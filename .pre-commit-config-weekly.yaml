@@ -1,0 +1,7 @@
+repos:
+- repo: https://github.com/cruft/cruft
+  rev: 2.10.2
+  hooks:
+  - id: cruft
+    entry: cruft update -y
+    additional_dependencies: [toml]

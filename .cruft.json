@@ -1,0 +1,16 @@
+{
+  "template": "https://github.com/ecmwf-projects/cookiecutter-conda-package",
+  "commit": "ec16feaef847dba10f51550308099b61af91b45c",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "teal",
+      "project_slug": "teal",
+      "project_short_description": "Polymorphism and duck-typing for geospatial data",
+      "copyright_holder": "European Centre for Medium Range Weather Forecasts",
+      "copyright_year": "2022",
+      "_template": "https://github.com/ecmwf-projects/cookiecutter-conda-package"
+    }
+  },
+  "directory": null
+}

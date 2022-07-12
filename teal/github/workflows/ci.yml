@@ -1,0 +1,43 @@
+name: ci
+
+# Controls when the workflow will run
+on:
+
+  # Trigger the workflow on all pushes
+  push:
+    branches:
+    - '**'
+    tags:
+    - '**'
+
+  # Trigger the workflow on all pull requests
+  pull_request: ~
+
+  # Trigger the workflow on release creation
+  release:
+    types:
+    - created
+
+  # Allow workflow to be dispatched on demand
+  workflow_dispatch: ~
+
+jobs:
+
+  # Calls a reusable CI workflow to qa, test & deploy the current repository.
+  #   We skip jobs that will result in duplicate jobs, since the code does not depend on the compiler.
+  #   It will produce a code coverage report on success and upload it to the codecov service.
+  #   If all checks were successful and a new release tag created, the package will be published on PyPI.
+  ci:
+    name: ci
+    uses: ecmwf-actions/reusable-workflows/.github/workflows/ci-python.yml@v1
+    with:
+      # codecov_upload: true
+      skip_matrix_jobs: |
+        clang-12@ubuntu-20.04
+        clang-9@ubuntu-18.04
+        clang-12@macos-10.15
+      build_package_inputs: |
+        self_build: false
+    secrets:
+      pypi_username: ${{ secrets.PYPI_USERNAME }}
+      pypi_password: ${{ secrets.PYPI_PASSWORD }}

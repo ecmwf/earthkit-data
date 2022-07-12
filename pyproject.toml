@@ -1,0 +1,24 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "setuptools_scm[toml]>=3.4",
+    "setuptools_scm_git_archive",
+]
+
+[tool.coverage.run]
+branch = true
+
+[tool.isort]
+profile = "black"
+
+[tool.pydocstyle]
+convention = "numpy"
+add_ignore = "D1"
+
+[tool.setuptools_scm]
+write_to = "teal/version.py"
+write_to_template = '''
+# Do not change! Do not track in version control!
+__version__ = "{version}"
+'''
