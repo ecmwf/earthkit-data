@@ -13,10 +13,11 @@ from six import string_types
 
 class Data:
     """
-    High-level abstract class represnting arbitrary geospatial data, offering
-    polymorphism to well-know geospatial file formats and Python libraries,
-    plus convenience methods for quickly extracting useful information from
-    complex data structures.
+    High-level abstract class represnting arbitrary geospatial data.
+
+    Offers polymorphism to well-know geospatial file formats and Python
+    libraries, plus convenience methods for quickly extracting useful
+    information from complex data structures.
     NOTE: Do not call this class directly outside of the teal source code.
     """
 
@@ -79,11 +80,15 @@ class Data:
         return self._extents
 
     def _get_extents(self):
-        x0 = np.amax(self.axis("x").values())
-        x1 = np.amin(self.axis("x").values())
-        y0 = np.amin(self.axis("y").values())
-        y1 = np.amax(self.axis("y").values())
-        return [x0, x1, y0, y1]
+        x0 = np.amax(self.axis("x").values)
+        x1 = np.amin(self.axis("x").values)
+        y0 = np.amin(self.axis("y").values)
+        y1 = np.amax(self.axis("y").values)
+        return (x0, x1, y0, y1)
+
+    @property
+    def crs(self):
+        self._not_implemented()
 
     def _not_implemented(self):
         import inspect
@@ -97,9 +102,10 @@ class Data:
 
 def open(source, *args, **kwargs):
     """
-    Open a file, directory, or Python object as a teal `Data` class, offering
-    flexible polymorphism to get your geospatial data into a format that suits
-    your needs.
+    Open a file, directory, or Python object as a teal `Data` class.
+
+    Offers flexible polymorphism to get your geospatial data into a format
+    that suits your needs.
 
     Parameters
     ----------

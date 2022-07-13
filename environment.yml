@@ -11,3 +11,11 @@ dependencies:
 - pytest-cov
 - sphinx
 - sphinxcontrib-apidoc
+- cf-units
+- xarray
+- numpy
+- pandas
+- geopandas
+- netcdf4
+- h5netcdf
+- dask
