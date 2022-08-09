@@ -1,6 +1,11 @@
 # teal
 
-Polymorphism and duck-typing for geospatial data
+Polymorphism and duck-typing for geospatial data.
+
+**DISCLAIMER**:
+This project is **BETA** and will be **Experimental** for the foreseeable future.
+Interfaces and functionality are likely to change, and the project itself may be scrapped.
+**DO NOT** use this software in any project/software that is operational.
 
 ## Workflow for developers/contributors
 
