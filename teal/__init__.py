@@ -9,6 +9,20 @@
 
 import numpy as np
 from six import string_types
+from teal import config
+
+
+def harmonise(method):
+    harmonise_kwargs = config.get("harmonise")
+
+    if harmonise_kwargs is None:
+        return method
+
+    import cgul
+    def _harmonise(*args, **kwargs):
+        result = method(*args, **kwargs)
+        return cgul.harmonise(result, **harmonise_kwargs)
+    return _harmonise
 
 
 class Data:
@@ -34,8 +48,12 @@ class Data:
     def to_pandas(self, *args, **kwargs):
         self._not_implemented()
 
-    def to_xarray(self, *args, **kwargs):
+    def _to_xarray(self, *args, **kwargs):
         self._not_implemented()
+
+    @harmonise
+    def to_xarray(self, *args, **kwargs):
+        return self._to_xarray()
 
     def to_netcdf(self, *args, **kwargs):
         self._not_implemented()
