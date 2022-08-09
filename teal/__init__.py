@@ -7,21 +7,34 @@
 # nor does it submit to any jurisdiction.
 
 
+import logging
 import numpy as np
 from six import string_types
 from teal import config
+import warnings
 
+LOG = logging.getLogger(__name__)
 
 def harmonise(method):
-    harmonise_kwargs = config.get("harmonise")
+    """
+    Decorator method to allow harmonisation of data objects.
 
-    if harmonise_kwargs is None:
-        return method
-
-    import cgul
+    Only the cgul harmonisation is currently available.
+    """
     def _harmonise(*args, **kwargs):
-        result = method(*args, **kwargs)
-        return cgul.harmonise(result, **harmonise_kwargs)
+        harmonisor = config.get("harmonisor")
+        if harmonisor is None:
+            return method
+
+        elif 'cgul' in harmonisor:
+            import cgul
+            result = method(*args, **kwargs)
+            return cgul.harmonise(result, **config.get("harmonisor_kwargs"))
+
+        else:
+            LOG.warning(f"Harmonisor '{harmonisor}' not implemented")
+            return method
+
     return _harmonise
 
 
@@ -53,6 +66,7 @@ class Data:
 
     @harmonise
     def to_xarray(self, *args, **kwargs):
+        print('In to_xarray')
         return self._to_xarray()
 
     def to_netcdf(self, *args, **kwargs):

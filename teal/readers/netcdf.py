@@ -103,7 +103,7 @@ class NetCDFReader(Reader):
         -------
         xarray.core.dataarray.DataArray
         """
-        return self._xarray_wrapper(**self.__xarray_kwargs).to_xarray()
+        return self._xarray_wrapper(**self.__xarray_kwargs)._to_xarray()
 
     @classmethod
     def to_xarray_multi_from_paths(cls, paths, **kwargs):
