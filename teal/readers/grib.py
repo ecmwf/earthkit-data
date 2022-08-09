@@ -55,7 +55,8 @@ class GRIBReader(Reader):
 
             if "xarray_open_mfdataset_kwargs" in kwargs:
                 warnings.warn(
-                    "xarray_open_mfdataset_kwargs is deprecated, please use xarray_open_dataset_kwargs instead."
+                    "xarray_open_mfdataset_kwargs is deprecated, "
+                    "please use xarray_open_dataset_kwargs instead."
                 )
                 kwargs["xarray_open_dataset_kwargs"] = kwargs.pop(
                     "xarray_open_mfdataset_kwargs"

@@ -8,12 +8,14 @@
 
 
 import logging
+
 import numpy as np
 from six import string_types
+
 from teal import config
-import warnings
 
 LOG = logging.getLogger(__name__)
+
 
 def harmonise(method):
     """
@@ -21,13 +23,15 @@ def harmonise(method):
 
     Only the cgul harmonisation is currently available.
     """
+
     def _harmonise(*args, **kwargs):
         harmonisor = config.get("harmonisor")
         if harmonisor is None:
             return method
 
-        elif 'cgul' in harmonisor:
+        elif "cgul" in harmonisor:
             import cgul
+
             result = method(*args, **kwargs)
             return cgul.harmonise(result, **config.get("harmonisor_kwargs"))
 
@@ -66,7 +70,7 @@ class Data:
 
     @harmonise
     def to_xarray(self, *args, **kwargs):
-        print('In to_xarray')
+        print("In to_xarray")
         return self._to_xarray()
 
     def to_netcdf(self, *args, **kwargs):

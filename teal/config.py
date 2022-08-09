@@ -1,10 +1,8 @@
-
-import yaml
-
 _SETTINGS = {
     "harmonisor": None,
     "harmonisor_kwargs": dict(),
 }
+
 
 class set:
     # TODO: Add docstring
@@ -18,7 +16,7 @@ class set:
             ) from ex
 
         _SETTINGS.update(kwargs)
-        
+
     def __enter__(self) -> None:
         pass
 
