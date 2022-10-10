@@ -11,7 +11,15 @@ from teal import Data
 
 
 class NumpyArrayWrapper(Data):
-    pass
+    def to_numpy(self):
+        """
+        Return a numpy `ndarray` representation of the data.
+
+        Returns
+        -------
+        numpy.ndarray
+        """
+        return self.source
 
 
 def wrapper(data, *args, **kwargs):
