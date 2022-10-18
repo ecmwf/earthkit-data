@@ -100,7 +100,7 @@ jobs:
         python -m pip install --no-deps -e .
     - name: Build documentation
       run: |
-        make build-docs
+        make docs-build
 
   integration-tests:
     needs: [unit-tests]
