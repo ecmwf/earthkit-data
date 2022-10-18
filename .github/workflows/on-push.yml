@@ -74,7 +74,7 @@ jobs:
         python -m pip install --no-deps -e .
     - name: Run code quality checks
       run: |
-        make type-check
+        echo type-check not used
 
   documentation:
     needs: [unit-tests]

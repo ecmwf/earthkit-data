@@ -15,7 +15,6 @@ from emohawk import Data
 
 _HELPERS = {}
 
-
 def _wrappers():
     if not _HELPERS:
         here = os.path.dirname(__file__)
