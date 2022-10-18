@@ -9,7 +9,7 @@
 """Container for project metadata."""
 
 __name__ = "emohawk"
-__version__ = "0.0.dev1"
+__version__ = "0.0.1"
 __author__ = "European Centre for Medium-Range Weather Forecasts (ECMWF)"
 __author_email__ = "james.varndell@ecmwf.int"
 __license__ = "Apache License Version 2.0"
