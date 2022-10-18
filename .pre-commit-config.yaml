@@ -36,7 +36,7 @@ repos:
   rev: v2.4.0
   hooks:
   - id: pretty-format-yaml
-    args: [--autofix]
+    args: [--autofix, --preserve-quotes]
   - id: pretty-format-toml
     args: [--autofix]
 - repo: https://github.com/PyCQA/pydocstyle.git

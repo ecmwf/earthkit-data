@@ -3,16 +3,16 @@ CONDA := conda
 CONDAFLAGS :=
 COV_REPORT := html
 
-default: qa test type-check
+default: qa unit-tests type-check
 
 qa:
 	pre-commit run --all-files
 
-test:
+unit-tests:
 	python -m pytest -vv --cov=. --cov-report=$(COV_REPORT)
 
 type-check:
-	python -m mypy --strict .
+	python -m mypy .
 
 conda-env-update:
 	$(CONDA) env update $(CONDAFLAGS) -f environment.yml
@@ -26,5 +26,9 @@ docker-run:
 template-update:
 	pre-commit run --all-files cruft -c .pre-commit-config-weekly.yaml
 
-build-docs:
+docs-build:
 	cd docs && rm -fr _api && make clean && make html
+
+#integration-tests:
+#    python -m pytest -vv --cov=. --cov-report=$(COV_REPORT) tests/integration*.py
+#    python -m pytest -vv --doctest-glob='*.md'

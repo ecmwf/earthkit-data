@@ -24,7 +24,7 @@ Before pushing to GitHub, run the following commands:
 1. Run quality assurance checks: `make qa`
 1. Run tests: `make test`
 1. Run the static type checker: `make type-check`
-1. Build the documentation (see [Sphinx tutorial](https://www.sphinx-doc.org/en/master/tutorial/)): `make build-docs`
+1. Build the documentation (see [Sphinx tutorial](https://www.sphinx-doc.org/en/master/tutorial/)): `make docs-build`
 
 ## License
 
