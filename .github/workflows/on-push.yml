@@ -48,7 +48,7 @@ jobs:
         python -m pip install --no-deps -e .
     - name: Run tests
       run: |
-        make test
+        make unit-tests
 
   type-check:
     needs: [unit-tests]
@@ -132,7 +132,7 @@ jobs:
         python -m pip install --no-deps -e .
     - name: Run tests
       run: |
-        make test
+        make unit-tests
 
   distribution:
     runs-on: ubuntu-latest
