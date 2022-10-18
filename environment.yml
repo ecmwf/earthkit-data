@@ -3,6 +3,7 @@ channels:
 - nodefaults
 dependencies:
 - make
+- mypy
 - myst-parser
 - pre-commit
 - pydata-sphinx-theme

@@ -9,6 +9,7 @@
       "project_short_description": "Polymorphism and duck-typing for geospatial data",
       "copyright_holder": "European Centre for Medium Range Weather Forecasts",
       "copyright_year": "2022",
+      "mypy_strict": "False",
       "_template": "https://github.com/ecmwf-projects/cookiecutter-conda-package"
     }
   },
