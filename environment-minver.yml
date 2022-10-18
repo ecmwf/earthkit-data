@@ -5,3 +5,4 @@ dependencies:
 - make
 - pytest
 - pytest-cov
+- numpy
