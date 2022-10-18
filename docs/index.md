@@ -1,4 +1,4 @@
-# Welcome to teal's documentation!
+# Welcome to emohawk's documentation!
 
 Polymorphism and duck-typing for geospatial data.
 

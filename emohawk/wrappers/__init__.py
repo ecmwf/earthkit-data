@@ -11,7 +11,7 @@ import os
 import warnings
 from importlib import import_module
 
-from teal import Data
+from emohawk import Data
 
 _HELPERS = {}
 
@@ -30,10 +30,7 @@ def _wrappers():
 
 
 def get_wrapper(data, *args, **kwargs):
-    """
-    Returns an object that wraps classes from other packages to support.
-    """
-
+    """Returns an object that wraps classes from other packages to support."""
     if isinstance(data, Data):
         return data
 

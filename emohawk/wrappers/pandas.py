@@ -7,9 +7,9 @@
 # nor does it submit to any jurisdiction.
 
 
-from teal import Data
-from teal.metadata import AXES
-from teal.wrappers import xarray
+from emohawk import Data
+from emohawk.metadata import AXES
+from emohawk.wrappers import xarray
 
 
 class PandasFrameWrapper(Data):

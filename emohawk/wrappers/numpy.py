@@ -7,18 +7,24 @@
 # nor does it submit to any jurisdiction.
 
 
-import numpy as np
-
-from teal import Data
+from emohawk import Data
 
 
-class ListWrapper(Data):
-    
+class NumpyArrayWrapper(Data):
     def to_numpy(self):
-        return np.array(self.source)
+        """
+        Return a numpy `ndarray` representation of the data.
+
+        Returns
+        -------
+        numpy.ndarray
+        """
+        return self.source
 
 
 def wrapper(data, *args, **kwargs):
-    if isinstance(data, list):
-        return ListWrapper(data, *args, **kwargs)
+    import numpy as np
+
+    if isinstance(data, np.ndarray):
+        return NumpyArrayWrapper(data, *args, **kwargs)
     return None

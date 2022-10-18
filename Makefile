@@ -1,4 +1,4 @@
-PROJECT := teal
+PROJECT := emohawk
 CONDA := conda
 CONDAFLAGS :=
 COV_REPORT := html

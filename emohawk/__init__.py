@@ -8,7 +8,6 @@
 
 
 import numpy as np
-from six import string_types
 
 
 class Data:
@@ -18,7 +17,7 @@ class Data:
     Offers polymorphism to well-know geospatial file formats and Python
     libraries, plus convenience methods for quickly extracting useful
     information from complex data structures.
-    NOTE: Do not call this class directly outside of the teal source code.
+    NOTE: Do not call this class directly outside of the emohawk source code.
     """
 
     def __init__(self, source, **kwargs):
@@ -102,7 +101,7 @@ class Data:
 
 def open(source, *args, **kwargs):
     """
-    Open a file, directory, or Python object as a teal `Data` class.
+    Open a file, directory, or Python object as a emohawk `Data` class.
 
     Offers flexible polymorphism to get your geospatial data into a format
     that suits your needs.
@@ -111,18 +110,18 @@ def open(source, *args, **kwargs):
     ----------
     source : (str or object)
         The source of your data. This can be a string respresenting the path
-        to your data file, or an object that is understood by teal (for example
+        to your data file, or an object that is understood by emohawk (for example
         an xarray, numpy or pandas object).
 
     Returns
     -------
-    teal.Data
+    emohawk.Data
         Polymorphic data object with methods for transforming data into a wide
         range of geospatial data formats and Python objects.
     """
     from . import readers, wrappers
 
-    if isinstance(source, string_types):
+    if isinstance(source, str):
         opener = readers.get_reader
     else:
         opener = wrappers.get_wrapper

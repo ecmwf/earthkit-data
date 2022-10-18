@@ -74,7 +74,7 @@ def reader(path, magic=None, deeper_check=False):
     try:
         with open(path, "r") as f:
             json.load(f)
-    except:
+    except:  # noqa: E722
         pass
     else:
         return JSONReader(path)

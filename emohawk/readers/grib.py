@@ -7,15 +7,40 @@
 # nor does it submit to any jurisdiction.
 
 
-from teal.wrappers.xarray import XArrayDatasetWrapper
+import copy
+import warnings
+
+import xarray as xr
+
+from emohawk.wrappers.xarray import XArrayDatasetWrapper
 
 from . import Reader
 
 
-class NetCDFReader(Reader):
+def mix_kwargs(
+    user,
+    default,
+    forced={},
+):
+    kwargs = copy.deepcopy(default)
+
+    for k, v in user.items():
+        if k in forced and v != forced[k]:
+            continue
+
+        kwargs[k] = v
+
+    kwargs.update(forced)
+
+    return kwargs
+
+
+class GRIBReader(Reader):
     """
-    Class for reading and polymorphing netCDF files.
+    Class for reading and polymorphing GRIB files.
     """
+
+    appendable = True  # GRIB messages can be added to the same file
 
     def __init__(self, source, **kwargs):
         super().__init__(source, **kwargs)
@@ -24,9 +49,42 @@ class NetCDFReader(Reader):
 
     def _xarray_wrapper(self, **kwargs):
         if self.__xarray_wrapper is None or kwargs != self.__xarray_kwargs:
-            dataset = type(self).to_xarray_multi_from_paths([self.source], **kwargs)
             self.__xarray_kwargs = kwargs.copy()
-            self.__xarray_wrapper = XArrayDatasetWrapper(dataset)
+
+            xarray_open_dataset_kwargs = {}
+
+            if "xarray_open_mfdataset_kwargs" in kwargs:
+                warnings.warn(
+                    "xarray_open_mfdataset_kwargs is deprecated, "
+                    "please use xarray_open_dataset_kwargs instead."
+                )
+                kwargs["xarray_open_dataset_kwargs"] = kwargs.pop(
+                    "xarray_open_mfdataset_kwargs"
+                )
+
+            user_xarray_open_dataset_kwargs = kwargs.get(
+                "xarray_open_dataset_kwargs", {}
+            )
+
+            for key in ["backend_kwargs"]:
+                xarray_open_dataset_kwargs[key] = mix_kwargs(
+                    user=user_xarray_open_dataset_kwargs.pop(key, {}),
+                    default={"errors": "raise"},
+                    forced={},
+                )
+            xarray_open_dataset_kwargs.update(
+                mix_kwargs(
+                    user=user_xarray_open_dataset_kwargs,
+                    default={"squeeze": False},
+                    forced={
+                        "errors": "raise",
+                        "engine": "cfgrib",
+                    },
+                )
+            )
+
+            result = xr.open_dataset(self.source, **xarray_open_dataset_kwargs)
+            self.__xarray_wrapper = XArrayDatasetWrapper(result)
         return self.__xarray_wrapper
 
     def axis(self, axis, **kwargs):
@@ -65,15 +123,16 @@ class NetCDFReader(Reader):
         """
         return self._xarray_wrapper(**kwargs).component(component)
 
-    def to_netcdf(self, **kwargs):
+    def to_netcdf(self, file_name, **kwargs):
         """
         Save the data to a netCDF file.
 
         Parameters
         ----------
-        See `xarray.DataSet.to_netcdf`.
+        file_name : str
+            The file name to which the netCDF file will be saved.
         """
-        self.save(**kwargs)
+        return self._xarray_wrapper(**kwargs).to_netcdf(file_name)
 
     def to_numpy(self, **kwargs):
         """
@@ -105,16 +164,7 @@ class NetCDFReader(Reader):
         """
         return self._xarray_wrapper(**self.__xarray_kwargs).to_xarray()
 
-    @classmethod
-    def to_xarray_multi_from_paths(cls, paths, **kwargs):
-        import xarray as xr
-
-        options = dict()
-        options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
-
-        return xr.open_mfdataset(paths, **options)
-
 
 def reader(path, magic=None, deeper_check=False):
-    if magic is None or magic[:4] in (b"\x89HDF", b"CDF\x01", b"CDF\x02"):
-        return NetCDFReader(path)
+    if magic is None or magic[:4] == b"GRIB":
+        return GRIBReader(path)

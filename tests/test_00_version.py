@@ -1,5 +1,5 @@
-import teal
+import emohawk
 
 
 def test_version() -> None:
-    assert teal.__version__ != "999"
+    assert emohawk.__version__ != "999"

@@ -7,14 +7,13 @@
 # nor does it submit to any jurisdiction.
 
 
-from teal import Data
-from teal.metadata import AXES, COMPONENTS
+from emohawk import Data
+from emohawk.metadata import AXES, COMPONENTS
 
 
 class XArrayDataArrayWrapper(Data):
-    """
-    Wrapper around an xarray `DataArray`, offering polymorphism and convenience
-    methods.
+    """Wrapper around an xarray `DataArray`, offering polymorphism and
+    convenience methods.
     """
 
     def axis(self, axis):

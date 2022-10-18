@@ -11,7 +11,7 @@ import os
 import warnings
 from importlib import import_module
 
-from teal import Data
+from emohawk import Data
 
 
 class Reader(Data):

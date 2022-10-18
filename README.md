@@ -1,6 +1,6 @@
-# teal
+# emohawk
 
-Polymorphism and duck-typing for geospatial data.
+A format-agnostic Python interface for geospatial data.
 
 **DISCLAIMER**:
 This project is **BETA** and will be **Experimental** for the foreseeable future.

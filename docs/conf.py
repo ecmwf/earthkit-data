@@ -9,17 +9,17 @@
 import os
 import sys
 
-import teal
+import emohawk
 
 sys.path.insert(0, os.path.abspath("../"))
 
 # -- Project information -----------------------------------------------------
 
-project = "teal"
+project = "emohawk"
 copyright = "2022, European Centre for Medium Range Weather Forecasts"
 author = "European Centre for Medium Range Weather Forecasts"
-version = teal.__version__
-release = teal.__version__
+version = emohawk.__version__
+release = emohawk.__version__
 
 # -- General configuration ---------------------------------------------------
 
@@ -29,7 +29,7 @@ release = teal.__version__
 extensions = ["myst_parser", "sphinxcontrib.apidoc", "sphinx.ext.napoleon"]
 
 # apidoc configuration
-apidoc_module_dir = "../teal"
+apidoc_module_dir = "../emohawk"
 apidoc_output_dir = "_api"
 apidoc_separate_modules = True
 

@@ -11,7 +11,7 @@ import fnmatch
 import os
 import shutil
 
-import teal
+import emohawk
 
 from . import Reader, get_reader
 
@@ -63,7 +63,7 @@ class DirectoryReader(Reader):
         return self
 
     def mutate_source(self):
-        return [teal.open(path) for path in sorted(self._content)]
+        return [emohawk.open(path) for path in sorted(self._content)]
 
     def save(self, path):
         shutil.copytree(self.path, path)
