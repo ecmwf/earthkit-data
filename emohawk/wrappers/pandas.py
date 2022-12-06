@@ -90,3 +90,12 @@ def wrapper(data, *args, **kwargs):
         return PandasFrameWrapper(data, *args, **kwargs)
 
     return None
+
+
+def translator(source, cls):
+    import pandas as pd
+
+    if cls in (pd.DataFrame,):
+        return source.to_pandas
+
+    return None

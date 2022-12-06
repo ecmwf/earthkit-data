@@ -137,3 +137,9 @@ def open(source, *args, **kwargs):
     result = opener(source, *args, **kwargs)
 
     return result
+
+
+def transform(source, cls):
+    from . import wrappers
+
+    return wrappers.get_translator(source, cls)
