@@ -7,7 +7,7 @@ repos:
   - id: check-json
   - id: check-yaml
   - id: check-toml
-  - id: check-added-large-files
+  # - id: check-added-large-files
   - id: debug-statements
   - id: mixed-line-ending
 - repo: https://github.com/PyCQA/isort
