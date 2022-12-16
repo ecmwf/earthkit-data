@@ -84,6 +84,19 @@ class XArrayDataArrayWrapper(Data):
         """
         return self.source.to_netcdf(*args, **kwargs)
 
+    def harmonise(self, *args, **kwargs):
+        import cgul
+
+        """
+        Harmonise the xarray using cgul, i.e. ensure coordinates and dimensions follow a standard and
+        correct any common non-standard unit strings.
+
+        Parameters
+        ----------
+        See `cgul.harmonise`.
+        """
+        return cgul.harmonise(self.source.to_xarray, **kwargs)
+
 
 class XArrayDatasetWrapper(XArrayDataArrayWrapper):
     """
