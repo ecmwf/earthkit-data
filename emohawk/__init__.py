@@ -45,9 +45,12 @@ class Data:
     def _to_xarray(self, *args, **kwargs):
         self._not_implemented()
 
-    def to_xarray(self, harmonise=False, *args, **kwargs):
+    def to_xarray(self, *args, harmonise=False, **kwargs):
+        print('to_xarray')
         xarray_object = self._to_xarray(self, *args, **kwargs)
+        print(harmonise)
         if harmonise:
+
             import cgul
 
             xarray_object = cgul.harmonise(xarray_object)
@@ -84,9 +87,6 @@ class Data:
         self._not_implemented()
 
     def component(self, *args, **kwargs):
-        self._not_implemented()
-
-    def harmonise(self, *args, **kwargs):
         self._not_implemented()
 
     @property
