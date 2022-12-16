@@ -62,7 +62,7 @@ class PandasFrameWrapper(Data):
         """
         return self.source.to_numpy(*args, **kwargs)
 
-    def to_xarray(self, *args, **kwargs):
+    def _to_xarray(self, *args, **kwargs):
         """
         Return an xarray representation of the data.
 
