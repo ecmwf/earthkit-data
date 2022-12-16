@@ -77,6 +77,9 @@ class Data:
 
     def component(self, *args, **kwargs):
         self._not_implemented()
+    
+    def harmonise(self, *args, **kwargs):
+        self._not_implemented()
 
     @property
     def extents(self):
