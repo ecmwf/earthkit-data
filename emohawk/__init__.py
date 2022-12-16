@@ -42,8 +42,16 @@ class Data:
     def to_pandas(self, *args, **kwargs):
         self._not_implemented()
 
-    def to_xarray(self, *args, **kwargs):
+    def _to_xarray(self, *args, **kwargs):
         self._not_implemented()
+
+    def to_xarray(self, harmonise=False, *args, **kwargs):
+        xarray_object = self._to_xarray(self, *args, **kwargs)
+        if harmonise:
+            import cgul
+
+            xarray_object = cgul.harmonise(xarray_object)
+        return xarray_object
 
     def to_netcdf(self, *args, **kwargs):
         self._not_implemented()
@@ -77,7 +85,7 @@ class Data:
 
     def component(self, *args, **kwargs):
         self._not_implemented()
-    
+
     def harmonise(self, *args, **kwargs):
         self._not_implemented()
 

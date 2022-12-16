@@ -154,7 +154,7 @@ class GRIBReader(Reader):
         """
         return self._xarray_wrapper(**self.__xarray_kwargs).to_pandas(**kwargs)
 
-    def to_xarray(self, **kwargs):
+    def _to_xarray(self, **kwargs):
         """
         Return an xarray representation of the data.
 

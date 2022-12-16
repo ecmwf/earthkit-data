@@ -44,7 +44,7 @@ class XArrayDataArrayWrapper(Data):
                 raise ValueError(f"No coordinate found with axis '{axis}'")
         return self.source.coords[coord]
 
-    def to_xarray(self):
+    def _to_xarray(self):
         """
         Return an xarray representation of the data.
 
@@ -83,19 +83,6 @@ class XArrayDataArrayWrapper(Data):
         See `xarray.DataArray.to_netcdf`.
         """
         return self.source.to_netcdf(*args, **kwargs)
-
-    def harmonise(self, *args, **kwargs):
-        import cgul
-
-        """
-        Harmonise the xarray using cgul, i.e. ensure coordinates and dimensions follow a standard and
-        correct any common non-standard unit strings.
-
-        Parameters
-        ----------
-        See `cgul.harmonise`.
-        """
-        return cgul.harmonise(self.source.to_xarray, **kwargs)
 
 
 class XArrayDatasetWrapper(XArrayDataArrayWrapper):
