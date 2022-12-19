@@ -14,7 +14,9 @@ from zipfile import ZipFile
 from .archive import ArchiveReader
 from .csv import CSVReader
 from .shapefile import ShapefileReader
+from . import get_reader
 
+SHAPEFILE_EXTENSIONS = (".shp", ".shx", ".dbf")
 
 class InfoWrapper:
     def __init__(self, member):
@@ -41,6 +43,7 @@ class ZIPReader(ArchiveReader):
         super().__init__(source)
 
         self._mutate = None
+        self.source = source
 
         with ZipFile(source, "r") as zip:
             members = zip.infolist()
@@ -52,16 +55,21 @@ class ZIPReader(ArchiveReader):
                     self._mutate = CSVReader(source, compression="zip")
                     return  # Pandas can read zipped files directly
 
-            if ".zattrs" in members:
+            elif ".zattrs" in members:
                 return  # Zarr can read zipped files directly
 
-            for member in members:
-                _, ext = os.path.splitext(member.filename)
-                if ext in (".shp", ".shx", ".dbf"):
-                    self._mutate = ShapefileReader(source)
-                    return  # GeoPandas can read zipped files directly
+            elif any([
+                os.path.splitext(member.filename)[-1] in SHAPEFILE_EXTENSIONS
+                for member in members
+            ]):
+                self._mutate = ShapefileReader(source)
+                return  # GeoPandas can read zipped files directly
 
+            # Extract contents to directory, and update source
             self.expand(zip, members)
+            # Mutate to directory source
+            self._mutate = get_reader(self.source).mutate()
+
 
     def check(self, member):
         return super().check(InfoWrapper(member))
