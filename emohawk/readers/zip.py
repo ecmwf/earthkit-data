@@ -11,12 +11,13 @@ import os
 import stat
 from zipfile import ZipFile
 
+from . import get_reader
 from .archive import ArchiveReader
 from .csv import CSVReader
 from .shapefile import ShapefileReader
-from . import get_reader
 
 SHAPEFILE_EXTENSIONS = (".shp", ".shx", ".dbf")
+
 
 class InfoWrapper:
     def __init__(self, member):
@@ -25,6 +26,9 @@ class InfoWrapper:
         # See https://stackoverflow.com/questions/35782941/archiving-symlinks-with-python-zipfile
         if member.create_system == 3:  # Unix
             unix_mode = member.external_attr >> 16
+            if unix_mode & 0o100000 == 0:
+                # if mode is 0, starts with '?' in zipinfo, set it to 1
+                unix_mode = unix_mode | 0o100000
             self.file_or_directory = stat.S_ISDIR(unix_mode) or stat.S_ISREG(unix_mode)
 
     @property
@@ -58,10 +62,12 @@ class ZIPReader(ArchiveReader):
             elif ".zattrs" in members:
                 return  # Zarr can read zipped files directly
 
-            elif any([
-                os.path.splitext(member.filename)[-1] in SHAPEFILE_EXTENSIONS
-                for member in members
-            ]):
+            elif any(
+                [
+                    os.path.splitext(member.filename)[-1] in SHAPEFILE_EXTENSIONS
+                    for member in members
+                ]
+            ):
                 self._mutate = ShapefileReader(source)
                 return  # GeoPandas can read zipped files directly
 
@@ -69,7 +75,6 @@ class ZIPReader(ArchiveReader):
             self.expand(zip, members)
             # Mutate to directory source
             self._mutate = get_reader(self.source).mutate()
-
 
     def check(self, member):
         return super().check(InfoWrapper(member))
