@@ -52,7 +52,6 @@ class XArrayDataArrayWrapper(Data):
         -------
         xarray.core.dataarray.DataArray
         """
-        print(self.source)
         return self.source
 
     def to_numpy(self):

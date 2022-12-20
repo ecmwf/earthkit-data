@@ -18,11 +18,9 @@ class ArchiveReader(Reader):
             return False
 
         if member.name.startswith("/"):
-            print("startswith /", member.name)
             return False
 
         if ".." in member.name:
-            print("is relative path", member.name)
             return False
 
         return True
