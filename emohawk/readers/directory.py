@@ -74,7 +74,7 @@ class DirectoryReader(Reader):
     def write(self, f):
         raise NotImplementedError()
 
-    def _xarray_wrapper(self, **kwargs):
+    def _xarray_wrapper_concat(self, **kwargs):
         if self.__xarray_wrapper is None or kwargs != self.__xarray_kwargs:
             m_sources = self.mutate_source()
             dataset = type(m_sources[0]).to_xarray_multi_from_paths(
@@ -84,8 +84,34 @@ class DirectoryReader(Reader):
             self.__xarray_wrapper = XArrayDatasetWrapper(dataset)
         return self.__xarray_wrapper
 
+    def _xarray_wrapper_list(self, **kwargs):
+        if self.__xarray_wrapper is None or kwargs != self.__xarray_kwargs:
+            m_sources = self.mutate_source()
+            dataset_list = [m_source.to_xarray(**kwargs) for m_source in m_sources]
+            self.__xarray_wrapper = [
+                XArrayDatasetWrapper(dataset) for dataset in dataset_list
+            ]
+            self.__xarray_kwargs = kwargs.copy()
+        return self.__xarray_wrapper
+
     def _to_xarray(self, *args, **kwargs):
-        return self._xarray_wrapper(**self.__xarray_kwargs)._to_xarray(**kwargs)
+
+        if not kwargs.get("concat", True):
+            return [
+                _xr_wrapper.to_xarray(**kwargs)
+                for _xr_wrapper in self._xarray_wrapper_list(**self.__xarray_kwargs)
+            ]
+
+        try:
+            return self._xarray_wrapper_concat(**self.__xarray_kwargs)._to_xarray(
+                **kwargs
+            )
+        except:  # noqa: E722
+            # If any incompatibility issue with directory contents, return a list of xarrays
+            return [
+                _xr_wrapper.to_xarray(**kwargs)
+                for _xr_wrapper in self._xarray_wrapper_list(**self.__xarray_kwargs)
+            ]
 
 
 def reader(path, magic=None, deeper_check=False):
