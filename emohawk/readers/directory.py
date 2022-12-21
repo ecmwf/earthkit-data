@@ -12,6 +12,7 @@ import os
 import shutil
 
 import emohawk
+from emohawk.wrappers.xarray import XArrayDatasetWrapper
 
 from . import Reader, get_reader
 
@@ -46,6 +47,8 @@ class DirectoryReader(Reader):
 
     def __init__(self, source):
         super().__init__(source)
+        self.__xarray_wrapper = None
+        self.__xarray_kwargs = dict()
 
         self._content = []
 
@@ -70,6 +73,19 @@ class DirectoryReader(Reader):
 
     def write(self, f):
         raise NotImplementedError()
+
+    def _xarray_wrapper(self, **kwargs):
+        if self.__xarray_wrapper is None or kwargs != self.__xarray_kwargs:
+            m_sources = self.mutate_source()
+            dataset = type(m_sources[0]).to_xarray_multi_from_paths(
+                sorted(self._content), **kwargs
+            )
+            self.__xarray_kwargs = kwargs.copy()
+            self.__xarray_wrapper = XArrayDatasetWrapper(dataset)
+        return self.__xarray_wrapper
+
+    def _to_xarray(self, *args, **kwargs):
+        return self._xarray_wrapper(**self.__xarray_kwargs)._to_xarray(**kwargs)
 
 
 def reader(path, magic=None, deeper_check=False):

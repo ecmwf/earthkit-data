@@ -11,9 +11,12 @@ import os
 import stat
 from zipfile import ZipFile
 
+from . import get_reader
 from .archive import ArchiveReader
 from .csv import CSVReader
 from .shapefile import ShapefileReader
+
+SHAPEFILE_EXTENSIONS = (".shp", ".shx", ".dbf")
 
 
 class InfoWrapper:
@@ -23,6 +26,9 @@ class InfoWrapper:
         # See https://stackoverflow.com/questions/35782941/archiving-symlinks-with-python-zipfile
         if member.create_system == 3:  # Unix
             unix_mode = member.external_attr >> 16
+            if unix_mode & 0o100000 == 0:
+                # if mode is 0, starts with '?' in zipinfo, set it to 1
+                unix_mode = unix_mode | 0o100000
             self.file_or_directory = stat.S_ISDIR(unix_mode) or stat.S_ISREG(unix_mode)
 
     @property
@@ -41,6 +47,7 @@ class ZIPReader(ArchiveReader):
         super().__init__(source)
 
         self._mutate = None
+        self.source = source
 
         with ZipFile(source, "r") as zip:
             members = zip.infolist()
@@ -55,13 +62,19 @@ class ZIPReader(ArchiveReader):
             if ".zattrs" in members:
                 return  # Zarr can read zipped files directly
 
-            for member in members:
-                _, ext = os.path.splitext(member.filename)
-                if ext in (".shp", ".shx", ".dbf"):
-                    self._mutate = ShapefileReader(source)
-                    return  # GeoPandas can read zipped files directly
+            if any(
+                [
+                    os.path.splitext(member.filename)[-1] in SHAPEFILE_EXTENSIONS
+                    for member in members
+                ]
+            ):
+                self._mutate = ShapefileReader(source)
+                return  # GeoPandas can read zipped files directly
 
+            # Extract contents to directory, and update source
             self.expand(zip, members)
+            # Mutate to directory source
+            self._mutate = get_reader(self.source).mutate()
 
     def check(self, member):
         return super().check(InfoWrapper(member))

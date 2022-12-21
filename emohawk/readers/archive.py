@@ -14,7 +14,6 @@ from . import Reader, get_reader
 
 class ArchiveReader(Reader):
     def check(self, member):
-
         if not member.isdir() and not member.isfile():
             return False
 

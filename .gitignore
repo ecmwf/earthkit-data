@@ -340,4 +340,6 @@ tags
 # Ignore code-workspaces
 *.code-workspace
 
+notebooks/data/*/
+
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,vim,visualstudiocode,pycharm

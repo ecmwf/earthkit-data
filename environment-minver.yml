@@ -6,3 +6,11 @@ dependencies:
 - pytest
 - pytest-cov
 - numpy
+- cf-units
+- xarray
+- numpy
+- pandas
+- geopandas
+- netcdf4
+- h5netcdf
+- dask
