@@ -13,8 +13,9 @@ import mimetypes
 import os
 import zipfile
 
-from . import Reader
 from emohawk.wrappers.pandas import PandasFrameWrapper
+
+from . import Reader
 
 
 class ZipProbe:
@@ -135,7 +136,9 @@ class CSVReader(Reader):
         if self.dialect is not None:
             pandas_read_csv_kwargs["dialect"] = self.dialect
 
-        return PandasFrameWrapper(pandas.read_csv(self.source, **pandas_read_csv_kwargs))
+        return PandasFrameWrapper(
+            pandas.read_csv(self.source, **pandas_read_csv_kwargs)
+        )
 
     def to_pandas(self, **kwargs):
         """
@@ -145,7 +148,6 @@ class CSVReader(Reader):
         -------
         pandas.core.frame.DataFrame
         """
-
         return self._pandas_wrapper(**kwargs).to_pandas()
 
     def _to_xarray(self, *args, **kwargs):
