@@ -28,3 +28,12 @@ def wrapper(data, *args, **kwargs):
     if isinstance(data, np.ndarray):
         return NumpyArrayWrapper(data, *args, **kwargs)
     return None
+
+
+def translator(source, cls):
+    import numpy as np
+
+    if cls in (np.ndarray,):
+        return source.to_numpy
+
+    return None

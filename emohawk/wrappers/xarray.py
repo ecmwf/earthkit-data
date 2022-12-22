@@ -139,3 +139,12 @@ def wrapper(data, *args, **kwargs):
             return XArrayDataArrayWrapper(data, *args, **kwargs)
 
     return None
+
+
+def translator(source, cls):
+    import xarray as xr
+
+    if cls in (xr.DataArray, xr.Dataset):
+        return source.to_xarray
+
+    return None
