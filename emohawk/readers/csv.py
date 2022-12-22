@@ -14,6 +14,7 @@ import os
 import zipfile
 
 from . import Reader
+from emohawk.wrappers.pandas import PandasFrameWrapper
 
 
 class ZipProbe:
@@ -123,14 +124,7 @@ class CSVReader(Reader):
         self.compression = compression
         self.dialect, self.has_header = probe_csv(source, compression=compression)
 
-    def to_pandas(self, **kwargs):
-        """
-        Return a pandas `dataframe` representation of the data.
-
-        Returns
-        -------
-        pandas.core.frame.DataFrame
-        """
+    def _pandas_wrapper(self, **kwargs):
         import pandas
 
         pandas_read_csv_kwargs = kwargs.get("pandas_read_csv_kwargs", {})
@@ -141,7 +135,29 @@ class CSVReader(Reader):
         if self.dialect is not None:
             pandas_read_csv_kwargs["dialect"] = self.dialect
 
-        return pandas.read_csv(self.source, **pandas_read_csv_kwargs)
+        return PandasFrameWrapper(pandas.read_csv(self.source, **pandas_read_csv_kwargs))
+
+    def to_pandas(self, **kwargs):
+        """
+        Return a pandas `dataframe` representation of the data.
+
+        Returns
+        -------
+        pandas.core.frame.DataFrame
+        """
+
+        return self._pandas_wrapper(**kwargs).to_pandas()
+
+    def _to_xarray(self, *args, **kwargs):
+        """
+        Return an xarray representation of the data.
+
+        Returns
+        -------
+        xarray.core.dataarray.DataArray
+        """
+        pandas_to_xarray_kwargs = kwargs.get("pandas_to_xarray_kwargs", {})
+        return self._pandas_wrapper(**kwargs)._to_xarray(**pandas_to_xarray_kwargs)
 
 
 def reader(path, magic, deeper_check, fwf=False):
