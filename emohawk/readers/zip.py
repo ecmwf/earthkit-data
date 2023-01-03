@@ -60,8 +60,6 @@ class ZIPReader(ArchiveReader):
                         valid_members.append(member)
                 members = valid_members
 
-            print(members)
-
             if len(members) == 1:
 
                 _, ext = os.path.splitext(members[0].filename)
