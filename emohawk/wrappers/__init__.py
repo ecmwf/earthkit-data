@@ -11,27 +11,39 @@ import os
 import warnings
 from importlib import import_module
 
-from emohawk import Data
+import emohawk
 
 _HELPERS = {}
+_TRANSLATORS = {}
 
 
-def _wrappers():
-    if not _HELPERS:
+def _helpers(function_name, lookup):
+    if not lookup:
         here = os.path.dirname(__file__)
         for path in os.listdir(here):
             if path.endswith(".py") and path[0] not in ("_", "."):
                 name, _ = os.path.splitext(path)
                 try:
-                    _HELPERS[name] = import_module(f".{name}", package=__name__).wrapper
+                    lookup[name] = getattr(
+                        import_module(f".{name}", package=__name__),
+                        function_name,
+                    )
                 except Exception as e:
-                    warnings.warn(f"Error loading wrapper '{name}': {e}")
-    return _HELPERS
+                    warnings.warn(f"Error loading {function_name} '{name}': {e}")
+    return lookup
+
+
+def _wrappers():
+    return _helpers("wrapper", _HELPERS)
+
+
+def _translators():
+    return _helpers("translator", _TRANSLATORS)
 
 
 def get_wrapper(data, *args, **kwargs):
     """Returns an object that wraps classes from other packages to support."""
-    if isinstance(data, Data):
+    if isinstance(data, emohawk.Data):
         return data
 
     for name, h in _wrappers().items():
@@ -42,3 +54,15 @@ def get_wrapper(data, *args, **kwargs):
     fullname = ".".join([data.__class__.__module__, data.__class__.__qualname__])
 
     raise ValueError(f"Cannot find a wrapper for class {fullname}")
+
+
+def get_translator(source, cls):
+    if not isinstance(source, emohawk.Data):
+        source = emohawk.open(source)
+
+    for name, h in _translators().items():
+        translator = h(source, cls)
+        if translator is not None:
+            return translator()
+
+    raise ValueError(f"Cannot find a translator for class {cls.__name__}")

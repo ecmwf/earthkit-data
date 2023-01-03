@@ -62,7 +62,7 @@ class ZIPReader(ArchiveReader):
             elif ".zattrs" in members:
                 return  # Zarr can read zipped files directly
 
-            elif any(
+            if any(
                 [
                     os.path.splitext(member.filename)[-1] in SHAPEFILE_EXTENSIONS
                     for member in members
