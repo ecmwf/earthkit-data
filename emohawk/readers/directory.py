@@ -88,6 +88,6 @@ class DirectoryReader(Reader):
         return self._xarray_wrapper(**self.__xarray_kwargs)._to_xarray(**kwargs)
 
 
-def reader(path, magic=None, deeper_check=False):
+def reader(path, magic=None, deeper_check=False, **kwargs):
     if magic is None or os.path.isdir(path):
         return DirectoryReader(path)
