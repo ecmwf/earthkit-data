@@ -85,13 +85,7 @@ class DirectoryReader(Reader):
         return self.__xarray_wrapper
 
     def _to_xarray(self, *args, **kwargs):
-        self.__xarray_kwargs = {
-            key: value
-            for key, value in kwargs.items() if key.startswith('xarray')
-        }
-        for key in self.__xarray_kwargs:
-            del kwargs[key]
-        return self._xarray_wrapper(**self.__xarray_kwargs)._to_xarray(**kwargs)
+        return self._xarray_wrapper(**kwargs)._to_xarray()
 
 
 def reader(path, magic=None, deeper_check=False, **kwargs):
