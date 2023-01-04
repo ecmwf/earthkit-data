@@ -26,16 +26,33 @@ release = emohawk.__version__
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["myst_parser", "sphinxcontrib.apidoc", "sphinx.ext.napoleon"]
+extensions = [
+    "autoapi.extension",
+    "myst_parser",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+]
 
-# apidoc configuration
-apidoc_module_dir = "../emohawk"
-apidoc_output_dir = "_api"
-apidoc_separate_modules = True
+# autodoc configuration
+autodoc_typehints = "none"
+
+# autoapi configuration
+autoapi_dirs = ["../emohawk"]
+autoapi_ignore = ["*/version.py"]
+autoapi_options = [
+    "members",
+    "inherited-members",
+    "undoc-members",
+    "show-inheritance",
+    "show-module-summary",
+    "imported-members",
+]
+autoapi_root = "_api"
 
 # napoleon configuration
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
+napoleon_preprocess_types = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
