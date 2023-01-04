@@ -7,9 +7,12 @@
 # nor does it submit to any jurisdiction.
 
 
+import fnmatch
 import os
 import stat
 from zipfile import ZipFile
+
+import numpy as np
 
 from . import get_reader
 from .archive import ArchiveReader
@@ -43,7 +46,7 @@ class InfoWrapper:
 
 
 class ZIPReader(ArchiveReader):
-    def __init__(self, source):
+    def __init__(self, source, include=None, exclude=None):
         super().__init__(source)
 
         self._mutate = None
@@ -51,6 +54,18 @@ class ZIPReader(ArchiveReader):
 
         with ZipFile(source, "r") as zip:
             members = zip.infolist()
+
+            filenames = [m.filename for m in members]
+            if include is not None:
+                include_files = []
+                for pattern in np.atleast_1d(include):
+                    include_files += fnmatch.filter(filenames, pattern)
+                members = [m for m in members if m.filename in include_files]
+            if exclude is not None:
+                exclude_files = []
+                for pattern in np.atleast_1d(exclude):
+                    exclude_files += fnmatch.filter(filenames, pattern)
+                members = [m for m in members if m.filename not in exclude_files]
 
             if len(members) == 1:
 
@@ -90,11 +105,11 @@ class ZIPReader(ArchiveReader):
 EXTENSIONS_TO_SKIP = (".npz",)  # Numpy arrays
 
 
-def reader(path, magic=None, deeper_check=False):
+def reader(path, magic=None, deeper_check=False, include=None, exclude=None, **kwargs):
     if magic is None:  # Bypass check and force
-        return ZIPReader(path)
+        return ZIPReader(path, include, exclude)
 
     _, extension = os.path.splitext(path)
 
     if magic[:4] == b"PK\x03\x04" and extension not in EXTENSIONS_TO_SKIP:
-        return ZIPReader(path)
+        return ZIPReader(path, include, exclude)

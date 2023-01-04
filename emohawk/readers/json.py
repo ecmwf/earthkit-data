@@ -70,7 +70,7 @@ class JSONReader(Reader):
             os.rename(file_name, original_file_name)
 
 
-def reader(path, magic=None, deeper_check=False):
+def reader(path, magic=None, deeper_check=False, **kwargs):
     try:
         with open(path, "r") as f:
             json.load(f)

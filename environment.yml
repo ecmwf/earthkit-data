@@ -10,6 +10,7 @@ dependencies:
 - pytest
 - pytest-cov
 - sphinx
+- sphinx-autoapi
 - sphinxcontrib-apidoc
 - cf-units
 - xarray

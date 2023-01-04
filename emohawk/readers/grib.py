@@ -165,6 +165,6 @@ class GRIBReader(Reader):
         return self._xarray_wrapper(**self.__xarray_kwargs)._to_xarray()
 
 
-def reader(path, magic=None, deeper_check=False):
+def reader(path, magic=None, deeper_check=False, **kwargs):
     if magic is None or magic[:4] == b"GRIB":
         return GRIBReader(path)

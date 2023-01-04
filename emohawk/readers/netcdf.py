@@ -113,6 +113,6 @@ class NetCDFReader(Reader):
         return xr.open_mfdataset(paths, **options)
 
 
-def reader(path, magic=None, deeper_check=False):
+def reader(path, magic=None, deeper_check=False, **kwargs):
     if magic is None or magic[:4] in (b"\x89HDF", b"CDF\x01", b"CDF\x02"):
         return NetCDFReader(path)

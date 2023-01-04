@@ -162,7 +162,7 @@ class CSVReader(Reader):
         return self._pandas_wrapper(**kwargs)._to_xarray(**pandas_to_xarray_kwargs)
 
 
-def reader(path, magic, deeper_check, fwf=False):
+def reader(path, magic, deeper_check, fwf=False, **kwargs):
     kind, compression = mimetypes.guess_type(path)
 
     if kind == "text/csv":

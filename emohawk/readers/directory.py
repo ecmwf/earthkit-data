@@ -98,22 +98,20 @@ class DirectoryReader(Reader):
 
         if not kwargs.get("concat", True):
             return [
-                _xr_wrapper.to_xarray(**kwargs)
-                for _xr_wrapper in self._xarray_wrapper_list(**self.__xarray_kwargs)
+                _xr_wrapper.to_xarray()
+                for _xr_wrapper in self._xarray_wrapper_list(**kwargs)
             ]
 
         try:
-            return self._xarray_wrapper_concat(**self.__xarray_kwargs)._to_xarray(
-                **kwargs
-            )
+            return self._xarray_wrapper_concat(**kwargs)._to_xarray()
         except:  # noqa: E722
             # If any incompatibility issue with directory contents, return a list of xarrays
             return [
-                _xr_wrapper.to_xarray(**kwargs)
-                for _xr_wrapper in self._xarray_wrapper_list(**self.__xarray_kwargs)
+                _xr_wrapper.to_xarray()
+                for _xr_wrapper in self._xarray_wrapper_list(**kwargs)
             ]
 
 
-def reader(path, magic=None, deeper_check=False):
+def reader(path, magic=None, deeper_check=False, **kwargs):
     if magic is None or os.path.isdir(path):
         return DirectoryReader(path)

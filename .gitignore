@@ -343,3 +343,6 @@ tags
 notebooks/data/*/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,vim,visualstudiocode,pycharm
+
+# Ignore cruft update files
+*.rej
