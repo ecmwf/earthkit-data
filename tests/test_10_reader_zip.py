@@ -12,6 +12,7 @@ SINGLE_GRIB_ZIP_FILE = f"{ROOT_DIR}/notebooks/data/ERA5_t2m_UK_single_grib.zip"
 MULTI_CSV_ZIP_FILE = f"{ROOT_DIR}/notebooks/data/ERA5_t2m_UK_multi_csv.zip"
 SINGLE_CSV_ZIP_FILE = f"{ROOT_DIR}/notebooks/data/ERA5_t2m_UK_single_csv.zip"
 MULTI_GRIB_ZIP_FILE = f"{ROOT_DIR}/notebooks/data/ERA5_t2m_UK_multi_grib.zip"
+MIXED_ZIP_FILE = f"{ROOT_DIR}/notebooks/data/cmip6.zip"
 
 
 def test_emohawk_open_zip():
@@ -26,3 +27,15 @@ def test_emohawk_open_zip():
         # MULTI_GRIB_ZIP_FILE,
     ]:
         emohawk.open(filename)
+
+
+def test_include_from_zip():
+    data = emohawk.open(MIXED_ZIP_FILE, include="*.nc")  # Contains netCDF, PNG and JSON
+    assert isinstance(data, emohawk.readers.netcdf.NetCDFReader)
+
+
+def test_exclude_from_zip():
+    data = emohawk.open(
+        MIXED_ZIP_FILE, exclude=("*.png", "*.json")
+    )  # Contains netCDF, PNG and JSON
+    assert isinstance(data, emohawk.readers.netcdf.NetCDFReader)
