@@ -14,6 +14,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash -l {0}
+
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
@@ -27,20 +31,16 @@ jobs:
   unit-tests:
     name: unit-tests (3.10)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -l {0}
 
     steps:
     - uses: actions/checkout@v3
     - name: Install Conda environment with Micromamba
-      uses: mamba-org/provision-with-micromamba@v12
+      uses: mamba-org/provision-with-micromamba@v14
       with:
         environment-file: environment.yml
         environment-name: DEVELOP
         channels: conda-forge
         cache-env: true
-        cache-env-key: ubuntu-latest-3.10
         extra-specs: |
           python=3.10
     - name: Install package

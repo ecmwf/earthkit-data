@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.3.0
+  rev: v4.4.0
   hooks:
   - id: trailing-whitespace
   - id: end-of-file-fixer
@@ -39,6 +39,7 @@ repos:
     args: [--autofix, --preserve-quotes]
   - id: pretty-format-toml
     args: [--autofix]
+    additional_dependencies: [toml-sort<0.22.0]
 - repo: https://github.com/PyCQA/pydocstyle.git
   rev: 6.1.1
   hooks:
