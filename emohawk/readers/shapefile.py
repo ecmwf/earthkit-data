@@ -6,8 +6,10 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-
-import geopandas as gpd
+try:
+    import geopandas as gpd
+except ModuleNotFoundError:
+    gpd = None
 
 from . import Reader
 
@@ -16,6 +18,11 @@ class ShapefileReader(Reader):
     """
     Class for reading and polymorphing ESRI Shapefiles.
     """
+
+    def __init__(self, *args, **kwargs):
+        if gpd is None:
+            raise ModuleNotFoundError("shapefile reader requires geopandas")
+        super().__init__(*args, **kwargs)
 
     def to_pandas(self, **kwargs):
         """
