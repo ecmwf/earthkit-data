@@ -118,7 +118,7 @@ class Data:
 
 def open(source, *args, **kwargs):
     """
-    Open a file, directory, or Python object as a emohawk `Data` class.
+    Open a file, directory, or Python object as an emohawk `Data` class.
 
     Offers flexible polymorphism to get your geospatial data into a format
     that suits your needs.
