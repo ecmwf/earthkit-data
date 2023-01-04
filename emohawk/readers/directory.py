@@ -8,6 +8,7 @@
 
 
 import fnmatch
+from multiprocessing.sharedctypes import Value
 import os
 import shutil
 
@@ -75,6 +76,7 @@ class DirectoryReader(Reader):
         raise NotImplementedError()
 
     def _xarray_wrapper(self, **kwargs):
+        print(kwargs)
         if self.__xarray_wrapper is None or kwargs != self.__xarray_kwargs:
             m_sources = self.mutate_source()
             dataset = type(m_sources[0]).to_xarray_multi_from_paths(
@@ -85,6 +87,12 @@ class DirectoryReader(Reader):
         return self.__xarray_wrapper
 
     def _to_xarray(self, *args, **kwargs):
+        self.__xarray_kwargs = {
+            key: value
+            for key, value in kwargs.items() if key.startswith('xarray')
+        }
+        for key in self.__xarray_kwargs:
+            del kwargs[key]
         return self._xarray_wrapper(**self.__xarray_kwargs)._to_xarray(**kwargs)
 
 
