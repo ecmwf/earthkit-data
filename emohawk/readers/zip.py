@@ -88,7 +88,7 @@ class ZIPReader(ArchiveReader):
 
             # Extract contents to directory, and update source
             self.expand(zip, members)
-            # Mutate to directory source
+            # Mutate to directory/netCDF/grib source
             self._mutate = get_reader(self.source).mutate()
 
     def check(self, member):
