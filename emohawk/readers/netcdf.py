@@ -101,7 +101,7 @@ class NetCDFReader(Reader):
         -------
         xarray.core.dataarray.DataArray
         """
-        return self._xarray_wrapper(**self.__xarray_kwargs)._to_xarray()
+        return self._xarray_wrapper(**kwargs)._to_xarray()
 
     @classmethod
     def to_xarray_multi_from_paths(cls, paths, **kwargs):
@@ -109,10 +109,9 @@ class NetCDFReader(Reader):
 
         options = dict()
         options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
-
         return xr.open_mfdataset(paths, **options)
 
 
-def reader(path, magic=None, deeper_check=False):
+def reader(path, magic=None, deeper_check=False, **kwargs):
     if magic is None or magic[:4] in (b"\x89HDF", b"CDF\x01", b"CDF\x02"):
         return NetCDFReader(path)

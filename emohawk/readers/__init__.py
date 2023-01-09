@@ -85,7 +85,7 @@ def get_reader(path, *args, **kwargs):
         # We do two passes, the second one
         # allow the plugin to look deeper in the file
         for name, r in _readers().items():
-            reader = r(path, magic, deeper_check)
+            reader = r(path, magic, deeper_check, **kwargs)
             if reader is not None:
                 return reader.mutate()
 
