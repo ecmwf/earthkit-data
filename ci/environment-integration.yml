@@ -1,3 +1,4 @@
+# environment-integration.yml: Additional dependencies to install in the integration environment (e.g., pinned dependencies).
 channels:
 - conda-forge
 - nodefaults
