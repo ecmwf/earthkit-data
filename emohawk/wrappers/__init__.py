@@ -13,8 +13,8 @@ from importlib import import_module
 
 import emohawk
 
-_HELPERS = {}
-_TRANSLATORS = {}
+_HELPERS = {}  # type: ignore
+_TRANSLATORS = {}  # type: ignore
 
 
 def _helpers(function_name, lookup):

@@ -44,7 +44,7 @@ class Reader(Data):
                 f.write(chunk)
 
 
-_READERS = {}
+_READERS = {}  # type: ignore
 
 
 def _readers():

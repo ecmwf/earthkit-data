@@ -7,42 +7,32 @@ repos:
   - id: check-json
   - id: check-yaml
   - id: check-toml
-  # - id: check-added-large-files
+  - id: check-added-large-files
   - id: debug-statements
   - id: mixed-line-ending
-- repo: https://github.com/PyCQA/isort
-  rev: 5.10.1
-  hooks:
-  - id: isort
 - repo: https://github.com/psf/black
-  rev: 22.6.0
+  rev: 22.12.0
   hooks:
   - id: black
 - repo: https://github.com/keewis/blackdoc
-  rev: v0.3.4
+  rev: v0.3.8
   hooks:
   - id: blackdoc
     additional_dependencies: [black==22.3.0]
-- repo: https://github.com/PyCQA/flake8
-  rev: 4.0.1
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: v0.0.217
   hooks:
-  - id: flake8
+  - id: ruff
+    args: [--fix, --force-exclude]
 - repo: https://github.com/executablebooks/mdformat
-  rev: 0.7.14
+  rev: 0.7.16
   hooks:
   - id: mdformat
-    exclude: cruft-update-template.md
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-  rev: v2.4.0
+  rev: v2.5.0
   hooks:
   - id: pretty-format-yaml
     args: [--autofix, --preserve-quotes]
   - id: pretty-format-toml
     args: [--autofix]
     additional_dependencies: [toml-sort<0.22.0]
-- repo: https://github.com/PyCQA/pydocstyle.git
-  rev: 6.1.1
-  hooks:
-  - id: pydocstyle
-    additional_dependencies: [toml]
-    exclude: tests|docs
