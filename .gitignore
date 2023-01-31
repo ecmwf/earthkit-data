@@ -187,6 +187,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+.benchmarks
 
 # Translations
 *.mo
@@ -207,6 +208,9 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/examples/*.tar
+docs/examples/*.zip
+docs/examples/_*
 
 # PyBuilder
 .pybuilder/
@@ -346,3 +350,6 @@ notebooks/data/*/
 
 # Ignore cruft update files
 *.rej
+
+# mac 
+.DS_Store

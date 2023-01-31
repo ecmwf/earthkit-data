@@ -9,7 +9,8 @@ qa:
 	pre-commit run --all-files
 
 unit-tests:
-	python -m pytest -vv --cov=. --cov-report=$(COV_REPORT)
+	python -m pytest -vv -m 'not notebook' --cov=. --cov-report=$(COV_REPORT)
+	python -m pytest -v -m "notebook"
 
 type-check:
 	python -m mypy .
