@@ -15,7 +15,7 @@ dependencies:
 - filelock
 - pyyaml
 - entrypoints
-- "tqdm"
+- tqdm
 - make
 - mypy
 - myst-parser
