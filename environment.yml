@@ -15,7 +15,7 @@ dependencies:
 - filelock
 - pyyaml
 - entrypoints
-- "tqdm",
+- "tqdm"
 - make
 - mypy
 - myst-parser
@@ -26,6 +26,6 @@ dependencies:
 - sphinx
 - sphinx-autoapi
 - sphinxcontrib-apidoc
-- nbformat 
-- nbconvert 
+- nbformat
+- nbconvert
 - ipykernel
