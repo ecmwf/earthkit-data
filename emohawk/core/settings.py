@@ -19,7 +19,7 @@ import yaml
 
 from emohawk.utils.html import css
 from emohawk.utils.humanize import as_bytes, as_percent, as_seconds
-from emohawk.version import __version__ as VERSION
+from emohawk import __version__ as VERSION
 
 LOG = logging.getLogger(__name__)
 
