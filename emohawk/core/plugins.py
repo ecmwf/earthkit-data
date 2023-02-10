@@ -23,7 +23,6 @@ from typing import List, Union
 import entrypoints
 
 import emohawk
-
 from emohawk import settings
 from emohawk.utils.humanize import did_you_mean
 

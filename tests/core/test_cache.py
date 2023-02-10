@@ -15,11 +15,7 @@ import os
 import pytest
 
 from emohawk import load_from, settings
-from emohawk.core.caching import (
-    cache_entries,
-    cache_file,
-    purge_cache,
-)
+from emohawk.core.caching import cache_entries, cache_file, purge_cache
 
 LOG = logging.getLogger(__name__)
 
