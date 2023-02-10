@@ -353,3 +353,6 @@ notebooks/data/*/
 
 # mac 
 .DS_Store
+
+# local code
+_dev
