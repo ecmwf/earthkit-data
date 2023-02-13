@@ -231,6 +231,12 @@ class CodesReader:
             assert handle is not None
             return CodesHandle(handle, self.path, offset)
 
+    def message(self, offset, length):
+        with self.lock:
+            self.last = time.time()
+            self.file.seek(offset, 0)
+            return self.file.read(length)
+
 
 class GribField(Base):
     def __init__(self, path, offset, length):
@@ -367,3 +373,6 @@ class GribField(Base):
 
     def write(self, f):
         f.write(self.handle.read_bytes(self._offset, self._length))
+
+    def message(self):
+        return CodesReader.from_cache(self.path).message(self._offset, self._length)

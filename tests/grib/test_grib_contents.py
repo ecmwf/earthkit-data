@@ -414,6 +414,16 @@ def test_bbox():
     assert s.to_bounding_box().as_tuple() == (73, -27, 33, 45), s.to_bounding_box()
 
 
+def test_message():
+    f = load_from("file", emohawk_examples_file("test.grib"))
+    v = f[0].message()
+    assert len(v) == 526
+    assert v[:4] == b"GRIB"
+    v = f[1].message()
+    assert len(v) == 526
+    assert v[:4] == b"GRIB"
+
+
 if __name__ == "__main__":
     from emohawk.testing import main
 
