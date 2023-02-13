@@ -128,6 +128,42 @@ def test_grib_sel_single_file():
     ]
 
 
+def test_grib_sel_slice_single_file():
+    f = load_from("file", emohawk_file("docs/examples/tuv_pl.grib"))
+
+    # ------------------------------------
+    # single resulting field
+    # ------------------------------------
+    g = f.sel(paramId=131, level=slice(600, 700))
+    assert len(g) == 1
+    assert g.metadata(["paramId", "level"]) == [[131, 700]]
+
+    g = f.sel(paramId=131, level=slice(650, 750))
+    assert len(g) == 1
+    assert g.metadata(["paramId", "level"]) == [[131, 700]]
+
+    g = f.sel(paramId=131, level=slice(1000, None))
+    assert len(g) == 1
+    assert g.metadata(["paramId", "level"]) == [[131, 1000]]
+
+    g = f.sel(paramId=131, level=slice(None, 300))
+    assert len(g) == 1
+    assert g.metadata(["paramId", "level"]) == [[131, 300]]
+
+    # ------------------------------------
+    # multiple resulting fields
+    # ------------------------------------
+    g = f.sel(paramId=131, level=slice(500, 700))
+    assert len(g) == 2
+    assert g.metadata(["paramId", "level"]) == [[131, 700], [131, 500]]
+
+    # -------------------------
+    # empty result
+    # -------------------------
+    g = f.sel(paramId=131, level=slice(510, 520))
+    assert len(g) == 0
+
+
 def test_grib_sel_multi_file():
     f1 = load_from("file", emohawk_file("docs/examples/tuv_pl.grib"))
     f2 = load_from("file", emohawk_file("tests/data/ml_data.grib"))
@@ -141,6 +177,19 @@ def test_grib_sel_multi_file():
     g1 = f[34]
     d = g.to_numpy() - g1.to_numpy()
     assert np.allclose(d, np.zeros(len(d)))
+
+
+def test_grib_sel_slice_multi_file():
+    f1 = load_from("file", emohawk_file("docs/examples/tuv_pl.grib"))
+    f2 = load_from("file", emohawk_file("tests/data/ml_data.grib"))
+    f = load_from("multi", [f1, f2])
+
+    g = f.sel(shortName="t", level=slice(56, 62))
+    assert len(g) == 2
+    assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [
+        ["t", 57, "hybrid"],
+        ["t", 61, "hybrid"],
+    ]
 
 
 def test_grib_sel_date():

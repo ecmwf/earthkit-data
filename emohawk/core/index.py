@@ -78,7 +78,7 @@ class Selection(OrderOrSelection):
         return self.dic
 
     def parse_kwarg(self, k, v):
-        if v is not None and not isinstance(v, (list, tuple)):
+        if v is not None and not isinstance(v, (list, tuple, slice)):
             v = [v]
         if isinstance(v, (list, tuple)):
             v = [str(_) for _ in v]
@@ -91,6 +91,13 @@ class Selection(OrderOrSelection):
                 continue
             value = element.metadata(k)
             # value = grib_naming({key:value})[key]
+            if isinstance(v, slice):
+                if v.start is not None and value < v.start:
+                    return False
+                elif v.stop is not None and value > v.stop:
+                    return False
+                else:
+                    continue
             if isinstance(v, (list, tuple)):
                 if value in v:
                     continue
