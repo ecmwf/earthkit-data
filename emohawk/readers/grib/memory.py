@@ -44,6 +44,21 @@ class GribFileMemoryReader(GribMemoryReader):
         return eccodes.codes_new_from_file(self.fp, eccodes.CODES_PRODUCT_GRIB)
 
 
+class GribMessageMemoryReader(GribMemoryReader):
+    def __init__(self, buf):
+        self.buf = buf
+
+    def __del__(self):
+        self.buf = None
+
+    def _next_handle(self):
+        if self.buf is None:
+            return None
+        handle = eccodes.codes_new_from_message(self.buf)
+        self.buf = None
+        return handle
+
+
 class GribStreamReader(GribMemoryReader):
     """Wrapper around eccodes.Streamreader. The problem is that when iterating via
     the StreamReader it returns an eccodes.GRIBMessage that releases the handle when deleted.
@@ -77,17 +92,16 @@ class GribFieldInMemory(GribField):
         eccodes.codes_write(self.handle, f)
 
 
-class FieldSetInMemory(FieldSet, Reader):
+class FieldSetInMemory(FieldSet):
     """Represent a GRIB field list in memory"""
 
-    def __init__(self, source, stream, *args, **kwargs):
+    def __init__(self, reader, *args, **kwargs):
         """
         The reader must support __next__.
         """
-        Reader.__init__(self, source, None)
-        FieldSet.__init__(self, *args, **kwargs)
+        super().__init__(self, *args, **kwargs)
 
-        self._reader = GribStreamReader(stream)
+        self._reader = reader
         self._loaded = False
         self._fields = []
 

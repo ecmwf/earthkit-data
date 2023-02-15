@@ -9,17 +9,17 @@
 
 import logging
 
-from emohawk.readers.grib.memory import FieldSetInMemory, GribStreamReader
+from emohawk.readers.grib.memory import FieldSetInMemory, GribMessageMemoryReader
 
 LOG = logging.getLogger(__name__)
 
 
-class GribStream(FieldSetInMemory):
-    def __init__(self, buf):
-        super().__init__(self, GribStreamReader(buf))
+class GribMemory(FieldSetInMemory):
+    def __init__(self, buf, **kwargs):
+        FieldSetInMemory.__init__(self, GribMessageMemoryReader(buf))
 
     def mutate(self):
         return self
 
 
-source = GribStream
+source = GribMemory

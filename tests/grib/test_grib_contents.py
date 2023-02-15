@@ -424,6 +424,15 @@ def test_message():
     assert v[:4] == b"GRIB"
 
 
+def test_grib_from_memory():
+    with open(emohawk_test_data_file("test_single.grib"), "rb") as f:
+        data = f.read()
+        fs = load_from("memory", data)
+        assert len(fs) == 1
+        sn = fs.metadata("param")
+        assert sn == ["2t"]
+
+
 if __name__ == "__main__":
     from emohawk.testing import main
 
