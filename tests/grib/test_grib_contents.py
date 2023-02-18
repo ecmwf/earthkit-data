@@ -12,6 +12,7 @@
 import datetime
 
 import numpy as np
+import pytest
 
 from emohawk import load_from
 from emohawk.testing import emohawk_examples_file, emohawk_test_data_file
@@ -431,6 +432,51 @@ def test_grib_from_memory():
         assert len(fs) == 1
         sn = fs.metadata("param")
         assert sn == ["2t"]
+
+
+def test_grib_from_stream_single_iter():
+    with open(emohawk_examples_file("test6.grib"), "rb") as stream:
+        fs = load_from("stream", stream)
+
+        # no methods are available
+        with pytest.raises(TypeError):
+            len(fs)
+
+        ref = ["t", "u", "v", "t", "u", "v"]
+        val = []
+        for f in fs:
+            v = f.metadata("param")
+            val.append(v)
+
+        assert val == ref
+
+        # no data is available
+        i = 0
+        for f in fs:
+            i += 1
+        assert i == 0
+
+
+def test_grib_from_stream_in_memory():
+    with open(emohawk_examples_file("test6.grib"), "rb") as stream:
+        fs = load_from("stream", stream, single_iter=False)
+
+        assert len(fs) == 6
+
+        ref = ["t", "u", "v", "t", "u", "v"]
+        val = []
+
+        # iteration
+        for f in fs:
+            v = f.metadata("param")
+            val.append(v)
+
+        assert val == ref, "iteration"
+
+        # metadata
+        val = []
+        val = fs.metadata("param")
+        assert val == ref, "method"
 
 
 if __name__ == "__main__":

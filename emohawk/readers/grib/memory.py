@@ -62,7 +62,7 @@ class GribMessageMemoryReader(GribMemoryReader):
 class GribStreamReader(GribMemoryReader):
     """Wrapper around eccodes.Streamreader. The problem is that when iterating via
     the StreamReader it returns an eccodes.GRIBMessage that releases the handle when deleted.
-    However, the handle has to be managed emohawk so we access the handle directly
+    However, the handle has to be managed by emohawk so we access it directly
     using _next_handle
     """
 
@@ -71,6 +71,12 @@ class GribStreamReader(GribMemoryReader):
 
     def _next_handle(self):
         return self._stream._next_handle()
+
+    def mutate(self):
+        return self
+
+    def mutate_source(self):
+        return self
 
 
 class GribFieldInMemory(GribField):
@@ -92,14 +98,15 @@ class GribFieldInMemory(GribField):
         eccodes.codes_write(self.handle, f)
 
 
-class FieldSetInMemory(FieldSet):
+class FieldSetInMemory(FieldSet, Reader):
     """Represent a GRIB field list in memory"""
 
-    def __init__(self, reader, *args, **kwargs):
+    def __init__(self, source, reader, *args, **kwargs):
         """
         The reader must support __next__.
         """
-        super().__init__(self, *args, **kwargs)
+        Reader.__init__(self, source, None)
+        FieldSet.__init__(self, *args, **kwargs)
 
         self._reader = reader
         self._loaded = False

@@ -90,7 +90,7 @@ _READERS = {}
 
 # TODO: Add plugins
 @locked
-def _readers():
+def _readers(method_name):
     if not _READERS:
         here = os.path.dirname(__file__)
         for path in sorted(os.listdir(here)):
@@ -101,22 +101,41 @@ def _readers():
             if path.endswith(".py") or os.path.isdir(os.path.join(here, path)):
 
                 name, _ = os.path.splitext(path)
-
                 try:
-                    module = import_module(f".{name}", package=__name__)
-                    if hasattr(module, "reader"):
-                        _READERS[name] = module.reader
-                        if hasattr(module, "aliases"):
-                            for a in module.aliases:
-                                assert a not in _READERS
-                                _READERS[a] = module.reader
+                    for method in ["reader", "memory_reader", "stream_reader"]:
+                        module = import_module(f".{name}", package=__name__)
+                        if hasattr(module, method):
+                            _READERS[(name, method)] = getattr(module, method)
+                            if hasattr(module, "aliases"):
+                                for a in module.aliases:
+                                    assert a not in _READERS
+                                    _READERS[(a, method_name)] = getattr(module, method)
                 except Exception:
                     LOG.exception("Error loading reader %s", name)
 
-    return _READERS
+    return {k[0]: v for k, v in _READERS.items() if k[1] == method_name}
+
+
+def _find_reader(method_name, source, path_or_bufr_or_stream, magic):
+    """Helper function to create a reader by trying all the registered
+    methods stored in _READERS."""
+    for deeper_check in (False, True):
+        # We do two passes, the second one
+        # allow the plugin to look deeper in the buffer
+        for name, r in _readers(method_name).items():
+            reader = r(source, path_or_bufr_or_stream, magic, deeper_check)
+            if reader is not None:
+                return reader.mutate()
+
+    from .unknown import Unknown
+
+    return Unknown(
+        source, path_or_bufr_or_stream if method_name == "reader" else "", magic
+    )
 
 
 def reader(source, path):
+    """Create the reader for a file/directory specified by path"""
 
     assert isinstance(path, str), source
 
@@ -143,14 +162,25 @@ def reader(source, path):
 
     LOG.debug("Looking for a reader for %s (%s)", path, magic)
 
-    for deeper_check in (False, True):
-        # We do two passes, the second one
-        # allow the plugin to look deeper in the file
-        for name, r in _readers().items():
-            reader = r(source, path, magic, deeper_check)
-            if reader is not None:
-                return reader.mutate()
+    return _find_reader("reader", source, path, magic)
 
-    from .unknown import Unknown
 
-    return Unknown(source, path, magic)
+def memory_reader(source, buf):
+    """Create a reader for data held in a memory buffer"""
+    assert isinstance(buf, (bytes, bytearray)), source
+    magic = buf[:8] if len(buf) > 8 else None
+    return _find_reader("memory_reader", source, buf, magic)
+
+
+def stream_reader(source, stream):
+    """Create a reader for a stream"""
+    magic = None
+    if hasattr(stream, "peek") and callable(stream.peek):
+        try:
+            magic = stream.peek(8)
+            if len(magic) > 8:
+                magic = magic[:8]
+        except Exception:
+            pass
+
+    return _find_reader("stream_reader", source, stream, magic)

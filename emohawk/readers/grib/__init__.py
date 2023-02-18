@@ -11,8 +11,29 @@ import logging
 LOG = logging.getLogger(__name__)
 
 
+def _match_magic(magic):
+    return magic is None or (len(magic) >= 4 and magic[:4] == b"GRIB")
+
+
 def reader(source, path, magic=None, deeper_check=False):
-    if magic is None or magic[:4] == b"GRIB":
+    if _match_magic(magic):
         from .reader import GRIBReader
 
         return GRIBReader(source, path)
+
+
+def memory_reader(source, buf, magic=None, deeper_check=False):
+    if _match_magic(magic):
+        from .memory import FieldSetInMemory, GribMessageMemoryReader
+
+        return FieldSetInMemory(source, GribMessageMemoryReader(buf))
+
+
+def stream_reader(source, stream, magic=None, deeper_check=False):
+    if _match_magic(magic):
+        from .memory import FieldSetInMemory, GribStreamReader
+
+        r = GribStreamReader(stream)
+        if not source.single_iter:
+            r = FieldSetInMemory(source, r)
+        return r
