@@ -369,7 +369,7 @@ class GribField(Base):
     def write(self, f):
         """Write the message to a file object"""
         # assert isinstance(f, io.IOBase)
-        f.write(self.handle.read_bytes(self._offset, self._length))
+        self.handle.write_to(f)
 
     def message(self):
         """Return a buffer containing the encoded message"""

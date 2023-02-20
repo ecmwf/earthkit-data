@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from emohawk import load_from
+from emohawk.core.temporary import temp_directory, temp_file
 from emohawk.testing import emohawk_examples_file, emohawk_test_data_file
 
 
@@ -477,6 +478,35 @@ def test_grib_from_stream_in_memory():
         val = []
         val = fs.metadata("param")
         assert val == ref, "method"
+
+
+def test_grib_save_when_loaded_from_file():
+    fs = load_from("file", emohawk_examples_file("test6.grib"))
+    assert len(fs) == 6
+    with temp_file() as tmp:
+        fs.save(tmp)
+        fs_saved = load_from("file", tmp)
+        assert len(fs) == len(fs_saved)
+
+
+def test_grib_save_when_loaded_from_memory():
+    with open(emohawk_test_data_file("test_single.grib"), "rb") as f:
+        data = f.read()
+        fs = load_from("memory", data)
+        with temp_file() as tmp:
+            fs.save(tmp)
+            fs_saved = load_from("file", tmp)
+            assert len(fs) == len(fs_saved)
+
+
+def test_grib_save_when_loaded_from_stream():
+    with open(emohawk_examples_file("test6.grib"), "rb") as stream:
+        fs = load_from("stream", stream, single_iter=False)
+        assert len(fs) == 6
+        with temp_file() as tmp:
+            fs.save(tmp)
+            fs_saved = load_from("file", tmp)
+            assert len(fs) == len(fs_saved)
 
 
 if __name__ == "__main__":
