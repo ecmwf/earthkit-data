@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 
 from emohawk import load_from
-from emohawk.core.temporary import temp_directory, temp_file
+from emohawk.core.temporary import temp_file
 from emohawk.testing import emohawk_examples_file, emohawk_test_data_file
 
 
