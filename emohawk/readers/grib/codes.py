@@ -172,9 +172,10 @@ class CodesHandle(eccodes.Message):
             self.offset = 0
 
     def read_bytes(self, offset, length):
-        with open(self.path, "rb") as f:
-            f.seek(offset)
-            return f.read(length)
+        if self.path is not None:
+            with open(self.path, "rb") as f:
+                f.seek(offset)
+                return f.read(length)
 
 
 class ReaderLRUCache(dict):
@@ -230,12 +231,6 @@ class CodesReader:
             )
             assert handle is not None
             return CodesHandle(handle, self.path, offset)
-
-    def message(self, offset, length):
-        with self.lock:
-            self.last = time.time()
-            self.file.seek(offset, 0)
-            return self.file.read(length)
 
 
 class GribField(Base):
@@ -372,7 +367,10 @@ class GribField(Base):
         return self.handle.as_mars(param)
 
     def write(self, f):
+        """Write the message to a file object"""
+        # assert isinstance(f, io.IOBase)
         f.write(self.handle.read_bytes(self._offset, self._length))
 
     def message(self):
-        return CodesReader.from_cache(self.path).message(self._offset, self._length)
+        """Return a buffer containing the encoded message"""
+        return self.handle.get_buffer()

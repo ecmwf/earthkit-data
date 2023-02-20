@@ -95,7 +95,9 @@ class GribFieldInMemory(GribField):
         return None
 
     def write(self, f):
-        eccodes.codes_write(self.handle, f)
+        """Write the message to a file object"""
+        # assert isinstance(f, io.IOBase)
+        self.handle.write_to(f)
 
 
 class FieldSetInMemory(FieldSet, Reader):
