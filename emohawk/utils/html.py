@@ -78,7 +78,8 @@ def table_from_dict(vals, title=None):
 
 def tab_page(title, tooltip, page_id, text, checked):
     checked = "checked" if checked else ""
-    return f"""<input type="radio" name="eh-tabs" id="{page_id}" {checked} />
+    return f"""
+<input type="radio" name="eh-tabs" id="{page_id}" {checked} />
 <label for="{page_id}" title="{tooltip}">{title}</label>
 <div class="tab">
 {text}
@@ -103,6 +104,7 @@ def tab(items, details=None, selected=None):
 </section>
 </div>
         """.format(
+        items=items,
         pages=" ".join(
             [
                 tab_page(
@@ -114,7 +116,7 @@ def tab(items, details=None, selected=None):
                 )
                 for item in items
             ]
-        )
+        ),
     )
 
     style = css("tab")

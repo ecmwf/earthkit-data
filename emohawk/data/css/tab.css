@@ -10,11 +10,19 @@
     --eh-border-color: var(--jp-border-color2, #e0e0e0);
     --eh-disabled-color: var(--jp-layout-color3, #bdbdbd);
     --eh-background-color: var(--jp-layout-color0, white);
-    --eh-background-color-row-even: var(--jp-layout-color1, white);
-    --eh-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
   }
   
-  
+html[theme=dark],
+body[data-theme=dark],
+body.vscode-dark {
+  --eh-font-color0: rgba(255, 255, 255, 1);
+  --eh-font-color2: rgba(255, 255, 255, 0.54);
+  --eh-font-color3: rgba(255, 255, 255, 0.38);
+  --eh-border-color: #1F1F1F;
+  --eh-disabled-color: #515151;
+  --eh-background-color: #111111;
+}
+
  /* Reset */
  *,
  *::before,
@@ -90,31 +98,4 @@
 
  .eh-tabs [type=radio]:not(:checked) + label:hover {
     color: var(--xr-font-color0);
- }
-
-
- @media (min-width: 768px) {
- 
-     .eh-tabs-container {
-         padding: 1rem 1rem;
-     }
- 
-     .eh-tabs label {
-         order: 1;
-         width: auto;
-     }
- 
-     .eh-tabs .tab {
-         order: 9;
-     }
- 
-     .eh-tabs [type=radio]:checked + label {
-         border-bottom: none;
-     }
- }
- @media (min-width: 992px) {
- 
-     .eh-tabs {
-         width: 800px;
-     }
  }
