@@ -230,6 +230,17 @@ def test_grib_get_generic():
     assert lg == [1000, "t"]
 
 
+def test_grib_metadata_namespace():
+    f = load_from("file", emohawk_examples_file("test6.grib"))
+
+    r = f[0].metadata(namespace="vertical")
+    ref = {"level": 1000, "typeOfLevel": "isobaricInhPa"}
+    assert r == ref
+
+    with pytest.raises(ValueError):
+        f[0].metadata("param", namespace="vertical")
+
+
 def test_grib_values_1():
     f = load_from("file", emohawk_test_data_file("test_single.grib"))
 

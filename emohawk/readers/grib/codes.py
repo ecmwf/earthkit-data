@@ -151,8 +151,11 @@ class CodesHandle(eccodes.Message):
         return self.get(name, ktype=int)
 
     def as_mars(self, param="shortName"):
+        return self.as_namespace("mars", param=param)
+
+    def as_namespace(self, namespace, param="shortName"):
         r = {}
-        for key in self.keys(namespace="mars"):
+        for key in self.keys(namespace=namespace):
             r[key] = self.get(param if key == "param" else key)
         return r
 
@@ -310,6 +313,34 @@ class GribField(Base):
         m["shape"] = self.shape
         return m
 
+    def info(self, namespace=None, **kwargs):
+        from emohawk.utils.summary import format_info
+
+        namespaces = [
+            "ls",
+            "geography",
+            "mars",
+            "parameter",
+            "time",
+            "vertical",
+        ]
+
+        if namespace is not None:
+            namespaces = [namespace]
+
+        r = [
+            {
+                "title": ns,
+                "data": self.handle.as_namespace(ns),
+                "tooltip": f"Keys in the ecCodes {ns} namespace",
+            }
+            for ns in namespaces
+        ]
+
+        return format_info(
+            r, selected="parameter", details=self.__class__.__name__, **kwargs
+        )
+
     def datetime(self):
         date = self.handle.get("date")
         time = self.handle.get("time")
@@ -350,11 +381,15 @@ class GribField(Base):
             name = "paramId"
         return self.handle.get(name)
 
-    def metadata(self, name):
+    def metadata(self, name=None, namespace=None):
+        if name is not None and namespace is not None:
+            raise ValueError("metadata: cannot use name and namespace together")
         if isinstance(name, (list, tuple)):
             return [self[k] for k in name]
-        else:
+        elif name is not None:
             return self[name]
+        elif namespace is not None:
+            return self.handle.as_namespace(namespace)
 
     def __getitem__(self, name):
         if name == "param":
@@ -364,7 +399,7 @@ class GribField(Base):
         return self.handle.get(name)
 
     def as_mars(self, param="shortName"):
-        return self.handle.as_mars(param)
+        return self.handle.as_namespace("mars", param=param)
 
     def write(self, f):
         """Write the message to a file object"""

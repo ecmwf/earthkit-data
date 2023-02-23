@@ -37,6 +37,9 @@ GRIB_DESCRIBE_KEYS = [
     "experimentVersionNumber",
 ]
 
+GRIB_INFO_NAMESPACES = ["ls", "geography", "mars", "parameter", "time", "vertical"]
+GRIB_INFO_ENABLED_NAMESPACE = "ls"
+
 
 def drop_unwanted_series(df, key=None, axis=1):
     # only show the column for number in the default set of keys if
@@ -67,16 +70,14 @@ def format_list(v, full=False):
 
 def make_unique(x, full=False):
     v = set(x)
-    r = []
-    for t in v:
-        r.append(str(t))
+    r = [str(t) for t in v]
     return format_list(r, full=full)
 
 
 def format_ls(attributes, **kwargs):
     import pandas as pd
 
-    no_print = kwargs.pop("no_print", False)
+    do_print = kwargs.pop("print", False)
 
     df = pd.DataFrame.from_records(attributes)
 
@@ -88,7 +89,7 @@ def format_ls(attributes, **kwargs):
     # test whether we're in the Jupyter environment
     if ipython_active:
         return df
-    elif not no_print:
+    elif do_print:
         print(df)
     return df
 
@@ -99,7 +100,8 @@ def format_describe(attributes, *args, **kwargs):
     param = args[0] if len(args) == 1 else None
     if param is None:
         param = kwargs.pop("param", None)
-    no_print = kwargs.pop("no_print", False)
+
+    do_print = kwargs.pop("print", True)
 
     df = pd.DataFrame.from_records(attributes, **kwargs)
 
@@ -134,6 +136,35 @@ def format_describe(attributes, *args, **kwargs):
 
     if ipython_active:
         return df
-    elif not no_print:
+    elif do_print:
         print(df)
     return df
+
+
+def format_info(data, selected=None, details=None, **kwargs):
+
+    do_print = kwargs.pop("print", True)
+    html = kwargs.pop("html", True)
+    raw = kwargs.pop("as_raw", False)
+
+    rv = {item["title"]: item["data"] for item in data}
+
+    if ipython_active:
+        if html:
+            from emohawk.core.ipython import HTML
+            from emohawk.utils.html import tab, table_from_dict
+
+            if len(data) == 1:
+                return HTML(table_from_dict(data[0]["data"]))
+            elif len(data) > 1:
+                for item in data:
+                    item["text"] = table_from_dict(item["data"])
+
+                return HTML(tab(data, details, selected))
+        else:
+            return rv
+
+    if do_print:
+        print(data if raw else rv)
+    else:
+        return data if raw else rv

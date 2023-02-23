@@ -18,7 +18,7 @@ def test_describe():
     f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
 
     # full contents
-    df = f.describe(no_print=True)
+    df = f.describe(print=False)
     df = df.data
 
     ref = {
@@ -77,7 +77,7 @@ def test_describe():
     assert ref == df.to_dict()
 
     # single param by shortName
-    df = f.describe("t", no_print=True)
+    df = f.describe("t", print=False)
     df = df.data
 
     ref = {
@@ -99,7 +99,7 @@ def test_describe():
     assert ref[0] == df[0].to_dict()
 
     # repeated use
-    df = f.describe(param="t", no_print=True)
+    df = f.describe(param="t", print=False)
     df = df.data
     assert ref[0] == df[0].to_dict()
 
@@ -112,7 +112,7 @@ def test_describe():
     assert ref[0] == df[0].to_dict()
 
     # single param by paramId
-    df = f.describe(130, no_print=True)
+    df = f.describe(130, print=False)
     df = df.data
 
     ref = {
@@ -133,7 +133,7 @@ def test_describe():
 
     assert ref[0] == df[0].to_dict()
 
-    df = f.describe(param=130, no_print=True)
+    df = f.describe(param=130, print=False)
     df = df.data
     assert ref[0] == df[0].to_dict()
 
@@ -151,7 +151,7 @@ def test_ls():
 
     # default keys
     f1 = f.sel(count=[1, 2, 3, 4])
-    df = f1.ls(no_print=True)
+    df = f1.ls(print=False)
 
     ref = {
         "centre": {0: "ecmf", 1: "ecmf", 2: "ecmf", 3: "ecmf"},
@@ -180,7 +180,7 @@ def test_ls():
 
     # extra keys
     f1 = f.sel(count=[1, 2])
-    df = f1.ls(extra_keys=["paramId"], no_print=True)
+    df = f1.ls(extra_keys=["paramId"], print=False)
 
     ref = {
         "centre": {0: "ecmf", 1: "ecmf"},
@@ -197,3 +197,137 @@ def test_ls():
     }
 
     assert ref == df.to_dict()
+
+
+def test_grib_info():
+    f = load_from("file", emohawk_examples_file("test6.grib"))
+
+    # default
+    r = f[0].info(print=False, as_raw=True)
+    ref = [
+        {
+            "title": "ls",
+            "data": {
+                "edition": 1,
+                "centre": "ecmf",
+                "typeOfLevel": "isobaricInhPa",
+                "level": 1000,
+                "dataDate": 20180801,
+                "stepRange": "0",
+                "dataType": "an",
+                "shortName": "t",
+                "packingType": "grid_simple",
+                "gridType": "regular_ll",
+            },
+            "tooltip": "Keys in the ecCodes ls namespace",
+        },
+        {
+            "title": "geography",
+            "data": {
+                "bitmapPresent": 0,
+                "latitudeOfFirstGridPointInDegrees": 90.0,
+                "longitudeOfFirstGridPointInDegrees": 0.0,
+                "latitudeOfLastGridPointInDegrees": -90.0,
+                "longitudeOfLastGridPointInDegrees": 330.0,
+                "iScansNegatively": 0,
+                "jScansPositively": 0,
+                "jPointsAreConsecutive": 0,
+                "jDirectionIncrementInDegrees": 30.0,
+                "iDirectionIncrementInDegrees": 30.0,
+                "gridType": "regular_ll",
+            },
+            "tooltip": "Keys in the ecCodes geography namespace",
+        },
+        {
+            "title": "mars",
+            "data": {
+                "domain": "g",
+                "levtype": "pl",
+                "levelist": 1000,
+                "date": 20180801,
+                "time": 1200,
+                "step": 0,
+                "param": "t",
+                "class": "od",
+                "type": "an",
+                "stream": "oper",
+                "expver": "0001",
+            },
+            "tooltip": "Keys in the ecCodes mars namespace",
+        },
+        {
+            "title": "parameter",
+            "data": {
+                "centre": "ecmf",
+                "paramId": 130,
+                "units": "K",
+                "name": "Temperature",
+                "shortName": "t",
+            },
+            "tooltip": "Keys in the ecCodes parameter namespace",
+        },
+        {
+            "title": "time",
+            "data": {
+                "dataDate": 20180801,
+                "dataTime": 1200,
+                "stepUnits": 1,
+                "stepType": "instant",
+                "stepRange": "0",
+                "startStep": 0,
+                "endStep": 0,
+                "validityDate": 20180801,
+                "validityTime": 1200,
+            },
+            "tooltip": "Keys in the ecCodes time namespace",
+        },
+        {
+            "title": "vertical",
+            "data": {"typeOfLevel": "isobaricInhPa", "level": 1000},
+            "tooltip": "Keys in the ecCodes vertical namespace",
+        },
+    ]
+
+    assert r == ref
+
+    # a namespace
+    r = f[0].info(namespace="mars", print=False, as_raw=True)
+    ref = [
+        {
+            "title": "mars",
+            "data": {
+                "domain": "g",
+                "levtype": "pl",
+                "levelist": 1000,
+                "date": 20180801,
+                "time": 1200,
+                "step": 0,
+                "param": "t",
+                "class": "od",
+                "type": "an",
+                "stream": "oper",
+                "expver": "0001",
+            },
+            "tooltip": "Keys in the ecCodes mars namespace",
+        }
+    ]
+    assert r == ref
+
+    # namespace reformatted
+    r = f[0].info(namespace="mars", print=False, as_raw=False)
+    ref = {
+        "mars": {
+            "domain": "g",
+            "levtype": "pl",
+            "levelist": 1000,
+            "date": 20180801,
+            "time": 1200,
+            "step": 0,
+            "param": "t",
+            "class": "od",
+            "type": "an",
+            "stream": "oper",
+            "expver": "0001",
+        }
+    }
+    assert r == ref
