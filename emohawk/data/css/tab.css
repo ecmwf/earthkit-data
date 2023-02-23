@@ -99,3 +99,30 @@ body.vscode-dark {
  .eh-tabs [type=radio]:not(:checked) + label:hover {
     color: var(--xr-font-color0);
  }
+
+
+ @media (min-width: 768px) {
+ 
+     .eh-tabs-container {
+         padding: 1rem 1rem;
+     }
+ 
+     .eh-tabs label {
+         order: 1;
+         width: auto;
+     }
+ 
+     .eh-tabs .tab {
+         order: 9;
+     }
+ 
+     .eh-tabs [type=radio]:checked + label {
+         border-bottom: none;
+     }
+ }
+ @media (min-width: 992px) {
+ 
+     .eh-tabs {
+         width: 800px;
+     }
+ }
