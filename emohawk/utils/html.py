@@ -104,7 +104,6 @@ def tab(items, details=None, selected=None):
 </section>
 </div>
         """.format(
-        items=items,
         pages=" ".join(
             [
                 tab_page(
