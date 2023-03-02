@@ -1,4 +1,4 @@
- /* Based on: 
+ /* Based on:
  https://codepen.io/htmlcssfreebies/pen/WNpVeRK
  https://github.com/pydata/xarray/blob/main/xarray/static/css/style.css
  */
@@ -11,7 +11,7 @@
     --eh-disabled-color: var(--jp-layout-color3, #bdbdbd);
     --eh-background-color: var(--jp-layout-color0, white);
   }
-  
+
 html[theme=dark],
 body[data-theme=dark],
 body.vscode-dark {
@@ -35,14 +35,14 @@ body.vscode-dark {
  }
 
  .eh-section {
-    padding-left: 0px; 
+    padding-left: 0px;
  }
 
  /* Tabs Container */
  .eh-tabs-container {
      padding: 0px;
  }
- 
+
  /* Tabs Block */
  .eh-tabs-block {
      display: flex;
@@ -50,14 +50,14 @@ body.vscode-dark {
      justify-content: center;
      padding-top: 4px;
  }
- 
+
  /* Tabs */
  .eh-tabs {
      display: flex;
      flex-wrap: wrap;
      width: 100%;
  }
- 
+
  .eh-tabs label {
      width: 100%;
      display: flex;
@@ -65,11 +65,11 @@ body.vscode-dark {
      justify-content: center;
      padding-left: 6px;
      padding-right: 6px;
-     font-weight: 400; 
+     font-weight: 400;
      cursor: pointer;
      color: var(--eh-font-color2);
-     background-color: var(--eh-background-color); 
-     border-top: 1px solid var(--eh-background-color); 
+     background-color: var(--eh-background-color);
+     border-top: 1px solid var(--eh-background-color);
      border-bottom: 1px solid var(--eh-disabled-color);
  }
 
@@ -85,13 +85,13 @@ body.vscode-dark {
  .eh-tabs [type=radio] {
      display: none;
  }
- 
+
  .eh-tabs [type=radio]:checked + label {
-     font-weight: 500; 
+     font-weight: 500;
      color: var(--eh-font-color0);
      border: 1px solid var(--eh-disabled-color);
  }
- 
+
  .eh-tabs [type=radio]:checked + label + .tab {
      display: block;
  }
@@ -102,26 +102,26 @@ body.vscode-dark {
 
 
  @media (min-width: 768px) {
- 
+
      .eh-tabs-container {
          padding: 1rem 1rem;
      }
- 
+
      .eh-tabs label {
          order: 1;
          width: auto;
      }
- 
+
      .eh-tabs .tab {
          order: 9;
      }
- 
+
      .eh-tabs [type=radio]:checked + label {
          border-bottom: none;
      }
  }
  @media (min-width: 992px) {
- 
+
      .eh-tabs {
          width: 800px;
      }

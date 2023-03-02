@@ -117,8 +117,10 @@ def _readers(method_name):
 
 
 def _find_reader(method_name, source, path_or_bufr_or_stream, magic):
-    """Helper function to create a reader by trying all the registered
-    methods stored in _READERS."""
+    """Helper function to create a reader.
+
+    Tries all the registered methods stored in _READERS.
+    """
     for deeper_check in (False, True):
         # We do two passes, the second one
         # allow the plugin to look deeper in the buffer
@@ -136,7 +138,6 @@ def _find_reader(method_name, source, path_or_bufr_or_stream, magic):
 
 def reader(source, path):
     """Create the reader for a file/directory specified by path"""
-
     assert isinstance(path, str), source
 
     if hasattr(source, "reader"):

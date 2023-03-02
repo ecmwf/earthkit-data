@@ -352,7 +352,7 @@ notebooks/data/*/
 # Ignore cruft update files
 *.rej
 
-# mac 
+# mac
 .DS_Store
 
 # local code

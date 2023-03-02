@@ -11,7 +11,7 @@
 
 import os
 
-import fieldlist as cml
+import emohawk as cml
 
 
 def test_unknown_reader():
