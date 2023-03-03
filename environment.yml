@@ -28,4 +28,5 @@ dependencies:
 - sphinxcontrib-apidoc
 - nbformat
 - nbconvert
+- nbsphinx
 - ipykernel
