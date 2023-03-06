@@ -427,6 +427,14 @@ def test_bbox():
     assert s.to_bounding_box().as_tuple() == (73, -27, 33, 45), s.to_bounding_box()
 
 
+def test_proj_string():
+    f = load_from("file", emohawk_test_data_file("mercator.grib"))
+    assert (
+        f[0].to_proj_string()
+        == "+proj=merc +lat_ts=20.000000 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=6371200.000000"
+    )
+
+
 def test_message():
     f = load_from("file", emohawk_examples_file("test.grib"))
     v = f[0].message()

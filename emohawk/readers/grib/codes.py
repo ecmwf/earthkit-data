@@ -359,6 +359,9 @@ class GribField(Base):
     def to_datetime_list(self):
         return [self.valid_datetime()]
 
+    def to_proj_string(self):
+        return self.handle.get("projString")
+
     def to_bounding_box(self):
         return BoundingBox(
             north=self.handle.get("latitudeOfFirstGridPointInDegrees"),
