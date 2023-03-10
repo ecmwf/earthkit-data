@@ -49,7 +49,7 @@ def drop_unwanted_series(df, key=None, axis=1):
         r = df[key].unique()
     elif axis == 0 and key in df.index:
         r = df.loc[key].unique()
-    if len(r) == 1 and r[0] in ["0", None]:
+    if r is not None and len(r) == 1 and r[0] in ["0", None]:
         df.drop(key, axis=axis, inplace=True)
 
 

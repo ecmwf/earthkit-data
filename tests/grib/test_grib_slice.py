@@ -48,9 +48,11 @@ def test_grib_single_index_bad():
     "indexes,expected_meta",
     [
         (slice(0, 4), [["t", 1000], ["u", 1000], ["v", 1000], ["t", 850]]),
+        (slice(None, 4), [["t", 1000], ["u", 1000], ["v", 1000], ["t", 850]]),
         (slice(2, 9, 2), [["v", 1000], ["u", 850], ["t", 700], ["v", 700]]),
         (slice(8, 1, -2), [["v", 700], ["t", 700], ["u", 850], ["v", 1000]]),
         (slice(14, 18), [["v", 400], ["t", 300], ["u", 300], ["v", 300]]),
+        (slice(14, None), [["v", 400], ["t", 300], ["u", 300], ["v", 300]]),
     ],
 )
 def test_grib_slice_single_file(indexes, expected_meta):

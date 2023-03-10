@@ -8,12 +8,13 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
+import pytest
 
 from emohawk import load_from
 from emohawk.testing import emohawk_examples_file
 
 
-def test_describe():
+def test_grib_describe():
 
     f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
 
@@ -146,7 +147,7 @@ def test_describe():
     assert ref[0] == df[0].to_dict()
 
 
-def test_ls():
+def test_grib_ls():
     f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
 
     # default keys
@@ -196,6 +197,134 @@ def test_ls():
         "paramId": {0: 130, 1: 131},
     }
 
+    assert ref == df.to_dict()
+
+
+def test_grib_ls_keys():
+    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+
+    # default keys
+    # positive num (=head)
+    df = f.ls(n=2, keys=["shortName", "bitsPerValue", "gridType"], print=False)
+    ref = {
+        "shortName": {0: "t", 1: "u"},
+        "bitsPerValue": {0: 4, 1: 4},
+        "gridType": {0: "regular_ll", 1: "regular_ll"},
+    }
+
+    assert ref == df.to_dict()
+
+    # negative num (=tail)
+    df = f.ls(n=-2, keys=["shortName", "bitsPerValue", "gridType"], print=False)
+    ref = {
+        "shortName": {0: "u", 1: "v"},
+        "bitsPerValue": {0: 4, 1: 4},
+        "gridType": {0: "regular_ll", 1: "regular_ll"},
+    }
+
+    assert ref == df.to_dict()
+
+
+def test_grib_ls_invalid_num():
+    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    with pytest.raises(ValueError):
+        f.ls(n=0, print=False)
+
+    with pytest.raises(ValueError):
+        f.ls(0, print=False)
+
+
+def test_grib_ls_num():
+    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+
+    # default keys
+
+    # positive num (=head)
+    df = f.ls(n=2, print=False)
+    ref = {
+        "centre": {0: "ecmf", 1: "ecmf"},
+        "shortName": {0: "t", 1: "u"},
+        "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
+        "level": {0: 1000, 1: 1000},
+        "dataDate": {0: 20180801, 1: 20180801},
+        "dataTime": {0: 1200, 1: 1200},
+        "stepRange": {0: "0", 1: "0"},
+        "dataType": {0: "an", 1: "an"},
+        "number": {0: 0, 1: 0},
+        "gridType": {0: "regular_ll", 1: "regular_ll"},
+    }
+
+    assert ref == df.to_dict()
+
+    df = f.ls(2, print=False)
+    assert ref == df.to_dict()
+
+    # negative num (=tail)
+    df = f.ls(n=-2, print=False)
+    ref = {
+        "centre": {0: "ecmf", 1: "ecmf"},
+        "shortName": {0: "u", 1: "v"},
+        "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
+        "level": {0: 300, 1: 300},
+        "dataDate": {0: 20180801, 1: 20180801},
+        "dataTime": {0: 1200, 1: 1200},
+        "stepRange": {0: "0", 1: "0"},
+        "dataType": {0: "an", 1: "an"},
+        "number": {0: 0, 1: 0},
+        "gridType": {0: "regular_ll", 1: "regular_ll"},
+    }
+
+    assert ref == df.to_dict()
+
+    df = f.ls(-2, print=False)
+    assert ref == df.to_dict()
+
+
+def test_grib_head_num():
+    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+
+    # default keys
+    df = f.head(n=2, print=False)
+    ref = {
+        "centre": {0: "ecmf", 1: "ecmf"},
+        "shortName": {0: "t", 1: "u"},
+        "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
+        "level": {0: 1000, 1: 1000},
+        "dataDate": {0: 20180801, 1: 20180801},
+        "dataTime": {0: 1200, 1: 1200},
+        "stepRange": {0: "0", 1: "0"},
+        "dataType": {0: "an", 1: "an"},
+        "number": {0: 0, 1: 0},
+        "gridType": {0: "regular_ll", 1: "regular_ll"},
+    }
+
+    assert ref == df.to_dict()
+
+    df = f.head(2, print=False)
+    assert ref == df.to_dict()
+
+
+def test_grib_tail_num():
+    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+
+    # default keys
+    df = f.tail(n=2, print=False)
+    ref = {
+        "centre": {0: "ecmf", 1: "ecmf"},
+        "shortName": {0: "u", 1: "v"},
+        "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
+        "level": {0: 300, 1: 300},
+        "dataDate": {0: 20180801, 1: 20180801},
+        "dataTime": {0: 1200, 1: 1200},
+        "stepRange": {0: "0", 1: "0"},
+        "dataType": {0: "an", 1: "an"},
+        "number": {0: 0, 1: 0},
+        "gridType": {0: "regular_ll", 1: "regular_ll"},
+    }
+
+    assert ref == df.to_dict()
+
+    df = f.tail(2, print=False)
     assert ref == df.to_dict()
 
 

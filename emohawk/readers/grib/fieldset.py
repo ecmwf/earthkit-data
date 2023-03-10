@@ -85,16 +85,27 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
             result.append(s.metadata(*args, **kwargs))
         return result
 
-    def ls(self, extra_keys=None, **kwargs):
+    def ls(self, n=None, keys=None, extra_keys=None, **kwargs):
         from emohawk.utils.summary import GRIB_LS_KEYS, format_ls
 
-        keys = list(GRIB_LS_KEYS)
+        keys = list(GRIB_LS_KEYS) if keys is None else keys
         extra_keys = [] if extra_keys is None else extra_keys
         if extra_keys is not None:
             [keys.append(x) for x in extra_keys if x not in keys]
+        if n == 0:
+            raise ValueError("n cannot be 0")
+        elif n is not None:
+            num = len(self)
+            if n > 0:
+                fs = self[: min(num, n)]
+            else:
+                fs = self[-min(num, -n) :]
+        else:
+            assert n is None
+            fs = self
 
         def _proc():
-            for f in self:
+            for f in fs:
                 yield (f._attributes(keys))
 
         return format_ls(_proc(), **kwargs)

@@ -142,6 +142,16 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     def coord(self, *args, **kwargs):
         return self._reader.coord(*args, **kwargs)
 
+    def head(self, n=5, **kwargs):
+        if n <= 0:
+            raise ValueError("head: n must be > 0")
+        return self.ls(n=n, **kwargs)
+
+    def tail(self, n=5, **kwargs):
+        if n <= 0:
+            raise ValueError("n must be > 0")
+        return self.ls(n=-n, **kwargs)
+
     def ls(self, *args, **kwargs):
         return self._reader.ls(*args, **kwargs)
 
