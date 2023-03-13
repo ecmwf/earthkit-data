@@ -98,6 +98,10 @@ class Base(metaclass=MetaBase):
         self._not_implemented()
 
     @abstractmethod
+    def isel(self, *args, **kwargs):
+        self._not_implemented()
+
+    @abstractmethod
     def order_by(self, *args, **kwargs):
         self._not_implemented()
 

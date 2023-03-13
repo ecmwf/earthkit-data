@@ -87,6 +87,9 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     def sel(self, *args, **kwargs):
         return self._reader.sel(*args, **kwargs)
 
+    def isel(self, *args, **kwargs):
+        return self._reader.isel(*args, **kwargs)
+
     def order_by(self, *args, **kwargs):
         return self._reader.order_by(*args, **kwargs)
 

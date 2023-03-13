@@ -83,7 +83,6 @@ class Selection(OrderOrSelection):
         if isinstance(v, (list, tuple)):
             v = [str(_) for _ in v]
         self.dic[k] = v
-        return
 
     def match_element(self, element):
         for k, v in self.dic.items():
@@ -110,6 +109,31 @@ class Selection(OrderOrSelection):
                 continue
             return False
         return True
+
+
+class SelectionByIndex(Selection):
+    def parse_kwarg(self, k, v):
+        if v is not None and not isinstance(v, (list, tuple, slice)):
+            v = [int(v)]
+        if isinstance(v, (list, tuple)):
+            v = [int(_) for _ in v]
+        self.dic[k] = v
+
+    def convert_index(self, coord_accessor):
+        for k in list(self.dic.keys()):
+            v = self.dic[k]
+            try:
+                coord_vals = coord_accessor(k)
+                if coord_vals is None or coord_vals[0] is None:
+                    self.dic = dict()
+                    return
+                else:
+                    if isinstance(v, slice):
+                        self.dic[k] = coord_vals[v]
+                    else:
+                        self.dic[k] = [coord_vals[i] for i in v]
+            except Exception as e:
+                raise IndexError(f"Invalid index={v} specified for key={k}. {e}")
 
 
 class Order(OrderOrSelection):
@@ -274,6 +298,21 @@ class Index(Source):
                 indices.append(i)
 
         return self.new_mask_index(self, indices)
+
+    @abstractmethod
+    def isel(self, *args, **kwargs):
+        """Filter elements on their metadata() using indices, according to kwargs.
+        Returns a new index object.
+        """
+        selection = SelectionByIndex(*args, **kwargs)
+        if selection.is_empty:
+            return self
+
+        selection.convert_index(self.coord)
+        if selection.is_empty:
+            return self.new_mask_index(self, [])
+
+        return self.sel(selection.selection)
 
     def order_by(self, *args, **kwargs):
         """Default order_by method.
