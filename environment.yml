@@ -15,7 +15,8 @@ dependencies:
 - filelock
 - pyyaml
 - entrypoints
-- multiurl
+- pip:
+  - git+https://github.com/ecmwf/multiurl
 - tqdm
 - make
 - mypy
