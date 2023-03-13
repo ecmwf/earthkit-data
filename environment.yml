@@ -15,6 +15,7 @@ dependencies:
 - filelock
 - pyyaml
 - entrypoints
+- multiurl
 - tqdm
 - make
 - mypy

@@ -46,7 +46,7 @@ class DirectorySource(IndexedSource):
             The input index location. Must be a JSON file.
             If None, parse the actual files in the directory pointed by "path".
         db_path: optional
-            The actual used database file. Must be a SQL CliMetLab index file.
+            The actual used database file. Must be a SQL emohawk index file.
             If None, create one in the default location.
 
         If _index is not None, ignore all other arguments (for internal usage)
