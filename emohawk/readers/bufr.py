@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import eccodes
-
 # See:
 # https://github.com/ecmwf/pdbufr
 from . import Reader
@@ -17,13 +15,13 @@ COLUMNS = ("latitude", "longitude", "data_datetime")
 
 BUFR_LS_KEYS = {
     "edition": "edition",
-    "Type": "dataCategory",
-    "Subtype": "dataSubCategory",
-    "C": "bufrHeaderCentre",
-    "Mv": "masterTablesVersionNumber",
-    "Lv": "localTablesVersionNumber",
-    "Subsets": "numberOfSubsets",
-    "Compr": "compressedData",
+    "type": "dataCategory",
+    "subtype": "dataSubCategory",
+    "c": "bufrHeaderCentre",
+    "mv": "masterTablesVersionNumber",
+    "lv": "localTablesVersionNumber",
+    "subsets": "numberOfSubsets",
+    "compr": "compressedData",
     "typicalDate": "typicalDate",
     "typicalTime": "typicalTime",
     "ident": "ident",
@@ -44,6 +42,8 @@ class BUFRReader(Reader):
 
     def __len__(self):
         if self._num is None:
+            import eccodes
+
             with open(self.path, "rb") as f:
                 self._num = eccodes.codes_count_in_file(f)
         return self._num
