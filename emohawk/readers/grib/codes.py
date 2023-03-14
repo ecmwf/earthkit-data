@@ -22,6 +22,9 @@ from emohawk.utils.bbox import BoundingBox
 LOG = logging.getLogger(__name__)
 
 
+GRIB_INFO_NAMESPACES = ["ls", "geography", "mars", "parameter", "time", "vertical"]
+
+
 def missing_is_none(x):
     return None if x == 2147483647 else x
 
@@ -316,18 +319,7 @@ class GribField(Base):
     def info(self, namespace=None, **kwargs):
         from emohawk.utils.summary import format_info
 
-        namespaces = [
-            "ls",
-            "geography",
-            "mars",
-            "parameter",
-            "time",
-            "vertical",
-        ]
-
-        if namespace is not None:
-            namespaces = [namespace]
-
+        namespaces = [namespace] if namespace is not None else GRIB_INFO_NAMESPACES
         r = [
             {
                 "title": ns,

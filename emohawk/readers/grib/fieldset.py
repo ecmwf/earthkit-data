@@ -23,6 +23,35 @@ from .xarray import XarrayMixIn
 
 LOG = logging.getLogger(__name__)
 
+GRIB_LS_KEYS = [
+    "centre",
+    "shortName",
+    "typeOfLevel",
+    "level",
+    "dataDate",
+    "dataTime",
+    "stepRange",
+    "dataType",
+    "number",
+    "gridType",
+]
+
+
+GRIB_DESCRIBE_KEYS = [
+    "shortName",
+    "typeOfLevel",
+    "level",
+    "date",
+    "time",
+    "step",
+    "number",
+    "paramId",
+    "marsClass",
+    "marsStream",
+    "marsType",
+    "experimentVersionNumber",
+]
+
 
 class FieldSetMixin(PandasMixIn, XarrayMixIn):
     _statistics = None
@@ -85,33 +114,43 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
             result.append(s.metadata(*args, **kwargs))
         return result
 
-    def ls(self, n=None, keys=None, extra_keys=None, **kwargs):
-        from emohawk.utils.summary import GRIB_LS_KEYS, format_ls
+    def ls(self, *args, **kwargs):
+        from emohawk.utils.summary import ls
 
-        keys = list(GRIB_LS_KEYS) if keys is None else keys
-        extra_keys = [] if extra_keys is None else extra_keys
-        if extra_keys is not None:
-            [keys.append(x) for x in extra_keys if x not in keys]
-        if n == 0:
-            raise ValueError("n cannot be 0")
-        elif n is not None:
-            num = len(self)
-            if n > 0:
-                fs = self[: min(num, n)]
+        # keys = list(GRIB_LS_KEYS) if keys is None else keys
+        # extra_keys = [] if extra_keys is None else extra_keys
+        # if extra_keys is not None:
+        #     [keys.append(x) for x in extra_keys if x not in keys]
+        # if n == 0:
+        #     raise ValueError("n cannot be 0")
+        # elif n is not None:
+        #     num = len(self)
+        #     if n > 0:
+        #         fs = self[: min(num, n)]
+        #     else:
+        #         fs = self[-min(num, -n) :]
+        # else:
+        #     assert n is None
+        #     fs = self
+
+        def _proc(keys, n):
+            if n is not None:
+                num = len(self)
+                if n > 0:
+                    fs = self[: min(num, n)]
+                else:
+                    fs = self[-min(num, -n) :]
             else:
-                fs = self[-min(num, -n) :]
-        else:
-            assert n is None
-            fs = self
+                assert n is None
+                fs = self
 
-        def _proc():
             for f in fs:
                 yield (f._attributes(keys))
 
-        return format_ls(_proc(), **kwargs)
+        return ls(_proc, GRIB_LS_KEYS, *args, **kwargs)
 
     def describe(self, *args, **kwargs):
-        from emohawk.utils.summary import GRIB_DESCRIBE_KEYS, format_describe
+        from emohawk.utils.summary import format_describe
 
         def _proc():
             for f in self:

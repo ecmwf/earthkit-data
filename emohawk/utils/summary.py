@@ -9,39 +9,11 @@
 
 from emohawk.core.ipython import ipython_active
 
-GRIB_LS_KEYS = [
-    "centre",
-    "shortName",
-    "typeOfLevel",
-    "level",
-    "dataDate",
-    "dataTime",
-    "stepRange",
-    "dataType",
-    "number",
-    "gridType",
-]
-
-GRIB_DESCRIBE_KEYS = [
-    "shortName",
-    "typeOfLevel",
-    "level",
-    "date",
-    "time",
-    "step",
-    "number",
-    "paramId",
-    "marsClass",
-    "marsStream",
-    "marsType",
-    "experimentVersionNumber",
-]
-
-GRIB_INFO_NAMESPACES = ["ls", "geography", "mars", "parameter", "time", "vertical"]
-GRIB_INFO_ENABLED_NAMESPACE = "ls"
-
 
 def drop_unwanted_series(df, key=None, axis=1):
+    if df is None:
+        return
+
     # only show the column for number in the default set of keys if
     # there are any valid values in it
     r = None
@@ -74,6 +46,26 @@ def make_unique(x, full=False):
     return format_list(r, full=full)
 
 
+def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, **kwargs):
+    _keys = {}
+    if isinstance(default_keys, (list, tuple)):
+        default_keys = {k: k for k in default_keys}
+
+    _keys = dict(default_keys) if keys is None else keys
+    if isinstance(_keys, (list, tuple)):
+        _keys = {k: k for k in keys}
+
+    if extra_keys is not None and len(extra_keys) > 0:
+        if isinstance(extra_keys, (list, tuple)):
+            extra_keys = {k: k for k in extra_keys}
+        _keys.update(extra_keys)
+
+    if n == 0:
+        raise ValueError("n cannot be 0")
+
+    return format_ls(metadata_proc(_keys, n), **kwargs)
+
+
 def format_ls(attributes, **kwargs):
     import pandas as pd
 
@@ -81,9 +73,7 @@ def format_ls(attributes, **kwargs):
 
     df = pd.DataFrame.from_records(attributes)
 
-    if df is None or df.empty:
-        return None
-
+    # TODO: this is GRIB specific code, should not be here
     drop_unwanted_series(df, key="number", axis=1)
 
     # test whether we're in the Jupyter environment
@@ -95,6 +85,7 @@ def format_ls(attributes, **kwargs):
 
 
 def format_describe(attributes, *args, **kwargs):
+    # TODO: this is GRIB specific code, should not be here
     import pandas as pd
 
     param = args[0] if len(args) == 1 else None
