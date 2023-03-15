@@ -427,11 +427,19 @@ def test_bbox():
     assert s.to_bounding_box().as_tuple() == (73, -27, 33, 45), s.to_bounding_box()
 
 
-def test_proj_string():
+def test_grib_proj_string_ll():
+    f = load_from("file", emohawk_examples_file("test.grib"))
+    r = f[0].to_proj()
+    assert len(r) == 2
+    assert r[0] is None
+    assert r[1] is None
+
+
+def test_grib_proj_string_mercator():
     f = load_from("file", emohawk_test_data_file("mercator.grib"))
-    assert (
-        f[0].to_proj_string()
-        == "+proj=merc +lat_ts=20.000000 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=6371200.000000"
+    assert f[0].to_proj() == (
+        "EPSG:4326",
+        "+proj=merc +lat_ts=20.000000 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=6371200.000000",
     )
 
 
