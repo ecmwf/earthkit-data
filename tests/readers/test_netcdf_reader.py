@@ -17,7 +17,12 @@ import pytest
 
 from emohawk import load_from
 from emohawk.readers.netcdf import NetCDFField
-from emohawk.testing import emohawk_examples_file, emohawk_file, emohawk_test_data_file
+from emohawk.testing import (
+    emohawk_examples_file,
+    emohawk_file,
+    emohawk_remote_test_data_file,
+    emohawk_test_data_file,
+)
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -194,7 +199,7 @@ def test_netcdf_proj_string_non_cf():
 
 
 def test_netcdf_proj_string_laea():
-    f = load_from("file", emohawk_examples_file("efas.nc"))
+    f = load_from("url", emohawk_remote_test_data_file("examples", "efas.nc"))
     r = f[0].to_proj()
     assert len(r) == 2
     assert (
