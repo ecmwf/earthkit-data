@@ -23,6 +23,12 @@ from emohawk.utils.dates import to_datetime
 from .. import Reader
 
 
+GEOGRAPHIC_COORDS = {
+    "x": ["x", "projection_x_coordinate", "lon", "longitude"],
+    "y": ["y", "projection_y_coordinate", "lat", "latitude"],
+}
+
+
 def as_datetime(self, time):
     return datetime.datetime.strptime(str(time)[:19], "%Y-%m-%dT%H:%M:%S")
 
@@ -144,6 +150,9 @@ class NetCDFField(Base):
     def __init__(self, path, ds, variable, slices, non_dim_coords):
 
         data_array = ds[variable]
+        
+        self._ds = ds
+        self._da = data_array
 
         self.north, self.west, self.south, self.east = ds.bbox(variable)
 
@@ -179,6 +188,20 @@ class NetCDFField(Base):
         return BoundingBox(
             north=self.north, south=self.south, east=self.east, west=self.west
         )
+    
+    def to_proj(self):
+        if "proj4_string" in self._da.attrs:
+            proj_source = self._da.attrs["proj4_string"]
+        elif "grid_mapping" in self._da.attrs:
+            proj_source = self._ds[self._da.attrs["grid_mapping"]].attrs["proj4_params"]
+        else:
+            raise AttributeError(
+                "No CF-compliant proj information detected in netCDF attributes")
+        
+        # For now, simply assume a WGS 84 target projection
+        proj_target = "+proj=eqc +datum=WGS84 +units=m +no_defs +type=crs"
+        
+        return proj_source, proj_target
 
 
 class NetCDFReader(Reader):
@@ -256,7 +279,7 @@ class NetCDFReader(Reader):
                 use = False
 
                 if (
-                    standard_name.lower() in ("longitude", "projection_x_coordinate")
+                    standard_name.lower() in GEOGRAPHIC_COORDS["x"]
                     or (long_name == "longitude")
                     or (axis == "X")
                 ):
@@ -264,7 +287,7 @@ class NetCDFReader(Reader):
                     use = True
 
                 if (
-                    standard_name.lower() in ("latitude", "projection_y_coordinate")
+                    standard_name.lower() in GEOGRAPHIC_COORDS["y"]
                     or (long_name == "latitude")
                     or (axis == "Y")
                 ):
@@ -338,6 +361,9 @@ class NetCDFReader(Reader):
 
     def to_bounding_box(self):
         return BoundingBox.multi_merge([s.to_bounding_box() for s in self.get_fields()])
+    
+    def to_proj(self):
+        return list(set(s.to_proj() for s in self.get_fields()))
 
 
 def reader(source, path, magic=None, deeper_check=False):
