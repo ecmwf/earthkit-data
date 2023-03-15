@@ -20,8 +20,7 @@ from emohawk.core import Base
 from emohawk.utils.bbox import BoundingBox
 from emohawk.utils.dates import to_datetime
 
-from .. import Reader
-
+from . import Reader
 
 GEOGRAPHIC_COORDS = {
     "x": ["x", "projection_x_coordinate", "lon", "longitude"],
@@ -150,7 +149,7 @@ class NetCDFField(Base):
     def __init__(self, path, ds, variable, slices, non_dim_coords):
 
         data_array = ds[variable]
-        
+
         self._ds = ds
         self._da = data_array
 
@@ -188,7 +187,7 @@ class NetCDFField(Base):
         return BoundingBox(
             north=self.north, south=self.south, east=self.east, west=self.west
         )
-    
+
     def to_proj(self):
         if "proj4_string" in self._da.attrs:
             proj_source = self._da.attrs["proj4_string"]
@@ -196,11 +195,12 @@ class NetCDFField(Base):
             proj_source = self._ds[self._da.attrs["grid_mapping"]].attrs["proj4_params"]
         else:
             raise AttributeError(
-                "No CF-compliant proj information detected in netCDF attributes")
-        
-        # For now, simply assume a WGS 84 target projection
-        proj_target = "+proj=eqc +datum=WGS84 +units=m +no_defs +type=crs"
-        
+                "No CF-compliant proj information detected in netCDF attributes"
+            )
+
+        # Simply assume a WGS 84 target projection for CF-compliant netCDF
+        proj_target = "+proj=eqc +datum=WGS84 +units=m +no_defs"
+
         return proj_source, proj_target
 
 
