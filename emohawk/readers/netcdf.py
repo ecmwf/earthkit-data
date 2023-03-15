@@ -22,6 +22,11 @@ from emohawk.utils.dates import to_datetime
 
 from . import Reader
 
+GEOGRAPHIC_COORDS = {
+    "x": ["x", "projection_x_coordinate", "lon", "longitude"],
+    "y": ["y", "projection_y_coordinate", "lat", "latitude"],
+}
+
 
 def as_datetime(self, time):
     return datetime.datetime.strptime(str(time)[:19], "%Y-%m-%dT%H:%M:%S")
@@ -145,6 +150,9 @@ class NetCDFField(Base):
 
         data_array = ds[variable]
 
+        self._ds = ds
+        self._da = data_array
+
         self.north, self.west, self.south, self.east = ds.bbox(variable)
 
         self.path = path
@@ -179,6 +187,52 @@ class NetCDFField(Base):
         return BoundingBox(
             north=self.north, south=self.south, east=self.east, west=self.west
         )
+
+    def to_xarray(self):
+        return self._da
+
+    def to_pandas(self):
+        return self._da.to_pandas()
+
+    def to_numpy(self, flatten=True):
+        arr = self.to_xarray().to_numpy()
+        if flatten:
+            arr = arr.flatten()
+        return arr
+
+    def to_proj(self):
+        if "proj4_string" in self._da.attrs:
+            proj_source = self._da.attrs["proj4_string"]
+        elif "grid_mapping" in self._da.attrs:
+            proj_source = self._ds[self._da.attrs["grid_mapping"]].attrs["proj4_params"]
+        else:
+            raise AttributeError(
+                "No CF-compliant proj information detected in netCDF attributes"
+            )
+
+        # Simply assume a WGS 84 target projection for CF-compliant netCDF
+        proj_target = "+proj=eqc +datum=WGS84 +units=m +no_defs"
+
+        return proj_source, proj_target
+
+    def to_points(self, flatten=True):
+        points = dict()
+        for axis in ("x", "y"):
+            for coord in self._da.coords:
+                if self._da.coords[coord].attrs.get("axis", "").lower() == axis:
+                    break
+            else:
+                candidates = GEOGRAPHIC_COORDS.get(axis, [])
+                for coord in candidates:
+                    if coord in self._da.coords:
+                        break
+                else:
+                    raise ValueError(f"No coordinate found with axis '{axis}'")
+            points[axis] = self._da.coords[coord]
+        points["x"], points["y"] = np.meshgrid(points["x"], points["y"])
+        if flatten:
+            points["x"], points["y"] = points["x"].flatten(), points["y"].flatten()
+        return points
 
 
 class NetCDFReader(Reader):
@@ -256,7 +310,7 @@ class NetCDFReader(Reader):
                 use = False
 
                 if (
-                    standard_name in ("longitude", "projection_x_coordinate")
+                    standard_name.lower() in GEOGRAPHIC_COORDS["x"]
                     or (long_name == "longitude")
                     or (axis == "X")
                 ):
@@ -264,7 +318,7 @@ class NetCDFReader(Reader):
                     use = True
 
                 if (
-                    standard_name in ("latitude", "projection_y_coordinate")
+                    standard_name.lower() in GEOGRAPHIC_COORDS["y"]
                     or (long_name == "latitude")
                     or (axis == "Y")
                 ):
@@ -307,6 +361,15 @@ class NetCDFReader(Reader):
             raise Exception("NetCDFReader no 2D fields found in %s" % (self.path,))
 
         return fields
+
+    def to_numpy(self, flatten=True):
+        arr = self.to_xarray().to_array().to_numpy()
+        if flatten:
+            arr = arr.flatten()
+        return arr
+
+    def to_pandas(self):
+        return self.to_xarray().to_pandas()
 
     def to_xarray(self, **kwargs):
         return type(self).to_xarray_multi_from_paths([self.path], **kwargs)

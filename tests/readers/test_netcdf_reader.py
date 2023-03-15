@@ -12,11 +12,24 @@
 import datetime
 import os
 
+import numpy as np
 import pytest
 
 from emohawk import load_from
 from emohawk.readers.netcdf import NetCDFField
-from emohawk.testing import emohawk_file
+from emohawk.testing import (
+    emohawk_examples_file,
+    emohawk_file,
+    emohawk_remote_test_data_file,
+    emohawk_test_data_file,
+)
+
+
+def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
+    assert v.shape == shape
+    assert np.isclose(v[0], first, eps)
+    assert np.isclose(v[-1], last, eps)
+    assert np.isclose(v.mean(), meanv, eps)
 
 
 def test_netcdf():
@@ -148,9 +161,52 @@ def test_datetime():
     ], s.to_datetime_list()
 
 
+def test_netcdf_to_points_1():
+    f = load_from("file", emohawk_test_data_file("test_single.nc"))
+
+    eps = 1e-5
+    v = f[0].to_points()
+    assert isinstance(v, dict)
+    assert isinstance(v["x"], np.ndarray)
+    assert isinstance(v["y"], np.ndarray)
+    check_array(
+        v["x"],
+        (84,),
+        first=0.0,
+        last=330.0,
+        meanv=165.0,
+        eps=eps,
+    )
+    check_array(
+        v["y"],
+        (84,),
+        first=90,
+        last=-90,
+        meanv=0,
+        eps=eps,
+    )
+
+
 def test_bbox():
     s = load_from("file", emohawk_file("docs/examples/test.nc"))
     assert s.to_bounding_box().as_tuple() == (73, -27, 33, 45), s.to_bounding_box()
+
+
+def test_netcdf_proj_string_non_cf():
+    f = load_from("file", emohawk_examples_file("test.nc"))
+    with pytest.raises(AttributeError):
+        f[0].to_proj()
+
+
+def test_netcdf_proj_string_laea():
+    f = load_from("url", emohawk_remote_test_data_file("examples", "efas.nc"))
+    r = f[0].to_proj()
+    assert len(r) == 2
+    assert (
+        r[0]
+        == "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
+    )
+    assert r[1] == "+proj=eqc +datum=WGS84 +units=m +no_defs"
 
 
 if __name__ == "__main__":

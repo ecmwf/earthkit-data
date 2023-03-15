@@ -27,6 +27,8 @@ class OfflineError(Exception):
 
 _NETWORK_PATCHER = patch("socket.socket", side_effect=OfflineError)
 
+_REMOTE_TEST_DATA_URL = "https://get.ecmwf.int/repository/test-data/emohawk/"
+
 
 @contextmanager
 def network_off():
@@ -35,6 +37,10 @@ def network_off():
         yield None
     finally:
         _NETWORK_PATCHER.stop()
+
+
+def emohawk_remote_test_data_file(*args):
+    return os.path.join(_REMOTE_TEST_DATA_URL, *args)
 
 
 def emohawk_file(*args):
