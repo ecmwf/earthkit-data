@@ -301,8 +301,6 @@ def test_grib_to_numpy_1():
     f = load_from("file", emohawk_test_data_file("test_single.grib"))
 
     eps = 1e-5
-
-    # whole file
     v = f.to_numpy()
     assert isinstance(v, np.ndarray)
     v = v[0].flatten()
@@ -315,24 +313,30 @@ def test_grib_to_numpy_1():
         eps=eps,
     )
 
-    opts = [
-        (f, {}, (1, 84)),
-        (f, {"flat_field": True}, (1, 84)),
-        (f, {"flat_field": False}, (1, 7, 12)),
-        (f[0], {}, (84,)),
-        (f[0], {"flat_field": True}, (84,)),
-        (f[0], {"flat_field": False}, (7, 12)),
-    ]
 
-    for opt in opts:
-        data = opt[0]
-        kwargs = opt[1]
-        shape = opt[2]
-        v1 = data.to_numpy(**kwargs)
-        assert isinstance(v1, np.ndarray)
-        assert v1.shape == shape
-        v1 = v1.flatten()
-        assert np.allclose(v, v1, eps)
+@pytest.mark.parametrize(
+    "first,options, expected_shape",
+    [
+        (False, {}, (1, 84)),
+        (False, {"flatten": True}, (1, 84)),
+        (False, {"flatten": False}, (1, 7, 12)),
+        (True, {}, (84,)),
+        (True, {"flatten": True}, (84,)),
+        (True, {"flatten": False}, (7, 12)),
+    ],
+)
+def test_grib_to_numpy_1_shape(first, options, expected_shape):
+    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+
+    v_ref = f[0].to_numpy().flatten()
+    eps = 1e-5
+
+    data = f[0] if first else f
+    v1 = data.to_numpy(**options)
+    assert isinstance(v1, np.ndarray)
+    assert v1.shape == expected_shape
+    v1 = v1.flatten()
+    assert np.allclose(v_ref, v1, eps)
 
 
 def test_grib_to_numpy_18():
@@ -364,22 +368,48 @@ def test_grib_to_numpy_18():
         eps=eps,
     )
 
-    opts = [
-        ({}, (18, 84)),
-        ({"flat_field": True}, (18, 84)),
-        ({"flat_field": False}, (18, 7, 12)),
-    ]
 
-    for opt in opts:
-        kwargs = opt[0]
-        shape = opt[1]
-        v1 = f.to_numpy(**kwargs)
-        assert isinstance(v1, np.ndarray)
-        assert v1.shape == shape
-        vr = v1[0].flatten()
-        assert np.allclose(vf0, vr, eps)
-        vr = v1[15].flatten()
-        assert np.allclose(vf15, vr, eps)
+@pytest.mark.parametrize(
+    "options, expected_shape",
+    [
+        (
+            {},
+            (
+                18,
+                84,
+            ),
+        ),
+        (
+            {"flatten": True},
+            (
+                18,
+                84,
+            ),
+        ),
+        ({"flatten": False}, (18, 7, 12)),
+    ],
+)
+def test_grib_to_numpy_18_shape(options, expected_shape):
+    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+
+    eps = 1e-5
+
+    # whole file
+    v = f.to_numpy()
+    assert isinstance(v, np.ndarray)
+    assert v.shape == (18, 84)
+    vf0 = f[0].to_numpy().flatten()
+    assert vf0.shape == (84,)
+    vf15 = f[15].to_numpy().flatten()
+    assert vf15.shape == (84,)
+
+    v1 = f.to_numpy(**options)
+    assert isinstance(v1, np.ndarray)
+    assert v1.shape == expected_shape
+    vr = v1[0].flatten()
+    assert np.allclose(vf0, vr, eps)
+    vr = v1[15].flatten()
+    assert np.allclose(vf15, vr, eps)
 
 
 def test_grib_values_with_missing():
@@ -397,6 +427,51 @@ def test_grib_values_with_missing():
     m = v[mask]
     assert len(m) == 38
     assert np.count_nonzero(np.isnan(m)) == 38
+
+
+def test_grib_to_points_1():
+    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+
+    eps = 1e-5
+    v = f[0].to_points()
+    assert isinstance(v, dict)
+    assert isinstance(v["x"], np.ndarray)
+    assert isinstance(v["y"], np.ndarray)
+    check_array(
+        v["x"],
+        (84,),
+        first=0.0,
+        last=330.0,
+        meanv=165.0,
+        eps=eps,
+    )
+    check_array(
+        v["y"],
+        (84,),
+        first=90,
+        last=-90,
+        meanv=0,
+        eps=eps,
+    )
+
+
+def test_grib_to_points_1_shape():
+    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+
+    v = f[0].to_points(flatten=False)
+    assert isinstance(v, dict)
+    assert isinstance(v["x"], np.ndarray)
+    assert isinstance(v["y"], np.ndarray)
+
+    # x
+    assert v["x"].shape == (7, 12)
+    for x in v["x"]:
+        assert np.allclose(x, np.linspace(0, 330, 12))
+
+    # y
+    assert v["y"].shape == (7, 12)
+    for i, y in enumerate(v["y"]):
+        assert np.allclose(y, np.ones(12) * (90 - i * 30))
 
 
 def test_grib_datetime():

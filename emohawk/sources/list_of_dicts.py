@@ -85,8 +85,8 @@ class VirtualGribField(dict):
     def values(self):
         return self["values"]
 
-    def to_numpy(self, flat_field=True):
-        return self.values if flat_field else self.values.reshape(self.shape)
+    def to_numpy(self, flatten=True):
+        return self.values if flatten else self.values.reshape(self.shape)
 
     @property
     def shape(self):

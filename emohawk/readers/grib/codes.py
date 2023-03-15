@@ -284,8 +284,17 @@ class GribField(Base):
         return (Nj, Ni)
 
     # @call_counter
-    def to_numpy(self, flat_field=True):
-        return self.values if flat_field else self.values.reshape(self.shape)
+    def to_numpy(self, flatten=True):
+        return self.values if flatten else self.values.reshape(self.shape)
+
+    def to_points(self, flatten=True):
+        shape = self.shape
+        lat = self.handle.get("latitudes")
+        lon = self.handle.get("longitudes")
+        if flatten:
+            return {"x": lon, "y": lat}
+        else:
+            return {"x": lon.reshape(shape), "y": lat.reshape(shape)}
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (
