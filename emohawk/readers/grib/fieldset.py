@@ -117,22 +117,6 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
     def ls(self, *args, **kwargs):
         from emohawk.utils.summary import ls
 
-        # keys = list(GRIB_LS_KEYS) if keys is None else keys
-        # extra_keys = [] if extra_keys is None else extra_keys
-        # if extra_keys is not None:
-        #     [keys.append(x) for x in extra_keys if x not in keys]
-        # if n == 0:
-        #     raise ValueError("n cannot be 0")
-        # elif n is not None:
-        #     num = len(self)
-        #     if n > 0:
-        #         fs = self[: min(num, n)]
-        #     else:
-        #         fs = self[-min(num, -n) :]
-        # else:
-        #     assert n is None
-        #     fs = self
-
         def _proc(keys, n):
             if n is not None:
                 num = len(self)
