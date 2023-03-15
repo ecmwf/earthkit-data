@@ -361,9 +361,6 @@ class NetCDFReader(Reader):
 
     def to_bounding_box(self):
         return BoundingBox.multi_merge([s.to_bounding_box() for s in self.get_fields()])
-    
-    def to_proj(self):
-        return list(set(s.to_proj() for s in self.get_fields()))
 
 
 def reader(source, path, magic=None, deeper_check=False):
