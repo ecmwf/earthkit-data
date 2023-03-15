@@ -16,7 +16,7 @@ import pytest
 
 from emohawk import load_from
 from emohawk.readers.netcdf import NetCDFField
-from emohawk.testing import emohawk_file
+from emohawk.testing import emohawk_examples_file, emohawk_file
 
 
 def test_netcdf():
@@ -151,6 +151,23 @@ def test_datetime():
 def test_bbox():
     s = load_from("file", emohawk_file("docs/examples/test.nc"))
     assert s.to_bounding_box().as_tuple() == (73, -27, 33, 45), s.to_bounding_box()
+
+
+def test_netcdf_proj_string_non_cf():
+    f = load_from("file", emohawk_examples_file("test.nc"))
+    with pytest.raises(AttributeError):
+        f[0].to_proj()
+
+
+def test_netcdf_proj_string_laea():
+    f = load_from("file", emohawk_examples_file("efas.nc"))
+    r = f[0].to_proj()
+    assert len(r) == 2
+    assert (
+        r[0]
+        == "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
+    )
+    assert r[1] == "+proj=eqc +datum=WGS84 +units=m +no_defs"
 
 
 if __name__ == "__main__":
