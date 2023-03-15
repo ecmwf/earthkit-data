@@ -187,10 +187,10 @@ class NetCDFField(Base):
         return BoundingBox(
             north=self.north, south=self.south, east=self.east, west=self.west
         )
-    
+
     def to_xarray(self):
         return self._da
-    
+
     def to_numpy(self, flatten=True):
         arr = self.to_xarray().to_numpy()
         if flatten:
@@ -216,10 +216,7 @@ class NetCDFField(Base):
         points = dict()
         for axis in ("x", "y"):
             for coord in self._da.coords:
-                if (
-                    self._da.coords[coord].attrs.get("axis", "").lower()
-                    == axis
-                ):
+                if self._da.coords[coord].attrs.get("axis", "").lower() == axis:
                     break
             else:
                 candidates = GEOGRAPHIC_COORDS.get(axis, [])

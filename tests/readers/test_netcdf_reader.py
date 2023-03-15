@@ -12,11 +12,19 @@
 import datetime
 import os
 
+import numpy as np
 import pytest
 
 from emohawk import load_from
 from emohawk.readers.netcdf import NetCDFField
-from emohawk.testing import emohawk_examples_file, emohawk_file
+from emohawk.testing import emohawk_examples_file, emohawk_file, emohawk_test_data_file
+
+
+def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
+    assert v.shape == shape
+    assert np.isclose(v[0], first, eps)
+    assert np.isclose(v[-1], last, eps)
+    assert np.isclose(v.mean(), meanv, eps)
 
 
 def test_netcdf():
@@ -146,6 +154,32 @@ def test_datetime():
         datetime.datetime(1990, 1, 1, 12, 0),
         datetime.datetime(1990, 1, 2, 12, 0),
     ], s.to_datetime_list()
+
+
+def test_netcdf_to_points_1():
+    f = load_from("file", emohawk_test_data_file("test_single.nc"))
+
+    eps = 1e-5
+    v = f[0].to_points()
+    assert isinstance(v, dict)
+    assert isinstance(v["x"], np.ndarray)
+    assert isinstance(v["y"], np.ndarray)
+    check_array(
+        v["x"],
+        (84,),
+        first=0.0,
+        last=330.0,
+        meanv=165.0,
+        eps=eps,
+    )
+    check_array(
+        v["y"],
+        (84,),
+        first=90,
+        last=-90,
+        meanv=0,
+        eps=eps,
+    )
 
 
 def test_bbox():
