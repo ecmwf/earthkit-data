@@ -191,6 +191,9 @@ class NetCDFField(Base):
     def to_xarray(self):
         return self._da
 
+    def to_pandas(self):
+        return self._da.to_pandas()
+
     def to_numpy(self, flatten=True):
         arr = self.to_xarray().to_numpy()
         if flatten:
@@ -358,6 +361,15 @@ class NetCDFReader(Reader):
             raise Exception("NetCDFReader no 2D fields found in %s" % (self.path,))
 
         return fields
+
+    def to_numpy(self, flatten=True):
+        arr = self.to_xarray().to_array().to_numpy()
+        if flatten:
+            arr = arr.flatten()
+        return arr
+
+    def to_pandas(self):
+        return self.to_xarray().to_pandas()
 
     def to_xarray(self, **kwargs):
         return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
