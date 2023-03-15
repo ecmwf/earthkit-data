@@ -187,6 +187,15 @@ class NetCDFField(Base):
         return BoundingBox(
             north=self.north, south=self.south, east=self.east, west=self.west
         )
+    
+    def to_xarray(self):
+        return self._da
+    
+    def to_numpy(self, flatten=True):
+        arr = self.to_xarray().to_numpy()
+        if flatten:
+            arr = arr.flatten()
+        return arr
 
     def to_proj(self):
         if "proj4_string" in self._da.attrs:
@@ -202,6 +211,28 @@ class NetCDFField(Base):
         proj_target = "+proj=eqc +datum=WGS84 +units=m +no_defs"
 
         return proj_source, proj_target
+
+    def to_points(self, flatten=True):
+        points = dict()
+        for axis in ("x", "y"):
+            for coord in self._da.coords:
+                if (
+                    self._da.coords[coord].attrs.get("axis", "").lower()
+                    == axis
+                ):
+                    break
+            else:
+                candidates = GEOGRAPHIC_COORDS.get(axis, [])
+                for coord in candidates:
+                    if coord in self._da.coords:
+                        break
+                else:
+                    raise ValueError(f"No coordinate found with axis '{axis}'")
+            points[axis] = self._da.coords[coord]
+        points["x"], points["y"] = np.meshgrid(points["x"], points["y"])
+        if flatten:
+            points["x"], points["y"] = points["x"].flatten(), points["y"].flatten()
+        return points
 
 
 class NetCDFReader(Reader):
