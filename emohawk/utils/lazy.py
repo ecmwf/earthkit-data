@@ -8,7 +8,7 @@
 #
 import logging
 
-from emohawk import load_from
+from emohawk import from_source
 
 LOG = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class LazySource:
 
         if self._source is None:
             try:
-                self._source = load_from(
+                self._source = from_source(
                     self.name,
                     lazily=False,
                     *self.args,

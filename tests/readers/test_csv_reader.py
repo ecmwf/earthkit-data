@@ -17,7 +17,7 @@ import emohawk as cml
 
 
 def test_csv_1():
-    s = cml.load_from(
+    s = cml.from_source(
         "dummy-source",
         "csv",
         headers=["a", "b", "c"],
@@ -32,7 +32,7 @@ def test_csv_1():
 
 
 def test_csv_2():
-    s = cml.load_from(
+    s = cml.from_source(
         "dummy-source",
         "csv",
         headers=["a", "b", "c"],
@@ -47,7 +47,7 @@ def test_csv_2():
 
 
 def test_csv_3():
-    s = cml.load_from(
+    s = cml.from_source(
         "dummy-source",
         "csv",
         headers=["a", "b", "c"],
@@ -62,7 +62,7 @@ def test_csv_3():
 
 
 def test_csv_4():
-    s = cml.load_from(
+    s = cml.from_source(
         "dummy-source",
         "csv",
         headers=["a", "b", "c"],
@@ -93,13 +93,13 @@ def test_csv_icoads():
         "type": "ofb",
     }
 
-    source = cml.load_from("mars", **r)
+    source = cml.from_source("mars", **r)
     print(source)
 
 
 def test_csv_text():
 
-    s = cml.load_from(
+    s = cml.from_source(
         "dummy-source",
         "csv",
         headers=["a", "b", "c"],

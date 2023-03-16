@@ -15,7 +15,7 @@ import os
 import numpy as np
 import pytest
 
-from emohawk import load_from
+from emohawk import from_source
 from emohawk.readers.netcdf import NetCDFField
 from emohawk.testing import (
     emohawk_examples_file,
@@ -33,12 +33,12 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
 
 
 def test_netcdf():
-    for s in load_from("file", emohawk_file("docs/examples/test.nc")):
+    for s in from_source("file", emohawk_file("docs/examples/test.nc")):
         s is not None
 
 
 def test_dummy_netcdf_reader_1():
-    s = load_from("file", emohawk_file("docs/examples/test.nc"))
+    s = from_source("file", emohawk_file("docs/examples/test.nc"))
     r = s._reader
     assert str(r).startswith("NetCDFReader"), r
     assert len(r) == 2
@@ -47,7 +47,7 @@ def test_dummy_netcdf_reader_1():
 
 @pytest.mark.parametrize("attribute", ["coordinates", "bounds", "grid_mapping"])
 def test_dummy_netcdf_reader_2(attribute):
-    s = load_from(
+    s = from_source(
         "dummy-source",
         kind="netcdf",
         attributes={"a": {attribute: f"{attribute}_of_a"}},
@@ -61,13 +61,13 @@ def test_dummy_netcdf_reader_2(attribute):
 
 
 def test_dummy_netcdf():
-    s = load_from("dummy-source", kind="netcdf")
+    s = from_source("dummy-source", kind="netcdf")
     ds = s.to_xarray()
     assert "lat" in ds.dims
 
 
 def test_dummy_netcdf_2():
-    s = load_from(
+    s = from_source(
         "dummy-source", kind="netcdf", dims=["lat", "lon", "time"], variables=["a", "b"]
     )
     ds = s.to_xarray()
@@ -75,7 +75,7 @@ def test_dummy_netcdf_2():
 
 
 def test_dummy_netcdf_3():
-    s = load_from(
+    s = from_source(
         "dummy-source",
         kind="netcdf",
         dims={"lat": dict(size=3), "lon": dict(size=2), "time": dict(size=2)},
@@ -86,7 +86,7 @@ def test_dummy_netcdf_3():
 
 
 def test_dummy_netcdf_4():
-    s = load_from(
+    s = from_source(
         "dummy-source",
         kind="netcdf",
         dims={"lat": dict(size=3), "lon": dict(size=2), "time": dict(size=2)},
@@ -104,7 +104,7 @@ def test_dummy_netcdf_4():
 def test_multi():
     if not os.path.exists(os.path.expanduser("~/.cdsapirc")):
         pytest.skip("No ~/.cdsapirc")
-    s1 = load_from(
+    s1 = from_source(
         "cds",
         "reanalysis-era5-single-levels",
         product_type="reanalysis",
@@ -113,7 +113,7 @@ def test_multi():
         format="netcdf",
     )
     s1.to_xarray()
-    s2 = load_from(
+    s2 = from_source(
         "cds",
         "reanalysis-era5-single-levels",
         product_type="reanalysis",
@@ -123,7 +123,7 @@ def test_multi():
     )
     s2.to_xarray()
 
-    source = load_from("multi", s1, s2)
+    source = from_source("multi", s1, s2)
     for s in source:
         print(s)
 
@@ -132,7 +132,7 @@ def test_multi():
 
 def test_datetime():
 
-    s = load_from("file", emohawk_file("docs/examples/test.nc"))
+    s = from_source("file", emohawk_file("docs/examples/test.nc"))
 
     assert s.to_datetime() == datetime.datetime(2020, 5, 13, 12), s.to_datetime()
 
@@ -140,7 +140,7 @@ def test_datetime():
         datetime.datetime(2020, 5, 13, 12)
     ], s.to_datetime_list()
 
-    s = load_from(
+    s = from_source(
         "dummy-source",
         kind="netcdf",
         dims=["lat", "lon", "time"],
@@ -162,7 +162,7 @@ def test_datetime():
 
 
 def test_netcdf_to_points_1():
-    f = load_from("file", emohawk_test_data_file("test_single.nc"))
+    f = from_source("file", emohawk_test_data_file("test_single.nc"))
 
     eps = 1e-5
     v = f[0].to_points()
@@ -188,18 +188,18 @@ def test_netcdf_to_points_1():
 
 
 def test_bbox():
-    s = load_from("file", emohawk_file("docs/examples/test.nc"))
+    s = from_source("file", emohawk_file("docs/examples/test.nc"))
     assert s.to_bounding_box().as_tuple() == (73, -27, 33, 45), s.to_bounding_box()
 
 
 def test_netcdf_proj_string_non_cf():
-    f = load_from("file", emohawk_examples_file("test.nc"))
+    f = from_source("file", emohawk_examples_file("test.nc"))
     with pytest.raises(AttributeError):
         f[0].to_proj()
 
 
 def test_netcdf_proj_string_laea():
-    f = load_from("url", emohawk_remote_test_data_file("examples", "efas.nc"))
+    f = from_source("url", emohawk_remote_test_data_file("examples", "efas.nc"))
     r = f[0].to_proj()
     assert len(r) == 2
     assert (

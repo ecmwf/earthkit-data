@@ -12,7 +12,7 @@ import glob
 import logging
 import os
 
-from emohawk import load_from
+from emohawk import from_source
 from emohawk.core.settings import SETTINGS
 from emohawk.readers import reader
 
@@ -44,9 +44,9 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
             if len(self.path) == 1:
                 self.path = self.path[0]
             else:
-                return load_from(
+                return from_source(
                     "multi",
-                    [load_from("file", p) for p in self.path],
+                    [from_source("file", p) for p in self.path],
                     filter=self.filter,
                     merger=self.merger,
                 )

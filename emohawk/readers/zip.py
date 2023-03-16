@@ -11,7 +11,7 @@ import os
 import stat
 from zipfile import ZipFile
 
-from emohawk import load_from
+from emohawk import from_source
 
 from .archive import ArchiveReader
 from .csv import CSVReader
@@ -78,7 +78,7 @@ class ZIPReader(ArchiveReader):
     def mutate_source(self):
         # zarr can read data from a zip file
         if ".zattrs" in self._content:
-            return load_from("zarr", self.path)
+            return from_source("zarr", self.path)
 
         return None
 

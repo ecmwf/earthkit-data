@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from importlib import import_module
 from unittest.mock import patch
 
-from emohawk import load_from
+from emohawk import from_source
 from emohawk.readers.text import TextReader
 from emohawk.sources.empty import EmptySource
 
@@ -118,7 +118,7 @@ UNSAFE_SAMPLES = (
 def check_unsafe_archives(extension):
     for archive, check in UNSAFE_SAMPLES:
         LOG.debug("%s.%s", archive, extension)
-        ds = load_from("url", f"{UNSAFE_SAMPLES_URL}/{archive}{extension}")
+        ds = from_source("url", f"{UNSAFE_SAMPLES_URL}/{archive}{extension}")
         check(ds)
 
 

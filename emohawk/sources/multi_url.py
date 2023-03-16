@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from emohawk import load_from
+from emohawk import from_source
 
 from .multi import MultiSource
 
@@ -23,7 +23,7 @@ class MultiUrl(MultiSource):
         assert len(urls)
 
         sources = [
-            load_from(
+            from_source(
                 "url",
                 url,
                 filter=filter,

@@ -27,7 +27,7 @@ class MultiSource(Source):
         if len(sources) == 1 and isinstance(sources[0], list):
             sources = sources[0]
 
-        sources = self._load_froms(sources)
+        sources = self._from_sources(sources)
 
         self.sources = [s.mutate() for s in sources if not s.ignore()]
         self.filter = filter
@@ -104,7 +104,7 @@ class MultiSource(Source):
     def statistics(self, **kwargs):
         return make_merger(self.merger, self.sources).statistics(**kwargs)
 
-    def _load_froms(self, sources):
+    def _from_sources(self, sources):
         callables = []
         has_callables = False
         for s in sources:

@@ -10,12 +10,12 @@
 
 import pytest
 
-from emohawk import load_from
+from emohawk import from_source
 from emohawk.testing import emohawk_examples_file
 
 
 def test_bufr_ls_invalid_num():
-    f = load_from("file", emohawk_examples_file("temp_10.bufr"))
+    f = from_source("file", emohawk_examples_file("temp_10.bufr"))
     with pytest.raises(ValueError):
         f.ls(n=0, print=False)
 
@@ -24,7 +24,7 @@ def test_bufr_ls_invalid_num():
 
 
 def test_bufr_ls_num():
-    f = load_from("file", emohawk_examples_file("temp_10.bufr"))
+    f = from_source("file", emohawk_examples_file("temp_10.bufr"))
 
     # default keys
 
@@ -73,7 +73,7 @@ def test_bufr_ls_num():
 
 
 def test_bufr_head_num():
-    f = load_from("file", emohawk_examples_file("temp_10.bufr"))
+    f = from_source("file", emohawk_examples_file("temp_10.bufr"))
 
     # default keys
     df = f.head(n=2, print=False)
@@ -100,7 +100,7 @@ def test_bufr_head_num():
 
 
 def test_bufr_tail_num():
-    f = load_from("file", emohawk_examples_file("temp_10.bufr"))
+    f = from_source("file", emohawk_examples_file("temp_10.bufr"))
 
     # default keys
     df = f.tail(n=2, print=False)

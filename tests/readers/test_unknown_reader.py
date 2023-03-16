@@ -15,7 +15,7 @@ import emohawk as cml
 
 
 def test_unknown_reader():
-    s = cml.load_from(
+    s = cml.from_source(
         "file",
         os.path.join(os.path.dirname(__file__), "unknown_file.unknown_ext"),
     )
@@ -24,7 +24,7 @@ def test_unknown_reader():
 
 
 def test_text_reader():
-    s = cml.load_from(
+    s = cml.from_source(
         "file",
         os.path.join(os.path.dirname(__file__), "unknown_text_file.unknown_ext"),
     )

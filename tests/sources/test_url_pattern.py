@@ -11,11 +11,11 @@
 
 import datetime
 
-from emohawk import load_from
+from emohawk import from_source
 
 
 def test_url_pattern_source_1():
-    load_from(
+    from_source(
         "url-pattern",
         "https://get.ecmwf.int/repository/test-data/emohawk/examples/test.{format}",
         {"format": ["nc", "grib"]},
@@ -25,7 +25,7 @@ def test_url_pattern_source_1():
 
 def test_url_pattern_int():
 
-    fs = load_from(
+    fs = from_source(
         "url-pattern",
         "https://get.ecmwf.int/repository/test-data/emohawk/examples/test{id}.grib",
         {"id": [4, 6]},
@@ -36,7 +36,7 @@ def test_url_pattern_int():
 
 def test_url_pattern_date():
 
-    fs = load_from(
+    fs = from_source(
         "url-pattern",
         "https://get.ecmwf.int/repository/test-data/emohawk/test-data/"
         "test_{my_date:date(%Y-%m-%d)}_{name}.grib",

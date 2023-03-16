@@ -14,7 +14,7 @@ import os
 
 import pytest
 
-from emohawk import load_from, settings
+from emohawk import from_source, settings
 from emohawk.core.caching import cache_entries, cache_file, purge_cache
 
 LOG = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ def test_cache_4():
         settings.set("cache-directory", "/Volumes/RAMDisk/emohawk")
         settings.set("maximum-cache-disk-usage", "90%")
         for n in range(10):
-            load_from("dummy-source", "zeros", size=100 * 1024 * 1024, n=n)
+            from_source("dummy-source", "zeros", size=100 * 1024 * 1024, n=n)
 
 
 if __name__ == "__main__":

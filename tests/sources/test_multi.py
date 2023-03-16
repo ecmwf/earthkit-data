@@ -16,36 +16,36 @@ import sys
 
 import pytest
 
-from emohawk import load_from
+from emohawk import from_source
 from emohawk.core.temporary import temp_directory, temp_file
 
 LOG = logging.getLogger(__name__)
 
 
 def test_multi_graph_1():
-    a11 = load_from("dummy-source", kind="grib", date=20000101)
-    a12 = load_from("dummy-source", kind="grib", date=20000102)
-    b11 = load_from("dummy-source", kind="grib", date=20000103)
-    b12 = load_from("dummy-source", kind="grib", date=20000104)
+    a11 = from_source("dummy-source", kind="grib", date=20000101)
+    a12 = from_source("dummy-source", kind="grib", date=20000102)
+    b11 = from_source("dummy-source", kind="grib", date=20000103)
+    b12 = from_source("dummy-source", kind="grib", date=20000104)
 
-    a21 = load_from("dummy-source", kind="grib", date=20000105)
-    a22 = load_from("dummy-source", kind="grib", date=20000106)
-    b21 = load_from("dummy-source", kind="grib", date=20000107)
-    b22 = load_from("dummy-source", kind="grib", date=20000108)
+    a21 = from_source("dummy-source", kind="grib", date=20000105)
+    a22 = from_source("dummy-source", kind="grib", date=20000106)
+    b21 = from_source("dummy-source", kind="grib", date=20000107)
+    b22 = from_source("dummy-source", kind="grib", date=20000108)
 
-    m1 = load_from(
+    m1 = from_source(
         "multi",
-        load_from("multi", a11, a12),
-        load_from("multi", b11, b12),
+        from_source("multi", a11, a12),
+        from_source("multi", b11, b12),
     )
 
-    m2 = load_from(
+    m2 = from_source(
         "multi",
-        load_from("multi", a21, a22),
-        load_from("multi", b21, b22),
+        from_source("multi", a21, a22),
+        from_source("multi", b21, b22),
     )
 
-    ds = load_from("multi", m1, m2)
+    ds = from_source("multi", m1, m2)
     # ds.graph()
 
     assert len(ds) == 8
@@ -55,33 +55,33 @@ def test_multi_graph_1():
 def test_multi_graph_2():
     with temp_directory() as tmpdir:
         os.mkdir(os.path.join(tmpdir, "a1"))
-        a11 = load_from("dummy-source", kind="grib", date=20000101)
+        a11 = from_source("dummy-source", kind="grib", date=20000101)
         a11.save(os.path.join(tmpdir, "a1", "a11.grib"))
-        a12 = load_from("dummy-source", kind="grib", date=20000102)
+        a12 = from_source("dummy-source", kind="grib", date=20000102)
         a12.save(os.path.join(tmpdir, "a1", "a12.grib"))
 
         os.mkdir(os.path.join(tmpdir, "b1"))
-        b11 = load_from("dummy-source", kind="grib", date=20000103)
+        b11 = from_source("dummy-source", kind="grib", date=20000103)
         b11.save(os.path.join(tmpdir, "b1", "b11.grib"))
-        b12 = load_from("dummy-source", kind="grib", date=20000104)
+        b12 = from_source("dummy-source", kind="grib", date=20000104)
         b12.save(os.path.join(tmpdir, "b1", "b12.grib"))
 
         os.mkdir(os.path.join(tmpdir, "a2"))
-        a21 = load_from("dummy-source", kind="grib", date=20000105)
+        a21 = from_source("dummy-source", kind="grib", date=20000105)
         a21.save(os.path.join(tmpdir, "a2", "a21.grib"))
-        a22 = load_from("dummy-source", kind="grib", date=20000106)
+        a22 = from_source("dummy-source", kind="grib", date=20000106)
         a22.save(os.path.join(tmpdir, "a2", "a22.grib"))
 
         os.mkdir(os.path.join(tmpdir, "b2"))
-        b21 = load_from("dummy-source", kind="grib", date=20000107)
+        b21 = from_source("dummy-source", kind="grib", date=20000107)
         b21.save(os.path.join(tmpdir, "b2", "b21.grib"))
-        b22 = load_from("dummy-source", kind="grib", date=20000108)
+        b22 = from_source("dummy-source", kind="grib", date=20000108)
         b22.save(os.path.join(tmpdir, "b2", "b22.grib"))
 
         def filter(path_or_url):
             return path_or_url.endswith("2.grib")
 
-        ds = load_from("file", tmpdir, filter=filter)
+        ds = from_source("file", tmpdir, filter=filter)
         # ds.graph()
 
         assert len(ds) == 4
@@ -91,25 +91,25 @@ def test_multi_graph_2():
 def test_multi_directory_1():
     with temp_directory() as directory:
         for date in (20000101, 20000102):
-            ds = load_from("dummy-source", kind="grib", date=date)
+            ds = from_source("dummy-source", kind="grib", date=date)
             ds.save(os.path.join(directory, f"{date}.grib"))
 
-        ds = load_from("file", directory)
+        ds = from_source("file", directory)
         print(ds)
         assert len(ds) == 2
         ds.graph()
 
         with temp_file() as filename:
             ds.save(filename)
-            ds = load_from("file", filename)
+            ds = from_source("file", filename)
             assert len(ds) == 2
 
 
 def test_multi_grib():
-    ds = load_from(
+    ds = from_source(
         "multi",
-        load_from("dummy-source", kind="grib", date=20000101),
-        load_from("dummy-source", kind="grib", date=20000102),
+        from_source("dummy-source", kind="grib", date=20000101),
+        from_source("dummy-source", kind="grib", date=20000102),
     )
     assert len(ds) == 2
     ds.to_xarray()
@@ -117,11 +117,11 @@ def test_multi_grib():
 
 
 def test_multi_grib_mixed():
-    ds = load_from(
+    ds = from_source(
         "multi",
-        load_from("dummy-source", kind="grib", date=20000101),
-        load_from("dummy-source", kind="grib", date=20000102),
-        load_from("dummy-source", kind="unknown", hello="world"),
+        from_source("dummy-source", kind="grib", date=20000101),
+        from_source("dummy-source", kind="grib", date=20000102),
+        from_source("dummy-source", kind="unknown", hello="world"),
     )
     assert len(ds) == 2
 

@@ -86,7 +86,7 @@ class Virtual(FieldSet):
         self.request.update(kwargs)
 
         self.reference = DictOveray(
-            cml.load_from(
+            cml.from_source(
                 "cds",
                 date=19590101,
                 time=0,
@@ -141,7 +141,7 @@ class Virtual(FieldSet):
             yyyy = yyyymm // 100
             mm = yyyymm % 100
             last = calendar.monthrange(yyyy, mm)[1]
-            source = cml.load_from(
+            source = cml.from_source(
                 "cds",
                 year=yyyy,
                 month=mm,

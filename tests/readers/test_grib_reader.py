@@ -11,20 +11,20 @@
 
 import datetime
 
-from emohawk import load_from
+from emohawk import from_source
 from emohawk.testing import emohawk_file
 
 
 def test_grib_len():
-    f = load_from("file", "tests/data/test_single.grib")
+    f = from_source("file", "tests/data/test_single.grib")
     assert len(f) == 1
 
-    f = load_from("file", "docs/examples/tuv_pl.grib")
+    f = from_source("file", "docs/examples/tuv_pl.grib")
     assert len(f) == 18
 
 
 def test_grib_create_from_list_of_paths():
-    f = load_from("file", ["docs/examples/tuv_pl.grib", "tests/data/ml_data.grib"])
+    f = from_source("file", ["docs/examples/tuv_pl.grib", "tests/data/ml_data.grib"])
 
     assert len(f) == 54
     assert f[0].metadata("level") == 1000
@@ -33,7 +33,7 @@ def test_grib_create_from_list_of_paths():
 
 
 def test_dummy_grib():
-    s = load_from(
+    s = from_source(
         "dummy-source",
         kind="grib",
         paramId=[129, 130],
@@ -45,7 +45,7 @@ def test_dummy_grib():
 
 def test_datetime():
 
-    s = load_from("file", emohawk_file("docs/examples/test.grib"))
+    s = from_source("file", emohawk_file("docs/examples/test.grib"))
 
     assert s.to_datetime() == datetime.datetime(2020, 5, 13, 12), s.to_datetime()
 
@@ -53,7 +53,7 @@ def test_datetime():
         datetime.datetime(2020, 5, 13, 12)
     ], s.to_datetime_list()
 
-    s = load_from(
+    s = from_source(
         "dummy-source",
         kind="grib",
         paramId=[129, 130],
@@ -67,7 +67,7 @@ def test_datetime():
 
 
 def test_bbox():
-    s = load_from("file", emohawk_file("docs/examples/test.grib"))
+    s = from_source("file", emohawk_file("docs/examples/test.grib"))
     assert s.to_bounding_box().as_tuple() == (73, -27, 33, 45), s.to_bounding_box()
 
 

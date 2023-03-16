@@ -22,7 +22,7 @@ class Statistics:
         self._data = []
 
         if filename:
-            self.load_from_json(filename)
+            self.from_source_json(filename)
 
     def append(self, event):
         self._events.append(event)
@@ -83,7 +83,7 @@ class Statistics:
                 indent=2,
             )
 
-    def load_from_json(self, filename):
+    def from_source_json(self, filename):
         with open(filename, "r") as f:
             data = json.load(f)
             self.process_event(data["events"])

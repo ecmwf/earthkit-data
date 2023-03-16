@@ -10,13 +10,13 @@
 
 import pytest
 
-from emohawk import load_from
+from emohawk import from_source
 from emohawk.testing import emohawk_examples_file
 
 
 def test_grib_describe():
 
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
 
     # full contents
     df = f.describe(print=False)
@@ -148,7 +148,7 @@ def test_grib_describe():
 
 
 def test_grib_ls():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
 
     # default keys
     f1 = f.sel(count=[1, 2, 3, 4])
@@ -201,7 +201,7 @@ def test_grib_ls():
 
 
 def test_grib_ls_keys():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
 
     # default keys
     # positive num (=head)
@@ -226,7 +226,7 @@ def test_grib_ls_keys():
 
 
 def test_grib_ls_invalid_num():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
     with pytest.raises(ValueError):
         f.ls(n=0, print=False)
 
@@ -235,7 +235,7 @@ def test_grib_ls_invalid_num():
 
 
 def test_grib_ls_num():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
 
     # default keys
 
@@ -281,7 +281,7 @@ def test_grib_ls_num():
 
 
 def test_grib_head_num():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
 
     # default keys
     df = f.head(n=2, print=False)
@@ -305,7 +305,7 @@ def test_grib_head_num():
 
 
 def test_grib_tail_num():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
 
     # default keys
     df = f.tail(n=2, print=False)
@@ -329,7 +329,7 @@ def test_grib_tail_num():
 
 
 def test_grib_info():
-    f = load_from("file", emohawk_examples_file("test6.grib"))
+    f = from_source("file", emohawk_examples_file("test6.grib"))
 
     # default
     r = f[0].info(print=False, as_raw=True)

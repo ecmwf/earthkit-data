@@ -132,10 +132,10 @@ class SourceMaker:
 get_source = SourceMaker()
 
 
-def load_from(name: str, *args, lazily=False, **kwargs) -> Source:
+def from_source(name: str, *args, lazily=False, **kwargs) -> Source:
 
     if lazily:
-        return load_from_lazily(name, *args, **kwargs)
+        return from_source_lazily(name, *args, **kwargs)
 
     prev = None
     src = get_source(name, *args, **kwargs)
@@ -145,7 +145,7 @@ def load_from(name: str, *args, lazily=False, **kwargs) -> Source:
     return src
 
 
-def load_from_lazily(name, *args, **kwargs):
+def from_source_lazily(name, *args, **kwargs):
     from emohawk.utils.lazy import LazySource
 
     return LazySource(name, *args, **kwargs)

@@ -12,7 +12,7 @@ import logging
 import os
 import shutil
 
-from emohawk import load_from
+from emohawk import from_source
 
 from . import Reader
 from . import reader as find_reader
@@ -66,12 +66,12 @@ class DirectoryReader(Reader):
 
     def mutate_source(self):
         if os.path.exists(os.path.join(self.path, ".zattrs")):
-            return load_from("zarr", self.path)
+            return from_source("zarr", self.path)
 
-        return load_from(
+        return from_source(
             "multi",
             [
-                load_from(
+                from_source(
                     "file",
                     path=path,
                     filter=self.filter,

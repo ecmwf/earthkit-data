@@ -66,7 +66,7 @@ def _index_grib_file(
 def _index_url(url):
     import emohawk as cml
 
-    path = cml.load_from("url", url).path
+    path = cml.from_source("url", url).path
     # TODO: should use download_and_cache
     # path = download_and_cache(url)
     for entry in _index_grib_file(path):

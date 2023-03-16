@@ -103,14 +103,14 @@ class GribIndexFromDicts(FieldSet):
 def get_fixtures_directory(request):
     tmp = dir_with_grib_files()
     total, n = 18, 4
-    ds = emohawk.load_from("directory", tmp.path, **request)
+    ds = emohawk.from_source("directory", tmp.path, **request)
     return ds, tmp, total, n
 
 
 def get_fixtures_file(request):
     tmp = unique_grib_file()
     total, n = 18, 4
-    ds = emohawk.load_from("file", tmp.path, **request)
+    ds = emohawk.from_source("file", tmp.path, **request)
     return ds, tmp, total, n
 
 

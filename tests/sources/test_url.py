@@ -14,7 +14,7 @@ import sys
 
 import pytest
 
-from emohawk import load_from, settings
+from emohawk import from_source, settings
 from emohawk.core.temporary import temp_directory
 from emohawk.testing import emohawk_file, network_off
 
@@ -25,19 +25,19 @@ from emohawk.testing import emohawk_file, network_off
 )
 def test_url_file_source():
     filename = os.path.abspath(emohawk_file("docs/examples/test.nc"))
-    s = load_from("url", f"file://{filename}")
+    s = from_source("url", f"file://{filename}")
     assert len(s) == 2
 
 
 def test_url_source_1():
-    load_from(
+    from_source(
         "url", "https://get.ecmwf.int/repository/test-data/emohawk/examples/test.grib"
     )
 
 
 def test_url_source_check_out_of_date():
     def load():
-        load_from(
+        from_source(
             "url",
             "https://get.ecmwf.int/repository/test-data/emohawk/examples/test.grib",
         )
@@ -53,21 +53,21 @@ def test_url_source_check_out_of_date():
 
 
 def test_url_source_2():
-    load_from(
+    from_source(
         "url",
         "https://get.ecmwf.int/repository/test-data/emohawk/test-data/temp.bufr",
     )
 
 
 def test_url_source_3():
-    load_from(
+    from_source(
         "url",
         "https://get.ecmwf.int/repository/test-data/emohawk/examples/test.nc",
     )
 
 
 def test_url_source_tar():
-    ds = load_from(
+    ds = from_source(
         "url",
         "https://get.ecmwf.int/repository/test-data/emohawk/examples/test_gribs.tar",
     )
@@ -76,12 +76,12 @@ def test_url_source_tar():
 
 def test_part_url():
 
-    ds = load_from(
+    ds = from_source(
         "url",
         "https://get.ecmwf.int/repository/test-data/emohawk/test-data/temp.bufr",
     )
 
-    ds = load_from(
+    ds = from_source(
         "url",
         "https://get.ecmwf.int/repository/test-data/emohawk/test-data/temp.bufr",
         parts=((0, 4),),
@@ -92,7 +92,7 @@ def test_part_url():
     with open(ds.path, "rb") as f:
         assert f.read() == b"BUFR"
 
-    ds = load_from(
+    ds = from_source(
         "url",
         "https://get.ecmwf.int/repository/test-data/emohawk/test-data/temp.bufr",
         parts=((0, 10), (50, 10), (60, 10)),
@@ -112,7 +112,7 @@ def test_part_url():
 )
 def test_url_part_file_source():
     filename = os.path.abspath(emohawk_file("docs/examples/test.grib"))
-    ds = load_from(
+    ds = from_source(
         "url",
         f"file://{filename}",
         parts=[

@@ -14,7 +14,7 @@ import datetime
 import numpy as np
 import pytest
 
-from emohawk import load_from
+from emohawk import from_source
 from emohawk.core.temporary import temp_file
 from emohawk.testing import emohawk_examples_file, emohawk_test_data_file
 
@@ -27,7 +27,7 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
 
 
 def test_grib_get_string_1():
-    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+    f = from_source("file", emohawk_test_data_file("test_single.grib"))
     for name in ("shortName", "shortName:s", "shortName:str"):
         sn = f.metadata(name)
         assert sn == ["2t"]
@@ -36,7 +36,7 @@ def test_grib_get_string_1():
 
 
 def test_grib_get_string_18():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
     for name in ("shortName", "shortName:s", "shortName:str"):
         sn = f.metadata(name)
         assert sn == ["t", "u", "v"] * 6
@@ -45,7 +45,7 @@ def test_grib_get_string_18():
 
 
 def test_grib_get_long_1():
-    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+    f = from_source("file", emohawk_test_data_file("test_single.grib"))
     for name in ("level", "level:l", "level:int"):
         r = f.metadata(name)
         assert r == [0]
@@ -54,7 +54,7 @@ def test_grib_get_long_1():
 
 
 def test_grib_get_long_18():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
     ref = (
         ([1000] * 3)
         + ([850] * 3)
@@ -72,7 +72,7 @@ def test_grib_get_long_18():
 
 
 def test_grib_get_double_1():
-    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+    f = from_source("file", emohawk_test_data_file("test_single.grib"))
     for name in ("max", "max:d", "max:float"):
         r = f.metadata(name)
         assert len(r) == 1
@@ -83,7 +83,7 @@ def test_grib_get_double_1():
 
 
 def test_grib_get_double_18():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
 
     ref = [
         320.5641784667969,
@@ -114,7 +114,9 @@ def test_grib_get_double_18():
 
 
 def test_grib_get_long_array_1():
-    f = load_from("file", emohawk_test_data_file("rgg_small_subarea_cellarea_ref.grib"))
+    f = from_source(
+        "file", emohawk_test_data_file("rgg_small_subarea_cellarea_ref.grib")
+    )
     assert len(f) == 1
     pl = f.metadata("pl")
     assert len(pl) == 1
@@ -128,7 +130,7 @@ def test_grib_get_long_array_1():
 
 
 def test_grib_get_double_array_values_1():
-    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+    f = from_source("file", emohawk_test_data_file("test_single.grib"))
     v = f.metadata("values")
     assert len(v) == 1
     v = v[0]
@@ -145,7 +147,7 @@ def test_grib_get_double_array_values_1():
 
 
 def test_grib_get_double_array_values_18():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
     v = f.metadata("values")
     assert isinstance(v, list)
     assert len(v) == 18
@@ -174,7 +176,7 @@ def test_grib_get_double_array_values_18():
 
 
 def test_grib_get_double_array_1():
-    f = load_from("file", emohawk_test_data_file("ml_data.grib"))[0]
+    f = from_source("file", emohawk_test_data_file("ml_data.grib"))[0]
     # f is now a field!
     v = f.metadata("pv")
     assert isinstance(v, np.ndarray)
@@ -186,7 +188,7 @@ def test_grib_get_double_array_1():
 
 
 def test_grib_get_double_array_18():
-    f = load_from("file", emohawk_test_data_file("ml_data.grib"))
+    f = from_source("file", emohawk_test_data_file("ml_data.grib"))
     v = f.metadata("pv")
     assert isinstance(v, list)
     assert len(v) == 36
@@ -202,7 +204,7 @@ def test_grib_get_double_array_18():
 
 
 def test_grib_get_generic():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
     f = f.sel(count=[1, 2, 3, 4])
 
     sn = f.metadata(["shortName"])
@@ -219,19 +221,19 @@ def test_grib_get_generic():
     #     lgk = f.metadata(["level:d", "cfVarName"], "invalid")
 
     # single fieldlist
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
     f = f.sel(count=[1])
     lg = f.metadata(["level", "cfVarName"])
     assert lg == [[1000, "t"]]
 
     # single field
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))[0]
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))[0]
     lg = f.metadata(["level", "cfVarName"])
     assert lg == [1000, "t"]
 
 
 def test_grib_metadata_namespace():
-    f = load_from("file", emohawk_examples_file("test6.grib"))
+    f = from_source("file", emohawk_examples_file("test6.grib"))
 
     r = f[0].metadata(namespace="vertical")
     ref = {"level": 1000, "typeOfLevel": "isobaricInhPa"}
@@ -242,7 +244,7 @@ def test_grib_metadata_namespace():
 
 
 def test_grib_values_1():
-    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+    f = from_source("file", emohawk_test_data_file("test_single.grib"))
 
     eps = 1e-5
 
@@ -268,7 +270,7 @@ def test_grib_values_1():
 
 
 def test_grib_values_18():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
 
     eps = 1e-5
 
@@ -298,7 +300,7 @@ def test_grib_values_18():
 
 
 def test_grib_to_numpy_1():
-    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+    f = from_source("file", emohawk_test_data_file("test_single.grib"))
 
     eps = 1e-5
     v = f.to_numpy()
@@ -326,7 +328,7 @@ def test_grib_to_numpy_1():
     ],
 )
 def test_grib_to_numpy_1_shape(first, options, expected_shape):
-    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+    f = from_source("file", emohawk_test_data_file("test_single.grib"))
 
     v_ref = f[0].to_numpy().flatten()
     eps = 1e-5
@@ -340,7 +342,7 @@ def test_grib_to_numpy_1_shape(first, options, expected_shape):
 
 
 def test_grib_to_numpy_18():
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
 
     eps = 1e-5
 
@@ -390,7 +392,7 @@ def test_grib_to_numpy_18():
     ],
 )
 def test_grib_to_numpy_18_shape(options, expected_shape):
-    f = load_from("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
 
     eps = 1e-5
 
@@ -413,7 +415,7 @@ def test_grib_to_numpy_18_shape(options, expected_shape):
 
 
 def test_grib_values_with_missing():
-    f = load_from("file", emohawk_test_data_file("test_single_with_missing.grib"))
+    f = from_source("file", emohawk_test_data_file("test_single_with_missing.grib"))
 
     v = f[0].values
     assert isinstance(v, np.ndarray)
@@ -430,7 +432,7 @@ def test_grib_values_with_missing():
 
 
 def test_grib_to_points_1():
-    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+    f = from_source("file", emohawk_test_data_file("test_single.grib"))
 
     eps = 1e-5
     v = f[0].to_points()
@@ -456,7 +458,7 @@ def test_grib_to_points_1():
 
 
 def test_grib_to_points_1_shape():
-    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+    f = from_source("file", emohawk_test_data_file("test_single.grib"))
 
     v = f[0].to_points(flatten=False)
     assert isinstance(v, dict)
@@ -476,7 +478,7 @@ def test_grib_to_points_1_shape():
 
 def test_grib_datetime():
 
-    s = load_from("file", emohawk_examples_file("test.grib"))
+    s = from_source("file", emohawk_examples_file("test.grib"))
 
     assert s.to_datetime() == datetime.datetime(2020, 5, 13, 12), s.to_datetime()
 
@@ -484,7 +486,7 @@ def test_grib_datetime():
         datetime.datetime(2020, 5, 13, 12)
     ], s.to_datetime_list()
 
-    s = load_from(
+    s = from_source(
         "dummy-source",
         kind="grib",
         paramId=[129, 130],
@@ -498,12 +500,12 @@ def test_grib_datetime():
 
 
 def test_bbox():
-    s = load_from("file", emohawk_examples_file("test.grib"))
+    s = from_source("file", emohawk_examples_file("test.grib"))
     assert s.to_bounding_box().as_tuple() == (73, -27, 33, 45), s.to_bounding_box()
 
 
 def test_grib_proj_string_ll():
-    f = load_from("file", emohawk_examples_file("test.grib"))
+    f = from_source("file", emohawk_examples_file("test.grib"))
     r = f[0].to_proj()
     assert len(r) == 2
     assert r[0] is None
@@ -511,7 +513,7 @@ def test_grib_proj_string_ll():
 
 
 def test_grib_proj_string_mercator():
-    f = load_from("file", emohawk_test_data_file("mercator.grib"))
+    f = from_source("file", emohawk_test_data_file("mercator.grib"))
     assert f[0].to_proj() == (
         "EPSG:4326",
         "+proj=merc +lat_ts=20.000000 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=6371200.000000",
@@ -519,7 +521,7 @@ def test_grib_proj_string_mercator():
 
 
 def test_message():
-    f = load_from("file", emohawk_examples_file("test.grib"))
+    f = from_source("file", emohawk_examples_file("test.grib"))
     v = f[0].message()
     assert len(v) == 526
     assert v[:4] == b"GRIB"
@@ -531,7 +533,7 @@ def test_message():
 def test_grib_from_memory():
     with open(emohawk_test_data_file("test_single.grib"), "rb") as f:
         data = f.read()
-        fs = load_from("memory", data)
+        fs = from_source("memory", data)
         assert len(fs) == 1
         sn = fs.metadata("param")
         assert sn == ["2t"]
@@ -539,7 +541,7 @@ def test_grib_from_memory():
 
 def test_grib_from_stream_single_iter():
     with open(emohawk_examples_file("test6.grib"), "rb") as stream:
-        fs = load_from("stream", stream)
+        fs = from_source("stream", stream)
 
         # no methods are available
         with pytest.raises(TypeError):
@@ -562,7 +564,7 @@ def test_grib_from_stream_single_iter():
 
 def test_grib_from_stream_in_memory():
     with open(emohawk_examples_file("test6.grib"), "rb") as stream:
-        fs = load_from("stream", stream, single_iter=False)
+        fs = from_source("stream", stream, single_iter=False)
 
         assert len(fs) == 6
 
@@ -583,36 +585,36 @@ def test_grib_from_stream_in_memory():
 
 
 def test_grib_save_when_loaded_from_file():
-    fs = load_from("file", emohawk_examples_file("test6.grib"))
+    fs = from_source("file", emohawk_examples_file("test6.grib"))
     assert len(fs) == 6
     with temp_file() as tmp:
         fs.save(tmp)
-        fs_saved = load_from("file", tmp)
+        fs_saved = from_source("file", tmp)
         assert len(fs) == len(fs_saved)
 
 
 def test_grib_save_when_loaded_from_memory():
     with open(emohawk_test_data_file("test_single.grib"), "rb") as f:
         data = f.read()
-        fs = load_from("memory", data)
+        fs = from_source("memory", data)
         with temp_file() as tmp:
             fs.save(tmp)
-            fs_saved = load_from("file", tmp)
+            fs_saved = from_source("file", tmp)
             assert len(fs) == len(fs_saved)
 
 
 def test_grib_save_when_loaded_from_stream():
     with open(emohawk_examples_file("test6.grib"), "rb") as stream:
-        fs = load_from("stream", stream, single_iter=False)
+        fs = from_source("stream", stream, single_iter=False)
         assert len(fs) == 6
         with temp_file() as tmp:
             fs.save(tmp)
-            fs_saved = load_from("file", tmp)
+            fs_saved = from_source("file", tmp)
             assert len(fs) == len(fs_saved)
 
 
 def test_grib_to_pandas():
-    f = load_from("file", emohawk_test_data_file("test_single.grib"))
+    f = from_source("file", emohawk_test_data_file("test_single.grib"))
 
     # all points
     df = f.to_pandas()
