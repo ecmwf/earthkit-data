@@ -171,6 +171,9 @@ class CodesHandle(eccodes.Message):
             vals[vals == CodesHandle.MISSING_VALUE] = np.nan
         return vals
 
+    def get_data_points(self):
+        return eccodes.codes_grib_get_data(self._handle)
+
     def save(self, path):
         with open(path, "wb") as f:
             self.write_to(f)
@@ -268,6 +271,9 @@ class GribField(Base):
     @property
     def values(self):
         return self.handle.get_values()
+
+    def data_points(self):
+        return self.handle.get_data_points()
 
     @property
     def offset(self):

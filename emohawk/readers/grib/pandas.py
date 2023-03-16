@@ -29,7 +29,7 @@ class PandasMixIn:
 
         frames = []
         for s in self:
-            df = pd.DataFrame(filter(s.data))
+            df = pd.DataFrame(filter(s.data_points()))
             df["datetime"] = s.valid_datetime()
             for k, v in s.as_mars().items():
                 df[k] = v
