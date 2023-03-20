@@ -506,18 +506,25 @@ def test_bbox():
 
 def test_grib_proj_string_ll():
     f = from_source("file", emohawk_examples_file("test.grib"))
-    r = f[0].to_proj()
-    assert len(r) == 2
-    assert r[0] is None
-    assert r[1] is None
+    r = f[0].proj_string()
+    assert r is None
+    r = f[0].proj_source_string()
+    assert r is None
+    r = f[0].proj_target_string()
+    assert r is None
 
 
 def test_grib_proj_string_mercator():
     f = from_source("file", emohawk_test_data_file("mercator.grib"))
-    assert f[0].to_proj() == (
-        "EPSG:4326",
-        "+proj=merc +lat_ts=20.000000 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=6371200.000000",
+    ref_str = (
+        "+proj=merc +lat_ts=20.000000 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=6371200.000000"
     )
+    r = f[0].proj_string()
+    assert r == ref_str
+    r = f[0].proj_source_string()
+    assert r == "EPSG:4326"
+    r = f[0].proj_target_string()
+    assert r == ref_str
 
 
 def test_message():

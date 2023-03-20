@@ -366,11 +366,14 @@ class GribField(Base):
     def to_datetime_list(self):
         return [self.valid_datetime()]
 
-    def to_proj(self):
-        return (
-            self.handle.get("projSourceString"),
-            self.handle.get("projTargetString"),
-        )
+    def proj_string(self):
+        return self.proj_target_string()
+
+    def proj_source_string(self):
+        return self.handle.get("projSourceString")
+
+    def proj_target_string(self):
+        return self.handle.get("projTargetString")
 
     def to_bounding_box(self):
         return BoundingBox(
