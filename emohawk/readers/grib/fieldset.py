@@ -128,10 +128,22 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
                 assert n is None
                 fs = self
 
-            for f in fs:
-                yield (f._attributes(keys))
+            # print(f"keys={keys}")
+            if "namespace" in keys:
+                ns = keys.pop("namespace", None)
+                for f in fs:
+                    v = f.metadata(namespace=ns)
+                    # print(f"v={v}")
+                    if len(keys) > 0:
+                        v.update(f._attributes(keys))
+                    yield (v)
+            else:
+                for f in fs:
+                    yield (f._attributes(keys))
 
-        return ls(_proc, GRIB_LS_KEYS, *args, **kwargs)
+        ns = kwargs.pop("namespace", None)
+        keys = GRIB_LS_KEYS if ns is None else dict(namespace=ns)
+        return ls(_proc, keys, *args, **kwargs)
 
     def describe(self, *args, **kwargs):
         from emohawk.utils.summary import format_describe

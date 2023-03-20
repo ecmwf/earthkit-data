@@ -47,6 +47,12 @@ def make_unique(x, full=False):
 
 
 def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, **kwargs):
+
+    do_print = kwargs.pop("print", False)
+
+    if kwargs:
+        raise ValueError(f"ls: unsupported arguments={kwargs}")
+
     _keys = {}
     if isinstance(default_keys, (list, tuple)):
         default_keys = {k: k for k in default_keys}
@@ -54,22 +60,26 @@ def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, **kwargs
     _keys = dict(default_keys) if keys is None else keys
     if isinstance(_keys, (list, tuple)):
         _keys = {k: k for k in keys}
+    elif isinstance(_keys, str):
+        _keys = {keys: keys}
 
-    if extra_keys is not None and len(extra_keys) > 0:
+    if extra_keys is not None:
         if isinstance(extra_keys, (list, tuple)):
-            extra_keys = {k: k for k in extra_keys}
-        _keys.update(extra_keys)
+            if len(extra_keys) > 0:
+                _keys.update({k: k for k in extra_keys})
+        elif isinstance(extra_keys, str):
+            _keys.update({extra_keys: extra_keys})
+        elif isinstance(extra_keys, dict):
+            _keys.update(extra_keys)
 
     if n == 0:
         raise ValueError("n cannot be 0")
 
-    return format_ls(metadata_proc(_keys, n), **kwargs)
+    return format_ls(metadata_proc(_keys, n), do_print)
 
 
-def format_ls(attributes, **kwargs):
+def format_ls(attributes, do_print):
     import pandas as pd
-
-    do_print = kwargs.pop("print", False)
 
     df = pd.DataFrame.from_records(attributes)
 

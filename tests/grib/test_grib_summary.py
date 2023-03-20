@@ -225,6 +225,26 @@ def test_grib_ls_keys():
     assert ref == df.to_dict()
 
 
+def test_grib_ls_namespace():
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+
+    df = f.ls(n=2, namespace="vertical", print=False)
+    ref = {
+        "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
+        "level": {0: 1000, 1: 1000},
+    }
+    assert ref == df.to_dict()
+
+    df = f.ls(n=2, namespace="vertical", extra_keys="shortName", print=False)
+    print(df.to_dict())
+    ref = {
+        "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
+        "level": {0: 1000, 1: 1000},
+        "shortName": {0: "t", 1: "u"},
+    }
+    assert ref == df.to_dict()
+
+
 def test_grib_ls_invalid_num():
     f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
     with pytest.raises(ValueError):
@@ -232,6 +252,12 @@ def test_grib_ls_invalid_num():
 
     with pytest.raises(ValueError):
         f.ls(0, print=False)
+
+
+def test_grib_ls_invalid_arg():
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    with pytest.raises(ValueError):
+        f.ls(invalid=1, print=False)
 
 
 def test_grib_ls_num():
