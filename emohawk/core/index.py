@@ -112,6 +112,12 @@ class Selection(OrderOrSelection):
 
 
 class SelectionByIndex(Selection):
+    def __init__(self, coord_accessor, *args, **kwargs):
+        """Parse args and kwargs to build a dictionary in self.order"""
+        super().__init__(*args, **kwargs)
+        if not self.is_empty:
+            self._convert_index(coord_accessor)
+
     def parse_kwarg(self, k, v):
         if v is not None and not isinstance(v, (list, tuple, slice)):
             v = [int(v)]
@@ -119,21 +125,31 @@ class SelectionByIndex(Selection):
             v = [int(_) for _ in v]
         self.dic[k] = v
 
-    def convert_index(self, coord_accessor):
+    @property
+    def is_valid(self):
+        return all([len(v) > 0 for v in self.dic.values()])
+
+    def _convert_index(self, coord_accessor):
         for k in list(self.dic.keys()):
             v = self.dic[k]
             try:
                 coord_vals = coord_accessor(k)
-                if coord_vals is None or coord_vals[0] is None:
-                    self.dic = dict()
+                if coord_vals is None or len(coord_vals) == 0:
+                    self.dic = {k: []}
                     return
                 else:
                     if isinstance(v, slice):
                         self.dic[k] = coord_vals[v]
                     else:
                         self.dic[k] = [coord_vals[i] for i in v]
+                    if None in self.dic[k]:
+                        self.dic = {k: []}
+                        return
+
             except Exception as e:
-                raise IndexError(f"Invalid index={v} specified for key={k}. {e}")
+                raise IndexError(
+                    f"Invalid index={v}. Specified key={k} has {len(coord_accessor(k))} values. {e}"
+                )
 
 
 class Order(OrderOrSelection):
@@ -304,13 +320,11 @@ class Index(Source):
         """Filter elements on their metadata() using indices, according to kwargs.
         Returns a new index object.
         """
-        selection = SelectionByIndex(*args, **kwargs)
+        selection = SelectionByIndex(self.coord, *args, **kwargs)
         if selection.is_empty:
             return self
-
-        selection.convert_index(self.coord)
-        if selection.is_empty:
-            return self.new_mask_index(self, [])
+        elif not selection.is_valid:
+            self.new_mask_index(self, [])
 
         return self.sel(selection.selection)
 

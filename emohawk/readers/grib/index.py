@@ -22,6 +22,7 @@ from emohawk.core.index import (
     Order,
     OrderOrSelection,
     Selection,
+    SelectionByIndex,
 )
 from emohawk.decorators import cached_method
 from emohawk.indexing.database.json import JsonDatabase
@@ -246,6 +247,9 @@ class FieldsetInFilesWithSqlIndex(FieldsetInFilesWithDBIndex):
 
     def sel(self, *args, **kwargs):
         return self.filter(Selection(*args, **kwargs))
+
+    def isel(self, *args, **kwargs):
+        return self.filter(SelectionByIndex(self.coord, *args, **kwargs))
 
     def order_by(self, *args, **kwargs):
         return self.filter(Order(*args, **kwargs))
