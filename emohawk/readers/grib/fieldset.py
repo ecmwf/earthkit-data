@@ -118,28 +118,23 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         from emohawk.utils.summary import ls
 
         def _proc(keys, n):
+            num = len(self)
+            pos = slice(0, num)
             if n is not None:
-                num = len(self)
-                if n > 0:
-                    fs = self[: min(num, n)]
-                else:
-                    fs = self[-min(num, -n) :]
-            else:
-                assert n is None
-                fs = self
+                pos = slice(0, min(num, n)) if n > 0 else slice(num - min(num, -n), num)
+            pos_range = range(pos.start, pos.stop)
 
-            # print(f"keys={keys}")
             if "namespace" in keys:
                 ns = keys.pop("namespace", None)
-                for f in fs:
+                for i in pos_range:
+                    f = self[i]
                     v = f.metadata(namespace=ns)
-                    # print(f"v={v}")
                     if len(keys) > 0:
                         v.update(f._attributes(keys))
                     yield (v)
             else:
-                for f in fs:
-                    yield (f._attributes(keys))
+                for i in pos_range:
+                    yield (self[i]._attributes(keys))
 
         ns = kwargs.pop("namespace", None)
         keys = GRIB_LS_KEYS if ns is None else dict(namespace=ns)
