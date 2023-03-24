@@ -319,10 +319,10 @@ def test_grib_to_numpy_1():
 @pytest.mark.parametrize(
     "first,options, expected_shape",
     [
-        (False, {}, (1, 84)),
+        (False, {}, (1, 7, 12)),
         (False, {"flatten": True}, (1, 84)),
         (False, {"flatten": False}, (1, 7, 12)),
-        (True, {}, (84,)),
+        (True, {}, (7, 12)),
         (True, {"flatten": True}, (84,)),
         (True, {"flatten": False}, (7, 12)),
     ],
@@ -347,7 +347,7 @@ def test_grib_to_numpy_18():
     eps = 1e-5
 
     # whole file
-    v = f.to_numpy()
+    v = f.to_numpy(flatten=True)
     assert isinstance(v, np.ndarray)
     assert v.shape == (18, 84)
     vf0 = v[0].flatten()
@@ -378,7 +378,8 @@ def test_grib_to_numpy_18():
             {},
             (
                 18,
-                84,
+                7,
+                12,
             ),
         ),
         (
@@ -399,7 +400,7 @@ def test_grib_to_numpy_18_shape(options, expected_shape):
     # whole file
     v = f.to_numpy()
     assert isinstance(v, np.ndarray)
-    assert v.shape == (18, 84)
+    assert v.shape == (18, 7, 12)
     vf0 = f[0].to_numpy().flatten()
     assert vf0.shape == (84,)
     vf15 = f[15].to_numpy().flatten()

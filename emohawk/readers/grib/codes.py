@@ -290,7 +290,7 @@ class GribField(Base):
         return (Nj, Ni)
 
     # @call_counter
-    def to_numpy(self, flatten=True):
+    def to_numpy(self, flatten=False):
         return self.values if flatten else self.values.reshape(self.shape)
 
     def to_points(self, flatten=True):

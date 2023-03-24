@@ -362,7 +362,7 @@ class NetCDFReader(Reader):
 
         return fields
 
-    def to_numpy(self, flatten=True):
+    def to_numpy(self, flatten=False):
         arr = self.to_xarray().to_array().to_numpy()
         if flatten:
             arr = arr.flatten()
