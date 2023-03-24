@@ -438,10 +438,10 @@ def test_grib_to_points_1():
     eps = 1e-5
     v = f[0].to_points()
     assert isinstance(v, dict)
-    assert isinstance(v["x"], np.ndarray)
-    assert isinstance(v["y"], np.ndarray)
+    assert isinstance(v["lon"], np.ndarray)
+    assert isinstance(v["lat"], np.ndarray)
     check_array(
-        v["x"],
+        v["lon"],
         (84,),
         first=0.0,
         last=330.0,
@@ -449,7 +449,7 @@ def test_grib_to_points_1():
         eps=eps,
     )
     check_array(
-        v["y"],
+        v["lat"],
         (84,),
         first=90,
         last=-90,
@@ -463,17 +463,17 @@ def test_grib_to_points_1_shape():
 
     v = f[0].to_points(flatten=False)
     assert isinstance(v, dict)
-    assert isinstance(v["x"], np.ndarray)
-    assert isinstance(v["y"], np.ndarray)
+    assert isinstance(v["lon"], np.ndarray)
+    assert isinstance(v["lat"], np.ndarray)
 
     # x
-    assert v["x"].shape == (7, 12)
-    for x in v["x"]:
+    assert v["lon"].shape == (7, 12)
+    for x in v["lon"]:
         assert np.allclose(x, np.linspace(0, 330, 12))
 
     # y
-    assert v["y"].shape == (7, 12)
-    for i, y in enumerate(v["y"]):
+    assert v["lat"].shape == (7, 12)
+    for i, y in enumerate(v["lat"]):
         assert np.allclose(y, np.ones(12) * (90 - i * 30))
 
 

@@ -171,6 +171,12 @@ class CodesHandle(eccodes.Message):
             vals[vals == CodesHandle.MISSING_VALUE] = np.nan
         return vals
 
+    def get_latitudes(self):
+        return self.get("latitudes")
+
+    def get_longitudes(self):
+        return self.get("longitudes")
+
     def get_data_points(self):
         return eccodes.codes_grib_get_data(self._handle)
 
@@ -272,9 +278,6 @@ class GribField(Base):
     def values(self):
         return self.handle.get_values()
 
-    def data_points(self):
-        return self.handle.get_data_points()
-
     @property
     def offset(self):
         if self._offset is None:
@@ -289,18 +292,29 @@ class GribField(Base):
             return self.handle.get("numberOfDataPoints")
         return (Nj, Ni)
 
-    # @call_counter
+    def data(self, *args, flatten=False):
+        keys = dict(
+            lat=self.handle.get_latitudes,
+            lon=self.handle.get_longitudes,
+            value=self.handle.get_values,
+        )
+        for k in args:
+            if k not in keys:
+                raise ValueError(f"data: invalid argument: {k}")
+
+        arg_keys = args if args else ("lat", "lon", "value")
+        r = [keys[k]() for k in arg_keys]
+        if not flatten:
+            shape = self.shape
+            r = [x.reshape(shape) for x in r]
+        return r[0] if len(r) == 1 else tuple(r)
+
     def to_numpy(self, flatten=False):
         return self.values if flatten else self.values.reshape(self.shape)
 
     def to_points(self, flatten=True):
-        shape = self.shape
-        lat = self.handle.get("latitudes")
-        lon = self.handle.get("longitudes")
-        if flatten:
-            return {"x": lon, "y": lat}
-        else:
-            return {"x": lon.reshape(shape), "y": lat.reshape(shape)}
+        lon, lat = self.data("lon", "lat", flatten=flatten)
+        return dict(lon=lon, lat=lat)
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (

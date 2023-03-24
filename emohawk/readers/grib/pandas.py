@@ -14,6 +14,7 @@ LOG = logging.getLogger(__name__)
 
 class PandasMixIn:
     def to_pandas(self, latitude=None, longitude=None, **kwargs):
+        import numpy as np
         import pandas as pd
 
         def ident(x):
@@ -22,14 +23,18 @@ class PandasMixIn:
         filter = ident
 
         def select_point(d):
-            return [x for x in d if x["lat"] == latitude and x["lon"] == longitude]
+            idx = np.where((d["lat"] == latitude) & (d["lon"] == longitude))
+            return dict(lat=d["lat"][idx], lon=d["lon"][idx], value=d["value"][idx])
 
         if latitude is not None or longitude is not None:
             filter = select_point
 
+        columns = ("lat", "lon", "value")
         frames = []
         for s in self:
-            df = pd.DataFrame(filter(s.data_points()))
+            df = pd.DataFrame.from_dict(
+                filter(dict(zip(columns, s.data("lat", "lon", "value", flatten=True))))
+            )
             df["datetime"] = s.valid_datetime()
             for k, v in s.as_mars().items():
                 df[k] = v
