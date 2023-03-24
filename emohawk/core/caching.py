@@ -9,7 +9,7 @@
 
 """
 
-Internally, CliMetLab cache is managed by the module `emohawk.core.cache`,
+Internally, emohawk cache is managed by the module `emohawk.core.caching`,
 it relies on a sqlite database. The :py:func:`cache_file` function provide
 a unique path for a given couple (`owner`, `args`).
 The calling code is responsible for checking if the file exists and
