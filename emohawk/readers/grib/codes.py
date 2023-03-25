@@ -268,12 +268,6 @@ class GribField(Base):
             self._handle = CodesReader.from_cache(self.path).at_offset(self._offset)
         return self._handle
 
-    def is_loaded(self):
-        return self._handle is not None
-
-    def release(self):
-        self._handle = None
-
     @property
     def values(self):
         return self.handle.get_values()
