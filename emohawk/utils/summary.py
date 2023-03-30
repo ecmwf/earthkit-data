@@ -146,7 +146,7 @@ def format_info(data, selected=None, details=None, **kwargs):
 
     do_print = kwargs.pop("print", True)
     html = kwargs.pop("html", True)
-    raw = kwargs.pop("as_raw", False)
+    raw = kwargs.pop("_as_raw", False)
 
     rv = {item["title"]: item["data"] for item in data}
 

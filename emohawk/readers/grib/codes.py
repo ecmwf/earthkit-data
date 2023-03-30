@@ -22,7 +22,16 @@ from emohawk.utils.bbox import BoundingBox
 LOG = logging.getLogger(__name__)
 
 
-GRIB_INFO_NAMESPACES = ["ls", "geography", "mars", "parameter", "time", "vertical"]
+GRIB_NAMESPACES = (
+    None,
+    "ls",
+    "geography",
+    "mars",
+    "parameter",
+    "statistics",
+    "time",
+    "vertical",
+)
 
 
 def missing_is_none(x):
@@ -340,23 +349,6 @@ class GribField(Base):
             west_east_increment=self.handle.get("iDirectionIncrementInDegrees"),
         )
 
-    def info(self, namespace=None, **kwargs):
-        from emohawk.utils.summary import format_info
-
-        namespaces = [namespace] if namespace is not None else GRIB_INFO_NAMESPACES
-        r = [
-            {
-                "title": ns,
-                "data": self.handle.as_namespace(ns),
-                "tooltip": f"Keys in the ecCodes {ns} namespace",
-            }
-            for ns in namespaces
-        ]
-
-        return format_info(
-            r, selected="parameter", details=self.__class__.__name__, **kwargs
-        )
-
     def datetime(self):
         date = self.handle.get("date")
         time = self.handle.get("time")
@@ -413,9 +405,7 @@ class GribField(Base):
             key = "paramId"
         return self.handle.get(key)
 
-    def _namespaces(self):
-        return (None, *GRIB_INFO_NAMESPACES)
-
+    # TODO: move it to core or util
     @staticmethod
     def _parse_metadata_args(*args, namespace=None, ktype=None):
 
@@ -477,7 +467,7 @@ class GribField(Base):
             return tuple(r) if len(r) > 1 else r[0]
         else:
             if len(namespace) == 0:
-                namespace = (None, *GRIB_INFO_NAMESPACES)
+                namespace = GRIB_NAMESPACES
             r = {ns: self.handle.as_namespace(ns) for ns in namespace}
             if len(r) == 1:
                 return r[namespace[0]]
@@ -488,6 +478,23 @@ class GribField(Base):
 
     def __getitem__(self, key):
         return self.metadata(key)
+
+    def dump(self, namespace=None, **kwargs):
+        from emohawk.utils.summary import format_info
+
+        namespace = GRIB_NAMESPACES if namespace is None else [namespace]
+        r = [
+            {
+                "title": ns if ns is not None else "default",
+                "data": self.handle.as_namespace(ns),
+                "tooltip": f"Keys in the ecCodes {ns} namespace",
+            }
+            for ns in namespace
+        ]
+
+        return format_info(
+            r, selected="parameter", details=self.__class__.__name__, **kwargs
+        )
 
     def as_mars(self, param="shortName"):
         return self.handle.as_namespace("mars", param=param)

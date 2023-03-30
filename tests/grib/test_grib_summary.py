@@ -354,11 +354,22 @@ def test_grib_tail_num():
     assert ref == df.to_dict()
 
 
-def test_grib_info():
+def test_grib_dump():
     f = from_source("file", emohawk_examples_file("test6.grib"))
 
+    namespaces = (
+        "default",
+        "geography",
+        "ls",
+        "mars",
+        "parameter",
+        "statistics",
+        "time",
+        "vertical",
+    )
+
     # default
-    r = f[0].info(print=False, as_raw=True)
+    r = f[0].dump(print=False, _as_raw=True)
     ref = [
         {
             "title": "ls",
@@ -443,10 +454,16 @@ def test_grib_info():
         },
     ]
 
-    assert r == ref
+    assert len(r) == len(namespaces)
+    assert isinstance(r, list)
+    for d in r:
+        ns = d["title"]
+        assert ns in namespaces
+        if ns not in ("default", "statistics"):
+            assert d == [x for x in ref if x["title"] == ns][0], ns
 
     # a namespace
-    r = f[0].info(namespace="mars", print=False, as_raw=True)
+    r = f[0].dump(namespace="mars", print=False, _as_raw=True)
     ref = [
         {
             "title": "mars",
@@ -469,7 +486,7 @@ def test_grib_info():
     assert r == ref
 
     # namespace reformatted
-    r = f[0].info(namespace="mars", print=False, as_raw=False)
+    r = f[0].dump(namespace="mars", print=False, _as_raw=False)
     ref = {
         "mars": {
             "domain": "g",
