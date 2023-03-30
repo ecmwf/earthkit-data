@@ -180,7 +180,7 @@ class BoundingBox:
         return dict(north=self.north, west=self.west, south=self.south, east=self.east)
 
 
-def to_bounding_box(obj):
+def bounding_box(obj):
 
     if isinstance(obj, BoundingBox):
         return obj
@@ -190,4 +190,4 @@ def to_bounding_box(obj):
 
     obj = get_wrapper(obj)
 
-    return to_bounding_box(obj.to_bounding_box())
+    return bounding_box(obj.bounding_box())

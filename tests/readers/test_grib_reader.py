@@ -68,7 +68,7 @@ def test_datetime():
 
 def test_bbox():
     s = from_source("file", emohawk_file("docs/examples/test.grib"))
-    assert s.to_bounding_box().as_tuple() == (73, -27, 33, 45), s.to_bounding_box()
+    assert s.bounding_box().as_tuple() == (73, -27, 33, 45), s.bounding_box()
 
 
 if __name__ == "__main__":

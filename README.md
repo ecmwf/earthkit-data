@@ -27,7 +27,7 @@ reference systems and bounding boxes.
 ```
 x = data.to_axis("x")
 crs = data.to_crs()
-x_min, x_max, y_min, y_max = data.to_bounding_box()
+x_min, x_max, y_min, y_max = data.bounding_box()
 ```
 
 ## License

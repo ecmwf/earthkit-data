@@ -81,7 +81,7 @@ class Base(metaclass=MetaBase):
         self._not_implemented()
 
     @abstractmethod
-    def to_bounding_box(self):
+    def bounding_box(self):
         self._not_implemented()
 
     # For machine learning

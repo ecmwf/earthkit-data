@@ -145,8 +145,8 @@ class MultiSource(Source):
             result.update(s.to_datetime_list())
         return sorted(result)
 
-    def to_bounding_box(self):
-        return BoundingBox.multi_merge([s.to_bounding_box() for s in self.sources])
+    def bounding_box(self):
+        return BoundingBox.multi_merge([s.bounding_box() for s in self.sources])
 
 
 source = MultiSource

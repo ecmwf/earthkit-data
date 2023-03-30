@@ -38,7 +38,7 @@ class StrWrapper(Wrapper):
     def __init__(self, data):
         self.data = data
 
-    def to_bounding_box(self):
+    def bounding_box(self):
         from emohawk.utils.domains import domain_to_area
 
         return domain_to_area(self.data)

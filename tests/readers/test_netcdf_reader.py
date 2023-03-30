@@ -57,7 +57,7 @@ def test_dummy_netcdf_reader_2(attribute):
     assert "lat" in ds.dims
     assert len(s) == 1
     # s.to_datetime_list()
-    s.to_bounding_box()
+    s.bounding_box()
 
 
 def test_dummy_netcdf():
@@ -189,7 +189,7 @@ def test_netcdf_to_points_1():
 
 def test_bbox():
     s = from_source("file", emohawk_file("docs/examples/test.nc"))
-    assert s.to_bounding_box().as_tuple() == (73, -27, 33, 45), s.to_bounding_box()
+    assert s.bounding_box().as_tuple() == (73, -27, 33, 45), s.bounding_box()
 
 
 def test_netcdf_proj_string_non_cf():

@@ -376,7 +376,7 @@ class GribField(Base):
     def proj_target_string(self):
         return self.handle.get("projTargetString")
 
-    def to_bounding_box(self):
+    def bounding_box(self):
         return BoundingBox(
             north=self.handle.get("latitudeOfFirstGridPointInDegrees"),
             south=self.handle.get("latitudeOfLastGridPointInDegrees"),

@@ -168,8 +168,8 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     def to_datetime_list(self):
         return self._reader.to_datetime_list()
 
-    def to_bounding_box(self):
-        return self._reader.to_bounding_box()
+    def bounding_box(self):
+        return self._reader.bounding_box()
 
     def statistics(self, **kwargs):
         return self._reader.statistics(**kwargs)

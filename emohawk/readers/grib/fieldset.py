@@ -162,8 +162,8 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
             result.add(s.valid_datetime())
         return sorted(result)
 
-    def to_bounding_box(self):
-        return BoundingBox.multi_merge([s.to_bounding_box() for s in self])
+    def bounding_box(self):
+        return BoundingBox.multi_merge([s.bounding_box() for s in self])
 
     def statistics(self):
         import numpy as np

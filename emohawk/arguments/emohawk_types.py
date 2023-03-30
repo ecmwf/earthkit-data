@@ -268,9 +268,9 @@ class BoundingBoxType(Type, NonListMixin):
         decorator.format = args[0]
 
     def cast(self, value):
-        from emohawk.utils.bbox import to_bounding_box
+        from emohawk.utils.bbox import bounding_box
 
-        return to_bounding_box(value)
+        return bounding_box(value)
 
     def format(self, value, format):
         from emohawk.utils.bbox import BoundingBox

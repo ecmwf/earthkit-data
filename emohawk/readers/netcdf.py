@@ -183,7 +183,7 @@ class NetCDFField(Base):
     def __repr__(self):
         return "NetCDFField[%r,%r]" % (self.variable, self.slices)
 
-    def to_bounding_box(self):
+    def bounding_box(self):
         return BoundingBox(
             north=self.north, south=self.south, east=self.east, west=self.west
         )
@@ -399,8 +399,8 @@ class NetCDFReader(Reader):
             result.add(to_datetime(s.time))
         return sorted(result)
 
-    def to_bounding_box(self):
-        return BoundingBox.multi_merge([s.to_bounding_box() for s in self.get_fields()])
+    def bounding_box(self):
+        return BoundingBox.multi_merge([s.bounding_box() for s in self.get_fields()])
 
 
 def reader(source, path, magic=None, deeper_check=False):
