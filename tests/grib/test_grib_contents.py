@@ -26,63 +26,116 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
     assert np.isclose(v.mean(), meanv, eps)
 
 
-def test_grib_get_string_1():
+def repeat_list_items(items, count):
+    return sum([[x] * count for x in items], [])
+
+
+@pytest.mark.parametrize(
+    "key,expected_value",
+    [
+        ("shortName", "2t"),
+        ("shortName:s", "2t"),
+        ("shortName:str", "2t"),
+        ("centre", "ecmf"),
+        ("centre:l", 98),
+        ("level", 0),
+        ("level:l", 0),
+        ("level:int", 0),
+    ],
+)
+def test_metadata_get_1(key, expected_value):
     f = from_source("file", emohawk_test_data_file("test_single.grib"))
-    for name in ("shortName", "shortName:s", "shortName:str"):
-        sn = f.metadata(name)
-        assert sn == ["2t"]
-        sn = f[0][name]
-        assert sn == "2t"
+    sn = f.metadata(key)
+    assert sn == [expected_value]
+    sn = f[0].metadata(key)
+    assert sn == expected_value
 
 
-def test_grib_get_string_18():
+@pytest.mark.parametrize(
+    "key,ktype,expected_value",
+    [
+        ("shortName", str, "2t"),
+        ("shortName", None, "2t"),
+        ("centre", None, "ecmf"),
+        ("centre", str, "ecmf"),
+        ("centre", int, 98),
+        ("level", None, 0),
+        ("level", str, "0"),
+        ("level", int, 0),
+    ],
+)
+def test_grib_metadata_ktype_1(key, ktype, expected_value):
+    f = from_source("file", emohawk_test_data_file("test_single.grib"))
+    sn = f.metadata(key, ktype=ktype)
+    assert sn == [expected_value]
+    sn = f[0].metadata(key, ktype=ktype)
+    assert sn == expected_value
+
+
+@pytest.mark.parametrize(
+    "key,expected_value",
+    [
+        ("shortName", ["t", "u", "v"] * 6),
+        ("shortName:s", ["t", "u", "v"] * 6),
+        ("shortName:str", ["t", "u", "v"] * 6),
+        ("level", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
+        ("level:l", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
+        ("level:int", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
+    ],
+)
+def test_grib_metadata_18(key, expected_value):
     f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
-    for name in ("shortName", "shortName:s", "shortName:str"):
-        sn = f.metadata(name)
-        assert sn == ["t", "u", "v"] * 6
-        # sn = f[name]
-        # assert sn == ["t", "u", "v"] * 6
+    sn = f.metadata(key)
+    assert sn == expected_value
 
 
-def test_grib_get_long_1():
-    f = from_source("file", emohawk_test_data_file("test_single.grib"))
-    for name in ("level", "level:l", "level:int"):
-        r = f.metadata(name)
-        assert r == [0]
-        r = f[0][name]
-        assert r == 0
-
-
-def test_grib_get_long_18():
+@pytest.mark.parametrize(
+    "key,ktype,expected_value",
+    [
+        ("shortName", str, ["t", "u", "v"] * 6),
+        ("shortName", None, ["t", "u", "v"] * 6),
+        (
+            "level",
+            int,
+            repeat_list_items([1000, 850, 700, 500, 400, 300], 3),
+        ),
+        (
+            "level",
+            None,
+            repeat_list_items([1000, 850, 700, 500, 400, 300], 3),
+        ),
+    ],
+)
+def test_grib_metadata_ktype_18(key, ktype, expected_value):
     f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
-    ref = (
-        ([1000] * 3)
-        + ([850] * 3)
-        + ([700] * 3)
-        + ([500] * 3)
-        + ([400] * 3)
-        + ([300] * 3)
-    )
-
-    for name in ("level", "level:l", "level:int"):
-        r = f.metadata(name)
-        assert r == ref
-        # r = f[name]
-        # assert r == ref
+    sn = f.metadata(key, ktype=ktype)
+    assert sn == expected_value
 
 
-def test_grib_get_double_1():
+@pytest.mark.parametrize(
+    "key,expected_value",
+    [
+        ("max", 307.18560791015625),
+        ("max:d", 307.18560791015625),
+        ("max:float", 307.18560791015625),
+    ],
+)
+def test_grib_metadata_double_1(key, expected_value):
     f = from_source("file", emohawk_test_data_file("test_single.grib"))
-    for name in ("max", "max:d", "max:float"):
-        r = f.metadata(name)
-        assert len(r) == 1
-        r = r[0]
-        assert np.isclose(r, 307.18560791015625)
-        # r = f[name]
-        # assert np.isclose(r, 316.061)
+    r = f.metadata(key)
+    assert len(r) == 1
+    assert np.isclose(r[0], expected_value)
 
 
-def test_grib_get_double_18():
+@pytest.mark.parametrize(
+    "key",
+    [
+        ("max"),
+        ("max:d"),
+        ("max:float"),
+    ],
+)
+def test_grib_metadata_double_18(key):
     f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
 
     ref = [
@@ -106,11 +159,43 @@ def test_grib_get_double_18():
         36.92034912109375,
     ]
 
-    for name in ("max", "max:d", "max:float"):
-        r = f.metadata(name)
-        np.testing.assert_allclose(r, ref, 0.001)
-        # r = f[name]
-        # np.testing.assert_allclose(r, ref, 0.001)
+    r = f.metadata(key)
+    np.testing.assert_allclose(r, ref, 0.001)
+
+
+@pytest.mark.parametrize(
+    "key,ktype",
+    [
+        ("max", None),
+        ("max", float),
+    ],
+)
+def test_grib_metadata_double_ktype_18(key, ktype):
+    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+
+    ref = [
+        320.5641784667969,
+        17.713119506835938,
+        11.833480834960938,
+        304.53916931152344,
+        27.10162353515625,
+        12.660964965820312,
+        287.26531982421875,
+        28.145523071289062,
+        15.6385498046875,
+        271.8430633544922,
+        36.74000549316406,
+        15.009902954101562,
+        264.00323486328125,
+        46.213775634765625,
+        23.949615478515625,
+        250.6531524658203,
+        58.45549011230469,
+        36.92034912109375,
+    ]
+
+    r = f.metadata(key, ktype=ktype)
+    np.testing.assert_allclose(r, ref, 0.001)
 
 
 def test_grib_get_long_array_1():
@@ -203,18 +288,37 @@ def test_grib_get_double_array_18():
     assert np.isclose(v[17][20], 316.4207458496094, eps)
 
 
-def test_grib_get_generic():
+def test_grib_metadata_generic():
     f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
     f = f.sel(count=[1, 2, 3, 4])
 
     sn = f.metadata(["shortName"])
-    assert sn == [["t"], ["u"], ["v"], ["t"]]
+    assert sn == ["t", "u", "v", "t"]
     cs = f.metadata(["centre:s"])
-    assert cs == [["ecmf"], ["ecmf"], ["ecmf"], ["ecmf"]]
+    assert cs == ["ecmf", "ecmf", "ecmf", "ecmf"]
     cl = f.metadata(["centre:l"])
-    assert cl == [[98], [98], [98], [98]]
+    assert cl == [98, 98, 98, 98]
     lg = f.metadata(["level:d", "cfVarName"])
-    assert lg == [[1000, "t"], [1000, "u"], [1000, "v"], [850, "t"]]
+    assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
+    lg = f.metadata("level", "cfVarName")
+    assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
+
+    # ktype
+    cs = f.metadata("centre", ktype=None)
+    assert cs == ["ecmf", "ecmf", "ecmf", "ecmf"]
+    cs = f.metadata("centre", ktype=str)
+    assert cs == ["ecmf", "ecmf", "ecmf", "ecmf"]
+    cl = f.metadata("centre", ktype=int)
+    assert cl == [98, 98, 98, 98]
+    lg = f.metadata(["level", "cfVarName"], ktype=(int, None))
+    assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
+    lg = f.metadata(["level", "cfVarName"], ktype=str)
+    assert lg == [("1000", "t"), ("1000", "u"), ("1000", "v"), ("850", "t")]
+
+    # non matching ktype
+    with pytest.raises(ValueError):
+        f.metadata(["level", "cfVarName", "centre"], ktype=(int, None))
+
     # lgk = f.metadata(["level:d", "cfVarName"], "key")
     # assert lgk == [[1000, 1000, 1000, 850], ["t", "u", "v", "t"]]
     # with pytest.raises(ValueError):
@@ -224,12 +328,12 @@ def test_grib_get_generic():
     f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
     f = f.sel(count=[1])
     lg = f.metadata(["level", "cfVarName"])
-    assert lg == [[1000, "t"]]
+    assert lg == [(1000, "t")]
 
     # single field
     f = from_source("file", emohawk_examples_file("tuv_pl.grib"))[0]
     lg = f.metadata(["level", "cfVarName"])
-    assert lg == [1000, "t"]
+    assert lg == (1000, "t")
 
 
 def test_grib_metadata_namespace():
@@ -239,8 +343,27 @@ def test_grib_metadata_namespace():
     ref = {"level": 1000, "typeOfLevel": "isobaricInhPa"}
     assert r == ref
 
-    with pytest.raises(ValueError):
-        f[0].metadata("param", namespace="vertical")
+    r = f[0].metadata(namespace=["vertical", "time"])
+    ref = {
+        "vertical": {"typeOfLevel": "isobaricInhPa", "level": 1000},
+        "time": {
+            "dataDate": 20180801,
+            "dataTime": 1200,
+            "stepUnits": 1,
+            "stepType": "instant",
+            "stepRange": "0",
+            "startStep": 0,
+            "endStep": 0,
+            "validityDate": 20180801,
+            "validityTime": 1200,
+        },
+    }
+    assert r == ref
+
+    r = f[0].metadata()
+    assert isinstance(r, dict)
+    for ns in ["", "vertical", "time"]:
+        assert ns in r, ns
 
 
 def test_grib_values_1():

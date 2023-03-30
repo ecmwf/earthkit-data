@@ -21,36 +21,38 @@ LOG = logging.getLogger(__name__)
 
 
 def test_cache_1():
+    with settings.temporary():
+        settings.set("maximum-cache-disk-usage", "99%")
 
-    purge_cache(matcher=lambda e: ["owner"] == "test_cache")
+        purge_cache(matcher=lambda e: ["owner"] == "test_cache")
 
-    def touch(target, args):
-        assert args["foo"] in (1, 2)
-        with open(target, "w"):
-            pass
+        def touch(target, args):
+            assert args["foo"] in (1, 2)
+            with open(target, "w"):
+                pass
 
-    path1 = cache_file(
-        "test_cache",
-        touch,
-        {"foo": 1},
-        extension=".test",
-    )
+        path1 = cache_file(
+            "test_cache",
+            touch,
+            {"foo": 1},
+            extension=".test",
+        )
 
-    path2 = cache_file(
-        "test_cache",
-        touch,
-        {"foo": 2},
-        extension=".test",
-    )
+        path2 = cache_file(
+            "test_cache",
+            touch,
+            {"foo": 2},
+            extension=".test",
+        )
 
-    assert path1 != path2
+        assert path1 != path2
 
-    cnt = 0
-    for f in cache_entries():
-        if f["owner"] == "test_cache":
-            cnt += 1
+        cnt = 0
+        for f in cache_entries():
+            if f["owner"] == "test_cache":
+                cnt += 1
 
-    assert cnt == 2
+        assert cnt == 2
 
 
 # 1GB ram disk on MacOS (blocks of 512 bytes)

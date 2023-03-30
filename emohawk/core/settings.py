@@ -60,16 +60,6 @@ SETTINGS_AND_HELP = {
         """Directory of where the dowloaded files are cached, with ``${USER}`` is the user id.
         See :doc:`/guide/caching` for more information.""",
     ),
-    "projections-directories": _(
-        [os.path.join(DOT_EMOHAWK, "projections")],
-        """List of directories where to search for projections definitions.
-        See :ref:`projections` for more information.""",
-    ),
-    "layers-directories": _(
-        [os.path.join(DOT_EMOHAWK, "layers")],
-        """List of directories where to search for layers definitions.
-        See :ref:`layers` for more information.""",
-    ),
     "dask-directories": _(
         [os.path.join(DOT_EMOHAWK, "dask")],
         """List of directories where to search for dask cluster definitions.
@@ -96,7 +86,7 @@ SETTINGS_AND_HELP = {
         none_ok=True,
     ),
     "maximum-cache-disk-usage": _(
-        "90%",
+        "95%",
         """Disk usage threshold after which CliMetLab expires older cached
         entries (% of the full disk capacity).
         See :doc:`/guide/caching` for more information.""",
@@ -114,10 +104,6 @@ SETTINGS_AND_HELP = {
     "download-out-of-date-urls": _(
         False,
         "Re-download URLs when the remote version of a cached file as been changed",
-    ),
-    "use-standalone-mars-client-when-available": _(
-        True,
-        "Use the standalone mars client when available instead of using the web API.",
     ),
 }
 

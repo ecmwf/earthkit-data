@@ -158,8 +158,18 @@ class CodesHandle(eccodes.Message):
 
     def as_namespace(self, namespace, param="shortName"):
         r = {}
+        ignore = {
+            "distinctLatitudes",
+            "distinctLongitudes",
+            "distinctLatitudes",
+            "latLonValues",
+            "latitudes",
+            "longitudes",
+            "values",
+        }
         for key in self.keys(namespace=namespace):
-            r[key] = self.get(param if key == "param" else key)
+            if key not in ignore:
+                r[key] = self.get(param if key == "param" else key)
         return r
 
     # TODO: once missing value handling is implemented in the base class this method
@@ -330,15 +340,6 @@ class GribField(Base):
             west_east_increment=self.handle.get("iDirectionIncrementInDegrees"),
         )
 
-    def field_metadata(self):
-        m = self._grid_definition()
-        for n in ("shortName", "units", "paramId"):
-            p = self.handle.get(n)
-            if p is not None:
-                m[n] = str(p)
-        m["shape"] = self.shape
-        return m
-
     def info(self, namespace=None, **kwargs):
         from emohawk.utils.summary import format_info
 
@@ -405,22 +406,88 @@ class GribField(Base):
             name = "paramId"
         return self.handle.get(name)
 
-    def metadata(self, name=None, namespace=None):
-        if name is not None and namespace is not None:
-            raise ValueError("metadata: cannot use name and namespace together")
-        if isinstance(name, (list, tuple)):
-            return [self[k] for k in name]
-        elif name is not None:
-            return self[name]
-        elif namespace is not None:
-            return self.handle.as_namespace(namespace)
+    def _get_key(self, key):
+        if key == "param":
+            key = "shortName"
+        elif key == "_param_id":
+            key = "paramId"
+        return self.handle.get(key)
 
-    def __getitem__(self, name):
-        if name == "param":
-            name = "shortName"
-        if name == "_param_id":
-            name = "paramId"
-        return self.handle.get(name)
+    def _namespaces(self):
+        return (None, *GRIB_INFO_NAMESPACES)
+
+    @staticmethod
+    def _parse_metadata_args(*args, namespace=None, ktype=None):
+
+        key = []
+        for k in args:
+            if isinstance(k, str):
+                key.append(k)
+            elif isinstance(k, (list, tuple)):
+                key.extend(k)
+            else:
+                raise ValueError(f"metadata: invalid key argument={k}")
+
+        if key:
+            if namespace is not None:
+                if not isinstance(namespace, str):
+                    raise ValueError(
+                        f"metadata: namespace={namespace} must be a str when key specified"
+                    )
+
+            if isinstance(ktype, (list, tuple)):
+                if len(ktype) != len(key):
+                    if len(ktype) == 1:
+                        ktype = [ktype[0]] * len(key)
+                    else:
+                        raise ValueError(
+                            "metadata: ktype must have the same number of items as key"
+                        )
+            else:
+                ktype = [ktype] * len(key)
+
+        if namespace is None:
+            namespace = []
+        elif isinstance(namespace, str):
+            namespace = [namespace]
+
+        return (key, namespace, ktype)
+
+    def metadata(self, *args, namespace=None, ktype=None):
+        def _key_name(key):
+            if key == "param":
+                key = "shortName"
+            elif key == "_param_id":
+                key = "paramId"
+            return key
+
+        key, namespace, ktype = self._parse_metadata_args(
+            *args, namespace=namespace, ktype=ktype
+        )
+
+        assert isinstance(key, list)
+        assert isinstance(namespace, (list, tuple))
+
+        if key:
+            assert isinstance(ktype, (list, tuple))
+            if namespace:
+                key = [namespace[0] + "." + k for k in key]
+
+            r = [self.handle.get(_key_name(k), ktype=kt) for k, kt in zip(key, ktype)]
+            return tuple(r) if len(r) > 1 else r[0]
+        else:
+            if len(namespace) == 0:
+                namespace = (None, *GRIB_INFO_NAMESPACES)
+            r = {ns: self.handle.as_namespace(ns) for ns in namespace}
+            if len(r) == 1:
+                return r[namespace[0]]
+            else:
+                if None in r:
+                    r[""] = r.pop(None)
+                return r
+
+    def __getitem__(self, key):
+        return self.metadata(key)
 
     def as_mars(self, param="shortName"):
         return self.handle.as_namespace("mars", param=param)

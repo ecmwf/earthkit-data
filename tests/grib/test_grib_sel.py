@@ -28,15 +28,15 @@ def test_grib_sel_single_message():
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
     [
-        (dict(shortName="u", level=700), [["u", 700]], []),
-        (dict(paramId=131, level=700), [[131, 700]], []),
+        (dict(shortName="u", level=700), [("u", 700)], []),
+        (dict(paramId=131, level=700), [(131, 700)], []),
         (
             dict(shortName=["t", "u"], level=[700, 500]),
             [
-                ["t", 700],
-                ["u", 700],
-                ["t", 500],
-                ["u", 500],
+                ("t", 700),
+                ("u", 700),
+                ("t", 500),
+                ("u", 500),
             ],
             ["shortName", "level:l"],
         ),
@@ -45,8 +45,8 @@ def test_grib_sel_single_message():
         (
             dict(shortName=["t"], level=[500, 700], marsType="an"),
             [
-                ["t", 700, "an"],
-                ["t", 500, "an"],
+                ("t", 700, "an"),
+                ("t", 500, "an"),
             ],
             ["shortName", "level:l", "marsType"],
         ),
@@ -73,8 +73,8 @@ def test_grib_sel_single_file_2():
     g = f.sel(shortName=["t"], step=[3, 6])
     assert len(g) == 2
     assert g.metadata(["shortName", "level:l", "step:l"]) == [
-        ["t", 1000, 3],
-        ["t", 1000, 6],
+        ("t", 1000, 3),
+        ("t", 1000, 6),
     ]
 
     # repeated use
@@ -82,8 +82,8 @@ def test_grib_sel_single_file_2():
     # g = f.sel(shortName=["t"], step=["3", "06"])
     assert len(g) == 2
     assert g.metadata(["shortName", "level:l", "step:l"]) == [
-        ["t", 1000, 3],
-        ["t", 1000, 6],
+        ("t", 1000, 3),
+        ("t", 1000, 6),
     ]
 
 
@@ -92,19 +92,19 @@ def test_grib_sel_single_file_as_dict():
     g = f.sel({"shortName": "t", "level": [500, 700], "mars.type": "an"})
     assert len(g) == 2
     assert g.metadata(["shortName", "level:l", "mars.type"]) == [
-        ["t", 700, "an"],
-        ["t", 500, "an"],
+        ("t", 700, "an"),
+        ("t", 500, "an"),
     ]
 
 
 @pytest.mark.parametrize(
     "param_id,level,expected_meta",
     [
-        (131, (slice(600, 700)), [[131, 700]]),
-        (131, (slice(650, 750)), [[131, 700]]),
-        (131, (slice(1000, None)), [[131, 1000]]),
-        (131, (slice(None, 300)), [[131, 300]]),
-        (131, (slice(500, 700)), [[131, 700], [131, 500]]),
+        (131, (slice(600, 700)), [(131, 700)]),
+        (131, (slice(650, 750)), [(131, 700)]),
+        (131, (slice(1000, None)), [(131, 1000)]),
+        (131, (slice(None, 300)), [(131, 300)]),
+        (131, (slice(500, 700)), [(131, 700), (131, 500)]),
         (131, (slice(510, 520)), []),
     ],
 )
@@ -125,7 +125,7 @@ def test_grib_sel_multi_file():
     # single resulting field
     g = f.sel(shortName="t", level=61)
     assert len(g) == 1
-    assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [["t", 61, "hybrid"]]
+    assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [("t", 61, "hybrid")]
 
     g1 = f[34]
     d = g.to_numpy() - g1.to_numpy()
@@ -140,8 +140,8 @@ def test_grib_sel_slice_multi_file():
     g = f.sel(shortName="t", level=slice(56, 62))
     assert len(g) == 2
     assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [
-        ["t", 57, "hybrid"],
-        ["t", 61, "hybrid"],
+        ("t", 57, "hybrid"),
+        ("t", 61, "hybrid"),
     ]
 
 
@@ -155,8 +155,8 @@ def test_grib_sel_date():
 
     ref_keys = ["shortName", "date", "time", "step"]
     ref = [
-        ["t", 20201221, 1200, 9],
-        ["z", 20201221, 1200, 9],
+        ("t", 20201221, 1200, 9),
+        ("z", 20201221, 1200, 9),
     ]
 
     assert g.metadata(ref_keys) == ref
@@ -173,15 +173,15 @@ def test_grib_isel_single_message():
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
     [
-        (dict(shortName=1, level=2), [["u", 700]], []),
-        (dict(paramId=1, level=2), [[131, 700]], []),
+        (dict(shortName=1, level=2), [("u", 700)], []),
+        (dict(paramId=1, level=2), [(131, 700)], []),
         (
             dict(shortName=[0, 1], level=[2, 3]),
             [
-                ["t", 700],
-                ["u", 700],
-                ["t", 500],
-                ["u", 500],
+                ("t", 700),
+                ("u", 700),
+                ("t", 500),
+                ("u", 500),
             ],
             ["shortName", "level:l"],
         ),
@@ -190,17 +190,17 @@ def test_grib_isel_single_message():
         (
             dict(shortName=[0], level=[3, 2], marsType=0),
             [
-                ["t", 700, "an"],
-                ["t", 500, "an"],
+                ("t", 700, "an"),
+                ("t", 500, "an"),
             ],
             ["shortName", "level:l", "marsType"],
         ),
         (
             dict(level=-1),
             [
-                ["t", 300],
-                ["u", 300],
-                ["v", 300],
+                ("t", 300),
+                ("u", 300),
+                ("v", 300),
             ],
             ["shortName", "level:l"],
         ),
@@ -223,12 +223,12 @@ def test_grib_isel_single_file(params, expected_meta, metadata_keys):
 @pytest.mark.parametrize(
     "param_id,level,expected_meta",
     [
-        (1, (slice(2)), [[131, 1000], [131, 850]]),
-        (1, (slice(None, 2)), [[131, 1000], [131, 850]]),
-        (1, (slice(2, 3)), [[131, 700]]),
-        (1, (slice(2, 4)), [[131, 700], [131, 500]]),
-        (1, (slice(4, None)), [[131, 400], [131, 300]]),
-        (1, (slice(None, None, 2)), [[131, 1000], [131, 700], [131, 400]]),
+        (1, (slice(2)), [(131, 1000), (131, 850)]),
+        (1, (slice(None, 2)), [(131, 1000), (131, 850)]),
+        (1, (slice(2, 3)), [(131, 700)]),
+        (1, (slice(2, 4)), [(131, 700), (131, 500)]),
+        (1, (slice(4, None)), [(131, 400), (131, 300)]),
+        (1, (slice(None, None, 2)), [(131, 1000), (131, 700), (131, 400)]),
     ],
 )
 def test_grib_isel_slice_single_file(param_id, level, expected_meta):
@@ -258,7 +258,7 @@ def test_grib_isel_multi_file():
     # single resulting field
     g = f.isel(shortName=0, level=21)
     assert len(g) == 1
-    assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [["t", 61, "hybrid"]]
+    assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [("t", 61, "hybrid")]
 
     g1 = f[34]
     d = g.to_numpy() - g1.to_numpy()
@@ -273,8 +273,8 @@ def test_grib_isel_slice_multi_file():
     g = f.isel(shortName=0, level=slice(20, 22))
     assert len(g) == 2
     assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [
-        ["t", 57, "hybrid"],
-        ["t", 61, "hybrid"],
+        ("t", 57, "hybrid"),
+        ("t", 61, "hybrid"),
     ]
 
 

@@ -20,11 +20,11 @@ from emohawk.testing import emohawk_examples_file
 @pytest.mark.parametrize(
     "index,expected_meta",
     [
-        (0, ["t", 1000]),
-        (2, ["v", 1000]),
-        (17, ["v", 300]),
-        (-1, ["v", 300]),
-        (-5, ["u", 400]),
+        (0, ("t", 1000)),
+        (2, ("v", 1000)),
+        (17, ("v", 300)),
+        (-1, ("v", 300)),
+        (-5, ("u", 400)),
     ],
 )
 def test_grib_single_index(index, expected_meta):
@@ -47,12 +47,12 @@ def test_grib_single_index_bad():
 @pytest.mark.parametrize(
     "indexes,expected_meta",
     [
-        (slice(0, 4), [["t", 1000], ["u", 1000], ["v", 1000], ["t", 850]]),
-        (slice(None, 4), [["t", 1000], ["u", 1000], ["v", 1000], ["t", 850]]),
-        (slice(2, 9, 2), [["v", 1000], ["u", 850], ["t", 700], ["v", 700]]),
-        (slice(8, 1, -2), [["v", 700], ["t", 700], ["u", 850], ["v", 1000]]),
-        (slice(14, 18), [["v", 400], ["t", 300], ["u", 300], ["v", 300]]),
-        (slice(14, None), [["v", 400], ["t", 300], ["u", 300], ["v", 300]]),
+        (slice(0, 4), [("t", 1000), ("u", 1000), ("v", 1000), ("t", 850)]),
+        (slice(None, 4), [("t", 1000), ("u", 1000), ("v", 1000), ("t", 850)]),
+        (slice(2, 9, 2), [("v", 1000), ("u", 850), ("t", 700), ("v", 700)]),
+        (slice(8, 1, -2), [("v", 700), ("t", 700), ("u", 850), ("v", 1000)]),
+        (slice(14, 18), [("v", 400), ("t", 300), ("u", 300), ("v", 300)]),
+        (slice(14, None), [("v", 400), ("t", 300), ("u", 300), ("v", 300)]),
     ],
 )
 def test_grib_slice_single_file(indexes, expected_meta):
@@ -70,10 +70,10 @@ def test_grib_slice_single_file(indexes, expected_meta):
 @pytest.mark.parametrize(
     "indexes,expected_meta",
     [
-        (slice(1, 4), [["msl", 0], ["t", 500], ["z", 500]]),
-        (slice(1, 6, 2), [["msl", 0], ["z", 500], ["z", 850]]),
-        (slice(5, 0, -2), [["z", 850], ["z", 500], ["msl", 0]]),
-        (slice(3, 6), [["z", 500], ["t", 850], ["z", 850]]),
+        (slice(1, 4), [("msl", 0), ("t", 500), ("z", 500)]),
+        (slice(1, 6, 2), [("msl", 0), ("z", 500), ("z", 850)]),
+        (slice(5, 0, -2), [("z", 850), ("z", 500), ("msl", 0)]),
+        (slice(3, 6), [("z", 500), ("t", 850), ("z", 850)]),
     ],
 )
 def test_grib_slice_multi_file(indexes, expected_meta):
