@@ -395,14 +395,7 @@ class GribField(Base):
             name = "paramId"
         return self.handle.get(name)
 
-    def _get_key(self, key):
-        if key == "param":
-            key = "shortName"
-        elif key == "_param_id":
-            key = "paramId"
-        return self.handle.get(key)
-
-    # TODO: move it to core or util
+    # TODO: move it into core or util
     @staticmethod
     def _parse_metadata_args(*args, namespace=None, ktype=None):
 
