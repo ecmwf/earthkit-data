@@ -24,7 +24,7 @@ def _index_grib_file(
     # TODO: deduplicate this code
 
     def parse_field(h):
-        field = h.as_mars()
+        field = h.as_namespace("mars")
 
         field["_path"] = path
         field["_offset"] = h.get_long("offset")

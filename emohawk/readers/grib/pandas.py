@@ -36,7 +36,7 @@ class PandasMixIn:
                 filter(dict(zip(columns, s.data("lat", "lon", "value", flatten=True))))
             )
             df["datetime"] = s.valid_datetime()
-            for k, v in s.as_mars().items():
+            for k, v in s.metadata(namespace="mars").items():
                 df[k] = v
             frames.append(df)
         return pd.concat(frames)

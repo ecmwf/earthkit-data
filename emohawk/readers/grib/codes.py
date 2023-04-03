@@ -162,9 +162,6 @@ class CodesHandle(eccodes.Message):
     def get_long(self, name):
         return self.get(name, ktype=int)
 
-    def as_mars(self, param="shortName"):
-        return self.as_namespace("mars", param=param)
-
     def as_namespace(self, namespace, param="shortName"):
         r = {}
         ignore = {
@@ -495,9 +492,6 @@ class GribField(Base):
         return format_info(
             r, selected="parameter", details=self.__class__.__name__, **kwargs
         )
-
-    def as_mars(self, param="shortName"):
-        return self.handle.as_namespace("mars", param=param)
 
     def write(self, f):
         """Write the message to a file object"""
