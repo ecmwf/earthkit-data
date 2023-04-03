@@ -133,17 +133,11 @@ class MultiSource(Source):
 
         return sources
 
-    # Used by normalisers
-    def to_datetime(self):
-        times = self.to_datetime_list()
-        assert len(times) == 1
-        return times[0]
-
-    def to_datetime_list(self):
-        result = set()
+    def datetime(self, **kwargs):
+        result = dict()
         for s in self.sources:
-            result.update(s.to_datetime_list())
-        return sorted(result)
+            result.update(s.datetime(**kwargs))
+        return {k: sorted(v) for k, v in result.items()}
 
     def bounding_box(self):
         return BoundingBox.multi_merge([s.bounding_box() for s in self.sources])

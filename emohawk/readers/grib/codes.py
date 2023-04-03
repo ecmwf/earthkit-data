@@ -336,17 +336,13 @@ class GribField(Base):
             self.handle.get("number"),
         )
 
-    def _grid_definition(self):
-        return dict(
-            north=self.handle.get("latitudeOfFirstGridPointInDegrees"),
-            south=self.handle.get("latitudeOfLastGridPointInDegrees"),
-            west=self.handle.get("longitudeOfFirstGridPointInDegrees"),
-            east=self.handle.get("longitudeOfLastGridPointInDegrees"),
-            south_north_increment=self.handle.get("jDirectionIncrementInDegrees"),
-            west_east_increment=self.handle.get("iDirectionIncrementInDegrees"),
-        )
+    def datetime(self, **kwargs):
+        return {
+            "base_time": self._base_datetime(),
+            "valid_time": self._valid_datetime(),
+        }
 
-    def datetime(self):
+    def _base_datetime(self):
         date = self.handle.get("date")
         time = self.handle.get("time")
         return datetime.datetime(
@@ -357,12 +353,9 @@ class GribField(Base):
             time % 100,
         )
 
-    def valid_datetime(self):
+    def _valid_datetime(self):
         step = self.handle.get("endStep")
-        return self.datetime() + datetime.timedelta(hours=step)
-
-    def to_datetime_list(self):
-        return [self.valid_datetime()]
+        return self._base_datetime() + datetime.timedelta(hours=step)
 
     def proj_string(self):
         return self.proj_target_string()

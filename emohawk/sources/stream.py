@@ -27,15 +27,20 @@ class StreamSingleIterSource(Source):
 
 
 class StreamSource(MemoryBaseSource):
-    def __init__(self, stream, single_iter=True, **kwargs):
+    def __init__(self, stream, single_iter=True, group_by=1, **kwargs):
         super().__init__(**kwargs)
         self._stream = stream
         self._reader_ = None
         self._single_iter = single_iter
+        self._group_by = group_by
 
     @property
     def single_iter(self):
         return self._single_iter
+
+    @property
+    def group_by(self):
+        return self._group_by
 
     def mutate(self):
         if self.single_iter:

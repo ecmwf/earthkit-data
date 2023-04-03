@@ -67,13 +67,8 @@ class Base(metaclass=MetaBase):
     def write(self, f):
         self._not_implemented()
 
-    # Used by normalisers
     @abstractmethod
-    def to_datetime(self):
-        self._not_implemented()
-
-    @abstractmethod
-    def to_datetime_list(self):
+    def datetime(self):
         self._not_implemented()
 
     @abstractmethod

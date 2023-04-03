@@ -604,11 +604,11 @@ def test_grib_datetime():
 
     s = from_source("file", emohawk_examples_file("test.grib"))
 
-    assert s.to_datetime() == datetime.datetime(2020, 5, 13, 12), s.to_datetime()
-
-    assert s.to_datetime_list() == [
-        datetime.datetime(2020, 5, 13, 12)
-    ], s.to_datetime_list()
+    ref = {
+        "base_time": [datetime.datetime(2020, 5, 13, 12)],
+        "valid_time": [datetime.datetime(2020, 5, 13, 12)],
+    }
+    assert s.datetime() == ref
 
     s = from_source(
         "dummy-source",
@@ -617,10 +617,17 @@ def test_grib_datetime():
         date=[19900101, 19900102],
         level=[1000, 500],
     )
-    assert s.to_datetime_list() == [
-        datetime.datetime(1990, 1, 1, 12, 0),
-        datetime.datetime(1990, 1, 2, 12, 0),
-    ], s.to_datetime_list()
+    ref = {
+        "base_time": [
+            datetime.datetime(1990, 1, 1, 12, 0),
+            datetime.datetime(1990, 1, 2, 12, 0),
+        ],
+        "valid_time": [
+            datetime.datetime(1990, 1, 1, 12, 0),
+            datetime.datetime(1990, 1, 2, 12, 0),
+        ],
+    }
+    assert s.datetime() == ref
 
 
 def test_bbox():

@@ -9,8 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
-
 from emohawk import from_source
 from emohawk.testing import emohawk_file
 
@@ -41,29 +39,6 @@ def test_dummy_grib():
         level=[1000, 500],
     )
     assert len(s) == 8
-
-
-def test_datetime():
-
-    s = from_source("file", emohawk_file("docs/examples/test.grib"))
-
-    assert s.to_datetime() == datetime.datetime(2020, 5, 13, 12), s.to_datetime()
-
-    assert s.to_datetime_list() == [
-        datetime.datetime(2020, 5, 13, 12)
-    ], s.to_datetime_list()
-
-    s = from_source(
-        "dummy-source",
-        kind="grib",
-        paramId=[129, 130],
-        date=[19900101, 19900102],
-        level=[1000, 500],
-    )
-    assert s.to_datetime_list() == [
-        datetime.datetime(1990, 1, 1, 12, 0),
-        datetime.datetime(1990, 1, 2, 12, 0),
-    ], s.to_datetime_list()
 
 
 def test_bbox():

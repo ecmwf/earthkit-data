@@ -386,18 +386,9 @@ class NetCDFReader(Reader):
             **options,
         )
 
-    # Used by normalisers
-    def to_datetime(self):
-        times = self.to_datetime_list()
-        assert len(times) == 1
-        return times[0]
-
-    def to_datetime_list(self):
-        # TODO: check if that can be done faster
-        result = set()
-        for s in self.get_fields():
-            result.add(to_datetime(s.time))
-        return sorted(result)
+    def datetime(self):
+        r = sorted({to_datetime(s.time) for s in self.get_fields()})
+        return {"base_time": r, "valid_time": r}
 
     def bounding_box(self):
         return BoundingBox.multi_merge([s.bounding_box() for s in self.get_fields()])

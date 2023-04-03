@@ -161,12 +161,8 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     def describe(self, *args, **kwargs):
         return self._reader.describe(*args, **kwargs)
 
-    # Used by normalisers
-    def to_datetime(self):
-        return self._reader.to_datetime()
-
-    def to_datetime_list(self):
-        return self._reader.to_datetime_list()
+    def datetime(self, **kwargs):
+        return self._reader.datetime(**kwargs)
 
     def bounding_box(self):
         return self._reader.bounding_box()

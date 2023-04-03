@@ -43,7 +43,7 @@ class StrWrapper(Wrapper):
 
         return domain_to_area(self.data)
 
-    def to_datetime(self):
+    def datetime(self):
         return parse_date(self.data)
 
     def to_datetime_list(self):

@@ -96,7 +96,13 @@ class VirtualGribField(dict):
             return len(self.values)
         return (Nj, Ni)
 
-    def datetime(self):
+    def datetime(self, **kwargs):
+        return {
+            "base_time": self._base_datetime(),
+            "valid_time": self._valid_datetime(),
+        }
+
+    def _base_datetime(self):
         date = self._get("date", None)
         time = self._get("time", None)
         return datetime.datetime(
@@ -107,12 +113,9 @@ class VirtualGribField(dict):
             time % 100,
         )
 
-    def valid_datetime(self):
+    def _valid_datetime(self):
         step = self._get("endStep", None)
-        return self.datetime() + datetime.timedelta(hours=step)
-
-    def to_datetime_list(self):
-        return [self.valid_datetime()]
+        return self._base_datetime() + datetime.timedelta(hours=step)
 
     def _attributes(self, names):
         result = {}

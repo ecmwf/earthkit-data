@@ -35,7 +35,7 @@ class PandasMixIn:
             df = pd.DataFrame.from_dict(
                 filter(dict(zip(columns, s.data("lat", "lon", "value", flatten=True))))
             )
-            df["datetime"] = s.valid_datetime()
+            df["datetime"] = s.datetime()["valid_time"]
             for k, v in s.metadata(namespace="mars").items():
                 df[k] = v
             frames.append(df)

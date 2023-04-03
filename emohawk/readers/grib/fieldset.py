@@ -149,18 +149,14 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
 
         return format_describe(_proc(), *args, **kwargs)
 
-    # Used by normalisers
-    def to_datetime(self):
-        times = self.to_datetime_list()
-        assert len(times) == 1
-        return times[0]
-
-    def to_datetime_list(self):
-        # TODO: check if that can be done faster
-        result = set()
+    def datetime(self, **kwargs):
+        base = set()
+        valid = set()
         for s in self:
-            result.add(s.valid_datetime())
-        return sorted(result)
+            d = s.datetime()
+            base.add(d["base_time"])
+            valid.add(d["valid_time"])
+        return {"base_time": sorted(base), "valid_time": sorted(valid)}
 
     def bounding_box(self):
         return BoundingBox.multi_merge([s.bounding_box() for s in self])
