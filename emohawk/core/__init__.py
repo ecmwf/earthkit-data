@@ -58,10 +58,6 @@ class Base(metaclass=MetaBase):
     def metadata(self):
         self._not_implemented()
 
-    @abstractmethod
-    def field_metadata(self):
-        self._not_implemented()
-
     # I/O
     @abstractmethod
     def save(self, path):
