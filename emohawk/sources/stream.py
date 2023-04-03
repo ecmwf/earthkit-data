@@ -17,37 +17,42 @@ from . import Source
 LOG = logging.getLogger(__name__)
 
 
-class StreamSingleIterSource(Source):
+class StreamMemorySource(MemoryBaseSource):
     def __init__(self, reader, **kwargs):
         super().__init__(**kwargs)
         self._reader = reader
 
     def __iter__(self):
-        return self._reader
+        return iter(self._reader)
 
 
-class StreamSource(MemoryBaseSource):
-    def __init__(self, stream, single_iter=True, group_by=1, **kwargs):
+class StreamSource(Source):
+    def __init__(self, stream, group_by=1, **kwargs):
         super().__init__(**kwargs)
         self._stream = stream
         self._reader_ = None
-        self._single_iter = single_iter
         self._group_by = group_by
-
-    @property
-    def single_iter(self):
-        return self._single_iter
 
     @property
     def group_by(self):
         return self._group_by
 
     def mutate(self):
-        if self.single_iter:
-            source = StreamSingleIterSource(self._reader)
+        if self.group_by == 0:
+            source = StreamMemorySource(self._reader)
             return source
         else:
             return self
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        assert self.group_by > 0
+        if self.group_by == 1:
+            return self._reader.__next__()
+        else:
+            return self._reader.read_group(self.group_by)
 
     @property
     def _reader(self):

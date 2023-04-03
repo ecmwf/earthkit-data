@@ -19,7 +19,7 @@ from emohawk.readers.grib.index import FieldSet
 LOG = logging.getLogger(__name__)
 
 
-class GribMemoryReader:
+class GribMemoryReader(Reader):
     def __iter__(self):
         return self
 
@@ -31,6 +31,10 @@ class GribMemoryReader:
 
     def _next_handle(self):
         raise NotImplementedError
+
+    def read_group(self, n):
+        fields = [self.__next__() for _ in range(n)]
+        return FieldSetInMemory.from_fields(fields)
 
 
 class GribFileMemoryReader(GribMemoryReader):
@@ -98,11 +102,19 @@ class GribFieldInMemory(GribField):
 class FieldSetInMemory(FieldSet, Reader):
     """Represent a GRIB field list in memory"""
 
+    @staticmethod
+    def from_fields(fields):
+        fs = FieldSetInMemory(None, None)
+        fs._fields = fields
+        fs._loaded = True
+        return fs
+
     def __init__(self, source, reader, *args, **kwargs):
         """
         The reader must support __next__.
         """
-        Reader.__init__(self, source, None)
+        if source is not None:
+            Reader.__init__(self, source, None)
         FieldSet.__init__(self, *args, **kwargs)
 
         self._reader = reader

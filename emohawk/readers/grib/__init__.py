@@ -34,6 +34,6 @@ def stream_reader(source, stream, magic=None, deeper_check=False):
         from .memory import FieldSetInMemory, GribStreamReader
 
         r = GribStreamReader(stream)
-        if not source.single_iter:
+        if source.group_by == 0:
             r = FieldSetInMemory(source, r)
         return r

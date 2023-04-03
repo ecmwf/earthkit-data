@@ -677,7 +677,7 @@ def test_grib_from_memory():
         assert sn == ["2t"]
 
 
-def test_grib_from_stream_single_iter():
+def test_grib_from_stream_single_group():
     with open(emohawk_examples_file("test6.grib"), "rb") as stream:
         fs = from_source("stream", stream)
 
@@ -700,9 +700,29 @@ def test_grib_from_stream_single_iter():
         assert i == 0
 
 
+def test_grib_from_stream_multi_group():
+    with open(emohawk_examples_file("test6.grib"), "rb") as stream:
+        fs = from_source("stream", stream, group_by=2)
+
+        # no methods are available
+        with pytest.raises(TypeError):
+            len(fs)
+
+        ref = [["t", "u"], ["v", "t"], ["u", "v"]]
+        for i, f in enumerate(fs):
+            assert len(f) == 2
+            f.metadata("param") == ref[i]
+
+        # no data is available
+        i = 0
+        for f in fs:
+            i += 1
+        assert i == 0
+
+
 def test_grib_from_stream_in_memory():
     with open(emohawk_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, single_iter=False)
+        fs = from_source("stream", stream, group_by=0)
 
         assert len(fs) == 6
 
@@ -743,7 +763,7 @@ def test_grib_save_when_loaded_from_memory():
 
 def test_grib_save_when_loaded_from_stream():
     with open(emohawk_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, single_iter=False)
+        fs = from_source("stream", stream, group_by=0)
         assert len(fs) == 6
         with temp_file() as tmp:
             fs.save(tmp)
