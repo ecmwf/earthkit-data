@@ -14,7 +14,7 @@ import mimetypes
 
 import pytest
 
-from emohawk.testing import check_unsafe_archives
+from earthkit.data.testing import check_unsafe_archives
 
 
 @pytest.mark.skip
@@ -31,6 +31,6 @@ def test_tar_mimetypes():
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main(__file__)

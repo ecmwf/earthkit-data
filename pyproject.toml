@@ -12,7 +12,7 @@ convention = "numpy"
 add_ignore = ["D1", "D200", "D205", "D400", "D401"]
 
 [tool.setuptools_scm]
-write_to = "emohawk/version.py"
+write_to = "earthkit/data/version.py"
 write_to_template = '''
 # Do not change! Do not track in version control!
 __version__ = "{version}"

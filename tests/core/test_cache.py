@@ -14,8 +14,8 @@ import os
 
 import pytest
 
-from emohawk import from_source, settings
-from emohawk.core.caching import cache_entries, cache_file, purge_cache
+from earthkit.data import from_source, settings
+from earthkit.data.core.caching import cache_entries, cache_file, purge_cache
 
 LOG = logging.getLogger(__name__)
 
@@ -60,13 +60,13 @@ def test_cache_1():
 @pytest.mark.skipif(not os.path.exists("/Volumes/RAMDisk"), reason="No RAM disk")
 def test_cache_4():
     with settings.temporary():
-        settings.set("cache-directory", "/Volumes/RAMDisk/emohawk")
+        settings.set("cache-directory", "/Volumes/RAMDisk/earthkit_data")
         settings.set("maximum-cache-disk-usage", "90%")
         for n in range(10):
             from_source("dummy-source", "zeros", size=100 * 1024 * 1024, n=n)
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main(__file__)

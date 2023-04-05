@@ -13,8 +13,8 @@
 import numpy as np
 import pytest
 
-from emohawk import from_source
-from emohawk.testing import emohawk_examples_file
+from earthkit.data import from_source
+from earthkit.data.testing import earthkit_examples_file
 
 
 @pytest.mark.parametrize(
@@ -28,7 +28,7 @@ from emohawk.testing import emohawk_examples_file
     ],
 )
 def test_grib_single_index(index, expected_meta):
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     r = f[index]
     assert r.metadata(["shortName", "level"]) == expected_meta
@@ -39,7 +39,7 @@ def test_grib_single_index(index, expected_meta):
 
 
 def test_grib_single_index_bad():
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     with pytest.raises(IndexError):
         f[27]
 
@@ -56,7 +56,7 @@ def test_grib_single_index_bad():
     ],
 )
 def test_grib_slice_single_file(indexes, expected_meta):
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     r = f[indexes]
     assert len(r) == 4
     assert r.metadata(["shortName", "level"]) == expected_meta
@@ -79,7 +79,7 @@ def test_grib_slice_single_file(indexes, expected_meta):
 def test_grib_slice_multi_file(indexes, expected_meta):
     f = from_source(
         "file",
-        [emohawk_examples_file("test.grib"), emohawk_examples_file("test4.grib")],
+        [earthkit_examples_file("test.grib"), earthkit_examples_file("test4.grib")],
     )
     r = f[indexes]
     assert len(r) == 3
@@ -93,7 +93,7 @@ def test_grib_slice_multi_file(indexes, expected_meta):
 
 @pytest.mark.parametrize("indexes", [(np.array([1, 16, 5, 9])), ([1, 16, 5, 9])])
 def test_grib_array_indexing(indexes):
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     r = f[indexes]
     assert len(r) == 4
     assert r.metadata("shortName") == ["u", "u", "v", "t"]
@@ -101,13 +101,13 @@ def test_grib_array_indexing(indexes):
 
 @pytest.mark.parametrize("indexes", [(np.array([1, 19, 5, 9])), ([1, 19, 5, 9])])
 def test_grib_array_indexing_bad(indexes):
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     with pytest.raises(IndexError):
         f[indexes]
 
 
 def test_grib_fieldset_iterator():
-    g = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    g = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     sn = g.metadata("shortName")
     assert len(sn) == 18
     iter_sn = [f["shortName"] for f in g]
@@ -121,7 +121,7 @@ def test_fieldset_iterator_with_zip():
     # this tests something different with the iterator - this does not try to
     # 'go off the edge' of the fieldset, because the length is determined by
     # the list of levels
-    g = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    g = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     ref_levs = g.metadata("level")
     assert len(ref_levs) == 18
     levs1 = []
@@ -135,7 +135,7 @@ def test_fieldset_iterator_with_zip():
 
 def test_fieldset_iterator_with_zip_multiple():
     # same as test_fieldset_iterator_with_zip() but multiple times
-    g = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    g = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     ref_levs = g.metadata("level")
     assert len(ref_levs) == 18
     for i in range(2):
@@ -149,7 +149,7 @@ def test_fieldset_iterator_with_zip_multiple():
 
 
 def test_fieldset_reverse_iterator():
-    g = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    g = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     sn = g.metadata("shortName")
     sn_reversed = list(reversed(sn))
     assert sn_reversed[0] == "v"

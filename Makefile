@@ -1,4 +1,4 @@
-PROJECT := emohawk
+PROJECT := earthkit-data
 CONDA := conda
 CONDAFLAGS :=
 COV_REPORT := html

@@ -12,13 +12,13 @@
 import numpy as np
 import pytest
 
-from emohawk import from_source
-from emohawk.testing import emohawk_file
+from earthkit.data import from_source
+from earthkit.data.testing import earthkit_file
 
 
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")
 def test_grib_sel_single_message():
-    s = from_source("file", emohawk_file("tests/data/test_single.grib"))
+    s = from_source("file", earthkit_file("tests/data/test_single.grib"))
 
     r = s.sel(shortName="2t")
     assert len(r) == 1
@@ -53,7 +53,7 @@ def test_grib_sel_single_message():
     ],
 )
 def test_grib_sel_single_file_1(params, expected_meta, metadata_keys):
-    f = from_source("file", emohawk_file("docs/examples/tuv_pl.grib"))
+    f = from_source("file", earthkit_file("docs/examples/tuv_pl.grib"))
 
     g = f.sel(**params)
     assert len(g) == len(expected_meta)
@@ -68,7 +68,7 @@ def test_grib_sel_single_file_1(params, expected_meta, metadata_keys):
 
 def test_grib_sel_single_file_2():
 
-    f = from_source("file", emohawk_file("tests/data/t_time_series.grib"))
+    f = from_source("file", earthkit_file("tests/data/t_time_series.grib"))
 
     g = f.sel(shortName=["t"], step=[3, 6])
     assert len(g) == 2
@@ -88,7 +88,7 @@ def test_grib_sel_single_file_2():
 
 
 def test_grib_sel_single_file_as_dict():
-    f = from_source("file", emohawk_file("docs/examples/tuv_pl.grib"))
+    f = from_source("file", earthkit_file("docs/examples/tuv_pl.grib"))
     g = f.sel({"shortName": "t", "level": [500, 700], "mars.type": "an"})
     assert len(g) == 2
     assert g.metadata(["shortName", "level:l", "mars.type"]) == [
@@ -109,7 +109,7 @@ def test_grib_sel_single_file_as_dict():
     ],
 )
 def test_grib_sel_slice_single_file(param_id, level, expected_meta):
-    f = from_source("file", emohawk_file("docs/examples/tuv_pl.grib"))
+    f = from_source("file", earthkit_file("docs/examples/tuv_pl.grib"))
 
     g = f.sel(paramId=param_id, level=level)
     assert len(g) == len(expected_meta)
@@ -118,8 +118,8 @@ def test_grib_sel_slice_single_file(param_id, level, expected_meta):
 
 
 def test_grib_sel_multi_file():
-    f1 = from_source("file", emohawk_file("docs/examples/tuv_pl.grib"))
-    f2 = from_source("file", emohawk_file("tests/data/ml_data.grib"))
+    f1 = from_source("file", earthkit_file("docs/examples/tuv_pl.grib"))
+    f2 = from_source("file", earthkit_file("tests/data/ml_data.grib"))
     f = from_source("multi", [f1, f2])
 
     # single resulting field
@@ -133,8 +133,8 @@ def test_grib_sel_multi_file():
 
 
 def test_grib_sel_slice_multi_file():
-    f1 = from_source("file", emohawk_file("docs/examples/tuv_pl.grib"))
-    f2 = from_source("file", emohawk_file("tests/data/ml_data.grib"))
+    f1 = from_source("file", earthkit_file("docs/examples/tuv_pl.grib"))
+    f2 = from_source("file", earthkit_file("tests/data/ml_data.grib"))
     f = from_source("multi", [f1, f2])
 
     g = f.sel(shortName="t", level=slice(56, 62))
@@ -147,7 +147,7 @@ def test_grib_sel_slice_multi_file():
 
 def test_grib_sel_date():
     # date and time
-    f = from_source("file", emohawk_file("tests/data/t_time_series.grib"))
+    f = from_source("file", earthkit_file("tests/data/t_time_series.grib"))
 
     g = f.sel(date=20201221, time=1200, step=9)
     # g = f.sel(date="20201221", time="12", step="9")
@@ -163,7 +163,7 @@ def test_grib_sel_date():
 
 
 def test_grib_isel_single_message():
-    s = from_source("file", emohawk_file("tests/data/test_single.grib"))
+    s = from_source("file", earthkit_file("tests/data/test_single.grib"))
 
     r = s.isel(shortName=0)
     assert len(r) == 1
@@ -207,7 +207,7 @@ def test_grib_isel_single_message():
     ],
 )
 def test_grib_isel_single_file(params, expected_meta, metadata_keys):
-    f = from_source("file", emohawk_file("docs/examples/tuv_pl.grib"))
+    f = from_source("file", earthkit_file("docs/examples/tuv_pl.grib"))
 
     g = f.isel(**params)
     assert len(g) == len(expected_meta)
@@ -232,7 +232,7 @@ def test_grib_isel_single_file(params, expected_meta, metadata_keys):
     ],
 )
 def test_grib_isel_slice_single_file(param_id, level, expected_meta):
-    f = from_source("file", emohawk_file("docs/examples/tuv_pl.grib"))
+    f = from_source("file", earthkit_file("docs/examples/tuv_pl.grib"))
 
     g = f.isel(paramId=param_id, level=level)
     assert len(g) == len(expected_meta)
@@ -241,7 +241,7 @@ def test_grib_isel_slice_single_file(param_id, level, expected_meta):
 
 
 def test_grib_isel_slice_invalid():
-    f = from_source("file", emohawk_file("docs/examples/tuv_pl.grib"))
+    f = from_source("file", earthkit_file("docs/examples/tuv_pl.grib"))
 
     with pytest.raises(IndexError):
         f.isel(level=500)
@@ -251,8 +251,8 @@ def test_grib_isel_slice_invalid():
 
 
 def test_grib_isel_multi_file():
-    f1 = from_source("file", emohawk_file("docs/examples/tuv_pl.grib"))
-    f2 = from_source("file", emohawk_file("tests/data/ml_data.grib"))
+    f1 = from_source("file", earthkit_file("docs/examples/tuv_pl.grib"))
+    f2 = from_source("file", earthkit_file("tests/data/ml_data.grib"))
     f = from_source("multi", [f1, f2])
 
     # single resulting field
@@ -266,8 +266,8 @@ def test_grib_isel_multi_file():
 
 
 def test_grib_isel_slice_multi_file():
-    f1 = from_source("file", emohawk_file("docs/examples/tuv_pl.grib"))
-    f2 = from_source("file", emohawk_file("tests/data/ml_data.grib"))
+    f1 = from_source("file", earthkit_file("docs/examples/tuv_pl.grib"))
+    f2 = from_source("file", earthkit_file("tests/data/ml_data.grib"))
     f = from_source("multi", [f1, f2])
 
     g = f.isel(shortName=0, level=slice(20, 22))
@@ -279,6 +279,6 @@ def test_grib_isel_slice_multi_file():
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main()

@@ -10,13 +10,13 @@
 
 import pytest
 
-from emohawk import from_source
-from emohawk.testing import emohawk_examples_file
+from earthkit.data import from_source
+from earthkit.data.testing import earthkit_examples_file
 
 
 def test_grib_describe():
 
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     # full contents
     df = f.describe(print=False)
@@ -148,7 +148,7 @@ def test_grib_describe():
 
 
 def test_grib_ls():
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     # default keys
     f1 = f.sel(count=[1, 2, 3, 4])
@@ -201,7 +201,7 @@ def test_grib_ls():
 
 
 def test_grib_ls_keys():
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     # default keys
     # positive num (=head)
@@ -226,7 +226,7 @@ def test_grib_ls_keys():
 
 
 def test_grib_ls_namespace():
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     df = f.ls(n=2, namespace="vertical", print=False)
     ref = {
@@ -246,7 +246,7 @@ def test_grib_ls_namespace():
 
 
 def test_grib_ls_invalid_num():
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     with pytest.raises(ValueError):
         f.ls(n=0, print=False)
 
@@ -255,13 +255,13 @@ def test_grib_ls_invalid_num():
 
 
 def test_grib_ls_invalid_arg():
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     with pytest.raises(ValueError):
         f.ls(invalid=1, print=False)
 
 
 def test_grib_ls_num():
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     # default keys
 
@@ -307,7 +307,7 @@ def test_grib_ls_num():
 
 
 def test_grib_head_num():
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     # default keys
     df = f.head(n=2, print=False)
@@ -331,7 +331,7 @@ def test_grib_head_num():
 
 
 def test_grib_tail_num():
-    f = from_source("file", emohawk_examples_file("tuv_pl.grib"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     # default keys
     df = f.tail(n=2, print=False)
@@ -355,7 +355,7 @@ def test_grib_tail_num():
 
 
 def test_grib_dump():
-    f = from_source("file", emohawk_examples_file("test6.grib"))
+    f = from_source("file", earthkit_examples_file("test6.grib"))
 
     namespaces = (
         "default",

@@ -15,9 +15,9 @@ import os
 
 import pytest
 
-from emohawk import from_source
-from emohawk.core.temporary import temp_directory
-from emohawk.testing import emohawk_file
+from earthkit.data import from_source
+from earthkit.data.core.temporary import temp_directory
+from earthkit.data.testing import earthkit_file
 
 LOG = logging.getLogger(__name__)
 
@@ -25,25 +25,25 @@ LOG = logging.getLogger(__name__)
 @pytest.mark.long_test
 def test_file_source_grib():
 
-    s = from_source("file", emohawk_file("docs/examples/test.grib"))
-    from emohawk.readers.grib.reader import GRIBReader
+    s = from_source("file", earthkit_file("docs/examples/test.grib"))
+    from earthkit.data.readers.grib.reader import GRIBReader
 
     assert isinstance(s._reader, GRIBReader), s
     assert len(s) == 2
 
 
 def test_file_source_netcdf():
-    s = from_source("file", emohawk_file("docs/examples/test.nc"))
+    s = from_source("file", earthkit_file("docs/examples/test.nc"))
     assert len(s) == 2
 
 
 # def test_user_1():
-#     s = from_source("file", emohawk_file("docs/examples/test.grib"))
-#     home_file = os.path.expanduser("~/.emohawk/test.grib")
+#     s = from_source("file", earthkit_file("docs/examples/test.grib"))
+#     home_file = os.path.expanduser("~/.earthkit_data/test.grib")
 #     try:
 #         s.save(home_file)
 #         # Test expand user
-#         s = from_source("file", "~/.emohawk/test.grib")
+#         s = from_source("file", "~/.earthkit_data/test.grib")
 #         assert len(s) == 2
 #     finally:
 #         try:
@@ -56,12 +56,12 @@ def test_file_source_netcdf():
 #     sys.platform == "win32", reason="Cannot (yet) use expandvars on Windows"
 # )
 # def test_user_2():
-#     s = from_source("file", emohawk_file("docs/examples/test.grib"))
-#     home_file = os.path.expanduser("~/.emohawk/test.grib")
+#     s = from_source("file", earthkit_file("docs/examples/test.grib"))
+#     home_file = os.path.expanduser("~/.earthkit_data/test.grib")
 #     try:
 #         s.save(home_file)
 #         # Test expand vars
-#         s = from_source("file", "$HOME/.emohawk/test.grib", expand_vars=True)
+#         s = from_source("file", "$HOME/.earthkit_data/test.grib", expand_vars=True)
 #         assert len(s) == 2
 #     finally:
 #         try:
@@ -71,7 +71,7 @@ def test_file_source_netcdf():
 
 
 def test_glob():
-    s = from_source("file", emohawk_file("docs/examples/test.grib"))
+    s = from_source("file", earthkit_file("docs/examples/test.grib"))
     with temp_directory() as tmpdir:
         s.save(os.path.join(tmpdir, "a.grib"))
         s.save(os.path.join(tmpdir, "b.grib"))
@@ -84,6 +84,6 @@ def test_glob():
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main(__file__)

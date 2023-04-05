@@ -1,4 +1,4 @@
-# Welcome to emohawk's documentation!
+# Welcome to earthkit-data's documentation!
 
 Polymorphism and duck-typing for geospatial data.
 

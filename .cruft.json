@@ -4,8 +4,8 @@
   "checkout": null,
   "context": {
     "cookiecutter": {
-      "project_name": "emohawk",
-      "project_slug": "emohawk",
+      "project_name": "earthkit-data",
+      "project_slug": "earthkit-data",
       "project_short_description": "Polymorphism and duck-typing for geospatial data",
       "copyright_holder": "European Centre for Medium Range Weather Forecasts",
       "copyright_year": "2022",

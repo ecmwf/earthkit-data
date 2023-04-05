@@ -14,9 +14,9 @@ import sys
 
 import pytest
 
-from emohawk import from_source, settings
-from emohawk.core.temporary import temp_directory
-from emohawk.testing import emohawk_file, network_off
+from earthkit.data import from_source, settings
+from earthkit.data.core.temporary import temp_directory
+from earthkit.data.testing import earthkit_file, network_off
 
 
 @pytest.mark.skipif(  # TODO: fix
@@ -24,7 +24,7 @@ from emohawk.testing import emohawk_file, network_off
     reason="file:// not working on Windows yet",
 )
 def test_url_file_source():
-    filename = os.path.abspath(emohawk_file("docs/examples/test.nc"))
+    filename = os.path.abspath(earthkit_file("docs/examples/test.nc"))
     s = from_source("url", f"file://{filename}")
     assert len(s) == 2
 
@@ -111,7 +111,7 @@ def test_part_url():
     reason="file:// not working on Windows yet",
 )
 def test_url_part_file_source():
-    filename = os.path.abspath(emohawk_file("docs/examples/test.grib"))
+    filename = os.path.abspath(earthkit_file("docs/examples/test.grib"))
     ds = from_source(
         "url",
         f"file://{filename}",
@@ -131,6 +131,6 @@ def test_url_part_file_source():
 
 if __name__ == "__main__":
     test_part_url()
-    # from emohawk.testing import main
+    # from earthkit.data.testing import main
 
     # main(__file__)

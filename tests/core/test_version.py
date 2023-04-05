@@ -11,12 +11,12 @@
 
 
 def test_version():
-    from emohawk import __version__
+    from earthkit.data import __version__
 
     assert __version__ is not None
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main(__file__)

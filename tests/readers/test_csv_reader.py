@@ -13,7 +13,7 @@ import mimetypes
 
 import pytest
 
-import emohawk as cml
+import earthkit.data as cml
 
 
 def test_csv_1():
@@ -124,6 +124,6 @@ def test_csv_mimetypes():
 # TODO test compression
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main(__file__)

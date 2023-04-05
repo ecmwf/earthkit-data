@@ -1,4 +1,4 @@
-# emohawk
+# earthkit-data
 
 A format-agnostic interface for geospatial data with a focus on meteorology and
 climate science.
@@ -8,19 +8,19 @@ This project is **BETA** and will be **Experimental** for the foreseeable future
 Interfaces and functionality are likely to change, and the project itself may be scrapped.
 **DO NOT** use this software in any project/software that is operational.
 
-**emohawk** makes it simple to read, inspect and slice data from a wide range of
+**earthkit-data** makes it simple to read, inspect and slice data from a wide range of
 geospatial input types (GRIB, netCDF, zarr and more) and transform them into
 familiar scientific Python objects (including numpy arrays, pandas dataframes,
 xarray datasets).
 
 ```
-data = emohawk.from_file("my-data.nc")
+data = earthkit.data.from_file("my-data.nc")
 arr = data.to_numpy()
 df = data.to_pandas()
 dataset = data.to_xarray()
 ```
 
-**emohawk** provides additional convenient methods for quickly inspecting certain
+**earthkit-datak** provides additional convenient methods for quickly inspecting certain
 features of your input data, such as data dimensionality, axes, coordinate
 reference systems and bounding boxes.
 

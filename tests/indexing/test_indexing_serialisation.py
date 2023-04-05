@@ -14,7 +14,11 @@ import sys
 
 import pytest
 
-from emohawk.utils.serialise import SERIALISATION, deserialise_state, serialise_state
+from earthkit.data.utils.serialise import (
+    SERIALISATION,
+    deserialise_state,
+    serialise_state,
+)
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -54,6 +58,6 @@ def test_indexing_pickle(params, levels, source_name):
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main(__file__)

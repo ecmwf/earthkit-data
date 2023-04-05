@@ -15,13 +15,13 @@ import os
 import numpy as np
 import pytest
 
-from emohawk import from_source
-from emohawk.readers.netcdf import NetCDFField
-from emohawk.testing import (
-    emohawk_examples_file,
-    emohawk_file,
-    emohawk_remote_test_data_file,
-    emohawk_test_data_file,
+from earthkit.data import from_source
+from earthkit.data.readers.netcdf import NetCDFField
+from earthkit.data.testing import (
+    earthkit_examples_file,
+    earthkit_file,
+    earthkit_remote_test_data_file,
+    earthkit_test_data_file,
 )
 
 
@@ -33,12 +33,12 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
 
 
 def test_netcdf():
-    for s in from_source("file", emohawk_file("docs/examples/test.nc")):
+    for s in from_source("file", earthkit_file("docs/examples/test.nc")):
         s is not None
 
 
 def test_dummy_netcdf_reader_1():
-    s = from_source("file", emohawk_file("docs/examples/test.nc"))
+    s = from_source("file", earthkit_file("docs/examples/test.nc"))
     r = s._reader
     assert str(r).startswith("NetCDFReader"), r
     assert len(r) == 2
@@ -131,7 +131,7 @@ def test_multi():
 
 
 def test_datetime():
-    s = from_source("file", emohawk_file("docs/examples/test.nc"))
+    s = from_source("file", earthkit_file("docs/examples/test.nc"))
 
     ref = {
         "base_time": [datetime.datetime(2020, 5, 13, 12)],
@@ -168,7 +168,7 @@ def test_datetime():
 
 
 def test_netcdf_to_points_1():
-    f = from_source("file", emohawk_test_data_file("test_single.nc"))
+    f = from_source("file", earthkit_test_data_file("test_single.nc"))
 
     eps = 1e-5
     v = f[0].to_points()
@@ -194,18 +194,18 @@ def test_netcdf_to_points_1():
 
 
 def test_bbox():
-    s = from_source("file", emohawk_file("docs/examples/test.nc"))
+    s = from_source("file", earthkit_file("docs/examples/test.nc"))
     assert s.bounding_box().as_tuple() == (73, -27, 33, 45), s.bounding_box()
 
 
 def test_netcdf_proj_string_non_cf():
-    f = from_source("file", emohawk_examples_file("test.nc"))
+    f = from_source("file", earthkit_examples_file("test.nc"))
     with pytest.raises(AttributeError):
         f[0].to_proj()
 
 
 def test_netcdf_proj_string_laea():
-    f = from_source("url", emohawk_remote_test_data_file("examples", "efas.nc"))
+    f = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
     r = f[0].to_proj()
     assert len(r) == 2
     assert (
@@ -216,7 +216,7 @@ def test_netcdf_proj_string_laea():
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     # test_datetime()
     main(__file__)

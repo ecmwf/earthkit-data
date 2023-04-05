@@ -56,6 +56,6 @@ def test_indexing_isel(params, levels, source_name):
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main(__file__)

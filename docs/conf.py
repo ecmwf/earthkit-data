@@ -9,17 +9,17 @@
 import os
 import sys
 
-import emohawk
+import earthkit.data
 
 sys.path.insert(0, os.path.abspath("../"))
 
 # -- Project information -----------------------------------------------------
 
-project = "emohawk"
+project = "earthkit-data"
 copyright = "2022, European Centre for Medium Range Weather Forecasts"
 author = "European Centre for Medium Range Weather Forecasts"
-version = emohawk.__version__
-release = emohawk.__version__
+version = earthkit.data.__version__
+release = earthkit.data.__version__
 
 # -- General configuration ---------------------------------------------------
 
@@ -38,7 +38,7 @@ extensions = [
 autodoc_typehints = "none"
 
 # autoapi configuration
-autoapi_dirs = ["../emohawk"]
+autoapi_dirs = ["../earthkit/data"]
 autoapi_ignore = ["*/version.py"]
 autoapi_options = [
     "members",

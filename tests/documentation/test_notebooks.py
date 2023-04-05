@@ -15,12 +15,12 @@ import sys
 
 import pytest
 
-from emohawk.testing import MISSING, emohawk_file
+from earthkit.data.testing import MISSING, earthkit_file
 
 # See https://www.blog.pythonlibrary.org/2018/10/16/testing-jupyter-notebooks/
 
 
-EXAMPLES = emohawk_file("docs", "examples")
+EXAMPLES = earthkit_file("docs", "examples")
 
 SKIP = "fdb_stream.ipynb"
 
@@ -62,6 +62,6 @@ def test_notebook(path):
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main(__file__)

@@ -16,8 +16,8 @@ import sys
 
 import pytest
 
-from emohawk import from_source
-from emohawk.core.temporary import temp_directory, temp_file
+from earthkit.data import from_source
+from earthkit.data.core.temporary import temp_directory, temp_file
 
 LOG = logging.getLogger(__name__)
 
@@ -127,6 +127,6 @@ def test_multi_grib_mixed():
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main(__file__)

@@ -13,13 +13,17 @@ import os
 import shutil
 import warnings
 
-import emohawk
-from emohawk.core.temporary import temp_directory, temp_file
-from emohawk.readers.grib.index import FieldSet
-from emohawk.testing import emohawk_examples_file, emohawk_file, emohawk_test_data_file
+import earthkit.data
+from earthkit.data.core.temporary import temp_directory, temp_file
+from earthkit.data.readers.grib.index import FieldSet
+from earthkit.data.testing import (
+    earthkit_examples_file,
+    earthkit_file,
+    earthkit_test_data_file,
+)
 
 TEST_GRIB_FILES = [
-    emohawk_file(p)
+    earthkit_file(p)
     for p in [
         "docs/examples/test.grib",
         "docs/examples/test4.grib",
@@ -36,7 +40,7 @@ def dir_with_grib_files():
 def _build_dir_with_grib_files(testdir):
     os.makedirs(testdir, exist_ok=True)
     for p in ["t", "u", "v"]:
-        shutil.copy(emohawk_test_data_file(f"{p}_pl.grib"), testdir)
+        shutil.copy(earthkit_test_data_file(f"{p}_pl.grib"), testdir)
 
 
 def unique_grib_file():
@@ -46,7 +50,7 @@ def unique_grib_file():
 
 
 def _build_unique_grib_file(path):
-    shutil.copy(emohawk_examples_file("tuv_pl.grib"), path)
+    shutil.copy(earthkit_examples_file("tuv_pl.grib"), path)
 
 
 def list_of_dicts():
@@ -103,14 +107,14 @@ class GribIndexFromDicts(FieldSet):
 def get_fixtures_directory(request):
     tmp = dir_with_grib_files()
     total, n = 18, 4
-    ds = emohawk.from_source("directory", tmp.path, **request)
+    ds = earthkit.data.from_source("directory", tmp.path, **request)
     return ds, tmp, total, n
 
 
 def get_fixtures_file(request):
     tmp = unique_grib_file()
     total, n = 18, 4
-    ds = emohawk.from_source("file", tmp.path, **request)
+    ds = earthkit.data.from_source("file", tmp.path, **request)
     return ds, tmp, total, n
 
 

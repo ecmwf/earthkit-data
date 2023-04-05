@@ -11,7 +11,7 @@
 
 import os
 
-import emohawk as cml
+import earthkit.data as cml
 
 
 def test_unknown_reader():
@@ -33,6 +33,6 @@ def test_text_reader():
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main(__file__)

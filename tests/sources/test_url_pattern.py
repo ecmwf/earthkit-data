@@ -11,7 +11,7 @@
 
 import datetime
 
-from emohawk import from_source
+from earthkit.data import from_source
 
 
 def test_url_pattern_source_1():
@@ -47,6 +47,6 @@ def test_url_pattern_date():
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main(__file__)

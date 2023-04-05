@@ -13,7 +13,7 @@ import os
 
 import pytest
 
-from emohawk.testing import emohawk_file
+from earthkit.data.testing import earthkit_file
 
 IGNORE = [
     "conf.py",
@@ -23,7 +23,7 @@ IGNORE = [
     "settings-2-set.py",
 ]
 
-EXAMPLES = emohawk_file("docs")
+EXAMPLES = earthkit_file("docs")
 
 
 def example_list():
@@ -49,6 +49,6 @@ def test_example(path):
 
 
 if __name__ == "__main__":
-    from emohawk.testing import main
+    from earthkit.data.testing import main
 
     main(__file__)
