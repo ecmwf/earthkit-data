@@ -238,6 +238,9 @@ class FieldsetInFilesWithSqlIndex(FieldsetInFilesWithDBIndex):
     def _find_coords_keys(self):
         return self.db._find_coords_keys()
 
+    def _find_coord_values(self, key):
+        return self.db._find_coord_values(key)
+
     def filter(self, filter):
         if filter.is_empty:
             return self
@@ -246,16 +249,28 @@ class FieldsetInFilesWithSqlIndex(FieldsetInFilesWithDBIndex):
         return self.__class__(db=db)
 
     def sel(self, *args, **kwargs):
-        return self.filter(Selection(*args, **kwargs))
+        s = Selection(*args, **kwargs)
+        for k in s.selection:
+            if not self.db.has_column(k):
+                raise KeyError(f"sel: GRIB key={k} not found in index db")
+
+        return self.filter(s)
 
     def isel(self, *args, **kwargs):
+        s = SelectionByIndex(None, *args, **kwargs)
+        for k in s.selection:
+            if not self.db.has_column(k):
+                raise KeyError(f"isel: GRIB key={k} not found in index db")
+
         return self.filter(SelectionByIndex(self.coord, *args, **kwargs))
 
     def order_by(self, *args, **kwargs):
-        return self.filter(Order(*args, **kwargs))
+        order = Order(*args, **kwargs)
+        for k in order.order:
+            if not self.db.has_column(k):
+                raise KeyError(f"order_by: GRIB key={k} not found in index db")
 
-    def _find_coord_values(self, key):
-        return self.db._find_coord_values(key)
+        return self.filter(Order(*args, **kwargs))
 
     def part(self, n):
         if self._cache is None or not (
@@ -283,6 +298,14 @@ class FieldsetInFilesWithSqlIndex(FieldsetInFilesWithDBIndex):
     @cached_method
     def number_of_parts(self):
         return self.db.count()
+
+    @classmethod
+    def merge(cls, readers):
+
+        assert all(isinstance(s, FieldsetInFilesWithSqlIndex) for s in readers), readers
+        assert len(readers) > 1
+
+        return MultiFieldSet(readers)
 
 
 register_serialisation(

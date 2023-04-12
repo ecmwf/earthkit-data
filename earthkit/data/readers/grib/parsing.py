@@ -83,18 +83,18 @@ def _index_path(path):
         yield from _index_grib_file(path)
 
 
-class DirectoryParserIterator:
+class PathParserIterator:
     """Delays parsing the directory for the list of files
     until the iterator is actually used (calling __iter__)
     """
 
     def __init__(
-        self, directory, relative_paths, ignore=None, followlinks=True, verbose=False
+        self, path, relative_paths, ignore=None, followlinks=True, verbose=False
     ):
         if ignore is None:
             ignore = []
         self.ignore = ignore
-        self.directory = directory
+        self.path = path
         self.relative_paths = relative_paths
         self.followlinks = followlinks
         self.verbose = verbose
@@ -111,35 +111,39 @@ class DirectoryParserIterator:
         if self._tasks is not None:
             return self._tasks
 
-        LOG.debug(f"Parsing files in {self.directory}")
-        assert os.path.exists(self.directory), f"{self.directory} does not exist"
-        assert os.path.isdir(self.directory), f"{self.directory} is not a directory"
+        LOG.debug(f"Parsing files in path={self.path}")
+        assert os.path.exists(self.path), f"{self.path} does not exist"
+        # assert os.path.isdir(self.path), f"{self.path} is not a directory"
 
         tasks = []
-        for root, _, files in os.walk(self.directory, followlinks=self.followlinks):
-            for name in files:
-                path = os.path.join(root, name)
-                if path in self.ignore:
-                    continue
-                tasks.append(path)
+
+        if not os.path.isdir(self.path):
+            tasks.append(self.path)
+        else:
+            for root, _, files in os.walk(self.path, followlinks=self.followlinks):
+                for name in files:
+                    path = os.path.join(root, name)
+                    if path in self.ignore:
+                        continue
+                    tasks.append(path)
 
         if tasks:
             if self.verbose:
                 print(f"Found {len(tasks)} files to index.")
         else:
-            LOG.error(f"Could not find any files to index in {self.directory}")
+            LOG.error(f"Could not find any files to index in path={self.path}")
 
         self._tasks = tasks
 
         return self.tasks
 
 
-class GribIndexingDirectoryParserIterator(DirectoryParserIterator):
+class GribIndexingPathParserIterator(PathParserIterator):
     def process_one_task(self, path):
         LOG.debug(f"Parsing file {path}")
 
         if self.relative_paths is True:
-            _path = os.path.relpath(path, self.directory)
+            _path = os.path.relpath(path, self.path)
         elif self.relative_paths is False:
             _path = os.path.abspath(path)
         elif self.relative_paths is None:

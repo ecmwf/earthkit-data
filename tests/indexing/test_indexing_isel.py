@@ -20,30 +20,33 @@ from indexing_fixtures import check_sel_and_order, get_fixtures  # noqa: E402
 
 
 @pytest.mark.parametrize(
-    "params,levels,source_name",
+    "params,levels,input_mode,indexing",
     [
         (
             ({"value": ["t", "u"], "index": [0, 1]}),
             ({"value": [500, 850], "index": [3, 5]}),
             "directory",
+            True,
         ),
         (
             ({"value": ["t", "u"], "index": [0, 1]}),
             ({"value": [500, 850], "index": [0, 1]}),
             "list-of-dicts",
+            False,
         ),
         (
             ({"value": ["t", "u"], "index": [0, 1]}),
             ({"value": [500, 850], "index": [3, 1]}),
             "file",
+            False,
         ),
     ],
 )
-def test_indexing_isel(params, levels, source_name):
+def test_indexing_isel(params, levels, input_mode, indexing):
     request = dict(param=params["index"], level=levels["index"], date=0, time=0)
     order_by = ["level", "variable"]
 
-    ds, _, total, n = get_fixtures(source_name, {})
+    ds, _, total, n = get_fixtures(input_mode, indexing, {})
 
     assert len(ds) == total, len(ds)
 

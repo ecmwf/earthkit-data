@@ -21,16 +21,16 @@ from indexing_fixtures import check_sel_and_order, get_fixtures  # noqa: E402
 
 @pytest.mark.parametrize("params", (["t", "u"], ["u", "t"]))
 @pytest.mark.parametrize("levels", ([500, 850], [850, 500]))
-# @pytest.mark.parametrize("source_name", ["directory", "list-of-dicts", "file"])
-@pytest.mark.parametrize("source_name", ["directory", "list-of-dicts"])
-def test_indexing_order_by_with_request(params, levels, source_name):
+@pytest.mark.parametrize("input_mode", ["directory", "list-of-dicts"])
+@pytest.mark.parametrize("indexing", [True])
+def test_indexing_order_by_with_request(params, levels, input_mode, indexing):
     request = dict(
         level=levels,
         variable=params,
         time="1200",
     )
 
-    ds, _, total, n = get_fixtures(source_name, request)
+    ds, _, total, n = get_fixtures(input_mode, indexing, request)
 
     for i in ds:
         print(i)
@@ -41,13 +41,13 @@ def test_indexing_order_by_with_request(params, levels, source_name):
 
 @pytest.mark.parametrize("params", (["t", "u"], ["u", "t"]))
 @pytest.mark.parametrize("levels", ([500, 850], [850, 500]))
-@pytest.mark.parametrize("source_name", ["directory", "list-of-dicts"])
-# @pytest.mark.parametrize("source_name", ["directory"])
-def test_indexing_order_by_with_keyword(params, levels, source_name):
+@pytest.mark.parametrize("input_mode", ["directory", "file", "list-of-dicts"])
+@pytest.mark.parametrize("indexing", [True])
+def test_indexing_order_by_with_keyword(params, levels, input_mode, indexing):
     request = dict(variable=params, level=levels, date=20180801, time="1200")
     request["order_by"] = dict(level=levels, variable=params)
 
-    ds, _, total, n = get_fixtures(source_name, request)
+    ds, _, total, n = get_fixtures(input_mode, indexing, request)
 
     assert len(ds) == n, len(ds)
 
@@ -56,12 +56,13 @@ def test_indexing_order_by_with_keyword(params, levels, source_name):
 
 @pytest.mark.parametrize("params", (["t", "u"],))
 @pytest.mark.parametrize("levels", ([500, 850],))
-@pytest.mark.parametrize("source_name", ["directory", "list-of-dicts", "file"])
-def test_indexing_order_by_with_method_with_list(params, levels, source_name):
+@pytest.mark.parametrize("input_mode", ["directory", "file", "list-of-dicts"])
+@pytest.mark.parametrize("indexing", [True, False])
+def test_indexing_order_by_with_method_with_list(params, levels, input_mode, indexing):
     request = dict(variable=params, level=levels, date=20180801, time="1200")
     order_by = ["level", "variable"]
 
-    ds, _, total, n = get_fixtures(source_name, {})
+    ds, _, total, n = get_fixtures(input_mode, indexing, {})
 
     assert len(ds) == total, len(ds)
 
@@ -76,12 +77,13 @@ def test_indexing_order_by_with_method_with_list(params, levels, source_name):
 
 @pytest.mark.parametrize("params", (["t", "u"], ["u", "t"]))
 @pytest.mark.parametrize("levels", ([500, 850], [850, 500]))
-@pytest.mark.parametrize("source_name", ["directory", "list-of-dicts", "file"])
-def test_indexing_order_by_with_method(params, levels, source_name):
+@pytest.mark.parametrize("input_mode", ["directory", "file", "list-of-dicts"])
+@pytest.mark.parametrize("indexing", [True, False])
+def test_indexing_order_by_with_method(params, levels, input_mode, indexing):
     request = dict(variable=params, level=levels, date=20180801, time="1200")
     order_by = dict(level=levels, variable=params)
 
-    ds, _, total, n = get_fixtures(source_name, {})
+    ds, _, total, n = get_fixtures(input_mode, indexing, {})
 
     print(ds)
     print()
@@ -110,13 +112,13 @@ def test_indexing_order_by_with_method(params, levels, source_name):
 @pytest.mark.parametrize(
     "levels", ([500, 850], [850, 500], ["500", "850"], ["850", "500"])
 )
-# @pytest.mark.parametrize("source_name", ["directory", "list-of-dicts", "file"])
-@pytest.mark.parametrize("source_name", ["directory"])
-def test_indexing_order_ascending_descending(params, levels, source_name):
+@pytest.mark.parametrize("input_mode", ["directory"])
+@pytest.mark.parametrize("indexing", [True])
+def test_indexing_order_ascending_descending(params, levels, input_mode, indexing):
     request = dict(variable=params, level=levels, date=20180801, time="1200")
     order_by = dict(level="descending", variable="ascending")
 
-    ds, _, total, n = get_fixtures(source_name, {})
+    ds, _, total, n = get_fixtures(input_mode, indexing, {})
 
     ds = ds.sel(**request)
     assert len(ds) == 4, len(ds)

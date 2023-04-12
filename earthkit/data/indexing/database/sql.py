@@ -280,6 +280,12 @@ class SqlDatabase(Database):
             return ""
         return " WHERE " + " AND ".join(conditions)
 
+    def has_column(self, name):
+        for prefix in ("i", "s", "c"):
+            if name in self._columns_names(prefix, True):
+                return True
+        return False
+
     def _columns_names(self, prefix, remove_prefix):
         if prefix in self._cache_column_names:
             return self._cache_column_names[(prefix, remove_prefix)]

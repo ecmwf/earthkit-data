@@ -22,8 +22,8 @@ LOG = logging.getLogger(__name__)
 
 
 class MultiSource(Source):
-    def __init__(self, *sources, filter=None, merger=None):
-
+    def __init__(self, *sources, filter=None, merger=None, **kwargs):
+        super().__init__(**kwargs)
         if len(sources) == 1 and isinstance(sources[0], list):
             sources = sources[0]
 
