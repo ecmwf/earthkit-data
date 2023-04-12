@@ -20,7 +20,7 @@ df = data.to_pandas()
 dataset = data.to_xarray()
 ```
 
-**earthkit-datak** provides additional convenient methods for quickly inspecting certain
+**earthkit-data** provides additional convenient methods for quickly inspecting certain
 features of your input data, such as data dimensionality, axes, coordinate
 reference systems and bounding boxes.
 
