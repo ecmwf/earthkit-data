@@ -49,8 +49,16 @@ def unique_grib_file():
     return tmp
 
 
-def _build_unique_grib_file(path):
-    shutil.copy(earthkit_examples_file("tuv_pl.grib"), path)
+def unique_grib_file_list():
+    tmp = temp_file()
+    _build_unique_grib_file(tmp.path, name="test.grib")
+    tmp1 = temp_file()
+    _build_unique_grib_file(tmp1.path, name="test4.grib")
+    return [tmp, tmp1]
+
+
+def _build_unique_grib_file(path, name="tuv_pl.grib"):
+    shutil.copy(earthkit_examples_file(name), path)
 
 
 def list_of_dicts():
@@ -104,21 +112,21 @@ class GribIndexFromDicts(FieldSet):
         return len(self.list_of_dicts)
 
 
-def get_fixtures_directory(request):
+def get_fixtures_directory(indexing, request):
     tmp = dir_with_grib_files()
     total, n = 18, 4
-    ds = earthkit.data.from_source("directory", tmp.path, **request)
+    ds = earthkit.data.from_source("file", tmp.path, indexing=indexing, **request)
     return ds, tmp, total, n
 
 
-def get_fixtures_file(request):
+def get_fixtures_file(indexing, request):
     tmp = unique_grib_file()
     total, n = 18, 4
-    ds = earthkit.data.from_source("file", tmp.path, **request)
+    ds = earthkit.data.from_source("file", tmp.path, indexing=indexing, **request)
     return ds, tmp, total, n
 
 
-def get_fixtures_list_of_dicts(request):
+def get_fixtures_list_of_dicts(indexing, request):
     tmp = list_of_dicts()
     total, n = 6, 4
     ds = GribIndexFromDicts(tmp, **request)
@@ -126,14 +134,14 @@ def get_fixtures_list_of_dicts(request):
     return ds, tmp, total, n
 
 
-def get_fixtures(source_name, *args, **kwargs):
+def get_fixtures(input_mode, indexing, *args, **kwargs):
     return {
         "directory": get_fixtures_directory,
         "file": get_fixtures_file,
         "list-of-dicts": get_fixtures_list_of_dicts,
         # "indexed-url": get_fixtures_indexed_url,
         # "indexed-urls": get_fixtures_indexed_urls,
-    }[source_name](*args, **kwargs)
+    }[input_mode](indexing, *args, **kwargs)
 
 
 def check_sel_and_order(ds, params, levels):

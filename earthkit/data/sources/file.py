@@ -15,6 +15,7 @@ import os
 from earthkit.data import from_source
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.readers import reader
+from earthkit.data.sources.file_indexed import FileIndexedSource
 
 from . import Source
 
@@ -33,23 +34,29 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
 
     _reader_ = None
 
-    def __init__(self, path=None, filter=None, merger=None):
+    def __init__(self, path=None, filter=None, merger=None, **kwargs):
+        Source.__init__(self, **kwargs)
         self.path = path
         self.filter = filter
         self.merger = merger
 
     def mutate(self):
-
         if isinstance(self.path, (list, tuple)):
             if len(self.path) == 1:
                 self.path = self.path[0]
             else:
                 return from_source(
                     "multi",
-                    [from_source("file", p) for p in self.path],
+                    [from_source("file", p, **self._kwargs) for p in self.path],
                     filter=self.filter,
                     merger=self.merger,
                 )
+
+        # here we must have a file or a directory
+        if self._kwargs.get("indexing", False):
+            kw = dict(self._kwargs)
+            kw.pop("indexing", None)
+            return FileIndexedSource(self.path, filter=filter, merger=self.merger, **kw)
 
         # Give a chance to directories and zip files
         # to return a multi-source
@@ -171,6 +178,11 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
         return self._reader.statistics(**kwargs)
 
 
+class IndexedFileSource(FileSource):
+    def mutate(self):
+        pass
+
+
 class File(FileSource):
     def __init__(
         self,
@@ -181,6 +193,7 @@ class File(FileSource):
         recursive_glob=True,
         filter=None,
         merger=None,
+        **kwargs,
     ):
 
         if not isinstance(path, (list, tuple)):
@@ -198,7 +211,7 @@ class File(FileSource):
                 if len(matches) > 1:
                     path = sorted(matches)
 
-        super().__init__(path, filter, merger)
+        super().__init__(path, filter, merger, **kwargs)
 
 
 source = File

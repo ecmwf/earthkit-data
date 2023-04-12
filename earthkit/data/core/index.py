@@ -130,6 +130,8 @@ class SelectionByIndex(Selection):
         return all([len(v) > 0 for v in self.dic.values()])
 
     def _convert_index(self, coord_accessor):
+        if coord_accessor is None:
+            return
         for k in list(self.dic.keys()):
             v = self.dic[k]
             try:

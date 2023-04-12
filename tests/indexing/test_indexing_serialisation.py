@@ -28,14 +28,15 @@ from indexing_fixtures import check_sel_and_order, get_fixtures  # noqa: E402
 @pytest.mark.parametrize("params", (["t", "u"], ["u", "t"]))
 @pytest.mark.parametrize("levels", ([500, 850], [850, 500]))
 @pytest.mark.parametrize(
-    "source_name",
+    "input_mode",
     [
         "directory",
         # "list-of-dicts",
         # "file",
     ],
 )
-def test_indexing_pickle(params, levels, source_name):
+@pytest.mark.parametrize("indexing", [True])
+def test_indexing_pickle(params, levels, input_mode, indexing):
     request = dict(
         level=levels,
         variable=params,
@@ -43,7 +44,7 @@ def test_indexing_pickle(params, levels, source_name):
         time="1200",
     )
 
-    ds, __tmp, total, n = get_fixtures(source_name, {})
+    ds, __tmp, total, n = get_fixtures(input_mode, indexing, {})
     assert len(ds) == total, len(ds)
 
     ds = ds.sel(**request)
