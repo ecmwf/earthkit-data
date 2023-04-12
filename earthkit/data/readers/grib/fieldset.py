@@ -93,10 +93,6 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
     def coords(self):
         return self._find_all_coords_dict(squeeze=True)
 
-    @property
-    def first(self):
-        return self[0]
-
     def to_numpy(self, **kwargs):
         import numpy as np
 
