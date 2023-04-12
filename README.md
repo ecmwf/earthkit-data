@@ -1,30 +1,34 @@
-# emohawk
+# earthkit-data
 
-A format-agnostic Python interface for geospatial data.
+A format-agnostic interface for geospatial data with a focus on meteorology and
+climate science.
 
-**DISCLAIMER**:
+**DISCLAIMER**
 This project is **BETA** and will be **Experimental** for the foreseeable future.
 Interfaces and functionality are likely to change, and the project itself may be scrapped.
 **DO NOT** use this software in any project/software that is operational.
 
-## Workflow for developers/contributors
-
-For best experience create a new conda environment (e.g. DEVELOP) with Python 3.10:
+**earthkit-data** makes it simple to read, inspect and slice data from a wide range of
+geospatial input types (GRIB, netCDF, zarr and more) and transform them into
+familiar scientific Python objects (including numpy arrays, pandas dataframes,
+xarray datasets).
 
 ```
-conda create -n DEVELOP -c conda-forge python=3.10
-conda activate DEVELOP
+data = earthkit.data.from_file("my-data.nc")
+arr = data.to_numpy()
+df = data.to_pandas()
+dataset = data.to_xarray()
 ```
 
-Before pushing to GitHub, run the following commands:
+**earthkit-datak** provides additional convenient methods for quickly inspecting certain
+features of your input data, such as data dimensionality, axes, coordinate
+reference systems and bounding boxes.
 
-1. Update conda environment: `make conda-env-update`
-1. Install this package: `pip install -e .`
-1. Sync with the latest [template](https://github.com/ecmwf-projects/cookiecutter-conda-package) (optional): `make template-update`
-1. Run quality assurance checks: `make qa`
-1. Run tests: `make test`
-1. Run the static type checker: `make type-check`
-1. Build the documentation (see [Sphinx tutorial](https://www.sphinx-doc.org/en/master/tutorial/)): `make docs-build`
+```
+x = data.to_axis("x")
+crs = data.to_crs()
+x_min, x_max, y_min, y_max = data.bounding_box()
+```
 
 ## License
 

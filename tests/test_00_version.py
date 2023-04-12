@@ -1,5 +1,5 @@
-import emohawk
+import earthkit.data
 
 
 def test_version() -> None:
-    assert emohawk.__version__ != "999"
+    assert earthkit.data.__version__ != "999"
