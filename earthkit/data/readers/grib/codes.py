@@ -111,7 +111,7 @@ class CodesHandle(eccodes.Message):
     # TODO: just a wrapper around the base class implementation to handle the
     # s,l,d qualifiers. Once these are implemented in the base class this method can
     # be removed. md5GridSection is also handled!
-    def get(self, name, default=None, ktype=None):
+    def get(self, name, ktype=None, **kwargs):
 
         if name == "values":
             return self.get_values()
@@ -119,15 +119,14 @@ class CodesHandle(eccodes.Message):
             return self.get_md5GridSection()
 
         if ktype is None:
-            name_part, _, key_type_str = name.partition(":")
+            name, _, key_type_str = name.partition(":")
             if key_type_str in CodesHandle.KEY_TYPES:
-                return super().get(
-                    name_part,
-                    default=default,
-                    ktype=CodesHandle.KEY_TYPES[key_type_str],
-                )
+                ktype = CodesHandle.KEY_TYPES[key_type_str]
 
-        return super().get(name, default=default, ktype=ktype)
+        if "default" in kwargs:
+            return super().get(name, ktype=ktype, **kwargs)
+        else:
+            return super()._get(name, ktype=ktype)
 
     def get_md5GridSection(self):
         # Special case because:
@@ -377,7 +376,7 @@ class GribField(Base):
     def _attributes(self, names):
         result = {}
         for name in names:
-            result[name] = self.handle.get(name)
+            result[name] = self.handle.get(name, default=None)
         return result
 
     def _get(self, name):
