@@ -14,7 +14,7 @@ familiar scientific Python objects (including numpy arrays, pandas dataframes,
 xarray datasets).
 
 ```
-data = earthkit.data.from_file("my-data.nc")
+data = earthkit.data.from_source("my-data.nc")
 arr = data.to_numpy()
 df = data.to_pandas()
 dataset = data.to_xarray()
@@ -23,12 +23,6 @@ dataset = data.to_xarray()
 **earthkit-data** provides additional convenient methods for quickly inspecting certain
 features of your input data, such as data dimensionality, axes, coordinate
 reference systems and bounding boxes.
-
-```
-x = data.to_axis("x")
-crs = data.to_crs()
-x_min, x_max, y_min, y_max = data.bounding_box()
-```
 
 ## License
 
