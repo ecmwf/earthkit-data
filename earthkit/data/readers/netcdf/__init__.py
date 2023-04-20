@@ -17,10 +17,11 @@ import numpy as np
 import xarray as xr
 
 from earthkit.data.core import Base
+from earthkit.data.readers import Reader
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
 
-from . import Reader
+from .cf import CFGridMapping
 
 GEOGRAPHIC_COORDS = {
     "x": ["x", "projection_x_coordinate", "lon", "longitude"],
@@ -199,6 +200,19 @@ class NetCDFField(Base):
         if flatten:
             arr = arr.flatten()
         return arr
+
+    def _grid_mapping(self):
+        if "grid_mapping" in self._da.attrs:
+            grid_mapping = self._ds[self._da.attrs["grid_mapping"]]
+        else:
+            raise AttributeError(
+                "no CF-compliant 'grid_mapping' detected in netCDF attributes"
+            )
+        return grid_mapping
+
+    def crs(self):
+        grid_mapping = CFGridMapping.from_grid_mapping(**self._grid_mapping().attrs)
+        return grid_mapping.to_ccrs()
 
     def to_proj(self):
         if "proj4_string" in self._da.attrs:

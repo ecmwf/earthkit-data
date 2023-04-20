@@ -215,6 +215,19 @@ def test_netcdf_proj_string_laea():
     assert r[1] == "+proj=eqc +datum=WGS84 +units=m +no_defs"
 
 
+def test_netcdf_crs_laea():
+    import cartopy.crs as ccrs
+
+    f = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
+    crs = f[0].crs()
+    assert crs == ccrs.LambertAzimuthalEqualArea(
+        central_longitude=10.0,
+        central_latitude=52.0,
+        false_easting=4321000.0,
+        false_northing=3210000.0,
+    )
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
