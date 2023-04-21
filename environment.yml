@@ -1,3 +1,4 @@
+name: earthkit-data
 channels:
 - conda-forge
 - nodefaults
@@ -16,6 +17,7 @@ dependencies:
 - filelock
 - pyyaml
 - entrypoints
+- jupyterlab
 - pip:
   - git+https://github.com/ecmwf/multiurl
 - tqdm
