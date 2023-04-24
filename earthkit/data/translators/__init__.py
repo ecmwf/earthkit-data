@@ -1,5 +1,6 @@
 from earthkit.data.core import Base
 
+
 def numpy_translator(source, cls):
     import numpy as np
 
@@ -29,11 +30,13 @@ def xarray_translator(source, cls):
 
     return None
 
+
 translators = {
     "numpy": numpy_translator,
     "pandas": pandas_translator,
     "xarray": xarray_translator,
 }
+
 
 def get_translator(source, cls):
     if not isinstance(source, Base):
