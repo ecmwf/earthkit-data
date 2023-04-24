@@ -19,7 +19,7 @@ class CFParameters:
     """
     Class for mapping CF-compliant grid mappings to cartopy CRS arguments.
 
-    Parameters mappings are based on the CF Grid Mappings specification at
+    Parameter mappings are based on the CF Grid Mappings specification at
     https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/apf.html
     """
 
