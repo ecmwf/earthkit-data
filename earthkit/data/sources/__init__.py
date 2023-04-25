@@ -12,21 +12,12 @@ import re
 import weakref
 from importlib import import_module
 
-import numpy as np
-import xarray as xr
-
 from earthkit.data.core import Base
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.plugins import find_plugin
 from earthkit.data.core.plugins import register as register_plugin
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.utils.html import table
-
-OBJECT_TYPE = {
-    np.ndarray: "numpy.ndarray",
-    xr.Dataset: "xarray.Dataset",
-    xr.DataArray: "xarray.DataArray",
-}
 
 
 class Source(Base):
