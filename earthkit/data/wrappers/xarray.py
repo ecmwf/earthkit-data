@@ -48,7 +48,7 @@ class XArrayDataArrayWrapper(Wrapper):
     #             raise ValueError(f"No coordinate found with axis '{axis}'")
     #     return self.source.coords[coord]
 
-    def _to_xarray(self, *args, **kwargs):
+    def to_xarray(self, *args, **kwargs):
         """
         Return an xarray representation of the data.
 
