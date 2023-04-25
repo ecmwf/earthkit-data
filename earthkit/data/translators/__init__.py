@@ -33,7 +33,6 @@ def get_translator(source, cls, *args, **kwargs):
     for name, h in _translators().items():
         translator = h(source, cls, *args, **kwargs)
         if translator is not None:
-            print(translator)
             return translator()
 
     raise ValueError(f"Cannot find a translator for class {cls.__name__}")
