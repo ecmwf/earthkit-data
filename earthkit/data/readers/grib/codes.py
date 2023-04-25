@@ -126,6 +126,7 @@ class CodesHandle(eccodes.Message):
         if "default" in kwargs:
             return super().get(name, ktype=ktype, **kwargs)
         else:
+            # this will throw if name is not available
             return super()._get(name, ktype=ktype)
 
     def get_md5GridSection(self):
@@ -295,10 +296,10 @@ class GribField(Base):
 
     @property
     def shape(self):
-        Nj = missing_is_none(self.handle.get("Nj"))
-        Ni = missing_is_none(self.handle.get("Ni"))
+        Nj = missing_is_none(self.handle.get("Nj", default=None))
+        Ni = missing_is_none(self.handle.get("Ni", default=None))
         if Ni is None or Nj is None:
-            return self.handle.get("numberOfDataPoints")
+            return self.handle.get("numberOfDataPoints", default=None)
         return (Nj, Ni)
 
     def data(self, *args, flatten=False):
@@ -327,12 +328,12 @@ class GribField(Base):
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (
-            self.handle.get("shortName"),
-            self.handle.get("levelist"),
-            self.handle.get("date"),
-            self.handle.get("time"),
-            self.handle.get("step"),
-            self.handle.get("number"),
+            self.handle.get("shortName", default=None),
+            self.handle.get("levelist", default=None),
+            self.handle.get("date", default=None),
+            self.handle.get("time", default=None),
+            self.handle.get("step", default=None),
+            self.handle.get("number", default=None),
         )
 
     def datetime(self, **kwargs):
@@ -342,8 +343,8 @@ class GribField(Base):
         }
 
     def _base_datetime(self):
-        date = self.handle.get("date")
-        time = self.handle.get("time")
+        date = self.handle.get("date", default=None)
+        time = self.handle.get("time", default=None)
         return datetime.datetime(
             date // 10000,
             date % 10000 // 100,
@@ -353,24 +354,24 @@ class GribField(Base):
         )
 
     def _valid_datetime(self):
-        step = self.handle.get("endStep")
+        step = self.handle.get("endStep", default=None)
         return self._base_datetime() + datetime.timedelta(hours=step)
 
     def proj_string(self):
         return self.proj_target_string()
 
     def proj_source_string(self):
-        return self.handle.get("projSourceString")
+        return self.handle.get("projSourceString", default=None)
 
     def proj_target_string(self):
-        return self.handle.get("projTargetString")
+        return self.handle.get("projTargetString", default=None)
 
     def bounding_box(self):
         return BoundingBox(
-            north=self.handle.get("latitudeOfFirstGridPointInDegrees"),
-            south=self.handle.get("latitudeOfLastGridPointInDegrees"),
-            west=self.handle.get("longitudeOfFirstGridPointInDegrees"),
-            east=self.handle.get("longitudeOfLastGridPointInDegrees"),
+            north=self.handle.get("latitudeOfFirstGridPointInDegrees", default=None),
+            south=self.handle.get("latitudeOfLastGridPointInDegrees", default=None),
+            west=self.handle.get("longitudeOfFirstGridPointInDegrees", default=None),
+            east=self.handle.get("longitudeOfLastGridPointInDegrees", default=None),
         )
 
     def _attributes(self, names):
@@ -425,7 +426,7 @@ class GribField(Base):
 
         return (key, namespace, astype)
 
-    def metadata(self, *args, namespace=None, astype=None):
+    def metadata(self, *args, namespace=None, astype=None, **kwargs):
         def _key_name(key):
             if key == "param":
                 key = "shortName"
@@ -445,7 +446,10 @@ class GribField(Base):
             if namespace:
                 key = [namespace[0] + "." + k for k in key]
 
-            r = [self.handle.get(_key_name(k), ktype=kt) for k, kt in zip(key, astype)]
+            r = [
+                self.handle.get(_key_name(k), ktype=kt, **kwargs)
+                for k, kt in zip(key, astype)
+            ]
             return tuple(r) if len(r) > 1 else r[0]
         else:
             if len(namespace) == 0:

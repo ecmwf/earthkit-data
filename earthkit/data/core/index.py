@@ -88,7 +88,7 @@ class Selection(OrderOrSelection):
         for k, v in self.dic.items():
             if v is None:
                 continue
-            value = element.metadata(k)
+            value = element.metadata(k, default=None)
             # value = grib_naming({key:value})[key]
             if isinstance(v, slice):
                 if v.start is not None and value < v.start:
@@ -258,7 +258,7 @@ class Order(OrderOrSelection):
         keys, key_types, dict_of_dicts = self.build_rankers()
         ranks = []
         for k in keys:
-            value = element.metadata(k)
+            value = element.metadata(k, default=None)
 
             if key_types[k] == "ascending":
                 ranks.append(value)

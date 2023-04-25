@@ -37,7 +37,7 @@ class VirtualGribField(dict):
     for k in list(NAME_LOOKUP.keys()):
         NAME_LOOKUP[NAME_LOOKUP[k]] = k
 
-    def metadata(self, name):
+    def metadata(self, name, **kwargs):
         name, _, key_type_str = name.partition(":")
         try:
             key_type = self.KEY_TYPES[key_type_str]
