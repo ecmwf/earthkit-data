@@ -1,4 +1,5 @@
 # These are the requirements for readthedoc
+ipykernel
 docutils
 Pygments>=2.6.1
 Sphinx
