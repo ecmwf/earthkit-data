@@ -20,7 +20,7 @@ project = "earthkit-data"
 author = "European Centre for Medium Range Weather Forecasts"
 
 year = datetime.datetime.now().year
-years = "2023-%s" % (year,)
+years = "2022-%s" % (year,)
 copyright = "%s, European Centre for Medium-Range Weather Forecasts (ECMWF)" % (years,)
 
 # version = earthkit.data.__version__
