@@ -4,5 +4,5 @@ docutils
 Pygments>=2.6.1
 Sphinx
 sphinx-rtd-theme
-nbsphinx
+nbsphinx<=0.8.12
 setuptools

@@ -9,7 +9,7 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     :maxdepth: 1
     :caption: GRIB
 
-    examples/grib_basics.ipynb
+    examples/grib_overview.ipynb
     examples/grib_indexing.ipynb
     examples/grib_metadata.ipynb
     examples/grib_missing.ipynb
