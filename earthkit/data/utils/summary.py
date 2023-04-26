@@ -47,7 +47,6 @@ def make_unique(x, full=False):
 
 
 def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, **kwargs):
-
     do_print = kwargs.pop("print", False)
 
     if kwargs:
@@ -143,7 +142,6 @@ def format_describe(attributes, *args, **kwargs):
 
 
 def format_info(data, selected=None, details=None, **kwargs):
-
     do_print = kwargs.pop("print", True)
     html = kwargs.pop("html", True)
     raw = kwargs.pop("_as_raw", False)

@@ -26,7 +26,6 @@ SKIP = "fdb_stream.ipynb"
 
 
 def notebooks_list():
-
     notebooks = []
     for path in os.listdir(EXAMPLES):
         if re.match(r".+\.ipynb$", path):

@@ -67,7 +67,6 @@ def test_grib_sel_single_file_1(params, expected_meta, metadata_keys):
 
 
 def test_grib_sel_single_file_2():
-
     f = from_source("file", earthkit_file("tests/data/t_time_series.grib"))
 
     g = f.sel(shortName=["t"], step=[3, 6])

@@ -75,7 +75,6 @@ def test_url_source_tar():
 
 
 def test_part_url():
-
     ds = from_source(
         "url",
         "https://get.ecmwf.int/repository/test-data/emohawk/test-data/temp.bufr",

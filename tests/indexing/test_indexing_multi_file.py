@@ -72,7 +72,6 @@ def test_indexing_multi_file_sel_invalid_key():
 
 
 def test_indexing_multi_file_isel():
-
     files = unique_grib_file_list()
     fs = earthkit.data.from_source("file", [f.path for f in files], indexing=True)
 
