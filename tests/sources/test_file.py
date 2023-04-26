@@ -24,7 +24,6 @@ LOG = logging.getLogger(__name__)
 
 @pytest.mark.long_test
 def test_file_source_grib():
-
     s = from_source("file", earthkit_file("docs/examples/test.grib"))
     from earthkit.data.readers.grib.reader import GRIBReader
 

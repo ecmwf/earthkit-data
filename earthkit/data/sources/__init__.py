@@ -91,7 +91,6 @@ class Source(Base):
 
 
 class SourceLoader:
-
     kind = "source"
 
     def load_module(self, module):
@@ -133,7 +132,6 @@ get_source = SourceMaker()
 
 
 def from_source(name: str, *args, lazily=False, **kwargs) -> Source:
-
     if lazily:
         return from_source_lazily(name, *args, **kwargs)
 

@@ -40,7 +40,6 @@ def missing_is_none(x):
 
 # This does not belong here, should be in the C library
 def get_messages_positions(path):
-
     fd = os.open(path, os.O_RDONLY)
     try:
 
@@ -112,7 +111,6 @@ class CodesHandle(eccodes.Message):
     # s,l,d qualifiers. Once these are implemented in the base class this method can
     # be removed. md5GridSection is also handled!
     def get(self, name, default=None, ktype=None):
-
         if name == "values":
             return self.get_values()
         elif name == "md5GridSection":
@@ -391,7 +389,6 @@ class GribField(Base):
     # TODO: move it into core or util
     @staticmethod
     def _parse_metadata_args(*args, namespace=None, astype=None):
-
         key = []
         for k in args:
             if isinstance(k, str):

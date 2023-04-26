@@ -601,7 +601,6 @@ def test_grib_to_points_1_shape():
 
 
 def test_grib_datetime():
-
     s = from_source("file", earthkit_examples_file("test.grib"))
 
     ref = {
