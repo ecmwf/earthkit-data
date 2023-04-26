@@ -10,7 +10,7 @@ import datetime
 import os
 import sys
 
-import earthkit.data
+# import earthkit.data
 
 sys.path.insert(0, os.path.abspath("../"))
 
@@ -23,8 +23,8 @@ year = datetime.datetime.now().year
 years = "2023-%s" % (year,)
 copyright = "%s, European Centre for Medium-Range Weather Forecasts (ECMWF)" % (years,)
 
-version = earthkit.data.__version__
-release = earthkit.data.__version__
+# version = earthkit.data.__version__
+# release = earthkit.data.__version__
 
 # -- General configuration ---------------------------------------------------
 
