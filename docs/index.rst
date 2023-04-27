@@ -13,7 +13,7 @@ Welcome to earthkit-data's documentation
 **earthkit-data** is a format-agnostic Python interface for geospatial data with a focus on meteorology and
 climate science.
 
-It makes it simple to read, inspect and slice data from a wide range of
+**earthkit-data** makes it simple to read, inspect and slice data from a wide range of
 geospatial input types (GRIB, netCDF and more) and transform them into
 familiar scientific Python objects (including numpy arrays, pandas dataframes, xarray datasets).
 
@@ -41,6 +41,7 @@ reference systems and bounding boxes.
    :maxdepth: 1
    :caption: Installation
 
+   install
    contributing
    licence
 
