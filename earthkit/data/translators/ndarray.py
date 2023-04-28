@@ -15,6 +15,7 @@ class NumpyNDArrayTranslator(Translator):
     """Wrapper around an xarray `DataArray`, offering polymorphism and
     convenience methods.
     """
+
     def __init__(self, data, *args, **kwargs):
         self.data = data.to_numpy(*args, **kwargs)
 

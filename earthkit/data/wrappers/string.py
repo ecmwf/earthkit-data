@@ -8,7 +8,6 @@
 #
 import datetime
 import re
-from tkinter import W
 
 from dateutil.parser import isoparse, parse
 

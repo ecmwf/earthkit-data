@@ -29,7 +29,7 @@ def _translators():
 
 def get_translator(source, cls, *args, **kwargs):
     """
-    get the appropriate translator for the source based on the target cls.
+    Get the appropriate translator for the source based on the target cls.
     """
     if not isinstance(source, Base):
         source = data.from_object(source)
@@ -44,7 +44,6 @@ def get_translator(source, cls, *args, **kwargs):
 
 def transform(*args, **kwargs):
     """
-    executing wrapper for the get_translator class method
+    Executing wrapper for the get_translator class method
     """
     return get_translator(*args, **kwargs)()
-

@@ -8,13 +8,14 @@
 #
 from earthkit.data.translators import Translator
 
+
 class StrTranslator(Translator):
     def __init__(self, data, *args, **kwargs):
         self.data = data.to_string(*args, **kwargs)
 
 
 def translator(data, cls, *args, **kwargs):
-    if cls in [str, 'string']:
+    if cls in [str, "string"]:
         return StrTranslator(data, *args, **kwargs)
 
     return None

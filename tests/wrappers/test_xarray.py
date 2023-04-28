@@ -11,12 +11,9 @@
 
 
 import logging
-import os
 
-import pytest
-
-from earthkit.data.wrappers import xarray as xr_wrapper
 from earthkit.data import wrappers
+from earthkit.data.wrappers import xarray as xr_wrapper
 
 LOG = logging.getLogger(__name__)
 
@@ -37,4 +34,3 @@ def test_dataarray_wrapper():
     assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
     _wrapper = wrappers.get_wrapper(xr.DataArray())
     assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
-

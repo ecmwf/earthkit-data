@@ -9,14 +9,10 @@
 # nor does it submit to any jurisdiction.
 #
 
-
 import logging
-import os
 
-import pytest
-
-from earthkit.data.wrappers import ndarray as ndwrapper
 from earthkit.data import wrappers
+from earthkit.data.wrappers import ndarray as ndwrapper
 
 LOG = logging.getLogger(__name__)
 
@@ -28,4 +24,3 @@ def test_ndarray_wrapper():
     assert isinstance(_wrapper, ndwrapper.NumpyNDArrayWrapper)
     _wrapper = wrappers.get_wrapper(np.array([]))
     assert isinstance(_wrapper, ndwrapper.NumpyNDArrayWrapper)
-

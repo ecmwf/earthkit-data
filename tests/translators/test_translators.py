@@ -11,18 +11,50 @@
 
 
 import logging
-import os
-import xarray as xr
 
-import pytest
-
-from earthkit.data.translators import xarray as xrtranslator
 from earthkit.data import translators, wrappers
+from earthkit.data.translators import ndarray as ndtranslator
+from earthkit.data.translators import string as strtranslator
+from earthkit.data.translators import xarray as xrtranslator
 
 LOG = logging.getLogger(__name__)
 
 
+def test_string_translator():
+    # Check that an ndarray translator can be created
+    _ndwrapper = wrappers.get_wrapper("Eartha")
+    _trans = strtranslator.translator(_ndwrapper, str)
+    assert isinstance(_trans, strtranslator.StrTranslator)
+
+    # Check that get_translator method find the right translator
+    _trans = translators.get_translator("Eartha", str)
+    assert isinstance(_trans, strtranslator.StrTranslator)
+
+    # Check that Transltor transforms to correct type
+    transformed = translators.transform("Eartha", str)
+    assert isinstance(transformed, str)
+
+
+def test_ndarray_translator():
+    import numpy as np
+
+    # Check that an ndarray translator can be created
+    _ndwrapper = wrappers.get_wrapper(np.array([1]))
+    _trans = ndtranslator.translator(_ndwrapper, np.ndarray)
+    assert isinstance(_trans, ndtranslator.NumpyNDArrayTranslator)
+
+    # Check that get_translator method find the right translator
+    _trans = translators.get_translator(np.array([1]), np.ndarray)
+    assert isinstance(_trans, ndtranslator.NumpyNDArrayTranslator)
+
+    # Check that Transltor transforms to correct type
+    transformed = translators.transform(np.array([1]), np.ndarray)
+    assert isinstance(transformed, np.ndarray)
+
+
 def test_xr_dataarray_translator():
+    import xarray as xr
+    
     # Check that an ndarray translator can be created
     _xrwrapper = wrappers.get_wrapper(xr.DataArray())
     _trans = xrtranslator.translator(_xrwrapper, xr.DataArray)
@@ -38,6 +70,8 @@ def test_xr_dataarray_translator():
 
 
 def test_xr_dataset_translator():
+    import xarray as xr
+
     # Check that an ndarray translator can be created
     _xrwrapper = wrappers.get_wrapper(xr.Dataset())
     _trans = xrtranslator.translator(_xrwrapper, xr.Dataset)
@@ -50,4 +84,3 @@ def test_xr_dataset_translator():
     # Check that Transltor transforms to correct type
     transformed = translators.transform(xr.Dataset(), xr.Dataset)
     assert isinstance(transformed, xr.Dataset)
-
