@@ -40,7 +40,6 @@ class FieldSet(FieldSetMixin, Index):
     _availability = None
 
     def __init__(self, *args, **kwargs):
-
         Index.__init__(self, *args, **kwargs)
 
     @classmethod
@@ -216,7 +215,6 @@ SqlResultCache = namedtuple("SqlResultCache", ["first", "length", "result"])
 
 
 class FieldsetInFilesWithSqlIndex(FieldsetInFilesWithDBIndex):
-
     DBCLASS = SqlDatabase
     DB_CACHE_SIZE = 50_000
     DB_DICT_CACHE_SIZE = 5_000
@@ -301,7 +299,6 @@ class FieldsetInFilesWithSqlIndex(FieldsetInFilesWithDBIndex):
 
     @classmethod
     def merge(cls, readers):
-
         assert all(isinstance(s, FieldsetInFilesWithSqlIndex) for s in readers), readers
         assert len(readers) > 1
 
@@ -339,7 +336,6 @@ class FieldSetInOneFile(FieldSetInFiles):
         super().__init__(**kwargs)
 
     def _build_offsets_lengths_mapping(self):
-
         offsets = []
         lengths = []
 

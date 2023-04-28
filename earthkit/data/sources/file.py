@@ -31,7 +31,6 @@ class FileSourceMeta(type(Source), type(os.PathLike)):
 
 
 class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
-
     _reader_ = None
 
     def __init__(self, path=None, filter=None, merger=None, **kwargs):
@@ -195,9 +194,7 @@ class File(FileSource):
         merger=None,
         **kwargs,
     ):
-
         if not isinstance(path, (list, tuple)):
-
             if expand_user:
                 path = os.path.expanduser(path)
 

@@ -38,7 +38,6 @@ class Setting:
         return type(self.default)
 
     def save(self, name, value, f):
-
         for n in self.description.split("\n"):
             print(f"# {n.strip()}", file=f)
         print(file=f)
@@ -297,7 +296,6 @@ class Settings:
         self._callbacks.append(callback)
 
     def _save(self):
-
         if self._settings_yaml is None:
             return
 
