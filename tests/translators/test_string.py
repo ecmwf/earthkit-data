@@ -16,74 +16,23 @@ import os
 
 import pytest
 
-from earthkit.data.wrappers import string as strwrapper
-from earthkit.data import wrappers
+from earthkit.data.translators import string as strtranslator
+from earthkit.data import translators, wrappers
 
 LOG = logging.getLogger(__name__)
 
 
-def test_string_wrapper():
+def test_string_translator():
+    # Check that an ndarray translator can be created
+    _ndwrapper = wrappers.get_wrapper("Eartha")
+    _trans = strtranslator.translator(_ndwrapper, str)
+    assert isinstance(_trans, strtranslator.StrTranslator)
 
-    _wrapper = strwrapper.wrapper(" ")
-    assert isinstance(_wrapper, strwrapper.StrWrapper)
-    _wrapper = wrappers.get_wrapper(" ")
-    assert isinstance(_wrapper, strwrapper.StrWrapper)
+    # Check that get_translator method find the right translator
+    _trans = translators.get_translator("Eartha", str)
+    assert isinstance(_trans, strtranslator.StrTranslator)
 
+    # Check that Transltor transforms to correct type
+    transformed = translators.transform("Eartha", str)
+    assert isinstance(transformed, str)
 
-def test_datetime_string():
-    import datetime
-
-    _datetime = datetime.datetime(2000,1,1)
-    date_formats = ["%Y-%m-%d"]
-    # Currently not accepted: "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"
-    for d_format in date_formats:
-        _wrapper = strwrapper.wrapper(_datetime.strftime(d_format))
-        assert _datetime==_wrapper.datetime()
-
-
-def test_datetime_list_string():
-    import datetime
-
-    _datetime_list = [
-        datetime.datetime(2000,1,i) for i in range(1,30)
-    ]
-    date_formats = ["%Y-%m-%d"]
-    # Currently not accepted: "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"
-    for d_format in date_formats:
-        datetime_list_string = '/to/'.join([
-            _datetime_list[i].strftime(d_format) for i in (0,-1)
-        ])
-        _wrapper = strwrapper.wrapper(datetime_list_string)
-        assert _datetime_list==_wrapper.to_datetime_list()
-
-
-def test_datetime_list_string_by():
-    import datetime
-
-    _datetime_list = [
-        datetime.datetime(2000,1,i) for i in range(1,30,2)
-    ]
-    date_formats = ["%Y-%m-%d"]
-    # Currently not accepted: "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"
-    for d_format in date_formats:
-        datetime_list_string = '/to/'.join([
-            _datetime_list[i].strftime(d_format) for i in (0,-1)
-        ])
-        _wrapper = strwrapper.wrapper(datetime_list_string+"/by/2")
-        assert _datetime_list==_wrapper.to_datetime_list()
-
-
-def test_boundingbox_string():
-    import datetime
-
-    _datetime_list = [
-        datetime.datetime(2000,1,i) for i in range(1,30,2)
-    ]
-    date_formats = ["%Y-%m-%d"]
-    # Currently not accepted: "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"
-    for d_format in date_formats:
-        datetime_list_string = '/to/'.join([
-            _datetime_list[i].strftime(d_format) for i in (0,-1)
-        ])
-        _wrapper = strwrapper.wrapper(datetime_list_string+"/by/2")
-        assert _datetime_list==_wrapper.to_datetime_list()

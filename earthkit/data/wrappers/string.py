@@ -8,6 +8,7 @@
 #
 import datetime
 import re
+from tkinter import W
 
 from dateutil.parser import isoparse, parse
 
@@ -41,8 +42,7 @@ class StrWrapper(Wrapper):
     # DEPENDANCIES NOT YET INSTALLED
     # def bounding_box(self):
     #     from earthkit.data.utils.domains import domain_to_area
-
-        return domain_to_area(self.data)
+    #     return domain_to_area(self.data)
 
     def datetime(self):
         return parse_date(self.data)
@@ -61,6 +61,9 @@ class StrWrapper(Wrapper):
             )
 
         return [parse_date(d) for d in bits]
+
+    def to_string(self):
+        return self.data
 
 
 def wrapper(data, *args, **kwargs):
