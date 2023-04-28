@@ -26,7 +26,7 @@ class NumpyNDArrayWrapper(Wrapper):
         -------
         numpy.ndarray
         """
-        return self.source
+        return self.data
 
 
 def wrapper(data, *args, **kwargs):

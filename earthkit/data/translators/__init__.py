@@ -28,15 +28,25 @@ def _translators():
 
 
 def get_translator(source, cls, *args, **kwargs):
+    """
+    get the appropriate translator for the source based on the target cls.
+    """
     if not isinstance(source, Base):
         source = data.from_object(source)
+
     for name, h in _translators().items():
         translator = h(source, cls, *args, **kwargs)
         if translator is not None:
-            return translator()
+            return translator
 
     raise ValueError(f"Cannot find a translator for class {cls.__name__}")
 
+
+def transform(*args, **kwargs):
+    """
+    executing wrapper for the get_translator class method
+    """
+    return get_translator(*args, **kwargs)()
 
 # def numpy_translator(source, cls):
 #     import numpy as np

@@ -15,17 +15,25 @@ import os
 
 import pytest
 
-from earthkit.data.wrappers import ndarray as ndwrapper
-from earthkit.data import wrappers
+from earthkit.data.translators import ndarray as ndtranslator
+from earthkit.data import translators, wrappers
 
 LOG = logging.getLogger(__name__)
 
 
-def test_ndarray_wrapper():
+def test_ndarray_translator():
     import numpy as np
 
-    _wrapper = ndwrapper.wrapper(np.array([]))
-    assert isinstance(_wrapper, ndwrapper.NumpyNDArrayWrapper)
-    _wrapper = wrappers.get_wrapper(np.array([]))
-    assert isinstance(_wrapper, ndwrapper.NumpyNDArrayWrapper)
+    # Check that an ndarray translator can be created
+    _ndwrapper = wrappers.get_wrapper(np.array([1]))
+    _trans = ndtranslator.translator(_ndwrapper, np.ndarray)
+    assert isinstance(_trans, ndtranslator.NumpyNDArrayTranslator)
+
+    # Check that get_translator method find the right translator
+    _trans = translators.get_translator(np.array([1]), np.ndarray)
+    assert isinstance(_trans, ndtranslator.NumpyNDArrayTranslator)
+
+    # Check that Transltor transforms to correct type
+    transformed = translators.transform(np.array([1]), np.ndarray)
+    assert isinstance(transformed, np.ndarray)
 

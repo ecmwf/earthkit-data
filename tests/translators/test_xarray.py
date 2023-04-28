@@ -12,29 +12,42 @@
 
 import logging
 import os
+import xarray as xr
 
 import pytest
 
-from earthkit.data.wrappers import xarray as xr_wrapper
-from earthkit.data import wrappers
+from earthkit.data.translators import xarray as xrtranslator
+from earthkit.data import translators, wrappers
 
 LOG = logging.getLogger(__name__)
 
 
-def test_dataset_wrapper():
-    import xarray as xr
+def test_xr_dataarray_translator():
+    # Check that an ndarray translator can be created
+    _xrwrapper = wrappers.get_wrapper(xr.DataArray())
+    _trans = xrtranslator.translator(_xrwrapper, xr.DataArray)
+    assert isinstance(_trans, xrtranslator.XArrayDataArrayTranslator)
 
-    _wrapper = xr_wrapper.wrapper(xr.Dataset())
-    assert isinstance(_wrapper, xr_wrapper.XArrayDatasetWrapper)
-    _wrapper = wrappers.get_wrapper(xr.Dataset())
-    assert isinstance(_wrapper, xr_wrapper.XArrayDatasetWrapper)
+    # Check that get_translator method find the right translator
+    _trans = translators.get_translator(xr.DataArray(), xr.DataArray)
+    assert isinstance(_trans, xrtranslator.XArrayDataArrayTranslator)
+
+    # Check that Transltor transforms to correct type
+    transformed = translators.transform(xr.DataArray(), xr.DataArray)
+    assert isinstance(transformed, xr.DataArray)
 
 
-def test_dataarray_wrapper():
-    import xarray as xr
+def test_xr_dataset_translator():
+    # Check that an ndarray translator can be created
+    _xrwrapper = wrappers.get_wrapper(xr.Dataset())
+    _trans = xrtranslator.translator(_xrwrapper, xr.Dataset)
+    assert isinstance(_trans, xrtranslator.XArrayDataArrayTranslator)
 
-    _wrapper = xr_wrapper.wrapper(xr.DataArray())
-    assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
-    _wrapper = wrappers.get_wrapper(xr.DataArray())
-    assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
+    # Check that get_translator method find the right translator
+    _trans = translators.get_translator(xr.Dataset(), xr.Dataset)
+    assert isinstance(_trans, xrtranslator.XArrayDataArrayTranslator)
+
+    # Check that Transltor transforms to correct type
+    transformed = translators.transform(xr.Dataset(), xr.Dataset)
+    assert isinstance(transformed, xr.Dataset)
 
