@@ -15,7 +15,6 @@ from earthkit.data.testing import earthkit_examples_file
 
 
 def test_grib_describe():
-
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     # full contents

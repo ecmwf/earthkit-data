@@ -40,7 +40,6 @@ def missing_is_none(x):
 
 # This does not belong here, should be in the C library
 def get_messages_positions(path):
-
     fd = os.open(path, os.O_RDONLY)
     try:
 
@@ -112,7 +111,6 @@ class CodesHandle(eccodes.Message):
     # s,l,d qualifiers. Once these are implemented in the base class this method can
     # be removed. md5GridSection is also handled!
     def get(self, name, default=None, ktype=None):
-
         if name == "values":
             return self.get_values()
         elif name == "md5GridSection":
@@ -390,8 +388,7 @@ class GribField(Base):
 
     # TODO: move it into core or util
     @staticmethod
-    def _parse_metadata_args(*args, namespace=None, ktype=None):
-
+    def _parse_metadata_args(*args, namespace=None, astype=None):
         key = []
         for k in args:
             if isinstance(k, str):
@@ -408,25 +405,25 @@ class GribField(Base):
                         f"metadata: namespace={namespace} must be a str when key specified"
                     )
 
-            if isinstance(ktype, (list, tuple)):
-                if len(ktype) != len(key):
-                    if len(ktype) == 1:
-                        ktype = [ktype[0]] * len(key)
+            if isinstance(astype, (list, tuple)):
+                if len(astype) != len(key):
+                    if len(astype) == 1:
+                        astype = [astype[0]] * len(key)
                     else:
                         raise ValueError(
-                            "metadata: ktype must have the same number of items as key"
+                            "metadata: astype must have the same number of items as key"
                         )
             else:
-                ktype = [ktype] * len(key)
+                astype = [astype] * len(key)
 
         if namespace is None:
             namespace = []
         elif isinstance(namespace, str):
             namespace = [namespace]
 
-        return (key, namespace, ktype)
+        return (key, namespace, astype)
 
-    def metadata(self, *args, namespace=None, ktype=None):
+    def metadata(self, *args, namespace=None, astype=None):
         def _key_name(key):
             if key == "param":
                 key = "shortName"
@@ -434,19 +431,19 @@ class GribField(Base):
                 key = "paramId"
             return key
 
-        key, namespace, ktype = self._parse_metadata_args(
-            *args, namespace=namespace, ktype=ktype
+        key, namespace, astype = self._parse_metadata_args(
+            *args, namespace=namespace, astype=astype
         )
 
         assert isinstance(key, list)
         assert isinstance(namespace, (list, tuple))
 
         if key:
-            assert isinstance(ktype, (list, tuple))
+            assert isinstance(astype, (list, tuple))
             if namespace:
                 key = [namespace[0] + "." + k for k in key]
 
-            r = [self.handle.get(_key_name(k), ktype=kt) for k, kt in zip(key, ktype)]
+            r = [self.handle.get(_key_name(k), ktype=kt) for k, kt in zip(key, astype)]
             return tuple(r) if len(r) > 1 else r[0]
         else:
             if len(namespace) == 0:

@@ -121,7 +121,6 @@ class DataSet:
         return self._cache[key]
 
     def bbox(self, variable):
-
         data_array = self[variable]
         dims = data_array.dims
 
@@ -129,7 +128,6 @@ class DataSet:
         lon = dims[-1]
 
         if (lat, lon) not in self._bbox:
-
             dims = data_array.dims
 
             latitude = data_array[lat]
@@ -147,7 +145,6 @@ class DataSet:
 
 class NetCDFField(Base):
     def __init__(self, path, ds, variable, slices, non_dim_coords):
-
         data_array = ds[variable]
 
         self._ds = ds
@@ -173,7 +170,6 @@ class NetCDFField(Base):
         # print('====', non_dim_coords)
 
         for s in self.slices:
-
             if isinstance(s, TimeSlice):
                 self.time = s.value
 
@@ -281,7 +277,6 @@ class NetCDFReader(Reader):
             skip.update(getattr(v, "grid_mapping", "").split(" "))
 
         for name in ds.data_vars:
-
             if name in skip:
                 continue
 
@@ -294,7 +289,6 @@ class NetCDFReader(Reader):
             info = [value for value in v.coords if value not in v.dims]
             non_dim_coords = {}
             for coord in v.coords:
-
                 if coord not in v.dims:
                     non_dim_coords[coord] = ds[coord].values
                     continue
@@ -350,7 +344,6 @@ class NetCDFReader(Reader):
                 continue
 
             for values in product(*[c.values for c in coordinates]):
-
                 slices = []
                 for value, coordinate in zip(values, coordinates):
                     slices.append(coordinate.make_slice(value))

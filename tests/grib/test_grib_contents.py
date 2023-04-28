@@ -52,7 +52,7 @@ def test_metadata_get_1(key, expected_value):
 
 
 @pytest.mark.parametrize(
-    "key,ktype,expected_value",
+    "key,astype,expected_value",
     [
         ("shortName", str, "2t"),
         ("shortName", None, "2t"),
@@ -64,11 +64,11 @@ def test_metadata_get_1(key, expected_value):
         ("level", int, 0),
     ],
 )
-def test_grib_metadata_ktype_1(key, ktype, expected_value):
+def test_grib_metadata_astype_1(key, astype, expected_value):
     f = from_source("file", earthkit_test_data_file("test_single.grib"))
-    sn = f.metadata(key, ktype=ktype)
+    sn = f.metadata(key, astype=astype)
     assert sn == [expected_value]
-    sn = f[0].metadata(key, ktype=ktype)
+    sn = f[0].metadata(key, astype=astype)
     assert sn == expected_value
 
 
@@ -90,7 +90,7 @@ def test_grib_metadata_18(key, expected_value):
 
 
 @pytest.mark.parametrize(
-    "key,ktype,expected_value",
+    "key,astype,expected_value",
     [
         ("shortName", str, ["t", "u", "v"] * 6),
         ("shortName", None, ["t", "u", "v"] * 6),
@@ -106,9 +106,9 @@ def test_grib_metadata_18(key, expected_value):
         ),
     ],
 )
-def test_grib_metadata_ktype_18(key, ktype, expected_value):
+def test_grib_metadata_astype_18(key, astype, expected_value):
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-    sn = f.metadata(key, ktype=ktype)
+    sn = f.metadata(key, astype=astype)
     assert sn == expected_value
 
 
@@ -164,13 +164,13 @@ def test_grib_metadata_double_18(key):
 
 
 @pytest.mark.parametrize(
-    "key,ktype",
+    "key,astype",
     [
         ("max", None),
         ("max", float),
     ],
 )
-def test_grib_metadata_double_ktype_18(key, ktype):
+def test_grib_metadata_double_astype_18(key, astype):
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     ref = [
@@ -194,7 +194,7 @@ def test_grib_metadata_double_ktype_18(key, ktype):
         36.92034912109375,
     ]
 
-    r = f.metadata(key, ktype=ktype)
+    r = f.metadata(key, astype=astype)
     np.testing.assert_allclose(r, ref, 0.001)
 
 
@@ -303,21 +303,21 @@ def test_grib_metadata_generic():
     lg = f.metadata("level", "cfVarName")
     assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
 
-    # ktype
-    cs = f.metadata("centre", ktype=None)
+    # astype
+    cs = f.metadata("centre", astype=None)
     assert cs == ["ecmf", "ecmf", "ecmf", "ecmf"]
-    cs = f.metadata("centre", ktype=str)
+    cs = f.metadata("centre", astype=str)
     assert cs == ["ecmf", "ecmf", "ecmf", "ecmf"]
-    cl = f.metadata("centre", ktype=int)
+    cl = f.metadata("centre", astype=int)
     assert cl == [98, 98, 98, 98]
-    lg = f.metadata(["level", "cfVarName"], ktype=(int, None))
+    lg = f.metadata(["level", "cfVarName"], astype=(int, None))
     assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
-    lg = f.metadata(["level", "cfVarName"], ktype=str)
+    lg = f.metadata(["level", "cfVarName"], astype=str)
     assert lg == [("1000", "t"), ("1000", "u"), ("1000", "v"), ("850", "t")]
 
-    # non matching ktype
+    # non matching astype
     with pytest.raises(ValueError):
-        f.metadata(["level", "cfVarName", "centre"], ktype=(int, None))
+        f.metadata(["level", "cfVarName", "centre"], astype=(int, None))
 
     # lgk = f.metadata(["level:d", "cfVarName"], "key")
     # assert lgk == [[1000, 1000, 1000, 850], ["t", "u", "v", "t"]]
@@ -601,7 +601,6 @@ def test_grib_to_points_1_shape():
 
 
 def test_grib_datetime():
-
     s = from_source("file", earthkit_examples_file("test.grib"))
 
     ref = {

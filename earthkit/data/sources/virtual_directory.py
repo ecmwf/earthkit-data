@@ -99,7 +99,6 @@ class CacheDict(dict):
 
 
 class VirtualField:  # Should inherit from GribField
-
     _real_item = None
 
     def __init__(self, i, owner):
@@ -171,7 +170,6 @@ class VirtualFieldsetInFilesWithSqlIndex(FieldsetInFilesWithSqlIndex):
         return super().__getitem__(n)
 
     def _get_metadata_for_item(self, key, item):
-
         func = METADATA_FUNCS[key]
 
         try:

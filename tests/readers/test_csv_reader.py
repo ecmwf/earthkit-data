@@ -79,7 +79,6 @@ def test_csv_4():
 
 @pytest.mark.skipif(True, reason="Test not yet implemented")
 def test_csv_icoads():
-
     r = {
         "class": "e2",
         "date": "1662-10-01/to/1663-12-31",
@@ -98,7 +97,6 @@ def test_csv_icoads():
 
 
 def test_csv_text():
-
     s = cml.from_source(
         "dummy-source",
         "csv",
