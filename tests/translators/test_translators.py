@@ -54,7 +54,7 @@ def test_ndarray_translator():
 
 def test_xr_dataarray_translator():
     import xarray as xr
-    
+
     # Check that an ndarray translator can be created
     _xrwrapper = wrappers.get_wrapper(xr.DataArray())
     _trans = xrtranslator.translator(_xrwrapper, xr.DataArray)

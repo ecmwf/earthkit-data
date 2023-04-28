@@ -19,7 +19,6 @@ LOG = logging.getLogger(__name__)
 
 
 def test_string_wrapper():
-
     _wrapper = strwrapper.wrapper(" ")
     assert isinstance(_wrapper, strwrapper.StrWrapper)
     _wrapper = wrappers.get_wrapper(" ")
