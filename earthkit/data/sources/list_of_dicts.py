@@ -16,7 +16,6 @@ LOG = logging.getLogger(__name__)
 
 
 class VirtualGribField(dict):
-
     KEY_TYPES = {
         "s": str,
         "l": int,

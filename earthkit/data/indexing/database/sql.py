@@ -210,7 +210,6 @@ class SqlDatabase(Database):
 
     def load(self, iterator):
         with self.connection as conn:
-
             # The i_ is to avoid clashes with SQL keywords
             i_columns = [f"i_{n}" for n in GRIB_INDEX_KEYS]
             s_columns = [f"s_{n}" for n in STATISTICS_KEYS]
