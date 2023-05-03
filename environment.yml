@@ -20,6 +20,7 @@ dependencies:
 - jupyterlab
 - pip:
   - git+https://github.com/ecmwf/multiurl
+  - pyfdb
 - tqdm
 - make
 - mypy
