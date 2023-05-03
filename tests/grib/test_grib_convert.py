@@ -22,4 +22,3 @@ def test_icon_to_xarray():
     ref_levs = g.metadata("level")
     assert ds["pres"].sizes["generalVerticalLayer"] == len(ref_levs)
     assert ds["pres"].sizes["values"] == 6
-    assert False
