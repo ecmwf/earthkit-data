@@ -22,7 +22,7 @@ class Remapping:
             self.remapping[k] = m
 
     def __call__(self, func):
-        if self.remapping is None:
+        if self.remapping is None or not self.remapping:
             return func
 
         class CustomJoiner:

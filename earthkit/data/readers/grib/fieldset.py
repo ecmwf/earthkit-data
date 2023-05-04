@@ -57,7 +57,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
     def _find_coord_values(self, key):
         values = set()
         for i in self:
-            v = i.metadata(key)
+            v = i.metadata(key, default=None)
             if v is not None:
                 values.add(v)
         return sorted(list(values))
@@ -68,7 +68,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         coords = defaultdict(set)
         for f in self:
             for k in GRIB_KEYS_NAMES:
-                v = f.metadata(k)
+                v = f.metadata(k, default=None)
                 if v is None:
                     continue
                 coords[k].add(v)

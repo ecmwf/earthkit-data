@@ -92,7 +92,7 @@ class Selection(OrderOrSelection):
 
     def match_element(self, element):
         metadata = self.remapping(element.metadata)
-        return all(v(metadata(k)) for k, v in self.actions.items())
+        return all(v(metadata(k, default=None)) for k, v in self.actions.items())
 
 
 class OrderBase(OrderOrSelection):
@@ -108,7 +108,7 @@ class OrderBase(OrderOrSelection):
         a_metadata = self.remapping(a.metadata)
         b_metadata = self.remapping(b.metadata)
         for k, v in self.actions.items():
-            n = v(a_metadata(k), b_metadata(k))
+            n = v(a_metadata(k, default=None), b_metadata(k, default=None))
             if n != 0:
                 return n
         return 0
@@ -401,7 +401,7 @@ class FullIndex(Index):
         self.holes = np.full(shape, False)
 
         for f in index:
-            idx = tuple(name_to_index[k][f.metadata(k)] for k in coords)
+            idx = tuple(name_to_index[k][f.metadata(k, default=None)] for k in coords)
             self.holes[idx] = True
 
         self.holes = self.holes.flatten()
