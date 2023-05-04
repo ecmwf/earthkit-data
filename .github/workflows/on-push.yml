@@ -164,7 +164,7 @@ jobs:
     steps:
     - name: Create inputs
       run: |
-        notify_inputs=$(jq -n --arg job_context ${{ toJSON(job) }} --arg needs_context ${{ toJSON(needs) }} \
+        notify_inputs=$(jq -n --arg job_context '${{ toJSON(job) }}' --arg needs_context '${{ toJSON(needs) }}' \
         '{ "job": "${{ github.job }}", "job_context": $job_context, "needs_context": $needs_context, "branch": "${{ github.ref }}", "sha": "${{ github.sha }}", "workflow": "${{ github.workflow }}", "run_id": "${{ github.run_id }}" }')
         echo notify_inputs=$notify_inputs >> $GITHUB_ENV
     - name: Trigger Teams notification
