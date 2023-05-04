@@ -172,3 +172,4 @@ jobs:
       with:
         workflow: notify_ci.yml
         inputs: ${{ env.notify_inputs }}
+        ref: ${{ github.event.pull_request.head.ref || github.ref }}
