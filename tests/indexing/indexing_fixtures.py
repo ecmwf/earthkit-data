@@ -90,7 +90,7 @@ class GribIndexFromDicts(FieldSet):
 
     def __getitem__(self, n):
         class _VirtualGribField(dict):
-            def metadata(_self, n):
+            def metadata(_self, n, **kwargs):
                 try:
                     if n == "level":
                         n = "levelist"

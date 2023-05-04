@@ -59,7 +59,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
     def _find_coord_values(self, key):
         values = []
         for i in self:
-            v = i.metadata(key)
+            v = i.metadata(key, default=None)
             if v not in values:
                 values.append(v)
         return tuple(values)
