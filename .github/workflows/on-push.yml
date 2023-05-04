@@ -166,4 +166,4 @@ jobs:
       uses: benc-uk/workflow-dispatch@v1
       with:
         workflow: notify_ci.yml
-        inputs: '{ "job": "${{ github.job }}", "job_context": "${{ toJSON(job) }}", "needs_context": "${{ toJSON(needs) }}", "branch": "${{ github.ref }}", "sha": "${{ github.sha }}", "workflow": "${{ github.workflow }}", "run_id": "${{ github.run_id }}" }'
+        inputs: '{ "job": "${{ github.job }}", "job_context": ${{ toJSON(job) }}, "needs_context": ${{ toJSON(needs) }}, "branch": "${{ github.ref }}", "sha": "${{ github.sha }}", "workflow": "${{ github.workflow }}", "run_id": "${{ github.run_id }}" }'
