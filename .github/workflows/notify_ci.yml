@@ -1,0 +1,35 @@
+name: Notify CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        required: true
+      job_context:
+        required: true
+      needs_context:
+        required: true
+      branch:
+        required: true
+      sha:
+        required: true
+      workflow:
+        required: true
+      run_id:
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Send Teams notification
+      uses: ecmwf-actions/notify-teams@v1
+      with:
+        incoming_webhook: ${{ secrets.MS_TEAMS_INCOMING_WEBHOOK }}
+        job: ${{ inputs.job }}
+        job_context: ${{ inputs.job_context }}
+        needs_context: ${{ inputs.needs_context }}
+        branch: ${{ inputs.branch }}
+        sha: ${{ inputs.sha }}
+        workflow: ${{ inputs.workflow }}
+        run_id: ${{ inputs.run_id }}
