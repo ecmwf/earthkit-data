@@ -14,131 +14,79 @@ import sys
 
 import pytest
 
+from earthkit.data import from_source
+
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from indexing_fixtures import check_sel_and_order, get_fixtures  # noqa: E402
+from indexing_fixtures import get_tmp_fixture  # noqa
 
 
-@pytest.mark.parametrize("params", (["t", "u"], ["u", "t"]))
-@pytest.mark.parametrize("levels", ([500, 850], [850, 500]))
-@pytest.mark.parametrize("input_mode", ["directory", "list-of-dicts"])
-@pytest.mark.parametrize("indexing", [True])
-def test_indexing_order_by_with_request(params, levels, input_mode, indexing):
-    request = dict(
-        level=levels,
-        variable=params,
-        time="1200",
-    )
-
-    ds, _, total, n = get_fixtures(input_mode, indexing, request)
-
-    for i in ds:
-        print(i)
-    assert len(ds) == 4, len(ds)
-
-    check_sel_and_order(ds, params, levels)
+class _CustomOrder:
+    def __call__(self, x, y):
+        r = dict(t=2, u=0, v=1)
+        a = r[x]
+        b = r[y]
+        if a == b:
+            return 0
+        if a > b:
+            return 1
+        if a < b:
+            return -1
 
 
-@pytest.mark.parametrize("params", (["t", "u"], ["u", "t"]))
-@pytest.mark.parametrize("levels", ([500, 850], [850, 500]))
-@pytest.mark.parametrize("input_mode", ["directory", "file", "list-of-dicts"])
-@pytest.mark.parametrize("indexing", [True])
-def test_indexing_order_by_with_keyword(params, levels, input_mode, indexing):
-    request = dict(variable=params, level=levels, date=20180801, time="1200")
-    request["order_by"] = dict(level=levels, variable=params)
-
-    ds, _, total, n = get_fixtures(input_mode, indexing, request)
-
-    assert len(ds) == n, len(ds)
-
-    check_sel_and_order(ds, params, levels)
-
-
-@pytest.mark.parametrize("params", (["t", "u"],))
-@pytest.mark.parametrize("levels", ([500, 850],))
-@pytest.mark.parametrize("input_mode", ["directory", "file", "list-of-dicts"])
-@pytest.mark.parametrize("indexing", [True, False])
-def test_indexing_order_by_with_method_with_list(params, levels, input_mode, indexing):
-    request = dict(variable=params, level=levels, date=20180801, time="1200")
-    order_by = ["level", "variable"]
-
-    ds, _, total, n = get_fixtures(input_mode, indexing, {})
-
-    assert len(ds) == total, len(ds)
-
-    ds = ds.sel(**request)
-    assert len(ds) == n, len(ds)
-
-    ds = ds.order_by(order_by)
-    assert len(ds) == n
-
-    check_sel_and_order(ds, params, levels)
-
-
-@pytest.mark.parametrize("params", (["t", "u"], ["u", "t"]))
-@pytest.mark.parametrize("levels", ([500, 850], [850, 500]))
-@pytest.mark.parametrize("input_mode", ["directory", "file", "list-of-dicts"])
-@pytest.mark.parametrize("indexing", [True, False])
-def test_indexing_order_by_with_method(params, levels, input_mode, indexing):
-    request = dict(variable=params, level=levels, date=20180801, time="1200")
-    order_by = dict(level=levels, variable=params)
-
-    ds, _, total, n = get_fixtures(input_mode, indexing, {})
-
-    print(ds)
-    print()
-    for i in ds:
-        print(i)
-    assert len(ds) == total, len(ds)
-
-    ds = ds.sel(**request)
-    assert len(ds) == n, len(ds)
-
-    ds = ds.order_by(order_by)
-    assert len(ds) == n
-
-    check_sel_and_order(ds, params, levels)
-
-    keys = list(ds.coords.keys())
-    assert keys == ["levelist", "param"], keys
-    coords_params = list(ds.coords["param"])
-    coords_levels = list(ds.coords["levelist"])
-    coords_levels = [int(x) for x in coords_levels]
-    assert coords_params == params, (coords_params, params)
-    assert coords_levels == levels, (coords_levels, levels)
-
-
-@pytest.mark.parametrize("params", (["t", "u"], ["u", "t"]))
+@pytest.mark.parametrize("mode", ["file", "multi", "directory"])
 @pytest.mark.parametrize(
-    "levels", ([500, 850], [850, 500], ["500", "850"], ["850", "500"])
+    "params,expected_meta",
+    [
+        ("param", dict(shortName=["t"] * 6 + ["u"] * 6 + ["v"] * 6)),
+        (["param"], dict(shortName=["t"] * 6 + ["u"] * 6 + ["v"] * 6)),
+        (
+            ["param", "level"],
+            dict(
+                shortName=["t"] * 6 + ["u"] * 6 + ["v"] * 6,
+                level=[300, 400, 500, 700, 850, 1000] * 3,
+            ),
+        ),
+        (dict(param="ascending"), dict(shortName=["t"] * 6 + ["u"] * 6 + ["v"] * 6)),
+        (dict(param="descending"), dict(shortName=["v"] * 6 + ["u"] * 6 + ["t"] * 6)),
+        (
+            dict(param="ascending", level="ascending"),
+            dict(
+                shortName=["t"] * 6 + ["u"] * 6 + ["v"] * 6,
+                level=[300, 400, 500, 700, 850, 1000] * 3,
+            ),
+        ),
+        (
+            dict(param="ascending", level="descending"),
+            dict(
+                shortName=["t"] * 6 + ["u"] * 6 + ["v"] * 6,
+                level=[1000, 850, 700, 500, 400, 300] * 3,
+            ),
+        ),
+        (
+            dict(param=["u", "v", "t"]),
+            dict(shortName=["u"] * 6 + ["v"] * 6 + ["t"] * 6),
+        ),
+        (
+            dict(param=["u", "v", "t"], level=[1000, 850, 300, 500, 400, 700]),
+            dict(
+                shortName=["u"] * 6 + ["v"] * 6 + ["t"] * 6,
+                level=[1000, 850, 300, 500, 400, 700] * 3,
+            ),
+        ),
+        # (
+        #     dict(param=_CustomOrder()),
+        #     dict(shortName=["u"] * 6 + ["v"] * 6 + ["t"] * 6),
+        # ),
+    ],
 )
-@pytest.mark.parametrize("input_mode", ["directory"])
-@pytest.mark.parametrize("indexing", [True])
-def test_indexing_order_ascending_descending(params, levels, input_mode, indexing):
-    request = dict(variable=params, level=levels, date=20180801, time="1200")
-    order_by = dict(level="descending", variable="ascending")
+def test_indexing_order_by_grib_file(mode, params, expected_meta):
+    tmp, path = get_tmp_fixture(mode)
+    ds = from_source("file", path, indexing=True)
+    assert len(ds) == 18
 
-    ds, _, total, n = get_fixtures(input_mode, indexing, {})
+    g = ds.order_by(params)
+    assert len(g) == len(ds)
 
-    ds = ds.sel(**request)
-    assert len(ds) == 4, len(ds)
-
-    ds = ds.order_by(order_by)
-    assert len(ds) == 4
-
-    assert ds[0].metadata("param") == min(params)
-    assert ds[1].metadata("param") == max(params)
-    assert ds[2].metadata("param") == min(params)
-    assert ds[3].metadata("param") == max(params)
-
-    assert int(ds[0].metadata("level")) == max([int(x) for x in levels])
-    assert int(ds[1].metadata("level")) == max([int(x) for x in levels])
-    assert int(ds[2].metadata("level")) == min([int(x) for x in levels])
-    assert int(ds[3].metadata("level")) == min([int(x) for x in levels])
-    print()
-
-
-if __name__ == "__main__":
-    from earthkit.data.testing import main
-
-    main(__file__)
+    for k, v in expected_meta.items():
+        assert g.metadata(k) == v

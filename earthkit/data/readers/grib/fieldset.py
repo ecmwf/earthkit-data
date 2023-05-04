@@ -9,16 +9,13 @@
 
 import json
 import logging
-import warnings
+from collections import defaultdict
 
 from earthkit.data.core.caching import auxiliary_cache_file
 from earthkit.data.core.index import ScaledIndex
 from earthkit.data.utils.bbox import BoundingBox
 
 from .pandas import PandasMixIn
-
-# from .pytorch import PytorchMixIn
-# from .tensorflow import TensorflowMixIn
 from .xarray import XarrayMixIn
 
 LOG = logging.getLogger(__name__)
@@ -55,43 +52,46 @@ GRIB_DESCRIBE_KEYS = [
 
 class FieldSetMixin(PandasMixIn, XarrayMixIn):
     _statistics = None
+    _coords = {}
 
     def _find_coord_values(self, key):
-        values = []
+        values = set()
         for i in self:
             v = i.metadata(key)
-            if v not in values:
-                values.append(v)
-        return tuple(values)
+            if v is not None:
+                values.add(v)
+        return sorted(list(values))
 
-    def coord(self, key):
-        if key in self._coords:
-            return self._coords[key]
+    def _find_all_coords_dict(self):
+        from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 
-        self._coords[key] = self._find_coord_values(key)
-        return self.coord(key)
+        coords = defaultdict(set)
+        for f in self:
+            for k in GRIB_KEYS_NAMES:
+                v = f.metadata(k)
+                if v is None:
+                    continue
+                coords[k].add(v)
 
-    def _find_coords_keys(self):
-        from earthkit.data.indexing.database.sql import GRIB_INDEX_KEYS
+        return {k: sorted(list(v)) for k, v in coords.items()}
 
-        return GRIB_INDEX_KEYS
-
-    def _find_all_coords_dict(self, squeeze):
-        out = {}
-        for key in self._find_coords_keys():
-            values = self.coord(key)
-            if squeeze and len(values) == 1:
-                continue
-            if len(values) == 0:
-                # This should never happen
-                warnings.warn(f".coords warning: GRIB key not found {key}")
-                continue
-            out[key] = values
-        return out
+    @property
+    def all_coords(self):
+        if not self._coords:
+            self._coords = self._find_all_coords_dict()
+        return self._coords
 
     @property
     def coords(self):
-        return self._find_all_coords_dict(squeeze=True)
+        # squeeze coords with only 1 value.
+        return {k: v for k, v in self.all_coords.items() if len(v) > 1}
+
+    def coord(self, key):
+        if key in self.all_coords:
+            return self.all_coords[key]
+
+        self._coords[key] = self._find_coord_values(key)
+        return self.coord(key)
 
     def to_numpy(self, **kwargs):
         import numpy as np
@@ -135,6 +135,16 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         ns = kwargs.pop("namespace", None)
         keys = GRIB_LS_KEYS if ns is None else dict(namespace=ns)
         return ls(_proc, keys, *args, **kwargs)
+
+    def head(self, n=5, **kwargs):
+        if n <= 0:
+            raise ValueError("head: n must be > 0")
+        return self.ls(n=n, **kwargs)
+
+    def tail(self, n=5, **kwargs):
+        if n <= 0:
+            raise ValueError("n must be > 0")
+        return self.ls(n=-n, **kwargs)
 
     def describe(self, *args, **kwargs):
         from earthkit.data.utils.summary import format_describe

@@ -91,12 +91,19 @@ def test_grib_slice_multi_file(indexes, expected_meta):
     assert f.metadata("shortName") == ["2t", "msl", "t", "z", "t", "z"]
 
 
-@pytest.mark.parametrize("indexes", [(np.array([1, 16, 5, 9])), ([1, 16, 5, 9])])
-def test_grib_array_indexing(indexes):
+@pytest.mark.parametrize(
+    "indexes1,indexes2",
+    [(np.array([1, 16, 5, 9]), np.array([1, 3])), ([1, 16, 5, 9], [1, 3])],
+)
+def test_grib_array_indexing(indexes1, indexes2):
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-    r = f[indexes]
+    r = f[indexes1]
     assert len(r) == 4
     assert r.metadata("shortName") == ["u", "u", "v", "t"]
+
+    r1 = r[indexes2]
+    assert len(r1) == 2
+    assert r1.metadata("shortName") == ["u", "t"]
 
 
 @pytest.mark.parametrize("indexes", [(np.array([1, 19, 5, 9])), ([1, 19, 5, 9])])

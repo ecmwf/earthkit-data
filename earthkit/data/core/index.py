@@ -7,313 +7,207 @@
 # nor does it submit to any jurisdiction.
 #
 
-
-import hashlib
-import json
+import functools
 import logging
+import math
 from abc import abstractmethod
+from collections import defaultdict
 
-from earthkit.data.decorators import alias_argument
+import numpy as np
+
+import earthkit.data
+from earthkit.data.core.order import build_remapping, normalize_order_by
+from earthkit.data.core.select import normalize_selection, selection_from_index
 from earthkit.data.sources import Source
 
 LOG = logging.getLogger(__name__)
 
 
 class OrderOrSelection:
-    def __init__(self, *args, **kwargs):
-        """Parse args and kwargs to build a dictionary in self.order"""
-        self.dic = {}
-
-        for arg in args:
-            if isinstance(arg, dict):
-                arg = self.normalize_naming(**arg)
-            res_ok = self.parse_arg(arg)
-            if res_ok is False:
-                raise ValueError(f"Invalid argument of type({type(arg)}): {arg}")
-
-        kwargs = self.normalize_naming(**kwargs)
-        for k, v in kwargs.items():
-            self.parse_kwarg(k, v)
-
-    @alias_argument("levelist", ["level"])
-    @alias_argument("param", ["variable", "parameter"])
-    @alias_argument("number", ["realization", "realisation"])
-    @alias_argument("class", "klass")
-    def normalize_naming(self, **kwargs):
-        return kwargs
-
-    def parse_arg(self, arg):
-        # Returns True of argument has been parsed.
-        if arg is None:
-            return True
-        if isinstance(arg, dict):
-            for k, v in arg.items():
-                self.parse_kwarg(k, v)
-            return True
-        return False
+    actions = {}
 
     def __str__(self):
-        return f"{self.__class__.__name__}({self.dic})"
+        return f"{self.__class__.__name__}({self.actions})"
 
     @property
-    def is_empty(self):  # TODO: use __bool__ instead
-        if not self.dic:
-            return True
-        return False
-
-    def h(self, *args, **kwargs):
-        m = hashlib.sha256()
-        m.update(json.dumps(args, sort_keys=True).encode("utf-8"))
-        m.update(json.dumps(kwargs, sort_keys=True).encode("utf-8"))
-        m.update(json.dumps(self.dic, sort_keys=True).encode("utf-8"))
-        return m.hexdigest()
-
-    def keys(self):
-        return self.dic.keys()
+    def is_empty(self):
+        return not self.actions
 
 
 class Selection(OrderOrSelection):
-    @property
-    def selection(self):
-        return self.dic
+    def __init__(self, kwargs, remapping=None):
+        self.remapping = build_remapping(remapping)
 
-    def parse_kwarg(self, k, v):
-        if v is not None and not isinstance(v, (list, tuple, slice)):
-            v = [v]
-        if isinstance(v, (list, tuple)):
-            v = [str(_) for _ in v]
-        self.dic[k] = v
+        class InList:
+            def __init__(self, lst):
+                self.first = True
+                self.lst = lst  # lazy casting: lst will be modified
 
-    def match_element(self, element):
-        for k, v in self.dic.items():
-            if v is None:
-                continue
-            value = element.metadata(k)
-            # value = grib_naming({key:value})[key]
-            if isinstance(v, slice):
-                if v.start is not None and value < v.start:
-                    return False
-                elif v.stop is not None and value > v.stop:
-                    return False
-                else:
-                    continue
-            if isinstance(v, (list, tuple)):
-                if value in v:
-                    continue
-                if str(value) in v:
-                    continue
-                return False
-            if value == v:
-                continue
-            if str(value) == v:
-                continue
-            return False
-        return True
+            def __call__(self, x):
+                if self.first and x is not None:
+                    cast = type(x)
+                    self.lst = [cast(y) for y in self.lst]
+                    self.first = False
+                return x in self.lst
 
+        class InSlice:
+            def __init__(self, slc):
+                self.slc = slc
+                if self.slc.start is None and self.slc.stop is None:
+                    raise ValueError("Invalid selection value: slice(None, None)")
 
-class SelectionByIndex(Selection):
-    def __init__(self, coord_accessor, *args, **kwargs):
-        """Parse args and kwargs to build a dictionary in self.order"""
-        super().__init__(*args, **kwargs)
-        if not self.is_empty:
-            self._convert_index(coord_accessor)
+                if (
+                    self.slc.start is not None
+                    and self.slc.stop is not None
+                    and self.slc.stop < self.slc.start
+                ):
+                    self.slc = slice(self.slc.stop, self.slc.start)
 
-    def parse_kwarg(self, k, v):
-        if v is not None and not isinstance(v, (list, tuple, slice)):
-            v = [int(v)]
-        if isinstance(v, (list, tuple)):
-            v = [int(_) for _ in v]
-        self.dic[k] = v
-
-    @property
-    def is_valid(self):
-        return all([len(v) > 0 for v in self.dic.values()])
-
-    def _convert_index(self, coord_accessor):
-        if coord_accessor is None:
-            return
-        for k in list(self.dic.keys()):
-            v = self.dic[k]
-            try:
-                coord_vals = coord_accessor(k)
-                if coord_vals is None or len(coord_vals) == 0:
-                    self.dic = {k: []}
-                    return
-                else:
-                    if isinstance(v, slice):
-                        self.dic[k] = coord_vals[v]
-                    else:
-                        self.dic[k] = [coord_vals[i] for i in v]
-                    if None in self.dic[k]:
-                        self.dic = {k: []}
-                        return
-
-            except Exception as e:
-                raise IndexError(
-                    f"Invalid index={v}. Specified key={k} has {len(coord_accessor(k))} values. {e}"
+            def __call__(self, x):
+                return not (
+                    (self.slc.start is not None and x < self.slc.start)
+                    or (self.slc.stop is not None and x > self.slc.stop)
                 )
 
-
-class Order(OrderOrSelection):
-    def __init__(self, *args, **kwargs):
-        self._rankers = None
-        if args and all([isinstance(a, str) for a in args]):
-            args = [args]
-        super().__init__(*args, **kwargs)
-
-    @property
-    def order(self):
-        return self.dic
-
-    def update(self, other):
-        assert isinstance(other, Order), other
-        self.dic.update(other.dic)
-
-    def items(self):
-        if self.is_empty:
-            return
-
-        from earthkit.data.indexing.database.sql import GRIB_INDEX_KEYS
-
-        for k, v in self.dic.items():
-            yield k, v
-
-        for k in GRIB_INDEX_KEYS:
-            if k in self.dic:
-                continue  # already yielded above
-            yield k, self[k]
-
-    def __getitem__(self, key):
-        # Default is ascending order
-        return self.dic.get(key, "ascending")
-
-    def parse_arg(self, arg):
-        if super().parse_arg(arg):
-            return True
-        if isinstance(arg, str):
-            self.dic[arg] = "ascending"
-            return True
-        if isinstance(arg, (list, tuple)):
-            dic = {}
-            for k in arg:
-                assert isinstance(k, str), k
-                assert len(k) > 0, k
-                if k[0] == "-":
-                    dic[k[1:]] = "descending"
-                    continue
-                if k[0] == "+":
-                    dic[k[1:]] = "ascending"
-                    continue
-                dic[k] = "ascending"
-            dic = self.normalize_naming(**dic)
-            return self.parse_arg(dic)
-        return False
-
-    def parse_kwarg(self, k, v):
-        if isinstance(v, (list, tuple)):
-            v = [str(_) for _ in v]  # processing only strings from now.
-        if (v == "ascending") or (v == "descending") or isinstance(v, (list, tuple)):
-            self.dic[k] = v
-            return
-
-        if v is None:
-            self.dic[k] = "ascending"
-            return
-
-        self.dic[k] = "ascending"
-        return
-        # raise ValueError(f"Invalid argument for {k}: {v} ({type(v)})")
-
-    def build_rankers(self):
-        if self._rankers is not None:
-            return self._rankers
-
-        from earthkit.data.indexing.database.sql import GRIB_INDEX_KEYS
-
-        keys = [_ for _ in self.dic.keys()]
-        keys += [_ for _ in GRIB_INDEX_KEYS if _ not in keys]
-
-        key_types = {}
-        dict_of_dicts = dict()
-
-        for key in keys:
-            lst = self.dic.get(key, None)
-
-            if isinstance(lst, (tuple, list)):
-                dict_of_dicts[key] = dict(zip(lst, range(len(lst))))
-                key_types[key] = "explicit"
+        self.actions = {}
+        for k, v in kwargs.items():
+            if v is None or v is earthkit.data.ALL:
+                self.actions[k] = lambda x: True
                 continue
 
-            if lst == "ascending" or lst is None:
-                dict_of_dicts[key] = lambda value: value
-                key_types[key] = "ascending"
+            if callable(v):
+                self.actions[k] = v
                 continue
 
-            raise ValueError(f"Invalid argument {lst}")
-
-        self._rankers = keys, key_types, dict_of_dicts
-        return self._rankers
-
-    def get_element_ranking(self, element):
-        keys, key_types, dict_of_dicts = self.build_rankers()
-        ranks = []
-        for k in keys:
-            value = element.metadata(k)
-
-            if key_types[k] == "ascending":
-                ranks.append(value)
+            if isinstance(v, slice):
+                self.actions[k] = InSlice(v)
                 continue
 
-            if key_types[k] == "explicit":
-                value = str(value)
-                ranks.append(dict_of_dicts[k][value])
+            if not isinstance(v, (list, tuple, set)):
+                v = [v]
+
+            v = set(v)
+
+            self.actions[k] = InList(v)
+
+    def match_element(self, element):
+        metadata = self.remapping(element.metadata)
+        return all(v(metadata(k)) for k, v in self.actions.items())
+
+
+class OrderBase(OrderOrSelection):
+    def __init__(self, kwargs, remapping):
+        self.actions = self.build_actions(kwargs)
+        self.remapping = remapping
+
+    @abstractmethod
+    def build_actions(self, kwargs):
+        raise NotImplementedError()
+
+    def compare_elements(self, a, b):
+        a_metadata = self.remapping(a.metadata)
+        b_metadata = self.remapping(b.metadata)
+        for k, v in self.actions.items():
+            n = v(a_metadata(k), b_metadata(k))
+            if n != 0:
+                return n
+        return 0
+
+
+class Order(OrderBase):
+    def build_actions(self, kwargs):
+        actions = {}
+
+        def ascending(a, b):
+            if a == b:
+                return 0
+            if a > b:
+                return 1
+            if a < b:
+                return -1
+            raise ValueError(f"{a},{b}")
+
+        def descending(a, b):
+            if a == b:
+                return 0
+            if a > b:
+                return -1
+            if a < b:
+                return 1
+            raise ValueError(f"{a},{b}")
+
+        class Compare:
+            def __init__(self, order):
+                self.order = order
+
+            def __call__(self, a, b):
+                return ascending(self.get(a), self.get(b))
+
+            def get(self, x):
+                return self.order[x]
+
+        for k, v in kwargs.items():
+            if v == "ascending" or v is None:
+                actions[k] = ascending
                 continue
 
-            assert False, (k, key_types[k], element)
+            if v == "descending":
+                actions[k] = descending
+                continue
 
-        return tuple(ranks)
+            if callable(v):
+                actions[k] = v
+                continue
+
+            assert isinstance(
+                v, (list, tuple)
+            ), f"Invalid argument for {k}: {v} ({type(v)})"
+
+            order = {}
+            for i, key in enumerate(v):
+                order[str(key)] = i
+                try:
+                    order[int(key)] = i
+                except ValueError:
+                    pass
+                try:
+                    order[float(key)] = i
+                except ValueError:
+                    pass
+            actions[k] = Compare(order)
+
+        return actions
 
 
 class Index(Source):
     @classmethod
     def new_mask_index(self, *args, **kwargs):
-        print("new_mask_index")
         return MaskIndex(*args, **kwargs)
-
-    def __init__(self, *args, order_by=None, **kwargs):
-        self._init_args = args
-        self._init_kwargs = kwargs
-        self._init_order_by = order_by
-        self._coords = {}
-
-    def mutate(self):
-        source = self
-        source = source.sel(*self._init_args, **self._init_kwargs)
-        source = source.order_by(*self._init_args, **self._init_kwargs)
-        source = source.order_by(self._init_order_by)
-        return source
-
-    @abstractmethod
-    def __getitem__(self, n):
-        self._not_implemented()
 
     @abstractmethod
     def __len__(self):
         self._not_implemented()
+
+    def _normalize_kwargs_names(**kwargs):
+        return kwargs
 
     @abstractmethod
     def sel(self, *args, **kwargs):
         """Filter elements on their metadata(), according to kwargs.
         Returns a new index object.
         """
-        selection = Selection(*args, **kwargs)
+        kwargs = normalize_selection(*args, **kwargs)
+        kwargs = self._normalize_kwargs_names(**kwargs)
+        if not kwargs:
+            return self
+
+        selection = Selection(kwargs)
         if selection.is_empty:
             return self
 
-        indices = []
-        for i, element in enumerate(self):
-            if selection.match_element(element):
-                indices.append(i)
+        indices = (
+            i for i, element in enumerate(self) if selection.match_element(element)
+        )
 
         return self.new_mask_index(self, indices)
 
@@ -322,15 +216,19 @@ class Index(Source):
         """Filter elements on their metadata() using indices, according to kwargs.
         Returns a new index object.
         """
-        selection = SelectionByIndex(self.coord, *args, **kwargs)
-        if selection.is_empty:
+        kwargs = normalize_selection(*args, **kwargs)
+        kwargs = self._normalize_kwargs_names(**kwargs)
+        if not kwargs:
             return self
-        elif not selection.is_valid:
-            self.new_mask_index(self, [])
 
-        return self.sel(selection.selection)
+        kwargs = selection_from_index(self.coord, kwargs)
 
-    def order_by(self, *args, **kwargs):
+        if not kwargs:
+            return self.new_mask_index(self, [])
+
+        return self.sel(**kwargs)
+
+    def order_by(self, *args, remapping=None, **kwargs):
         """Default order_by method.
         It expects that calling self[i] returns an element that and Order object can rank
         (i.e. order.get_element_ranking(element) -> tuple).
@@ -338,65 +236,86 @@ class Index(Source):
 
         Returns a new index object.
         """
-        order = Order(*args, **kwargs)
+        kwargs = normalize_order_by(*args, **kwargs)
+        kwargs = self._normalize_kwargs_names(**kwargs)
+
+        remapping = build_remapping(remapping)
+
+        if not kwargs:
+            return self
+
+        order = Order(kwargs, remapping=remapping)
+        # order = Order(*args, **kwargs)
         if order.is_empty:
             return self
 
-        for k, v in order.order.items():
-            assert isinstance(v, (tuple, list)) or v in [
-                "ascending",
-                None,
-            ], f"Unsupported order: {v}, Supported values: 'ascending'."
+        def cmp(i, j):
+            return order.compare_elements(self[i], self[j])
 
-        class Sorter:
-            def __init__(_self, index, order):
-                """Uses the order to sort the index"""
-                _self.index = index
-                _self.order = order
-                _self._cache = [None] * len(_self.index)
-
-            def __call__(_self, i):
-                if _self._cache[i] is None:
-                    element = _self.index[i]
-                    _self._cache[i] = _self.order.get_element_ranking(element)
-                return _self._cache[i]
-
-        sorter = Sorter(self, order)
-
-        result = list(range(len(self)))
-        indices = sorted(result, key=sorter)
+        indices = list(range(len(self)))
+        indices = sorted(indices, key=functools.cmp_to_key(cmp))
         return self.new_mask_index(self, indices)
 
-    def subindex(self, idx):
-        def _make_subindex(num, idx):
-            import numpy as np
+    def __getitem__(self, n):
+        if isinstance(n, slice):
+            return self.from_slice(n)
+        if isinstance(n, (tuple, list, np.ndarray)):
+            return self.from_multi(n)
+        if isinstance(n, dict):
+            return self.from_dict(n)
+        return self._getitem(n)
 
-            indices = np.arange(0, num if num > 0 else 0)
-            return indices[idx].tolist()
-
-        if isinstance(int, str):
-            raise ValueError(f"subindex: invalid idx type={type(idx)} specified")
-
-        indices = _make_subindex(len(self), idx)
+    def from_slice(self, s):
+        indices = range(len(self))[s]
         return self.new_mask_index(self, indices)
+
+    def from_mask(self, lst):
+        indices = [i for i, x in enumerate(lst) if x]
+        return self.new_mask_index(self, indices)
+
+    def from_multi(self, a):
+        # will raise IndexError if an index is out of bounds
+        n = len(self)
+        indices = np.arange(0, n if n > 0 else 0)
+        indices = indices[a].tolist()
+        return self.new_mask_index(self, indices)
+
+    def from_dict(self, dic):
+        return self.sel(dic)
+
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(_, Index) for _ in sources)
+        return MultiIndex(sources)
+
+    def to_numpy(self, *args, **kwargs):
+        import numpy as np
+
+        return np.array([f.to_numpy(*args, **kwargs) for f in self])
+
+    def full(self, *coords):
+        return FullIndex(self, *coords)
 
 
 class MaskIndex(Index):
     def __init__(self, index, indices):
         self.index = index
-        self.indices = indices
-        super().__init__(
-            *self.index._init_args,
-            order_by=self.index._init_order_by,
-            **self.index._init_kwargs,
-        )
+        self.indices = list(indices)
+        # super().__init__(
+        #     *self.index._init_args,
+        #     order_by=self.index._init_order_by,
+        #     **self.index._init_kwargs,
+        # )
 
-    def __getitem__(self, n):
+    def _getitem(self, n):
         n = self.indices[n]
         return self.index[n]
 
     def __len__(self):
         return len(self.indices)
+
+    def __repr__(self):
+        return "MaskIndex(%r,%s)" % (self.index, self.indices)
 
 
 class MultiIndex(Index):
@@ -407,22 +326,16 @@ class MultiIndex(Index):
         # TODO: propagate  index._init_args, index._init_order_by, index._init_kwargs, for each i in indexes?
 
     def sel(self, *args, **kwargs):
-        selection = Selection(*args, **kwargs)
-        if selection.is_empty:
+        if not args and not kwargs:
             return self
         return self.__class__(i.sel(*args, **kwargs) for i in self.indexes)
 
-    def __getitem__(self, n):
-        if isinstance(n, int):
-            if n < 0:
-                n = len(self) + n
-            k = 0
-            while n >= len(self.indexes[k]):
-                n -= len(self.indexes[k])
-                k += 1
-            return self.indexes[k][n]
-        else:
-            return self.subindex(n)
+    def _getitem(self, n):
+        k = 0
+        while n >= len(self.indexes[k]):
+            n -= len(self.indexes[k])
+            k += 1
+        return self.indexes[k][n]
 
     def __len__(self):
         return sum(len(i) for i in self.indexes)
@@ -431,6 +344,12 @@ class MultiIndex(Index):
         print(" " * depth, self.__class__.__name__)
         for s in self.indexes:
             s.graph(depth + 3)
+
+    def __repr__(self):
+        return "%s(%s)" % (
+            self.__class__.__name__,
+            ",".join(repr(i) for i in self.indexes),
+        )
 
 
 class ForwardingIndex(Index):
@@ -459,3 +378,38 @@ class ScaledIndex(ForwardingIndex):
 
     def __getitem__(self, n):
         return ScaledField(self.index[n], self.offset, self.scaling)
+
+
+class FullIndex(Index):
+    def __init__(self, index, *coords):
+        import numpy as np
+
+        self.index = index
+
+        # Pass1, unique values
+        unique = index.unique_values(*coords)
+        shape = tuple(len(v) for v in unique.values())
+
+        name_to_index = defaultdict(dict)
+
+        for k, v in unique.items():
+            for i, e in enumerate(v):
+                name_to_index[k][e] = i
+
+        self.size = math.prod(shape)
+        self.shape = shape
+        self.holes = np.full(shape, False)
+
+        for f in index:
+            idx = tuple(name_to_index[k][f.metadata(k)] for k in coords)
+            self.holes[idx] = True
+
+        self.holes = self.holes.flatten()
+        print("+++++++++", self.holes.shape, coords, self.shape)
+
+    def __len__(self):
+        return self.size
+
+    def _getitem(self, n):
+        assert self.holes[n], f"Attempting to access hole {n}"
+        return self.index[sum(self.holes[:n])]
