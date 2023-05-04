@@ -30,6 +30,7 @@ dependencies:
 - pytest-cov
 - sphinx
 - sphinx-autoapi
+- sphinx_rtd_theme
 - sphinxcontrib-apidoc
 - nbformat
 - nbconvert
