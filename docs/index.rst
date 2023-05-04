@@ -39,6 +39,13 @@ reference systems and bounding boxes.
 
 .. toctree::
    :maxdepth: 1
+   :caption: Documentation
+
+   guide/index
+
+
+.. toctree::
+   :maxdepth: 1
    :caption: Installation
 
    install
