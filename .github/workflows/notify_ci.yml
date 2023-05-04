@@ -26,10 +26,10 @@ jobs:
       uses: ecmwf-actions/notify-teams@v1
       with:
         incoming_webhook: ${{ secrets.MS_TEAMS_INCOMING_WEBHOOK }}
-        job: job
-        job_context: job_context
-        needs_context: needs_context
-        branch: branch
-        sha: sha
-        workflow: workflow
-        run_id: run_id
+        job: ${{ inputs.job }}
+        job_context: ${{ inputs.job_context }}
+        needs_context: ${{ inputs.needs_context }}
+        branch: ${{ inputs.branch }}
+        sha: ${{ inputs.sha }}
+        workflow: ${{ inputs.workflow }}
+        run_id: ${{ inputs.run_id }}
