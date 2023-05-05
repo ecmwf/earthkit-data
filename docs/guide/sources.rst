@@ -263,20 +263,15 @@ stream
 
   .. code-block:: python
 
-      import earthkit.data
-
-      data = earthkit.data.from_source("stream", stream, group_by=0)
+      >>> import earthkit.data
+      >>> data = earthkit.data.from_source("stream", stream, group_by=0)
 
       # data is empty at this point, but calling any method on it will
       # consume the whole stream
-      len(data)
-
-      # now data stores all the messages in memory
-
-  Output ::
-
+      >>> len(data)
       4
 
+      # now data stores all the messages in memory
 
   See the following notebook examples for further details:
 
