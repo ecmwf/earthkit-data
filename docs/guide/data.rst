@@ -8,7 +8,7 @@ Data Manipulation
 Methods provided by earthkit-data data objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Methods provided by CliMetLab data objects (such as a Dataset, a data Source or a Reader):
+Methods provided by earthkit-data data objects (such as a data Source or a Reader):
 Depending on the data, some of these methods are or are not available.
 
 A CliMetLab data object provides methods to access and use its data.
@@ -51,7 +51,7 @@ In the the following example we read a GRIB file from disk. In the iteration eac
 Selection with ``[...]``
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-When an earthkit-data data `source` or dataset provides a list of fields, a subset of the list can be created using the standard python list interface relying on brackets and slices.
+When an earthkit-data data `source` or dataset provides a list of fields, a subset of the list can be created using the standard python list interface relying on brackets and slices. A subsetting also works by providing a list or ndarray of indices.
 
 .. code-block:: python
 
@@ -83,6 +83,19 @@ When an earthkit-data data `source` or dataset provides a list of fields, a subs
     GribField(u,850,20180801,1200,0,0)
     GribField(v,850,20180801,1200,0,0)
 
+    >>> for f in ds[[1, 3]]:
+    ...     print(f)
+    ...
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(t,850,20180801,1200,0,0)
+
+    >>> for f in ds[np.array([1, 3])]:
+    ...     print(f)
+    ...
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(t,850,20180801,1200,0,0)
+
+
 .. _sel:
 
 Selection with ``.sel()``
@@ -90,13 +103,13 @@ Selection with ``.sel()``
 
 When an earthkit-data data `source` or dataset provides a list of fields, the method ``.sel()`` allows filtering this list and we can **select a subset** of the list of fields. ``.sel()`` returns a "view" so no new data is generated on disk or in memory. The selection offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()``, etc. are all available.
 
-``.sel()`` conditions are specified by a set of **metadata** keys. Both single or multiple keys are allowed to use and each can specify the following type of values:
+``.sel()`` conditions are specified by a set of **metadata** keys. Both single or multiple keys are allowed to use and each can specify the following type of filter values:
 
  - single value
  - list of values
- - slice of values (defines a closed interval, so treated as inclusive of both the start and stop values, unlike normal Python indexing)
+ - slice of values (defines a **closed interval**, so treated as inclusive of both the start and stop values, unlike normal Python indexing)
 
-The following example demonstrates the usage of various conditions. The input data contains temperature and wind fields on various pressure levels.
+The following example demonstrates the usage of ``.sel()``. The input data contains temperature and wind fields on various pressure levels.
 
 .. code-block:: python
 
@@ -143,13 +156,13 @@ When an earthkit-data data `source` or dataset provides a list of fields, the me
 
 ``.isel()`` works similarly to :ref:`sel <sel>` but conditions are specified by indices to the unique values of **coordinates**. A *coordinate* stores the unique, **unsorted** values of the corresponding metadata key in the input data. To list the coordinates that have more than one values use the ``.coords`` property, or to find out the values of specific coordinate use ``.coord()``.
 
-Both single or multiple coordinates are allowed to use in ``.isel()`` and each can specify the following type of values:
+Both single or multiple coordinates are allowed to use in ``.isel()`` and each can specify the following type of index values:
 
  - single index
  - list of indices
- - slice of indices (behaves like normal Python indexing, so stop value not included)
+ - slice of indices (behaves like normal Python indexing, stop value not included)
 
-The following example demonstrates the usage of various conditions. The input data contains temperature and wind fields on various pressure levels.
+The following example demonstrates the usage of ``.isel()``. The input data contains temperature and wind fields on various pressure levels.
 
 .. code:: python
 
@@ -197,4 +210,40 @@ When an earthkit-data data `source` or dataset provides a list of fields, the me
 
 ``.order_by()`` returns a "view" so no new data is generated on disk or in memory. The resulting object offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()``, etc. are all available.
 
-By default ``.order_by()`` uses a list of predefined metadata keys for sorting but we can also specify our list of custom sorting keys. conditions are specified by a set of **metadata** keys. Both single or multiple keys are allowed to use and each can have the following type of values:
+.. code-block:: python
+
+    >>> import earthkit.data
+    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+
+    >>> len(ds)
+    6
+
+    >>> for f in ds.order_by("param"):
+    ...     print(f)
+    ...
+    GribField(t,850,20180801,1200,0,0)
+    GribField(t,1000,20180801,1200,0,0)
+    GribField(u,850,20180801,1200,0,0)
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(v,850,20180801,1200,0,0)
+    GribField(v,1000,20180801,1200,0,0)
+
+    >>> for f in ds.order_by(["level", "param"]):
+    ...     print(f)
+    ...
+    GribField(t,850,20180801,1200,0,0)
+    GribField(u,850,20180801,1200,0,0)
+    GribField(v,850,20180801,1200,0,0)
+    GribField(t,1000,20180801,1200,0,0)
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(v,1000,20180801,1200,0,0)
+
+    >>> for f in ds.order_by(param=["u", "t", "v"]):
+    ...     print(f)
+    ...
+    GribField(u,850,20180801,1200,0,0)
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(t,850,20180801,1200,0,0)
+    GribField(t,1000,20180801,1200,0,0)
+    GribField(v,850,20180801,1200,0,0)
+    GribField(v,1000,20180801,1200,0,0)
