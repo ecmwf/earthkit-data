@@ -247,15 +247,13 @@ stream
 
   .. code-block:: python
 
-      import earthkit.data
+      >>> import earthkit.data
+      >>> data = earthkit.data.from_source("stream", stream, group_by=2)
 
-      data = earthkit.data.from_source("stream", stream, group_by=2)
-      for f in data:
-          # f is a FieldList containing 2 GribFields
-          print(f.metadata("param"))
-
-  Output: ::
-
+      # f is a FieldList containing 2 GribFields
+      >>> for f in data:
+      ...     print(f.metadata("param"))
+      ...
       ['u', 'v']
       ['u', 'v']
 
