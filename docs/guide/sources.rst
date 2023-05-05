@@ -88,18 +88,18 @@ file
 
   The ``path`` can be used in a flexible way:
 
-    .. code:: python
+  .. code:: python
 
-        import earthkit.data
+      import earthkit.data
 
-        # UNIX globbing is allowed by default
-        data = earthkit.data.from_source("file", "path/to/t_*.grib")
+      # UNIX globbing is allowed by default
+      data = earthkit.data.from_source("file", "path/to/t_*.grib")
 
-        # list of files can be specified
-        data = earthkit.data.from_source("file", ["path/to/f1.grib", "path/to/f2.grib"])
+      # list of files can be specified
+      data = earthkit.data.from_source("file", ["path/to/f1.grib", "path/to/f2.grib"])
 
-        # a path can be a directory, in this case it is recursively scanned for supported files
-        data = earthkit.data.from_source("file", "path/to/dir")
+      # a path can be a directory, in this case it is recursively scanned for supported files
+      data = earthkit.data.from_source("file", "path/to/dir")
 
 
   See the following notebook examples for further details:
@@ -293,6 +293,7 @@ memory
       import earthkit.data
 
       # buffer stores GRIB messages
+      buffer = ...
       stream = io.BytesIO(buffer)
 
       data = earthkit.data.from_source("stream", stream)
