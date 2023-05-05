@@ -225,51 +225,50 @@ stream
 
   When ``groub_by`` is not zero ``from_source`` gives us a stream iterator object. During the iteration temporary objects are created for each message then get deleted when going out of scope.
 
-  Let us imagine we have 4 GRIB messages available in a stream. By default (``group_by=1``) we will consume one message at a time:
+  In the examples below, for simplicity, we create a file stream from a GRIB file and read it as a "stream". By default (``group_by=1``) we will consume one message at a time:
 
   .. code-block:: python
 
-      import earthkit.data
+      >>> import earthkit.data
+      >>> stream = open("docs/examples/test4.grib", "rb")
+      >>> ds = earthkit.data.from_source("stream", stream)
 
-      data = earthkit.data.from_source("stream", stream)
-      for f in data:
-          # f is a GribField
-          print(f.metadata("param"))
-
-  Output: ::
-
-      GribField(u,1000,20180801,1200,0,0)
-      GribField(v,1000,20180801,1200,0,0)
-      GribField(u,500,20180801,1200,0,0)
-      GribField(v,500,20180801,1200,0,0)
+      # f is a GribField
+      >>> for f in ds:
+      ...     print(len(f))
+      ...
+      1
+      1
 
   We can use ``group_by=2`` to read 2 messages at a time:
 
   .. code-block:: python
 
       >>> import earthkit.data
-      >>> data = earthkit.data.from_source("stream", stream, group_by=2)
+      >>> stream = open("docs/examples/test4.grib", "rb")
+      >>> ds = earthkit.data.from_source("stream", stream, group_by=2)
 
       # f is a FieldList containing 2 GribFields
-      >>> for f in data:
-      ...     print(f.metadata("param"))
+      >>> for f in ds:
+      ...     print(len(f))
       ...
-      ['u', 'v']
-      ['u', 'v']
+      2
+      2
 
   With ``groub_by=0`` the whole stream will be consumed resulting in a FieldList object storing all the messages in memory. **Use this option carefully!**
 
   .. code-block:: python
 
       >>> import earthkit.data
-      >>> data = earthkit.data.from_source("stream", stream, group_by=0)
+      >>> stream = open("docs/examples/test4.grib", "rb")
+      >>> ds = earthkit.data.from_source("stream", stream, group_by=0)
 
-      # data is empty at this point, but calling any method on it will
+      # ds is empty at this point, but calling any method on it will
       # consume the whole stream
-      >>> len(data)
+      >>> len(ds)
       4
 
-      # now data stores all the messages in memory
+      # now ds stores all the messages in memory
 
   See the following notebook examples for further details:
 
