@@ -1,6 +1,6 @@
 .. _data-handling:
 
-Data Manipulation
+Data manipulation
 =================
 
 .. _base-class-methods:
@@ -8,15 +8,12 @@ Data Manipulation
 Methods provided by earthkit-data data objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Methods provided by earthkit-data data objects (such as a data Source or a Reader):
-Depending on the data, some of these methods are or are not available.
-
-A CliMetLab data object provides methods to access and use its data.
+The earthkit-data data objects (such as a data Source or a Reader) offers data accessing/filtering/conversion methods, some of which are only available for certain data types. Some of these methods are listed below:
 
 .. code-block:: python
 
-    >>> source.to_xarray()  # for gridded data
-    >>> source.to_pandas()  # for non-gridded data
+    >>> source.to_xarray()  # for field data
+    >>> source.to_pandas()  # for non-field data
     >>> source.to_numpy()  # When the data is a n-dimensional array.
 
 .. _iter:
