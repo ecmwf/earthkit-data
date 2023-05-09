@@ -271,6 +271,17 @@ class CodesReader:
 
 class GribField(Base):
     def __init__(self, path, offset, length):
+        r"""Represents a GRIB message
+
+        Parameters
+        ----------
+        path: str
+            Path to the GRIB file
+        offset: number
+            File offset of the message (in bytes)
+        length: number
+            Size of the message (in bytes)
+        """
         self.path = path
         self._offset = offset
         self._length = length
@@ -278,6 +289,7 @@ class GribField(Base):
 
     @property
     def handle(self):
+        r"""Represents a GRIB message"""
         if self._handle is None:
             assert self._offset is not None
             self._handle = CodesReader.from_cache(self.path).at_offset(self._offset)
@@ -285,16 +297,23 @@ class GribField(Base):
 
     @property
     def values(self):
+        r"""Get the values stored in the GRIB field as a flat ndarray"""
         return self.handle.get_values()
 
     @property
     def offset(self):
+        r"""Get the offset (bytes) of the GRIB field within the GRIB file."""
         if self._offset is None:
             self._offset = int(self.handle.get("offset"))
         return self._offset
 
     @property
     def shape(self):
+        r"""Get the shape of the GRIB field. For structured grid the shape is a tuple in the form of (Nj, Ni) where:
+        - ni: the number of gridpoints in i direction (longitude for a regular latitude-longitude grid)
+        - nj: the number of gridpoints in j direction (latitude for a regular latitude-longitude grid)
+        For other grid types the number of gridpoints is returned.
+        """
         Nj = missing_is_none(self.handle.get("Nj", default=None))
         Ni = missing_is_none(self.handle.get("Ni", default=None))
         if Ni is None or Nj is None:
@@ -303,6 +322,7 @@ class GribField(Base):
         return (Nj, Ni)
 
     def data(self, *args, flatten=False):
+        r"""Returns the values and/or the geographical coordinates for each grid point."""
         keys = dict(
             lat=self.handle.get_latitudes,
             lon=self.handle.get_longitudes,
@@ -320,9 +340,36 @@ class GribField(Base):
         return r[0] if len(r) == 1 else tuple(r)
 
     def to_numpy(self, flatten=False):
+        r"""Returns the values stored in the GRIB field as an ndarray.
+
+        Parameters
+        ----------
+        flatten: bool
+            When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
+            ``shape`` is returned.
+
+        Returns
+        -------
+        ndarray
+            Field values
+        """
         return self.values if flatten else self.values.reshape(self.shape)
 
     def to_points(self, flatten=True):
+        r"""Returns the latitudes/longitudes of all the gridpoints in the fields.
+
+        Parameters
+        ----------
+        flatten: bool
+            When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
+            ``shape`` are returned.
+
+        Returns
+        -------
+        dict
+            Dictionary with items "lat" and "lon", with the ndarrays of the latitudes and
+            longitudes, respectively.
+        """
         lon, lat = self.data("lon", "lat", flatten=flatten)
         return dict(lon=lon, lat=lat)
 

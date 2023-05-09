@@ -42,6 +42,8 @@ reference systems and bounding boxes.
    :caption: Documentation
 
    guide/index
+   _api/index
+
 
 
 .. toctree::
