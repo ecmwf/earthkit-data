@@ -1,5 +1,6 @@
 version: 2
 formats: []
+
 build:
   os: "ubuntu-22.04"
   tools:
