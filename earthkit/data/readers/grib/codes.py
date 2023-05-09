@@ -214,21 +214,25 @@ class ReaderLRUCache(dict):
         self.size = size
 
     def __getitem__(self, path):
+        key = (
+            path,
+            os.getpid(),
+        )
         with self.lock:
             try:
-                return super().__getitem__(path)
+                return super().__getitem__(key)
             except KeyError:
                 pass
 
-            c = self[path] = CodesReader(path)
+            c = self[key] = CodesReader(path)
             while len(self) >= self.size:
-                oldest = min((v.last, v.path) for v in self.values())
-                del self[oldest[1]]
+                _, oldest = min((v.last, k) for k, v in self.items())
+                del self[oldest]
 
             return c
 
 
-cache = ReaderLRUCache(512)  # TODO: Add to config
+cache = ReaderLRUCache(32)  # TODO: Add to config
 
 
 class CodesReader:
@@ -261,6 +265,9 @@ class CodesReader:
             assert handle is not None
             return CodesHandle(handle, self.path, offset)
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.path}"
+
 
 class GribField(Base):
     def __init__(self, path, offset, length):
@@ -268,12 +275,6 @@ class GribField(Base):
         self._offset = offset
         self._length = length
         self._handle = None
-
-    # def __enter__(self):
-    #     return self
-
-    # def __exit__(self, exc_type, exc_val, exc_tb):
-    #     pass
 
     @property
     def handle(self):
@@ -297,7 +298,8 @@ class GribField(Base):
         Nj = missing_is_none(self.handle.get("Nj", default=None))
         Ni = missing_is_none(self.handle.get("Ni", default=None))
         if Ni is None or Nj is None:
-            return self.handle.get("numberOfDataPoints", default=None)
+            n = self.handle.get("numberOfDataPoints", default=None)
+            return (n,)  # shape must be a tuple
         return (Nj, Ni)
 
     def data(self, *args, flatten=False):
