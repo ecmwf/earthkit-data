@@ -1,4 +1,4 @@
-name: on-push
+name: ci
 
 on:
   push:
@@ -9,6 +9,9 @@ on:
   pull_request:
     branches:
     - main
+  pull_request_target:
+    types: [labeled]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,9 +23,12 @@ defaults:
 
 jobs:
   pre-commit:
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
     - uses: actions/setup-python@v4
       with:
         python-version: 3.x
@@ -30,10 +36,13 @@ jobs:
 
   unit-tests:
     name: unit-tests (3.10)
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
     - name: Install Conda environment with Micromamba
       uses: mamba-org/provision-with-micromamba@v14
       with:
@@ -52,6 +61,7 @@ jobs:
 
   type-check:
     needs: [unit-tests]
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -59,6 +69,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
     - name: Install Conda environment with Micromamba
       uses: mamba-org/provision-with-micromamba@v12
       with:
@@ -78,6 +90,7 @@ jobs:
 
   documentation:
     needs: [unit-tests]
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -85,6 +98,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
     - name: Install Conda environment with Micromamba
       uses: mamba-org/provision-with-micromamba@v12
       with:
@@ -104,6 +119,7 @@ jobs:
 
   integration-tests:
     needs: [unit-tests]
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -113,10 +129,12 @@ jobs:
       matrix:
         include:
         - python-version: "3.10"
-            # extra: -minver  # This will need to be uncommented and environment-minver.yml updated if we want to publish on conda
+              # extra: -minver  # This will need to be uncommented and environment-minver.yml updated if we want to publish on conda
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
     - name: Install Conda environment with Micromamba
       uses: mamba-org/provision-with-micromamba@v12
       with:
@@ -135,11 +153,14 @@ jobs:
         make unit-tests
 
   distribution:
-    runs-on: ubuntu-latest
     needs: [integration-tests, type-check, documentation]
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
     - name: Build distributions
       run: |
         $CONDA/bin/python -m pip install build
@@ -152,7 +173,7 @@ jobs:
         password: ${{ secrets.PYPI_API_TOKEN }}
 
   notify:
-    runs-on: ubuntu-latest
+    if: always() && ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
     needs:
     - pre-commit
     - unit-tests
@@ -160,16 +181,10 @@ jobs:
     - documentation
     - integration-tests
     - distribution
-    if: always()
+    runs-on: ubuntu-latest
     steps:
-    - name: Create inputs
-      run: |
-        notify_inputs=$(jq -n --arg job_context '${{ toJSON(job) }}' --arg needs_context '${{ toJSON(needs) }}' \
-        '{ "job": "${{ github.job }}", "job_context": $job_context, "needs_context": $needs_context, "branch": "${{ github.ref }}", "sha": "${{ github.sha }}", "workflow": "${{ github.workflow }}", "run_id": "${{ github.run_id }}" }')
-        echo notify_inputs=$notify_inputs >> $GITHUB_ENV
     - name: Trigger Teams notification
-      uses: benc-uk/workflow-dispatch@v1
+      uses: ecmwf-actions/notify-teams@v1
       with:
-        workflow: notify_ci.yml
-        inputs: ${{ env.notify_inputs }}
-        ref: ${{ github.event.pull_request.head.ref || github.ref }}
+        incoming_webhook: ${{ secrets.MS_TEAMS_INCOMING_WEBHOOK }}
+        needs_context: ${{ toJSON(needs) }}
