@@ -6,4 +6,3 @@ Sphinx
 sphinx-rtd-theme
 nbsphinx
 setuptools
-urllib3<2.0.0
