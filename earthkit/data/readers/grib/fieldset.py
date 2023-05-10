@@ -78,8 +78,8 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
     def indices(self, squeeze=False):
         r"""Returns the unique, sorted values for a set of metadata keys across all the
         fields. By default it uses a set of keys from the mars ecCodes namespace, but keys
-        with no valid values are not included. Keys :obj:`index` called with are automatically added
-        to original set of keys used in :obj:`indices`.
+        with no valid values are not included. Keys that :obj:`index` is called with are automatically
+        added to original set of keys used in :obj:`indices`.
 
         Parameters
         ----------
