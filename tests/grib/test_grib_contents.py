@@ -292,11 +292,13 @@ def test_grib_metadata_generic():
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     f = f.sel(count=[1, 2, 3, 4])
 
-    sn = f.metadata(["shortName"])
+    sn = f.metadata("shortName")
     assert sn == ["t", "u", "v", "t"]
-    cs = f.metadata(["centre:s"])
+    sn = f.metadata(["shortName"])
+    assert sn == [("t",), ("u",), ("v",), ("t",)]
+    cs = f.metadata("centre:s")
     assert cs == ["ecmf", "ecmf", "ecmf", "ecmf"]
-    cl = f.metadata(["centre:l"])
+    cl = f.metadata("centre:l")
     assert cl == [98, 98, 98, 98]
     lg = f.metadata(["level:d", "cfVarName"])
     assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
@@ -362,7 +364,7 @@ def test_grib_metadata_namespace():
 
     r = f[0].metadata()
     assert isinstance(r, dict)
-    for ns in ["", "vertical", "time"]:
+    for ns in ["default", "vertical", "time"]:
         assert ns in r, ns
 
 

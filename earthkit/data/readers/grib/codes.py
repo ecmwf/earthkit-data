@@ -21,17 +21,10 @@ from earthkit.data.utils.bbox import BoundingBox
 
 LOG = logging.getLogger(__name__)
 
+_GRIB_NAMESPACES = {"default": None}
 
-GRIB_NAMESPACES = (
-    "default",
-    "ls",
-    "geography",
-    "mars",
-    "parameter",
-    "statistics",
-    "time",
-    "vertical",
-)
+for k in ("ls", "geography", "mars", "parameter", "statistics", "time", "vertical"):
+    _GRIB_NAMESPACES[k] = k
 
 
 def missing_is_none(x):
@@ -481,16 +474,14 @@ class GribField(Base):
     @staticmethod
     def _parse_metadata_args(*args, namespace=None, astype=None):
         key = []
-        single_key = False
+        single_key = len(args) == 1 and isinstance(args[0], str)
         for k in args:
             if isinstance(k, str):
                 key.append(k)
-                single_key = True
             elif isinstance(k, (list, tuple)):
                 key.extend(k)
             else:
                 raise ValueError(f"metadata: invalid key argument={k}")
-        single_key = single_key and len(k) == 1
 
         if key:
             if namespace is not None:
@@ -528,7 +519,7 @@ class GribField(Base):
         namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
             The `ecCodes namespace
             <https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ>`_ to
-            choose the ``keys`` from. When ``namespace`` is none all the available namespaces will be used.
+            choose the ``keys`` from. When ``namespace`` is None all the available namespaces will be used.
         astype: type name or :obj:`tuple`
             Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
             Otherwise, must have same number of elements as ``keys``. Only used when ``keys`` is not empty.
@@ -542,12 +533,14 @@ class GribField(Base):
         Returns
         -------
         single value, :obj:`tuple` or :obj:`dict`
-            When no ``namespace`` or a single ``namespace`` is specified:
-
-            - return a single value when ``keys`` is a single str
-            - returns a :obj:`tuple` when ``keys`` is a sequence
-
-            When multiple ``namespace``\ s are specified it returns a :obj:`dict` with one item per namespace.
+            The return type depends on ``keys`` and ``namespace``.
+            When ``keys`` is not empty:
+                - returns a single value when ``keys`` is a str
+                - returns a :obj:`tuple` when ``keys`` is a sequence
+            When ``keys`` is empty:
+                - when ``namespace`` is :obj:`str` returns a :obj:`dict` with the keys and
+                  values in that namespace
+                - otherwise returns a :obj:`dict` with one item per namespace (dict of dict)
 
         Raises
         ------
@@ -618,17 +611,15 @@ class GribField(Base):
             return tuple(r) if not single_key else r[0]
         else:
             if len(namespace) == 0:
-                namespace = GRIB_NAMESPACES
+                namespace = _GRIB_NAMESPACES.keys()
 
             r = {
-                ns: self.handle.as_namespace(ns if ns != "default" else None)
+                ns: self.handle.as_namespace(_GRIB_NAMESPACES.get(ns, ns))
                 for ns in namespace
             }
             if len(r) == 1:
                 return r[namespace[0]]
             else:
-                if None in r:
-                    r[""] = r.pop(None)
                 return r
 
     def __getitem__(self, key):
@@ -663,11 +654,11 @@ class GribField(Base):
         """
         from earthkit.data.utils.summary import format_info
 
-        namespace = GRIB_NAMESPACES if namespace is None else [namespace]
+        namespace = _GRIB_NAMESPACES.keys() if namespace is None else [namespace]
         r = [
             {
-                "title": ns if ns is not None else "default",
-                "data": self.handle.as_namespace(ns),
+                "title": ns,
+                "data": self.handle.as_namespace(_GRIB_NAMESPACES.get(ns)),
                 "tooltip": f"Keys in the ecCodes {ns} namespace",
             }
             for ns in namespace
