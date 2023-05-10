@@ -297,9 +297,9 @@ class NetCDFReader(Reader):
 
                 # self.log.info("COORD %s %s %s %s", coord, type(coord), hasattr(c, 'calendar'), c)
 
-                standard_name = getattr(c, "standard_name", '')
-                axis = getattr(c, "axis", '')
-                long_name = getattr(c, "long_name", '')
+                standard_name = getattr(c, "standard_name", "")
+                axis = getattr(c, "axis", "")
+                long_name = getattr(c, "long_name", "")
 
                 use = False
 
