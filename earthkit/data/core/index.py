@@ -221,7 +221,7 @@ class Index(Source):
         if not kwargs:
             return self
 
-        kwargs = selection_from_index(self.coord, kwargs)
+        kwargs = selection_from_index(self.index, kwargs)
 
         if not kwargs:
             return self.new_mask_index(self, [])
