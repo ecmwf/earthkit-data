@@ -293,8 +293,8 @@ class Index(Source):
 
         return np.array([f.to_numpy(*args, **kwargs) for f in self])
 
-    def full(self, *indices):
-        return FullIndex(self, *indices)
+    def full(self, *coords):
+        return FullIndex(self, *coords)
 
 
 class MaskIndex(Index):
