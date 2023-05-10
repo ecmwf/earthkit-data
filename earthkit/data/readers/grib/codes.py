@@ -508,14 +508,15 @@ class GribField(Base):
 
         return (key, namespace, astype, single_key)
 
-    def metadata(self, *args, namespace=None, astype=None, **kwargs):
+    def metadata(self, *keys, namespace=None, astype=None, **kwargs):
         r"""Returns metadata values from the GRIB message.
 
         Parameters
         ----------
-        *args: :obj:`str`, :obj:`list` or :obj:`tuple`
-            Metadata key(s). Only ecCodes GRIBkeys can be used here. Can be empty, in this case all the
-            keys from the specified ``namespace`` will be used.
+        *keys: :obj:`str`, :obj:`list` or :obj:`tuple`
+            Positional arguments specifying metadata keys. Only ecCodes GRIBkeys can be used
+            here. Can be empty, in this case all the keys from the specified ``namespace`` will
+            be used.
         namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
             The `ecCodes namespace
             <https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ>`_ to
@@ -560,6 +561,8 @@ class GribField(Base):
         ('2t', 'K')
         >>> ds[0].metadata(["param", "units"])
         ('2t', 'K')
+        >>> ds[0].metadata(["param"])
+        ('2t',)
         >>> ds[0].metadata("badkey")
         KeyError: 'badkey'
         >>> ds[0].metadata("badkey", default=None)
@@ -593,7 +596,7 @@ class GribField(Base):
             return key
 
         key, namespace, astype, single_key = self._parse_metadata_args(
-            *args, namespace=namespace, astype=astype
+            *keys, namespace=namespace, astype=astype
         )
 
         assert isinstance(key, list)
