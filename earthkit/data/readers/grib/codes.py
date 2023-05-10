@@ -302,18 +302,17 @@ class GribField(Base):
             return (n,)  # shape must be a tuple
         return (Nj, Ni)
 
-    def data(self, *args, flatten=False):
-        keys = dict(
+    def data(self, keys=("lat", "lon", "value"), flatten=False):
+        _keys = dict(
             lat=self.handle.get_latitudes,
             lon=self.handle.get_longitudes,
             value=self.handle.get_values,
         )
-        for k in args:
-            if k not in keys:
+        for k in keys:
+            if k not in _keys:
                 raise ValueError(f"data: invalid argument: {k}")
 
-        arg_keys = args if args else ("lat", "lon", "value")
-        r = [keys[k]() for k in arg_keys]
+        r = [_keys[k]() for k in keys]
         if not flatten:
             shape = self.shape
             r = [x.reshape(shape) for x in r]
@@ -322,8 +321,8 @@ class GribField(Base):
     def to_numpy(self, flatten=False):
         return self.values if flatten else self.values.reshape(self.shape)
 
-    def to_points(self, flatten=True):
-        lon, lat = self.data("lon", "lat", flatten=flatten)
+    def to_points(self, flatten=False):
+        lon, lat = self.data(("lon", "lat"), flatten=flatten)
         return dict(lon=lon, lat=lat)
 
     def __repr__(self):
@@ -336,7 +335,7 @@ class GribField(Base):
             self.handle.get("number", default=None),
         )
 
-    def datetime(self, **kwargs):
+    def datetime(self):
         return {
             "base_time": self._base_datetime(),
             "valid_time": self._valid_datetime(),

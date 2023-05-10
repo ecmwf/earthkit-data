@@ -559,7 +559,7 @@ def test_grib_to_points_1():
     f = from_source("file", earthkit_test_data_file("test_single.grib"))
 
     eps = 1e-5
-    v = f[0].to_points()
+    v = f[0].to_points(flatten=True)
     assert isinstance(v, dict)
     assert isinstance(v["lon"], np.ndarray)
     assert isinstance(v["lat"], np.ndarray)
@@ -584,7 +584,7 @@ def test_grib_to_points_1():
 def test_grib_to_points_1_shape():
     f = from_source("file", earthkit_test_data_file("test_single.grib"))
 
-    v = f[0].to_points(flatten=False)
+    v = f[0].to_points()
     assert isinstance(v, dict)
     assert isinstance(v["lon"], np.ndarray)
     assert isinstance(v["lat"], np.ndarray)

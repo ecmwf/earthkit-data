@@ -33,7 +33,7 @@ class PandasMixIn:
         frames = []
         for s in self:
             df = pd.DataFrame.from_dict(
-                filter(dict(zip(columns, s.data("lat", "lon", "value", flatten=True))))
+                filter(dict(zip(columns, s.data(columns, flatten=True))))
             )
             df["datetime"] = s.datetime()["valid_time"]
             for k, v in s.metadata(namespace="mars").items():
