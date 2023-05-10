@@ -23,7 +23,7 @@ LOG = logging.getLogger(__name__)
 
 
 GRIB_NAMESPACES = (
-    None,
+    "default",
     "ls",
     "geography",
     "mars",
@@ -270,6 +270,18 @@ class CodesReader:
 
 
 class GribField(Base):
+    r"""Represents a GRIB message in a GRIB file.
+
+    Parameters
+    ----------
+    path: str
+        Path to the GRIB file
+    offset: number
+        File offset of the message (in bytes)
+    length: number
+        Size of the message (in bytes)
+    """
+
     def __init__(self, path, offset, length):
         self.path = path
         self._offset = offset
@@ -278,6 +290,7 @@ class GribField(Base):
 
     @property
     def handle(self):
+        r""":class:`CodesHandle`: Gets an object providing access to the low level GRIB message structure."""
         if self._handle is None:
             assert self._offset is not None
             self._handle = CodesReader.from_cache(self.path).at_offset(self._offset)
@@ -285,16 +298,26 @@ class GribField(Base):
 
     @property
     def values(self):
+        r"""ndarray: Gets the values stored in the GRIB field as a 1D ndarray."""
         return self.handle.get_values()
 
     @property
     def offset(self):
+        r"""number: Gets the offset (in bytes) of the GRIB field within the GRIB file."""
         if self._offset is None:
             self._offset = int(self.handle.get("offset"))
         return self._offset
 
     @property
     def shape(self):
+        r"""tuple: Gets the shape of the GRIB field. For structured grids the shape is a tuple
+        in the form of (Nj, Ni) where:
+
+        - ni: the number of gridpoints in i direction (longitude for a regular latitude-longitude grid)
+        - nj: the number of gridpoints in j direction (latitude for a regular latitude-longitude grid)
+
+        For other grid types the number of gridpoints is returned as ``(num,)``
+        """
         Nj = missing_is_none(self.handle.get("Nj", default=None))
         Ni = missing_is_none(self.handle.get("Ni", default=None))
         if Ni is None or Nj is None:
@@ -303,11 +326,36 @@ class GribField(Base):
         return (Nj, Ni)
 
     def data(self, keys=("lat", "lon", "value"), flatten=False):
+        r"""Returns the values and/or the geographical coordinates for each grid point.
+
+        Parameters
+        ----------
+        keys: :obj:`str`, :obj:`list` or :obj:`tuple`
+            Specifies the type of data to be returned. Any combination of "lat", "lon" and "value"
+            is allowed here.
+        flatten: bool
+            When it is True a flat ndarray per key is returned. Otherwise an ndarray with the field's
+            :obj:`shape` is returned for each key.
+
+        Returns
+        -------
+        ndarray or tuple of ndarrays
+            When ``keys`` is a single value an ndarray is returned. Otherwise a tuple containing one ndarray
+            per key is returned (following the order in ``keys``).
+
+        Note
+        ----
+            See also: :obj:`to_points`, :obj:`to_numpy` and :obj:`values`.
+        """
         _keys = dict(
             lat=self.handle.get_latitudes,
             lon=self.handle.get_longitudes,
             value=self.handle.get_values,
         )
+
+        if isinstance(keys, str):
+            keys = [keys]
+
         for k in keys:
             if k not in _keys:
                 raise ValueError(f"data: invalid argument: {k}")
@@ -319,9 +367,38 @@ class GribField(Base):
         return r[0] if len(r) == 1 else tuple(r)
 
     def to_numpy(self, flatten=False):
+        r"""Returns the values stored in the GRIB field as an ndarray.
+
+        Parameters
+        ----------
+        flatten: bool
+            When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
+            ``shape`` is returned.
+
+        Returns
+        -------
+        ndarray
+            Field values
+
+        """
         return self.values if flatten else self.values.reshape(self.shape)
 
     def to_points(self, flatten=False):
+        r"""Returns the latitudes/longitudes of all the gridpoints in the field.
+
+        Parameters
+        ----------
+        flatten: bool
+            When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
+            ``shape`` are returned.
+
+        Returns
+        -------
+        dict
+            Dictionary with items "lat" and "lon", containing the ndarrays of the latitudes and
+            longitudes, respectively.
+
+        """
         lon, lat = self.data(("lon", "lat"), flatten=flatten)
         return dict(lon=lon, lat=lat)
 
@@ -336,6 +413,13 @@ class GribField(Base):
         )
 
     def datetime(self):
+        r"""Returns the date and time of the GRIB message.
+
+        Returns
+        -------
+        dict of datatime.datetime
+            Dict with items "base_time" and "valid_time".
+        """
         return {
             "base_time": self._base_datetime(),
             "valid_time": self._valid_datetime(),
@@ -366,6 +450,12 @@ class GribField(Base):
         return self.handle.get("projTargetString", default=None)
 
     def bounding_box(self):
+        r"""Returns the bounding box of the field.
+
+        Returns
+        -------
+        :class:`BoundingBox`
+        """
         return BoundingBox(
             north=self.handle.get("latitudeOfFirstGridPointInDegrees", default=None),
             south=self.handle.get("latitudeOfLastGridPointInDegrees", default=None),
@@ -391,13 +481,16 @@ class GribField(Base):
     @staticmethod
     def _parse_metadata_args(*args, namespace=None, astype=None):
         key = []
+        single_key = False
         for k in args:
             if isinstance(k, str):
                 key.append(k)
+                single_key = True
             elif isinstance(k, (list, tuple)):
                 key.extend(k)
             else:
                 raise ValueError(f"metadata: invalid key argument={k}")
+        single_key = single_key and len(k) == 1
 
         if key:
             if namespace is not None:
@@ -422,9 +515,83 @@ class GribField(Base):
         elif isinstance(namespace, str):
             namespace = [namespace]
 
-        return (key, namespace, astype)
+        return (key, namespace, astype, single_key)
 
     def metadata(self, *args, namespace=None, astype=None, **kwargs):
+        r"""Returns metadata values from the GRIB message.
+
+        Parameters
+        ----------
+        *args: :obj:`str`, :obj:`list` or :obj:`tuple`
+            Metadata key(s). Only ecCodes GRIBkeys can be used here. Can be empty, in this case all the
+            keys from the specified ``namespace`` will be used.
+        namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
+            The `ecCodes namespace
+            <https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ>`_ to
+            choose the ``keys`` from. When ``namespace`` is none all the available namespaces will be used.
+        astype: type name or :obj:`tuple`
+            Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
+            Otherwise, must have same number of elements as ``keys``. Only used when ``keys`` is not empty.
+        **kwargs:
+            Other keyword arguments:
+
+            * default: value, optional
+                Specifies the same default value for all the ``keys`` specified. When ``default`` is
+                **not present** and a key is not found :obj:`metadata` will raise KeyError.
+
+        Returns
+        -------
+        single value, :obj:`tuple` or :obj:`dict`
+            When no ``namespace`` or a single ``namespace`` is specified:
+
+            - return a single value when ``keys`` is a single str
+            - returns a :obj:`tuple` when ``keys`` is a sequence
+
+            When multiple ``namespace``\ s are specified it returns a :obj:`dict` with one item per namespace.
+
+        Raises
+        ------
+        KeyError
+            If a key is not found in the message and no ``default`` is set.
+
+
+        Examples
+        --------
+        Getting keys with their native type:
+
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds[0].metadata("param")
+        '2t'
+        >>> ds[0].metadata("param", "units")
+        ('2t', 'K')
+        >>> ds[0].metadata(["param", "units"])
+        ('2t', 'K')
+        >>> ds[0].metadata("badkey")
+        KeyError: 'badkey'
+        >>> ds[0].metadata("badkey", default=None)
+        <BLANKLINE>
+
+        Prescribing key types:
+
+        >>> ds[0].metadata("centre", astype=int)
+        98
+        >>> ds[0].metadata(["paramId", "centre"], astype=int)
+        (167, 98)
+        >>> ds[0].metadata(["centre", "centre"], astype=(int, str))
+        (98, 'ecmf')
+
+        Using namespaces:
+
+        >>> ds[0].metadata(namespace="parameter")
+        {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature', 'shortName': '2t'}
+        >>> ds[0].metadata(namespace=["parameter", "vertical"])
+        {'parameter': {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature',
+         'shortName': '2t'},
+         'vertical': {'typeOfLevel': 'surface', 'level': 0}}
+
+        """
+
         def _key_name(key):
             if key == "param":
                 key = "shortName"
@@ -432,7 +599,7 @@ class GribField(Base):
                 key = "paramId"
             return key
 
-        key, namespace, astype = self._parse_metadata_args(
+        key, namespace, astype, single_key = self._parse_metadata_args(
             *args, namespace=namespace, astype=astype
         )
 
@@ -441,18 +608,22 @@ class GribField(Base):
 
         if key:
             assert isinstance(astype, (list, tuple))
-            if namespace:
+            if namespace and namespace[0] != "default":
                 key = [namespace[0] + "." + k for k in key]
 
             r = [
                 self.handle.get(_key_name(k), ktype=kt, **kwargs)
                 for k, kt in zip(key, astype)
             ]
-            return tuple(r) if len(r) > 1 else r[0]
+            return tuple(r) if not single_key else r[0]
         else:
             if len(namespace) == 0:
                 namespace = GRIB_NAMESPACES
-            r = {ns: self.handle.as_namespace(ns) for ns in namespace}
+
+            r = {
+                ns: self.handle.as_namespace(ns if ns != "default" else None)
+                for ns in namespace
+            }
             if len(r) == 1:
                 return r[namespace[0]]
             else:
@@ -461,9 +632,35 @@ class GribField(Base):
                 return r
 
     def __getitem__(self, key):
+        """Returns the value of the metadata ``key``."""
         return self.metadata(key)
 
     def dump(self, namespace=None, **kwargs):
+        r"""Generates dump with all the metadata keys belonging to ``namespace``.
+
+        Parameters
+        ----------
+        namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
+            The `ecCodes namespace(s)
+            <https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ>`_.
+            When ``namespace`` is None all the available namespaces will be used.
+        **kwargs:
+            Other keyword arguments:
+
+            print: bool, optional
+                Enables printing the dump to the standard output when not in a Jupyter notebook.
+                Default: False
+            html: bool, optional
+                Enables generating HTML based content in a Jupyter notebook. Default: True
+
+
+        Returns
+        -------
+        html or dict
+            - When in Jupyter notebook returns HTML code providing a tabbed interface to browse the
+              dump content. When ``html`` is False a dict is returned.
+            - dict otherwise. When ``print`` is True also prints the dict to stdout.
+        """
         from earthkit.data.utils.summary import format_info
 
         namespace = GRIB_NAMESPACES if namespace is None else [namespace]
@@ -481,10 +678,21 @@ class GribField(Base):
         )
 
     def write(self, f):
-        """Write the message to a file object"""
+        r"""Write the message to a file object.
+
+        Parameters
+        ----------
+        f: file object
+            The target file object.
+        """
         # assert isinstance(f, io.IOBase)
         self.handle.write_to(f)
 
     def message(self):
-        """Return a buffer containing the encoded message"""
+        r"""Returns a buffer containing the encoded message.
+
+        Returns
+        -------
+        bytes
+        """
         return self.handle.get_buffer()
