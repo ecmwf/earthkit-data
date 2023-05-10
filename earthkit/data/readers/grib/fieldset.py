@@ -52,9 +52,9 @@ GRIB_DESCRIBE_KEYS = [
 
 class FieldSetMixin(PandasMixIn, XarrayMixIn):
     _statistics = None
-    _coords = {}
+    _indices = {}
 
-    def _find_coord_values(self, key):
+    def _find_index_values(self, key):
         values = set()
         for i in self:
             v = i.metadata(key, default=None)
@@ -62,36 +62,63 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
                 values.add(v)
         return sorted(list(values))
 
-    def _find_all_coords_dict(self):
+    def _find_all_index_dict(self):
         from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 
-        coords = defaultdict(set)
+        indices = defaultdict(set)
         for f in self:
             for k in GRIB_KEYS_NAMES:
                 v = f.metadata(k, default=None)
                 if v is None:
                     continue
-                coords[k].add(v)
+                indices[k].add(v)
 
-        return {k: sorted(list(v)) for k, v in coords.items()}
+        return {k: sorted(list(v)) for k, v in indices.items()}
 
-    @property
-    def all_coords(self):
-        if not self._coords:
-            self._coords = self._find_all_coords_dict()
-        return self._coords
+    def indices(self, squeeze=False):
+        r"""Returns the unique, sorted values for a set of metadata keys across all the
+        fields. By default it uses a set of keys from the mars ecCodes namespace, but keys
+        with no valid values are not included. Keys :obj:`index` called with are automatically added
+        to original set of keys used in :obj:`indices`.
 
-    @property
-    def coords(self):
-        # squeeze coords with only 1 value.
-        return {k: v for k, v in self.all_coords.items() if len(v) > 1}
+        Parameters
+        ----------
+        squeeze : False
+            When it is True only returns the metadata keys that have more than one values.
 
-    def coord(self, key):
-        if key in self.all_coords:
-            return self.all_coords[key]
+        Returns
+        -------
+        dict
+            Unique, sorted metadata values across all the fields.
 
-        self._coords[key] = self._find_coord_values(key)
-        return self.coord(key)
+        """
+        if not self._indices:
+            self._indices = self._find_all_index_dict()
+        if squeeze:
+            return {k: v for k, v in self._indices.items() if len(v) > 1}
+        else:
+            return self._indices
+
+    def index(self, key):
+        r"""Returns the unique, sorted values of the specified metadata ``key` across all the fields.
+        ``key`` will be automatically added to the keys returned by :obj:`indices`.
+
+        Parameters
+        ----------
+        key : str
+            Metadata key.
+
+        Returns
+        -------
+        list
+            Unique, sorted values of ``key`` across all the fields.
+
+        """
+        if key in self.indices():
+            return self.indices()[key]
+
+        self._indices[key] = self._find_index_values(key)
+        return self._indices[key]
 
     def to_numpy(self, **kwargs):
         import numpy as np

@@ -221,7 +221,7 @@ class Index(Source):
         if not kwargs:
             return self
 
-        kwargs = selection_from_index(self.coord, kwargs)
+        kwargs = selection_from_index(self.index, kwargs)
 
         if not kwargs:
             return self.new_mask_index(self, [])
@@ -293,8 +293,8 @@ class Index(Source):
 
         return np.array([f.to_numpy(*args, **kwargs) for f in self])
 
-    def full(self, *coords):
-        return FullIndex(self, *coords)
+    def full(self, *indices):
+        return FullIndex(self, *indices)
 
 
 class MaskIndex(Index):
