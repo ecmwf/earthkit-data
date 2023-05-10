@@ -44,7 +44,7 @@ class FieldsetInFilesWithSqlIndex(FieldsetInFilesWithDBIndex):
             obj = obj.filter(f)
         return obj
 
-    def _find_all_coords_dict(self):
+    def _find_all_indices_dict(self):
         from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 
         d = self.unique_values(*GRIB_KEYS_NAMES, remapping=None, progress_bar=None)
