@@ -34,7 +34,31 @@ copyright = "%s, European Centre for Medium-Range Weather Forecasts (ECMWF)" % (
 extensions = [
     "sphinx_rtd_theme",
     "nbsphinx",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "autoapi.extension",
 ]
+
+# autodoc configuration
+autodoc_typehints = "none"
+
+# autoapi configuration
+autoapi_dirs = ["../earthkit/data"]
+autoapi_ignore = ["*/version.py"]
+autoapi_options = [
+    "members",
+    "inherited-members",
+    "undoc-members",
+    "show-inheritance",
+    "show-module-summary",
+    "imported-members",
+]
+autoapi_root = "_api"
+
+# napoleon configuration
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+napoleon_preprocess_types = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
