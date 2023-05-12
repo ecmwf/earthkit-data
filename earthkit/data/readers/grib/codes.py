@@ -588,6 +588,9 @@ class GribField(Base):
         {'parameter': {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature',
          'shortName': '2t'},
          'vertical': {'typeOfLevel': 'surface', 'level': 0}}
+        >>> r = ds[0].metadata()
+        >>> r.keys()
+        dict_keys(['default', 'ls', 'geography', 'mars', 'parameter', 'statistics', 'time', 'vertical'])
 
         """
 
@@ -658,6 +661,12 @@ class GribField(Base):
             - When in Jupyter notebook returns HTML code providing a tabbed interface to browse the
               dump content. When ``html`` is False a dict is returned.
             - dict otherwise. When ``print`` is True also prints the dict to stdout.
+
+
+        Examples
+        --------
+        :ref:`/examples/grib_metadata.ipynb`
+
         """
         from earthkit.data.utils.summary import format_info
 
