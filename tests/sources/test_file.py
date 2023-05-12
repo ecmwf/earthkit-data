@@ -13,8 +13,6 @@
 import logging
 import os
 
-import pytest
-
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.testing import earthkit_file
@@ -22,7 +20,6 @@ from earthkit.data.testing import earthkit_file
 LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.long_test
 def test_file_source_grib():
     s = from_source("file", earthkit_file("docs/examples/test.grib"))
     from earthkit.data.readers.grib.reader import GRIBReader
