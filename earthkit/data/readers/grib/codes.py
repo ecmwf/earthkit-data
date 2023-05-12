@@ -1,4 +1,4 @@
-# (C) Copyright 2020 ECMWF.
+# (C) Copyright 2022 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -514,16 +514,20 @@ class GribField(Base):
         Parameters
         ----------
         *keys: :obj:`str`, :obj:`list` or :obj:`tuple`
-            Positional arguments specifying metadata keys. Only ecCodes GRIBkeys can be used
+            Positional arguments specifying metadata keys. Only ecCodes GRIB keys can be used
             here. Can be empty, in this case all the keys from the specified ``namespace`` will
             be used.
         namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
-            The `ecCodes namespace
-            <https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ>`_ to
-            choose the ``keys`` from. When ``namespace`` is None all the available namespaces will be used.
+            The namespace to choose the ``keys`` from. Any :xref:`eccodes_namespace` can be used here.
+            On top of these :obj:`metadata` defines the "default" namespace, which contains all the
+            GRIB keys that ecCodes can access without specifying a namespace.
+            When ``keys`` is empty and ``namespace`` is None all
+            the available namespaces will be used. When ``keys`` is non empty ``namespace`` cannot
+            specify multiple values.
         astype: type name or :obj:`tuple`
             Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
-            Otherwise, must have same number of elements as ``keys``. Only used when ``keys`` is not empty.
+            Otherwise, must have same number of elements as ``keys``. Only used when ``keys`` is
+            not empty.
         **kwargs:
             Other keyword arguments:
 
@@ -534,13 +538,12 @@ class GribField(Base):
         Returns
         -------
         single value, :obj:`tuple` or :obj:`dict`
-            The return type depends on ``keys`` and ``namespace``.
-            When ``keys`` is not empty:
-                - returns a single value when ``keys`` is a str
-                - returns a :obj:`tuple` when ``keys`` is a sequence
-            When ``keys`` is empty:
-                - when ``namespace`` is :obj:`str` returns a :obj:`dict` with the keys and
-                  values in that namespace
+            - when ``keys`` is not empty:
+                - single value when ``keys`` is a str
+                - :obj:`tuple` when ``keys`` is a sequence
+            - when ``keys`` is empty:
+                - when ``namespace`` is :obj:`str` returns a :obj:`dict` with the keys and values
+                  in that namespace
                 - otherwise returns a :obj:`dict` with one item per namespace (dict of dict)
 
         Raises
@@ -635,8 +638,9 @@ class GribField(Base):
         Parameters
         ----------
         namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
-            The `ecCodes namespace(s)
-            <https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ>`_.
+            The namespace to dump. Any :xref:`eccodes_namespace` can be used here. On top of these
+            :obj:`dump` defines the "default" namespace, which contains all the GRIB keys
+            that ecCodes can access without specifying a namespace.
             When ``namespace`` is None all the available namespaces will be used.
         **kwargs:
             Other keyword arguments:

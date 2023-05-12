@@ -14,6 +14,9 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../"))
 
+# Adds path to the folder _ext, where extensions are stored
+sys.path.append(os.path.abspath("./_ext"))
+
 # -- Project information -----------------------------------------------------
 
 project = "earthkit-data"
@@ -37,6 +40,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "autoapi.extension",
+    "xref",
 ]
 
 # autodoc configuration
@@ -84,6 +88,14 @@ html_static_path = ["_static"]
 # html_css_files = ["style.css"]
 
 
+xref_links = {
+    "eccodes_namespace": (
+        "ecCodes namespace",
+        "https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ",
+    )
+}
+
+
 # define skip rules for autoapi
 def _skip_for_api(app, what, name, obj, skip, options):
     # if what == "package":
@@ -104,5 +116,5 @@ def _skip_for_api(app, what, name, obj, skip, options):
     return skip
 
 
-def setup(sphinx):
-    sphinx.connect("autoapi-skip-member", _skip_for_api)
+def setup(app):
+    app.connect("autoapi-skip-member", _skip_for_api)
