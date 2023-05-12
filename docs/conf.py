@@ -47,7 +47,6 @@ autoapi_dirs = ["../earthkit/data"]
 autoapi_ignore = ["*/version.py"]
 autoapi_options = [
     "members",
-    "inherited-members",
     "undoc-members",
     "show-inheritance",
     "show-module-summary",
@@ -83,3 +82,27 @@ html_theme = "sphinx_rtd_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 # html_css_files = ["style.css"]
+
+
+# define skip rules for autoapi
+def _skip_for_api(app, what, name, obj, skip, options):
+    # if what == "package":
+    #     print(f"{name}[{what}]")
+
+    if what == "module" and "grib.codes" not in name:
+        skip = True
+    elif what == "package" and name not in [
+        "data",
+        "data.readers",
+        "data.readers.grib",
+    ]:
+        skip = True
+    elif what == "class" and "GribField" not in name:
+        skip = True
+    elif what in ("function", "attribute", "data"):
+        skip = True
+    return skip
+
+
+def setup(sphinx):
+    sphinx.connect("autoapi-skip-member", _skip_for_api)
