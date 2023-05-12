@@ -11,6 +11,7 @@
 
 import datetime
 import os
+import tempfile
 
 import numpy as np
 import pytest
@@ -213,6 +214,28 @@ def test_netcdf_proj_string_laea():
         == "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
     )
     assert r[1] == "+proj=eqc +datum=WGS84 +units=m +no_defs"
+
+
+def test_get_fields_missing_standard_name_attr_in_coord_array():
+    """test _get_fields() can handle a missing 'standard_name' attr in coordinate data arrays"""
+
+    # example dataset
+    fs = from_source("file", earthkit_file("docs/examples/test.nc"))
+    ds = fs.to_xarray()
+
+    # delete 'standard_name' attribute (if exists) in any coordinate data arrays
+    for coord_name in ds.coords:
+        try:
+            del ds.coords[coord_name].attrs["standard_name"]
+        except Exception as e:
+            print(e)
+
+    # save updates to disk and try read that file source
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        fpath = os.path.join(tmp_dir, "tmp.nc")
+        ds.to_netcdf(fpath)
+        fs = from_source("file", earthkit_test_data_file(fpath))
+        assert len(fs) == 2
 
 
 if __name__ == "__main__":
