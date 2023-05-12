@@ -366,7 +366,7 @@ class GribField(Base):
         ----------
         flatten: bool
             When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
-            ``shape`` is returned.
+            :obj:`shape` is returned.
 
         Returns
         -------
@@ -383,7 +383,7 @@ class GribField(Base):
         ----------
         flatten: bool
             When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
-            ``shape`` are returned.
+            :obj:`shape` are returned.
 
         Returns
         -------
