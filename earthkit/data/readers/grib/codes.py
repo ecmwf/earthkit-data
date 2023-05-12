@@ -519,7 +519,7 @@ class GribField(Base):
             be used.
         namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
             The namespace to choose the ``keys`` from. Any :xref:`eccodes_namespace` can be used here.
-            On top of these :obj:`metadata` defines the "default" namespace, which contains all the
+            :obj:`metadata` also defines the "default" namespace, which contains all the
             GRIB keys that ecCodes can access without specifying a namespace.
             When ``keys`` is empty and ``namespace`` is None all
             the available namespaces will be used. When ``keys`` is non empty ``namespace`` cannot
@@ -638,8 +638,8 @@ class GribField(Base):
         Parameters
         ----------
         namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
-            The namespace to dump. Any :xref:`eccodes_namespace` can be used here. On top of these
-            :obj:`dump` defines the "default" namespace, which contains all the GRIB keys
+            The namespace to dump. Any :xref:`eccodes_namespace` can be used here.
+            :obj:`dump` also defines the "default" namespace, which contains all the GRIB keys
             that ecCodes can access without specifying a namespace.
             When ``namespace`` is None all the available namespaces will be used.
         **kwargs:
