@@ -685,7 +685,7 @@ class GribField(Base):
         )
 
     def write(self, f):
-        r"""Write the message to a file object.
+        r"""Writes the message to a file object.
 
         Parameters
         ----------
