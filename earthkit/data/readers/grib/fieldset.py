@@ -80,9 +80,8 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         return {k: sorted(list(v)) for k, v in indices.items()}
 
     def indices(self, squeeze=False):
-        r"""Returns the unique, sorted values for a set of metadata keys
-        extracted from all the :obj:`GribField <data.readers.grib.codes.GribField>`\ s.
-        Individual keys can be also queried by :obj:`index`.
+        r"""Returns the unique, sorted values for a set of metadata keys (see below)
+        from all the fields. Individual keys can be also queried by :obj:`index`.
 
         Parameters
         ----------
@@ -110,7 +109,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         [300, 400, 500, 700, 850, 1000]
 
         By default :obj:`indices` uses the following metadata keys taken from the
-        the "mars" :xref:`eccodes_namespace`:
+        "mars" :xref:`eccodes_namespace`:
 
             .. code-block:: python
 
@@ -155,7 +154,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
             return self._indices
 
     def index(self, key):
-        r"""Returns the unique, sorted values of the specified metadata ``key`` across all the fields.
+        r"""Returns the unique, sorted values of the specified metadata ``key`` from all the fields.
         ``key`` will be automatically added to the keys returned by :obj:`indices`.
 
         Parameters
@@ -224,8 +223,6 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         r"""ndarray: Gets the field values as a 2D ndarray. It is formed as the array of
         :obj:`GribField.values <data.readers.grib.codes.GribField.values>` per field.
 
-        Examples
-        --------
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
         >>> for f in ds:
@@ -245,10 +242,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         return np.array([f.values for f in self])
 
     def metadata(self, *args, **kwargs):
-        r"""Returns metadata values from each
-        :obj:`GribField <data.readers.grib.codes.GribField>`. All the arguments are
-        directly passed to
-        :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+        r"""Returns the metadata values of each field.
 
         Parameters
         ----------
@@ -280,14 +274,15 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         return result
 
     def ls(self, n=None, keys=None, extra_keys=None, namespace=None, **kwargs):
-        r"""Lists a set of metadata keys of the
-        :obj:`GribField <data.readers.grib.codes.GribField>`\ s as a pandas DataFrame.
+        r"""Generates a list like summary of the specified
+        :obj:`GribField <data.readers.grib.codes.GribField>`\ s using a set of metadata keys.
 
         Parameters
         ----------
         n: int, None
-            The number of messages to be printed. None means all the messages. ``n`` < 0 means
-            :obj:`GribField <data.readers.grib.codes.GribField>`\ s from the back of the fieldlist.
+            The number of :obj:`GribField <data.readers.grib.codes.GribField>`\ s to be
+            listed. None means all the messages, ``n > 0`` means fields from the front, while
+            ``n < 0`` means fields from the back of the fieldlist.
         keys: list of str, dict, None
             Metadata keys. If it is None the following default set of keys will be used:  "centre",
             "shortName", "typeOfLevel", "level", "dataDate", "dataTime", "stepRange", "dataType",
@@ -333,15 +328,12 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
                 for i in pos_range:
                     yield (self[i]._attributes(keys))
 
-        # ns = kwargs.pop("namespace", None)
-        # _keys = GRIB_LS_KEYS if ns is None else dict(namespace=ns)
-        # return ls(_proc, keys, *args, **kwargs)
         _keys = GRIB_LS_KEYS if namespace is None else dict(namespace=namespace)
         return ls(_proc, _keys, n=n, keys=keys, extra_keys=extra_keys, **kwargs)
 
     def head(self, n=5, **kwargs):
-        r"""Lists a set of metadata keys of the first ``n``
-        :obj:`GribField <data.readers.grib.codes.GribField>`\ s as a pandas DataFrame.
+        r"""Generates a list like summary of the first ``n``
+        :obj:`GribField <data.readers.grib.codes.GribField>`\ s using a set of metadata keys.
         Same as calling :obj:`ls` with ``n``.
 
         Parameters
@@ -373,8 +365,8 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         return self.ls(n=n, **kwargs)
 
     def tail(self, n=5, **kwargs):
-        r"""Lists a set of metadata keys of the last ``n``
-        :obj:`GribField <data.readers.grib.codes.GribField>`\ s as a pandas DataFrame.
+        r"""Generates a list like summary of the last ``n``
+        :obj:`GribField <data.readers.grib.codes.GribField>`\ s using a set of metadata keys.
         Same as calling :obj:`ls` with ``-n``.
 
         Parameters
@@ -415,13 +407,26 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
 
         return format_describe(_proc(), *args, **kwargs)
 
-    def datetime(self, **kwargs):
+    def datetime(self):
         r"""Returns the unique, sorted list of dates and times in the fieldlist.
 
         Returns
         -------
         dict of datatime.datetime
             Dict with items "base_time" and "valid_time".
+
+
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
+        >>> ds.datetime()
+        {'base_time': [datetime.datetime(2020, 12, 21, 12, 0)],
+        'valid_time': [
+            datetime.datetime(2020, 12, 21, 12, 0),
+            datetime.datetime(2020, 12, 21, 15, 0),
+            datetime.datetime(2020, 12, 21, 18, 0),
+            datetime.datetime(2020, 12, 21, 21, 0),
+            datetime.datetime(2020, 12, 23, 12, 0)]}
+
         """
         base = set()
         valid = set()
@@ -432,6 +437,14 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         return {"base_time": sorted(base), "valid_time": sorted(valid)}
 
     def bounding_box(self):
+        r"""Returns the bounding box of each field.
+
+        Returns
+        -------
+        list
+            List with one :obj:`BoundingBox` per
+            :obj:`GribField <data.readers.grib.codes.GribField>`
+        """
         return BoundingBox.multi_merge([s.bounding_box() for s in self])
 
     def statistics(self):
