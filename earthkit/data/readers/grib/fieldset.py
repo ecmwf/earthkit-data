@@ -242,7 +242,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         return np.array([f.values for f in self])
 
     def metadata(self, *args, **kwargs):
-        r"""Returns the metadata values of each field.
+        r"""Returns the metadata values for each field.
 
         Parameters
         ----------
@@ -437,7 +437,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         return {"base_time": sorted(base), "valid_time": sorted(valid)}
 
     def bounding_box(self):
-        r"""Returns the bounding box of each field.
+        r"""Returns the bounding box for each field.
 
         Returns
         -------
@@ -511,9 +511,8 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         return self._statistics
 
     def save(self, filename):
-        r"""Writes all the
-        :obj:`GribField <data.readers.grib.codes.GribField>`\ s into a file.
-        The target file will be overwritten if already exists.
+        r"""Writes all the fields into a file. The target file will be overwritten if
+        already exists.
 
         Parameters
         ----------
@@ -524,8 +523,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
             self.write(f)
 
     def write(self, f):
-        r"""Writes all the
-        :obj:`GribField <data.readers.grib.codes.GribField>`\ a into a file object.
+        r"""Writes all the fields to a file object.
 
         Parameters
         ----------
