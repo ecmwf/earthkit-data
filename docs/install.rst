@@ -4,11 +4,11 @@ Installation
 Installing earthkit-data
 ----------------------------
 
-**earthkit-data** can be installed from PyPI with:
+Install **earthkit-data** with python3 (>= 3.8) and pip as follows:
 
 .. code-block:: bash
 
-    pip install earthkit-data
+    python3 -m pip install --upgrade git+https://github.com/ecmwf/earthkit-data.git@main
 
 
 Installing the binary dependencies
