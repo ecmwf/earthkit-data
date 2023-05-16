@@ -9,16 +9,13 @@
 
 import json
 import logging
-import warnings
+from collections import defaultdict
 
 from earthkit.data.core.caching import auxiliary_cache_file
 from earthkit.data.core.index import ScaledIndex
 from earthkit.data.utils.bbox import BoundingBox
 
 from .pandas import PandasMixIn
-
-# from .pytorch import PytorchMixIn
-# from .tensorflow import TensorflowMixIn
 from .xarray import XarrayMixIn
 
 LOG = logging.getLogger(__name__)
@@ -55,43 +52,73 @@ GRIB_DESCRIBE_KEYS = [
 
 class FieldSetMixin(PandasMixIn, XarrayMixIn):
     _statistics = None
+    _indices = {}
 
-    def _find_coord_values(self, key):
-        values = []
+    def _find_index_values(self, key):
+        values = set()
         for i in self:
             v = i.metadata(key, default=None)
-            if v not in values:
-                values.append(v)
-        return tuple(values)
+            if v is not None:
+                values.add(v)
+        return sorted(list(values))
 
-    def coord(self, key):
-        if key in self._coords:
-            return self._coords[key]
+    def _find_all_index_dict(self):
+        from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 
-        self._coords[key] = self._find_coord_values(key)
-        return self.coord(key)
+        indices = defaultdict(set)
+        for f in self:
+            for k in GRIB_KEYS_NAMES:
+                v = f.metadata(k, default=None)
+                if v is None:
+                    continue
+                indices[k].add(v)
 
-    def _find_coords_keys(self):
-        from earthkit.data.indexing.database.sql import GRIB_INDEX_KEYS
+        return {k: sorted(list(v)) for k, v in indices.items()}
 
-        return GRIB_INDEX_KEYS
+    def indices(self, squeeze=False):
+        r"""Returns the unique, sorted values for a set of metadata keys across all the
+        fields. By default it uses a set of keys from the mars ecCodes namespace, but keys
+        with no valid values are not included. Keys that :obj:`index` is called with are automatically
+        added to original set of keys used in :obj:`indices`.
 
-    def _find_all_coords_dict(self, squeeze):
-        out = {}
-        for key in self._find_coords_keys():
-            values = self.coord(key)
-            if squeeze and len(values) == 1:
-                continue
-            if len(values) == 0:
-                # This should never happen
-                warnings.warn(f".coords warning: GRIB key not found {key}")
-                continue
-            out[key] = values
-        return out
+        Parameters
+        ----------
+        squeeze : False
+            When it is True only returns the metadata keys that have more than one values.
 
-    @property
-    def coords(self):
-        return self._find_all_coords_dict(squeeze=True)
+        Returns
+        -------
+        dict
+            Unique, sorted metadata values across all the fields.
+
+        """
+        if not self._indices:
+            self._indices = self._find_all_index_dict()
+        if squeeze:
+            return {k: v for k, v in self._indices.items() if len(v) > 1}
+        else:
+            return self._indices
+
+    def index(self, key):
+        r"""Returns the unique, sorted values of the specified metadata ``key` across all the fields.
+        ``key`` will be automatically added to the keys returned by :obj:`indices`.
+
+        Parameters
+        ----------
+        key : str
+            Metadata key.
+
+        Returns
+        -------
+        list
+            Unique, sorted values of ``key`` across all the fields.
+
+        """
+        if key in self.indices():
+            return self.indices()[key]
+
+        self._indices[key] = self._find_index_values(key)
+        return self._indices[key]
 
     def to_numpy(self, **kwargs):
         import numpy as np
@@ -135,6 +162,16 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         ns = kwargs.pop("namespace", None)
         keys = GRIB_LS_KEYS if ns is None else dict(namespace=ns)
         return ls(_proc, keys, *args, **kwargs)
+
+    def head(self, n=5, **kwargs):
+        if n <= 0:
+            raise ValueError("head: n must be > 0")
+        return self.ls(n=n, **kwargs)
+
+    def tail(self, n=5, **kwargs):
+        if n <= 0:
+            raise ValueError("n must be > 0")
+        return self.ls(n=-n, **kwargs)
 
     def describe(self, *args, **kwargs):
         from earthkit.data.utils.summary import format_describe

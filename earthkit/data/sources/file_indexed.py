@@ -9,7 +9,7 @@
 import logging
 import os
 
-from earthkit.data.readers.grib.index import FieldsetInFilesWithSqlIndex
+from earthkit.data.readers.grib.index.sql import FieldsetInFilesWithSqlIndex
 from earthkit.data.readers.grib.parsing import GribIndexingPathParserIterator
 from earthkit.data.sources.indexed import IndexedSource
 
@@ -96,4 +96,5 @@ class FileIndexedSource(IndexedSource):
             GribIndexingPathParserIterator(path, ignore=ignore, relative_paths=False),
             cache_metadata={"directory": self.path},
         )
+
         super().__init__(index, **kwargs)

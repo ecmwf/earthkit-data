@@ -14,6 +14,7 @@ import sys
 
 import pytest
 
+from earthkit.data import from_source
 from earthkit.data.utils.serialise import (
     SERIALISATION,
     deserialise_state,
@@ -22,21 +23,17 @@ from earthkit.data.utils.serialise import (
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from indexing_fixtures import check_sel_and_order, get_fixtures  # noqa: E402
+from indexing_fixtures import get_tmp_fixture  # noqa E402
 
 
+# TODO: add test for mode=multi
+@pytest.mark.parametrize("mode", ["file", "directory"])
 @pytest.mark.parametrize("params", (["t", "u"], ["u", "t"]))
 @pytest.mark.parametrize("levels", ([500, 850], [850, 500]))
-@pytest.mark.parametrize(
-    "input_mode",
-    [
-        "directory",
-        # "list-of-dicts",
-        # "file",
-    ],
-)
-@pytest.mark.parametrize("indexing", [True])
-def test_indexing_pickle(params, levels, input_mode, indexing):
+def test_indexing_pickle(mode, params, levels):
+    tmp, path = get_tmp_fixture(mode)
+    ds = from_source("file", path, indexing=True)
+
     request = dict(
         level=levels,
         variable=params,
@@ -44,18 +41,18 @@ def test_indexing_pickle(params, levels, input_mode, indexing):
         time="1200",
     )
 
-    ds, __tmp, total, n = get_fixtures(input_mode, indexing, {})
-    assert len(ds) == total, len(ds)
-
     ds = ds.sel(**request)
-    ds = ds.order_by(level=levels, variable=params)
+    ds = ds.order_by(["level", "param"])
 
-    assert len(ds) == n, (len(ds), ds, SERIALISATION)
+    assert len(ds) == 4, (len(ds), ds, SERIALISATION)
     state = serialise_state(ds)
     ds = deserialise_state(state)
-    assert len(ds) == n, (len(ds), ds, SERIALISATION)
+    assert len(ds) == 4, (len(ds), ds, SERIALISATION)
 
-    check_sel_and_order(ds, params, levels)
+    ref = dict(shortName=["t", "u", "t", "u"], level=[500, 500, 850, 850])
+
+    for k, v in ref.items():
+        assert ds.metadata(k) == v
 
 
 if __name__ == "__main__":

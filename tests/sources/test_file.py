@@ -27,7 +27,7 @@ def test_file_source_grib():
     s = from_source("file", earthkit_file("docs/examples/test.grib"))
     from earthkit.data.readers.grib.reader import GRIBReader
 
-    assert isinstance(s._reader, GRIBReader), s
+    assert isinstance(s, GRIBReader), s
     assert len(s) == 2
 
 
