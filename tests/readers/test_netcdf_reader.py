@@ -220,7 +220,7 @@ def test_get_fields_missing_standard_name_attr_in_coord_array():
     """test _get_fields() can handle a missing 'standard_name' attr in coordinate data arrays"""
 
     # example dataset
-    fs = from_source("file", earthkit_file("docs/examples/test.nc"))
+    fs = from_source("file", earthkit_examples_file("test.nc"))
     ds = fs.to_xarray()
 
     # delete 'standard_name' attribute (if exists) in any coordinate data arrays
