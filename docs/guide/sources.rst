@@ -39,6 +39,8 @@ with the appropriate name and arguments, which provides data and additional func
      - read data from a stream
    * - :ref:`data-sources-memory`
      - read data from a memory buffer
+   * - :ref:`data-sources-mars`
+     - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
 
 The data source object provides methods to access and use its data, such as
 ``to_xarray()`` or ``to_pandas()`` or other. Depending on the data, some of
@@ -299,3 +301,38 @@ memory
       data = earthkit.data.from_source("stream", stream)
       for f in data:
           print(f.metadata("param"))
+
+
+.. _data-sources-mars:
+
+mars
+--------------
+
+.. py:function:: from_source("mars", request)
+
+  The *mars* source will retrieve data from the ECMWF MARS (Meteorological Archival and Retrieval System) archive. In addition
+  to data retrieval, ``request`` also has GRIB post-processing options such as ``grid`` and ``area`` for regridding and
+  sub-area extraction respectively.
+
+  To figure out which data you need, or discover relevant data available in MARS, see the publicly accessible `MARS catalog <https://apps.ecmwf.int/archive-catalogue/>`_ (or this `access restricted catalog <https://apps.ecmwf.int/mars-catalogue/>`_).  To access data from the MARS, you will need to register and retrieve an access token. For a more extensive documentation about MARS, please refer to the `MARS user documentation <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_ (or its `access from the internet <https://confluence.ecmwf.int/display/UDOC/Web-MARS>`_ through
+  its `web API <https://www.ecmwf.int/en/forecasts/access-forecasts/ecmwf-web-api>`_).
+
+  The ``request`` can be specified as a set of keyword arguments or as a dict. The following example retrieves analysis GRIB data for a subarea for 2 surface parameters:
+
+  .. code-block:: python
+
+      import io
+      import earthkit.data
+
+      ds = earthkit.data.from_source(
+          "mars",
+          {
+              "param": ["2t", "msl"],
+              "levtype": "sfc",
+              "area": [50, -50, 20, 50],
+              "grid": [2, 2],
+              "date": "2023-05-10",
+          },
+      )
+
+  Data downloaded from MARS is stored in the the :ref:`cache <caching>`.
