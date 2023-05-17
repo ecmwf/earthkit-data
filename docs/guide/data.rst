@@ -151,7 +151,7 @@ Selection with ``.isel()``
 
 When an earthkit-data data `source` or dataset provides a list of fields, the method ``.isel()`` allows filtering this list and we can **select a subset** of the list of fields. ``.isel()`` returns a "view" so no new data is generated on disk or in memory. The selection offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()`` , etc. are all available.
 
-``.isel()`` works similarly to :ref:`sel <sel>` but conditions are specified by indices to the unique values of **coordinates**. A *coordinate* stores the unique, **unsorted** values of the corresponding metadata key in the input data. To list the coordinates that have more than one values use the ``.coords`` property, or to find out the values of specific coordinate use ``.coord()``.
+``.isel()`` works similarly to :ref:`sel <sel>` but conditions are specified by indices to the unique values of **coordinates**. A *coordinate* stores the unique, **unsorted** values of the corresponding metadata key in the input data. To list the coordinates that have more than one values use the ``.indices`` property, or to find out the values of specific coordinate use ``.index()``.
 
 Both single or multiple coordinates are allowed to use in ``.isel()`` and each can specify the following type of index values:
 
@@ -168,7 +168,7 @@ The following example demonstrates the usage of ``.isel()``. The input data cont
 
     >>> len(ds)
     18
-    >>> ds.coords
+    >>> ds.indices
     {'levelist': (1000, 850, 700, 500, 400, 300), 'param': ('t', 'u', 'v')}
 
     >>> subset = ds.isel(param=0)
