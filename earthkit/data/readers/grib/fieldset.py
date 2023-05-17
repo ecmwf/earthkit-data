@@ -266,6 +266,8 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         ['2t', 'msl']
         >>> ds.metadata("param", "units")
         [('2t', 'K'), ('msl', 'Pa')]
+        >>> ds.metadata(["param", "units"])
+        [['2t', 'K'], ['msl', 'Pa']]
 
         """
         result = []

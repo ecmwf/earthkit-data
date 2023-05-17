@@ -474,7 +474,15 @@ class GribField(Base):
     @staticmethod
     def _parse_metadata_args(*args, namespace=None, astype=None):
         key = []
-        single_key = len(args) == 1 and isinstance(args[0], str)
+        key_arg_type = None
+        if len(args) == 1 and isinstance(args[0], str):
+            key_arg_type = str
+        elif len(args) >= 1:
+            key_arg_type = tuple
+            for k in args:
+                if isinstance(k, list):
+                    key_arg_type = list
+
         for k in args:
             if isinstance(k, str):
                 key.append(k)
@@ -506,7 +514,7 @@ class GribField(Base):
         elif isinstance(namespace, str):
             namespace = [namespace]
 
-        return (key, namespace, astype, single_key)
+        return (key, namespace, astype, key_arg_type)
 
     def metadata(self, *keys, namespace=None, astype=None, **kwargs):
         r"""Returns metadata values from the GRIB message.
@@ -524,10 +532,10 @@ class GribField(Base):
             When ``keys`` is empty and ``namespace`` is None all
             the available namespaces will be used. When ``keys`` is non empty ``namespace`` cannot
             specify multiple values.
-        astype: type name or :obj:`tuple`
+        astype: type name, :obj:`list` or :obj:`tuple`
             Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
-            Otherwise, must have same number of elements as ``keys``. Only used when ``keys`` is
-            not empty.
+            Otherwise, must have same the number of elements as ``keys``. Only used when
+            ``keys`` is not empty.
         **kwargs:
             Other keyword arguments:
 
@@ -537,10 +545,10 @@ class GribField(Base):
 
         Returns
         -------
-        single value, :obj:`tuple` or :obj:`dict`
+        single value, :obj:`list`, :obj:`tuple` or :obj:`dict`
             - when ``keys`` is not empty:
                 - single value when ``keys`` is a str
-                - :obj:`tuple` when ``keys`` is a sequence
+                - otherwise the same type as that of ``keys`` (:obj:`lits` or :obj:`tuple`)
             - when ``keys`` is empty:
                 - when ``namespace`` is :obj:`str` returns a :obj:`dict` with the keys and values
                   in that namespace
@@ -562,10 +570,12 @@ class GribField(Base):
         '2t'
         >>> ds[0].metadata("param", "units")
         ('2t', 'K')
-        >>> ds[0].metadata(["param", "units"])
+        >>> ds[0].metadata(("param", "units"))
         ('2t', 'K')
+        >>> ds[0].metadata(["param", "units"])
+        ['2t', 'K']
         >>> ds[0].metadata(["param"])
-        ('2t',)
+        ['2t']
         >>> ds[0].metadata("badkey")
         KeyError: 'badkey'
         >>> ds[0].metadata("badkey", default=None)
@@ -576,9 +586,9 @@ class GribField(Base):
         >>> ds[0].metadata("centre", astype=int)
         98
         >>> ds[0].metadata(["paramId", "centre"], astype=int)
-        (167, 98)
-        >>> ds[0].metadata(["centre", "centre"], astype=(int, str))
-        (98, 'ecmf')
+        [167, 98]
+        >>> ds[0].metadata(["centre", "centre"], astype=[int, str])
+        [98, 'ecmf']
 
         Using namespaces:
 
@@ -601,7 +611,7 @@ class GribField(Base):
                 key = "paramId"
             return key
 
-        key, namespace, astype, single_key = self._parse_metadata_args(
+        key, namespace, astype, key_arg_type = self._parse_metadata_args(
             *keys, namespace=namespace, astype=astype
         )
 
@@ -617,7 +627,13 @@ class GribField(Base):
                 self.handle.get(_key_name(k), ktype=kt, **kwargs)
                 for k, kt in zip(key, astype)
             ]
-            return tuple(r) if not single_key else r[0]
+
+            if key_arg_type == str:
+                return r[0]
+            elif key_arg_type == tuple:
+                return tuple(r)
+            else:
+                return r
         else:
             if len(namespace) == 0:
                 namespace = _GRIB_NAMESPACES.keys()

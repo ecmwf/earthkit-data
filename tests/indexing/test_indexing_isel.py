@@ -25,32 +25,32 @@ from indexing_fixtures import get_tmp_fixture  # noqa
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
     [
-        (dict(param=1, level=2), [("u", 500)], ["shortName", "level:l"]),
-        (dict(param=1, level=2), [(131, 500)], ["paramId", "level:l"]),
+        (dict(param=1, level=2), [["u", 500]], ["shortName", "level:l"]),
+        (dict(param=1, level=2), [[131, 500]], ["paramId", "level:l"]),
         (
             dict(param=[0, 1], level=[2, 3]),
             [
-                ("t", 500),
-                ("t", 700),
-                ("u", 500),
-                ("u", 700),
+                ["t", 500],
+                ["t", 700],
+                ["u", 500],
+                ["u", 700],
             ],
             ["shortName", "level:l"],
         ),
         (
             dict(param=[0], level=[3, 2], type=0),
             [
-                ("t", 500, "an"),
-                ("t", 700, "an"),
+                ["t", 500, "an"],
+                ["t", 700, "an"],
             ],
             ["shortName", "level:l", "marsType"],
         ),
         (
             dict(level=-1),
             [
-                ("t", 1000),
-                ("u", 1000),
-                ("v", 1000),
+                ["t", 1000],
+                ["u", 1000],
+                ["v", 1000],
             ],
             ["shortName", "level:l"],
         ),
