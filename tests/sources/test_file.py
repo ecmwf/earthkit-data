@@ -13,18 +13,15 @@
 import logging
 import os
 
-import pytest
-
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import earthkit_file
+from earthkit.data.testing import earthkit_examples_file
 
 LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.long_test
 def test_file_source_grib():
-    s = from_source("file", earthkit_file("docs/examples/test.grib"))
+    s = from_source("file", earthkit_examples_file("test.grib"))
     from earthkit.data.readers.grib.reader import GRIBReader
 
     assert isinstance(s, GRIBReader), s
@@ -32,8 +29,13 @@ def test_file_source_grib():
 
 
 def test_file_source_netcdf():
-    s = from_source("file", earthkit_file("docs/examples/test.nc"))
+    s = from_source("file", earthkit_examples_file("test.nc"))
     assert len(s) == 2
+
+
+def test_file_source_odb():
+    s = from_source("file", earthkit_examples_file("test.odb"))
+    assert s.path == earthkit_examples_file("test.odb")
 
 
 # def test_user_1():
@@ -70,7 +72,7 @@ def test_file_source_netcdf():
 
 
 def test_glob():
-    s = from_source("file", earthkit_file("docs/examples/test.grib"))
+    s = from_source("file", earthkit_examples_file("test.grib"))
     with temp_directory() as tmpdir:
         s.save(os.path.join(tmpdir, "a.grib"))
         s.save(os.path.join(tmpdir, "b.grib"))

@@ -5,6 +5,15 @@ Examples
 
 Here is a list of example notebooks to illustrate how to use earthkit-data.
 
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Retrieve
+
+    examples/mars.ipynb
+    examples/cds.ipynb
+
+
 .. toctree::
     :maxdepth: 1
     :caption: GRIB
