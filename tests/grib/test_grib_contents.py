@@ -336,6 +336,20 @@ def test_grib_metadata_generic():
     assert lg == (1000, "t")
 
 
+def test_grib_metadata_missing_value():
+    f = from_source("file", earthkit_test_data_file("ml_data.grib"))
+
+    with pytest.raises(KeyError):
+        f[0].metadata("scaleFactorOfSecondFixedSurface")
+
+
+def test_grib_metadata_missing_key():
+    f = from_source("file", earthkit_examples_file("test.grib"))
+
+    with pytest.raises(KeyError):
+        f[0].metadata("_badkey_")
+
+
 def test_grib_metadata_namespace():
     f = from_source("file", earthkit_examples_file("test6.grib"))
 
