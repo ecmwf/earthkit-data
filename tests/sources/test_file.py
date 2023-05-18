@@ -17,7 +17,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import earthkit_file
+from earthkit.data.testing import earthkit_examples_file, earthkit_file
 
 LOG = logging.getLogger(__name__)
 
@@ -34,6 +34,11 @@ def test_file_source_grib():
 def test_file_source_netcdf():
     s = from_source("file", earthkit_file("docs/examples/test.nc"))
     assert len(s) == 2
+
+
+def test_file_source_odb():
+    s = from_source("file", earthkit_examples_file("test.odb"))
+    assert s.path == earthkit_examples_file("test.odb")
 
 
 # def test_user_1():
