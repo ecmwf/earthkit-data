@@ -601,7 +601,6 @@ def test_grib_to_points_1_shape():
 
 
 def test_grib_datetime():
-
     s = from_source("file", earthkit_examples_file("test.grib"))
 
     ref = {
@@ -769,42 +768,6 @@ def test_grib_save_when_loaded_from_stream():
             fs.save(tmp)
             fs_saved = from_source("file", tmp)
             assert len(fs) == len(fs_saved)
-
-
-def test_grib_to_pandas():
-    f = from_source("file", earthkit_test_data_file("test_single.grib"))
-
-    # all points
-    df = f.to_pandas()
-    assert len(df) == 84
-    cols = [
-        "lat",
-        "lon",
-        "value",
-        "datetime",
-        "domain",
-        "levtype",
-        "date",
-        "time",
-        "step",
-        "param",
-        "class",
-        "type",
-        "stream",
-        "expver",
-    ]
-    assert list(df.columns) == cols
-    assert np.allclose(df["lat"][0:2], [90, 90])
-    assert np.allclose(df["lon"][0:2], [0, 30])
-    assert np.allclose(df["value"][0:2], [260.435608, 260.435608])
-
-    # specific location
-    df = f.to_pandas(latitude=90, longitude=30)
-    assert len(df) == 1
-    assert list(df.columns) == cols
-    assert np.isclose(df["lat"][0], 90)
-    assert np.isclose(df["lon"][0], 30)
-    assert np.isclose(df["value"][0], 260.435608)
 
 
 if __name__ == "__main__":

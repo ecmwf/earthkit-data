@@ -31,7 +31,6 @@ class FileSourceMeta(type(Source), type(os.PathLike)):
 
 
 class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
-
     _reader_ = None
 
     def __init__(self, path=None, filter=None, merger=None, **kwargs):
@@ -145,12 +144,11 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     def metadata(self, *args, **kwargs):
         return self._reader.metadata(*args, **kwargs)
 
-    @property
-    def coords(self):
-        return self._reader.coords
+    def indices(self, *args, **kwargs):
+        return self._reader.indices(*args, **kwargs)
 
-    def coord(self, *args, **kwargs):
-        return self._reader.coord(*args, **kwargs)
+    def index(self, *args, **kwargs):
+        return self._reader.index(*args, **kwargs)
 
     def head(self, n=5, **kwargs):
         if n <= 0:
@@ -195,9 +193,7 @@ class File(FileSource):
         merger=None,
         **kwargs,
     ):
-
         if not isinstance(path, (list, tuple)):
-
             if expand_user:
                 path = os.path.expanduser(path)
 

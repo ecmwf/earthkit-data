@@ -24,7 +24,6 @@ def test_url_pattern_source_1():
 
 
 def test_url_pattern_int():
-
     fs = from_source(
         "url-pattern",
         "https://get.ecmwf.int/repository/test-data/emohawk/examples/test{id}.grib",
@@ -35,7 +34,6 @@ def test_url_pattern_int():
 
 
 def test_url_pattern_date():
-
     fs = from_source(
         "url-pattern",
         "https://get.ecmwf.int/repository/test-data/emohawk/test-data/"

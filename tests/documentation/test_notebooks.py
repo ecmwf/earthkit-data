@@ -22,11 +22,10 @@ from earthkit.data.testing import MISSING, earthkit_file
 
 EXAMPLES = earthkit_file("docs", "examples")
 
-SKIP = "fdb_stream.ipynb"
+SKIP = "grib_fdb_stream.ipynb"
 
 
 def notebooks_list():
-
     notebooks = []
     for path in os.listdir(EXAMPLES):
         if re.match(r".+\.ipynb$", path):

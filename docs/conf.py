@@ -6,20 +6,25 @@
 
 # -- Import and path setup ---------------------------------------------------
 
+import datetime
 import os
 import sys
 
-import earthkit.data
+# import earthkit.data
 
 sys.path.insert(0, os.path.abspath("../"))
 
 # -- Project information -----------------------------------------------------
 
 project = "earthkit-data"
-copyright = "2022, European Centre for Medium Range Weather Forecasts"
 author = "European Centre for Medium Range Weather Forecasts"
-version = earthkit.data.__version__
-release = earthkit.data.__version__
+
+year = datetime.datetime.now().year
+years = "2022-%s" % (year,)
+copyright = "%s, European Centre for Medium-Range Weather Forecasts (ECMWF)" % (years,)
+
+# version = earthkit.data.__version__
+# release = earthkit.data.__version__
 
 # -- General configuration ---------------------------------------------------
 
@@ -27,33 +32,9 @@ release = earthkit.data.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "autoapi.extension",
-    "myst_parser",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
+    "sphinx_rtd_theme",
     "nbsphinx",
 ]
-
-# autodoc configuration
-autodoc_typehints = "none"
-
-# autoapi configuration
-autoapi_dirs = ["../earthkit/data"]
-autoapi_ignore = ["*/version.py"]
-autoapi_options = [
-    "members",
-    "inherited-members",
-    "undoc-members",
-    "show-inheritance",
-    "show-module-summary",
-    "imported-members",
-]
-autoapi_root = "_api"
-
-# napoleon configuration
-napoleon_google_docstring = False
-napoleon_numpy_docstring = True
-napoleon_preprocess_types = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -63,15 +44,18 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+# The suffix of source filenames.
+source_suffix = ".rst"
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "pydata_sphinx_theme"
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+# html_css_files = ["style.css"]

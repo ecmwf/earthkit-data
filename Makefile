@@ -3,6 +3,9 @@ CONDA := conda
 CONDAFLAGS :=
 COV_REPORT := html
 
+setup:
+	pre-commit install
+
 default: qa unit-tests type-check
 
 qa:

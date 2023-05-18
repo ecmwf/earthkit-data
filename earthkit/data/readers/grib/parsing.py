@@ -6,25 +6,82 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+
+import datetime
+import fnmatch
 import logging
 import os
 
-from earthkit.data.readers.grib.codes import CodesHandle
-from earthkit.data.utils import progress_bar, tqdm
+from tqdm import tqdm
 
 LOG = logging.getLogger(__name__)
+
+
+def post_process_valid_date(field, h):
+    date = h.get("validityDate")
+    time = h.get("validityTime")
+    field["datetime"] = datetime.datetime(
+        date // 10000,
+        date % 10000 // 100,
+        date % 100,
+        time // 100,
+        time % 100,
+    )
+    # Note that we do not create a script here:
+    # There is no ".isoformat()". Because the sql database
+    # takes care of this conversion back and forth.
+    return field
+
+
+def post_process_parameter_level(field, h):
+    param = field.get("param", None)
+    if param is None:
+        field["param_level"] = None
+        return field
+
+    level = field.get("levelist", None)
+    if level is None:
+        field["param_level"] = param
+        return field
+
+    field["param_level"] = f"{param}_{level}"
+    return field
+
+
+def post_process_statistics(field, h):
+    values = h.get("values")
+    field["mean"] = values.mean()
+    field["std"] = values.std()
+    field["min"] = values.min()
+    field["max"] = values.max()
+    field["shape"] = ",".join([str(_) for _ in values.shape])
+    return field
 
 
 def _index_grib_file(
     path,
     with_statistics=False,
+    with_valid_date=True,
+    with_parameter_level=True,
 ):
     import eccodes
 
-    # TODO: deduplicate this code
+    from earthkit.data.readers.grib.codes import CodesHandle
+
+    post_process_mars = []
+    if with_valid_date:
+        post_process_mars.append(post_process_valid_date)
+    if with_parameter_level:
+        post_process_mars.append(post_process_parameter_level)
+    if with_statistics:
+        post_process_mars.append(post_process_statistics)
 
     def parse_field(h):
         field = h.as_namespace("mars")
+
+        if post_process_mars:
+            for f in post_process_mars:
+                field = f(field, h)
 
         field["_path"] = path
         field["_offset"] = h.get_long("offset")
@@ -36,17 +93,19 @@ def _index_grib_file(
         # when "number" is not in the iterator
         # remove? field["number"] = h.get("number")
 
-        if with_statistics:
-            values = h.get("values")
-            field["mean"] = values.mean()
-            field["std"] = values.std()
-            field["min"] = values.min()
-            field["max"] = values.max()
-
         return field
 
     size = os.path.getsize(path)
-    pbar = progress_bar(desc=f"Parsing {path}", total=size)
+    pbar = tqdm(
+        desc=f"Parsing {path}",
+        total=size,
+        unit_scale=True,
+        unit_divisor=1024,
+        unit="B",
+        leave=False,
+        # position=TQDM_POSITION,
+        dynamic_ncols=True,
+    )
 
     with open(path, "rb") as f:
         old_position = f.tell()
@@ -64,9 +123,9 @@ def _index_grib_file(
 
 
 def _index_url(url):
-    import earthkit.data as cml
+    import earthkit.data
 
-    path = cml.from_source("url", url).path
+    path = earthkit.data.from_source("url", url).path
     # TODO: should use download_and_cache
     # path = download_and_cache(url)
     for entry in _index_grib_file(path):
@@ -89,7 +148,13 @@ class PathParserIterator:
     """
 
     def __init__(
-        self, path, relative_paths, ignore=None, followlinks=True, verbose=False
+        self,
+        path,
+        relative_paths,
+        ignore=None,
+        followlinks=True,
+        verbose=False,
+        with_statistics=True,
     ):
         if ignore is None:
             ignore = []
@@ -98,6 +163,7 @@ class PathParserIterator:
         self.relative_paths = relative_paths
         self.followlinks = followlinks
         self.verbose = verbose
+        self.with_statistics = with_statistics
 
         self._tasks = None
 
@@ -114,6 +180,12 @@ class PathParserIterator:
         LOG.debug(f"Parsing files in path={self.path}")
         assert os.path.exists(self.path), f"{self.path} does not exist"
         # assert os.path.isdir(self.path), f"{self.path} is not a directory"
+
+        def _ignore(path):
+            for ignore in self.ignore:
+                if fnmatch.fnmatch(os.path.basename(path), ignore):
+                    return True
+            return False
 
         tasks = []
 
@@ -160,7 +232,7 @@ class GribIndexingPathParserIterator(PathParserIterator):
 
             from earthkit.data.readers.grib.parsing import _index_grib_file
 
-            for field in _index_grib_file(path, with_statistics=True):
+            for field in _index_grib_file(path, with_statistics=self.with_statistics):
                 field["_path"] = _path
                 yield field
         except PermissionError as e:

@@ -67,7 +67,6 @@ def test_grib_sel_single_file_1(params, expected_meta, metadata_keys):
 
 
 def test_grib_sel_single_file_2():
-
     f = from_source("file", earthkit_file("tests/data/t_time_series.grib"))
 
     g = f.sel(shortName=["t"], step=[3, 6])
@@ -173,8 +172,8 @@ def test_grib_isel_single_message():
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
     [
-        (dict(shortName=1, level=2), [("u", 700)], []),
-        (dict(paramId=1, level=2), [(131, 700)], []),
+        (dict(shortName=1, level=2), [("u", 500)], []),
+        (dict(paramId=1, level=2), [(131, 500)], []),
         (
             dict(shortName=[0, 1], level=[2, 3]),
             [
@@ -198,9 +197,9 @@ def test_grib_isel_single_message():
         (
             dict(level=-1),
             [
-                ("t", 300),
-                ("u", 300),
-                ("v", 300),
+                ("t", 1000),
+                ("u", 1000),
+                ("v", 1000),
             ],
             ["shortName", "level:l"],
         ),
@@ -217,18 +216,17 @@ def test_grib_isel_single_file(params, expected_meta, metadata_keys):
             keys = metadata_keys
 
         assert g.metadata(keys) == expected_meta
-    return
 
 
 @pytest.mark.parametrize(
     "param_id,level,expected_meta",
     [
-        (1, (slice(2)), [(131, 1000), (131, 850)]),
-        (1, (slice(None, 2)), [(131, 1000), (131, 850)]),
-        (1, (slice(2, 3)), [(131, 700)]),
+        (1, (slice(2)), [(131, 400), (131, 300)]),
+        (1, (slice(None, 2)), [(131, 400), (131, 300)]),
+        (1, (slice(2, 3)), [(131, 500)]),
         (1, (slice(2, 4)), [(131, 700), (131, 500)]),
-        (1, (slice(4, None)), [(131, 400), (131, 300)]),
-        (1, (slice(None, None, 2)), [(131, 1000), (131, 700), (131, 400)]),
+        (1, (slice(4, None)), [(131, 1000), (131, 850)]),
+        (1, (slice(None, None, 2)), [(131, 850), (131, 500), (131, 300)]),
     ],
 )
 def test_grib_isel_slice_single_file(param_id, level, expected_meta):
@@ -256,11 +254,11 @@ def test_grib_isel_multi_file():
     f = from_source("multi", [f1, f2])
 
     # single resulting field
-    g = f.isel(shortName=0, level=21)
+    g = f.isel(shortName=1, level=21)
     assert len(g) == 1
-    assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [("t", 61, "hybrid")]
+    assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [("t", 85, "hybrid")]
 
-    g1 = f[34]
+    g1 = f[40]
     d = g.to_numpy() - g1.to_numpy()
     assert np.allclose(d, np.zeros(len(d)))
 
@@ -270,11 +268,11 @@ def test_grib_isel_slice_multi_file():
     f2 = from_source("file", earthkit_file("tests/data/ml_data.grib"))
     f = from_source("multi", [f1, f2])
 
-    g = f.isel(shortName=0, level=slice(20, 22))
+    g = f.isel(shortName=1, level=slice(20, 22))
     assert len(g) == 2
     assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [
-        ("t", 57, "hybrid"),
-        ("t", 61, "hybrid"),
+        ("t", 81, "hybrid"),
+        ("t", 85, "hybrid"),
     ]
 
 

@@ -34,7 +34,6 @@ def tr(key, value):
 
 
 def table(obj):
-
     style = css("table")
 
     table = """
@@ -57,7 +56,6 @@ def table(obj):
 
 
 def table_from_dict(vals, title=None):
-
     if not isinstance(vals, dict):
         raise TypeError(f"table_from_dict: vals must be a dict not type={type(vals)}")
 
