@@ -19,9 +19,9 @@ def test_CFParameters():
         "longitude_of_projection_origin": 10,
         "standard_parallel": 40,
     }
-    
+
     cf_parameters = cf.CFParameters(**params)
-    
+
     assert cf_parameters.central_latitude == 52
     assert cf_parameters.central_longitude == 10
     assert cf_parameters.standard_parallels == [40]
@@ -36,7 +36,7 @@ def test_CFGridMapping():
         "false_easting": 4321000.0,
     }
     grid_mapping = cf.CFGridMapping.from_grid_mapping(**grid_mapping)
-    
+
     assert grid_mapping.to_ccrs() == ccrs.LambertAzimuthalEqualArea(
         central_longitude=10.0,
         central_latitude=52.0,
