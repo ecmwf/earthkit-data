@@ -19,6 +19,7 @@ dependencies:
 - entrypoints
 - jupyterlab
 - ecmwf-api-client>=1.6.1
+- cdsapi
 - pip:
   - git+https://github.com/ecmwf/multiurl
 - tqdm
