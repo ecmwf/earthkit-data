@@ -33,6 +33,11 @@ def test_file_source_netcdf():
     assert len(s) == 2
 
 
+def test_file_source_odb():
+    s = from_source("file", earthkit_examples_file("test.odb"))
+    assert s.path == earthkit_examples_file("test.odb")
+
+
 # def test_user_1():
 #     s = from_source("file", earthkit_file("docs/examples/test.grib"))
 #     home_file = os.path.expanduser("~/.earthkit_data/test.grib")
