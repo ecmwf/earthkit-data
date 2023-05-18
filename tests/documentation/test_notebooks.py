@@ -22,7 +22,7 @@ from earthkit.data.testing import MISSING, earthkit_file
 
 EXAMPLES = earthkit_file("docs", "examples")
 
-SKIP = "grib_fdb_stream.ipynb"
+SKIP = ["grib_fdb_stream.ipynb", "grib_mars.ipynb"]
 
 
 def notebooks_list():

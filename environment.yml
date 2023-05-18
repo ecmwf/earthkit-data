@@ -18,9 +18,11 @@ dependencies:
 - pyyaml
 - entrypoints
 - jupyterlab
+- ecmwf-api-client>=1.6.1
 - pip:
   - git+https://github.com/ecmwf/multiurl
 - tqdm
+- markdown
 - make
 - mypy
 - myst-parser
