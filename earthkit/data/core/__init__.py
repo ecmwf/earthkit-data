@@ -95,6 +95,9 @@ class Base(metaclass=MetaBase):
     def order_by(self, *args, **kwargs):
         self._not_implemented()
 
+    def __add__(self, other):
+        self._not_implemented()
+
     #
     def _not_implemented(self):
         import inspect
