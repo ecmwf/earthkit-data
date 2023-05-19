@@ -14,6 +14,9 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../"))
 
+# Adds path to the folder _ext, where extensions are stored
+sys.path.append(os.path.abspath("./_ext"))
+
 # -- Project information -----------------------------------------------------
 
 project = "earthkit-data"
@@ -34,7 +37,31 @@ copyright = "%s, European Centre for Medium-Range Weather Forecasts (ECMWF)" % (
 extensions = [
     "sphinx_rtd_theme",
     "nbsphinx",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "autoapi.extension",
+    "xref",
 ]
+
+# autodoc configuration
+autodoc_typehints = "none"
+
+# autoapi configuration
+autoapi_dirs = ["../earthkit/data"]
+autoapi_ignore = ["*/version.py"]
+autoapi_options = [
+    "members",
+    "undoc-members",
+    "show-inheritance",
+    "show-module-summary",
+    "imported-members",
+]
+autoapi_root = "_api"
+
+# napoleon configuration
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+napoleon_preprocess_types = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -59,3 +86,36 @@ html_theme = "sphinx_rtd_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 # html_css_files = ["style.css"]
+
+
+xref_links = {
+    "eccodes_namespace": (
+        "ecCodes namespace",
+        "https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ",
+    )
+}
+
+
+# define skip rules for autoapi
+def _skip_for_api(app, what, name, obj, skip, options):
+    # if what == "package":
+    #     print(f"{name}[{what}]")
+
+    if what == "module" and "grib.codes" not in name and "grib.fieldset" not in name:
+        skip = True
+    elif what == "package" and name not in [
+        "data",
+        "data.readers",
+        "data.readers.grib",
+        "data.readers.fieldset",
+    ]:
+        skip = True
+    elif what == "class" and "GribField" not in name and "FieldSetMixin" not in name:
+        skip = True
+    elif what in ("function", "attribute", "data"):
+        skip = True
+    return skip
+
+
+def setup(app):
+    app.connect("autoapi-skip-member", _skip_for_api)

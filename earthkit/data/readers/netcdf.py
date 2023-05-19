@@ -211,7 +211,7 @@ class NetCDFField(Base):
 
         return proj_source, proj_target
 
-    def to_points(self, flatten=True):
+    def to_points(self, flatten=False):
         points = dict()
         for axis in ("x", "y"):
             for coord in self._da.coords:
