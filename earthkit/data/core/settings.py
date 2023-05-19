@@ -80,13 +80,13 @@ SETTINGS_AND_HELP = {
     ),
     "maximum-cache-size": _(
         None,
-        """Maximum disk space used by the CliMetLab cache (ex: 100G or 2T).""",
+        """Maximum disk space used by the earthkit-data cache (ex: 100G or 2T).""",
         getter="_as_bytes",
         none_ok=True,
     ),
     "maximum-cache-disk-usage": _(
         "95%",
-        """Disk usage threshold after which CliMetLab expires older cached
+        """Disk usage threshold after which earthkit-data expires older cached
         entries (% of the full disk capacity).
         See :doc:`/guide/caching` for more information.""",
         getter="_as_percent",
@@ -103,6 +103,10 @@ SETTINGS_AND_HELP = {
     "download-out-of-date-urls": _(
         False,
         "Re-download URLs when the remote version of a cached file as been changed",
+    ),
+    "use-standalone-mars-client-when-available": _(
+        True,
+        "Use the standalone mars client when available instead of using the web API.",
     ),
 }
 
