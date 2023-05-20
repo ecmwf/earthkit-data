@@ -51,6 +51,10 @@ GRIB_DESCRIBE_KEYS = [
 
 
 class FieldSetMixin(PandasMixIn, XarrayMixIn):
+    r"""Represents a list of
+    :obj:`GribField <data.readers.grib.codes.GribField>`\ s.
+    """
+
     _statistics = None
     _indices = {}
 
@@ -76,20 +80,70 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         return {k: sorted(list(v)) for k, v in indices.items()}
 
     def indices(self, squeeze=False):
-        r"""Returns the unique, sorted values for a set of metadata keys across all the
-        fields. By default it uses a set of keys from the mars ecCodes namespace, but keys
-        with no valid values are not included. Keys that :obj:`index` is called with are automatically
-        added to original set of keys used in :obj:`indices`.
+        r"""Returns the unique, sorted values for a set of metadata keys (see below)
+        from all the fields. Individual keys can be also queried by :obj:`index`.
 
         Parameters
         ----------
         squeeze : False
-            When it is True only returns the metadata keys that have more than one values.
+            When True only returns the metadata keys that have more than one values.
 
         Returns
         -------
         dict
-            Unique, sorted metadata values across all the fields.
+            Unique, sorted metadata values from all the
+            :obj:`GribField <data.readers.grib.codes.GribField>`\ s.
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+        >>> ds.indices()
+        {'class': ['od'], 'stream': ['oper'], 'levtype': ['pl'], 'type': ['an'],
+        'expver': ['0001'], 'date': [20180801], 'time': [1200], 'domain': ['g'],
+        'number': [0], 'levelist': [300, 400, 500, 700, 850, 1000],
+        'param': ['t', 'u', 'v']}
+        >>> ds.indices(squeeze=True)
+        {'levelist': [300, 400, 500, 700, 850, 1000], 'param': ['t', 'u', 'v']}
+        >>> ds.index("level")
+        [300, 400, 500, 700, 850, 1000]
+
+        By default :obj:`indices` uses the following metadata keys taken from the
+        "mars" :xref:`eccodes_namespace`:
+
+            .. code-block:: python
+
+                [
+                    "class",
+                    "stream",
+                    "levtype",
+                    "type",
+                    "expver",
+                    "date",
+                    "hdate",
+                    "andate",
+                    "time",
+                    "antime",
+                    "reference",
+                    "anoffset",
+                    "verify",
+                    "fcmonth",
+                    "fcperiod",
+                    "leadtime",
+                    "opttime",
+                    "origin",
+                    "domain",
+                    "method",
+                    "diagnostic",
+                    "iteration",
+                    "number",
+                    "quantile",
+                    "levelist",
+                    "param",
+                ]
+
+        Keys with no valid values are not included. Keys that :obj:`index` is called with are
+        automatically added to the original set of keys used in :obj:`indices`.
 
         """
         if not self._indices:
@@ -100,7 +154,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
             return self._indices
 
     def index(self, key):
-        r"""Returns the unique, sorted values of the specified metadata ``key` across all the fields.
+        r"""Returns the unique, sorted values of the specified metadata ``key`` from all the fields.
         ``key`` will be automatically added to the keys returned by :obj:`indices`.
 
         Parameters
@@ -111,7 +165,15 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         Returns
         -------
         list
-            Unique, sorted values of ``key`` across all the fields.
+            Unique, sorted values of ``key`` from all the
+            :obj:`GribField <data.readers.grib.codes.GribField>`\ s.
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+        >>> ds.index("level")
+        [300, 400, 500, 700, 850, 1000]
 
         """
         if key in self.indices():
@@ -121,23 +183,134 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         return self._indices[key]
 
     def to_numpy(self, **kwargs):
+        r"""Returns the field values as an ndarray. It is formed by calling
+        :obj:`GribField.to_numpy() <data.readers.grib.codes.GribField.to_numpy>`
+        per field.
+
+        Parameters
+        ----------
+        **kwargs:
+            Keyword arguments passed to
+            :obj:`GribField.to_numpy() <data.readers.grib.codes.GribField.to_numpy>`
+
+        Returns
+        -------
+        ndarray
+            Array containing the field values.
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> for f in ds:
+        ...     print(f.to_numpy().shape)
+        ...
+        (11, 19)
+        (11, 19)
+        >>> v = ds.to_numpy()
+        >>> v.shape
+        (2, 11, 19)
+        >>> v[0][0, 0]
+        262.7802734375
+
+        """
         import numpy as np
 
         return np.array([f.to_numpy(**kwargs) for f in self])
 
     @property
     def values(self):
+        r"""ndarray: Gets the field values as a 2D ndarray. It is formed as the array of
+        :obj:`GribField.values <data.readers.grib.codes.GribField.values>` per field. See
+        also :obj:`to_numpy`.
+
+
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> for f in ds:
+        ...     print(f.values.shape)
+        ...
+        (209,)
+        (209,)
+        >>> v = ds.values
+        >>> v.shape
+        (2, 209)
+        >>> v[0][:3]
+        array([262.78027344, 267.44726562, 268.61230469])
+
+        """
         import numpy as np
 
         return np.array([f.values for f in self])
 
     def metadata(self, *args, **kwargs):
+        r"""Returns the metadata values for each field.
+
+        Parameters
+        ----------
+        *args:
+            Positional arguments defining the metadata keys. Passed to
+            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+        **kwargs:
+            Keyword arguments passed to
+            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+
+        Returns
+        -------
+        list
+            List with one item per :obj:`GribField <data.readers.grib.codes.GribField>`
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds.metadata("param")
+        ['2t', 'msl']
+        >>> ds.metadata("param", "units")
+        [('2t', 'K'), ('msl', 'Pa')]
+        >>> ds.metadata(["param", "units"])
+        [['2t', 'K'], ['msl', 'Pa']]
+
+        """
         result = []
         for s in self:
             result.append(s.metadata(*args, **kwargs))
         return result
 
-    def ls(self, *args, **kwargs):
+    def ls(self, n=None, keys=None, extra_keys=None, namespace=None, **kwargs):
+        r"""Generates a list like summary of fieldlist using a set of metadata keys.
+
+        Parameters
+        ----------
+        n: int, None
+            The number of :obj:`GribField <data.readers.grib.codes.GribField>`\ s to be
+            listed. None means all the messages, ``n > 0`` means fields from the front, while
+            ``n < 0`` means fields from the back of the fieldlist.
+        keys: list of str, dict, None
+            Metadata keys. If it is None the following default set of keys will be used:  "centre",
+            "shortName", "typeOfLevel", "level", "dataDate", "dataTime", "stepRange", "dataType",
+            "number", "gridType". To specify a column title for each key in the output use a dict.
+        extra_keys: list of str, dict, None
+            List of additional keys to ``keys``. To specify a column title for each key in the output
+            use a dict.
+        namespace: str, None
+            The :xref:`eccodes_namespace` to choose the ``keys`` from. When it is set ``keys`` and
+            ``extra_keys`` are omitted.
+        **kwargs:
+            Other keyword arguments:
+
+            print: bool, optional
+                Enables printing the DataFrame to the standard output when not in a Jupyter notebook.
+                Default: False
+
+        Returns
+        -------
+        Pandas DataFrame
+            DataFrame with one row per :obj:`GribField <data.readers.grib.codes.GribField>`.
+            If not in a Jupyter notebook and ``print`` is True the DataFrame is printed to
+            the standard output
+
+        """
         from earthkit.data.utils.summary import ls
 
         def _proc(keys, n):
@@ -159,21 +332,77 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
                 for i in pos_range:
                     yield (self[i]._attributes(keys))
 
-        ns = kwargs.pop("namespace", None)
-        keys = GRIB_LS_KEYS if ns is None else dict(namespace=ns)
-        return ls(_proc, keys, *args, **kwargs)
+        _keys = GRIB_LS_KEYS if namespace is None else dict(namespace=namespace)
+        return ls(_proc, _keys, n=n, keys=keys, extra_keys=extra_keys, **kwargs)
 
     def head(self, n=5, **kwargs):
+        r"""Generates a list like summary of the first ``n``
+        :obj:`GribField <data.readers.grib.codes.GribField>`\ s using a set of metadata keys.
+        Same as calling :obj:`ls` with ``n``.
+
+        Parameters
+        ----------
+        n: int, None
+            The number of messages (``n`` > 0) to be printed from the front.
+        **kwargs:
+            Other keyword arguments passed to :obj:`ls`.
+
+        Returns
+        -------
+        Pandas DataFrame
+            See  :obj:`ls`.
+
+
+        The following calls are equivalent:
+
+            .. code-block:: python
+
+                ds.head()
+                ds.head(5)
+                ds.head(n=5)
+                ds.ls(5)
+                ds.ls(n=5)
+
+        """
         if n <= 0:
             raise ValueError("head: n must be > 0")
         return self.ls(n=n, **kwargs)
 
     def tail(self, n=5, **kwargs):
+        r"""Generates a list like summary of the last ``n``
+        :obj:`GribField <data.readers.grib.codes.GribField>`\ s using a set of metadata keys.
+        Same as calling :obj:`ls` with ``-n``.
+
+        Parameters
+        ----------
+        n: int, None
+            The number of messages (``n`` > 0)  to be printed from the back.
+        **kwargs:
+            Other keyword arguments passed to :obj:`ls`.
+
+        Returns
+        -------
+        Pandas DataFrame
+            See  :obj:`ls`.
+
+
+        The following calls are equivalent:
+
+            .. code-block:: python
+
+                ds.tail()
+                ds.tail(5)
+                ds.tail(n=5)
+                ds.ls(-5)
+                ds.ls(n=-5)
+
+        """
         if n <= 0:
             raise ValueError("n must be > 0")
         return self.ls(n=-n, **kwargs)
 
     def describe(self, *args, **kwargs):
+        r"""Generates a summary of the fieldlist."""
         from earthkit.data.utils.summary import format_describe
 
         def _proc():
@@ -182,7 +411,27 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
 
         return format_describe(_proc(), *args, **kwargs)
 
-    def datetime(self, **kwargs):
+    def datetime(self):
+        r"""Returns the unique, sorted list of dates and times in the fieldlist.
+
+        Returns
+        -------
+        dict of datatime.datetime
+            Dict with items "base_time" and "valid_time".
+
+
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
+        >>> ds.datetime()
+        {'base_time': [datetime.datetime(2020, 12, 21, 12, 0)],
+        'valid_time': [
+            datetime.datetime(2020, 12, 21, 12, 0),
+            datetime.datetime(2020, 12, 21, 15, 0),
+            datetime.datetime(2020, 12, 21, 18, 0),
+            datetime.datetime(2020, 12, 21, 21, 0),
+            datetime.datetime(2020, 12, 23, 12, 0)]}
+
+        """
         base = set()
         valid = set()
         for s in self:
@@ -192,6 +441,14 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         return {"base_time": sorted(base), "valid_time": sorted(valid)}
 
     def bounding_box(self):
+        r"""Returns the bounding box for each field.
+
+        Returns
+        -------
+        list
+            List with one :obj:`BoundingBox` per
+            :obj:`GribField <data.readers.grib.codes.GribField>`
+        """
         return BoundingBox.multi_merge([s.bounding_box() for s in self])
 
     def statistics(self):
@@ -258,10 +515,25 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         return self._statistics
 
     def save(self, filename):
+        r"""Writes all the fields into a file. The target file will be overwritten if
+        already exists.
+
+        Parameters
+        ----------
+        filename: str
+            The target file path.
+        """
         with open(filename, "wb") as f:
             self.write(f)
 
     def write(self, f):
+        r"""Writes all the fields to a file object.
+
+        Parameters
+        ----------
+        f: file object
+            The target file object.
+        """
         for s in self:
             s.write(f)
 

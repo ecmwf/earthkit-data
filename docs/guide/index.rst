@@ -9,3 +9,5 @@ User guide
    sources
    data
    data_access
+   settings
+   grib

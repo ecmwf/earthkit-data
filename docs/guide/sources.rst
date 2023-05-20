@@ -20,7 +20,7 @@ with the appropriate name and arguments, which provides data and additional func
     - The ``**kwargs`` provide **additional functionalities** including caching, filtering, sorting and indexing.
 
 
-**earthkit-data** has the following built-in sources:.
+**earthkit-data** has the following built-in sources:
 
 .. list-table:: Data sources
    :header-rows: 1
@@ -41,6 +41,9 @@ with the appropriate name and arguments, which provides data and additional func
      - read data from a memory buffer
    * - :ref:`data-sources-mars`
      - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
+   * - :ref:`data-sources-cds`
+     - retrieve data from the `Copernicus Climate Data Store <https://cds.climate.copernicus.eu/>`_ (CDS)
+
 
 The data source object provides methods to access and use its data, such as
 ``to_xarray()`` or ``to_pandas()`` or other. Depending on the data, some of
@@ -64,7 +67,7 @@ file
 .. py:function:: from_source("file", path, expand_user=True, expand_vars=False, unix_glob=True, recursive_glob=True)
   :noindex:
 
-  The simplest data source is the *file* source that can access a local file/list of files.
+  The simplest data source is the ``file`` source that can access a local file/list of files.
 
   :param path: input path(s)
   :type path: str, list
@@ -78,12 +81,12 @@ file
 
   - Fields:
       - NetCDF
-      - GRIB
+      - :ref:`grib`
 
   - Observations:
       - CSV (comma-separated values)
       - BUFR
-
+      - ODB
 
   When the input is an archive format such as ``.zip``, ``.tar``, ``.tar.gz``, etc,
   *earthkit-data* will attempt to open it and extract any usable files, which are then stored in the :ref:`cache <caching>`.
@@ -104,9 +107,12 @@ file
       data = earthkit.data.from_source("file", "path/to/dir")
 
 
-  See the following notebook examples for further details:
+  Further examples:
 
+    - :ref:`/examples/grib_overview.ipynb`
     - :ref:`/examples/grib_multi.ipynb`
+    - :ref:`/examples/bufr.ipynb`
+    - :ref:`/examples/netcdf.ipynb`
 
 .. _data-sources-file-pattern:
 
@@ -115,7 +121,7 @@ file-pattern
 
 .. py:function:: from_source("file-pattern", pattern, *args, **kwargs)
 
-  The *file-pattern* data source will build paths from the pattern specified,
+  The ``file-pattern`` data source will build paths from the pattern specified,
   using the other arguments to fill the pattern. Each argument can be a list
   to iterate and create the cartesian product of all lists.
   Then each file is read in the same ways as with :ref:`file source <data-sources-file>`.
@@ -151,7 +157,7 @@ url
 
 .. py:function:: from_source("url", url, unpack=True)
 
-  The *url* data source will download the data from the address specified and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
+  The ``url`` data source will download the data from the address specified and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
 
   :param url: the URL to download
   :type url: str
@@ -171,7 +177,7 @@ url-pattern
 
 .. py:function:: from_source("url-pattern", url, unpack=True)
 
-  The *url-pattern* data source will build urls from the pattern specified,
+  The ``url-pattern`` data source will build urls from the pattern specified,
   using the other arguments to fill the pattern. Each argument can be a list
   to iterate and create the cartesian product of all lists.
   Then each url is downloaded and stored in the :ref:`cache <caching>`. The
@@ -220,7 +226,7 @@ stream
 
 .. py:function:: from_source("stream", stream, group_by=1)
 
-  The *stream* source will read data from a stream, which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment tt only works for GRIB data.
+  The ``stream`` source will read data from a stream, which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment tt only works for GRIB data.
 
   :param stream: the stream
   :param bool group_by: defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``groub_by=0`` means all the messages will be loaded and stored in memory.
@@ -285,7 +291,7 @@ memory
 
 .. py:function:: from_source("memory", buffer)
 
-  The *memory* source will read data from a memory buffer. Currently it only works for a ``buffer`` storing a single GRIB message.
+  The ``memory`` source will read data from a memory buffer. Currently it only works for a ``buffer`` storing a single GRIB message.
 
   Please note that a buffer can always be read as a :ref:`stream source <data-sources-stream>` using ``io.BytesIO``.
 
@@ -310,7 +316,7 @@ mars
 
 .. py:function:: from_source("mars", request)
 
-  The *mars* source will retrieve data from the ECMWF MARS (Meteorological Archival and Retrieval System) archive. In addition
+  The ``mars`` source will retrieve data from the ECMWF MARS (Meteorological Archival and Retrieval System) archive. In addition
   to data retrieval, ``request`` also has GRIB post-processing options such as ``grid`` and ``area`` for regridding and
   sub-area extraction respectively.
 
@@ -335,4 +341,52 @@ mars
           },
       )
 
-  Data downloaded from MARS is stored in the the :ref:`cache <caching>`.
+  Data downloaded from MARS is stored in the :ref:`cache <caching>`.
+
+  Further examples:
+
+      - :ref:`/examples/mars.ipynb`
+
+
+.. _data-sources-cds:
+
+cds
+---
+
+.. py:function:: from_source("cds", dataset, request)
+
+  The ``"cds"`` data source accesses the `Copernicus Climate Data Store`_ (CDS), using the cdsapi_ package. In addition to data retrieval, ``request`` also has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively.
+
+  :param str dataset: the name of the CDS dataset
+  :param request: specifies the data to be retrieved as a dict or a set of keyword arguments.
+  :type request: dict, keyword arguments
+
+  The following example retrieves ERA5 reanalysis GRIB data for a subarea for 2 surface parameters:
+
+  .. code-block:: python
+
+      import earthkit.data
+
+      ds = earthkit.data.from_source(
+          "cds",
+          "reanalysis-era5-single-levels",
+          variable=["2t", "msl"],
+          product_type="reanalysis",
+          area=[50, -10, 40, 10],  # N,W,S,E
+          grid=[2, 2],
+          date="2012-05-10",
+      )
+
+
+  Data downloaded from the CDS is stored in the the :ref:`cache <caching>`.
+
+  To access data from the CDS, you will need to register and retrieve an access token. The process is described here_. For more information, see the CDS `knowledge base`_.
+
+  Further examples:
+
+      - :ref:`/examples/cds.ipynb`
+
+.. _Copernicus Climate Data Store: https://cds.climate.copernicus.eu/
+.. _here: https://cds.climate.copernicus.eu/api-how-to
+.. _cdsapi: https://pypi.org/project/cdsapi/
+.. _knowledge base: https://confluence.ecmwf.int/display/CKB/Copernicus+Knowledge+Base

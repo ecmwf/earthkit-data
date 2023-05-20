@@ -36,15 +36,12 @@ reference systems and bounding boxes.
 
    examples
 
-
 .. toctree::
    :maxdepth: 1
    :caption: Documentation
 
    guide/index
    _api/index
-
-
 
 .. toctree::
    :maxdepth: 1
