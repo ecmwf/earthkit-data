@@ -32,7 +32,7 @@ class Combined:
     def __getitem__(self, key):
         if key in self.metadata:
             return self.metadata[key]
-        return self.handle.get(key)
+        return self.handle.get(key, default=None)
 
 
 class GribOutput:
@@ -130,7 +130,7 @@ class GribOutput:
     def __exit__(self, exc_type, exc_value, trace):
         self.close()
 
-    def update_metadata(self, handle, metadata, compulsary):
+    def update_metadata(self, handle, metadata, compulsory):
         # TODO: revisit that logic
         combined = Combined(handle, metadata)
 
@@ -163,20 +163,19 @@ class GribOutput:
                 metadata.setdefault("type", "pf")
 
         if "number" in metadata:
-            compulsary += ("numberOfForecastsInEnsemble",)
+            compulsory += ("numberOfForecastsInEnsemble",)
 
         if "levelist" in metadata:
             metadata.setdefault("levtype", "pl")
 
         if "param" in metadata:
             param = metadata.pop("param")
-            print(f" -> PARAM={param}")
             try:
                 metadata["paramId"] = int(param)
             except ValueError:
                 metadata["shortName"] = param
 
-    def handle_from_metadata(self, values, metadata, compulsary):
+    def handle_from_metadata(self, values, metadata, compulsory):
         from .codes import CodesHandle  # Lazy loading of eccodes
 
         if len(values.shape) == 1:
@@ -220,7 +219,7 @@ class GribOutput:
             metadata["setLocalDefinition"] = 1
             # metadata['grib2LocalSectionNumber'] = 1
 
-        for check in compulsary:
+        for check in compulsory:
             if not isinstance(check, tuple):
                 check = [check]
 

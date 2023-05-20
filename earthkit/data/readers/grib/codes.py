@@ -100,6 +100,12 @@ class CodesHandle(eccodes.Message):
         self.path = path
         self.offset = offset
 
+    @classmethod
+    def from_sample(cls, name):
+        return cls(
+            eccodes.codes_new_from_samples(name, eccodes.CODES_PRODUCT_GRIB), None, None
+        )
+
     # TODO: just a wrapper around the base class implementation to handle the
     # s,l,d qualifiers. Once these are implemented in the base class this method can
     # be removed. md5GridSection is also handled!
