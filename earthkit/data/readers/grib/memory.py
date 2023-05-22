@@ -32,7 +32,7 @@ class GribMemoryReader(Reader):
     def _next_handle(self):
         raise NotImplementedError
 
-    def read_group(self, n):
+    def read_batch(self, n):
         fields = [self.__next__() for _ in range(n)]
         return FieldSetInMemory.from_fields(fields)
 
