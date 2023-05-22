@@ -1,49 +1,45 @@
 .. _data-sources:
 
 Data sources
-============
+===============
 
-Using ``from_source(name, *args, **kwargs)`` we create a :ref:`data object <data-object>` from a given source:
+Getting data from a source
+----------------------------
 
-    .. code-block:: python
+We can get data from a given source by using :func:`from_source`:
 
-        import earthkit.data
+.. py:function:: from_source(name, *args, **kwargs)
 
-        ds = earthkit.data.from_source(name, "argument1", "argument2", ...)
+  Returns a :ref:`data object <data-object>` from the source specified by ``name``.
 
-- The **name** is a string that uniquely identifies the source type.
+  :param str name: the source (see below)
+  :param *args: specifies the data location and additional parameters to ato access the data
+  :param **kwargs: provides **additional functionalities** including caching, filtering, sorting and indexing
 
-- The ``*args`` are used to specify the data location to access the data.
-  They can include additional parameters to access the data.
+  **earthkit-data** has the following built-in sources:
 
-- The ``**kwargs`` provide **additional functionalities** including caching, filtering, sorting and indexing.
+  .. list-table:: Data sources
+    :header-rows: 1
 
-**earthkit-data** has the following built-in sources:
+    * - Name
+      - Description
+    * - :ref:`data-sources-file`
+      - read data from a file/files
+    * - :ref:`data-sources-file-pattern`
+      - read data from a list of files  created from a pattern
+    * - :ref:`data-sources-url`
+      - read data from a URL
+    * - :ref:`data-sources-url-pattern`
+      - read data from a list of URLs created from a pattern
+    * - :ref:`data-sources-stream`
+      - read data from a stream
+    * - :ref:`data-sources-memory`
+      - read data from a memory buffer
+    * - :ref:`data-sources-mars`
+      - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
+    * - :ref:`data-sources-cds`
+      - retrieve data from the `Copernicus Climate Data Store <https://cds.climate.copernicus.eu/>`_ (CDS)
 
-.. list-table:: Data sources
-   :header-rows: 1
-
-   * - Name
-     - Description
-   * - :ref:`data-sources-file`
-     - read data from a file/files
-   * - :ref:`data-sources-file-pattern`
-     - read data from a list of files  created from a pattern
-   * - :ref:`data-sources-url`
-     - read data from a URL
-   * - :ref:`data-sources-url-pattern`
-     - read data from a list of URLs created from a pattern
-   * - :ref:`data-sources-stream`
-     - read data from a stream
-   * - :ref:`data-sources-memory`
-     - read data from a memory buffer
-   * - :ref:`data-sources-mars`
-     - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
-   * - :ref:`data-sources-cds`
-     - retrieve data from the `Copernicus Climate Data Store <https://cds.climate.copernicus.eu/>`_ (CDS)
-
-
-The result of ``from_source()`` is a :ref:`data object <data-object>` providing methods to access and use its data, such as ``to_xarray()`` or ``to_pandas()`` or other. Depending on the data, some of these methods may not be available.
 
 ----------------------------------
 
@@ -99,6 +95,7 @@ file-pattern
 --------------
 
 .. py:function:: from_source("file-pattern", pattern, *args, **kwargs)
+  :noindex:
 
   The ``file-pattern`` source will build paths from the pattern specified,
   using the other arguments to fill the pattern. Each argument can be a list
@@ -135,6 +132,7 @@ url
 ---
 
 .. py:function:: from_source("url", url, unpack=True)
+  :noindex:
 
   The ``url`` source will download the data from the address specified and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
 
@@ -155,6 +153,7 @@ url-pattern
 -----------
 
 .. py:function:: from_source("url-pattern", url, unpack=True)
+  :noindex:
 
   The ``url-pattern`` source will build urls from the pattern specified,
   using the other arguments to fill the pattern. Each argument can be a list
@@ -188,22 +187,13 @@ url-pattern
   ``url-pattern`` according to the **unpack** argument, similarly to what
   the source ``url`` does (see above the :ref:`data-sources-url` source).
 
-
-  Once the data have been properly downloaded [and unpacked] and cached. It can
-  can be accessed using ``to_xarray()`` or ``to_pandas()``.
-
-  To provide a unique xarray.Dataset (or pandas.DataFrame), the different
-  datasets are merged.
-  The default merger strategy for field data is to use ``xarray.open_mfdataset``
-  from `xarray`. This can be changed by providing a custom merger to the
-  ``url-pattern`` source. See :ref:`merging sources <custom-merge>`
-
 .. _data-sources-stream:
 
 stream
 --------------
 
 .. py:function:: from_source("stream", stream, group_by=1)
+  :noindex:
 
   The ``stream`` will read data from a stream, which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment tt only works for GRIB data.
 
@@ -269,6 +259,7 @@ memory
 --------------
 
 .. py:function:: from_source("memory", buffer)
+  :noindex:
 
   The ``memory`` source will read data from a memory buffer. Currently it only works for a ``buffer`` storing a single GRIB message.
 
@@ -294,6 +285,7 @@ mars
 --------------
 
 .. py:function:: from_source("mars", request)
+  :noindex:
 
   The ``mars`` source will retrieve data from the ECMWF MARS (Meteorological Archival and Retrieval System) archive. In addition
   to data retrieval, ``request`` also has GRIB post-processing options such as ``grid`` and ``area`` for regridding and
@@ -333,6 +325,7 @@ cds
 ---
 
 .. py:function:: from_source("cds", dataset, request)
+  :noindex:
 
   The ``"cds"`` source accesses the `Copernicus Climate Data Store`_ (CDS), using the cdsapi_ package. In addition to data retrieval, ``request`` also has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively.
 

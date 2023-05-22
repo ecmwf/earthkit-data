@@ -44,7 +44,7 @@ autodoc_typehints = "none"
 
 # autoapi configuration
 autoapi_dirs = ["../earthkit/data"]
-autoapi_ignore = ["*/version.py"]
+autoapi_ignore = ["*/version.py", "sphinxext/*"]
 autoapi_options = [
     "members",
     "undoc-members",
@@ -55,6 +55,7 @@ autoapi_options = [
 ]
 autoapi_root = "_api"
 autoapi_member_order = "alphabetical"
+autoapi_add_toctree_entry = False
 
 # napoleon configuration
 napoleon_google_docstring = False
@@ -109,7 +110,6 @@ def _skip_for_api(app, what, name, obj, skip, options):
     if what == "module" and name not in [
         "data.readers.grib.codes",
         "data.readers.grib.index",
-        "data.core",
     ]:
         skip = True
     elif what == "package" and name not in [
@@ -118,13 +118,11 @@ def _skip_for_api(app, what, name, obj, skip, options):
         "data.readers.grib",
         # "data.readers.grib.fieldset",
         "data.readers.grib.index",
-        "data.core",
     ]:
         skip = True
     elif what == "class" and name not in [
         "data.readers.grib.codes.GribField",
         "data.readers.grib.index.FieldSet",
-        "data.core.Base",
     ]:
         skip = True
     elif what in ("function", "attribute", "data"):

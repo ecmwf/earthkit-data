@@ -1,4 +1,4 @@
-.. _data-types:
+.. _data-format:
 
 Data formats
 =============

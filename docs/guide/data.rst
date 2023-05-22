@@ -3,33 +3,21 @@
 Data objects
 =================
 
-.. _base-class-methods:
+When we call :func:`from_source` it will return a **data object**. The actual object type depends on the source parameters and the :ref:`data format <data-format>`, but is supposed to implement a **common** set of methods/operators, some of which will only be available for certain :ref:`data types <data-format>`.
 
-Base class methods
-~~~~~~~~~~~~~~~~~~~~
+The list of common methods/operators:
 
-When we call :func:`from_source <data-sources>` it will return a **data object**. The actual object type depends on the source parameters and the data we read but all of t
-them will be derived from the :obj:`Base <data.core.Base>`, which defines an :obj:`common set of methods <data.core.Base>`. As a minimum, data objects try to implement these methods, but some will only be available for certain data types. Some objects offer an extra set of methods on top of the common methods.
+  - :ref:`conversion`
+  - :ref:`concat`
+  - :ref:`iter`
+  - :ref:`slice`
+  - :ref:`sel`
+  - :ref:`order_by`
+  - :ref:`data_values`
+  - :ref:`metadata`
+  - :ref:`inspection`
 
-Method overview
-~~~~~~~~~~~~~~~~~~
-
-The data types can be grouped into two main categories offering a different set of methods:
-
-:ref:`Field data <field-data>` has a rich API including:
-
-  - :ref:`conversion to scientific Python objects <transform>` e.g to xarray or pandas
-  - :ref:`iteration <iter>`
-  - :ref:`slicing <slice>`
-  - :ref:`filtering <sel>`
-  - :ref:`ordering <order_by>`
-  - :ref:`data value access <data_values>`
-  - :ref:`metadata access <metadata>`
-  - :ref:`inspection <inspection>`
-
-:ref:`Non-field data <non-field-data>` (e.g. observation/points) offers a :ref:`conversion <transform>` to a pandas DataFrame via the ``.to_pandas()`` method.
-
-.. _transform:
+.. _conversion:
 
 Conversion to scientific Python objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,10 +30,29 @@ We can **convert** data objects into familiar scientific Python objects (includi
     ds.to_pandas()  # for non-field data
     ds.to_numpy()  # when the data is a n-dimensional array.
 
+.. _concat:
+
+Concatenation
+~~~~~~~~~~~~~~~~~~
+
+Data objects can be concatenated with the "+" operator:
+
+.. code-block:: python
+
+    >>> import earthkit.data
+    >>> ds1 = earthkit.data.from_source("file", "docs/examples/test.grib")
+    >>> len(ds1)
+    2
+    >>> ds2 = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> len(ds2)
+    6
+    >>> ds = ds1 + ds2
+    >>> len(ds)
+    8
 
 .. _iter:
 
-Iterating
+Iteration
 ~~~~~~~~~
 
 When an earthkit-data data `source` or dataset provides a list of fields, it can be iterated over to access each field (in a given order see :ref:`below <order_by>`).
@@ -275,8 +282,8 @@ When an earthkit-data data `source` or dataset provides a list of fields, the me
 
 .. _data_values:
 
-Accessing data with ``.to_numpy()`` and ``.values``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Accessing data values
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 We can extract the values from data objects as an ndarray using the ``.to_numpy()`` method or the ``.values`` property.
 
@@ -320,8 +327,8 @@ In the following example the input GRIB data contains 6 fields each defined on a
 
 .. _metadata:
 
-Accessing metadata ``.metadata()``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Accessing metadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We can extract metadata from data objects using the ``.metadata()`` method.
 
@@ -329,7 +336,7 @@ When an earthkit-data :ref:`source <data-sources>` provides a list of fields, th
 
 .. _inspection:
 
-Inspection
-~~~~~~~~~~~~~
+Inspecting contents
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 On certain data objects (currently only :ref:`grib` and :ref:`bufr`) we can call ``.ls()``, ``.head()`` or ``.tail()``.
