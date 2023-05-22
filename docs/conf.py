@@ -125,6 +125,8 @@ def _skip_for_api(app, what, name, obj, skip, options):
         "data.readers.grib.index.FieldSet",
     ]:
         skip = True
+    elif what == "method" and "abstractmethod" in getattr(obj, "properties", []):
+        skip = True
     elif what in ("function", "attribute", "data"):
         skip = True
     return skip

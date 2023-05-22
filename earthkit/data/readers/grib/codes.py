@@ -477,6 +477,14 @@ class GribField(Base):
         -------
         dict of datatime.datetime
             Dict with items "base_time" and "valid_time".
+
+
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
+        >>> ds[0].datetime()
+        {'base_time': datetime.datetime(2020, 12, 21, 12, 0),
+        'valid_time': datetime.datetime(2020, 12, 21, 12, 0)}
+
         """
         return {
             "base_time": self._base_datetime(),
