@@ -18,6 +18,7 @@ except ImportError:  # pragma: no cover
 from .arguments.transformers import ALL
 from .core.caching import CACHE as cache
 from .core.settings import SETTINGS as settings
+from .readers.grib.output import new_grib_output
 from .sources import from_source, from_source_lazily
 
 __all__ = [
@@ -25,6 +26,7 @@ __all__ = [
     "cache",
     "from_source",
     "from_source_lazily",
+    "new_grib_output",
     "settings",
     "__version__",
 ]

@@ -563,6 +563,28 @@ def test_grib_to_numpy_18_shape(options, expected_shape):
     assert np.allclose(vf15, vr, eps)
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_grib_to_numpy_1_dtype(dtype):
+    f = from_source("file", earthkit_test_data_file("test_single.grib"))
+
+    v = f[0].to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+    v = f.to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_grib_to_numpy_18_dtype(dtype):
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+
+    v = f[0].to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+    v = f.to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+
 def test_grib_values_with_missing():
     f = from_source("file", earthkit_test_data_file("test_single_with_missing.grib"))
 
