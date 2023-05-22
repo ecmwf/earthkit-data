@@ -15,7 +15,6 @@ from earthkit.data.utils.humanize import did_you_mean
 
 LOG = logging.getLogger(__name__)
 
-
 SYNONYMS = (
     (("mars", "2t"), ("cf", "t2m")),
     (("mars", "ci"), ("cf", "siconc")),
@@ -87,8 +86,8 @@ class Vocabulary:
             ),
         )
         if correction is not None:
-            LOG.warning(
-                "Cannot find '%s' in %s vocabulary, did you mean '%s'?",
+            LOG.debug(
+                "This warning can be safely ignored: Cannot find '%s' in %s vocabulary, did you mean '%s'?",
                 word,
                 self.name,
                 correction,
