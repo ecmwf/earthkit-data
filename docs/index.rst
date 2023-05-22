@@ -14,7 +14,7 @@ Welcome to earthkit-data's documentation
 climate science.
 
 **earthkit-data** makes it simple to read, inspect and slice data from a wide range of
-geospatial input types (GRIB, netCDF and more) and transform them into
+geospatial input types (:ref:`grib`, :ref:`netcdf` and more) and transform them into
 familiar scientific Python objects (including numpy arrays, pandas dataframes, xarray datasets).
 
 .. code-block:: python

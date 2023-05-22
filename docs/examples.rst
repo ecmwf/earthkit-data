@@ -47,6 +47,13 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
 
 .. toctree::
     :maxdepth: 1
+    :caption: ODB
+    :glob:
+
+    examples/odb*
+
+.. toctree::
+    :maxdepth: 1
     :caption: List of dicts
     :glob:
 

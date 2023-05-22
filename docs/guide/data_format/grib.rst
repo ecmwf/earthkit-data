@@ -9,7 +9,7 @@ GRIB is the WMO's format for binary gridded data consisting of GRIB messages, wh
 Fieldsets
 +++++++++++
 
-We can read/access GRIB data with :func:`from_source <data-sources>`. The resulting object will be a :obj:`FieldSet <data.readers.grib.index.FieldSet>` representing a list of :obj:`GribFields <data.readers.grib.codes.GribField>`, which we can iterate through:
+We can read/retrieve GRIB data with :func:`from_source <data-sources>`. The resulting object will be a :obj:`FieldSet <data.readers.grib.index.FieldSet>` representing a list of :obj:`GribFields <data.readers.grib.codes.GribField>`, which we can iterate through:
 
 .. code-block:: python
 
@@ -37,19 +37,24 @@ The following table gives an overview of the :obj:`FieldSet API<data.readers.gri
      -
    * - :ref:`slicing <slice>`
      -
+   * - inspection
+     - :meth:`FieldSet.ls() <data.readers.grib.index.FieldSet.ls>`, :meth:`FieldSet.head() <data.readers.grib.index.FieldSet.head>`
    * - :ref:`filtering <sel>`
      - :meth:`FieldSet.sel() <data.readers.grib.index.FieldSet.sel>`
    * - :ref:`ordering <order_by>`
      - :meth:`FieldSet.order_by() <data.readers.grib.index.FieldSet.order_by>`
-   * - :ref:`field value and metadata extraction <data-access>`
+   * - :ref:`field value <data_values>` and :ref:`metadata <metadata>` extraction
      - :meth:`FieldSet.to_numpy() <data.readers.grib.index.FieldSet.to_numpy>`, :meth:`FieldSet.metadata() <data.readers.grib.index.FieldSet.metadata>`
-   * - :ref:`conversion <conversion>` to other objects
+   * - :ref:`transforming <transform>` to other objects
      - :meth:`FieldSet.to_xarray() <data.readers.grib.index.FieldSet.to_xarray>`
 
 Fields
 +++++++
 
-A :obj:`GribField <data.readers.grib.codes.GribField>`  represent a single GRIB field. It primarily offers methods to :ref:`extract field values and metadata<data-access>`, such as :meth:`GribField.to_numpy() <data.readers.grib.codes.GribField.to_numpy>` and :meth:`GribField.metadata() <data.readers.grib.codes.GribField._metadata>`
+A :obj:`GribField <data.readers.grib.codes.GribField>`  represent a single GRIB field. It primarily offers methods to:
+
+ - :ref:`extract field values <data-values>`, such as :meth:`GribField.to_numpy() <data.readers.grib.codes.GribField.to_numpy>`
+ - :ref:`extract field metadata <metadata>`, such as :meth:`GribField.metadata() <data.readers.grib.codes.GribField._metadata>`
 
 Examples:
 

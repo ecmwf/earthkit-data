@@ -27,12 +27,21 @@ DOT_EARTHKIT_DATA = os.path.expanduser("~/.earthkit_data")
 
 
 class Setting:
-    def __init__(self, default, description, getter=None, none_ok=False, kind=None):
+    def __init__(
+        self,
+        default,
+        description,
+        getter=None,
+        none_ok=False,
+        kind=None,
+        docs_default=None,
+    ):
         self.default = default
         self.description = description
         self.getter = getter
         self.none_ok = none_ok
         self.kind = kind if kind is not None else type(default)
+        self.docs_default = docs_default if docs_default is not None else self.default
 
     def kind(self):
         return type(self.default)
@@ -58,6 +67,7 @@ SETTINGS_AND_HELP = {
         os.path.join(tempfile.gettempdir(), "earthkit-data-%s" % (getpass.getuser(),)),
         """Directory of where the dowloaded files are cached, with ``${USER}`` is the user id.
         See :doc:`/guide/caching` for more information.""",
+        docs_default=os.path.join("TMP", "earthkit-data-%s" % (getpass.getuser(),)),
     ),
     "dask-directories": _(
         [os.path.join(DOT_EARTHKIT_DATA, "dask")],

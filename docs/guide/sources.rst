@@ -3,22 +3,20 @@
 Data sources
 ============
 
-A Data Source is an object created using ``earthkit.data.from_source(name, *args, **kwargs)``
-with the appropriate name and arguments, which provides data and additional functionalities.
+Using ``from_source(name, *args, **kwargs)`` we create a :ref:`data object <data-object>` from a given source:
 
     .. code-block:: python
 
         import earthkit.data
 
-        source = earthkit.data.from_source(name, "argument1", "argument2", ...)
+        ds = earthkit.data.from_source(name, "argument1", "argument2", ...)
 
-    - The **name** is a string that uniquely identifies the source type.
+- The **name** is a string that uniquely identifies the source type.
 
-    - The ``*args`` are used to specify the data location to access the data.
-      They can include additional parameters to access the data.
+- The ``*args`` are used to specify the data location to access the data.
+  They can include additional parameters to access the data.
 
-    - The ``**kwargs`` provide **additional functionalities** including caching, filtering, sorting and indexing.
-
+- The ``**kwargs`` provide **additional functionalities** including caching, filtering, sorting and indexing.
 
 **earthkit-data** has the following built-in sources:
 
@@ -45,19 +43,9 @@ with the appropriate name and arguments, which provides data and additional func
      - retrieve data from the `Copernicus Climate Data Store <https://cds.climate.copernicus.eu/>`_ (CDS)
 
 
-The data source object provides methods to access and use its data, such as
-``to_xarray()`` or ``to_pandas()`` or other. Depending on the data, some of
-these methods may not be available.
-
-    .. code-block:: python
-
-        source.to_xarray()  # for gridded data
-        source.to_pandas()  # for non-gridded data
-        source.to_numpy()
-
+The result of ``from_source()`` is a :ref:`data object <data-object>` providing methods to access and use its data, such as ``to_xarray()`` or ``to_pandas()`` or other. Depending on the data, some of these methods may not be available.
 
 ----------------------------------
-
 
 .. _data-sources-file:
 
@@ -67,7 +55,7 @@ file
 .. py:function:: from_source("file", path, expand_user=True, expand_vars=False, unix_glob=True, recursive_glob=True)
   :noindex:
 
-  The simplest data source is the ``file`` source that can access a local file/list of files.
+  The simplest source is ``file`` that can access a local file/list of files.
 
   :param path: input path(s)
   :type path: str, list
@@ -77,16 +65,7 @@ file
   :param bool recursive_glob: allows recursive scanning of directories. Only used when ``uxix_glob`` is True
 
   *earthkit-data* will inspect the content of the files to check for any of the
-  supported data formats listed below:
-
-  - Fields:
-      - NetCDF
-      - :ref:`grib`
-
-  - Observations:
-      - CSV (comma-separated values)
-      - BUFR
-      - ODB
+  supported :ref:`data formats <data-format>`.
 
   When the input is an archive format such as ``.zip``, ``.tar``, ``.tar.gz``, etc,
   *earthkit-data* will attempt to open it and extract any usable files, which are then stored in the :ref:`cache <caching>`.
@@ -98,13 +77,13 @@ file
       import earthkit.data
 
       # UNIX globbing is allowed by default
-      data = earthkit.data.from_source("file", "path/to/t_*.grib")
+      ds = earthkit.data.from_source("file", "path/to/t_*.grib")
 
       # list of files can be specified
-      data = earthkit.data.from_source("file", ["path/to/f1.grib", "path/to/f2.grib"])
+      ds = earthkit.data.from_source("file", ["path/to/f1.grib", "path/to/f2.grib"])
 
       # a path can be a directory, in this case it is recursively scanned for supported files
-      data = earthkit.data.from_source("file", "path/to/dir")
+      ds = earthkit.data.from_source("file", "path/to/dir")
 
 
   Further examples:
@@ -121,7 +100,7 @@ file-pattern
 
 .. py:function:: from_source("file-pattern", pattern, *args, **kwargs)
 
-  The ``file-pattern`` data source will build paths from the pattern specified,
+  The ``file-pattern`` source will build paths from the pattern specified,
   using the other arguments to fill the pattern. Each argument can be a list
   to iterate and create the cartesian product of all lists.
   Then each file is read in the same ways as with :ref:`file source <data-sources-file>`.
@@ -131,7 +110,7 @@ file-pattern
       import datetime
       import earthkit.data
 
-      data = earthkit.data.from_source(
+      ds = earthkit.data.from_source(
           "file-pattern",
           "path/to/data-{my_date:date(%Y-%m-%d)}-{run_time}-{param}.grib",
           {
@@ -157,7 +136,7 @@ url
 
 .. py:function:: from_source("url", url, unpack=True)
 
-  The ``url`` data source will download the data from the address specified and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
+  The ``url`` source will download the data from the address specified and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
 
   :param url: the URL to download
   :type url: str
@@ -167,7 +146,7 @@ url
 
       import earthkit.data
 
-      data = earthkit.data.from_source("url", "https://www.example.com/data.csv")
+      ds = earthkit.data.from_source("url", "https://www.example.com/data.csv")
 
 
 .. _data-sources-url-pattern:
@@ -177,7 +156,7 @@ url-pattern
 
 .. py:function:: from_source("url-pattern", url, unpack=True)
 
-  The ``url-pattern`` data source will build urls from the pattern specified,
+  The ``url-pattern`` source will build urls from the pattern specified,
   using the other arguments to fill the pattern. Each argument can be a list
   to iterate and create the cartesian product of all lists.
   Then each url is downloaded and stored in the :ref:`cache <caching>`. The
@@ -188,7 +167,7 @@ url-pattern
 
       import climetlab as cml
 
-      data = cml.load_source(
+      ds = cml.load_source(
           "url-pattern",
           "https://www.example.com/data-{foo}-{bar}-{qux}.csv",
           foo=[1, 2, 3],
@@ -226,7 +205,7 @@ stream
 
 .. py:function:: from_source("stream", stream, group_by=1)
 
-  The ``stream`` source will read data from a stream, which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment tt only works for GRIB data.
+  The ``stream`` will read data from a stream, which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment tt only works for GRIB data.
 
   :param stream: the stream
   :param bool group_by: defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``groub_by=0`` means all the messages will be loaded and stored in memory.
@@ -304,8 +283,8 @@ memory
       buffer = ...
       stream = io.BytesIO(buffer)
 
-      data = earthkit.data.from_source("stream", stream)
-      for f in data:
+      ds = earthkit.data.from_source("stream", stream)
+      for f in ds:
           print(f.metadata("param"))
 
 
@@ -355,7 +334,7 @@ cds
 
 .. py:function:: from_source("cds", dataset, request)
 
-  The ``"cds"`` data source accesses the `Copernicus Climate Data Store`_ (CDS), using the cdsapi_ package. In addition to data retrieval, ``request`` also has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively.
+  The ``"cds"`` source accesses the `Copernicus Climate Data Store`_ (CDS), using the cdsapi_ package. In addition to data retrieval, ``request`` also has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively.
 
   :param str dataset: the name of the CDS dataset
   :param request: specifies the data to be retrieved as a dict or a set of keyword arguments.

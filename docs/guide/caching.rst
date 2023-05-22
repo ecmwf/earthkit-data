@@ -1,13 +1,12 @@
 .. _caching:
 
 Caching
-=======
+=============
 
 .. warning::
 
      This part of eartkit-data is still a work in progress. Documentation
      and code behaviour will change.
-
 
 Purpose
 -------
@@ -33,6 +32,7 @@ Cache location
 
   The cache location is defined by the ``cache‑directory`` setting. Its default
   value depends on your system:
+
     - ``/tmp/earthkit-data-$USER`` for Linux,
     - ``C:\\Users\\$USER\\AppData\\Local\\Temp\\earthkit-data-$USER`` for Windows
     - ``/tmp/.../earthkit-data-$USER`` for MacOS
@@ -45,68 +45,58 @@ Cache location
     It is recommended to restart your Jupyter kernels after changing
     the cache location.
 
-  From a shell with the ``climetlab`` command:
 
-  .. code:: bash
-
-    # Find the current cache directory
-    $ climetlab settings cache-directory
-    /tmp/climetlab-$USER
-
-    # Change the value of the setting
-    $ climetlab settings cache-directory /big-disk/climetlab-cache
-
-    # Cache directory has been modified
-    $ climetlab settings cache-directory
-    /big-disk/climetlab-cache
-
-  From a python notebook or python script:
+  From Python:
 
   .. code:: python
 
-    >>> import climetlab as cml
-    >>> cml.settings.get("cache-directory")  # Find the current cache directory
-    /tmp/climetlab-$USER
+    >>> import earthkit.data
+    >>> earthkit.data.settings.get(
+    ...     "cache-directory"
+    ... )  # Find the current cache directory
+    /tmp/earthkit-data-$USER
     >>> # Change the value of the setting
-    >>> cml.settings.set("cache-directory", "/big-disk/climetlab-cache")
+    >>> earthkit.data.settings.set("cache-directory", "/big-disk/earthkit-data-cache")
 
     # Python kernel restarted
 
-    >>> import climetlab as cml
-    >>> cml.settings.get("cache-directory")  # Cache directory has been modified
-    /big-disk/climetlab-cache
+    >>> import earthkit.data
+    >>> earthkit.data.settings.get(
+    ...     "cache-directory"
+    ... )  # Cache directory has been modified
+    /big-disk/earthkit-data-cache
 
-  More generally, the CliMetLab settings can be read, modified, reset
-  to their default values using the ``climetlab`` command or from python,
+  More generally, the earthkit-data settings can be read, modified, reset
+  to their default values from python,
   see the :doc:`Settings documentation <settings>`.
 
 Cache limits
 ------------
 
 Maximum-cache-size
-  The ``maximum-cache-size`` setting ensures that CliMetLab does not
+  The ``maximum-cache-size`` setting ensures that earthkit-data does not
   use to much disk space.  Its value sets the maximum disk space used
-  by CliMetLab cache.  When CliMetLab cache disk usage goes above
-  this limit, CliMetLab triggers its cache cleaning mechanism  before
+  by earthkit-data cache.  When earthkit-data cache disk usage goes above
+  this limit, earthkit-data triggers its cache cleaning mechanism  before
   downloading additional data.  The value of cache-maximum-size is
   absolute (such as "10G", "10M", "1K").
 
 Maximum-cache-disk-usage
-  The ``maximum-cache-disk-usage`` setting ensures that CliMetLab
+  The ``maximum-cache-disk-usage`` setting ensures that earthkit-data
   leaves does not fill your disk.
-  Its values sets the maximum disk usage of the filesystem containing the cache
-  directory. When the disk space goes below this limit, CliMetLab triggers
+  Its values sets the maximum disk usage as % of the filesystem containing the cache
+  directory. When the disk space goes below this limit, earthkit-data triggers
   its cache cleaning mechanism before downloading additional data.
   The value of maximum-cache-disk-usage is relative (such as "90%" or "100%").
 
 .. warning::
-    If your disk is filled by another application, CliMetLab will happily
+    If your disk is filled by another application, earthkit-data will happily
     delete its cached data to make room for the other application as soon
     as it has a chance.
 
 .. note::
     When tweaking the cache settings, it is recommended to set the
-    ``maximum-cache-size`` to a value below the user disk quota (if appliable)
+    ``maximum-cache-size`` to a value below the user disk quota (if applicable)
     and ``maximum-cache-disk-usage`` to ``None``.
 
 

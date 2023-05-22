@@ -10,12 +10,7 @@ import datetime
 import os
 import sys
 
-# import earthkit.data
-
 sys.path.insert(0, os.path.abspath("../"))
-
-# Adds path to the folder _ext, where extensions are stored
-sys.path.append(os.path.abspath("./_ext"))
 
 # -- Project information -----------------------------------------------------
 
@@ -40,7 +35,8 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "autoapi.extension",
-    "xref",
+    "earthkit.data.sphinxext.xref",
+    "earthkit.data.sphinxext.module_output",
 ]
 
 # autodoc configuration
@@ -87,7 +83,7 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-# html_css_files = ["style.css"]
+html_css_files = ["style.css"]
 
 
 xref_links = {
@@ -99,6 +95,9 @@ xref_links = {
         "ecCodes namespace",
         "https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ",
     ),
+    "pdbufr": ("pdbufr", "https://pypi.org/project/pdbufr"),
+    "odb": ("ODB", "https://odc.readthedocs.io/en/latest/content/introduction.html"),
+    "pyodc": ("pyodc", "https://github.com/ecmwf/pyodc"),
 }
 
 
@@ -110,6 +109,7 @@ def _skip_for_api(app, what, name, obj, skip, options):
     if what == "module" and name not in [
         "data.readers.grib.codes",
         "data.readers.grib.index",
+        "data.core",
     ]:
         skip = True
     elif what == "package" and name not in [
@@ -118,11 +118,13 @@ def _skip_for_api(app, what, name, obj, skip, options):
         "data.readers.grib",
         # "data.readers.grib.fieldset",
         "data.readers.grib.index",
+        "data.core",
     ]:
         skip = True
     elif what == "class" and name not in [
         "data.readers.grib.codes.GribField",
         "data.readers.grib.index.FieldSet",
+        "data.core.Base",
     ]:
         skip = True
     elif what in ("function", "attribute", "data"):

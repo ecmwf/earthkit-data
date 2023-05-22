@@ -2,12 +2,11 @@
 User guide
 =============
 
-
 .. toctree::
    :maxdepth: 1
 
    sources
    data
-   data_access
+   data_format/index.rst
    settings
-   grib
+   caching
