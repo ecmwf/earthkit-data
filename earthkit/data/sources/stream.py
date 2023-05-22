@@ -27,18 +27,18 @@ class StreamMemorySource(MemoryBaseSource):
 
 
 class StreamSource(Source):
-    def __init__(self, stream, group_by=1, **kwargs):
+    def __init__(self, stream, batch_size=1, **kwargs):
         super().__init__(**kwargs)
         self._stream = stream
         self._reader_ = None
-        self._group_by = group_by
+        self._batch_size = batch_size
 
     @property
-    def group_by(self):
-        return self._group_by
+    def batch_size(self):
+        return self._batch_size
 
     def mutate(self):
-        if self.group_by == 0:
+        if self.batch_size == 0:
             source = StreamMemorySource(self._reader)
             return source
         else:
@@ -48,11 +48,11 @@ class StreamSource(Source):
         return self
 
     def __next__(self):
-        assert self.group_by > 0
-        if self.group_by == 1:
+        assert self.batch_size > 0
+        if self.batch_size == 1:
             return self._reader.__next__()
         else:
-            return self._reader.read_group(self.group_by)
+            return self._reader.read_batch(self.batch_size)
 
     @property
     def _reader(self):

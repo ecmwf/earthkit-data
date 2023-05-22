@@ -748,7 +748,7 @@ def test_grib_from_stream_single_group():
 
 def test_grib_from_stream_multi_group():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, group_by=2)
+        fs = from_source("stream", stream, batch_size=2)
 
         # no methods are available
         with pytest.raises(TypeError):
@@ -768,7 +768,7 @@ def test_grib_from_stream_multi_group():
 
 def test_grib_from_stream_in_memory():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, group_by=0)
+        fs = from_source("stream", stream, batch_size=0)
 
         assert len(fs) == 6
 
@@ -809,7 +809,7 @@ def test_grib_save_when_loaded_from_memory():
 
 def test_grib_save_when_loaded_from_stream():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, group_by=0)
+        fs = from_source("stream", stream, batch_size=0)
         assert len(fs) == 6
         with temp_file() as tmp:
             fs.save(tmp)
