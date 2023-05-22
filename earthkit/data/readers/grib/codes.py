@@ -100,6 +100,12 @@ class CodesHandle(eccodes.Message):
         self.path = path
         self.offset = offset
 
+    @classmethod
+    def from_sample(cls, name):
+        return cls(
+            eccodes.codes_new_from_samples(name, eccodes.CODES_PRODUCT_GRIB), None, None
+        )
+
     # TODO: just a wrapper around the base class implementation to handle the
     # s,l,d qualifiers. Once these are implemented in the base class this method can
     # be removed. md5GridSection is also handled!
@@ -186,6 +192,58 @@ class CodesHandle(eccodes.Message):
 
     def get_data_points(self):
         return eccodes.codes_grib_get_data(self._handle)
+
+    def clone(self):
+        return CodesHandle(eccodes.codes_clone(self._handle), None, None)
+
+    def set_values(self, values):
+        assert self.path is None, "Only cloned handles can have values changed"
+        eccodes.codes_set_values(self._handle, values.flatten())
+        # This is writing on the GRIB that something has been modified (255=unknown)
+        eccodes.codes_set_long(self._handle, "generatingProcessIdentifier", 255)
+
+    def set_multiple(self, values):
+        assert self.path is None, "Only cloned handles can have values changed"
+        eccodes.codes_set_key_vals(self._handle, values)
+
+    def set_long(self, name, value):
+        try:
+            assert self.path is None, "Only cloned handles can have values changed"
+            eccodes.codes_set_long(self._handle, name, value)
+        except Exception as e:
+            LOG.error("Error setting %s=%s", name, value)
+            LOG.exception(e)
+
+    def set_double(self, name, value):
+        try:
+            assert self.path is None, "Only cloned handles can have values changed"
+            eccodes.codes_set_double(self._handle, name, value)
+        except Exception as e:
+            LOG.error("Error setting %s=%s", name, value)
+            LOG.exception(e)
+
+    def set_string(self, name, value):
+        try:
+            assert self.path is None, "Only cloned handles can have values changed"
+            eccodes.codes_set_string(self._handle, name, value)
+        except Exception as e:
+            LOG.error("Error setting %s=%s", name, value)
+            LOG.exception(e)
+
+    def set(self, name, value):
+        try:
+            assert self.path is None, "Only cloned handles can have values changed"
+
+            if isinstance(value, list):
+                return eccodes.codes_set_array(self._handle, name, value)
+
+            return eccodes.codes_set(self._handle, name, value)
+        except Exception as e:
+            LOG.error("Error setting %s=%s", name, value)
+            LOG.exception(e)
+
+    def write(self, f):
+        eccodes.codes_write(self._handle, f)
 
     def save(self, path):
         with open(path, "wb") as f:
@@ -359,7 +417,7 @@ class GribField(Base):
             r = [x.reshape(shape) for x in r]
         return r[0] if len(r) == 1 else tuple(r)
 
-    def to_numpy(self, flatten=False):
+    def to_numpy(self, flatten=False, dtype=None):
         r"""Returns the values stored in the GRIB field as an ndarray.
 
         Parameters
@@ -367,6 +425,8 @@ class GribField(Base):
         flatten: bool
             When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
             :obj:`shape` is returned.
+        dtype: str or dtype
+            Typecode or data-type to which the array is cast.
 
         Returns
         -------
@@ -374,7 +434,12 @@ class GribField(Base):
             Field values
 
         """
-        return self.values if flatten else self.values.reshape(self.shape)
+        values = self.values
+        if not flatten:
+            values = self.values.reshape(self.shape)
+        if dtype is not None:
+            values = values.astype(dtype)
+        return values
 
     def to_points(self, flatten=False):
         r"""Returns the latitudes/longitudes of all the gridpoints in the field.

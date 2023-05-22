@@ -192,7 +192,7 @@ class Index(Source):
         return kwargs
 
     @abstractmethod
-    def sel(self, *args, **kwargs):
+    def sel(self, *args, remapping=None, **kwargs):
         """Filter elements on their metadata(), according to kwargs.
         Returns a new index object.
         """
@@ -201,7 +201,7 @@ class Index(Source):
         if not kwargs:
             return self
 
-        selection = Selection(kwargs)
+        selection = Selection(kwargs, remapping=remapping)
         if selection.is_empty:
             return self
 

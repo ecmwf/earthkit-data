@@ -106,6 +106,9 @@ class Base(metaclass=MetaBase):
         """Reorder the elements of the object."""
         self._not_implemented()
 
+    def __add__(self, other):
+        self._not_implemented()
+
     #
     def _not_implemented(self):
         import inspect
