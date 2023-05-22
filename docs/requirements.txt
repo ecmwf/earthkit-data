@@ -7,4 +7,6 @@ sphinx-rtd-theme
 nbsphinx
 setuptools
 sphinx-autoapi
+pandas
 tqdm
+xarray
