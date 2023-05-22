@@ -192,17 +192,17 @@ url-pattern
 stream
 --------------
 
-.. py:function:: from_source("stream", stream, group_by=1)
+.. py:function:: from_source("stream", stream, batch_size=1)
   :noindex:
 
   The ``stream`` will read data from a stream, which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment tt only works for GRIB data.
 
   :param stream: the stream
-  :param bool group_by: defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``groub_by=0`` means all the messages will be loaded and stored in memory.
+  :param bool batch_size: defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``groub_by=0`` means all the messages will be loaded and stored in memory.
 
   When ``groub_by`` is not zero ``from_source`` gives us a stream iterator object. During the iteration temporary objects are created for each message then get deleted when going out of scope.
 
-  In the examples below, for simplicity, we create a file stream from a GRIB file and read it as a "stream". By default (``group_by=1``) we will consume one message at a time:
+  In the examples below, for simplicity, we create a file stream from a GRIB file and read it as a "stream". By default (``batch_size=1``) we will consume one message at a time:
 
   .. code-block:: python
 
@@ -217,13 +217,13 @@ stream
       1
       1
 
-  We can use ``group_by=2`` to read 2 messages at a time:
+  We can use ``batch_size=2`` to read 2 messages at a time:
 
   .. code-block:: python
 
       >>> import earthkit.data
       >>> stream = open("docs/examples/test4.grib", "rb")
-      >>> ds = earthkit.data.from_source("stream", stream, group_by=2)
+      >>> ds = earthkit.data.from_source("stream", stream, batch_size=2)
 
       # f is a FieldList containing 2 GribFields
       >>> for f in ds:
@@ -238,7 +238,7 @@ stream
 
       >>> import earthkit.data
       >>> stream = open("docs/examples/test4.grib", "rb")
-      >>> ds = earthkit.data.from_source("stream", stream, group_by=0)
+      >>> ds = earthkit.data.from_source("stream", stream, batch_size=0)
 
       # ds is empty at this point, but calling any method on it will
       # consume the whole stream
