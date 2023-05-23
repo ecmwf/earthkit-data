@@ -8,9 +8,15 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-import cartopy.crs as ccrs
+import pytest
 
 from earthkit.data.readers.netcdf import cf
+
+NO_CARTOPY = False
+try:
+    import cartopy.crs as ccrs
+except ImportError:
+    NO_CARTOPY = True
 
 
 def test_CFParameters():
@@ -27,6 +33,7 @@ def test_CFParameters():
     assert cf_parameters.standard_parallels == [40]
 
 
+@pytest.mark.skipif(NO_CARTOPY, reason="cartopy is not installed")
 def test_CFGridMapping():
     grid_mapping = {
         "grid_mapping_name": "lambert_azimuthal_equal_area",
