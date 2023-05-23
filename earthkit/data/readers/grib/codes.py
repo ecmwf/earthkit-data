@@ -481,9 +481,9 @@ class GribField(Base):
 
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
-        >>> ds[0].datetime()
+        >>> ds[4].datetime()
         {'base_time': datetime.datetime(2020, 12, 21, 12, 0),
-        'valid_time': datetime.datetime(2020, 12, 21, 12, 0)}
+        'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
 
         """
         return {
