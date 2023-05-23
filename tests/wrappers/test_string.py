@@ -12,7 +12,7 @@
 
 import logging
 
-from earthkit.data import wrappers
+from earthkit.data import wrappers, from_object
 from earthkit.data.wrappers import string as strwrapper
 
 LOG = logging.getLogger(__name__)
@@ -22,6 +22,8 @@ def test_string_wrapper():
     _wrapper = strwrapper.wrapper(" ")
     assert isinstance(_wrapper, strwrapper.StrWrapper)
     _wrapper = wrappers.get_wrapper(" ")
+    assert isinstance(_wrapper, strwrapper.StrWrapper)
+    _wrapper = from_object(" ")
     assert isinstance(_wrapper, strwrapper.StrWrapper)
 
 

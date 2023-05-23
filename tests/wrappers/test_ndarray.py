@@ -11,7 +11,7 @@
 
 import logging
 
-from earthkit.data import wrappers
+from earthkit.data import wrappers, from_object
 from earthkit.data.wrappers import ndarray as ndwrapper
 
 LOG = logging.getLogger(__name__)
@@ -23,4 +23,6 @@ def test_ndarray_wrapper():
     _wrapper = ndwrapper.wrapper(np.array([]))
     assert isinstance(_wrapper, ndwrapper.NumpyNDArrayWrapper)
     _wrapper = wrappers.get_wrapper(np.array([]))
+    assert isinstance(_wrapper, ndwrapper.NumpyNDArrayWrapper)
+    _wrapper = from_object(np.array([]))
     assert isinstance(_wrapper, ndwrapper.NumpyNDArrayWrapper)

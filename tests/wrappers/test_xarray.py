@@ -12,7 +12,7 @@
 
 import logging
 
-from earthkit.data import wrappers
+from earthkit.data import wrappers, from_object
 from earthkit.data.wrappers import xarray as xr_wrapper
 
 LOG = logging.getLogger(__name__)
@@ -25,6 +25,8 @@ def test_dataset_wrapper():
     assert isinstance(_wrapper, xr_wrapper.XArrayDatasetWrapper)
     _wrapper = wrappers.get_wrapper(xr.Dataset())
     assert isinstance(_wrapper, xr_wrapper.XArrayDatasetWrapper)
+    _wrapper = from_object(xr.Dataset())
+    assert isinstance(_wrapper, xr_wrapper.XArrayDatasetWrapper)
 
 
 def test_dataarray_wrapper():
@@ -33,4 +35,6 @@ def test_dataarray_wrapper():
     _wrapper = xr_wrapper.wrapper(xr.DataArray())
     assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
     _wrapper = wrappers.get_wrapper(xr.DataArray())
+    assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
+    _wrapper = from_object(xr.DataArray())
     assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
