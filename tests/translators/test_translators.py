@@ -12,7 +12,10 @@
 
 import logging
 
-from earthkit.data import translators, wrappers
+import numpy as np
+import xarray as xr
+
+from earthkit.data import from_source, translators, wrappers
 from earthkit.data.translators import ndarray as ndtranslator
 from earthkit.data.translators import string as strtranslator
 from earthkit.data.translators import xarray as xrtranslator
@@ -36,8 +39,6 @@ def test_string_translator():
 
 
 def test_ndarray_translator():
-    import numpy as np
-
     # Check that an ndarray translator can be created
     _ndwrapper = wrappers.get_wrapper(np.array([1]))
     _trans = ndtranslator.translator(_ndwrapper, np.ndarray)
@@ -53,9 +54,7 @@ def test_ndarray_translator():
 
 
 def test_xr_dataarray_translator():
-    import xarray as xr
-
-    # Check that an ndarray translator can be created
+    # Check that an xr.DataArray translator can be created
     _xrwrapper = wrappers.get_wrapper(xr.DataArray())
     _trans = xrtranslator.translator(_xrwrapper, xr.DataArray)
     assert isinstance(_trans, xrtranslator.XArrayDataArrayTranslator)
@@ -65,14 +64,13 @@ def test_xr_dataarray_translator():
     assert isinstance(_trans, xrtranslator.XArrayDataArrayTranslator)
 
     # Check that Transltor transforms to correct type
+    # translate back to original
     transformed = translators.transform(xr.DataArray(), xr.DataArray)
     assert isinstance(transformed, xr.DataArray)
 
 
 def test_xr_dataset_translator():
-    import xarray as xr
-
-    # Check that an ndarray translator can be created
+    # Check that an xr.Dataset translator can be created
     _xrwrapper = wrappers.get_wrapper(xr.Dataset())
     _trans = xrtranslator.translator(_xrwrapper, xr.Dataset)
     assert isinstance(_trans, xrtranslator.XArrayDataArrayTranslator)
@@ -82,5 +80,41 @@ def test_xr_dataset_translator():
     assert isinstance(_trans, xrtranslator.XArrayDataArrayTranslator)
 
     # Check that Transltor transforms to correct type
+    # translate back to original
     transformed = translators.transform(xr.Dataset(), xr.Dataset)
     assert isinstance(transformed, xr.Dataset)
+
+
+def test_transform_from_grib_file():
+    # transform grib-based data object
+    f = from_source("file", "tests/data/test_single.grib")
+
+    # np.ndarray
+    transformed = translators.transform(f, np.ndarray)
+    assert isinstance(transformed, np.ndarray)
+
+    # xr.DataArray
+    transformed = translators.transform(f, xr.DataArray)
+    assert isinstance(transformed, xr.DataArray)
+
+    # xr.Dataset
+    transformed = translators.transform(f, xr.Dataset)
+    assert isinstance(transformed, xr.Dataset)
+
+
+def test_transform_from_xarray_object():
+    # transform grib-based data object
+    da = xr.DataArray([])
+    ds = xr.Dataset({"a": da})
+
+    # da to np.ndarray
+    transformed = translators.transform(da, np.ndarray)
+    assert isinstance(transformed, np.ndarray)
+
+    # ds to xr.DataArray
+    transformed = translators.transform(ds, xr.DataArray)
+    assert isinstance(transformed, xr.DataArray)
+
+    # ds to np.ndarray
+    transformed = translators.transform(ds, np.ndarray)
+    assert isinstance(transformed, np.ndarray)

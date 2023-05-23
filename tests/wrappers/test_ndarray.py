@@ -11,7 +11,7 @@
 
 import logging
 
-from earthkit.data import wrappers, from_object
+from earthkit.data import from_object, wrappers
 from earthkit.data.wrappers import ndarray as ndwrapper
 
 LOG = logging.getLogger(__name__)
