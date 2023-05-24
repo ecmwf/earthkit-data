@@ -229,12 +229,97 @@ class Index(Source):
         return self.sel(**kwargs)
 
     def order_by(self, *args, remapping=None, **kwargs):
-        """Default order_by method.
-        It expects that calling self[i] returns an element that and Order object can rank
-        (i.e. order.get_element_ranking(element) -> tuple).
-        then it sorts the elements according to the tuples.
+        """Changes the ordered of the elements of a fieldlist-like object. Returns a "view"
+        to the original object.
 
-        Returns a new index object.
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the metadata keys to perform the ordering on.
+            (See below for details)
+        remapping: dict
+            Defines new metadata keys from existing ones that we can refer to in ``*args`` and
+            ``**kwargs``. E.g. to define a new
+            key "param_level" as the concatenated value of the "param" and "level" keys use::
+
+                remapping={"param_level": "{param}{level}"}
+
+            See below for a more elaborate example.
+
+        **kwargs: dict, optional
+            Other keyword arguments specifying the metadata keys to perform the ordering on.
+            (See below for details)
+
+        Returns
+        -------
+        A "view" to the original object.
+
+
+        Ordering by a single metadata key "param". The default ordering direction is ascending:
+
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+        >>> for f in ds.order_by("param"):
+        ...     print(f)
+        ...
+        GribField(t,850,20180801,1200,0,0)
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(u,850,20180801,1200,0,0)
+        GribField(u,1000,20180801,1200,0,0)
+        GribField(v,850,20180801,1200,0,0)
+        GribField(v,1000,20180801,1200,0,0)
+
+        Ordering by multiple keys (first by "level" then by "param"):
+
+        >>> for f in ds.order_by(["level", "param"]):
+        ...     print(f)
+        ...
+        GribField(t,850,20180801,1200,0,0)
+        GribField(u,850,20180801,1200,0,0)
+        GribField(v,850,20180801,1200,0,0)
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(u,1000,20180801,1200,0,0)
+        GribField(v,1000,20180801,1200,0,0)
+
+        Specifying the ordering direction:
+
+        >>> for f in ds.order_by(param="ascending", level="descending"):
+        ...     print(f)
+        ...
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(t,850,20180801,1200,0,0)
+        GribField(u,1000,20180801,1200,0,0)
+        GribField(u,850,20180801,1200,0,0)
+        GribField(v,1000,20180801,1200,0,0)
+        GribField(v,850,20180801,1200,0,0)
+
+        Using the list of all the values of a key ("param") to define the order:
+
+        >>> for f in ds.order_by(param=["u", "t", "v"]):
+        ...     print(f)
+        ...
+        GribField(u,1000,20180801,1200,0,0)
+        GribField(u,850,20180801,1200,0,0)
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(t,850,20180801,1200,0,0)
+        GribField(v,1000,20180801,1200,0,0)
+        GribField(v,850,20180801,1200,0,0)
+
+        Using ``remapping`` to specify the order by a key created from two other keys
+        (we created the key "param_level" from the "param" and "levelist" keys):
+
+        >>> ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
+        >>> for f in ds.order_by(
+        ...     param_level=ordering, remapping={"param_level": "{param}{levelist}"}
+        ... ):
+        ...     print(f)
+        GribField(t,850,20180801,1200,0,0)
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(u,1000,20180801,1200,0,0)
+        GribField(v,850,20180801,1200,0,0)
+        GribField(v,1000,20180801,1200,0,0)
+        GribField(u,850,20180801,1200,0,0)
+
         """
         kwargs = normalize_order_by(*args, **kwargs)
         kwargs = self._normalize_kwargs_names(**kwargs)
