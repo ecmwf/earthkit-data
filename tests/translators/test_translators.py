@@ -15,7 +15,7 @@ import logging
 import numpy as np
 import xarray as xr
 
-from earthkit.data import from_source, translators, wrappers
+from earthkit.data import from_source, transform, translators, wrappers
 from earthkit.data.translators import ndarray as ndtranslator
 from earthkit.data.translators import string as strtranslator
 from earthkit.data.translators import xarray as xrtranslator
@@ -33,8 +33,8 @@ def test_string_translator():
     _trans = translators.get_translator("Eartha", str)
     assert isinstance(_trans, strtranslator.StrTranslator)
 
-    # Check that Transltor transforms to correct type
-    transformed = translators.transform("Eartha", str)
+    # Check that public API method transforms to correct type (back to original)
+    transformed = transform("Eartha", str)
     assert isinstance(transformed, str)
 
 
@@ -48,8 +48,8 @@ def test_ndarray_translator():
     _trans = translators.get_translator(np.array([1]), np.ndarray)
     assert isinstance(_trans, ndtranslator.NumpyNDArrayTranslator)
 
-    # Check that Transltor transforms to correct type
-    transformed = translators.transform(np.array([1]), np.ndarray)
+    # Check that public API method  transforms to correct type (back to original)
+    transformed = transform(np.array([1]), np.ndarray)
     assert isinstance(transformed, np.ndarray)
 
 
@@ -63,9 +63,8 @@ def test_xr_dataarray_translator():
     _trans = translators.get_translator(xr.DataArray(), xr.DataArray)
     assert isinstance(_trans, xrtranslator.XArrayDataArrayTranslator)
 
-    # Check that Transltor transforms to correct type
-    # translate back to original
-    transformed = translators.transform(xr.DataArray(), xr.DataArray)
+    # Check that public API method transforms to correct type (back to original)
+    transformed = transform(xr.DataArray(), xr.DataArray)
     assert isinstance(transformed, xr.DataArray)
 
 
@@ -79,9 +78,8 @@ def test_xr_dataset_translator():
     _trans = translators.get_translator(xr.Dataset(), xr.Dataset)
     assert isinstance(_trans, xrtranslator.XArrayDataArrayTranslator)
 
-    # Check that Transltor transforms to correct type
-    # translate back to original
-    transformed = translators.transform(xr.Dataset(), xr.Dataset)
+    # Check that public API method transforms to correct type (back to original)
+    transformed = transform(xr.Dataset(), xr.Dataset)
     assert isinstance(transformed, xr.Dataset)
 
 
@@ -90,15 +88,15 @@ def test_transform_from_grib_file():
     f = from_source("file", "tests/data/test_single.grib")
 
     # np.ndarray
-    transformed = translators.transform(f, np.ndarray)
+    transformed = transform(f, np.ndarray)
     assert isinstance(transformed, np.ndarray)
 
     # xr.DataArray
-    transformed = translators.transform(f, xr.DataArray)
+    transformed = transform(f, xr.DataArray)
     assert isinstance(transformed, xr.DataArray)
 
     # xr.Dataset
-    transformed = translators.transform(f, xr.Dataset)
+    transformed = transform(f, xr.Dataset)
     assert isinstance(transformed, xr.Dataset)
 
 
@@ -108,13 +106,13 @@ def test_transform_from_xarray_object():
     ds = xr.Dataset({"a": da})
 
     # da to np.ndarray
-    transformed = translators.transform(da, np.ndarray)
+    transformed = transform(da, np.ndarray)
     assert isinstance(transformed, np.ndarray)
 
     # ds to xr.DataArray
-    transformed = translators.transform(ds, xr.DataArray)
+    transformed = transform(ds, xr.DataArray)
     assert isinstance(transformed, xr.DataArray)
 
     # ds to np.ndarray
-    transformed = translators.transform(ds, np.ndarray)
+    transformed = transform(ds, np.ndarray)
     assert isinstance(transformed, np.ndarray)
