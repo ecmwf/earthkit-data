@@ -7,47 +7,53 @@
 # nor does it submit to any jurisdiction.
 #
 
-import glob
 import logging
-import os
-import time
+import shutil
 
 import pyfdb
-import yaml
 
-from earthkit.data.readers.grib.index import FieldSetInFiles
-from earthkit.data.utils.parts import Part
+from earthkit.data.sources.file import FileSource
+from earthkit.data.sources.stream import StreamSource
+
+from . import Source
 
 LOG = logging.getLogger(__name__)
 
 
-class FDB(FieldSetInFiles):
-    def __init__(self, root=None, schema=None, request={}):
-        super().__init__(db=None)
+class FDBSource(Source):
+    def __init__(self, *args, stream=True, **kwargs):
+        super().__init__()
 
-        if schema is None and root is not None:
-            for n in glob.iglob(f"{root}/*/schema"):
-                schema = n
-                break
+        self._stream_kwargs = kwargs.pop("batch_size", 1)
+        self.stream = stream
 
-        config = {
-            "spaces": [{"roots": [{"path": root}]}],
-            "schema": schema,
-        }
-        os.environ["FDB5_CONFIG"] = yaml.dump(config)
+        self.request = {}
+        for a in args:
+            self.request.update(a)
+        self.request.update(kwargs)
 
-        now = time.time()
-
-        fdb = pyfdb.FDB()
-        self.parts = list(fdb.list(request))
-        print("pyfdb.list", time.time() - now)
-
-    def number_of_parts(self):
-        return len(self.parts)
-
-    def part(self, i):
-        f = self.parts[i]
-        return Part(f["path"], f["offset"], f["length"])
+    def mutate(self):
+        if self.stream:
+            stream = pyfdb.retrieve(self.request)
+            return StreamSource(stream, self._stream_kwargs)
+        else:
+            return FDBFileSource(self.request)
 
 
-source = FDB
+class FDBFileSource(FileSource):
+    def __init__(self, request):
+        super().__init__()
+        self.path = self._retrieve(request)
+
+    def _retrieve(self, request):
+        def retrieve(target, request):
+            with open(target, "wb") as o, pyfdb.retrieve(request) as i:
+                shutil.copyfileobj(i, o)
+
+        return self.cache_file(
+            retrieve,
+            request,
+        )
+
+
+source = FDBSource
