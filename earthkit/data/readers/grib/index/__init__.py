@@ -21,14 +21,14 @@ from earthkit.data.indexing.database import (
     STATISTICS_KEY_NAMES,
 )
 from earthkit.data.readers.grib.codes import GribField
-from earthkit.data.readers.grib.fieldset import FieldSetMixin
+from earthkit.data.readers.grib.fieldlist import FieldListMixin
 from earthkit.data.utils import progress_bar
 from earthkit.data.utils.availability import Availability
 
 LOG = logging.getLogger(__name__)
 
 
-class FieldSet(FieldSetMixin, Index):
+class FieldList(FieldListMixin, Index):
     _availability = None
 
     def __init__(self, *args, **kwargs):
@@ -41,7 +41,7 @@ class FieldSet(FieldSetMixin, Index):
 
     @classmethod
     def new_mask_index(self, *args, **kwargs):
-        return MaskFieldSet(*args, **kwargs)
+        return MaskFieldList(*args, **kwargs)
 
     @property
     def availability_path(self):
@@ -49,8 +49,8 @@ class FieldSet(FieldSetMixin, Index):
 
     @classmethod
     def merge(cls, sources):
-        assert all(isinstance(_, FieldSet) for _ in sources)
-        return MultiFieldSet(sources)
+        assert all(isinstance(_, FieldList) for _ in sources)
+        return MultiFieldList(sources)
 
     def _custom_availability(self, ignore_keys=None, filter_keys=lambda k: True):
         def dicts():
@@ -108,19 +108,19 @@ class FieldSet(FieldSetMixin, Index):
         return kwargs
 
 
-class MaskFieldSet(FieldSet, MaskIndex):
+class MaskFieldList(FieldList, MaskIndex):
     def __init__(self, *args, **kwargs):
         MaskIndex.__init__(self, *args, **kwargs)
 
 
-class MultiFieldSet(FieldSet, MultiIndex):
+class MultiFieldList(FieldList, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
 
 
-class FieldSetInFiles(FieldSet):
-    # Remote Fieldsets (with urls) are also here,
-    # as the actual fieldset is accessed on a file in cache.
+class FieldListInFiles(FieldList):
+    # Remote FieldLists (with urls) are also here,
+    # as the actual fieldlist is accessed on a file in cache.
     # This class changes the interface (_getitem__ and __len__)
     # into the interface (part and number_of_parts).
     def __getitem__(self, n):
