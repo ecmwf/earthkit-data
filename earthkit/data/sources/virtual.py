@@ -13,7 +13,7 @@ import logging
 import threading
 
 import earthkit.data as cml
-from earthkit.data.readers.grib.index import FieldSet
+from earthkit.data.readers.grib.index import FieldList
 from earthkit.data.utils.serialise import register_serialisation
 
 LOG = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ class DictOveray(dict):
             return self[key]
 
 
-class Virtual(FieldSet):
+class Virtual(FieldList):
     SIZE = int(365.25 * 24 * (2022 - 1959))
     # SIZE = 100
 

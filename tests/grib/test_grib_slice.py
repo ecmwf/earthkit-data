@@ -62,7 +62,7 @@ def test_grib_slice_single_file(indexes, expected_meta):
     assert r.metadata(["shortName", "level"]) == expected_meta
     v = r.values
     assert v.shape == (4, 84)
-    # check the original fieldset
+    # check the original fieldlist
     assert len(f) == 18
     assert f.metadata("shortName") == ["t", "u", "v"] * 6
 
@@ -86,7 +86,7 @@ def test_grib_slice_multi_file(indexes, expected_meta):
     assert r.metadata(["shortName", "level"]) == expected_meta
     # v = r.values
     # assert v.shape == (3, 84)
-    # check the original fieldset
+    # check the original fieldlist
     assert len(f) == 6
     assert f.metadata("shortName") == ["2t", "msl", "t", "z", "t", "z"]
 
@@ -113,7 +113,7 @@ def test_grib_array_indexing_bad(indexes):
         f[indexes]
 
 
-def test_grib_fieldset_iterator():
+def test_grib_fieldlist_iterator():
     g = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     sn = g.metadata("shortName")
     assert len(sn) == 18
@@ -124,9 +124,9 @@ def test_grib_fieldset_iterator():
     assert iter_sn == sn
 
 
-def test_fieldset_iterator_with_zip():
+def test_fieldlist_iterator_with_zip():
     # this tests something different with the iterator - this does not try to
-    # 'go off the edge' of the fieldset, because the length is determined by
+    # 'go off the edge' of the fieldlist, because the length is determined by
     # the list of levels
     g = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     ref_levs = g.metadata("level")
@@ -140,8 +140,8 @@ def test_fieldset_iterator_with_zip():
     assert levs2 == ref_levs
 
 
-def test_fieldset_iterator_with_zip_multiple():
-    # same as test_fieldset_iterator_with_zip() but multiple times
+def test_fieldlist_iterator_with_zip_multiple():
+    # same as test_fieldlist_iterator_with_zip() but multiple times
     g = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     ref_levs = g.metadata("level")
     assert len(ref_levs) == 18
@@ -155,7 +155,7 @@ def test_fieldset_iterator_with_zip_multiple():
         assert levs2 == ref_levs, i
 
 
-def test_fieldset_reverse_iterator():
+def test_fieldlist_reverse_iterator():
     g = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     sn = g.metadata("shortName")
     sn_reversed = list(reversed(sn))

@@ -14,7 +14,7 @@ import shutil
 import warnings
 
 from earthkit.data.core.temporary import temp_directory, temp_file
-from earthkit.data.readers.grib.index import FieldSet
+from earthkit.data.readers.grib.index import FieldList
 from earthkit.data.testing import (
     earthkit_examples_file,
     earthkit_file,
@@ -78,7 +78,7 @@ def list_of_dicts():
     ]
 
 
-class GribIndexFromDicts(FieldSet):
+class GribIndexFromDicts(FieldList):
     def __init__(self, list_of_dicts, *args, **kwargs):
         self.list_of_dicts = list_of_dicts
         print(f"KWARGS={kwargs}")
