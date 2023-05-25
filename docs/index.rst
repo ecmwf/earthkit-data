@@ -19,7 +19,7 @@ familiar scientific Python objects (including numpy arrays, pandas dataframes, x
 
 .. code-block:: python
 
-    data = earthkit.data.from_source("my-data.nc")
+    data = earthkit.data.from_source("file", "my-data.nc")
     arr = data.to_numpy()
     df = data.to_pandas()
     dataset = data.to_xarray()

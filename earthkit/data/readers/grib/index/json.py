@@ -10,10 +10,10 @@
 
 from earthkit.data.decorators import cached_method
 from earthkit.data.indexing.database.json import JsonFileDatabase
-from earthkit.data.readers.grib.index.db import FieldsetInFilesWithDBIndex
+from earthkit.data.readers.grib.index.db import FieldListInFilesWithDBIndex
 
 
-class FieldsetInFilesWithJsonIndex(FieldsetInFilesWithDBIndex):
+class FieldListInFilesWithJsonIndex(FieldListInFilesWithDBIndex):
     DBCLASS = JsonFileDatabase
 
     @cached_method

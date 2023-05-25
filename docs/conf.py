@@ -117,13 +117,12 @@ def _skip_for_api(app, what, name, obj, skip, options):
         "data",
         "data.readers",
         "data.readers.grib",
-        # "data.readers.grib.fieldset",
         "data.readers.grib.index",
     ]:
         skip = True
     elif what == "class" and name not in [
         "data.readers.grib.codes.GribField",
-        "data.readers.grib.index.FieldSet",
+        "data.readers.grib.index.FieldList",
     ]:
         skip = True
     elif what == "method" and "abstractmethod" in getattr(obj, "properties", []):
