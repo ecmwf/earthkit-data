@@ -101,16 +101,16 @@ def _skip_for_api(app, what, name, obj, skip, options):
     # if what == "package":
     #     print(f"{name}[{what}]")
 
-    if what == "module" and "grib.codes" not in name and "grib.fieldset" not in name:
+    if what == "module" and "grib.codes" not in name and "grib.fieldlist" not in name:
         skip = True
     elif what == "package" and name not in [
         "data",
         "data.readers",
         "data.readers.grib",
-        "data.readers.fieldset",
+        "data.readers.fieldlist",
     ]:
         skip = True
-    elif what == "class" and "GribField" not in name and "FieldSetMixin" not in name:
+    elif what == "class" and "GribField" not in name and "FieldListMixin" not in name:
         skip = True
     elif what in ("function", "attribute", "data"):
         skip = True

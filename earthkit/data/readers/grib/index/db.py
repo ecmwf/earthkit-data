@@ -16,13 +16,13 @@ import requests
 from multiurl import robust
 
 from earthkit.data.core.caching import cache_file
-from earthkit.data.readers.grib.index import FieldSetInFiles
+from earthkit.data.readers.grib.index import FieldListInFiles
 from earthkit.data.utils import progress_bar
 
 LOG = logging.getLogger(__name__)
 
 
-class FieldsetInFilesWithDBIndex(FieldSetInFiles):
+class FieldListInFilesWithDBIndex(FieldListInFiles):
     def __init__(self, db, **kwargs):
         """Should not be instantiated directly.
         The public API are the constructors "_from*()" class methods.
