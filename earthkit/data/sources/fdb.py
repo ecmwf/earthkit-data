@@ -8,6 +8,7 @@
 #
 
 import logging
+import os
 import shutil
 
 import pyfdb
@@ -31,6 +32,10 @@ class FDBSource(Source):
         for a in args:
             self.request.update(a)
         self.request.update(kwargs)
+
+        fdb_home = os.environ.get("FDB_HOME", None)
+        if fdb_home is None or not fdb_home:
+            os.environ["FDB_HOME"] = "/home/fdbprod"
 
     def mutate(self):
         if self.stream:
