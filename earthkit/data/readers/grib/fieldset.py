@@ -94,6 +94,10 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
             Unique, sorted metadata values from all the
             :obj:`GribField <data.readers.grib.codes.GribField>`\ s.
 
+        See Also
+        --------
+        index
+
         Examples
         --------
         >>> import earthkit.data
@@ -108,42 +112,10 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         >>> ds.index("level")
         [300, 400, 500, 700, 850, 1000]
 
-        By default :obj:`indices` uses the following metadata keys taken from the
-        "mars" :xref:`eccodes_namespace`:
-
-            .. code-block:: python
-
-                [
-                    "class",
-                    "stream",
-                    "levtype",
-                    "type",
-                    "expver",
-                    "date",
-                    "hdate",
-                    "andate",
-                    "time",
-                    "antime",
-                    "reference",
-                    "anoffset",
-                    "verify",
-                    "fcmonth",
-                    "fcperiod",
-                    "leadtime",
-                    "opttime",
-                    "origin",
-                    "domain",
-                    "method",
-                    "diagnostic",
-                    "iteration",
-                    "number",
-                    "quantile",
-                    "levelist",
-                    "param",
-                ]
-
-        Keys with no valid values are not included. Keys that :obj:`index` is called with are
-        automatically added to the original set of keys used in :obj:`indices`.
+        By default :obj:`indices` uses the keys from the
+        "mars" :xref:`eccodes_namespace`. Keys with no valid values are not included. Keys
+        that :obj:`index` is called with are automatically added to the original set of keys
+        used in :obj:`indices`.
 
         """
         if not self._indices:
@@ -168,6 +140,10 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
             Unique, sorted values of ``key`` from all the
             :obj:`GribField <data.readers.grib.codes.GribField>`\ s.
 
+        See Also
+        --------
+        index
+
         Examples
         --------
         >>> import earthkit.data
@@ -189,7 +165,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
 
         Parameters
         ----------
-        **kwargs:
+        **kwargs: dict, optional
             Keyword arguments passed to
             :obj:`GribField.to_numpy() <data.readers.grib.codes.GribField.to_numpy>`
 
@@ -197,6 +173,10 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         -------
         ndarray
             Array containing the field values.
+
+        See Also
+        --------
+        values
 
         Examples
         --------
@@ -221,8 +201,11 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
     @property
     def values(self):
         r"""ndarray: Gets the field values as a 2D ndarray. It is formed as the array of
-        :obj:`GribField.values <data.readers.grib.codes.GribField.values>` per field. See
-        also :obj:`to_numpy`.
+        :obj:`GribField.values <data.readers.grib.codes.GribField.values>` per field.
+
+        See Also
+        --------
+        to_numpy
 
 
         >>> import earthkit.data
@@ -248,10 +231,10 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
 
         Parameters
         ----------
-        *args:
+        *args: tuple
             Positional arguments defining the metadata keys. Passed to
             :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
-        **kwargs:
+        **kwargs: dict, optional
             Keyword arguments passed to
             :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
 
@@ -296,7 +279,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         namespace: str, None
             The :xref:`eccodes_namespace` to choose the ``keys`` from. When it is set ``keys`` and
             ``extra_keys`` are omitted.
-        **kwargs:
+        **kwargs: dict, optional
             Other keyword arguments:
 
             print: bool, optional
@@ -344,7 +327,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         ----------
         n: int, None
             The number of messages (``n`` > 0) to be printed from the front.
-        **kwargs:
+        **kwargs: dict, optional
             Other keyword arguments passed to :obj:`ls`.
 
         Returns
@@ -377,7 +360,7 @@ class FieldSetMixin(PandasMixIn, XarrayMixIn):
         ----------
         n: int, None
             The number of messages (``n`` > 0)  to be printed from the back.
-        **kwargs:
+        **kwargs: dict, optional
             Other keyword arguments passed to :obj:`ls`.
 
         Returns

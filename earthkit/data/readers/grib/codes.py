@@ -394,9 +394,12 @@ class GribField(Base):
             When ``keys`` is a single value an ndarray is returned. Otherwise a tuple containing one ndarray
             per key is returned (following the order in ``keys``).
 
-        Note
-        ----
-            See also: :obj:`to_points`, :obj:`to_numpy` and :obj:`values`.
+        See Also
+        --------
+        to_points
+        to_numpy
+        values
+
         """
         _keys = dict(
             lat=self.handle.get_latitudes,
@@ -594,10 +597,10 @@ class GribField(Base):
 
         Parameters
         ----------
-        *keys: :obj:`str`, :obj:`list` or :obj:`tuple`
+        *keys: tuple
             Positional arguments specifying metadata keys. Only ecCodes GRIB keys can be used
             here. Can be empty, in this case all the keys from the specified ``namespace`` will
-            be used.
+            be used. (See examples below).
         namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
             The namespace to choose the ``keys`` from. Any :xref:`eccodes_namespace` can be used here.
             :obj:`metadata` also defines the "default" namespace, which contains all the
@@ -609,7 +612,7 @@ class GribField(Base):
             Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
             Otherwise, must have same the number of elements as ``keys``. Only used when
             ``keys`` is not empty.
-        **kwargs:
+        **kwargs: tuple, optional
             Other keyword arguments:
 
             * default: value, optional
@@ -630,7 +633,7 @@ class GribField(Base):
         Raises
         ------
         KeyError
-            If a key is not found in the message and no ``default`` is set.
+            If no ``default`` is set and a key is not found in the message or it has a missing value.
 
 
         Examples
@@ -734,7 +737,7 @@ class GribField(Base):
             :obj:`dump` also defines the "default" namespace, which contains all the GRIB keys
             that ecCodes can access without specifying a namespace.
             When ``namespace`` is None all the available namespaces will be used.
-        **kwargs:
+        **kwargs: dict, optional
             Other keyword arguments:
 
             print: bool, optional

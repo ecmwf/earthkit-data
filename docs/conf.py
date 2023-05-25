@@ -88,6 +88,7 @@ html_css_files = ["style.css"]
 
 
 xref_links = {
+    "cfgrib": ("cfgirb", "https://github.com/ecmwf/cfgrib"),
     "eccodes": (
         "ecCodes",
         "https://confluence.ecmwf.int/display/ECC/ecCodes+Home",
@@ -96,7 +97,7 @@ xref_links = {
         "ecCodes namespace",
         "https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ",
     ),
-    "pdbufr": ("pdbufr", "https://pypi.org/project/pdbufr"),
+    "pdbufr": ("pdbufr", "https://github.com/ecmwf/pdbufr"),
     "odb": ("ODB", "https://odc.readthedocs.io/en/latest/content/introduction.html"),
     "pyodc": ("pyodc", "https://github.com/ecmwf/pyodc"),
 }

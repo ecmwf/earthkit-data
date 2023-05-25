@@ -191,10 +191,96 @@ class Index(Source):
     def _normalize_kwargs_names(**kwargs):
         return kwargs
 
-    @abstractmethod
     def sel(self, *args, remapping=None, **kwargs):
-        """Filter elements on their metadata(), according to kwargs.
-        Returns a new index object.
+        """Select a subset of the elements from a fieldlist-like object.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the metadata keys to perform the filtering on.
+            (See below for details).
+        remapping: dict
+            Defines new metadata keys from existing ones that we can refer to in ``*args`` and
+            ``**kwargs``. E.g. to define a new
+            key "param_level" as the concatenated value of the "param" and "level" keys use::
+
+                remapping={"param_level": "{param}{level}"}
+
+            See below for a more elaborate example.
+
+        **kwargs: dict, optional
+            Other keyword arguments specifying the metadata keys to perform the filtering on.
+            (See below for details).
+
+        Returns
+        -------
+        object
+            Returns a new object with the filtered elements. It contains a view to the data in the
+            original object, so no data is copied.
+
+
+        Filter conditions are specified by a set of **metadata** keys either by a dictionary (in
+        ``*args``) or a set of ``**kwargs``. Both single or multiple keys are allowed to use and each
+        can specify the following type of filter values:
+
+        - single value::
+
+            ds.sel(param="t")
+
+        - list of values::
+
+            ds.sel(param=["u", "v"])
+
+        - **slice** of values (defines a **closed interval**, so treated as inclusive of both the start
+        and stop values, unlike normal Python indexing)::
+
+            # filter levels between 300 and 500 inclusively
+            ds.sel(level=slice(300, 500))
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+        >>> len(ds)
+        18
+
+        Selecting by a single key ("param"):
+
+        >>> subset = ds.sel(param="t")
+        >>> for f in subset:
+        ...     print(f)
+        ...
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(t,850,20180801,1200,0,0)
+        GribField(t,700,20180801,1200,0,0)
+        GribField(t,500,20180801,1200,0,0)
+        GribField(t,400,20180801,1200,0,0)
+        GribField(t,300,20180801,1200,0,0)
+
+
+        Selecting by multiple keys ("param", "level") with a list and slice of values:
+
+        >>> subset = ds.sel(param=["u", "v"], level=slice(400, 700))
+        >>> for f in subset:
+        ...     print(f)
+        ...
+        GribField(u,700,20180801,1200,0,0)
+        GribField(v,700,20180801,1200,0,0)
+        GribField(u,500,20180801,1200,0,0)
+        GribField(v,500,20180801,1200,0,0)
+        GribField(u,400,20180801,1200,0,0)
+        GribField(v,400,20180801, 1200,0,0)
+
+        Using ``remapping`` to specify the selection by a key created from two other keys
+        (we created key "param_level" from "param" and "levelist"):
+
+        >>> for f in ds.order_by(
+        ...     param_level=["t850", "u1000"],
+        ...     remapping={"param_level": "{param}{levelist}"},
+        ... ):
+        ...     print(f)
+        GribField(t,850,20180801,1200,0,0)
+        GribField(u,1000,20180801,1200,0,0)
         """
         kwargs = normalize_selection(*args, **kwargs)
         kwargs = self._normalize_kwargs_names(**kwargs)
@@ -229,8 +315,7 @@ class Index(Source):
         return self.sel(**kwargs)
 
     def order_by(self, *args, remapping=None, **kwargs):
-        """Changes the ordered of the elements of a fieldlist-like object. Returns a "view"
-        to the original object.
+        """Changes the order of the elements in a fieldlist-like object.
 
         Parameters
         ----------
@@ -252,10 +337,13 @@ class Index(Source):
 
         Returns
         -------
-        A "view" to the original object.
+        object
+            Returns a new object with reordered elements. It contains a view to the data in the
+            original object, so no data is copied.
 
 
-        Ordering by a single metadata key "param". The default ordering direction is ascending:
+        Ordering by a single metadata key ("param"). The default ordering directio
+        is ``ascending``:
 
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
@@ -264,7 +352,7 @@ class Index(Source):
         ...
         GribField(t,850,20180801,1200,0,0)
         GribField(t,1000,20180801,1200,0,0)
-        GribField(u,850,20180801,1200,0,0)
+        GribField(u,850,20180801,1200,0,0)s
         GribField(u,1000,20180801,1200,0,0)
         GribField(v,850,20180801,1200,0,0)
         GribField(v,1000,20180801,1200,0,0)
@@ -306,7 +394,7 @@ class Index(Source):
         GribField(v,850,20180801,1200,0,0)
 
         Using ``remapping`` to specify the order by a key created from two other keys
-        (we created the key "param_level" from the "param" and "levelist" keys):
+        (we created key "param_level" from "param" and "levelist"):
 
         >>> ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
         >>> for f in ds.order_by(
@@ -319,7 +407,6 @@ class Index(Source):
         GribField(v,850,20180801,1200,0,0)
         GribField(v,1000,20180801,1200,0,0)
         GribField(u,850,20180801,1200,0,0)
-
         """
         kwargs = normalize_order_by(*args, **kwargs)
         kwargs = self._normalize_kwargs_names(**kwargs)
