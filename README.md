@@ -21,6 +21,12 @@ Install via `pip` with:
 
 More details, such as how to install any necessary binaries, can be found  at https://earthkit-data.readthedocs.io/en/latest/install.html.
 
+Alternatively, install via `conda` with:
+
+    $ conda install earthkit-data -c conda-forge
+
+This will bring in any necessary binaries dependencies for you.
+
 
 ## License
 
