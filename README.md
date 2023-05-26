@@ -5,12 +5,16 @@
 A format-agnostic interface for geospatial data with a focus on meteorology and
 climate science.
 
-The documentation can be found at https://earthkit-data.readthedocs.io/.
-
 **DISCLAIMER**
 This project is **BETA** and will be **Experimental** for the foreseeable future.
 Interfaces and functionality are likely to change, and the project itself may be scrapped.
 **DO NOT** use this software in any project/software that is operational.
+
+Documentation
+-------------
+
+The documentation can be found at https://earthkit-data.readthedocs.io/.
+
 
 Install
 -------
@@ -25,7 +29,7 @@ Alternatively, install via `conda` with:
 
     $ conda install earthkit-data -c conda-forge
 
-This will bring in any necessary binaries dependencies for you.
+This will bring in some necessary binaries dependencies for you.
 
 
 ## License
