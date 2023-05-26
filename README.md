@@ -5,6 +5,15 @@
 A format-agnostic interface for geospatial data with a focus on meteorology and
 climate science.
 
+Install
+-------
+
+Install via `pip` with:
+
+    $ pip install earthkit-data
+
+More details, such as how to install any necessary binaries, can be found  at https://earthkit-data.readthedocs.io/en/latest/install.html.
+
 **DISCLAIMER**
 This project is **BETA** and will be **Experimental** for the foreseeable future.
 Interfaces and functionality are likely to change, and the project itself may be scrapped.
