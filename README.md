@@ -14,9 +14,7 @@ Interfaces and functionality are likely to change, and the project itself may be
 
 The documentation can be found at https://earthkit-data.readthedocs.io/.
 
-
 ## Install
-
 
 Install via `pip` with:
 
@@ -33,7 +31,6 @@ $ conda install earthkit-data -c conda-forge
 ```
 
 This will bring in some necessary binary dependencies for you.
-
 
 ## License
 
