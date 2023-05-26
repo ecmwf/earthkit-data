@@ -1,6 +1,6 @@
 # earthkit-data
 
-![earthkit-data](https://raw.githubusercontent.com/ecmwf/earthkit-data/develop/earthkit-data.png)
+![earthkit-data](docs/_static/earthkit-data.png)
 
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-data.svg)](https://pypi.python.org/pypi/earthkit-data/)
 
