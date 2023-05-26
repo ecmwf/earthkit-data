@@ -18,6 +18,7 @@ import numpy as np
 
 from earthkit.data.core import Base
 from earthkit.data.utils.bbox import BoundingBox
+from earthkit.data.utils.projections import Projection
 
 LOG = logging.getLogger(__name__)
 
@@ -528,6 +529,9 @@ class GribField(Base):
 
     def proj_target_string(self):
         return self.handle.get("projTargetString", default=None)
+
+    def projection(self):
+        return Projection.from_proj_string(self.proj_string())
 
     def bounding_box(self):
         r"""Returns the bounding box of the field.
