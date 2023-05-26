@@ -29,6 +29,76 @@ LOG = logging.getLogger(__name__)
 
 
 class FieldList(FieldListMixin, Index):
+    r"""Represents a list of :obj:`GribField <data.readers.grib.codes.GribField>`\ s.
+
+    We can **iterate** through the fields as follows:
+
+    >>> import earthkit.data
+    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> len(ds)
+    6
+    >>> for f in ds:
+    ...     print(f)
+    ...
+    GribField(t,1000,20180801,1200,0,0)
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(v,1000,20180801,1200,0,0)
+    GribField(t,850,20180801,1200,0,0)
+    GribField(u,850,20180801,1200,0,0)
+    GribField(v,850,20180801,1200,0,0)
+
+    :obj:`Fieldset` objects can be **concatenated** with the + operator:
+
+    >>> import earthkit.data
+    >>> ds1 = earthkit.data.from_source("file", "docs/examples/test.grib")
+    >>> len(ds1)
+    2
+    >>> ds2 = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> len(ds2)
+    6
+    >>> ds = ds1 + ds2
+    >>> len(ds)
+    8
+
+    Standard Python slicing works:
+
+    >>> import earthkit.data
+    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> len(ds)
+    6
+    >>> ds[0]
+    GribField(t,1000,20180801,1200,0,0)
+    >>> for f in ds[0:3]:
+    ...     print(f)
+    GribField(t,1000,20180801,1200,0,0)
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(v,1000,20180801,1200,0,0)
+    >>> for f in ds[0:4:2]:
+    ...     print(f)
+    GribField(t,1000,20180801,1200,0,0)
+    GribField(v,1000,20180801,1200,0,0)
+    >>> ds[-1]
+    GribField(v,850,20180801,1200,0,0)
+    >>> for f in ds[-2:]:
+    ...     print(f)
+    GribField(u,850,20180801,1200,0,0)
+    GribField(v,850,20180801,1200,0,0)
+
+    Slicing also works with a list or an ndarray:
+
+    >>> for f in ds[[1, 3]]:
+    ...     print(f)
+    ...
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(t,850,20180801,1200,0,0)
+    >>> for f in ds[np.array([1, 3])]:
+    ...     print(f)
+    ...
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(t,850,20180801,1200,0,0)
+
+    """
+
     _availability = None
 
     def __init__(self, *args, **kwargs):
@@ -90,7 +160,7 @@ class FieldList(FieldListMixin, Index):
         )
         return self.availability
 
-    def is_full_hypercube(self):
+    def _is_full_hypercube(self):
         non_empty_coords = {
             k: v
             for k, v in self.availability._tree.unique_values().items()

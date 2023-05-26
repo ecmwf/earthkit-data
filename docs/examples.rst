@@ -12,6 +12,7 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
 
     examples/mars.ipynb
     examples/cds.ipynb
+    examples/fdb.ipynb
 
 
 .. toctree::
@@ -19,12 +20,11 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     :caption: GRIB
 
     examples/grib_overview.ipynb
-    examples/grib_indexing.ipynb
     examples/grib_metadata.ipynb
-    examples/grib_missing.ipynb
     examples/grib_selection.ipynb
+    examples/grib_indexing.ipynb
+    examples/grib_missing.ipynb
     examples/grib_multi.ipynb
-    examples/grib_fdb_stream.ipynb
     examples/grib_from_stream.ipynb
     examples/grib_file_pattern.ipynb
     examples/grib_tar.ipynb
@@ -44,6 +44,13 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     :glob:
 
     examples/bufr*
+
+.. toctree::
+    :maxdepth: 1
+    :caption: ODB
+    :glob:
+
+    examples/odb*
 
 .. toctree::
     :maxdepth: 1

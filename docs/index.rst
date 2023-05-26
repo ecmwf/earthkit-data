@@ -14,12 +14,12 @@ Welcome to earthkit-data's documentation
 climate science.
 
 **earthkit-data** makes it simple to read, inspect and slice data from a wide range of
-geospatial input types (GRIB, netCDF and more) and transform them into
+geospatial input types (:ref:`grib`, :ref:`netcdf` and more) and transform them into
 familiar scientific Python objects (including numpy arrays, pandas dataframes, xarray datasets).
 
 .. code-block:: python
 
-    data = earthkit.data.from_source("my-data.nc")
+    data = earthkit.data.from_source("file", "my-data.nc")
     arr = data.to_numpy()
     df = data.to_pandas()
     dataset = data.to_xarray()
@@ -40,14 +40,15 @@ reference systems and bounding boxes.
    :maxdepth: 1
    :caption: Documentation
 
-   _api/index
+   guide/index
+   api
 
 .. toctree::
    :maxdepth: 1
    :caption: Installation
 
    install
-   contributing
+   development
    licence
 
 
