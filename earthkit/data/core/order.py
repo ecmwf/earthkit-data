@@ -21,8 +21,6 @@ class Remapping:
             m = re.split(r"\{([^}]*)\}", v)
             self.remapping[k] = m
 
-        print(f"remapping={self.remapping}")
-
     def __call__(self, func):
         if self.remapping is None or not self.remapping:
             return func

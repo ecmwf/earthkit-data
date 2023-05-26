@@ -17,7 +17,6 @@ from earthkit.data.core.caching import cache_file
 from earthkit.data.core.plugins import find_plugin
 from earthkit.data.core.plugins import register as register_plugin
 from earthkit.data.core.settings import SETTINGS
-from earthkit.data.utils.html import table
 
 
 class Source(Base):
@@ -89,7 +88,7 @@ class Source(Base):
         self._parent = parent
 
     def _repr_html_(self):
-        return table(self)
+        return self.__repr__()
 
     def graph(self, depth=0):
         print(" " * depth, self)
