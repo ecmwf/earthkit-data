@@ -456,6 +456,35 @@ class GribField(Base):
         return values
 
     def to_points(self, flatten=False):
+        r"""Returns the geographical coordinates in the data's original
+        Coordinate Reference System (CRS).
+
+        Parameters
+        ----------
+        flatten: bool
+            When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
+            :obj:`shape` are returned.
+
+        Returns
+        -------
+        dict
+            Dictionary with items "x" and "y", containing the ndarrays of the x and
+            y coordinates, respectively.
+
+        Raises
+        ------
+        ValueError
+            When the coordinates in the data's original CRS are not available.
+
+        """
+        grid_type = self.metadata("gridType", default=None)
+        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+            lon, lat = self.data(("lon", "lat"), flatten=flatten)
+            return dict(x=lon, y=lat)
+        else:
+            raise ValueError("grid_type={grid_type} is not supported in to_points()")
+
+    def to_latlon(self, flatten=False):
         r"""Returns the latitudes/longitudes of all the gridpoints in the field.
 
         Parameters
@@ -472,7 +501,7 @@ class GribField(Base):
 
         """
         lon, lat = self.data(("lon", "lat"), flatten=flatten)
-        return dict(lon=lon, lat=lat)
+        return dict(lat=lat, lon=lon)
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (
