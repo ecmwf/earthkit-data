@@ -31,7 +31,8 @@ def test_url_file_source():
 
 def test_url_source_1():
     from_source(
-        "url", "https://get.ecmwf.int/repository/test-data/emohawk/examples/test.grib"
+        "url",
+        "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test.grib",
     )
 
 
@@ -39,7 +40,7 @@ def test_url_source_check_out_of_date():
     def load():
         from_source(
             "url",
-            "https://get.ecmwf.int/repository/test-data/emohawk/examples/test.grib",
+            "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test.grib",
         )
 
     with temp_directory() as tmpdir:
@@ -55,21 +56,21 @@ def test_url_source_check_out_of_date():
 def test_url_source_2():
     from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/emohawk/test-data/temp.bufr",
+        "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
     )
 
 
 def test_url_source_3():
     from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/emohawk/examples/test.nc",
+        "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test.nc",
     )
 
 
 def test_url_source_tar():
     ds = from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/emohawk/examples/test_gribs.tar",
+        "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test_gribs.tar",
     )
     assert len(ds) == 6
 
@@ -77,12 +78,12 @@ def test_url_source_tar():
 def test_part_url():
     ds = from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/emohawk/test-data/temp.bufr",
+        "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
     )
 
     ds = from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/emohawk/test-data/temp.bufr",
+        "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
         parts=((0, 4),),
     )
 
@@ -93,7 +94,7 @@ def test_part_url():
 
     ds = from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/emohawk/test-data/temp.bufr",
+        "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
         parts=((0, 10), (50, 10), (60, 10)),
     )
 

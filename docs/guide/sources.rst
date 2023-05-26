@@ -13,12 +13,13 @@ We can get data from a given source by using :func:`from_source`:
   Returns a :ref:`data object <data-object>` from the source specified by ``name``.
 
   :param str name: the source (see below)
-  :param *args: specifies the data location and additional parameters to ato access the data
-  :param **kwargs: provides **additional functionalities** including caching, filtering, sorting and indexing
+  :param tuple *args: specifies the data location and additional parameters to access the data
+  :param dict **kwargs: provides **additional functionalities** including caching, filtering, sorting and indexing
 
   **earthkit-data** has the following built-in sources:
 
   .. list-table:: Data sources
+    :widths: 20 80
     :header-rows: 1
 
     * - Name
@@ -39,6 +40,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
     * - :ref:`data-sources-cds`
       - retrieve data from the `Copernicus Climate Data Store <https://cds.climate.copernicus.eu/>`_ (CDS)
+    * - :ref:`data-sources-fdb`
+      - retrieve data from the `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
 
 
 ----------------------------------
@@ -88,6 +91,7 @@ file
     - :ref:`/examples/grib_multi.ipynb`
     - :ref:`/examples/bufr.ipynb`
     - :ref:`/examples/netcdf.ipynb`
+    - :ref:`/examples/odb.ipynb`
 
 .. _data-sources-file-pattern:
 
@@ -118,12 +122,12 @@ file-pattern
       )
 
 
-  The code above will read the following files:
+  The code above will read the following files::
 
-  #. \path/to/data-2020-05-02-12-t2.grib
-  #. \path/to/data-2020-05-02-12-msl.grib
-  #. \path/to/data-2020-05-02-18-t2.grib
-  #. \path/to/data-2020-05-02-18-msl.grib
+    path/to/data-2020-05-02-12-t2.grib
+    path/to/data-2020-05-02-12-msl.grib
+    path/to/data-2020-05-02-18-t2.grib
+    path/to/data-2020-05-02-18-msl.grib
 
 
 .. _data-sources-url:
@@ -164,9 +168,9 @@ url-pattern
 
   .. code-block:: python
 
-      import climetlab as cml
+      import earthkit.data
 
-      ds = cml.load_source(
+      ds = earthkit.data.from_source(
           "url-pattern",
           "https://www.example.com/data-{foo}-{bar}-{qux}.csv",
           foo=[1, 2, 3],
@@ -174,14 +178,14 @@ url-pattern
           qux="unique",
       )
 
-  The code above will download and process the data from the six following urls:
+  The code above will download and process the data from the six following urls::
 
-  #. \https://www.example.com/data-1-a-unique.csv
-  #. \https://www.example.com/data-2-a-unique.csv
-  #. \https://www.example.com/data-3-a-unique.csv
-  #. \https://www.example.com/data-1-b-unique.csv
-  #. \https://www.example.com/data-2-b-unique.csv
-  #. \https://www.example.com/data-3-b-unique.csv
+    https://www.example.com/data-1-a-unique.csv
+    https://www.example.com/data-2-a-unique.csv
+    https://www.example.com/data-3-a-unique.csv
+    https://www.example.com/data-1-b-unique.csv
+    https://www.example.com/data-2-b-unique.csv
+    https://www.example.com/data-3-b-unique.csv
 
   If the urls are pointing to archive format, the data will be unpacked by
   ``url-pattern`` according to the **unpack** argument, similarly to what
@@ -195,14 +199,12 @@ stream
 .. py:function:: from_source("stream", stream, batch_size=1)
   :noindex:
 
-  The ``stream`` will read data from a stream, which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment tt only works for GRIB data.
+  The ``stream`` will read data from a stream, which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment it only works for GRIB data.
 
   :param stream: the stream
-  :param bool batch_size: defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``groub_by=0`` means all the messages will be loaded and stored in memory.
+  :param bool batch_size: defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the messages will be loaded and stored in memory. When ``batch_size`` is not zero ``from_source`` gives us a stream iterator object. During the iteration temporary objects are created for each message then get deleted when going out of scope.
 
-  When ``groub_by`` is not zero ``from_source`` gives us a stream iterator object. During the iteration temporary objects are created for each message then get deleted when going out of scope.
-
-  In the examples below, for simplicity, we create a file stream from a GRIB file and read it as a "stream". By default (``batch_size=1``) we will consume one message at a time:
+  In the examples below, for simplicity, we create a file stream from a :ref:`grib` file and read it as a "stream". By default (``batch_size=1``) we will consume one message at a time:
 
   .. code-block:: python
 
@@ -232,7 +234,7 @@ stream
       2
       2
 
-  With ``groub_by=0`` the whole stream will be consumed resulting in a FieldList object storing all the messages in memory. **Use this option carefully!**
+  With ``batch_size=0`` the whole stream will be consumed resulting in a FieldList object storing all the messages in memory. **Use this option carefully!**
 
   .. code-block:: python
 
@@ -284,17 +286,21 @@ memory
 mars
 --------------
 
-.. py:function:: from_source("mars", request)
+.. py:function:: from_source("mars", *args, **kwargs)
   :noindex:
 
   The ``mars`` source will retrieve data from the ECMWF MARS (Meteorological Archival and Retrieval System) archive. In addition
-  to data retrieval, ``request`` also has GRIB post-processing options such as ``grid`` and ``area`` for regridding and
-  sub-area extraction respectively.
+  to data retrieval, the request specified as ``*args`` and/or ``**kwargs`` also has GRIB post-processing options such as ``grid`` and ``area`` for regridding and
+  sub-area extraction, respectively.
 
-  To figure out which data you need, or discover relevant data available in MARS, see the publicly accessible `MARS catalog <https://apps.ecmwf.int/archive-catalogue/>`_ (or this `access restricted catalog <https://apps.ecmwf.int/mars-catalogue/>`_).  To access data from the MARS, you will need to register and retrieve an access token. For a more extensive documentation about MARS, please refer to the `MARS user documentation <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_ (or its `access from the internet <https://confluence.ecmwf.int/display/UDOC/Web-MARS>`_ through
-  its `web API <https://www.ecmwf.int/en/forecasts/access-forecasts/ecmwf-web-api>`_).
+  To figure out which data you need, or discover relevant data available in MARS, see the publicly accessible `MARS catalog`_ (or this `access restricted catalog <https://apps.ecmwf.int/mars-catalogue/>`_).
 
-  The ``request`` can be specified as a set of keyword arguments or as a dict. The following example retrieves analysis GRIB data for a subarea for 2 surface parameters:
+  The MARS access is direct when the MARS client is installed (as at ECMWF), otherwise it will use the `web API`_. In order to use the `web API`_ you will need to register and retrieve an access token. For a more extensive documentation about MARS, please refer to the `MARS user documentation`_.
+
+  :param tuple *args: positional arguments specifying the request as a dict
+  :param dict **kwargs: other keyword arguments specifying the request
+
+  The following example retrieves analysis GRIB data for a subarea for 2 surface parameters:
 
   .. code-block:: python
 
@@ -324,14 +330,14 @@ mars
 cds
 ---
 
-.. py:function:: from_source("cds", dataset, request)
+.. py:function:: from_source("cds", dataset, *args, **kwargs)
   :noindex:
 
-  The ``"cds"`` source accesses the `Copernicus Climate Data Store`_ (CDS), using the cdsapi_ package. In addition to data retrieval, ``request`` also has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively.
+  The ``cds`` source accesses the `Copernicus Climate Data Store`_ (CDS), using the cdsapi_ package. In addition to data retrieval, ``request`` also has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively.
 
   :param str dataset: the name of the CDS dataset
-  :param request: specifies the data to be retrieved as a dict or a set of keyword arguments.
-  :type request: dict, keyword arguments
+  :param tuple *args: specifies the request as a dict
+  :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves ERA5 reanalysis GRIB data for a subarea for 2 surface parameters:
 
@@ -357,6 +363,69 @@ cds
   Further examples:
 
       - :ref:`/examples/cds.ipynb`
+
+.. _data-sources-fdb:
+
+fdb
+---
+
+.. py:function:: from_source("fdb", *args, stream=True, batch_size=1, **kwargs)
+  :noindex:
+
+  The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
+
+  :param str dataset: the name of the CDS dataset
+  :param tuple *args: positional arguments specifying the request as a dict
+  :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`.
+  :param bool batch_size: used when ``stream=True`` and defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the messages will be loaded and stored in memory.  When ``batch_size`` is not zero ``from_source`` gives us a stream iterator object. During the iteration temporary objects are created for each message then get deleted when going out of scope.
+  :param dict **kwargs: other keyword arguments specifying the request
+
+  The following example retrieves analysis :ref:`grib` data for 2 surface parameters as stream.
+  By default (``batch_size=1``) we will consume one message at a time and ``ds`` in the code can only be used as an iterator:
+
+  .. code-block:: python
+
+      >>> import earthkit.data
+      >>> request = {
+      ...     "class": "od",
+      ...     "expver": "0001",
+      ...     "stream": "oper",
+      ...     "date": "20230524",
+      ...     "time": [0, 12],
+      ...     "domain": "g",
+      ...     "type": "an",
+      ...     "levtype": "sfc",
+      ...     "step": 0,
+      ...     "param": [151, 167],
+      ... }
+      >>>
+      >>> ds = earthkit.data.from_source("fdb", request)
+      >>> for f in ds:
+      ...     print(f)
+      ...
+      GribField(msl,None,20230524,0,0,0)
+      GribField(2t,None,20230524,0,0,0)
+      GribField(msl,None,20230524,1200,0,0)
+      GribField(2t,None,20230524,1200,0,0)
+
+  We can use ``batch_size=2`` to read 2 fields at a time. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>` containing 2 fields:
+
+      >>> ds = earthkit.data.from_source("fdb", request, batch_size=2)
+      >>> for f in ds:
+      ...     print(len(f))
+      ...
+      2
+      2
+
+
+  Further examples:
+
+      - :ref:`/examples/grib_fdb_stream.ipynb`
+
+
+.. _MARS catalog: https://apps.ecmwf.int/archive-catalogue/
+.. _MARS user documentation: https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation
+.. _web API: https://www.ecmwf.int/en/forecasts/access-forecasts/ecmwf-web-api
 
 .. _Copernicus Climate Data Store: https://cds.climate.copernicus.eu/
 .. _here: https://cds.climate.copernicus.eu/api-how-to

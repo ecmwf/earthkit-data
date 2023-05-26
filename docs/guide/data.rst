@@ -132,13 +132,9 @@ When an earthkit-data data `source` or dataset provides a list of fields, a subs
 Selection with ``.sel()``
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When an earthkit-data data `source` or dataset provides a list of fields, the method ``.sel()`` allows filtering this list and we can **select a subset** of the list of fields. ``.sel()`` returns a "view" so no new data is generated on disk or in memory. The selection offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()``, etc. are all available.
+When an earthkit-data data `source` or dataset provides a list of fields, the method ``.sel()`` allows filtering this list and we can **select a subset** of the list of fields. ``.sel()`` returns a view to original data, so no data is copied. The selection offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()``, etc. are all available.
 
-``.sel()`` conditions are specified by a set of **metadata** keys. Both single or multiple keys are allowed to use and each can specify the following type of filter values:
-
- - single value
- - list of values
- - slice of values (defines a **closed interval**, so treated as inclusive of both the start and stop values, unlike normal Python indexing)
+For more details see: :meth:`FieldList.sel() <data.readers.grib.index.FieldList.sel>`
 
 The following example demonstrates the usage of ``.sel()``. The input data contains temperature and wind fields on various pressure levels.
 
@@ -178,58 +174,54 @@ The following example demonstrates the usage of ``.sel()``. The input data conta
     GribField(u,400,20180801,1200,0,0)
     GribField(v,400,20180801,1200,0,0)
 
-.. .. _isel:
+.. _isel:
 
-.. Selection with ``.isel()``
-.. ~~~~~~~~~~~~~~~~~~~~~~~~~~
+Selection with ``.isel()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. When an earthkit-data data `source` or dataset provides a list of fields, the method ``.isel()`` allows filtering this list and we can **select a subset** of the list of fields. ``.isel()`` returns a "view" so no new data is generated on disk or in memory. The selection offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()`` , etc. are all available.
+When an earthkit-data data `source` or dataset provides a list of fields, the method ``.isel()`` allows filtering this list and we can **select a subset** of the list of fields. ``.isel()`` returns a view to the original data, so no data is copied. The selection offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()`` , etc. are all available.
 
-.. ``.isel()`` works similarly to :ref:`sel <sel>` but conditions are specified by indices of metadata keys. A metadata index stores the unique, **sorted** values of the corresponding metadata key in the input data. To list the indices that have more than one values use the ``.indices`` property, or to find out the values of a specific index use ``.index()``.
+``.isel()`` works similarly to :ref:`sel <sel>` but conditions are specified by indices of metadata keys. A metadata index stores the unique, **sorted** values of the corresponding metadata key from all the fields in the input data.
 
-.. Both single or multiple metadata keys are allowed to use in ``.isel()`` and each can specify the following type of index values:
+For more details see: :meth:`FieldList.isel() <data.readers.grib.index.FieldList.isel>`
 
-..  - single index
-..  - list of indices
-..  - slice of indices (behaves like normal Python indexing, stop value not included)
+The following example demonstrates the usage of ``.isel()``. The input data contains temperature and wind fields on various pressure levels.
 
-.. The following example demonstrates the usage of ``.isel()``. The input data contains temperature and wind fields on various pressure levels.
+.. code:: python
 
-.. .. code:: python
+    >>> import earthkit.data
+    >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
 
-..     >>> import earthkit.data
-..     >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+    >>> len(ds)
+    18
+    >>> ds.indices
+    {'levelist': (1000, 850, 700, 500, 400, 300), 'param': ('t', 'u', 'v')}
 
-..     >>> len(ds)
-..     18
-..     >>> ds.indices
-..     {'levelist': (1000, 850, 700, 500, 400, 300), 'param': ('t', 'u', 'v')}
+    >>> subset = ds.isel(param=0)
+    >>> len(ds)
+    6
 
-..     >>> subset = ds.isel(param=0)
-..     >>> len(ds)
-..     6
+    >>> for f in subset:
+    ...     print(f)
+    ...
+    GribField(t,1000,20180801,1200,0,0)
+    GribField(t,850,20180801,1200,0,0)
+    GribField(t,700,20180801,1200,0,0)
+    GribField(t,500,20180801,1200,0,0)
+    GribField(t,400,20180801,1200,0,0)
+    GribField(t,300,20180801,1200,0,0)
 
-..     >>> for f in subset:
-..     ...     print(f)
-..     ...
-..     GribField(t,1000,20180801,1200,0,0)
-..     GribField(t,850,20180801,1200,0,0)
-..     GribField(t,700,20180801,1200,0,0)
-..     GribField(t,500,20180801,1200,0,0)
-..     GribField(t,400,20180801,1200,0,0)
-..     GribField(t,300,20180801,1200,0,0)
+    >>> subset = ds.isel(param=[1, 2], level=slice(2, 4))
+    >>> len(subset)
+    4
 
-..     >>> subset = ds.isel(param=[1, 2], level=slice(2, 4))
-..     >>> len(subset)
-..     4
-
-..     >>> for f in subset:
-..     ...     print(f)
-..     ...
-..     GribField(u,700,20180801,1200,0,0)
-..     GribField(v,700,20180801,1200,0,0)
-..     GribField(u,500,20180801,1200,0,0)
-..     GribField(v,500,20180801,1200,0,0)
+    >>> for f in subset:
+    ...     print(f)
+    ...
+    GribField(u,700,20180801,1200,0,0)
+    GribField(v,700,20180801,1200,0,0)
+    GribField(u,500,20180801,1200,0,0)
+    GribField(v,500,20180801,1200,0,0)
 
 
 .. _order_by:
@@ -240,6 +232,8 @@ Ordering with ``.order_by()``
 When an earthkit-data data `source` or dataset provides a list of fields, the method ``.order_by()`` allows sorting this list.
 
 ``.order_by()`` returns a "view" so no new data is generated on disk or in memory. The resulting object offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()``, etc. are all available.
+
+For more details see: :meth:`FieldList.sel() <data.readers.grib.index.FieldList.order_by>`
 
 .. code-block:: python
 
@@ -291,6 +285,8 @@ When an earthkit-data :ref:`source <data-sources>` provides a list of fields, th
 
 While ``.to_numpy()``, by default, preserves the shape of the fields,  ``.values`` always returns a flat array per field. By using ``flatten=True``, we can force ``.to_numpy()`` to return a flat ndarray per field.
 
+For more details see: :meth:`FieldList.to_numpy() <data.readers.grib.index.FieldList.to_numpy>`
+
 In the following example the input GRIB data contains 6 fields each defined on a latitude-longitude grid with a shape of (7, 12).
 
 .. code-block:: python
@@ -334,9 +330,14 @@ We can extract metadata from data objects using the ``.metadata()`` method.
 
 When an earthkit-data :ref:`source <data-sources>` provides a list of fields, this method can be called both on the whole object and on the individual fields, too.
 
+For more details see: :meth:`FieldList.metadata() <data.readers.grib.index.FieldList.metadata>` and
+:meth:`GribField._metadata() <data.readers.grib.codes.GribField.metadata>`
+
 .. _inspection:
 
 Inspecting contents
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 On certain data objects (currently only :ref:`grib` and :ref:`bufr`) we can call ``.ls()``, ``.head()`` or ``.tail()``.
+
+For more details see: :meth:`FieldList.ls()) <data.readers.grib.index.FieldList.ls>`

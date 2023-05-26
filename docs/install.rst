@@ -4,15 +4,24 @@ Installation
 Installing earthkit-data
 ----------------------------
 
-Install **earthkit-data** with python3 (>= 3.8) and pip as follows:
+Install **earthkit-data** with python3 (>= 3.8) and **pip** as follows:
 
 .. code-block:: bash
 
-    python3 -m pip install --upgrade git+https://github.com/ecmwf/earthkit-data.git@main
+    python3 -m pip install earthkit-data
+
+or from **Conda** environment:
+
+.. code-block:: bash
+
+    conda install earthkit-data -c conda-forge
 
 
 Installing the binary dependencies
 --------------------------------------
+
+eccCodes
++++++++++++
 
 **earthkit-data** depends on the ECMWF *ecCodes* library
 that must be installed on the system and accessible as a shared library. The easiest way to install it is to use Conda:

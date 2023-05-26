@@ -48,7 +48,7 @@ reference systems and bounding boxes.
    :caption: Installation
 
    install
-   contributing
+   development
    licence
 
 
