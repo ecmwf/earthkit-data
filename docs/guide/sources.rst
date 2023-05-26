@@ -304,7 +304,6 @@ mars
 
   .. code-block:: python
 
-      import io
       import earthkit.data
 
       ds = earthkit.data.from_source(
