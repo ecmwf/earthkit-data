@@ -73,7 +73,6 @@ class FieldListInFilesWithDBIndex(FieldListInFiles):
     @classmethod
     def from_url(cls, url, patch_entry=None, **kwargs):
         """Create a database from a given url"""
-
         import requests
         from multiurl import robust
 
