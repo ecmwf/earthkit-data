@@ -41,9 +41,13 @@ def repeat_list_items(items, count):
         ("level", 0),
         ("level:l", 0),
         ("level:int", 0),
+        (["shortName"], ["2t"]),
+        (["shortName", "level"], ["2t", 0]),
+        (("shortName"), "2t"),
+        (("shortName", "level"), ("2t", 0)),
     ],
 )
-def test_metadata_get_1(key, expected_value):
+def test_grib_metadata_grib(key, expected_value):
     f = from_source("file", earthkit_test_data_file("test_single.grib"))
     sn = f.metadata(key)
     assert sn == [expected_value]
@@ -289,17 +293,18 @@ def test_grib_get_double_array_18():
 
 
 def test_grib_metadata_generic():
-    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-    f = f.sel(count=[1, 2, 3, 4])
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))[0:4]
 
-    sn = f.metadata(["shortName"])
+    sn = f.metadata("shortName")
     assert sn == ["t", "u", "v", "t"]
-    cs = f.metadata(["centre:s"])
+    sn = f.metadata(["shortName"])
+    assert sn == [["t"], ["u"], ["v"], ["t"]]
+    cs = f.metadata("centre:s")
     assert cs == ["ecmf", "ecmf", "ecmf", "ecmf"]
-    cl = f.metadata(["centre:l"])
+    cl = f.metadata("centre:l")
     assert cl == [98, 98, 98, 98]
     lg = f.metadata(["level:d", "cfVarName"])
-    assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
+    assert lg == [[1000, "t"], [1000, "u"], [1000, "v"], [850, "t"]]
     lg = f.metadata("level", "cfVarName")
     assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
 
@@ -311,9 +316,9 @@ def test_grib_metadata_generic():
     cl = f.metadata("centre", astype=int)
     assert cl == [98, 98, 98, 98]
     lg = f.metadata(["level", "cfVarName"], astype=(int, None))
-    assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
+    assert lg == [[1000, "t"], [1000, "u"], [1000, "v"], [850, "t"]]
     lg = f.metadata(["level", "cfVarName"], astype=str)
-    assert lg == [("1000", "t"), ("1000", "u"), ("1000", "v"), ("850", "t")]
+    assert lg == [["1000", "t"], ["1000", "u"], ["1000", "v"], ["850", "t"]]
 
     # non matching astype
     with pytest.raises(ValueError):
@@ -328,12 +333,32 @@ def test_grib_metadata_generic():
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     f = f.sel(count=[1])
     lg = f.metadata(["level", "cfVarName"])
-    assert lg == [(1000, "t")]
+    assert lg == [[1000, "t"]]
 
     # single field
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))[0]
     lg = f.metadata(["level", "cfVarName"])
-    assert lg == (1000, "t")
+    assert lg == [1000, "t"]
+
+
+def test_grib_metadata_missing_value():
+    f = from_source("file", earthkit_test_data_file("ml_data.grib"))
+
+    with pytest.raises(KeyError):
+        f[0].metadata("scaleFactorOfSecondFixedSurface")
+
+    v = f[0].metadata("scaleFactorOfSecondFixedSurface", default=None)
+    assert v is None
+
+
+def test_grib_metadata_missing_key():
+    f = from_source("file", earthkit_examples_file("test.grib"))
+
+    with pytest.raises(KeyError):
+        f[0].metadata("_badkey_")
+
+    v = f[0].metadata("__badkey__", default=0)
+    assert v == 0
 
 
 def test_grib_metadata_namespace():
@@ -362,7 +387,7 @@ def test_grib_metadata_namespace():
 
     r = f[0].metadata()
     assert isinstance(r, dict)
-    for ns in ["", "vertical", "time"]:
+    for ns in ["default", "vertical", "time"]:
         assert ns in r, ns
 
 
@@ -538,6 +563,28 @@ def test_grib_to_numpy_18_shape(options, expected_shape):
     assert np.allclose(vf15, vr, eps)
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_grib_to_numpy_1_dtype(dtype):
+    f = from_source("file", earthkit_test_data_file("test_single.grib"))
+
+    v = f[0].to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+    v = f.to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_grib_to_numpy_18_dtype(dtype):
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+
+    v = f[0].to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+    v = f.to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+
 def test_grib_values_with_missing():
     f = from_source("file", earthkit_test_data_file("test_single_with_missing.grib"))
 
@@ -559,7 +606,7 @@ def test_grib_to_points_1():
     f = from_source("file", earthkit_test_data_file("test_single.grib"))
 
     eps = 1e-5
-    v = f[0].to_points()
+    v = f[0].to_points(flatten=True)
     assert isinstance(v, dict)
     assert isinstance(v["lon"], np.ndarray)
     assert isinstance(v["lat"], np.ndarray)
@@ -584,7 +631,7 @@ def test_grib_to_points_1():
 def test_grib_to_points_1_shape():
     f = from_source("file", earthkit_test_data_file("test_single.grib"))
 
-    v = f[0].to_points(flatten=False)
+    v = f[0].to_points()
     assert isinstance(v, dict)
     assert isinstance(v["lon"], np.ndarray)
     assert isinstance(v["lat"], np.ndarray)
@@ -701,7 +748,7 @@ def test_grib_from_stream_single_group():
 
 def test_grib_from_stream_multi_group():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, group_by=2)
+        fs = from_source("stream", stream, batch_size=2)
 
         # no methods are available
         with pytest.raises(TypeError):
@@ -721,7 +768,7 @@ def test_grib_from_stream_multi_group():
 
 def test_grib_from_stream_in_memory():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, group_by=0)
+        fs = from_source("stream", stream, batch_size=0)
 
         assert len(fs) == 6
 
@@ -762,7 +809,7 @@ def test_grib_save_when_loaded_from_memory():
 
 def test_grib_save_when_loaded_from_stream():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, group_by=0)
+        fs = from_source("stream", stream, batch_size=0)
         assert len(fs) == 6
         with temp_file() as tmp:
             fs.save(tmp)

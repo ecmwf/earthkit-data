@@ -20,7 +20,7 @@ from earthkit.data.indexing.database.sql import (
     SqlRemapping,
     SqlSelection,
 )
-from earthkit.data.readers.grib.index.db import FieldsetInFilesWithDBIndex
+from earthkit.data.readers.grib.index.db import FieldListInFilesWithDBIndex
 from earthkit.data.utils.serialise import register_serialisation
 
 LOG = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ def _normalize_grib_kwargs_values(**kwargs):
     return kwargs
 
 
-class FieldsetInFilesWithSqlIndex(FieldsetInFilesWithDBIndex):
+class FieldListInFilesWithSqlIndex(FieldListInFilesWithDBIndex):
     DBCLASS = SqlDatabase
     DB_CACHE_SIZE = 100_000
     DB_DICT_CACHE_SIZE = 100_000
@@ -141,9 +141,9 @@ class FieldsetInFilesWithSqlIndex(FieldsetInFilesWithDBIndex):
 
 
 register_serialisation(
-    FieldsetInFilesWithSqlIndex,
+    FieldListInFilesWithSqlIndex,
     lambda x: [x.db.db_path, x.db._filters],
-    lambda x: FieldsetInFilesWithSqlIndex(db=SqlDatabase(x[0])).apply_filters(
+    lambda x: FieldListInFilesWithSqlIndex(db=SqlDatabase(x[0])).apply_filters(
         filters=x[1]
     ),
 )

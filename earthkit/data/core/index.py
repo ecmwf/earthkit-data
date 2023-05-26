@@ -191,17 +191,103 @@ class Index(Source):
     def _normalize_kwargs_names(**kwargs):
         return kwargs
 
-    @abstractmethod
-    def sel(self, *args, **kwargs):
-        """Filter elements on their metadata(), according to kwargs.
-        Returns a new index object.
+    def sel(self, *args, remapping=None, **kwargs):
+        """Uses metadata values to select a subset of the elements from a fieldlist-like object.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the filter condition as dict.
+            (See below for details).
+        remapping: dict
+            Creates new metadata keys from existing ones that we can refer to in ``*args`` and
+            ``**kwargs``. E.g. to define a new
+            key "param_level" as the concatenated value of the "param" and "level" keys use::
+
+                remapping={"param_level": "{param}{level}"}
+
+            See below for a more elaborate example.
+
+        **kwargs: dict, optional
+            Other keyword arguments specifying the filter conditions.
+            (See below for details).
+
+        Returns
+        -------
+        object
+            Returns a new object with the filtered elements. It contains a view to the data in the
+            original object, so no data is copied.
+
+
+        Filter conditions are specified by a set of **metadata** keys either by a dictionary (in
+        ``*args``) or a set of ``**kwargs``. Both single or multiple keys are allowed to use and each
+        can specify the following type of filter values:
+
+        - single value::
+
+            ds.sel(param="t")
+
+        - list of values::
+
+            ds.sel(param=["u", "v"])
+
+        - **slice** of values (defines a **closed interval**, so treated as inclusive of both the start
+        and stop values, unlike normal Python indexing)::
+
+            # filter levels between 300 and 500 inclusively
+            ds.sel(level=slice(300, 500))
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+        >>> len(ds)
+        18
+
+        Selecting by a single key ("param"):
+
+        >>> subset = ds.sel(param="t")
+        >>> for f in subset:
+        ...     print(f)
+        ...
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(t,850,20180801,1200,0,0)
+        GribField(t,700,20180801,1200,0,0)
+        GribField(t,500,20180801,1200,0,0)
+        GribField(t,400,20180801,1200,0,0)
+        GribField(t,300,20180801,1200,0,0)
+
+
+        Selecting by multiple keys ("param", "level") with a list and slice of values:
+
+        >>> subset = ds.sel(param=["u", "v"], level=slice(400, 700))
+        >>> for f in subset:
+        ...     print(f)
+        ...
+        GribField(u,700,20180801,1200,0,0)
+        GribField(v,700,20180801,1200,0,0)
+        GribField(u,500,20180801,1200,0,0)
+        GribField(v,500,20180801,1200,0,0)
+        GribField(u,400,20180801,1200,0,0)
+        GribField(v,400,20180801, 1200,0,0)
+
+        Using ``remapping`` to specify the selection by a key created from two other keys
+        (we created key "param_level" from "param" and "levelist"):
+
+        >>> for f in ds.order_by(
+        ...     param_level=["t850", "u1000"],
+        ...     remapping={"param_level": "{param}{levelist}"},
+        ... ):
+        ...     print(f)
+        GribField(t,850,20180801,1200,0,0)
+        GribField(u,1000,20180801,1200,0,0)
         """
         kwargs = normalize_selection(*args, **kwargs)
         kwargs = self._normalize_kwargs_names(**kwargs)
         if not kwargs:
             return self
 
-        selection = Selection(kwargs)
+        selection = Selection(kwargs, remapping=remapping)
         if selection.is_empty:
             return self
 
@@ -211,10 +297,88 @@ class Index(Source):
 
         return self.new_mask_index(self, indices)
 
-    @abstractmethod
     def isel(self, *args, **kwargs):
-        """Filter elements on their metadata() using indices, according to kwargs.
-        Returns a new index object.
+        """Uses metadata value indices to select a subset of the elements from a
+        fieldlist-like object.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the filter conditions.
+            (See below for details).
+        **kwargs: dict, optional
+            Other keyword arguments specifying the metadata keys to perform the filtering on.
+            (See below for details).
+
+        Returns
+        -------
+        object
+            Returns a new object with the filtered elements. It contains a view to the data in
+            the original object, so no data is copied.
+
+
+        :obj:`isel` works similarly to :obj:`sel` but conditions are specified by indices of metadata
+        keys. A metadata index stores the unique, **sorted** values of the corresponding metadata key
+        from all the fields in the input data. If the object is a
+        obj:`FieldList <data.readers.grib.index.FieldList>`
+        to list the indices that have more than one values use
+        :meth:`FieldList.indices() <data.readers.grib.index.FieldList.indices>`, or to find
+        out the values of a specific index use :meth:`FieldList.index()
+        <data.readers.grib.index.FieldList.index>`.
+
+        Filter conditions are specified by a set of **metadata** keys either by a dictionary (in
+        ``*args``) or a set of ``**kwargs``. Both single or multiple keys are allowed to use and each
+        can specify the following type of filter values:
+
+        - single index::
+
+            ds.sel(param=1)
+
+        - list of indices::
+
+            ds.sel(param=[1, 3])
+
+        - **slice** of values (behaves like normal Python indexing, stop value not included)::
+
+            # filter levels on level indices 1 and 2
+            ds.sel(level=slice(1,3))
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+
+        >>> len(ds)
+        18
+        >>> ds.indices
+        {'levelist': (1000, 850, 700, 500, 400, 300), 'param': ('t', 'u', 'v')}
+
+        >>> subset = ds.isel(param=0)
+        >>> len(ds)
+        6
+
+        >>> for f in subset:
+        ...     print(f)
+        ...
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(t,850,20180801,1200,0,0)
+        GribField(t,700,20180801,1200,0,0)
+        GribField(t,500,20180801,1200,0,0)
+        GribField(t,400,20180801,1200,0,0)
+        GribField(t,300,20180801,1200,0,0)
+
+        >>> subset = ds.isel(param=[1, 2], level=slice(2, 4))
+        >>> len(subset)
+        4
+
+        >>> for f in subset:
+        ...     print(f)
+        ...
+        GribField(u,700,20180801,1200,0,0)
+        GribField(v,700,20180801,1200,0,0)
+        GribField(u,500,20180801,1200,0,0)
+        GribField(v,500,20180801,1200,0,0)
+
         """
         kwargs = normalize_selection(*args, **kwargs)
         kwargs = self._normalize_kwargs_names(**kwargs)
@@ -229,12 +393,98 @@ class Index(Source):
         return self.sel(**kwargs)
 
     def order_by(self, *args, remapping=None, **kwargs):
-        """Default order_by method.
-        It expects that calling self[i] returns an element that and Order object can rank
-        (i.e. order.get_element_ranking(element) -> tuple).
-        then it sorts the elements according to the tuples.
+        """Changes the order of the elements in a fieldlist-like object.
 
-        Returns a new index object.
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the metadata keys to perform the ordering on.
+            (See below for details)
+        remapping: dict
+            Defines new metadata keys from existing ones that we can refer to in ``*args`` and
+            ``**kwargs``. E.g. to define a new
+            key "param_level" as the concatenated value of the "param" and "level" keys use::
+
+                remapping={"param_level": "{param}{level}"}
+
+            See below for a more elaborate example.
+
+        **kwargs: dict, optional
+            Other keyword arguments specifying the metadata keys to perform the ordering on.
+            (See below for details)
+
+        Returns
+        -------
+        object
+            Returns a new object with reordered elements. It contains a view to the data in the
+            original object, so no data is copied.
+
+
+        Ordering by a single metadata key ("param"). The default ordering directio
+        is ``ascending``:
+
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+        >>> for f in ds.order_by("param"):
+        ...     print(f)
+        ...
+        GribField(t,850,20180801,1200,0,0)
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(u,850,20180801,1200,0,0)s
+        GribField(u,1000,20180801,1200,0,0)
+        GribField(v,850,20180801,1200,0,0)
+        GribField(v,1000,20180801,1200,0,0)
+
+        Ordering by multiple keys (first by "level" then by "param"):
+
+        >>> for f in ds.order_by(["level", "param"]):
+        ...     print(f)
+        ...
+        GribField(t,850,20180801,1200,0,0)
+        GribField(u,850,20180801,1200,0,0)
+        GribField(v,850,20180801,1200,0,0)
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(u,1000,20180801,1200,0,0)
+        GribField(v,1000,20180801,1200,0,0)
+
+        Specifying the ordering direction:
+
+        >>> for f in ds.order_by(param="ascending", level="descending"):
+        ...     print(f)
+        ...
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(t,850,20180801,1200,0,0)
+        GribField(u,1000,20180801,1200,0,0)
+        GribField(u,850,20180801,1200,0,0)
+        GribField(v,1000,20180801,1200,0,0)
+        GribField(v,850,20180801,1200,0,0)
+
+        Using the list of all the values of a key ("param") to define the order:
+
+        >>> for f in ds.order_by(param=["u", "t", "v"]):
+        ...     print(f)
+        ...
+        GribField(u,1000,20180801,1200,0,0)
+        GribField(u,850,20180801,1200,0,0)
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(t,850,20180801,1200,0,0)
+        GribField(v,1000,20180801,1200,0,0)
+        GribField(v,850,20180801,1200,0,0)
+
+        Using ``remapping`` to specify the order by a key created from two other keys
+        (we created key "param_level" from "param" and "levelist"):
+
+        >>> ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
+        >>> for f in ds.order_by(
+        ...     param_level=ordering, remapping={"param_level": "{param}{levelist}"}
+        ... ):
+        ...     print(f)
+        GribField(t,850,20180801,1200,0,0)
+        GribField(t,1000,20180801,1200,0,0)
+        GribField(u,1000,20180801,1200,0,0)
+        GribField(v,850,20180801,1200,0,0)
+        GribField(v,1000,20180801,1200,0,0)
+        GribField(u,850,20180801,1200,0,0)
         """
         kwargs = normalize_order_by(*args, **kwargs)
         kwargs = self._normalize_kwargs_names(**kwargs)

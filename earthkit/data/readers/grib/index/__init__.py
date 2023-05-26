@@ -21,14 +21,84 @@ from earthkit.data.indexing.database import (
     STATISTICS_KEY_NAMES,
 )
 from earthkit.data.readers.grib.codes import GribField
-from earthkit.data.readers.grib.fieldset import FieldSetMixin
+from earthkit.data.readers.grib.fieldlist import FieldListMixin
 from earthkit.data.utils import progress_bar
 from earthkit.data.utils.availability import Availability
 
 LOG = logging.getLogger(__name__)
 
 
-class FieldSet(FieldSetMixin, Index):
+class FieldList(FieldListMixin, Index):
+    r"""Represents a list of :obj:`GribField <data.readers.grib.codes.GribField>`\ s.
+
+    We can **iterate** through the fields as follows:
+
+    >>> import earthkit.data
+    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> len(ds)
+    6
+    >>> for f in ds:
+    ...     print(f)
+    ...
+    GribField(t,1000,20180801,1200,0,0)
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(v,1000,20180801,1200,0,0)
+    GribField(t,850,20180801,1200,0,0)
+    GribField(u,850,20180801,1200,0,0)
+    GribField(v,850,20180801,1200,0,0)
+
+    :obj:`Fieldset` objects can be **concatenated** with the + operator:
+
+    >>> import earthkit.data
+    >>> ds1 = earthkit.data.from_source("file", "docs/examples/test.grib")
+    >>> len(ds1)
+    2
+    >>> ds2 = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> len(ds2)
+    6
+    >>> ds = ds1 + ds2
+    >>> len(ds)
+    8
+
+    Standard Python slicing works:
+
+    >>> import earthkit.data
+    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> len(ds)
+    6
+    >>> ds[0]
+    GribField(t,1000,20180801,1200,0,0)
+    >>> for f in ds[0:3]:
+    ...     print(f)
+    GribField(t,1000,20180801,1200,0,0)
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(v,1000,20180801,1200,0,0)
+    >>> for f in ds[0:4:2]:
+    ...     print(f)
+    GribField(t,1000,20180801,1200,0,0)
+    GribField(v,1000,20180801,1200,0,0)
+    >>> ds[-1]
+    GribField(v,850,20180801,1200,0,0)
+    >>> for f in ds[-2:]:
+    ...     print(f)
+    GribField(u,850,20180801,1200,0,0)
+    GribField(v,850,20180801,1200,0,0)
+
+    Slicing also works with a list or an ndarray:
+
+    >>> for f in ds[[1, 3]]:
+    ...     print(f)
+    ...
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(t,850,20180801,1200,0,0)
+    >>> for f in ds[np.array([1, 3])]:
+    ...     print(f)
+    ...
+    GribField(u,1000,20180801,1200,0,0)
+    GribField(t,850,20180801,1200,0,0)
+
+    """
+
     _availability = None
 
     def __init__(self, *args, **kwargs):
@@ -41,7 +111,7 @@ class FieldSet(FieldSetMixin, Index):
 
     @classmethod
     def new_mask_index(self, *args, **kwargs):
-        return MaskFieldSet(*args, **kwargs)
+        return MaskFieldList(*args, **kwargs)
 
     @property
     def availability_path(self):
@@ -49,8 +119,8 @@ class FieldSet(FieldSetMixin, Index):
 
     @classmethod
     def merge(cls, sources):
-        assert all(isinstance(_, FieldSet) for _ in sources)
-        return MultiFieldSet(sources)
+        assert all(isinstance(_, FieldList) for _ in sources)
+        return MultiFieldList(sources)
 
     def _custom_availability(self, ignore_keys=None, filter_keys=lambda k: True):
         def dicts():
@@ -90,7 +160,7 @@ class FieldSet(FieldSetMixin, Index):
         )
         return self.availability
 
-    def is_full_hypercube(self):
+    def _is_full_hypercube(self):
         non_empty_coords = {
             k: v
             for k, v in self.availability._tree.unique_values().items()
@@ -108,19 +178,19 @@ class FieldSet(FieldSetMixin, Index):
         return kwargs
 
 
-class MaskFieldSet(FieldSet, MaskIndex):
+class MaskFieldList(FieldList, MaskIndex):
     def __init__(self, *args, **kwargs):
         MaskIndex.__init__(self, *args, **kwargs)
 
 
-class MultiFieldSet(FieldSet, MultiIndex):
+class MultiFieldList(FieldList, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
 
 
-class FieldSetInFiles(FieldSet):
-    # Remote Fieldsets (with urls) are also here,
-    # as the actual fieldset is accessed on a file in cache.
+class FieldListInFiles(FieldList):
+    # Remote FieldLists (with urls) are also here,
+    # as the actual fieldlist is accessed on a file in cache.
     # This class changes the interface (_getitem__ and __len__)
     # into the interface (part and number_of_parts).
     def __getitem__(self, n):

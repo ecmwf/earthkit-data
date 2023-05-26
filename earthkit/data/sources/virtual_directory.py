@@ -10,7 +10,7 @@ import logging
 import warnings
 from collections import defaultdict
 
-from earthkit.data.readers.grib.index import FieldsetInFilesWithSqlIndex
+from earthkit.data.readers.grib.index import FieldListInFilesWithSqlIndex
 from earthkit.data.sources.directory import DirectorySource
 from earthkit.data.utils import progress_bar
 
@@ -137,7 +137,7 @@ class VirtualField:  # Should inherit from GribField
         return "Virt" + str(self.real_item)
 
 
-class VirtualFieldsetInFilesWithSqlIndex(FieldsetInFilesWithSqlIndex):
+class VirtualFieldListInFilesWithSqlIndex(FieldListInFilesWithSqlIndex):
     # DEBUG = True
     DEBUG = False
 
@@ -226,7 +226,7 @@ class VirtualFieldsetInFilesWithSqlIndex(FieldsetInFilesWithSqlIndex):
 
 
 class VirtualDirectorySource(DirectorySource):
-    INDEX_CLASS = VirtualFieldsetInFilesWithSqlIndex
+    INDEX_CLASS = VirtualFieldListInFilesWithSqlIndex
 
 
 source = VirtualDirectorySource

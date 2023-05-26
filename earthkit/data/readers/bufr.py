@@ -31,11 +31,35 @@ BUFR_LS_KEYS = {
 
 
 class BUFRReader(Reader):
+    """Represents a BUFR file"""
+
     def __init__(self, source, path):
         super().__init__(source, path)
         self._num = None
 
     def to_pandas(self, columns=COLUMNS, filters=None, **kwargs):
+        """Extracts BUFR data into an pandas DataFranme using :xref:`pdbufr`.
+
+        Parameters
+        ----------
+        columns: str, sequence[str]
+            List of ecCodes BUFR keys to extract for each BUFR message/subset.
+            See: :xref:`read_bufr` for details.
+        filters: dict
+            Defines the conditions when to extract the specified ``columns``. See:
+            :xref:`read_bufr` for details.
+        **kwargs: dict, optional
+            Other keyword arguments:
+
+        Returns
+        -------
+        Pandas DataFrame
+
+        Examples
+        --------
+        :ref:`/examples/bufr.ipynb`
+
+        """
         import pdbufr
 
         return pdbufr.read_bufr(self.path, columns=columns, filters=filters)

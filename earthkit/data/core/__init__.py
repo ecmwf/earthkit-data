@@ -35,14 +35,17 @@ class MetaBase(type):
 class Base(metaclass=MetaBase):
     # Convertors
     def to_numpy(self, **kwargs):
+        """Converts into a numpy array"""
         self._not_implemented()
 
     @abstractmethod
     def to_xarray(self, **kwargs):
+        """Converts into an xarray dataset"""
         self._not_implemented()
 
     @abstractmethod
     def to_pandas(self, **kwargs):
+        """Converts into a pandas dataframe"""
         self._not_implemented()
 
     # Change class
@@ -51,27 +54,33 @@ class Base(metaclass=MetaBase):
 
     @classmethod
     def merge(cls, *args, **kwargs):
+        """Merges the object with other ones."""
         return None
 
     @abstractmethod
-    def metadata(self):
+    def metadata(self, *args, **kwargs):
+        """Returns metadata."""
         self._not_implemented()
 
     # I/O
     @abstractmethod
     def save(self, path):
+        """Writes data into the specified ``path``."""
         self._not_implemented()
 
     @abstractmethod
     def write(self, f):
+        """Writes data to the ``f`` file object."""
         self._not_implemented()
 
     @abstractmethod
     def datetime(self):
+        """Returns datetime."""
         self._not_implemented()
 
     @abstractmethod
     def bounding_box(self):
+        """Returns the bounding box."""
         self._not_implemented()
 
     # For machine learning
@@ -85,6 +94,7 @@ class Base(metaclass=MetaBase):
 
     @abstractmethod
     def sel(self, *args, **kwargs):
+        """Filters the object based on metadata."""
         self._not_implemented()
 
     @abstractmethod
@@ -93,6 +103,10 @@ class Base(metaclass=MetaBase):
 
     @abstractmethod
     def order_by(self, *args, **kwargs):
+        """Reorder the elements of the object."""
+        self._not_implemented()
+
+    def __add__(self, other):
         self._not_implemented()
 
     #

@@ -6,3 +6,8 @@ Sphinx
 sphinx-rtd-theme
 nbsphinx
 setuptools
+sphinx-autoapi
+entrypoints
+pandas
+tqdm
+xarray

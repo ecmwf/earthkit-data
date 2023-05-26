@@ -172,7 +172,7 @@ def test_netcdf_to_points_1():
     f = from_source("file", earthkit_test_data_file("test_single.nc"))
 
     eps = 1e-5
-    v = f[0].to_points()
+    v = f[0].to_points(flatten=True)
     assert isinstance(v, dict)
     assert isinstance(v["x"], np.ndarray)
     assert isinstance(v["y"], np.ndarray)

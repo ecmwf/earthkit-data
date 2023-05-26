@@ -26,8 +26,8 @@ class Remapping:
             return func
 
         class CustomJoiner:
-            def format_name(self, x):
-                return func(x)
+            def format_name(self, x, **kwargs):
+                return func(x, **kwargs)
 
             def format_string(self, x):
                 return str(x)
@@ -37,17 +37,17 @@ class Remapping:
 
         joiner = CustomJoiner()
 
-        def wrapped(name):
-            return self.substitute(name, joiner)
+        def wrapped(name, **kwargs):
+            return self.substitute(name, joiner, **kwargs)
 
         return wrapped
 
-    def substitute(self, name, joiner):
+    def substitute(self, name, joiner, **kwargs):
         if name in self.remapping:
             lst = []
             for i, bit in enumerate(self.remapping[name]):
                 if i % 2:
-                    p = joiner.format_name(bit)
+                    p = joiner.format_name(bit, **kwargs)
                     if p is not None:
                         lst.append(p)
                     else:
@@ -55,7 +55,7 @@ class Remapping:
                 else:
                     lst.append(joiner.format_string(bit))
             return joiner.join(lst)
-        return joiner.format_name(name)
+        return joiner.format_name(name, **kwargs)
 
     def as_dict(self):
         return self.remapping

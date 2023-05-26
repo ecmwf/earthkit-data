@@ -14,13 +14,13 @@ import os
 
 from earthkit.data.core.caching import auxiliary_cache_file
 from earthkit.data.readers.grib.codes import get_messages_positions
-from earthkit.data.readers.grib.index import FieldSetInFiles
+from earthkit.data.readers.grib.index import FieldListInFiles
 from earthkit.data.utils.parts import Part
 
 LOG = logging.getLogger(__name__)
 
 
-class FieldSetInOneFile(FieldSetInFiles):
+class FieldListInOneFile(FieldListInFiles):
     VERSION = 1
 
     @property

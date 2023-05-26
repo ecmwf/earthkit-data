@@ -10,7 +10,7 @@
 import datetime
 import logging
 
-from earthkit.data.readers.grib.index import FieldSet
+from earthkit.data.readers.grib.index import FieldList
 
 LOG = logging.getLogger(__name__)
 
@@ -123,7 +123,7 @@ class VirtualGribField(dict):
         return result
 
 
-class GribFromDicts(FieldSet):
+class GribFromDicts(FieldList):
     def __init__(self, list_of_dicts, *args, **kwargs):
         self.list_of_dicts = list_of_dicts
         super().__init__(*args, **kwargs)

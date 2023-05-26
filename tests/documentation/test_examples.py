@@ -21,6 +21,7 @@ IGNORE = [
     "actions.py",
     "generate-examples-maps.py",
     "settings-2-set.py",
+    "xref.py",
 ]
 
 EXAMPLES = earthkit_file("docs")
