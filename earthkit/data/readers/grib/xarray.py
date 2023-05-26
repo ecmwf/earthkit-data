@@ -60,6 +60,39 @@ class XarrayMixIn:
         )
 
     def to_xarray(self, **kwargs):
+        """
+        Converts the fieldset into an xarray DataSet using :xref:`cfgrib`.
+
+        Parameters
+        ----------
+        **kwargs: dict, optional
+            Other keyword arguments:
+
+            xarray_open_dataset_kwargs: dict, optional
+                Keyword arguments passed to ``xarray.open_dataset()``. Default value is::
+
+                    {"backend_kwargs": {"errors": "raise"},
+                    "squeeze": False, "cache": True, "chunks": None,
+                    "errors": "raise", "engine": "cfgrib"}
+
+                Please note that the settings ``errors="raise"`` and ``engine="cfgrib"`` are always
+                enforced and cannot be changed.
+
+        Returns
+        -------
+        xarray DataSet
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> fs = earthkit.data.from_source("file", "test6.grib")
+        >>> ds = fs.to_xarray(
+        ...     xarray_open_dataset_kwargs={
+        ...         "backend_kwargs": {"ignore_keys": ["number"]}
+        ...     }
+        ... )
+
+        """
         import xarray as xr
 
         xarray_open_dataset_kwargs = {}

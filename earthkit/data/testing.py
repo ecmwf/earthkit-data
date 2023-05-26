@@ -27,7 +27,7 @@ class OfflineError(Exception):
 
 _NETWORK_PATCHER = patch("socket.socket", side_effect=OfflineError)
 
-_REMOTE_TEST_DATA_URL = "https://get.ecmwf.int/repository/test-data/emohawk/"
+_REMOTE_TEST_DATA_URL = "https://get.ecmwf.int/repository/test-data/earthkit-data/"
 
 _ROOT_DIR = top = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 

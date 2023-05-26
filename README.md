@@ -12,7 +12,27 @@ This project is **BETA** and will be **Experimental** for the foreseeable future
 Interfaces and functionality are likely to change, and the project itself may be scrapped.
 **DO NOT** use this software in any project/software that is operational.
 
+## Documentation
+
 The documentation can be found at https://earthkit-data.readthedocs.io/.
+
+## Install
+
+Install via `pip` with:
+
+```
+$ pip install earthkit-data
+```
+
+More details, such as how to install any necessary binaries, can be found  at https://earthkit-data.readthedocs.io/en/latest/install.html.
+
+Alternatively, install via `conda` with:
+
+```
+$ conda install earthkit-data -c conda-forge
+```
+
+This will bring in some necessary binary dependencies for you.
 
 ## License
 

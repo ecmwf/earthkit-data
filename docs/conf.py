@@ -10,12 +10,7 @@ import datetime
 import os
 import sys
 
-# import earthkit.data
-
 sys.path.insert(0, os.path.abspath("../"))
-
-# Adds path to the folder _ext, where extensions are stored
-sys.path.append(os.path.abspath("./_ext"))
 
 # -- Project information -----------------------------------------------------
 
@@ -40,7 +35,8 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "autoapi.extension",
-    "xref",
+    "earthkit.data.sphinxext.xref",
+    "earthkit.data.sphinxext.module_output",
 ]
 
 # autodoc configuration
@@ -48,15 +44,18 @@ autodoc_typehints = "none"
 
 # autoapi configuration
 autoapi_dirs = ["../earthkit/data"]
-autoapi_ignore = ["*/version.py"]
+autoapi_ignore = ["*/version.py", "sphinxext/*"]
 autoapi_options = [
     "members",
     "undoc-members",
     "show-inheritance",
     "show-module-summary",
     "imported-members",
+    "inherited-members",
 ]
 autoapi_root = "_api"
+autoapi_member_order = "alphabetical"
+autoapi_add_toctree_entry = False
 
 # napoleon configuration
 napoleon_google_docstring = False
@@ -85,14 +84,26 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-# html_css_files = ["style.css"]
+html_css_files = ["style.css"]
 
 
 xref_links = {
+    "cfgrib": ("cfgirb", "https://github.com/ecmwf/cfgrib"),
+    "eccodes": (
+        "ecCodes",
+        "https://confluence.ecmwf.int/display/ECC/ecCodes+Home",
+    ),
     "eccodes_namespace": (
         "ecCodes namespace",
         "https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ",
-    )
+    ),
+    "pdbufr": ("pdbufr", "https://github.com/ecmwf/pdbufr"),
+    "read_bufr": (
+        "pdbufr.read_bufr()",
+        "https://pdbufr.readthedocs.io/en/latest/read_bufr.html",
+    ),
+    "odb": ("ODB", "https://odc.readthedocs.io/en/latest/content/introduction.html"),
+    "pyodc": ("pyodc", "https://github.com/ecmwf/pyodc"),
 }
 
 
@@ -101,16 +112,26 @@ def _skip_for_api(app, what, name, obj, skip, options):
     # if what == "package":
     #     print(f"{name}[{what}]")
 
-    if what == "module" and "grib.codes" not in name and "grib.fieldset" not in name:
+    if what == "module" and name not in [
+        "data.readers",
+        "data.readers.grib.codes",
+        "data.readers.grib.index",
+    ]:
         skip = True
     elif what == "package" and name not in [
         "data",
         "data.readers",
         "data.readers.grib",
-        "data.readers.fieldset",
+        "data.readers.grib.index",
     ]:
         skip = True
-    elif what == "class" and "GribField" not in name and "FieldSetMixin" not in name:
+    elif what == "class" and name not in [
+        "data.readers.bufr.BUFRReader",
+        "data.readers.grib.codes.GribField",
+        "data.readers.grib.index.FieldList",
+    ]:
+        skip = True
+    elif what == "method" and "abstractmethod" in getattr(obj, "properties", []):
         skip = True
     elif what in ("function", "attribute", "data"):
         skip = True
