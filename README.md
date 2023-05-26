@@ -5,6 +5,11 @@
 A format-agnostic interface for geospatial data with a focus on meteorology and
 climate science.
 
+**DISCLAIMER**
+This project is **BETA** and will be **Experimental** for the foreseeable future.
+Interfaces and functionality are likely to change, and the project itself may be scrapped.
+**DO NOT** use this software in any project/software that is operational.
+
 Install
 -------
 
@@ -14,10 +19,6 @@ Install via `pip` with:
 
 More details, such as how to install any necessary binaries, can be found  at https://earthkit-data.readthedocs.io/en/latest/install.html.
 
-**DISCLAIMER**
-This project is **BETA** and will be **Experimental** for the foreseeable future.
-Interfaces and functionality are likely to change, and the project itself may be scrapped.
-**DO NOT** use this software in any project/software that is operational.
 
 The documentation can be found at https://earthkit-data.readthedocs.io/.
 
