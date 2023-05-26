@@ -29,8 +29,7 @@ LOG = logging.getLogger(__name__)
 
 
 class FieldList(FieldListMixin, Index):
-    r"""Represents a list of
-    :obj:`GribField <data.readers.grib.codes.GribField>`\ s.
+    r"""Represents a list of :obj:`GribField <data.readers.grib.codes.GribField>`\ s.
 
     We can **iterate** through the fields as follows:
 

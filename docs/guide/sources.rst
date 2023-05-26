@@ -252,7 +252,7 @@ stream
   See the following notebook examples for further details:
 
     - :ref:`/examples/grib_from_stream.ipynb`
-    - :ref:`/examples/grib_fdb_stream.ipynb`
+    - :ref:`/examples/fdb.ipynb`
 
 
 .. _data-sources-memory:
@@ -420,7 +420,7 @@ fdb
 
   Further examples:
 
-      - :ref:`/examples/grib_fdb_stream.ipynb`
+      - :ref:`/examples/fdb.ipynb`
 
 
 .. _MARS catalog: https://apps.ecmwf.int/archive-catalogue/

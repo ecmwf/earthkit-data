@@ -617,7 +617,8 @@ class GribField(Base):
 
             * default: value, optional
                 Specifies the same default value for all the ``keys`` specified. When ``default`` is
-                **not present** and a key is not found :obj:`metadata` will raise KeyError.
+                **not present** and a key is not found or its value is a missing value
+                :obj:`metadata` will raise KeyError.
 
         Returns
         -------

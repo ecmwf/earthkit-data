@@ -313,8 +313,9 @@ class Index(Source):
         Returns
         -------
         object
-            Returns a new object with the filtered elements. It contains a view to the data in the
-            original object, so no data is copied.
+            Returns a new object with the filtered elements. It contains a view to the data in
+            the original object, so no data is copied.
+
 
         :obj:`isel` works similarly to :obj:`sel` but conditions are specified by indices of metadata
         keys. A metadata index stores the unique, **sorted** values of the corresponding metadata key
