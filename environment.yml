@@ -18,9 +18,13 @@ dependencies:
 - pyyaml
 - entrypoints
 - jupyterlab
+- ecmwf-api-client>=1.6.1
+- cdsapi
 - pip:
   - git+https://github.com/ecmwf/multiurl
+  - git+https://github.com/ecmwf/pyfdb
 - tqdm
+- markdown
 - make
 - mypy
 - myst-parser
@@ -30,6 +34,7 @@ dependencies:
 - pytest-cov
 - sphinx
 - sphinx-autoapi
+- sphinx_rtd_theme
 - sphinxcontrib-apidoc
 - nbformat
 - nbconvert

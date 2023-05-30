@@ -17,7 +17,6 @@ from earthkit.data.core.caching import cache_file
 from earthkit.data.core.plugins import find_plugin
 from earthkit.data.core.plugins import register as register_plugin
 from earthkit.data.core.settings import SETTINGS
-from earthkit.data.utils.html import table
 
 
 class Source(Base):
@@ -47,6 +46,11 @@ class Source(Base):
     def ignore(self):
         # Used by multi-source
         return False
+
+    def __add__(self, other):
+        from earthkit.data.sources import from_source
+
+        return from_source("multi", self, other)
 
     def cache_file(self, create, args, **kwargs):
         owner = self.name
@@ -84,7 +88,7 @@ class Source(Base):
         self._parent = parent
 
     def _repr_html_(self):
-        return table(self)
+        return self.__repr__()
 
     def graph(self, depth=0):
         print(" " * depth, self)

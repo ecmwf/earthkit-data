@@ -6,20 +6,23 @@
 
 # -- Import and path setup ---------------------------------------------------
 
+import datetime
 import os
 import sys
-
-import earthkit.data
 
 sys.path.insert(0, os.path.abspath("../"))
 
 # -- Project information -----------------------------------------------------
 
 project = "earthkit-data"
-copyright = "2022, European Centre for Medium Range Weather Forecasts"
 author = "European Centre for Medium Range Weather Forecasts"
-version = earthkit.data.__version__
-release = earthkit.data.__version__
+
+year = datetime.datetime.now().year
+years = "2022-%s" % (year,)
+copyright = "%s, European Centre for Medium-Range Weather Forecasts (ECMWF)" % (years,)
+
+# version = earthkit.data.__version__
+# release = earthkit.data.__version__
 
 # -- General configuration ---------------------------------------------------
 
@@ -27,11 +30,13 @@ release = earthkit.data.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "autoapi.extension",
-    "myst_parser",
+    "sphinx_rtd_theme",
+    "nbsphinx",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
-    "nbsphinx",
+    "autoapi.extension",
+    "earthkit.data.sphinxext.xref",
+    "earthkit.data.sphinxext.module_output",
 ]
 
 # autodoc configuration
@@ -39,16 +44,18 @@ autodoc_typehints = "none"
 
 # autoapi configuration
 autoapi_dirs = ["../earthkit/data"]
-autoapi_ignore = ["*/version.py"]
+autoapi_ignore = ["*/version.py", "sphinxext/*"]
 autoapi_options = [
     "members",
-    "inherited-members",
     "undoc-members",
     "show-inheritance",
     "show-module-summary",
     "imported-members",
+    "inherited-members",
 ]
 autoapi_root = "_api"
+autoapi_member_order = "alphabetical"
+autoapi_add_toctree_entry = False
 
 # napoleon configuration
 napoleon_google_docstring = False
@@ -63,15 +70,74 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+# The suffix of source filenames.
+source_suffix = ".rst"
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "pydata_sphinx_theme"
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_css_files = ["style.css"]
+
+html_logo = "_static/earthkit-data.png"
+
+xref_links = {
+    "cfgrib": ("cfgirb", "https://github.com/ecmwf/cfgrib"),
+    "eccodes": (
+        "ecCodes",
+        "https://confluence.ecmwf.int/display/ECC/ecCodes+Home",
+    ),
+    "eccodes_namespace": (
+        "ecCodes namespace",
+        "https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ",
+    ),
+    "pdbufr": ("pdbufr", "https://github.com/ecmwf/pdbufr"),
+    "read_bufr": (
+        "pdbufr.read_bufr()",
+        "https://pdbufr.readthedocs.io/en/latest/read_bufr.html",
+    ),
+    "odb": ("ODB", "https://odc.readthedocs.io/en/latest/content/introduction.html"),
+    "pyodc": ("pyodc", "https://github.com/ecmwf/pyodc"),
+}
+
+
+# define skip rules for autoapi
+def _skip_for_api(app, what, name, obj, skip, options):
+    # if what == "package":
+    #     print(f"{name}[{what}]")
+
+    if what == "module" and name not in [
+        "data.readers",
+        "data.readers.grib.codes",
+        "data.readers.grib.index",
+    ]:
+        skip = True
+    elif what == "package" and name not in [
+        "data",
+        "data.readers",
+        "data.readers.grib",
+        "data.readers.grib.index",
+    ]:
+        skip = True
+    elif what == "class" and name not in [
+        "data.readers.bufr.BUFRReader",
+        "data.readers.grib.codes.GribField",
+        "data.readers.grib.index.FieldList",
+    ]:
+        skip = True
+    elif what == "method" and "abstractmethod" in getattr(obj, "properties", []):
+        skip = True
+    elif what in ("function", "attribute", "data"):
+        skip = True
+    return skip
+
+
+def setup(app):
+    app.connect("autoapi-skip-member", _skip_for_api)

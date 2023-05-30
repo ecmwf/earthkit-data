@@ -24,7 +24,7 @@ class ODBReader(Reader):
             LOG.debug("Using pure Python odc decoder.")
 
         odc_read_odb_kwargs = kwargs.get("odc_read_odb_kwargs", {})
-        return odc.read_odb(self.path, single=True, *odc_read_odb_kwargs)
+        return odc.read_odb(self.path, single=True, **odc_read_odb_kwargs)
 
 
 def reader(source, path, magic=None, deeper_check=False):

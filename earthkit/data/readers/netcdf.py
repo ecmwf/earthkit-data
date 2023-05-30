@@ -211,7 +211,7 @@ class NetCDFField(Base):
 
         return proj_source, proj_target
 
-    def to_points(self, flatten=True):
+    def to_points(self, flatten=False):
         points = dict()
         for axis in ("x", "y"):
             for coord in self._da.coords:
@@ -297,9 +297,9 @@ class NetCDFReader(Reader):
 
                 # self.log.info("COORD %s %s %s %s", coord, type(coord), hasattr(c, 'calendar'), c)
 
-                standard_name = getattr(c, "standard_name", None)
-                axis = getattr(c, "axis", None)
-                long_name = getattr(c, "long_name", None)
+                standard_name = getattr(c, "standard_name", "")
+                axis = getattr(c, "axis", "")
+                long_name = getattr(c, "long_name", "")
 
                 use = False
 

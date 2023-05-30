@@ -9,7 +9,7 @@
 import logging
 import os
 
-from earthkit.data.readers.grib.index import FieldsetInFilesWithSqlIndex
+from earthkit.data.readers.grib.index.sql import FieldListInFilesWithSqlIndex
 from earthkit.data.readers.grib.parsing import GribIndexingPathParserIterator
 from earthkit.data.sources.indexed import IndexedSource
 
@@ -31,7 +31,7 @@ def make_absolute(filename, root_dir, default):
 class FileIndexedSource(IndexedSource):
     DEFAULT_JSON_FILE = "earthkit.index"
     DEFAULT_DB_FILE = "earthkit.db"
-    INDEX_CLASS = FieldsetInFilesWithSqlIndex
+    INDEX_CLASS = FieldListInFilesWithSqlIndex
 
     def __init__(
         self,
@@ -96,4 +96,5 @@ class FileIndexedSource(IndexedSource):
             GribIndexingPathParserIterator(path, ignore=ignore, relative_paths=False),
             cache_metadata={"directory": self.path},
         )
+
         super().__init__(index, **kwargs)

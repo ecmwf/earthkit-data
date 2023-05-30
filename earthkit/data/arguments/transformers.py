@@ -13,13 +13,7 @@ from earthkit.data.vocabularies.aliases import unalias
 
 LOG = logging.getLogger(__name__)
 
-
-class _all:
-    def __repr__(self):
-        return "earthkit.ALL"
-
-
-ALL = _all()
+ALL = all
 
 
 class Action:

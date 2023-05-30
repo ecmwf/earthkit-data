@@ -24,16 +24,16 @@ def reader(source, path, magic=None, deeper_check=False):
 
 def memory_reader(source, buf, magic=None, deeper_check=False):
     if _match_magic(magic):
-        from .memory import FieldSetInMemory, GribMessageMemoryReader
+        from .memory import FieldListInMemory, GribMessageMemoryReader
 
-        return FieldSetInMemory(source, GribMessageMemoryReader(buf))
+        return FieldListInMemory(source, GribMessageMemoryReader(buf))
 
 
 def stream_reader(source, stream, magic=None, deeper_check=False):
     if _match_magic(magic):
-        from .memory import FieldSetInMemory, GribStreamReader
+        from .memory import FieldListInMemory, GribStreamReader
 
         r = GribStreamReader(stream)
-        if source.group_by == 0:
-            r = FieldSetInMemory(source, r)
+        if source.batch_size == 0:
+            r = FieldListInMemory(source, r)
         return r

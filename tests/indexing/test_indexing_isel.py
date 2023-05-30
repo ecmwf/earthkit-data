@@ -14,48 +14,77 @@ import sys
 
 import pytest
 
+from earthkit.data import from_source
+
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from indexing_fixtures import check_sel_and_order, get_fixtures  # noqa: E402
+from indexing_fixtures import get_tmp_fixture  # noqa
 
 
+@pytest.mark.parametrize("mode", ["file", "multi", "directory"])
 @pytest.mark.parametrize(
-    "params,levels,input_mode,indexing",
+    "params,expected_meta,metadata_keys",
     [
+        (dict(param=1, level=2), [["u", 500]], ["shortName", "level:l"]),
+        (dict(param=1, level=2), [[131, 500]], ["paramId", "level:l"]),
         (
-            ({"value": ["t", "u"], "index": [0, 1]}),
-            ({"value": [500, 850], "index": [3, 5]}),
-            "directory",
-            True,
+            dict(param=[0, 1], level=[2, 3]),
+            [
+                ["t", 500],
+                ["t", 700],
+                ["u", 500],
+                ["u", 700],
+            ],
+            ["shortName", "level:l"],
         ),
         (
-            ({"value": ["t", "u"], "index": [0, 1]}),
-            ({"value": [500, 850], "index": [0, 1]}),
-            "list-of-dicts",
-            False,
+            dict(param=[0], level=[3, 2], type=0),
+            [
+                ["t", 500, "an"],
+                ["t", 700, "an"],
+            ],
+            ["shortName", "level:l", "marsType"],
         ),
         (
-            ({"value": ["t", "u"], "index": [0, 1]}),
-            ({"value": [500, 850], "index": [3, 1]}),
-            "file",
-            False,
+            dict(level=-1),
+            [
+                ["t", 1000],
+                ["u", 1000],
+                ["v", 1000],
+            ],
+            ["shortName", "level:l"],
         ),
     ],
 )
-def test_indexing_isel(params, levels, input_mode, indexing):
-    request = dict(param=params["index"], level=levels["index"], date=0, time=0)
-    order_by = ["level", "variable"]
+def test_indexing_isel_grib_file(mode, params, expected_meta, metadata_keys):
+    tmp, path = get_tmp_fixture(mode)
+    ds = from_source("file", path, indexing=True)
+    assert len(ds) == 18
 
-    ds, _, total, n = get_fixtures(input_mode, indexing, {})
+    g = ds.isel(**params)
+    assert len(g) == len(expected_meta)
 
-    assert len(ds) == total, len(ds)
+    # we sort the result to make the contents checking simpler
+    g = g.order_by(["param", "level"])
 
-    ds = ds.isel(**request)
-    assert len(ds) == n, len(ds)
+    if len(expected_meta) > 0:
+        keys = list(params.keys())
+        if metadata_keys:
+            keys = metadata_keys
 
-    ds = ds.order_by(order_by)
+        assert g.metadata(keys) == expected_meta
 
-    check_sel_and_order(ds, params["value"], levels["value"])
+
+def test_indexing_isel_grib_file_invalid_key():
+    tmp, path = get_tmp_fixture("file")
+    ds = from_source("file", path, indexing=True)
+    assert len(ds) == 18
+
+    r = ds.isel(INVALIDKEY=0)
+    assert len(r) == 0
+
+    with pytest.raises(IndexError):
+        ds.isel(level=500)
 
 
 if __name__ == "__main__":

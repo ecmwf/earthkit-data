@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-
+import datetime
 import json
 import logging
 import os
@@ -21,6 +21,31 @@ LOG = logging.getLogger(__name__)
 
 class JsonDatabase(Database):
     VERSION = 1
+
+    def __init__(self, *arg):
+        pass
+
+    def json_dumps_entry(self, entry):
+        return json.dumps(entry, default=json_serialiser)
+
+
+class JsonStdoutDatabase(JsonDatabase):
+    def load_iterator(self, iterator):
+        count = 0
+        for entry in iterator:
+            print(self.json_dumps_entry(entry))
+            count += 1
+        return count
+
+
+def json_serialiser(o):
+    if isinstance(o, (datetime.date, datetime.datetime)):
+        return o.isoformat()
+    if hasattr(o, "as_dict"):
+        return o.as_dict()
+
+
+class JsonFileDatabase(JsonDatabase):
     EXTENSION = ".json"
 
     def __init__(self, db_path):
@@ -31,12 +56,13 @@ class JsonDatabase(Database):
                 for entry in f:
                     self.entries.append(json.loads(entry))
 
-    def load(self, iterator):
-        self.entries = list(iterator)
+    def load_iterator(self, iterator):
+        self.entries = []
 
         with open(self.db_path, "w") as f:
-            for entry in self.entries:
-                print(json.dumps(entry), file=f)
+            for entry in iterator:
+                self.entries.append(entry)
+                print(self.json_dumps_entry(entry), file=f)
 
         return len(self.entries)
 
@@ -45,3 +71,6 @@ class JsonDatabase(Database):
         for e in self.entries:
             parts.append(Part(e["_path"], e["_offset"], e["_length"]))
         return Part.resolve(parts, os.path.dirname(self.db_path))
+
+    def lookup_dicts(self, *args, **kwargs):
+        return self.entries

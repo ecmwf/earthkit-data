@@ -10,7 +10,7 @@
 import datetime
 import logging
 
-from earthkit.data.readers.grib.index import FieldSet
+from earthkit.data.readers.grib.index import FieldList
 
 LOG = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class VirtualGribField(dict):
     for k in list(NAME_LOOKUP.keys()):
         NAME_LOOKUP[NAME_LOOKUP[k]] = k
 
-    def metadata(self, name):
+    def metadata(self, name, **kwargs):
         name, _, key_type_str = name.partition(":")
         try:
             key_type = self.KEY_TYPES[key_type_str]
@@ -123,7 +123,7 @@ class VirtualGribField(dict):
         return result
 
 
-class GribFromDicts(FieldSet):
+class GribFromDicts(FieldList):
     def __init__(self, list_of_dicts, *args, **kwargs):
         self.list_of_dicts = list_of_dicts
         super().__init__(*args, **kwargs)

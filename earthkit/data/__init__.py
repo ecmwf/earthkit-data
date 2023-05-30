@@ -21,6 +21,7 @@ from earthkit.data.wrappers import get_wrapper as from_object
 from .arguments.transformers import ALL
 from .core.caching import CACHE as cache
 from .core.settings import SETTINGS as settings
+from .readers.grib.output import new_grib_output
 from .sources import from_source, from_source_lazily
 
 __all__ = [
@@ -30,6 +31,7 @@ __all__ = [
     "from_source_lazily",
     "from_object",
     "transform",
+    "new_grib_output",
     "settings",
     "__version__",
 ]
