@@ -111,7 +111,7 @@ class LambertAzimuthalEqualArea(Projection):
 
 class AlbersEqualArea(Projection):
     PROJ_NAME = "aea"
-    CF_GRID_MAPPING_NAME = "albers_conic_equal_area"
+    CF_GRID_MAPPING_NAME = "albers_conical_equal_area"
     CARTOPY_CRS = "AlbersEqualArea"
 
 
