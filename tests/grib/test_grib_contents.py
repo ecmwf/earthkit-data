@@ -17,6 +17,7 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file, earthkit_test_data_file
+from earthkit.data.utils import projections
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -702,6 +703,25 @@ def test_grib_proj_string_mercator():
     assert r == "EPSG:4326"
     r = f[0].proj_target_string()
     assert r == ref_str
+
+
+def test_grib_projection_ll():
+    f = from_source("file", earthkit_examples_file("test.grib"))
+    assert isinstance(f[0].projection(), projections.EquidistantCylindrical)
+
+
+def test_grib_projection_mercator():
+    f = from_source("file", earthkit_test_data_file("mercator.grib"))
+    projection = f[0].projection()
+    assert isinstance(projection, projections.Mercator)
+    assert projection.parameters == {
+        "true_scale_latitude": 20,
+        "central_latitude": 0,
+        "central_longitude": 0,
+        "false_easting": 0,
+        "false_northing": 0,
+    }
+    assert projection.globe == dict()
 
 
 def test_message():

@@ -228,8 +228,7 @@ def test_netcdf_projection_laea():
         "false_easting": 4321000.0,
     }
     assert projection.globe == {
-        "semimajor_axis": 6378137.0,
-        "flattening": 298.257223563,
+        "ellipse": "GRS80",
     }
 
 
