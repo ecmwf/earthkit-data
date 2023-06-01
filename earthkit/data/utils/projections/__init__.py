@@ -51,8 +51,8 @@ class Projection:
     @classmethod
     def from_cf_grid_mapping(cls, grid_mapping_name, **parameters):
         proj_string = parameters.pop("proj4_params", None)
-        # if proj_string is not None:
-        #     return Projection.from_proj_string(proj_string)
+        if proj_string is not None:
+            return Projection.from_proj_string(proj_string)
 
         for cls in _PROJECTIONS:
             if cls.CF_GRID_MAPPING_NAME == grid_mapping_name:

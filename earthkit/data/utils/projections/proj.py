@@ -55,6 +55,7 @@ def to_projection_kwargs(proj_params):
         for param in PROJ_PARAMS_TO_GLOBE_KWARGS
         if param in proj_params
     }
+
     kwargs = {
         PROJ_PARAMS_TO_KWARGS[k]: v
         for k, v in proj_params.items()
