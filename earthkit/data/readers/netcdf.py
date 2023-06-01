@@ -19,6 +19,7 @@ import xarray as xr
 from earthkit.data.core import Base
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
+from earthkit.data.utils.projections import Projection
 
 from . import Reader
 
@@ -210,6 +211,18 @@ class NetCDFField(Base):
         proj_target = "+proj=eqc +datum=WGS84 +units=m +no_defs"
 
         return proj_source, proj_target
+
+    def _grid_mapping(self):
+        if "grid_mapping" in self._da.attrs:
+            grid_mapping = self._ds[self._da.attrs["grid_mapping"]]
+        else:
+            raise AttributeError(
+                "no CF-compliant 'grid_mapping' detected in netCDF attributes"
+            )
+        return grid_mapping
+
+    def projection(self):
+        return Projection.from_cf_grid_mapping(**self._grid_mapping().attrs)
 
     def to_points(self, flatten=False):
         points = dict()

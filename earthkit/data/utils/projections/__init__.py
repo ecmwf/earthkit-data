@@ -6,7 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-from . import proj
+from . import cf, proj
 
 try:
     import cartopy.crs as ccrs
@@ -50,7 +50,19 @@ class Projection:
 
     @classmethod
     def from_cf_grid_mapping(cls, grid_mapping_name, **parameters):
-        raise NotImplementedError()
+        proj_string = parameters.pop("proj4_params", None)
+        # if proj_string is not None:
+        #     return Projection.from_proj_string(proj_string)
+
+        for cls in _PROJECTIONS:
+            if cls.CF_GRID_MAPPING_NAME == grid_mapping_name:
+                break
+        else:
+            raise ValueError(f"grid mapping '{grid_mapping_name}' is not supported")
+
+        kwargs = cf.to_projection_kwargs(parameters)
+
+        return cls(proj_string=proj_string, **kwargs)
 
     def __init__(self, proj_string=None, **kwargs):
         self.parameters = kwargs
@@ -68,7 +80,7 @@ class Projection:
 
     def to_proj_string(self):
         if self._proj_string is None:
-            pass
+            raise ValueError("projection source provided no proj string")
         return self._proj_string
 
     def to_cartopy_globe(self):
