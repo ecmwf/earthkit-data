@@ -30,7 +30,6 @@ def test_download_example_file_single(tmpdir):
 def test_download_example_file_multi(tmpdir):
     filenames = ["test.grib", "test6.grib"]
     with tmpdir.as_cwd():
-        os.chdir(tmpdir)
         download_example_file(filenames)
 
         paths = [os.path.join(tmpdir.realpath(), f) for f in filenames]
