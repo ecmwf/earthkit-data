@@ -23,15 +23,18 @@ from .core.caching import CACHE as cache
 from .core.settings import SETTINGS as settings
 from .readers.grib.output import new_grib_output
 from .sources import from_source, from_source_lazily
+from .utils.examples import download_example_file, remote_example_file
 
 __all__ = [
     "ALL",
     "cache",
+    "download_example_file",
     "from_source",
     "from_source_lazily",
     "from_object",
     "transform",
     "new_grib_output",
+    "remote_example_file",
     "settings",
     "__version__",
 ]
