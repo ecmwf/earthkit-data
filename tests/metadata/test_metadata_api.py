@@ -93,7 +93,15 @@ def test_grib_metadata():
 
 
 def test_build_from_object():
-    arr = np.linspace(290., 300., 11)
-    md = RawMetadata({"date": 20200812, "time": 1200, "step": 0, "typeOfLevel": "surface", "shortName": "2t"})
+    arr = np.linspace(290.0, 300.0, 11)
+    md = RawMetadata(
+        {
+            "date": 20200812,
+            "time": 1200,
+            "step": 0,
+            "typeOfLevel": "surface",
+            "shortName": "2t",
+        }
+    )
     f = from_object(arr, metadata=md)
     assert f.metadata()["date"] == 20200812
