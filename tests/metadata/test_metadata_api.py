@@ -9,9 +9,10 @@
 # nor does it submit to any jurisdiction.
 #
 
+import numpy as np
 import pytest
 
-from earthkit.data import from_source
+from earthkit.data import from_object, from_source
 from earthkit.data.testing import earthkit_examples_file
 
 try:
@@ -89,3 +90,10 @@ def test_grib_metadata():
     assert updated["shortName"] == "2ta"
     # When we write the GribMetadata, the GRIB keys should be set in the correct
     # order to produce the expected result
+
+
+def test_build_from_object():
+    arr = np.linspace(290., 300., 11)
+    md = RawMetadata({"date": 20200812, "time": 1200, "step": 0, "typeOfLevel": "surface", "shortName": "2t"})
+    f = from_object(arr, metadata=md)
+    assert f.metadata()["date"] == 20200812
