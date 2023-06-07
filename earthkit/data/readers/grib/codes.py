@@ -550,17 +550,11 @@ class GribField(Base):
         step = self.handle.get("endStep", default=None)
         return self._base_datetime() + datetime.timedelta(hours=step)
 
-    def proj_string(self):
-        return self.proj_target_string()
-
-    def proj_source_string(self):
-        return self.handle.get("projSourceString", default=None)
-
-    def proj_target_string(self):
-        return self.handle.get("projTargetString", default=None)
-
     def projection(self):
-        return Projection.from_proj_string(self.proj_string())
+        r"""Returns information about the projection."""
+        return Projection.from_proj_string(
+            self.handle.get("projTargetString", default=None)
+        )
 
     def bounding_box(self):
         r"""Returns the bounding box of the field.

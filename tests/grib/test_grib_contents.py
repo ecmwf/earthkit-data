@@ -714,29 +714,6 @@ def test_bbox():
     assert s.bounding_box().as_tuple() == (73, -27, 33, 45), s.bounding_box()
 
 
-def test_grib_proj_string_ll():
-    f = from_source("file", earthkit_examples_file("test.grib"))
-    r = f[0].proj_string()
-    assert r is None
-    r = f[0].proj_source_string()
-    assert r is None
-    r = f[0].proj_target_string()
-    assert r is None
-
-
-def test_grib_proj_string_mercator():
-    f = from_source("file", earthkit_test_data_file("mercator.grib"))
-    ref_str = (
-        "+proj=merc +lat_ts=20.000000 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=6371200.000000"
-    )
-    r = f[0].proj_string()
-    assert r == ref_str
-    r = f[0].proj_source_string()
-    assert r == "EPSG:4326"
-    r = f[0].proj_target_string()
-    assert r == ref_str
-
-
 def test_grib_projection_ll():
     f = from_source("file", earthkit_examples_file("test.grib"))
     assert isinstance(f[0].projection(), projections.EquidistantCylindrical)
