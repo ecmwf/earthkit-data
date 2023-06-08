@@ -25,10 +25,11 @@ class FDBSource(Source):
     def __init__(self, *args, stream=True, **kwargs):
         super().__init__()
 
-        self._stream_kwargs = {
-            kwargs.pop("batch_size", 1),
-            kwargs.pop("group_by", None),
-        }
+        self._stream_kwargs = dict()
+        for k in ["group_by", "batch_size"]:
+            if k in kwargs:
+                self._stream_kwargs[k] = kwargs.pop(k)
+
         self.stream = stream
 
         self.request = {}
@@ -46,7 +47,7 @@ class FDBSource(Source):
     def mutate(self):
         if self.stream:
             stream = pyfdb.retrieve(self.request)
-            return StreamSource(stream, self._stream_kwargs)
+            return StreamSource(stream, **self._stream_kwargs)
         else:
             return FDBFileSource(self.request)
 

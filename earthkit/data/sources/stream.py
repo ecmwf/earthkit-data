@@ -38,7 +38,7 @@ class StreamSource(Source):
         if not isinstance(self._group_by, list):
             self._group_by = list(self._group_by)
         if self._group_by and not all([isinstance(x, str) for x in self._group_by]):
-            raise ValueError(f"`group_by`={group_by} must contain str values")
+            raise ValueError(f"`group_by`={self._group_by} must contain str values")
 
         if self._group_by and "batch_size" in kwargs:
             raise TypeError(
