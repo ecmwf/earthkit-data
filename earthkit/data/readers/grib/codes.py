@@ -104,7 +104,7 @@ except Exception:
 
 class CodesHandle(eccodes.Message):
     MISSING_VALUE = np.finfo(np.float32).max
-    KEY_TYPES = {"s": str, "l": int, "d": float}
+    KEY_TYPES = {"s": str, "l": int, "d": float, "float": float}
 
     def __init__(self, handle, path, offset):
         super().__init__(handle)
