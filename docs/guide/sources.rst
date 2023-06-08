@@ -380,8 +380,8 @@ fdb
   :param bool batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the messages will be loaded and stored in memory.  When ``batch_size`` is not zero ``from_source`` gives us a stream iterator object. During the iteration temporary objects are created for each message then get deleted when going out of scope.
   :param dict **kwargs: other keyword arguments specifying the request
 
-  The following example retrieves analysis :ref:`grib` data for 2 surface parameters as stream.
-  By default (``batch_size=1``) we will consume one message at a time and ``ds`` in the code can only be used as an iterator:
+  The following example retrieves analysis :ref:`grib` data for 3 surface parameters as stream.
+  By default we will consume one message at a time and ``ds`` can only be used as an iterator:
 
   .. code-block:: python
 
@@ -390,41 +390,59 @@ fdb
       ...     "class": "od",
       ...     "expver": "0001",
       ...     "stream": "oper",
-      ...     "date": "20230524",
+      ...     "date": "20230607",
       ...     "time": [0, 12],
       ...     "domain": "g",
       ...     "type": "an",
       ...     "levtype": "sfc",
       ...     "step": 0,
-      ...     "param": [151, 167],
+      ...     "param": [151, 167, 168],
       ... }
       >>>
       >>> ds = earthkit.data.from_source("fdb", request)
       >>> for f in ds:
       ...     print(f)
       ...
-      GribField(msl,None,20230524,0,0,0)
-      GribField(2t,None,20230524,0,0,0)
-      GribField(msl,None,20230524,1200,0,0)
-      GribField(2t,None,20230524,1200,0,0)
+      GribField(msl,None,20230607,0,0,0)
+      GribField(2t,None,20230607,0,0,0)
+      GribField(msl,None,20230607,1200,0,0)
+      GribField(2t,None,20230607,1200,0,0)
 
   We can use ``group_by`` to read fields with a matching time. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>`:
 
       >>> ds = earthkit.data.from_source("fdb", request, group_by="time")
       >>> for f in ds:
-      ...     print(len(f))
+      ...     print(f)
+      ...     for g in f:
+      ...         print(f" {g}")
       ...
-      2
-      2
+      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
+       GribField(msl,None,20230607,0,0,0)
+       GribField(2t,None,20230607,0,0,0)
+       GribField(2d,None,20230607,0,0,0)
+      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
+       GribField(msl,None,20230607,1200,0,0)
+       GribField(2t,None,20230607,1200,0,0)
+       GribField(2d,None,20230607,1200,0,0)
 
   We can use ``batch_size=2`` to read 2 fields at a time. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>` containing 2 fields:
 
       >>> ds = earthkit.data.from_source("fdb", request, batch_size=2)
       >>> for f in ds:
-      ...     print(len(f))
+      ...     print(f)
+      ...     for g in f:
+      ...         print(f" {g}")
       ...
-      2
-      2
+      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
+        GribField(msl,None,20230607,0,0,0)
+        GribField(2t,None,20230607,0,0,0)
+      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
+        GribField(2d,None,20230607,0,0,0)
+        GribField(msl,None,20230607,1200,0,0)
+      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
+        GribField(2t,None,20230607,1200,0,0)
+        GribField(2d,None,20230607,1200,0,0)
+
 
   Further examples:
 

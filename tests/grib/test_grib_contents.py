@@ -758,11 +758,11 @@ def test_grib_from_stream_invalid_args():
             from_source("stream", stream, order_by="level")
 
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             from_source("stream", stream, group_by=1)
 
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             from_source("stream", stream, group_by=["level", 1])
 
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
