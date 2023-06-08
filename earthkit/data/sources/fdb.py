@@ -25,7 +25,10 @@ class FDBSource(Source):
     def __init__(self, *args, stream=True, **kwargs):
         super().__init__()
 
-        self._stream_kwargs = kwargs.pop("batch_size", 1)
+        self._stream_kwargs = {
+            kwargs.pop("batch_size", 1),
+            kwargs.pop("group_by", None),
+        }
         self.stream = stream
 
         self.request = {}

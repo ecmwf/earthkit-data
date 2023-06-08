@@ -368,15 +368,16 @@ cds
 fdb
 ---
 
-.. py:function:: from_source("fdb", *args, stream=True, batch_size=1, **kwargs)
+.. py:function:: from_source("fdb", *args, stream=True, group_by=None, batch_size=1, **kwargs)
   :noindex:
 
   The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
 
-  :param str dataset: the name of the CDS dataset
   :param tuple *args: positional arguments specifying the request as a dict
   :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`.
-  :param bool batch_size: used when ``stream=True`` and defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the messages will be loaded and stored in memory.  When ``batch_size`` is not zero ``from_source`` gives us a stream iterator object. During the iteration temporary objects are created for each message then get deleted when going out of scope.
+  :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. When it is set ``from_source`` gives us a stream iterator object. Each iteration step results in a Fieldlist object, which is built by consuming GRIB messages from the stream until the values of the ``group_by`` metadata keys do not change. The generated Fieldlist keeps GRIB messages in memory then gets deleted when going out of scope. When ``group_by`` is set ``batch_size`` cannot be used.
+  :type group_by: str, list of str
+  :param bool batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the messages will be loaded and stored in memory.  When ``batch_size`` is not zero ``from_source`` gives us a stream iterator object. During the iteration temporary objects are created for each message then get deleted when going out of scope.
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves analysis :ref:`grib` data for 2 surface parameters as stream.
@@ -407,6 +408,15 @@ fdb
       GribField(msl,None,20230524,1200,0,0)
       GribField(2t,None,20230524,1200,0,0)
 
+  We can use ``group_by`` to read fields with a matching time. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>`:
+
+      >>> ds = earthkit.data.from_source("fdb", request, group_by="time")
+      >>> for f in ds:
+      ...     print(len(f))
+      ...
+      2
+      2
+
   We can use ``batch_size=2`` to read 2 fields at a time. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>` containing 2 fields:
 
       >>> ds = earthkit.data.from_source("fdb", request, batch_size=2)
@@ -415,7 +425,6 @@ fdb
       ...
       2
       2
-
 
   Further examples:
 
