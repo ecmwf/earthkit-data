@@ -211,6 +211,7 @@ docs/_build/
 docs/examples/*.tar
 docs/examples/*.zip
 docs/examples/_*
+docs/examples/synop_10.bufr
 docs/examples/earthkit_use_cases/*.grib
 
 # PyBuilder
