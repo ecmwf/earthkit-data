@@ -88,6 +88,7 @@ SETTINGS_AND_HELP = {
         5,
         """Number of threads used to download data.""",
     ),
+    "cache-policy": _("persistent", "Caching policy"),
     "maximum-cache-size": _(
         None,
         """Maximum disk space used by the earthkit-data cache (ex: 100G or 2T).""",
@@ -181,9 +182,12 @@ class Settings:
     def get(self, name: str, default=NONE):
         """[summary]
 
-        Args:
-            name (str): [description]
-            default ([type], optional): [description]. Defaults to NONE.
+        Parameters
+        ----------
+            name: str
+                [description]
+            default: [type]
+                [description]. Defaults to NONE.
 
         Returns
         -------
@@ -210,10 +214,12 @@ class Settings:
     def set(self, name: str, *args, **kwargs):
         """[summary]
 
-        Args
-        ----
-            name (set): [description]
-            value ([type]): [description]
+        Parameters
+        ----------
+            name: str
+                [description]
+            value: [type]
+                [description]
         """
         if name not in SETTINGS_AND_HELP:
             raise KeyError("No setting name '%s'" % (name,))
@@ -265,11 +271,12 @@ class Settings:
     def reset(self, name: str = None):
         """Reset setting(s) to default values.
 
-        Args
-        ----
-            name (str, optional): The name of the setting to reset to default. If the setting
-            does not have a default, it is removed. If `None` is passed, all settings are reset
-            to their default values. Defaults to None.
+        Parameters
+        ----------
+            name: str, optional
+                The name of the setting to reset to default. If the setting
+                does not have a default, it is removed. If `None` is passed, all settings are
+                reset to their default values. Defaults to None.
         """
         if name is None:
             self._settings = dict(**DEFAULTS)
@@ -352,7 +359,7 @@ try:
         save_settings(settings_yaml, DEFAULTS)
 except Exception:
     LOG.error(
-        "Cannot create CliMetLab settings directory, using defaults (%s)",
+        "Cannot create earthkit-data settings directory, using defaults (%s)",
         settings_yaml,
         exc_info=True,
     )
@@ -374,7 +381,7 @@ try:
 
 except Exception:
     LOG.error(
-        "Cannot load CliMetLab settings (%s), reverting to defaults",
+        "Cannot load earthkit-data settings (%s), reverting to defaults",
         settings_yaml,
         exc_info=True,
     )

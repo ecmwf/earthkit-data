@@ -145,12 +145,30 @@ class Future:
         return self._result
 
 
+class CachePolicy:
+    TYPES = {}
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def from_str(cls, name):
+        pass
+        # d = CachePolicy.TYPES.get(name)
+
+
+class NoCachePolicy(CachePolicy):
+    def __init__(self):
+        pass
+
+
 class Cache(threading.Thread):
     def __init__(self):
         super().__init__(daemon=True)
         self._connection = None
         self._queue = []
         self._condition = threading.Condition()
+        self._policy = NoCachePolicy()
 
     def run(self):
         while True:
@@ -205,6 +223,13 @@ class Cache(threading.Thread):
             self._queue.append(s)
             self._condition.notify_all()
             return s
+
+    @property
+    def policy(self):
+        if self._policy is None:
+            cache_policy = SETTINGS.get("cache-policy")
+            self._policy = CachePolicy.from_str(cache_policy)
+        return self._policy
 
     def _file_in_cache_directory(self, path):
         cache_directory = SETTINGS.get("cache-directory")
