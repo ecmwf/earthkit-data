@@ -62,6 +62,7 @@ class BUFRReader(Reader):
         """
         import pdbufr
 
+        filters = {} if filters is None else filters
         return pdbufr.read_bufr(self.path, columns=columns, filters=filters)
 
     def __len__(self):
