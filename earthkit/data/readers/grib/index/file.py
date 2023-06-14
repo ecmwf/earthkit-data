@@ -20,6 +20,73 @@ from earthkit.data.utils.parts import Part
 LOG = logging.getLogger(__name__)
 
 
+class FieldlistMessagePositionIndex:
+    def __init__(self, path):
+        self.path = path
+        self.offsets = None
+        self.lengths = None
+        self._cache_file = None
+        self._load()
+
+    def _build(self):
+        offsets = []
+        lengths = []
+
+        for offset, length in get_messages_positions(self.path):
+            offsets.append(offset)
+            lengths.append(length)
+
+        self.offsets = offsets
+        self.lengths = lengths
+
+    def _load(self):
+        if True:
+            # if SETTINGS.policy("message-position-cache"):
+            self._cache_file = auxiliary_cache_file(
+                "grib-index",
+                self.path,
+                content="null",
+                extension=".json",
+            )
+            if not self._load_cache():
+                self._build()
+                self._save_cache()
+        else:
+            self._build()
+
+    def _save_cache(self):
+        # assert SETTINGS.policy("message-position-cache")
+        try:
+            with open(self._cache_file, "w") as f:
+                json.dump(
+                    dict(
+                        version=self.VERSION,
+                        offsets=self.offsets,
+                        lengths=self.lengths,
+                    ),
+                    f,
+                )
+        except Exception:
+            LOG.exception("Write to cache failed %s", self._cache_file)
+
+    def _load_cache(self):
+        # assert SETTINGS.policy("message-position-cache")
+        try:
+            with open(self._cache_file) as f:
+                c = json.load(f)
+                if not isinstance(c, dict):
+                    return False
+
+                assert c["version"] == self.VERSION
+                self.offsets = c["offsets"]
+                self.lengths = c["lengths"]
+                return True
+        except Exception:
+            LOG.exception("Load from cache failed %s", self._cache_file)
+
+        return False
+
+
 class FieldListInOneFile(FieldListInFiles):
     VERSION = 1
 
@@ -31,65 +98,14 @@ class FieldListInOneFile(FieldListInFiles):
         assert isinstance(path, str), path
 
         self.path = path
-        self.offsets = None
-        self.lengths = None
-        self.mappings_cache_file = auxiliary_cache_file(
-            "grib-index",
-            path,
-            content="null",
-            extension=".json",
-        )
-
-        if not self._load_cache():
-            self._build_offsets_lengths_mapping()
+        self.position_index = FieldlistMessagePositionIndex(self.path)
 
         super().__init__(**kwargs)
 
-    def _build_offsets_lengths_mapping(self):
-        offsets = []
-        lengths = []
-
-        for offset, length in get_messages_positions(self.path):
-            offsets.append(offset)
-            lengths.append(length)
-
-        self.offsets = offsets
-        self.lengths = lengths
-
-        self._save_cache()
-
-    def _save_cache(self):
-        try:
-            with open(self.mappings_cache_file, "w") as f:
-                json.dump(
-                    dict(
-                        version=self.VERSION,
-                        offsets=self.offsets,
-                        lengths=self.lengths,
-                    ),
-                    f,
-                )
-        except Exception:
-            LOG.exception("Write to cache failed %s", self.mappings_cache_file)
-
-    def _load_cache(self):
-        try:
-            with open(self.mappings_cache_file) as f:
-                c = json.load(f)
-                if not isinstance(c, dict):
-                    return False
-
-                assert c["version"] == self.VERSION
-                self.offsets = c["offsets"]
-                self.lengths = c["lengths"]
-                return True
-        except Exception:
-            LOG.exception("Load from cache failed %s", self.mappings_cache_file)
-
-        return False
-
     def part(self, n):
-        return Part(self.path, self.offsets[n], self.lengths[n])
+        return Part(
+            self.path, self.position_index.offsets[n], self.position_index.lengths[n]
+        )
 
     def number_of_parts(self):
-        return len(self.offsets)
+        return len(self.position_index.offsets)
