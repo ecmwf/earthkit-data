@@ -17,10 +17,10 @@ from earthkit.data.testing import earthkit_examples_file
 def test_bufr_ls_invalid_num():
     f = from_source("file", earthkit_examples_file("temp_10.bufr"))
     with pytest.raises(ValueError):
-        f.ls(n=0, print=False)
+        f.ls(n=0)
 
     with pytest.raises(ValueError):
-        f.ls(0, print=False)
+        f.ls(0)
 
 
 def test_bufr_ls_num():
@@ -29,7 +29,7 @@ def test_bufr_ls_num():
     # default keys
 
     # head
-    df = f.ls(n=2, print=False)
+    df = f.ls(n=2)
     ref = {
         "edition": {0: 3, 1: 3},
         "type": {0: 2, 1: 2},
@@ -49,7 +49,7 @@ def test_bufr_ls_num():
     assert ref == df.to_dict()
 
     # t tail
-    df = f.ls(-2, print=False)
+    df = f.ls(-2)
     ref = {
         "edition": {0: 3, 1: 3},
         "type": {0: 2, 1: 2},
@@ -68,7 +68,7 @@ def test_bufr_ls_num():
 
     assert ref == df.to_dict()
 
-    df = f.ls(-2, print=False)
+    df = f.ls(-2)
     assert ref == df.to_dict()
 
 
@@ -76,7 +76,7 @@ def test_bufr_head_num():
     f = from_source("file", earthkit_examples_file("temp_10.bufr"))
 
     # default keys
-    df = f.head(n=2, print=False)
+    df = f.head(n=2)
     ref = {
         "edition": {0: 3, 1: 3},
         "type": {0: 2, 1: 2},
@@ -95,7 +95,7 @@ def test_bufr_head_num():
 
     assert ref == df.to_dict()
 
-    df = f.head(2, print=False)
+    df = f.head(2)
     assert ref == df.to_dict()
 
 
@@ -103,7 +103,7 @@ def test_bufr_tail_num():
     f = from_source("file", earthkit_examples_file("temp_10.bufr"))
 
     # default keys
-    df = f.tail(n=2, print=False)
+    df = f.tail(n=2)
     ref = {
         "edition": {0: 3, 1: 3},
         "type": {0: 2, 1: 2},
@@ -122,5 +122,5 @@ def test_bufr_tail_num():
 
     assert ref == df.to_dict()
 
-    df = f.tail(2, print=False)
+    df = f.tail(2)
     assert ref == df.to_dict()

@@ -767,7 +767,8 @@ class GribField(Base):
         return self.metadata(key)
 
     def dump(self, namespace=None, **kwargs):
-        r"""Generates dump with all the metadata keys belonging to ``namespace``.
+        r"""Generates dump with all the metadata keys belonging to ``namespace``
+        offering a tabbed interface in a Jupyter notebook.
 
         Parameters
         ----------
@@ -777,29 +778,20 @@ class GribField(Base):
             that ecCodes can access without specifying a namespace.
             When ``namespace`` is None all the available namespaces will be used.
         **kwargs: dict, optional
-            Other keyword arguments:
-
-            print: bool, optional
-                Enables printing the dump to the standard output when not in a Jupyter notebook.
-                Default: False
-            html: bool, optional
-                Enables generating HTML based content in a Jupyter notebook. Default: True
-
+            Other keyword arguments used for testing only
 
         Returns
         -------
-        html or dict
-            - When in Jupyter notebook returns HTML code providing a tabbed interface to browse the
-              dump content. When ``html`` is False a dict is returned.
-            - dict otherwise. When ``print`` is True also prints the dict to stdout.
-
+        NamespaceDump
+            Dict-like object with one item per namespace. In a Jupyter notebook represented
+            as a tabbed interface to browse the dump contents.
 
         Examples
         --------
         :ref:`/examples/grib_metadata.ipynb`
 
         """
-        from earthkit.data.utils.summary import format_info
+        from earthkit.data.utils.summary import format_namespace_dump
 
         namespace = _GRIB_NAMESPACES.keys() if namespace is None else [namespace]
         r = [
@@ -811,7 +803,7 @@ class GribField(Base):
             for ns in namespace
         ]
 
-        return format_info(
+        return format_namespace_dump(
             r, selected="parameter", details=self.__class__.__name__, **kwargs
         )
 
