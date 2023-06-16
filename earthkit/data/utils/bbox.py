@@ -72,7 +72,12 @@ class BoundingBox:
         return self.north - self.south
 
     @classmethod
-    def multi_merge(cls, bboxes):
+    def union(cls, *args):
+        if len(args) == 1 and isinstance(args[0], list):
+            bboxes = args[0]
+        else:
+            bboxes = list(args)
+
         north = max(z.north for z in bboxes)
         south = min(z.south for z in bboxes)
 
@@ -141,8 +146,8 @@ class BoundingBox:
             east=origin + east,
         )
 
-    def merge(self, other):
-        return self.multi_merge([self, other])
+    # def union(self, other):
+    #     return self.union([self, other])
 
     def add_margins(self, margins):
         if isinstance(margins, str) and margins[-1] == "%":

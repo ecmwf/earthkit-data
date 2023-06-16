@@ -710,8 +710,11 @@ def test_grib_datetime():
 
 
 def test_bbox():
-    s = from_source("file", earthkit_examples_file("test.grib"))
-    assert s.bounding_box().as_tuple() == (73, -27, 33, 45), s.bounding_box()
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    bb = ds.bounding_box()
+    assert len(bb) == 2
+    for b in bb:
+        assert b.as_tuple() == (73, -27, 33, 45)
 
 
 def test_grib_projection_ll():
