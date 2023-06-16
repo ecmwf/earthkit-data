@@ -260,7 +260,7 @@ class FieldListMixin(PandasMixIn, XarrayMixIn):
             result.append(s.metadata(*args, **kwargs))
         return result
 
-    def ls(self, n=None, keys=None, extra_keys=None, namespace=None, **kwargs):
+    def ls(self, n=None, keys=None, extra_keys=None, namespace=None):
         r"""Generates a list like summary of fieldlist using a set of metadata keys.
 
         Parameters
@@ -279,19 +279,11 @@ class FieldListMixin(PandasMixIn, XarrayMixIn):
         namespace: str, None
             The :xref:`eccodes_namespace` to choose the ``keys`` from. When it is set ``keys`` and
             ``extra_keys`` are omitted.
-        **kwargs: dict, optional
-            Other keyword arguments:
-
-            print: bool, optional
-                Enables printing the DataFrame to the standard output when not in a Jupyter notebook.
-                Default: False
 
         Returns
         -------
         Pandas DataFrame
             DataFrame with one row per :obj:`GribField <data.readers.grib.codes.GribField>`.
-            If not in a Jupyter notebook and ``print`` is True the DataFrame is printed to
-            the standard output
 
         """
         from earthkit.data.utils.summary import ls
@@ -316,7 +308,7 @@ class FieldListMixin(PandasMixIn, XarrayMixIn):
                     yield (self[i]._attributes(keys))
 
         _keys = GRIB_LS_KEYS if namespace is None else dict(namespace=namespace)
-        return ls(_proc, _keys, n=n, keys=keys, extra_keys=extra_keys, **kwargs)
+        return ls(_proc, _keys, n=n, keys=keys, extra_keys=extra_keys)
 
     def head(self, n=5, **kwargs):
         r"""Generates a list like summary of the first ``n``

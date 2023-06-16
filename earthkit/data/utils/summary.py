@@ -47,10 +47,10 @@ def make_unique(x, full=False):
 
 
 def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, **kwargs):
-    do_print = kwargs.pop("print", False)
+    # do_print = kwargs.pop("print", False)
 
     if kwargs:
-        raise ValueError(f"ls: unsupported arguments={kwargs}")
+        raise TypeError(f"ls: unsupported arguments={kwargs}")
 
     _keys = {}
     if isinstance(default_keys, (list, tuple)):
@@ -74,22 +74,13 @@ def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, **kwargs
     if n == 0:
         raise ValueError("n cannot be 0")
 
-    return format_ls(metadata_proc(_keys, n), do_print)
+    return format_ls(metadata_proc(_keys, n))
 
 
-def format_ls(attributes, do_print):
+def format_ls(attributes):
     import pandas as pd
 
     df = pd.DataFrame.from_records(attributes)
-
-    # TODO: this is GRIB specific code, should not be here
-    drop_unwanted_series(df, key="number", axis=1)
-
-    # test whether we're in the Jupyter environment
-    if ipython_active:
-        return df
-    elif do_print:
-        print(df)
     return df
 
 
@@ -101,7 +92,7 @@ def format_describe(attributes, *args, **kwargs):
     if param is None:
         param = kwargs.pop("param", None)
 
-    do_print = kwargs.pop("print", True)
+    # do_print = kwargs.pop("print", True)
 
     df = pd.DataFrame.from_records(attributes, **kwargs)
 
@@ -134,36 +125,35 @@ def format_describe(attributes, *args, **kwargs):
     if no_header:
         df.hide(axis="columns")
 
-    if ipython_active:
-        return df
-    elif do_print:
-        print(df)
     return df
 
 
-def format_info(data, selected=None, details=None, **kwargs):
-    do_print = kwargs.pop("print", True)
-    html = kwargs.pop("html", True)
-    raw = kwargs.pop("_as_raw", False)
+class NamespaceDump(dict):
+    def __init__(self, data, **kwargs):
+        d = {item["title"]: item["data"] for item in data}
+        super().__init__(d)
+        self.data = data
+        self._kwargs = kwargs
 
-    rv = {item["title"]: item["data"] for item in data}
-
-    if ipython_active:
-        if html:
-            from earthkit.data.core.ipython import HTML
+    def _repr_html_(self):
+        if ipython_active:
             from earthkit.data.utils.html import tab, table_from_dict
 
-            if len(data) == 1:
-                return HTML(table_from_dict(data[0]["data"]))
-            elif len(data) > 1:
-                for item in data:
+            if len(self.data) == 1:
+                return table_from_dict(self.data[0]["data"])
+            elif len(self.data) > 1:
+                for item in self.data:
                     item["text"] = table_from_dict(item["data"])
 
-                return HTML(tab(data, details, selected))
+                return tab(self.data, **self._kwargs)
         else:
-            return rv
+            return str(self)
 
-    if do_print:
-        print(data if raw else rv)
+
+def format_namespace_dump(data, selected=None, details=None, **kwargs):
+    raw = kwargs.pop("_as_raw", False)
+
+    if not raw:
+        return NamespaceDump(data, selected=selected, details=details)
     else:
-        return data if raw else rv
+        return data
