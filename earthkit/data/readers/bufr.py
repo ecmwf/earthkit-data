@@ -10,11 +10,18 @@
 # See:
 # https://github.com/ecmwf/pdbufr
 
-import threading
+import os
 
 import eccodes
 
+from earthkit.data.core import Base
+from earthkit.data.readers.grib.codes import CodesReader
+from earthkit.data.utils.parts import Part
+
 from . import Reader
+
+# import threading
+
 
 COLUMNS = ("latitude", "longitude", "data_datetime")
 
@@ -35,64 +42,107 @@ BUFR_LS_KEYS = {
 }
 
 
-class BUFRInOneFile:
-    def __init__(self, path):
+# This does not belong here, should be in the C library
+def get_messages_positions(path):
+    fd = os.open(path, os.O_RDONLY)
+    try:
+
+        def get(count):
+            buf = os.read(fd, count)
+            assert len(buf) == count
+            return int.from_bytes(
+                buf,
+                byteorder="big",
+                signed=False,
+            )
+
+        offset = 0
+        while True:
+            code = os.read(fd, 4)
+            if len(code) < 4:
+                break
+
+            if code != b"BUFR":
+                offset = os.lseek(fd, offset + 1, os.SEEK_SET)
+                continue
+
+            length = get(3)
+            edition = get(1)
+
+            if edition in [3, 4]:
+                yield offset, length
+                offset = os.lseek(fd, offset + length, os.SEEK_SET)
+
+    finally:
+        os.close(fd)
+
+
+class CodesGribHandle(eccodes.Message):
+    # MISSING_VALUE = np.finfo(np.float32).max
+    # KEY_TYPES = {"s": str, "l": int, "d": float}
+
+    def __init__(self, handle, path, offset):
+        super().__init__(handle)
         self.path = path
-        self.lock = threading.Lock()
-        self.file = open(self.path, "rb")
-        self.offsets = []
-        self.lengths = []
-        self.num = None
+        self.offset = offset
+        # self.unpack(1)
 
-    def __del__(self):
-        try:
-            # print("CLOSE", self.path)
-            self.file.close()
-        except Exception:
-            pass
+    def unpack(self):
+        """Decode data section"""
+        eccodes.codes_set(self._handle, "unpack", 1)
 
-    def _get_positions(self):
-        if not self.offsets:
-            with self.lock:
-                while True:
-                    pos = self.file.tell()
-                    handle = eccodes.codes_bufr_new_from_file(self.file)
-                    if handle is None:
-                        break
-                    self.offsets.append(pos)
-                    self.lengths.append(self.file.tell() - pos)
-                    eccodes.codes_release(handle)
+    def pack(self):
+        """Encode data section"""
+        eccodes.codes_set(self._handle, "pack", 1)
 
-        if self.num is None:
-            self.num = len(self.offsets)
+    def json_dump(self, path):
+        self.unpack()
+        with open(path, "w") as f:
+            eccodes.codes_dump(self._handle, f, "json")
+        self.pack()
 
-    def __len__(self):
-        if self.num is None:
-            with self.lock:
-                self.num = eccodes.codes_count_in_file(self.file)
-            return self.num
+
+class CodesBufrReader(CodesReader):
+    PRODUCT_ID = eccodes.CODES_PRODUCT_BUFR
+    HANDLE_TYPE = CodesGribHandle
+
+
+class BUFRMessage(Base):
+    def __init__(self, path, offset, length):
+        self.path = path
+        self._offset = offset
+        self._length = length
+        self._handle = None
+
+    @property
+    def handle(self):
+        r""":class:`CodesHandle`: Gets an object providing access to the low level GRIB message structure."""
+        if self._handle is None:
+            assert self._offset is not None
+            self._handle = CodesBufrReader.from_cache(self.path).at_offset(self._offset)
+        return self._handle
 
     def dump(self, n):
-        # self._get_positions()
+        self._get_positions()
 
         # handle = self.at_offset(self.offsets[n])
         # handle = self.at_offset(0)
         import json
         import warnings
 
-        import eccodes
-
         from earthkit.data.core.temporary import temp_file
 
         with temp_file() as filename:
             # self._get_positions()
             # handle = self.at_offset(self.offsets[n])
-            handle = self.at_offset(0)
-            eccodes.codes_set(handle, "unpack", 1)
-            with open(filename, "w") as f:
-                eccodes.codes_dump(handle, f, "json")
+            self.handle.json_dump(filename)
 
-            eccodes.codes_release(handle)
+            # handle = self.at_offset(0)
+            # self.handle.unpack()
+            # with open(filename, "w") as f:
+            #     eccodes.codes_dump(handle, f, "json")
+
+            # eccodes.codes_release(handle)
 
             with open(filename, "r") as f:
                 try:
@@ -106,23 +156,119 @@ class BUFRInOneFile:
     # def __getitem__(self, n):
     #     elf.offsets[n], self.lengths[n])
 
-    def at_offset(self, offset):
-        with self.lock:
-            print(f"offsets={self.offsets} ")
-            print(f"path={self.path} offset={offset} file={self.file}")
-            print(f"tell={self.file.tell()}")
-            self.file.seek(offset, 0)
-            print(f"tell={self.file.tell()}")
-            handle = eccodes.codes_bufr_new_from_file(self.file)
 
-            # handle = eccodes.codes_new_from_file(
-            #     self.file,
-            #     eccodes.CODES_PRODUCT_BUFR,
-            # )
-            print(f"handle={handle}")
-            assert handle is not None
-            # return CodesHandle(handle, self.path, offset)
-            return handle
+class BUFRInOneFile:
+    def __init__(self, path):
+        self.path = path
+        # self.lock = threading.Lock()
+        # self.file = open(self.path, "rb")
+        self.offsets = []
+        self.lengths = []
+        self._get_positions(self)
+        # self.num = None
+
+    # def __del__(self):
+    #     try:
+    #         self.file.close()
+    #     except Exception:
+    #         pass
+
+    def __getitem__(self, n):
+        if isinstance(n, int):
+            part = self.part(n if n >= 0 else len(self) + n)
+            return BUFRMessage(part.path, part.offset, part.length)
+        else:
+            return super().__getitem__(n)
+
+    def _get_positions(self):
+        if not self.offsets:
+            self.offsets = []
+            self.lengths = []
+
+            for offset, length in get_messages_positions(self.path):
+                self.offsets.append(offset)
+                self.lengths.append(length)
+
+            # with self.lock:
+            #     while True:
+            #         pos = self.file.tell()
+            #         handle = eccodes.codes_bufr_new_from_file(self.file)
+            #         if handle is None:
+            #             break
+            #         self.offsets.append(pos)
+            #         self.lengths.append(self.file.tell() - pos)
+            #         eccodes.codes_release(handle)
+
+        # if self.num is None:
+        #     self.num = len(self.offsets)
+
+    def __len__(self):
+        return self.number_of_parts()
+        # num = self.number_of_parts()
+        # if num > 0:
+        #     self.num = num
+        # elif self.num is None:
+        #     with self.lock:
+        #         self.num = eccodes.codes_count_in_file(self.file)
+        # return self.num
+
+    # def dump(self, n):
+    #     self._get_positions()
+
+    #     # handle = self.at_offset(self.offsets[n])
+    #     # handle = self.at_offset(0)
+    #     import json
+    #     import warnings
+
+    #     import eccodes
+
+    #     from earthkit.data.core.temporary import temp_file
+
+    #     with temp_file() as filename:
+    #         self._get_positions()
+    #         handle = self.at_offset(self.offsets[n])
+    #         # handle = self.at_offset(0)
+    #         eccodes.codes_set(handle, "unpack", 1)
+    #         with open(filename, "w") as f:
+    #             eccodes.codes_dump(handle, f, "json")
+
+    #         eccodes.codes_release(handle)
+
+    #         with open(filename, "r") as f:
+    #             try:
+    #                 d = json.loads(f.read())
+    #                 # print(d)
+    #                 return d
+    #             except Exception as e:
+    #                 warnings.warn("Failed to parse bufr_dump", e)
+    #                 return None
+
+    # def __getitem__(self, n):
+    #     elf.offsets[n], self.lengths[n])
+
+    # def at_offset(self, offset):
+    #     with self.lock:
+    #         print(f"offsets={self.offsets} ")
+    #         print(f"path={self.path} offset={offset} file={self.file}")
+    #         print(f"tell={self.file.tell()}")
+    #         self.file.seek(offset, 0)
+    #         print(f"tell={self.file.tell()}")
+    #         handle = eccodes.codes_bufr_new_from_file(self.file)
+
+    #         # handle = eccodes.codes_new_from_file(
+    #         #     self.file,
+    #         #     eccodes.CODES_PRODUCT_BUFR,
+    #         # )
+    #         print(f"handle={handle}")
+    #         assert handle is not None
+    #         # return CodesHandle(handle, self.path, offset)
+    #         return handle
+
+    def part(self, n):
+        return Part(self.path, self.offsets[n], self.lengths[n])
+
+    def number_of_parts(self):
+        return len(self.offsets)
 
 
 class BUFRReader(Reader):

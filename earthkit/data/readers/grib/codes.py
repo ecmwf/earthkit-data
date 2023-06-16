@@ -276,18 +276,17 @@ class ReaderLRUCache(dict):
         self.lock = threading.Lock()
         self.size = size
 
-    def __getitem__(self, path):
-        key = (
-            path,
-            os.getpid(),
-        )
+    def __getitem__(self, path_and_cls):
+        path = path_and_cls[0]
+        cls = path_and_cls[1]
+        key = (path, os.getpid())
         with self.lock:
             try:
                 return super().__getitem__(key)
             except KeyError:
                 pass
 
-            c = self[key] = CodesReader(path)
+            c = self[key] = cls(path)
             while len(self) >= self.size:
                 _, oldest = min((v.last, k) for k, v in self.items())
                 del self[oldest]
@@ -299,6 +298,9 @@ cache = ReaderLRUCache(32)  # TODO: Add to config
 
 
 class CodesReader:
+    PRODUCT_ID = None
+    HANDLE_TYPE = None
+
     def __init__(self, path):
         self.path = path
         self.lock = threading.Lock()
@@ -315,7 +317,7 @@ class CodesReader:
 
     @classmethod
     def from_cache(cls, path):
-        return cache[path]
+        return cache[(path, cls)]
 
     def at_offset(self, offset):
         with self.lock:
@@ -323,13 +325,18 @@ class CodesReader:
             self.file.seek(offset, 0)
             handle = eccodes.codes_new_from_file(
                 self.file,
-                eccodes.CODES_PRODUCT_GRIB,
+                self.PRODUCT_ID,
             )
             assert handle is not None
-            return CodesHandle(handle, self.path, offset)
+            return self.HANDLE_TYPE(handle, self.path, offset)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.path}"
+
+
+class CodesGribReader(CodesReader):
+    PRODUCT_ID = eccodes.CODES_PRODUCT_GRIB
+    HANDLE_TYPE = CodesHandle
 
 
 class GribField(Base):
@@ -356,7 +363,7 @@ class GribField(Base):
         r""":class:`CodesHandle`: Gets an object providing access to the low level GRIB message structure."""
         if self._handle is None:
             assert self._offset is not None
-            self._handle = CodesReader.from_cache(self.path).at_offset(self._offset)
+            self._handle = CodesGribReader.from_cache(self.path).at_offset(self._offset)
         return self._handle
 
     @property
