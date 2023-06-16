@@ -159,10 +159,8 @@ class BUFRHtmlTree:
 
 
 def make_bufr_html_tree(data, **kwargs):
-    do_print = kwargs.pop("print", False)
-
     tree = BUFRTree().make_tree(data)
-    if not do_print and ipython_active:
+    if ipython_active:
         from IPython.display import HTML
 
         from earthkit.data.utils.html import css
@@ -171,7 +169,4 @@ def make_bufr_html_tree(data, **kwargs):
         style = css("tree")
         return HTML(style + t)
 
-    if do_print:
-        print(tree)
-    else:
-        return tree
+    return tree

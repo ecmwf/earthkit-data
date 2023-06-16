@@ -10,12 +10,19 @@
 # See:
 # https://github.com/ecmwf/pdbufr
 
-import os
+# import os
 
 import eccodes
 
 from earthkit.data.core import Base
-from earthkit.data.readers.grib.codes import CodesReader
+from earthkit.data.utils.dump import make_bufr_html_tree
+
+# from earthkit.data.readers.grib.codes import CodesReader
+from earthkit.data.utils.message import (
+    CodesHandle,
+    CodesReader,
+    get_bufr_messages_positions,
+)
 from earthkit.data.utils.parts import Part
 
 from . import Reader
@@ -42,50 +49,50 @@ BUFR_LS_KEYS = {
 }
 
 
-# This does not belong here, should be in the C library
-def get_messages_positions(path):
-    fd = os.open(path, os.O_RDONLY)
-    try:
+# # This does not belong here, should be in the C library
+# def get_messages_positions(path):
+#     fd = os.open(path, os.O_RDONLY)
+#     try:
 
-        def get(count):
-            buf = os.read(fd, count)
-            assert len(buf) == count
-            return int.from_bytes(
-                buf,
-                byteorder="big",
-                signed=False,
-            )
+#         def get(count):
+#             buf = os.read(fd, count)
+#             assert len(buf) == count
+#             return int.from_bytes(
+#                 buf,
+#                 byteorder="big",
+#                 signed=False,
+#             )
 
-        offset = 0
-        while True:
-            code = os.read(fd, 4)
-            if len(code) < 4:
-                break
+#         offset = 0
+#         while True:
+#             code = os.read(fd, 4)
+#             if len(code) < 4:
+#                 break
 
-            if code != b"BUFR":
-                offset = os.lseek(fd, offset + 1, os.SEEK_SET)
-                continue
+#             if code != b"BUFR":
+#                 offset = os.lseek(fd, offset + 1, os.SEEK_SET)
+#                 continue
 
-            length = get(3)
-            edition = get(1)
+#             length = get(3)
+#             edition = get(1)
 
-            if edition in [3, 4]:
-                yield offset, length
-                offset = os.lseek(fd, offset + length, os.SEEK_SET)
+#             if edition in [3, 4]:
+#                 yield offset, length
+#                 offset = os.lseek(fd, offset + length, os.SEEK_SET)
 
-    finally:
-        os.close(fd)
+#     finally:
+#         os.close(fd)
 
 
-class CodesGribHandle(eccodes.Message):
+class BUFRCodesHandle(CodesHandle):
     # MISSING_VALUE = np.finfo(np.float32).max
     # KEY_TYPES = {"s": str, "l": int, "d": float}
 
-    def __init__(self, handle, path, offset):
-        super().__init__(handle)
-        self.path = path
-        self.offset = offset
-        # self.unpack(1)
+    # def __init__(self, handle, path, offset):
+    #     super().__init__(handle)
+    #     self.path = path
+    #     self.offset = offset
+    #     # self.unpack(1)
 
     def unpack(self):
         """Decode data section"""
@@ -101,10 +108,19 @@ class CodesGribHandle(eccodes.Message):
             eccodes.codes_dump(self._handle, f, "json")
         self.pack()
 
+    # def write(self, f):
+    #     eccodes.codes_write(self._handle, f)
 
-class CodesBufrReader(CodesReader):
+    # def save(self, path):
+    #     with open(path, "wb") as f:
+    #         self.write_to(f)
+    #         self.path = path
+    #         self.offset = 0
+
+
+class BUFRCodesReader(CodesReader):
     PRODUCT_ID = eccodes.CODES_PRODUCT_BUFR
-    HANDLE_TYPE = CodesGribHandle
+    HANDLE_TYPE = BUFRCodesHandle
 
 
 class BUFRMessage(Base):
@@ -119,11 +135,11 @@ class BUFRMessage(Base):
         r""":class:`CodesHandle`: Gets an object providing access to the low level GRIB message structure."""
         if self._handle is None:
             assert self._offset is not None
-            self._handle = CodesBufrReader.from_cache(self.path).at_offset(self._offset)
+            self._handle = BUFRCodesReader.from_cache(self.path).at_offset(self._offset)
         return self._handle
 
-    def dump(self, n):
-        self._get_positions()
+    def dump(self):
+        # self._get_positions()
 
         # handle = self.at_offset(self.offsets[n])
         # handle = self.at_offset(0)
@@ -147,8 +163,9 @@ class BUFRMessage(Base):
             with open(filename, "r") as f:
                 try:
                     d = json.loads(f.read())
+                    return make_bufr_html_tree(d)
                     # print(d)
-                    return d
+                    # return d
                 except Exception as e:
                     warnings.warn("Failed to parse bufr_dump", e)
                     return None
@@ -164,7 +181,7 @@ class BUFRInOneFile:
         # self.file = open(self.path, "rb")
         self.offsets = []
         self.lengths = []
-        self._get_positions(self)
+        self._get_positions()
         # self.num = None
 
     # def __del__(self):
@@ -185,7 +202,7 @@ class BUFRInOneFile:
             self.offsets = []
             self.lengths = []
 
-            for offset, length in get_messages_positions(self.path):
+            for offset, length in get_bufr_messages_positions(self.path):
                 self.offsets.append(offset)
                 self.lengths.append(length)
 
@@ -308,6 +325,9 @@ class BUFRReader(Reader):
 
     def __len__(self):
         return len(self._reader)
+
+    def __getitem__(self, n):
+        return self._reader.__getitem__(n)
 
     def ls(self, *args, **kwargs):
         from pdbufr.high_level_bufr.bufr import BufrFile
