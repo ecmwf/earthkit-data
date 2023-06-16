@@ -436,7 +436,7 @@ class FieldListMixin(PandasMixIn, XarrayMixIn):
         return False
 
     def to_points(self, **kwargs):
-        r"""Returns the geographical coordinates shared by all the files in
+        r"""Returns the geographical coordinates shared by all the fields in
         the data's original Coordinate Reference System (CRS).
 
         Parameters
