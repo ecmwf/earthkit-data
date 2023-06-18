@@ -16,7 +16,11 @@ import numpy as np
 
 from earthkit.data.core import Base
 from earthkit.data.utils.bbox import BoundingBox
-from earthkit.data.utils.message import CodesHandle, CodesReader
+from earthkit.data.utils.message import (
+    CodesHandle,
+    CodesMessagePositionIndex,
+    CodesReader,
+)
 from earthkit.data.utils.projections import Projection
 
 # import threading
@@ -36,7 +40,7 @@ def missing_is_none(x):
 
 
 # This does not belong here, should be in the C library
-def get_messages_positions(path):
+def get_grib_messages_positions(path):
     fd = os.open(path, os.O_RDONLY)
     try:
 
@@ -95,6 +99,67 @@ def get_messages_positions(path):
         os.close(fd)
 
 
+class GribCodesMessagePositionIndex(CodesMessagePositionIndex):
+    # This does not belong here, should be in the C library
+    def _get_message_positions(self, path):
+        fd = os.open(path, os.O_RDONLY)
+        try:
+
+            def get(count):
+                buf = os.read(fd, count)
+                assert len(buf) == count
+                return int.from_bytes(
+                    buf,
+                    byteorder="big",
+                    signed=False,
+                )
+
+            offset = 0
+            while True:
+                code = os.read(fd, 4)
+                if len(code) < 4:
+                    break
+
+                if code != b"GRIB":
+                    offset = os.lseek(fd, offset + 1, os.SEEK_SET)
+                    continue
+
+                length = get(3)
+                edition = get(1)
+
+                if edition == 1:
+                    if length & 0x800000:
+                        sec1len = get(3)
+                        os.lseek(fd, 4, os.SEEK_CUR)
+                        flags = get(1)
+                        os.lseek(fd, sec1len - 8, os.SEEK_CUR)
+
+                        if flags & (1 << 7):
+                            sec2len = get(3)
+                            os.lseek(fd, sec2len - 3, os.SEEK_CUR)
+
+                        if flags & (1 << 6):
+                            sec3len = get(3)
+                            os.lseek(fd, sec3len - 3, os.SEEK_CUR)
+
+                        sec4len = get(3)
+
+                        if sec4len < 120:
+                            length &= 0x7FFFFF
+                            length *= 120
+                            length -= sec4len
+                            length += 4
+
+                if edition == 2:
+                    length = get(8)
+
+                yield offset, length
+                offset = os.lseek(fd, offset + length, os.SEEK_SET)
+
+        finally:
+            os.close(fd)
+
+
 # # For some reason, cffi can ge stuck in the GC if that function
 # # needs to be called defined for the first time in a GC thread.
 # try:
@@ -107,6 +172,7 @@ def get_messages_positions(path):
 
 
 class GribCodesHandle(CodesHandle):
+    PRODUCT_ID = eccodes.CODES_PRODUCT_GRIB
     # MISSING_VALUE = np.finfo(np.float32).max
     # KEY_TYPES = {"s": str, "l": int, "d": float}
 

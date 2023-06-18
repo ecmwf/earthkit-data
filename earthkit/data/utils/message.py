@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import json
+
 # import datetime
 import logging
 import os
@@ -16,109 +18,15 @@ import time
 import eccodes
 import numpy as np
 
+from earthkit.data.core.caching import auxiliary_cache_file
+
 # from earthkit.data.core import Base
 # from earthkit.data.utils.bbox import BoundingBox
 # from earthkit.data.utils.projections import Projection
 
 LOG = logging.getLogger(__name__)
 
-
-# This does not belong here, should be in the C library
-def get_bufr_messages_positions(path):
-    fd = os.open(path, os.O_RDONLY)
-    try:
-
-        def get(count):
-            buf = os.read(fd, count)
-            assert len(buf) == count
-            return int.from_bytes(
-                buf,
-                byteorder="big",
-                signed=False,
-            )
-
-        offset = 0
-        while True:
-            code = os.read(fd, 4)
-            if len(code) < 4:
-                break
-
-            if code != b"BUFR":
-                offset = os.lseek(fd, offset + 1, os.SEEK_SET)
-                continue
-
-            length = get(3)
-            edition = get(1)
-
-            if edition in [3, 4]:
-                yield offset, length
-                offset = os.lseek(fd, offset + length, os.SEEK_SET)
-
-    finally:
-        os.close(fd)
-
-
-# This does not belong here, should be in the C library
-def get_grib_messages_positions(path):
-    fd = os.open(path, os.O_RDONLY)
-    try:
-
-        def get(count):
-            buf = os.read(fd, count)
-            assert len(buf) == count
-            return int.from_bytes(
-                buf,
-                byteorder="big",
-                signed=False,
-            )
-
-        offset = 0
-        while True:
-            code = os.read(fd, 4)
-            if len(code) < 4:
-                break
-
-            if code != b"GRIB":
-                offset = os.lseek(fd, offset + 1, os.SEEK_SET)
-                continue
-
-            length = get(3)
-            edition = get(1)
-
-            if edition == 1:
-                if length & 0x800000:
-                    sec1len = get(3)
-                    os.lseek(fd, 4, os.SEEK_CUR)
-                    flags = get(1)
-                    os.lseek(fd, sec1len - 8, os.SEEK_CUR)
-
-                    if flags & (1 << 7):
-                        sec2len = get(3)
-                        os.lseek(fd, sec2len - 3, os.SEEK_CUR)
-
-                    if flags & (1 << 6):
-                        sec3len = get(3)
-                        os.lseek(fd, sec3len - 3, os.SEEK_CUR)
-
-                    sec4len = get(3)
-
-                    if sec4len < 120:
-                        length &= 0x7FFFFF
-                        length *= 120
-                        length -= sec4len
-                        length += 4
-
-            if edition == 2:
-                length = get(8)
-
-            yield offset, length
-            offset = os.lseek(fd, offset + length, os.SEEK_SET)
-
-    finally:
-        os.close(fd)
-
-
-# For some reason, cffi can ge stuck in the GC if that function
+# For some reason, cffi can get stuck in the GC if that function
 # needs to be called defined for the first time in a GC thread.
 try:
     _h = eccodes.codes_new_from_samples(
@@ -127,6 +35,79 @@ try:
     eccodes.codes_release(_h)
 except Exception:
     pass
+
+
+class CodesMessagePositionIndex:
+    def __init__(self, path):
+        self.path = path
+        self.offsets = None
+        self.lengths = None
+        self._cache_file = None
+        self._load()
+
+    def __len__(self):
+        return len(self.offsets)
+
+    def _get_message_positions(self, path):
+        raise NotImplementedError
+
+    def _build(self):
+        offsets = []
+        lengths = []
+
+        for offset, length in self._get_message_positions(self.path):
+            offsets.append(offset)
+            lengths.append(length)
+
+        self.offsets = offsets
+        self.lengths = lengths
+
+    def _load(self):
+        if True:
+            # if SETTINGS.policy("message-position-cache"):
+            self._cache_file = auxiliary_cache_file(
+                "message-index",
+                self.path,
+                content="null",
+                extension=".json",
+            )
+            if not self._load_cache():
+                self._build()
+                self._save_cache()
+        else:
+            self._build()
+
+    def _save_cache(self):
+        # assert SETTINGS.policy("message-position-cache")
+        try:
+            with open(self._cache_file, "w") as f:
+                json.dump(
+                    dict(
+                        version=self.VERSION,
+                        offsets=self.offsets,
+                        lengths=self.lengths,
+                    ),
+                    f,
+                )
+        except Exception:
+            LOG.exception("Write to cache failed %s", self._cache_file)
+
+    def _load_cache(self):
+        # assert SETTINGS.policy("message-position-cache")
+        try:
+            with open(self._cache_file) as f:
+                c = json.load(f)
+                if not isinstance(c, dict):
+                    return False
+
+                assert c["version"] == self.VERSION
+                self.offsets = c["offsets"]
+                self.lengths = c["lengths"]
+                return True
+        except Exception:
+            LOG.exception("Load from cache failed %s", self._cache_file)
+
+        return False
 
 
 class CodesHandle(eccodes.Message):
@@ -152,10 +133,10 @@ class CodesHandle(eccodes.Message):
         # elif name == "md5GridSection":
         #     return self.get_md5GridSection()
 
-        # if ktype is None:
-        #     name, _, key_type_str = name.partition(":")
-        #     if key_type_str in CodesHandle.KEY_TYPES:
-        #         ktype = CodesHandle.KEY_TYPES[key_type_str]
+        if ktype is None:
+            name, _, key_type_str = name.partition(":")
+            if key_type_str in CodesHandle.KEY_TYPES:
+                ktype = CodesHandle.KEY_TYPES[key_type_str]
 
         if "default" in kwargs:
             return super().get(name, ktype=ktype, **kwargs)

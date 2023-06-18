@@ -13,7 +13,7 @@ import logging
 import eccodes
 
 from earthkit.data.readers import Reader
-from earthkit.data.readers.grib.codes import CodesHandle, GribField
+from earthkit.data.readers.grib.codes import GribCodesHandle, GribField
 from earthkit.data.readers.grib.index import FieldList
 
 LOG = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ class GribMemoryReader(Reader):
     def __next__(self):
         handle = self._next_handle()
         if handle is not None:
-            return GribFieldInMemory(CodesHandle(handle, None, None))
+            return GribFieldInMemory(GribCodesHandle(handle, None, None))
         raise StopIteration
 
     def _next_handle(self):

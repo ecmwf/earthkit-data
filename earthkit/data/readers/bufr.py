@@ -10,7 +10,7 @@
 # See:
 # https://github.com/ecmwf/pdbufr
 
-# import os
+import os
 
 import eccodes
 
@@ -20,8 +20,8 @@ from earthkit.data.utils.dump import make_bufr_html_tree
 # from earthkit.data.readers.grib.codes import CodesReader
 from earthkit.data.utils.message import (
     CodesHandle,
+    CodesMessagePositionIndex,
     CodesReader,
-    get_bufr_messages_positions,
 )
 from earthkit.data.utils.parts import Part
 
@@ -49,42 +49,44 @@ BUFR_LS_KEYS = {
 }
 
 
-# # This does not belong here, should be in the C library
-# def get_messages_positions(path):
-#     fd = os.open(path, os.O_RDONLY)
-#     try:
+class BufrCodesMessagePositionIndex(CodesMessagePositionIndex):
+    # This does not belong here, should be in the C library
+    def _get_message_positions(self, path):
+        fd = os.open(path, os.O_RDONLY)
+        try:
 
-#         def get(count):
-#             buf = os.read(fd, count)
-#             assert len(buf) == count
-#             return int.from_bytes(
-#                 buf,
-#                 byteorder="big",
-#                 signed=False,
-#             )
+            def get(count):
+                buf = os.read(fd, count)
+                assert len(buf) == count
+                return int.from_bytes(
+                    buf,
+                    byteorder="big",
+                    signed=False,
+                )
 
-#         offset = 0
-#         while True:
-#             code = os.read(fd, 4)
-#             if len(code) < 4:
-#                 break
+            offset = 0
+            while True:
+                code = os.read(fd, 4)
+                if len(code) < 4:
+                    break
 
-#             if code != b"BUFR":
-#                 offset = os.lseek(fd, offset + 1, os.SEEK_SET)
-#                 continue
+                if code != b"BUFR":
+                    offset = os.lseek(fd, offset + 1, os.SEEK_SET)
+                    continue
 
-#             length = get(3)
-#             edition = get(1)
+                length = get(3)
+                edition = get(1)
 
-#             if edition in [3, 4]:
-#                 yield offset, length
-#                 offset = os.lseek(fd, offset + length, os.SEEK_SET)
+                if edition in [3, 4]:
+                    yield offset, length
+                    offset = os.lseek(fd, offset + length, os.SEEK_SET)
 
-#     finally:
-#         os.close(fd)
+        finally:
+            os.close(fd)
 
 
 class BUFRCodesHandle(CodesHandle):
+    PRODUCT_ID = eccodes.CODES_PRODUCT_BUFR
     # MISSING_VALUE = np.finfo(np.float32).max
     # KEY_TYPES = {"s": str, "l": int, "d": float}
 
@@ -179,9 +181,11 @@ class BUFRInOneFile:
         self.path = path
         # self.lock = threading.Lock()
         # self.file = open(self.path, "rb")
-        self.offsets = []
-        self.lengths = []
-        self._get_positions()
+        self._positions = BufrCodesMessagePositionIndex(self.path)
+        # self.offsets = []
+        # self.lengths = []
+
+        # self._get_positions()
         # self.num = None
 
     # def __del__(self):
@@ -197,27 +201,27 @@ class BUFRInOneFile:
         else:
             return super().__getitem__(n)
 
-    def _get_positions(self):
-        if not self.offsets:
-            self.offsets = []
-            self.lengths = []
+    # def _get_positions(self):
+    #     if not self.offsets:
+    #         self.offsets = []
+    #         self.lengths = []
 
-            for offset, length in get_bufr_messages_positions(self.path):
-                self.offsets.append(offset)
-                self.lengths.append(length)
+    #         for offset, length in get_bufr_messages_positions(self.path):
+    #             self.offsets.append(offset)
+    #             self.lengths.append(length)
 
-            # with self.lock:
-            #     while True:
-            #         pos = self.file.tell()
-            #         handle = eccodes.codes_bufr_new_from_file(self.file)
-            #         if handle is None:
-            #             break
-            #         self.offsets.append(pos)
-            #         self.lengths.append(self.file.tell() - pos)
-            #         eccodes.codes_release(handle)
+    #         # with self.lock:
+    #         #     while True:
+    #         #         pos = self.file.tell()
+    #         #         handle = eccodes.codes_bufr_new_from_file(self.file)
+    #         #         if handle is None:
+    #         #             break
+    #         #         self.offsets.append(pos)
+    #         #         self.lengths.append(self.file.tell() - pos)
+    #         #         eccodes.codes_release(handle)
 
-        # if self.num is None:
-        #     self.num = len(self.offsets)
+    #     # if self.num is None:
+    #     #     self.num = len(self.offsets)
 
     def __len__(self):
         return self.number_of_parts()
@@ -282,10 +286,10 @@ class BUFRInOneFile:
     #         return handle
 
     def part(self, n):
-        return Part(self.path, self.offsets[n], self.lengths[n])
+        return Part(self.path, self._positions.offsets[n], self._positions.lengths[n])
 
     def number_of_parts(self):
-        return len(self.offsets)
+        return len(self._positions)
 
 
 class BUFRReader(Reader):

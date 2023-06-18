@@ -13,7 +13,7 @@ import logging
 import os
 
 from earthkit.data.core.caching import auxiliary_cache_file
-from earthkit.data.readers.grib.codes import get_messages_positions
+from earthkit.data.readers.grib.codes import get_grib_messages_positions
 from earthkit.data.readers.grib.index import FieldListInFiles
 from earthkit.data.utils.parts import Part
 
@@ -49,7 +49,7 @@ class FieldListInOneFile(FieldListInFiles):
         offsets = []
         lengths = []
 
-        for offset, length in get_messages_positions(self.path):
+        for offset, length in get_grib_messages_positions(self.path):
             offsets.append(offset)
             lengths.append(length)
 
