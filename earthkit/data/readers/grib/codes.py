@@ -18,6 +18,7 @@ import numpy as np
 
 from earthkit.data.core import Base
 from earthkit.data.utils.bbox import BoundingBox
+from earthkit.data.utils.projections import Projection
 
 LOG = logging.getLogger(__name__)
 
@@ -457,6 +458,35 @@ class GribField(Base):
         return values
 
     def to_points(self, flatten=False):
+        r"""Returns the geographical coordinates in the data's original
+        Coordinate Reference System (CRS).
+
+        Parameters
+        ----------
+        flatten: bool
+            When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
+            :obj:`shape` are returned.
+
+        Returns
+        -------
+        dict
+            Dictionary with items "x" and "y", containing the ndarrays of the x and
+            y coordinates, respectively.
+
+        Raises
+        ------
+        ValueError
+            When the coordinates in the data's original CRS are not available.
+
+        """
+        grid_type = self.metadata("gridType", default=None)
+        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+            lon, lat = self.data(("lon", "lat"), flatten=flatten)
+            return dict(x=lon, y=lat)
+        else:
+            raise ValueError("grid_type={grid_type} is not supported in to_points()")
+
+    def to_latlon(self, flatten=False):
         r"""Returns the latitudes/longitudes of all the gridpoints in the field.
 
         Parameters
@@ -473,7 +503,7 @@ class GribField(Base):
 
         """
         lon, lat = self.data(("lon", "lat"), flatten=flatten)
-        return dict(lon=lon, lat=lat)
+        return dict(lat=lat, lon=lon)
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (
@@ -521,14 +551,11 @@ class GribField(Base):
         step = self.handle.get("endStep", default=None)
         return self._base_datetime() + datetime.timedelta(hours=step)
 
-    def proj_string(self):
-        return self.proj_target_string()
-
-    def proj_source_string(self):
-        return self.handle.get("projSourceString", default=None)
-
-    def proj_target_string(self):
-        return self.handle.get("projTargetString", default=None)
+    def projection(self):
+        r"""Returns information about the projection."""
+        return Projection.from_proj_string(
+            self.handle.get("projTargetString", default=None)
+        )
 
     def bounding_box(self):
         r"""Returns the bounding box of the field.
@@ -741,7 +768,8 @@ class GribField(Base):
         return self.metadata(key)
 
     def dump(self, namespace=None, **kwargs):
-        r"""Generates dump with all the metadata keys belonging to ``namespace``.
+        r"""Generates dump with all the metadata keys belonging to ``namespace``
+        offering a tabbed interface in a Jupyter notebook.
 
         Parameters
         ----------
@@ -751,29 +779,20 @@ class GribField(Base):
             that ecCodes can access without specifying a namespace.
             When ``namespace`` is None all the available namespaces will be used.
         **kwargs: dict, optional
-            Other keyword arguments:
-
-            print: bool, optional
-                Enables printing the dump to the standard output when not in a Jupyter notebook.
-                Default: False
-            html: bool, optional
-                Enables generating HTML based content in a Jupyter notebook. Default: True
-
+            Other keyword arguments used for testing only
 
         Returns
         -------
-        html or dict
-            - When in Jupyter notebook returns HTML code providing a tabbed interface to browse the
-              dump content. When ``html`` is False a dict is returned.
-            - dict otherwise. When ``print`` is True also prints the dict to stdout.
-
+        NamespaceDump
+            Dict-like object with one item per namespace. In a Jupyter notebook represented
+            as a tabbed interface to browse the dump contents.
 
         Examples
         --------
         :ref:`/examples/grib_metadata.ipynb`
 
         """
-        from earthkit.data.utils.summary import format_info
+        from earthkit.data.utils.summary import format_namespace_dump
 
         namespace = _GRIB_NAMESPACES.keys() if namespace is None else [namespace]
         r = [
@@ -785,7 +804,7 @@ class GribField(Base):
             for ns in namespace
         ]
 
-        return format_info(
+        return format_namespace_dump(
             r, selected="parameter", details=self.__class__.__name__, **kwargs
         )
 

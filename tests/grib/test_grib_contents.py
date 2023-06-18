@@ -17,6 +17,7 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file, earthkit_test_data_file
+from earthkit.data.utils import projections
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -645,11 +646,11 @@ def test_grib_values_with_missing():
     assert np.count_nonzero(np.isnan(m)) == 38
 
 
-def test_grib_to_points_1():
+def test_grib_to_latlon_single():
     f = from_source("file", earthkit_test_data_file("test_single.grib"))
 
     eps = 1e-5
-    v = f[0].to_points(flatten=True)
+    v = f[0].to_latlon(flatten=True)
     assert isinstance(v, dict)
     assert isinstance(v["lon"], np.ndarray)
     assert isinstance(v["lat"], np.ndarray)
@@ -671,10 +672,10 @@ def test_grib_to_points_1():
     )
 
 
-def test_grib_to_points_1_shape():
+def test_grib_to_latlon_single_shape():
     f = from_source("file", earthkit_test_data_file("test_single.grib"))
 
-    v = f[0].to_points()
+    v = f[0].to_latlon()
     assert isinstance(v, dict)
     assert isinstance(v["lon"], np.ndarray)
     assert isinstance(v["lat"], np.ndarray)
@@ -688,6 +689,38 @@ def test_grib_to_points_1_shape():
     assert v["lat"].shape == (7, 12)
     for i, y in enumerate(v["lat"]):
         assert np.allclose(y, np.ones(12) * (90 - i * 30))
+
+
+def test_grib_to_points_single():
+    f = from_source("file", earthkit_test_data_file("test_single.grib"))
+
+    eps = 1e-5
+    v = f[0].to_points(flatten=True)
+    assert isinstance(v, dict)
+    assert isinstance(v["x"], np.ndarray)
+    assert isinstance(v["y"], np.ndarray)
+    check_array(
+        v["x"],
+        (84,),
+        first=0.0,
+        last=330.0,
+        meanv=165.0,
+        eps=eps,
+    )
+    check_array(
+        v["y"],
+        (84,),
+        first=90,
+        last=-90,
+        meanv=0,
+        eps=eps,
+    )
+
+
+def test_grib_to_points_unsupported_grid():
+    f = from_source("file", earthkit_test_data_file("mercator.grib"))
+    with pytest.raises(ValueError):
+        f[0].to_points()
 
 
 def test_grib_datetime():
@@ -724,27 +757,23 @@ def test_bbox():
     assert s.bounding_box().as_tuple() == (73, -27, 33, 45), s.bounding_box()
 
 
-def test_grib_proj_string_ll():
+def test_grib_projection_ll():
     f = from_source("file", earthkit_examples_file("test.grib"))
-    r = f[0].proj_string()
-    assert r is None
-    r = f[0].proj_source_string()
-    assert r is None
-    r = f[0].proj_target_string()
-    assert r is None
+    assert isinstance(f[0].projection(), projections.EquidistantCylindrical)
 
 
-def test_grib_proj_string_mercator():
+def test_grib_projection_mercator():
     f = from_source("file", earthkit_test_data_file("mercator.grib"))
-    ref_str = (
-        "+proj=merc +lat_ts=20.000000 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +R=6371200.000000"
-    )
-    r = f[0].proj_string()
-    assert r == ref_str
-    r = f[0].proj_source_string()
-    assert r == "EPSG:4326"
-    r = f[0].proj_target_string()
-    assert r == ref_str
+    projection = f[0].projection()
+    assert isinstance(projection, projections.Mercator)
+    assert projection.parameters == {
+        "true_scale_latitude": 20,
+        "central_latitude": 0,
+        "central_longitude": 0,
+        "false_easting": 0,
+        "false_northing": 0,
+    }
+    assert projection.globe == dict()
 
 
 def test_message():

@@ -4,11 +4,13 @@ on:
   push:
     branches:
     - main
+    - develop
     tags:
     - "*"
   pull_request:
     branches:
     - main
+    - develop
   pull_request_target:
     types: [labeled]
   workflow_dispatch:
@@ -46,7 +48,7 @@ jobs:
     - name: Install Conda environment with Micromamba
       uses: mamba-org/provision-with-micromamba@v14
       with:
-        environment-file: environment.yml
+        environment-file: tests/environment-unit-tests.yml
         environment-name: DEVELOP
         channels: conda-forge
         cache-env: true
@@ -138,7 +140,7 @@ jobs:
     - name: Install Conda environment with Micromamba
       uses: mamba-org/provision-with-micromamba@v12
       with:
-        environment-file: environment${{ matrix.extra }}.yml
+        environment-file: tests/environment-unit-tests${{ matrix.extra }}.yml
         environment-name: DEVELOP${{ matrix.extra }}
         channels: conda-forge
         cache-env: true
