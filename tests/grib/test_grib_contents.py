@@ -292,6 +292,72 @@ def test_grib_get_double_array_18():
     assert np.isclose(v[17][20], 316.4207458496094, eps)
 
 
+def test_grib_metadata_type_qualifier():
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))[0:4]
+
+    # to str
+    r = f.metadata("centre:s")
+    assert r == ["ecmf", "ecmf", "ecmf", "ecmf"]
+    r = f.metadata("centre:str")
+    assert r == ["ecmf", "ecmf", "ecmf", "ecmf"]
+    r = f.metadata("level:s")
+    assert r == ["1000", "1000", "1000", "850"]
+    r = f.metadata("level:str")
+    assert r == ["1000", "1000", "1000", "850"]
+
+    # to int
+    r = f.metadata("centre:l")
+    assert r == [98, 98, 98, 98]
+    r = f.metadata("centre:int")
+    assert r == [98, 98, 98, 98]
+    r = f.metadata("level:d")
+    assert r == [1000, 1000, 1000, 850]
+    r = f.metadata("level:int")
+    assert r == [1000, 1000, 1000, 850]
+
+    # to float
+    r = f.metadata("centre:d")
+    assert np.allclose(np.array(r), np.array([98.0, 98.0, 98.0, 98.0]))
+    r = f.metadata("centre:float")
+    assert np.allclose(np.array(r), np.array([98.0, 98.0, 98.0, 98.0]))
+    r = f.metadata("level:d")
+    assert np.allclose(np.array(r), np.array([1000.0, 1000.0, 1000.0, 850.0]))
+    r = f.metadata("level:float")
+    assert np.allclose(np.array(r), np.array([1000.0, 1000.0, 1000.0, 850.0]))
+
+
+def test_grib_metadata_astype():
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))[0:4]
+
+    # to str
+    r = f.metadata("centre", astype=None)
+    assert r == ["ecmf", "ecmf", "ecmf", "ecmf"]
+    r = f.metadata("centre", astype=str)
+    assert r == ["ecmf", "ecmf", "ecmf", "ecmf"]
+    r = f.metadata("level", astype=str)
+    assert r == ["1000", "1000", "1000", "850"]
+
+    # to int
+    r = f.metadata("centre", astype=int)
+    assert r == [98, 98, 98, 98]
+    r = f.metadata("level", astype=int)
+    assert r == [1000, 1000, 1000, 850]
+
+    # to float
+    r = f.metadata("level", astype=float)
+    assert np.allclose(np.array(r), np.array([1000.0, 1000.0, 1000.0, 850.0]))
+
+    # multi
+    r = f.metadata(["level", "cfVarName"], astype=(int, None))
+    assert r == [[1000, "t"], [1000, "u"], [1000, "v"], [850, "t"]]
+    r = f.metadata(["level", "cfVarName"], astype=str)
+    assert r == [["1000", "t"], ["1000", "u"], ["1000", "v"], ["850", "t"]]
+
+    # non matching astype
+    with pytest.raises(ValueError):
+        f.metadata(["level", "cfVarName", "centre"], astype=(int, None))
+
+
 def test_grib_metadata_generic():
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))[0:4]
 
@@ -299,35 +365,12 @@ def test_grib_metadata_generic():
     assert sn == ["t", "u", "v", "t"]
     sn = f.metadata(["shortName"])
     assert sn == [["t"], ["u"], ["v"], ["t"]]
-    cs = f.metadata("centre:s")
-    assert cs == ["ecmf", "ecmf", "ecmf", "ecmf"]
-    cl = f.metadata("centre:l")
-    assert cl == [98, 98, 98, 98]
-    lg = f.metadata(["level:d", "cfVarName"])
+    lg = f.metadata("level", "cfVarName")
+    assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
+    lg = f.metadata(["level", "cfVarName"])
     assert lg == [[1000, "t"], [1000, "u"], [1000, "v"], [850, "t"]]
     lg = f.metadata("level", "cfVarName")
     assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
-
-    # astype
-    cs = f.metadata("centre", astype=None)
-    assert cs == ["ecmf", "ecmf", "ecmf", "ecmf"]
-    cs = f.metadata("centre", astype=str)
-    assert cs == ["ecmf", "ecmf", "ecmf", "ecmf"]
-    cl = f.metadata("centre", astype=int)
-    assert cl == [98, 98, 98, 98]
-    lg = f.metadata(["level", "cfVarName"], astype=(int, None))
-    assert lg == [[1000, "t"], [1000, "u"], [1000, "v"], [850, "t"]]
-    lg = f.metadata(["level", "cfVarName"], astype=str)
-    assert lg == [["1000", "t"], ["1000", "u"], ["1000", "v"], ["850", "t"]]
-
-    # non matching astype
-    with pytest.raises(ValueError):
-        f.metadata(["level", "cfVarName", "centre"], astype=(int, None))
-
-    # lgk = f.metadata(["level:d", "cfVarName"], "key")
-    # assert lgk == [[1000, 1000, 1000, 850], ["t", "u", "v", "t"]]
-    # with pytest.raises(ValueError):
-    #     lgk = f.metadata(["level:d", "cfVarName"], "invalid")
 
     # single fieldlist
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))

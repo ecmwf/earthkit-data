@@ -104,7 +104,7 @@ except Exception:
 
 class CodesHandle(eccodes.Message):
     MISSING_VALUE = np.finfo(np.float32).max
-    KEY_TYPES = {"s": str, "l": int, "d": float, "float": float}
+    KEY_TYPES = {"s": str, "l": int, "d": float}
 
     def __init__(self, handle, path, offset):
         super().__init__(handle)
@@ -127,8 +127,9 @@ class CodesHandle(eccodes.Message):
             return self.get_md5GridSection()
 
         if ktype is None:
-            name, _, key_type_str = name.partition(":")
+            key_name, _, key_type_str = name.partition(":")
             if key_type_str in CodesHandle.KEY_TYPES:
+                name = key_name
                 ktype = CodesHandle.KEY_TYPES[key_type_str]
 
         if "default" in kwargs:
