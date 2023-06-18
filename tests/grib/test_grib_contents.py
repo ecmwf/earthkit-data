@@ -319,12 +319,16 @@ def test_grib_metadata_type_qualifier():
     # to float
     r = f.metadata("centre:d")
     assert np.allclose(np.array(r), np.array([98.0, 98.0, 98.0, 98.0]))
+    assert all(isinstance(x, float) for x in r)
     r = f.metadata("centre:float")
     assert np.allclose(np.array(r), np.array([98.0, 98.0, 98.0, 98.0]))
+    assert all(isinstance(x, float) for x in r)
     r = f.metadata("level:d")
     assert np.allclose(np.array(r), np.array([1000.0, 1000.0, 1000.0, 850.0]))
+    assert all(isinstance(x, float) for x in r)
     r = f.metadata("level:float")
     assert np.allclose(np.array(r), np.array([1000.0, 1000.0, 1000.0, 850.0]))
+    assert all(isinstance(x, float) for x in r)
 
 
 def test_grib_metadata_astype():
@@ -347,6 +351,7 @@ def test_grib_metadata_astype():
     # to float
     r = f.metadata("level", astype=float)
     assert np.allclose(np.array(r), np.array([1000.0, 1000.0, 1000.0, 850.0]))
+    assert all(isinstance(x, float) for x in r)
 
     # multi
     r = f.metadata(["level", "cfVarName"], astype=(int, None))
