@@ -11,10 +11,10 @@ from earthkit.data.core.ipython import ipython_active
 
 
 class BUFRTree:
-    """Restructure the result of the bufr_dump ecCodes command."""
+    """Restructures the result of the bufr_dump ecCodes command."""
 
     def make_tree(self, data):
-        """Restructure the the result of json bufr_dump into a format better
+        """Restructures the the result of json bufr_dump into a format better
         suited for generating a tree view out of it.
 
         Parameters
@@ -54,16 +54,10 @@ class BUFRTree:
             if isinstance(v, list):
                 arrayCnt += 1
             else:
-                # print(v)
                 keyCnt += 1
-        # if arrayCnt > 1:
-        #     for i, v in enumerate(data):
-        #         print(i, v)
-        #     return
 
         for i, v in enumerate(data):
             if not isinstance(v, list):
-                # print(i, v["key"], arrayCnt)
                 parent.append(
                     {
                         "key": v["key"],
@@ -72,15 +66,10 @@ class BUFRTree:
                     }
                 )
             else:
-                # print("    arrayCnt=", arrayCnt)
                 if arrayCnt > 1:
-                    # print("->", v[0])
-                    # print("  ", v[1])
                     item = []
                     parent.append(item)
                     self._parse_dump(v, item)
-                    # print(f"item={item}")
-                    # break
                 else:
                     self._parse_dump(v, parent)
 
@@ -158,14 +147,18 @@ class BUFRHtmlTree:
         return td
 
 
-def make_bufr_html_tree(data, **kwargs):
+def make_bufr_html_tree(data, title):
     tree = BUFRTree().make_tree(data)
     if ipython_active:
         from IPython.display import HTML
 
         from earthkit.data.utils.html import css
 
-        t = BUFRHtmlTree().make_html(tree)
+        t = ""
+        if title is not None and title:
+            t = f"<h4>{title}</h4>"
+
+        t += BUFRHtmlTree().make_html(tree)
         style = css("tree")
         return HTML(style + t)
 

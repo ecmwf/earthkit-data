@@ -39,66 +39,6 @@ def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
-# This does not belong here, should be in the C library
-def get_grib_messages_positions(path):
-    fd = os.open(path, os.O_RDONLY)
-    try:
-
-        def get(count):
-            buf = os.read(fd, count)
-            assert len(buf) == count
-            return int.from_bytes(
-                buf,
-                byteorder="big",
-                signed=False,
-            )
-
-        offset = 0
-        while True:
-            code = os.read(fd, 4)
-            if len(code) < 4:
-                break
-
-            if code != b"GRIB":
-                offset = os.lseek(fd, offset + 1, os.SEEK_SET)
-                continue
-
-            length = get(3)
-            edition = get(1)
-
-            if edition == 1:
-                if length & 0x800000:
-                    sec1len = get(3)
-                    os.lseek(fd, 4, os.SEEK_CUR)
-                    flags = get(1)
-                    os.lseek(fd, sec1len - 8, os.SEEK_CUR)
-
-                    if flags & (1 << 7):
-                        sec2len = get(3)
-                        os.lseek(fd, sec2len - 3, os.SEEK_CUR)
-
-                    if flags & (1 << 6):
-                        sec3len = get(3)
-                        os.lseek(fd, sec3len - 3, os.SEEK_CUR)
-
-                    sec4len = get(3)
-
-                    if sec4len < 120:
-                        length &= 0x7FFFFF
-                        length *= 120
-                        length -= sec4len
-                        length += 4
-
-            if edition == 2:
-                length = get(8)
-
-            yield offset, length
-            offset = os.lseek(fd, offset + length, os.SEEK_SET)
-
-    finally:
-        os.close(fd)
-
-
 class GribCodesMessagePositionIndex(CodesMessagePositionIndex):
     # This does not belong here, should be in the C library
     def _get_message_positions(self, path):
@@ -173,19 +113,6 @@ class GribCodesMessagePositionIndex(CodesMessagePositionIndex):
 
 class GribCodesHandle(CodesHandle):
     PRODUCT_ID = eccodes.CODES_PRODUCT_GRIB
-    # MISSING_VALUE = np.finfo(np.float32).max
-    # KEY_TYPES = {"s": str, "l": int, "d": float}
-
-    # def __init__(self, handle, path, offset):
-    #     super().__init__(handle)
-    #     self.path = path
-    #     self.offset = offset
-
-    # @classmethod
-    # def from_sample(cls, name):
-    #     return cls(
-    #         eccodes.codes_new_from_samples(name, eccodes.CODES_PRODUCT_GRIB), None, None
-    #     )
 
     # TODO: just a wrapper around the base class implementation to handle the
     # s,l,d qualifiers. Once these are implemented in the base class this method can

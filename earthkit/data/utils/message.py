@@ -8,8 +8,6 @@
 #
 
 import json
-
-# import datetime
 import logging
 import os
 import threading
@@ -19,10 +17,6 @@ import eccodes
 import numpy as np
 
 from earthkit.data.core.caching import auxiliary_cache_file
-
-# from earthkit.data.core import Base
-# from earthkit.data.utils.bbox import BoundingBox
-# from earthkit.data.utils.projections import Projection
 
 LOG = logging.getLogger(__name__)
 
@@ -38,6 +32,8 @@ except Exception:
 
 
 class CodesMessagePositionIndex:
+    VERSION = 1
+
     def __init__(self, path):
         self.path = path
         self.offsets = None
@@ -128,11 +124,6 @@ class CodesHandle(eccodes.Message):
     # s,l,d qualifiers. Once these are implemented in the base class this method can
     # be removed. md5GridSection is also handled!
     def get(self, name, ktype=None, **kwargs):
-        # if name == "values":
-        #     return self.get_values()
-        # elif name == "md5GridSection":
-        #     return self.get_md5GridSection()
-
         if ktype is None:
             name, _, key_type_str = name.partition(":")
             if key_type_str in CodesHandle.KEY_TYPES:
