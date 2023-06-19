@@ -24,16 +24,16 @@ def test_globe():
     assert globe2.width == 360
     assert globe2.west == -180
 
-    assert BoundingBox.union(globe1, globe2).width == 360, BoundingBox.union(
-        globe1, globe2
+    assert BoundingBox.union([globe1, globe2]).width == 360, BoundingBox.union(
+        [globe1, globe2]
     ).width
-    assert BoundingBox.union(globe2, globe1).width == 360, BoundingBox.union(
-        globe2, globe1
+    assert BoundingBox.union([globe2, globe1]).width == 360, BoundingBox.union(
+        [globe2, globe1]
     ).width
 
     b1 = BoundingBox(north=90, west=-180, east=0, south=-90)
     b2 = BoundingBox(north=90, west=0, east=180, south=-90)
-    b0 = BoundingBox.union(b1, b2)
+    b0 = BoundingBox.union([b1, b2])
     assert b0.width == 360
 
 
@@ -41,11 +41,11 @@ def test_almost_globe():
     globe1 = BoundingBox(north=90, west=1, east=360, south=-90)
     globe2 = BoundingBox(north=90, west=-180, east=179, south=-90)
 
-    assert BoundingBox.union(globe1, globe2).width == 360, BoundingBox.union(
-        globe1, globe2
+    assert BoundingBox.union([globe1, globe2]).width == 360, BoundingBox.union(
+        [globe1, globe2]
     ).width
-    assert BoundingBox.union(globe2, globe1).width == 360, BoundingBox.union(
-        globe2, globe1
+    assert BoundingBox.union([globe2, globe1]).width == 360, BoundingBox.union(
+        [globe2, globe1]
     ).width
 
 
@@ -86,14 +86,14 @@ def test_bbox():
         bbox1 = BoundingBox(north=90, west=150 + i, south=30, east=170 + i)
         bbox2 = BoundingBox(north=90, west=-170 + i, south=30, east=-150 + i)
 
-        bbox = BoundingBox.union(bbox1, bbox2)
+        bbox = BoundingBox.union([bbox1, bbox2])
         assert bbox.width == 60, (bbox1, bbox2, bbox, bbox.width)
 
-        bbox = BoundingBox.union(bbox2, bbox1)
+        bbox = BoundingBox.union([bbox2, bbox1])
         assert bbox.width == 60, (bbox1, bbox2, bbox, bbox.width)
 
-        merge1 = BoundingBox.union(bbox1, bbox2)
-        merge2 = BoundingBox.union(bbox2, bbox1)
+        merge1 = BoundingBox.union([bbox1, bbox2])
+        merge2 = BoundingBox.union([bbox2, bbox1])
         assert merge1 == merge2, (bbox1, bbox2, merge1, merge2)
 
     with pytest.raises(ValueError):
@@ -102,7 +102,7 @@ def test_bbox():
     b0 = BoundingBox(north=89.9746, west=-179.975, south=-89.9746, east=179.975)
     b1 = BoundingBox(north=89.9746, west=-179.975, south=-89.9746, east=179.975)
     b2 = BoundingBox(north=89.9746, west=-179.975, south=-89.9746, east=179.975)
-    b3 = BoundingBox.union(b1, b2)
+    b3 = BoundingBox.union([b1, b2])
 
     assert b0 == b3
 
@@ -179,12 +179,12 @@ def xxxtest_overlaps():
 def test_overlapping_bbox_2():
     b1 = BoundingBox(north=90, west=-200, south=-90, east=-130)
     b2 = BoundingBox(north=90, west=-180, south=-90, east=-90)
-    b0 = BoundingBox.union(b1, b2)
+    b0 = BoundingBox.union([b1, b2])
 
     assert b0.width == 110, b0.width
 
     b3 = BoundingBox(north=90, west=-210, south=-90, east=-160)
-    b0 = BoundingBox.union(b0, b3)
+    b0 = BoundingBox.union([b0, b3])
     assert b0.width == 120, b0.width
 
     #      ----------------------
@@ -228,7 +228,7 @@ def test_overlapping_bbox_3():
     for i in range(361):
         b1 = BoundingBox(north=90, west=-45 - i, south=-90, east=45 - i)
         b2 = BoundingBox(north=90, west=-45 + i, south=-90, east=45 + i)
-        b0 = BoundingBox.union(b1, b2)
+        b0 = BoundingBox.union([b1, b2])
 
         if i <= 90:
             assert b0.width == 90 + 2 * i, (i, b0.width, b0)
@@ -241,6 +241,13 @@ def test_overlapping_bbox_3():
 
         if i > 270:
             assert b0.width == 3 * 90 - 2 * (i - 270), (i, b0.width, b0)
+
+
+def test_bbox_union_with():
+    b1 = BoundingBox(north=50, west=-20, south=-30, east=40)
+    b2 = BoundingBox(north=60, west=-10, south=-40, east=55)
+    b = b1.union_with(b2)
+    assert b == BoundingBox(north=60, west=-20, south=-40, east=55)
 
 
 if __name__ == "__main__":

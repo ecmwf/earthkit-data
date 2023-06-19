@@ -561,7 +561,7 @@ class GribField(Base):
 
         Returns
         -------
-        :class:`BoundingBox`
+        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
         """
         return BoundingBox(
             north=self.handle.get("latitudeOfFirstGridPointInDegrees", default=None),

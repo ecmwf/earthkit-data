@@ -21,6 +21,20 @@ def _normalize(lon, minimum):
 
 
 class BoundingBox:
+    r"""Represents a geographic bounding box.
+
+    Parameters
+    ----------
+    north: number
+        Northern latitude (degrees)
+    west: number
+        Western longitude (degrees)
+    south: number
+        Southern latitude (degrees)
+    east: number
+        Eastern longitude (degrees)
+    """
+
     def __init__(self, *, north, west, south, east):
         # Convert to float as these values may come from Numpy
         self.north = min(float(north), 90.0)
@@ -65,19 +79,33 @@ class BoundingBox:
 
     @property
     def width(self):
+        """number: Returns the East-West size (degrees)"""
         return self.east - self.west
 
     @property
     def height(self):
+        """number: Returns the North-South size (degrees)"""
         return self.north - self.south
 
     @classmethod
-    def union(cls, *args):
-        if len(args) == 1 and isinstance(args[0], list):
-            bboxes = args[0]
-        else:
-            bboxes = list(args)
+    def union(cls, bboxes):
+        """Generates the union of a list of :obj:`BoundingBox` objects.
 
+        Parameters
+        ----------
+        bboxes: list
+            Input  :obj:`BoundingBox` objects.
+
+        Returns
+        -------
+        :obj:`BoundingBox`
+            Union of input objects.
+
+        See Also
+        --------
+        :obj:`union_with`
+
+        """
         north = max(z.north for z in bboxes)
         south = min(z.south for z in bboxes)
 
@@ -146,10 +174,40 @@ class BoundingBox:
             east=origin + east,
         )
 
-    # def union(self, other):
-    #     return self.union([self, other])
+    def union_with(self, other):
+        """Generates the union of the current object and ``other``.
+
+        Parameters
+        ----------
+        other: :obj:`BoundingBox`
+            The object to make the union with.
+
+        Returns
+        -------
+        :obj:`BoundingBox`
+            New object containing the union.
+
+        See Also
+        --------
+        :obj:`union`
+
+        """
+        return self.union([self, other])
 
     def add_margins(self, margins):
+        """Generates a new :obj:`BoundingBox` object with adjusted ``margins``.
+
+        Parameters
+        ----------
+        margins: str or number
+            The margin to be added to each side. When it is a ``str`` must specify a percentage
+            in terms of the current size like "50%", while a ``number`` must specify degrees.
+
+        Returns
+        -------
+        :obj:`BoundingBox`
+            New object with adjusted ``margins``.
+        """
         if isinstance(margins, str) and margins[-1] == "%":
             margins = int(margins[:-1]) / 100.0
             margins = max(

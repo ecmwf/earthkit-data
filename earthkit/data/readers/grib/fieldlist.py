@@ -428,7 +428,7 @@ class FieldListMixin(PandasMixIn, XarrayMixIn):
         Returns
         -------
         list
-            List with one :obj:`BoundingBox` per
+            List with one :obj:`BoundingBox <data.utils.bbox.BoundingBox>` per
             :obj:`GribField <data.readers.grib.codes.GribField>`
         """
         return [s.bounding_box() for s in self]
