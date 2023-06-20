@@ -20,6 +20,10 @@
     padding-right: 5px;
 }
 
+.eh-description {
+    color: var(--eh-font-color2);
+ }
+
 .ekd-sections {
     display: grid;
     grid-template-columns: repeat(3, auto);

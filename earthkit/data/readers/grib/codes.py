@@ -23,10 +23,6 @@ from earthkit.data.utils.message import (
 )
 from earthkit.data.utils.projections import Projection
 
-# import threading
-# import time
-
-
 LOG = logging.getLogger(__name__)
 
 _GRIB_NAMESPACES = {"default": None}
@@ -100,17 +96,6 @@ class GribCodesMessagePositionIndex(CodesMessagePositionIndex):
             os.close(fd)
 
 
-# # For some reason, cffi can ge stuck in the GC if that function
-# # needs to be called defined for the first time in a GC thread.
-# try:
-#     _h = eccodes.codes_new_from_samples(
-#         "regular_ll_pl_grib1", eccodes.CODES_PRODUCT_GRIB
-#     )
-#     eccodes.codes_release(_h)
-# except Exception:
-#     pass
-
-
 class GribCodesHandle(CodesHandle):
     PRODUCT_ID = eccodes.CODES_PRODUCT_GRIB
 
@@ -123,18 +108,7 @@ class GribCodesHandle(CodesHandle):
         elif name == "md5GridSection":
             return self.get_md5GridSection()
 
-        # if ktype is None:
-        #     name, _, key_type_str = name.partition(":")
-        #     if key_type_str in CodesHandle.KEY_TYPES:
-        #         ktype = CodesHandle.KEY_TYPES[key_type_str]
-
         return super().get(name, ktype, **kwargs)
-
-        # if "default" in kwargs:
-        #     return super().get(name, ktype=ktype, **kwargs)
-        # else:
-        #     # this will throw if name is not available
-        #     return super()._get(name, ktype=ktype)
 
     def get_md5GridSection(self):
         # Special case because:
@@ -162,12 +136,6 @@ class GribCodesHandle(CodesHandle):
         result = eccodes.codes_get_string(self._handle, "md5GridSection")
         eccodes.codes_set_long(self._handle, "shapeOfTheEarth", save)
         return result
-
-    # def get_string(self, name):
-    #     return self.get(name, ktype=str)
-
-    # def get_long(self, name):
-    #     return self.get(name, ktype=int)
 
     def as_namespace(self, namespace, param="shortName"):
         r = {}
@@ -216,292 +184,10 @@ class GribCodesHandle(CodesHandle):
         assert self.path is None, "Only cloned handles can have values changed"
         eccodes.codes_set_key_vals(self._handle, values)
 
-    # def set_long(self, name, value):
-    #     try:
-    #         assert self.path is None, "Only cloned handles can have values changed"
-    #         eccodes.codes_set_long(self._handle, name, value)
-    #     except Exception as e:
-    #         LOG.error("Error setting %s=%s", name, value)
-    #         LOG.exception(e)
-
-    # def set_double(self, name, value):
-    #     try:
-    #         assert self.path is None, "Only cloned handles can have values changed"
-    #         eccodes.codes_set_double(self._handle, name, value)
-    #     except Exception as e:
-    #         LOG.error("Error setting %s=%s", name, value)
-    #         LOG.exception(e)
-
-    # def set_string(self, name, value):
-    #     try:
-    #         assert self.path is None, "Only cloned handles can have values changed"
-    #         eccodes.codes_set_string(self._handle, name, value)
-    #     except Exception as e:
-    #         LOG.error("Error setting %s=%s", name, value)
-    #         LOG.exception(e)
-
-    # def set(self, name, value):
-    #     try:
-    #         assert self.path is None, "Only cloned handles can have values changed"
-
-    #         if isinstance(value, list):
-    #             return eccodes.codes_set_array(self._handle, name, value)
-
-    #         return eccodes.codes_set(self._handle, name, value)
-    #     except Exception as e:
-    #         LOG.error("Error setting %s=%s", name, value)
-    #         LOG.exception(e)
-
-    # def write(self, f):
-    #     eccodes.codes_write(self._handle, f)
-
-    # def save(self, path):
-    #     with open(path, "wb") as f:
-    #         self.write_to(f)
-    #         self.path = path
-    #         self.offset = 0
-
-    # def read_bytes(self, offset, length):
-    #     if self.path is not None:
-    #         with open(self.path, "rb") as f:
-    #             f.seek(offset)
-    #             return f.read(length)
-
-
-# class CodesHandle(eccodes.Message):
-#     MISSING_VALUE = np.finfo(np.float32).max
-#     KEY_TYPES = {"s": str, "l": int, "d": float}
-
-#     def __init__(self, handle, path, offset):
-#         super().__init__(handle)
-#         self.path = path
-#         self.offset = offset
-
-#     @classmethod
-#     def from_sample(cls, name):
-#         return cls(
-#             eccodes.codes_new_from_samples(name, eccodes.CODES_PRODUCT_GRIB), None, None
-#         )
-
-#     # TODO: just a wrapper around the base class implementation to handle the
-#     # s,l,d qualifiers. Once these are implemented in the base class this method can
-#     # be removed. md5GridSection is also handled!
-#     def get(self, name, ktype=None, **kwargs):
-#         if name == "values":
-#             return self.get_values()
-#         elif name == "md5GridSection":
-#             return self.get_md5GridSection()
-
-#         if ktype is None:
-#             name, _, key_type_str = name.partition(":")
-#             if key_type_str in CodesHandle.KEY_TYPES:
-#                 ktype = CodesHandle.KEY_TYPES[key_type_str]
-
-#         if "default" in kwargs:
-#             return super().get(name, ktype=ktype, **kwargs)
-#         else:
-#             # this will throw if name is not available
-#             return super()._get(name, ktype=ktype)
-
-#     def get_md5GridSection(self):
-#         # Special case because:
-#         #
-#         # 1) eccodes is returning size > 1 for 'md5GridSection'
-#         # (size = 16 : it is the number of bytes of the value)
-#         # This is already fixed in eccodes 2.27.1
-#         #
-#         # 2) sometimes (see below), the value for "shapeOfTheEarth" is inconsistent.
-#         # This impacts the (computed on-the-fly) value of "md5GridSection".
-#         # ----------------
-#         # Example of data with inconsistent values:
-#         # S2S data, origin='ecmf', param='tp', step='24', number='0', date=['20201203','20200702']
-#         # the 'md5GridSection' are different
-#         # This is because one has "shapeOfTheEarth" set to 0, the other to 6.
-#         # This is only impacting the metadata.
-#         # Since this has no impact on the data itself,
-#         # this is unlikely to be fixed. Therefore this hacky patch.
-#         #
-#         # Obviously, the patch causes an inconsistency between the value of md5GridSection
-#         # read by this code, and the value read by another code without this patch.
-
-#         save = eccodes.codes_get_long(self._handle, "shapeOfTheEarth")
-#         eccodes.codes_set_long(self._handle, "shapeOfTheEarth", 255)
-#         result = eccodes.codes_get_string(self._handle, "md5GridSection")
-#         eccodes.codes_set_long(self._handle, "shapeOfTheEarth", save)
-#         return result
-
-#     def get_string(self, name):
-#         return self.get(name, ktype=str)
-
-#     def get_long(self, name):
-#         return self.get(name, ktype=int)
-
-#     def as_namespace(self, namespace, param="shortName"):
-#         r = {}
-#         ignore = {
-#             "distinctLatitudes",
-#             "distinctLongitudes",
-#             "distinctLatitudes",
-#             "latLonValues",
-#             "latitudes",
-#             "longitudes",
-#             "values",
-#         }
-#         for key in self.keys(namespace=namespace):
-#             if key not in ignore:
-#                 r[key] = self.get(param if key == "param" else key)
-#         return r
-
-#     # TODO: once missing value handling is implemented in the base class this method
-#     # can be removed
-#     def get_values(self):
-#         eccodes.codes_set(self._handle, "missingValue", CodesHandle.MISSING_VALUE)
-#         vals = eccodes.codes_get_values(self._handle)
-#         if self.get_long("bitmapPresent"):
-#             vals[vals == CodesHandle.MISSING_VALUE] = np.nan
-#         return vals
-
-#     def get_latitudes(self):
-#         return self.get("latitudes")
-
-#     def get_longitudes(self):
-#         return self.get("longitudes")
-
-#     def get_data_points(self):
-#         return eccodes.codes_grib_get_data(self._handle)
-
-#     def clone(self):
-#         return CodesHandle(eccodes.codes_clone(self._handle), None, None)
-
-#     def set_values(self, values):
-#         assert self.path is None, "Only cloned handles can have values changed"
-#         eccodes.codes_set_values(self._handle, values.flatten())
-#         # This is writing on the GRIB that something has been modified (255=unknown)
-#         eccodes.codes_set_long(self._handle, "generatingProcessIdentifier", 255)
-
-#     def set_multiple(self, values):
-#         assert self.path is None, "Only cloned handles can have values changed"
-#         eccodes.codes_set_key_vals(self._handle, values)
-
-#     def set_long(self, name, value):
-#         try:
-#             assert self.path is None, "Only cloned handles can have values changed"
-#             eccodes.codes_set_long(self._handle, name, value)
-#         except Exception as e:
-#             LOG.error("Error setting %s=%s", name, value)
-#             LOG.exception(e)
-
-#     def set_double(self, name, value):
-#         try:
-#             assert self.path is None, "Only cloned handles can have values changed"
-#             eccodes.codes_set_double(self._handle, name, value)
-#         except Exception as e:
-#             LOG.error("Error setting %s=%s", name, value)
-#             LOG.exception(e)
-
-#     def set_string(self, name, value):
-#         try:
-#             assert self.path is None, "Only cloned handles can have values changed"
-#             eccodes.codes_set_string(self._handle, name, value)
-#         except Exception as e:
-#             LOG.error("Error setting %s=%s", name, value)
-#             LOG.exception(e)
-
-#     def set(self, name, value):
-#         try:
-#             assert self.path is None, "Only cloned handles can have values changed"
-
-#             if isinstance(value, list):
-#                 return eccodes.codes_set_array(self._handle, name, value)
-
-#             return eccodes.codes_set(self._handle, name, value)
-#         except Exception as e:
-#             LOG.error("Error setting %s=%s", name, value)
-#             LOG.exception(e)
-
-#     def write(self, f):
-#         eccodes.codes_write(self._handle, f)
-
-#     def save(self, path):
-#         with open(path, "wb") as f:
-#             self.write_to(f)
-#             self.path = path
-#             self.offset = 0
-
-#     def read_bytes(self, offset, length):
-#         if self.path is not None:
-#             with open(self.path, "rb") as f:
-#                 f.seek(offset)
-#                 return f.read(length)
-
-
-# class ReaderLRUCache(dict):
-#     def __init__(self, size):
-#         self.readers = dict()
-#         self.lock = threading.Lock()
-#         self.size = size
-
-#     def __getitem__(self, path_and_cls):
-#         path = path_and_cls[0]
-#         cls = path_and_cls[1]
-#         key = (path, os.getpid())
-#         with self.lock:
-#             try:
-#                 return super().__getitem__(key)
-#             except KeyError:
-#                 pass
-
-#             c = self[key] = cls(path)
-#             while len(self) >= self.size:
-#                 _, oldest = min((v.last, k) for k, v in self.items())
-#                 del self[oldest]
-
-#             return c
-
-
-# cache = ReaderLRUCache(32)  # TODO: Add to config
-
 
 class GribCodesReader(CodesReader):
     PRODUCT_ID = eccodes.CODES_PRODUCT_GRIB
     HANDLE_TYPE = GribCodesHandle
-
-
-# class CodesReader:
-#     PRODUCT_ID = None
-#     HANDLE_TYPE = None
-
-#     def __init__(self, path):
-#         self.path = path
-#         self.lock = threading.Lock()
-#         # print("OPEN", self.path)
-#         self.file = open(self.path, "rb")
-#         self.last = time.time()
-
-#     def __del__(self):
-#         try:
-#             # print("CLOSE", self.path)
-#             self.file.close()
-#         except Exception:
-#             pass
-
-#     @classmethod
-#     def from_cache(cls, path):
-#         return cache[(path, cls)]
-
-#     def at_offset(self, offset):
-#         with self.lock:
-#             self.last = time.time()
-#             self.file.seek(offset, 0)
-#             handle = eccodes.codes_new_from_file(
-#                 self.file,
-#                 self.PRODUCT_ID,
-#             )
-#             assert handle is not None
-#             return self.HANDLE_TYPE(handle, self.path, offset)
-
-#     def __repr__(self):
-#         return f"{self.__class__.__name__}({self.path}"
 
 
 class GribField(Base):

@@ -11,7 +11,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_examples_file, earthkit_remote_test_data_file
 
 
 def test_bufr_ls_invalid_num():
@@ -124,3 +124,85 @@ def test_bufr_tail_num():
 
     df = f.tail(2)
     assert ref == df.to_dict()
+
+
+def test_bufr_dump():
+    ds = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    r = ds[0].dump()
+    assert isinstance(r, dict)
+    assert "header" in r
+    assert "data" in r
+
+
+@pytest.mark.parametrize(
+    "_kwargs,expected_val", [({"subset": 1}, 1), ({}, 1), ({"subset": 2}, 2)]
+)
+def test_bufr_dump_uncompressed(_kwargs, expected_val):
+    ds = from_source(
+        "url",
+        earthkit_remote_test_data_file(
+            "test-data/synop_multi_subset_uncompressed.bufr"
+        ),
+    )
+    n = ds[0].subsets()
+    assert n == 12
+
+    r = ds[0].dump(**_kwargs)
+    assert isinstance(r, dict)
+    assert "header" in r
+    assert "data" in r
+    assert r["data"][0] == dict(key="subsetNumber", value=expected_val, units=None)
+
+
+@pytest.mark.parametrize("_kwargs", [{"subset": 0}, {"subset": None}])
+def test_bufr_dump_uncompressed_full(_kwargs):
+    ds = from_source(
+        "url",
+        earthkit_remote_test_data_file(
+            "test-data/synop_multi_subset_uncompressed.bufr"
+        ),
+    )
+
+    n = ds[0].subsets()
+    assert n == 12
+
+    r = ds[0].dump(**_kwargs)
+    assert isinstance(r, dict)
+    assert "header" in r
+    assert "data" in r
+    d = r["data"]
+    for i in range(n):
+        assert d[i][0] == dict(key="subsetNumber", value=i + 1, units=None)
+
+
+@pytest.mark.parametrize(
+    "_kwargs, expected_val",
+    [
+        ({"subset": 0}, "[0, ...] (51 items)"),
+        ({"subset": None}, "[0, ...] (51 items)"),
+        ({"subset": 1}, "0 (51 items)"),
+        ({}, "0 (51 items)"),
+        ({"subset": 2}, "1 (51 items)"),
+    ],
+)
+def test_bufr_dump_compressed(_kwargs, expected_val):
+    ds = from_source(
+        "url",
+        earthkit_remote_test_data_file("test-data/ens_multi_subset_compressed.bufr"),
+    )
+    n = ds[0].subsets()
+    assert n == 51
+
+    r = ds[0].dump(**_kwargs)
+    assert isinstance(r, dict)
+    assert "header" in r
+    assert "data" in r
+    assert r["data"][1] == dict(
+        key="ensembleMemberNumber", value=expected_val, units="Numeric"
+    )
+
+
+if __name__ == "__main__":
+    from earthkit.data.testing import main
+
+    main()

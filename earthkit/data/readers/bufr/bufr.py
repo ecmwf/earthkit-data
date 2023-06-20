@@ -8,21 +8,22 @@
 #
 
 import os
+from abc import abstractmethod
 
 import eccodes
 
 from earthkit.data.core import Base
-from earthkit.data.utils.dump import make_bufr_html_tree
+from earthkit.data.core.index import Index, MultiIndex
 from earthkit.data.utils.message import (
     CodesHandle,
     CodesMessagePositionIndex,
     CodesReader,
 )
 from earthkit.data.utils.parts import Part
+from earthkit.data.utils.summary import make_bufr_html_tree
 
-from . import Reader
-
-COLUMNS = ("latitude", "longitude", "data_datetime")
+from .. import Reader
+from .pandas import PandasMixIn
 
 BUFR_LS_KEYS = {
     "edition": "edition",
@@ -124,9 +125,10 @@ class BUFRMessage(Base):
         return self._handle
 
     def __repr__(self):
-        return "BUFRMessage(%s,%s,%s,%s)" % (
+        return "BUFRMessage(type=%s,subType=%s,subsets=%s,%s,%s)" % (
             self.handle.get("dataCategory", default=None),
             self.handle.get("dataSubCategory", default=None),
+            self.handle.get("numberOfSubsets", default=None),
             self.handle.get("typicalDate", default=None),
             self.handle.get("typicalTime", default=None),
         )
@@ -134,7 +136,16 @@ class BUFRMessage(Base):
     def _header(self, key):
         return self.handle.get(key, default=None)
 
-    def dump(self):
+    def subsets(self):
+        return self._header("numberOfSubsets")
+
+    def is_compressed(self):
+        return self.subsets() > 1 and self._header("compressedData") == 1
+
+    def is_uncompressed(self):
+        return self.subsets() > 1 and self._header("compressedData") == 0
+
+    def dump(self, subset=1):
         from earthkit.data.core.temporary import temp_file
 
         with temp_file() as filename:
@@ -145,10 +156,27 @@ class BUFRMessage(Base):
 
                 try:
                     d = json.loads(f.read())
-                    return make_bufr_html_tree(d, self.__repr__)
+                    return make_bufr_html_tree(
+                        d,
+                        self.__repr__(),
+                        subset,
+                        self.is_compressed(),
+                        self.is_uncompressed(),
+                    )
                 except Exception as e:
                     warnings.warn("Failed to parse bufr_dump", e)
                     return None
+
+    def write(self, f):
+        r"""Writes the message to a file object.
+
+        Parameters
+        ----------
+        f: file object
+            The target file object.
+        """
+        # assert isinstance(f, io.IOBase)
+        self.handle.write_to(f)
 
     def message(self):
         r"""Returns a buffer containing the encoded message.
@@ -160,71 +188,14 @@ class BUFRMessage(Base):
         return self.handle.get_buffer()
 
 
-class BUFRInOneFile:
-    def __init__(self, path):
-        self.path = path
-        self._positions = BufrCodesMessagePositionIndex(self.path)
+class BUFRList(PandasMixIn, Index):
+    def __init__(self, *args, **kwargs):
+        Index.__init__(self, *args, **kwargs)
 
-    def __getitem__(self, n):
-        if isinstance(n, int):
-            part = self.part(n if n >= 0 else len(self) + n)
-            return BUFRMessage(part.path, part.offset, part.length)
-        else:
-            return super().__getitem__(n)
-
-    def __len__(self):
-        return self.number_of_parts()
-
-    def part(self, n):
-        return Part(self.path, self._positions.offsets[n], self._positions.lengths[n])
-
-    def number_of_parts(self):
-        return len(self._positions)
-
-
-class BUFRReader(Reader):
-    """Represents a BUFR file"""
-
-    def __init__(self, source, path):
-        super().__init__(source, path)
-        self._reader = None
-
-    def to_pandas(self, columns=COLUMNS, filters=None, **kwargs):
-        """Extracts BUFR data into an pandas DataFranme using :xref:`pdbufr`.
-
-        Parameters
-        ----------
-        columns: str, sequence[str]
-            List of ecCodes BUFR keys to extract for each BUFR message/subset.
-            See: :xref:`read_bufr` for details.
-        filters: dict
-            Defines the conditions when to extract the specified ``columns``. See:
-            :xref:`read_bufr` for details.
-        **kwargs: dict, optional
-            Other keyword arguments:
-
-        Returns
-        -------
-        Pandas DataFrame
-
-        Examples
-        --------
-        :ref:`/examples/bufr.ipynb`
-
-        """
-        import pdbufr
-
-        filters = {} if filters is None else filters
-        return pdbufr.read_bufr(self.path, columns=columns, filters=filters)
-
-    def __len__(self):
-        return len(self.reader)
-
-    def __getitem__(self, n):
-        return self.reader.__getitem__(n)
-
-    def _header(self, key):
-        return self.handle.get(key, default=None)
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(_, BUFRList) for _ in sources)
+        return MultiBUFRList(sources)
 
     def ls(self, *args, **kwargs):
         from earthkit.data.utils.summary import ls
@@ -248,13 +219,83 @@ class BUFRReader(Reader):
 
         return ls(_proc, BUFR_LS_KEYS, *args, **kwargs)
 
+    def head(self, n=5, **kwargs):
+        if n <= 0:
+            raise ValueError("head: n must be > 0")
+        return self.ls(n=n, **kwargs)
+
+    def tail(self, n=5, **kwargs):
+        if n <= 0:
+            raise ValueError("n must be > 0")
+        return self.ls(n=-n, **kwargs)
+
+
+class MultiBUFRList(BUFRList, MultiIndex):
+    def __init__(self, *args, **kwargs):
+        MultiIndex.__init__(self, *args, **kwargs)
+
+
+class BUFRInFiles(BUFRList):
+    # Remote BUFRLists (with urls) are also here,
+    # as the actual fieldlist is accessed on a file in cache.
+    # This class changes the interface (_getitem__ and __len__)
+    # into the interface (part and number_of_parts).
+    def __getitem__(self, n):
+        if isinstance(n, int):
+            part = self.part(n if n >= 0 else len(self) + n)
+            return BUFRMessage(part.path, part.offset, part.length)
+        else:
+            return super().__getitem__(n)
+
+    def __len__(self):
+        return self.number_of_parts()
+
+    @abstractmethod
+    def part(self, n):
+        self._not_implemented()
+
+    @abstractmethod
+    def number_of_parts(self):
+        self._not_implemented()
+
+
+class BUFRInOneFile(BUFRInFiles):
+    def __init__(self, path):
+        self.path = path
+        self.__positions = None
+
     @property
-    def reader(self):
-        if self._reader is None:
-            self._reader = BUFRInOneFile(self.path)
-        return self._reader
+    def _positions(self):
+        if self.__positions is None:
+            self.__positions = BufrCodesMessagePositionIndex(self.path)
+        return self.__positions
+
+    def part(self, n):
+        return Part(self.path, self._positions.offsets[n], self._positions.lengths[n])
+
+    def number_of_parts(self):
+        return len(self._positions)
 
 
-def reader(source, path, magic=None, deeper_check=False):
-    if magic is None or magic[:4] == b"BUFR":
-        return BUFRReader(source, path)
+class BUFRReader(BUFRInOneFile, Reader):
+    """Represents a BUFR file"""
+
+    appendable = True  # BUFR messages can be added to the same file
+
+    def __init__(self, source, path):
+        Reader.__init__(self, source, path)
+        BUFRInOneFile.__init__(self, path)
+
+    def __repr__(self):
+        return "BUFRReader(%s)" % (self.path,)
+
+    @classmethod
+    def merge(cls, readers):
+        assert all(isinstance(s, BUFRReader) for s in readers), readers
+        assert len(readers) > 1
+
+        return MultiBUFRList(readers)
+
+    def mutate_source(self):
+        # A BUFRReader is a source itself
+        return self
