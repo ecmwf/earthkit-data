@@ -10,12 +10,12 @@
 #
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_examples_file, earthkit_remote_test_data_file
 
 
 def test_bufr_concat():
     ds1 = from_source("file", earthkit_examples_file("temp_10.bufr"))
-    ds2 = from_source("file", earthkit_examples_file("synop_10.bufr"))
+    ds2 = from_source("url", earthkit_remote_test_data_file("examples/synop_10.bufr"))
     ds = ds1 + ds2
 
     assert len(ds) == 20
