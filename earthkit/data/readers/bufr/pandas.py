@@ -11,13 +11,28 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
-
 COLUMNS = ("latitude", "longitude", "data_datetime")
+
+# todo: remove it when pdbufr with message list support is released
+_MESSAGE_LIST_SUPPORT = None
+
+
+def has_message_list_support():
+    global _MESSAGE_LIST_SUPPORT
+    if _MESSAGE_LIST_SUPPORT is None:
+        try:
+            from pdbufr.bufr_read import _read_bufr  # noqa
+
+            _MESSAGE_LIST_SUPPORT = True
+        except Exception:
+            _MESSAGE_LIST_SUPPORT = False
+
+    return _MESSAGE_LIST_SUPPORT
 
 
 class PandasMixIn:
     def to_pandas(self, columns=COLUMNS, filters=None, **kwargs):
-        """Extracts BUFR data into an pandas DataFranme using :xref:`pdbufr`.
+        """Extracts BUFR data into a pandas DataFranme using :xref:`pdbufr`.
 
         Parameters
         ----------
@@ -42,4 +57,13 @@ class PandasMixIn:
         import pdbufr
 
         filters = {} if filters is None else filters
-        return pdbufr.read_bufr(self.path, columns=columns, filters=filters)
+
+        if has_message_list_support():
+            return pdbufr.read_bufr(self, columns=columns, filters=filters, **kwargs)
+        else:
+            if hasattr(self, "path"):
+                return pdbufr.read_bufr(self.path, columns=columns, filters=filters)
+            else:
+                raise NotImplementedError(
+                    "to_pandas is only supported for single files"
+                )

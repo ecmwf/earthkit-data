@@ -25,6 +25,17 @@ from earthkit.data.utils.summary import make_bufr_html_tree
 from .. import Reader
 from .pandas import PandasMixIn
 
+try:
+    from pdbufr.high_level_bufr.bufr import bufr_code_is_coord
+except Exception:
+
+    def bufr_code_is_coord(code):
+        try:
+            return code <= 9999
+        except Exception:
+            return int(code[:3]) < 10
+
+
 BUFR_LS_KEYS = {
     "edition": "edition",
     "type": "dataCategory",
@@ -103,6 +114,29 @@ class BUFRCodesHandle(CodesHandle):
             eccodes.codes_dump(self._handle, f, "json")
         self.pack()
 
+    def __iter__(self):
+        class _KeyIterator:
+            def __init__(self, handle):
+                self._iterator = eccodes.codes_bufr_keys_iterator_new(handle)
+
+            def __del__(self):
+                try:
+                    eccodes.codes_bufr_keys_iterator_delete(self._iterator)
+                except Exception:
+                    pass
+
+            def __iter__(self):
+                return self
+
+            def __next__(self):
+                while True:
+                    if not eccodes.codes_bufr_keys_iterator_next(self._iterator):
+                        raise StopIteration
+
+                    return eccodes.codes_bufr_keys_iterator_get_name(self._iterator)
+
+        return _KeyIterator(self._handle)
+
 
 class BUFRCodesReader(CodesReader):
     PRODUCT_ID = eccodes.CODES_PRODUCT_BUFR
@@ -144,6 +178,45 @@ class BUFRMessage(Base):
 
     def is_uncompressed(self):
         return self.subsets() > 1 and self._header("compressedData") == 0
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._handle = None
+
+    def __setitem__(self, key, value):
+        """Sets value associated with ``key``"""
+        if isinstance(value, list):
+            return eccodes.codes_set_array(self.handle._handle, key, value)
+        else:
+            return eccodes.codes_set(self.handle._handle, key, value)
+
+    def __getitem__(self, key):
+        """Returns the value of the ``key``."""
+        return self.handle.get(key)
+
+    def __iter__(self):
+        """Returns an iterator for the keys the message contains."""
+        return self.handle.__iter__()
+
+    def is_coord(self, key):
+        """Check if the specified key is a BUFR coordinate descriptor
+
+        Parameters
+        ----------
+        key: str
+            Key name (can contain ecCodes rank)
+
+        Returns
+        -------
+        bool
+            True if the specified ``key`` is a BUFR coordinate descriptor
+        """
+        try:
+            return bufr_code_is_coord(self.d[key + "->code"])
+        except Exception:
+            return False
 
     def dump(self, subset=1):
         from earthkit.data.core.temporary import temp_file

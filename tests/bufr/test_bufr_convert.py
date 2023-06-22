@@ -13,6 +13,7 @@ import pandas as pd
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.readers.bufr.pandas import has_message_list_support
 from earthkit.data.testing import earthkit_examples_file
 
 assert_frame_equal = pd.testing.assert_frame_equal
@@ -54,8 +55,9 @@ def test_bufr_to_pandas_filters():
     assert_frame_equal(res, ref[res.columns])
 
 
-@pytest.mark.skip(reason="not implemented")
+@pytest.mark.skipif(not has_message_list_support(), reason="not implemented")
 def test_bufr_to_pandas_multi():
+    print(f"support={has_message_list_support()}")
     ds = from_source("file", earthkit_examples_file("temp_10.bufr")) + from_source(
         "file", earthkit_examples_file("synop_10.bufr")
     )
