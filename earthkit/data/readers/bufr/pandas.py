@@ -32,7 +32,7 @@ def has_message_list_support():
 
 class PandasMixIn:
     def to_pandas(self, columns=COLUMNS, filters=None, **kwargs):
-        """Extracts BUFR data into a pandas DataFranme using :xref:`pdbufr`.
+        """Extracts BUFR data into a pandas DataFrame using :xref:`pdbufr`.
 
         Parameters
         ----------
@@ -51,7 +51,8 @@ class PandasMixIn:
 
         Examples
         --------
-        :ref:`/examples/bufr.ipynb`
+        :ref:`/examples/bufr_temp.ipynb`
+        :ref:`/examples/bufr_synop.ipynb`
 
         """
         import pdbufr
@@ -65,5 +66,5 @@ class PandasMixIn:
                 return pdbufr.read_bufr(self.path, columns=columns, filters=filters)
             else:
                 raise NotImplementedError(
-                    "to_pandas is only supported for single files"
+                    "to_pandas is only supported for single BUFR files"
                 )
