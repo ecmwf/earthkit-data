@@ -18,7 +18,7 @@ def test_grib_describe():
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     # full contents
-    df = f.describe(print=False)
+    df = f.describe()
     df = df.data
 
     ref = {
@@ -77,7 +77,7 @@ def test_grib_describe():
     assert ref == df.to_dict()
 
     # single param by shortName
-    df = f.describe("t", print=False)
+    df = f.describe("t")
     df = df.data
 
     ref = {
@@ -99,7 +99,7 @@ def test_grib_describe():
     assert ref[0] == df[0].to_dict()
 
     # repeated use
-    df = f.describe(param="t", print=False)
+    df = f.describe(param="t")
     df = df.data
     assert ref[0] == df[0].to_dict()
 
@@ -112,7 +112,7 @@ def test_grib_describe():
     assert ref[0] == df[0].to_dict()
 
     # single param by paramId
-    df = f.describe(130, print=False)
+    df = f.describe(130)
     df = df.data
 
     ref = {
@@ -133,14 +133,6 @@ def test_grib_describe():
 
     assert ref[0] == df[0].to_dict()
 
-    df = f.describe(param=130, print=False)
-    df = df.data
-    assert ref[0] == df[0].to_dict()
-
-    df = f.describe(130)
-    df = df.data
-    assert ref[0] == df[0].to_dict()
-
     df = f.describe(param=130)
     df = df.data
     assert ref[0] == df[0].to_dict()
@@ -151,7 +143,7 @@ def test_grib_ls():
 
     # default keys
     f1 = f.sel(count=[1, 2, 3, 4])
-    df = f1.ls(print=False)
+    df = f1.ls()
 
     ref = {
         "centre": {0: "ecmf", 1: "ecmf", 2: "ecmf", 3: "ecmf"},
@@ -180,7 +172,7 @@ def test_grib_ls():
 
     # extra keys
     f1 = f.sel(count=[1, 2])
-    df = f1.ls(extra_keys=["paramId"], print=False)
+    df = f1.ls(extra_keys=["paramId"])
 
     ref = {
         "centre": {0: "ecmf", 1: "ecmf"},
@@ -204,7 +196,7 @@ def test_grib_ls_keys():
 
     # default keys
     # positive num (=head)
-    df = f.ls(n=2, keys=["shortName", "bitsPerValue", "gridType"], print=False)
+    df = f.ls(n=2, keys=["shortName", "bitsPerValue", "gridType"])
     ref = {
         "shortName": {0: "t", 1: "u"},
         "bitsPerValue": {0: 4, 1: 4},
@@ -214,7 +206,7 @@ def test_grib_ls_keys():
     assert ref == df.to_dict()
 
     # negative num (=tail)
-    df = f.ls(n=-2, keys=["shortName", "bitsPerValue", "gridType"], print=False)
+    df = f.ls(n=-2, keys=["shortName", "bitsPerValue", "gridType"])
     ref = {
         "shortName": {0: "u", 1: "v"},
         "bitsPerValue": {0: 4, 1: 4},
@@ -227,15 +219,15 @@ def test_grib_ls_keys():
 def test_grib_ls_namespace():
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
-    df = f.ls(n=2, namespace="vertical", print=False)
+    df = f.ls(n=2, namespace="vertical")
     ref = {
         "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
         "level": {0: 1000, 1: 1000},
     }
     assert ref == df.to_dict()
 
-    df = f.ls(n=2, namespace="vertical", extra_keys="shortName", print=False)
-    print(df.to_dict())
+    df = f.ls(n=2, namespace="vertical", extra_keys="shortName")
+
     ref = {
         "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
         "level": {0: 1000, 1: 1000},
@@ -247,16 +239,16 @@ def test_grib_ls_namespace():
 def test_grib_ls_invalid_num():
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     with pytest.raises(ValueError):
-        f.ls(n=0, print=False)
+        f.ls(n=0)
 
     with pytest.raises(ValueError):
-        f.ls(0, print=False)
+        f.ls(0)
 
 
 def test_grib_ls_invalid_arg():
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-    with pytest.raises(ValueError):
-        f.ls(invalid=1, print=False)
+    with pytest.raises(TypeError):
+        f.ls(invalid=1)
 
 
 def test_grib_ls_num():
@@ -265,7 +257,7 @@ def test_grib_ls_num():
     # default keys
 
     # positive num (=head)
-    df = f.ls(n=2, print=False)
+    df = f.ls(n=2)
     ref = {
         "centre": {0: "ecmf", 1: "ecmf"},
         "shortName": {0: "t", 1: "u"},
@@ -281,11 +273,11 @@ def test_grib_ls_num():
 
     assert ref == df.to_dict()
 
-    df = f.ls(2, print=False)
+    df = f.ls(2)
     assert ref == df.to_dict()
 
     # negative num (=tail)
-    df = f.ls(n=-2, print=False)
+    df = f.ls(n=-2)
     ref = {
         "centre": {0: "ecmf", 1: "ecmf"},
         "shortName": {0: "u", 1: "v"},
@@ -301,7 +293,7 @@ def test_grib_ls_num():
 
     assert ref == df.to_dict()
 
-    df = f.ls(-2, print=False)
+    df = f.ls(-2)
     assert ref == df.to_dict()
 
 
@@ -309,7 +301,7 @@ def test_grib_head_num():
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     # default keys
-    df = f.head(n=2, print=False)
+    df = f.head(n=2)
     ref = {
         "centre": {0: "ecmf", 1: "ecmf"},
         "shortName": {0: "t", 1: "u"},
@@ -325,7 +317,7 @@ def test_grib_head_num():
 
     assert ref == df.to_dict()
 
-    df = f.head(2, print=False)
+    df = f.head(2)
     assert ref == df.to_dict()
 
 
@@ -333,7 +325,7 @@ def test_grib_tail_num():
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     # default keys
-    df = f.tail(n=2, print=False)
+    df = f.tail(n=2)
     ref = {
         "centre": {0: "ecmf", 1: "ecmf"},
         "shortName": {0: "u", 1: "v"},
@@ -349,7 +341,7 @@ def test_grib_tail_num():
 
     assert ref == df.to_dict()
 
-    df = f.tail(2, print=False)
+    df = f.tail(2)
     assert ref == df.to_dict()
 
 
@@ -368,7 +360,7 @@ def test_grib_dump():
     )
 
     # default
-    r = f[0].dump(print=False, _as_raw=True)
+    r = f[0].dump(_as_raw=True)
     ref = [
         {
             "title": "ls",
@@ -462,7 +454,7 @@ def test_grib_dump():
             assert d == [x for x in ref if x["title"] == ns][0], ns
 
     # a namespace
-    r = f[0].dump(namespace="mars", print=False, _as_raw=True)
+    r = f[0].dump(namespace="mars", _as_raw=True)
     ref = [
         {
             "title": "mars",
@@ -485,7 +477,7 @@ def test_grib_dump():
     assert r == ref
 
     # namespace reformatted
-    r = f[0].dump(namespace="mars", print=False, _as_raw=False)
+    r = f[0].dump(namespace="mars", _as_raw=False)
     ref = {
         "mars": {
             "domain": "g",

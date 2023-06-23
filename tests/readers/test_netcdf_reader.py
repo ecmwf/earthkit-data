@@ -196,8 +196,11 @@ def test_netcdf_to_points_1():
 
 
 def test_bbox():
-    s = from_source("file", earthkit_file("docs/examples/test.nc"))
-    assert s.bounding_box().as_tuple() == (73, -27, 33, 45), s.bounding_box()
+    ds = from_source("file", earthkit_file("docs/examples/test.nc"))
+    bb = ds.bounding_box()
+    assert len(bb) == 2
+    for b in bb:
+        assert b.as_tuple() == (73, -27, 33, 45)
 
 
 def test_netcdf_proj_string_non_cf():
