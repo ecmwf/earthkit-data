@@ -13,7 +13,6 @@ from collections import defaultdict
 
 from earthkit.data.core.caching import auxiliary_cache_file
 from earthkit.data.core.index import ScaledIndex
-from earthkit.data.utils.bbox import BoundingBox
 
 from .pandas import PandasMixIn
 from .xarray import XarrayMixIn
@@ -421,10 +420,10 @@ class FieldListMixin(PandasMixIn, XarrayMixIn):
         Returns
         -------
         list
-            List with one :obj:`BoundingBox` per
+            List with one :obj:`BoundingBox <data.utils.bbox.BoundingBox>` per
             :obj:`GribField <data.readers.grib.codes.GribField>`
         """
-        return BoundingBox.multi_merge([s.bounding_box() for s in self])
+        return [s.bounding_box() for s in self]
 
     def statistics(self):
         import numpy as np

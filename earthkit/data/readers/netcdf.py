@@ -397,7 +397,7 @@ class NetCDFReader(Reader):
         return {"base_time": r, "valid_time": r}
 
     def bounding_box(self):
-        return BoundingBox.multi_merge([s.bounding_box() for s in self.get_fields()])
+        return [s.bounding_box() for s in self.get_fields()]
 
 
 def reader(source, path, magic=None, deeper_check=False):
