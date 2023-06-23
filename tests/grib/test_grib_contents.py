@@ -752,7 +752,50 @@ def test_grib_from_memory():
         assert sn == ["2t"]
 
 
-def test_grib_from_stream_single_group():
+def test_grib_from_stream_invalid_args():
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        with pytest.raises(TypeError):
+            from_source("stream", stream, order_by="level")
+
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        with pytest.raises(TypeError):
+            from_source("stream", stream, group_by=1)
+
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        with pytest.raises(TypeError):
+            from_source("stream", stream, group_by=["level", 1])
+
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        with pytest.raises(TypeError):
+            from_source("stream", stream, group_by="level", batch_size=1)
+
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        with pytest.raises(ValueError):
+            from_source("stream", stream, batch_size=-1)
+
+
+@pytest.mark.parametrize("group_by", ["level", ["level", "gridType"]])
+def test_grib_from_stream_group_by(group_by):
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        fs = from_source("stream", stream, group_by=group_by)
+
+        # no methods are available
+        with pytest.raises(TypeError):
+            len(fs)
+
+        ref = [
+            [("t", 1000), ("u", 1000), ("v", 1000)],
+            [("t", 850), ("u", 850), ("v", 850)],
+        ]
+        for i, f in enumerate(fs):
+            assert len(f) == 3
+            assert f.metadata(("param", "level")) == ref[i]
+
+        # stream consumed, no data is available
+        assert sum([1 for _ in fs]) == 0
+
+
+def test_grib_from_stream_single_batch():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         fs = from_source("stream", stream)
 
@@ -768,14 +811,11 @@ def test_grib_from_stream_single_group():
 
         assert val == ref
 
-        # no data is available
-        i = 0
-        for f in fs:
-            i += 1
-        assert i == 0
+        # stream consumed, no data is available
+        assert sum([1 for _ in fs]) == 0
 
 
-def test_grib_from_stream_multi_group():
+def test_grib_from_stream_multi_batch():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         fs = from_source("stream", stream, batch_size=2)
 
@@ -788,11 +828,8 @@ def test_grib_from_stream_multi_group():
             assert len(f) == 2
             f.metadata("param") == ref[i]
 
-        # no data is available
-        i = 0
-        for f in fs:
-            i += 1
-        assert i == 0
+        # stream consumed, no data is available
+        assert sum([1 for _ in fs]) == 0
 
 
 def test_grib_from_stream_in_memory():
