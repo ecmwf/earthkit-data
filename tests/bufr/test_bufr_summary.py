@@ -144,7 +144,7 @@ def test_bufr_dump_uncompressed(_kwargs, expected_val):
             "test-data/synop_multi_subset_uncompressed.bufr"
         ),
     )
-    n = ds[0].subsets()
+    n = ds[0].subset_count()
     assert n == 12
 
     r = ds[0].dump(**_kwargs)
@@ -163,7 +163,7 @@ def test_bufr_dump_uncompressed_full(_kwargs):
         ),
     )
 
-    n = ds[0].subsets()
+    n = ds[0].subset_count()
     assert n == 12
 
     r = ds[0].dump(**_kwargs)
@@ -190,7 +190,7 @@ def test_bufr_dump_compressed(_kwargs, expected_val):
         "url",
         earthkit_remote_test_data_file("test-data/ens_multi_subset_compressed.bufr"),
     )
-    n = ds[0].subsets()
+    n = ds[0].subset_count()
     assert n == 51
 
     r = ds[0].dump(**_kwargs)

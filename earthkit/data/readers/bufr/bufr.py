@@ -170,14 +170,14 @@ class BUFRMessage(Base):
     def _header(self, key):
         return self.handle.get(key, default=None)
 
-    def subsets(self):
+    def subset_count(self):
         return self._header("numberOfSubsets")
 
     def is_compressed(self):
-        return self.subsets() > 1 and self._header("compressedData") == 1
+        return self.subset_count() > 1 and self._header("compressedData") == 1
 
     def is_uncompressed(self):
-        return self.subsets() > 1 and self._header("compressedData") == 0
+        return self.subset_count() > 1 and self._header("compressedData") == 0
 
     def __enter__(self):
         return self
@@ -248,7 +248,6 @@ class BUFRMessage(Base):
         f: file object
             The target file object.
         """
-        # assert isinstance(f, io.IOBase)
         self.handle.write_to(f)
 
     def message(self):

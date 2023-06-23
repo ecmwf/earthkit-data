@@ -17,7 +17,7 @@ def test_bufr_iteration():
     assert len(ds) == 10
     assert len([x for x in ds]) == 10
     for f in ds:
-        assert f.subsets() == 1
+        assert f.subset_count() == 1
 
 
 def test_bufr_message_repr():
@@ -27,7 +27,7 @@ def test_bufr_message_repr():
 
 def test_bufr_metadata():
     ds = from_source("file", earthkit_examples_file("temp_10.bufr"))
-    assert ds[0].subsets() == 1
+    assert ds[0].subset_count() == 1
     assert ds[0].is_compressed() is False
     assert ds[0].is_uncompressed() is False
 
@@ -41,7 +41,7 @@ def test_bufr_metadata_uncompressed():
     )
     assert len(ds) == 1
     f = ds[0]
-    assert f.subsets() == 12
+    assert f.subset_count() == 12
     assert f.is_compressed() is False
     assert f.is_uncompressed() is True
 
@@ -53,7 +53,7 @@ def test_bufr_metadata_compressed():
     )
     assert len(ds) == 1
     f = ds[0]
-    assert f.subsets() == 51
+    assert f.subset_count() == 51
     assert f.is_compressed() is True
     assert f.is_uncompressed() is False
 
