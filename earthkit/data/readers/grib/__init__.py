@@ -11,26 +11,32 @@ import logging
 LOG = logging.getLogger(__name__)
 
 
-def _match_magic(magic):
-    return magic is None or (len(magic) >= 4 and magic[:4] == b"GRIB")
+def _match_magic(magic, deeper_check):
+    if magic is not None:
+        type_id = b"GRIB"
+        if not deeper_check:
+            return len(magic) >= 4 and magic[:4] == type_id
+        else:
+            return type_id in magic
+    return False
 
 
 def reader(source, path, magic=None, deeper_check=False):
-    if _match_magic(magic):
+    if _match_magic(magic, deeper_check):
         from .reader import GRIBReader
 
         return GRIBReader(source, path)
 
 
 def memory_reader(source, buf, magic=None, deeper_check=False):
-    if _match_magic(magic):
+    if _match_magic(magic, deeper_check):
         from .memory import FieldListInMemory, GribMessageMemoryReader
 
         return FieldListInMemory(source, GribMessageMemoryReader(buf))
 
 
 def stream_reader(source, stream, magic=None, deeper_check=False):
-    if _match_magic(magic):
+    if _match_magic(magic, deeper_check):
         from .memory import FieldListInMemory, GribStreamReader
 
         r = GribStreamReader(stream)
