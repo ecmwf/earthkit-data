@@ -11,30 +11,21 @@ import os
 from abc import abstractmethod
 
 import eccodes
+from pdbufr.high_level_bufr.bufr import bufr_code_is_coord
 
 from earthkit.data.core import Base
-from earthkit.data.core.index import Index, MultiIndex
+from earthkit.data.core.index import Index, MaskIndex, MultiIndex
 from earthkit.data.utils.message import (
     CodesHandle,
     CodesMessagePositionIndex,
     CodesReader,
 )
+from earthkit.data.utils.metadata import metadata_argument
 from earthkit.data.utils.parts import Part
 from earthkit.data.utils.summary import make_bufr_html_tree
 
 from .. import Reader
 from .pandas import PandasMixIn
-
-try:
-    from pdbufr.high_level_bufr.bufr import bufr_code_is_coord
-except Exception:
-
-    def bufr_code_is_coord(code):
-        try:
-            return code <= 9999
-        except Exception:
-            return int(code[:3]) < 10
-
 
 BUFR_LS_KEYS = {
     "edition": "edition",
@@ -137,6 +128,13 @@ class BUFRCodesHandle(CodesHandle):
 
         return _KeyIterator(self._handle)
 
+    def keys(self, namespace=None):
+        """Iterate over all the available keys"""
+        return self.__iter__()
+
+    def as_namespace(self, namespace=None):
+        return {k: self.get(k) for k in self.keys(namespace=namespace)}
+
 
 class BUFRCodesReader(CodesReader):
     PRODUCT_ID = eccodes.CODES_PRODUCT_BUFR
@@ -200,6 +198,62 @@ class BUFRMessage(Base):
         """Returns an iterator for the keys the message contains."""
         return self.handle.__iter__()
 
+    def metadata(self, *keys, astype=None, **kwargs):
+        r"""Returns metadata values from the BUFR message.
+
+        Parameters
+        ----------
+        *keys: tuple
+            Positional arguments specifying metadata keys. Only ecCodes BUFR keys can be used
+            here. Can be empty, in this case all the keys will
+            be used.
+        astype: type name, :obj:`list` or :obj:`tuple`
+            Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
+            Otherwise, must have same the number of elements as ``keys``. Only used when
+            ``keys`` is not empty.
+        **kwargs: tuple, optional
+            Other keyword arguments:
+
+            * default: value, optional
+                Specifies the same default value for all the ``keys`` specified. When ``default`` is
+                **not present** and a key is not found or its value is a missing value
+                :obj:`metadata` will raise KeyError.
+
+        Returns
+        -------
+        single value, :obj:`list`, :obj:`tuple` or :obj:`dict`
+            - when ``keys`` is not empty:
+                - single value when ``keys`` is a str
+                - otherwise the same type as that of ``keys`` (:obj:`list` or :obj:`tuple`)
+            - when ``keys`` is empty:
+                - otherwise returns a :obj:`dict` with one item per key
+
+        Raises
+        ------
+        KeyError
+            If no ``default`` is set and a key is not found in the message or it has a missing value.
+
+        """
+        key, namespace, astype, key_arg_type = metadata_argument(
+            *keys, namespace=None, astype=astype
+        )
+
+        assert isinstance(key, list)
+        assert isinstance(namespace, (list, tuple))
+
+        if key:
+            assert isinstance(astype, (list, tuple))
+            r = [self.handle.get(k, ktype=kt, **kwargs) for k, kt in zip(key, astype)]
+
+            if key_arg_type == str:
+                return r[0]
+            elif key_arg_type == tuple:
+                return tuple(r)
+            else:
+                return r
+        else:
+            return self.handle.as_namespace()
+
     def is_coord(self, key):
         """Check if the specified key is a BUFR coordinate descriptor
 
@@ -260,15 +314,7 @@ class BUFRMessage(Base):
         return self.handle.get_buffer()
 
 
-class BUFRList(PandasMixIn, Index):
-    def __init__(self, *args, **kwargs):
-        Index.__init__(self, *args, **kwargs)
-
-    @classmethod
-    def merge(cls, sources):
-        assert all(isinstance(_, BUFRList) for _ in sources)
-        return MultiBUFRList(sources)
-
+class BUFRListMixIn(PandasMixIn):
     def ls(self, *args, **kwargs):
         from earthkit.data.utils.summary import ls
 
@@ -300,6 +346,25 @@ class BUFRList(PandasMixIn, Index):
         if n <= 0:
             raise ValueError("n must be > 0")
         return self.ls(n=-n, **kwargs)
+
+
+class BUFRList(BUFRListMixIn, Index):
+    def __init__(self, *args, **kwargs):
+        Index.__init__(self, *args, **kwargs)
+
+    @classmethod
+    def new_mask_index(self, *args, **kwargs):
+        return MaskBUFRList(*args, **kwargs)
+
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(_, BUFRList) for _ in sources)
+        return MultiBUFRList(sources)
+
+
+class MaskBUFRList(BUFRList, MaskIndex):
+    def __init__(self, *args, **kwargs):
+        MaskIndex.__init__(self, *args, **kwargs)
 
 
 class MultiBUFRList(BUFRList, MultiIndex):

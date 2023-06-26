@@ -21,6 +21,7 @@ from earthkit.data.utils.message import (
     CodesMessagePositionIndex,
     CodesReader,
 )
+from earthkit.data.utils.metadata import metadata_argument
 from earthkit.data.utils.projections import Projection
 
 LOG = logging.getLogger(__name__)
@@ -442,52 +443,6 @@ class GribField(Base):
             name = "paramId"
         return self.handle.get(name)
 
-    # TODO: move it into core or util
-    @staticmethod
-    def _parse_metadata_args(*args, namespace=None, astype=None):
-        key = []
-        key_arg_type = None
-        if len(args) == 1 and isinstance(args[0], str):
-            key_arg_type = str
-        elif len(args) >= 1:
-            key_arg_type = tuple
-            for k in args:
-                if isinstance(k, list):
-                    key_arg_type = list
-
-        for k in args:
-            if isinstance(k, str):
-                key.append(k)
-            elif isinstance(k, (list, tuple)):
-                key.extend(k)
-            else:
-                raise ValueError(f"metadata: invalid key argument={k}")
-
-        if key:
-            if namespace is not None:
-                if not isinstance(namespace, str):
-                    raise ValueError(
-                        f"metadata: namespace={namespace} must be a str when key specified"
-                    )
-
-            if isinstance(astype, (list, tuple)):
-                if len(astype) != len(key):
-                    if len(astype) == 1:
-                        astype = [astype[0]] * len(key)
-                    else:
-                        raise ValueError(
-                            "metadata: astype must have the same number of items as key"
-                        )
-            else:
-                astype = [astype] * len(key)
-
-        if namespace is None:
-            namespace = []
-        elif isinstance(namespace, str):
-            namespace = [namespace]
-
-        return (key, namespace, astype, key_arg_type)
-
     def metadata(self, *keys, namespace=None, astype=None, **kwargs):
         r"""Returns metadata values from the GRIB message.
 
@@ -521,7 +476,7 @@ class GribField(Base):
         single value, :obj:`list`, :obj:`tuple` or :obj:`dict`
             - when ``keys`` is not empty:
                 - single value when ``keys`` is a str
-                - otherwise the same type as that of ``keys`` (:obj:`lits` or :obj:`tuple`)
+                - otherwise the same type as that of ``keys`` (:obj:`list` or :obj:`tuple`)
             - when ``keys`` is empty:
                 - when ``namespace`` is :obj:`str` returns a :obj:`dict` with the keys and values
                   in that namespace
@@ -584,7 +539,7 @@ class GribField(Base):
                 key = "paramId"
             return key
 
-        key, namespace, astype, key_arg_type = self._parse_metadata_args(
+        key, namespace, astype, key_arg_type = metadata_argument(
             *keys, namespace=namespace, astype=astype
         )
 
