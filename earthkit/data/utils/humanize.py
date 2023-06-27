@@ -345,3 +345,19 @@ def rounded_datetime(d):
         d = d + datetime.timedelta(seconds=1)
     d = d.replace(microsecond=0)
     return d
+
+
+def interval_to_human(v, value="x"):
+    if v.bounded:
+        if not v.bounded_left:
+            right_oper = "<=" if v.closed_right else "<"
+            return f"{value} {right_oper} {v.right}"
+        elif not v.bounded_right:
+            left_oper = ">=" if v.closed_left else ">"
+            return f"{value} {left_oper} {v.left}"
+        else:
+            left_oper = "<=" if v.closed_left else "<"
+            right_oper = "<=" if v.closed_right else "<"
+            return f"{v.left} {left_oper} {value} {right_oper} {v.right}"
+    else:
+        return ""
