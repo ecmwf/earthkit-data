@@ -101,6 +101,16 @@ class BUFRReader(Reader):
         return ls(_proc, BUFR_LS_KEYS, *args, **kwargs)
 
 
+def _match_magic(magic, deeper_check):
+    if magic is not None:
+        type_id = b"BUFR"
+        if not deeper_check:
+            return len(magic) >= 4 and magic[:4] == type_id
+        else:
+            return type_id in magic
+    return False
+
+
 def reader(source, path, magic=None, deeper_check=False):
-    if magic is None or magic[:4] == b"BUFR":
+    if _match_magic(magic, deeper_check):
         return BUFRReader(source, path)

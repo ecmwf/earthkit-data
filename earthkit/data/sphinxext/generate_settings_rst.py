@@ -55,7 +55,7 @@ def execute(*args):
 
         print("   * - ", k.replace("-", "\u2011"))  # Non-breaking hyphen
         print("     - ", repr(tidy(v.docs_default)).replace("-", "\u2011"))
-        print("     - ", v.description)
+        print("     - ", v.docs_description)
     print()
 
 

@@ -603,11 +603,13 @@ def test_grib_values_with_missing():
     assert np.count_nonzero(np.isnan(m)) == 38
 
 
-def test_grib_to_latlon_single():
+@pytest.mark.parametrize("index", [0, None])
+def test_grib_to_latlon_single(index):
     f = from_source("file", earthkit_test_data_file("test_single.grib"))
 
     eps = 1e-5
-    v = f[0].to_latlon(flatten=True)
+    g = f[index] if index is not None else f
+    v = g.to_latlon(flatten=True)
     assert isinstance(v, dict)
     assert isinstance(v["lon"], np.ndarray)
     assert isinstance(v["lat"], np.ndarray)
@@ -629,10 +631,12 @@ def test_grib_to_latlon_single():
     )
 
 
-def test_grib_to_latlon_single_shape():
+@pytest.mark.parametrize("index", [0, None])
+def test_grib_to_latlon_single_shape(index):
     f = from_source("file", earthkit_test_data_file("test_single.grib"))
 
-    v = f[0].to_latlon()
+    g = f[index] if index is not None else f
+    v = g.to_latlon()
     assert isinstance(v, dict)
     assert isinstance(v["lon"], np.ndarray)
     assert isinstance(v["lat"], np.ndarray)
@@ -648,11 +652,35 @@ def test_grib_to_latlon_single_shape():
         assert np.allclose(y, np.ones(12) * (90 - i * 30))
 
 
-def test_grib_to_points_single():
+def test_grib_to_latlon_multi():
+    f = from_source("file", earthkit_examples_file("test.grib"))
+
+    v_ref = f[0].to_latlon(flatten=True)
+    v = f.to_latlon(flatten=True)
+    assert isinstance(v, dict)
+    assert v.keys() == v_ref.keys()
+
+    assert isinstance(v, dict)
+    assert np.allclose(v["lat"], v_ref["lat"])
+    assert np.allclose(v["lon"], v_ref["lon"])
+
+
+def test_grib_to_latlon_multi_non_shared_grid():
+    f1 = from_source("file", earthkit_examples_file("test.grib"))
+    f2 = from_source("file", earthkit_examples_file("test4.grib"))
+    f = f1 + f2
+
+    with pytest.raises(ValueError):
+        f.to_latlon()
+
+
+@pytest.mark.parametrize("index", [0, None])
+def test_grib_to_points_single(index):
     f = from_source("file", earthkit_test_data_file("test_single.grib"))
 
     eps = 1e-5
-    v = f[0].to_points(flatten=True)
+    g = f[index] if index is not None else f
+    v = g.to_points(flatten=True)
     assert isinstance(v, dict)
     assert isinstance(v["x"], np.ndarray)
     assert isinstance(v["y"], np.ndarray)
@@ -678,6 +706,28 @@ def test_grib_to_points_unsupported_grid():
     f = from_source("file", earthkit_test_data_file("mercator.grib"))
     with pytest.raises(ValueError):
         f[0].to_points()
+
+
+def test_grib_to_points_multi():
+    f = from_source("file", earthkit_examples_file("test.grib"))
+
+    v_ref = f[0].to_points(flatten=True)
+    v = f.to_points(flatten=True)
+    assert isinstance(v, dict)
+    assert v.keys() == v_ref.keys()
+
+    assert isinstance(v, dict)
+    assert np.allclose(v["x"], v_ref["x"])
+    assert np.allclose(v["y"], v_ref["y"])
+
+
+def test_grib_to_points_multi_non_shared_grid():
+    f1 = from_source("file", earthkit_examples_file("test.grib"))
+    f2 = from_source("file", earthkit_examples_file("test4.grib"))
+    f = f1 + f2
+
+    with pytest.raises(ValueError):
+        f.to_points()
 
 
 def test_grib_datetime():
@@ -710,8 +760,11 @@ def test_grib_datetime():
 
 
 def test_bbox():
-    s = from_source("file", earthkit_examples_file("test.grib"))
-    assert s.bounding_box().as_tuple() == (73, -27, 33, 45), s.bounding_box()
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    bb = ds.bounding_box()
+    assert len(bb) == 2
+    for b in bb:
+        assert b.as_tuple() == (73, -27, 33, 45)
 
 
 def test_grib_projection_ll():
@@ -752,7 +805,50 @@ def test_grib_from_memory():
         assert sn == ["2t"]
 
 
-def test_grib_from_stream_single_group():
+def test_grib_from_stream_invalid_args():
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        with pytest.raises(TypeError):
+            from_source("stream", stream, order_by="level")
+
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        with pytest.raises(TypeError):
+            from_source("stream", stream, group_by=1)
+
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        with pytest.raises(TypeError):
+            from_source("stream", stream, group_by=["level", 1])
+
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        with pytest.raises(TypeError):
+            from_source("stream", stream, group_by="level", batch_size=1)
+
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        with pytest.raises(ValueError):
+            from_source("stream", stream, batch_size=-1)
+
+
+@pytest.mark.parametrize("group_by", ["level", ["level", "gridType"]])
+def test_grib_from_stream_group_by(group_by):
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        fs = from_source("stream", stream, group_by=group_by)
+
+        # no methods are available
+        with pytest.raises(TypeError):
+            len(fs)
+
+        ref = [
+            [("t", 1000), ("u", 1000), ("v", 1000)],
+            [("t", 850), ("u", 850), ("v", 850)],
+        ]
+        for i, f in enumerate(fs):
+            assert len(f) == 3
+            assert f.metadata(("param", "level")) == ref[i]
+
+        # stream consumed, no data is available
+        assert sum([1 for _ in fs]) == 0
+
+
+def test_grib_from_stream_single_batch():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         fs = from_source("stream", stream)
 
@@ -768,14 +864,11 @@ def test_grib_from_stream_single_group():
 
         assert val == ref
 
-        # no data is available
-        i = 0
-        for f in fs:
-            i += 1
-        assert i == 0
+        # stream consumed, no data is available
+        assert sum([1 for _ in fs]) == 0
 
 
-def test_grib_from_stream_multi_group():
+def test_grib_from_stream_multi_batch():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         fs = from_source("stream", stream, batch_size=2)
 
@@ -788,11 +881,8 @@ def test_grib_from_stream_multi_group():
             assert len(f) == 2
             f.metadata("param") == ref[i]
 
-        # no data is available
-        i = 0
-        for f in fs:
-            i += 1
-        assert i == 0
+        # stream consumed, no data is available
+        assert sum([1 for _ in fs]) == 0
 
 
 def test_grib_from_stream_in_memory():
