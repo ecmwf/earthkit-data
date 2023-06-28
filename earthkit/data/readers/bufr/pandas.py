@@ -43,7 +43,7 @@ class PandasMixIn:
             Defines the conditions when to extract the specified ``columns``. See:
             :xref:`read_bufr` for details.
         **kwargs: dict, optional
-            Other keyword arguments:
+            Other keyword arguments passed to :xref:`read_bufr`.
 
         Returns
         -------
