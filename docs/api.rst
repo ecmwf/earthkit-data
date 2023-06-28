@@ -15,3 +15,9 @@ GRIB
 .. -----
 
 .. - :py:class:`BufrReader <data.readers.bufr.BUFRReader>`
+
+
+Other
+--------
+
+- :py:class:`BoundingBox <data.utils.bbox.BoundingBox>`

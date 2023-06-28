@@ -117,6 +117,8 @@ def _skip_for_api(app, what, name, obj, skip, options):
         "data.readers",
         "data.readers.grib.codes",
         "data.readers.grib.index",
+        "data.utils",
+        "data.utils.bbox",
     ]:
         skip = True
     elif what == "package" and name not in [
@@ -124,18 +126,24 @@ def _skip_for_api(app, what, name, obj, skip, options):
         "data.readers",
         "data.readers.grib",
         "data.readers.grib.index",
+        "data.utils",
+        "data.utils.bbox",
     ]:
         skip = True
     elif what == "class" and name not in [
         "data.readers.bufr.BUFRReader",
         "data.readers.grib.codes.GribField",
         "data.readers.grib.index.FieldList",
+        "data.utils.bbox.BoundingBox",
     ]:
         skip = True
     elif what == "method" and "abstractmethod" in getattr(obj, "properties", []):
         skip = True
     elif what in ("function", "attribute", "data"):
         skip = True
+
+    if not skip:
+        print(f"{what} {name}")
     return skip
 
 

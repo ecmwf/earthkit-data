@@ -13,6 +13,7 @@ import weakref
 from importlib import import_module
 
 from earthkit.data.core import Base
+from earthkit.data.core.settings import SETTINGS
 from earthkit.data.decorators import locked
 
 LOG = logging.getLogger(__name__)
@@ -154,8 +155,9 @@ def reader(source, path):
         return DirectoryReader(source, path).mutate()
     LOG.debug("Reader for %s", path)
 
+    n_bytes = SETTINGS.get("reader-type-check-bytes")
     with open(path, "rb") as f:
-        magic = f.read(8)
+        magic = f.read(n_bytes)
 
     LOG.debug("Looking for a reader for %s (%s)", path, magic)
 
@@ -165,7 +167,8 @@ def reader(source, path):
 def memory_reader(source, buf):
     """Create a reader for data held in a memory buffer"""
     assert isinstance(buf, (bytes, bytearray)), source
-    magic = buf[:8] if len(buf) > 8 else None
+    n_bytes = SETTINGS.get("reader-type-check-bytes")
+    magic = buf[: min(n_bytes, len(buf) - 1)]
     return _find_reader("memory_reader", source, buf, magic)
 
 
@@ -174,9 +177,10 @@ def stream_reader(source, stream):
     magic = None
     if hasattr(stream, "peek") and callable(stream.peek):
         try:
-            magic = stream.peek(8)
-            if len(magic) > 8:
-                magic = magic[:8]
+            n_bytes = SETTINGS.get("reader-type-check-bytes")
+            magic = stream.peek(n_bytes)
+            if len(magic) > n_bytes:
+                magic = magic[:n_bytes]
         except Exception:
             pass
 

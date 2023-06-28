@@ -106,6 +106,14 @@ class Base(metaclass=MetaBase):
         """Reorder the elements of the object."""
         self._not_implemented()
 
+    @abstractmethod
+    def to_points(self, *args, **kwargs):
+        self._not_implemented()
+
+    @abstractmethod
+    def to_latlon(self, *args, **kwargs):
+        self._not_implemented()
+
     def __add__(self, other):
         self._not_implemented()
 

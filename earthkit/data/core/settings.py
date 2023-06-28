@@ -19,11 +19,36 @@ import yaml
 
 from earthkit.data import __version__ as VERSION
 from earthkit.data.utils.html import css
-from earthkit.data.utils.humanize import as_bytes, as_percent, as_seconds
+from earthkit.data.utils.humanize import (
+    as_bytes,
+    as_percent,
+    as_seconds,
+    interval_to_human,
+)
+from earthkit.data.utils.interval import Interval
 
 LOG = logging.getLogger(__name__)
 
 DOT_EARTHKIT_DATA = os.path.expanduser("~/.earthkit_data")
+
+
+class Validator:
+    def check(self, value):
+        raise NotImplementedError()
+
+    def explain(self):
+        return str()
+
+
+class IntervalValidator(Validator):
+    def __init__(self, interval):
+        self.interval = interval
+
+    def check(self, value):
+        return value in self.interval
+
+    def explain(self):
+        return f"Valid when {interval_to_human(self.interval)}."
 
 
 class Setting:
@@ -35,6 +60,7 @@ class Setting:
         none_ok=False,
         kind=None,
         docs_default=None,
+        validator=None,
     ):
         self.default = default
         self.description = description
@@ -42,6 +68,7 @@ class Setting:
         self.none_ok = none_ok
         self.kind = kind if kind is not None else type(default)
         self.docs_default = docs_default if docs_default is not None else self.default
+        self.validator = validator
 
     def kind(self):
         return type(self.default)
@@ -57,6 +84,15 @@ class Setting:
         if value != self.default:
             print(file=f)
             yaml.dump({name: value}, f, default_flow_style=False)
+
+    @property
+    def docs_description(self):
+        d = self.description
+        if self.validator:
+            t = self.validator.explain()
+            if t:
+                return d + " " + t
+        return d
 
 
 _ = Setting
@@ -117,6 +153,11 @@ SETTINGS_AND_HELP = {
     "use-standalone-mars-client-when-available": _(
         True,
         "Use the standalone mars client when available instead of using the web API.",
+    ),
+    "reader-type-check-bytes": _(
+        64,
+        "Number of bytes read from the beginning of a source to identify its type.",
+        validator=IntervalValidator(Interval(8, 4096)),
     ),
 }
 
@@ -257,6 +298,13 @@ class Settings:
         else:
             if not isinstance(value, klass):
                 raise TypeError("Setting '%s' must be of type '%s'" % (name, klass))
+
+        validator = SETTINGS_AND_HELP[name].validator
+        if validator is not None:
+            if not validator.check(value):
+                raise ValueError(
+                    f"Settings {name} cannot be set to {value}. {validator.explain()}"
+                )
 
         self._settings[name] = value
         self._changed()

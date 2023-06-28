@@ -176,7 +176,7 @@ class GribOutput:
                 metadata["shortName"] = param
 
     def handle_from_metadata(self, values, metadata, compulsory):
-        from .codes import CodesHandle  # Lazy loading of eccodes
+        from .codes import GribCodesHandle  # Lazy loading of eccodes
 
         if len(values.shape) == 1:
             sample = self._gg_field(values, metadata)
@@ -227,8 +227,8 @@ class GribOutput:
                 choices = list_to_human([f"'{c}'" for c in check], "or")
                 raise ValueError(f"Please provide a value for {choices}.")
 
-        LOG.debug("CodesHandle.from_sample(%s)", sample)
-        return CodesHandle.from_sample(sample)
+        LOG.debug("GribCodesHandle.from_sample(%s)", sample)
+        return GribCodesHandle.from_sample(sample)
 
     def _ll_field(self, values, metadata):
         Nj, Ni = values.shape

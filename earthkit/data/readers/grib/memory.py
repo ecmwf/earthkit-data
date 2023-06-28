@@ -7,38 +7,80 @@
 # nor does it submit to any jurisdiction.
 #
 
-
 import logging
 
 import eccodes
 
 from earthkit.data.readers import Reader
-from earthkit.data.readers.grib.codes import CodesHandle, GribField
+from earthkit.data.readers.grib.codes import GribCodesHandle, GribField
 from earthkit.data.readers.grib.index import FieldList
 
 LOG = logging.getLogger(__name__)
 
 
 class GribMemoryReader(Reader):
+    def __init__(self):
+        self._peeked = None
+
     def __iter__(self):
         return self
 
     def __next__(self):
+        if self._peeked is not None:
+            msg = self._peeked
+            self._peeked = None
+            return msg
         handle = self._next_handle()
+        msg = self._message_from_handle(handle)
         if handle is not None:
-            return GribFieldInMemory(CodesHandle(handle, None, None))
+            return msg
         raise StopIteration
 
     def _next_handle(self):
         raise NotImplementedError
 
+    def _message_from_handle(self, handle):
+        if handle is not None:
+            return GribFieldInMemory(GribCodesHandle(handle, None, None))
+
+    def peek(self):
+        """Returns the next available message without consuming it"""
+        if self._peeked is None:
+            handle = self._next_handle()
+            self._peeked = self._message_from_handle(handle)
+        return self._peeked
+
     def read_batch(self, n):
         fields = [self.__next__() for _ in range(n)]
+        return FieldListInMemory.from_fields(fields)
+
+    def read_group(self, group):
+        assert isinstance(group, list)
+
+        fields = []
+        current_group = {}
+        while True:
+            f = self.peek()
+            if f is not None:
+                group_md = f._attributes(group)
+                if not current_group:
+                    current_group = group_md
+                if current_group == group_md:
+                    fields.append(f)
+                    self.__next__()
+                else:
+                    break
+            elif fields:
+                break
+            else:
+                raise StopIteration
+
         return FieldListInMemory.from_fields(fields)
 
 
 class GribFileMemoryReader(GribMemoryReader):
     def __init__(self, path):
+        super().__init__()
         self.fp = open(path, "rb")
 
     def __del__(self):
@@ -50,6 +92,7 @@ class GribFileMemoryReader(GribMemoryReader):
 
 class GribMessageMemoryReader(GribMemoryReader):
     def __init__(self, buf):
+        super().__init__()
         self.buf = buf
 
     def __del__(self):
@@ -71,6 +114,7 @@ class GribStreamReader(GribMemoryReader):
     """
 
     def __init__(self, stream):
+        super().__init__()
         self._stream = eccodes.StreamReader(stream)
 
     def _next_handle(self):

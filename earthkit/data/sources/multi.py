@@ -138,7 +138,7 @@ class MultiSource(Source):
         return {k: sorted(v) for k, v in result.items()}
 
     def bounding_box(self):
-        return BoundingBox.multi_merge([s.bounding_box() for s in self.sources])
+        return BoundingBox.union([s.bounding_box() for s in self.sources])
 
 
 source = MultiSource

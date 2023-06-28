@@ -13,7 +13,7 @@ LOG = logging.getLogger(__name__)
 
 def _match_magic(magic, deeper_check):
     if magic is not None:
-        type_id = b"GRIB"
+        type_id = b"BUFR"
         if not deeper_check:
             return len(magic) >= 4 and magic[:4] == type_id
         else:
@@ -23,23 +23,6 @@ def _match_magic(magic, deeper_check):
 
 def reader(source, path, magic=None, deeper_check=False):
     if _match_magic(magic, deeper_check):
-        from .reader import GRIBReader
+        from .bufr import BUFRReader
 
-        return GRIBReader(source, path)
-
-
-def memory_reader(source, buf, magic=None, deeper_check=False):
-    if _match_magic(magic, deeper_check):
-        from .memory import FieldListInMemory, GribMessageMemoryReader
-
-        return FieldListInMemory(source, GribMessageMemoryReader(buf))
-
-
-def stream_reader(source, stream, magic=None, deeper_check=False):
-    if _match_magic(magic, deeper_check):
-        from .memory import FieldListInMemory, GribStreamReader
-
-        r = GribStreamReader(stream)
-        if source.batch_size == 0:
-            r = FieldListInMemory(source, r)
-        return r
+        return BUFRReader(source, path)
