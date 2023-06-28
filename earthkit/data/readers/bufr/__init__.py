@@ -11,8 +11,18 @@ import logging
 LOG = logging.getLogger(__name__)
 
 
-def reader(source, path, magic=None, deeper_check=False):
-    from .bufr import BUFRReader
+def _match_magic(magic, deeper_check):
+    if magic is not None:
+        type_id = b"BUFR"
+        if not deeper_check:
+            return len(magic) >= 4 and magic[:4] == type_id
+        else:
+            return type_id in magic
+    return False
 
-    if magic is None or magic[:4] == b"BUFR":
+
+def reader(source, path, magic=None, deeper_check=False):
+    if _match_magic(magic, deeper_check):
+        from .bufr import BUFRReader
+
         return BUFRReader(source, path)

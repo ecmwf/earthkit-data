@@ -400,6 +400,13 @@ class NetCDFReader(Reader):
         return [s.bounding_box() for s in self.get_fields()]
 
 
+def _match_magic(magic, deeper_check):
+    if magic is not None:
+        type_id = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
+        return len(magic) >= 4 and magic[:4] in type_id
+    return False
+
+
 def reader(source, path, magic=None, deeper_check=False):
-    if magic is None or magic[:4] in (b"\x89HDF", b"CDF\x01", b"CDF\x02"):
+    if _match_magic(magic, deeper_check):
         return NetCDFReader(source, path)
