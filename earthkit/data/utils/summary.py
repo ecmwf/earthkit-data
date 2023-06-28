@@ -157,3 +157,190 @@ def format_namespace_dump(data, selected=None, details=None, **kwargs):
         return NamespaceDump(data, selected=selected, details=details)
     else:
         return data
+
+
+class BUFRTree:
+    """Restructures the result of the bufr_dump ecCodes command."""
+
+    def __init__(self, data, subset, compressed, uncompressed):
+        self.data = data
+        self.subset = subset
+        self.compressed = compressed
+        self.uncompressed = uncompressed
+
+    def make_tree(self):
+        """Restructures the the result of json bufr_dump into a format better
+        suited for generating a tree view out of it.
+
+        Returns
+        -------
+        dict
+        """
+        return self._load_dump()
+
+    def _load_dump(self):
+        r = {"header": [], "data": []}
+
+        # data = data["messages"][0]
+
+        for i, v in enumerate(self.data):
+            # print(v)
+            k = v["key"]
+            val = v["value"]
+            if isinstance(val, list):
+                val = "array"
+
+            r["header"].append({"key": k, "value": val})
+
+            # start data section
+            if k == "unexpandedDescriptors":
+                # for uncompressed data tries to shown only the branch
+                # with given subset
+                if self.subset is not None and self.subset > 0 and self.uncompressed:
+                    try:
+                        subset_index = self.subset - 1
+                        d = self.data[i + 1][subset_index][0]
+                        if d["key"] == "subsetNumber" and d["value"] == self.subset:
+                            self._parse_dump(self.data[i + 1][subset_index], r["data"])
+                            break
+                    except Exception:
+                        pass
+                self._parse_dump(self.data[i + 1], r["data"])
+                break
+        return r
+
+    def _parse_dump(self, data, parent):
+        arrayCnt = 0
+        keyCnt = 0
+        for v in data:
+            if isinstance(v, list):
+                arrayCnt += 1
+            else:
+                keyCnt += 1
+
+        for v in data:
+            if not isinstance(v, list):
+                vals = v["value"]
+                if isinstance(vals, list):
+                    vals = self._format_list(vals)
+                parent.append(
+                    {
+                        "key": v["key"],
+                        "value": vals,
+                        "units": v.get("units", None),
+                    }
+                )
+            else:
+                if arrayCnt > 1:
+                    item = []
+                    parent.append(item)
+                    self._parse_dump(v, item)
+                else:
+                    self._parse_dump(v, parent)
+
+    def _format_list(self, vals):
+        if len(vals) > 0:
+            if self.subset is not None and self.subset > 0:
+                index = self.subset - 1
+                if index < len(vals):
+                    return f"{vals[index]} ({len(vals)} items)"
+                else:
+                    return f"[{vals[0]}, ...] ({len(vals)-1} items)"
+            else:
+                return f"[{vals[0]}, ...] ({len(vals)} items)"
+        else:
+            return "[]"
+
+
+class BUFRHtmlTree:
+    def make_html(self, data):
+        """Generates a html/css tree view from the input representing the
+        result of bufr_dump.
+
+        Parameters
+        ----------
+        data: dict
+
+        Returns
+        -------
+        str
+        """
+        return self._build(data)
+
+    def _build(self, data):
+        td1 = self._node(data["header"], [])
+        td2 = self._node(data["data"], [])
+
+        td = self._top_node("header", td1) + self._top_node("data", td2)
+        t = f"""
+        <ul class="tree">
+        <li>
+            {td}
+        </li>
+        </ul>
+        """
+        return t
+
+    def _leaf(self, k, v, units):
+        if units is not None:
+            return f"""<li>{k}: {v} [{units}]</li>"""
+        else:
+            return f"""<li>{k}: {v}</li>"""
+
+    def _top_node(self, name, v):
+        return f"""
+        <li>
+        <details>
+            <summary>{name}</summary>
+            <ul>
+            {v}
+            </ul>
+            </details>
+        </li>
+        """
+
+    def _start_node(self, k, v):
+        return f"""
+        <li>
+        <details>
+            <summary>{k}: {v}</summary>
+            <ul>
+        """
+
+    def _end_node(self):
+        return """</ul>
+            </details>
+        </li>
+        """
+
+    def _node(self, data, parent):
+        td = ""
+        if isinstance(data, list):
+            if parent:
+                td += self._start_node(data[0]["key"], data[0]["value"])
+            for v in data:
+                td += self._node(v, data)
+            if parent:
+                td += self._end_node()
+        else:
+            td += self._leaf(data["key"], data["value"], data.get("units", None))
+
+        return td
+
+
+def make_bufr_html_tree(data, title, subset, compressed, uncompressed):
+    tree = BUFRTree(data, subset, compressed, uncompressed).make_tree()
+    if ipython_active:
+        from IPython.display import HTML
+
+        from earthkit.data.utils.html import css
+
+        t = ""
+        if title is not None and title:
+            t = f"""<div class="eh-description">{title}</div>"""
+
+        t += BUFRHtmlTree().make_html(tree)
+        style = css("tree")
+        return HTML(style + t)
+
+    return tree
