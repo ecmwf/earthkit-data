@@ -13,7 +13,7 @@ dependencies:
 - dask
 - netcdf4
 - cfgrib>=0.9.10.1
-- pdbufr>=0.10.3
+- pdbufr>=0.11.0
 - pyodc
 - filelock
 - pyyaml
