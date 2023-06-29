@@ -48,6 +48,7 @@ reference systems and bounding boxes.
    :caption: Installation
 
    install
+   release_notes/index
    development
    licence
 
