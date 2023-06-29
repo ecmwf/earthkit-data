@@ -410,7 +410,34 @@ class GribField(Base):
         return self._base_datetime() + datetime.timedelta(hours=step)
 
     def projection(self):
-        r"""Returns information about the projection."""
+        r"""Returns information about the projection.
+
+        Returns
+        -------
+        :obj:`Projection`
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds.projection()
+        <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
+        Name: unknown
+        Axis Info [cartesian]:
+        - E[east]: Easting (unknown)
+        - N[north]: Northing (unknown)
+        - h[up]: Ellipsoidal height (metre)
+        Area of Use:
+        - undefined
+        Coordinate Operation:
+        - name: unknown
+        - method: Equidistant Cylindrical
+        Datum: Unknown based on WGS 84 ellipsoid
+        - Ellipsoid: WGS 84
+        - Prime Meridian: Greenwich
+        >>> ds.projection().to_proj_string()
+        '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
+        """
         return Projection.from_proj_string(
             self.handle.get("projTargetString", default=None)
         )
