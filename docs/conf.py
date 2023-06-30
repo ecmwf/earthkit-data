@@ -115,6 +115,7 @@ def _skip_for_api(app, what, name, obj, skip, options):
 
     if what == "module" and name not in [
         "data.readers",
+        "data.readers.bufr.bufr",
         "data.readers.grib.codes",
         "data.readers.grib.index",
         "data.utils",
@@ -124,6 +125,8 @@ def _skip_for_api(app, what, name, obj, skip, options):
     elif what == "package" and name not in [
         "data",
         "data.readers",
+        "data.readers.bufr",
+        "data.readers.bufr.bufr",
         "data.readers.grib",
         "data.readers.grib.index",
         "data.utils",
@@ -131,7 +134,8 @@ def _skip_for_api(app, what, name, obj, skip, options):
     ]:
         skip = True
     elif what == "class" and name not in [
-        "data.readers.bufr.BUFRReader",
+        "data.readers.bufr.bufr.BUFRList",
+        "data.readers.bufr.bufr.BUFRMessage",
         "data.readers.grib.codes.GribField",
         "data.readers.grib.index.FieldList",
         "data.utils.bbox.BoundingBox",
