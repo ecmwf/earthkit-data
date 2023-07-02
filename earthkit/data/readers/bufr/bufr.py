@@ -327,7 +327,8 @@ class BUFRMessage(Base):
         Parameters
         ----------
         subset: int
-            Subset to dump. Please note that susbset indexing starts at 1.
+            Subset to dump. Please note that susbset indexing starts at 1. Use None to dump all the
+            subsets in the message.
 
         Returns
         -------
@@ -511,6 +512,29 @@ class BUFRListMixIn(PandasMixIn):
             raise ValueError("n must be > 0")
         return self.ls(n=-n, **kwargs)
 
+    def metadata(self, *args, **kwargs):
+        r"""Returns the metadata values for each message.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments defining the metadata keys. Passed to
+            :obj:`BUFRMessage.metadata() <data.readers.bufr.bufr.BUFRMessage.metadata>`
+        **kwargs: dict, optional
+            Keyword arguments passed to
+            :obj:`BUFRMessage.metadata() <data.readers.bufr.bufr.BUFRMessage.metadata>`
+
+        Returns
+        -------
+        list
+            List with one item per :obj:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage.metadata>`
+
+        """
+        result = []
+        for s in self:
+            result.append(s.metadata(*args, **kwargs))
+        return result
+
 
 class BUFRList(BUFRListMixIn, Index):
     r"""Represents a list of
@@ -528,6 +552,72 @@ class BUFRList(BUFRListMixIn, Index):
     def merge(cls, sources):
         assert all(isinstance(_, BUFRList) for _ in sources)
         return MultiBUFRList(sources)
+
+    def sel(self, *args, **kwargs):
+        """Uses header metadata values to select only certain messages from
+          a BUFRList object.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the filter condition as dict.
+            (See below for details).
+        **kwargs: dict, optional
+            Other keyword arguments specifying the filter conditions.
+            (See below for details).
+
+        Returns
+        -------
+        object
+            Returns a new object with the filtered elements. It contains a view to the data in the
+            original object, so no data is copied.
+
+
+        Filter conditions are specified by a set of **metadata** keys either by a dictionary (in
+        ``*args``) or a set of ``**kwargs``. Both single or multiple keys are allowed to use and each
+        can specify the following type of filter values:
+
+        - single value::
+
+            ds.sel(dataCategory="2")
+
+        - list of values::
+
+            ds.sel(dataCategory=[1, 2])
+
+        - **slice** of values (defines a **closed interval**, so treated as inclusive of both the start
+        and stop values, unlike normal Python indexing)::
+
+            # filter dataCategory between 1 and 4 inclusively
+            ds.sel(dataCategory=slice(1,4))
+        """
+        kwargs.pop("remapping", None)
+        return super().sel(*args, remapping=None, **kwargs)
+
+    def isel(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    def order_by(self, *args, **kwargs):
+        """Changes the order of the messages in a BUFRList object.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the metadata keys to perform the ordering on.
+            (See below for details)
+        **kwargs: dict, optional
+            Other keyword arguments specifying the metadata keys to perform the ordering on.
+            (See below for details)
+
+        Returns
+        -------
+        object
+            Returns a new object with reordered messages. It contains a view to the data in the
+            original object, so no data is copied.
+
+        """
+        kwargs.pop("remapping", None)
+        return super().order_by(*args, remapping=None, **kwargs)
 
 
 class MaskBUFRList(BUFRList, MaskIndex):

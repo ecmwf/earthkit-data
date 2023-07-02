@@ -420,7 +420,7 @@ class Index(Source):
             original object, so no data is copied.
 
 
-        Ordering by a single metadata key ("param"). The default ordering directio
+        Ordering by a single metadata key ("param"). The default ordering direction
         is ``ascending``:
 
         >>> import earthkit.data
