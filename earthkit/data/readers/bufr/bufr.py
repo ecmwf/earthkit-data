@@ -142,6 +142,18 @@ class BUFRCodesReader(CodesReader):
 
 
 class BUFRMessage(Base):
+    r"""Represents a BUFR message in a BUFR file.
+
+    Parameters
+    ----------
+    path: str
+        Path to the BUFR file
+    offset: number
+        File offset of the message (in bytes)
+    length: number
+        Size of the message (in bytes)
+    """
+
     def __init__(self, path, offset, length):
         self.path = path
         self._offset = offset
@@ -169,12 +181,15 @@ class BUFRMessage(Base):
         return self.handle.get(key, default=None)
 
     def subset_count(self):
+        """Returns the number of subsets in the given BUFR message."""
         return self._header("numberOfSubsets")
 
     def is_compressed(self):
+        """Checks if the BUFR message contains compressed subsets."""
         return self.subset_count() > 1 and self._header("compressedData") == 1
 
     def is_uncompressed(self):
+        """Checks if the BUFR message contains uncompressed subsets."""
         return self.subset_count() > 1 and self._header("compressedData") == 0
 
     def __enter__(self):
@@ -198,14 +213,39 @@ class BUFRMessage(Base):
         """Returns an iterator for the keys the message contains."""
         return self.handle.__iter__()
 
+    def unpack(self):
+        """Decodes the data section of the message. When a message is unpacked all
+        the keys in the data section will be vailable via :obj:`metadata`.
+
+        See Also
+        --------
+        :obj:`unpack`
+        """
+        return self.handle.unpack()
+
+    def pack(self):
+        """Encodes the data section of the message. After calling ``pack`` the
+        contents of the data section will not be available and :obj:`metadata` will
+        able to access ``header keys`` only. To access the data section you need to use
+        :obj:`unpack` again.
+
+        See Also
+        --------
+        :obj:`unpack`
+        """
+        return self.handle.unpack()
+
     def metadata(self, *keys, astype=None, **kwargs):
-        r"""Returns metadata values from the BUFR message.
+        r"""Returns metadata values from the BUFR message. When the message in packed
+        (default state) only the header keys are available. To access data section keys
+        you need to call :obj:`unpack`.
 
         Parameters
         ----------
         *keys: tuple
             Positional arguments specifying metadata keys. Only ecCodes BUFR keys can be used
-            here. Can be empty, in this case all the keys will
+            here. It can contain a single str or a list or tuple. Can be empty, in this case
+            all the keys will
             be used.
         astype: type name, :obj:`list` or :obj:`tuple`
             Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
@@ -226,12 +266,21 @@ class BUFRMessage(Base):
                 - single value when ``keys`` is a str
                 - otherwise the same type as that of ``keys`` (:obj:`list` or :obj:`tuple`)
             - when ``keys`` is empty:
-                - otherwise returns a :obj:`dict` with one item per key
+                - returns a :obj:`dict` with one item per key
 
         Raises
         ------
         KeyError
             If no ``default`` is set and a key is not found in the message or it has a missing value.
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/temp_10.bufr")
+        >>> ds[0].metadata("edition")
+        3
+        >>> ds[0].metadata("dataCategory", "dataSubCategory")
+        (2, 101)
 
         """
         key, namespace, astype, key_arg_type = metadata_argument(
@@ -273,6 +322,23 @@ class BUFRMessage(Base):
             return False
 
     def dump(self, subset=1):
+        r"""Generates a dump with the message content represented as a tree view in a Jupyter notebook.
+
+        Parameters
+        ----------
+        subset: int
+            Subset to dump. Please note that susbset indexing starts at 1.
+
+        Returns
+        -------
+        HTML
+            Dump contents represented as a tree view in a Jupyter notebook.
+
+        Examples
+        --------
+        :ref:`/examples/bufr_temp.ipynb`
+
+        """
         from earthkit.data.core.temporary import temp_file
 
         with temp_file() as filename:
@@ -316,6 +382,48 @@ class BUFRMessage(Base):
 
 class BUFRListMixIn(PandasMixIn):
     def ls(self, *args, **kwargs):
+        r"""Generates a list like summary of the BUFR message list using a set of metadata keys.
+
+        Parameters
+        ----------
+        n: int, None
+            The number of :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`\ s to be
+            listed. ``None`` means all the messages, ``n > 0`` means messages from the front, while
+            ``n < 0`` means messages from the back of the list.
+        keys: list of str, dict, None
+            Metadata keys. To specify a column title for each key in the output use a dict. If
+            ``keys`` is None the following dict will be used to define the titles and the keys::
+
+                {
+                    "edition": "edition",
+                    "type": "dataCategory",
+                    "subtype": "dataSubCategory",
+                    "c": "bufrHeaderCentre",
+                    "mv": "masterTablesVersionNumber",
+                    "lv": "localTablesVersionNumber",
+                    "subsets": "numberOfSubsets",
+                    "compr": "compressedData",
+                    "typicalDate": "typicalDate",
+                    "typicalTime": "typicalTime",
+                    "ident": "ident",
+                    "lat": "localLatitude",
+                    "lon": "localLongitude",
+                }
+
+        extra_keys: list of str, dict, None
+            List of additional keys to ``keys``. To specify a column title for each key in the output
+            use a dict.
+
+        Returns
+        -------
+        Pandas DataFrame
+            DataFrame with one row per :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`.
+
+        Examples
+        --------
+        :ref:`/examples/bufr_temp.ipynb`
+
+        """
         from earthkit.data.utils.summary import ls
 
         def _proc(keys, n):
@@ -338,17 +446,77 @@ class BUFRListMixIn(PandasMixIn):
         return ls(_proc, BUFR_LS_KEYS, *args, **kwargs)
 
     def head(self, n=5, **kwargs):
+        r"""Generates a list like summary of the first ``n``
+        :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`\ s using a set of metadata keys.
+        Same as calling :obj:`ls` with ``n``.
+
+        Parameters
+        ----------
+        n: int, None
+            The number of messages (``n`` > 0) to be printed from the front.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`ls`.
+
+        Returns
+        -------
+        Pandas DataFrame
+            See  :obj:`ls`.
+
+
+        The following calls are equivalent:
+
+            .. code-block:: python
+
+                ds.head()
+                ds.head(5)
+                ds.head(n=5)
+                ds.ls(5)
+                ds.ls(n=5)
+
+        """
         if n <= 0:
             raise ValueError("head: n must be > 0")
         return self.ls(n=n, **kwargs)
 
     def tail(self, n=5, **kwargs):
+        r"""Generates a list like summary of the last ``n``
+        :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`\ s using a set of metadata keys.
+        Same as calling :obj:`ls` with ``-n``.
+
+        Parameters
+        ----------
+        n: int, None
+            The number of messages (``n`` > 0)  to be printed from the back.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`ls`.
+
+        Returns
+        -------
+        Pandas DataFrame
+            See  :obj:`ls`.
+
+
+        The following calls are equivalent:
+
+            .. code-block:: python
+
+                ds.tail()
+                ds.tail(5)
+                ds.tail(n=5)
+                ds.ls(-5)
+                ds.ls(n=-5)
+
+        """
         if n <= 0:
             raise ValueError("n must be > 0")
         return self.ls(n=-n, **kwargs)
 
 
 class BUFRList(BUFRListMixIn, Index):
+    r"""Represents a list of
+    :obj:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>`\ s.
+    """
+
     def __init__(self, *args, **kwargs):
         Index.__init__(self, *args, **kwargs)
 

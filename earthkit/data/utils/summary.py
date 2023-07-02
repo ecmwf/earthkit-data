@@ -343,4 +343,4 @@ def make_bufr_html_tree(data, title, subset, compressed, uncompressed):
         style = css("tree")
         return HTML(style + t)
 
-    return tree
+    return data
