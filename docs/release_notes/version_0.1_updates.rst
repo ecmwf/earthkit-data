@@ -9,7 +9,8 @@ Version 0.1.4
 New features
 ++++++++++++++++
 
-- redesigned :ref:`bufr` handling. :ref:`bufr` data is now represented by a :class:`BUFRList` made up of :class:`BUFRMessage` objects. In many aspects it behaves similarly to a :obj:`FieldList <data.readers.grib.index.FieldList>` offering iteration, slicing, selection and message dump. For details see :ref:`here <bufr>` and also check the notebook examples:
+- added new source :ref:`data-sources-eod` to retrieve ECMWF open data. See the :ref:`/examples/ecmwf_open_data.ipynb` notebook example.
+- redesigned :ref:`bufr` handling. :ref:`bufr` data is now represented by a :class:`BUFRList <data.readers.bufr.bufr.BUFRList>` made up of :class:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>` objects. In many aspects it behaves similarly to a :obj:`FieldList <data.readers.grib.index.FieldList>` offering iteration, slicing, selection and message dump. For details see :ref:`here <bufr>` and also check the notebook examples:
 
      - :ref:`/examples/bufr_temp.ipynb`
      - :ref:`/examples/bufr_synop.ipynb`
@@ -25,6 +26,5 @@ New features
 Fixes
 ++++++
 
-- fixed issue when :meth:`FieldList.to_xarray() <data.readers.grib.index.FieldList.to_xarray>` failed for input data where ``level`` was mistakenly read as an ``int`` and not as a ``float``. (`#121 <https://github.com/ecmwf/earthkit-data/pull/121>`_)
-- fixed issue when :ref:`grib`, :ref:`bufr` or :ref:`odb` data contained extra bytes at the beginning (e.g. transmission headers) :func:`read_source` could not identify their type. (`#123 <https://github.com/ecmwf/earthkit-data/issues/123>`_)
+- fixed issue when :ref:`grib`, :ref:`bufr` or :ref:`odb` data contained extra bytes at the beginning :func:`read_source` could not identify their type. (`#123 <https://github.com/ecmwf/earthkit-data/issues/123>`_)
 - fixed issue when not specifying the ``filter`` option in :func:`to_pandas` on :ref:`bufr` data caused a crash
