@@ -215,7 +215,7 @@ class BUFRMessage(Base):
 
     def unpack(self):
         """Decodes the data section of the message. When a message is unpacked all
-        the keys in the data section will be vailable via :obj:`metadata`.
+        the keys in the data section become available via :obj:`metadata`.
 
         See Also
         --------
@@ -224,10 +224,9 @@ class BUFRMessage(Base):
         return self.handle.unpack()
 
     def pack(self):
-        """Encodes the data section of the message. After calling ``pack`` the
-        contents of the data section will not be available and :obj:`metadata` will
-        able to access ``header keys`` only. To access the data section you need to use
-        :obj:`unpack` again.
+        """Encodes the data section of the message. Having called ``pack`` the
+        contents of only the header keys become available via :obj:`metadata`. To access
+        the data section you need to use :obj:`unpack` again.
 
         See Also
         --------
@@ -237,7 +236,7 @@ class BUFRMessage(Base):
 
     def metadata(self, *keys, astype=None, **kwargs):
         r"""Returns metadata values from the BUFR message. When the message in packed
-        (default state) only the header keys are available. To access data section keys
+        (default state) only the header keys are available. To access the data section keys
         you need to call :obj:`unpack`.
 
         Parameters
