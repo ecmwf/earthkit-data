@@ -35,8 +35,8 @@ class PandasMixIn:
 
         Examples
         --------
-        :ref:`/examples/bufr_temp.ipynb`
-        :ref:`/examples/bufr_synop.ipynb`
+        - :ref:`/examples/bufr_temp.ipynb`
+        - :ref:`/examples/bufr_synop.ipynb`
 
         """
         import pdbufr

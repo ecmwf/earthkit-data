@@ -31,6 +31,10 @@ def test_bufr_metadata():
     assert ds[0].is_compressed() is False
     assert ds[0].is_uncompressed() is False
 
+    assert ds[0].metadata("dataCategory") == 2
+
+    assert ds.metadata("dataCategory") == [2] * 10
+
 
 def test_bufr_metadata_uncompressed():
     ds = from_source(
