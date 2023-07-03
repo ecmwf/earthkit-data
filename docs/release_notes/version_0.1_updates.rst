@@ -15,10 +15,18 @@ New features
      - :ref:`/examples/bufr_temp.ipynb`
      - :ref:`/examples/bufr_synop.ipynb`
 
-- added the ``group_by`` option to :ref:`data-sources-fdb` stream source. With this option we can read data in groups from a stream. See the :ref:`/examples/fdb.ipynb` notebook example. (`#109 <https://github.com/ecmwf/earthkit-data/pull/109>`_)
-- added the :meth:`projection() <data.readers.grib.codes.GribField.projection>` method to Field objects. See the :ref:`/examples/projection.ipynb` notebook example.
-- added the :meth:`to_latlon() <data.readers.grib.codes.GribField.to_latlon>` method to Field objects to return the latitudes and longitudes for all the gridpoints. At the same time the behaviour of :meth:`to_points() <data.readers.grib.codes.GribField.to_points>` was changed and it now returns the geographical coordinates in the data’s original Coordinate Reference System (CRS).
-- added the :meth:`to_latlon() <data.readers.grib.index.FieldList.to_latlon>` to FieldLists to return the latitudes/longitudes shared by all the fields. When not all the fields have the same grid geometry it raises an exception.
+- added the ``group_by`` option to :ref:`data-sources-fdb` stream source. With this option we can read data in groups from a stream. See the :ref:`/examples/fdb.ipynb` notebook example.
+- changed how the field geopgraphy can be accessed. On a Field object we can now call the following methods:
+
+   - :meth:`projection() <data.readers.grib.codes.GribField.projection>`: returns an object describing the projection. See the :ref:`/examples/projection.ipynb` notebook example.
+   - :meth:`to_latlon() <data.readers.grib.codes.GribField.to_latlon>`: returns the latitudes and longitudes for all the gridpoints
+   - :meth:`to_points() <data.readers.grib.codes.GribField.to_points>`: returns the geographical coordinates of all the gridpoints in the data’s original Coordinate Reference System (CRS)
+
+  The same methods can also be called on a FieldList:
+
+     - when all the fields have the same grid geometry in the FieldList they return the value of the same function called on the first field
+     - otherwise an exception is raised
+
 - added new :ref:`settings` option ``reader‑type‑check‑bytes`` to control the number of bytes read from the beginning of a source to identify its type. The default value is 64 and the allowed value range is [8, 4096]. (`#126 <https://github.com/ecmwf/earthkit-data/pull/126>`_)
 - changed the return type of :meth:`FieldList.bounding_box() <data.readers.grib.index.FieldList.bounding_box>`, which now returns a list of bounding boxes (one per field). (`#122 <https://github.com/ecmwf/earthkit-data/issues/122>`_)
 - removed options ``print`` and ``html`` from methods :meth:`FieldList.ls() <data.readers.grib.index.FieldList.ls>`, :meth:`FieldList.describe() <data.readers.grib.index.FieldList.describe>` and :meth:`GribField.dump() <data.readers.grib.codes.GribField.dump>`. Printing the resulting object can be simply done by using the Python ``print()`` method. (`#118 <https://github.com/ecmwf/earthkit-data/issues/118>`_)
