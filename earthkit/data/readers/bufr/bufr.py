@@ -554,8 +554,7 @@ class BUFRList(BUFRListMixIn, Index):
         return MultiBUFRList(sources)
 
     def sel(self, *args, **kwargs):
-        """Uses header metadata values to select only certain messages from
-          a BUFRList object.
+        """Uses header metadata values to select only certain messages from a BUFRList object.
 
         Parameters
         ----------
