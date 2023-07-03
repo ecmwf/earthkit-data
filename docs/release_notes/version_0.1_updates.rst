@@ -16,7 +16,7 @@ New features
      - :ref:`/examples/bufr_synop.ipynb`
 
 - added the ``group_by`` option to :ref:`data-sources-fdb` stream source. With this option we can read data in groups from a stream. See the :ref:`/examples/fdb.ipynb` notebook example.
-- changed how the field geopgraphy can be accessed. On a Field object we can now call the following methods:
+- changed how the field geography can be accessed. On a Field object we can now call the following methods:
 
    - :meth:`projection() <data.readers.grib.codes.GribField.projection>`: returns an object describing the projection. See the :ref:`/examples/projection.ipynb` notebook example.
    - :meth:`to_latlon() <data.readers.grib.codes.GribField.to_latlon>`: returns the latitudes and longitudes for all the gridpoints
