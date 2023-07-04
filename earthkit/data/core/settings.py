@@ -124,8 +124,17 @@ SETTINGS_AND_HELP = {
         5,
         """Number of threads used to download data.""",
     ),
-    "cache-usage": _("", "Caching policy"),
+    "cache-policy": _(
+        "",
+        "Caching policy",
+        values=[
+            "no",
+            "temporary",
+        ],
+    ),
     "cache-cleanup": _(True, ""),
+    "cache-message-offset-index": _(False, ""),
+    "cache-message-metadata-index": _(False, ""),
     "maximum-cache-size": _(
         None,
         """Maximum disk space used by the earthkit-data cache (ex: 100G or 2T).""",
