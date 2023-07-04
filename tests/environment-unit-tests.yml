@@ -1,0 +1,44 @@
+name: earthkit-data
+channels:
+- conda-forge
+- nodefaults
+dependencies:
+- eccodes=>2.19.0
+- python-eccodes
+- pip
+- numpy
+- pandas
+- xarray>=0.19.0
+- cartopy
+- dask
+- netcdf4
+- cfgrib>=0.9.10.1
+- pdbufr>=0.11.0
+- pyodc
+- filelock
+- pyyaml
+- entrypoints
+- jupyterlab
+- ecmwf-api-client>=1.6.1
+- cdsapi
+- pip:
+  - git+https://github.com/ecmwf/multiurl
+  - git+https://github.com/ecmwf/pyfdb
+  - ecmwf-opendata>=0.1.2
+- tqdm
+- markdown
+- make
+- mypy
+- myst-parser
+- pre-commit
+- pydata-sphinx-theme
+- pytest
+- pytest-cov
+- sphinx
+- sphinx-autoapi
+- sphinx_rtd_theme
+- sphinxcontrib-apidoc
+- nbformat
+- nbconvert
+- nbsphinx
+- ipykernel

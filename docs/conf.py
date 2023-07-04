@@ -10,6 +10,7 @@ import datetime
 import os
 import sys
 
+sys.path.insert(0, os.path.abspath("./"))
 sys.path.insert(0, os.path.abspath("../"))
 
 # -- Project information -----------------------------------------------------
@@ -108,36 +109,7 @@ xref_links = {
 }
 
 
-# define skip rules for autoapi
-def _skip_for_api(app, what, name, obj, skip, options):
-    # if what == "package":
-    #     print(f"{name}[{what}]")
-
-    if what == "module" and name not in [
-        "data.readers",
-        "data.readers.grib.codes",
-        "data.readers.grib.index",
-    ]:
-        skip = True
-    elif what == "package" and name not in [
-        "data",
-        "data.readers",
-        "data.readers.grib",
-        "data.readers.grib.index",
-    ]:
-        skip = True
-    elif what == "class" and name not in [
-        "data.readers.bufr.BUFRReader",
-        "data.readers.grib.codes.GribField",
-        "data.readers.grib.index.FieldList",
-    ]:
-        skip = True
-    elif what == "method" and "abstractmethod" in getattr(obj, "properties", []):
-        skip = True
-    elif what in ("function", "attribute", "data"):
-        skip = True
-    return skip
-
-
 def setup(app):
-    app.connect("autoapi-skip-member", _skip_for_api)
+    from skip_api_rules import _skip_api_items
+
+    app.connect("autoapi-skip-member", _skip_api_items)

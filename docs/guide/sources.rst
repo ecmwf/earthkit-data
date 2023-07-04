@@ -10,7 +10,7 @@ We can get data from a given source by using :func:`from_source`:
 
 .. py:function:: from_source(name, *args, **kwargs)
 
-  Returns a :ref:`data object <data-object>` from the source specified by ``name``.
+  Returns a :ref:`data object <data-object>` from the source specified by ``name`` .
 
   :param str name: the source (see below)
   :param tuple *args: specifies the data location and additional parameters to access the data
@@ -19,7 +19,7 @@ We can get data from a given source by using :func:`from_source`:
   **earthkit-data** has the following built-in sources:
 
   .. list-table:: Data sources
-    :widths: 20 80
+    :widths: 30 70
     :header-rows: 1
 
     * - Name
@@ -40,6 +40,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
     * - :ref:`data-sources-cds`
       - retrieve data from the `Copernicus Climate Data Store <https://cds.climate.copernicus.eu/>`_ (CDS)
+    * - :ref:`data-sources-eod`
+      - retrieve `ECMWF open data <https://www.ecmwf.int/en/forecasts/datasets/open-data>`_
     * - :ref:`data-sources-fdb`
       - retrieve data from the `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
 
@@ -89,7 +91,7 @@ file
 
     - :ref:`/examples/grib_overview.ipynb`
     - :ref:`/examples/grib_multi.ipynb`
-    - :ref:`/examples/bufr.ipynb`
+    - :ref:`/examples/bufr_temp.ipynb`
     - :ref:`/examples/netcdf.ipynb`
     - :ref:`/examples/odb.ipynb`
 
@@ -357,30 +359,65 @@ cds
 
   Data downloaded from the CDS is stored in the the :ref:`cache <caching>`.
 
-  To access data from the CDS, you will need to register and retrieve an access token. The process is described here_. For more information, see the CDS `knowledge base`_.
+  To access data from the CDS, you will need to register and retrieve an access token. The process is described `here <https://cds.climate.copernicus.eu/api-how-to>`__. For more information, see the CDS `knowledge base`_.
 
   Further examples:
 
       - :ref:`/examples/cds.ipynb`
+
+
+.. _data-sources-eod:
+
+ecmwf-open-data
+-------------------
+
+.. py:function:: from_source("ecmwf-open-data", *args, **kwargs)
+  :noindex:
+
+  The ``ecmwf-open-data`` source provides access to the `ECMWF open data`_, which is a subset of ECMWF real-time forecast data made available to the public free of charge.  It uses the `ecmwf-opendata <https://github.com/ecmwf/ecmwf-opendata>`_ package.
+
+  :param tuple *args: specifies the request as a dict
+  :param dict **kwargs: other keyword arguments specifying the request
+
+  Details about the request format can be found `here <https://github.com/ecmwf/ecmwf-opendata>`__.
+
+  The following example retrieves forecast for 2 surface parameters from the latest forecast:
+
+  .. code-block:: python
+
+      import earthkit.data
+
+      ds = earthkit.data.from_source(
+          "ecmwf-open-data", param=["2t", "msl"], levtype="sfc", step=[0, 6, 12]
+      )
+
+
+  The resulting GRIB data files are stored in the :ref:`cache <caching>`.
+
+  Further examples:
+
+      - :ref:`/examples/ecmwf_open_data.ipynb`
+
 
 .. _data-sources-fdb:
 
 fdb
 ---
 
-.. py:function:: from_source("fdb", *args, stream=True, batch_size=1, **kwargs)
+.. py:function:: from_source("fdb", *args, stream=True, group_by=None, batch_size=1, **kwargs)
   :noindex:
 
   The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
 
-  :param str dataset: the name of the CDS dataset
   :param tuple *args: positional arguments specifying the request as a dict
   :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`.
-  :param bool batch_size: used when ``stream=True`` and defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the messages will be loaded and stored in memory.  When ``batch_size`` is not zero ``from_source`` gives us a stream iterator object. During the iteration temporary objects are created for each message then get deleted when going out of scope.
+  :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. When it is set ``from_source`` gives us a stream iterator object. Each iteration step results in a Fieldlist object, which is built by consuming GRIB messages from the stream until the values of the ``group_by`` metadata keys change. The generated Fieldlist keeps GRIB messages in memory then gets deleted when going out of scope. When ``group_by`` is set ``batch_size`` cannot be used.
+  :type group_by: str, list of str
+  :param bool batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the messages will be loaded and stored in memory.  When ``batch_size`` is not zero ``from_source`` gives us a stream iterator object. During the iteration temporary objects are created for each message then get deleted when going out of scope.
   :param dict **kwargs: other keyword arguments specifying the request
 
-  The following example retrieves analysis :ref:`grib` data for 2 surface parameters as stream.
-  By default (``batch_size=1``) we will consume one message at a time and ``ds`` in the code can only be used as an iterator:
+  The following example retrieves analysis :ref:`grib` data for 3 surface parameters as stream.
+  By default we will consume one message at a time and ``ds`` can only be used as an iterator:
 
   .. code-block:: python
 
@@ -389,32 +426,58 @@ fdb
       ...     "class": "od",
       ...     "expver": "0001",
       ...     "stream": "oper",
-      ...     "date": "20230524",
+      ...     "date": "20230607",
       ...     "time": [0, 12],
       ...     "domain": "g",
       ...     "type": "an",
       ...     "levtype": "sfc",
       ...     "step": 0,
-      ...     "param": [151, 167],
+      ...     "param": [151, 167, 168],
       ... }
       >>>
       >>> ds = earthkit.data.from_source("fdb", request)
       >>> for f in ds:
       ...     print(f)
       ...
-      GribField(msl,None,20230524,0,0,0)
-      GribField(2t,None,20230524,0,0,0)
-      GribField(msl,None,20230524,1200,0,0)
-      GribField(2t,None,20230524,1200,0,0)
+      GribField(msl,None,20230607,0,0,0)
+      GribField(2t,None,20230607,0,0,0)
+      GribField(msl,None,20230607,1200,0,0)
+      GribField(2t,None,20230607,1200,0,0)
+
+  We can use ``group_by`` to read fields with a matching time. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>`:
+
+      >>> ds = earthkit.data.from_source("fdb", request, group_by="time")
+      >>> for f in ds:
+      ...     print(f)
+      ...     for g in f:
+      ...         print(f" {g}")
+      ...
+      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
+       GribField(msl,None,20230607,0,0,0)
+       GribField(2t,None,20230607,0,0,0)
+       GribField(2d,None,20230607,0,0,0)
+      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
+       GribField(msl,None,20230607,1200,0,0)
+       GribField(2t,None,20230607,1200,0,0)
+       GribField(2d,None,20230607,1200,0,0)
 
   We can use ``batch_size=2`` to read 2 fields at a time. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>` containing 2 fields:
 
       >>> ds = earthkit.data.from_source("fdb", request, batch_size=2)
       >>> for f in ds:
-      ...     print(len(f))
+      ...     print(f)
+      ...     for g in f:
+      ...         print(f" {g}")
       ...
-      2
-      2
+      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
+        GribField(msl,None,20230607,0,0,0)
+        GribField(2t,None,20230607,0,0,0)
+      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
+        GribField(2d,None,20230607,0,0,0)
+        GribField(msl,None,20230607,1200,0,0)
+      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
+        GribField(2t,None,20230607,1200,0,0)
+        GribField(2d,None,20230607,1200,0,0)
 
 
   Further examples:
@@ -427,6 +490,7 @@ fdb
 .. _web API: https://www.ecmwf.int/en/forecasts/access-forecasts/ecmwf-web-api
 
 .. _Copernicus Climate Data Store: https://cds.climate.copernicus.eu/
-.. _here: https://cds.climate.copernicus.eu/api-how-to
 .. _cdsapi: https://pypi.org/project/cdsapi/
 .. _knowledge base: https://confluence.ecmwf.int/display/CKB/Copernicus+Knowledge+Base
+
+.. _ECMWF open data: https://www.ecmwf.int/en/forecasts/datasets/open-data

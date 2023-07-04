@@ -12,6 +12,7 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
 
     examples/mars.ipynb
     examples/cds.ipynb
+    examples/ecmwf_open_data.ipynb
     examples/fdb.ipynb
 
 
@@ -54,7 +55,15 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
 
 .. toctree::
     :maxdepth: 1
-    :caption: List of dicts
+    :caption: Other inputs
     :glob:
 
+    examples/from_object.ipynb
     examples/list_of_dict*
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Miscellaneous
+    :glob:
+
+    examples/projection.ipynb

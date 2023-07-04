@@ -24,6 +24,7 @@ from earthkit.data.testing import (
     earthkit_remote_test_data_file,
     earthkit_test_data_file,
 )
+from earthkit.data.utils import projections
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -195,8 +196,11 @@ def test_netcdf_to_points_1():
 
 
 def test_bbox():
-    s = from_source("file", earthkit_file("docs/examples/test.nc"))
-    assert s.bounding_box().as_tuple() == (73, -27, 33, 45), s.bounding_box()
+    ds = from_source("file", earthkit_file("docs/examples/test.nc"))
+    bb = ds.bounding_box()
+    assert len(bb) == 2
+    for b in bb:
+        assert b.as_tuple() == (73, -27, 33, 45)
 
 
 def test_netcdf_proj_string_non_cf():
@@ -214,6 +218,21 @@ def test_netcdf_proj_string_laea():
         == "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
     )
     assert r[1] == "+proj=eqc +datum=WGS84 +units=m +no_defs"
+
+
+def test_netcdf_projection_laea():
+    f = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
+    projection = f[0].projection()
+    assert isinstance(projection, projections.LambertAzimuthalEqualArea)
+    assert projection.parameters == {
+        "central_latitude": 52.0,
+        "central_longitude": 10.0,
+        "false_northing": 3210000.0,
+        "false_easting": 4321000.0,
+    }
+    assert projection.globe == {
+        "ellipse": "GRS80",
+    }
 
 
 def test_get_fields_missing_standard_name_attr_in_coord_array():

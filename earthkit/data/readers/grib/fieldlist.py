@@ -13,7 +13,7 @@ from collections import defaultdict
 
 from earthkit.data.core.caching import auxiliary_cache_file
 from earthkit.data.core.index import ScaledIndex
-from earthkit.data.utils.bbox import BoundingBox
+from earthkit.data.decorators import cached_method
 
 from .pandas import PandasMixIn
 from .xarray import XarrayMixIn
@@ -260,7 +260,7 @@ class FieldListMixin(PandasMixIn, XarrayMixIn):
             result.append(s.metadata(*args, **kwargs))
         return result
 
-    def ls(self, n=None, keys=None, extra_keys=None, namespace=None, **kwargs):
+    def ls(self, n=None, keys=None, extra_keys=None, namespace=None):
         r"""Generates a list like summary of fieldlist using a set of metadata keys.
 
         Parameters
@@ -279,19 +279,11 @@ class FieldListMixin(PandasMixIn, XarrayMixIn):
         namespace: str, None
             The :xref:`eccodes_namespace` to choose the ``keys`` from. When it is set ``keys`` and
             ``extra_keys`` are omitted.
-        **kwargs: dict, optional
-            Other keyword arguments:
-
-            print: bool, optional
-                Enables printing the DataFrame to the standard output when not in a Jupyter notebook.
-                Default: False
 
         Returns
         -------
         Pandas DataFrame
             DataFrame with one row per :obj:`GribField <data.readers.grib.codes.GribField>`.
-            If not in a Jupyter notebook and ``print`` is True the DataFrame is printed to
-            the standard output
 
         """
         from earthkit.data.utils.summary import ls
@@ -316,7 +308,7 @@ class FieldListMixin(PandasMixIn, XarrayMixIn):
                     yield (self[i]._attributes(keys))
 
         _keys = GRIB_LS_KEYS if namespace is None else dict(namespace=namespace)
-        return ls(_proc, _keys, n=n, keys=keys, extra_keys=extra_keys, **kwargs)
+        return ls(_proc, _keys, n=n, keys=keys, extra_keys=extra_keys)
 
     def head(self, n=5, **kwargs):
         r"""Generates a list like summary of the first ``n``
@@ -423,16 +415,145 @@ class FieldListMixin(PandasMixIn, XarrayMixIn):
             valid.add(d["valid_time"])
         return {"base_time": sorted(base), "valid_time": sorted(valid)}
 
+    @cached_method
+    def _is_shared_grid(self):
+        if len(self) > 0:
+            for i, f in enumerate(self):
+                if i == 0:
+                    grid = f.metadata("md5GridSection")
+                elif f.metadata("md5GridSection") != grid:
+                    return False
+            return True
+        return False
+
+    def to_points(self, **kwargs):
+        r"""Returns the geographical coordinates shared by all the fields in
+        the data's original Coordinate Reference System (CRS).
+
+        Parameters
+        ----------
+        **kwargs: dict, optional
+            Keyword arguments passed to
+            :obj:`GribField.to_points() <data.readers.grib.codes.GribField.to_points>`
+
+        Returns
+        -------
+        dict
+            Dictionary with items "x" and "y", containing the ndarrays of the x and
+            y coordinates, respectively.
+
+        Raises
+        ------
+        ValueError
+            When not all the fields have the same grid geometry.
+        """
+        if self._is_shared_grid():
+            return self[0].to_points(**kwargs)
+        elif len(self) == 0:
+            return dict(x=None, y=None)
+        else:
+            raise ValueError("Fields do not have the same grid geometry")
+
+    def to_latlon(self, **kwargs):
+        r"""Returns the latitudes/longitudes shared by all the fields.
+
+        Parameters
+        ----------
+        **kwargs: dict, optional
+            Keyword arguments passed to
+            :obj:`GribField.to_latlon() <data.readers.grib.codes.GribField.to_latlon>`
+
+        Returns
+        -------
+        dict
+            Dictionary with items "lat" and "lon", containing the ndarrays of the latitudes and
+            longitudes, respectively.
+
+        Raises
+        ------
+        ValueError
+            When not all the fields have the same grid geometry
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> for f in ds:
+        ...     print(f.shape)
+        ...
+        (11, 19)
+        (11, 19)
+        >>> r = ds.to_latlon()
+        >>> for k, v in r.items():
+        ...     print(f"{k}: shape={v.shape}")
+        ...
+        lat: shape=(11, 19)
+        lon: shape=(11, 19)
+        >>> r["lon"][:2]
+        array([[-27., -23., -19., -15., -11.,  -7.,  -3.,   1.,   5.,   9.,  13.,
+         17.,  21.,  25.,  29.,  33.,  37.,  41.,  45.],
+        [-27., -23., -19., -15., -11.,  -7.,  -3.,   1.,   5.,   9.,  13.,
+         17.,  21.,  25.,  29.,  33.,  37.,  41.,  45.]])
+
+        """
+        if self._is_shared_grid():
+            return self[0].to_latlon(**kwargs)
+        elif len(self) == 0:
+            return dict(lat=None, lon=None)
+        else:
+            raise ValueError("Fields do not have the same grid geometry")
+
+    def projection(self):
+        r"""Returns the projection information shared by all the fields.
+
+        Returns
+        -------
+        :obj:`Projection`
+
+        Raises
+        ------
+        ValueError
+            When not all the fields have the same grid geometry
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds.projection()
+        <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
+        Name: unknown
+        Axis Info [cartesian]:
+        - E[east]: Easting (unknown)
+        - N[north]: Northing (unknown)
+        - h[up]: Ellipsoidal height (metre)
+        Area of Use:
+        - undefined
+        Coordinate Operation:
+        - name: unknown
+        - method: Equidistant Cylindrical
+        Datum: Unknown based on WGS 84 ellipsoid
+        - Ellipsoid: WGS 84
+        - Prime Meridian: Greenwich
+        >>> ds.projection().to_proj_string()
+        '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
+        """
+        if self._is_shared_grid():
+            return self[0].projection()
+        elif len(self) == 0:
+            return None
+        else:
+            raise ValueError("Fields do not have the same grid geometry")
+
     def bounding_box(self):
         r"""Returns the bounding box for each field.
 
         Returns
         -------
         list
-            List with one :obj:`BoundingBox` per
+            List with one :obj:`BoundingBox <data.utils.bbox.BoundingBox>` per
             :obj:`GribField <data.readers.grib.codes.GribField>`
         """
-        return BoundingBox.multi_merge([s.bounding_box() for s in self])
+        return [s.bounding_box() for s in self]
 
     def statistics(self):
         import numpy as np

@@ -19,6 +19,7 @@ import xarray as xr
 from earthkit.data.core import Base
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
+from earthkit.data.utils.projections import Projection
 
 from . import Reader
 
@@ -211,6 +212,18 @@ class NetCDFField(Base):
 
         return proj_source, proj_target
 
+    def _grid_mapping(self):
+        if "grid_mapping" in self._da.attrs:
+            grid_mapping = self._ds[self._da.attrs["grid_mapping"]]
+        else:
+            raise AttributeError(
+                "no CF-compliant 'grid_mapping' detected in netCDF attributes"
+            )
+        return grid_mapping
+
+    def projection(self):
+        return Projection.from_cf_grid_mapping(**self._grid_mapping().attrs)
+
     def to_points(self, flatten=False):
         points = dict()
         for axis in ("x", "y"):
@@ -384,9 +397,16 @@ class NetCDFReader(Reader):
         return {"base_time": r, "valid_time": r}
 
     def bounding_box(self):
-        return BoundingBox.multi_merge([s.bounding_box() for s in self.get_fields()])
+        return [s.bounding_box() for s in self.get_fields()]
+
+
+def _match_magic(magic, deeper_check):
+    if magic is not None:
+        type_id = (b"\x89HDF", b"CDF\x01", b"CDF\x02")
+        return len(magic) >= 4 and magic[:4] in type_id
+    return False
 
 
 def reader(source, path, magic=None, deeper_check=False):
-    if magic is None or magic[:4] in (b"\x89HDF", b"CDF\x01", b"CDF\x02"):
+    if _match_magic(magic, deeper_check):
         return NetCDFReader(source, path)

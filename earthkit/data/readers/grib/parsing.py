@@ -66,7 +66,7 @@ def _index_grib_file(
 ):
     import eccodes
 
-    from earthkit.data.readers.grib.codes import CodesHandle
+    from earthkit.data.readers.grib.codes import GribCodesHandle
 
     post_process_mars = []
     if with_valid_date:
@@ -112,7 +112,7 @@ def _index_grib_file(
         h = eccodes.codes_grib_new_from_file(f)
 
         while h:
-            yield parse_field(CodesHandle(h, path, offset=old_position))
+            yield parse_field(GribCodesHandle(h, path, offset=old_position))
 
             position = f.tell()
             pbar.update(position - old_position)

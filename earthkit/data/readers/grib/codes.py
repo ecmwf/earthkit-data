@@ -10,14 +10,19 @@
 import datetime
 import logging
 import os
-import threading
-import time
 
 import eccodes
 import numpy as np
 
 from earthkit.data.core import Base
 from earthkit.data.utils.bbox import BoundingBox
+from earthkit.data.utils.message import (
+    CodesHandle,
+    CodesMessagePositionIndex,
+    CodesReader,
+)
+from earthkit.data.utils.metadata import metadata_argument
+from earthkit.data.utils.projections import Projection
 
 LOG = logging.getLogger(__name__)
 
@@ -31,91 +36,69 @@ def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
-# This does not belong here, should be in the C library
-def get_messages_positions(path):
-    fd = os.open(path, os.O_RDONLY)
-    try:
+class GribCodesMessagePositionIndex(CodesMessagePositionIndex):
+    # This does not belong here, should be in the C library
+    def _get_message_positions(self, path):
+        fd = os.open(path, os.O_RDONLY)
+        try:
 
-        def get(count):
-            buf = os.read(fd, count)
-            assert len(buf) == count
-            return int.from_bytes(
-                buf,
-                byteorder="big",
-                signed=False,
-            )
+            def get(count):
+                buf = os.read(fd, count)
+                assert len(buf) == count
+                return int.from_bytes(
+                    buf,
+                    byteorder="big",
+                    signed=False,
+                )
 
-        offset = 0
-        while True:
-            code = os.read(fd, 4)
-            if len(code) < 4:
-                break
+            offset = 0
+            while True:
+                code = os.read(fd, 4)
+                if len(code) < 4:
+                    break
 
-            if code != b"GRIB":
-                offset = os.lseek(fd, offset + 1, os.SEEK_SET)
-                continue
+                if code != b"GRIB":
+                    offset = os.lseek(fd, offset + 1, os.SEEK_SET)
+                    continue
 
-            length = get(3)
-            edition = get(1)
+                length = get(3)
+                edition = get(1)
 
-            if edition == 1:
-                if length & 0x800000:
-                    sec1len = get(3)
-                    os.lseek(fd, 4, os.SEEK_CUR)
-                    flags = get(1)
-                    os.lseek(fd, sec1len - 8, os.SEEK_CUR)
+                if edition == 1:
+                    if length & 0x800000:
+                        sec1len = get(3)
+                        os.lseek(fd, 4, os.SEEK_CUR)
+                        flags = get(1)
+                        os.lseek(fd, sec1len - 8, os.SEEK_CUR)
 
-                    if flags & (1 << 7):
-                        sec2len = get(3)
-                        os.lseek(fd, sec2len - 3, os.SEEK_CUR)
+                        if flags & (1 << 7):
+                            sec2len = get(3)
+                            os.lseek(fd, sec2len - 3, os.SEEK_CUR)
 
-                    if flags & (1 << 6):
-                        sec3len = get(3)
-                        os.lseek(fd, sec3len - 3, os.SEEK_CUR)
+                        if flags & (1 << 6):
+                            sec3len = get(3)
+                            os.lseek(fd, sec3len - 3, os.SEEK_CUR)
 
-                    sec4len = get(3)
+                        sec4len = get(3)
 
-                    if sec4len < 120:
-                        length &= 0x7FFFFF
-                        length *= 120
-                        length -= sec4len
-                        length += 4
+                        if sec4len < 120:
+                            length &= 0x7FFFFF
+                            length *= 120
+                            length -= sec4len
+                            length += 4
 
-            if edition == 2:
-                length = get(8)
+                if edition == 2:
+                    length = get(8)
 
-            yield offset, length
-            offset = os.lseek(fd, offset + length, os.SEEK_SET)
+                yield offset, length
+                offset = os.lseek(fd, offset + length, os.SEEK_SET)
 
-    finally:
-        os.close(fd)
-
-
-# For some reason, cffi can ge stuck in the GC if that function
-# needs to be called defined for the first time in a GC thread.
-try:
-    _h = eccodes.codes_new_from_samples(
-        "regular_ll_pl_grib1", eccodes.CODES_PRODUCT_GRIB
-    )
-    eccodes.codes_release(_h)
-except Exception:
-    pass
+        finally:
+            os.close(fd)
 
 
-class CodesHandle(eccodes.Message):
-    MISSING_VALUE = np.finfo(np.float32).max
-    KEY_TYPES = {"s": str, "l": int, "d": float}
-
-    def __init__(self, handle, path, offset):
-        super().__init__(handle)
-        self.path = path
-        self.offset = offset
-
-    @classmethod
-    def from_sample(cls, name):
-        return cls(
-            eccodes.codes_new_from_samples(name, eccodes.CODES_PRODUCT_GRIB), None, None
-        )
+class GribCodesHandle(CodesHandle):
+    PRODUCT_ID = eccodes.CODES_PRODUCT_GRIB
 
     # TODO: just a wrapper around the base class implementation to handle the
     # s,l,d qualifiers. Once these are implemented in the base class this method can
@@ -126,16 +109,7 @@ class CodesHandle(eccodes.Message):
         elif name == "md5GridSection":
             return self.get_md5GridSection()
 
-        if ktype is None:
-            name, _, key_type_str = name.partition(":")
-            if key_type_str in CodesHandle.KEY_TYPES:
-                ktype = CodesHandle.KEY_TYPES[key_type_str]
-
-        if "default" in kwargs:
-            return super().get(name, ktype=ktype, **kwargs)
-        else:
-            # this will throw if name is not available
-            return super()._get(name, ktype=ktype)
+        return super().get(name, ktype, **kwargs)
 
     def get_md5GridSection(self):
         # Special case because:
@@ -163,12 +137,6 @@ class CodesHandle(eccodes.Message):
         result = eccodes.codes_get_string(self._handle, "md5GridSection")
         eccodes.codes_set_long(self._handle, "shapeOfTheEarth", save)
         return result
-
-    def get_string(self, name):
-        return self.get(name, ktype=str)
-
-    def get_long(self, name):
-        return self.get(name, ktype=int)
 
     def as_namespace(self, namespace, param="shortName"):
         r = {}
@@ -204,8 +172,8 @@ class CodesHandle(eccodes.Message):
     def get_data_points(self):
         return eccodes.codes_grib_get_data(self._handle)
 
-    def clone(self):
-        return CodesHandle(eccodes.codes_clone(self._handle), None, None)
+    # def clone(self):
+    #     return CodesHandle(eccodes.codes_clone(self._handle), None, None)
 
     def set_values(self, values):
         assert self.path is None, "Only cloned handles can have values changed"
@@ -217,118 +185,10 @@ class CodesHandle(eccodes.Message):
         assert self.path is None, "Only cloned handles can have values changed"
         eccodes.codes_set_key_vals(self._handle, values)
 
-    def set_long(self, name, value):
-        try:
-            assert self.path is None, "Only cloned handles can have values changed"
-            eccodes.codes_set_long(self._handle, name, value)
-        except Exception as e:
-            LOG.error("Error setting %s=%s", name, value)
-            LOG.exception(e)
 
-    def set_double(self, name, value):
-        try:
-            assert self.path is None, "Only cloned handles can have values changed"
-            eccodes.codes_set_double(self._handle, name, value)
-        except Exception as e:
-            LOG.error("Error setting %s=%s", name, value)
-            LOG.exception(e)
-
-    def set_string(self, name, value):
-        try:
-            assert self.path is None, "Only cloned handles can have values changed"
-            eccodes.codes_set_string(self._handle, name, value)
-        except Exception as e:
-            LOG.error("Error setting %s=%s", name, value)
-            LOG.exception(e)
-
-    def set(self, name, value):
-        try:
-            assert self.path is None, "Only cloned handles can have values changed"
-
-            if isinstance(value, list):
-                return eccodes.codes_set_array(self._handle, name, value)
-
-            return eccodes.codes_set(self._handle, name, value)
-        except Exception as e:
-            LOG.error("Error setting %s=%s", name, value)
-            LOG.exception(e)
-
-    def write(self, f):
-        eccodes.codes_write(self._handle, f)
-
-    def save(self, path):
-        with open(path, "wb") as f:
-            self.write_to(f)
-            self.path = path
-            self.offset = 0
-
-    def read_bytes(self, offset, length):
-        if self.path is not None:
-            with open(self.path, "rb") as f:
-                f.seek(offset)
-                return f.read(length)
-
-
-class ReaderLRUCache(dict):
-    def __init__(self, size):
-        self.readers = dict()
-        self.lock = threading.Lock()
-        self.size = size
-
-    def __getitem__(self, path):
-        key = (
-            path,
-            os.getpid(),
-        )
-        with self.lock:
-            try:
-                return super().__getitem__(key)
-            except KeyError:
-                pass
-
-            c = self[key] = CodesReader(path)
-            while len(self) >= self.size:
-                _, oldest = min((v.last, k) for k, v in self.items())
-                del self[oldest]
-
-            return c
-
-
-cache = ReaderLRUCache(32)  # TODO: Add to config
-
-
-class CodesReader:
-    def __init__(self, path):
-        self.path = path
-        self.lock = threading.Lock()
-        # print("OPEN", self.path)
-        self.file = open(self.path, "rb")
-        self.last = time.time()
-
-    def __del__(self):
-        try:
-            # print("CLOSE", self.path)
-            self.file.close()
-        except Exception:
-            pass
-
-    @classmethod
-    def from_cache(cls, path):
-        return cache[path]
-
-    def at_offset(self, offset):
-        with self.lock:
-            self.last = time.time()
-            self.file.seek(offset, 0)
-            handle = eccodes.codes_new_from_file(
-                self.file,
-                eccodes.CODES_PRODUCT_GRIB,
-            )
-            assert handle is not None
-            return CodesHandle(handle, self.path, offset)
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.path}"
+class GribCodesReader(CodesReader):
+    PRODUCT_ID = eccodes.CODES_PRODUCT_GRIB
+    HANDLE_TYPE = GribCodesHandle
 
 
 class GribField(Base):
@@ -355,7 +215,7 @@ class GribField(Base):
         r""":class:`CodesHandle`: Gets an object providing access to the low level GRIB message structure."""
         if self._handle is None:
             assert self._offset is not None
-            self._handle = CodesReader.from_cache(self.path).at_offset(self._offset)
+            self._handle = GribCodesReader.from_cache(self.path).at_offset(self._offset)
         return self._handle
 
     @property
@@ -456,6 +316,35 @@ class GribField(Base):
         return values
 
     def to_points(self, flatten=False):
+        r"""Returns the geographical coordinates in the data's original
+        Coordinate Reference System (CRS).
+
+        Parameters
+        ----------
+        flatten: bool
+            When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
+            :obj:`shape` are returned.
+
+        Returns
+        -------
+        dict
+            Dictionary with items "x" and "y", containing the ndarrays of the x and
+            y coordinates, respectively.
+
+        Raises
+        ------
+        ValueError
+            When the coordinates in the data's original CRS are not available.
+
+        """
+        grid_type = self.metadata("gridType", default=None)
+        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+            lon, lat = self.data(("lon", "lat"), flatten=flatten)
+            return dict(x=lon, y=lat)
+        else:
+            raise ValueError("grid_type={grid_type} is not supported in to_points()")
+
+    def to_latlon(self, flatten=False):
         r"""Returns the latitudes/longitudes of all the gridpoints in the field.
 
         Parameters
@@ -472,7 +361,7 @@ class GribField(Base):
 
         """
         lon, lat = self.data(("lon", "lat"), flatten=flatten)
-        return dict(lon=lon, lat=lat)
+        return dict(lat=lat, lon=lon)
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (
@@ -520,21 +409,45 @@ class GribField(Base):
         step = self.handle.get("endStep", default=None)
         return self._base_datetime() + datetime.timedelta(hours=step)
 
-    def proj_string(self):
-        return self.proj_target_string()
+    def projection(self):
+        r"""Returns information about the projection.
 
-    def proj_source_string(self):
-        return self.handle.get("projSourceString", default=None)
+        Returns
+        -------
+        :obj:`Projection`
 
-    def proj_target_string(self):
-        return self.handle.get("projTargetString", default=None)
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds.projection()
+        <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
+        Name: unknown
+        Axis Info [cartesian]:
+        - E[east]: Easting (unknown)
+        - N[north]: Northing (unknown)
+        - h[up]: Ellipsoidal height (metre)
+        Area of Use:
+        - undefined
+        Coordinate Operation:
+        - name: unknown
+        - method: Equidistant Cylindrical
+        Datum: Unknown based on WGS 84 ellipsoid
+        - Ellipsoid: WGS 84
+        - Prime Meridian: Greenwich
+        >>> ds.projection().to_proj_string()
+        '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
+        """
+        return Projection.from_proj_string(
+            self.handle.get("projTargetString", default=None)
+        )
 
     def bounding_box(self):
         r"""Returns the bounding box of the field.
 
         Returns
         -------
-        :class:`BoundingBox`
+        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
         """
         return BoundingBox(
             north=self.handle.get("latitudeOfFirstGridPointInDegrees", default=None),
@@ -556,52 +469,6 @@ class GribField(Base):
         if name == "param":
             name = "paramId"
         return self.handle.get(name)
-
-    # TODO: move it into core or util
-    @staticmethod
-    def _parse_metadata_args(*args, namespace=None, astype=None):
-        key = []
-        key_arg_type = None
-        if len(args) == 1 and isinstance(args[0], str):
-            key_arg_type = str
-        elif len(args) >= 1:
-            key_arg_type = tuple
-            for k in args:
-                if isinstance(k, list):
-                    key_arg_type = list
-
-        for k in args:
-            if isinstance(k, str):
-                key.append(k)
-            elif isinstance(k, (list, tuple)):
-                key.extend(k)
-            else:
-                raise ValueError(f"metadata: invalid key argument={k}")
-
-        if key:
-            if namespace is not None:
-                if not isinstance(namespace, str):
-                    raise ValueError(
-                        f"metadata: namespace={namespace} must be a str when key specified"
-                    )
-
-            if isinstance(astype, (list, tuple)):
-                if len(astype) != len(key):
-                    if len(astype) == 1:
-                        astype = [astype[0]] * len(key)
-                    else:
-                        raise ValueError(
-                            "metadata: astype must have the same number of items as key"
-                        )
-            else:
-                astype = [astype] * len(key)
-
-        if namespace is None:
-            namespace = []
-        elif isinstance(namespace, str):
-            namespace = [namespace]
-
-        return (key, namespace, astype, key_arg_type)
 
     def metadata(self, *keys, namespace=None, astype=None, **kwargs):
         r"""Returns metadata values from the GRIB message.
@@ -636,7 +503,7 @@ class GribField(Base):
         single value, :obj:`list`, :obj:`tuple` or :obj:`dict`
             - when ``keys`` is not empty:
                 - single value when ``keys`` is a str
-                - otherwise the same type as that of ``keys`` (:obj:`lits` or :obj:`tuple`)
+                - otherwise the same type as that of ``keys`` (:obj:`list` or :obj:`tuple`)
             - when ``keys`` is empty:
                 - when ``namespace`` is :obj:`str` returns a :obj:`dict` with the keys and values
                   in that namespace
@@ -699,7 +566,7 @@ class GribField(Base):
                 key = "paramId"
             return key
 
-        key, namespace, astype, key_arg_type = self._parse_metadata_args(
+        key, namespace, astype, key_arg_type = metadata_argument(
             *keys, namespace=namespace, astype=astype
         )
 
@@ -740,7 +607,8 @@ class GribField(Base):
         return self.metadata(key)
 
     def dump(self, namespace=None, **kwargs):
-        r"""Generates dump with all the metadata keys belonging to ``namespace``.
+        r"""Generates dump with all the metadata keys belonging to ``namespace``
+        offering a tabbed interface in a Jupyter notebook.
 
         Parameters
         ----------
@@ -750,29 +618,20 @@ class GribField(Base):
             that ecCodes can access without specifying a namespace.
             When ``namespace`` is None all the available namespaces will be used.
         **kwargs: dict, optional
-            Other keyword arguments:
-
-            print: bool, optional
-                Enables printing the dump to the standard output when not in a Jupyter notebook.
-                Default: False
-            html: bool, optional
-                Enables generating HTML based content in a Jupyter notebook. Default: True
-
+            Other keyword arguments used for testing only
 
         Returns
         -------
-        html or dict
-            - When in Jupyter notebook returns HTML code providing a tabbed interface to browse the
-              dump content. When ``html`` is False a dict is returned.
-            - dict otherwise. When ``print`` is True also prints the dict to stdout.
-
+        NamespaceDump
+            Dict-like object with one item per namespace. In a Jupyter notebook represented
+            as a tabbed interface to browse the dump contents.
 
         Examples
         --------
         :ref:`/examples/grib_metadata.ipynb`
 
         """
-        from earthkit.data.utils.summary import format_info
+        from earthkit.data.utils.summary import format_namespace_dump
 
         namespace = _GRIB_NAMESPACES.keys() if namespace is None else [namespace]
         r = [
@@ -784,7 +643,7 @@ class GribField(Base):
             for ns in namespace
         ]
 
-        return format_info(
+        return format_namespace_dump(
             r, selected="parameter", details=self.__class__.__name__, **kwargs
         )
 

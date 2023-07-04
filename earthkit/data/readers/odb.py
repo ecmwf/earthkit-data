@@ -27,6 +27,16 @@ class ODBReader(Reader):
         return odc.read_odb(self.path, single=True, **odc_read_odb_kwargs)
 
 
+def _match_magic(magic, deeper_check):
+    if magic is not None:
+        type_id = b"\xff\xffODA"
+        if not deeper_check:
+            return len(magic) >= 5 and magic[:5] == type_id
+        else:
+            return type_id in magic
+    return False
+
+
 def reader(source, path, magic=None, deeper_check=False):
-    if magic is None or magic[:5] == b"\xff\xffODA":
+    if _match_magic(magic, deeper_check):
         return ODBReader(source, path)

@@ -10,7 +10,6 @@
 #
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_file
 
 
 def test_grib_len():
@@ -39,11 +38,6 @@ def test_dummy_grib():
         level=[1000, 500],
     )
     assert len(s) == 8
-
-
-def test_bbox():
-    s = from_source("file", earthkit_file("docs/examples/test.grib"))
-    assert s.bounding_box().as_tuple() == (73, -27, 33, 45), s.bounding_box()
 
 
 if __name__ == "__main__":

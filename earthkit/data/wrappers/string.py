@@ -37,10 +37,10 @@ class StrWrapper(Wrapper):
     def __init__(self, data):
         self.data = data
 
-    def bounding_box(self):
-        from earthkit.data.utils.domains import domain_to_area
-
-        return domain_to_area(self.data)
+    # DEPENDANCIES NOT YET INSTALLED
+    # def bounding_box(self):
+    #     from earthkit.data.utils.domains import domain_to_area
+    #     return domain_to_area(self.data)
 
     def datetime(self):
         return parse_date(self.data)
@@ -59,6 +59,9 @@ class StrWrapper(Wrapper):
             )
 
         return [parse_date(d) for d in bits]
+
+    def to_string(self):
+        return self.data
 
 
 def wrapper(data, *args, **kwargs):

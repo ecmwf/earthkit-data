@@ -1,0 +1,69 @@
+:root {
+    --ekd-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+    --ekd-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+    --ekd-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+    --ekd-border-color: var(--jp-border-color2, #e0e0e0);
+    --ekd-disabled-color: var(--jp-layout-color3, #bdbdbd);
+    --ekd-background-color: var(--jp-layout-color0, white);
+    --ekd-background-color-row-even: var(--jp-layout-color1, white);
+    --ekd-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+}
+
+.ekd-var-item>div,
+.ekd-var-item label,
+.ekd-var-item>.ekd-var-name span {
+    background-color: var(--ekd-background-color-row-even);
+    margin-bottom: 0;
+}
+
+.ekd-var-item>.ekd-var-name:hover span {
+    padding-right: 5px;
+}
+
+.eh-description {
+    color: var(--eh-font-color2);
+ }
+
+.ekd-sections {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    justify-content: start;
+}
+
+.ekd-sections-1 {
+    padding-left: 0 !important;
+    display: grid;
+    grid-template-columns: 150px auto auto 1fr 20px 20px;
+}
+
+.ekd-var-name {
+    grid-column: 1;
+}
+
+.ekd-var-value {
+    grid-column: 2;
+}
+
+.ekd-var-units {
+    grid-column: 3;
+}
+
+li:nth-child(odd) {
+    background-color: var(--ekd-background-color-row-odd);
+}
+
+.tree {
+    --spacing: 1rem;
+    --radius: 5px;
+}
+
+.tree li {
+    display: block;
+    position: relative;
+    #padding-left: calc(2 * var(--spacing) - var(--radius) - 2px);
+}
+
+.tree ul {
+    #margin-left: calc(var(--radius) - var(--spacing));
+    padding-left: 0;
+}
