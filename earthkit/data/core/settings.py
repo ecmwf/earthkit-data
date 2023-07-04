@@ -40,6 +40,25 @@ class Validator:
     def explain(self):
         return str()
 
+    @staticmethod
+    def make(value):
+        v = _validators.get(type(value), None)
+        if v is not None:
+            return v(value)
+        else:
+            raise TypeError(f"Cannot create Validator for type={type(value)}")
+
+
+class ValueValidator(Validator):
+    def __init__(self, value):
+        self.value = value
+
+    def check(self, value):
+        return value == self.value
+
+    def explain(self):
+        return f"Valid when = {self.value}."
+
 
 class IntervalValidator(Validator):
     def __init__(self, interval):
@@ -63,6 +82,27 @@ class ListValidator(Validator):
         return f"Valid when in {list_to_human(self.values)}."
 
 
+_validators = {Interval: IntervalValidator, bool: ValueValidator, list: ListValidator}
+
+
+class SettingsRule:
+    def __init__(self):
+        self.owner = None
+
+
+class OverrideValueSettingsRule(SettingsRule):
+    def __init__(self, conditions, value, item):
+        self.validators = {k: Validator.make(v) in conditions}
+        self.value = value
+        self.item = item
+
+    def value(self, name, settings):
+        if all(v.check(settings[k]) for k, v in self.validators):
+            return self.value
+        else:
+            return None
+
+
 class Setting:
     def __init__(
         self,
@@ -73,6 +113,7 @@ class Setting:
         kind=None,
         docs_default=None,
         validator=None,
+        rule=None,
     ):
         self.default = default
         self.description = description
@@ -81,6 +122,9 @@ class Setting:
         self.kind = kind if kind is not None else type(default)
         self.docs_default = docs_default if docs_default is not None else self.default
         self.validator = validator
+        self.rule = rule
+        if self.rule is not None:
+            self.rule.owner = self
 
     def kind(self):
         return type(self.default)
@@ -105,6 +149,16 @@ class Setting:
             if t:
                 return d + " " + t
         return d
+
+    def validate(self, name, value):
+        if self.validator is not None:
+            if not self.validator.check(value):
+                raise ValueError(
+                    f"Settings {name} cannot be set to {value}. {self.validator.explain()}"
+                )
+
+    def rule(self, setting):
+        pass
 
 
 _ = Setting
@@ -141,7 +195,11 @@ SETTINGS_AND_HELP = {
         "Caching policy",
         validator=ListValidator(["no", "temporary", "reuse"]),
     ),
-    "cache-message-positions": _(True, "Cache message positions"),
+    "cache-message-positions": _(
+        True,
+        "Cache message positions",
+        rule=OverrideValueSettingsRule({"cache-policy": "no"}, False),
+    ),
     "cache-message-metadata-index": _(False, ""),
     "maximum-cache-size": _(
         None,
@@ -255,9 +313,11 @@ class Settings:
         if name not in SETTINGS_AND_HELP:
             raise KeyError("No setting name '%s'" % (name,))
 
+        settings_item = SETTINGS_AND_HELP[name]
+
         getter, none_ok = (
-            SETTINGS_AND_HELP[name].getter,
-            SETTINGS_AND_HELP[name].none_ok,
+            settings_item.getter,
+            settings_item.none_ok,
         )
         if getter is None:
             getter = lambda name, value, none_ok: value  # noqa: E731
@@ -283,7 +343,9 @@ class Settings:
         if name not in SETTINGS_AND_HELP:
             raise KeyError("No setting name '%s'" % (name,))
 
-        klass = SETTINGS_AND_HELP[name].kind
+        settings_item = SETTINGS_AND_HELP[name]
+
+        klass = settings_item.kind
 
         if klass in (bool, int, float, str):
             # TODO: Proper exceptions
@@ -310,8 +372,8 @@ class Settings:
                 value = args[0]
 
         getter, none_ok = (
-            SETTINGS_AND_HELP[name].getter,
-            SETTINGS_AND_HELP[name].none_ok,
+            settings_item.getter,
+            settings_item.none_ok,
         )
         if getter is not None:
             assert len(args) == 1
@@ -323,12 +385,14 @@ class Settings:
             if not isinstance(value, klass):
                 raise TypeError("Setting '%s' must be of type '%s'" % (name, klass))
 
-        validator = SETTINGS_AND_HELP[name].validator
-        if validator is not None:
-            if not validator.check(value):
-                raise ValueError(
-                    f"Settings {name} cannot be set to {value}. {validator.explain()}"
-                )
+        settings_item.validate(name, value)
+
+        # validator = SETTINGS_AND_HELP[name].validator
+        # if validator is not None:
+        #     if not validator.check(value):
+        #         raise ValueError(
+        #             f"Settings {name} cannot be set to {value}. {validator.explain()}"
+        #         )
 
         self._settings[name] = value
         self._changed()
