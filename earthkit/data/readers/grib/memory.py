@@ -12,7 +12,7 @@ import logging
 import eccodes
 
 from earthkit.data.readers import Reader
-from earthkit.data.readers.grib.codes import CodesHandle, GribField
+from earthkit.data.readers.grib.codes import GribCodesHandle, GribField
 from earthkit.data.readers.grib.index import FieldList
 
 LOG = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            return GribFieldInMemory(CodesHandle(handle, None, None))
+            return GribFieldInMemory(GribCodesHandle(handle, None, None))
 
     def peek(self):
         """Returns the next available message without consuming it"""

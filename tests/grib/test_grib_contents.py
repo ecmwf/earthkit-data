@@ -767,9 +767,15 @@ def test_bbox():
         assert b.as_tuple() == (73, -27, 33, 45)
 
 
-def test_grib_projection_ll():
+@pytest.mark.parametrize("index", [0, None])
+def test_grib_projection_ll(index):
     f = from_source("file", earthkit_examples_file("test.grib"))
-    assert isinstance(f[0].projection(), projections.EquidistantCylindrical)
+
+    if index is not None:
+        g = f[index]
+    else:
+        g = f
+    assert isinstance(g.projection(), projections.EquidistantCylindrical)
 
 
 def test_grib_projection_mercator():

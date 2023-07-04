@@ -54,6 +54,18 @@ def test_bufr_to_pandas_filters():
     assert_frame_equal(res, ref[res.columns])
 
 
+def test_bufr_to_pandas_multi():
+    ds = from_source("file", earthkit_examples_file("temp_10.bufr")) + from_source(
+        "file", earthkit_examples_file("synop_10.bufr")
+    )
+
+    res = ds.to_pandas(
+        columns=["latitude", "longitude", "WMO_station_id"],
+    )
+
+    assert len(res) == 20
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 

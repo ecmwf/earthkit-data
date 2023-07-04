@@ -12,6 +12,7 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
 
     examples/mars.ipynb
     examples/cds.ipynb
+    examples/ecmwf_open_data.ipynb
     examples/fdb.ipynb
 
 
