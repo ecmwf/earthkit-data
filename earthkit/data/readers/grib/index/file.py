@@ -8,83 +8,14 @@
 #
 
 
-import json
 import logging
 import os
 
-from earthkit.data.core.caching import auxiliary_cache_file
-from earthkit.data.core.settings import SETTINGS
-from earthkit.data.readers.grib.codes import get_messages_positions
+from earthkit.data.readers.grib.codes import GribCodesMessagePositionIndex
 from earthkit.data.readers.grib.index import FieldListInFiles
 from earthkit.data.utils.parts import Part
 
 LOG = logging.getLogger(__name__)
-
-
-class FieldlistMessagePositionIndex:
-    def __init__(self, path):
-        self.path = path
-        self.offsets = None
-        self.lengths = None
-        self._cache_file = None
-        self._load()
-
-    def _build(self):
-        offsets = []
-        lengths = []
-
-        for offset, length in get_messages_positions(self.path):
-            offsets.append(offset)
-            lengths.append(length)
-
-        self.offsets = offsets
-        self.lengths = lengths
-
-    def _load(self):
-        if SETTINGS.get("cache-message-positions"):
-            self._cache_file = auxiliary_cache_file(
-                "grib-index",
-                self.path,
-                content="null",
-                extension=".json",
-            )
-            if not self._load_cache():
-                self._build()
-                self._save_cache()
-        else:
-            self._build()
-
-    def _save_cache(self):
-        if SETTINGS.get("cache-message-positions"):
-            try:
-                with open(self._cache_file, "w") as f:
-                    json.dump(
-                        dict(
-                            version=self.VERSION,
-                            offsets=self.offsets,
-                            lengths=self.lengths,
-                        ),
-                        f,
-                    )
-            except Exception:
-                LOG.exception("Write to cache failed %s", self._cache_file)
-
-    def _load_cache(self):
-        if SETTINGS.get("cache-message-positions"):
-            try:
-                with open(self._cache_file) as f:
-                    c = json.load(f)
-                    if not isinstance(c, dict):
-                        return False
-
-                    assert c["version"] == self.VERSION
-                    self.offsets = c["offsets"]
-                    self.lengths = c["lengths"]
-                    return True
-            except Exception:
-                LOG.exception("Load from cache failed %s", self._cache_file)
-
-        return False
 
 
 class FieldListInOneFile(FieldListInFiles):
@@ -98,14 +29,17 @@ class FieldListInOneFile(FieldListInFiles):
         assert isinstance(path, str), path
 
         self.path = path
-        self.position_index = FieldlistMessagePositionIndex(self.path)
-
+        self.__positions = None
         super().__init__(**kwargs)
 
+    @property
+    def _positions(self):
+        if self.__positions is None:
+            self.__positions = GribCodesMessagePositionIndex(self.path)
+        return self.__positions
+
     def part(self, n):
-        return Part(
-            self.path, self.position_index.offsets[n], self.position_index.lengths[n]
-        )
+        return Part(self.path, self._positions.offsets[n], self._positions.lengths[n])
 
     def number_of_parts(self):
-        return len(self.position_index.offsets)
+        return len(self._positions.offsets)

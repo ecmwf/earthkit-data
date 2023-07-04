@@ -17,6 +17,7 @@ import eccodes
 import numpy as np
 
 from earthkit.data.core.caching import auxiliary_cache_file
+from earthkit.data.core.settings import SETTINGS
 
 LOG = logging.getLogger(__name__)
 
@@ -59,8 +60,7 @@ class CodesMessagePositionIndex:
         self.lengths = lengths
 
     def _load(self):
-        if True:
-            # if SETTINGS.policy("message-position-cache"):
+        if SETTINGS.get("cache-message-positions"):
             self._cache_file = auxiliary_cache_file(
                 "message-index",
                 self.path,
@@ -74,34 +74,34 @@ class CodesMessagePositionIndex:
             self._build()
 
     def _save_cache(self):
-        # assert SETTINGS.policy("message-position-cache")
-        try:
-            with open(self._cache_file, "w") as f:
-                json.dump(
-                    dict(
-                        version=self.VERSION,
-                        offsets=self.offsets,
-                        lengths=self.lengths,
-                    ),
-                    f,
-                )
-        except Exception:
-            LOG.exception("Write to cache failed %s", self._cache_file)
+        if SETTINGS.get("cache-message-positions"):
+            try:
+                with open(self._cache_file, "w") as f:
+                    json.dump(
+                        dict(
+                            version=self.VERSION,
+                            offsets=self.offsets,
+                            lengths=self.lengths,
+                        ),
+                        f,
+                    )
+            except Exception:
+                LOG.exception("Write to cache failed %s", self._cache_file)
 
     def _load_cache(self):
-        # assert SETTINGS.policy("message-position-cache")
-        try:
-            with open(self._cache_file) as f:
-                c = json.load(f)
-                if not isinstance(c, dict):
-                    return False
+        if SETTINGS.get("cache-message-positions"):
+            try:
+                with open(self._cache_file) as f:
+                    c = json.load(f)
+                    if not isinstance(c, dict):
+                        return False
 
-                assert c["version"] == self.VERSION
-                self.offsets = c["offsets"]
-                self.lengths = c["lengths"]
-                return True
-        except Exception:
-            LOG.exception("Load from cache failed %s", self._cache_file)
+                    assert c["version"] == self.VERSION
+                    self.offsets = c["offsets"]
+                    self.lengths = c["lengths"]
+                    return True
+            except Exception:
+                LOG.exception("Load from cache failed %s", self._cache_file)
 
         return False
 

@@ -24,6 +24,7 @@ from earthkit.data.utils.humanize import (
     as_percent,
     as_seconds,
     interval_to_human,
+    list_to_human,
 )
 from earthkit.data.utils.interval import Interval
 
@@ -49,6 +50,17 @@ class IntervalValidator(Validator):
 
     def explain(self):
         return f"Valid when {interval_to_human(self.interval)}."
+
+
+class ListValidator(Validator):
+    def __init__(self, values):
+        self.values = values
+
+    def check(self, value):
+        return value in self.values
+
+    def explain(self):
+        return f"Valid when in {list_to_human(self.values)}."
 
 
 class Setting:
@@ -127,13 +139,9 @@ SETTINGS_AND_HELP = {
     "cache-policy": _(
         "",
         "Caching policy",
-        values=[
-            "no",
-            "temporary",
-        ],
+        validator=ListValidator(["no", "temporary", "reuse"]),
     ),
-    "cache-cleanup": _(True, ""),
-    "cache-message-offset-index": _(False, ""),
+    "cache-message-positions": _(True, "Cache message positions"),
     "cache-message-metadata-index": _(False, ""),
     "maximum-cache-size": _(
         None,
