@@ -125,8 +125,9 @@ class CodesHandle(eccodes.Message):
     # be removed. md5GridSection is also handled!
     def get(self, name, ktype=None, **kwargs):
         if ktype is None:
-            name, _, key_type_str = name.partition(":")
+            key_name, _, key_type_str = name.partition(":")
             if key_type_str in CodesHandle.KEY_TYPES:
+                name = key_name
                 ktype = CodesHandle.KEY_TYPES[key_type_str]
 
         if "default" in kwargs:
