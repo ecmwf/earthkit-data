@@ -16,8 +16,7 @@ import time
 import eccodes
 import numpy as np
 
-from earthkit.data.core.caching import auxiliary_cache_file
-from earthkit.data.core.settings import SETTINGS
+from earthkit.data.core.caching import CACHE, auxiliary_cache_file
 
 LOG = logging.getLogger(__name__)
 
@@ -60,7 +59,7 @@ class CodesMessagePositionIndex:
         self.lengths = lengths
 
     def _load(self):
-        if SETTINGS.get("cache-message-positions"):
+        if CACHE.policy.use_message_position_index_cache():
             self._cache_file = auxiliary_cache_file(
                 "message-index",
                 self.path,
@@ -74,7 +73,7 @@ class CodesMessagePositionIndex:
             self._build()
 
     def _save_cache(self):
-        if SETTINGS.get("cache-message-positions"):
+        if CACHE.policy.use_message_position_index_cache():
             try:
                 with open(self._cache_file, "w") as f:
                     json.dump(
@@ -89,7 +88,7 @@ class CodesMessagePositionIndex:
                 LOG.exception("Write to cache failed %s", self._cache_file)
 
     def _load_cache(self):
-        if SETTINGS.get("cache-message-positions"):
+        if CACHE.policy.use_message_position_index_cache():
             try:
                 with open(self._cache_file) as f:
                     c = json.load(f)
