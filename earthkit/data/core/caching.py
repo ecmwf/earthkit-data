@@ -456,7 +456,7 @@ class CacheWorker(threading.Thread):
         if bytes <= 0:
             return 0
 
-        LOG.warning("CliMetLab cache: trying to free %s", humanize.bytes(bytes))
+        LOG.warning("earthkit-data cache: trying to free %s", humanize.bytes(bytes))
 
         total = 0
 
@@ -582,7 +582,7 @@ class CacheWorker(threading.Thread):
                 )  # TODO: decide how to handle temporary extension
                 if n["size"] is None:
                     n["size"] = 0
-                html.append("<table class='climetlab'>")
+                html.append("<table class='ek'>")
                 html.append("<td><td colspan='2'>%s</td></tr>" % (n["path"],))
 
                 for k in [x for x in n.keys() if x not in ("path", "owner_data")]:
@@ -627,7 +627,7 @@ class CachePolicy(metaclass=ABCMeta):
             name = other
             return type(self) == _cache_policies[name]
         else:
-            return type(self) == other
+            return type(self) == type(other)
 
     def _make_dir(self, path):
         if not os.path.exists(path):
@@ -639,27 +639,23 @@ class CachePolicy(metaclass=ABCMeta):
 
     @abstractmethod
     def cache_directory(self):
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def use_message_position_index_cache(self):
-        raise NotImplementedError
-
-    @abstractmethod
-    def use_message_metadata_index_cache(self):
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def is_cache_size_managed(self):
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def maximum_cache_size(self):
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     def maximum_cache_disk_usage(self):
-        raise NotImplementedError
+        pass
 
 
 class NoCachePolicy(CachePolicy):
@@ -673,9 +669,6 @@ class NoCachePolicy(CachePolicy):
         return None
 
     def use_message_position_index_cache(self):
-        return False
-
-    def use_message_metadata_index_cache(self):
         return False
 
     def is_cache_size_managed(self):
@@ -704,9 +697,6 @@ class UserCachePolicy(CachePolicy):
     def use_message_position_index_cache(self):
         return SETTINGS.get("use-message-position-index-cache")
 
-    def use_message_metadata_index_cache(self):
-        return SETTINGS.get("use-message-metadata-index-cache")
-
     def is_cache_size_managed(self):
         return (
             self.maximum_cache_size() is not None
@@ -720,11 +710,11 @@ class UserCachePolicy(CachePolicy):
         return SETTINGS.get("maximum-cache-disk-usage")
 
     def __repr__(self):
-        r = f"{self.__class__.__name__}\n"
-        r += f"cache-directory={self.cache_directory()}\n"
-        r += f"maximum-cache-size={self.maximum_cache_size()}\n"
-        r += f"maximum-cache-disk-usage={self.maximum_cache_disk_usage()}\n"
-        return r
+        r = [{self.__class__.__name__}]
+        r.append(f"cache-directory={self.cache_directory()}")
+        r.append(f"maximum-cache-size={self.maximum_cache_size()}")
+        r.append(f"maximum-cache-disk-usage={self.maximum_cache_disk_usage()}")
+        return "\n".join(r)
 
 
 class TmpCachePolicy(UserCachePolicy):
@@ -768,10 +758,10 @@ class Cache:
             self.settings_changed()
 
     def settings_changed(self):
-        print("settings_changed ->" + SETTINGS.get("cache-policy"))
-        # print(f"policy={self._policy}")
+        LOG.debug(
+            "Cache settings_changed. cache-policy=" + SETTINGS.get("cache-policy")
+        )
         if self._policy != SETTINGS.get("cache-policy"):
-            # print("SETTING DIFFERENT")
             self._policy = CachePolicy.from_str(SETTINGS.get("cache-policy"))
             if self._policy.has_cache() and self._worker is None:
                 self._worker = CacheWorker()
@@ -830,8 +820,6 @@ class Cache:
         return self.policy.cache_directory()
 
     def file_in_cache_directory(self, path):
-        # cache_directory = self.cache_directory()
-        # cache_directory = SETTINGS.get("cache-directory")
         return path.startswith(self.cache_directory())
 
 
@@ -863,7 +851,7 @@ def cache_file(
         Full path to the cache file.
     """
     if not CACHE.policy.has_cache() or CACHE.cache_directory() is None:
-        raise ValueError("Cache is disabled. Cannot create cache file.")
+        raise RuntimeError("Cache is disabled. Cannot create cache file.")
 
     m = hashlib.sha256()
     m.update(owner.encode("utf-8"))

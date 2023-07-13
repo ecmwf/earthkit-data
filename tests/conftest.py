@@ -40,3 +40,10 @@ def pytest_runtest_setup(item):
     for m in marks_in_items:
         if m in marks_to_skip:
             pytest.skip(f"test is skipped because custom pytest option: -E {flag}")
+
+    # make sure all the tests use the default settings
+    from earthkit.data import settings
+
+    settings.auto_save_settings = False
+    settings.reset()
+    settings.set("use-message-position-index-cache", True)

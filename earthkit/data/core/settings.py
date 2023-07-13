@@ -184,10 +184,6 @@ SETTINGS_AND_HELP = {
         False,
         "Stores message offset index for GRIB/BUFR files in the cache.",
     ),
-    "use-message-metadata-index-cache": _(
-        False,
-        "Stores message metadata indexing for GRIB files in the cache.",
-    ),
     "maximum-cache-size": _(
         None,
         """Maximum disk space used by the earthkit-data cache (ex: 100G or 2T).""",

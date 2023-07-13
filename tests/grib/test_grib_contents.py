@@ -823,6 +823,8 @@ def test_grib_projection_ll(index):
         g = f[index]
     else:
         g = f
+    print(f"proj={g.projection()}")
+    assert False
     assert isinstance(g.projection(), projections.EquidistantCylindrical)
 
 

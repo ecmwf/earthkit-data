@@ -17,6 +17,7 @@ import pytest
 from earthkit.data import cache, from_source, settings
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.temporary import temp_directory
+from earthkit.data.testing import earthkit_examples_file
 
 LOG = logging.getLogger(__name__)
 
@@ -157,7 +158,7 @@ def test_cache_policy():
                 assert cache.policy.has_cache() is False
                 assert cache.policy.cache_directory() is None
 
-                with pytest.raises(ValueError):
+                with pytest.raises(RuntimeError):
                     cache_file(
                         "dummy_test_cache",
                         None,
@@ -173,6 +174,34 @@ def test_cache_policy():
             assert cache_dir == user_dir
             assert os.path.exists(cache_dir)
             check_cache_files(cache_dir)
+
+
+def test_url_source_no_cache():
+    with settings.temporary("cache-policy", "off"):
+        with pytest.raises(RuntimeError):
+            from_source(
+                "url",
+                "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test.grib",
+            )
+
+
+def test_grib_no_cache():
+    with settings.temporary("cache-policy", "off"):
+        ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+        assert len(ds) == 18
+
+        f = ds[3]
+        assert f.metadata("param") == "t"
+
+
+def test_grib_no_offset_index_cache():
+    s = {"cache-policy": "temporary", "use-message-position-index-cache": False}
+    with settings.temporary(s):
+        ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+        assert len(ds) == 18
+
+        f = ds[3]
+        assert f.metadata("param") == "t"
 
 
 if __name__ == "__main__":
