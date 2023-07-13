@@ -21,8 +21,8 @@ from earthkit.data.testing import NO_CDS
 def test_ads_grib_1():
     s = from_source(
         "ads",
-        'cams-global-reanalysis-eac4',
-        variable = ['particulate_matter_10um', 'particulate_matter_1um'],
+        "cams-global-reanalysis-eac4",
+        variable=["particulate_matter_10um", "particulate_matter_1um"],
         area=[50, -50, 20, 50],
         date="2012-12-12",
         time="12:00",
@@ -36,8 +36,8 @@ def test_ads_grib_1():
 def test_ads_grib_2():
     s = from_source(
         "ads",
-        'cams-global-reanalysis-eac4',
-        variable = ['particulate_matter_10um', 'particulate_matter_1um'],
+        "cams-global-reanalysis-eac4",
+        variable=["particulate_matter_10um", "particulate_matter_1um"],
         area=[50, -50, 20, 50],
         date="2012-12-12",
         time="12:00",
@@ -52,8 +52,8 @@ def test_ads_grib_2():
 def test_ads_grib_3():
     s = from_source(
         "ads",
-        'cams-global-reanalysis-eac4',
-        variable = ['particulate_matter_10um', 'particulate_matter_1um'],
+        "cams-global-reanalysis-eac4",
+        variable=["particulate_matter_10um", "particulate_matter_1um"],
         area=[50, -50, 20, 50],
         date="2012-12-12/to/2012-12-15",
         time="12:00",
@@ -67,8 +67,8 @@ def test_ads_grib_3():
 def test_ads_netcdf():
     s = from_source(
         "ads",
-        'cams-global-reanalysis-eac4',
-        variable = ['particulate_matter_10um', 'particulate_matter_1um'],
+        "cams-global-reanalysis-eac4",
+        variable=["particulate_matter_10um", "particulate_matter_1um"],
         area=[50, -50, 20, 50],
         date="2012-12-12",
         time="12:00",

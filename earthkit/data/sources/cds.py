@@ -68,6 +68,7 @@ class CdsRetriever(FileSource):
     sphinxdoc = """
     CdsRetriever
     """
+
     def client(self):
         return client()
 
