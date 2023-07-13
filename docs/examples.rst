@@ -66,4 +66,6 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     :caption: Miscellaneous
     :glob:
 
+    examples/settings.ipynb
+    examples/cache.ipynb
     examples/projection.ipynb
