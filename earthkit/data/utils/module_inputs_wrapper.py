@@ -1,3 +1,12 @@
+# (C) Copyright 2020 ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation
+# nor does it submit to any jurisdiction.
+#
+
 """
 Module containing methods to transform the inputs of functions based on the function type setting,
 common signitures or mapping defined at call time
@@ -9,6 +18,7 @@ import typing as T
 from functools import wraps
 
 from earthkit.data import transform
+from earthkit.data.wrappers import Wrapper
 
 try:
     UNION_TYPES = [T.Union, types.UnionType]
@@ -27,24 +37,73 @@ def ensure_iterable(input_item):
         return [input_item]
     return input_item
 
+def ensure_tuple(input_item):
+    """Ensure that an item is iterable"""
+    if not isinstance(input_item, tuple):
+        return tuple(ensure_iterable(input_item))
+    return input_item
 
-def transform_function_inputs(function, **kwarg_types):
+
+def transform_function_inputs(
+    function: T.Callable,
+    kwarg_types: T.Dict[str, T.Any] = {},
+    convert_types: T.Union[T.Tuple[T.Any], T.Dict[str, T.Tuple[T.Any]]] = (),
+    **decorator_kwargs
+) -> T.Callable:
     """
     Transform the inputs to a function to match the requirements.
     earthkit.data handles the input arg/kwarg format.
+
+    Parameters
+    ----------
+    function : Callable
+        Method to be wrapped
+    kwarg_types : Dict[str: type]
+        Mapping of accepted object types for each arg/kwarg
+    convert_types : Tuple[type]
+        List of data-types to try to convert, this can be useful when the function is versitile and can
+        accept a large number of data-types, hence only a small number of types should be converted.
+
+    Returns
+    -------
+    [type]
+        [description]
     """
-    def _wrapper(kwarg_types, *args, **kwargs):
+    def _wrapper(kwarg_types, convert_types, *args, **kwargs):
         kwarg_types = {**kwarg_types}
         signature = inspect.signature(function)
         mapping = signature_mapping(signature, kwarg_types)
 
-        # convert args to kwargs for ease of looping:
+        # Add args to kwargs for ease of looping:
+        arg_names = []
         for arg, name in zip(args, signature.parameters):
+            arg_names.append(name)
             kwargs[name] = arg
 
-        kwargs_with_mapping = [k for k in kwargs if k in mapping]
-        # transform args/kwargs if mapping available
-        for key in kwargs_with_mapping:
+        # Expand any Wrapper objects to their native data format:
+        for k, v in kwargs.items():
+            if isinstance(v, Wrapper):
+                try:
+                    kwargs[k] = v.data
+                except:
+                    pass
+
+        convert_kwargs = [k for k in kwargs if k in mapping]
+        # Only convert some data-types, this can be used to prevent conversion for for functions which
+        #  accept a long-list of formats, e.g. numpy methods can accept xarray, pandas and more
+        
+        # Filter for convert_types
+        if convert_types:
+            # Ensure convert_types is a dictionary
+            if not isinstance(convert_types, dict):
+                convert_types = {key: convert_types for key in convert_kwargs}
+            
+            convert_kwargs = [
+                k for k in convert_kwargs if isinstance(kwargs[k], ensure_tuple(convert_types.get(k, ())))
+            ]
+
+        # transform args/kwargs
+        for key in convert_kwargs:
             value = kwargs[key]
             kwarg_types = ensure_iterable(mapping[key])
             # Transform value if necessary
@@ -52,18 +111,20 @@ def transform_function_inputs(function, **kwarg_types):
                 for kwarg_type in kwarg_types:
                     try:
                         kwargs[key] = transform(value, kwarg_type)
-                    except ValueError:
+                    except:
                         # Transform was not possible, move to next kwarg type.
                         # If no transform is possible, format is unchanged and we rely on function to raise
                         # an Error.
                         continue
                     break
 
-        return function(**kwargs)
+        # Extract args from kwargs:
+        args = [kwargs.pop(name) for name in arg_names]
+        return function(*args, **kwargs)
 
     @wraps(function)
     def wrapper(*args, **kwargs):
-        return _wrapper(kwarg_types, *args, **kwargs)
+        return _wrapper(kwarg_types, convert_types, *args, **kwargs)
 
     return wrapper
 
