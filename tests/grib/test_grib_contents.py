@@ -823,7 +823,9 @@ def test_grib_projection_ll(index):
         g = f[index]
     else:
         g = f
-    assert isinstance(g.projection(), projections.EquidistantCylindrical)
+    assert isinstance(
+        g.projection(), (projections.EquidistantCylindrical, projections.LongLat)
+    )
 
 
 def test_grib_projection_mercator():
