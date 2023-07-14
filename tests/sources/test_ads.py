@@ -10,14 +10,15 @@
 #
 
 import pytest
+import os
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_CDS
 
+NO_ADS = not os.path.exists(os.path.expanduser("~/.adsapirc"))
 
 @pytest.mark.long_test
 @pytest.mark.download
-@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.skipif(NO_ADS, reason="No access to ADS")
 def test_ads_grib_1():
     s = from_source(
         "ads",
@@ -32,7 +33,7 @@ def test_ads_grib_1():
 
 @pytest.mark.long_test
 @pytest.mark.download
-@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.skipif(NO_ADS, reason="No access to ADS")
 def test_ads_grib_2():
     s = from_source(
         "ads",
@@ -48,7 +49,7 @@ def test_ads_grib_2():
 
 @pytest.mark.long_test
 @pytest.mark.download
-@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.skipif(NO_ADS, reason="No access to ADS")
 def test_ads_grib_3():
     s = from_source(
         "ads",
@@ -63,7 +64,7 @@ def test_ads_grib_3():
 
 @pytest.mark.long_test
 @pytest.mark.download
-@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.skipif(NO_ADS, reason="No access to ADS")
 def test_ads_netcdf():
     s = from_source(
         "ads",
