@@ -28,6 +28,18 @@ class NumpyNDArrayWrapper(Wrapper):
         """
         return self.data
 
+    def to_xarray(self, **kwargs):
+        """
+        Return an xarray.DataArray representation of the data.
+
+        Returns
+        -------
+        xarray.DataArray
+        """
+        import xarray as xr
+
+        return xr.DataArray(self.data, **kwargs)
+
 
 def wrapper(data, *args, **kwargs):
     import numpy as np

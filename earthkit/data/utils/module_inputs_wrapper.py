@@ -11,10 +11,10 @@
 Module containing methods to transform the inputs of functions based on the function type setting,
 common signitures or mapping defined at call time
 """
-from ast import Module
 import inspect
 import types
 import typing as T
+from ast import Module
 from functools import wraps
 
 from earthkit.data import transform
@@ -36,6 +36,7 @@ def ensure_iterable(input_item):
     if not isinstance(input_item, (tuple, list, dict)):
         return [input_item]
     return input_item
+
 
 def ensure_tuple(input_item):
     """Ensure that an item is iterable"""
@@ -69,6 +70,7 @@ def transform_function_inputs(
     [type]
         [description]
     """
+
     def _wrapper(kwarg_types, convert_types, *args, **kwargs):
         kwarg_types = {**kwarg_types}
         signature = inspect.signature(function)
@@ -80,26 +82,20 @@ def transform_function_inputs(
             arg_names.append(name)
             kwargs[name] = arg
 
-        # Expand any Wrapper objects to their native data format:
-        for k, v in kwargs.items():
-            if isinstance(v, Wrapper):
-                try:
-                    kwargs[k] = v.data
-                except:
-                    pass
-
         convert_kwargs = [k for k in kwargs if k in mapping]
         # Only convert some data-types, this can be used to prevent conversion for for functions which
         #  accept a long-list of formats, e.g. numpy methods can accept xarray, pandas and more
-        
+
         # Filter for convert_types
         if convert_types:
             # Ensure convert_types is a dictionary
             if not isinstance(convert_types, dict):
                 convert_types = {key: convert_types for key in convert_kwargs}
-            
+
             convert_kwargs = [
-                k for k in convert_kwargs if isinstance(kwargs[k], ensure_tuple(convert_types.get(k, ())))
+                k
+                for k in convert_kwargs
+                if isinstance(kwargs[k], ensure_tuple(convert_types.get(k, ())))
             ]
 
         # transform args/kwargs
@@ -111,12 +107,19 @@ def transform_function_inputs(
                 for kwarg_type in kwarg_types:
                     try:
                         kwargs[key] = transform(value, kwarg_type)
-                    except:
+                    except Exception:
                         # Transform was not possible, move to next kwarg type.
                         # If no transform is possible, format is unchanged and we rely on function to raise
                         # an Error.
                         continue
                     break
+
+        # Anything that is still a Wrapper object, expand to native data format:
+        for k, v in [(_k, _v) for _k, _v in kwargs.items() if isinstance(_v, Wrapper)]:
+            try:
+                kwargs[k] = v.data
+            except Exception:
+                pass
 
         # Extract args from kwargs:
         args = [kwargs.pop(name) for name in arg_names]
@@ -163,8 +166,12 @@ def transform_module_inputs(in_module, **decorator_kwargs):
     for name in dir(in_module):
         func = getattr(in_module, name)
         # Wrap any functions that are not hidden
-        if not name.startswith('_') and isinstance(func, types.FunctionType):
-            setattr(wrapped_module, name, transform_function_inputs(func, **decorator_kwargs))
+        if not name.startswith("_") and isinstance(func, types.FunctionType):
+            setattr(
+                wrapped_module,
+                name,
+                transform_function_inputs(func, **decorator_kwargs),
+            )
         else:
             # If not a func, we just copy
             setattr(wrapped_module, name, func)
