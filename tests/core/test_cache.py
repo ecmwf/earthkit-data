@@ -62,34 +62,6 @@ def test_cache_1():
         cache.purge_cache(matcher=lambda e: ["owner"] == "test_cache")
         check_cache_files(settings.get("user-cache-directory"))
 
-        # def touch(target, args):
-        #     assert args["foo"] in (1, 2)
-        #     with open(target, "w"):
-        #         pass
-
-        # path1 = cache_file(
-        #     "test_cache",
-        #     touch,
-        #     {"foo": 1},
-        #     extension=".test",
-        # )
-
-        # path2 = cache_file(
-        #     "test_cache",
-        #     touch,
-        #     {"foo": 2},
-        #     extension=".test",
-        # )
-
-        # assert path1 != path2
-
-        # cnt = 0
-        # for f in cache.cache_entries():
-        #     if f["owner"] == "test_cache":
-        #         cnt += 1
-
-        # assert cnt == 2
-
 
 # 1GB ram disk on MacOS (blocks of 512 bytes)
 # diskutil erasevolume HFS+ "RAMDisk" `hdiutil attach -nomount ram://2097152`
@@ -194,14 +166,15 @@ def test_grib_no_cache():
         assert f.metadata("param") == "t"
 
 
-def test_grib_no_offset_index_cache():
-    s = {"cache-policy": "temporary", "use-message-position-index-cache": False}
+@pytest.mark.parametrize("index_cache", [True, False])
+def test_grib_offset_index_cache(index_cache):
+    s = {"cache-policy": "temporary", "use-message-position-index-cache": index_cache}
     with settings.temporary(s):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == 18
 
         f = ds[3]
-        assert f.metadata("param") == "t"
+        assert f.metadata("param") == "t", f"index-cache={index_cache}"
 
 
 if __name__ == "__main__":

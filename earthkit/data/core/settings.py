@@ -156,21 +156,6 @@ SETTINGS_AND_HELP = {
         getter="_as_str",
         none_ok=True,
     ),
-    "dask-directories": _(
-        [os.path.join(DOT_EARTHKIT_DATA, "dask")],
-        """List of directories where to search for dask cluster definitions.
-        See :ref:`dask` for more information.""",
-    ),
-    "datasets-directories": _(
-        [os.path.join(DOT_EARTHKIT_DATA, "datasets")],
-        """List of directories where to search for datasets definitions.
-        See :ref:`datasets` for more information.""",
-    ),
-    "datasets-catalogs-urls": _(
-        ["https://github.com/ecmwf-lab/climetlab-datasets/raw/main/datasets"],
-        """List of url where to search for catalogues of datasets definitions.
-        See :ref:`datasets` for more information.""",
-    ),
     "number-of-download-threads": _(
         5,
         """Number of threads used to download data.""",

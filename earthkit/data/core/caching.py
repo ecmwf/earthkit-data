@@ -103,7 +103,7 @@ def in_executor(func):
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
         global CACHE
-        s = CACHE._worker.enqueue(func, *args, **kwargs)
+        s = CACHE._manager.enqueue(func, *args, **kwargs)
         return s.result()
 
     return wrapped
@@ -113,7 +113,7 @@ def in_executor_forget(func):
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
         global CACHE
-        CACHE._worker.enqueue(func, *args, **kwargs)
+        CACHE._manager.enqueue(func, *args, **kwargs)
         return None
 
     return wrapped
@@ -147,7 +147,7 @@ class Future:
         return self._result
 
 
-class CacheWorker(threading.Thread):
+class CacheManager(threading.Thread):
     def __init__(self):
         super().__init__(daemon=True)
         self._connection = None
@@ -744,9 +744,9 @@ _cache_policies = {
 
 class Cache:
     def __init__(self):
-        self._worker = None
+        self._manager = None
         self._policy = None
-        self._worker_methods = {}
+        self._manager_methods = {}
 
     @property
     def policy(self):
@@ -763,58 +763,58 @@ class Cache:
         )
         if self._policy != SETTINGS.get("cache-policy"):
             self._policy = CachePolicy.from_str(SETTINGS.get("cache-policy"))
-            if self._policy.has_cache() and self._worker is None:
-                self._worker = CacheWorker()
-                self._worker.start()
+            if self._policy.has_cache() and self._manager is None:
+                self._manager = CacheManager()
+                self._manager.start()
 
         self._settings_changed()
 
-    def _call_worker(self, name, forget, *args, **kwargs):
-        if self.policy.has_cache() and self._worker is not None:
-            if name not in self._worker_methods:
-                worker_fn_name = "_" + name
+    def _call_manager(self, name, forget, *args, **kwargs):
+        if self.policy.has_cache() and self._manager is not None:
+            if name not in self._manager_methods:
+                manager_fn_name = "_" + name
                 if forget:
-                    self._worker_methods[name] = in_executor_forget(
-                        getattr(self._worker, worker_fn_name)
+                    self._manager_methods[name] = in_executor_forget(
+                        getattr(self._manager, manager_fn_name)
                     )
                 else:
-                    self._worker_methods[name] = in_executor(
-                        getattr(self._worker, worker_fn_name)
+                    self._manager_methods[name] = in_executor(
+                        getattr(self._manager, manager_fn_name)
                     )
-            return self._worker_methods[name](*args, **kwargs)
+            return self._manager_methods[name](*args, **kwargs)
 
     def dump_cache_database(self, *args, **kwargs):
-        return self._call_worker("dump_cache_database", False, *args, **kwargs)
+        return self._call_manager("dump_cache_database", False, *args, **kwargs)
 
     def summary_dump_cache_database(self, *args, **kwargs):
-        return self._call_worker("summary_dump_cache_database", False, *args, **kwargs)
+        return self._call_manager("summary_dump_cache_database", False, *args, **kwargs)
 
     def register_cache_file(self, *args, **kwargs):
-        return self._call_worker("register_cache_file", False, *args, **kwargs)
+        return self._call_manager("register_cache_file", False, *args, **kwargs)
 
     def update_entry(self, *args, **kwargs):
-        return self._call_worker("update_entry", False, *args, **kwargs)
+        return self._call_manager("update_entry", False, *args, **kwargs)
 
     def decache_file(self, *args, **kwargs):
-        return self._call_worker("decache_file", False, *args, **kwargs)
+        return self._call_manager("decache_file", False, *args, **kwargs)
 
     def check_cache_size(self, *args, **kwargs):
-        return self._call_worker("check_cache_size", True, *args, **kwargs)
+        return self._call_manager("check_cache_size", True, *args, **kwargs)
 
     def cache_size(self, *args, **kwargs):
-        return self._call_worker("cache_size", False, *args, **kwargs)
+        return self._call_manager("cache_size", False, *args, **kwargs)
 
     def cache_entries(self, *args, **kwargs):
-        return self._call_worker("cache_entries", False, *args, **kwargs)
+        return self._call_manager("cache_entries", False, *args, **kwargs)
 
     def purge_cache(self, *args, **kwargs):
-        return self._call_worker("purge_cache", False, *args, **kwargs)
+        return self._call_manager("purge_cache", False, *args, **kwargs)
 
     def housekeeping(self, *args, **kwargs):
-        return self._call_worker("housekeeping", False, *args, **kwargs)
+        return self._call_manager("housekeeping", False, *args, **kwargs)
 
     def _settings_changed(self, *args, **kwargs):
-        return self._call_worker("settings_changed", False, *args, **kwargs)
+        return self._call_manager("settings_changed", False, *args, **kwargs)
 
     def cache_directory(self):
         return self.policy.cache_directory()

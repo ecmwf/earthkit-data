@@ -46,4 +46,3 @@ def pytest_runtest_setup(item):
 
     settings.auto_save_settings = False
     settings.reset()
-    settings.set("use-message-position-index-cache", True)
