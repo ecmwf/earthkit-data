@@ -8,20 +8,17 @@
 #
 
 import logging
-import polytope
-import requests
 
-from .prompt import APIKeyPrompt
 from . import Source
-from .multi import MultiSource
-from .memory import MemorySource
 from .multi_url import MultiUrl
+from .prompt import APIKeyPrompt
 
 LOG = logging.getLogger(__name__)
 
+
 class PolytopeWebKeyPrompt(APIKeyPrompt):
-    register_or_sign_in_url="",
-    retrieve_api_key_url="",
+    register_or_sign_in_url = ("",)
+    retrieve_api_key_url = ("",)
     prompts = [
         dict(
             name="user_email",
@@ -40,32 +37,53 @@ class PolytopeWebKeyPrompt(APIKeyPrompt):
 
 
 class Polytope(Source):
-    def __init__(self, dataset, request):
-        """
-        Usage:
-            earthkit.data.from_source("polytope", "iecmwf-mars", request)
-        """
+    """
+    Retrieve data using the Polytope Web API.
+    See polytope-client.readthedocs.io for more information.
+
+    Parameters
+    ----------
+    dataset : str
+        The name of the dataset to query.
+    request: dict[str, str]
+        A collection of key : value pairs specifying the dataset.
+
+    Examples
+    --------
+    >>> src = earthkit.data.from_source("polytope", "ecmwf-mars", request)
+    >>> src.to_pandas()  # if tabular data
+    >>> src.to_xarray()  # if datacube
+    """
+
+    def __init__(self, dataset, request) -> None:
+        try:
+            import polytope
+        except ImportError:
+            raise ImportError(
+                "Polytope Web Client must be installed with 'pip install polytope-client'"
+            )
+
         super().__init__()
         assert isinstance(dataset, str)
-        self.request = dict(dataset = dataset,
-                            request = request)
-        
-        credentials = PolytopeWebKeyPrompt().check(load = True)
+
+        self.request = dict(dataset=dataset, request=request)
+
+        credentials = PolytopeWebKeyPrompt().check(load=True)
         self.client = polytope.api.Client(**credentials)
 
-    def mutate(self):
-        pointers = self.client.retrieve(self.request["dataset"],
-                                        self.request["request"],
-                                        pointer = True, asynchronous=False)
-        
-        urls = [p['location'] for p in pointers]
-        file_sources = [MemorySource(requests.get(url).content) for url in urls]
-        
-        if len(file_sources) == 1:
-            return file_sources[0]
-        
-        # This does not actually work, if gives 
-        return MultiSource(file_sources)
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.request['dataset']}, {self.request['request']})"
+
+    def mutate(self) -> Source:
+        pointers = self.client.retrieve(
+            self.request["dataset"],
+            self.request["request"],
+            pointer=True,
+            asynchronous=False,
+        )
+
+        urls = [p["location"] for p in pointers]
+        return MultiUrl(urls)
 
 
 source = Polytope
