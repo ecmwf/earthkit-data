@@ -15,6 +15,7 @@ import eccodes
 import numpy as np
 
 from earthkit.data.core import Base
+from earthkit.data.readers.grib.metadata import GribMetadata
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.message import (
     CodesHandle,
@@ -565,6 +566,9 @@ class GribField(Base):
             elif key == "_param_id":
                 key = "paramId"
             return key
+
+        if len(keys) == 0 and namespace is None and astype is None and len(kwargs) == 0:
+            return GribMetadata(self.handle)
 
         key, namespace, astype, key_arg_type = metadata_argument(
             *keys, namespace=namespace, astype=astype

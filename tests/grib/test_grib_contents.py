@@ -434,10 +434,10 @@ def test_grib_metadata_namespace():
     }
     assert r == ref
 
-    r = f[0].metadata()
-    assert isinstance(r, dict)
-    for ns in ["default", "vertical", "time"]:
-        assert ns in r, ns
+    # r = f[0].metadata()
+    # assert isinstance(r, dict)
+    # for ns in ["default", "vertical", "time"]:
+    #     assert ns in r, ns
 
 
 def test_grib_values_1():
