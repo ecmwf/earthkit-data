@@ -9,12 +9,14 @@
 # nor does it submit to any jurisdiction.
 #
 
-import pytest
 import os
+
+import pytest
 
 from earthkit.data import from_source
 
 NO_ADS = not os.path.exists(os.path.expanduser("~/.adsapirc"))
+
 
 @pytest.mark.long_test
 @pytest.mark.download
