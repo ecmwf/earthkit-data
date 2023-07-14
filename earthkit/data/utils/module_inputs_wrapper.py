@@ -126,7 +126,9 @@ def transform_function_inputs(
         return function(*args, **kwargs)
 
     @wraps(function)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, _auto_inputs_transform=True, **kwargs):
+        if not _auto_inputs_transform:  # Possibility to escape wrapping at call level
+            return function(*args, **kwargs)
         return _wrapper(kwarg_types, convert_types, *args, **kwargs)
 
     return wrapper
