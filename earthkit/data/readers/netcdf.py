@@ -14,7 +14,6 @@ from contextlib import closing
 from itertools import product
 
 import numpy as np
-import xarray as xr
 
 from earthkit.data.core import Base
 from earthkit.data.utils.bbox import BoundingBox
@@ -269,6 +268,8 @@ class NetCDFReader(Reader):
         return self.fields[n]
 
     def get_fields(self):
+        import xarray as xr
+
         with closing(
             xr.open_mfdataset(self.path, combine="by_coords")
         ) as ds:  # or nested
