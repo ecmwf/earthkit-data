@@ -76,9 +76,6 @@ class PandasDataFrameWrapper(PandasSeriesWrapper):
     convenience methods.
     """
 
-    def __init__(self, data):
-        self.data = data
-
     def to_pandas(self):
         """
         Return a `pandas.DataFrame` representation of the data.
@@ -104,11 +101,28 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
     """Wrapper around a `geopandas.DataFrame`, offering polymorphism and
     convenience methods.
 
-    Key difference to a pandas dataframe wrapper, we iterate of rows (features) not coloums
+    Key difference to a pandas dataframe wrapper, we treat rows (features) as fields
     """
+    def __init__(self, source, path):
+        super().__init__(source, path)
+        self.fields = None
 
-    def __init__(self, data):
-        self.data = data
+    def __iter__(self):
+        """
+        Iterate over features in geojson via pandas
+        """
+        self._scan()
+        return iter(self.fields)
+    
+    def _scan(self):
+        if self.fields is None:
+            self.fields = self.get_fields()
+
+    def get_fields(self):
+        """
+        For geopandas, a field is a feature
+        """
+        return [row[1] for row in self.data.iterrows()]
 
 
 def wrapper(data, *args, **kwargs):
