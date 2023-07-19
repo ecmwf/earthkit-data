@@ -12,8 +12,6 @@
 import mimetypes
 import numpy as np
 
-from earthkit.data.utils.dates import to_datetime
-
 from . import Reader
 
 
@@ -23,6 +21,9 @@ class GeojsonReader(Reader):
         self.fields = None
 
     def _scan(self):
+        """
+        For geojson, a field is a feature
+        """
         if self.fields is None:
             self.fields = self.get_fields()
 
@@ -30,9 +31,12 @@ class GeojsonReader(Reader):
         return "GeojsonReader(%s)" % (self.path,)
 
     def __iter__(self):
+        """
+        Iterate over features in geojson via pandas
+        """
         self._scan()
         return iter(self.fields)
-
+    
     def __len__(self):
         self._scan()
         return len(self.fields)
@@ -40,10 +44,18 @@ class GeojsonReader(Reader):
     def __getitem__(self, n):
         self._scan()
         return self.fields[n]
+    
+    def bounding_box(self, **kwargs):
+        return self.to_pandas(**kwargs).crs.area_of_use.bounds
+    
+    def ls(self, **kwargs):
+        return self.to_pandas(**kwargs)
+    describe = ls
+    # def describe(self, kwargs):
+    #     return self.to_pandas(**kwargs)
 
-    # def get_fields(self):
-    #     import geopandas as gpd
-    #     return gpd.read_file(self.path)
+    def get_fields(self, **kwargs):
+        return [row[1] for row in self.to_pandas(**kwargs).iterrows()]
 
     def to_numpy(self, flatten=False):
         arr = self.to_pandas().to_numpy()
@@ -51,8 +63,14 @@ class GeojsonReader(Reader):
             arr = arr.flatten()
         return arr
 
+    # def to_geopandas(self, **kwargs):
+    #     # TODO: handle multiple paths
+    #     return self.to_pandas(**kwargs)
+    
     def to_pandas(self, **kwargs):
-        return self.to_pandas_from_multi_paths.read_file(self.path, **kwargs)
+        # TODO: handle multiple paths
+        return self.to_pandas_from_multi_paths([self.path], **kwargs)
+    to_geopandas = to_pandas
 
     def to_xarray(self, **kwargs):
         return self.to_pandas(**kwargs).to_xarray()

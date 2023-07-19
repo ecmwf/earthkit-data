@@ -9,26 +9,25 @@
 # nor does it submit to any jurisdiction.
 #
 
-import mimetypes
-
-import pytest
-
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_file
 
-
 def test_geojson():
-    for s in from_source("file", earthkit_file("tests/data/NUTS_RG_20M_2021_3035.geojson")):
-        s is not None
+    s = from_source("file", earthkit_file("tests/data/NUTS_RG_20M_2021_3035.geojson"))
+    assert s
+    for _s in s:
+        assert _s is not None
+        assert _s.geometry
+    
 
 
+
+# TODO test mimetypes
 # def test_csv_mimetypes():
     # assert mimetypes.guess_type("x.geojson") == ("application/geo+json", None)
     # assert mimetypes.guess_type("x.geojson.gz") == ("application/geo+json", "gzip")
     # assert mimetypes.guess_type("x.geojson.bz2") == ("application/geo+json", "bzip2")
 
-
-# TODO test compression
 
 if __name__ == "__main__":
     from earthkit.data.testing import main

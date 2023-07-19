@@ -17,18 +17,59 @@ class PandasSeriesWrapper(Wrapper):
 
     def __init__(self, data):
         self.data = data
+    
+    def __iter__(self):
+        return iter(self.data)
 
     def to_pandas(self):
         """
-        Return a `pandas.DataFrame` representation of the data.
+        Return a `pandas.Series` representation of the data.
 
         Returns
         -------
         pandas.Series
         """
         return self.data
+   
+    def to_numpy(self, **kwargs):
+        """
+        Return a `numpy.array` representation of the data.
+
+        Returns
+        -------
+        numpy.array
+        """
+        return self.data.to_numpy(**kwargs) 
     
+    def to_xarray(self, **kwargs):
+        """
+        Return a `xarray.DataArray` representation of the data.
+
+        Returns
+        -------
+        numpy.array
+        """
+        return self.data.to_xarray(**kwargs)
     
+    def to_netcdf(self, *args, **kwargs):
+        """
+        Return a `xarray.DataArray` representation of the data.
+
+        Returns
+        -------
+        numpy.array
+        """
+        return self.data.to_xarray().to_netcdf(*args, **kwargs)
+
+    def describe(self):
+        """
+        A pandas is tabular, therefore return itself
+
+        Returns
+        -------
+        numpy.array
+        """
+        return self.data
 
 class PandasDataFrameWrapper(PandasSeriesWrapper):
     """Wrapper around a `pandas.DataFrame`, offering polymorphism and
@@ -48,6 +89,15 @@ class PandasDataFrameWrapper(PandasSeriesWrapper):
         """
         return self.data
 
+    def to_xarray(self, **kwargs):
+        """
+        Return a `xarray.Dataset` representation of the data.
+
+        Returns
+        -------
+        numpy.array
+        """
+        return self.data.to_xarray(**kwargs) 
 
 def wrapper(data, *args, **kwargs):
     import pandas as pd
