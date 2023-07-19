@@ -99,11 +99,32 @@ class PandasDataFrameWrapper(PandasSeriesWrapper):
         """
         return self.data.to_xarray(**kwargs) 
 
+
+class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
+    """Wrapper around a `geopandas.DataFrame`, offering polymorphism and
+    convenience methods.
+
+    Key difference to a pandas dataframe wrapper, we iterate of rows (features) not coloums
+    """
+
+    def __init__(self, data):
+        self.data = data
+
+
 def wrapper(data, *args, **kwargs):
     import pandas as pd
 
+    try:
+        import geopandas as gpd
+        l_gpd = True
+    except ImportError:
+        l_gpd = False    
+
+    if l_gpd and isinstance(data, gpd.geodataframe.GeoDataFrame):
+        return GeoPandasDataFrameWrapper(data, *args, **kwargs)
     if isinstance(data, pd.DataFrame):
         return PandasDataFrameWrapper(data, *args, **kwargs)
     elif isinstance(data, pd.Series):
         return PandasSeriesWrapper(data, *args, **kwargs)
+
     return None
