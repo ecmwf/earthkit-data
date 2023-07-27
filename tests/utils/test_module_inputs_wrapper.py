@@ -113,8 +113,6 @@ def test_transform_module_inputs_wrapper_to_numpy():
     # Test with Earthkit.data XarrayWrapper object
     ek_object_result = WRAPPED_DUMMY_MODULE.numpy_mean(EK_XARRAY_WRAPPER)
     assert ek_object_result == np.mean(TEST_DS)
-    # TODO: Why this don't pass?
-    # assert isinstance(ek_object_result, type(EK_XARRAY_WRAPPER.data))
 
     # Test with Earthkit.data NumpyWrapper object
     ek_object_result = WRAPPED_DUMMY_MODULE.numpy_mean(EK_NUMPY_WRAPPER)
