@@ -49,7 +49,6 @@ def transform_function_inputs(
     function: T.Callable,
     kwarg_types: T.Dict[str, T.Any] = {},
     convert_types: T.Union[T.Tuple[T.Any], T.Dict[str, T.Tuple[T.Any]]] = (),
-    **decorator_kwargs
 ) -> T.Callable:
     """
     Transform the inputs to a function to match the requirements.
@@ -159,9 +158,26 @@ def signature_mapping(signature, kwarg_types):
     return mapping
 
 
-def transform_module_inputs(in_module, **decorator_kwargs):
+def transform_module_inputs(in_module, **kwargs):
     """
     Transform the inputs to all functions in a module.
+
+    Parameters
+    ----------
+    in_module : Module
+        Module containing funcitons which are to be wrapped with transform_function_inputs
+    kwarg_types : Dict[str: type]
+        Mapping of accepted object types for each arg/kwarg
+    convert_types : Tuple[type]
+        List of data-types to try to convert, this can be useful when the function is versitile and can
+        accept a large number of data-types, hence only a small number of types should be converted.
+    kwargs: Any
+        Any other kwargs accepted by transform_function_inputs
+
+    Returns
+    -------
+    Module
+        Version of in_module where all functions are wrapped with transform_modul_inputs
     """
     # wrapped_module must be different to original to prevent overriding cached module
     wrapped_module = Module
@@ -172,7 +188,7 @@ def transform_module_inputs(in_module, **decorator_kwargs):
             setattr(
                 wrapped_module,
                 name,
-                transform_function_inputs(func, **decorator_kwargs),
+                transform_function_inputs(func, **kwargs),
             )
         else:
             # If not a func, we just copy
