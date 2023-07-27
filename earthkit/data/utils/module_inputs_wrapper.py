@@ -31,17 +31,17 @@ except AttributeError:
 EMPTY_TYPES = [inspect._empty]
 
 
-def ensure_iterable(input_item):
+def _ensure_iterable(input_item):
     """Ensure that an item is iterable"""
     if not isinstance(input_item, (tuple, list, dict)):
         return [input_item]
     return input_item
 
 
-def ensure_tuple(input_item):
-    """Ensure that an item is iterable"""
+def _ensure_tuple(input_item):
+    """Ensure that an item is a tuple"""
     if not isinstance(input_item, tuple):
-        return tuple(ensure_iterable(input_item))
+        return tuple(_ensure_iterable(input_item))
     return input_item
 
 
@@ -94,13 +94,13 @@ def transform_function_inputs(
             convert_kwargs = [
                 k
                 for k in convert_kwargs
-                if isinstance(kwargs[k], ensure_tuple(convert_types.get(k, ())))
+                if isinstance(kwargs[k], _ensure_tuple(convert_types.get(k, ())))
             ]
 
         # transform args/kwargs
         for key in convert_kwargs:
             value = kwargs[key]
-            kwarg_types = ensure_iterable(mapping[key])
+            kwarg_types = _ensure_iterable(mapping[key])
             # Transform value if necessary
             if type(value) not in kwarg_types:
                 for kwarg_type in kwarg_types:
