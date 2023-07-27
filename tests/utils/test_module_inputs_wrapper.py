@@ -73,11 +73,28 @@ def test_transform_function_inputs_wrapper_to_xarray():
     assert isinstance(ek_wrapper_result, XR_TYPES)
     assert ek_wrapper_result.equals(xr.ones_like(TEST_DA))
 
+def test_transform_module_inputs_wrapper_to_xarray():
+    # EK XarrayWrapper object
+    ek_wrapper_result = WRAPPED_DUMMY_MODULE.xarray_ones_like(EK_XARRAY_WRAPPER)
+    assert isinstance(ek_wrapper_result, XR_TYPES)
+    assert ek_wrapper_result.equals(xr.ones_like(EK_XARRAY_WRAPPER.data))
+    # EK NumpyWrapper object
+    ek_wrapper_result = WRAPPED_DUMMY_MODULE.xarray_ones_like(EK_NUMPY_WRAPPER)
+    assert isinstance(ek_wrapper_result, XR_TYPES)
+    assert ek_wrapper_result.equals(xr.ones_like(TEST_DA))
+
 
 def test_transform_function_inputs_reader_to_numpy():
     # Test with Earthkit.data GribReader object
     assert WRAPPED_NP_MEAN(EK_GRIB_READER) == np.mean(EK_GRIB_READER.to_numpy())
     assert isinstance(WRAPPED_NP_MEAN(EK_GRIB_READER), np.float64)
+
+
+def test_transform_module_inputs_reader_to_numpy():
+    # Test with Earthkit.data GribReader object
+    result = WRAPPED_DUMMY_MODULE.numpy_mean(EK_GRIB_READER)
+    assert result == np.mean(EK_GRIB_READER.to_numpy())
+    assert isinstance(result, np.float64)
 
 
 def test_transform_function_inputs_wrapper_to_numpy():
@@ -88,6 +105,19 @@ def test_transform_function_inputs_wrapper_to_numpy():
 
     # Test with Earthkit.data NumpyWrapper object
     ek_object_result = WRAPPED_NP_MEAN(EK_NUMPY_WRAPPER)
+    assert ek_object_result == np.mean(TEST_NP)
+    assert isinstance(ek_object_result, np.float64)
+
+
+def test_transform_module_inputs_wrapper_to_numpy():
+    # Test with Earthkit.data XarrayWrapper object
+    ek_object_result = WRAPPED_DUMMY_MODULE.numpy_mean(EK_XARRAY_WRAPPER)
+    assert ek_object_result == np.mean(TEST_DS)
+    # TODO: Why this don't pass?
+    # assert isinstance(ek_object_result, type(EK_XARRAY_WRAPPER.data))
+
+    # Test with Earthkit.data NumpyWrapper object
+    ek_object_result = WRAPPED_DUMMY_MODULE.numpy_mean(EK_NUMPY_WRAPPER)
     assert ek_object_result == np.mean(TEST_NP)
     assert isinstance(ek_object_result, np.float64)
 
