@@ -15,6 +15,9 @@ from earthkit.data import from_object, from_source
 from earthkit.data.readers import Reader
 from earthkit.data.utils import module_inputs_wrapper
 
+from . import dummy_module
+from .dummy_module import XR_TYPES
+
 TEST_NP = np.arange(10)
 TEST_NP2 = np.arange(10)
 
@@ -29,7 +32,6 @@ EK_GRIB_READER = from_source("file", "tests/data/test_single.grib")
 EK_XARRAY_WRAPPER = from_object(TEST_DS)
 EK_NUMPY_WRAPPER = from_object(TEST_NP)
 
-XR_TYPES = (xr.Dataset, xr.DataArray, xr.Variable)
 WRAPPED_XR_ONES_LIKE = module_inputs_wrapper.transform_function_inputs(
     xr.ones_like, kwarg_types={"other": XR_TYPES}
 )
@@ -42,10 +44,21 @@ WRAPPED_NP_MEAN = module_inputs_wrapper.transform_function_inputs(
     ),  # Only convert Earthkit.data.Reader (np.mean can handle xarray and pandas)
 )
 
+WRAPPED_DUMMY_MODULE = module_inputs_wrapper.transform_module_inputs(
+    dummy_module, kwarg_types={"dataarray": XR_TYPES}
+)
+
 
 def test_transform_function_inputs_reader_to_xarray():
     # Check EK GribReader object
     ek_reader_result = WRAPPED_XR_ONES_LIKE(EK_GRIB_READER)
+    assert isinstance(ek_reader_result, XR_TYPES)
+    assert ek_reader_result.equals(xr.ones_like(EK_GRIB_READER.to_xarray()))
+
+
+def test_transform_module_inputs_reader_to_xarray():
+    # Check EK GribReader object
+    ek_reader_result = WRAPPED_DUMMY_MODULE.xarray_ones_like(EK_GRIB_READER)
     assert isinstance(ek_reader_result, XR_TYPES)
     assert ek_reader_result.equals(xr.ones_like(EK_GRIB_READER.to_xarray()))
 
@@ -88,6 +101,6 @@ def test_transform_function_inputs_xarray_to_numpy():
 
 def test_transform_function_inputs_pandas_to_numpy():
     # Test with pandas.DataFrame object
-    assert WRAPPED_NP_MEAN(TEST_DF) == np.mean(TEST_NP)
-    assert WRAPPED_NP_MEAN(TEST_DF) == np.mean(TEST_DF)
-    assert isinstance(WRAPPED_NP_MEAN(TEST_DF), np.float64)
+    result = WRAPPED_NP_MEAN(TEST_DF)
+    assert result.equals(np.mean(TEST_DF))
+    assert isinstance(result, pd.core.series.Series)
