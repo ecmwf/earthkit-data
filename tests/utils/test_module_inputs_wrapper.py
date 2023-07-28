@@ -113,8 +113,9 @@ def test_transform_function_inputs_reader_to_numpy():
 def test_transform_function_inputs_reader_to_numpy_typesetting():
     # Test with Earthkit.data GribReader object
     result = WRAPPED_NP_MEAN_TYPE_SETTING(EK_GRIB_READER)
-    assert result  == np.mean(EK_GRIB_READER.to_numpy())
+    assert result == np.mean(EK_GRIB_READER.to_numpy())
     assert isinstance(result, np.float64)
+
 
 def test_transform_module_inputs_reader_to_numpy():
     # Test with Earthkit.data GribReader object
