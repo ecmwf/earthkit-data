@@ -45,7 +45,7 @@ WRAPPED_NP_MEAN = module_inputs_wrapper.transform_function_inputs(
 )
 
 WRAPPED_DUMMY_MODULE = module_inputs_wrapper.transform_module_inputs(
-    dummy_module, kwarg_types={"dataarray": XR_TYPES}
+    dummy_module,
 )
 
 
@@ -59,8 +59,9 @@ def test_transform_function_inputs_reader_to_xarray():
 def test_transform_module_inputs_reader_to_xarray():
     # Check EK GribReader object
     ek_reader_result = WRAPPED_DUMMY_MODULE.xarray_ones_like(EK_GRIB_READER)
-    assert isinstance(ek_reader_result, XR_TYPES)
-    assert ek_reader_result.equals(xr.ones_like(EK_GRIB_READER.to_xarray()))
+    # Data array because type-setting of function has dataarray first
+    assert isinstance(ek_reader_result, xr.DataArray)
+    assert ek_reader_result.equals(xr.ones_like(EK_GRIB_READER.to_xarray()).t2m)
 
 
 def test_transform_function_inputs_wrapper_to_xarray():
@@ -72,6 +73,7 @@ def test_transform_function_inputs_wrapper_to_xarray():
     ek_wrapper_result = WRAPPED_XR_ONES_LIKE(EK_NUMPY_WRAPPER)
     assert isinstance(ek_wrapper_result, XR_TYPES)
     assert ek_wrapper_result.equals(xr.ones_like(TEST_DA))
+
 
 def test_transform_module_inputs_wrapper_to_xarray():
     # EK XarrayWrapper object
