@@ -117,10 +117,10 @@ def test_grib_fieldlist_iterator():
     g = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     sn = g.metadata("shortName")
     assert len(sn) == 18
-    iter_sn = [f["shortName"] for f in g]
+    iter_sn = [f.metadata("shortName") for f in g]
     assert iter_sn == sn
     # repeated iteration
-    iter_sn = [f["shortName"] for f in g]
+    iter_sn = [f.metadata("shortName") for f in g]
     assert iter_sn == sn
 
 

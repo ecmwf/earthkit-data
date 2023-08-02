@@ -30,16 +30,16 @@ def reader(source, path, magic=None, deeper_check=False):
 
 def memory_reader(source, buf, magic=None, deeper_check=False):
     if _match_magic(magic, deeper_check):
-        from .memory import FieldListInMemory, GribMessageMemoryReader
+        from .memory import GribFieldListInMemory, GribMessageMemoryReader
 
-        return FieldListInMemory(source, GribMessageMemoryReader(buf))
+        return GribFieldListInMemory(source, GribMessageMemoryReader(buf))
 
 
 def stream_reader(source, stream, magic=None, deeper_check=False):
     if _match_magic(magic, deeper_check):
-        from .memory import FieldListInMemory, GribStreamReader
+        from .memory import GribFieldListInMemory, GribStreamReader
 
         r = GribStreamReader(stream)
         if source.batch_size == 0:
-            r = FieldListInMemory(source, r)
+            r = GribFieldListInMemory(source, r)
         return r

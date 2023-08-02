@@ -25,17 +25,74 @@ class Metadata(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get(self, key, *args):
+    def __contains__(self, key):
         pass
 
     @abstractmethod
-    def update(self, *args, **kwargs):
+    def get(self, key, *args):
         pass
+
+    def _get(self, key, astype=None, **kwargs):
+        if "default" in kwargs:
+            default = kwargs.pop("default")
+            v = self.get(key, default)
+        else:
+            v = self.get(key)
+
+        if astype is None:
+            try:
+                return astype(v)
+            except Exception:
+                return None
+        return v
+
+    @abstractmethod
+    def override(self, *args, **kwargs):
+        pass
+
+    def ls_keys(self):
+        return []
+
+    def namespaces(self):
+        return {}
+
+    def as_namespace(self, ns):
+        return {}
+
+    def latitudes(self):
+        return None
+
+    def longitudes(self):
+        return None
+
+    def x(self):
+        return None
+
+    def y(self):
+        return None
+
+    def shape(self):
+        return (0,)
+
+    def _unique_grid_id(self):
+        return None
+
+    def projection(self):
+        return None
+
+    def bounding_box(self):
+        return None
+
+    def datetime(self):
+        return None
+
+    def dump(self, **kwargs):
+        return None
 
 
 class RawMetadata(Metadata):
     def __init__(self, d):
-        self._d = d
+        self._d = dict(d)
 
     def keys(self):
         return self._d.keys()
@@ -46,6 +103,9 @@ class RawMetadata(Metadata):
     def __getitem__(self, key):
         return self._d.__getitem__(key)
 
+    def __contains__(self, key):
+        return key in self._d
+
     def get(self, key, *args):
         if len(args) == 1:
             return self._d.get(key, args[0])
@@ -55,9 +115,9 @@ class RawMetadata(Metadata):
             else:
                 raise KeyError
         else:
-            raise ValueError
+            raise TypeError(f"get: expected at most 2 arguments, got {1+len(args)}")
 
-    def update(self, *args, **kwargs):
+    def override(self, *args, **kwargs):
         d = dict(**self._d)
         d.update(*args, **kwargs)
         return RawMetadata(d)

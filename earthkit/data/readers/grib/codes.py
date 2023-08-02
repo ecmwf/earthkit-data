@@ -7,23 +7,19 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 import logging
 import os
 
 import eccodes
 import numpy as np
 
-from earthkit.data.core import Base
+from earthkit.data.core.fieldlist import Field
 from earthkit.data.readers.grib.metadata import GribMetadata
-from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.message import (
     CodesHandle,
     CodesMessagePositionIndex,
     CodesReader,
 )
-from earthkit.data.utils.metadata import metadata_argument
-from earthkit.data.utils.projections import Projection
 
 LOG = logging.getLogger(__name__)
 
@@ -192,7 +188,7 @@ class GribCodesReader(CodesReader):
     HANDLE_TYPE = GribCodesHandle
 
 
-class GribField(Base):
+class GribField(Field):
     r"""Represents a GRIB message in a GRIB file.
 
     Parameters
@@ -210,6 +206,7 @@ class GribField(Base):
         self._offset = offset
         self._length = length
         self._handle = None
+        self.__metadata = None
 
     @property
     def handle(self):
@@ -232,236 +229,255 @@ class GribField(Base):
         return self._offset
 
     @property
-    def shape(self):
-        r"""tuple: Gets the shape of the GRIB field. For structured grids the shape is a tuple
-        in the form of (Nj, Ni) where:
+    def _metadata(self):
+        if self.__metadata is None:
+            self.__metadata = GribMetadata(self.handle)
+        return self.__metadata
 
-        - ni: the number of gridpoints in i direction (longitude for a regular latitude-longitude grid)
-        - nj: the number of gridpoints in j direction (latitude for a regular latitude-longitude grid)
+    # @property
+    # def shape(self):
+    #     r"""tuple: Gets the shape of the GRIB field. For structured grids the shape is a tuple
+    #     in the form of (Nj, Ni) where:
 
-        For other grid types the number of gridpoints is returned as ``(num,)``
-        """
-        Nj = missing_is_none(self.handle.get("Nj", default=None))
-        Ni = missing_is_none(self.handle.get("Ni", default=None))
-        if Ni is None or Nj is None:
-            n = self.handle.get("numberOfDataPoints", default=None)
-            return (n,)  # shape must be a tuple
-        return (Nj, Ni)
+    #     - ni: the number of gridpoints in i direction (longitude for a regular latitude-longitude grid)
+    #     - nj: the number of gridpoints in j direction (latitude for a regular latitude-longitude grid)
 
-    def data(self, keys=("lat", "lon", "value"), flatten=False):
-        r"""Returns the values and/or the geographical coordinates for each grid point.
+    #     For other grid types the number of gridpoints is returned as ``(num,)``
+    #     """
 
-        Parameters
-        ----------
-        keys: :obj:`str`, :obj:`list` or :obj:`tuple`
-            Specifies the type of data to be returned. Any combination of "lat", "lon" and "value"
-            is allowed here.
-        flatten: bool
-            When it is True a flat ndarray per key is returned. Otherwise an ndarray with the field's
-            :obj:`shape` is returned for each key.
+    #     return self._meta.shape
 
-        Returns
-        -------
-        ndarray or tuple of ndarrays
-            When ``keys`` is a single value an ndarray is returned. Otherwise a tuple containing one ndarray
-            per key is returned (following the order in ``keys``).
+    #     # Nj = missing_is_none(self.handle.get("Nj", default=None))
+    #     # Ni = missing_is_none(self.handle.get("Ni", default=None))
+    #     # if Ni is None or Nj is None:
+    #     #     n = self.handle.get("numberOfDataPoints", default=None)
+    #     #     return (n,)  # shape must be a tuple
+    #     # return (Nj, Ni)
 
-        See Also
-        --------
-        to_points
-        to_numpy
-        values
+    # def data(self, keys=("lat", "lon", "value"), flatten=False):
+    #     r"""Returns the values and/or the geographical coordinates for each grid point.
 
-        """
-        _keys = dict(
-            lat=self.handle.get_latitudes,
-            lon=self.handle.get_longitudes,
-            value=self.handle.get_values,
-        )
+    #     Parameters
+    #     ----------
+    #     keys: :obj:`str`, :obj:`list` or :obj:`tuple`
+    #         Specifies the type of data to be returned. Any combination of "lat", "lon" and "value"
+    #         is allowed here.
+    #     flatten: bool
+    #         When it is True a flat ndarray per key is returned. Otherwise an ndarray with the field's
+    #         :obj:`shape` is returned for each key.
 
-        if isinstance(keys, str):
-            keys = [keys]
+    #     Returns
+    #     -------
+    #     ndarray or tuple of ndarrays
+    #         When ``keys`` is a single value an ndarray is returned. Otherwise a tuple containing one ndarray
+    #         per key is returned (following the order in ``keys``).
 
-        for k in keys:
-            if k not in _keys:
-                raise ValueError(f"data: invalid argument: {k}")
+    #     See Also
+    #     --------
+    #     to_points
+    #     to_numpy
+    #     values
 
-        r = [_keys[k]() for k in keys]
-        if not flatten:
-            shape = self.shape
-            r = [x.reshape(shape) for x in r]
-        return r[0] if len(r) == 1 else tuple(r)
+    #     """
+    #     _keys = dict(
+    #         lat=self.handle.get_latitudes,
+    #         lon=self.handle.get_longitudes,
+    #         value=self.handle.get_values,
+    #     )
 
-    def to_numpy(self, flatten=False, dtype=None):
-        r"""Returns the values stored in the GRIB field as an ndarray.
+    #     if isinstance(keys, str):
+    #         keys = [keys]
 
-        Parameters
-        ----------
-        flatten: bool
-            When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
-            :obj:`shape` is returned.
-        dtype: str or dtype
-            Typecode or data-type to which the array is cast.
+    #     for k in keys:
+    #         if k not in _keys:
+    #             raise ValueError(f"data: invalid argument: {k}")
 
-        Returns
-        -------
-        ndarray
-            Field values
+    #     r = [_keys[k]() for k in keys]
+    #     if not flatten:
+    #         shape = self.shape
+    #         r = [x.reshape(shape) for x in r]
+    #     return r[0] if len(r) == 1 else tuple(r)
 
-        """
-        values = self.values
-        if not flatten:
-            values = self.values.reshape(self.shape)
-        if dtype is not None:
-            values = values.astype(dtype)
-        return values
+    # def to_numpy(self, flatten=False, dtype=None):
+    #     r"""Returns the values stored in the GRIB field as an ndarray.
 
-    def to_points(self, flatten=False):
-        r"""Returns the geographical coordinates in the data's original
-        Coordinate Reference System (CRS).
+    #     Parameters
+    #     ----------
+    #     flatten: bool
+    #         When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
+    #         :obj:`shape` is returned.
+    #     dtype: str or dtype
+    #         Typecode or data-type to which the array is cast.
 
-        Parameters
-        ----------
-        flatten: bool
-            When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
-            :obj:`shape` are returned.
+    #     Returns
+    #     -------
+    #     ndarray
+    #         Field values
 
-        Returns
-        -------
-        dict
-            Dictionary with items "x" and "y", containing the ndarrays of the x and
-            y coordinates, respectively.
+    #     """
+    #     values = self.values
+    #     if not flatten:
+    #         values = self.values.reshape(self.shape)
+    #     if dtype is not None:
+    #         values = values.astype(dtype)
+    #     return values
 
-        Raises
-        ------
-        ValueError
-            When the coordinates in the data's original CRS are not available.
+    # def to_points(self, flatten=False):
+    #     r"""Returns the geographical coordinates in the data's original
+    #     Coordinate Reference System (CRS).
 
-        """
-        grid_type = self.metadata("gridType", default=None)
-        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            lon, lat = self.data(("lon", "lat"), flatten=flatten)
-            return dict(x=lon, y=lat)
-        else:
-            raise ValueError("grid_type={grid_type} is not supported in to_points()")
+    #     Parameters
+    #     ----------
+    #     flatten: bool
+    #         When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
+    #         :obj:`shape` are returned.
 
-    def to_latlon(self, flatten=False):
-        r"""Returns the latitudes/longitudes of all the gridpoints in the field.
+    #     Returns
+    #     -------
+    #     dict
+    #         Dictionary with items "x" and "y", containing the ndarrays of the x and
+    #         y coordinates, respectively.
 
-        Parameters
-        ----------
-        flatten: bool
-            When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
-            :obj:`shape` are returned.
+    #     Raises
+    #     ------
+    #     ValueError
+    #         When the coordinates in the data's original CRS are not available.
 
-        Returns
-        -------
-        dict
-            Dictionary with items "lat" and "lon", containing the ndarrays of the latitudes and
-            longitudes, respectively.
+    #     """
+    #     grid_type = self.metadata("gridType", default=None)
+    #     if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+    #         lon, lat = self.data(("lon", "lat"), flatten=flatten)
+    #         return dict(x=lon, y=lat)
+    #     else:
+    #         raise ValueError("grid_type={grid_type} is not supported in to_points()")
 
-        """
-        lon, lat = self.data(("lon", "lat"), flatten=flatten)
-        return dict(lat=lat, lon=lon)
+    # def to_latlon(self, flatten=False):
+    #     r"""Returns the latitudes/longitudes of all the gridpoints in the field.
+
+    #     Parameters
+    #     ----------
+    #     flatten: bool
+    #         When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
+    #         :obj:`shape` are returned.
+
+    #     Returns
+    #     -------
+    #     dict
+    #         Dictionary with items "lat" and "lon", containing the ndarrays of the latitudes and
+    #         longitudes, respectively.
+
+    #     """
+    #     lon, lat = self.data(("lon", "lat"), flatten=flatten)
+    #     return dict(lat=lat, lon=lon)
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (
-            self.handle.get("shortName", default=None),
-            self.handle.get("levelist", default=None),
-            self.handle.get("date", default=None),
-            self.handle.get("time", default=None),
-            self.handle.get("step", default=None),
-            self.handle.get("number", default=None),
+            self._metadata.get("shortName", None),
+            self._metadata.get("levelist", None),
+            self._metadata.get("date", None),
+            self._metadata.get("time", None),
+            self._metadata.get("step", None),
+            self._metadata.get("number", None),
         )
+        # return "GribField(%s,%s,%s,%s,%s,%s)" % (
+        #     self.handle.get("shortName", default=None),
+        #     self.handle.get("levelist", default=None),
+        #     self.handle.get("date", default=None),
+        #     self.handle.get("time", default=None),
+        #     self.handle.get("step", default=None),
+        #     self.handle.get("number", default=None),
+        # )
 
-    def datetime(self):
-        r"""Returns the date and time of the GRIB message.
+    # def datetime(self):
+    #     r"""Returns the date and time of the GRIB message.
 
-        Returns
-        -------
-        dict of datatime.datetime
-            Dict with items "base_time" and "valid_time".
+    #     Returns
+    #     -------
+    #     dict of datatime.datetime
+    #         Dict with items "base_time" and "valid_time".
 
+    #     >>> import earthkit.data
+    #     >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
+    #     >>> ds[4].datetime()
+    #     {'base_time': datetime.datetime(2020, 12, 21, 12, 0),
+    #     'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
 
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
-        >>> ds[4].datetime()
-        {'base_time': datetime.datetime(2020, 12, 21, 12, 0),
-        'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
+    #     """
+    #     return self._meta.datetime()
+    # return {
+    #     "base_time": self._base_datetime(),
+    #     "valid_time": self._valid_datetime(),
+    # }
 
-        """
-        return {
-            "base_time": self._base_datetime(),
-            "valid_time": self._valid_datetime(),
-        }
+    # def _base_datetime(self):
+    #     date = self.handle.get("date", default=None)
+    #     time = self.handle.get("time", default=None)
+    #     return datetime.datetime(
+    #         date // 10000,
+    #         date % 10000 // 100,
+    #         date % 100,
+    #         time // 100,
+    #         time % 100,
+    #     )
 
-    def _base_datetime(self):
-        date = self.handle.get("date", default=None)
-        time = self.handle.get("time", default=None)
-        return datetime.datetime(
-            date // 10000,
-            date % 10000 // 100,
-            date % 100,
-            time // 100,
-            time % 100,
-        )
+    # def _valid_datetime(self):
+    #     step = self.handle.get("endStep", default=None)
+    #     return self._base_datetime() + datetime.timedelta(hours=step)
 
-    def _valid_datetime(self):
-        step = self.handle.get("endStep", default=None)
-        return self._base_datetime() + datetime.timedelta(hours=step)
+    # def projection(self):
+    #     r"""Returns information about the projection.
 
-    def projection(self):
-        r"""Returns information about the projection.
+    #     Returns
+    #     -------
+    #     :obj:`Projection`
 
-        Returns
-        -------
-        :obj:`Projection`
+    #     Examples
+    #     --------
+    #     >>> import earthkit.data
+    #     >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+    #     >>> ds.projection()
+    #     <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
+    #     Name: unknown
+    #     Axis Info [cartesian]:
+    #     - E[east]: Easting (unknown)
+    #     - N[north]: Northing (unknown)
+    #     - h[up]: Ellipsoidal height (metre)
+    #     Area of Use:
+    #     - undefined
+    #     Coordinate Operation:
+    #     - name: unknown
+    #     - method: Equidistant Cylindrical
+    #     Datum: Unknown based on WGS 84 ellipsoid
+    #     - Ellipsoid: WGS 84
+    #     - Prime Meridian: Greenwich
+    #     >>> ds.projection().to_proj_string()
+    #     '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
+    #     """
+    #     return self._meta.projection()
+    #     # return Projection.from_proj_string(
+    #     #     self.handle.get("projTargetString", default=None)
+    #     # )
 
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> ds.projection()
-        <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
-        Name: unknown
-        Axis Info [cartesian]:
-        - E[east]: Easting (unknown)
-        - N[north]: Northing (unknown)
-        - h[up]: Ellipsoidal height (metre)
-        Area of Use:
-        - undefined
-        Coordinate Operation:
-        - name: unknown
-        - method: Equidistant Cylindrical
-        Datum: Unknown based on WGS 84 ellipsoid
-        - Ellipsoid: WGS 84
-        - Prime Meridian: Greenwich
-        >>> ds.projection().to_proj_string()
-        '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
-        """
-        return Projection.from_proj_string(
-            self.handle.get("projTargetString", default=None)
-        )
+    # def bounding_box(self):
+    #     r"""Returns the bounding box of the field.
 
-    def bounding_box(self):
-        r"""Returns the bounding box of the field.
+    #     Returns
+    #     -------
+    #     :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
+    #     """
+    #     return self._meta.bounding_box()
+    #     # return BoundingBox(
+    #     #     north=self.handle.get("latitudeOfFirstGridPointInDegrees", default=None),
+    #     #     south=self.handle.get("latitudeOfLastGridPointInDegrees", default=None),
+    #     #     west=self.handle.get("longitudeOfFirstGridPointInDegrees", default=None),
+    #     #     east=self.handle.get("longitudeOfLastGridPointInDegrees", default=None),
+    #     # )
 
-        Returns
-        -------
-        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
-        """
-        return BoundingBox(
-            north=self.handle.get("latitudeOfFirstGridPointInDegrees", default=None),
-            south=self.handle.get("latitudeOfLastGridPointInDegrees", default=None),
-            west=self.handle.get("longitudeOfFirstGridPointInDegrees", default=None),
-            east=self.handle.get("longitudeOfLastGridPointInDegrees", default=None),
-        )
-
-    def _attributes(self, names):
-        result = {}
-        for name in names:
-            result[name] = self.handle.get(name, default=None)
-        return result
+    # def _attributes(self, names):
+    #     result = {}
+    #     for name in names:
+    #         result[name] = self._metadata.get(name, None)
+    #     return result
 
     def _get(self, name):
         """Private, for testing only"""
@@ -471,185 +487,187 @@ class GribField(Base):
             name = "paramId"
         return self.handle.get(name)
 
-    def metadata(self, *keys, namespace=None, astype=None, **kwargs):
-        r"""Returns metadata values from the GRIB message.
+    # def metadata(self, *keys, namespace=None, astype=None, **kwargs):
+    #     r"""Returns metadata values from the GRIB message.
 
-        Parameters
-        ----------
-        *keys: tuple
-            Positional arguments specifying metadata keys. Only ecCodes GRIB keys can be used
-            here. Can be empty, in this case all the keys from the specified ``namespace`` will
-            be used. (See examples below).
-        namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
-            The namespace to choose the ``keys`` from. Any :xref:`eccodes_namespace` can be used here.
-            :obj:`metadata` also defines the "default" namespace, which contains all the
-            GRIB keys that ecCodes can access without specifying a namespace.
-            When ``keys`` is empty and ``namespace`` is None all
-            the available namespaces will be used. When ``keys`` is non empty ``namespace`` cannot
-            specify multiple values.
-        astype: type name, :obj:`list` or :obj:`tuple`
-            Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
-            Otherwise, must have same the number of elements as ``keys``. Only used when
-            ``keys`` is not empty.
-        **kwargs: tuple, optional
-            Other keyword arguments:
+    #     Parameters
+    #     ----------
+    #     *keys: tuple
+    #         Positional arguments specifying metadata keys. Only ecCodes GRIB keys can be used
+    #         here. Can be empty, in this case all the keys from the specified ``namespace`` will
+    #         be used. (See examples below).
+    #     namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
+    #         The namespace to choose the ``keys`` from. Any :xref:`eccodes_namespace` can be used here.
+    #         :obj:`metadata` also defines the "default" namespace, which contains all the
+    #         GRIB keys that ecCodes can access without specifying a namespace.
+    #         When ``keys`` is empty and ``namespace`` is None all
+    #         the available namespaces will be used. When ``keys`` is non empty ``namespace`` cannot
+    #         specify multiple values.
+    #     astype: type name, :obj:`list` or :obj:`tuple`
+    #         Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
+    #         Otherwise, must have same the number of elements as ``keys``. Only used when
+    #         ``keys`` is not empty.
+    #     **kwargs: tuple, optional
+    #         Other keyword arguments:
 
-            * default: value, optional
-                Specifies the same default value for all the ``keys`` specified. When ``default`` is
-                **not present** and a key is not found or its value is a missing value
-                :obj:`metadata` will raise KeyError.
+    #         * default: value, optional
+    #             Specifies the same default value for all the ``keys`` specified. When ``default`` is
+    #             **not present** and a key is not found or its value is a missing value
+    #             :obj:`metadata` will raise KeyError.
 
-        Returns
-        -------
-        single value, :obj:`list`, :obj:`tuple` or :obj:`dict`
-            - when ``keys`` is not empty:
-                - single value when ``keys`` is a str
-                - otherwise the same type as that of ``keys`` (:obj:`list` or :obj:`tuple`)
-            - when ``keys`` is empty:
-                - when ``namespace`` is :obj:`str` returns a :obj:`dict` with the keys and values
-                  in that namespace
-                - otherwise returns a :obj:`dict` with one item per namespace (dict of dict)
+    #     Returns
+    #     -------
+    #     single value, :obj:`list`, :obj:`tuple` or :obj:`dict`
+    #         - when ``keys`` is not empty:
+    #             - single value when ``keys`` is a str
+    #             - otherwise the same type as that of ``keys`` (:obj:`list` or :obj:`tuple`)
+    #         - when ``keys`` is empty:
+    #             - when ``namespace`` is :obj:`str` returns a :obj:`dict` with the keys and values
+    #               in that namespace
+    #             - otherwise returns a :obj:`dict` with one item per namespace (dict of dict)
 
-        Raises
-        ------
-        KeyError
-            If no ``default`` is set and a key is not found in the message or it has a missing value.
+    #     Raises
+    #     ------
+    #     KeyError
+    #         If no ``default`` is set and a key is not found in the message or it has a missing value.
 
+    #     Examples
+    #     --------
+    #     Getting keys with their native type:
 
-        Examples
-        --------
-        Getting keys with their native type:
+    #     >>> import earthkit.data
+    #     >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+    #     >>> ds[0].metadata("param")
+    #     '2t'
+    #     >>> ds[0].metadata("param", "units")
+    #     ('2t', 'K')
+    #     >>> ds[0].metadata(("param", "units"))
+    #     ('2t', 'K')
+    #     >>> ds[0].metadata(["param", "units"])
+    #     ['2t', 'K']
+    #     >>> ds[0].metadata(["param"])
+    #     ['2t']
+    #     >>> ds[0].metadata("badkey")
+    #     KeyError: 'badkey'
+    #     >>> ds[0].metadata("badkey", default=None)
+    #     <BLANKLINE>
 
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> ds[0].metadata("param")
-        '2t'
-        >>> ds[0].metadata("param", "units")
-        ('2t', 'K')
-        >>> ds[0].metadata(("param", "units"))
-        ('2t', 'K')
-        >>> ds[0].metadata(["param", "units"])
-        ['2t', 'K']
-        >>> ds[0].metadata(["param"])
-        ['2t']
-        >>> ds[0].metadata("badkey")
-        KeyError: 'badkey'
-        >>> ds[0].metadata("badkey", default=None)
-        <BLANKLINE>
+    #     Prescribing key types:
 
-        Prescribing key types:
+    #     >>> ds[0].metadata("centre", astype=int)
+    #     98
+    #     >>> ds[0].metadata(["paramId", "centre"], astype=int)
+    #     [167, 98]
+    #     >>> ds[0].metadata(["centre", "centre"], astype=[int, str])
+    #     [98, 'ecmf']
 
-        >>> ds[0].metadata("centre", astype=int)
-        98
-        >>> ds[0].metadata(["paramId", "centre"], astype=int)
-        [167, 98]
-        >>> ds[0].metadata(["centre", "centre"], astype=[int, str])
-        [98, 'ecmf']
+    #     Using namespaces:
 
-        Using namespaces:
+    #     >>> ds[0].metadata(namespace="parameter")
+    #     {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature', 'shortName': '2t'}
+    #     >>> ds[0].metadata(namespace=["parameter", "vertical"])
+    #     {'parameter': {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature',
+    #      'shortName': '2t'},
+    #      'vertical': {'typeOfLevel': 'surface', 'level': 0}}
+    #     >>> r = ds[0].metadata()
+    #     >>> r.keys()
+    #     dict_keys(['default', 'ls', 'geography', 'mars', 'parameter', 'statistics', 'time', 'vertical'])
 
-        >>> ds[0].metadata(namespace="parameter")
-        {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature', 'shortName': '2t'}
-        >>> ds[0].metadata(namespace=["parameter", "vertical"])
-        {'parameter': {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature',
-         'shortName': '2t'},
-         'vertical': {'typeOfLevel': 'surface', 'level': 0}}
-        >>> r = ds[0].metadata()
-        >>> r.keys()
-        dict_keys(['default', 'ls', 'geography', 'mars', 'parameter', 'statistics', 'time', 'vertical'])
+    #     """
 
-        """
+    #     # def _key_name(key):
+    #     #     if key == "param":
+    #     #         key = "shortName"
+    #     #     elif key == "_param_id":
+    #     #         key = "paramId"
+    #     #     return key
 
-        def _key_name(key):
-            if key == "param":
-                key = "shortName"
-            elif key == "_param_id":
-                key = "paramId"
-            return key
+    #     if len(keys) == 0 and namespace is None and astype is None and len(kwargs) == 0:
+    #         # return GribMetadata(self.handle)
+    #         return self.__metadata
 
-        if len(keys) == 0 and namespace is None and astype is None and len(kwargs) == 0:
-            return GribMetadata(self.handle)
+    #     return self._meta.metadata(*keys, namespace=namespace, astype=astype, **kwargs)
 
-        key, namespace, astype, key_arg_type = metadata_argument(
-            *keys, namespace=namespace, astype=astype
-        )
+    #     # key, namespace, astype, key_arg_type = metadata_argument(
+    #     #     *keys, namespace=namespace, astype=astype
+    #     # )
 
-        assert isinstance(key, list)
-        assert isinstance(namespace, (list, tuple))
+    #     # assert isinstance(key, list)
+    #     # assert isinstance(namespace, (list, tuple))
 
-        if key:
-            assert isinstance(astype, (list, tuple))
-            if namespace and namespace[0] != "default":
-                key = [namespace[0] + "." + k for k in key]
+    #     # if key:
+    #     #     assert isinstance(astype, (list, tuple))
+    #     #     if namespace and namespace[0] != "default":
+    #     #         key = [namespace[0] + "." + k for k in key]
 
-            r = [
-                self.handle.get(_key_name(k), ktype=kt, **kwargs)
-                for k, kt in zip(key, astype)
-            ]
+    #     #     r = [
+    #     #         self.handle.get(_key_name(k), ktype=kt, **kwargs)
+    #     #         for k, kt in zip(key, astype)
+    #     #     ]
 
-            if key_arg_type == str:
-                return r[0]
-            elif key_arg_type == tuple:
-                return tuple(r)
-            else:
-                return r
-        else:
-            if len(namespace) == 0:
-                namespace = _GRIB_NAMESPACES.keys()
+    #     #     if key_arg_type == str:
+    #     #         return r[0]
+    #     #     elif key_arg_type == tuple:
+    #     #         return tuple(r)
+    #     #     else:
+    #     #         return r
+    #     # else:
+    #     #     if len(namespace) == 0:
+    #     #         namespace = _GRIB_NAMESPACES.keys()
 
-            r = {
-                ns: self.handle.as_namespace(_GRIB_NAMESPACES.get(ns, ns))
-                for ns in namespace
-            }
-            if len(r) == 1:
-                return r[namespace[0]]
-            else:
-                return r
+    #     #     r = {
+    #     #         ns: self.handle.as_namespace(_GRIB_NAMESPACES.get(ns, ns))
+    #     #         for ns in namespace
+    #     #     }
+    #     #     if len(r) == 1:
+    #     #         return r[namespace[0]]
+    #     #     else:
+    #     #         return r
 
-    def __getitem__(self, key):
-        """Returns the value of the metadata ``key``."""
-        return self.metadata(key)
+    # def __getitem__(self, key):
+    #     """Returns the value of the metadata ``key``."""
+    #     return self.metadata(key)
 
-    def dump(self, namespace=None, **kwargs):
-        r"""Generates dump with all the metadata keys belonging to ``namespace``
-        offering a tabbed interface in a Jupyter notebook.
+    # def dump(self, namespace=None, **kwargs):
+    #     r"""Generates dump with all the metadata keys belonging to ``namespace``
+    #     offering a tabbed interface in a Jupyter notebook.
 
-        Parameters
-        ----------
-        namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
-            The namespace to dump. Any :xref:`eccodes_namespace` can be used here.
-            :obj:`dump` also defines the "default" namespace, which contains all the GRIB keys
-            that ecCodes can access without specifying a namespace.
-            When ``namespace`` is None all the available namespaces will be used.
-        **kwargs: dict, optional
-            Other keyword arguments used for testing only
+    #     Parameters
+    #     ----------
+    #     namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
+    #         The namespace to dump. Any :xref:`eccodes_namespace` can be used here.
+    #         :obj:`dump` also defines the "default" namespace, which contains all the GRIB keys
+    #         that ecCodes can access without specifying a namespace.
+    #         When ``namespace`` is None all the available namespaces will be used.
+    #     **kwargs: dict, optional
+    #         Other keyword arguments used for testing only
 
-        Returns
-        -------
-        NamespaceDump
-            Dict-like object with one item per namespace. In a Jupyter notebook represented
-            as a tabbed interface to browse the dump contents.
+    #     Returns
+    #     -------
+    #     NamespaceDump
+    #         Dict-like object with one item per namespace. In a Jupyter notebook represented
+    #         as a tabbed interface to browse the dump contents.
 
-        Examples
-        --------
-        :ref:`/examples/grib_metadata.ipynb`
+    #     Examples
+    #     --------
+    #     :ref:`/examples/grib_metadata.ipynb`
 
-        """
-        from earthkit.data.utils.summary import format_namespace_dump
+    #     """
+    #     from earthkit.data.utils.summary import format_namespace_dump
 
-        namespace = _GRIB_NAMESPACES.keys() if namespace is None else [namespace]
-        r = [
-            {
-                "title": ns,
-                "data": self.handle.as_namespace(_GRIB_NAMESPACES.get(ns)),
-                "tooltip": f"Keys in the ecCodes {ns} namespace",
-            }
-            for ns in namespace
-        ]
+    #     namespace = _GRIB_NAMESPACES.keys() if namespace is None else [namespace]
+    #     r = [
+    #         {
+    #             "title": ns,
+    #             "data": self.handle.as_namespace(_GRIB_NAMESPACES.get(ns)),
+    #             "tooltip": f"Keys in the ecCodes {ns} namespace",
+    #         }
+    #         for ns in namespace
+    #     ]
 
-        return format_namespace_dump(
-            r, selected="parameter", details=self.__class__.__name__, **kwargs
-        )
+    #     return format_namespace_dump(
+    #         r, selected="parameter", details=self.__class__.__name__, **kwargs
+    #     )
 
     def write(self, f):
         r"""Writes the message to a file object.

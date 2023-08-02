@@ -120,6 +120,10 @@ class CodesHandle(eccodes.Message):
     def from_sample(cls, name):
         return cls(eccodes.codes_new_from_samples(name, cls.PRODUCT_ID), None, None)
 
+    @classmethod
+    def _from_raw_handle(cls, handle):
+        return cls(handle, None, None)
+
     # TODO: just a wrapper around the base class implementation to handle the
     # s,l,d qualifiers. Once these are implemented in the base class this method can
     # be removed. md5GridSection is also handled!
@@ -143,7 +147,7 @@ class CodesHandle(eccodes.Message):
         return self.get(name, ktype=int)
 
     def clone(self):
-        return CodesHandle(eccodes.codes_clone(self._handle), None, None)
+        return self._from_raw_handle(eccodes.codes_clone(self._handle))
 
     def set_multiple(self, values):
         assert self.path is None, "Only cloned handles can have values changed"

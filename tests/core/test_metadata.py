@@ -12,57 +12,186 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.core.metadata import Metadata, RawMetadata
+from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.readers.grib.metadata import GribMetadata
 from earthkit.data.testing import earthkit_examples_file
 
 
-def test_abstract_metadata():
-    # Metadata properties:
-    # * immutable
-    # * behaves like a dict
-    # * can be updated (creating a new object, either a copy or a view)
-    # Updates can be made with compatible subclasses, e.g. update a GribMetadata with a RawMetadata
-    assert Metadata is not None
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"shortName": "2t", "perturbationNumber": 5},
+        [("shortName", "2t"), ("perturbationNumber", 5)],
+    ],
+)
+def test_raw_metadata_create(params):
+    md = RawMetadata(params)
+    assert md["shortName"] == "2t"
+    assert md["perturbationNumber"] == 5
 
 
-def test_raw_metadata():
-    assert RawMetadata is not None
-    assert issubclass(RawMetadata, Metadata)
-
+def test_raw_metadata_get():
     md = RawMetadata({"shortName": "2t", "perturbationNumber": 5})
     assert md["shortName"] == "2t"
     assert md["perturbationNumber"] == 5
     assert md.get("shortName") == "2t"
     with pytest.raises(KeyError):
         md["nonExistentKey"]
+    with pytest.raises(KeyError):
+        md.get("nonExistentKey")
     assert md.get("nonExistentKey", 12) == 12
+    with pytest.raises(TypeError):
+        md.get("centre", "shortName", "step")
 
-    md2 = md.update({"centre": "ecmf", "perturbationNumber": 8})
-    sentinel = object()
-    assert md.get("centre", sentinel) is sentinel
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"centre": "ecmf", "perturbationNumber": 8},
+        [("centre", "ecmf"), ("perturbationNumber", 8)],
+        RawMetadata({"centre": "ecmf", "perturbationNumber": 8}),
+    ],
+)
+def test_raw_metadata_override(params):
+    md = RawMetadata({"shortName": "2t", "perturbationNumber": 5})
+    assert md["shortName"] == "2t"
     assert md["perturbationNumber"] == 5
+    assert md.get("centre", None) is None
+
+    md2 = md.override(params)
+    assert id(md2) != id(md)
+    assert md["shortName"] == "2t"
+    assert md["perturbationNumber"] == 5
+    assert md.get("centre", None) is None
     assert md2["shortName"] == "2t"
     assert md2["perturbationNumber"] == 8
     assert md2["centre"] == "ecmf"
 
-    md3 = RawMetadata({"step": 24, "centre": "unknown"}).update(md2)
-    assert md3["step"] == 24
-    assert md3["centre"] == "ecmf"
-    assert md3["shortName"] == "2t"
+
+def test_raw_metadata_override_with_kwarg():
+    md = RawMetadata({"shortName": "2t", "perturbationNumber": 5})
+    assert md["shortName"] == "2t"
+    assert md["perturbationNumber"] == 5
+    assert md.get("centre", None) is None
+
+    md2 = md.override(centre="ecmf", perturbationNumber=8)
+    assert id(md2) != id(md)
+    assert md["shortName"] == "2t"
+    assert md["perturbationNumber"] == 5
+    assert md.get("centre", None) is None
+    assert md2["shortName"] == "2t"
+    assert md2["perturbationNumber"] == 8
+    assert md2["centre"] == "ecmf"
 
 
-def test_grib_metadata():
-    assert GribMetadata is not None
-    assert issubclass(GribMetadata, Metadata)
+def test_grib_metadata_create():
+    f = from_source("file", earthkit_examples_file("test.grib"))
+    md = f[0].metadata()
+    assert isinstance(md, GribMetadata)
 
+    # cannot create from dict
     with pytest.raises(TypeError):
         GribMetadata({"shortName": "u", "typeOfLevel": "pl", "levelist": 1000})
 
-    f = from_source("file", earthkit_examples_file("test.grib"))
-    md = f[0].metadata()
+    # cannot create from raw metadata
+    raw_md = RawMetadata({"shortName": "u", "typeOfLevel": "pl", "levelist": 1000})
+    with pytest.raises(TypeError):
+        GribMetadata(raw_md)
 
-    assert isinstance(md, GribMetadata)
+
+def test_grib_metadata_get():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    md = ds[0].metadata()
+    assert md["shortName"] == "2t"
+    assert md["typeOfLevel"] == "surface"
+    assert md.get("shortName") == "2t"
+
+    with pytest.raises(KeyError):
+        md["nonExistentKey"]
+
+    with pytest.raises(KeyError):
+        md.get("nonExistentKey")
+
+    assert md.get("nonExistentKey", 12) == 12
+
+    sentinel = object()
+    assert md.get("nonExistentKey", sentinel) is sentinel
+
+    with pytest.raises(TypeError):
+        md.get("centre", "shortName", "step")
+
+
+def test_grib_metadata_override():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    md = ds[0].metadata()
+
+    md2 = md.override({"perturbationNumber": 5})
+    assert id(md2) != id(md)
+    assert md["perturbationNumber"] == 0
+    assert md2["perturbationNumber"] == 5
+
+    md2 = md.override({"shortName": "2d"})
+    assert md["shortName"] == "2t"
+    assert md2["shortName"] == "2d"
+
+    md2 = md.override({"perturbationNumber": 5, "shortName": "2d"})
+    assert md["perturbationNumber"] == 0
+    assert md["shortName"] == "2t"
+    assert md2["perturbationNumber"] == 5
+    assert md2["shortName"] == "2d"
+
+    md3 = md2.override({"step": 24})
+    assert md["step"] == 0
+    assert md2["step"] == 0
+    assert md3["step"] == 24
+
+    # all the handles should exist and be different
+    assert md._handle._handle is not None
+    assert md2._handle._handle is not None
+    assert md3._handle._handle is not None
+    assert md._handle._handle != md2._handle._handle
+    assert md2._handle._handle != md3._handle._handle
+    assert md._handle._handle != md3._handle._handle
+
+    md = None
+    assert md2._handle._handle is not None
+    assert md3._handle._handle is not None
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"perturbationNumber": 5, "shortName": "2d"},
+        [("perturbationNumber", 5), ("shortName", "2d")],
+        RawMetadata({"perturbationNumber": 5, "shortName": "2d"}),
+    ],
+)
+def test_grib_metadata_override_1(params):
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    md = ds[0].metadata()
+    assert md["perturbationNumber"] == 0
+    assert md["shortName"] == "2t"
+
+    md2 = md.override(params)
+    assert id(md2) != id(md)
+    assert md["perturbationNumber"] == 0
+    assert md["shortName"] == "2t"
+    assert md2["perturbationNumber"] == 5
+    assert md2["shortName"] == "2d"
+
+
+def test_grib_metadata_override_with_kwarg():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    md = ds[0].metadata()
+    assert md["perturbationNumber"] == 0
+    assert md["shortName"] == "2t"
+
+    md2 = md.override(perturbationNumber=5, shortName="2d")
+    assert id(md2) != id(md)
+    assert md["perturbationNumber"] == 0
+    assert md["shortName"] == "2t"
+    assert md2["perturbationNumber"] == 5
+    assert md2["shortName"] == "2d"
 
 
 if __name__ == "__main__":
