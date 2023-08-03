@@ -263,18 +263,15 @@ class Field(Base):
                 return r
         elif namespace:
             if all in namespace:
-                namespace = self._metadata.namespaces().keys()
+                namespace = self._metadata.namespaces()
 
-            r = {
-                ns: self._metadata.as_namespace(self._metadata.namespaces().get(ns, ns))
-                for ns in namespace
-            }
+            r = {ns: self._metadata.as_namespace(ns) for ns in namespace}
             if len(r) == 1:
                 return r[namespace[0]]
             else:
                 return r
 
-    def dump(self, namespace=None, **kwargs):
+    def dump(self, namespace=all, **kwargs):
         r"""Generates dump with all the metadata keys belonging to ``namespace``
         offering a tabbed interface in a Jupyter notebook.
 

@@ -9,7 +9,7 @@
 
 import datetime
 
-from earthkit.data.core.metadata import Metadata
+from earthkit.data.core.metadata import FieldMetadata
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
@@ -19,7 +19,30 @@ def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
-class GribMetadata(Metadata):
+class GribMetadata(FieldMetadata):
+    """Represent the metadata of a GRIB field.
+
+    Parameters
+    ----------
+    handle: :obj:`GribCodesHandle`
+        Object representing the ecCodes GRIB handle of the field.
+
+
+    :obj:`GribMetadata` is created internally by a :obj:`GribField` and we can use
+    the field's :meth:`metadata` method to access it.
+
+    >>> ds = earthkit.data.from_source("file", "docs/examples/test4.grib")
+    >>> md = ds[0].metadata()
+    >>> md["shortName"]
+    't'
+    >>> md.get("shortName")
+    't'
+    >>> md.get("nonExistentKey")
+    >>> md.get("nonExistentKey", 12)
+    12
+
+    """
+
     LS_KEYS = [
         "centre",
         "shortName",
@@ -50,20 +73,16 @@ class GribMetadata(Metadata):
 
     INDEX_KEYS = list(GRIB_KEYS_NAMES)
 
-    NAMESPACES = {
-        k: k
-        for k in (
-            "default",
-            "ls",
-            "geography",
-            "mars",
-            "parameter",
-            "statistics",
-            "time",
-            "vertical",
-        )
-    }
-    NAMESPACES["default"] = None
+    NAMESPACES = [
+        "default",
+        "ls",
+        "geography",
+        "mars",
+        "parameter",
+        "statistics",
+        "time",
+        "vertical",
+    ]
 
     __handle_type = None
 
@@ -85,25 +104,46 @@ class GribMetadata(Metadata):
             GribMetadata.__handle_type = GribCodesHandle
         return GribMetadata.__handle_type
 
-    def keys(self):
-        self._handle.keys()
-
-    def items(self):
-        return self._handle.items()
+    def __len__(self):
+        return sum(map(lambda i: 1, self._handle.keys()))
 
     def __getitem__(self, key):
-        return self.get(key)
+        return self._handle.get(key)
 
     def __contains__(self, key):
-        return self._handle.__contains(key)
+        return self._handle.__contains__(key)
 
-    def get(self, key, *args):
-        if len(args) == 1:
-            return self._handle.get(key, default=args[0])
-        elif len(args) == 0:
-            return self._handle.get(key)
-        else:
-            raise TypeError(f"get: expected at most 2 arguments, got {1+len(args)}")
+    def keys(self):
+        r"""Return a new view of the metadata keys.
+
+        Returns
+        -------
+        Iterable of str
+
+        """
+        return self._handle.keys()
+
+    def items(self):
+        r"""Return a new view of the metadata items.
+
+        Returns
+        -------
+        Iterable of :obj:`(key,value)` pairs
+
+        """
+        return self._handle.items()
+
+    def get(self, key, default=None):
+        r"""Return the value for ``key``.
+
+        Parameters
+        ----------
+        key: str
+            Metadata key
+        default:
+            When ``key`` is not found ``default`` is returned.
+        """
+        return self._handle.get(key, default=default)
 
     def _get(self, key, astype=None, **kwargs):
         def _key_name(key):
@@ -116,43 +156,125 @@ class GribMetadata(Metadata):
         return self._handle.get(_key_name(key), ktype=astype, **kwargs)
 
     def override(self, *args, **kwargs):
+        r"""Change the metadata values and return a new object.
+
+        :obj:`override` accepts another :obj:`Metadata` or a dict or
+        an iterable of key/value pairs (as tuples or other iterables of length two).
+        If keyword arguments are specified, the metadata is then updated with those
+        key/value pairs.
+
+        Examples
+        --------
+        >>> other = RawMetadata({"key1": 1, "key2": 2})
+        >>> m1 = m.override(other)
+        >>> m1 = m.override({"key1": 1, "key2": 2})
+        >>> m1 = m.override([("key1", 1), ("key2", 2)])
+        >>> m1 = m.override(key1=1, key2=2)
+        """
         d = dict(*args, **kwargs)
         handle = self._handle.clone()
         handle.set_multiple(d)
         return GribMetadata(handle)
 
-    def as_namespace(self, ns):
-        return self._handle.as_namespace(ns)
+    def as_namespace(self, namespace=None):
+        r"""Return all the keys/values from a namespace.
+
+        Parameters
+        ----------
+        namespace: str, None
+            The :xref:`eccodes_namespace`. earthkit-data also defines the "default" namespace,
+            which contains all the GRIB keys that ecCodes can access without specifying a namespace.
+            When `namespace` is None or an empty :obj:`str` all the available
+            keys/values are returned.
+
+        Returns
+        -------
+        dict
+            All the keys/values from the `namespace`.
+
+        """
+        if not isinstance(namespace, str) and namespace is not None:
+            raise TypeError("namespace must be a str or None")
+
+        if namespace == "default" or namespace == "":
+            namespace = None
+        return self._handle.as_namespace(namespace)
 
     def ls_keys(self):
+        r"""Return the keys to be used with the :meth:`ls` method."""
         return self.LS_KEYS
 
     def describe_keys(self):
+        r"""Return the keys to be used with the :meth:`describe` method."""
         return self.DESCRIBE_KEYS
 
     def index_keys(self):
+        r"""Return the keys to be used with the :meth:`indices` method."""
         return self.INDEX_KEYS
 
     def namespaces(self):
+        r"""Return the available namespaces.
+
+        Returns
+        -------
+        list of str
+        """
         return self.NAMESPACES
 
     def latitudes(self):
+        r"""Return the latitudes of the field.
+
+        Returns
+        -------
+        ndarray
+        """
         return self._handle.get_latitudes()
 
     def longitudes(self):
+        r"""Return the longitudes of the field.
+
+        Returns
+        -------
+        ndarray
+        """
         return self._handle.get_longitudes()
 
     def x(self):
+        r"""Return the x coordinates in the field's original CRS.
+
+        Returns
+        -------
+        ndarray
+        """
         grid_type = self.get("gridType", None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
             return self.longitudes()
 
     def y(self):
+        r"""Return the y coordinates in the field's original CRS.
+
+        Returns
+        -------
+        ndarray
+        """
         grid_type = self.get("gridType", None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
             return self.latitudes()
 
     def shape(self):
+        r"""Get the shape of the field.
+
+        For structured grids the shape is a tuple in the form of (Nj, Ni) where:
+
+        - ni: the number of gridpoints in i direction (longitude for a regular latitude-longitude grid)
+        - nj: the number of gridpoints in j direction (latitude for a regular latitude-longitude grid)
+
+        For other grid types the number of gridpoints is returned as ``(num,)``
+
+        Returns
+        -------
+        tuple
+        """
         Nj = missing_is_none(self.get("Nj", None))
         Ni = missing_is_none(self.get("Ni", None))
         if Ni is None or Nj is None:
@@ -164,7 +286,7 @@ class GribMetadata(Metadata):
         return self.get("md5GridSection", None)
 
     def datetime(self):
-        r"""Returns the date and time of the GRIB message.
+        r"""Return the date and time of the field.
 
         Returns
         -------
@@ -200,7 +322,7 @@ class GribMetadata(Metadata):
         return self._base_datetime() + datetime.timedelta(hours=step)
 
     def projection(self):
-        r"""Returns information about the projection.
+        r"""Return information about the projection.
 
         Returns
         -------
@@ -231,7 +353,7 @@ class GribMetadata(Metadata):
         return Projection.from_proj_string(self.get("projTargetString", None))
 
     def bounding_box(self):
-        r"""Returns the bounding box of the field.
+        r"""Return the bounding box of the field.
 
         Returns
         -------
@@ -244,17 +366,22 @@ class GribMetadata(Metadata):
             east=self.get("longitudeOfLastGridPointInDegrees", None),
         )
 
-    def dump(self, namespace=None, **kwargs):
-        r"""Generates dump with all the metadata keys belonging to ``namespace``
-        offering a tabbed interface in a Jupyter notebook.
+    def dump(self, namespace=all, **kwargs):
+        r"""Generate dump with all the metadata keys belonging to ``namespace``.
+
+        In a Jupyter notebook it is represented as a tabbed interface.
 
         Parameters
         ----------
-        namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
+        namespace: :obj:`str`, :obj:`list`, :obj:`tuple`, :obj:`None` or :obj:`all`
             The namespace to dump. Any :xref:`eccodes_namespace` can be used here.
-            :obj:`dump` also defines the "default" namespace, which contains all the GRIB keys
-            that ecCodes can access without specifying a namespace.
-            When ``namespace`` is None all the available namespaces will be used.
+            earthkit-data also defines the "default" namespace, which contains all the GRIB keys
+            that ecCodes can access without specifying a namespace. The following `namespace` values
+            have a special meaning:
+
+            - :obj:`all`: all the available namespaces will be used (including "default").
+            - None or empty str: the "default" namespace will be used.
+
         **kwargs: dict, optional
             Other keyword arguments used for testing only
 
@@ -271,11 +398,11 @@ class GribMetadata(Metadata):
         """
         from earthkit.data.utils.summary import format_namespace_dump
 
-        namespace = self.NAMESPACES.keys() if namespace is None else [namespace]
+        namespace = self.NAMESPACES if namespace is all else [namespace]
         r = [
             {
-                "title": ns,
-                "data": self.as_namespace(self.NAMESPACES.get(ns)),
+                "title": ns if ns else "default",
+                "data": self.as_namespace(ns),
                 "tooltip": f"Keys in the ecCodes {ns} namespace",
             }
             for ns in namespace

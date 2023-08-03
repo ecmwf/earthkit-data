@@ -67,4 +67,5 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     :glob:
 
     examples/projection.ipynb
+    examples/metadata.ipynb
     examples/numpy_fieldlist.ipynb

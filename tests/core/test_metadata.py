@@ -22,6 +22,7 @@ from earthkit.data.testing import earthkit_examples_file
     [
         {"shortName": "2t", "perturbationNumber": 5},
         [("shortName", "2t"), ("perturbationNumber", 5)],
+        RawMetadata({"shortName": "2t", "perturbationNumber": 5}),
     ],
 )
 def test_raw_metadata_create(params):
@@ -30,15 +31,31 @@ def test_raw_metadata_create(params):
     assert md["perturbationNumber"] == 5
 
 
+def test_raw_metadata_create_with_kwarg():
+    md = RawMetadata(shortName="2t", perturbationNumber=5)
+    assert md["shortName"] == "2t"
+    assert md["perturbationNumber"] == 5
+
+
 def test_raw_metadata_get():
     md = RawMetadata({"shortName": "2t", "perturbationNumber": 5})
+
+    assert len(md) == 2
+    assert list(md.keys()) == ["shortName", "perturbationNumber"]
+    assert [k for k in md] == ["shortName", "perturbationNumber"]
+    assert {k: v for k, v in md.items()} == {"shortName": "2t", "perturbationNumber": 5}
+
+    assert "shortName" in md
+    assert "nonExistentKey" not in md
+
     assert md["shortName"] == "2t"
     assert md["perturbationNumber"] == 5
     assert md.get("shortName") == "2t"
     with pytest.raises(KeyError):
         md["nonExistentKey"]
-    with pytest.raises(KeyError):
-        md.get("nonExistentKey")
+
+    assert md.get("nonExistentKey") is None
+    assert md.get("nonExistentKey", None) is None
     assert md.get("nonExistentKey", 12) == 12
     with pytest.raises(TypeError):
         md.get("centre", "shortName", "step")
@@ -102,6 +119,26 @@ def test_grib_metadata_create():
 def test_grib_metadata_get():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds[0].metadata()
+
+    assert len(md) == 192
+    keys = list(md.keys())
+    assert len(keys) == 192
+    assert keys[0] == "globalDomain"
+    assert keys[10] == "wrongPadding"
+
+    keys = [k for k in md]
+    assert len(keys) == 192
+    assert keys[0] == "globalDomain"
+    assert keys[10] == "wrongPadding"
+
+    items = {k: v for k, v in md.items()}
+    assert len(items) == 192
+    assert items["shortName"] == "2t"
+    assert items["typeOfLevel"] == "surface"
+
+    assert "shortName" in md
+    assert "nonExistentKey" not in md
+
     assert md["shortName"] == "2t"
     assert md["typeOfLevel"] == "surface"
     assert md.get("shortName") == "2t"
@@ -109,9 +146,8 @@ def test_grib_metadata_get():
     with pytest.raises(KeyError):
         md["nonExistentKey"]
 
-    with pytest.raises(KeyError):
-        md.get("nonExistentKey")
-
+    assert md.get("nonExistentKey") is None
+    assert md.get("nonExistentKey", None) is None
     assert md.get("nonExistentKey", 12) == 12
 
     sentinel = object()

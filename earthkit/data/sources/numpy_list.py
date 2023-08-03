@@ -11,6 +11,7 @@ import logging
 
 from earthkit.data.core.fieldlist import Field, FieldList
 from earthkit.data.core.index import MaskIndex, MultiIndex
+from earthkit.data.core.metadata import FieldMetadata
 
 LOG = logging.getLogger(__name__)
 
@@ -31,6 +32,9 @@ class NumpyField(Field):
 
 class NumpyFieldList(FieldList):
     def __init__(self, array, metadata, *args, **kwargs):
+        if not isinstance(metadata, FieldMetadata):
+            raise TypeError("metadata must be a subclass of FieldMetaData")
+
         self._array = array
         self._metadata = metadata
 
