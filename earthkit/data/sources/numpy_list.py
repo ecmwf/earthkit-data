@@ -31,6 +31,11 @@ class NumpyField(Field):
     def values(self):
         return self._array
 
+    def write(self, f):
+        from earthkit.data.writers import write
+
+        write(f, self.values, self._metadata, check_nans=False)
+
 
 class NumpyFieldList(FieldList):
     def __init__(self, array, metadata, *args, **kwargs):
