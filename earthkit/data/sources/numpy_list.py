@@ -9,6 +9,8 @@
 
 import logging
 
+import numpy as np
+
 from earthkit.data.core.fieldlist import Field, FieldList
 from earthkit.data.core.index import MaskIndex, MultiIndex
 from earthkit.data.core.metadata import FieldMetadata
@@ -32,22 +34,31 @@ class NumpyField(Field):
 
 class NumpyFieldList(FieldList):
     def __init__(self, array, metadata, *args, **kwargs):
-        if not isinstance(metadata, FieldMetadata):
-            raise TypeError("metadata must be a subclass of FieldMetaData")
-
         self._array = array
         self._metadata = metadata
 
         if not isinstance(self._metadata, list):
             self._metadata = [self._metadata]
 
+        for md in self._metadata:
+            if not isinstance(md, FieldMetadata):
+                raise TypeError("metadata must be a subclass of FieldMetaData")
+
         if self._array.shape[0] != len(self._metadata):
-            raise ValueError(
-                (
-                    f"first array dimension ({self._array.shape[0]}) differs "
-                    f"from number of metadata objects ({len(self._metadata)})"
+            import numpy as np
+
+            # we have a single array and a single metadata
+            if len(self._metadata) == 1 and self._shape_match(
+                self._array.shape, self._metadata[0].shape()
+            ):
+                self._array = np.array([self._array])
+            else:
+                raise ValueError(
+                    (
+                        f"first array dimension ({self._array.shape[0]}) differs "
+                        f"from number of metadata objects ({len(self._metadata)})"
+                    )
                 )
-            )
 
         super().__init__(*args, **kwargs)
 
@@ -56,6 +67,13 @@ class NumpyFieldList(FieldList):
 
     def __len__(self):
         return self._array.shape[0]
+
+    def _shape_match(self, shape1, shape2):
+        if shape1 == shape2:
+            return True
+        if len(shape1) == 1 and shape1[0] == np.prod(shape2):
+            return True
+        return False
 
 
 class NumpyMaskFieldList(NumpyFieldList, MaskIndex):

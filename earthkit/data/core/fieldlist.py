@@ -312,6 +312,17 @@ class Field(Base):
         """
         self._not_implemented()
 
+    def __repr__(self):
+        return "%s(%s,%s,%s,%s,%s,%s)" % (
+            self.__class__.__name__,
+            self._metadata.get("shortName", None),
+            self._metadata.get("levelist", None),
+            self._metadata.get("date", None),
+            self._metadata.get("time", None),
+            self._metadata.get("step", None),
+            self._metadata.get("number", None),
+        )
+
     @abstractmethod
     def _attributes(self, names):
         result = {}

@@ -20,6 +20,7 @@ from earthkit.data.wrappers import get_wrapper as from_object
 
 from .arguments.transformers import ALL
 from .core.caching import CACHE as cache
+from .core.fieldlist import FieldList
 from .core.settings import SETTINGS as settings
 from .readers.grib.output import new_grib_output
 from .sources import from_source, from_source_lazily
@@ -29,6 +30,7 @@ __all__ = [
     "ALL",
     "cache",
     "download_example_file",
+    "FieldList",
     "from_source",
     "from_source_lazily",
     "from_object",
