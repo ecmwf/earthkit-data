@@ -11,10 +11,12 @@
 from abc import ABCMeta, abstractmethod
 
 
-class Grid(metaclass=ABCMeta):
+class Geography(metaclass=ABCMeta):
+    """Geographical information about a field or data unit"""
+
     @abstractmethod
     def latitudes(self):
-        r"""Return the latitudes of the field.
+        r"""Return the latitudes.
 
         Returns
         -------
@@ -24,7 +26,7 @@ class Grid(metaclass=ABCMeta):
 
     @abstractmethod
     def longitudes(self):
-        r"""Return the longitudes of the field.
+        r"""Return the longitudes.
 
         Returns
         -------
@@ -34,7 +36,7 @@ class Grid(metaclass=ABCMeta):
 
     @abstractmethod
     def x(self):
-        r"""Return the x coordinates in the field's original CRS.
+        r"""Return the x coordinates in the original CRS.
 
         Returns
         -------
@@ -44,7 +46,7 @@ class Grid(metaclass=ABCMeta):
 
     @abstractmethod
     def y(self):
-        r"""Return the y coordinates in the field's original CRS.
+        r"""Return the y coordinates in the original CRS.
 
         Returns
         -------
@@ -55,7 +57,7 @@ class Grid(metaclass=ABCMeta):
     @property
     @abstractmethod
     def shape(self):
-        r"""Return the shape of the field.
+        r"""Return the shape of the grid or data values.
 
         Returns
         -------
@@ -64,12 +66,13 @@ class Grid(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _unique_id(self):
+    def _unique_grid_id(self):
+        r"""Return a unique id of the grid of a field."""
         pass
 
     @abstractmethod
     def projection(self):
-        r"""Return information about the field's projection.
+        r"""Return information about projection.
 
         Returns
         -------
@@ -79,7 +82,7 @@ class Grid(metaclass=ABCMeta):
 
     @abstractmethod
     def bounding_box(self):
-        r"""Return the bounding box of the field.
+        r"""Return the bounding box.
 
         Returns
         -------
@@ -92,7 +95,7 @@ class Metadata(metaclass=ABCMeta):
     r"""Base class to represent metadata.
 
     Metadata is a dict-like immutable object. Modification is possible
-    with :obj:`override`, which always creates new object.
+    with :obj:`override`, which always creates a new object.
 
     Implemented in subclasses: :obj:`RawMetadata`, :obj:`GribMetadata`.
 
@@ -245,8 +248,8 @@ class Metadata(metaclass=ABCMeta):
         return None
 
     @property
-    def grid(self):
-        r""":obj:`Grid`: Get grid description.
+    def geography(self):
+        r""":obj:`Geography`: Get geography description.
 
         If it is not available None is returned.
         """
@@ -294,7 +297,7 @@ class RawMetadata(Metadata):
 
     Examples
     --------
-    :ref:`/examples/metadata.ipynb`
+    - :ref:`/examples/metadata.ipynb`
 
     """
 

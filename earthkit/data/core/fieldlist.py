@@ -81,8 +81,8 @@ class Field(Base):
 
         """
         _keys = dict(
-            lat=self._metadata.grid.latitudes,
-            lon=self._metadata.grid.longitudes,
+            lat=self._metadata.geography.latitudes,
+            lon=self._metadata.geography.longitudes,
             value=lambda: self.values,
         )
 
@@ -125,8 +125,8 @@ class Field(Base):
         to_latlon
 
         """
-        x = self._metadata.grid.x()
-        y = self._metadata.grid.y()
+        x = self._metadata.geography.x()
+        y = self._metadata.geography.y()
         if x is not None and y is not None:
             if not flatten:
                 shape = self.shape
@@ -175,7 +175,7 @@ class Field(Base):
 
         For other grid types the number of gridpoints is returned as ``(num,)``
         """
-        return self._metadata.grid.shape()
+        return self._metadata.geography.shape()
 
     def projection(self):
         r"""Return information about the projection.
@@ -206,7 +206,7 @@ class Field(Base):
         >>> ds.projection().to_proj_string()
         '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
         """
-        return self._metadata.grid.projection()
+        return self._metadata.geography.projection()
 
     def bounding_box(self):
         r"""Returns the bounding box of the field.
@@ -215,7 +215,7 @@ class Field(Base):
         -------
         :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
         """
-        return self._metadata.grid.bounding_box()
+        return self._metadata.geography.bounding_box()
 
     def datetime(self):
         r"""Returns the date and time of the field.
@@ -811,9 +811,11 @@ class FieldList(Index):
     @cached_method
     def _is_shared_grid(self):
         if len(self) > 0:
-            grid = self[0].metadata().grid._unique_id()
+            grid = self[0].metadata().geography._unique_grid_id()
             if grid is not None:
-                return all(f.metadata().grid._unique_id() == grid for f in self)
+                return all(
+                    f.metadata().geography._unique_grid_id() == grid for f in self
+                )
         return False
 
     def save(self, filename):

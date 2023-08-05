@@ -9,7 +9,7 @@
 
 import datetime
 
-from earthkit.data.core.metadata import Grid, Metadata
+from earthkit.data.core.metadata import Geography, Metadata
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
@@ -19,7 +19,7 @@ def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
-class GribFieldGrid(Grid):
+class GribFieldGeography(Geography):
     def __init__(self, metadata):
         self.metadata = metadata
 
@@ -84,7 +84,7 @@ class GribFieldGrid(Grid):
             return (n,)  # shape must be a tuple
         return (Nj, Ni)
 
-    def _unique_id(self):
+    def _unique_grid_id(self):
         return self.metadata.get("md5GridSection", None)
 
     def projection(self):
@@ -206,7 +206,7 @@ class GribMetadata(Metadata):
                 f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}"
             )
         self._handle = handle
-        self._grid = None
+        self._geo = None
 
     @staticmethod
     def _handle_type():
@@ -316,10 +316,10 @@ class GribMetadata(Metadata):
         return self._handle.as_namespace(namespace)
 
     @property
-    def grid(self):
-        if self._grid is None:
-            self._grid = GribFieldGrid(self)
-        return self._grid
+    def geography(self):
+        if self._geo is None:
+            self._geo = GribFieldGeography(self)
+        return self._geo
 
     def namespaces(self):
         r"""Return the available namespaces.
