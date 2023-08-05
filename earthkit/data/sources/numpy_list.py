@@ -13,7 +13,7 @@ import numpy as np
 
 from earthkit.data.core.fieldlist import Field, FieldList
 from earthkit.data.core.index import MaskIndex, MultiIndex
-from earthkit.data.core.metadata import FieldMetadata
+from earthkit.data.core.metadata import Metadata
 
 LOG = logging.getLogger(__name__)
 
@@ -45,16 +45,20 @@ class NumpyFieldList(FieldList):
         if not isinstance(self._metadata, list):
             self._metadata = [self._metadata]
 
+        # template = kwargs.pop("template", None)
+        # if template is not None:
+        #     self._metadata = [CompositeMetadata(md, template.metadata()) for md in self._metadata]
+
         for md in self._metadata:
-            if not isinstance(md, FieldMetadata):
-                raise TypeError("metadata must be a subclass of FieldMetaData")
+            if not isinstance(md, Metadata):
+                raise TypeError("metadata must be a subclass of MetaData")
 
         if self._array.shape[0] != len(self._metadata):
             import numpy as np
 
             # we have a single array and a single metadata
             if len(self._metadata) == 1 and self._shape_match(
-                self._array.shape, self._metadata[0].shape()
+                self._array.shape, self._metadata[0].grid.shape()
             ):
                 self._array = np.array([self._array])
             else:

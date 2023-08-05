@@ -11,6 +11,83 @@
 from abc import ABCMeta, abstractmethod
 
 
+class Grid(metaclass=ABCMeta):
+    @abstractmethod
+    def latitudes(self):
+        r"""Return the latitudes of the field.
+
+        Returns
+        -------
+        ndarray
+        """
+        pass
+
+    @abstractmethod
+    def longitudes(self):
+        r"""Return the longitudes of the field.
+
+        Returns
+        -------
+        ndarray
+        """
+        pass
+
+    @abstractmethod
+    def x(self):
+        r"""Return the x coordinates in the field's original CRS.
+
+        Returns
+        -------
+        ndarray
+        """
+        pass
+
+    @abstractmethod
+    def y(self):
+        r"""Return the y coordinates in the field's original CRS.
+
+        Returns
+        -------
+        ndarray
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def shape(self):
+        r"""Return the shape of the field.
+
+        Returns
+        -------
+        tuple
+        """
+        pass
+
+    @abstractmethod
+    def _unique_id(self):
+        pass
+
+    @abstractmethod
+    def projection(self):
+        r"""Return information about the field's projection.
+
+        Returns
+        -------
+        :obj:`Projection`
+        """
+        pass
+
+    @abstractmethod
+    def bounding_box(self):
+        r"""Return the bounding box of the field.
+
+        Returns
+        -------
+        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
+        """
+        pass
+
+
 class Metadata(metaclass=ABCMeta):
     r"""Base class to represent metadata.
 
@@ -148,11 +225,44 @@ class Metadata(metaclass=ABCMeta):
             All the keys/values from the `namespace`.
 
         """
+        if namespace is None or namespace == "":
+            return {k: v for k, v in self.items()}
         return {}
 
     def dump(self, **kwargs):
         r"""Generate a dump from the metadata content."""
         return None
+
+    def datetime(self):
+        r"""Return the date and time.
+
+        Returns
+        -------
+        dict of datatime.datetime or None
+            Dict with items "base_time" and "valid_time". None if
+            date and time are not available.
+        """
+        return None
+
+    @property
+    def grid(self):
+        r""":obj:`Grid`: Get grid description.
+
+        If it is not available None is returned.
+        """
+        return None
+
+    def ls_keys(self):
+        r"""Return the keys to be used with the :meth:`ls` method."""
+        return []
+
+    def describe_keys(self):
+        r"""Return the keys to be used with the :meth:`describe` method."""
+        return []
+
+    def index_keys(self):
+        r"""Return the keys to be used with the :meth:`indices` method."""
+        return []
 
 
 class RawMetadata(Metadata):
@@ -216,107 +326,3 @@ class RawMetadata(Metadata):
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self._d.__repr__()})"
-
-
-class FieldMetadata(Metadata):
-    r"""Metadata implementation for fields."""
-
-    @abstractmethod
-    def latitudes(self):
-        r"""Return the latitudes of the field.
-
-        Returns
-        -------
-        ndarray
-        """
-        pass
-
-    @abstractmethod
-    def longitudes(self):
-        r"""Return the longitudes of the field.
-
-        Returns
-        -------
-        ndarray
-        """
-        pass
-
-    @abstractmethod
-    def x(self):
-        r"""Return the x coordinates in the field's original CRS.
-
-        Returns
-        -------
-        ndarray
-        """
-        pass
-
-    @abstractmethod
-    def y(self):
-        r"""Return the y coordinates in the field's original CRS.
-
-        Returns
-        -------
-        ndarray
-        """
-        pass
-
-    @abstractmethod
-    def shape(self):
-        r"""Return the shape of the field.
-
-        Returns
-        -------
-        tuple
-        """
-        pass
-
-    @abstractmethod
-    def _unique_grid_id(self):
-        pass
-
-    @abstractmethod
-    def projection(self):
-        r"""Return information about the field's projection.
-
-        Returns
-        -------
-        :obj:`Projection`
-        """
-        pass
-
-    @abstractmethod
-    def bounding_box(self):
-        r"""Return the bounding box of the field.
-
-        Returns
-        -------
-        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
-        """
-        pass
-
-    @abstractmethod
-    def datetime(self):
-        r"""Return the date and time of the field.
-
-        Returns
-        -------
-        dict of datatime.datetime
-            Dict with items "base_time" and "valid_time".
-        """
-        pass
-
-    @abstractmethod
-    def ls_keys(self):
-        r"""Return the keys to be used with the :meth:`ls` method."""
-        pass
-
-    @abstractmethod
-    def describe_keys(self):
-        r"""Return the keys to be used with the :meth:`describe` method."""
-        pass
-
-    @abstractmethod
-    def index_keys(self):
-        r"""Return the keys to be used with the :meth:`indices` method."""
-        pass

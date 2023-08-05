@@ -81,8 +81,8 @@ class Field(Base):
 
         """
         _keys = dict(
-            lat=self._metadata.latitudes,
-            lon=self._metadata.longitudes,
+            lat=self._metadata.grid.latitudes,
+            lon=self._metadata.grid.longitudes,
             value=lambda: self.values,
         )
 
@@ -125,8 +125,8 @@ class Field(Base):
         to_latlon
 
         """
-        x = self._metadata.x()
-        y = self._metadata.y()
+        x = self._metadata.grid.x()
+        y = self._metadata.grid.y()
         if x is not None and y is not None:
             if not flatten:
                 shape = self.shape
@@ -166,18 +166,19 @@ class Field(Base):
 
     @property
     def shape(self):
-        r"""tuple: Gets the shape of the field. For structured grids the shape is a tuple
-        in the form of (Nj, Ni) where:
+        r"""tuple: Get the shape of the field.
+
+        For structured grids the shape is a tuple in the form of (Nj, Ni) where:
 
         - ni: the number of gridpoints in i direction (longitude for a regular latitude-longitude grid)
         - nj: the number of gridpoints in j direction (latitude for a regular latitude-longitude grid)
 
         For other grid types the number of gridpoints is returned as ``(num,)``
         """
-        return self._metadata.shape()
+        return self._metadata.grid.shape()
 
     def projection(self):
-        r"""Returns information about the projection.
+        r"""Return information about the projection.
 
         Returns
         -------
@@ -205,7 +206,7 @@ class Field(Base):
         >>> ds.projection().to_proj_string()
         '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
         """
-        return self._metadata.projection()
+        return self._metadata.grid.projection()
 
     def bounding_box(self):
         r"""Returns the bounding box of the field.
@@ -214,7 +215,7 @@ class Field(Base):
         -------
         :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
         """
-        return self._metadata.bounding_box()
+        return self._metadata.grid.bounding_box()
 
     def datetime(self):
         r"""Returns the date and time of the field.
@@ -810,9 +811,9 @@ class FieldList(Index):
     @cached_method
     def _is_shared_grid(self):
         if len(self) > 0:
-            grid = self[0].metadata()._unique_grid_id()
+            grid = self[0].metadata().grid._unique_id()
             if grid is not None:
-                return all(f.metadata()._unique_grid_id() == grid for f in self)
+                return all(f.metadata().grid._unique_id() == grid for f in self)
         return False
 
     def save(self, filename):

@@ -9,7 +9,7 @@
 
 import datetime
 
-from earthkit.data.core.metadata import FieldMetadata
+from earthkit.data.core.metadata import Grid, Metadata
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
@@ -19,7 +19,121 @@ def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
-class GribMetadata(FieldMetadata):
+class GribFieldGrid(Grid):
+    def __init__(self, metadata):
+        self.metadata = metadata
+
+    def latitudes(self):
+        r"""Return the latitudes of the field.
+
+        Returns
+        -------
+        ndarray
+        """
+        return self.metadata._handle.get_latitudes()
+
+    def longitudes(self):
+        r"""Return the longitudes of the field.
+
+        Returns
+        -------
+        ndarray
+        """
+        return self.metadata._handle.get_longitudes()
+
+    def x(self):
+        r"""Return the x coordinates in the field's original CRS.
+
+        Returns
+        -------
+        ndarray
+        """
+        grid_type = self.metadata.get("gridType", None)
+        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+            return self.longitudes()
+
+    def y(self):
+        r"""Return the y coordinates in the field's original CRS.
+
+        Returns
+        -------
+        ndarray
+        """
+        grid_type = self.metadata.get("gridType", None)
+        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+            return self.latitudes()
+
+    def shape(self):
+        r"""Get the shape of the field.
+
+        For structured grids the shape is a tuple in the form of (Nj, Ni) where:
+
+        - ni: the number of gridpoints in i direction (longitude for a regular latitude-longitude grid)
+        - nj: the number of gridpoints in j direction (latitude for a regular latitude-longitude grid)
+
+        For other grid types the number of gridpoints is returned as ``(num,)``
+
+        Returns
+        -------
+        tuple
+        """
+        Nj = missing_is_none(self.metadata.get("Nj", None))
+        Ni = missing_is_none(self.metadata.get("Ni", None))
+        if Ni is None or Nj is None:
+            n = self.metadata.get("numberOfDataPoints", None)
+            return (n,)  # shape must be a tuple
+        return (Nj, Ni)
+
+    def _unique_id(self):
+        return self.metadata.get("md5GridSection", None)
+
+    def projection(self):
+        r"""Return information about the projection.
+
+        Returns
+        -------
+        :obj:`Projection`
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds.projection()
+        <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
+        Name: unknown
+        Axis Info [cartesian]:
+        - E[east]: Easting (unknown)
+        - N[north]: Northing (unknown)
+        - h[up]: Ellipsoidal height (metre)
+        Area of Use:
+        - undefined
+        Coordinate Operation:
+        - name: unknown
+        - method: Equidistant Cylindrical
+        Datum: Unknown based on WGS 84 ellipsoid
+        - Ellipsoid: WGS 84
+        - Prime Meridian: Greenwich
+        >>> ds.projection().to_proj_string()
+        '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
+        """
+        return Projection.from_proj_string(self.metadata.get("projTargetString", None))
+
+    def bounding_box(self):
+        r"""Return the bounding box of the field.
+
+        Returns
+        -------
+        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
+        """
+        return BoundingBox(
+            north=self.metadata.get("latitudeOfFirstGridPointInDegrees", None),
+            south=self.metadata.get("latitudeOfLastGridPointInDegrees", None),
+            west=self.metadata.get("longitudeOfFirstGridPointInDegrees", None),
+            east=self.metadata.get("longitudeOfLastGridPointInDegrees", None),
+        )
+
+
+class GribMetadata(Metadata):
     """Represent the metadata of a GRIB field.
 
     Parameters
@@ -92,6 +206,7 @@ class GribMetadata(FieldMetadata):
                 f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}"
             )
         self._handle = handle
+        self._grid = None
 
     @staticmethod
     def _handle_type():
@@ -200,17 +315,11 @@ class GribMetadata(FieldMetadata):
             namespace = None
         return self._handle.as_namespace(namespace)
 
-    def ls_keys(self):
-        r"""Return the keys to be used with the :meth:`ls` method."""
-        return self.LS_KEYS
-
-    def describe_keys(self):
-        r"""Return the keys to be used with the :meth:`describe` method."""
-        return self.DESCRIBE_KEYS
-
-    def index_keys(self):
-        r"""Return the keys to be used with the :meth:`indices` method."""
-        return self.INDEX_KEYS
+    @property
+    def grid(self):
+        if self._grid is None:
+            self._grid = GribFieldGrid(self)
+        return self._grid
 
     def namespaces(self):
         r"""Return the available namespaces.
@@ -220,70 +329,6 @@ class GribMetadata(FieldMetadata):
         list of str
         """
         return self.NAMESPACES
-
-    def latitudes(self):
-        r"""Return the latitudes of the field.
-
-        Returns
-        -------
-        ndarray
-        """
-        return self._handle.get_latitudes()
-
-    def longitudes(self):
-        r"""Return the longitudes of the field.
-
-        Returns
-        -------
-        ndarray
-        """
-        return self._handle.get_longitudes()
-
-    def x(self):
-        r"""Return the x coordinates in the field's original CRS.
-
-        Returns
-        -------
-        ndarray
-        """
-        grid_type = self.get("gridType", None)
-        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            return self.longitudes()
-
-    def y(self):
-        r"""Return the y coordinates in the field's original CRS.
-
-        Returns
-        -------
-        ndarray
-        """
-        grid_type = self.get("gridType", None)
-        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            return self.latitudes()
-
-    def shape(self):
-        r"""Get the shape of the field.
-
-        For structured grids the shape is a tuple in the form of (Nj, Ni) where:
-
-        - ni: the number of gridpoints in i direction (longitude for a regular latitude-longitude grid)
-        - nj: the number of gridpoints in j direction (latitude for a regular latitude-longitude grid)
-
-        For other grid types the number of gridpoints is returned as ``(num,)``
-
-        Returns
-        -------
-        tuple
-        """
-        Nj = missing_is_none(self.get("Nj", None))
-        Ni = missing_is_none(self.get("Ni", None))
-        if Ni is None or Nj is None:
-            n = self.get("numberOfDataPoints", None)
-            return (n,)  # shape must be a tuple
-        return (Nj, Ni)
-
-    def _unique_grid_id(self):
-        return self.get("md5GridSection", None)
 
     def datetime(self):
         r"""Return the date and time of the field.
@@ -320,51 +365,6 @@ class GribMetadata(FieldMetadata):
     def _valid_datetime(self):
         step = self.get("endStep", None)
         return self._base_datetime() + datetime.timedelta(hours=step)
-
-    def projection(self):
-        r"""Return information about the projection.
-
-        Returns
-        -------
-        :obj:`Projection`
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> ds.projection()
-        <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
-        Name: unknown
-        Axis Info [cartesian]:
-        - E[east]: Easting (unknown)
-        - N[north]: Northing (unknown)
-        - h[up]: Ellipsoidal height (metre)
-        Area of Use:
-        - undefined
-        Coordinate Operation:
-        - name: unknown
-        - method: Equidistant Cylindrical
-        Datum: Unknown based on WGS 84 ellipsoid
-        - Ellipsoid: WGS 84
-        - Prime Meridian: Greenwich
-        >>> ds.projection().to_proj_string()
-        '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
-        """
-        return Projection.from_proj_string(self.get("projTargetString", None))
-
-    def bounding_box(self):
-        r"""Return the bounding box of the field.
-
-        Returns
-        -------
-        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
-        """
-        return BoundingBox(
-            north=self.get("latitudeOfFirstGridPointInDegrees", None),
-            south=self.get("latitudeOfLastGridPointInDegrees", None),
-            west=self.get("longitudeOfFirstGridPointInDegrees", None),
-            east=self.get("longitudeOfLastGridPointInDegrees", None),
-        )
 
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
@@ -411,3 +411,15 @@ class GribMetadata(FieldMetadata):
         return format_namespace_dump(
             r, selected="parameter", details=self.__class__.__name__, **kwargs
         )
+
+    def ls_keys(self):
+        r"""Return the keys to be used with the :meth:`ls` method."""
+        return self.LS_KEYS
+
+    def describe_keys(self):
+        r"""Return the keys to be used with the :meth:`describe` method."""
+        return self.DESCRIBE_KEYS
+
+    def index_keys(self):
+        r"""Return the keys to be used with the :meth:`indices` method."""
+        return self.INDEX_KEYS
