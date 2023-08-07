@@ -434,10 +434,55 @@ def test_grib_metadata_namespace():
     }
     assert r == ref
 
-    # r = f[0].metadata()
-    # assert isinstance(r, dict)
-    # for ns in ["default", "vertical", "time"]:
-    #     assert ns in r, ns
+    r = f[0].metadata(namespace=None)
+    assert isinstance(r, dict)
+    assert len(r) == 186
+    assert r["level"] == 1000
+    assert r["stepType"] == "instant"
+
+    r = f[0].metadata(namespace=[None])
+    assert isinstance(r, dict)
+    assert len(r) == 186
+    assert r["level"] == 1000
+    assert r["stepType"] == "instant"
+
+    r = f[0].metadata(namespace="")
+    assert isinstance(r, dict)
+    assert len(r) == 186
+    assert r["level"] == 1000
+    assert r["stepType"] == "instant"
+
+    r = f[0].metadata(namespace=[""])
+    assert isinstance(r, dict)
+    assert len(r) == 186
+    assert r["level"] == 1000
+    assert r["stepType"] == "instant"
+
+    ref = {
+        "geography",
+        "statistics",
+        "vertical",
+        "time",
+        "parameter",
+        "mars",
+        "ls",
+        "default",
+    }
+    r = f[0].metadata(namespace=all)
+    assert isinstance(r, dict)
+    assert set(r.keys()) == ref
+
+    r = f[0].metadata(namespace=[all])
+    assert isinstance(r, dict)
+    assert set(r.keys()) == ref
+
+    with pytest.raises(ValueError) as excinfo:
+        r = f[0].metadata("level", namespace=["vertical", "time"])
+    assert "must be a str when key specified" in str(excinfo.value)
+
+    with pytest.raises(ValueError) as excinfo:
+        r = f[0].metadata("level", namespace=["vertical", "time"])
+    assert "must be a str when key specified" in str(excinfo.value)
 
 
 def test_grib_values_1():

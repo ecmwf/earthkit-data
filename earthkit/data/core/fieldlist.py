@@ -22,17 +22,17 @@ class Field(Base):
     @property
     @abstractmethod
     def values(self):
-        r"""ndarray: Gets the values stored in the field as a 1D ndarray."""
+        r"""ndarray: Get the values stored in the field as a 1D ndarray."""
         self._not_implemented()
 
     @property
     @abstractmethod
     def _metadata(self):
-        r"""Metadata: Gets the object representing the field's metadata."""
+        r"""Metadata: Get the object representing the field's metadata."""
         self._not_implemented()
 
     def to_numpy(self, flatten=False, dtype=None):
-        r"""Returns the values stored in the field as an ndarray.
+        r"""Return the values stored in the field as an ndarray.
 
         Parameters
         ----------
@@ -56,7 +56,7 @@ class Field(Base):
         return values
 
     def data(self, keys=("lat", "lon", "value"), flatten=False):
-        r"""Returns the values and/or the geographical coordinates for each grid point.
+        r"""Return the values and/or the geographical coordinates for each grid point.
 
         Parameters
         ----------
@@ -100,7 +100,7 @@ class Field(Base):
         return r[0] if len(r) == 1 else tuple(r)
 
     def to_points(self, flatten=False):
-        r"""Returns the geographical coordinates in the data's original
+        r"""Return the geographical coordinates in the data's original
         Coordinate Reference System (CRS).
 
         Parameters
@@ -142,7 +142,7 @@ class Field(Base):
             )
 
     def to_latlon(self, flatten=False):
-        r"""Returns the latitudes/longitudes of all the gridpoints in the field.
+        r"""Return the latitudes/longitudes of all the gridpoints in the field.
 
         Parameters
         ----------
@@ -209,7 +209,7 @@ class Field(Base):
         return self._metadata.geography.projection()
 
     def bounding_box(self):
-        r"""Returns the bounding box of the field.
+        r"""Return the bounding box of the field.
 
         Returns
         -------
@@ -218,12 +218,13 @@ class Field(Base):
         return self._metadata.geography.bounding_box()
 
     def datetime(self):
-        r"""Returns the date and time of the field.
+        r"""Return the date and time of the field.
 
         Returns
         -------
         dict of datatime.datetime
             Dict with items "base_time" and "valid_time".
+
 
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
@@ -234,11 +235,117 @@ class Field(Base):
         """
         return self._metadata.datetime()
 
-    def metadata(self, *keys, namespace=None, astype=None, **kwargs):
+    def metadata(self, *keys, astype=None, **kwargs):
+        r"""Return metadata values from the field.
+
+        When called without any arguments returns a :obj:`Metadata` object.
+
+        Parameters
+        ----------
+        *keys: tuple
+            Positional arguments specifying metadata keys. Can be empty, in this case all
+            the keys from the specified ``namespace`` will
+            be used. (See examples below).
+        astype: type name, :obj:`list` or :obj:`tuple`
+            Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
+            Otherwise, must have same the number of elements as ``keys``. Only used when
+            ``keys`` is not empty.
+        **kwargs: tuple, optional
+            Other keyword arguments:
+
+            * namespace: :obj:`str`, :obj:`list`, :obj:`tuple`, :obj:`None` or :obj:`all`
+                The namespace to choose the ``keys`` from. When ``keys`` is empty and ``namespace`` is
+                :obj:`all` all the available namespaces will be used. When ``keys`` is non empty
+                ``namespace`` cannot specify multiple values and it cannot be :obj:`all`. When
+                ``namespace`` is None or empty str all the available keys will be used
+                (without a namespace qualifier).
+
+            * default: value, optional
+                Specifies the same default value for all the ``keys`` specified. When ``default`` is
+                **not present** and a key is not found or its value is a missing value
+                :obj:`metadata` will raise KeyError.
+
+        Returns
+        -------
+        single value, :obj:`list`, :obj:`tuple`, :obj:`dict` or :obj:`Metadata`
+            - when called without any arguments returns a :obj:`Metadata` object
+            - when ``keys`` is not empty:
+                - returns single value when ``keys`` is a str
+                - otherwise returns the same type as that of ``keys`` (:obj:`list` or :obj:`tuple`)
+            - when ``keys`` is empty:
+                - when ``namespace`` is None or an empty str returns a :obj:`dict` with all
+                  the available keys and values
+                - when ``namespace`` is :obj:`str` returns a :obj:`dict` with the keys and values
+                  in that namespace
+                - otherwise returns a :obj:`dict` with one item per namespace (dict of dict)
+
+        Raises
+        ------
+        KeyError
+            If no ``default`` is set and a key is not found in the message or it has a missing value.
+
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+
+        Calling without arguments:
+
+        >>> r = ds[0].metadata()
+        >>> r
+        <earthkit.data.readers.grib.metadata.GribMetadata object at 0x164ace170>
+        >>> r["name"]
+        '2 metre temperature'
+
+        Getting keys with their native type:
+
+        >>> ds[0].metadata("param")
+        '2t'
+        >>> ds[0].metadata("param", "units")
+        ('2t', 'K')
+        >>> ds[0].metadata(("param", "units"))
+        ('2t', 'K')
+        >>> ds[0].metadata(["param", "units"])
+        ['2t', 'K']
+        >>> ds[0].metadata(["param"])
+        ['2t']
+        >>> ds[0].metadata("badkey")
+        KeyError: 'badkey'
+        >>> ds[0].metadata("badkey", default=None)
+        <BLANKLINE>
+
+        Prescribing key types:
+
+        >>> ds[0].metadata("centre", astype=int)
+        98
+        >>> ds[0].metadata(["paramId", "centre"], astype=int)
+        [167, 98]
+        >>> ds[0].metadata(["centre", "centre"], astype=[int, str])
+        [98, 'ecmf']
+
+        Using namespaces:
+
+        >>> ds[0].metadata(namespace="parameter")
+        {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature', 'shortName': '2t'}
+        >>> ds[0].metadata(namespace=["parameter", "vertical"])
+        {'parameter': {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature',
+         'shortName': '2t'},
+         'vertical': {'typeOfLevel': 'surface', 'level': 0}}
+        >>> r = ds[0].metadata(namespace=all)
+        >>> r.keys()
+        dict_keys(['default', 'ls', 'geography', 'mars', 'parameter', 'statistics', 'time', 'vertical'])
+        >>> r = ds[0].metadata(namespace=None)
+        >>> len(r)
+        186
+        >>> r["name"]
+        '2 metre temperature'
+        """
         # when called without arguments returns the metadata object
-        if len(keys) == 0 and namespace is None and astype is None and len(kwargs) == 0:
+        if len(keys) == 0 and astype is None and len(kwargs) == 0:
             return self._metadata
 
+        namespace = kwargs.pop("namespace", None)
         key, namespace, astype, key_arg_type = metadata_argument(
             *keys, namespace=namespace, astype=astype
         )
@@ -271,18 +378,24 @@ class Field(Base):
                 return r[namespace[0]]
             else:
                 return r
+        else:
+            return self._metadata.as_namespace(None)
 
     def dump(self, namespace=all, **kwargs):
-        r"""Generates dump with all the metadata keys belonging to ``namespace``
-        offering a tabbed interface in a Jupyter notebook.
+        r"""Generate dump with all the metadata keys belonging to ``namespace``.
+
+        In a Jupyter notebook it is represented as a tabbed interface.
 
         Parameters
         ----------
-        namespace: :obj:`str`, :obj:`list` or :obj:`tuple`
-            The namespace to dump. Any :xref:`eccodes_namespace` can be used here.
-            :obj:`dump` also defines the "default" namespace, which contains all the GRIB keys
-            that ecCodes can access without specifying a namespace.
-            When ``namespace`` is None all the available namespaces will be used.
+        namespace: :obj:`str`, :obj:`list`, :obj:`tuple`, :obj:`None` or :obj:`all`
+            The namespace to dump. The following `namespace` values
+            have a special meaning:
+
+            - :obj:`all`: all the available namespaces will be used.
+            - None or empty str: all the available keys will be used
+                (without a namespace qualifier)
+
         **kwargs: dict, optional
             Other keyword arguments used for testing only
 
@@ -300,12 +413,12 @@ class Field(Base):
         return self._metadata.dump(namespace=namespace, **kwargs)
 
     def __getitem__(self, key):
-        """Returns the value of the metadata ``key``."""
+        """Return the value of the metadata ``key``."""
         return self._metadata.get(key)
 
     @abstractmethod
     def message(self):
-        r"""Returns a buffer containing the encoded message for message based formats (e.g. GRIB).
+        r"""Return a buffer containing the encoded message for message based formats (e.g. GRIB).
 
         Returns
         -------
@@ -333,6 +446,8 @@ class Field(Base):
 
 
 class FieldList(Index):
+    r"""Represents a list of :obj:`Field` \s."""
+
     _indices = {}
 
     def __init__(self, *args, **kwargs):
@@ -371,7 +486,7 @@ class FieldList(Index):
         return {k: sorted(list(v)) for k, v in indices.items()}
 
     def indices(self, squeeze=False):
-        r"""Returns the unique, sorted values for a set of metadata keys (see below)
+        r"""Return the unique, sorted values for a set of metadata keys (see below)
         from all the fields. Individual keys can be also queried by :obj:`index`.
 
         Parameters
@@ -417,7 +532,7 @@ class FieldList(Index):
             return self._indices
 
     def index(self, key):
-        r"""Returns the unique, sorted values of the specified metadata ``key`` from all the fields.
+        r"""Return the unique, sorted values of the specified metadata ``key`` from all the fields.
         ``key`` will be automatically added to the keys returned by :obj:`indices`.
 
         Parameters
@@ -450,7 +565,7 @@ class FieldList(Index):
         return self._indices[key]
 
     def to_numpy(self, **kwargs):
-        r"""Returns the field values as an ndarray. It is formed as the array of the
+        r"""Return the field values as an ndarray. It is formed as the array of the
         :obj:`data.core.fieldlist.Field.to_numpy` values per field.
 
         Parameters
@@ -473,7 +588,7 @@ class FieldList(Index):
 
     @property
     def values(self):
-        r"""ndarray: Gets the field values as a 2D ndarray. It is formed as the array of
+        r"""ndarray: Get the field values as a 2D ndarray. It is formed as the array of
         :obj:`GribField.values <data.readers.grib.codes.GribField.values>` per field.
 
         See Also
@@ -500,7 +615,7 @@ class FieldList(Index):
         return np.array([f.values for f in self])
 
     def metadata(self, *args, **kwargs):
-        r"""Returns the metadata values for each field.
+        r"""Return the metadata values for each field.
 
         Parameters
         ----------
@@ -534,6 +649,36 @@ class FieldList(Index):
         return result
 
     def ls(self, n=None, keys=None, extra_keys=None, namespace=None):
+        r"""Generate a list like summary using a set of metadata keys.
+
+        Parameters
+        ----------
+        n: int, None
+            The number of :obj:`Field`\ s to be
+            listed. None means all the messages, ``n > 0`` means fields from the front, while
+            ``n < 0`` means fields from the back of the fieldlist.
+        keys: list of str, dict, None
+            Metadata keys. If it is None the following default set of keys will be used:  "centre",
+            "shortName", "typeOfLevel", "level", "dataDate", "dataTime", "stepRange", "dataType",
+            "number", "gridType". To specify a column title for each key in the output use a dict.
+        extra_keys: list of str, dict, None
+            List of additional keys to ``keys``. To specify a column title for each key in the output
+            use a dict.
+        namespace: str, None
+            The namespace to choose the ``keys`` from. When it is set ``keys`` and
+            ``extra_keys`` are omitted.
+
+        Returns
+        -------
+        Pandas DataFrame
+            DataFrame with one row per :obj:`Field`.
+
+        See Also
+        --------
+        head
+        tail
+
+        """
         from earthkit.data.utils.summary import ls
 
         def _proc(keys, n):
@@ -568,7 +713,7 @@ class FieldList(Index):
             return []
 
     def head(self, n=5, **kwargs):
-        r"""Generates a list like summary of the first ``n``
+        r"""Generate a list like summary of the first ``n``
         :obj:`GribField <data.readers.grib.codes.GribField>`\ s using a set of metadata keys.
         Same as calling :obj:`ls` with ``n``.
 
@@ -583,6 +728,11 @@ class FieldList(Index):
         -------
         Pandas DataFrame
             See  :obj:`ls`.
+
+        See Also
+        --------
+        ls
+        tail
 
 
         The following calls are equivalent:
@@ -601,7 +751,7 @@ class FieldList(Index):
         return self.ls(n=n, **kwargs)
 
     def tail(self, n=5, **kwargs):
-        r"""Generates a list like summary of the last ``n``
+        r"""Generate a list like summary of the last ``n``
         :obj:`GribField <data.readers.grib.codes.GribField>`\ s using a set of metadata keys.
         Same as calling :obj:`ls` with ``-n``.
 
@@ -616,6 +766,11 @@ class FieldList(Index):
         -------
         Pandas DataFrame
             See  :obj:`ls`.
+
+        See Also
+        --------
+        head
+        ls
 
 
         The following calls are equivalent:
@@ -634,7 +789,7 @@ class FieldList(Index):
         return self.ls(n=-n, **kwargs)
 
     def describe(self, *args, **kwargs):
-        r"""Generates a summary of the fieldlist."""
+        r"""Generate a summary of the fieldlist."""
         from earthkit.data.utils.summary import format_describe
 
         def _proc():
@@ -651,7 +806,7 @@ class FieldList(Index):
             return []
 
     def datetime(self):
-        r"""Returns the unique, sorted list of dates and times in the fieldlist.
+        r"""Return the unique, sorted list of dates and times in the fieldlist.
 
         Returns
         -------
@@ -680,7 +835,7 @@ class FieldList(Index):
         return {"base_time": sorted(base), "valid_time": sorted(valid)}
 
     def to_points(self, **kwargs):
-        r"""Returns the geographical coordinates shared by all the fields in
+        r"""Return the geographical coordinates shared by all the fields in
         the data's original Coordinate Reference System (CRS).
 
         Parameters
@@ -708,7 +863,7 @@ class FieldList(Index):
             raise ValueError("Fields do not have the same grid geometry")
 
     def to_latlon(self, **kwargs):
-        r"""Returns the latitudes/longitudes shared by all the fields.
+        r"""Return the latitudes/longitudes shared by all the fields.
 
         Parameters
         ----------
@@ -757,7 +912,7 @@ class FieldList(Index):
             raise ValueError("Fields do not have the same grid geometry")
 
     def projection(self):
-        r"""Returns the projection information shared by all the fields.
+        r"""Return the projection information shared by all the fields.
 
         Returns
         -------
@@ -798,7 +953,7 @@ class FieldList(Index):
             raise ValueError("Fields do not have the same grid geometry")
 
     def bounding_box(self):
-        r"""Returns the bounding box for each field.
+        r"""Return the bounding box for each field.
 
         Returns
         -------
@@ -819,7 +974,7 @@ class FieldList(Index):
         return False
 
     def save(self, filename):
-        r"""Writes all the fields into a file. The target file will be overwritten if
+        r"""Write all the fields into a file. The target file will be overwritten if
         already exists.
 
         Parameters
@@ -831,7 +986,7 @@ class FieldList(Index):
             self.write(f)
 
     def write(self, f):
-        r"""Writes all the fields to a file object.
+        r"""Write all the fields to a file object.
 
         Parameters
         ----------

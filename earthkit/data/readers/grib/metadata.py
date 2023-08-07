@@ -210,7 +210,7 @@ class GribMetadata(Metadata):
 
     @staticmethod
     def _handle_type():
-        """Returns the expected handle type. Implemented like this
+        """Return the expected handle type. Implemented like this
         to avoid cyclic import
         """
         if GribMetadata.__handle_type is None:

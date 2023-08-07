@@ -55,7 +55,7 @@ Data objects can be concatenated with the "+" operator:
 Iteration
 ~~~~~~~~~
 
-When an earthkit-data data `source` or dataset provides a list of fields or messages, we can iterated through it to access each element (in a given order see :ref:`below <order_by>`).
+When an earthkit-data data `source` or dataset provides a list of fields or messages, we can iterate through it to access each element (in a given order see :ref:`below <order_by>`).
 
 In the the following example we read a GRIB file from disk. In the iteration each element is a field (representing a GRIB message):
 
