@@ -69,6 +69,9 @@ class CdsRetriever(FileSource):
     CdsRetriever
     """
 
+    def client(self):
+        return client()
+
     def __init__(self, dataset, *args, **kwargs):
         super().__init__()
 
@@ -81,7 +84,7 @@ class CdsRetriever(FileSource):
 
         requests = self.requests(**kwargs)
 
-        client()  # Trigger password prompt before thraeding
+        self.client()  # Trigger password prompt before thraeding
 
         nthreads = min(self.settings("number-of-download-threads"), len(requests))
 
@@ -96,7 +99,7 @@ class CdsRetriever(FileSource):
 
     def _retrieve(self, dataset, request):
         def retrieve(target, args):
-            client().retrieve(args[0], args[1], target)
+            self.client().retrieve(args[0], args[1], target)
 
         return self.cache_file(
             retrieve,
