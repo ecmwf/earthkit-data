@@ -11,6 +11,7 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     :caption: Retrieve
 
     examples/mars.ipynb
+    examples/ads.ipynb
     examples/cds.ipynb
     examples/ecmwf_open_data.ipynb
     examples/fdb.ipynb
