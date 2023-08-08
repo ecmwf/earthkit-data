@@ -158,7 +158,12 @@ def test_transform_function_inputs_xarray_to_numpy():
 
 
 def test_transform_function_inputs_pandas_to_numpy():
-    # Test with pandas.DataFrame object
-    result = WRAPPED_NP_MEAN(TEST_DF)
-    assert result.equals(np.mean(TEST_DF))
+    # Test with pandas.DataFrame object, axis=0 is to preserve the pandas.DataFrame, this is pandas syntax
+    result = WRAPPED_NP_MEAN(TEST_DF, axis=0)
+    assert result.equals(np.mean(TEST_DF, axis=0))
     assert isinstance(result, pd.core.series.Series)
+
+    # Test without axis declartion, pandas>2 returns a scalar mean of the dataframe
+    result = WRAPPED_NP_MEAN(TEST_DF)
+    assert result == np.mean(TEST_DF)
+    assert isinstance(result, np.float64)
