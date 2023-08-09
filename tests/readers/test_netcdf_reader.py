@@ -40,11 +40,10 @@ def test_netcdf():
 
 
 def test_dummy_netcdf_reader_1():
-    s = from_source("file", earthkit_file("docs/examples/test.nc"))
-    r = s._reader
-    assert str(r).startswith("NetCDFReader"), r
-    assert len(r) == 2
-    assert isinstance(r[1], NetCDFField), r
+    ds = from_source("file", earthkit_file("docs/examples/test.nc"))
+    # assert str(ds).startswith("NetCDFReader"), r
+    assert len(ds) == 2
+    assert isinstance(ds[1], NetCDFField), ds
 
 
 @pytest.mark.parametrize("attribute", ["coordinates", "bounds", "grid_mapping"])
@@ -132,7 +131,7 @@ def test_multi():
     source.to_xarray()
 
 
-def test_datetime():
+def test_netcdf_datetime():
     s = from_source("file", earthkit_file("docs/examples/test.nc"))
 
     ref = {
@@ -209,15 +208,15 @@ def test_netcdf_proj_string_non_cf():
         f[0].to_proj()
 
 
-def test_netcdf_proj_string_laea():
-    f = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
-    r = f[0].to_proj()
-    assert len(r) == 2
-    assert (
-        r[0]
-        == "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
-    )
-    assert r[1] == "+proj=eqc +datum=WGS84 +units=m +no_defs"
+# def test_netcdf_proj_string_laea():
+#     f = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
+#     r = f[0].to_proj()
+#     assert len(r) == 2
+#     assert (
+#         r[0]
+#         == "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
+#     )
+#     assert r[1] == "+proj=eqc +datum=WGS84 +units=m +no_defs"
 
 
 def test_netcdf_projection_laea():

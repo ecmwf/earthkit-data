@@ -21,11 +21,10 @@ LOG = logging.getLogger(__name__)
 class NumpyField(Field):
     def __init__(self, array, metadata):
         self._array = array
-        self.__metadata = metadata
+        super().__init__(metadata=metadata)
 
-    @property
-    def _metadata(self):
-        return self.__metadata
+    def _make_metadata(self):
+        pass
 
     @property
     def values(self):

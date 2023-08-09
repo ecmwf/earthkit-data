@@ -11,86 +11,6 @@
 from abc import ABCMeta, abstractmethod
 
 
-class Geography(metaclass=ABCMeta):
-    """Geographical information about a field or data unit"""
-
-    @abstractmethod
-    def latitudes(self):
-        r"""Return the latitudes.
-
-        Returns
-        -------
-        ndarray
-        """
-        pass
-
-    @abstractmethod
-    def longitudes(self):
-        r"""Return the longitudes.
-
-        Returns
-        -------
-        ndarray
-        """
-        pass
-
-    @abstractmethod
-    def x(self):
-        r"""Return the x coordinates in the original CRS.
-
-        Returns
-        -------
-        ndarray
-        """
-        pass
-
-    @abstractmethod
-    def y(self):
-        r"""Return the y coordinates in the original CRS.
-
-        Returns
-        -------
-        ndarray
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def shape(self):
-        r"""Return the shape of the grid or data values.
-
-        Returns
-        -------
-        tuple
-        """
-        pass
-
-    @abstractmethod
-    def _unique_grid_id(self):
-        r"""Return a unique id of the grid of a field."""
-        pass
-
-    @abstractmethod
-    def projection(self):
-        r"""Return information about projection.
-
-        Returns
-        -------
-        :obj:`Projection`
-        """
-        pass
-
-    @abstractmethod
-    def bounding_box(self):
-        r"""Return the bounding box.
-
-        Returns
-        -------
-        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
-        """
-        pass
-
-
 class Metadata(metaclass=ABCMeta):
     r"""Base class to represent metadata.
 
@@ -178,7 +98,7 @@ class Metadata(metaclass=ABCMeta):
         else:
             v = self.__getitem__(key)
 
-        if astype is None:
+        if astype is not None:
             try:
                 return astype(v)
             except Exception:
@@ -314,7 +234,7 @@ class RawMetadata(Metadata):
         return self._d.items()
 
     def __getitem__(self, key):
-        return self._d.__getitem__(key)
+        return self._d[key]
 
     def __contains__(self, key):
         return key in self._d

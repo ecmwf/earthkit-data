@@ -9,7 +9,8 @@
 
 import datetime
 
-from earthkit.data.core.metadata import Geography, Metadata
+from earthkit.data.core.geography import Geography
+from earthkit.data.core.metadata import Metadata
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection

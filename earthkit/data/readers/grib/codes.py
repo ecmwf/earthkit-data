@@ -202,11 +202,11 @@ class GribField(Field):
     """
 
     def __init__(self, path, offset, length):
+        super().__init__()
         self.path = path
         self._offset = offset
         self._length = length
         self._handle = None
-        self.__metadata = None
 
     @property
     def handle(self):
@@ -228,11 +228,8 @@ class GribField(Field):
             self._offset = int(self.handle.get("offset"))
         return self._offset
 
-    @property
-    def _metadata(self):
-        if self.__metadata is None:
-            self.__metadata = GribMetadata(self.handle)
-        return self.__metadata
+    def _make_metadata(self):
+        return GribMetadata(self.handle)
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (

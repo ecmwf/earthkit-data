@@ -19,17 +19,25 @@ from earthkit.data.utils.metadata import metadata_argument
 class Field(Base):
     r"""Represents a Field."""
 
+    def __init__(self, metadata=None):
+        self.__metadata = metadata
+
     @property
     @abstractmethod
     def values(self):
         r"""ndarray: Get the values stored in the field as a 1D ndarray."""
         self._not_implemented()
 
+    def _make_metadata(self):
+        r"""Create a field metadata object."""
+        self._not_implemented()
+
     @property
-    @abstractmethod
     def _metadata(self):
         r"""Metadata: Get the object representing the field's metadata."""
-        self._not_implemented()
+        if self.__metadata is None:
+            self.__metadata = self._make_metadata()
+        return self.__metadata
 
     def to_numpy(self, flatten=False, dtype=None):
         r"""Return the values stored in the field as an ndarray.

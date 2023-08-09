@@ -11,6 +11,7 @@ import datetime
 import logging
 
 from earthkit.data.core.fieldlist import Field
+from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.readers.grib.index import GribFieldList
 from earthkit.data.readers.grib.metadata import GribMetadata
@@ -18,6 +19,10 @@ from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
 
 LOG = logging.getLogger(__name__)
+
+
+class VirtualGribGeography(Geography):
+    pass
 
 
 class VirtualGribMetadata(RawMetadata):
@@ -157,18 +162,19 @@ class VirtualGribMetadata(RawMetadata):
             east=self.get("longitudeOfLastGridPointInDegrees", None),
         )
 
+    from earthkit.data.core.geography import Geography
+
 
 class VirtualGribField(Field):
     def __init__(self, d):
-        self.__metadata = VirtualGribMetadata(d)
+        super().__init__(metadata=VirtualGribMetadata(d))
 
     @property
     def values(self):
         return self._metadata["values"]
 
-    @property
-    def _metadata(self):
-        return self.__metadata
+    def _make_metadata(self):
+        pass
 
 
 class GribFromDicts(GribFieldList):
