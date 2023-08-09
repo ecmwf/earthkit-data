@@ -299,22 +299,28 @@ class NetCDFField(Field):
     def to_pandas(self):
         return self._da.to_pandas()
 
-    @property
-    def values(self):
+    def _to_numpy(self):
         dims = self._da.dims
         v = {}
         for s in self.slices:
             if s.is_dimension:
                 if s.name in dims:
                     v[s.name] = s.index
-        return self._da.isel(**v).to_numpy().flatten()
+        return self._da.isel(**v).to_numpy()
+
+    @property
+    def values(self):
+        return self._to_numpy().flatten()
 
     def to_numpy(self, flatten=False, dtype=None):
-        values = self._da.to_numpy()
+        values = self._to_numpy()
         if not flatten:
-            values = self.values.reshape(self.shape)
+            values = values.reshape(self.shape)
+        else:
+            values = values.flatten()
         if dtype is not None:
             values = values.astype(dtype)
+
         return values
 
 
@@ -497,11 +503,11 @@ class NetCDFReader(NetCDFFieldListInOneFile, Reader):
         # A NetCDFReader is a source itself
         return self
 
-    def to_numpy(self, flatten=False):
-        arr = self.to_xarray().to_array().to_numpy()
-        if flatten:
-            arr = arr.flatten()
-        return arr
+    # def to_numpy(self, flatten=False):
+    #     arr = self.to_xarray().to_array().to_numpy()
+    #     if flatten:
+    #         arr = arr.flatten()
+    #     return arr
 
     def to_pandas(self):
         return self.to_xarray().to_pandas()
