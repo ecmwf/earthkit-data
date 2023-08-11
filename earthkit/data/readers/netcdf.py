@@ -457,6 +457,11 @@ class NetCDFFieldList(FieldList):
         return fields
 
     @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(_, NetCDFFieldList) for _ in sources)
+        return NetCDFMultiFieldList(sources)
+
+    @classmethod
     def new_mask_index(self, *args, **kwargs):
         return NetCDFMaskFieldList(*args, **kwargs)
 
@@ -464,7 +469,22 @@ class NetCDFFieldList(FieldList):
         return self.to_xarray().to_pandas()
 
     def to_xarray(self, **kwargs):
-        return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
+        return type(self).to_xarray_multi_from_paths(self.path, **kwargs)
+
+    @classmethod
+    def to_xarray_multi_from_paths(cls, paths, **kwargs):
+        import xarray as xr
+
+        if not isinstance(paths, list):
+            paths = [paths]
+
+        options = dict()
+        options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+
+        return xr.open_mfdataset(
+            paths,
+            **options,
+        )
 
 
 class NetCDFFieldListInFiles(NetCDFFieldList):
@@ -497,6 +517,11 @@ class NetCDFMultiFieldList(NetCDFFieldList, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
 
+    def to_xarray(self, **kwargs):
+        return NetCDFFieldList.to_xarray_multi_from_paths(
+            [x.path for x in self.indexes], **kwargs
+        )
+
 
 class NetCDFFieldListReader(NetCDFFieldListInOneFile, Reader):
     def __init__(self, source, path):
@@ -506,34 +531,37 @@ class NetCDFFieldListReader(NetCDFFieldListInOneFile, Reader):
     def __repr__(self):
         return "NetCDFFieldListReader(%s)" % (self.path,)
 
-    # # @classmethod
+    # @classmethod
     # def merge(cls, readers):
-    #     assert all(isinstance(s, NetCDFReader) for s in readers), readers
+    #     assert all(isinstance(s, NetCDFFieldListReader) for s in readers), readers
     #     assert len(readers) > 1
 
-    #     return NetCDReader(readers[0], [s.path for s in readers])
+    #     return NetCDFFieldListReader(readers[0], [s.path for s in readers])
 
     def mutate_source(self):
         # A NetCDFReader is a source itself
         return self
 
-    def to_pandas(self):
-        return self.to_xarray().to_pandas()
+    # def to_pandas(self):
+    #     return self.to_xarray().to_pandas()
 
-    def to_xarray(self, **kwargs):
-        return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
+    # def to_xarray(self, **kwargs):
+    #     return type(self).to_xarray_multi_from_paths(self.path, **kwargs)
 
-    @classmethod
-    def to_xarray_multi_from_paths(cls, paths, **kwargs):
-        import xarray as xr
+    # @classmethod
+    # def to_xarray_multi_from_paths(cls, paths, **kwargs):
+    #     import xarray as xr
 
-        options = dict()
-        options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+    #     if not isinstance(paths, list):
+    #         paths = [paths]
 
-        return xr.open_mfdataset(
-            paths,
-            **options,
-        )
+    #     options = dict()
+    #     options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+
+    #     return xr.open_mfdataset(
+    #         paths,
+    #         **options,
+    #     )
 
 
 class NetCDFReader(Reader):
@@ -559,6 +587,9 @@ class NetCDFReader(Reader):
     @classmethod
     def to_xarray_multi_from_paths(cls, paths, **kwargs):
         import xarray as xr
+
+        if not isinstance(paths, list):
+            paths = [paths]
 
         options = dict()
         options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))

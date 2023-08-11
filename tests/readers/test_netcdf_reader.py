@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import os
 import tempfile
 
@@ -97,9 +98,8 @@ def test_dummy_netcdf_4():
     assert "lat" in ds.dims
 
 
-@pytest.mark.skip
 @pytest.mark.long_test
-def test_multi():
+def test_netcdf_multi_cds():
     if not os.path.exists(os.path.expanduser("~/.cdsapirc")):
         pytest.skip("No ~/.cdsapirc")
     s1 = from_source(
@@ -108,6 +108,7 @@ def test_multi():
         product_type="reanalysis",
         param="2t",
         date="2021-03-01",
+        grid=[20, 20],
         format="netcdf",
     )
     s1.to_xarray()
@@ -117,6 +118,7 @@ def test_multi():
         product_type="reanalysis",
         param="2t",
         date="2021-03-02",
+        grid=[20, 20],
         format="netcdf",
     )
     s2.to_xarray()
@@ -126,6 +128,75 @@ def test_multi():
         print(s)
 
     source.to_xarray()
+
+
+def test_netcdf_multi_sources():
+    path = earthkit_test_data_file("era5_2t_1.nc")
+    s1 = from_source("file", path)
+    s1.to_xarray()
+    assert s1.path == path
+
+    path = earthkit_test_data_file("era5_2t_2.nc")
+    s2 = from_source("file", path)
+    s2.to_xarray()
+    assert s2.path == path
+
+    s3 = from_source("multi", s1, s2)
+    for s in s3:
+        print(s)
+
+    assert len(s3) == 2
+    assert s3[0].datetime() == {
+        "base_time": datetime.datetime(2021, 3, 1, 12, 0),
+        "valid_time": datetime.datetime(2021, 3, 1, 12, 0),
+    }
+    assert s3[1].datetime() == {
+        "base_time": datetime.datetime(2021, 3, 2, 12, 0),
+        "valid_time": datetime.datetime(2021, 3, 2, 12, 0),
+    }
+    assert s3.datetime() == {
+        "base_time": [
+            datetime.datetime(2021, 3, 1, 12, 0),
+            datetime.datetime(2021, 3, 2, 12, 0),
+        ],
+        "valid_time": [
+            datetime.datetime(2021, 3, 1, 12, 0),
+            datetime.datetime(2021, 3, 2, 12, 0),
+        ],
+    }
+    s3.to_xarray()
+
+
+def test_netcdf_multi_files():
+    ds = from_source(
+        "file",
+        [
+            earthkit_test_data_file("era5_2t_1.nc"),
+            earthkit_test_data_file("era5_2t_2.nc"),
+        ],
+    )
+
+    assert len(ds) == 2
+    assert ds[0].datetime() == {
+        "base_time": datetime.datetime(2021, 3, 1, 12, 0),
+        "valid_time": datetime.datetime(2021, 3, 1, 12, 0),
+    }
+    assert ds[1].datetime() == {
+        "base_time": datetime.datetime(2021, 3, 2, 12, 0),
+        "valid_time": datetime.datetime(2021, 3, 2, 12, 0),
+    }
+    assert ds.datetime() == {
+        "base_time": [
+            datetime.datetime(2021, 3, 1, 12, 0),
+            datetime.datetime(2021, 3, 2, 12, 0),
+        ],
+        "valid_time": [
+            datetime.datetime(2021, 3, 1, 12, 0),
+            datetime.datetime(2021, 3, 2, 12, 0),
+        ],
+    }
+
+    ds.to_xarray()
 
 
 def test_get_fields_missing_standard_name_attr_in_coord_array():
