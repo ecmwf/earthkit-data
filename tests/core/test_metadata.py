@@ -230,6 +230,21 @@ def test_grib_metadata_override_with_kwarg():
     assert md2["shortName"] == "2d"
 
 
+def test_grib_metadata_override_invalid():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    md = ds[0].metadata()
+
+    # invalid key
+    with pytest.raises(Exception) as e:
+        md.override({"__invalidkey": 5})
+    assert "KeyValueNotFoundError" in e.typename
+
+    # invalid value
+    with pytest.raises(Exception) as e:
+        md.override({"level": -100})
+    assert "EncodingError" in e.typename
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 

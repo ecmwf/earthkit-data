@@ -169,18 +169,16 @@ class GribCodesHandle(CodesHandle):
     def get_data_points(self):
         return eccodes.codes_grib_get_data(self._handle)
 
-    # def clone(self):
-    #     return CodesHandle(eccodes.codes_clone(self._handle), None, None)
-
     def set_values(self, values):
-        assert self.path is None, "Only cloned handles can have values changed"
-        eccodes.codes_set_values(self._handle, values.flatten())
-        # This is writing on the GRIB that something has been modified (255=unknown)
-        eccodes.codes_set_long(self._handle, "generatingProcessIdentifier", 255)
-
-    def set_multiple(self, values):
-        assert self.path is None, "Only cloned handles can have values changed"
-        eccodes.codes_set_key_vals(self._handle, values)
+        try:
+            assert self.path is None, "Only cloned handles can have values changed"
+            eccodes.codes_set_values(self._handle, values.flatten())
+            # This is writing on the GRIB that something has been modified (255=unknown)
+            eccodes.codes_set_long(self._handle, "generatingProcessIdentifier", 255)
+        except Exception as e:
+            LOG.error("Error setting values")
+            LOG.exception(e)
+            raise
 
 
 class GribCodesReader(CodesReader):

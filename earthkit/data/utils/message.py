@@ -149,8 +149,13 @@ class CodesHandle(eccodes.Message):
         return self._from_raw_handle(eccodes.codes_clone(self._handle))
 
     def set_multiple(self, values):
-        assert self.path is None, "Only cloned handles can have values changed"
-        eccodes.codes_set_key_vals(self._handle, values)
+        try:
+            assert self.path is None, "Only cloned handles can have values changed"
+            eccodes.codes_set_key_vals(self._handle, values)
+        except Exception as e:
+            LOG.error(f"Error setting: {values}")
+            LOG.exception(e)
+            raise
 
     def set_long(self, name, value):
         try:
@@ -159,6 +164,7 @@ class CodesHandle(eccodes.Message):
         except Exception as e:
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
+            raise
 
     def set_double(self, name, value):
         try:
@@ -167,6 +173,7 @@ class CodesHandle(eccodes.Message):
         except Exception as e:
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
+            raise
 
     def set_string(self, name, value):
         try:
@@ -175,6 +182,7 @@ class CodesHandle(eccodes.Message):
         except Exception as e:
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
+            raise
 
     def set(self, name, value):
         try:
@@ -187,6 +195,7 @@ class CodesHandle(eccodes.Message):
         except Exception as e:
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
+            raise
 
     def write(self, f):
         eccodes.codes_write(self._handle, f)
