@@ -1,4 +1,9 @@
-table.eh td {
+table.ek td {
+    vertical-align: top;
+    text-align: left !important;
+}
+
+table.ek th {
     vertical-align: top;
     text-align: left !important;
 }
