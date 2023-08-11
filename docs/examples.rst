@@ -22,6 +22,7 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     :caption: GRIB
 
     examples/grib_overview.ipynb
+    examples/grib_lat_lon_value.ipynb
     examples/grib_metadata.ipynb
     examples/grib_selection.ipynb
     examples/grib_indexing.ipynb
