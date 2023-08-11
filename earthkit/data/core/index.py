@@ -46,8 +46,7 @@ class Selection(OrderOrSelection):
             def __call__(self, x):
                 if self.first and x is not None:
                     self.lst = [
-                        lambda y: type(x) if not type(x) == type(y) else y
-                        for y in self.lst
+                        type(x) if not type(x) == type(y) else y for y in self.lst
                     ]
                     self.first = False
                 return x in self.lst
