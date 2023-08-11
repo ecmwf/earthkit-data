@@ -45,7 +45,7 @@ def test_url_source_check_out_of_date():
 
     with temp_directory() as tmpdir:
         with settings.temporary():
-            settings.set("cache-directory", tmpdir)
+            settings.set("user-cache-directory", tmpdir)
             load()
 
             settings.set("check-out-of-date-urls", False)

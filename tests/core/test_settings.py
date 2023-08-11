@@ -15,6 +15,19 @@ from earthkit.data import settings
 from earthkit.data.core.temporary import temp_directory
 
 
+def read_settings_yaml(path="~/.earthkit-data/settings.yaml"):
+    try:
+        with open(path) as f:
+            import yaml
+
+            s = yaml.load(f, Loader=yaml.SafeLoader)
+            if not isinstance(s, dict):
+                s = {}
+            return s
+    except Exception:
+        return {}
+
+
 @pytest.mark.parametrize(
     "param,default_value,new_value",
     [
@@ -77,7 +90,9 @@ def test_settings_set_numbers(param, set_value, stored_value, raise_error):
 
 def test_settings_set_cache_numbers():
     with temp_directory() as tmpdir:
-        with settings.temporary("cache-directory", tmpdir):
+        with settings.temporary(
+            {"cache-policy": "user", "user-cache-directory": tmpdir}
+        ):
             data = [
                 ("maximum-cache-size", "1", 1, None),
                 ("maximum-cache-size", "1k", 1024, None),
@@ -100,6 +115,82 @@ def test_settings_set_cache_numbers():
                 else:
                     with pytest.raises(raise_error):
                         settings.set(param, set_value)
+
+
+def test_settings_set_multi():
+    with settings.temporary():
+        settings.set("number-of-download-threads", 7)
+        assert settings.get("number-of-download-threads") == 7
+
+        settings.set({"number-of-download-threads": 2, "url-download-timeout": 21})
+        assert settings.get("number-of-download-threads") == 2
+        assert settings.get("url-download-timeout") == 21
+
+        settings.set(number_of_download_threads=3, url_download_timeout=11)
+        assert settings.get("number-of-download-threads") == 3
+        assert settings.get("url-download-timeout") == 11
+
+        with pytest.raises(KeyError):
+            settings.set({"number-of-download-threads": 2, "-invalid-": 21})
+
+        with pytest.raises(KeyError):
+            settings.set(number_of_download_threads=3, __invalid__=11)
+
+
+def test_settings_temporary_single():
+    with settings.temporary("number-of-download-threads", 7):
+        assert settings.get("number-of-download-threads") == 7
+
+    with settings.temporary({"number-of-download-threads": 7}):
+        assert settings.get("number-of-download-threads") == 7
+
+    with settings.temporary(number_of_download_threads=7):
+        assert settings.get("number-of-download-threads") == 7
+
+
+def test_settings_temporary_multi():
+    with settings.temporary(
+        {"number-of-download-threads": 2, "url-download-timeout": 21}
+    ):
+        assert settings.get("number-of-download-threads") == 2
+        assert settings.get("url-download-timeout") == 21
+
+    with settings.temporary(number_of_download_threads=3, url_download_timeout=11):
+        assert settings.get("number-of-download-threads") == 3
+        assert settings.get("url-download-timeout") == 11
+
+
+def test_settings_temporary_nested():
+    with settings.temporary("number-of-download-threads", 7):
+        assert settings.get("number-of-download-threads") == 7
+        with settings.temporary("number-of-download-threads", 10):
+            assert settings.get("number-of-download-threads") == 10
+        assert settings.get("number-of-download-threads") == 7
+
+
+@pytest.mark.parametrize("autosave", [True, False])
+def test_settings_temporary_autosave(autosave):
+    v_ori = settings.auto_save_settings
+    s = read_settings_yaml()
+    if s:
+        with settings.temporary():
+            settings.auto_save_settings = autosave
+            v = settings.get("number-of-download-threads")
+            settings.set("number-of-download-threads", v + 10)
+            assert s["number-of-download-threads"] == v
+        assert settings.auto_save_settings == autosave
+    settings.auto_save_settings = v_ori
+
+
+def test_settings_auto_save():
+    v_ori = settings.auto_save_settings
+    settings.auto_save_settings = False
+    s = read_settings_yaml()
+    if s:
+        v = settings.get("number-of-download-threads")
+        settings.set("number-of-download-threads", v + 10)
+        assert s["number-of-download-threads"] == v
+    settings.auto_save_settings = v_ori
 
 
 if __name__ == "__main__":
