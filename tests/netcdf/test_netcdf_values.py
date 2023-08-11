@@ -154,6 +154,72 @@ def test_netcdf_to_numpy_surf_shape(first, options, expected_shape):
     assert np.allclose(v_ref, v1, eps)
 
 
+@pytest.mark.parametrize(
+    "options, expected_shape",
+    [
+        (
+            {},
+            (
+                18,
+                7,
+                12,
+            ),
+        ),
+        (
+            {"flatten": True},
+            (
+                18,
+                84,
+            ),
+        ),
+        ({"flatten": False}, (18, 7, 12)),
+    ],
+)
+def test_netcdf_to_numpy_upper_shape(options, expected_shape):
+    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+
+    eps = 1e-5
+
+    # whole file
+    v = f.to_numpy()
+    assert isinstance(v, np.ndarray)
+    assert v.shape == (18, 7, 12)
+    vf0 = f[0].to_numpy().flatten()
+    assert vf0.shape == (84,)
+    vf15 = f[15].to_numpy().flatten()
+    assert vf15.shape == (84,)
+
+    v1 = f.to_numpy(**options)
+    assert isinstance(v1, np.ndarray)
+    assert v1.shape == expected_shape
+    vr = v1[0].flatten()
+    assert np.allclose(vf0, vr, eps)
+    vr = v1[15].flatten()
+    assert np.allclose(vf15, vr, eps)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_netcdf_to_numpy_surf_dtype(dtype):
+    f = from_source("file", earthkit_examples_file("test.nc"))
+
+    v = f[0].to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+    v = f.to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_netcdf_to_numpy_upper_dtype(dtype):
+    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+
+    v = f[0].to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+    v = f.to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 

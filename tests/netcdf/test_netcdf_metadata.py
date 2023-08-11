@@ -8,6 +8,9 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+
+import datetime
+
 import pytest
 
 from earthkit.data import from_source
@@ -37,6 +40,41 @@ def test_netcdf_metadata_single_field(key, expected_value):
     # assert sn == [expected_value]
     sn = f[0].metadata(key)
     assert sn == expected_value
+
+
+def test_netcdf_datetime():
+    ds = from_source("file", earthkit_examples_file("test.nc"))
+
+    ref = {
+        "base_time": [datetime.datetime(2020, 5, 13, 12)],
+        "valid_time": [datetime.datetime(2020, 5, 13, 12)],
+    }
+    assert ds.datetime() == ref
+
+    ds = from_source(
+        "dummy-source",
+        kind="netcdf",
+        dims=["lat", "lon", "time"],
+        variables=["a", "b"],
+        coord_values=dict(
+            time=[
+                datetime.datetime(1990, 1, 1, 12, 0),
+                datetime.datetime(1990, 1, 2, 12, 0),
+            ]
+        ),
+    )
+
+    ref = {
+        "base_time": [
+            datetime.datetime(1990, 1, 1, 12, 0),
+            datetime.datetime(1990, 1, 2, 12, 0),
+        ],
+        "valid_time": [
+            datetime.datetime(1990, 1, 1, 12, 0),
+            datetime.datetime(1990, 1, 2, 12, 0),
+        ],
+    }
+    assert ds.datetime() == ref
 
 
 if __name__ == "__main__":

@@ -288,25 +288,29 @@ class NetCDFField(Field):
         # print(f"-> time={self.time}")
 
     def __repr__(self):
-        return "NetCDFField[%r,%r]" % (self.variable, self.slices)
+        return (
+            f"NetCDFField({self.variable},"
+            + ",".join([f"{s.name}={s.value}" for s in self.slices])
+            + ")"
+        )
 
     def _make_metadata(self):
         return NetCDFMetadata(self)
 
     def to_xarray(self):
-        return self._da
-
-    def to_pandas(self):
-        return self._da.to_pandas()
-
-    def _to_numpy(self):
         dims = self._da.dims
         v = {}
         for s in self.slices:
             if s.is_dimension:
                 if s.name in dims:
                     v[s.name] = s.index
-        return self._da.isel(**v).to_numpy()
+        return self._da.isel(**v)
+
+    def to_pandas(self):
+        return self.to_xarray().to_pandas()
+
+    def _to_numpy(self):
+        return self.to_xarray().to_numpy()
 
     @property
     def values(self):
@@ -412,8 +416,12 @@ class NetCDFFieldList(FieldList):
                     or long_name in ["time"]
                     or axis == "T"
                 ):
-                    coordinates.append(TimeCoordinate(c, coord in info))
-                    use = True
+                    # we might not be able to convert time to datetime
+                    try:
+                        coordinates.append(TimeCoordinate(c, coord in info))
+                        use = True
+                    except ValueError:
+                        break
 
                 # TODO: Support other level types
                 if standard_name in [
@@ -443,14 +451,20 @@ class NetCDFFieldList(FieldList):
 
                 fields.append(NetCDFField(ds, name, slices, non_dim_coords))
 
-        if not fields:
-            raise Exception("NetCDFReader no 2D fields found in %s" % (self.path,))
+        # if not fields:
+        #     raise Exception("NetCDFReader no 2D fields found in %s" % (self.path,))
 
         return fields
 
     @classmethod
     def new_mask_index(self, *args, **kwargs):
         return NetCDFMaskFieldList(*args, **kwargs)
+
+    def to_pandas(self):
+        return self.to_xarray().to_pandas()
+
+    def to_xarray(self, **kwargs):
+        return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
 
 
 class NetCDFFieldListInFiles(NetCDFFieldList):
@@ -484,15 +498,15 @@ class NetCDFMultiFieldList(NetCDFFieldList, MultiIndex):
         MultiIndex.__init__(self, *args, **kwargs)
 
 
-class NetCDFReader(NetCDFFieldListInOneFile, Reader):
+class NetCDFFieldListReader(NetCDFFieldListInOneFile, Reader):
     def __init__(self, source, path):
         Reader.__init__(self, source, path)
         NetCDFFieldList.__init__(self, path)
 
     def __repr__(self):
-        return "NetCDFReader(%s)" % (self.path,)
+        return "NetCDFFieldListReader(%s)" % (self.path,)
 
-    # @classmethod
+    # # @classmethod
     # def merge(cls, readers):
     #     assert all(isinstance(s, NetCDFReader) for s in readers), readers
     #     assert len(readers) > 1
@@ -503,11 +517,38 @@ class NetCDFReader(NetCDFFieldListInOneFile, Reader):
         # A NetCDFReader is a source itself
         return self
 
-    # def to_numpy(self, flatten=False):
-    #     arr = self.to_xarray().to_array().to_numpy()
-    #     if flatten:
-    #         arr = arr.flatten()
-    #     return arr
+    def to_pandas(self):
+        return self.to_xarray().to_pandas()
+
+    def to_xarray(self, **kwargs):
+        return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
+
+    @classmethod
+    def to_xarray_multi_from_paths(cls, paths, **kwargs):
+        import xarray as xr
+
+        options = dict()
+        options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+
+        return xr.open_mfdataset(
+            paths,
+            **options,
+        )
+
+
+class NetCDFReader(Reader):
+    def __init__(self, source, path):
+        Reader.__init__(self, source, path)
+        NetCDFFieldList.__init__(self, path)
+
+    def __repr__(self):
+        return "NetCDFReader(%s)" % (self.path,)
+
+    def to_numpy(self, flatten=False):
+        arr = self.to_xarray().to_array().to_numpy()
+        if flatten:
+            arr = arr.flatten()
+        return arr
 
     def to_pandas(self):
         return self.to_xarray().to_pandas()
@@ -537,4 +578,8 @@ def _match_magic(magic, deeper_check):
 
 def reader(source, path, magic=None, deeper_check=False):
     if _match_magic(magic, deeper_check):
-        return NetCDFReader(source, path)
+        r = NetCDFFieldListReader(source, path)
+        if len(r) > 0:
+            return r
+        else:
+            return NetCDFReader(source, path)

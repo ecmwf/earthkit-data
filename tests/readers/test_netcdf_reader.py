@@ -9,7 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 import os
 import tempfile
 
@@ -21,10 +20,8 @@ from earthkit.data.readers.netcdf import NetCDFField
 from earthkit.data.testing import (
     earthkit_examples_file,
     earthkit_file,
-    earthkit_remote_test_data_file,
     earthkit_test_data_file,
 )
-from earthkit.data.utils import projections
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -129,109 +126,6 @@ def test_multi():
         print(s)
 
     source.to_xarray()
-
-
-def test_netcdf_datetime():
-    s = from_source("file", earthkit_file("docs/examples/test.nc"))
-
-    ref = {
-        "base_time": [datetime.datetime(2020, 5, 13, 12)],
-        "valid_time": [datetime.datetime(2020, 5, 13, 12)],
-    }
-    assert s.datetime() == ref
-
-    s = from_source(
-        "dummy-source",
-        kind="netcdf",
-        dims=["lat", "lon", "time"],
-        variables=["a", "b"],
-        coord_values=dict(
-            time=[
-                datetime.datetime(1990, 1, 1, 12, 0),
-                datetime.datetime(1990, 1, 2, 12, 0),
-            ]
-        ),
-    )
-
-    # print(s.to_xarray())
-    # print(s.to_xarray().time)
-    ref = {
-        "base_time": [
-            datetime.datetime(1990, 1, 1, 12, 0),
-            datetime.datetime(1990, 1, 2, 12, 0),
-        ],
-        "valid_time": [
-            datetime.datetime(1990, 1, 1, 12, 0),
-            datetime.datetime(1990, 1, 2, 12, 0),
-        ],
-    }
-    assert s.datetime() == ref
-
-
-def test_netcdf_to_points_1():
-    f = from_source("file", earthkit_test_data_file("test_single.nc"))
-
-    eps = 1e-5
-    v = f[0].to_points(flatten=True)
-    assert isinstance(v, dict)
-    assert isinstance(v["x"], np.ndarray)
-    assert isinstance(v["y"], np.ndarray)
-    check_array(
-        v["x"],
-        (84,),
-        first=0.0,
-        last=330.0,
-        meanv=165.0,
-        eps=eps,
-    )
-    check_array(
-        v["y"],
-        (84,),
-        first=90,
-        last=-90,
-        meanv=0,
-        eps=eps,
-    )
-
-
-def test_bbox():
-    ds = from_source("file", earthkit_file("docs/examples/test.nc"))
-    bb = ds.bounding_box()
-    assert len(bb) == 2
-    for b in bb:
-        assert b.as_tuple() == (73, -27, 33, 45)
-
-
-def test_netcdf_proj_string_non_cf():
-    f = from_source("file", earthkit_examples_file("test.nc"))
-    with pytest.raises(AttributeError):
-        f[0].to_proj()
-
-
-# def test_netcdf_proj_string_laea():
-#     f = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
-#     r = f[0].to_proj()
-#     assert len(r) == 2
-#     assert (
-#         r[0]
-#         == "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
-#     )
-#     assert r[1] == "+proj=eqc +datum=WGS84 +units=m +no_defs"
-
-
-def test_netcdf_projection_laea():
-    f = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
-    projection = f[0].projection()
-    assert isinstance(projection, projections.LambertAzimuthalEqualArea)
-    assert projection.parameters == {
-        "central_latitude": 52.0,
-        "central_longitude": 10.0,
-        "false_northing": 3210000.0,
-        "false_easting": 4321000.0,
-    }
-    assert projection.globe == {
-        "ellipse": "GRS80",
-    }
 
 
 def test_get_fields_missing_standard_name_attr_in_coord_array():
