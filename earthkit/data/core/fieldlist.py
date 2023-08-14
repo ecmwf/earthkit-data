@@ -77,12 +77,36 @@ class Field(Base):
 
         Returns
         -------
-        ndarray or tuple of ndarrays
-            When ``keys`` is a single value an ndarray is returned. Otherwise a tuple containing one ndarray
-            per key is returned (following the order in ``keys``).
+        ndarray
+            An ndarray containing one ndarray per key is returned
+            (following the order in ``keys``). When ``keys`` is a single value only the
+            ndarray belonging to the key is returned.
+
+
+        Examples
+        --------
+        - :ref:`/examples/grib_lat_lon_value.ipynb`
+
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+        >>> d = ds[0].data()
+        >>> d.shape
+        (3, 7, 12)
+        >>> d[0, 0, 0]  # first latitude
+        90.0
+        >>> d[1, 0, 0]  # first longitude
+        0.0
+        >>> d[2, 0, 0]  # first value
+        272.56417847
+        >>> d = ds[0].data(keys="lon")
+        >>> d.shape
+        (7, 12)
+        >>> d[0, 0]  # first longitude
+        0.0
 
         See Also
         --------
+        to_latlon
         to_points
         to_numpy
         values
@@ -105,7 +129,12 @@ class Field(Base):
         if not flatten:
             shape = self.shape
             r = [x.reshape(shape) for x in r]
-        return r[0] if len(r) == 1 else tuple(r)
+        if len(r) == 1:
+            return r[0]
+        else:
+            import numpy as np
+
+            return np.array(r)
 
     def to_points(self, flatten=False):
         r"""Return the geographical coordinates in the data's original
@@ -633,32 +662,48 @@ class FieldList(Index):
             Specifies the type of data to be returned. Any combination of "lat", "lon" and "value"
             is allowed here.
         flatten: bool
-            When it is True a flat ndarray for "lat" and "lon" is returned, while the
-            resulting ndarray for "value" will be flattened per field. Otherwise an ndarray
-            with one field's :obj:`shape` is returned for "lat" and "lon", while for
-            "value" each array per field will keep the field's :obj:`shape`.
+            When it is True the "lat", "lon" arrays and the "value" arrays per field
+            will all be flattened. Otherwise they will preserve the field's :obj:`shape`.
 
         Returns
         -------
-        ndarray or tuple of ndarrays
-            When ``keys`` is a single value an ndarray is returned. Otherwise a tuple containing one ndarray
-            per key is returned (following the order in ``keys``). The ndarray for a
-            given key is constructed as follows:
+        ndarray
+            The elements of the ndarray (in the order of the ``keys``) are as follows:
 
-            * "lat": the latitudes array from the first field returned
-            * "lon": the longitudes array from the first field returned
-            * "values": the array of the field values array returned
-              (same as with :obj:`to_numpy`)
+            * the latitudes array from the first field  when "lat" is in ``keys``
+            * the longitudes array from the first field when "lon" is in ``keys``
+            * a values array per field when "values" is in ``keys``
+
 
         Raises
         ------
         ValueError
             When not all the fields have the same grid geometry.
 
+
         Examples
         --------
         - :ref:`/examples/grib_lat_lon_value.ipynb`
 
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+        >>> len(ds)
+        6
+        >>> d = ds.data()
+        >>> d.shape
+        (8, 7, 12)
+        >>> d[0, 0, 0]  # first latitude
+        90.0
+        >>> d[1, 0, 0]  # first longitude
+        0.0
+        >>> d[2:, 0, 0]  # first value per field
+        array([272.56417847,  -6.28688049,   7.83348083, 272.53916931,
+                -4.89837646,   8.66096497])
+        >>> d = ds.data(keys="lon")
+        >>> d.shape
+        (1, 7, 12)
+        >>> d[0, 0, 0]  # first longitude
+        0.0
 
         See Also
         --------
@@ -668,6 +713,8 @@ class FieldList(Index):
         values
 
         """
+        import numpy as np
+
         if self._is_shared_grid():
             if isinstance(keys, str):
                 keys = [keys]
@@ -682,14 +729,14 @@ class FieldList(Index):
                 elif k == "lon":
                     r.append(latlon["lon"])
                 elif k == "value":
-                    r.append(self.to_numpy(flatten=flatten))
+                    r.extend([f.to_numpy(flatten=flatten) for f in self])
                 else:
                     raise ValueError(f"data: invalid argument: {k}")
 
-            return r[0] if len(r) == 1 else tuple(r)
+            return np.array(r)
 
         elif len(self) == 0:
-            return tuple()
+            return np.array([])
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
