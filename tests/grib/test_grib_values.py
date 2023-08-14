@@ -217,6 +217,87 @@ def test_grib_to_numpy_18_dtype(dtype):
     assert v.dtype == dtype
 
 
+@pytest.mark.parametrize(
+    "kwarg,expected_shape",
+    [({}, (11, 19)), ({"flatten": True}, (209,)), ({"flatten": False}, (11, 19))],
+)
+def test_grib_field_data(kwarg, expected_shape):
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    latlon = ds[0].to_latlon(**kwarg)
+    v = ds[0].to_numpy(**kwarg)
+
+    d = ds[0].data(**kwarg)
+    assert isinstance(d, tuple)
+    assert len(d) == 3
+    assert d[0].shape == expected_shape
+    assert np.allclose(d[0], latlon["lat"])
+    assert np.allclose(d[1], latlon["lon"])
+    assert np.allclose(d[2], v)
+
+    d = ds[0].data(keys="lat", **kwarg)
+    assert np.allclose(d, latlon["lat"])
+
+    d = ds[0].data(keys="lon", **kwarg)
+    assert np.allclose(d, latlon["lon"])
+
+    d = ds[0].data(keys="value", **kwarg)
+    assert np.allclose(d, v)
+
+    d = ds[0].data(keys=("value", "lon"), **kwarg)
+    assert isinstance(d, tuple)
+    assert len(d) == 2
+    assert np.allclose(d[0], v)
+    assert np.allclose(d[1], latlon["lon"])
+
+
+@pytest.mark.parametrize(
+    "kwarg,expected_latlon_shape,expected_values_shape",
+    [
+        ({}, (11, 19), (2, 11, 19)),
+        (
+            {"flatten": True},
+            (209,),
+            (
+                2,
+                209,
+            ),
+        ),
+        ({"flatten": False}, (11, 19), (2, 11, 19)),
+    ],
+)
+def test_grib_fieldlist_data(kwarg, expected_latlon_shape, expected_values_shape):
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    latlon = ds.to_latlon(**kwarg)
+    v = ds.to_numpy(**kwarg)
+
+    d = ds.data(**kwarg)
+    assert isinstance(d, tuple)
+    assert len(d) == 3
+    assert d[0].shape == expected_latlon_shape
+    assert d[1].shape == expected_latlon_shape
+    assert d[2].shape == expected_values_shape
+    assert np.allclose(d[0], latlon["lat"])
+    assert np.allclose(d[1], latlon["lon"])
+    assert np.allclose(d[2], v)
+
+    d = ds.data(keys="lat", **kwarg)
+    assert np.allclose(d, latlon["lat"])
+
+    d = ds.data(keys="lon", **kwarg)
+    assert np.allclose(d, latlon["lon"])
+
+    d = ds.data(keys="value", **kwarg)
+    assert np.allclose(d, v)
+
+    d = ds.data(keys=("value", "lon"), **kwarg)
+    assert isinstance(d, tuple)
+    assert len(d) == 2
+    assert np.allclose(d[0], v)
+    assert np.allclose(d[1], latlon["lon"])
+
+
 def test_grib_values_with_missing():
     f = from_source("file", earthkit_test_data_file("test_single_with_missing.grib"))
 

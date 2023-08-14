@@ -622,6 +622,77 @@ class FieldList(Index):
 
         return np.array([f.values for f in self])
 
+    def data(self, keys=("lat", "lon", "value"), flatten=False):
+        r"""Return the values and/or the geographical coordinates.
+
+        Only works when all the fields have the same grid geometry.
+
+        Parameters
+        ----------
+        keys: :obj:`str`, :obj:`list` or :obj:`tuple`
+            Specifies the type of data to be returned. Any combination of "lat", "lon" and "value"
+            is allowed here.
+        flatten: bool
+            When it is True a flat ndarray for "lat" and "lon" is returned, while the
+            resulting ndarray for "value" will be flattened per field. Otherwise an ndarray
+            with one field's :obj:`shape` is returned for "lat" and "lon", while for
+            "value" each array per field will keep the field's :obj:`shape`.
+
+        Returns
+        -------
+        ndarray or tuple of ndarrays
+            When ``keys`` is a single value an ndarray is returned. Otherwise a tuple containing one ndarray
+            per key is returned (following the order in ``keys``). The ndarray for a
+            given key is constructed as follows:
+
+            * "lat": the latitudes array from the first field returned
+            * "lon": the longitudes array from the first field returned
+            * "values": the array of the field values array returned
+              (same as with :obj:`to_numpy`)
+
+        Raises
+        ------
+        ValueError
+            When not all the fields have the same grid geometry.
+
+        Examples
+        --------
+        - :ref:`/examples/grib_lat_lon_value.ipynb`
+
+
+        See Also
+        --------
+        to_latlon
+        to_points
+        to_numpy
+        values
+
+        """
+        if self._is_shared_grid():
+            if isinstance(keys, str):
+                keys = [keys]
+
+            if "lat" in keys or "lon" in keys:
+                latlon = self[0].to_latlon(flatten=flatten)
+
+            r = []
+            for k in keys:
+                if k == "lat":
+                    r.append(latlon["lat"])
+                elif k == "lon":
+                    r.append(latlon["lon"])
+                elif k == "value":
+                    r.append(self.to_numpy(flatten=flatten))
+                else:
+                    raise ValueError(f"data: invalid argument: {k}")
+
+            return r[0] if len(r) == 1 else tuple(r)
+
+        elif len(self) == 0:
+            return tuple()
+        else:
+            raise ValueError("Fields do not have the same grid geometry")
+
     def metadata(self, *args, **kwargs):
         r"""Return the metadata values for each field.
 
