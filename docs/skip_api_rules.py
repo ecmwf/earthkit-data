@@ -27,7 +27,26 @@ _skip_methods = {
     ],
     "data.readers.bufr.bufr.BUFRMessage": ["merge", "mutate", "to_numpy"],
     "data.readers.grib.codes.GribField": ["merge", "mutate"],
-    "data.readers.grib.index.FieldList": [
+    "data.core.fieldlist.FieldList": [
+        "cache_file",
+        "dataset",
+        "from_dict",
+        "from_mask",
+        "from_multi",
+        "from_slice",
+        "full",
+        "graph",
+        "ignore",
+        "merge",
+        "mutate",
+        "new_mask_index",
+        "parent",
+        "scaled",
+        "settings",
+        "statistics",
+        "xarray_open_dataset_kwargs",
+    ],
+    "data.readers.grib.index.GribFieldList": [
         "cache_file",
         "dataset",
         "from_dict",
@@ -55,6 +74,9 @@ def _skip_api_items(app, what, name, obj, skip, options):
     #     print(f"{name}[{what}]")
 
     if what == "module" and name not in [
+        "data.core",
+        "data.core.metadata",
+        "data.core.fieldlist",
         "data.readers",
         "data.readers.bufr.bufr",
         "data.readers.grib.codes",
@@ -65,6 +87,7 @@ def _skip_api_items(app, what, name, obj, skip, options):
         skip = True
     elif what == "package" and name not in [
         "data",
+        "data.core",
         "data.readers",
         "data.readers.bufr",
         "data.readers.bufr.bufr",
@@ -75,17 +98,23 @@ def _skip_api_items(app, what, name, obj, skip, options):
     ]:
         skip = True
     elif what == "class" and name not in [
+        "data.core.fieldlist.Field",
+        "data.core.fieldlist.FieldList",
+        "data.core.metadata.Metadata",
+        "data.core.metadata.RawMetadata",
         "data.readers.bufr.bufr.BUFRList",
         "data.readers.bufr.bufr.BUFRMessage",
         "data.readers.grib.codes.GribField",
-        "data.readers.grib.index.FieldList",
+        "data.readers.grib.index.GribFieldList",
+        "data.readers.grib.metadata.GribMetadata",
         "data.utils.bbox.BoundingBox",
     ]:
         skip = True
     elif what == "method":
-        if "abstractmethod" in getattr(obj, "properties", []):
-            skip = True
-        else:
+        # if "abstractmethod" in getattr(obj, "properties", []):
+        #     skip = True
+        # else:
+        if True:
             for k, v in _skip_methods.items():
                 if k in name and name.split(".")[-1] in v:
                     skip = True

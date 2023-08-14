@@ -10,12 +10,22 @@
 import datetime
 import logging
 
-from earthkit.data.readers.grib.index import FieldList
+from earthkit.data.core.fieldlist import Field
+from earthkit.data.core.geography import Geography
+from earthkit.data.core.metadata import RawMetadata
+from earthkit.data.readers.grib.index import GribFieldList
+from earthkit.data.readers.grib.metadata import GribMetadata
+from earthkit.data.utils.bbox import BoundingBox
+from earthkit.data.utils.projections import Projection
 
 LOG = logging.getLogger(__name__)
 
 
-class VirtualGribField(dict):
+class VirtualGribGeography(Geography):
+    pass
+
+
+class VirtualGribMetadata(RawMetadata):
     KEY_TYPES = {
         "s": str,
         "l": int,
@@ -26,84 +36,109 @@ class VirtualGribField(dict):
         "": None,
     }
 
-    NAME_LOOKUP = {
-        "dataDate": "date",
-        "dataTime": "time",
-        "level": "levelist",
-        "step": "endStep",
+    KEY_TYPE_SUFFIX = {str: ":s", int: ":l", float: ":d"}
+
+    KEY_GROUPS = {
+        ("dataDate", "date"),
+        ("dataTime", "time"),
+        ("level", "levelist"),
+        ("step", "endStep", "stepRange"),
     }
 
-    for k in list(NAME_LOOKUP.keys()):
-        NAME_LOOKUP[NAME_LOOKUP[k]] = k
+    def __init__(self, m):
+        super().__init__(m)
 
-    def metadata(self, name, **kwargs):
-        name, _, key_type_str = name.partition(":")
+    def get(self, key, *args):
+        key, _, key_type_str = key.partition(":")
         try:
             key_type = self.KEY_TYPES[key_type_str]
         except KeyError:
             raise ValueError(f"Key type={key_type_str} not supported")
 
+        if key not in self:
+            for v in self.KEY_GROUPS:
+                if key in v:
+                    for k in v:
+                        if k in self:
+                            key = k
+                            break
+
+        v = super().get(key, *args)
+
+        if key == "stepRange" and key_type is None:
+            key_type = str
+
         try:
             if key_type is not None:
-                return key_type(self._get(name))
+                return key_type(v)
             else:
-                return self._get(name)
+                return v
         except Exception:
             return None
 
-    def __getitem__(self, name):
-        return self.metadata(name)
+    def _get(self, key, astype=None, **kwargs):
+        def _key_name(key):
+            if key == "param":
+                key = "shortName"
+            elif key == "_param_id":
+                key = "paramId"
+            return key
 
-    def _get(self, name):
-        if name in VirtualGribField.NAME_LOOKUP:
-            return self._get_with_replace(name, VirtualGribField.NAME_LOOKUP[name])
-        elif name == "stepRange":
-            return self.steprange()
-        return self.get(name, None)
+        key = _key_name(key)
+        if astype is not None:
+            key += self.KEY_TYPE_SUFFIX.get(astype)
 
-    def _get_with_replace(self, name, other_name):
-        v = self.get(name, None)
-        if v is None:
-            return self.get(other_name, None)
+        if "default" in kwargs:
+            default = kwargs.pop("default")
+            return self.get(key, default)
         else:
-            return v
+            return self.get(key)
 
-    def steprange(self):
-        v = self.get("stepRange", None)
-        if v is None:
-            for k in ["step", "endStep"]:
-                v = self.get(k, None)
-                if v is not None:
-                    try:
-                        return str(v)
-                    except Exception:
-                        v = None
-        return v
-
-    @property
-    def values(self):
-        return self["values"]
-
-    def to_numpy(self, flatten=False):
-        return self.values if flatten else self.values.reshape(self.shape)
-
-    @property
     def shape(self):
         Nj = self.get("Nj", None)
         Ni = self.get("Ni", None)
         if Ni is None or Nj is None:
-            return len(self.values)
+            n = len(self.get("values"))
+            return (n,)  # shape must be a tuple
         return (Nj, Ni)
 
-    def datetime(self, **kwargs):
+    def as_namespace(self, ns):
+        return {}
+
+    def ls_keys(self):
+        return GribMetadata.LS_KEYS
+
+    def namespaces(self):
+        return []
+
+    def latitudes(self):
+        return self.get("latitudes")
+
+    def longitudes(self):
+        return self.get("longitudes")
+
+    def x(self):
+        grid_type = self.get("gridType", None)
+        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+            return self.longitudes()
+
+    def y(self):
+        grid_type = self.get("gridType", None)
+        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+            return self.latitudes()
+
+    def _unique_grid_id(self):
+        return self.get("md5GridSection", None)
+
+    def datetime(self):
         return {
             "base_time": self._base_datetime(),
             "valid_time": self._valid_datetime(),
         }
 
     def _base_datetime(self):
-        date = self._get("date", None)
-        time = self._get("time", None)
+        date = self.get("date", None)
+        time = self.get("time", None)
         return datetime.datetime(
             date // 10000,
             date % 10000 // 100,
@@ -113,17 +148,36 @@ class VirtualGribField(dict):
         )
 
     def _valid_datetime(self):
-        step = self._get("endStep", None)
+        step = self.get("endStep", None)
         return self._base_datetime() + datetime.timedelta(hours=step)
 
-    def _attributes(self, names):
-        result = {}
-        for name in names:
-            result[name] = self._get(name)
-        return result
+    def projection(self):
+        return Projection.from_proj_string(self.get("projTargetString", None))
+
+    def bounding_box(self):
+        return BoundingBox(
+            north=self.get("latitudeOfFirstGridPointInDegrees", None),
+            south=self.get("latitudeOfLastGridPointInDegrees", None),
+            west=self.get("longitudeOfFirstGridPointInDegrees", None),
+            east=self.get("longitudeOfLastGridPointInDegrees", None),
+        )
+
+    from earthkit.data.core.geography import Geography
 
 
-class GribFromDicts(FieldList):
+class VirtualGribField(Field):
+    def __init__(self, d):
+        super().__init__(metadata=VirtualGribMetadata(d))
+
+    @property
+    def values(self):
+        return self._metadata["values"]
+
+    def _make_metadata(self):
+        pass
+
+
+class GribFromDicts(GribFieldList):
     def __init__(self, list_of_dicts, *args, **kwargs):
         self.list_of_dicts = list_of_dicts
         super().__init__(*args, **kwargs)

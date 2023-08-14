@@ -119,6 +119,10 @@ class CodesHandle(eccodes.Message):
     def from_sample(cls, name):
         return cls(eccodes.codes_new_from_samples(name, cls.PRODUCT_ID), None, None)
 
+    @classmethod
+    def _from_raw_handle(cls, handle):
+        return cls(handle, None, None)
+
     # TODO: just a wrapper around the base class implementation to handle the
     # s,l,d qualifiers. Once these are implemented in the base class this method can
     # be removed. md5GridSection is also handled!
@@ -142,11 +146,16 @@ class CodesHandle(eccodes.Message):
         return self.get(name, ktype=int)
 
     def clone(self):
-        return CodesHandle(eccodes.codes_clone(self._handle), None, None)
+        return self._from_raw_handle(eccodes.codes_clone(self._handle))
 
     def set_multiple(self, values):
-        assert self.path is None, "Only cloned handles can have values changed"
-        eccodes.codes_set_key_vals(self._handle, values)
+        try:
+            assert self.path is None, "Only cloned handles can have values changed"
+            eccodes.codes_set_key_vals(self._handle, values)
+        except Exception as e:
+            LOG.error(f"Error setting: {values}")
+            LOG.exception(e)
+            raise
 
     def set_long(self, name, value):
         try:
@@ -155,6 +164,7 @@ class CodesHandle(eccodes.Message):
         except Exception as e:
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
+            raise
 
     def set_double(self, name, value):
         try:
@@ -163,6 +173,7 @@ class CodesHandle(eccodes.Message):
         except Exception as e:
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
+            raise
 
     def set_string(self, name, value):
         try:
@@ -171,6 +182,7 @@ class CodesHandle(eccodes.Message):
         except Exception as e:
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
+            raise
 
     def set(self, name, value):
         try:
@@ -183,6 +195,7 @@ class CodesHandle(eccodes.Message):
         except Exception as e:
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
+            raise
 
     def write(self, f):
         eccodes.codes_write(self._handle, f)
