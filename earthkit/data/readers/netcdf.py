@@ -344,6 +344,8 @@ class NetCDFFieldList(FieldList):
             self._fields = self._get_fields()
 
     def _get_fields(self):
+        import xarray as xr
+
         with closing(
             xr.open_mfdataset(self.path, combine="by_coords")
         ) as ds:  # or nested

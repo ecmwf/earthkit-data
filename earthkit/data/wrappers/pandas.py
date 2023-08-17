@@ -17,7 +17,7 @@ class PandasSeriesWrapper(Wrapper):
 
     def __init__(self, data):
         self.data = data
-    
+
     def __iter__(self):
         return iter(self.data)
 
@@ -30,7 +30,7 @@ class PandasSeriesWrapper(Wrapper):
         pandas.Series
         """
         return self.data
-   
+
     def to_numpy(self, **kwargs):
         """
         Return a `numpy.array` representation of the data.
@@ -39,8 +39,8 @@ class PandasSeriesWrapper(Wrapper):
         -------
         numpy.array
         """
-        return self.data.to_numpy(**kwargs) 
-    
+        return self.data.to_numpy(**kwargs)
+
     def to_xarray(self, **kwargs):
         """
         Return a `xarray.DataArray` representation of the data.
@@ -50,7 +50,7 @@ class PandasSeriesWrapper(Wrapper):
         numpy.array
         """
         return self.data.to_xarray(**kwargs)
-    
+
     def to_netcdf(self, *args, **kwargs):
         """
         Return a `xarray.DataArray` representation of the data.
@@ -70,6 +70,7 @@ class PandasSeriesWrapper(Wrapper):
         numpy.array
         """
         return self.data
+
 
 class PandasDataFrameWrapper(PandasSeriesWrapper):
     """Wrapper around a `pandas.DataFrame`, offering polymorphism and
@@ -94,7 +95,7 @@ class PandasDataFrameWrapper(PandasSeriesWrapper):
         -------
         numpy.array
         """
-        return self.data.to_xarray(**kwargs) 
+        return self.data.to_xarray(**kwargs)
 
 
 class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
@@ -103,6 +104,7 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
 
     Key difference to a pandas dataframe wrapper, we treat rows (features) as fields
     """
+
     def __init__(self, source, path):
         super().__init__(source, path)
         self.fields = None
@@ -113,7 +115,7 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
         """
         self._scan()
         return iter(self.fields)
-    
+
     def _scan(self):
         if self.fields is None:
             self.fields = self.get_fields()
@@ -130,9 +132,10 @@ def wrapper(data, *args, **kwargs):
 
     try:
         import geopandas as gpd
+
         l_gpd = True
     except ImportError:
-        l_gpd = False    
+        l_gpd = False
 
     if l_gpd and isinstance(data, gpd.geodataframe.GeoDataFrame):
         return GeoPandasDataFrameWrapper(data, *args, **kwargs)
