@@ -92,6 +92,6 @@ def reader(source, path, magic=None, deeper_check=False):
     ext = path.split(".")[-1]
 
     geojson_extensions = ["geojson"]
-    geojson_mimetypes = "application/geo+json"
+    geojson_mimetypes = ["application/geo+json"]
     if magic is None or ext in geojson_extensions or kind in geojson_mimetypes:
         return GeojsonReader(source, path)
