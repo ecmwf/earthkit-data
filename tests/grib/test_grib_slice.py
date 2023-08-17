@@ -117,14 +117,14 @@ def test_grib_fieldlist_iterator():
     g = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     sn = g.metadata("shortName")
     assert len(sn) == 18
-    iter_sn = [f["shortName"] for f in g]
+    iter_sn = [f.metadata("shortName") for f in g]
     assert iter_sn == sn
     # repeated iteration
-    iter_sn = [f["shortName"] for f in g]
+    iter_sn = [f.metadata("shortName") for f in g]
     assert iter_sn == sn
 
 
-def test_fieldlist_iterator_with_zip():
+def test_grib_fieldlist_iterator_with_zip():
     # this tests something different with the iterator - this does not try to
     # 'go off the edge' of the fieldlist, because the length is determined by
     # the list of levels
@@ -140,7 +140,7 @@ def test_fieldlist_iterator_with_zip():
     assert levs2 == ref_levs
 
 
-def test_fieldlist_iterator_with_zip_multiple():
+def test_grib_fieldlist_iterator_with_zip_multiple():
     # same as test_fieldlist_iterator_with_zip() but multiple times
     g = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     ref_levs = g.metadata("level")
@@ -155,7 +155,7 @@ def test_fieldlist_iterator_with_zip_multiple():
         assert levs2 == ref_levs, i
 
 
-def test_fieldlist_reverse_iterator():
+def test_grib_fieldlist_reverse_iterator():
     g = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     sn = g.metadata("shortName")
     sn_reversed = list(reversed(sn))

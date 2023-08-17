@@ -12,13 +12,13 @@ import logging
 import os
 
 from earthkit.data.readers.grib.codes import GribCodesMessagePositionIndex
-from earthkit.data.readers.grib.index import FieldListInFiles
+from earthkit.data.readers.grib.index import GribFieldListInFiles
 from earthkit.data.utils.parts import Part
 
 LOG = logging.getLogger(__name__)
 
 
-class FieldListInOneFile(FieldListInFiles):
+class GribFieldListInOneFile(GribFieldListInFiles):
     VERSION = 1
 
     @property

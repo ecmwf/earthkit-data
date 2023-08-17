@@ -7,15 +7,16 @@
 # nor does it submit to any jurisdiction.
 #
 
-# The code is copied from skinnywms, and we should combile later
-
 import datetime
 from contextlib import closing
 from itertools import product
 
 import numpy as np
 
-from earthkit.data.core import Base
+from earthkit.data.core.fieldlist import Field, FieldList
+from earthkit.data.core.geography import Geography
+from earthkit.data.core.index import Index, MaskIndex, MultiIndex
+from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.projections import Projection
@@ -143,73 +144,60 @@ class DataSet:
         return self._bbox[(lat, lon)]
 
 
-class NetCDFField(Base):
-    def __init__(self, path, ds, variable, slices, non_dim_coords):
-        data_array = ds[variable]
-
+class NetCDFFieldGeography(Geography):
+    def __init__(self, metadata, da, ds, variable):
+        self.metadata = metadata
+        self._da = da
         self._ds = ds
-        self._da = data_array
+        self.north, self.west, self.south, self.east = self._ds.bbox(variable)
 
-        self.north, self.west, self.south, self.east = ds.bbox(variable)
+    def latitudes(self):
+        return self.x()
 
-        self.path = path
-        self.variable = variable
-        self.slices = slices
-        self.non_dim_coords = non_dim_coords
+    def longitudes(self):
+        return self.y()
 
-        self.name = self.variable
+    def _get_xy(self, axis, flatten=False):
+        if axis not in ("x", "y"):
+            raise ValueError(f"Invalid axis={axis}")
 
-        self.title = getattr(
-            data_array,
-            "long_name",
-            getattr(data_array, "standard_name", self.variable),
-        )
+        points = dict()
+        for ax in ("x", "y"):
+            for coord in self._da.coords:
+                if self._da.coords[coord].attrs.get("axis", "").lower() == ax:
+                    break
+            else:
+                candidates = GEOGRAPHIC_COORDS.get(ax, [])
+                for coord in candidates:
+                    if coord in self._da.coords:
+                        break
+                else:
+                    raise ValueError(f"No coordinate found with axis '{ax}'")
+            points[ax] = self._da.coords[coord]
+        points["x"], points["y"] = np.meshgrid(points["x"], points["y"])
+        if flatten:
+            points[axis] = points[axis].flatten()
+        return points[axis]
 
-        self.time = non_dim_coords.get("valid_time", non_dim_coords.get("time"))
+    def x(self):
+        return self._get_xy("x", flatten=True)
 
-        # print('====', non_dim_coords)
+    def y(self):
+        return self._get_xy("y", flatten=True)
 
-        for s in self.slices:
-            if isinstance(s, TimeSlice):
-                self.time = s.value
+    def shape(self):
+        return self._da.shape[-2:]
 
-            if s.is_info:
-                self.title += " (" + s.name + "=" + str(s.value) + ")"
+    def _unique_grid_id(self):
+        return self.shape
 
-    def __repr__(self):
-        return "NetCDFField[%r,%r]" % (self.variable, self.slices)
+    def projection(self):
+        return Projection.from_cf_grid_mapping(**self._grid_mapping().attrs)
 
     def bounding_box(self):
         return BoundingBox(
             north=self.north, south=self.south, east=self.east, west=self.west
         )
-
-    def to_xarray(self):
-        return self._da
-
-    def to_pandas(self):
-        return self._da.to_pandas()
-
-    def to_numpy(self, flatten=True):
-        arr = self.to_xarray().to_numpy()
-        if flatten:
-            arr = arr.flatten()
-        return arr
-
-    def to_proj(self):
-        if "proj4_string" in self._da.attrs:
-            proj_source = self._da.attrs["proj4_string"]
-        elif "grid_mapping" in self._da.attrs:
-            proj_source = self._ds[self._da.attrs["grid_mapping"]].attrs["proj4_params"]
-        else:
-            raise AttributeError(
-                "No CF-compliant proj information detected in netCDF attributes"
-            )
-
-        # Simply assume a WGS 84 target projection for CF-compliant netCDF
-        proj_target = "+proj=eqc +datum=WGS84 +units=m +no_defs"
-
-        return proj_source, proj_target
 
     def _grid_mapping(self):
         if "grid_mapping" in self._da.attrs:
@@ -220,62 +208,148 @@ class NetCDFField(Base):
             )
         return grid_mapping
 
-    def projection(self):
-        return Projection.from_cf_grid_mapping(**self._grid_mapping().attrs)
 
-    def to_points(self, flatten=False):
-        points = dict()
-        for axis in ("x", "y"):
-            for coord in self._da.coords:
-                if self._da.coords[coord].attrs.get("axis", "").lower() == axis:
-                    break
+class NetCDFMetadata(RawMetadata):
+    def __init__(self, field):
+        if not isinstance(field, NetCDFField):
+            raise TypeError(
+                f"NetCDFMetadata: expected field type NetCDFField, got {type(field)}"
+            )
+        self._field = field
+        self._geo = None
+
+        d = dict(self._field._da.attrs)
+        d["variable"] = self._field.variable
+        for s in self._field.slices:
+            if isinstance(s, TimeSlice):
+                d[s.name] = to_datetime(s.value)
             else:
-                candidates = GEOGRAPHIC_COORDS.get(axis, [])
-                for coord in candidates:
-                    if coord in self._da.coords:
-                        break
-                else:
-                    raise ValueError(f"No coordinate found with axis '{axis}'")
-            points[axis] = self._da.coords[coord]
-        points["x"], points["y"] = np.meshgrid(points["x"], points["y"])
-        if flatten:
-            points["x"], points["y"] = points["x"].flatten(), points["y"].flatten()
-        return points
+                d[s.name] = s.value
+        super().__init__(d)
+
+    def override(self, *args, **kwargs):
+        return None
+
+    @property
+    def geography(self):
+        if self._geo is None:
+            self._geo = NetCDFFieldGeography(
+                self, self._field._da, self._field._ds, self._field.variable
+            )
+        return self._geo
+
+    def datetime(self):
+        t = to_datetime(self._field.time)
+        return {"base_time": t, "valid_time": t}
+
+    def ls_keys(self):
+        LS_KEYS = ["variable", "level", "time", "units"]
+        return LS_KEYS
 
 
-class NetCDFReader(Reader):
-    def __init__(self, source, path):
-        super().__init__(source, path)
-        self.fields = None
+class NetCDFField(Field):
+    def __init__(self, ds, variable, slices, non_dim_coords):
+        super().__init__()
 
-    def _scan(self):
-        if self.fields is None:
-            self.fields = self.get_fields()
+        self._ds = ds
+        self._da = ds[variable]
+
+        # self.north, self.west, self.south, self.east = ds.bbox(variable)
+
+        self.variable = variable
+        self.slices = slices
+        self.non_dim_coords = non_dim_coords
+        # self.name = self.variable
+
+        # print(f"ds={ds}")
+        # print(f"da={data_array}")
+        # print(f"non_dim_coords={non_dim_coords}")
+
+        self.title = getattr(
+            self._da,
+            "long_name",
+            getattr(self._da, "standard_name", self.variable),
+        )
+
+        self.time = non_dim_coords.get("valid_time", non_dim_coords.get("time"))
+
+        # print('====', non_dim_coords)
+
+        # print(f"time={self.time}")
+
+        for s in self.slices:
+            if isinstance(s, TimeSlice):
+                self.time = s.value
+
+            if s.is_info:
+                self.title += " (" + s.name + "=" + str(s.value) + ")"
+
+        # print(f"-> time={self.time}")
 
     def __repr__(self):
-        return "NetCDFReader(%s)" % (self.path,)
+        return (
+            f"NetCDFField({self.variable},"
+            + ",".join([f"{s.name}={s.value}" for s in self.slices])
+            + ")"
+        )
 
-    def __iter__(self):
-        self._scan()
-        return iter(self.fields)
+    def _make_metadata(self):
+        return NetCDFMetadata(self)
 
-    def __len__(self):
-        self._scan()
-        return len(self.fields)
+    def to_xarray(self):
+        dims = self._da.dims
+        v = {}
+        for s in self.slices:
+            if s.is_dimension:
+                if s.name in dims:
+                    v[s.name] = s.index
+        return self._da.isel(**v)
 
-    def __getitem__(self, n):
-        self._scan()
-        return self.fields[n]
+    def to_pandas(self):
+        return self.to_xarray().to_pandas()
 
-    def get_fields(self):
-        import xarray as xr
+    def _to_numpy(self):
+        return self.to_xarray().to_numpy()
 
+    @property
+    def values(self):
+        return self._to_numpy().flatten()
+
+    def to_numpy(self, flatten=False, dtype=None):
+        values = self._to_numpy()
+        if not flatten:
+            values = values.reshape(self.shape)
+        else:
+            values = values.flatten()
+        if dtype is not None:
+            values = values.astype(dtype)
+
+        return values
+
+
+class NetCDFFieldList(FieldList):
+    def __init__(self, path, *args, **kwargs):
+        self.path = path
+        self._fields = None
+        Index.__init__(self, *args, **kwargs)
+
+    @property
+    def fields(self):
+        if self._fields is None:
+            self._scan()
+        return self._fields
+
+    def _scan(self):
+        if self._fields is None:
+            self._fields = self._get_fields()
+
+    def _get_fields(self):
         with closing(
             xr.open_mfdataset(self.path, combine="by_coords")
         ) as ds:  # or nested
-            return self._get_fields(DataSet(ds))
+            return self._get_fields_from_ds(DataSet(ds))
 
-    def _get_fields(self, ds):  # noqa C901
+    def _get_fields_from_ds(self, ds):  # noqa C901
         # Select only geographical variables
         has_lat = False
         has_lon = False
@@ -333,17 +407,29 @@ class NetCDFReader(Reader):
                     has_lat = True
                     use = True
 
+                # print(f"  standard_name={standard_name}")
+
                 # Of course, not every one sets the standard_name
-                if standard_name in ("time", "forecast_reference_time") or axis == "T":
-                    coordinates.append(TimeCoordinate(c, coord in info))
-                    use = True
+                if (
+                    standard_name in ["time", "forecast_reference_time"]
+                    or long_name in ["time"]
+                    or axis == "T"
+                ):
+                    # we might not be able to convert time to datetime
+                    try:
+                        coordinates.append(TimeCoordinate(c, coord in info))
+                        use = True
+                    except ValueError:
+                        break
 
                 # TODO: Support other level types
-                if standard_name in (
+                if standard_name in [
                     "air_pressure",
                     "model_level_number",
                     "altitude",
-                ):  # or axis == 'Z':
+                ] or long_name in [
+                    "pressure_level"
+                ]:  # or axis == 'Z':
                     coordinates.append(LevelCoordinate(c, coord in info))
                     use = True
 
@@ -362,12 +448,128 @@ class NetCDFReader(Reader):
                 for value, coordinate in zip(values, coordinates):
                     slices.append(coordinate.make_slice(value))
 
-                fields.append(NetCDFField(self.path, ds, name, slices, non_dim_coords))
+                fields.append(NetCDFField(ds, name, slices, non_dim_coords))
 
-        if not fields:
-            raise Exception("NetCDFReader no 2D fields found in %s" % (self.path,))
+        # if not fields:
+        #     raise Exception("NetCDFReader no 2D fields found in %s" % (self.path,))
 
         return fields
+
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(_, NetCDFFieldList) for _ in sources)
+        return NetCDFMultiFieldList(sources)
+
+    @classmethod
+    def new_mask_index(self, *args, **kwargs):
+        return NetCDFMaskFieldList(*args, **kwargs)
+
+    def to_pandas(self):
+        return self.to_xarray().to_pandas()
+
+    def to_xarray(self, **kwargs):
+        return type(self).to_xarray_multi_from_paths(self.path, **kwargs)
+
+    @classmethod
+    def to_xarray_multi_from_paths(cls, paths, **kwargs):
+        import xarray as xr
+
+        if not isinstance(paths, list):
+            paths = [paths]
+
+        options = dict()
+        options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+
+        return xr.open_mfdataset(
+            paths,
+            **options,
+        )
+
+
+class NetCDFFieldListInFiles(NetCDFFieldList):
+    pass
+
+
+class NetCDFFieldListInOneFile(NetCDFFieldListInFiles):
+    VERSION = 1
+
+    def __init__(self, path, **kwargs):
+        assert isinstance(path, str), path
+        super().__init__(path, **kwargs)
+
+    def __getitem__(self, n):
+        if isinstance(n, int):
+            return self.fields[n]
+        else:
+            return super().__getitem__(n)
+
+    def __len__(self):
+        return len(self.fields)
+
+
+class NetCDFMaskFieldList(NetCDFFieldList, MaskIndex):
+    def __init__(self, *args, **kwargs):
+        MaskIndex.__init__(self, *args, **kwargs)
+
+
+class NetCDFMultiFieldList(NetCDFFieldList, MultiIndex):
+    def __init__(self, *args, **kwargs):
+        MultiIndex.__init__(self, *args, **kwargs)
+
+    def to_xarray(self, **kwargs):
+        return NetCDFFieldList.to_xarray_multi_from_paths(
+            [x.path for x in self.indexes], **kwargs
+        )
+
+
+class NetCDFFieldListReader(NetCDFFieldListInOneFile, Reader):
+    def __init__(self, source, path):
+        Reader.__init__(self, source, path)
+        NetCDFFieldList.__init__(self, path)
+
+    def __repr__(self):
+        return "NetCDFFieldListReader(%s)" % (self.path,)
+
+    # @classmethod
+    # def merge(cls, readers):
+    #     assert all(isinstance(s, NetCDFFieldListReader) for s in readers), readers
+    #     assert len(readers) > 1
+
+    #     return NetCDFFieldListReader(readers[0], [s.path for s in readers])
+
+    def mutate_source(self):
+        # A NetCDFReader is a source itself
+        return self
+
+    # def to_pandas(self):
+    #     return self.to_xarray().to_pandas()
+
+    # def to_xarray(self, **kwargs):
+    #     return type(self).to_xarray_multi_from_paths(self.path, **kwargs)
+
+    # @classmethod
+    # def to_xarray_multi_from_paths(cls, paths, **kwargs):
+    #     import xarray as xr
+
+    #     if not isinstance(paths, list):
+    #         paths = [paths]
+
+    #     options = dict()
+    #     options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+
+    #     return xr.open_mfdataset(
+    #         paths,
+    #         **options,
+    #     )
+
+
+class NetCDFReader(Reader):
+    def __init__(self, source, path):
+        Reader.__init__(self, source, path)
+        NetCDFFieldList.__init__(self, path)
+
+    def __repr__(self):
+        return "NetCDFReader(%s)" % (self.path,)
 
     def to_numpy(self, flatten=False):
         arr = self.to_xarray().to_array().to_numpy()
@@ -385,6 +587,9 @@ class NetCDFReader(Reader):
     def to_xarray_multi_from_paths(cls, paths, **kwargs):
         import xarray as xr
 
+        if not isinstance(paths, list):
+            paths = [paths]
+
         options = dict()
         options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
 
@@ -392,13 +597,6 @@ class NetCDFReader(Reader):
             paths,
             **options,
         )
-
-    def datetime(self):
-        r = sorted({to_datetime(s.time) for s in self.get_fields()})
-        return {"base_time": r, "valid_time": r}
-
-    def bounding_box(self):
-        return [s.bounding_box() for s in self.get_fields()]
 
 
 def _match_magic(magic, deeper_check):
@@ -410,4 +608,8 @@ def _match_magic(magic, deeper_check):
 
 def reader(source, path, magic=None, deeper_check=False):
     if _match_magic(magic, deeper_check):
-        return NetCDFReader(source, path)
+        r = NetCDFFieldListReader(source, path)
+        if len(r) > 0:
+            return r
+        else:
+            return NetCDFReader(source, path)

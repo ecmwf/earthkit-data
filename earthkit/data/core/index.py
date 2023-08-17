@@ -45,8 +45,9 @@ class Selection(OrderOrSelection):
 
             def __call__(self, x):
                 if self.first and x is not None:
-                    cast = type(x)
-                    self.lst = [cast(y) for y in self.lst]
+                    self.lst = [
+                        type(x) if not type(x) == type(y) else y for y in self.lst
+                    ]
                     self.first = False
                 return x in self.lst
 
@@ -420,7 +421,7 @@ class Index(Source):
             original object, so no data is copied.
 
 
-        Ordering by a single metadata key ("param"). The default ordering directio
+        Ordering by a single metadata key ("param"). The default ordering direction
         is ``ascending``:
 
         >>> import earthkit.data

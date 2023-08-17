@@ -83,15 +83,6 @@ class Base(metaclass=MetaBase):
         """Returns the bounding box."""
         self._not_implemented()
 
-    # For machine learning
-    @abstractmethod
-    def statistics(self):
-        self._not_implemented()
-
-    @abstractmethod
-    def scaled(self, args, kwargs):
-        self._not_implemented()
-
     @abstractmethod
     def sel(self, *args, **kwargs):
         """Filters the object based on metadata."""
@@ -106,13 +97,13 @@ class Base(metaclass=MetaBase):
         """Reorder the elements of the object."""
         self._not_implemented()
 
-    @abstractmethod
-    def to_points(self, *args, **kwargs):
-        self._not_implemented()
+    # @abstractmethod
+    # def to_points(self, *args, **kwargs):
+    #     self._not_implemented()
 
-    @abstractmethod
-    def to_latlon(self, *args, **kwargs):
-        self._not_implemented()
+    # @abstractmethod
+    # def to_latlon(self, *args, **kwargs):
+    #     self._not_implemented()
 
     def __add__(self, other):
         self._not_implemented()

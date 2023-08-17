@@ -11,7 +11,9 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     :caption: Retrieve
 
     examples/mars.ipynb
+    examples/ads.ipynb
     examples/cds.ipynb
+    examples/ecmwf_open_data.ipynb
     examples/fdb.ipynb
 
 
@@ -20,6 +22,7 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     :caption: GRIB
 
     examples/grib_overview.ipynb
+    examples/grib_lat_lon_value.ipynb
     examples/grib_metadata.ipynb
     examples/grib_selection.ipynb
     examples/grib_indexing.ipynb
@@ -65,4 +68,8 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     :caption: Miscellaneous
     :glob:
 
+    examples/settings.ipynb
+    examples/cache.ipynb
     examples/projection.ipynb
+    examples/metadata.ipynb
+    examples/numpy_fieldlist.ipynb

@@ -10,7 +10,7 @@ We can get data from a given source by using :func:`from_source`:
 
 .. py:function:: from_source(name, *args, **kwargs)
 
-  Returns a :ref:`data object <data-object>` from the source specified by ``name``.
+  Returns a :ref:`data object <data-object>` from the source specified by ``name`` .
 
   :param str name: the source (see below)
   :param tuple *args: specifies the data location and additional parameters to access the data
@@ -19,7 +19,7 @@ We can get data from a given source by using :func:`from_source`:
   **earthkit-data** has the following built-in sources:
 
   .. list-table:: Data sources
-    :widths: 20 80
+    :widths: 30 70
     :header-rows: 1
 
     * - Name
@@ -40,6 +40,10 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
     * - :ref:`data-sources-cds`
       - retrieve data from the `Copernicus Climate Data Store <https://cds.climate.copernicus.eu/>`_ (CDS)
+    * - :ref:`data-sources-ads`
+      - retrieve data from the `Copernicus Atmosphere Data Store <https://ads.atmosphere.copernicus.eu/>`_ (ADS)
+    * - :ref:`data-sources-eod`
+      - retrieve `ECMWF open data <https://www.ecmwf.int/en/forecasts/datasets/open-data>`_
     * - :ref:`data-sources-fdb`
       - retrieve data from the `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
 
@@ -89,7 +93,7 @@ file
 
     - :ref:`/examples/grib_overview.ipynb`
     - :ref:`/examples/grib_multi.ipynb`
-    - :ref:`/examples/bufr.ipynb`
+    - :ref:`/examples/bufr_temp.ipynb`
     - :ref:`/examples/netcdf.ipynb`
     - :ref:`/examples/odb.ipynb`
 
@@ -357,11 +361,83 @@ cds
 
   Data downloaded from the CDS is stored in the the :ref:`cache <caching>`.
 
-  To access data from the CDS, you will need to register and retrieve an access token. The process is described here_. For more information, see the CDS `knowledge base`_.
+  To access data from the CDS, you will need to register and retrieve an access token. The process is described `here <https://cds.climate.copernicus.eu/api-how-to>`__. For more information, see the `CDS_knowledge base`_.
 
   Further examples:
 
       - :ref:`/examples/cds.ipynb`
+
+
+.. _data-sources-ads:
+
+ads
+---
+
+.. py:function:: from_source("ads", dataset, *args, **kwargs)
+  :noindex:
+
+  The ``ads`` source accesses the `Copernicus Atmosphere Data Store`_ (ADS), using the cdsapi_ package. In addition to data retrieval, ``request`` also has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively.
+
+  :param str dataset: the name of the ADS dataset
+  :param tuple *args: specifies the request as a dict
+  :param dict **kwargs: other keyword arguments specifying the request
+
+  The following example retrieves CAMS global reanalysis GRIB data for 2 parameters:
+
+  .. code-block:: python
+
+      import earthkit.data
+
+      ds = earthkit.data.from_source(
+          "ads",
+          "cams-global-reanalysis-eac4",
+          variable=["particulate_matter_10um", "particulate_matter_1um"],
+          area=[50, -50, 20, 50],  # N,W,S,E
+          date="2012-12-12",
+          time="12:00",
+      )
+
+  Data downloaded from the ADS is stored in the the :ref:`cache <caching>`.
+
+  To access data from the ADS, you will need to register and retrieve an access token. The process is described `here <https://ads.atmosphere.copernicus.eu/api-how-to>`__. For more information, see the `ADS_knowledge base`_.
+
+  Further examples:
+
+      - :ref:`/examples/ads.ipynb`
+
+
+.. _data-sources-eod:
+
+ecmwf-open-data
+-------------------
+
+.. py:function:: from_source("ecmwf-open-data", *args, **kwargs)
+  :noindex:
+
+  The ``ecmwf-open-data`` source provides access to the `ECMWF open data`_, which is a subset of ECMWF real-time forecast data made available to the public free of charge.  It uses the `ecmwf-opendata <https://github.com/ecmwf/ecmwf-opendata>`_ package.
+
+  :param tuple *args: specifies the request as a dict
+  :param dict **kwargs: other keyword arguments specifying the request
+
+  Details about the request format can be found `here <https://github.com/ecmwf/ecmwf-opendata>`__.
+
+  The following example retrieves forecast for 2 surface parameters from the latest forecast:
+
+  .. code-block:: python
+
+      import earthkit.data
+
+      ds = earthkit.data.from_source(
+          "ecmwf-open-data", param=["2t", "msl"], levtype="sfc", step=[0, 6, 12]
+      )
+
+
+  The resulting GRIB data files are stored in the :ref:`cache <caching>`.
+
+  Further examples:
+
+      - :ref:`/examples/ecmwf_open_data.ipynb`
+
 
 .. _data-sources-fdb:
 
@@ -454,6 +530,9 @@ fdb
 .. _web API: https://www.ecmwf.int/en/forecasts/access-forecasts/ecmwf-web-api
 
 .. _Copernicus Climate Data Store: https://cds.climate.copernicus.eu/
-.. _here: https://cds.climate.copernicus.eu/api-how-to
+.. _Copernicus Atmosphere Data Store: https://ads.atmosphere.copernicus.eu/
 .. _cdsapi: https://pypi.org/project/cdsapi/
-.. _knowledge base: https://confluence.ecmwf.int/display/CKB/Copernicus+Knowledge+Base
+.. _CDS_knowledge base: https://confluence.ecmwf.int/pages/viewpage.action?pageId=151530614
+.. _ADS_knowledge base: https://confluence.ecmwf.int/pages/viewpage.action?pageId=151530675
+
+.. _ECMWF open data: https://www.ecmwf.int/en/forecasts/datasets/open-data

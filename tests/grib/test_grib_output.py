@@ -18,8 +18,20 @@ import numpy as np
 import pytest
 
 import earthkit.data
+from earthkit.data import from_source
+from earthkit.data.core.temporary import temp_file
+from earthkit.data.testing import earthkit_examples_file
 
 EPSILON = 1e-4
+
+
+def test_grib_save_when_loaded_from_file():
+    fs = from_source("file", earthkit_examples_file("test6.grib"))
+    assert len(fs) == 6
+    with temp_file() as tmp:
+        fs.save(tmp)
+        fs_saved = from_source("file", tmp)
+        assert len(fs) == len(fs_saved)
 
 
 @pytest.mark.skipif(

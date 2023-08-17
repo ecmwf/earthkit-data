@@ -23,7 +23,7 @@ from typing import List, Union
 import entrypoints
 
 import earthkit.data
-from earthkit.data import settings
+from earthkit.data.core.settings import SETTINGS
 from earthkit.data.utils.humanize import did_you_mean
 
 LOG = logging.getLogger(__name__)
@@ -176,7 +176,7 @@ def directories(owner: bool = False) -> list:
         "datasets-directories",
         "dask-directories",
     ):
-        for d in settings.get(conf):
+        for d in SETTINGS.get(conf):
             if os.path.exists(d) and os.path.isdir(d):
                 result.append(("user-settings", d))
 
