@@ -59,13 +59,24 @@ class PandasSeriesWrapper(Wrapper):
 
     def to_netcdf(self, *args, **kwargs):
         """
-        Return a `xarray.DataArray` representation of the data.
+        Write the pandas object to a netCDF file
 
         Returns
         -------
         numpy.array
         """
         return self.data.to_xarray().to_netcdf(*args, **kwargs)
+
+    def to_json(self, *args, **kwargs):
+        """
+        Write the pandas object to a netCDF file
+
+        Returns
+        -------
+        numpy.array
+        """
+        kwargs.setdefault("indent", 2)
+        return self.data.to_json(*args, **kwargs)
 
     def describe(self):
         """
