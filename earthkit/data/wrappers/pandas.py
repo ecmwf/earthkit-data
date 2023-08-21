@@ -20,13 +20,13 @@ class PandasSeriesWrapper(Wrapper):
 
     def __iter__(self):
         return iter(self.data)
-    
+
     def __getitem__(self, i):
         return self.data.columns[i]
 
     def __len__(self):
         return len(self.data)
-    
+
     def to_pandas(self):
         """
         Return a `pandas.Series` representation of the data.
@@ -132,14 +132,14 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
         """
         self._scan()
         return iter(self.fields)
-    
+
     def __getitem__(self, i):
         self._scan()
         return self.fields[i]
 
     def __len__(self):
         return len(self.data)
-    
+
     def _scan(self):
         if self.fields is None:
             self.fields = self.get_fields()
