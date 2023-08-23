@@ -22,7 +22,7 @@ class PandasSeriesTranslator(Translator):
         Series requested, if DataFrame return the first column
         """
         if isinstance(self.data, pd.DataFrame):
-            return self.data.iloc[:,0]
+            return self.data.iloc[:, 0]
 
         return self.data
 
@@ -54,8 +54,8 @@ class GeoPandasDataFrameTranslator(PandasSeriesTranslator):
 
         return self.data
 
-def translator(data, cls, *args, **kwargs):
 
+def translator(data, cls, *args, **kwargs):
     try:
         import geopandas as gpd
 
@@ -69,5 +69,5 @@ def translator(data, cls, *args, **kwargs):
         return PandasDataFrameTranslator(data, *args, **kwargs)
     if cls in [pd.Series]:
         return PandasSeriesTranslator(data, *args, **kwargs)
-    
+
     return None

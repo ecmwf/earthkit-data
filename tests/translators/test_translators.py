@@ -12,16 +12,16 @@
 
 import logging
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
-import geopandas as gpd
 import xarray as xr
 
 from earthkit.data import from_source, transform, translators, wrappers
 from earthkit.data.translators import ndarray as ndtranslator
+from earthkit.data.translators import pandas as pdtranslator
 from earthkit.data.translators import string as strtranslator
 from earthkit.data.translators import xarray as xrtranslator
-from earthkit.data.translators import pandas as pdtranslator
 
 LOG = logging.getLogger(__name__)
 
@@ -85,6 +85,7 @@ def test_xr_dataset_translator():
     transformed = transform(xr.Dataset(), xr.Dataset)
     assert isinstance(transformed, xr.Dataset)
 
+
 def test_pd_series_translator():
     # Check that an xr.Dataset translator can be created
     _pdwrapper = wrappers.get_wrapper(pd.Series())
@@ -98,6 +99,7 @@ def test_pd_series_translator():
     # Check that public API method transforms to correct type (back to original)
     transformed = transform(pd.Series(), pd.Series)
     assert isinstance(transformed, pd.Series)
+
 
 def test_pd_dataframe_translator():
     # Check that an xr.Dataset translator can be created
