@@ -174,7 +174,7 @@ def test_grib_output_tp():
         f.write(data, param="tp", step=48)
         f.close()
 
-        ds = earthkit.data.load_source("file", path)
+        ds = earthkit.data.from_source("file", path)
         print(ds[0])
 
         assert ds[0].metadata("date") == 20010101
