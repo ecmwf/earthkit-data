@@ -165,7 +165,7 @@ def wrapper(data, *args, **kwargs):
         return GeoPandasDataFrameWrapper(data, *args, **kwargs)
     if isinstance(data, pd.DataFrame):
         return PandasDataFrameWrapper(data, *args, **kwargs)
-    elif isinstance(data, pd.Series):
+    if isinstance(data, pd.Series):
         return PandasSeriesWrapper(data, *args, **kwargs)
 
     return None
