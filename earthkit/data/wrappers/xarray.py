@@ -9,6 +9,8 @@
 
 # from emohawk.metadata import AXES, COMPONENTS
 
+from earthkit.data.core.index import Index
+from earthkit.data.readers import netcdf
 from earthkit.data.wrappers import Wrapper
 
 
@@ -128,6 +130,28 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
     #     else:
     #         raise ValueError(f"No variable found with direction '{component}'")
     #     return self.source.data_vars[variable]
+
+
+class XarrayFieldList(netcdf.NetCDFFieldList):
+    def __init__(self, ds, *args, **kwargs):
+        self.ds = ds
+        self._fields = None
+        Index.__init__(self, *args, **kwargs)
+
+    def __len__(self):
+        return len(self.fields)
+
+    @property
+    def fields(self):
+        if self._fields is None:
+            self._scan()
+        return self._fields
+
+    def _get_fields(self):
+        return self._get_fields_from_ds(netcdf.DataSet(self.ds))
+
+    def to_xarray(self):
+        return self.ds
 
 
 def wrapper(data, *args, **kwargs):

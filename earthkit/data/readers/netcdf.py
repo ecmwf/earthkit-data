@@ -349,10 +349,12 @@ class NetCDFFieldList(FieldList):
         with closing(
             xr.open_mfdataset(self.path, combine="by_coords")
         ) as ds:  # or nested
+            print(ds)
             return self._get_fields_from_ds(DataSet(ds))
 
     def _get_fields_from_ds(self, ds):  # noqa C901
         # Select only geographical variables
+        print("HERE")
         has_lat = False
         has_lon = False
 
