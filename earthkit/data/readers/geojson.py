@@ -14,7 +14,7 @@ import mimetypes
 import numpy as np
 
 from earthkit.data.readers import Reader
-from earthkit.data.core.index import Index
+
 
 class GeojsonReader(Reader):
     def __init__(self, source, path):
@@ -31,15 +31,15 @@ class GeojsonReader(Reader):
     def __repr__(self):
         return f"GeojsonReader({self.path})"
         # return self.to_pandas().__repr__()
-    
+
     def _repr_html_(self):
         html_repr = (
             f"<h3>GeojsonReader(represented as a geopandas object):</h3>"
             f"{self.to_pandas()._repr_html_()}"
         )
-        
+
         return html_repr
-    
+
     def __iter__(self):
         """
         Iterate over features in geojson via pandas
@@ -58,7 +58,7 @@ class GeojsonReader(Reader):
     def mutate_source(self):
         # A Geojson is a source itself
         return self
-    
+
     def bounding_box(self, **kwargs):
         return self.to_pandas(**kwargs).crs.area_of_use.bounds
 
