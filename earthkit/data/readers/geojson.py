@@ -65,15 +65,13 @@ class GeojsonReader(Reader):
             arr = arr.flatten()
         return arr
 
-    # def to_geopandas(self, **kwargs):
-    #     # TODO: handle multiple paths
-    #     return self.to_pandas(**kwargs)
-
     def to_pandas(self, **kwargs):
         # TODO: handle multiple paths
         return self.to_pandas_from_multi_paths([self.path], **kwargs)
 
-    to_geopandas = to_pandas
+    def to_geopandas(self, **kwargs):
+        # TODO: handle multiple paths
+        return self.to_pandas(**kwargs)
 
     def to_xarray(self, **kwargs):
         return self.to_pandas(**kwargs).to_xarray()
