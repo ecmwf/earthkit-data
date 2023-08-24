@@ -8,6 +8,7 @@
 #
 
 import datetime
+import io
 from contextlib import closing
 from itertools import product
 
@@ -27,6 +28,8 @@ GEOGRAPHIC_COORDS = {
     "x": ["x", "projection_x_coordinate", "lon", "longitude"],
     "y": ["y", "projection_y_coordinate", "lat", "latitude"],
 }
+
+NAME_PRIORITY = ["long_name", "standard_name", "name", "short_name"]
 
 
 def as_datetime(self, time):
@@ -291,6 +294,92 @@ class NetCDFField(Field):
             f"NetCDFField({self.variable},"
             + ",".join([f"{s.name}={s.value}" for s in self.slices])
             + ")"
+        )
+
+    def _repr_html_(self):
+        try:
+            import earthkit.maps
+        except ImportError:
+            return self.__repr__()
+        import base64
+
+        import matplotlib
+        import matplotlib.patches as patches
+
+        backend = matplotlib.pyplot.get_backend()
+
+        matplotlib.use("Agg")
+
+        name = self.to_xarray().name
+        header = f"earthkit.data NetCDFField &nbsp; '{name}'<hr>"
+
+        with earthkit.maps.schema.set(figsize=(2, 2)):
+            chart = earthkit.maps.Superplot()
+            chart.plot(self)
+            chart.coastlines()
+            chart.gridlines(draw_labels=False)
+            buf = io.BytesIO()
+            chart[0].ax.set_facecolor("white")
+            chart[0].ax.set_alpha(1)
+            pos = chart[0].ax.get_position()
+            print(pos)
+            w, h = chart.fig.get_size_inches()
+            x0 = pos.x0 * w
+            x1 = pos.x1 * w
+            y0 = pos.y0 * h
+            y1 = pos.y1 * h
+            rect = patches.Rectangle(
+                (x1, y1), x1 - x0, y1 - y0, linewidth=1, edgecolor="r", facecolor="none"
+            )
+            chart.fig.patches.extend([rect])
+            chart.save(buf, format="png", transparent=True)
+            bytes = str(base64.b64encode(buf.getvalue()))[2:-1]
+            img_tag = f"<img src='data:image/png;base64,{bytes}'/>"
+
+        variable = None
+        for key in NAME_PRIORITY:
+            try:
+                variable = self.metadata(key)
+            except KeyError:
+                continue
+            else:
+                break
+        variable = f'<tr><th>Variable</th><td>{variable}</td><td rowspan="6">{img_tag}</td></tr>'
+
+        units = self.metadata("units", default=None)
+        if units is not None:
+            units = earthkit.maps.layers.metadata.format_units(units)
+
+        units = f"<tr><th>Units</th><td>{units}</td></tr>"
+
+        try:
+            projection = self.projection().__class__.__name__
+        except AttributeError:
+            projection = None
+        projection = f"<tr><th>Projection</th><td>{projection}</td></tr>"
+
+        time = self.datetime()["base_time"]
+        time = f"<tr><th>Time</th><td>{time:%H:%M %-d %B %Y}</td></tr>"
+
+        level = self.metadata("level", default=None)
+        level = f"<tr><th>Level</th><td>{level}</td></tr>"
+
+        points = self.to_points()
+        extents = ""
+        for key, value in points.items():
+            if extents:
+                extents += "\n"
+            if hasattr(value[0], "__len__"):
+                value = value[0]
+            extent = f"{key}: {value[0]}-{value[-1]}"
+            extents += extent
+        extents = f"<tr><th>Extents</th><td>{extents}</td></tr>"
+
+        matplotlib.use(backend)
+
+        return (
+            f"{header}"
+            f"<table>{variable}{level}{time}{units}{projection}{extents}</table>"
         )
 
     def _make_metadata(self):
