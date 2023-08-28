@@ -1,16 +1,15 @@
 import pytest
 
 SKIP = {
-    "short": ["download", "external_download", "ftp", "long_test"],
+    "short": ["download", "ftp", "long_test"],
     "long": ["ftp"],
     "release": [],
     "documentation": None,
-    # pytest.mark.short_download not used
 }
 
 
 def pytest_addoption(parser):
-    help_str = "NAME: short, long, release. Runs a subset of tests.\n"
+    help_str = "NAME: short, long, release, documentation. Runs a subset of tests.\n"
     for k, v in SKIP.items():
         if v:
             help_str += f"'{k}': skip tests marked as {','.join(v)}.\n"
