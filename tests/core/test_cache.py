@@ -9,7 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import logging
 import os
 
 import pytest
@@ -18,8 +17,6 @@ from earthkit.data import cache, from_source, settings
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.testing import earthkit_examples_file
-
-LOG = logging.getLogger(__name__)
 
 
 def check_cache_files(dir_path):
@@ -175,6 +172,30 @@ def test_grib_offset_index_cache(index_cache):
 
         f = ds[3]
         assert f.metadata("param") == "t", f"index-cache={index_cache}"
+
+
+# See github #155. This test can hang so we must set a timeout.
+@pytest.mark.no_cache_init
+@pytest.mark.timeout(20)
+def test_cache_with_log_debug(caplog):
+    import logging
+
+    # the cache must not be initialised at this point
+    assert cache._policy is None
+    assert cache._manager is None
+
+    caplog.set_level(logging.DEBUG)
+    LOG = logging.getLogger(__name__)
+
+    class A:
+        def __repr__(self):
+            d = cache.cache_directory()
+            return d
+
+    a = A()
+    LOG.debug(f"dir {a}")
+    # NOTE: if we use "%s" formatting e.g. "LOG.debug("dir %s", a)"
+    # the problem still occurs!
 
 
 if __name__ == "__main__":
