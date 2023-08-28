@@ -258,6 +258,7 @@ def save_settings(path, settings):
 
 class Settings:
     _auto_save_settings = True
+    _notify_enabled = True
 
     def __init__(self, settings_yaml: str, defaults: dict, callbacks=[]):
         self._defaults = defaults
@@ -439,8 +440,9 @@ class Settings:
         self._notify()
 
     def _notify(self):
-        for cb in self._callbacks:
-            cb()
+        if self._notify_enabled:
+            for cb in self._callbacks:
+                cb()
 
     def on_change(self, callback: Callable[[], None]):
         self._callbacks.append(callback)
