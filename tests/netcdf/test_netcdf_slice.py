@@ -13,9 +13,10 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_examples_file, load_nc_or_xr_source
 
 
+@pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize(
     "index,expected_meta",
     [
@@ -26,8 +27,8 @@ from earthkit.data.testing import earthkit_examples_file
         (-5, ["v", 850]),
     ],
 )
-def test_netcdf_single_index(index, expected_meta):
-    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+def test_netcdf_single_index(mode, index, expected_meta):
+    f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
 
     r = f[index]
     assert r.metadata(["variable", "level"]) == expected_meta
@@ -43,6 +44,7 @@ def test_netcdf_single_index_bad():
         f[27]
 
 
+@pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize(
     "indexes,expected_meta",
     [
@@ -54,8 +56,8 @@ def test_netcdf_single_index_bad():
         (slice(14, None), [["v", 700], ["v", 500], ["v", 400], ["v", 300]]),
     ],
 )
-def test_netcdf_slice_single_file(indexes, expected_meta):
-    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+def test_netcdf_slice_single_file(mode, indexes, expected_meta):
+    f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
     r = f[indexes]
     assert len(r) == 4
     assert r.metadata(["variable", "level"]) == expected_meta
@@ -91,12 +93,14 @@ def test_netcdf_slice_multi_file(indexes, expected_meta):
     assert f.metadata("shortName") == ["2t", "msl", "t", "z", "t", "z"]
 
 
+@pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize(
     "indexes1,indexes2",
     [(np.array([1, 16, 5, 9]), np.array([1, 3])), ([1, 16, 5, 9], [1, 3])],
 )
-def test_netcdf_array_indexing(indexes1, indexes2):
-    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+def test_netcdf_array_indexing(mode, indexes1, indexes2):
+    f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
+
     r = f[indexes1]
     assert len(r) == 4
     assert r.metadata("variable") == ["t", "v", "t", "u"]
@@ -106,15 +110,17 @@ def test_netcdf_array_indexing(indexes1, indexes2):
     assert r1.metadata("variable") == ["v", "u"]
 
 
+@pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize("indexes", [(np.array([1, 19, 5, 9])), ([1, 19, 5, 9])])
-def test_netcdf_array_indexing_bad(indexes):
-    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+def test_netcdf_array_indexing_bad(mode, indexes):
+    f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
     with pytest.raises(IndexError):
         f[indexes]
 
 
-def test_netcdf_fieldlist_iterator():
-    g = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_fieldlist_iterator(mode):
+    g = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
     sn = g.metadata("variable")
     assert len(sn) == 18
     iter_sn = [f.metadata("variable") for f in g]
@@ -155,8 +161,9 @@ def test_netcdf_fieldlist_iterator_with_zip_multiple():
         assert levs2 == ref_levs, i
 
 
-def test_netcdf_fieldlist_reverse_iterator():
-    g = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_fieldlist_reverse_iterator(mode):
+    g = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
     sn = g.metadata("variable")
     sn_reversed = list(reversed(sn))
     assert sn_reversed[0] == "v"
