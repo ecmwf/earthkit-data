@@ -134,7 +134,7 @@ class Metadata(metaclass=ABCMeta):
     def _get_custom_key(self, key, default=None, raise_on_missing=True):
         try:
             if key == DATETIME:
-                return True, self.datetime().get("valid_time").isoformat()
+                return True, self.datetime().get("valid_time")
         except Exception as e:
             if not raise_on_missing:
                 return default

@@ -516,7 +516,7 @@ def test_grib_valid_datetime():
     ds = from_source("file", earthkit_test_data_file("t_time_series.grib"))
     f = ds[4]
 
-    assert f.metadata("valid_datetime") == "2020-12-21T18:00:00"
+    assert f.metadata("valid_datetime") == datetime.datetime(2020, 12, 21, 18)
 
 
 def test_message():

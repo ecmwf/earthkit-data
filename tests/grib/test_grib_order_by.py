@@ -9,6 +9,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+
 import pytest
 
 from earthkit.data import from_source
@@ -157,3 +159,25 @@ def test_grib_order_by_with_sel():
     r = g.order_by({"shortName": "descending"})
     assert len(r) == len(g)
     assert r.metadata("shortName") == ["v", "u", "t"]
+
+
+def test_grib_order_by_valid_datetime():
+    f = from_source("file", earthkit_file("tests/data/t_time_series.grib"))
+
+    g = f.order_by(valid_datetime="descending")
+    assert len(g) == 10
+
+    ref = [
+        datetime.datetime(2020, 12, 23, 12, 0),
+        datetime.datetime(2020, 12, 23, 12, 0),
+        datetime.datetime(2020, 12, 21, 21, 0),
+        datetime.datetime(2020, 12, 21, 21, 0),
+        datetime.datetime(2020, 12, 21, 18, 0),
+        datetime.datetime(2020, 12, 21, 18, 0),
+        datetime.datetime(2020, 12, 21, 15, 0),
+        datetime.datetime(2020, 12, 21, 15, 0),
+        datetime.datetime(2020, 12, 21, 12, 0),
+        datetime.datetime(2020, 12, 21, 12, 0),
+    ]
+
+    assert g.metadata("valid_datetime") == ref

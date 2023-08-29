@@ -9,6 +9,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+
 import pytest
 
 from earthkit.data import from_source
@@ -161,7 +163,7 @@ def test_grib_grib_metadata_valid_datetime():
     ds = from_source("file", earthkit_test_data_file("t_time_series.grib"))
     md = ds[4].metadata()
 
-    assert md["valid_datetime"] == "2020-12-21T18:00:00"
+    assert md["valid_datetime"] == datetime.datetime(2020, 12, 21, 18)
 
 
 def test_grib_metadata_override():
