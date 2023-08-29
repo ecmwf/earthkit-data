@@ -161,6 +161,22 @@ def test_grib_sel_date():
     assert g.metadata(ref_keys) == ref
 
 
+def test_grib_sel_valid_date():
+    # date and time
+    f = from_source("file", earthkit_file("tests/data/t_time_series.grib"))
+
+    g = f.sel(valid_datetime="2020-12-21T21:00:00")
+    assert len(g) == 2
+
+    ref_keys = ["shortName", "date", "time", "step"]
+    ref = [
+        ["t", 20201221, 1200, 9],
+        ["z", 20201221, 1200, 9],
+    ]
+
+    assert g.metadata(ref_keys) == ref
+
+
 def test_grib_isel_single_message():
     s = from_source("file", earthkit_file("tests/data/test_single.grib"))
 
