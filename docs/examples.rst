@@ -62,6 +62,7 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
 
     examples/from_object.ipynb
     examples/list_of_dict*
+    examples/pandas.ipynb
 
 .. toctree::
     :maxdepth: 1
