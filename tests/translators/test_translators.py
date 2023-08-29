@@ -12,11 +12,14 @@
 
 import logging
 
+import geopandas as gpd
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 from earthkit.data import from_source, transform, translators, wrappers
 from earthkit.data.translators import ndarray as ndtranslator
+from earthkit.data.translators import pandas as pdtranslator
 from earthkit.data.translators import string as strtranslator
 from earthkit.data.translators import xarray as xrtranslator
 
@@ -72,15 +75,60 @@ def test_xr_dataset_translator():
     # Check that an xr.Dataset translator can be created
     _xrwrapper = wrappers.get_wrapper(xr.Dataset())
     _trans = xrtranslator.translator(_xrwrapper, xr.Dataset)
-    assert isinstance(_trans, xrtranslator.XArrayDataArrayTranslator)
+    assert isinstance(_trans, xrtranslator.XArrayDatasetTranslator)
 
     # Check that get_translator method find the right translator
     _trans = translators.get_translator(xr.Dataset(), xr.Dataset)
-    assert isinstance(_trans, xrtranslator.XArrayDataArrayTranslator)
+    assert isinstance(_trans, xrtranslator.XArrayDatasetTranslator)
 
     # Check that public API method transforms to correct type (back to original)
     transformed = transform(xr.Dataset(), xr.Dataset)
     assert isinstance(transformed, xr.Dataset)
+
+
+def test_pd_series_translator():
+    # Check that an xr.Dataset translator can be created
+    _pdwrapper = wrappers.get_wrapper(pd.Series())
+    _trans = pdtranslator.translator(_pdwrapper, pd.DataFrame)
+    assert isinstance(_trans, pdtranslator.PandasSeriesTranslator)
+
+    # Check that get_translator method find the right translator
+    _trans = translators.get_translator(pd.Series(), pd.Series)
+    assert isinstance(_trans, pdtranslator.PandasSeriesTranslator)
+
+    # Check that public API method transforms to correct type (back to original)
+    transformed = transform(pd.Series(), pd.Series)
+    assert isinstance(transformed, pd.Series)
+
+
+def test_pd_dataframe_translator():
+    # Check that an xr.Dataset translator can be created
+    _pdwrapper = wrappers.get_wrapper(pd.DataFrame())
+    _trans = pdtranslator.translator(_pdwrapper, pd.DataFrame)
+    assert isinstance(_trans, pdtranslator.PandasDataFrameTranslator)
+
+    # Check that get_translator method find the right translator
+    _trans = translators.get_translator(pd.DataFrame(), pd.DataFrame)
+    assert isinstance(_trans, pdtranslator.PandasDataFrameTranslator)
+
+    # Check that public API method transforms to correct type (back to original)
+    transformed = transform(pd.DataFrame(), pd.DataFrame)
+    assert isinstance(transformed, pd.DataFrame)
+
+
+def test_gpd_dataframe_translator():
+    # Check that an xr.Dataset translator can be created
+    _pdwrapper = wrappers.get_wrapper(gpd.GeoDataFrame())
+    _trans = pdtranslator.translator(_pdwrapper, gpd.GeoDataFrame)
+    assert isinstance(_trans, pdtranslator.GeoPandasDataFrameTranslator)
+
+    # Check that get_translator method find the right translator
+    _trans = translators.get_translator(gpd.GeoDataFrame(), gpd.GeoDataFrame)
+    assert isinstance(_trans, pdtranslator.GeoPandasDataFrameTranslator)
+
+    # Check that public API method transforms to correct type (back to original)
+    transformed = transform(gpd.GeoDataFrame(), gpd.GeoDataFrame)
+    assert isinstance(transformed, gpd.GeoDataFrame)
 
 
 def test_transform_from_grib_file():

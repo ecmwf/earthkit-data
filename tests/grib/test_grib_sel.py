@@ -9,6 +9,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+
 import numpy as np
 import pytest
 
@@ -150,6 +152,21 @@ def test_grib_sel_date():
 
     g = f.sel(date=20201221, time=1200, step=9)
     # g = f.sel(date="20201221", time="12", step="9")
+    assert len(g) == 2
+
+    ref_keys = ["shortName", "date", "time", "step"]
+    ref = [
+        ["t", 20201221, 1200, 9],
+        ["z", 20201221, 1200, 9],
+    ]
+
+    assert g.metadata(ref_keys) == ref
+
+
+def test_grib_sel_valid_datetime():
+    f = from_source("file", earthkit_file("tests/data/t_time_series.grib"))
+
+    g = f.sel(valid_datetime=datetime.datetime(2020, 12, 21, 21))
     assert len(g) == 2
 
     ref_keys = ["shortName", "date", "time", "step"]

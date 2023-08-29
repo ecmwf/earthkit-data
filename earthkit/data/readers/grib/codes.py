@@ -239,13 +239,13 @@ class GribField(Field):
             self._metadata.get("number", None),
         )
 
-    def _get(self, name):
-        """Private, for testing only"""
-        # paramId is renamed as param to get rid of the
-        # additional '.128' (in earthkit/data/scripts/grib.py)
-        if name == "param":
-            name = "paramId"
-        return self.handle.get(name)
+    # def _get(self, name):
+    #     """Private, for testing only"""
+    #     # paramId is renamed as param to get rid of the
+    #     # additional '.128' (in earthkit/data/scripts/grib.py)
+    #     if name == "param":
+    #         name = "paramId"
+    #     return self.handle.get(name)
 
     def write(self, f):
         r"""Writes the message to a file object.

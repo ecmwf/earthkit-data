@@ -48,7 +48,15 @@ class VirtualGribMetadata(RawMetadata):
     def __init__(self, m):
         super().__init__(m)
 
-    def get(self, key, *args):
+    def _get_internal_key(self, key, astype=None, default=None, raise_on_missing=True):
+        def _key_name(key):
+            if key == "param":
+                key = "shortName"
+            elif key == "_param_id":
+                key = "paramId"
+            return key
+
+        key = _key_name(key)
         key, _, key_type_str = key.partition(":")
         try:
             key_type = self.KEY_TYPES[key_type_str]
@@ -63,36 +71,15 @@ class VirtualGribMetadata(RawMetadata):
                             key = k
                             break
 
-        v = super().get(key, *args)
+        if key_type is None:
+            key_type = astype
 
         if key == "stepRange" and key_type is None:
             key_type = str
 
-        try:
-            if key_type is not None:
-                return key_type(v)
-            else:
-                return v
-        except Exception:
-            return None
-
-    def _get(self, key, astype=None, **kwargs):
-        def _key_name(key):
-            if key == "param":
-                key = "shortName"
-            elif key == "_param_id":
-                key = "paramId"
-            return key
-
-        key = _key_name(key)
-        if astype is not None:
-            key += self.KEY_TYPE_SUFFIX.get(astype)
-
-        if "default" in kwargs:
-            default = kwargs.pop("default")
-            return self.get(key, default)
-        else:
-            return self.get(key)
+        return super()._get_internal_key(
+            key, astype=key_type, default=default, raise_on_missing=raise_on_missing
+        )
 
     def shape(self):
         Nj = self.get("Nj", None)
