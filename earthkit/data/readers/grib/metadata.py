@@ -223,9 +223,6 @@ class GribMetadata(Metadata):
     def __len__(self):
         return sum(map(lambda i: 1, self._handle.keys()))
 
-    def __getitem__(self, key):
-        return self._handle.get(key)
-
     def __contains__(self, key):
         return self._handle.__contains__(key)
 
@@ -249,19 +246,7 @@ class GribMetadata(Metadata):
         """
         return self._handle.items()
 
-    def get(self, key, default=None):
-        r"""Return the value for ``key``.
-
-        Parameters
-        ----------
-        key: str
-            Metadata key
-        default:
-            When ``key`` is not found ``default`` is returned.
-        """
-        return self._handle.get(key, default=default)
-
-    def _get(self, key, astype=None, **kwargs):
+    def _get_internal_key(self, key, astype=None, default=None, raise_on_missing=False):
         def _key_name(key):
             if key == "param":
                 key = "shortName"
@@ -269,7 +254,11 @@ class GribMetadata(Metadata):
                 key = "paramId"
             return key
 
-        return self._handle.get(_key_name(key), ktype=astype, **kwargs)
+        _kwargs = {}
+        if not raise_on_missing:
+            _kwargs["default"] = default
+
+        return self._handle.get(_key_name(key), ktype=astype, **_kwargs)
 
     def override(self, *args, **kwargs):
         r"""Change the metadata values and return a new object.
@@ -355,6 +344,14 @@ class GribMetadata(Metadata):
     def _base_datetime(self):
         date = self.get("date", None)
         time = self.get("time", None)
+        return self._build_datetime(date, time)
+
+    def _valid_datetime(self):
+        date = self.get("validityDate", None)
+        time = self.get("validityTime", None)
+        return self._build_datetime(date, time)
+
+    def _build_datetime(self, date, time):
         return datetime.datetime(
             date // 10000,
             date % 10000 // 100,
@@ -362,10 +359,6 @@ class GribMetadata(Metadata):
             time // 100,
             time % 100,
         )
-
-    def _valid_datetime(self):
-        step = self.get("endStep", None)
-        return self._base_datetime() + datetime.timedelta(hours=step)
 
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.

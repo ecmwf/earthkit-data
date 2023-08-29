@@ -77,6 +77,11 @@ def test_netcdf_datetime():
     assert ds.datetime() == ref
 
 
+def test_netcdf_valid_datetime():
+    ds = from_source("file", earthkit_examples_file("test.nc"))
+    assert ds[0].metadata("valid_datetime") == datetime.datetime(2020, 5, 13, 12)
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 

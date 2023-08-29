@@ -287,7 +287,7 @@ class Field(Base):
             Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
             Otherwise, must have same the number of elements as ``keys``. Only used when
             ``keys`` is not empty.
-        **kwargs: tuple, optional
+        **kwargs: dict, optional
             Other keyword arguments:
 
             * namespace: :obj:`str`, :obj:`list`, :obj:`tuple`, :obj:`None` or :obj:`all`
@@ -395,8 +395,17 @@ class Field(Base):
             if namespace and namespace[0] != "default":
                 key = [namespace[0] + "." + k for k in key]
 
+            raise_on_missing = "default" not in kwargs
+            default = kwargs.pop("default", None)
+
             r = [
-                self._metadata._get(k, astype=kt, **kwargs)
+                self._metadata._get_key(
+                    k,
+                    astype=kt,
+                    default=default,
+                    raise_on_missing=raise_on_missing,
+                    **kwargs,
+                )
                 for k, kt in zip(key, astype)
             ]
 
