@@ -533,6 +533,7 @@ class CacheManager(threading.Thread):
             )
 
     def _cache_size(self):
+        LOG.debug("cache_size")
         with self.connection as db:
             size = db.execute("SELECT SUM(size) FROM cache").fetchone()[0]
             if size is None:
@@ -681,8 +682,7 @@ class NoCachePolicy(CachePolicy):
         return None
 
     def __repr__(self):
-        r = f"{self.__class__.__name__}"
-        return r
+        return self.__class__.__name__
 
 
 class UserCachePolicy(CachePolicy):
@@ -710,11 +710,14 @@ class UserCachePolicy(CachePolicy):
         return SETTINGS.get("maximum-cache-disk-usage")
 
     def __repr__(self):
-        r = [{self.__class__.__name__}]
-        r.append(f"cache-directory={self.cache_directory()}")
-        r.append(f"maximum-cache-size={self.maximum_cache_size()}")
-        r.append(f"maximum-cache-disk-usage={self.maximum_cache_disk_usage()}")
-        return "\n".join(r)
+        r = (
+            f"{self.__class__.__name__}["
+            f"user-cache-directory={self.cache_directory()}"
+            f", maximum-cache-size={self.maximum_cache_size()}"
+            f", maximum-cache-disk-usage={self.maximum_cache_disk_usage()}"
+            "]"
+        )
+        return r
 
 
 class TmpCachePolicy(UserCachePolicy):
@@ -755,19 +758,34 @@ class Cache:
 
     def _lazy_init(self):
         if self._policy is None:
-            self.settings_changed()
+            self._make_policy()
+            LOG.debug(f"Initialise cache with policy={self._policy}")
+            self._settings_changed()
 
-    def settings_changed(self):
-        LOG.debug(
-            "Cache settings_changed. cache-policy=" + SETTINGS.get("cache-policy")
-        )
+    def _make_policy(self):
         if self._policy != SETTINGS.get("cache-policy"):
             self._policy = CachePolicy.from_str(SETTINGS.get("cache-policy"))
             if self._policy.has_cache() and self._manager is None:
                 self._manager = CacheManager()
                 self._manager.start()
 
+    def settings_changed(self):
+        LOG.debug(
+            "Cache settings_changed. cache-policy=" + SETTINGS.get("cache-policy")
+        )
+        self._make_policy()
         self._settings_changed()
+
+        # # self._lazy_init()
+        # if self.policy != SETTINGS.get("cache-policy"):
+        #     self._policy = CachePolicy.from_str(SETTINGS.get("cache-policy"))
+        #     self._start_manager()
+
+        #     # if self._policy.has_cache() and self._manager is None:
+        #     #     self._manager = CacheManager()
+        #     #     self._manager.start()
+
+        # self._settings_changed()
 
     def _call_manager(self, name, forget, *args, **kwargs):
         if self.policy.has_cache() and self._manager is not None:

@@ -49,7 +49,7 @@ class InputManager:
 
     def build_pipeline(self):
         self._pipeline = []
-        LOG.debug("Building arguments from decorators:\n %s", self.decorators)
+        LOG.debug(f"Building arguments from decorators:\n {self.decorators}")
 
         self.arguments = {}
 
@@ -147,20 +147,20 @@ class InputManager:
         from earthkit.data.arguments.args_kwargs import ArgsKwargs
 
         args_kwargs = ArgsKwargs(args, kwargs, func=func)
-        LOG.debug("Applying decorator stack (before default) to: %s %s", args, kwargs)
+        LOG.debug(f"Applying decorator stack (before default) to: {args} {kwargs}")
         args_kwargs.kwargs = self.apply_to_kwargs_before_default(args_kwargs.kwargs)
 
         args_kwargs.add_default_values_and_kwargs()
         self.consolidate_defaults(args_kwargs.defaults)
 
-        LOG.debug("Applying decorator stack to: %s %s", args, kwargs)
+        LOG.debug(f"Applying decorator stack to: {args} {kwargs}")
         args_kwargs.kwargs = self.apply_to_kwargs(args_kwargs.kwargs)
 
         args_kwargs.ensure_positionals_only()
 
         args, kwargs = args_kwargs.args, args_kwargs.kwargs
 
-        LOG.debug("CALLING func %s %s", args, kwargs)
+        LOG.debug(f"CALLING func {args} {kwargs}")
         return args, kwargs
 
 
