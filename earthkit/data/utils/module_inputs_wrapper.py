@@ -14,7 +14,6 @@ common signitures or mapping defined at call time
 import inspect
 import types
 import typing as T
-from ast import Module
 from functools import wraps
 
 from earthkit.data import transform
