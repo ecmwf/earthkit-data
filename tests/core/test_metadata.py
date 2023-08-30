@@ -9,12 +9,14 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+
 import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.readers.grib.metadata import GribMetadata
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_examples_file, earthkit_test_data_file
 
 
 @pytest.mark.parametrize(
@@ -155,6 +157,13 @@ def test_grib_metadata_get():
 
     with pytest.raises(TypeError):
         md.get("centre", "shortName", "step")
+
+
+def test_grib_grib_metadata_valid_datetime():
+    ds = from_source("file", earthkit_test_data_file("t_time_series.grib"))
+    md = ds[4].metadata()
+
+    assert md["valid_datetime"] == datetime.datetime(2020, 12, 21, 18)
 
 
 def test_grib_metadata_override():

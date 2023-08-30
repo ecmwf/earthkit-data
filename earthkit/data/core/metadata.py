@@ -10,6 +10,8 @@
 
 from abc import ABCMeta, abstractmethod
 
+from earthkit.data.core.constants import DATETIME
+
 
 class Metadata(metaclass=ABCMeta):
     r"""Base class to represent metadata.
@@ -33,7 +35,6 @@ class Metadata(metaclass=ABCMeta):
     def __len__(self):
         r"""Return the number of metadata entries."""
 
-    @abstractmethod
     def __getitem__(self, key):
         r"""Return the value for ``key``.
 
@@ -42,7 +43,7 @@ class Metadata(metaclass=ABCMeta):
         KeyError
             When ``key`` is not available.
         """
-        pass
+        return self._get_key(key)
 
     @abstractmethod
     def __contains__(self, key):
@@ -76,7 +77,6 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
     def get(self, key, default=None):
         r"""Return the value for ``key``.
 
@@ -87,23 +87,60 @@ class Metadata(metaclass=ABCMeta):
         default:
             When ``key`` is not found ``default`` is returned.
         """
+        return self._get_key(key, default=default, raise_on_missing=False)
+
+    def _get_key(self, key, astype=None, default=None, raise_on_missing=True):
+        r"""Return the value for ``key``.
+
+        Parameters
+        ----------
+        key: str
+            Metadata key
+        default: value
+            Specify the default value for ``key``. Returned when ``key``
+            is not found or its value is a missing value and raise_on_missing is ``False``.
+        raise_on_missing: bool
+            When it is True raises an exception if ``key`` is not found or
+            it has a missing value.
+
+        Returns
+        -------
+        value
+            Returns the ``key`` value. Returns ``default`` if ``key`` is not found
+            or it has a missing value and ``raise_on_missing`` is False.
+
+        Raises
+        ------
+        KeyError
+            If ``raise_on_missing`` is True and ``key`` is not found or it has
+            a missing value.
+
+        """
+        # check for custom keys
+        is_custom, v = self._get_custom_key(
+            key, default=default, raise_on_missing=raise_on_missing
+        )
+        if is_custom:
+            return v
+
+        return self._get_internal_key(
+            key, astype=astype, default=default, raise_on_missing=raise_on_missing
+        )
+
+    @abstractmethod
+    def _get_internal_key(self, key, astype=None, default=None, raise_on_missing=True):
         pass
 
-    def _get(self, key, astype=None, **kwargs):
-        # when key is not available and no default is specified this
-        # should raise KeyError
-        if "default" in kwargs:
-            default = kwargs.pop("default")
-            v = self.get(key, default)
-        else:
-            v = self.__getitem__(key)
-
-        if astype is not None:
-            try:
-                return astype(v)
-            except Exception:
-                return None
-        return v
+    def _get_custom_key(self, key, default=None, raise_on_missing=True):
+        try:
+            if key == DATETIME:
+                return True, self.datetime().get("valid_time")
+        except Exception as e:
+            if not raise_on_missing:
+                return default
+            else:
+                raise KeyError(f"{key}, reason={e}")
+        return False, None
 
     @abstractmethod
     def override(self, *args, **kwargs):
@@ -233,14 +270,21 @@ class RawMetadata(Metadata):
     def items(self):
         return self._d.items()
 
-    def __getitem__(self, key):
-        return self._d[key]
-
     def __contains__(self, key):
         return key in self._d
 
-    def get(self, key, default=None):
-        return self._d.get(key, default)
+    def _get_internal_key(self, key, astype=None, default=None, raise_on_missing=True):
+        if not raise_on_missing:
+            v = self._d.get(key, default)
+        else:
+            v = self._d[key]
+
+        if astype is not None:
+            try:
+                return astype(v)
+            except Exception:
+                return None
+        return v
 
     def override(self, *args, **kwargs):
         d = dict(**self._d)
