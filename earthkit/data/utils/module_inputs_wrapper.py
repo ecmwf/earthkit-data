@@ -192,5 +192,5 @@ def transform_module_inputs(in_module, **kwargs):
         else:
             # If not a func, we just copy
             setattr(wrapped_module, name, func)
-    
+
     return wrapped_module
