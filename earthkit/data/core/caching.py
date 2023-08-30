@@ -626,9 +626,9 @@ class CachePolicy(metaclass=ABCMeta):
     def __eq__(self, other):
         if isinstance(other, str):
             name = other
-            return type(self) == _cache_policies[name]
+            return type(self) is _cache_policies[name]
         else:
-            return type(self) == type(other)
+            return type(self) is type(other)
 
     def _make_dir(self, path):
         if not os.path.exists(path):

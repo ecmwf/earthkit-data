@@ -210,7 +210,7 @@ class VirtualFieldListInFilesWithSqlIndex(FieldListInFilesWithSqlIndex):
     def _check_with_real_item(self, key, item, value):
         assert self.DEBUG is True
         real = item.real_item[key]
-        if type(real) != type(value) or str(real) != str(value):
+        if type(real) is not type(value) or str(real) is not str(value):
             msg = f"key={key}: providing {value} (type {type(value)}) instead of {real} (type {type(real)})"
             warnings.warn(msg)
             exit(-1)
