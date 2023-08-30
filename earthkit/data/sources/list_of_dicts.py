@@ -98,18 +98,18 @@ class VirtualGribMetadata(RawMetadata):
     def namespaces(self):
         return []
 
-    def latitudes(self):
+    def latitudes(self, dtype=None):
         return self.get("latitudes")
 
-    def longitudes(self):
+    def longitudes(self, dtype=None):
         return self.get("longitudes")
 
-    def x(self):
+    def x(self, dtype=None):
         grid_type = self.get("gridType", None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
             return self.longitudes()
 
-    def y(self):
+    def y(self, dtype=None):
         grid_type = self.get("gridType", None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
             return self.latitudes()
@@ -156,8 +156,7 @@ class VirtualGribField(Field):
     def __init__(self, d):
         super().__init__(metadata=VirtualGribMetadata(d))
 
-    @property
-    def values(self):
+    def _values(self, dtype=None):
         return self._metadata["values"]
 
     def _make_metadata(self):

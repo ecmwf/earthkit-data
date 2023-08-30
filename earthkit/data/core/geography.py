@@ -15,7 +15,7 @@ class Geography(metaclass=ABCMeta):
     """Geographical information about a field or data unit"""
 
     @abstractmethod
-    def latitudes(self):
+    def latitudes(self, dtype=None):
         r"""Return the latitudes.
 
         Returns
@@ -25,7 +25,7 @@ class Geography(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def longitudes(self):
+    def longitudes(self, dtype=None):
         r"""Return the longitudes.
 
         Returns
@@ -35,7 +35,7 @@ class Geography(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def x(self):
+    def x(self, dtype=None):
         r"""Return the x coordinates in the original CRS.
 
         Returns
@@ -45,7 +45,7 @@ class Geography(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def y(self):
+    def y(self, dtype=None):
         r"""Return the y coordinates in the original CRS.
 
         Returns

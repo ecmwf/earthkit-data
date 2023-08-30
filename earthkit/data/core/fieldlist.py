@@ -22,11 +22,27 @@ class Field(Base):
     def __init__(self, metadata=None):
         self.__metadata = metadata
 
-    @property
     @abstractmethod
+    def _values(self, dtype=None):
+        r"""Return the values stored in the field as a 1D ndarray.
+
+        Parameters
+        ----------
+        dtype: str or numpy.dtype
+            Typecode or data-type to which the array is cast.
+
+        Returns
+        -------
+        ndarray
+            Field values
+
+        """
+        self._not_implemented()
+
+    @property
     def values(self):
         r"""ndarray: Get the values stored in the field as a 1D ndarray."""
-        self._not_implemented()
+        return self._values()
 
     def _make_metadata(self):
         r"""Create a field metadata object."""
@@ -47,7 +63,7 @@ class Field(Base):
         flatten: bool
             When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
             :obj:`shape` is returned.
-        dtype: str or dtype
+        dtype: str or numpy.dtype
             Typecode or data-type to which the array is cast.
 
         Returns
@@ -58,12 +74,13 @@ class Field(Base):
         """
         values = self.values
         if not flatten:
-            values = self.values.reshape(self.shape)
+            # values = self.values.reshape(self.shape)
+            values = self._values(dtype=dtype).reshape(self.shape)
         if dtype is not None:
             values = values.astype(dtype)
         return values
 
-    def data(self, keys=("lat", "lon", "value"), flatten=False):
+    def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None):
         r"""Return the values and/or the geographical coordinates for each grid point.
 
         Parameters
@@ -74,6 +91,8 @@ class Field(Base):
         flatten: bool
             When it is True a flat ndarray per key is returned. Otherwise an ndarray with the field's
             :obj:`shape` is returned for each key.
+        dtype: str or numpy.dtype
+            Typecode or data-type to which the arrays are cast.
 
         Returns
         -------
@@ -115,7 +134,7 @@ class Field(Base):
         _keys = dict(
             lat=self._metadata.geography.latitudes,
             lon=self._metadata.geography.longitudes,
-            value=lambda: self.values,
+            value=self._values,
         )
 
         if isinstance(keys, str):
@@ -125,7 +144,7 @@ class Field(Base):
             if k not in _keys:
                 raise ValueError(f"data: invalid argument: {k}")
 
-        r = [_keys[k]() for k in keys]
+        r = [_keys[k](dtype=dtype) for k in keys]
         if not flatten:
             shape = self.shape
             r = [x.reshape(shape) for x in r]
@@ -136,7 +155,7 @@ class Field(Base):
 
             return np.array(r)
 
-    def to_points(self, flatten=False):
+    def to_points(self, flatten=False, dtype=None):
         r"""Return the geographical coordinates in the data's original
         Coordinate Reference System (CRS).
 
@@ -145,6 +164,8 @@ class Field(Base):
         flatten: bool
             When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
             :obj:`shape` are returned.
+        dtype: str or numpy.dtype
+            Typecode or data-type to which the arrays are cast.
 
         Returns
         -------
@@ -162,8 +183,8 @@ class Field(Base):
         to_latlon
 
         """
-        x = self._metadata.geography.x()
-        y = self._metadata.geography.y()
+        x = self._metadata.geography.x(dtype=dtype)
+        y = self._metadata.geography.y(dtype=dtype)
         if x is not None and y is not None:
             if not flatten:
                 shape = self.shape
@@ -171,14 +192,14 @@ class Field(Base):
                 y = y.reshape(shape)
             return dict(x=x, y=y)
         elif self.projection().CARTOPY_CRS == "PlateCarree":
-            lon, lat = self.data(("lon", "lat"), flatten=flatten)
+            lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype)
             return dict(x=lon, y=lat)
         else:
             raise ValueError(
                 "to_points(): geographical coordinates in original CRS are not available"
             )
 
-    def to_latlon(self, flatten=False):
+    def to_latlon(self, flatten=False, dtype=None):
         r"""Return the latitudes/longitudes of all the gridpoints in the field.
 
         Parameters
@@ -186,6 +207,8 @@ class Field(Base):
         flatten: bool
             When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
             :obj:`shape` are returned.
+        dtype: str or numpy.dtype
+            Typecode or data-type to which the arrays are cast.
 
         Returns
         -------
@@ -198,7 +221,7 @@ class Field(Base):
         to_points
 
         """
-        lon, lat = self.data(("lon", "lat"), flatten=flatten)
+        lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype)
         return dict(lat=lat, lon=lon)
 
     @property
@@ -660,7 +683,7 @@ class FieldList(Index):
 
         return np.array([f.values for f in self])
 
-    def data(self, keys=("lat", "lon", "value"), flatten=False):
+    def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None):
         r"""Return the values and/or the geographical coordinates.
 
         Only works when all the fields have the same grid geometry.
@@ -673,6 +696,8 @@ class FieldList(Index):
         flatten: bool
             When it is True the "lat", "lon" arrays and the "value" arrays per field
             will all be flattened. Otherwise they will preserve the field's :obj:`shape`.
+        dtype: str or numpy.dtype
+            Typecode or data-type to which the arrays are cast.
 
         Returns
         -------
@@ -729,7 +754,7 @@ class FieldList(Index):
                 keys = [keys]
 
             if "lat" in keys or "lon" in keys:
-                latlon = self[0].to_latlon(flatten=flatten)
+                latlon = self[0].to_latlon(flatten=flatten, dtype=dtype)
 
             r = []
             for k in keys:
@@ -738,7 +763,7 @@ class FieldList(Index):
                 elif k == "lon":
                     r.append(latlon["lon"])
                 elif k == "value":
-                    r.extend([f.to_numpy(flatten=flatten) for f in self])
+                    r.extend([f.to_numpy(flatten=flatten, dtype=dtype) for f in self])
                 else:
                     raise ValueError(f"data: invalid argument: {k}")
 

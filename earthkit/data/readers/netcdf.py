@@ -151,13 +151,13 @@ class NetCDFFieldGeography(Geography):
         self._ds = ds
         self.north, self.west, self.south, self.east = self._ds.bbox(variable)
 
-    def latitudes(self):
-        return self.x()
+    def latitudes(self, dtype=None):
+        return self.x(dtype=dtype)
 
-    def longitudes(self):
-        return self.y()
+    def longitudes(self, dtype=None):
+        return self.y(dtype=dtype)
 
-    def _get_xy(self, axis, flatten=False):
+    def _get_xy(self, axis, flatten=False, dtype=None):
         if axis not in ("x", "y"):
             raise ValueError(f"Invalid axis={axis}")
 
@@ -177,13 +177,16 @@ class NetCDFFieldGeography(Geography):
         points["x"], points["y"] = np.meshgrid(points["x"], points["y"])
         if flatten:
             points[axis] = points[axis].flatten()
-        return points[axis]
+        if dtype is not None:
+            return points[axis].astype(dtype)
+        else:
+            return points[axis]
 
-    def x(self):
-        return self._get_xy("x", flatten=True)
+    def x(self, dtype=None):
+        return self._get_xy("x", flatten=True, dtype=dtype)
 
-    def y(self):
-        return self._get_xy("y", flatten=True)
+    def y(self, dtype=None):
+        return self._get_xy("y", flatten=True, dtype=dtype)
 
     def shape(self):
         return self._da.shape[-2:]
@@ -311,8 +314,7 @@ class NetCDFField(Field):
     def _to_numpy(self):
         return self.to_xarray().to_numpy()
 
-    @property
-    def values(self):
+    def _values(self, dtype=None):
         return self._to_numpy().flatten()
 
     def to_numpy(self, flatten=False, dtype=None):
