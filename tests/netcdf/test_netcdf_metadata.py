@@ -14,9 +14,10 @@ import datetime
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_examples_file, load_nc_or_xr_source
 
 
+@pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize(
     "key,expected_value",
     [
@@ -34,8 +35,9 @@ from earthkit.data.testing import earthkit_examples_file
         (("variable", "level"), ("t", 1000)),
     ],
 )
-def test_netcdf_metadata_single_field(key, expected_value):
-    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+def test_netcdf_metadata_single_field(mode, key, expected_value):
+    f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
+
     # sn = f.metadata(key)
     # assert sn == [expected_value]
     sn = f[0].metadata(key)
@@ -77,8 +79,9 @@ def test_netcdf_datetime():
     assert ds.datetime() == ref
 
 
-def test_netcdf_valid_datetime():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_valid_datetime(mode):
+    ds = load_nc_or_xr_source(earthkit_examples_file("test.nc"), mode)
     assert ds[0].metadata("valid_datetime") == datetime.datetime(2020, 5, 13, 12)
 
 

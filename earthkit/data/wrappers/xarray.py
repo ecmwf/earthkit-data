@@ -9,6 +9,7 @@
 
 # from emohawk.metadata import AXES, COMPONENTS
 
+from earthkit.data.readers import netcdf
 from earthkit.data.wrappers import Wrapper
 
 
@@ -133,13 +134,20 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
 def wrapper(data, *args, **kwargs):
     import xarray as xr
 
+    ds = None
     if isinstance(data, xr.Dataset):
-        return XArrayDatasetWrapper(data, *args, **kwargs)
-
-    if isinstance(data, xr.DataArray):
+        ds = data
+    elif isinstance(data, xr.DataArray):
         try:
-            return XArrayDatasetWrapper(data.to_dataset(), *args, **kwargs)
+            ds = data.to_dataset()
         except ValueError:
             return XArrayDataArrayWrapper(data, *args, **kwargs)
+
+    if ds is not None:
+        fs = netcdf.XArrayFieldList(ds, **kwargs)
+        if len(fs) > 0:
+            return fs
+        else:
+            return XArrayDatasetWrapper(ds, *args, **kwargs)
 
     return None

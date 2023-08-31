@@ -12,8 +12,7 @@
 import numpy as np
 import pytest
 
-from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_examples_file, load_nc_or_xr_source
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -23,8 +22,9 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
     assert np.isclose(v.mean(), meanv, eps)
 
 
-def test_netcdf_values_surf():
-    f = from_source("file", earthkit_examples_file("test.nc"))
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_values_surf(mode):
+    f = load_nc_or_xr_source(earthkit_examples_file("test.nc"), mode)
 
     eps = 1e-5
 
@@ -59,8 +59,9 @@ def test_netcdf_values_surf():
     assert np.allclose(v0_f, v0, eps)
 
 
-def test_netcdf_values_upper():
-    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_values_upper(mode):
+    f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
 
     eps = 1e-5
 
@@ -89,8 +90,9 @@ def test_netcdf_values_upper():
     )
 
 
-def test_netcdf_to_numpy_surf():
-    f = from_source("file", earthkit_examples_file("test.nc"))
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_to_numpy_surf(mode):
+    f = load_nc_or_xr_source(earthkit_examples_file("test.nc"), mode)
 
     eps = 1e-5
     v = f.to_numpy()
@@ -124,6 +126,7 @@ def test_netcdf_to_numpy_surf():
     assert np.allclose(v0_f.flatten(), v0, eps)
 
 
+@pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize(
     "first,options, expected_shape",
     [
@@ -135,8 +138,8 @@ def test_netcdf_to_numpy_surf():
         (True, {"flatten": False}, (11, 19)),
     ],
 )
-def test_netcdf_to_numpy_surf_shape(first, options, expected_shape):
-    f = from_source("file", earthkit_examples_file("test.nc"))
+def test_netcdf_to_numpy_surf_shape(mode, first, options, expected_shape):
+    f = load_nc_or_xr_source(earthkit_examples_file("test.nc"), mode)
 
     eps = 1e-5
 
@@ -154,6 +157,7 @@ def test_netcdf_to_numpy_surf_shape(first, options, expected_shape):
     assert np.allclose(v_ref, v1, eps)
 
 
+@pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize(
     "options, expected_shape",
     [
@@ -175,8 +179,8 @@ def test_netcdf_to_numpy_surf_shape(first, options, expected_shape):
         ({"flatten": False}, (18, 7, 12)),
     ],
 )
-def test_netcdf_to_numpy_upper_shape(options, expected_shape):
-    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+def test_netcdf_to_numpy_upper_shape(mode, options, expected_shape):
+    f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
 
     eps = 1e-5
 
@@ -198,9 +202,10 @@ def test_netcdf_to_numpy_upper_shape(options, expected_shape):
     assert np.allclose(vf15, vr, eps)
 
 
+@pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_netcdf_to_numpy_surf_dtype(dtype):
-    f = from_source("file", earthkit_examples_file("test.nc"))
+def test_netcdf_to_numpy_surf_dtype(mode, dtype):
+    f = load_nc_or_xr_source(earthkit_examples_file("test.nc"), mode)
 
     v = f[0].to_numpy(dtype=dtype)
     assert v.dtype == dtype
@@ -209,9 +214,10 @@ def test_netcdf_to_numpy_surf_dtype(dtype):
     assert v.dtype == dtype
 
 
+@pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_netcdf_to_numpy_upper_dtype(dtype):
-    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+def test_netcdf_to_numpy_upper_dtype(mode, dtype):
+    f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
 
     v = f[0].to_numpy(dtype=dtype)
     assert v.dtype == dtype
