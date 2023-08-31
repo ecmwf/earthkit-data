@@ -63,7 +63,7 @@ class GribCodesLatitudeAccessor(GribCodesFloatArrayAccessor):
 
     def get(self, handle, dtype=None):
         v = eccodes.codes_get_array(handle, self.KEY)
-        if dtype == np.float32:
+        if dtype is not None:
             return v.astype(dtype)
         else:
             return v
@@ -76,7 +76,7 @@ class GribCodesLongitudeAccessor(GribCodesFloatArrayAccessor):
 
     def get(self, handle, dtype=None):
         v = eccodes.codes_get_array(handle, self.KEY)
-        if dtype == np.float32:
+        if dtype is not None:
             return v.astype(dtype)
         else:
             return v
@@ -209,7 +209,6 @@ class GribCodesHandle(CodesHandle):
     # can be removed
     def get_values(self, dtype=None):
         eccodes.codes_set(self._handle, "missingValue", CodesHandle.MISSING_VALUE)
-        # vals = eccodes.codes_get_values(self._handle)
         vals = VALUE_ACCESSOR.get(self._handle, dtype=dtype)
         if self.get_long("bitmapPresent"):
             vals[vals == CodesHandle.MISSING_VALUE] = np.nan
@@ -217,11 +216,9 @@ class GribCodesHandle(CodesHandle):
 
     def get_latitudes(self, dtype=None):
         return LATITUDE_ACCESSOR.get(self._handle, dtype=dtype)
-        return self.get("latitudes")
 
     def get_longitudes(self, dtype=None):
         return LONGITUDE_ACCESSOR.get(self._handle, dtype=dtype)
-        # return self.get("longitudes")
 
     def get_data_points(self):
         return eccodes.codes_grib_get_data(self._handle)
