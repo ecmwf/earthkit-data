@@ -6,8 +6,12 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
+import logging
+
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.wrappers import Wrapper
+
+logger = logging.getLogger(__name__)
 
 
 class PandasSeriesWrapper(Wrapper):
@@ -132,8 +136,7 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
                 self.north,
             ) = self.data.crs.area_of_use.bounds
         except AttributeError:
-            # log.warn("Bounding box not found in geopandas")
-            pass
+            logger.warn("Bounding box not found in geopandas object")
         self.fields = None
 
     def __iter__(self):
