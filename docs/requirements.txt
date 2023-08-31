@@ -1,4 +1,4 @@
-# These are the requirements for readthedoc
+# These are the requirements for readthedocs
 ipykernel
 docutils
 Pygments>=2.6.1
