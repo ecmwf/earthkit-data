@@ -11,13 +11,15 @@
 
 import datetime
 
-from earthkit.data import from_source
-from earthkit.data.testing import earthkit_test_data_file
+import pytest
+
+from earthkit.data.testing import earthkit_test_data_file, load_nc_or_xr_source
 
 
-def test_netcdf_concat():
-    ds1 = from_source("file", earthkit_test_data_file("era5_2t_1.nc"))
-    ds2 = from_source("file", earthkit_test_data_file("era5_2t_2.nc"))
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_concat(mode):
+    ds1 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_1.nc"), mode)
+    ds2 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_2.nc"), mode)
     ds = ds1 + ds2
 
     assert len(ds) == 2

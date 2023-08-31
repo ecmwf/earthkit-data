@@ -144,7 +144,7 @@ class DataSet:
         return self._bbox[(lat, lon)]
 
 
-class NetCDFFieldGeography(Geography):
+class XArrayFieldGeography(Geography):
     def __init__(self, metadata, da, ds, variable):
         self.metadata = metadata
         self._da = da
@@ -209,11 +209,11 @@ class NetCDFFieldGeography(Geography):
         return grid_mapping
 
 
-class NetCDFMetadata(RawMetadata):
+class XArrayMetadata(RawMetadata):
     def __init__(self, field):
-        if not isinstance(field, NetCDFField):
+        if not isinstance(field, XArrayField):
             raise TypeError(
-                f"NetCDFMetadata: expected field type NetCDFField, got {type(field)}"
+                f"XArrayMetadata: expected field type XArrayField, got {type(field)}"
             )
         self._field = field
         self._geo = None
@@ -233,7 +233,7 @@ class NetCDFMetadata(RawMetadata):
     @property
     def geography(self):
         if self._geo is None:
-            self._geo = NetCDFFieldGeography(
+            self._geo = XArrayFieldGeography(
                 self, self._field._da, self._field._ds, self._field.variable
             )
         return self._geo
@@ -247,7 +247,7 @@ class NetCDFMetadata(RawMetadata):
         return LS_KEYS
 
 
-class NetCDFField(Field):
+class XArrayField(Field):
     def __init__(self, ds, variable, slices, non_dim_coords):
         super().__init__()
 
@@ -288,13 +288,13 @@ class NetCDFField(Field):
 
     def __repr__(self):
         return (
-            f"NetCDFField({self.variable},"
+            f"{self.__class__.__name__}({self.variable},"
             + ",".join([f"{s.name}={s.value}" for s in self.slices])
             + ")"
         )
 
     def _make_metadata(self):
-        return NetCDFMetadata(self)
+        return XArrayMetadata(self)
 
     def to_xarray(self):
         dims = self._da.dims
@@ -327,9 +327,11 @@ class NetCDFField(Field):
         return values
 
 
-class NetCDFFieldList(FieldList):
-    def __init__(self, path, *args, **kwargs):
-        self.path = path
+class XArrayFieldListCore(FieldList):
+    FIELD_TYPE = None
+
+    def __init__(self, ds, *args, **kwargs):
+        self.ds = ds
         self._fields = None
         Index.__init__(self, *args, **kwargs)
 
@@ -344,12 +346,7 @@ class NetCDFFieldList(FieldList):
             self._fields = self._get_fields()
 
     def _get_fields(self):
-        import xarray as xr
-
-        with closing(
-            xr.open_mfdataset(self.path, combine="by_coords")
-        ) as ds:  # or nested
-            return self._get_fields_from_ds(DataSet(ds))
+        return self._get_fields_from_ds(DataSet(self.ds))
 
     def _get_fields_from_ds(self, ds):  # noqa C901
         # Select only geographical variables
@@ -450,12 +447,94 @@ class NetCDFFieldList(FieldList):
                 for value, coordinate in zip(values, coordinates):
                     slices.append(coordinate.make_slice(value))
 
-                fields.append(NetCDFField(ds, name, slices, non_dim_coords))
+                fields.append(self.FIELD_TYPE(ds, name, slices, non_dim_coords))
 
         # if not fields:
         #     raise Exception("NetCDFReader no 2D fields found in %s" % (self.path,))
 
         return fields
+
+    def to_pandas(self):
+        return self.to_xarray().to_pandas()
+
+    def to_xarray(self, **kwargs):
+        return self.ds
+
+    def to_netcdf(self, *args, **kwargs):
+        """
+        Save the data to a netCDF file.
+
+        Parameters
+        ----------
+        See `xarray.DataArray.to_netcdf`.
+        """
+        return self.ds.to_netcdf(*args, **kwargs)
+
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(_, XArrayFieldList) for _ in sources)
+        return XArrayMultiFieldList(sources)
+
+    @classmethod
+    def new_mask_index(cls, *args, **kwargs):
+        return XArrayMaskFieldList(*args, **kwargs)
+
+
+class XArrayFieldList(XArrayFieldListCore):
+    VERSION = 1
+
+    def __init__(self, ds, **kwargs):
+        self.FIELD_TYPE = XArrayField
+        super().__init__(ds, **kwargs)
+
+    def __getitem__(self, n):
+        if isinstance(n, int):
+            return self.fields[n]
+        else:
+            return super().__getitem__(n)
+
+    def __len__(self):
+        return len(self.fields)
+
+
+class XArrayMaskFieldList(XArrayFieldListCore, MaskIndex):
+    def __init__(self, *args, **kwargs):
+        MaskIndex.__init__(self, *args, **kwargs)
+
+
+class XArrayMultiFieldList(XArrayFieldListCore, MultiIndex):
+    def __init__(self, *args, **kwargs):
+        MultiIndex.__init__(self, *args, **kwargs)
+
+    def to_xarray(self, **kwargs):
+        import xarray as xr
+
+        return xr.merge([x.ds for x in self.indexes], **kwargs)
+
+
+class NetCDFMetadata(XArrayMetadata):
+    pass
+
+
+class NetCDFField(XArrayField):
+    def _make_metadata(self):
+        return NetCDFMetadata(self)
+
+
+class NetCDFFieldList(XArrayFieldListCore):
+    def __init__(self, path, *args, **kwargs):
+        self.FIELD_TYPE = NetCDFField
+        self.path = path
+        # self._fields = None
+        super().__init__(None, *args, **kwargs)
+
+    def _get_fields(self):
+        import xarray as xr
+
+        with closing(
+            xr.open_mfdataset(self.path, combine="by_coords")
+        ) as ds:  # or nested
+            return self._get_fields_from_ds(DataSet(ds))
 
     @classmethod
     def merge(cls, sources):
@@ -466,11 +545,18 @@ class NetCDFFieldList(FieldList):
     def new_mask_index(self, *args, **kwargs):
         return NetCDFMaskFieldList(*args, **kwargs)
 
-    def to_pandas(self):
-        return self.to_xarray().to_pandas()
-
     def to_xarray(self, **kwargs):
         return type(self).to_xarray_multi_from_paths(self.path, **kwargs)
+
+    def to_netcdf(self, *args, **kwargs):
+        """
+        Save the data to a netCDF file.
+
+        Parameters
+        ----------
+        See `xarray.DataArray.to_netcdf`.
+        """
+        return self.to_xarray().to_netcdf(*args, **kwargs)
 
     @classmethod
     def to_xarray_multi_from_paths(cls, paths, **kwargs):
@@ -532,37 +618,9 @@ class NetCDFFieldListReader(NetCDFFieldListInOneFile, Reader):
     def __repr__(self):
         return "NetCDFFieldListReader(%s)" % (self.path,)
 
-    # @classmethod
-    # def merge(cls, readers):
-    #     assert all(isinstance(s, NetCDFFieldListReader) for s in readers), readers
-    #     assert len(readers) > 1
-
-    #     return NetCDFFieldListReader(readers[0], [s.path for s in readers])
-
     def mutate_source(self):
         # A NetCDFReader is a source itself
         return self
-
-    # def to_pandas(self):
-    #     return self.to_xarray().to_pandas()
-
-    # def to_xarray(self, **kwargs):
-    #     return type(self).to_xarray_multi_from_paths(self.path, **kwargs)
-
-    # @classmethod
-    # def to_xarray_multi_from_paths(cls, paths, **kwargs):
-    #     import xarray as xr
-
-    #     if not isinstance(paths, list):
-    #         paths = [paths]
-
-    #     options = dict()
-    #     options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
-
-    #     return xr.open_mfdataset(
-    #         paths,
-    #         **options,
-    #     )
 
 
 class NetCDFReader(Reader):
@@ -610,8 +668,8 @@ def _match_magic(magic, deeper_check):
 
 def reader(source, path, magic=None, deeper_check=False):
     if _match_magic(magic, deeper_check):
-        r = NetCDFFieldListReader(source, path)
-        if len(r) > 0:
-            return r
+        fs = NetCDFFieldListReader(source, path)
+        if len(fs) > 0:
+            return fs
         else:
             return NetCDFReader(source, path)
