@@ -6,8 +6,12 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
+import logging
 
+from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.wrappers import Wrapper
+
+logger = logging.getLogger(__name__)
 
 
 class PandasSeriesWrapper(Wrapper):
@@ -124,6 +128,15 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
 
     def __init__(self, source):
         super().__init__(source)
+        try:
+            (
+                self.east,
+                self.south,
+                self.west,
+                self.north,
+            ) = self.data.crs.area_of_use.bounds
+        except AttributeError:
+            logger.warn("Bounding box not found in geopandas object")
         self.fields = None
 
     def __iter__(self):
@@ -149,6 +162,14 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
         For geopandas, a field is a feature
         """
         return [row[1] for row in self.data.iterrows()]
+
+    def bounding_box(self):
+        """
+        For geopandas, get bounding box and convert to EK.BoundingBox type
+        """
+        return BoundingBox(
+            north=self.north, south=self.south, east=self.east, west=self.west
+        )
 
 
 def wrapper(data, *args, **kwargs):

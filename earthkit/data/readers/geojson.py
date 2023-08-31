@@ -14,6 +14,7 @@ import mimetypes
 import numpy as np
 
 from earthkit.data.readers import Reader
+from earthkit.data.wrappers.pandas import GeoPandasDataFrameWrapper
 
 
 class GeojsonReader(Reader):
@@ -60,7 +61,7 @@ class GeojsonReader(Reader):
         return self
 
     def bounding_box(self, **kwargs):
-        return self.to_pandas(**kwargs).crs.area_of_use.bounds
+        return self._to_geopandas_dataframe_wrapper(**kwargs).bounding_box()
 
     def ls(self, **kwargs):
         return self.to_pandas(**kwargs)
@@ -95,6 +96,9 @@ class GeojsonReader(Reader):
         geo_df = gpd.pd.concat([gpd.read_file(path, **kwargs) for path in paths])
 
         return geo_df.set_index(np.arange(len(geo_df)))
+
+    def _to_geopandas_dataframe_wrapper(self, **kwargs):
+        return GeoPandasDataFrameWrapper(self.to_pandas(**kwargs))
 
 
 def reader(source, path, magic=None, deeper_check=False):

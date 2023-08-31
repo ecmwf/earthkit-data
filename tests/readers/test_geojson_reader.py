@@ -21,6 +21,14 @@ def test_geojson():
         assert _s.geometry
 
 
+def test_geojson_bounding_box():
+    s = from_source("file", earthkit_file("tests/data/NUTS_RG_20M_2021_3035.geojson"))
+    bb = s.bounding_box()
+    assert bb
+    assert bb.south, bb.north == (-90.0, 90.0)
+    assert bb.east, bb.west == (-180.0, 180.0)
+
+
 # TODO test mimetypes
 # def test_csv_mimetypes():
 # assert mimetypes.guess_type("x.geojson") == ("application/geo+json", None)

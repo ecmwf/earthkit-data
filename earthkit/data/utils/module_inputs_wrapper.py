@@ -14,7 +14,6 @@ common signitures or mapping defined at call time
 import inspect
 import types
 import typing as T
-from ast import Module
 from functools import wraps
 
 from earthkit.data import transform
@@ -180,7 +179,7 @@ def transform_module_inputs(in_module, **kwargs):
         Version of in_module where all functions are wrapped with transform_modul_inputs
     """
     # wrapped_module must be different to original to prevent overriding cached module
-    wrapped_module = Module
+    wrapped_module = types.ModuleType(__name__)
     for name in dir(in_module):
         func = getattr(in_module, name)
         # Wrap any functions that are not hidden
