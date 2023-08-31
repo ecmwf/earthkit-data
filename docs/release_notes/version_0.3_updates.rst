@@ -13,7 +13,7 @@ New features
 - added pandas and geopandas support. See the :ref:`/examples/pandas.ipynb` notebook example.
 - added :ref:`caching` policies. See the :ref:`/examples/cache.ipynb` and :ref:`/examples/settings.ipynb` notebook examples.
 - changed the return type of :meth:`~data.core.fieldlist.FieldList.data`, which now returns an ndarray. Previously it returned a tuple of ndarrays. See the :ref:`/examples/grib_lat_lon_value.ipynb` notebook example.
-- added :meth:`~data.core.fieldlist.FieldList.data` data method to :class:`~data.core.fieldlist.FieldList`. See the :ref:`/examples/grib_lat_lon_value.ipynb` notebook example.
+- added :meth:`~data.core.fieldlist.FieldList.data` method to :class:`~data.core.fieldlist.FieldList`. See the :ref:`/examples/grib_lat_lon_value.ipynb` notebook example.
 - added the ``valid_datetime`` metadata key, which can be used in :meth:`Field.metadata() <data.core.fieldlist.Field.metadata>` and :class:`~data.core.fieldlist.FieldList` methods like :meth:`~data.core.fieldlist.FieldList.metadata`, :meth:`~data.core.fieldlist.FieldList.sel` and  :meth:`~data.core.fieldlist.FieldList.order_by` etc. It is particularly useful for GRIB data because the this piece of information was previously only available as two separate keys (``validityDate`` and ``validityTime``).
 
   .. code-block:: python
