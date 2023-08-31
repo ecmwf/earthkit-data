@@ -460,6 +460,16 @@ class XArrayFieldListCore(FieldList):
     def to_xarray(self, **kwargs):
         return self.ds
 
+    def to_netcdf(self, *args, **kwargs):
+        """
+        Save the data to a netCDF file.
+
+        Parameters
+        ----------
+        See `xarray.DataArray.to_netcdf`.
+        """
+        return self.ds.to_netcdf(*args, **kwargs)
+
     @classmethod
     def merge(cls, sources):
         assert all(isinstance(_, XArrayFieldList) for _ in sources)
@@ -537,6 +547,16 @@ class NetCDFFieldList(XArrayFieldListCore):
 
     def to_xarray(self, **kwargs):
         return type(self).to_xarray_multi_from_paths(self.path, **kwargs)
+
+    def to_netcdf(self, *args, **kwargs):
+        """
+        Save the data to a netCDF file.
+
+        Parameters
+        ----------
+        See `xarray.DataArray.to_netcdf`.
+        """
+        return self.to_xarray().to_netcdf(*args, **kwargs)
 
     @classmethod
     def to_xarray_multi_from_paths(cls, paths, **kwargs):
@@ -648,8 +668,8 @@ def _match_magic(magic, deeper_check):
 
 def reader(source, path, magic=None, deeper_check=False):
     if _match_magic(magic, deeper_check):
-        r = NetCDFFieldListReader(source, path)
-        if len(r) > 0:
-            return r
+        fs = NetCDFFieldListReader(source, path)
+        if len(fs) > 0:
+            return fs
         else:
             return NetCDFReader(source, path)

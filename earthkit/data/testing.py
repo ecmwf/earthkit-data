@@ -132,7 +132,7 @@ def load_nc_or_xr_source(path, mode):
     else:
         import xarray
 
-        return from_object(xarray.open_dataset(path)).to_fieldlist()
+        return from_object(xarray.open_dataset(path))
 
 
 def main(path):

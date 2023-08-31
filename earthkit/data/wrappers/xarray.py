@@ -130,42 +130,24 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
     #         raise ValueError(f"No variable found with direction '{component}'")
     #     return self.source.data_vars[variable]
 
-    def to_fieldlist(self):
-        return netcdf.XArrayFieldList(self.data)
-
-
-# class XarrayFieldList(netcdf.NetCDFFieldList):
-#     def __init__(self, ds, *args, **kwargs):
-#         self.ds = ds
-#         self._fields = None
-#         Index.__init__(self, *args, **kwargs)
-
-#     def __len__(self):
-#         return len(self.fields)
-
-#     @property
-#     def fields(self):
-#         if self._fields is None:
-#             self._scan()
-#         return self._fields
-
-#     def _get_fields(self):
-#         return self._get_fields_from_ds(netcdf.DataSet(self.ds))
-
-#     def to_xarray(self):
-#         return self.ds
-
 
 def wrapper(data, *args, **kwargs):
     import xarray as xr
 
+    ds = None
     if isinstance(data, xr.Dataset):
-        return XArrayDatasetWrapper(data, *args, **kwargs)
-
-    if isinstance(data, xr.DataArray):
+        ds = data
+    elif isinstance(data, xr.DataArray):
         try:
-            return XArrayDatasetWrapper(data.to_dataset(), *args, **kwargs)
+            ds = data.to_dataset()
         except ValueError:
             return XArrayDataArrayWrapper(data, *args, **kwargs)
+
+    if ds is not None:
+        fs = netcdf.XArrayFieldList(ds, **kwargs)
+        if len(fs) > 0:
+            return fs
+        else:
+            return XArrayDatasetWrapper(ds, *args, **kwargs)
 
     return None
