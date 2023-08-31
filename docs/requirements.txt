@@ -11,3 +11,4 @@ entrypoints
 pandas
 tqdm
 xarray
+filelock
