@@ -40,6 +40,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
     * - :ref:`data-sources-cds`
       - retrieve data from the `Copernicus Climate Data Store <https://cds.climate.copernicus.eu/>`_ (CDS)
+    * - :ref:`data-sources-ads`
+      - retrieve data from the `Copernicus Atmosphere Data Store <https://ads.atmosphere.copernicus.eu/>`_ (ADS)
     * - :ref:`data-sources-eod`
       - retrieve `ECMWF open data <https://www.ecmwf.int/en/forecasts/datasets/open-data>`_
     * - :ref:`data-sources-fdb`
@@ -359,11 +361,49 @@ cds
 
   Data downloaded from the CDS is stored in the the :ref:`cache <caching>`.
 
-  To access data from the CDS, you will need to register and retrieve an access token. The process is described `here <https://cds.climate.copernicus.eu/api-how-to>`__. For more information, see the CDS `knowledge base`_.
+  To access data from the CDS, you will need to register and retrieve an access token. The process is described `here <https://cds.climate.copernicus.eu/api-how-to>`__. For more information, see the `CDS_knowledge base`_.
 
   Further examples:
 
       - :ref:`/examples/cds.ipynb`
+
+
+.. _data-sources-ads:
+
+ads
+---
+
+.. py:function:: from_source("ads", dataset, *args, **kwargs)
+  :noindex:
+
+  The ``ads`` source accesses the `Copernicus Atmosphere Data Store`_ (ADS), using the cdsapi_ package. In addition to data retrieval, ``request`` also has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively.
+
+  :param str dataset: the name of the ADS dataset
+  :param tuple *args: specifies the request as a dict
+  :param dict **kwargs: other keyword arguments specifying the request
+
+  The following example retrieves CAMS global reanalysis GRIB data for 2 parameters:
+
+  .. code-block:: python
+
+      import earthkit.data
+
+      ds = earthkit.data.from_source(
+          "ads",
+          "cams-global-reanalysis-eac4",
+          variable=["particulate_matter_10um", "particulate_matter_1um"],
+          area=[50, -50, 20, 50],  # N,W,S,E
+          date="2012-12-12",
+          time="12:00",
+      )
+
+  Data downloaded from the ADS is stored in the the :ref:`cache <caching>`.
+
+  To access data from the ADS, you will need to register and retrieve an access token. The process is described `here <https://ads.atmosphere.copernicus.eu/api-how-to>`__. For more information, see the `ADS_knowledge base`_.
+
+  Further examples:
+
+      - :ref:`/examples/ads.ipynb`
 
 
 .. _data-sources-eod:
@@ -490,7 +530,9 @@ fdb
 .. _web API: https://www.ecmwf.int/en/forecasts/access-forecasts/ecmwf-web-api
 
 .. _Copernicus Climate Data Store: https://cds.climate.copernicus.eu/
+.. _Copernicus Atmosphere Data Store: https://ads.atmosphere.copernicus.eu/
 .. _cdsapi: https://pypi.org/project/cdsapi/
-.. _knowledge base: https://confluence.ecmwf.int/display/CKB/Copernicus+Knowledge+Base
+.. _CDS_knowledge base: https://confluence.ecmwf.int/pages/viewpage.action?pageId=151530614
+.. _ADS_knowledge base: https://confluence.ecmwf.int/pages/viewpage.action?pageId=151530675
 
 .. _ECMWF open data: https://www.ecmwf.int/en/forecasts/datasets/open-data

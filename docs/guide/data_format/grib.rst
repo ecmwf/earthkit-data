@@ -9,7 +9,7 @@ GRIB is the WMO's format for binary gridded data consisting of GRIB messages, wh
 Fieldlists
 +++++++++++
 
-We can read/retrieve GRIB data with :func:`from_source <data-sources>`. The resulting object will be a :obj:`FieldList <data.readers.grib.index.FieldList>` representing a list of :obj:`GribFields <data.readers.grib.codes.GribField>`, which we can iterate through:
+We can read/retrieve GRIB data with :func:`from_source`. The resulting object will be a :class:`~data.readers.grib.index.GribFieldList` representing a list of :class:`~data.readers.grib.codes.GribField`, which we can iterate through:
 
 .. code-block:: python
 
@@ -26,15 +26,15 @@ We can read/retrieve GRIB data with :func:`from_source <data-sources>`. The resu
     GribField(msl,1000,20200513,1200,0,0)
 
 
-The following table gives an overview of the :obj:`FieldList API<data.readers.grib.index.FieldList>`:
+The following table gives an overview of the GRIB :class:`~data.readers.grib.index.FieldList` API:
 
-.. list-table:: Highlights of the FieldList API
+.. list-table:: Highlights of the GRIB FieldList API
    :header-rows: 1
 
    * - Methods/Operators
      - API
    * - :ref:`conversion`
-     - :meth:`to_xarray() <data.readers.grib.index.FieldList.to_xarray>`
+     - :meth:`~data.readers.grib.index.GribFieldList.to_xarray`
    * - :ref:`concat`
      -
    * - :ref:`iter`
@@ -42,23 +42,23 @@ The following table gives an overview of the :obj:`FieldList API<data.readers.gr
    * - :ref:`slice`
      -
    * - :ref:`sel`
-     - :meth:`sel() <data.readers.grib.index.FieldList.sel>`
+     - :meth:`~data.readers.grib.index.GribFieldList.sel`
    * - :ref:`order_by`
-     - :meth:`order_by() <data.readers.grib.index.FieldList.order_by>`
+     - :meth:`~data.readers.grib.index.GribFieldList.order_by`
    * - :ref:`data_values`
-     - :meth:`to_numpy() <data.readers.grib.index.FieldList.to_numpy>`
+     - :meth:`~data.readers.grib.index.GribFieldList.to_numpy`
    * - :ref:`metadata`
-     - :meth:`metadata() <data.readers.grib.index.FieldList.metadata>`
+     - :meth:`~data.readers.grib.index.GribFieldList.metadata`
    * - :ref:`inspection`
-     - :meth:`ls() <data.readers.grib.index.FieldList.ls>`, :meth:`head() <data.readers.grib.index.FieldList.head>` and :meth:`tail() <data.readers.grib.index.FieldList.tail>`
+     - :meth:`~data.readers.grib.index.GribFieldList.ls`, :meth:`~data.readers.grib.index.GribFieldList.head` and :meth:`~data.readers.grib.index.GribFieldList.tail`
 
 Fields
 +++++++
 
-A :obj:`GribField <data.readers.grib.codes.GribField>` represent a single GRIB field. It primarily offers methods to:
+A :class:`~data.readers.grib.codes.GribField` represent a single GRIB field. It primarily offers methods to:
 
- - :ref:`extract field values <data_values>`, such as :meth:`to_numpy() <data.readers.grib.codes.GribField.to_numpy>`
- - :ref:`extract field metadata <metadata>`, such as :meth:`metadata() <data.readers.grib.codes.GribField._metadata>`
+ - :ref:`extract field values <data_values>`, such as :meth:`~data.readers.grib.codes.GribField.to_numpy`
+ - :ref:`extract field metadata <metadata>`, such as :meth:`~data.readers.grib.codes.GribField.metadata`
 
 Examples:
 

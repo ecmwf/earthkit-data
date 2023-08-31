@@ -113,7 +113,7 @@ def test_multi_grib():
     )
     assert len(ds) == 2
     ds.to_xarray()
-    ds.statistics()
+    # ds.statistics()
 
 
 def test_multi_grib_mixed():

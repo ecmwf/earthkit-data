@@ -10,18 +10,18 @@
 import logging
 
 from earthkit.data.readers import Reader
-from earthkit.data.readers.grib.index import MultiFieldList
-from earthkit.data.readers.grib.index.file import FieldListInOneFile
+from earthkit.data.readers.grib.index import GribMultiFieldList
+from earthkit.data.readers.grib.index.file import GribFieldListInOneFile
 
 LOG = logging.getLogger(__name__)
 
 
-class GRIBReader(FieldListInOneFile, Reader):
+class GRIBReader(GribFieldListInOneFile, Reader):
     appendable = True  # GRIB messages can be added to the same file
 
     def __init__(self, source, path):
         Reader.__init__(self, source, path)
-        FieldListInOneFile.__init__(self, path)
+        GribFieldListInOneFile.__init__(self, path)
 
     def __repr__(self):
         return "GRIBReader(%s)" % (self.path,)
@@ -31,7 +31,7 @@ class GRIBReader(FieldListInOneFile, Reader):
         assert all(isinstance(s, GRIBReader) for s in readers), readers
         assert len(readers) > 1
 
-        return MultiFieldList(readers)
+        return GribMultiFieldList(readers)
 
     def mutate_source(self):
         # A GRIBReader is a source itself

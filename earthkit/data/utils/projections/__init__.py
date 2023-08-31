@@ -103,6 +103,12 @@ class EquidistantCylindrical(Projection):
     CARTOPY_CRS = "PlateCarree"
 
 
+class LongLat(Projection):
+    PROJ_NAME = "longlat"
+    CF_GRID_MAPPING_NAME = "latitude_longitude"
+    CARTOPY_CRS = "PlateCarree"
+
+
 class LambertAzimuthalEqualArea(Projection):
     PROJ_NAME = "laea"
     CF_GRID_MAPPING_NAME = "lambert_azimuthal_equal_area"
@@ -123,6 +129,7 @@ class Mercator(Projection):
 
 _PROJECTIONS = [
     EquidistantCylindrical,
+    LongLat,
     LambertAzimuthalEqualArea,
     AlbersEqualArea,
     Mercator,

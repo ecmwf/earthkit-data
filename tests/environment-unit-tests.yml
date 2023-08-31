@@ -34,6 +34,8 @@ dependencies:
 - pydata-sphinx-theme
 - pytest
 - pytest-cov
+- pytest-forked
+- pytest-timeout
 - sphinx
 - sphinx-autoapi
 - sphinx_rtd_theme
@@ -42,3 +44,4 @@ dependencies:
 - nbconvert
 - nbsphinx
 - ipykernel
+- geopandas

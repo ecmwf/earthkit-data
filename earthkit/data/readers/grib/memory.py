@@ -13,7 +13,7 @@ import eccodes
 
 from earthkit.data.readers import Reader
 from earthkit.data.readers.grib.codes import GribCodesHandle, GribField
-from earthkit.data.readers.grib.index import FieldList
+from earthkit.data.readers.grib.index import GribFieldList
 
 LOG = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class GribMemoryReader(Reader):
 
     def read_batch(self, n):
         fields = [self.__next__() for _ in range(n)]
-        return FieldListInMemory.from_fields(fields)
+        return GribFieldListInMemory.from_fields(fields)
 
     def read_group(self, group):
         assert isinstance(group, list)
@@ -75,7 +75,7 @@ class GribMemoryReader(Reader):
             else:
                 raise StopIteration
 
-        return FieldListInMemory.from_fields(fields)
+        return GribFieldListInMemory.from_fields(fields)
 
 
 class GribFileMemoryReader(GribMemoryReader):
@@ -143,12 +143,12 @@ class GribFieldInMemory(GribField):
         return None
 
 
-class FieldListInMemory(FieldList, Reader):
+class GribFieldListInMemory(GribFieldList, Reader):
     """Represent a GRIB field list in memory"""
 
     @staticmethod
     def from_fields(fields):
-        fs = FieldListInMemory(None, None)
+        fs = GribFieldListInMemory(None, None)
         fs._fields = fields
         fs._loaded = True
         return fs
@@ -159,7 +159,7 @@ class FieldListInMemory(FieldList, Reader):
         """
         if source is not None:
             Reader.__init__(self, source, None)
-        FieldList.__init__(self, *args, **kwargs)
+        GribFieldList.__init__(self, *args, **kwargs)
 
         self._reader = reader
         self._loaded = False

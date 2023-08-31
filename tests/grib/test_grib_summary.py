@@ -494,3 +494,10 @@ def test_grib_dump():
         }
     }
     assert r == ref
+
+
+if __name__ == "__main__":
+    from earthkit.data.testing import main
+
+    # test_datetime()
+    main(__file__)

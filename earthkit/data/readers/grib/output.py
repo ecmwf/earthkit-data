@@ -11,7 +11,7 @@ import datetime
 import logging
 import re
 
-from earthkit.data.decorators import alias_argument, normalize
+from earthkit.data.decorators import normalize, normalize_grib_keys
 from earthkit.data.utils.humanize import list_to_human
 
 LOG = logging.getLogger(__name__)
@@ -49,11 +49,7 @@ class GribOutput:
         self._bbox = {}
         self.kwargs = kwargs
 
-    @alias_argument("levelist", ["level", "levellist"])
-    @alias_argument("levtype", ["leveltype"])
-    @alias_argument("param", ["variable", "parameter"])
-    @alias_argument("number", ["realization", "realisation"])
-    @alias_argument("class", ["klass", "class_"])
+    @normalize_grib_keys
     @normalize("date", "date")
     def _normalize_kwargs_names(self, **kwargs):
         return kwargs
@@ -66,7 +62,7 @@ class GribOutput:
 
         if path not in self._files:
             self._files[path] = open(path, "wb")
-        return self._files[path]
+        return self._files[path], path
 
     def write(
         self,
@@ -74,14 +70,15 @@ class GribOutput:
         check_nans=False,
         metadata={},
         template=None,
-        **kwarg,
+        **kwargs,
     ):
         # Make a copy as we may modify it
         md = self._normalize_kwargs_names(**self.kwargs)
         md.update(self._normalize_kwargs_names(**metadata))
-        md.update(self._normalize_kwargs_names(**kwarg))
+        md.update(self._normalize_kwargs_names(**kwargs))
 
         metadata = md
+
         compulsory = ("date", ("param", "paramId", "shortName"))
 
         if template is None:
@@ -118,7 +115,11 @@ class GribOutput:
             handle.set(k, v)
 
         handle.set_values(values)
-        handle.write(self.f(handle))
+
+        file, path = self.f(handle)
+        handle.write(file)
+
+        return handle, path
 
     def close(self):
         for f in self._files.values():

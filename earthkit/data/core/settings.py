@@ -12,6 +12,7 @@ import getpass
 import logging
 import os
 import tempfile
+from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 from typing import Callable
 
@@ -24,20 +25,43 @@ from earthkit.data.utils.humanize import (
     as_percent,
     as_seconds,
     interval_to_human,
+    list_to_human,
 )
 from earthkit.data.utils.interval import Interval
 
 LOG = logging.getLogger(__name__)
 
 DOT_EARTHKIT_DATA = os.path.expanduser("~/.earthkit_data")
+EARTHKIT_SETTINGS_DIR = DOT_EARTHKIT_DATA
 
 
-class Validator:
+class Validator(metaclass=ABCMeta):
+    @abstractmethod
     def check(self, value):
-        raise NotImplementedError()
+        pass
+
+    @abstractmethod
+    def explain(self):
+        pass
+
+    @staticmethod
+    def make(value):
+        v = _validators.get(type(value), None)
+        if v is not None:
+            return v(value)
+        else:
+            raise TypeError(f"Cannot create Validator for type={type(value)}")
+
+
+class ValueValidator(Validator):
+    def __init__(self, value):
+        self.value = value
+
+    def check(self, value):
+        return value == self.value
 
     def explain(self):
-        return str()
+        return f"Valid when = {self.value}."
 
 
 class IntervalValidator(Validator):
@@ -49,6 +73,20 @@ class IntervalValidator(Validator):
 
     def explain(self):
         return f"Valid when {interval_to_human(self.interval)}."
+
+
+class ListValidator(Validator):
+    def __init__(self, values):
+        self.values = values
+
+    def check(self, value):
+        return value in self.values
+
+    def explain(self):
+        return f"Valid values: {list_to_human(self.values)}."
+
+
+_validators = {Interval: IntervalValidator, bool: ValueValidator, list: ListValidator}
 
 
 class Setting:
@@ -88,41 +126,48 @@ class Setting:
     @property
     def docs_description(self):
         d = self.description
+        t = ""
         if self.validator:
             t = self.validator.explain()
-            if t:
-                return d + " " + t
-        return d
+
+        return d.replace("{validator}", t)
+
+    def validate(self, name, value):
+        if self.validator is not None and not self.validator.check(value):
+            raise ValueError(
+                f"Settings {name} cannot be set to {value}. {self.validator.explain()}"
+            )
 
 
 _ = Setting
 
 
 SETTINGS_AND_HELP = {
-    "cache-directory": _(
+    "user-cache-directory": _(
         os.path.join(tempfile.gettempdir(), "earthkit-data-%s" % (getpass.getuser(),)),
-        """Directory of where the dowloaded files are cached, with ``${USER}`` is the user id.
+        """Cache directory used when ``cache-policy`` is ``user``.
         See :doc:`/guide/caching` for more information.""",
         docs_default=os.path.join("TMP", "earthkit-data-%s" % (getpass.getuser(),)),
     ),
-    "dask-directories": _(
-        [os.path.join(DOT_EARTHKIT_DATA, "dask")],
-        """List of directories where to search for dask cluster definitions.
-        See :ref:`dask` for more information.""",
-    ),
-    "datasets-directories": _(
-        [os.path.join(DOT_EARTHKIT_DATA, "datasets")],
-        """List of directories where to search for datasets definitions.
-        See :ref:`datasets` for more information.""",
-    ),
-    "datasets-catalogs-urls": _(
-        ["https://github.com/ecmwf-lab/climetlab-datasets/raw/main/datasets"],
-        """List of url where to search for catalogues of datasets definitions.
-        See :ref:`datasets` for more information.""",
+    "temporary-cache-directory-root": _(
+        None,
+        """Parent of the cache directory when ``cache-policy`` is ``temporary``.
+        See :doc:`/guide/caching` for more information.""",
+        getter="_as_str",
+        none_ok=True,
     ),
     "number-of-download-threads": _(
         5,
         """Number of threads used to download data.""",
+    ),
+    "cache-policy": _(
+        "user",
+        """Caching policy. {validator} See :doc:`/guide/caching` for more information. """,
+        validator=ListValidator(["off", "temporary", "user"]),
+    ),
+    "use-message-position-index-cache": _(
+        False,
+        "Stores message offset index for GRIB/BUFR files in the cache.",
     ),
     "maximum-cache-size": _(
         None,
@@ -156,7 +201,7 @@ SETTINGS_AND_HELP = {
     ),
     "reader-type-check-bytes": _(
         64,
-        "Number of bytes read from the beginning of a source to identify its type.",
+        "Number of bytes read from the beginning of a source to identify its type. {validator}",
         validator=IntervalValidator(Interval(8, 4096)),
     ),
 }
@@ -170,7 +215,9 @@ for k, v in SETTINGS_AND_HELP.items():
 
 @contextmanager
 def new_settings(s):
+    """Context manager to create new settings"""
     SETTINGS._stack.append(s)
+    SETTINGS._notify()
     try:
         yield None
     finally:
@@ -210,6 +257,9 @@ def save_settings(path, settings):
 
 
 class Settings:
+    _auto_save_settings = True
+    _notify_enabled = True
+
     def __init__(self, settings_yaml: str, defaults: dict, callbacks=[]):
         self._defaults = defaults
         self._settings = dict(**defaults)
@@ -222,9 +272,12 @@ class Settings:
     def get(self, name: str, default=NONE):
         """[summary]
 
-        Args:
-            name (str): [description]
-            default ([type], optional): [description]. Defaults to NONE.
+        Parameters
+        ----------
+            name: str
+                [description]
+            default: [type]
+                [description]. Defaults to NONE.
 
         Returns
         -------
@@ -233,9 +286,11 @@ class Settings:
         if name not in SETTINGS_AND_HELP:
             raise KeyError("No setting name '%s'" % (name,))
 
+        settings_item = SETTINGS_AND_HELP[name]
+
         getter, none_ok = (
-            SETTINGS_AND_HELP[name].getter,
-            SETTINGS_AND_HELP[name].none_ok,
+            settings_item.getter,
+            settings_item.none_ok,
         )
         if getter is None:
             getter = lambda name, value, none_ok: value  # noqa: E731
@@ -248,18 +303,45 @@ class Settings:
         return getter(name, self._settings.get(name, default), none_ok)
 
     @forward
-    def set(self, name: str, *args, **kwargs):
+    def set(self, *args, **kwargs):
         """[summary]
 
-        Args
-        ----
-            name (set): [description]
-            value ([type]): [description]
+        Parameters
+        ----------
+            name: str
+                [description]
+            value: [type]
+                [description]
+        """
+        if len(args) == 0:
+            assert len(kwargs) > 0
+            for k, v in kwargs.items():
+                self._set(k.replace("_", "-"), v)
+            self._changed()
+        else:
+            if len(args) == 1 and isinstance(args[0], dict):
+                for k, v in args[0].items():
+                    self._set(k, v)
+            else:
+                self._set(*args, **kwargs)
+        self._changed()
+
+    def _set(self, name: str, *args, **kwargs):
+        """[summary]
+
+        Parameters
+        ----------
+            name: str
+                [description]
+            value: [type]
+                [description]
         """
         if name not in SETTINGS_AND_HELP:
             raise KeyError("No setting name '%s'" % (name,))
 
-        klass = SETTINGS_AND_HELP[name].kind
+        settings_item = SETTINGS_AND_HELP[name]
+
+        klass = settings_item.kind
 
         if klass in (bool, int, float, str):
             # TODO: Proper exceptions
@@ -286,8 +368,8 @@ class Settings:
                 value = args[0]
 
         getter, none_ok = (
-            SETTINGS_AND_HELP[name].getter,
-            SETTINGS_AND_HELP[name].none_ok,
+            settings_item.getter,
+            settings_item.none_ok,
         )
         if getter is not None:
             assert len(args) == 1
@@ -299,25 +381,21 @@ class Settings:
             if not isinstance(value, klass):
                 raise TypeError("Setting '%s' must be of type '%s'" % (name, klass))
 
-        validator = SETTINGS_AND_HELP[name].validator
-        if validator is not None:
-            if not validator.check(value):
-                raise ValueError(
-                    f"Settings {name} cannot be set to {value}. {validator.explain()}"
-                )
-
+        settings_item.validate(name, value)
         self._settings[name] = value
-        self._changed()
+
+        LOG.debug(f"_set {name}={value} stack_size={len(self._stack)}")
 
     @forward
     def reset(self, name: str = None):
         """Reset setting(s) to default values.
 
-        Args
-        ----
-            name (str, optional): The name of the setting to reset to default. If the setting
-            does not have a default, it is removed. If `None` is passed, all settings are reset
-            to their default values. Defaults to None.
+        Parameters
+        ----------
+            name: str, optional
+                The name of the setting to reset to default. If the setting
+                does not have a default, it is removed. If `None` is passed, all settings are
+                reset to their default values. Defaults to None.
         """
         if name is None:
             self._settings = dict(**DEFAULTS)
@@ -331,13 +409,23 @@ class Settings:
         self._changed()
 
     @forward
-    def _repr_html_(self):
-        html = [css("table")]
-        html.append("<table class='climetlab'>")
+    def __repr__(self):
+        r = []
         for k, v in sorted(self._settings.items()):
             setting = SETTINGS_AND_HELP.get(k, None)
             default = setting.default if setting else ""
-            html.append("<tr><td>%s</td><td>%r</td><td>%r</td></td>" % (k, v, default))
+            r.append(f"{k}: ({v}, {default})")
+        return "\n".join(r)
+
+    @forward
+    def _repr_html_(self):
+        html = [css("table")]
+        html.append("<table class='ek'>")
+        html.append("<tr><th>Name</th><th>Value</th><th>Default</th></tr>")
+        for k, v in sorted(self._settings.items()):
+            setting = SETTINGS_AND_HELP.get(k, None)
+            default = setting.default if setting else ""
+            html.append("<tr><td>%s</td><td>%r</td><td>%r</td></tr>" % (k, v, default))
         html.append("</table>")
         return "".join(html)
 
@@ -347,12 +435,14 @@ class Settings:
             yield ((k, v, SETTINGS_AND_HELP.get(k)))
 
     def _changed(self):
-        self._save()
+        if self._auto_save_settings:
+            self._save()
         self._notify()
 
     def _notify(self):
-        for cb in self._callbacks:
-            cb()
+        if self._notify_enabled:
+            for cb in self._callbacks:
+                cb()
 
     def on_change(self, callback: Callable[[], None]):
         self._callbacks.append(callback)
@@ -365,8 +455,17 @@ class Settings:
             save_settings(self._settings_yaml, self._settings)
         except Exception:
             LOG.error(
-                "Cannot save CliMetLab settings (%s)",
+                "Cannot save earthkit-data settings (%s)",
                 self._settings_yaml,
+                exc_info=True,
+            )
+
+    def save_as(self, path):
+        try:
+            save_settings(path, self._settings)
+        except Exception:
+            LOG.error(
+                f"Cannot save earthkit-data settings ({path})",
                 exc_info=True,
             )
 
@@ -379,15 +478,32 @@ class Settings:
     def _as_seconds(self, name, value, none_ok):
         return as_seconds(value, name=name, none_ok=none_ok)
 
+    def _as_str(self, name, value, none_ok):
+        if value is None and none_ok:
+            return None
+        return str(value)
+
     # def _as_number(self, name, value, units, none_ok):
     #     return as_number(name, value, units, none_ok)
 
     @forward
-    def temporary(self, name=None, *args, **kwargs):
-        tmp = Settings(None, self._settings, self._callbacks)
-        if name is not None:
-            tmp.set(name, *args, **kwargs)
+    def temporary(self, *args, **kwargs):
+        tmp = Settings(None, self._settings)
+        # until the tmp object is at the top of the stack we do not want
+        # notify the observers
+        if len(args) > 0 or len(kwargs) > 0:
+            # tmp does not have any callbacks so it will not broadcast the changes
+            tmp.set(*args, **kwargs)
+        tmp._callbacks = self._callbacks
         return new_settings(tmp)
+
+    @property
+    def auto_save_settings(self):
+        return Settings._auto_save_settings
+
+    @auto_save_settings.setter
+    def auto_save_settings(self, v):
+        Settings._auto_save_settings = v
 
 
 save = False
@@ -400,7 +516,7 @@ try:
         save_settings(settings_yaml, DEFAULTS)
 except Exception:
     LOG.error(
-        "Cannot create CliMetLab settings directory, using defaults (%s)",
+        "Cannot create earthkit-data settings directory, using defaults (%s)",
         settings_yaml,
         exc_info=True,
     )
@@ -422,7 +538,7 @@ try:
 
 except Exception:
     LOG.error(
-        "Cannot load CliMetLab settings (%s), reverting to defaults",
+        "Cannot load earthkit-data settings (%s), reverting to defaults",
         settings_yaml,
         exc_info=True,
     )
