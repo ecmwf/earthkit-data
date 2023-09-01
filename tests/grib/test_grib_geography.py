@@ -34,6 +34,8 @@ def test_grib_to_latlon_single(index):
     assert isinstance(v, dict)
     assert isinstance(v["lon"], np.ndarray)
     assert isinstance(v["lat"], np.ndarray)
+    assert v["lon"].dtype == np.float64
+    assert v["lat"].dtype == np.float64
     check_array(
         v["lon"],
         (84,),
@@ -64,26 +66,31 @@ def test_grib_to_latlon_single_shape(index):
 
     # x
     assert v["lon"].shape == (7, 12)
+    assert v["lon"].dtype == np.float64
     for x in v["lon"]:
         assert np.allclose(x, np.linspace(0, 330, 12))
 
     # y
     assert v["lat"].shape == (7, 12)
+    assert v["lon"].dtype == np.float64
     for i, y in enumerate(v["lat"]):
         assert np.allclose(y, np.ones(12) * (90 - i * 30))
 
 
-def test_grib_to_latlon_multi():
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_grib_to_latlon_multi(dtype):
     f = from_source("file", earthkit_examples_file("test.grib"))
 
-    v_ref = f[0].to_latlon(flatten=True)
-    v = f.to_latlon(flatten=True)
+    v_ref = f[0].to_latlon(flatten=True, dtype=dtype)
+    v = f.to_latlon(flatten=True, dtype=dtype)
     assert isinstance(v, dict)
     assert v.keys() == v_ref.keys()
 
     assert isinstance(v, dict)
     assert np.allclose(v["lat"], v_ref["lat"])
     assert np.allclose(v["lon"], v_ref["lon"])
+    assert v["lat"].dtype == dtype
+    assert v["lon"].dtype == dtype
 
 
 def test_grib_to_latlon_multi_non_shared_grid():
@@ -105,6 +112,8 @@ def test_grib_to_points_single(index):
     assert isinstance(v, dict)
     assert isinstance(v["x"], np.ndarray)
     assert isinstance(v["y"], np.ndarray)
+    assert v["x"].dtype == np.float64
+    assert v["y"].dtype == np.float64
     check_array(
         v["x"],
         (84,),
@@ -129,17 +138,20 @@ def test_grib_to_points_unsupported_grid():
         f[0].to_points()
 
 
-def test_grib_to_points_multi():
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_grib_to_points_multi(dtype):
     f = from_source("file", earthkit_examples_file("test.grib"))
 
-    v_ref = f[0].to_points(flatten=True)
-    v = f.to_points(flatten=True)
+    v_ref = f[0].to_points(flatten=True, dtype=dtype)
+    v = f.to_points(flatten=True, dtype=dtype)
     assert isinstance(v, dict)
     assert v.keys() == v_ref.keys()
 
     assert isinstance(v, dict)
     assert np.allclose(v["x"], v_ref["x"])
     assert np.allclose(v["y"], v_ref["y"])
+    assert v["x"].dtype == dtype
+    assert v["y"].dtype == dtype
 
 
 def test_grib_to_points_multi_non_shared_grid():

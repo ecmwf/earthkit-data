@@ -24,25 +24,25 @@ class GribFieldGeography(Geography):
     def __init__(self, metadata):
         self.metadata = metadata
 
-    def latitudes(self):
+    def latitudes(self, dtype=None):
         r"""Return the latitudes of the field.
 
         Returns
         -------
         ndarray
         """
-        return self.metadata._handle.get_latitudes()
+        return self.metadata._handle.get_latitudes(dtype=dtype)
 
-    def longitudes(self):
+    def longitudes(self, dtype=None):
         r"""Return the longitudes of the field.
 
         Returns
         -------
         ndarray
         """
-        return self.metadata._handle.get_longitudes()
+        return self.metadata._handle.get_longitudes(dtype=dtype)
 
-    def x(self):
+    def x(self, dtype=None):
         r"""Return the x coordinates in the field's original CRS.
 
         Returns
@@ -51,9 +51,9 @@ class GribFieldGeography(Geography):
         """
         grid_type = self.metadata.get("gridType", None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            return self.longitudes()
+            return self.longitudes(dtype=dtype)
 
-    def y(self):
+    def y(self, dtype=None):
         r"""Return the y coordinates in the field's original CRS.
 
         Returns
@@ -62,7 +62,7 @@ class GribFieldGeography(Geography):
         """
         grid_type = self.metadata.get("gridType", None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            return self.latitudes()
+            return self.latitudes(dtype=dtype)
 
     def shape(self):
         r"""Get the shape of the field.

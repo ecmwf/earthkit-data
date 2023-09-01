@@ -33,6 +33,60 @@ def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
+class GribCodesFloatArrayAccessor:
+    HAS_FLOAT_SUPPORT = None
+    KEY = None
+
+    def __init__(self):
+        if GribCodesFloatArrayAccessor.HAS_FLOAT_SUPPORT is None:
+            GribCodesFloatArrayAccessor.HAS_FLOAT_SUPPORT = hasattr(
+                eccodes, "codes_get_float_array"
+            )
+
+    def get(self, handle, dtype=None):
+        if dtype is np.float32 and self.HAS_FLOAT_SUPPORT:
+            return eccodes.codes_get_array(handle, self.KEY, ktype=dtype)
+        else:
+            return eccodes.codes_get_array(handle, self.KEY)
+
+
+class GribCodesValueAccessor(GribCodesFloatArrayAccessor):
+    def __init__(self):
+        super().__init__()
+        self.KEY = "values"
+
+
+class GribCodesLatitudeAccessor(GribCodesFloatArrayAccessor):
+    def __init__(self):
+        super().__init__()
+        self.KEY = "latitudes"
+
+    def get(self, handle, dtype=None):
+        v = eccodes.codes_get_array(handle, self.KEY)
+        if dtype is not None:
+            return v.astype(dtype)
+        else:
+            return v
+
+
+class GribCodesLongitudeAccessor(GribCodesFloatArrayAccessor):
+    def __init__(self):
+        super().__init__()
+        self.KEY = "longitudes"
+
+    def get(self, handle, dtype=None):
+        v = eccodes.codes_get_array(handle, self.KEY)
+        if dtype is not None:
+            return v.astype(dtype)
+        else:
+            return v
+
+
+VALUE_ACCESSOR = GribCodesValueAccessor()
+LATITUDE_ACCESSOR = GribCodesLatitudeAccessor()
+LONGITUDE_ACCESSOR = GribCodesLongitudeAccessor()
+
+
 class GribCodesMessagePositionIndex(CodesMessagePositionIndex):
     # This does not belong here, should be in the C library
     def _get_message_positions(self, path):
@@ -153,18 +207,18 @@ class GribCodesHandle(CodesHandle):
 
     # TODO: once missing value handling is implemented in the base class this method
     # can be removed
-    def get_values(self):
+    def get_values(self, dtype=None):
         eccodes.codes_set(self._handle, "missingValue", CodesHandle.MISSING_VALUE)
-        vals = eccodes.codes_get_values(self._handle)
+        vals = VALUE_ACCESSOR.get(self._handle, dtype=dtype)
         if self.get_long("bitmapPresent"):
             vals[vals == CodesHandle.MISSING_VALUE] = np.nan
         return vals
 
-    def get_latitudes(self):
-        return self.get("latitudes")
+    def get_latitudes(self, dtype=None):
+        return LATITUDE_ACCESSOR.get(self._handle, dtype=dtype)
 
-    def get_longitudes(self):
-        return self.get("longitudes")
+    def get_longitudes(self, dtype=None):
+        return LONGITUDE_ACCESSOR.get(self._handle, dtype=dtype)
 
     def get_data_points(self):
         return eccodes.codes_grib_get_data(self._handle)
@@ -214,10 +268,13 @@ class GribField(Field):
             self._handle = GribCodesReader.from_cache(self.path).at_offset(self._offset)
         return self._handle
 
-    @property
-    def values(self):
-        r"""ndarray: Gets the values stored in the GRIB field as a 1D ndarray."""
-        return self.handle.get_values()
+    def _values(self, dtype=None):
+        return self.handle.get_values(dtype=dtype)
+
+    # @property
+    # def values(self):
+    #     r"""ndarray: Gets the values stored in the GRIB field as a 1D ndarray."""
+    #     return self.handle.get_values()
 
     @property
     def offset(self):
