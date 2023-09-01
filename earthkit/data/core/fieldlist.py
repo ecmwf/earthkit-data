@@ -28,8 +28,10 @@ class Field(Base):
 
         Parameters
         ----------
-        dtype: str or numpy.dtype
-            Typecode or data-type to which the array is cast.
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the array. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is
+            ``np.float64``.
 
         Returns
         -------
@@ -63,8 +65,9 @@ class Field(Base):
         flatten: bool
             When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
             :obj:`shape` is returned.
-        dtype: str or numpy.dtype
-            Typecode or data-type to which the array is cast.
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the array. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is ``np.float64``.
 
         Returns
         -------
@@ -91,8 +94,10 @@ class Field(Base):
         flatten: bool
             When it is True a flat ndarray per key is returned. Otherwise an ndarray with the field's
             :obj:`shape` is returned for each key.
-        dtype: str or numpy.dtype
-            Typecode or data-type to which the arrays are cast.
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the arrays. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is ``np.float64``.
+
 
         Returns
         -------
@@ -164,8 +169,10 @@ class Field(Base):
         flatten: bool
             When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
             :obj:`shape` are returned.
-        dtype: str or numpy.dtype
-            Typecode or data-type to which the arrays are cast.
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the arrays. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is
+            ``np.float64``.
 
         Returns
         -------
@@ -207,8 +214,10 @@ class Field(Base):
         flatten: bool
             When it is True 1D ndarrays are returned. Otherwise ndarrays with the field's
             :obj:`shape` are returned.
-        dtype: str or numpy.dtype
-            Typecode or data-type to which the arrays are cast.
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the arrays. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is
+            ``np.float64``.
 
         Returns
         -------
@@ -567,7 +576,7 @@ class FieldList(Index):
         -------
         dict
             Unique, sorted metadata values from all the
-            :obj:`GribField <data.readers.grib.codes.GribField>`\ s.
+            :obj:`Field`\ s.
 
         See Also
         --------
@@ -613,7 +622,7 @@ class FieldList(Index):
         -------
         list
             Unique, sorted values of ``key`` from all the
-            :obj:`GribField <data.readers.grib.codes.GribField>`\ s.
+            :obj:`Field`\ s.
 
         See Also
         --------
@@ -696,8 +705,10 @@ class FieldList(Index):
         flatten: bool
             When it is True the "lat", "lon" arrays and the "value" arrays per field
             will all be flattened. Otherwise they will preserve the field's :obj:`shape`.
-        dtype: str or numpy.dtype
-            Typecode or data-type to which the arrays are cast.
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the arrays. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is
+            ``np.float64``.
 
         Returns
         -------
@@ -1002,7 +1013,7 @@ class FieldList(Index):
         ----------
         **kwargs: dict, optional
             Keyword arguments passed to
-            :obj:`GribField.to_points() <data.readers.grib.codes.GribField.to_points>`
+            :obj:`Field.to_points() <data.core.fieldlist.Field.to_points>`
 
         Returns
         -------
@@ -1029,7 +1040,7 @@ class FieldList(Index):
         ----------
         **kwargs: dict, optional
             Keyword arguments passed to
-            :obj:`GribField.to_latlon() <data.readers.grib.codes.GribField.to_latlon>`
+            :meth:`Field.to_latlon() <data.core.fieldlist.Field.to_latlon>`
 
         Returns
         -------
@@ -1119,7 +1130,7 @@ class FieldList(Index):
         -------
         list
             List with one :obj:`BoundingBox <data.utils.bbox.BoundingBox>` per
-            :obj:`GribField <data.readers.grib.codes.GribField>`
+            :obj:`Field`
         """
         return [s.bounding_box() for s in self]
 

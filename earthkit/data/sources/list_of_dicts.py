@@ -99,20 +99,28 @@ class VirtualGribMetadata(RawMetadata):
         return []
 
     def latitudes(self, dtype=None):
-        return self.get("latitudes")
+        v = self.get("latitudes")
+        if dtype is None:
+            return v
+        else:
+            return v.astype(dtype)
 
     def longitudes(self, dtype=None):
-        return self.get("longitudes")
+        v = self.get("longitudes")
+        if dtype is None:
+            return v
+        else:
+            return v.astype(dtype)
 
     def x(self, dtype=None):
         grid_type = self.get("gridType", None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            return self.longitudes()
+            return self.longitudes(dtype=dtype)
 
     def y(self, dtype=None):
         grid_type = self.get("gridType", None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            return self.latitudes()
+            return self.latitudes(dtype=dtype)
 
     def _unique_grid_id(self):
         return self.get("md5GridSection", None)
@@ -157,7 +165,11 @@ class VirtualGribField(Field):
         super().__init__(metadata=VirtualGribMetadata(d))
 
     def _values(self, dtype=None):
-        return self._metadata["values"]
+        v = self._metadata["values"]
+        if dtype is None:
+            return v
+        else:
+            return v.astype(dtype)
 
     def _make_metadata(self):
         pass

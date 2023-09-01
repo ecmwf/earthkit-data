@@ -18,6 +18,13 @@ class Geography(metaclass=ABCMeta):
     def latitudes(self, dtype=None):
         r"""Return the latitudes.
 
+        Parameters
+        ----------
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the array. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is
+            ``np.float64``.
+
         Returns
         -------
         ndarray
@@ -27,6 +34,13 @@ class Geography(metaclass=ABCMeta):
     @abstractmethod
     def longitudes(self, dtype=None):
         r"""Return the longitudes.
+
+        Parameters
+        ----------
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the array. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is
+            ``np.float64``.
 
         Returns
         -------
@@ -38,6 +52,13 @@ class Geography(metaclass=ABCMeta):
     def x(self, dtype=None):
         r"""Return the x coordinates in the original CRS.
 
+        Parameters
+        ----------
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the array. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is
+            ``np.float64``.
+
         Returns
         -------
         ndarray
@@ -47,6 +68,13 @@ class Geography(metaclass=ABCMeta):
     @abstractmethod
     def y(self, dtype=None):
         r"""Return the y coordinates in the original CRS.
+
+        Parameters
+        ----------
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the array. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is
+            ``np.float64``.
 
         Returns
         -------
