@@ -45,6 +45,9 @@ def test_dataarray_wrapper():
     assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
 
 
-def test_inbuilt_xarray_method():
+def test_inbuilt_xarray_methods():
     _wrapper = from_object(TEST_DA)
     assert _wrapper.mean().equals(TEST_DA.mean())
+
+    _wrapper = from_object(TEST_DS)
+    assert _wrapper.mean().equals(TEST_DS.mean())

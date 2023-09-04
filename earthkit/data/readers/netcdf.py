@@ -339,7 +339,11 @@ class XArrayFieldListCore(FieldList):
         # populate with in-built xarray methods:
         for method in dir(ds):
             if not method.startswith("_") and method not in dir(self):
-                setattr(self.__class__, method, classmethod(getattr(ds, method)))
+                try:
+                    setattr(self.__class__, method, classmethod(getattr(ds, method)))
+                except Exception:
+                    # Ignore incompatible methods
+                    pass
 
     @property
     def fields(self):
