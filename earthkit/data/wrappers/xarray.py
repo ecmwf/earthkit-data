@@ -20,6 +20,10 @@ class XArrayDataArrayWrapper(Wrapper):
 
     def __init__(self, data):
         self.data = data
+        # populate with in-built xarray methods:
+        for method in dir(data):
+            if not method.startswith("_") and method not in dir(self):
+                setattr(self.__class__, method, classmethod(getattr(data, method)))
 
     # def axis(self, axis):
     #     """
