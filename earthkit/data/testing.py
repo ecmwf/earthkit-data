@@ -94,7 +94,7 @@ try:
     fdb_home = os.environ.get("FDB_HOME", None)
     NO_FDB = fdb_home is None
 except Exception:
-    NO_EOD = True
+    NO_FDB = True
 
 
 def MISSING(*modules):
