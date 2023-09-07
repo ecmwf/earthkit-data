@@ -53,26 +53,29 @@ class GribCodesFloatArrayAccessor:
 
 class GribCodesValueAccessor(GribCodesFloatArrayAccessor):
     KEY = "values"
+
     def __init__(self):
         super().__init__()
-       
+
     def get(self, handle, dtype=None):
         if dtype is np.float32 and self.HAS_FLOAT_SUPPORT:
             return eccodes.codes_get_array(handle, self.KEY, ktype=dtype)
         else:
             return super().get(handle, dtype=dtype)
 
+
 class GribCodesLatitudeAccessor(GribCodesFloatArrayAccessor):
     KEY = "latitudes"
+
     def __init__(self):
         super().__init__()
 
 
 class GribCodesLongitudeAccessor(GribCodesFloatArrayAccessor):
     KEY = "longitudes"
+
     def __init__(self):
         super().__init__()
-
 
 
 VALUE_ACCESSOR = GribCodesValueAccessor()
