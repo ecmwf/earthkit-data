@@ -26,9 +26,11 @@ class NumpyField(Field):
     def _make_metadata(self):
         pass
 
-    @property
-    def values(self):
-        return self._array
+    def _values(self, dtype=None):
+        if dtype is None:
+            return self._array
+        else:
+            return self._array.astype(dtype)
 
     def write(self, f):
         from earthkit.data.writers import write
