@@ -127,8 +127,6 @@ def test_numpy_list_grib_write_append():
 
     md = ds[0].metadata()
     md1 = md.override(shortName="msl")
-
-    md = ds[0].metadata()
     md2 = md.override(shortName="2d")
 
     r1 = FieldList.from_numpy(v1, md1)
@@ -138,11 +136,14 @@ def test_numpy_list_grib_write_append():
     tmp = temp_file()
     r1.save(tmp.path)
     assert os.path.exists(tmp.path)
+    r_tmp = from_source("file", tmp.path)
+    assert len(r_tmp) == 1
+    assert r_tmp.metadata("shortName") == ["msl"]
+    r_tmp = None
+
     r2.save(tmp.path, append=True)
     assert os.path.exists(tmp.path)
-
     r_tmp = from_source("file", tmp.path)
-
     assert len(r_tmp) == 2
     assert r_tmp.metadata("shortName") == ["msl", "2d"]
 
