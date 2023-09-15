@@ -1144,16 +1144,19 @@ class FieldList(Index):
                 )
         return False
 
-    def save(self, filename):
-        r"""Write all the fields into a file. The target file will be overwritten if
-        already exists.
+    def save(self, filename, append=False):
+        r"""Write all the fields into a file.
 
         Parameters
         ----------
         filename: str
             The target file path.
+        append: bool
+            When it is true append data to the target file. Otherwise
+            the target file be overwritten if already exists.
         """
-        with open(filename, "wb") as f:
+        flag = "wb" if not append else "ab"
+        with open(filename, flag) as f:
             self.write(f)
 
     def write(self, f):

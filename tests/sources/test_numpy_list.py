@@ -116,6 +116,37 @@ def test_numpy_list_grib_write_missing():
     assert not np.isnan(r_tmp[0].values[1])
 
 
+def test_numpy_list_grib_write_append():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    assert ds[0].metadata("shortName") == "2t"
+
+    v = ds[0].values
+    v1 = v + 1
+    v2 = v + 2
+
+    md = ds[0].metadata()
+    md1 = md.override(shortName="msl")
+
+    md = ds[0].metadata()
+    md2 = md.override(shortName="2d")
+
+    r1 = FieldList.from_numpy(v1, md1)
+    r2 = FieldList.from_numpy(v2, md2)
+
+    # save to disk
+    tmp = temp_file()
+    r1.save(tmp.path)
+    assert os.path.exists(tmp.path)
+    r2.save(tmp.path, append=True)
+    assert os.path.exists(tmp.path)
+
+    r_tmp = from_source("file", tmp.path)
+
+    assert len(r_tmp) == 2
+    assert r_tmp.metadata("shortName") == ["msl", "2d"]
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
