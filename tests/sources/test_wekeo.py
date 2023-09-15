@@ -32,8 +32,7 @@ def test_wekeo_download():
     s = from_source(
         "wekeo",
         "EO:CLMS:DAT:CGLS_GLOBAL_NDVI300_V1_333M",
-        request=rq,
-        format='netcdf'
+        request=rq
     )
     assert len(s) == 1
 
