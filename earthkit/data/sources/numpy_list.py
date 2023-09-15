@@ -38,7 +38,7 @@ class NumpyField(Field):
         write(f, self.values, self._metadata, check_nans=True)
 
 
-class NumpyFieldList(FieldList):
+class NumpyFieldListCore(FieldList):
     def __init__(self, array, metadata, *args, **kwargs):
         self._array = array
         self._metadata = metadata
@@ -68,12 +68,6 @@ class NumpyFieldList(FieldList):
 
         super().__init__(*args, **kwargs)
 
-    def __getitem__(self, n):
-        return NumpyField(self._array[n], self._metadata[n])
-
-    def __len__(self):
-        return self._array.shape[0]
-
     def _shape_match(self, shape1, shape2):
         if shape1 == shape2:
             return True
@@ -81,12 +75,29 @@ class NumpyFieldList(FieldList):
             return True
         return False
 
+    @classmethod
+    def new_mask_index(self, *args, **kwargs):
+        return NumpyMaskFieldList(*args, **kwargs)
 
-class NumpyMaskFieldList(NumpyFieldList, MaskIndex):
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(_, NumpyFieldListCore) for _ in sources)
+        return NumpyMultiFieldList(sources)
+
+
+class NumpyFieldList(NumpyFieldListCore):
+    def __getitem__(self, n):
+        return NumpyField(self._array[n], self._metadata[n])
+
+    def __len__(self):
+        return self._array.shape[0]
+
+
+class NumpyMaskFieldList(NumpyFieldListCore, MaskIndex):
     def __init__(self, *args, **kwargs):
         MaskIndex.__init__(self, *args, **kwargs)
 
 
-class NumpyMultiFieldList(NumpyFieldList, MultiIndex):
+class NumpyMultiFieldList(NumpyFieldListCore, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
