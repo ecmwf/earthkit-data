@@ -7,11 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-import hda
 import os
-from hda.api import DataOrderRequest
 
+import hda
 import yaml
+from hda.api import DataOrderRequest
 
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.decorators import normalize
@@ -61,15 +61,19 @@ class ApiClient(hda.Client):
         super().__init__(self, *args, **kwargs)
 
     def retrieve(self, name, request, target=None):
-        matches = self.search(request['request'])
+        matches = self.search(request["request"])
         out = []
         for result in matches.results:
             query = {"jobId": matches.job_id, "uri": result["url"]}
             url = DataOrderRequest(self).run(query)
             out.append(
-                os.path.abspath(self.stream(result.get("filename"), result.get("size"), target, *url))
+                os.path.abspath(
+                    self.stream(
+                        result.get("filename"), result.get("size"), target, *url
+                    )
+                )
             )
-        print(out, '>' * 20)
+        print(out, ">" * 20)
         return out
 
     def download(self, download_dir: str = "."):

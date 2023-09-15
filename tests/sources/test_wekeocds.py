@@ -28,12 +28,12 @@ def test_wekeo_grib_1():
         month=["12"],
         day=["12"],
         time=["12:00"],
-        format="grib"
+        format="grib",
     )
     assert len(s) == 2
 
 
-#@pytest.mark.long_test
+# @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_HDA, reason="No access to CDS")
 def test_wekeo_grib_2():
@@ -42,7 +42,7 @@ def test_wekeo_grib_2():
         "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS",
         variable=["2m_temperature", "mean_sea_level_pressure"],
         product_type=["reanalysis"],
-        #area=[50, -50, 20, 50],
+        # area=[50, -50, 20, 50],
         year=["2012"],
         month=["12"],
         day=["12"],
@@ -53,7 +53,7 @@ def test_wekeo_grib_2():
     assert len(s) == 2
 
 
-#@pytest.mark.long_test
+# @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_HDA, reason="No access to CDS")
 def test_wekeo_grib_3():
@@ -67,7 +67,7 @@ def test_wekeo_grib_3():
         month=["12"],
         day=["12", "13", "14", "15"],
         time=["12:00"],
-        format="grib"
+        format="grib",
     )
     assert len(s) == 8
 

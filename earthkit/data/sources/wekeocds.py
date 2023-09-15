@@ -7,11 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-import hda
 import os
-from hda.api import DataOrderRequest
 
+import hda
 import yaml
+from hda.api import DataOrderRequest
 
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.decorators import normalize
@@ -71,11 +71,8 @@ class ApiClient(hda.Client):
                 for _name, _value in request.items()
             ],
         }
-        if 'area' in request:
-            rq.update({"boundingBoxValues": {'name': 'area',
-                                             "bbox": request['area']
-                                             }
-                       })
+        if "area" in request:
+            rq.update({"boundingBoxValues": {"name": "area", "bbox": request["area"]}})
         matches = self.search(rq)
         out = []
         for result in matches.results:
