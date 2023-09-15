@@ -30,7 +30,20 @@ rq = {
 @pytest.mark.download
 @pytest.mark.skipif(NO_HDA, reason="No access to WEKEO")
 def test_wekeo_download():
-    s = from_source("wekeo", "EO:CLMS:DAT:CGLS_GLOBAL_NDVI300_V1_333M", request=rq)
+    s = from_source(
+        "wekeo",
+        "EO:CLMS:DAT:CGLS_GLOBAL_NDVI300_V1_333M",
+        request={
+            "datasetId": "EO:CLMS:DAT:CGLS_GLOBAL_NDVI300_V1_333M",
+            "dateRangeSelectValues": [
+                {
+                    "name": "dtrange",
+                    "start": "2014-01-01T00:00:00.000Z",
+                    "end": "2014-01-01T23:59:59.999Z",
+                }
+            ],
+        },
+    )
     assert len(s) == 1
 
 
