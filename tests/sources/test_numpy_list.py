@@ -85,6 +85,37 @@ def test_numpy_list_grib_multi_field():
         assert f.metadata("name") == "2 metre dewpoint temperature", f"name {i}"
 
 
+def test_numpy_list_grib_write_missing():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    assert ds[0].metadata("shortName") == "2t"
+
+    v = ds[0].values
+    v1 = np.array(v)
+    assert not np.isnan(v1[0])
+    assert not np.isnan(v1[1])
+
+    v1[0] = np.nan
+    assert np.isnan(v1[0])
+    assert not np.isnan(v1[1])
+
+    md = ds[0].metadata()
+    md1 = md.override(shortName="msl")
+    r = FieldList.from_numpy(v1, md1)
+
+    assert np.isnan(r[0].values[0])
+    assert not np.isnan(r[0].values[1])
+
+    # save to disk
+    tmp = temp_file()
+    r.save(tmp.path)
+    assert os.path.exists(tmp.path)
+    r_tmp = from_source("file", tmp.path)
+
+    assert np.isnan(r_tmp[0].values[0])
+    assert not np.isnan(r_tmp[0].values[1])
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
