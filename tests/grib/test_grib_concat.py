@@ -9,7 +9,10 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
+
 from earthkit.data import from_source
+from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file
 
 
@@ -21,6 +24,15 @@ def test_grib_concat():
     assert len(ds) == 8
     md = ds1.metadata("param") + ds2.metadata("param")
     assert ds.metadata("param") == md
+
+    # save to disk
+    tmp = temp_file()
+    ds.save(tmp.path)
+    assert os.path.exists(tmp.path)
+    r_tmp = from_source("file", tmp.path)
+    assert len(r_tmp) == 8
+    assert r_tmp.metadata("shortName") == ["2t", "msl", "t", "u", "v", "t", "u", "v"]
+    r_tmp = None
 
 
 if __name__ == "__main__":

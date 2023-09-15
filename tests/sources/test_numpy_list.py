@@ -148,6 +148,42 @@ def test_numpy_list_grib_write_append():
     assert r_tmp.metadata("shortName") == ["msl", "2d"]
 
 
+def test_numpy_list_grib_concat():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    assert ds[0].metadata("shortName") == "2t"
+
+    v = ds[0].values
+    v1 = v + 1
+    v2 = v + 2
+
+    md = ds[0].metadata()
+    md1 = md.override(shortName="msl")
+    md2 = md.override(shortName="2d")
+
+    r1 = FieldList.from_numpy(v1, md1)
+    r2 = FieldList.from_numpy(v2, md2)
+
+    r = r1 + r2
+    assert len(r) == 2
+    assert r.metadata("shortName") == ["msl", "2d"]
+
+    f1 = r.sel(shortName="msl")
+    assert len(f1) == 1
+    assert f1.metadata("shortName") == ["msl"]
+    assert np.allclose(f1.values, v1)
+
+    # save to disk
+    tmp = temp_file()
+    r.save(tmp.path)
+    assert os.path.exists(tmp.path)
+    r_tmp = from_source("file", tmp.path)
+    assert len(r_tmp) == 2
+    assert r_tmp.metadata("shortName") == ["msl", "2d"]
+    assert np.allclose(v1, r[0].values)
+    assert np.allclose(v2, r[1].values)
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
