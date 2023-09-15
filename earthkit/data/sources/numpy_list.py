@@ -35,7 +35,7 @@ class NumpyField(Field):
     def write(self, f):
         from earthkit.data.writers import write
 
-        write(f, self.values, self._metadata, check_nans=False)
+        write(f, self.values, self._metadata, check_nans=True)
 
 
 class NumpyFieldList(FieldList):
