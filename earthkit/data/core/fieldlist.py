@@ -537,6 +537,15 @@ class FieldList(Index):
 
         return NumpyFieldList(array, metadata)
 
+    def ignore(self):
+        # When the concrete type is Fieldlist we assume the object was
+        # created with Fieldlist() i.e. it is empty. We ignore it from
+        # all the merge operations.
+        if type(self) is FieldList:
+            return True
+        else:
+            return False
+
     @cached_method
     def _default_index_keys(self):
         if len(self) > 0:
