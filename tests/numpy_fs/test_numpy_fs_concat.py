@@ -9,7 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import logging
 import os
 
 import numpy as np
@@ -19,8 +18,6 @@ from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file
-
-LOG = logging.getLogger(__name__)
 
 
 def _check_save_to_disk(ds, len_ref, meta_ref):
