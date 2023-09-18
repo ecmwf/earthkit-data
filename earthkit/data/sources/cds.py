@@ -110,12 +110,13 @@ class CdsRetriever(FileSource):
     @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
     def requests(self, **kwargs):
-        # TODO: move these 5 lines into @normalize
-        if "year" in kwargs:
-            if "month" not in kwargs:
-                kwargs["month"] = [f"{i+1:02}" for i in range(0, 12)]
-            if "day" not in kwargs:
-                kwargs["day"] = [f"{i+1:02}" for i in range(0, 31)]
+        # # TODO: This section is incompatible with the selection limits on the CDS,
+        # #       e.g. satellite-albedo data is not downloadable with the following uncommented.
+        # if "year" in kwargs:
+        #     if "month" not in kwargs:
+        #         kwargs["month"] = [f"{i+1:02}" for i in range(0, 12)]
+        #     if "day" not in kwargs:
+        #         kwargs["day"] = [f"{i+1:02}" for i in range(0, 31)]
 
         split_on = kwargs.pop("split_on", None)
         if split_on is None or not isinstance(kwargs.get(split_on), (list, tuple)):
