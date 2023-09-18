@@ -60,9 +60,11 @@ jobs:
     - name: Run tests
       run: |
         make unit-tests
-    - name: Run tests without eccodes
+    - name: Remove eccodes
       run: |
         micromamba remove eccodes
+    - name: Run tests without eccodes
+      run: |
         python -m pytest -v -m 'no_eccodes'
 
 
