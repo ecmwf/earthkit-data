@@ -33,17 +33,14 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
 
 
 @pytest.mark.no_eccodes
-def test_netcdf():
-    for s in from_source("file", earthkit_file("docs/examples/test.nc")):
-        assert s is not None
-
-
-@pytest.mark.no_eccodes
-def test_dummy_netcdf_reader_1():
+def test_netcdf_reader():
     ds = from_source("file", earthkit_file("docs/examples/test.nc"))
     # assert str(ds).startswith("NetCDFReader"), r
     assert len(ds) == 2
-    assert isinstance(ds[1], NetCDFField), ds
+    assert isinstance(ds[0], NetCDFField)
+    assert isinstance(ds[1], NetCDFField)
+    for f in from_source("file", earthkit_file("docs/examples/test.nc")):
+        assert isinstance(f, NetCDFField)
 
 
 @pytest.mark.parametrize("attribute", ["coordinates", "bounds", "grid_mapping"])
@@ -61,14 +58,12 @@ def test_dummy_netcdf_reader_2(attribute):
     s.bounding_box()
 
 
-@pytest.mark.no_eccodes
 def test_dummy_netcdf():
     s = from_source("dummy-source", kind="netcdf")
     ds = s.to_xarray()
     assert "lat" in ds.dims
 
 
-@pytest.mark.no_eccodes
 def test_dummy_netcdf_2():
     s = from_source(
         "dummy-source", kind="netcdf", dims=["lat", "lon", "time"], variables=["a", "b"]
@@ -77,7 +72,6 @@ def test_dummy_netcdf_2():
     assert "lat" in ds.dims
 
 
-@pytest.mark.no_eccodes
 def test_dummy_netcdf_3():
     s = from_source(
         "dummy-source",
@@ -89,7 +83,6 @@ def test_dummy_netcdf_3():
     assert "lat" in ds.dims
 
 
-@pytest.mark.no_eccodes
 def test_dummy_netcdf_4():
     s = from_source(
         "dummy-source",
@@ -104,7 +97,6 @@ def test_dummy_netcdf_4():
     assert "lat" in ds.dims
 
 
-@pytest.mark.no_eccodes
 @pytest.mark.long_test
 def test_netcdf_multi_cds():
     if not os.path.exists(os.path.expanduser("~/.cdsapirc")):
