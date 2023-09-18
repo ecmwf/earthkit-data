@@ -23,6 +23,7 @@ from earthkit.data.testing import (
     earthkit_file,
     earthkit_remote_test_data_file,
     earthkit_test_data_file,
+    NO_CDS,
 )
 
 
@@ -100,6 +101,8 @@ def test_dummy_netcdf_4():
 
 
 @pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 def test_netcdf_multi_cds():
     if not os.path.exists(os.path.expanduser("~/.cdsapirc")):
         pytest.skip("No ~/.cdsapirc")
@@ -222,6 +225,8 @@ def test_get_fields_missing_standard_name_attr_in_coord_array():
         assert len(fs) == 2
 
 
+@pytest.mark.long_test
+@pytest.mark.download
 def test_satellite_l2_data():
     ek_ch4_l2 = from_source(
         "url",
