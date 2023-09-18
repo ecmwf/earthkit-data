@@ -221,6 +221,23 @@ def test_get_fields_missing_standard_name_attr_in_coord_array():
         assert len(fs) == 2
 
 
+def test_satellite_l2_data():
+    # TODO: add more conditions to this test when it is clear what methods it should have
+    ek_ch4_l2 = from_source(
+        "cds",
+        "satellite-methane",
+        {
+            'processing_level': 'level_2',
+            'sensor_and_algorithm': 'tanso2_fts2_srfp',
+            'year': '2021',
+            'month': '01',
+            'day': '01',
+            'version': '2.0.0',
+        }
+    )
+    assert ek_ch4_l2 
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
