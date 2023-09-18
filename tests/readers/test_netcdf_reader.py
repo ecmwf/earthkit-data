@@ -227,15 +227,15 @@ def test_satellite_l2_data():
         "cds",
         "satellite-methane",
         {
-            'processing_level': 'level_2',
-            'sensor_and_algorithm': 'tanso2_fts2_srfp',
-            'year': '2021',
-            'month': '01',
-            'day': '01',
-            'version': '2.0.0',
-        }
+            "processing_level": "level_2",
+            "sensor_and_algorithm": "tanso2_fts2_srfp",
+            "year": "2021",
+            "month": "01",
+            "day": "01",
+            "version": "2.0.0",
+        },
     )
-    assert ek_ch4_l2 
+    ek_ch4_l2.to_xarray()
 
 
 if __name__ == "__main__":
