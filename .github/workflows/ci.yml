@@ -60,6 +60,12 @@ jobs:
     - name: Run tests
       run: |
         make unit-tests
+    - name: Run tests without eccodes
+      run: |
+        conda uninstall eccodes
+        python -m pip install --no-deps -e .
+        python -m pytest -vv -m 'no_eccodes'
+
 
   type-check:
     needs: [unit-tests]

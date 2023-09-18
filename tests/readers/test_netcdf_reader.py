@@ -32,11 +32,13 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
     assert np.isclose(v.mean(), meanv, eps)
 
 
+@pytest.mark.no_eccodes
 def test_netcdf():
     for s in from_source("file", earthkit_file("docs/examples/test.nc")):
-        s is not None
+        assert s is not None
 
 
+@pytest.mark.no_eccodes
 def test_dummy_netcdf_reader_1():
     ds = from_source("file", earthkit_file("docs/examples/test.nc"))
     # assert str(ds).startswith("NetCDFReader"), r
@@ -59,12 +61,14 @@ def test_dummy_netcdf_reader_2(attribute):
     s.bounding_box()
 
 
+@pytest.mark.no_eccodes
 def test_dummy_netcdf():
     s = from_source("dummy-source", kind="netcdf")
     ds = s.to_xarray()
     assert "lat" in ds.dims
 
 
+@pytest.mark.no_eccodes
 def test_dummy_netcdf_2():
     s = from_source(
         "dummy-source", kind="netcdf", dims=["lat", "lon", "time"], variables=["a", "b"]
@@ -73,6 +77,7 @@ def test_dummy_netcdf_2():
     assert "lat" in ds.dims
 
 
+@pytest.mark.no_eccodes
 def test_dummy_netcdf_3():
     s = from_source(
         "dummy-source",
@@ -84,6 +89,7 @@ def test_dummy_netcdf_3():
     assert "lat" in ds.dims
 
 
+@pytest.mark.no_eccodes
 def test_dummy_netcdf_4():
     s = from_source(
         "dummy-source",
@@ -98,6 +104,7 @@ def test_dummy_netcdf_4():
     assert "lat" in ds.dims
 
 
+@pytest.mark.no_eccodes
 @pytest.mark.long_test
 def test_netcdf_multi_cds():
     if not os.path.exists(os.path.expanduser("~/.cdsapirc")):
@@ -130,6 +137,7 @@ def test_netcdf_multi_cds():
     source.to_xarray()
 
 
+@pytest.mark.no_eccodes
 def test_netcdf_multi_sources():
     path = earthkit_test_data_file("era5_2t_1.nc")
     s1 = from_source("file", path)
@@ -167,6 +175,7 @@ def test_netcdf_multi_sources():
     s3.to_xarray()
 
 
+@pytest.mark.no_eccodes
 def test_netcdf_multi_files():
     ds = from_source(
         "file",
@@ -199,6 +208,7 @@ def test_netcdf_multi_files():
     ds.to_xarray()
 
 
+@pytest.mark.no_eccodes
 def test_get_fields_missing_standard_name_attr_in_coord_array():
     """test _get_fields() can handle a missing 'standard_name' attr in coordinate data arrays"""
 
