@@ -83,7 +83,7 @@ def test_cds_netcdf():
 
 @pytest.mark.long_test
 @pytest.mark.download
-# @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 def test_cds_netcdf_selection_limited():
     s = from_source(
         "cds",
