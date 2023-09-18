@@ -30,6 +30,42 @@ def _check_save_to_disk(ds, len_ref, meta_ref):
     r_tmp = None
 
 
+def _check_contents(ds, ds_input, md_full):
+    assert len(ds_input) in [2, 3]
+
+    assert len(ds) == len(md_full)
+    assert ds.metadata("param") == md_full
+
+    # check slice
+    r = ds[1]
+    assert r.metadata("param") == "msl"
+
+    r = ds[1:3]
+    assert len(r) == 2
+    assert r.metadata("param") == ["msl", "t"]
+    assert r[0].metadata("param") == "msl"
+    assert r[1].metadata("param") == "t"
+    assert np.allclose(r[0].values, ds_input[0][1].values)
+    assert np.allclose(r[1].values, ds_input[1][0].values)
+    with pytest.raises(ValueError):
+        _ = r.values
+
+    # check sel
+    r = ds.sel(shortName="msl")
+    assert len(r) == 1
+    assert r.metadata("shortName") == ["msl"]
+    assert r[0].metadata("param") == "msl"
+    assert np.allclose(r[0].values, ds_input[0][1].values)
+
+    if len(ds_input) == 3:
+        r = ds[1:13:4]
+        assert len(r) == 3
+        assert r.metadata("param") == ["msl", "t", "u"]
+        assert r[0].metadata("param") == "msl"
+        assert r[1].metadata("param") == "t"
+        assert r[2].metadata("param") == "u"
+
+
 def _prepare_ds(num):
     assert num in [1, 2, 3]
     files = ["test.grib", "test6.grib", "tuv_pl.grib"]
@@ -61,29 +97,16 @@ def test_numpy_list_grib_concat_2a(mode):
     else:
         ds = from_source("multi", ds1, ds2)
 
-    assert len(ds) == 8
-    assert ds.metadata("param") == md
-
-    f1 = ds.sel(shortName="msl")
-    assert len(f1) == 1
-    assert f1.metadata("shortName") == ["msl"]
-    assert np.allclose(f1[0].values, ds1[1].values)
-
+    _check_contents(ds, [ds1, ds2], md)
     _check_save_to_disk(ds, 8, md)
 
 
 def test_numpy_list_grib_concat_2b():
     ds1, ds2, md = _prepare_ds(2)
+    ds1_ori = ds1
     ds1 += ds2
 
-    assert len(ds1) == 8
-    assert ds1.metadata("param") == md
-
-    f1 = ds1.sel(shortName="msl")
-    assert len(f1) == 1
-    assert f1.metadata("shortName") == ["msl"]
-    assert np.allclose(f1[0].values, ds1[1].values)
-
+    _check_contents(ds1, [ds1_ori, ds2], md)
     _check_save_to_disk(ds1, 8, md)
 
 
@@ -98,8 +121,7 @@ def test_numpy_list_grib_concat_3a(mode):
         ds = from_source("multi", ds1, ds2)
         ds = from_source("multi", ds, ds3)
 
-    assert len(ds) == 26
-    assert ds.metadata("param") == md
+    _check_contents(ds, [ds1, ds2, ds3], md)
     _check_save_to_disk(ds, 26, md)
 
 
@@ -112,8 +134,7 @@ def test_numpy_list_grib_concat_3b(mode):
     else:
         ds = from_source("multi", ds1, ds2, ds3)
 
-    assert len(ds) == 26
-    assert ds.metadata("param") == md
+    _check_contents(ds, [ds1, ds2, ds3], md)
     _check_save_to_disk(ds, 26, md)
 
 
@@ -141,8 +162,8 @@ def test_numpy_list_grib_from_empty_3():
     ds_e = FieldList()
     ds1, ds2, md = _prepare_ds(2)
     ds = ds_e + ds1 + ds2
-    assert len(ds) == 8
-    assert ds.metadata("param") == md
+
+    _check_contents(ds, [ds1, ds2], md)
     _check_save_to_disk(ds, 8, md)
 
 
@@ -160,8 +181,8 @@ def test_numpy_list_grib_from_empty_5():
     ds = FieldList()
     ds1, ds2, md = _prepare_ds(2)
     ds += ds1 + ds2
-    assert len(ds) == 8
-    assert ds.metadata("param") == md
+
+    _check_contents(ds, [ds1, ds2], md)
     _check_save_to_disk(ds, 8, md)
 
 
