@@ -19,11 +19,11 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.readers.netcdf import NetCDFField
 from earthkit.data.testing import (
+    NO_CDS,
     earthkit_examples_file,
     earthkit_file,
     earthkit_remote_test_data_file,
     earthkit_test_data_file,
-    NO_CDS,
 )
 
 
