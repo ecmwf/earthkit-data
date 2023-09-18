@@ -40,9 +40,28 @@ def test_grib_concat(mode):
     else:
         ds = from_source("multi", ds1, ds2)
 
+    # check metadata
     assert len(ds) == 8
     md = ds1.metadata("param") + ds2.metadata("param")
     assert ds.metadata("param") == md
+
+    # check slice
+    r = ds[1]
+    assert r.metadata("param") == "msl"
+
+    r = ds[1:3]
+    assert len(r) == 2
+    assert r.metadata("param") == ["msl", "t"]
+    assert r[0].metadata("param") == "msl"
+    assert r[1].metadata("param") == "t"
+
+    # check sel
+    r = ds.sel(param="2t")
+    assert len(r) == 1
+    assert r.metadata("param") == ["2t"]
+    assert r[0].metadata("param") == "2t"
+
+    # check saving to disk
     _check_save_to_disk(ds, 8, md)
 
 
