@@ -62,7 +62,7 @@ jobs:
         make unit-tests
     - name: Run tests without eccodes
       run: |
-        conda uninstall eccodes-python
+        conda remove eccodes-python
         python -m pytest -vv -m 'no_eccodes'
 
 
