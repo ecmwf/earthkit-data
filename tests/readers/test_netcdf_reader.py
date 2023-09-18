@@ -22,6 +22,7 @@ from earthkit.data.testing import (
     earthkit_examples_file,
     earthkit_file,
     earthkit_test_data_file,
+    earthkit_remote_test_data_file,
 )
 
 
@@ -222,21 +223,24 @@ def test_get_fields_missing_standard_name_attr_in_coord_array():
 
 
 def test_satellite_l2_data():
-    # TODO: add more conditions to this test when it is clear what methods it should have
     ek_ch4_l2 = from_source(
-        "cds",
-        "satellite-methane",
-        {
-            "processing_level": "level_2",
-            "sensor_and_algorithm": "tanso2_fts2_srfp",
-            "year": "2021",
-            "month": "01",
-            "day": "01",
-            "version": "2.0.0",
-        },
+        "url", earthkit_remote_test_data_file(
+            "test-data/20210101-C3S-L2_GHG-GHG_PRODUCTS-TANSO2-GOSAT2-SRFP-DAILY-v2.0.0.nc"
+        )
+        # Data from this CDS request:
+        # "cds",
+        # "satellite-methane",
+        # {
+        #     "processing_level": "level_2",
+        #     "sensor_and_algorithm": "tanso2_fts2_srfp",
+        #     "year": "2021",
+        #     "month": "01",
+        #     "day": "01",
+        #     "version": "2.0.0",
+        # },
     )
+    # TODO: add more conditions to this test when it is clear what methods it should have
     ek_ch4_l2.to_xarray()
-
 
 if __name__ == "__main__":
     from earthkit.data.testing import main
