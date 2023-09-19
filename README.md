@@ -1,6 +1,6 @@
 # earthkit-data
 
-!\[earthkit-data\](docs/\_static/earthkit-data.png | width=200)
+<img src="docs/_static/earthkit-data.png" width="120">
 
 [![PyPI version fury.io](https://badge.fury.io/py/earthkit-data.svg)](https://pypi.python.org/pypi/earthkit-data/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-data.svg)](https://pypi.python.org/pypi/earthkit-data/)
