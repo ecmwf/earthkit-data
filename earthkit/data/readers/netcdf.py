@@ -624,7 +624,6 @@ class NetCDFMultiFieldList(NetCDFFieldList, MultiIndex):
             self._not_implemented()
 
 
-
 class NetCDFFieldListReader(NetCDFFieldListInOneFile, Reader):
     def __init__(self, source, path):
         Reader.__init__(self, source, path)
