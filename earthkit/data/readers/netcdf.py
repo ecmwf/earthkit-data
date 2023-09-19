@@ -604,6 +604,10 @@ class NetCDFMaskFieldList(NetCDFFieldList, MaskIndex):
     def __init__(self, *args, **kwargs):
         MaskIndex.__init__(self, *args, **kwargs)
 
+    # TODO: Implement this, but discussion required
+    def write(self, *args, **kwargs):
+        self._not_implemented()
+
 
 class NetCDFMultiFieldList(NetCDFFieldList, MultiIndex):
     def __init__(self, *args, **kwargs):
