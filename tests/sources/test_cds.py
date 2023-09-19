@@ -34,6 +34,26 @@ def test_cds_grib_1():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+def test_cds_grib_1_save():
+    s = from_source(
+        "cds",
+        "reanalysis-era5-single-levels",
+        variable=["2t", "msl"],
+        product_type="reanalysis",
+        area=[50, -50, 20, 50],
+        date="2012-12-12",
+        time="12:00",
+    )
+    # Save with user defined filename:
+    s.save("temp.grib")
+    # Save with CDS generated filename:
+    s.save()
+    
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 def test_cds_grib_2():
     s = from_source(
         "cds",
@@ -80,6 +100,25 @@ def test_cds_netcdf():
     )
     assert len(s) == 2
 
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+def test_cds_netcdf_save():
+    s = from_source(
+        "cds",
+        "reanalysis-era5-single-levels",
+        variable=["2t", "msl"],
+        product_type="reanalysis",
+        area=[50, -50, 20, 50],
+        date="2012-12-12",
+        time="12:00",
+        format="netcdf",
+    )
+    # Save with user defined filename:
+    s.save("temp.nc")
+    # Save with CDS generated filename:
+    s.save()
 
 if __name__ == "__main__":
     from earthkit.data.testing import main
