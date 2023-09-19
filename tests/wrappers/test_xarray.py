@@ -12,29 +12,42 @@
 
 import logging
 
+import numpy as np
+import xarray as xr
+
 from earthkit.data import from_object, wrappers
 from earthkit.data.wrappers import xarray as xr_wrapper
 
 LOG = logging.getLogger(__name__)
 
 
-def test_dataset_wrapper():
-    import xarray as xr
+TEST_DA = xr.DataArray(
+    np.arange(9).reshape(3, 3), name="test", coords={"x": [1, 2, 3], "y": [1, 2, 3]}
+)
+TEST_DS = TEST_DA.to_dataset()
 
-    _wrapper = xr_wrapper.wrapper(xr.Dataset())
+
+def test_dataset_wrapper():
+    _wrapper = xr_wrapper.wrapper(TEST_DS)
     assert isinstance(_wrapper, xr_wrapper.XArrayDatasetWrapper)
-    _wrapper = wrappers.get_wrapper(xr.Dataset())
+    _wrapper = wrappers.get_wrapper(TEST_DS)
     assert isinstance(_wrapper, xr_wrapper.XArrayDatasetWrapper)
-    _wrapper = from_object(xr.Dataset())
+    _wrapper = from_object(TEST_DS)
     assert isinstance(_wrapper, xr_wrapper.XArrayDatasetWrapper)
 
 
 def test_dataarray_wrapper():
-    import xarray as xr
+    _wrapper = xr_wrapper.wrapper(TEST_DA)
+    assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
+    _wrapper = wrappers.get_wrapper(TEST_DA)
+    assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
+    _wrapper = from_object(TEST_DA)
+    assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
 
-    _wrapper = xr_wrapper.wrapper(xr.DataArray())
-    assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
-    _wrapper = wrappers.get_wrapper(xr.DataArray())
-    assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
-    _wrapper = from_object(xr.DataArray())
-    assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
+
+def test_inbuilt_xarray_methods():
+    _wrapper = from_object(TEST_DA)
+    assert _wrapper.mean().equals(TEST_DA.mean())
+
+    _wrapper = from_object(TEST_DS)
+    assert _wrapper.mean().equals(TEST_DS.mean())

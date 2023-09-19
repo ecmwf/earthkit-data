@@ -20,6 +20,14 @@ class XArrayDataArrayWrapper(Wrapper):
 
     def __init__(self, data):
         self.data = data
+        # populate with in-built xarray methods:
+        for method in dir(data):
+            if not method.startswith("_") and method not in dir(self):
+                try:
+                    setattr(self.__class__, method, classmethod(getattr(data, method)))
+                except Exception:
+                    # Ignore those that are incompatible
+                    pass
 
     # def axis(self, axis):
     #     """
@@ -138,10 +146,10 @@ def wrapper(data, *args, **kwargs):
     if isinstance(data, xr.Dataset):
         ds = data
     elif isinstance(data, xr.DataArray):
-        try:
-            ds = data.to_dataset()
-        except ValueError:
-            return XArrayDataArrayWrapper(data, *args, **kwargs)
+        # try:
+        #     ds = data.to_dataset()
+        # except ValueError:
+        return XArrayDataArrayWrapper(data, *args, **kwargs)
 
     if ds is not None:
         fs = netcdf.XArrayFieldList(ds, **kwargs)

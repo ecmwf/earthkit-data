@@ -336,6 +336,14 @@ class XArrayFieldListCore(FieldList):
         self.ds = ds
         self._fields = None
         Index.__init__(self, *args, **kwargs)
+        # populate with in-built xarray methods:
+        for method in dir(ds):
+            if not method.startswith("_") and method not in dir(self):
+                try:
+                    setattr(self.__class__, method, classmethod(getattr(ds, method)))
+                except Exception:
+                    # Ignore incompatible methods
+                    pass
 
     @property
     def fields(self):

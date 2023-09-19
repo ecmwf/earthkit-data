@@ -150,7 +150,7 @@ def test_transform_from_grib_file():
 
 def test_transform_from_xarray_object():
     # transform grib-based data object
-    da = xr.DataArray([])
+    da = xr.DataArray([], name="a")
     ds = xr.Dataset({"a": da})
 
     # da to np.ndarray
