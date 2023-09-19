@@ -86,7 +86,7 @@ jobs:
         micromamba remove eccodes
     - name: Run tests without eccodes
       run: |
-        python -m pytest -v -m 'no_eccodes' make unit-tests
+        python -m pytest -v -m 'no_eccodes'
 
 
   type-check:
