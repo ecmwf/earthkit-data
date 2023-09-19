@@ -35,6 +35,19 @@ def dict_args(func):
     return wrapped
 
 
+def detect_out_filename(func):
+    @functools.wraps(func)
+    def wrapped(self, *args, **kwargs):
+        if len(args) == 0:
+            try:
+                args = [os.path.basename(self.path)]
+            except AttributeError:
+                raise TypeError("Please provide a output filename")
+        return func(self, *args, **kwargs)
+
+    return wrapped
+
+
 LOCK = threading.RLock()
 
 
