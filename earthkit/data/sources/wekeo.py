@@ -14,7 +14,6 @@ import yaml
 from hda.api import DataOrderRequest
 
 from earthkit.data.core.thread import SoftThreadPool
-from earthkit.data.decorators import normalize
 from earthkit.data.utils import tqdm
 
 from .file import FileSource
@@ -37,14 +36,14 @@ class HDAAPIKeyPrompt(APIKeyPrompt):
             example="name",
             title="User name",
             hidden=False,
-            validate=r"[\-0-9a-z]+",
+            validate=r"[0-9a-z]+",
         ),
         dict(
             name="password",
             example="secretpassword",
             title="Password",
-            hidden=False,
-            validate=r"[\-0-9a-z\!\@\#\$\%\&\*]{5,30}",
+            hidden=True,
+            validate=r"[0-9A-z\!\@\#\$\%\&\*]{5,30}",
         ),
     ]
 
@@ -84,20 +83,6 @@ class ApiClient(hda.Client):
             self.stream(result.get("filename"), result.get("size"), download_dir, *url)
 
 
-def client():
-    prompt = HDAAPIKeyPrompt()
-    prompt.check()
-
-    try:
-        return ApiClient()
-    except Exception as e:
-        if ".hdarc" in str(e):
-            prompt.ask_user_and_save()
-            return ApiClient()
-
-        raise
-
-
 EXTENSIONS = {
     "grib": ".grib",
     "netcdf": ".nc",
@@ -106,11 +91,21 @@ EXTENSIONS = {
 
 class WekeoRetriever(FileSource):
     sphinxdoc = """
-    CdsRetriever
+    WekeoRetriever
     """
 
-    def client(self):
-        return client()
+    @staticmethod
+    def client():
+        prompt = HDAAPIKeyPrompt()
+        prompt.check()
+
+        try:
+            return ApiClient()
+        except Exception as e:
+            if ".hdarc" in str(e):
+                prompt.ask_user_and_save()
+                return ApiClient()
+            raise
 
     def __init__(self, dataset, *args, **kwargs):
         super().__init__()
@@ -147,15 +142,8 @@ class WekeoRetriever(FileSource):
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
         )
 
-    @normalize("date", "date-list(%Y-%m-%d)")
-    @normalize("area", "bounding-box(list)")
-    def requests(self, **kwargs):
-        if "year" in kwargs:
-            if "month" not in kwargs:
-                kwargs["month"] = [f"{i+1:02}" for i in range(0, 12)]
-            if "day" not in kwargs:
-                kwargs["day"] = [f"{i+1:02}" for i in range(0, 31)]
-
+    @staticmethod
+    def requests(**kwargs):
         split_on = kwargs.pop("split_on", None)
         if split_on is None or not isinstance(kwargs.get(split_on), (list, tuple)):
             return [kwargs]
@@ -168,28 +156,6 @@ class WekeoRetriever(FileSource):
             result.append(r)
 
         return result
-
-    def to_pandas(self, **kwargs):
-        pandas_read_csv_kwargs = dict(
-            comment="#",
-            parse_dates=["report_timestamp"],
-            skip_blank_lines=True,
-            compression="zip",
-        )
-
-        pandas_read_csv_kwargs.update(kwargs.get("pandas_read_csv_kwargs", {}))
-
-        odc_read_odb_kwargs = dict(
-            # TODO
-        )
-
-        odc_read_odb_kwargs.update(kwargs.get("odc_read_odb_kwargs", {}))
-
-        return super().to_pandas(
-            pandas_read_csv_kwargs=pandas_read_csv_kwargs,
-            odc_read_odb_kwargs=odc_read_odb_kwargs,
-            **kwargs,
-        )
 
 
 source = WekeoRetriever

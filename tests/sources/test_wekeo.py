@@ -14,17 +14,6 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.testing import NO_HDA
 
-rq = {
-    "datasetId": "EO:CLMS:DAT:CGLS_GLOBAL_NDVI300_V1_333M",
-    "dateRangeSelectValues": [
-        {
-            "name": "dtrange",
-            "start": "2014-01-01T00:00:00.000Z",
-            "end": "2014-01-01T23:59:59.999Z",
-        }
-    ],
-}
-
 
 @pytest.mark.long_test
 @pytest.mark.download

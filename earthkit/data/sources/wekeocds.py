@@ -9,8 +9,6 @@
 
 import os
 
-import hda
-import yaml
 from hda.api import DataOrderRequest
 
 from earthkit.data.core.thread import SoftThreadPool
@@ -18,44 +16,13 @@ from earthkit.data.decorators import normalize
 from earthkit.data.utils import tqdm
 
 from .file import FileSource
-from .prompt import APIKeyPrompt
+from .wekeo import EXTENSIONS
+from .wekeo import ApiClient as WekeoClient
+from .wekeo import HDAAPIKeyPrompt
 
 
-class HDAAPIKeyPrompt(APIKeyPrompt):
-    register_or_sign_in_url = "https://www.wekeo.eu"
-    retrieve_api_key_url = "https://www.wekeo.eu"
-
-    prompts = [
-        dict(
-            name="url",
-            default="https://wekeo-broker.apps.mercator.dpi.wekeo.eu/databroker",
-            title="API url",
-            validate=r"http.?://.*",
-        ),
-        dict(
-            name="user",
-            example="name",
-            title="User name",
-            hidden=False,
-            validate=r"[\-0-9a-z]+",
-        ),
-        dict(
-            name="password",
-            example="secretpassword",
-            title="Password",
-            hidden=False,
-            validate=r"[\-0-9a-z\!\@\#\$\%\&\*]{5,30}",
-        ),
-    ]
-
-    rcfile = "~/.hdarc"
-
-    def save(self, input, file):
-        yaml.dump(input, file, default_flow_style=False)
-
-
-class ApiClient(hda.Client):
-    name = "wekeo"
+class ApiClient(WekeoClient):
+    name = "wekeocds"
 
     def __int__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
@@ -84,41 +51,24 @@ class ApiClient(hda.Client):
             )
         return [os.path.abspath(_) for _ in out]
 
-    def download(self, download_dir: str = "."):
-        for result in self.results:
-            query = {"jobId": self.jobId, "uri": result["url"]}
-            self.debug(result)
-            url = DataOrderRequest(self.client).run(query)
-            self.stream(result.get("filename"), result.get("size"), download_dir, *url)
-
-
-def client():
-    prompt = HDAAPIKeyPrompt()
-    prompt.check()
-
-    try:
-        return ApiClient()
-    except Exception as e:
-        if ".hdarc" in str(e):
-            prompt.ask_user_and_save()
-            return ApiClient()
-
-        raise
-
-
-EXTENSIONS = {
-    "grib": ".grib",
-    "netcdf": ".nc",
-}
-
 
 class WekeoCdsRetriever(FileSource):
     sphinxdoc = """
-    CdsRetriever
+    WekeoCdsRetriever
     """
 
-    def client(self):
-        return client()
+    @staticmethod
+    def client():
+        prompt = HDAAPIKeyPrompt()
+        prompt.check()
+        try:
+            return ApiClient()
+        except Exception as e:
+            if ".hdarc" in str(e):
+                prompt.ask_user_and_save()
+                return ApiClient()
+
+            raise
 
     def __init__(self, dataset, *args, **kwargs):
         super().__init__()
@@ -176,28 +126,6 @@ class WekeoCdsRetriever(FileSource):
             result.append(r)
 
         return result
-
-    def to_pandas(self, **kwargs):
-        pandas_read_csv_kwargs = dict(
-            comment="#",
-            parse_dates=["report_timestamp"],
-            skip_blank_lines=True,
-            compression="zip",
-        )
-
-        pandas_read_csv_kwargs.update(kwargs.get("pandas_read_csv_kwargs", {}))
-
-        odc_read_odb_kwargs = dict(
-            # TODO
-        )
-
-        odc_read_odb_kwargs.update(kwargs.get("odc_read_odb_kwargs", {}))
-
-        return super().to_pandas(
-            pandas_read_csv_kwargs=pandas_read_csv_kwargs,
-            odc_read_odb_kwargs=odc_read_odb_kwargs,
-            **kwargs,
-        )
 
 
 source = WekeoCdsRetriever
