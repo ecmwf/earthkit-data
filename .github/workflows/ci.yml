@@ -52,6 +52,7 @@ jobs:
         environment-name: DEVELOP
         channels: conda-forge
         cache-env: true
+        cache-env-key: ubuntu-latest-3.10
         extra-specs: |
           python=3.10
     - name: Install package
