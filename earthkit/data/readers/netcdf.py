@@ -575,6 +575,9 @@ class NetCDFFieldList(XArrayFieldListCore):
             **options,
         )
 
+    def write(self, *args, **kwargs):
+        return self.to_netcdf(*args, **kwargs)
+
 
 class NetCDFFieldListInFiles(NetCDFFieldList):
     pass
