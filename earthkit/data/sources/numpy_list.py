@@ -70,6 +70,14 @@ class NumpyFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
                         )
                     )
         elif isinstance(self._array, list):
+            if len(self._array) != len(self._metadata):
+                raise ValueError(
+                    (
+                        f"array len ({len(self._array)}) differs "
+                        f"from number of metadata objects ({len(self._metadata)})"
+                    )
+                )
+
             for i, a in enumerate(self._array):
                 if not isinstance(a, np.ndarray):
                     raise ValueError(
