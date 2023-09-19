@@ -225,9 +225,8 @@ def test_get_fields_missing_standard_name_attr_in_coord_array():
         assert len(fs) == 2
 
 
-@pytest.mark.long_test
-@pytest.mark.download
-def test_satellite_l2_data():
+@pytest.mark.no_eccodes
+def test_netcdf_non_fieldlist():
     ek_ch4_l2 = from_source(
         "url",
         earthkit_remote_test_data_file(
