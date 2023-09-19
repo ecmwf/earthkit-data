@@ -605,7 +605,7 @@ class NetCDFMaskFieldList(NetCDFFieldList, MaskIndex):
         MaskIndex.__init__(self, *args, **kwargs)
 
     # TODO: Implement this, but discussion required
-    def write(self, *args, **kwargs):
+    def to_xarray(self, *args, **kwargs):
         self._not_implemented()
 
 
