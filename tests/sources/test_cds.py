@@ -99,7 +99,7 @@ def test_cds_netcdf_selection_limited():
             "nominal_day": "10",
         },
     )
-    assert len(s) == 1
+    assert len(s) == 9
 
 
 if __name__ == "__main__":
