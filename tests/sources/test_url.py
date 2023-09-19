@@ -136,7 +136,7 @@ def test_url_part_file_source():
 def test_url_netcdf_source_save():
     ek_url_nc_source = from_source(
         "url",
-        earthkit_remote_test_data_file("examples/efas.nc"),
+        earthkit_remote_test_data_file("examples/test.nc"),
     )
     ek_url_nc_source.save("temp.nc")
 
