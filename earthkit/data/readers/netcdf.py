@@ -614,9 +614,15 @@ class NetCDFMultiFieldList(NetCDFFieldList, MultiIndex):
         MultiIndex.__init__(self, *args, **kwargs)
 
     def to_xarray(self, **kwargs):
-        return NetCDFFieldList.to_xarray_multi_from_paths(
-            [x.path for x in self.indexes], **kwargs
-        )
+        try:
+            return NetCDFFieldList.to_xarray_multi_from_paths(
+                [x.path for x in self.indexes], **kwargs
+            )
+        except AttributeError:
+            # TODO: Implement this, but discussion required
+            #  This catches Multi-MaskFieldLists which cannot be openned in xarray
+            self._not_implemented()
+
 
 
 class NetCDFFieldListReader(NetCDFFieldListInOneFile, Reader):
