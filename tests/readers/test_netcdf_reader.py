@@ -19,8 +19,10 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.readers.netcdf import NetCDFField
 from earthkit.data.testing import (
+    NO_CDS,
     earthkit_examples_file,
     earthkit_file,
+    earthkit_remote_test_data_file,
     earthkit_test_data_file,
 )
 
@@ -98,9 +100,9 @@ def test_dummy_netcdf_4():
 
 
 @pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 def test_netcdf_multi_cds():
-    if not os.path.exists(os.path.expanduser("~/.cdsapirc")):
-        pytest.skip("No ~/.cdsapirc")
     s1 = from_source(
         "cds",
         "reanalysis-era5-single-levels",
@@ -221,6 +223,29 @@ def test_get_fields_missing_standard_name_attr_in_coord_array():
         ds.to_netcdf(fpath)
         fs = from_source("file", earthkit_test_data_file(fpath))
         assert len(fs) == 2
+
+
+@pytest.mark.no_eccodes
+def test_netcdf_non_fieldlist():
+    ek_ch4_l2 = from_source(
+        "url",
+        earthkit_remote_test_data_file(
+            "test-data/20210101-C3S-L2_GHG-GHG_PRODUCTS-TANSO2-GOSAT2-SRFP-DAILY-v2.0.0.nc"
+        )
+        # Data from this CDS request:
+        # "cds",
+        # "satellite-methane",
+        # {
+        #     "processing_level": "level_2",
+        #     "sensor_and_algorithm": "tanso2_fts2_srfp",
+        #     "year": "2021",
+        #     "month": "01",
+        #     "day": "01",
+        #     "version": "2.0.0",
+        # },
+    )
+    # TODO: add more conditions to this test when it is clear what methods it should have
+    ek_ch4_l2.to_xarray()
 
 
 if __name__ == "__main__":
