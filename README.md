@@ -2,6 +2,7 @@
 
 ![earthkit-data](docs/_static/earthkit-data.png)
 
+![PyPI version fury.io](https://badge.fury.io/py/earthkit-data.svg)\](https://pypi.python.org/pypi/earthkit-data/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-data.svg)](https://pypi.python.org/pypi/earthkit-data/)
 
 > :warning: **DISCLAIMER**
