@@ -104,8 +104,6 @@ def test_dummy_netcdf_4():
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 def test_netcdf_multi_cds():
-    if not os.path.exists(os.path.expanduser("~/.cdsapirc")):
-        pytest.skip("No ~/.cdsapirc")
     s1 = from_source(
         "cds",
         "reanalysis-era5-single-levels",
