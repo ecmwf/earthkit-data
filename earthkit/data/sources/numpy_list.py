@@ -14,6 +14,8 @@ import numpy as np
 from earthkit.data.core.fieldlist import Field, FieldList
 from earthkit.data.core.index import MaskIndex, MultiIndex
 from earthkit.data.core.metadata import Metadata
+from earthkit.data.readers.grib.pandas import PandasMixIn
+from earthkit.data.readers.grib.xarray import XarrayMixIn
 
 LOG = logging.getLogger(__name__)
 
@@ -38,7 +40,7 @@ class NumpyField(Field):
         write(f, self.values, self._metadata, check_nans=True)
 
 
-class NumpyFieldListCore(FieldList):
+class NumpyFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
     def __init__(self, array, metadata, *args, **kwargs):
         self._array = array
         self._metadata = metadata
@@ -87,7 +89,10 @@ class NumpyFieldListCore(FieldList):
 
 class NumpyFieldList(NumpyFieldListCore):
     def __getitem__(self, n):
-        return NumpyField(self._array[n], self._metadata[n])
+        if isinstance(n, int):
+            return NumpyField(self._array[n], self._metadata[n])
+        else:
+            return super().__getitem__(n)
 
     def __len__(self):
         return self._array.shape[0]
