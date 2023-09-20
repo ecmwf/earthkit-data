@@ -72,7 +72,6 @@ class ApiClient(hda.Client):
                     )
                 )
             )
-        print(out, ">" * 20)
         return out
 
     def download(self, download_dir: str = "."):
