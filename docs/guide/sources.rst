@@ -47,9 +47,9 @@ We can get data from a given source by using :func:`from_source`:
     * - :ref:`data-sources-fdb`
       - retrieve data from the `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
     * - :ref:`data-sources-wekeo`
-      - retrieve data from `WEkEO`_ using the WEkEO "grammar"
+      - retrieve data from `WEkEO`_ using the WEkEO grammar
     * - :ref:`data-sources-wekeocds`
-      - retrieve `CDS <https://cds.climate.copernicus.eu/>`_ data stored on `WEkEO`_ using the `cdsapi`_ "grammar"
+      - retrieve `CDS <https://cds.climate.copernicus.eu/>`_ data stored on `WEkEO`_ using the `cdsapi`_ grammar
 
 
 ----------------------------------
@@ -537,7 +537,7 @@ wekeo
 .. py:function:: from_source("wekeo", dataset, *args, **kwargs)
   :noindex:
 
-  `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeo`` source provides access to `WEkEO`_ using the WEkEO "grammar". The retrieval is based on the hda_ Python API.
+  `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeo`` source provides access to `WEkEO`_ using the WEkEO grammar. The retrieval is based on the hda_ Python API.
 
   :param str dataset: the name of the WEkEO dataset
   :param tuple *args: specifies the request as a dict
@@ -582,7 +582,7 @@ wekeocds
 .. py:function:: from_source("wekeocds", dataset, *args, **kwargs)
   :noindex:
 
-  `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeocds`` source provides access to `Copernicus Climate Data Store`_ (CDS) datasets served on `WEkEO`_ using the `cdsapi`_ "grammar". The retrieval is based on the hda_ Python API.
+  `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeocds`` source provides access to `Copernicus Climate Data Store`_ (CDS) datasets served on `WEkEO`_ using the `cdsapi`_ grammar. The retrieval is based on the hda_ Python API.
 
   :param str dataset: the name of the WEkEO dataset
   :param tuple *args: specifies the request as a dict
