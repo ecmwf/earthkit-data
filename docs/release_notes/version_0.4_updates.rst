@@ -24,6 +24,6 @@ Fixes
 - fixed issue when concatenation for :class:`~data.core.readers.numpy_list.NumpyFieldList` did not work
 - fixed issue when concatenation to an empty Fieldlist did not work
 - fixed issue when could not get values from a  :class:`~data.core.readers.numpy_list.NumpyFieldList`
-- fixed issue when could not retrieve data from the :ref:`CDS <data-sources-wekeo>` beacause the ``month`` and ``day`` request parameters were pre-filled by earthkit-data. These parameters are not pre-filled now.
+- fixed issue when could not retrieve data from the :ref:`CDS <data-sources-wekeo>` beacause the ``month`` and ``day`` request parameters were pre-filled by earthkit-data. These parameters are not pre-filled any longer.
 - fixed issue when missing values were not correctly written to GRIB output
 - fixed issue when could not read non-fieldlist type NetCDF data with :func:`from_source`
