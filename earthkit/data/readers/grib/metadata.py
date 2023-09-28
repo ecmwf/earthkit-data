@@ -10,7 +10,7 @@
 import datetime
 
 from earthkit.data.core.geography import Geography
-from earthkit.data.core.metadata import Metadata
+from earthkit.data.core.metadata import LazyMetadata, Metadata
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
@@ -18,6 +18,32 @@ from earthkit.data.utils.projections import Projection
 
 def missing_is_none(x):
     return None if x == 2147483647 else x
+
+
+class GribValuesPartMetadata(LazyMetadata):
+    INVALID_KEYS = ["constant"]
+
+    def _load(self):
+        if self.data is None:
+            return {}
+
+        import numpy as np
+
+        v = self.data
+        maximum = np.nanmax(v)
+        minimum = np.nanmin(v)
+        stdev = np.nanstd(v)
+        average = np.nanmean(v)
+
+        d = {}
+        d["min"] = minimum
+        d["max"] = maximum
+        d["avg"] = average
+        d["sd"] = stdev
+        d["numberOfMissing"] = np.count_nonzero(np.isnan(v))
+        d["bitmapPresent"] = 1 if d["numberOfMissing"] > 1 else 0
+
+        return d
 
 
 class GribFieldGeography(Geography):
@@ -198,6 +224,9 @@ class GribMetadata(Metadata):
         "time",
         "vertical",
     ]
+
+    VALUES_PART_METADATA_CLASS = GribValuesPartMetadata
+    DATA_FORMAT = "grib"
 
     __handle_type = None
 

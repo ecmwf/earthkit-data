@@ -27,6 +27,9 @@ class Metadata(metaclass=ABCMeta):
 
     """
 
+    VALUES_PART_METADATA_CLASS = None
+    DATA_FORMAT = None
+
     def __iter__(self):
         """Return an iterator over the metadata keys."""
         return iter(self.keys())
@@ -224,6 +227,16 @@ class Metadata(metaclass=ABCMeta):
         r"""Return the keys to be used with the :meth:`indices` method."""
         return []
 
+    def data_format(self):
+        return self.DATA_FORMAT
+
+    def combine(self, values):
+        if self.VALUES_PART_METADATA_CLASS is None:
+            raise NotImplementedError
+
+        part = self.VALUES_PART_METADATA_CLASS(values)
+        return CombinedMetadata(self, part)
+
 
 class RawMetadata(Metadata):
     r"""Metadata implementation based on key/value pairs.
@@ -293,3 +306,96 @@ class RawMetadata(Metadata):
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self._d.__repr__()})"
+
+
+class LazyMetadata:
+    r"""Lazily load a RawMetadata object from the specified data"""
+
+    INVALID_KEYS = []
+
+    def __init__(self, data):
+        self.data = data
+        self._md = None
+        self._exception = None
+
+    @property
+    def md(self):
+        if self._md is None:
+            try:
+                d = self._load()
+                for k in self.INVALID_KEYS:
+                    d[k] = None
+                self._md = RawMetadata(d)
+            except Exception as e:
+                self._exception = e
+                raise
+
+        return self._md
+
+    @abstractmethod
+    def _load(self):
+        pass
+
+    def __getitem__(self, name):
+        return self.md.__getitem__(name)
+
+    def __iter__(self):
+        return iter(self.md)
+
+    def __len__(self):
+        return len(self.md)
+
+    def __contains__(self, key):
+        return key in self.md
+
+    def __getattr__(self, name):
+        if self._exception is not None:
+            raise self._exception
+        assert name != "_load"
+        assert name != "md"
+        return getattr(self.md, name)
+
+
+class CombinedMetadata:
+    r"""Combining a main and a partial metadata object.
+
+    Parameters
+    ----------
+    md: Metadata
+        The main metadata object.
+    part: Metadata
+        Metadata object containing only part of the keys from `md`.
+        When a key is available in ``part`` it is served from it. Keys
+        present in ``part`` but not in ``md`` are not exposed to the users.
+
+    """
+
+    def __init__(self, md, part):
+        self.md = md
+        self.part = part
+
+    def as_namespace(self, namespace=None):
+        r = self.md.as_namespace(namespace=namespace)
+        for k in r:
+            _, _, name = k.partition(".")
+            if name in self.part:
+                r[k] = self.part[name]
+        return r
+
+    def _get_internal_key(self, key, **kwargs):
+        if key in self.part:
+            return self.md._get_internal_key(key, **kwargs)
+
+        return self.md._get_internal_key(key, **kwargs)
+
+    def __getattr__(self, name):
+        # if self._exception is not None:
+        #     raise self._exception(name)
+        assert name != "as_namespace"
+        assert name != "_get_internal_key"
+        return getattr(self.md, name)
+
+    def combine(self, values):
+        if id(self.part.data) == id(values):
+            return self
+        return self.md.combine(values)
