@@ -48,6 +48,11 @@ def check_numpy_fs(ds, ds_input, md_full):
     assert ds.metadata("param") == md_full
     assert np.allclose(ds[0].values, ds_input[0][0].values)
 
+    # values metadata
+    keys = ["min", "max"]
+    for k in keys:
+        assert np.isclose(ds[0].metadata(k), ds_input[0][0].metadata(k))
+
     # check slice
     r = ds[1]
     assert r.metadata("param") == "msl"

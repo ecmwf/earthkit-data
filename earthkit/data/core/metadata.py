@@ -356,6 +356,16 @@ class LazyMetadata:
         return getattr(self.md, name)
 
 
+# def part(func):
+#     @functools.wraps(func)
+#     def wrapped(self, key, *args, **kwargs):
+#         if key in self.part:
+#             return func(self.part, key, *args, **kwargs)
+#         return func(self, key, *args, **kwargs)
+
+#     return wrapped
+
+
 class CombinedMetadata:
     r"""Combining a main and a partial metadata object.
 
@@ -374,6 +384,29 @@ class CombinedMetadata:
         self.md = md
         self.part = part
 
+    def __getitem__(self, key):
+        if key in self.part:
+            return self.part.__getitem__(key)
+        return self.md.__getitem__(key)
+
+    def get(self, key, **kwargs):
+        if key in self.part:
+            return self.part.get(key, **kwargs)
+        return self.md.get(key, **kwargs)
+
+    def _get_key(self, key, **kwargs):
+        if key in self.part:
+            return self.part._get_key(key, **kwargs)
+        return self.md._get_key(key, **kwargs)
+
+    def _get_internal_key(self, key, **kwargs):
+        print(f"_get_internal_key: {key}")
+        if key in self.part:
+            print(" -> from part")
+            return self.part._get_internal_key(key, **kwargs)
+
+        return self.md._get_internal_key(key, **kwargs)
+
     def as_namespace(self, namespace=None):
         r = self.md.as_namespace(namespace=namespace)
         for k in r:
@@ -382,13 +415,8 @@ class CombinedMetadata:
                 r[k] = self.part[name]
         return r
 
-    def _get_internal_key(self, key, **kwargs):
-        if key in self.part:
-            return self.md._get_internal_key(key, **kwargs)
-
-        return self.md._get_internal_key(key, **kwargs)
-
     def __getattr__(self, name):
+        print(f"__getattr__: {name}")
         # if self._exception is not None:
         #     raise self._exception(name)
         assert name != "as_namespace"
@@ -399,3 +427,6 @@ class CombinedMetadata:
         if id(self.part.data) == id(values):
             return self
         return self.md.combine(values)
+
+
+# class CombinedGribMetadata(CombinedMetadata):
