@@ -16,7 +16,7 @@ import time
 import eccodes
 import numpy as np
 
-from earthkit.data.core.caching import auxiliary_cache_file
+from earthkit.data.core.caching import CACHE, auxiliary_cache_file
 
 LOG = logging.getLogger(__name__)
 
@@ -59,8 +59,7 @@ class CodesMessagePositionIndex:
         self.lengths = lengths
 
     def _load(self):
-        if True:
-            # if SETTINGS.policy("message-position-cache"):
+        if CACHE.policy.use_message_position_index_cache():
             self._cache_file = auxiliary_cache_file(
                 "message-index",
                 self.path,
@@ -74,34 +73,34 @@ class CodesMessagePositionIndex:
             self._build()
 
     def _save_cache(self):
-        # assert SETTINGS.policy("message-position-cache")
-        try:
-            with open(self._cache_file, "w") as f:
-                json.dump(
-                    dict(
-                        version=self.VERSION,
-                        offsets=self.offsets,
-                        lengths=self.lengths,
-                    ),
-                    f,
-                )
-        except Exception:
-            LOG.exception("Write to cache failed %s", self._cache_file)
+        if CACHE.policy.use_message_position_index_cache():
+            try:
+                with open(self._cache_file, "w") as f:
+                    json.dump(
+                        dict(
+                            version=self.VERSION,
+                            offsets=self.offsets,
+                            lengths=self.lengths,
+                        ),
+                        f,
+                    )
+            except Exception:
+                LOG.exception("Write to cache failed %s", self._cache_file)
 
     def _load_cache(self):
-        # assert SETTINGS.policy("message-position-cache")
-        try:
-            with open(self._cache_file) as f:
-                c = json.load(f)
-                if not isinstance(c, dict):
-                    return False
+        if CACHE.policy.use_message_position_index_cache():
+            try:
+                with open(self._cache_file) as f:
+                    c = json.load(f)
+                    if not isinstance(c, dict):
+                        return False
 
-                assert c["version"] == self.VERSION
-                self.offsets = c["offsets"]
-                self.lengths = c["lengths"]
-                return True
-        except Exception:
-            LOG.exception("Load from cache failed %s", self._cache_file)
+                    assert c["version"] == self.VERSION
+                    self.offsets = c["offsets"]
+                    self.lengths = c["lengths"]
+                    return True
+            except Exception:
+                LOG.exception("Load from cache failed %s", self._cache_file)
 
         return False
 
@@ -119,6 +118,10 @@ class CodesHandle(eccodes.Message):
     @classmethod
     def from_sample(cls, name):
         return cls(eccodes.codes_new_from_samples(name, cls.PRODUCT_ID), None, None)
+
+    @classmethod
+    def _from_raw_handle(cls, handle):
+        return cls(handle, None, None)
 
     # TODO: just a wrapper around the base class implementation to handle the
     # s,l,d qualifiers. Once these are implemented in the base class this method can
@@ -143,11 +146,16 @@ class CodesHandle(eccodes.Message):
         return self.get(name, ktype=int)
 
     def clone(self):
-        return CodesHandle(eccodes.codes_clone(self._handle), None, None)
+        return self._from_raw_handle(eccodes.codes_clone(self._handle))
 
     def set_multiple(self, values):
-        assert self.path is None, "Only cloned handles can have values changed"
-        eccodes.codes_set_key_vals(self._handle, values)
+        try:
+            assert self.path is None, "Only cloned handles can have values changed"
+            eccodes.codes_set_key_vals(self._handle, values)
+        except Exception as e:
+            LOG.error(f"Error setting: {values}")
+            LOG.exception(e)
+            raise
 
     def set_long(self, name, value):
         try:
@@ -156,6 +164,7 @@ class CodesHandle(eccodes.Message):
         except Exception as e:
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
+            raise
 
     def set_double(self, name, value):
         try:
@@ -164,6 +173,7 @@ class CodesHandle(eccodes.Message):
         except Exception as e:
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
+            raise
 
     def set_string(self, name, value):
         try:
@@ -172,6 +182,7 @@ class CodesHandle(eccodes.Message):
         except Exception as e:
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
+            raise
 
     def set(self, name, value):
         try:
@@ -184,6 +195,7 @@ class CodesHandle(eccodes.Message):
         except Exception as e:
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
+            raise
 
     def write(self, f):
         eccodes.codes_write(self._handle, f)

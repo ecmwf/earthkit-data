@@ -40,7 +40,8 @@ class FDBSource(Source):
         fdb_home = os.environ.get("FDB_HOME", None)
         if fdb_home is None:
             raise ValueError(
-                """No FDB_HOME environment variable was set! Please define it to make the FDB access work. See:
+                """No FDB_HOME environment variable was set! Please define it to
+                make the FDB access work. See:
                 https://fields-database.readthedocs.io for details about FDB."""
             )
 

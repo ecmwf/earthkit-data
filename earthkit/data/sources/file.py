@@ -13,9 +13,8 @@ import logging
 import os
 
 from earthkit.data import from_source
-from earthkit.data.core.settings import SETTINGS
+from earthkit.data.core.caching import CACHE
 from earthkit.data.readers import reader
-from earthkit.data.sources.file_indexed import FileIndexedSource
 
 from . import Source
 
@@ -53,6 +52,8 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
 
         # here we must have a file or a directory
         if self._kwargs.get("indexing", False):
+            from earthkit.data.sources.file_indexed import FileIndexedSource
+
             kw = dict(self._kwargs)
             kw.pop("indexing", None)
             return FileIndexedSource(self.path, filter=filter, merger=self.merger, **kw)
@@ -126,9 +127,9 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
         return self._reader._attributes(names)
 
     def __repr__(self):
-        cache_dir = SETTINGS.get("cache-directory")
         path = getattr(self, "path", None)
         if isinstance(path, str):
+            cache_dir = CACHE.cache_directory()
             path = path.replace(cache_dir, "CACHE:")
         try:
             reader_class_name = str(self._reader.__class__.__name__)

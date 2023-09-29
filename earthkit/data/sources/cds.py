@@ -69,6 +69,9 @@ class CdsRetriever(FileSource):
     CdsRetriever
     """
 
+    def client(self):
+        return client()
+
     def __init__(self, dataset, *args, **kwargs):
         super().__init__()
 
@@ -81,7 +84,7 @@ class CdsRetriever(FileSource):
 
         requests = self.requests(**kwargs)
 
-        client()  # Trigger password prompt before thraeding
+        self.client()  # Trigger password prompt before thraeding
 
         nthreads = min(self.settings("number-of-download-threads"), len(requests))
 
@@ -96,7 +99,7 @@ class CdsRetriever(FileSource):
 
     def _retrieve(self, dataset, request):
         def retrieve(target, args):
-            client().retrieve(args[0], args[1], target)
+            self.client().retrieve(args[0], args[1], target)
 
         return self.cache_file(
             retrieve,
@@ -107,13 +110,6 @@ class CdsRetriever(FileSource):
     @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
     def requests(self, **kwargs):
-        # TODO: move these 5 lines into @normalize
-        if "year" in kwargs:
-            if "month" not in kwargs:
-                kwargs["month"] = [f"{i+1:02}" for i in range(0, 12)]
-            if "day" not in kwargs:
-                kwargs["day"] = [f"{i+1:02}" for i in range(0, 31)]
-
         split_on = kwargs.pop("split_on", None)
         if split_on is None or not isinstance(kwargs.get(split_on), (list, tuple)):
             return [kwargs]

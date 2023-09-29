@@ -55,7 +55,7 @@ Data objects can be concatenated with the "+" operator:
 Iteration
 ~~~~~~~~~
 
-When an earthkit-data data `source` or dataset provides a list of fields or messages, we can iterated through it to access each element (in a given order see :ref:`below <order_by>`).
+When an earthkit-data data `source` or dataset provides a :class:`~data.core.fieldlist.FieldList` or message list, we can iterate through it to access each element (in a given order see :ref:`below <order_by>`).
 
 In the the following example we read a GRIB file from disk. In the iteration each element is a field (representing a GRIB message):
 
@@ -82,7 +82,7 @@ In the the following example we read a GRIB file from disk. In the iteration eac
 Selection with ``[...]``
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-When an earthkit-data data `source` or dataset provides a list of fields or messages, a subset of it can be created using the standard python list interface relying on brackets and slices. Slicing also works by providing a list or ndarray of indices.
+When an earthkit-data data `source` or dataset provides a :class:`~data.core.fieldlist.FieldList` or message list, a subset of it can be created using the standard python list interface relying on brackets and slices. Slicing also works by providing a list or ndarray of indices.
 
 .. code-block:: python
 
@@ -132,9 +132,9 @@ When an earthkit-data data `source` or dataset provides a list of fields or mess
 Selection with ``.sel()``
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When an earthkit-data data `source` or dataset provides a list of fields or messages, the method ``.sel()`` allows filtering this list and we can **select a subset** of the list. ``.sel()`` returns a view to original data, so no data is copied. The selection offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()``, etc. are all available.
+When an earthkit-data data `source` or dataset provides a :class:`~data.core.fieldlist.FieldList` or message list, the method ``.sel()`` allows filtering this list and we can **select a subset** of the list. ``.sel()`` returns a view to original data, so no data is copied. The selection offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()``, etc. are all available.
 
-For more details see: :meth:`FieldList.sel() <data.readers.grib.index.FieldList.sel>`
+For more details see: :meth:`~data.core.fieldlist.FieldList.sel`.
 
 The following example demonstrates the usage of ``.sel()``. The input data contains temperature and wind fields on various pressure levels.
 
@@ -179,11 +179,11 @@ The following example demonstrates the usage of ``.sel()``. The input data conta
 Selection with ``.isel()``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When an earthkit-data data `source` or dataset provides a list of fields, the method ``.isel()`` allows filtering this list and we can **select a subset** of the list. ``.isel()`` returns a view to the original data, so no data is copied. The selection offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()`` , etc. are all available.
+When an earthkit-data data `source` or dataset provides a :class:`~data.core.fieldlist.FieldList`, the method ``.isel()`` allows filtering this list and we can **select a subset** of the list. ``.isel()`` returns a view to the original data, so no data is copied. The selection offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()`` , etc. are all available.
 
 ``.isel()`` works similarly to :ref:`sel <sel>` but conditions are specified by indices of metadata keys. A metadata index stores the unique, **sorted** values of the corresponding metadata key from all the fields in the input data.
 
-For more details see: :meth:`FieldList.isel() <data.readers.grib.index.FieldList.isel>`
+For more details see: :meth:`~data.core.fieldlist.FieldList.isel`
 
 The following example demonstrates the usage of ``.isel()``. The input data contains temperature and wind fields on various pressure levels.
 
@@ -229,11 +229,11 @@ The following example demonstrates the usage of ``.isel()``. The input data cont
 Ordering with ``.order_by()``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When an earthkit-data data `source` or dataset provides a list of fields or messages, the method ``.order_by()`` allows sorting this list.
+When an earthkit-data data `source` or dataset provides a :class:`~data.core.fieldlist.FieldList` or message list, the method ``.order_by()`` allows sorting this list.
 
 ``.order_by()`` returns a "view" so no new data is generated on disk or in memory. The resulting object offers the same functionality as the original data object, so methods like ``.to_numpy()``, ``.to_xarray()``, etc. are all available.
 
-For more details see: :meth:`FieldList.sel() <data.readers.grib.index.FieldList.order_by>`
+For more details see: :meth:`~data.core.fieldlist.FieldList.order_by`
 
 .. code-block:: python
 
@@ -281,11 +281,11 @@ Accessing data values
 
 We can extract the values from data objects as an ndarray using the ``.to_numpy()`` method or the ``.values`` property.
 
-When an earthkit-data :ref:`source <data-sources>` provides a list of fields, these methods can be called both on the whole object and on the individual fields, too.
+When an earthkit-data :ref:`source <data-sources>` provides a :class:`~data.core.fieldlist.FieldList`, these methods can be called both on the whole object and on the individual fields, too.
 
 While ``.to_numpy()``, by default, preserves the shape of the fields,  ``.values`` always returns a flat array per field. By using ``flatten=True``, we can force ``.to_numpy()`` to return a flat ndarray per field.
 
-For more details see: :meth:`FieldList.to_numpy() <data.readers.grib.index.FieldList.to_numpy>`
+For more details see: :meth:`~data.core.fieldlist.FieldList.to_numpy`.
 
 In the following example the input GRIB data contains 6 fields each defined on a latitude-longitude grid with a shape of (7, 12).
 
@@ -328,10 +328,10 @@ Accessing metadata
 
 We can extract metadata from data objects using the ``.metadata()`` method.
 
-When an earthkit-data :ref:`source <data-sources>` provides a list of fields or messages, this method can be called both on the whole object and on the individual fields, too.
+When an earthkit-data :ref:`source <data-sources>` provides a :class:`~data.core.fieldlist.FieldList` or message list, this method can be called both on the whole object and on the individual fields, too.
 
-For more details see: :meth:`FieldList.metadata() <data.readers.grib.index.FieldList.metadata>` and
-:meth:`GribField._metadata() <data.readers.grib.codes.GribField.metadata>`
+For more details see: :meth:`FieldList.metadata() <data.core.fieldlist.FieldList.metadata>` and
+:meth:`Field.metadata() <data.core.fieldlist.Field.metadata>`
 
 .. _inspection:
 
@@ -340,4 +340,4 @@ Inspecting contents
 
 On certain data objects (currently only :ref:`grib` and :ref:`bufr`) we can call ``.ls()``, ``.head()`` or ``.tail()``.
 
-For more details see: :meth:`FieldList.ls()) <data.readers.grib.index.FieldList.ls>`
+For more details see: :meth:`~data.core.fieldlist.FieldList.ls`.

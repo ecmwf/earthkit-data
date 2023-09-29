@@ -9,15 +9,23 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+import os
+import sys
+
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_file
+
+here = os.path.dirname(__file__)
+sys.path.insert(0, here)
+from grib_fixtures import load_file_or_numpy_fs  # noqa: E402
 
 
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")
-def test_grib_order_by_single_message():
-    s = from_source("file", earthkit_file("tests/data/test_single.grib"))
+@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+def test_grib_order_by_single_message(mode):
+    s = load_file_or_numpy_fs("test_single.grib", mode, folder="data")
 
     r = s.order_by("shortName")
     assert len(r) == 1
@@ -45,6 +53,7 @@ class _CustomOrder:
             return -1
 
 
+@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
 @pytest.mark.parametrize(
     "params,expected_meta",
     [
@@ -91,10 +100,11 @@ class _CustomOrder:
     ],
 )
 def test_grib_order_by_single_file_(
+    mode,
     params,
     expected_meta,
 ):
-    f = from_source("file", earthkit_file("docs/examples/test6.grib"))
+    f = load_file_or_numpy_fs("test6.grib", mode)
 
     g = f.order_by(params)
     assert len(g) == len(f)
@@ -103,6 +113,7 @@ def test_grib_order_by_single_file_(
         assert g.metadata(k) == v
 
 
+@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
 @pytest.mark.parametrize(
     "params,expected_meta",
     [
@@ -131,9 +142,9 @@ def test_grib_order_by_single_file_(
         ),
     ],
 )
-def test_grib_order_by_multi_file(params, expected_meta):
-    f1 = from_source("file", earthkit_file("docs/examples/test4.grib"))
-    f2 = from_source("file", earthkit_file("docs/examples/test6.grib"))
+def test_grib_order_by_multi_file(mode, params, expected_meta):
+    f1 = load_file_or_numpy_fs("test4.grib", mode)
+    f2 = load_file_or_numpy_fs("test6.grib", mode)
     f = from_source("multi", [f1, f2])
 
     g = f.order_by(params)
@@ -143,8 +154,9 @@ def test_grib_order_by_multi_file(params, expected_meta):
         assert g.metadata(k) == v
 
 
-def test_grib_order_by_with_sel():
-    f = from_source("file", earthkit_file("docs/examples/tuv_pl.grib"))
+@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+def test_grib_order_by_with_sel(mode):
+    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
 
     g = f.sel(level=500)
     assert len(g) == 3
@@ -157,3 +169,26 @@ def test_grib_order_by_with_sel():
     r = g.order_by({"shortName": "descending"})
     assert len(r) == len(g)
     assert r.metadata("shortName") == ["v", "u", "t"]
+
+
+@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+def test_grib_order_by_valid_datetime(mode):
+    f = load_file_or_numpy_fs("t_time_series.grib", mode, folder="data")
+
+    g = f.order_by(valid_datetime="descending")
+    assert len(g) == 10
+
+    ref = [
+        datetime.datetime(2020, 12, 23, 12, 0),
+        datetime.datetime(2020, 12, 23, 12, 0),
+        datetime.datetime(2020, 12, 21, 21, 0),
+        datetime.datetime(2020, 12, 21, 21, 0),
+        datetime.datetime(2020, 12, 21, 18, 0),
+        datetime.datetime(2020, 12, 21, 18, 0),
+        datetime.datetime(2020, 12, 21, 15, 0),
+        datetime.datetime(2020, 12, 21, 15, 0),
+        datetime.datetime(2020, 12, 21, 12, 0),
+        datetime.datetime(2020, 12, 21, 12, 0),
+    ]
+
+    assert g.metadata("valid_datetime") == ref

@@ -12,7 +12,7 @@ import tempfile
 
 
 class TmpFile:
-    """The TmpFile objets are designed to be used for temporary files.
+    """The TmpFile objects are designed to be used for temporary files.
     It ensures that the file is unlinked when the object is
     out-of-scope (with __del__).
 
@@ -58,10 +58,18 @@ def temp_file(extension=".tmp") -> TmpFile:
 
 
 class TmpDirectory(tempfile.TemporaryDirectory):
+    def __init__(self, *args, **kwargs):
+        d = kwargs.get("dir", None)
+        if d == "":
+            raise ValueError("TmpDirectory: dir option cannot be an empty str!")
+        if d is not None and not os.path.exists(d):
+            os.makedirs(d)
+        super().__init__(*args, **kwargs)
+
     @property
     def path(self):
         return self.name
 
 
-def temp_directory():
-    return TmpDirectory()
+def temp_directory(dir=None):
+    return TmpDirectory(dir=dir)

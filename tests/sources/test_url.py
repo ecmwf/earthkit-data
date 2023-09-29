@@ -15,8 +15,12 @@ import sys
 import pytest
 
 from earthkit.data import from_source, settings
-from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import earthkit_file, network_off
+from earthkit.data.core.temporary import temp_directory, temp_file
+from earthkit.data.testing import (
+    earthkit_file,
+    earthkit_remote_test_data_file,
+    network_off,
+)
 
 
 @pytest.mark.skipif(  # TODO: fix
@@ -45,7 +49,7 @@ def test_url_source_check_out_of_date():
 
     with temp_directory() as tmpdir:
         with settings.temporary():
-            settings.set("cache-directory", tmpdir)
+            settings.set("user-cache-directory", tmpdir)
             load()
 
             settings.set("check-out-of-date-urls", False)
@@ -127,6 +131,17 @@ def test_url_part_file_source():
 
     with open(ds.path, "rb") as f:
         assert f.read() == b"GRIB7777GRIB7777"
+
+
+def test_url_netcdf_source_save():
+    ds = from_source(
+        "url",
+        earthkit_remote_test_data_file("examples/test.nc"),
+    )
+
+    tmp = temp_file()
+    ds.save(tmp.path)
+    assert os.path.exists(tmp.path)
 
 
 if __name__ == "__main__":

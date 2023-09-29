@@ -18,8 +18,20 @@ import numpy as np
 import pytest
 
 import earthkit.data
+from earthkit.data import from_source
+from earthkit.data.core.temporary import temp_file
+from earthkit.data.testing import earthkit_examples_file
 
 EPSILON = 1e-4
+
+
+def test_grib_save_when_loaded_from_file():
+    fs = from_source("file", earthkit_examples_file("test6.grib"))
+    assert len(fs) == 6
+    with temp_file() as tmp:
+        fs.save(tmp)
+        fs_saved = from_source("file", tmp)
+        assert len(fs) == len(fs_saved)
 
 
 @pytest.mark.skipif(
@@ -162,7 +174,7 @@ def test_grib_output_tp():
         f.write(data, param="tp", step=48)
         f.close()
 
-        ds = earthkit.data.load_source("file", path)
+        ds = earthkit.data.from_source("file", path)
         print(ds[0])
 
         assert ds[0].metadata("date") == 20010101
