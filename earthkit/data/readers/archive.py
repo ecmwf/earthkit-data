@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import logging
 import os
 
@@ -66,9 +67,17 @@ class ArchiveReader(Reader):
                     continue
                 archive.extract(member=member, path=target, **kwargs)
 
+        try:
+            r = os.stat(self.path)
+            fsize = r[6]
+            mtime = datetime.datetime.fromtimestamp(r[8])
+        except Exception:
+            fsize = 0
+            mtime = 0
+
         self.path = self.cache_file(
             unpack,
-            self.path,
+            [self.path, fsize, mtime],
             extension=".d",
             replace=self.path,
         )
