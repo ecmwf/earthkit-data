@@ -12,7 +12,7 @@ New features
 - added the ``dtype`` option to the ``to_data()``, ``to_latlon()`` and ``to_points()`` methods both on a :class:`~data.core.fieldlist.Field` or :class:`~data.core.fieldlist.FieldList`.
 - allowed access to 32-bit GRIB data values without requiring a cast in Python from 64 to 32 bits. Only works with a recent ecCodes version (ecCodes >= 2.31.0 and eccodes-python >= 1.6.0 required). In order to use this feature set ``dtype=np.float32`` in the ``to_numpy()``, ``to_data()``, ``to_latlon()`` or ``to_points()`` methods on either a :class:`~data.core.fieldlist.Field` or :class:`~data.core.fieldlist.FieldList`.
 - added :meth:`~data.core.readers.csv.CSVReader.to_xarray` to csv data
-- no ecCodes installation required any longer for accessing other data than GRIB or BUFR
+- no ecCodes installation required any longer when we do not want to access GRIB or BUFR data
 
 
 Fixes
