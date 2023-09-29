@@ -198,7 +198,7 @@ def test_cache_with_log_debug(caplog):
     # the problem still occurs!
 
 
-def test_cache_zip_file_overwritten():
+def test_cache_zip_file_overwritten_1():
     with temp_directory() as tmp_dir:
         import shutil
         import zipfile
@@ -253,7 +253,9 @@ def test_cache_zip_file_changed_modtime():
         ds_path = ds.path
 
         # second pass - changed modtime
-        os.utime(zip_path, (10, 10))
+        # TODO: here we have to assume more than 1 ns passed since the
+        # zip file was created.
+        os.utime(zip_path, None)
         ds2 = from_source("file", zip_path)
         assert len(ds2) == 2
         assert ds2.path != ds_path
