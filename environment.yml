@@ -38,7 +38,8 @@ dependencies:
 - pytest-forked
 - pytest-timeout
 - sphinx>=7.2.6
-- sphinx-autoapi>=3.0.0
+- pip:
+  - sphinx-autoapi>=3.0.0
 - sphinx_rtd_theme
 - sphinxcontrib-apidoc
 - nbformat
