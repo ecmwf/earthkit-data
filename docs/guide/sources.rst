@@ -567,7 +567,8 @@ polytope
 
       ds = earthkit.data.from_source("polytope", "ecmwf-mars", request)
 
-  .. Data downloaded from the polytope service is stored in the the :ref:`cache <caching>`.
+  Data downloaded from the polytope service is stored in the the :ref:`cache <caching>`. However,
+  please note that, in the current version, each call to  :func:`from_source` will download the data again.
 
   To access data from polytope, you will need to register and retrieve an access token.
 
