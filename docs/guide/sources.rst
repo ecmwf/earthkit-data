@@ -539,7 +539,7 @@ polytope
 .. py:function:: from_source("polytope", collection, *args, **kwargs)
   :noindex:
 
-  The ``polytope`` source accesses the `Polytope web services <https://polytope-client.readthedocs.io/en/latest/>`_ , using the polytope-client_ package. 
+  The ``polytope`` source accesses the `Polytope web services <https://polytope-client.readthedocs.io/en/latest/>`_ , using the polytope-client_ package.
 
   :param str collection: the name of the polytope collection
   :param tuple *args: specifies the request as a dict
@@ -549,27 +549,27 @@ polytope
 
   .. code-block:: python
 
-    import earthkit.data
+      import earthkit.data
 
-    request = {
-        'stream': 'oper',
-        'levtype': 'pl',
-        'levellist': '1',
-        'param': '130.128',
-        'step': '0/12',
-        'time': '00:00:00',
-        'date': '20200915',
-        'type': 'fc',
-        'class': 'rd',
-        'expver': 'hsvs',
-        'domain': 'g'
-    }
+      request = {
+          "stream": "oper",
+          "levtype": "pl",
+          "levellist": "1",
+          "param": "130.128",
+          "step": "0/12",
+          "time": "00:00:00",
+          "date": "20200915",
+          "type": "fc",
+          "class": "rd",
+          "expver": "hsvs",
+          "domain": "g",
+      }
 
-    ds = earthkit.data.from_source("polytope", "ecmwf-mars", request)
-    
+      ds = earthkit.data.from_source("polytope", "ecmwf-mars", request)
+
   .. Data downloaded from the polytope service is stored in the the :ref:`cache <caching>`.
 
-  To access data from polytope, you will need to register and retrieve an access token. 
+  To access data from polytope, you will need to register and retrieve an access token.
 
   Further examples:
 
