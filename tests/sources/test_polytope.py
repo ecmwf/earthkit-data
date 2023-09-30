@@ -9,7 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
 import sys
 
 import pytest
@@ -49,26 +48,26 @@ def test_polytope_odb():
     df = src.to_pandas()
     assert len(df) == 52
 
+
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_POLYTOPE, reason="No access to Polytope Web API")
 def test_polytope_grib():
     request = {
-        'stream': 'oper',
-        'levtype': 'pl',
-        'levellist': '500',
-        'param': '129.128',
-        'step': '0/12',
-        'time': '00:00:00',
-        'date': '20200915',
-        'type': 'fc',
-        'class': 'rd',
-        'expver': 'hsvs',
-        'domain': 'g'
+        "stream": "oper",
+        "levtype": "pl",
+        "levellist": "500",
+        "param": "129.128",
+        "step": "0/12",
+        "time": "00:00:00",
+        "date": "20200915",
+        "type": "fc",
+        "class": "rd",
+        "expver": "hsvs",
+        "domain": "g",
     }
 
-
     ds = from_source("polytope", "ecmwf-mars", request)
-    
-    assert len(ds) ==  2
+
+    assert len(ds) == 2
     assert ds.metadata("level") == [500, 500]
