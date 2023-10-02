@@ -96,7 +96,6 @@ def test_constant_3():
         datetime.datetime(2020, 12, 23, 12, 0),
     ]
 
-    dt = sample.datetime()
     params = all_params
 
     ds = from_source(

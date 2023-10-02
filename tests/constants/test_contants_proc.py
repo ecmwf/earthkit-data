@@ -16,11 +16,11 @@ import numpy as np
 import pytest
 import yaml
 
+from earthkit.data.testing import earthkit_test_data_file
+
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
 from constants_fixtures import all_params, load_constants_fs  # noqa: E402
-
-from earthkit.data.testing import earthkit_test_data_file
 
 
 def _build_proc_ref():
@@ -29,7 +29,7 @@ def _build_proc_ref():
     ds, _ = load_constants_fs(params=all_params, last_step=12)
     d = {}
     for p in all_params:
-        #print(f"p={p}")
+        # print(f"p={p}")
         f = ds.sel(param=p, valid_datetime="2020-05-13T18:00:00")
         v = f[0].values
         d[p] = {
@@ -38,22 +38,22 @@ def _build_proc_ref():
             "mean": float(np.nanmean(v)),
         }
 
-    #print(d)
+    # print(d)
     with open("_dev/proc.yaml", "w") as outfile:
         yaml.dump(d, outfile, sort_keys=True)
 
 
 def test_constants_proc():
     with open(
-        earthkit_test_data_file(os.path.join("constants","proc.yaml")), "r"
+        earthkit_test_data_file(os.path.join("constants", "proc.yaml")), "r"
     ) as f:
         ref = yaml.safe_load(f)
 
     ds, _ = load_constants_fs(params=all_params, last_step=12)
-  
+
     for p in all_params:
         f = ds.sel(param=p, valid_datetime="2020-05-13T18:00:00")
-        assert len(f) ==  1
+        assert len(f) == 1
         v = f[0].values
         r = ref[p]
         assert np.isclose(v[0], r["first"])
@@ -61,10 +61,10 @@ def test_constants_proc():
         assert np.isclose(np.nanmean(v), r["mean"])
 
 
-@pytest.mark.parametrize("param,coord", [("latitude","lat"), ("longitude","lon")])
+@pytest.mark.parametrize("param,coord", [("latitude", "lat"), ("longitude", "lon")])
 def test_constants_proc_latlon(param, coord):
     ds, _ = load_constants_fs(params=all_params, last_step=12)
-  
+
     latlon = ds[0].to_latlon(flatten=True)
     coord = latlon[coord]
     date = "2020-05-13T18:00:00"
@@ -80,7 +80,6 @@ def test_constants_proc_latlon(param, coord):
     f = ds.sel(param="sin_" + param, valid_datetime=date)
     assert len(f) == 1
     assert np.allclose(f[0].values, np.sin(np.deg2rad(coord)))
-
 
 
 if __name__ == "__main__":

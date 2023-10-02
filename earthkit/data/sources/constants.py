@@ -15,7 +15,6 @@ from warnings import warn
 import numpy as np
 
 from earthkit.data.core.fieldlist import Field, FieldList
-from earthkit.data.core.geography import Geography
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.decorators import cached_method, normalize

@@ -67,4 +67,3 @@ def load_constants_fs(params=None, first_step=6, last_step=72):
 
     md = [[d.isoformat(), p] for d, p in itertools.product(dates, params)]
     return ds, md
-
