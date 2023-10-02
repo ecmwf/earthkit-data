@@ -13,10 +13,10 @@ import datetime
 
 import pytest
 
-from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_examples_file, load_nc_or_xr_source
 
 
+@pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
     [
@@ -47,8 +47,8 @@ from earthkit.data.testing import earthkit_examples_file
         ),
     ],
 )
-def test_netcdf_sel_single_file_1(params, expected_meta, metadata_keys):
-    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+def test_netcdf_sel_single_file_1(mode, params, expected_meta, metadata_keys):
+    f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
 
     g = f.sel(**params)
     assert len(g) == len(expected_meta)

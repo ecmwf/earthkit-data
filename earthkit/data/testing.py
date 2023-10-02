@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from importlib import import_module
 from unittest.mock import patch
 
-from earthkit.data import from_source
+from earthkit.data import from_object, from_source
 from earthkit.data.readers.text import TextReader
 from earthkit.data.sources.empty import EmptySource
 
@@ -80,6 +80,7 @@ def modules_installed(*modules):
 
 NO_MARS = not os.path.exists(os.path.expanduser("~/.ecmwfapirc"))
 NO_CDS = not os.path.exists(os.path.expanduser("~/.cdsapirc"))
+NO_HDA = not os.path.exists(os.path.expanduser("~/.hdarc"))
 IN_GITHUB = os.environ.get("GITHUB_WORKFLOW") is not None
 try:
     import ecmwf.opendata  # noqa
@@ -95,6 +96,8 @@ try:
     NO_FDB = fdb_home is None
 except Exception:
     NO_FDB = True
+
+NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
 
 
 def MISSING(*modules):
@@ -132,6 +135,15 @@ def check_unsafe_archives(extension):
         LOG.debug("%s.%s", archive, extension)
         ds = from_source("url", f"{UNSAFE_SAMPLES_URL}/{archive}{extension}")
         check(ds)
+
+
+def load_nc_or_xr_source(path, mode):
+    if mode == "nc":
+        return from_source("file", path)
+    else:
+        import xarray
+
+        return from_object(xarray.open_dataset(path))
 
 
 def main(path):

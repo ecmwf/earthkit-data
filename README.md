@@ -1,17 +1,16 @@
 # earthkit-data
 
-![earthkit-data](docs/_static/earthkit-data.png)
+<img src="docs/_static/earthkit-data.png" width="120">
 
+[![PyPI version fury.io](https://badge.fury.io/py/earthkit-data.svg)](https://pypi.python.org/pypi/earthkit-data/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-data.svg)](https://pypi.python.org/pypi/earthkit-data/)
+
+**DISCLAIMER**
+
+> This project is in the **BETA** stage of development. Please be aware that interfaces and functionality may change as the project develops. If this software is to be used in operational systems you are **strongly advised to use a released tag in your system configuration**, and you should be willing to accept incoming changes and bug fixes that require adaptations on your part. ECMWF **does use** this software in operations and abides by the same caveats.
 
 A format-agnostic interface for geospatial data with a focus on meteorology and
 climate science.
-
-> :warning: **DISCLAIMER**
->
-> This project is **BETA** and will be **Experimental** for the foreseeable future.
-> Interfaces and functionality are likely to change, and the project itself may be scrapped.
-> **DO NOT** use this software in any project/software that is operational.
 
 ## Documentation
 

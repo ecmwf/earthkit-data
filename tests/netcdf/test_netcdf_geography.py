@@ -28,14 +28,20 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
     assert np.isclose(v.mean(), meanv, eps)
 
 
-def test_netcdf_to_points_1():
+@pytest.mark.parametrize(
+    "dtype,expected_dtype",
+    [(None, np.float64), (np.float32, np.float32), (np.float64, np.float64)],
+)
+def test_netcdf_to_points_1(dtype, expected_dtype):
     ds = from_source("file", earthkit_test_data_file("test_single.nc"))
 
     eps = 1e-5
-    v = ds[0].to_points(flatten=True)
+    v = ds[0].to_points(flatten=True, dtype=dtype)
     assert isinstance(v, dict)
     assert isinstance(v["x"], np.ndarray)
     assert isinstance(v["y"], np.ndarray)
+    assert v["x"].dtype == expected_dtype
+    assert v["y"].dtype == expected_dtype
     check_array(
         v["x"],
         (84,),

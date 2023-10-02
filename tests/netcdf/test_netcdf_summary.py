@@ -10,12 +10,14 @@
 
 import datetime
 
-from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+import pytest
+
+from earthkit.data.testing import earthkit_examples_file, load_nc_or_xr_source
 
 
-def test_netcdf_ls():
-    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_ls(mode):
+    f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
 
     # default keys
     f1 = f[:4]

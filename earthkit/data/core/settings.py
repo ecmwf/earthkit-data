@@ -112,7 +112,7 @@ class Setting:
         return type(self.default)
 
     def save(self, name, value, f):
-        for n in self.description.split("\n"):
+        for n in self.docs_description.split("\n"):
             print(f"# {n.strip()}", file=f)
         print(file=f)
         comment = yaml.dump({name: self.default}, default_flow_style=False)
@@ -162,7 +162,8 @@ SETTINGS_AND_HELP = {
     ),
     "cache-policy": _(
         "user",
-        """Caching policy. {validator} See :doc:`/guide/caching` for more information. """,
+        """Caching policy. {validator}
+        See :doc:`/guide/caching` for more information. """,
         validator=ListValidator(["off", "temporary", "user"]),
     ),
     "use-message-position-index-cache": _(
@@ -201,7 +202,8 @@ SETTINGS_AND_HELP = {
     ),
     "reader-type-check-bytes": _(
         64,
-        "Number of bytes read from the beginning of a source to identify its type. {validator}",
+        """Number of bytes read from the beginning of a source to identify its type.
+        {validator}""",
         validator=IntervalValidator(Interval(8, 4096)),
     ),
 }
@@ -250,7 +252,7 @@ def save_settings(path, settings):
 
         print(file=f)
         print("#", "-" * 76, file=f)
-        print("# Version of CliMetLab", file=f)
+        print("# Version of earthkit-data", file=f)
         print(file=f)
         yaml.dump({"version": VERSION}, f, default_flow_style=False)
         print(file=f)

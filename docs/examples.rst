@@ -15,6 +15,9 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     examples/cds.ipynb
     examples/ecmwf_open_data.ipynb
     examples/fdb.ipynb
+    examples/mars.ipynb
+    examples/polytope.ipynb
+    examples/wekeo.ipynb
 
 
 .. toctree::
@@ -33,6 +36,7 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     examples/grib_tar.ipynb
     examples/grib_url.ipynb
     examples/grib_to_netcdf.ipynb
+    examples/numpy_fieldlist.ipynb
 
 .. toctree::
     :maxdepth: 1
@@ -73,4 +77,3 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     examples/cache.ipynb
     examples/projection.ipynb
     examples/metadata.ipynb
-    examples/numpy_fieldlist.ipynb
