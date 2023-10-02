@@ -161,7 +161,7 @@ class CSVReader(Reader):
                 "comment": "#",
             }
 
-        # Ensure dictionary from climetlab, is this necessary?
+        # Ensure dictionary. This code is from climetlab, is it necessary?
         pandas_read_csv_kwargs = dict(**pandas_read_csv_kwargs)
 
         if self.compression is not None:
