@@ -141,11 +141,11 @@ def test_csv_with_comment():
         comment_line="This is a comment",
     )
 
-    df = s.to_pandas(pandas_read_csv_kwargs={"comment": "#"})
+    df = s.to_pandas()
     assert len(df) == 3
     assert list(df.columns) == ["a", "b", "c"]
 
-    ds = s.to_xarray(pandas_read_csv_kwargs={"comment": "#"})
+    ds = s.to_xarray()
     assert len(ds) == 3
     assert list(ds.variables) == ["index", "a", "b", "c"]
 

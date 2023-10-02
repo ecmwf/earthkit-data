@@ -102,6 +102,24 @@ def test_cds_netcdf_selection_limited():
     assert len(s) == 9
 
 
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+def test_cds_consistent_csv_response():
+    collection_id = "insitu-observations-gruan-reference-network"
+    request = {
+        "format": "csv-lev.zip",
+        "year": "2006",
+        "month": "05",
+        "variable": ["air_temperature", "altitude"],
+        "day": ["21", "22"],
+    }
+    data_cds = from_source("cds", collection_id, **request)
+    data_file = from_source("file", data_cds.path)
+
+    assert data_cds.to_pandas().equals(data_file.to_pandas())
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 

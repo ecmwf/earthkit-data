@@ -134,7 +134,7 @@ class CSVReader(Reader):
         self.compression = compression
         self.dialect, self.has_header = probe_csv(path, compression=compression)
 
-    def to_pandas(self, pandas_read_csv_kwargs=None):
+    def to_pandas(self, pandas_read_csv_kwargs=None, **kwargs):
         """Convert CSV data into a :py:class:`pandas.DataFrame` using :py:func:`pandas.read_csv`.
 
         Parameters
@@ -157,16 +157,21 @@ class CSVReader(Reader):
         import pandas
 
         if pandas_read_csv_kwargs is None:
-            pandas_read_csv_kwargs = {}
+            pandas_read_csv_kwargs = {
+                "comment": "#",
+            }
+
+        # Ensure dictionary from climetlab, is this necessary?
+        pandas_read_csv_kwargs = dict(**pandas_read_csv_kwargs)
 
         if self.compression is not None:
-            pandas_read_csv_kwargs = dict(**pandas_read_csv_kwargs)
+            # Over-write any specified compression in the read kwargs
             pandas_read_csv_kwargs["compression"] = self.compression
 
         LOG.debug("pandas.read_csv(%s,%s)", self.path, pandas_read_csv_kwargs)
         return pandas.read_csv(self.path, **pandas_read_csv_kwargs)
 
-    def to_xarray(self, pandas_read_csv_kwargs=None):
+    def to_xarray(self, pandas_read_csv_kwargs=None, **kwargs):
         """Convert CSV data into an xarray object`.
 
         First, the data is converted into a :py:class:`pandas.DataFrame` with :py:func:`pandas.read_csv`,
@@ -182,10 +187,9 @@ class CSVReader(Reader):
         Xarray object
 
         """
-        if pandas_read_csv_kwargs is None:
-            pandas_read_csv_kwargs = {}
-
-        return self.to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs).to_xarray()
+        return self.to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs).to_xarray(
+            **kwargs
+        )
 
 
 def reader(source, path, magic, deeper_check, fwf=False):
