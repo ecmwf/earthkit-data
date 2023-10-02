@@ -123,5 +123,24 @@ class CdsRetriever(FileSource):
 
         return result
 
+    def to_pandas(self, **kwargs):
+        pandas_read_csv_kwargs = dict(
+            compression="zip",
+        )
+
+        pandas_read_csv_kwargs.update(kwargs.get("pandas_read_csv_kwargs", {}))
+
+        odc_read_odb_kwargs = dict(
+            # TODO
+        )
+
+        odc_read_odb_kwargs.update(kwargs.get("odc_read_odb_kwargs", {}))
+
+        return super().to_pandas(
+            pandas_read_csv_kwargs=pandas_read_csv_kwargs,
+            odc_read_odb_kwargs=odc_read_odb_kwargs,
+            **kwargs,
+        )
+
 
 source = CdsRetriever
