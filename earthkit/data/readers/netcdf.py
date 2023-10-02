@@ -506,11 +506,9 @@ class XArrayFieldList(XArrayFieldListCore):
         self.FIELD_TYPE = XArrayField
         super().__init__(ds, **kwargs)
 
-    def __getitem__(self, n):
+    def _getitem(self, n):
         if isinstance(n, int):
             return self.fields[n]
-        else:
-            return super().__getitem__(n)
 
     def __len__(self):
         return len(self.fields)
@@ -621,11 +619,9 @@ class NetCDFFieldListInOneFile(NetCDFFieldListInFiles):
         assert isinstance(path, str), path
         super().__init__(path, **kwargs)
 
-    def __getitem__(self, n):
+    def _getitem(self, n):
         if isinstance(n, int):
             return self.fields[n]
-        else:
-            return super().__getitem__(n)
 
     def __len__(self):
         return len(self.fields)
