@@ -120,6 +120,25 @@ def test_cds_consistent_csv_response():
     assert data_cds.to_pandas().equals(data_file.to_pandas())
 
 
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+def test_cds_non_observation_csv_file():
+    collection_id = 'sis-energy-derived-reanalysis'
+    request = {
+        'variable': 'wind_power_generation_onshore',
+        'spatial_aggregation': 'country_level',
+        'energy_product_type': 'energy',
+        'temporal_aggregation': 'daily',
+        'format': 'zip',
+    }
+    data_cds = from_source("cds", collection_id, **request)
+    assert "Date" in data_cds.to_pandas().columns
+
+    # Assert a consistent behviour for local and remote versions
+    data_file = from_source("file", data_cds.path)
+    assert data_cds.to_pandas().equals(data_file.to_pandas())
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
