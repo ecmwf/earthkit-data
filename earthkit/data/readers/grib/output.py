@@ -127,7 +127,7 @@ class GribOutput:
 
         for k, v in metadata.items():
             handle.set(k, v)
-        
+
         handle.set_values(values)
 
         file, path = self.f(handle)
