@@ -89,6 +89,23 @@ def test_csv_4():
     assert list(df.columns) == ["a", "b", "c"]
 
 
+def test_csv_5():
+    s = from_source(
+        "dummy-source",
+        "csv",
+        headers=["a", "b", "c"],
+        quote_strings=True,
+        lines=[
+            [1, "x", 3],
+            [4, "y", 6],
+            [7, "z", 9],
+        ],
+    )
+
+    df = s.to_pandas(pandas_read_csv_kwargs={"index_col": "a"})
+    assert df.index.name == "a"
+
+
 @pytest.mark.skipif(True, reason="Test not yet implemented")
 def test_csv_icoads():
     r = {
