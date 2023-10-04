@@ -137,10 +137,11 @@ class Metadata(metaclass=ABCMeta):
     def _get_custom_key(self, key, default=None, raise_on_missing=True):
         try:
             if key == DATETIME:
-                return True, self.datetime().get("valid_time")
+                if key not in self:
+                    return True, self.datetime().get("valid_time")
         except Exception as e:
             if not raise_on_missing:
-                return default
+                return True, default
             else:
                 raise KeyError(f"{key}, reason={e}")
         return False, None
