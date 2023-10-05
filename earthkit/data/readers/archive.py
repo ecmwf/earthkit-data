@@ -7,7 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 import logging
 import os
 
@@ -69,8 +68,8 @@ class ArchiveReader(Reader):
 
         try:
             r = os.stat(self.path)
-            fsize = r[6]
-            mtime = datetime.datetime.fromtimestamp(r[8])
+            fsize = r.st_size
+            mtime = r.st_mtime_ns
         except Exception:
             fsize = 0
             mtime = 0
