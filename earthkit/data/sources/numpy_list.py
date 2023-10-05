@@ -82,11 +82,9 @@ class NumpyFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
         else:
             raise TypeError("array must be an ndarray or a list of ndarrays")
 
-        # wrap metadata
-        _md = []
-        for a, md in zip(self._array, self._metadata):
-            _md.append(md.combine(a))
-        self._metadata = _md
+        # hide internal metadata related to values
+        for md in self._metadata:
+            md._hide_internal()
 
         super().__init__(*args, **kwargs)
 

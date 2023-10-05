@@ -9,30 +9,108 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
+import sys
 
-import numpy as np
+import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.testing import earthkit_examples_file
 
-# Note: All grib metadata tests are also run for numpyfs.
+here = os.path.dirname(__file__)
+sys.path.insert(0, here)
+from numpy_fs_fixtures import (  # noqa: E402
+    load_numpy_fs, load_numpy_fs_file
+)
+
+
+# Note: Almost all grib metadata tests are also run for numpyfs.
 # See grib/test_grib_metadata.py
 
 
 def test_numpy_fs_grib_values_metadata():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-
-    v = ds[0].values
-    v_new = v + 1
-    md_new = ds[0].metadata().override(generatingProcessIdentifier=150)
-
-    ds_new = FieldList.from_numpy(v_new, md_new)
+    ds, _ = load_numpy_fs(1)
 
     # values metadata
-    keys = ["min", "max"]
+    keys = ["min", "max", "avg", "ds", "skew", "kurt", "isConstant", "const", "bitmapPresent", "numberOfMissing"]
     for k in keys:
-        assert np.isclose(ds_new[0].metadata(k), ds[0].metadata(k) + 1)
+        assert ds[0].metadata(k, default=None) is None, k
+        with pytest.raises(KeyError):
+            ds[0].metadata(k)
+
+def test_numpy_fs_metadata_namespace():
+    f, _ = load_numpy_fs_file("tuv_pl.grib")
+
+    r = f[0].metadata(namespace="vertical")
+    ref = {"level": 1000, "typeOfLevel": "isobaricInhPa"}
+    assert r == ref
+
+    r = f[0].metadata(namespace=["vertical", "time"])
+    ref = {
+        "vertical": {"typeOfLevel": "isobaricInhPa", "level": 1000},
+        "time": {
+            "dataDate": 20180801,
+            "dataTime": 1200,
+            "stepUnits": 1,
+            "stepType": "instant",
+            "stepRange": "0",
+            "startStep": 0,
+            "endStep": 0,
+            "validityDate": 20180801,
+            "validityTime": 1200,
+        },
+    }
+    assert r == ref
+
+    r = f[0].metadata(namespace=None)
+    assert isinstance(r, dict)
+    assert len(r) == 183
+    assert r["level"] == 1000
+    assert r["stepType"] == "instant"
+
+    r = f[0].metadata(namespace=[None])
+    assert isinstance(r, dict)
+    assert len(r) == 183
+    assert r["level"] == 1000
+    assert r["stepType"] == "instant"
+
+    r = f[0].metadata(namespace="")
+    assert isinstance(r, dict)
+    assert len(r) == 183
+    assert r["level"] == 1000
+    assert r["stepType"] == "instant"
+
+    r = f[0].metadata(namespace=[""])
+    assert isinstance(r, dict)
+    assert len(r) == 183
+    assert r["level"] == 1000
+    assert r["stepType"] == "instant"
+
+    ref = {
+        "geography",
+        "vertical",
+        "time",
+        "parameter",
+        "mars",
+        "ls",
+        "default",
+    }
+    r = f[0].metadata(namespace=all)
+    assert isinstance(r, dict)
+    assert set(r.keys()) == ref
+
+    r = f[0].metadata(namespace=[all])
+    assert isinstance(r, dict)
+    assert set(r.keys()) == ref
+
+    with pytest.raises(ValueError) as excinfo:
+        r = f[0].metadata("level", namespace=["vertical", "time"])
+    assert "must be a str when key specified" in str(excinfo.value)
+
+    with pytest.raises(ValueError) as excinfo:
+        r = f[0].metadata("level", namespace=["vertical", "time"])
+    assert "must be a str when key specified" in str(excinfo.value)
 
 
 if __name__ == "__main__":

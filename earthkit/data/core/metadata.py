@@ -9,9 +9,75 @@
 
 
 from abc import ABCMeta, abstractmethod
+import functools
 
 from earthkit.data.core.constants import DATETIME
+from earthkit.data.decorators import cached_method
 
+
+def internal_key(func):
+    """Controls if internal keys can be accessed"""
+    @functools.wraps(func)
+    def wrapped(self, key, *args, **kwargs):
+        if not self._internal:
+            ns, _, name = key.partition(".")
+            if name == "":
+                name = key
+                ns = ""
+
+            if args:
+                kwargs["default"] = args[0]
+
+            args = ()
+
+            if ns == self.EKD_NAMESPACE:
+                key = name
+            else:
+                if name in self.INTERNAL_KEYS:
+                    if kwargs.get("raise_on_missing", True):
+                        raise KeyError(key)
+                    else:
+                        return kwargs.get("default", None)
+
+        return func(self, key, *args, **kwargs)
+
+    return wrapped
+
+
+def internal_namespace(func):
+    """Controls if internal namespaces an be accessed"""
+    @functools.wraps(func)
+    def wrapped(self, namespace):
+        if not self._internal:
+            if namespace in self.INTERNAL_NAMESPACES:
+                return {}
+
+            r = func(self, namespace)
+            for k in list(r.keys()):
+                if k in self.INTERNAL_KEYS:
+                    del r[k]
+            return r
+        else:
+            return func(self, namespace)
+
+    return wrapped
+
+
+def internal_namespace_list(func):
+    """Controls if internal namespaced an be accessed"""
+    @functools.wraps(func)
+    def wrapped(self):
+        v = func(self)
+        if not self._internal:
+            r = []
+            for x in v:
+                if x not in self.INTERNAL_NAMESPACES:
+                    r.append(x)
+            return r
+        else:
+            return v
+
+    return wrapped
 
 class Metadata(metaclass=ABCMeta):
     r"""Base class to represent metadata.
@@ -27,9 +93,24 @@ class Metadata(metaclass=ABCMeta):
 
     """
 
-    VALUES_PART_METADATA_CLASS = None
     DATA_FORMAT = None
+    NAMESPACES = []
+    LS_KEYS = []
+    DESCRIBE_KEYS = [] 
+    INDEX_KEYS = []
+    CUSTOM_KEYS = [DATETIME]
+    _internal = True
 
+    # _key_accessor = None
+
+    def __init_subclass__(cls, *args, **kwargs):
+        super().__init_subclass__(*args, **kwargs)
+    
+        name = "as_namespace"
+        if name in cls.__dict__:
+            setattr(cls, name, namespace_filter(getattr(cls, name)))
+
+    
     def __iter__(self):
         """Return an iterator over the metadata keys."""
         return iter(self.keys())
@@ -37,6 +118,7 @@ class Metadata(metaclass=ABCMeta):
     @abstractmethod
     def __len__(self):
         r"""Return the number of metadata entries."""
+        pass
 
     def __getitem__(self, key):
         r"""Return the value for ``key``.
@@ -46,7 +128,7 @@ class Metadata(metaclass=ABCMeta):
         KeyError
             When ``key`` is not available.
         """
-        return self._get_key(key)
+        return self.get(key, raise_on_missing=True)
 
     @abstractmethod
     def __contains__(self, key):
@@ -58,7 +140,7 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
+    @abstractmethod    
     def keys(self):
         r"""Return a new view of the metadata keys.
 
@@ -69,7 +151,7 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
+    @abstractmethod   
     def items(self):
         r"""Return a new view of the metadata items.
 
@@ -80,21 +162,10 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
-    def get(self, key, default=None):
+    @internal_key
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         r"""Return the value for ``key``.
-
-        Parameters
-        ----------
-        key: str
-            Metadata key
-        default:
-            When ``key`` is not found ``default`` is returned.
-        """
-        return self._get_key(key, default=default, raise_on_missing=False)
-
-    def _get_key(self, key, astype=None, default=None, raise_on_missing=True):
-        r"""Return the value for ``key``.
-
+        
         Parameters
         ----------
         key: str
@@ -119,32 +190,32 @@ class Metadata(metaclass=ABCMeta):
             a missing value.
 
         """
-        # check for custom keys
-        is_custom, v = self._get_custom_key(
-            key, default=default, raise_on_missing=raise_on_missing
-        )
-        if is_custom:
-            return v
-
-        return self._get_internal_key(
-            key, astype=astype, default=default, raise_on_missing=raise_on_missing
-        )
+        if self.is_custom_key(key):
+            return self._get_custom_key(
+                key, default=default, astype=astype, raise_on_missing=raise_on_missing
+            )
+        else:
+            return self._get(
+                key, default=default, astype=astype, raise_on_missing=raise_on_missing
+            )
 
     @abstractmethod
-    def _get_internal_key(self, key, astype=None, default=None, raise_on_missing=True):
+    def _get(self, key, astype=None, default=None, raise_on_missing=False):
         pass
 
-    def _get_custom_key(self, key, default=None, raise_on_missing=True):
-        try:
-            if key == DATETIME:
-                if key not in self:
-                    return True, self.datetime().get("valid_time")
-        except Exception as e:
-            if not raise_on_missing:
-                return True, default
-            else:
-                raise KeyError(f"{key}, reason={e}")
-        return False, None
+    def is_custom_key(self, key):
+        return key in self.CUSTOM_KEYS and key not in self
+
+    def _get_custom_key(self, key, default=None, raise_on_missing=True, **kwargs):
+        if self.is_custom_key(key):
+            try:
+                if key == DATETIME:
+                    return self._valid_datetime()
+            except Exception as e:
+                if not raise_on_missing:
+                    return default
+                else:
+                    raise KeyError(f"{key}, reason={e}")
 
     @abstractmethod
     def override(self, *args, **kwargs):
@@ -165,6 +236,7 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
+    @internal_namespace
     def namespaces(self):
         r"""Return the available namespaces.
 
@@ -172,7 +244,7 @@ class Metadata(metaclass=ABCMeta):
         -------
         list of str
         """
-        return []
+        return self.NAMESPACES
 
     def as_namespace(self, namespace=None):
         r"""Return all the keys/values from a namespace.
@@ -198,15 +270,33 @@ class Metadata(metaclass=ABCMeta):
         return None
 
     def datetime(self):
-        r"""Return the date and time.
+        r"""Return the date and time of the field.
 
         Returns
         -------
-        dict of datatime.datetime or None
-            Dict with items "base_time" and "valid_time". None if
-            date and time are not available.
+        dict of datatime.datetime
+            Dict with items "base_time" and "valid_time".
+
+
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
+        >>> ds[4].datetime()
+        {'base_time': datetime.datetime(2020, 12, 21, 12, 0),
+        'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
+
         """
-        return None
+        return {
+            "base_time": self._base_datetime(),
+            "valid_time": self._valid_datetime(),
+        }
+
+    @abstractmethod
+    def _base_datetime(self):
+        pass
+
+    @abstractmethod
+    def _valid_datetime(self):
+        pass
 
     @property
     def geography(self):
@@ -215,28 +305,24 @@ class Metadata(metaclass=ABCMeta):
         If it is not available None is returned.
         """
         return None
-
+   
     def ls_keys(self):
         r"""Return the keys to be used with the :meth:`ls` method."""
-        return []
+        return self.LS_KEYS
 
     def describe_keys(self):
         r"""Return the keys to be used with the :meth:`describe` method."""
-        return []
+        return self.DESCRIBE_KEYS
 
     def index_keys(self):
         r"""Return the keys to be used with the :meth:`indices` method."""
-        return []
-
+        return self.INDEX_KEYS
+    
     def data_format(self):
         return self.DATA_FORMAT
 
-    def combine(self, values):
-        if self.VALUES_PART_METADATA_CLASS is None:
-            raise NotImplementedError
-
-        part = self.VALUES_PART_METADATA_CLASS(values)
-        return CombinedMetadata(self, part)
+    def _hide_internal(self):
+        self._internal = False
 
 
 class RawMetadata(Metadata):
@@ -274,20 +360,19 @@ class RawMetadata(Metadata):
 
     def __init__(self, *args, **kwargs):
         self._d = dict(*args, **kwargs)
+        
+    def override(self, *args, **kwargs):
+        d = dict(**self._d)
+        d.update(*args, **kwargs)
+        return RawMetadata(d)
 
     def __len__(self):
         return len(self._d)
 
-    def keys(self):
-        return self._d.keys()
-
-    def items(self):
-        return self._d.items()
-
     def __contains__(self, key):
         return key in self._d
 
-    def _get_internal_key(self, key, astype=None, default=None, raise_on_missing=True):
+    def _get(self, key, astype=None, default=None, raise_on_missing=False):
         if not raise_on_missing:
             v = self._d.get(key, default)
         else:
@@ -300,134 +385,20 @@ class RawMetadata(Metadata):
                 return None
         return v
 
-    def override(self, *args, **kwargs):
-        d = dict(**self._d)
-        d.update(*args, **kwargs)
-        return RawMetadata(d)
+    def keys(self):
+        return self._d.keys()
+
+    def items(self):
+        return self._d.items()
+    
+    def _base_datetime(self):
+        return None
+    
+    def _valid_datetime(self):
+        return None
+    
+    def as_namespace(self, namespace):
+        return {}
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self._d.__repr__()})"
-
-
-class LazyMetadata:
-    r"""Lazily load a RawMetadata object from the specified data"""
-
-    INVALID_KEYS = []
-
-    def __init__(self, data):
-        self.data = data
-        self._md = None
-        self._exception = None
-
-    @property
-    def md(self):
-        if self._md is None:
-            try:
-                d = self._load()
-                for k in self.INVALID_KEYS:
-                    d[k] = None
-                self._md = RawMetadata(d)
-            except Exception as e:
-                self._exception = e
-                raise
-
-        return self._md
-
-    @abstractmethod
-    def _load(self):
-        pass
-
-    def __getitem__(self, name):
-        return self.md.__getitem__(name)
-
-    def __iter__(self):
-        return iter(self.md)
-
-    def __len__(self):
-        return len(self.md)
-
-    def __contains__(self, key):
-        return key in self.md
-
-    def __getattr__(self, name):
-        if self._exception is not None:
-            raise self._exception
-        assert name != "_load"
-        assert name != "md"
-        return getattr(self.md, name)
-
-
-# def part(func):
-#     @functools.wraps(func)
-#     def wrapped(self, key, *args, **kwargs):
-#         if key in self.part:
-#             return func(self.part, key, *args, **kwargs)
-#         return func(self, key, *args, **kwargs)
-
-#     return wrapped
-
-
-class CombinedMetadata:
-    r"""Combining a main and a partial metadata object.
-
-    Parameters
-    ----------
-    md: Metadata
-        The main metadata object.
-    part: Metadata
-        Metadata object containing only part of the keys from `md`.
-        When a key is available in ``part`` it is served from it. Keys
-        present in ``part`` but not in ``md`` are not exposed to the users.
-
-    """
-
-    def __init__(self, md, part):
-        self.md = md
-        self.part = part
-
-    def __getitem__(self, key):
-        if key in self.part:
-            return self.part.__getitem__(key)
-        return self.md.__getitem__(key)
-
-    def get(self, key, **kwargs):
-        if key in self.part:
-            return self.part.get(key, **kwargs)
-        return self.md.get(key, **kwargs)
-
-    def _get_key(self, key, **kwargs):
-        if key in self.part:
-            return self.part._get_key(key, **kwargs)
-        return self.md._get_key(key, **kwargs)
-
-    def _get_internal_key(self, key, **kwargs):
-        print(f"_get_internal_key: {key}")
-        if key in self.part:
-            print(" -> from part")
-            return self.part._get_internal_key(key, **kwargs)
-
-        return self.md._get_internal_key(key, **kwargs)
-
-    def as_namespace(self, namespace=None):
-        r = self.md.as_namespace(namespace=namespace)
-        for k in r:
-            _, _, name = k.partition(".")
-            if name in self.part:
-                r[k] = self.part[name]
-        return r
-
-    def __getattr__(self, name):
-        print(f"__getattr__: {name}")
-        # if self._exception is not None:
-        #     raise self._exception(name)
-        assert name != "as_namespace"
-        assert name != "_get_internal_key"
-        return getattr(self.md, name)
-
-    def combine(self, values):
-        if id(self.part.data) == id(values):
-            return self
-        return self.md.combine(values)
-
-
-# class CombinedGribMetadata(CombinedMetadata):

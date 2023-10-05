@@ -10,7 +10,7 @@
 import datetime
 
 from earthkit.data.core.geography import Geography
-from earthkit.data.core.metadata import LazyMetadata, Metadata
+from earthkit.data.core.metadata import Metadata
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
@@ -18,33 +18,6 @@ from earthkit.data.utils.projections import Projection
 
 def missing_is_none(x):
     return None if x == 2147483647 else x
-
-
-class GribValuesPartMetadata(LazyMetadata):
-    INVALID_KEYS = ["constant"]
-
-    def _load(self):
-        if self.data is None:
-            return {}
-
-        import numpy as np
-
-        v = self.data
-        maximum = np.nanmax(v)
-        minimum = np.nanmin(v)
-        stdev = np.nanstd(v)
-        average = np.nanmean(v)
-
-        d = {}
-        d["min"] = minimum
-        d["max"] = maximum
-        d["avg"] = average
-        d["sd"] = stdev
-        d["numberOfMissing"] = np.count_nonzero(np.isnan(v))
-        d["bitmapPresent"] = 1 if d["numberOfMissing"] > 1 else 0
-
-        return d
-
 
 class GribFieldGeography(Geography):
     def __init__(self, metadata):
@@ -225,8 +198,21 @@ class GribMetadata(Metadata):
         "vertical",
     ]
 
-    VALUES_PART_METADATA_CLASS = GribValuesPartMetadata
     DATA_FORMAT = "grib"
+    EKD_NAMESPACE = "grib"
+    INTERNAL_KEYS = [
+        "min",
+        "max",
+        "avg",
+        "sd",
+        "skew",
+        "kurt",
+        "const",
+        "isConstant",
+        "numberOfMissing", "numberOfCodedValues",
+        "bitmapPresent", "offsetValuesBy", "packingError", "referenceValue", "referenceValueError", "unpackedError",
+    ]
+    INTERNAL_NAMESPACES = ["statistics"]
 
     __handle_type = None
 
@@ -236,6 +222,7 @@ class GribMetadata(Metadata):
                 f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}"
             )
         self._handle = handle
+        # self._key_accessor = GribKeyAccessor(handle)
         self._geo = None
 
     @staticmethod
@@ -256,26 +243,12 @@ class GribMetadata(Metadata):
         return self._handle.__contains__(key)
 
     def keys(self):
-        r"""Return a new view of the metadata keys.
-
-        Returns
-        -------
-        Iterable of str
-
-        """
         return self._handle.keys()
 
     def items(self):
-        r"""Return a new view of the metadata items.
-
-        Returns
-        -------
-        Iterable of :obj:`(key,value)` pairs
-
-        """
         return self._handle.items()
 
-    def _get_internal_key(self, key, astype=None, default=None, raise_on_missing=False):
+    def _get(self, key, astype=None, default=None, raise_on_missing=False):
         def _key_name(key):
             if key == "param":
                 key = "shortName"
@@ -340,36 +313,6 @@ class GribMetadata(Metadata):
             self._geo = GribFieldGeography(self)
         return self._geo
 
-    def namespaces(self):
-        r"""Return the available namespaces.
-
-        Returns
-        -------
-        list of str
-        """
-        return self.NAMESPACES
-
-    def datetime(self):
-        r"""Return the date and time of the field.
-
-        Returns
-        -------
-        dict of datatime.datetime
-            Dict with items "base_time" and "valid_time".
-
-
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
-        >>> ds[4].datetime()
-        {'base_time': datetime.datetime(2020, 12, 21, 12, 0),
-        'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
-
-        """
-        return {
-            "base_time": self._base_datetime(),
-            "valid_time": self._valid_datetime(),
-        }
-
     def _base_datetime(self):
         date = self.get("date", None)
         time = self.get("time", None)
@@ -422,27 +365,18 @@ class GribMetadata(Metadata):
         from earthkit.data.utils.summary import format_namespace_dump
 
         namespace = self.NAMESPACES if namespace is all else [namespace]
-        r = [
-            {
-                "title": ns if ns else "default",
-                "data": self.as_namespace(ns),
-                "tooltip": f"Keys in the ecCodes {ns} namespace",
-            }
-            for ns in namespace
-        ]
+        r = []
+        for ns in namespace:
+            v = self.as_namespace(ns)
+            if v:
+                r.append(
+                    {
+                        "title": ns if ns else "default",
+                        "data": v,
+                        "tooltip": f"Keys in the ecCodes {ns} namespace",
+                    }
+                )
 
         return format_namespace_dump(
             r, selected="parameter", details=self.__class__.__name__, **kwargs
         )
-
-    def ls_keys(self):
-        r"""Return the keys to be used with the :meth:`ls` method."""
-        return self.LS_KEYS
-
-    def describe_keys(self):
-        r"""Return the keys to be used with the :meth:`describe` method."""
-        return self.DESCRIBE_KEYS
-
-    def index_keys(self):
-        r"""Return the keys to be used with the :meth:`indices` method."""
-        return self.INDEX_KEYS

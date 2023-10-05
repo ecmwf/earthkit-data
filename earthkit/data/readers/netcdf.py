@@ -327,8 +327,18 @@ class XArrayFieldGeography(Geography):
             )
         return grid_mapping
 
+# class XArrayKeyAccessor(RawMetadataKeyAccessor):
+#     def __init__(self, d, field):
+#         self._field = field
+#         super().__init__(d)
+    
+#     def _valid_datetime(self):
+#         return to_datetime(self._field.time)
+    
 
 class XArrayMetadata(RawMetadata):
+    LS_KEYS = ["variable", "level", "time", "units"]
+
     def __init__(self, field):
         if not isinstance(field, XArrayField):
             raise TypeError(
@@ -357,13 +367,19 @@ class XArrayMetadata(RawMetadata):
             )
         return self._geo
 
-    def datetime(self):
-        t = to_datetime(self._field.time)
-        return {"base_time": t, "valid_time": t}
+    # def datetime(self):
+    #     t = to_datetime(self._field.time)
+    #     return {"base_time": t, "valid_time": t}
 
-    def ls_keys(self):
-        LS_KEYS = ["variable", "level", "time", "units"]
-        return LS_KEYS
+    # def ls_keys(self):
+    #     LS_KEYS = ["variable", "level", "time", "units"]
+    #     return LS_KEYS
+
+    def _base_datetime(self):
+        return to_datetime(self._field.time)
+
+    def _valid_datetime(self):
+        return to_datetime(self._field.time)
 
 
 class XArrayField(Field):
