@@ -134,19 +134,17 @@ class CSVReader(Reader):
         self.compression = compression
         self.dialect, self.has_header = probe_csv(path, compression=compression)
 
-    def to_pandas(
-        self, comment="#", compression=None, pandas_read_csv_kwargs=None, **kwargs
-    ):
+    def to_pandas(self, comment="#", pandas_read_csv_kwargs=None, **kwargs):
         """Convert CSV data into a :py:class:`pandas.DataFrame` using :py:func:`pandas.read_csv`.
+
+        Please note that Earthkit should be able to handle compressed file objects.
+
 
         Parameters
         ----------
         comment: str
             Character that represents a comment line in csv file. This value is ignored if the comment
             character is defined in pandas_read_csv_kwargs.
-        compression: (None, str)
-            The compression of the file being opened. This value is ignored if Earthkit detects
-            the compression or if  defined in pandas_read_csv_kwargs.
         pandas_read_csv_kwargs: dict
             kwargs passed to :func:`pandas.read_csv`, this is used for safe parsing of kwargs via intermediate
             methods
@@ -175,9 +173,6 @@ class CSVReader(Reader):
         if self.compression is not None:
             # Over-write any specified compression in the read kwargs
             pandas_read_csv_kwargs["compression"] = self.compression
-        elif compression is not None:
-            # In this scenario, we let the pandas_read_csv_kwargs take superiority
-            pandas_read_csv_kwargs.setdefault("compression", compression)
 
         LOG.debug("pandas.read_csv(%s,%s)", self.path, pandas_read_csv_kwargs)
         return pandas.read_csv(self.path, **pandas_read_csv_kwargs)
