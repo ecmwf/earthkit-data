@@ -150,9 +150,6 @@ class CSVReader(Reader):
         pandas_read_csv_kwargs: dict
             kwargs passed to :func:`pandas.read_csv`, this is used for safe parsing of kwargs via intermediate
             methods
-        kwargs: dict
-            kwargs passed to :func:`pandas.read_csv`, these will be superceded by those defined in
-            `pandas_read_csv_kwargs`.
 
 
         Returns
@@ -170,12 +167,7 @@ class CSVReader(Reader):
         import pandas
 
         if pandas_read_csv_kwargs is None:
-            pandas_read_csv_kwargs = kwargs
-        else:
-            pandas_read_csv_kwargs = dict(
-                **kwargs,
-                **pandas_read_csv_kwargs,
-            )
+            pandas_read_csv_kwargs = {}
 
         if comment is not None:
             pandas_read_csv_kwargs.setdefault("comment", comment)
