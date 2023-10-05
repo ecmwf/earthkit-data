@@ -7,77 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
-
 from abc import ABCMeta, abstractmethod
-import functools
 
 from earthkit.data.core.constants import DATETIME
-from earthkit.data.decorators import cached_method
 
-
-def internal_key(func):
-    """Controls if internal keys can be accessed"""
-    @functools.wraps(func)
-    def wrapped(self, key, *args, **kwargs):
-        if not self._internal:
-            ns, _, name = key.partition(".")
-            if name == "":
-                name = key
-                ns = ""
-
-            if args:
-                kwargs["default"] = args[0]
-
-            args = ()
-
-            if ns == self.EKD_NAMESPACE:
-                key = name
-            else:
-                if name in self.INTERNAL_KEYS:
-                    if kwargs.get("raise_on_missing", True):
-                        raise KeyError(key)
-                    else:
-                        return kwargs.get("default", None)
-
-        return func(self, key, *args, **kwargs)
-
-    return wrapped
-
-
-def internal_namespace(func):
-    """Controls if internal namespaces an be accessed"""
-    @functools.wraps(func)
-    def wrapped(self, namespace):
-        if not self._internal:
-            if namespace in self.INTERNAL_NAMESPACES:
-                return {}
-
-            r = func(self, namespace)
-            for k in list(r.keys()):
-                if k in self.INTERNAL_KEYS:
-                    del r[k]
-            return r
-        else:
-            return func(self, namespace)
-
-    return wrapped
-
-
-def internal_namespace_list(func):
-    """Controls if internal namespaced an be accessed"""
-    @functools.wraps(func)
-    def wrapped(self):
-        v = func(self)
-        if not self._internal:
-            r = []
-            for x in v:
-                if x not in self.INTERNAL_NAMESPACES:
-                    r.append(x)
-            return r
-        else:
-            return v
-
-    return wrapped
 
 class Metadata(metaclass=ABCMeta):
     r"""Base class to represent metadata.
@@ -96,21 +29,13 @@ class Metadata(metaclass=ABCMeta):
     DATA_FORMAT = None
     NAMESPACES = []
     LS_KEYS = []
-    DESCRIBE_KEYS = [] 
+    DESCRIBE_KEYS = []
     INDEX_KEYS = []
     CUSTOM_KEYS = [DATETIME]
-    _internal = True
+    EKD_NAMESPACE = "grib"
+    INTERNAL_KEYS = []
+    INTERNAL_NAMESPACES = []
 
-    # _key_accessor = None
-
-    def __init_subclass__(cls, *args, **kwargs):
-        super().__init_subclass__(*args, **kwargs)
-    
-        name = "as_namespace"
-        if name in cls.__dict__:
-            setattr(cls, name, namespace_filter(getattr(cls, name)))
-
-    
     def __iter__(self):
         """Return an iterator over the metadata keys."""
         return iter(self.keys())
@@ -140,9 +65,9 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod    
+    @abstractmethod
     def keys(self):
-        r"""Return a new view of the metadata keys.
+        r"""Return the metadata keys.
 
         Returns
         -------
@@ -151,9 +76,9 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod   
+    @abstractmethod
     def items(self):
-        r"""Return a new view of the metadata items.
+        r"""Return the metadata items.
 
         Returns
         -------
@@ -162,10 +87,10 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
-    @internal_key
+    # @filter_get
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         r"""Return the value for ``key``.
-        
+
         Parameters
         ----------
         key: str
@@ -173,6 +98,8 @@ class Metadata(metaclass=ABCMeta):
         default: value
             Specify the default value for ``key``. Returned when ``key``
             is not found or its value is a missing value and raise_on_missing is ``False``.
+        astype: type as str, int or float
+            Return/access type for ``key``. When it is None the default type based on the metadata
         raise_on_missing: bool
             When it is True raises an exception if ``key`` is not found or
             it has a missing value.
@@ -190,7 +117,7 @@ class Metadata(metaclass=ABCMeta):
             a missing value.
 
         """
-        if self.is_custom_key(key):
+        if self._is_custom_key(key):
             return self._get_custom_key(
                 key, default=default, astype=astype, raise_on_missing=raise_on_missing
             )
@@ -203,11 +130,11 @@ class Metadata(metaclass=ABCMeta):
     def _get(self, key, astype=None, default=None, raise_on_missing=False):
         pass
 
-    def is_custom_key(self, key):
+    def _is_custom_key(self, key):
         return key in self.CUSTOM_KEYS and key not in self
 
     def _get_custom_key(self, key, default=None, raise_on_missing=True, **kwargs):
-        if self.is_custom_key(key):
+        if self._is_custom_key(key):
             try:
                 if key == DATETIME:
                     return self._valid_datetime()
@@ -236,7 +163,7 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
-    @internal_namespace
+    # @filter_namespaces
     def namespaces(self):
         r"""Return the available namespaces.
 
@@ -246,6 +173,7 @@ class Metadata(metaclass=ABCMeta):
         """
         return self.NAMESPACES
 
+    # @filter_as_namespace
     def as_namespace(self, namespace=None):
         r"""Return all the keys/values from a namespace.
 
@@ -305,7 +233,7 @@ class Metadata(metaclass=ABCMeta):
         If it is not available None is returned.
         """
         return None
-   
+
     def ls_keys(self):
         r"""Return the keys to be used with the :meth:`ls` method."""
         return self.LS_KEYS
@@ -317,12 +245,19 @@ class Metadata(metaclass=ABCMeta):
     def index_keys(self):
         r"""Return the keys to be used with the :meth:`indices` method."""
         return self.INDEX_KEYS
-    
+
     def data_format(self):
+        r"""Return the underlying data format.
+
+        Returns
+        -------
+        str
+
+        """
         return self.DATA_FORMAT
 
-    def _hide_internal(self):
-        self._internal = False
+    def _hide_internal_keys(self):
+        return self
 
 
 class RawMetadata(Metadata):
@@ -360,7 +295,7 @@ class RawMetadata(Metadata):
 
     def __init__(self, *args, **kwargs):
         self._d = dict(*args, **kwargs)
-        
+
     def override(self, *args, **kwargs):
         d = dict(**self._d)
         d.update(*args, **kwargs)
@@ -390,13 +325,13 @@ class RawMetadata(Metadata):
 
     def items(self):
         return self._d.items()
-    
+
     def _base_datetime(self):
         return None
-    
+
     def _valid_datetime(self):
         return None
-    
+
     def as_namespace(self, namespace):
         return {}
 

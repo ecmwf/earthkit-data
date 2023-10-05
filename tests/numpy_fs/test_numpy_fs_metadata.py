@@ -12,18 +12,12 @@
 import os
 import sys
 
+import numpy as np
 import pytest
-
-from earthkit.data import from_source
-from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.testing import earthkit_examples_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from numpy_fs_fixtures import (  # noqa: E402
-    load_numpy_fs, load_numpy_fs_file
-)
-
+from numpy_fs_fixtures import load_numpy_fs, load_numpy_fs_file  # noqa: E402
 
 # Note: Almost all grib metadata tests are also run for numpyfs.
 # See grib/test_grib_metadata.py
@@ -33,11 +27,43 @@ def test_numpy_fs_grib_values_metadata():
     ds, _ = load_numpy_fs(1)
 
     # values metadata
-    keys = ["min", "max", "avg", "ds", "skew", "kurt", "isConstant", "const", "bitmapPresent", "numberOfMissing"]
+    keys = [
+        "min",
+        "max",
+        "avg",
+        "ds",
+        "skew",
+        "kurt",
+        "isConstant",
+        "const",
+        "bitmapPresent",
+        "numberOfMissing",
+    ]
     for k in keys:
         assert ds[0].metadata(k, default=None) is None, k
         with pytest.raises(KeyError):
             ds[0].metadata(k)
+
+
+def test_numpy_fs_grib_values_metadata_internal():
+    ds, _ = load_numpy_fs(1)
+
+    keys = {
+        "shortName": "2t",
+        "grib.shortName": "2t",
+    }
+
+    for k, v in keys.items():
+        assert ds[0].metadata(k) == v, k
+
+    keys = {
+        "grib.min": 262.7802734375,
+        "grib.max": 315.4599609375,
+    }
+
+    for k, v in keys.items():
+        assert np.isclose(ds[0].metadata(k), v), k
+
 
 def test_numpy_fs_metadata_namespace():
     f, _ = load_numpy_fs_file("tuv_pl.grib")
@@ -65,25 +91,25 @@ def test_numpy_fs_metadata_namespace():
 
     r = f[0].metadata(namespace=None)
     assert isinstance(r, dict)
-    assert len(r) == 183
+    assert len(r) == 177
     assert r["level"] == 1000
     assert r["stepType"] == "instant"
 
     r = f[0].metadata(namespace=[None])
     assert isinstance(r, dict)
-    assert len(r) == 183
+    assert len(r) == 177
     assert r["level"] == 1000
     assert r["stepType"] == "instant"
 
     r = f[0].metadata(namespace="")
     assert isinstance(r, dict)
-    assert len(r) == 183
+    assert len(r) == 177
     assert r["level"] == 1000
     assert r["stepType"] == "instant"
 
     r = f[0].metadata(namespace=[""])
     assert isinstance(r, dict)
-    assert len(r) == 183
+    assert len(r) == 177
     assert r["level"] == 1000
     assert r["stepType"] == "instant"
 

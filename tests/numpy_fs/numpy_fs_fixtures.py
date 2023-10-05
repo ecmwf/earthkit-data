@@ -40,13 +40,15 @@ def load_numpy_fs(num):
 
     return (*ds, md)
 
+
 def load_numpy_fs_file(fname):
     ds_in = from_source("file", earthkit_examples_file(fname))
     md = ds_in.metadata("param")
-   
-    ds =  FieldList.from_numpy(
-                ds_in.values, [m.override(edition=1) for m in ds_in.metadata()])
-    
+
+    ds = FieldList.from_numpy(
+        ds_in.values, [m.override(edition=1) for m in ds_in.metadata()]
+    )
+
     return (ds, md)
 
 

@@ -19,6 +19,7 @@ from earthkit.data.utils.projections import Projection
 def missing_is_none(x):
     return None if x == 2147483647 else x
 
+
 class GribFieldGeography(Geography):
     def __init__(self, metadata):
         self.metadata = metadata
@@ -209,8 +210,14 @@ class GribMetadata(Metadata):
         "kurt",
         "const",
         "isConstant",
-        "numberOfMissing", "numberOfCodedValues",
-        "bitmapPresent", "offsetValuesBy", "packingError", "referenceValue", "referenceValueError", "unpackedError",
+        "numberOfMissing",
+        "numberOfCodedValues",
+        "bitmapPresent",
+        "offsetValuesBy",
+        "packingError",
+        "referenceValue",
+        "referenceValueError",
+        "unpackedError",
     ]
     INTERNAL_NAMESPACES = ["statistics"]
 
@@ -237,7 +244,7 @@ class GribMetadata(Metadata):
         return GribMetadata.__handle_type
 
     def __len__(self):
-        return sum(map(lambda i: 1, self._handle.keys()))
+        return sum(map(lambda i: 1, self.keys()))
 
     def __contains__(self, key):
         return self._handle.__contains__(key)
@@ -261,6 +268,9 @@ class GribMetadata(Metadata):
             _kwargs["default"] = default
 
         return self._handle.get(_key_name(key), ktype=astype, **_kwargs)
+
+    def _is_custom_key(self, key):
+        return key in self.CUSTOM_KEYS
 
     def override(self, *args, **kwargs):
         r"""Change the metadata values and return a new object.
@@ -380,3 +390,83 @@ class GribMetadata(Metadata):
         return format_namespace_dump(
             r, selected="parameter", details=self.__class__.__name__, **kwargs
         )
+
+    def _hide_internal_keys(self):
+        return RestrictedGribMetadata(self)
+
+
+# TODO: this is a temporary solution
+class RestrictedGribMetadata(GribMetadata):
+    def __init__(self, md):
+        super().__init__(md._handle)
+
+    def __len__(self):
+        if self.INTERNAL_KEYS:
+            return len(self.keys())
+        else:
+            return super().__len__()
+
+    def __contains__(self, key):
+        if self.INTERNAL_KEYS:
+            return key not in self.INTERNAL_KEYS and super().__contains__(key)
+        else:
+            return super().__contains__(key)
+
+    def keys(self):
+        if self.INTERNAL_KEYS:
+            r = []
+            for k in super().keys():
+                if k not in self.INTERNAL_KEYS:
+                    r.append(k)
+            return r
+        else:
+            return super().keys()
+
+    def items(self):
+        if self.INTERNAL_KEYS:
+            r = {}
+            for k, v in super().items():
+                if k not in self.INTERNAL_KEYS:
+                    r[k] = v
+            return r
+        else:
+            return super().items()
+
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
+        ns, _, name = key.partition(".")
+        if name == "":
+            name = key
+            ns = ""
+        if ns == self.EKD_NAMESPACE:
+            key = name
+        else:
+            if name in self.INTERNAL_KEYS:
+                if raise_on_missing:
+                    raise KeyError(key)
+                else:
+                    return default
+
+        return super().get(
+            key, default=default, astype=astype, raise_on_missing=raise_on_missing
+        )
+
+    def namespaces(self):
+        if self.INTERNAL_NAMESPACES:
+            return [
+                x for x in super().namespaces() if x not in self.INTERNAL_NAMESPACES
+            ]
+        else:
+            return super().namespaces()
+
+    def as_namespace(self, namespace):
+        if namespace in self.INTERNAL_NAMESPACES:
+            return {}
+
+        r = super().as_namespace(namespace)
+        for k in list(r.keys()):
+            if k in self.INTERNAL_KEYS:
+                del r[k]
+        return r
+
+    def _hide_internal_keys(self):
+        return self

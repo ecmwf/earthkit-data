@@ -12,20 +12,13 @@
 import os
 import sys
 
-import pytest
-
-from earthkit.data import from_source
-from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.testing import earthkit_examples_file
-
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from numpy_fs_fixtures import (  # noqa: E402
-    load_numpy_fs_file
-)
+from numpy_fs_fixtures import load_numpy_fs_file  # noqa: E402
 
 # Note: Almost all grib metadata tests are also run for numpyfs.
 # See grib/test_grib_summary.py
+
 
 def test_numpy_fs_dump():
     f, _ = load_numpy_fs_file("test6.grib")

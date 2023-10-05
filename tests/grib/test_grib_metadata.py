@@ -129,9 +129,9 @@ def test_grib_metadata_astype_18(mode, key, astype, expected_value):
 @pytest.mark.parametrize(
     "key,expected_value",
     [
-        ("latitudeOfFirstGridPointInDegrees", 90.),
-        ("latitudeOfFirstGridPointInDegrees:d", 90.),
-        ("latitudeOfFirstGridPointInDegrees:float", 90.),
+        ("latitudeOfFirstGridPointInDegrees", 90.0),
+        ("latitudeOfFirstGridPointInDegrees:d", 90.0),
+        ("latitudeOfFirstGridPointInDegrees:float", 90.0),
     ],
 )
 def test_grib_metadata_double_1(mode, key, expected_value):
@@ -139,6 +139,7 @@ def test_grib_metadata_double_1(mode, key, expected_value):
     r = f.metadata(key)
     assert len(r) == 1
     assert np.isclose(r[0], expected_value)
+
 
 @pytest.mark.parametrize("mode", ["file", "numpy_fs"])
 @pytest.mark.parametrize(
@@ -152,7 +153,7 @@ def test_grib_metadata_double_1(mode, key, expected_value):
 def test_grib_metadata_double_18(mode, key):
     f = load_file_or_numpy_fs("tuv_pl.grib", mode)
 
-    ref = [90.] * 18
+    ref = [90.0] * 18
     r = f.metadata(key)
     np.testing.assert_allclose(r, ref, 0.001)
 
@@ -168,7 +169,7 @@ def test_grib_metadata_double_18(mode, key):
 def test_grib_metadata_double_astype_18(mode, key, astype):
     f = load_file_or_numpy_fs("tuv_pl.grib", mode)
 
-    ref = [90.] *18
+    ref = [90.0] * 18
 
     r = f.metadata(key, astype=astype)
     np.testing.assert_allclose(r, ref, 0.001)
