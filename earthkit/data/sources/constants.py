@@ -34,14 +34,11 @@ class ConstantMetadata(RawMetadata):
     def geography(self):
         return self._geo
 
-    def datetime(self):
-        return {
-            "base_time": None,
-            "valid_time": datetime.datetime.fromisoformat(self["valid_datetime"]),
-        }
+    def _base_datetime(self):
+        return None
 
-    def ls_keys(self):
-        return self.LS_KEYS
+    def _valid_datetime(self):
+        return datetime.datetime.fromisoformat(self["valid_datetime"])
 
 
 class ConstantMaker:
