@@ -23,7 +23,7 @@ from numpy_fs_fixtures import load_numpy_fs, load_numpy_fs_file  # noqa: E402
 # See grib/test_grib_metadata.py
 
 
-def test_numpy_fs_grib_values_metadata():
+def test_numpy_fs_values_metadata():
     ds, _ = load_numpy_fs(1)
 
     # values metadata
@@ -45,7 +45,7 @@ def test_numpy_fs_grib_values_metadata():
             ds[0].metadata(k)
 
 
-def test_numpy_fs_grib_values_metadata_internal():
+def test_numpy_fs_values_metadata_internal():
     ds, _ = load_numpy_fs(1)
 
     keys = {
@@ -63,6 +63,35 @@ def test_numpy_fs_grib_values_metadata_internal():
 
     for k, v in keys.items():
         assert np.isclose(ds[0].metadata(k), v), k
+
+
+def test_numpy_fs_metadata_keys():
+    ds, _ = load_numpy_fs(1)
+
+    num = 183
+    md = ds[0].metadata()
+    assert len(md) == num
+
+    keys = md.keys()
+    assert len(keys) == num
+
+    for k in md.keys():
+        assert isinstance(k, str)
+        assert k != ""
+        break
+
+    items = md.items()
+    assert len(items) == num
+
+    for k, v in md.items():
+        assert isinstance(k, str)
+        assert k != ""
+        assert v is not None
+        break
+
+    assert "max" not in md
+    assert "statistics.max" not in md
+    assert "validityDate" in md
 
 
 def test_numpy_fs_metadata_namespace():

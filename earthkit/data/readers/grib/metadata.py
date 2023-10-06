@@ -200,26 +200,6 @@ class GribMetadata(Metadata):
     ]
 
     DATA_FORMAT = "grib"
-    EKD_NAMESPACE = "grib"
-    INTERNAL_KEYS = [
-        "min",
-        "max",
-        "avg",
-        "sd",
-        "skew",
-        "kurt",
-        "const",
-        "isConstant",
-        "numberOfMissing",
-        "numberOfCodedValues",
-        "bitmapPresent",
-        "offsetValuesBy",
-        "packingError",
-        "referenceValue",
-        "referenceValueError",
-        "unpackedError",
-    ]
-    INTERNAL_NAMESPACES = ["statistics"]
 
     __handle_type = None
 
@@ -229,7 +209,6 @@ class GribMetadata(Metadata):
                 f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}"
             )
         self._handle = handle
-        # self._key_accessor = GribKeyAccessor(handle)
         self._geo = None
 
     @staticmethod
@@ -273,21 +252,6 @@ class GribMetadata(Metadata):
         return key in self.CUSTOM_KEYS
 
     def override(self, *args, **kwargs):
-        r"""Change the metadata values and return a new object.
-
-        :obj:`override` accepts another :obj:`Metadata` or a dict or
-        an iterable of key/value pairs (as tuples or other iterables of length two).
-        If keyword arguments are specified, the metadata is then updated with those
-        key/value pairs.
-
-        Examples
-        --------
-        >>> other = RawMetadata({"key1": 1, "key2": 2})
-        >>> m1 = m.override(other)
-        >>> m1 = m.override({"key1": 1, "key2": 2})
-        >>> m1 = m.override([("key1", 1), ("key2", 2)])
-        >>> m1 = m.override(key1=1, key2=2)
-        """
         d = dict(*args, **kwargs)
         handle = self._handle.clone()
         handle.set_multiple(d)
@@ -397,6 +361,29 @@ class GribMetadata(Metadata):
 
 # TODO: this is a temporary solution
 class RestrictedGribMetadata(GribMetadata):
+    """Hide internal keys and namespaces in GRIB metadata"""
+
+    EKD_NAMESPACE = "grib"
+    INTERNAL_KEYS = [
+        "min",
+        "max",
+        "avg",
+        "sd",
+        "skew",
+        "kurt",
+        "const",
+        "isConstant",
+        "numberOfMissing",
+        "numberOfCodedValues",
+        "bitmapPresent",
+        "offsetValuesBy",
+        "packingError",
+        "referenceValue",
+        "referenceValueError",
+        "unpackedError",
+    ]
+    INTERNAL_NAMESPACES = ["statistics"]
+
     def __init__(self, md):
         super().__init__(md._handle)
 
@@ -406,9 +393,20 @@ class RestrictedGribMetadata(GribMetadata):
         else:
             return super().__len__()
 
+    def _is_internal(self, key):
+        ns, _, name = key.partition(".")
+        if name == "":
+            name = key
+            ns = ""
+
+        if ns == self.EKD_NAMESPACE:
+            return False
+        else:
+            return name in self.INTERNAL_KEYS
+
     def __contains__(self, key):
         if self.INTERNAL_KEYS:
-            return key not in self.INTERNAL_KEYS and super().__contains__(key)
+            return not self._is_internal(key) and super().__contains__(key)
         else:
             return super().__contains__(key)
 
@@ -428,7 +426,7 @@ class RestrictedGribMetadata(GribMetadata):
             for k, v in super().items():
                 if k not in self.INTERNAL_KEYS:
                     r[k] = v
-            return r
+            return r.items()
         else:
             return super().items()
 
@@ -437,6 +435,7 @@ class RestrictedGribMetadata(GribMetadata):
         if name == "":
             name = key
             ns = ""
+
         if ns == self.EKD_NAMESPACE:
             key = name
         else:
