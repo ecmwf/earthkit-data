@@ -32,9 +32,6 @@ class Metadata(metaclass=ABCMeta):
     DESCRIBE_KEYS = []
     INDEX_KEYS = []
     CUSTOM_KEYS = [DATETIME]
-    EKD_NAMESPACE = "grib"
-    INTERNAL_KEYS = []
-    INTERNAL_NAMESPACES = []
 
     def __iter__(self):
         """Return an iterator over the metadata keys."""
@@ -87,7 +84,6 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
-    # @filter_get
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         r"""Return the value for ``key``.
 
@@ -99,7 +95,9 @@ class Metadata(metaclass=ABCMeta):
             Specify the default value for ``key``. Returned when ``key``
             is not found or its value is a missing value and raise_on_missing is ``False``.
         astype: type as str, int or float
-            Return/access type for ``key``. When it is None the default type based on the metadata
+            Return/access type for ``key``. When it is supported ``astype`` is passed to the
+            underlying metadata accessor as an option. Otherwise the value is
+            cast to ``astype`` after it is taken from the accessor.
         raise_on_missing: bool
             When it is True raises an exception if ``key`` is not found or
             it has a missing value.
@@ -163,7 +161,6 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
-    # @filter_namespaces
     def namespaces(self):
         r"""Return the available namespaces.
 
@@ -173,7 +170,6 @@ class Metadata(metaclass=ABCMeta):
         """
         return self.NAMESPACES
 
-    # @filter_as_namespace
     def as_namespace(self, namespace=None):
         r"""Return all the keys/values from a namespace.
 
