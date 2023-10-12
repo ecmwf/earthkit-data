@@ -6,6 +6,8 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+import collections
+import itertools
 
 import cdsapi
 import yaml
@@ -16,6 +18,12 @@ from earthkit.data.utils import tqdm
 
 from .file import FileSource
 from .prompt import APIKeyPrompt
+
+
+def ensure_iterable(obj):
+    if isinstance(obj, str) or not isinstance(obj, collections.abc.Iterable):
+        return [obj]
+    return obj
 
 
 class CDSAPIKeyPrompt(APIKeyPrompt):
@@ -111,16 +119,16 @@ class CdsRetriever(FileSource):
     @normalize("area", "bounding-box(list)")
     def requests(self, **kwargs):
         split_on = kwargs.pop("split_on", None)
-        if split_on is None or not isinstance(kwargs.get(split_on), (list, tuple)):
+        if split_on is None:
             return [kwargs]
+        split_on = ensure_iterable(split_on)
 
         result = []
-
-        for v in kwargs[split_on]:
-            r = dict(**kwargs)
-            r[split_on] = v
-            result.append(r)
-
+        for values in itertools.product(
+            *[ensure_iterable(kwargs[k]) for k in split_on]
+        ):
+            subrequest = dict(zip(split_on, values))
+            result.append(kwargs | subrequest)
         return result
 
 
