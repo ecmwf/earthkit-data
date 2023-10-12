@@ -129,7 +129,7 @@ class CdsRetriever(FileSource):
         ):
             subrequest = dict(zip(split_on, values))
             result.append(kwargs | subrequest)
-        return result
+        return result or [kwargs]
 
 
 source = CdsRetriever
