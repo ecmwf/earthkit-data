@@ -9,9 +9,12 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
+
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.core.temporary import temp_directory
 from earthkit.data.testing import NO_CDS
 
 
@@ -29,26 +32,6 @@ def test_cds_grib_1():
         time="12:00",
     )
     assert len(s) == 2
-
-
-# @pytest.mark.long_test
-# @pytest.mark.download
-# @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
-def test_cds_grib_1_save():
-    s = from_source(
-        "cds",
-        "reanalysis-era5-single-levels",
-        variable=["2t", "msl"],
-        product_type="reanalysis",
-        area=[50, -50, 20, 50],
-        date="2012-12-12",
-        time="12:00",
-    )
-    # Save with user defined filename:
-    s.save("temp.grib")
-    # Save with CDS generated filename:
-    s.save()
-    
 
 
 @pytest.mark.long_test
@@ -87,6 +70,32 @@ def test_cds_grib_3():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+def test_cds_grib_save():
+    s = from_source(
+        "cds",
+        "reanalysis-era5-single-levels",
+        variable=["2t", "msl"],
+        product_type="reanalysis",
+        area=[50, -50, 20, 50],
+        date="2012-12-12",
+        time="12:00",
+    )
+    with temp_directory() as tmpdir:
+        # Check file save to assigned filename
+        s.save(os.path.join(tmpdir, "test.grib"))
+        assert os.path.isfile(os.path.join(tmpdir, "test.grib"))
+
+        # Check file can be saved in current dir with detected filename:
+        here = os.curdir
+        os.chdir(tmpdir)
+        s.save()
+        assert os.path.isfile(os.path.basename(s.path))
+        os.chdir(here)
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 def test_cds_netcdf():
     s = from_source(
         "cds",
@@ -115,10 +124,17 @@ def test_cds_netcdf_save():
         time="12:00",
         format="netcdf",
     )
-    # Save with user defined filename:
-    s.save("temp.nc")
-    # Save with CDS generated filename:
-    s.save()
+    with temp_directory() as tmpdir:
+        # Check file save to assigned filename
+        s.save(os.path.join(tmpdir, "test.nc"))
+        assert os.path.isfile(os.path.join(tmpdir, "test.nc"))
+
+        # Check file can be saved in current dir with detected filename:
+        here = os.curdir
+        os.chdir(tmpdir)
+        s.save()
+        assert os.path.isfile(os.path.basename(s.path))
+        os.chdir(here)
 
 
 @pytest.mark.long_test

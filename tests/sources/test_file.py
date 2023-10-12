@@ -40,11 +40,12 @@ def test_file_source_netcdf_save():
         s.save(os.path.join(tmpdir, "test2.nc"))
         assert os.path.isfile(os.path.join(tmpdir, "test2.nc"))
         # Check file can be saved in current dir with detected filename:
-        here =os.curdir
+        here = os.curdir
         os.chdir(tmpdir)
         s.save()
         assert os.path.isfile("test.nc")
         os.chdir(here)
+
 
 def test_file_source_odb():
     s = from_source("file", earthkit_examples_file("test.odb"))
