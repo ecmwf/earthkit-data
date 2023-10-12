@@ -12,7 +12,7 @@ from collections import defaultdict
 
 from earthkit.data.core import Base
 from earthkit.data.core.index import Index
-from earthkit.data.decorators import cached_method
+from earthkit.data.decorators import cached_method, detect_out_filename
 from earthkit.data.utils.metadata import metadata_argument
 
 
@@ -1153,6 +1153,7 @@ class FieldList(Index):
                 )
         return False
 
+    @detect_out_filename
     def save(self, filename, append=False):
         r"""Write all the fields into a file.
 
