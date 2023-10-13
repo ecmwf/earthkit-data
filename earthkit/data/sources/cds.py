@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import collections
+
 import cdsapi
 import yaml
 
@@ -16,6 +18,12 @@ from earthkit.data.utils import tqdm
 
 from .file import FileSource
 from .prompt import APIKeyPrompt
+
+
+def ensure_iterable(obj):
+    if isinstance(obj, str) or not isinstance(obj, collections.abc.Iterable):
+        return [obj]
+    return obj
 
 
 class CDSAPIKeyPrompt(APIKeyPrompt):
@@ -103,7 +111,7 @@ class CdsRetriever(FileSource):
 
         return self.cache_file(
             retrieve,
-            (dataset, request),
+            (dataset, self.normalized_request(**request)),
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
         )
 
@@ -121,6 +129,16 @@ class CdsRetriever(FileSource):
             r[split_on] = v
             result.append(r)
 
+        return result
+
+    @staticmethod
+    def normalized_request(**request):
+        result = {}
+        for k, v in sorted(request.items()):
+            v = ensure_iterable(v)
+            if k not in ("area", "grid"):
+                v = sorted(v)
+            result[k] = v[0] if len(v) == 1 else v
         return result
 
 

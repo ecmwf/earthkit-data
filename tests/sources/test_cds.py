@@ -67,6 +67,26 @@ def test_cds_grib_3():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+def test_cds_normalized_request():
+    variables = ["2t", "msl"]
+    base_request = dict(
+        product_type="reanalysis",
+        area=[50, -50, 20, 50],
+        date="2012-12-12",
+        time="12:00",
+    )
+    s0 = from_source(
+        "cds", "reanalysis-era5-single-levels", variable=variables, **base_request
+    )
+    s1 = from_source(
+        "cds", "reanalysis-era5-single-levels", variable=variables[::-1], **base_request
+    )
+    assert s0.path == s1.path
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 def test_cds_netcdf():
     s = from_source(
         "cds",
