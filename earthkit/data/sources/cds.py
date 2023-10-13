@@ -8,6 +8,7 @@
 #
 import collections
 import itertools
+import sys
 
 import cdsapi
 import yaml
@@ -18,6 +19,18 @@ from earthkit.data.utils import tqdm
 
 from .file import FileSource
 from .prompt import APIKeyPrompt
+
+if sys.version_info >= (3, 12):
+    from collections import batched
+else:
+
+    def batched(iterable, n):
+        # batched('ABCDEFG', 3) --> ABC DEF G
+        if n < 1:
+            raise ValueError("n must be at least one")
+        it = iter(iterable)
+        while batch := tuple(itertools.islice(it, n)):
+            yield batch
 
 
 def ensure_iterable(obj):
@@ -80,17 +93,18 @@ class CdsRetriever(FileSource):
     def client(self):
         return client()
 
-    def __init__(self, dataset, *args, **kwargs):
+    def __init__(self, dataset, *args, split_on=None, **kwargs):
         super().__init__()
 
         assert isinstance(dataset, str)
-        if len(args):
-            assert len(args) == 1
-            assert isinstance(args[0], dict)
-            assert not kwargs
-            kwargs = args[0]
+        assert not (args and kwargs)
+        if not args:
+            args = [kwargs]
+        assert all(isinstance(request, dict) for request in args)
 
-        requests = self.requests(**kwargs)
+        requests = []
+        for request in args:
+            requests.extend(self.requests(split_on, **request))
 
         self.client()  # Trigger password prompt before thraeding
 
@@ -117,15 +131,16 @@ class CdsRetriever(FileSource):
 
     @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
-    def requests(self, **kwargs):
-        split_on = kwargs.pop("split_on", None)
+    def requests(self, split_on, **kwargs):
         if split_on is None:
             return [kwargs]
-        split_on = ensure_iterable(split_on)
+
+        if not isinstance(split_on, dict):
+            split_on = {k: 1 for k in ensure_iterable(split_on)}
 
         result = []
         for values in itertools.product(
-            *[ensure_iterable(kwargs[k]) for k in split_on]
+            *[batched(ensure_iterable(kwargs[k]), v) for k, v in split_on.items()]
         ):
             subrequest = dict(zip(split_on, values))
             result.append(kwargs | subrequest)

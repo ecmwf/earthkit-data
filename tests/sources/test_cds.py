@@ -71,7 +71,11 @@ def test_cds_grib_3():
     "split_on,expected_len",
     (
         ["variable", 2],
+        [{"variable": 1}, 2],
+        [{"variable": 1, "time": 2}, 2],
+        [{"variable": 2, "time": 1}, 2],
         [("variable", "time"), 4],
+        [{"variable": 1, "time": 1}, 4],
     ),
 )
 def test_cds_split_on(split_on, expected_len):
@@ -84,6 +88,25 @@ def test_cds_split_on(split_on, expected_len):
         date="2012-12-12",
         time=["00:00", "12:00"],
         split_on=split_on,
+    )
+    assert len(s.indexes) == expected_len
+
+
+@pytest.mark.parametrize(
+    "split_on,expected_len",
+    ([None, 2], ["time", 4]),
+)
+def test_cds_multiple_requests(split_on, expected_len):
+    variables = ["2t", "msl"]
+    base_request = dict(
+        product_type="reanalysis",
+        area=[50, -50, 20, 50],
+        date="2012-12-12",
+        time=["00:00", "12:00"],
+    )
+    requests = [base_request | {"variable": variable} for variable in variables]
+    s = from_source(
+        "cds", "reanalysis-era5-single-levels", *requests, split_on=split_on
     )
     assert len(s.indexes) == expected_len
 
