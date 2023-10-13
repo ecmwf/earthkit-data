@@ -6,8 +6,8 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-
 import collections.abc
+import itertools
 
 import cdsapi
 import yaml
@@ -119,17 +119,17 @@ class CdsRetriever(FileSource):
     @normalize("area", "bounding-box(list)")
     def requests(self, **kwargs):
         split_on = kwargs.pop("split_on", None)
-        if split_on is None or not isinstance(kwargs.get(split_on), (list, tuple)):
+        if split_on is None:
             return [kwargs]
+        split_on = ensure_iterable(split_on)
 
         result = []
-
-        for v in kwargs[split_on]:
-            r = dict(**kwargs)
-            r[split_on] = v
-            result.append(r)
-
-        return result
+        for values in itertools.product(
+            *[ensure_iterable(kwargs[k]) for k in split_on]
+        ):
+            subrequest = dict(zip(split_on, values))
+            result.append(kwargs | subrequest)
+        return result or [kwargs]
 
     @staticmethod
     def normalized_request(**request):
