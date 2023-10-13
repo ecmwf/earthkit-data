@@ -21,7 +21,7 @@ from .file import FileSource
 from .prompt import APIKeyPrompt
 
 if sys.version_info >= (3, 12):
-    from collections import batched
+    from itertools import batched
 else:
 
     def batched(iterable, n):
