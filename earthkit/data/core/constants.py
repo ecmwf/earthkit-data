@@ -25,4 +25,4 @@ north = 90
 r"""Latitude of the north pole in degrees"""
 
 south = -90
-r"""Latitude of the north pole in degrees"""
+r"""Latitude of the south pole in degrees"""
