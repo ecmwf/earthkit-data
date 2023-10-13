@@ -99,7 +99,7 @@ class CdsRetriever(FileSource):
         assert isinstance(dataset, str)
         assert not (args and kwargs)
         if not args:
-            args = [kwargs]
+            args = (kwargs,)
         assert all(isinstance(request, dict) for request in args)
 
         requests = []
