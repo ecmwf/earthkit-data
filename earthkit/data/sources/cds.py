@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-import collections
+import collections.abc
 
 import cdsapi
 import yaml
