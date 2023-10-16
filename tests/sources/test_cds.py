@@ -93,6 +93,9 @@ def test_cds_split_on(split_on, expected_len):
     assert len(s.indexes) == expected_len
 
 
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 @pytest.mark.parametrize(
     "split_on,expected_len",
     ([None, 2], ["time", 4]),
