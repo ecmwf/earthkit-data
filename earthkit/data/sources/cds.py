@@ -111,7 +111,7 @@ class CdsRetriever(FileSource):
 
         return self.cache_file(
             retrieve,
-            (dataset, self.normalized_request(**request)),
+            (dataset, self._normalize_request(**request)),
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
         )
 
@@ -125,14 +125,14 @@ class CdsRetriever(FileSource):
 
         result = []
         for values in itertools.product(
-            *[ensure_iterable(kwargs[k]) for k in split_on]
+            *[sorted(ensure_iterable(kwargs[k])) for k in split_on]
         ):
             subrequest = dict(zip(split_on, values))
             result.append(kwargs | subrequest)
         return result or [kwargs]
 
     @staticmethod
-    def normalized_request(**request):
+    def _normalize_request(**request):
         result = {}
         for k, v in sorted(request.items()):
             v = ensure_iterable(v)
