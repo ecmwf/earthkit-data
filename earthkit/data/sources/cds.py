@@ -102,8 +102,8 @@ class CdsRetriever(FileSource):
         if not args:
             args = (kwargs,)
         assert all(isinstance(request, dict) for request in args)
-        self.args = args
-        self.split_on = split_on
+        self._args = args
+        self._split_on = split_on
 
         self.client()  # Trigger password prompt before thraeding
 
@@ -137,12 +137,12 @@ class CdsRetriever(FileSource):
 
     @cached_property
     def requests(self):
-        split_on = self.split_on
+        split_on = self._split_on
         if not isinstance(split_on, dict):
-            split_on = {k: 1 for k in ensure_iterable(self.split_on) if k is not None}
+            split_on = {k: 1 for k in ensure_iterable(self._split_on) if k is not None}
 
         requests = []
-        for arg in self.args:
+        for arg in self._args:
             request = self._normalized_request(**arg)
             for values in itertools.product(
                 *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
