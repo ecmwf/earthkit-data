@@ -103,7 +103,9 @@ def nearest_point_haversine(ref_point, points):
     Returns
     -------
     number
-        Index of the nearest point from ``points`` to ``ref_point``
+        Index of the nearest point to ``ref_point` in ``points``.
+    number
+        Distance (m) between ``ref_point`` and the nearest point in ``points``.
 
     Examples
     --------
@@ -112,7 +114,7 @@ def nearest_point_haversine(ref_point, points):
     >>> p_lat = [44.49, 50.73, 50.1]
     >>> p_lon = [11.34, 7.90, -8.1]
     >>> nearest_point_haversine(p_ref, (p_lat, p_lon))
-    2
+    (2, 523115.8314777661)
 
     """
     if np.asarray(ref_point[0]).size != 1 or np.asarray(ref_point[1]).size != 1:
@@ -122,4 +124,4 @@ def nearest_point_haversine(ref_point, points):
     index = np.nanargmin(distance)
     if isinstance(index, np.ndarray):
         return index[0]
-    return index
+    return (index, distance[index])
