@@ -140,9 +140,13 @@ class CdsRetriever(FileSource):
         requests = []
         for arg in self._args:
             request = self._normalize_request(**arg)
-            split_on = request.pop("split_on", {})
+            split_on = request.pop("split_on", None)
+            if split_on is None:
+                requests.append(request)
+                continue
+
             if not isinstance(split_on, dict):
-                split_on = {k: 1 for k in ensure_iterable(split_on) if k is not None}
+                split_on = {k: 1 for k in ensure_iterable(split_on)}
             for values in itertools.product(
                 *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
             ):
