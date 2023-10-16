@@ -9,6 +9,7 @@
 import collections.abc
 import itertools
 import sys
+from functools import cached_property
 
 import cdsapi
 import yaml
@@ -101,23 +102,23 @@ class CdsRetriever(FileSource):
         if not args:
             args = (kwargs,)
         assert all(isinstance(request, dict) for request in args)
-
-        requests = []
-        for request in args:
-            requests.extend(self.requests(split_on, **request))
+        self.args = args
+        self.split_on = split_on
 
         self.client()  # Trigger password prompt before thraeding
 
-        nthreads = min(self.settings("number-of-download-threads"), len(requests))
+        nthreads = min(self.settings("number-of-download-threads"), len(self.requests))
 
         if nthreads < 2:
-            self.path = [self._retrieve(dataset, r) for r in requests]
+            self.path = [self._retrieve(dataset, r) for r in self.requests]
         else:
             with SoftThreadPool(nthreads=nthreads) as pool:
-                futures = [pool.submit(self._retrieve, dataset, r) for r in requests]
+                futures = [
+                    pool.submit(self._retrieve, dataset, r) for r in self.requests
+                ]
 
                 iterator = (f.result() for f in futures)
-                self.path = list(tqdm(iterator, leave=True, total=len(requests)))
+                self.path = list(tqdm(iterator, leave=True, total=len(self.requests)))
 
     def _retrieve(self, dataset, request):
         def retrieve(target, args):
@@ -131,20 +132,24 @@ class CdsRetriever(FileSource):
 
     @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
-    def requests(self, split_on, **kwargs):
-        if split_on is None:
-            return [kwargs]
+    def _normalized_request(self, **kwargs):
+        return kwargs
 
-        if not isinstance(split_on, dict):
-            split_on = {k: 1 for k in ensure_iterable(split_on)}
+    @cached_property
+    def requests(self):
+        split_on = self.split_on
+        if not isinstance(self.split_on, dict):
+            split_on = {k: 1 for k in ensure_iterable(self.split_on) if k is not None}
 
-        result = []
-        for values in itertools.product(
-            *[batched(ensure_iterable(kwargs[k]), v) for k, v in split_on.items()]
-        ):
-            subrequest = dict(zip(split_on, values))
-            result.append(kwargs | subrequest)
-        return result or [kwargs]
+        requests = []
+        for arg in self.args:
+            request = self._normalized_request(**arg)
+            for values in itertools.product(
+                *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
+            ):
+                subrequest = dict(zip(split_on, values))
+                requests.append(request | subrequest)
+        return requests
 
 
 source = CdsRetriever

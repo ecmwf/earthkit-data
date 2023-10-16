@@ -71,6 +71,7 @@ def test_cds_grib_3():
     "split_on,expected_len",
     (
         ["variable", 2],
+        [("variable",), 2],
         [{"variable": 1}, 2],
         [{"variable": 1, "time": 2}, 2],
         [{"variable": 2, "time": 1}, 2],
