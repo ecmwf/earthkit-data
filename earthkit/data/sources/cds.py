@@ -132,7 +132,7 @@ class CdsRetriever(FileSource):
 
     @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
-    def _normalized_request(self, **kwargs):
+    def _normalize_request(self, **kwargs):
         return kwargs
 
     @cached_property
@@ -143,7 +143,7 @@ class CdsRetriever(FileSource):
 
         requests = []
         for arg in self._args:
-            request = self._normalized_request(**arg)
+            request = self._normalize_request(**arg)
             for values in itertools.product(
                 *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
             ):
