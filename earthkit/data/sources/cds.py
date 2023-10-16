@@ -138,7 +138,7 @@ class CdsRetriever(FileSource):
     @cached_property
     def requests(self):
         split_on = self.split_on
-        if not isinstance(self.split_on, dict):
+        if not isinstance(split_on, dict):
             split_on = {k: 1 for k in ensure_iterable(self.split_on) if k is not None}
 
         requests = []
