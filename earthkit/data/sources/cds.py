@@ -94,7 +94,7 @@ class CdsRetriever(FileSource):
     def client(self):
         return client()
 
-    def __init__(self, dataset, *args, split_on=None, **kwargs):
+    def __init__(self, dataset, *args, **kwargs):
         super().__init__()
 
         assert isinstance(dataset, str)
@@ -103,11 +103,6 @@ class CdsRetriever(FileSource):
             args = (kwargs,)
         assert all(isinstance(request, dict) for request in args)
         self._args = args
-        self._split_on = (
-            split_on
-            if isinstance(split_on, dict)
-            else {k: 1 for k in ensure_iterable(split_on) if k is not None}
-        )
 
         self.client()  # Trigger password prompt before thraeding
 
@@ -145,13 +140,13 @@ class CdsRetriever(FileSource):
         requests = []
         for arg in self._args:
             request = self._normalize_request(**arg)
+            split_on = request.pop("split_on", {})
+            if not isinstance(split_on, dict):
+                split_on = {k: 1 for k in ensure_iterable(split_on) if k is not None}
             for values in itertools.product(
-                *[
-                    batched(ensure_iterable(request[k]), v)
-                    for k, v in self._split_on.items()
-                ]
+                *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
             ):
-                subrequest = dict(zip(self._split_on, values))
+                subrequest = dict(zip(split_on, values))
                 requests.append(request | subrequest)
         return requests
 

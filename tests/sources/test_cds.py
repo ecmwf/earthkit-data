@@ -107,11 +107,10 @@ def test_cds_multiple_requests(split_on, expected_len):
         area=[50, -50, 20, 50],
         date="2012-12-12",
         time=["00:00", "12:00"],
+        split_on=split_on,
     )
     requests = [base_request | {"variable": variable} for variable in variables]
-    s = from_source(
-        "cds", "reanalysis-era5-single-levels", *requests, split_on=split_on
-    )
+    s = from_source("cds", "reanalysis-era5-single-levels", *requests)
     assert len(s.indexes) == expected_len
 
 
