@@ -47,7 +47,9 @@ def detect_out_filename(func):
             # Ensure we do not overwrite the original file:
             assert args[0] != self.path
         except AssertionError:
-            LOG.warn("Earhtkit refusing to overwrite the file we are currently reading.")
+            LOG.warn(
+                "Earhtkit refusing to overwrite the file we are currently reading."
+            )
             return
         return func(self, *args, **kwargs)
 
