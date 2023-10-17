@@ -8,6 +8,8 @@
 #
 import collections.abc
 import itertools
+import sys
+from functools import cached_property
 
 import cdsapi
 import yaml
@@ -18,6 +20,18 @@ from earthkit.data.utils import tqdm
 
 from .file import FileSource
 from .prompt import APIKeyPrompt
+
+if sys.version_info >= (3, 12):
+    from itertools import batched
+else:
+
+    def batched(iterable, n):
+        # batched('ABCDEFG', 3) --> ABC DEF G
+        if n < 1:
+            raise ValueError("n must be at least one")
+        it = iter(iterable)
+        while batch := tuple(itertools.islice(it, n)):
+            yield batch
 
 
 def ensure_iterable(obj):
@@ -84,26 +98,26 @@ class CdsRetriever(FileSource):
         super().__init__()
 
         assert isinstance(dataset, str)
-        if len(args):
-            assert len(args) == 1
-            assert isinstance(args[0], dict)
-            assert not kwargs
-            kwargs = args[0]
-
-        requests = self.requests(**kwargs)
+        assert not (args and kwargs)
+        if not args:
+            args = (kwargs,)
+        assert all(isinstance(request, dict) for request in args)
+        self._args = args
 
         self.client()  # Trigger password prompt before thraeding
 
-        nthreads = min(self.settings("number-of-download-threads"), len(requests))
+        nthreads = min(self.settings("number-of-download-threads"), len(self.requests))
 
         if nthreads < 2:
-            self.path = [self._retrieve(dataset, r) for r in requests]
+            self.path = [self._retrieve(dataset, r) for r in self.requests]
         else:
             with SoftThreadPool(nthreads=nthreads) as pool:
-                futures = [pool.submit(self._retrieve, dataset, r) for r in requests]
+                futures = [
+                    pool.submit(self._retrieve, dataset, r) for r in self.requests
+                ]
 
                 iterator = (f.result() for f in futures)
-                self.path = list(tqdm(iterator, leave=True, total=len(requests)))
+                self.path = list(tqdm(iterator, leave=True, total=len(self.requests)))
 
     def _retrieve(self, dataset, request):
         def retrieve(target, args):
@@ -115,31 +129,36 @@ class CdsRetriever(FileSource):
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
         )
 
+    @staticmethod
     @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
-    def requests(self, **kwargs):
-        split_on = kwargs.pop("split_on", None)
-        if split_on is None:
-            return [kwargs]
-        split_on = ensure_iterable(split_on)
-
-        result = []
-        for values in itertools.product(
-            *[sorted(ensure_iterable(kwargs[k])) for k in split_on]
-        ):
-            subrequest = dict(zip(split_on, values))
-            result.append(kwargs | subrequest)
-        return result or [kwargs]
-
-    @staticmethod
-    def _normalize_request(**request):
-        result = {}
-        for k, v in sorted(request.items()):
+    def _normalize_request(**kwargs):
+        kwargs = {}
+        for k, v in sorted(kwargs.items()):
             v = ensure_iterable(v)
             if k not in ("area", "grid"):
                 v = sorted(v)
-            result[k] = v[0] if len(v) == 1 else v
-        return result
+            kwargs[k] = v[0] if len(v) == 1 else v
+        return kwargs
+
+    @cached_property
+    def requests(self):
+        requests = []
+        for arg in self._args:
+            request = self._normalize_request(**arg)
+            split_on = request.pop("split_on", None)
+            if split_on is None:
+                requests.append(request)
+                continue
+
+            if not isinstance(split_on, dict):
+                split_on = {k: 1 for k in ensure_iterable(split_on)}
+            for values in itertools.product(
+                *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
+            ):
+                subrequest = dict(zip(split_on, values))
+                requests.append(request | subrequest)
+        return requests
 
 
 source = CdsRetriever
