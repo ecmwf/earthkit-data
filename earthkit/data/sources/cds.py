@@ -144,8 +144,7 @@ class CdsRetriever(FileSource):
     @cached_property
     def requests(self):
         requests = []
-        for arg in self._args:
-            request = self._normalize_request(**arg)
+        for request in self._args:
             split_on = request.pop("split_on", None)
             if split_on is None:
                 requests.append(request)
@@ -153,12 +152,13 @@ class CdsRetriever(FileSource):
 
             if not isinstance(split_on, dict):
                 split_on = {k: 1 for k in ensure_iterable(split_on)}
+            request = self._normalize_request(**request)
             for values in itertools.product(
                 *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
             ):
                 subrequest = dict(zip(split_on, values))
                 requests.append(request | subrequest)
-        return requests
+        return [self._normalize_request(**request) for request in requests]
 
 
 source = CdsRetriever
