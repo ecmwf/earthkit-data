@@ -84,6 +84,9 @@ def test_cds_normalized_request():
     assert s0.path == s1.path
 
 
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 @pytest.mark.parametrize(
     "split_on,expected_len",
     (
