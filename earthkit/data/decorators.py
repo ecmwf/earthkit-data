@@ -41,10 +41,14 @@ def detect_out_filename(func):
         if len(args) == 0:
             try:
                 args = [os.path.basename(self.path)]
-                # Ensure we do not overwrite the original file:
-                assert args[0] != self.path
             except AttributeError:
                 raise TypeError("Please provide a output filename")
+        try:
+            # Ensure we do not overwrite the original file:
+            assert args[0] != self.path
+        except AssertionError:
+            LOG.warn("Earhtkit refusing to overwrite the file we are currently reading.")
+            return
         return func(self, *args, **kwargs)
 
     return wrapped
