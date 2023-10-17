@@ -70,8 +70,16 @@ def test_cds_grib_3():
 @pytest.mark.parametrize(
     "split_on,expected_len",
     (
+        [None, 1],
+        [[], 1],
+        [{}, 1],
         ["variable", 2],
+        [("variable",), 2],
+        [{"variable": 1}, 2],
+        [{"variable": 1, "time": 2}, 2],
+        [{"variable": 2, "time": 1}, 2],
         [("variable", "time"), 4],
+        [{"variable": 1, "time": 1}, 4],
     ),
 )
 def test_cds_split_on(split_on, expected_len):
@@ -84,6 +92,38 @@ def test_cds_split_on(split_on, expected_len):
         date="2012-12-12",
         time=["00:00", "12:00"],
         split_on=split_on,
+    )
+    if expected_len == 1:
+        assert hasattr(s, "path")
+        assert not hasattr(s, "indexes")
+    else:
+        assert not hasattr(s, "path")
+        assert len(s.indexes) == expected_len
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.parametrize(
+    "split_on1,split_on2,expected_len",
+    (
+        [None, None, 2],
+        [None, "time", 3],
+        ["time", "time", 4],
+    ),
+)
+def test_cds_multiple_requests(split_on1, split_on2, expected_len):
+    base_request = dict(
+        product_type="reanalysis",
+        area=[50, -50, 20, 50],
+        date="2012-12-12",
+        time=["00:00", "12:00"],
+    )
+    s = from_source(
+        "cds",
+        "reanalysis-era5-single-levels",
+        base_request | {"variable": "2t", "split_on": split_on1},
+        base_request | {"variable": "msl", "split_on": split_on2},
     )
     assert len(s.indexes) == expected_len
 
