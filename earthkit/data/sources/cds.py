@@ -125,7 +125,7 @@ class CdsRetriever(FileSource):
 
         return self.cache_file(
             retrieve,
-            (dataset, self._normalize_request(**request)),
+            (dataset, request),
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
         )
 
@@ -133,13 +133,13 @@ class CdsRetriever(FileSource):
     @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
     def _normalize_request(**kwargs):
-        kwargs = {}
+        request = {}
         for k, v in sorted(kwargs.items()):
             v = ensure_iterable(v)
             if k not in ("area", "grid"):
                 v = sorted(v)
-            kwargs[k] = v[0] if len(v) == 1 else v
-        return kwargs
+            request[k] = v[0] if len(v) == 1 else v
+        return request
 
     @cached_property
     def requests(self):
