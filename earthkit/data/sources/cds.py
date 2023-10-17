@@ -103,7 +103,6 @@ class CdsRetriever(FileSource):
                 "CdsRetriever: cannot specify request using both args and kwargs"
             )
 
-        assert not (args and kwargs)
         if not args:
             args = (kwargs,)
         assert all(isinstance(request, dict) for request in args)
