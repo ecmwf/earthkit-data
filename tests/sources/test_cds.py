@@ -122,10 +122,10 @@ def test_cds_grib_multi_var_date():
 @pytest.mark.parametrize(
     "split_on,expected_file_num,expected_param,expected_time",
     (
-        [None, 1, ["2t", "msl"] * 2, [0, 0, 1200, 1200]],
-        [[], 1, ["2t", "msl"] * 2, [0, 0, 1200, 1200]],
-        [{}, 1, ["2t", "msl"] * 2, [0, 0, 1200, 1200]],
-        ["variable", 2, ["2t"] * 2 + ["msl"] * 2, [0, 1200] * 2],
+        [None, 1, ["2t", "msl", "2t", "msl"], [0, 0, 1200, 1200]],
+        [[], 1, ["2t", "msl", "2t", "msl"], [0, 0, 1200, 1200]],
+        [{}, 1, ["2t", "msl", "2t", "msl"], [0, 0, 1200, 1200]],
+        ["variable", 2, ["2t", "2t", "msl", "msl"], [0, 1200] * 2],
         [("variable",), 2, ["2t", "2t", "msl", "msl"], [0, 1200, 0, 1200]],
         [{"variable": 1}, 2, ["2t", "2t", "msl", "msl"], [0, 1200, 0, 1200]],
         [{"variable": 1, "time": 2}, 2, ["2t", "2t", "msl", "msl"], [0, 1200, 0, 1200]],
