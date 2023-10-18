@@ -67,21 +67,30 @@ def test_cds_grib_3():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
-def test_cds_normalized_request():
-    variables = ["2t", "msl"]
+@pytest.mark.parametrize(
+    "variable1,variable2",
+    (
+        ("2t", ["2t"]),
+        (["2t", "msl"], ["msl", "2t"]),
+    ),
+)
+def test_cds_normalized_request(variable1, variable2):
     base_request = dict(
         product_type="reanalysis",
         area=[50, -50, 20, 50],
+        grid=[2, 1],
         date="2012-12-12",
         time="12:00",
     )
-    s0 = from_source(
-        "cds", "reanalysis-era5-single-levels", variable=variables, **base_request
-    )
     s1 = from_source(
-        "cds", "reanalysis-era5-single-levels", variable=variables[::-1], **base_request
+        "cds", "reanalysis-era5-single-levels", variable=variable1, **base_request
     )
-    assert s0.path == s1.path
+    s2 = from_source(
+        "cds", "reanalysis-era5-single-levels", variable=variable2, **base_request
+    )
+    assert s1.path == s2.path
+    assert s1.to_xarray()["longitude"].values.tolist() == list(range(-50, 51, 2))
+    assert s1.to_xarray()["latitude"].values.tolist() == list(range(50, 19, -1))
 
 
 @pytest.mark.long_test
