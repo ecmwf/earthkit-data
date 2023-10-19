@@ -114,15 +114,16 @@ def nearest_point_haversine(ref_points, points):
     >>> p_lat = [44.49, 50.73, 50.1]
     >>> p_lon = [11.34, 7.90, -8.1]
     >>> nearest_point_haversine(p_ref, (p_lat, p_lon))
-    (2, 523115.8314777661)
+    array([[2.00000000e+00],
+       [5.23115831e+05]])
 
     >>> from earthkit.data.geo import nearest_point_haversine
-    >>> p_ref = [(51.45, 44.49), (-0.97, 11.34)]
+    >>> p_ref = [(51.45, 44.49, 12.29), (-0.97, 11.34, -17.1)]
     >>> p_lat = [44.49, 50.73, 50.1]
     >>> p_lon = [11.34, 7.90, -8.1]
     >>> nearest_point_haversine(p_ref, (p_lat, p_lon))
-    array([[2.00000000e+00, 0.00000000e+00],
-       [5.23115831e+05, 0.00000000e+00]])
+    array([[2.00000000e+00, 0.00000000e+00, 2.00000000e+00],
+       [5.23115831e+05, 0.00000000e+00, 4.28398717e+06]])
 
     """
     ref_points = np.asarray(ref_points)
