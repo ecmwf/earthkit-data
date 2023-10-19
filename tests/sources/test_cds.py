@@ -265,18 +265,20 @@ def test_cds_observation_csv_file_to_pandas_xarray():
     assert list(df.columns)[:2] == ["station_name", "report_timestamp"]
 
 
-@pytest.mark.skip("remote data does not exist")
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 def test_cds_non_observation_csv_file_to_pandas_xarray():
-    collection_id = "sis-energy-derived-reanalysis"
+    collection_id = "sis-energy-derived-projections"
     request = {
+        "format": "zip",
         "variable": "wind_power_generation_onshore",
         "spatial_aggregation": "country_level",
-        "energy_product_type": "energy",
+        "energy_product_type": "capacity_factor_ratio",
         "temporal_aggregation": "daily",
-        "format": "zip",
+        "experiment": "rcp_2_6",
+        "rcm": "hirham5",
+        "gcm": "ec_earth",
     }
     data_cds = from_source("cds", collection_id, **request)
     assert "Date" in data_cds.to_pandas().columns
