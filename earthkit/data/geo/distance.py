@@ -87,25 +87,25 @@ def haversine_distance(p1, p2):
     return distance
 
 
-def nearest_point_haversine(ref_point, points):
-    """Find the index of the nearest point to ``ref_point`` in a set of ``points`` using the
+def nearest_point_haversine(ref_points, points):
+    """Find the index of the nearest point to all ``ref_points`` in a set of ``points`` using the
        haversine distance formula.
 
     Parameters
     ----------
-    point_ref: pair of numbers
-        Latitude and longitude coordinate of the reference point (degrees)
+    ref_points: pair of array-like
+        Latitude and longitude coordinates of the reference point (degrees)
     points: pair of array-like
         Locations of the set of points from which the nearest to
-        ``point_ref`` is to be found. The first item specifies the latitudes,
+        ``ref_points`` is to be found. The first item specifies the latitudes,
         the second the longitudes (degrees)
 
     Returns
     -------
-    number
-        Index of the nearest point to ``ref_point` in ``points``.
-    number
-        Distance (m) between ``ref_point`` and the nearest point in ``points``.
+    ndarray of shape (2, n_ref_points)
+        The index-distance matrix. The first row contains the nearest point indices for
+        ``ref_points`. The second row contains the distance (m) between the ``ref_points``
+        and the corresponding nearest point in ``points``.
 
     Examples
     --------
@@ -116,12 +116,29 @@ def nearest_point_haversine(ref_point, points):
     >>> nearest_point_haversine(p_ref, (p_lat, p_lon))
     (2, 523115.8314777661)
 
-    """
-    if np.asarray(ref_point[0]).size != 1 or np.asarray(ref_point[1]).size != 1:
-        raise ValueError("nearest_point_haversine: ref_point must be a single point")
+    >>> from earthkit.data.geo import nearest_point_haversine
+    >>> p_ref = [(51.45, 44.49), (-0.97, 11.34)]
+    >>> p_lat = [44.49, 50.73, 50.1]
+    >>> p_lon = [11.34, 7.90, -8.1]
+    >>> nearest_point_haversine(p_ref, (p_lat, p_lon))
+    array([[2.00000000e+00, 0.00000000e+00],
+       [5.23115831e+05, 0.00000000e+00]])
 
-    distance = haversine_distance(ref_point, points)
-    index = np.nanargmin(distance)
-    if isinstance(index, np.ndarray):
-        return index[0]
-    return (index, distance[index])
+    """
+    ref_points = np.asarray(ref_points)
+    if ref_points.shape == (2,):
+        ref_points = np.array([[ref_points[0]], [ref_points[1]]])
+    elif len(ref_points.shape) != 2 or ref_points.shape[0] != 2:
+        raise ValueError(
+            f"nearest_point_haversine: ref_point expected shape of (2,), got {ref_points.shape}"
+        )
+
+    res_index = []
+    res_distance = []
+    for lat, lon in ref_points.T:
+        distance = haversine_distance((lat, lon), points)
+        index = np.nanargmin(distance)
+        index = index[0] if isinstance(index, np.ndarray) else index
+        res_index.append(index)
+        res_distance.append(distance[index])
+    return np.array([np.array(res_index), np.array(res_distance)])
