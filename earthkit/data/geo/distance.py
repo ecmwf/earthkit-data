@@ -137,9 +137,9 @@ def nearest_point_haversine(ref_points, points):
     res_index = []
     res_distance = []
     for lat, lon in ref_points.T:
-        distance = haversine_distance((lat, lon), points)
+        distance = haversine_distance((lat, lon), points).flatten()
         index = np.nanargmin(distance)
         index = index[0] if isinstance(index, np.ndarray) else index
         res_index.append(index)
         res_distance.append(distance[index])
-    return np.array([np.array(res_index), np.array(res_distance)])
+    return (np.array(res_index), np.array(res_distance))
