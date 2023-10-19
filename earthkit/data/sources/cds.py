@@ -98,7 +98,11 @@ class CdsRetriever(FileSource):
         super().__init__()
 
         assert isinstance(dataset, str)
-        assert not (args and kwargs)
+        if args and kwargs:
+            raise TypeError(
+                "CdsRetriever: cannot specify request using both args and kwargs"
+            )
+
         if not args:
             args = (kwargs,)
         assert all(isinstance(request, dict) for request in args)

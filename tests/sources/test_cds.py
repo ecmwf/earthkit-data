@@ -18,7 +18,7 @@ from earthkit.data.testing import NO_CDS
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
-def test_cds_grib_1():
+def test_cds_grib_kwargs():
     s = from_source(
         "cds",
         "reanalysis-era5-single-levels",
@@ -29,12 +29,50 @@ def test_cds_grib_1():
         time="12:00",
     )
     assert len(s) == 2
+    assert s.metadata("param") == ["2t", "msl"]
 
 
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
-def test_cds_grib_2():
+def test_cds_grib_dict():
+    s = from_source(
+        "cds",
+        "reanalysis-era5-single-levels",
+        dict(
+            variable=["2t", "msl"],
+            product_type="reanalysis",
+            area=[50, -50, 20, 50],
+            date="2012-12-12",
+            time="12:00",
+        ),
+    )
+    assert len(s) == 2
+    assert s.metadata("param") == ["2t", "msl"]
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+def test_cds_grib_invalid_args_kwargs():
+    with pytest.raises(TypeError):
+        from_source(
+            "cds",
+            "reanalysis-era5-single-levels",
+            dict(
+                variable=["2t", "msl"],
+                product_type="reanalysis",
+                area=[50, -50, 20, 50],
+                date="2012-12-12",
+            ),
+            time="12:00",
+        )
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+def test_cds_grib_split_on_var():
     s = from_source(
         "cds",
         "reanalysis-era5-single-levels",
@@ -46,12 +84,15 @@ def test_cds_grib_2():
         split_on="variable",
     )
     assert len(s) == 2
+    assert s.metadata("param") == ["2t", "msl"]
+    assert not hasattr(s, "path")
+    assert len(s.indexes) == 2
 
 
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
-def test_cds_grib_3():
+def test_cds_grib_multi_var_date():
     s = from_source(
         "cds",
         "reanalysis-era5-single-levels",
@@ -62,6 +103,17 @@ def test_cds_grib_3():
         time="12:00",
     )
     assert len(s) == 8
+    assert s.metadata("param") == ["2t", "msl"] * 4
+    assert s.metadata("date") == [
+        20121212,
+        20121212,
+        20121213,
+        20121213,
+        20121214,
+        20121214,
+        20121215,
+        20121215,
+    ]
 
 
 @pytest.mark.long_test
@@ -98,21 +150,21 @@ def test_cds_normalized_request(variable1, variable2, expected_vars):
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 @pytest.mark.parametrize(
-    "split_on,expected_len",
+    "split_on,expected_file_num,expected_param,expected_time",
     (
-        [None, 1],
-        [[], 1],
-        [{}, 1],
-        ["variable", 2],
-        [("variable",), 2],
-        [{"variable": 1}, 2],
-        [{"variable": 1, "time": 2}, 2],
-        [{"variable": 2, "time": 1}, 2],
-        [("variable", "time"), 4],
-        [{"variable": 1, "time": 1}, 4],
+        [None, 1, ["2t", "msl", "2t", "msl"], [0, 0, 1200, 1200]],
+        [[], 1, ["2t", "msl", "2t", "msl"], [0, 0, 1200, 1200]],
+        [{}, 1, ["2t", "msl", "2t", "msl"], [0, 0, 1200, 1200]],
+        ["variable", 2, ["2t", "2t", "msl", "msl"], [0, 1200] * 2],
+        [("variable",), 2, ["2t", "2t", "msl", "msl"], [0, 1200, 0, 1200]],
+        [{"variable": 1}, 2, ["2t", "2t", "msl", "msl"], [0, 1200, 0, 1200]],
+        [{"variable": 1, "time": 2}, 2, ["2t", "2t", "msl", "msl"], [0, 1200, 0, 1200]],
+        [{"variable": 2, "time": 1}, 2, ["2t", "msl", "2t", "msl"], [0, 0, 1200, 1200]],
+        [("variable", "time"), 4, ["2t", "2t", "msl", "msl"], [0, 1200, 0, 1200]],
+        [{"variable": 1, "time": 1}, 4, ["2t", "2t", "msl", "msl"], [0, 1200, 0, 1200]],
     ),
 )
-def test_cds_split_on(split_on, expected_len):
+def test_cds_split_on(split_on, expected_file_num, expected_param, expected_time):
     s = from_source(
         "cds",
         "reanalysis-era5-single-levels",
@@ -123,26 +175,33 @@ def test_cds_split_on(split_on, expected_len):
         time=["00:00", "12:00"],
         split_on=split_on,
     )
-    if expected_len == 1:
+
+    if expected_file_num == 1:
         assert hasattr(s, "path")
         assert not hasattr(s, "indexes")
     else:
         assert not hasattr(s, "path")
-        assert len(s.indexes) == expected_len
+        assert len(s.indexes) == expected_file_num
+
+    assert len(s) == 4
+    assert s.metadata("param") == expected_param
+    assert s.metadata("time") == expected_time
 
 
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 @pytest.mark.parametrize(
-    "split_on1,split_on2,expected_len",
+    "split_on1,split_on2,expected_file_num,expected_param,expected_time",
     (
-        [None, None, 2],
-        [None, "time", 3],
-        ["time", "time", 4],
+        [None, None, 2, ["2t", "2t", "msl", "msl"], [0, 1200, 0, 1200]],
+        [None, "time", 3, ["2t", "2t", "msl", "msl"], [0, 1200, 0, 1200]],
+        ["time", "time", 4, ["2t", "2t", "msl", "msl"], [0, 1200, 0, 1200]],
     ),
 )
-def test_cds_multiple_requests(split_on1, split_on2, expected_len):
+def test_cds_multiple_requests(
+    split_on1, split_on2, expected_file_num, expected_param, expected_time
+):
     base_request = dict(
         product_type="reanalysis",
         area=[50, -50, 20, 50],
@@ -155,7 +214,10 @@ def test_cds_multiple_requests(split_on1, split_on2, expected_len):
         base_request | {"variable": "2t", "split_on": split_on1},
         base_request | {"variable": "msl", "split_on": split_on2},
     )
-    assert len(s.indexes) == expected_len
+    assert len(s.indexes) == expected_file_num
+    assert len(s) == 4
+    assert s.metadata("param") == expected_param
+    assert s.metadata("time") == expected_time
 
 
 @pytest.mark.long_test
@@ -173,6 +235,7 @@ def test_cds_netcdf():
         format="netcdf",
     )
     assert len(s) == 2
+    assert s.metadata("variable") == ["t2m", "msl"]
 
 
 @pytest.mark.long_test
@@ -194,6 +257,17 @@ def test_cds_netcdf_selection_limited():
         },
     )
     assert len(s) == 9
+    assert s.metadata("variable") == [
+        "AL_BH_BB",
+        "AL_BH_BB_ERR",
+        "AL_BH_NI",
+        "AL_BH_NI_ERR",
+        "AL_BH_VI",
+        "AL_BH_VI_ERR",
+        "AGE",
+        "NMOD",
+        "QFLAG",
+    ]
 
 
 @pytest.mark.long_test
@@ -216,18 +290,25 @@ def test_cds_observation_csv_file_to_pandas_xarray():
     assert data_cds.to_pandas().equals(data_file.to_pandas())
     assert data_cds.to_xarray().equals(data_file.to_xarray())
 
+    df = data_file.to_pandas()
+    assert len(df) == 11318
+    assert list(df.columns)[:2] == ["station_name", "report_timestamp"]
+
 
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 def test_cds_non_observation_csv_file_to_pandas_xarray():
-    collection_id = "sis-energy-derived-reanalysis"
+    collection_id = "sis-energy-derived-projections"
     request = {
+        "format": "zip",
         "variable": "wind_power_generation_onshore",
         "spatial_aggregation": "country_level",
-        "energy_product_type": "energy",
+        "energy_product_type": "capacity_factor_ratio",
         "temporal_aggregation": "daily",
-        "format": "zip",
+        "experiment": "rcp_2_6",
+        "rcm": "hirham5",
+        "gcm": "ec_earth",
     }
     data_cds = from_source("cds", collection_id, **request)
     assert "Date" in data_cds.to_pandas().columns
@@ -257,6 +338,14 @@ def test_cds_grib_to_pandas_xarray():
     assert data_cds.to_pandas().equals(data_file.to_pandas())
     assert data_cds.to_xarray().equals(data_file.to_xarray())
 
+    df = data_file.to_pandas()
+    assert len(df) == 388168
+    assert list(df.columns)[:3] == ["lat", "lon", "value"]
+
+    ds = data_file.to_xarray()
+    assert len(ds) == 2
+    assert len(ds.data_vars) == 2
+
 
 @pytest.mark.long_test
 @pytest.mark.download
@@ -280,7 +369,12 @@ def test_cds_netcdf_to_pandas_xarray():
     # Assert a consistent behviour for local and remote versions
     data_file = from_source("file", data_cds.path)
     assert data_cds.to_xarray().equals(data_file.to_xarray())
-    # Implement to_dataframe
+
+    ds = data_file.to_xarray()
+    assert len(ds) == 18
+    assert len(ds.data_vars) == 18
+
+    # TODO: implement to_dataframe
     # assert data_cds.to_pandas().equals(data_file.to_pandas())
 
 
