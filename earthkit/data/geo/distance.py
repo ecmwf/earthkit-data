@@ -102,10 +102,11 @@ def nearest_point_haversine(ref_points, points):
 
     Returns
     -------
-    ndarray of shape (2, n_ref_points)
-        The index-distance matrix. The first row contains the nearest point indices for
-        ``ref_points`. The second row contains the distance (m) between the ``ref_points``
-        and the corresponding nearest point in ``points``.
+    ndarray
+        Indices of the nearest points to ``ref_points`.
+    ndarray
+        The distance (m) between the ``ref_points`` and the corresponding nearest
+        point in ``points``.
 
     Examples
     --------
