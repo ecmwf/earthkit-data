@@ -8,6 +8,7 @@
 #
 
 from .distance import (  # noqa
+    GeoKDTree,
     haversine_distance,
     nearest_point_haversine,
     nearest_point_kdtree,

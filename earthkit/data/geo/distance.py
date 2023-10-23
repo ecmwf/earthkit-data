@@ -174,7 +174,7 @@ def arclength_to_cordlenght(arc_length):
     return np.sin(central_angle / 2) * 2.0 * constants.R_earth
 
 
-class KdTree:
+class GeoKDTree:
     def __init__(self, lats, lons):
         lats = np.asarray(lats).flatten()
         lons = np.asarray(lons).flatten()
@@ -231,22 +231,22 @@ def nearest_point_kdtree(ref_points, points):
 
     Examples
     --------
-    >>> from earthkit.data.geo import nearest_point_haversine
+    >>> from earthkit.data.geo import nearest_point_kdtree
     >>> p_ref = (51.45, -0.97)
     >>> p_lat = [44.49, 50.73, 50.1]
     >>> p_lon = [11.34, 7.90, -8.1]
-    >>> nearest_point_haversine(p_ref, (p_lat, p_lon))
+    >>> nearest_point_kdtree(p_ref, (p_lat, p_lon))
     (array([2]), array([523115.83147777]))
 
-    >>> from earthkit.data.geo import nearest_point_haversine
+    >>> from earthkit.data.geo import nearest_point_kdtree
     >>> p_ref = [(51.45, 41.49, 12.29), (-0.97, 18.34, -17.1)]
     >>> p_lat = [44.49, 50.73, 50.1]
     >>> p_lon = [11.34, 7.90, -8.1]
-    >>> nearest_point_haversine(p_ref, (p_lat, p_lon))
+    >>> nearest_point_kdtree(p_ref, (p_lat, p_lon))
     (array([2, 0, 2]), array([ 523115.83147777,  659558.55282001, 4283987.17429322]))
 
     """
     lats, lons = points
-    tree = KdTree(lats, lons)
+    tree = GeoKDTree(lats, lons)
     index, distance = tree.nearest_point(ref_points)
     return index, distance
