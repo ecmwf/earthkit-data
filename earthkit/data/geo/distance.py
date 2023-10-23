@@ -176,10 +176,20 @@ def arclength_to_cordlenght(arc_length):
 
 class KdTree:
     def __init__(self, lats, lons):
-        x, y, z = ll_to_xyz(lats.flatten(), lons.flatten())
+        lats = np.asarray(lats).flatten()
+        lons = np.asarray(lons).flatten()
+
+        # kdtree cannot contain nans
+        if np.isnan(lats.max()) or np.isnan(lons.max()):
+            mask = ~np.isnan(lats) & ~np.isnan(lons)
+            lats = lats[mask]
+            lons = lons[mask]
+
+        x, y, z = ll_to_xyz(lats, lons)
         v = np.column_stack((x, y, z))
         self.tree = KDTree(v)
 
+        # TODO: allow user to specify max distance
         self.max_distance_arc = 10000 * 1000  # m
         if self.max_distance_arc <= np.pi * constants.R_earth:
             self.max_distance_cord = arclength_to_cordlenght(self.max_distance_arc)
@@ -200,6 +210,42 @@ class KdTree:
 
 
 def nearest_point_kdtree(ref_points, points):
+    """Find the index of the nearest point to all ``ref_points`` in a set of ``points`` using a KDTree.
+
+    Parameters
+    ----------
+    ref_points: pair of array-like
+        Latitude and longitude coordinates of the reference point (degrees)
+    points: pair of array-like
+        Locations of the set of points from which the nearest to
+        ``ref_points`` is to be found. The first item specifies the latitudes,
+        the second the longitudes (degrees)
+
+    Returns
+    -------
+    ndarray
+        Indices of the nearest points to ``ref_points`.
+    ndarray
+        The distance (m) between the ``ref_points`` and the corresponding nearest
+        point in ``points``.
+
+    Examples
+    --------
+    >>> from earthkit.data.geo import nearest_point_haversine
+    >>> p_ref = (51.45, -0.97)
+    >>> p_lat = [44.49, 50.73, 50.1]
+    >>> p_lon = [11.34, 7.90, -8.1]
+    >>> nearest_point_haversine(p_ref, (p_lat, p_lon))
+    (array([2]), array([523115.83147777]))
+
+    >>> from earthkit.data.geo import nearest_point_haversine
+    >>> p_ref = [(51.45, 41.49, 12.29), (-0.97, 18.34, -17.1)]
+    >>> p_lat = [44.49, 50.73, 50.1]
+    >>> p_lon = [11.34, 7.90, -8.1]
+    >>> nearest_point_haversine(p_ref, (p_lat, p_lon))
+    (array([2, 0, 2]), array([ 523115.83147777,  659558.55282001, 4283987.17429322]))
+
+    """
     lats, lons = points
     tree = KdTree(lats, lons)
     index, distance = tree.nearest_point(ref_points)
