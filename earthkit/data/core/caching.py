@@ -174,16 +174,8 @@ class CacheManager(threading.Thread):
         return self._connection
 
     def new_connection(self):
-        cache_dir = self._policy.cache_directory()
-
-        # assert CACHE.policy.managed()
-        # assert CACHE.policy.cache_directory() is not None
-        # cache_dir = CACHE.policy.cache_directory()
-        # if not os.path.exists(cache_dir):
-        #     os.makedirs(cache_dir, exist_ok=True)
-        # cache_dir = SETTINGS.get("cache-directory")
-        # if not os.path.exists(cache_dir):
-        #     os.makedirs(cache_dir, exist_ok=True)
+        assert self._policy.managed()
+        cache_dir = self._policy.directory()
         cache_db = os.path.join(cache_dir, CACHE_DB)
         LOG.debug("Cache database is %s", cache_db)
         connection = sqlite3.connect(cache_db)
@@ -217,29 +209,6 @@ class CacheManager(threading.Thread):
             self._queue.append(s)
             self._condition.notify_all()
             return s
-
-    # def _file_in_cache_directory(self, path):
-    #     # cache_directory = self.cache_directory()
-    #     # cache_directory = SETTINGS.get("cache-directory")
-    #     return path.startswith(self._cache_directory())
-
-    # def _cache_directory(self):
-    #     return self._policy.cache_directory()
-
-    # def _cache_directory(self):
-    #     # cache_directory = SETTINGS.get("cache-directory")
-    #     self.policy.cache_directory()
-    #     return cache_directory
-
-    # def _make_cache_dir(self):
-    #     assert CACHE.policy.managed()
-    #     assert CACHE.policy.cache_directory() is not None
-    #     cache_dir = CACHE.policy.cache_directory()
-    #     if not os.path.exists(cache_dir):
-    #         os.makedirs(cache_dir, exist_ok=True)
-    # cache_dir = SETTINGS.get("cache-directory")
-    # if not os.path.exists(cache_dir):
-    #     os.makedirs(cache_dir, exist_ok=True)
 
     def _ensure_in_cache(self, path):
         assert self._policy.file_in_cache_directory(path), f"File not in cache {path}"
@@ -345,7 +314,7 @@ class CacheManager(threading.Thread):
                 db.commit()
 
     def _housekeeping(self, clean=False):
-        top = self._policy.cache_directory()
+        top = self._policy.directory()
         with self.connection as db:
             for name in os.listdir(top):
                 if name == CACHE_DB:
@@ -563,7 +532,6 @@ class CacheManager(threading.Thread):
         if self._policy.managed():
             # Check absolute limit
             size = self._cache_size()
-            # maximum = SETTINGS.get("maximum-cache-size")
             maximum = self._policy.maximum_cache_size()
             if maximum is not None and size > maximum:
                 self._housekeeping()
@@ -571,10 +539,8 @@ class CacheManager(threading.Thread):
 
             # Check relative limit
             size = self._cache_size()
-            # usage = SETTINGS.get("maximum-cache-disk-usage")
             usage = self._policy.maximum_cache_disk_usage()
-            # cache_directory = SETTINGS.get("cache-directory")
-            df = disk_usage(self._policy.cache_directory())
+            df = disk_usage(self._policy.directory())
             if df.percent > usage:
                 LOG.debug("Cache disk usage %s, limit %s", df.percent, usage)
                 self._housekeeping()
@@ -673,11 +639,7 @@ class CachePolicy(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def cache_directory(self):
-        pass
-
-    @abstractmethod
-    def temporary_directory(self):
+    def directory(self):
         pass
 
     @abstractmethod
@@ -697,17 +659,14 @@ class CachePolicy(metaclass=ABCMeta):
         pass
 
     def file_in_cache_directory(self, path):
-        return path.startswith(self.cache_directory())
+        return path.startswith(self.directory())
 
 
 class EmptyCachePolicy(CachePolicy):
     def managed(self):
         return False
 
-    def cache_directory(self):
-        return None
-
-    def temporary_directory(self):
+    def directory(self):
         return None
 
     def use_message_position_index_cache(self):
@@ -733,10 +692,7 @@ class NoCachePolicy(CachePolicy):
     def managed(self):
         return False
 
-    def cache_directory(self):
-        return self.temporary_directory()
-
-    def temporary_directory(self):
+    def directory(self):
         if self._dir is None:
             if self._dir is None:
                 root_dir = self._settings.get("temporary-directory-root")
@@ -771,11 +727,8 @@ class UserCachePolicy(CachePolicy):
     def managed(self):
         return True
 
-    def cache_directory(self):
+    def directory(self):
         return self._settings.get("user-cache-directory")
-
-    def temporary_directory(self):
-        return None
 
     def use_message_position_index_cache(self):
         return self._settings.get("use-message-position-index-cache")
@@ -795,7 +748,7 @@ class UserCachePolicy(CachePolicy):
     def __repr__(self):
         r = (
             f"{self.__class__.__name__}["
-            f"user-cache-directory={self.cache_directory()}"
+            f"user-cache-directory={self.directory()}"
             f", maximum-cache-size={self.maximum_cache_size()}"
             f", maximum-cache-disk-usage={self.maximum_cache_disk_usage()}"
             "]"
@@ -811,11 +764,8 @@ class TmpCachePolicy(UserCachePolicy):
         root_dir = self._settings.get("temporary-cache-directory-root")
         self._dir = temp_directory(dir=root_dir)
 
-    def cache_directory(self):
+    def directory(self):
         return self._dir.path
-
-    def temporary_directory(self):
-        return self.cache_directory()
 
 
 _cache_policies = {
@@ -912,11 +862,8 @@ class Cache:
     def housekeeping(self, *args, **kwargs):
         return self._call_manager(False, "housekeeping", *args, **kwargs)
 
-    def cache_directory(self):
-        return self.policy.cache_directory()
-
-    def temporary_directory(self):
-        return self.policy.temporary_directory()
+    def directory(self):
+        return self.policy.directory()
 
 
 CACHE = Cache()
@@ -964,7 +911,7 @@ def cache_file(
     serving as a temporary space.
 
     """
-    managed = CACHE.policy.managed() and CACHE.cache_directory() is not None
+    managed = CACHE.policy.managed() and CACHE.directory() is not None
 
     if managed:
         m = hashlib.sha256()
@@ -982,7 +929,7 @@ def cache_file(
                 replace = None
 
         path = os.path.join(
-            CACHE.cache_directory(),
+            CACHE.directory(),
             "{}-{}{}".format(
                 owner.lower(),
                 m.hexdigest(),
@@ -1024,7 +971,7 @@ def cache_file(
         m.update(str(randrange(10000000)).encode("utf-8"))
 
         path = os.path.join(
-            CACHE.temporary_directory(),
+            CACHE.directory(),
             "{}-{}{}".format(
                 owner.lower(),
                 m.hexdigest(),

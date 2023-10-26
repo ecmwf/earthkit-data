@@ -81,7 +81,7 @@ def test_cache_policy():
             assert settings.get("cache-policy") == "user"
             assert settings.get("user-cache-directory") == user_dir
             assert cache.policy.managed() is True
-            cache_dir = cache.policy.cache_directory()
+            cache_dir = cache.policy.directory()
             assert cache_dir == user_dir
             assert os.path.exists(cache_dir)
             check_cache_files(cache_dir)
@@ -93,7 +93,7 @@ def test_cache_policy():
                 assert settings.get("cache-policy") == "temporary"
                 assert settings.get("temporary-cache-directory-root") is None
                 assert cache.policy.managed() is True
-                cache_dir = cache.policy.cache_directory()
+                cache_dir = cache.policy.directory()
                 assert os.path.exists(cache_dir)
                 check_cache_files(cache_dir)
 
@@ -101,7 +101,7 @@ def test_cache_policy():
             assert settings.get("cache-policy") == "user"
             assert settings.get("user-cache-directory") == user_dir
             assert cache.policy.managed() is True
-            cache_dir = cache.policy.cache_directory()
+            cache_dir = cache.policy.directory()
             assert cache_dir == user_dir
             assert os.path.exists(cache_dir)
             check_cache_files(cache_dir)
@@ -117,7 +117,7 @@ def test_cache_policy():
                     assert settings.get("cache-policy") == "temporary"
                     assert settings.get("temporary-cache-directory-root") == root_dir
                     assert cache.policy.managed() is True
-                    cache_dir = cache.policy.cache_directory()
+                    cache_dir = cache.policy.directory()
                     assert os.path.exists(cache_dir)
                     os.path.dirname(cache_dir) == root_dir
                     check_cache_files(cache_dir)
@@ -128,17 +128,15 @@ def test_cache_policy():
                 assert settings.get("user-cache-directory") == user_dir
                 assert cache.policy.managed() is False
 
-                cache_dir = cache.policy.cache_directory()
+                cache_dir = cache.policy.directory()
                 assert os.path.exists(cache_dir)
-                tmp_dir = cache.policy.temporary_directory()
-                assert tmp_dir == cache_dir
                 check_cache_files(cache_dir, managed=False)
 
             # cache = user dir (again)
             assert settings.get("cache-policy") == "user"
             assert settings.get("user-cache-directory") == user_dir
             assert cache.policy.managed() is True
-            cache_dir = cache.policy.cache_directory()
+            cache_dir = cache.policy.directory()
             assert cache_dir == user_dir
             assert os.path.exists(cache_dir)
             check_cache_files(cache_dir)
@@ -188,7 +186,7 @@ def test_cache_with_log_debug(caplog):
 
     class A:
         def __repr__(self):
-            d = cache.cache_directory()
+            d = cache.directory()
             return d
 
     a = A()
