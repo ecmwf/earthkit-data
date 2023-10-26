@@ -19,32 +19,33 @@ from earthkit.data.core.temporary import temp_directory
 from earthkit.data.testing import earthkit_examples_file
 
 
-def check_cache_files(dir_path):
+def check_cache_files(dir_path, managed=True):
     def touch(target, args):
         assert args["foo"] in (1, 2)
         with open(target, "w"):
             pass
 
-        path1 = cache_file(
-            "test_cache",
-            touch,
-            {"foo": 1},
-            extension=".test",
-        )
+    path1 = cache_file(
+        "test_cache",
+        touch,
+        {"foo": 1},
+        extension=".test",
+    )
 
-        path2 = cache_file(
-            "test_cache",
-            touch,
-            {"foo": 2},
-            extension=".test",
-        )
+    path2 = cache_file(
+        "test_cache",
+        touch,
+        {"foo": 2},
+        extension=".test",
+    )
 
-        assert os.path.exists(path1)
-        assert os.path.exists(path2)
-        assert os.path.dirname(path1) == dir_path
-        assert os.path.dirname(path1) == dir_path
-        assert path1 != path2
+    assert os.path.exists(path1)
+    assert os.path.exists(path2)
+    assert os.path.dirname(path1) == dir_path
+    assert os.path.dirname(path1) == dir_path
+    assert path1 != path2
 
+    if managed:
         cnt = 0
         for f in cache.cache_entries():
             if f["owner"] == "test_cache":
@@ -53,6 +54,7 @@ def check_cache_files(dir_path):
         assert cnt == 2
 
 
+@pytest.mark.cache
 def test_cache_1():
     with settings.temporary():
         settings.set("maximum-cache-disk-usage", "99%")
@@ -78,7 +80,7 @@ def test_cache_policy():
             settings.set({"cache-policy": "user", "user-cache-directory": user_dir})
             assert settings.get("cache-policy") == "user"
             assert settings.get("user-cache-directory") == user_dir
-            assert cache.policy.has_cache() is True
+            assert cache.policy.managed() is True
             cache_dir = cache.policy.cache_directory()
             assert cache_dir == user_dir
             assert os.path.exists(cache_dir)
@@ -90,7 +92,7 @@ def test_cache_policy():
             ):
                 assert settings.get("cache-policy") == "temporary"
                 assert settings.get("temporary-cache-directory-root") is None
-                assert cache.policy.has_cache() is True
+                assert cache.policy.managed() is True
                 cache_dir = cache.policy.cache_directory()
                 assert os.path.exists(cache_dir)
                 check_cache_files(cache_dir)
@@ -98,7 +100,7 @@ def test_cache_policy():
             # cache = user dir (again)
             assert settings.get("cache-policy") == "user"
             assert settings.get("user-cache-directory") == user_dir
-            assert cache.policy.has_cache() is True
+            assert cache.policy.managed() is True
             cache_dir = cache.policy.cache_directory()
             assert cache_dir == user_dir
             assert os.path.exists(cache_dir)
@@ -114,7 +116,7 @@ def test_cache_policy():
                 ):
                     assert settings.get("cache-policy") == "temporary"
                     assert settings.get("temporary-cache-directory-root") == root_dir
-                    assert cache.policy.has_cache() is True
+                    assert cache.policy.managed() is True
                     cache_dir = cache.policy.cache_directory()
                     assert os.path.exists(cache_dir)
                     os.path.dirname(cache_dir) == root_dir
@@ -124,21 +126,18 @@ def test_cache_policy():
             with settings.temporary("cache-policy", "off"):
                 assert settings.get("cache-policy") == "off"
                 assert settings.get("user-cache-directory") == user_dir
-                assert cache.policy.has_cache() is False
-                assert cache.policy.cache_directory() is None
+                assert cache.policy.managed() is False
 
-                with pytest.raises(RuntimeError):
-                    cache_file(
-                        "dummy_test_cache",
-                        None,
-                        {"foo": 1},
-                        extension=".test",
-                    )
+                cache_dir = cache.policy.cache_directory()
+                assert os.path.exists(cache_dir)
+                tmp_dir = cache.policy.temporary_directory()
+                assert tmp_dir == cache_dir
+                check_cache_files(cache_dir, managed=False)
 
             # cache = user dir (again)
             assert settings.get("cache-policy") == "user"
             assert settings.get("user-cache-directory") == user_dir
-            assert cache.policy.has_cache() is True
+            assert cache.policy.managed() is True
             cache_dir = cache.policy.cache_directory()
             assert cache_dir == user_dir
             assert os.path.exists(cache_dir)
@@ -147,11 +146,11 @@ def test_cache_policy():
 
 def test_url_source_no_cache():
     with settings.temporary("cache-policy", "off"):
-        with pytest.raises(RuntimeError):
-            from_source(
-                "url",
-                "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test.grib",
-            )
+        ds = from_source(
+            "url",
+            "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test.grib",
+        )
+        assert len(ds) == 2
 
 
 def test_grib_no_cache():
@@ -198,6 +197,7 @@ def test_cache_with_log_debug(caplog):
     # the problem still occurs!
 
 
+@pytest.mark.cache
 def test_cache_zip_file_overwritten_1():
     with temp_directory() as tmp_dir:
         import shutil

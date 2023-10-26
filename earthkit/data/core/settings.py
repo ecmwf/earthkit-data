@@ -156,12 +156,19 @@ SETTINGS_AND_HELP = {
         getter="_as_str",
         none_ok=True,
     ),
+    "temporary-directory-root": _(
+        None,
+        """Parent of the temporary directory when ``cache-policy`` is ``off``.
+        See :doc:`/guide/caching` for more information.""",
+        getter="_as_str",
+        none_ok=True,
+    ),
     "number-of-download-threads": _(
         5,
         """Number of threads used to download data.""",
     ),
     "cache-policy": _(
-        "user",
+        "off",
         """Caching policy. {validator}
         See :doc:`/guide/caching` for more information. """,
         validator=ListValidator(["off", "temporary", "user"]),

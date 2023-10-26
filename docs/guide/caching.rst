@@ -3,19 +3,19 @@
 Caching
 =============
 
-.. warning::
-
-     This part of eartkit-data is still a work in progress. Documentation
-     and code behaviour will change.
 
 Purpose
 -------
 
-earthkit-data caches most of the remote data access on a local cache. Running again
-:func:`from_source` will use the cached data instead of
-downloading it again. When the cache is full, cached data is deleted according it cache policy
-(i.e. oldest data is deleted first).
-earthkit-data cache configuration is managed through the :doc:`settings`.
+earthkit-data uses a dedicated **directory** to store the results of remote data access and some GRIB/BUFR indexing information.
+
+When **caching is enabled** this directory will also serve as a **cache**. It means if we run :func:`from_source` again with the same arguments it will load the data from the cache instead of downloading it again. Additionally, caching offers monitoring and disk space management. When the cache is full, cached data is deleted according it the settings (i.e. oldest data is deleted first). The cache is implemented by using a sqlite database running in a separate thread.
+
+Please note that the earthkit-data cache configuration is managed through the :doc:`settings`.
+
+.. warning::
+
+  By default the caching is disabled, i.e. the :ref:`cache-policy <cache_policies>` is "off".
 
 .. warning::
 
@@ -31,11 +31,11 @@ earthkit-data cache configuration is managed through the :doc:`settings`.
 Cache policies and locations
 ------------------------------
 
-The primary key to control the cache in the settings is ``cache‑policy``, which can take the following values:
+The primary key to control the cache in the settings is ``cache-policy``, which can take the following values:
 
-  - "user" (default)
+  - "off" (default)
   - "temporary"
-  - "off"
+  - "user"
 
 The cache location can be read and modified with Python (see the details below).
 
@@ -46,12 +46,67 @@ The cache location can be read and modified with Python (see the details below).
 .. note::
 
   It is recommended to restart your Jupyter kernels after changing
-  the cache location.
+  the cache policy or location.
+
+Off cache policy
+++++++++++++++++++++++++
+
+When the ``cache-policy`` is "off" no caching is available. This is the **default** value. In this case all files are downloaded into a temporary directory created by ``tempfile.TemporaryDirectory``. This directory will be unique for each earthkit-data session. When the directory object goes out of scope (at the latest on exit) the directory is cleaned up.
+
+Due to the temporary nature of this directory path it cannot be queried via the :doc:`settings`, but we need to use :meth:`cache_directory` on the ``cache`` object.
+
+.. code-block:: python
+
+  >>> from earthkit.data import cache, settings
+  >>> settings.set("cache-policy", "off")
+  >>> cache.cache_directory()
+  '/var/folders/ng/g0zkhc2s42xbslpsywwp_26m0000gn/T/tmp_5bf5kq8'
+
+We can specify the parent directory for the the temporary directory by using the ``temporary-directory-root`` settings. By default it is set to None (no parent directory specified).
+
+.. code-block:: python
+
+  >>> from earthkit.data import cache, setting
+  >>> s = {
+  ...     "cache-policy": "off",
+  ...     "temporary-directory-root": "~/my_demo_tmp",
+  ... }
+  >>> settings.set(s)
+  >>> cache.cache_directory()
+  '~/my_demo_tmp/tmp0iiuvsz5'
+
+Temporary cache policy
+++++++++++++++++++++++++
+
+When the ``cache-policy`` is "temporary" the cache will be located in a temporary directory created by ``tempfile.TemporaryDirectory``. This directory will be unique for each earthkit-data session. When the directory object goes out of scope (at the latest on exit) the cache is cleaned up.
+
+Due to the temporary nature of this directory path it cannot be queried via the :doc:`settings`, but we need to use :meth:`cache_directory` on the ``cache`` object.
+
+.. code-block:: python
+
+  >>> from earthkit.data import cache, settings
+  >>> settings.set("cache-policy", "temporary")
+  >>> cache.cache_directory()
+  '/var/folders/ng/g0zkhc2s42xbslpsywwp_26m0000gn/T/tmp_5bf5kq8'
+
+We can specify the parent directory for the the temporary cache by using the ``temporary-cache-directory-root`` settings. By default it is set to None (no parent directory specified).
+
+.. code-block:: python
+
+  >>> from earthkit.data import cache, setting
+  >>> s = {
+  ...     "cache-policy": "temporary",
+  ...     "temporary-cache-directory-root": "~/my_demo_cache",
+  ... }
+  >>> settings.set(s)
+  >>> cache.cache_directory()
+  '~/my_demo_cache/tmp0iiuvsz5'
+
 
 User cache policy
 +++++++++++++++++++
 
-When the ``cache‑policy`` is "user" the cache is created in the directory defined by the ``user-cache-directory`` settings. The user cache directory is not cleaned up on exit. So next time you start earthkit-data it will (probably) be there again. Also, when you run multiple sessions of earthkit-data under the same user they will share the same cache.
+When the ``cache-policy`` is "user" the cache is created in the directory defined by the ``user-cache-directory`` settings. The user cache directory is not cleaned up on exit. So next time you start earthkit-data it will (probably) be there again. Also, when you run multiple sessions of earthkit-data under the same user they will share the same cache.
 
 The default value of the cache directory depends on your system:
 
@@ -80,40 +135,6 @@ More generally, the earthkit-data settings can be read, modified, reset
 to their default values from Python,
 see the :doc:`Settings documentation <settings>`.
 
-
-Temporary cache policy
-++++++++++++++++++++++++
-
-When the ``cache‑policy`` is "temporary" the cache will be located in a temporary directory created by ``tempfile.TemporaryDirectory``. This directory will be unique for each earthkit-data session. When the directory object goes out of scope (at the latest on exit) the cache is cleaned up. Due to the temporary nature of this directory path it cannot be queried via the :doc:`settings`, but we need to use :meth:`cache_directory` on the ``cache`` object.
-
-.. code-block:: python
-
-  >>> from earthkit.data import cache, settings
-  >>> settings.set("cache-policy", "temporary")
-  >>> cache.cache_directory()
-  '/var/folders/ng/g0zkhc2s42xbslpsywwp_26m0000gn/T/tmp_5bf5kq8'
-
-We can specify the parent directory for the the temporary cache by using the ``temporary-cache-directory-root`` settings. By default it is set to None (no parent directory specified).
-
-.. code-block:: python
-
-  >>> from earthkit.data import cache, setting
-  >>> s = {
-  ...     "cache-policy": "temporary",
-  ...     "temporary-cache-directory-root": "~/my_demo_cache",
-  ... }
-  >>> settings.set(s)
-  >>> cache.cache_directory()
-  '~/my_demo_cache/tmp0iiuvsz5'
-
-Off cache policy
-++++++++++++++++++++++++
-
-It is also possible to turn caching off completely by setting the ``cache-policy`` to “off”.
-
-.. warning::
-
-  At the moment, when the cache is disabled none of the sources downloading data  (e.g. :ref:`data-sources-mars`) will work. On top of that the  :ref:`data-sources-file` source will not be able to handle archive input (e.g. tar, zip).
 
 Cache limits
 ------------
