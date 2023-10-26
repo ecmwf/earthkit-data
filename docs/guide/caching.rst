@@ -53,7 +53,7 @@ The cache location can be read and modified with Python (see the details below).
 Off cache policy
 ++++++++++++++++++++++++
 
-When the ``cache-policy`` is "off" no caching is available. This is the **default** value. In this case all files are downloaded into an **unmanaged** temporary directory created by ``tempfile.TemporaryDirectory``. Since caching is disabled all calls to :func:`from_source` for remote services and URLSs will download the data again! This temporary directory will be unique for each earthkit-data session. When the directory object goes out of scope (at the latest on exit) the directory will be **cleaned up**.
+When the ``cache-policy`` is "off" no caching is available. This is the **default** value. In this case all files are downloaded into an **unmanaged** temporary directory created by ``tempfile.TemporaryDirectory``. Since caching is disabled, all repeated calls to :func:`from_source` for remote services and URLSs will download the data again! This temporary directory will be unique for each earthkit-data session. When the directory object goes out of scope (at the latest on exit) the directory will be **cleaned up**.
 
 Due to the temporary nature of this directory path it cannot be queried via the :doc:`settings`, but we need to call the :meth:`directory` method on the ``cache`` object.
 
