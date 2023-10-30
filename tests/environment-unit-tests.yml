@@ -3,6 +3,7 @@ channels:
 - conda-forge
 - nodefaults
 dependencies:
+- setuptools
 - eccodes=>2.19.0
 - python-eccodes
 - pip
