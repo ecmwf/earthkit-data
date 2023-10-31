@@ -160,7 +160,7 @@ see the :doc:`Settings documentation <settings>`.
 Cache methods
 -------------------------
 
-The cache is controlled by a global object, which we can access as ``earthkit.data.cache``. 
+The cache is controlled by a global object, which we can access as ``earthkit.data.cache``.
 
 .. code:: python
 
@@ -177,7 +177,7 @@ there are a set of methods available on this object to manage and interact with 
 
    * - Methods
      - Description
-  
+
    * - :attr:`~data.core.caching.Cache.policy`
      - Get the current cache policy object.
    * - :meth:`~data.core.caching.Cache.directory`
@@ -194,8 +194,8 @@ there are a set of methods available on this object to manage and interact with 
      - Remove all entries from the cache
 
 .. warning::
-  
-    :meth:`~data.core.caching.Cache.check_cache_size` automatically runs when a new 
+
+    :meth:`~data.core.caching.Cache.check_cache_size` automatically runs when a new
     entry is added to the cache or any of the :ref:`cache_settings` changes.
 
 Examples:
@@ -229,7 +229,7 @@ Cache limits
 Maximum-cache-size
   The ``maximum-cache-size`` setting ensures that earthkit-data does not
   use to much disk space.  Its value sets
-  the maximum disk space used by earthkit-data cache.  When earthkit-data cache disk 
+  the maximum disk space used by earthkit-data cache.  When earthkit-data cache disk
   usage goes above this limit, earthkit-data triggers its cache cleaning mechanism  before
   downloading additional data.  The value of cache-maximum-size is
   absolute (such as "10G", "10M", "1K"). To disable it use None.

@@ -119,7 +119,7 @@ def test_settings_set_cache_numbers():
                     if stored_value is not None:
                         assert settings.get(param) == stored_value
                     else:
-                        assert settings.get(param) is None 
+                        assert settings.get(param) is None
                 else:
                     with pytest.raises(raise_error):
                         settings.set(param, set_value)

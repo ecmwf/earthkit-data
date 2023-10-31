@@ -15,7 +15,6 @@
 
 import ctypes
 import datetime
-import functools
 import hashlib
 import json
 import logging
@@ -529,7 +528,7 @@ class CacheManager(threading.Thread):
             # Check absolute limit
             maximum = self._policy.maximum_cache_size()
             if maximum is not None:
-                size = self._cache_size()  
+                size = self._cache_size()
                 if size > maximum:
                     self._housekeeping()
                     self._decache(size - maximum)
@@ -694,7 +693,7 @@ class NoCachePolicy(CachePolicy):
     OUTDATED_CHECK_KEYS = ["cache-policy", "temporary-directory-root"]
     _name = "off"
     _dir = None
-   
+
     def managed(self):
         return False
 
@@ -784,10 +783,11 @@ _cache_policies = {
 
 
 class Cache:
-    """Class controlling the cache. 
+    """Class controlling the cache.
 
     See :ref:`caching` for details.
     """
+
     _created = False
 
     def __init__(self):
@@ -801,7 +801,7 @@ class Cache:
 
     @property
     def policy(self):
-        r"""CachePolicy: Get the current cache policy."""   
+        r"""CachePolicy: Get the current cache policy."""
         with self._policy_lock:
             if self._policy is None:
                 self._make_policy()
@@ -857,7 +857,7 @@ class Cache:
         """Return the number of items and total size of the cache.
 
         Does not work when the ``cache-policy`` is "off".
-        
+
         Returns
         -------
         int:
@@ -865,7 +865,7 @@ class Cache:
         int:
             total number of bytes stored in the cache
 
-         
+
         >>> from earthkit.data import cache
         >>> cache.summary_dump_cache_database()
         (40, 846785699)
@@ -891,12 +891,12 @@ class Cache:
         The algorithm includes three steps:
 
         - first, the cache size is determined
-        - next, if the size is larger than the limit defined by 
+        - next, if the size is larger than the limit defined by
           the ``maximum-cache-size`` settings the oldest cache entries are
           removed until the desired size reached
-        - finally, if the size is larger than the limit defined by the 
+        - finally, if the size is larger than the limit defined by the
           ``maximum-cache-disk-usage`` settings the oldest cache entries are
-          removed until the desired size reached 
+          removed until the desired size reached
 
         """
         return self._call_manager(True, "check_cache_size", *args, **kwargs)
@@ -912,7 +912,7 @@ class Cache:
         """Dump the entries stored in the cache.
 
         Does not work when the ``cache-policy`` is "off".
-        
+
         Returns
         -------
         list of dict:
@@ -936,7 +936,7 @@ class Cache:
         Returns
         -------
         str:
-            The cache directory when ``cache-policy`` is "user" or "temporary". 
+            The cache directory when ``cache-policy`` is "user" or "temporary".
             The temporary directory when ``cache-policy`` is off.
         """
         return self.policy.directory()
