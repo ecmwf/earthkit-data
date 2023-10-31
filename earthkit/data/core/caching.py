@@ -420,8 +420,8 @@ class CacheManager(threading.Thread):
                 db.execute("DELETE FROM cache WHERE path=?", (path,))
             return total
 
-        LOG.warning(f"CliMetLab cache: deleting {path} ({humanize.bytes(size)})")
-        LOG.warning(f"CliMetLab cache: {owner} {args}")
+        LOG.warning(f"earthkit-data cache: deleting {path} ({humanize.bytes(size)})")
+        LOG.warning(f"earthkit-data cache: {owner} {args}")
         self._delete_file(path)
 
         with self.connection as db:
@@ -451,12 +451,12 @@ class CacheManager(threading.Thread):
                     total += self._delete_entry(entry)
                     if total >= bytes:
                         LOG.warning(
-                            "CliMetLab cache: freed %s from cache",
+                            "earthkit-data cache: freed %s from cache",
                             humanize.bytes(bytes),
                         )
                         return total
 
-        LOG.warning("CliMetLab cache: could not free %s", humanize.bytes(bytes))
+        LOG.warning("earthkit-data cache: could not free %s", humanize.bytes(bytes))
 
     def _register_cache_file(self, path, owner, args, parent=None):
         """Register a file in the cache
@@ -921,9 +921,32 @@ class Cache:
         return self._call_manager(False, "cache_entries", *args, **kwargs)
 
     def purge_cache(self, *args, **kwargs):
-        """Remove all entries from the cache.
+        """Delete entries from the cache.
 
         Does not work when the ``cache-policy`` is "off".
+
+        Parameters
+        ----------
+        **kwargs: dict, optional
+            Other keyword arguments:
+
+            * matcher: callable
+                Method to match the cache entries to delete. Its only argument
+                is a cache entry and should return True if the entry is to be
+                deleted.
+
+        Examples
+        --------
+        Delete all entries.
+
+        >>> from earthkit.data import cache
+        >>> cache.purge_cache()
+
+        Delete all entries where the "owner" is "test_cache".
+
+        >>> from earthkit.data import cache
+        >>> cache.purge_cache(matcher=lambda e: ["owner"] == "test_cache")
+
         """
         return self._call_manager(False, "purge_cache", *args, **kwargs)
 

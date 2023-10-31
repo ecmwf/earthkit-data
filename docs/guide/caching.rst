@@ -191,7 +191,7 @@ there are a set of methods available on this object to manage and interact with 
    * - :meth:`~data.core.caching.Cache.summary_dump_cache_database`
      - Return the number of items and total size of the cache
    * - :meth:`~data.core.caching.Cache.purge_cache`
-     - Remove all entries from the cache
+     - delete entries from the cache
 
 .. warning::
 
