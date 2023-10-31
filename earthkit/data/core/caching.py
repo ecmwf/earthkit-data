@@ -860,9 +860,9 @@ class Cache:
 
         Returns
         -------
-        int:
+        num: int
             number of items in the cache
-        int:
+        size: int
             total number of bytes stored in the cache
 
 
@@ -960,7 +960,7 @@ class Cache:
         -------
         str:
             The cache directory when ``cache-policy`` is "user" or "temporary".
-            The temporary directory when ``cache-policy`` is off.
+            The temporary directory when ``cache-policy`` is "off".
         """
         return self.policy.directory()
 
