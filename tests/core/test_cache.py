@@ -232,6 +232,7 @@ def test_cache_zip_file_overwritten_1():
         assert ds2.path != ds_path
 
 
+@pytest.mark.cache
 def test_cache_zip_file_changed_modtime():
     with temp_directory() as tmp_dir:
         import shutil
@@ -257,6 +258,70 @@ def test_cache_zip_file_changed_modtime():
         ds2 = from_source("file", zip_path)
         assert len(ds2) == 2
         assert ds2.path != ds_path
+
+
+@pytest.mark.parametrize("policy", ["user", "temporary"])
+def test_cache_management(policy):
+    with temp_directory() as tmp_dir:
+        with settings.temporary():
+            if policy == "user":
+                settings.set({"cache-policy": "user", "user-cache-directory": tmp_dir})
+            elif policy == "temporary":
+                settings.set(
+                    {
+                        "cache-policy": "temporary",
+                        "temporary-cache-directory-root": tmp_dir,
+                    }
+                )
+            else:
+                assert False
+
+            data_size = 10 * 1024
+
+            # create 3 files existing only in the cache
+            r = []
+            for n in range(3):
+                r.append(from_source("dummy-source", "zeros", size=data_size, n=n))
+
+            for ds in r:
+                assert os.path.exists(ds.path)
+                assert os.path.dirname(ds.path) == cache.directory()
+
+            # check cache contents
+            num, size = cache.summary_dump_cache_database()
+            assert num == 3
+            assert size == 3 * data_size
+            assert len(cache.cache_entries()) == 3
+
+            for i, x in enumerate(cache.cache_entries()):
+                assert x["size"] == data_size
+                assert x["owner"] == "dummy-source"
+                assert x["args"] == {"size": data_size, "n": i}
+                latest_path = x["path"]
+
+            # limit cache size so that only one file should remain
+            settings.set(
+                {"maximum-cache-size": "12K", "maximum-cache-disk-usage": None}
+            )
+
+            num, size = cache.summary_dump_cache_database()
+            assert num == 1
+            assert size == data_size
+            assert len(cache.cache_entries()) == 1
+            for x in cache.cache_entries():
+                assert x["size"] == data_size
+                assert x["owner"] == "dummy-source"
+                assert x["args"] == {"size": data_size, "n": 2}
+                x["path"] == latest_path
+                break
+
+            # purge the cache
+            r = None
+            cache.purge_cache()
+            num, size = cache.summary_dump_cache_database()
+            assert num == 0
+            assert size == 0
+            assert len(cache.cache_entries()) == 0
 
 
 if __name__ == "__main__":
