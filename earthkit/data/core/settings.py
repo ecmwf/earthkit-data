@@ -179,16 +179,18 @@ SETTINGS_AND_HELP = {
     ),
     "maximum-cache-size": _(
         None,
-        """Maximum disk space used by the earthkit-data cache (ex: 100G or 2T).""",
+        """Maximum disk space used by the earthkit-data cache (e.g.: 100G or 2T).
+        Can be set to None.""",
         getter="_as_bytes",
         none_ok=True,
     ),
     "maximum-cache-disk-usage": _(
         "95%",
         """Disk usage threshold after which earthkit-data expires older cached
-        entries (% of the full disk capacity).
-        See :doc:`/guide/caching` for more information.""",
+        entries (% of the full disk capacity). Can be set to None.
+        See :ref:`caching` for more information.""",
         getter="_as_percent",
+        none_ok=True,
     ),
     "url-download-timeout": _(
         "30s",

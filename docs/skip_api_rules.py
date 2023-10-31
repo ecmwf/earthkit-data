@@ -93,6 +93,7 @@ def _skip_api_items(app, what, name, obj, skip, options):
 
     if what == "module" and name not in [
         "data.core",
+        "data.core.caching",
         "data.core.metadata",
         "data.core.fieldlist",
         "data.readers",
@@ -107,6 +108,7 @@ def _skip_api_items(app, what, name, obj, skip, options):
     elif what == "package" and name not in [
         "data",
         "data.core",
+        "data.core.caching",
         "data.readers",
         "data.readers.bufr",
         "data.readers.bufr.bufr",
@@ -118,6 +120,7 @@ def _skip_api_items(app, what, name, obj, skip, options):
     ]:
         skip = True
     elif what == "class" and name not in [
+        "data.core.caching.Cache",
         "data.core.fieldlist.Field",
         "data.core.fieldlist.FieldList",
         "data.core.metadata.Metadata",

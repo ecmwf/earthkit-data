@@ -28,7 +28,7 @@ Please note that the earthkit-data cache configuration is managed through the :d
 .. _cache_location:
 .. _cache_policies:
 
-Cache policies and locations
+Cache policies
 ------------------------------
 
 The primary key to control the cache in the settings is ``cache-policy``, which can take the following values:
@@ -55,7 +55,7 @@ Off cache policy
 
 When the ``cache-policy`` is "off" no caching is available. This is the **default** value. In this case all files are downloaded into an **unmanaged** temporary directory created by ``tempfile.TemporaryDirectory``. Since caching is disabled, all repeated calls to :func:`from_source` for remote services and URLSs will download the data again! This temporary directory will be unique for each earthkit-data session. When the directory object goes out of scope (at the latest on exit) the directory will be **cleaned up**.
 
-Due to the temporary nature of this directory path it cannot be queried via the :doc:`settings`, but we need to call the :meth:`directory` method on the ``cache`` object.
+Due to the temporary nature of this directory path it cannot be queried via the :doc:`settings`, but we need to call the :meth:`~data.core.caching.Cache.directory` :ref:`cache method <cache_methods>`.
 
 .. code-block:: python
 
@@ -84,7 +84,7 @@ Temporary cache policy
 
 When the ``cache-policy`` is "temporary" the **cache will be active and located in a managed** temporary directory created by ``tempfile.TemporaryDirectory``. This directory will be unique for each earthkit-data session. When the directory object goes out of scope (at the latest on exit) the cache is **cleaned up**.
 
-Due to the temporary nature of this directory path it cannot be queried via the :doc:`settings`, but we need to call the :meth:`directory` method on the ``cache`` object.
+Due to the temporary nature of this directory path it cannot be queried via the :doc:`settings`, but we need to call the :meth:`~data.core.caching.Cache.directory` :ref:`cache method <cache_methods>`.
 
 .. code-block:: python
 
@@ -122,7 +122,7 @@ The default value of the user cache directory depends on your system:
   - ``/tmp/.../earthkit-data-$USER`` for MacOS
 
 
-We can query the directory path via the :doc:`settings` and also by calling the :meth:`directory` method on the ``cache`` object.
+We can query the directory path via the :doc:`settings` and also by calling the :meth:`~data.core.caching.Cache.directory` :ref:`cache method <cache_methods>`.
 
 .. code-block:: python
 
@@ -154,39 +154,109 @@ More generally, the earthkit-data settings can be read, modified, reset
 to their default values from Python,
 see the :doc:`Settings documentation <settings>`.
 
+.. _cache_object:
+.. _cache_methods:
+
+Cache methods
+-------------------------
+
+The cache is controlled by a global object, which we can access as ``earthkit.data.cache``. 
+
+.. code:: python
+
+  >>> from earthkit.data import cache
+  >>> cache
+  <earthkit.data.core.caching.Cache object at 0x117be7040>
+
+
+When ``cache-policy`` is :ref:`user <user_cache_policy>` or :ref:`temporary <temporary_cache_policy>`
+there are a set of methods available on this object to manage and interact with the cache.
+
+.. list-table:: Methods/properties of the cache object
+   :header-rows: 1
+
+   * - Methods
+     - Description
+  
+   * - :attr:`~data.core.caching.Cache.policy`
+     - Get the current cache policy object.
+   * - :meth:`~data.core.caching.Cache.directory`
+     - Return the path to the current cache directory
+   * - :meth:`~data.core.caching.Cache.cache_size`
+     - Return the total number of bytes stored in the cache
+   * - :meth:`~data.core.caching.Cache.check_cache_size`
+     - Check the cache size and trim it down when needed.
+   * - :meth:`~data.core.caching.Cache.cache_entries`
+     - Dump the entries stored in the cache
+   * - :meth:`~data.core.caching.Cache.summary_dump_cache_database`
+     - Return the number of items and total size of the cache
+   * - :meth:`~data.core.caching.Cache.purge_cache`
+     - Remove all entries from the cache
+
+.. warning::
+  
+    :meth:`~data.core.caching.Cache.check_cache_size` automatically runs when a new 
+    entry is added to the cache or any of the :ref:`cache_settings` changes.
+
+Examples:
+
+.. code:: python
+
+      >>> from earthkit.data import cache
+      >>> cache.policy.name
+      'user'
+      >>> cache.directory()
+      '/var/folders/ng/g0zkhc2s42xbslpsywwp_26m0000gn/T/earthkit-data-cgr'
+      >>> cache.cache_size()
+      846785699
+      >>> cache.summary_dump_cache_database()
+      (40, 846785699)
+      >>> d = cache.cache_entries()
+      >>> len(d)
+      40
+      >>> d[0].get("creation_date")
+      '2023-10-30 14:48:31.320322'
+
 
 Cache limits
 ------------
 
+.. warning::
+
+  These settings does not work when ``cache-policy`` is :ref:`off <off_cache_policy>` .
+
+
 Maximum-cache-size
   The ``maximum-cache-size`` setting ensures that earthkit-data does not
-  use to much disk space when ``cache-policy`` is not "off".  Its value sets
-   the maximum disk space used
-  by earthkit-data cache.  When earthkit-data cache disk usage goes above
-  this limit, earthkit-data triggers its cache cleaning mechanism  before
+  use to much disk space.  Its value sets
+  the maximum disk space used by earthkit-data cache.  When earthkit-data cache disk 
+  usage goes above this limit, earthkit-data triggers its cache cleaning mechanism  before
   downloading additional data.  The value of cache-maximum-size is
-  absolute (such as "10G", "10M", "1K").
+  absolute (such as "10G", "10M", "1K"). To disable it use None.
 
 Maximum-cache-disk-usage
   The ``maximum-cache-disk-usage`` setting ensures that earthkit-data
-  leaves does not fill your disk when ``cache-policy`` is not "off".
+  leaves does not fill your disk.
   Its values sets the maximum disk usage as % of the filesystem containing the cache
   directory. When the disk space goes below this limit, earthkit-data triggers
   its cache cleaning mechanism before downloading additional data.
   The value of maximum-cache-disk-usage is relative (such as "90%" or "100%").
+  To disable it use None.
 
 .. warning::
     If your disk is filled by another application, earthkit-data will happily
     delete its cached data to make room for the other application as soon
     as it has a chance.
 
-.. note::
-    When tweaking the cache settings, it is recommended to set the
-    ``maximum-cache-size`` to a value below the user disk quota (if applicable)
-    and ``maximum-cache-disk-usage`` to ``None``.
+.. .. note::
+..     When tweaking the cache settings, it is recommended to set the
+..     ``maximum-cache-size`` to a value below the user disk quota (if applicable)
+..     and ``maximum-cache-disk-usage`` to ``None``.
 
 
-Caching settings parameters
+.. _cache_settings:
+
+Cache settings parameters
 -------------------------------
 
 .. module-output:: generate_settings_rst .*-cache-.* cache-.* .*-cache
