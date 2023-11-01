@@ -262,17 +262,19 @@ def test_cache_zip_file_changed_modtime():
 
 @pytest.mark.parametrize("policy", ["user", "temporary"])
 def test_cache_management(policy):
-    with temp_directory() as tmp_dir:
+    with temp_directory() as tmp_dir_path:
         with settings.temporary():
             if policy == "user":
-                settings.set({"cache-policy": "user", "user-cache-directory": tmp_dir})
+                settings.set({"cache-policy": "user", "user-cache-directory": tmp_dir_path})
+                assert cache.directory() ==tmp_dir_path
             elif policy == "temporary":
                 settings.set(
                     {
                         "cache-policy": "temporary",
-                        "temporary-cache-directory-root": tmp_dir,
+                        "temporary-cache-directory-root": tmp_dir_path,
                     }
                 )
+                assert os.path.dirname(cache.directory()) == tmp_dir_path
             else:
                 assert False
 
