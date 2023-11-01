@@ -265,8 +265,10 @@ def test_cache_management(policy):
     with temp_directory() as tmp_dir_path:
         with settings.temporary():
             if policy == "user":
-                settings.set({"cache-policy": "user", "user-cache-directory": tmp_dir_path})
-                assert cache.directory() ==tmp_dir_path
+                settings.set(
+                    {"cache-policy": "user", "user-cache-directory": tmp_dir_path}
+                )
+                assert cache.directory() == tmp_dir_path
             elif policy == "temporary":
                 settings.set(
                     {
