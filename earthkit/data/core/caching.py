@@ -96,26 +96,6 @@ def default_serialiser(o):
     return json.JSONEncoder.default(o)
 
 
-# def in_executor(func):
-#     @functools.wraps(func)
-#     def wrapped(*args, **kwargs):
-#         global CACHE
-#         s = CACHE._manager.enqueue(func, *args, **kwargs)
-#         return s.result()
-
-#     return wrapped
-
-
-# def in_executor_forget(func):
-#     @functools.wraps(func)
-#     def wrapped(*args, **kwargs):
-#         global CACHE
-#         CACHE._manager.enqueue(func, *args, **kwargs)
-#         return None
-
-#     return wrapped
-
-
 class Future:
     def __init__(self, func, args, kwargs):
         self.func = func
@@ -982,12 +962,13 @@ def cache_file(
     Parameters
     ----------
     owner: str
-        The owner of the cache file is generally the name of the source that generated the cache.
+        The owner of the cache file is generally the name of the source that
+        called :func:`cache_file`.
     create: callable
         The method to create the contents of the cache file.
     args: list-like
-        The parameters used to generate the cache key, which are also encoded into the
-        file name.
+        The parameters used to generate the cache key, which is also encoded into the
+        file name and stored in the cache entry.
     extension: str
         Extension filename (such as ".nc" for NetCDF, etc.), by default ".cache".
     force: callable, bool
@@ -1002,11 +983,11 @@ def cache_file(
     The behaviour depends on the cache policy:
 
     - If the cache-policy is ``user`` or ``temporary`` the file is created in the
-    cache-directory and the relevant entires are added to the cache database
-    using :py:meth:`Cache.register_cache_file`.
+    cache-directory and the relevant entries are added to the cache database
+    using :py:meth:`Cache._register_cache_file`.
 
     - If the cache-policy is ``off`` the file is created in the temporary directory.
-    No cache database and monitoring is available. The cache-directory is merely
+    No cache database and monitoring is available. The cache directory is merely
     serving as a temporary space.
 
     """
@@ -1065,6 +1046,7 @@ def cache_file(
                 pass
 
     else:
+        # path can be a file or a directory. We have to make the name unique.
         m = hashlib.sha256()
         m.update(datetime.datetime.now().isoformat().encode("utf-8"))
         m.update(str(randrange(10000000)).encode("utf-8"))
@@ -1101,9 +1083,11 @@ def auxiliary_cache_file(
     content=None,
     extension=".cache",
 ):
-    # Create an auxiliary cache file
-    # to be used for example to cache an index
-    # It is invalidated if `path` is changed
+    r"""Create an auxiliary cache file.
+
+    It can be used for example to cache an index for a message based format
+    such as GRIB. It is invalidated if ``path`` is changed.
+    """
     stat = os.stat(path)
 
     def create(target, args):
