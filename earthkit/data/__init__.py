@@ -22,6 +22,7 @@ from .arguments.transformers import ALL
 from .core.caching import CACHE as cache
 from .core.fieldlist import FieldList
 from .core.settings import SETTINGS as settings
+from .datasets import Dataset, from_dataset
 from .readers.grib.output import new_grib_output
 from .sources import Source, from_source, from_source_lazily
 from .utils.examples import download_example_file, remote_example_file
@@ -29,8 +30,10 @@ from .utils.examples import download_example_file, remote_example_file
 __all__ = [
     "ALL",
     "cache",
+    "Dataset",
     "download_example_file",
     "FieldList",
+    "from_dataset",
     "from_source",
     "from_source_lazily",
     "from_object",

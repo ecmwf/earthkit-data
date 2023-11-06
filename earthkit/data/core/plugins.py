@@ -169,13 +169,7 @@ def directories(owner: bool = False) -> list:
 
     """
     result = []
-    for conf in (
-        "styles-directories",
-        "projections-directories",
-        "layers-directories",
-        "datasets-directories",
-        "dask-directories",
-    ):
+    for conf in ("datasets-directories",):
         for d in SETTINGS.get(conf):
             if os.path.exists(d) and os.path.isdir(d):
                 result.append(("user-settings", d))
