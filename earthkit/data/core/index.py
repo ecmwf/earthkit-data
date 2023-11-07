@@ -510,7 +510,9 @@ class Index(Source):
     def __getitem__(self, n):
         if isinstance(n, slice):
             return self.from_slice(n)
-        if isinstance(n, (tuple, list, np.ndarray)):
+        if isinstance(n, tuple):
+            return self.from_tuple(n)
+        if isinstance(n, (list, np.ndarray)):
             return self.from_multi(n)
         if isinstance(n, dict):
             return self.from_dict(n)
@@ -528,8 +530,11 @@ class Index(Source):
         # will raise IndexError if an index is out of bounds
         n = len(self)
         indices = np.arange(0, n if n > 0 else 0)
-        indices = indices[a].tolist()
+        indices = list(indices[a].tolist())
         return self.new_mask_index(self, indices)
+
+    def from_tuple(self, lst):
+        return self.new_mask_index(self, lst)
 
     def from_dict(self, dic):
         return self.sel(dic)

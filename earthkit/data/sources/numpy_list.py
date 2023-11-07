@@ -151,6 +151,12 @@ class NumpyFieldList(NumpyFieldListCore):
             len(self._array) if isinstance(self._array, list) else self._array.shape[0]
         )
 
+    def to_numpy(self, **kwargs):
+        if isinstance(self._array, np.ndarray):
+            return self._array
+        else:
+            return super().to_numpy(**kwargs)
+
 
 class NumpyMaskFieldList(NumpyFieldListCore, MaskIndex):
     def __init__(self, *args, **kwargs):

@@ -104,7 +104,11 @@ def test_grib_slice_multi_file(indexes, expected_meta):
 @pytest.mark.parametrize("mode", ["file", "numpy_fs"])
 @pytest.mark.parametrize(
     "indexes1,indexes2",
-    [(np.array([1, 16, 5, 9]), np.array([1, 3])), ([1, 16, 5, 9], [1, 3])],
+    [
+        (np.array([1, 16, 5, 9]), np.array([1, 3])),
+        ([1, 16, 5, 9], [1, 3]),
+        ((1, 16, 5, 9), (1, 3)),
+    ],
 )
 def test_grib_array_indexing(mode, indexes1, indexes2):
     f = load_file_or_numpy_fs("tuv_pl.grib", mode)

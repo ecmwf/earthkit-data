@@ -1178,3 +1178,12 @@ class FieldList(Index):
         """
         for s in self:
             s.write(f)
+
+    def to_tensor(self, *args):
+        from earthkit.data.indexing.cube import FieldCube
+
+        return FieldCube(self, *args)
+
+    def to_decoded(self):
+        md = [f.metadata() for f in self]
+        return self.from_numpy(self.to_numpy(), md)
