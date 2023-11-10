@@ -50,9 +50,9 @@ class CubeSelection(Selection):
         return all(v(element) for k, v in self.actions.items())
 
 
-class CubeDims(dict):
+class CubeCoords(dict):
     def __repr__(self):
-        t = "Dimensions:\n"
+        t = "Coordinates:\n"
         max_len = max(len(k) for k in self.keys())
         for k, v in self.items():
             t += f"  {k:<{max_len+4}}{self._format_item(v)}\n"
@@ -85,8 +85,9 @@ def flatten(func):
 
 class FieldCubeCore(metaclass=ABCMeta):
     _shape = None
+    _user_shape = None
     _field_shape = None
-    _dims = None
+    _coords = None
     _array = None
     flatten_values = None
 
@@ -95,8 +96,8 @@ class FieldCubeCore(metaclass=ABCMeta):
         return self._shape
 
     @property
-    def dims(self):
-        return self._dims
+    def coords(self):
+        return self._coords
 
     @property
     @abstractmethod
@@ -129,8 +130,8 @@ class FieldCubeCore(metaclass=ABCMeta):
         # print(f"{indexes=}")
         indexes = tuple(indexes)
 
-        dims = self._subset_dims(indexes)
-        return MaskedCube(self, indexes, dims)
+        coords = self._subset_coords(indexes)
+        return MaskedCube(self, indexes, coords)
 
     def sel(self, *args, remapping=None, **kwargs):
         kwargs = normalize_selection(*args, **kwargs)
@@ -143,12 +144,12 @@ class FieldCubeCore(metaclass=ABCMeta):
             selection = CubeSelection(dict(k=v))
             r[k] = list(
                 i
-                for i, element in enumerate(self.dims[k])
+                for i, element in enumerate(self.coords[k])
                 if selection.match_element(element)
             )
 
         indexes = []
-        for k, v in self.dims.items():
+        for k, v in self.coords.items():
             if k in r:
                 indexes.append(r[k])
             else:
@@ -157,31 +158,31 @@ class FieldCubeCore(metaclass=ABCMeta):
         indexes = tuple(indexes)
         # print(f"{indexes=}")
 
-        dims = self._subset_dims(indexes)
+        coords = self._subset_coords(indexes)
 
-        return MaskedCube(self, indexes, dims)
+        return MaskedCube(self, indexes, coords)
 
-    def _subset_dims(self, indexes):
+    def _subset_coords(self, indexes):
         import numpy as np
 
         # TODO: avoid copying values
-        r = CubeDims()
-        for idx, k in zip(indexes, self.dims.keys()):
+        r = CubeCoords()
+        for idx, k in zip(indexes, self.coords.keys()):
             # print(f"{k=} {idx=} {self.coords[k]}")
             # print(self.coords[k][idx])
             if isinstance(idx, (int, slice)):
-                v = self.dims[k][idx]
+                v = self.coords[k][idx]
                 if not isinstance(v, (list, np.ndarray)):
                     v = [v]
                 r[k] = v
             elif isinstance(idx, list):
-                r[k] = [self.dims[k][i] for i in idx]
+                r[k] = [self.coords[k][i] for i in idx]
         return r
 
     def copy(self, data=None):
         if data is None:
             data = self.to_numpy().copy()
-        return ArrayCube(data, self.dims, self.field_shape)
+        return ArrayCube(data, self.coords, self.field_shape)
 
 
 class FieldListCube(FieldCubeCore):
@@ -204,17 +205,17 @@ class FieldListCube(FieldCubeCore):
 
         # Get a mapping of user names to unique values
         # With possible reduce dimensionality if the user uses 'level+param'
-        self._dims = CubeDims(ds.unique_values(*names, remapping=remapping))
-        for k, v in self._dims.items():
-            self._dims[k] = sorted(v)
+        self._coords = CubeCoords(ds.unique_values(*names, remapping=remapping))
+        for k, v in self._coords.items():
+            self._coords[k] = sorted(v)
 
         # print(f"{self.user_coords=}")
 
-        self._shape = tuple(len(v) for k, v in self._dims.items())
-        self._shape = self._shape + self.field_shape
+        self._user_shape = tuple(len(v) for k, v in self._coords.items())
+        self._shape = self._user_shape + self.field_shape
 
         if len(self.field_shape) == 1:
-            self._dims["values"] = [list(range(self._field_shape[0]))]
+            self._coords["values"] = [list(range(self._field_shape[0]))]
 
         if len(self.field_shape) == 2:
             f = self.source[0]
@@ -222,11 +223,11 @@ class FieldListCube(FieldCubeCore):
             lat = geo.distinct_latitudes()
             lon = geo.distinct_longitudes()
             if len(lat) == self.field_shape[0] and len(lon) == self.field_shape[1]:
-                self._dims["latitude"] = lat
-                self._dims["longitude"] = lon
+                self._coords["latitude"] = lat
+                self._coords["longitude"] = lon
             else:
-                self._dims["x"] = list(range(self._field_shape[0]))
-                self._dims["y"] = list(range(self._field_shape[1]))
+                self._coords["x"] = list(range(self._field_shape[0]))
+                self._coords["y"] = list(range(self._field_shape[1]))
 
     @property
     def field_shape(self):
@@ -260,9 +261,9 @@ class FieldListCube(FieldCubeCore):
 
 
 class ArrayCube(FieldCubeCore):
-    def __init__(self, array, dims, field_shape):
+    def __init__(self, array, coords, field_shape):
         self._array = array
-        self._dims = dims
+        self._coords = coords
         self._shape = self._array.shape
         self._field_shape = field_shape
 
@@ -275,11 +276,11 @@ class ArrayCube(FieldCubeCore):
 
 
 class MaskedCube(FieldCubeCore):
-    def __init__(self, cube, indexes, dims):
+    def __init__(self, cube, indexes, coords):
         self.owner = cube
         self.indexes = indexes
-        self._dims = dims
-        self._shape = tuple(len(v) for _, v in self._dims.items())
+        self._coords = coords
+        self._shape = tuple(len(v) for _, v in self._coords.items())
         # print(f"MaskedCube indexes={self.indexes} {self._shape} {self._coords}")
 
     @flatten
