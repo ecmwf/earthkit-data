@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import functools
 import logging
 import math
 from abc import ABCMeta, abstractmethod
@@ -49,9 +50,9 @@ class CubeSelection(Selection):
         return all(v(element) for k, v in self.actions.items())
 
 
-class CubeCoords(dict):
+class CubeDims(dict):
     def __repr__(self):
-        t = "Coordinates:\n"
+        t = "Dimensions:\n"
         max_len = max(len(k) for k in self.keys())
         for k, v in self.items():
             t += f"  {k:<{max_len+4}}{self._format_item(v)}\n"
@@ -72,10 +73,20 @@ class CubeCoords(dict):
         return t
 
 
+def flatten(func):
+    @functools.wraps(func)
+    def wrapped(self, *args, **kwargs):
+        _kwargs = {**kwargs}
+        _kwargs["flatten"] = len(self.field_shape) == 1
+        return func(self, *args, **_kwargs)
+
+    return wrapped
+
+
 class FieldCubeCore(metaclass=ABCMeta):
     _shape = None
     _field_shape = None
-    _coords = None
+    _dims = None
     _array = None
     flatten_values = None
 
@@ -84,8 +95,8 @@ class FieldCubeCore(metaclass=ABCMeta):
         return self._shape
 
     @property
-    def coords(self):
-        return self._coords
+    def dims(self):
+        return self._dims
 
     @property
     @abstractmethod
@@ -118,8 +129,8 @@ class FieldCubeCore(metaclass=ABCMeta):
         # print(f"{indexes=}")
         indexes = tuple(indexes)
 
-        coords = self.subset_coords(indexes)
-        return MaskedCube(self, indexes, coords)
+        dims = self._subset_dims(indexes)
+        return MaskedCube(self, indexes, dims)
 
     def sel(self, *args, remapping=None, **kwargs):
         kwargs = normalize_selection(*args, **kwargs)
@@ -132,12 +143,12 @@ class FieldCubeCore(metaclass=ABCMeta):
             selection = CubeSelection(dict(k=v))
             r[k] = list(
                 i
-                for i, element in enumerate(self.coords[k])
+                for i, element in enumerate(self.dims[k])
                 if selection.match_element(element)
             )
 
         indexes = []
-        for k, v in self.coords.items():
+        for k, v in self.dims.items():
             if k in r:
                 indexes.append(r[k])
             else:
@@ -146,39 +157,37 @@ class FieldCubeCore(metaclass=ABCMeta):
         indexes = tuple(indexes)
         # print(f"{indexes=}")
 
-        coords = self.subset_coords(indexes)
+        dims = self._subset_dims(indexes)
 
-        return MaskedCube(self, indexes, coords)
+        return MaskedCube(self, indexes, dims)
 
-    def subset_coords(self, indexes):
+    def _subset_dims(self, indexes):
         import numpy as np
 
         # TODO: avoid copying values
-        r = CubeCoords()
-        for idx, k in zip(indexes, self.coords.keys()):
+        r = CubeDims()
+        for idx, k in zip(indexes, self.dims.keys()):
             # print(f"{k=} {idx=} {self.coords[k]}")
             # print(self.coords[k][idx])
             if isinstance(idx, (int, slice)):
-                v = self.coords[k][idx]
+                v = self.dims[k][idx]
                 if not isinstance(v, (list, np.ndarray)):
                     v = [v]
                 r[k] = v
             elif isinstance(idx, list):
-                r[k] = [self.coords[k][i] for i in idx]
+                r[k] = [self.dims[k][i] for i in idx]
         return r
 
     def copy(self, data=None):
         if data is None:
             data = self.to_numpy().copy()
-        return ArrayCube(data, self.coords, self.field_shape)
+        return ArrayCube(data, self.dims, self.field_shape)
 
 
 class FieldListCube(FieldCubeCore):
     def __init__(self, ds, *args, remapping=None, flatten_values=False):
         assert len(ds), f"No data in {ds}"
         self.flatten_values = flatten_values
-        # self._array = None
-        # self._field_shape = None
 
         if len(args) == 1 and isinstance(args[0], (list, tuple)):
             args = args[0]
@@ -195,22 +204,29 @@ class FieldListCube(FieldCubeCore):
 
         # Get a mapping of user names to unique values
         # With possible reduce dimensionality if the user uses 'level+param'
-        self._coords = CubeCoords(ds.unique_values(*names, remapping=remapping))
-        for k, v in self._coords.items():
-            self._coords[k] = sorted(v)
+        self._dims = CubeDims(ds.unique_values(*names, remapping=remapping))
+        for k, v in self._dims.items():
+            self._dims[k] = sorted(v)
 
         # print(f"{self.user_coords=}")
 
-        self._shape = tuple(len(v) for k, v in self._coords.items())
+        self._shape = tuple(len(v) for k, v in self._dims.items())
         self._shape = self._shape + self.field_shape
 
-        if len(self._field_shape) == 1:
-            self._coords["position"] = [list(range(self._field_shape[0]))]
+        if len(self.field_shape) == 1:
+            self._dims["values"] = [list(range(self._field_shape[0]))]
 
-        if len(self._field_shape) == 2:
-            latlon = self.source[0].to_latlon(flatten=False)
-            self._coords["latitude"] = latlon["lat"][:, 0]
-            self._coords["longitude"] = latlon["lon"][0]
+        if len(self.field_shape) == 2:
+            f = self.source[0]
+            geo = f.metadata().geography
+            lat = geo.distinct_latitudes()
+            lon = geo.distinct_longitudes()
+            if len(lat) == self.field_shape[0] and len(lon) == self.field_shape[1]:
+                self._dims["latitude"] = lat
+                self._dims["longitude"] = lon
+            else:
+                self._dims["x"] = list(range(self._field_shape[0]))
+                self._dims["y"] = list(range(self._field_shape[1]))
 
     @property
     def field_shape(self):
@@ -226,23 +242,27 @@ class FieldListCube(FieldCubeCore):
             )
         return self._field_shape
 
+    @flatten
     def to_numpy(self, **kwargs):
         if self._array is None:
             # print(f"shape={self.source.to_numpy(**kwargs).shape}")
-            _kwargs = dict(kwargs)
-            _kwargs["flatten"] = self.flatten_values
             # print(f"kwargs={_kwargs} shape={self.source.to_numpy(**_kwargs).shape}")
-            self._array = self.source.to_numpy(**_kwargs).reshape(*self.shape)
+            self._array = self.source.to_numpy(**kwargs).reshape(*self.shape)
         return self._array
 
-    def to_latlon(self, **kwargs):
-        return self.source.to_latlon(**kwargs)
+    @flatten
+    def latitudes(self, **kwargs):
+        return self.source[0].data("lat", **kwargs)
+
+    @flatten
+    def longitudes(self, **kwargs):
+        return self.source[0].data("lon", **kwargs)
 
 
 class ArrayCube(FieldCubeCore):
-    def __init__(self, array, coords, field_shape):
+    def __init__(self, array, dims, field_shape):
         self._array = array
-        self._coords = coords
+        self._dims = dims
         self._shape = self._array.shape
         self._field_shape = field_shape
 
@@ -255,13 +275,14 @@ class ArrayCube(FieldCubeCore):
 
 
 class MaskedCube(FieldCubeCore):
-    def __init__(self, cube, indexes, coords):
+    def __init__(self, cube, indexes, dims):
         self.owner = cube
         self.indexes = indexes
-        self._coords = coords
-        self._shape = tuple(len(v) for _, v in self._coords.items())
+        self._dims = dims
+        self._shape = tuple(len(v) for _, v in self._dims.items())
         # print(f"MaskedCube indexes={self.indexes} {self._shape} {self._coords}")
 
+    @flatten
     def to_numpy(self, **kwargs):
         indexes = []
         for idx in self.indexes:
@@ -274,15 +295,29 @@ class MaskedCube(FieldCubeCore):
         # print(f"shape={self.owner.to_numpy(**kwargs).shape}")
         return self.owner.to_numpy(**kwargs)[indexes].reshape(self.shape)
 
+    @flatten
+    def latitudes(self, **kwargs):
+        return self.owner.latitudes(**kwargs)[tuple(self._field_indexes())]
+
+    @flatten
+    def longitudes(self, **kwargs):
+        return self.owner.longitudes(**kwargs)[tuple(self._field_indexes())]
+
     @property
     def field_shape(self):
         if self._field_shape is None:
-            if len(self.owner.field.shape) == 1:
+            if len(self.owner.field_shape) == 1:
                 return (self.shape[-1],)
-            elif len(self.owner.field.shape) == 2:
+            elif len(self.owner.field_shape) == 2:
                 return (self.shape[-2], self.shape[-1])
             else:
                 raise ValueError(
                     f"Invalid field shape in owner = {self.owner.field_shape}"
                 )
         return self._field_shape
+
+    def _field_indexes(self):
+        if len(self.field_shape) == 1:
+            return [self.indexes[-1]]
+        elif len(self.field_shape) == 2:
+            return self.indexes[-2:]

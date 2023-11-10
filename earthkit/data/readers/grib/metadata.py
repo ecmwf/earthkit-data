@@ -42,6 +42,12 @@ class GribFieldGeography(Geography):
         """
         return self.metadata._handle.get_longitudes(dtype=dtype)
 
+    def distinct_latitudes(self, dtype=None):
+        return self.metadata._handle.get("distinctLatitudes", dtype=dtype)
+
+    def distinct_longitudes(self, dtype=None):
+        return self.metadata._handle.get("distinctLongitudes", dtype=dtype)
+
     def x(self, dtype=None):
         r"""Return the x coordinates in the field's original CRS.
 
