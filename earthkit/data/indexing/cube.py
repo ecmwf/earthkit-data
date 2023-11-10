@@ -167,6 +167,11 @@ class FieldCubeCore(metaclass=ABCMeta):
                 r[k] = [self.coords[k][i] for i in idx]
         return r
 
+    def copy(self, data=None):
+        if data is None:
+            data = self.to_numpy().copy()
+        return ArrayCube(data, self.coords, self.field_shape)
+
 
 class FieldListCube(FieldCubeCore):
     def __init__(self, ds, *args, remapping=None, flatten_values=False):
@@ -232,13 +237,18 @@ class FieldListCube(FieldCubeCore):
 
 
 class ArrayCube(FieldCubeCore):
-    def __init__(self, array, coords):
+    def __init__(self, array, coords, field_shape):
         self._array = array
         self._coords = coords
         self._shape = self._array.shape
+        self._field_shape = field_shape
 
     def to_numpy(self, **kwargs):
         return self._array
+
+    @property
+    def field_shape(self):
+        return self._field_shape
 
 
 class MaskedCube(FieldCubeCore):
