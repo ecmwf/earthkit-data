@@ -235,6 +235,9 @@ class FieldListCube(FieldCubeCore):
             self._array = self.source.to_numpy(**_kwargs).reshape(*self.shape)
         return self._array
 
+    def to_latlon(self, **kwargs):
+        return self.source.to_latlon(**kwargs)
+
 
 class ArrayCube(FieldCubeCore):
     def __init__(self, array, coords, field_shape):
