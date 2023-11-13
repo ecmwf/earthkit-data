@@ -12,6 +12,8 @@ import logging
 import math
 from abc import ABCMeta, abstractmethod
 
+import numpy as np
+
 from earthkit.data.core.index import Selection, normalize_selection
 
 LOG = logging.getLogger(__name__)
@@ -205,17 +207,19 @@ class FieldListCube(FieldCubeCore):
 
         # Get a mapping of user names to unique values
         # With possible reduce dimensionality if the user uses 'level+param'
-        self._coords = CubeCoords(ds.unique_values(*names, remapping=remapping))
-        for k, v in self._coords.items():
-            self._coords[k] = sorted(v)
+        self._user_coords = CubeCoords(ds.unique_values(*names, remapping=remapping))
+        for k, v in self._user_coords.items():
+            self._user_coords[k] = sorted(v)
 
         # print(f"{self.user_coords=}")
 
-        self._user_shape = tuple(len(v) for k, v in self._coords.items())
+        self._user_shape = tuple(len(v) for k, v in self._user_coords.items())
         self._shape = self._user_shape + self.field_shape
 
         if len(self.field_shape) == 1:
-            self._coords["values"] = [list(range(self._field_shape[0]))]
+            self._coords["values"] = np.linspace(
+                0, self._field_shape[0], self._field_shape[0] + 1, dtype=int
+            )
 
         if len(self.field_shape) == 2:
             f = self.source[0]
@@ -226,8 +230,12 @@ class FieldListCube(FieldCubeCore):
                 self._coords["latitude"] = lat
                 self._coords["longitude"] = lon
             else:
-                self._coords["x"] = list(range(self._field_shape[0]))
-                self._coords["y"] = list(range(self._field_shape[1]))
+                self._coords["x"] = np.linspace(
+                    0, self._field_shape[0], self._field_shape[0] + 1, dtype=int
+                )
+                self._coords["y"] = np.linspace(
+                    0, self._field_shape[1], self._field_shape[1] + 1, dtype=int
+                )
 
     @property
     def field_shape(self):
@@ -245,11 +253,13 @@ class FieldListCube(FieldCubeCore):
 
     @flatten
     def to_numpy(self, **kwargs):
-        if self._array is None:
-            # print(f"shape={self.source.to_numpy(**kwargs).shape}")
-            # print(f"kwargs={_kwargs} shape={self.source.to_numpy(**_kwargs).shape}")
-            self._array = self.source.to_numpy(**kwargs).reshape(*self.shape)
-        return self._array
+        self._array = self.source.to_numpy(**kwargs).reshape(*self.shape)
+
+        # if self._array is None:
+        #     # print(f"shape={self.source.to_numpy(**kwargs).shape}")
+        #     # print(f"kwargs={_kwargs} shape={self.source.to_numpy(**_kwargs).shape}")
+        #     self._array = self.source.to_numpy(**kwargs).reshape(*self.shape)
+        # return self._array
 
     @flatten
     def latitudes(self, **kwargs):

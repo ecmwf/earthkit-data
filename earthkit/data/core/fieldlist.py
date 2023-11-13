@@ -1196,7 +1196,7 @@ class FieldList(Index):
             s.write(f)
 
     def to_tensor(self, *args):
-        from earthkit.data.indexing.cube import FieldListCube
+        from earthkit.data.indexing.tensor import FieldListCube
 
         return FieldListCube(self, *args)
 
