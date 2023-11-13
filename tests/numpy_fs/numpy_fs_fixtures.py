@@ -93,7 +93,7 @@ def check_numpy_fs(ds, ds_input, md_full):
         assert r[2].metadata("param") == "u"
 
 
-def check_numpy_fs_decoded(ds, ds_input, md_full, flatten=False, dtype=None):
+def check_numpy_fs_from_to_fieldlist(ds, ds_input, md_full, flatten=False, dtype=None):
     assert len(ds_input) in [1, 2, 3]
     assert len(ds) == len(md_full)
     assert ds.metadata("param") == md_full

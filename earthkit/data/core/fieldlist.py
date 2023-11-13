@@ -533,11 +533,6 @@ class Field(Base):
             result[name] = self._metadata.get(name, None)
         return result
 
-    def to_decoded(self, **kwargs):
-        from earthkit.data.sources.numpy_list import NumpyField
-
-        return NumpyField(self.to_numpy(**kwargs), self.metadata())
-
 
 class FieldList(Index):
     r"""Represents a list of :obj:`Field` \s."""
@@ -1195,26 +1190,59 @@ class FieldList(Index):
         for s in self:
             s.write(f)
 
-    def to_decoded(self, **kwargs):
-        r"""Convert the FieldList into a :class:`NumpyFieldList` storing all the
-        data in memory.
+    def to_fieldlist(self, backend, **kwargs):
+        r"""Convert to a new :class:`FieldList` based on the ``backend``.
 
-        In the resulting object each field is represented by an ndarray storing the
-        field values and a :class:`MetaData` object holding the field metadata. The
-        shape and dtype of the ndarray is controlled by the ``kwargs``.
-
-        Internally, the generated :class:`NumpyFieldList` will always store all the
-        field values in a single ndarray.
+        When the :class:`FieldList` is already in the required format no new
+        :class:`FieldList` is created but the current one is returned.
 
         Parameters
         ----------
+        backend: str
+            Specifies the backend for the generated fieldlist. The supported values are as follows:
+
+            - "numpy": the generated fieldlist is a :class:`NumpyFieldList`, which represents
+              each field by an ndarray storing the field values and a :class:`MetaData` object holding
+              the field metadata. The shape and dtype of the ndarray is controlled by the ``kwargs``.
+              Please note that generated :class:`NumpyFieldList` stores all the field values in
+              a single ndarray.
+
         **kwargs: dict, optional
-            Keyword arguments passed to :obj:`to_numpy`
+            When ``backend`` is "numpy" ``kwargs`` are passed to :obj:`to_numpy` to
+            extract the field values the resulting object will store.
 
         Returns
         -------
-        :class:`NumpyFieldList`
+        :class:`FieldList`
+            - the current :class:`FieldList` if it is already in the required format
+            - :class:`NumpyFieldList` when ``backend`` is "numpy"
+
+        Examples
+        --------
+        The following example will convert a fieldlist read from a file into a
+        :class:`NumpyFieldList` storing single precision field values.
+
+        >>> import numpy as np
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+        >>> ds.path
+        'docs/examples/tuv_pl.grib'
+        >>> r = ds.to_fieldlist("numpy", dtype=np.float32)
+        >>> r
+        NumpyFieldList(fields=18)
+        >>> hasattr(r, "path")
+        False
+        >>> r.to_numpy().dtype
+        dtype('float32')
 
         """
+        converter = fieldlist_converters.get(backend, None)
+        if converter is not None:
+            return getattr(self, converter)(**kwargs)
+
+    def _to_numpy_fieldlist(self, **kwargs):
         md = [f.metadata() for f in self]
         return self.from_numpy(self.to_numpy(**kwargs), md)
+
+
+fieldlist_converters = {"numpy": "_to_numpy_fieldlist"}

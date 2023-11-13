@@ -25,9 +25,6 @@ class StreamMemorySource(MemoryBaseSource):
     def __iter__(self):
         return iter(self._reader)
 
-    def to_decoded(self, **kwargs):
-        return self._reader.to_decoded(**kwargs)
-
 
 class StreamSource(Source):
     def __init__(self, stream, group_by=None, **kwargs):
