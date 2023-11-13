@@ -20,6 +20,16 @@ LOG = logging.getLogger(__name__)
 
 
 class NumpyField(Field):
+    r"""Represents a field consisting of an ndarray and metadata object.
+
+    Parameters
+    ----------
+    array: ndarray
+        Array storing the values of the field
+    metadata: :class:`Metadata`
+        Metadata object describing the field metadata.
+    """
+
     def __init__(self, array, metadata):
         self._array = array
         super().__init__(metadata=metadata)
@@ -31,7 +41,13 @@ class NumpyField(Field):
         if dtype is None:
             return self._array
         else:
-            return self._array.astype(dtype)
+            return self._array.astype(dtype, copy=False)
+
+    def to_decoded(self, **kwargs):
+        if self._array_matches(self._array, **kwargs):
+            return self
+        else:
+            return NumpyField(self.to_numpy(**kwargs), self.metadata())
 
     def __repr__(self):
         return f"{self.__class__.__name__}()"
@@ -108,6 +124,12 @@ class NumpyFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
     def __repr__(self):
         return f"{self.__class__.__name__}(fields={len(self)})"
 
+    def to_decoded(self, **kwargs):
+        if self[0]._array_matches(self._array[0], **kwargs):
+            return self
+        else:
+            return type(self)(self.to_numpy(**kwargs), self._metadata)
+
 
 class MultiUnwindMerger:
     def __init__(self, sources):
@@ -142,6 +164,18 @@ class ListMerger:
 
 
 class NumpyFieldList(NumpyFieldListCore):
+    r"""Represents a list of :obj:`NumpyField <data.sources.numpy_list.NumpyField>`\ s.
+
+    The preferred way to create a NumpyFieldList is to use either the
+    static :obj:`from_numpy` method or the :obj:`to_decoded` method.
+
+    See Also
+    --------
+    from_numpy
+    to_decoded
+
+    """
+
     def _getitem(self, n):
         if isinstance(n, int):
             return NumpyField(self._array[n], self._metadata[n])
