@@ -22,7 +22,10 @@ from earthkit.data.testing import earthkit_examples_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from numpy_fs_fixtures import check_numpy_fs, check_numpy_fs_decoded  # noqa: E402
+from numpy_fs_fixtures import (  # noqa: E402
+    check_numpy_fs,
+    check_numpy_fs_from_to_fieldlist,
+)
 
 
 def test_numpy_fs_grib_single_field():
@@ -123,28 +126,28 @@ def test_numpy_fs_grib_from_list_of_arrays_bad():
         {"flatten": True, "dtype": np.float32},
     ],
 )
-def test_numpy_fs_grib_from_to_decoded(kwargs):
+def test_numpy_fs_grib_from_to_fieldlist(kwargs):
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md_full = ds.metadata("param")
     assert len(ds) == 2
 
-    r = ds.to_decoded(**kwargs)
-    check_numpy_fs_decoded(r, [ds], md_full, **kwargs)
+    r = ds.to_fieldlist("numpy", **kwargs)
+    check_numpy_fs_from_to_fieldlist(r, [ds], md_full, **kwargs)
 
 
-def test_numpy_fs_grib_from_to_decoded_repeat():
+def test_numpy_fs_grib_from_to_fieldlist_repeat():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md_full = ds.metadata("param")
     assert len(ds) == 2
 
     kwargs = {}
-    r = ds.to_decoded(**kwargs)
-    check_numpy_fs_decoded(r, [ds], md_full, **kwargs)
+    r = ds.to_fieldlist("numpy", **kwargs)
+    check_numpy_fs_from_to_fieldlist(r, [ds], md_full, **kwargs)
 
     kwargs = {"flatten": True, "dtype": np.float32}
-    r1 = r.to_decoded(**kwargs)
+    r1 = r.to_fieldlist("numpy", **kwargs)
     assert r1 is not r
-    check_numpy_fs_decoded(r1, [ds], md_full, **kwargs)
+    check_numpy_fs_from_to_fieldlist(r1, [ds], md_full, **kwargs)
 
 
 if __name__ == "__main__":
