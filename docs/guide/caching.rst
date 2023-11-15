@@ -7,7 +7,7 @@ Caching
 Purpose
 -------
 
-earthkit-data uses a dedicated **directory** to store the results of remote data access and some GRIB/BUFR indexing information. By default this directory is **unmanaged** (its size is not checked/limited) and **no caching** is provided for the files in it, i.e. repeated calls to :func:`from_source` for remote services and URLSs will download the data again!
+earthkit-data uses a dedicated **directory** to store the results of remote data access and some GRIB/BUFR indexing information. By default this directory is **unmanaged** (its size is not checked/limited) and **no caching** is provided for the files in it, i.e. repeated calls to :func:`from_source` for remote services and URLs will download the data again!
 
 When **caching is enabled** this directory will also serve as a **cache**. It means if we run :func:`from_source` again with the same arguments it will load the data from the cache instead of downloading it again. Additionally, caching offers **monitoring and disk space management**. When the cache is full, cached data is deleted according to the settings (i.e. oldest data is deleted first). The cache is implemented by using a sqlite database running in a separate thread.
 
@@ -182,20 +182,20 @@ there are a set of methods available on this object to manage and interact with 
      - Get the current cache policy object.
    * - :meth:`~data.core.caching.Cache.directory`
      - Return the path to the current cache directory
-   * - :meth:`~data.core.caching.Cache.cache_size`
+   * - :meth:`~data.core.caching.Cache.size`
      - Return the total number of bytes stored in the cache
-   * - :meth:`~data.core.caching.Cache.check_cache_size`
+   * - :meth:`~data.core.caching.Cache.check_size`
      - Check the cache size and trim it down when needed.
-   * - :meth:`~data.core.caching.Cache.cache_entries`
+   * - :meth:`~data.core.caching.Cache.entries`
      - Dump the entries stored in the cache
-   * - :meth:`~data.core.caching.Cache.summary_dump_cache_database`
+   * - :meth:`~data.core.caching.Cache.summary_dump_database`
      - Return the number of items and total size of the cache
-   * - :meth:`~data.core.caching.Cache.purge_cache`
+   * - :meth:`~data.core.caching.Cache.purge`
      - Delete entries from the cache
 
 .. warning::
 
-    :meth:`~data.core.caching.Cache.check_cache_size` automatically runs when a new
+    :meth:`~data.core.caching.Cache.check_size` automatically runs when a new
     entry is added to the cache or any of the :ref:`cache_settings` changes.
 
 Examples:
@@ -207,11 +207,11 @@ Examples:
       'user'
       >>> cache.directory()
       '/var/folders/ng/g0zkhc2s42xbslpsywwp_26m0000gn/T/earthkit-data-cgr'
-      >>> cache.cache_size()
+      >>> cache.size()
       846785699
-      >>> cache.summary_dump_cache_database()
+      >>> cache.summary_dump_database()
       (40, 846785699)
-      >>> d = cache.cache_entries()
+      >>> d = cache.entries()
       >>> len(d)
       40
       >>> d[0].get("creation_date")

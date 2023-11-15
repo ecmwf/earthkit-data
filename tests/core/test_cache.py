@@ -47,7 +47,7 @@ def check_cache_files(dir_path, managed=True):
 
     if managed:
         cnt = 0
-        for f in cache.cache_entries():
+        for f in cache.entries():
             if f["owner"] == "test_cache":
                 cnt += 1
 
@@ -58,7 +58,7 @@ def check_cache_files(dir_path, managed=True):
 def test_cache_1():
     with settings.temporary():
         settings.set("maximum-cache-disk-usage", "99%")
-        cache.purge_cache(matcher=lambda e: ["owner"] == "test_cache")
+        cache.purge(matcher=lambda e: ["owner"] == "test_cache")
         check_cache_files(settings.get("user-cache-directory"))
 
 
@@ -292,12 +292,12 @@ def test_cache_management(policy):
                 assert os.path.dirname(ds.path) == cache.directory()
 
             # check cache contents
-            num, size = cache.summary_dump_cache_database()
+            num, size = cache.summary_dump_database()
             assert num == 3
             assert size == 3 * data_size
-            assert len(cache.cache_entries()) == 3
+            assert len(cache.entries()) == 3
 
-            for i, x in enumerate(cache.cache_entries()):
+            for i, x in enumerate(cache.entries()):
                 assert x["size"] == data_size
                 assert x["owner"] == "dummy-source"
                 assert x["args"] == {"size": data_size, "n": i}
@@ -308,11 +308,11 @@ def test_cache_management(policy):
                 {"maximum-cache-size": "12K", "maximum-cache-disk-usage": None}
             )
 
-            num, size = cache.summary_dump_cache_database()
+            num, size = cache.summary_dump_database()
             assert num == 1
             assert size == data_size
-            assert len(cache.cache_entries()) == 1
-            for x in cache.cache_entries():
+            assert len(cache.entries()) == 1
+            for x in cache.entries():
                 assert x["size"] == data_size
                 assert x["owner"] == "dummy-source"
                 assert x["args"] == {"size": data_size, "n": 2}
@@ -321,11 +321,11 @@ def test_cache_management(policy):
 
             # purge the cache
             r = None
-            cache.purge_cache()
-            num, size = cache.summary_dump_cache_database()
+            cache.purge()
+            num, size = cache.summary_dump_database()
             assert num == 0
             assert size == 0
-            assert len(cache.cache_entries()) == 0
+            assert len(cache.entries()) == 0
 
 
 if __name__ == "__main__":

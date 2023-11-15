@@ -830,10 +830,10 @@ class Cache:
         )
         return s.result()
 
-    def _dump_cache_database(self, *args, **kwargs):
+    def _dump_database(self, *args, **kwargs):
         return self._call_manager(False, "dump_cache_database", *args, **kwargs)
 
-    def summary_dump_cache_database(self, *args, **kwargs):
+    def summary_dump_database(self, *args, **kwargs):
         """Return the number of items and total size of the cache.
 
         Does not work when the ``cache-policy`` is "off".
@@ -847,7 +847,7 @@ class Cache:
 
 
         >>> from earthkit.data import cache
-        >>> cache.summary_dump_cache_database()
+        >>> cache.summary_dump_database()
         (40, 846785699)
         """
         return self._call_manager(False, "summary_dump_cache_database", *args, **kwargs)
@@ -861,7 +861,7 @@ class Cache:
     def _decache_file(self, *args, **kwargs):
         return self._call_manager(False, "decache_file", *args, **kwargs)
 
-    def check_cache_size(self, *args, **kwargs):
+    def check_size(self, *args, **kwargs):
         """Check the cache size and trim it down when needed.
 
         Automatically runs when a new entry is added to the cache or the
@@ -881,14 +881,14 @@ class Cache:
         """
         return self._call_manager(True, "check_cache_size", *args, **kwargs)
 
-    def cache_size(self, *args, **kwargs):
+    def size(self, *args, **kwargs):
         """Return the total number of bytes stored in the cache.
 
         Does not work when the ``cache-policy`` is "off".
         """
         return self._call_manager(False, "cache_size", *args, **kwargs)
 
-    def cache_entries(self, *args, **kwargs):
+    def entries(self, *args, **kwargs):
         """Dump the entries stored in the cache.
 
         Does not work when the ``cache-policy`` is "off".
@@ -900,7 +900,7 @@ class Cache:
         """
         return self._call_manager(False, "cache_entries", *args, **kwargs)
 
-    def purge_cache(self, *args, **kwargs):
+    def purge(self, *args, **kwargs):
         """Delete entries from the cache.
 
         Does not work when the ``cache-policy`` is "off".
@@ -920,12 +920,12 @@ class Cache:
         Delete all entries.
 
         >>> from earthkit.data import cache
-        >>> cache.purge_cache()
+        >>> cache.purge()
 
         Delete all entries where the "owner" is "test_cache".
 
         >>> from earthkit.data import cache
-        >>> cache.purge_cache(matcher=lambda e: ["owner"] == "test_cache")
+        >>> cache.purge(matcher=lambda e: ["owner"] == "test_cache")
 
         """
         return self._call_manager(False, "purge_cache", *args, **kwargs)
@@ -1038,7 +1038,7 @@ def cache_file(
                     owner_data = create(path + ".tmp", args)
                     os.rename(path + ".tmp", path)
                     CACHE._update_entry(path, owner_data)
-                    CACHE.check_cache_size()
+                    CACHE.check_size()
 
             try:
                 os.unlink(lock)
