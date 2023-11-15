@@ -157,11 +157,30 @@ class TensorCore(metaclass=ABCMeta):
                 for i, element in enumerate(self.coords[k])
                 if selection.match_element(element)
             )
+            if len(r[k]) == 1:
+                v = r[k][0]
+                r[k] = slice(v, v + 1)
+                # r[k] = r[k][0]
 
         indexes = []
         for k, v in self.coords.items():
             if k in r:
                 indexes.append(r[k])
+            else:
+                indexes.append(slice(None, None, None))
+
+        indexes = tuple(indexes)
+        # print(f"{indexes=}")
+
+        return self._subset(indexes)
+
+    def isel(self, *args, remapping=None, **kwargs):
+        kwargs = normalize_selection(*args, **kwargs)
+
+        indexes = []
+        for k, v in self.coords.items():
+            if k in kwargs:
+                indexes.append(kwargs[k])
             else:
                 indexes.append(slice(None, None, None))
 
@@ -203,10 +222,10 @@ class TensorCore(metaclass=ABCMeta):
                 f"shape={self._shape} does not match shape deduced from coords={s}"
             )
 
-    # def copy(self, data=None):
-    #     if data is None:
-    #         data = self.to_numpy().copy()
-    #     return ArrayCube(data, self.coords, self.field_shape)
+    def copy(self, data=None):
+        if data is None:
+            data = self.to_numpy().copy()
+        return ArrayTensor(data, self.coords, self.field_shape)
 
 
 class FieldListTensor(TensorCore):
@@ -315,13 +334,13 @@ class FieldListTensor(TensorCore):
     def _subset(self, indexes):
         # Map the slices to a list of indexes per dimension
         coords = []
-        print(f"{indexes=}")
+        # print(f"{indexes=}")
         for s, c in zip(indexes, self._user_shape):
             lst = np.array(list(range(c)))[s].tolist()
             if not isinstance(lst, list):
                 lst = [lst]
             coords.append(lst)
-            print(f"{coords=}")
+            # print(f"{coords=}")
 
         # Transform the coordinates to a list of indexes for the underlying dataset
         dataset_indexes = []
@@ -365,5 +384,6 @@ class ArrayTensor(TensorCore):
 
     def _subset(self, indexes):
         coords = self._subset_coords(indexes)
+        # print(f"{indexes=}")
         data = self._array[indexes]
         return ArrayTensor(data, coords, self.field_shape)
