@@ -8,6 +8,7 @@
 #
 
 import functools
+import itertools
 import logging
 import math
 from abc import ABCMeta, abstractmethod
@@ -20,14 +21,17 @@ LOG = logging.getLogger(__name__)
 
 
 def coords_to_index(coords, shape) -> int:
-    a = 0
+    """
+    Map user coords to field index"""
+    index = 0
     n = 1
-    i = len(coords) - 1
-    while i >= 0:
-        a += coords[i] * n
+    # i = len(coords) - 1
+    for i in range(len(coords) - 1, 0, -1):
+        # while i >= 0:
+        index += coords[i] * n
         n *= shape[i]
-        i -= 1
-    return a
+        # i -= 1
+    return index
 
 
 def index_to_coords(index: int, shape):
@@ -75,7 +79,7 @@ class CubeCoords(dict):
         return t
 
 
-def flatten(func):
+def flatten_arg(func):
     @functools.wraps(func)
     def wrapped(self, *args, **kwargs):
         _kwargs = {**kwargs}
@@ -85,12 +89,14 @@ def flatten(func):
     return wrapped
 
 
-class FieldCubeCore(metaclass=ABCMeta):
+class TensorCore(metaclass=ABCMeta):
+    _type = None
     _shape = None
     _user_shape = None
     _field_shape = None
     _coords = None
     _array = None
+    _data = None
     flatten_values = None
 
     @property
@@ -98,13 +104,16 @@ class FieldCubeCore(metaclass=ABCMeta):
         return self._shape
 
     @property
-    def coords(self):
-        return self._coords
+    def user_shape(self):
+        return self._user_shape
 
     @property
-    @abstractmethod
     def field_shape(self):
-        pass
+        return self._field_shape
+
+    @property
+    def coords(self):
+        return self._coords
 
     @abstractmethod
     def to_numpy(self, **kwargs):
@@ -132,8 +141,7 @@ class FieldCubeCore(metaclass=ABCMeta):
         # print(f"{indexes=}")
         indexes = tuple(indexes)
 
-        coords = self._subset_coords(indexes)
-        return MaskedCube(self, indexes, coords)
+        return self._subset(indexes)
 
     def sel(self, *args, remapping=None, **kwargs):
         kwargs = normalize_selection(*args, **kwargs)
@@ -160,9 +168,11 @@ class FieldCubeCore(metaclass=ABCMeta):
         indexes = tuple(indexes)
         # print(f"{indexes=}")
 
-        coords = self._subset_coords(indexes)
+        return self._subset(indexes)
 
-        return MaskedCube(self, indexes, coords)
+    @abstractmethod
+    def _subset(self, indexes):
+        pass
 
     def _subset_coords(self, indexes):
         import numpy as np
@@ -181,16 +191,63 @@ class FieldCubeCore(metaclass=ABCMeta):
                 r[k] = [self.coords[k][i] for i in idx]
         return r
 
-    def copy(self, data=None):
-        if data is None:
-            data = self.to_numpy().copy()
-        return ArrayCube(data, self.coords, self.field_shape)
+    def _check(self):
+        if self._shape != self._user_shape + self._field_shape:
+            raise ValueError(
+                f"shape={self._shape} differs from expected shape={self._user_shape} + {self._field_shape}"
+            )
+
+        s = tuple(len(v) for _, v in self._coords.items())
+        if s != self._shape:
+            raise ValueError(
+                f"shape={self._shape} does not match shape deduced from coords={s}"
+            )
+
+    # def copy(self, data=None):
+    #     if data is None:
+    #         data = self.to_numpy().copy()
+    #     return ArrayCube(data, self.coords, self.field_shape)
 
 
-class FieldListCube(FieldCubeCore):
-    def __init__(self, ds, *args, remapping=None, flatten_values=False):
-        assert len(ds), f"No data in {ds}"
+class FieldListTensor(TensorCore):
+    def __init__(self, source, coords, user_shape, field_shape, flatten_values):
+        self.source = source
+        self._coords = coords
+        self._user_coords = {
+            k: coords[k] for k in list(coords.keys())[: -len(field_shape)]
+        }
+        self._shape = user_shape + field_shape
+        self._user_shape = user_shape
+        self._field_shape = field_shape
         self.flatten_values = flatten_values
+
+        # consistency check
+        self._check()
+
+        if len(self.source) != math.prod(self._user_shape):
+            raise ValueError(
+                (
+                    f"user shape={self._user_shape} does not match number of available "
+                    f"fields={len(self.source)}"
+                )
+            )
+
+    @classmethod
+    def from_tensor(cls, owner, source, coords):
+        shape = tuple(len(v) for _, v in coords.items())
+        flatten_values = owner.flatten_values
+        field_shape = FieldListTensor._get_field_shape(source[0], flatten_values)
+        user_shape = [x for x in shape[: -len(field_shape)]]
+        if len(user_shape) == 1:
+            user_shape = (user_shape,)
+        else:
+            user_shape = tuple(user_shape)
+
+        return cls(source, coords, user_shape, field_shape, flatten_values)
+
+    @classmethod
+    def from_fieldlist(cls, ds, *args, remapping=None, flatten_values=False):
+        assert len(ds), f"No data in {ds}"
 
         if len(args) == 1 and isinstance(args[0], (list, tuple)):
             args = args[0]
@@ -203,74 +260,100 @@ class FieldListCube(FieldCubeCore):
                 names += list(a.keys())
 
         # Sort the source
-        self.source = ds.order_by(*args, remapping=remapping)
+        source = ds.order_by(*args, remapping=remapping)
 
         # Get a mapping of user names to unique values
         # With possible reduce dimensionality if the user uses 'level+param'
-        self._user_coords = CubeCoords(ds.unique_values(*names, remapping=remapping))
-        for k, v in self._user_coords.items():
-            self._user_coords[k] = sorted(v)
+        coords = CubeCoords(ds.unique_values(*names, remapping=remapping))
+        for k, v in coords.items():
+            coords[k] = sorted(v)
 
         # print(f"{self.user_coords=}")
 
-        self._user_shape = tuple(len(v) for k, v in self._user_coords.items())
-        self._shape = self._user_shape + self.field_shape
+        user_shape = tuple(len(v) for k, v in coords.items())
 
-        if len(self.field_shape) == 1:
-            self._coords["values"] = np.linspace(
-                0, self._field_shape[0], self._field_shape[0] + 1, dtype=int
+        # determine field shape
+        field_shape = FieldListTensor._get_field_shape(source[0], flatten_values)
+
+        # shape = user_shape + field_shape
+
+        if len(field_shape) == 1:
+            coords["values"] = np.linspace(
+                0, field_shape[0], field_shape[0] + 1, dtype=int
             )
 
-        if len(self.field_shape) == 2:
-            f = self.source[0]
+        if len(field_shape) == 2:
+            f = source[0]
             geo = f.metadata().geography
             lat = geo.distinct_latitudes()
             lon = geo.distinct_longitudes()
-            if len(lat) == self.field_shape[0] and len(lon) == self.field_shape[1]:
-                self._coords["latitude"] = lat
-                self._coords["longitude"] = lon
+            if len(lat) == field_shape[0] and len(lon) == field_shape[1]:
+                coords["latitude"] = lat
+                coords["longitude"] = lon
             else:
-                self._coords["x"] = np.linspace(
-                    0, self._field_shape[0], self._field_shape[0] + 1, dtype=int
+                coords["x"] = np.linspace(
+                    0, field_shape[0], field_shape[0] + 1, dtype=int
                 )
-                self._coords["y"] = np.linspace(
-                    0, self._field_shape[1], self._field_shape[1] + 1, dtype=int
+                coords["y"] = np.linspace(
+                    0, field_shape[1], field_shape[1] + 1, dtype=int
                 )
 
-    @property
-    def field_shape(self):
-        if self._field_shape is None:
-            self._field_shape = self.source[0].shape
+        return cls(source, coords, user_shape, field_shape, flatten_values)
 
-            if self.flatten_values:
-                self._field_shape = (math.prod(self._field_shape),)
-
-            assert isinstance(self._field_shape, tuple), (
-                self._field_shape,
-                self.source[0],
-            )
-        return self._field_shape
-
-    @flatten
+    @flatten_arg
     def to_numpy(self, **kwargs):
-        self._array = self.source.to_numpy(**kwargs).reshape(*self.shape)
+        return self.source.to_numpy(**kwargs).reshape(*self.shape)
 
-        # if self._array is None:
-        #     # print(f"shape={self.source.to_numpy(**kwargs).shape}")
-        #     # print(f"kwargs={_kwargs} shape={self.source.to_numpy(**_kwargs).shape}")
-        #     self._array = self.source.to_numpy(**kwargs).reshape(*self.shape)
-        # return self._array
-
-    @flatten
+    @flatten_arg
     def latitudes(self, **kwargs):
         return self.source[0].data("lat", **kwargs)
 
-    @flatten
+    @flatten_arg
     def longitudes(self, **kwargs):
         return self.source[0].data("lon", **kwargs)
 
+    def _subset(self, indexes):
+        # Map the slices to a list of indexes per dimension
+        coords = []
+        print(f"{indexes=}")
+        for s, c in zip(indexes, self._user_shape):
+            lst = np.array(list(range(c)))[s].tolist()
+            if not isinstance(lst, list):
+                lst = [lst]
+            coords.append(lst)
+            print(f"{coords=}")
 
-class ArrayCube(FieldCubeCore):
+        # Transform the coordinates to a list of indexes for the underlying dataset
+        dataset_indexes = []
+        user_shape = self._user_shape
+        for x in itertools.product(*coords):
+            i = coords_to_index(x, user_shape)
+            assert isinstance(i, int), i
+            dataset_indexes.append(i)
+
+        coords = self._subset_coords(indexes)
+        ds = self.source[tuple(dataset_indexes)]
+        return self.from_tensor(self, ds, coords)
+
+    # @staticmethod
+    # def _get_shape(coords):
+    #     return tuple(len(v) for _, v in coords.items())
+
+    @staticmethod
+    def _get_field_shape(field, flatten_values):
+        field_shape = field.shape
+
+        if flatten_values:
+            field_shape = (math.prod(field_shape),)
+
+        assert isinstance(field_shape, tuple), (
+            field_shape,
+            field,
+        )
+        return field_shape
+
+
+class ArrayTensor(TensorCore):
     def __init__(self, array, coords, field_shape):
         self._array = array
         self._coords = coords
@@ -280,55 +363,7 @@ class ArrayCube(FieldCubeCore):
     def to_numpy(self, **kwargs):
         return self._array
 
-    @property
-    def field_shape(self):
-        return self._field_shape
-
-
-class MaskedCube(FieldCubeCore):
-    def __init__(self, cube, indexes, coords):
-        self.owner = cube
-        self.indexes = indexes
-        self._coords = coords
-        self._shape = tuple(len(v) for _, v in self._coords.items())
-        # print(f"MaskedCube indexes={self.indexes} {self._shape} {self._coords}")
-
-    @flatten
-    def to_numpy(self, **kwargs):
-        indexes = []
-        for idx in self.indexes:
-            if idx == slice(None, None, None):
-                idx = ":"
-            indexes.append(idx)
-
-        indexes = tuple(self.indexes)
-        # print(f"to_numpy: {indexes=} {self.shape} {self._shape}")
-        # print(f"shape={self.owner.to_numpy(**kwargs).shape}")
-        return self.owner.to_numpy(**kwargs)[indexes].reshape(self.shape)
-
-    @flatten
-    def latitudes(self, **kwargs):
-        return self.owner.latitudes(**kwargs)[tuple(self._field_indexes())]
-
-    @flatten
-    def longitudes(self, **kwargs):
-        return self.owner.longitudes(**kwargs)[tuple(self._field_indexes())]
-
-    @property
-    def field_shape(self):
-        if self._field_shape is None:
-            if len(self.owner.field_shape) == 1:
-                return (self.shape[-1],)
-            elif len(self.owner.field_shape) == 2:
-                return (self.shape[-2], self.shape[-1])
-            else:
-                raise ValueError(
-                    f"Invalid field shape in owner = {self.owner.field_shape}"
-                )
-        return self._field_shape
-
-    def _field_indexes(self):
-        if len(self.field_shape) == 1:
-            return [self.indexes[-1]]
-        elif len(self.field_shape) == 2:
-            return self.indexes[-2:]
+    def _subset(self, indexes):
+        coords = self._subset_coords(indexes)
+        data = self._array[indexes]
+        return ArrayTensor(data, coords, self.field_shape)

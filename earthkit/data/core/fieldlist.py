@@ -1190,10 +1190,10 @@ class FieldList(Index):
         for s in self:
             s.write(f)
 
-    def to_tensor(self, *args):
-        from earthkit.data.indexing.tensor import FieldListCube
+    def to_tensor(self, *args, **kwargs):
+        from earthkit.data.indexing.tensor import FieldListTensor
 
-        return FieldListCube(self, *args)
+        return FieldListTensor.from_fieldlist(self, *args, **kwargs)
 
     def to_fieldlist(self, backend, **kwargs):
         r"""Convert to a new :class:`FieldList` based on the ``backend``.
