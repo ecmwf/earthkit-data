@@ -297,9 +297,7 @@ class FieldListTensor(TensorCore):
         # shape = user_shape + field_shape
 
         if len(field_shape) == 1:
-            coords["values"] = np.linspace(
-                0, field_shape[0], field_shape[0] + 1, dtype=int
-            )
+            coords["values"] = np.linspace(0, field_shape[0], field_shape[0], dtype=int)
 
         if len(field_shape) == 2:
             f = source[0]
@@ -310,12 +308,8 @@ class FieldListTensor(TensorCore):
                 coords["latitude"] = lat
                 coords["longitude"] = lon
             else:
-                coords["x"] = np.linspace(
-                    0, field_shape[0], field_shape[0] + 1, dtype=int
-                )
-                coords["y"] = np.linspace(
-                    0, field_shape[1], field_shape[1] + 1, dtype=int
-                )
+                coords["x"] = np.linspace(0, field_shape[0], field_shape[0], dtype=int)
+                coords["y"] = np.linspace(0, field_shape[1], field_shape[1], dtype=int)
 
         return cls(source, coords, user_shape, field_shape, flatten_values)
 
