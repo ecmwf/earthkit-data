@@ -1,0 +1,17 @@
+build:
+  modules:
+  - ninja
+  dependencies:
+  - ecmwf/ecbuild
+  - MathisRosenhauer/libaec@master
+  - ecmwf/eccodes
+  - ecmwf/odc
+  python_dependencies:
+  - ecmwf/eccodes-ecmwf@develop
+  - ecmwf/cfgrib@develop
+  - ecmwf/pdbufr@develop
+  - ecmwf/pyodc@develop
+  env:
+  - ECCODES_SAMPLES_PATH=$ECCODES_DIR/share/eccodes/samples
+  - ECCODES_DEFINITION_PATH=$ECCODES_DIR/share/eccodes/definitions
+  parallel: 64
