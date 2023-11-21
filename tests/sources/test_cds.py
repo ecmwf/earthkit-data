@@ -92,31 +92,35 @@ def test_cds_grib_split_on_var():
     assert len(s.indexes) == 2
 
 
+@pytest.mark.parametrize(
+    "date,expected_date",
+    [
+        (
+            "2012-12-12/to/2012-12-14",
+            [20121212, 20121212, 20121213, 20121213, 20121214, 20121214],
+        ),
+        (
+            ["2014-05-12", "2014-05-13", "2014-05-14"],
+            [20140512, 20140512, 20140513, 20140513, 20140514, 20140514],
+        ),
+    ],
+)
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
-def test_cds_grib_multi_var_date():
+def test_cds_grib_multi_var_date(date, expected_date):
     s = from_source(
         "cds",
         "reanalysis-era5-single-levels",
         variable=["2t", "msl"],
         product_type="reanalysis",
         area=[50, -50, 20, 50],
-        date="2012-12-12/to/2012-12-15",
+        date=date,
         time="12:00",
     )
-    assert len(s) == 8
-    assert s.metadata("param") == ["2t", "msl"] * 4
-    assert s.metadata("date") == [
-        20121212,
-        20121212,
-        20121213,
-        20121213,
-        20121214,
-        20121214,
-        20121215,
-        20121215,
-    ]
+    assert len(s) == 6
+    assert s.metadata("param") == ["2t", "msl"] * 3
+    assert s.metadata("date") == expected_date
 
 
 @pytest.mark.long_test
@@ -321,18 +325,20 @@ def test_cds_observation_csv_file_to_pandas_xarray():
     assert list(df.columns)[:2] == ["station_name", "report_timestamp"]
 
 
-@pytest.mark.skip("remote data does not exist")
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 def test_cds_non_observation_csv_file_to_pandas_xarray():
-    collection_id = "sis-energy-derived-reanalysis"
+    collection_id = "sis-energy-derived-projections"
     request = {
+        "format": "zip",
         "variable": "wind_power_generation_onshore",
         "spatial_aggregation": "country_level",
-        "energy_product_type": "energy",
+        "energy_product_type": "capacity_factor_ratio",
         "temporal_aggregation": "daily",
-        "format": "zip",
+        "experiment": "rcp_2_6",
+        "rcm": "hirham5",
+        "gcm": "ec_earth",
     }
     data_cds = from_source("cds", collection_id, **request)
     assert "Date" in data_cds.to_pandas().columns
