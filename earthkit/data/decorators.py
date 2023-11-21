@@ -39,9 +39,10 @@ def detect_out_filename(func):
     @functools.wraps(func)
     def wrapped(self, *args, **kwargs):
         if len(args) == 0:
-            try:
-                args = [os.path.basename(self.path)]
-            except AttributeError:
+            for att in ["source_filename", "path"]:
+                if hasattr(self, att):
+                    args = [getattr(self, att)]
+            else:
                 raise TypeError("Please provide a output filename")
 
         if hasattr(self, "path") and os.path.samefile(args[0], self.path):
