@@ -48,7 +48,11 @@ def detect_out_filename(func):
                 raise TypeError("Please provide a output filename")
 
         # Ensure we do not overwrite file that is being read:
-        if os.path.isfile(args[0]) and hasattr(self, "path") and os.path.samefile(args[0], self.path):
+        if (
+            os.path.isfile(args[0])
+            and hasattr(self, "path")
+            and os.path.samefile(args[0], self.path)
+        ):
             LOG.warn(
                 "Earhtkit refusing to overwrite the file we are currently reading."
             )
