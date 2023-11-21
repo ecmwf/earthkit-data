@@ -96,6 +96,7 @@ class CdsRetriever(FileSource):
 
     def __init__(self, dataset, *args, **kwargs):
         super().__init__()
+        self.source_filename: str = ""
 
         assert isinstance(dataset, str)
         if args and kwargs:
@@ -125,7 +126,9 @@ class CdsRetriever(FileSource):
 
     def _retrieve(self, dataset, request):
         def retrieve(target, args):
-            self.client().retrieve(args[0], args[1], target)
+            cds_result = self.client().retrieve(args[0], args[1])
+            self.source_filename = cds_result.location.split("/")[-1]
+            cds_result.download(target=target)
 
         return self.cache_file(
             retrieve,
