@@ -38,14 +38,17 @@ def dict_args(func):
 def detect_out_filename(func):
     @functools.wraps(func)
     def wrapped(self, *args, **kwargs):
+        # Detect filename:
         if len(args) == 0:
             for att in ["source_filename", "path"]:
-                if hasattr(self, att):
+                if hasattr(self, att) and getattr(self, att) is not None:
                     args = [getattr(self, att)]
+                    break
             else:
                 raise TypeError("Please provide a output filename")
 
-        if hasattr(self, "path") and os.path.samefile(args[0], self.path):
+        # Ensure we do not overwrite file that is being read:
+        if os.path.isfile(args[0]) and hasattr(self, "path") and os.path.samefile(args[0], self.path):
             LOG.warn(
                 "Earhtkit refusing to overwrite the file we are currently reading."
             )

@@ -96,7 +96,7 @@ class CdsRetriever(FileSource):
 
     def __init__(self, dataset, *args, **kwargs):
         super().__init__()
-        self.source_filename: str = ""
+        self.source_filename = None
 
         assert isinstance(dataset, str)
         if args and kwargs:
