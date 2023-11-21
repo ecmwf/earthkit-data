@@ -42,15 +42,18 @@ def detect_out_filename(func):
         if len(args) == 0:
             for att in ["source_filename", "path"]:
                 if hasattr(self, att) and getattr(self, att) is not None:
-                    args = [getattr(self, att)]
+                    args = [os.path.basename(getattr(self, att))]
+                    print(att, args)
                     break
             else:
                 raise TypeError("Please provide a output filename")
 
         # Ensure we do not overwrite file that is being read:
         if (
-            os.path.isfile(args[0])
+            args[0] is not None
+            and os.path.isfile(args[0])
             and hasattr(self, "path")
+            and self.path is not None
             and os.path.samefile(args[0], self.path)
         ):
             LOG.warn(
