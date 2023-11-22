@@ -12,6 +12,7 @@ import logging
 import os
 import re
 import threading
+import warnings
 
 from earthkit.data.utils import load_json_or_yaml
 from earthkit.data.utils.availability import Availability
@@ -43,7 +44,6 @@ def detect_out_filename(func):
             for att in ["source_filename", "path"]:
                 if hasattr(self, att) and getattr(self, att) is not None:
                     args = [os.path.basename(getattr(self, att))]
-                    print(att, args)
                     break
             else:
                 raise TypeError("Please provide a output filename")
@@ -56,8 +56,10 @@ def detect_out_filename(func):
             and self.path is not None
             and os.path.samefile(args[0], self.path)
         ):
-            LOG.warn(
-                "Earhtkit refusing to overwrite the file we are currently reading."
+            warnings.warn(
+                UserWarning(
+                    f"Earhtkit refusing to overwrite the file we are currently reading: {args[0]}"
+                )
             )
             return
 
