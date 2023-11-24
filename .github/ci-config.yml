@@ -2,6 +2,7 @@ dependencies: |
   ecmwf/ecbuild
   MathisRosenhauer/libaec@master
   ecmwf/eccodes
+  ecmwf/eckit
   ecmwf/odc
 dependency_branch: develop
 parallelism_factor: 8

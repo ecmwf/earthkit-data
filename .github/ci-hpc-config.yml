@@ -5,6 +5,7 @@ build:
   - ecmwf/ecbuild
   - MathisRosenhauer/libaec@master
   - ecmwf/eccodes
+  - ecmwf/eckit
   - ecmwf/odc
   python_dependencies:
   - ecmwf/eccodes-ecmwf@develop
