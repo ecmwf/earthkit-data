@@ -8,9 +8,9 @@ build:
   - ecmwf/eckit
   - ecmwf/odc
   python_dependencies:
-  - ecmwf/eccodes-ecmwf@develop
-  - ecmwf/cfgrib@develop
-  - ecmwf/pdbufr@develop
+  - ecmwf/eccodes-python@develop
+  - ecmwf/cfgrib@master
+  - ecmwf/pdbufr@master
   - ecmwf/pyodc@develop
   env:
   - ECCODES_SAMPLES_PATH=$ECCODES_DIR/share/eccodes/samples
