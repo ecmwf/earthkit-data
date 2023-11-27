@@ -58,13 +58,13 @@ The ``earthkit-data-demo-source`` package demonstrates how to implement a ``sour
 
 This data source plugin allows accessing data from a SQL database using earthkit-data.
 
-Once the package is installed either from source or from PyPI as:
+This demo is not hosted on PyPI but we can directly install it from github:
 
 .. code-block:: shell
 
-  pip install earthkit-data-demo-source
+  pip install git+https://github.com/ecmwf/earthkit-data-demo-source
 
-tabular data can be read in earthkit-data as follows:
+Having finished the installation, tabular data can be read in earthkit-data as follows:
 
 .. code-block:: python
 
