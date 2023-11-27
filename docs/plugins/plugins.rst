@@ -6,12 +6,6 @@ The plugin mechanism
 This document discusses how plugins are integrated into earthkit-data.
 
 
-.. note::
-
-  **Naming convention**: A plugin package name should preferably starts with ``earthkit-data-`` and use "-". The Python package to import should starts with
-  :py:class:`earthkit_data\_` and use "_".
-
-
 Plugin as python packages using ``entry_points``
 ------------------------------------------------
 
