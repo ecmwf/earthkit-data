@@ -168,7 +168,7 @@ def directories(owner: bool = False) -> list:
 
     """
     result = []
-    for kind in "source":
+    for kind in ["source"]:
         for name, v in load_plugins(kind).items():
             try:
                 module = import_module(v.module_name)
