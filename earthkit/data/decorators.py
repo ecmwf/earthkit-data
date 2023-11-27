@@ -46,7 +46,7 @@ def detect_out_filename(func):
                     args = [os.path.basename(getattr(self, att))]
                     break
             else:
-                raise TypeError("Please provide a output filename")
+                raise TypeError("Please provide an output filename")
 
         # Ensure we do not overwrite file that is being read:
         if (
