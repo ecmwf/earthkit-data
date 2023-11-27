@@ -54,11 +54,9 @@ With this we could use the new source in :func:`from_source` as:
 Example
 -------
 
-The ``earthkit-data-demo-source`` package demonstrates how to implement a ``sources plugin`` with the source code located at https://github.com/ecmwf/earthkit-data-demo-source.
+The ``earthkit-data-demo-source`` package demonstrates how to implement a ``sources plugin``. Its source code is located at https://github.com/ecmwf/earthkit-data-demo-source. This plugin enables earthkit-data to access data from an SQL database.
 
-This data source plugin allows accessing data from a SQL database using earthkit-data.
-
-This demo is not hosted on PyPI but we can directly install it from github:
+This demo package is not hosted on PyPI but we need to install it from github:
 
 .. code-block:: shell
 
