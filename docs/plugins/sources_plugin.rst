@@ -87,4 +87,4 @@ The integration is performed by ``entry_points`` is defined in  ``setup.cfg``.
         demo-source = earthkit_data_demo_source:DemoSource
 
 
-See the :ref:`/examples/demo_source_plugin.ipynb` notebook for the full example.
+See the :ref:`/examples/demo_sources_plugin.ipynb` notebook for the full example.
