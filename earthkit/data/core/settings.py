@@ -206,16 +206,6 @@ SETTINGS_AND_HELP = {
         {validator}""",
         validator=IntervalValidator(Interval(8, 4096)),
     ),
-    "datasets-directories": _(
-        [os.path.join(DOT_EARTHKIT_DATA, "datasets")],
-        """List of directories where to search for datasets definitions.
-        See :ref:`datasets` for more information.""",
-    ),
-    "datasets-catalogs-urls": _(
-        ["https://github.com/ecmwf-lab/earthkit-data-datasets/raw/main/datasets"],
-        """List of url where to search for catalogues of datasets definitions.
-        See :ref:`datasets` for more information.""",
-    ),
 }
 
 

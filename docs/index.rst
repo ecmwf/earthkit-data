@@ -50,7 +50,7 @@ reference systems and bounding boxes.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Plugin developer guide
+   :caption: Plugins
 
    plugins/index
 
