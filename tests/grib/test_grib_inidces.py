@@ -170,3 +170,26 @@ def test_grib_indices_multi_Del(mode):
     ds1 = ds.sel(param="t", level=[93, 500])
     r = ds1.indices()
     assert r == ref
+
+
+@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+def test_grib_indices_order_by(mode):
+    ds = load_file_or_numpy_fs("tuv_pl.grib", mode)
+
+    ref = {
+        "class": ["od"],
+        "stream": ["oper"],
+        "levtype": ["pl"],
+        "type": ["an"],
+        "expver": ["0001"],
+        "date": [20180801],
+        "time": [1200],
+        "domain": ["g"],
+        "number": [0],
+        "levelist": [300, 400, 500, 700, 850, 1000],
+        "param": ["t", "u", "v"],
+    }
+
+    ds1 = ds.order_by(levelist="descending")
+    r = ds1.indices()
+    assert r == ref
