@@ -47,6 +47,10 @@ def test_grib_indices_base(mode):
     r = ds.indices(squeeze=True)
     assert r == ref
 
+    ref = ["t", "u", "v"]
+    r = ds.index("param")
+    assert r == ref
+
 
 @pytest.mark.parametrize("mode", ["file", "numpy_fs"])
 def test_grib_indices_sel(mode):
