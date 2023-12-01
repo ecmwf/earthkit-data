@@ -131,7 +131,6 @@ class XarrayMixIn:
                 default=default,
                 forced={
                     "errors": "raise",
-                    "engine": "cfgrib",
                 },
             )
         )
