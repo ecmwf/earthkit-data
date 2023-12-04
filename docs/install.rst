@@ -22,13 +22,13 @@ You can install **earthkit-data** with all the optional packages in one go by us
 
 .. code-block:: bash
 
-    python3 -m pip install .earthkit-data[all]
+    python3 -m pip install earthkit-data[all]
 
 Please note in **zsh** you need to use quotes around the square brackets:
 
 .. code-block:: bash
 
-    python3 -m pip install ".earthkit-data[all]"
+    python3 -m pip install "earthkit-data[all]"
 
 
 Installing individual optional packages
@@ -51,7 +51,7 @@ E.g. to add :ref:`data-sources-mars`  support you can use:
 
 .. code-block:: bash
 
-    python3 -m pip install .earthkit-data[mars]
+    python3 -m pip install earthkit-data[mars]
 
 
 
