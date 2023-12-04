@@ -3,7 +3,7 @@ import xarray
 import xarray.core.indexing as indexing
 from xarray.backends import BackendEntrypoint
 
-import earthkit.data
+from earthkit.data import from_source
 
 
 class EarthkitBackendArray(xarray.backends.common.BackendArray):
@@ -65,7 +65,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
     def open_dataset(self, filename_or_obj, drop_variables=None, array_module=numpy):
         xp = array_module
 
-        ekds = earthkit.data.from_source("file", filename_or_obj)
+        ekds = from_source("file", filename_or_obj)
         attributes = _get_common_attributes(ekds.metadata(), ekds._default_ls_keys())
         attributes["ekds"] = ekds
 
