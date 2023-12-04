@@ -3,8 +3,8 @@ import xarray
 import xarray.core.indexing as indexing
 from xarray.backends import BackendEntrypoint
 
-from earthkit.data import from_source, from_object
-from earthkit.data.readers.netcdf import get_fields_from_ds, XArrayField
+from earthkit.data import from_source, from_object, FieldList
+from earthkit.data.readers.netcdf import get_fields_from_ds
 from earthkit.data.core import Base
 
 
@@ -56,7 +56,7 @@ class EarthkitBackendArray(xarray.backends.common.BackendArray):
         # must be threadsafe
         isels = dict(zip(self.dims, key))
         result = self.ekds.isel(**isels).to_numpy()
-        print(f"Loaded {self.xp.__name__} with shape: {result.shape}")
+        # print(f"Loaded {self.xp.__name__} with shape: {result.shape}")
 
         # Loading as numpy but then converting. This needs to be changed upstream (eccodes)
         # to load directly into cupy.
@@ -91,7 +91,6 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             variable_metadata_keys = DEFAULT_METADATA_KEYS[variable_metadata_keys]
             
         xp = array_module
-        print(xp)
 
         attributes = _get_common_attributes(ekds.metadata(), ekds._default_ls_keys())
         if hasattr(ekds, "path"):
@@ -117,9 +116,8 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             backend_array = EarthkitBackendArray(ek_param, dims, ek_param.shape, xp)
             data = indexing.LazilyIndexedArray(backend_array)
             
-            var_attrs = _get_common_attributes(
-                ek_param.source.metadata(), [k for k in variable_metadata_keys if k not in attributes]
-            )
+            var_attrs = {"metadata": ek_param.source.metadata()[0]}
+            print(var_attrs)
             var = xarray.Variable(dims, data, attrs=var_attrs)
             vars[param] = var
 
@@ -166,37 +164,49 @@ class GribSaver:
 
 from itertools import product
 
+def data_array_to_list(da):
+    dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon"]]
+    coords = {key: value for key, value in da.coords.items() if key in dims}
+
+    data_list = []
+    metadata_list = []
+    for values in product(*[coords[dim].values for dim in dims]):
+        local_coords = dict(zip(dims, values))
+        xa_field = da.sel(**local_coords)
+        if "metadata" not in da.attrs:
+            raise ValueError("Metadata object not found in variable. Required for conversion to field list!")
+        metadata = xa_field.attrs.pop("metadata", {})
+        metadata = metadata.override(**local_coords)
+        data_list.append(xa_field.values)
+        metadata_list.append(metadata)
+    return data_list, metadata_list
+
 
 @xarray.register_dataset_accessor("to_fieldlist")
 class FieldListMutator:
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
 
-    def __call__(self, metadata=None):
-        field_list = get_fields_from_ds(self._obj, XArrayField)
-        print(field_list)
-
+    def __call__(self):
         ds = self._obj 
 
-        field_list = []
-        for var in ds.variables:
+        data_list = []
+        metadata_list = []
+        for var in ds.data_vars:
             da = ds[var]
-            print(da)
-            print(da.attrs)
-            if "metadata" not in da.attrs:
-                raise ValueError("Metadata object not found in variable. Required for conversion to field list!")
-            metadata = da.attrs.get("metadata", {})
-            dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon"]]
-            coords = {key: value for key, value in da.coords.items() if key in dims}
+            da_data, da_metadata = data_array_to_list(da)
+            data_list.extend(da_data)
+            metadata_list.extend(da_metadata)
+        field_list = FieldList.from_numpy(numpy.array(data_list), metadata_list)
+        return field_list
 
-            print(coords)
-            for values in product(coords):
-                print(values)
-                # slices = []
-                # for value, coordinate in zip(values, coordinates):
-                #     slices.append(coordinate.make_slice(value))
+@xarray.register_dataarray_accessor("to_fieldlist")
+class FieldListMutator:
+    def __init__(self, xarray_obj):
+        self._obj = xarray_obj
 
-                # if check_only:
-                #     return True
-
-                # fields.append(field_type(ds, name, slices, non_dim_coords))
+    def __call__(self):
+        da = self._obj 
+        data_list, metadata_list = data_array_to_list(da)
+        field_list = FieldList.from_numpy(numpy.array(data_list), metadata_list)
+        return field_list
