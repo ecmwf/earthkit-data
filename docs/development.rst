@@ -36,7 +36,19 @@ To run the test suite, you can use the following command:
 
 .. code-block:: shell
 
-    pytest
+    make unit-tests
+
+Please note this will not run any of the tests based on remote services e.g. :ref:`data-sources-mars`. These are disabled by default because they can take a very long time to complete or just hang. To enable all these tests you need to run:
+
+.. code-block:: shell
+
+    pytest -E long -v
+
+If just want to run e.g. the :ref:`data-sources-cds` tests you can use:
+
+.. code-block:: shell
+
+    pytest -E long -v -k cds
 
 
 Build documentation

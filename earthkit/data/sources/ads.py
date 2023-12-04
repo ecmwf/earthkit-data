@@ -9,7 +9,6 @@
 
 import os
 
-import cdsapi
 import yaml
 
 from .cds import CdsRetriever
@@ -53,6 +52,10 @@ def client():
 
     with open(path) as f:
         rc = yaml.safe_load(f.read())
+
+    from earthkit.data.utils.importer import IMPORTER
+
+    cdsapi = IMPORTER.import_module("cdsapi")
 
     return cdsapi.Client(**rc)
 

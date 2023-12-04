@@ -11,8 +11,6 @@ import logging
 import os
 import subprocess
 
-import ecmwfapi
-
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.core.temporary import temp_file
 
@@ -48,6 +46,10 @@ class StandaloneMarsClient:
 
 class MarsRetriever(ECMWFApi):
     def service(self):
+        from earthkit.data.utils.importer import IMPORTER
+
+        ecmwfapi = IMPORTER.import_module("ecmwfapi")
+
         if SETTINGS.get("use-standalone-mars-client-when-available"):
             if os.path.exists(StandaloneMarsClient.EXE):
                 return StandaloneMarsClient()

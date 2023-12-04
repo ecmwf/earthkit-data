@@ -11,8 +11,6 @@ import logging
 import os
 import shutil
 
-import pyfdb
-
 from earthkit.data.sources.file import FileSource
 from earthkit.data.sources.stream import StreamSource
 
@@ -48,6 +46,9 @@ class FDBSource(Source):
 
     def mutate(self):
         if self.stream:
+            from earthkit.data.utils.importer import IMPORTER
+
+            pyfdb = IMPORTER.import_module("pyfdb")
             stream = pyfdb.retrieve(self.request)
             return StreamSource(stream, **self._stream_kwargs)
         else:
@@ -60,6 +61,10 @@ class FDBFileSource(FileSource):
         self.path = self._retrieve(request)
 
     def _retrieve(self, request):
+        from earthkit.data.utils.importer import IMPORTER
+
+        pyfdb = IMPORTER.import_module("pyfdb")
+
         def retrieve(target, request):
             with open(target, "wb") as o, pyfdb.retrieve(request) as i:
                 shutil.copyfileobj(i, o)

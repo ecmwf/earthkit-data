@@ -11,13 +11,8 @@
 
 import pytest
 
+from earthkit.data.testing import NO_CARTOPY
 from earthkit.data.utils import projections
-
-NO_CARTOPY = False
-try:
-    import cartopy.crs as ccrs
-except ImportError:
-    NO_CARTOPY = True
 
 
 def test_from_proj_string_laea():
@@ -52,6 +47,8 @@ def test_from_cf_grid_mapping_aea():
 
 @pytest.mark.skipif(NO_CARTOPY, reason="cartopy is not installed")
 def test_to_cartopy_crs_laea():
+    import cartopy.ccrs as ccrs
+
     proj_string = "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
     projection = projections.Projection.from_proj_string(proj_string)
     assert projection.to_cartopy_crs() == ccrs.LambertAzimuthalEqualArea(

@@ -91,8 +91,9 @@ class GeojsonReader(Reader):
 
     @classmethod
     def to_pandas_from_multi_paths(cls, paths, **kwargs):
-        import geopandas as gpd
+        from earthkit.data.utils.importer import IMPORTER
 
+        gpd = IMPORTER.import_module("geopandas")
         geo_df = gpd.pd.concat([gpd.read_file(path, **kwargs) for path in paths])
 
         return geo_df.set_index(np.arange(len(geo_df)))

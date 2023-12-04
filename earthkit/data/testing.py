@@ -78,30 +78,23 @@ def modules_installed(*modules):
     return True
 
 
-NO_MARS = not os.path.exists(os.path.expanduser("~/.ecmwfapirc"))
-NO_CDS = not os.path.exists(os.path.expanduser("~/.cdsapirc"))
-NO_HDA = not os.path.exists(os.path.expanduser("~/.hdarc"))
-IN_GITHUB = os.environ.get("GITHUB_WORKFLOW") is not None
-try:
-    import ecmwf.opendata  # noqa
-
-    NO_EOD = False
-except Exception:
-    NO_EOD = True
-
-try:
-    import pyfdb  # noqa
-
-    fdb_home = os.environ.get("FDB_HOME", None)
-    NO_FDB = fdb_home is None
-except Exception:
-    NO_FDB = True
-
-NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
-
-
 def MISSING(*modules):
     return not modules_installed(*modules)
+
+
+NO_MARS = not os.path.exists(os.path.expanduser("~/.ecmwfapirc"))
+NO_CDS = not os.path.exists(os.path.expanduser("~/.cdsapirc"))
+NO_ADS = not os.path.exists(os.path.expanduser("~/.adsapirc"))
+NO_HDA = not os.path.exists(os.path.expanduser("~/.hdarc"))
+NO_EOD = MISSING("ecmwf.opendata")
+NO_FDB = not (
+    os.environ.get("FDB_HOME", None) is not None
+    or os.environ.get("FDB5_CONFIG", None) is not None
+)
+NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
+NO_CARTOPY = MISSING("cartopy.ccrs")
+
+IN_GITHUB = os.environ.get("GITHUB_WORKFLOW") is not None
 
 
 UNSAFE_SAMPLES_URL = "https://github.com/jwilk/traversal-archives/releases/download/0"

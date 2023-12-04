@@ -56,12 +56,9 @@ class Polytope(Source):
     """
 
     def __init__(self, dataset, request) -> None:
-        try:
-            import polytope
-        except ImportError:
-            raise ImportError(
-                "Polytope Web Client must be installed with 'pip install polytope-client'"
-            )
+        from earthkit.data.utils.importer import IMPORTER
+
+        polytope = IMPORTER.import_module("polytope")
 
         super().__init__()
         assert isinstance(dataset, str)
