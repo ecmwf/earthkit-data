@@ -3,7 +3,8 @@ import xarray
 import xarray.core.indexing as indexing
 from xarray.backends import BackendEntrypoint
 
-from earthkit.data import from_source
+from earthkit.data import from_source, from_object
+from earthkit.data.core import Base
 
 
 class EarthkitBackendArray(xarray.backends.common.BackendArray):
@@ -61,13 +62,13 @@ def _get_common_attributes(metadata, keys):
     return common_entries
 
 
-class EarthkitBackendEntrypoint(BackendEntrypoint):
-    def open_dataset(self, filename_or_obj, drop_variables=None, array_module=numpy):
+class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
+    def open_dataset(self, ekds, drop_variables=None, array_module=numpy):
         xp = array_module
 
-        ekds = from_source("file", filename_or_obj)
         attributes = _get_common_attributes(ekds.metadata(), ekds._default_ls_keys())
-        attributes["ekds"] = ekds
+        if hasattr(ekds, "path"):
+            attributes["ekds_source"] = ekds.path
 
         vars = {}
         params = ekds.index("param")
@@ -95,8 +96,27 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         return dataset
 
     @classmethod
+    def guess_can_open(cls, ek_object):
+        return isinstance(ek_object, Base)
+
+
+class EarthkitBackendEntrypoint(BackendEntrypoint):
+    def open_dataset(self, filename_or_obj, drop_variables=None, array_module=numpy):
+        if isinstance(filename_or_obj, Base):
+            ekds = filename_or_obj
+        elif isinstance(filename_or_obj, str):  # TODO: Add Path? or handle with try statement
+            print(filename_or_obj)
+            ekds = from_source("file", filename_or_obj)
+        else:
+            ekds = from_object(filename_or_obj)
+
+        return EarthkitObjectBackendEntrypoint.open_dataset(
+            self, ekds, drop_variables=drop_variables, array_module=array_module
+        )
+    
+    @classmethod
     def guess_can_open(cls, filename_or_obj):
-        return filename_or_obj.endswith(".grib")
+        return True #  filename_or_obj.endswith(".grib")
 
 
 @xarray.register_dataset_accessor("to_grib")
