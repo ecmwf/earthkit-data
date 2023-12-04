@@ -152,6 +152,7 @@ def get_fields_from_ds(
     # Select only geographical variables
     has_lat = False
     has_lon = False
+    has_values = False
 
     fields = []
 
@@ -206,6 +207,13 @@ def get_fields_from_ds(
                 has_lat = True
                 use = True
 
+            if (
+                (coord == "values")
+            ):
+                # If "values" is a coordinate, use it as a field identifier
+                has_values = True
+                use = True
+
             # print(f"  standard_name={standard_name}")
 
             # Of course, not every one sets the standard_name
@@ -238,7 +246,7 @@ def get_fields_from_ds(
             if not use:
                 coordinates.append(OtherCoordinate(c, coord in info))
 
-        if not (has_lat and has_lon):
+        if not (has_lat and has_lon) and not has_values:
             # self.log.info("NetCDFReader: skip %s (Not a 2 field)", name)
             continue
 

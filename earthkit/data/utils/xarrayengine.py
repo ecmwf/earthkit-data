@@ -7,6 +7,22 @@ from earthkit.data import from_source, from_object
 from earthkit.data.core import Base
 
 
+DEFAULT_METADATA_KEYS = {
+    "CF": [
+        "shortName",
+        "units",
+        "name",
+        "cfName",
+        "cfVarName",
+        "missingValue",
+        "totalNumber",
+        "numberOfDirections",
+        "numberOfFrequencies",
+        "NV",
+        "gridDefinitionDescription",
+    ]
+}
+
 class EarthkitBackendArray(xarray.backends.common.BackendArray):
     def __init__(self, ekds, dims, shape, xp):
         super().__init__()
@@ -52,7 +68,7 @@ class EarthkitBackendArray(xarray.backends.common.BackendArray):
 def _get_common_attributes(metadata, keys):
     common_entries = {}
     if len(metadata) > 0:
-        common_entries = {key: metadata[0][key] for key in keys}
+        common_entries = {key: metadata[0][key] for key in keys if key in metadata[0]}
         for dictionary in metadata[1:]:
             common_entries = {
                 key: value
@@ -63,7 +79,16 @@ def _get_common_attributes(metadata, keys):
 
 
 class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
-    def open_dataset(self, ekds, drop_variables=None, array_module=numpy):
+    def open_dataset(
+            self, ekds, drop_variables=None, array_module=numpy,
+            variable_metadata_keys = None
+        ):
+
+        if variable_metadata_keys is None:
+            variable_metadata_keys = ekds[0].metadata().describe_keys()
+        elif isinstance(variable_metadata_keys, str):
+            variable_metadata_keys = DEFAULT_METADATA_KEYS[variable_metadata_keys]
+            
         xp = array_module
 
         attributes = _get_common_attributes(ekds.metadata(), ekds._default_ls_keys())
@@ -86,9 +111,11 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
 
             backend_array = EarthkitBackendArray(ek_param, dims, ek_param.shape, xp)
             data = indexing.LazilyIndexedArray(backend_array)
-
-            attrs = {"metadata": ek_param.source.metadata()[0]}
-            var = xarray.Variable(dims, data, attrs=attrs)
+            
+            var_attrs = _get_common_attributes(
+                ek_param.source.metadata(), [k for k in variable_metadata_keys if k not in attributes]
+            )
+            var = xarray.Variable(dims, data, attrs=var_attrs)
             vars[param] = var
 
         dataset = xarray.Dataset(vars, coords=ek_param.coords, attrs=attributes)
@@ -100,18 +127,21 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
         return isinstance(ek_object, Base)
 
 
-class EarthkitBackendEntrypoint(BackendEntrypoint):
-    def open_dataset(self, filename_or_obj, drop_variables=None, array_module=numpy):
+class EarthkitBackendEntrypoint(EarthkitObjectBackendEntrypoint):
+    def open_dataset(
+        self, filename_or_obj, drop_variables=None, array_module=numpy,
+        variable_metadata_keys = None
+    ):
         if isinstance(filename_or_obj, Base):
             ekds = filename_or_obj
         elif isinstance(filename_or_obj, str):  # TODO: Add Path? or handle with try statement
-            print(filename_or_obj)
             ekds = from_source("file", filename_or_obj)
         else:
             ekds = from_object(filename_or_obj)
 
         return EarthkitObjectBackendEntrypoint.open_dataset(
-            self, ekds, drop_variables=drop_variables, array_module=array_module
+            self, ekds, drop_variables=drop_variables, array_module=array_module,
+            variable_metadata_keys=variable_metadata_keys
         )
     
     @classmethod
