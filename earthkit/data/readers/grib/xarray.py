@@ -105,7 +105,6 @@ class XarrayMixIn:
             )
 
         user_xarray_open_dataset_kwargs = kwargs.get("xarray_open_dataset_kwargs", {})
-        print(user_xarray_open_dataset_kwargs)
 
         # To use the legacy cfgrib method, set _legacy=True
         if kwargs.get("_legacy", False):
@@ -148,9 +147,6 @@ class XarrayMixIn:
                 **user_xarray_open_dataset_kwargs
             }
 
-
-        print(open_object)
-        print(xarray_open_dataset_kwargs)
         result = xr.open_dataset(
             open_object,
             **xarray_open_dataset_kwargs,

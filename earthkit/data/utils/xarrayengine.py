@@ -4,6 +4,7 @@ import xarray.core.indexing as indexing
 from xarray.backends import BackendEntrypoint
 
 from earthkit.data import from_source, from_object
+from earthkit.data.readers.netcdf import get_fields_from_ds, XArrayField
 from earthkit.data.core import Base
 
 
@@ -80,7 +81,7 @@ def _get_common_attributes(metadata, keys):
 
 class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
     def open_dataset(
-            self, ekds, drop_variables=None, array_module=numpy,
+            self, ekds, drop_variables=None, dims_order=None, array_module=numpy,
             variable_metadata_keys = None
         ):
 
@@ -90,6 +91,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             variable_metadata_keys = DEFAULT_METADATA_KEYS[variable_metadata_keys]
             
         xp = array_module
+        print(xp)
 
         attributes = _get_common_attributes(ekds.metadata(), ekds._default_ls_keys())
         if hasattr(ekds, "path"):
@@ -99,9 +101,12 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
         params = ekds.index("param")
 
         ekds.index("step")  # have to access this to make it appear below in indices()
-        other_dims = [
-            key for key in ekds.indices(squeeze=True).keys() if key != "param"
-        ]
+        if dims_order is None:
+            other_dims = [
+                key for key in ekds.indices(squeeze=True).keys() if key != "param"
+            ]
+        else:
+            other_dims = dims_order
 
         for param in params:
             ekds_param = ekds.sel(param=param)
@@ -129,7 +134,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
 
 class EarthkitBackendEntrypoint(EarthkitObjectBackendEntrypoint):
     def open_dataset(
-        self, filename_or_obj, drop_variables=None, array_module=numpy,
+        self, filename_or_obj, drop_variables=None, dims_order=None, array_module=numpy,
         variable_metadata_keys = None
     ):
         if isinstance(filename_or_obj, Base):
@@ -140,7 +145,7 @@ class EarthkitBackendEntrypoint(EarthkitObjectBackendEntrypoint):
             ekds = from_object(filename_or_obj)
 
         return EarthkitObjectBackendEntrypoint.open_dataset(
-            self, ekds, drop_variables=drop_variables, array_module=array_module,
+            self, ekds, drop_variables=drop_variables, dims_order=dims_order, array_module=array_module,
             variable_metadata_keys=variable_metadata_keys
         )
     
@@ -158,3 +163,40 @@ class GribSaver:
         assert "ekds" in self._obj.attrs, "Dataset was not opened with earthkit backend"
         ekds = self._obj.attrs["ekds"]
         ekds.save(filename)
+
+from itertools import product
+
+
+@xarray.register_dataset_accessor("to_fieldlist")
+class FieldListMutator:
+    def __init__(self, xarray_obj):
+        self._obj = xarray_obj
+
+    def __call__(self, metadata=None):
+        field_list = get_fields_from_ds(self._obj, XArrayField)
+        print(field_list)
+
+        ds = self._obj 
+
+        field_list = []
+        for var in ds.variables:
+            da = ds[var]
+            print(da)
+            print(da.attrs)
+            if "metadata" not in da.attrs:
+                raise ValueError("Metadata object not found in variable. Required for conversion to field list!")
+            metadata = da.attrs.get("metadata", {})
+            dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon"]]
+            coords = {key: value for key, value in da.coords.items() if key in dims}
+
+            print(coords)
+            for values in product(coords):
+                print(values)
+                # slices = []
+                # for value, coordinate in zip(values, coordinates):
+                #     slices.append(coordinate.make_slice(value))
+
+                # if check_only:
+                #     return True
+
+                # fields.append(field_type(ds, name, slices, non_dim_coords))

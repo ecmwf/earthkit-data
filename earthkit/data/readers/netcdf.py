@@ -165,6 +165,7 @@ def get_fields_from_ds(
         skip.update(getattr(v, "grid_mapping", "").split(" "))
 
     for name in ds.data_vars:
+        print(name)
         if name in skip:
             continue
 
@@ -177,6 +178,7 @@ def get_fields_from_ds(
         info = [value for value in v.coords if value not in v.dims]
         non_dim_coords = {}
         for coord in v.coords:
+            print(coord)
             if coord not in v.dims:
                 non_dim_coords[coord] = ds[coord].values
                 continue
@@ -191,6 +193,10 @@ def get_fields_from_ds(
 
             use = False
 
+
+            if axis in ("values"):
+                use = True
+                 
             if (
                 standard_name.lower() in GEOGRAPHIC_COORDS["x"]
                 or (long_name == "longitude")
@@ -243,14 +249,19 @@ def get_fields_from_ds(
             if axis in ("X", "Y"):
                 use = True
 
+            if axis in ("values"):
+                use = True
+
             if not use:
                 coordinates.append(OtherCoordinate(c, coord in info))
 
         if not (has_lat and has_lon) and not has_values:
             # self.log.info("NetCDFReader: skip %s (Not a 2 field)", name)
             continue
-
+        
+        print(coordinates)
         for values in product(*[c.values for c in coordinates]):
+            print(values)
             slices = []
             for value, coordinate in zip(values, coordinates):
                 slices.append(coordinate.make_slice(value))
