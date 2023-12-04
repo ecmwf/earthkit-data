@@ -23,6 +23,12 @@ class ImporterItem:
         if not isinstance(self._module, tuple):
             self._module = (self._module,)
 
+    @property
+    def status(self):
+        if self._status is None:
+            self.import_module()
+        return self._status
+
     def import_module(self):
         if self._status is not None and not self._status:
             raise ModuleNotFoundError(self._message)
@@ -56,12 +62,18 @@ class Importer:
         for k, v in _conf.items():
             self._conf[k] = ImporterItem(k, v)
 
-    def import_module(self, module):
+    def _item(self, module):
         k = module
         if isinstance(k, list):
             k = tuple(k)
 
-        return self._conf[k].import_module()
+        return self._conf[k]
+
+    def import_module(self, module):
+        return self._item(module).import_module()
+
+    def status(self, module):
+        return self._item(module).status
 
 
 _conf = {

@@ -44,7 +44,7 @@ Alternatively, you can install the following components individually:
     - polytope: provides access to the :ref:`data-sources-polytope` source
     - bufr: provides full support for the :ref:`bufr` data type
     - odb: provides full support for the :ref:`odb` data type
-    - geojson: adds geojson support
+    - geopandas: adds geojson/geopandas support
     - projection: adds projection support
 
 E.g. to add :ref:`data-sources-mars`  support you can use:
