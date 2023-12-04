@@ -106,37 +106,45 @@ class XarrayMixIn:
 
         user_xarray_open_dataset_kwargs = kwargs.get("xarray_open_dataset_kwargs", {})
 
-        # until ignore_keys is included into cfgrib,
-        # it is implemented here directly
-        ignore_keys = user_xarray_open_dataset_kwargs.get("backend_kwargs", {}).pop(
-            "ignore_keys", []
-        )
 
-        for key in ["backend_kwargs"]:
-            xarray_open_dataset_kwargs[key] = Kwargs(
-                user=user_xarray_open_dataset_kwargs.pop(key, {}),
-                default={"errors": "raise"},
-                forced={},
-                logging_owner="xarray_open_dataset_kwargs",
-                logging_main_key=key,
+        if "engine" not in user_xarray_open_dataset_kwargs:
+            # until ignore_keys is included into cfgrib,
+            # it is implemented here directly
+            ignore_keys = user_xarray_open_dataset_kwargs.get("backend_kwargs", {}).pop(
+                "ignore_keys", []
             )
+            open_object = IndexWrapperForCfGrib(self, ignore_keys=ignore_keys)
+            for key in ["backend_kwargs"]:
+                xarray_open_dataset_kwargs[key] = Kwargs(
+                    user=user_xarray_open_dataset_kwargs.pop(key, {}),
+                    default={"errors": "raise"},
+                    forced={},
+                    logging_owner="xarray_open_dataset_kwargs",
+                    logging_main_key=key,
+                )
 
-        default = dict(squeeze=False)  # TODO:Documenet me
-        default.update(self.xarray_open_dataset_kwargs())
+            default = {
+                **dict(
+                    squeeze=False,
+                ),
+                **self.xarray_open_dataset_kwargs()
+            }  # TODO:Documenet me
 
-        xarray_open_dataset_kwargs.update(
-            Kwargs(
-                user=user_xarray_open_dataset_kwargs,
-                default=default,
-                forced={
-                    "errors": "raise",
-                    "engine": "cfgrib",
-                },
+            xarray_open_dataset_kwargs.update(
+                Kwargs(
+                    user=user_xarray_open_dataset_kwargs,
+                    default=default,
+                    forced={
+                        "errors": "raise",
+                        "engine": "cfgrib",
+                    },
+                )
             )
-        )
+        else:
+            open_object = self
 
         result = xr.open_dataset(
-            IndexWrapperForCfGrib(self, ignore_keys=ignore_keys),
+            open_object,
             **xarray_open_dataset_kwargs,
         )
 
