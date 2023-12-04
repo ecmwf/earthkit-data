@@ -106,7 +106,6 @@ class XarrayMixIn:
 
         user_xarray_open_dataset_kwargs = kwargs.get("xarray_open_dataset_kwargs", {})
 
-
         if "engine" not in user_xarray_open_dataset_kwargs:
             # until ignore_keys is included into cfgrib,
             # it is implemented here directly
@@ -127,7 +126,7 @@ class XarrayMixIn:
                 **dict(
                     squeeze=False,
                 ),
-                **self.xarray_open_dataset_kwargs()
+                **self.xarray_open_dataset_kwargs(),
             }  # TODO:Documenet me
 
             xarray_open_dataset_kwargs.update(
