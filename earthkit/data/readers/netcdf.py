@@ -200,6 +200,7 @@ def get_fields_from_ds(
             if (
                 standard_name.lower() in GEOGRAPHIC_COORDS["x"]
                 or (long_name == "longitude")
+                or (coord == "longitude")
                 or (axis == "X")
             ):
                 has_lon = True
@@ -208,6 +209,7 @@ def get_fields_from_ds(
             if (
                 standard_name.lower() in GEOGRAPHIC_COORDS["y"]
                 or (long_name == "latitude")
+                or (coord == "latitude")
                 or (axis == "Y")
             ):
                 has_lat = True
@@ -523,6 +525,9 @@ class XArrayFieldList(XArrayFieldListCore):
 
     def __len__(self):
         return len(self.fields)
+    
+    def __repr__(self):
+        return f"XArrayFieldList " # TODO: some __repr__ of the data: {self.data}
 
 
 class XArrayMaskFieldList(XArrayFieldListCore, MaskIndex):

@@ -24,6 +24,16 @@ DEFAULT_METADATA_KEYS = {
     ]
 }
 
+def get_metadata_keys(tag, metadata):
+    if tag =='describe':
+        return metadata.describe_keys()
+    
+    if tag in DEFAULT_METADATA_KEYS:
+        return DEFAULT_METADATA_KEYS[tag]
+    
+    print("Metadata tag not recognised, not adding any metadata to variables")
+    return []
+
 class EarthkitBackendArray(xarray.backends.common.BackendArray):
     def __init__(self, ekds, dims, shape, xp):
         super().__init__()
@@ -85,10 +95,8 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             variable_metadata_keys = None
         ):
 
-        if variable_metadata_keys is None:
-            variable_metadata_keys = ekds[0].metadata().describe_keys()
-        elif isinstance(variable_metadata_keys, str):
-            variable_metadata_keys = DEFAULT_METADATA_KEYS[variable_metadata_keys]
+        if isinstance(variable_metadata_keys, str):
+            variable_metadata_keys = get_metadata_keys(variable_metadata_keys, ekds[0].metadata())
             
         xp = array_module
 
@@ -116,8 +124,13 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             backend_array = EarthkitBackendArray(ek_param, dims, ek_param.shape, xp)
             data = indexing.LazilyIndexedArray(backend_array)
             
-            var_attrs = {"metadata": ek_param.source.metadata()[0]}
-            print(var_attrs)
+            if variable_metadata_keys is None:
+                var_attrs = {"metadata": ekds[0].metadata()}
+            else:
+                # Get metadata keys which are common for all fields, and not listed in dataset attrs
+                var_attrs = _get_common_attributes(
+                    ek_param.source.metadata(), [k for k in variable_metadata_keys if k not in attributes]
+                )
             var = xarray.Variable(dims, data, attrs=var_attrs)
             vars[param] = var
 
