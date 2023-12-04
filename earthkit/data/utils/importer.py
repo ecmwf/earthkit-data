@@ -26,10 +26,10 @@ class ImporterItem:
     @property
     def status(self):
         if self._status is None:
-            self.import_module()
+            self.import_module(reraise=False)
         return self._status
 
-    def import_module(self):
+    def import_module(self, reraise=True):
         if self._status is not None and not self._status:
             raise ModuleNotFoundError(self._message)
 
@@ -38,7 +38,8 @@ class ImporterItem:
             self._status = True
         except Exception as e:
             self._status = False
-            raise type(e)(self._message + " ") from e
+            if reraise:
+                raise type(e)(self._message + " ") from e
 
         return r
 
