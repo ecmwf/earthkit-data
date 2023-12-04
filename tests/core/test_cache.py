@@ -252,9 +252,9 @@ def test_cache_zip_file_changed_modtime():
         ds_path = ds.path
 
         # second pass - changed modtime
-        # TODO: here we have to assume more than 1 ns passed since the
-        # zip file was created.
-        os.utime(zip_path, None)
+        st = os.stat(zip_path)
+        m_time = (st.st_atime_ns + 10, st.st_mtime_ns + 10)
+        os.utime(zip_path, ns=m_time)
         ds2 = from_source("file", zip_path)
         assert len(ds2) == 2
         assert ds2.path != ds_path
