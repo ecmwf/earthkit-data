@@ -125,7 +125,6 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             ]
         else:
             other_dims = dims_order
-        print(other_dims)
 
         for variable in variables:
             ekds_variable = ekds.sel(**{var_key: variable})
