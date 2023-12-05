@@ -2,6 +2,7 @@ import numpy
 import xarray
 import xarray.core.indexing as indexing
 from xarray.backends import BackendEntrypoint
+from itertools import product
 
 from earthkit.data import from_source, from_object, FieldList
 from earthkit.data.readers.netcdf import get_fields_from_ds
@@ -24,6 +25,7 @@ DEFAULT_METADATA_KEYS = {
     ]
 }
 
+
 def get_metadata_keys(tag, metadata):
     if tag =='describe':
         return metadata.describe_keys()
@@ -33,6 +35,7 @@ def get_metadata_keys(tag, metadata):
     
     print("Metadata tag not recognised, not adding any metadata to variables")
     return []
+
 
 class EarthkitBackendArray(xarray.backends.common.BackendArray):
     def __init__(self, ekds, dims, shape, xp):
@@ -92,7 +95,7 @@ def _get_common_attributes(metadata, keys):
 class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
     def open_dataset(
             self, ekds, drop_variables=None, dims_order=None, array_module=numpy,
-            variable_metadata_keys = None
+            variable_metadata_keys=[]
         ):
 
         if isinstance(variable_metadata_keys, str):
@@ -124,13 +127,11 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             backend_array = EarthkitBackendArray(ek_param, dims, ek_param.shape, xp)
             data = indexing.LazilyIndexedArray(backend_array)
             
-            if variable_metadata_keys is None:
-                var_attrs = {"metadata": ekds[0].metadata()}
-            else:
-                # Get metadata keys which are common for all fields, and not listed in dataset attrs
-                var_attrs = _get_common_attributes(
-                    ek_param.source.metadata(), [k for k in variable_metadata_keys if k not in attributes]
-                )
+            # Get metadata keys which are common for all fields, and not listed in dataset attrs
+            var_attrs = _get_common_attributes(
+                ek_param.source.metadata(), [k for k in variable_metadata_keys if k not in attributes]
+            )
+            var_attrs = {"metadata": ekds[0].metadata()}
             var = xarray.Variable(dims, data, attrs=var_attrs)
             vars[param] = var
 
@@ -146,7 +147,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
 class EarthkitBackendEntrypoint(EarthkitObjectBackendEntrypoint):
     def open_dataset(
         self, filename_or_obj, drop_variables=None, dims_order=None, array_module=numpy,
-        variable_metadata_keys = None
+        variable_metadata_keys = []
     ):
         if isinstance(filename_or_obj, Base):
             ekds = filename_or_obj
@@ -175,7 +176,6 @@ class GribSaver:
         ekds = self._obj.attrs["ekds"]
         ekds.save(filename)
 
-from itertools import product
 
 def data_array_to_list(da):
     dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon"]]
@@ -186,40 +186,60 @@ def data_array_to_list(da):
     for values in product(*[coords[dim].values for dim in dims]):
         local_coords = dict(zip(dims, values))
         xa_field = da.sel(**local_coords)
-        if "metadata" not in da.attrs:
-            raise ValueError("Metadata object not found in variable. Required for conversion to field list!")
-        metadata = xa_field.attrs.pop("metadata", {})
+        
+        # extract metadata from object
+        if hasattr(da, "earthkit"):
+            metadata = da.earthkit.metadata
+        else:
+            raise ValueError("Earthkit attribute not found in DataArray. Required for conversion to FieldList!")
+        
         metadata = metadata.override(**local_coords)
         data_list.append(xa_field.values)
         metadata_list.append(metadata)
     return data_list, metadata_list
 
 
-@xarray.register_dataset_accessor("to_fieldlist")
-class FieldListMutator:
+class XarrayEarthkit():
+    def to_grib(self, filename):
+        fl = self.to_fieldlist()
+        fl.save(filename)
+
+
+@xarray.register_dataarray_accessor("earthkit")
+class XarrayEarthkitDataArray(XarrayEarthkit):
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
 
-    def __call__(self):
-        ds = self._obj 
+    @property
+    def metadata(self):
+        return self._obj.attrs.get("metadata", None)
 
-        data_list = []
-        metadata_list = []
-        for var in ds.data_vars:
-            da = ds[var]
-            da_data, da_metadata = data_array_to_list(da)
-            data_list.extend(da_data)
-            metadata_list.extend(da_metadata)
+    @metadata.setter
+    def metadata(self, value):
+        self._obj.attrs["metadata"] = value
+
+    @metadata.deleter
+    def metadata(self):
+        self._obj.attrs.pop("metadata", None)
+
+    def to_fieldlist(self):
+        data_list, metadata_list = data_array_to_list(self._obj)
         field_list = FieldList.from_numpy(numpy.array(data_list), metadata_list)
         return field_list
 
-@xarray.register_dataarray_accessor("to_fieldlist")
-class FieldListMutator:
+
+@xarray.register_dataset_accessor("earthkit")
+class XarrayEarthkitDataSet(XarrayEarthkit):
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
 
-    def __call__(self):
-        da = self._obj 
-        data_list, metadata_list = data_array_to_list(da)
+    def to_fieldlist(self):
+        data_list = []
+        metadata_list = []
+        for var in self._obj.data_vars:
+            da = self._obj
+            da_data, da_metadata = data_array_to_list(da)
+            data_list.extend(da_data)
+            metadata_list.extend(da_metadata)
         field_list = FieldList.from_numpy(numpy.array(data_list), metadata_list)
         return field_list
