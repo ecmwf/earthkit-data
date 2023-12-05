@@ -223,15 +223,17 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
             return GribMetadata(GribCodesReader.from_cache(_metadata[2]).at_offset(_metadata[1]))
             # return GribMetadata(handle)
         else:
-            return None
+            from earthkit.data.readers.netcdf import XArrayMetadata
+
+            return XArrayMetadata(self._obj)
 
     # @metadata.setter
     # def metadata(self, value):
-    #     self._obj.attrs["metadata_id"] = value
+    #     self._obj.attrs["metadata"] = value
 
     # @metadata.deleter
     # def metadata(self):
-    #     self._obj.attrs.pop("metadata_id", None)
+    #     self._obj.attrs.pop("metadata", None)
 
     def to_fieldlist(self):
         data_list, metadata_list = data_array_to_list(self._obj)
