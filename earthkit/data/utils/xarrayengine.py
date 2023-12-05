@@ -92,7 +92,7 @@ def _get_common_attributes(metadata, keys):
 class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
     def open_dataset(
             self, ekds, drop_variables=None, dims_order=None, array_module=numpy,
-            variable_metadata_keys = None
+            variable_metadata_keys = None, variable_index = ["param", "variable"]
         ):
 
         if isinstance(variable_metadata_keys, str):
@@ -105,7 +105,10 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             attributes["ekds_source"] = ekds.path
 
         vars = {}
-        params = ekds.index("param")
+        for var_index in variable_index:
+            params = ekds.index(var_index)
+            if len(params) > 0:
+                break
 
         ekds.index("step")  # have to access this to make it appear below in indices()
         if dims_order is None:
@@ -119,6 +122,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             ekds_param = ekds.sel(param=param)
 
             ek_param = ekds_param.to_tensor(*other_dims)
+            print(ek_param)
             dims = [key for key in ek_param.coords.keys() if key != "param"]
 
             backend_array = EarthkitBackendArray(ek_param, dims, ek_param.shape, xp)
@@ -148,6 +152,7 @@ class EarthkitBackendEntrypoint(EarthkitObjectBackendEntrypoint):
         self, filename_or_obj, drop_variables=None, dims_order=None, array_module=numpy,
         variable_metadata_keys = None
     ):
+        print("hello")
         if isinstance(filename_or_obj, Base):
             ekds = filename_or_obj
         elif isinstance(filename_or_obj, str):  # TODO: Add Path? or handle with try statement
