@@ -95,7 +95,7 @@ def _get_common_attributes(metadata, keys):
 class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
     def open_dataset(
             self, ekds, drop_variables=[], dims_order=None, array_module=numpy,
-            variable_metadata_keys=[], variable_index=["param", "variable"]
+            variable_metadata_keys="CF", variable_index=["param", "variable"]
         ):
 
         if isinstance(variable_metadata_keys, str):
@@ -150,7 +150,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
 
 class EarthkitBackendEntrypoint(EarthkitObjectBackendEntrypoint):
     def open_dataset(
-        self, filename_or_obj, drop_variables=None, dims_order=None, array_module=numpy,
+        self, filename_or_obj, drop_variables=[], dims_order=None, array_module=numpy,
         variable_metadata_keys=[]
     ):
         if isinstance(filename_or_obj, Base):
