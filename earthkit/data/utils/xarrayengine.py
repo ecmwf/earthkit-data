@@ -95,7 +95,7 @@ def _get_common_attributes(metadata, keys):
 class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
     def open_dataset(
             self, ekds, drop_variables=None, dims_order=None, array_module=numpy,
-            variable_metadata_keys=[]
+            variable_metadata_keys = None, variable_index = ["param", "variable"]
         ):
 
         if isinstance(variable_metadata_keys, str):
@@ -108,7 +108,11 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             attributes["ekds_source"] = ekds.path
 
         vars = {}
-        params = ekds.index("param")
+        for var_index in variable_index:
+            params = ekds.index(var_index)
+            if len(params) > 0:
+                var_key = var_index
+                break
 
         ekds.index("step")  # have to access this to make it appear below in indices()
         if dims_order is None:
@@ -119,8 +123,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             other_dims = dims_order
 
         for param in params:
-            ekds_param = ekds.sel(param=param)
-
+            ekds_param = ekds.sel(**{var_key: param})
             ek_param = ekds_param.to_tensor(*other_dims)
             dims = [key for key in ek_param.coords.keys() if key != "param"]
 
@@ -164,17 +167,6 @@ class EarthkitBackendEntrypoint(EarthkitObjectBackendEntrypoint):
     @classmethod
     def guess_can_open(cls, filename_or_obj):
         return True #  filename_or_obj.endswith(".grib")
-
-
-@xarray.register_dataset_accessor("to_grib")
-class GribSaver:
-    def __init__(self, xarray_obj):
-        self._obj = xarray_obj
-
-    def __call__(self, filename):
-        assert "ekds" in self._obj.attrs, "Dataset was not opened with earthkit backend"
-        ekds = self._obj.attrs["ekds"]
-        ekds.save(filename)
 
 
 def data_array_to_list(da):

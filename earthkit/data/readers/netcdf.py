@@ -165,7 +165,6 @@ def get_fields_from_ds(
         skip.update(getattr(v, "grid_mapping", "").split(" "))
 
     for name in ds.data_vars:
-        print(name)
         if name in skip:
             continue
 
@@ -178,7 +177,6 @@ def get_fields_from_ds(
         info = [value for value in v.coords if value not in v.dims]
         non_dim_coords = {}
         for coord in v.coords:
-            print(coord)
             if coord not in v.dims:
                 non_dim_coords[coord] = ds[coord].values
                 continue
@@ -261,9 +259,7 @@ def get_fields_from_ds(
             # self.log.info("NetCDFReader: skip %s (Not a 2 field)", name)
             continue
         
-        print(coordinates)
         for values in product(*[c.values for c in coordinates]):
-            print(values)
             slices = []
             for value, coordinate in zip(values, coordinates):
                 slices.append(coordinate.make_slice(value))
@@ -294,6 +290,12 @@ class XArrayFieldGeography(Geography):
     def longitudes(self, dtype=None):
         return self.y(dtype=dtype)
 
+    def distinct_latitudes(self, **kwargs):
+        return self.latitudes(**kwargs)
+
+    def distinct_longitudes(self, **kwargs):
+        return self.longitudes(**kwargs)
+    
     def _get_xy(self, axis, flatten=False, dtype=None):
         if axis not in ("x", "y"):
             raise ValueError(f"Invalid axis={axis}")
