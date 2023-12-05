@@ -94,7 +94,7 @@ def _get_common_attributes(metadata, keys):
 
 class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
     def open_dataset(
-            self, ekds, drop_variables=None, dims_order=None, array_module=numpy,
+            self, ekds, drop_variables=[], dims_order=None, array_module=numpy,
             variable_metadata_keys=[], variable_index=["param", "variable"]
         ):
 
@@ -109,36 +109,37 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
 
         vars = {}
         for var_index in variable_index:
-            params = ekds.index(var_index)
-            if len(params) > 0:
+            variables = ekds.index(var_index)
+            if len(variables) > 0:
                 var_key = var_index
                 break
+        variables = [var for var in variables if var not in drop_variables]
 
         ekds.index("step")  # have to access this to make it appear below in indices()
         if dims_order is None:
             other_dims = [
-                key for key in ekds.indices(squeeze=True).keys() if key != "param"
+                key for key in ekds.indices(squeeze=True).keys() if key != var_key
             ]
         else:
             other_dims = dims_order
 
-        for param in params:
-            ekds_param = ekds.sel(**{var_key: param})
-            ek_param = ekds_param.to_tensor(*other_dims)
-            dims = [key for key in ek_param.coords.keys() if key != "param"]
+        for variable in variables:
+            ekds_variable = ekds.sel(**{var_key: variable})
+            ek_variable = ekds_variable.to_tensor(*other_dims)
+            dims = [key for key in ek_variable.coords.keys() if key != var_key]
 
-            backend_array = EarthkitBackendArray(ek_param, dims, ek_param.shape, xp)
+            backend_array = EarthkitBackendArray(ek_variable, dims, ek_variable.shape, xp)
             data = indexing.LazilyIndexedArray(backend_array)
             
             # Get metadata keys which are common for all fields, and not listed in dataset attrs
             var_attrs = _get_common_attributes(
-                ek_param.source.metadata(), [k for k in variable_metadata_keys if k not in attributes]
+                ek_variable.source.metadata(), [k for k in variable_metadata_keys if k not in attributes]
             )
             var_attrs["metadata"] = ekds[0].metadata()
             var = xarray.Variable(dims, data, attrs=var_attrs)
-            vars[param] = var
+            vars[variable] = var
 
-        dataset = xarray.Dataset(vars, coords=ek_param.coords, attrs=attributes)
+        dataset = xarray.Dataset(vars, coords=ek_variable.coords, attrs=attributes)
 
         return dataset
 
