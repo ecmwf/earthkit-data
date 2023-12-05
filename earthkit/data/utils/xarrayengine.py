@@ -5,9 +5,8 @@ from xarray.backends import BackendEntrypoint
 from itertools import product
 
 from earthkit.data import from_source, from_object, FieldList
-from earthkit.data.readers.netcdf import get_fields_from_ds
+# from earthkit.data.readers.netcdf import get_fields_from_ds
 from earthkit.data.core import Base
-
 
 DEFAULT_METADATA_KEYS = {
     "CF": [
@@ -138,7 +137,11 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             var_attrs = _get_common_attributes(
                 ek_variable.source.metadata(), [k for k in variable_metadata_keys if k not in attributes]
             )
-            var_attrs["metadata"] = ekds[0].metadata()
+            if hasattr(ekds_variable[0], '_offset'):
+                print(type(ekds_variable[0].handle))
+                var_attrs["metadata"] = ("_offset", ekds_variable[0]._offset, ekds.path)
+            else:
+                var_attrs["metadata"] = ("id", id(ekds_variable[0].metadata()))
             var = xarray.Variable(dims, data, attrs=var_attrs)
             vars[variable] = var
 
@@ -206,17 +209,29 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
 
-    @property
+    # Making it not a property so it behaves like a regular earthkit metadata object
+    # @property
     def metadata(self):
-        return self._obj.attrs.get("metadata", None)
+        _metadata = self._obj.attrs.get("metadata", {})
+        if "id" == _metadata[0]:
+            import ctypes
+            return ctypes.cast(_metadata[1], ctypes.py_object).value
+        elif "_offset" == _metadata[0]:
+            from earthkit.data.readers.grib.metadata import GribMetadata
+            from earthkit.data.readers.grib.codes import GribCodesReader
 
-    @metadata.setter
-    def metadata(self, value):
-        self._obj.attrs["metadata"] = value
+            return GribMetadata(GribCodesReader.from_cache(_metadata[2]).at_offset(_metadata[1]))
+            # return GribMetadata(handle)
+        else:
+            return None
 
-    @metadata.deleter
-    def metadata(self):
-        self._obj.attrs.pop("metadata", None)
+    # @metadata.setter
+    # def metadata(self, value):
+    #     self._obj.attrs["metadata_id"] = value
+
+    # @metadata.deleter
+    # def metadata(self):
+    #     self._obj.attrs.pop("metadata_id", None)
 
     def to_fieldlist(self):
         data_list, metadata_list = data_array_to_list(self._obj)
