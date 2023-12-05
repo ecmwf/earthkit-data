@@ -210,7 +210,6 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         self._obj = xarray_obj
 
     # Making it not a property so it behaves like a regular earthkit metadata object
-    # @property
     def metadata(self):
         _metadata = self._obj.attrs.get("metadata", {})
         if "id" == _metadata[0]:
@@ -226,6 +225,11 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
             from earthkit.data.readers.netcdf import XArrayMetadata
 
             return XArrayMetadata(self._obj)
+    
+    # Corentin property method:
+    # @property
+    # def metadata(self):
+    #     return self._obj.attrs.get("metadata", None)
 
     # @metadata.setter
     # def metadata(self, value):
