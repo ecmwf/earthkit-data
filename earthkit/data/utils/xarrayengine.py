@@ -108,6 +108,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
         for var_index in variable_index:
             params = ekds.index(var_index)
             if len(params) > 0:
+                var_key = var_index
                 break
 
         ekds.index("step")  # have to access this to make it appear below in indices()
@@ -119,8 +120,8 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             other_dims = dims_order
 
         for param in params:
-            ekds_param = ekds.sel(param=param)
-
+            ekds_param = ekds.sel(**{var_key: param})
+            print(ekds_param)
             ek_param = ekds_param.to_tensor(*other_dims)
             print(ek_param)
             dims = [key for key in ek_param.coords.keys() if key != "param"]

@@ -290,6 +290,12 @@ class XArrayFieldGeography(Geography):
     def longitudes(self, dtype=None):
         return self.y(dtype=dtype)
 
+    def distinct_latitudes(self, **kwargs):
+        return self.latitudes(**kwargs)
+
+    def distinct_longitudes(self, **kwargs):
+        return self.longitudes(**kwargs)
+    
     def _get_xy(self, axis, flatten=False, dtype=None):
         if axis not in ("x", "y"):
             raise ValueError(f"Invalid axis={axis}")
