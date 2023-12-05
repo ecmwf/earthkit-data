@@ -3,7 +3,8 @@ import xarray
 import xarray.core.indexing as indexing
 from xarray.backends import BackendEntrypoint
 
-from earthkit.data import from_source, from_object
+from earthkit.data import from_source, from_object, FieldList
+from earthkit.data.readers.netcdf import get_fields_from_ds
 from earthkit.data.core import Base
 
 
@@ -65,7 +66,7 @@ class EarthkitBackendArray(xarray.backends.common.BackendArray):
         # must be threadsafe
         isels = dict(zip(self.dims, key))
         result = self.ekds.isel(**isels).to_numpy()
-        print(f"Loaded {self.xp.__name__} with shape: {result.shape}")
+        # print(f"Loaded {self.xp.__name__} with shape: {result.shape}")
 
         # Loading as numpy but then converting. This needs to be changed upstream (eccodes)
         # to load directly into cupy.
@@ -90,7 +91,7 @@ def _get_common_attributes(metadata, keys):
 
 class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
     def open_dataset(
-            self, ekds, drop_variables=None, array_module=numpy,
+            self, ekds, drop_variables=None, dims_order=None, array_module=numpy,
             variable_metadata_keys = None
         ):
 
@@ -107,9 +108,12 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
         params = ekds.index("param")
 
         ekds.index("step")  # have to access this to make it appear below in indices()
-        other_dims = [
-            key for key in ekds.indices(squeeze=True).keys() if key != "param"
-        ]
+        if dims_order is None:
+            other_dims = [
+                key for key in ekds.indices(squeeze=True).keys() if key != "param"
+            ]
+        else:
+            other_dims = dims_order
 
         for param in params:
             ekds_param = ekds.sel(param=param)
@@ -141,7 +145,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
 
 class EarthkitBackendEntrypoint(EarthkitObjectBackendEntrypoint):
     def open_dataset(
-        self, filename_or_obj, drop_variables=None, array_module=numpy,
+        self, filename_or_obj, drop_variables=None, dims_order=None, array_module=numpy,
         variable_metadata_keys = None
     ):
         if isinstance(filename_or_obj, Base):
@@ -152,7 +156,7 @@ class EarthkitBackendEntrypoint(EarthkitObjectBackendEntrypoint):
             ekds = from_object(filename_or_obj)
 
         return EarthkitObjectBackendEntrypoint.open_dataset(
-            self, ekds, drop_variables=drop_variables, array_module=array_module,
+            self, ekds, drop_variables=drop_variables, dims_order=dims_order, array_module=array_module,
             variable_metadata_keys=variable_metadata_keys
         )
     
@@ -170,3 +174,52 @@ class GribSaver:
         assert "ekds" in self._obj.attrs, "Dataset was not opened with earthkit backend"
         ekds = self._obj.attrs["ekds"]
         ekds.save(filename)
+
+from itertools import product
+
+def data_array_to_list(da):
+    dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon"]]
+    coords = {key: value for key, value in da.coords.items() if key in dims}
+
+    data_list = []
+    metadata_list = []
+    for values in product(*[coords[dim].values for dim in dims]):
+        local_coords = dict(zip(dims, values))
+        xa_field = da.sel(**local_coords)
+        if "metadata" not in da.attrs:
+            raise ValueError("Metadata object not found in variable. Required for conversion to field list!")
+        metadata = xa_field.attrs.pop("metadata", {})
+        metadata = metadata.override(**local_coords)
+        data_list.append(xa_field.values)
+        metadata_list.append(metadata)
+    return data_list, metadata_list
+
+
+@xarray.register_dataset_accessor("to_fieldlist")
+class FieldListMutator:
+    def __init__(self, xarray_obj):
+        self._obj = xarray_obj
+
+    def __call__(self):
+        ds = self._obj 
+
+        data_list = []
+        metadata_list = []
+        for var in ds.data_vars:
+            da = ds[var]
+            da_data, da_metadata = data_array_to_list(da)
+            data_list.extend(da_data)
+            metadata_list.extend(da_metadata)
+        field_list = FieldList.from_numpy(numpy.array(data_list), metadata_list)
+        return field_list
+
+@xarray.register_dataarray_accessor("to_fieldlist")
+class FieldListMutator:
+    def __init__(self, xarray_obj):
+        self._obj = xarray_obj
+
+    def __call__(self):
+        da = self._obj 
+        data_list, metadata_list = data_array_to_list(da)
+        field_list = FieldList.from_numpy(numpy.array(data_list), metadata_list)
+        return field_list
