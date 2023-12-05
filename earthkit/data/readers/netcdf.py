@@ -361,6 +361,8 @@ class XArrayMetadata(RawMetadata):
             )
         self._field = field
         self._geo = None
+        if hasattr(field, "_da"):
+            self.INDEX_KEYS = list(field._da.dims)
 
         d = dict(self._field._da.attrs)
         d["variable"] = self._field.variable
