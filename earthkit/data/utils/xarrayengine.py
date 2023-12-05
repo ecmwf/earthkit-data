@@ -134,7 +134,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             var_attrs = _get_common_attributes(
                 ek_param.source.metadata(), [k for k in variable_metadata_keys if k not in attributes]
             )
-            var_attrs = {"metadata": ekds[0].metadata()}
+            var_attrs["metadata"] = ekds[0].metadata()
             var = xarray.Variable(dims, data, attrs=var_attrs)
             vars[param] = var
 
