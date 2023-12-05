@@ -94,9 +94,11 @@ def _get_common_attributes(metadata, keys):
 
 class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
     def open_dataset(
-            self, ekds, drop_variables=[], dims_order=None, array_module=numpy,
-            variable_metadata_keys="CF", variable_index=["param", "variable"]
+            self, ekds, drop_variables=None, dims_order=None, array_module=numpy,
+            variable_metadata_keys="describe", variable_index=["param", "variable"]
         ):
+
+        
 
         if isinstance(variable_metadata_keys, str):
             variable_metadata_keys = get_metadata_keys(variable_metadata_keys, ekds[0].metadata())
@@ -113,7 +115,8 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             if len(variables) > 0:
                 var_key = var_index
                 break
-        variables = [var for var in variables if var not in drop_variables]
+        if drop_variables is not None:
+            variables = [var for var in variables if var not in drop_variables]
 
         ekds.index("step")  # have to access this to make it appear below in indices()
         if dims_order is None:
@@ -122,6 +125,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             ]
         else:
             other_dims = dims_order
+        print(other_dims)
 
         for variable in variables:
             ekds_variable = ekds.sel(**{var_key: variable})
@@ -150,7 +154,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
 
 class EarthkitBackendEntrypoint(EarthkitObjectBackendEntrypoint):
     def open_dataset(
-        self, filename_or_obj, drop_variables=[], dims_order=None, array_module=numpy,
+        self, filename_or_obj, drop_variables=None, dims_order=None, array_module=numpy,
         variable_metadata_keys=[]
     ):
         if isinstance(filename_or_obj, Base):
