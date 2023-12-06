@@ -358,3 +358,5 @@ notebooks/data/*/
 
 # local code
 _dev
+
+*.idx
