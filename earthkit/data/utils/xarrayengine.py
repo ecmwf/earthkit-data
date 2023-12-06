@@ -209,8 +209,13 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         self._obj = xarray_obj
 
     # Making it not a property so it behaves like a regular earthkit metadata object
+    @property
     def metadata(self):
         _metadata = self._obj.attrs.get("metadata", tuple())
+        if len(_metadata)<1:
+            from earthkit.data.readers.netcdf import XArrayMetadata
+
+            return XArrayMetadata(self._obj)
         if "id" == _metadata[0]:
             import ctypes
 
