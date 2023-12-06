@@ -141,6 +141,8 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
                 var_attrs["metadata"] = ("grib_handle", ekds.path, ekds_variable[0]._offset)
             else:
                 var_attrs["metadata"] = ("id", id(ekds_variable[0].metadata()))
+            # Corentin method:
+            # var_attrs["metadata"] = ekds_variable[0].metadata()
             var = xarray.Variable(dims, data, attrs=var_attrs)
             vars[variable] = var
 
