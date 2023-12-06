@@ -138,7 +138,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
                 ek_variable.source.metadata(), [k for k in variable_metadata_keys if k not in attributes]
             )
             if hasattr(ekds_variable[0], '_offset'):
-                var_attrs["metadata"] = ("_offset", ekds_variable[0]._offset, ekds.path)
+                var_attrs["metadata"] = ("grib_handle", ekds.path, ekds_variable[0]._offset)
             else:
                 var_attrs["metadata"] = ("id", id(ekds_variable[0].metadata()))
             var = xarray.Variable(dims, data, attrs=var_attrs)
@@ -215,11 +215,11 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
             import ctypes
 
             return ctypes.cast(_metadata[1], ctypes.py_object).value
-        elif "_offset" == _metadata[0]:
+        elif "grib_handle" == _metadata[0]:
             from earthkit.data.readers.grib.metadata import GribMetadata
             from earthkit.data.readers.grib.codes import GribCodesReader
 
-            handle = GribCodesReader.from_cache(_metadata[2]).at_offset(_metadata[1])
+            handle = GribCodesReader.from_cache(_metadata[1]).at_offset(_metadata[2])
             return GribMetadata(handle)
         else:
             from earthkit.data.readers.netcdf import XArrayMetadata
