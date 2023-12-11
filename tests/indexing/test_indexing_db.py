@@ -35,8 +35,8 @@ def test_indexing_db_file_multi():
     ds = from_source("file", path, indexing=True)
 
     counts = [6, 6, 6]
-    assert len(counts) == len(ds.indexes)
-    for i, d in enumerate(ds.indexes):
+    assert len(counts) == len(ds._indexes)
+    for i, d in enumerate(ds._indexes):
         assert hasattr(d, "db"), f"db,{i}"
         assert d.db.count() == counts[i]
 
