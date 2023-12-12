@@ -2,11 +2,11 @@ build:
   modules:
   - ninja
   dependencies:
-  - ecmwf/ecbuild
+  - ecmwf/ecbuild@develop
   - MathisRosenhauer/libaec@master
-  - ecmwf/eccodes
-  - ecmwf/eckit
-  - ecmwf/odc
+  - ecmwf/eccodes@develop
+  - ecmwf/eckit@develop
+  - ecmwf/odc@develop
   python_dependencies:
   - ecmwf/eccodes-python@develop
   - ecmwf/cfgrib@master
