@@ -17,7 +17,7 @@ build:
   - ECCODES_DEFINITION_PATH=$ECCODES_DIR/share/eccodes/definitions
   parallel: 64
   requirements_path: tests/downstream-ci-requirements.txt
-  test_cmd: |
+  pytest_cmd: |
     python -m pytest -vv -m 'not notebook and not no_cache_init' --cov=. --cov-report=xml
     python -m pytest -v -m 'notebook'
     python -m pytest --forked -vv -m 'no_cache_init'
