@@ -359,3 +359,5 @@ notebooks/data/*/
 
 # local code
 _dev
+
+test.db
