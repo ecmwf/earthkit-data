@@ -9,48 +9,73 @@
 
 import logging
 
+from earthkit.data.sources.multi_url import MultiUrl
+from earthkit.data.sources.stream import StreamSource
+
 from .file import FileSource
 
 LOG = logging.getLogger(__name__)
 
 
-class S3Retriever(FileSource):
-    def __init__(self, request) -> None:
+def bucket_to_url(bucket, key):
+    return f"https://{bucket}.s3.amazonaws.com/{key}"
+
+
+def request_to_url(requests):
+    urls = []
+    for r in requests:
+        bucket = r["bucket"]
+        for obj in r["objects"]:
+            url = bucket_to_url(bucket, obj["object"])
+            urls.append(url)
+    return urls
+
+
+class S3Source(FileSource):
+    def __init__(self, *args, stream=True, **kwargs) -> None:
         super().__init__()
 
-        if not isinstance(request, list):
-            request = [request]
+        self._stream_kwargs = dict()
+        for k in ["group_by", "batch_size"]:
+            if k in kwargs:
+                self._stream_kwargs[k] = kwargs.pop(k)
 
-        p = [self._proc_request(r) for r in request]
-        self.path = []
-        for r in p:
-            self.path.extend(r)
+        self.stream = stream
 
-        print(f"self.path={self.path}")
+        self.request = {}
+        for a in args:
+            self.request.update(a)
+        self.request.update(kwargs)
+
+        if not isinstance(self.request, list):
+            self.request = [self.request]
+
+        self.urls = request_to_url(self.request)
+
+    def mutate(self):
+        if self.stream:
+            from urllib.request import urlopen
+
+            # TODO: the stream has to be closed
+            if len(self.urls) == 1:
+                stream = urlopen(self.urls[0])
+                return StreamSource(stream, **self._stream_kwargs)
+            else:
+                assert False
+        else:
+            return S3FileSource(self.urls)
 
     def __repr__(self) -> str:
         return self.__class__.__name__
 
-    def _proc_request(self, request):
-        result = []
-        bucket = request["bucket"]
-        for obj in request["objects"]:
-            path = bucket + "/" + obj["object"]
-            result.append(self._retrieve(path))
-        return result
 
-    def _retrieve(self, path):
-        def retrieve(target, path):
-            import s3fs
+class S3FileSource(FileSource):
+    def __init__(self, urls):
+        super().__init__()
+        self.urls = urls
 
-            s3 = s3fs.S3FileSystem(anon=True)
-            with s3.open(path, "rb") as f:
-                s3.get_file(f, target)
-
-        return self.cache_file(
-            retrieve,
-            path,
-        )
+    def mutate(self):
+        return MultiUrl(self.urls)
 
 
-source = S3Retriever
+source = S3Source
