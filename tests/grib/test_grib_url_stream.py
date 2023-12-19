@@ -277,20 +277,28 @@ def test_grib_multi_url_stream_memory():
 
     assert len(ds) == 6
 
-    ref = ["2t", "msl", "t", "z", "t", "z"]
+    md_ref = [
+        ("2t", 0),
+        ("msl", 0),
+        ("t", 500),
+        ("z", 500),
+        ("t", 850),
+        ("z", 850),
+    ]
+
     val = []
 
     # iteration
     for f in ds:
-        v = f.metadata("param")
+        v = f.metadata(("param", "level"))
         val.append(v)
 
-    assert val == ref, "iteration"
+    assert val == md_ref, "iteration"
 
     # metadata
     val = []
-    val = ds.metadata("param")
-    assert val == ref, "method"
+    val = ds.metadata(("param", "level"))
+    assert val == md_ref, "method"
 
     # data
     with pytest.raises(ValueError):
@@ -313,6 +321,25 @@ def test_grib_multi_url_stream_memory():
 
     vals = ds[2:].to_numpy()[:, 0, 0]
     assert np.allclose(vals, ref)
+
+    # slicing
+    r = ds[0:3]
+    assert len(r) == 3
+    val = r.metadata(("param", "level"))
+    assert val == md_ref[0:3]
+
+    r = ds[-2:]
+    assert len(r) == 2
+    val = r.metadata(("param", "level"))
+    assert val == md_ref[-2:]
+
+    r = ds.sel(param="t")
+    assert len(r) == 2
+    val = r.metadata(("param", "level"))
+    assert val == [
+        ("t", 500),
+        ("t", 850),
+    ]
 
 
 if __name__ == "__main__":

@@ -211,20 +211,27 @@ def test_grib_from_stream_in_memory():
         assert len(ds) == 6
 
         expected_shape = (6, 7, 12)
-        ref = ["t", "u", "v", "t", "u", "v"]
+        md_ref = [
+            ("t", 1000),
+            ("u", 1000),
+            ("v", 1000),
+            ("t", 850),
+            ("u", 850),
+            ("v", 850),
+        ]
         val = []
 
         # iteration
         for f in ds:
-            v = f.metadata("param")
+            v = f.metadata(("param", "level"))
             val.append(v)
 
-        assert val == ref, "iteration"
+        assert val == md_ref, "iteration"
 
         # metadata
         val = []
-        val = ds.metadata("param")
-        assert val == ref, "method"
+        val = ds.metadata(("param", "level"))
+        assert val == md_ref, "method"
 
         # data
         assert ds.to_numpy().shape == expected_shape
@@ -242,6 +249,25 @@ def test_grib_from_stream_in_memory():
 
         vals = ds.to_numpy()[:, 0, 0]
         assert np.allclose(vals, ref)
+
+        # slicing
+        r = ds[0:3]
+        assert len(r) == 3
+        val = r.metadata(("param", "level"))
+        assert val == md_ref[0:3]
+
+        r = ds[-2:]
+        assert len(r) == 2
+        val = r.metadata(("param", "level"))
+        assert val == md_ref[-2:]
+
+        r = ds.sel(param="t")
+        assert len(r) == 2
+        val = r.metadata(("param", "level"))
+        assert val == [
+            ("t", 1000),
+            ("t", 850),
+        ]
 
 
 @pytest.mark.parametrize(
