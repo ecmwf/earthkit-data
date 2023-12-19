@@ -21,32 +21,34 @@ def repeat_list_items(items, count):
     return sum([[x] * count for x in items], [])
 
 
-def test_grib_from_stream_invalid_args():
+@pytest.mark.parametrize(
+    "_kwargs,error",
+    [
+        (dict(order_by="level"), TypeError),
+        (dict(group_by=1), TypeError),
+        (dict(group_by=["level", 1]), TypeError),
+        # (dict(group_by="level", batch_size=1), TypeError),
+        (dict(batch_size=-1), ValueError),
+    ],
+)
+def test_grib_from_stream_invalid_args(_kwargs, error):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        with pytest.raises(TypeError):
-            from_source("stream", stream, order_by="level")
-
-    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        with pytest.raises(TypeError):
-            from_source("stream", stream, group_by=1)
-
-    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        with pytest.raises(TypeError):
-            from_source("stream", stream, group_by=["level", 1])
-
-    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        with pytest.raises(TypeError):
-            from_source("stream", stream, group_by="level", batch_size=1)
-
-    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        with pytest.raises(ValueError):
-            from_source("stream", stream, batch_size=-1)
+        with pytest.raises(error):
+            from_source("stream", stream, **_kwargs)
 
 
-@pytest.mark.parametrize("group_by", ["level", ["level", "gridType"]])
-def test_grib_from_stream_group_by(group_by):
+@pytest.mark.parametrize(
+    "_kwargs",
+    [
+        {"group_by": "level"},
+        {"group_by": "level", "batch_size": 0},
+        {"group_by": "level", "batch_size": 1},
+        {"group_by": ["level", "gridType"]},
+    ],
+)
+def test_grib_from_stream_group_by(_kwargs):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, group_by=group_by)
+        fs = from_source("stream", stream, **_kwargs)
 
         # no methods are available
         with pytest.raises(TypeError):
@@ -104,9 +106,16 @@ def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_sha
         assert sum([1 for _ in ds]) == 0
 
 
-def test_grib_from_stream_single_batch():
+@pytest.mark.parametrize(
+    "_kwargs",
+    [
+        {},
+        {"batch_size": 1},
+    ],
+)
+def test_grib_from_stream_single_batch(_kwargs):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream)
+        ds = from_source("stream", stream, **_kwargs)
 
         # no fieldlist methods are available
         with pytest.raises(TypeError):
@@ -128,21 +137,27 @@ def test_grib_from_stream_single_batch():
         assert sum([1 for _ in ds]) == 0
 
 
-def test_grib_from_stream_multi_batch():
+@pytest.mark.parametrize(
+    "_kwargs,expected_meta",
+    [
+        ({"batch_size": 3}, [["t", "u", "v"], ["t", "u", "v"]]),
+        ({"batch_size": 4}, [["t", "u", "v", "t"], ["u", "v"]]),
+    ],
+)
+def test_grib_from_stream_multi_batch(_kwargs, expected_meta):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, batch_size=2)
+        ds = from_source("stream", stream, **_kwargs)
 
         # no methods are available
         with pytest.raises(TypeError):
-            len(fs)
+            len(ds)
 
-        ref = [["t", "u"], ["v", "t"], ["u", "v"]]
-        for i, f in enumerate(fs):
-            assert len(f) == 2
-            f.metadata("param") == ref[i]
+        for i, f in enumerate(ds):
+            assert len(f) == len(expected_meta[i])
+            f.metadata("param") == expected_meta[i]
 
         # stream consumed, no data is available
-        assert sum([1 for _ in fs]) == 0
+        assert sum([1 for _ in ds]) == 0
 
 
 @pytest.mark.parametrize(
