@@ -20,7 +20,15 @@ LOG = logging.getLogger(__name__)
 
 def parse_stream_kwargs(**kwargs):
     group_by = kwargs.pop("group_by", None)
-    group_by = group_by if group_by is not None else []
+    batch_size = kwargs.pop("batch_size", 1)
+    batch_size, group_by = check_stream_kwargs(batch_size, group_by)
+    stream_kwargs = dict(batch_size=batch_size, group_by=group_by)
+    return (stream_kwargs, kwargs)
+
+
+def check_stream_kwargs(batch_size, group_by):
+    if group_by is None:
+        group_by = []
 
     if isinstance(group_by, str):
         group_by = [group_by]
@@ -31,22 +39,15 @@ def parse_stream_kwargs(**kwargs):
             raise TypeError(f"unsupported types in group_by={group_by}")
 
     if group_by and not all([isinstance(x, str) for x in group_by]):
-        raise TypeError(f"`group_by`={group_by} must contain str values")
+        raise TypeError(f"group_by={group_by} must contain str values")
 
-    # if strict:
-    #     if group_by and "batch_size" in kwargs:
-    #         raise TypeError(
-    #             "got an invalid keyword argument. batch_size cannot be used when group_by is set"
-    #         )
-
-    batch_size = kwargs.pop("batch_size", 1)
     if batch_size is None:
         batch_size = 1
 
     if batch_size < 0:
         raise ValueError(f"batch_size={batch_size} cannot be negative")
 
-    return (batch_size, group_by, kwargs)
+    return (batch_size, group_by)
 
 
 class StreamMemorySource(MemoryBaseSource):
@@ -76,8 +77,7 @@ class StreamSourceBase(Source):
         super().__init__()
         self._reader_ = None
         self._stream = stream
-        _kwargs = dict(batch_size=batch_size, group_by=group_by)
-        self.batch_size, self.group_by, _ = parse_stream_kwargs(**_kwargs)
+        self.batch_size, self.group_by = check_stream_kwargs(batch_size, group_by)
 
     def __iter__(self):
         return self
@@ -264,8 +264,7 @@ def make_source(stream, group_by, batch_size):
 
 
 def make_stream_from_method(owner, create, data, **kwargs):
-    batch_size, group_by, kwargs = parse_stream_kwargs(**kwargs)
-    stream_kwargs = dict(group_by=group_by, batch_size=batch_size)
+    stream_kwargs, kwargs = parse_stream_kwargs(**kwargs)
 
     if kwargs:
         raise TypeError(f"got invalid keyword argument(s): {list(kwargs.keys())}")
