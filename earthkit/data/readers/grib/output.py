@@ -123,12 +123,15 @@ class GribOutput:
             k: v for k, v in sorted(metadata.items(), key=lambda x: order(x[0]))
         }
 
+        if "generatingProcessIdentifier" not in metadata:
+            metadata["generatingProcessIdentifier"] = 255
+
         LOG.debug("GribOutput.metadata %s", metadata)
 
         for k, v in metadata.items():
             handle.set(k, v)
 
-        handle.set_values(values, generating_proc_id=255)
+        handle.set_values(values)
 
         file, path = self.f(handle)
         handle.write(file)

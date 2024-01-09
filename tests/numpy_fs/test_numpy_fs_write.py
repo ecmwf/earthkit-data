@@ -113,16 +113,7 @@ def test_numpy_fs_grib_write_append():
     assert r_tmp.metadata("shortName") == ["msl", "2d"]
 
 
-@pytest.mark.parametrize(
-    "_kwargs,expected_value",
-    [
-        ({}, 150),
-        ({"generating_proc_id": None}, 150),
-        ({"generating_proc_id": 255}, 255),
-        ({"generating_proc_id": 144}, 144),
-    ],
-)
-def test_numpy_fs_grib_write_generating_proc_id(_kwargs, expected_value):
+def test_numpy_fs_grib_write_generating_proc_id():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     assert ds[0].metadata("shortName") == "2t"
@@ -132,21 +123,21 @@ def test_numpy_fs_grib_write_generating_proc_id(_kwargs, expected_value):
     v2 = v + 2
 
     md = ds[0].metadata()
-    md1 = md.override(shortName="msl")
+    md1 = md.override(shortName="msl", generatingProcessIdentifier=255)
     md2 = md.override(shortName="2d")
 
     r1 = FieldList.from_numpy([v1, v2], [md1, md2])
 
     # save to disk: using generatingProcessIdentifier=255 (default)
     with temp_file() as tmp:
-        r1.save(tmp, **_kwargs)
+        r1.save(tmp)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
         assert len(r_tmp) == 2
         assert r_tmp.metadata("shortName") == ["msl", "2d"]
         assert r_tmp.metadata("generatingProcessIdentifier") == [
-            expected_value,
-            expected_value,
+            255,
+            150,
         ]
 
 

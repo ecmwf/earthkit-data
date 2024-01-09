@@ -219,15 +219,10 @@ class GribCodesHandle(CodesHandle):
     def get_data_points(self):
         return eccodes.codes_grib_get_data(self._handle)
 
-    def set_values(self, values, generating_proc_id=None):
+    def set_values(self, values):
         try:
             assert self.path is None, "Only cloned handles can have values changed"
             eccodes.codes_set_values(self._handle, values.flatten())
-            # For ECMWF gribs: indicates that something has been modified (255=unknown)
-            if generating_proc_id is not None:
-                eccodes.codes_set_long(
-                    self._handle, "generatingProcessIdentifier", generating_proc_id
-                )
         except Exception as e:
             LOG.error("Error setting values")
             LOG.exception(e)
