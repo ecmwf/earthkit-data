@@ -60,12 +60,12 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
     def cache_file(self, *args, **kwargs):
         return self.source.cache_file(*args, **kwargs)
 
-    def save(self, path):
+    def save(self, path, **kwargs):
         mode = "wb" if self.binary else "w"
         with open(path, mode) as f:
-            self.write(f)
+            self.write(f, **kwargs)
 
-    def write(self, f):
+    def write(self, f, **kwargs):
         if not self.appendable:
             assert f.tell() == 0
         mode = "rb" if self.binary else "r"

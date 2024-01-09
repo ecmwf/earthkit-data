@@ -13,7 +13,24 @@ from . import Writer
 class GribWriter(Writer):
     DATA_FORMAT = "grib"
 
-    def write(self, f, values, metadata, check_nans=True):
+    def write(self, f, values, metadata, check_nans=True, generating_proc_id=None):
+        r"""Write a GRIB field to a file object.
+
+        Parameters
+        ----------
+        f: file object
+            The target file object.
+        values: ndarray
+            Values of the GRIB field/message.
+        values: :class:`GribMetadata`
+            Metadata of the GRIB field/message.
+        check_nans: bool
+            Replace nans in ``values`` with GRIB missing values when writing to``f``.
+        generating_proc_id: int
+            Set the ``generatingProcessIdentifier`` ecCodes GRIB key
+            to the specified value when writing to ``f``. When
+            ``None`` no changes are made.
+        """
         handle = metadata._handle
         if check_nans:
             import numpy as np
@@ -24,7 +41,7 @@ class GribWriter(Writer):
                 handle.set_double("missingValue", missing_value)
                 handle.set_long("bitmapPresent", 1)
 
-        handle.set_values(values)
+        handle.set_values(values, generating_proc_id=generating_proc_id)
         handle.write(f)
 
 
