@@ -16,6 +16,7 @@ from earthkit.data.core.caching import cache_file
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.core.statistics import record_statistics
 from earthkit.data.utils import progress_bar
+from earthkit.data.utils.url import AnonymousUrlResource, UrlResource
 
 from .file import FileSource
 
@@ -128,10 +129,18 @@ class Url(FileSource):
         self.url = url
         self.parts = parts
         self.stream = stream
+        self.http_headers = http_headers
         LOG.debug("URL %s", url)
 
         if not self.stream:
             self.update_if_out_of_date = update_if_out_of_date
+
+            if isinstance(url, UrlResource):
+                resource = url
+                url = resource.url
+                if not isinstance(self.http_headers, dict):
+                    self.http_headers = {}
+                self.http_headers.update(resource.auth())
 
             self.downloader = Downloader(
                 url,
@@ -140,7 +149,7 @@ class Url(FileSource):
                 verify=verify,
                 parts=parts,
                 range_method=range_method,
-                http_headers=http_headers,
+                http_headers=self.http_headers,
                 fake_headers=fake_headers,
                 statistics_gatherer=record_statistics,
                 progress_bar=progress_bar,
@@ -179,18 +188,16 @@ class Url(FileSource):
 
     def mutate(self):
         if self.stream:
+            urls = self.url
+            if not isinstance(urls, list):
+                urls = [urls]
 
-            def url_to_stream(url):
-                from urllib.request import urlopen
+            if isinstance(urls[0], str):
+                urls = [AnonymousUrlResource(x) for x in urls]
 
-                # TODO: ensure stream is closed when consumed
-                return urlopen(url)
+            from .stream import make_stream_from_resource
 
-            from .stream import make_stream_from_method
-
-            return make_stream_from_method(
-                self, url_to_stream, self.url, **self._kwargs
-            )
+            return make_stream_from_resource(self, urls, **self._kwargs)
         else:
             return super().mutate()
 

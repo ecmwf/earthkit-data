@@ -10,30 +10,65 @@
 import logging
 
 from earthkit.data.sources.multi_url import MultiUrl
-from earthkit.data.sources.stream import StreamSource
+from earthkit.data.sources.url import Url
+from earthkit.data.utils.url import UrlResource
 
 from .file import FileSource
 
 LOG = logging.getLogger(__name__)
 
 
-def bucket_to_url(bucket, key):
-    return f"https://{bucket}.s3.amazonaws.com/{key}"
-
-
-def request_to_url(requests):
-    urls = []
+def request_to_resource(requests, anon):
+    resources = []
     for r in requests:
         bucket = r["bucket"]
         for obj in r["objects"]:
-            url = bucket_to_url(bucket, obj["object"])
-            urls.append(url)
-    return urls
+            key = obj["object"]
+            resources.append(S3Resource(bucket, key, anon))
+    return resources
+
+
+class S3Resource(UrlResource):
+    def __init__(self, bucket, key, anon):
+        super().__init__(anon)
+        self.bucket = bucket
+        self.key = key
+
+    @property
+    def url(self):
+        return f"https://{self.bucket}.s3.amazonaws.com/{self.key}"
+
+    def _host(self):
+        return f"{self.bucket}.s3.amazonaws.com"
+
+    def auth(self):
+        if not self.anon:
+            from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
+
+            class _R:
+                def __init__(self, url):
+                    self.method = "GET"
+                    self.url = url
+                    self.body = ""
+
+            req = _R(self.url)
+
+            auth = BotoAWSRequestsAuth(
+                aws_host=self._host(),
+                aws_region="eu-west-2",
+                aws_service="s3",
+            )
+
+            return auth.get_aws_request_headers_handler(req)
+        else:
+            return {}
 
 
 class S3Source(FileSource):
-    def __init__(self, *args, stream=True, **kwargs) -> None:
+    def __init__(self, *args, anon=True, stream=True, **kwargs) -> None:
         super().__init__()
+
+        self.anon = anon
 
         self._stream_kwargs = dict()
         for k in ["group_by", "batch_size"]:
@@ -50,32 +85,16 @@ class S3Source(FileSource):
         if not isinstance(self.request, list):
             self.request = [self.request]
 
-        self.urls = request_to_url(self.request)
+        self.resources = request_to_resource(self.request, self.anon)
 
     def mutate(self):
         if self.stream:
-            from urllib.request import urlopen
-
-            # TODO: the stream has to be closed
-            if len(self.urls) == 1:
-                stream = urlopen(self.urls[0])
-                return StreamSource(stream, **self._stream_kwargs)
-            else:
-                assert False
+            return Url(self.resources, stream=True, **self._stream_kwargs)
         else:
-            return S3FileSource(self.urls)
+            return MultiUrl(self.resources)
 
     def __repr__(self) -> str:
         return self.__class__.__name__
-
-
-class S3FileSource(FileSource):
-    def __init__(self, urls):
-        super().__init__()
-        self.urls = urls
-
-    def mutate(self):
-        return MultiUrl(self.urls)
 
 
 source = S3Source

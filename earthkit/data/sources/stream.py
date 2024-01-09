@@ -227,15 +227,14 @@ class StreamSource(StreamSourceBase):
 
 
 class StreamSourceMaker:
-    def __init__(self, create, data, stream_kwargs):
-        self.create = create
-        self.data = data
+    def __init__(self, resource, stream_kwargs):
+        self.resource = resource
         self.stream_kwargs = dict(stream_kwargs)
         self.source = None
 
     def __call__(self):
         if self.source is None:
-            stream = self.create(self.data)
+            stream = self.resource.to_stream()
             self.source = make_source(stream, **self.stream_kwargs)
 
             prev = None
@@ -263,18 +262,32 @@ def make_source(stream, group_by, batch_size):
     raise ValueError(f"Unsupported stream parameters {batch_size=} {group_by=}")
 
 
-def make_stream_from_method(owner, create, data, **kwargs):
+def make_stream_from_resource(owner, resource, **kwargs):
     stream_kwargs, kwargs = parse_stream_kwargs(**kwargs)
 
     if kwargs:
         raise TypeError(f"got invalid keyword argument(s): {list(kwargs.keys())}")
 
-    if not isinstance(data, (list, tuple)):
-        maker = StreamSourceMaker(create, data, stream_kwargs)
+    if not isinstance(resource, (list, tuple)):
+        maker = StreamSourceMaker(resource, stream_kwargs)
         return maker()
     else:
-        sources = [StreamSourceMaker(create, d, stream_kwargs) for d in data]
+        sources = [StreamSourceMaker(r, stream_kwargs) for r in resource]
         return MultiStreamSource(sources, **stream_kwargs)
+
+
+# def make_stream_from_method(owner, create, data, **kwargs):
+#     stream_kwargs, kwargs = parse_stream_kwargs(**kwargs)
+
+#     if kwargs:
+#         raise TypeError(f"got invalid keyword argument(s): {list(kwargs.keys())}")
+
+#     if not isinstance(data, (list, tuple)):
+#         maker = StreamSourceMaker(create, data, stream_kwargs)
+#         return maker()
+#     else:
+#         sources = [StreamSourceMaker(create, d, stream_kwargs) for d in data]
+#         return MultiStreamSource(sources, **stream_kwargs)
 
 
 source = StreamSource

@@ -22,6 +22,9 @@ class MultiUrl(MultiSource):
 
         assert len(urls)
 
+        if len(urls) > 1 and isinstance(urls[0], str):
+            urls = sorted(urls)
+
         sources = [
             from_source(
                 "url",
@@ -31,8 +34,9 @@ class MultiUrl(MultiSource):
                 force=force,
                 # Load lazily so we can do parallel downloads
                 lazily=True,
+                **kwargs
             )
-            for url in sorted(urls)
+            for url in urls
         ]
 
         super().__init__(sources, filter=filter, merger=merger)
