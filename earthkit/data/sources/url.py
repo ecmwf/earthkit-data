@@ -135,19 +135,23 @@ class Url(FileSource):
         if not self.stream:
             self.update_if_out_of_date = update_if_out_of_date
 
-            if isinstance(url, UrlResource):
-                resource = url
-                url = resource.url
+            if isinstance(self.url, UrlResource):
+                resource = self.url
+                self.url = resource.url
+                if resource.part is not None:
+                    self.parts = [resource.part]
                 if not isinstance(self.http_headers, dict):
                     self.http_headers = {}
                 self.http_headers.update(resource.auth())
 
+            LOG.debug(f"url={self.url} parts={self.parts}")
+
             self.downloader = Downloader(
-                url,
+                self.url,
                 chunk_size=chunk_size,
                 timeout=SETTINGS.get("url-download-timeout"),
                 verify=verify,
-                parts=parts,
+                parts=self.parts,
                 range_method=range_method,
                 http_headers=self.http_headers,
                 fake_headers=fake_headers,
@@ -175,11 +179,9 @@ class Url(FileSource):
                 self.downloader.download(target)
                 return self.downloader.cache_data()
 
-            print(f"{url=}")
-
             self.path = self.cache_file(
                 download,
-                dict(url=url, parts=parts),
+                dict(url=self.url, parts=self.parts),
                 extension=extension,
                 force=force,
             )

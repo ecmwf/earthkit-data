@@ -24,15 +24,22 @@ def request_to_resource(requests, anon):
         bucket = r["bucket"]
         for obj in r["objects"]:
             key = obj["object"]
-            resources.append(S3Resource(bucket, key, anon))
+            part_start = obj.get("start")
+            part_range = obj.get("range")
+            if part_start is not None and part_range is not None:
+                part = (int(part_start), int(part_range))
+            else:
+                part = None
+            resources.append(S3Resource(bucket, key, anon, part=part))
     return resources
 
 
 class S3Resource(UrlResource):
-    def __init__(self, bucket, key, anon):
+    def __init__(self, bucket, key, anon, part=None):
         super().__init__(anon)
         self.bucket = bucket
         self.key = key
+        self.part = part
 
     @property
     def url(self):
@@ -62,6 +69,12 @@ class S3Resource(UrlResource):
             return auth.get_aws_request_headers_handler(req)
         else:
             return {}
+
+    def fake_headers(self):
+        return {"accept-ranges": "bytes", "server": "AmazonS3"}
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(bucket={self.url}, anon={self.anon}, part={self.part})"
 
 
 class S3Source(FileSource):
