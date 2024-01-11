@@ -103,7 +103,7 @@ def download_and_cache(
     return path
 
 
-class Url(FileSource):
+class UrlBase(FileSource):
     def __init__(
         self,
         url,
@@ -111,42 +111,115 @@ class Url(FileSource):
         filter=None,
         merger=None,
         verify=True,
-        force=None,
-        chunk_size=1024 * 1024,
         range_method="auto",
         http_headers=None,
-        update_if_out_of_date=False,
         fake_headers=None,  # When HEAD is not allowed but you know the size
         stream=False,
+        auth=None,
         **kwargs,
     ):
         super().__init__(filter=filter, merger=merger)
 
-        # TODO: re-enable this feature
-        extension = None
-
         self.url = url
         self.parts = parts
+        self.http_headers = http_headers
+        self.auth = auth
+        self.verify = verify
+        self.range_method = range_method
+        self.fake_headers = fake_headers
         self.stream = stream
-        LOG.debug("URL %s", url)
+        self._kwargs = kwargs
+        LOG.debug(
+            f"url={self.url} parts={self.parts} auth={self.auth} _kwargs={self._kwargs}"
+        )
+
+    def connect_to_mirror(self, mirror):
+        return mirror.connection_for_url(self, self.url, self.parts)
+
+    def prepare_headers(self, url):
+        headers = {}
+        if self.http_headers is not None:
+            headers = dict(self.http_headers)
+
+        if self.auth is not None:
+            headers.update(self.auth.auth_header(url))
+
+        if not headers:
+            headers = None
+
+        return headers
+
+    def _get_parts(self, url):
+        if isinstance(self.parts, dict):
+            return self.parts.get(url, None)
+        else:
+            return self.parts
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.url})"
+
+
+class Url(UrlBase):
+    """Represent a URL source.
+
+    Parameters
+    ----------
+    url: str, list, tuple
+        Single url or a list/tuple of urls. A url item can be:
+
+        * a str
+        * a list/tuple of two items. The first item is the url as a str, while the second
+          item defines the parts for the given url. In this case the ``parts`` kwargs
+          cannot be used.
+
+        When ``url`` is a list/tuple these two formats cannot be mixed so either all the url
+        items are str or a list/tuple of url and parts.
+
+    """
+
+    def __init__(
+        self,
+        url,
+        *,
+        chunk_size=1024 * 1024,
+        update_if_out_of_date=False,
+        force=None,
+        **kwargs,
+    ):
+        super().__init__(url, **kwargs)
+
+        # TODO: re-enable this feature
+        extension = None
 
         if not self.stream:
             self.update_if_out_of_date = update_if_out_of_date
 
+            # ensure no parts kwargs is used when the parts are defined together with the urls
+            _parts_kwargs = {}
+            if not isinstance(url, (list, tuple)):
+                url = [url]
+            if isinstance(url[0], (list, tuple)):
+                if self.parts is not None:
+                    raise ValueError("cannot specify parts both as arg and kwarg")
+            else:
+                _parts_kwargs = {"parts": self.parts}
+
+            LOG.debug(f"http_headers={self.http_headers}")
+
             self.downloader = Downloader(
-                url,
+                self.url,
                 chunk_size=chunk_size,
                 timeout=SETTINGS.get("url-download-timeout"),
-                verify=verify,
-                parts=parts,
-                range_method=range_method,
-                http_headers=http_headers,
-                fake_headers=fake_headers,
+                verify=self.verify,
+                range_method=self.range_method,
+                http_headers=self.prepare_headers(self.url),
+                fake_headers=self.fake_headers,
                 statistics_gatherer=record_statistics,
                 progress_bar=progress_bar,
                 resume_transfers=True,
                 override_target_file=False,
                 download_file_extension=".download",
+                **_parts_kwargs,
             )
 
             if extension and extension[0] != ".":
@@ -166,36 +239,42 @@ class Url(FileSource):
                 self.downloader.download(target)
                 return self.downloader.cache_data()
 
-            print(f"{url=}")
-
             self.path = self.cache_file(
                 download,
-                dict(url=url, parts=parts),
+                dict(url=self.url, parts=self.parts),
                 extension=extension,
                 force=force,
             )
-        else:
-            self._kwargs = kwargs
 
     def mutate(self):
         if self.stream:
+            # create one stream source per url
+            from multiurl.downloader import _canonicalize
 
-            def url_to_stream(url):
-                from urllib.request import urlopen
+            s = []
+            _kwargs = {}
+            if self.parts is not None:
+                _kwargs = {"parts": self.parts}
+            urls, _ = _canonicalize(self.url, **_kwargs)
 
-                # TODO: ensure stream is closed when consumed
-                return urlopen(url)
+            for url, parts in urls:
+                s.append(
+                    SingleUrlStream(
+                        url,
+                        parts=parts,
+                        verify=True,
+                        range_method="auto",
+                        http_headers=self.prepare_headers(url),
+                        fake_headers=None,
+                        auth=self.auth,
+                    )
+                )
 
-            from .stream import make_stream_from_method
+            from .stream import _from_source
 
-            return make_stream_from_method(
-                self, url_to_stream, self.url, **self._kwargs
-            )
+            return _from_source(s, **self._kwargs)
         else:
             return super().mutate()
-
-    def connect_to_mirror(self, mirror):
-        return mirror.connection_for_url(self, self.url, self.parts)
 
     def out_of_date(self, url, path, cache_data):
         if SETTINGS.get("check-out-of-date-urls") is False:
@@ -215,8 +294,62 @@ class Url(FileSource):
                 )
         return False
 
-    def __repr__(self) -> str:
-        return f"Url({self.url})"
+
+class SingleUrlStream(UrlBase):
+    def __init__(
+        self,
+        url,
+        **kwargs,
+    ):
+        super().__init__(url, **kwargs)
+
+        if isinstance(self.url, (list, tuple)):
+            raise TypeError("only a single url is supported")
+
+    def mutate(self):
+        from .stream import _from_source
+
+        return _from_source(self, **self._kwargs)
+
+    def to_stream(self):
+        from urllib.request import Request, urlopen
+
+        headers = self.prepare_headers(self.url)
+
+        # TODO: ensure stream is closed when consumed
+        # TODO: use multiurl
+        r = Request(self.url, headers=headers)
+        return urlopen(r)
+
+    def prepare_headers(self, url):
+        headers = super().prepare_headers(url)
+        parts = self.parts_header(self.parts)
+        if parts is not None and parts:
+            if headers is None:
+                headers = {}
+            headers.update(parts)
+        return headers if headers is not None else {}
+
+    def parts_header(self, parts):
+        if parts is not None:
+            if isinstance(parts, (list, tuple)):
+                part = parts[0]
+            else:
+                part = parts
+
+            offset, length = part.offset, part.length
+            if offset is None:
+                offset = 0
+
+            start = offset
+            end = ""
+
+            if length is not None:
+                end = offset + length - 1
+
+            return {"Range": f"bytes={start}-{end}"}
+        else:
+            return {}
 
 
 source = Url

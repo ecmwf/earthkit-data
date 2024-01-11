@@ -145,6 +145,20 @@ def test_url_netcdf_source_save():
     assert os.path.exists(tmp.path)
 
 
+def test_multi_url_parts_invalid():
+    parts1 = [(240, 150)]
+    parts2 = [(0, 526)]
+    with pytest.raises(ValueError):
+        from_source(
+            "url",
+            [
+                [earthkit_remote_test_data_file("examples/test6.grib"), parts1],
+                [earthkit_remote_test_data_file("examples/test.grib"), parts2],
+            ],
+            parts=[(0, 240)],
+        )
+
+
 if __name__ == "__main__":
     test_part_url()
     # from earthkit.data.testing import main
