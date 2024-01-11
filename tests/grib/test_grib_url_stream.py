@@ -66,10 +66,14 @@ def test_grib_url_stream_group_by(_kwargs):
         [("t", 1000), ("u", 1000), ("v", 1000)],
         [("t", 850), ("u", 850), ("v", 850)],
     ]
+    cnt = 0
     for i, f in enumerate(fs):
         assert len(f) == 3
         assert f.metadata(("param", "level")) == ref[i]
         assert f.to_fieldlist("numpy") is not f
+        cnt += 1
+
+    assert cnt == len(ref)
 
     # stream consumed, no data is available
     assert sum([1 for _ in fs]) == 0
@@ -102,9 +106,12 @@ def test_grib_url_stream_single_batch(_kwargs):
         ("u", 850),
         ("v", 850),
     ]
-
+    cnt = 0
     for i, f in enumerate(ds):
         assert f.metadata(("param", "level")) == ref[i], i
+        cnt += 1
+
+    assert cnt == len(ref)
 
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
@@ -129,9 +136,13 @@ def test_grib_url_stream_multi_batch(_kwargs, expected_meta):
     with pytest.raises(TypeError):
         len(ds)
 
+    cnt = 0
     for i, f in enumerate(ds):
         assert len(f) == len(expected_meta[i])
         f.metadata("param") == expected_meta[i]
+        cnt += 1
+
+    assert cnt == len(expected_meta)
 
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
@@ -225,9 +236,12 @@ def test_grib_multi_url_stream_single_batch(_kwargs):
         ("t", 850),
         ("z", 850),
     ]
-
+    cnt = 0
     for i, f in enumerate(ds):
         assert f.metadata(("param", "level")) == ref[i], i
+        cnt += 1
+
+    assert cnt == len(ref)
 
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
@@ -256,9 +270,13 @@ def test_grib_multi_url_stream_batch(_kwargs, expected_meta):
     with pytest.raises(TypeError):
         len(ds)
 
+    cnt = 0
     for i, f in enumerate(ds):
         assert len(f) == len(expected_meta[i])
         f.metadata("param") == expected_meta[i]
+        cnt += 1
+
+    assert cnt == len(expected_meta)
 
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
@@ -340,6 +358,90 @@ def test_grib_multi_url_stream_memory():
         ("t", 500),
         ("t", 850),
     ]
+
+
+@pytest.mark.parametrize(
+    "parts,expected_meta",
+    [
+        ([(0, 150)], [("t", 1000)]),
+        ([(240, 150)], [("u", 1000)]),
+        ([(240, 480)], [("u", 1000), ("v", 1000)]),
+    ],
+)
+def test_grib_single_url_stream_parts(parts, expected_meta):
+    ds = from_source(
+        "url",
+        earthkit_remote_test_data_file("examples/test6.grib"),
+        parts=parts,
+        stream=True,
+    )
+
+    # no fieldlist methods are available
+    with pytest.raises(TypeError):
+        len(ds)
+
+    cnt = 0
+    for i, f in enumerate(ds):
+        assert f.metadata(("param", "level")) == expected_meta[i], i
+        cnt += 1
+
+    assert cnt == len(expected_meta)
+
+    # stream consumed, no data is available
+    assert sum([1 for _ in ds]) == 0
+
+
+@pytest.mark.parametrize(
+    "parts1,parts2,expected_meta",
+    [
+        (
+            [(240, 150)],
+            None,
+            [("u", 1000), ("2t", 0), ("msl", 0)],
+        ),
+        (
+            None,
+            [(0, 526)],
+            [
+                ("t", 1000),
+                ("u", 1000),
+                ("v", 1000),
+                ("t", 850),
+                ("u", 850),
+                ("v", 850),
+                ("2t", 0),
+            ],
+        ),
+        (
+            [(240, 150)],
+            [(0, 526)],
+            [("u", 1000), ("2t", 0)],
+        ),
+    ],
+)
+def test_grib_multi_url_stream_parts(parts1, parts2, expected_meta):
+    ds = from_source(
+        "url",
+        [
+            [earthkit_remote_test_data_file("examples/test6.grib"), parts1],
+            [earthkit_remote_test_data_file("examples/test.grib"), parts2],
+        ],
+        stream=True,
+    )
+
+    # no fieldlist methods are available
+    with pytest.raises(TypeError):
+        len(ds)
+
+    cnt = 0
+    for i, f in enumerate(ds):
+        assert f.metadata(("param", "level")) == expected_meta[i], i
+        cnt += 1
+
+    assert cnt == len(expected_meta)
+
+    # stream consumed, no data is available
+    assert sum([1 for _ in ds]) == 0
 
 
 if __name__ == "__main__":
