@@ -11,32 +11,59 @@ import logging
 
 from earthkit.data.sources.multi_url import MultiUrl
 from earthkit.data.sources.url import Url
-from earthkit.data.utils.url import UrlResource
+from earthkit.data.utils.url import HttpAuthenticator
 
 from .file import FileSource
 
 LOG = logging.getLogger(__name__)
 
 
-def request_to_resource(requests, anon):
+def request_to_resource(requests):
+    def _make_part(part_start, part_range):
+        if part_start is not None and part_range is not None:
+            part = (int(part_start), int(part_range))
+        else:
+            part = None
+        return part
+
     resources = []
     for r in requests:
         bucket = r["bucket"]
         for obj in r["objects"]:
             key = obj["object"]
-            part_start = obj.get("start")
-            part_range = obj.get("range")
-            if part_start is not None and part_range is not None:
-                part = (int(part_start), int(part_range))
-            else:
-                part = None
-            resources.append(S3Resource(bucket, key, anon, part=part))
+            part = _make_part(obj.get("start"), obj.get("range"))
+            resources.append(S3Resource(bucket, key, part=part))
     return resources
 
 
-class S3Resource(UrlResource):
-    def __init__(self, bucket, key, anon, part=None):
-        super().__init__(anon)
+class S3Authenticator(HttpAuthenticator):
+    def _host(self, url):
+        from urllib.parse import urlparse
+
+        return urlparse(url).netloc
+
+    def auth_header(self, url):
+        from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
+
+        class _R:
+            def __init__(self, url):
+                self.method = "GET"
+                self.url = url
+                self.body = ""
+
+        req = _R(url)
+
+        auth = BotoAWSRequestsAuth(
+            aws_host=self._host(url),
+            aws_region="eu-west-2",
+            aws_service="s3",
+        )
+
+        return auth.get_aws_request_headers_handler(req)
+
+
+class S3Resource:
+    def __init__(self, bucket, key, part=None):
         self.bucket = bucket
         self.key = key
         self.part = part
@@ -45,36 +72,11 @@ class S3Resource(UrlResource):
     def url(self):
         return f"https://{self.bucket}.s3.amazonaws.com/{self.key}"
 
-    def _host(self):
+    def host(self):
         return f"{self.bucket}.s3.amazonaws.com"
 
-    def auth(self):
-        if not self.anon:
-            from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
-
-            class _R:
-                def __init__(self, url):
-                    self.method = "GET"
-                    self.url = url
-                    self.body = ""
-
-            req = _R(self.url)
-
-            auth = BotoAWSRequestsAuth(
-                aws_host=self._host(),
-                aws_region="eu-west-2",
-                aws_service="s3",
-            )
-
-            return auth.get_aws_request_headers_handler(req)
-        else:
-            return {}
-
-    def fake_headers(self):
-        return {"accept-ranges": "bytes", "server": "AmazonS3"}
-
     def __repr__(self):
-        return f"{self.__class__.__name__}(bucket={self.url}, anon={self.anon}, part={self.part})"
+        return f"{self.__class__.__name__}(url={self.url}, part={self.part})"
 
 
 class S3Source(FileSource):
@@ -98,16 +100,38 @@ class S3Source(FileSource):
         if not isinstance(self.request, list):
             self.request = [self.request]
 
-        self.resources = request_to_resource(self.request, self.anon)
+        self.resources = request_to_resource(self.request)
 
     def mutate(self):
+        urls = []
+        parts = {}
+        for r in self.resources:
+            urls.append(r.url)
+            if r.part:
+                parts[r.url] = r.part
+
+        if not parts:
+            parts = None
+        elif len(urls) == 1:
+            parts = parts[urls[0]]
+
         if self.stream:
-            return Url(self.resources, stream=True, **self._stream_kwargs)
+            return Url(
+                urls,
+                auth=self.make_auth(),
+                parts=parts,
+                stream=True,
+                **self._stream_kwargs,
+            )
+
         else:
-            return MultiUrl(self.resources)
+            return MultiUrl(urls, parts=parts, auth=self.make_auth())
+
+    def make_auth(self):
+        return S3Authenticator() if not self.anon else None
 
     def __repr__(self) -> str:
-        return self.__class__.__name__
+        return f"{self.__class__.__name__}()"
 
 
 source = S3Source

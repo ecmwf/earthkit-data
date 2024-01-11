@@ -16,7 +16,6 @@ from earthkit.data.core.caching import cache_file
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.core.statistics import record_statistics
 from earthkit.data.utils import progress_bar
-from earthkit.data.utils.url import AnonymousUrlResource, UrlResource
 
 from .file import FileSource
 
@@ -104,7 +103,7 @@ def download_and_cache(
     return path
 
 
-class Url(FileSource):
+class UrlBase(FileSource):
     def __init__(
         self,
         url,
@@ -112,49 +111,79 @@ class Url(FileSource):
         filter=None,
         merger=None,
         verify=True,
-        force=None,
-        chunk_size=1024 * 1024,
         range_method="auto",
         http_headers=None,
-        update_if_out_of_date=False,
         fake_headers=None,  # When HEAD is not allowed but you know the size
         stream=False,
+        auth=None,
         **kwargs,
     ):
         super().__init__(filter=filter, merger=merger)
 
-        # TODO: re-enable this feature
-        extension = None
-
         self.url = url
         self.parts = parts
-        self.stream = stream
         self.http_headers = http_headers
-        LOG.debug("URL %s", url)
+        self.auth = auth
+        self.verify = verify
+        self.range_method = range_method
+        self.fake_headers = fake_headers
+        self.stream = stream
+        self._kwargs = kwargs
+        LOG.debug(f"url={self.url} _kwargs={self._kwargs}")
+
+    def connect_to_mirror(self, mirror):
+        return mirror.connection_for_url(self, self.url, self.parts)
+
+    def _add_auth_headers(self):
+        if self.http_headers is None:
+            self.http_headers = {}
+
+        self.http_headers = dict(self.http_headers)
+
+        if self.auth is not None:
+            self.http_headers.update(self.auth.auth_header())
+
+    def _get_parts(self, url):
+        if isinstance(self.parts, dict):
+            return self.parts.get(url, None)
+        else:
+            return self.parts
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.url})"
+
+
+class Url(UrlBase):
+    def __init__(
+        self,
+        url,
+        chunk_size=1024 * 1024,
+        update_if_out_of_date=False,
+        force=None,
+        **kwargs,
+    ):
+        super().__init__(url, **kwargs)
+
+        # TODO: re-enable this feature
+        extension = None
 
         if not self.stream:
             self.update_if_out_of_date = update_if_out_of_date
 
-            if isinstance(self.url, UrlResource):
-                resource = self.url
-                self.url = resource.url
-                if resource.part is not None:
-                    self.parts = [resource.part]
-                if not isinstance(self.http_headers, dict):
-                    self.http_headers = {}
-                self.http_headers.update(resource.auth())
+            if self.parts is not None and not isinstance(self.parts, (list, tuple)):
+                raise TypeError(f"invalid parts format: {type(self.parts)}")
 
-            LOG.debug(f"url={self.url} parts={self.parts}")
+            self._add_auth_headers()
 
             self.downloader = Downloader(
                 self.url,
                 chunk_size=chunk_size,
                 timeout=SETTINGS.get("url-download-timeout"),
-                verify=verify,
+                verify=self.verify,
                 parts=self.parts,
-                range_method=range_method,
+                range_method=self.range_method,
                 http_headers=self.http_headers,
-                fake_headers=fake_headers,
+                fake_headers=self.fake_headers,
                 statistics_gatherer=record_statistics,
                 progress_bar=progress_bar,
                 resume_transfers=True,
@@ -185,26 +214,32 @@ class Url(FileSource):
                 extension=extension,
                 force=force,
             )
-        else:
-            self._kwargs = kwargs
 
     def mutate(self):
         if self.stream:
             urls = self.url
+            s = []
             if not isinstance(urls, list):
                 urls = [urls]
 
-            if isinstance(urls[0], str):
-                urls = [AnonymousUrlResource(x) for x in urls]
+            for url in urls:
+                s.append(
+                    SingleUrlStream(
+                        url,
+                        parts=self._get_parts(url),
+                        verify=True,
+                        range_method="auto",
+                        http_headers=self.http_headers,
+                        fake_headers=None,
+                        auth=self.auth,
+                    )
+                )
 
-            from .stream import make_stream_from_resource
+            from .stream import _from_source
 
-            return make_stream_from_resource(self, urls, **self._kwargs)
+            return _from_source(s, **self._kwargs)
         else:
             return super().mutate()
-
-    def connect_to_mirror(self, mirror):
-        return mirror.connection_for_url(self, self.url, self.parts)
 
     def out_of_date(self, url, path, cache_data):
         if SETTINGS.get("check-out-of-date-urls") is False:
@@ -224,8 +259,36 @@ class Url(FileSource):
                 )
         return False
 
-    def __repr__(self) -> str:
-        return f"Url({self.url})"
+
+class SingleUrlStream(UrlBase):
+    def __init__(
+        self,
+        url,
+        **kwargs,
+    ):
+        super().__init__(url, **kwargs)
+
+        if isinstance(self.url, (list, tuple)):
+            raise TypeError("only a single url is supported")
+
+    def mutate(self):
+        from .stream import _from_source
+
+        return _from_source(self, **self._kwargs)
+
+    def to_stream(self):
+        from urllib.request import Request, urlopen
+
+        if self.http_headers is None:
+            self.http_headers = {}
+        headers = dict(self.http_headers)
+
+        if self.auth is not None:
+            headers.update(self.auth.auth_header(self.url))
+
+        # TODO: ensure stream is closed when consumed
+        r = Request(self.url, headers=headers)
+        return urlopen(r)
 
 
 source = Url

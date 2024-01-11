@@ -11,37 +11,12 @@
 from abc import ABCMeta, abstractmethod
 
 
-class UrlResource(metaclass=ABCMeta):
-    def __init__(self, anon):
-        self.anon = anon
-
-    @property
+class HttpAuthenticator(metaclass=ABCMeta):
     @abstractmethod
-    def url(self):
+    def auth_header(self, url):
         pass
 
-    def auth(self):
-        return {}
 
-    def to_stream(self):
-        from urllib.request import Request, urlopen
-
-        headers = self.auth()
-
-        # TODO: ensure stream is closed when consumed
-        print(f"SELF={self.url}")
-        r = Request(self.url, headers=headers)
-        return urlopen(r)
-
-
-class AnonymousUrlResource(UrlResource):
-    def __init__(self, url):
-        super().__init__(True)
-        self._url = url
-
-    @property
-    def url(self):
-        return self._url
-
-    def auth(self):
+class AnonymousHttpAuthenticator(metaclass=ABCMeta):
+    def auth_header(self, url):
         return {}

@@ -221,21 +221,21 @@ class StreamSource(StreamSourceBase):
     def mutate(self):
         assert self._reader_ is None
 
-        return make_source(
+        return _from_stream(
             self._stream, batch_size=self.batch_size, group_by=self.group_by
         )
 
 
 class StreamSourceMaker:
-    def __init__(self, resource, stream_kwargs):
-        self.resource = resource
+    def __init__(self, source, stream_kwargs):
+        self.in_source = source
         self.stream_kwargs = dict(stream_kwargs)
         self.source = None
 
     def __call__(self):
         if self.source is None:
-            stream = self.resource.to_stream()
-            self.source = make_source(stream, **self.stream_kwargs)
+            stream = self.in_source.to_stream()
+            self.source = _from_stream(stream, **self.stream_kwargs)
 
             prev = None
             src = self.source
@@ -247,7 +247,7 @@ class StreamSourceMaker:
         return self.source
 
 
-def make_source(stream, group_by, batch_size):
+def _from_stream(stream, group_by, batch_size):
     _kwargs = dict(batch_size=batch_size, group_by=group_by)
 
     if group_by:
@@ -262,32 +262,18 @@ def make_source(stream, group_by, batch_size):
     raise ValueError(f"Unsupported stream parameters {batch_size=} {group_by=}")
 
 
-def make_stream_from_resource(owner, resource, **kwargs):
+def _from_source(source, **kwargs):
     stream_kwargs, kwargs = parse_stream_kwargs(**kwargs)
 
     if kwargs:
         raise TypeError(f"got invalid keyword argument(s): {list(kwargs.keys())}")
 
-    if not isinstance(resource, (list, tuple)):
-        maker = StreamSourceMaker(resource, stream_kwargs)
+    if not isinstance(source, (list, tuple)):
+        maker = StreamSourceMaker(source, stream_kwargs)
         return maker()
     else:
-        sources = [StreamSourceMaker(r, stream_kwargs) for r in resource]
+        sources = [StreamSourceMaker(s, stream_kwargs) for s in source]
         return MultiStreamSource(sources, **stream_kwargs)
-
-
-# def make_stream_from_method(owner, create, data, **kwargs):
-#     stream_kwargs, kwargs = parse_stream_kwargs(**kwargs)
-
-#     if kwargs:
-#         raise TypeError(f"got invalid keyword argument(s): {list(kwargs.keys())}")
-
-#     if not isinstance(data, (list, tuple)):
-#         maker = StreamSourceMaker(create, data, stream_kwargs)
-#         return maker()
-#     else:
-#         sources = [StreamSourceMaker(create, d, stream_kwargs) for d in data]
-#         return MultiStreamSource(sources, **stream_kwargs)
 
 
 source = StreamSource
