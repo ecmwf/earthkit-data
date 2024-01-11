@@ -108,24 +108,33 @@ class S3Source(FileSource):
         for r in self.resources:
             urls.append(r.url)
             if r.part:
-                parts[r.url] = r.part
+                parts[r.url] = [r.part]
 
         if not parts:
             parts = None
         elif len(urls) == 1:
             parts = parts[urls[0]]
 
+        #
+        if not self.anon and parts:
+            fake_headers = {"accept-ranges": "bytes"}
+        else:
+            fake_headers = None
+
+        auth = self.make_auth()
+
         if self.stream:
             return Url(
                 urls,
-                auth=self.make_auth(),
+                auth=auth,
                 parts=parts,
+                fake_headers=fake_headers,
                 stream=True,
                 **self._stream_kwargs,
             )
 
         else:
-            return MultiUrl(urls, parts=parts, auth=self.make_auth())
+            return MultiUrl(urls, parts=parts, fake_headers=fake_headers, auth=auth)
 
     def make_auth(self):
         return S3Authenticator() if not self.anon else None

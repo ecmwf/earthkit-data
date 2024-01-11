@@ -129,19 +129,26 @@ class UrlBase(FileSource):
         self.fake_headers = fake_headers
         self.stream = stream
         self._kwargs = kwargs
-        LOG.debug(f"url={self.url} _kwargs={self._kwargs}")
+        LOG.debug(
+            f"url={self.url} parts={self.parts} auth={self.auth} _kwargs={self._kwargs}"
+        )
 
     def connect_to_mirror(self, mirror):
         return mirror.connection_for_url(self, self.url, self.parts)
 
-    def _add_auth_headers(self):
-        if self.http_headers is None:
-            self.http_headers = {}
-
-        self.http_headers = dict(self.http_headers)
+    def prepare_headers(self, url):
+        headers = {}
+        if self.http_headers is not None:
+            headers = dict(self.http_headers)
 
         if self.auth is not None:
-            self.http_headers.update(self.auth.auth_header())
+            LOG.debug(f"url={self.url}")
+            headers.update(self.auth.auth_header(url))
+
+        if not headers:
+            headers = None
+
+        return headers
 
     def _get_parts(self, url):
         if isinstance(self.parts, dict):
@@ -175,6 +182,8 @@ class Url(UrlBase):
 
             self._add_auth_headers()
 
+            LOG.debug(f"http_headers={self.http_headers}")
+
             self.downloader = Downloader(
                 self.url,
                 chunk_size=chunk_size,
@@ -182,7 +191,7 @@ class Url(UrlBase):
                 verify=self.verify,
                 parts=self.parts,
                 range_method=self.range_method,
-                http_headers=self.http_headers,
+                http_headers=self.prepare_headers(),
                 fake_headers=self.fake_headers,
                 statistics_gatherer=record_statistics,
                 progress_bar=progress_bar,
@@ -229,7 +238,7 @@ class Url(UrlBase):
                         parts=self._get_parts(url),
                         verify=True,
                         range_method="auto",
-                        http_headers=self.http_headers,
+                        http_headers=self.prepare_headers(url),
                         fake_headers=None,
                         auth=self.auth,
                     )
@@ -279,16 +288,41 @@ class SingleUrlStream(UrlBase):
     def to_stream(self):
         from urllib.request import Request, urlopen
 
-        if self.http_headers is None:
-            self.http_headers = {}
-        headers = dict(self.http_headers)
-
-        if self.auth is not None:
-            headers.update(self.auth.auth_header(self.url))
+        headers = self.prepare_headers(self.url)
 
         # TODO: ensure stream is closed when consumed
         r = Request(self.url, headers=headers)
         return urlopen(r)
+
+    def prepare_headers(self, url):
+        headers = super().prepare_headers(url)
+        parts = self.parts_header(self.parts)
+        if parts is not None and parts:
+            if headers is None:
+                headers = {}
+            headers.update(parts)
+        return headers
+
+    def parts_header(self, parts):
+        if parts is not None:
+            if isinstance(parts, list):
+                part = parts[0]
+            else:
+                part = parts
+
+            offset, length = part
+            if offset is None:
+                offset = 0
+
+            start = offset
+            end = ""
+
+            if length is not None:
+                end = offset + length - 1
+
+            return {"Range": f"bytes={start}-{end}"}
+        else:
+            return {}
 
 
 source = Url
