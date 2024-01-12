@@ -48,6 +48,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
     * - :ref:`data-sources-polytope`
       - retrieve data from the `Polytope services <https://polytope-client.readthedocs.io/en/latest/>`_
+    * - :ref:`data-sources-s3`
+      - retrieve data from Amazon S3 buckets
     * - :ref:`data-sources-wekeo`
       - retrieve data from `WEkEO`_ using the WEkEO grammar
     * - :ref:`data-sources-wekeocds`
@@ -625,6 +627,31 @@ polytope
 
       - :ref:`/examples/polytope.ipynb`
 
+
+.. _data-sources-s3:
+
+s3
+---
+
+.. py:function:: from_source("s3", *args, stream=True,  batch_size=1, group_by=None, **kwargs)
+  :noindex:
+
+  The ``s3`` source provides access to `Amazon S3 buckets <https://aws.amazon.com/s3/>`_.
+
+  :param tuple *args: positional arguments specifying the request as a dict
+  :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`.
+  :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. For details see :ref:`stream source <data-sources-stream>`.
+  :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
+  :type group_by: str, list of str
+  :param dict **kwargs: other keyword arguments specifying the request
+
+  The following example retrieves analysis :ref:`grib` data for 3 surface parameters as stream.
+  By default we will consume one message at a time and ``ds`` can only be used as an iterator:
+
+
+  Further examples:
+
+      - :ref:`/examples/s3.ipynb`
 
 
 .. _data-sources-wekeo:

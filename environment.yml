@@ -30,6 +30,7 @@ dependencies:
   - earthkit-meteo>=0.0.1
 - tqdm
 - markdown
+- aws-requests-auth
 - make
 - mypy
 - myst-parser

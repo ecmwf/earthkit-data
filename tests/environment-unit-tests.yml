@@ -32,6 +32,7 @@ dependencies:
   - git+https://github.com/ecmwf/earthkit-data-demo-source
 - tqdm
 - markdown
+- aws-requests-auth
 - make
 - mypy
 - myst-parser

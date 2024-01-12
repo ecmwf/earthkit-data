@@ -19,12 +19,15 @@ LOG = logging.getLogger(__name__)
 
 
 def request_to_resource(requests):
-    def _make_part(part_start, part_range):
-        if part_start is not None and part_range is not None:
-            part = (int(part_start), int(part_range))
-        else:
-            part = None
-        return part
+    def _make_part(offset, length):
+        if offset is not None:
+            offset = int(offset)
+
+        if length is not None:
+            length = int(length)
+
+        if offset is not None or length is not None:
+            return [(offset, length)]
 
     resources = []
     for r in requests:
@@ -80,6 +83,8 @@ class S3Resource:
 
 
 class S3Source(FileSource):
+    """Represent an AWS S3 bucket source"""
+
     def __init__(self, *args, anon=True, stream=True, **kwargs) -> None:
         super().__init__()
 
@@ -104,19 +109,15 @@ class S3Source(FileSource):
 
     def mutate(self):
         urls = []
-        parts = {}
-        for r in self.resources:
-            urls.append(r.url)
-            if r.part:
-                parts[r.url] = [r.part]
+        has_parts = any(r.part is not None for r in self.resources)
+        if has_parts:
+            for r in self.resources:
+                urls.append([r.url, r.part])
+        else:
+            for r in self.resources:
+                urls.append(r.url)
 
-        if not parts:
-            parts = None
-        elif len(urls) == 1:
-            parts = parts[urls[0]]
-
-        #
-        if not self.anon and parts:
+        if not self.anon and has_parts:
             fake_headers = {"accept-ranges": "bytes"}
         else:
             fake_headers = None
@@ -127,14 +128,13 @@ class S3Source(FileSource):
             return Url(
                 urls,
                 auth=auth,
-                parts=parts,
                 fake_headers=fake_headers,
                 stream=True,
                 **self._stream_kwargs,
             )
 
         else:
-            return MultiUrl(urls, parts=parts, fake_headers=fake_headers, auth=auth)
+            return MultiUrl(urls, fake_headers=fake_headers, auth=auth)
 
     def make_auth(self):
         return S3Authenticator() if not self.anon else None

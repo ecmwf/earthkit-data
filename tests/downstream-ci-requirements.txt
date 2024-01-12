@@ -23,6 +23,7 @@ earthkit-meteo>=0.0.1
 git+https://github.com/ecmwf/earthkit-data-demo-source
 geopandas
 cartopy
+aws-requests-auth
 # for testing
 pytest
 pytest-cov

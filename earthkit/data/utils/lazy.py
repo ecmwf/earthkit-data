@@ -39,6 +39,7 @@ class LazySource:
             #     self._exception = e
             #     raise LazySource(e)
             except Exception as e:
+                LOG.exception(e)
                 self._exception = e
                 raise
 

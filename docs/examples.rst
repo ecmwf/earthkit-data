@@ -17,6 +17,7 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     examples/fdb.ipynb
     examples/mars.ipynb
     examples/polytope.ipynb
+    examples/s3.ipynb
     examples/wekeo.ipynb
 
 

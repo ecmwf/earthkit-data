@@ -142,7 +142,6 @@ class UrlBase(FileSource):
             headers = dict(self.http_headers)
 
         if self.auth is not None:
-            LOG.debug(f"url={self.url}")
             headers.update(self.auth.auth_header(url))
 
         if not headers:
@@ -161,9 +160,27 @@ class UrlBase(FileSource):
 
 
 class Url(UrlBase):
+    """Represent a URL source.
+
+    Parameters
+    ----------
+    url: str, list, tuple
+        Single url or a list/tuple of urls. A url item can be:
+
+        * a str
+        * a list/tuple of two items. The first item is the url as a str, while the second
+          item defines the parts for the given url. In this case the ``parts`` kwargs
+          cannot be used.
+
+        When ``url`` is a list/tuple these two formats cannot be mixed so either all the url
+        items are str or a list/tuple of url and parts.
+
+    """
+
     def __init__(
         self,
         url,
+        *,
         chunk_size=1024 * 1024,
         update_if_out_of_date=False,
         force=None,
@@ -177,27 +194,30 @@ class Url(UrlBase):
         if not self.stream:
             self.update_if_out_of_date = update_if_out_of_date
 
-            if self.parts is not None and not isinstance(self.parts, (list, tuple)):
-                raise TypeError(f"invalid parts format: {type(self.parts)}")
+            self.prepare()
 
-            self._add_auth_headers()
-
-            LOG.debug(f"http_headers={self.http_headers}")
+            LOG.debug(
+                (
+                    f"url={self.url} parts={self.parts} auth={self.auth}) "
+                    f"http_headers={self.http_headers} parts_kwargs={self.parts_kwargs}"
+                    f" _kwargs={self._kwargs}"
+                )
+            )
 
             self.downloader = Downloader(
                 self.url,
                 chunk_size=chunk_size,
                 timeout=SETTINGS.get("url-download-timeout"),
                 verify=self.verify,
-                parts=self.parts,
                 range_method=self.range_method,
-                http_headers=self.prepare_headers(),
+                http_headers=self.prepare_headers(self.url),
                 fake_headers=self.fake_headers,
                 statistics_gatherer=record_statistics,
                 progress_bar=progress_bar,
                 resume_transfers=True,
                 override_target_file=False,
                 download_file_extension=".download",
+                **self.parts_kwargs,
             )
 
             if extension and extension[0] != ".":
@@ -226,16 +246,20 @@ class Url(UrlBase):
 
     def mutate(self):
         if self.stream:
-            urls = self.url
-            s = []
-            if not isinstance(urls, list):
-                urls = [urls]
+            # create one stream source per url
+            from multiurl.downloader import _canonicalize
 
-            for url in urls:
+            s = []
+            _kwargs = {}
+            if self.parts is not None:
+                _kwargs = {"parts": self.parts}
+            urls, _ = _canonicalize(self.url, **_kwargs)
+
+            for url, parts in urls:
                 s.append(
                     SingleUrlStream(
                         url,
-                        parts=self._get_parts(url),
+                        parts=parts,
                         verify=True,
                         range_method="auto",
                         http_headers=self.prepare_headers(url),
@@ -249,6 +273,32 @@ class Url(UrlBase):
             return _from_source(s, **self._kwargs)
         else:
             return super().mutate()
+
+    def prepare(self):
+        # ensure no parts kwargs is used when the parts are defined together with the urls
+        self.parts_kwargs = {}
+        urls = self.url
+
+        if not isinstance(urls, (list, tuple)):
+            urls = [urls]
+
+        # a single url as [url, parts] is not allowed by multiurl
+        if (
+            len(urls) == 2
+            and isinstance(urls[0], str)
+            and (urls[1] is None or isinstance(urls[1], (list, tuple)))
+        ):
+            if self.parts is not None:
+                raise ValueError("cannot specify parts both as arg and kwarg")
+            self.url, self.parts = urls
+            self.parts_kwargs = {"parts": self.parts}
+        # each url is a [url, parts]
+        elif isinstance(urls[0], (list, tuple)):
+            if self.parts is not None:
+                raise ValueError("cannot specify parts both as arg and kwarg")
+        # each url is a str
+        else:
+            self.parts_kwargs = {"parts": self.parts}
 
     def out_of_date(self, url, path, cache_data):
         if SETTINGS.get("check-out-of-date-urls") is False:
@@ -291,6 +341,7 @@ class SingleUrlStream(UrlBase):
         headers = self.prepare_headers(self.url)
 
         # TODO: ensure stream is closed when consumed
+        # TODO: use multiurl
         r = Request(self.url, headers=headers)
         return urlopen(r)
 
@@ -301,24 +352,30 @@ class SingleUrlStream(UrlBase):
             if headers is None:
                 headers = {}
             headers.update(parts)
-        return headers
+        return headers if headers is not None else {}
 
     def parts_header(self, parts):
         if parts is not None:
-            if isinstance(parts, list):
+            if isinstance(parts, (list, tuple)):
                 part = parts[0]
             else:
                 part = parts
 
-            offset, length = part
+            offset, length = part.offset, part.length
+
+            if offset is None and length is None:
+                return {}
+
             if offset is None:
-                offset = 0
-
+                offset = ""
             start = offset
-            end = ""
 
+            end = ""
             if length is not None:
-                end = offset + length - 1
+                if isinstance(offset, int):
+                    end = offset + length - 1
+                else:
+                    end = length
 
             return {"Range": f"bytes={start}-{end}"}
         else:
