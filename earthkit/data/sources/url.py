@@ -196,10 +196,10 @@ class Url(UrlBase):
         # TODO: re-enable this feature
         extension = None
 
+        self.prepare()
+
         if not self.stream:
             self.update_if_out_of_date = update_if_out_of_date
-
-            self.prepare()
 
             LOG.debug(
                 (
@@ -255,9 +255,9 @@ class Url(UrlBase):
             from multiurl.downloader import _canonicalize
 
             s = []
-            _kwargs = {}
-            if self.parts is not None:
-                _kwargs = {"parts": self.parts}
+            _kwargs = dict(**self.parts_kwargs)
+            # if self.parts is not None:
+            #     _kwargs = {"parts": self.parts}
             urls, _ = _canonicalize(self.url, **_kwargs)
 
             for url, parts in urls:
@@ -294,13 +294,13 @@ class Url(UrlBase):
             and (urls[1] is None or isinstance(urls[1], (list, tuple)))
         ):
             if self.parts is not None:
-                raise ValueError("cannot specify parts both as arg and kwarg")
+                raise ValueError("Cannot specify parts both as arg and kwarg")
             self.url, self.parts = urls
             self.parts_kwargs = {"parts": self.parts}
         # each url is a [url, parts]
         elif isinstance(urls[0], (list, tuple)):
             if self.parts is not None:
-                raise ValueError("cannot specify parts both as arg and kwarg")
+                raise ValueError("Cannot specify parts both as arg and kwarg")
         # each url is a str
         else:
             self.parts_kwargs = {"parts": self.parts}
@@ -326,7 +326,7 @@ class Url(UrlBase):
 
 class RequestIterStreamer:
     """Expose fixed chunk-based stream reader used in mutiurl as a
-    stream supporting a generic read method
+    stream supporting a generic read method.
     """
 
     def __init__(self, iter_content):
@@ -431,13 +431,13 @@ class SingleUrlStream(UrlBase):
         super().__init__(url, **kwargs)
 
         if isinstance(self.url, (list, tuple)):
-            raise TypeError("only a single url is supported")
+            raise TypeError("Only a single url is supported")
 
         from urllib.parse import urlparse
 
         o = urlparse(self.url)
         if o.scheme not in ("http", "https"):
-            raise NotImplementedError(f"streams are not supported for {o.scheme} URLs")
+            raise NotImplementedError(f"Streams are not supported for {o.scheme} urls")
 
     def mutate(self):
         from .stream import _from_source

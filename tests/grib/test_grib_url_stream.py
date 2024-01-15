@@ -400,6 +400,48 @@ def test_grib_single_url_stream_parts(path, parts, expected_meta):
 
 
 @pytest.mark.parametrize(
+    "parts,expected_meta",
+    [
+        ([(0, 150)], [("t", 1000)]),
+        (
+            None,
+            [("t", 1000), ("u", 1000), ("v", 1000), ("t", 850), ("u", 850), ("v", 850)],
+        ),
+    ],
+)
+def test_grib_single_url_stream_parts_as_arg(parts, expected_meta):
+    ds = from_source(
+        "url",
+        [earthkit_remote_test_data_file("examples/test6.grib"), parts],
+        stream=True,
+    )
+
+    # no fieldlist methods are available
+    with pytest.raises(TypeError):
+        len(ds)
+
+    cnt = 0
+    for i, f in enumerate(ds):
+        assert f.metadata(("param", "level")) == expected_meta[i], i
+        cnt += 1
+
+    assert cnt == len(expected_meta)
+
+    # stream consumed, no data is available
+    assert sum([1 for _ in ds]) == 0
+
+
+def test_grib_single_url_stream_parts_as_arg_invalid():
+    with pytest.raises(ValueError):
+        from_source(
+            "url",
+            [earthkit_remote_test_data_file("examples/test6.grib"), [(0, 150)]],
+            parts=[(0, 160)],
+            stream=True,
+        )
+
+
+@pytest.mark.parametrize(
     "parts1,parts2,expected_meta",
     [
         (
