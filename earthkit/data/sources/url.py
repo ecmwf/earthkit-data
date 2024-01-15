@@ -22,6 +22,10 @@ from .file import FileSource
 LOG = logging.getLogger(__name__)
 
 
+def _ignore(*args, **kwargs):
+    pass
+
+
 def download_and_cache(
     url,
     *,
@@ -107,6 +111,7 @@ class UrlBase(FileSource):
     def __init__(
         self,
         url,
+        chunk_size=1024 * 1024,
         parts=None,
         filter=None,
         merger=None,
@@ -121,6 +126,7 @@ class UrlBase(FileSource):
         super().__init__(filter=filter, merger=merger)
 
         self.url = url
+        self.chunk_size = chunk_size
         self.parts = parts
         self.http_headers = http_headers
         self.auth = auth
@@ -181,7 +187,6 @@ class Url(UrlBase):
         self,
         url,
         *,
-        chunk_size=1024 * 1024,
         update_if_out_of_date=False,
         force=None,
         **kwargs,
@@ -208,7 +213,7 @@ class Url(UrlBase):
 
             self.downloader = Downloader(
                 self.url,
-                chunk_size=chunk_size,
+                chunk_size=self.chunk_size,
                 timeout=SETTINGS.get("url-download-timeout"),
                 verify=self.verify,
                 range_method=self.range_method,
@@ -295,6 +300,104 @@ class Url(UrlBase):
         return False
 
 
+class RequestIterStreamer:
+    """Expose fixed chunk-based stream reader used in mutiurl as a
+    stream supporting a generic read method
+    """
+
+    def __init__(self, iter_content):
+        from collections import deque
+
+        self.iter_content = iter_content
+        self.content = deque()
+        self.position = 0
+        self.total = 0
+        self.consumed = False
+
+    def _ensure_content(self, size):
+        while self.total < size:
+            try:
+                self.content.append(next(self.iter_content))
+                self.total += len(self.content[-1])
+            except StopIteration:
+                break
+
+    def _read(self, size):
+        assert len(self.content) > 0
+
+        start = self.position
+        length = min(len(self.content[0]) - start, size)
+        end = start + length
+        data = self.content[0][start:end]
+        last = 0
+        size -= length
+
+        if size > 0:
+            d = [data]
+            for i in range(1, len(self.content)):
+                start = 0
+                length = min(len(self.content[i]) - start, size)
+                end = start + length
+                d.append(self.content[i][start:end])
+                last = i
+                size -= length
+                if size <= 0:
+                    break
+            data = data = b"".join(d)
+
+        return data, last, end, size
+
+    def read(self, size):
+        if size <= 0 or self.consumed:
+            return bytes()
+
+        self._ensure_content(size)
+        if len(self.content) == 0 or self.total == 0:
+            self.close()
+            return bytes()
+
+        data, last, self.position, missing_size = self._read(size)
+        # LOG.debug(f"{size=} {last=} pos={self.position} {missing_size=}")
+
+        if missing_size > 0:
+            self.close()
+        else:
+            if self.position == len(self.content[last]):
+                last += 1
+                self.position = 0
+
+            if last > 0:
+                for _ in range(0, last):
+                    self.content.popleft()
+
+            self.total = sum(len(x) for x in self.content)
+            self.total -= self.position
+
+        return data
+
+    def peek(self, size):
+        if size <= 0 or self.consumed:
+            return bytes()
+
+        self._ensure_content(size)
+        data, _, _, _ = self._read(size)
+        return data
+
+    def close(self):
+        if not self.closed:
+            self._clear()
+
+    @property
+    def closed(self):
+        return self.consumed
+
+    def _clear(self):
+        self.iter_content = None
+        self.content.clear()
+        self.position = 0
+        self.consumed = True
+
+
 class SingleUrlStream(UrlBase):
     def __init__(
         self,
@@ -306,50 +409,36 @@ class SingleUrlStream(UrlBase):
         if isinstance(self.url, (list, tuple)):
             raise TypeError("only a single url is supported")
 
+        from urllib.parse import urlparse
+
+        o = urlparse(self.url)
+        if o.scheme not in ("http", "https"):
+            raise NotImplementedError(f"streams are not supported for {o.scheme} URLs")
+
     def mutate(self):
         from .stream import _from_source
 
         return _from_source(self, **self._kwargs)
 
     def to_stream(self):
-        from urllib.request import Request, urlopen
+        downloader = Downloader(
+            self.url,
+            chunk_size=256,
+            parts=self.parts,
+            timeout=SETTINGS.get("url-download-timeout"),
+            verify=self.verify,
+            range_method=self.range_method,
+            http_headers=self.prepare_headers(self.url),
+            fake_headers=self.fake_headers,
+            statistics_gatherer=_ignore,
+            progress_bar=progress_bar,
+            resume_transfers=False,
+            override_target_file=False,
+        )
 
-        headers = self.prepare_headers(self.url)
-
-        # TODO: ensure stream is closed when consumed
-        # TODO: use multiurl
-        r = Request(self.url, headers=headers)
-        return urlopen(r)
-
-    def prepare_headers(self, url):
-        headers = super().prepare_headers(url)
-        parts = self.parts_header(self.parts)
-        if parts is not None and parts:
-            if headers is None:
-                headers = {}
-            headers.update(parts)
-        return headers if headers is not None else {}
-
-    def parts_header(self, parts):
-        if parts is not None:
-            if isinstance(parts, (list, tuple)):
-                part = parts[0]
-            else:
-                part = parts
-
-            offset, length = part.offset, part.length
-            if offset is None:
-                offset = 0
-
-            start = offset
-            end = ""
-
-            if length is not None:
-                end = offset + length - 1
-
-            return {"Range": f"bytes={start}-{end}"}
-        else:
-            return {}
+        size, mode, skip, trust_size = downloader.estimate_size(None)
+        stream = downloader.make_stream()
+        return RequestIterStreamer(stream(chunk_size=self.chunk_size))
 
 
 source = Url
