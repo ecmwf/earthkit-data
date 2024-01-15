@@ -196,20 +196,18 @@ class Url(UrlBase):
         # TODO: re-enable this feature
         extension = None
 
+        self.prepare()
+
         if not self.stream:
             self.update_if_out_of_date = update_if_out_of_date
 
-            # ensure no parts kwargs is used when the parts are defined together with the urls
-            _parts_kwargs = {}
-            if not isinstance(url, (list, tuple)):
-                url = [url]
-            if isinstance(url[0], (list, tuple)):
-                if self.parts is not None:
-                    raise ValueError("cannot specify parts both as arg and kwarg")
-            else:
-                _parts_kwargs = {"parts": self.parts}
-
-            LOG.debug(f"http_headers={self.http_headers}")
+            LOG.debug(
+                (
+                    f"url={self.url} parts={self.parts} auth={self.auth}) "
+                    f"http_headers={self.http_headers} parts_kwargs={self.parts_kwargs}"
+                    f" _kwargs={self._kwargs}"
+                )
+            )
 
             self.downloader = Downloader(
                 self.url,
@@ -224,7 +222,7 @@ class Url(UrlBase):
                 resume_transfers=True,
                 override_target_file=False,
                 download_file_extension=".download",
-                **_parts_kwargs,
+                **self.parts_kwargs,
             )
 
             if extension and extension[0] != ".":
@@ -257,9 +255,9 @@ class Url(UrlBase):
             from multiurl.downloader import _canonicalize
 
             s = []
-            _kwargs = {}
-            if self.parts is not None:
-                _kwargs = {"parts": self.parts}
+            _kwargs = dict(**self.parts_kwargs)
+            # if self.parts is not None:
+            #     _kwargs = {"parts": self.parts}
             urls, _ = _canonicalize(self.url, **_kwargs)
 
             for url, parts in urls:
@@ -280,6 +278,32 @@ class Url(UrlBase):
             return _from_source(s, **self._kwargs)
         else:
             return super().mutate()
+
+    def prepare(self):
+        # ensure no parts kwargs is used when the parts are defined together with the urls
+        self.parts_kwargs = {}
+        urls = self.url
+
+        if not isinstance(urls, (list, tuple)):
+            urls = [urls]
+
+        # a single url as [url, parts] is not allowed by multiurl
+        if (
+            len(urls) == 2
+            and isinstance(urls[0], str)
+            and (urls[1] is None or isinstance(urls[1], (list, tuple)))
+        ):
+            if self.parts is not None:
+                raise ValueError("Cannot specify parts both as arg and kwarg")
+            self.url, self.parts = urls
+            self.parts_kwargs = {"parts": self.parts}
+        # each url is a [url, parts]
+        elif isinstance(urls[0], (list, tuple)):
+            if self.parts is not None:
+                raise ValueError("Cannot specify parts both as arg and kwarg")
+        # each url is a str
+        else:
+            self.parts_kwargs = {"parts": self.parts}
 
     def out_of_date(self, url, path, cache_data):
         if SETTINGS.get("check-out-of-date-urls") is False:
@@ -302,7 +326,7 @@ class Url(UrlBase):
 
 class RequestIterStreamer:
     """Expose fixed chunk-based stream reader used in mutiurl as a
-    stream supporting a generic read method
+    stream supporting a generic read method.
     """
 
     def __init__(self, iter_content):
@@ -407,13 +431,13 @@ class SingleUrlStream(UrlBase):
         super().__init__(url, **kwargs)
 
         if isinstance(self.url, (list, tuple)):
-            raise TypeError("only a single url is supported")
+            raise TypeError("Only a single url is supported")
 
         from urllib.parse import urlparse
 
         o = urlparse(self.url)
         if o.scheme not in ("http", "https"):
-            raise NotImplementedError(f"streams are not supported for {o.scheme} URLs")
+            raise NotImplementedError(f"Streams are not supported for {o.scheme} urls")
 
     def mutate(self):
         from .stream import _from_source
