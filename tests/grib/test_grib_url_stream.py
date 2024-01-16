@@ -66,10 +66,14 @@ def test_grib_url_stream_group_by(_kwargs):
         [("t", 1000), ("u", 1000), ("v", 1000)],
         [("t", 850), ("u", 850), ("v", 850)],
     ]
+    cnt = 0
     for i, f in enumerate(fs):
         assert len(f) == 3
         assert f.metadata(("param", "level")) == ref[i]
         assert f.to_fieldlist("numpy") is not f
+        cnt += 1
+
+    assert cnt == len(ref)
 
     # stream consumed, no data is available
     assert sum([1 for _ in fs]) == 0
@@ -102,9 +106,12 @@ def test_grib_url_stream_single_batch(_kwargs):
         ("u", 850),
         ("v", 850),
     ]
-
+    cnt = 0
     for i, f in enumerate(ds):
         assert f.metadata(("param", "level")) == ref[i], i
+        cnt += 1
+
+    assert cnt == len(ref)
 
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
@@ -129,9 +136,13 @@ def test_grib_url_stream_multi_batch(_kwargs, expected_meta):
     with pytest.raises(TypeError):
         len(ds)
 
+    cnt = 0
     for i, f in enumerate(ds):
         assert len(f) == len(expected_meta[i])
         f.metadata("param") == expected_meta[i]
+        cnt += 1
+
+    assert cnt == len(expected_meta)
 
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
@@ -225,9 +236,12 @@ def test_grib_multi_url_stream_single_batch(_kwargs):
         ("t", 850),
         ("z", 850),
     ]
-
+    cnt = 0
     for i, f in enumerate(ds):
         assert f.metadata(("param", "level")) == ref[i], i
+        cnt += 1
+
+    assert cnt == len(ref)
 
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
@@ -256,9 +270,13 @@ def test_grib_multi_url_stream_batch(_kwargs, expected_meta):
     with pytest.raises(TypeError):
         len(ds)
 
+    cnt = 0
     for i, f in enumerate(ds):
         assert len(f) == len(expected_meta[i])
         f.metadata("param") == expected_meta[i]
+        cnt += 1
+
+    assert cnt == len(expected_meta)
 
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
@@ -340,6 +358,183 @@ def test_grib_multi_url_stream_memory():
         ("t", 500),
         ("t", 850),
     ]
+
+
+@pytest.mark.parametrize(
+    "path,parts,expected_meta",
+    [
+        ("examples/test6.grib", [(0, 150)], [("t", 1000)]),
+        ("examples/test6.grib", [(240, 150)], [("u", 1000)]),
+        ("examples/test6.grib", [(240, 480)], [("u", 1000), ("v", 1000)]),
+        ("test-data/karl_850.grib", [(0, 1683960)], [("t", 850)]),
+        ("test-data/karl_850.grib", [(0, 3367920)], [("t", 850), ("r", 850)]),
+        ("examples/test6.grib", [(240, 240), (720, 240)], [("u", 1000), ("t", 850)]),
+        (
+            "test-data/karl_850.grib",
+            [(0, 1683960), (3367920, 1683960)],
+            [("t", 850), ("z", 850)],
+        ),
+    ],
+)
+def test_grib_single_url_stream_parts(path, parts, expected_meta):
+    ds = from_source(
+        "url",
+        earthkit_remote_test_data_file(path),
+        parts=parts,
+        stream=True,
+    )
+
+    # no fieldlist methods are available
+    with pytest.raises(TypeError):
+        len(ds)
+
+    cnt = 0
+    for i, f in enumerate(ds):
+        assert f.metadata(("param", "level")) == expected_meta[i], i
+        cnt += 1
+
+    assert cnt == len(expected_meta)
+
+    # stream consumed, no data is available
+    assert sum([1 for _ in ds]) == 0
+
+
+@pytest.mark.parametrize(
+    "parts,expected_meta",
+    [
+        ([(0, 150)], [("t", 1000)]),
+        (
+            None,
+            [("t", 1000), ("u", 1000), ("v", 1000), ("t", 850), ("u", 850), ("v", 850)],
+        ),
+    ],
+)
+def test_grib_single_url_stream_parts_as_arg(parts, expected_meta):
+    ds = from_source(
+        "url",
+        [earthkit_remote_test_data_file("examples/test6.grib"), parts],
+        stream=True,
+    )
+
+    # no fieldlist methods are available
+    with pytest.raises(TypeError):
+        len(ds)
+
+    cnt = 0
+    for i, f in enumerate(ds):
+        assert f.metadata(("param", "level")) == expected_meta[i], i
+        cnt += 1
+
+    assert cnt == len(expected_meta)
+
+    # stream consumed, no data is available
+    assert sum([1 for _ in ds]) == 0
+
+
+def test_grib_single_url_stream_parts_as_arg_invalid():
+    with pytest.raises(ValueError):
+        from_source(
+            "url",
+            [earthkit_remote_test_data_file("examples/test6.grib"), [(0, 150)]],
+            parts=[(0, 160)],
+            stream=True,
+        )
+
+
+@pytest.mark.parametrize(
+    "parts1,parts2,expected_meta",
+    [
+        (
+            [(240, 150)],
+            None,
+            [("u", 1000), ("2t", 0), ("msl", 0)],
+        ),
+        (
+            None,
+            [(0, 526)],
+            [
+                ("t", 1000),
+                ("u", 1000),
+                ("v", 1000),
+                ("t", 850),
+                ("u", 850),
+                ("v", 850),
+                ("2t", 0),
+            ],
+        ),
+        (
+            [(240, 150)],
+            [(0, 526)],
+            [("u", 1000), ("2t", 0)],
+        ),
+        (
+            [(240, 150), (720, 150)],
+            [(0, 526)],
+            [("u", 1000), ("t", 850), ("2t", 0)],
+        ),
+    ],
+)
+def test_grib_multi_url_stream_parts(parts1, parts2, expected_meta):
+    ds = from_source(
+        "url",
+        [
+            [earthkit_remote_test_data_file("examples/test6.grib"), parts1],
+            [earthkit_remote_test_data_file("examples/test.grib"), parts2],
+        ],
+        stream=True,
+    )
+
+    # no fieldlist methods are available
+    with pytest.raises(TypeError):
+        len(ds)
+
+    cnt = 0
+    for i, f in enumerate(ds):
+        assert f.metadata(("param", "level")) == expected_meta[i], i
+        cnt += 1
+
+    assert cnt == len(expected_meta)
+
+    # stream consumed, no data is available
+    assert sum([1 for _ in ds]) == 0
+
+
+# Test RequestIterStreamer object from sources/url.py
+
+
+def iter_stream(chunk_size, data):
+    num = len(data)
+    pos = 0
+    while pos < num:
+        start = pos
+        end = min(pos + chunk_size, num)
+        pos += end - start
+        yield data[start:end]
+
+
+@pytest.mark.parametrize("chunk_size", [1, 2, 3, 4, 5, 10, 12, 14])
+@pytest.mark.parametrize("read_size", [1, 2, 3, 4, 5, 10, 12, 14])
+def test_request_iter_streamer(chunk_size, read_size):
+    from earthkit.data.sources.url import RequestIterStreamer
+
+    data = str.encode("0123456789abc")
+
+    stream = RequestIterStreamer(iter_stream(chunk_size, data))
+
+    assert not stream.closed
+    assert stream.read(-1) == bytes()
+    assert stream.read(0) == bytes()
+    assert stream.peek(4) == data[:4]
+    assert not stream.closed
+
+    for i in range(0, len(data), read_size):
+        assert stream.read(read_size) == data[i : min(i + read_size, len(data))], i
+
+    assert stream.read(1) == bytes()
+    assert stream.closed
+    assert stream.read(0) == bytes()
+    assert stream.read(-1) == bytes()
+    assert stream.peek(4) == bytes()
 
 
 if __name__ == "__main__":
