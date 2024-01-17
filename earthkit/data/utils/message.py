@@ -31,6 +31,31 @@ except Exception:
     pass
 
 
+class EccodesFeatures:
+    def __init__(self):
+        try:
+            self.major, self.mid, self.minor = [
+                int(x) for x in eccodes.__version__.split(".")
+            ]
+        except Exception:
+            self.major, self.mid, self.minor = (0, 0, 0)
+
+        self.has_header_only_clone = (
+            self.major >= 1
+            and self.mid >= 7
+            and eccodes.codes_get_api_version(int) >= 23400
+        )
+
+    def check_codes_clone_kwargs(self, **kwargs):
+        if not self.has_header_only_clone:
+            kwargs = dict(**kwargs)
+            kwargs.pop("headers_only")
+        return kwargs
+
+
+ECC_FEATURES = EccodesFeatures()
+
+
 class CodesMessagePositionIndex:
     VERSION = 1
 
@@ -145,8 +170,9 @@ class CodesHandle(eccodes.Message):
     def get_long(self, name):
         return self.get(name, ktype=int)
 
-    def clone(self):
-        return self._from_raw_handle(eccodes.codes_clone(self._handle))
+    def clone(self, **kwargs):
+        kwargs = ECC_FEATURES.check_codes_clone_kwargs(**kwargs)
+        return self._from_raw_handle(eccodes.codes_clone(self._handle, **kwargs))
 
     def set_multiple(self, values):
         try:
