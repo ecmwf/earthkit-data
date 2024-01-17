@@ -107,7 +107,7 @@ def to_date_list(obj):
 
 
 def step_to_delta(step):
-    # TODO: make it work for all the options
+    # TODO: make it work for all the ecCodes step formats
     if isinstance(step, int):
         return datetime.timedelta(hours=step)
     elif isinstance(step, str):
