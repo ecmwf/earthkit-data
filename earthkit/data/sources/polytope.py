@@ -55,7 +55,7 @@ class Polytope(Source):
     >>> src.to_xarray()  # if datacube
     """
 
-    def __init__(self, dataset, request) -> None:
+    def __init__(self, dataset, request, address=None) -> None:
         from earthkit.data.utils.importer import IMPORTER
 
         polytope = IMPORTER.import_module("polytope")
@@ -66,7 +66,11 @@ class Polytope(Source):
         self.request = dict(dataset=dataset, request=request)
 
         credentials = PolytopeWebKeyPrompt().check(load=True)
-        self.client = polytope.api.Client(**credentials)
+
+        client_kwargs = {}
+        if address is not None:
+            client_kwargs = {"address": address}
+        self.client = polytope.api.Client(**credentials, **client_kwargs)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.request['dataset']}, {self.request['request']})"

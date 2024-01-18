@@ -95,6 +95,7 @@ NO_FDB = not (
 )
 NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
 NO_CARTOPY = MISSING("cartopy.ccrs")
+NO_ECCOVJSON = not modules_installed("eccovjson")
 
 IN_GITHUB = os.environ.get("GITHUB_WORKFLOW") is not None
 
