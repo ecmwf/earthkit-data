@@ -20,6 +20,8 @@ from earthkit.data.core.caching import CACHE, auxiliary_cache_file
 
 LOG = logging.getLogger(__name__)
 
+os.environ["ECCODES_GRIB_SHOW_HOUR_STEPUNIT"] = "1"
+
 # For some reason, cffi can get stuck in the GC if that function
 # needs to be called defined for the first time in a GC thread.
 try:
