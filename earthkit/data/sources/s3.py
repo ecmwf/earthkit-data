@@ -83,7 +83,7 @@ class S3Resource:
             return f"https://{self.endpoint}/{self.bucket}/{self.key}"
 
     def host(self):
-        if "amazonwas" in self.endpoint:
+        if "amazonaws" in self.endpoint:
             return f"{self.bucket}.{self.endpoint}"
         else:
             return f"{self.endpoint}"
