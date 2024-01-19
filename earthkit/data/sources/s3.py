@@ -17,6 +17,8 @@ from .file import FileSource
 
 LOG = logging.getLogger(__name__)
 
+DEFAULT_ENDPOINT = "s3.amazonaws.com"
+
 
 def request_to_resource(requests):
     def _make_part(offset, length):
@@ -32,10 +34,11 @@ def request_to_resource(requests):
     resources = []
     for r in requests:
         bucket = r["bucket"]
+        endpoint = r.get("endpoint", DEFAULT_ENDPOINT)
         for obj in r["objects"]:
             key = obj["object"]
             part = _make_part(obj.get("start"), obj.get("range"))
-            resources.append(S3Resource(bucket, key, part=part))
+            resources.append(S3Resource(endpoint, bucket, key, part=part))
     return resources
 
 
@@ -66,17 +69,24 @@ class S3Authenticator(HttpAuthenticator):
 
 
 class S3Resource:
-    def __init__(self, bucket, key, part=None):
+    def __init__(self, endpoint, bucket, key, part=None):
+        self.endpoint = endpoint
         self.bucket = bucket
         self.key = key
         self.part = part
 
     @property
     def url(self):
-        return f"https://{self.bucket}.s3.amazonaws.com/{self.key}"
+        if "amazonaws" in self.endpoint:
+            return f"https://{self.bucket}.{self.endpoint}/{self.key}"
+        else:
+            return f"https://{self.endpoint}/{self.bucket}/{self.key}"
 
     def host(self):
-        return f"{self.bucket}.s3.amazonaws.com"
+        if "amazonwas" in self.endpoint:
+            return f"{self.bucket}.{self.endpoint}"
+        else:
+            return f"{self.endpoint}"
 
     def __repr__(self):
         return f"{self.__class__.__name__}(url={self.url}, part={self.part})"
