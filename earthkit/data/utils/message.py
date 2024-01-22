@@ -47,12 +47,13 @@ class EccodesFeatures:
         except Exception:
             self._py_version = (0, 0, 0)
 
+        self._py_version = (1, 6, 1)
         print(f"ecCodes versions: {self.versions}")
 
     def check_clone_kwargs(self, **kwargs):
         if not (self._py_version >= (1, 7, 0) and self._version >= (2, 34, 0)):
             kwargs = dict(**kwargs)
-            kwargs.pop("headers_only")
+            kwargs.pop("headers_only", None)
         return kwargs
 
     @property
