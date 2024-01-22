@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import functools
 import json
 import logging
 import os
@@ -35,27 +36,44 @@ except Exception:
 
 class EccodesFeatures:
     def __init__(self):
+        self._version = None
+        self._py_version = eccodes.codes_get_api_version(int)
+
         try:
+            self._version = eccodes.__version__
             self.major, self.mid, self.minor = [
-                int(x) for x in eccodes.__version__.split(".")
+                int(x) for x in self._version.split(".")
             ]
         except Exception:
             self.major, self.mid, self.minor = (0, 0, 0)
 
         self.has_header_only_clone = (
-            self.major >= 1
-            and self.mid >= 7
-            and eccodes.codes_get_api_version(int) >= 23400
+            self.major >= 1 and self.mid >= 7 and self._py_version >= 23400
         )
 
-    def check_codes_clone_kwargs(self, **kwargs):
+        print(f"ecCodes versions: {self.versions}")
+
+    def check_clone_kwargs(self, **kwargs):
         if not self.has_header_only_clone:
             kwargs = dict(**kwargs)
             kwargs.pop("headers_only")
         return kwargs
 
+    @property
+    def versions(self):
+        return f"ecCodes: {self._version} eccodes-python: {self._py_version}"
+
 
 ECC_FEATURES = EccodesFeatures()
+
+
+def check_clone_kwargs(func):
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        kwargs = ECC_FEATURES.check_clone_kwargs(**kwargs)
+        return func(*args, **kwargs)
+
+    return wrapped
 
 
 class CodesMessagePositionIndex:
@@ -172,8 +190,8 @@ class CodesHandle(eccodes.Message):
     def get_long(self, name):
         return self.get(name, ktype=int)
 
+    @check_clone_kwargs
     def clone(self, **kwargs):
-        kwargs = ECC_FEATURES.check_codes_clone_kwargs(**kwargs)
         return self._from_raw_handle(eccodes.codes_clone(self._handle, **kwargs))
 
     def set_multiple(self, values):
