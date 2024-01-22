@@ -36,25 +36,21 @@ except Exception:
 
 class EccodesFeatures:
     def __init__(self):
-        self._version = None
-        self._py_version = eccodes.codes_get_api_version(int)
+        v = eccodes.codes_get_version_info()
+        try:
+            self._version = tuple([int(x) for x in v["eccodes"].split(".")])
+        except Exception:
+            self._version = (0, 0, 0)
 
         try:
-            self._version = eccodes.__version__
-            self.major, self.mid, self.minor = [
-                int(x) for x in self._version.split(".")
-            ]
+            self._py_version = tuple([int(x) for x in v["bindings"].split(".")])
         except Exception:
-            self.major, self.mid, self.minor = (0, 0, 0)
-
-        self.has_header_only_clone = (
-            self.major >= 1 and self.mid >= 7 and self._py_version >= 23400
-        )
+            self._py_version = (0, 0, 0)
 
         print(f"ecCodes versions: {self.versions}")
 
     def check_clone_kwargs(self, **kwargs):
-        if not self.has_header_only_clone:
+        if self._py_version >= (1, 7, 0) and self._version >= (2, 34, 0):
             kwargs = dict(**kwargs)
             kwargs.pop("headers_only")
         return kwargs
