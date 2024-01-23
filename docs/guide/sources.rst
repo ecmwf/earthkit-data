@@ -385,13 +385,14 @@ cds
 .. py:function:: from_source("cds", dataset, *args, **kwargs)
   :noindex:
 
-  The ``cds`` source accesses the `Copernicus Climate Data Store`_ (CDS), using the cdsapi_ package. In addition to data retrieval, ``request`` also has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively.
+  The ``cds`` source accesses the `Copernicus Climate Data Store`_ (CDS), using the cdsapi_ package. In addition to data retrieval, the request has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively. It can
+  also contain the earthkit-data specific :ref:`split_on <split_on>` parameter.
 
   :param str dataset: the name of the CDS dataset
-  :param tuple *args: specify the request as a dict
+  :param tuple *args: specify the request as dict. A sequence of dicts can be used to specify multiple requests.
   :param dict **kwargs: other keyword arguments specifying the request
 
-  The following example retrieves ERA5 reanalysis GRIB data for a subarea for 2 surface parameters:
+  The following example retrieves ERA5 reanalysis GRIB data for a subarea for 2 surface parameters. The request is specified using ``kwargs``:
 
   .. code-block:: python
 
@@ -405,6 +406,26 @@ cds
           area=[50, -10, 40, 10],  # N,W,S,E
           grid=[2, 2],
           date="2012-05-10",
+      )
+
+  The same retrieval can be defined by passing the request as a positional argument:
+
+  .. code-block:: python
+
+      import earthkit.data
+
+      req = dict(
+          variable=["2t", "msl"],
+          product_type="reanalysis",
+          area=[50, -10, 40, 10],  # N,W,S,E
+          grid=[2, 2],
+          date="2012-05-10",
+      )
+
+      ds = earthkit.data.from_source(
+          "cds",
+          "reanalysis-era5-single-levels",
+          req,
       )
 
 
