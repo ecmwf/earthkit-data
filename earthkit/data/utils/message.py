@@ -264,7 +264,8 @@ class ReaderLRUCache(dict):
     def __getitem__(self, path_and_cls):
         path = path_and_cls[0]
         cls = path_and_cls[1]
-        key = (path, os.getpid())
+        key = (path, os.getpid(), self._modtime(path))
+
         with self.lock:
             try:
                 return super().__getitem__(key)
@@ -277,6 +278,12 @@ class ReaderLRUCache(dict):
                 del self[oldest]
 
             return c
+
+    def _modtime(self, path):
+        try:
+            return os.stat(path)
+        except Exception:
+            return 0
 
 
 cache = ReaderLRUCache(32)  # TODO: Add to config
@@ -312,6 +319,7 @@ class CodesReader:
                 self.file,
                 self.PRODUCT_ID,
             )
+
             assert handle is not None
             return self.HANDLE_TYPE(handle, self.path, offset)
 

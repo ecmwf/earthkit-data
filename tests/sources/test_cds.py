@@ -9,9 +9,11 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
+
 import pytest
 
-from earthkit.data import from_source
+from earthkit.data import from_source, settings
 from earthkit.data.testing import NO_CDS
 
 
@@ -350,6 +352,41 @@ def test_cds_netcdf_to_pandas_xarray():
 
     # TODO: implement to_dataframe
     # assert data_cds.to_pandas().equals(data_file.to_pandas())
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+def test_cds_invalidate_cache():
+    with settings.temporary(
+        {"cache-policy": "temporary", "temporary-cache-directory-root": None}
+    ):
+        assert settings.get("cache-policy") == "temporary"
+        assert settings.get("temporary-cache-directory-root") is None
+
+        args = ("cds", "reanalysis-era5-single-levels")
+        kwargs = dict(
+            variable=["2t"],
+            product_type="reanalysis",
+            area=[50, -10, 40, 10],  # N,W,S,E
+            grid=[2, 2],
+            date="2012-12-12",
+            time="12:00",
+        )
+
+        ds = from_source(*args, **kwargs)
+        assert len(ds) == 1
+        assert ds.metadata("param") == ["2t"]
+
+        with open(ds.path, "w") as f:  # noqa
+            pass
+
+        assert os.path.getsize(ds.path) == 0
+        ds = None
+
+        ds1 = from_source(*args, **kwargs)
+        assert len(ds1) == 1
+        assert ds1.metadata("param") == ["2t"]
 
 
 if __name__ == "__main__":

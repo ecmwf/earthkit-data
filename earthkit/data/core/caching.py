@@ -36,7 +36,7 @@ from earthkit.data.core.temporary import temp_directory
 from earthkit.data.utils import humanize
 from earthkit.data.utils.html import css
 
-VERSION = 2
+VERSION = 3
 CACHE_DB = f"cache-{VERSION}.db"
 
 LOG = logging.getLogger(__name__)
@@ -174,7 +174,8 @@ class CacheManager(threading.Thread):
                     extra         TEXT,
                     expires       INTEGER,
                     accesses      INTEGER,
-                    size          INTEGER);"""
+                    size          INTEGER,
+                    mod_date_ns   INTEGER);"""
         )
         return connection
 
@@ -248,13 +249,20 @@ class CacheManager(threading.Thread):
             kind = "file"
             size = os.path.getsize(path)
 
+        try:
+            s = os.stat(path)
+            mtime_ns = s.st_mtime_ns
+        except Exception:
+            mtime_ns = 0
+
         with self.connection as db:
             db.execute(
-                "UPDATE cache SET size=?, type=?, owner_data=? WHERE path=?",
+                "UPDATE cache SET size=?, type=?, owner_data=?, mod_date_ns=? WHERE path=?",
                 (
                     size,
                     kind,
                     json.dumps(owner_data, default=default_serialiser),
+                    mtime_ns,
                     path,
                 ),
             )
@@ -483,9 +491,10 @@ class CacheManager(threading.Thread):
                                     creation_date,
                                     last_access,
                                     accesses,
-                                    parent)
-                    VALUES(?,?,?,?,?,?,?)""",
-                    (path, owner, args, now, now, 1, parent),
+                                    parent,
+                                    mod_date_ns)
+                    VALUES(?,?,?,?,?,?,?,?)""",
+                    (path, owner, args, now, now, 1, parent, time.time_ns()),
                 )
 
             return dict(
@@ -1019,6 +1028,14 @@ def cache_file(
 
         record = CACHE._register_cache_file(path, owner, args)
         if os.path.exists(path):
+            mod_date_ns = record["mod_date_ns"]
+            try:
+                s = os.stat(path)
+                if s.st_mtime_ns > mod_date_ns:
+                    force = True
+            except Exception:
+                pass
+
             if callable(force):
                 owner_data = record["owner_data"]
                 if owner_data is not None:
