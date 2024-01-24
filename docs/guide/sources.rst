@@ -10,7 +10,7 @@ We can get data from a given source by using :func:`from_source`:
 
 .. py:function:: from_source(name, *args, **kwargs)
 
-  Returns a :ref:`data object <data-object>` from the source specified by ``name`` .
+  Return a :ref:`data object <data-object>` from the source specified by ``name`` .
 
   :param str name: the source (see below)
   :param tuple *args: specifies the data location and additional parameters to access the data
