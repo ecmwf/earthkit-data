@@ -7,7 +7,8 @@ Version 0.5.0
 New features
 ++++++++++++++++
 
-- changed the default :ref:`cache policy <cache_policies>` to :ref:`off <off_cache_policy>`. This mode now enables the usage of remote sources like :ref:`data-sources-mars`. See the :ref:`/examples/cache.ipynb` notebook example.
+- changed the default :ref:`cache policy <cache_policies>` to :ref:`off <off_cache_policy>`. See the :ref:`/examples/cache.ipynb` notebook example.
+- enabled the :ref:`off <off_cache_policy>` cache policy to access remote sources like :ref:`data-sources-mars`
 - allowed creating source :ref:`plugins <plugin-overview>`
 - enabled reading :ref:`data-sources-url` sources as streams. See the :ref:`/examples/grib_url_stream.ipynb` notebook example
 - added the :meth:`FieldList.to_fieldlist() <data.core.fieldlist.FieldList.to_fieldlist>` method to convert to a new :class:`FieldList` based on a given backend
