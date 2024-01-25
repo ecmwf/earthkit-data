@@ -11,6 +11,7 @@ New features
 - enabled the :ref:`off <off_cache_policy>` cache policy to access remote sources like :ref:`data-sources-mars`
 - allowed creating source :ref:`plugins <plugin-overview>`
 - enabled reading :ref:`data-sources-url` sources as streams. See the :ref:`/examples/grib_url_stream.ipynb` notebook example
+- enabled reading :ref:`data-sources-polytope` sources as streams
 - added the :meth:`FieldList.to_fieldlist() <data.core.fieldlist.FieldList.to_fieldlist>` method to convert to a new :class:`FieldList` based on a given backend
 - added the :meth:`nearest_point_haversine` and :meth:`nearest_point_kdtree` methods to find the nearest point out of a set of locations. See the :ref:`/examples/grib_nearest_gridpoint.ipynb` and :ref:`/examples/grib_time_series.ipynb` notebook examples.
 - enabled using multiple keys and dictionaries in the :ref:`split_on <split_on>` request parameter for :ref:`data-sources-cds` retrievals
