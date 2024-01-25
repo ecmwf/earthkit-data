@@ -17,11 +17,32 @@ from earthkit.data.decorators import cached_method
 from earthkit.data.utils.metadata import metadata_argument
 
 
+class ArrayMaker:
+    def to_numpy(self):
+        pass
+
+
+class PytorchArrayMaker:
+    def from_numpy(self, v):
+        import torch
+
+        return torch.from_numpy(v)
+
+
 class Field(Base):
     r"""Represents a Field."""
 
     def __init__(self, metadata=None):
         self.__metadata = metadata
+        self.__array_ns = None
+
+    @property
+    def _array_ns(self):
+        if self.__array_ns is None:
+            import array_api_compat
+
+            self.__array_ns = array_api_compat.array_namespace(self.values)
+        return self.__array_ns
 
     @abstractmethod
     def _values(self, dtype=None):
@@ -48,7 +69,7 @@ class Field(Base):
         v = self._values()
         if len(v.shape) != 1:
             n = math.prod(v.shape)
-            return v.reshape(n)
+            return self._array_ns.reshape(v, n)
         return v
 
     def _make_metadata(self):
@@ -83,8 +104,15 @@ class Field(Base):
         v = self._values(dtype=dtype)
         shape = self._required_shape(flatten)
         if shape != v.shape:
-            return v.reshape(shape)
+            return self._array_ns.reshape(v, shape)
         return v
+
+    def to_array(self, flatten=False, dtype=None, backend="numpy"):
+        if backend == "pytorch":
+            v = self.to_numpy()
+            import torch
+
+            return torch.from_numpy(v)
 
     def _required_shape(self, flatten):
         return self.shape if not flatten else (math.prod(self.shape),)
@@ -683,6 +711,13 @@ class FieldList(Index):
         import numpy as np
 
         return np.array([f.to_numpy(**kwargs) for f in self])
+
+    def to_array(self, backend="cupy"):
+        import array_api_compat
+
+        x = [f.to_array(backend=backend) for f in self]
+        xp = array_api_compat.array_namespace(x[0])
+        return xp.stack(x)
 
     @property
     def values(self):
