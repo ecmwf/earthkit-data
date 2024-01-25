@@ -376,9 +376,12 @@ class RequestIterStreamer:
 
         return data, last, end, size
 
-    def read(self, size):
-        if size <= 0 or self.consumed:
+    def read(self, size=-1):
+        if size < -1 or size == 0 or self.consumed:
             return bytes()
+
+        if size == -1:
+            return self.readall()
 
         self._ensure_content(size)
         if len(self.content) == 0 or self.total == 0:
@@ -387,7 +390,6 @@ class RequestIterStreamer:
 
         data, last, self.position, missing_size = self._read(size)
         # LOG.debug(f"{size=} {last=} pos={self.position} {missing_size=}")
-
         if missing_size > 0:
             self.close()
         else:
@@ -403,6 +405,25 @@ class RequestIterStreamer:
             self.total -= self.position
 
         return data
+
+    def readall(self):
+        if self.consumed:
+            return bytes()
+
+        first = self.read(self.total)
+        if len(first) == 0:
+            first = next(self.iter_content)
+        res = [first]
+
+        for d in self.iter_content:
+            res.append(d)
+
+        self.close()
+
+        if len(res) == 1:
+            return res[0]
+        else:
+            return b"".join(res)
 
     def peek(self, size):
         if size <= 0 or self.consumed:
@@ -452,7 +473,7 @@ class SingleUrlStream(UrlBase):
     def to_stream(self):
         downloader = Downloader(
             self.url,
-            chunk_size=256,
+            chunk_size=self.chunk_size,
             parts=self.parts,
             timeout=SETTINGS.get("url-download-timeout"),
             verify=self.verify,
@@ -466,6 +487,12 @@ class SingleUrlStream(UrlBase):
         )
 
         size, mode, skip, trust_size = downloader.estimate_size(None)
+
+        # cache data may contain the result of the http HEAD request
+        h = downloader.cache_data()
+        if isinstance(h, dict):
+            self.content_type = h.get("content-type")
+
         stream = downloader.make_stream()
         return RequestIterStreamer(stream(chunk_size=self.chunk_size))
 
