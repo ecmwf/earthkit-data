@@ -482,8 +482,8 @@ fdb
   The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
 
   :param tuple *args: positional arguments specifying the request as a dict
-  :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`.
-  :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. For details see :ref:`stream source <data-sources-stream>`.
+  :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. Only works for :ref:`grib` data.
+  :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the data is read straight to memory. For details see :ref:`stream source <data-sources-stream>`.
   :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
   :type group_by: str, list of str
   :param dict **kwargs: other keyword arguments specifying the request
@@ -606,13 +606,17 @@ mars
 polytope
 --------
 
-.. py:function:: from_source("polytope", collection, *args, **kwargs)
+.. py:function:: from_source("polytope", collection, *args, stream=True,  batch_size=1, group_by=None, **kwargs)
   :noindex:
 
   The ``polytope`` source accesses the `Polytope web services <https://polytope-client.readthedocs.io/en/latest/>`_ , using the polytope-client_ package.
 
   :param str collection: the name of the polytope collection
   :param tuple *args: specify the request as a dict
+  :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. Only works for :ref:`grib` and CoverageJson data.
+  :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the data is read straight to memory. For details see :ref:`stream source <data-sources-stream>`.
+  :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
+  :type group_by: str, list of str
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves GRIB data from the "ecmwf-mars" polytope collection:
@@ -635,7 +639,7 @@ polytope
           "domain": "g",
       }
 
-      ds = earthkit.data.from_source("polytope", "ecmwf-mars", request)
+      ds = earthkit.data.from_source("polytope", "ecmwf-mars", request, stream=False)
 
   Data downloaded from the polytope service is stored in the the :ref:`cache <caching>`. However,
   please note that, in the current version, each call to  :func:`from_source` will download the data again.
