@@ -30,6 +30,7 @@ dependencies:
   - polytope-client>=0.7.1
   - earthkit-meteo>=0.0.1
   - git+https://github.com/ecmwf/earthkit-data-demo-source
+  - eccovjson>=0.0.1
 - tqdm
 - markdown
 - make
