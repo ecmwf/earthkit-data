@@ -21,11 +21,13 @@ class GribWriter(Writer):
         f: file object
             The target file object.
         values: ndarray
-            Values of the GRIB field/message.
-        values: :class:`GribMetadata`
-            Metadata of the GRIB field/message.
+            Values of the GRIB field.
+        metadata: :class:`GribMetadata`
+            Metadata of the GRIB field.
         check_nans: bool
             Replace nans in ``values`` with GRIB missing values when writing to``f``.
+        bits_per_value: int
+            Set the ``bitsPerValue`` GRIB key in the generated GRIB message.
         """
         handle = metadata._handle.clone()
 
