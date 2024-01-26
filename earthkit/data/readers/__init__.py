@@ -60,12 +60,12 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
     def cache_file(self, *args, **kwargs):
         return self.source.cache_file(*args, **kwargs)
 
-    def save(self, path):
+    def save(self, path, **kwargs):
         mode = "wb" if self.binary else "w"
         with open(path, mode) as f:
-            self.write(f)
+            self.write(f, **kwargs)
 
-    def write(self, f):
+    def write(self, f, **kwargs):
         if not self.appendable:
             assert f.tell() == 0
         mode = "rb" if self.binary else "r"
@@ -113,7 +113,7 @@ def _readers(method_name):
     return {k[0]: v for k, v in _READERS.items() if k[1] == method_name}
 
 
-def _find_reader(method_name, source, path_or_bufr_or_stream, magic):
+def _find_reader(method_name, source, path_or_data, **kwargs):
     """Helper function to create a reader.
 
     Tries all the registered methods stored in _READERS.
@@ -122,18 +122,25 @@ def _find_reader(method_name, source, path_or_bufr_or_stream, magic):
         # We do two passes, the second one
         # allow the plugin to look deeper in the buffer
         for name, r in _readers(method_name).items():
-            reader = r(source, path_or_bufr_or_stream, magic, deeper_check)
+            reader = r(source, path_or_data, deeper_check=deeper_check, **kwargs)
             if reader is not None:
                 return reader.mutate()
 
-    from .unknown import Unknown
-
-    return Unknown(
-        source, path_or_bufr_or_stream if method_name == "reader" else "", magic
-    )
+    return _unknown(method_name, source, path_or_data, **kwargs)
 
 
-def reader(source, path):
+def _unknown(method_name, source, path_or_data, **kwargs):
+    from .unknown import UnknownMemoryReader, UnknownReader, UnknownStreamReader
+
+    unknowns = {
+        "reader": UnknownReader,
+        "stream_reader": UnknownStreamReader,
+        "memory_reader": UnknownMemoryReader,
+    }
+    return unknowns[method_name](source, path_or_data, **kwargs)
+
+
+def reader(source, path, content_type=None):
     """Create the reader for a file/directory specified by path"""
     assert isinstance(path, str), source
 
@@ -143,7 +150,9 @@ def reader(source, path):
         if callable(reader):
             return reader(source, path)
         if isinstance(reader, str):
-            return _readers()[reader.replace("-", "_")](source, path, None, False)
+            return _readers()[reader.replace("-", "_")](
+                source, path, magic=None, deeper_check=False
+            )
 
         raise TypeError(
             "Provided reader must be a callable or a string, not %s" % type(reader)
@@ -161,18 +170,25 @@ def reader(source, path):
 
     LOG.debug("Looking for a reader for %s (%s)", path, magic)
 
-    return _find_reader("reader", source, path, magic)
+    return _find_reader(
+        "reader",
+        source,
+        path,
+        magic=magic,
+        content_type=content_type,
+    )
 
 
-def memory_reader(source, buf):
+def memory_reader(source, buffer):
     """Create a reader for data held in a memory buffer"""
-    assert isinstance(buf, (bytes, bytearray)), source
+    assert isinstance(buffer, (bytes, bytearray)), source
     n_bytes = SETTINGS.get("reader-type-check-bytes")
-    magic = buf[: min(n_bytes, len(buf) - 1)]
-    return _find_reader("memory_reader", source, buf, magic)
+    magic = buffer[: min(n_bytes, len(buffer) - 1)]
+
+    return _find_reader("memory_reader", source, buffer, magic=magic)
 
 
-def stream_reader(source, stream):
+def stream_reader(source, stream, memory, content_type=None):
     """Create a reader for a stream"""
     magic = None
     if hasattr(stream, "peek") and callable(stream.peek):
@@ -184,4 +200,11 @@ def stream_reader(source, stream):
         except Exception:
             pass
 
-    return _find_reader("stream_reader", source, stream, magic)
+    return _find_reader(
+        "stream_reader",
+        source,
+        stream,
+        magic=magic,
+        memory=memory,
+        content_type=content_type,
+    )

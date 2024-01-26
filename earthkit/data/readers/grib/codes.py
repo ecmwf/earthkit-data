@@ -223,8 +223,6 @@ class GribCodesHandle(CodesHandle):
         try:
             assert self.path is None, "Only cloned handles can have values changed"
             eccodes.codes_set_values(self._handle, values.flatten())
-            # This is writing on the GRIB that something has been modified (255=unknown)
-            eccodes.codes_set_long(self._handle, "generatingProcessIdentifier", 255)
         except Exception as e:
             LOG.error("Error setting values")
             LOG.exception(e)
@@ -266,11 +264,6 @@ class GribField(Field):
 
     def _values(self, dtype=None):
         return self.handle.get_values(dtype=dtype)
-
-    # @property
-    # def values(self):
-    #     r"""ndarray: Gets the values stored in the GRIB field as a 1D ndarray."""
-    #     return self.handle.get_values()
 
     @property
     def offset(self):

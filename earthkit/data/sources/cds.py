@@ -6,6 +6,10 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+import collections.abc
+import itertools
+import sys
+from functools import cached_property
 
 import cdsapi
 import yaml
@@ -16,6 +20,24 @@ from earthkit.data.utils import tqdm
 
 from .file import FileSource
 from .prompt import APIKeyPrompt
+
+if sys.version_info >= (3, 12):
+    from itertools import batched
+else:
+
+    def batched(iterable, n):
+        # batched('ABCDEFG', 3) --> ABC DEF G
+        if n < 1:
+            raise ValueError("n must be at least one")
+        it = iter(iterable)
+        while batch := tuple(itertools.islice(it, n)):
+            yield batch
+
+
+def ensure_iterable(obj):
+    if isinstance(obj, str) or not isinstance(obj, collections.abc.Iterable):
+        return [obj]
+    return obj
 
 
 class CDSAPIKeyPrompt(APIKeyPrompt):
@@ -76,26 +98,30 @@ class CdsRetriever(FileSource):
         super().__init__()
 
         assert isinstance(dataset, str)
-        if len(args):
-            assert len(args) == 1
-            assert isinstance(args[0], dict)
-            assert not kwargs
-            kwargs = args[0]
+        if args and kwargs:
+            raise TypeError(
+                "CdsRetriever: cannot specify request using both args and kwargs"
+            )
 
-        requests = self.requests(**kwargs)
+        if not args:
+            args = (kwargs,)
+        assert all(isinstance(request, dict) for request in args)
+        self._args = args
 
         self.client()  # Trigger password prompt before thraeding
 
-        nthreads = min(self.settings("number-of-download-threads"), len(requests))
+        nthreads = min(self.settings("number-of-download-threads"), len(self.requests))
 
         if nthreads < 2:
-            self.path = [self._retrieve(dataset, r) for r in requests]
+            self.path = [self._retrieve(dataset, r) for r in self.requests]
         else:
             with SoftThreadPool(nthreads=nthreads) as pool:
-                futures = [pool.submit(self._retrieve, dataset, r) for r in requests]
+                futures = [
+                    pool.submit(self._retrieve, dataset, r) for r in self.requests
+                ]
 
                 iterator = (f.result() for f in futures)
-                self.path = list(tqdm(iterator, leave=True, total=len(requests)))
+                self.path = list(tqdm(iterator, leave=True, total=len(self.requests)))
 
     def _retrieve(self, dataset, request):
         def retrieve(target, args):
@@ -107,43 +133,30 @@ class CdsRetriever(FileSource):
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
         )
 
+    @staticmethod
     @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
-    def requests(self, **kwargs):
-        split_on = kwargs.pop("split_on", None)
-        if split_on is None or not isinstance(kwargs.get(split_on), (list, tuple)):
-            return [kwargs]
+    def _normalize_request(**kwargs):
+        return kwargs
 
-        result = []
+    @cached_property
+    def requests(self):
+        requests = []
+        for arg in self._args:
+            request = self._normalize_request(**arg)
+            split_on = request.pop("split_on", None)
+            if split_on is None:
+                requests.append(request)
+                continue
 
-        for v in kwargs[split_on]:
-            r = dict(**kwargs)
-            r[split_on] = v
-            result.append(r)
-
-        return result
-
-    def to_pandas(self, **kwargs):
-        pandas_read_csv_kwargs = dict(
-            comment="#",
-            parse_dates=["report_timestamp"],
-            skip_blank_lines=True,
-            compression="zip",
-        )
-
-        pandas_read_csv_kwargs.update(kwargs.get("pandas_read_csv_kwargs", {}))
-
-        odc_read_odb_kwargs = dict(
-            # TODO
-        )
-
-        odc_read_odb_kwargs.update(kwargs.get("odc_read_odb_kwargs", {}))
-
-        return super().to_pandas(
-            pandas_read_csv_kwargs=pandas_read_csv_kwargs,
-            odc_read_odb_kwargs=odc_read_odb_kwargs,
-            **kwargs,
-        )
+            if not isinstance(split_on, dict):
+                split_on = {k: 1 for k in ensure_iterable(split_on)}
+            for values in itertools.product(
+                *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
+            ):
+                subrequest = dict(zip(split_on, values))
+                requests.append(request | subrequest)
+        return requests
 
 
 source = CdsRetriever

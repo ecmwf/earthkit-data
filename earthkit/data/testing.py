@@ -30,6 +30,8 @@ _NETWORK_PATCHER = patch("socket.socket", side_effect=OfflineError)
 _REMOTE_TEST_DATA_URL = "https://get.ecmwf.int/repository/test-data/earthkit-data/"
 
 _ROOT_DIR = top = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+if not os.path.exists(os.path.join(_ROOT_DIR, "tests", "data")):
+    _ROOT_DIR = "./"
 
 
 @contextmanager
@@ -98,6 +100,7 @@ except Exception:
     NO_FDB = True
 
 NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
+NO_ECCOVJSON = not modules_installed("eccovjson")
 
 
 def MISSING(*modules):
