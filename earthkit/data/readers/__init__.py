@@ -188,7 +188,7 @@ def memory_reader(source, buffer):
     return _find_reader("memory_reader", source, buffer, magic=magic)
 
 
-def stream_reader(source, stream, memory):
+def stream_reader(source, stream, memory, content_type=None):
     """Create a reader for a stream"""
     magic = None
     if hasattr(stream, "peek") and callable(stream.peek):
@@ -206,4 +206,5 @@ def stream_reader(source, stream, memory):
         stream,
         magic=magic,
         memory=memory,
+        content_type=content_type,
     )
