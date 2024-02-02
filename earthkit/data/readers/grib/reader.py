@@ -22,7 +22,6 @@ class GRIBReader(GribFieldListInOneFile, Reader):
     def __init__(self, source, path):
         Reader.__init__(self, source, path)
         GribFieldListInOneFile.__init__(self, path)
-        print("GribReader:", self.source_filename)
 
     def __repr__(self):
         return "GRIBReader(%s)" % (self.path,)
