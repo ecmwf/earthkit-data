@@ -1165,7 +1165,7 @@ class FieldList(Index):
         return False
 
     @detect_out_filename
-    def save(self, filename, append=False):
+    def save(self, filename, append=False, **kwargs):
         r"""Write all the fields into a file.
 
         Parameters
@@ -1175,21 +1175,25 @@ class FieldList(Index):
         append: bool
             When it is true append data to the target file. Otherwise
             the target file be overwritten if already exists.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`write`.
         """
         flag = "wb" if not append else "ab"
         with open(filename, flag) as f:
-            self.write(f)
+            self.write(f, **kwargs)
 
-    def write(self, f):
+    def write(self, f, **kwargs):
         r"""Write all the fields to a file object.
 
         Parameters
         ----------
         f: file object
             The target file object.
+        **kwargs: dict, optional
+            Other keyword arguments passed to the underlying field implementation.
         """
         for s in self:
-            s.write(f)
+            s.write(f, **kwargs)
 
     def to_fieldlist(self, backend, **kwargs):
         r"""Convert to a new :class:`FieldList` based on the ``backend``.
