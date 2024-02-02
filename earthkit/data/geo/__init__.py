@@ -7,4 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .distance import haversine_distance, nearest_point_haversine  # noqa
+from .distance import (  # noqa
+    GeoKDTree,
+    haversine_distance,
+    nearest_point_haversine,
+    nearest_point_kdtree,
+)

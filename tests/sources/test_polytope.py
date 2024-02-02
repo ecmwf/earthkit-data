@@ -25,6 +25,7 @@ def test_no_polytope_client(monkeypatch):
         assert "pip install polytope-client" in str(excinfo.value)
 
 
+@pytest.mark.skip("Data not available?")
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_POLYTOPE, reason="No access to Polytope Web API")
@@ -44,11 +45,12 @@ def test_polytope_odb():
         "domain": "off",
     }
 
-    src = from_source("polytope", "ichange", request)
+    src = from_source("polytope", "ichange", request, stream=False)
     df = src.to_pandas()
     assert len(df) == 52
 
 
+# @pytest.mark.skip("Data not available?")
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_POLYTOPE, reason="No access to Polytope Web API")
@@ -67,7 +69,7 @@ def test_polytope_grib():
         "domain": "g",
     }
 
-    ds = from_source("polytope", "ecmwf-mars", request)
+    ds = from_source("polytope", "ecmwf-mars", request, stream=False)
 
     assert len(ds) == 2
     assert ds.metadata("level") == [500, 500]

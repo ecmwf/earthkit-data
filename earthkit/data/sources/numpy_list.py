@@ -20,6 +20,16 @@ LOG = logging.getLogger(__name__)
 
 
 class NumpyField(Field):
+    r"""Represent a field consisting of an ndarray and metadata object.
+
+    Parameters
+    ----------
+    array: ndarray
+        Array storing the values of the field
+    metadata: :class:`Metadata`
+        Metadata object describing the field metadata.
+    """
+
     def __init__(self, array, metadata):
         self._array = array
         super().__init__(metadata=metadata)
@@ -31,15 +41,24 @@ class NumpyField(Field):
         if dtype is None:
             return self._array
         else:
-            return self._array.astype(dtype)
+            return self._array.astype(dtype, copy=False)
 
     def __repr__(self):
         return f"{self.__class__.__name__}()"
 
-    def write(self, f):
+    def write(self, f, **kwargs):
+        r"""Write the field to a file object.
+
+        Parameters
+        ----------
+        f: file object
+            The target file object.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :meth:`data.writers.grib.GribWriter.write`.
+        """
         from earthkit.data.writers import write
 
-        write(f, self.values, self._metadata, check_nans=True)
+        write(f, self.values, self._metadata, **kwargs)
 
 
 class NumpyFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
@@ -108,6 +127,34 @@ class NumpyFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
     def __repr__(self):
         return f"{self.__class__.__name__}(fields={len(self)})"
 
+    def _to_numpy_fieldlist(self, **kwargs):
+        if self[0]._array_matches(self._array[0], **kwargs):
+            return self
+        else:
+            return type(self)(self.to_numpy(**kwargs), self._metadata)
+
+    def save(self, filename, append=False, check_nans=True, bits_per_value=16):
+        r"""Write all the fields into a file.
+
+        Parameters
+        ----------
+        filename: str
+            The target file path.
+        append: bool
+            When it is true append data to the target file. Otherwise
+            the target file be overwritten if already exists.
+        check_nans: bool
+            Replace nans in the values with GRIB missing values when generating the output.
+        bits_per_value: int
+            Set the ``bitsPerValue`` GRIB key in the generated output.
+        """
+        super().save(
+            filename,
+            append=append,
+            check_nans=check_nans,
+            bits_per_value=bits_per_value,
+        )
+
 
 class MultiUnwindMerger:
     def __init__(self, sources):
@@ -142,6 +189,18 @@ class ListMerger:
 
 
 class NumpyFieldList(NumpyFieldListCore):
+    r"""Represent a list of :obj:`NumpyField <data.sources.numpy_list.NumpyField>`\ s.
+
+    The preferred way to create a NumpyFieldList is to use either the
+    static :obj:`from_numpy` method or the :obj:`to_fieldlist` method.
+
+    See Also
+    --------
+    from_numpy
+    to_fieldlist
+
+    """
+
     def _getitem(self, n):
         if isinstance(n, int):
             return NumpyField(self._array[n], self._metadata[n])

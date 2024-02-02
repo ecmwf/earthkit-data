@@ -8,6 +8,7 @@
 #
 
 import datetime
+import logging
 from contextlib import closing
 from itertools import product
 
@@ -23,6 +24,8 @@ from earthkit.data.utils.projections import Projection
 
 from . import Reader
 
+LOG = logging.getLogger(__name__)
+
 GEOGRAPHIC_COORDS = {
     "x": ["x", "projection_x_coordinate", "lon", "longitude"],
     "y": ["y", "projection_y_coordinate", "lat", "latitude"],
@@ -34,6 +37,8 @@ def as_datetime(self, time):
 
 
 def as_level(self, level):
+    if isinstance(level, str):
+        return level
     n = float(level)
     if int(n) == n:
         return int(n)
@@ -187,13 +192,16 @@ def get_fields_from_ds(
             standard_name = getattr(c, "standard_name", "")
             axis = getattr(c, "axis", "")
             long_name = getattr(c, "long_name", "")
+            coord_name = getattr(c, "name", "")
 
+            # LOG.debug(f"{standard_name=} {long_name=} {axis=} {coord_name}")
             use = False
 
             if (
                 standard_name.lower() in GEOGRAPHIC_COORDS["x"]
                 or (long_name == "longitude")
                 or (axis == "X")
+                or coord_name.lower() in GEOGRAPHIC_COORDS["x"]
             ):
                 has_lon = True
                 use = True
@@ -202,11 +210,10 @@ def get_fields_from_ds(
                 standard_name.lower() in GEOGRAPHIC_COORDS["y"]
                 or (long_name == "latitude")
                 or (axis == "Y")
+                or coord_name.lower() in GEOGRAPHIC_COORDS["y"]
             ):
                 has_lat = True
                 use = True
-
-            # print(f"  standard_name={standard_name}")
 
             # Of course, not every one sets the standard_name
             if (
@@ -222,13 +229,16 @@ def get_fields_from_ds(
                     break
 
             # TODO: Support other level types
-            if standard_name in [
-                "air_pressure",
-                "model_level_number",
-                "altitude",
-            ] or long_name in [
-                "pressure_level"
-            ]:  # or axis == 'Z':
+            if (
+                standard_name
+                in [
+                    "air_pressure",
+                    "model_level_number",
+                    "altitude",
+                ]
+                or long_name in ["pressure_level"]
+                or coord_name in ["level"]
+            ):  # or axis == 'Z':
                 coordinates.append(LevelCoordinate(c, coord in info))
                 use = True
 
@@ -430,18 +440,10 @@ class XArrayField(Field):
         return self.to_xarray().to_numpy()
 
     def _values(self, dtype=None):
-        return self._to_numpy().flatten()
-
-    def to_numpy(self, flatten=False, dtype=None):
-        values = self._to_numpy()
-        if not flatten:
-            values = values.reshape(self.shape)
+        if dtype is None:
+            return self._to_numpy()
         else:
-            values = values.flatten()
-        if dtype is not None:
-            values = values.astype(dtype)
-
-        return values
+            return self._to_numpy().astype(dtype, copy=False)
 
 
 class XArrayFieldListCore(FieldList):
@@ -526,7 +528,7 @@ class XArrayMultiFieldList(XArrayFieldListCore, MultiIndex):
     def to_xarray(self, **kwargs):
         import xarray as xr
 
-        return xr.merge([x.ds for x in self.indexes], **kwargs)
+        return xr.merge([x.ds for x in self._indexes], **kwargs)
 
 
 class NetCDFMetadata(XArrayMetadata):
@@ -643,7 +645,7 @@ class NetCDFMultiFieldList(NetCDFFieldList, MultiIndex):
     def to_xarray(self, **kwargs):
         try:
             return NetCDFFieldList.to_xarray_multi_from_paths(
-                [x.path for x in self.indexes], **kwargs
+                [x.path for x in self._indexes], **kwargs
             )
         except AttributeError:
             # TODO: Implement this, but discussion required
@@ -706,7 +708,7 @@ def _match_magic(magic, deeper_check):
     return False
 
 
-def reader(source, path, magic=None, deeper_check=False):
+def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
         fs = NetCDFFieldListReader(source, path)
         if fs.has_fields():
