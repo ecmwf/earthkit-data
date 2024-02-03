@@ -40,6 +40,10 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
         self.merger = merger
         self.path, self.parts = self._paths_and_parts(path, parts)
 
+        if self._kwargs.get("indexing", False):
+            if self.parts is not None and any(x is not None for x in self.parts):
+                raise ValueError("Cannot specify parts when indexing is enabled!")
+
     def mutate(self):
         if isinstance(self.path, (list, tuple)):
             if len(self.path) == 1:

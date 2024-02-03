@@ -25,5 +25,4 @@ def reader(source, path, *, magic=None, deeper_check=False, parts=None, **kwargs
     if _match_magic(magic, deeper_check):
         from .bufr import BUFRReader
 
-        print(f"{parts=}")
         return BUFRReader(source, path, parts=parts)
