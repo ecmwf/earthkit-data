@@ -12,37 +12,78 @@ from abc import abstractmethod
 from collections import defaultdict
 
 from earthkit.data.core import Base
+from earthkit.data.core.array import NumpyBackend
 from earthkit.data.core.index import Index
 from earthkit.data.decorators import cached_method
 from earthkit.data.utils.metadata import metadata_argument
 
+# class ArrayMaker:
+#     def to_numpy(self):
+#         pass
 
-class ArrayMaker:
-    def to_numpy(self):
-        pass
+
+# class NumpyBackend:
+#     def __init__(self):
+#         import numpy as np
+#         self._array_ns = np
+
+#     @property
+#     def array_ns(self):
+#         return self._array_ns
+
+#     def to_array(self, v):
+#         try:
+#             import array_api_compat
+
+#             __array_ns = array_api_compat.array_namespace(v)
+#         return v
+
+#     def from_numpy(self, v):
+#         return v
+
+#     def from_pytorch(self, v):
+#         import torch
+
+#         return torch.to_numpy(v)
 
 
-class PytorchArrayMaker:
-    def from_numpy(self, v):
-        import torch
+# class PytorchArrayMaker:
+#     def from_numpy(self, v):
+#         import torch
 
-        return torch.from_numpy(v)
+#         return torch.from_numpy(v)
+
+
+# array_backends = {"numpy": NumpyArrayMaker, "pytorch": PytorchArrayMaker}
 
 
 class Field(Base):
     r"""Represents a Field."""
 
-    def __init__(self, metadata=None):
+    raw_backend = NumpyBackend
+
+    def __init__(self, metadata=None, backend=None):
         self.__metadata = metadata
         self.__array_ns = None
+        if backend is None:
+            backend = "numpy"
+        # self.backend = array_backends[backend]
 
     @property
     def _array_ns(self):
         if self.__array_ns is None:
-            import array_api_compat
+            try:
+                import array_api_compat
 
-            self.__array_ns = array_api_compat.array_namespace(self.values)
+                self.__array_ns = array_api_compat.array_namespace(self.values)
+            except ImportError:
+                import numpy as np
+
+                self.__array_ns = np
         return self.__array_ns
+
+    def _to_array(self, v):
+        return self.backend.to_array(v, self.raw_backend)
 
     @abstractmethod
     def _values(self, dtype=None):
