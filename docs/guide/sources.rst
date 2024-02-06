@@ -60,17 +60,19 @@ We can get data from a given source by using :func:`from_source`:
 file
 ----
 
-.. py:function:: from_source("file", path, expand_user=True, expand_vars=False, unix_glob=True, recursive_glob=True)
+.. py:function:: from_source("file", path, expand_user=True, expand_vars=False, unix_glob=True, recursive_glob=True, parts=None)
   :noindex:
 
-  The simplest source is ``file`` that can access a local file/list of files.
+  The simplest source is ``file``, which can access a local file/list of files.
 
-  :param path: input path(s)
-  :type path: str, list
+  :param path: input path(s). Each path can contain the :ref:`parts <parts>` defining the byte ranges to read.
+  :type path: str, list, tuple
   :param bool expand_user: replace the leading ~ or ~user in ``path`` by that user's home directory. See ``os.path.expanduser``
   :param bool expand_vars:  expand shell environment variables in ``path``. See ``os.path.expandpath``
   :param bool unix_glob: allow UNIX globbing in ``path``
   :param bool recursive_glob: allow recursive scanning of directories. Only used when ``uxix_glob`` is True
+  :param parts: the :ref:`parts <parts>` to read from the file(s) specified by ``path``. Cannot be used when ``path`` already defines the :ref:`parts <parts>`.
+  :type parts: pair, list or tuple of pairs, None
 
   *earthkit-data* will inspect the content of the files to check for any of the
   supported :ref:`data formats <data-format>`.
@@ -94,10 +96,33 @@ file
       ds = earthkit.data.from_source("file", "path/to/dir")
 
 
+  The following examples using parts:
+
+  .. code:: python
+
+      import earthkit.data
+
+      # reading only certain parts (byte ranges) from a single file
+      ds = earthkit.data.from_source("file", "my.grib", parts=[(0, 150), (400, 160)])
+
+      # reading only certain parts (byte ranges) from multiple files
+      ds = earthkit.data.from_source(
+          "file",
+          [
+              ("a.grib", (0, 150)),
+              ("b.grib", (240, 120)),
+              ("c.grib", None),
+              ("d.grib", [(240, 120), (720, 120)]),
+          ],
+      )
+
+
+
   Further examples:
 
     - :ref:`/examples/grib_overview.ipynb`
     - :ref:`/examples/grib_multi.ipynb`
+    - :ref:`/examples/grib_file_parts.ipynb`
     - :ref:`/examples/bufr_temp.ipynb`
     - :ref:`/examples/netcdf.ipynb`
     - :ref:`/examples/odb.ipynb`
@@ -144,14 +169,16 @@ file-pattern
 url
 ---
 
-.. py:function:: from_source("url", url, unpack=True, stream=False, batch_size=1, group_by=None)
+.. py:function:: from_source("url", url, unpack=True, parts=None, stream=False, batch_size=1, group_by=None)
   :noindex:
 
   The ``url`` source will download the data from the address specified and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
 
-  :param url: the URL to download
+  :param url: the URL(s) to download. Each URL can contain the :ref:`parts <parts>` defining the byte ranges to read.
   :type url: str
   :param bool unpack: for archive formats such as ``.zip``, ``.tar``, ``.tar.gz``, etc, *earthkit-data* will attempt to open it and extract any usable file. To keep the downloaded file as is use ``unpack=False``
+  :param parts: the :ref:`parts <parts>` to read from the resource(s) specified by ``url``. Cannot be used when ``url`` already defines the :ref:`parts <parts>`.
+  :type parts: pair, list or tuple of pairs, None
   :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs.
   :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. For details see :ref:`stream source <data-sources-stream>`.
   :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
@@ -165,8 +192,25 @@ url
       ...     "url",
       ...     "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test4.grib",
       ... )
-      >>> len(ds)
-      4
+      >>> ds.ls()
+        centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
+      0   ecmf         t  isobaricInhPa    500  20070101      1200         0       an       0  regular_ll
+      1   ecmf         z  isobaricInhPa    500  20070101      1200         0       an       0  regular_ll
+      2   ecmf         t  isobaricInhPa    850  20070101      1200         0       an       0  regular_ll
+      3   ecmf         z  isobaricInhPa    850  20070101      1200         0       an       0  regular_ll
+
+  .. code-block:: python
+
+      >>> import earthkit.data
+      >>> ds = earthkit.data.from_source(
+      ...     "url",
+      ...     "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test4.grib",
+      ...     parts=[(0, 130428), (260856, 130428)],
+      ... )
+      >>> ds.ls()
+        centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
+      0   ecmf         t  isobaricInhPa    500  20070101      1200         0       an       0  regular_ll
+      1   ecmf         t  isobaricInhPa    850  20070101      1200         0       an       0  regular_ll
 
   Further examples:
 
