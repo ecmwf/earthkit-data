@@ -1170,11 +1170,11 @@ class FieldList(Index):
 
         Parameters
         ----------
-        filename: str
-            The target file path.
-        append: bool
+        filename: str, optional
+            The target file path, if not defined attempts will be made to detect the filename
+        append: bool, optional
             When it is true append data to the target file. Otherwise
-            the target file be overwritten if already exists.
+            the target file be overwritten if already exists. Default is False
         **kwargs: dict, optional
             Other keyword arguments passed to :obj:`write`.
         """
