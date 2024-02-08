@@ -24,7 +24,7 @@ class ReaderMeta(type(Base), type(os.PathLike)):
 
 
 class Reader(Base, os.PathLike, metaclass=ReaderMeta):
-    appendable = False  # Set to True if the data can be appened to and existing file
+    appendable = False  # Set to True if the data can be appended to and existing file
     binary = True
 
     def __init__(self, source, path):
@@ -88,6 +88,9 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
         LOG.warning(f"index-content(): Ignoring {self.path}")
         return []
 
+    def ranges(self):
+        self.source._kw
+
 
 _READERS = {}
 
@@ -145,7 +148,7 @@ def _unknown(method_name, source, path_or_data, **kwargs):
     return unknowns[method_name](source, path_or_data, **kwargs)
 
 
-def reader(source, path, content_type=None):
+def reader(source, path, **kwargs):
     """Create the reader for a file/directory specified by path"""
     assert isinstance(path, str), source
 
@@ -180,7 +183,7 @@ def reader(source, path, content_type=None):
         source,
         path,
         magic=magic,
-        content_type=content_type,
+        **kwargs,
     )
 
 
