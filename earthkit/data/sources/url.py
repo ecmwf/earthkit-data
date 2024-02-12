@@ -219,8 +219,6 @@ class Url(UrlBase):
                 download_file_extension=".download",
             )
 
-            print(f"downloader={self.downloader}")
-
             if extension and extension[0] != ".":
                 extension = "." + extension
 

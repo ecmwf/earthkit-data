@@ -12,75 +12,20 @@ from abc import abstractmethod
 from collections import defaultdict
 
 from earthkit.data.core import Base
-from earthkit.data.core.array import NumpyBackend
+from earthkit.data.core.array import ArrayBackend
 from earthkit.data.core.index import Index
 from earthkit.data.decorators import cached_method
 from earthkit.data.utils.metadata import metadata_argument
-
-# class ArrayMaker:
-#     def to_numpy(self):
-#         pass
-
-
-# class NumpyBackend:
-#     def __init__(self):
-#         import numpy as np
-#         self._array_ns = np
-
-#     @property
-#     def array_ns(self):
-#         return self._array_ns
-
-#     def to_array(self, v):
-#         try:
-#             import array_api_compat
-
-#             __array_ns = array_api_compat.array_namespace(v)
-#         return v
-
-#     def from_numpy(self, v):
-#         return v
-
-#     def from_pytorch(self, v):
-#         import torch
-
-#         return torch.to_numpy(v)
-
-
-# class PytorchArrayMaker:
-#     def from_numpy(self, v):
-#         import torch
-
-#         return torch.from_numpy(v)
-
-
-# array_backends = {"numpy": NumpyArrayMaker, "pytorch": PytorchArrayMaker}
 
 
 class Field(Base):
     r"""Represents a Field."""
 
-    raw_backend = NumpyBackend
+    raw_backend = ArrayBackend.find("numpy")
 
-    def __init__(self, metadata=None, backend=None):
+    def __init__(self, backend, metadata=None):
         self.__metadata = metadata
-        self.__array_ns = None
-        if backend is None:
-            backend = "numpy"
-        # self.backend = array_backends[backend]
-
-    @property
-    def _array_ns(self):
-        if self.__array_ns is None:
-            try:
-                import array_api_compat
-
-                self.__array_ns = array_api_compat.array_namespace(self.values)
-            except ImportError:
-                import numpy as np
-
-                self.__array_ns = np
-        return self.__array_ns
+        self.backend = backend
 
     def _to_array(self, v):
         return self.backend.to_array(v, self.raw_backend)
@@ -107,10 +52,10 @@ class Field(Base):
     @property
     def values(self):
         r"""ndarray: Get the values stored in the field as a 1D ndarray."""
-        v = self._values()
+        v = self._to_array(self._values())
         if len(v.shape) != 1:
             n = math.prod(v.shape)
-            return self._array_ns.reshape(v, n)
+            return self.backend.array_ns.reshape(v, n)
         return v
 
     def _make_metadata(self):
@@ -143,17 +88,35 @@ class Field(Base):
 
         """
         v = self._values(dtype=dtype)
+        ArrayBackend.find("numpy").to_array(v, self.raw_backend)
         shape = self._required_shape(flatten)
         if shape != v.shape:
-            return self._array_ns.reshape(v, shape)
+            return v.reshape(shape)
         return v
 
-    def to_array(self, flatten=False, dtype=None, backend="numpy"):
-        if backend == "pytorch":
-            v = self.to_numpy()
-            import torch
+    def to_array(self, flatten=False, dtype=None):
+        r"""Return the values stored in the field as an ndarray.
 
-            return torch.from_numpy(v)
+        Parameters
+        ----------
+        flatten: bool
+            When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
+            :obj:`shape` is returned.
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the array. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is ``np.float64``.
+
+        Returns
+        -------
+        ndarray
+            Field values
+
+        """
+        v = self._to_array(self._values(dtype=dtype))
+        shape = self._required_shape(flatten)
+        if shape != v.shape:
+            return self.backend.array_ns.reshape(v, shape)
+        return v
 
     def _required_shape(self, flatten):
         return self.shape if not flatten else (math.prod(self.shape),)
@@ -228,17 +191,19 @@ class Field(Base):
             if k not in _keys:
                 raise ValueError(f"data: invalid argument: {k}")
 
-        r = [_keys[k](dtype=dtype) for k in keys]
+        r = [self._to_array(_keys[k](dtype=dtype)) for k in keys]
         shape = self._required_shape(flatten)
         if shape != r[0].shape:
-            r = [x.reshape(shape) for x in r]
+            # r = [x.reshape(shape) for x in r]
+            r = [self.backend.array_ns.reshape(x, shape) for x in r]
 
         if len(r) == 1:
             return r[0]
         else:
-            import numpy as np
+            return self.backend.array_ns.stack(r)
+            # import numpy as np
 
-            return np.array(r)
+            # return np.array(r)
 
     def to_points(self, flatten=False, dtype=None):
         r"""Return the geographical coordinates in the data's original
@@ -608,7 +573,11 @@ class FieldList(Index):
 
     _md_indices = {}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, backend=None, **kwargs):
+        if backend is None:
+            backend = "numpy"
+        self.backend = ArrayBackend.find(backend)
+
         super().__init__(*args, **kwargs)
 
     @staticmethod
@@ -753,12 +722,9 @@ class FieldList(Index):
 
         return np.array([f.to_numpy(**kwargs) for f in self])
 
-    def to_array(self, backend="cupy"):
-        import array_api_compat
-
-        x = [f.to_array(backend=backend) for f in self]
-        xp = array_api_compat.array_namespace(x[0])
-        return xp.stack(x)
+    def to_array(self):
+        x = [f.to_array() for f in self]
+        return self.backend.array_ns.stack(x)
 
     @property
     def values(self):
@@ -784,9 +750,13 @@ class FieldList(Index):
         array([262.78027344, 267.44726562, 268.61230469])
 
         """
-        import numpy as np
+        # import numpy as np
 
-        return np.array([f.values for f in self])
+        x = [f.values for f in self]
+        return self.backend.array_ns.stack(x)
+        # return self.backend.to_array(x)
+
+        # return np.array([f.values for f in self])
 
     def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None):
         r"""Return the values and/or the geographical coordinates.

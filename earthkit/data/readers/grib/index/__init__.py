@@ -13,7 +13,7 @@ import os
 from abc import abstractmethod
 
 from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.core.index import Index, MaskIndex, MultiIndex
+from earthkit.data.core.index import MaskIndex, MultiIndex
 from earthkit.data.decorators import alias_argument
 from earthkit.data.indexing.database import (
     FILEPARTS_KEY_NAMES,
@@ -109,7 +109,8 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
         ):
             self._availability = Availability(self.availability_path)
 
-        Index.__init__(self, *args, **kwargs)
+        # Index.__init__(self, *args, **kwargs)
+        FieldList.__init__(self, *args, **kwargs)
 
     @classmethod
     def new_mask_index(self, *args, **kwargs):
@@ -194,7 +195,7 @@ class GribFieldListInFiles(GribFieldList):
     def _getitem(self, n):
         if isinstance(n, int):
             part = self.part(n if n >= 0 else len(self) + n)
-            return GribField(part.path, part.offset, part.length)
+            return GribField(part.path, part.offset, part.length, self.backend)
 
     def __len__(self):
         return self.number_of_parts()
