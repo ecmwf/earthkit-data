@@ -111,6 +111,7 @@ class CdsRetriever(FileSource):
         self.client()  # Trigger password prompt before thraeding
 
         nthreads = min(self.settings("number-of-download-threads"), len(self.requests))
+        print(2, self.source_filename)
 
         if nthreads < 2:
             self.path = [self._retrieve(dataset, r) for r in self.requests]
@@ -122,6 +123,7 @@ class CdsRetriever(FileSource):
 
                 iterator = (f.result() for f in futures)
                 self.path = list(tqdm(iterator, leave=True, total=len(self.requests)))
+        print(5, self.source_filename)
 
     def _retrieve(self, dataset, request):
         def retrieve(target, args):
@@ -129,11 +131,14 @@ class CdsRetriever(FileSource):
             self.source_filename = cds_result.location.split("/")[-1]
             cds_result.download(target=target)
 
-        return self.cache_file(
+        print(3, self.source_filename)
+        return_object = self.cache_file(
             retrieve,
             (dataset, request),
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
         )
+        print(4, self.source_filename)
+        return return_object
 
     @staticmethod
     @normalize("date", "date-list(%Y-%m-%d)")

@@ -32,10 +32,7 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
 
         self._source = weakref.ref(source)
         self.path = path
-
-    @property
-    def source_filename(self):
-        return getattr(self.source, "source_filename", None)
+        self.source_filename = self.source.source_filename
 
     @property
     def source(self):
