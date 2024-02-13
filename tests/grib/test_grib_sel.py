@@ -138,6 +138,7 @@ def test_grib_sel_multi_file(mode):
 
     # single resulting field
     g = f.sel(shortName="t", level=61)
+    print(f"{g=}")
     assert len(g) == 1
     assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [["t", 61, "hybrid"]]
 

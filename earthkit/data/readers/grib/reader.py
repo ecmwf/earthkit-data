@@ -10,7 +10,6 @@
 import logging
 
 from earthkit.data.readers import Reader
-from earthkit.data.readers.grib.index import GribMultiFieldList
 from earthkit.data.readers.grib.index.file import GribFieldListInOneFile
 
 LOG = logging.getLogger(__name__)
@@ -27,13 +26,6 @@ class GRIBReader(GribFieldListInOneFile, Reader):
 
     def __repr__(self):
         return "GRIBReader(%s)" % (self.path,)
-
-    @classmethod
-    def merge(cls, readers):
-        assert all(isinstance(s, GRIBReader) for s in readers), readers
-        assert len(readers) > 1
-
-        return GribMultiFieldList(readers)
 
     def mutate_source(self):
         # A GRIBReader is a source itself

@@ -182,16 +182,16 @@ def reader(source, path, **kwargs):
     )
 
 
-def memory_reader(source, buffer):
+def memory_reader(source, buffer, **kwargs):
     """Create a reader for data held in a memory buffer"""
     assert isinstance(buffer, (bytes, bytearray)), source
     n_bytes = SETTINGS.get("reader-type-check-bytes")
     magic = buffer[: min(n_bytes, len(buffer) - 1)]
 
-    return _find_reader("memory_reader", source, buffer, magic=magic)
+    return _find_reader("memory_reader", source, buffer, magic=magic, **kwargs)
 
 
-def stream_reader(source, stream, memory, content_type=None):
+def stream_reader(source, stream, memory, **kwargs):
     """Create a reader for a stream"""
     magic = None
     if hasattr(stream, "peek") and callable(stream.peek):
@@ -209,5 +209,5 @@ def stream_reader(source, stream, memory, content_type=None):
         stream,
         magic=magic,
         memory=memory,
-        content_type=content_type,
+        **kwargs,
     )

@@ -113,7 +113,7 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
         FieldList.__init__(self, *args, **kwargs)
 
     @classmethod
-    def new_mask_index(self, *args, **kwargs):
+    def new_mask_index(cls, *args, **kwargs):
         return GribMaskFieldList(*args, **kwargs)
 
     @property
@@ -122,7 +122,13 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
 
     @classmethod
     def merge(cls, sources):
-        assert all(isinstance(_, GribFieldList) for _ in sources)
+        if not all(isinstance(_, GribFieldList) for _ in sources):
+            raise ValueError(
+                "GribFieldList can only be merged to another GribFieldLists"
+            )
+        if not all(s.backend is s[0].backend for s in sources):
+            raise ValueError("Only fieldlists with the same backend can be merged")
+
         return GribMultiFieldList(sources)
 
     def _custom_availability(self, ignore_keys=None, filter_keys=lambda k: True):
@@ -184,11 +190,13 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
 class GribMaskFieldList(GribFieldList, MaskIndex):
     def __init__(self, *args, **kwargs):
         MaskIndex.__init__(self, *args, **kwargs)
+        FieldList._init_from_mask(self, self)
 
 
 class GribMultiFieldList(GribFieldList, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
+        FieldList._init_from_multi(self, self)
 
 
 class GribFieldListInFiles(GribFieldList):

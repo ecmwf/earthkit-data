@@ -12,7 +12,7 @@ from abc import abstractmethod
 from collections import defaultdict
 
 from earthkit.data.core import Base
-from earthkit.data.core.array import ArrayBackend
+from earthkit.data.core.array import NUMPY_BACKEND, ensure_backend
 from earthkit.data.core.index import Index
 from earthkit.data.decorators import cached_method
 from earthkit.data.utils.metadata import metadata_argument
@@ -21,18 +21,22 @@ from earthkit.data.utils.metadata import metadata_argument
 class Field(Base):
     r"""Represents a Field."""
 
-    raw_backend = ArrayBackend.find("numpy")
+    raw_backend = NUMPY_BACKEND
 
     def __init__(self, backend, metadata=None):
         self.__metadata = metadata
         self.backend = backend
 
-    def _to_array(self, v):
-        return self.backend.to_array(v, self.raw_backend)
+    def _to_array(self, v, backend=None):
+        if backend is None:
+            return self.backend.to_array(v, self.raw_backend)
+        else:
+            backend = ensure_backend(backend)
+            return backend.to_array(v, self.raw_backend)
 
     @abstractmethod
     def _values(self, dtype=None):
-        r"""Return the values stored in the field as an ndarray.
+        r"""Return the values as stored in the field as an ndarray.
 
         Parameters
         ----------
@@ -40,6 +44,8 @@ class Field(Base):
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is
             ``np.float64``.
+
+        The original shape and backend type of the values is kept.
 
         Returns
         -------
@@ -55,6 +61,7 @@ class Field(Base):
         v = self._to_array(self._values())
         if len(v.shape) != 1:
             n = math.prod(v.shape)
+            n = (n,)
             return self.backend.array_ns.reshape(v, n)
         return v
 
@@ -88,13 +95,13 @@ class Field(Base):
 
         """
         v = self._values(dtype=dtype)
-        ArrayBackend.find("numpy").to_array(v, self.raw_backend)
+        NUMPY_BACKEND.to_array(v, self.raw_backend)
         shape = self._required_shape(flatten)
         if shape != v.shape:
             return v.reshape(shape)
         return v
 
-    def to_array(self, flatten=False, dtype=None):
+    def to_array(self, flatten=False, dtype=None, backend=None):
         r"""Return the values stored in the field as an ndarray.
 
         Parameters
@@ -112,7 +119,7 @@ class Field(Base):
             Field values
 
         """
-        v = self._to_array(self._values(dtype=dtype))
+        v = self._to_array(self._values(dtype=dtype), backend=backend)
         shape = self._required_shape(flatten)
         if shape != v.shape:
             return self.backend.array_ns.reshape(v, shape)
@@ -238,10 +245,14 @@ class Field(Base):
         x = self._metadata.geography.x(dtype=dtype)
         y = self._metadata.geography.y(dtype=dtype)
         if x is not None and y is not None:
+            x = self._to_array(x)
+            y = self._to_array(y)
             shape = self._required_shape(flatten)
             if shape != x.shape:
-                x = x.reshape(shape)
-                y = y.reshape(shape)
+                # x = x.reshape(shape)
+                # y = y.reshape(shape)
+                x = self.backend.array_ns.reshape(x, shape)
+                y = self.backend.array_ns.reshape(y, shape)
             return dict(x=x, y=y)
         elif self.projection().CARTOPY_CRS == "PlateCarree":
             lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype)
@@ -573,18 +584,27 @@ class FieldList(Index):
 
     _md_indices = {}
 
-    def __init__(self, *args, backend=None, **kwargs):
-        if backend is None:
-            backend = "numpy"
-        self.backend = ArrayBackend.find(backend)
+    def __init__(self, backend=None, **kwargs):
+        self.backend = ensure_backend(backend)
+        super().__init__(**kwargs)
 
-        super().__init__(*args, **kwargs)
+    def _init_from_mask(self, index):
+        self.backend = index._index.backend
+
+    def _init_from_multi(self, index):
+        self.backend = index._indexes[0].backend
 
     @staticmethod
     def from_numpy(array, metadata):
-        from earthkit.data.sources.numpy_list import NumpyFieldList
+        from earthkit.data.sources.array_list import ArrayFieldList
 
-        return NumpyFieldList(array, metadata)
+        return ArrayFieldList(array, metadata, backend=NUMPY_BACKEND)
+
+    @staticmethod
+    def from_array(array, metadata):
+        from earthkit.data.sources.array_list import ArrayFieldList
+
+        return ArrayFieldList(array, metadata)
 
     def ignore(self):
         # When the concrete type is Fieldlist we assume the object was
@@ -722,8 +742,8 @@ class FieldList(Index):
 
         return np.array([f.to_numpy(**kwargs) for f in self])
 
-    def to_array(self):
-        x = [f.to_array() for f in self]
+    def to_array(self, **kwargs):
+        x = [f.to_array(**kwargs) for f in self]
         return self.backend.array_ns.stack(x)
 
     @property
@@ -750,13 +770,8 @@ class FieldList(Index):
         array([262.78027344, 267.44726562, 268.61230469])
 
         """
-        # import numpy as np
-
         x = [f.values for f in self]
         return self.backend.array_ns.stack(x)
-        # return self.backend.to_array(x)
-
-        # return np.array([f.values for f in self])
 
     def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None):
         r"""Return the values and/or the geographical coordinates.
@@ -824,8 +839,6 @@ class FieldList(Index):
         values
 
         """
-        import numpy as np
-
         if self._is_shared_grid():
             if isinstance(keys, str):
                 keys = [keys]
@@ -840,14 +853,14 @@ class FieldList(Index):
                 elif k == "lon":
                     r.append(latlon["lon"])
                 elif k == "value":
-                    r.extend([f.to_numpy(flatten=flatten, dtype=dtype) for f in self])
+                    r.extend([f.to_array(flatten=flatten, dtype=dtype) for f in self])
                 else:
                     raise ValueError(f"data: invalid argument: {k}")
 
-            return np.array(r)
+            return self.backend.array_ns.stack(r)
 
         elif len(self) == 0:
-            return np.array([])
+            return self.backend.array_ns.stack([])
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
@@ -1286,13 +1299,9 @@ class FieldList(Index):
         dtype('float32')
 
         """
-        converter = fieldlist_converters.get(backend, None)
-        if converter is not None:
-            return getattr(self, converter)(**kwargs)
+        backend = ensure_backend(backend)
+        return self._to_array_fieldlist(backend=backend, **kwargs)
 
-    def _to_numpy_fieldlist(self, **kwargs):
+    def _to_array_fieldlist(self, **kwargs):
         md = [f.metadata() for f in self]
-        return self.from_numpy(self.to_numpy(**kwargs), md)
-
-
-fieldlist_converters = {"numpy": "_to_numpy_fieldlist"}
+        return self.from_array(self.to_array(**kwargs), md)

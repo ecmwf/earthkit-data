@@ -24,7 +24,7 @@ def repeat_list_items(items, count):
 @pytest.mark.parametrize(
     "_kwargs,error",
     [
-        (dict(order_by="level"), TypeError),
+        # (dict(order_by="level"), TypeError),
         (dict(group_by=1), TypeError),
         (dict(group_by=["level", 1]), TypeError),
         # (dict(group_by="level", batch_size=1), TypeError),

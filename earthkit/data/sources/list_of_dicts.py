@@ -171,8 +171,8 @@ class VirtualGribMetadata(RawMetadata):
 
 
 class VirtualGribField(Field):
-    def __init__(self, d):
-        super().__init__(metadata=VirtualGribMetadata(d))
+    def __init__(self, d, backend):
+        super().__init__(backend, metadata=VirtualGribMetadata(d))
 
     def _values(self, dtype=None):
         v = self._metadata["values"]
@@ -191,7 +191,7 @@ class GribFromDicts(GribFieldList):
         super().__init__(*args, **kwargs)
 
     def __getitem__(self, n):
-        return VirtualGribField(self.list_of_dicts[n])
+        return VirtualGribField(self.list_of_dicts[n], self.backend)
 
     def __len__(self):
         return len(self.list_of_dicts)

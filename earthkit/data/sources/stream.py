@@ -59,7 +59,7 @@ class StreamMemorySource(MemoryBaseSource):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = stream_reader(self, self._stream, True)
+            self._reader_ = stream_reader(self, self._stream, True, **self._kwargs)
             if self._reader_ is None:
                 raise TypeError(f"could not create reader for stream={self._stream}")
         return self._reader_
@@ -73,11 +73,12 @@ class StreamMemorySource(MemoryBaseSource):
 
 
 class StreamSourceBase(Source):
-    def __init__(self, stream, *, batch_size=1, group_by=None):
+    def __init__(self, stream, *, batch_size=1, group_by=None, **kwargs):
         super().__init__()
         self._reader_ = None
         self._stream = stream
         self.batch_size, self.group_by = check_stream_kwargs(batch_size, group_by)
+        self._kwargs = kwargs
 
     def __iter__(self):
         return self
@@ -88,7 +89,7 @@ class StreamSourceBase(Source):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = stream_reader(self, self._stream, False)
+            self._reader_ = stream_reader(self, self._stream, False, **self._kwargs)
             if self._reader_ is None:
                 raise TypeError(f"could not create reader for stream={self._stream}")
         return self._reader_
@@ -214,28 +215,28 @@ class StreamSource(StreamSourceBase):
     def __init__(self, stream, **kwargs):
         super().__init__(stream, **kwargs)
 
-        # print(f"kwargs={kwargs} {id(kwargs)}")
-        # if kwargs:
-        #     raise TypeError(f"got invalid keyword argument(s): {list(kwargs.keys())}")
-
     def mutate(self):
         assert self._reader_ is None
 
         return _from_stream(
-            self._stream, batch_size=self.batch_size, group_by=self.group_by
+            self._stream,
+            batch_size=self.batch_size,
+            group_by=self.group_by,
+            **self._kwargs,
         )
 
 
 class StreamSourceMaker:
-    def __init__(self, source, stream_kwargs):
+    def __init__(self, source, stream_kwargs, **kwargs):
         self.in_source = source
+        self._kwargs = kwargs
         self.stream_kwargs = dict(stream_kwargs)
         self.source = None
 
     def __call__(self):
         if self.source is None:
             stream = self.in_source.to_stream()
-            self.source = _from_stream(stream, **self.stream_kwargs)
+            self.source = _from_stream(stream, **self.stream_kwargs, **self._kwargs)
 
             prev = None
             src = self.source
@@ -247,17 +248,17 @@ class StreamSourceMaker:
         return self.source
 
 
-def _from_stream(stream, group_by, batch_size):
+def _from_stream(stream, group_by, batch_size, **kwargs):
     _kwargs = dict(batch_size=batch_size, group_by=group_by)
 
     if group_by:
-        return StreamGroupSource(stream, **_kwargs)
+        return StreamGroupSource(stream, **_kwargs, **kwargs)
     elif batch_size == 0:
-        return StreamMemorySource(stream)
+        return StreamMemorySource(stream, **kwargs)
     elif batch_size > 1:
-        return StreamBatchSource(stream, **_kwargs)
+        return StreamBatchSource(stream, **_kwargs, **kwargs)
     elif batch_size == 1:
-        return StreamSingleSource(stream, **_kwargs)
+        return StreamSingleSource(stream, **_kwargs, **kwargs)
 
     raise ValueError(f"Unsupported stream parameters {batch_size=} {group_by=}")
 
@@ -265,17 +266,14 @@ def _from_stream(stream, group_by, batch_size):
 def _from_source(source, **kwargs):
     stream_kwargs, kwargs = parse_stream_kwargs(**kwargs)
 
-    if kwargs:
-        raise TypeError(f"got invalid keyword argument(s): {list(kwargs.keys())}")
-
     if not isinstance(source, (list, tuple)):
         source = [source]
 
     if len(source) == 1:
-        maker = StreamSourceMaker(source[0], stream_kwargs)
+        maker = StreamSourceMaker(source[0], stream_kwargs, **kwargs)
         return maker()
     else:
-        sources = [StreamSourceMaker(s, stream_kwargs) for s in source]
+        sources = [StreamSourceMaker(s, stream_kwargs, **kwargs) for s in source]
         return MultiStreamSource(sources, **stream_kwargs)
 
 
