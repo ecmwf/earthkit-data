@@ -14,6 +14,7 @@ import os
 
 from earthkit.data import from_source
 from earthkit.data.core.caching import CACHE
+from earthkit.data.decorators import detect_out_filename
 from earthkit.data.readers import reader
 from earthkit.data.utils.parts import check_urls_and_parts, ensure_urls_and_parts
 
@@ -125,6 +126,7 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     def values(self):
         return self._reader.values
 
+    @detect_out_filename
     def save(self, path, **kwargs):
         return self._reader.save(path, **kwargs)
 
