@@ -16,10 +16,11 @@ import sys
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.testing import ARRAY_BACKENDS
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import ARRAY_BACKENDS, FL_TYPES, load_grib_data  # noqa: E402
+from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
 
 
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")

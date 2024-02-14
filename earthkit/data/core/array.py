@@ -78,6 +78,7 @@ class ArrayBackend(metaclass=ABCMeta):
     _default = "numpy"
     _name = None
     _array_name = "array"
+    _dtypes = {}
 
     def __init__(self):
         self.lock = threading.Lock()
@@ -113,8 +114,19 @@ class ArrayBackend(metaclass=ABCMeta):
             b = get_backend(v, strict=False)
             return b.to_backend(v, self)
 
+    def to_dtype(self, dtype):
+        if isinstance(dtype, str):
+            return self._dtypes.get(dtype, None)
+        return dtype
+
+    def match_dtype(self, v, dtype):
+        if dtype is not None:
+            dtype = self.to_dtype(dtype)
+            return v.dtype == dtype if dtype is not None else False
+        return True
+
     @abstractmethod
-    def is_native_array(self, v):
+    def is_native_array(self, v, **kwargs):
         pass
 
     @abstractmethod
@@ -152,10 +164,17 @@ class NumpyBackend(ArrayBackend):
 
         return ns
 
-    def is_native_array(self, v):
+    def to_dtype(self, dtype):
+        return dtype
+
+    def is_native_array(self, v, dtype=None):
         import numpy as np
 
-        return isinstance(v, np.ndarray)
+        if not isinstance(v, np.ndarray):
+            return False
+        if dtype is not None:
+            return v.dtype == dtype
+        return True
 
     def to_backend(self, v, backend):
         return backend.from_numpy(v)
@@ -194,12 +213,16 @@ class PytorchBackend(ArrayBackend):
         except Exception:
             raise ImportError("pytorch is required to use pytorch backend")
 
+        self._dtypes = {"float64": torch.float64, "float32": torch.float32}
+
         return array_api_compat.array_namespace(torch.ones(2))
 
-    def is_native_array(self, v):
+    def is_native_array(self, v, dtype=None):
         import torch
 
-        return torch.is_tensor(v)
+        if not torch.is_tensor(v):
+            return False
+        return self.match_dtype(v, dtype)
 
     def to_backend(self, v, backend):
         return backend.from_pytorch(v)

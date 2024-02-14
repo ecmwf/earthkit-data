@@ -15,16 +15,12 @@ import sys
 import numpy as np
 import pytest
 
+from earthkit.data.testing import ARRAY_BACKENDS, check_array_type
 from earthkit.data.utils import projections
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import (  # noqa: E402
-    ARRAY_BACKENDS,
-    FL_TYPES,
-    check_array_type,
-    load_grib_data,
-)
+from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):

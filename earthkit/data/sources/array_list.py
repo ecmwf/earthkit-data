@@ -63,7 +63,6 @@ class ArrayField(Field):
         from earthkit.data.writers import write
 
         write(f, self.to_numpy(flatten=True), self._metadata, **kwargs)
-        # write(f, self.values, self._metadata, **kwargs)
 
 
 class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):

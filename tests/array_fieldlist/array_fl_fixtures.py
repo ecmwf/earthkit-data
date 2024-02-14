@@ -11,15 +11,13 @@
 
 import os
 
-import numpy as np
-
 from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_examples_file, get_array_namespace
 
 
-def load_numpy_fs(num):
+def load_array_fl(num, backend=None):
     assert num in [1, 2, 3]
     files = ["test.grib", "test6.grib", "tuv_pl.grib"]
     files = files[:num]
@@ -27,13 +25,15 @@ def load_numpy_fs(num):
     ds_in = []
     md = []
     for fname in files:
-        ds_in.append(from_source("file", earthkit_examples_file(fname)))
+        ds_in.append(
+            from_source("file", earthkit_examples_file(fname), backend=backend)
+        )
         md += ds_in[-1].metadata("param")
 
     ds = []
     for x in ds_in:
         ds.append(
-            FieldList.from_numpy(
+            FieldList.from_array(
                 x.values, [m.override(edition=1) for m in x.metadata()]
             )
         )
@@ -41,23 +41,25 @@ def load_numpy_fs(num):
     return (*ds, md)
 
 
-def load_numpy_fs_file(fname):
-    ds_in = from_source("file", earthkit_examples_file(fname))
+def load_array_fl_file(fname, backend=None):
+    ds_in = from_source("file", earthkit_examples_file(fname), backend=backend)
     md = ds_in.metadata("param")
 
-    ds = FieldList.from_numpy(
+    ds = FieldList.from_array(
         ds_in.values, [m.override(edition=1) for m in ds_in.metadata()]
     )
 
     return (ds, md)
 
 
-def check_numpy_fs(ds, ds_input, md_full):
+def check_array_fl(ds, ds_input, md_full, backend=None):
     assert len(ds_input) in [1, 2, 3]
+
+    ns = get_array_namespace(backend)
 
     assert len(ds) == len(md_full)
     assert ds.metadata("param") == md_full
-    assert np.allclose(ds[0].values, ds_input[0][0].values)
+    assert ns.allclose(ds[0].values, ds_input[0][0].values)
 
     # # values metadata
     # keys = ["min", "max"]
@@ -74,15 +76,15 @@ def check_numpy_fs(ds, ds_input, md_full):
         assert r.metadata("param") == ["msl", "t"]
         assert r[0].metadata("param") == "msl"
         assert r[1].metadata("param") == "t"
-        assert np.allclose(r[0].values, ds_input[0][1].values)
-        assert np.allclose(r[1].values, ds_input[1][0].values)
+        assert ns.allclose(r[0].values, ds_input[0][1].values)
+        assert ns.allclose(r[1].values, ds_input[1][0].values)
 
         # check sel
         r = ds.sel(shortName="msl")
         assert len(r) == 1
         assert r.metadata("shortName") == ["msl"]
         assert r[0].metadata("param") == "msl"
-        assert np.allclose(r[0].values, ds_input[0][1].values)
+        assert ns.allclose(r[0].values, ds_input[0][1].values)
 
     if len(ds_input) == 3:
         r = ds[1:13:4]
@@ -93,19 +95,23 @@ def check_numpy_fs(ds, ds_input, md_full):
         assert r[2].metadata("param") == "u"
 
 
-def check_numpy_fs_from_to_fieldlist(ds, ds_input, md_full, flatten=False, dtype=None):
+def check_array_fl_from_to_fieldlist(
+    ds, ds_input, md_full, backend=None, flatten=False, dtype=None
+):
     assert len(ds_input) in [1, 2, 3]
     assert len(ds) == len(md_full)
     assert ds.metadata("param") == md_full
 
+    ns = get_array_namespace(backend)
+
     np_kwargs = {"flatten": flatten, "dtype": dtype}
 
-    assert np.allclose(
-        ds[0].to_numpy(**np_kwargs), ds_input[0][0].to_numpy(**np_kwargs)
+    assert ns.allclose(
+        ds[0].to_array(**np_kwargs), ds_input[0][0].to_array(**np_kwargs)
     )
 
-    assert ds.to_numpy(**np_kwargs).shape == ds_input[0].to_numpy(**np_kwargs).shape
-    assert ds._array.shape == ds_input[0].to_numpy(**np_kwargs).shape
+    assert ds.to_array(**np_kwargs).shape == ds_input[0].to_array(**np_kwargs).shape
+    assert ds._array.shape == ds_input[0].to_array(**np_kwargs).shape
 
     # check slice
     r = ds[1]
@@ -117,11 +123,11 @@ def check_numpy_fs_from_to_fieldlist(ds, ds_input, md_full, flatten=False, dtype
         assert r.metadata("param") == ["msl", "t"]
         assert r[0].metadata("param") == "msl"
         assert r[1].metadata("param") == "t"
-        assert np.allclose(
-            r[0].to_numpy(**np_kwargs), ds_input[0][1].to_numpy(**np_kwargs)
+        assert ns.allclose(
+            r[0].to_array(**np_kwargs), ds_input[0][1].to_array(**np_kwargs)
         )
-        assert np.allclose(
-            r[1].to_numpy(**np_kwargs), ds_input[1][0].to_numpy(**np_kwargs)
+        assert ns.allclose(
+            r[1].to_array(**np_kwargs), ds_input[1][0].to_array(**np_kwargs)
         )
 
         # check sel
@@ -129,8 +135,8 @@ def check_numpy_fs_from_to_fieldlist(ds, ds_input, md_full, flatten=False, dtype
         assert len(r) == 1
         assert r.metadata("shortName") == ["msl"]
         assert r[0].metadata("param") == "msl"
-        assert np.allclose(
-            r[0].to_numpy(**np_kwargs), ds_input[0][1].to_numpy(**np_kwargs)
+        assert ns.allclose(
+            r[0].to_array(**np_kwargs), ds_input[0][1].to_array(**np_kwargs)
         )
 
     if len(ds_input) == 3:

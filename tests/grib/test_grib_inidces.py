@@ -14,9 +14,11 @@ import sys
 
 import pytest
 
+from earthkit.data.testing import ARRAY_BACKENDS
+
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import ARRAY_BACKENDS, FL_TYPES, load_grib_data  # noqa: E402
+from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)

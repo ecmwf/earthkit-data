@@ -19,46 +19,75 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import (
+    ARRAY_BACKENDS,
+    check_array_type,
+    earthkit_examples_file,
+    get_array_namespace,
+)
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from numpy_fs_fixtures import load_numpy_fs  # noqa: E402
+from array_fl_fixtures import load_array_fl  # noqa: E402
 
 LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_array_fl_grib_write(backend):
+    ds = from_source("file", earthkit_examples_file("test.grib"), backend=backend)
+    ns = get_array_namespace(backend)
+
+    assert ds[0].metadata("shortName") == "2t"
+    assert len(ds) == 2
+    v1 = ds[0].values + 1
+    check_array_type(v1, backend)
+
+    md = ds[0].metadata()
+    md1 = md.override(shortName="msl")
+    r = FieldList.from_array(v1, md1)
+
+    with temp_file() as tmp:
+        r.save(tmp)
+        assert os.path.exists(tmp)
+        r_tmp = from_source("file", tmp, backend=backend)
+        v_tmp = r_tmp[0].values
+        assert ns.allclose(v1, v_tmp)
+
+
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("_kwargs", [{}, {"check_nans": True}])
-def test_numpy_fs_grib_write_missing(_kwargs):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+def test_array_fl_grib_write_missing(backend, _kwargs):
+    ds = from_source("file", earthkit_examples_file("test.grib"), backend=backend)
+    ns = get_array_namespace(backend)
 
     assert ds[0].metadata("shortName") == "2t"
 
     v = ds[0].values
     v1 = v + 1
-    assert not np.isnan(v1[0])
-    assert not np.isnan(v1[1])
-    v1[0] = np.nan
-    assert np.isnan(v1[0])
-    assert not np.isnan(v1[1])
+    assert not ns.isnan(v1[0])
+    assert not ns.isnan(v1[1])
+    v1[0] = ns.nan
+    assert ns.isnan(v1[0])
+    assert not ns.isnan(v1[1])
 
     md = ds[0].metadata()
     md1 = md.override(shortName="msl")
-    r = FieldList.from_numpy(v1, md1)
+    r = FieldList.from_array(v1, md1)
 
-    assert np.isnan(r[0].values[0])
-    assert not np.isnan(r[0].values[1])
+    assert ns.isnan(r[0].values[0])
+    assert not ns.isnan(r[0].values[1])
 
     with temp_file() as tmp:
         r.save(tmp, **_kwargs)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp, backend=backend)
         v_tmp = r_tmp[0].values
-        assert np.isnan(v_tmp[0])
-        assert not np.isnan(v_tmp[1])
+        assert ns.isnan(v_tmp[0])
+        assert not ns.isnan(v_tmp[1])
 
 
-def test_numpy_fs_grib_write_check_nans_bad():
+def test_array_fl_grib_write_check_nans_bad():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     assert ds[0].metadata("shortName") == "2t"
@@ -85,7 +114,7 @@ def test_numpy_fs_grib_write_check_nans_bad():
             r.save(tmp, check_nans=False)
 
 
-def test_numpy_fs_grib_write_append():
+def test_array_fl_grib_write_append():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     assert ds[0].metadata("shortName") == "2t"
@@ -118,7 +147,7 @@ def test_numpy_fs_grib_write_append():
     assert r_tmp.metadata("shortName") == ["msl", "2d"]
 
 
-def test_numpy_fs_grib_write_generating_proc_id():
+def test_array_fl_grib_write_generating_proc_id():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     assert ds[0].metadata("shortName") == "2t"
@@ -149,11 +178,12 @@ def test_numpy_fs_grib_write_generating_proc_id():
         assert np.allclose(r_tmp.values[1], v2)
 
 
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "_kwargs,expected_value", [({}, 16), ({"bits_per_value": 12}, 12)]
 )
-def test_numpy_fs_grib_write_bits_per_value(_kwargs, expected_value):
-    ds, _ = load_numpy_fs(1)
+def test_array_fl_grib_write_bits_per_value(backend, _kwargs, expected_value):
+    ds, _ = load_array_fl(1, backend)
 
     with temp_file() as tmp:
         ds.save(tmp, **_kwargs)

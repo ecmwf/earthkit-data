@@ -15,16 +15,16 @@ import sys
 import numpy as np
 import pytest
 
-here = os.path.dirname(__file__)
-sys.path.insert(0, here)
-from grib_fixtures import (  # noqa: E402
+from earthkit.data.testing import (
     ARRAY_BACKENDS,
-    FL_TYPES,
     check_array_type,
     get_array,
     get_array_namespace,
-    load_grib_data,
 )
+
+here = os.path.dirname(__file__)
+sys.path.insert(0, here)
+from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
