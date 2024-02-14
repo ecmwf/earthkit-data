@@ -125,13 +125,16 @@ class CdsRetriever(FileSource):
 
     def _retrieve(self, dataset, request):
         def retrieve(target, args):
-            self.client().retrieve(args[0], args[1], target)
+            cds_result = self.client().retrieve(args[0], args[1])
+            self.source_filename = cds_result.location.split("/")[-1]
+            cds_result.download(target=target)
 
-        return self.cache_file(
+        return_object = self.cache_file(
             retrieve,
             (dataset, request),
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
         )
+        return return_object
 
     @staticmethod
     @normalize("date", "date-list(%Y-%m-%d)")
