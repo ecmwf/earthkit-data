@@ -65,8 +65,9 @@ def to_projection_kwargs(proj_params):
     }
     kwargs["globe"] = globe_params
 
-    standard_parallels = [proj_params.get(param) for param in STANDARD_PARALLELS]
-    standard_parallels = tuple(i for i in standard_parallels if i is not None)
+    standard_parallels = tuple(
+        proj_params[param] for param in STANDARD_PARALLELS if param in proj_params
+    )
     if standard_parallels:
         kwargs["standard_parallels"] = standard_parallels
 
