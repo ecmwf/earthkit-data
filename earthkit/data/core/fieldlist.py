@@ -21,18 +21,19 @@ from earthkit.data.utils.metadata import metadata_argument
 class Field(Base):
     r"""Represents a Field."""
 
-    raw_backend = NUMPY_BACKEND
+    raw_values_backend = NUMPY_BACKEND
+    raw_other_backend = NUMPY_BACKEND
 
     def __init__(self, backend, metadata=None):
         self.__metadata = metadata
         self.backend = backend
 
-    def _to_array(self, v, backend=None):
+    def _to_array(self, v, backend=None, raw=None):
         if backend is None:
-            return self.backend.to_array(v, self.raw_backend)
+            return self.backend.to_array(v, raw)
         else:
             backend = ensure_backend(backend)
-            return backend.to_array(v, self.raw_backend)
+            return backend.to_array(v, raw)
 
     @abstractmethod
     def _values(self, dtype=None):
@@ -58,7 +59,7 @@ class Field(Base):
     @property
     def values(self):
         r"""ndarray: Get the values stored in the field as a 1D ndarray."""
-        v = self._to_array(self._values())
+        v = self._to_array(self._values(), raw=self.raw_values_backend)
         if len(v.shape) != 1:
             n = math.prod(v.shape)
             n = (n,)
@@ -95,7 +96,7 @@ class Field(Base):
 
         """
         v = self._values(dtype=dtype)
-        NUMPY_BACKEND.to_array(v, self.raw_backend)
+        v = NUMPY_BACKEND.to_array(v, self.raw_values_backend)
         shape = self._required_shape(flatten)
         if shape != v.shape:
             return v.reshape(shape)
@@ -119,7 +120,9 @@ class Field(Base):
             Field values
 
         """
-        v = self._to_array(self._values(dtype=dtype), backend=backend)
+        v = self._to_array(
+            self._values(dtype=dtype), backend=backend, raw=self.raw_values_backend
+        )
         shape = self._required_shape(flatten)
         if shape != v.shape:
             return self.backend.array_ns.reshape(v, shape)
@@ -186,9 +189,9 @@ class Field(Base):
 
         """
         _keys = dict(
-            lat=self._metadata.geography.latitudes,
-            lon=self._metadata.geography.longitudes,
-            value=self._values,
+            lat=(self._metadata.geography.latitudes, self.raw_other_backend),
+            lon=(self._metadata.geography.longitudes, self.raw_other_backend),
+            value=(self._values, self.raw_values_backend),
         )
 
         if isinstance(keys, str):
@@ -198,7 +201,7 @@ class Field(Base):
             if k not in _keys:
                 raise ValueError(f"data: invalid argument: {k}")
 
-        r = [self._to_array(_keys[k](dtype=dtype)) for k in keys]
+        r = [self._to_array(_keys[k][0](dtype=dtype), raw=_keys[k][1]) for k in keys]
         shape = self._required_shape(flatten)
         if shape != r[0].shape:
             # r = [x.reshape(shape) for x in r]
@@ -245,12 +248,10 @@ class Field(Base):
         x = self._metadata.geography.x(dtype=dtype)
         y = self._metadata.geography.y(dtype=dtype)
         if x is not None and y is not None:
-            x = self._to_array(x)
-            y = self._to_array(y)
+            x = self._to_array(x, raw=self.raw_other_backend)
+            y = self._to_array(y, raw=self.raw_other_backend)
             shape = self._required_shape(flatten)
             if shape != x.shape:
-                # x = x.reshape(shape)
-                # y = y.reshape(shape)
                 x = self.backend.array_ns.reshape(x, shape)
                 y = self.backend.array_ns.reshape(y, shape)
             return dict(x=x, y=y)

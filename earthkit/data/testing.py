@@ -101,6 +101,7 @@ except Exception:
 
 NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
 NO_ECCOVJSON = not modules_installed("eccovjson")
+NO_PYTORCH = not modules_installed("torch")
 
 
 def MISSING(*modules):

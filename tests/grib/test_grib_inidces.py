@@ -16,12 +16,13 @@ import pytest
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import load_file_or_numpy_fs  # noqa: E402
+from grib_fixtures import ARRAY_BACKENDS, FL_TYPES, load_grib_data  # noqa: E402
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_indices_base(mode):
-    ds = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_indices_base(fl_type, backend):
+    ds = load_grib_data("tuv_pl.grib", fl_type, backend)
 
     ref = {
         "class": ["od"],
@@ -52,9 +53,10 @@ def test_grib_indices_base(mode):
     assert r == ref
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_indices_sel(mode):
-    ds = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_indices_sel(fl_type, backend):
+    ds = load_grib_data("tuv_pl.grib", fl_type, backend)
 
     ref = {
         "class": ["od"],
@@ -81,10 +83,11 @@ def test_grib_indices_sel(mode):
     assert r == ref
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_indices_multi(mode):
-    f1 = load_file_or_numpy_fs("tuv_pl.grib", mode)
-    f2 = load_file_or_numpy_fs("ml_data.grib", mode, folder="data")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_indices_multi(fl_type, backend):
+    f1 = load_grib_data("tuv_pl.grib", fl_type, backend)
+    f2 = load_grib_data("ml_data.grib", fl_type, backend, folder="data")
     ds = f1 + f2
 
     ref = {
@@ -147,10 +150,11 @@ def test_grib_indices_multi(mode):
     assert r == ref
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_indices_multi_Del(mode):
-    f1 = load_file_or_numpy_fs("tuv_pl.grib", mode)
-    f2 = load_file_or_numpy_fs("ml_data.grib", mode, folder="data")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_indices_multi_Del(fl_type, backend):
+    f1 = load_grib_data("tuv_pl.grib", fl_type, backend)
+    f2 = load_grib_data("ml_data.grib", fl_type, backend, folder="data")
     ds = f1 + f2
 
     ref = {
@@ -172,9 +176,10 @@ def test_grib_indices_multi_Del(mode):
     assert r == ref
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_indices_order_by(mode):
-    ds = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_indices_order_by(fl_type, backend):
+    ds = load_grib_data("tuv_pl.grib", fl_type, backend)
 
     ref = {
         "class": ["od"],

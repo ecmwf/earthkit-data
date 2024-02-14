@@ -15,12 +15,13 @@ import pytest
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import load_file_or_numpy_fs  # noqa: E402
+from grib_fixtures import ARRAY_BACKENDS, FL_TYPES, load_grib_data  # noqa: E402
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_describe(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_describe(fl_type, backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, backend)
 
     # full contents
     df = f.describe()
@@ -143,9 +144,10 @@ def test_grib_describe(mode):
     assert ref[0] == df[0].to_dict()
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_ls(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_ls(fl_type, backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, backend)
 
     # default keys
     f1 = f[0:4]
@@ -197,9 +199,10 @@ def test_grib_ls(mode):
     assert ref == df.to_dict()
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_ls_keys(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_ls_keys(fl_type, backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, backend)
 
     # default keys
     # positive num (=head)
@@ -223,9 +226,10 @@ def test_grib_ls_keys(mode):
     assert ref == df.to_dict()
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_ls_namespace(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_ls_namespace(fl_type, backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, backend)
 
     df = f.ls(n=2, namespace="vertical")
     ref = {
@@ -244,9 +248,10 @@ def test_grib_ls_namespace(mode):
     assert ref == df.to_dict()
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_ls_invalid_num(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_ls_invalid_num(fl_type, backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, backend)
 
     with pytest.raises(ValueError):
         f.ls(n=0)
@@ -255,16 +260,18 @@ def test_grib_ls_invalid_num(mode):
         f.ls(0)
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_ls_invalid_arg(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_ls_invalid_arg(fl_type, backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, backend)
     with pytest.raises(TypeError):
         f.ls(invalid=1)
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_ls_num(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_ls_num(fl_type, backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, backend)
 
     # default keys
 
@@ -309,9 +316,10 @@ def test_grib_ls_num(mode):
     assert ref == df.to_dict()
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_head_num(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_head_num(fl_type, backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, backend)
 
     # default keys
     df = f.head(n=2)
@@ -334,9 +342,10 @@ def test_grib_head_num(mode):
     assert ref == df.to_dict()
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_tail_num(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_tail_num(fl_type, backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, backend)
 
     # default keys
     df = f.tail(n=2)
@@ -359,9 +368,10 @@ def test_grib_tail_num(mode):
     assert ref == df.to_dict()
 
 
-@pytest.mark.parametrize("mode", ["file"])
-def test_grib_dump(mode):
-    f = load_file_or_numpy_fs("test6.grib", mode)
+@pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize("backend", [None])
+def test_grib_dump(fl_type, backend):
+    f = load_grib_data("test6.grib", fl_type, backend)
 
     namespaces = (
         "default",

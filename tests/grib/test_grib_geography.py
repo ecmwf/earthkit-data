@@ -19,7 +19,12 @@ from earthkit.data.utils import projections
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import load_file_or_numpy_fs  # noqa: E402
+from grib_fixtures import (  # noqa: E402
+    ARRAY_BACKENDS,
+    FL_TYPES,
+    check_array_type,
+    load_grib_data,
+)
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -29,19 +34,18 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
     assert np.isclose(v.mean(), meanv, eps)
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("index", [0, None])
-def test_grib_to_latlon_single(mode, index):
-    f = load_file_or_numpy_fs("test_single.grib", mode, folder="data")
+def test_grib_to_latlon_single(fl_type, backend, index):
+    f = load_grib_data("test_single.grib", fl_type, backend, folder="data")
 
     eps = 1e-5
     g = f[index] if index is not None else f
     v = g.to_latlon(flatten=True)
     assert isinstance(v, dict)
-    assert isinstance(v["lon"], np.ndarray)
-    assert isinstance(v["lat"], np.ndarray)
-    assert v["lon"].dtype == np.float64
-    assert v["lat"].dtype == np.float64
+    check_array_type(v["lon"], backend, dtype="float64")
+    check_array_type(v["lat"], backend, dtype="float64")
     check_array(
         v["lon"],
         (84,),
@@ -60,34 +64,34 @@ def test_grib_to_latlon_single(mode, index):
     )
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("index", [0, None])
-def test_grib_to_latlon_single_shape(mode, index):
-    f = load_file_or_numpy_fs("test_single.grib", mode, folder="data")
+def test_grib_to_latlon_single_shape(fl_type, backend, index):
+    f = load_grib_data("test_single.grib", fl_type, backend, folder="data")
 
     g = f[index] if index is not None else f
     v = g.to_latlon()
     assert isinstance(v, dict)
-    assert isinstance(v["lon"], np.ndarray)
-    assert isinstance(v["lat"], np.ndarray)
+    check_array_type(v["lon"], backend, dtype="float64")
+    check_array_type(v["lat"], backend, dtype="float64")
 
     # x
     assert v["lon"].shape == (7, 12)
-    assert v["lon"].dtype == np.float64
     for x in v["lon"]:
         assert np.allclose(x, np.linspace(0, 330, 12))
 
     # y
     assert v["lat"].shape == (7, 12)
-    assert v["lon"].dtype == np.float64
     for i, y in enumerate(v["lat"]):
         assert np.allclose(y, np.ones(12) * (90 - i * 30))
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ["numpy"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_grib_to_latlon_multi(mode, dtype):
-    f = load_file_or_numpy_fs("test.grib", mode)
+def test_grib_to_latlon_multi(fl_type, backend, dtype):
+    f = load_grib_data("test.grib", fl_type, backend)
 
     v_ref = f[0].to_latlon(flatten=True, dtype=dtype)
     v = f.to_latlon(flatten=True, dtype=dtype)
@@ -101,29 +105,29 @@ def test_grib_to_latlon_multi(mode, dtype):
     assert v["lon"].dtype == dtype
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_to_latlon_multi_non_shared_grid(mode):
-    f1 = load_file_or_numpy_fs("test.grib", mode)
-    f2 = load_file_or_numpy_fs("test4.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_to_latlon_multi_non_shared_grid(fl_type, backend):
+    f1 = load_grib_data("test.grib", fl_type, backend)
+    f2 = load_grib_data("test4.grib", fl_type, backend)
     f = f1 + f2
 
     with pytest.raises(ValueError):
         f.to_latlon()
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("index", [0, None])
-def test_grib_to_points_single(mode, index):
-    f = load_file_or_numpy_fs("test_single.grib", mode, folder="data")
+def test_grib_to_points_single(fl_type, backend, index):
+    f = load_grib_data("test_single.grib", fl_type, backend, folder="data")
 
     eps = 1e-5
     g = f[index] if index is not None else f
     v = g.to_points(flatten=True)
     assert isinstance(v, dict)
-    assert isinstance(v["x"], np.ndarray)
-    assert isinstance(v["y"], np.ndarray)
-    assert v["x"].dtype == np.float64
-    assert v["y"].dtype == np.float64
+    check_array_type(v["x"], backend, dtype="float64")
+    check_array_type(v["y"], backend, dtype="float64")
     check_array(
         v["x"],
         (84,),
@@ -142,17 +146,19 @@ def test_grib_to_points_single(mode, index):
     )
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_to_points_unsupported_grid(mode):
-    f = load_file_or_numpy_fs("mercator.grib", mode, folder="data")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_to_points_unsupported_grid(fl_type, backend):
+    f = load_grib_data("mercator.grib", fl_type, backend, folder="data")
     with pytest.raises(ValueError):
         f[0].to_points()
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ["numpy"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_grib_to_points_multi(mode, dtype):
-    f = load_file_or_numpy_fs("test.grib", mode)
+def test_grib_to_points_multi(fl_type, backend, dtype):
+    f = load_grib_data("test.grib", fl_type, backend)
 
     v_ref = f[0].to_points(flatten=True, dtype=dtype)
     v = f.to_points(flatten=True, dtype=dtype)
@@ -166,29 +172,32 @@ def test_grib_to_points_multi(mode, dtype):
     assert v["y"].dtype == dtype
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_to_points_multi_non_shared_grid(mode):
-    f1 = load_file_or_numpy_fs("test.grib", mode)
-    f2 = load_file_or_numpy_fs("test4.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_to_points_multi_non_shared_grid(fl_type, backend):
+    f1 = load_grib_data("test.grib", fl_type, backend)
+    f2 = load_grib_data("test4.grib", fl_type, backend)
     f = f1 + f2
 
     with pytest.raises(ValueError):
         f.to_points()
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_bbox(mode):
-    ds = load_file_or_numpy_fs("test.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_bbox(fl_type, backend):
+    ds = load_grib_data("test.grib", fl_type, backend)
     bb = ds.bounding_box()
     assert len(bb) == 2
     for b in bb:
         assert b.as_tuple() == (73, -27, 33, 45)
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("index", [0, None])
-def test_grib_projection_ll(mode, index):
-    f = load_file_or_numpy_fs("test.grib", mode)
+def test_grib_projection_ll(fl_type, backend, index):
+    f = load_grib_data("test.grib", fl_type, backend)
 
     if index is not None:
         g = f[index]
@@ -199,9 +208,10 @@ def test_grib_projection_ll(mode, index):
     )
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_projection_mercator(mode):
-    f = load_file_or_numpy_fs("mercator.grib", mode, folder="data")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+def test_grib_projection_mercator(fl_type, backend):
+    f = load_grib_data("mercator.grib", fl_type, backend, folder="data")
     projection = f[0].projection()
     assert isinstance(projection, projections.Mercator)
     assert projection.parameters == {

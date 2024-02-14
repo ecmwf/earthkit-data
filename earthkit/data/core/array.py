@@ -108,14 +108,17 @@ class ArrayBackend(metaclass=ABCMeta):
             if backend is self:
                 return v
 
-            return backend.to_backend(self, v)
+            return backend.to_backend(v, self)
+        else:
+            b = get_backend(v, strict=False)
+            return b.to_backend(v, self)
 
     @abstractmethod
     def is_native_array(self, v):
         pass
 
     @abstractmethod
-    def to_backend(self, backend, v):
+    def to_backend(self, v, backend):
         pass
 
     @abstractmethod
@@ -124,6 +127,10 @@ class ArrayBackend(metaclass=ABCMeta):
 
     @abstractmethod
     def from_pytorch(self, v):
+        pass
+
+    @abstractmethod
+    def from_other(self, v, **kwargs):
         pass
 
 
@@ -150,20 +157,23 @@ class NumpyBackend(ArrayBackend):
 
         return isinstance(v, np.ndarray)
 
-    def to_backend(self, backend, v):
+    def to_backend(self, v, backend):
         return backend.from_numpy(v)
 
     def from_numpy(self, v):
         return v
 
     def from_pytorch(self, v):
-        import torch
+        return v.numpy()
 
-        return torch.to_numpy(v)
+    def from_other(self, v, **kwargs):
+        import numpy as np
+
+        return np.array(v, **kwargs)
 
 
 class PytorchBackend(ArrayBackend):
-    _name = "pytroch"
+    _name = "pytorch"
     _array_name = "tensor"
 
     def __init__(self):
@@ -191,7 +201,7 @@ class PytorchBackend(ArrayBackend):
 
         return torch.is_tensor(v)
 
-    def to_backend(self, backend, v):
+    def to_backend(self, v, backend):
         return backend.from_pytorch(v)
 
     def from_numpy(self, v):
@@ -201,6 +211,11 @@ class PytorchBackend(ArrayBackend):
 
     def from_pytorch(self, v):
         return v
+
+    def from_other(self, v, **kwargs):
+        import torch
+
+        return torch.tensor(v, **kwargs)
 
 
 array_backend_types = {"numpy": NumpyBackend, "pytorch": PytorchBackend}

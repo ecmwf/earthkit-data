@@ -8,8 +8,7 @@
 #
 
 import logging
-
-import numpy as np
+import math
 
 from earthkit.data.core.array import get_backend
 from earthkit.data.core.fieldlist import Field, FieldList
@@ -30,18 +29,19 @@ class ArrayField(Field):
     metadata: :class:`Metadata`
         Metadata object describing the field metadata.
     backend: str, ArrayBackend
-        Array backend.
+        Array backend. Must match the type of ``array``.
     """
 
     def __init__(self, array, metadata, backend):
         super().__init__(backend, metadata=metadata)
         self._array = array
-        self.raw_backend = backend
+        self.raw_values_backend = backend
 
     def _make_metadata(self):
         pass
 
     def _values(self, dtype=None):
+        """native array type"""
         if dtype is None:
             return self._array
         else:
@@ -122,7 +122,7 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
     def _shape_match(self, shape1, shape2):
         if shape1 == shape2:
             return True
-        if len(shape1) == 1 and shape1[0] == np.prod(shape2):
+        if len(shape1) == 1 and shape1[0] == math.prod(shape2):
             return True
         return False
 
@@ -209,14 +209,14 @@ class ListMerger:
 
 
 class ArrayFieldList(ArrayFieldListCore):
-    r"""Represent a list of :obj:`NumpyField <data.sources.numpy_list.NumpyField>`\ s.
+    r"""Represent a list of :obj:`ArrayField <data.sources.array_list.ArrayField>`\ s.
 
-    The preferred way to create a NumpyFieldList is to use either the
-    static :obj:`from_numpy` method or the :obj:`to_fieldlist` method.
+    The preferred way to create a ArrayFieldList is to use either the
+    static :obj:`from_array` method or the :obj:`to_fieldlist` method.
 
     See Also
     --------
-    from_numpy
+    from_array
     to_fieldlist
 
     """
