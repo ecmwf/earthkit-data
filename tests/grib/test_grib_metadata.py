@@ -36,7 +36,7 @@ def repeat_list_items(items, count):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key,expected_value",
     [
@@ -54,8 +54,8 @@ def repeat_list_items(items, count):
         (("shortName", "level"), ("2t", 0)),
     ],
 )
-def test_grib_metadata_grib(fl_type, backend, key, expected_value):
-    f = load_grib_data("test_single.grib", fl_type, backend, folder="data")
+def test_grib_metadata_grib(fl_type, array_backend, key, expected_value):
+    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
     sn = f.metadata(key)
     assert sn == [expected_value]
     sn = f[0].metadata(key)
@@ -63,7 +63,7 @@ def test_grib_metadata_grib(fl_type, backend, key, expected_value):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key,astype,expected_value",
     [
@@ -77,8 +77,8 @@ def test_grib_metadata_grib(fl_type, backend, key, expected_value):
         ("level", int, 0),
     ],
 )
-def test_grib_metadata_astype_1(fl_type, backend, key, astype, expected_value):
-    f = load_grib_data("test_single.grib", fl_type, backend, folder="data")
+def test_grib_metadata_astype_1(fl_type, array_backend, key, astype, expected_value):
+    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
     sn = f.metadata(key, astype=astype)
     assert sn == [expected_value]
     sn = f[0].metadata(key, astype=astype)
@@ -86,7 +86,7 @@ def test_grib_metadata_astype_1(fl_type, backend, key, astype, expected_value):
 
 
 @pytest.mark.parametrize("fs_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key,expected_value",
     [
@@ -98,15 +98,15 @@ def test_grib_metadata_astype_1(fl_type, backend, key, astype, expected_value):
         ("level:int", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
     ],
 )
-def test_grib_metadata_18(fs_type, backend, key, expected_value):
+def test_grib_metadata_18(fs_type, array_backend, key, expected_value):
     # f = load_grib_data("tuv_pl.grib", mode)
-    ds = load_grib_data("tuv_pl.grib", fs_type, backend)
+    ds = load_grib_data("tuv_pl.grib", fs_type, array_backend)
     sn = ds.metadata(key)
     assert sn == expected_value
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key,astype,expected_value",
     [
@@ -124,14 +124,14 @@ def test_grib_metadata_18(fs_type, backend, key, expected_value):
         ),
     ],
 )
-def test_grib_metadata_astype_18(fl_type, backend, key, astype, expected_value):
-    f = load_grib_data("tuv_pl.grib", fl_type, backend)
+def test_grib_metadata_astype_18(fl_type, array_backend, key, astype, expected_value):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     sn = f.metadata(key, astype=astype)
     assert sn == expected_value
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key,expected_value",
     [
@@ -140,15 +140,15 @@ def test_grib_metadata_astype_18(fl_type, backend, key, astype, expected_value):
         ("latitudeOfFirstGridPointInDegrees:float", 90.0),
     ],
 )
-def test_grib_metadata_double_1(fl_type, backend, key, expected_value):
-    f = load_grib_data("test_single.grib", fl_type, backend, folder="data")
+def test_grib_metadata_double_1(fl_type, array_backend, key, expected_value):
+    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
     r = f.metadata(key)
     assert len(r) == 1
     assert np.isclose(r[0], expected_value)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key",
     [
@@ -157,8 +157,8 @@ def test_grib_metadata_double_1(fl_type, backend, key, expected_value):
         ("latitudeOfFirstGridPointInDegrees:float"),
     ],
 )
-def test_grib_metadata_double_18(fl_type, backend, key):
-    f = load_grib_data("tuv_pl.grib", fl_type, backend)
+def test_grib_metadata_double_18(fl_type, array_backend, key):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     ref = [90.0] * 18
     r = f.metadata(key)
@@ -166,7 +166,7 @@ def test_grib_metadata_double_18(fl_type, backend, key):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key,astype",
     [
@@ -174,8 +174,8 @@ def test_grib_metadata_double_18(fl_type, backend, key):
         ("latitudeOfFirstGridPointInDegrees", float),
     ],
 )
-def test_grib_metadata_double_astype_18(fl_type, backend, key, astype):
-    f = load_grib_data("tuv_pl.grib", fl_type, backend)
+def test_grib_metadata_double_astype_18(fl_type, array_backend, key, astype):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     ref = [90.0] * 18
 
@@ -184,10 +184,10 @@ def test_grib_metadata_double_astype_18(fl_type, backend, key, astype):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_get_long_array_1(fl_type, backend):
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_get_long_array_1(fl_type, array_backend):
     f = load_grib_data(
-        "rgg_small_subarea_cellarea_ref.grib", fl_type, backend, folder="data"
+        "rgg_small_subarea_cellarea_ref.grib", fl_type, array_backend, folder="data"
     )
 
     assert len(f) == 1
@@ -203,9 +203,9 @@ def test_grib_get_long_array_1(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("backend", [None])
-def test_grib_get_double_array_values_1(fl_type, backend):
-    f = load_grib_data("test_single.grib", fl_type, backend, folder="data")
+@pytest.mark.parametrize("array_backend", [None])
+def test_grib_get_double_array_values_1(fl_type, array_backend):
+    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
 
     v = f.metadata("values")
     assert len(v) == 1
@@ -223,9 +223,9 @@ def test_grib_get_double_array_values_1(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("backend", [None])
-def test_grib_get_double_array_values_18(fl_type, backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, backend)
+@pytest.mark.parametrize("array_backend", [None])
+def test_grib_get_double_array_values_18(fl_type, array_backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     v = f.metadata("values")
     assert isinstance(v, list)
     assert len(v) == 18
@@ -254,9 +254,9 @@ def test_grib_get_double_array_values_18(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_get_double_array_1(fl_type, backend):
-    f = load_grib_data("ml_data.grib", fl_type, backend, folder="data")[0]
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_get_double_array_1(fl_type, array_backend):
+    f = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")[0]
     # f is now a field!
     v = f.metadata("pv")
     assert isinstance(v, np.ndarray)
@@ -268,9 +268,9 @@ def test_grib_get_double_array_1(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_get_double_array_18(fl_type, backend):
-    f = load_grib_data("ml_data.grib", fl_type, backend, folder="data")
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_get_double_array_18(fl_type, array_backend):
+    f = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")
     v = f.metadata("pv")
     assert isinstance(v, list)
     assert len(v) == 36
@@ -286,9 +286,9 @@ def test_grib_get_double_array_18(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_metadata_type_qualifier(fl_type, backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, backend)[0:4]
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_metadata_type_qualifier(fl_type, array_backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)[0:4]
 
     # to str
     r = f.metadata("centre:s")
@@ -326,9 +326,9 @@ def test_grib_metadata_type_qualifier(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_metadata_astype(fl_type, backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, backend)[0:4]
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_metadata_astype(fl_type, array_backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)[0:4]
 
     # to str
     r = f.metadata("centre", astype=None)
@@ -361,9 +361,9 @@ def test_grib_metadata_astype(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_metadata_generic(fl_type, backend):
-    f_full = load_grib_data("tuv_pl.grib", fl_type, backend)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_metadata_generic(fl_type, array_backend):
+    f_full = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     f = f_full[0:4]
 
@@ -391,9 +391,9 @@ def test_grib_metadata_generic(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_metadata_missing_value(fl_type, backend):
-    f = load_grib_data("ml_data.grib", fl_type, backend, folder="data")
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_metadata_missing_value(fl_type, array_backend):
+    f = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")
 
     with pytest.raises(KeyError):
         f[0].metadata("scaleFactorOfSecondFixedSurface")
@@ -403,9 +403,9 @@ def test_grib_metadata_missing_value(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_metadata_missing_key(fl_type, backend):
-    f = load_grib_data("test.grib", fl_type, backend)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_metadata_missing_key(fl_type, array_backend):
+    f = load_grib_data("test.grib", fl_type, array_backend)
 
     with pytest.raises(KeyError):
         f[0].metadata("_badkey_")
@@ -415,9 +415,9 @@ def test_grib_metadata_missing_key(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("backend", [None])
-def test_grib_metadata_namespace(fl_type, backend):
-    f = load_grib_data("test6.grib", fl_type, backend)
+@pytest.mark.parametrize("array_backend", [None])
+def test_grib_metadata_namespace(fl_type, array_backend):
+    f = load_grib_data("test6.grib", fl_type, array_backend)
 
     r = f[0].metadata(namespace="vertical")
     ref = {"level": 1000, "typeOfLevel": "isobaricInhPa"}
@@ -496,9 +496,9 @@ def test_grib_metadata_namespace(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_datetime(fl_type, backend):
-    s = load_grib_data("test.grib", fl_type, backend)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_datetime(fl_type, array_backend):
+    s = load_grib_data("test.grib", fl_type, array_backend)
 
     ref = {
         "base_time": [datetime.datetime(2020, 5, 13, 12)],
@@ -527,18 +527,18 @@ def test_grib_datetime(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_valid_datetime(fl_type, backend):
-    ds = load_grib_data("t_time_series.grib", fl_type, backend, folder="data")
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_valid_datetime(fl_type, array_backend):
+    ds = load_grib_data("t_time_series.grib", fl_type, array_backend, folder="data")
     f = ds[4]
 
     assert f.metadata("valid_datetime") == datetime.datetime(2020, 12, 21, 18)
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("backend", [None])
-def test_message(fl_type, backend):
-    f = load_grib_data("test.grib", fl_type, backend)
+@pytest.mark.parametrize("array_backend", [None])
+def test_message(fl_type, array_backend):
+    f = load_grib_data("test.grib", fl_type, array_backend)
     v = f[0].message()
     assert len(v) == 526
     assert v[:4] == b"GRIB"

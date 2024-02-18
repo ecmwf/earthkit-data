@@ -191,7 +191,7 @@ class GribFromDicts(GribFieldList):
         super().__init__(*args, **kwargs)
 
     def __getitem__(self, n):
-        return VirtualGribField(self.list_of_dicts[n], self.backend)
+        return VirtualGribField(self.list_of_dicts[n], self.array_backend)
 
     def __len__(self):
         return len(self.list_of_dicts)

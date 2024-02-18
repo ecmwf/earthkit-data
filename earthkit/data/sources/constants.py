@@ -328,7 +328,7 @@ class ConstantsFieldList(ConstantsFieldListCore):
                 self.procs[param],
                 self.maker.shape,
                 self.maker.field.metadata().geography,
-                self.backend,
+                self.array_backend,
             )
 
 

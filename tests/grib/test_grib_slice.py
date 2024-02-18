@@ -24,7 +24,7 @@ from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "index,expected_meta",
     [
@@ -35,8 +35,8 @@ from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
         (-5, ["u", 400]),
     ],
 )
-def test_grib_single_index(fl_type, backend, index, expected_meta):
-    f = load_grib_data("tuv_pl.grib", fl_type, backend)
+def test_grib_single_index(fl_type, array_backend, index, expected_meta):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     # f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     r = f[index]
@@ -48,15 +48,15 @@ def test_grib_single_index(fl_type, backend, index, expected_meta):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_single_index_bad(fl_type, backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, backend)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_single_index_bad(fl_type, array_backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     with pytest.raises(IndexError):
         f[27]
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "indexes,expected_meta",
     [
@@ -68,8 +68,8 @@ def test_grib_single_index_bad(fl_type, backend):
         (slice(14, None), [["v", 400], ["t", 300], ["u", 300], ["v", 300]]),
     ],
 )
-def test_grib_slice_single_file(fl_type, backend, indexes, expected_meta):
-    f = load_grib_data("tuv_pl.grib", fl_type, backend)
+def test_grib_slice_single_file(fl_type, array_backend, indexes, expected_meta):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     r = f[indexes]
     assert len(r) == 4
     assert r.metadata(["shortName", "level"]) == expected_meta
@@ -105,13 +105,13 @@ def test_grib_slice_multi_file(indexes, expected_meta):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "indexes1,indexes2",
     [(np.array([1, 16, 5, 9]), np.array([1, 3])), ([1, 16, 5, 9], [1, 3])],
 )
-def test_grib_array_indexing(fl_type, backend, indexes1, indexes2):
-    f = load_grib_data("tuv_pl.grib", fl_type, backend)
+def test_grib_array_indexing(fl_type, array_backend, indexes1, indexes2):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     r = f[indexes1]
     assert len(r) == 4
@@ -123,18 +123,18 @@ def test_grib_array_indexing(fl_type, backend, indexes1, indexes2):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("indexes", [(np.array([1, 19, 5, 9])), ([1, 19, 5, 9])])
-def test_grib_array_indexing_bad(fl_type, backend, indexes):
-    f = load_grib_data("tuv_pl.grib", fl_type, backend)
+def test_grib_array_indexing_bad(fl_type, array_backend, indexes):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     with pytest.raises(IndexError):
         f[indexes]
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_fieldlist_iterator(fl_type, backend):
-    g = load_grib_data("tuv_pl.grib", fl_type, backend)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_fieldlist_iterator(fl_type, array_backend):
+    g = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     sn = g.metadata("shortName")
     assert len(sn) == 18
     iter_sn = [f.metadata("shortName") for f in g]
@@ -145,12 +145,12 @@ def test_grib_fieldlist_iterator(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_fieldlist_iterator_with_zip(fl_type, backend):
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_fieldlist_iterator_with_zip(fl_type, array_backend):
     # test something different to the iterator - does not try to
     # 'go off the edge' of the fieldlist, because the length is determined by
     # the list of levels
-    g = load_grib_data("tuv_pl.grib", fl_type, backend)
+    g = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     ref_levs = g.metadata("level")
     assert len(ref_levs) == 18
     levs1 = []
@@ -163,10 +163,10 @@ def test_grib_fieldlist_iterator_with_zip(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_fieldlist_iterator_with_zip_multiple(fl_type, backend):
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_fieldlist_iterator_with_zip_multiple(fl_type, array_backend):
     # same as test_fieldlist_iterator_with_zip() but multiple times
-    g = load_grib_data("tuv_pl.grib", fl_type, backend)
+    g = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     ref_levs = g.metadata("level")
     assert len(ref_levs) == 18
     for i in range(2):
@@ -180,9 +180,9 @@ def test_grib_fieldlist_iterator_with_zip_multiple(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_fieldlist_reverse_iterator(fl_type, backend):
-    g = load_grib_data("tuv_pl.grib", fl_type, backend)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_fieldlist_reverse_iterator(fl_type, array_backend):
+    g = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     sn = g.metadata("shortName")
     sn_reversed = list(reversed(sn))
     assert sn_reversed[0] == "v"

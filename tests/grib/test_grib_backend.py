@@ -16,7 +16,7 @@ from earthkit.data import FieldList, from_source
 from earthkit.data.testing import NO_PYTORCH, earthkit_examples_file
 
 
-@pytest.mark.parametrize("_kwargs", [{}, {"backend": "numpy"}])
+@pytest.mark.parametrize("_kwargs", [{}, {"array_backend": "numpy"}])
 def test_grib_file_numpy_backend(_kwargs):
     ds = from_source("file", earthkit_examples_file("test6.grib"), **_kwargs)
 
@@ -43,12 +43,19 @@ def test_grib_file_numpy_backend(_kwargs):
     assert isinstance(ds.to_numpy(), np.ndarray)
     assert ds.to_numpy().shape == (6, 7, 12)
 
+    ds1 = ds.to_fieldlist()
+    assert len(ds1) == len(ds)
+    assert ds1.array_backend.name == "numpy"
+    assert getattr(ds1, "path", None) is None
+
 
 @pytest.mark.skipif(NO_PYTORCH, reason="No pytorch installed")
 def test_grib_file_pytorch_backend():
     import torch
 
-    ds = from_source("file", earthkit_examples_file("test6.grib"), backend="pytorch")
+    ds = from_source(
+        "file", earthkit_examples_file("test6.grib"), array_backend="pytorch"
+    )
 
     assert len(ds) == 6
 
@@ -72,6 +79,11 @@ def test_grib_file_pytorch_backend():
 
     assert isinstance(ds.to_numpy(), np.ndarray)
     assert ds.to_numpy().shape == (6, 7, 12)
+
+    ds1 = ds.to_fieldlist()
+    assert len(ds1) == len(ds)
+    assert ds1.array_backend.name == "pytorch"
+    assert getattr(ds1, "path", None) is None
 
 
 def test_grib_array_numpy_backend():
@@ -111,7 +123,9 @@ def test_grib_array_numpy_backend():
 def test_grib_array_pytorch_backend():
     import torch
 
-    s = from_source("file", earthkit_examples_file("test6.grib"), backend="pytorch")
+    s = from_source(
+        "file", earthkit_examples_file("test6.grib"), array_backend="pytorch"
+    )
 
     ds = FieldList.from_array(
         s.values,

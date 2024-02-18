@@ -150,49 +150,21 @@ def load_nc_or_xr_source(path, mode):
         return from_object(xarray.open_dataset(path))
 
 
-# def check_numpy_array_type(v, dtype=None):
-#     import numpy as np
-
-#     assert isinstance(v, np.ndarray)
-#     if dtype is not None:
-#         if dtype == "float64":
-#             dtype = np.float64
-#         elif dtype == "float32":
-#             dtype = np.float32
-#         else:
-#             raise ValueError("Unsupported dtype={dtype}")
-#         assert v.dtype == dtype
-
-
-# def check_pytorch_array_type(v, dtype=None):
-#     import torch
-
-#     assert torch.is_tensor(v)
-#     if dtype is not None:
-#         if dtype == "float64":
-#             dtype = torch.float64
-#         elif dtype == "float32":
-#             dtype = torch.float32
-#         else:
-#             raise ValueError("Unsupported dtype={dtype}")
-#         assert v.dtype == dtype
-
-
 def check_array_type(v, backend, **kwargs):
-    from earthkit.data.core.array import ensure_backend
+    from earthkit.data.utils.array import ensure_backend
 
     b = ensure_backend(backend)
-    assert b.is_native_array(v, **kwargs)
+    assert b.is_native_array(v, **kwargs), f"{type(v)}, {backend=}, {kwargs=}"
 
 
 def get_array_namespace(backend):
-    from earthkit.data.core.array import ensure_backend
+    from earthkit.data.utils.array import ensure_backend
 
     return ensure_backend(backend).array_ns
 
 
 def get_array(v, backend, **kwargs):
-    from earthkit.data.core.array import ensure_backend
+    from earthkit.data.utils.array import ensure_backend
 
     b = ensure_backend(backend)
     return b.from_other(v, **kwargs)

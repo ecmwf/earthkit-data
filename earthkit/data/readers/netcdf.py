@@ -151,7 +151,7 @@ class DataSet:
 
 def get_fields_from_ds(
     ds,
-    backend,
+    array_backend,
     field_type=None,
     check_only=False,
 ):  # noqa C901
@@ -261,7 +261,7 @@ def get_fields_from_ds(
             if check_only:
                 return True
 
-            fields.append(field_type(ds, name, slices, non_dim_coords, backend))
+            fields.append(field_type(ds, name, slices, non_dim_coords, array_backend))
 
     # if not fields:
     #     raise Exception("NetCDFReader no 2D fields found in %s" % (self.path,))
@@ -378,8 +378,8 @@ class XArrayMetadata(RawMetadata):
 
 
 class XArrayField(Field):
-    def __init__(self, ds, variable, slices, non_dim_coords, backend):
-        super().__init__(backend)
+    def __init__(self, ds, variable, slices, non_dim_coords, array_backend):
+        super().__init__(array_backend)
         self._ds = ds
         self._da = ds[variable]
 
@@ -467,7 +467,7 @@ class XArrayFieldListCore(FieldList):
         if self._fields is None:
             return get_fields_from_ds(
                 DataSet(self.ds),
-                self.backend,
+                self.array_backend,
                 field_type=self.FIELD_TYPE,
                 check_only=True,
             )
@@ -480,7 +480,7 @@ class XArrayFieldListCore(FieldList):
 
     def _get_fields(self):
         return get_fields_from_ds(
-            DataSet(self.ds), self.backend, field_type=self.FIELD_TYPE
+            DataSet(self.ds), self.array_backend, field_type=self.FIELD_TYPE
         )
 
     def to_pandas(self):
@@ -565,7 +565,7 @@ class NetCDFFieldList(XArrayFieldListCore):
             xr.open_mfdataset(self.path, combine="by_coords")
         ) as ds:  # or nested
             return get_fields_from_ds(
-                DataSet(ds), self.backend, field_type=self.FIELD_TYPE
+                DataSet(ds), self.array_backend, field_type=self.FIELD_TYPE
             )
 
     def has_fields(self):
@@ -577,7 +577,7 @@ class NetCDFFieldList(XArrayFieldListCore):
             ) as ds:  # or nested
                 return get_fields_from_ds(
                     DataSet(ds),
-                    self.backend,
+                    self.array_backend,
                     field_type=self.FIELD_TYPE,
                     check_only=True,
                 )

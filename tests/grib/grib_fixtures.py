@@ -15,14 +15,14 @@ from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.testing import earthkit_examples_file, earthkit_test_data_file
 
 
-def load_array_fieldlist(path, backend):
-    ds = from_source("file", path, backend=backend)
+def load_array_fieldlist(path, array_backend):
+    ds = from_source("file", path, array_backend=array_backend)
     return FieldList.from_array(
         ds.values, [m.override(generatingProcessIdentifier=120) for m in ds.metadata()]
     )
 
 
-def load_grib_data(filename, fl_type, backend, folder="example"):
+def load_grib_data(filename, fl_type, array_backend, folder="example"):
     if folder == "example":
         path = earthkit_examples_file(filename)
     elif folder == "data":
@@ -31,65 +31,11 @@ def load_grib_data(filename, fl_type, backend, folder="example"):
         raise ValueError("Invalid folder={folder}")
 
     if fl_type == "file":
-        return from_source("file", path, backend=backend)
+        return from_source("file", path, array_backend=array_backend)
     elif fl_type == "array":
-        return load_array_fieldlist(path, backend)
+        return load_array_fieldlist(path, array_backend)
     else:
         raise ValueError("Invalid fl_type={fl_type}")
 
 
-# def check_numpy_array_type(v, dtype=None):
-#     import numpy as np
-
-#     assert isinstance(v, np.ndarray)
-#     if dtype is not None:
-#         if dtype == "float64":
-#             dtype = np.float64
-#         elif dtype == "float32":
-#             dtype = np.float32
-#         else:
-#             raise ValueError("Unsupported dtype={dtype}")
-#         assert v.dtype == dtype
-
-
-# def check_pytorch_array_type(v, dtype=None):
-#     import torch
-
-#     assert torch.is_tensor(v)
-#     if dtype is not None:
-#         if dtype == "float64":
-#             dtype = torch.float64
-#         elif dtype == "float32":
-#             dtype = torch.float32
-#         else:
-#             raise ValueError("Unsupported dtype={dtype}")
-#         assert v.dtype == dtype
-
-
-# def check_array_type(v, backend, **kwargs):
-#     if backend is None or backend == "numpy":
-#         check_numpy_array_type(v, **kwargs)
-#     elif backend == "pytorch":
-#         check_pytorch_array_type(v, **kwargs)
-#     else:
-#         raise ValueError("Invalid backend={backend}")
-
-
-# def get_array_namespace(backend):
-#     from earthkit.data.core.array import ensure_backend
-
-#     return ensure_backend(backend).array_ns
-
-
-# def get_array(v, backend):
-#     from earthkit.data.core.array import ensure_backend
-
-#     b = ensure_backend(backend)
-#     return b.from_other(v)
-
-
 FL_TYPES = ["file", "array"]
-
-# ARRAY_BACKENDS = ["numpy"]
-# if not NO_PYTORCH:
-#     ARRAY_BACKENDS.append("pytorch")

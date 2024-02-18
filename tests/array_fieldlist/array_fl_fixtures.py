@@ -17,7 +17,7 @@ from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file, get_array_namespace
 
 
-def load_array_fl(num, backend=None):
+def load_array_fl(num, array_backend=None):
     assert num in [1, 2, 3]
     files = ["test.grib", "test6.grib", "tuv_pl.grib"]
     files = files[:num]
@@ -26,7 +26,9 @@ def load_array_fl(num, backend=None):
     md = []
     for fname in files:
         ds_in.append(
-            from_source("file", earthkit_examples_file(fname), backend=backend)
+            from_source(
+                "file", earthkit_examples_file(fname), array_backend=array_backend
+            )
         )
         md += ds_in[-1].metadata("param")
 
@@ -41,8 +43,10 @@ def load_array_fl(num, backend=None):
     return (*ds, md)
 
 
-def load_array_fl_file(fname, backend=None):
-    ds_in = from_source("file", earthkit_examples_file(fname), backend=backend)
+def load_array_fl_file(fname, array_backend=None):
+    ds_in = from_source(
+        "file", earthkit_examples_file(fname), array_backend=array_backend
+    )
     md = ds_in.metadata("param")
 
     ds = FieldList.from_array(
@@ -52,10 +56,10 @@ def load_array_fl_file(fname, backend=None):
     return (ds, md)
 
 
-def check_array_fl(ds, ds_input, md_full, backend=None):
+def check_array_fl(ds, ds_input, md_full, array_backend=None):
     assert len(ds_input) in [1, 2, 3]
 
-    ns = get_array_namespace(backend)
+    ns = get_array_namespace(array_backend)
 
     assert len(ds) == len(md_full)
     assert ds.metadata("param") == md_full
@@ -96,13 +100,13 @@ def check_array_fl(ds, ds_input, md_full, backend=None):
 
 
 def check_array_fl_from_to_fieldlist(
-    ds, ds_input, md_full, backend=None, flatten=False, dtype=None
+    ds, ds_input, md_full, array_backend=None, flatten=False, dtype=None
 ):
     assert len(ds_input) in [1, 2, 3]
     assert len(ds) == len(md_full)
     assert ds.metadata("param") == md_full
 
-    ns = get_array_namespace(backend)
+    ns = get_array_namespace(array_backend)
 
     np_kwargs = {"flatten": flatten, "dtype": dtype}
 

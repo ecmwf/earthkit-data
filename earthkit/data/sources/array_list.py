@@ -10,11 +10,11 @@
 import logging
 import math
 
-from earthkit.data.core.array import get_backend
 from earthkit.data.core.fieldlist import Field, FieldList
 from earthkit.data.core.index import MaskIndex, MultiIndex
 from earthkit.data.readers.grib.pandas import PandasMixIn
 from earthkit.data.readers.grib.xarray import XarrayMixIn
+from earthkit.data.utils.array import get_backend
 
 LOG = logging.getLogger(__name__)
 
@@ -28,14 +28,15 @@ class ArrayField(Field):
         Array storing the values of the field
     metadata: :class:`Metadata`
         Metadata object describing the field metadata.
-    backend: str, ArrayBackend
+    array_backend: str, ArrayBackend
         Array backend. Must match the type of ``array``.
     """
 
-    def __init__(self, array, metadata, backend):
-        super().__init__(backend, metadata=metadata)
+    def __init__(self, array, metadata, array_backend):
+        super().__init__(
+            array_backend, raw_values_backend=array_backend, metadata=metadata
+        )
         self._array = array
-        self.raw_values_backend = backend
 
     def _make_metadata(self):
         pass
@@ -45,7 +46,7 @@ class ArrayField(Field):
         if dtype is None:
             return self._array
         else:
-            return self.backend.array_ns.astype(self._array, dtype, copy=False)
+            return self.array_backend.array_ns.astype(self._array, dtype, copy=False)
 
     def __repr__(self):
         return f"{self.__class__.__name__}()"
@@ -66,7 +67,7 @@ class ArrayField(Field):
 
 
 class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
-    def __init__(self, array, metadata, *args, backend=None, **kwargs):
+    def __init__(self, array, metadata, *args, array_backend=None, **kwargs):
         self._array = array
         self._metadata = metadata
 
@@ -74,17 +75,17 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
             self._metadata = [self._metadata]
 
         # get backend and check consistency
-        backend = get_backend(self._array, guess=backend, strict=True)
+        array_backend = get_backend(self._array, guess=array_backend, strict=True)
 
-        FieldList.__init__(self, *args, backend=backend, **kwargs)
+        FieldList.__init__(self, *args, array_backend=array_backend, **kwargs)
 
-        if self.backend.is_native_array(self._array):
+        if self.array_backend.is_native_array(self._array):
             if self._array.shape[0] != len(self._metadata):
                 # we have a single array and a single metadata
                 if len(self._metadata) == 1 and self._shape_match(
                     self._array.shape, self._metadata[0].geography.shape()
                 ):
-                    self._array = self.backend.array_ns.stack([self._array])
+                    self._array = self.array_backend.array_ns.stack([self._array])
                 else:
                     raise ValueError(
                         (
@@ -102,17 +103,20 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
                 )
 
             for i, a in enumerate(self._array):
-                if not self.backend.is_native_array(a):
+                if not self.array_backend.is_native_array(a):
                     raise ValueError(
                         (
-                            f"All array element must be an {self.backend.array_name}."
+                            f"All array element must be an {self.array_backend.array_name}."
                             " Type at position={i} is {type(a)}"
                         )
                     )
 
         else:
             raise TypeError(
-                f"array must be an {self.backend.array_name} or a list of {self.backend.array_name}s"
+                (
+                    f"array must be an {self.array_backend.array_name} or a"
+                    f" list of {self.array_backend.array_name}s"
+                )
             )
 
         # hide internal metadata related to values
@@ -135,8 +139,10 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
             raise ValueError(
                 "ArrayFieldList can only be merged to another ArrayFieldLists"
             )
-        if not all(s.backend is s[0].backend for s in sources):
-            raise ValueError("Only fieldlists with the same backend can be merged")
+        if not all(s.array_backend is s[0].array_backend for s in sources):
+            raise ValueError(
+                "Only fieldlists with the same array backend can be merged"
+            )
 
         merger = ListMerger(sources)
         return merger.to_fieldlist()
@@ -144,11 +150,13 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
     def __repr__(self):
         return f"{self.__class__.__name__}(fields={len(self)})"
 
-    def _to_array_fieldlist(self, backend=None, **kwargs):
+    def _to_array_fieldlist(self, array_backend=None, **kwargs):
         if self[0]._array_matches(self._array[0], **kwargs):
             return self
         else:
-            return type(self)(self.to_array(backend=backend, **kwargs), self._metadata)
+            return type(self)(
+                self.to_array(array_backend=array_backend, **kwargs), self._metadata
+            )
 
     def save(self, filename, append=False, check_nans=True, bits_per_value=16):
         r"""Write all the fields into a file.
@@ -203,8 +211,10 @@ class ListMerger:
             for f in s:
                 array.append(f._array)
                 metadata.append(f._metadata)
-        backend = None if len(self.sources) == 0 else self.sources[0].backend
-        return ArrayFieldList(array, metadata, backend=backend)
+        array_backend = (
+            None if len(self.sources) == 0 else self.sources[0].array_backend
+        )
+        return ArrayFieldList(array, metadata, array_backend=array_backend)
 
 
 class ArrayFieldList(ArrayFieldListCore):
@@ -222,7 +232,7 @@ class ArrayFieldList(ArrayFieldListCore):
 
     def _getitem(self, n):
         if isinstance(n, int):
-            return ArrayField(self._array[n], self._metadata[n], self.backend)
+            return ArrayField(self._array[n], self._metadata[n], self.array_backend)
 
     def __len__(self):
         return (

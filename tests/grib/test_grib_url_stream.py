@@ -70,7 +70,7 @@ def test_grib_url_stream_group_by(_kwargs):
     for i, f in enumerate(fs):
         assert len(f) == 3
         assert f.metadata(("param", "level")) == ref[i]
-        assert f.to_fieldlist("numpy") is not f
+        assert f.to_fieldlist(array_backend="numpy") is not f
         cnt += 1
 
     assert cnt == len(ref)

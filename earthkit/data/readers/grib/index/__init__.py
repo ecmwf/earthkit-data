@@ -126,8 +126,10 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
             raise ValueError(
                 "GribFieldList can only be merged to another GribFieldLists"
             )
-        if not all(s.backend is s[0].backend for s in sources):
-            raise ValueError("Only fieldlists with the same backend can be merged")
+        if not all(s.array_backend is s[0].array_backend for s in sources):
+            raise ValueError(
+                "Only fieldlists with the same array backend can be merged"
+            )
 
         return GribMultiFieldList(sources)
 
@@ -203,7 +205,7 @@ class GribFieldListInFiles(GribFieldList):
     def _getitem(self, n):
         if isinstance(n, int):
             part = self.part(n if n >= 0 else len(self) + n)
-            return GribField(part.path, part.offset, part.length, self.backend)
+            return GribField(part.path, part.offset, part.length, self.array_backend)
 
     def __len__(self):
         return self.number_of_parts()

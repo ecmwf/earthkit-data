@@ -7,11 +7,12 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.core.array import NUMPY_BACKEND
 from earthkit.data.sources.array_list import ArrayFieldList
 
 
 class NumpyFieldList(ArrayFieldList):
     def __init__(self, *args, **kwargs):
+        from earthkit.data.utils.array import numpy_backend
+
         kwargs.pop("backend", None)
-        super().__init__(*args, backend=NUMPY_BACKEND, **kwargs)
+        super().__init__(*args, array_backend=numpy_backend(), **kwargs)

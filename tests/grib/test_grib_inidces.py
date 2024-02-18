@@ -22,9 +22,9 @@ from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_indices_base(fl_type, backend):
-    ds = load_grib_data("tuv_pl.grib", fl_type, backend)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_indices_base(fl_type, array_backend):
+    ds = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     ref = {
         "class": ["od"],
@@ -56,9 +56,9 @@ def test_grib_indices_base(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_indices_sel(fl_type, backend):
-    ds = load_grib_data("tuv_pl.grib", fl_type, backend)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_indices_sel(fl_type, array_backend):
+    ds = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     ref = {
         "class": ["od"],
@@ -86,10 +86,10 @@ def test_grib_indices_sel(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_indices_multi(fl_type, backend):
-    f1 = load_grib_data("tuv_pl.grib", fl_type, backend)
-    f2 = load_grib_data("ml_data.grib", fl_type, backend, folder="data")
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_indices_multi(fl_type, array_backend):
+    f1 = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+    f2 = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")
     ds = f1 + f2
 
     ref = {
@@ -153,10 +153,10 @@ def test_grib_indices_multi(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_indices_multi_Del(fl_type, backend):
-    f1 = load_grib_data("tuv_pl.grib", fl_type, backend)
-    f2 = load_grib_data("ml_data.grib", fl_type, backend, folder="data")
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_indices_multi_Del(fl_type, array_backend):
+    f1 = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+    f2 = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")
     ds = f1 + f2
 
     ref = {
@@ -179,9 +179,9 @@ def test_grib_indices_multi_Del(fl_type, backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_indices_order_by(fl_type, backend):
-    ds = load_grib_data("tuv_pl.grib", fl_type, backend)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_indices_order_by(fl_type, array_backend):
+    ds = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     ref = {
         "class": ["od"],

@@ -131,7 +131,7 @@ def test_array_fl_grib_from_to_fieldlist(kwargs):
     md_full = ds.metadata("param")
     assert len(ds) == 2
 
-    r = ds.to_fieldlist("numpy", **kwargs)
+    r = ds.to_fieldlist(array_backend="numpy", **kwargs)
     check_array_fl_from_to_fieldlist(r, [ds], md_full, **kwargs)
 
 
@@ -141,11 +141,11 @@ def test_array_fl_grib_from_to_fieldlist_repeat():
     assert len(ds) == 2
 
     kwargs = {}
-    r = ds.to_fieldlist("numpy", **kwargs)
+    r = ds.to_fieldlist(array_backend="numpy", **kwargs)
     check_array_fl_from_to_fieldlist(r, [ds], md_full, **kwargs)
 
     kwargs = {"flatten": True, "dtype": np.float32}
-    r1 = r.to_fieldlist("numpy", **kwargs)
+    r1 = r.to_fieldlist(array_backend="numpy", **kwargs)
     assert r1 is not r
     check_array_fl_from_to_fieldlist(r1, [ds], md_full, **kwargs)
 

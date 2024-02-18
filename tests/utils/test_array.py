@@ -11,11 +11,11 @@
 
 import pytest
 
-from earthkit.data.core.array import ensure_backend, get_backend
 from earthkit.data.testing import NO_PYTORCH
+from earthkit.data.utils.array import ensure_backend, get_backend
 
 
-def test_core_array_backend_numpy():
+def test_utils_array_backend_numpy():
     b = ensure_backend("numpy")
     assert b.name == "numpy"
 
@@ -43,7 +43,7 @@ def test_core_array_backend_numpy():
 
 
 @pytest.mark.skipif(NO_PYTORCH, reason="No pytorch installed")
-def test_core_array_backend_pytorch():
+def test_utils_array_backend_pytorch():
     b = ensure_backend("pytorch")
     assert b.name == "pytorch"
 

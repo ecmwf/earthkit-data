@@ -25,9 +25,11 @@ from earthkit.data.testing import ARRAY_BACKENDS, earthkit_examples_file
 EPSILON = 1e-4
 
 
-@pytest.mark.parametrize("backend", ARRAY_BACKENDS)
-def test_grib_save_when_loaded_from_file(backend):
-    fs = from_source("file", earthkit_examples_file("test6.grib"), backend=backend)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_save_when_loaded_from_file(array_backend):
+    fs = from_source(
+        "file", earthkit_examples_file("test6.grib"), array_backend=array_backend
+    )
     assert len(fs) == 6
     with temp_file() as tmp:
         fs.save(tmp)
