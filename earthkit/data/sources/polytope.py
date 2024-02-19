@@ -21,16 +21,14 @@ class PolytopeWebKeyPrompt(APIKeyPrompt):
     register_or_sign_in_url = ("",)
     retrieve_api_key_url = ("",)
     prompts = [
-        dict(
-            name="user_email",
-            title="Your email",
-        ),
+        dict(name="user_email", title="Your email", env="POLYTOPE_USER_EMAIL"),
         dict(
             name="user_key",
             example="b295aad8af30332fad2fa8c963ab7900",
             title="API key",
             hidden=True,
             validate="[0-9a-z]{32}",
+            env="POLYTOPE_USER_KEY",
         ),
     ]
 

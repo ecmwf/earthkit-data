@@ -30,6 +30,7 @@ class HDAAPIKeyPrompt(APIKeyPrompt):
             default="https://wekeo-broker.apps.mercator.dpi.wekeo.eu/databroker",
             title="API url",
             validate=r"http.?://.*",
+            env="HDA_URL",
         ),
         dict(
             name="user",
@@ -37,6 +38,7 @@ class HDAAPIKeyPrompt(APIKeyPrompt):
             title="User name",
             hidden=False,
             validate=r"[0-9a-z]+",
+            env="HDA_USER",
         ),
         dict(
             name="password",
@@ -44,10 +46,12 @@ class HDAAPIKeyPrompt(APIKeyPrompt):
             title="Password",
             hidden=True,
             validate=r"[0-9A-z\!\@\#\$\%\&\*]{5,30}",
+            env="HDA_PASSWORD",
         ),
     ]
 
     rcfile = "~/.hdarc"
+    rcfile_env = "HDA_RC"
 
     def save(self, input, file):
         yaml.dump(input, file, default_flow_style=False)
@@ -95,13 +99,11 @@ class WekeoRetriever(FileSource):
 
     @staticmethod
     def client():
-        prompt = HDAAPIKeyPrompt()
-        prompt.check()
-
         try:
             return ApiClient()
         except Exception as e:
             if ".hdarc" in str(e):
+                prompt = HDAAPIKeyPrompt()
                 prompt.ask_user_and_save()
                 return ApiClient()
             raise

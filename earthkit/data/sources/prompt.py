@@ -14,9 +14,8 @@ import re
 import stat
 from getpass import getpass
 
-import markdown
-
 from earthkit.data.core.ipython import HTML, display, ipython_active
+from earthkit.data.utils.humanize import list_to_human
 
 LOG = logging.getLogger(__name__)
 
@@ -44,6 +43,18 @@ An API key is needed to access this dataset. Please visit
 then visit {retrieve_api_key_url} to retrieve you API key.
 """
 
+RC_MESSAGE_BASE = """
+You can store the credentials in {rcfile}; if you follow the
+instructions below it will be automatically done for you.
+"""
+
+RC_MESSAGE_EXT = """
+You can store the credentials in {rcfile} or in the file
+pointed by the {rcfile_env} environment variable. If you follow
+the instructions below {rcfile} will be automatically created
+for you.
+"""
+
 
 class RegexValidate:
     def __init__(self, pattern):
@@ -57,6 +68,28 @@ class RegexValidate:
 class Prompt:
     def __init__(self, owner):
         self.owner = owner
+
+    def _rc_message(self):
+        if self.owner.rcfile:
+            if self.owner.rcfile_env:
+                return RC_MESSAGE_EXT.format(
+                    rcfile=self.owner.rcfile, rcfile_env=self.owner.rcfile_env
+                )
+            else:
+                return RC_MESSAGE_BASE.format(rcfile=self.owner.rcfile)
+
+        return ""
+
+    def _env_message(self):
+        ev = [p["env"] for p in self.owner.prompts if "env" in p]
+        if ev and len(ev) == len(self.owner.prompts):
+            plural = "s" if len(ev) > 1 else ""
+            return (
+                f" Alternatively, you can use the {list_to_human(ev)}"
+                f" environment variable{plural} to specify the credentials."
+            )
+
+        return ""
 
     def ask_user(self):
         self.print_message()
@@ -87,6 +120,8 @@ class Text(Prompt):
                 register_or_sign_in_url=self.owner.register_or_sign_in_url,
                 retrieve_api_key_url=self.owner.retrieve_api_key_url,
             )
+            + self._rc_message()
+            + self._env_message()
         )
 
     def ask(self, p, method):
@@ -99,22 +134,29 @@ class Text(Prompt):
 
 class Markdown(Prompt):
     def print_message(self):
+        import markdown
+
         message = markdown.markdown(
             MESSAGE.format(
                 register_or_sign_in_url=f"<{self.owner.register_or_sign_in_url}>",
                 retrieve_api_key_url=f"<{self.owner.retrieve_api_key_url}>",
+                rcfile=f"{self.owner.rcfile}",
             )
+            + self._rc_message()
+            + self._env_message()
         )
         # We use Python's markdown instead of IPython's Markdown because
         # jupyter lab/colab/deepnotes all behave differently
         display(HTML(HTML_MESSAGE.format(message=message)))
 
     def ask(self, p, method):
+        import markdown
+
         message = f"Please enter a value for <span style='color: red;'>{p.get('title')}</span>"
         if "default" in p:
             message += (
-                " or leave empty for the default value ",
-                f"<span style='color: red;'>{p.get('default')}</span>",
+                " or leave empty for the default value "
+                f"<span style='color: red;'>{p.get('default')}</span>"
             )
         message += ", then press *ENTER*"
         if "example" in p:
@@ -125,14 +167,17 @@ class Markdown(Prompt):
 
 
 class APIKeyPrompt:
+    rcfile_env = None
+
     def check(self, load=False):
         rcfile = os.path.expanduser(self.rcfile)
         if not os.path.exists(rcfile):
             self.ask_user_and_save()
 
         if load:
-            with open(rcfile) as f:
-                return self.load(f)
+            return self.load(rcfile)
+            # with open(rcfile) as f:
+            #     return self.load(f)
 
     def ask_user(self):
         if ipython_active:
@@ -161,8 +206,26 @@ class APIKeyPrompt:
     def save(self, input, file):
         json.dump(input, file, indent=4)
 
-    def load(self, file):
-        return json.load(file)
+    def load(self, path):
+        try:
+            return self._load_json(path)
+        except Exception:
+            try:
+                return self._load_yaml(path)
+            except Exception:
+                pass
+
+        raise Exception(f"Could not read config file either as JSON or YAML. {path=}")
+
+    def _load_json(self, path):
+        with open(path) as f:
+            return json.load(f)
+
+    def _load_yaml(self, path):
+        with open(path) as f:
+            import yaml
+
+            return yaml.safe_load(f.read())
 
     def validate(self, input):
         return input

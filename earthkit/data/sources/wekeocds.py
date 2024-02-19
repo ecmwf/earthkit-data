@@ -59,12 +59,11 @@ class WekeoCdsRetriever(FileSource):
 
     @staticmethod
     def client():
-        prompt = HDAAPIKeyPrompt()
-        prompt.check()
         try:
             return ApiClient()
         except Exception as e:
             if ".hdarc" in str(e):
+                prompt = HDAAPIKeyPrompt()
                 prompt.ask_user_and_save()
                 return ApiClient()
 

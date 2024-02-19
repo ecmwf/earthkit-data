@@ -6,7 +6,7 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-import collections.abc
+
 import itertools
 import sys
 from functools import cached_property
@@ -16,7 +16,7 @@ import yaml
 
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.decorators import normalize
-from earthkit.data.utils import tqdm
+from earthkit.data.utils import ensure_iterable, tqdm
 
 from .file import FileSource
 from .prompt import APIKeyPrompt
@@ -34,12 +34,6 @@ else:
             yield batch
 
 
-def ensure_iterable(obj):
-    if isinstance(obj, str) or not isinstance(obj, collections.abc.Iterable):
-        return [obj]
-    return obj
-
-
 class CDSAPIKeyPrompt(APIKeyPrompt):
     register_or_sign_in_url = "https://cds.climate.copernicus.eu/"
     retrieve_api_key_url = "https://cds.climate.copernicus.eu/api-how-to"
@@ -50,6 +44,7 @@ class CDSAPIKeyPrompt(APIKeyPrompt):
             default="https://cds.climate.copernicus.eu/api/v2",
             title="API url",
             validate=r"http.?://.*",
+            env="CDSAPI_URL",
         ),
         dict(
             name="key",
@@ -57,23 +52,26 @@ class CDSAPIKeyPrompt(APIKeyPrompt):
             title="API key",
             hidden=True,
             validate=r"\d+:[\-0-9a-f]+",
+            env="CDSAPI_KEY",
         ),
     ]
 
     rcfile = "~/.cdsapirc"
+    rcfile_env = "CDSAPI_RC"
 
     def save(self, input, file):
         yaml.dump(input, file, default_flow_style=False)
 
 
 def client():
-    prompt = CDSAPIKeyPrompt()
-    prompt.check()
+    # prompt = CDSAPIKeyPrompt()
+    # prompt.check()
 
     try:
         return cdsapi.Client()
     except Exception as e:
         if ".cdsapirc" in str(e):
+            prompt = CDSAPIKeyPrompt()
             prompt.ask_user_and_save()
             return cdsapi.Client()
 
@@ -108,7 +106,7 @@ class CdsRetriever(FileSource):
         assert all(isinstance(request, dict) for request in args)
         self._args = args
 
-        self.client()  # Trigger password prompt before thraeding
+        self.client()  # Trigger password prompt before threading
 
         nthreads = min(self.settings("number-of-download-threads"), len(self.requests))
 
@@ -125,6 +123,7 @@ class CdsRetriever(FileSource):
 
     def _retrieve(self, dataset, request):
         def retrieve(target, args):
+            print(f"RETRIEVE={args}")
             cds_result = self.client().retrieve(args[0], args[1])
             self.source_filename = cds_result.location.split("/")[-1]
             cds_result.download(target=target)
