@@ -12,7 +12,7 @@
 
 import pytest
 
-from earthkit.data.sources.file import FileSource
+from earthkit.data.sources.file import FileParts
 from earthkit.data.sources.url import Url
 from earthkit.data.utils.parts import SimplePart
 
@@ -81,9 +81,26 @@ from earthkit.data.utils.parts import SimplePart
     ],
 )
 def test_prepare_file_parts(paths, parts, expected_paths, expected_parts):
-    res_paths, res_parts = FileSource._paths_and_parts(paths, parts)
+    p = FileParts(paths, parts)
+    res_paths, res_parts = p.path, p.parts
     assert res_paths == expected_paths
     assert res_parts == expected_parts
+
+
+def test_update_file_parts():
+    p = FileParts("", None)
+    assert p.path == ""
+    assert p.parts is None
+
+    res = p.update("a.grib")
+    assert res == "a.grib"
+    assert p.path == res
+    assert p.parts is None
+
+    res = p.update(["a.grib", "b.grib"])
+    assert res == ["a.grib", "b.grib"]
+    assert p.path == res
+    assert p.parts == [None, None]
 
 
 @pytest.mark.parametrize(
