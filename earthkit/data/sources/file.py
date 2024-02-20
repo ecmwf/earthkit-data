@@ -16,62 +16,15 @@ from earthkit.data import from_source
 from earthkit.data.core.caching import CACHE
 from earthkit.data.decorators import detect_out_filename
 from earthkit.data.readers import reader
-from earthkit.data.utils.parts import check_urls_and_parts, ensure_urls_and_parts
+from earthkit.data.utils.parts import PathAndParts
 
 from . import Source
 
 LOG = logging.getLogger(__name__)
 
 
-class FileParts:
-    def __init__(self, path, parts):
-        self.path, self.parts = self._paths_and_parts(path, parts)
-
-    def is_empty(self):
-        return not (self.parts is not None and any(x is not None for x in self.parts))
-
-    def update(self, path):
-        if self.path != path:
-            self.path, self.parts = self._paths_and_parts(path, self.parts)
-        return self.path
-
-    def _paths_and_parts(self, paths, parts):
-        """Preprocess paths and parts.
-
-        Parameters
-        ----------
-        paths: str or list/tuple
-            The path(s). When it is a sequence either each
-            item is a path (str), or a pair of a path and :ref:`parts <parts>`.
-        parts: part,list/tuple of parts or None.
-            The :ref:`parts <parts>`.
-
-        Returns
-        -------
-        str or list of str
-            The path or paths.
-        SimplePart, list or tuple, None
-            The parts (one for each path). A part can be a single
-            SimplePart, a list/tuple of SimpleParts or None.
-
-        """
-        if parts is None:
-            if isinstance(paths, str):
-                return paths, None
-            elif isinstance(paths, (list, tuple)) and all(
-                isinstance(p, str) for p in paths
-            ):
-                return paths, [None] * len(paths)
-
-        paths = check_urls_and_parts(paths, parts)
-        paths_and_parts = ensure_urls_and_parts(paths, parts, compress=True)
-
-        paths, parts = zip(*paths_and_parts)
-        assert len(paths) == len(parts)
-        if len(paths) == 1:
-            return paths[0], parts[0]
-        else:
-            return paths, parts
+class FileSourcePathAndParts(PathAndParts):
+    compress = False
 
 
 class FileSourceMeta(type(Source), type(os.PathLike)):
@@ -90,18 +43,13 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
         Source.__init__(self, **kwargs)
         self.filter = filter
         self.merger = merger
-        self._parts = FileParts(path, parts)
-        self.path = self._parts.path
+        self._path_and_parts = FileSourcePathAndParts(path, parts)
 
         if self._kwargs.get("indexing", False):
-            if not self._parts.is_empty():
+            if not self._path_and_parts.is_empty():
                 raise ValueError("Cannot specify parts when indexing is enabled!")
 
     def mutate(self):
-        # the initial path is reset for e.g. the retrievals. We have to ensure
-        # the parts are still correctly formed
-        self.check_parts()
-
         if isinstance(self.path, (list, tuple)):
             if len(self.path) == 1:
                 self.path = self.path[0]
@@ -110,7 +58,7 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
                     "multi",
                     [
                         from_source("file", p, parts=part, **self._kwargs)
-                        for p, part in zip(self.path, self._parts.parts)
+                        for p, part in zip(self.path, self.parts)
                     ],
                     filter=self.filter,
                     merger=self.merger,
@@ -145,9 +93,8 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self.check_parts()
             self._reader_ = reader(
-                self, self.path, content_type=self.content_type, parts=self._parts.parts
+                self, self.path, content_type=self.content_type, parts=self.parts
             )
         return self._reader_
 
@@ -246,8 +193,17 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     def statistics(self, **kwargs):
         return self._reader.statistics(**kwargs)
 
-    def check_parts(self):
-        self.path = self._parts.update(self.path)
+    @property
+    def path(self):
+        return self._path_and_parts.path
+
+    @path.setter
+    def path(self, v):
+        self._path_and_parts.update(v)
+
+    @property
+    def parts(self):
+        return self._path_and_parts.parts
 
 
 class IndexedFileSource(FileSource):
