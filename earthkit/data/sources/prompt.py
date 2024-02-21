@@ -80,16 +80,25 @@ class Prompt:
 
         return ""
 
-    def _env_message(self):
-        ev = [p["env"] for p in self.owner.prompts if "env" in p]
-        if ev and len(ev) == len(self.owner.prompts):
+    def _config_env_message(self):
+        ev = self.owner.config_env
+        if ev:
             plural = "s" if len(ev) > 1 else ""
             return (
                 f" Alternatively, you can use the {list_to_human(ev)}"
                 f" environment variable{plural} to specify the credentials."
             )
-
         return ""
+
+        # ev = [p["env"] for p in self.owner.prompts if "env" in p]
+        # if ev and len(ev) == len(self.owner.prompts):
+        #     plural = "s" if len(ev) > 1 else ""
+        #     return (
+        #         f" Alternatively, you can use the {list_to_human(ev)}"
+        #         f" environment variable{plural} to specify the credentials."
+        #     )
+
+        # return ""
 
     def ask_user(self):
         self.print_message()
@@ -121,7 +130,7 @@ class Text(Prompt):
                 retrieve_api_key_url=self.owner.retrieve_api_key_url,
             )
             + self._rc_message()
-            + self._env_message()
+            + self._config_env_message()
         )
 
     def ask(self, p, method):
@@ -143,7 +152,7 @@ class Markdown(Prompt):
                 rcfile=f"{self.owner.rcfile}",
             )
             + self._rc_message()
-            + self._env_message()
+            + self._config_env_message()
         )
         # We use Python's markdown instead of IPython's Markdown because
         # jupyter lab/colab/deepnotes all behave differently
@@ -168,16 +177,17 @@ class Markdown(Prompt):
 
 class APIKeyPrompt:
     rcfile_env = None
+    config_env = []
 
     def check(self, load=False):
-        rcfile = os.path.expanduser(self.rcfile)
-        if not os.path.exists(rcfile):
+        if not self.has_api_config():
             self.ask_user_and_save()
 
         if load:
-            return self.load(rcfile)
-            # with open(rcfile) as f:
-            #     return self.load(f)
+            rcfile = self.existing_rcfile_path()
+            if rcfile is not None:
+                with open(rcfile) as f:
+                    return self.load(f)
 
     def ask_user(self):
         if ipython_active:
@@ -206,26 +216,28 @@ class APIKeyPrompt:
     def save(self, input, file):
         json.dump(input, file, indent=4)
 
-    def load(self, path):
-        try:
-            return self._load_json(path)
-        except Exception:
-            try:
-                return self._load_yaml(path)
-            except Exception:
-                pass
+    def load(self, file):
+        return json.load(file)
 
-        raise Exception(f"Could not read config file either as JSON or YAML. {path=}")
+    def existing_rcfile_path(self):
+        rcfile = os.path.expanduser(self.rcfile)
+        if os.path.exists(rcfile):
+            return rcfile
 
-    def _load_json(self, path):
-        with open(path) as f:
-            return json.load(f)
+        if self.rcfile_env:
+            rcfile = os.path.expanduser(os.getenv(self.rcfile_env, ""))
+            if os.path.exists(rcfile):
+                return rcfile
 
-    def _load_yaml(self, path):
-        with open(path) as f:
-            import yaml
+    def has_config_env(self):
+        for ev in self.config_env:
+            v = os.getenv(ev, "")
+            if v is None or v == "":
+                return False
+        return True if len(self.config_env) > 0 else False
 
-            return yaml.safe_load(f.read())
+    def has_api_config(self):
+        return self.existing_rcfile_path() is not None or self.has_config_env()
 
     def validate(self, input):
         return input

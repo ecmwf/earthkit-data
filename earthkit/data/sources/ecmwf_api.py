@@ -29,7 +29,6 @@ class MARSAPIKeyPrompt(APIKeyPrompt):
             default="https://api.ecmwf.int/v1",
             title="API url",
             validate=r"http.?://.*",
-            env="ECMWF_API_KEY",
         ),
         dict(
             name="key",
@@ -37,18 +36,20 @@ class MARSAPIKeyPrompt(APIKeyPrompt):
             title="API key",
             hidden=True,
             validate="[0-9a-z]{32}",
-            env="ECMWF_API_URL",
         ),
         dict(name="email", title="Your email", env="ECMWF_API_EMAIL"),
     ]
 
     rcfile = "~/.ecmwfapirc"
     rcfile_env = "ECMWF_API_RC_FILE"
+    config_env = ("ECMWF_API_KEY", "ECMWF_API_URL")
 
 
 class ECMWFApi(FileSource):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, prompt=True, **kwargs):
         super().__init__()
+
+        self.prompt = prompt
 
         request = {}
         for a in args:

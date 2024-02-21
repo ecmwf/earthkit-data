@@ -8,6 +8,7 @@
 #
 
 import itertools
+import logging
 import sys
 from functools import cached_property
 
@@ -34,6 +35,9 @@ else:
             yield batch
 
 
+LOG = logging.getLogger(__name__)
+
+
 class CDSAPIKeyPrompt(APIKeyPrompt):
     register_or_sign_in_url = "https://cds.climate.copernicus.eu/"
     retrieve_api_key_url = "https://cds.climate.copernicus.eu/api-how-to"
@@ -44,7 +48,6 @@ class CDSAPIKeyPrompt(APIKeyPrompt):
             default="https://cds.climate.copernicus.eu/api/v2",
             title="API url",
             validate=r"http.?://.*",
-            env="CDSAPI_URL",
         ),
         dict(
             name="key",
@@ -52,30 +55,37 @@ class CDSAPIKeyPrompt(APIKeyPrompt):
             title="API key",
             hidden=True,
             validate=r"\d+:[\-0-9a-f]+",
-            env="CDSAPI_KEY",
         ),
     ]
 
     rcfile = "~/.cdsapirc"
     rcfile_env = "CDSAPI_RC"
+    config_env = ("CDSAPI_URL", "CDSAPI_KEY")
 
     def save(self, input, file):
         yaml.dump(input, file, default_flow_style=False)
 
+    def load(self, file):
+        return yaml.safe_load(file.read())
 
-def client():
-    # prompt = CDSAPIKeyPrompt()
-    # prompt.check()
 
-    try:
-        return cdsapi.Client()
-    except Exception as e:
-        if ".cdsapirc" in str(e):
-            prompt = CDSAPIKeyPrompt()
-            prompt.ask_user_and_save()
+def client(use_prompt):
+    if use_prompt:
+        prompt = CDSAPIKeyPrompt()
+        prompt.check()
+
+        try:
             return cdsapi.Client()
+        except Exception as e:
+            if ".cdsapirc" in str(e) or not prompt.has_config_env():
+                LOG.warning(e)
+                LOG.exception(f"Could not load cds api client. {e}")
+                prompt.ask_user_and_save()
+                return cdsapi.Client()
 
-        raise
+            raise
+    else:
+        return cdsapi.Client()
 
 
 EXTENSIONS = {
@@ -89,11 +99,10 @@ class CdsRetriever(FileSource):
     CdsRetriever
     """
 
-    def client(self):
-        return client()
-
-    def __init__(self, dataset, *args, **kwargs):
+    def __init__(self, dataset, *args, prompt=True, **kwargs):
         super().__init__()
+
+        self.prompt = prompt
 
         assert isinstance(dataset, str)
         if args and kwargs:
@@ -159,6 +168,9 @@ class CdsRetriever(FileSource):
                 subrequest = dict(zip(split_on, values))
                 requests.append(request | subrequest)
         return requests
+
+    def client(self):
+        return client(self.prompt)
 
 
 source = CdsRetriever

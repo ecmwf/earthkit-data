@@ -40,6 +40,9 @@ class ADSAPIKeyPrompt(APIKeyPrompt):
     def save(self, input, file):
         yaml.dump(input, file, default_flow_style=False)
 
+    def load(self, file):
+        return yaml.safe_load(file.read())
+
 
 def client():
     prompt = ADSAPIKeyPrompt()
