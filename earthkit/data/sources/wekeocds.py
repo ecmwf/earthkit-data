@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import logging
 import os
 
 from earthkit.data.core.thread import SoftThreadPool
@@ -21,6 +22,8 @@ from .wekeo import HDAAPIKeyPrompt
 
 hda = IMPORTER.import_module("hda")
 from hda.api import DataOrderRequest  # noqa
+
+LOG = logging.getLogger(__name__)
 
 
 class ApiClient(WekeoClient):
@@ -59,21 +62,10 @@ class WekeoCdsRetriever(FileSource):
     WekeoCdsRetriever
     """
 
-    @staticmethod
-    def client():
-        prompt = HDAAPIKeyPrompt()
-        prompt.check()
-        try:
-            return ApiClient()
-        except Exception as e:
-            if ".hdarc" in str(e):
-                prompt.ask_user_and_save()
-                return ApiClient()
-
-            raise
-
-    def __init__(self, dataset, *args, **kwargs):
+    def __init__(self, dataset, *args, prompt=True, **kwargs):
         super().__init__()
+
+        self.prompt = prompt
 
         assert isinstance(dataset, str)
         if len(args):
@@ -84,7 +76,7 @@ class WekeoCdsRetriever(FileSource):
 
         requests = self.requests(**kwargs)
 
-        self.client()  # Trigger password prompt before thraeding
+        self.client(self.prompt)  # Trigger password prompt before threading
 
         nthreads = min(self.settings("number-of-download-threads"), len(requests))
 
@@ -99,7 +91,7 @@ class WekeoCdsRetriever(FileSource):
 
     def _retrieve(self, dataset, request):
         def retrieve(target, args):
-            self.client().retrieve(args[0], args[1], target)
+            self.client(self.prompt).retrieve(args[0], args[1], target)
 
         return self.cache_file(
             retrieve,
@@ -128,6 +120,26 @@ class WekeoCdsRetriever(FileSource):
             result.append(r)
 
         return result
+
+    @staticmethod
+    def client(use_prompt):
+        if use_prompt:
+            prompt = HDAAPIKeyPrompt()
+            prompt.check()
+
+            try:
+                return ApiClient()
+            except Exception as e:
+                # if no rc file is available hda throws
+                # ConfigurationError: Missing or incomplete configuration
+                if ".hdarc" in str(e) or not prompt.has_config_env():
+                    LOG.warning(e)
+                    LOG.exception(f"Could not load hda client. {e}")
+                    prompt.ask_user_and_save()
+                    return ApiClient()
+                raise
+        else:
+            return ApiClient()
 
 
 source = WekeoCdsRetriever
