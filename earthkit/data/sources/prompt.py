@@ -90,16 +90,6 @@ class Prompt:
             )
         return ""
 
-        # ev = [p["env"] for p in self.owner.prompts if "env" in p]
-        # if ev and len(ev) == len(self.owner.prompts):
-        #     plural = "s" if len(ev) > 1 else ""
-        #     return (
-        #         f" Alternatively, you can use the {list_to_human(ev)}"
-        #         f" environment variable{plural} to specify the credentials."
-        #     )
-
-        # return ""
-
     def ask_user(self):
         self.print_message()
 
