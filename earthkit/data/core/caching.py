@@ -643,6 +643,12 @@ class CachePolicy(metaclass=ABCMeta):
     def file_in_cache_directory(self, path):
         return path.startswith(self.directory())
 
+    @staticmethod
+    def _expand_path(path):
+        if path is not None:
+            path = os.path.expanduser(path)
+        return path
+
 
 class EmptyCachePolicy(CachePolicy):
     _name = "empty"
@@ -680,7 +686,9 @@ class NoCachePolicy(CachePolicy):
     def directory(self):
         if self._dir is None:
             if self._dir is None:
-                root_dir = self._settings.get("temporary-directory-root")
+                root_dir = self._expand_path(
+                    self._settings.get("temporary-directory-root")
+                )
                 self._dir = temp_directory(dir=root_dir)
         return self._dir.path
 
@@ -706,7 +714,7 @@ class UserCachePolicy(CachePolicy):
 
     def __init__(self):
         super().__init__()
-        path = self._settings.get("user-cache-directory")
+        path = self._expand_path(self._settings.get("user-cache-directory"))
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
 
@@ -748,7 +756,9 @@ class TmpCachePolicy(UserCachePolicy):
 
     def __init__(self):
         super().__init__()
-        root_dir = self._settings.get("temporary-cache-directory-root")
+        root_dir = self._expand_path(
+            self._settings.get("temporary-cache-directory-root")
+        )
         self._dir = temp_directory(dir=root_dir)
 
     def directory(self):
