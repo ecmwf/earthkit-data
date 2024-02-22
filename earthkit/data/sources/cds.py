@@ -132,7 +132,6 @@ class CdsRetriever(FileSource):
 
     def _retrieve(self, dataset, request):
         def retrieve(target, args):
-            print(f"RETRIEVE={args}")
             cds_result = self.client().retrieve(args[0], args[1])
             self.source_filename = cds_result.location.split("/")[-1]
             cds_result.download(target=target)
