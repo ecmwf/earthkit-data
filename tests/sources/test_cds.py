@@ -21,6 +21,25 @@ from earthkit.data.testing import NO_CDS
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.parametrize("prompt", [True, False])
+def test_cds_grib_prompt(prompt):
+    s = from_source(
+        "cds",
+        "reanalysis-era5-single-levels",
+        variable=["2t", "msl"],
+        product_type="reanalysis",
+        area=[50, -50, 20, 50],
+        date="2012-12-12",
+        prompt=prompt,
+        time="12:00",
+    )
+    assert len(s) == 2
+    assert s.metadata("param") == ["2t", "msl"]
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 def test_cds_grib_kwargs():
     s = from_source(
         "cds",
