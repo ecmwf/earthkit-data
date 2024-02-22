@@ -1,6 +1,13 @@
 Version 0.5 Updates
 /////////////////////////
 
+Version 0.5.4
+===============
+
+Fixes
+++++++
+- fixed issue when paths starting with ~ used for :ref:`cache directories <caching>` were not correctly expanded
+
 
 Version 0.5.2
 ===============
