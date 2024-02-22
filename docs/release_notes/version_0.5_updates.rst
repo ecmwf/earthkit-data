@@ -1,13 +1,12 @@
 Version 0.5 Updates
 /////////////////////////
 
-Version 0.5.3
+Version 0.5.4
 ===============
 
 Fixes
 ++++++
 - fixed issue when paths starting with ~ used for :ref:`cache directories <caching>` were not correctly expanded
-- changed the pyfdb dependency
 
 
 Version 0.5.2
