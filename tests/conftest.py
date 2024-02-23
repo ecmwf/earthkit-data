@@ -33,7 +33,7 @@ def pytest_addoption(parser):
         action="store",
         metavar="TIMEOUT",
         default=30,
-        help="Timeout in seconds for cds tests. 0 means not timeout. Default is 30.",
+        help="Timeout in seconds for cds tests. 0 means no timeout. Default is 30.",
     )
 
 
