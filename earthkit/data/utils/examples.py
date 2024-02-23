@@ -8,6 +8,9 @@
 #
 
 
+REMOTE_SAMPLE_DATA_URL = "https://get.ecmwf.int/repository/earthkit/samples/"
+
+
 def download_example_file(file_names, force=False):
     import os
     import urllib.request
@@ -30,3 +33,16 @@ def remote_example_file(file_name):
     from earthkit.data.testing import earthkit_remote_test_data_file
 
     return earthkit_remote_test_data_file(os.path.join("examples", file_name))
+
+
+def from_sample(file_names):
+    from earthkit.data.sources.url import Url
+
+    if isinstance(file_names, str):
+        file_names = [file_names]
+
+    urls = []
+    for f_name in file_names:
+        urls.append(REMOTE_SAMPLE_DATA_URL + f_name)
+
+    return Url(urls)
