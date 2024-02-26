@@ -40,15 +40,15 @@ class Field(Base):
 
     @property
     def raw_values_backend(self):
-        r""":obj:`ArrayBackend`: Return the array backend the low level API
-        uses to extract the field values.
+        r""":obj:`ArrayBackend`: Return the array backend used by the low level API
+        to extract the field values.
         """
         return self._raw_values_backend
 
     @property
     def raw_other_backend(self):
-        r""":obj:`ArrayBackend`: Return the array backend the low level API
-        uses to extract non-field-related values, e.g. latitudes, longitudes.
+        r""":obj:`ArrayBackend`: Return the array backend used by the low level API
+        to extract non-field-related values, e.g. latitudes, longitudes.
         """
         return self._raw_other_backend
 
@@ -192,7 +192,7 @@ class Field(Base):
             Specifies the type of data to be returned. Any combination of "lat", "lon" and "value"
             is allowed here.
         flatten: bool
-            When it is True a flat ndarray per key is returned. Otherwise an ndarray with the field's
+            When it is True a flat array per key is returned. Otherwise an array with the field's
             :obj:`shape` is returned for each key.
         dtype: str, array.dtype or None
             Typecode or data-type of the arrays. When it is :obj:`None` the default
@@ -204,7 +204,7 @@ class Field(Base):
         array-like
             An multi-dimensional array containing one array per key is returned
             (following the order in ``keys``). When ``keys`` is a single value only the
-            ndarray belonging to the key is returned. The array format is specified by
+            array belonging to the key is returned. The array format is specified by
             :attr:`array_backend`.
 
 
@@ -666,8 +666,8 @@ class FieldList(Index):
         Parameters
         ----------
         array: array-like, list
-            The fields' values. When it is a list must contain one array per field. The array
-            type must be supported by :class:`ArrayBackend`.
+            The fields' values. When it is a list it must contain one array per field.
+            The array type must be supported by :class:`ArrayBackend`.
         metadata: list
             The fields' metadata. Must contain one :class:`Metadata` object per field.
 
@@ -847,7 +847,7 @@ class FieldList(Index):
 
     @property
     def values(self):
-        r"""ndarray: Get all the fields' values as a 2D array. It is formed as the array of
+        r"""array-likr: Get all the fields' values as a 2D array. It is formed as the array of
         :obj:`GribField.values <data.readers.grib.codes.GribField.values>` per field.
 
         See Also
@@ -1356,7 +1356,7 @@ class FieldList(Index):
             s.write(f, **kwargs)
 
     def to_fieldlist(self, array_backend=None, **kwargs):
-        r"""Convert to a new :class:`FieldList` based on the ``array_backend``.
+        r"""Convert to a new :class:`FieldList`.
 
         When the :class:`FieldList` is already in the required format no new
         :class:`FieldList` is created but the current one is returned.
@@ -1364,7 +1364,7 @@ class FieldList(Index):
         Parameters
         ----------
         array_backend: str, :obj:`ArrayBackend`
-            Specifies the array backend for the generated fieldlist. The array
+            Specifies the array backend for the generated :class:`FieldList`. The array
             type must be supported by :class:`ArrayBackend`.
 
         **kwargs: dict, optional

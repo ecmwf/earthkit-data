@@ -118,7 +118,7 @@ class ArrayBackend(metaclass=ABCMeta):
 
     @abstractmethod
     def _load(self):
-        """Called from arrayBackendCore. It must return ns and dtypes"""
+        """Load the backend object. Called from arrayBackendCore."""
         pass
 
     @property
@@ -142,8 +142,9 @@ class ArrayBackend(metaclass=ABCMeta):
         ----------
         v: array-like
             Array.
-        source_backend: :obj:`ArrayBackend`
-            The array backend of ``v``. When it is None automatically detected.
+        source_backend: :obj:`ArrayBackend`, str
+            The array backend of ``v``. When None ``source_backend``
+            is automatically detected.
 
         Returns
         -------
