@@ -7,14 +7,12 @@
 # nor does it submit to any jurisdiction.
 #
 
-import sys
-
 from . import ArrayBackend
 
 
 class CupyBackend(ArrayBackend):
     _name = "cupy"
-    _array_name = "tensor"
+    _module_name = "cupy"
 
     def _load(self):
         try:
@@ -33,10 +31,7 @@ class CupyBackend(ArrayBackend):
 
         return ns, dt
 
-    def is_native_array(self, v, dtype=None):
-        if (not self._loaded() and "cupy" not in sys.modules) or not self.available:
-            return False
-
+    def _is_native_array(self, v, dtype=None):
         import cupy as cp
 
         if not isinstance(v, cp.ndarray):

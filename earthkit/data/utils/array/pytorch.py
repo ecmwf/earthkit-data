@@ -7,14 +7,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-import sys
-
 from . import ArrayBackend
 
 
 class PytorchBackend(ArrayBackend):
     _name = "pytorch"
     _array_name = "tensor"
+    _module_name = "torch"
 
     def __init__(self):
         super().__init__()
@@ -39,10 +38,7 @@ class PytorchBackend(ArrayBackend):
 
         return ns, dt
 
-    def is_native_array(self, v, dtype=None):
-        if (not self._loaded() and "torch" not in sys.modules) or not self.available:
-            return False
-
+    def _is_native_array(self, v, dtype=None):
         import torch
 
         if not torch.is_tensor(v):

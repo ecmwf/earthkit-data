@@ -7,13 +7,12 @@
 # nor does it submit to any jurisdiction.
 #
 
-import sys
-
 from . import ArrayBackend
 
 
 class NumpyBackend(ArrayBackend):
     _name = "numpy"
+    _module_name = "numpy"
 
     def _load(self):
         import numpy as np
@@ -30,10 +29,7 @@ class NumpyBackend(ArrayBackend):
     def to_dtype(self, dtype):
         return dtype
 
-    def is_native_array(self, v, dtype=None):
-        if (not self._loaded() and "numpy" not in sys.modules) or not self.available:
-            return False
-
+    def _is_native_array(self, v, dtype=None):
         import numpy as np
 
         if not isinstance(v, np.ndarray):

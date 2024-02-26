@@ -9,6 +9,7 @@
 
 import logging
 import os
+import sys
 import threading
 from abc import ABCMeta, abstractmethod
 from importlib import import_module
@@ -110,9 +111,6 @@ class ArrayBackend(metaclass=ABCMeta):
                 if self._core is None:
                     self._core = ArrayBackendCore(self)
 
-    def _loaded(self):
-        return self._core is not None
-
     @property
     def available(self):
         self._load_core()
@@ -171,9 +169,21 @@ class ArrayBackend(metaclass=ABCMeta):
             return f
         return True
 
+    def is_native_array(self, v, dtype=None):
+        if (
+            self._core is None and self._module_name not in sys.modules
+        ) or not self.available:
+            return False
+        return self._is_native_array(v, dtype=dtype)
+
     @abstractmethod
-    def is_native_array(self, v, **kwargs):
+    def _is_native_array(self, v, **kwargs):
         pass
+
+    def _quick_check_available(self):
+        return (
+            self._core is None and self._module_name not in sys.modules
+        ) or not self.available
 
     @abstractmethod
     def to_numpy(self, v):

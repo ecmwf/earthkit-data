@@ -66,7 +66,7 @@ def test_utils_array_backend_pytorch():
     assert get_backend(v, guess=b) is b
 
     np_b = ensure_backend("numpy")
-    r = b._backend(v, np_b)
+    r = b.to_backend(v, np_b)
     assert isinstance(r, np.ndarray)
     assert np.allclose(r, v_np)
 
