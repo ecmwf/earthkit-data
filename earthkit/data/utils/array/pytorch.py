@@ -16,6 +16,10 @@ class PytorchBackend(ArrayBackend):
     _name = "pytorch"
     _array_name = "tensor"
 
+    def __init__(self):
+        super().__init__()
+        self._converters = {"numpy": self.from_numpy}
+
     def _load(self):
         try:
             import array_api_compat
@@ -45,19 +49,13 @@ class PytorchBackend(ArrayBackend):
             return False
         return self.match_dtype(v, dtype)
 
-    def to_backend(self, v, backend):
-        return backend.from_pytorch(v)
+    def to_numpy(self, v):
+        return v.numpy()
 
     def from_numpy(self, v):
         import torch
 
         return torch.from_numpy(v)
-
-    def from_cupy(self, v):
-        return None
-
-    def from_pytorch(self, v):
-        return v
 
     def from_other(self, v, **kwargs):
         import torch

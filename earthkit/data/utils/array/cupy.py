@@ -21,9 +21,7 @@ class CupyBackend(ArrayBackend):
             import array_api_compat
 
         except Exception as e:
-            raise ImportError(
-                f"array_api_compat is required to use cupy backend, {e}"
-            )
+            raise ImportError(f"array_api_compat is required to use cupy backend, {e}")
 
         try:
             import cupy as cp
@@ -45,19 +43,8 @@ class CupyBackend(ArrayBackend):
             return False
         return self.match_dtype(v, dtype)
 
-    def to_backend(self, v, backend):
-        return backend.from_cupy(v)
-
-    def from_numpy(self, v):
-        import cupy as cp
-
-        return cp.array(v)
-
-    def from_pytorch(self, v):
-        return None
-
-    def from_cupy(self, v):
-        return v
+    def to_numpy(self, v):
+        return v.get()
 
     def from_other(self, v, **kwargs):
         import cupy as cp

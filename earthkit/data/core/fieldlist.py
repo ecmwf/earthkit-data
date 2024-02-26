@@ -60,7 +60,8 @@ class Field(Base):
         v: array-like
             The values.
         array_backend: :obj:`ArrayBackend`
-            The target array backend.
+            The target array backend. When it is None ``self.array_backend`` will
+            be used.
         source_backend: :obj:`ArrayBackend`
             The array backend of ``v``. When None, it will be automatically detected.
 

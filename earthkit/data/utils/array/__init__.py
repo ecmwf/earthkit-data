@@ -99,6 +99,7 @@ class ArrayBackend(metaclass=ABCMeta):
     _name = None
     _array_name = "array"
     _core = None
+    _converters = {}
 
     def __init__(self):
         self.lock = threading.Lock()
@@ -108,7 +109,7 @@ class ArrayBackend(metaclass=ABCMeta):
             with self.lock:
                 if self._core is None:
                     self._core = ArrayBackendCore(self)
-    
+
     def _loaded(self):
         return self._core is not None
 
@@ -136,15 +137,22 @@ class ArrayBackend(metaclass=ABCMeta):
     def array_name(self):
         return f"{self._name} {self._array_name}"
 
-    def to_array(self, v, backend=None):
-        if backend is not None:
-            if backend is self:
-                return v
+    def to_array(self, v, source_backend=None):
+        r"""Convert an array into the current backend.
 
-            return backend.to_backend(v, self)
-        else:
-            b = get_backend(v, strict=False)
-            return b.to_backend(v, self)
+        Parameters
+        ----------
+        v: array-like
+            Array.
+        source_backend: :obj:`ArrayBackend`
+            The array backend of ``v``. When it is None automatically detected.
+
+        Returns
+        -------
+        array-like
+            ``v`` converted into the array backend defined by ``self``.
+        """
+        return self.from_backend(v, source_backend)
 
     @property
     def _dtypes(self):
@@ -168,20 +176,27 @@ class ArrayBackend(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def to_backend(self, v, backend):
+    def to_numpy(self, v):
         pass
 
-    @abstractmethod
-    def from_numpy(self, v):
-        pass
+    def to_backend(self, v, backend, **kwargs):
+        assert backend is not None
+        backend = ensure_backend(backend)
+        return backend.from_backend(v, self, **kwargs)
 
-    @abstractmethod
-    def from_pytorch(self, v):
-        pass
+    def from_backend(self, v, backend, **kwargs):
+        if backend is None:
+            backend = get_backend(v, strict=False)
 
-    @abstractmethod
-    def from_cupy(self, v):
-        pass
+        if self is backend:
+            return v
+
+        if backend is not None:
+            b = self._converters.get(backend.name, None)
+            if b is not None:
+                return b(v)
+
+        return self.from_other(v, **kwargs)
 
     @abstractmethod
     def from_other(self, v, **kwargs):

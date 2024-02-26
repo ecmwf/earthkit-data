@@ -33,7 +33,7 @@ class NumpyBackend(ArrayBackend):
     def is_native_array(self, v, dtype=None):
         if (not self._loaded() and "numpy" not in sys.modules) or not self.available:
             return False
-        
+
         import numpy as np
 
         if not isinstance(v, np.ndarray):
@@ -42,17 +42,16 @@ class NumpyBackend(ArrayBackend):
             return v.dtype == dtype
         return True
 
-    def to_backend(self, v, backend):
-        return backend.from_numpy(v)
+    def from_backend(self, v, backend, **kwargs):
+        if self is backend:
+            return v
+        elif backend is not None:
+            return backend.to_numpy(v)
+        else:
+            return super().from_backend(v, backend, **kwargs)
 
-    def from_numpy(self, v):
+    def to_numpy(self, v):
         return v
-
-    def from_pytorch(self, v):
-        return v.numpy()
-
-    def from_cupy(self, v):
-        return v.get()
 
     def from_other(self, v, **kwargs):
         import numpy as np
