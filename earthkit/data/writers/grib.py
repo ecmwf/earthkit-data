@@ -25,7 +25,7 @@ class GribWriter(Writer):
         metadata: :class:`GribMetadata`
             Metadata of the GRIB field.
         check_nans: bool
-            Replace nans in ``values`` with GRIB missing values when writing to``f``.
+            Replace nans in ``values`` with GRIB missing values when writing to ``f``.
         bits_per_value: int
             Set the ``bitsPerValue`` GRIB key in the generated GRIB message.
         """
