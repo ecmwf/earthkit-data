@@ -11,7 +11,7 @@
 
 import pytest
 
-from earthkit.data.testing import NO_PYTORCH
+from earthkit.data.testing import NO_CUPY, NO_PYTORCH
 from earthkit.data.utils.array import ensure_backend, get_backend
 
 
@@ -58,6 +58,32 @@ def test_utils_array_backend_pytorch():
     assert id(b.from_pytorch(v)) == id(v)
     assert torch.allclose(b.from_numpy(v_np), v)
     assert torch.allclose(b.from_other(v_lst, dtype=torch.float64), v)
+    assert get_backend(v) is b
+    assert get_backend(v, guess=b) is b
+
+    np_b = ensure_backend("numpy")
+    r = b.to_backend(v, np_b)
+    assert isinstance(r, np.ndarray)
+    assert np.allclose(r, v_np)
+
+    assert np.isclose(b.array_ns.mean(v), 1.0)
+
+@pytest.mark.skipif(NO_CUPY, reason="No pytorch installed")
+def test_utils_array_backend_cupy():
+    b = ensure_backend("cupy")
+    assert b.name == "cupy"
+
+    import numpy as np
+    import cupy as cp
+
+    v = cp.ones(10, dtype=cp.float64)
+    v_np = np.ones(10, dtype=np.float64)
+    v_lst = [1.0] * 10
+
+    assert b.is_native_array(v)
+    assert id(b.from_cupy(v)) == id(v)
+    assert cp.allclose(b.from_numpy(v_np), v)
+    assert cp.allclose(b.from_other(v_lst, dtype=cp.float64), v)
     assert get_backend(v) is b
     assert get_backend(v, guess=b) is b
 

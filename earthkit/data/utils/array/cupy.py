@@ -12,8 +12,8 @@ import sys
 from . import ArrayBackend
 
 
-class PytorchBackend(ArrayBackend):
-    _name = "pytorch"
+class CupyBackend(ArrayBackend):
+    _name = "cupy"
     _array_name = "tensor"
 
     def _load(self):
@@ -22,47 +22,47 @@ class PytorchBackend(ArrayBackend):
 
         except Exception as e:
             raise ImportError(
-                f"array_api_compat is required to use pytorch backend, {e}"
+                f"array_api_compat is required to use cupy backend, {e}"
             )
 
         try:
-            import torch
+            import cupy as cp
         except Exception as e:
-            raise ImportError(f"torch is required to use pytorch backend, {e}")
+            raise ImportError(f"cupy is required to use cupy backend, {e}")
 
-        dt = {"float64": torch.float64, "float32": torch.float32}
-        ns = array_api_compat.array_namespace(torch.ones(2))
+        dt = {"float64": cp.float64, "float32": cp.float32}
+        ns = array_api_compat.array_namespace(cp.ones(2))
 
         return ns, dt
 
     def is_native_array(self, v, dtype=None):
-        if (not self._loaded() and "torch" not in sys.modules) or not self.available:
+        if (not self._loaded() and "cupy" not in sys.modules) or not self.available:
             return False
 
-        import torch
+        import cupy as cp
 
-        if not torch.is_tensor(v):
+        if not isinstance(v, cp.ndarray):
             return False
         return self.match_dtype(v, dtype)
 
     def to_backend(self, v, backend):
-        return backend.from_pytorch(v)
+        return backend.from_cupy(v)
 
     def from_numpy(self, v):
-        import torch
+        import cupy as cp
 
-        return torch.from_numpy(v)
-
-    def from_cupy(self, v):
-        return None
+        return cp.array(v)
 
     def from_pytorch(self, v):
+        return None
+
+    def from_cupy(self, v):
         return v
 
     def from_other(self, v, **kwargs):
-        import torch
+        import cupy as cp
 
-        return torch.tensor(v, **kwargs)
+        return cp.array(v, **kwargs)
 
 
-Backend = PytorchBackend
+Backend = CupyBackend

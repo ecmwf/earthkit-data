@@ -65,7 +65,7 @@ def test_grib_values_1(fl_type, array_backend):
 # @pytest.mark.parametrize("fl_type", FL_TYPES)
 # @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("array_backend", ["pytorch"])
+@pytest.mark.parametrize("array_backend", ["numpy"])
 def test_grib_values_18(fl_type, array_backend):
     f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     eps = 1e-5

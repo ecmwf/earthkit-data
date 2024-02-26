@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
+import sys
 
 from . import ArrayBackend
 
@@ -31,9 +31,9 @@ class NumpyBackend(ArrayBackend):
         return dtype
 
     def is_native_array(self, v, dtype=None):
-        if self.available is None and "numpy" not in os.modules:
+        if (not self._loaded() and "numpy" not in sys.modules) or not self.available:
             return False
-
+        
         import numpy as np
 
         if not isinstance(v, np.ndarray):
@@ -50,6 +50,9 @@ class NumpyBackend(ArrayBackend):
 
     def from_pytorch(self, v):
         return v.numpy()
+
+    def from_cupy(self, v):
+        return v.get()
 
     def from_other(self, v, **kwargs):
         import numpy as np

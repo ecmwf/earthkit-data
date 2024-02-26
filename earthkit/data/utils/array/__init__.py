@@ -108,6 +108,9 @@ class ArrayBackend(metaclass=ABCMeta):
             with self.lock:
                 if self._core is None:
                     self._core = ArrayBackendCore(self)
+    
+    def _loaded(self):
+        return self._core is not None
 
     @property
     def available(self):
@@ -174,6 +177,10 @@ class ArrayBackend(metaclass=ABCMeta):
 
     @abstractmethod
     def from_pytorch(self, v):
+        pass
+
+    @abstractmethod
+    def from_cupy(self, v):
         pass
 
     @abstractmethod
