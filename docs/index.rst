@@ -6,7 +6,7 @@ Welcome to earthkit-data's documentation
    This project is in the **BETA** stage of development. Please be aware that interfaces and functionality may change as the project develops. If this software is to be used in operational systems you are **strongly advised to use a released tag in your system configuration**, and you should be willing to accept incoming changes and bug fixes that require adaptations on your part. ECMWF **does use** this software in operations and abides by the same caveats.
 
 **earthkit-data** is a format-agnostic Python interface for geospatial data with a focus on meteorology and
-climate science.
+climate science. It is the data handling component of :xref:`earthkit`.
 
 **earthkit-data** makes it simple to read, inspect and slice data from a wide range of
 geospatial input types (:ref:`grib`, :ref:`netcdf` and more) and transform them into
@@ -53,6 +53,12 @@ reference systems and bounding boxes.
    :caption: Plugins
 
    plugins/index
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Projects
+
+   earthkit <https://earthkit.readthedocs.io/en/latest>
 
 
 Indices and tables
