@@ -169,6 +169,12 @@ def reader(source, path, **kwargs):
         return DirectoryReader(source, path).mutate()
     LOG.debug("Reader for %s", path)
 
+    if not os.path.exists(path):
+        raise FileExistsError(f"No such file exists: '{path}'")
+
+    if os.path.getsize(path) == 0:
+        raise Exception(f"File is empty: '{path}'")
+
     n_bytes = SETTINGS.get("reader-type-check-bytes")
     with open(path, "rb") as f:
         magic = f.read(n_bytes)
