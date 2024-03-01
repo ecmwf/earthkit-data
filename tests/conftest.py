@@ -8,6 +8,10 @@ SKIP = {
 }
 
 
+def pytest_configure(config):
+    pytest.CDS_TIMEOUT = config.getoption("--cds-timeout")
+
+
 def pytest_addoption(parser):
     help_str = "NAME: short, long, release, documentation. Runs a subset of tests.\n"
     for k, v in SKIP.items():
@@ -22,6 +26,14 @@ def pytest_addoption(parser):
         metavar="NAME",
         default="short",
         help=help_str,
+    )
+
+    parser.addoption(
+        "--cds-timeout",
+        action="store",
+        metavar="TIMEOUT",
+        default=30,
+        help="Timeout in seconds for cds tests. 0 means no timeout. Default is 30.",
     )
 
 
