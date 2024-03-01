@@ -9,11 +9,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data import from_sample
+from earthkit.data import from_source
 
 
-def test_from_sample_grib():
-    ds = from_sample("storm_ophelia_wind_850.grib")
+def test_sample_source_grib():
+    ds = from_source("sample", "storm_ophelia_wind_850.grib")
     assert len(ds) == 2
     assert ds.metadata(["param", "level"]) == [["u", 850], ["v", 850]]
 
