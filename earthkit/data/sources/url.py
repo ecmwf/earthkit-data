@@ -151,8 +151,8 @@ class UrlBase(FileSource):
         if self.http_headers is not None:
             headers = dict(self.http_headers)
 
-        if self.auth is not None:
-            headers.update(self.auth.auth_header(url))
+        # if self.auth is not None:
+        #     headers.update(self.auth.auth_header(url))
 
         if not headers:
             headers = None
@@ -225,6 +225,7 @@ class Url(UrlBase):
                 resume_transfers=True,
                 override_target_file=False,
                 download_file_extension=".download",
+                auth=self.auth,
             )
 
             if extension and extension[0] != ".":
@@ -453,6 +454,7 @@ class SingleUrlStream(UrlBase):
             progress_bar=progress_bar,
             resume_transfers=False,
             override_target_file=False,
+            auth=self.auth,
         )
 
         size, mode, skip, trust_size = downloader.estimate_size(None)

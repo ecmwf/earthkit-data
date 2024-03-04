@@ -42,30 +42,23 @@ def request_to_resource(requests):
     return resources
 
 
-class S3Authenticator(HttpAuthenticator):
-    def _host(self, url):
+class S3Authenticator:
+    @staticmethod
+    def _host(url):
         from urllib.parse import urlparse
 
         return urlparse(url).netloc
 
-    def auth_header(self, url):
+    def __call__(self, r):
         from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
 
-        class _R:
-            def __init__(self, url):
-                self.method = "GET"
-                self.url = url
-                self.body = ""
-
-        req = _R(url)
-
+        host = self._host(r.url)
         auth = BotoAWSRequestsAuth(
-            aws_host=self._host(url),
+            aws_host=host,
             aws_region="eu-west-2",
             aws_service="s3",
         )
-
-        return auth.get_aws_request_headers_handler(req)
+        return auth(r)
 
 
 class S3Resource:
@@ -132,7 +125,7 @@ class S3Source(FileSource):
         else:
             fake_headers = None
 
-        auth = self.make_auth()
+        auth = self.make_auth(len(urls))
 
         if self.stream:
             return Url(
@@ -146,7 +139,7 @@ class S3Source(FileSource):
         else:
             return MultiUrl(urls, fake_headers=fake_headers, auth=auth)
 
-    def make_auth(self):
+    def make_auth(self, urls):
         return S3Authenticator() if not self.anon else None
 
     def __repr__(self) -> str:
