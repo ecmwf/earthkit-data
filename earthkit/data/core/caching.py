@@ -714,15 +714,15 @@ class UserCachePolicy(CachePolicy):
 
     def __init__(self):
         super().__init__()
-        path = self._expand_path(self._settings.get("user-cache-directory"))
-        if not os.path.exists(path):
-            os.makedirs(path, exist_ok=True)
+        self._path = self._expand_path(self._settings.get("user-cache-directory"))
+        if not os.path.exists(self._path):
+            os.makedirs(self._path, exist_ok=True)
 
     def managed(self):
         return True
 
     def directory(self):
-        return self._settings.get("user-cache-directory")
+        return self._path
 
     def use_message_position_index_cache(self):
         return self._settings.get("use-message-position-index-cache")
