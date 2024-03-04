@@ -150,7 +150,8 @@ def test_numpy_fs_grib_write_generating_proc_id():
 
 
 @pytest.mark.parametrize(
-    "_kwargs,expected_value", [({}, 16), ({"bits_per_value": 12}, 12)]
+    "_kwargs,expected_value",
+    [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
 )
 def test_numpy_fs_grib_write_bits_per_value(_kwargs, expected_value):
     ds, _ = load_numpy_fs(1)
