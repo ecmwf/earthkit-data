@@ -1,6 +1,15 @@
 Version 0.5 Updates
 /////////////////////////
 
+
+Version 0.5.5
+===============
+
+Fixes
+++++++
+- fixed issue when paths starting with ~ used for the ``user-cache-directory`` settings were not correctly expanded
+ 
+
 Version 0.5.4
 ===============
 
