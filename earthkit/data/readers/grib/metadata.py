@@ -255,7 +255,21 @@ class GribMetadata(Metadata):
         d = dict(*args, **kwargs)
         handle = self._handle.clone(headers_only=True)
         handle.set_multiple(d)
+
+        # some keys, which needed later, are not copied into the clone when
+        # headers_only=True. These keys must be copied separately, but we must
+        # be absolutely sure they do not increase the cloned message size!
+        self._copy_keys(self._handle, handle)
+
         return GribMetadata(handle)
+
+    @staticmethod
+    def _copy_keys(handle_src, handle_target):
+        v_ori = handle_src.get("bitsPerValue", default=0)
+        if v_ori != 0:
+            v = handle_target.get("bitsPerValue", default=0)
+            if v != v_ori:
+                handle_target.set_long("bitsPerValue", v_ori)
 
     def as_namespace(self, namespace=None):
         r"""Return all the keys/values from a namespace.
