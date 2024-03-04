@@ -382,7 +382,6 @@ class RestrictedGribMetadata(GribMetadata):
         "numberOfMissing",
         "numberOfCodedValues",
         "bitmapPresent",
-        "bitsPerValue",
         "offsetValuesBy",
         "packingError",
         "referenceValue",

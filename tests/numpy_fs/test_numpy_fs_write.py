@@ -157,7 +157,7 @@ def test_numpy_fs_grib_write_bits_per_value(_kwargs, expected_value):
     ds, _ = load_numpy_fs(1)
 
     if expected_value is None:
-        expected_value = [ds[0].metadata("bitsPerValue")]
+        expected_value = ds[0].metadata("bitsPerValue")
 
     with temp_file() as tmp:
         ds.save(tmp, **_kwargs)
