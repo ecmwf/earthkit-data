@@ -245,8 +245,8 @@ class GribField(Field):
         Size of the message (in bytes)
     """
 
-    def __init__(self, path, offset, length):
-        super().__init__()
+    def __init__(self, path, offset, length, backend):
+        super().__init__(backend)
         self.path = path
         self._offset = offset
         self._length = length

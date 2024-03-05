@@ -16,14 +16,14 @@ import pytest
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from numpy_fs_fixtures import load_numpy_fs, load_numpy_fs_file  # noqa: E402
+from array_fl_fixtures import load_array_fl, load_array_fl_file  # noqa: E402
 
 # Note: Almost all grib metadata tests are also run for numpyfs.
 # See grib/test_grib_metadata.py
 
 
-def test_numpy_fs_values_metadata():
-    ds, _ = load_numpy_fs(1)
+def test_array_fl_values_metadata():
+    ds, _ = load_array_fl(1)
 
     # values metadata
     keys = [
@@ -48,8 +48,8 @@ def test_numpy_fs_values_metadata():
     assert ds[0].metadata("bitsPerValue") == 16
 
 
-def test_numpy_fs_values_metadata_internal():
-    ds, _ = load_numpy_fs(1)
+def test_array_fl_values_metadata_internal():
+    ds, _ = load_array_fl(1)
 
     keys = {
         "shortName": "2t",
@@ -60,8 +60,8 @@ def test_numpy_fs_values_metadata_internal():
         assert ds[0].metadata(k) == v, k
 
 
-def test_numpy_fs_metadata_keys():
-    ds, _ = load_numpy_fs(1)
+def test_array_fl_metadata_keys():
+    ds, _ = load_array_fl(1)
 
     # The number/order of metadata keys can vary with the ecCodes version.
     # The same is true for the namespaces.
@@ -93,8 +93,8 @@ def test_numpy_fs_metadata_keys():
     assert "validityDate" in md
 
 
-def test_numpy_fs_metadata_namespace():
-    f, _ = load_numpy_fs_file("tuv_pl.grib")
+def test_array_fl_metadata_namespace():
+    f, _ = load_array_fl_file("tuv_pl.grib")
 
     r = f[0].metadata(namespace="vertical")
     ref = {"level": 1000, "typeOfLevel": "isobaricInhPa"}

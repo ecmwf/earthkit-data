@@ -14,13 +14,15 @@ import eccodes
 from earthkit.data.readers import Reader
 from earthkit.data.readers.grib.codes import GribCodesHandle, GribField
 from earthkit.data.readers.grib.index import GribFieldList
+from earthkit.data.utils.array import ensure_backend
 
 LOG = logging.getLogger(__name__)
 
 
 class GribMemoryReader(Reader):
-    def __init__(self):
+    def __init__(self, array_backend=None):
         self._peeked = None
+        self._array_backend = ensure_backend(array_backend)
 
     def __iter__(self):
         return self
@@ -41,7 +43,9 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            return GribFieldInMemory(GribCodesHandle(handle, None, None))
+            return GribFieldInMemory(
+                GribCodesHandle(handle, None, None), self._array_backend
+            )
 
     def peek(self):
         """Returns the next available message without consuming it"""
@@ -87,8 +91,8 @@ class GribMemoryReader(Reader):
 
 
 class GribFileMemoryReader(GribMemoryReader):
-    def __init__(self, path):
-        super().__init__()
+    def __init__(self, path, **kwargs):
+        super().__init__(**kwargs)
         self.fp = open(path, "rb")
 
     def __del__(self):
@@ -99,8 +103,8 @@ class GribFileMemoryReader(GribMemoryReader):
 
 
 class GribMessageMemoryReader(GribMemoryReader):
-    def __init__(self, buf):
-        super().__init__()
+    def __init__(self, buf, **kwargs):
+        super().__init__(**kwargs)
         self.buf = buf
 
     def __del__(self):
@@ -121,7 +125,7 @@ class GribStreamReader(GribMemoryReader):
     using _next_handle
     """
 
-    def __init__(self, stream):
+    def __init__(self, stream, **kwargs):
         super().__init__()
         self._stream = stream
         self._reader = eccodes.StreamReader(stream)
@@ -142,8 +146,8 @@ class GribStreamReader(GribMemoryReader):
 class GribFieldInMemory(GribField):
     """Represents a GRIB message in memory"""
 
-    def __init__(self, handle):
-        super().__init__(None, None, None)
+    def __init__(self, handle, array_backend=None):
+        super().__init__(None, None, None, array_backend)
         self._handle = handle
 
     @GribField.handle.getter
@@ -159,8 +163,10 @@ class GribFieldListInMemory(GribFieldList, Reader):
     """Represent a GRIB field list in memory"""
 
     @staticmethod
-    def from_fields(fields):
-        fs = GribFieldListInMemory(None, None)
+    def from_fields(fields, array_backend=None):
+        if array_backend is None and len(fields) > 0:
+            array_backend = fields[0].array_backend
+        fs = GribFieldListInMemory(None, None, array_backend=array_backend)
         fs._fields = fields
         fs._loaded = True
         return fs

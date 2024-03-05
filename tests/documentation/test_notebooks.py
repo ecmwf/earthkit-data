@@ -15,7 +15,7 @@ import sys
 
 import pytest
 
-from earthkit.data.testing import MISSING, earthkit_file
+from earthkit.data.testing import MISSING, NO_PYTORCH, earthkit_file
 
 # See https://www.blog.pythonlibrary.org/2018/10/16/testing-jupyter-notebooks/
 
@@ -31,7 +31,12 @@ SKIP = [
     "polytope.ipynb",
     "grib_fdb_write.ipynb",
     "demo_source_plugin.ipynb",
+    "ecmwf_open_data.ipynb",
+    "pandas.ipynb",
 ]
+
+if NO_PYTORCH:
+    SKIP.append("grib_array_backends.ipynb")
 
 
 def notebooks_list():

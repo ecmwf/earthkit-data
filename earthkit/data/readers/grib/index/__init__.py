@@ -13,7 +13,7 @@ import os
 from abc import abstractmethod
 
 from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.core.index import Index, MaskIndex, MultiIndex
+from earthkit.data.core.index import MaskIndex, MultiIndex
 from earthkit.data.decorators import alias_argument, detect_out_filename
 from earthkit.data.indexing.database import (
     FILEPARTS_KEY_NAMES,
@@ -109,10 +109,11 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
         ):
             self._availability = Availability(self.availability_path)
 
-        Index.__init__(self, *args, **kwargs)
+        # Index.__init__(self, *args, **kwargs)
+        FieldList.__init__(self, *args, **kwargs)
 
     @classmethod
-    def new_mask_index(self, *args, **kwargs):
+    def new_mask_index(cls, *args, **kwargs):
         return GribMaskFieldList(*args, **kwargs)
 
     @property
@@ -121,7 +122,15 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
 
     @classmethod
     def merge(cls, sources):
-        assert all(isinstance(_, GribFieldList) for _ in sources)
+        if not all(isinstance(_, GribFieldList) for _ in sources):
+            raise ValueError(
+                "GribFieldList can only be merged to another GribFieldLists"
+            )
+        if not all(s.array_backend is s[0].array_backend for s in sources):
+            raise ValueError(
+                "Only fieldlists with the same array backend can be merged"
+            )
+
         return GribMultiFieldList(sources)
 
     def _custom_availability(self, ignore_keys=None, filter_keys=lambda k: True):
@@ -210,18 +219,20 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
 class GribMaskFieldList(GribFieldList, MaskIndex):
     def __init__(self, *args, **kwargs):
         MaskIndex.__init__(self, *args, **kwargs)
+        FieldList._init_from_mask(self, self)
 
 
 class GribMultiFieldList(GribFieldList, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
+        FieldList._init_from_multi(self, self)
 
 
 class GribFieldListInFiles(GribFieldList):
     def _getitem(self, n):
         if isinstance(n, int):
             part = self.part(n if n >= 0 else len(self) + n)
-            return GribField(part.path, part.offset, part.length)
+            return GribField(part.path, part.offset, part.length, self.array_backend)
 
     def __len__(self):
         return self.number_of_parts()

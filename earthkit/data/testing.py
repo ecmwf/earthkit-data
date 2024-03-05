@@ -101,6 +101,15 @@ except Exception:
 
 NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
 NO_ECCOVJSON = not modules_installed("eccovjson")
+NO_PYTORCH = not modules_installed("torch")
+NO_CUPY = not modules_installed("cupy")
+if not NO_CUPY:
+    try:
+        import cupy as cp
+
+        a = cp.ones(2)
+    except Exception:
+        NO_CUPY = True
 
 
 def MISSING(*modules):
@@ -147,6 +156,34 @@ def load_nc_or_xr_source(path, mode):
         import xarray
 
         return from_object(xarray.open_dataset(path))
+
+
+def check_array_type(v, backend, **kwargs):
+    from earthkit.data.utils.array import ensure_backend
+
+    b = ensure_backend(backend)
+    assert b.is_native_array(v, **kwargs), f"{type(v)}, {backend=}, {kwargs=}"
+
+
+def get_array_namespace(backend):
+    from earthkit.data.utils.array import ensure_backend
+
+    return ensure_backend(backend).array_ns
+
+
+def get_array(v, backend, **kwargs):
+    from earthkit.data.utils.array import ensure_backend
+
+    b = ensure_backend(backend)
+    return b.from_other(v, **kwargs)
+
+
+ARRAY_BACKENDS = ["numpy"]
+if not NO_PYTORCH:
+    ARRAY_BACKENDS.append("pytorch")
+
+if not NO_CUPY:
+    ARRAY_BACKENDS.append("cupy")
 
 
 def main(path):
