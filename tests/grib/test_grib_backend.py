@@ -89,11 +89,10 @@ def test_grib_file_pytorch_backend():
     assert ds1.array_backend.name == "pytorch"
     assert getattr(ds1, "path", None) is None
 
+
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
 def test_grib_file_cupy_backend():
-    ds = from_source(
-        "file", earthkit_examples_file("test6.grib"), array_backend="cupy"
-    )
+    ds = from_source("file", earthkit_examples_file("test6.grib"), array_backend="cupy")
 
     import cupy as cp
 
@@ -200,11 +199,10 @@ def test_grib_array_pytorch_backend():
     assert isinstance(ds.to_numpy(), np.ndarray)
     assert ds.to_numpy().shape == (6, 7, 12)
 
+
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
 def test_grib_array_cupy_backend():
-    s = from_source(
-        "file", earthkit_examples_file("test6.grib"), array_backend="cupy"
-    )
+    s = from_source("file", earthkit_examples_file("test6.grib"), array_backend="cupy")
 
     ds = FieldList.from_array(
         s.values,
@@ -219,7 +217,7 @@ def test_grib_array_cupy_backend():
     assert isinstance(ds[0].values, cp.ndarray)
     assert ds[0].values.shape == (84,)
 
-    assert isinstance( ds.values, cp.ndarray)
+    assert isinstance(ds.values, cp.ndarray)
     assert ds.values.shape == (
         6,
         84,
@@ -240,7 +238,6 @@ def test_grib_array_cupy_backend():
     x = ds.to_numpy()
     assert isinstance(x, np.ndarray)
     assert x.shape == (6, 7, 12)
-
 
 
 if __name__ == "__main__":

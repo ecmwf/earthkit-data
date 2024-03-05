@@ -102,13 +102,15 @@ except Exception:
 NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
 NO_ECCOVJSON = not modules_installed("eccovjson")
 NO_PYTORCH = not modules_installed("torch")
-NO_CUPY = not modules_installed("cupy") 
+NO_CUPY = not modules_installed("cupy")
 if not NO_CUPY:
     try:
         import cupy as cp
+
         a = cp.ones(2)
     except Exception:
         NO_CUPY = True
+
 
 def MISSING(*modules):
     return not modules_installed(*modules)
