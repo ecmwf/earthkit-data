@@ -33,13 +33,23 @@ class Metadata(metaclass=ABCMeta):
     INDEX_KEYS = []
     CUSTOM_KEYS = [DATETIME]
 
+    extra = None
+
     def __iter__(self):
         """Return an iterator over the metadata keys."""
         return iter(self.keys())
 
-    @abstractmethod
     def __len__(self):
         r"""Return the number of metadata entries."""
+        if not self.extra:
+            return self._len()
+        else:
+            extra = sum([1 for x in self.extra if not self._contains(x)])
+            return extra + self._len()
+
+    @abstractmethod
+    def _len(self):
+        r"""Return the number of metadata entries without the extra items."""
         pass
 
     def __getitem__(self, key):
@@ -52,7 +62,6 @@ class Metadata(metaclass=ABCMeta):
         """
         return self.get(key, raise_on_missing=True)
 
-    @abstractmethod
     def __contains__(self, key):
         r"""Check if ``key`` is available.
 
@@ -60,9 +69,23 @@ class Metadata(metaclass=ABCMeta):
         -------
         bool
         """
-        pass
+        if not self.extra:
+            return self._contains(key)
+        else:
+            if key in self.extra:
+                return True
+            return self._contains(key)
 
     @abstractmethod
+    def _contains(self, key):
+        r"""Check if ``key`` is available in the non extra-keys.
+
+        Returns
+        -------
+        bool
+        """
+        pass
+
     def keys(self):
         r"""Return the metadata keys.
 
@@ -71,11 +94,45 @@ class Metadata(metaclass=ABCMeta):
         Iterable of str
 
         """
-        pass
+        if not self.extra:
+            return self._keys()
+        else:
+            extra = [x for x in self.extra if x not in self._keys()]
+            if len(extra) == 0:
+                return self._keys()
+            else:
+                r = list(self._keys()) + extra
+                return r
 
     @abstractmethod
+    def _keys(self):
+        r"""Return the metadata keys without the extra keys.
+
+        Returns
+        -------
+        Iterable of str
+
+        """
+        pass
+
     def items(self):
         r"""Return the metadata items.
+
+        Returns
+        -------
+        Iterable of :obj:`(key,value)` pairs
+
+        """
+        if not self.extra:
+            return self._items()
+        else:
+            r = dict(self._items())
+            r.update(self.extra)
+            return r.items()
+
+    @abstractmethod
+    def _items(self):
+        r"""Return the metadata items without the extra keys.
 
         Returns
         -------
@@ -115,6 +172,8 @@ class Metadata(metaclass=ABCMeta):
             a missing value.
 
         """
+        if self._is_extra_key(key):
+            return self._get_extra_key(key, default=default, astype=astype)
         if self._is_custom_key(key):
             return self._get_custom_key(
                 key, default=default, astype=astype, raise_on_missing=raise_on_missing
@@ -127,6 +186,19 @@ class Metadata(metaclass=ABCMeta):
     @abstractmethod
     def _get(self, key, astype=None, default=None, raise_on_missing=False):
         pass
+
+    def _is_extra_key(self, key):
+        return self.extra is not None and key in self.extra
+
+    def _get_extra_key(self, key, default=None, astype=None, **kwargs):
+        v = self.extra.get(key, default)
+
+        if astype is not None and v is not None:
+            try:
+                return astype(v)
+            except Exception:
+                return None
+        return v
 
     def _is_custom_key(self, key):
         return key in self.CUSTOM_KEYS and key not in self
@@ -300,8 +372,14 @@ class RawMetadata(Metadata):
     def __len__(self):
         return len(self._d)
 
+    def _len(self):
+        return self._len()
+
     def __contains__(self, key):
         return key in self._d
+
+    def _contains(self, key):
+        pass
 
     def _get(self, key, astype=None, default=None, raise_on_missing=False):
         if not raise_on_missing:
@@ -319,8 +397,14 @@ class RawMetadata(Metadata):
     def keys(self):
         return self._d.keys()
 
+    def _keys(self):
+        pass
+
     def items(self):
         return self._d.items()
+
+    def _items(self):
+        pass
 
     def _base_datetime(self):
         return None

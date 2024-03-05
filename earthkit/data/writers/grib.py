@@ -32,7 +32,10 @@ class GribWriter(Writer):
         """
         handle = metadata._handle.clone()
 
-        if bits_per_value is not None:
+        if bits_per_value is None:
+            bits_per_value = metadata.get("bitsPerValue", 0)
+
+        if bits_per_value != 0:
             handle.set_long("bitsPerValue", bits_per_value)
 
         if check_nans:
