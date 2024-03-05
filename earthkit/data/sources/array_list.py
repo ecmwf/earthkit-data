@@ -158,7 +158,7 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
                 self.to_array(array_backend=array_backend, **kwargs), self._metadata
             )
 
-    def save(self, filename, append=False, check_nans=True, bits_per_value=16):
+    def save(self, filename, append=False, check_nans=True, bits_per_value=None):
         r"""Write all the fields into a file.
 
         Parameters
@@ -170,8 +170,9 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
             the target file be overwritten if already exists.
         check_nans: bool
             Replace nans in the values with GRIB missing values when generating the output.
-        bits_per_value: int
-            Set the ``bitsPerValue`` GRIB key in the generated output.
+        bits_per_value: int or None
+            Set the ``bitsPerValue`` GRIB key in the generated output. When None the
+            ``bitsPerValue`` stored in the metadata will be used.
         """
         super().save(
             filename,

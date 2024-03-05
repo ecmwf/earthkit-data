@@ -44,6 +44,9 @@ def test_array_fl_values_metadata():
         with pytest.raises(KeyError):
             ds[0].metadata(k)
 
+    # bits per value must be kept from the original GRIB data
+    assert ds[0].metadata("bitsPerValue") == 16
+
 
 def test_array_fl_values_metadata_internal():
     ds, _ = load_array_fl(1)
