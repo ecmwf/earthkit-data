@@ -11,10 +11,10 @@ import datetime
 
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
+from earthkit.data.decorators import cached_method
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
-from earthkit.data.decorators import cached_method
 
 
 def missing_is_none(x):
