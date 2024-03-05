@@ -31,6 +31,7 @@ SKIP = [
     "polytope.ipynb",
     "grib_fdb_write.ipynb",
     "demo_source_plugin.ipynb",
+    "ecmwf_open_data.ipynb",
 ]
 
 if NO_PYTORCH:
