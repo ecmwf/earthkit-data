@@ -1177,6 +1177,13 @@ class FieldList(Index):
             the target file be overwritten if already exists. Default is False
         **kwargs: dict, optional
             Other keyword arguments passed to :obj:`write`.
+
+        See Also
+        --------
+        :obj:`write`
+        :meth:`GribFieldList.save() <data.readers.grib.index.GribFieldList.save>`
+        :meth:`NumpyFieldList.save() <data.sources.numpy_list.NumpyFieldList.save>`
+
         """
         flag = "wb" if not append else "ab"
         with open(filename, flag) as f:
@@ -1191,6 +1198,11 @@ class FieldList(Index):
             The target file object.
         **kwargs: dict, optional
             Other keyword arguments passed to the underlying field implementation.
+
+        See Also
+        --------
+        read
+
         """
         for s in self:
             s.write(f, **kwargs)

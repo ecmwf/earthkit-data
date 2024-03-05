@@ -34,6 +34,19 @@ def test_grib_save_when_loaded_from_file():
         assert len(fs) == len(fs_saved)
 
 
+@pytest.mark.parametrize(
+    "_kwargs,expected_value",
+    [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
+)
+def test_grib_save_bits_per_value(_kwargs, expected_value):
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    with temp_file() as tmp:
+        ds.save(tmp, **_kwargs)
+        ds1 = from_source("file", tmp)
+        assert ds1.metadata("bitsPerValue") == [expected_value] * len(ds)
+
+
 @pytest.mark.skipif(
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",

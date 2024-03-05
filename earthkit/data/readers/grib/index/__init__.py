@@ -14,7 +14,7 @@ from abc import abstractmethod
 
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.index import Index, MaskIndex, MultiIndex
-from earthkit.data.decorators import alias_argument
+from earthkit.data.decorators import alias_argument, detect_out_filename
 from earthkit.data.indexing.database import (
     FILEPARTS_KEY_NAMES,
     MORE_KEY_NAMES,
@@ -178,6 +178,33 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
     @alias_argument("class", "klass")
     def _normalize_kwargs_names(self, **kwargs):
         return kwargs
+
+    @detect_out_filename
+    def save(self, filename, append=False, bits_per_value=None):
+        r"""Write all the fields into a file.
+
+        Parameters
+        ----------
+        filename: str
+            The target file path.
+        append: bool
+            When it is true append data to the target file. Otherwise
+            the target file be overwritten if already exists.
+        bits_per_value: int or None
+            Set the ``bitsPerValue`` GRIB key for each message in the generated
+            output. When None the ``bitsPerValue`` stored in the message metadata
+            will be used.
+
+        See Also
+        --------
+        write
+
+        """
+        super().save(
+            filename,
+            append=append,
+            bits_per_value=bits_per_value,
+        )
 
 
 class GribMaskFieldList(GribFieldList, MaskIndex):
