@@ -258,7 +258,7 @@ class GribMetadata(Metadata):
         d = dict(*args, **kwargs)
         handle = self._handle.clone(headers_only=True)
 
-        # whether headers_only works depend on the eccCodes version and the
+        # whether headers_only=True works depends on the eccCodes version and the
         # message properties. We check it by comparing the message lengths.
         shrunk = handle.get_long("totalLength") < self._handle.get_long("totalLength")
 
@@ -381,8 +381,8 @@ class RestrictedGribMetadata(GribMetadata):
 
     EKD_NAMESPACE = "grib"
 
-    # ideally bitsPerValue should be here. However, it is treated as a
-    # combined key and cannot be an internal key.
+    # ideally bitsPerValue should be here. However, it is treated as an
+    # extra key and cannot be an internal key.
     INTERNAL_KEYS = [
         "minimum",
         "maximum",
