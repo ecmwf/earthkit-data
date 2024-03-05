@@ -33,3 +33,4 @@ pytest-forked
 pytest-timeout
 nbformat
 nbconvert
+ipykernel
