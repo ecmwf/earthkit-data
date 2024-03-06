@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # (C) Copyright 2020 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
@@ -7,12 +9,16 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.sources.array_list import ArrayFieldList
+from earthkit.data import from_source
 
 
-class NumpyFieldList(ArrayFieldList):
-    def __init__(self, *args, **kwargs):
-        from earthkit.data.utils.array import numpy_backend
+def test_sample_source_grib():
+    ds = from_source("sample", "storm_ophelia_wind_850.grib")
+    assert len(ds) == 2
+    assert ds.metadata(["param", "level"]) == [["u", 850], ["v", 850]]
 
-        kwargs.pop("backend", None)
-        super().__init__(*args, array_backend=numpy_backend(), **kwargs)
+
+if __name__ == "__main__":
+    from earthkit.data.testing import main
+
+    main(__file__)

@@ -186,7 +186,7 @@ class ConstantMaker:
 
 
 class ConstantField(Field):
-    def __init__(self, date, param, proc, shape, geometry):
+    def __init__(self, date, param, proc, shape, geometry, backend):
         self.date = date
         self.param = param
         self.proc = proc
@@ -199,7 +199,7 @@ class ConstantField(Field):
             levelist=None,
             number=None,
         )
-        super().__init__(metadata=ConstantMetadata(d, geometry))
+        super().__init__(backend, metadata=ConstantMetadata(d, geometry))
 
     def _make_metadata(self):
         pass
@@ -287,6 +287,8 @@ class ConstantsFieldListCore(FieldList):
         self.procs = {param: getattr(self.maker, param) for param in self.params}
         self._len = len(self.dates) * len(self.params) * self.repeat
 
+        super().__init__(**kwargs)
+
     @normalize("date", "date-list")
     @normalize("time", "int-list")
     @normalize("number", "int-list")
@@ -326,12 +328,14 @@ class ConstantsFieldList(ConstantsFieldListCore):
                 self.procs[param],
                 self.maker.shape,
                 self.maker.field.metadata().geography,
+                self.array_backend,
             )
 
 
 class ConstantsMaskFieldList(ConstantsFieldListCore, MaskIndex):
     def __init__(self, *args, **kwargs):
         MaskIndex.__init__(self, *args, **kwargs)
+        FieldList._init_from_mask(self, self)
 
 
 source = ConstantsFieldList

@@ -22,13 +22,13 @@ from earthkit.data.testing import earthkit_examples_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from numpy_fs_fixtures import (  # noqa: E402
-    check_numpy_fs,
-    check_numpy_fs_from_to_fieldlist,
+from array_fl_fixtures import (  # noqa: E402
+    check_array_fl,
+    check_array_fl_from_to_fieldlist,
 )
 
 
-def test_numpy_fs_grib_single_field():
+def test_array_fl_grib_single_field():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     assert ds[0].metadata("shortName") == "2t"
@@ -60,7 +60,7 @@ def test_numpy_fs_grib_single_field():
     _check_field(r_tmp)
 
 
-def test_numpy_fs_grib_multi_field():
+def test_array_fl_grib_multi_field():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     assert ds[0].metadata("shortName") == "2t"
@@ -91,7 +91,7 @@ def test_numpy_fs_grib_multi_field():
         assert f.metadata("name") == "2 metre dewpoint temperature", f"name {i}"
 
 
-def test_numpy_fs_grib_from_list_of_arrays():
+def test_array_fl_grib_from_list_of_arrays():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md_full = ds.metadata("param")
     assert len(ds) == 2
@@ -100,10 +100,10 @@ def test_numpy_fs_grib_from_list_of_arrays():
     md = [f.metadata().override(generatingProcessIdentifier=150) for f in ds]
     r = FieldList.from_numpy(v, md)
 
-    check_numpy_fs(r, [ds], md_full)
+    check_array_fl(r, [ds], md_full)
 
 
-def test_numpy_fs_grib_from_list_of_arrays_bad():
+def test_array_fl_grib_from_list_of_arrays_bad():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     v = ds[0].values
@@ -126,28 +126,28 @@ def test_numpy_fs_grib_from_list_of_arrays_bad():
         {"flatten": True, "dtype": np.float32},
     ],
 )
-def test_numpy_fs_grib_from_to_fieldlist(kwargs):
+def test_array_fl_grib_from_to_fieldlist(kwargs):
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md_full = ds.metadata("param")
     assert len(ds) == 2
 
-    r = ds.to_fieldlist("numpy", **kwargs)
-    check_numpy_fs_from_to_fieldlist(r, [ds], md_full, **kwargs)
+    r = ds.to_fieldlist(array_backend="numpy", **kwargs)
+    check_array_fl_from_to_fieldlist(r, [ds], md_full, **kwargs)
 
 
-def test_numpy_fs_grib_from_to_fieldlist_repeat():
+def test_array_fl_grib_from_to_fieldlist_repeat():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md_full = ds.metadata("param")
     assert len(ds) == 2
 
     kwargs = {}
-    r = ds.to_fieldlist("numpy", **kwargs)
-    check_numpy_fs_from_to_fieldlist(r, [ds], md_full, **kwargs)
+    r = ds.to_fieldlist(array_backend="numpy", **kwargs)
+    check_array_fl_from_to_fieldlist(r, [ds], md_full, **kwargs)
 
     kwargs = {"flatten": True, "dtype": np.float32}
-    r1 = r.to_fieldlist("numpy", **kwargs)
+    r1 = r.to_fieldlist(array_backend="numpy", **kwargs)
     assert r1 is not r
-    check_numpy_fs_from_to_fieldlist(r1, [ds], md_full, **kwargs)
+    check_array_fl_from_to_fieldlist(r1, [ds], md_full, **kwargs)
 
 
 if __name__ == "__main__":
