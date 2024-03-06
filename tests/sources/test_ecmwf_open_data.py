@@ -25,7 +25,22 @@ def test_eod():
         levtype="sfc",
     )
     assert len(ds) == 2
-    assert ds.path
+    assert ds.metadata("param") == ["2t", "msl"]
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_EOD, reason="No access to EOD")
+@pytest.mark.parametrize("model", ["ifs", "aifs"])
+def test_eod_model(model):
+    ds = from_source(
+        "ecmwf-open-data",
+        model=model,
+        param="t",
+        levelist=500,
+    )
+    assert len(ds) == 1
+    assert ds[0].metadata(["param", "level"]) == ["t", 500]
 
 
 if __name__ == "__main__":

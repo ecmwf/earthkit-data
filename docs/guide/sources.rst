@@ -520,12 +520,14 @@ cds
 ecmwf-open-data
 -------------------
 
-.. py:function:: from_source("ecmwf-open-data", *args, **kwargs)
+.. py:function:: from_source("ecmwf-open-data", *args, source="ecmwf", model="ifs", **kwargs)
   :noindex:
 
   The ``ecmwf-open-data`` source provides access to the `ECMWF open data`_, which is a subset of ECMWF real-time forecast data made available to the public free of charge.  It uses the `ecmwf-opendata <https://github.com/ecmwf/ecmwf-opendata>`_ package.
 
   :param tuple *args: specify the request as a dict
+  :param str source: either the name of the server to contact or a fully qualified URL. Possible values are "ecmwf" to access ECMWF's servers, or "azure" to access data hosted on Microsoft's Azure. Default is "ecmwf".
+  :param str model: name of the model that produced the data. Use "ifs" for the physics-driven model and "aifs" for the data-driven model. Please note that "aifs" is currently experimental and only produces a small subset of fields. Default is "ifs".
   :param dict **kwargs: other keyword arguments specifying the request
 
   Details about the request format can be found `here <https://github.com/ecmwf/ecmwf-opendata>`__.
