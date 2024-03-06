@@ -32,7 +32,6 @@ SKIP = [
     "grib_fdb_write.ipynb",
     "demo_source_plugin.ipynb",
     "ecmwf_open_data.ipynb",
-    "pandas.ipynb",
 ]
 
 if NO_PYTORCH:
