@@ -162,11 +162,16 @@ def get_fields_from_ds(
 
     skip = set()
 
+    def _skip_attr(v, attr_name):
+        attr_val = getattr(v, attr_name, "")
+        if isinstance(attr_val, str):
+            skip.update(attr_val.split(" "))
+
     for name in ds.data_vars:
         v = ds[name]
-        skip.update(getattr(v, "coordinates", "").split(" "))
-        skip.update(getattr(v, "bounds", "").split(" "))
-        skip.update(getattr(v, "grid_mapping", "").split(" "))
+        _skip_attr(v, "coordinates")
+        _skip_attr(v, "bounds")
+        _skip_attr(v, "grid_mapping")
 
     for name in ds.data_vars:
         if name in skip:
