@@ -11,13 +11,14 @@ import logging
 
 from earthkit.data.sources.multi_url import MultiUrl
 from earthkit.data.sources.url import Url
-from earthkit.data.utils.url import HttpAuthenticator
+from earthkit.data.utils import ensure_sequence
 
 from .file import FileSource
 
 LOG = logging.getLogger(__name__)
 
 DEFAULT_ENDPOINT = "s3.amazonaws.com"
+DEFAULT_REGION = "eu-west-2"
 
 
 def request_to_resource(requests):
@@ -35,14 +36,23 @@ def request_to_resource(requests):
     for r in requests:
         bucket = r["bucket"]
         endpoint = r.get("endpoint", DEFAULT_ENDPOINT)
-        for obj in r["objects"]:
-            key = obj["object"]
-            part = _make_part(obj.get("start"), obj.get("range"))
-            resources.append(S3Resource(endpoint, bucket, key, part=part))
+        o = ensure_sequence(r["objects"])
+        for obj in o:
+            if isinstance(obj, str):
+                key = obj
+                resources.append(S3Resource(endpoint, bucket, key))
+            else:
+                key = obj["object"]
+                region = obj.ge("region", DEFAULT_REGION)
+                parts = obj.get("parts", None)
+                resources.append(S3Resource(endpoint, bucket, region, key, parts=parts))
     return resources
 
 
 class S3Authenticator:
+    def __init__(self, region):
+        self.region = region
+
     @staticmethod
     def _host(url):
         from urllib.parse import urlparse
@@ -55,18 +65,32 @@ class S3Authenticator:
         host = self._host(r.url)
         auth = BotoAWSRequestsAuth(
             aws_host=host,
-            aws_region="eu-west-2",
+            aws_region=self.region,
             aws_service="s3",
         )
-        return auth(r)
+
+        # BotoAWSRequestsAuth raises AttributeError when no credentials are found
+        # because it wants to call a method on a None object. Until this is handled
+        # correctly in aws_requests_auth we raise a properly worded exception.
+        try:
+            return auth(r)
+        except AttributeError:
+            raise Exception(
+                (
+                    "No S3 credentials were found using botocore. See the following page "
+                    "about how credentials are searched for: http://boto3.readthedocs.io/en/"
+                    "latest/guide/configuration.html#configuring-credentials"
+                )
+            ) from None
 
 
 class S3Resource:
-    def __init__(self, endpoint, bucket, key, part=None):
+    def __init__(self, endpoint, bucket, region, key, parts=None):
         self.endpoint = endpoint
+        self.region = region
         self.bucket = bucket
         self.key = key
-        self.part = part
+        self.parts = parts
 
     @property
     def url(self):
@@ -88,7 +112,7 @@ class S3Resource:
 class S3Source(FileSource):
     """Represent an AWS S3 bucket source"""
 
-    def __init__(self, *args, anon=True, stream=True, **kwargs) -> None:
+    def __init__(self, *args, anon=True, stream=False, **kwargs) -> None:
         super().__init__()
 
         self.anon = anon
@@ -100,46 +124,93 @@ class S3Source(FileSource):
 
         self.stream = stream
 
-        self.request = {}
+        self.request = []
         for a in args:
-            self.request.update(a)
-        self.request.update(kwargs)
+            self.request.append(a)
+        # self.request.update(kwargs)
 
-        if not isinstance(self.request, list):
-            self.request = [self.request]
+        # if not isinstance(self.request, list):
+        #     self.request = [self.request]
 
         self.resources = request_to_resource(self.request)
 
     def mutate(self):
-        urls = []
-        has_parts = any(r.part is not None for r in self.resources)
-        if has_parts:
-            for r in self.resources:
-                urls.append([r.url, r.part])
-        else:
-            for r in self.resources:
-                urls.append(r.url)
-
-        if not self.anon and has_parts:
-            fake_headers = {"accept-ranges": "bytes"}
-        else:
-            fake_headers = None
-
-        auth = self.make_auth(len(urls))
-
         if self.stream:
-            return Url(
-                urls,
-                auth=auth,
-                fake_headers=fake_headers,
-                stream=True,
-                **self._stream_kwargs,
-            )
+            urls = []
+            has_parts = any(r.parts is not None for r in self.resources)
 
+            if has_parts:
+                for r in self.resources:
+                    urls.append([r.url, r.parts])
+            else:
+                for r in self.resources:
+                    urls.append(r.url)
+
+            if not self.anon and has_parts:
+                fake_headers = {"accept-ranges": "bytes"}
+            else:
+                fake_headers = None
+
+            auth = self.make_auth()
+
+            if self.stream:
+                return Url(
+                    urls,
+                    auth=auth,
+                    fake_headers=fake_headers,
+                    stream=True,
+                    **self._stream_kwargs,
+                )
         else:
-            return MultiUrl(urls, fake_headers=fake_headers, auth=auth)
+            url_spec = []
+            has_parts = any(r.parts is not None for r in self.resources)
+            for r in self.resources:
+                r = {"url": r.url}
+                if has_parts:
+                    r["parts"] = r.parts
+                if not self.anon:
+                    auth = S3Authenticator(r.region)
+                    r["auth"] = auth
+                url_spec.append(r)
 
-    def make_auth(self, urls):
+            if not self.anon and has_parts:
+                fake_headers = {"accept-ranges": "bytes"}
+            else:
+                fake_headers = None
+
+            return MultiUrl(url_spec, fake_headers=fake_headers)
+
+        # urls  = []
+        # has_parts = any(r.parts is not None for r in self.resources)
+        # if not self.anon else None
+
+        # if has_parts:
+        #     for r in self.resources:
+        #         urls.append([r.url, r.parts])
+        # else:
+        #     for r in self.resources:
+        #         urls.append(r.url)
+
+        # if not self.anon and has_parts:
+        #     fake_headers = {"accept-ranges": "bytes"}
+        # else:
+        #     fake_headers = None
+
+        # auth = self.make_auth(len(urls))
+
+        # if self.stream:
+        #     return Url(
+        #         urls,
+        #         auth=auth,
+        #         fake_headers=fake_headers,
+        #         stream=True,
+        #         **self._stream_kwargs,
+        #     )
+
+        # else:
+        #     return MultiUrl(urls, fake_headers=fake_headers, auth=auth)
+
+    def make_auth(self):
         return S3Authenticator() if not self.anon else None
 
     def __repr__(self) -> str:

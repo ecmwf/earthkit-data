@@ -18,6 +18,7 @@ Here is a list of example notebooks to illustrate how to use earthkit-data.
     examples/polytope.ipynb
     examples/s3.ipynb
     examples/wekeo.ipynb
+    examples/s3.ipynb
 
 
 .. toctree::

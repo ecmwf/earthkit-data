@@ -25,6 +25,7 @@ LOG = logging.getLogger(__name__)
 
 class FileSourcePathAndParts(PathAndParts):
     compress = False
+    sequence = False
 
 
 class FileSourceMeta(type(Source), type(os.PathLike)):

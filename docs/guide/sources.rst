@@ -742,20 +742,81 @@ polytope
 s3
 ---
 
-.. py:function:: from_source("s3", *args, stream=True,  batch_size=1, group_by=None, **kwargs)
+.. py:function:: from_source("s3", *args, stream=False,  batch_size=1, group_by=None, anon=True)
   :noindex:
 
   The ``s3`` source provides access to `Amazon S3 buckets <https://aws.amazon.com/s3/>`_.
 
-  :param tuple *args: positional arguments specifying the request as a dict
+  :param tuple *args: positional arguments specifying the requests. Each request is represented by a dict. See detailed description below.
   :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`.
   :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. For details see :ref:`stream source <data-sources-stream>`.
   :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
   :type group_by: str, list of str
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param bool anon: enables anonymous access
+  .. :param dict **kwargs: other keyword arguments specifying the request
 
-  The following example retrieves analysis :ref:`grib` data for 3 surface parameters as stream.
-  By default we will consume one message at a time and ``ds`` can only be used as an iterator:
+  A **request** describes a single or multiple objects in a given bucket. It has the following format:
+
+      .. code-block::
+
+          {"endpoint": endpoint, "region": region, "bucket": bucket, "objects": objects}
+
+  where:
+
+        - "endpoint": specifies the S3 endpoint (optional). Defaults to "s3.amazonaws.com"
+        - "region": specifies the AWS region (optional). Defaults to "eu-west-2"
+        - "bucket": specifies the bucket name
+        - "objects": specifies the object(s) in the buckets
+
+  An object can be:
+
+    - the name of the object as a str
+    - a dict in the following format:
+
+      .. code-block::
+
+          {"object": name, "parts": parts}
+
+      where the optional "parts" can specify the :ref:`parts <parts>` (byte ranges) to read.
+
+
+  The following examples retrieve :ref:`grib` data from a publicly available bucket on the European Weather Cloud (EWC).
+
+  .. code-block:: python
+
+    >>> import earthkit.data
+    >>> req = {
+    ...     "endpoint": "object-store.os-api.cci1.ecmwf.int",
+    ...     "bucket": "earthkit-test-data-public",
+    ...     "objects": "test6.grib",
+    ... }
+    >>> ds = earthkit.data.from_source("s3", req, anon=True)
+    >>> ds.ls()
+      centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
+    0   ecmf         t  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
+    1   ecmf         u  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
+    2   ecmf         v  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
+    3   ecmf         t  isobaricInhPa    850  20180801      1200         0       an       0  regular_ll
+    4   ecmf         u  isobaricInhPa    850  20180801      1200         0       an       0  regular_ll
+    5   ecmf         v  isobaricInhPa    850  20180801      1200         0       an       0  regular_ll
+
+
+  .. code-block:: python
+
+    >>> req = {
+    ...     "endpoint": "object-store.os-api.cci1.ecmwf.int",
+    ...     "bucket": "earthkit-test-data-public",
+    ...     "objects": [
+    ...         {"object": "test6.grib", "parts": (0, 240)},
+    ...         {"object": "tuv_pl.grib", "parts": (2400, 240)},
+    ...     ],
+    ... }
+    >>>
+    >>> ds = earthkit.data.from_source("s3", req, anon=True)
+    >>> ds.ls()
+      centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
+    0   ecmf         t  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
+    1   ecmf         u  isobaricInhPa    500  20180801      1200         0       an       0  regular_ll
 
 
   Further examples:

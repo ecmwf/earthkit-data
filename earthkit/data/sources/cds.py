@@ -115,6 +115,8 @@ class CdsRetriever(FileSource):
         assert all(isinstance(request, dict) for request in args)
         self._args = args
 
+        print(f"REQ={self.requests}")
+
         self.client()  # Trigger password prompt before threading
 
         nthreads = min(self.settings("number-of-download-threads"), len(self.requests))
