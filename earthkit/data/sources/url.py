@@ -19,9 +19,6 @@ from earthkit.data.utils import progress_bar
 
 from .file import FileSource
 
-# from earthkit.data.utils.parts import PathAndParts
-
-
 LOG = logging.getLogger(__name__)
 
 
@@ -110,10 +107,6 @@ def download_and_cache(
     return path
 
 
-# class UrlSourcePathAndParts(PathAndParts):
-#     compress = True
-
-
 class UrlBase(FileSource):
     def __init__(
         self,
@@ -131,10 +124,10 @@ class UrlBase(FileSource):
     ):
         super().__init__(filter=filter, merger=merger)
 
-        from earthkit.data.utils.url import UrlSpec
+        from earthkit.data.utils.url import UrlSpec, UrlSpecItem
 
-        if isinstance(url, UrlSpec):
-            self.url_spec = url
+        if isinstance(url, UrlSpecItem):
+            self.url_spec = UrlSpec(url)
         else:
             url_kwargs = dict(
                 chunk_size=chunk_size,
@@ -147,39 +140,19 @@ class UrlBase(FileSource):
             )
             self.url_spec = UrlSpec(url, **url_kwargs)
 
-        # self._url_and_parts = UrlSourcePathAndParts(url, parts)
-        # self.chunk_size = chunk_size
-        # self.http_headers = http_headers
-        # self.auth = auth
-        # self.verify = verify
-        # self.range_method = range_method
-        # self.fake_headers = fake_headers
-        # self.stream = stream
         self._kwargs = kwargs
         LOG.debug(f"url={self.url} url_parts={self.url_parts} _kwargs={self._kwargs}")
 
     def connect_to_mirror(self, mirror):
         return mirror.connection_for_url(self, self.url, self.url_parts)
 
-    # def prepare_headers(self, url):
-    #     headers = {}
-    #     if self.http_headers is not None:
-    #         headers = dict(self.http_headers)
-
-    #     if not headers:
-    #         headers = None
-
-    #     return headers
-
     @property
     def url(self):
         return self.url_spec.url
-        # return self._url_and_parts.path
 
     @property
     def url_parts(self):
         return self.url_spec.parts
-        # return self._url_and_parts.parts
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.url})"
@@ -220,116 +193,31 @@ class Url(UrlBase):
         self.parallel = parallel
         self.stream = stream
 
+        # if self.stream and self.parallel:
+        #     raise ValueError(f"URL: parallel=True is not allowed when stream=True")
+
         self._call_multi = self.parallel and len(self.url_spec) > 1
 
-        print(f"CONF len={len(self.url_spec)} {self.stream} {self._call_multi}")
         if not self.stream and not self._call_multi:
             self._download()
-
-        # if not self.stream:
-        #     self.update_if_out_of_date = update_if_out_of_date
-
-        #     LOG.debug(
-        #         (
-        #             f"url={self.url} url_parts={self.url_parts} auth={self.auth}) "
-        #             f"http_headers={self.http_headers}"
-        #             f" _kwargs={self._kwargs}"
-        #         )
-        #     )
-        #     self.downloader = Downloader(
-        #         self._url_and_parts.zipped(),
-        #         chunk_size=self.chunk_size,
-        #         timeout=SETTINGS.get("url-download-timeout"),
-        #         verify=self.verify,
-        #         range_method=self.range_method,
-        #         http_headers=self.http_headers,
-        #         fake_headers=self.fake_headers,
-        #         statistics_gatherer=record_statistics,
-        #         progress_bar=progress_bar,
-        #         resume_transfers=True,
-        #         override_target_file=False,
-        #         download_file_extension=".download",
-        #         auth=self.auth,
-        #     )
-
-        #     if extension and extension[0] != ".":
-        #         extension = "." + extension
-
-        #     if extension is None:
-        #         extension = self.downloader.extension()
-
-        #     self.path = self.downloader.local_path()
-        #     if self.path is not None:
-        #         return
-
-        #     if force is None:
-        #         force = self.out_of_date
-
-        #     def download(target, _):
-        #         self.downloader.download(target)
-        #         return self.downloader.cache_data()
-
-        #     self.path = self.cache_file(
-        #         download,
-        #         dict(url=self.url, parts=self.url_parts),
-        #         extension=extension,
-        #         force=force,
-        #     )
-
-        #     # cache data may contain the result of the http HEAD request
-        #     h = self.downloader.cache_data()
-        #     if isinstance(h, dict):
-        #         self.content_type = h.get("content-type")
 
     def mutate(self):
         if self.stream:
             s = []
             # create one stream source per url
             for x in self.url_spec:
-                print(f"X={x}")
-                s.append(
-                    SingleUrlStream(x)
-                    # x.url,
-                    # parts=x.parts,
-                    # **x.kwargs,
-                    # verify=True,
-                    # range_method="auto",
-                    # http_headers=self.prepare_headers(url),
-                    # fake_headers=None,
-                    # auth=self.auth,
-                    # )
-                )
-
-            # s = []
-            # for url, parts in self._url_and_parts:
-            #     s.append(
-            #         SingleUrlStream(
-            #             url,s
-            #             parts=parts,
-            #             verify=True,
-            #             range_method="auto",
-            #             http_headers=self.prepare_headers(url),
-            #             fake_headers=None,
-            #             auth=self.auth,
-            #         )
-            #     )
+                s.append(SingleUrlStream(x))
 
             from .stream import _from_source
 
             return _from_source(s, **self._kwargs)
-        else:
-            if self._call_multi:
-                from earthkit.data.sources.multi_url import MultiUrl
+        elif self._call_multi:
+            assert self.parallel
+            from earthkit.data.sources.multi_url import MultiUrl
 
-                return MultiUrl(self.url_spec, **self._kwargs)
-            else:
-                return super().mutate()
-            # if not self.parallel or len(self.url_spec) == 1:
-            #     return SingleUrl(self.url_spec, **self._kwargs)
-            #     # return super().mutate()
-            # else:
-            #     return MultiUrl(self.url_spec, **self._kwargs)
-            # # return super().mutate()
+            return MultiUrl(self.url_spec, **self._kwargs)
+
+        return super().mutate()
 
     def _download(self):
         # TODO: re-enable this feature
@@ -343,24 +231,15 @@ class Url(UrlBase):
             )
         )
 
-        print(f"zipped={self.url_spec.url_and_parts.zipped()}")
-
         self.downloader = Downloader(
             self.url_spec.zipped(),
-            # self._url_and_parts.zipped(),
-            **self.url_spec[0].kwargs,
-            # chunk_size=self.chunk_size,
             timeout=SETTINGS.get("url-download-timeout"),
-            # verify=self.verify,
-            # range_method=self.range_method,
-            # http_headers=self.http_headers,
-            # fake_headers=self.fake_headers,
             statistics_gatherer=record_statistics,
             progress_bar=progress_bar,
             resume_transfers=True,
             override_target_file=False,
             download_file_extension=".download",
-            # auth=self.auth,
+            **self.url_spec[0].kwargs,
         )
 
         if extension and extension[0] != ".":
@@ -536,19 +415,16 @@ class SingleUrlStream(UrlBase):
         url,
         **kwargs,
     ):
-        print(f"STREAM url={url}")
         super().__init__(url, **kwargs)
 
-        if len(self.url_spec) > 1:
+        if len(self.url_spec) != 1:
             raise TypeError("Only a single url is supported")
 
-        assert isinstance(self.url, str)
-        # if isinstance(self.url, (list, tuple)):
-        #     raise TypeError("Only a single url is supported")
+        assert isinstance(self.url[0], str)
 
         from urllib.parse import urlparse
 
-        o = urlparse(self.url)
+        o = urlparse(self.url[0])
         if o.scheme not in ("http", "https"):
             raise NotImplementedError(f"Streams are not supported for {o.scheme} urls")
 
@@ -560,19 +436,11 @@ class SingleUrlStream(UrlBase):
     def to_stream(self):
         downloader = Downloader(
             self.url_spec.zipped(),
-            # self.url,
-            # chunk_size=self.chunk_size,
-            # parts=self.url_parts,
             timeout=SETTINGS.get("url-download-timeout"),
-            # verify=self.verify,
-            # range_method=self.range_method,
-            # http_headers=self.prepare_headers(self.url),
-            # fake_headers=self.fake_headers,
             statistics_gatherer=_ignore,
             progress_bar=progress_bar,
             resume_transfers=False,
             override_target_file=False,
-            # auth=self.auth,
             **self.url_spec[0].kwargs,
         )
 

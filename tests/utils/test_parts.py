@@ -13,8 +13,6 @@
 import pytest
 
 from earthkit.data.sources.file import FileSourcePathAndParts
-
-# from earthkit.data.sources.url import UrlSourcePathAndParts
 from earthkit.data.utils.parts import SimplePart
 from earthkit.data.utils.url import UrlSourcePathAndParts
 

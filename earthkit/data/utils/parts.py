@@ -203,6 +203,7 @@ class PathAndParts:
 
         paths, parts = zip(*paths_and_parts)
         assert len(paths) == len(parts)
+
         if not self.sequence and len(paths) == 1:
             return paths[0], parts[0]
         else:

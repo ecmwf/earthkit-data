@@ -40,10 +40,10 @@ def request_to_resource(requests):
         for obj in o:
             if isinstance(obj, str):
                 key = obj
-                resources.append(S3Resource(endpoint, bucket, key))
+                resources.append(S3Resource(endpoint, bucket, DEFAULT_REGION, key))
             else:
                 key = obj["object"]
-                region = obj.ge("region", DEFAULT_REGION)
+                region = obj.get("region", DEFAULT_REGION)
                 parts = obj.get("parts", None)
                 resources.append(S3Resource(endpoint, bucket, region, key, parts=parts))
     return resources
@@ -127,10 +127,6 @@ class S3Source(FileSource):
         self.request = []
         for a in args:
             self.request.append(a)
-        # self.request.update(kwargs)
-
-        # if not isinstance(self.request, list):
-        #     self.request = [self.request]
 
         self.resources = request_to_resource(self.request)
 
@@ -165,13 +161,13 @@ class S3Source(FileSource):
             url_spec = []
             has_parts = any(r.parts is not None for r in self.resources)
             for r in self.resources:
-                r = {"url": r.url}
+                spec = {"url": r.url}
                 if has_parts:
-                    r["parts"] = r.parts
+                    spec["parts"] = r.parts
                 if not self.anon:
                     auth = S3Authenticator(r.region)
-                    r["auth"] = auth
-                url_spec.append(r)
+                    spec["auth"] = auth
+                url_spec.append(spec)
 
             if not self.anon and has_parts:
                 fake_headers = {"accept-ranges": "bytes"}
@@ -179,36 +175,6 @@ class S3Source(FileSource):
                 fake_headers = None
 
             return MultiUrl(url_spec, fake_headers=fake_headers)
-
-        # urls  = []
-        # has_parts = any(r.parts is not None for r in self.resources)
-        # if not self.anon else None
-
-        # if has_parts:
-        #     for r in self.resources:
-        #         urls.append([r.url, r.parts])
-        # else:
-        #     for r in self.resources:
-        #         urls.append(r.url)
-
-        # if not self.anon and has_parts:
-        #     fake_headers = {"accept-ranges": "bytes"}
-        # else:
-        #     fake_headers = None
-
-        # auth = self.make_auth(len(urls))
-
-        # if self.stream:
-        #     return Url(
-        #         urls,
-        #         auth=auth,
-        #         fake_headers=fake_headers,
-        #         stream=True,
-        #         **self._stream_kwargs,
-        #     )
-
-        # else:
-        #     return MultiUrl(urls, fake_headers=fake_headers, auth=auth)
 
     def make_auth(self):
         return S3Authenticator() if not self.anon else None

@@ -21,28 +21,20 @@ def parse_url_args(urls, **kwargs):
     res_url = []
     res_kwargs = []
 
-    parts = None
+    parts = kwargs.pop("parts", None)
     for url in urls:
         if isinstance(url, dict):
             u = url.pop("url")
-            if "parts" in url:
-                p = url.pop("parts")
+            p = url.pop("parts", None)
+            if p is not None:
                 res_url.append([u, p])
             else:
                 res_url.append(u)
 
             _kwarg = dict(**kwargs)
             _kwarg.update(url)
-            p = _kwarg.pop("parts", None)
-            if p is not None:
-                parts = p
             res_kwargs.append(_kwarg)
         else:
-            # if isinstance(url, str):
-            #     key = url
-            # elif isinstance(url, (list, tuple)):
-            #     key = url[0]
-
             p = kwargs.pop("parts", None)
             if p is not None:
                 parts = p
@@ -57,48 +49,23 @@ def parse_url_args(urls, **kwargs):
 
 class UrlSourcePathAndParts(PathAndParts):
     compress = True
-    sequence = False
+    sequence = True
 
 
 class UrlSpec:
     def __init__(self, urls, **kwargs):
-        print(f"CONSTRUCTOR {urls=}")
         self.spec = []
 
         if isinstance(urls, UrlSpecItem):
             self.spec.append(urls)
-            self.url_and_parts = PathAndParts(urls.url, urls.parts)
-
-            # url, parts_kwarg, self.kwargs = urls.url, urls.parts, urls.kwargs
+            self.url_and_parts = UrlSourcePathAndParts(urls.url, urls.parts)
         else:
             url, _kwargs, parts_kwarg = parse_url_args(urls, **kwargs)
-            self.url_and_parts = PathAndParts(url, parts_kwarg)
+            self.url_and_parts = UrlSourcePathAndParts(url, parts_kwarg)
 
             self.spec = []
             for i, x in enumerate(self.url_and_parts):
                 self.spec.append(UrlSpecItem(x[0], x[1], _kwargs[i]))
-
-        # self.single = isinstance(self.url_and_parts.path, str)
-        # if self.single:
-        #     if isinstance(self.kwargs, list):
-        #         self.kwargs = self.kwargs[0]
-
-        # print(
-        #     f"   -> single={self.single} kwargs={self.kwargs} url={self.url} parts={self.parts}"
-        # )
-
-    # specs = None
-    # parts_kwarg = None
-    # _paths_and_parts = None
-
-    # def from_args(urls, **kwargs):
-    #     s = UrlSpec()
-    #     s.specs, s.parts_kwarg = parse_url_args(urls, **kwargs)
-
-    # def from_spec(specs):
-    #     s = UrlSpec()
-    #     s.specs = ensure_sequence(specs)
-    #     return s
 
     def __len__(self):
         return len(self.spec)
@@ -106,29 +73,8 @@ class UrlSpec:
     def __iter__(self):
         return iter(self.spec)
 
-    #     n = 1 if self.single else len(self.url)
-    #     print(f"LEN={n}")
-    #     return n
-
     def __getitem__(self, n):
         return self.spec[n]
-
-    # def __getitem__(self, n):
-    #     print(f"getItem {n=}")
-    #     if self.single:
-    #         if n == 0:
-    #             return UrlSpecItem(
-    #                 self.url_and_parts.path,
-    #                 self.url_and_parts.parts,
-    #                 self.kwargs,
-    #             )
-
-    #     else:
-    #         return UrlSpecItem(
-    #             self.url_and_parts.path[n],
-    #             self.url_and_parts.parts[n],
-    #             self.kwargs[n],
-    #         )
 
     @property
     def url(self):
@@ -140,13 +86,3 @@ class UrlSpec:
 
     def zipped(self):
         return self.url_and_parts.zipped()
-
-    # def __next__(self):
-    #     return UrlSpec.from_spec
-
-    # @property
-    # def paths_and_parts(self):
-    #     if self._paths_and_parts is None:
-    #         u = [x["url"] for x in self.spec]
-    #         self._paths_and_parts = UrlSourcePathAndParts(u, self.parts_kwarg)
-    #     return self._paths_and_parts
