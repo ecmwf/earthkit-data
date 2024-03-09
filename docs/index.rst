@@ -27,9 +27,8 @@ reference systems and bounding boxes.
 .. toctree::
    :maxdepth: 1
    :caption: Examples
-   :titlesonly:
 
-   examples
+   examples/index
 
 .. toctree::
    :maxdepth: 1
