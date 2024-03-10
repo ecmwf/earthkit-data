@@ -5,7 +5,7 @@ Examples
 
 Here is a list of example notebooks to illustrate how to use earthkit-data.
 
-Sources
+Data sources
 ++++++++++
 
 .. toctree::
@@ -88,7 +88,6 @@ Other inputs
 
 .. toctree::
     :maxdepth: 1
-    :caption: Other inputs
     :glob:
 
     from_object.ipynb
