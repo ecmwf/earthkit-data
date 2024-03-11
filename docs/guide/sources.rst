@@ -122,9 +122,11 @@ file
 
   Further examples:
 
+    - :ref:`/examples/files.ipynb`
+    - :ref:`/examples/multi_files.ipynb`
+    - :ref:`/examples/file_parts.ipynb`
+    - :ref:`/examples/tar_files.ipynb`
     - :ref:`/examples/grib_overview.ipynb`
-    - :ref:`/examples/grib_multi.ipynb`
-    - :ref:`/examples/grib_file_parts.ipynb`
     - :ref:`/examples/bufr_temp.ipynb`
     - :ref:`/examples/netcdf.ipynb`
     - :ref:`/examples/odb.ipynb`
@@ -164,6 +166,10 @@ file-pattern
     path/to/data-2020-05-02-12-msl.grib
     path/to/data-2020-05-02-18-t2.grib
     path/to/data-2020-05-02-18-msl.grib
+
+Further examples:
+
+    - :ref:`/examples/files.ipynb`
 
 
 .. _data-sources-url:
@@ -216,8 +222,8 @@ url
 
   Further examples:
 
-    - :ref:`/examples/grib_url.ipynb`
-    - :ref:`/examples/grib_url_stream.ipynb`
+    - :ref:`/examples/url.ipynb`
+    - :ref:`/examples/url_stream.ipynb`
 
 
 .. _data-sources-url-pattern:
@@ -379,9 +385,9 @@ stream
 
   See the following notebook examples for further details:
 
-    - :ref:`/examples/grib_from_stream.ipynb`
+    - :ref:`/examples/data_from_stream.ipynb`
     - :ref:`/examples/fdb.ipynb`
-    - :ref:`/examples/grib_url_stream.ipynb`
+    - :ref:`/examples/url_stream.ipynb`
 
 
 .. _data-sources-memory:

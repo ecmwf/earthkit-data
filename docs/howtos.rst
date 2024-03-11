@@ -1,5 +1,4 @@
-.. _howtos
-
+.. _howtos:
 
 Howtos
 ============
