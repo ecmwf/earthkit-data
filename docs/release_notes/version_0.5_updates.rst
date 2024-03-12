@@ -1,6 +1,13 @@
 Version 0.5 Updates
 /////////////////////////
 
+Version 0.5.6
+===============
+
+Fixes
+++++++
+- fixed issue when parsing a NetCDF input for fields caused a crash
+
 
 Version 0.5.5
 ===============
