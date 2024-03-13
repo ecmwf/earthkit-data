@@ -67,4 +67,4 @@ When we use this mode the ``parts`` kwarg cannot be used!
 
 Examples:
 
-    - :ref:`/examples/grib_file_parts.ipynb`
+    - :ref:`/examples/file_parts.ipynb`

@@ -38,6 +38,25 @@ def test_netcdf_fieldlist_string_coord():
     assert np.allclose(ds[0].to_points()["y"], y_ref)
 
 
+def test_netcdf_fieldlist_bounds():
+    """Check if having non string values in bounds does not cause a crash"""
+    import xarray as xr
+
+    a = xr.DataArray(
+        [
+            [[11, 12, 13], [21, 22, 23], [31, 32, 33]],
+            [[14, 15, 16], [24, 25, 26], [34, 35, 36]],
+        ],
+        coords={"level": [0, 0], "x": [1, 2, 3], "y": [4, 5, 6]},
+        attrs={"bounds": [1, 2, 3]},
+        name="dummyvar",
+    )
+
+    ds = earthkit.data.from_object(a)
+    assert ds
+    assert len(ds) == 2
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
