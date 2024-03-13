@@ -99,9 +99,10 @@ class CdsRetriever(FileSource):
     CdsRetriever
     """
 
-    def __init__(self, dataset, *args, prompt=True, **kwargs):
+    def __init__(self, dataset, *args, prompt=True, target=None, **kwargs):
         super().__init__()
 
+        self.targets = target
         self.prompt = prompt
 
         assert isinstance(dataset, str)
@@ -117,31 +118,57 @@ class CdsRetriever(FileSource):
 
         self.client()  # Trigger password prompt before threading
 
+        if len(self.requests) == 0:
+            raise ValueError("CdsRetriever: no request specified")
+
+        if self.targets is not None:
+            if not isinstance(self.targets, str):
+                raise TypeError("target must be a str")
+            if len(self.requests) > 1:
+                self.targets = [
+                    f"{self.targets}.{i}" for i in range(len(self.requests))
+                ]
+            else:
+                self.targets = [self.targets]
+        else:
+            self.targets = [None for _ in self.requests]
+
+        assert isinstance(self.targets, list)
+        assert len(self.targets) == len(self.requests)
+
         nthreads = min(self.settings("number-of-download-threads"), len(self.requests))
 
         if nthreads < 2:
-            self.path = [self._retrieve(dataset, r) for r in self.requests]
+            self.path = [
+                self._retrieve(dataset, r, t)
+                for r, t in zip(self.requests, self.targets)
+            ]
         else:
             with SoftThreadPool(nthreads=nthreads) as pool:
                 futures = [
-                    pool.submit(self._retrieve, dataset, r) for r in self.requests
+                    pool.submit(self._retrieve, dataset, r, t)
+                    for r, t in zip(self.requests, self.targets)
                 ]
 
                 iterator = (f.result() for f in futures)
                 self.path = list(tqdm(iterator, leave=True, total=len(self.requests)))
 
-    def _retrieve(self, dataset, request):
+    def _retrieve(self, dataset, request, target):
         def retrieve(target, args):
             cds_result = self.client().retrieve(args[0], args[1])
             self.source_filename = cds_result.location.split("/")[-1]
             cds_result.download(target=target)
 
-        return_object = self.cache_file(
-            retrieve,
-            (dataset, request),
-            extension=EXTENSIONS.get(request.get("format"), ".cache"),
-        )
-        return return_object
+        if target is not None:
+            retrieve(target, (dataset, request))
+            return target
+        else:
+            return_object = self.cache_file(
+                retrieve,
+                (dataset, request),
+                extension=EXTENSIONS.get(request.get("format"), ".cache"),
+            )
+            return return_object
 
     @staticmethod
     @normalize("date", "date-list(%Y-%m-%d)")
@@ -170,6 +197,12 @@ class CdsRetriever(FileSource):
 
     def client(self):
         return client(self.prompt)
+
+    def mutate(self):
+        if self.targets[0] is not None:
+            return self
+        else:
+            return super().mutate()
 
 
 source = CdsRetriever

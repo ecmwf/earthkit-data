@@ -46,10 +46,11 @@ class MARSAPIKeyPrompt(APIKeyPrompt):
 
 
 class ECMWFApi(FileSource):
-    def __init__(self, *args, prompt=True, **kwargs):
+    def __init__(self, *args, prompt=True, target=True, **kwargs):
         super().__init__()
 
         self.prompt = prompt
+        self.targets = target
 
         request = {}
         for a in args:
@@ -60,25 +61,42 @@ class ECMWFApi(FileSource):
 
         self.service()  # Trigger password prompt before threading
 
+        if self.targets is not None:
+            if not isinstance(self.targets, str):
+                raise TypeError("target must be a str")
+            if len(requests) > 1:
+                self.targets = [f"{self.targets}.{i}" for i in range(len(requests))]
+            else:
+                self.targets = [self.targets]
+        else:
+            self.targets = [None for _ in self.requests]
+
         nthreads = min(self.settings("number-of-download-threads"), len(requests))
 
         if nthreads < 2:
-            self.path = [self._retrieve(r) for r in requests]
+            self.path = [self._retrieve(r, t) for r, t in zip(requests, self.targets)]
         else:
             with SoftThreadPool(nthreads=nthreads) as pool:
-                futures = [pool.submit(self._retrieve, r) for r in requests]
+                futures = [
+                    pool.submit(self._retrieve, r, SoftThreadPool)
+                    for r, t in zip(requests, self.targets)
+                ]
 
                 iterator = (f.result() for f in futures)
                 self.path = list(tqdm(iterator, leave=True, total=len(requests)))
 
-    def _retrieve(self, request):
+    def _retrieve(self, request, target):
         def retrieve(target, request):
             self.service().execute(request, target)
 
-        return self.cache_file(
-            retrieve,
-            request,
-        )
+        if target is not None:
+            retrieve(target, request)
+            return target
+        else:
+            return self.cache_file(
+                retrieve,
+                request,
+            )
 
     @normalize("param", "variable-list(mars)")
     @normalize("date", "date-list(%Y-%m-%d)")
@@ -115,3 +133,9 @@ class ECMWFApi(FileSource):
             # odc_read_odb_kwargs=odc_read_odb_kwargs,
             **kwargs,
         )
+
+    def mutate(self):
+        if self.targets[0] is not None:
+            return self
+        else:
+            return super().mutate()
