@@ -34,7 +34,7 @@ Please note in **zsh** you need to use quotes around the square brackets:
 Installing individual optional packages
 +++++++++++++++++++++++++++++++++++++++++
 
-Alternatively, you can install the following components individually:
+Alternatively, you can install the following components:
 
     - mars: provides access to the :ref:`data-sources-mars` source
     - cds: provides access to the :ref:`data-sources-cds` and :ref:`data-sources-ads` sources
@@ -53,6 +53,11 @@ E.g. to add :ref:`data-sources-mars`  support you can use:
 
     python3 -m pip install earthkit-data[mars]
 
+List of optional dependencies can also be specified :
+
+.. code-block:: bash
+
+    python3 -m pip install earthkit-data[cds,mars]
 
 
 Installing with conda
