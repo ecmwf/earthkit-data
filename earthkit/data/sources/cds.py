@@ -12,6 +12,7 @@ import logging
 import sys
 from functools import cached_property
 
+import cdsapi
 import yaml
 
 from earthkit.data.core.thread import SoftThreadPool
@@ -72,10 +73,6 @@ def client(use_prompt):
     if use_prompt:
         prompt = CDSAPIKeyPrompt()
         prompt.check()
-
-        from earthkit.data.utils.importer import IMPORTER
-
-        cdsapi = IMPORTER.import_module("cdsapi")
 
         try:
             return cdsapi.Client()

@@ -12,6 +12,7 @@
 
 import logging
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -117,10 +118,6 @@ def test_pd_dataframe_translator():
 
 
 def test_gpd_dataframe_translator():
-    from earthkit.data.utils.importer import IMPORTER
-
-    gpd = IMPORTER.import_module("geopandas")
-
     # Check that an xr.Dataset translator can be created
     _pdwrapper = wrappers.get_wrapper(gpd.GeoDataFrame())
     _trans = pdtranslator.translator(_pdwrapper, gpd.GeoDataFrame)

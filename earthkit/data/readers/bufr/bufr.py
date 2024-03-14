@@ -11,10 +11,10 @@ import os
 from abc import abstractmethod
 
 import eccodes
+from pdbufr.high_level_bufr.bufr import bufr_code_is_coord
 
 from earthkit.data.core import Base
 from earthkit.data.core.index import Index, MaskIndex, MultiIndex
-from earthkit.data.utils.importer import IMPORTER
 from earthkit.data.utils.message import (
     CodesHandle,
     CodesMessagePositionIndex,
@@ -26,16 +26,6 @@ from earthkit.data.utils.summary import make_bufr_html_tree
 
 from .. import Reader
 from .pandas import PandasMixIn
-
-# from earthkit.data.utils.importer import IMPORTER
-
-# pdbufr = IMPORTER.import_module("pdbufr")
-
-# from pdbufr.high_level_bufr.bufr import bufr_code_is_coord  # noqa
-
-
-pdbufr = IMPORTER.import_module("pdbufr")
-from pdbufr.high_level_bufr.bufr import bufr_code_is_coord  # noqa
 
 BUFR_LS_KEYS = {
     "edition": "edition",

@@ -8,6 +8,17 @@
 
 from . import cf, proj
 
+try:
+    import cartopy.crs as ccrs
+
+    NO_CARTOPY = False
+except ImportError:
+    NO_CARTOPY = True
+CARTOPY_WARNING = (
+    "no cartopy installation found; cartopy must be installed to use this feature"
+)
+
+
 DEFAULT_LATLON_PROJ_STRING = (
     "+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 "
     "+no_defs +type=crs"
@@ -59,9 +70,7 @@ class Projection:
         self._proj_string = proj_string
 
     def __repr__(self):
-        from earthkit.data.utils.importer import IMPORTER
-
-        if IMPORTER.status("cartopy.crs"):
+        if not NO_CARTOPY:
             return self.to_cartopy_crs().__repr__()
         else:
             return self.__str__()
@@ -75,15 +84,13 @@ class Projection:
         return self._proj_string
 
     def to_cartopy_globe(self):
-        from earthkit.data.utils.importer import IMPORTER
-
-        ccrs = IMPORTER.import_module("cartopy.crs")
+        if NO_CARTOPY:
+            raise ImportError(CARTOPY_WARNING)
         return ccrs.Globe(**self.globe)
 
     def to_cartopy_crs(self):
-        from earthkit.data.utils.importer import IMPORTER
-
-        ccrs = IMPORTER.import_module("cartopy.crs")
+        if NO_CARTOPY:
+            raise ImportError(CARTOPY_WARNING)
         return getattr(ccrs, self.CARTOPY_CRS)(
             globe=self.to_cartopy_globe(),
             **self.parameters,

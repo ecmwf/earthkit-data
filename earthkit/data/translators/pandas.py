@@ -47,9 +47,8 @@ class GeoPandasDataFrameTranslator(PandasSeriesTranslator):
         """
         GeoDataFrame requested, if normal pandas convert to geopandas.
         """
-        from earthkit.data.utils.importer import IMPORTER
+        import geopandas as gpd
 
-        gpd = IMPORTER.import_module("geopandas")
         if isinstance(self.data, pd.DataFrame):
             return gpd.GeoDataFrame(self.data)
 

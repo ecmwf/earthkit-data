@@ -10,17 +10,15 @@
 import logging
 import os
 
+import hda
 import yaml
+from hda.api import DataOrderRequest
 
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.utils import tqdm
-from earthkit.data.utils.importer import IMPORTER
 
 from .file import FileSource
 from .prompt import APIKeyPrompt
-
-hda = IMPORTER.import_module("hda")
-from hda.api import DataOrderRequest  # noqa
 
 LOG = logging.getLogger(__name__)
 

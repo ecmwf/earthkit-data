@@ -39,9 +39,7 @@ class PandasMixIn:
         - :ref:`/examples/bufr_synop.ipynb`
 
         """
-        from earthkit.data.utils.importer import IMPORTER
-
-        pdbufr = IMPORTER.import_module("pdbufr")
+        import pdbufr
 
         filters = {} if filters is None else filters
 
