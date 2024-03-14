@@ -16,7 +16,7 @@ import numpy as np
 
 from earthkit.data.core.fieldlist import Field, FieldList
 from earthkit.data.core.geography import Geography
-from earthkit.data.core.index import Index, MaskIndex, MultiIndex
+from earthkit.data.core.index import MaskIndex, MultiIndex
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
@@ -151,6 +151,7 @@ class DataSet:
 
 def get_fields_from_ds(
     ds,
+    array_backend,
     field_type=None,
     check_only=False,
 ):  # noqa C901
@@ -162,11 +163,16 @@ def get_fields_from_ds(
 
     skip = set()
 
+    def _skip_attr(v, attr_name):
+        attr_val = getattr(v, attr_name, "")
+        if isinstance(attr_val, str):
+            skip.update(attr_val.split(" "))
+
     for name in ds.data_vars:
         v = ds[name]
-        skip.update(getattr(v, "coordinates", "").split(" "))
-        skip.update(getattr(v, "bounds", "").split(" "))
-        skip.update(getattr(v, "grid_mapping", "").split(" "))
+        _skip_attr(v, "coordinates")
+        _skip_attr(v, "bounds")
+        _skip_attr(v, "grid_mapping")
 
     for name in ds.data_vars:
         if name in skip:
@@ -260,7 +266,7 @@ def get_fields_from_ds(
             if check_only:
                 return True
 
-            fields.append(field_type(ds, name, slices, non_dim_coords))
+            fields.append(field_type(ds, name, slices, non_dim_coords, array_backend))
 
     # if not fields:
     #     raise Exception("NetCDFReader no 2D fields found in %s" % (self.path,))
@@ -377,8 +383,8 @@ class XArrayMetadata(RawMetadata):
 
 
 class XArrayField(Field):
-    def __init__(self, ds, variable, slices, non_dim_coords):
-        super().__init__()
+    def __init__(self, ds, variable, slices, non_dim_coords, array_backend):
+        super().__init__(array_backend)
         self._ds = ds
         self._da = ds[variable]
 
@@ -452,7 +458,9 @@ class XArrayFieldListCore(FieldList):
     def __init__(self, ds, *args, **kwargs):
         self.ds = ds
         self._fields = None
-        Index.__init__(self, *args, **kwargs)
+        # Index.__init__(self, *args, **kwargs)
+        # super().__init__(self, *args, **kwargs)
+        super().__init__(*kwargs)
 
     @property
     def fields(self):
@@ -463,7 +471,10 @@ class XArrayFieldListCore(FieldList):
     def has_fields(self):
         if self._fields is None:
             return get_fields_from_ds(
-                DataSet(self.ds), field_type=self.FIELD_TYPE, check_only=True
+                DataSet(self.ds),
+                self.array_backend,
+                field_type=self.FIELD_TYPE,
+                check_only=True,
             )
         else:
             return len(self._fields)
@@ -473,7 +484,9 @@ class XArrayFieldListCore(FieldList):
             self._fields = self._get_fields()
 
     def _get_fields(self):
-        return get_fields_from_ds(DataSet(self.ds), field_type=self.FIELD_TYPE)
+        return get_fields_from_ds(
+            DataSet(self.ds), self.array_backend, field_type=self.FIELD_TYPE
+        )
 
     def to_pandas(self):
         return self.to_xarray().to_pandas()
@@ -519,11 +532,13 @@ class XArrayFieldList(XArrayFieldListCore):
 class XArrayMaskFieldList(XArrayFieldListCore, MaskIndex):
     def __init__(self, *args, **kwargs):
         MaskIndex.__init__(self, *args, **kwargs)
+        FieldList._init_from_mask(self, self)
 
 
 class XArrayMultiFieldList(XArrayFieldListCore, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
+        FieldList._init_from_multi(self, self)
 
     def to_xarray(self, **kwargs):
         import xarray as xr
@@ -554,7 +569,9 @@ class NetCDFFieldList(XArrayFieldListCore):
         with closing(
             xr.open_mfdataset(self.path, combine="by_coords")
         ) as ds:  # or nested
-            return get_fields_from_ds(DataSet(ds), field_type=self.FIELD_TYPE)
+            return get_fields_from_ds(
+                DataSet(ds), self.array_backend, field_type=self.FIELD_TYPE
+            )
 
     def has_fields(self):
         if self._fields is None:
@@ -564,7 +581,10 @@ class NetCDFFieldList(XArrayFieldListCore):
                 xr.open_mfdataset(self.path, combine="by_coords")
             ) as ds:  # or nested
                 return get_fields_from_ds(
-                    DataSet(ds), field_type=self.FIELD_TYPE, check_only=True
+                    DataSet(ds),
+                    self.array_backend,
+                    field_type=self.FIELD_TYPE,
+                    check_only=True,
                 )
         else:
             return len(self._fields)
@@ -575,7 +595,7 @@ class NetCDFFieldList(XArrayFieldListCore):
         return NetCDFMultiFieldList(sources)
 
     @classmethod
-    def new_mask_index(self, *args, **kwargs):
+    def new_mask_index(cls, *args, **kwargs):
         return NetCDFMaskFieldList(*args, **kwargs)
 
     def to_xarray(self, **kwargs):
@@ -632,6 +652,7 @@ class NetCDFFieldListInOneFile(NetCDFFieldListInFiles):
 class NetCDFMaskFieldList(NetCDFFieldList, MaskIndex):
     def __init__(self, *args, **kwargs):
         MaskIndex.__init__(self, *args, **kwargs)
+        FieldList._init_from_mask(self, self)
 
     # TODO: Implement this, but discussion required
     def to_xarray(self, *args, **kwargs):
@@ -641,6 +662,7 @@ class NetCDFMaskFieldList(NetCDFFieldList, MaskIndex):
 class NetCDFMultiFieldList(NetCDFFieldList, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
+        FieldList._init_from_multi(self, self)
 
     def to_xarray(self, **kwargs):
         try:

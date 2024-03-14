@@ -38,7 +38,9 @@ def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
         from .memory import GribFieldListInMemory, GribMessageMemoryReader
 
-        return GribFieldListInMemory(source, GribMessageMemoryReader(buffer))
+        return GribFieldListInMemory(
+            source, GribMessageMemoryReader(buffer, **kwargs), **kwargs
+        )
 
 
 def stream_reader(
@@ -54,7 +56,7 @@ def stream_reader(
     if _is_default(magic, content_type) or _match_magic(magic, deeper_check):
         from .memory import GribFieldListInMemory, GribStreamReader
 
-        r = GribStreamReader(stream)
+        r = GribStreamReader(stream, **kwargs)
         if memory:
-            r = GribFieldListInMemory(source, r)
+            r = GribFieldListInMemory(source, r, **kwargs)
         return r

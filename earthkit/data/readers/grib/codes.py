@@ -245,8 +245,8 @@ class GribField(Field):
         Size of the message (in bytes)
     """
 
-    def __init__(self, path, offset, length):
-        super().__init__()
+    def __init__(self, path, offset, length, backend):
+        super().__init__(backend)
         self.path = path
         self._offset = offset
         self._length = length
@@ -291,16 +291,25 @@ class GribField(Field):
     #         name = "paramId"
     #     return self.handle.get(name)
 
-    def write(self, f):
+    def write(self, f, bits_per_value=None):
         r"""Writes the message to a file object.
 
         Parameters
         ----------
         f: file object
             The target file object.
+        bits_per_value: int or None
+            Set the ``bitsPerValue`` GRIB key in the generated GRIB message. When
+            None the ``bitsPerValue`` stored in the metadata will be used.
         """
+        if bits_per_value is not None:
+            handle = self.handle.clone()
+            handle.set_long("bitsPerValue", bits_per_value)
+        else:
+            handle = self.handle
+
         # assert isinstance(f, io.IOBase)
-        self.handle.write_to(f)
+        handle.write_to(f)
 
     def message(self):
         r"""Returns a buffer containing the encoded message.

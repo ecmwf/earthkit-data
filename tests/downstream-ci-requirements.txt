@@ -1,8 +1,9 @@
+array_api_compat
 cdsapi
 cfgrib>=0.9.10.1
 eccodes>=1.5.0
 ecmwf-api-client>=1.6.1
-ecmwf-opendata>=0.1.2
+ecmwf-opendata>=0.3.3
 polytope-client>=0.7.2
 dask
 entrypoints
@@ -17,6 +18,7 @@ pyfdb
 pyodc
 pyyaml
 scipy
+torch
 tqdm
 xarray>=0.19.0
 earthkit-meteo>=0.0.1
@@ -31,3 +33,4 @@ pytest-forked
 pytest-timeout
 nbformat
 nbconvert
+ipykernel

@@ -80,24 +80,40 @@ def modules_installed(*modules):
     return True
 
 
-def MISSING(*modules):
-    return not modules_installed(*modules)
-
-
 NO_MARS = not os.path.exists(os.path.expanduser("~/.ecmwfapirc"))
 NO_CDS = not os.path.exists(os.path.expanduser("~/.cdsapirc"))
-NO_ADS = not os.path.exists(os.path.expanduser("~/.adsapirc"))
 NO_HDA = not os.path.exists(os.path.expanduser("~/.hdarc"))
-NO_EOD = MISSING("ecmwf.opendata")
-NO_FDB = not (
-    os.environ.get("FDB_HOME", None) is not None
-    or os.environ.get("FDB5_CONFIG", None) is not None
-)
-NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
-NO_CARTOPY = MISSING("cartopy.ccrs")
-NO_ECCOVJSON = not modules_installed("eccovjson")
-
 IN_GITHUB = os.environ.get("GITHUB_WORKFLOW") is not None
+try:
+    import ecmwf.opendata  # noqa
+
+    NO_EOD = False
+except Exception:
+    NO_EOD = True
+
+try:
+    import pyfdb  # noqa
+
+    fdb_home = os.environ.get("FDB_HOME", None)
+    NO_FDB = fdb_home is None
+except Exception:
+    NO_FDB = True
+
+NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
+NO_ECCOVJSON = not modules_installed("eccovjson")
+NO_PYTORCH = not modules_installed("torch")
+NO_CUPY = not modules_installed("cupy")
+if not NO_CUPY:
+    try:
+        import cupy as cp
+
+        a = cp.ones(2)
+    except Exception:
+        NO_CUPY = True
+
+
+def MISSING(*modules):
+    return not modules_installed(*modules)
 
 
 UNSAFE_SAMPLES_URL = "https://github.com/jwilk/traversal-archives/releases/download/0"
@@ -140,6 +156,34 @@ def load_nc_or_xr_source(path, mode):
         import xarray
 
         return from_object(xarray.open_dataset(path))
+
+
+def check_array_type(v, backend, **kwargs):
+    from earthkit.data.utils.array import ensure_backend
+
+    b = ensure_backend(backend)
+    assert b.is_native_array(v, **kwargs), f"{type(v)}, {backend=}, {kwargs=}"
+
+
+def get_array_namespace(backend):
+    from earthkit.data.utils.array import ensure_backend
+
+    return ensure_backend(backend).array_ns
+
+
+def get_array(v, backend, **kwargs):
+    from earthkit.data.utils.array import ensure_backend
+
+    b = ensure_backend(backend)
+    return b.from_other(v, **kwargs)
+
+
+ARRAY_BACKENDS = ["numpy"]
+if not NO_PYTORCH:
+    ARRAY_BACKENDS.append("pytorch")
+
+if not NO_CUPY:
+    ARRAY_BACKENDS.append("cupy")
 
 
 def main(path):
