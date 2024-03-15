@@ -7,8 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-# With tdqm>=4.63.0 if ipywidgets is not installed
-# when importing from tdqm.auto a warning is generated. Previous
+# With tqdm>=4.63.0 if ipywidgets is not installed
+# when importing from tqdm.auto a warning is generated. Previous
 # versions crashed. We want to avoid both behaviours.
 try:
     import ipywidgets  # noqa F401
