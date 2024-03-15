@@ -17,11 +17,11 @@ pdbufr>=0.11.0
 pyfdb
 pyodc
 pyyaml
-scipy
 torch
 tqdm
 xarray>=0.19.0
 earthkit-meteo>=0.0.1
+earthkit-geo
 git+https://github.com/ecmwf/earthkit-data-demo-source
 geopandas
 cartopy

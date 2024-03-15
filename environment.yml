@@ -21,14 +21,14 @@ dependencies:
 - ecmwf-api-client>=1.6.1
 - cdsapi
 - hda
-- scipy
 - pip:
-  - git+https://github.com/ecmwf/multiurl
+  - multiurl
   - git+https://github.com/ecmwf/pyfdb
   - ecmwf-opendata>=0.1.2
   - polytope-client>=0.7.2
   - earthkit-meteo>=0.0.1
   - eccovjson>=0.0.5
+  - earthkit-geo
 - tqdm
 - markdown
 - make
