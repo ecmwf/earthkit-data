@@ -10,8 +10,6 @@
 import logging
 import os
 
-from earthkit.data.utils import tqdm
-
 from . import Reader
 from . import reader as find_reader
 
@@ -60,6 +58,7 @@ class ArchiveReader(Reader):
                 os.mkdir(target)
             except FileExistsError:
                 pass
+            from earthkit.data.utils.progbar import tqdm
 
             for member in tqdm(iterable=members, total=len(members), leave=False):
                 if not self.check(member):

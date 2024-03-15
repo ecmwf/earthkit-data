@@ -14,7 +14,7 @@ from urllib.parse import urljoin
 
 from earthkit.data.core.caching import cache_file
 from earthkit.data.readers.grib.index import GribFieldListInFiles
-from earthkit.data.utils import progress_bar
+from earthkit.data.utils.progbar import progress_bar
 
 LOG = logging.getLogger(__name__)
 

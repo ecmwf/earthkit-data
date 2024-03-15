@@ -15,8 +15,8 @@ from multiurl import Downloader
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.core.statistics import record_statistics
-from earthkit.data.utils import progress_bar
 from earthkit.data.utils.parts import PathAndParts
+from earthkit.data.utils.progbar import progress_bar
 
 from .file import FileSource
 
