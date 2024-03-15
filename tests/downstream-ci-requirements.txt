@@ -11,7 +11,7 @@ filelock
 hda
 jinja2
 markdown
-multiurl
+multiurl>=0.3.0
 netcdf4
 pdbufr>=0.11.0
 pyfdb

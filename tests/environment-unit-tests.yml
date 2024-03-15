@@ -23,7 +23,7 @@ dependencies:
 - cdsapi
 - hda
 - pip:
-  - multiurl
+  - multiurl>=0.3.0
   - git+https://github.com/ecmwf/pyfdb
   - ecmwf-opendata>=0.3.3
   - polytope-client>=0.7.2
