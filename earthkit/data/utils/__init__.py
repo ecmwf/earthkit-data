@@ -10,19 +10,12 @@ import inspect
 import json
 import re
 
-import requests
 import yaml
-
-try:
-    # There is a bug in tqdm that expects ipywidgets
-    # to be installed if running in a notebook
-    import ipywidgets  # noqa F401
-    from tqdm.auto import tqdm  # noqa F401
-except ImportError:
-    from tqdm import tqdm  # noqa F401
 
 
 def download_and_cache(url, return_none_on_404=False, **kwargs):
+    import requests
+
     from earthkit.data.sources.url import download_and_cache
 
     try:
@@ -152,21 +145,6 @@ def load_json_or_yaml(path):
         raise ValueError(
             f"Cannot read file {path}. Need json or yaml with appropriate extension."
         )
-
-
-def progress_bar(*, total=None, iterable=None, initial=0, desc=None):
-    return tqdm(
-        iterable=iterable,
-        total=total,
-        initial=initial,
-        unit_scale=True,
-        unit_divisor=1024,
-        unit="B",
-        disable=False,
-        leave=False,
-        desc=desc,
-        # dynamic_ncols=True, # make this the default?
-    )
 
 
 def ensure_iterable(obj):

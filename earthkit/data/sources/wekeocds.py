@@ -14,7 +14,6 @@ from hda.api import DataOrderRequest
 
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.decorators import normalize
-from earthkit.data.utils import tqdm
 
 from .file import FileSource
 from .wekeo import EXTENSIONS
@@ -81,6 +80,8 @@ class WekeoCdsRetriever(FileSource):
         if nthreads < 2:
             self.path = [self._retrieve(dataset, r) for r in requests]
         else:
+            from earthkit.data.utils.progbar import tqdm
+
             with SoftThreadPool(nthreads=nthreads) as pool:
                 futures = [pool.submit(self._retrieve, dataset, r) for r in requests]
 

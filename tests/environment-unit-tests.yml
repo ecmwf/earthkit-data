@@ -31,7 +31,7 @@ dependencies:
   - git+https://github.com/ecmwf/earthkit-data-demo-source
   - eccovjson>=0.0.5
   - earthkit-geo
-- tqdm
+- tqdm>=4.63.0
 - markdown
 - aws-requests-auth
 - make

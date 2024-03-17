@@ -15,7 +15,7 @@ from multiurl import Downloader
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.core.statistics import record_statistics
-from earthkit.data.utils import progress_bar
+from earthkit.data.utils.progbar import progress_bar
 
 from .file import FileSource
 
@@ -119,6 +119,7 @@ class UrlBase(FileSource):
         range_method="auto",
         http_headers=None,
         fake_headers=None,  # When HEAD is not allowed but you know the size
+        stream=False,
         auth=None,
         **kwargs,
     ):
@@ -145,6 +146,19 @@ class UrlBase(FileSource):
 
     def connect_to_mirror(self, mirror):
         return mirror.connection_for_url(self, self.url, self.url_parts)
+
+    def prepare_headers(self, url):
+        headers = {}
+        if self.http_headers is not None:
+            headers = dict(self.http_headers)
+
+        if self.auth is not None:
+            headers.update(self.auth.auth_header(url))
+
+        if not headers:
+            headers = None
+
+        return headers
 
     @property
     def url(self):
@@ -437,6 +451,10 @@ class SingleUrlStream(UrlBase):
         downloader = Downloader(
             self.url_spec.zipped(),
             timeout=SETTINGS.get("url-download-timeout"),
+            verify=self.verify,
+            range_method=self.range_method,
+            http_headers=self.prepare_headers(self.url),
+            fake_headers=self.fake_headers,
             statistics_gatherer=_ignore,
             progress_bar=progress_bar,
             resume_transfers=False,
