@@ -25,13 +25,13 @@ class Field(Base):
         self,
         array_backend,
         metadata=None,
-        raw_values_backend=numpy_backend(),
-        raw_other_backend=numpy_backend(),
+        raw_values_backend=None,
+        raw_other_backend=None,
     ):
         self.__metadata = metadata
         self._array_backend = array_backend
-        self._raw_values_backend = raw_values_backend
-        self._raw_other_backend = raw_other_backend
+        self._raw_values_backend = ensure_backend(raw_values_backend)
+        self._raw_other_backend = ensure_backend(raw_other_backend)
 
     @property
     def array_backend(self):
