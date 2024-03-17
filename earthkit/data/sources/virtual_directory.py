@@ -12,7 +12,7 @@ from collections import defaultdict
 
 from earthkit.data.readers.grib.index import FieldListInFilesWithSqlIndex
 from earthkit.data.sources.directory import DirectorySource
-from earthkit.data.utils import progress_bar
+from earthkit.data.utils.progbar import progress_bar
 
 LOG = logging.getLogger(__name__)
 

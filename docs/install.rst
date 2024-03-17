@@ -1,8 +1,11 @@
 Installation
 ============
 
-Installing earthkit-data
-----------------------------
+Installing from PyPI
+------------------------------------
+
+Minimal installation
++++++++++++++++++++++++++
 
 Install **earthkit-data** with python3 (>= 3.8) and ``pip`` as follows:
 
@@ -10,7 +13,58 @@ Install **earthkit-data** with python3 (>= 3.8) and ``pip`` as follows:
 
     python3 -m pip install earthkit-data
 
-Alternatively, install via ``conda`` with:
+The package installed like this is **minimal** supporting only GRIB and NetCDF data and cannot access remote services other than URLs. If you want to use more data types or remote services you need to install the optional Python packages.
+
+Installing all the optional packages
+++++++++++++++++++++++++++++++++++++++++
+
+You can install **earthkit-data** with all the optional packages in one go by using:
+
+.. code-block:: bash
+
+    python3 -m pip install earthkit-data[all]
+
+Please note in **zsh** you need to use quotes around the square brackets:
+
+.. code-block:: bash
+
+    python3 -m pip install "earthkit-data[all]"
+
+
+Installing individual optional packages
++++++++++++++++++++++++++++++++++++++++++
+
+Alternatively, you can install the following components:
+
+    - mars: provides access to the :ref:`data-sources-mars` source
+    - cds: provides access to the :ref:`data-sources-cds` and :ref:`data-sources-ads` sources
+    - ecmwf-opendata: provides access to the :ref:`data-sources-eod`
+    - wekeo: provides access to the :ref:`data-sources-wekeo` and :ref:`data-sources-wekeocds` sources
+    - fdb: provides access to the :ref:`data-sources-fdb` source
+    - polytope: provides access to the :ref:`data-sources-polytope` source
+    - bufr: provides full support for the :ref:`bufr` data type
+    - odb: provides full support for the :ref:`odb` data type
+    - geopandas: adds geojson/geopandas support
+    - projection: adds projection support
+    - eccovjson: provides access to coverage json data served by the :ref:`data-sources-polytope` source
+
+E.g. to add :ref:`data-sources-mars`  support you can use:
+
+.. code-block:: bash
+
+    python3 -m pip install earthkit-data[mars]
+
+List of optional dependencies can also be specified :
+
+.. code-block:: bash
+
+    python3 -m pip install earthkit-data[cds,mars]
+
+
+Installing with conda
+---------------------------------------
+
+Install **earthkit-data** via ``conda`` with:
 
 .. code-block:: bash
 

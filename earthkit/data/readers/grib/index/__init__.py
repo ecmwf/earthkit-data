@@ -24,8 +24,8 @@ from earthkit.data.indexing.database import (
 from earthkit.data.readers.grib.codes import GribField
 from earthkit.data.readers.grib.pandas import PandasMixIn
 from earthkit.data.readers.grib.xarray import XarrayMixIn
-from earthkit.data.utils import progress_bar
 from earthkit.data.utils.availability import Availability
+from earthkit.data.utils.progbar import progress_bar
 
 LOG = logging.getLogger(__name__)
 

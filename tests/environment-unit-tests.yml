@@ -3,8 +3,8 @@ channels:
 - conda-forge
 - nodefaults
 dependencies:
-- eccodes=>2.19.0
-- python-eccodes
+- eccodes=>2.34.1
+- python-eccodes>=1.7.0
 - pip
 - numpy
 - pandas
@@ -22,16 +22,16 @@ dependencies:
 - ecmwf-api-client>=1.6.1
 - cdsapi
 - hda
-- scipy
 - pip:
-  - git+https://github.com/ecmwf/multiurl
+  - multiurl
   - git+https://github.com/ecmwf/pyfdb
   - ecmwf-opendata>=0.3.3
   - polytope-client>=0.7.2
   - earthkit-meteo>=0.0.1
   - git+https://github.com/ecmwf/earthkit-data-demo-source
   - eccovjson>=0.0.5
-- tqdm
+  - earthkit-geo
+- tqdm>=4.63.0
 - markdown
 - make
 - mypy
