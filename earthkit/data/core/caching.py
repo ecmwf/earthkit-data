@@ -28,9 +28,6 @@ from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from random import randrange
 
-import pandas as pd
-from filelock import FileLock
-
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.utils import humanize
@@ -87,6 +84,8 @@ def disk_usage(path):
 
 
 def default_serialiser(o):
+    import pandas as pd
+
     if isinstance(o, (datetime.date, datetime.datetime)):
         return o.isoformat()
     if isinstance(o, (pd.Timestamp)):
@@ -714,15 +713,15 @@ class UserCachePolicy(CachePolicy):
 
     def __init__(self):
         super().__init__()
-        path = self._expand_path(self._settings.get("user-cache-directory"))
-        if not os.path.exists(path):
-            os.makedirs(path, exist_ok=True)
+        self._path = self._expand_path(self._settings.get("user-cache-directory"))
+        if not os.path.exists(self._path):
+            os.makedirs(self._path, exist_ok=True)
 
     def managed(self):
         return True
 
     def directory(self):
-        return self._settings.get("user-cache-directory")
+        return self._path
 
     def use_message_position_index_cache(self):
         return self._settings.get("use-message-position-index-cache")
@@ -1039,8 +1038,9 @@ def cache_file(
                 CACHE._decache_file(path)
 
         if not os.path.exists(path):
-            lock = path + ".lock"
+            from filelock import FileLock
 
+            lock = path + ".lock"
             with FileLock(lock):
                 if not os.path.exists(
                     path
@@ -1071,6 +1071,8 @@ def cache_file(
         )
 
         if not os.path.exists(path):
+            from filelock import FileLock
+
             lock = path + ".lock"
             with FileLock(lock):
                 if not os.path.exists(

@@ -16,14 +16,15 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import ARRAY_BACKENDS, earthkit_examples_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import load_file_or_numpy_fs  # noqa: E402
+from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "index,expected_meta",
     [
@@ -34,8 +35,8 @@ from grib_fixtures import load_file_or_numpy_fs  # noqa: E402
         (-5, ["u", 400]),
     ],
 )
-def test_grib_single_index(mode, index, expected_meta):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+def test_grib_single_index(fl_type, array_backend, index, expected_meta):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     # f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     r = f[index]
@@ -46,14 +47,16 @@ def test_grib_single_index(mode, index, expected_meta):
     # assert np.isclose(v[1088], 304.5642, eps)
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_single_index_bad(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_single_index_bad(fl_type, array_backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     with pytest.raises(IndexError):
         f[27]
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "indexes,expected_meta",
     [
@@ -65,8 +68,8 @@ def test_grib_single_index_bad(mode):
         (slice(14, None), [["v", 400], ["t", 300], ["u", 300], ["v", 300]]),
     ],
 )
-def test_grib_slice_single_file(mode, indexes, expected_meta):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+def test_grib_slice_single_file(fl_type, array_backend, indexes, expected_meta):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     r = f[indexes]
     assert len(r) == 4
     assert r.metadata(["shortName", "level"]) == expected_meta
@@ -101,7 +104,8 @@ def test_grib_slice_multi_file(indexes, expected_meta):
     assert f.metadata("shortName") == ["2t", "msl", "t", "z", "t", "z"]
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "indexes1,indexes2",
     [
@@ -110,8 +114,8 @@ def test_grib_slice_multi_file(indexes, expected_meta):
         ((1, 16, 5, 9), (1, 3)),
     ],
 )
-def test_grib_array_indexing(mode, indexes1, indexes2):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+def test_grib_array_indexing(fl_type, array_backend, indexes1, indexes2):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     r = f[indexes1]
     assert len(r) == 4
@@ -122,17 +126,19 @@ def test_grib_array_indexing(mode, indexes1, indexes2):
     assert r1.metadata("shortName") == ["u", "t"]
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("indexes", [(np.array([1, 19, 5, 9])), ([1, 19, 5, 9])])
-def test_grib_array_indexing_bad(mode, indexes):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+def test_grib_array_indexing_bad(fl_type, array_backend, indexes):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     with pytest.raises(IndexError):
         f[indexes]
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_fieldlist_iterator(mode):
-    g = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_fieldlist_iterator(fl_type, array_backend):
+    g = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     sn = g.metadata("shortName")
     assert len(sn) == 18
     iter_sn = [f.metadata("shortName") for f in g]
@@ -142,12 +148,13 @@ def test_grib_fieldlist_iterator(mode):
     assert iter_sn == sn
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_fieldlist_iterator_with_zip(mode):
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_fieldlist_iterator_with_zip(fl_type, array_backend):
     # test something different to the iterator - does not try to
     # 'go off the edge' of the fieldlist, because the length is determined by
     # the list of levels
-    g = load_file_or_numpy_fs("tuv_pl.grib", mode)
+    g = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     ref_levs = g.metadata("level")
     assert len(ref_levs) == 18
     levs1 = []
@@ -159,10 +166,11 @@ def test_grib_fieldlist_iterator_with_zip(mode):
     assert levs2 == ref_levs
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_fieldlist_iterator_with_zip_multiple(mode):
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_fieldlist_iterator_with_zip_multiple(fl_type, array_backend):
     # same as test_fieldlist_iterator_with_zip() but multiple times
-    g = load_file_or_numpy_fs("tuv_pl.grib", mode)
+    g = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     ref_levs = g.metadata("level")
     assert len(ref_levs) == 18
     for i in range(2):
@@ -175,9 +183,10 @@ def test_grib_fieldlist_iterator_with_zip_multiple(mode):
         assert levs2 == ref_levs, i
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_fieldlist_reverse_iterator(mode):
-    g = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_fieldlist_reverse_iterator(fl_type, array_backend):
+    g = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     sn = g.metadata("shortName")
     sn_reversed = list(reversed(sn))
     assert sn_reversed[0] == "v"

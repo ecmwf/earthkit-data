@@ -17,11 +17,14 @@ from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.testing import NO_CDS
 
+CDS_TIMEOUT = pytest.CDS_TIMEOUT
+
 
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 @pytest.mark.parametrize("prompt", [True, False])
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_prompt(prompt):
     s = from_source(
         "cds",
@@ -40,6 +43,7 @@ def test_cds_grib_prompt(prompt):
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_kwargs():
     s = from_source(
         "cds",
@@ -57,6 +61,7 @@ def test_cds_grib_kwargs():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_dict():
     s = from_source(
         "cds",
@@ -76,6 +81,7 @@ def test_cds_grib_dict():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_invalid_args_kwargs():
     with pytest.raises(TypeError):
         from_source(
@@ -94,6 +100,7 @@ def test_cds_grib_invalid_args_kwargs():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_split_on_var():
     s = from_source(
         "cds",
@@ -127,6 +134,7 @@ def test_cds_grib_split_on_var():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_multi_var_date(date, expected_date):
     s = from_source(
         "cds",
@@ -145,6 +153,7 @@ def test_cds_grib_multi_var_date(date, expected_date):
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_save():
     s = from_source(
         "cds",
@@ -181,6 +190,7 @@ def test_cds_grib_save():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 @pytest.mark.parametrize(
     "split_on,expected_file_num,expected_param,expected_time",
     (
@@ -223,6 +233,7 @@ def test_cds_split_on(split_on, expected_file_num, expected_param, expected_time
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 @pytest.mark.parametrize(
     "split_on1,split_on2,expected_file_num,expected_param,expected_time",
     (
@@ -255,6 +266,7 @@ def test_cds_multiple_requests(
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_netcdf():
     s = from_source(
         "cds",
@@ -273,6 +285,7 @@ def test_cds_netcdf():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_netcdf_save():
     s = from_source(
         "cds",
@@ -300,6 +313,7 @@ def test_cds_netcdf_save():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(60)
 def test_cds_netcdf_selection_limited():
     s = from_source(
         "cds",
@@ -332,6 +346,7 @@ def test_cds_netcdf_selection_limited():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_observation_csv_file_to_pandas_xarray():
     collection_id = "insitu-observations-gruan-reference-network"
     request = {
@@ -357,6 +372,7 @@ def test_cds_observation_csv_file_to_pandas_xarray():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_non_observation_csv_file_to_pandas_xarray():
     collection_id = "sis-energy-derived-projections"
     request = {
@@ -381,6 +397,7 @@ def test_cds_non_observation_csv_file_to_pandas_xarray():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_to_pandas_xarray():
     collection_id = "reanalysis-era5-single-levels"
     request = dict(
@@ -409,6 +426,7 @@ def test_cds_grib_to_pandas_xarray():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_netcdf_to_pandas_xarray():
     collection_id = "satellite-methane"
     request = {

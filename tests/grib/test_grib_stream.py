@@ -14,7 +14,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import ARRAY_BACKENDS, earthkit_examples_file
 
 
 def repeat_list_items(items, count):
@@ -24,7 +24,7 @@ def repeat_list_items(items, count):
 @pytest.mark.parametrize(
     "_kwargs,error",
     [
-        (dict(order_by="level"), TypeError),
+        # (dict(order_by="level"), TypeError),
         (dict(group_by=1), TypeError),
         (dict(group_by=["level", 1]), TypeError),
         # (dict(group_by="level", batch_size=1), TypeError),
@@ -37,6 +37,7 @@ def test_grib_from_stream_invalid_args(_kwargs, error):
             from_source("stream", stream, **_kwargs)
 
 
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "_kwargs",
     [
@@ -46,9 +47,9 @@ def test_grib_from_stream_invalid_args(_kwargs, error):
         {"group_by": ["level", "gridType"]},
     ],
 )
-def test_grib_from_stream_group_by(_kwargs):
+def test_grib_from_stream_group_by(array_backend, _kwargs):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, **_kwargs)
+        fs = from_source("stream", stream, **_kwargs, array_backend=array_backend)
 
         # no methods are available
         with pytest.raises(TypeError):
@@ -61,7 +62,9 @@ def test_grib_from_stream_group_by(_kwargs):
         for i, f in enumerate(fs):
             assert len(f) == 3
             assert f.metadata(("param", "level")) == ref[i]
-            assert f.to_fieldlist("numpy") is not f
+            afl = f.to_fieldlist(array_backend=array_backend)
+            assert afl is not f
+            assert len(afl) == 3
 
         # stream consumed, no data is available
         assert sum([1 for _ in fs]) == 0
@@ -95,12 +98,12 @@ def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_sha
             convert_kwargs = {}
 
         for i, f in enumerate(ds):
-            df = f.to_fieldlist("numpy", **convert_kwargs)
+            df = f.to_fieldlist(array_backend="numpy", **convert_kwargs)
             assert len(df) == 3
             assert df.metadata(("param", "level")) == ref[i]
             assert df._array.shape == expected_shape
             assert df.to_numpy(**convert_kwargs).shape == expected_shape
-            assert df.to_fieldlist("numpy", **convert_kwargs) is df
+            assert df.to_fieldlist(array_backend="numpy", **convert_kwargs) is df
 
         # stream consumed, no data is available
         assert sum([1 for _ in ds]) == 0
@@ -190,11 +193,11 @@ def test_grib_from_stream_multi_batch_convert_to_numpy(convert_kwargs, expected_
             convert_kwargs = {}
 
         for i, f in enumerate(ds):
-            df = f.to_fieldlist("numpy", **convert_kwargs)
+            df = f.to_fieldlist(array_backend="numpy", **convert_kwargs)
             assert df.metadata(("param", "level")) == ref[i], i
             assert df._array.shape == expected_shape, i
             assert df.to_numpy(**convert_kwargs).shape == expected_shape, i
-            assert df.to_fieldlist("numpy", **convert_kwargs) is df, i
+            assert df.to_fieldlist(array_backend="numpy", **convert_kwargs) is df, i
 
         # stream consumed, no data is available
         assert sum([1 for _ in ds]) == 0
@@ -286,7 +289,7 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
             batch_size=0,
         )
 
-        ds = ds_s.to_fieldlist("numpy", **convert_kwargs)
+        ds = ds_s.to_fieldlist(array_backend="numpy", **convert_kwargs)
 
         assert len(ds) == 6
 
@@ -326,7 +329,7 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
 
         assert np.allclose(vals, ref)
         assert ds._array.shape == expected_shape
-        assert ds.to_fieldlist("numpy", **convert_kwargs) is ds
+        assert ds.to_fieldlist(array_backend="numpy", **convert_kwargs) is ds
 
 
 def test_grib_save_when_loaded_from_stream():

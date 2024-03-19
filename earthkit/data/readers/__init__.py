@@ -169,6 +169,12 @@ def reader(source, path, **kwargs):
         return DirectoryReader(source, path).mutate()
     LOG.debug("Reader for %s", path)
 
+    if not os.path.exists(path):
+        raise FileExistsError(f"No such file exists: '{path}'")
+
+    if os.path.getsize(path) == 0:
+        raise Exception(f"File is empty: '{path}'")
+
     n_bytes = SETTINGS.get("reader-type-check-bytes")
     with open(path, "rb") as f:
         magic = f.read(n_bytes)
@@ -184,16 +190,16 @@ def reader(source, path, **kwargs):
     )
 
 
-def memory_reader(source, buffer):
+def memory_reader(source, buffer, **kwargs):
     """Create a reader for data held in a memory buffer"""
     assert isinstance(buffer, (bytes, bytearray)), source
     n_bytes = SETTINGS.get("reader-type-check-bytes")
     magic = buffer[: min(n_bytes, len(buffer) - 1)]
 
-    return _find_reader("memory_reader", source, buffer, magic=magic)
+    return _find_reader("memory_reader", source, buffer, magic=magic, **kwargs)
 
 
-def stream_reader(source, stream, memory, content_type=None):
+def stream_reader(source, stream, memory, **kwargs):
     """Create a reader for a stream"""
     magic = None
     if hasattr(stream, "peek") and callable(stream.peek):
@@ -211,5 +217,5 @@ def stream_reader(source, stream, memory, content_type=None):
         stream,
         magic=magic,
         memory=memory,
-        content_type=content_type,
+        **kwargs,
     )

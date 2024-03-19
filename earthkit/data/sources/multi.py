@@ -13,7 +13,6 @@ import logging
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.mergers import make_merger, merge_by_class
 from earthkit.data.sources.empty import EmptySource
-from earthkit.data.utils import tqdm
 from earthkit.data.utils.bbox import BoundingBox
 
 from . import Source
@@ -122,6 +121,8 @@ class MultiSource(Source):
 
         def _call(s, *args, **kwargs):
             return s(*args, **kwargs)
+
+        from earthkit.data.utils.progbar import tqdm
 
         with SoftThreadPool(nthreads=nthreads) as pool:
             futures = [pool.submit(_call, s, observer=pool) for s in sources]

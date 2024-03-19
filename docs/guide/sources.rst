@@ -32,6 +32,8 @@ We can get data from a given source by using :func:`from_source`:
       - read data from a URL
     * - :ref:`data-sources-url-pattern`
       - read data from a list of URLs created from a pattern
+    * - :ref:`data-sources-sample`
+      - read example data
     * - :ref:`data-sources-stream`
       - read data from a stream
     * - :ref:`data-sources-memory`
@@ -120,9 +122,11 @@ file
 
   Further examples:
 
+    - :ref:`/examples/files.ipynb`
+    - :ref:`/examples/multi_files.ipynb`
+    - :ref:`/examples/file_parts.ipynb`
+    - :ref:`/examples/tar_files.ipynb`
     - :ref:`/examples/grib_overview.ipynb`
-    - :ref:`/examples/grib_multi.ipynb`
-    - :ref:`/examples/grib_file_parts.ipynb`
     - :ref:`/examples/bufr_temp.ipynb`
     - :ref:`/examples/netcdf.ipynb`
     - :ref:`/examples/odb.ipynb`
@@ -162,6 +166,10 @@ file-pattern
     path/to/data-2020-05-02-12-msl.grib
     path/to/data-2020-05-02-18-t2.grib
     path/to/data-2020-05-02-18-msl.grib
+
+Further examples:
+
+    - :ref:`/examples/files.ipynb`
 
 
 .. _data-sources-url:
@@ -214,8 +222,8 @@ url
 
   Further examples:
 
-    - :ref:`/examples/grib_url.ipynb`
-    - :ref:`/examples/grib_url_stream.ipynb`
+    - :ref:`/examples/url.ipynb`
+    - :ref:`/examples/url_stream.ipynb`
 
 
 .. _data-sources-url-pattern:
@@ -258,6 +266,32 @@ url-pattern
   If the urls are pointing to archive format, the data will be unpacked by
   ``url-pattern`` according to the **unpack** argument, similarly to what
   the source ``url`` does (see above the :ref:`data-sources-url` source).
+
+
+
+.. _data-sources-sample:
+
+sample
+------
+
+.. py:function:: from_source("sample", name_or_path)
+  :noindex:
+
+  The ``sample`` source will download example data prepared for earthkit and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
+
+  :param name_or_path: input file name(s) or relative path(s) to the root of the remote storage folder.
+  :type name_or_path: str, list, tuple
+
+  .. code-block:: python
+
+    >>> import earthkit.data
+    >>> ds = earthkit.data.from_source("sample", "storm_ophelia_wind_850.grib")
+    >>> ds.ls()
+      centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
+    0   ecmf         u  isobaricInhPa    850  20171016         0         0       an       0  regular_ll
+    1   ecmf         v  isobaricInhPa    850  20171016         0         0       an       0  regular_ll
+
+
 
 .. _data-sources-stream:
 
@@ -351,9 +385,9 @@ stream
 
   See the following notebook examples for further details:
 
-    - :ref:`/examples/grib_from_stream.ipynb`
+    - :ref:`/examples/data_from_stream.ipynb`
     - :ref:`/examples/fdb.ipynb`
-    - :ref:`/examples/grib_url_stream.ipynb`
+    - :ref:`/examples/url_stream.ipynb`
 
 
 .. _data-sources-memory:
@@ -492,12 +526,14 @@ cds
 ecmwf-open-data
 -------------------
 
-.. py:function:: from_source("ecmwf-open-data", *args, **kwargs)
+.. py:function:: from_source("ecmwf-open-data", *args, source="ecmwf", model="ifs", **kwargs)
   :noindex:
 
   The ``ecmwf-open-data`` source provides access to the `ECMWF open data`_, which is a subset of ECMWF real-time forecast data made available to the public free of charge.  It uses the `ecmwf-opendata <https://github.com/ecmwf/ecmwf-opendata>`_ package.
 
   :param tuple *args: specify the request as a dict
+  :param str source: either the name of the server to contact or a fully qualified URL. Possible values are "ecmwf" to access ECMWF's servers, or "azure" to access data hosted on Microsoft's Azure. Default is "ecmwf".
+  :param str model: name of the model that produced the data. Use "ifs" for the physics-driven model and "aifs" for the data-driven model. Please note that "aifs" is currently experimental and only produces a small subset of fields. Default is "ifs".
   :param dict **kwargs: other keyword arguments specifying the request
 
   Details about the request format can be found `here <https://github.com/ecmwf/ecmwf-opendata>`__.

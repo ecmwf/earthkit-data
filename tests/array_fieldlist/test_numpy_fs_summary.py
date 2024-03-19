@@ -14,14 +14,14 @@ import sys
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from numpy_fs_fixtures import load_numpy_fs_file  # noqa: E402
+from array_fl_fixtures import load_array_fl_file  # noqa: E402
 
 # Note: Almost all grib metadata tests are also run for numpyfs.
 # See grib/test_grib_summary.py
 
 
-def test_numpy_fs_dump():
-    f, _ = load_numpy_fs_file("test6.grib")
+def test_array_fl_dump():
+    f, _ = load_array_fl_file("test6.grib")
 
     namespaces = (
         "default",

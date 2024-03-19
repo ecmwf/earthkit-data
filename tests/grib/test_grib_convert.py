@@ -17,13 +17,14 @@ import pytest
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import load_file_or_numpy_fs  # noqa: E402
+from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_icon_to_xarray(mode):
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ["numpy"])
+def test_icon_to_xarray(fl_type, array_backend):
     # test the conversion to xarray for an icon (unstructured grid) grib file.
-    g = load_file_or_numpy_fs("test_icon.grib", mode, folder="data")
+    g = load_grib_data("test_icon.grib", fl_type, array_backend, folder="data")
 
     ds = g.to_xarray()
     assert len(ds.data_vars) == 1
@@ -33,9 +34,10 @@ def test_icon_to_xarray(mode):
     assert ds["pres"].sizes["values"] == 6
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_to_xarray_filter_by_keys(mode):
-    g = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ["numpy"])
+def test_to_xarray_filter_by_keys(fl_type, array_backend):
+    g = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     g = g.sel(param="t", level=500) + g.sel(param="u")
     assert len(g) > 1
 
@@ -50,9 +52,10 @@ def test_to_xarray_filter_by_keys(mode):
     assert r["t"].sizes["isobaricInhPa"] == 1
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_to_pandas(mode):
-    f = load_file_or_numpy_fs("test_single.grib", mode, folder="data")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ["numpy"])
+def test_grib_to_pandas(fl_type, array_backend):
+    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
 
     # all points
     df = f.to_pandas()

@@ -257,6 +257,40 @@ def test_grib_metadata_override_invalid():
     assert "EncodingError" in e.typename
 
 
+def test_grib_metadata_override_extra():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    md = ds[0].metadata()
+    md_num = len(md)
+
+    assert md["perturbationNumber"] == 0
+    assert md["shortName"] == "2t"
+
+    extra = {"my_custom_key": "2", "shortName": "N", "perturbationNumber": 2}
+    md = GribMetadata(md._handle, extra=extra)
+
+    assert md["my_custom_key"] == "2"
+    assert md["perturbationNumber"] == 2
+    assert md["shortName"] == "N"
+    assert md["typeOfLevel"] == "surface"
+
+    keys = md.keys()
+    assert len(keys) == md_num + 1
+
+    for k in md.keys():
+        assert isinstance(k, str)
+        assert k != ""
+        break
+
+    items = md.items()
+    assert len(items) == md_num + 1
+
+    for k, v in md.items():
+        assert isinstance(k, str)
+        assert k != ""
+        assert v is not None
+        break
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 

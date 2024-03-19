@@ -20,18 +20,34 @@ import pytest
 import earthkit.data
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import ARRAY_BACKENDS, earthkit_examples_file
 
 EPSILON = 1e-4
 
 
-def test_grib_save_when_loaded_from_file():
-    fs = from_source("file", earthkit_examples_file("test6.grib"))
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_save_when_loaded_from_file(array_backend):
+    fs = from_source(
+        "file", earthkit_examples_file("test6.grib"), array_backend=array_backend
+    )
     assert len(fs) == 6
     with temp_file() as tmp:
         fs.save(tmp)
         fs_saved = from_source("file", tmp)
         assert len(fs) == len(fs_saved)
+
+
+@pytest.mark.parametrize(
+    "_kwargs,expected_value",
+    [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
+)
+def test_grib_save_bits_per_value(_kwargs, expected_value):
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    with temp_file() as tmp:
+        ds.save(tmp, **_kwargs)
+        ds1 = from_source("file", tmp)
+        assert ds1.metadata("bitsPerValue") == [expected_value] * len(ds)
 
 
 @pytest.mark.skipif(

@@ -9,13 +9,16 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.geo import nearest_point_haversine, nearest_point_kdtree
+from earthkit.data import from_source
 
 
-def get_nearest_method(mode):
-    if mode == "haversine":
-        return nearest_point_haversine
-    elif mode == "kdtree":
-        return nearest_point_kdtree
-    else:
-        raise ValueError(f"Invalid mode={mode}")
+def test_sample_source_grib():
+    ds = from_source("sample", "storm_ophelia_wind_850.grib")
+    assert len(ds) == 2
+    assert ds.metadata(["param", "level"]) == [["u", 850], ["v", 850]]
+
+
+if __name__ == "__main__":
+    from earthkit.data.testing import main
+
+    main(__file__)
