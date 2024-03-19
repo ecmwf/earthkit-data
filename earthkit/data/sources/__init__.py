@@ -119,15 +119,16 @@ class SourceLoader:
 
 
 class SourceMaker:
+    SOURCES = {}
+
     def __call__(self, name, *args, **kwargs):
         loader = SourceLoader()
 
-        klass = find_plugin(os.path.dirname(__file__), name, loader)
-
-        # if os.environ.get("FIEDLIST_TESTING_ENABLE_MOCKUP_SOURCE", False):
-        #     from earthkit.data.mockup import SourceMockup
-
-        #     klass = SourceMockup
+        if name in self.SOURCES:
+            klass = self.SOURCES[name]
+        else:
+            klass = find_plugin(os.path.dirname(__file__), name, loader)
+            self.SOURCES[name] = klass
 
         source = klass(*args, **kwargs)
 
