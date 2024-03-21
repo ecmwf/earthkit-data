@@ -192,6 +192,36 @@ def test_cds_grib_save():
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 @pytest.mark.timeout(CDS_TIMEOUT)
 @pytest.mark.parametrize(
+    "variable1,variable2,expected_vars",
+    (
+        ("2t", ["2t"], {"t2m"}),
+        (["2t", "msl"], ["msl", "2t"], {"t2m", "msl"}),
+    ),
+)
+def test_cds_normalized_request(variable1, variable2, expected_vars):
+    base_request = dict(
+        product_type="reanalysis",
+        area=[50, -50, 20, 50],
+        grid=[2, 1],
+        date="2012-12-12",
+        time="12:00",
+    )
+    s1 = from_source(
+        "cds", "reanalysis-era5-single-levels", variable=variable1, **base_request
+    )
+    s2 = from_source(
+        "cds", "reanalysis-era5-single-levels", variable=variable2, **base_request
+    )
+    assert s1.path == s2.path
+    assert set(s1.to_xarray().data_vars) == expected_vars
+    assert s1.to_xarray()["longitude"].values.tolist() == list(range(-50, 51, 2))
+    assert s1.to_xarray()["latitude"].values.tolist() == list(range(50, 19, -1))
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.parametrize(
     "split_on,expected_file_num,expected_param,expected_time",
     (
         [None, 1, ["2t", "msl", "2t", "msl"], [0, 0, 1200, 1200]],

@@ -147,26 +147,32 @@ class CdsRetriever(FileSource):
     @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
     def _normalize_request(**kwargs):
-        return kwargs
+        request = {}
+        for k, v in sorted(kwargs.items()):
+            v = ensure_iterable(v)
+            if k not in ("area", "grid"):
+                v = sorted(v)
+            request[k] = v[0] if len(v) == 1 else v
+        return request
 
     @cached_property
     def requests(self):
         requests = []
-        for arg in self._args:
-            request = self._normalize_request(**arg)
-            split_on = request.pop("split_on", None)
-            if split_on is None:
+        for request in self._args:
+            split_on = request.pop("split_on", {})
+            if not isinstance(split_on, dict):
+                split_on = {k: 1 for k in ensure_iterable(split_on) if k is not None}
+            if not split_on:
                 requests.append(request)
                 continue
 
-            if not isinstance(split_on, dict):
-                split_on = {k: 1 for k in ensure_iterable(split_on)}
+            request = self._normalize_request(**request)
             for values in itertools.product(
                 *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
             ):
                 subrequest = dict(zip(split_on, values))
                 requests.append(request | subrequest)
-        return requests
+        return [self._normalize_request(**request) for request in requests]
 
     def client(self):
         return client(self.prompt)
