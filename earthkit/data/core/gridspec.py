@@ -7,22 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
-DATETIME = "valid_datetime"
-GRIDSPEC = "grid_spec"
+from earthkit.data.core.metadata import RawMetadata
 
-"""
-Collection of constants in SI units.
-"""
 
-R_earth = 6371229
-r"""Average radius of the Earth [:math:`m`]. See [IFS-CY47R3-PhysicalProcesses]_
- (Chapter 12)."""
+class GridSpec(RawMetadata):
+    """Geographical information about a field or data unit"""
 
-full_circle = 360
-r"""Full circle in degrees"""
-
-north = 90
-r"""Latitude of the north pole in degrees"""
-
-south = -90
-r"""Latitude of the south pole in degrees"""
+    pass

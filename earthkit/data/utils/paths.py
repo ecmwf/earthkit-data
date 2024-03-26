@@ -7,22 +7,14 @@
 # nor does it submit to any jurisdiction.
 #
 
-DATETIME = "valid_datetime"
-GRIDSPEC = "grid_spec"
+import logging
+import os
 
-"""
-Collection of constants in SI units.
-"""
+LOG = logging.getLogger(__name__)
 
-R_earth = 6371229
-r"""Average radius of the Earth [:math:`m`]. See [IFS-CY47R3-PhysicalProcesses]_
- (Chapter 12)."""
 
-full_circle = 360
-r"""Full circle in degrees"""
+_ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 
-north = 90
-r"""Latitude of the north pole in degrees"""
 
-south = -90
-r"""Latitude of the south pole in degrees"""
+def earthkit_conf_file(*args):
+    return os.path.join(_ROOT_DIR, "conf", *args)
