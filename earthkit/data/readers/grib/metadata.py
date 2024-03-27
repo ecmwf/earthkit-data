@@ -12,6 +12,7 @@ import datetime
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
+from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
 
@@ -133,6 +134,9 @@ class GribFieldGeography(Geography):
             east=self.metadata.get("longitudeOfLastGridPointInDegrees", None),
         )
 
+    def gridspec(self):
+        return make_gridspec(self.metadata)
+
 
 class GribMetadata(Metadata):
     """Represent the metadata of a GRIB field.
@@ -253,8 +257,32 @@ class GribMetadata(Metadata):
 
     def override(self, *args, **kwargs):
         d = dict(*args, **kwargs)
-        handle = self._handle.clone(headers_only=True)
+
+        new_value_size = None
+        gridspec = d.pop("gridspec", None)
+        if gridspec is not None:
+            from earthkit.data.readers.grib.gridspec import GridSpecConverter
+
+            edition = d.get("edition", self["edition"])
+            md, new_value_size = GridSpecConverter.to_metadata(
+                gridspec, edition=edition
+            )
+            d.update(md)
+
+            # at the moment we cannot use headers_only clone when setting the
+            # geography
+            handle = self._handle.clone()
+        else:
+            handle = self._handle.clone(headers_only=True)
+
         handle.set_multiple(d)
+
+        if new_value_size is not None and new_value_size > 0:
+            import numpy as np
+
+            vals = np.zeros(new_value_size)
+            handle.set_values(vals)
+
         return GribMetadata(handle)
 
     def as_namespace(self, namespace=None):

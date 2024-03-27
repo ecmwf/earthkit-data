@@ -23,6 +23,7 @@ dependencies:
 - cdsapi
 - hda
 - scipy
+- jsonschema
 - pip:
   - git+https://github.com/ecmwf/multiurl
   - git+https://github.com/ecmwf/pyfdb

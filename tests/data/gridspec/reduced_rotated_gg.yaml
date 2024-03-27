@@ -1,0 +1,33 @@
+- file: reduced_rotated_gg/t_reduced_rotated_gg_N48_global.grib1
+  gridspec:
+    angle_of_rotation: 0.0
+    area:
+    - 88.573
+    - 0.0
+    - -88.573
+    - 358.125
+    grid: N48
+    i_scans_negatively: 0
+    j_points_consecutive: 0
+    j_scans_positively: 0
+    rotation:
+    - 40.0
+    - 20.0
+    type: reduced_gg
+  metadata:
+    N: 48
+    Nj: 96
+    Ny: 96
+    angleOfRotationInDegrees: 0.0
+    global: 1
+    gridType: reduced_rotated_gg
+    iScansNegatively: 0
+    isOctahedral: 0
+    jPointsAreConsecutive: 0
+    jScansPositively: 0
+    latitudeOfFirstGridPointInDegrees: 88.573
+    latitudeOfLastGridPointInDegrees: -88.573
+    latitudeOfSouthernPoleInDegrees: 40.0
+    longitudeOfFirstGridPointInDegrees: 0.0
+    longitudeOfLastGridPointInDegrees: 358.125
+    longitudeOfSouthernPoleInDegrees: 20.0
