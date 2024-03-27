@@ -269,11 +269,11 @@ class GribMetadata(Metadata):
             )
             d.update(md)
 
-        handle = self._handle.clone(headers_only=True)
-
-        # # whether headers_only=True works depends on the eccCodes version and the
-        # # message properties. We check it by comparing the message lengths.
-        # shrunk = handle.get_long("totalLength") < self._handle.get_long("totalLength")
+            # at the moment we cannot use headers_only clone when setting the
+            # geography
+            handle = self._handle.clone()
+        else:
+            handle = self._handle.clone(headers_only=True)
 
         handle.set_multiple(d)
 
