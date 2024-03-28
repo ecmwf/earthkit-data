@@ -26,6 +26,7 @@ git+https://github.com/ecmwf/earthkit-data-demo-source
 geopandas
 cartopy
 eccovjson>=0.0.5
+jsonschema
 # for testing
 pytest
 pytest-cov

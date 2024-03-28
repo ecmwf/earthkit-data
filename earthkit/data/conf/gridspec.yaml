@@ -1,0 +1,170 @@
+grib_key_map:
+  gridType: grid_type
+  N: N
+  Nx: nx
+  Ny: ny
+  Ni: nx
+  Nj: ny
+  iDirectionIncrementInDegrees: dx
+  jDirectionIncrementInDegrees: dy
+  DxInMetres: dx_in_metres
+  DyInMetres: dy_in_metres
+  DiInMetres: dx_in_metres
+  DjInMetres: dy_in_metres
+  xDirectionGridLengthInMetres: dx_in_metres
+  yDirectionGridLengthInMetres: dy_in_metres
+  LaDInDegrees: lad
+  LoVInDegrees: lov
+  Latin1InDegrees: latin_1
+  Latin2InDegrees: latin_2
+  angleOfRotationInDegrees: angle_of_rotation
+  latitudeOfSouthernPoleInDegrees: lat_south_pole
+  longitudeOfSouthernPoleInDegrees: lon_south_pole
+  orientationOfTheGridInDegrees: orientation
+  jPointsAreConsecutive: j_points_consecutive
+  iScansNegatively: i_scans_negatively
+  jScansPositively: j_scans_positively
+  standardParallelInDegrees: standard_parallel
+  centralLongitudeInDegrees: central_longitude
+  shapeOfTheEarth: shape_of_the_earth
+  radius: radius
+  earthMajorAxis: earth_major_axis
+  earthMinorAxis: earth_minor_axis
+  isOctahedral: octahedral
+  global: global
+  latitudeOfFirstGridPointInDegrees: first_lat
+  latitudeOfLastGridPointInDegrees: last_lat
+  longitudeOfFirstGridPointInDegrees: first_lon
+  longitudeOfLastGridPointInDegrees: last_lon
+  J: J
+  K: K
+  M: M
+  orderingConvention: ordering
+  Nside: n_side
+definitions:
+  _1: &area
+    area:
+    - north
+    - west
+    - south
+    - east
+  _2: &rotation
+    rotation:
+    - lat_south_pole
+    - lon_south_pole
+  _3:
+    first_point:
+    - first_lat
+    - first_lon
+shared_keys: &shared_keys
+- type
+- *rotation
+- angle_of_rotation
+- j_points_consecutive
+- i_scans_negatively
+- j_scans_positively
+rotation_keys:
+- rotation
+- angle_of_rotation
+types:
+  sh:
+    grid_type: sh
+    spec:
+    - type
+    - J
+    - K
+    - M
+  regular_ll:
+    grid_type: regular_ll
+    rotated_type: rotated_ll
+    spec:
+    - *shared_keys
+    - grid:
+      - dx
+      - dy
+    - *area
+  reduced_ll:
+    grid_type: reduced_ll
+    spec:
+    - *shared_keys
+    - grid:
+      - dy
+    - *area
+  regular_gg:
+    grid_type: regular_gg
+    rotated_type: rotated_gg
+    spec:
+    - *shared_keys
+    - grid:
+      - N
+    - *area
+    N_label: F
+  reduced_gg:
+    grid_type: reduced_gg
+    rotated_type: reduced_rotated_gg
+    spec:
+    - *shared_keys
+    - grid:
+      - N
+    - *area
+    N_label:
+      octahedral:
+        0: N
+        1: O
+  # mercator:
+  #   grid_type: mercator
+  #   spec:
+  #   - *shared_keys
+  #   - grid:
+  #     - dx_in_metres
+  #     - dy_in_metres
+  #   - *area
+  #   - nx
+  #   - ny
+  #   - lad
+  #   - orientation
+  # polar_stereographic:
+  #   grid_type: polar_stereographic
+  #   spec:
+  #   - *shared_keys
+  #   - grid:
+  #     - dx_in_metres
+  #     - dy_in_metres
+  #   - *first_point
+  #   - nx
+  #   - ny
+  #   - lad
+  #   - orientation
+  # lambert:
+  #   grid_type: lambert
+  #   spec:
+  #   - *shared_keys
+  #   - grid:
+  #     - dx_in_metres
+  #     - dy_in_metres
+  #   - *first_point
+  #   - nx
+  #   - ny
+  #   - lad
+  #   - lov
+  #   - latin_1
+  #   - latin_2
+  # lambert_azimuthal_equal_area:
+  #   grid_type: lambert_azimuthal_equal_area
+  #   spec:
+  #   - *shared_keys
+  #   - grid:
+  #     - dx_in_metres
+  #     - dy_in_metres
+  #   - *first_point
+  #   - nx
+  #   - ny
+  #   - standard_parallel
+  #   - central_longitude
+  healpix:
+    grid_type: healpix
+    spec:
+    - type
+    - grid:
+      - H
+    - ordering

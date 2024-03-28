@@ -9,7 +9,7 @@
 
 from abc import ABCMeta, abstractmethod
 
-from earthkit.data.core.constants import DATETIME
+from earthkit.data.core.constants import DATETIME, GRIDSPEC
 
 
 class Metadata(metaclass=ABCMeta):
@@ -31,7 +31,7 @@ class Metadata(metaclass=ABCMeta):
     LS_KEYS = []
     DESCRIBE_KEYS = []
     INDEX_KEYS = []
-    CUSTOM_KEYS = [DATETIME]
+    CUSTOM_KEYS = [DATETIME, GRIDSPEC]
 
     extra = None
 
@@ -208,6 +208,8 @@ class Metadata(metaclass=ABCMeta):
             try:
                 if key == DATETIME:
                     return self._valid_datetime()
+                elif key == GRIDSPEC:
+                    return self.grid_spec
             except Exception as e:
                 if not raise_on_missing:
                     return default
@@ -301,6 +303,14 @@ class Metadata(metaclass=ABCMeta):
         If it is not available None is returned.
         """
         return None
+
+    @property
+    def gridspec(self):
+        r""":ref:`~data.core.gridspec.GridSpec`: Get grid description.
+
+        If it is not available None is returned.
+        """
+        return None if self.geography is None else self.geography.gridspec()
 
     def ls_keys(self):
         r"""Return the keys to be used with the :meth:`ls` method."""

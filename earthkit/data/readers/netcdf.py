@@ -343,6 +343,9 @@ class XArrayFieldGeography(Geography):
             )
         return grid_mapping
 
+    def gridspec(self):
+        raise NotImplementedError("gridspec is not implemented for netcdf/xarray")
+
 
 class XArrayMetadata(RawMetadata):
     LS_KEYS = ["variable", "level", "time", "units"]
