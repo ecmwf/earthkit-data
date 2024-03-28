@@ -16,7 +16,7 @@ def urlify(text):
 
 
 def css(name):
-    path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "css", name)
+    path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "conf", "css", name)
     with open(path + ".css") as f:
         return """<style type="text/css">%s</style>""" % (f.read(),)
 
