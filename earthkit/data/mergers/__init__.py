@@ -9,6 +9,7 @@
 
 import logging
 
+from earthkit.data.readers import Reader
 from earthkit.data.sources.file import FileSource
 from earthkit.data.utils import string_to_args
 
@@ -56,11 +57,16 @@ class Merger:
         self.reader_class = None
         self.common = _nearest_common_class(sources)
         LOG.debug("nearest_common_class %s", self.common)
+        print("nearest_common_class %s", self.common)
 
         if issubclass(self.common, FileSource):
+            # TODO: avoid calling _ methods
             readers = [s._reader for s in self.sources]
             self.reader_class = _nearest_common_class(readers)
             LOG.debug("nearest_common_class %s", self.reader_class)
+            self.paths = [s.path for s in self.sources]
+        elif issubclass(self.common, Reader):
+            self.reader_class = self.common
             self.paths = [s.path for s in self.sources]
 
     @property
@@ -136,6 +142,7 @@ class XarrayGenericMerger(Merger):
         self.options = options
 
     def to_xarray(self, *args, **kwargs):
+        print(f"sources = {self.sources}")
         assert self.paths is not None, self.paths
         import xarray as xr
 

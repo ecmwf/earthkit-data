@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.readers.netcdf import NetCDFField
+from earthkit.data.readers.netcdf.field import NetCDFField
 from earthkit.data.testing import (
     NO_CDS,
     earthkit_examples_file,
@@ -231,7 +231,7 @@ def test_netcdf_non_fieldlist():
         "url",
         earthkit_remote_test_data_file(
             "test-data/20210101-C3S-L2_GHG-GHG_PRODUCTS-TANSO2-GOSAT2-SRFP-DAILY-v2.0.0.nc"
-        )
+        ),
         # Data from this CDS request:
         # "cds",
         # "satellite-methane",

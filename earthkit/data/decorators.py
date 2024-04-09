@@ -54,6 +54,7 @@ def detect_out_filename(func):
             and os.path.isfile(args[0])
             and hasattr(self, "path")
             and self.path is not None
+            and os.path.isfile(self.path)
             and os.path.samefile(args[0], self.path)
         ):
             warnings.warn(
