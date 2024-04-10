@@ -10,17 +10,6 @@
 import datetime
 import logging
 
-# from . import Reader
-
-# from earthkit.data.core.fieldlist import Field, FieldList
-# from earthkit.data.core.geography import Geography
-# from earthkit.data.core.index import MaskIndex, MultiIndex
-# from earthkit.data.core.metadata import RawMetadata
-# from earthkit.data.utils.bbox import BoundingBox
-# from earthkit.data.utils.dates import to_datetime
-# from earthkit.data.utils.projections import Projection
-
-
 LOG = logging.getLogger(__name__)
 
 GEOGRAPHIC_COORDS = {
@@ -100,7 +89,7 @@ class TimeCoordinate(Coordinate):
 
 class LevelCoordinate(Coordinate):
     # This class is just in case we want to specialise
-    # 'level', othewise, it is the same as OtherCoordinate
+    # 'level', otherwise, it is the same as OtherCoordinate
     slice_class = Slice
     is_dimension = False
     convert = as_level

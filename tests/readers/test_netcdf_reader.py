@@ -17,12 +17,12 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.core.temporary import temp_file
 from earthkit.data.readers.netcdf.field import NetCDFField
 from earthkit.data.testing import (
     NO_CDS,
     earthkit_examples_file,
     earthkit_file,
-    earthkit_remote_test_data_file,
     earthkit_test_data_file,
 )
 
@@ -225,39 +225,59 @@ def test_get_fields_missing_standard_name_attr_in_coord_array():
         assert len(fs) == 2
 
 
+# @pytest.mark.no_eccodes
+# def test_netcdf_non_fieldlist_0():
+#     ek_ch4_l2 = from_source(
+#         "url",
+#         earthkit_remote_test_data_file(
+#             "test-data/20210101-C3S-L2_GHG-GHG_PRODUCTS-TANSO2-GOSAT2-SRFP-DAILY-v2.0.0.nc"
+#         ),
+#         # Data from this CDS request:
+#         # "cds",
+#         # "satellite-methane",
+#         # {
+#         #     "processing_level": "level_2",
+#         #     "sensor_and_algorithm": "tanso2_fts2_srfp",
+#         #     "year": "2021",
+#         #     "month": "01",
+#         #     "day": "01",
+#         #     "version": "2.0.0",
+#         # },
+#     )
+#     # TODO: add more conditions to this test when it is clear what methods it should have
+#     ek_ch4_l2.to_xarray()
+
+
 @pytest.mark.no_eccodes
 def test_netcdf_non_fieldlist():
-    ek_ch4_l2 = from_source(
-        "url",
-        earthkit_remote_test_data_file(
-            "test-data/20210101-C3S-L2_GHG-GHG_PRODUCTS-TANSO2-GOSAT2-SRFP-DAILY-v2.0.0.nc"
-        ),
-        # Data from this CDS request:
-        # "cds",
-        # "satellite-methane",
-        # {
-        #     "processing_level": "level_2",
-        #     "sensor_and_algorithm": "tanso2_fts2_srfp",
-        #     "year": "2021",
-        #     "month": "01",
-        #     "day": "01",
-        #     "version": "2.0.0",
-        # },
-    )
-    # TODO: add more conditions to this test when it is clear what methods it should have
-    ek_ch4_l2.to_xarray()
+    ds = from_source("file", earthkit_test_data_file("hovexp_vert_area.nc"))
+    with pytest.raises(TypeError):
+        len(ds)
+
+    import xarray as xr
+
+    ref = xr.open_dataset(earthkit_test_data_file("hovexp_vert_area.nc"))
+    res = ds.to_xarray()
+
+    assert ref.identical(res)
+    assert ds.to_numpy().shape == (1, 6, 5)
+
+    with temp_file() as tmp:
+        ds.save(tmp)
+        assert os.path.exists(tmp)
+        ds_saved = from_source("file", tmp)
+        assert ds_saved.to_xarray().identical(res)
 
 
 @pytest.mark.no_eccodes
 def test_netcdf_lazy_fieldlist_scan():
     ds = from_source("file", earthkit_examples_file("test.nc"))
-    assert ds._fields is None
+    assert ds._reader._fields is None
     assert len(ds) == 2
-    assert len(ds._fields) == 2
+    assert len(ds._reader._fields) == 2
 
 
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
-    # test_datetime()
     main(__file__)

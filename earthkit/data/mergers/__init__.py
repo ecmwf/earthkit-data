@@ -57,7 +57,6 @@ class Merger:
         self.reader_class = None
         self.common = _nearest_common_class(sources)
         LOG.debug("nearest_common_class %s", self.common)
-        print("nearest_common_class %s", self.common)
 
         if issubclass(self.common, FileSource):
             # TODO: avoid calling _ methods
@@ -142,7 +141,6 @@ class XarrayGenericMerger(Merger):
         self.options = options
 
     def to_xarray(self, *args, **kwargs):
-        print(f"sources = {self.sources}")
         assert self.paths is not None, self.paths
         import xarray as xr
 

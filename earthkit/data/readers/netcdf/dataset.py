@@ -7,24 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-# import datetime
 import logging
 
 import numpy as np
-
-# from . import Reader
-
-# from contextlib import closing
-# from itertools import product
-
-
-# from earthkit.data.core.fieldlist import Field
-# from earthkit.data.core.geography import Geography
-# from earthkit.data.core.metadata import RawMetadata
-# from earthkit.data.utils.bbox import BoundingBox
-# from earthkit.data.utils.dates import to_datetime
-# from earthkit.data.utils.projections import Projection
-
 
 LOG = logging.getLogger(__name__)
 

@@ -27,6 +27,12 @@ _ORDER = (
     "productDefinitionTemplateNumber",
 )
 
+NOT_IN_EDITION_1 = (
+    "productDefinitionTemplateNumber",
+    "typeOfGeneratingProcess",
+)
+
+
 ORDER = {}
 for i, k in enumerate(_ORDER):
     ORDER[k] = i
@@ -43,6 +49,7 @@ class Combined:
         self.metadata = metadata
 
     def __contains__(self, key):
+        # return key in self.metadata or key in self.handle
         raise NotImplementedError()
 
     def __getitem__(self, key):
@@ -95,7 +102,7 @@ class GribOutput:
 
         metadata = md
 
-        compulsory = ("date", ("param", "paramId", "shortName"))
+        compulsory = (("date", "referenceDate"), ("param", "paramId", "shortName"))
 
         if template is None:
             template = self.template
@@ -109,7 +116,7 @@ class GribOutput:
         self.update_metadata(handle, metadata, compulsory)
         # print("<-", metadata)
 
-        if check_nans:
+        if check_nans and values is not None:
             import numpy as np
 
             if np.isnan(values).any():
@@ -123,6 +130,10 @@ class GribOutput:
             k: v for k, v in sorted(metadata.items(), key=lambda x: order(x[0]))
         }
 
+        if str(metadata.get("edition")) == "1":
+            for k in NOT_IN_EDITION_1:
+                metadata.pop(k, None)
+
         if "generatingProcessIdentifier" not in metadata:
             metadata["generatingProcessIdentifier"] = 255
 
@@ -131,7 +142,8 @@ class GribOutput:
         for k, v in metadata.items():
             handle.set(k, v)
 
-        handle.set_values(values)
+        if values is not None:
+            handle.set_values(values)
 
         file, path = self.f(handle)
         handle.write(file)
@@ -152,7 +164,7 @@ class GribOutput:
         # TODO: revisit that logic
         combined = Combined(handle, metadata)
 
-        if "step" in metadata:
+        if "step" in metadata or "endStep" in metadata:
             if combined["type"] == "an":
                 metadata["type"] = "fc"
 
@@ -323,6 +335,7 @@ class GribOutput:
             1373624: (512, False),
             2140702: (640, False),
             5447118: (1024, False),
+            6599680: (1280, True),
             8505906: (1280, False),
             20696844: (2000, False),
         }

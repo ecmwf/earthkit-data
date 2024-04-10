@@ -29,10 +29,20 @@ def test_netcdf_fieldlist_save():
     assert len(r_tmp) == 2
 
 
-def test_netcdf_fieldlist_subset_save():
+def test_netcdf_fieldlist_subset_save_1():
     ds = from_source("file", earthkit_examples_file("test.nc"))
     assert len(ds) == 2
     r = ds[1]
+
+    tmp = temp_file()
+    with pytest.raises(NotImplementedError):
+        r.save(tmp.path)
+
+
+def test_netcdf_fieldlist_subset_save_2():
+    ds = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+    assert len(ds) == 18
+    r = ds[1:4]
 
     tmp = temp_file()
     with pytest.raises(NotImplementedError):
@@ -61,5 +71,5 @@ def test_netcdf_fieldlist_multi_subset_save_bad():
     assert len(ds) == 6
 
     tmp = temp_file()
-    with pytest.raises(AttributeError):
+    with pytest.raises(NotImplementedError):
         ds.save(tmp.path)

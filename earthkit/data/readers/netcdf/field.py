@@ -7,11 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-# import datetime
 import logging
-
-# from contextlib import closing
-from itertools import product
 
 import numpy as np
 
@@ -22,8 +18,7 @@ from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.projections import Projection
 
-# from . import Reader
-from .coords import LevelCoordinate, OtherCoordinate, TimeCoordinate, TimeSlice
+from .coords import TimeSlice
 
 LOG = logging.getLogger(__name__)
 
@@ -69,133 +64,6 @@ class DataSet:
             )
 
         return self._bbox[(lat, lon)]
-
-
-def get_fields_from_ds(
-    ds,
-    array_backend,
-    field_type=None,
-    check_only=False,
-):  # noqa C901
-    # Select only geographical variables
-    has_lat = False
-    has_lon = False
-
-    fields = []
-
-    skip = set()
-
-    def _skip_attr(v, attr_name):
-        attr_val = getattr(v, attr_name, "")
-        if isinstance(attr_val, str):
-            skip.update(attr_val.split(" "))
-
-    for name in ds.data_vars:
-        v = ds[name]
-        _skip_attr(v, "coordinates")
-        _skip_attr(v, "bounds")
-        _skip_attr(v, "grid_mapping")
-
-    for name in ds.data_vars:
-        if name in skip:
-            continue
-
-        v = ds[name]
-
-        coordinates = []
-
-        # self.log.info('Scanning file: %s var=%s coords=%s', self.path, name, v.coords)
-
-        info = [value for value in v.coords if value not in v.dims]
-        non_dim_coords = {}
-        for coord in v.coords:
-            if coord not in v.dims:
-                non_dim_coords[coord] = ds[coord].values
-                continue
-
-            c = ds[coord]
-
-            # self.log.info("COORD %s %s %s %s", coord, type(coord), hasattr(c, 'calendar'), c)
-
-            standard_name = getattr(c, "standard_name", "")
-            axis = getattr(c, "axis", "")
-            long_name = getattr(c, "long_name", "")
-            coord_name = getattr(c, "name", "")
-
-            # LOG.debug(f"{standard_name=} {long_name=} {axis=} {coord_name}")
-            use = False
-
-            if (
-                standard_name.lower() in GEOGRAPHIC_COORDS["x"]
-                or (long_name == "longitude")
-                or (axis == "X")
-                or coord_name.lower() in GEOGRAPHIC_COORDS["x"]
-            ):
-                has_lon = True
-                use = True
-
-            if (
-                standard_name.lower() in GEOGRAPHIC_COORDS["y"]
-                or (long_name == "latitude")
-                or (axis == "Y")
-                or coord_name.lower() in GEOGRAPHIC_COORDS["y"]
-            ):
-                has_lat = True
-                use = True
-
-            # Of course, not every one sets the standard_name
-            if (
-                standard_name in ["time", "forecast_reference_time"]
-                or long_name in ["time"]
-                or axis == "T"
-            ):
-                # we might not be able to convert time to datetime
-                try:
-                    coordinates.append(TimeCoordinate(c, coord in info))
-                    use = True
-                except ValueError:
-                    break
-
-            # TODO: Support other level types
-            if (
-                standard_name
-                in [
-                    "air_pressure",
-                    "model_level_number",
-                    "altitude",
-                ]
-                or long_name in ["pressure_level"]
-                or coord_name in ["level"]
-            ):  # or axis == 'Z':
-                coordinates.append(LevelCoordinate(c, coord in info))
-                use = True
-
-            if axis in ("X", "Y"):
-                use = True
-
-            if not use:
-                coordinates.append(OtherCoordinate(c, coord in info))
-
-        if not (has_lat and has_lon):
-            # self.log.info("NetCDFReader: skip %s (Not a 2 field)", name)
-            continue
-
-        for values in product(*[c.values for c in coordinates]):
-            slices = []
-            for value, coordinate in zip(values, coordinates):
-                slices.append(coordinate.make_slice(value))
-
-            if check_only:
-                return True
-
-            fields.append(field_type(ds, name, slices, non_dim_coords, array_backend))
-
-    # if not fields:
-    #     raise Exception("NetCDFReader no 2D fields found in %s" % (self.path,))
-
-    if check_only:
-        return False
-    return fields
 
 
 class XArrayFieldGeography(Geography):

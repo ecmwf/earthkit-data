@@ -228,13 +228,7 @@ def test_netcdf_concat_var_different_coords_2():
     target = xr.concat([ds1, ds2], dim="time")
 
     ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)")
-    print(f"ds.sources={ds.sources}")
-    import logging
 
-    logging.basicConfig(level=logging.DEBUG)
-
-    for f in ds.sources:
-        print(f"path={f.path}")
     ds.graph()
     merged = ds.to_xarray()
 
@@ -260,6 +254,8 @@ def test_netcdf_wrong_concat_var():
     )
     ds2 = s2.to_xarray()
 
+    print(f"s1={s1}")
+    print(f"s2={s2}")
     target = xr.concat([ds1, ds2], dim="time")
     ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)")
 
