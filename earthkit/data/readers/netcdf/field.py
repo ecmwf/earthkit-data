@@ -8,8 +8,7 @@
 #
 
 import logging
-
-import numpy as np
+from datetime import timedelta
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.geography import Geography
@@ -18,100 +17,33 @@ from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.projections import Projection
 
-from .coords import TimeSlice
+from .coords import LevelSlice, TimeSlice
 
 LOG = logging.getLogger(__name__)
 
-GEOGRAPHIC_COORDS = {
-    "x": ["x", "projection_x_coordinate", "lon", "longitude"],
-    "y": ["y", "projection_y_coordinate", "lat", "latitude"],
-}
-
-
-class DataSet:
-    def __init__(self, ds):
-        self._ds = ds
-        self._bbox = {}
-        self._cache = {}
-
-    @property
-    def data_vars(self):
-        return self._ds.data_vars
-
-    def __getitem__(self, key):
-        if key not in self._cache:
-            self._cache[key] = self._ds[key]
-        return self._cache[key]
-
-    def bbox(self, variable):
-        data_array = self[variable]
-        dims = data_array.dims
-
-        lat = dims[-2]
-        lon = dims[-1]
-
-        if (lat, lon) not in self._bbox:
-            dims = data_array.dims
-
-            latitude = data_array[lat]
-            longitude = data_array[lon]
-
-            self._bbox[(lat, lon)] = (
-                np.amax(latitude.data),
-                np.amin(longitude.data),
-                np.amin(latitude.data),
-                np.amax(longitude.data),
-            )
-
-        return self._bbox[(lat, lon)]
-
 
 class XArrayFieldGeography(Geography):
-    def __init__(self, metadata, da, ds, variable):
+    def __init__(self, metadata, data_array, ds, variable):
         self.metadata = metadata
-        self._da = da
-        self._ds = ds
-        self.north, self.west, self.south, self.east = self._ds.bbox(variable)
+        self.data_array = data_array
+        self.ds = ds
+        self.north, self.west, self.south, self.east = self.ds.bbox(variable)
 
     def latitudes(self, dtype=None):
-        return self.x(dtype=dtype)
-
-    def longitudes(self, dtype=None):
         return self.y(dtype=dtype)
 
-    def _get_xy(self, axis, flatten=False, dtype=None):
-        if axis not in ("x", "y"):
-            raise ValueError(f"Invalid axis={axis}")
-
-        points = dict()
-        for ax in ("x", "y"):
-            for coord in self._da.coords:
-                if self._da.coords[coord].attrs.get("axis", "").lower() == ax:
-                    break
-            else:
-                candidates = GEOGRAPHIC_COORDS.get(ax, [])
-                for coord in candidates:
-                    if coord in self._da.coords:
-                        break
-                else:
-                    raise ValueError(f"No coordinate found with axis '{ax}'")
-            points[ax] = self._da.coords[coord]
-        points["x"], points["y"] = np.meshgrid(points["x"], points["y"])
-        if flatten:
-            points[axis] = points[axis].flatten()
-        if dtype is not None:
-            return points[axis].astype(dtype)
-        else:
-            return points[axis]
+    def longitudes(self, dtype=None):
+        return self.x(dtype=dtype)
 
     def x(self, dtype=None):
-        return self._get_xy("x", flatten=True, dtype=dtype)
+        return self.ds._get_xy(self.data_array, "x", flatten=True, dtype=dtype)
 
     def y(self, dtype=None):
-        return self._get_xy("y", flatten=True, dtype=dtype)
+        return self.ds._get_xy(self.data_array, "y", flatten=True, dtype=dtype)
 
     def shape(self):
-        return self._da.shape[-2:]
+        coords = self.ds._get_xy_coords(self.data_array)
+        return tuple([self.data_array.coords[v[1]].size for v in coords])
 
     def _unique_grid_id(self):
         return self.shape
@@ -125,8 +57,8 @@ class XArrayFieldGeography(Geography):
         )
 
     def _grid_mapping(self):
-        if "grid_mapping" in self._da.attrs:
-            grid_mapping = self._ds[self._da.attrs["grid_mapping"]]
+        if "grid_mapping" in self.data_array.attrs:
+            grid_mapping = self.ds[self.data_array.attrs["grid_mapping"]]
         else:
             raise AttributeError(
                 "no CF-compliant 'grid_mapping' detected in netCDF attributes"
@@ -138,7 +70,12 @@ class XArrayFieldGeography(Geography):
 
 
 class XArrayMetadata(RawMetadata):
-    LS_KEYS = ["variable", "level", "time", "units"]
+    LS_KEYS = ["variable", "level", "valid_datetime", "units"]
+    NAMESPACES = [
+        "default",
+        "mars",
+    ]
+    MARS_KEYS = ["param", "step", "levelist", "levtype", "number", "date", "time"]
 
     def __init__(self, field):
         if not isinstance(field, XArrayField):
@@ -149,12 +86,47 @@ class XArrayMetadata(RawMetadata):
         self._geo = None
 
         d = dict(self._field._da.attrs)
-        d["variable"] = self._field.variable
-        for s in self._field.slices:
+
+        time = field.non_dim_coords.get("valid_time", field.non_dim_coords.get("time"))
+        level = None
+        level_type = "sfc"
+
+        for s in field.slices:
             if isinstance(s, TimeSlice):
-                d[s.name] = to_datetime(s.value)
-            else:
-                d[s.name] = s.value
+                time = s.value
+
+            if isinstance(s, LevelSlice):
+                level = s.value
+                level_type = {"pressure": "pl"}.get(s.name, s.name)
+
+        step = 0
+        if time is not None:
+            self.time = to_datetime(time)
+            if "forecast_reference_time" in field._ds.data_vars:
+                forecast_reference_time = field.ds["forecast_reference_time"].data
+                assert forecast_reference_time.ndim == 0, forecast_reference_time
+                forecast_reference_time = forecast_reference_time.astype(
+                    "datetime64[s]"
+                )
+                forecast_reference_time = forecast_reference_time.astype(object)
+                step = (time - forecast_reference_time).total_seconds()
+                assert step % 3600 == 0, step
+                step = int(step // 3600)
+                d["step"] = step
+
+            date = self.time - timedelta(hours=step)
+            d["date"] = int(date.strftime("%Y%m%d"))
+            d["time"] = int(date.strftime("%H%M"))
+
+        else:
+            self.time = None
+
+        d["variable"] = self._field.variable
+        d["param"] = d["variable"]
+        d["level"] = level
+        d["levelist"] = level
+        d["levtype"] = level_type
+
         super().__init__(d)
 
     def override(self, *args, **kwargs):
@@ -168,11 +140,44 @@ class XArrayMetadata(RawMetadata):
             )
         return self._geo
 
+    def as_namespace(self, namespace=None):
+        if not isinstance(namespace, str) and namespace is not None:
+            raise TypeError("namespace must be a str or None")
+
+        if namespace == "default" or namespace == "" or namespace is None:
+            return dict(self)
+        elif namespace == "mars":
+            return self._as_mars()
+
+    def _as_mars(self):
+        return dict(
+            param=self["variable"],
+            step=self.get("step", None),
+            levelist=self["level"],
+            levtype=self["levtype"],
+            number=None,
+            date=self.get("date", None),
+            time=self.get("time", None),
+        )
+
     def _base_datetime(self):
-        return self._valid_datetime()
+        v = self._valid_datetime()
+        if v is not None:
+            return v - timedelta(hours=self.get("hour", 0))
 
     def _valid_datetime(self):
-        return to_datetime(self._field.time)
+        if self.time is not None:
+            return to_datetime(self.time)
+
+    def _get(self, key, **kwargs):
+        if key.startswith("mars."):
+            key = key[5:]
+            if key not in self.MARS_KEYS:
+                if kwargs.get("raise_on_missing", False):
+                    raise KeyError(f"Invalid key '{key}' in namespace='mars'")
+                else:
+                    return kwargs.get("default", None)
+        return super()._get(key, **kwargs)
 
 
 class XArrayField(Field):
@@ -186,32 +191,7 @@ class XArrayField(Field):
         self.variable = variable
         self.slices = slices
         self.non_dim_coords = non_dim_coords
-        # self.name = self.variable
-
-        # print(f"ds={ds}")
-        # print(f"da={data_array}")
-        # print(f"non_dim_coords={non_dim_coords}")
-
-        self.title = getattr(
-            self._da,
-            "long_name",
-            getattr(self._da, "standard_name", self.variable),
-        )
-
-        self.time = non_dim_coords.get("valid_time", non_dim_coords.get("time"))
-
-        # print('====', non_dim_coords)
-
-        # print(f"time={self.time}")
-
-        for s in self.slices:
-            if isinstance(s, TimeSlice):
-                self.time = s.value
-
-            if s.is_info:
-                self.title += " (" + s.name + "=" + str(s.value) + ")"
-
-        # print(f"-> time={self.time}")
+        self.name = self.variable
 
     def __repr__(self):
         return (

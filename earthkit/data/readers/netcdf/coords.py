@@ -90,7 +90,7 @@ class TimeCoordinate(Coordinate):
 class LevelCoordinate(Coordinate):
     # This class is just in case we want to specialise
     # 'level', otherwise, it is the same as OtherCoordinate
-    slice_class = Slice
+    slice_class = LevelSlice
     is_dimension = False
     convert = as_level
 

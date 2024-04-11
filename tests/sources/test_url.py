@@ -15,7 +15,7 @@ import sys
 import pytest
 
 from earthkit.data import from_source, settings
-from earthkit.data.core.temporary import temp_directory
+from earthkit.data.core.temporary import temp_directory, temp_file
 from earthkit.data.testing import (
     earthkit_file,
     earthkit_remote_test_data_file,
@@ -190,15 +190,17 @@ def test_url_part_file_source():
         assert f.read() == b"GRIB7777GRIB7777"
 
 
-# def test_url_netcdf_source_save():
-#     ds = from_source(
-#         "url",
-#         earthkit_remote_test_data_file("examples/test.nc"),
-#     )
+def test_url_netcdf_source_save():
+    ds = from_source(
+        "url",
+        earthkit_remote_test_data_file("examples/test.nc"),
+    )
 
-#     tmp = temp_file()
-#     ds.save(tmp.path)
-#     assert os.path.exists(tmp.path)
+    with temp_file() as tmp:
+        ds.save(tmp)
+        assert os.path.exists(tmp)
+        ds_saved = from_source("file", tmp)
+        assert len(ds_saved) == 2
 
 
 if __name__ == "__main__":

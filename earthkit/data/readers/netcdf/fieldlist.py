@@ -15,15 +15,10 @@ from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.index import MaskIndex, MultiIndex
 
 from .coords import LevelCoordinate, OtherCoordinate, TimeCoordinate
-from .dataset import DataSet
+from .dataset import GEOGRAPHIC_COORDS, DataSet
 from .field import NetCDFField, XArrayField
 
 LOG = logging.getLogger(__name__)
-
-GEOGRAPHIC_COORDS = {
-    "x": ["x", "projection_x_coordinate", "lon", "longitude"],
-    "y": ["y", "projection_y_coordinate", "lat", "latitude"],
-}
 
 
 def get_fields_from_ds(
