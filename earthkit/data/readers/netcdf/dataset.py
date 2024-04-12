@@ -174,6 +174,13 @@ class DataSet:
     def _get_xy_coords(self, data_array):
         c = []
 
+        if (
+            len(data_array.dims) >= 2
+            and data_array.dims[-1] in GEOGRAPHIC_COORDS["x"]
+            and data_array.dims[-2] in GEOGRAPHIC_COORDS["y"]
+        ):
+            return [("y", data_array.dims[-2]), ("x", data_array.dims[-1])]
+
         axes = ("x", "y")
         for dim in data_array.dims:
             for ax in axes:

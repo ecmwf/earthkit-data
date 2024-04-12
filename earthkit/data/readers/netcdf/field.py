@@ -122,9 +122,7 @@ class XArrayMetadata(RawMetadata):
             self.time = None
 
         d["variable"] = self._field.variable
-        d["param"] = d["variable"]
         d["level"] = level
-        d["levelist"] = level
         d["levtype"] = level_type
 
         super().__init__(d)
@@ -177,7 +175,15 @@ class XArrayMetadata(RawMetadata):
                     raise KeyError(f"Invalid key '{key}' in namespace='mars'")
                 else:
                     return kwargs.get("default", None)
-        return super()._get(key, **kwargs)
+
+        def _key_name(key):
+            if key == "param":
+                key = "variable"
+            elif key == "levelist":
+                key = "level"
+            return key
+
+        return super()._get(_key_name(key), **kwargs)
 
 
 class XArrayField(Field):
