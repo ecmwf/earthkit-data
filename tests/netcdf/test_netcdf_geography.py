@@ -36,6 +36,7 @@ def test_netcdf_to_points_1(dtype, expected_dtype):
     ds = from_source("file", earthkit_test_data_file("test_single.nc"))
 
     eps = 1e-5
+
     v = ds[0].to_points(flatten=True, dtype=dtype)
     assert isinstance(v, dict)
     assert isinstance(v["x"], np.ndarray)
@@ -58,6 +59,74 @@ def test_netcdf_to_points_1(dtype, expected_dtype):
         meanv=0,
         eps=eps,
     )
+
+
+def test_netcdf_to_points_2():
+    ds = from_source("file", earthkit_examples_file("test.nc"))
+
+    assert len(ds) == 2
+
+    import xarray as xr
+
+    xr_ds = xr.open_dataset(earthkit_examples_file("test.nc"))
+
+    for f in ds:
+        v = f.to_points()
+        assert isinstance(v, dict)
+
+        # x
+        assert isinstance(v["x"], np.ndarray)
+        assert v["x"].shape == (11, 19)
+        for x in v["x"]:
+            assert np.allclose(x, np.arange(-27, 45 + 4, 4))
+
+        # y
+        assert isinstance(v["y"], np.ndarray)
+        assert v["y"].shape == (11, 19)
+        for i, y in enumerate(v["y"]):
+            assert np.allclose(y, np.ones(19) * (73 - i * 4))
+
+        ref = xr_ds[f.name].sel(latitude=57, longitude=-7).values
+
+        x = 5
+        y = 4
+        assert np.isclose(f.to_numpy()[y, x], ref)
+        assert np.isclose(v["x"][y, x], -7)
+        assert np.isclose(v["y"][y, x], 57)
+
+
+def test_netcdf_to_latlon():
+    ds = from_source("file", earthkit_examples_file("test.nc"))
+
+    assert len(ds) == 2
+
+    import xarray as xr
+
+    xr_ds = xr.open_dataset(earthkit_examples_file("test.nc"))
+
+    for f in ds:
+        v = f.to_latlon()
+        assert isinstance(v, dict)
+
+        # lon
+        assert isinstance(v["lon"], np.ndarray)
+        assert v["lon"].shape == (11, 19)
+        for x in v["lon"]:
+            assert np.allclose(x, np.arange(-27, 45 + 4, 4))
+
+        # lat
+        assert isinstance(v["lat"], np.ndarray)
+        assert v["lat"].shape == (11, 19)
+        for i, y in enumerate(v["lat"]):
+            assert np.allclose(y, np.ones(19) * (73 - i * 4))
+
+        ref = xr_ds[f.name].sel(latitude=57, longitude=-7).values
+
+        x = 5
+        y = 4
+        assert np.isclose(f.to_numpy()[y, x], ref)
+        assert np.isclose(v["lon"][y, x], -7)
+        assert np.isclose(v["lat"][y, x], 57)
 
 
 def test_bbox():
