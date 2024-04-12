@@ -12,12 +12,17 @@ import logging
 import sys
 from functools import cached_property
 
-import cdsapi
+try:
+    import cdsapi
+except ImportError:
+    raise ImportError("CDS access requires 'cdsapi' to be installed")
+
 import yaml
 
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.decorators import normalize
-from earthkit.data.utils import ensure_iterable, tqdm
+from earthkit.data.utils import ensure_iterable
+from earthkit.data.utils.progbar import tqdm
 
 from .file import FileSource
 from .prompt import APIKeyPrompt

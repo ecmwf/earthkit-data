@@ -9,6 +9,11 @@
 
 import logging
 
+try:
+    import polytope
+except ImportError:
+    raise ImportError("Polytope access requires 'polytope-client' to be installed")
+
 from . import Source
 from .multi_url import MultiUrl
 from .prompt import APIKeyPrompt
@@ -55,13 +60,6 @@ class Polytope(Source):
     """
 
     def __init__(self, dataset, request, address=None, stream=True, **kwargs) -> None:
-        try:
-            import polytope
-        except ImportError:
-            raise ImportError(
-                "Polytope Web Client must be installed with 'pip install polytope-client'"
-            )
-
         super().__init__()
         assert isinstance(dataset, str)
 
