@@ -23,7 +23,7 @@ class WrappedSource:
         self.source = source
 
 
-class CMLEngine(BackendEntrypoint):
+class EKDEngine(BackendEntrypoint):
     @classmethod
     def open_dataset(cls, filename_or_obj, *args, **kwargs):
         assert isinstance(filename_or_obj, WrappedSource)
@@ -87,6 +87,6 @@ def merge(
     LOG.debug(f"xr.open_mfdataset with options= {options}")
     return xr.open_mfdataset(
         [WrappedSource(s) for s in sources],
-        engine=CMLEngine,
+        engine=EKDEngine,
         **options,
     )

@@ -9,7 +9,7 @@
 
 # from emohawk.metadata import AXES, COMPONENTS
 
-from earthkit.data.readers import netcdf
+# from earthkit.data.readers import netcdf
 from earthkit.data.wrappers import Wrapper
 
 
@@ -144,7 +144,9 @@ def wrapper(data, *args, **kwargs):
             return XArrayDataArrayWrapper(data, *args, **kwargs)
 
     if ds is not None:
-        fs = netcdf.XArrayFieldList(ds, **kwargs)
+        from earthkit.data.readers.netcdf.fieldlist import XArrayFieldList
+
+        fs = XArrayFieldList(ds, **kwargs)
         if fs.has_fields():
             return fs
         else:
