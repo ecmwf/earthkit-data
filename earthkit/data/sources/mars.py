@@ -11,7 +11,10 @@ import logging
 import os
 import subprocess
 
-import ecmwfapi
+try:
+    import ecmwfapi
+except ImportError:
+    raise ImportError("MARS access requires 'ecmwf-api-client' to be installed")
 
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.core.temporary import temp_file

@@ -8,7 +8,11 @@
 #
 
 
-import cdsapi
+try:
+    import cdsapi
+except ImportError:
+    raise ImportError("ADS access requires 'cdsapi' to be installed")
+
 import yaml
 
 from .cds import CdsRetriever

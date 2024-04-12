@@ -19,8 +19,10 @@ class ODBReader(Reader):
         try:
             import codc as odc
         except Exception:
-            import pyodc as odc
-
+            try:
+                import pyodc as odc
+            except ImportError:
+                raise ImportError("ODC handling requires 'pyodc' to be installed")
             LOG.debug("Using pure Python odc decoder.")
 
         odc_read_odb_kwargs = kwargs.get("odc_read_odb_kwargs", {})

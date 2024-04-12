@@ -186,11 +186,11 @@ def wrapper(data, *args, **kwargs):
     try:
         import geopandas as gpd
 
-        l_gpd = True
+        has_gpd = True
     except ImportError:
-        l_gpd = False
+        has_gpd = False
 
-    if l_gpd and isinstance(data, gpd.geodataframe.GeoDataFrame):
+    if has_gpd and isinstance(data, gpd.geodataframe.GeoDataFrame):
         return GeoPandasDataFrameWrapper(data, *args, **kwargs)
     if isinstance(data, pd.DataFrame):
         return PandasDataFrameWrapper(data, *args, **kwargs)

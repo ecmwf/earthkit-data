@@ -75,7 +75,13 @@ class ShapeFileReader(Reader):
         if not kwargs and self.__gdf is not None:
             return self.__gdf
         else:
-            import geopandas as gpd
+            try:
+                import geopandas as gpd
+            except ImportError:
+                raise ImportError(
+                    "shapefile handling requires 'geopandas' to be installed"
+                )
+
             import numpy as np
 
             geo_df = gpd.read_file(self.path, **kwargs)
