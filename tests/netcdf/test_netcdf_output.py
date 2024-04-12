@@ -20,13 +20,16 @@ from earthkit.data.testing import earthkit_examples_file
 
 def test_netcdf_fieldlist_save():
     ds = from_source("file", earthkit_examples_file("test.nc"))
-    assert len(ds) == 2
 
-    tmp = temp_file()
-    ds.save(tmp.path)
-    assert os.path.exists(tmp.path)
-    r_tmp = from_source("file", tmp.path)
-    assert len(r_tmp) == 2
+    # the file must be saved without loading the fields
+    assert ds._reader._fields is None
+
+    with temp_file() as tmp:
+        ds.save(tmp)
+        assert ds._reader._fields is None
+        assert os.path.exists(tmp)
+        r_tmp = from_source("file", tmp)
+        assert len(r_tmp) == 2
 
 
 def test_netcdf_fieldlist_subset_save_1():
