@@ -170,7 +170,7 @@ class CdsRetriever(FileSource):
                 *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
             ):
                 subrequest = dict(zip(split_on, values))
-                requests.append(request | subrequest)
+                requests.append({**request, **subrequest})
         return requests
 
     def client(self):

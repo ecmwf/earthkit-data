@@ -254,8 +254,8 @@ def test_cds_multiple_requests(
     s = from_source(
         "cds",
         "reanalysis-era5-single-levels",
-        base_request | {"variable": "2t", "split_on": split_on1},
-        base_request | {"variable": "msl", "split_on": split_on2},
+        {**base_request, **{"variable": "2t", "split_on": split_on1}},
+        {**base_request, **{"variable": "msl", "split_on": split_on2}},
     )
     assert len(s._indexes) == expected_file_num
     assert len(s) == 4
