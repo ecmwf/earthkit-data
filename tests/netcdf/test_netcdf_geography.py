@@ -167,6 +167,78 @@ def test_netcdf_proj_string_laea():
     )
 
 
+def test_netcdf_to_points_laea():
+    ds = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
+
+    assert len(ds) == 3
+
+    pos = [(0, 0), (0, -1), (-1, 0), (-1, -1)]
+
+    # we must check multiple fields
+    for idx in range(2):
+        v = ds[idx].to_points()
+        assert isinstance(v, dict)
+
+        # lon
+        assert isinstance(v["x"], np.ndarray)
+        assert v["x"].shape == (950, 1000)
+
+        ref = np.array([2502500.0, 7497500.0, 2502500.0, 7497500.0])
+        for i, x in enumerate(pos):
+            assert np.isclose(v["x"][x], ref[i]), f"{i=}, {x=}"
+
+        # lat
+        assert isinstance(v["y"], np.ndarray)
+        assert v["y"].shape == (950, 1000)
+
+        ref = np.array([5497500.0, 5497500.0, 752500.0, 752500.0])
+        for i, x in enumerate(pos):
+            assert np.isclose(v["y"][x], ref[i]), f"{i=}, {x=}"
+
+
+def test_netcdf_to_latlon_laea():
+    ds = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
+
+    assert len(ds) == 3
+
+    pos = [(0, 0), (0, -1), (-1, 0), (-1, -1)]
+
+    # we must check multiple fields
+    for idx in range(2):
+        v = ds[idx].to_latlon()
+        assert isinstance(v, dict)
+
+        # lon
+        assert isinstance(v["lon"], np.ndarray)
+        assert v["lon"].shape == (950, 1000)
+
+        ref = np.array(
+            [
+                -35.034023999999995,
+                73.93767587613708,
+                -8.229274420493763,
+                41.13970495087975,
+            ]
+        )
+        for i, x in enumerate(pos):
+            assert np.isclose(v["lon"][x], ref[i]), f"{i=}, {x=}"
+
+        # lat
+        assert isinstance(v["lat"], np.ndarray)
+        assert v["lat"].shape == (950, 1000)
+
+        ref = np.array(
+            [
+                66.9821429989222,
+                58.24673887576243,
+                27.802844211251625,
+                23.942342882929605,
+            ]
+        )
+        for i, x in enumerate(pos):
+            assert np.isclose(v["lat"][x], ref[i]), f"{i=}, {x=}"
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
