@@ -3,7 +3,7 @@ channels:
 - conda-forge
 - nodefaults
 dependencies:
-- eccodes=>2.34.1
+- eccodes=>2.35.0
 - python-eccodes>=1.7.0
 - pip
 - numpy
