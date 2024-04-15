@@ -30,20 +30,20 @@ class XArrayFieldGeography(Geography):
         self.north, self.west, self.south, self.east = self.ds.bbox(variable)
 
     def latitudes(self, dtype=None):
-        return self.y(dtype=dtype)
+        return self.ds._get_latlon(self.data_array, flatten=True, dtype=dtype)[0]
 
     def longitudes(self, dtype=None):
-        return self.x(dtype=dtype)
+        return self.ds._get_latlon(self.data_array, flatten=True, dtype=dtype)[1]
 
     def x(self, dtype=None):
-        return self.ds._get_xy(self.data_array, "x", flatten=True, dtype=dtype)
+        return self.ds._get_xy(self.data_array, flatten=True, dtype=dtype)[0]
 
     def y(self, dtype=None):
-        return self.ds._get_xy(self.data_array, "y", flatten=True, dtype=dtype)
+        return self.ds._get_xy(self.data_array, flatten=True, dtype=dtype)[1]
 
     def shape(self):
-        coords = self.ds._get_xy_coords(self.data_array)
-        return tuple([self.data_array.coords[v[1]].size for v in coords])
+        _, coords = self.ds._get_xy_coords(self.data_array)
+        return tuple([self.data_array.coords[v].size for v in coords])
 
     def _unique_grid_id(self):
         return self.shape
