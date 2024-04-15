@@ -273,24 +273,20 @@ class GribMetadata(Metadata):
             )
             d.update(md)
 
-            # at the moment we cannot use headers_only clone when setting the
-            # geography
-            handle = self._handle.clone()
-        else:
-            handle = self._handle.clone(headers_only=True)
-            # whether headers_only=True works depends on the eccCodes version and the
-            # message properties. We check it by comparing the message lengths.
-            shrunk = handle.get_long("totalLength") < self._handle.get_long(
-                "totalLength"
-            )
+        handle = self._handle.clone(headers_only=True)
+        # whether headers_only=True works depends on the eccCodes version and the
+        # message properties. We check it by comparing the message lengths.
+        shrunk = handle.get_long("totalLength") < self._handle.get_long("totalLength")
 
-            # some keys, needed later, are not copied into the clone when
-            # headers_only=True. We store them as extra keys.
-            if shrunk:
-                extra = {"bitsPerValue": self._handle.get("bitsPerValue", default=0)}
+        # some keys, needed later, are not copied into the clone when
+        # headers_only=True. We store them as extra keys.
+        if shrunk:
+            extra = {"bitsPerValue": self._handle.get("bitsPerValue", default=0)}
 
         handle.set_multiple(d)
 
+        # we need to set the values to the new size otherwise the clone generated
+        # with headers_only=True will be inconsistent
         if new_value_size is not None and new_value_size > 0:
             import numpy as np
 
