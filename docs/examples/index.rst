@@ -6,7 +6,7 @@ Examples
 Here is a list of example notebooks to illustrate how to use earthkit-data.
 
 Data sources
-++++++++++
+++++++++++++++
 
 .. toctree::
     :maxdepth: 1
@@ -75,13 +75,22 @@ ODB
     odb*
 
 Geojson/GeoPandas
-+++++++++++++++++++
++++++++++++++++++++++++++++++
 
 .. toctree::
     :maxdepth: 1
     :glob:
 
     geojson_geopandas.ipynb
+
+Shapefile
++++++++++++++++++++++++++++++
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    shapefile.ipynb
 
 Other inputs
 +++++++++++++
