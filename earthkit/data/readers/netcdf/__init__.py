@@ -9,7 +9,7 @@
 
 
 from .. import Reader
-from .fieldlist import NetCDFFieldListFromFile
+from .fieldlist import NetCDFFieldListFromFile, NetCDFFieldListFromURL
 
 
 class NetCDFFieldListReader(NetCDFFieldListFromFile, Reader):
@@ -19,6 +19,19 @@ class NetCDFFieldListReader(NetCDFFieldListFromFile, Reader):
 
     def __repr__(self):
         return "NetCDFFieldListReader(%s)" % (self.path,)
+
+    # def mutate_source(self):
+    #     # A NetCDFReader is a source itself
+    #     return self
+
+
+class NetCDFFieldListUrlReader(NetCDFFieldListFromURL, Reader):
+    def __init__(self, source, url):
+        Reader.__init__(self, source, url)
+        NetCDFFieldListFromURL.__init__(self, url)
+
+    def __repr__(self):
+        return "NetCDFFieldListUrlReader(%s)" % (self.path,)
 
     # def mutate_source(self):
     #     # A NetCDFReader is a source itself
