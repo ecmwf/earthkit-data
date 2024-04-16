@@ -19,6 +19,7 @@ Data sources
     url.ipynb
     url_parts.ipynb
     url_stream.ipynb
+    netcdf_opendap.ipynb
     mars.ipynb
     ads.ipynb
     cds.ipynb
@@ -53,7 +54,8 @@ NetCDF
     :maxdepth: 1
     :glob:
 
-    netcdf*
+    netcdf.ipynb
+    netcdf_fieldlist.ipynb
 
 
 BUFR

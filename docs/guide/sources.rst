@@ -48,6 +48,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from the `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
     * - :ref:`data-sources-mars`
       - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
+    * - :ref:`data-sources-opendap`
+      - retrieve NetCDF data from `OPEnDAP <https://en.wikipedia.org/wiki/OPeNDAP>`_ services
     * - :ref:`data-sources-polytope`
       - retrieve data from the `Polytope services <https://polytope-client.readthedocs.io/en/latest/>`_
     * - :ref:`data-sources-wekeo`
@@ -688,6 +690,23 @@ mars
   Further examples:
 
       - :ref:`/examples/mars.ipynb`
+
+
+.. _data-sources-opendap:
+
+opendap
+--------
+
+.. py:function:: from_source("opendap", url)
+  :noindex:
+
+  The ``opendap`` source accesses NetCDF data from `OPeNDAP <https://en.wikipedia.org/wiki/OPeNDAP>`_ services. OPenDAP is an acronym for "Open-source Project for a Network Data Access Protocol".
+
+  :param str url: the url of the remote NetCDF file
+
+  Examples:
+
+      - :ref:`/examples/netcdf_opendap.ipynb`
 
 
 .. _data-sources-polytope:
