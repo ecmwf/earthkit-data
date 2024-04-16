@@ -59,7 +59,13 @@ class Polytope(Source):
     >>> src.to_xarray()  # if datacube
     """
 
-    def __init__(self, dataset, request, address=None, stream=True, **kwargs) -> None:
+    def __init__(
+        self,
+        dataset,
+        request,
+        stream=True,
+        **kwargs,
+    ) -> None:
         super().__init__()
         assert isinstance(dataset, str)
 
@@ -70,14 +76,30 @@ class Polytope(Source):
 
         self.stream = stream
 
-        self.request = dict(dataset=dataset, request=request)
-
-        credentials = PolytopeWebKeyPrompt().check(load=True)
-
+        # Polytope client configuration options
         client_kwargs = {}
-        if address is not None:
-            client_kwargs = {"address": address}
-        self.client = polytope.api.Client(**credentials, **client_kwargs)
+        for k in [
+            "config_path",
+            "address",
+            "port",
+            "username",
+            "key_path",
+            "quiet",
+            "verbose",
+            "log_file",
+            "log_level",
+            "user_key",
+            "user_email",
+            "password",
+            "insecure",
+            "skip_tls",
+            "cli",
+        ]:
+            if k in kwargs:
+                client_kwargs[k] = kwargs.pop(k, None)
+
+        self.request = dict(dataset=dataset, request=request)
+        self.client = polytope.api.Client(**client_kwargs)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.request['dataset']}, {self.request['request']})"
