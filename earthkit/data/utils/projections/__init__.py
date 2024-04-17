@@ -14,9 +14,8 @@ try:
     NO_CARTOPY = False
 except ImportError:
     NO_CARTOPY = True
-CARTOPY_WARNING = (
-    "no cartopy installation found; cartopy must be installed to use this feature"
-)
+
+CARTOPY_WARNING = "This feature requires 'cartopy' to be installed"
 
 
 DEFAULT_LATLON_PROJ_STRING = (

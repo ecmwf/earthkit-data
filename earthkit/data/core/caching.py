@@ -1035,7 +1035,9 @@ def cache_file(
                 force = force(args, path, owner_data)
 
             if force:
+                LOG.debug(f"decache file by force: {path=}")
                 CACHE._decache_file(path)
+                record = CACHE._register_cache_file(path, owner, args)
 
         if not os.path.exists(path):
             from filelock import FileLock

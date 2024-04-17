@@ -26,7 +26,7 @@ def test_netcdf_ls(mode):
     ref = {
         "variable": {0: "t", 1: "t", 2: "t", 3: "t"},
         "level": {0: 1000, 1: 850, 2: 700, 3: 500},
-        "time": {
+        "valid_datetime": {
             0: datetime.datetime.fromisoformat("2018-08-01 12:00:00"),
             1: datetime.datetime.fromisoformat("2018-08-01 12:00:00"),
             2: datetime.datetime.fromisoformat("2018-08-01 12:00:00"),
@@ -44,7 +44,7 @@ def test_netcdf_ls(mode):
     ref = {
         "variable": {0: "t", 1: "t"},
         "level": {0: 1000, 1: 850},
-        "time": {
+        "valid_datetime": {
             0: datetime.datetime.fromisoformat("2018-08-01 12:00:00"),
             1: datetime.datetime.fromisoformat("2018-08-01 12:00:00"),
         },

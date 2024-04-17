@@ -48,6 +48,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from the `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
     * - :ref:`data-sources-mars`
       - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
+    * - :ref:`data-sources-opendap`
+      - retrieve NetCDF data from `OPEnDAP <https://en.wikipedia.org/wiki/OPeNDAP>`_ services
     * - :ref:`data-sources-polytope`
       - retrieve data from the `Polytope services <https://polytope-client.readthedocs.io/en/latest/>`_
     * - :ref:`data-sources-s3`
@@ -418,7 +420,6 @@ memory
           print(f.metadata("param"))
 
 
-
 .. _data-sources-ads:
 
 ads
@@ -693,23 +694,44 @@ mars
       - :ref:`/examples/mars.ipynb`
 
 
+.. _data-sources-opendap:
+
+opendap
+--------
+
+.. py:function:: from_source("opendap", url)
+  :noindex:
+
+  The ``opendap`` source accesses NetCDF data from `OPeNDAP <https://en.wikipedia.org/wiki/OPeNDAP>`_ services. OPenDAP is an acronym for "Open-source Project for a Network Data Access Protocol".
+
+  :param str url: the url of the remote NetCDF file
+
+  Examples:
+
+      - :ref:`/examples/netcdf_opendap.ipynb`
+
+
 .. _data-sources-polytope:
 
 polytope
 --------
 
-.. py:function:: from_source("polytope", collection, *args, stream=True,  batch_size=1, group_by=None, **kwargs)
+.. py:function:: from_source("polytope", collection, *args, address=None, user_email=None, user_key=None, stream=True, batch_size=1, group_by=None, **kwargs)
   :noindex:
 
   The ``polytope`` source accesses the `Polytope web services <https://polytope-client.readthedocs.io/en/latest/>`_ , using the polytope-client_ package.
 
   :param str collection: the name of the polytope collection
   :param tuple *args: specify the request as a dict
+  :param str address: specify the address of the polytope service
+  :param str user_email: specify the user email credential. Must be used together with ``user_key``. This is an alternative to using the ``POLYTOPE_USER_EMAIL`` environment variable. *Added in version 0.7.0*
+  :param str user_key: specify the user key credential. Must be used together with ``user_email``. This is an alternative to using the ``POLYTOPE_USER_KEY`` environment variable. *Added in version 0.7.0*
   :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data.
   :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the data is read straight to memory. For details see :ref:`stream source <data-sources-stream>`.
   :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
   :type group_by: str, list of str
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param dict **kwargs: other keyword arguments, these can include options passed to the polytope-client_
+
 
   The following example retrieves GRIB data from the "ecmwf-mars" polytope collection:
 
