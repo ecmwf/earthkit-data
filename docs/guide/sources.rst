@@ -728,7 +728,7 @@ polytope
   :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the data is read straight to memory. For details see :ref:`stream source <data-sources-stream>`.
   :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
   :type group_by: str, list of str
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param dict **kwargs: other keyword arguments, these can include options passed to the polytope-client_
 
 
   The following example retrieves GRIB data from the "ecmwf-mars" polytope collection:
