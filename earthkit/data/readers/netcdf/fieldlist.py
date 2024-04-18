@@ -248,7 +248,7 @@ class XArrayMultiFieldList(XArrayFieldListCore, MultiIndex):
     def to_xarray(self, **kwargs):
         import xarray as xr
 
-        return xr.merge([x.ds for x in self._indexes], **kwargs)
+        return xr.merge([x._ds for x in self._indexes], **kwargs)
 
 
 class NetCDFFieldList(XArrayFieldListCore):
@@ -268,10 +268,8 @@ class NetCDFFieldList(XArrayFieldListCore):
         return NetCDFMaskFieldList(*args, **kwargs)
 
     def to_xarray(self, **kwargs):
-        import xarray as xr
-
-        if self.path.startswith("http"):
-            return xr.open_dataset(self.path, **kwargs)
+        # if self.path.startswith("http"):
+        #     return xr.open_dataset(self.path, **kwargs)
         return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
 
     def write(self, *args, **kwargs):
@@ -348,7 +346,7 @@ class NetCDFMultiFieldList(NetCDFFieldList, MultiIndex):
         # try:
 
         if not kwargs:
-            kwargs = dict(combine="by_coords")
+            kwargs = {"xarray_open_mfdataset_kwargs": dict(combine="by_coords")}
 
         for x in self._indexes:
             if isinstance(x, NetCDFMaskFieldList):

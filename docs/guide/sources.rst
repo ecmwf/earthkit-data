@@ -38,6 +38,8 @@ We can get data from a given source by using :func:`from_source`:
       - read data from a stream
     * - :ref:`data-sources-memory`
       - read data from a memory buffer
+    * - :ref:`data-sources-multi`
+      - read data from multiple sources
     * - :ref:`data-sources-ads`
       - retrieve data from the `Copernicus Atmosphere Data Store <https://ads.atmosphere.copernicus.eu/>`_ (ADS)
     * - :ref:`data-sources-cds`
@@ -416,6 +418,27 @@ memory
       ds = earthkit.data.from_source("stream", stream)
       for f in ds:
           print(f.metadata("param"))
+
+
+.. _data-sources-multi:
+
+multi
+--------------
+
+.. py:function:: from_source("multi", *sources, merger=None, **kwargs)
+  :noindex:
+
+  The ``multi`` source reads multiple sources.
+
+  :param tuple *sources: the sources
+  :param merger: if it is None an attempt is made to merge/concatenate the sources by their classes (using the nearest common class). Otherwise the sources are merged/concatenated using the merger in a lazy way. The merger can one of the following:
+
+    - class/object implementing  the :func:`to_xarray` or :func:`to_pandas` methods
+    - callable
+    - str, describing a call either to "concat" or "merge". E.g.: "concat(concat_dim=time)"
+    - tuple with 2 elements. The fist element is a str, either "concat" or "merge", and the second element is a dict with the keyword arguments for the call. E.g.: ("concat", {"concat_dim": "time"})
+  :param dict **kwargs: other keyword arguments
+
 
 
 .. _data-sources-ads:
