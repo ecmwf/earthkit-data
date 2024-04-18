@@ -1,5 +1,4 @@
-.. _howtos
-
+.. _howtos:
 
 Howtos
 ============
@@ -25,3 +24,31 @@ save the results of a :ref:`MARS retrieval <data-sources-mars>` into a file:
     )
 
     ds.save("my_data.grib")
+
+
+How to call to_xarray() with arguments for NetCDF data?
+---------------------------------------------------------
+
+When calling :func:`to_xarray` for NetCDF data it calls ``xarray.open_mfdataset`` internally. You can pass arguments to this xarray function by using the ``xarray_open_mfdataset_kwargs`` option. For example:
+
+
+.. code-block:: python
+
+    import earthkit.data
+
+    req = {
+        "format": "zip",
+        "origin": "c3s",
+        "sensor": "olci",
+        "version": "1_1",
+        "year": "2022",
+        "month": "04",
+        "nominal_day": "01",
+        "variable": "pixel_variables",
+        "region": "europe",
+    }
+
+    ds = earthkit.data.from_source("cds", "satellite-fire-burned-area", req)
+    r = ds.to_xarray(
+        xarray_open_mfdataset_kwargs=dict(decode_cf=False, decode_times=False)
+    )

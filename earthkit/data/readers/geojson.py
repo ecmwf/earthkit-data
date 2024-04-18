@@ -91,7 +91,10 @@ class GeojsonReader(Reader):
 
     @classmethod
     def to_pandas_from_multi_paths(cls, paths, **kwargs):
-        import geopandas as gpd
+        try:
+            import geopandas as gpd
+        except ImportError:
+            raise ImportError("Geojson handling requires 'geopandas' to be installed")
 
         geo_df = gpd.pd.concat([gpd.read_file(path, **kwargs) for path in paths])
 
@@ -107,5 +110,5 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
 
     geojson_extensions = ["geojson"]
     geojson_mimetypes = ["application/geo+json"]
-    if magic is None or ext in geojson_extensions or kind in geojson_mimetypes:
+    if ext in geojson_extensions or kind in geojson_mimetypes:
         return GeojsonReader(source, path)

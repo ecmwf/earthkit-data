@@ -32,10 +32,14 @@ We can get data from a given source by using :func:`from_source`:
       - read data from a URL
     * - :ref:`data-sources-url-pattern`
       - read data from a list of URLs created from a pattern
+    * - :ref:`data-sources-sample`
+      - read example data
     * - :ref:`data-sources-stream`
       - read data from a stream
     * - :ref:`data-sources-memory`
       - read data from a memory buffer
+    * - :ref:`data-sources-multi`
+      - read data from multiple sources
     * - :ref:`data-sources-ads`
       - retrieve data from the `Copernicus Atmosphere Data Store <https://ads.atmosphere.copernicus.eu/>`_ (ADS)
     * - :ref:`data-sources-cds`
@@ -46,6 +50,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from the `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
     * - :ref:`data-sources-mars`
       - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
+    * - :ref:`data-sources-opendap`
+      - retrieve NetCDF data from `OPEnDAP <https://en.wikipedia.org/wiki/OPeNDAP>`_ services
     * - :ref:`data-sources-polytope`
       - retrieve data from the `Polytope services <https://polytope-client.readthedocs.io/en/latest/>`_
     * - :ref:`data-sources-wekeo`
@@ -60,17 +66,19 @@ We can get data from a given source by using :func:`from_source`:
 file
 ----
 
-.. py:function:: from_source("file", path, expand_user=True, expand_vars=False, unix_glob=True, recursive_glob=True)
+.. py:function:: from_source("file", path, expand_user=True, expand_vars=False, unix_glob=True, recursive_glob=True, parts=None)
   :noindex:
 
-  The simplest source is ``file`` that can access a local file/list of files.
+  The simplest source is ``file``, which can access a local file/list of files.
 
-  :param path: input path(s)
-  :type path: str, list
+  :param path: input path(s). Each path can contain the :ref:`parts <parts>` defining the byte ranges to read.
+  :type path: str, list, tuple
   :param bool expand_user: replace the leading ~ or ~user in ``path`` by that user's home directory. See ``os.path.expanduser``
   :param bool expand_vars:  expand shell environment variables in ``path``. See ``os.path.expandpath``
   :param bool unix_glob: allow UNIX globbing in ``path``
   :param bool recursive_glob: allow recursive scanning of directories. Only used when ``uxix_glob`` is True
+  :param parts: the :ref:`parts <parts>` to read from the file(s) specified by ``path``. Cannot be used when ``path`` already defines the :ref:`parts <parts>`.
+  :type parts: pair, list or tuple of pairs, None
 
   *earthkit-data* will inspect the content of the files to check for any of the
   supported :ref:`data formats <data-format>`.
@@ -94,10 +102,35 @@ file
       ds = earthkit.data.from_source("file", "path/to/dir")
 
 
+  The following examples using parts:
+
+  .. code:: python
+
+      import earthkit.data
+
+      # reading only certain parts (byte ranges) from a single file
+      ds = earthkit.data.from_source("file", "my.grib", parts=[(0, 150), (400, 160)])
+
+      # reading only certain parts (byte ranges) from multiple files
+      ds = earthkit.data.from_source(
+          "file",
+          [
+              ("a.grib", (0, 150)),
+              ("b.grib", (240, 120)),
+              ("c.grib", None),
+              ("d.grib", [(240, 120), (720, 120)]),
+          ],
+      )
+
+
+
   Further examples:
 
+    - :ref:`/examples/files.ipynb`
+    - :ref:`/examples/multi_files.ipynb`
+    - :ref:`/examples/file_parts.ipynb`
+    - :ref:`/examples/tar_files.ipynb`
     - :ref:`/examples/grib_overview.ipynb`
-    - :ref:`/examples/grib_multi.ipynb`
     - :ref:`/examples/bufr_temp.ipynb`
     - :ref:`/examples/netcdf.ipynb`
     - :ref:`/examples/odb.ipynb`
@@ -138,20 +171,26 @@ file-pattern
     path/to/data-2020-05-02-18-t2.grib
     path/to/data-2020-05-02-18-msl.grib
 
+Further examples:
+
+    - :ref:`/examples/files.ipynb`
+
 
 .. _data-sources-url:
 
 url
 ---
 
-.. py:function:: from_source("url", url, unpack=True, stream=False, batch_size=1, group_by=None)
+.. py:function:: from_source("url", url, unpack=True, parts=None, stream=False, batch_size=1, group_by=None)
   :noindex:
 
   The ``url`` source will download the data from the address specified and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
 
-  :param url: the URL to download
+  :param url: the URL(s) to download. Each URL can contain the :ref:`parts <parts>` defining the byte ranges to read.
   :type url: str
   :param bool unpack: for archive formats such as ``.zip``, ``.tar``, ``.tar.gz``, etc, *earthkit-data* will attempt to open it and extract any usable file. To keep the downloaded file as is use ``unpack=False``
+  :param parts: the :ref:`parts <parts>` to read from the resource(s) specified by ``url``. Cannot be used when ``url`` already defines the :ref:`parts <parts>`.
+  :type parts: pair, list or tuple of pairs, None
   :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs.
   :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. For details see :ref:`stream source <data-sources-stream>`.
   :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
@@ -165,13 +204,30 @@ url
       ...     "url",
       ...     "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test4.grib",
       ... )
-      >>> len(ds)
-      4
+      >>> ds.ls()
+        centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
+      0   ecmf         t  isobaricInhPa    500  20070101      1200         0       an       0  regular_ll
+      1   ecmf         z  isobaricInhPa    500  20070101      1200         0       an       0  regular_ll
+      2   ecmf         t  isobaricInhPa    850  20070101      1200         0       an       0  regular_ll
+      3   ecmf         z  isobaricInhPa    850  20070101      1200         0       an       0  regular_ll
+
+  .. code-block:: python
+
+      >>> import earthkit.data
+      >>> ds = earthkit.data.from_source(
+      ...     "url",
+      ...     "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test4.grib",
+      ...     parts=[(0, 130428), (260856, 130428)],
+      ... )
+      >>> ds.ls()
+        centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
+      0   ecmf         t  isobaricInhPa    500  20070101      1200         0       an       0  regular_ll
+      1   ecmf         t  isobaricInhPa    850  20070101      1200         0       an       0  regular_ll
 
   Further examples:
 
-    - :ref:`/examples/grib_url.ipynb`
-    - :ref:`/examples/grib_url_stream.ipynb`
+    - :ref:`/examples/url.ipynb`
+    - :ref:`/examples/url_stream.ipynb`
 
 
 .. _data-sources-url-pattern:
@@ -214,6 +270,32 @@ url-pattern
   If the urls are pointing to archive format, the data will be unpacked by
   ``url-pattern`` according to the **unpack** argument, similarly to what
   the source ``url`` does (see above the :ref:`data-sources-url` source).
+
+
+
+.. _data-sources-sample:
+
+sample
+------
+
+.. py:function:: from_source("sample", name_or_path)
+  :noindex:
+
+  The ``sample`` source will download example data prepared for earthkit and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
+
+  :param name_or_path: input file name(s) or relative path(s) to the root of the remote storage folder.
+  :type name_or_path: str, list, tuple
+
+  .. code-block:: python
+
+    >>> import earthkit.data
+    >>> ds = earthkit.data.from_source("sample", "storm_ophelia_wind_850.grib")
+    >>> ds.ls()
+      centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
+    0   ecmf         u  isobaricInhPa    850  20171016         0         0       an       0  regular_ll
+    1   ecmf         v  isobaricInhPa    850  20171016         0         0       an       0  regular_ll
+
+
 
 .. _data-sources-stream:
 
@@ -307,9 +389,9 @@ stream
 
   See the following notebook examples for further details:
 
-    - :ref:`/examples/grib_from_stream.ipynb`
+    - :ref:`/examples/data_from_stream.ipynb`
     - :ref:`/examples/fdb.ipynb`
-    - :ref:`/examples/grib_url_stream.ipynb`
+    - :ref:`/examples/url_stream.ipynb`
 
 
 .. _data-sources-memory:
@@ -336,6 +418,26 @@ memory
       ds = earthkit.data.from_source("stream", stream)
       for f in ds:
           print(f.metadata("param"))
+
+
+.. _data-sources-multi:
+
+multi
+--------------
+
+.. py:function:: from_source("multi", *sources, merger=None, **kwargs)
+  :noindex:
+
+  The ``multi`` source reads multiple sources.
+
+  :param tuple *sources: the sources
+  :param merger: if it is None an attempt is made to merge/concatenate the sources by their classes (using the nearest common class). Otherwise the sources are merged/concatenated using the merger in a lazy way. The merger can one of the following:
+
+    - class/object implementing  the :func:`to_xarray` or :func:`to_pandas` methods
+    - callable
+    - str, describing a call either to "concat" or "merge". E.g.: "concat(concat_dim=time)"
+    - tuple with 2 elements. The fist element is a str, either "concat" or "merge", and the second element is a dict with the keyword arguments for the call. E.g.: ("concat", {"concat_dim": "time"})
+  :param dict **kwargs: other keyword arguments
 
 
 
@@ -382,7 +484,7 @@ ads
 cds
 ---
 
-.. py:function:: from_source("cds", dataset, *args, **kwargs)
+.. py:function:: from_source("cds", dataset, *args, prompt=True, **kwargs)
   :noindex:
 
   The ``cds`` source accesses the `Copernicus Climate Data Store`_ (CDS), using the cdsapi_ package. In addition to data retrieval, the request has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively. It can
@@ -390,6 +492,11 @@ cds
 
   :param str dataset: the name of the CDS dataset
   :param tuple *args: specify the request as dict. A sequence of dicts can be used to specify multiple requests.
+  :param bool prompt: when True it can offer a prompt to specify the credentials for cdsapi_ and write them into the default RC file ``~/.cdsapirc``. The prompt only appears when:
+
+    - no cdsapi_ RC file exists at the default location ``~/.cdsapirc``
+    - no cdsapi_ RC file exists at the location specified via the ``CDSAPI_RC`` environment variable
+    - no credentials specified via the ``CDSAPI_URL`` and ``CDSAPI_KEY`` environment variables
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves ERA5 reanalysis GRIB data for a subarea for 2 surface parameters. The request is specified using ``kwargs``:
@@ -443,12 +550,14 @@ cds
 ecmwf-open-data
 -------------------
 
-.. py:function:: from_source("ecmwf-open-data", *args, **kwargs)
+.. py:function:: from_source("ecmwf-open-data", *args, source="ecmwf", model="ifs", **kwargs)
   :noindex:
 
   The ``ecmwf-open-data`` source provides access to the `ECMWF open data`_, which is a subset of ECMWF real-time forecast data made available to the public free of charge.  It uses the `ecmwf-opendata <https://github.com/ecmwf/ecmwf-opendata>`_ package.
 
   :param tuple *args: specify the request as a dict
+  :param str source: either the name of the server to contact or a fully qualified URL. Possible values are "ecmwf" to access ECMWF's servers, or "azure" to access data hosted on Microsoft's Azure. Default is "ecmwf".
+  :param str model: name of the model that produced the data. Use "ifs" for the physics-driven model and "aifs" for the data-driven model. Please note that "aifs" is currently experimental and only produces a small subset of fields. Default is "ifs".
   :param dict **kwargs: other keyword arguments specifying the request
 
   Details about the request format can be found `here <https://github.com/ecmwf/ecmwf-opendata>`__.
@@ -563,7 +672,7 @@ fdb
 mars
 --------------
 
-.. py:function:: from_source("mars", *args, **kwargs)
+.. py:function:: from_source("mars", *args, prompt=True, **kwargs)
   :noindex:
 
   The ``mars`` source will retrieve data from the ECMWF MARS (Meteorological Archival and Retrieval System) archive. In addition
@@ -575,6 +684,11 @@ mars
   The MARS access is direct when the MARS client is installed (as at ECMWF), otherwise it will use the `web API`_. In order to use the `web API`_ you will need to register and retrieve an access token. For a more extensive documentation about MARS, please refer to the `MARS user documentation`_.
 
   :param tuple *args: positional arguments specifying the request as a dict
+  :param bool prompt: when True it can offer a prompt to specify the credentials for `web API`_ and write them into the default RC file ``~/.ecmwfapirc``. The prompt only appears when:
+
+    - no `web API`_ RC file exists at the default location ``~/.ecmwfapirc``
+    - no `web API`_ RC file exists at the location specified via the ``ECMWF_API_RC_FILE`` environment variable
+    - no credentials specified via the ``ECMWF_API_URL`` and ``ECMWF_API_KEY``  environment variables
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves analysis GRIB data for a subarea for 2 surface parameters:
@@ -601,23 +715,44 @@ mars
       - :ref:`/examples/mars.ipynb`
 
 
+.. _data-sources-opendap:
+
+opendap
+--------
+
+.. py:function:: from_source("opendap", url)
+  :noindex:
+
+  The ``opendap`` source accesses NetCDF data from `OPeNDAP <https://en.wikipedia.org/wiki/OPeNDAP>`_ services. OPenDAP is an acronym for "Open-source Project for a Network Data Access Protocol".
+
+  :param str url: the url of the remote NetCDF file
+
+  Examples:
+
+      - :ref:`/examples/netcdf_opendap.ipynb`
+
+
 .. _data-sources-polytope:
 
 polytope
 --------
 
-.. py:function:: from_source("polytope", collection, *args, stream=True,  batch_size=1, group_by=None, **kwargs)
+.. py:function:: from_source("polytope", collection, *args, address=None, user_email=None, user_key=None, stream=True, batch_size=1, group_by=None, **kwargs)
   :noindex:
 
   The ``polytope`` source accesses the `Polytope web services <https://polytope-client.readthedocs.io/en/latest/>`_ , using the polytope-client_ package.
 
   :param str collection: the name of the polytope collection
   :param tuple *args: specify the request as a dict
+  :param str address: specify the address of the polytope service
+  :param str user_email: specify the user email credential. Must be used together with ``user_key``. This is an alternative to using the ``POLYTOPE_USER_EMAIL`` environment variable. *Added in version 0.7.0*
+  :param str user_key: specify the user key credential. Must be used together with ``user_email``. This is an alternative to using the ``POLYTOPE_USER_KEY`` environment variable. *Added in version 0.7.0*
   :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data.
   :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the data is read straight to memory. For details see :ref:`stream source <data-sources-stream>`.
   :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
   :type group_by: str, list of str
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param dict **kwargs: other keyword arguments, these can include options passed to the polytope-client_
+
 
   The following example retrieves GRIB data from the "ecmwf-mars" polytope collection:
 
@@ -657,13 +792,18 @@ polytope
 wekeo
 -----
 
-.. py:function:: from_source("wekeo", dataset, *args, **kwargs)
+.. py:function:: from_source("wekeo", dataset, *args, prompt=True, **kwargs)
   :noindex:
 
   `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeo`` source provides access to `WEkEO`_ using the WEkEO grammar. The retrieval is based on the hda_ Python API.
 
   :param str dataset: the name of the WEkEO dataset
   :param tuple *args: specify the request as a dict
+  :param bool prompt: when True it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
+
+    - no hda_ RC file exists at the default location ``~/.hdarc``
+    - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
+    - no credentials specified via the ``HDA_URL``, ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves Normalized Difference Vegetation Index data derived from EO satellite imagery in NetCDF format:
@@ -702,13 +842,18 @@ wekeo
 wekeocds
 --------
 
-.. py:function:: from_source("wekeocds", dataset, *args, **kwargs)
+.. py:function:: from_source("wekeocds", dataset, *args, prompt=True, **kwargs)
   :noindex:
 
   `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeocds`` source provides access to `Copernicus Climate Data Store`_ (CDS) datasets served on `WEkEO`_ using the `cdsapi`_ grammar. The retrieval is based on the hda_ Python API.
 
   :param str dataset: the name of the WEkEO dataset
   :param tuple *args: specify the request as a dict
+  :param bool prompt: when True it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
+
+    - no hda_ RC file exists at the default location ``~/.hdarc``
+    - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
+    - no credentials specified via the ``HDA_URL``, ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves ERA5 surface data for multiple days in GRIB format:

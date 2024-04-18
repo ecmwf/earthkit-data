@@ -28,9 +28,6 @@ from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 from random import randrange
 
-import pandas as pd
-from filelock import FileLock
-
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.utils import humanize
@@ -87,6 +84,8 @@ def disk_usage(path):
 
 
 def default_serialiser(o):
+    import pandas as pd
+
     if isinstance(o, (datetime.date, datetime.datetime)):
         return o.isoformat()
     if isinstance(o, (pd.Timestamp)):
@@ -1036,11 +1035,14 @@ def cache_file(
                 force = force(args, path, owner_data)
 
             if force:
+                LOG.debug(f"decache file by force: {path=}")
                 CACHE._decache_file(path)
+                record = CACHE._register_cache_file(path, owner, args)
 
         if not os.path.exists(path):
-            lock = path + ".lock"
+            from filelock import FileLock
 
+            lock = path + ".lock"
             with FileLock(lock):
                 if not os.path.exists(
                     path
@@ -1071,6 +1073,8 @@ def cache_file(
         )
 
         if not os.path.exists(path):
+            from filelock import FileLock
+
             lock = path + ".lock"
             with FileLock(lock):
                 if not os.path.exists(

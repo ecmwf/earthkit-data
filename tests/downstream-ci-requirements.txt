@@ -1,9 +1,10 @@
+array_api_compat
 cdsapi
 cfgrib>=0.9.10.1
 eccodes>=1.7.0
 ecmwf-api-client>=1.6.1
-ecmwf-opendata>=0.1.2
-polytope-client>=0.7.2
+ecmwf-opendata>=0.3.3
+polytope-client>=0.7.4
 dask
 entrypoints
 filelock
@@ -16,10 +17,11 @@ pdbufr>=0.11.0
 pyfdb
 pyodc
 pyyaml
-scipy
-tqdm
+torch
+tqdm>=4.63.0
 xarray>=0.19.0
 earthkit-meteo>=0.0.1
+earthkit-geo
 git+https://github.com/ecmwf/earthkit-data-demo-source
 geopandas
 cartopy
@@ -32,3 +34,4 @@ pytest-forked
 pytest-timeout
 nbformat
 nbconvert
+ipykernel

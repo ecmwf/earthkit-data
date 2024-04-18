@@ -7,7 +7,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-import ecmwf.opendata
+
+try:
+    import ecmwf.opendata
+except ImportError:
+    raise ImportError(
+        "ECMWF Open Data access requires 'ecmwf-opendata' to be installed"
+    )
 
 from .file import FileSource
 
@@ -17,7 +23,7 @@ class EODRetriever(FileSource):
     EODRetriever
     """
 
-    def __init__(self, source="ecmwf", *args, **kwargs):
+    def __init__(self, *args, source="ecmwf", model="ifs", **kwargs):
         super().__init__()
         if len(args):
             assert len(args) == 1
@@ -27,7 +33,9 @@ class EODRetriever(FileSource):
 
         self.source_kwargs = self.request(**kwargs)
 
-        self.client = ecmwf.opendata.Client(source=source, preserve_request_order=True)
+        self.client = ecmwf.opendata.Client(
+            source=source, model=model, preserve_request_order=True
+        )
 
         self.path = self._retrieve(self.source_kwargs)
 

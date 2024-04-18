@@ -328,6 +328,49 @@ def test_cache_management(policy):
             assert len(cache.entries()) == 0
 
 
+@pytest.mark.cache
+def test_cache_force():
+    import time
+
+    def _force_true(args, path, owner_data):
+        time.sleep(0.001)
+        return True
+
+    def _force_false(args, path, owner_data):
+        time.sleep(0.001)
+        return False
+
+    data_size = 10 * 1024
+    ds = from_source("dummy-source", "zeros", size=data_size, n=0)
+    st = os.stat(ds.path)
+    m_time_ref = st.st_mtime_ns
+
+    ds1 = from_source("dummy-source", "zeros", size=data_size, n=0)
+    assert ds1.path == ds.path
+    st = os.stat(ds1.path)
+    m_time = st.st_mtime_ns
+    assert m_time == m_time_ref
+
+    ds2 = from_source("dummy-source", "zeros", force=_force_false, size=data_size, n=0)
+    assert ds2.path == ds.path
+    st = os.stat(ds2.path)
+    m_time = st.st_mtime_ns
+    assert m_time == m_time_ref
+
+    ds3 = from_source("dummy-source", "zeros", force=_force_true, size=data_size, n=0)
+    assert ds3.path == ds.path
+    st = os.stat(ds3.path)
+    m_time = st.st_mtime_ns
+    assert m_time != m_time_ref
+    m_time_ref = m_time
+
+    ds4 = from_source("dummy-source", "zeros", size=data_size, n=0)
+    assert ds4.path == ds.path
+    st = os.stat(ds4.path)
+    m_time = st.st_mtime_ns
+    assert m_time == m_time_ref
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 

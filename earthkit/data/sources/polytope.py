@@ -9,6 +9,11 @@
 
 import logging
 
+try:
+    import polytope
+except ImportError:
+    raise ImportError("Polytope access requires 'polytope-client' to be installed")
+
 from . import Source
 from .multi_url import MultiUrl
 from .prompt import APIKeyPrompt
@@ -21,10 +26,7 @@ class PolytopeWebKeyPrompt(APIKeyPrompt):
     register_or_sign_in_url = ("",)
     retrieve_api_key_url = ("",)
     prompts = [
-        dict(
-            name="user_email",
-            title="Your email",
-        ),
+        dict(name="user_email", title="Your email"),
         dict(
             name="user_key",
             example="b295aad8af30332fad2fa8c963ab7900",
@@ -35,6 +37,7 @@ class PolytopeWebKeyPrompt(APIKeyPrompt):
     ]
 
     rcfile = "~/.polytopeapirc"
+    config_env = ("POLYTOPE_USER_EMAIL", "POLYTOPE_USER_KEY")
 
 
 class Polytope(Source):
@@ -56,14 +59,13 @@ class Polytope(Source):
     >>> src.to_xarray()  # if datacube
     """
 
-    def __init__(self, dataset, request, address=None, stream=True, **kwargs) -> None:
-        try:
-            import polytope
-        except ImportError:
-            raise ImportError(
-                "Polytope Web Client must be installed with 'pip install polytope-client'"
-            )
-
+    def __init__(
+        self,
+        dataset,
+        request,
+        stream=True,
+        **kwargs,
+    ) -> None:
         super().__init__()
         assert isinstance(dataset, str)
 
@@ -76,12 +78,8 @@ class Polytope(Source):
 
         self.request = dict(dataset=dataset, request=request)
 
-        credentials = PolytopeWebKeyPrompt().check(load=True)
-
-        client_kwargs = {}
-        if address is not None:
-            client_kwargs = {"address": address}
-        self.client = polytope.api.Client(**credentials, **client_kwargs)
+        # all the kwargs are passed to the client!
+        self.client = polytope.api.Client(**kwargs)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.request['dataset']}, {self.request['request']})"

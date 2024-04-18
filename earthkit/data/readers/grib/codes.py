@@ -84,64 +84,62 @@ LONGITUDE_ACCESSOR = GribCodesLongitudeAccessor()
 
 
 class GribCodesMessagePositionIndex(CodesMessagePositionIndex):
+    MAGIC = b"GRIB"
+
     # This does not belong here, should be in the C library
-    def _get_message_positions(self, path):
-        fd = os.open(path, os.O_RDONLY)
-        try:
+    def _get_message_positions_part(self, fd, part):
+        assert part is not None
+        assert len(part) == 2
 
-            def get(count):
-                buf = os.read(fd, count)
-                assert len(buf) == count
-                return int.from_bytes(
-                    buf,
-                    byteorder="big",
-                    signed=False,
-                )
+        offset = part[0]
+        end_pos = part[0] + part[1] if part[1] > 0 else -1
 
-            offset = 0
-            while True:
-                code = os.read(fd, 4)
-                if len(code) < 4:
-                    break
+        if os.lseek(fd, offset, os.SEEK_SET) != offset:
+            return
 
-                if code != b"GRIB":
-                    offset = os.lseek(fd, offset + 1, os.SEEK_SET)
-                    continue
+        while True:
+            code = os.read(fd, 4)
+            if len(code) < 4:
+                break
 
-                length = get(3)
-                edition = get(1)
+            if code != self.MAGIC:
+                offset = os.lseek(fd, offset + 1, os.SEEK_SET)
+                continue
 
-                if edition == 1:
-                    if length & 0x800000:
-                        sec1len = get(3)
-                        os.lseek(fd, 4, os.SEEK_CUR)
-                        flags = get(1)
-                        os.lseek(fd, sec1len - 8, os.SEEK_CUR)
+            length = self._get_bytes(fd, 3)
+            edition = self._get_bytes(fd, 1)
 
-                        if flags & (1 << 7):
-                            sec2len = get(3)
-                            os.lseek(fd, sec2len - 3, os.SEEK_CUR)
+            if edition == 1:
+                if length & 0x800000:
+                    sec1len = self._get_bytes(fd, 3)
+                    os.lseek(fd, 4, os.SEEK_CUR)
+                    flags = self._get_bytes(fd, 1)
+                    os.lseek(fd, sec1len - 8, os.SEEK_CUR)
 
-                        if flags & (1 << 6):
-                            sec3len = get(3)
-                            os.lseek(fd, sec3len - 3, os.SEEK_CUR)
+                    if flags & (1 << 7):
+                        sec2len = self._get_bytes(fd, 3)
+                        os.lseek(fd, sec2len - 3, os.SEEK_CUR)
 
-                        sec4len = get(3)
+                    if flags & (1 << 6):
+                        sec3len = self._get_bytes(fd, 3)
+                        os.lseek(fd, sec3len - 3, os.SEEK_CUR)
 
-                        if sec4len < 120:
-                            length &= 0x7FFFFF
-                            length *= 120
-                            length -= sec4len
-                            length += 4
+                    sec4len = self._get_bytes(fd, 3)
 
-                if edition == 2:
-                    length = get(8)
+                    if sec4len < 120:
+                        length &= 0x7FFFFF
+                        length *= 120
+                        length -= sec4len
+                        length += 4
 
-                yield offset, length
-                offset = os.lseek(fd, offset + length, os.SEEK_SET)
+            if edition == 2:
+                length = self._get_bytes(fd, 8)
 
-        finally:
-            os.close(fd)
+            if end_pos > 0 and offset + length > end_pos:
+                return
+
+            yield offset, length
+            offset = os.lseek(fd, offset + length, os.SEEK_SET)
 
 
 class GribCodesHandle(CodesHandle):
@@ -247,8 +245,8 @@ class GribField(Field):
         Size of the message (in bytes)
     """
 
-    def __init__(self, path, offset, length):
-        super().__init__()
+    def __init__(self, path, offset, length, backend):
+        super().__init__(backend)
         self.path = path
         self._offset = offset
         self._length = length
@@ -293,16 +291,25 @@ class GribField(Field):
     #         name = "paramId"
     #     return self.handle.get(name)
 
-    def write(self, f):
+    def write(self, f, bits_per_value=None):
         r"""Writes the message to a file object.
 
         Parameters
         ----------
         f: file object
             The target file object.
+        bits_per_value: int or None
+            Set the ``bitsPerValue`` GRIB key in the generated GRIB message. When
+            None the ``bitsPerValue`` stored in the metadata will be used.
         """
+        if bits_per_value is not None:
+            handle = self.handle.clone()
+            handle.set_long("bitsPerValue", bits_per_value)
+        else:
+            handle = self.handle
+
         # assert isinstance(f, io.IOBase)
-        self.handle.write_to(f)
+        handle.write_to(f)
 
     def message(self):
         r"""Returns a buffer containing the encoded message.

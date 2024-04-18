@@ -14,11 +14,17 @@ import os
 
 from earthkit.data import from_source
 from earthkit.data.core.caching import CACHE
+from earthkit.data.decorators import detect_out_filename
 from earthkit.data.readers import reader
+from earthkit.data.utils.parts import PathAndParts
 
 from . import Source
 
 LOG = logging.getLogger(__name__)
+
+
+class FileSourcePathAndParts(PathAndParts):
+    compress = False
 
 
 class FileSourceMeta(type(Source), type(os.PathLike)):
@@ -33,11 +39,15 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     _reader_ = None
     content_type = None
 
-    def __init__(self, path=None, filter=None, merger=None, **kwargs):
+    def __init__(self, path=None, filter=None, merger=None, parts=None, **kwargs):
         Source.__init__(self, **kwargs)
-        self.path = path
         self.filter = filter
         self.merger = merger
+        self._path_and_parts = FileSourcePathAndParts(path, parts)
+
+        if self._kwargs.get("indexing", False):
+            if not self._path_and_parts.is_empty():
+                raise ValueError("Cannot specify parts when indexing is enabled!")
 
     def mutate(self):
         if isinstance(self.path, (list, tuple)):
@@ -46,7 +56,10 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
             else:
                 return from_source(
                     "multi",
-                    [from_source("file", p, **self._kwargs) for p in self.path],
+                    [
+                        from_source("file", p, parts=part, **self._kwargs)
+                        for p, part in zip(self.path, self.parts)
+                    ],
                     filter=self.filter,
                     merger=self.merger,
                 )
@@ -80,7 +93,9 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = reader(self, self.path, content_type=self.content_type)
+            self._reader_ = reader(
+                self, self.path, content_type=self.content_type, parts=self.parts
+            )
         return self._reader_
 
     def __iter__(self):
@@ -115,6 +130,7 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     def values(self):
         return self._reader.values
 
+    @detect_out_filename
     def save(self, path, **kwargs):
         return self._reader.save(path, **kwargs)
 
@@ -176,6 +192,18 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
 
     def statistics(self, **kwargs):
         return self._reader.statistics(**kwargs)
+
+    @property
+    def path(self):
+        return self._path_and_parts.path
+
+    @path.setter
+    def path(self, v):
+        self._path_and_parts.update(v)
+
+    @property
+    def parts(self):
+        return self._path_and_parts.parts
 
 
 class IndexedFileSource(FileSource):

@@ -7,17 +7,23 @@
 # nor does it submit to any jurisdiction.
 #
 
+import logging
 import os
 
-import hda
+try:
+    import hda
+except ImportError:
+    raise ImportError("WEkEO access requires 'hda' to be installed")
+
 import yaml
 from hda.api import DataOrderRequest
 
 from earthkit.data.core.thread import SoftThreadPool
-from earthkit.data.utils import tqdm
 
 from .file import FileSource
 from .prompt import APIKeyPrompt
+
+LOG = logging.getLogger(__name__)
 
 
 class HDAAPIKeyPrompt(APIKeyPrompt):
@@ -48,9 +54,14 @@ class HDAAPIKeyPrompt(APIKeyPrompt):
     ]
 
     rcfile = "~/.hdarc"
+    rcfile_env = "HDA_RC"
+    config_env = ("HDA_URL", "HDA_USER", "HDA_PASSWORD")
 
     def save(self, input, file):
         yaml.dump(input, file, default_flow_style=False)
+
+    def load(self, file):
+        return yaml.safe_load(file.read())
 
 
 class ApiClient(hda.Client):
@@ -93,21 +104,10 @@ class WekeoRetriever(FileSource):
     WekeoRetriever
     """
 
-    @staticmethod
-    def client():
-        prompt = HDAAPIKeyPrompt()
-        prompt.check()
-
-        try:
-            return ApiClient()
-        except Exception as e:
-            if ".hdarc" in str(e):
-                prompt.ask_user_and_save()
-                return ApiClient()
-            raise
-
-    def __init__(self, dataset, *args, **kwargs):
+    def __init__(self, dataset, *args, prompt=True, **kwargs):
         super().__init__()
+
+        self.prompt = prompt
 
         assert isinstance(dataset, str)
         if len(args):
@@ -118,22 +118,44 @@ class WekeoRetriever(FileSource):
 
         requests = self.requests(**kwargs)
 
-        self.client()  # Trigger password prompt before thraeding
+        self.client(self.prompt)  # Trigger password prompt before threading
 
         nthreads = min(self.settings("number-of-download-threads"), len(requests))
 
         if nthreads < 2:
             self.path = [self._retrieve(dataset, r) for r in requests]
         else:
+            from earthkit.data.utils.progbar import tqdm
+
             with SoftThreadPool(nthreads=nthreads) as pool:
                 futures = [pool.submit(self._retrieve, dataset, r) for r in requests]
 
                 iterator = (f.result() for f in futures)
                 self.path = list(tqdm(iterator, leave=True, total=len(requests)))
 
+    @staticmethod
+    def client(use_prompt):
+        if use_prompt:
+            prompt = HDAAPIKeyPrompt()
+            prompt.check()
+
+            try:
+                return ApiClient()
+            except Exception as e:
+                # if no rc file is available hda throws
+                # ConfigurationError: Missing or incomplete configuration
+                if ".hdarc" in str(e) or not prompt.has_config_env():
+                    LOG.warning(e)
+                    LOG.exception(f"Could not load hda client. {e}")
+                    prompt.ask_user_and_save()
+                    return ApiClient()
+                raise
+        else:
+            return ApiClient()
+
     def _retrieve(self, dataset, request):
         def retrieve(target, args):
-            self.client().retrieve(args[0], args[1], target)
+            self.client(self.prompt).retrieve(args[0], args[1], target)
 
         return self.cache_file(
             retrieve,

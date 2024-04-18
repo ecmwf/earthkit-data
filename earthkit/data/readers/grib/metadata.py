@@ -11,6 +11,7 @@ import datetime
 
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
+from earthkit.data.decorators import cached_method
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
@@ -207,13 +208,15 @@ class GribMetadata(Metadata):
 
     __handle_type = None
 
-    def __init__(self, handle):
+    def __init__(self, handle, extra=None):
         if not isinstance(handle, self._handle_type()):
             raise TypeError(
                 f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}"
             )
         self._handle = handle
         self._geo = None
+        if extra is not None:
+            self.extra = extra
 
     @staticmethod
     def _handle_type():
@@ -226,16 +229,16 @@ class GribMetadata(Metadata):
             GribMetadata.__handle_type = GribCodesHandle
         return GribMetadata.__handle_type
 
-    def __len__(self):
-        return sum(map(lambda i: 1, self.keys()))
+    def _len(self):
+        return sum(map(lambda i: 1, self._keys()))
 
-    def __contains__(self, key):
+    def _contains(self, key):
         return self._handle.__contains__(key)
 
-    def keys(self):
+    def _keys(self):
         return self._handle.keys()
 
-    def items(self):
+    def _items(self):
         return self._handle.items()
 
     def _get(self, key, astype=None, default=None, raise_on_missing=False):
@@ -259,6 +262,7 @@ class GribMetadata(Metadata):
         d = dict(*args, **kwargs)
 
         new_value_size = None
+        extra = None
         gridspec = d.pop("gridspec", None)
         if gridspec is not None:
             from earthkit.data.readers.grib.gridspec import GridSpecConverter
@@ -269,21 +273,27 @@ class GribMetadata(Metadata):
             )
             d.update(md)
 
-            # at the moment we cannot use headers_only clone when setting the
-            # geography
-            handle = self._handle.clone()
-        else:
-            handle = self._handle.clone(headers_only=True)
+        handle = self._handle.clone(headers_only=True)
+        # whether headers_only=True works depends on the eccCodes version and the
+        # message properties. We check it by comparing the message lengths.
+        shrunk = handle.get_long("totalLength") < self._handle.get_long("totalLength")
+
+        # some keys, needed later, are not copied into the clone when
+        # headers_only=True. We store them as extra keys.
+        if shrunk:
+            extra = {"bitsPerValue": self._handle.get("bitsPerValue", default=0)}
 
         handle.set_multiple(d)
 
+        # we need to set the values to the new size otherwise the clone generated
+        # with headers_only=True will be inconsistent
         if new_value_size is not None and new_value_size > 0:
             import numpy as np
 
             vals = np.zeros(new_value_size)
             handle.set_values(vals)
 
-        return GribMetadata(handle)
+        return GribMetadata(handle, extra=extra)
 
     def as_namespace(self, namespace=None):
         r"""Return all the keys/values from a namespace.
@@ -392,6 +402,9 @@ class RestrictedGribMetadata(GribMetadata):
     """Hide internal keys and namespaces in GRIB metadata"""
 
     EKD_NAMESPACE = "grib"
+
+    # ideally bitsPerValue should be here. However, it is treated as an
+    # extra key and cannot be an internal key.
     INTERNAL_KEYS = [
         "minimum",
         "maximum",
@@ -410,7 +423,6 @@ class RestrictedGribMetadata(GribMetadata):
         "numberOfMissing",
         "numberOfCodedValues",
         "bitmapPresent",
-        "bitsPerValue",
         "offsetValuesBy",
         "packingError",
         "referenceValue",
@@ -421,13 +433,17 @@ class RestrictedGribMetadata(GribMetadata):
     INTERNAL_NAMESPACES = ["statistics"]
 
     def __init__(self, md):
-        super().__init__(md._handle)
+        super().__init__(md._handle, extra=md.extra)
 
-    def __len__(self):
+    @cached_method
+    def _len(self):
         if self.INTERNAL_KEYS:
-            return len(self.keys())
+            # NOTE: argumentless super cannot be used in list comprehension
+            m = super()._contains
+            surplus = [1 for x in self.INTERNAL_KEYS if not m(x)]
+            return super()._len() + len(surplus)
         else:
-            return super().__len__()
+            return super()._len()
 
     def _is_internal(self, key):
         ns, _, name = key.partition(".")
@@ -440,31 +456,31 @@ class RestrictedGribMetadata(GribMetadata):
         else:
             return name in self.INTERNAL_KEYS
 
-    def __contains__(self, key):
+    def _contains(self, key):
         if self.INTERNAL_KEYS:
-            return not self._is_internal(key) and super().__contains__(key)
+            return not self._is_internal(key) and super()._contains(key)
         else:
-            return super().__contains__(key)
+            return super()._contains(key)
 
-    def keys(self):
+    def _keys(self):
         if self.INTERNAL_KEYS:
             r = []
-            for k in super().keys():
+            for k in super()._keys():
                 if k not in self.INTERNAL_KEYS:
                     r.append(k)
             return r
         else:
-            return super().keys()
+            return super()._keys()
 
-    def items(self):
+    def _items(self):
         if self.INTERNAL_KEYS:
             r = {}
-            for k, v in super().items():
+            for k, v in super()._items():
                 if k not in self.INTERNAL_KEYS:
                     r[k] = v
             return r.items()
         else:
-            return super().items()
+            return super()._items()
 
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         ns, _, name = key.partition(".")

@@ -11,7 +11,10 @@ import logging
 import os
 import shutil
 
-import pyfdb
+try:
+    import pyfdb
+except ImportError:
+    raise ImportError("FDB access requires 'pyfdb' to be installed")
 
 from earthkit.data.sources.file import FileSource
 from earthkit.data.sources.stream import StreamSource

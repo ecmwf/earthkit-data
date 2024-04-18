@@ -20,7 +20,6 @@ import numpy as np
 import earthkit.data
 from earthkit.data.core.order import build_remapping
 from earthkit.data.indexing.database.json import json_serialiser
-from earthkit.data.utils import tqdm
 from earthkit.data.utils.parts import Part
 
 from . import (
@@ -224,6 +223,7 @@ class EntriesLoader:
     def build_sql_indexes(self):
         indexed_columns = [k for k, v in self.keys.items() if k.startswith("i_")]
         indexed_columns += ["path"]
+        from earthkit.data.utils.progbar import tqdm
 
         pbar = tqdm(indexed_columns, desc="Building indexes")
         for n in pbar:

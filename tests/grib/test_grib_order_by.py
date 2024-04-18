@@ -16,16 +16,18 @@ import sys
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.testing import ARRAY_BACKENDS
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import load_file_or_numpy_fs  # noqa: E402
+from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
 
 
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_order_by_single_message(mode):
-    s = load_file_or_numpy_fs("test_single.grib", mode, folder="data")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_order_by_single_message(fl_type, array_backend):
+    s = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
 
     r = s.order_by("shortName")
     assert len(r) == 1
@@ -53,7 +55,8 @@ class _CustomOrder:
             return -1
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "params,expected_meta",
     [
@@ -100,11 +103,12 @@ class _CustomOrder:
     ],
 )
 def test_grib_order_by_single_file_(
-    mode,
+    fl_type,
+    array_backend,
     params,
     expected_meta,
 ):
-    f = load_file_or_numpy_fs("test6.grib", mode)
+    f = load_grib_data("test6.grib", fl_type, array_backend)
 
     g = f.order_by(params)
     assert len(g) == len(f)
@@ -113,7 +117,8 @@ def test_grib_order_by_single_file_(
         assert g.metadata(k) == v
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "params,expected_meta",
     [
@@ -142,9 +147,9 @@ def test_grib_order_by_single_file_(
         ),
     ],
 )
-def test_grib_order_by_multi_file(mode, params, expected_meta):
-    f1 = load_file_or_numpy_fs("test4.grib", mode)
-    f2 = load_file_or_numpy_fs("test6.grib", mode)
+def test_grib_order_by_multi_file(fl_type, array_backend, params, expected_meta):
+    f1 = load_grib_data("test4.grib", fl_type, array_backend)
+    f2 = load_grib_data("test6.grib", fl_type, array_backend)
     f = from_source("multi", [f1, f2])
 
     g = f.order_by(params)
@@ -154,9 +159,10 @@ def test_grib_order_by_multi_file(mode, params, expected_meta):
         assert g.metadata(k) == v
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_order_by_with_sel(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_order_by_with_sel(fl_type, array_backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     g = f.sel(level=500)
     assert len(g) == 3
@@ -171,9 +177,10 @@ def test_grib_order_by_with_sel(mode):
     assert r.metadata("shortName") == ["v", "u", "t"]
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_order_by_valid_datetime(mode):
-    f = load_file_or_numpy_fs("t_time_series.grib", mode, folder="data")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_order_by_valid_datetime(fl_type, array_backend):
+    f = load_grib_data("t_time_series.grib", fl_type, array_backend, folder="data")
 
     g = f.order_by(valid_datetime="descending")
     assert len(g) == 10

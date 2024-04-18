@@ -13,8 +13,6 @@ import math
 from abc import abstractmethod
 from collections import defaultdict
 
-import numpy as np
-
 import earthkit.data
 from earthkit.data.core.order import build_remapping, normalize_order_by
 from earthkit.data.core.select import normalize_selection, selection_from_index
@@ -510,10 +508,16 @@ class Index(Source):
     def __getitem__(self, n):
         if isinstance(n, slice):
             return self.from_slice(n)
-        if isinstance(n, (tuple, list, np.ndarray)):
+        if isinstance(n, (tuple, list)):
             return self.from_multi(n)
         if isinstance(n, dict):
             return self.from_dict(n)
+        else:
+            import numpy as np
+
+            if isinstance(n, np.ndarray):
+                return self.from_multi(n)
+
         return self._getitem(n)
 
     def from_slice(self, s):
@@ -525,6 +529,8 @@ class Index(Source):
         return self.new_mask_index(self, indices)
 
     def from_multi(self, a):
+        import numpy as np
+
         # will raise IndexError if an index is out of bounds
         n = len(self)
         indices = np.arange(0, n if n > 0 else 0)

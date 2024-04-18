@@ -9,20 +9,3 @@
 
 DATETIME = "valid_datetime"
 GRIDSPEC = "grid_spec"
-
-"""
-Collection of constants in SI units.
-"""
-
-R_earth = 6371229
-r"""Average radius of the Earth [:math:`m`]. See [IFS-CY47R3-PhysicalProcesses]_
- (Chapter 12)."""
-
-full_circle = 360
-r"""Full circle in degrees"""
-
-north = 90
-r"""Latitude of the north pole in degrees"""
-
-south = -90
-r"""Latitude of the south pole in degrees"""

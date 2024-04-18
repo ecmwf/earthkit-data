@@ -14,7 +14,7 @@ from importlib import import_module
 
 from earthkit.data.core import Base
 from earthkit.data.core.settings import SETTINGS
-from earthkit.data.decorators import locked
+from earthkit.data.decorators import detect_out_filename, locked
 
 LOG = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class ReaderMeta(type(Base), type(os.PathLike)):
 
 
 class Reader(Base, os.PathLike, metaclass=ReaderMeta):
-    appendable = False  # Set to True if the data can be appened to and existing file
+    appendable = False  # Set to True if the data can be appended to and existing file
     binary = True
 
     def __init__(self, source, path):
@@ -32,6 +32,7 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
 
         self._source = weakref.ref(source)
         self.path = path
+        self.source_filename = self.source.source_filename
 
     @property
     def source(self):
@@ -60,6 +61,7 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
     def cache_file(self, *args, **kwargs):
         return self.source.cache_file(*args, **kwargs)
 
+    @detect_out_filename
     def save(self, path, **kwargs):
         mode = "wb" if self.binary else "w"
         with open(path, mode) as f:
@@ -82,6 +84,9 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
     def index_content(self):
         LOG.warning(f"index-content(): Ignoring {self.path}")
         return []
+
+    def ranges(self):
+        self.source._kw
 
 
 _READERS = {}
@@ -140,7 +145,7 @@ def _unknown(method_name, source, path_or_data, **kwargs):
     return unknowns[method_name](source, path_or_data, **kwargs)
 
 
-def reader(source, path, content_type=None):
+def reader(source, path, **kwargs):
     """Create the reader for a file/directory specified by path"""
     assert isinstance(path, str), source
 
@@ -164,6 +169,12 @@ def reader(source, path, content_type=None):
         return DirectoryReader(source, path).mutate()
     LOG.debug("Reader for %s", path)
 
+    if not os.path.exists(path):
+        raise FileExistsError(f"No such file exists: '{path}'")
+
+    if os.path.getsize(path) == 0:
+        raise Exception(f"File is empty: '{path}'")
+
     n_bytes = SETTINGS.get("reader-type-check-bytes")
     with open(path, "rb") as f:
         magic = f.read(n_bytes)
@@ -175,20 +186,20 @@ def reader(source, path, content_type=None):
         source,
         path,
         magic=magic,
-        content_type=content_type,
+        **kwargs,
     )
 
 
-def memory_reader(source, buffer):
+def memory_reader(source, buffer, **kwargs):
     """Create a reader for data held in a memory buffer"""
     assert isinstance(buffer, (bytes, bytearray)), source
     n_bytes = SETTINGS.get("reader-type-check-bytes")
     magic = buffer[: min(n_bytes, len(buffer) - 1)]
 
-    return _find_reader("memory_reader", source, buffer, magic=magic)
+    return _find_reader("memory_reader", source, buffer, magic=magic, **kwargs)
 
 
-def stream_reader(source, stream, memory, content_type=None):
+def stream_reader(source, stream, memory, **kwargs):
     """Create a reader for a stream"""
     magic = None
     if hasattr(stream, "peek") and callable(stream.peek):
@@ -206,5 +217,5 @@ def stream_reader(source, stream, memory, content_type=None):
         stream,
         magic=magic,
         memory=memory,
-        content_type=content_type,
+        **kwargs,
     )
