@@ -13,6 +13,7 @@ from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
 from earthkit.data.decorators import cached_method
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
+from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
 
@@ -133,6 +134,9 @@ class GribFieldGeography(Geography):
             west=self.metadata.get("longitudeOfFirstGridPointInDegrees", None),
             east=self.metadata.get("longitudeOfLastGridPointInDegrees", None),
         )
+
+    def gridspec(self):
+        return make_gridspec(self.metadata)
 
 
 class GribMetadata(Metadata):
@@ -256,20 +260,38 @@ class GribMetadata(Metadata):
 
     def override(self, *args, **kwargs):
         d = dict(*args, **kwargs)
-        handle = self._handle.clone(headers_only=True)
 
+        new_value_size = None
+        extra = None
+        gridspec = d.pop("gridspec", None)
+        if gridspec is not None:
+            from earthkit.data.readers.grib.gridspec import GridSpecConverter
+
+            edition = d.get("edition", self["edition"])
+            md, new_value_size = GridSpecConverter.to_metadata(
+                gridspec, edition=edition
+            )
+            d.update(md)
+
+        handle = self._handle.clone(headers_only=True)
         # whether headers_only=True works depends on the eccCodes version and the
         # message properties. We check it by comparing the message lengths.
         shrunk = handle.get_long("totalLength") < self._handle.get_long("totalLength")
-
-        handle.set_multiple(d)
 
         # some keys, needed later, are not copied into the clone when
         # headers_only=True. We store them as extra keys.
         if shrunk:
             extra = {"bitsPerValue": self._handle.get("bitsPerValue", default=0)}
-        else:
-            extra = None
+
+        handle.set_multiple(d)
+
+        # we need to set the values to the new size otherwise the clone generated
+        # with headers_only=True will be inconsistent
+        if new_value_size is not None and new_value_size > 0:
+            import numpy as np
+
+            vals = np.zeros(new_value_size)
+            handle.set_values(vals)
 
         return GribMetadata(handle, extra=extra)
 

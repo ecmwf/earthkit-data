@@ -37,13 +37,26 @@ from earthkit.data.testing import earthkit_examples_file, load_nc_or_xr_source
             dict(
                 variable=["t"],
                 level=[500, 700],
-                time=datetime.datetime(2018, 8, 1, 12, 0),
+                valid_datetime=datetime.datetime(2018, 8, 1, 12, 0),
             ),
             [
                 ["t", 700, datetime.datetime(2018, 8, 1, 12, 0)],
                 ["t", 500, datetime.datetime(2018, 8, 1, 12, 0)],
             ],
-            ["variable", "level", "time"],
+            ["variable", "level", "valid_datetime"],
+        ),
+        (
+            dict(
+                variable=["t"],
+                level=[500, 700],
+                date=20180801,
+                time=1200,
+            ),
+            [
+                ["t", 700, 20180801, 1200],
+                ["t", 500, 20180801, 1200],
+            ],
+            ["variable", "level", "date", "time"],
         ),
     ],
 )

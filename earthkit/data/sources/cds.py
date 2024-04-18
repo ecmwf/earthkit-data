@@ -12,12 +12,17 @@ import logging
 import sys
 from functools import cached_property
 
-import cdsapi
+try:
+    import cdsapi
+except ImportError:
+    raise ImportError("CDS access requires 'cdsapi' to be installed")
+
 import yaml
 
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.decorators import normalize
-from earthkit.data.utils import ensure_iterable, tqdm
+from earthkit.data.utils import ensure_iterable
+from earthkit.data.utils.progbar import tqdm
 
 from .file import FileSource
 from .prompt import APIKeyPrompt
@@ -192,7 +197,7 @@ class CdsRetriever(FileSource):
                 *[batched(ensure_iterable(request[k]), v) for k, v in split_on.items()]
             ):
                 subrequest = dict(zip(split_on, values))
-                requests.append(request | subrequest)
+                requests.append({**request, **subrequest})
         return requests
 
     def client(self):

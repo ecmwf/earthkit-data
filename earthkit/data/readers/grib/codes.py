@@ -113,7 +113,7 @@ class GribCodesMessagePositionIndex(CodesMessagePositionIndex):
                 if length & 0x800000:
                     sec1len = self._get_bytes(fd, 3)
                     os.lseek(fd, 4, os.SEEK_CUR)
-                    flags = self._get_bytes(1)
+                    flags = self._get_bytes(fd, 1)
                     os.lseek(fd, sec1len - 8, os.SEEK_CUR)
 
                     if flags & (1 << 7):
