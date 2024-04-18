@@ -188,6 +188,8 @@ class XArrayFieldListCore(FieldList):
 
         options = dict()
         options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+        if not options:
+            options = dict(**kwargs)
 
         return xr.open_mfdataset(
             paths,
@@ -346,7 +348,7 @@ class NetCDFMultiFieldList(NetCDFFieldList, MultiIndex):
         # try:
 
         if not kwargs:
-            kwargs = {"xarray_open_mfdataset_kwargs": dict(combine="by_coords")}
+            kwargs = dict(combine="by_coords")
 
         for x in self._indexes:
             if isinstance(x, NetCDFMaskFieldList):

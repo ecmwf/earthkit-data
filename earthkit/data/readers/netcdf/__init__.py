@@ -66,6 +66,8 @@ class NetCDFReader(Reader):
 
         options = dict()
         options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+        if not options:
+            options = dict(**kwargs)
 
         return xr.open_mfdataset(
             paths,
