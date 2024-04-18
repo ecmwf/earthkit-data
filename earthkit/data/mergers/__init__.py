@@ -15,7 +15,7 @@ from earthkit.data.utils import string_to_args
 
 LOG = logging.getLogger(__name__)
 
-FORWARDS = ("to_xarray", "to_pandas", "to_tfdataset")
+FORWARDS = ("to_xarray", "to_pandas")
 
 
 def _nearest_common_class(objects):
@@ -86,16 +86,6 @@ class DefaultMerger(Merger):
             **kwargs,
         )
 
-    def to_tfdataset(self, **kwargs):
-        from .tfdataset import merge
-
-        return merge(
-            sources=self.sources,
-            paths=self.paths,
-            reader_class=self.reader_class,
-            **kwargs,
-        )
-
     def to_xarray(self, **kwargs):
         from .xarray import merge
 
@@ -118,9 +108,6 @@ class ObjMerger(Merger):
     def to_pandas(self, *args, **kwargs):
         return self.obj.to_pandas(self.paths_or_sources, **kwargs)
 
-    def to_tfdataset(self, *args, **kwargs):
-        return self.obj.to_tfdataset(self.paths_or_sources, **kwargs)
-
 
 class CallableMerger(Merger):
     def __init__(self, func, sources, *args, **kwargs):
@@ -132,7 +119,6 @@ class CallableMerger(Merger):
 
     to_xarray = _call_func
     to_pandas = _call_func
-    to_tfdataset = _call_func
 
 
 class XarrayGenericMerger(Merger):

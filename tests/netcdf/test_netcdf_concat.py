@@ -74,6 +74,55 @@ def test_netcdf_concat(mode):
         ],
     }
 
+    import xarray as xr
+
+    target = xr.merge([ds1.to_xarray(), ds2.to_xarray()])
+    merged = ds.to_xarray()
+    assert target.identical(merged)
+
+
+def test_netcdf_read_multiple_files():
+    ds = from_source(
+        "file",
+        [
+            earthkit_test_data_file("era5_2t_1.nc"),
+            earthkit_test_data_file("era5_2t_2.nc"),
+        ],
+    )
+
+    assert len(ds) == 2
+    assert ds.metadata("variable") == ["t2m", "t2m"]
+
+    assert ds[0].datetime() == {
+        "base_time": datetime.datetime(2021, 3, 1, 12, 0),
+        "valid_time": datetime.datetime(2021, 3, 1, 12, 0),
+    }
+    assert ds[1].datetime() == {
+        "base_time": datetime.datetime(2021, 3, 2, 12, 0),
+        "valid_time": datetime.datetime(2021, 3, 2, 12, 0),
+    }
+    assert ds.datetime() == {
+        "base_time": [
+            datetime.datetime(2021, 3, 1, 12, 0),
+            datetime.datetime(2021, 3, 2, 12, 0),
+        ],
+        "valid_time": [
+            datetime.datetime(2021, 3, 1, 12, 0),
+            datetime.datetime(2021, 3, 2, 12, 0),
+        ],
+    }
+
+    import xarray as xr
+
+    target = xr.merge(
+        [
+            xr.open_dataset(earthkit_test_data_file("era5_2t_1.nc")),
+            xr.open_dataset(earthkit_test_data_file("era5_2t_2.nc")),
+        ]
+    )
+    merged = ds.to_xarray()
+    assert target.identical(merged)
+
 
 @pytest.mark.parametrize("custom_merger", (merger_func, Merger_obj()))
 def test_netdcf_merge_custom(custom_merger):
