@@ -9,12 +9,13 @@
 
 import logging
 
+from earthkit.data.readers import Reader
 from earthkit.data.sources.file import FileSource
 from earthkit.data.utils import string_to_args
 
 LOG = logging.getLogger(__name__)
 
-FORWARDS = ("to_xarray", "to_pandas", "to_tfdataset")
+FORWARDS = ("to_xarray", "to_pandas")
 
 
 def _nearest_common_class(objects):
@@ -58,9 +59,13 @@ class Merger:
         LOG.debug("nearest_common_class %s", self.common)
 
         if issubclass(self.common, FileSource):
+            # TODO: avoid calling _ methods
             readers = [s._reader for s in self.sources]
             self.reader_class = _nearest_common_class(readers)
             LOG.debug("nearest_common_class %s", self.reader_class)
+            self.paths = [s.path for s in self.sources]
+        elif issubclass(self.common, Reader):
+            self.reader_class = self.common
             self.paths = [s.path for s in self.sources]
 
     @property
@@ -73,16 +78,6 @@ class Merger:
 class DefaultMerger(Merger):
     def to_pandas(self, **kwargs):
         from .pandas import merge
-
-        return merge(
-            sources=self.sources,
-            paths=self.paths,
-            reader_class=self.reader_class,
-            **kwargs,
-        )
-
-    def to_tfdataset(self, **kwargs):
-        from .tfdataset import merge
 
         return merge(
             sources=self.sources,
@@ -113,9 +108,6 @@ class ObjMerger(Merger):
     def to_pandas(self, *args, **kwargs):
         return self.obj.to_pandas(self.paths_or_sources, **kwargs)
 
-    def to_tfdataset(self, *args, **kwargs):
-        return self.obj.to_tfdataset(self.paths_or_sources, **kwargs)
-
 
 class CallableMerger(Merger):
     def __init__(self, func, sources, *args, **kwargs):
@@ -127,7 +119,6 @@ class CallableMerger(Merger):
 
     to_xarray = _call_func
     to_pandas = _call_func
-    to_tfdataset = _call_func
 
 
 class XarrayGenericMerger(Merger):

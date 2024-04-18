@@ -196,9 +196,11 @@ def test_url_netcdf_source_save():
         earthkit_remote_test_data_file("examples/test.nc"),
     )
 
-    tmp = temp_file()
-    ds.save(tmp.path)
-    assert os.path.exists(tmp.path)
+    with temp_file() as tmp:
+        ds.save(tmp)
+        assert os.path.exists(tmp)
+        ds_saved = from_source("file", tmp)
+        assert len(ds_saved) == 2
 
 
 if __name__ == "__main__":

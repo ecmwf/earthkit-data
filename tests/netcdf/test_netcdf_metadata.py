@@ -22,17 +22,12 @@ from earthkit.data.testing import earthkit_examples_file, load_nc_or_xr_source
     "key,expected_value",
     [
         ("variable", "t"),
-        # ("variable:s", "t"),
-        # ("variable:str", "t"),
-        # ("centre", "ecmf"),
-        # ("centre:l", 98),
         ("level", 1000),
-        # ("level:l", 1000),
-        # ("level:int", 1000),
         (["variable"], ["t"]),
         (["variable", "level"], ["t", 1000]),
         (("variable"), "t"),
         (("variable", "level"), ("t", 1000)),
+        (("param", "levelist"), ("t", 1000)),
     ],
 )
 def test_netcdf_metadata_single_field(mode, key, expected_value):

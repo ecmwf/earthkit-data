@@ -7,7 +7,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-import ecmwf.opendata
+
+try:
+    import ecmwf.opendata
+except ImportError:
+    raise ImportError(
+        "ECMWF Open Data access requires 'ecmwf-opendata' to be installed"
+    )
 
 from .file import FileSource
 

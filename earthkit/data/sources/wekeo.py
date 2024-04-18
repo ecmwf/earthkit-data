@@ -10,7 +10,11 @@
 import logging
 import os
 
-import hda
+try:
+    import hda
+except ImportError:
+    raise ImportError("WEkEO access requires 'hda' to be installed")
+
 import yaml
 from hda.api import DataOrderRequest
 

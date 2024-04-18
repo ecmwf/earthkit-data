@@ -1,3 +1,5 @@
+.. _install:
+
 Installation
 ============
 
@@ -42,7 +44,6 @@ Alternatively, you can install the following components:
     - wekeo: provides access to the :ref:`data-sources-wekeo` and :ref:`data-sources-wekeocds` sources
     - fdb: provides access to the :ref:`data-sources-fdb` source
     - polytope: provides access to the :ref:`data-sources-polytope` source
-    - bufr: provides full support for the :ref:`bufr` data type
     - odb: provides full support for the :ref:`odb` data type
     - geopandas: adds geojson/geopandas support
     - projection: adds projection support

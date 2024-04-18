@@ -10,7 +10,10 @@
 import logging
 import os
 
-from hda.api import DataOrderRequest
+try:
+    from hda.api import DataOrderRequest
+except ImportError:
+    raise ImportError("WEkEO access requires 'hda' to be installed")
 
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.decorators import normalize

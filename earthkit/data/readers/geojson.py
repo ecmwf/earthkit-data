@@ -91,7 +91,10 @@ class GeojsonReader(Reader):
 
     @classmethod
     def to_pandas_from_multi_paths(cls, paths, **kwargs):
-        import geopandas as gpd
+        try:
+            import geopandas as gpd
+        except ImportError:
+            raise ImportError("Geojson handling requires 'geopandas' to be installed")
 
         geo_df = gpd.pd.concat([gpd.read_file(path, **kwargs) for path in paths])
 

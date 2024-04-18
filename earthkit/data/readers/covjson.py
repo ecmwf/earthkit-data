@@ -17,10 +17,8 @@ class XarrayMixIn:
     def to_xarray(self, **kwargs):
         try:
             from eccovjson.api import Eccovjson
-        except Exception:
-            raise ModuleNotFoundError(
-                "this feature requires 'eccovjson' to be installed!"
-            )
+        except ImportError:
+            raise ImportError("covjason handling requires 'eccovjson' to be installed")
 
         decoder = Eccovjson().decode(self._json())
         return decoder.to_xarray()
