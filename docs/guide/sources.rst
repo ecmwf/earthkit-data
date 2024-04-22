@@ -305,7 +305,7 @@ stream
 .. py:function:: from_source("stream", stream, batch_size=1, group_by=None)
   :noindex:
 
-  The ``stream`` will read data from a stream, which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment it only works for :ref:`grib` and CoverageJson data.
+  The ``stream`` source will read data from a stream, which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment, it only works for :ref:`grib` and CoverageJson data.
 
   :param stream: the stream
   :param int batch_size: used when ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the messages will be loaded and stored in memory.  When ``batch_size`` is not zero ``from_source`` gives us a stream iterator object. During the iteration temporary objects are created for each message then get deleted when going out of scope. Used when ``group_by`` is unset.
@@ -314,7 +314,7 @@ stream
   :param dict **kwargs: other keyword arguments specifying the request
 
 
-  In the examples below, for simplicity, we create a file stream from a :ref:`grib` file and read it as a "stream". By default (``batch_size=1``) we will consume one message at a time:
+  In the examples below, for simplicity, we create a stream from a :ref:`grib` file. By default (``batch_size=1``) we will consume one message at a time:
 
   .. code-block:: python
 
@@ -591,8 +591,8 @@ fdb
   The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
 
   :param tuple *args: positional arguments specifying the request as a dict
-  :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` data.
-  :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the data is read straight to memory. For details see :ref:`stream source <data-sources-stream>`.
+  :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` data.
+  :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the data is read into memory. For details see :ref:`stream source <data-sources-stream>`.
   :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
   :type group_by: str, list of str
   :param dict **kwargs: other keyword arguments specifying the request
@@ -622,8 +622,11 @@ fdb
       ...
       GribField(msl,None,20230607,0,0,0)
       GribField(2t,None,20230607,0,0,0)
+      GribField(2d,None,20230607,0,0,0)
       GribField(msl,None,20230607,1200,0,0)
       GribField(2t,None,20230607,1200,0,0)
+      GribField(2d,None,20230607,1200,0,0)
+
 
   We can use ``group_by`` to read fields with a matching time. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>`:
 
@@ -748,7 +751,7 @@ polytope
   :param str user_email: specify the user email credential. Must be used together with ``user_key``. This is an alternative to using the ``POLYTOPE_USER_EMAIL`` environment variable. *Added in version 0.7.0*
   :param str user_key: specify the user key credential. Must be used together with ``user_email``. This is an alternative to using the ``POLYTOPE_USER_KEY`` environment variable. *Added in version 0.7.0*
   :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data.
-  :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the data is read straight to memory. For details see :ref:`stream source <data-sources-stream>`.
+  :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the data is read into memory. For details see :ref:`stream source <data-sources-stream>`.
   :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
   :type group_by: str, list of str
   :param dict **kwargs: other keyword arguments, these can include options passed to the polytope-client_
