@@ -228,16 +228,10 @@ class GribMultiFieldList(GribFieldList, MultiIndex):
         FieldList._init_from_multi(self, self)
 
 
-CNOUNTER = 0
-
-
 class GribFieldListInFiles(GribFieldList):
     def _getitem(self, n):
         if isinstance(n, int):
-            global CNOUNTER
             part = self.part(n if n >= 0 else len(self) + n)
-            print(f"CREATE FIELD {n=} {part.path} {CNOUNTER=}")
-            CNOUNTER += 1
             return GribField(part.path, part.offset, part.length, self.array_backend)
 
     def __len__(self):
