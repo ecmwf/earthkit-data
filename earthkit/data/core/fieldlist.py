@@ -654,6 +654,10 @@ class FieldList(Index):
         self._array_backend = index._indexes[0].array_backend
 
     @staticmethod
+    def from_fields(fields):
+        raise NotImplementedError
+
+    @staticmethod
     def from_numpy(array, metadata):
         from earthkit.data.sources.array_list import ArrayFieldList
 

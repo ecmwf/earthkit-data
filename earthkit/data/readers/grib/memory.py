@@ -47,46 +47,24 @@ class GribMemoryReader(Reader):
                 GribCodesHandle(handle, None, None), self._array_backend
             )
 
-    def peek(self):
-        """Returns the next available message without consuming it"""
-        if self._peeked is None:
-            handle = self._next_handle()
-            self._peeked = self._message_from_handle(handle)
-        return self._peeked
+    # def peek(self):
+    #     """Returns the next available message without consuming it"""
+    #     if self._peeked is None:
+    #         handle = self._next_handle()
+    #         self._peeked = self._message_from_handle(handle)
+    #     return self._peeked
 
-    def read_batch(self, n):
-        fields = []
-        for _ in range(n):
-            try:
-                fields.append(self.__next__())
-            except StopIteration:
-                break
-        if not fields:
-            raise StopIteration
+    def batched(self, n):
+        from earthkit.data.utils.batch import batched
 
-        return GribFieldListInMemory.from_fields(fields)
+        return batched(self, n, maker=self.to_fieldlist)
 
-    def read_group(self, group):
-        assert isinstance(group, list)
+    def group_by(self, *args):
+        from earthkit.data.utils.batch import group_by
 
-        fields = []
-        current_group = {}
-        while True:
-            f = self.peek()
-            if f is not None:
-                group_md = f._attributes(group)
-                if not current_group:
-                    current_group = group_md
-                if current_group == group_md:
-                    fields.append(f)
-                    self.__next__()
-                else:
-                    break
-            elif fields:
-                break
-            else:
-                raise StopIteration
+        return group_by(self, *args, maker=self.to_fieldlist)
 
+    def to_fieldlist(self, fields):
         return GribFieldListInMemory.from_fields(fields)
 
 
@@ -157,6 +135,10 @@ class GribFieldInMemory(GribField):
     @GribField.handle.getter
     def offset(self):
         return None
+
+    @staticmethod
+    def to_fieldlist(fields):
+        return GribFieldListInMemory.from_fields(fields)
 
 
 class GribFieldListInMemory(GribFieldList, Reader):

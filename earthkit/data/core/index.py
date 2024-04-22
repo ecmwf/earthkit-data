@@ -531,10 +531,16 @@ class Index(Source):
     def from_multi(self, a):
         import numpy as np
 
+        if not isinstance(a, list):
+            a = list(a)
+
+        # print(f"{a=}")
         # will raise IndexError if an index is out of bounds
         n = len(self)
         indices = np.arange(0, n if n > 0 else 0)
+        # print(f"{indices=}")
         indices = indices[a].tolist()
+        # print(f"{indices=}")
         return self.new_mask_index(self, indices)
 
     def from_dict(self, dic):
@@ -552,6 +558,51 @@ class Index(Source):
 
     def full(self, *coords):
         return FullIndex(self, *coords)
+
+    def batched(self, n):
+        """Iterate through the object in batches of ``n``.
+
+        Parameters
+        ----------
+        n: int
+            Batch size.
+
+        Returns
+        -------
+        object
+            Returns an iterator yielding batches of ``n`` elements. Each batch is a new object
+            containing a view to the data in the original object, so no data is copied. The last
+            batch may contain fewer than ``n`` elements.
+
+        """
+        from earthkit.data.utils.batch import batched
+
+        return batched(self, n, mode="indexed")
+
+    def group_by(self, *keys, sort=True):
+        """Iterate through the object in groups defined by metadata keys.
+
+        Parameters
+        ----------
+        *keys: tuple
+            Positional arguments specifying the metadata keys to group by.
+            Keys can be a single or multiple str, or a list or tuple of str.
+
+        sort: bool, optional
+            If ``True`` (default), the object is sorted by the metadata ``keys`` before grouping.
+            Sorting is only applied if the object is supporting the sorting operation.
+
+        Returns
+        -------
+        object
+            Returns an iterator yielding batches of elements grouped by the metadata ``keys``. Each
+            batch is a new object containing a view to the data in the original object, so no data
+            is copied. It generates a new group every time the value of the ``keys`` change.
+
+        """
+        from earthkit.data.utils.batch import group_by
+
+        return group_by(self, *keys, sort=sort, mode="indexed")
 
 
 class MaskIndex(Index):

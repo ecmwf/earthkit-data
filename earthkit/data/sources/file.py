@@ -205,6 +205,12 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     def parts(self):
         return self._path_and_parts.parts
 
+    def batched(self, *args):
+        return self._reader.batched(*args)
+
+    def group_by(self, *args):
+        return self._reader.group_by(*args)
+
 
 class IndexedFileSource(FileSource):
     def mutate(self):
