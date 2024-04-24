@@ -534,13 +534,10 @@ class Index(Source):
         if not isinstance(a, list):
             a = list(a)
 
-        # print(f"{a=}")
         # will raise IndexError if an index is out of bounds
         n = len(self)
         indices = np.arange(0, n if n > 0 else 0)
-        # print(f"{indices=}")
         indices = indices[a].tolist()
-        # print(f"{indices=}")
         return self.new_mask_index(self, indices)
 
     def from_dict(self, dic):
