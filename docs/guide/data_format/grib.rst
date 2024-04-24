@@ -39,6 +39,10 @@ The following table gives us an overview of the GRIB :class:`~data.readers.grib.
      -
    * - :ref:`iter`
      -
+   * - :ref:`batched`
+     - :meth:`~data.readers.grib.index.GribFieldList.batched`
+   * - :ref:`group_by`
+     - :meth:`~data.readers.grib.index.GribFieldList.group_by`
    * - :ref:`slice`
      -
    * - :ref:`sel`
