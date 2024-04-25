@@ -10,6 +10,7 @@
 import itertools
 import logging
 
+from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.readers import stream_reader
 from earthkit.data.sources.memory import MemoryBaseSource
 
@@ -66,6 +67,8 @@ class StreamSource(Source):
     def mutate(self):
         if self.memory:
             return StreamMemorySource(self._stream, **self._kwargs)
+        elif hasattr(self._reader, "to_fieldlist"):
+            return StreamFieldList(self._reader, **self._kwargs)
 
         return self
 
@@ -125,7 +128,6 @@ class MultiStreamSource(Source):
             from .multi import MultiSource
 
             return MultiSource([s() for s in self.sources])
-
         return self
 
     def __iter__(self):
@@ -140,6 +142,21 @@ class MultiStreamSource(Source):
         from earthkit.data.utils.batch import group_by
 
         return group_by(self, *args)
+
+
+class StreamFieldList(FieldList):
+    def __init__(self, reader, **kwargs):
+        super().__init__(**kwargs)
+        self._reader = reader
+
+    def __iter__(self):
+        return iter(self._reader)
+
+    def batched(self, n):
+        return self._reader.batched(n)
+
+    def group_by(self, *keys, **kwargs):
+        return self._reader.group_by(*keys)
 
 
 class StreamSourceMaker:

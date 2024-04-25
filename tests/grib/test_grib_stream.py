@@ -44,7 +44,7 @@ def test_grib_from_stream_group_by(array_backend, group):
         ds = from_source("stream", stream, array_backend=array_backend)
 
         # no methods are available
-        with pytest.raises(TypeError):
+        with pytest.raises((TypeError, NotImplementedError)):
             len(ds)
 
         ref = [
@@ -78,7 +78,7 @@ def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_sha
         ds = from_source("stream", stream)
 
         # no fieldlist methods are available on a StreamSource
-        with pytest.raises(TypeError):
+        with pytest.raises((TypeError, NotImplementedError)):
             len(ds)
 
         ref = [
@@ -106,7 +106,7 @@ def test_grib_from_stream_default():
         ds = from_source("stream", stream)
 
         # no fieldlist methods are available
-        with pytest.raises(TypeError):
+        with pytest.raises((TypeError, NotImplementedError)):
             len(ds)
 
         ref = [
@@ -125,6 +125,37 @@ def test_grib_from_stream_default():
         assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_from_stream_fieldlist_backend(array_backend):
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        ds = from_source("stream", stream, array_backend=array_backend)
+
+        assert ds.array_backend.name == array_backend
+        assert ds.to_array().shape == (6, 7, 12)
+
+        assert sum([1 for _ in ds]) == 0
+
+        with pytest.raises((RuntimeError, ValueError)):
+            ds.to_array()
+
+        # ref = [
+        #     ("t", 1000),
+        #     ("u", 1000),
+        #     ("v", 1000),
+        #     ("t", 850),
+        #     ("u", 850),
+        #     ("v", 850),
+        # ]
+
+        # for i, f in enumerate(ds):
+        #     assert f.metadata(("param", "level")) == ref[i], i
+        #     assert ds. array_backend f.values.shape == (7, 12)
+        #     break
+
+        # # stream consumed, no data is available
+        # assert sum([1 for _ in ds]) == 0
+
+
 @pytest.mark.parametrize(
     "_kwargs,expected_meta",
     [
@@ -138,7 +169,7 @@ def test_grib_from_stream_batched(_kwargs, expected_meta):
         ds = from_source("stream", stream)
 
         # no methods are available
-        with pytest.raises(TypeError):
+        with pytest.raises((TypeError, NotImplementedError)):
             len(ds)
 
         for i, f in enumerate(ds.batched(_kwargs["n"])):

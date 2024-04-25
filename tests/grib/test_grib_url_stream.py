@@ -57,7 +57,7 @@ def test_grib_url_stream_group_by(group):
     )
 
     # no methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     ref = [
@@ -92,7 +92,7 @@ def test_grib_url_stream_default():
     )
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     ref = [
@@ -130,7 +130,7 @@ def test_grib_from_stream_batched(_kwargs, expected_meta):
     )
 
     # no methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     cnt = 0
@@ -216,7 +216,7 @@ def test_grib_multi_url_stream_default():
     )
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     ref = [
@@ -258,7 +258,7 @@ def test_grib_multi_url_stream_batched(_kwargs, expected_meta):
     )
 
     # no methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     cnt = 0
@@ -369,7 +369,7 @@ def test_grib_single_url_stream_parts(path, parts, expected_meta):
     )
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     cnt = 0
@@ -401,7 +401,7 @@ def test_grib_single_url_stream_parts_as_arg_valid(parts, expected_meta):
     )
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     cnt = 0
@@ -469,7 +469,7 @@ def test_grib_multi_url_stream_parts(parts1, parts2, expected_meta):
     )
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     cnt = 0

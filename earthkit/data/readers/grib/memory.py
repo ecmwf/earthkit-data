@@ -20,7 +20,7 @@ LOG = logging.getLogger(__name__)
 
 
 class GribMemoryReader(Reader):
-    def __init__(self, array_backend=None):
+    def __init__(self, array_backend=None, **kwargs):
         self._peeked = None
         self._array_backend = ensure_backend(array_backend)
 
@@ -36,6 +36,7 @@ class GribMemoryReader(Reader):
         msg = self._message_from_handle(handle)
         if handle is not None:
             return msg
+        self.consumed_ = True
         raise StopIteration
 
     def _next_handle(self):
@@ -46,13 +47,6 @@ class GribMemoryReader(Reader):
             return GribFieldInMemory(
                 GribCodesHandle(handle, None, None), self._array_backend
             )
-
-    # def peek(self):
-    #     """Returns the next available message without consuming it"""
-    #     if self._peeked is None:
-    #         handle = self._next_handle()
-    #         self._peeked = self._message_from_handle(handle)
-    #     return self._peeked
 
     def batched(self, n):
         from earthkit.data.utils.batch import batched
@@ -104,7 +98,7 @@ class GribStreamReader(GribMemoryReader):
     """
 
     def __init__(self, stream, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
         self._stream = stream
         self._reader = eccodes.StreamReader(stream)
 
