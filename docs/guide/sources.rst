@@ -305,9 +305,10 @@ stream
 .. py:function:: from_source("stream", stream, read_all=False)
   :noindex:
 
-  The ``stream`` source will read data from a stream, which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment it only works for :ref:`grib` and CoverageJson data. For more details see :ref:`here <streams>`.
+  The ``stream`` source will read data from a stream (or streams), which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment it only works for :ref:`grib` and CoverageJson data. For more details see :ref:`here <streams>`.
 
-  :param stream: the stream
+  :param stream: the stream(s)
+  :type stream: stream, list, tuple
   :param bool read_all: when it is ``True`` all the data is read into memory from a stream. Used when ``stream=True``. *New in version 0.8.0*
 
   In the examples below, for simplicity, we create a file stream from a :ref:`grib` file. By default :ref:`from_source() <data-sources-stream>` returns an object that can only be used as an iterator.

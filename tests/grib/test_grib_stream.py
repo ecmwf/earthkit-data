@@ -14,6 +14,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
+from earthkit.data.sources.stream import StreamFieldList
 from earthkit.data.testing import ARRAY_BACKENDS, earthkit_examples_file
 
 
@@ -37,71 +38,7 @@ def repeat_list_items(items, count):
 #             from_source("stream", stream, **_kwargs)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-@pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
-def test_grib_from_stream_group_by(array_backend, group):
-    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream, array_backend=array_backend)
-
-        # no methods are available
-        with pytest.raises((TypeError, NotImplementedError)):
-            len(ds)
-
-        ref = [
-            [("t", 1000), ("u", 1000), ("v", 1000)],
-            [("t", 850), ("u", 850), ("v", 850)],
-        ]
-        for i, f in enumerate(ds.group_by(group)):
-            assert len(f) == 3
-            assert f.metadata(("param", "level")) == ref[i]
-            afl = f.to_fieldlist(array_backend=array_backend)
-            assert afl is not f
-            assert len(afl) == 3
-
-        # stream consumed, no data is available
-        assert sum([1 for _ in ds]) == 0
-
-
-@pytest.mark.parametrize(
-    "convert_kwargs,expected_shape",
-    [
-        ({}, (3, 7, 12)),
-        (None, (3, 7, 12)),
-        (None, (3, 7, 12)),
-        ({"flatten": False}, (3, 7, 12)),
-        ({"flatten": True}, (3, 84)),
-    ],
-)
-def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_shape):
-    group = "level"
-    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream)
-
-        # no fieldlist methods are available on a StreamSource
-        with pytest.raises((TypeError, NotImplementedError)):
-            len(ds)
-
-        ref = [
-            [("t", 1000), ("u", 1000), ("v", 1000)],
-            [("t", 850), ("u", 850), ("v", 850)],
-        ]
-
-        if convert_kwargs is None:
-            convert_kwargs = {}
-
-        for i, f in enumerate(ds.group_by(group)):
-            df = f.to_fieldlist(array_backend="numpy", **convert_kwargs)
-            assert len(df) == 3
-            assert df.metadata(("param", "level")) == ref[i]
-            assert df._array.shape == expected_shape
-            assert df.to_numpy(**convert_kwargs).shape == expected_shape
-            assert df.to_fieldlist(array_backend="numpy", **convert_kwargs) is df
-
-        # stream consumed, no data is available
-        assert sum([1 for _ in ds]) == 0
-
-
-def test_grib_from_stream_default():
+def test_grib_from_stream_iter():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source("stream", stream)
 
@@ -130,6 +67,8 @@ def test_grib_from_stream_fieldlist_backend(array_backend):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source("stream", stream, array_backend=array_backend)
 
+        assert isinstance(ds, StreamFieldList)
+
         assert ds.array_backend.name == array_backend
         assert ds.to_array().shape == (6, 7, 12)
 
@@ -137,23 +76,6 @@ def test_grib_from_stream_fieldlist_backend(array_backend):
 
         with pytest.raises((RuntimeError, ValueError)):
             ds.to_array()
-
-        # ref = [
-        #     ("t", 1000),
-        #     ("u", 1000),
-        #     ("v", 1000),
-        #     ("t", 850),
-        #     ("u", 850),
-        #     ("v", 850),
-        # ]
-
-        # for i, f in enumerate(ds):
-        #     assert f.metadata(("param", "level")) == ref[i], i
-        #     assert ds. array_backend f.values.shape == (7, 12)
-        #     break
-
-        # # stream consumed, no data is available
-        # assert sum([1 for _ in ds]) == 0
 
 
 @pytest.mark.parametrize(
@@ -215,6 +137,70 @@ def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shap
             assert df._array.shape == expected_shape, i
             assert df.to_numpy(**convert_kwargs).shape == expected_shape, i
             assert df.to_fieldlist(array_backend="numpy", **convert_kwargs) is df, i
+
+        # stream consumed, no data is available
+        assert sum([1 for _ in ds]) == 0
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
+def test_grib_from_stream_group_by(array_backend, group):
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        ds = from_source("stream", stream, array_backend=array_backend)
+
+        # no methods are available
+        with pytest.raises((TypeError, NotImplementedError)):
+            len(ds)
+
+        ref = [
+            [("t", 1000), ("u", 1000), ("v", 1000)],
+            [("t", 850), ("u", 850), ("v", 850)],
+        ]
+        for i, f in enumerate(ds.group_by(group)):
+            assert len(f) == 3
+            assert f.metadata(("param", "level")) == ref[i]
+            afl = f.to_fieldlist(array_backend=array_backend)
+            assert afl is not f
+            assert len(afl) == 3
+
+        # stream consumed, no data is available
+        assert sum([1 for _ in ds]) == 0
+
+
+@pytest.mark.parametrize(
+    "convert_kwargs,expected_shape",
+    [
+        ({}, (3, 7, 12)),
+        (None, (3, 7, 12)),
+        (None, (3, 7, 12)),
+        ({"flatten": False}, (3, 7, 12)),
+        ({"flatten": True}, (3, 84)),
+    ],
+)
+def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_shape):
+    group = "level"
+    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+        ds = from_source("stream", stream)
+
+        # no fieldlist methods are available on a StreamSource
+        with pytest.raises((TypeError, NotImplementedError)):
+            len(ds)
+
+        ref = [
+            [("t", 1000), ("u", 1000), ("v", 1000)],
+            [("t", 850), ("u", 850), ("v", 850)],
+        ]
+
+        if convert_kwargs is None:
+            convert_kwargs = {}
+
+        for i, f in enumerate(ds.group_by(group)):
+            df = f.to_fieldlist(array_backend="numpy", **convert_kwargs)
+            assert len(df) == 3
+            assert df.metadata(("param", "level")) == ref[i]
+            assert df._array.shape == expected_shape
+            assert df.to_numpy(**convert_kwargs).shape == expected_shape
+            assert df.to_fieldlist(array_backend="numpy", **convert_kwargs) is df
 
         # stream consumed, no data is available
         assert sum([1 for _ in ds]) == 0
@@ -343,6 +329,130 @@ def test_grib_save_when_loaded_from_stream():
             fs.save(tmp)
             fs_saved = from_source("file", tmp)
             assert len(fs) == len(fs_saved)
+
+
+def test_grib_multi_from_stream_iter():
+    stream1 = open(earthkit_examples_file("test.grib"), "rb")
+    stream2 = open(earthkit_examples_file("test4.grib"), "rb")
+    ds = from_source("stream", [stream1, stream2])
+
+    assert isinstance(ds, StreamFieldList)
+
+    # no fieldlist methods are available
+    with pytest.raises((TypeError, NotImplementedError)):
+        len(ds)
+
+    ref = [
+        ("2t", 0),
+        ("msl", 0),
+        ("t", 500),
+        ("z", 500),
+        ("t", 850),
+        ("z", 850),
+    ]
+
+    for i, f in enumerate(ds):
+        assert f.metadata(("param", "level")) == ref[i], i
+
+    # stream consumed, no data is available
+    assert sum([1 for _ in ds]) == 0
+
+
+@pytest.mark.parametrize(
+    "_kwargs,expected_meta",
+    [
+        ({"n": 1}, [["2t"], ["msl"], ["t"], ["z"], ["t"], ["z"]]),
+        ({"n": 2}, [["2t", "msl"], ["t", "z"], ["t", "z"]]),
+        ({"n": 3}, [["2t", "msl", "t"], ["z", "t", "z"]]),
+        ({"n": 4}, [["2t", "msl", "t", "z"], ["t", "z"]]),
+    ],
+)
+def test_grib_multi_grib_from_stream_batched(_kwargs, expected_meta):
+    stream1 = open(earthkit_examples_file("test.grib"), "rb")
+    stream2 = open(earthkit_examples_file("test4.grib"), "rb")
+    ds = from_source("stream", [stream1, stream2])
+
+    assert isinstance(ds, StreamFieldList)
+
+    # no methods are available
+    with pytest.raises((TypeError, NotImplementedError)):
+        len(ds)
+
+    cnt = 0
+    for i, f in enumerate(ds.batched(_kwargs["n"])):
+        assert len(f) == len(expected_meta[i])
+        f.metadata("param") == expected_meta[i]
+        cnt += 1
+
+    assert cnt == len(expected_meta)
+
+    # stream consumed, no data is available
+    assert sum([1 for _ in ds]) == 0
+
+
+def test_grib_multi_stream_memory():
+    stream1 = open(earthkit_examples_file("test.grib"), "rb")
+    stream2 = open(earthkit_examples_file("test4.grib"), "rb")
+    ds = from_source("stream", [stream1, stream2], read_all=True)
+
+    assert len(ds) == 6
+
+    md_ref = [
+        ("2t", 0),
+        ("msl", 0),
+        ("t", 500),
+        ("z", 500),
+        ("t", 850),
+        ("z", 850),
+    ]
+    # iteration
+    val = [f.metadata(("param", "level")) for f in ds]
+    assert val == md_ref, "iteration"
+
+    # metadata
+    val = ds.metadata(("param", "level"))
+    assert val == md_ref, "method"
+
+    # data
+    with pytest.raises(ValueError):
+        ds.to_numpy().shape
+
+    # first part
+    expected_shape = (2, 11, 19)
+    assert ds[0:2].to_numpy().shape == expected_shape
+
+    ref = np.array([262.78027344, 101947.8125])
+
+    vals = ds[0:2].to_numpy()[:, 0, 0]
+    assert np.allclose(vals, ref)
+
+    # second part
+    expected_shape = (4, 181, 360)
+    assert ds[2:].to_numpy().shape == expected_shape
+
+    ref = np.array([228.04600525, 48126.859375, 246.61032104, 11786.1132812])
+
+    vals = ds[2:].to_numpy()[:, 0, 0]
+    assert np.allclose(vals, ref)
+
+    # slicing
+    r = ds[0:3]
+    assert len(r) == 3
+    val = r.metadata(("param", "level"))
+    assert val == md_ref[0:3]
+
+    r = ds[-2:]
+    assert len(r) == 2
+    val = r.metadata(("param", "level"))
+    assert val == md_ref[-2:]
+
+    r = ds.sel(param="t")
+    assert len(r) == 2
+    val = r.metadata(("param", "level"))
+    assert val == [
+        ("t", 500),
+        ("t", 850),
+    ]
 
 
 if __name__ == "__main__":

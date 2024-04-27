@@ -28,13 +28,17 @@ def parse_stream_kwargs(**kwargs):
 class StreamMemorySource(MemoryBaseSource):
     def __init__(self, stream, **kwargs):
         super().__init__(**kwargs)
+        if not isinstance(stream, Stream):
+            raise ValueError(f"Invalid stream={stream}")
         self._stream = stream
         self._reader_ = None
 
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = stream_reader(self, self._stream, True, **self._kwargs)
+            self._reader_ = stream_reader(
+                self, self._stream.stream, True, **self._kwargs
+            )
             if self._reader_ is None:
                 raise TypeError(f"could not create reader for stream={self._stream}")
         return self._reader_
@@ -51,7 +55,7 @@ class StreamSource(Source):
     def __init__(self, stream, *, read_all=False, **kwargs):
         super().__init__()
         self._reader_ = None
-        self._stream = stream
+        self._stream = self._wrap_stream(stream)
         self.memory = read_all
         for k in ["group_by", "batch_size"]:
             if k in kwargs:
@@ -65,19 +69,25 @@ class StreamSource(Source):
         return iter(self._reader)
 
     def mutate(self):
-        if self.memory:
-            return StreamMemorySource(self._stream, **self._kwargs)
-        elif hasattr(self._reader, "to_fieldlist"):
-            return StreamFieldList(self._reader, **self._kwargs)
-
+        if isinstance(self._stream, (list, tuple)):
+            return MultiStreamSource(self._stream, read_all=self.memory)
+        else:
+            if self.memory:
+                return StreamMemorySource(self._stream, **self._kwargs)
+            elif hasattr(self._reader, "to_fieldlist"):
+                return StreamFieldList(self._reader, **self._kwargs)
         return self
 
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = stream_reader(self, self._stream, False, **self._kwargs)
+            self._reader_ = stream_reader(
+                self, self._stream.stream, False, **self._kwargs
+            )
             if self._reader_ is None:
-                raise TypeError(f"could not create reader for stream={self._stream}")
+                raise TypeError(
+                    f"could not create reader for stream={self._stream.stream}"
+                )
         return self._reader_
 
     def batched(self, n):
@@ -117,17 +127,44 @@ class StreamSource(Source):
         """
         return self._reader.group_by(*keys)
 
+    def _wrap_stream(self, stream):
+        if isinstance(stream, (list, tuple)):
+            r = []
+            for s in stream:
+                if not isinstance(s, Stream):
+                    r.append(Stream(s))
+                else:
+                    r.append(s)
+            return r
+        elif not isinstance(stream, Stream):
+            return Stream(stream)
+
+        return stream
+
+    def _status(self):
+        """For testing purposes."""
+        return {
+            "reader": self._reader_ is not None,
+            "stream": self._stream._stream is not None,
+        }
+
 
 class MultiStreamSource(Source):
     def __init__(self, sources, read_all=False, **kwargs):
-        self.sources = sources
+        super().__init__(**kwargs)
         self.memory = read_all
+        self.sources = self._from_sources(sources)
 
     def mutate(self):
         if self.memory:
             from .multi import MultiSource
 
-            return MultiSource([s() for s in self.sources])
+            return MultiSource([s.mutate() for s in self.sources])
+        else:
+            first = self.sources[0]
+            if hasattr(first._reader, "to_fieldlist"):
+                return StreamFieldList(self, **self._kwargs)
+
         return self
 
     def __iter__(self):
@@ -143,69 +180,69 @@ class MultiStreamSource(Source):
 
         return group_by(self, *args)
 
+    def _from_sources(self, sources):
+        r = []
+        for s in sources:
+            if isinstance(s, StreamSource):
+                r.append(s)
+            elif isinstance(s, Stream):
+                r.append(StreamSource(s, read_all=self.memory))
+            else:
+                raise TypeError(f"Invalid source={s}")
+        return r
 
-class StreamFieldList(FieldList):
-    def __init__(self, reader, **kwargs):
-        super().__init__(**kwargs)
-        self._reader = reader
+    def _status(self):
+        """For testing purposes."""
+        return [s._status() for s in self.sources]
+
+
+class StreamFieldList(FieldList, Source):
+    def __init__(self, source, **kwargs):
+        FieldList.__init__(self, **kwargs)
+        self._source = source
+
+    def mutate(self):
+        return self
 
     def __iter__(self):
-        return iter(self._reader)
+        return iter(self._source)
 
     def batched(self, n):
-        return self._reader.batched(n)
+        return self._source.batched(n)
 
     def group_by(self, *keys, **kwargs):
-        return self._reader.group_by(*keys)
+        return self._source.group_by(*keys)
 
 
-class StreamSourceMaker:
-    def __init__(self, source, stream_kwargs, **kwargs):
-        self.in_source = source
-        self._kwargs = kwargs
-        self.stream_kwargs = dict(stream_kwargs)
-        self.source = None
+class Stream:
+    def __init__(self, stream=None, maker=None, **kwargs):
+        self._stream = stream
+        self.maker = maker
+        self.kwargs = kwargs
+        if self._stream is None and self.maker is None:
+            raise ValueError("Either stream or maker must be provided")
 
-    def __call__(self):
-        if self.source is None:
-            stream = self.in_source.to_stream()
-            self.source = self._from_stream(
-                stream, **self.stream_kwargs, **self._kwargs
-            )
-
-            prev = None
-            src = self.source
-            while src is not prev:
-                prev = src
-                src = src.mutate()
-            self.source = src
-
-        return self.source
-
-    def __iter__(self):
-        return iter(self())
-
-    @staticmethod
-    def _from_stream(stream, read_all, **kwargs):
-        _kwargs = dict(read_all=read_all)
-        if read_all:
-            return StreamMemorySource(stream, **kwargs)
-        else:
-            return StreamSource(stream, **_kwargs, **kwargs)
+    @property
+    def stream(self):
+        if self._stream is None:
+            self._stream = self.maker()
+        return self._stream
 
 
-def _from_source(source, **kwargs):
+def make_stream_source_from_other(source, **kwargs):
     stream_kwargs, kwargs = parse_stream_kwargs(**kwargs)
 
     if not isinstance(source, (list, tuple)):
         source = [source]
 
+    for i, s in enumerate(source):
+        stream = Stream(maker=s.to_stream)
+        source[i] = StreamSource(stream, **stream_kwargs, **kwargs)
+
     if len(source) == 1:
-        maker = StreamSourceMaker(source[0], stream_kwargs, **kwargs)
-        return maker()
+        return source[0]
     else:
-        sources = [StreamSourceMaker(s, stream_kwargs, **kwargs) for s in source]
-        return MultiStreamSource(sources, **stream_kwargs)
+        return MultiStreamSource(source, **stream_kwargs)
 
 
 source = StreamSource
