@@ -51,12 +51,12 @@ class GribMemoryReader(Reader):
     def batched(self, n):
         from earthkit.data.utils.batch import batched
 
-        return batched(self, n, maker=self.to_fieldlist)
+        return batched(self, n, create=self.to_fieldlist)
 
-    def group_by(self, *args):
+    def group_by(self, *args, **kwargs):
         from earthkit.data.utils.batch import group_by
 
-        return group_by(self, *args, maker=self.to_fieldlist)
+        return group_by(self, *args, create=self.to_fieldlist, sort=False)
 
     def to_fieldlist(self, fields):
         return GribFieldListInMemory.from_fields(fields)
