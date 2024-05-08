@@ -38,10 +38,13 @@ def test_file_source_grib_save():
         assert os.path.isfile(os.path.join(tmpdir, "test2.grib"))
         # Check file can be saved in current dir with detected filename:
         here = os.curdir
+        print("here:", here)
         os.chdir(tmpdir)
+        print("tmpdir:", tmpdir)
         s.save()
         assert os.path.isfile("test.grib")
         os.chdir(here)
+        print("curdir:", os.curdir)
 
 
 def test_file_source_grib_no_overwrite():
