@@ -18,7 +18,6 @@ from earthkit.data import from_source, settings
 from earthkit.data.core.temporary import temp_directory, temp_file
 from earthkit.data.testing import (
     earthkit_examples_file,
-    earthkit_file,
     earthkit_remote_test_data_file,
     network_off,
 )
@@ -29,7 +28,6 @@ from earthkit.data.testing import (
     reason="file:// not working on Windows yet",
 )
 def test_url_file_source():
-    # filename = os.path.abspath(earthkit_file("docs/examples/test.nc"))
     filename = os.path.abspath(earthkit_examples_file("test.nc"))
     s = from_source("url", f"file://{filename}")
     assert len(s) == 2
@@ -174,7 +172,7 @@ def test_multi_url_parts_invalid():
     reason="file:// not working on Windows yet",
 )
 def test_url_part_file_source():
-    filename = os.path.abspath(earthkit_file("docs/examples/test.grib"))
+    filename = os.path.abspath(earthkit_examples_file("test.grib"))
     ds = from_source(
         "url",
         f"file://{filename}",

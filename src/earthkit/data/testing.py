@@ -45,6 +45,15 @@ def network_off():
         _NETWORK_PATCHER.stop()
 
 
+@contextmanager
+def preserve_cwd():
+    current_dir = os.getcwd()
+    try:
+        yield
+    finally:
+        os.chdir(current_dir)
+
+
 def earthkit_remote_test_data_file(*args):
     return os.path.join(_REMOTE_TEST_DATA_URL, *args)
 
