@@ -33,7 +33,7 @@ def test_file_source_grib_save():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     with temp_directory() as tmpdir:
         # Check file save to assigned filename
-        f_tmp = ds.path.join(tmpdir, "test2.grib")
+        f_tmp = os.path.join(tmpdir, "test2.grib")
         ds.save(f_tmp)
         assert os.path.isfile(f_tmp)
         # Check file can be saved in current dir with detected filename:
@@ -73,7 +73,7 @@ def test_file_source_netcdf_save():
     ds = from_source("file", earthkit_examples_file("test.nc"))
     with temp_directory() as tmpdir:
         # Check file save to assigned filename
-        f_tmp = ds.path.join(tmpdir, "test2.grib")
+        f_tmp = os.path.join(tmpdir, "test2.grib")
         ds.save(f_tmp)
         assert os.path.isfile(f_tmp)
         # Check file can be saved in current dir with detected filename:

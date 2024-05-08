@@ -49,7 +49,7 @@ def network_off():
 def preserve_cwd():
     current_dir = os.getcwd()
     try:
-        yield
+        yield None
     finally:
         os.chdir(current_dir)
 
