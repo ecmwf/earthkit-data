@@ -59,7 +59,7 @@ def detect_out_filename(func):
         ):
             warnings.warn(
                 UserWarning(
-                    f"Earhtkit refusing to overwrite the file we are currently reading: {args[0]}"
+                    f"Earthkit refusing to overwrite the file we are currently reading: {args[0]}"
                 )
             )
             return

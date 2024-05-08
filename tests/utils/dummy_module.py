@@ -14,7 +14,7 @@ def numpy_mean(
     a: T.Union[
         np.ndarray, xr.Dataset, xr.DataArray, xr.Variable, pd.DataFrame, pd.Series
     ],
-    **kwargs
+    **kwargs,
 ):
     return np.mean(a, **kwargs)
 
