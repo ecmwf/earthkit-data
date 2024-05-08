@@ -30,7 +30,7 @@ def test_file_source_grib():
 
 
 def test_file_source_grib_save():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", os.path.abspath(earthkit_examples_file("test.grib")))
     with temp_directory() as tmpdir:
         # Check file save to assigned filename
         f_tmp = os.path.join(tmpdir, "test2.grib")
@@ -44,7 +44,7 @@ def test_file_source_grib_save():
 
 
 def test_file_source_grib_no_overwrite():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", os.path.abspath(earthkit_examples_file("test.grib")))
     with temp_directory() as tmpdir:
         with preserve_cwd():
             os.chdir(tmpdir)
@@ -70,10 +70,10 @@ def test_file_source_netcdf():
 
 
 def test_file_source_netcdf_save():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ds = from_source("file", os.path.abspath(earthkit_examples_file("test.nc")))
     with temp_directory() as tmpdir:
         # Check file save to assigned filename
-        f_tmp = os.path.join(tmpdir, "test2.grib")
+        f_tmp = os.path.join(tmpdir, "test2.nc")
         ds.save(f_tmp)
         assert os.path.isfile(f_tmp)
         # Check file can be saved in current dir with detected filename:
@@ -84,7 +84,7 @@ def test_file_source_netcdf_save():
 
 
 def test_file_source_netcdf_no_overwrite():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ds = from_source("file", os.path.abspath(earthkit_examples_file("test.nc")))
     with temp_directory() as tmpdir:
         with preserve_cwd():
             os.chdir(tmpdir)
