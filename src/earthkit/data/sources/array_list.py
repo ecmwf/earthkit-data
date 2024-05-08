@@ -42,7 +42,7 @@ class ArrayField(Field):
         pass
 
     def _values(self, dtype=None):
-        """native array type"""
+        """Native array type"""
         if dtype is None:
             return self._array
         else:
