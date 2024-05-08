@@ -45,6 +45,7 @@ def test_file_source_grib_save():
         assert os.path.isfile("test.grib")
         os.chdir(here)
         print("curdir:", os.curdir)
+        assert False
 
 
 def test_file_source_grib_no_overwrite():
