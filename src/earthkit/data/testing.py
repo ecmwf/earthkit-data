@@ -29,7 +29,9 @@ _NETWORK_PATCHER = patch("socket.socket", side_effect=OfflineError)
 
 _REMOTE_TEST_DATA_URL = "https://get.ecmwf.int/repository/test-data/earthkit-data/"
 
-_ROOT_DIR = top = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+_ROOT_DIR = top = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+)
 if not os.path.exists(os.path.join(_ROOT_DIR, "tests", "data")):
     _ROOT_DIR = "./"
 
@@ -41,6 +43,15 @@ def network_off():
         yield None
     finally:
         _NETWORK_PATCHER.stop()
+
+
+@contextmanager
+def preserve_cwd():
+    current_dir = os.getcwd()
+    try:
+        yield None
+    finally:
+        os.chdir(current_dir)
 
 
 def earthkit_remote_test_data_file(*args):

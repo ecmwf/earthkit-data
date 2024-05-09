@@ -32,7 +32,7 @@ class PandasDataFrameTranslator(PandasSeriesTranslator):
 
     def __call__(self):
         """
-        DataFrame requested, if Series convert to DataFrame.
+        Return DataFrame, if Series convert to DataFrame.
         """
         if isinstance(self.data, pd.Series):
             return self.data.to_frame()
@@ -45,7 +45,7 @@ class GeoPandasDataFrameTranslator(PandasSeriesTranslator):
 
     def __call__(self):
         """
-        GeoDataFrame requested, if normal pandas convert to geopandas.
+        Return GeoDataFrame, if normal pandas convert to geopandas.
         """
         import geopandas as gpd
 
