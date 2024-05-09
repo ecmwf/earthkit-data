@@ -195,9 +195,9 @@ class GribOutput:
         if "number" in metadata:
             compulsory += ("numberOfForecastsInEnsemble",)
             productDefinitionTemplateNumber = {"tp": 11}
-            metadata[
-                "productDefinitionTemplateNumber"
-            ] = productDefinitionTemplateNumber.get(handle.get("shortName"), 1)
+            metadata["productDefinitionTemplateNumber"] = (
+                productDefinitionTemplateNumber.get(handle.get("shortName"), 1)
+            )
 
         if metadata.get("type") in ("pf", "cf"):
             metadata.setdefault("typeOfGeneratingProcess", 4)
