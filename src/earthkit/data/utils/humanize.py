@@ -13,7 +13,34 @@ from collections import defaultdict
 
 
 def bytes(n):
-    u = ["", " KiB", " MiB", " GiB", " TiB", " PiB", "EiB", "ZiB", "YiB"]
+    """
+    >>> bytes(4096)
+    '4 KiB'
+    >>> bytes(4000)
+    '3.9 KiB'
+    """
+    if n < 0:
+        sign = "-"
+        n -= 0
+    else:
+        sign = ""
+
+    u = ["", " KiB", " MiB", " GiB", " TiB", " PiB", " EiB", " ZiB", " YiB"]
+    i = 0
+    while n >= 1024:
+        n /= 1024.0
+        i += 1
+    return "%s%g%s" % (sign, int(n * 10 + 0.5) / 10.0, u[i])
+
+
+def base2(n):
+    """
+    >>> base2(4096)
+    '4K'
+    >>> base2(4000)
+    '3.9K'
+    """
+    u = ["", "K", "M", "G", "T", " P", "E", "Z", "Y"]
     i = 0
     while n >= 1024:
         n /= 1024.0
@@ -254,14 +281,14 @@ def dict_to_human(query):
     return list_to_human(lst)
 
 
-def list_to_human(lst):
+def list_to_human(lst, conjunction="and"):
     if not lst:
         return "??"
 
     if len(lst) > 2:
         lst = [", ".join(lst[:-1]), lst[-1]]
 
-    return " and ".join(lst)
+    return f" {conjunction} ".join(lst)
 
 
 def as_number(value, name, units, none_ok):

@@ -21,7 +21,7 @@ def _normalize(lon, minimum):
 
 
 class BoundingBox:
-    r"""Represents a geographic bounding box.
+    r"""Represent a geographic bounding box.
 
     Parameters
     ----------
@@ -35,7 +35,7 @@ class BoundingBox:
         Eastern longitude (degrees)
     """
 
-    def __init__(self, *, north, west, south, east):
+    def __init__(self, *, north, west, south, east, check=True):
         # Convert to float as these values may come from Numpy
         self.north = min(float(north), 90.0)
         self.south = max(float(south), -90.0)
@@ -48,17 +48,17 @@ class BoundingBox:
         else:
             self.east = _normalize(float(east), self.west)
 
-        if self.north < self.south:
+        if self.north < self.south and check:
             raise ValueError(
                 f"Invalid bounding box, north={self.north} < south={self.south}"
             )
 
-        if self.west > self.east:
+        if self.west > self.east and check:
             raise ValueError(
                 f"Invalid bounding box, west={self.west} > east={self.east}"
             )
 
-        if self.east > self.west + 360:
+        if self.east > self.west + 360 and check:
             raise ValueError(
                 f"Invalid bounding box, east={self.east} > west={self.west}+360"
             )
@@ -252,12 +252,18 @@ class BoundingBox:
             return BoundingBox.make_invalid()
 
 
-def bounding_box(obj):
+def bounding_box(obj, check=True):
     if isinstance(obj, BoundingBox):
         return obj
 
     if isinstance(obj, (list, tuple)):
-        return BoundingBox(north=obj[0], west=obj[1], south=obj[2], east=obj[3])
+        return BoundingBox(
+            north=obj[0],
+            west=obj[1],
+            south=obj[2],
+            east=obj[3],
+            check=check,
+        )
 
     obj = get_wrapper(obj)
 

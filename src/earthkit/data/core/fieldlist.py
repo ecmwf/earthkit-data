@@ -12,7 +12,7 @@ from abc import abstractmethod
 from collections import defaultdict
 
 from earthkit.data.core import Base
-from earthkit.data.core.index import Index
+from earthkit.data.core.index import Index, MaskIndex, MultiIndex
 from earthkit.data.decorators import cached_method, detect_out_filename
 from earthkit.data.utils.array import ensure_backend, numpy_backend
 from earthkit.data.utils.metadata import metadata_argument
@@ -1416,3 +1416,22 @@ class FieldList(Index):
     def _to_array_fieldlist(self, **kwargs):
         md = [f.metadata() for f in self]
         return self.from_array(self.to_array(**kwargs), md)
+
+    @classmethod
+    def new_mask_index(self, *args, **kwargs):
+        return MaskFieldList(*args, **kwargs)
+
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(_, FieldList) for _ in sources)
+        return MultiFieldList(sources)
+
+
+class MaskFieldList(FieldList, MaskIndex):
+    def __init__(self, *args, **kwargs):
+        MaskIndex.__init__(self, *args, **kwargs)
+
+
+class MultiFieldList(FieldList, MultiIndex):
+    def __init__(self, *args, **kwargs):
+        MultiIndex.__init__(self, *args, **kwargs)

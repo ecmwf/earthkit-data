@@ -104,6 +104,7 @@ class OrderBase(OrderOrSelection):
         raise NotImplementedError()
 
     def compare_elements(self, a, b):
+        assert callable(self.remapping), (type(self.remapping), self.remapping)
         a_metadata = self.remapping(a.metadata)
         b_metadata = self.remapping(b.metadata)
         for k, v in self.actions.items():
@@ -120,18 +121,18 @@ class Order(OrderBase):
         def ascending(a, b):
             if a == b:
                 return 0
-            if a > b:
+            if b is None or a > b:
                 return 1
-            if a < b:
+            if a is None or a < b:
                 return -1
             raise ValueError(f"{a},{b}")
 
         def descending(a, b):
             if a == b:
                 return 0
-            if a > b:
+            if b is None or a > b:
                 return -1
-            if a < b:
+            if a is None or a < b:
                 return 1
             raise ValueError(f"{a},{b}")
 
@@ -169,6 +170,9 @@ class Order(OrderBase):
                     order[int(key)] = i
                 except ValueError:
                     pass
+                except TypeError:
+                    print('Cannot convert "%s" to int (%s)' % (key, type(key)))
+                    raise
                 try:
                     order[float(key)] = i
                 except ValueError:
