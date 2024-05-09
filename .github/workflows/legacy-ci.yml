@@ -1,4 +1,4 @@
-name: ci
+name: legacy-ci
 
 on:
   push:
@@ -65,7 +65,6 @@ jobs:
 
 
   documentation:
-    needs: [unit-tests-no-eccodes]
     if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
     runs-on: ubuntu-latest
     defaults:
@@ -79,7 +78,7 @@ jobs:
     - name: Install Conda environment with Micromamba
       uses: mamba-org/provision-with-micromamba@v12
       with:
-        environment-file: environment.yml
+        environment-file: tests/environment-unit-tests.yml
         environment-name: DEVELOP
         channels: conda-forge
         cache-env: true
@@ -92,37 +91,3 @@ jobs:
     - name: Build documentation
       run: |
         make docs-build
-
-  distribution:
-    needs: [documentation]
-    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ github.event.pull_request.head.sha || github.ref }}
-    - name: Build distributions
-      run: |
-        $CONDA/bin/python -m pip install build
-        $CONDA/bin/python -m build
-    - name: Publish a Python distribution to PyPI
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
-
-  notify:
-    if: always() && ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
-    needs:
-    - pre-commit
-    - unit-tests-no-eccodes
-    - documentation
-    runs-on: ubuntu-latest
-    steps:
-    - name: Trigger Teams notification
-      uses: ecmwf-actions/notify-teams@v1
-      with:
-        incoming_webhook: ${{ secrets.MS_TEAMS_INCOMING_WEBHOOK }}
-        needs_context: ${{ toJSON(needs) }}
