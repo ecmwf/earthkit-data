@@ -98,7 +98,7 @@ class Base(metaclass=MetaBase):
         """Reorder the elements of the object."""
         self._not_implemented()
 
-    def unique_values(self, *coords, remapping=None, progress_bar=True):
+    def unique_values(self, *coords, remapping=None, patches=None, progress_bar=True):
         """
         Given a list of metadata attributes, such as date, param, levels,
         returns the list of unique values for each attributes
@@ -109,7 +109,7 @@ class Base(metaclass=MetaBase):
         assert len(coords)
         assert all(isinstance(k, str) for k in coords), coords
 
-        remapping = build_remapping(remapping)
+        remapping = build_remapping(remapping, patches)
         iterable = self
 
         if progress_bar:
@@ -118,16 +118,16 @@ class Base(metaclass=MetaBase):
                 desc=f"Finding coords in dataset for {coords}",
             )
 
-        dic = defaultdict(dict)
+        vals = defaultdict(dict)
         for f in iterable:
             metadata = remapping(f.metadata)
             for k in coords:
                 v = metadata(k)
-                dic[k][v] = True
+                vals[k][v] = True
 
-        dic = {k: tuple(values.keys()) for k, values in dic.items()}
+        vals = {k: tuple(values.keys()) for k, values in vals.items()}
 
-        return dic
+        return vals
 
     # @abstractmethod
     # def to_points(self, *args, **kwargs):

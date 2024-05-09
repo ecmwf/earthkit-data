@@ -42,9 +42,8 @@ class ConstantMetadata(RawMetadata):
 
 
 class ConstantMaker:
-    def __init__(self, source_or_dataset):
-        self.source_or_dataset = source_or_dataset
-        self.field = source_or_dataset[0]
+    def __init__(self, field):
+        self.field = field
         self.shape = self.field.shape
 
     @cached_method
@@ -184,22 +183,59 @@ class ConstantMaker:
         )
         return result.flatten()
 
+    def __getattr__(self, name):
+        if "+" not in name and "-" not in name:
+            # If we are here, we are looking for a method that does not exist,
+            # it has to be a method with a time delta.
+            raise AttributeError(name)
+        if "+" in name:
+            fname, delta = name.split("+")
+            sign = 1
+        if "-" in name:
+            fname, delta = name.split("-")
+            sign = -1
+        method = getattr(self, fname)
+
+        if delta.endswith("h"):
+            factor = 60
+        elif delta.endswith("d"):
+            factor = 24 * 60
+        else:
+            raise ValueError(f"Invalid time delta {delta} in {name}")
+
+        delta = delta[:-1]
+        delta = int(delta)
+        delta = datetime.timedelta(minutes=delta) * factor * sign
+
+        def wrapper(date):
+            date = date + delta
+            value = method(date)
+            return value
+
+        return wrapper
+
 
 class ConstantField(Field):
-    def __init__(self, date, param, proc, shape, geometry, backend):
+    def __init__(self, maker, date, param, proc, number=None, array_backend=None):
+        self.maker = maker
         self.date = date
         self.param = param
         self.proc = proc
-        self._shape = shape
-        self._geometry = geometry
+        self.number = number
+        # self._shape = shape
+        # self._geometry = self.maker.field.metadata().geography
         d = dict(
             valid_datetime=date if isinstance(date, str) else date.isoformat(),
             param=param,
             level=None,
             levelist=None,
-            number=None,
+            number=number,
+            levtype=None,
         )
-        super().__init__(backend, metadata=ConstantMetadata(d, geometry))
+        super().__init__(
+            array_backend,
+            metadata=ConstantMetadata(d, self.maker.field.metadata().geography),
+        )
 
     def _make_metadata(self):
         pass
@@ -210,15 +246,8 @@ class ConstantField(Field):
             values = values.astype(dtype)
         return values
 
-    @property
-    def shape(self):
-        return self._shape
-
     def __repr__(self):
-        return "ConstantField(%s,%s)" % (
-            self.param,
-            self.date,
-        )
+        return "ConstantField(%s,%s,%s)" % (self.param, self.date, self.number)
 
 
 def make_datetime(date, time):
@@ -258,34 +287,64 @@ def index_to_coords(index: int, shape):
 
 
 class ConstantsFieldListCore(FieldList):
-    def __init__(self, source_or_dataset, request={}, repeat=1, **kwargs):
+    def __init__(self, source_or_dataset, request={}, **kwargs):
         request = dict(**request)
         request.update(kwargs)
 
         self.request = self._request(**request)
 
-        if "date" in self.request:
-            self.dates = [
-                make_datetime(date, time)
-                for date, time in itertools.product(
-                    self.request["date"], self.request.get("time", [None])
-                )
-            ]
-            assert len(set(self.dates)) == len(
-                self.dates
-            ), "Duplicates dates in constants."
-        else:
-            self.dates = source_or_dataset.unique_values("valid_datetime")[
-                "valid_datetime"
-            ]
+        def find_numbers(source_or_dataset):
+            if "number" in self.request:
+                return self.request["number"]
+
+            assert hasattr(source_or_dataset, "unique_values"), (
+                f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is"
+                " not a proper source or dataset"
+            )
+
+            return source_or_dataset.unique_values(
+                "number", patches={"number": {None: 0}}
+            )["number"]
+
+        def find_dates(source_or_dataset):
+            if "date" not in self.request and "time" in self.request:
+                raise ValueError("Cannot specify time without date")
+
+            if "date" in self.request and "time" not in self.request:
+                return self.request["date"]
+
+            if "date" in self.request and "time" in self.request:
+                dates = [
+                    make_datetime(date, time)
+                    for date, time in itertools.product(
+                        self.request["date"], self.request["time"]
+                    )
+                ]
+                assert len(set(dates)) == len(dates), "Duplicates dates in constants."
+                return dates
+
+            assert "date" not in self.request and "time" not in self.request
+            assert hasattr(source_or_dataset, "unique_values"), (
+                f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is"
+                " not a proper source or dataset"
+            )
+
+            return source_or_dataset.unique_values("valid_datetime")["valid_datetime"]
+
+        self.dates = find_dates(source_or_dataset)
 
         self.params = self.request["param"]
-        if not isinstance(self.params, list):
+        if not isinstance(self.params, (tuple, list)):
             self.params = [self.params]
-        self.repeat = repeat  # For ensembles
-        self.maker = ConstantMaker(source_or_dataset)
+
+        # self.numbers = self.request.get("number", [None])
+        self.numbers = find_numbers(source_or_dataset)
+        if not isinstance(self.numbers, (tuple, list)):
+            self.numbers = [self.numbers]
+
+        self.maker = ConstantMaker(field=source_or_dataset[0])
         self.procs = {param: getattr(self.maker, param) for param in self.params}
-        self._len = len(self.dates) * len(self.params) * self.repeat
+        self._len = len(self.dates) * len(self.params) * len(self.numbers)
 
         super().__init__(**kwargs)
 
@@ -312,23 +371,22 @@ class ConstantsFieldList(ConstantsFieldListCore):
             if n >= self._len or n < 0:
                 raise IndexError(n)
 
-            date, param, repeat = index_to_coords(
-                n, (len(self.dates), len(self.params), self.repeat)
+            date, param, number = index_to_coords(
+                n, (len(self.dates), len(self.params), len(self.numbers))
             )
-
-            assert repeat == 0, "Not implemented"
 
             date = self.dates[date]
             # assert isinstance(date, datetime.datetime), (date, type(date))
-
             param = self.params[param]
+            number = self.numbers[number]
+
             return ConstantField(
+                self.maker,
                 date,
                 param,
                 self.procs[param],
-                self.maker.shape,
-                self.maker.field.metadata().geography,
-                self.array_backend,
+                number=number,
+                array_backend=self.array_backend,
             )
 
 
