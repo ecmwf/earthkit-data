@@ -341,6 +341,14 @@ class Field(Base):
         lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype)
         return dict(lat=lat, lon=lon)
 
+    def grid_points(self):
+        r = self.to_latlon(flatten=True)
+        return r["lat"], r["lon"]
+
+    @property
+    def resolution(self):
+        return self._metadata.geography.resolution()
+
     @property
     def shape(self):
         r"""tuple: Get the shape of the field.
@@ -1416,6 +1424,11 @@ class FieldList(Index):
     def _to_array_fieldlist(self, **kwargs):
         md = [f.metadata() for f in self]
         return self.from_array(self.to_array(**kwargs), md)
+
+    def cube(self, *args, **kwargs):
+        from earthkit.data.indexing.cube import FieldCube
+
+        return FieldCube(self, *args, **kwargs)
 
     @classmethod
     def new_mask_index(self, *args, **kwargs):

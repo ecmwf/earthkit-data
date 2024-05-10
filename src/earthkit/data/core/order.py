@@ -30,8 +30,8 @@ class Remapping(dict):
             return func
 
         class CustomJoiner:
-            def format_name(self, x):
-                return func(x)
+            def format_name(self, x, **kwargs):
+                return func(x, **kwargs)
 
             def format_string(self, x):
                 return str(x)
@@ -41,12 +41,12 @@ class Remapping(dict):
 
         joiner = CustomJoiner()
 
-        def wrapped(name):
-            return self.substitute(name, joiner)
+        def wrapped(name, **kwargs):
+            return self.substitute(name, joiner, **kwargs)
 
         return wrapped
 
-    def substitute(self, name, joiner):
+    def substitute(self, name, joiner, **kwargs):
         if name in self.lists:
             if callable(self.lists[name]):
                 return self.lists[name]()
@@ -54,7 +54,7 @@ class Remapping(dict):
             lst = []
             for i, bit in enumerate(self.lists[name]):
                 if i % 2:
-                    p = joiner.format_name(bit)
+                    p = joiner.format_name(bit, **kwargs)
                     if p is not None:
                         lst.append(p)
                     else:
@@ -62,7 +62,7 @@ class Remapping(dict):
                 else:
                     lst.append(joiner.format_string(bit))
             return joiner.join(lst)
-        return joiner.format_name(name)
+        return joiner.format_name(name, **kwargs)
 
     def as_dict(self):
         return dict(self)
@@ -99,8 +99,8 @@ class Patch(dict):
     def __call__(self, func):
         next = self.proc(func)
 
-        def wrapped(name):
-            result = next(name)
+        def wrapped(name, **kwargs):
+            result = next(name, **kwargs)
             if name == self.name:
                 result = self.patch(result)
             return result

@@ -138,6 +138,26 @@ class GribFieldGeography(Geography):
     def gridspec(self):
         return make_gridspec(self.metadata)
 
+    def resolution(self):
+        grid_type = self.metadata.get("gridType")
+
+        if grid_type in ("reduced_gg", "reduced_rotated_gg"):
+            return self.metadata.get("gridName")
+
+        if grid_type == "regular_ll":
+            x = self.metadata.get("DxInDegrees")
+            y = self.metadata.get("DyInDegrees")
+            assert x == y, (x, y)
+            return x
+
+        if grid_type == "lambert":
+            x = self.metadata.get("DxInMetres")
+            y = self.metadata.get("DyInMetres")
+            assert x == y, (x, y)
+            return str(x / 1000).replace(".", "p") + "km"
+
+        raise ValueError(f"Unknown gridType={grid_type}")
+
 
 class GribMetadata(Metadata):
     """Represent the metadata of a GRIB field.

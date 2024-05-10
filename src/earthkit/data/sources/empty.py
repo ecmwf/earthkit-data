@@ -7,10 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-from . import Source
+
+from earthkit.data.core.fieldlist import FieldList
 
 
-class EmptySource(Source):
+class EmptySource(FieldList):
     def ignore(self):
         # Used by multi-source
         return True

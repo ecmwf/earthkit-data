@@ -127,3 +127,7 @@ class Geography(metaclass=ABCMeta):
         :class:`~data.core.gridspec.GridSpec>`
         """
         pass
+
+    @abstractmethod
+    def resolution(self):
+        pass

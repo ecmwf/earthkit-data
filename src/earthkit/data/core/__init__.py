@@ -122,7 +122,7 @@ class Base(metaclass=MetaBase):
         for f in iterable:
             metadata = remapping(f.metadata)
             for k in coords:
-                v = metadata(k)
+                v = metadata(k, default=None)
                 vals[k][v] = True
 
         vals = {k: tuple(values.keys()) for k, values in vals.items()}
