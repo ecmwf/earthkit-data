@@ -78,6 +78,7 @@ class FieldCube:
         # print(ds[2])
         # print(ds[3])
         self.source = ds.order_by(*args, remapping=remapping, patches=patches)
+
         del ds
         # print("after")
         # print(self.source[0])
@@ -174,8 +175,6 @@ class FieldCube:
             i = coords_to_index(x, user_shape)
             assert isinstance(i, int), i
             dataset_indexes.append(i)
-
-        print("dataset_indexes", dataset_indexes, "tuple", tuple(dataset_indexes))
 
         ds = self.source[tuple(dataset_indexes)]
 

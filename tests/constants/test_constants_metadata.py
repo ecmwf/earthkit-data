@@ -36,7 +36,8 @@ def test_constants_valid_datetime():
     ds, _ = load_constants_fs(last_step=12)
     f = ds[4]
 
-    assert f.metadata("valid_datetime") == "2020-05-13T18:00:00"
+    assert f.metadata("valid_datetime") == datetime.datetime(2020, 5, 13, 18)
+    # "2020-05-13T18:00:00"
 
 
 if __name__ == "__main__":
