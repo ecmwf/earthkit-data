@@ -29,7 +29,7 @@ def _is_default(magic, content_type):
 
 def reader(source, path, *, magic=None, deeper_check=False, parts=None, **kwargs):
     if _match_magic(magic, deeper_check):
-        from .reader import GRIBReader
+        from .file import GRIBReader
 
         return GRIBReader(source, path, parts=parts)
 
