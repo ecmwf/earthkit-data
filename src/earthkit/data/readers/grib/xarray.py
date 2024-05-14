@@ -134,12 +134,13 @@ class XarrayMixIn:
         xarray_open_dataset_kwargs.update(
             Kwargs(
                 user=user_xarray_open_dataset_kwargs,
-                default={},
+                default=default,
                 forced={
                     "errors": "raise",
                     "engine": "cfgrib",
                 },
                 logging_owner="xarray_open_dataset_kwargs",
+                warn_non_default=False,
             )
         )
 

@@ -34,6 +34,7 @@ class Kwargs(dict):
         forced=None,
         logging_owner="",
         logging_main_key="",
+        warn_non_default=True,
     ):
         if default is None:
             default = {}
@@ -53,13 +54,14 @@ class Kwargs(dict):
                 )
                 continue
 
-            if k in default and v != default[k]:
-                warnings.warn(
-                    (
-                        f"In {logging_owner} {logging_main_key}, overriding the default value "
-                        f"({k}={default[k]}) with {k}={v} is not recommended."
+            if warn_non_default:
+                if k in default and v != default[k]:
+                    warnings.warn(
+                        (
+                            f"In {logging_owner} {logging_main_key}, overriding the default value "
+                            f"({k}={default[k]}) with {k}={v} is not recommended."
+                        )
                     )
-                )
 
             kwargs[k] = v
 
