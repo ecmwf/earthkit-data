@@ -9,6 +9,7 @@
 
 import copy
 import logging
+import warnings
 
 LOG = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ class Kwargs(dict):
         forced=None,
         logging_owner="",
         logging_main_key="",
+        warn_non_default=True,
     ):
         if default is None:
             default = {}
@@ -44,7 +46,7 @@ class Kwargs(dict):
 
         for k, v in user.items():
             if k in forced and v != forced[k]:
-                LOG.warning(
+                warnings.warn(
                     (
                         f"In {logging_owner} {logging_main_key},"
                         f"ignoring attempt to override {k}={forced[k]} with {k}={v}."
@@ -52,13 +54,14 @@ class Kwargs(dict):
                 )
                 continue
 
-            if k in default and v != default[k]:
-                LOG.warning(
-                    (
-                        f"In {logging_owner} {logging_main_key}, overriding the default value "
-                        f"({k}={default[k]}) with {k}={v} is not recommended."
+            if warn_non_default:
+                if k in default and v != default[k]:
+                    warnings.warn(
+                        (
+                            f"In {logging_owner} {logging_main_key}, overriding the default value "
+                            f"({k}={default[k]}) with {k}={v} is not recommended."
+                        )
                     )
-                )
 
             kwargs[k] = v
 
