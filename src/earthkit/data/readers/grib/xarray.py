@@ -70,12 +70,19 @@ class XarrayMixIn:
             xarray_open_dataset_kwargs: dict, optional
                 Keyword arguments passed to ``xarray.open_dataset()``. Default value is::
 
-                    {"backend_kwargs": {"errors": "raise"},
+                    {"backend_kwargs": {"errors": "raise", "ignore_keys": []},
                     "squeeze": False, "cache": True, "chunks": None,
                     "errors": "raise", "engine": "cfgrib"}
 
-                Please note that the settings ``errors="raise"`` and ``engine="cfgrib"`` are always
-                enforced and cannot be changed.
+                Please note that:
+
+                - ``backend_kwargs`` is passed to :xref:`cfgrib`, with the exception
+                  of ``ignore_keys``
+                - ``ignore_keys``  is not supported by :xref:`cfgrib`, but implemented in
+                  earthkit-data. It specifies the metadata keys that should be ignored when reading
+                  the GRIB messages in the backend.
+                - settings ``errors="raise"`` and ``engine="cfgrib"`` are always enforced and cannot
+                  be changed.
 
         Returns
         -------
@@ -121,7 +128,7 @@ class XarrayMixIn:
                 logging_main_key=key,
             )
 
-        default = dict(squeeze=False)  # TODO:Documenet me
+        default = dict(squeeze=False)  # TODO:Document me
         default.update(self.xarray_open_dataset_kwargs())
 
         xarray_open_dataset_kwargs.update(
@@ -132,6 +139,8 @@ class XarrayMixIn:
                     "errors": "raise",
                     "engine": "cfgrib",
                 },
+                logging_owner="xarray_open_dataset_kwargs",
+                warn_non_default=False,
             )
         )
 
