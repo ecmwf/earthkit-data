@@ -9,6 +9,9 @@
 
 import logging
 from datetime import timedelta
+from functools import cached_property
+
+import numpy as np
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.geography import Geography
@@ -233,6 +236,25 @@ class XArrayField(Field):
             return self._to_numpy()
         else:
             return self._to_numpy().astype(dtype, copy=False)
+
+    @cached_property
+    def grid_mapping(self):
+        def tidy(x):
+            if isinstance(x, np.ndarray):
+                return x.tolist()
+            if isinstance(x, (tuple, list)):
+                return [tidy(y) for y in x]
+            if isinstance(x, dict):
+                return {k: tidy(v) for k, v in x.items()}
+            return x
+
+        # return tidy(
+        #     self.owner.xr_dataset[
+        #         self.owner.xr_dataset[self.variable].grid_mapping
+        #     ].attrs
+        # )
+
+        return tidy(self._ds[self._ds[self.variable].grid_mapping].attrs)
 
 
 class NetCDFMetadata(XArrayMetadata):
