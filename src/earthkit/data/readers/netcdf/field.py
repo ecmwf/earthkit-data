@@ -107,7 +107,7 @@ class XArrayMetadata(RawMetadata):
         if time is not None:
             self.time = to_datetime(time)
             if "forecast_reference_time" in field._ds.data_vars:
-                forecast_reference_time = field.ds["forecast_reference_time"].data
+                forecast_reference_time = field._ds["forecast_reference_time"].data
                 assert forecast_reference_time.ndim == 0, forecast_reference_time
                 forecast_reference_time = forecast_reference_time.astype(
                     "datetime64[s]"
