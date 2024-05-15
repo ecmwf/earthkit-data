@@ -7,9 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
+import itertools
 import logging
-from collections import deque
 
+from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.readers import stream_reader
 from earthkit.data.sources.memory import MemoryBaseSource
 
@@ -19,47 +20,25 @@ LOG = logging.getLogger(__name__)
 
 
 def parse_stream_kwargs(**kwargs):
-    group_by = kwargs.pop("group_by", None)
-    batch_size = kwargs.pop("batch_size", 1)
-    batch_size, group_by = check_stream_kwargs(batch_size, group_by)
-    stream_kwargs = dict(batch_size=batch_size, group_by=group_by)
+    read_all = kwargs.pop("read_all", False)
+    stream_kwargs = dict(read_all=read_all)
     return (stream_kwargs, kwargs)
-
-
-def check_stream_kwargs(batch_size, group_by):
-    if group_by is None:
-        group_by = []
-
-    if isinstance(group_by, str):
-        group_by = [group_by]
-    else:
-        try:
-            group_by = list(group_by)
-        except Exception:
-            raise TypeError(f"unsupported types in group_by={group_by}")
-
-    if group_by and not all([isinstance(x, str) for x in group_by]):
-        raise TypeError(f"group_by={group_by} must contain str values")
-
-    if batch_size is None:
-        batch_size = 1
-
-    if batch_size < 0:
-        raise ValueError(f"batch_size={batch_size} cannot be negative")
-
-    return (batch_size, group_by)
 
 
 class StreamMemorySource(MemoryBaseSource):
     def __init__(self, stream, **kwargs):
         super().__init__(**kwargs)
+        if not isinstance(stream, Stream):
+            raise ValueError(f"Invalid stream={stream}")
         self._stream = stream
         self._reader_ = None
 
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = stream_reader(self, self._stream, True, **self._kwargs)
+            self._reader_ = stream_reader(
+                self, self._stream.stream, True, **self._kwargs
+            )
             if self._reader_ is None:
                 raise TypeError(f"could not create reader for stream={self._stream}")
         return self._reader_
@@ -72,209 +51,198 @@ class StreamMemorySource(MemoryBaseSource):
         return self
 
 
-class StreamSourceBase(Source):
-    def __init__(self, stream, *, batch_size=1, group_by=None, **kwargs):
+class StreamSource(Source):
+    def __init__(self, stream, *, read_all=False, **kwargs):
         super().__init__()
         self._reader_ = None
-        self._stream = stream
-        self.batch_size, self.group_by = check_stream_kwargs(batch_size, group_by)
+        self._stream = self._wrap_stream(stream)
+        self.memory = read_all
+        for k in ["group_by", "batch_size"]:
+            if k in kwargs:
+                raise ValueError(
+                    f"Invalid argument '{k}' for StreamSource. Deprecated since 0.8.0."
+                )
+
         self._kwargs = kwargs
 
     def __iter__(self):
-        return self
+        return iter(self._reader)
 
     def mutate(self):
+        if isinstance(self._stream, (list, tuple)):
+            return MultiStreamSource(self._stream, read_all=self.memory)
+        else:
+            if self.memory:
+                return StreamMemorySource(self._stream, **self._kwargs)
+            elif hasattr(self._reader, "to_fieldlist"):
+                return StreamFieldList(self._reader, **self._kwargs)
         return self
 
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = stream_reader(self, self._stream, False, **self._kwargs)
+            self._reader_ = stream_reader(
+                self, self._stream.stream, False, **self._kwargs
+            )
             if self._reader_ is None:
-                raise TypeError(f"could not create reader for stream={self._stream}")
+                raise TypeError(
+                    f"could not create reader for stream={self._stream.stream}"
+                )
         return self._reader_
 
+    def batched(self, n):
+        """Iterate through the stream in batches of ``n``.
 
-class StreamSingleSource(StreamSourceBase):
-    def __init__(self, stream, **kwargs):
-        super().__init__(stream, **kwargs)
-        assert self.batch_size == 1
+        Parameters
+        ----------
+        n: int
+            Batch size.
 
-    def __next__(self):
-        return self._reader.__next__()
+        Returns
+        -------
+        object
+            Returns an iterator yielding batches of ``n`` elements. Each batch is a new object
+            containing a view to the data in the original object, so no data is copied. The last
+            batch may contain fewer than ``n`` elements.
 
+        """
+        return self._reader.batched(n)
 
-class StreamBatchSource(StreamSourceBase):
-    def __init__(self, stream, **kwargs):
-        super().__init__(stream, **kwargs)
-        assert self.batch_size > 1
+    def group_by(self, *keys, **kwargs):
+        """Iterate through the stream in groups defined by metadata keys.
 
-    def __next__(self):
-        return self._get_batch(self.batch_size)
+        Parameters
+        ----------
+        *keys: tuple
+            Positional arguments specifying the metadata keys to group by.
+            Keys can be a single or multiple str, or a list or tuple of str.
 
-    def _get_batch(self, n):
-        return self._reader.read_batch(n)
+        Returns
+        -------
+        object
+            Returns an iterator yielding batches of elements grouped by the metadata ``keys``. Each
+            batch is a new object containing a view to the data in the original object, so no data
+            is copied. It generates a new group every time the value of the ``keys`` change.
 
+        """
+        return self._reader.group_by(*keys)
 
-class StreamGroupSource(StreamSourceBase):
-    def __init__(self, stream, **kwargs):
-        super().__init__(stream, **kwargs)
-        assert self.group_by
+    def _wrap_stream(self, stream):
+        if isinstance(stream, (list, tuple)):
+            r = []
+            for s in stream:
+                if not isinstance(s, Stream):
+                    r.append(Stream(s))
+                else:
+                    r.append(s)
+            return r
+        elif not isinstance(stream, Stream):
+            return Stream(stream)
 
-    def __next__(self):
-        return self._reader.read_group(self.group_by)
+        return stream
+
+    def _status(self):
+        """For testing purposes."""
+        return {
+            "reader": self._reader_ is not None,
+            "stream": self._stream._stream is not None,
+        }
 
 
 class MultiStreamSource(Source):
-    def __init__(self, sources, group_by=None, batch_size=1):
-        self.sources = sources
-        if not isinstance(self.sources, deque):
-            self.sources = deque(self.sources)
-        self.group_by = group_by
-        self.batch_size = batch_size
-        self.current = None
+    def __init__(self, sources, read_all=False, **kwargs):
+        super().__init__(**kwargs)
+        self.memory = read_all
+        self.sources = self._from_sources(sources)
 
     def mutate(self):
-        if not self.group_by:
-            if self.batch_size == 0:
-                from .multi import MultiSource
+        if self.memory:
+            from .multi import MultiSource
 
-                return MultiSource([s() for s in self.sources])
-            elif self.batch_size > 1:
-                return MultiStreamBatchSource(
-                    self.sources, batch_size=self.batch_size, group_by=self.group_by
-                )
+            return MultiSource([s.mutate() for s in self.sources])
+        else:
+            first = self.sources[0]
+            if hasattr(first._reader, "to_fieldlist"):
+                return StreamFieldList(self, **self._kwargs)
 
         return self
 
     def __iter__(self):
-        return self
+        return itertools.chain(*self.sources)
 
-    def _next_source(self):
-        try:
-            return self.sources.popleft()()
-        except IndexError:
-            self.sources.clear()
-            pass
+    def batched(self, n):
+        from earthkit.data.utils.batch import batched
 
-    def __next__(self):
-        if self.current is None:
-            self.current = self._next_source()
-            if self.current is None:
-                raise StopIteration
+        return batched(self, n)
 
-        try:
-            return self.current.__next__()
-        except StopIteration:
-            self.current = self._next_source()
-            if self.current is None:
-                raise StopIteration
-            return self.current.__next__()
+    def group_by(self, *args):
+        from earthkit.data.utils.batch import group_by
 
+        return group_by(self, *args)
 
-class MultiStreamBatchSource(MultiStreamSource):
-    def mutate(self):
-        return self
-
-    def __next__(self):
-        if self.current is None:
-            if self.sources:
-                self.current = self._next_source()
+    def _from_sources(self, sources):
+        r = []
+        for s in sources:
+            if isinstance(s, StreamSource):
+                r.append(s)
+            elif isinstance(s, Stream):
+                r.append(StreamSource(s, read_all=self.memory))
             else:
-                raise StopIteration
-
-        delta = self.batch_size
-        try:
-            r = self.current._get_batch(self.batch_size)
-            delta -= len(r)
-        except StopIteration:
-            r = None
-
-        while delta > 0:
-            self.current = self._next_source()
-            if self.current is None:
-                break
-            else:
-                try:
-                    r1 = self.current._get_batch(delta)
-                    assert r1 is not None
-                    assert len(r1) > 0
-                    r = r + r1 if r is not None else r1
-                    assert len(r) > 0
-                    delta = self.batch_size - len(r)
-                except StopIteration:
-                    break
-
-        if r is None or len(r) == 0:
-            raise StopIteration
-
+                raise TypeError(f"Invalid source={s}")
         return r
 
+    def _status(self):
+        """For testing purposes."""
+        return [s._status() for s in self.sources]
 
-class StreamSource(StreamSourceBase):
-    def __init__(self, stream, **kwargs):
-        super().__init__(stream, **kwargs)
+
+class StreamFieldList(FieldList, Source):
+    def __init__(self, source, **kwargs):
+        FieldList.__init__(self, **kwargs)
+        self._source = source
 
     def mutate(self):
-        assert self._reader_ is None
+        return self
 
-        return _from_stream(
-            self._stream,
-            batch_size=self.batch_size,
-            group_by=self.group_by,
-            **self._kwargs,
-        )
+    def __iter__(self):
+        return iter(self._source)
 
+    def batched(self, n):
+        return self._source.batched(n)
 
-class StreamSourceMaker:
-    def __init__(self, source, stream_kwargs, **kwargs):
-        self.in_source = source
-        self._kwargs = kwargs
-        self.stream_kwargs = dict(stream_kwargs)
-        self.source = None
-
-    def __call__(self):
-        if self.source is None:
-            stream = self.in_source.to_stream()
-            self.source = _from_stream(stream, **self.stream_kwargs, **self._kwargs)
-
-            prev = None
-            src = self.source
-            while src is not prev:
-                prev = src
-                src = src.mutate()
-            self.source = src
-
-        return self.source
+    def group_by(self, *keys, **kwargs):
+        return self._source.group_by(*keys)
 
 
-def _from_stream(stream, group_by, batch_size, **kwargs):
-    _kwargs = dict(batch_size=batch_size, group_by=group_by)
+class Stream:
+    def __init__(self, stream=None, maker=None, **kwargs):
+        self._stream = stream
+        self.maker = maker
+        self.kwargs = kwargs
+        if self._stream is None and self.maker is None:
+            raise ValueError("Either stream or maker must be provided")
 
-    if group_by:
-        return StreamGroupSource(stream, **_kwargs, **kwargs)
-    elif batch_size == 0:
-        return StreamMemorySource(stream, **kwargs)
-    elif batch_size > 1:
-        return StreamBatchSource(stream, **_kwargs, **kwargs)
-    elif batch_size == 1:
-        return StreamSingleSource(stream, **_kwargs, **kwargs)
-
-    raise ValueError(f"Unsupported stream parameters {batch_size=} {group_by=}")
+    @property
+    def stream(self):
+        if self._stream is None:
+            self._stream = self.maker()
+        return self._stream
 
 
-def _from_source(source, **kwargs):
+def make_stream_source_from_other(source, **kwargs):
     stream_kwargs, kwargs = parse_stream_kwargs(**kwargs)
 
     if not isinstance(source, (list, tuple)):
         source = [source]
 
+    for i, s in enumerate(source):
+        stream = Stream(maker=s.to_stream)
+        source[i] = StreamSource(stream, **stream_kwargs, **kwargs)
+
     if len(source) == 1:
-        maker = StreamSourceMaker(source[0], stream_kwargs, **kwargs)
-        return maker()
+        return source[0]
     else:
-        sources = [StreamSourceMaker(s, stream_kwargs, **kwargs) for s in source]
-        return MultiStreamSource(sources, **stream_kwargs)
+        return MultiStreamSource(source, **stream_kwargs)
 
 
 source = StreamSource

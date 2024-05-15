@@ -20,7 +20,7 @@ LOG = logging.getLogger(__name__)
 
 
 class GribMemoryReader(Reader):
-    def __init__(self, array_backend=None):
+    def __init__(self, array_backend=None, **kwargs):
         self._peeked = None
         self._array_backend = ensure_backend(array_backend)
 
@@ -36,6 +36,7 @@ class GribMemoryReader(Reader):
         msg = self._message_from_handle(handle)
         if handle is not None:
             return msg
+        self.consumed_ = True
         raise StopIteration
 
     def _next_handle(self):
@@ -47,46 +48,17 @@ class GribMemoryReader(Reader):
                 GribCodesHandle(handle, None, None), self._array_backend
             )
 
-    def peek(self):
-        """Returns the next available message without consuming it"""
-        if self._peeked is None:
-            handle = self._next_handle()
-            self._peeked = self._message_from_handle(handle)
-        return self._peeked
+    def batched(self, n):
+        from earthkit.data.utils.batch import batched
 
-    def read_batch(self, n):
-        fields = []
-        for _ in range(n):
-            try:
-                fields.append(self.__next__())
-            except StopIteration:
-                break
-        if not fields:
-            raise StopIteration
+        return batched(self, n, create=self.to_fieldlist)
 
-        return GribFieldListInMemory.from_fields(fields)
+    def group_by(self, *args, **kwargs):
+        from earthkit.data.utils.batch import group_by
 
-    def read_group(self, group):
-        assert isinstance(group, list)
+        return group_by(self, *args, create=self.to_fieldlist, sort=False)
 
-        fields = []
-        current_group = {}
-        while True:
-            f = self.peek()
-            if f is not None:
-                group_md = f._attributes(group)
-                if not current_group:
-                    current_group = group_md
-                if current_group == group_md:
-                    fields.append(f)
-                    self.__next__()
-                else:
-                    break
-            elif fields:
-                break
-            else:
-                raise StopIteration
-
+    def to_fieldlist(self, fields):
         return GribFieldListInMemory.from_fields(fields)
 
 
@@ -126,7 +98,7 @@ class GribStreamReader(GribMemoryReader):
     """
 
     def __init__(self, stream, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
         self._stream = stream
         self._reader = eccodes.StreamReader(stream)
 
@@ -157,6 +129,10 @@ class GribFieldInMemory(GribField):
     @GribField.handle.getter
     def offset(self):
         return None
+
+    @staticmethod
+    def to_fieldlist(fields):
+        return GribFieldListInMemory.from_fields(fields)
 
 
 class GribFieldListInMemory(GribFieldList, Reader):

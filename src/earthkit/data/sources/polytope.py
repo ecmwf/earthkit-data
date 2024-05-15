@@ -69,8 +69,14 @@ class Polytope(Source):
         super().__init__()
         assert isinstance(dataset, str)
 
-        self._stream_kwargs = dict()
         for k in ["group_by", "batch_size"]:
+            if k in kwargs:
+                raise ValueError(
+                    f"Invalid argument '{k}' for Polytope. Deprecated since 0.8.0."
+                )
+
+        self._stream_kwargs = dict()
+        for k in ["read_all"]:
             if k in kwargs:
                 self._stream_kwargs[k] = kwargs.pop(k)
 
