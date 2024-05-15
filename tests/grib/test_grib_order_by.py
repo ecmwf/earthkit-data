@@ -9,7 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 import os
 import sys
 
@@ -186,16 +185,16 @@ def test_grib_order_by_valid_datetime(fl_type, array_backend):
     assert len(g) == 10
 
     ref = [
-        datetime.datetime(2020, 12, 23, 12, 0),
-        datetime.datetime(2020, 12, 23, 12, 0),
-        datetime.datetime(2020, 12, 21, 21, 0),
-        datetime.datetime(2020, 12, 21, 21, 0),
-        datetime.datetime(2020, 12, 21, 18, 0),
-        datetime.datetime(2020, 12, 21, 18, 0),
-        datetime.datetime(2020, 12, 21, 15, 0),
-        datetime.datetime(2020, 12, 21, 15, 0),
-        datetime.datetime(2020, 12, 21, 12, 0),
-        datetime.datetime(2020, 12, 21, 12, 0),
+        "2020-12-23T12:00:00",
+        "2020-12-23T12:00:00",
+        "2020-12-21T21:00:00",
+        "2020-12-21T21:00:00",
+        "2020-12-21T18:00:00",
+        "2020-12-21T18:00:00",
+        "2020-12-21T15:00:00",
+        "2020-12-21T15:00:00",
+        "2020-12-21T12:00:00",
+        "2020-12-21T12:00:00",
     ]
 
     assert g.metadata("valid_datetime") == ref

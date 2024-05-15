@@ -9,7 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 import os
 import sys
 
@@ -198,7 +197,7 @@ def test_grib_sel_date(fl_type, array_backend):
 def test_grib_sel_valid_datetime(fl_type, array_backend):
     f = load_grib_data("t_time_series.grib", fl_type, array_backend, folder="data")
 
-    g = f.sel(valid_datetime=datetime.datetime(2020, 12, 21, 21))
+    g = f.sel(valid_datetime="2020-12-21T21:00:00")
     assert len(g) == 2
 
     ref_keys = ["shortName", "date", "time", "step"]
