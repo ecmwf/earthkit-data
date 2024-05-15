@@ -273,9 +273,9 @@ class Url(UrlBase):
                     )
                 )
 
-            from .stream import _from_source
+            from .stream import make_stream_source_from_other
 
-            return _from_source(s, **self._kwargs)
+            return make_stream_source_from_other(s, **self._kwargs)
         else:
             return super().mutate()
 
@@ -435,9 +435,9 @@ class SingleUrlStream(UrlBase):
             raise NotImplementedError(f"Streams are not supported for {o.scheme} urls")
 
     def mutate(self):
-        from .stream import _from_source
+        from .stream import make_stream_source_from_other
 
-        return _from_source(self, **self._kwargs)
+        return make_stream_source_from_other(self, **self._kwargs)
 
     def to_stream(self):
         downloader = Downloader(

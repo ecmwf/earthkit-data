@@ -84,6 +84,12 @@ class MemoryBaseSource(Source):
     def statistics(self, **kwargs):
         return self._reader.statistics(**kwargs)
 
+    def batched(self, *args):
+        return self._reader.batched(*args)
+
+    def group_by(self, *args):
+        return self._reader.group_by(*args)
+
 
 class MemorySource(MemoryBaseSource):
     def __init__(self, buf, **kwargs):

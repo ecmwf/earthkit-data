@@ -152,3 +152,11 @@ class Base(metaclass=MetaBase):
         if hasattr(self, "path"):
             extra = f" on {self.path}"
         raise NotImplementedError(f"{module}.{name}.{func}(){extra}")
+
+    def batched(self, *args):
+        """Return iterator for batches of data"""
+        self._not_implemented()
+
+    def group_by(self, *args):
+        """Return iterator for batches of data grouped by metadata keys"""
+        self._not_implemented()
