@@ -165,7 +165,7 @@ class GribFieldGeography(Geography):
                 self.metadata.get("jDirectionIncrementInDegrees"),
             ]
 
-        return self.handle.get("gridName")
+        return self.metadata.get("gridName")
 
     def mars_area(self):
         north = self.metadata.get("latitudeOfFirstGridPointInDegrees")
