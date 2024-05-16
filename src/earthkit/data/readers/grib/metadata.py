@@ -159,7 +159,7 @@ class GribFieldGeography(Geography):
         raise ValueError(f"Unknown gridType={grid_type}")
 
     def mars_grid(self):
-        if len(self.shape) == 2:
+        if len(self.shape()) == 2:
             return [
                 self.metadata.get("iDirectionIncrementInDegrees"),
                 self.metadata.get("jDirectionIncrementInDegrees"),
