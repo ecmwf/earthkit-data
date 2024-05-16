@@ -85,6 +85,7 @@ class ECMWFApi(FileSource):
     @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
     def requests(self, **kwargs):
+        kwargs.pop("accumulation_period", None)
         split_on = kwargs.pop("split_on", None)
         if split_on is None or not isinstance(kwargs.get(split_on), (list, tuple)):
             return [kwargs]

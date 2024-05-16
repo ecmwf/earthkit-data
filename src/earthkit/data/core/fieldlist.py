@@ -350,6 +350,14 @@ class Field(Base):
         return self._metadata.geography.resolution()
 
     @property
+    def mars_grid(self):
+        return self._metadata.geography.mars_grid()
+
+    @property
+    def mars_area(self):
+        return self._metadata.geography.mars_area()
+
+    @property
     def shape(self):
         r"""tuple: Get the shape of the field.
 

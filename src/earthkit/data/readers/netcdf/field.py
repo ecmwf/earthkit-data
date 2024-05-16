@@ -75,6 +75,16 @@ class XArrayFieldGeography(Geography):
         # TODO: implement resolution
         return None
 
+    @property
+    def mars_grid(self):
+        # TODO: implement mars_grid
+        return None
+
+    @property
+    def mars_area(self):
+        # TODO: code me
+        return [self.north, self.west, self.south, self.east]
+
 
 class XArrayMetadata(RawMetadata):
     LS_KEYS = ["variable", "level", "valid_datetime", "units"]

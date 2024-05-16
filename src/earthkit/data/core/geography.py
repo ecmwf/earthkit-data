@@ -131,3 +131,11 @@ class Geography(metaclass=ABCMeta):
     @abstractmethod
     def resolution(self):
         pass
+
+    @abstractmethod
+    def mars_grid(self):
+        pass
+
+    @abstractmethod
+    def mars_area(self):
+        pass

@@ -158,6 +158,22 @@ class GribFieldGeography(Geography):
 
         raise ValueError(f"Unknown gridType={grid_type}")
 
+    def mars_grid(self):
+        if len(self.shape) == 2:
+            return [
+                self.metadata.get("iDirectionIncrementInDegrees"),
+                self.metadata.get("jDirectionIncrementInDegrees"),
+            ]
+
+        return self.handle.get("gridName")
+
+    def mars_area(self):
+        north = self.metadata.get("latitudeOfFirstGridPointInDegrees")
+        south = self.metadata.get("latitudeOfLastGridPointInDegrees")
+        west = self.metadata.get("longitudeOfFirstGridPointInDegrees")
+        east = self.metadata.get("longitudeOfLastGridPointInDegrees")
+        return [north, west, south, east]
+
 
 class GribMetadata(Metadata):
     """Represent the metadata of a GRIB field.

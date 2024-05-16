@@ -8,8 +8,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-import datetime
-
 import pytest
 
 from earthkit.data.testing import earthkit_examples_file, load_nc_or_xr_source
@@ -27,10 +25,10 @@ def test_netcdf_ls(mode):
         "variable": {0: "t", 1: "t", 2: "t", 3: "t"},
         "level": {0: 1000, 1: 850, 2: 700, 3: 500},
         "valid_datetime": {
-            0: datetime.datetime.fromisoformat("2018-08-01 12:00:00"),
-            1: datetime.datetime.fromisoformat("2018-08-01 12:00:00"),
-            2: datetime.datetime.fromisoformat("2018-08-01 12:00:00"),
-            3: datetime.datetime.fromisoformat("2018-08-01 12:00:00"),
+            0: "2018-08-01T12:00:00",
+            1: "2018-08-01T12:00:00",
+            2: "2018-08-01T12:00:00",
+            3: "2018-08-01T12:00:00",
         },
         "units": {0: "K", 1: "K", 2: "K", 3: "K"},
     }
@@ -45,8 +43,8 @@ def test_netcdf_ls(mode):
         "variable": {0: "t", 1: "t"},
         "level": {0: 1000, 1: 850},
         "valid_datetime": {
-            0: datetime.datetime.fromisoformat("2018-08-01 12:00:00"),
-            1: datetime.datetime.fromisoformat("2018-08-01 12:00:00"),
+            0: "2018-08-01T12:00:00",
+            1: "2018-08-01T12:00:00",
         },
         "units": {0: "K", 1: "K"},
         "long_name": {0: "Temperature", 1: "Temperature"},
