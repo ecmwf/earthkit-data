@@ -351,6 +351,10 @@ class Field(Base):
         return lat, lon
 
     @property
+    def rotation(self):
+        return self._metadata.geography.rotation
+
+    @property
     def resolution(self):
         return self._metadata.geography.resolution()
 
