@@ -37,7 +37,7 @@ class StrWrapper(Wrapper):
     def __init__(self, data):
         self.data = data
 
-    def to_bounding_box(self):
+    def bounding_box(self):
         if "/" in self.data:
             return tuple(float(x) for x in self.data.split("/"))
         else:
