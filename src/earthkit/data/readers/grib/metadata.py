@@ -8,6 +8,8 @@
 #
 
 import datetime
+import warnings
+from functools import cached_property
 
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
@@ -174,6 +176,55 @@ class GribFieldGeography(Geography):
         east = self.metadata.get("longitudeOfLastGridPointInDegrees")
         return [north, west, south, east]
 
+    @property
+    def rotation(self):
+        return (
+            self.metadata.get("latitudeOfSouthernPoleInDegrees"),
+            self.metadata.get("longitudeOfSouthernPoleInDegrees"),
+            self.metadata.get("angleOfRotationInDegrees"),
+        )
+
+    @cached_property
+    def rotated(self):
+        grid_type = self.metadata.get("gridType")
+        return "rotated" in grid_type
+
+    @cached_property
+    def rotated_iterator(self):
+        return self.metadata.get("iteratorDisableUnrotate") is not None
+
+    def latitudes_unrotated(self, **kwargs):
+        if not self.rotated:
+            return self.latitudes(**kwargs)
+        if not self.rotated_iterator:
+            from earthkit.geo.rotate import rotate
+
+            grid_type = self.metadata.get("gridType")
+            warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
+            lat, lon = self.latitudes(**kwargs), self.longitudes(**kwargs)
+            south_pole_lat, south_pole_lon, _ = self.rotation
+            lat, lon = rotate(lat, lon, south_pole_lat, south_pole_lon)
+            return lat
+
+        with self.metadata._handle._set_tmp("iteratorDisableUnrotate", 1, 0):
+            return self.latitudes(**kwargs)
+
+    def longitudes_unrotated(self, **kwargs):
+        if not self.rotated:
+            return self.longitudes(**kwargs)
+        if not self.rotated_iterator:
+            from earthkit.geo.rotate import rotate
+
+            grid_type = self.metadata.get("gridType")
+            warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
+            lat, lon = self.latitudes(**kwargs), self.longitudes(**kwargs)
+            south_pole_lat, south_pole_lon, _ = self.rotation
+            lat, lon = rotate(lat, lon, south_pole_lat, south_pole_lon)
+            return lon
+
+        with self.metadata._handle._set_tmp("iteratorDisableUnrotate", 1, 0):
+            return self.longitudes(**kwargs)
+
 
 class GribMetadata(Metadata):
     """Represent the metadata of a GRIB field.
@@ -182,7 +233,6 @@ class GribMetadata(Metadata):
     ----------
     handle: :obj:`GribCodesHandle`
         Object representing the ecCodes GRIB handle of the field.
-
 
     :obj:`GribMetadata` is created internally by a :obj:`GribField` and we can use
     the field's :meth:`metadata` method to access it.

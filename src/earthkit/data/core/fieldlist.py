@@ -345,6 +345,11 @@ class Field(Base):
         r = self.to_latlon(flatten=True)
         return r["lat"], r["lon"]
 
+    def grid_points_unrotated(self):
+        lat = self._metadata.geography.latitudes_unrotated()
+        lon = self._metadata.geography.longitudes_unrotated()
+        return lat, lon
+
     @property
     def resolution(self):
         return self._metadata.geography.resolution()

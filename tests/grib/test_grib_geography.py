@@ -15,7 +15,13 @@ import sys
 import numpy as np
 import pytest
 
-from earthkit.data.testing import ARRAY_BACKENDS, check_array_type
+import earthkit.data
+from earthkit.data.testing import (
+    ARRAY_BACKENDS,
+    check_array_type,
+    earthkit_examples_file,
+    earthkit_test_data_file,
+)
 from earthkit.data.utils import projections
 
 here = os.path.dirname(__file__)
@@ -218,6 +224,152 @@ def test_grib_projection_mercator(fl_type, array_backend):
         "false_northing": 0,
     }
     assert projection.globe == dict()
+
+
+@pytest.mark.parametrize(
+    "path,expected_value",
+    [
+        (earthkit_examples_file("test.grib"), 4.0),
+        (earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"), "O1280"),
+        (earthkit_test_data_file("rotated_N32_subarea.grib"), "N32"),
+    ],
+)
+def test_grib_resolution(path, expected_value):
+    ds = earthkit.data.from_source("file", path)
+
+    if isinstance(expected_value, str):
+        assert ds[0].resolution == expected_value
+    else:
+        assert np.isclose(ds[0].resolution, expected_value)
+
+
+@pytest.mark.parametrize(
+    "path,expected_value",
+    [
+        (earthkit_examples_file("test.grib"), [73.0, -27.0, 33.0, 45.0]),
+        (
+            earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"),
+            [89.877, 36.233, 84.815, 46.185],
+        ),
+        (
+            earthkit_test_data_file("rotated_N32_subarea.grib"),
+            [26.511, 0.0, -12.558, 39.375],
+        ),
+        (
+            earthkit_test_data_file("rotated_wind_20x20.grib"),
+            [80.0, 0.0, -80.0, 340.0],
+        ),
+        (
+            earthkit_test_data_file("mercator.grib"),
+            [16.9775, 291.9722, 19.5221, 296.0156],
+        ),
+    ],
+)
+def test_grib_mars_area(path, expected_value):
+    ds = earthkit.data.from_source("file", path)
+
+    assert np.allclose(np.asarray(ds[0].mars_area), np.asarray(expected_value))
+
+
+@pytest.mark.parametrize(
+    "path,expected_value",
+    [
+        (earthkit_examples_file("test.grib"), [4.0, 4.0]),
+        (
+            earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"),
+            "O1280",
+        ),
+        (
+            earthkit_test_data_file("rotated_N32_subarea.grib"),
+            "N32",
+        ),
+        (
+            earthkit_test_data_file("rotated_wind_20x20.grib"),
+            [20.0, 20.0],
+        ),
+        (
+            earthkit_test_data_file("mercator.grib"),
+            [None, None],
+        ),
+    ],
+)
+def test_grib_mars_grid(path, expected_value):
+    ds = earthkit.data.from_source("file", path)
+
+    if isinstance(expected_value, str):
+        assert ds[0].mars_grid == expected_value
+    elif expected_value == [None, None]:
+        assert ds[0].mars_grid == expected_value
+    else:
+        assert np.allclose(np.asarray(ds[0].mars_grid), np.asarray(expected_value))
+
+
+def test_grib_grid_points_rotated_ll():
+    """The"""
+    ds = earthkit.data.from_source(
+        "file", earthkit_test_data_file("rotated_wind_20x20.grib")
+    )
+
+    # grid points
+    res = ds[0].grid_points()
+    ref1 = np.array([30.0, 29.351052, 27.504876, 24.734374]), np.array(
+        [140.0, 136.09296, 132.770576, 130.469424]
+    )
+
+    ref2 = np.array([-17.968188, -14.787578, -12.22927, -10.573044]), np.array(
+        [-50.356844, -48.94784, -46.558096, -43.46374]
+    )
+
+    assert np.allclose(res[0][:4], ref1[0])
+    assert np.allclose(res[1][:4], ref1[1])
+    assert np.allclose(res[0][-4:], ref2[0])
+    assert np.allclose(res[1][-4:], ref2[1])
+
+    # unrotated grid points
+    ds1 = earthkit.data.from_source("file", earthkit_test_data_file("wind_20x20.grib"))
+
+    res = ds[0].grid_points_unrotated()
+    ref = ds1[0].grid_points()
+
+    assert np.allclose(res[0], ref[0])
+    assert np.allclose(res[1], ref[1])
+
+
+def test_grib_grid_points_rotated_rgg():
+    ds = earthkit.data.from_source(
+        "file", earthkit_test_data_file("rotated_N32_subarea.grib")
+    )
+
+    # grid points
+    res = ds[0].grid_points()
+    ref1 = np.array([85.489232, 84.81188, 83.171928, 81.086144]), np.array(
+        [140.0, 110.950144, 92.460416, 82.07156]
+    )
+
+    ref2 = np.array([44.011184, 42.14694, 40.199948, 38.1796]), np.array(
+        [4.244462, 7.003924, 9.575494, 11.973933]
+    )
+
+    assert np.allclose(res[0][:4], ref1[0])
+    assert np.allclose(res[1][:4], ref1[1])
+    assert np.allclose(res[0][-4:], ref2[0])
+    assert np.allclose(res[1][-4:], ref2[1])
+
+    # unrotated grid points
+    res = ds[0].grid_points_unrotated()
+
+    ref1 = np.array([25.42352666, 23.76898256, 22.12830112, 20.50355176]), np.array(
+        [43.20872165, 45.29450861, 47.36706898, 49.43030989]
+    )
+
+    ref2 = np.array([-23.87417203, -25.52690401, -27.162813, -28.77850622]), np.array(
+        [43.3371028, 45.74997023, 48.2101817, 50.72330737]
+    )
+
+    assert np.allclose(res[0][:4], ref1[0])
+    assert np.allclose(res[1][:4], ref1[1])
+    assert np.allclose(res[0][-4:], ref2[0])
+    assert np.allclose(res[1][-4:], ref2[1])
 
 
 if __name__ == "__main__":

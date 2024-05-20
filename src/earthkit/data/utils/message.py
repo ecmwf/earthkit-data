@@ -13,6 +13,7 @@ import logging
 import os
 import threading
 import time
+from contextlib import contextmanager
 
 import eccodes
 import numpy as np
@@ -268,6 +269,23 @@ class CodesHandle(eccodes.Message):
             LOG.error("Error setting %s=%s", name, value)
             LOG.exception(e)
             raise
+
+    @contextmanager
+    def _set_tmp(self, name, new_value, restore_value):
+        try:
+            if isinstance(new_value, list):
+                yield eccodes.codes_set_array(self._handle, name, new_value)
+            else:
+                yield eccodes.codes_set(self._handle, name, new_value)
+        except Exception as e:
+            LOG.error("Error setting %s=%s", name, new_value)
+            LOG.exception(e)
+            raise
+        finally:
+            if isinstance(restore_value, list):
+                eccodes.codes_set_array(self._handle, name, restore_value)
+            else:
+                eccodes.codes_set(self._handle, name, restore_value)
 
     def write(self, f):
         eccodes.codes_write(self._handle, f)
