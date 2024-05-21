@@ -197,13 +197,13 @@ class GribFieldGeography(Geography):
         if not self.rotated:
             return self.latitudes(**kwargs)
         if not self.rotated_iterator:
-            from earthkit.geo.rotate import rotate
+            from earthkit.geo.rotate import unrotate
 
             grid_type = self.metadata.get("gridType")
             warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
             lat, lon = self.latitudes(**kwargs), self.longitudes(**kwargs)
             south_pole_lat, south_pole_lon, _ = self.rotation
-            lat, lon = rotate(lat, lon, south_pole_lat, south_pole_lon)
+            lat, lon = unrotate(lat, lon, south_pole_lat, south_pole_lon)
             return lat
 
         with self.metadata._handle._set_tmp("iteratorDisableUnrotate", 1, 0):
@@ -213,13 +213,13 @@ class GribFieldGeography(Geography):
         if not self.rotated:
             return self.longitudes(**kwargs)
         if not self.rotated_iterator:
-            from earthkit.geo.rotate import rotate
+            from earthkit.geo.rotate import unrotate
 
             grid_type = self.metadata.get("gridType")
             warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
             lat, lon = self.latitudes(**kwargs), self.longitudes(**kwargs)
             south_pole_lat, south_pole_lon, _ = self.rotation
-            lat, lon = rotate(lat, lon, south_pole_lat, south_pole_lon)
+            lat, lon = unrotate(lat, lon, south_pole_lat, south_pole_lon)
             return lon
 
         with self.metadata._handle._set_tmp("iteratorDisableUnrotate", 1, 0):
