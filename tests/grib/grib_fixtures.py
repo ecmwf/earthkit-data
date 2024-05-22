@@ -15,14 +15,14 @@ from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.testing import earthkit_examples_file, earthkit_test_data_file
 
 
-def load_numpy_fieldlist(path):
-    ds = from_source("file", path)
-    return FieldList.from_numpy(
+def load_array_fieldlist(path, array_backend):
+    ds = from_source("file", path, array_backend=array_backend)
+    return FieldList.from_array(
         ds.values, [m.override(generatingProcessIdentifier=120) for m in ds.metadata()]
     )
 
 
-def load_file_or_numpy_fs(filename, mode, folder="example"):
+def load_grib_data(filename, fl_type, array_backend, folder="example"):
     if folder == "example":
         path = earthkit_examples_file(filename)
     elif folder == "data":
@@ -30,7 +30,12 @@ def load_file_or_numpy_fs(filename, mode, folder="example"):
     else:
         raise ValueError("Invalid folder={folder}")
 
-    if mode == "file":
-        return from_source("file", path)
+    if fl_type == "file":
+        return from_source("file", path, array_backend=array_backend)
+    elif fl_type == "array":
+        return load_array_fieldlist(path, array_backend)
     else:
-        return load_numpy_fieldlist(path)
+        raise ValueError("Invalid fl_type={fl_type}")
+
+
+FL_TYPES = ["file", "array"]

@@ -1,0 +1,30 @@
+- file: healpix/H16_ring.grib2
+  gridspec:
+    grid: H16
+    ordering: ring
+    type: healpix
+  metadata:
+    N: 16
+    Nside: 16
+    gridType: healpix
+    iScansNegatively: 0
+    jScansPositively: 0
+    longitudeOfFirstGridPointInDegrees: 45.0
+    orderingConvention: ring
+    radius: 6367470
+    shapeOfTheEarth: 0
+- file: healpix/H16_nested.grib2
+  gridspec:
+    grid: H16
+    ordering: nested
+    type: healpix
+  metadata:
+    N: 16
+    Nside: 16
+    gridType: healpix
+    iScansNegatively: 0
+    jScansPositively: 0
+    longitudeOfFirstGridPointInDegrees: 45.0
+    orderingConvention: nested
+    radius: 6367470
+    shapeOfTheEarth: 0

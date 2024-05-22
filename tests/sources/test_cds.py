@@ -9,15 +9,41 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
+
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_CDS
+from earthkit.data.core.temporary import temp_directory
+from earthkit.data.testing import NO_CDS, preserve_cwd
+
+CDS_TIMEOUT = pytest.CDS_TIMEOUT
 
 
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.parametrize("prompt", [True, False])
+@pytest.mark.timeout(CDS_TIMEOUT)
+def test_cds_grib_prompt(prompt):
+    s = from_source(
+        "cds",
+        "reanalysis-era5-single-levels",
+        variable=["2t", "msl"],
+        product_type="reanalysis",
+        area=[50, -50, 20, 50],
+        date="2012-12-12",
+        prompt=prompt,
+        time="12:00",
+    )
+    assert len(s) == 2
+    assert s.metadata("param") == ["2t", "msl"]
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_kwargs():
     s = from_source(
         "cds",
@@ -35,6 +61,7 @@ def test_cds_grib_kwargs():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_dict():
     s = from_source(
         "cds",
@@ -54,6 +81,7 @@ def test_cds_grib_dict():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_invalid_args_kwargs():
     with pytest.raises(TypeError):
         from_source(
@@ -72,6 +100,7 @@ def test_cds_grib_invalid_args_kwargs():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_split_on_var():
     s = from_source(
         "cds",
@@ -86,7 +115,7 @@ def test_cds_grib_split_on_var():
     assert len(s) == 2
     assert s.metadata("param") == ["2t", "msl"]
     assert not hasattr(s, "path")
-    assert len(s.indexes) == 2
+    assert len(s._indexes) == 2
 
 
 @pytest.mark.parametrize(
@@ -105,6 +134,7 @@ def test_cds_grib_split_on_var():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_multi_var_date(date, expected_date):
     s = from_source(
         "cds",
@@ -123,6 +153,43 @@ def test_cds_grib_multi_var_date(date, expected_date):
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
+def test_cds_grib_save():
+    s = from_source(
+        "cds",
+        "reanalysis-era5-single-levels",
+        variable=["2t", "msl"],
+        product_type="reanalysis",
+        area=[50, -50, 20, 50],
+        date="2012-12-12",
+        time="12:00",
+    )
+    with temp_directory() as tmpdir:
+        # Check file save to assigned filename
+        s.save(os.path.join(tmpdir, "test.grib"))
+        assert os.path.isfile(os.path.join(tmpdir, "test.grib"))
+
+    s = from_source(
+        "cds",
+        "reanalysis-era5-single-levels",
+        variable=["2t", "msl"],
+        product_type="reanalysis",
+        area=[50, -50, 20, 50],
+        date="2012-12-12",
+        time="12:00",
+    )
+    with temp_directory() as tmpdir:
+        # Check file can be saved in current dir with detected filename:
+        with preserve_cwd():
+            os.chdir(tmpdir)
+            s.save()
+            assert os.path.isfile(os.path.basename(s.source_filename))
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 @pytest.mark.parametrize(
     "split_on,expected_file_num,expected_param,expected_time",
     (
@@ -152,10 +219,10 @@ def test_cds_split_on(split_on, expected_file_num, expected_param, expected_time
 
     if expected_file_num == 1:
         assert hasattr(s, "path")
-        assert not hasattr(s, "indexes")
+        assert not hasattr(s, "_indexes")
     else:
         assert not hasattr(s, "path")
-        assert len(s.indexes) == expected_file_num
+        assert len(s._indexes) == expected_file_num
 
     assert len(s) == 4
     assert s.metadata("param") == expected_param
@@ -165,6 +232,7 @@ def test_cds_split_on(split_on, expected_file_num, expected_param, expected_time
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 @pytest.mark.parametrize(
     "split_on1,split_on2,expected_file_num,expected_param,expected_time",
     (
@@ -185,10 +253,10 @@ def test_cds_multiple_requests(
     s = from_source(
         "cds",
         "reanalysis-era5-single-levels",
-        base_request | {"variable": "2t", "split_on": split_on1},
-        base_request | {"variable": "msl", "split_on": split_on2},
+        {**base_request, **{"variable": "2t", "split_on": split_on1}},
+        {**base_request, **{"variable": "msl", "split_on": split_on2}},
     )
-    assert len(s.indexes) == expected_file_num
+    assert len(s._indexes) == expected_file_num
     assert len(s) == 4
     assert s.metadata("param") == expected_param
     assert s.metadata("time") == expected_time
@@ -197,6 +265,7 @@ def test_cds_multiple_requests(
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_netcdf():
     s = from_source(
         "cds",
@@ -215,6 +284,31 @@ def test_cds_netcdf():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
+def test_cds_netcdf_save():
+    s = from_source(
+        "cds",
+        "reanalysis-era5-single-levels",
+        variable=["2t", "msl"],
+        product_type="reanalysis",
+        area=[50, -50, 20, 50],
+        date="2012-12-12",
+        time="12:00",
+        format="netcdf",
+    )
+
+    with temp_directory() as tmpdir:
+        # Check file can be saved in current dir with detected filename:
+        with preserve_cwd():
+            os.chdir(tmpdir)
+            s.save()
+            assert os.path.isfile(os.path.basename(s.source_filename))
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(60)
 def test_cds_netcdf_selection_limited():
     s = from_source(
         "cds",
@@ -247,6 +341,7 @@ def test_cds_netcdf_selection_limited():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_observation_csv_file_to_pandas_xarray():
     collection_id = "insitu-observations-gruan-reference-network"
     request = {
@@ -272,6 +367,7 @@ def test_cds_observation_csv_file_to_pandas_xarray():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_non_observation_csv_file_to_pandas_xarray():
     collection_id = "sis-energy-derived-projections"
     request = {
@@ -296,6 +392,7 @@ def test_cds_non_observation_csv_file_to_pandas_xarray():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_grib_to_pandas_xarray():
     collection_id = "reanalysis-era5-single-levels"
     request = dict(
@@ -324,6 +421,7 @@ def test_cds_grib_to_pandas_xarray():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_cds_netcdf_to_pandas_xarray():
     collection_id = "satellite-methane"
     request = {

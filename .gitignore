@@ -1,5 +1,6 @@
 # setuptools-scm
 version.py
+_version.py
 
 # Sphinx automatic generation of API
 docs/_api/
@@ -358,5 +359,7 @@ notebooks/data/*/
 
 # local code
 _dev
+
+test.db
 
 *.idx

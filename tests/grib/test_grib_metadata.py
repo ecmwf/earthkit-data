@@ -17,11 +17,11 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import ARRAY_BACKENDS, earthkit_examples_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import load_file_or_numpy_fs  # noqa: E402
+from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -35,7 +35,8 @@ def repeat_list_items(items, count):
     return sum([[x] * count for x in items], [])
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key,expected_value",
     [
@@ -53,15 +54,16 @@ def repeat_list_items(items, count):
         (("shortName", "level"), ("2t", 0)),
     ],
 )
-def test_grib_metadata_grib(mode, key, expected_value):
-    f = load_file_or_numpy_fs("test_single.grib", mode, folder="data")
+def test_grib_metadata_grib(fl_type, array_backend, key, expected_value):
+    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
     sn = f.metadata(key)
     assert sn == [expected_value]
     sn = f[0].metadata(key)
     assert sn == expected_value
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key,astype,expected_value",
     [
@@ -75,15 +77,16 @@ def test_grib_metadata_grib(mode, key, expected_value):
         ("level", int, 0),
     ],
 )
-def test_grib_metadata_astype_1(mode, key, astype, expected_value):
-    f = load_file_or_numpy_fs("test_single.grib", mode, folder="data")
+def test_grib_metadata_astype_1(fl_type, array_backend, key, astype, expected_value):
+    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
     sn = f.metadata(key, astype=astype)
     assert sn == [expected_value]
     sn = f[0].metadata(key, astype=astype)
     assert sn == expected_value
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fs_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key,expected_value",
     [
@@ -95,13 +98,15 @@ def test_grib_metadata_astype_1(mode, key, astype, expected_value):
         ("level:int", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
     ],
 )
-def test_grib_metadata_18(mode, key, expected_value):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
-    sn = f.metadata(key)
+def test_grib_metadata_18(fs_type, array_backend, key, expected_value):
+    # f = load_grib_data("tuv_pl.grib", mode)
+    ds = load_grib_data("tuv_pl.grib", fs_type, array_backend)
+    sn = ds.metadata(key)
     assert sn == expected_value
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key,astype,expected_value",
     [
@@ -119,13 +124,14 @@ def test_grib_metadata_18(mode, key, expected_value):
         ),
     ],
 )
-def test_grib_metadata_astype_18(mode, key, astype, expected_value):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+def test_grib_metadata_astype_18(fl_type, array_backend, key, astype, expected_value):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     sn = f.metadata(key, astype=astype)
     assert sn == expected_value
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key,expected_value",
     [
@@ -134,14 +140,15 @@ def test_grib_metadata_astype_18(mode, key, astype, expected_value):
         ("latitudeOfFirstGridPointInDegrees:float", 90.0),
     ],
 )
-def test_grib_metadata_double_1(mode, key, expected_value):
-    f = load_file_or_numpy_fs("test_single.grib", mode, folder="data")
+def test_grib_metadata_double_1(fl_type, array_backend, key, expected_value):
+    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
     r = f.metadata(key)
     assert len(r) == 1
     assert np.isclose(r[0], expected_value)
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key",
     [
@@ -150,15 +157,16 @@ def test_grib_metadata_double_1(mode, key, expected_value):
         ("latitudeOfFirstGridPointInDegrees:float"),
     ],
 )
-def test_grib_metadata_double_18(mode, key):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+def test_grib_metadata_double_18(fl_type, array_backend, key):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     ref = [90.0] * 18
     r = f.metadata(key)
     np.testing.assert_allclose(r, ref, 0.001)
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "key,astype",
     [
@@ -166,8 +174,8 @@ def test_grib_metadata_double_18(mode, key):
         ("latitudeOfFirstGridPointInDegrees", float),
     ],
 )
-def test_grib_metadata_double_astype_18(mode, key, astype):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+def test_grib_metadata_double_astype_18(fl_type, array_backend, key, astype):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     ref = [90.0] * 18
 
@@ -175,10 +183,11 @@ def test_grib_metadata_double_astype_18(mode, key, astype):
     np.testing.assert_allclose(r, ref, 0.001)
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_get_long_array_1(mode):
-    f = load_file_or_numpy_fs(
-        "rgg_small_subarea_cellarea_ref.grib", mode, folder="data"
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_get_long_array_1(fl_type, array_backend):
+    f = load_grib_data(
+        "rgg_small_subarea_cellarea_ref.grib", fl_type, array_backend, folder="data"
     )
 
     assert len(f) == 1
@@ -193,9 +202,10 @@ def test_grib_get_long_array_1(mode):
     assert pl[72] == 312
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_get_double_array_values_1(mode):
-    f = load_file_or_numpy_fs("test_single.grib", mode, folder="data")
+@pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize("array_backend", [None])
+def test_grib_get_double_array_values_1(fl_type, array_backend):
+    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
 
     v = f.metadata("values")
     assert len(v) == 1
@@ -212,9 +222,10 @@ def test_grib_get_double_array_values_1(mode):
     )
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_get_double_array_values_18(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize("array_backend", [None])
+def test_grib_get_double_array_values_18(fl_type, array_backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     v = f.metadata("values")
     assert isinstance(v, list)
     assert len(v) == 18
@@ -242,9 +253,10 @@ def test_grib_get_double_array_values_18(mode):
     )
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_get_double_array_1(mode):
-    f = load_file_or_numpy_fs("ml_data.grib", mode, folder="data")[0]
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_get_double_array_1(fl_type, array_backend):
+    f = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")[0]
     # f is now a field!
     v = f.metadata("pv")
     assert isinstance(v, np.ndarray)
@@ -255,9 +267,10 @@ def test_grib_get_double_array_1(mode):
     assert np.isclose(v[275], 1.0)
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_get_double_array_18(mode):
-    f = load_file_or_numpy_fs("ml_data.grib", mode, folder="data")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_get_double_array_18(fl_type, array_backend):
+    f = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")
     v = f.metadata("pv")
     assert isinstance(v, list)
     assert len(v) == 36
@@ -272,9 +285,10 @@ def test_grib_get_double_array_18(mode):
     assert np.isclose(v[17][20], 316.4207458496094, eps)
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_metadata_type_qualifier(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)[0:4]
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_metadata_type_qualifier(fl_type, array_backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)[0:4]
 
     # to str
     r = f.metadata("centre:s")
@@ -311,9 +325,10 @@ def test_grib_metadata_type_qualifier(mode):
     assert all(isinstance(x, float) for x in r)
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_metadata_astype(mode):
-    f = load_file_or_numpy_fs("tuv_pl.grib", mode)[0:4]
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_metadata_astype(fl_type, array_backend):
+    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)[0:4]
 
     # to str
     r = f.metadata("centre", astype=None)
@@ -345,9 +360,10 @@ def test_grib_metadata_astype(mode):
         f.metadata(["level", "cfVarName", "centre"], astype=(int, None))
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_metadata_generic(mode):
-    f_full = load_file_or_numpy_fs("tuv_pl.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_metadata_generic(fl_type, array_backend):
+    f_full = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     f = f_full[0:4]
 
@@ -374,9 +390,10 @@ def test_grib_metadata_generic(mode):
     assert lg == [1000, "t"]
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_metadata_missing_value(mode):
-    f = load_file_or_numpy_fs("ml_data.grib", mode, folder="data")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_metadata_missing_value(fl_type, array_backend):
+    f = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")
 
     with pytest.raises(KeyError):
         f[0].metadata("scaleFactorOfSecondFixedSurface")
@@ -385,9 +402,10 @@ def test_grib_metadata_missing_value(mode):
     assert v is None
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_metadata_missing_key(mode):
-    f = load_file_or_numpy_fs("test.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_metadata_missing_key(fl_type, array_backend):
+    f = load_grib_data("test.grib", fl_type, array_backend)
 
     with pytest.raises(KeyError):
         f[0].metadata("_badkey_")
@@ -396,9 +414,10 @@ def test_grib_metadata_missing_key(mode):
     assert v == 0
 
 
-@pytest.mark.parametrize("mode", ["file"])
-def test_grib_metadata_namespace(mode):
-    f = load_file_or_numpy_fs("test6.grib", mode)
+@pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize("array_backend", [None])
+def test_grib_metadata_namespace(fl_type, array_backend):
+    f = load_grib_data("test6.grib", fl_type, array_backend)
 
     r = f[0].metadata(namespace="vertical")
     ref = {"level": 1000, "typeOfLevel": "isobaricInhPa"}
@@ -476,9 +495,10 @@ def test_grib_metadata_namespace(mode):
     assert "must be a str when key specified" in str(excinfo.value)
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_datetime(mode):
-    s = load_file_or_numpy_fs("test.grib", mode)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_datetime(fl_type, array_backend):
+    s = load_grib_data("test.grib", fl_type, array_backend)
 
     ref = {
         "base_time": [datetime.datetime(2020, 5, 13, 12)],
@@ -506,17 +526,19 @@ def test_grib_datetime(mode):
     assert s.datetime() == ref
 
 
-@pytest.mark.parametrize("mode", ["file", "numpy_fs"])
-def test_grib_valid_datetime(mode):
-    ds = load_file_or_numpy_fs("t_time_series.grib", mode, folder="data")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_valid_datetime(fl_type, array_backend):
+    ds = load_grib_data("t_time_series.grib", fl_type, array_backend, folder="data")
     f = ds[4]
 
     assert f.metadata("valid_datetime") == datetime.datetime(2020, 12, 21, 18)
 
 
-@pytest.mark.parametrize("mode", ["file"])
-def test_message(mode):
-    f = load_file_or_numpy_fs("test.grib", mode)
+@pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize("array_backend", [None])
+def test_message(fl_type, array_backend):
+    f = load_grib_data("test.grib", fl_type, array_backend)
     v = f[0].message()
     assert len(v) == 526
     assert v[:4] == b"GRIB"

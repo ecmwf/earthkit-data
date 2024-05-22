@@ -20,18 +20,34 @@ import pytest
 import earthkit.data
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import ARRAY_BACKENDS, earthkit_examples_file
 
 EPSILON = 1e-4
 
 
-def test_grib_save_when_loaded_from_file():
-    fs = from_source("file", earthkit_examples_file("test6.grib"))
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_save_when_loaded_from_file(array_backend):
+    fs = from_source(
+        "file", earthkit_examples_file("test6.grib"), array_backend=array_backend
+    )
     assert len(fs) == 6
     with temp_file() as tmp:
         fs.save(tmp)
         fs_saved = from_source("file", tmp)
         assert len(fs) == len(fs_saved)
+
+
+@pytest.mark.parametrize(
+    "_kwargs,expected_value",
+    [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
+)
+def test_grib_save_bits_per_value(_kwargs, expected_value):
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    with temp_file() as tmp:
+        ds.save(tmp, **_kwargs)
+        ds1 = from_source("file", tmp)
+        assert ds1.metadata("bitsPerValue") == [expected_value] * len(ds)
 
 
 @pytest.mark.skipif(
@@ -55,6 +71,7 @@ def test_grib_output_latlon():
         assert ds[0].metadata("param") == "2t"
         assert ds[0].metadata("levtype") == "sfc"
         assert ds[0].metadata("edition") == 2
+        assert ds[0].metadata("generatingProcessIdentifier") == 255
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -79,6 +96,7 @@ def test_grib_output_o96():
         assert ds[0].metadata("param") == "2t"
         assert ds[0].metadata("levtype") == "sfc"
         assert ds[0].metadata("edition") == 2
+        assert ds[0].metadata("generatingProcessIdentifier") == 255
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -103,6 +121,7 @@ def test_grib_output_o160():
         assert ds[0].metadata("edition") == 2
         assert ds[0].metadata("levtype") == "sfc"
         assert ds[0].metadata("param") == "2t"
+        assert ds[0].metadata("generatingProcessIdentifier") == 255
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -125,11 +144,12 @@ def test_grib_output_mars_labeling():
 
         assert ds[0].metadata("date") == 20010101
         assert ds[0].metadata("edition") == 2
-        assert ds[0].metadata("step") == 24
+        assert ds[0].metadata("step", astype=int) == 24
         assert ds[0].metadata("expver") == "test"
         assert ds[0].metadata("levtype") == "sfc"
         assert ds[0].metadata("param") == "msl"
         assert ds[0].metadata("type") == "fc"
+        assert ds[0].metadata("generatingProcessIdentifier") == 255
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -138,14 +158,17 @@ def test_grib_output_mars_labeling():
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
 )
-def test_grib_output_pl():
+@pytest.mark.parametrize("levtype", [{}, {"levtype": "pl"}])
+def test_grib_output_pl(levtype):
     data = np.random.random((40320,))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "a.grib")
 
         f = earthkit.data.new_grib_output(path, date=20010101)
-        f.write(data, param="t", level=850)
+        _kwargs = dict(param="t", level=850)
+        _kwargs.update(levtype)
+        f.write(data, **_kwargs)
         f.close()
 
         ds = earthkit.data.from_source("file", path)
@@ -155,6 +178,7 @@ def test_grib_output_pl():
         assert ds[0].metadata("level") == 850
         assert ds[0].metadata("levtype") == "pl"
         assert ds[0].metadata("param") == "t"
+        assert ds[0].metadata("generatingProcessIdentifier") == 255
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -181,7 +205,8 @@ def test_grib_output_tp():
         assert ds[0].metadata("param") == "tp"
         assert ds[0].metadata("levtype") == "sfc"
         assert ds[0].metadata("edition") == 1
-        assert ds[0].metadata("step") == 48
+        assert ds[0].metadata("step", astype=int) == 48
+        assert ds[0].metadata("generatingProcessIdentifier") == 255
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 

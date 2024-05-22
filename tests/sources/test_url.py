@@ -17,7 +17,7 @@ import pytest
 from earthkit.data import from_source, settings
 from earthkit.data.core.temporary import temp_directory, temp_file
 from earthkit.data.testing import (
-    earthkit_file,
+    earthkit_examples_file,
     earthkit_remote_test_data_file,
     network_off,
 )
@@ -28,7 +28,7 @@ from earthkit.data.testing import (
     reason="file:// not working on Windows yet",
 )
 def test_url_file_source():
-    filename = os.path.abspath(earthkit_file("docs/examples/test.nc"))
+    filename = os.path.abspath(earthkit_examples_file("test.nc"))
     s = from_source("url", f"file://{filename}")
     assert len(s) == 2
 
@@ -80,7 +80,7 @@ def test_url_source_tar():
     assert len(ds) == 6
 
 
-def test_part_url():
+def test_parts_url():
     ds = from_source(
         "url",
         "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
@@ -111,12 +111,68 @@ def test_part_url():
         assert f.read()[:4] == b"BUFR"
 
 
+def test_parts_as_arg_url_1():
+    ds = from_source(
+        "url",
+        [
+            "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
+            [(0, 4)],
+        ],
+    )
+
+    assert os.path.getsize(ds.path) == 4
+
+    with open(ds.path, "rb") as f:
+        assert f.read() == b"BUFR"
+
+
+def test_parts_as_arg_url_2():
+    ds = from_source(
+        "url",
+        [
+            "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
+            None,
+        ],
+    )
+
+    assert os.path.getsize(ds.path) > 4
+
+    with open(ds.path, "rb") as f:
+        assert f.read(4) == b"BUFR"
+
+
+def test_multi_url_parts_as_arg_invalid_1():
+    with pytest.raises(ValueError):
+        from_source(
+            "url",
+            [
+                "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
+                [(0, 4)],
+            ],
+            parts=[(0, 5)],
+        )
+
+
+def test_multi_url_parts_invalid():
+    parts1 = [(240, 150)]
+    parts2 = [(0, 526)]
+    with pytest.raises(ValueError):
+        from_source(
+            "url",
+            [
+                [earthkit_remote_test_data_file("examples/test6.grib"), parts1],
+                [earthkit_remote_test_data_file("examples/test.grib"), parts2],
+            ],
+            parts=[(0, 240)],
+        )
+
+
 @pytest.mark.skipif(  # TODO: fix
     sys.platform == "win32",
     reason="file:// not working on Windows yet",
 )
 def test_url_part_file_source():
-    filename = os.path.abspath(earthkit_file("docs/examples/test.grib"))
+    filename = os.path.abspath(earthkit_examples_file("test.grib"))
     ds = from_source(
         "url",
         f"file://{filename}",
@@ -140,13 +196,14 @@ def test_url_netcdf_source_save():
         earthkit_remote_test_data_file("examples/test.nc"),
     )
 
-    tmp = temp_file()
-    ds.save(tmp.path)
-    assert os.path.exists(tmp.path)
+    with temp_file() as tmp:
+        ds.save(tmp)
+        assert os.path.exists(tmp)
+        ds_saved = from_source("file", tmp)
+        assert len(ds_saved) == 2
 
 
 if __name__ == "__main__":
-    test_part_url()
-    # from earthkit.data.testing import main
+    from earthkit.data.testing import main
 
-    # main(__file__)
+    main(__file__)
