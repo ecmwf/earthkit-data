@@ -277,13 +277,15 @@ class Index(Source):
         Using ``remapping`` to specify the selection by a key created from two other keys
         (we created key "param_level" from "param" and "levelist"):
 
-        >>> for f in ds.order_by(
+        >>> subset = ds.sel(
         ...     param_level=["t850", "u1000"],
         ...     remapping={"param_level": "{param}{levelist}"},
-        ... ):
+        ... )
+        >>> for f in subset:
         ...     print(f)
-        GribField(t,850,20180801,1200,0,0)
+        ...
         GribField(u,1000,20180801,1200,0,0)
+        GribField(t,850,20180801,1200,0,0)
         """
         kwargs = normalize_selection(*args, **kwargs)
         kwargs = self._normalize_kwargs_names(**kwargs)

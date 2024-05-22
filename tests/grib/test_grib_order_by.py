@@ -198,3 +198,18 @@ def test_grib_order_by_valid_datetime(fl_type, array_backend):
     ]
 
     assert g.metadata("valid_datetime") == ref
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_order_by_remapping(fl_type, array_backend):
+    ds = load_grib_data("test6.grib", fl_type, array_backend)
+
+    ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
+    ref = [("t", 850), ("t", 1000), ("u", 1000), ("v", 850), ("v", 1000), ("u", 850)]
+
+    r = ds.order_by(
+        param_level=ordering, remapping={"param_level": "{param}{levelist}"}
+    )
+
+    assert r.metadata("param", "level") == ref
