@@ -1,0 +1,93 @@
+name: legacy-ci
+
+on:
+  push:
+    branches:
+    - main
+    - develop
+    tags:
+    - "*"
+  pull_request:
+    branches:
+    - main
+    - develop
+  pull_request_target:
+    types: [labeled]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  pre-commit:
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
+    - uses: pre-commit/action@v3.0.0
+
+  unit-tests-no-eccodes:
+    name: unit-tests (3.10)
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
+    - name: Install Conda environment with Micromamba
+      uses: mamba-org/provision-with-micromamba@v14
+      with:
+        environment-file: tests/environment-unit-tests.yml
+        environment-name: DEVELOP
+        channels: conda-forge
+        cache-env: true
+        cache-env-key: ubuntu-latest-3.10-no-eccodes
+        extra-specs: |
+          python=3.10
+    - name: Install package
+      run: |
+        python -m pip install --no-deps -e .
+        micromamba remove eccodes
+    - name: Run tests without eccodes
+      run: |
+        python -m pytest -v -m 'no_eccodes'
+
+
+  documentation:
+    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
+    - name: Install Conda environment with Micromamba
+      uses: mamba-org/provision-with-micromamba@v12
+      with:
+        environment-file: tests/environment-unit-tests.yml
+        environment-name: DEVELOP
+        channels: conda-forge
+        cache-env: true
+        cache-env-key: ubuntu-latest-3.10-no-eccodes
+        extra-specs: |
+          python=3.10
+    - name: Install package
+      run: |
+        python -m pip install --no-deps -e .
+    - name: Build documentation
+      run: |
+        make docs-build
