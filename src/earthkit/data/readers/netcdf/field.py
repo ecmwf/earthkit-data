@@ -26,9 +26,9 @@ LOG = logging.getLogger(__name__)
 
 
 class XArrayFieldGeography(Geography):
-    def __init__(self, metadata, data_array, ds, variable):
+    def __init__(self, metadata, ds, variable):
         self.metadata = metadata
-        self.data_array = data_array
+        self.variable = variable
         self.ds = ds
         self.north, self.west, self.south, self.east = self.ds.bbox(variable)
 
@@ -59,9 +59,11 @@ class XArrayFieldGeography(Geography):
             north=self.north, south=self.south, east=self.east, west=self.west
         )
 
+    @cached_property
     def _grid_mapping(self):
-        if "grid_mapping" in self.data_array.attrs:
-            grid_mapping = self.ds[self.data_array.attrs["grid_mapping"]]
+        da = self.data_array
+        if "grid_mapping" in da.attrs:
+            grid_mapping = self.ds[da.attrs["grid_mapping"]]
         else:
             raise AttributeError(
                 "no CF-compliant 'grid_mapping' detected in netCDF attributes"
@@ -70,6 +72,10 @@ class XArrayFieldGeography(Geography):
 
     def gridspec(self):
         raise NotImplementedError("gridspec is not implemented for netcdf/xarray")
+
+    @property
+    def data_array(self):
+        return self.ds[self.variable]
 
     def resolution(self):
         # TODO: implement resolution
@@ -102,7 +108,8 @@ class XArrayMetadata(RawMetadata):
         self._field = field
         self._geo = None
 
-        d = dict(self._field._da.attrs)
+        data_array = field._ds[field.variable]
+        d = dict(data_array.attrs)
 
         time = field.non_dim_coords.get("valid_time", field.non_dim_coords.get("time"))
         level = None
@@ -151,7 +158,7 @@ class XArrayMetadata(RawMetadata):
     def geography(self):
         if self._geo is None:
             self._geo = XArrayFieldGeography(
-                self, self._field._da, self._field._ds, self._field.variable
+                self, self._field._ds, self._field.variable
             )
         return self._geo
 
@@ -207,10 +214,6 @@ class XArrayField(Field):
     def __init__(self, ds, variable, slices, non_dim_coords, array_backend):
         super().__init__(array_backend)
         self._ds = ds
-        self._da = ds[variable]
-
-        # self.north, self.west, self.south, self.east = ds.bbox(variable)
-
         self.variable = variable
         self.slices = slices
         self.non_dim_coords = non_dim_coords
@@ -227,19 +230,26 @@ class XArrayField(Field):
         return XArrayMetadata(self)
 
     def to_xarray(self):
-        dims = self._da.dims
+        da = self._ds[self.variable]
+        dims = da.dims
         v = {}
         for s in self.slices:
             if s.is_dimension:
                 if s.name in dims:
                     v[s.name] = s.index
-        return self._da.isel(**v)
+        return da.isel(**v)
 
     def to_pandas(self):
         return self.to_xarray().to_pandas()
 
+    # def _to_numpy(self):
+    #     return self.to_xarray().to_numpy()
+
     def _to_numpy(self):
-        return self.to_xarray().to_numpy()
+        dimensions = dict((s.name, s.index) for s in self.slices)
+        # values = self.owner.xr_dataset[self.variable].isel(dimensions).values
+        values = self._ds[self.variable].isel(dimensions).values
+        return values
 
     def _values(self, dtype=None):
         if dtype is None:
