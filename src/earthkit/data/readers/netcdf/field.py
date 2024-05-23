@@ -59,7 +59,6 @@ class XArrayFieldGeography(Geography):
             north=self.north, south=self.south, east=self.east, west=self.west
         )
 
-    @cached_property
     def _grid_mapping(self):
         da = self.data_array
         if "grid_mapping" in da.attrs:
