@@ -198,7 +198,7 @@ class GribFieldGeography(Geography):
         if self.rotated and self.metadata.get("gridType") == "reduced_rotated_gg":
             from earthkit.data.utils.message import ECC_FEATURES
 
-            if not ECC_FEATURES.versions["eccodes"] >= (2, 35, 0):
+            if not ECC_FEATURES.version >= (2, 35, 0):
                 raise RuntimeError(
                     "gridType=rotated_reduced_gg requires ecCodes >= 2.35.0"
                 )

@@ -60,6 +60,10 @@ class EccodesFeatures:
     def versions(self):
         return f"ecCodes: {self._version} eccodes-python: {self._py_version}"
 
+    @property
+    def version(self):
+        return self._version
+
 
 ECC_FEATURES = EccodesFeatures()
 
