@@ -27,6 +27,7 @@ def missing_is_none(x):
 class GribFieldGeography(Geography):
     def __init__(self, metadata):
         self.metadata = metadata
+        self.check_rotated_support()
 
     def latitudes(self, dtype=None):
         r"""Return the latitudes of the field.
@@ -193,9 +194,19 @@ class GribFieldGeography(Geography):
     def rotated_iterator(self):
         return self.metadata.get("iteratorDisableUnrotate") is not None
 
+    def check_rotated_support(self):
+        if self.rotated and self.metadata.get("gridType") == "reduced_rotated_gg":
+            from earthkit.data.utils.message import ECC_FEATURES
+
+            if not ECC_FEATURES.versions["eccodes"] >= (2, 35, 0):
+                raise RuntimeError(
+                    "gridType=rotated_reduced_gg requires ecCodes >= 2.35.0"
+                )
+
     def latitudes_unrotated(self, **kwargs):
         if not self.rotated:
             return self.latitudes(**kwargs)
+
         if not self.rotated_iterator:
             from earthkit.geo.rotate import unrotate
 
@@ -212,6 +223,7 @@ class GribFieldGeography(Geography):
     def longitudes_unrotated(self, **kwargs):
         if not self.rotated:
             return self.longitudes(**kwargs)
+
         if not self.rotated_iterator:
             from earthkit.geo.rotate import unrotate
 
