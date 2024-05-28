@@ -34,6 +34,7 @@ dependencies = [
   "pyyaml",
   "tqdm>=4.63.0",
   "xarray>=0.19.0",
+  "earthkit-geo>=0.2.0",
   "earthkit-meteo>=0.0.1"
 ]
 description = "A format-agnostic Python interface for geospatial data"
