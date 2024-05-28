@@ -27,4 +27,4 @@ New features
 Fixes
 ++++++
 
-- Fixed issue when :func:`from_source` could not be used after importing GRIBReader
+- Fixed issue when :func:`from_source` could not be used after importing GRIBReader.
