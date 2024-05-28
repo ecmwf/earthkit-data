@@ -71,3 +71,10 @@ We can load the whole stream into memory by using ``read_all=True`` in :func:`fr
     >>> ds = earthkit.data.from_source("url", url, stream=True, read_all=True)
     >>> len(ds)
     6
+
+Further examples
+-----------------
+
+- :ref:`/examples/data_from_stream.ipynb`
+- :ref:`/examples/fdb.ipynb`
+- :ref:`/examples/url_stream.ipynb`
