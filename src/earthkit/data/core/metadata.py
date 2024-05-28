@@ -306,7 +306,7 @@ class Metadata(metaclass=ABCMeta):
 
     @property
     def gridspec(self):
-        r""":ref:`~data.core.gridspec.GridSpec`: Get grid description.
+        r""":class:`~data.core.gridspec.GridSpec`: Get grid description.
 
         If it is not available None is returned.
         """
