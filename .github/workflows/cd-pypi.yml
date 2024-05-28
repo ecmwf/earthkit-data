@@ -12,14 +12,14 @@ name: cd
 
 
 on:
-  push: {}
-
-  release:
-    types: [created]
+  push:
+    branches:
+    - main
 
 jobs:
   deploy:
-    if: ${{ github.event_name == 'release' }}
+    # if: ${{ github.ref_type == 'tag' }}
+    if: ${{ github.ref_type == 'branch' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
