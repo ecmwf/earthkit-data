@@ -207,7 +207,7 @@ class Metadata(metaclass=ABCMeta):
         if self._is_custom_key(key):
             try:
                 if key == DATETIME:
-                    return self._valid_datetime()
+                    return self._valid_datetime().isoformat()
                 elif key == GRIDSPEC:
                     return self.grid_spec
             except Exception as e:

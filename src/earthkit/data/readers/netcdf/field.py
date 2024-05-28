@@ -9,6 +9,9 @@
 
 import logging
 from datetime import timedelta
+from functools import cached_property
+
+import numpy as np
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.geography import Geography
@@ -23,9 +26,9 @@ LOG = logging.getLogger(__name__)
 
 
 class XArrayFieldGeography(Geography):
-    def __init__(self, metadata, data_array, ds, variable):
+    def __init__(self, metadata, ds, variable):
         self.metadata = metadata
-        self.data_array = data_array
+        self.variable = variable
         self.ds = ds
         self.north, self.west, self.south, self.east = self.ds.bbox(variable)
 
@@ -57,8 +60,9 @@ class XArrayFieldGeography(Geography):
         )
 
     def _grid_mapping(self):
-        if "grid_mapping" in self.data_array.attrs:
-            grid_mapping = self.ds[self.data_array.attrs["grid_mapping"]]
+        da = self.data_array
+        if "grid_mapping" in da.attrs:
+            grid_mapping = self.ds[da.attrs["grid_mapping"]]
         else:
             raise AttributeError(
                 "no CF-compliant 'grid_mapping' detected in netCDF attributes"
@@ -67,6 +71,24 @@ class XArrayFieldGeography(Geography):
 
     def gridspec(self):
         raise NotImplementedError("gridspec is not implemented for netcdf/xarray")
+
+    @property
+    def data_array(self):
+        return self.ds[self.variable]
+
+    def resolution(self):
+        # TODO: implement resolution
+        return None
+
+    @property
+    def mars_grid(self):
+        # TODO: implement mars_grid
+        return None
+
+    @property
+    def mars_area(self):
+        # TODO: code me
+        return [self.north, self.west, self.south, self.east]
 
 
 class XArrayMetadata(RawMetadata):
@@ -85,7 +107,8 @@ class XArrayMetadata(RawMetadata):
         self._field = field
         self._geo = None
 
-        d = dict(self._field._da.attrs)
+        data_array = field._ds[field.variable]
+        d = dict(data_array.attrs)
 
         time = field.non_dim_coords.get("valid_time", field.non_dim_coords.get("time"))
         level = None
@@ -103,7 +126,7 @@ class XArrayMetadata(RawMetadata):
         if time is not None:
             self.time = to_datetime(time)
             if "forecast_reference_time" in field._ds.data_vars:
-                forecast_reference_time = field.ds["forecast_reference_time"].data
+                forecast_reference_time = field._ds["forecast_reference_time"].data
                 assert forecast_reference_time.ndim == 0, forecast_reference_time
                 forecast_reference_time = forecast_reference_time.astype(
                     "datetime64[s]"
@@ -134,7 +157,7 @@ class XArrayMetadata(RawMetadata):
     def geography(self):
         if self._geo is None:
             self._geo = XArrayFieldGeography(
-                self, self._field._da, self._field._ds, self._field.variable
+                self, self._field._ds, self._field.variable
             )
         return self._geo
 
@@ -190,10 +213,6 @@ class XArrayField(Field):
     def __init__(self, ds, variable, slices, non_dim_coords, array_backend):
         super().__init__(array_backend)
         self._ds = ds
-        self._da = ds[variable]
-
-        # self.north, self.west, self.south, self.east = ds.bbox(variable)
-
         self.variable = variable
         self.slices = slices
         self.non_dim_coords = non_dim_coords
@@ -210,25 +229,51 @@ class XArrayField(Field):
         return XArrayMetadata(self)
 
     def to_xarray(self):
-        dims = self._da.dims
+        da = self._ds[self.variable]
+        dims = da.dims
         v = {}
         for s in self.slices:
             if s.is_dimension:
                 if s.name in dims:
                     v[s.name] = s.index
-        return self._da.isel(**v)
+        return da.isel(**v)
 
     def to_pandas(self):
         return self.to_xarray().to_pandas()
 
+    # def _to_numpy(self):
+    #     return self.to_xarray().to_numpy()
+
     def _to_numpy(self):
-        return self.to_xarray().to_numpy()
+        dimensions = dict((s.name, s.index) for s in self.slices)
+        # values = self.owner.xr_dataset[self.variable].isel(dimensions).values
+        values = self._ds[self.variable].isel(dimensions).values
+        return values
 
     def _values(self, dtype=None):
         if dtype is None:
             return self._to_numpy()
         else:
             return self._to_numpy().astype(dtype, copy=False)
+
+    @cached_property
+    def grid_mapping(self):
+        def tidy(x):
+            if isinstance(x, np.ndarray):
+                return x.tolist()
+            if isinstance(x, (tuple, list)):
+                return [tidy(y) for y in x]
+            if isinstance(x, dict):
+                return {k: tidy(v) for k, v in x.items()}
+            return x
+
+        # return tidy(
+        #     self.owner.xr_dataset[
+        #         self.owner.xr_dataset[self.variable].grid_mapping
+        #     ].attrs
+        # )
+
+        return tidy(self._ds[self._ds[self.variable].grid_mapping].attrs)
 
 
 class NetCDFMetadata(XArrayMetadata):

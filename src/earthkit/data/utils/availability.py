@@ -13,9 +13,11 @@ import io
 import itertools
 import json
 import os
+import pickle
 
 import yaml
 
+from earthkit.data.utils import load_json_or_yaml
 from earthkit.data.utils.factorise import Tree, factorise
 
 from .humanize import dict_to_human, list_to_human
@@ -47,26 +49,55 @@ def load_yaml(avail):
         return yaml.load(f, Loader=yaml.SafeLoader)
 
 
-CONFIG_LOADERS = {
-    ".json": load_json,
-    ".yaml": load_yaml,
-}
-
-
 class Availability:
     def __init__(self, avail, intervals=None, parser=None):
+        CONFIG_LOADERS = {
+            "json": load_json,
+            "yaml": load_yaml,
+            # "marslist": Availability.from_mars_list,
+            "pickle": Availability.from_pickle,
+        }
         if not isinstance(avail, Tree):
             if isinstance(avail, str):
                 config_loader = load_json
                 if len(avail) > 5:
-                    config_loader = CONFIG_LOADERS.get(avail[-5:], load_str)
+                    ext = avail[-10:].split(".")[-1]
+                    config_loader = CONFIG_LOADERS.get(ext, load_str)
                     avail = config_loader(avail)
 
             if parser is not None:
                 avail = [parser(item) for item in avail]
 
-            avail = factorise(avail, intervals=intervals)
+            if isinstance(avail, Availability):
+                avail = avail._tree
+
+            if not isinstance(avail, Tree):
+                avail = factorise(avail, intervals=intervals)
         self._tree = avail
+
+    def as_mars_list(self, *args, **kwargs):
+        return self._tree.as_mars_list(*args, **kwargs)
+
+    def as_mars(self, *args, **kwargs):
+        return self._tree.as_mars(*args, **kwargs)
+
+    def to_pickle(self, filename):
+        with open(filename, "wb") as f:
+            pickle.dump(self._tree, f)
+
+    @classmethod
+    def from_pickle(cls, filename):
+        with open(filename, "rb") as f:
+            tree = pickle.load(f)
+            return cls(tree)
+
+    def to_yaml(self):
+        return yaml.dump(self._tree)
+
+    @classmethod
+    def from_yaml(cls, filename):
+        dic = load_json_or_yaml(filename)
+        return cls(dic)
 
     @classmethod
     def from_mars_list(cls, tree, intervals=None):
@@ -84,18 +115,18 @@ class Availability:
 
         requests = []
         stack = []
-        last = 0
+        last = -1
         for line in input:
             line = line.rstrip()
             cnt = 0
             while len(line) > 0 and line[0] == " ":
                 line = line[1:]
                 cnt += 1
-            if cnt <= last and stack:
+            if cnt <= last:
                 requests.append(as_dict(",".join(stack)))
-            while len(stack) <= cnt:
-                stack.append(None)
-            stack[cnt] = line
+            while len(stack) > cnt:
+                stack.pop()
+            stack.append(line)
             last = cnt
 
         if stack:
@@ -105,6 +136,12 @@ class Availability:
 
     def _repr_html_(self):
         return "<hr><pre>{}</pre><hr>".format(self.tree())
+
+    def __str__(self):
+        return self.tree()
+
+    def __repr__(self):
+        return str(self.tree())
 
     def select(self, *args, **kwargs):
         return Availability(self._tree.select(*args, **kwargs))

@@ -12,7 +12,7 @@ from abc import abstractmethod
 from collections import defaultdict
 
 from earthkit.data.core import Base
-from earthkit.data.core.index import Index
+from earthkit.data.core.index import Index, MaskIndex, MultiIndex
 from earthkit.data.decorators import cached_method, detect_out_filename
 from earthkit.data.utils.array import ensure_backend, numpy_backend
 from earthkit.data.utils.metadata import metadata_argument
@@ -340,6 +340,31 @@ class Field(Base):
         """
         lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype)
         return dict(lat=lat, lon=lon)
+
+    def grid_points(self):
+        r = self.to_latlon(flatten=True)
+        return r["lat"], r["lon"]
+
+    def grid_points_unrotated(self):
+        lat = self._metadata.geography.latitudes_unrotated()
+        lon = self._metadata.geography.longitudes_unrotated()
+        return lat, lon
+
+    @property
+    def rotation(self):
+        return self._metadata.geography.rotation
+
+    @property
+    def resolution(self):
+        return self._metadata.geography.resolution()
+
+    @property
+    def mars_grid(self):
+        return self._metadata.geography.mars_grid()
+
+    @property
+    def mars_area(self):
+        return self._metadata.geography.mars_area()
 
     @property
     def shape(self):
@@ -1420,3 +1445,27 @@ class FieldList(Index):
     def _to_array_fieldlist(self, **kwargs):
         md = [f.metadata() for f in self]
         return self.from_array(self.to_array(**kwargs), md)
+
+    def cube(self, *args, **kwargs):
+        from earthkit.data.indexing.cube import FieldCube
+
+        return FieldCube(self, *args, **kwargs)
+
+    @classmethod
+    def new_mask_index(self, *args, **kwargs):
+        return MaskFieldList(*args, **kwargs)
+
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(_, FieldList) for _ in sources)
+        return MultiFieldList(sources)
+
+
+class MaskFieldList(FieldList, MaskIndex):
+    def __init__(self, *args, **kwargs):
+        MaskIndex.__init__(self, *args, **kwargs)
+
+
+class MultiFieldList(FieldList, MultiIndex):
+    def __init__(self, *args, **kwargs):
+        MultiIndex.__init__(self, *args, **kwargs)

@@ -104,6 +104,7 @@ class OrderBase(OrderOrSelection):
         raise NotImplementedError()
 
     def compare_elements(self, a, b):
+        assert callable(self.remapping), (type(self.remapping), self.remapping)
         a_metadata = self.remapping(a.metadata)
         b_metadata = self.remapping(b.metadata)
         for k, v in self.actions.items():
@@ -120,18 +121,18 @@ class Order(OrderBase):
         def ascending(a, b):
             if a == b:
                 return 0
-            if a > b:
+            if b is None or a > b:
                 return 1
-            if a < b:
+            if a is None or a < b:
                 return -1
             raise ValueError(f"{a},{b}")
 
         def descending(a, b):
             if a == b:
                 return 0
-            if a > b:
+            if b is None or a > b:
                 return -1
-            if a < b:
+            if a is None or a < b:
                 return 1
             raise ValueError(f"{a},{b}")
 
@@ -169,6 +170,9 @@ class Order(OrderBase):
                     order[int(key)] = i
                 except ValueError:
                     pass
+                except TypeError:
+                    print('Cannot convert "%s" to int (%s)' % (key, type(key)))
+                    raise
                 try:
                     order[float(key)] = i
                 except ValueError:
@@ -273,13 +277,15 @@ class Index(Source):
         Using ``remapping`` to specify the selection by a key created from two other keys
         (we created key "param_level" from "param" and "levelist"):
 
-        >>> for f in ds.order_by(
+        >>> subset = ds.sel(
         ...     param_level=["t850", "u1000"],
         ...     remapping={"param_level": "{param}{levelist}"},
-        ... ):
+        ... )
+        >>> for f in subset:
         ...     print(f)
-        GribField(t,850,20180801,1200,0,0)
+        ...
         GribField(u,1000,20180801,1200,0,0)
+        GribField(t,850,20180801,1200,0,0)
         """
         kwargs = normalize_selection(*args, **kwargs)
         kwargs = self._normalize_kwargs_names(**kwargs)
@@ -391,7 +397,7 @@ class Index(Source):
 
         return self.sel(**kwargs)
 
-    def order_by(self, *args, remapping=None, **kwargs):
+    def order_by(self, *args, remapping=None, patches=None, **kwargs):
         """Changes the order of the elements in a fieldlist-like object.
 
         Parameters
@@ -488,7 +494,7 @@ class Index(Source):
         kwargs = normalize_order_by(*args, **kwargs)
         kwargs = self._normalize_kwargs_names(**kwargs)
 
-        remapping = build_remapping(remapping)
+        remapping = build_remapping(remapping, patches)
 
         if not kwargs:
             return self
@@ -507,38 +513,39 @@ class Index(Source):
 
     def __getitem__(self, n):
         if isinstance(n, slice):
-            return self.from_slice(n)
+            return self._from_slice(n)
         if isinstance(n, (tuple, list)):
-            return self.from_multi(n)
+            return self._from_sequence(n)
         if isinstance(n, dict):
-            return self.from_dict(n)
+            return self._from_dict(n)
         else:
             import numpy as np
 
             if isinstance(n, np.ndarray):
-                return self.from_multi(n)
+                return self._from_ndarray(n)
 
         return self._getitem(n)
 
-    def from_slice(self, s):
+    def _from_slice(self, s):
         indices = range(len(self))[s]
         return self.new_mask_index(self, indices)
 
-    def from_mask(self, lst):
+    def _from_mask(self, lst):
         indices = [i for i, x in enumerate(lst) if x]
         return self.new_mask_index(self, indices)
 
-    def from_multi(self, a):
-        import numpy as np
+    def _from_sequence(self, s):
+        return self.new_mask_index(self, s)
 
-        if not isinstance(a, list):
-            a = list(a)
+    def _from_ndarray(self, a):
+        return self._from_sequence(a.tolist())
+        # import numpy as np
 
-        # will raise IndexError if an index is out of bounds
-        n = len(self)
-        indices = np.arange(0, n if n > 0 else 0)
-        indices = indices[a].tolist()
-        return self.new_mask_index(self, indices)
+        # # will raise IndexError if an index is out of bounds
+        # n = len(self)
+        # indices = np.arange(0, n if n > 0 else 0)
+        # indices = indices[a].tolist()
+        # return self.new_mask_index(self, indices)
 
     def from_dict(self, dic):
         return self.sel(dic)
