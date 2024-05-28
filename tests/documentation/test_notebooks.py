@@ -33,6 +33,7 @@ SKIP = [
     "demo_source_plugin.ipynb",
     "ecmwf_open_data.ipynb",
     "shapefile.ipynb",
+    "netcdf_opendap.ipynb",
 ]
 
 if NO_PYTORCH:

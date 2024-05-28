@@ -15,7 +15,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import NO_CDS
+from earthkit.data.testing import NO_CDS, preserve_cwd
 
 CDS_TIMEOUT = pytest.CDS_TIMEOUT
 
@@ -180,11 +180,10 @@ def test_cds_grib_save():
     )
     with temp_directory() as tmpdir:
         # Check file can be saved in current dir with detected filename:
-        here = os.curdir
-        os.chdir(tmpdir)
-        s.save()
-        assert os.path.isfile(os.path.basename(s.source_filename))
-        os.chdir(here)
+        with preserve_cwd():
+            os.chdir(tmpdir)
+            s.save()
+            assert os.path.isfile(os.path.basename(s.source_filename))
 
 
 @pytest.mark.long_test
@@ -300,11 +299,10 @@ def test_cds_netcdf_save():
 
     with temp_directory() as tmpdir:
         # Check file can be saved in current dir with detected filename:
-        here = os.curdir
-        os.chdir(tmpdir)
-        s.save()
-        assert os.path.isfile(os.path.basename(s.source_filename))
-        os.chdir(here)
+        with preserve_cwd():
+            os.chdir(tmpdir)
+            s.save()
+            assert os.path.isfile(os.path.basename(s.source_filename))
 
 
 @pytest.mark.long_test

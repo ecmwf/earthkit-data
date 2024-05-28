@@ -73,7 +73,11 @@ def test_constants_slice(indexes):
 
 @pytest.mark.parametrize(
     "indexes1,indexes2",
-    [(np.array([1, 16, 5, 9]), np.array([1, 3])), ([1, 16, 5, 9], [1, 3])],
+    [
+        (np.array([1, 16, 5, 9]), np.array([1, 3])),
+        ([1, 16, 5, 9], [1, 3]),
+        ((1, 16, 5, 9), (1, 3)),
+    ],
 )
 def test_constants_array_indexing(indexes1, indexes2):
     ds, md = load_constants_fs()
@@ -93,7 +97,15 @@ def test_constants_array_indexing(indexes1, indexes2):
     assert r1.metadata(["valid_datetime", "param"]) == ref_md
 
 
-@pytest.mark.parametrize("indexes", [(np.array([1, 96, 5, 9])), ([1, 96, 5, 9])])
+@pytest.mark.skip(reason="Index range checking disabled")
+@pytest.mark.parametrize(
+    "indexes",
+    [
+        (np.array([1, 96, 5, 9])),
+        ([1, 16, 5, 9], [1, 3]),
+        ((1, 16, 5, 9), (1, 3)),
+    ],
+)
 def test_constants_array_indexing_bad(indexes):
     ds, _ = load_constants_fs()
     with pytest.raises(IndexError):

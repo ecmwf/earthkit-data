@@ -10,6 +10,8 @@ The list of common methods/operators:
   - :ref:`conversion`
   - :ref:`concat`
   - :ref:`iter`
+  - :ref:`batched`
+  - :ref:`group_by`
   - :ref:`slice`
   - :ref:`sel`
   - :ref:`order_by`
@@ -76,6 +78,49 @@ In the the following example we read a GRIB file from disk. In the iteration eac
     GribField(t,850,20180801,1200,0,0)
     GribField(u,850,20180801,1200,0,0)
     GribField(v,850,20180801,1200,0,0)
+
+.. _batched:
+
+Iteration with ``.batched()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When an earthkit-data data `source` or dataset provides a :class:`~data.core.fieldlist.FieldList` or message list, we can iterate through it in batches of fixed size using :meth:`~data.core.fieldlist.FieldList.batched`. This method also works for :ref:`streams <streams>`.
+
+In the the following example we read a GRIB file from disk and iterate through it in batches of 2. Each iteration step yields a :class:`~data.core.fieldlist.FieldList` of 2 fields.
+
+.. code-block:: python
+
+    >>> import earthkit.data
+    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+
+    >>> for f in ds.batched(2):
+    ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
+    ...
+    len=2 [('t', 1000), ('u', 1000)]
+    len=2 [('v', 1000), ('t', 850)]
+    len=2 [('u', 850), ('v', 850)]
+
+
+.. _group_by:
+
+Iteration with ``.group_by()``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When an earthkit-data data `source` or dataset provides a :class:`~data.core.fieldlist.FieldList` or message list, we can iterate through it in groups defined by metadata keys using :meth:`~data.core.fieldlist.FieldList.group_by`. This method also works for :ref:`streams <streams>`.
+
+In the the following example we read a GRIB file from disk and iterate through it in groups defined by the "level" metadata key. Each iteration step yields a :class:`~data.core.fieldlist.FieldList` containing fields with the same "level" value.
+
+.. code-block:: python
+
+    >>> import earthkit.data
+    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+
+    >>> for f in ds.group_by("level"):
+    ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
+    ...
+    len=3 [('t', 1000), ('u', 1000), ('v', 1000)]
+    len=3 [('t', 850), ('u', 850), ('v', 850)]
+
 
 .. _slice:
 
