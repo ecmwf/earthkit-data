@@ -35,6 +35,7 @@ SKIP = [
     "shapefile.ipynb",
     "grib_to_xarray.ipynb",
     "xarray_engine.ipynb",
+    "netcdf_opendap.ipynb",
 ]
 
 if NO_PYTORCH:

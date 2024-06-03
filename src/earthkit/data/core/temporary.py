@@ -35,7 +35,7 @@ class TmpFile:
         self.cleanup()
 
     def cleanup(self):
-        if self.path is not None:
+        if self.path is not None and os is not None:
             os.unlink(self.path)
         self.path = None
 
@@ -73,3 +73,40 @@ class TmpDirectory(tempfile.TemporaryDirectory):
 
 def temp_directory(dir=None):
     return TmpDirectory(dir=dir)
+
+
+class TmpEnv:
+    """
+    A context manager that temporarily sets environment variables.
+
+    Usage:
+    >>> import os
+    >>> with TmpEnv(CLIMETLAB_TESTS_FOO="123", CLIMETLAB_TESTS_BAR="456"):
+    ...     print(os.environ["CLIMETLAB_TESTS_FOO"])
+    ...     print(os.environ["CLIMETLAB_TESTS_BAR"])
+    ...
+    123
+    456
+    >>> print(os.environ.get("CLIMETLAB_TESTS_FOO"))
+    None
+    """
+
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+        self.previous = {}
+
+    def __enter__(self):
+        for key, value in self.kwargs.items():
+            self.previous[key] = os.environ.get(key)
+            os.environ[key] = str(value)
+
+    def __exit__(self, type, value, traceback):
+        for key in self.kwargs.keys():
+            if self.previous.get(key) is not None:
+                os.environ[key] = self.previous[key]
+            else:
+                del os.environ[key]
+
+
+def temp_env(**kwargs):
+    return TmpEnv(**kwargs)

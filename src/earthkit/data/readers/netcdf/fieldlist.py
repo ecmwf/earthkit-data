@@ -156,6 +156,7 @@ def get_fields_from_ds(
 
     if check_only:
         return False
+
     return fields
 
 
@@ -182,7 +183,7 @@ class XArrayFieldListCore(FieldList):
                 check_only=True,
             )
         else:
-            return len(self._fields)
+            return len(self._fields) > 0
 
     def _get_fields(self, ds):
         return get_fields_from_ds(ds, self.array_backend, field_type=self.FIELD_TYPE)

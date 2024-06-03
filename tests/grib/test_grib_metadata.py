@@ -532,7 +532,7 @@ def test_grib_valid_datetime(fl_type, array_backend):
     ds = load_grib_data("t_time_series.grib", fl_type, array_backend, folder="data")
     f = ds[4]
 
-    assert f.metadata("valid_datetime") == datetime.datetime(2020, 12, 21, 18)
+    assert f.metadata("valid_datetime") == "2020-12-21T18:00:00"
 
 
 @pytest.mark.parametrize("fl_type", ["file"])

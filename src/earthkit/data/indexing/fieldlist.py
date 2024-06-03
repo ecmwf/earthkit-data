@@ -7,17 +7,21 @@
 # nor does it submit to any jurisdiction.
 #
 
-
 from earthkit.data.core.fieldlist import FieldList
 
 
-class EmptySource(FieldList):
-    def ignore(self):
-        # Used by multi-source
-        return True
+class FieldArray(FieldList):
+    def __init__(self, fields=None):
+        self.fields = fields if fields is not None else []
+
+    def append(self, field):
+        self.fields.append(field)
+
+    def _getitem(self, n):
+        return self.fields[n]
 
     def __len__(self):
-        return 0
+        return len(self.fields)
 
-
-source = EmptySource
+    def __repr__(self) -> str:
+        return f"FieldArray({len(self.fields)})"

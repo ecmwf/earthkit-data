@@ -86,7 +86,14 @@ class Str:
         return self.format % value
 
 
-TYPES = {"": Any, "int": Int, "float": Float, "date": Datetime, "enum": Enum}
+TYPES = {
+    "": Any,
+    "int": Int,
+    "float": Float,
+    "date": Datetime,
+    "strftime": Datetime,
+    "enum": Enum,
+}
 
 
 class Constant:
@@ -115,6 +122,23 @@ class Variable:
         return self.kind.substitute(params[self.name], self.name)
 
 
+FUNCTIONS = dict(lower=lambda s: s.lower())
+
+
+class Function:
+    def __init__(self, value):
+        functions = value.split("|")
+        self.name = functions[0]
+        self.variable = Variable(functions[0])
+        self.functions = functions[1:]
+
+    def substitute(self, params):
+        value = self.variable.substitute(params)
+        for f in self.functions:
+            value = FUNCTIONS[f](value)
+        return value
+
+
 class Pattern:
     def __init__(self, pattern, ignore_missing_keys=False):
         self.ignore_missing_keys = ignore_missing_keys
@@ -125,7 +149,10 @@ class Pattern:
             if i % 2 == 0:
                 self.pattern.append(Constant(p))
             else:
-                v = Variable(p)
+                if "|" in p:
+                    v = Function(p)
+                else:
+                    v = Variable(p)
                 self.variables.append(v)
                 self.pattern.append(v)
 

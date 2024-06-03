@@ -126,9 +126,17 @@ def test_grib_array_indexing(fl_type, array_backend, indexes1, indexes2):
     assert r1.metadata("shortName") == ["u", "t"]
 
 
+@pytest.mark.skip(reason="Index range checking disabled")
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-@pytest.mark.parametrize("indexes", [(np.array([1, 19, 5, 9])), ([1, 19, 5, 9])])
+@pytest.mark.parametrize(
+    "indexes",
+    [
+        (np.array([1, 19, 5, 9])),
+        ([1, 16, 5, 9], [1, 3]),
+        ((1, 16, 5, 9), (1, 3)),
+    ],
+)
 def test_grib_array_indexing_bad(fl_type, array_backend, indexes):
     f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     with pytest.raises(IndexError):

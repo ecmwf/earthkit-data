@@ -9,7 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 import os
 import sys
 
@@ -186,16 +185,31 @@ def test_grib_order_by_valid_datetime(fl_type, array_backend):
     assert len(g) == 10
 
     ref = [
-        datetime.datetime(2020, 12, 23, 12, 0),
-        datetime.datetime(2020, 12, 23, 12, 0),
-        datetime.datetime(2020, 12, 21, 21, 0),
-        datetime.datetime(2020, 12, 21, 21, 0),
-        datetime.datetime(2020, 12, 21, 18, 0),
-        datetime.datetime(2020, 12, 21, 18, 0),
-        datetime.datetime(2020, 12, 21, 15, 0),
-        datetime.datetime(2020, 12, 21, 15, 0),
-        datetime.datetime(2020, 12, 21, 12, 0),
-        datetime.datetime(2020, 12, 21, 12, 0),
+        "2020-12-23T12:00:00",
+        "2020-12-23T12:00:00",
+        "2020-12-21T21:00:00",
+        "2020-12-21T21:00:00",
+        "2020-12-21T18:00:00",
+        "2020-12-21T18:00:00",
+        "2020-12-21T15:00:00",
+        "2020-12-21T15:00:00",
+        "2020-12-21T12:00:00",
+        "2020-12-21T12:00:00",
     ]
 
     assert g.metadata("valid_datetime") == ref
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_order_by_remapping(fl_type, array_backend):
+    ds = load_grib_data("test6.grib", fl_type, array_backend)
+
+    ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
+    ref = [("t", 850), ("t", 1000), ("u", 1000), ("v", 850), ("v", 1000), ("u", 850)]
+
+    r = ds.order_by(
+        param_level=ordering, remapping={"param_level": "{param}{levelist}"}
+    )
+
+    assert r.metadata("param", "level") == ref

@@ -397,6 +397,97 @@ class Tree:
     def factorise(self):
         return _factorise(list(self._flatten_tree()), intervals=self._intervals)
 
+    def as_mars(self, verb="retrieve", extra=None):
+        result = []
+        for r in self.flatten():
+            req = [verb]
+            if extra is not None:
+                req.append(extra)
+            for k, v in r.items():
+                v = [str(_) for _ in v]
+                req.append(f"{k}={'/'.join(v)}")
+            result.append(",".join(req))
+        return "\n".join(result)
+
+    def as_mars_list(self):
+        text = []
+        indent = {}
+        order = {}
+
+        def V(request, depth):
+            if not request:
+                return
+
+            if depth not in indent:
+                indent[depth] = len(indent)
+
+            text.append(" " * indent[depth])
+
+            for k in sorted(request.keys()):
+                if k not in order:
+                    order[k] = len(order)
+
+            sep = ""
+            for k, v in sorted(request.items(), key=lambda x: order[x[0]]):
+                text.append(sep)
+                text.append(k)
+                text.append("=")
+
+                if isinstance(v[0], Interval):
+                    v = [str(x) for x in v]
+
+                if len(v) == 1:
+                    text.append(v[0])
+                else:
+                    start, end = self._to_date_interval(k, v)
+                    if start is not None:
+                        text.append(f"{start}/to/{end}")
+                    else:
+                        text.append("/".join([str(_) for _ in sorted(v)]))
+                sep = ","
+            text.append("\n")
+
+        self.visit(V)
+
+        return "".join(str(x) for x in text)
+
+    def _to_date_interval(self, k, v):
+        class ReturnNoneNone(Exception):
+            pass
+
+        def parse_date(d):
+            try:
+                return datetime.datetime.strptime(d, "%Y%m%d")
+            except:  # noqa: E722
+                raise ReturnNoneNone()
+
+        try:
+            if k != "date":
+                raise ReturnNoneNone()
+
+            if len(k) < 3:
+                raise ReturnNoneNone()
+
+            start = parse_date(str(v[0]))
+            step = parse_date(str(v[1])) - start
+
+            if step != datetime.timedelta(days=1):
+                raise ReturnNoneNone()
+
+            for i in range(2, len(v)):
+                current = parse_date(str(v[i]))
+                previous = parse_date(str(v[i - 1]))
+                if current - previous != step:
+                    print(int(v[i]))
+                    print(
+                        f"expecting {previous + step} after {previous}, found {current}"
+                    )
+                    raise ReturnNoneNone()
+            return str(v[0]), str(v[-1])
+
+        except ReturnNoneNone:
+            return None, None
+
     def tree(self):
         text = []
         indent = {}
@@ -427,9 +518,13 @@ class Tree:
                 if len(v) == 1:
                     text.append(v[0])
                 else:
-                    text.append("[")
-                    text.append(", ".join(sorted(str(x) for x in v)))
-                    text.append("]")
+                    start, end = self._to_date_interval(k, v)
+                    if start is not None:
+                        text.append(f"{start}/to/{end}")
+                    else:
+                        text.append("[")
+                        text.append(", ".join([str(_) for _ in sorted(v)]))
+                        text.append("]")
                 sep = ", "
             text.append("\n")
 
@@ -552,6 +647,25 @@ class Table(object):
 
         self.colidx.sort(key=lambda a: self.cols[a])
 
+    def compare_values(self, sa, sb):
+        if isinstance(sa, tuple) and isinstance(sb, tuple):
+            for a, b in zip(sa, sb):
+                n = self.compare_values(a, b)
+                if n != 0:
+                    return n
+            return 0
+
+        if type(sa) is type(sb):
+            if sa < sb:
+                return -1
+
+            if sa > sb:
+                return 1
+
+            return 0
+
+        return self.compare_values(str(type(sa)), str(type(sb)))
+
     def compare_rows(self, a, b):
         for idx in self.colidx:
             sa = self.cols[idx].value(a)
@@ -560,11 +674,10 @@ class Table(object):
             if sa is None and sb is None:
                 continue
 
-            if sa < sb:
-                return -1
+            n = self.compare_values(sa, sb)
 
-            if sa > sb:
-                return 1
+            if n != 0:
+                return n
 
         return 0
 

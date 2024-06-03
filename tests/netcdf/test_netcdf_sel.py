@@ -9,8 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
-
 import pytest
 
 from earthkit.data.testing import earthkit_examples_file, load_nc_or_xr_source
@@ -37,11 +35,11 @@ from earthkit.data.testing import earthkit_examples_file, load_nc_or_xr_source
             dict(
                 variable=["t"],
                 level=[500, 700],
-                valid_datetime=datetime.datetime(2018, 8, 1, 12, 0),
+                valid_datetime="2018-08-01T12:00:00",
             ),
             [
-                ["t", 700, datetime.datetime(2018, 8, 1, 12, 0)],
-                ["t", 500, datetime.datetime(2018, 8, 1, 12, 0)],
+                ["t", 700, "2018-08-01T12:00:00"],
+                ["t", 500, "2018-08-01T12:00:00"],
             ],
             ["variable", "level", "valid_datetime"],
         ),

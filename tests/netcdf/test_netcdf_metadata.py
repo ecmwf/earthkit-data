@@ -77,7 +77,7 @@ def test_netcdf_datetime():
 @pytest.mark.parametrize("mode", ["nc", "xr"])
 def test_netcdf_valid_datetime(mode):
     ds = load_nc_or_xr_source(earthkit_examples_file("test.nc"), mode)
-    assert ds[0].metadata("valid_datetime") == datetime.datetime(2020, 5, 13, 12)
+    assert ds[0].metadata("valid_datetime") == "2020-05-13T12:00:00"
 
 
 if __name__ == "__main__":

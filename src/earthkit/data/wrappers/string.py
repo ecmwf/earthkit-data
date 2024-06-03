@@ -37,10 +37,11 @@ class StrWrapper(Wrapper):
     def __init__(self, data):
         self.data = data
 
-    # DEPENDANCIES NOT YET INSTALLED
-    # def bounding_box(self):
-    #     from earthkit.data.utils.domains import domain_to_area
-    #     return domain_to_area(self.data)
+    def bounding_box(self):
+        if "/" in self.data:
+            return tuple(float(x) for x in self.data.split("/"))
+        else:
+            raise ValueError(f"Invalid bounding box '{self.data}'")
 
     def datetime(self):
         return parse_date(self.data)
