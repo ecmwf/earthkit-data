@@ -152,7 +152,7 @@ def test_s3_ewc_public_stream():
     ds = from_source("s3", r, stream=True, anon=True)
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises(NotImplementedError):
         len(ds)
 
     ref = [
@@ -186,7 +186,7 @@ def test_s3_ewc_private_stream():
     ds = from_source("s3", r, stream=True, anon=False)
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises(NotImplementedError):
         len(ds)
 
     ref = [
@@ -226,7 +226,7 @@ def test_s3_ewc_public_stream_single_parts(parts, expected_meta):
     ds = from_source("s3", r, stream=True, anon=True)
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises(NotImplementedError):
         len(ds)
 
     cnt = 0
@@ -260,7 +260,7 @@ def test_s3_ewc_private_stream_single_parts(parts, expected_meta):
     ds = from_source("s3", r, stream=True, anon=False)
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises(NotImplementedError):
         len(ds)
 
     cnt = 0

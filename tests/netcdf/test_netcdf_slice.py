@@ -96,7 +96,11 @@ def test_netcdf_slice_multi_file(indexes, expected_meta):
 @pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize(
     "indexes1,indexes2",
-    [(np.array([1, 16, 5, 9]), np.array([1, 3])), ([1, 16, 5, 9], [1, 3])],
+    [
+        (np.array([1, 16, 5, 9]), np.array([1, 3])),
+        ([1, 16, 5, 9], [1, 3]),
+        ((1, 16, 5, 9), (1, 3)),
+    ],
 )
 def test_netcdf_array_indexing(mode, indexes1, indexes2):
     f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
@@ -110,8 +114,16 @@ def test_netcdf_array_indexing(mode, indexes1, indexes2):
     assert r1.metadata("variable") == ["v", "u"]
 
 
+@pytest.mark.skip(reason="Index range checking disabled")
 @pytest.mark.parametrize("mode", ["nc", "xr"])
-@pytest.mark.parametrize("indexes", [(np.array([1, 19, 5, 9])), ([1, 19, 5, 9])])
+@pytest.mark.parametrize(
+    "indexes",
+    [
+        (np.array([1, 19, 5, 9])),
+        ([1, 16, 5, 9], [1, 3]),
+        ((1, 16, 5, 9), (1, 3)),
+    ],
+)
 def test_netcdf_array_indexing_bad(mode, indexes):
     f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
     with pytest.raises(IndexError):

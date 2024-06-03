@@ -183,7 +183,7 @@ Further examples:
 url
 ---
 
-.. py:function:: from_source("url", url, unpack=True, parts=None, stream=False, batch_size=1, group_by=None)
+.. py:function:: from_source("url", url, unpack=True, parts=None, stream=False, read_all=False)
   :noindex:
 
   The ``url`` source will download the data from the address specified and store it in the :ref:`cache <caching>`. The supported data formats are the same as for the :ref:`file <data-sources-file>` data source above.
@@ -193,9 +193,8 @@ url
   :param bool unpack: for archive formats such as ``.zip``, ``.tar``, ``.tar.gz``, etc, *earthkit-data* will attempt to open it and extract any usable file. To keep the downloaded file as is use ``unpack=False``
   :param parts: the :ref:`parts <parts>` to read from the resource(s) specified by ``url``. Cannot be used when ``url`` already defines the :ref:`parts <parts>`.
   :type parts: pair, list or tuple of pairs, None
-  :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs.
-  :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. For details see :ref:`stream source <data-sources-stream>`.
-  :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
+  :param bool stream: when it is ``True`` the data is read as a :ref:`stream <streams>`. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs. See details about streams :ref:`here <streams>`.
+  :param bool read_all: when it is ``True`` all the data is read straight to memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :type group_by: str, list of str
   :param dict **kwargs: other keyword arguments specifying the request
 
@@ -229,6 +228,7 @@ url
   Further examples:
 
     - :ref:`/examples/url.ipynb`
+    - :ref:`/examples/url_parts.ipynb`
     - :ref:`/examples/url_stream.ipynb`
 
 
@@ -304,19 +304,16 @@ sample
 stream
 --------------
 
-.. py:function:: from_source("stream", stream, batch_size=1, group_by=None)
+.. py:function:: from_source("stream", stream, read_all=False)
   :noindex:
 
-  The ``stream`` will read data from a stream, which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment it only works for :ref:`grib` and CoverageJson data.
+  The ``stream`` source will read data from a stream (or streams), which can be an FDB stream, a standard Python IO stream or any object implementing the necessary stream methods. At the moment it only works for :ref:`grib` and CoverageJson data. For more details see :ref:`here <streams>`.
 
-  :param stream: the stream
-  :param int batch_size: used when ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the messages will be loaded and stored in memory.  When ``batch_size`` is not zero ``from_source`` gives us a stream iterator object. During the iteration temporary objects are created for each message then get deleted when going out of scope. Used when ``group_by`` is unset.
-  :param group_by: specify one or more metadata keys to control how GRIB messages are read from the stream. When it is set ``from_source`` gives us a stream iterator object. Each iteration step results in a Fieldlist object, which is built by consuming GRIB messages from the stream until the values of the ``group_by`` metadata keys change. The generated Fieldlist keeps GRIB messages in memory then gets deleted when going out of scope. When ``group_by`` is set ``batch_size`` is ignored.
-  :type group_by: str, list of str
-  :param dict **kwargs: other keyword arguments specifying the request
+  :param stream: the stream(s)
+  :type stream: stream, list, tuple
+  :param bool read_all: when it is ``True`` all the data is read into memory from a stream. Used when ``stream=True``. *New in version 0.8.0*
 
-
-  In the examples below, for simplicity, we create a file stream from a :ref:`grib` file and read it as a "stream". By default (``batch_size=1``) we will consume one message at a time:
+  In the examples below, for simplicity, we create a file stream from a :ref:`grib` file. By default :ref:`from_source() <data-sources-stream>` returns an object that can only be used as an iterator.
 
   .. code-block:: python
 
@@ -333,27 +330,7 @@ stream
       GribField(t,850,20070101,1200,0,0)
       GribField(z,850,20070101,1200,0,0)
 
-
-  We can use ``group_by`` to read fields with a matching level. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>`:
-
-    .. code-block:: python
-
-      >>> import earthkit.data
-      >>> stream = open("docs/examples/test4.grib", "rb")
-      >>> ds = earthkit.data.from_source("stream", stream, group_by="level")
-      >>> for f in ds:
-      ...     print(len(f))
-      ...     for g in f:
-      ...         print(f" {g}")
-      ...
-      2
-       GribField(t,500,20070101,1200,0,0)
-       GribField(z,500,20070101,1200,0,0)
-      2
-       GribField(t,850,20070101,1200,0,0)
-       GribField(z,850,20070101,1200,0,0)
-
-  We can use ``batch_size=2`` to read 2 messages at a time:
+  We can also iterate through the stream in batches of fixed size using ``batched()``:
 
     .. code-block:: python
 
@@ -361,26 +338,36 @@ stream
       >>> stream = open("docs/examples/test4.grib", "rb")
       >>> ds = earthkit.data.from_source("stream", stream, batch_size=2)
 
-      # f is a FieldList containing 2 GribFields
-      >>> for f in ds:
-      ...     print(len(f))
-      ...     for g in f:
-      ...         print(f" {g}")
+       # f is a FieldList
+      >>> for f in ds.batched(2):
+      ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
       ...
-      2
-       GribField(t,500,20070101,1200,0,0)
-       GribField(z,500,20070101,1200,0,0)
-      2
-       GribField(t,850,20070101,1200,0,0)
-       GribField(z,850,20070101,1200,0,0)
+      len=2 [('t', 500), ('z', 500)]
+      len=2 [('t', 850), ('z', 850)]
 
-  With ``batch_size=0`` the whole stream will be consumed resulting in a FieldList object storing all the messages in memory. **Use this option carefully!**
+
+  When using ``group_by()`` we can iterate through the stream in groups defined by metadata keys. In this case each iteration step yields a :obj:`FieldList <data.readers.grib.index.FieldList>`.
 
     .. code-block:: python
 
       >>> import earthkit.data
       >>> stream = open("docs/examples/test4.grib", "rb")
-      >>> ds = earthkit.data.from_source("stream", stream, batch_size=0)
+      >>> ds = earthkit.data.from_source("stream", stream)
+
+      # f is a FieldList
+      >>> for f in ds.group_by("level"):
+      ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
+      ...
+      len=2 [('t', 500), ('z', 500)]
+      len=2 [('t', 850), ('z', 850)]
+
+  We can consume the whole stream and load all the data into memory by using ``read_all=True`` in :ref:`from_source() <data-sources-stream>`. **Use this option carefully!**
+
+    .. code-block:: python
+
+      >>> import earthkit.data
+      >>> stream = open("docs/examples/test4.grib", "rb")
+      >>> ds = earthkit.data.from_source("stream", stream, read_all=True)
 
       # ds is empty at this point, but calling any method on it will
       # consume the whole stream
@@ -587,16 +574,14 @@ ecmwf-open-data
 fdb
 ---
 
-.. py:function:: from_source("fdb", *args, stream=True,  batch_size=1, group_by=None, **kwargs)
+.. py:function:: from_source("fdb", *args, stream=True, read_all=False, **kwargs)
   :noindex:
 
   The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
 
   :param tuple *args: positional arguments specifying the request as a dict
-  :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` data.
-  :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the data is read straight to memory. For details see :ref:`stream source <data-sources-stream>`.
-  :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
-  :type group_by: str, list of str
+  :param bool stream: when it is ``True`` the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
+  :param bool read_all: when it is ``True`` all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves analysis :ref:`grib` data for 3 surface parameters as stream.
@@ -609,7 +594,7 @@ fdb
       ...     "class": "od",
       ...     "expver": "0001",
       ...     "stream": "oper",
-      ...     "date": "20230607",
+      ...     "date": "20240421",
       ...     "time": [0, 12],
       ...     "domain": "g",
       ...     "type": "an",
@@ -622,46 +607,51 @@ fdb
       >>> for f in ds:
       ...     print(f)
       ...
-      GribField(msl,None,20230607,0,0,0)
-      GribField(2t,None,20230607,0,0,0)
-      GribField(msl,None,20230607,1200,0,0)
-      GribField(2t,None,20230607,1200,0,0)
+      GribField(msl,None,20240421,0,0,0)
+      GribField(2t,None,20240421,0,0,0)
+      GribField(2d,None,20240421,0,0,0)
+      GribField(msl,None,20240421,1200,0,0)
+      GribField(2t,None,20240421,1200,0,0)
+      GribField(2d,None,20240421,1200,0,0)
 
-  We can use ``group_by`` to read fields with a matching time. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>`:
+  We can also iterate through the stream in batches of fixed size using ``batched``:
 
-      >>> ds = earthkit.data.from_source("fdb", request, group_by="time")
-      >>> for f in ds:
-      ...     print(f)
-      ...     for g in f:
-      ...         print(f" {g}")
+  .. code-block:: python
+
+      >>> ds = earthkit.data.from_source("fdb", request)
+      >>> for f in ds.batched(2):
+      ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
       ...
-      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
-       GribField(msl,None,20230607,0,0,0)
-       GribField(2t,None,20230607,0,0,0)
-       GribField(2d,None,20230607,0,0,0)
-      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
-       GribField(msl,None,20230607,1200,0,0)
-       GribField(2t,None,20230607,1200,0,0)
-       GribField(2d,None,20230607,1200,0,0)
+      len=2 [('msl', 0), ('2t', 0)]
+      len=2 [('2d', 0), ('msl', 0)]
+      len=2 [('2t', 0), ('2d', 0)]
 
   We can use ``batch_size=2`` to read 2 fields at a time. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>` containing 2 fields:
 
-      >>> ds = earthkit.data.from_source("fdb", request, batch_size=2)
-      >>> for f in ds:
-      ...     print(f)
-      ...     for g in f:
-      ...         print(f" {g}")
-      ...
-      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
-        GribField(msl,None,20230607,0,0,0)
-        GribField(2t,None,20230607,0,0,0)
-      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
-        GribField(2d,None,20230607,0,0,0)
-        GribField(msl,None,20230607,1200,0,0)
-      <class 'earthkit.data.readers.grib.memory.FieldListInMemory'>
-        GribField(2t,None,20230607,1200,0,0)
-        GribField(2d,None,20230607,1200,0,0)
+  When using ``group_by()`` we can iterate through the stream in groups defined by metadata keys. In this case each iteration step yields a :obj:`FieldList <data.readers.grib.index.FieldList>`.
 
+  .. code-block:: python
+
+      >>> ds = earthkit.data.from_source("fdb", request)
+      >>> for f in ds.group_by("time"):
+      ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
+      ...
+      len=3 [('msl', 0), ('2t', 0), ('2d', 0)]
+      len=3 [('msl', 0), ('2t', 0), ('2d', 0)]
+
+  We can consume the whole stream and load all the data into memory by using ``read_all=True`` in :ref:`from_source() <data-sources-stream>`. **Use this option carefully!**
+
+  .. code-block:: python
+
+      >>> import earthkit.data
+      >>> ds = earthkit.data.from_source("fdb", request, read_all=True)
+
+      # ds is empty at this point, but calling any method on it will
+      # consume the whole stream
+      >>> len(ds)
+      3
+
+      # now ds stores all the messages in memory
 
   Further examples:
 
@@ -739,7 +729,7 @@ opendap
 polytope
 --------
 
-.. py:function:: from_source("polytope", collection, *args, address=None, user_email=None, user_key=None, stream=True, batch_size=1, group_by=None, **kwargs)
+.. py:function:: from_source("polytope", collection, *args, address=None, user_email=None, user_key=None, stream=True, read_all=False, **kwargs)
   :noindex:
 
   The ``polytope`` source accesses the `Polytope web services <https://polytope-client.readthedocs.io/en/latest/>`_ , using the polytope-client_ package.
@@ -747,12 +737,10 @@ polytope
   :param str collection: the name of the polytope collection
   :param tuple *args: specify the request as a dict
   :param str address: specify the address of the polytope service
-  :param str user_email: specify the user email credential. Must be used together with ``user_key``. This is an alternative to using the ``POLYTOPE_USER_EMAIL`` environment variable. *Added in version 0.7.0*
-  :param str user_key: specify the user key credential. Must be used together with ``user_email``. This is an alternative to using the ``POLYTOPE_USER_KEY`` environment variable. *Added in version 0.7.0*
-  :param bool stream: when it is ``True`` the data is read as a stream. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data.
-  :param int batch_size: used when ``stream=True`` and ``group_by`` is unset. It defines how many GRIB messages are consumed from the stream and kept in memory at a time. ``batch_size=0`` means all the data is read straight to memory. For details see :ref:`stream source <data-sources-stream>`.
-  :param group_by: used when ``stream=True`` and can specify one or more metadata keys to control how GRIB messages are read from the stream. For details see :ref:`stream source <data-sources-stream>`.
-  :type group_by: str, list of str
+  :param str user_email: specify the user email credential. Must be used together with ``user_key``. This is an alternative to using the ``POLYTOPE_USER_EMAIL`` environment variable. *New in version 0.7.0*
+  :param str user_key: specify the user key credential. Must be used together with ``user_email``. This is an alternative to using the ``POLYTOPE_USER_KEY`` environment variable. *New in version 0.7.0*
+  :param bool stream: when ``True`` the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
+  :param bool read_all: when ``True`` all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :param dict **kwargs: other keyword arguments, these can include options passed to the polytope-client_
 
 

@@ -1,5 +1,6 @@
 # setuptools-scm
 version.py
+_version.py
 
 # Sphinx automatic generation of API
 docs/_api/

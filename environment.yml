@@ -28,7 +28,7 @@ dependencies:
   - polytope-client>=0.7.4
   - earthkit-meteo>=0.0.1
   - eccovjson>=0.0.5
-  - earthkit-geo
+  - earthkit-geo>=0.2.0
 - tqdm>=4.63.0
 - markdown
 - aws-requests-auth
