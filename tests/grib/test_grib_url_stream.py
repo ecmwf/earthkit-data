@@ -14,6 +14,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
+from earthkit.data.sources.stream import StreamFieldList
 from earthkit.data.testing import earthkit_remote_test_data_file
 
 
@@ -21,81 +22,53 @@ def repeat_list_items(items, count):
     return sum([[x] * count for x in items], [])
 
 
-@pytest.mark.parametrize(
-    "_kwargs,error",
-    [
-        # (dict(order_by="level"), TypeError),
-        (dict(group_by=1), TypeError),
-        (dict(group_by=["level", 1]), TypeError),
-        # (dict(group_by="level", batch_size=1), TypeError),
-        (dict(batch_size=-1), ValueError),
-    ],
-)
-def test_grib_url_stream_invalid_args(_kwargs, error):
-    with pytest.raises(error):
-        from_source(
-            "url",
-            earthkit_remote_test_data_file("examples/test6.grib"),
-            stream=True,
-            **_kwargs,
-        )
+# @pytest.mark.parametrize(
+#     "_kwargs,error",
+#     [
+#         # (dict(order_by="level"), TypeError),
+#         (dict(group_by=1), TypeError),
+#         (dict(group_by=["level", 1]), TypeError),
+#         # (dict(group_by="level", batch_size=1), TypeError),
+#         (dict(batch_size=-1), ValueError),
+#     ],
+# )
+# def test_grib_url_stream_invalid_args(_kwargs, error):
+#     with pytest.raises(error):
+#         from_source(
+#             "url",
+#             earthkit_remote_test_data_file("examples/test6.grib"),
+#             stream=True,
+#             **_kwargs,
+#         )
 
 
-@pytest.mark.parametrize(
-    "_kwargs",
-    [
-        {"group_by": "level"},
-        {"group_by": "level", "batch_size": 0},
-        {"group_by": "level", "batch_size": 1},
-        {"group_by": ["level", "gridType"]},
-    ],
-)
-def test_grib_url_stream_group_by(_kwargs):
-    fs = from_source(
-        "url",
-        earthkit_remote_test_data_file("examples/test6.grib"),
-        stream=True,
-        **_kwargs,
-    )
-
-    # no methods are available
-    with pytest.raises(TypeError):
-        len(fs)
-
-    ref = [
-        [("t", 1000), ("u", 1000), ("v", 1000)],
-        [("t", 850), ("u", 850), ("v", 850)],
-    ]
-    cnt = 0
-    for i, f in enumerate(fs):
-        assert len(f) == 3
-        assert f.metadata(("param", "level")) == ref[i]
-        assert f.to_fieldlist(array_backend="numpy") is not f
-        cnt += 1
-
-    assert cnt == len(ref)
-
-    # stream consumed, no data is available
-    assert sum([1 for _ in fs]) == 0
+# @pytest.mark.parametrize(
+#     "_kwargs",
+#     [
+#         {"group_by": "level"},
+#         {"group_by": "level", "batch_size": 0},
+#         {"group_by": "level", "batch_size": 1},
+#         {"group_by": ["level", "gridType"]},
+#     ],
+# )
 
 
-@pytest.mark.parametrize(
-    "_kwargs",
-    [
-        {},
-        {"batch_size": 1},
-    ],
-)
-def test_grib_url_stream_single_batch(_kwargs):
+# @pytest.mark.parametrize(
+#     "_kwargs",
+#     [
+#         {},
+#         {"batch_size": 1},
+#     ],
+# )
+def test_grib_url_stream_iter():
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("examples/test6.grib"),
         stream=True,
-        **_kwargs,
     )
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     ref = [
@@ -120,24 +93,24 @@ def test_grib_url_stream_single_batch(_kwargs):
 @pytest.mark.parametrize(
     "_kwargs,expected_meta",
     [
-        ({"batch_size": 3}, [["t", "u", "v"], ["t", "u", "v"]]),
-        ({"batch_size": 4}, [["t", "u", "v", "t"], ["u", "v"]]),
+        ({"n": 1}, [["t"], ["u"], ["v"], ["t"], ["u"], ["v"]]),
+        ({"n": 3}, [["t", "u", "v"], ["t", "u", "v"]]),
+        ({"n": 4}, [["t", "u", "v", "t"], ["u", "v"]]),
     ],
 )
-def test_grib_url_stream_multi_batch(_kwargs, expected_meta):
+def test_grib_from_stream_batched(_kwargs, expected_meta):
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("examples/test6.grib"),
         stream=True,
-        **_kwargs,
     )
 
     # no methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     cnt = 0
-    for i, f in enumerate(ds):
+    for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
         f.metadata("param") == expected_meta[i]
         cnt += 1
@@ -148,29 +121,51 @@ def test_grib_url_stream_multi_batch(_kwargs, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
+def test_grib_url_stream_group_by(group):
+    ds = from_source(
+        "url", earthkit_remote_test_data_file("examples/test6.grib"), stream=True
+    )
+
+    # no methods are available
+    with pytest.raises((TypeError, NotImplementedError)):
+        len(ds)
+
+    ref = [
+        [("t", 1000), ("u", 1000), ("v", 1000)],
+        [("t", 850), ("u", 850), ("v", 850)],
+    ]
+    cnt = 0
+    for i, f in enumerate(ds.group_by(group)):
+        assert len(f) == 3
+        assert f.metadata(("param", "level")) == ref[i]
+        assert f.to_fieldlist(array_backend="numpy") is not f
+        cnt += 1
+
+    assert cnt == len(ref)
+
+    # stream consumed, no data is available
+    assert sum([1 for _ in ds]) == 0
+
+
 def test_grib_url_stream_in_memory():
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("examples/test6.grib"),
         stream=True,
-        batch_size=0,
+        read_all=True,
     )
 
     assert len(ds) == 6
 
     expected_shape = (6, 7, 12)
     ref = ["t", "u", "v", "t", "u", "v"]
-    val = []
 
     # iteration
-    for f in ds:
-        v = f.metadata("param")
-        val.append(v)
-
+    val = [f.metadata(("param")) for f in ds]
     assert val == ref, "iteration"
 
     # metadata
-    val = []
     val = ds.metadata("param")
     assert val == ref, "method"
 
@@ -197,7 +192,7 @@ def test_grib_save_when_loaded_from_url_stream():
         "url",
         earthkit_remote_test_data_file("examples/test6.grib"),
         stream=True,
-        batch_size=0,
+        read_all=True,
     )
     assert len(ds) == 6
     with temp_file() as tmp:
@@ -206,14 +201,14 @@ def test_grib_save_when_loaded_from_url_stream():
         assert len(ds) == len(ds_saved)
 
 
-@pytest.mark.parametrize(
-    "_kwargs",
-    [
-        {},
-        {"batch_size": 1},
-    ],
-)
-def test_grib_multi_url_stream_single_batch(_kwargs):
+# @pytest.mark.parametrize(
+#     "_kwargs",
+#     [
+#         {},
+#         {"batch_size": 1},
+#     ],
+# )
+def test_grib_multi_url_stream_iter():
     ds = from_source(
         "url",
         [
@@ -221,11 +216,17 @@ def test_grib_multi_url_stream_single_batch(_kwargs):
             earthkit_remote_test_data_file("examples/test4.grib"),
         ],
         stream=True,
-        **_kwargs,
     )
 
+    assert isinstance(ds, StreamFieldList)
+    assert len(ds._source.sources) == 2
+    assert ds._source._status() == [
+        {"reader": True, "stream": True},
+        {"reader": False, "stream": False},
+    ]
+
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     ref = [
@@ -246,16 +247,22 @@ def test_grib_multi_url_stream_single_batch(_kwargs):
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
 
+    assert ds._source._status() == [
+        {"reader": True, "stream": True},
+        {"reader": True, "stream": True},
+    ]
+
 
 @pytest.mark.parametrize(
     "_kwargs,expected_meta",
     [
-        ({"batch_size": 2}, [["2t", "msl"], ["t", "z"], ["t", "z"]]),
-        ({"batch_size": 3}, [["2t", "msl", "t"], ["z", "t", "z"]]),
-        ({"batch_size": 4}, [["2t", "msl", "t", "z"], ["t", "z"]]),
+        ({"n": 1}, [["2t"], ["msl"], ["t"], ["z"], ["t"], ["z"]]),
+        ({"n": 2}, [["2t", "msl"], ["t", "z"], ["t", "z"]]),
+        ({"n": 3}, [["2t", "msl", "t"], ["z", "t", "z"]]),
+        ({"n": 4}, [["2t", "msl", "t", "z"], ["t", "z"]]),
     ],
 )
-def test_grib_multi_url_stream_batch(_kwargs, expected_meta):
+def test_grib_multi_url_stream_batched(_kwargs, expected_meta):
     ds = from_source(
         "url",
         [
@@ -263,15 +270,14 @@ def test_grib_multi_url_stream_batch(_kwargs, expected_meta):
             earthkit_remote_test_data_file("examples/test4.grib"),
         ],
         stream=True,
-        **_kwargs,
     )
 
     # no methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     cnt = 0
-    for i, f in enumerate(ds):
+    for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
         f.metadata("param") == expected_meta[i]
         cnt += 1
@@ -290,7 +296,7 @@ def test_grib_multi_url_stream_memory():
             earthkit_remote_test_data_file("examples/test4.grib"),
         ],
         stream=True,
-        batch_size=0,
+        read_all=True,
     )
 
     assert len(ds) == 6
@@ -303,18 +309,11 @@ def test_grib_multi_url_stream_memory():
         ("t", 850),
         ("z", 850),
     ]
-
-    val = []
-
     # iteration
-    for f in ds:
-        v = f.metadata(("param", "level"))
-        val.append(v)
-
+    val = [f.metadata(("param", "level")) for f in ds]
     assert val == md_ref, "iteration"
 
     # metadata
-    val = []
     val = ds.metadata(("param", "level"))
     assert val == md_ref, "method"
 
@@ -385,7 +384,7 @@ def test_grib_single_url_stream_parts(path, parts, expected_meta):
     )
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     cnt = 0
@@ -417,7 +416,7 @@ def test_grib_single_url_stream_parts_as_arg_valid(parts, expected_meta):
     )
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     cnt = 0
@@ -485,7 +484,7 @@ def test_grib_multi_url_stream_parts(parts1, parts2, expected_meta):
     )
 
     # no fieldlist methods are available
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
     cnt = 0

@@ -1,0 +1,36 @@
+name: cd
+
+on:
+  push:
+    tags:
+    - '**'
+
+# jobs:
+#   pypi:
+#     uses: ecmwf-actions/reusable-workflows/.github/workflows/cd-pypi.yml@v2
+#     secrets: inherit
+
+jobs:
+  deploy:
+    if: ${{ github.ref_type == 'tag' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build wheel twine
+
+    - name: Build and publish
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        python -m build
+        twine upload dist/*

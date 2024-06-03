@@ -9,7 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 import os
 import sys
 
@@ -198,7 +197,7 @@ def test_grib_sel_date(fl_type, array_backend):
 def test_grib_sel_valid_datetime(fl_type, array_backend):
     f = load_grib_data("t_time_series.grib", fl_type, array_backend, folder="data")
 
-    g = f.sel(valid_datetime=datetime.datetime(2020, 12, 21, 21))
+    g = f.sel(valid_datetime="2020-12-21T21:00:00")
     assert len(g) == 2
 
     ref_keys = ["shortName", "date", "time", "step"]
@@ -339,6 +338,26 @@ def test_grib_isel_slice_multi_file(fl_type, array_backend):
         ["t", 81, "hybrid"],
         ["t", 85, "hybrid"],
     ]
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_sel_remapping_1(fl_type, array_backend):
+    ds = load_grib_data("test6.grib", fl_type, array_backend)
+    ref = [("t", 850)]
+    r = ds.sel(param_level="t850", remapping={"param_level": "{param}{levelist}"})
+    assert r.metadata("param", "level") == ref
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_sel_remapping_2(fl_type, array_backend):
+    ds = load_grib_data("test6.grib", fl_type, array_backend)
+    ref = [("u", 1000), ("t", 850)]
+    r = ds.sel(
+        param_level=["t850", "u1000"], remapping={"param_level": "{param}{levelist}"}
+    )
+    assert r.metadata("param", "level") == ref
 
 
 if __name__ == "__main__":

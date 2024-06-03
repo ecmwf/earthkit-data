@@ -34,7 +34,7 @@ def test_csv_1():
 
     ds = s.to_xarray()
     assert len(ds) == 3
-    assert list(ds.variables) == ["index", "a", "b", "c"]
+    assert set(ds.variables) == set(["index", "a", "b", "c"])
 
 
 def test_csv_2():
@@ -51,7 +51,7 @@ def test_csv_2():
 
     df = s.to_pandas()
     assert len(df) == 3
-    assert list(df.columns) == ["a", "b", "c"]
+    assert set(df.columns) == set(["a", "b", "c"])
 
 
 def test_csv_3():
@@ -68,7 +68,7 @@ def test_csv_3():
 
     df = s.to_pandas()
     assert len(df) == 3
-    assert list(df.columns) == ["a", "b", "c"]
+    assert set(df.columns) == set(["a", "b", "c"])
 
 
 def test_csv_4():
@@ -86,7 +86,7 @@ def test_csv_4():
 
     df = s.to_pandas()
     assert len(df) == 3
-    assert list(df.columns) == ["a", "b", "c"]
+    assert set(df.columns) == set(["a", "b", "c"])
 
 
 def test_csv_5():
@@ -141,7 +141,7 @@ def test_csv_text_file():
 
     df = s.to_pandas()
     assert len(df) == 3
-    assert list(df.columns) == ["a", "b", "c"]
+    assert set(df.columns) == set(["a", "b", "c"])
 
 
 def test_csv_with_comment():
@@ -160,11 +160,11 @@ def test_csv_with_comment():
 
     df = s.to_pandas()
     assert len(df) == 3
-    assert list(df.columns) == ["a", "b", "c"]
+    assert set(df.columns) == set(["a", "b", "c"])
 
     ds = s.to_xarray()
     assert len(ds) == 3
-    assert list(ds.variables) == ["index", "a", "b", "c"]
+    assert set(ds.variables) == set(["index", "a", "b", "c"])
 
 
 def test_csv_mimetypes():

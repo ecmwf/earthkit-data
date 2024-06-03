@@ -31,7 +31,7 @@ dependencies:
   - earthkit-meteo>=0.0.1
   - git+https://github.com/ecmwf/earthkit-data-demo-source
   - eccovjson>=0.0.5
-  - earthkit-geo
+  - earthkit-geo>=0.2.0
 - tqdm>=4.63.0
 - markdown
 - make
