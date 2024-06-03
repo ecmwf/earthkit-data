@@ -44,6 +44,10 @@ name = "earthkit-data"
 readme = "README.md"
 requires-python = ">= 3.8"
 
+[project.entry-points."xarray.backends"]
+earthkit = "earthkit.data.utils.xarrayengine:EarthkitBackendEntrypoint"
+earthkitobject = "earthkit.data.utils.xarrayengine:EarthkitObjectBackendEntrypoint"
+
 [project.optional-dependencies]
 all = [
   "earthkit-data[mars]",

@@ -44,8 +44,13 @@ class EarthkitBackendArray(xarray.backends.common.BackendArray):
         self.ekds = ekds
         self.dims = dims
         self.shape = shape
-        self.dtype = xp.float32
+        self.dtype = xp.dtype(xp.float32)
         self.xp = xp
+
+    def nbytes(self):
+        from math import prod
+
+        return prod(self.shape) * self.dtype.itemsize
 
     def __getitem__(self, key: xarray.core.indexing.ExplicitIndexer):
         indexing_support = indexing.IndexingSupport.BASIC
@@ -109,11 +114,14 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
                 variable_metadata_keys, ekds[0].metadata()
             )
 
+        # print(f"variable_metadata_keys: {variable_metadata_keys}")
         xp = array_module
 
         attributes = _get_common_attributes(ekds.metadata(), ekds._default_ls_keys())
         if hasattr(ekds, "path"):
             attributes["ekds_source"] = ekds.path
+
+        # print(f"attributes: {attributes}")
 
         vars = {}
         for var_index in variable_index:
@@ -124,6 +132,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
         if drop_variables is not None:
             variables = [var for var in variables if var not in drop_variables]
 
+        # print(f"variables: {variables}")
         ekds.index("step")  # have to access this to make it appear below in indices()
         if dims_order is None:
             other_dims = [
@@ -132,10 +141,14 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
         else:
             other_dims = dims_order
 
+        # print(f"other_dims: {other_dims} var_key: {var_key}")
+
         for variable in variables:
             ekds_variable = ekds.sel(**{var_key: variable})
             ek_variable = ekds_variable.to_tensor(*other_dims)
             dims = [key for key in ek_variable.coords.keys() if key != var_key]
+
+            # print(f"variable: {variable} dims: {dims}")
 
             backend_array = EarthkitBackendArray(
                 ek_variable, dims, ek_variable.shape, xp
@@ -147,6 +160,9 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
                 ek_variable.source.metadata(),
                 [k for k in variable_metadata_keys if k not in attributes],
             )
+
+            # print(f"var_attrs: {var_attrs}")
+
             if hasattr(ekds_variable[0], "_offset"):
                 var_attrs["metadata"] = (
                     "grib_handle",
@@ -155,11 +171,15 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
                 )
             else:
                 var_attrs["metadata"] = ("id", id(ekds_variable[0].metadata()))
+
+            # print(f" -> var_attrs: {var_attrs}")
+
             # Corentin method:
             # var_attrs["metadata"] = ekds_variable[0].metadata()
             var = xarray.Variable(dims, data, attrs=var_attrs)
             vars[variable] = var
 
+        # print(f"coords: {ek_variable.coords} attributes: {attributes}")
         dataset = xarray.Dataset(vars, coords=ek_variable.coords, attrs=attributes)
 
         return dataset
@@ -282,6 +302,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 class XarrayEarthkitDataSet(XarrayEarthkit):
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
+        print("CALLED")
 
     def to_fieldlist(self):
         data_list = []
