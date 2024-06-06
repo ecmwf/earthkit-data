@@ -20,7 +20,8 @@ from earthkit.data.testing import earthkit_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from constants_fixtures import all_params, load_constants_fs  # noqa: E402
+from constants_fixtures import all_params  # noqa: E402
+from constants_fixtures import load_constants_fs  # noqa: E402
 
 
 def _build_proc_ref():
@@ -44,9 +45,7 @@ def _build_proc_ref():
 
 
 def test_constants_proc():
-    with open(
-        earthkit_test_data_file(os.path.join("constants", "proc.yaml")), "r"
-    ) as f:
+    with open(earthkit_test_data_file(os.path.join("constants", "proc.yaml")), "r") as f:
         ref = yaml.safe_load(f)
 
     ds, _ = load_constants_fs(params=all_params, last_step=12)

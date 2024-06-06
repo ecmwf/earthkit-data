@@ -90,9 +90,7 @@ def test_settings_set_numbers(param, set_value, stored_value, raise_error):
 
 def test_settings_set_cache_numbers():
     with temp_directory() as tmpdir:
-        with settings.temporary(
-            {"cache-policy": "user", "user-cache-directory": tmpdir}
-        ):
+        with settings.temporary({"cache-policy": "user", "user-cache-directory": tmpdir}):
             data = [
                 ("maximum-cache-size", "1", 1, None),
                 ("maximum-cache-size", "1k", 1024, None),
@@ -157,9 +155,7 @@ def test_settings_temporary_single():
 
 
 def test_settings_temporary_multi():
-    with settings.temporary(
-        {"number-of-download-threads": 2, "url-download-timeout": 21}
-    ):
+    with settings.temporary({"number-of-download-threads": 2, "url-download-timeout": 21}):
         assert settings.get("number-of-download-threads") == 2
         assert settings.get("url-download-timeout") == 21
 

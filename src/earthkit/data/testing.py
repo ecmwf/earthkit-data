@@ -14,7 +14,8 @@ from contextlib import contextmanager
 from importlib import import_module
 from unittest.mock import patch
 
-from earthkit.data import from_object, from_source
+from earthkit.data import from_object
+from earthkit.data import from_source
 from earthkit.data.readers.text import TextReader
 from earthkit.data.sources.empty import EmptySource
 
@@ -29,9 +30,7 @@ _NETWORK_PATCHER = patch("socket.socket", side_effect=OfflineError)
 
 _REMOTE_TEST_DATA_URL = "https://get.ecmwf.int/repository/test-data/earthkit-data/"
 
-_ROOT_DIR = top = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-)
+_ROOT_DIR = top = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 if not os.path.exists(os.path.join(_ROOT_DIR, "tests", "data")):
     _ROOT_DIR = "./"
 

@@ -24,9 +24,7 @@ class PytorchBackend(ArrayBackend):
             import array_api_compat
 
         except Exception as e:
-            raise ImportError(
-                f"array_api_compat is required to use pytorch backend, {e}"
-            )
+            raise ImportError(f"array_api_compat is required to use pytorch backend, {e}")
 
         try:
             import torch

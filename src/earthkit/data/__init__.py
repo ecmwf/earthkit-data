@@ -23,8 +23,11 @@ from .core.caching import CACHE as cache
 from .core.fieldlist import FieldList
 from .core.settings import SETTINGS as settings
 from .readers.grib.output import new_grib_output
-from .sources import Source, from_source, from_source_lazily
-from .utils.examples import download_example_file, remote_example_file
+from .sources import Source
+from .sources import from_source
+from .sources import from_source_lazily
+from .utils.examples import download_example_file
+from .utils.examples import remote_example_file
 
 __all__ = [
     "ALL",

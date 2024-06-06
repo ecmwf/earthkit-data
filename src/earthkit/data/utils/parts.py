@@ -7,7 +7,8 @@
 # nor does it submit to any jurisdiction.
 
 import os
-from collections import defaultdict, namedtuple
+from collections import defaultdict
+from collections import namedtuple
 
 SimplePart = namedtuple("SimplePart", ["offset", "length"])
 
@@ -22,11 +23,7 @@ class Part:
         self.length = length
 
     def __eq__(self, other):
-        return (
-            self.path == other.path
-            and self.offset == other.offset
-            and self.length == other.length
-        )
+        return self.path == other.path and self.offset == other.offset and self.length == other.length
 
     @classmethod
     def resolve(cls, parts, directory=None):
@@ -35,11 +32,7 @@ class Part:
             paths[part.path].append(part)
 
         for path, bits in paths.items():
-            if (
-                path.startswith("http://")
-                or path.startswith("https://")
-                or path.startswith("ftp://")
-            ):
+            if path.startswith("http://") or path.startswith("https://") or path.startswith("ftp://"):
                 # newpath = download_and_cache(
                 #     path, parts=[(p.offset, p.length) for p in bits]
                 # )
@@ -189,9 +182,7 @@ class PathAndParts:
         if parts is None:
             if isinstance(paths, str):
                 return paths, None
-            elif isinstance(paths, (list, tuple)) and all(
-                isinstance(p, str) for p in paths
-            ):
+            elif isinstance(paths, (list, tuple)) and all(isinstance(p, str) for p in paths):
                 return paths, [None] * len(paths)
 
         paths = check_urls_and_parts(paths, parts)

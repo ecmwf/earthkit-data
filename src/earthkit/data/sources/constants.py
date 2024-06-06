@@ -13,10 +13,12 @@ import logging
 
 import numpy as np
 
-from earthkit.data.core.fieldlist import Field, FieldList
+from earthkit.data.core.fieldlist import Field
+from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.metadata import RawMetadata
-from earthkit.data.decorators import cached_method, normalize
+from earthkit.data.decorators import cached_method
+from earthkit.data.decorators import normalize
 from earthkit.data.utils.dates import to_datetime
 
 LOG = logging.getLogger(__name__)
@@ -301,9 +303,7 @@ class ConstantsFieldListCore(FieldList):
                 " not a proper source or dataset"
             )
 
-            return source_or_dataset.unique_values(
-                "number", patches={"number": {None: 0}}
-            )["number"]
+            return source_or_dataset.unique_values("number", patches={"number": {None: 0}})["number"]
 
         def find_dates(source_or_dataset):
             if "date" not in self.request and "time" in self.request:
@@ -315,9 +315,7 @@ class ConstantsFieldListCore(FieldList):
             if "date" in self.request and "time" in self.request:
                 dates = [
                     make_datetime(date, time)
-                    for date, time in itertools.product(
-                        self.request["date"], self.request["time"]
-                    )
+                    for date, time in itertools.product(self.request["date"], self.request["time"])
                 ]
                 assert len(set(dates)) == len(dates), "Duplicates dates in constants."
                 return dates
@@ -370,9 +368,7 @@ class ConstantsFieldList(ConstantsFieldListCore):
             if n >= self._len or n < 0:
                 raise IndexError(n)
 
-            date, param, number = index_to_coords(
-                n, (len(self.dates), len(self.params), len(self.numbers))
-            )
+            date, param, number = index_to_coords(n, (len(self.dates), len(self.params), len(self.numbers)))
 
             date = self.dates[date]
             # assert isinstance(date, datetime.datetime), (date, type(date))

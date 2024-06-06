@@ -17,7 +17,8 @@ import sys
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.core.temporary import temp_directory, temp_file
+from earthkit.data.core.temporary import temp_directory
+from earthkit.data.core.temporary import temp_file
 
 LOG = logging.getLogger(__name__)
 

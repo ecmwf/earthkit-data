@@ -15,16 +15,15 @@ import sys
 import numpy as np
 import pytest
 
-from earthkit.data.testing import (
-    ARRAY_BACKENDS,
-    check_array_type,
-    get_array,
-    get_array_namespace,
-)
+from earthkit.data.testing import ARRAY_BACKENDS
+from earthkit.data.testing import check_array_type
+from earthkit.data.testing import get_array
+from earthkit.data.testing import get_array_namespace
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
+from grib_fixtures import FL_TYPES  # noqa: E402
+from grib_fixtures import load_grib_data  # noqa: E402
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -316,9 +315,7 @@ def test_grib_field_data(fl_type, array_backend, kwarg, expected_shape, expected
         ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
     ],
 )
-def test_grib_fieldlist_data(
-    fl_type, array_backend, kwarg, expected_shape, expected_dtype
-):
+def test_grib_fieldlist_data(fl_type, array_backend, kwarg, expected_shape, expected_dtype):
     ds = load_grib_data("test.grib", fl_type, array_backend)
 
     latlon = ds.to_latlon(**kwarg)
@@ -360,9 +357,7 @@ def test_grib_fieldlist_data(
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 def test_grib_values_with_missing(fl_type, array_backend):
-    f = load_grib_data(
-        "test_single_with_missing.grib", fl_type, array_backend, folder="data"
-    )
+    f = load_grib_data("test_single_with_missing.grib", fl_type, array_backend, folder="data")
 
     v = f[0].values
     check_array_type(v, array_backend)

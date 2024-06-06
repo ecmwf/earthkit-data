@@ -12,8 +12,11 @@
 import numpy as np
 import pytest
 
-from earthkit.data import FieldList, from_source
-from earthkit.data.testing import NO_CUPY, NO_PYTORCH, earthkit_examples_file
+from earthkit.data import FieldList
+from earthkit.data import from_source
+from earthkit.data.testing import NO_CUPY
+from earthkit.data.testing import NO_PYTORCH
+from earthkit.data.testing import earthkit_examples_file
 
 
 @pytest.mark.parametrize("_kwargs", [{}, {"array_backend": "numpy"}])
@@ -51,9 +54,7 @@ def test_grib_file_numpy_backend(_kwargs):
 
 @pytest.mark.skipif(NO_PYTORCH, reason="No pytorch installed")
 def test_grib_file_pytorch_backend():
-    ds = from_source(
-        "file", earthkit_examples_file("test6.grib"), array_backend="pytorch"
-    )
+    ds = from_source("file", earthkit_examples_file("test6.grib"), array_backend="pytorch")
 
     assert len(ds) == 6
 
@@ -164,9 +165,7 @@ def test_grib_array_numpy_backend():
 
 @pytest.mark.skipif(NO_PYTORCH, reason="No pytorch installed")
 def test_grib_array_pytorch_backend():
-    s = from_source(
-        "file", earthkit_examples_file("test6.grib"), array_backend="pytorch"
-    )
+    s = from_source("file", earthkit_examples_file("test6.grib"), array_backend="pytorch")
 
     ds = FieldList.from_array(
         s.values,

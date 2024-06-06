@@ -479,9 +479,7 @@ class Tree:
                 previous = parse_date(str(v[i - 1]))
                 if current - previous != step:
                     print(int(v[i]))
-                    print(
-                        f"expecting {previous + step} after {previous}, found {current}"
-                    )
+                    print(f"expecting {previous + step} after {previous}, found {current}")
                     raise ReturnNoneNone()
             return str(v[0]), str(v[-1])
 
@@ -556,8 +554,7 @@ class Column(object):
         self.values[i] = v
 
     def compute_differences(self, idx):
-        """
-        Number of unique values in this column for the requested
+        """Number of unique values in this column for the requested
         row indexes.
 
         @param idx list of row indexes
@@ -596,9 +593,7 @@ class Table(object):
         return self.cols[self.colidx[c]].set_value(self.rowidx[r], v)
 
     def __repr__(self):
-        return repr(
-            [[self.cols[col].value(row) for row in self.rowidx] for col in self.colidx]
-        )
+        return repr([[self.cols[col].value(row) for row in self.rowidx] for col in self.colidx])
 
     def column(self, s, col):
         self.cols.append(Column(s, col))
@@ -639,9 +634,7 @@ class Table(object):
             self.set_elem(n, i, _as_tuple(s))
 
     def sort_columns(self):
-        """
-        Sort the columns on the number of unique values (this column.diff).
-        """
+        """Sort the columns on the number of unique values (this column.diff)."""
         for idx in self.colidx:
             self.cols[idx].compute_differences(self.rowidx)
 
@@ -685,8 +678,7 @@ class Table(object):
         self.rowidx.sort(key=cmp_to_key(self.compare_rows))
 
     def pop_singles(self):
-        """
-        Take the column with just one unique value and add them to the
+        """Take the column with just one unique value and add them to the
         tree. Delete their index from the list of column indexes.
         """
         self.sort_columns()

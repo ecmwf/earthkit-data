@@ -139,7 +139,6 @@ class CSVReader(Reader):
 
         Please note that Earthkit should be able to handle compressed file objects.
 
-
         Parameters
         ----------
         comment: str
@@ -149,11 +148,9 @@ class CSVReader(Reader):
             kwargs passed to :func:`pandas.read_csv`, this is used for safe parsing of kwargs via intermediate
             methods
 
-
         Returns
         -------
         :py:class:`pandas.DataFrame`
-
 
         Examples
         --------
@@ -193,9 +190,7 @@ class CSVReader(Reader):
         Xarray object
 
         """
-        return self.to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs).to_xarray(
-            **kwargs
-        )
+        return self.to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs).to_xarray(**kwargs)
 
 
 def reader(source, path, *, magic=None, deeper_check=False, fwf=False, **kwargs):

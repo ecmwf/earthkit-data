@@ -8,9 +8,7 @@ earthkit.data.settings.set("number-of-download-threads", 7)
 
 # Multiple values can be set together. The argument list
 # can be a dictionary:
-earthkit.data.settings.set(
-    {"number-of-download-threads": 7, "url-download-timeout": "1m"}
-)
+earthkit.data.settings.set({"number-of-download-threads": 7, "url-download-timeout": "1m"})
 
 # Alternatively, we can use keyword arguments. However, because
 # the “-” character is not allowed in variable names in Python we have

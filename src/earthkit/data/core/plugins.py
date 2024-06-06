@@ -18,7 +18,8 @@ import os
 import sys
 from collections import defaultdict
 from importlib import import_module
-from typing import List, Union
+from typing import List
+from typing import Union
 
 import entrypoints
 
@@ -80,13 +81,15 @@ def find_plugin(directories: Union[str, List[str]], name: str, loader, refreshed
 
     Returns
     -------
-    Return what the loader will returns when applied to the plugin with the right name `name`, found in one of the directories of the `directories` list.
+    Return what the loader will returns when applied to the plugin with the right name
+    `name`, found in one of the directories of the `directories` list.
 
     Raises
     ------
     NameError
         If plugin is not found.
-    """  # noqa: E501
+    """
+    # noqa: E501
     candidates = set()
 
     if name in REGISTERED[loader.kind]:

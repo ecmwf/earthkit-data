@@ -205,9 +205,7 @@ class GribFieldGeography(Geography):
             from earthkit.data.utils.message import ECC_FEATURES
 
             if not ECC_FEATURES.version >= (2, 35, 0):
-                raise RuntimeError(
-                    "gridType=rotated_reduced_gg requires ecCodes >= 2.35.0"
-                )
+                raise RuntimeError("gridType=rotated_reduced_gg requires ecCodes >= 2.35.0")
 
     def latitudes_unrotated(self, **kwargs):
         if not self.rotated:
@@ -314,9 +312,7 @@ class GribMetadata(Metadata):
 
     def __init__(self, handle, extra=None):
         if not isinstance(handle, self._handle_type()):
-            raise TypeError(
-                f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}"
-            )
+            raise TypeError(f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}")
         self._handle = handle
         self._geo = None
         if extra is not None:
@@ -372,9 +368,7 @@ class GribMetadata(Metadata):
             from earthkit.data.readers.grib.gridspec import GridSpecConverter
 
             edition = d.get("edition", self["edition"])
-            md, new_value_size = GridSpecConverter.to_metadata(
-                gridspec, edition=edition
-            )
+            md, new_value_size = GridSpecConverter.to_metadata(gridspec, edition=edition)
             d.update(md)
 
         handle = self._handle.clone(headers_only=True)
@@ -493,9 +487,7 @@ class GribMetadata(Metadata):
                     }
                 )
 
-        return format_namespace_dump(
-            r, selected="parameter", details=self.__class__.__name__, **kwargs
-        )
+        return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
 
     def _hide_internal_keys(self):
         return RestrictedGribMetadata(self)
@@ -601,15 +593,11 @@ class RestrictedGribMetadata(GribMetadata):
                 else:
                     return default
 
-        return super().get(
-            key, default=default, astype=astype, raise_on_missing=raise_on_missing
-        )
+        return super().get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
 
     def namespaces(self):
         if self.INTERNAL_NAMESPACES:
-            return [
-                x for x in super().namespaces() if x not in self.INTERNAL_NAMESPACES
-            ]
+            return [x for x in super().namespaces() if x not in self.INTERNAL_NAMESPACES]
         else:
             return super().namespaces()
 

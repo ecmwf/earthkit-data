@@ -11,7 +11,8 @@
 
 import os
 
-from earthkit.data import download_example_file, remote_example_file
+from earthkit.data import download_example_file
+from earthkit.data import remote_example_file
 
 
 def test_download_example_file_single(tmpdir):
@@ -47,8 +48,7 @@ def test_remote_example_file_path():
     filename = "test.grib"
     assert (
         remote_example_file(filename)
-        == "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/"
-        + filename
+        == "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/" + filename
     )
 
 

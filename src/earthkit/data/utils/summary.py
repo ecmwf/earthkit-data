@@ -137,7 +137,8 @@ class NamespaceDump(dict):
 
     def _repr_html_(self):
         if ipython_active:
-            from earthkit.data.utils.html import tab, table_from_dict
+            from earthkit.data.utils.html import tab
+            from earthkit.data.utils.html import table_from_dict
 
             if len(self.data) == 1:
                 return table_from_dict(self.data[0]["data"])

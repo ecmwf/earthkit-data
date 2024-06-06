@@ -13,14 +13,14 @@ import os
 from abc import abstractmethod
 
 from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.core.index import MaskIndex, MultiIndex
-from earthkit.data.decorators import alias_argument, detect_out_filename
-from earthkit.data.indexing.database import (
-    FILEPARTS_KEY_NAMES,
-    MORE_KEY_NAMES,
-    MORE_KEY_NAMES_WITH_UNDERSCORE,
-    STATISTICS_KEY_NAMES,
-)
+from earthkit.data.core.index import MaskIndex
+from earthkit.data.core.index import MultiIndex
+from earthkit.data.decorators import alias_argument
+from earthkit.data.decorators import detect_out_filename
+from earthkit.data.indexing.database import FILEPARTS_KEY_NAMES
+from earthkit.data.indexing.database import MORE_KEY_NAMES
+from earthkit.data.indexing.database import MORE_KEY_NAMES_WITH_UNDERSCORE
+from earthkit.data.indexing.database import STATISTICS_KEY_NAMES
 from earthkit.data.readers.grib.codes import GribField
 from earthkit.data.readers.grib.pandas import PandasMixIn
 from earthkit.data.readers.grib.xarray import XarrayMixIn
@@ -104,9 +104,7 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
     _availability = None
 
     def __init__(self, *args, **kwargs):
-        if self.availability_path is not None and os.path.exists(
-            self.availability_path
-        ):
+        if self.availability_path is not None and os.path.exists(self.availability_path):
             self._availability = Availability(self.availability_path)
 
         # Index.__init__(self, *args, **kwargs)
@@ -123,21 +121,15 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
     @classmethod
     def merge(cls, sources):
         if not all(isinstance(_, GribFieldList) for _ in sources):
-            raise ValueError(
-                "GribFieldList can only be merged to another GribFieldLists"
-            )
+            raise ValueError("GribFieldList can only be merged to another GribFieldLists")
         if not all(s.array_backend is s[0].array_backend for s in sources):
-            raise ValueError(
-                "Only fieldlists with the same array backend can be merged"
-            )
+            raise ValueError("Only fieldlists with the same array backend can be merged")
 
         return GribMultiFieldList(sources)
 
     def _custom_availability(self, ignore_keys=None, filter_keys=lambda k: True):
         def dicts():
-            for i in progress_bar(
-                iterable=range(len(self)), desc="Building availability"
-            ):
+            for i in progress_bar(iterable=range(len(self)), desc="Building availability"):
                 dic = self.get_metadata(i)
 
                 for k in list(dic.keys()):
@@ -172,11 +164,7 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
         return self.availability
 
     def _is_full_hypercube(self):
-        non_empty_coords = {
-            k: v
-            for k, v in self.availability._tree.unique_values().items()
-            if len(v) > 1
-        }
+        non_empty_coords = {k: v for k, v in self.availability._tree.unique_values().items() if len(v) > 1}
         expected_size = math.prod([len(v) for k, v in non_empty_coords.items()])
         return len(self) == expected_size
 

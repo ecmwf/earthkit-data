@@ -22,15 +22,11 @@ _TRANSLATORS = {}
 
 @locked
 def _translators():
-    return _helpers(
-        "translator", _TRANSLATORS, here=os.path.dirname(__file__), package=__name__
-    )
+    return _helpers("translator", _TRANSLATORS, here=os.path.dirname(__file__), package=__name__)
 
 
 def get_translator(source, cls, *args, **kwargs):
-    """
-    Get the appropriate translator for the source based on the target cls.
-    """
+    """Get the appropriate translator for the source based on the target cls."""
     if not isinstance(source, Base):
         source = data.from_object(source)
 
@@ -43,7 +39,5 @@ def get_translator(source, cls, *args, **kwargs):
 
 
 def transform(*args, **kwargs):
-    """
-    Executing wrapper for the get_translator class method
-    """
+    """Executing wrapper for the get_translator class method"""
     return get_translator(*args, **kwargs)()

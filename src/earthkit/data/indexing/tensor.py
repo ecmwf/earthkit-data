@@ -11,11 +11,13 @@ import functools
 import itertools
 import logging
 import math
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 
 import numpy as np
 
-from earthkit.data.core.index import Selection, normalize_selection
+from earthkit.data.core.index import Selection
+from earthkit.data.core.index import normalize_selection
 
 LOG = logging.getLogger(__name__)
 
@@ -152,11 +154,7 @@ class TensorCore(metaclass=ABCMeta):
         r = {}
         for k, v in kwargs.items():
             selection = CubeSelection(dict(k=v))
-            r[k] = list(
-                i
-                for i, element in enumerate(self.coords[k])
-                if selection.match_element(element)
-            )
+            r[k] = list(i for i, element in enumerate(self.coords[k]) if selection.match_element(element))
             if len(r[k]) == 1:
                 v = r[k][0]
                 r[k] = slice(v, v + 1)
@@ -218,9 +216,7 @@ class TensorCore(metaclass=ABCMeta):
 
         s = tuple(len(v) for _, v in self._coords.items())
         if s != self._shape:
-            raise ValueError(
-                f"shape={self._shape} does not match shape deduced from coords={s}"
-            )
+            raise ValueError(f"shape={self._shape} does not match shape deduced from coords={s}")
 
     def copy(self, data=None):
         if data is None:
@@ -232,9 +228,7 @@ class FieldListTensor(TensorCore):
     def __init__(self, source, coords, user_shape, field_shape, flatten_values):
         self.source = source
         self._coords = coords
-        self._user_coords = {
-            k: coords[k] for k in list(coords.keys())[: -len(field_shape)]
-        }
+        self._user_coords = {k: coords[k] for k in list(coords.keys())[: -len(field_shape)]}
         self._shape = user_shape + field_shape
         self._user_shape = user_shape
         self._field_shape = field_shape

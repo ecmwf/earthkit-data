@@ -12,9 +12,13 @@ from abc import abstractmethod
 from collections import defaultdict
 
 from earthkit.data.core import Base
-from earthkit.data.core.index import Index, MaskIndex, MultiIndex
-from earthkit.data.decorators import cached_method, detect_out_filename
-from earthkit.data.utils.array import ensure_backend, numpy_backend
+from earthkit.data.core.index import Index
+from earthkit.data.core.index import MaskIndex
+from earthkit.data.core.index import MultiIndex
+from earthkit.data.decorators import cached_method
+from earthkit.data.decorators import detect_out_filename
+from earthkit.data.utils.array import ensure_backend
+from earthkit.data.utils.array import numpy_backend
 from earthkit.data.utils.metadata import metadata_argument
 
 
@@ -198,7 +202,6 @@ class Field(Base):
             Typecode or data-type of the arrays. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
 
-
         Returns
         -------
         array-like
@@ -206,7 +209,6 @@ class Field(Base):
             (following the order in ``keys``). When ``keys`` is a single value only the
             array belonging to the key is returned. The array format is specified by
             :attr:`array_backend`.
-
 
         Examples
         --------
@@ -250,10 +252,7 @@ class Field(Base):
             if k not in _keys:
                 raise ValueError(f"data: invalid argument: {k}")
 
-        r = [
-            self._to_array(_keys[k][0](dtype=dtype), source_backend=_keys[k][1])
-            for k in keys
-        ]
+        r = [self._to_array(_keys[k][0](dtype=dtype), source_backend=_keys[k][1]) for k in keys]
         shape = self._required_shape(flatten)
         if shape != r[0].shape:
             # r = [x.reshape(shape) for x in r]
@@ -309,9 +308,7 @@ class Field(Base):
             lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype)
             return dict(x=lon, y=lat)
         else:
-            raise ValueError(
-                "to_points(): geographical coordinates in original CRS are not available"
-            )
+            raise ValueError("to_points(): geographical coordinates in original CRS are not available")
 
     def to_latlon(self, flatten=False, dtype=None):
         r"""Return the latitudes/longitudes of all the gridpoints in the field.
@@ -427,7 +424,6 @@ class Field(Base):
         dict of datatime.datetime
             Dict with items "base_time" and "valid_time".
 
-
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
         >>> ds[4].datetime()
@@ -485,7 +481,6 @@ class Field(Base):
         ------
         KeyError
             If no ``default`` is set and a key is not found in the message or it has a missing value.
-
 
         Examples
         --------
@@ -548,9 +543,7 @@ class Field(Base):
             return self._metadata
 
         namespace = kwargs.pop("namespace", None)
-        key, namespace, astype, key_arg_type = metadata_argument(
-            *keys, namespace=namespace, astype=astype
-        )
+        key, namespace, astype, key_arg_type = metadata_argument(*keys, namespace=namespace, astype=astype)
 
         assert isinstance(key, list)
         assert isinstance(namespace, (list, tuple))
@@ -574,9 +567,9 @@ class Field(Base):
                 for k, kt in zip(key, astype)
             ]
 
-            if key_arg_type == str:
+            if key_arg_type is str:
                 return r[0]
-            elif key_arg_type == tuple:
+            elif key_arg_type is tuple:
                 return tuple(r)
             else:
                 return r
@@ -883,7 +876,6 @@ class FieldList(Index):
         --------
         to_array
 
-
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
         >>> for f in ds:
@@ -928,12 +920,10 @@ class FieldList(Index):
             * the longitudes array from the first field when "lon" is in ``keys``
             * a values array per field when "values" is in ``keys``
 
-
         Raises
         ------
         ValueError
             When not all the fields have the same grid geometry.
-
 
         Examples
         --------
@@ -1078,9 +1068,7 @@ class FieldList(Index):
                 for i in pos_range:
                     yield (self[i]._attributes(keys))
 
-        _keys = (
-            self._default_ls_keys() if namespace is None else dict(namespace=namespace)
-        )
+        _keys = self._default_ls_keys() if namespace is None else dict(namespace=namespace)
         return ls(_proc, _keys, n=n, keys=keys, extra_keys=extra_keys)
 
     @cached_method
@@ -1111,7 +1099,6 @@ class FieldList(Index):
         --------
         ls
         tail
-
 
         The following calls are equivalent:
 
@@ -1149,7 +1136,6 @@ class FieldList(Index):
         --------
         head
         ls
-
 
         The following calls are equivalent:
 
@@ -1190,7 +1176,6 @@ class FieldList(Index):
         -------
         dict of datatime.datetime
             Dict with items "base_time" and "valid_time".
-
 
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
@@ -1348,9 +1333,7 @@ class FieldList(Index):
         if len(self) > 0:
             grid = self[0].metadata().geography._unique_grid_id()
             if grid is not None:
-                return all(
-                    f.metadata().geography._unique_grid_id() == grid for f in self
-                )
+                return all(f.metadata().geography._unique_grid_id() == grid for f in self)
         return False
 
     @detect_out_filename

@@ -12,6 +12,7 @@
 import numpy as np
 
 import earthkit.data
+from earthkit.data.testing import earthkit_remote_test_data_file
 
 
 def test_netcdf_fieldlist_string_coord():
@@ -58,6 +59,17 @@ def test_netcdf_fieldlist_bounds():
     ds = earthkit.data.from_object(a)
     assert ds
     assert len(ds) == 2
+
+
+def test_netcdf_fieldlist_ctime():
+    ds = earthkit.data.from_source(
+        "url",
+        earthkit_remote_test_data_file("test-data", "zgrid_rhgmet_metop_200701_R_2305_0010.nc"),
+    )
+
+    assert len(ds) == 1506
+    assert ds[0].metadata("valid_datetime") == "2007-01-16T00:00:00"
+    assert ds[5].metadata("valid_datetime") == "2007-01-16T00:00:00"
 
 
 if __name__ == "__main__":

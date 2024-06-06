@@ -12,7 +12,8 @@
 
 from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.testing import earthkit_examples_file, earthkit_test_data_file
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_test_data_file
 
 
 def load_array_fieldlist(path, array_backend):

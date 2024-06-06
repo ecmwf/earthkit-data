@@ -15,7 +15,9 @@ import xarray
 import xarray.core.indexing as indexing
 from xarray.backends import BackendEntrypoint
 
-from earthkit.data import FieldList, from_object, from_source
+from earthkit.data import FieldList
+from earthkit.data import from_object
+from earthkit.data import from_source
 
 # from earthkit.data.readers.netcdf import get_fields_from_ds
 from earthkit.data.core import Base
@@ -61,9 +63,7 @@ class WrappedFieldList(FieldArray):
     def common_attributes(self):
         if self.db:
             return {
-                k: v
-                for k, v in self.db[0].items()
-                if all([d[k] is not None and v == d[k] for d in self.db])
+                k: v for k, v in self.db[0].items() if all([d[k] is not None and v == d[k] for d in self.db])
             }
 
     def common_attributes_other(self, ds, keys):
@@ -155,9 +155,9 @@ class WrappedField:
             r = []
             for k in _k:
                 r.append(self._meta[k])
-            if key_arg_type == str:
+            if key_arg_type is str:
                 return r[0]
-            elif key_arg_type == tuple:
+            elif key_arg_type is tuple:
                 return tuple(r)
             else:
                 return r
@@ -220,9 +220,7 @@ class EarthkitBackendArray(xarray.backends.common.BackendArray):
 
     def __getitem__(self, key: xarray.core.indexing.ExplicitIndexer):
         indexing_support = indexing.IndexingSupport.BASIC
-        raw_key, numpy_indices = indexing.decompose_indexer(
-            key, self.shape, indexing_support
-        )
+        raw_key, numpy_indices = indexing.decompose_indexer(key, self.shape, indexing_support)
         result = self._raw_indexing_method(raw_key.tuple)
         if numpy_indices.tuple:
             # index the loaded np.ndarray
@@ -255,9 +253,7 @@ def _get_common_attributes(ds, keys):
     common_entries = {}
     if len(ds) > 0:
         first = ds[0]
-        common_entries = {
-            key: first.metadata(key) for key in keys if key in first.metadata()
-        }
+        common_entries = {key: first.metadata(key) for key in keys if key in first.metadata()}
         for f in ds[1:]:
             dictionary = f.metadata()
             common_entries = {
@@ -292,9 +288,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
 
         mem("1")
         if isinstance(variable_metadata_keys, str):
-            variable_metadata_keys = get_metadata_keys(
-                variable_metadata_keys, first.metadata()
-            )
+            variable_metadata_keys = get_metadata_keys(variable_metadata_keys, first.metadata())
 
         index_keys += [key for key in variable_metadata_keys if key not in index_keys]
 
@@ -332,9 +326,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
         # print(f"variables: {variables}")
         ekds.index("step")  # have to access this to make it appear below in indices()
         if dims_order is None:
-            other_dims = [
-                key for key in ekds.indices(squeeze=True).keys() if key != var_key
-            ]
+            other_dims = [key for key in ekds.indices(squeeze=True).keys() if key != var_key]
         else:
             other_dims = dims_order
 
@@ -350,9 +342,7 @@ class EarthkitObjectBackendEntrypoint(BackendEntrypoint):
             mem(" A ")
             # print(f"variable: {variable} dims: {dims}")
 
-            backend_array = EarthkitBackendArray(
-                ek_variable, dims, ek_variable.shape, array_module
-            )
+            backend_array = EarthkitBackendArray(ek_variable, dims, ek_variable.shape, array_module)
             mem(" B ")
             data = indexing.LazilyIndexedArray(backend_array)
             mem(" C ")
@@ -409,9 +399,7 @@ class EarthkitBackendEntrypoint(EarthkitObjectBackendEntrypoint):
     ):
         if isinstance(filename_or_obj, Base):
             ekds = filename_or_obj
-        elif isinstance(
-            filename_or_obj, str
-        ):  # TODO: Add Path? or handle with try statement
+        elif isinstance(filename_or_obj, str):  # TODO: Add Path? or handle with try statement
             ekds = from_source("file", filename_or_obj)
         else:
             ekds = from_object(filename_or_obj)

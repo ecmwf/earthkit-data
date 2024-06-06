@@ -12,9 +12,7 @@ import warnings
 
 class GlobalIndex:
     def __init__(self, index_location, baseurl) -> None:
-        warnings.warn(
-            "GlobalIndex is obsolete. Please update your code and use the 'directory' source"
-        )
+        warnings.warn("GlobalIndex is obsolete. Please update your code and use the 'directory' source")
         raise NotImplementedError(
             "GlobalIndex is obsolete. Please update your code and use the 'directory' source"
         )

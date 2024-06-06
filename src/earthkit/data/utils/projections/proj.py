@@ -32,10 +32,7 @@ PROJ_PARAMS_TO_GLOBE_KWARGS = {
 
 def to_dict(proj_string):
     proj_params = {
-        k.lstrip("+"): v
-        for k, v in (
-            p.split("=") if "=" in p else (p, None) for p in proj_string.split()
-        )
+        k.lstrip("+"): v for k, v in (p.split("=") if "=" in p else (p, None) for p in proj_string.split())
     }
 
     for key, value in proj_params.items():
@@ -58,16 +55,10 @@ def to_projection_kwargs(proj_params):
         if param in proj_params
     }
 
-    kwargs = {
-        PROJ_PARAMS_TO_KWARGS[k]: v
-        for k, v in proj_params.items()
-        if k in PROJ_PARAMS_TO_KWARGS
-    }
+    kwargs = {PROJ_PARAMS_TO_KWARGS[k]: v for k, v in proj_params.items() if k in PROJ_PARAMS_TO_KWARGS}
     kwargs["globe"] = globe_params
 
-    standard_parallels = tuple(
-        proj_params[param] for param in STANDARD_PARALLELS if param in proj_params
-    )
+    standard_parallels = tuple(proj_params[param] for param in STANDARD_PARALLELS if param in proj_params)
     if standard_parallels:
         kwargs["standard_parallels"] = standard_parallels
 

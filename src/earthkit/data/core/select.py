@@ -57,9 +57,7 @@ def selection_from_index(coord_accessor, kwargs):
             elif isinstance(v, int):
                 _kwargs[k] = coord_vals[v]
             else:
-                raise ValueError(
-                    f"Invalid value index={v}. Type={type(v)} not supported"
-                )
+                raise ValueError(f"Invalid value index={v}. Type={type(v)} not supported")
 
         except IndexError as e:
             raise IndexError(
