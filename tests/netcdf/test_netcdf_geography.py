@@ -239,6 +239,14 @@ def test_netcdf_to_latlon_laea():
             assert np.isclose(v["lat"][x], ref[i]), f"{i=}, {x=}"
 
 
+def test_netcdf_forecast_reference_time():
+    ds = from_source("url", earthkit_remote_test_data_file("test-data", "fa_ta850.nc"))
+
+    assert len(ds) == 37
+    assert ds[0].metadata("valid_datetime") == "2020-01-23T00:00:00"
+    assert ds[5].metadata("valid_datetime") == "2020-01-23T05:00:00"
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
