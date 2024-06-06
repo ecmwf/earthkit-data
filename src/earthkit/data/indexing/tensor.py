@@ -311,6 +311,9 @@ class FieldListTensor(TensorCore):
                 coords["x"] = np.linspace(0, field_shape[0], field_shape[0], dtype=int)
                 coords["y"] = np.linspace(0, field_shape[1], field_shape[1], dtype=int)
 
+            if hasattr(f, "unload"):
+                f.unload()
+
         return cls(source, coords, user_shape, field_shape, flatten_values)
 
     @flatten_arg

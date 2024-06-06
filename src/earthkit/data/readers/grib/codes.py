@@ -145,6 +145,9 @@ class GribCodesMessagePositionIndex(CodesMessagePositionIndex):
 class GribCodesHandle(CodesHandle):
     PRODUCT_ID = eccodes.CODES_PRODUCT_GRIB
 
+    # def __del__(self):
+    #     print("GribCodesHandle.__del__")
+
     # TODO: just a wrapper around the base class implementation to handle the
     # s,l,d qualifiers. Once these are implemented in the base class this method can
     # be removed. md5GridSection is also handled!
@@ -263,6 +266,21 @@ class GribField(Field):
     def _values(self, dtype=None):
         return self.handle.get_values(dtype=dtype)
 
+    def unload(self):
+        pass
+        if self._handle is not None:
+            # import gc
+
+            self.__metadata = None
+            # gc.collect()
+            # print(f"REF={gc.get_referrers(self._handle)}")
+            # try:
+            #     eccodes.codes_release(self._handle._handle)
+            # except:
+            #     pass
+            self._handle = None
+            # gc.collect()
+
     @property
     def offset(self):
         r"""number: Gets the offset (in bytes) of the GRIB field within the GRIB file."""
@@ -272,6 +290,9 @@ class GribField(Field):
 
     def _make_metadata(self):
         return GribMetadata(self.handle)
+
+    def _metadata_class(self):
+        return GribMetadata
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (
