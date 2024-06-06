@@ -147,9 +147,11 @@ class GribFieldGeography(Geography):
         if grid_type in ("reduced_gg", "reduced_rotated_gg"):
             return self.metadata.get("gridName")
 
-        if grid_type == "regular_ll":
+        if grid_type in ("regular_ll", "rotated_ll"):
             x = self.metadata.get("DxInDegrees")
             y = self.metadata.get("DyInDegrees")
+            x = round(x * 1_000_000) / 1_000_000
+            y = round(y * 1_000_000) / 1_000_000
             assert x == y, (x, y)
             return x
 
