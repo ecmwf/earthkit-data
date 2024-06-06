@@ -27,9 +27,6 @@ def get_fields_from_ds(
     field_type=None,
     check_only=False,
 ):  # noqa C901
-    # Select only geographical variables
-    has_lat = False
-    has_lon = False
 
     fields = []
 
@@ -47,6 +44,10 @@ def get_fields_from_ds(
         _skip_attr(v, "grid_mapping")
 
     for name in ds.data_vars:
+        # Select only geographical variables
+        has_lat = False
+        has_lon = False
+
         if name in skip:
             continue
 
