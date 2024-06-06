@@ -117,9 +117,18 @@ class DataSet:
         keys, coords = self._get_xy_coords(data_array)
 
         points = dict()
-        if "latitude" in self._ds and "longitude" in self._ds:
-            latitude = self._ds["latitude"]
-            longitude = self._ds["longitude"]
+
+        def _get_ll(keys):
+            for key in keys:
+                if key in self._ds:
+                    return self._ds[key]
+
+        lat_keys = ["latitude", "lat"]
+        lon_keys = ["longitude", "lon"]
+        latitude = _get_ll(lat_keys)
+        longitude = _get_ll(lon_keys)
+
+        if latitude is not None and longitude is not None:
             if latitude.dims == coords and longitude.dims == coords:
                 latitude = latitude.data
                 longitude = longitude.data
