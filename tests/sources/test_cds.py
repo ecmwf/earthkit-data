@@ -15,7 +15,8 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import NO_CDS, preserve_cwd
+from earthkit.data.testing import NO_CDS
+from earthkit.data.testing import preserve_cwd
 
 CDS_TIMEOUT = pytest.CDS_TIMEOUT
 
@@ -241,9 +242,7 @@ def test_cds_split_on(split_on, expected_file_num, expected_param, expected_time
         ["time", "time", 4, ["2t", "2t", "msl", "msl"], [0, 1200, 0, 1200]],
     ),
 )
-def test_cds_multiple_requests(
-    split_on1, split_on2, expected_file_num, expected_param, expected_time
-):
+def test_cds_multiple_requests(split_on1, split_on2, expected_file_num, expected_param, expected_time):
     base_request = dict(
         product_type="reanalysis",
         area=[50, -50, 20, 50],

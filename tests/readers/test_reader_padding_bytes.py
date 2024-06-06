@@ -11,7 +11,8 @@
 
 import pytest
 
-from earthkit.data import from_source, settings
+from earthkit.data import from_source
+from earthkit.data import settings
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file
 

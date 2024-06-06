@@ -11,8 +11,10 @@
 
 import pytest
 
-from earthkit.data.testing import NO_CUPY, NO_PYTORCH
-from earthkit.data.utils.array import ensure_backend, get_backend
+from earthkit.data.testing import NO_CUPY
+from earthkit.data.testing import NO_PYTORCH
+from earthkit.data.utils.array import ensure_backend
+from earthkit.data.utils.array import get_backend
 
 
 def test_utils_array_backend_numpy():

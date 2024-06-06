@@ -13,9 +13,7 @@ from .multi import MultiSource
 
 
 class MultiUrl(MultiSource):
-    def __init__(
-        self, urls, *args, filter=None, merger=None, force=None, lazily=True, **kwargs
-    ):
+    def __init__(self, urls, *args, filter=None, merger=None, force=None, lazily=True, **kwargs):
         if not isinstance(urls, (list, tuple)):
             urls = [urls]
 

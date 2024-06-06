@@ -11,7 +11,8 @@ import datetime
 import logging
 import re
 
-from earthkit.data.decorators import normalize, normalize_grib_keys
+from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalize_grib_keys
 from earthkit.data.utils.humanize import list_to_human
 
 LOG = logging.getLogger(__name__)
@@ -126,9 +127,7 @@ class GribOutput:
                 metadata["missingValue"] = missing_value
                 metadata["bitmapPresent"] = 1
 
-        metadata = {
-            k: v for k, v in sorted(metadata.items(), key=lambda x: order(x[0]))
-        }
+        metadata = {k: v for k, v in sorted(metadata.items(), key=lambda x: order(x[0]))}
 
         if str(metadata.get("edition")) == "1":
             for k in NOT_IN_EDITION_1:
@@ -199,8 +198,8 @@ class GribOutput:
         if "number" in metadata:
             compulsory += ("numberOfForecastsInEnsemble",)
             productDefinitionTemplateNumber = {"tp": 11}
-            metadata["productDefinitionTemplateNumber"] = (
-                productDefinitionTemplateNumber.get(handle.get("shortName"), 1)
+            metadata["productDefinitionTemplateNumber"] = productDefinitionTemplateNumber.get(
+                handle.get("shortName"), 1
             )
 
         if metadata.get("type") in ("pf", "cf"):
@@ -236,9 +235,7 @@ class GribOutput:
         elif len(values.shape) == 2:
             sample = self._ll_field(values, metadata)
         else:
-            raise ValueError(
-                f"Invalid shape {values.shape} for GRIB, must be 1 or 2 dimension "
-            )
+            raise ValueError(f"Invalid shape {values.shape} for GRIB, must be 1 or 2 dimension ")
 
         metadata.setdefault("bitsPerValue", 16)
         metadata["scanningMode"] = 0
@@ -262,12 +259,7 @@ class GribOutput:
             )
         )
 
-        if (
-            "class" in metadata
-            or "type" in metadata
-            or "stream" in metadata
-            or "expver" in metadata
-        ):
+        if "class" in metadata or "type" in metadata or "stream" in metadata or "expver" in metadata:
             # MARS labelling
             metadata["setLocalDefinition"] = 1
             # metadata['grib2LocalSectionNumber'] = 1

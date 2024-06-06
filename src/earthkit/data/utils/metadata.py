@@ -31,18 +31,14 @@ def metadata_argument(*args, namespace=None, astype=None):
     if key:
         if namespace is not None:
             if not isinstance(namespace, str):
-                raise ValueError(
-                    f"metadata: namespace={namespace} must be a str when key specified"
-                )
+                raise ValueError(f"metadata: namespace={namespace} must be a str when key specified")
 
         if isinstance(astype, (list, tuple)):
             if len(astype) != len(key):
                 if len(astype) == 1:
                     astype = [astype[0]] * len(key)
                 else:
-                    raise ValueError(
-                        "metadata: astype must have the same number of items as key"
-                    )
+                    raise ValueError("metadata: astype must have the same number of items as key")
         else:
             astype = [astype] * len(key)
 

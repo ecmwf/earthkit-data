@@ -123,9 +123,7 @@ def test_grib_from_stream_batched(_kwargs, expected_meta):
 
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
 def test_grib_url_stream_group_by(group):
-    ds = from_source(
-        "url", earthkit_remote_test_data_file("examples/test6.grib"), stream=True
-    )
+    ds = from_source("url", earthkit_remote_test_data_file("examples/test6.grib"), stream=True)
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):

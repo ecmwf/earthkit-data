@@ -24,7 +24,8 @@ import shutil
 import sqlite3
 import threading
 import time
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 from copy import deepcopy
 from random import randrange
 
@@ -68,9 +69,7 @@ class DiskUsage:
             self.total = st.f_blocks * st.f_frsize
             self.avail = st.f_bavail * st.f_frsize
 
-        self.percent = int(
-            float(self.total - self.avail) / float(self.total) * 100 + 0.5
-        )
+        self.percent = int(float(self.total - self.avail) / float(self.total) * 100 + 0.5)
 
     def __repr__(self):
         return (
@@ -198,13 +197,11 @@ class CacheManager(threading.Thread):
         So we do not purge files being downloaded.
         """
         with self.connection as db:
-            latest = db.execute(
-                "SELECT MIN(creation_date) FROM cache WHERE size IS NULL"
-            ).fetchone()[0]
+            latest = db.execute("SELECT MIN(creation_date) FROM cache WHERE size IS NULL").fetchone()[0]
             if latest is None:
-                latest = db.execute(
-                    "SELECT MAX(creation_date) FROM cache WHERE size IS NOT NULL"
-                ).fetchone()[0]
+                latest = db.execute("SELECT MAX(creation_date) FROM cache WHERE size IS NOT NULL").fetchone()[
+                    0
+                ]
             if latest is None:
                 latest = datetime.datetime.now()
             return latest
@@ -295,9 +292,7 @@ class CacheManager(threading.Thread):
                     continue
 
                 full = os.path.join(top, name)
-                count = db.execute(
-                    "SELECT count(*) FROM cache WHERE path=?", (full,)
-                ).fetchone()[0]
+                count = db.execute("SELECT count(*) FROM cache WHERE path=?", (full,)).fetchone()[0]
 
                 if count > 0:
                     continue
@@ -322,9 +317,7 @@ class CacheManager(threading.Thread):
                 if parent is None:
                     LOG.warning(f"earthkit-data cache: orphan found: {full}")
                 else:
-                    LOG.debug(
-                        f"earthkit-data cache: orphan found: {full} with parent {parent}"
-                    )
+                    LOG.debug(f"earthkit-data cache: orphan found: {full} with parent {parent}")
 
                 self._register_cache_file(
                     full,
@@ -382,9 +375,7 @@ class CacheManager(threading.Thread):
 
         LOG.warning(
             "Deleting entry %s",
-            json.dumps(
-                self._entry_to_dict(entry), indent=4, default=default_serialiser
-            ),
+            json.dumps(self._entry_to_dict(entry), indent=4, default=default_serialiser),
         )
         total = 0
 
@@ -487,9 +478,7 @@ class CacheManager(threading.Thread):
                     (path, owner, args, now, now, 1, parent),
                 )
 
-            return dict(
-                db.execute("SELECT * FROM cache WHERE path=?", (path,)).fetchone()
-            )
+            return dict(db.execute("SELECT * FROM cache WHERE path=?", (path,)).fetchone())
 
     def _cache_size(self):
         LOG.debug("cache_size")
@@ -602,9 +591,7 @@ class CachePolicy(metaclass=ABCMeta):
             raise NotImplementedError(f"Unknown cache policy={name}")
 
     def outdated(self):
-        return any(
-            self._settings.get(k) != SETTINGS.get(k) for k in self.OUTDATED_CHECK_KEYS
-        )
+        return any(self._settings.get(k) != SETTINGS.get(k) for k in self.OUTDATED_CHECK_KEYS)
 
     def update(self):
         changed = False
@@ -685,9 +672,7 @@ class NoCachePolicy(CachePolicy):
     def directory(self):
         if self._dir is None:
             if self._dir is None:
-                root_dir = self._expand_path(
-                    self._settings.get("temporary-directory-root")
-                )
+                root_dir = self._expand_path(self._settings.get("temporary-directory-root"))
                 self._dir = temp_directory(dir=root_dir)
         return self._dir.path
 
@@ -727,10 +712,7 @@ class UserCachePolicy(CachePolicy):
         return self._settings.get("use-message-position-index-cache")
 
     def is_cache_size_managed(self):
-        return (
-            self.maximum_cache_size() is not None
-            or self.maximum_cache_disk_usage() is not None
-        )
+        return self.maximum_cache_size() is not None or self.maximum_cache_disk_usage() is not None
 
     def maximum_cache_size(self):
         return self._settings.get("maximum-cache-size")
@@ -755,9 +737,7 @@ class TmpCachePolicy(UserCachePolicy):
 
     def __init__(self):
         super().__init__()
-        root_dir = self._expand_path(
-            self._settings.get("temporary-cache-directory-root")
-        )
+        root_dir = self._expand_path(self._settings.get("temporary-cache-directory-root"))
         self._dir = temp_directory(dir=root_dir)
 
     def directory(self):
@@ -808,9 +788,7 @@ class Cache:
                     self._call_manager_settings_changed()
 
     def _settings_changed(self):
-        LOG.debug(
-            "Cache: settings_changed, cache-policy=" + SETTINGS.get("cache-policy")
-        )
+        LOG.debug("Cache: settings_changed, cache-policy=" + SETTINGS.get("cache-policy"))
         if self.policy.outdated():
             with self._policy_lock:
                 # Check again, another thread/process may have modified the policy
@@ -834,9 +812,7 @@ class Cache:
                     return s.result()
 
     def _call_manager_settings_changed(self):
-        s = self._manager.enqueue(
-            self._manager._settings_changed, deepcopy(self._policy)
-        )
+        s = self._manager.enqueue(self._manager._settings_changed, deepcopy(self._policy))
         return s.result()
 
     def _dump_database(self, *args, **kwargs):
@@ -1006,9 +982,7 @@ def cache_file(
         m = hashlib.sha256()
         m.update(owner.encode("utf-8"))
 
-        m.update(
-            json.dumps(args, sort_keys=True, default=default_serialiser).encode("utf-8")
-        )
+        m.update(json.dumps(args, sort_keys=True, default=default_serialiser).encode("utf-8"))
         m.update(json.dumps(hash_extra, sort_keys=True).encode("utf-8"))
         m.update(json.dumps(extension, sort_keys=True).encode("utf-8"))
 
@@ -1044,9 +1018,7 @@ def cache_file(
 
             lock = path + ".lock"
             with FileLock(lock):
-                if not os.path.exists(
-                    path
-                ):  # Check again, another thread/process may have created the file
+                if not os.path.exists(path):  # Check again, another thread/process may have created the file
                     owner_data = create(path + ".tmp", args)
                     os.rename(path + ".tmp", path)
                     CACHE._update_entry(path, owner_data)
@@ -1077,9 +1049,7 @@ def cache_file(
 
             lock = path + ".lock"
             with FileLock(lock):
-                if not os.path.exists(
-                    path
-                ):  # Check again, another thread/process may have created the file
+                if not os.path.exists(path):  # Check again, another thread/process may have created the file
                     owner_data = create(path + ".tmp", args)
                     os.rename(path + ".tmp", path)
             try:

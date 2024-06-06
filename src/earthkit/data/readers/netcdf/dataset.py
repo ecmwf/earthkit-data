@@ -21,9 +21,7 @@ GEOGRAPHIC_COORDS = {
 
 
 class DataSet:
-    """
-    Class that wraps a xarray dataset to provide caching
-    """
+    """Class that wraps a xarray dataset to provide caching"""
 
     def __init__(self, ds):
         self._ds = ds

@@ -7,9 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 
-from earthkit.data.core.constants import DATETIME, GRIDSPEC
+from earthkit.data.core.constants import DATETIME
+from earthkit.data.core.constants import GRIDSPEC
 
 
 class Metadata(metaclass=ABCMeta):
@@ -179,9 +181,7 @@ class Metadata(metaclass=ABCMeta):
                 key, default=default, astype=astype, raise_on_missing=raise_on_missing
             )
         else:
-            return self._get(
-                key, default=default, astype=astype, raise_on_missing=raise_on_missing
-            )
+            return self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
 
     @abstractmethod
     def _get(self, key, astype=None, default=None, raise_on_missing=False):
@@ -274,7 +274,6 @@ class Metadata(metaclass=ABCMeta):
         -------
         dict of datatime.datetime
             Dict with items "base_time" and "valid_time".
-
 
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")

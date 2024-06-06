@@ -80,9 +80,7 @@ class VirtualGribMetadata(RawMetadata):
         if key == "stepRange" and key_type is None:
             key_type = str
 
-        return super()._get(
-            key, astype=key_type, default=default, raise_on_missing=raise_on_missing
-        )
+        return super()._get(key, astype=key_type, default=default, raise_on_missing=raise_on_missing)
 
     def shape(self):
         Nj = self.get("Nj", None)

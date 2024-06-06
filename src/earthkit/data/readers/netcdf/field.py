@@ -20,7 +20,8 @@ from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.projections import Projection
 
-from .coords import LevelSlice, TimeSlice
+from .coords import LevelSlice
+from .coords import TimeSlice
 
 LOG = logging.getLogger(__name__)
 
@@ -55,18 +56,14 @@ class XArrayFieldGeography(Geography):
         return Projection.from_cf_grid_mapping(**self._grid_mapping().attrs)
 
     def bounding_box(self):
-        return BoundingBox(
-            north=self.north, south=self.south, east=self.east, west=self.west
-        )
+        return BoundingBox(north=self.north, south=self.south, east=self.east, west=self.west)
 
     def _grid_mapping(self):
         da = self.data_array
         if "grid_mapping" in da.attrs:
             grid_mapping = self.ds[da.attrs["grid_mapping"]]
         else:
-            raise AttributeError(
-                "no CF-compliant 'grid_mapping' detected in netCDF attributes"
-            )
+            raise AttributeError("no CF-compliant 'grid_mapping' detected in netCDF attributes")
         return grid_mapping
 
     def gridspec(self):
@@ -101,9 +98,7 @@ class XArrayMetadata(RawMetadata):
 
     def __init__(self, field):
         if not isinstance(field, XArrayField):
-            raise TypeError(
-                f"XArrayMetadata: expected field type XArrayField, got {type(field)}"
-            )
+            raise TypeError(f"XArrayMetadata: expected field type XArrayField, got {type(field)}")
         self._field = field
         self._geo = None
 
@@ -128,9 +123,7 @@ class XArrayMetadata(RawMetadata):
             if "forecast_reference_time" in field._ds.data_vars:
                 forecast_reference_time = field._ds["forecast_reference_time"].data
                 assert forecast_reference_time.ndim == 0, forecast_reference_time
-                forecast_reference_time = forecast_reference_time.astype(
-                    "datetime64[s]"
-                )
+                forecast_reference_time = forecast_reference_time.astype("datetime64[s]")
                 forecast_reference_time = forecast_reference_time.astype(object)
                 step = (time - forecast_reference_time).total_seconds()
                 assert step % 3600 == 0, step
@@ -156,9 +149,7 @@ class XArrayMetadata(RawMetadata):
     @property
     def geography(self):
         if self._geo is None:
-            self._geo = XArrayFieldGeography(
-                self, self._field._ds, self._field.variable
-            )
+            self._geo = XArrayFieldGeography(self, self._field._ds, self._field.variable)
         return self._geo
 
     def as_namespace(self, namespace=None):

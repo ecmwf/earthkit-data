@@ -41,8 +41,7 @@ class PolytopeWebKeyPrompt(APIKeyPrompt):
 
 
 class Polytope(Source):
-    """
-    Retrieve data using the Polytope Web API.
+    """Retrieve data using the Polytope Web API.
     See polytope-client.readthedocs.io for more information.
 
     Parameters
@@ -71,9 +70,7 @@ class Polytope(Source):
 
         for k in ["group_by", "batch_size"]:
             if k in kwargs:
-                raise ValueError(
-                    f"Invalid argument '{k}' for Polytope. Deprecated since 0.8.0."
-                )
+                raise ValueError(f"Invalid argument '{k}' for Polytope. Deprecated since 0.8.0.")
 
         self._stream_kwargs = dict()
         for k in ["read_all"]:

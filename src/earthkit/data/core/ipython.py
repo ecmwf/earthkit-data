@@ -7,9 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-ipython is not None when running a notebook
-"""
+"""ipython is not None when running a notebook"""
 
 import logging
 import sys
@@ -110,7 +108,9 @@ def _identity(x, **kwargs):
 if ipython_active:
     from IPython.display import HTML
     from IPython.display import SVG as SVG_ipython
-    from IPython.display import Image, Markdown, display
+    from IPython.display import Image
+    from IPython.display import Markdown
+    from IPython.display import display
 
     def SVG(*args, **kwargs):
         import IPython

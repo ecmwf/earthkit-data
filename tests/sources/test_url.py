@@ -14,13 +14,13 @@ import sys
 
 import pytest
 
-from earthkit.data import from_source, settings
-from earthkit.data.core.temporary import temp_directory, temp_file
-from earthkit.data.testing import (
-    earthkit_examples_file,
-    earthkit_remote_test_data_file,
-    network_off,
-)
+from earthkit.data import from_source
+from earthkit.data import settings
+from earthkit.data.core.temporary import temp_directory
+from earthkit.data.core.temporary import temp_file
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.testing import network_off
 
 
 @pytest.mark.skipif(  # TODO: fix

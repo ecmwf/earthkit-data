@@ -111,9 +111,7 @@ class CdsRetriever(FileSource):
 
         assert isinstance(dataset, str)
         if args and kwargs:
-            raise TypeError(
-                "CdsRetriever: cannot specify request using both args and kwargs"
-            )
+            raise TypeError("CdsRetriever: cannot specify request using both args and kwargs")
 
         if not args:
             args = (kwargs,)
@@ -128,9 +126,7 @@ class CdsRetriever(FileSource):
             self.path = [self._retrieve(dataset, r) for r in self.requests]
         else:
             with SoftThreadPool(nthreads=nthreads) as pool:
-                futures = [
-                    pool.submit(self._retrieve, dataset, r) for r in self.requests
-                ]
+                futures = [pool.submit(self._retrieve, dataset, r) for r in self.requests]
 
                 iterator = (f.result() for f in futures)
                 self.path = list(tqdm(iterator, leave=True, total=len(self.requests)))

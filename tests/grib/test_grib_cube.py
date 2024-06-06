@@ -43,9 +43,7 @@ def test_grib_cube():
     ref_meta = (["t", 300], ["t", 400])
 
     for i in range(len(ref_meta)):
-        assert (
-            r[0, i].metadata(["param", "level"]) == ref_meta[i]
-        ), f"{i=} ref_meta={ref_meta[i]}"
+        assert r[0, i].metadata(["param", "level"]) == ref_meta[i], f"{i=} ref_meta={ref_meta[i]}"
 
     # this slice is a cube
     r = c[1:3, 0:2]

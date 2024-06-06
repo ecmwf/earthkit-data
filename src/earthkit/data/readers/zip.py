@@ -18,9 +18,7 @@ from .csv import CSVReader
 
 
 class InfoWrapper:
-    """
-    A class so that ZipInfo has the same interface as TarInfo
-    """
+    """A class so that ZipInfo has the same interface as TarInfo"""
 
     def __init__(self, member):
         self.member = member

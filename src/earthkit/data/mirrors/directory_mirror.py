@@ -14,7 +14,8 @@ from urllib.parse import urlparse
 from earthkit.data.sources.file import FileSource
 from earthkit.data.sources.url import Url
 
-from . import BaseMirror, MirrorConnection
+from . import BaseMirror
+from . import MirrorConnection
 
 LOG = logging.getLogger(__name__)
 
