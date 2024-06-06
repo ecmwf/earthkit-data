@@ -229,6 +229,7 @@ def test_grib_projection_mercator(fl_type, array_backend):
         (earthkit_examples_file("test.grib"), 4.0),
         (earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"), "O1280"),
         (earthkit_test_data_file("rotated_N32_subarea.grib"), "N32"),
+        (earthkit_test_data_file("rotated_wind_20x20.grib"), 20),
     ],
 )
 def test_grib_resolution(path, expected_value):
