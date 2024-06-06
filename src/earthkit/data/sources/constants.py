@@ -303,7 +303,7 @@ class ConstantsFieldListCore(FieldList):
                 " not a proper source or dataset"
             )
 
-            return source_or_dataset.unique_values("number", patches={"number": {None: 0}})["number"]
+            return source_or_dataset.unique_values("number", patches={"number": {None: 0}}).get("number", 0)
 
         def find_dates(source_or_dataset):
             if "date" not in self.request and "time" in self.request:
