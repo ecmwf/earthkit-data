@@ -139,9 +139,7 @@ class UrlBase(FileSource):
         self.fake_headers = fake_headers
         self.stream = stream
         self._kwargs = kwargs
-        LOG.debug(
-            f"url={self.url} url_parts={self.url_parts} auth={self.auth} _kwargs={self._kwargs}"
-        )
+        LOG.debug(f"url={self.url} url_parts={self.url_parts} auth={self.auth} _kwargs={self._kwargs}")
 
     def connect_to_mirror(self, mirror):
         return mirror.connection_for_url(self, self.url, self.url_parts)
@@ -455,7 +453,7 @@ class SingleUrlStream(UrlBase):
             override_target_file=False,
         )
 
-        size, mode, skip, trust_size = downloader.estimate_size(None)
+        size, mode, skip, trust_size = downloader.estimate_size(None)  # noqa F841
 
         # cache data may contain the result of the http HEAD request
         h = downloader.cache_data()

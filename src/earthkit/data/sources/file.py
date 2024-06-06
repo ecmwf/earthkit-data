@@ -93,9 +93,7 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = reader(
-                self, self.path, content_type=self.content_type, parts=self.parts
-            )
+            self._reader_ = reader(self, self.path, content_type=self.content_type, parts=self.parts)
         return self._reader_
 
     def __iter__(self):

@@ -19,12 +19,10 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.readers.netcdf.field import NetCDFField
-from earthkit.data.testing import (
-    NO_CDS,
-    earthkit_examples_file,
-    earthkit_file,
-    earthkit_test_data_file,
-)
+from earthkit.data.testing import NO_CDS
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_file
+from earthkit.data.testing import earthkit_test_data_file
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -67,9 +65,7 @@ def test_dummy_netcdf():
 
 
 def test_dummy_netcdf_2():
-    s = from_source(
-        "dummy-source", kind="netcdf", dims=["lat", "lon", "time"], variables=["a", "b"]
-    )
+    s = from_source("dummy-source", kind="netcdf", dims=["lat", "lon", "time"], variables=["a", "b"])
     ds = s.to_xarray()
     assert "lat" in ds.dims
 

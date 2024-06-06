@@ -12,12 +12,11 @@
 import os
 import shutil
 
-from earthkit.data.core.temporary import temp_directory, temp_file
-from earthkit.data.testing import (
-    earthkit_examples_file,
-    earthkit_file,
-    earthkit_test_data_file,
-)
+from earthkit.data.core.temporary import temp_directory
+from earthkit.data.core.temporary import temp_file
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_file
+from earthkit.data.testing import earthkit_test_data_file
 
 TEST_GRIB_FILES = [
     earthkit_file(p)

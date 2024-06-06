@@ -23,7 +23,7 @@ from indexing_fixtures import get_tmp_fixture  # noqa: E402
 
 @pytest.mark.cache
 def test_indexing_db_file():
-    tmp, path = get_tmp_fixture("file")
+    _, path = get_tmp_fixture("file")
     ds = from_source("file", path, indexing=True)
     assert hasattr(ds, "db")
     assert ds.db.count() == 18
@@ -31,7 +31,7 @@ def test_indexing_db_file():
 
 @pytest.mark.cache
 def test_indexing_db_file_multi():
-    tmp, path = get_tmp_fixture("multi")
+    _, path = get_tmp_fixture("multi")
     ds = from_source("file", path, indexing=True)
 
     counts = [6, 6, 6]
@@ -43,7 +43,7 @@ def test_indexing_db_file_multi():
 
 @pytest.mark.cache
 def test_indexing_db_directory():
-    tmp, path = get_tmp_fixture("directory")
+    _, path = get_tmp_fixture("directory")
     ds = from_source("file", path, indexing=True)
     assert hasattr(ds, "db")
     assert ds.db.count() == 18

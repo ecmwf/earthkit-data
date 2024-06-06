@@ -28,9 +28,7 @@ def _helpers(function_name, lookup, here=os.path.dirname(__file__), package=__na
             if path.endswith(".py") and path[0] not in ("_", "."):
                 name, _ = os.path.splitext(path)
                 try:
-                    lookup[name] = getattr(
-                        import_module(f".{name}", package=package), function_name
-                    )
+                    lookup[name] = getattr(import_module(f".{name}", package=package), function_name)
                 except Exception as e:
                     LOG.warning(f"Error loading {function_name} '{name}': {e}")
     return lookup
@@ -45,8 +43,7 @@ def _wrappers():
 
 
 def get_wrapper(data, *args, **kwargs):
-    """
-    Returns the input object with the appropriate earthkit-data wrapper.
+    """Returns the input object with the appropriate earthkit-data wrapper.
     i.e. so that an xarray object can be handled as an earkit-data object.
     """
     if isinstance(data, Base):
@@ -58,9 +55,7 @@ def get_wrapper(data, *args, **kwargs):
             return wrapper.mutate()
     else:
         fullname = ".".join([data.__class__.__module__, data.__class__.__qualname__])
-        LOG.warning(
-            f"Cannot find a wrapper for class: {fullname}, returning unwrapped object"
-        )
+        LOG.warning(f"Cannot find a wrapper for class: {fullname}, returning unwrapped object")
         return data
 
 

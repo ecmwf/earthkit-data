@@ -7,8 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-"""
-Module containing methods to transform the inputs of functions based on the function type setting,
+"""Module containing methods to transform the inputs of functions based on the function type setting,
 common signitures or mapping defined at call time
 """
 import inspect
@@ -49,8 +48,7 @@ def transform_function_inputs(
     kwarg_types: T.Dict[str, T.Any] = {},
     convert_types: T.Union[T.Tuple[T.Any], T.Dict[str, T.Tuple[T.Any]]] = (),
 ) -> T.Callable:
-    """
-    Transform the inputs to a function to match the requirements.
+    """Transform the inputs to a function to match the requirements.
     earthkit.data handles the input arg/kwarg format.
 
     Parameters
@@ -91,9 +89,7 @@ def transform_function_inputs(
                 convert_types = {key: convert_types for key in convert_kwargs}
 
             convert_kwargs = [
-                k
-                for k in convert_kwargs
-                if isinstance(kwargs[k], _ensure_tuple(convert_types.get(k, ())))
+                k for k in convert_kwargs if isinstance(kwargs[k], _ensure_tuple(convert_types.get(k, ())))
             ]
 
         # transform args/kwargs
@@ -133,8 +129,7 @@ def transform_function_inputs(
 
 
 def signature_mapping(signature, kwarg_types):
-    """
-    Map args and kwargs to object types, using hierarchical selection method:
+    """Map args and kwargs to object types, using hierarchical selection method:
     1. Explicitly defined type
     2. Based on Type setting in function
     3. Do nothing
@@ -158,8 +153,7 @@ def signature_mapping(signature, kwarg_types):
 
 
 def transform_module_inputs(in_module, **kwargs):
-    """
-    Transform the inputs to all functions in a module.
+    """Transform the inputs to all functions in a module.
 
     Parameters
     ----------

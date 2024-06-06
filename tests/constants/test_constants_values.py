@@ -29,7 +29,7 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
 
 
 def test_contants_values():
-    ds, md = load_constants_fs(last_step=12)
+    ds, _ = load_constants_fs(last_step=12)
     eps = 1e-5
     num = len(ds)
 
@@ -60,7 +60,7 @@ def test_contants_values():
 
 
 def test_constants_to_numpy():
-    ds, md = load_constants_fs(last_step=12)
+    ds, _ = load_constants_fs(last_step=12)
     eps = 1e-5
     num = len(ds)
 

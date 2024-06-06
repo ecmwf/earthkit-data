@@ -13,7 +13,9 @@ import os
 
 import pytest
 
-from earthkit.data import cache, from_source, settings
+from earthkit.data import cache
+from earthkit.data import from_source
+from earthkit.data import settings
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.testing import earthkit_examples_file
@@ -87,9 +89,7 @@ def test_cache_policy():
             check_cache_files(cache_dir)
 
             # cache = temporary with auto generated path
-            with settings.temporary(
-                {"cache-policy": "temporary", "temporary-cache-directory-root": None}
-            ):
+            with settings.temporary({"cache-policy": "temporary", "temporary-cache-directory-root": None}):
                 assert settings.get("cache-policy") == "temporary"
                 assert settings.get("temporary-cache-directory-root") is None
                 assert cache.policy.managed() is True
@@ -265,9 +265,7 @@ def test_cache_management(policy):
     with temp_directory() as tmp_dir_path:
         with settings.temporary():
             if policy == "user":
-                settings.set(
-                    {"cache-policy": "user", "user-cache-directory": tmp_dir_path}
-                )
+                settings.set({"cache-policy": "user", "user-cache-directory": tmp_dir_path})
                 assert cache.directory() == tmp_dir_path
             elif policy == "temporary":
                 settings.set(
@@ -304,9 +302,7 @@ def test_cache_management(policy):
                 latest_path = x["path"]
 
             # limit cache size so that only one file should remain
-            settings.set(
-                {"maximum-cache-size": "12K", "maximum-cache-disk-usage": None}
-            )
+            settings.set({"maximum-cache-size": "12K", "maximum-cache-disk-usage": None})
 
             num, size = cache.summary_dump_database()
             assert num == 1

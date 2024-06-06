@@ -16,7 +16,8 @@ import pandas as pd
 import pytest
 import yaml
 
-from earthkit.data.decorators import availability, normalize
+from earthkit.data.decorators import availability
+from earthkit.data.decorators import normalize
 from earthkit.data.utils.availability import Availability
 
 
@@ -43,9 +44,7 @@ def availability_s2s_as_list():
 
     for k, v in config.items():
         dic = dict(origin=k)
-        dic["date"] = [x.strftime("%Y-%m-%d") for x in pd.date_range(**v["alldates"])][
-            :3
-        ]
+        dic["date"] = [x.strftime("%Y-%m-%d") for x in pd.date_range(**v["alldates"])][:3]
         dic["number"] = list(range(1, v["number"] + 1))
         dic["param"] = v["param"][:3]
         availability_list.append(dic)

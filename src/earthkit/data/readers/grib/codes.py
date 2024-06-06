@@ -15,11 +15,9 @@ import numpy as np
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.readers.grib.metadata import GribMetadata
-from earthkit.data.utils.message import (
-    CodesHandle,
-    CodesMessagePositionIndex,
-    CodesReader,
-)
+from earthkit.data.utils.message import CodesHandle
+from earthkit.data.utils.message import CodesMessagePositionIndex
+from earthkit.data.utils.message import CodesReader
 
 LOG = logging.getLogger(__name__)
 
@@ -39,9 +37,7 @@ class GribCodesFloatArrayAccessor:
 
     def __init__(self):
         if GribCodesFloatArrayAccessor.HAS_FLOAT_SUPPORT is None:
-            GribCodesFloatArrayAccessor.HAS_FLOAT_SUPPORT = hasattr(
-                eccodes, "codes_get_float_array"
-            )
+            GribCodesFloatArrayAccessor.HAS_FLOAT_SUPPORT = hasattr(eccodes, "codes_get_float_array")
 
     def get(self, handle, dtype=None):
         v = eccodes.codes_get_array(handle, self.KEY)

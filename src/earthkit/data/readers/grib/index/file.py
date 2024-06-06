@@ -36,9 +36,7 @@ class GribFieldListInOneFile(GribFieldListInFiles):
     @property
     def _positions(self):
         if self.__positions is None:
-            self.__positions = GribCodesMessagePositionIndex(
-                self.path, self._file_parts
-            )
+            self.__positions = GribCodesMessagePositionIndex(self.path, self._file_parts)
         return self.__positions
 
     def part(self, n):

@@ -55,9 +55,7 @@ def pytest_runtest_setup(item):
 
     marked_no_cache_init = "no_cache_init" in marks_in_items
     if marked_no_cache_init and not item.config.getoption("--forked"):
-        pytest.skip(
-            "test is skipped because marked as no_cache_init but --forked is not used"
-        )
+        pytest.skip("test is skipped because marked as no_cache_init but --forked is not used")
 
     need_cache = "cache" in marks_in_items
 

@@ -99,8 +99,7 @@ class Base(metaclass=MetaBase):
         self._not_implemented()
 
     def unique_values(self, *coords, remapping=None, patches=None, progress_bar=True):
-        """
-        Given a list of metadata attributes, such as date, param, levels,
+        """Given a list of metadata attributes, such as date, param, levels,
         returns the list of unique values for each attributes
         """
         from earthkit.data.core.order import build_remapping

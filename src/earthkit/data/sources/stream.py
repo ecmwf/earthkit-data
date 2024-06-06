@@ -36,9 +36,7 @@ class StreamMemorySource(MemoryBaseSource):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = stream_reader(
-                self, self._stream.stream, True, **self._kwargs
-            )
+            self._reader_ = stream_reader(self, self._stream.stream, True, **self._kwargs)
             if self._reader_ is None:
                 raise TypeError(f"could not create reader for stream={self._stream}")
         return self._reader_
@@ -59,9 +57,7 @@ class StreamSource(Source):
         self.memory = read_all
         for k in ["group_by", "batch_size"]:
             if k in kwargs:
-                raise ValueError(
-                    f"Invalid argument '{k}' for StreamSource. Deprecated since 0.8.0."
-                )
+                raise ValueError(f"Invalid argument '{k}' for StreamSource. Deprecated since 0.8.0.")
 
         self._kwargs = kwargs
 
@@ -81,13 +77,9 @@ class StreamSource(Source):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = stream_reader(
-                self, self._stream.stream, False, **self._kwargs
-            )
+            self._reader_ = stream_reader(self, self._stream.stream, False, **self._kwargs)
             if self._reader_ is None:
-                raise TypeError(
-                    f"could not create reader for stream={self._stream.stream}"
-                )
+                raise TypeError(f"could not create reader for stream={self._stream.stream}")
         return self._reader_
 
     def batched(self, n):

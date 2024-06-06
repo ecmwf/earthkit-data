@@ -14,7 +14,8 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.readers.grib.metadata import GribMetadata
-from earthkit.data.testing import earthkit_examples_file, earthkit_test_data_file
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_test_data_file
 
 
 @pytest.mark.parametrize(

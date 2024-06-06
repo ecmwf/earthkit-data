@@ -20,9 +20,7 @@ class XArrayDataArrayTranslator(Translator):
         self.data = data.to_xarray(*args, **kwargs)
 
     def __call__(self):
-        """
-        Data-Array requested, if Dataset return the first data variable in dataset.
-        """
+        """Data-Array requested, if Dataset return the first data variable in dataset."""
         # import xarray as xr
 
         if isinstance(self.data, xr.Dataset):
@@ -33,15 +31,12 @@ class XArrayDataArrayTranslator(Translator):
 
 
 class XArrayDatasetTranslator(XArrayDataArrayTranslator):
-    """
-    Wrapper around an xarray `DataSet`, offering polymorphism and convenience
+    """Wrapper around an xarray `DataSet`, offering polymorphism and convenience
     methods.
     """
 
     def __call__(self):
-        """
-        Dataset requested, if DataArray convert to Dataset.
-        """
+        """Dataset requested, if DataArray convert to Dataset."""
         # import xarray as xr
 
         if isinstance(self.data, xr.DataArray):

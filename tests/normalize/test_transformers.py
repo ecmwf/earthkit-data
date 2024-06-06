@@ -13,22 +13,21 @@ import datetime
 
 import pytest
 
-from earthkit.data.arguments.earthkit_types import (
-    BoundingBoxType,
-    DateListType,
-    DateType,
-    EnumListType,
-    EnumType,
-    FloatListType,
-    FloatType,
-    IntListType,
-    IntType,
-    StrListType,
-    StrType,
-    VariableListType,
-    VariableType,
-)
-from earthkit.data.arguments.transformers import FormatTransformer, TypeTransformer
+from earthkit.data.arguments.earthkit_types import BoundingBoxType
+from earthkit.data.arguments.earthkit_types import DateListType
+from earthkit.data.arguments.earthkit_types import DateType
+from earthkit.data.arguments.earthkit_types import EnumListType
+from earthkit.data.arguments.earthkit_types import EnumType
+from earthkit.data.arguments.earthkit_types import FloatListType
+from earthkit.data.arguments.earthkit_types import FloatType
+from earthkit.data.arguments.earthkit_types import IntListType
+from earthkit.data.arguments.earthkit_types import IntType
+from earthkit.data.arguments.earthkit_types import StrListType
+from earthkit.data.arguments.earthkit_types import StrType
+from earthkit.data.arguments.earthkit_types import VariableListType
+from earthkit.data.arguments.earthkit_types import VariableType
+from earthkit.data.arguments.transformers import FormatTransformer
+from earthkit.data.arguments.transformers import TypeTransformer
 from earthkit.data.utils.bbox import BoundingBox
 
 enum = ("a", "b", "c")
@@ -48,21 +47,15 @@ def test_types():
     assert TypeTransformer(None, type=FloatType).transform("3.14") == 3.14
     assert TypeTransformer(None, type=FloatListType).transform(3.14) == [3.14]
 
-    assert TypeTransformer(None, type=DateType).transform(
-        20000101
-    ) == datetime.datetime(2000, 1, 1)
+    assert TypeTransformer(None, type=DateType).transform(20000101) == datetime.datetime(2000, 1, 1)
 
-    assert TypeTransformer(None, type=DateListType).transform(
-        "20000101/to/20000103"
-    ) == [
+    assert TypeTransformer(None, type=DateListType).transform("20000101/to/20000103") == [
         datetime.datetime(2000, 1, 1),
         datetime.datetime(2000, 1, 2),
         datetime.datetime(2000, 1, 3),
     ]
 
-    assert TypeTransformer(None, type=DateListType).transform(
-        (20000101, 20000102, 20000103)
-    ) == [
+    assert TypeTransformer(None, type=DateListType).transform((20000101, 20000102, 20000103)) == [
         datetime.datetime(2000, 1, 1),
         datetime.datetime(2000, 1, 2),
         datetime.datetime(2000, 1, 3),
@@ -74,51 +67,38 @@ def test_types():
     with pytest.raises(AssertionError):  # FIXME: Not sure what this should be
         assert TypeTransformer(None, type=VariableListType("cf")).transform(42) == 0
 
-    assert TypeTransformer(None, type=BoundingBoxType).transform(
-        (1, -1, -1, 1)
-    ) == BoundingBox(north=1, west=-1, south=-1, east=1)
+    assert TypeTransformer(None, type=BoundingBoxType).transform((1, -1, -1, 1)) == BoundingBox(
+        north=1, west=-1, south=-1, east=1
+    )
 
 
 def test_formats():
-    assert (
-        FormatTransformer(None, type=EnumType(enum), format="%4s").transform("a")
-        == "   a"
-    )
+    assert FormatTransformer(None, type=EnumType(enum), format="%4s").transform("a") == "   a"
 
-    assert FormatTransformer(None, type=EnumListType(enum), format="%4s").transform(
-        ("a", "b")
-    ) == ["   a", "   b"]
+    assert FormatTransformer(None, type=EnumListType(enum), format="%4s").transform(("a", "b")) == [
+        "   a",
+        "   b",
+    ]
 
     assert FormatTransformer(None, type=StrType, format="%4s").transform("a") == "   a"
 
-    assert FormatTransformer(None, type=StrListType, format="%4s").transform(
-        ("a", "b")
-    ) == ["   a", "   b"]
+    assert FormatTransformer(None, type=StrListType, format="%4s").transform(("a", "b")) == ["   a", "   b"]
 
     assert FormatTransformer(None, type=IntType, format="%04d").transform(42) == "0042"
 
-    assert FormatTransformer(None, type=IntListType, format="%04d").transform(
-        (42, 43)
-    ) == ["0042", "0043"]
+    assert FormatTransformer(None, type=IntListType, format="%04d").transform((42, 43)) == ["0042", "0043"]
+
+    assert FormatTransformer(None, type=FloatType, format="%4s").transform("3.14") == "3.14"
+
+    assert FormatTransformer(None, type=FloatType, format="%.1f").transform(3.14) == "3.1"
+
+    assert FormatTransformer(None, type=FloatListType, format="%.1f").transform((3.14, 2.72)) == [
+        "3.1",
+        "2.7",
+    ]
 
     assert (
-        FormatTransformer(None, type=FloatType, format="%4s").transform("3.14")
-        == "3.14"
-    )
-
-    assert (
-        FormatTransformer(None, type=FloatType, format="%.1f").transform(3.14) == "3.1"
-    )
-
-    assert FormatTransformer(None, type=FloatListType, format="%.1f").transform(
-        (3.14, 2.72)
-    ) == ["3.1", "2.7"]
-
-    assert (
-        FormatTransformer(None, type=DateType, format="%Y").transform(
-            datetime.datetime(2000, 1, 1)
-        )
-        == "2000"
+        FormatTransformer(None, type=DateType, format="%Y").transform(datetime.datetime(2000, 1, 1)) == "2000"
     )
 
     assert FormatTransformer(None, type=DateListType, format="%d").transform(
@@ -126,15 +106,10 @@ def test_formats():
     ) == ["01", "02"]
 
     with pytest.raises(Exception):  # FIXME: Not sure what this should be
-        assert (
-            FormatTransformer(None, type=VariableType, format="%4s").transform(42) == 0
-        )
+        assert FormatTransformer(None, type=VariableType, format="%4s").transform(42) == 0
 
     with pytest.raises(Exception):  # FIXME: Not sure what this should be
-        assert (
-            FormatTransformer(None, type=VariableListType, format="%4s").transform(42)
-            == 0
-        )
+        assert FormatTransformer(None, type=VariableListType, format="%4s").transform(42) == 0
 
     with pytest.raises(Exception):  # FIXME: Not sure what this should be
         assert FormatTransformer(None, type=BoundingBoxType, format="%4s").transform(
@@ -142,18 +117,14 @@ def test_formats():
         ) == BoundingBox(north=1, west=-1, south=-1, east=1)
 
     b1 = BoundingBox(north=90, west=-45, south=-90, east=45)
-    assert FormatTransformer(None, type=BoundingBoxType, format=tuple).transform(
-        b1
-    ) == (
+    assert FormatTransformer(None, type=BoundingBoxType, format=tuple).transform(b1) == (
         90.0,
         -45.0,
         -90.0,
         45.0,
     )
 
-    assert FormatTransformer(None, type=BoundingBoxType, format="dict").transform(
-        b1
-    ) == {
+    assert FormatTransformer(None, type=BoundingBoxType, format="dict").transform(b1) == {
         "east": 45.0,
         "north": 90.0,
         "south": -90.0,

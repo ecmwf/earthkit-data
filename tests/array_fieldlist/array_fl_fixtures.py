@@ -14,7 +14,8 @@ import os
 from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import earthkit_examples_file, get_array_namespace
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import get_array_namespace
 
 
 def load_array_fl(num, array_backend=None):
@@ -25,33 +26,21 @@ def load_array_fl(num, array_backend=None):
     ds_in = []
     md = []
     for fname in files:
-        ds_in.append(
-            from_source(
-                "file", earthkit_examples_file(fname), array_backend=array_backend
-            )
-        )
+        ds_in.append(from_source("file", earthkit_examples_file(fname), array_backend=array_backend))
         md += ds_in[-1].metadata("param")
 
     ds = []
     for x in ds_in:
-        ds.append(
-            FieldList.from_array(
-                x.values, [m.override(edition=1) for m in x.metadata()]
-            )
-        )
+        ds.append(FieldList.from_array(x.values, [m.override(edition=1) for m in x.metadata()]))
 
     return (*ds, md)
 
 
 def load_array_fl_file(fname, array_backend=None):
-    ds_in = from_source(
-        "file", earthkit_examples_file(fname), array_backend=array_backend
-    )
+    ds_in = from_source("file", earthkit_examples_file(fname), array_backend=array_backend)
     md = ds_in.metadata("param")
 
-    ds = FieldList.from_array(
-        ds_in.values, [m.override(edition=1) for m in ds_in.metadata()]
-    )
+    ds = FieldList.from_array(ds_in.values, [m.override(edition=1) for m in ds_in.metadata()])
 
     return (ds, md)
 
@@ -99,9 +88,7 @@ def check_array_fl(ds, ds_input, md_full, array_backend=None):
         assert r[2].metadata("param") == "u"
 
 
-def check_array_fl_from_to_fieldlist(
-    ds, ds_input, md_full, array_backend=None, flatten=False, dtype=None
-):
+def check_array_fl_from_to_fieldlist(ds, ds_input, md_full, array_backend=None, flatten=False, dtype=None):
     assert len(ds_input) in [1, 2, 3]
     assert len(ds) == len(md_full)
     assert ds.metadata("param") == md_full
@@ -110,9 +97,7 @@ def check_array_fl_from_to_fieldlist(
 
     np_kwargs = {"flatten": flatten, "dtype": dtype}
 
-    assert ns.allclose(
-        ds[0].to_array(**np_kwargs), ds_input[0][0].to_array(**np_kwargs)
-    )
+    assert ns.allclose(ds[0].to_array(**np_kwargs), ds_input[0][0].to_array(**np_kwargs))
 
     assert ds.to_array(**np_kwargs).shape == ds_input[0].to_array(**np_kwargs).shape
     assert ds._array.shape == ds_input[0].to_array(**np_kwargs).shape
@@ -127,21 +112,15 @@ def check_array_fl_from_to_fieldlist(
         assert r.metadata("param") == ["msl", "t"]
         assert r[0].metadata("param") == "msl"
         assert r[1].metadata("param") == "t"
-        assert ns.allclose(
-            r[0].to_array(**np_kwargs), ds_input[0][1].to_array(**np_kwargs)
-        )
-        assert ns.allclose(
-            r[1].to_array(**np_kwargs), ds_input[1][0].to_array(**np_kwargs)
-        )
+        assert ns.allclose(r[0].to_array(**np_kwargs), ds_input[0][1].to_array(**np_kwargs))
+        assert ns.allclose(r[1].to_array(**np_kwargs), ds_input[1][0].to_array(**np_kwargs))
 
         # check sel
         r = ds.sel(shortName="msl")
         assert len(r) == 1
         assert r.metadata("shortName") == ["msl"]
         assert r[0].metadata("param") == "msl"
-        assert ns.allclose(
-            r[0].to_array(**np_kwargs), ds_input[0][1].to_array(**np_kwargs)
-        )
+        assert ns.allclose(r[0].to_array(**np_kwargs), ds_input[0][1].to_array(**np_kwargs))
 
     if len(ds_input) == 3:
         r = ds[1:13:4]

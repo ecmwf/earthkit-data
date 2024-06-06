@@ -20,9 +20,7 @@ from earthkit.data.core.settings import SETTINGS
 
 
 class Source(Base):
-    """
-    Doc
-    """
+    """Doc"""
 
     name = None
     home_page = "-"

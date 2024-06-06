@@ -11,9 +11,7 @@ XR_TYPES = (xr.Dataset, xr.DataArray, xr.Variable)
 
 
 def numpy_mean(
-    a: T.Union[
-        np.ndarray, xr.Dataset, xr.DataArray, xr.Variable, pd.DataFrame, pd.Series
-    ],
+    a: T.Union[np.ndarray, xr.Dataset, xr.DataArray, xr.Variable, pd.DataFrame, pd.Series],
     **kwargs,
 ):
     return np.mean(a, **kwargs)

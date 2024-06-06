@@ -47,9 +47,7 @@ def test_normalize_dates_formatted_1():
 
 @pytest.mark.skip(reason="Not implemented yet.")
 def test_normalize_enum_dates_formatted():
-    date_formatted = normalize(
-        "d", values=["20010512", "20020512"], type="date", format="%Y.%m.%d"
-    )(f)
+    date_formatted = normalize("d", values=["20010512", "20020512"], type="date", format="%Y.%m.%d")(f)
 
     assert date_formatted("20200513") == "2020.05.13"
 

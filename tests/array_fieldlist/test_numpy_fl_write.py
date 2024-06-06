@@ -19,12 +19,10 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import (
-    ARRAY_BACKENDS,
-    check_array_type,
-    earthkit_examples_file,
-    get_array_namespace,
-)
+from earthkit.data.testing import ARRAY_BACKENDS
+from earthkit.data.testing import check_array_type
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import get_array_namespace
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -35,9 +33,7 @@ LOG = logging.getLogger(__name__)
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 def test_array_fl_grib_write(array_backend):
-    ds = from_source(
-        "file", earthkit_examples_file("test.grib"), array_backend=array_backend
-    )
+    ds = from_source("file", earthkit_examples_file("test.grib"), array_backend=array_backend)
     ns = get_array_namespace(array_backend)
 
     assert ds[0].metadata("shortName") == "2t"
@@ -60,9 +56,7 @@ def test_array_fl_grib_write(array_backend):
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("_kwargs", [{}, {"check_nans": True}])
 def test_array_fl_grib_write_missing(array_backend, _kwargs):
-    ds = from_source(
-        "file", earthkit_examples_file("test.grib"), array_backend=array_backend
-    )
+    ds = from_source("file", earthkit_examples_file("test.grib"), array_backend=array_backend)
     ns = get_array_namespace(array_backend)
 
     assert ds[0].metadata("shortName") == "2t"

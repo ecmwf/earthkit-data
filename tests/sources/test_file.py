@@ -16,7 +16,8 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import earthkit_examples_file, preserve_cwd
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import preserve_cwd
 
 LOG = logging.getLogger(__name__)
 
