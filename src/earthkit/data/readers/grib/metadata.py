@@ -17,6 +17,7 @@ from earthkit.data.decorators import cached_method
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
+from earthkit.data.utils.dates import step_to_delta
 from earthkit.data.utils.projections import Projection
 
 
@@ -443,6 +444,9 @@ class GribMetadata(Metadata):
             time // 100,
             time % 100,
         )
+
+    def _step_timedelta(self):
+        return step_to_delta(self.get("step", None))
 
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.

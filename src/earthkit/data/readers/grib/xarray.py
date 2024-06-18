@@ -113,7 +113,7 @@ class XarrayMixIn:
         user_xarray_open_dataset_kwargs = kwargs.get("xarray_open_dataset_kwargs", {})
 
         # To use the legacy cfgrib method, set _legacy=True
-        if kwargs.get("_legacy", True):
+        if kwargs.get("_legacy", False):
             # until ignore_keys is included into cfgrib,
             # it is implemented here directly
             ignore_keys = user_xarray_open_dataset_kwargs.get("backend_kwargs", {}).pop("ignore_keys", [])
@@ -147,12 +147,16 @@ class XarrayMixIn:
         else:
             open_object = self
             xarray_open_dataset_kwargs = {
-                "engine": "earthkitobject",
+                "engine": "earthkit",
                 **user_xarray_open_dataset_kwargs,
             }
 
+        print(f"{kwargs=}")
+        print(f"{xarray_open_dataset_kwargs=}")
+
         result = xr.open_dataset(
             open_object,
+            # decode_cf=False,
             **xarray_open_dataset_kwargs,
         )
 

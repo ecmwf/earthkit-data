@@ -129,7 +129,6 @@ urls.Issues = "https://github.com/ecmwf/earthkit-data.issues"
 urls.Repository = "https://github.com/ecmwf/earthkit-data/"
 
 entry-points."xarray.backends".earthkit = "earthkit.data.utils.xarrayengine:EarthkitBackendEntrypoint"
-entry-points."xarray.backends".earthkitobject = "earthkit.data.utils.xarrayengine:EarthkitObjectBackendEntrypoint"
 
 [tool.setuptools.packages.find]
 include = [

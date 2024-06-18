@@ -642,10 +642,15 @@ class Field(Base):
         )
 
     @abstractmethod
-    def _attributes(self, names):
+    def _attributes(self, names, remapping=None):
         result = {}
+        metadata = self._metadata.get
+        if remapping:
+            metadata = remapping(metadata)
+
         for name in names:
-            result[name] = self._metadata.get(name, None)
+            # result[name] = metadata(name, None)
+            result[name] = metadata(name)
         return result
 
 
@@ -821,7 +826,7 @@ class FieldList(Index):
         self._md_indices[key] = self._find_index_values(key)
         return self._md_indices[key]
 
-    def to_numpy(self, **kwargs):
+    def to_numpy(self, field_index=None, **kwargs):
         r"""Return all the fields' values as an ndarray. It is formed as the array of the
         :obj:`data.core.fieldlist.Field.to_numpy` values per field.
 
@@ -842,7 +847,10 @@ class FieldList(Index):
         """
         import numpy as np
 
-        return np.array([f.to_numpy(**kwargs) for f in self])
+        if field_index is None:
+            return np.array([f.to_numpy(**kwargs) for f in self])
+        else:
+            return np.array([f.to_numpy(**kwargs)[field_index] for f in self])
 
     def to_array(self, **kwargs):
         r"""Return all the fields' values as an array. It is formed as the array of the

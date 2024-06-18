@@ -7,6 +7,32 @@
 # nor does it submit to any jurisdiction.
 #
 
+import time
+
+
+class TimeDiag:
+    def __init__(self, name=""):
+        self.name = name
+        self.start = time.time()
+        self.prev = self.start
+
+    def elapsed(self):
+        return time.time() - self.start
+
+    def __call__(self, label=""):
+        curr = time.time()
+        delta = curr - self.prev
+        self.prev = curr
+        if label:
+            label = f"[{label:10}] "
+        if self.name:
+            if label:
+                label = f"[{self.name}] {label}"
+            else:
+                label = f"[{self.name}]"
+
+        print(f"{label} elapsed={self.elapsed():.3f} delta={delta:.3f}")
+
 
 class MemoryDiag:
     def __init__(self, name=""):
@@ -65,3 +91,13 @@ class MemoryDiag:
             print(f"{label} c={m:.3f}  d={_delta:.3f}")
         else:
             print(f"{label} c={m:.3f}")
+
+
+class Diag:
+    def __init__(self, name=""):
+        self.time = TimeDiag(name)
+        self.memory = MemoryDiag(name)
+
+    def __call__(self, label=""):
+        self.time(label)
+        # self.memory(label)

@@ -23,6 +23,10 @@ def test_grib_cube():
     assert c.field_shape == (7, 12)
     assert c.extended_user_shape == (3, 6, 7, 12)
     assert c.count() == 18
+    assert c.user_coords == {
+        "param": ("t", "u", "v"),
+        "level": (300, 400, 500, 700, 850, 1000),
+    }
 
     # this slice is a field
     r = c[0, 0]
@@ -36,6 +40,7 @@ def test_grib_cube():
     assert r.user_shape == (1, 2)
     assert r.field_shape == (7, 12)
     assert r.extended_user_shape == (1, 2, 7, 12)
+    assert r.user_coords == {"param": ("t",), "level": (300, 400)}
     assert r.count() == 2
     assert r.to_numpy().shape == (1, 2, 7, 12)
     assert np.isclose(r.to_numpy()[0, 0, 0, 0], 226.6531524658203)
@@ -50,6 +55,7 @@ def test_grib_cube():
     assert r.user_shape == (2, 2)
     assert r.field_shape == (7, 12)
     assert r.extended_user_shape == (2, 2, 7, 12)
+    assert r.user_coords == {"param": ("u", "v"), "level": (300, 400)}
     assert r.count() == 4
     assert r.to_numpy().shape == (2, 2, 7, 12)
     assert np.isclose(r.to_numpy()[0, 0, 0, 0], 10.455490112304688)
@@ -68,6 +74,7 @@ def test_grib_cube():
     assert r.user_shape == (1, 6)
     assert r.field_shape == (7, 12)
     assert r.extended_user_shape == (1, 6, 7, 12)
+    assert r.user_coords == {"param": ("u",), "level": (300, 400, 500, 700, 850, 1000)}
     assert r.count() == 6
     assert r.to_numpy().shape == (1, 6, 7, 12)
     assert np.isclose(r.to_numpy()[0, 0, 0, 0], 10.455490112304688)

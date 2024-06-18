@@ -33,7 +33,14 @@ class Metadata(metaclass=ABCMeta):
     LS_KEYS = []
     DESCRIBE_KEYS = []
     INDEX_KEYS = []
-    CUSTOM_KEYS = [DATETIME, GRIDSPEC]
+    CUSTOM_KEYS = [
+        DATETIME,
+        GRIDSPEC,
+        "base_datetime",
+        "step_timedelta",
+        "param_level",
+        "level_and_type",
+    ]
 
     extra = None
 
@@ -208,6 +215,14 @@ class Metadata(metaclass=ABCMeta):
             try:
                 if key == DATETIME:
                     return self._valid_datetime().isoformat()
+                elif key == "base_datetime":
+                    return self._base_datetime().isoformat()
+                elif key == "step_timedelta":
+                    return self._step_timedelta
+                elif key == "param_level":
+                    return self.get("param", astype=str) + self.get("level", astype=str)
+                elif key == "level_and_type":
+                    return self.get("level", astype=str) + self.get("levtype", astype=str)
                 elif key == GRIDSPEC:
                     return self.grid_spec
             except Exception as e:
@@ -293,6 +308,9 @@ class Metadata(metaclass=ABCMeta):
 
     @abstractmethod
     def _valid_datetime(self):
+        pass
+
+    def _step_timedelta(self):
         pass
 
     @property
