@@ -250,6 +250,123 @@ def test_grib_to_numpy_18_dtype(fl_type, array_backend, dtype):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_to_numpy_1_index(fl_type, array_backend):
+    ds = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
+
+    eps = 1e-5
+
+    v = ds[0].to_numpy(flatten=True, index=[0, -1])
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    assert v.shape == (2,)
+    assert np.allclose(v, [260.43560791015625, 227.18560791015625])
+
+    v = ds[0].to_numpy(flatten=True, index=slice(None, None))
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    check_array(
+        v,
+        (84,),
+        first=260.43560791015625,
+        last=227.18560791015625,
+        meanv=274.36566743396577,
+        eps=eps,
+    )
+
+    v = ds[0].to_numpy(index=(slice(None, 2), slice(None, 3)))
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    assert v.shape == (2, 3)
+    assert np.allclose(
+        v,
+        [
+            [260.43560791, 260.43560791, 260.43560791],
+            [280.81060791, 277.06060791, 284.43560791],
+        ],
+    )
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_grib_to_numpy_18_index(fl_type, array_backend):
+    ds = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+
+    eps = 1e-5
+
+    v = ds.to_numpy(flatten=True, index=[0, -1])
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    assert v.shape == (18, 2)
+    vf0 = v[0].flatten()
+    assert np.allclose(vf0, [272.5642, 240.56417846679688])
+    vf15 = v[15].flatten()
+    assert np.allclose(vf15, [226.6531524658203, 206.6531524658203])
+
+    v = ds.to_numpy(flatten=True, index=slice(None, 2))
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    assert v.shape == (18, 2)
+    vf0 = v[0].flatten()
+    assert np.allclose(vf0, [272.56417847, 272.56417847])
+    vf15 = v[15].flatten()
+    assert np.allclose(vf15, [226.65315247, 226.65315247])
+
+    v = ds.to_numpy(flatten=True, index=slice(None, None))
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    assert v.shape == (18, 84)
+    vf0 = v[0].flatten()
+    check_array(
+        vf0,
+        (84,),
+        first=272.5642,
+        last=240.56417846679688,
+        meanv=279.70703560965404,
+        eps=eps,
+    )
+
+    vf15 = v[15].flatten()
+    check_array(
+        vf15,
+        (84,),
+        first=226.6531524658203,
+        last=206.6531524658203,
+        meanv=227.84362865629652,
+        eps=eps,
+    )
+
+    v = ds.to_numpy(index=(slice(None, 2), slice(None, 3)))
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    assert v.shape == (18, 2, 3)
+    vf0 = v[0].flatten()
+    assert np.allclose(
+        vf0,
+        [
+            272.56417847,
+            272.56417847,
+            272.56417847,
+            288.56417847,
+            296.56417847,
+            288.56417847,
+        ],
+    )
+    vf15 = v[15].flatten()
+    assert np.allclose(
+        vf15,
+        [
+            226.65315247,
+            226.65315247,
+            226.65315247,
+            230.65315247,
+            230.65315247,
+            230.65315247,
+        ],
+    )
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("array_backend", ["numpy"])
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
@@ -352,6 +469,105 @@ def test_grib_fieldlist_data(fl_type, array_backend, kwarg, expected_shape, expe
     assert np.allclose(d[0], v[0])
     assert np.allclose(d[1], v[1])
     assert np.allclose(d[2], latlon["lon"])
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("array_backend", ["numpy"])
+def test_grib_fieldlist_data_index(fl_type, array_backend):
+    ds = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+
+    eps = 1e-5
+
+    latlon = ds.to_latlon(flatten=True)
+    lat = latlon["lat"]
+    lon = latlon["lon"]
+
+    index = [0, -1]
+    v = ds.data(flatten=True, index=index)
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    assert v.shape == (18 + 2, 2)
+    assert np.allclose(v[0].flatten(), lat[index])
+    assert np.allclose(v[1].flatten(), lon[index])
+    vf0 = v[2 + 0].flatten()
+    assert np.allclose(vf0, [272.5642, 240.56417846679688])
+    vf15 = v[2 + 15].flatten()
+    assert np.allclose(vf15, [226.6531524658203, 206.6531524658203])
+
+    index = slice(None, 2)
+    v = ds.data(flatten=True, index=index)
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    assert v.shape == (18 + 2, 2)
+    assert np.allclose(v[0].flatten(), lat[index])
+    assert np.allclose(v[1].flatten(), lon[index])
+    vf0 = v[2 + 0].flatten()
+    assert np.allclose(vf0, [272.56417847, 272.56417847])
+    vf15 = v[2 + 15].flatten()
+    assert np.allclose(vf15, [226.65315247, 226.65315247])
+
+    index = slice(None, None)
+    v = ds.data(flatten=True, index=index)
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    assert v.shape == (18 + 2, 84)
+    assert np.allclose(v[0].flatten(), lat)
+    assert np.allclose(v[1].flatten(), lon)
+    vf0 = v[2 + 0].flatten()
+    check_array(
+        vf0,
+        (84,),
+        first=272.5642,
+        last=240.56417846679688,
+        meanv=279.70703560965404,
+        eps=eps,
+    )
+
+    vf15 = v[2 + 15].flatten()
+    check_array(
+        vf15,
+        (84,),
+        first=226.6531524658203,
+        last=206.6531524658203,
+        meanv=227.84362865629652,
+        eps=eps,
+    )
+
+    index = (slice(None, 2), slice(None, 3))
+    v = ds.data(index=index)
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    assert v.shape == (2 + 18, 2, 3)
+    latlon = ds.to_latlon()
+    lat = latlon["lat"]
+    lon = latlon["lon"]
+    assert np.allclose(v[0], lat[index])
+    assert np.allclose(v[1], lon[index])
+
+    vf0 = v[2 + 0].flatten()
+    assert np.allclose(
+        vf0,
+        [
+            272.56417847,
+            272.56417847,
+            272.56417847,
+            288.56417847,
+            296.56417847,
+            288.56417847,
+        ],
+    )
+    vf15 = v[2 + 15].flatten()
+    assert np.allclose(
+        vf15,
+        [
+            226.65315247,
+            226.65315247,
+            226.65315247,
+            230.65315247,
+            230.65315247,
+            230.65315247,
+        ],
+    )
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
