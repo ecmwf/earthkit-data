@@ -46,8 +46,7 @@ GRIB
     grib_time_series.ipynb
     grib_fdb_write.ipynb
     grib_to_netcdf.ipynb
-    grib_to_xarray.ipynb
-    xarray_engine.ipynb
+
 
 NetCDF
 ++++++
@@ -106,6 +105,18 @@ Other inputs
     from_object.ipynb
     pandas.ipynb
     list_of_dict*
+
+Xarray_engine
++++++++++++++
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    xarray_engine_demo.ipynb
+    grib_cube.ipynb
+    grib_to_xarray.ipynb
+
 
 Miscellaneous
 +++++++++++++

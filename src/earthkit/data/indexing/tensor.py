@@ -280,7 +280,7 @@ class FieldListTensor(TensorCore):
         field_dims,
         flatten_values,
     ):
-        print(f"FieldListTensor field_coords={field_coords.keys()} {field_dims=}")
+        # print(f"FieldListTensor field_coords={field_coords.keys()} {field_dims=}")
 
         self.source = source
         self._user_coords = user_coords

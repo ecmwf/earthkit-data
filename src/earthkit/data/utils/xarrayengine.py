@@ -238,8 +238,8 @@ class Grid:
 
         first = ds[0]
         self.dims, self.coords = FieldListTensor._field_part(first, flatten_values)
-        print(f"grid dims: {self.dims}")
-        print(f"grid coords: {self.coords.keys()}")
+        # print(f"grid dims: {self.dims}")
+        # print(f"grid coords: {self.coords.keys()}")
 
 
 class ProfileConf:
@@ -277,15 +277,20 @@ class IndexProfile:
         self,
         index_keys=None,
         mandatory_keys=None,
+        extra_index_keys=None,
         remapping=None,
         drop_variables=None,
         use_valid_datetime=False,
         use_base_datetime=False,
         add_level_type=False,
+        add_valid_datetime_coord=False,
     ):
-        self.index_keys = [] if index_keys is None else index_keys
-        mandatory_keys = [] if mandatory_keys is None else mandatory_keys
+        self.index_keys = [] if index_keys is None else list(index_keys)
+        mandatory_keys = [] if mandatory_keys is None else list(mandatory_keys)
         self.add_keys(mandatory_keys)
+
+        extra_index_keys = [] if extra_index_keys is None else extra_index_keys
+        self.add_keys(extra_index_keys)
 
         # self.index_keys = index_keys
         self.remapping = build_remapping(remapping)
@@ -302,14 +307,18 @@ class IndexProfile:
         elif use_base_datetime:
             self.managed_dims["datetime"] = BaseDatetimeDim(self)
             self.managed_dims["step"] = StepDim(self)
-            self.add_keys(["valid_datetime"])
+            if add_valid_datetime_coord:
+                self.add_keys(["valid_datetime"])
         else:
             self.managed_dims["date"] = DateDim(self)
             self.managed_dims["time"] = TimeDim(self)
             self.managed_dims["step"] = StepDim(self)
 
-        # self.managed_dims["level"] = LevelAndTypeDim(self)
-        self.managed_dims["level"] = LevelDim(self)
+        if "level_and_type" in self.index_keys:
+            self.managed_dims["level"] = LevelAndTypeDim(self)
+        else:
+            self.managed_dims["level"] = LevelDim(self)
+
         self.managed_dims["number"] = NumberDim(self)
 
         self.variable_key = self.guess_variable_key()
@@ -343,6 +352,10 @@ class IndexProfile:
             for k, v in self.remapping.lists.items():
                 if any(p in VARIABLE_KEYS for p in v):
                     return k
+
+        print("index_keys", self.index_keys)
+        if "param_level" in self.index_keys:
+            return "param_level"
 
         return VARIABLE_KEYS[0]
 
@@ -380,19 +393,19 @@ class IndexProfile:
                     break
 
         assert self.variable_key is not None
-        print("variable_key", self.variable_key)
+        # print("variable_key", self.variable_key)
 
         # variable keys cannot be dimensions
         self._remove_dim_keys(VARIABLE_KEYS + [self.variable_key])
         assert self.dim_keys
         assert self.variable_key not in self.dim_keys
-        print(" -> dim_keys", self.dim_keys)
+        # print(" -> dim_keys", self.dim_keys)
 
         self.dim_keys = [key for key in self.dim_keys if key in ds.indices() and key not in attributes]
 
         assert self.dim_keys
         assert self.variable_key not in self.dim_keys
-        print(" -> dim_keys", self.dim_keys)
+        # print(" -> dim_keys", self.dim_keys)
 
         self.variables = ds.index(self.variable_key)
 
@@ -419,7 +432,7 @@ class WrappedFieldList(FieldArray):
         self.db = db if db is not None else []
 
         self.remapping = build_remapping(remapping)
-        print(f"remapping vals: {self.remapping.lists}")
+        # print(f"remapping vals: {self.remapping.lists}")
         if fields is not None:
             self.fields = fields
         else:
@@ -555,7 +568,7 @@ class WrappedField:
             else:
                 return r
 
-        print(f"Key={_k} not found in local metadata")
+        # print(f"Key={_k} not found in local metadata")
         r = self.field.metadata(*keys, **kwargs)
         self.unload()
         return r
@@ -667,6 +680,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         source_type="file",
         drop_variables=None,
         dims_order=None,
+        extra_index_keys=None,
         array_module=numpy,
         variable_metadata_keys=[],
         variable_index=["param", "variable", "shortName"],
@@ -674,10 +688,17 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         flatten_values=False,
         remapping=None,
         profile="mars",
+        use_base_datetime_dim=False,
+        use_valid_datetime_dim=False,
+        add_valid_datetime_coord=False,
+        use_timedelta_step=False,
+        use_level_and_type_dim=False,
+        use_level_per_type_dim=False,
     ):
 
         self.drop_variables = drop_variables
         self.dims_order = dims_order
+        self.extra_index_keys = extra_index_keys
         self.array_module = array_module
         self.variable_metadata_keys = variable_metadata_keys
         self.variable_index = variable_index
@@ -686,12 +707,12 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         self.remapping = remapping
         self.profile = profile
 
-        self.use_base_datetime_dim = False
-        self.use_valid_datetime_dim = False
-        self.add_valid_datetime_coord = False
-        self.use_timedelta_step = False
-        self.use_level_and_type_dim = False
-        self.use_level_per_type_dim = False
+        self.use_base_datetime_dim = use_base_datetime_dim
+        self.use_valid_datetime_dim = use_valid_datetime_dim
+        self.add_valid_datetime_coord = add_valid_datetime_coord
+        self.use_timedelta_step = use_timedelta_step
+        self.use_level_and_type_dim = use_level_and_type_dim
+        self.use_level_per_type_dim = use_level_per_type_dim
 
         if isinstance(filename_or_obj, Base):
             ekds = filename_or_obj
@@ -725,20 +746,22 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
     #     ):
 
     def _create(self, ekds):
-        print(f"remapping: {self.remapping}, profile: {self.profile}")
+        # print(f"remapping: {self.remapping}, profile: {self.profile}")
 
         remapping = build_remapping(self.remapping)
 
         profile = IndexProfile.make(self.profile)(
             remapping=remapping,
+            extra_index_keys=self.extra_index_keys,
             drop_variables=self.drop_variables,
-            use_valid_datetime=False,
-            use_base_datetime=False,
+            use_valid_datetime=self.use_valid_datetime_dim,
+            use_base_datetime=self.use_base_datetime_dim,
+            add_valid_datetime_coord=self.add_valid_datetime_coord,
         )
 
-        print(f"variable_metadata_keys: {self.variable_metadata_keys}")
+        # print(f"variable_metadata_keys: {self.variable_metadata_keys}")
         print(f"profile index_keys={profile.index_keys}")
-        print(f"profile dim_keys={profile.dim_keys}")
+        # print(f"profile dim_keys={profile.dim_keys}")
         if isinstance(self.variable_metadata_keys, str):
             # get first field
             first = ekds[0]
@@ -750,11 +773,11 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
         assert isinstance(self.variable_metadata_keys, list)
         profile.add_keys(self.variable_metadata_keys)
-        print(f"profile index_keys={profile.index_keys}")
+        # print(f"profile index_keys={profile.index_keys}")
 
         # create new fieldlist and ensure all the required metadata is kept in memory
         ds_ori = WrappedFieldList(ekds, profile.index_keys, remapping=remapping)
-        print(f"ds_ori: {ds_ori.indices()}")
+        # print(f"ds_ori: {ds_ori.indices()}")
 
         # global attributes are keys which are the same for all the fields
         attributes = {k: v[0] for k, v in ds_ori.indices().items() if len(v) == 1}
@@ -766,14 +789,14 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
         # attributes["institution"] = "European Centre fot Medium-range Weather Forecasts"
 
-        print(f"attributes: {attributes}")
+        # print(f"attributes: {attributes}")
 
         profile.update(ds_ori, attributes)
         ds = ds_ori.order_by(profile.sort_keys)
         dims = profile.dim_keys
 
-        print(f"sort_keys: {profile.sort_keys}")
-        print(f"dims: {dims}")
+        # print(f"sort_keys: {profile.sort_keys}")
+        # print(f"dims: {dims}")
 
         if self.basic:
             xr_vars = {}
@@ -787,7 +810,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
             # we assume each variable forms a full cube
             for variable in profile.variables:
-                print(variable)
+                # print(variable)
                 ds_var = ds.sel(**{profile.variable_key: variable})
 
                 v_dims = []
@@ -795,7 +818,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                     if len(ds_var.index(d)) > 1:
                         v_dims.append(d)
 
-                print(f"v_dims: {v_dims}")
+                # print(f"v_dims: {v_dims}")
 
                 tensor = ds_var.to_tensor(
                     *v_dims,
@@ -805,14 +828,14 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                     flatten_values=self.flatten_values,
                 )
 
-                print(f" full_dims={tensor.full_dims}")
-                print(f" full_shape={tensor.full_shape}")
+                # print(f" full_dims={tensor.full_dims}")
+                # print(f" full_shape={tensor.full_shape}")
 
                 xr_coords.collect(tensor)
                 xr_dims = list(tensor.full_dims.keys())
 
-                print(f" {tensor.full_coords.keys()} shape={tensor.full_shape}")
-                print(f" {xr_dims=}")
+                # print(f" {tensor.full_coords.keys()} shape={tensor.full_shape}")
+                # print(f" {xr_dims=}")
 
                 backend_array = EarthkitBackendArray(
                     tensor, xr_dims, tensor.full_shape, self.array_module, variable
@@ -849,7 +872,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 var = xarray.Variable(xr_dims, data, attrs=var_attrs)
                 xr_vars[variable] = var
 
-            print(f"xr_coords: {xr_coords.coords.keys()}")
+            # print(f"xr_coords: {xr_coords.coords.keys()}")
 
             dataset = xarray.Dataset(xr_vars, coords=xr_coords.coords, attrs=attributes)
             return dataset
