@@ -152,6 +152,10 @@ class LevelPerTypeDim(Dim):
     name = "level"
     group = ["levelist", "levtype", "typeOfLevel"]
 
+    # def __init__(self, profile, name):
+    #     self.name = name
+    #     super().__init__(profile)
+
     def rename(self, name):
         self.name = name
 
@@ -176,12 +180,15 @@ class Coords:
         grid,
         add_valid_datetime_coord=False,
         use_timedelta_step=False,
+        use_level_per_type=False,
     ):
         self._user_coords = {}
         self._field_coords = self._from_grid(grid)
         self.add_valid_datetime_coord = add_valid_datetime_coord
         self.use_timedelta_step = use_timedelta_step
         self._step_converted = False
+        self.use_level_per_type = use_level_per_type
+        self.dims = []
 
     @property
     def coords(self):
@@ -197,6 +204,19 @@ class Coords:
                 if k not in self._user_coords:
                     self._user_coords[k] = (k, v)
 
+        if self.use_level_per_type:
+            self._user_coords.pop("level", None)
+            if "level" in tensor.user_dims:
+                lev_type = tensor.source[0].metadata("levtype")
+                # print("->lev_type", lev_type)
+                if not lev_type:
+                    raise ValueError("levtype not found in metadata")
+                if lev_type not in self._user_coords:
+                    self._user_coords[lev_type] = (
+                        lev_type,
+                        list(tensor.user_coords["level"]),
+                    )
+
         if (
             self.add_valid_datetime_coord
             and "valid_datetime" not in tensor.user_dims
@@ -208,6 +228,18 @@ class Coords:
             self._user_coords["valid_datetime"] = xarray.Variable(_dims, _vals)
 
         self._convert_step()
+
+        self.dims = []
+        self._dims(tensor)
+
+    def _dims(self, tensor):
+        self.dims = list(tensor.full_dims.keys())
+        if self.use_level_per_type:
+            if "level" in self.dims:
+                lev_type = tensor.source[0].metadata("levtype")
+                if lev_type in self._user_coords:
+                    idx = self.dims.index("level")
+                    self.dims[idx] = lev_type
 
     def _convert_step(self):
         if self.use_timedelta_step and not self._step_converted and "step" in self._user_coords:
@@ -284,6 +316,7 @@ class IndexProfile:
         use_base_datetime=False,
         add_level_type=False,
         add_valid_datetime_coord=False,
+        use_level_per_type_dim=False,
     ):
         self.index_keys = [] if index_keys is None else list(index_keys)
         mandatory_keys = [] if mandatory_keys is None else list(mandatory_keys)
@@ -314,7 +347,10 @@ class IndexProfile:
             self.managed_dims["time"] = TimeDim(self)
             self.managed_dims["step"] = StepDim(self)
 
-        if "level_and_type" in self.index_keys:
+        self.use_level_per_type_dim = use_level_per_type_dim
+        if use_level_per_type_dim:
+            self.managed_dims["level"] = LevelPerTypeDim(self)
+        elif "level_and_type" in self.index_keys:
             self.managed_dims["level"] = LevelAndTypeDim(self)
         else:
             self.managed_dims["level"] = LevelDim(self)
@@ -353,7 +389,6 @@ class IndexProfile:
                 if any(p in VARIABLE_KEYS for p in v):
                     return k
 
-        print("index_keys", self.index_keys)
         if "param_level" in self.index_keys:
             return "param_level"
 
@@ -400,6 +435,11 @@ class IndexProfile:
         assert self.dim_keys
         assert self.variable_key not in self.dim_keys
         # print(" -> dim_keys", self.dim_keys)
+
+        if self.use_level_per_type_dim:
+            for x in ds.index("levtype"):
+                self.managed_dims[x] = LevelPerTypeDim(self)
+            # self._remove_dim_keys(VARIABLE_KEYS + [self.variable_key])
 
         self.dim_keys = [key for key in self.dim_keys if key in ds.indices() and key not in attributes]
 
@@ -757,10 +797,11 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             use_valid_datetime=self.use_valid_datetime_dim,
             use_base_datetime=self.use_base_datetime_dim,
             add_valid_datetime_coord=self.add_valid_datetime_coord,
+            use_level_per_type_dim=self.use_level_per_type_dim,
         )
 
         # print(f"variable_metadata_keys: {self.variable_metadata_keys}")
-        print(f"profile index_keys={profile.index_keys}")
+        # print(f"profile index_keys={profile.index_keys}")
         # print(f"profile dim_keys={profile.dim_keys}")
         if isinstance(self.variable_metadata_keys, str):
             # get first field
@@ -806,6 +847,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 grid,
                 use_timedelta_step=self.use_timedelta_step,
                 add_valid_datetime_coord=self.add_valid_datetime_coord,
+                use_level_per_type=self.use_level_per_type_dim,
             )
 
             # we assume each variable forms a full cube
@@ -832,13 +874,19 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 # print(f" full_shape={tensor.full_shape}")
 
                 xr_coords.collect(tensor)
-                xr_dims = list(tensor.full_dims.keys())
+                # xr_dims = list(tensor.full_dims.keys())
+
+                # xr_coords.check_dims(xr_dims, tensor)
 
                 # print(f" {tensor.full_coords.keys()} shape={tensor.full_shape}")
                 # print(f" {xr_dims=}")
 
                 backend_array = EarthkitBackendArray(
-                    tensor, xr_dims, tensor.full_shape, self.array_module, variable
+                    tensor,
+                    xr_coords.dims,
+                    tensor.full_shape,
+                    self.array_module,
+                    variable,
                 )
 
                 data = indexing.LazilyIndexedArray(backend_array)
@@ -869,7 +917,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
                 # Corentin method:
                 # var_attrs["metadata"] = ekds_variable[0].metadata()
-                var = xarray.Variable(xr_dims, data, attrs=var_attrs)
+                var = xarray.Variable(xr_coords.dims, data, attrs=var_attrs)
                 xr_vars[variable] = var
 
             # print(f"xr_coords: {xr_coords.coords.keys()}")
