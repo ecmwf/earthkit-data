@@ -18,8 +18,6 @@ from earthkit.data.utils.humanize import list_to_human
 
 LOG = logging.getLogger(__name__)
 
-# Make sure the
-
 ACCUMULATIONS = {("tp", 2): {"productDefinitionTemplateNumber": 8}}
 
 _ORDER = (
