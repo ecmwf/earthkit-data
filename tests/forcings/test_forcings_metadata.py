@@ -15,11 +15,11 @@ import sys
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from constants_fixtures import load_constants_fs  # noqa: E402
+from forcings_fixtures import load_forcings_fs  # noqa: E402
 
 
-def test_constants_datetime():
-    ds, _ = load_constants_fs(last_step=12)
+def test_forcings_datetime():
+    ds, _ = load_forcings_fs(last_step=12)
 
     ref = {
         "base_time": [None],
@@ -32,8 +32,8 @@ def test_constants_datetime():
     assert ds.datetime() == ref
 
 
-def test_constants_valid_datetime():
-    ds, _ = load_constants_fs(last_step=12)
+def test_forcings_valid_datetime():
+    ds, _ = load_forcings_fs(last_step=12)
     f = ds[4]
 
     assert f.metadata("valid_datetime") == "2020-05-13T18:00:00"

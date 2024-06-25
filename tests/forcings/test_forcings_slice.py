@@ -17,19 +17,19 @@ import pytest
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from constants_fixtures import load_constants_fs  # noqa: E402
+from forcings_fixtures import load_forcings_fs  # noqa: E402
 
 
-def test_constants_single_index_bad():
-    ds, _ = load_constants_fs()
+def test_forcings_single_index_bad():
+    ds, _ = load_forcings_fs()
     idx = len(ds) + 10
     with pytest.raises(IndexError):
         ds[idx]
 
 
 @pytest.mark.parametrize("index", [0, 2, 95, -1, -96])
-def test_constants_single_index(index):
-    ds, md = load_constants_fs()
+def test_forcings_single_index(index):
+    ds, md = load_forcings_fs()
     num = len(ds)
     r = ds[index]
 
@@ -54,8 +54,8 @@ def test_constants_single_index(index):
         slice(91, None),
     ],
 )
-def test_constants_slice(indexes):
-    ds, md = load_constants_fs()
+def test_forcings_slice(indexes):
+    ds, md = load_forcings_fs()
     num = len(ds)
     r = ds[indexes]
 
@@ -79,8 +79,8 @@ def test_constants_slice(indexes):
         ((1, 16, 5, 9), (1, 3)),
     ],
 )
-def test_constants_array_indexing(indexes1, indexes2):
-    ds, md = load_constants_fs()
+def test_forcings_array_indexing(indexes1, indexes2):
+    ds, md = load_forcings_fs()
 
     # first subset
     r = ds[indexes1]
@@ -106,14 +106,14 @@ def test_constants_array_indexing(indexes1, indexes2):
         ((1, 16, 5, 9), (1, 3)),
     ],
 )
-def test_constants_array_indexing_bad(indexes):
-    ds, _ = load_constants_fs()
+def test_forcings_array_indexing_bad(indexes):
+    ds, _ = load_forcings_fs()
     with pytest.raises(IndexError):
         ds[indexes]
 
 
-def test_constants_fieldlist_iterator():
-    ds, md = load_constants_fs()
+def test_forcings_fieldlist_iterator():
+    ds, md = load_forcings_fs()
     # sn = ds.metadata(["valid_datetime", "param"])
     sn = md
     assert len(sn) == len(ds)
