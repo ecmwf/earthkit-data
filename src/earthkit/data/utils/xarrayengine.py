@@ -405,8 +405,19 @@ class Coords:
         r = {}
         if len(grid.dims) == 2:
             if len(grid.coords) == 2:
-                for k, v in grid.coords.items():
-                    r[k] = xarray.Variable(grid.dims, v)
+                if all(x in grid.dims for x in grid.coords.keys()):
+                    for k, v in grid.coords.items():
+                        print(f"grid coord: {k} grid_dims: {k}:{grid.dims[k]} shape: {v.shape}")
+                        r[k] = xarray.Variable({k: grid.dims[k]}, v)
+                else:
+                    for k, v in grid.coords.items():
+                        print(f"grid coord: {k} grid_dims: {grid.dims} shape: {v.shape}")
+                        r[k] = xarray.Variable(grid.dims, v)
+
+            # if len(grid.coords) == 2:
+            #     for k, v in grid.coords.items():
+            #         print(f"grid coord: {k} grid_dims: {grid.dims} shape: {v.shape}")
+            #         r[k] = xarray.Variable(grid.dims, v)
             else:
                 raise ValueError(
                     (
@@ -1291,10 +1302,11 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
                 # Corentin method:
                 # var_attrs["metadata"] = ekds_variable[0].metadata()
+                print("DIMS=", xr_coords.dims)
                 var = xarray.Variable(xr_coords.dims, data, attrs=var_attrs)
                 xr_vars[variable] = var
 
-            # print(f"xr_coords: {xr_coords.coords.keys()}")
+            print(f"xr_coords: {xr_coords.coords.keys()}")
 
             dataset = xarray.Dataset(xr_vars, coords=xr_coords.coords, attrs=attributes)
             return dataset

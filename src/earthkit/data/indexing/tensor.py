@@ -504,7 +504,6 @@ class FieldListTensor(TensorCore):
             except Exception:
                 pass
             dims["values"] = field_shape[0]
-
         elif len(field_shape) == 2:
             # diag(" LATLON")
             geo = field.metadata().geography
