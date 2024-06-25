@@ -1138,13 +1138,13 @@ class FieldList(Index):
 
         The following calls are equivalent:
 
-            .. code-block:: python
+        .. code-block:: python
 
-                ds.head()
-                ds.head(5)
-                ds.head(n=5)
-                ds.ls(5)
-                ds.ls(n=5)
+            ds.head()
+            ds.head(5)
+            ds.head(n=5)
+            ds.ls(5)
+            ds.ls(n=5)
 
         """
         if n <= 0:
@@ -1175,13 +1175,13 @@ class FieldList(Index):
 
         The following calls are equivalent:
 
-            .. code-block:: python
+        .. code-block:: python
 
-                ds.tail()
-                ds.tail(5)
-                ds.tail(n=5)
-                ds.ls(-5)
-                ds.ls(n=-5)
+            ds.tail()
+            ds.tail(5)
+            ds.tail(n=5)
+            ds.ls(-5)
+            ds.ls(n=-5)
 
         """
         if n <= 0:

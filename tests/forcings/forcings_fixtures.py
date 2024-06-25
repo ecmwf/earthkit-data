@@ -36,7 +36,7 @@ all_params = [
 ]
 
 
-def load_constants_fs(params=None, first_step=6, last_step=72):
+def load_forcings_fs(params=None, first_step=6, last_step=72):
     sample = from_source("file", earthkit_examples_file("test.grib"))
 
     if params is None:
@@ -58,7 +58,7 @@ def load_constants_fs(params=None, first_step=6, last_step=72):
         dates.append(start + datetime.timedelta(hours=step))
 
     ds = from_source(
-        "constants",
+        "forcings",
         sample,
         date=dates,
         param=params,
