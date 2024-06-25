@@ -11,7 +11,8 @@ import logging
 import warnings
 
 from earthkit.data.utils.kwargs import Kwargs
-from earthkit.data.utils.serialise import deserialise_state, serialise_state
+from earthkit.data.utils.serialise import deserialise_state
+from earthkit.data.utils.serialise import serialise_state
 
 LOG = logging.getLogger(__name__)
 
@@ -59,8 +60,7 @@ class XarrayMixIn:
         )
 
     def to_xarray(self, **kwargs):
-        """
-        Convert the FieldList into an xarray DataSet using :xref:`cfgrib`.
+        """Convert the FieldList into an xarray DataSet using :xref:`cfgrib`.
 
         Parameters
         ----------
@@ -107,17 +107,13 @@ class XarrayMixIn:
             warnings.warn(
                 "xarray_open_mfdataset_kwargs is deprecated, please use xarray_open_dataset_kwargs instead."
             )
-            kwargs["xarray_open_dataset_kwargs"] = kwargs.pop(
-                "xarray_open_mfdataset_kwargs"
-            )
+            kwargs["xarray_open_dataset_kwargs"] = kwargs.pop("xarray_open_mfdataset_kwargs")
 
         user_xarray_open_dataset_kwargs = kwargs.get("xarray_open_dataset_kwargs", {})
 
         # until ignore_keys is included into cfgrib,
         # it is implemented here directly
-        ignore_keys = user_xarray_open_dataset_kwargs.get("backend_kwargs", {}).pop(
-            "ignore_keys", []
-        )
+        ignore_keys = user_xarray_open_dataset_kwargs.get("backend_kwargs", {}).pop("ignore_keys", [])
 
         for key in ["backend_kwargs"]:
             xarray_open_dataset_kwargs[key] = Kwargs(

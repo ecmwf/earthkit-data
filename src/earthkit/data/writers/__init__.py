@@ -9,7 +9,8 @@
 
 import logging
 import os
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 from importlib import import_module
 
 from earthkit.data.decorators import locked

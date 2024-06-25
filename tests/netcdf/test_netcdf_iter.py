@@ -13,19 +13,15 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import (
-    ARRAY_BACKENDS,
-    earthkit_examples_file,
-    earthkit_test_data_file,
-)
+from earthkit.data.testing import ARRAY_BACKENDS
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_test_data_file
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("group", ["param"])
 def test_netcdf_group_by(array_backend, group):
-    ds = from_source(
-        "file", earthkit_test_data_file("test6.nc"), array_backend=array_backend
-    )
+    ds = from_source("file", earthkit_test_data_file("test6.nc"), array_backend=array_backend)
 
     ref = [
         [("t", 1000), ("t", 850)],

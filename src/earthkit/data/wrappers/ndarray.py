@@ -19,8 +19,7 @@ class NumpyNDArrayWrapper(Wrapper):
         self.data = data
 
     def to_numpy(self):
-        """
-        Return a numpy `ndarray` representation of the data.
+        """Return a numpy `ndarray` representation of the data.
 
         Returns
         -------
@@ -29,8 +28,7 @@ class NumpyNDArrayWrapper(Wrapper):
         return self.data
 
     def to_xarray(self, **kwargs):
-        """
-        Return an xarray.DataArray representation of the data.
+        """Return an xarray.DataArray representation of the data.
 
         Returns
         -------

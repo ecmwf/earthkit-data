@@ -10,20 +10,21 @@
 import datetime
 import itertools
 import logging
-from warnings import warn
 
 import numpy as np
 
-from earthkit.data.core.fieldlist import Field, FieldList
+from earthkit.data.core.fieldlist import Field
+from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.metadata import RawMetadata
-from earthkit.data.decorators import cached_method, normalize
+from earthkit.data.decorators import cached_method
+from earthkit.data.decorators import normalize
 from earthkit.data.utils.dates import to_datetime
 
 LOG = logging.getLogger(__name__)
 
 
-class ConstantMetadata(RawMetadata):
+class ForcingMetadata(RawMetadata):
     LS_KEYS = ["valid_datetime", "param"]
 
     def __init__(self, d, geography):
@@ -41,7 +42,7 @@ class ConstantMetadata(RawMetadata):
         return datetime.datetime.fromisoformat(self["valid_datetime"])
 
 
-class ConstantMaker:
+class ForcingMaker:
     def __init__(self, field):
         self.field = field
         self.shape = self.field.shape
@@ -154,9 +155,6 @@ class ConstantMaker:
         return np.sin(radians)
 
     def insolation(self, date):
-        warn(
-            "The function `insolation` is deprecated, please use `cos_solar_zenith_angle` instead"
-        )
         return self.cos_solar_zenith_angle(date)
 
     def toa_incident_solar_radiation(self, date):
@@ -215,7 +213,7 @@ class ConstantMaker:
         return wrapper
 
 
-class ConstantField(Field):
+class ForcingField(Field):
     def __init__(self, maker, date, param, proc, number=None, array_backend=None):
         self.maker = maker
         self.date = date
@@ -234,7 +232,7 @@ class ConstantField(Field):
         )
         super().__init__(
             array_backend,
-            metadata=ConstantMetadata(d, self.maker.field.metadata().geography),
+            metadata=ForcingMetadata(d, self.maker.field.metadata().geography),
         )
 
     def _make_metadata(self):
@@ -247,7 +245,7 @@ class ConstantField(Field):
         return values
 
     def __repr__(self):
-        return "ConstantField(%s,%s,%s)" % (self.param, self.date, self.number)
+        return "ForcingField(%s,%s,%s)" % (self.param, self.date, self.number)
 
 
 def make_datetime(date, time):
@@ -286,7 +284,7 @@ def index_to_coords(index: int, shape):
     return result
 
 
-class ConstantsFieldListCore(FieldList):
+class ForcingsFieldListCore(FieldList):
     def __init__(self, source_or_dataset, request={}, **kwargs):
         request = dict(**request)
         request.update(kwargs)
@@ -302,9 +300,7 @@ class ConstantsFieldListCore(FieldList):
                 " not a proper source or dataset"
             )
 
-            return source_or_dataset.unique_values(
-                "number", patches={"number": {None: 0}}
-            )["number"]
+            return source_or_dataset.unique_values("number", patches={"number": {None: 0}}).get("number", 0)
 
         def find_dates(source_or_dataset):
             if "date" not in self.request and "time" in self.request:
@@ -316,11 +312,9 @@ class ConstantsFieldListCore(FieldList):
             if "date" in self.request and "time" in self.request:
                 dates = [
                     make_datetime(date, time)
-                    for date, time in itertools.product(
-                        self.request["date"], self.request["time"]
-                    )
+                    for date, time in itertools.product(self.request["date"], self.request["time"])
                 ]
-                assert len(set(dates)) == len(dates), "Duplicates dates in constants."
+                assert len(set(dates)) == len(dates), "Duplicates dates in forcings."
                 return dates
 
             assert "date" not in self.request and "time" not in self.request
@@ -342,7 +336,7 @@ class ConstantsFieldListCore(FieldList):
         if not isinstance(self.numbers, (tuple, list)):
             self.numbers = [self.numbers]
 
-        self.maker = ConstantMaker(field=source_or_dataset[0])
+        self.maker = ForcingMaker(field=source_or_dataset[0])
         self.procs = {param: getattr(self.maker, param) for param in self.params}
         self._len = len(self.dates) * len(self.params) * len(self.numbers)
 
@@ -356,10 +350,10 @@ class ConstantsFieldListCore(FieldList):
 
     @classmethod
     def new_mask_index(self, *args, **kwargs):
-        return ConstantsMaskFieldList(*args, **kwargs)
+        return ForcingsMaskFieldList(*args, **kwargs)
 
 
-class ConstantsFieldList(ConstantsFieldListCore):
+class ForcingsFieldList(ForcingsFieldListCore):
     def __len__(self):
         return self._len
 
@@ -371,16 +365,14 @@ class ConstantsFieldList(ConstantsFieldListCore):
             if n >= self._len or n < 0:
                 raise IndexError(n)
 
-            date, param, number = index_to_coords(
-                n, (len(self.dates), len(self.params), len(self.numbers))
-            )
+            date, param, number = index_to_coords(n, (len(self.dates), len(self.params), len(self.numbers)))
 
             date = self.dates[date]
             # assert isinstance(date, datetime.datetime), (date, type(date))
             param = self.params[param]
             number = self.numbers[number]
 
-            return ConstantField(
+            return ForcingField(
                 self.maker,
                 date,
                 param,
@@ -390,10 +382,10 @@ class ConstantsFieldList(ConstantsFieldListCore):
             )
 
 
-class ConstantsMaskFieldList(ConstantsFieldListCore, MaskIndex):
+class ForcingsMaskFieldList(ForcingsFieldListCore, MaskIndex):
     def __init__(self, *args, **kwargs):
         MaskIndex.__init__(self, *args, **kwargs)
         FieldList._init_from_mask(self, self)
 
 
-source = ConstantsFieldList
+source = ForcingsFieldList

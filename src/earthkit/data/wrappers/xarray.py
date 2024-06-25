@@ -50,8 +50,7 @@ class XArrayDataArrayWrapper(Wrapper):
     #     return self.source.coords[coord]
 
     def to_xarray(self, *args, **kwargs):
-        """
-        Return an xarray representation of the data.
+        """Return an xarray representation of the data.
 
         Returns
         -------
@@ -60,8 +59,7 @@ class XArrayDataArrayWrapper(Wrapper):
         return self.data
 
     def to_numpy(self):
-        """
-        Return a numpy `ndarray` representation of the data.
+        """Return a numpy `ndarray` representation of the data.
 
         Returns
         -------
@@ -70,8 +68,7 @@ class XArrayDataArrayWrapper(Wrapper):
         return self.data.to_numpy()
 
     def to_pandas(self, *args, **kwargs):
-        """
-        Return a pandas `dataframe` representation of the data.
+        """Return a pandas `dataframe` representation of the data.
 
         Returns
         -------
@@ -80,8 +77,7 @@ class XArrayDataArrayWrapper(Wrapper):
         return self.data.to_dataframe(*args, **kwargs)
 
     def to_netcdf(self, *args, **kwargs):
-        """
-        Save the data to a netCDF file.
+        """Save the data to a netCDF file.
 
         Parameters
         ----------
@@ -91,14 +87,12 @@ class XArrayDataArrayWrapper(Wrapper):
 
 
 class XArrayDatasetWrapper(XArrayDataArrayWrapper):
-    """
-    Wrapper around an xarray `DataSet`, offering polymorphism and convenience
+    """Wrapper around an xarray `DataSet`, offering polymorphism and convenience
     methods.
     """
 
     def to_numpy(self):
-        """
-        Return a numpy `ndarray` representation of the data.
+        """Return a numpy `ndarray` representation of the data.
 
         Returns
         -------

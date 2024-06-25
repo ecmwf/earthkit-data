@@ -145,10 +145,7 @@ def normalize_order_by(*args, **kwargs):
 
     for k, v in _kwargs.items():
         if not (
-            v is None
-            or callable(v)
-            or isinstance(v, (list, tuple, set))
-            or v in ["ascending", "descending"]
+            v is None or callable(v) or isinstance(v, (list, tuple, set)) or v in ["ascending", "descending"]
         ):
             raise ValueError(f"Unsupported order: {v} of type {type(v)} for key {k}")
 

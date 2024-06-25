@@ -16,7 +16,8 @@ import pytest
 import xarray as xr
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_test_data_file, load_nc_or_xr_source
+from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.testing import load_nc_or_xr_source
 
 # These functionalities are variations around
 # http://xarray.pydata.org/en/stable/user-guide/combining.html#combining-multi

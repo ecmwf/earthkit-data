@@ -7,7 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.readers.netcdf import NetCDFFieldListUrlReader, NetCDFReader
+from earthkit.data.readers.netcdf import NetCDFFieldListUrlReader
+from earthkit.data.readers.netcdf import NetCDFReader
 from earthkit.data.sources import Source
 
 

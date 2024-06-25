@@ -14,8 +14,10 @@ from abc import abstractmethod
 from collections import defaultdict
 
 import earthkit.data
-from earthkit.data.core.order import build_remapping, normalize_order_by
-from earthkit.data.core.select import normalize_selection, selection_from_index
+from earthkit.data.core.order import build_remapping
+from earthkit.data.core.order import normalize_order_by
+from earthkit.data.core.select import normalize_selection
+from earthkit.data.core.select import selection_from_index
 from earthkit.data.sources import Source
 
 LOG = logging.getLogger(__name__)
@@ -43,9 +45,7 @@ class Selection(OrderOrSelection):
 
             def __call__(self, x):
                 if self.first and x is not None:
-                    self.lst = [
-                        type(x) if not type(x) is type(y) else y for y in self.lst
-                    ]
+                    self.lst = [type(x) if type(x) is not type(y) else y for y in self.lst]
                     self.first = False
                 return x in self.lst
 
@@ -119,22 +119,25 @@ class Order(OrderBase):
         actions = {}
 
         def ascending(a, b):
-            if a == b:
+            if a is b or a == b:
                 return 0
-            if b is None or a > b:
+
+            if b is None:
                 return 1
-            if a is None or a < b:
+
+            if a is None:
                 return -1
+
+            if a > b:
+                return 1
+
+            if a < b:
+                return -1
+
             raise ValueError(f"{a},{b}")
 
         def descending(a, b):
-            if a == b:
-                return 0
-            if b is None or a > b:
-                return -1
-            if a is None or a < b:
-                return 1
-            raise ValueError(f"{a},{b}")
+            return -ascending(a, b)
 
         class Compare:
             def __init__(self, order):
@@ -159,9 +162,7 @@ class Order(OrderBase):
                 actions[k] = v
                 continue
 
-            assert isinstance(
-                v, (list, tuple)
-            ), f"Invalid argument for {k}: {v} ({type(v)})"
+            assert isinstance(v, (list, tuple)), f"Invalid argument for {k}: {v} ({type(v)})"
 
             order = {}
             for i, key in enumerate(v):
@@ -221,7 +222,6 @@ class Index(Source):
             Returns a new object with the filtered elements. It contains a view to the data in the
             original object, so no data is copied.
 
-
         Filter conditions are specified by a set of **metadata** keys either by a dictionary (in
         ``*args``) or a set of ``**kwargs``. Both single or multiple keys are allowed to use and each
         can specify the following type of filter values:
@@ -260,7 +260,6 @@ class Index(Source):
         GribField(t,400,20180801,1200,0,0)
         GribField(t,300,20180801,1200,0,0)
 
-
         Selecting by multiple keys ("param", "level") with a list and slice of values:
 
         >>> subset = ds.sel(param=["u", "v"], level=slice(400, 700))
@@ -296,9 +295,7 @@ class Index(Source):
         if selection.is_empty:
             return self
 
-        indices = (
-            i for i, element in enumerate(self) if selection.match_element(element)
-        )
+        indices = (i for i, element in enumerate(self) if selection.match_element(element))
 
         return self.new_mask_index(self, indices)
 
@@ -320,7 +317,6 @@ class Index(Source):
         object
             Returns a new object with the filtered elements. It contains a view to the data in
             the original object, so no data is copied.
-
 
         :obj:`isel` works similarly to :obj:`sel` but conditions are specified by indices of metadata
         keys. A metadata index stores the unique, **sorted** values of the corresponding metadata key
@@ -423,7 +419,6 @@ class Index(Source):
         object
             Returns a new object with reordered elements. It contains a view to the data in the
             original object, so no data is copied.
-
 
         Ordering by a single metadata key ("param"). The default ordering direction
         is ``ascending``:

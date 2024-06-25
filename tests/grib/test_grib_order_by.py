@@ -19,7 +19,8 @@ from earthkit.data.testing import ARRAY_BACKENDS
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
+from grib_fixtures import FL_TYPES  # noqa: E402
+from grib_fixtures import load_grib_data  # noqa: E402
 
 
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")
@@ -208,8 +209,6 @@ def test_grib_order_by_remapping(fl_type, array_backend):
     ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
     ref = [("t", 850), ("t", 1000), ("u", 1000), ("v", 850), ("v", 1000), ("u", 850)]
 
-    r = ds.order_by(
-        param_level=ordering, remapping={"param_level": "{param}{levelist}"}
-    )
+    r = ds.order_by(param_level=ordering, remapping={"param_level": "{param}{levelist}"})
 
     assert r.metadata("param", "level") == ref

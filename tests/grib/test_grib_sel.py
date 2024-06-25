@@ -20,7 +20,8 @@ from earthkit.data.testing import ARRAY_BACKENDS
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
+from grib_fixtures import FL_TYPES  # noqa: E402
+from grib_fixtures import load_grib_data  # noqa: E402
 
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")
 
@@ -64,9 +65,7 @@ def test_grib_sel_single_message(fl_type, array_backend):
         ),
     ],
 )
-def test_grib_sel_single_file_1(
-    fl_type, array_backend, params, expected_meta, metadata_keys
-):
+def test_grib_sel_single_file_1(fl_type, array_backend, params, expected_meta, metadata_keys):
     f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     g = f.sel(**params)
@@ -128,9 +127,7 @@ def test_grib_sel_single_file_as_dict(fl_type, array_backend):
         (131, (slice(510, 520)), []),
     ],
 )
-def test_grib_sel_slice_single_file(
-    fl_type, array_backend, param_id, level, expected_meta
-):
+def test_grib_sel_slice_single_file(fl_type, array_backend, param_id, level, expected_meta):
     f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     g = f.sel(paramId=param_id, level=level)
@@ -257,9 +254,7 @@ def test_grib_isel_single_message(fl_type, array_backend):
         ),
     ],
 )
-def test_grib_isel_single_file(
-    fl_type, array_backend, params, expected_meta, metadata_keys
-):
+def test_grib_isel_single_file(fl_type, array_backend, params, expected_meta, metadata_keys):
     f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     g = f.isel(**params)
@@ -285,9 +280,7 @@ def test_grib_isel_single_file(
         (1, (slice(None, None, 2)), [[131, 850], [131, 500], [131, 300]]),
     ],
 )
-def test_grib_isel_slice_single_file(
-    fl_type, array_backend, param_id, level, expected_meta
-):
+def test_grib_isel_slice_single_file(fl_type, array_backend, param_id, level, expected_meta):
     f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
     g = f.isel(paramId=param_id, level=level)
@@ -354,9 +347,7 @@ def test_grib_sel_remapping_1(fl_type, array_backend):
 def test_grib_sel_remapping_2(fl_type, array_backend):
     ds = load_grib_data("test6.grib", fl_type, array_backend)
     ref = [("u", 1000), ("t", 850)]
-    r = ds.sel(
-        param_level=["t850", "u1000"], remapping={"param_level": "{param}{levelist}"}
-    )
+    r = ds.sel(param_level=["t850", "u1000"], remapping={"param_level": "{param}{levelist}"})
     assert r.metadata("param", "level") == ref
 
 

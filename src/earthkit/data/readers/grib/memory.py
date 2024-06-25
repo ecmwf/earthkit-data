@@ -12,7 +12,8 @@ import logging
 import eccodes
 
 from earthkit.data.readers import Reader
-from earthkit.data.readers.grib.codes import GribCodesHandle, GribField
+from earthkit.data.readers.grib.codes import GribCodesHandle
+from earthkit.data.readers.grib.codes import GribField
 from earthkit.data.readers.grib.index import GribFieldList
 from earthkit.data.utils.array import ensure_backend
 
@@ -44,9 +45,7 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            return GribFieldInMemory(
-                GribCodesHandle(handle, None, None), self._array_backend
-            )
+            return GribFieldInMemory(GribCodesHandle(handle, None, None), self._array_backend)
 
     def batched(self, n):
         from earthkit.data.utils.batch import batched
@@ -148,9 +147,7 @@ class GribFieldListInMemory(GribFieldList, Reader):
         return fs
 
     def __init__(self, source, reader, *args, **kwargs):
-        """
-        The reader must support __next__.
-        """
+        """The reader must support __next__."""
         if source is not None:
             Reader.__init__(self, source, None)
         GribFieldList.__init__(self, *args, **kwargs)

@@ -58,9 +58,7 @@ def detect_out_filename(func):
             and os.path.samefile(args[0], self.path)
         ):
             warnings.warn(
-                UserWarning(
-                    f"Earthkit refusing to overwrite the file we are currently reading: {args[0]}"
-                )
+                UserWarning(f"Earthkit refusing to overwrite the file we are currently reading: {args[0]}")
             )
             return
 
@@ -199,13 +197,13 @@ def normalize_grib_key_values(kwargs, accept_none=True, as_tuple=False):
     kwargs = f(**kwargs)
 
     if "time" in kwargs:
-        kwargs["time"] = {False: _normalize_time, True: _normalize_time_as_tuple}[
-            as_tuple
-        ](kwargs["time"], int)
+        kwargs["time"] = {False: _normalize_time, True: _normalize_time_as_tuple}[as_tuple](
+            kwargs["time"], int
+        )
     if "expver" in kwargs:
-        kwargs["expver"] = {False: _normalize_expver, True: _normalize_expver_as_tuple}[
-            as_tuple
-        ](kwargs["expver"])
+        kwargs["expver"] = {False: _normalize_expver, True: _normalize_expver_as_tuple}[as_tuple](
+            kwargs["expver"]
+        )
 
     return kwargs
 
@@ -268,9 +266,7 @@ class normalize(Decorator):
         self.name = name
 
         if isinstance(values, str):
-            assert (
-                kwargs.get("type") is None
-            ), f"Cannot mix values={values} and type={kwargs.get('type')}"
+            assert kwargs.get("type") is None, f"Cannot mix values={values} and type={kwargs.get('type')}"
             if "(" in values:
                 m = re.match(r"(.+)\((.+)\)", values)
                 type = m.group(1)

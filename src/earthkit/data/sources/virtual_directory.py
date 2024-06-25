@@ -220,9 +220,7 @@ class VirtualFieldListInFilesWithSqlIndex(FieldListInFilesWithSqlIndex):
         r = self.reference[1][key]
         i = item.item_metadata[key]
         if r != i:
-            raise Exception(
-                f"Error for field={item.i}, key={key}: reference={r}, item={i}"
-            )
+            raise Exception(f"Error for field={item.i}, key={key}: reference={r}, item={i}")
 
 
 class VirtualDirectorySource(DirectorySource):

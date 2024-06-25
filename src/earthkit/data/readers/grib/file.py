@@ -22,9 +22,7 @@ class GRIBReader(GribFieldListInOneFile, Reader):
         array_backend = source._kwargs.get("array_backend", None)
 
         Reader.__init__(self, source, path)
-        GribFieldListInOneFile.__init__(
-            self, path, parts=parts, array_backend=array_backend
-        )
+        GribFieldListInOneFile.__init__(self, path, parts=parts, array_backend=array_backend)
 
     def __repr__(self):
         return "GRIBReader(%s)" % (self.path,)

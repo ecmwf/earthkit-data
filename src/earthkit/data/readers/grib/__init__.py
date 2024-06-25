@@ -22,9 +22,7 @@ def _match_magic(magic, deeper_check):
 
 
 def _is_default(magic, content_type):
-    return (magic is None or len(magic) == 0) and (
-        content_type is None or len(content_type) == 0
-    )
+    return (magic is None or len(magic) == 0) and (content_type is None or len(content_type) == 0)
 
 
 def reader(source, path, *, magic=None, deeper_check=False, parts=None, **kwargs):
@@ -36,11 +34,10 @@ def reader(source, path, *, magic=None, deeper_check=False, parts=None, **kwargs
 
 def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
-        from .memory import GribFieldListInMemory, GribMessageMemoryReader
+        from .memory import GribFieldListInMemory
+        from .memory import GribMessageMemoryReader
 
-        return GribFieldListInMemory(
-            source, GribMessageMemoryReader(buffer, **kwargs), **kwargs
-        )
+        return GribFieldListInMemory(source, GribMessageMemoryReader(buffer, **kwargs), **kwargs)
 
 
 def stream_reader(
@@ -54,7 +51,8 @@ def stream_reader(
     **kwargs,
 ):
     if _is_default(magic, content_type) or _match_magic(magic, deeper_check):
-        from .memory import GribFieldListInMemory, GribStreamReader
+        from .memory import GribFieldListInMemory
+        from .memory import GribStreamReader
 
         r = GribStreamReader(stream, **kwargs)
         if memory:

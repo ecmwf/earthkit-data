@@ -13,8 +13,7 @@ from collections import defaultdict
 
 
 def bytes(n):
-    """
-    >>> bytes(4096)
+    """>>> bytes(4096)
     '4 KiB'
     >>> bytes(4000)
     '3.9 KiB'
@@ -34,8 +33,7 @@ def bytes(n):
 
 
 def base2(n):
-    """
-    >>> base2(4096)
+    """>>> base2(4096)
     '4K'
     >>> base2(4000)
     '3.9K'
@@ -270,7 +268,7 @@ def string_distance(s, t):
 
 
 def did_you_mean(word, vocabulary):
-    distance, best = min((string_distance(word, w), w) for w in vocabulary)
+    distance, best = min((string_distance(word, w), w) for w in vocabulary)  # noqa F841
     # if distance < min(len(word), len(best)):
     return best
 

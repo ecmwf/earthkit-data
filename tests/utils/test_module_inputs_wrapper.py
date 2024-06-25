@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from earthkit.data import from_object, from_source
+from earthkit.data import from_object
+from earthkit.data import from_source
 from earthkit.data.readers import Reader
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import module_inputs_wrapper
@@ -43,9 +44,7 @@ WRAPPED_XR_ONES_LIKE_TYPE_SETTING = module_inputs_wrapper.transform_function_inp
 WRAPPED_NP_MEAN = module_inputs_wrapper.transform_function_inputs(
     np.mean,
     kwarg_types={"a": np.ndarray},
-    convert_types=(
-        Reader
-    ),  # Only convert Earthkit.data.Reader (np.mean can handle xarray and pandas)
+    convert_types=(Reader),  # Only convert Earthkit.data.Reader (np.mean can handle xarray and pandas)
 )
 
 WRAPPED_NP_MEAN_TYPE_SETTING = module_inputs_wrapper.transform_function_inputs(

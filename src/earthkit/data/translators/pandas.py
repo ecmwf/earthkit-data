@@ -18,9 +18,7 @@ class PandasSeriesTranslator(Translator):
         self.data = data.to_pandas(*args, **kwargs)
 
     def __call__(self):
-        """
-        Series requested, if DataFrame return the first column
-        """
+        """Series requested, if DataFrame return the first column"""
         if isinstance(self.data, pd.DataFrame):
             return self.data.iloc[:, 0]
 
@@ -31,9 +29,7 @@ class PandasDataFrameTranslator(PandasSeriesTranslator):
     """Translator class for pandas `DataFrame`"""
 
     def __call__(self):
-        """
-        Return DataFrame, if Series convert to DataFrame.
-        """
+        """Return DataFrame, if Series convert to DataFrame."""
         if isinstance(self.data, pd.Series):
             return self.data.to_frame()
 
@@ -44,9 +40,7 @@ class GeoPandasDataFrameTranslator(PandasSeriesTranslator):
     """Translator class for geopandas `DataFrame`"""
 
     def __call__(self):
-        """
-        Return GeoDataFrame, if normal pandas convert to geopandas.
-        """
+        """Return GeoDataFrame, if normal pandas convert to geopandas."""
         import geopandas as gpd
 
         if isinstance(self.data, pd.DataFrame):

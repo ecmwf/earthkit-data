@@ -11,7 +11,8 @@ import logging
 import os
 import sys
 import threading
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 from importlib import import_module
 
 LOG = logging.getLogger(__name__)
@@ -73,9 +74,7 @@ class ArrayBackendManager:
                                 w = getattr(module, "Backend")
                                 self.backends[name] = w()
                         except Exception as e:
-                            LOG.exception(
-                                f"Failed to import array backend code {name} from {path}. {e}"
-                            )
+                            LOG.exception(f"Failed to import array backend code {name} from {path}. {e}")
                 self.loaded = True
 
 
@@ -171,9 +170,7 @@ class ArrayBackend(metaclass=ABCMeta):
         return True
 
     def is_native_array(self, v, dtype=None):
-        if (
-            self._core is None and self._module_name not in sys.modules
-        ) or not self.available:
+        if (self._core is None and self._module_name not in sys.modules) or not self.available:
             return False
         return self._is_native_array(v, dtype=dtype)
 
@@ -182,9 +179,7 @@ class ArrayBackend(metaclass=ABCMeta):
         pass
 
     def _quick_check_available(self):
-        return (
-            self._core is None and self._module_name not in sys.modules
-        ) or not self.available
+        return (self._core is None and self._module_name not in sys.modules) or not self.available
 
     @abstractmethod
     def to_numpy(self, v):
@@ -237,9 +232,7 @@ def get_backend(array, guess=None, strict=True):
 
     b = _MANAGER.find_for_array(array, guess=guess)
     if strict and guess is not None and b is not guess:
-        raise ValueError(
-            f"array type={b.array_name} and specified backend={guess} do not match"
-        )
+        raise ValueError(f"array type={b.array_name} and specified backend={guess} do not match")
     return b
 
 

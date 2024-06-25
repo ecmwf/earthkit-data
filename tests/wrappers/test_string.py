@@ -12,7 +12,8 @@
 
 import logging
 
-from earthkit.data import from_object, wrappers
+from earthkit.data import from_object
+from earthkit.data import wrappers
 from earthkit.data.wrappers import string as strwrapper
 
 LOG = logging.getLogger(__name__)
@@ -45,9 +46,7 @@ def test_datetime_list_string():
     date_formats = ["%Y-%m-%d"]
     # Currently not accepted: "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"
     for d_format in date_formats:
-        datetime_list_string = "/to/".join(
-            [_datetime_list[i].strftime(d_format) for i in (0, -1)]
-        )
+        datetime_list_string = "/to/".join([_datetime_list[i].strftime(d_format) for i in (0, -1)])
         _wrapper = strwrapper.wrapper(datetime_list_string)
         assert _datetime_list == _wrapper.to_datetime_list()
 
@@ -59,9 +58,7 @@ def test_datetime_list_string_by():
     date_formats = ["%Y-%m-%d"]
     # Currently not accepted: "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"
     for d_format in date_formats:
-        datetime_list_string = "/to/".join(
-            [_datetime_list[i].strftime(d_format) for i in (0, -1)]
-        )
+        datetime_list_string = "/to/".join([_datetime_list[i].strftime(d_format) for i in (0, -1)])
         _wrapper = strwrapper.wrapper(datetime_list_string + "/by/2")
         assert _datetime_list == _wrapper.to_datetime_list()
 
@@ -73,8 +70,6 @@ def test_boundingbox_string():
     date_formats = ["%Y-%m-%d"]
     # Currently not accepted: "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y"
     for d_format in date_formats:
-        datetime_list_string = "/to/".join(
-            [_datetime_list[i].strftime(d_format) for i in (0, -1)]
-        )
+        datetime_list_string = "/to/".join([_datetime_list[i].strftime(d_format) for i in (0, -1)])
         _wrapper = strwrapper.wrapper(datetime_list_string + "/by/2")
         assert _datetime_list == _wrapper.to_datetime_list()

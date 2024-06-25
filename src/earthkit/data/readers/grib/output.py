@@ -10,13 +10,13 @@
 import datetime
 import logging
 import re
+from io import IOBase
 
-from earthkit.data.decorators import normalize, normalize_grib_keys
+from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalize_grib_keys
 from earthkit.data.utils.humanize import list_to_human
 
 LOG = logging.getLogger(__name__)
-
-# Make sure the
 
 ACCUMULATIONS = {("tp", 2): {"productDefinitionTemplateNumber": 8}}
 
@@ -58,15 +58,8 @@ class Combined:
         return self.handle.get(key, default=None)
 
 
-class GribOutput:
-    def __init__(self, filename, split_output=False, template=None, **kwargs):
-        self._files = {}
-        self.filename = filename
-
-        if split_output:
-            self.split_output = re.findall(r"\{(.*?)\}", self.filename)
-        else:
-            self.split_output = None
+class GribCoder:
+    def __init__(self, template=None, **kwargs):
 
         self.template = template
         self._bbox = {}
@@ -77,22 +70,13 @@ class GribOutput:
     def _normalize_kwargs_names(self, **kwargs):
         return kwargs
 
-    def f(self, handle):
-        if self.split_output:
-            path = self.filename.format(**{k: handle.get(k) for k in self.split_output})
-        else:
-            path = self.filename
-
-        if path not in self._files:
-            self._files[path] = open(path, "wb")
-        return self._files[path], path
-
-    def write(
+    def encode(
         self,
         values,
         check_nans=False,
         metadata={},
         template=None,
+        return_bytes=False,
         **kwargs,
     ):
         # Make a copy as we may modify it
@@ -126,12 +110,14 @@ class GribOutput:
                 metadata["missingValue"] = missing_value
                 metadata["bitmapPresent"] = 1
 
-        metadata = {
-            k: v for k, v in sorted(metadata.items(), key=lambda x: order(x[0]))
-        }
+        metadata = {k: v for k, v in sorted(metadata.items(), key=lambda x: order(x[0]))}
 
         if str(metadata.get("edition")) == "1":
             for k in NOT_IN_EDITION_1:
+                metadata.pop(k, None)
+
+        if int(metadata.get("deleteLocalDefinition", 0)):
+            for k in ("class", "type", "stream", "expver", "setLocalDefinition"):
                 metadata.pop(k, None)
 
         if "generatingProcessIdentifier" not in metadata:
@@ -145,20 +131,10 @@ class GribOutput:
         if values is not None:
             handle.set_values(values)
 
-        file, path = self.f(handle)
-        handle.write(file)
+        if return_bytes:
+            return handle.get_message()
 
-        return handle, path
-
-    def close(self):
-        for f in self._files.values():
-            f.close()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, trace):
-        self.close()
+        return handle
 
     def update_metadata(self, handle, metadata, compulsory):
         # TODO: revisit that logic
@@ -195,8 +171,8 @@ class GribOutput:
         if "number" in metadata:
             compulsory += ("numberOfForecastsInEnsemble",)
             productDefinitionTemplateNumber = {"tp": 11}
-            metadata["productDefinitionTemplateNumber"] = (
-                productDefinitionTemplateNumber.get(handle.get("shortName"), 1)
+            metadata["productDefinitionTemplateNumber"] = productDefinitionTemplateNumber.get(
+                handle.get("shortName"), 1
             )
 
         if metadata.get("type") in ("pf", "cf"):
@@ -232,9 +208,7 @@ class GribOutput:
         elif len(values.shape) == 2:
             sample = self._ll_field(values, metadata)
         else:
-            raise ValueError(
-                f"Invalid shape {values.shape} for GRIB, must be 1 or 2 dimension "
-            )
+            raise ValueError(f"Invalid shape {values.shape} for GRIB, must be 1 or 2 dimension ")
 
         metadata.setdefault("bitsPerValue", 16)
         metadata["scanningMode"] = 0
@@ -258,12 +232,7 @@ class GribOutput:
             )
         )
 
-        if (
-            "class" in metadata
-            or "type" in metadata
-            or "stream" in metadata
-            or "expver" in metadata
-        ):
+        if "class" in metadata or "type" in metadata or "stream" in metadata or "expver" in metadata:
             # MARS labelling
             metadata["setLocalDefinition"] = 1
             # metadata['grib2LocalSectionNumber'] = 1
@@ -380,5 +349,73 @@ class GribOutput:
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
 
 
+class GribOutput:
+    def __init__(self, file, split_output=False, template=None, **kwargs):
+        self._files = {}
+        self.fileobj = None
+        self.filename = None
+
+        if isinstance(file, IOBase):
+            self.fileobj = file
+            split_output = False
+        else:
+            self.filename = file
+
+        if split_output:
+            self.split_output = re.findall(r"\{(.*?)\}", self.filename)
+        else:
+            self.split_output = None
+
+        self._coder = GribCoder(template=template, **kwargs)
+
+    def close(self):
+        for f in self._files.values():
+            f.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, trace):
+        self.close()
+
+    def write(
+        self,
+        values,
+        check_nans=False,
+        metadata={},
+        template=None,
+        **kwargs,
+    ):
+        handle = self._coder.encode(
+            values,
+            check_nans=check_nans,
+            metadata=metadata,
+            template=template,
+            **kwargs,
+        )
+
+        file, path = self.f(handle)
+        handle.write(file)
+
+        return handle, path
+
+    def f(self, handle):
+        if self.fileobj:
+            return self.fileobj, None
+
+        if self.split_output:
+            path = self.filename.format(**{k: handle.get(k) for k in self.split_output})
+        else:
+            path = self.filename
+
+        if path not in self._files:
+            self._files[path] = open(path, "wb")
+        return self._files[path], path
+
+
 def new_grib_output(*args, **kwargs):
     return GribOutput(*args, **kwargs)
+
+
+def new_grib_coder(*args, **kwargs):
+    return GribCoder(*args, **kwargs)

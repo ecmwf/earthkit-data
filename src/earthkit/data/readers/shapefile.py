@@ -78,9 +78,7 @@ class ShapeFileReader(Reader):
             try:
                 import geopandas as gpd
             except ImportError:
-                raise ImportError(
-                    "shapefile handling requires 'geopandas' to be installed"
-                )
+                raise ImportError("shapefile handling requires 'geopandas' to be installed")
 
             import numpy as np
 

@@ -9,7 +9,8 @@
 import datetime
 import re
 
-from dateutil.parser import isoparse, parse
+from dateutil.parser import isoparse
+from dateutil.parser import parse
 
 from earthkit.data.wrappers import Wrapper
 
@@ -58,9 +59,7 @@ class StrWrapper(Wrapper):
             return mars_like_date_list(parse_date(bits[0]), parse_date(bits[2]), 1)
 
         if len(bits) == 5 and bits[1].lower() == "to" and bits[3].lower() == "by":
-            return mars_like_date_list(
-                parse_date(bits[0]), parse_date(bits[2]), int(bits[4])
-            )
+            return mars_like_date_list(parse_date(bits[0]), parse_date(bits[2]), int(bits[4]))
 
         return [parse_date(d) for d in bits]
 

@@ -12,11 +12,16 @@ from functools import cached_property
 from itertools import product
 
 from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.core.index import MaskIndex, MultiIndex
+from earthkit.data.core.index import MaskIndex
+from earthkit.data.core.index import MultiIndex
 
-from .coords import LevelCoordinate, OtherCoordinate, TimeCoordinate
-from .dataset import GEOGRAPHIC_COORDS, DataSet
-from .field import NetCDFField, XArrayField
+from .coords import LevelCoordinate
+from .coords import OtherCoordinate
+from .coords import TimeCoordinate
+from .dataset import GEOGRAPHIC_COORDS
+from .dataset import DataSet
+from .field import NetCDFField
+from .field import XArrayField
 
 LOG = logging.getLogger(__name__)
 
@@ -27,9 +32,6 @@ def get_fields_from_ds(
     field_type=None,
     check_only=False,
 ):  # noqa C901
-    # Select only geographical variables
-    has_lat = False
-    has_lon = False
 
     fields = []
 
@@ -47,6 +49,10 @@ def get_fields_from_ds(
         _skip_attr(v, "grid_mapping")
 
     for name in ds.data_vars:
+        # Select only geographical variables
+        has_lat = False
+        has_lon = False
+
         if name in skip:
             continue
 
@@ -97,6 +103,7 @@ def get_fields_from_ds(
             if (
                 standard_name in ["time", "forecast_reference_time"]
                 or long_name in ["time"]
+                or coord_name.lower() in ["time"]
                 or axis == "T"
             ):
                 # we might not be able to convert time to datetime
@@ -357,6 +364,4 @@ class NetCDFMultiFieldList(NetCDFFieldList, MultiIndex):
                     "NetCDFMultiFieldList.to_xarray() does not supports NetCDFMaskFieldList"
                 )
 
-        return NetCDFFieldList.to_xarray_multi_from_paths(
-            [x.path for x in self._indexes], **kwargs
-        )
+        return NetCDFFieldList.to_xarray_multi_from_paths([x.path for x in self._indexes], **kwargs)
