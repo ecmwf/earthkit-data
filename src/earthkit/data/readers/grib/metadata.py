@@ -30,6 +30,10 @@ class GribFieldGeography(Geography):
         self.metadata = metadata
         self.check_rotated_support()
 
+    @cached_property
+    def spectral(self):
+        return self.metadata._handle.get("gridType", "") == "sh"
+
     def latitudes(self, dtype=None):
         r"""Return the latitudes of the field.
 

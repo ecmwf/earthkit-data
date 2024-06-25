@@ -350,16 +350,19 @@ class FieldListTensor(TensorCore):
                 names += list(a.keys())
 
         # Sort the source
-        if sort:
+        if names and sort:
             source = ds.order_by(*args, remapping=remapping)
         else:
             source = ds
 
         # Get a mapping of user names to unique values
         # With possible reduce dimensionality if the user uses 'level+param'
-        user_coords = CubeCoords(ds.unique_values(*names, remapping=remapping, progress_bar=progress_bar))
-        for k, v in user_coords.items():
-            user_coords[k] = sorted(v)
+        if names:
+            user_coords = CubeCoords(ds.unique_values(*names, remapping=remapping, progress_bar=progress_bar))
+            for k, v in user_coords.items():
+                user_coords[k] = sorted(v)
+        else:
+            user_coords = CubeCoords()
 
         # print(f"{self.user_coords=}")
 
@@ -476,6 +479,7 @@ class FieldListTensor(TensorCore):
     # def _get_shape(coords):
     #     return tuple(len(v) for _, v in coords.items())
 
+    @staticmethod
     def _field_part(field, flatten_values):
         field_shape = field.shape
 
@@ -490,10 +494,15 @@ class FieldListTensor(TensorCore):
         coords = {}
         dims = {}
 
+        print(f"{field_shape=}")
+
         if len(field_shape) == 1:
-            ll = field.to_latlon(flatten=True)
-            coords["latitude"] = ll["lat"]
-            coords["longitude"] = ll["lon"]
+            try:
+                ll = field.to_latlon(flatten=True)
+                coords["latitude"] = ll["lat"]
+                coords["longitude"] = ll["lon"]
+            except Exception:
+                pass
             dims["values"] = field_shape[0]
 
         elif len(field_shape) == 2:
@@ -508,10 +517,15 @@ class FieldListTensor(TensorCore):
                 dims["latitude"] = len(lat)
                 dims["longitude"] = len(lon)
             else:
-                coords["x"] = np.linspace(0, field_shape[0], field_shape[0], dtype=int)
-                coords["y"] = np.linspace(0, field_shape[1], field_shape[1], dtype=int)
-                dims["x"] = len(coords["x"])
-                dims["y"] = len(coords["y"])
+                ll = field.to_latlon(flatten=True)
+                # coords["latitude"] = ll["lat"]
+                # coords["longitude"] = ll["lon"]
+                coords["latitude"] = ll["lat"].reshape(field_shape)
+                coords["longitude"] = ll["lon"].reshape(field_shape)
+                # coords["x"] = np.linspace(0, field_shape[0], field_shape[0], dtype=int)
+                # coords["y"] = np.linspace(0, field_shape[1], field_shape[1], dtype=int)
+                dims["y"] = field_shape[0]  # len(coords["y"])
+                dims["x"] = field_shape[1]  # len(coords["x"])
 
         if hasattr(field, "unload"):
             field.unload()
