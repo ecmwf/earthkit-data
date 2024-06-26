@@ -96,14 +96,11 @@ class Patch(dict):
             assert callable(patch)
             self.patch = patch
 
-        print(f"Patching {name} with {self.patch}")
         # For JSON, we simply forward to the remapping
         super().__init__(proc.as_dict())
 
     def __call__(self, func):
         next = self.proc(func)
-
-        print(f"PATCH {self.name} {func=}")
 
         def wrapped(name, **kwargs):
             result = next(name, **kwargs)
@@ -120,11 +117,9 @@ class Patch(dict):
 
 def build_remapping(mapping, patches=None):
     result = _build_remapping(mapping)
-    print("patches", patches)
     if patches:
         for k, v in patches.items():
             result = Patch(result, k, v)
-            print("result", type(result))
     return result
 
 
