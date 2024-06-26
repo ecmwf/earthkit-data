@@ -795,14 +795,15 @@ class MarsProfile(IndexProfile):
 
 
 class WrappedFieldList(FieldArray):
-    def __init__(self, fieldlist, keys, db=None, fields=None, remapping={}):
+    def __init__(self, fieldlist, keys, db=None, fields=None, remapping=None):
         super().__init__()
         self.ds = fieldlist
         self.keys = keys
         self.db = db if db is not None else []
 
-        self.remapping = build_remapping(remapping)
-        # print(f"remapping vals: {self.remapping.lists}")
+        # self.remapping = build_remapping(remapping)
+        self.remapping = remapping
+        print(f"type remapping={type(self.remapping)}")
         if fields is not None:
             self.fields = fields
         else:
@@ -1135,6 +1136,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         self.use_level_per_type_dim = use_level_per_type_dim
         self.merge_cf_and_pf = merge_cf_and_pf
         self.add_geo_coords = add_geo_coords
+        self.merge_cf_and_pf = merge_cf_and_pf
 
         if isinstance(filename_or_obj, Base):
             ekds = filename_or_obj
@@ -1170,8 +1172,13 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
     def _create(self, ekds):
         # print(f"remapping: {self.remapping}, profile: {self.profile}")
 
-        remapping = build_remapping(self.remapping)
+        self.patches = {}
+        if self.merge_cf_and_pf:
+            self.patches = {"type": {"cf": "pf"}, "number": {None: 0}}
 
+        remapping = build_remapping(self.remapping, self.patches)
+        print(f"{self.patches=}")
+        print(f"{remapping=}")
         profile = IndexProfile.make(self.profile)(
             remapping=remapping,
             variable_key=self.variable_key,
@@ -1202,7 +1209,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
         # create new fieldlist and ensure all the required metadata is kept in memory
         ds_ori = WrappedFieldList(ekds, profile.index_keys, remapping=remapping)
-        # print(f"ds_ori: {ds_ori.indices()}")
+        print(f"{remapping=}")
+        print(f"ds_ori: {ds_ori.indices()}")
 
         # global attributes are keys which are the same for all the fields
         attributes = {k: v[0] for k, v in ds_ori.indices().items() if len(v) == 1}

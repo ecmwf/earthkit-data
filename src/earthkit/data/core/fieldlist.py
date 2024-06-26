@@ -645,7 +645,7 @@ class Field(Base):
     def _attributes(self, names, remapping=None):
         result = {}
         metadata = self._metadata.get
-        if remapping:
+        if remapping is not None:
             metadata = remapping(metadata)
 
         for name in names:
