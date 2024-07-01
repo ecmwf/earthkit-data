@@ -9,21 +9,18 @@
 # nor does it submit to any jurisdiction.
 #
 
-import os
 
 import numpy as np
 import pytest
 
 from earthkit.data import from_source
-
-SAMPLE_DATA_FOLDER = "~/git/cfgrib/tests/sample-data"
-SAMPLE_DATA_FOLDER = "/Users/cgr/metview/python_test/earthkit_data/engine"
+from earthkit.data.testing import earthkit_remote_test_data_file
 
 
 @pytest.mark.parametrize(
-    "grib_name",
+    "file",
     [
-        "pl_regular_ll",
+        "pl_regular_ll.grib",
         # "era5-levels-members",
         # "fields_with_missing_values",
         # "lambert_grid",
@@ -40,19 +37,17 @@ SAMPLE_DATA_FOLDER = "/Users/cgr/metview/python_test/earthkit_data/engine"
         # "t_analysis_and_fc_0",
     ],
 )
-def test_xr_engine(grib_name):
-    pass
-    grib_path = os.path.join(SAMPLE_DATA_FOLDER, grib_name + ".grib")
-    print(f"Reading {grib_path}")
-    ds = from_source("file", grib_path)
+def test_xr_engine_basic(file):
+    ds = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", file))
     res = ds.to_xarray(_legacy=False)
     assert res is not None
 
 
 def test_xr_engine_detailed_check():
-    grib_path = os.path.join(SAMPLE_DATA_FOLDER, "pl_regular_ll.grib")
+    ds_ek = from_source(
+        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_regular_ll.grib")
+    )
 
-    ds_ek = from_source("file", grib_path)
     ds = ds_ek.to_xarray()
     assert ds is not None
 
@@ -221,9 +216,9 @@ def test_xr_engine_detailed_check():
 
 
 def test_xr_engine_detailed_flatten_check():
-    grib_path = os.path.join(SAMPLE_DATA_FOLDER, "pl_regular_ll.grib")
-
-    ds_ek = from_source("file", grib_path)
+    ds_ek = from_source(
+        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_regular_ll.grib")
+    )
 
     kwargs = {
         "xarray_open_dataset_kwargs": {
@@ -354,7 +349,7 @@ def test_xr_engine_detailed_flatten_check():
     for k, v in coords_ref.items():
         assert np.allclose(r.coords[k].values, v)
 
-    # lat-lon
+    # level=500, lat=0, lon=0
     da = ds["t"]
 
     r = da[:, 0, :, 2, 9 * 36 + 0]
@@ -382,6 +377,7 @@ def test_xr_engine_detailed_flatten_check():
     assert np.allclose(r.values, vals_ref)
 
     r = da.loc[:, 0, :, 500, 9 * 36 + 0]
+    print(da.coords["levelist"])
     assert r.shape == (2, 2)
     vals_ref = np.array([[269.00918579, 268.78610229], [268.57771301, 268.08932495]])
     assert np.allclose(r.values, vals_ref)

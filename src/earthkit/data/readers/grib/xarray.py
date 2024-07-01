@@ -144,20 +144,44 @@ class XarrayMixIn:
                     warn_non_default=False,
                 )
             )
+
+            return xr.open_dataset(
+                open_object,
+                # decode_cf=False,
+                **xarray_open_dataset_kwargs,
+            )
+
         else:
-            open_object = self
-            xarray_open_dataset_kwargs = {
-                "engine": "earthkit",
-                **user_xarray_open_dataset_kwargs,
-            }
+            for key in ["backend_kwargs"]:
+                xarray_open_dataset_kwargs[key] = Kwargs(
+                    user=user_xarray_open_dataset_kwargs.pop(key, {}),
+                    default={"errors": "raise"},
+                    forced={},
+                    logging_owner="xarray_open_dataset_kwargs",
+                    logging_main_key=key,
+                )
 
-        print(f"{kwargs=}")
-        print(f"{xarray_open_dataset_kwargs=}")
+            # print(f"{xarray_open_dataset_kwargs=}")
 
-        result = xr.open_dataset(
-            open_object,
-            # decode_cf=False,
-            **xarray_open_dataset_kwargs,
-        )
+            default = dict()
+            default.update(self.xarray_open_dataset_kwargs())
 
-        return result
+            xarray_open_dataset_kwargs.update(
+                Kwargs(
+                    user=user_xarray_open_dataset_kwargs,
+                    default=default,
+                    forced={
+                        # "errors": "raise",
+                        "engine": "earthkit",
+                    },
+                    logging_owner="xarray_open_dataset_kwargs",
+                    warn_non_default=False,
+                )
+            )
+
+            # print(f"{kwargs=}")
+            # print(f"{xarray_open_dataset_kwargs=}")
+
+            from earthkit.data.utils.xarray.engine import from_earthkit
+
+            return from_earthkit(self, **xarray_open_dataset_kwargs)

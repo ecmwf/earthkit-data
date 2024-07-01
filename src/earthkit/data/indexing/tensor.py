@@ -168,7 +168,7 @@ class TensorCore(metaclass=ABCMeta):
         while len(indexes) > len(self.user_shape):
             indexes.pop()
 
-        print(f"{indexes=} user_shape={self.user_shape=}")
+        # print(f"{indexes=} user_shape={self.user_shape=}")
         indexes = tuple(indexes)
 
         return self._subset(indexes)
@@ -234,6 +234,7 @@ class TensorCore(metaclass=ABCMeta):
                 # print(f"{k=} {idx=} {self.coords[k]}")
                 # print(self.coords[k][idx])
                 if isinstance(idx, (int, slice)):
+                    # print(f"{k=} {idx=} {self._user_coords[k]}")
                     v = self._user_coords[k][idx]
                     if not isinstance(v, (list, np.ndarray)):
                         v = [v]
@@ -372,7 +373,7 @@ class FieldListTensor(TensorCore):
         if field_dims_and_coords is not None:
             field_dims, field_coords = field_dims_and_coords
         else:
-            field_dims, field_coords = FieldListTensor._field_part(source[0], flatten_values)
+            field_dims, field_coords, _ = FieldListTensor._field_part(source[0], flatten_values)
 
         # first = source[0]
 
@@ -461,6 +462,8 @@ class FieldListTensor(TensorCore):
             user_coords.append(lst)
             user_indexes.append(s)
 
+        # print(f"{user_coords=} {user_indexes=}")
+
         assert len(user_coords) == len(self._user_coords)
 
         dataset_indexes = []
@@ -493,43 +496,61 @@ class FieldListTensor(TensorCore):
 
         coords = {}
         dims = {}
+        coords_dim = {}
 
-        print(f"{field_shape=}")
+        # print(f"{field_shape=}")
 
         if len(field_shape) == 1:
+            dims["values"] = field_shape[0]
             try:
                 ll = field.to_latlon(flatten=True)
-                coords["latitude"] = ll["lat"]
-                coords["longitude"] = ll["lon"]
+                coords["latitude"] = np.atleast_1d(ll["lat"])
+                coords["longitude"] = np.atleast_1d(ll["lon"])
+                coords_dim = {k: ("values",) for k in coords}
             except Exception:
                 pass
-            dims["values"] = field_shape[0]
         elif len(field_shape) == 2:
-            # diag(" LATLON")
-            geo = field.metadata().geography
-            lat = geo.distinct_latitudes()
-            lon = geo.distinct_longitudes()
-            # diag(" LATLON")
-            if len(lat) == field_shape[0] and len(lon) == field_shape[1]:
-                coords["latitude"] = lat
-                coords["longitude"] = lon
-                dims["latitude"] = len(lat)
-                dims["longitude"] = len(lon)
-            else:
-                ll = field.to_latlon(flatten=True)
-                # coords["latitude"] = ll["lat"]
-                # coords["longitude"] = ll["lon"]
-                coords["latitude"] = ll["lat"].reshape(field_shape)
-                coords["longitude"] = ll["lon"].reshape(field_shape)
-                # coords["x"] = np.linspace(0, field_shape[0], field_shape[0], dtype=int)
-                # coords["y"] = np.linspace(0, field_shape[1], field_shape[1], dtype=int)
-                dims["y"] = field_shape[0]  # len(coords["y"])
-                dims["x"] = field_shape[1]  # len(coords["x"])
+            try:
+                geo = field.metadata().geography
+                lat = np.atleast_1d(geo.distinct_latitudes())
+                if len(lat) == field_shape[0]:
+                    lon = np.atleast_1d(geo.distinct_longitudes())
+                    if len(lon) == field_shape[1]:
+                        coords["latitude"] = lat
+                        coords["longitude"] = lon
+                        coords_dim["latitude"] = ("latitude",)
+                        coords_dim["longitude"] = ("longitude",)
+                        dims["latitude"] = lat.size
+                        dims["longitude"] = lon.size
+                        assert coords["latitude"].size == field_shape[0]
+                        assert coords["longitude"].size == field_shape[1]
+                        assert dims["latitude"] == field_shape[0]
+                        assert dims["longitude"] == field_shape[1]
+            except Exception as e:
+                print(e)
+                pass
+
+            if not coords or not dims:
+                ll = field.to_latlon(flatten=False)
+                coords["latitude"] = np.atleast_1d(ll["lat"])
+                coords["longitude"] = np.atleast_1d(ll["lon"])
+                coords_dim = {k: ("y", "x") for k in coords}
+                dims["y"] = field_shape[0]
+                dims["x"] = field_shape[1]
+                assert coords["latitude"].shape == field_shape
+                assert coords["longitude"].shape == field_shape
+        else:
+            raise ValueError(f"Unsupported field shape {field_shape}")
 
         if hasattr(field, "unload"):
             field.unload()
 
-        return dims, coords
+        for k, v in coords.items():
+            assert k in coords_dim, f"{k=}, {coords_dim=}"
+            assert all(x in dims for x in coords_dim[k]), f"{k=}, {coords_dim=} {dims=}"
+            assert v.size == math.prod([dims[x] for x in coords_dim[k]])
+
+        return dims, coords, coords_dim
 
     # @staticmethod
     # def _get_field_shape(field, flatten_values):

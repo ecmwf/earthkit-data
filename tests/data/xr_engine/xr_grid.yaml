@@ -34,6 +34,18 @@
     - longitude
     - 5
   distinct_ll: true
+- file: regular_ll_single_point.grib1
+  dims:
+    latitude: 1
+    longitude: 1
+  coords:
+    latitude:
+    - latitude
+    - 1
+    longitude:
+    - longitude
+    - 1
+  distinct_ll: true
 - file: rotated_ll.grib1
   dims:
     y: 19

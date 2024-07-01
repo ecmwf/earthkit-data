@@ -114,6 +114,7 @@ Xarray_engine
     :glob:
 
     xarray_engine_demo.ipynb
+    xarray_engine_split.ipynb
     grib_cube.ipynb
     grib_to_xarray.ipynb
 

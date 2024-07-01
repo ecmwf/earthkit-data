@@ -25,19 +25,22 @@ def to_tuple(x):
     return tuple(ensure_iterable(x))
 
 
-def grid_list():
+def grid_list(files=None):
     with open(earthkit_test_data_file(os.path.join("xr_engine", "xr_grid.yaml")), "r") as f:
         r = yaml.safe_load(f)
 
+    files = [] if files is None else files
     for item in r:
-        yield (item["file"], item["dims"], item["coords"], item["distinct_ll"])
+        if not files or item["file"] in files:
+            yield (item["file"], item["dims"], item["coords"], item["distinct_ll"])
 
 
 @pytest.mark.parametrize(
     "file,dims,coords,distinct_ll",
+    # grid_list(files=["regular_ll_single_point.grib1"]),
     grid_list(),
 )
-def test_xr_engine_geo(file, dims, coords, distinct_ll):
+def test_xr_engine_grid(file, dims, coords, distinct_ll):
     ds = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "grid", file))
 
     a = ds.to_xarray()

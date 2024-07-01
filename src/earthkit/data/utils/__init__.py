@@ -148,6 +148,8 @@ def load_json_or_yaml(path):
 def ensure_iterable(obj):
     import collections.abc
 
+    if obj is None:
+        return []
     if isinstance(obj, str) or not isinstance(obj, collections.abc.Iterable):
         return [obj]
     return obj

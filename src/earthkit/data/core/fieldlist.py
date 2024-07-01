@@ -734,6 +734,7 @@ class FieldList(Index):
             v = f.metadata(key, default=None)
             if v is not None:
                 values.add(v)
+
         return sorted(list(values))
 
     def _find_all_index_dict(self):
