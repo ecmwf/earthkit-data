@@ -597,6 +597,7 @@ class FieldListTensor(TensorCore):
     def make_valid_datetime(self):
         dims_opt = [
             ["base_datetime", "step"],
+            ["base_datetime"],
             ["date", "time", "step"],
             ["date", "time"],
             ["date", "step"],
@@ -604,11 +605,13 @@ class FieldListTensor(TensorCore):
             ["step"],
         ]
 
+        print(f"{self.user_dims=}")
         for dims in dims_opt:
             if all(d in self.user_dims for d in dims):
                 # use same dim order as in user_dims
                 dims = [d for d in dims if d in self.user_dims]
                 other_dims = [d for d in self.user_dims if d not in dims]
+                print(f"{dims=} {other_dims=}")
                 if other_dims:
                     import datetime
 
@@ -623,6 +626,17 @@ class FieldListTensor(TensorCore):
                             datetime.datetime.fromisoformat(x)
                             for x in self.source.sel(**other_coords).metadata("valid_datetime")
                         ]
+                    )
+
+                    shape = tuple([self.user_dims[d] for d in dims])
+                    return tuple(dims), vals.reshape(shape)
+                else:
+                    import datetime
+
+                    import numpy as np
+
+                    vals = np.array(
+                        [datetime.datetime.fromisoformat(x) for x in self.source.metadata("valid_datetime")]
                     )
 
                     shape = tuple([self.user_dims[d] for d in dims])

@@ -1,0 +1,94 @@
+options:
+  fixed_dims: true
+  valid_datetime_coord: true
+  base_datetime_coord: true
+  step_timedelta: true
+  no_levtype_dim: true
+  merge_pf_and_cf: true
+  merge_pl_levels: true
+index_keys:
+- cfVarName
+- class
+- stream
+- type
+- expver
+- date
+- hdate
+- andate
+- time
+- antime
+- step
+- reference
+- anoffset
+- verify
+- fcmonth
+- fcperiod
+- leadtime
+- opttime
+- origin
+- domain
+- method
+- diagnostic
+- iteration
+- number
+- quantile
+- typeOfLevel
+- level
+- units
+
+var_attrs:
+- cfName
+- units
+
+var_key: cfVarName
+
+attr_mapping:
+  cfName: standard_name
+
+dim_coord_mapping:
+  valid_datetime: valid_time
+  base_time: forecast_reference_time
+  base_datetime: forecast_reference_time
+  levelist: level
+
+global_attrs:
+  Conventions: CF-1.8
+
+coord_attrs:
+  latitude:
+    units: degrees_north
+    standard_name: latitude
+    long_name: latitude
+  longitude:
+    units: degrees_east
+    standard_name: longitude
+    long_name: longitude
+  forecast_reference_time:
+    # "units": "seconds since 1970-01-01T00:00:00",
+    # "calendar": "proleptic_gregorian",
+    standard_name: forecast_reference_time
+    long_name: initial time of forecast
+  step:
+    # "units": "hours",
+    standard_name: forecast_period
+    long_name: time since forecast_reference_time
+  valid_time:
+    # "units": "seconds since 1970-01-01T00:00:00",
+    # "calendar": "proleptic_gregorian",
+    standard_name: time
+    long_name: valid_time
+
+level_maps:
+  key: typeOfLevel
+  isobaricInhPa:
+    units: hPa
+    positive: down
+    stored_direction: decreasing
+    standard_name: air_pressure
+    long_name: pressure
+  isobaricInPa:
+    units: Pa
+    positive: down
+    stored_direction: decreasing
+    standard_name: air_pressure
+    long_name: pressure

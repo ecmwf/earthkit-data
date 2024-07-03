@@ -63,7 +63,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
     def _raw_indexing_method(self, key: tuple):
         # must be threadsafe
         # print("_var", self._var)
-        # print(f"dims: {self.dims} key: {key} shape: {self.shape}")
+        print(f"dims: {self.dims} key: {key} shape: {self.shape}")
         # isels = dict(zip(self.dims, key))
         # r = self.ekds.isel(**isels)
         # print(f"t-coords={self.tensor.user_coords}")
@@ -73,7 +73,9 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
 
         field_index = r.field_indexes(key)
         # print(f"field.index={field_index} coords={r.user_coords}")
-        result = r.to_numpy(field_index=field_index).squeeze()
+        # result = r.to_numpy(field_index=field_index).squeeze()
+        result = r.to_numpy(field_index=field_index)
+        # print("result", result.shape)
         # result = self.ekds.isel(**isels).to_numpy()
 
         # print("result", result.shape)
@@ -125,7 +127,9 @@ class TensorBackendBuilder:
 
     @property
     def coords(self):
-        r = {k: v for k, v in self.tensor_coords.items()}
+        r = {k: v.make_var(self.profile) for k, v in self.tensor_coords.items()}
+
+        # r = {k: v for k, v in self.tensor_coords.items()}
         r.update(self.field_coords)
         return r
 
@@ -133,7 +137,7 @@ class TensorBackendBuilder:
         r = {}
         for k, v in self.grid.coords.items():
             dims = {x: self.grid.dims[x] for x in self.grid.coords_dim[k]}
-            r[k] = xarray.Variable(dims, v)
+            r[k] = xarray.Variable(dims, v, self.profile.coord_attrs(k))
         return r
 
     def var_dims(self, tensor):
@@ -143,12 +147,20 @@ class TensorBackendBuilder:
         return dims
 
     def collect_coords(self, tensor):
-        if not self.tensor_coords:
-            self.tensor_coords = {k: (k, v) for k, v in tensor.user_coords.items()}
-        else:
-            for k, v in tensor.user_coords.items():
-                if k not in self.tensor_coords:
-                    self.tensor_coords[k] = (k, v)
+        from .profile import Coord
+
+        for k, v in tensor.user_coords.items():
+            if k not in self.tensor_coords:
+                self.tensor_coords[k] = Coord.make(k, v)
+
+        # if not self.tensor_coords:
+        #     self.tensor_coords = {
+        #         k: (k, v, self.profile.coord_attrs(k)) for k, v in tensor.user_coords.items()
+        #     }
+        # else:
+        #     for k, v in tensor.user_coords.items():
+        #         if k not in self.tensor_coords:
+        #             self.tensor_coords[k] = (k, v, self.profile.coord_attrs(k))
 
         self.adjust_level(tensor)
         self.adjust_date(tensor)
@@ -182,10 +194,14 @@ class TensorBackendBuilder:
             and "valid_datetime" not in tensor.user_dims
             and "valid_datetime" not in self.tensor_coords
         ):
+            from .profile import Coord
+
             _dims, _vals = tensor.make_valid_datetime()
             if _dims is None or _vals is None:
                 raise ValueError("valid_datetime coord could not be created")
-            self.tensor_coords["valid_datetime"] = xarray.Variable(_dims, _vals)
+            self.tensor_coords["valid_datetime"] = Coord.make("valid_datetime", _vals, dims=_dims)
+
+            # self.tensor_coords["valid_datetime"] = xarray.Variable(_dims, _vals)
 
     def adjust_step(self):
         # TODO: ensure only called once
@@ -215,7 +231,15 @@ class TensorBackendBuilder:
 
         self.adjust_step()
 
-        dataset = xarray.Dataset(xr_vars, coords=self.coords, attrs=self.attributes)
+        attrs = self.attributes.copy()
+        attrs.update(self.profile.attributes())
+        attrs = self.profile.adjust_attributes(attrs)
+
+        coords = self.profile.rename_coords(self.coords)
+        dataset = xarray.Dataset(xr_vars, coords=coords, attrs=attrs)
+
+        # dataset = self.profile.rename_dims(dataset)
+        # dataset = self.profile.rename_coords(dataset)
         return dataset
 
     def make_variable(self, ds, dims, key, name):
@@ -241,6 +265,7 @@ class TensorBackendBuilder:
         self.collect_coords(tensor)
 
         var_dims = self.var_dims(tensor)
+        var_dims = self.profile.rename_dims(var_dims)
 
         backend_array = TensorBackendArray(
             tensor,
@@ -250,13 +275,19 @@ class TensorBackendBuilder:
             name,
         )
 
+        print("tensor.full_shape", tensor.full_shape)
         data = indexing.LazilyIndexedArray(backend_array)
 
         # Get metadata keys which are common for all fields, and not listed in dataset attrs
         # kk = [k for k in self.profile.index_keys if k not in self.attributes]
         # var_attrs = ds.common_attributes_other(ds_var, kk)
 
-        var_attrs = {}
+        var_attrs = {
+            k: ds_var.index(k)[0] for k in self.profile.var_attributes() if len(ds_var.index(k)) >= 1
+        }
+
+        var_attrs = self.profile.remap(var_attrs)
+        # var_attrs = {k: v[0] for k, v in ds_var.indices().items() if len(v) == 1}
 
         # var_attrs = _get_common_attributes(
         #     ek_variable.source,

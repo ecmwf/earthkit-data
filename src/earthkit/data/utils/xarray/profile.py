@@ -66,6 +66,84 @@ VARIABLE_KEYS = [
 
 CUSTOM_KEYS = ["valid_datetime", "base_datetime", "level_and_type"]
 
+CF_GRIB_KEYS_NAMES = [
+    "cfVarName",
+    "class",
+    "stream",
+    "type",
+    "expver",
+    "date",
+    "hdate",
+    "andate",
+    "time",
+    "antime",
+    "step",
+    "reference",
+    "anoffset",
+    "verify",
+    "fcmonth",
+    "fcperiod",
+    "leadtime",
+    "opttime",
+    "origin",
+    "domain",
+    "method",
+    "diagnostic",
+    "iteration",
+    "number",
+    "quantile",
+    "typeOfLevel",
+    "level",
+    "units",
+]
+
+
+CF_VAR_ATTRIBUTES = ["cfName", "units"]
+CF_MAPPING = {"cfName": "standard_name"}
+
+COORD_ATTRS = {
+    # geography
+    "latitude": {"units": "degrees_north", "standard_name": "latitude", "long_name": "latitude"},
+    "longitude": {"units": "degrees_east", "standard_name": "longitude", "long_name": "longitude"},
+    # vertical
+    "base_datetime": {
+        # "units": "seconds since 1970-01-01T00:00:00",
+        # "calendar": "proleptic_gregorian",
+        "standard_name": "forecast_reference_time",
+        "long_name": "initial time of forecast",
+    },
+    "step": {
+        # "units": "hours",
+        "standard_name": "forecast_period",
+        "long_name": "time since forecast_reference_time",
+    },
+    "time": {
+        # "units": "seconds since 1970-01-01T00:00:00",
+        # "calendar": "proleptic_gregorian",
+        "standard_name": "time",
+        "long_name": "valid_time",
+    },
+    "valid_datetime": {
+        # "units": "seconds since 1970-01-01T00:00:00",
+        # "calendar": "proleptic_gregorian",
+        "standard_name": "time",
+        "long_name": "valid_time",
+    },
+    "valid_time": {
+        # "units": "seconds since 1970-01-01T00:00:00",
+        # "calendar": "proleptic_gregorian",
+        "standard_name": "time",
+        "long_name": "valid_time",
+    },
+    "levelist": {
+        "units": "hPa",
+        "positive": "down",
+        "stored_direction": "decreasing",
+        "standard_name": "air_pressure",
+        "long_name": "pressure",
+    },
+}
+
 
 class CompoundKey:
     name = None
@@ -275,6 +353,12 @@ class LevelTypeDim(Dim):
     name = "levtype"
     drop = ["typeOfLevel"]
 
+    def update(self, ds, attributes, squeeze=True):
+        print("UPDATE levtype", ds.index("levtype"))
+        super().update(ds, attributes, squeeze)
+        if self.active and not squeeze and len(ds.index(self.name)) < 2:
+            self.active = False
+
 
 class NumberDim(Dim):
     name = "number"
@@ -304,6 +388,17 @@ class OtherDim(Dim):
         super().__init__(profile)
 
 
+TIME_DIM = 0
+DATE_DIM = 1
+STEP_DIM = 2
+Z_DIM = 1
+Y_DIM = 2
+X_DIM = 3
+N_DIM = 4
+
+DIM_ORDER = [N_DIM, TIME_DIM, DATE_DIM, STEP_DIM, Z_DIM, Y_DIM, X_DIM]
+
+
 class ProfileConf:
     def __init__(self):
         self._conf = None
@@ -315,7 +410,6 @@ class ProfileConf:
         return self._conf[name]
 
     def _load(self, name):
-        """Load the available backend objects"""
         if name not in self._conf:
             with self._lock:
                 here = os.path.dirname(__file__)
@@ -335,6 +429,8 @@ PROFILE_CONF = ProfileConf()
 
 
 class IndexProfile:
+    fixed_dim_order = False
+
     def __init__(
         self,
         index_keys=None,
@@ -421,23 +517,26 @@ class IndexProfile:
         # print("INIT dim_keys", self.dim_keys)
 
     @staticmethod
-    def make(name):
-        return MarsProfile
-        # conf = PROFILE_CONF.get(name)
-        # return IndexProfile.from_conf(conf)
+    def make(name, *args, **kwargs):
+        profile = PROFILES.get(name, IndexProfile)
+        conf = PROFILE_CONF.get(name)
+        return profile.from_conf(conf, *args, **kwargs)
 
     @classmethod
-    def from_conf(cls, conf):
-        self = cls()
-        self.index_keys = conf["index_keys"]
-        self.mandatory_keys = conf.get("mandatory_keys", [])
-        self.groups = conf.get("groups", {})
+    def from_conf(cls, conf, *args, **kwargs):
+        conf = conf.copy()
+        options = conf.pop("options", {})
+        kwargs.update(options)
 
-        for k in self.mandatory_keys:
-            if k not in self.index_keys:
-                self.index_keys.append(k)
+        # self.index_keys = conf["index_keys"]
+        # self.mandatory_keys = conf.get("mandatory_keys", [])
+        # self.groups = conf.get("groups", {})
 
-        return self
+        # for k in self.mandatory_keys:
+        #     if k not in self.index_keys:
+        #         self.index_keys.append(k)
+
+        return cls(*args, **kwargs, **conf)
 
     @property
     def dim_keys(self):
@@ -533,7 +632,6 @@ class IndexProfile:
             if len(ds.index(k)) > 1:
                 if k not in var_keys and all(d.allows(k) for d in self.dims):
                     new_dims.append(OtherDim(self, k))
-
         self.dims.extend(new_dims)
 
         # var_keys = VARIABLE_KEYS + [self.variable_key]
@@ -583,6 +681,15 @@ class IndexProfile:
     def sort_keys(self):
         return [self.variable_key] + self.dim_keys
 
+    def attributes(self):
+        return dict()
+
+    def var_attributes(self):
+        return list()
+
+    def coord_attrs(self, name):
+        return COORD_ATTRS.get(name, {})
+
 
 class MarsProfile(IndexProfile):
     def __init__(self, *args, **kwargs):
@@ -592,3 +699,96 @@ class MarsProfile(IndexProfile):
             mandatory_keys=GEO_KEYS,
             **kwargs,
         )
+
+
+class Coord:
+    def __init__(self, name, vals, dims=None):
+        self.name = name
+        self.vals = vals
+        self.dims = dims
+        if not self.dims:
+            self.dims = (self.name,)
+        self.convert()
+
+    @staticmethod
+    def make(name, *args, **kwargs):
+        if name in ["date", "valid_datetime", "base_datetime"]:
+            return DateTimeCoord(name, *args, **kwargs)
+        elif name in ["step"]:
+            return StepCoord(name, *args, **kwargs)
+        return Coord(name, *args, **kwargs)
+
+    def make_var(self, profile):
+        import xarray
+
+        # self.profile.remap_coords(self.name)
+        return xarray.Variable(profile.rename_dims(self.dims), self.vals, profile.coord_attrs(self.name))
+
+    def convert(self):
+        pass
+
+
+class DateTimeCoord(Coord):
+    def convert(self):
+        if isinstance(self.vals, list):
+            from earthkit.data.utils.dates import to_datetime_list
+
+            self.vals = to_datetime_list(self.vals)
+
+
+class StepCoord(Coord):
+    def convert(self):
+        from earthkit.data.utils.dates import step_to_delta
+
+        self.vals = [step_to_delta(x) for x in self.vals]
+
+
+class CFProfile(IndexProfile):
+    fixed_dim_order = True
+
+    def __init__(self, *args, variable_key=None, **kwargs):
+        variable_key = "cfVarName"
+        super().__init__(
+            *args,
+            index_keys=CF_GRIB_KEYS_NAMES,
+            mandatory_keys=GEO_KEYS,
+            variable_key=variable_key,
+            **kwargs,
+        )
+
+    def attributes(self):
+        return {"Conventions": "CF-1.8"}
+
+    def var_attributes(self):
+        return CF_VAR_ATTRIBUTES
+
+    def remap(self, d):
+        def _remap(k):
+            return CF_MAPPING.get(k, k)
+
+        return {_remap(k): v for k, v in d.items()}
+
+    # def add_coords(self, name, vals):
+    #     if not self.tensor_coords:
+    #         self.tensor_coords = {
+    #             k: (k, v, self.profile.coord_attrs(k)) for k, v in tensor.user_coords.items()
+    #         }
+    #     else:
+    #         for k, v in tensor.user_coords.items():
+    #             if k not in self.tensor_coords:
+    #                 self.tensor_coords[k] = (k, v, self.profile.coord_attrs(k))
+
+    def rename_dims(self, dims):
+        r = {"valid_datetime": "valid_time", "base_datetime": "forecast_reference_time", "levelist": "level"}
+        return [r.get(d, d) for d in dims]
+
+    def rename_coords(self, coords):
+        r = {"valid_datetime": "valid_time", "base_datetime": "forecast_reference_time", "levelist": "level"}
+        return {r.get(k, k): v for k, v in coords.items()}
+
+    def adjust_attributes(self, attrs):
+        attrs.pop("units", None)
+        return attrs
+
+
+PROFILES = {"mars": MarsProfile, "cf": CFProfile}
