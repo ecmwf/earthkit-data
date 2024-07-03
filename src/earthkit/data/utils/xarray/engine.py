@@ -12,7 +12,6 @@ from itertools import product
 
 import numpy
 import xarray
-import xarray.core.indexing as indexing
 from xarray.backends import BackendEntrypoint
 
 LOG = logging.getLogger(__name__)
@@ -34,63 +33,6 @@ def from_earthkit(ds, **kwargs):
 
         backend_kwargs = kwargs.pop("backend_kwargs", {})
         return SplitDatasetBuilder(ds, **backend_kwargs, **kwargs).build()
-
-
-class EarthkitBackendArray(xarray.backends.common.BackendArray):
-    def __init__(self, tensor, dims, shape, xp, variable):
-        super().__init__()
-        self.tensor = tensor
-        self.dims = dims
-        self.shape = shape
-        self.dtype = xp.dtype(xp.float32)
-        self.xp = xp
-        self._var = variable
-
-    def nbytes(self):
-        from math import prod
-
-        return prod(self.shape) * self.dtype.itemsize
-
-    def __getitem__(self, key: xarray.core.indexing.ExplicitIndexer):
-        # indexing_support = indexing.IndexingSupport.BASIC
-        # raw_key, numpy_indices = indexing.decompose_indexer(
-        #     key, self.shape, indexing_support
-        # )
-        # result = self._raw_indexing_method(raw_key.tuple)
-        # if numpy_indices.tuple:
-        #     # index the loaded np.ndarray
-        #     result = indexing.NdArrayLikeIndexingAdapter(result)[numpy_indices]
-        # return result
-        return indexing.explicit_indexing_adapter(
-            key,
-            self.shape,
-            indexing.IndexingSupport.BASIC,
-            self._raw_indexing_method,
-        )
-        # bug in xarray here? tries to create a NumpyIndexingAdapter instead of NdArrayLikeIndexingAdapter
-        # patched in local copy for now, but could construct this ourself
-
-    def _raw_indexing_method(self, key: tuple):
-        # must be threadsafe
-        # print("_var", self._var)
-        print(f"dims: {self.dims} key: {key} shape: {self.shape}")
-        # isels = dict(zip(self.dims, key))
-        # r = self.ekds.isel(**isels)
-        r = self.tensor[key]
-
-        field_index = r.field_indexes(key)
-        result = r.to_numpy(field_index=field_index).squeeze()
-        # result = self.ekds.isel(**isels).to_numpy()
-
-        # print("result", result.shape)
-        # print(f"Loaded {self.xp.__name__} with shape: {result.shape}")
-
-        # Loading as numpy but then converting. This needs to be changed upstream (eccodes)
-        # to load directly into cupy.
-        # Maybe some incompatibilities when trying to copy from FFI to cupy directly
-        result = self.xp.asarray(result)
-
-        return result
 
 
 class EarthkitBackendEntrypoint(BackendEntrypoint):
