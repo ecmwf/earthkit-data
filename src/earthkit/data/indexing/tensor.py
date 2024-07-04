@@ -421,15 +421,15 @@ class FieldListTensor(TensorCore):
         return cls(source, user_coords, field_coords, field_dims, flatten_values)
 
     @flatten_arg
-    def to_numpy(self, field_index=None, **kwargs):
-        if field_index is not None:
-            if all(i == slice(None, None, None) for i in field_index):
-                field_index = None
+    def to_numpy(self, index=None, **kwargs):
+        if index is not None:
+            if all(i == slice(None, None, None) for i in index):
+                index = None
 
-        if field_index is None:
+        if index is None:
             return self.source.to_numpy(**kwargs).reshape(*self.full_shape)
         else:
-            n = self.source.to_numpy(field_index=field_index, **kwargs)
+            n = self.source.to_numpy(index=index, **kwargs)
             shape = list(self._user_shape)
             shape += list(n.shape[1:])
             return n.reshape(*shape)

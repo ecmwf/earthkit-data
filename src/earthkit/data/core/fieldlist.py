@@ -827,7 +827,7 @@ class FieldList(Index):
         self._md_indices[key] = self._find_index_values(key)
         return self._md_indices[key]
 
-    def to_numpy(self, field_index=None, **kwargs):
+    def to_numpy(self, **kwargs):
         r"""Return all the fields' values as an ndarray. It is formed as the array of the
         :obj:`data.core.fieldlist.Field.to_numpy` values per field.
 
@@ -848,10 +848,7 @@ class FieldList(Index):
         """
         import numpy as np
 
-        if field_index is None:
-            return np.array([f.to_numpy(**kwargs) for f in self])
-        else:
-            return np.array([f.to_numpy(**kwargs)[field_index] for f in self])
+        return np.array([f.to_numpy(**kwargs) for f in self])
 
     def to_array(self, **kwargs):
         r"""Return all the fields' values as an array. It is formed as the array of the

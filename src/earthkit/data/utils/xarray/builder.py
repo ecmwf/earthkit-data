@@ -73,8 +73,8 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
 
         field_index = r.field_indexes(key)
         # print(f"field.index={field_index} coords={r.user_coords}")
-        # result = r.to_numpy(field_index=field_index).squeeze()
-        result = r.to_numpy(field_index=field_index)
+        # result = r.to_numpy(index=field_index).squeeze()
+        result = r.to_numpy(index=field_index)
         # print("result", result.shape)
         # result = self.ekds.isel(**isels).to_numpy()
 
