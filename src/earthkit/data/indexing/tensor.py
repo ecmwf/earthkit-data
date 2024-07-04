@@ -605,13 +605,13 @@ class FieldListTensor(TensorCore):
             ["step"],
         ]
 
-        print(f"{self.user_dims=}")
+        # print(f"{self.user_dims=}")
         for dims in dims_opt:
             if all(d in self.user_dims for d in dims):
                 # use same dim order as in user_dims
                 dims = [d for d in dims if d in self.user_dims]
                 other_dims = [d for d in self.user_dims if d not in dims]
-                print(f"{dims=} {other_dims=}")
+                # print(f"{dims=} {other_dims=}")
                 if other_dims:
                     import datetime
 

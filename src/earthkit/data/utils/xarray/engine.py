@@ -40,9 +40,9 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         self,
         filename_or_obj,
         source_type="file",
-        variable_key=None,
-        variable_metadata_keys=None,
-        variable_mapping=None,
+        var_key=None,
+        var_metadata_keys=None,
+        # variable_mapping=None,
         drop_variables=None,
         extra_index_keys=None,
         ignore_index_keys=None,
@@ -63,10 +63,10 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         array_module=numpy,
     ):
         r"""
-        variable_key: str, None
+        var_key: str, None
             Metadata key to use for defining the dataset variables. It cannot be
             defined as a dimension. When None, the key is automatically determined.
-        variable_metadata_keys: str, iterable of str, None
+        var_metadata_keys: str, iterable of str, None
             Metadata keys to include as variable attributes in the dataset. When None, variable
             attributes are automatically generated.
         variable_mapping: str, dict, None
@@ -131,9 +131,9 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             The module to use for array operations. Default is numpy.
         """
         _kwargs = dict(
-            variable_key=variable_key,
-            variable_metadata_keys=variable_metadata_keys,
-            variable_mapping=variable_mapping,
+            var_key=var_key,
+            var_metadata_keys=var_metadata_keys,
+            # var_mapping=var_mapping,
             drop_variables=drop_variables,
             extra_index_keys=extra_index_keys,
             ignore_index_keys=ignore_index_keys,
@@ -268,7 +268,6 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 class XarrayEarthkitDataSet(XarrayEarthkit):
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
-        print("CALLED")
 
     def to_fieldlist(self):
         from earthkit.data import FieldList

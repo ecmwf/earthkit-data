@@ -14,7 +14,7 @@ import sys
 
 import pytest
 
-from earthkit.data.utils.xarray.profile import MarsProfile
+from earthkit.data.utils.xarray.profile import IndexProfile
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -61,7 +61,7 @@ DS_DATE_SFC_PL = [
         "param": ["2t", "msl"],
         "shortName": ["2t", "msl"],
         "levelist": [None],
-        "level": [FileNotFoundError],
+        "level": [None],
         "levtype": ["sfc"],
         "date": ["20210101", "20210102"],
         "time": ["12"],
@@ -86,14 +86,14 @@ def _attributes(ds):
 
 
 def test_xr_dims_input_fieldlist():
-    prof = MarsProfile()
+    prof = IndexProfile.make("mars")
     ds = load_wrapped_fieldlist(DS_DATE_LEV, prof)
     assert ds.index("param") == ["r", "t"]
     assert ds.index("param_level") == ["r1000", "r850", "t1000", "t850"]
     assert ds.index("level_and_type") == ["1000pl", "850pl"]
 
     remapping = {"param_level": "{param}_{level}"}
-    prof = MarsProfile(remapping=remapping)
+    prof = IndexProfile.make("mars", remapping=remapping)
     ds = load_wrapped_fieldlist(DS_DATE_LEV, prof, remapping=remapping)
     assert ds.index("param") == ["r", "t"]
     assert ds.index("param_level") == ["r_1000", "r_850", "t_1000", "t_850"]
@@ -102,7 +102,7 @@ def test_xr_dims_input_fieldlist():
         "param_level": "{param}_{level}",
         "level_and_type": "{level}_{levtype}",
     }
-    prof = MarsProfile(remapping=remapping)
+    prof = IndexProfile.make("mars", remapping=remapping)
     ds = load_wrapped_fieldlist(DS_DATE_LEV, prof, remapping=remapping)
     assert ds.index("param") == ["r", "t"]
     assert ds.index("param_level") == ["r_1000", "r_850", "t_1000", "t_850"]
@@ -110,24 +110,24 @@ def test_xr_dims_input_fieldlist():
 
 
 @pytest.mark.parametrize(
-    "kwargs,variable_key,variables,dim_keys",
+    "kwargs,var_key,variables,dim_keys",
     [
         ({}, "param", ["r", "t"], ["levelist"]),
         ({"base_datetime_dim": True}, "param", ["r", "t"], ["levelist"]),
         ({"squeeze": False}, "param", ["r", "t"], ["time", "step", "levelist"]),
     ],
 )
-def test_xr_dims_ds_lev(kwargs, variable_key, variables, dim_keys):
-    prof = MarsProfile(**kwargs)
+def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
+    prof = IndexProfile.make("mars", **kwargs)
     ds = load_wrapped_fieldlist(DS_LEV, prof)
     prof.update(ds, _attributes(ds))
-    assert prof.variable_key == variable_key
+    assert prof.var_key == var_key
     assert prof.variables == variables
     assert prof.dim_keys == dim_keys
 
 
 @pytest.mark.parametrize(
-    "kwargs,variable_key,variables,dims",
+    "kwargs,var_key,variables,dims",
     [
         ({}, "param", ["r", "t"], ["date", "levelist"]),
         (
@@ -137,7 +137,7 @@ def test_xr_dims_ds_lev(kwargs, variable_key, variables, dim_keys):
             ["base_datetime", "levelist"],
         ),
         (
-            {"variable_key": "param_level"},
+            {"var_key": "param_level"},
             "param_level",
             ["r1000", "r850", "t1000", "t850"],
             ["date"],
@@ -160,19 +160,19 @@ def test_xr_dims_ds_lev(kwargs, variable_key, variables, dim_keys):
             ["date"],
         ),
         (
-            {"variable_key": "shortName"},
+            {"var_key": "shortName"},
             "shortName",
             ["r", "t"],
             ["date", "levelist"],
         ),
         (
-            {"variable_key": "shortName", "drop_variables": ["r"]},
+            {"var_key": "shortName", "drop_variables": ["r"]},
             "shortName",
             ["t"],
             ["date", "levelist"],
         ),
         (
-            {"variable_key": "param_level", "drop_variables": ["r", "r1000"]},
+            {"var_key": "param_level", "drop_variables": ["r", "r1000"]},
             "param_level",
             ["r850", "t1000", "t850"],
             ["date"],
@@ -191,18 +191,18 @@ def test_xr_dims_ds_lev(kwargs, variable_key, variables, dim_keys):
         ),
     ],
 )
-def test_xr_dims_ds_date_lev(kwargs, variable_key, variables, dims):
+def test_xr_dims_ds_date_lev(kwargs, var_key, variables, dims):
 
     remapping = None
     if "remapping" in kwargs:
         remapping = dict(kwargs["remapping"])
 
-    prof = MarsProfile(**kwargs)
+    prof = IndexProfile.make("mars", **kwargs)
     ds = load_wrapped_fieldlist(DS_DATE_LEV, prof, remapping=remapping)
 
     # ds.load(prof.index_keys)
     prof.update(ds, _attributes(ds))
-    assert prof.variable_key == variable_key
+    assert prof.var_key == var_key
     assert prof.variables == variables
 
     if isinstance(dims, list):
@@ -216,17 +216,17 @@ def test_xr_dims_ds_date_lev(kwargs, variable_key, variables, dims):
 
 
 @pytest.mark.parametrize(
-    "kwargs,variable_key,variables,dim_keys",
+    "kwargs,var_key,variables,dim_keys",
     [
         ({}, "param", ["2t", "msl", "r", "t"], ["date", "levelist", "levtype"]),
         # ({"base_datetime_dim": True}, "param", ["r", "t"], ["levelist"]),
         # ({"squeeze": False}, "param", ["r", "t"], ["time", "step", "levelist"]),
     ],
 )
-def test_xr_dims_ds_sfc_and_pl(kwargs, variable_key, variables, dim_keys):
-    prof = MarsProfile(**kwargs)
+def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
+    prof = IndexProfile.make("mars", **kwargs)
     ds = load_wrapped_fieldlist(DS_DATE_SFC_PL, prof)
     prof.update(ds, _attributes(ds))
-    assert prof.variable_key == variable_key
+    assert prof.var_key == var_key
     assert prof.variables == variables
     assert prof.dim_keys == dim_keys

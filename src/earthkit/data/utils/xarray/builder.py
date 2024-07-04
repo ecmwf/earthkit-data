@@ -63,7 +63,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
     def _raw_indexing_method(self, key: tuple):
         # must be threadsafe
         # print("_var", self._var)
-        print(f"dims: {self.dims} key: {key} shape: {self.shape}")
+        # print(f"dims: {self.dims} key: {key} shape: {self.shape}")
         # isels = dict(zip(self.dims, key))
         # r = self.ekds.isel(**isels)
         # print(f"t-coords={self.tensor.user_coords}")
@@ -137,7 +137,7 @@ class TensorBackendBuilder:
         r = {}
         for k, v in self.grid.coords.items():
             dims = {x: self.grid.dims[x] for x in self.grid.coords_dim[k]}
-            r[k] = xarray.Variable(dims, v, self.profile.coord_attrs(k))
+            r[k] = xarray.Variable(dims, v, self.profile.add_coord_attrs(k))
         return r
 
     def var_dims(self, tensor):
@@ -147,11 +147,11 @@ class TensorBackendBuilder:
         return dims
 
     def collect_coords(self, tensor):
-        from .profile import Coord
+        from .coord import Coord
 
         for k, v in tensor.user_coords.items():
             if k not in self.tensor_coords:
-                self.tensor_coords[k] = Coord.make(k, v)
+                self.tensor_coords[k] = Coord.make(k, v, ds=tensor.source)
 
         # if not self.tensor_coords:
         #     self.tensor_coords = {
@@ -194,7 +194,7 @@ class TensorBackendBuilder:
             and "valid_datetime" not in tensor.user_dims
             and "valid_datetime" not in self.tensor_coords
         ):
-            from .profile import Coord
+            from .coord import Coord
 
             _dims, _vals = tensor.make_valid_datetime()
             if _dims is None or _vals is None:
@@ -227,9 +227,9 @@ class TensorBackendBuilder:
 
         # we assume each variable forms a full cube
         for variable in self.profile.variables:
-            xr_vars[variable] = self.make_variable(self.ds, self.dims, self.profile.variable_key, variable)
+            xr_vars[variable] = self.make_variable(self.ds, self.dims, self.profile.var_key, variable)
 
-        self.adjust_step()
+        # self.adjust_step()
 
         attrs = self.attributes.copy()
         attrs.update(self.profile.attributes())
@@ -275,7 +275,7 @@ class TensorBackendBuilder:
             name,
         )
 
-        print("tensor.full_shape", tensor.full_shape)
+        # print("tensor.full_shape", tensor.full_shape)
         data = indexing.LazilyIndexedArray(backend_array)
 
         # Get metadata keys which are common for all fields, and not listed in dataset attrs
@@ -291,7 +291,7 @@ class TensorBackendBuilder:
 
         # var_attrs = _get_common_attributes(
         #     ek_variable.source,
-        #     [k for k in variable_metadata_keys if k not in attributes],
+        #     [k for k in var_metadata_keys if k not in attributes],
         # )
 
         # print(f"var_attrs: {var_attrs}")
@@ -316,25 +316,25 @@ class DatasetBuilder:
     def __init__(
         self,
         ds,
-        variable_key=None,
-        variable_metadata_keys=None,
-        variable_mapping=None,
-        drop_variables=None,
-        extra_index_keys=None,
-        ignore_index_keys=None,
-        dims=None,
-        squeeze=True,
-        auto_split=False,
-        split_dims=None,
+        # var_key=None,
+        var_metadata_keys=None,
+        # variable_mapping=None,
+        # drop_variables=None,
+        # extra_index_keys=None,
+        # ignore_index_keys=None,
+        # dims=None,
+        # squeeze=True,
+        # auto_split=False,
+        # split_dims=None,
         flatten_values=False,
         remapping=None,
         profile="mars",
-        base_datetime_dim=False,
-        valid_datetime_dim=False,
-        valid_datetime_coord=False,
-        timedelta_step=False,
-        level_and_type_dim=False,
-        level_per_type_dim=False,
+        # base_datetime_dim=False,
+        # valid_datetime_dim=False,
+        # valid_datetime_coord=False,
+        # timedelta_step=False,
+        # level_and_type_dim=False,
+        # level_per_type_dim=False,
         geo_coords=True,
         merge_cf_and_pf=False,
         errors=None,
@@ -354,31 +354,37 @@ class DatasetBuilder:
         self.ds = ds
         self.kwargs = kwargs
 
-        self.variable_key = variable_key
-        self.variable_metadata_keys = ensure_iterable(variable_metadata_keys)
-        self.variable_mapping = variable_mapping
-        self.drop_variables = ensure_iterable(drop_variables)
-        self.extra_index_keys = ensure_iterable(extra_index_keys)
-        self.ignore_index_keys = ensure_iterable(ignore_index_keys)
-        self.dims = ensure_iterable(dims)
-        self.squeeze = squeeze
-        self.auto_split = auto_split
-        self.split_dims = ensure_iterable(split_dims)
+        # self.var_key = var_key
+        self.var_metadata_keys = ensure_iterable(var_metadata_keys)
+        # self.variable_mapping = variable_mapping
+        # self.drop_variables = ensure_iterable(drop_variables)
+        # self.extra_index_keys = ensure_iterable(extra_index_keys)
+        # self.ignore_index_keys = ensure_iterable(ignore_index_keys)
+        # self.dims = ensure_iterable(dims)
+        # self.squeeze = squeeze
+        # self.auto_split = auto_split
+        # self.split_dims = ensure_iterable(split_dims)
         self.flatten_values = flatten_values
         self.remapping = remapping
-        self.profile = profile
-        self.base_datetime_dim = base_datetime_dim
-        self.valid_datetime_dim = valid_datetime_dim
-        self.valid_datetime_coord = valid_datetime_coord
-        self.timedelta_step = timedelta_step
-        self.level_and_type_dim = level_and_type_dim
-        self.level_per_type_dim = level_per_type_dim
+        self.profile_name = profile
+        # self.base_datetime_dim = base_datetime_dim
+        # self.valid_datetime_dim = valid_datetime_dim
+        # self.valid_datetime_coord = valid_datetime_coord
+        # self.timedelta_step = timedelta_step
+        # self.level_and_type_dim = level_and_type_dim
+        # self.level_per_type_dim = level_per_type_dim
         self.geo_coords = geo_coords
         self.merge_cf_and_pf = merge_cf_and_pf
         self.errors = errors
         self.array_module = array_module
 
         self.grids = {}
+
+        # patches = None
+        # if self.merge_cf_and_pf:
+        #     patches = {"type": {"cf": "pf"}, "number": {None: 0}}
+
+        # self.remapping = build_remapping(self.remapping, patches)
 
     def parse(self):
         assert not hasattr(self.ds, "_ek_builder")
@@ -391,35 +397,35 @@ class DatasetBuilder:
 
         from .profile import IndexProfile
 
-        profile = IndexProfile.make(self.profile)
-        profile = profile(
-            remapping=remapping,
-            variable_key=self.variable_key,
-            extra_index_keys=self.extra_index_keys,
-            drop_variables=self.drop_variables,
-            valid_datetime_dim=self.valid_datetime_dim,
-            base_datetime_dim=self.base_datetime_dim,
-            valid_datetime_coord=self.valid_datetime_coord,
-            level_per_type_dim=self.level_per_type_dim,
-            squeeze=self.squeeze,
-        )
+        profile = IndexProfile.make(self.profile_name, remapping=remapping, **self.kwargs)
+        # profile = profile(
+        #     remapping=remapping,
+        #     var_key=self.var_key,
+        #     extra_index_keys=self.extra_index_keys,
+        #     drop_variables=self.drop_variables,
+        #     valid_datetime_dim=self.valid_datetime_dim,
+        #     base_datetime_dim=self.base_datetime_dim,
+        #     valid_datetime_coord=self.valid_datetime_coord,
+        #     level_per_type_dim=self.level_per_type_dim,
+        #     squeeze=self.squeeze,
+        # )
 
-        # print(f"variable_metadata_keys: {self.variable_metadata_keys}")
+        # print(f"var_metadata_keys: {self.var_metadata_keys}")
         # print(f"profile index_keys={profile.index_keys}")
         # print(f"profile dim_keys={profile.dim_keys}")
-        if isinstance(self.variable_metadata_keys, str):
+        if isinstance(self.var_metadata_keys, str):
             # get first field
             first = self.ds[0]
 
             from .profile import get_metadata_keys
 
-            self.variable_metadata_keys = get_metadata_keys(self.variable_metadata_keys, first.metadata())
+            self.var_metadata_keys = get_metadata_keys(self.var_metadata_keys, first.metadata())
 
             # release first field
             first = None
 
-        assert isinstance(self.variable_metadata_keys, list)
-        profile.add_keys(self.variable_metadata_keys)
+        assert isinstance(self.var_metadata_keys, list)
+        profile.add_keys(self.var_metadata_keys)
         # print(f"profile index_keys={profile.index_keys}")
 
         from .fieldlist import WrappedFieldList
@@ -485,9 +491,9 @@ class SingleDatasetBuilder(DatasetBuilder):
             attributes,
             grid=self.grid(ds),
             flatten_values=self.flatten_values,
-            timedelta_step=self.timedelta_step,
-            valid_datetime_coord=self.valid_datetime_coord,
-            level_per_type_dim=self.level_per_type_dim,
+            timedelta_step=profile.timedelta_step,
+            valid_datetime_coord=profile.valid_datetime_coord,
+            level_per_type_dim=profile.level_per_type_dim,
             geo_coords=self.geo_coords,
             array_module=numpy,
         )
@@ -520,9 +526,9 @@ class SplitDatasetBuilder(DatasetBuilder):
                 attributes,
                 grid=self.grid(s_ds),
                 flatten_values=self.flatten_values,
-                timedelta_step=self.timedelta_step,
-                valid_datetime_coord=self.valid_datetime_coord,
-                level_per_type_dim=self.level_per_type_dim,
+                timedelta_step=profile.timedelta_step,
+                valid_datetime_coord=profile.valid_datetime_coord,
+                level_per_type_dim=profile.level_per_type_dim,
                 geo_coords=self.geo_coords,
                 array_module=numpy,
             )
