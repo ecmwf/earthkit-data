@@ -87,6 +87,9 @@ optional-dependencies.all = [
 optional-dependencies.cds = [
   "cdsapi",
 ]
+optional-dependencies.ci = [
+  "earthkit-data-demo-source@git+https://github.com/ecmwf/earthkit-data-demo-source",
+]
 optional-dependencies.eccovjson = [
   "eccovjson>=0.0.5",
 ]
