@@ -11,27 +11,13 @@ import logging
 import os
 import threading
 
-from earthkit.data.core.order import build_remapping
 from earthkit.data.utils import ensure_iterable
-
-from .dim import BaseDatetimeDim
-from .dim import CompoundKeyDim
-from .dim import DateDim
-from .dim import LevelDim
-from .dim import LevelPerTypeDim
-from .dim import LevelTypeDim
-from .dim import NumberDim
-from .dim import OtherDim
-from .dim import RemappingDim
-from .dim import StepDim
-from .dim import TimeDim
-from .dim import ValidDatetimeDim
 
 LOG = logging.getLogger(__name__)
 
 
 GEO_KEYS = ["md5GridSection"]
-
+MANDATORY_KEYS = GEO_KEYS
 
 CUSTOM_VARIABLE_KEYS = ["param_level"]
 VARIABLE_KEYS = [
@@ -47,33 +33,6 @@ VARIABLE_KEYS = [
 
 
 CUSTOM_KEYS = ["valid_datetime", "base_datetime", "level_and_type"]
-
-
-class CompoundKey:
-    name = None
-    keys = []
-
-    def remapping(self):
-        return {self.name: "".join([str(k) for k in self.keys])}
-
-    @staticmethod
-    def make(key):
-        ck = COMPOUND_KEYS.get(key, None)
-        return ck() if ck is not None else None
-
-
-class ParamLevelKey(CompoundKey):
-    name = "param_level"
-    keys = ["param", "level"]
-
-
-class LevelAndTypeKey(CompoundKey):
-    name = "level_and_type"
-    keys = ["level", "levtype"]
-
-
-COMPOUND_KEYS = {v.name: v for v in [ParamLevelKey, LevelAndTypeKey]}
-
 
 DEFAULT_METADATA_KEYS = {
     "CF": [
@@ -118,6 +77,7 @@ class ProfileConf:
             with self._lock:
                 here = os.path.dirname(__file__)
                 path = os.path.join(here, f"{name}.yaml")
+                print("path", here)
                 if os.path.exists(path):
                     import yaml
 
@@ -125,7 +85,8 @@ class ProfileConf:
                         with open(path, "r") as f:
                             self._conf[name] = yaml.safe_load(f)
                     except Exception as e:
-                        LOG.exception(f"Failed to import array backend code {name} from {path}. {e}")
+                        LOG.exception(f"Failed read profile conf {name} from {path}. {e}")
+                        raise
                 else:
                     raise ValueError(f"Profile {name} not found! path={path}")
 
@@ -133,197 +94,137 @@ class ProfileConf:
 PROFILE_CONF = ProfileConf()
 
 
-class IndexProfile:
+class Profile:
     fixed_dim_order = False
 
     def __init__(
         self,
         index_keys=None,
-        ignore_index_keys=None,
-        mandatory_keys=None,
-        var_key=None,
-        squeeze=True,
-        extra_index_keys=None,
-        remapping=None,
+        variable_key=None,
         drop_variables=None,
-        valid_datetime_dim=False,
-        base_datetime_dim=False,
-        valid_datetime_coord=False,
-        base_datetime_coord=False,
-        timedelta_step=False,
-        level_and_type_dim=False,
-        level_per_type_dim=False,
-        no_levtype_dim=False,
-        fixed_dims=False,
-        var_attrs=None,
-        attr_mapping=None,
-        dim_coord_mapping=None,
+        variable_attrs=None,
+        extra_variable_attrs=None,
         global_attrs=None,
+        extra_global_attrs=None,
+        drop_global_attrs=None,
+        global_attrs_strategy=None,
+        predefined_dims=None,
+        extra_dims=None,
+        drop_dims=None,
+        ensure_dims=None,
+        fixed_dims=None,
+        squeeze=True,
+        remapping=None,
+        add_valid_time_dim=False,
+        add_forecast_ref_time_dim=False,
+        add_valid_time_coord=False,
+        step_as_timedelta=False,
+        add_level_and_type_dim=False,
+        add_level_per_type_dim=False,
         coord_attrs=None,
+        dim_coord_mapping=None,
+        attr_mapping=None,
         level_maps=None,
-        dims=None,
         merge_pf_and_cf=False,
-        merge_pl_levels=False,
+        attrs_mode=None,
+        **kwargs,
     ):
+
+        if kwargs:
+            raise ValueError(f"Profile got unsupported arguments: {kwargs}")
 
         def _ensure_dict(d):
             return {} if d is None else d
 
         self.fixed_dims = _ensure_dict(fixed_dims)
-        self.var_attrs = _ensure_dict(var_attrs)
+        self.variable_attrs = _ensure_dict(variable_attrs)
         self.attr_mapping = _ensure_dict(attr_mapping)
         self.dim_coord_mapping = _ensure_dict(dim_coord_mapping)
         self.global_attrs = _ensure_dict(global_attrs)
         self.coord_attrs = _ensure_dict(coord_attrs)
         self.level_maps = _ensure_dict(level_maps)
         self.squeeze = squeeze
-        self.valid_datetime_dim = valid_datetime_dim
-        self.base_datetime_dim = base_datetime_dim
-        self.valid_datetime_coord = valid_datetime_coord
-        self.timedelta_step = timedelta_step
-        self.level_and_type_dim = level_and_type_dim
-        self.level_per_type_dim = level_per_type_dim
-        self.var_key = var_key
+        self.add_valid_time_dim = add_valid_time_dim
+        self.add_forecast_ref_time_dim = add_forecast_ref_time_dim
+        self.add_valid_time_coord = add_valid_time_coord
+        self.step_as_timedelta = step_as_timedelta
+        self.add_level_and_type_dim = add_level_and_type_dim
+        self.add_level_per_type_dim = add_level_per_type_dim
+        self.variable_key = variable_key
 
-        self.index_keys = [] if index_keys is None else list(index_keys)
+        self.global_attrs = _ensure_dict(global_attrs)
+        self.extra_global_attrs = _ensure_dict(extra_global_attrs)
+        self.drop_global_attrs = ensure_iterable(drop_global_attrs)
+        self.global_attrs_strategy = global_attrs_strategy
+        self.predefined_dims = ensure_iterable(predefined_dims)
+        self.extra_dims = ensure_iterable(extra_dims)
+        self.drop_dims = ensure_iterable(drop_dims)
+        self.ensure_dims = ensure_iterable(ensure_dims)
 
+        self.index_keys = ensure_iterable(index_keys)
+        self.add_keys(ensure_iterable(MANDATORY_KEYS))
+        # self.add_keys(ensure_iterable(extra_dims))
         # print("INIT index_keys", self.index_keys)
-        mandatory_keys = [] if mandatory_keys is None else list(mandatory_keys)
-        self.add_keys(mandatory_keys)
-        # print("INIT index_keys", self.index_keys)
+        if variable_key is not None:
+            self.add_keys([variable_key])
 
-        # print("INIT extra_index_keys", extra_index_keys)
-        extra_index_keys = [] if extra_index_keys is None else ensure_iterable(extra_index_keys)
+        from .attrs import GlobalAttrs
+        from .dim import Dims
 
-        self.add_keys(ensure_iterable(extra_index_keys))
-        # print("INIT index_keys", self.index_keys)
-        if var_key is not None:
-            self.add_keys([var_key])
-
-        self.dims = []
-
-        # print("INIT index_keys", self.index_keys)
-
-        remapping = build_remapping(remapping)
-        # print(f"{remapping=}")
-        if remapping:
-            for k in remapping.lists:
-                d = RemappingDim(self, k, remapping.lists[k])
-                self.dims.append(d)
-
-        for k in self.index_keys:
-            if not remapping or k not in remapping.lists:
-                ck = CompoundKey.make(k)
-                if ck is not None:
-                    d = CompoundKeyDim(self, ck)
-                    # print("CompoundKeyDim", ck.name, ck.keys)
-                    self.dims.append(d)
-
-        if valid_datetime_dim:
-            self.dims.append(ValidDatetimeDim(self))
-        elif base_datetime_dim:
-            self.dims.append(BaseDatetimeDim(self))
-            self.dims.append(StepDim(self))
-            if valid_datetime_coord:
-                self.add_keys(["valid_datetime"])
-        else:
-            self.dims.extend([DateDim(self), TimeDim(self), StepDim(self)])
-
-        self.level_per_type_dim = level_per_type_dim
-        if level_per_type_dim:
-            self.dims.append(LevelPerTypeDim(self))
-        # elif "level_and_type" in self.index_keys:
-        #     self.dims.append(LevelAndTypeDim(self))
-        else:
-            self.dims.append(LevelDim(self))
-            self.dims.append(LevelTypeDim(self))
-
-        self.dims.append(NumberDim(self))
+        self.dims = Dims(self)
+        self.g_attrs = GlobalAttrs(self)
 
         # print("INIT dim_keys", self.dim_keys)
         self.drop_variables = drop_variables
 
         self.variables = []
-        if var_key is not None:
-            self.user_var_key = True
-            self.var_key = var_key
-        else:
-            self.user_var_key = False
-            self.var_key = self.guess_var_key()
+        self.frozen_variable_key = variable_key is not None
+        self.variable_key = variable_key if variable_key is not None else self.guess_variable_key()
 
-        # print("INIT variable key", self.var_key)
+        # print("INIT variable key", self.variable_key)
         # print("INIT index_keys", self.index_keys)
         # print("INIT dim_keys", self.dim_keys)
 
     @staticmethod
     def make(name, *args, **kwargs):
-        # profile = PROFILES.get(name, IndexProfile)
         conf = PROFILE_CONF.get(name)
-        return IndexProfile.from_conf(name, conf, *args, **kwargs)
+        return Profile.from_conf(name, conf, *args, **kwargs)
 
     @classmethod
     def from_conf(cls, name, conf, *args, **kwargs):
         conf = conf.copy()
-        options = conf.pop("options", {})
+        options = conf.pop("frozen_options", {})
 
         for k, v in kwargs.items():
             if v is not None and k in conf and conf[k] != v:
-                raise ValueError("Cannot specify kwargs for built in option" f" {k} in profile={name}!")
+                raise ValueError(f"Cannot specify {k} as a kwarg. It is a frozen option in profile={name}")
 
         kwargs = dict(**kwargs)
         kwargs.update(options)
+        conf.update(kwargs)
 
-        # print("kwargs", kwargs)
-        # print(f"from_conf name={name} conf={conf} args={args} kwargs={kwargs}")
-        # self.index_keys = conf["index_keys"]
-        # self.mandatory_keys = conf.get("mandatory_keys", [])
-        # self.groups = conf.get("groups", {})
-
-        # for k in self.mandatory_keys:
-        #     if k not in self.index_keys:
-        #         self.index_keys.append(k)
-
-        return cls(*args, **kwargs, **conf)
+        return cls(*args, **conf)
 
     @property
     def dim_keys(self):
-        return [d.name for d in self.dims if d.active]
+        return self.dims.active_dim_keys
 
     def add_keys(self, keys):
         self.index_keys += [key for key in keys if key not in self.index_keys]
 
-    def guess_var_key(self):
+    def guess_variable_key(self):
         """If any remapping/compound key contains a param key, the variable key is set
         to that key.
         """
-        for d in self.dims:
-            if any(p in d for p in VARIABLE_KEYS):
-                # print(f"GUESS deactivate dim={d.name} keys={d.drop}")
-                assert d.name in self.index_keys
-                d.active = False
-                d.deactivate_related()
-                return d.name
+        names = self.dims.deactivate(VARIABLE_KEYS, others=True, collect=True)
+        if names:
+            return names[0]
 
         for k in CUSTOM_VARIABLE_KEYS:
             if k in self.index_keys:
                 return k
 
         return VARIABLE_KEYS[0]
-
-    # def adjust_dims_to_remapping(self):
-    #     if self.remapping:
-    #         for k, v in self.remapping.lists.items():
-    #             for _, d in self.managed_dims.items():
-    #                 if k in d or any(p in d for p in v):
-    #                     d.remove()
-
-    #             # if k in self.dim_keys:
-    #             #     for rk in v:
-    #             #         group = self._key_group(rk)
-    #             #         for key in group:
-    #             #             if key in self.dim_keys:
-    #             #
-    #             #
 
     def remove_dims(self, keys):
         self.dims = [d for d in self.dims if any(k in d for k in keys)]
@@ -334,74 +235,31 @@ class IndexProfile:
     def _squeeze(self, ds, attributes):
         self.dim_keys = [key for key in self.dim_keys if key in ds.indices() and key not in attributes]
 
-    def _update_variables(self, ds):
-        if not self.user_var_key and self.var_key in VARIABLE_KEYS:
-            self.variables = ds.index(self.var_key)
+    def update_variables(self, ds):
+        self.variables = ds.index(self.variable_key)
+
+        if not self.frozen_variable_key and self.variable_key in VARIABLE_KEYS:
+            # try to find a valid variable out of the predefined variable keys
             if not self.variables:
                 for k in VARIABLE_KEYS:
-                    if k != self.var_key:
+                    if k != self.variable_key:
                         self.variables = ds.index(k)
                         if self.variables:
-                            self.var_key = k
+                            self.variable_key = k
                             break
         else:
-            self.variables = ds.index(self.var_key)
             if self.drop_variables:
                 self.variables = [v for v in self.variables if v not in self.drop_variables]
 
         if not self.variables:
-            raise ValueError(f"No values found for variable key {self.var_key}")
+            raise ValueError(f"No metadata values found for variable key {self.variable_key}")
 
-    def _update_dims(self, ds, attributes):
+    def update_dims(self, ds, attributes):
         # variable keys cannot be dimensions
-        # print("UPDATE dim_keys[0]", self.dim_keys)
-        var_keys = VARIABLE_KEYS + [self.var_key]
-        for d in self.dims:
-            # print(f" d={d.name}")
-            if d.active and any(k in d for k in var_keys):
-                # print("DEACTIVATE dim={d.name} keys={d.group}")
-                d.active = False
-                d.deactivate_related()
-
-        # print("UPDATE dim_keys[0a]", self.dim_keys)
-
-        for d in self.dims:
-            d.update(ds, attributes, self.squeeze)
-        # print("UPDATE dim_keys[0b]", self.dim_keys)
-
-        # if self.level_per_type_dim:
-        #     print("UPDATE levtype", ds.index("levtype"))
-        #     for x in ds.index("levtype"):
-        #         self.dims.append(LevelPerTypeDim(self))
-
-        new_dims = []
-        for k in self.index_keys:
-            if len(ds.index(k)) > 1:
-                if k not in var_keys and all(d.allows(k) for d in self.dims):
-                    new_dims.append(OtherDim(self, k))
-        self.dims.extend(new_dims)
-
-        # var_keys = VARIABLE_KEYS + [self.var_key]
-        # for d in self.dims:
-        #     if d.active and any(k in d for k in var_keys):
-        #         d.active = False
-
-        # print("UPDATE dim_keys[1]", self.dim_keys)
-
-        # self.dim_keys = [
-        #     key
-        #     for key in self.dim_keys
-        #     if key in self.managed_dims
-        #     or (key in ds.indices() and key not in attributes)
-        # ]
-
-        # for ck in self.compound_keys:
-        #     self._remove_dim_keys.remove(ck.keys)
-
-        # print("UPDATE dim_keys[2]", self.dim_keys)
-
-        # assert self.dim_keys
-        assert self.var_key not in self.dim_keys
+        variable_keys = VARIABLE_KEYS + [self.variable_key]
+        self.dims.deactivate(variable_keys, others=True)
+        self.dims.update(ds, attributes, variable_keys)
+        assert self.variable_key not in self.dim_keys
 
     def update(self, ds, attributes):
         """
@@ -412,27 +270,27 @@ class IndexProfile:
         attributes: dict
             Index keys which has a single (valid) value
         """
-        self._update_variables(ds)
-        self._update_dims(ds, attributes)
+        self.update_variables(ds)
+        self.update_dims(ds, attributes)
 
-        assert self.var_key is not None
+        assert self.variable_key is not None
         assert self.variables
         # assert self.dim_keys
-        assert self.var_key not in self.dim_keys
+        assert self.variable_key not in self.dim_keys
 
-        # print("UPDATE var_key", self.var_key)
+        # print("UPDATE variable_key", self.variable_key)
         # print("UPDATE variables", self.variables)
         # print(" -> dim_keys", self.dim_keys)
 
     @property
     def sort_keys(self):
-        return [self.var_key] + self.dim_keys
+        return [self.variable_key] + self.dim_keys
 
     def attributes(self):
         return self.global_attrs
 
     def var_attributes(self):
-        return self.var_attrs
+        return self.variable_attrs
 
     def add_coord_attrs(self, name):
         return self.coord_attrs.get(name, {})

@@ -108,7 +108,12 @@ def get_fields_from_ds(
                 use = True
 
             # Of course, not every one sets the standard_name
-            if standard_name in ["time", "forecast_reference_time"] or long_name in ["time"] or axis == "T":
+            if (
+                standard_name in ["time", "forecast_reference_time"]
+                or long_name in ["time"]
+                or axis == "T"
+                or coord in ["time", "forecast_reference_time"]
+            ):
                 # we might not be able to convert time to datetime
                 try:
                     coordinates.append(TimeCoordinate(c, coord in info))

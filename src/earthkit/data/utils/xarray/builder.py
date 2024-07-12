@@ -227,14 +227,14 @@ class TensorBackendBuilder:
 
         # we assume each variable forms a full cube
         for variable in self.profile.variables:
-            xr_vars[variable] = self.make_variable(self.ds, self.dims, self.profile.var_key, variable)
+            xr_vars[variable] = self.make_variable(self.ds, self.dims, self.profile.variable_key, variable)
 
         # self.adjust_step()
 
-        attrs = self.attributes.copy()
-        attrs.update(self.profile.attributes())
-        attrs = self.profile.adjust_attributes(attrs)
-
+        # attrs = self.attributes.copy()
+        # attrs.update(self.profile.attributes())
+        # attrs = self.profile.adjust_attributes(attrs)
+        attrs = self.profile.g_attrs.attrs(self.ds)
         coords = self.profile.rename_coords(self.coords)
         dataset = xarray.Dataset(xr_vars, coords=coords, attrs=attrs)
 
@@ -250,7 +250,7 @@ class TensorBackendBuilder:
             if len(ds_var.index(d)) > 1 or (not self.profile.squeeze and len(ds_var.index(d)) >= 1):
                 tensor_dims.append(d)
 
-        # print("tensor_dims", tensor_dims)
+        print("tensor_dims", tensor_dims)
         tensor = ds_var.to_tensor(
             *tensor_dims,
             sort=False,
@@ -335,7 +335,7 @@ class DatasetBuilder:
         # timedelta_step=False,
         # level_and_type_dim=False,
         # level_per_type_dim=False,
-        geo_coords=True,
+        add_geo_coords=True,
         merge_cf_and_pf=False,
         errors=None,
         array_module=numpy,
@@ -373,7 +373,7 @@ class DatasetBuilder:
         # self.timedelta_step = timedelta_step
         # self.level_and_type_dim = level_and_type_dim
         # self.level_per_type_dim = level_per_type_dim
-        self.geo_coords = geo_coords
+        self.add_geo_coords = add_geo_coords
         self.merge_cf_and_pf = merge_cf_and_pf
         self.errors = errors
         self.array_module = array_module
@@ -395,9 +395,9 @@ class DatasetBuilder:
 
         remapping = build_remapping(self.remapping, patches)
 
-        from .profile import IndexProfile
+        from .profile import Profile
 
-        profile = IndexProfile.make(self.profile_name, remapping=remapping, **self.kwargs)
+        profile = Profile.make(self.profile_name, remapping=remapping, **self.kwargs)
         # profile = profile(
         #     remapping=remapping,
         #     var_key=self.var_key,
@@ -491,10 +491,10 @@ class SingleDatasetBuilder(DatasetBuilder):
             attributes,
             grid=self.grid(ds),
             flatten_values=self.flatten_values,
-            timedelta_step=profile.timedelta_step,
-            valid_datetime_coord=profile.valid_datetime_coord,
-            level_per_type_dim=profile.level_per_type_dim,
-            geo_coords=self.geo_coords,
+            timedelta_step=profile.step_as_timedelta,
+            valid_datetime_coord=profile.add_valid_time_coord,
+            level_per_type_dim=profile.add_level_per_type_dim,
+            geo_coords=self.add_geo_coords,
             array_module=numpy,
         )
 
@@ -526,10 +526,10 @@ class SplitDatasetBuilder(DatasetBuilder):
                 attributes,
                 grid=self.grid(s_ds),
                 flatten_values=self.flatten_values,
-                timedelta_step=profile.timedelta_step,
-                valid_datetime_coord=profile.valid_datetime_coord,
-                level_per_type_dim=profile.level_per_type_dim,
-                geo_coords=self.geo_coords,
+                timedelta_step=profile.step_as_timedelta,
+                valid_datetime_coord=profile.add_valid_datetime_coord,
+                level_per_type_dim=profile.add_level_per_type_dim,
+                geo_coords=self.add_geo_coords,
                 array_module=numpy,
             )
 

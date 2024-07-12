@@ -7,8 +7,14 @@
 #   merge_pf_and_cf: true
 #   merge_pl_levels: true
 #   var_key: cfVarName
+
+frozen_options:
+- predefined_dims
+- global_attrs_strategy
+
 index_keys:
 - param
+- number
 - class
 - stream
 - type
@@ -31,25 +37,46 @@ index_keys:
 - method
 - diagnostic
 - iteration
-- number
 - quantile
+- levelist
 - levtype
-- level
 - units
 
-var_attrs:
-- cfName
+# variables
+variable_key: param
+variable_attrs:
 - units
 
-attr_mapping:
+# attributes
+attrs_mapping:
   cfName: standard_name
+
+# global attributes
+global_attrs:
+drop_global_attrs:
+- units
+- md5GridSection
+global_attrs_strategy: unique_keys
+
+# dimensions
+predefined_dims:
+- number
+- forecast_reference_time
+- date
+- time
+- step
+- valid_time
+- levelist
+- level_per_type
+
+drop_dims:
+- class
+
 
 dim_coord_mapping:
   valid_datetime: valid_time
   base_time: forecast_reference_time
   base_datetime: forecast_reference_time
-
-global_attrs:
 
 coord_attrs:
   latitude:

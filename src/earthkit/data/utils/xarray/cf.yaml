@@ -1,4 +1,4 @@
-options:
+frozen_options:
   fixed_dims: true
   valid_datetime_coord: true
   base_datetime_dim: true
@@ -9,6 +9,12 @@ options:
   var_key: cfVarName
 index_keys:
 - cfVarName
+- number
+- valid_datetime
+- forecast_reference_time
+- step
+- typeOfLevel
+- level
 - class
 - stream
 - type
@@ -37,12 +43,30 @@ index_keys:
 - level
 - units
 
+attrs_mode: fixed
+
 var_attrs:
 - cfName
 - units
 
-attr_mapping:
+attrs_mapping:
   cfName: standard_name
+
+allow_remapping: false
+
+predefined_dims:
+- number
+- forecast_reference_time
+- step
+- valid_time
+- level
+- level_per_type
+
+key_roles:
+  level: level
+  level_type: typeOfLevel
+  time: forecast_reference_time
+  number: number
 
 dim_coord_mapping:
   valid_datetime: valid_time

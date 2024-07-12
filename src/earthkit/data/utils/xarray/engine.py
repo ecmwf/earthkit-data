@@ -40,33 +40,34 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         self,
         filename_or_obj,
         source_type="file",
-        var_key=None,
-        var_metadata_keys=None,
-        # variable_mapping=None,
+        variable_key=None,
         drop_variables=None,
-        extra_index_keys=None,
-        ignore_index_keys=None,
-        dims=None,
+        extra_variable_attrs=None,
+        extra_global_attrs=None,
+        extra_dims=None,
+        drop_dims=None,
+        ensure_dims=None,
+        fixed_dims=None,
         squeeze=True,
         flatten_values=False,
         remapping=None,
         profile="mars",
-        base_datetime_dim=False,
-        valid_datetime_dim=False,
-        valid_datetime_coord=False,
-        timedelta_step=False,
-        level_and_type_dim=False,
-        level_per_type_dim=False,
-        geo_coords=True,
+        add_forecast_ref_time_dim=False,
+        add_valid_time_dim=False,
+        add_valid_time_coord=False,
+        step_as_timedelta=False,
+        add_level_and_type_dim=False,
+        add_level_per_type_dim=False,
+        add_geo_coords=True,
         merge_cf_and_pf=False,
         errors=None,
         array_module=numpy,
     ):
         r"""
-        var_key: str, None
+        variable_key: str, None
             Metadata key to use for defining the dataset variables. It cannot be
             defined as a dimension. When None, the key is automatically determined.
-        var_metadata_keys: str, iterable of str, None
+        extra_variable_attrs: str, iterable of str, None
             Metadata keys to include as variable attributes in the dataset. When None, variable
             attributes are automatically generated.
         variable_mapping: str, dict, None
@@ -80,12 +81,16 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             The default is None.
         drop_variables: str, or iterable of str, None
             A variable or list of variables to drop from the dataset. Default is None.
-        extra_index_keys:  str, or iterable of str, None
+        extra_dims:  str, or iterable of str, None
             List of additional metadata keys to use as index keys. Only enabled when
             no ``dims`` is specified.
-        ignore_index_keys:  str, or iterable of str, None
+        drop_dims:  str, or iterable of str, None
             List of metadata keys to ignore as index keys. Default is None.
-        dims: str, or iterable of str, None
+        fixed_dims: str, or iterable of str, None
+            Dimension or list of dimensions in the order they should be used. When defined
+            no other dimensions will be used. Might be incompatible with some
+            other options.
+        ensure_dims: str, or iterable of str, None
             Dimension or list of dimensions in the order they should be used. When defined
             no other dimensions will be used. Might be incompatible with some
             other options.
@@ -102,27 +107,27 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             Define new metadata keys for indexing. Default is None.
         profile: str
             The profile to use for indexing the dataset. Default is "mars".
-        base_datetime_dim: bool
+        add_forecast_ref_time_dim: bool
             The ``date`` and ``time`` dimensions are combined into a single dimension
-            called `base_datetime` with datetime64 values. Default is False.
-        valid_datetime_dim: bool
+            called `forecast_reference_time` with datetime64 values. Default is False.
+        add_valid_time_dim: bool
             The ``date``, ``time`` and ``step`` dimensions are combined into a single
-            dimension called `valid_datetime` with np.datetime64 values. Default is False.
-        timedelta_step: bool
+            dimension called `valid_yime` with np.datetime64 values. Default is False.
+        step_as_timedelta: bool
             Convert the ``step`` dimension to np.timedelta64 values. Default is False.
-        valid_datetime_coord: bool
+        add_valid_time_coord: bool
             Add a `valid_datetime` coordinate containing np.datetime64 values to the
-            dataset. Only used when ``valid_datetime_dim`` is False. Default is False.
-        level_and_type_dim: bool
+            dataset. Only used when ``add_valid_time_dim`` is False. Default is False.
+        add_level_and_type_dim: bool
             Use a single dimension for level and type of level. Cannot be used when
-            ``_level_per_type_dim`` is True. Default is False.
-        level_per_type_dim: bool
+            ``add_level_per_type_dim`` is True. Default is False.
+        add_level_per_type_dim: bool
             Use a separate dimension for each level type.  Cannot be used when
-            ``level_and_type_dim`` is True.  Default is False.
+            ``add_level_and_type_dim`` is True.  Default is False.
         merge_cf_and_pf: bool
             Treat ENS control forecasts as if they had "type=pf" and "number=0" metadata values.
             Default is False.
-        geo_coords: bool
+        add_geo_coords: bool
             Add geographic coordinates to the dataset when field values are represented by
             a single "values" dimension. Default is True.
         errors: str, None
@@ -131,24 +136,26 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             The module to use for array operations. Default is numpy.
         """
         _kwargs = dict(
-            var_key=var_key,
-            var_metadata_keys=var_metadata_keys,
+            variable_key=variable_key,
+            extra_variable_attrs=extra_variable_attrs,
             # var_mapping=var_mapping,
             drop_variables=drop_variables,
-            extra_index_keys=extra_index_keys,
-            ignore_index_keys=ignore_index_keys,
-            dims=dims,
+            extra_global_attrs=extra_global_attrs,
+            extra_dims=extra_dims,
+            drop_dims=drop_dims,
+            fixed_dims=fixed_dims,
+            ensure_dims=ensure_dims,
             squeeze=squeeze,
             flatten_values=flatten_values,
             remapping=remapping,
             profile=profile,
-            base_datetime_dim=base_datetime_dim,
-            valid_datetime_dim=valid_datetime_dim,
-            valid_datetime_coord=valid_datetime_coord,
-            timedelta_step=timedelta_step,
-            level_and_type_dim=level_and_type_dim,
-            level_per_type_dim=level_per_type_dim,
-            geo_coords=geo_coords,
+            add_forecast_ref_time_dim=add_forecast_ref_time_dim,
+            add_valid_time_dim=add_valid_time_dim,
+            add_valid_time_coord=add_valid_time_coord,
+            step_as_timedelta=step_as_timedelta,
+            add_level_and_type_dim=add_level_and_type_dim,
+            add_level_per_type_dim=add_level_per_type_dim,
+            add_geo_coords=add_geo_coords,
             merge_cf_and_pf=merge_cf_and_pf,
             errors=errors,
             array_module=array_module,
