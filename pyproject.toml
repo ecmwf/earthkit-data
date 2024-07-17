@@ -52,27 +52,33 @@ dependencies = [
 optional-dependencies.all = [
   "cartopy",
   "cdsapi",
-  "cfgrib>=0.9.10.1",
-  "dask",
-  "earthkit-geo>=0.2",
-  "earthkit-meteo>=0.0.1",
-  "eccodes>=1.7",
   "eccovjson>=0.0.5",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
-  "entrypoints",
-  "filelock",
   "geopandas",
   "hda",
-  "jinja2",
-  "jsonschema",
-  "markdown",
-  "multiurl",
+  "polytope-client>=0.7.4",
+  "pyfdb",
+  "pyodc",
+]
+optional-dependencies.cds = [
+  "cdsapi",
+]
+optional-dependencies.ci = [
+  "array-api-compat",
+  "torch",
+]
+optional-dependencies.dev = [
+  "cartopy",
+  "cdsapi",
+  "earthkit-data-demo-source @ git+https://github.com/ecmwf/earthkit-data-demo-source",
+  "eccovjson>=0.0.5",
+  "ecmwf-api-client>=1.6.1",
+  "ecmwf-opendata>=0.3.3",
+  "geopandas",
+  "hda",
   "nbconvert",
   "nbformat",
-  "netcdf4",
-  "pandas",
-  "pdbufr>=0.11",
   "polytope-client>=0.7.4",
   "pyfdb",
   "pyodc",
@@ -80,13 +86,8 @@ optional-dependencies.all = [
   "pytest-cov",
   "pytest-forked",
   "pytest-timeout",
-  "pyyaml",
-  "tqdm>=4.63",
-  "xarray>=0.19",
 ]
-optional-dependencies.cds = [
-  "cdsapi",
-]
+
 optional-dependencies.eccovjson = [
   "eccovjson>=0.0.5",
 ]
@@ -112,6 +113,7 @@ optional-dependencies.projection = [
   "cartopy",
 ]
 optional-dependencies.test = [
+  "earthkit-data-demo-source @ git+https://github.com/ecmwf/earthkit-data-demo-source",
   "nbconvert",
   "nbformat",
   "pytest",
