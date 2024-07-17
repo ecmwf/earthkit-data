@@ -1,7 +1,17 @@
 Version 0.9 Updates
 /////////////////////////
 
+
 Version 0.9.1
+===============
+
+Fixes
+++++++
+
+- When "shortName" is "~" in the GRIB header, :func:`metadata` now returns the value of "paramId" as a str for both the "param" and "shortName" keys. Previously "~" was returned for both these keys.
+
+
+Version 0.9.0
 ===============
 
 New features
