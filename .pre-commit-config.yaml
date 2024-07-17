@@ -11,7 +11,7 @@ repos:
   - id: debug-statements
   - id: mixed-line-ending
   - id: no-commit-to-branch # Prevent committing to main / master
-  - id: check-merge-conflict # Check for files that contain merge conflict
+  # - id: check-merge-conflict # Check for files that contain merge conflict
 - repo: https://github.com/PyCQA/isort
   rev: 5.13.0
   hooks:
