@@ -72,7 +72,7 @@ optional-dependencies.ci = [
 optional-dependencies.dev = [
   "cartopy",
   "cdsapi",
-  "earthkit-data-demo-source @ git+https://github.com/ecmwf/earthkit-data-demo-source",
+  "earthkit-data-demo-source",
   "eccovjson>=0.0.5",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
@@ -88,7 +88,6 @@ optional-dependencies.dev = [
   "pytest-forked",
   "pytest-timeout",
 ]
-
 optional-dependencies.eccovjson = [
   "eccovjson>=0.0.5",
 ]
@@ -114,7 +113,7 @@ optional-dependencies.projection = [
   "cartopy",
 ]
 optional-dependencies.test = [
-  "earthkit-data-demo-source @ git+https://github.com/ecmwf/earthkit-data-demo-source",
+  "earthkit-data-demo-source",
   "nbconvert",
   "nbformat",
   "pytest",

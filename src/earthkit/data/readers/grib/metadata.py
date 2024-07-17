@@ -360,7 +360,13 @@ class GribMetadata(Metadata):
         if not raise_on_missing:
             _kwargs["default"] = default
 
-        return self._handle.get(_key_name(key), ktype=astype, **_kwargs)
+        key = _key_name(key)
+
+        # special case when  "shortName" is "~".
+        v = self._handle.get(key, ktype=astype, **_kwargs)
+        if key == "shortName" and v == "~":
+            v = self._handle.get("paramId", ktype=str, **_kwargs)
+        return v
 
     def _is_custom_key(self, key):
         return key in self.CUSTOM_KEYS
