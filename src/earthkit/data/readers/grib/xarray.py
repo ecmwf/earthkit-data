@@ -8,7 +8,6 @@
 #
 
 import logging
-import warnings
 
 from earthkit.data.utils.kwargs import Kwargs
 from earthkit.data.utils.serialise import deserialise_state
@@ -59,12 +58,16 @@ class XarrayMixIn:
             chunks=None,  # Set to 'auto' for lazy loading
         )
 
-    def to_xarray(self, **kwargs):
+    def to_xarray(self, engine="earthkit", **kwargs):
         """
         Convert the FieldList into an xarray DataSet using :xref:`cfgrib`.
 
         Parameters
         ----------
+        engine, str, optional
+            The xarray engine to use for generating the dataset. Default value is ``earthkit``.
+            If set to ``cfgrib``, the :xref:`cfgrib` engine is used. No other values are
+            supported.
         **kwargs: dict, optional
             Other keyword arguments:
 
@@ -100,89 +103,178 @@ class XarrayMixIn:
         ... )
 
         """
+        # import xarray as xr
+
+        # xarray_open_dataset_kwargs = {}
+
+        # if "xarray_open_mfdataset_kwargs" in kwargs:
+        #     warnings.warn(
+        #         "xarray_open_mfdataset_kwargs is deprecated, please use xarray_open_dataset_kwargs instead."
+        #     )
+        #     kwargs["xarray_open_dataset_kwargs"] = kwargs.pop("xarray_open_mfdataset_kwargs")
+
+        engines = {"earthkit": self.to_xarray_earthkit, "cfgrib": self.to_xarray_cfgrib}
+
+        engine = kwargs.pop("engine")
+        if engine not in engines:
+            raise ValueError(f"Unsupported engine: {engine}")
+
+        user_xarray_open_dataset_kwargs = kwargs.get("xarray_open_dataset_kwargs", {})
+
+        return engines[engine](user_xarray_open_dataset_kwargs, **kwargs)
+
+        # # To use the legacy cfgrib method, set _legacy=True
+        # if engine == "cfgrib":
+        #     # until ignore_keys is included into cfgrib,
+        #     # it is implemented here directly
+        #     ignore_keys = user_xarray_open_dataset_kwargs.get("backend_kwargs", {}).pop("ignore_keys", [])
+
+        #     open_object = IndexWrapperForCfGrib(self, ignore_keys=ignore_keys)
+
+        #     for key in ["backend_kwargs"]:
+        #         xarray_open_dataset_kwargs[key] = Kwargs(
+        #             user=user_xarray_open_dataset_kwargs.pop(key, {}),
+        #             default={"errors": "raise"},
+        #             forced={},
+        #             logging_owner="xarray_open_dataset_kwargs",
+        #             logging_main_key=key,
+        #         )
+
+        #     default = dict(squeeze=False)  # TODO:Document me
+        #     default.update(self.xarray_open_dataset_kwargs())
+
+        #     xarray_open_dataset_kwargs.update(
+        #         Kwargs(
+        #             user=user_xarray_open_dataset_kwargs,
+        #             default=default,
+        #             forced={
+        #                 "errors": "raise",
+        #                 "engine": "cfgrib",
+        #             },
+        #             logging_owner="xarray_open_dataset_kwargs",
+        #             warn_non_default=False,
+        #         )
+        #     )
+
+        #     return xr.open_dataset(
+        #         open_object,
+        #         # decode_cf=False,
+        #         **xarray_open_dataset_kwargs,
+        #         **kwargs,
+        #     )
+
+        # else:
+        #     for key in ["backend_kwargs"]:
+        #         xarray_open_dataset_kwargs[key] = Kwargs(
+        #             user=user_xarray_open_dataset_kwargs.pop(key, {}),
+        #             default={"errors": "raise"},
+        #             forced={},
+        #             logging_owner="xarray_open_dataset_kwargs",
+        #             logging_main_key=key,
+        #         )
+
+        #     # print(f"{xarray_open_dataset_kwargs=}")
+
+        #     default = dict()
+        #     default.update(self.xarray_open_dataset_kwargs())
+
+        #     xarray_open_dataset_kwargs.update(
+        #         Kwargs(
+        #             user=user_xarray_open_dataset_kwargs,
+        #             default=default,
+        #             forced={
+        #                 # "errors": "raise",
+        #                 "engine": "earthkit",
+        #             },
+        #             logging_owner="xarray_open_dataset_kwargs",
+        #             warn_non_default=False,
+        #         )
+        #     )
+
+        #     # print(f"{kwargs=}")
+        #     # print(f"{xarray_open_dataset_kwargs=}")
+
+        #     from earthkit.data.utils.xarray.engine import from_earthkit
+
+        #     return from_earthkit(self, **xarray_open_dataset_kwargs)
+
+    def to_xarray_earthkit(self, user_xarray_open_dataset_kwargs, **kwargs):
+
+        xarray_open_dataset_kwargs = {}
+
+        for key in ["backend_kwargs"]:
+            xarray_open_dataset_kwargs[key] = Kwargs(
+                user=user_xarray_open_dataset_kwargs.pop(key, {}),
+                default={"errors": "raise"},
+                forced={},
+                logging_owner="xarray_open_dataset_kwargs",
+                logging_main_key=key,
+            )
+
+        # print(f"{xarray_open_dataset_kwargs=}")
+
+        default = dict()
+        default.update(self.xarray_open_dataset_kwargs())
+
+        xarray_open_dataset_kwargs.update(
+            Kwargs(
+                user=user_xarray_open_dataset_kwargs,
+                default=default,
+                forced={
+                    # "errors": "raise",
+                    "engine": "earthkit",
+                },
+                logging_owner="xarray_open_dataset_kwargs",
+                warn_non_default=False,
+            )
+        )
+
+        # print(f"{kwargs=}")
+        # print(f"{xarray_open_dataset_kwargs=}")
+
+        from earthkit.data.utils.xarray.engine import from_earthkit
+
+        return from_earthkit(self, **xarray_open_dataset_kwargs)
+
+    def to_xarray_cfgrib(self, user_xarray_open_dataset_kwargs, **kwargs):
         import xarray as xr
 
         xarray_open_dataset_kwargs = {}
 
-        if "xarray_open_mfdataset_kwargs" in kwargs:
-            warnings.warn(
-                "xarray_open_mfdataset_kwargs is deprecated, please use xarray_open_dataset_kwargs instead."
-            )
-            kwargs["xarray_open_dataset_kwargs"] = kwargs.pop("xarray_open_mfdataset_kwargs")
+        # until ignore_keys is included into cfgrib,
+        # it is implemented here directly
+        ignore_keys = user_xarray_open_dataset_kwargs.get("backend_kwargs", {}).pop("ignore_keys", [])
 
-        user_xarray_open_dataset_kwargs = kwargs.get("xarray_open_dataset_kwargs", {})
+        open_object = IndexWrapperForCfGrib(self, ignore_keys=ignore_keys)
 
-        # To use the legacy cfgrib method, set _legacy=True
-        if kwargs.get("_legacy", False):
-            # until ignore_keys is included into cfgrib,
-            # it is implemented here directly
-            ignore_keys = user_xarray_open_dataset_kwargs.get("backend_kwargs", {}).pop("ignore_keys", [])
-
-            open_object = IndexWrapperForCfGrib(self, ignore_keys=ignore_keys)
-
-            for key in ["backend_kwargs"]:
-                xarray_open_dataset_kwargs[key] = Kwargs(
-                    user=user_xarray_open_dataset_kwargs.pop(key, {}),
-                    default={"errors": "raise"},
-                    forced={},
-                    logging_owner="xarray_open_dataset_kwargs",
-                    logging_main_key=key,
-                )
-
-            default = dict(squeeze=False)  # TODO:Document me
-            default.update(self.xarray_open_dataset_kwargs())
-
-            xarray_open_dataset_kwargs.update(
-                Kwargs(
-                    user=user_xarray_open_dataset_kwargs,
-                    default=default,
-                    forced={
-                        "errors": "raise",
-                        "engine": "cfgrib",
-                    },
-                    logging_owner="xarray_open_dataset_kwargs",
-                    warn_non_default=False,
-                )
+        for key in ["backend_kwargs"]:
+            xarray_open_dataset_kwargs[key] = Kwargs(
+                user=user_xarray_open_dataset_kwargs.pop(key, {}),
+                default={"errors": "raise"},
+                forced={},
+                logging_owner="xarray_open_dataset_kwargs",
+                logging_main_key=key,
             )
 
-            return xr.open_dataset(
-                open_object,
-                # decode_cf=False,
-                **xarray_open_dataset_kwargs,
-                **kwargs,
+        default = dict(squeeze=False)  # TODO:Document me
+        default.update(self.xarray_open_dataset_kwargs())
+
+        xarray_open_dataset_kwargs.update(
+            Kwargs(
+                user=user_xarray_open_dataset_kwargs,
+                default=default,
+                forced={
+                    "errors": "raise",
+                    "engine": "cfgrib",
+                },
+                logging_owner="xarray_open_dataset_kwargs",
+                warn_non_default=False,
             )
+        )
 
-        else:
-            for key in ["backend_kwargs"]:
-                xarray_open_dataset_kwargs[key] = Kwargs(
-                    user=user_xarray_open_dataset_kwargs.pop(key, {}),
-                    default={"errors": "raise"},
-                    forced={},
-                    logging_owner="xarray_open_dataset_kwargs",
-                    logging_main_key=key,
-                )
-
-            # print(f"{xarray_open_dataset_kwargs=}")
-
-            default = dict()
-            default.update(self.xarray_open_dataset_kwargs())
-
-            xarray_open_dataset_kwargs.update(
-                Kwargs(
-                    user=user_xarray_open_dataset_kwargs,
-                    default=default,
-                    forced={
-                        # "errors": "raise",
-                        "engine": "earthkit",
-                    },
-                    logging_owner="xarray_open_dataset_kwargs",
-                    warn_non_default=False,
-                )
-            )
-
-            # print(f"{kwargs=}")
-            # print(f"{xarray_open_dataset_kwargs=}")
-
-            from earthkit.data.utils.xarray.engine import from_earthkit
-
-            return from_earthkit(self, **xarray_open_dataset_kwargs)
+        return xr.open_dataset(
+            open_object,
+            # decode_cf=False,
+            **xarray_open_dataset_kwargs,
+            **kwargs,
+        )
