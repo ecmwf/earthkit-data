@@ -64,6 +64,10 @@ optional-dependencies.all = [
 optional-dependencies.cds = [
   "cdsapi",
 ]
+optional-dependencies.ci = [
+  "array-api-compat",
+  "torch",
+]
 optional-dependencies.dev = [
   "cartopy",
   "cdsapi",
