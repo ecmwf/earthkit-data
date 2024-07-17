@@ -547,6 +547,18 @@ def test_message(fl_type, array_backend):
     assert v[:4] == b"GRIB"
 
 
+@pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize("array_backend", [None])
+def test_grib_tilde_shortname(fl_type, array_backend):
+    f = load_grib_data("tilde_shortname.grib", fl_type, array_backend, folder="data")
+
+    assert f[0].metadata("shortName") == "106"
+    assert f[0].metadata("shortName", astype=int) == 0
+    assert f[0].metadata("paramId") == 106
+    assert f[0].metadata("paramId", astype=int) == 106
+    assert f[0].metadata("param") == "106"
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
