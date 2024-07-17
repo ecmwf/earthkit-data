@@ -12,38 +12,18 @@ frozen_options:
 - predefined_dims
 - global_attrs_strategy
 
-index_keys:
-- param
-- number
-- class
-- stream
-- type
-- expver
-- date
-- hdate
-- andate
-- time
-- antime
-- step
-- reference
-- anoffset
-- verify
-- fcmonth
-- fcperiod
-- leadtime
-- opttime
-- origin
-- domain
-- method
-- diagnostic
-- iteration
-- quantile
-- levelist
-- levtype
-- units
+vocabulary: mars
 
 # variables
 variable_key: param
+
+attrs:
+- levtype
+- units
+
+attrs_strategy: unique_keys
+
+# variable attributes
 variable_attrs:
 - units
 
@@ -55,23 +35,18 @@ attrs_mapping:
 global_attrs:
 drop_global_attrs:
 - units
-- md5GridSection
-global_attrs_strategy: unique_keys
 
-# dimensions
-predefined_dims:
-- number
-- forecast_reference_time
-- date
-- time
-- step
-- valid_time
-- levelist
-- level_per_type
 
-drop_dims:
-- class
-
+# # dimensions
+# predefined_dims:
+# - number
+# - forecast_reference_time
+# - date
+# - time
+# - step
+# - valid_time
+# - levelist
+# - level_per_type
 
 dim_coord_mapping:
   valid_datetime: valid_time

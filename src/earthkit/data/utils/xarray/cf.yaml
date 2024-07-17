@@ -1,19 +1,18 @@
 frozen_options:
   fixed_dims: true
-  valid_datetime_coord: true
-  base_datetime_dim: true
-  timedelta_step: true
-  no_levtype_dim: true
+  add_valid_time_coord: true
+  # add_forecast_reference_dim: true
+  step_as_timedelta: true
+  # no_levtype_dim: true
   merge_pf_and_cf: true
-  merge_pl_levels: true
-  var_key: cfVarName
+  # merge_pl_levels: true
+  variable_key: cfVarName
 index_keys:
 - cfVarName
 - number
 - valid_datetime
 - forecast_reference_time
 - step
-- typeOfLevel
 - level
 - class
 - stream
@@ -39,34 +38,27 @@ index_keys:
 - iteration
 - number
 - quantile
-- typeOfLevel
-- level
 - units
+
+vocabulary: cf
 
 attrs_mode: fixed
 
-var_attrs:
+variable_attrs:
 - cfName
 - units
 
 attrs_mapping:
   cfName: standard_name
 
-allow_remapping: false
+# allow_remapping: false
 
-predefined_dims:
-- number
-- forecast_reference_time
-- step
-- valid_time
-- level
-- level_per_type
 
-key_roles:
-  level: level
-  level_type: typeOfLevel
-  time: forecast_reference_time
-  number: number
+# key_roles:
+#   level: level
+#   level_type: typeOfLevel
+#   time: forecast_reference_time
+#   number: number
 
 dim_coord_mapping:
   valid_datetime: valid_time

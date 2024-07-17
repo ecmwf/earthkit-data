@@ -102,6 +102,40 @@ def to_date_list(obj):
     return sorted(set(to_datetime_list(obj)))
 
 
+def to_time(dt):
+    if isinstance(dt, int):
+        h = dt / 100
+        m = dt % 100
+        return datetime.time(hour=h, minute=m)
+
+    if isinstance(dt, datetime.time):
+        return dt
+
+    if isinstance(dt, datetime.datetime):
+        return datetime.time
+
+    if isinstance(dt, datetime.date):
+        return datetime.time()
+
+    if isinstance(dt, np.datetime64):
+        # Looks like numpy dates conversion vary
+        dt = dt.astype(datetime.datetime)
+
+        if isinstance(dt, datetime.datetime):
+            return dt.time
+
+        if isinstance(dt, datetime.date):
+            return to_datetime(dt)
+
+        raise ValueError("Failed to convert numpy datetime {}".format((dt, type(dt))))
+
+
+def to_time_list(times):
+    if not isinstance(times, (list, tuple)):
+        return to_time_list([times])
+    return [to_time(x) for x in times]
+
+
 def step_to_delta(step):
     # TODO: make it work for all the ecCodes step formats
     if isinstance(step, int):

@@ -19,46 +19,68 @@ class Coord:
         self.dims = dims
         if not self.dims:
             self.dims = (self.name,)
-        self.convert()
 
     @staticmethod
     def make(name, *args, **kwargs):
-        if name in ["date", "valid_datetime", "base_datetime"]:
+        if name in ["forecast_reference_time", "date", "hdate", "andate", "valid_datetime", "base_datetime"]:
             return DateTimeCoord(name, *args, **kwargs)
+        if name in ["time", "antime"]:
+            return TimeCoord(name, *args, **kwargs)
         elif name in ["step"]:
             return StepCoord(name, *args, **kwargs)
         elif name in ["level", "levelist"]:
             return LevelCoord(name, *args, **kwargs)
         return Coord(name, *args, **kwargs)
 
-    def make_var(self, profile):
+    def to_xr_var(self, profile):
         import xarray
 
         c = profile.rename_coords({self.name: None})
         name = list(c.keys())[0]
-        return xarray.Variable(profile.rename_dims(self.dims), self.convert(), self.attrs(name, profile))
+        return xarray.Variable(
+            profile.rename_dims(self.dims), self.convert(profile), self.attrs(name, profile)
+        )
 
-    def convert(self):
+    def convert(self, profile):
         return self.vals
+
+    def encoding(self, profile):
+        return {}
 
     def attrs(self, name, profile):
         return profile.add_coord_attrs(name)
 
 
 class DateTimeCoord(Coord):
-    def convert(self):
-        if isinstance(self.vals, list):
+    def convert(self, profile):
+        if profile.decode_time:
             from earthkit.data.utils.dates import to_datetime_list
 
             return to_datetime_list(self.vals)
-        return super().convert()
+        return super().convert(profile)
+
+
+class TimeCoord(Coord):
+    def convert(self, profile):
+        if profile.decode_time:
+            from earthkit.data.utils.dates import to_time_list
+
+            return to_time_list(self.vals)
+        return super().convert(profile)
 
 
 class StepCoord(Coord):
-    def convert(self):
-        from earthkit.data.utils.dates import step_to_delta
+    def convert(self, profile):
+        if profile.decode_time:
+            from earthkit.data.utils.dates import step_to_delta
 
-        return [step_to_delta(x) for x in self.vals]
+            return [step_to_delta(x) for x in self.vals]
+        return super().convert(profile)
+
+    def encoding(self, profile):
+        if profile.decode_time:
+            return ({"dtype": "timedelta64[s]"},)
+        return {}
 
 
 class LevelCoord(Coord):

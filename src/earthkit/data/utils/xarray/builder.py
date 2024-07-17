@@ -14,7 +14,6 @@ import xarray
 import xarray.core.indexing as indexing
 
 from earthkit.data.core.order import build_remapping
-from earthkit.data.utils import ensure_iterable
 
 LOG = logging.getLogger(__name__)
 
@@ -32,7 +31,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         self.tensor = tensor
         self.dims = dims
         self.shape = shape
-        self.dtype = xp.dtype(xp.float32)
+        self.dtype = xp.dtype(xp.float64)
         self.xp = xp
         self._var = variable
 
@@ -95,41 +94,36 @@ class TensorBackendBuilder:
         ds,
         profile,
         dims,
-        attributes,
+        global_attrs,
         grid=None,
         flatten_values=False,
-        timedelta_step=False,
-        valid_datetime_coord=False,
-        level_per_type_dim=False,
-        geo_coords=True,
         array_module=numpy,
     ):
         self.ds = ds
         self.profile = profile
         self.dims = dims
-        self.attributes = attributes
+        print("Builder, dims=", dims)
+        self.global_attrs = global_attrs
 
         self.flatten_values = flatten_values
-        self.timedelta_step = timedelta_step
-        self.valid_datetime_coord = valid_datetime_coord
-        self.level_per_type_dim = level_per_type_dim
         self.array_module = array_module
 
+        # coords within the tensor describing the non-field dimensions.
+        # Note: in the tensor the corresponding dims are called user_dims
         self.tensor_coords = {}
+
+        # coords describing the field dimensions
         self.field_coords = {}
 
         self.grid = grid
         if self.grid is None:
             self.grid = Grid(self.ds[0], self.flatten_values)
 
-        if geo_coords:
+        if self.profile.add_geo_coords:
             self.field_coords = self._make_field_coords()
 
-    @property
     def coords(self):
-        r = {k: v.make_var(self.profile) for k, v in self.tensor_coords.items()}
-
-        # r = {k: v for k, v in self.tensor_coords.items()}
+        r = {k: v.to_xr_var(self.profile) for k, v in self.tensor_coords.items()}
         r.update(self.field_coords)
         return r
 
@@ -140,106 +134,29 @@ class TensorBackendBuilder:
             r[k] = xarray.Variable(dims, v, self.profile.add_coord_attrs(k))
         return r
 
-    def var_dims(self, tensor):
-        """Return the list of xr dimensions for the tensor"""
-        dims = list(tensor.full_dims.keys())
-        dims = self.adjust_level_dim(dims, tensor)
-        return dims
-
-    def collect_coords(self, tensor):
-        from .coord import Coord
-
-        for k, v in tensor.user_coords.items():
-            if k not in self.tensor_coords:
-                self.tensor_coords[k] = Coord.make(k, v, ds=tensor.source)
-
-        # if not self.tensor_coords:
-        #     self.tensor_coords = {
-        #         k: (k, v, self.profile.coord_attrs(k)) for k, v in tensor.user_coords.items()
-        #     }
-        # else:
-        #     for k, v in tensor.user_coords.items():
-        #         if k not in self.tensor_coords:
-        #             self.tensor_coords[k] = (k, v, self.profile.coord_attrs(k))
-
-        self.adjust_level(tensor)
-        self.adjust_date(tensor)
-
-    def adjust_level(self, tensor):
-        if self.level_per_type_dim:
-            self.tensor_coords.pop("level", None)
-            if "level" in tensor.user_dims:
-                lev_type = tensor.source[0].metadata("levtype")
-                # print("->lev_type", lev_type)
-                if not lev_type:
-                    raise ValueError("levtype not found in metadata")
-                if lev_type not in self.tensor_coords:
-                    self.tensor_coords[lev_type] = (
-                        lev_type,
-                        list(tensor.user_coords["level"]),
-                    )
-
-    def adjust_level_dim(self, dims, tensor):
-        if self.level_per_type_dim:
-            if "level" in dims:
-                lev_type = tensor.source[0].metadata("levtype")
-                if lev_type in self.tensor_coords:
-                    idx = dims.index("level")
-                    dims[idx] = lev_type
-        return dims
-
-    def adjust_date(self, tensor):
+    def collect_date_coords(self, tensor):
         if (
-            self.valid_datetime_coord
-            and "valid_datetime" not in tensor.user_dims
-            and "valid_datetime" not in self.tensor_coords
+            self.profile.add_valid_time_coord
+            and "valid_time" not in tensor.user_dims
+            and "valid_time" not in self.tensor_coords
         ):
             from .coord import Coord
 
             _dims, _vals = tensor.make_valid_datetime()
             if _dims is None or _vals is None:
-                raise ValueError("valid_datetime coord could not be created")
-            self.tensor_coords["valid_datetime"] = Coord.make("valid_datetime", _vals, dims=_dims)
-
-            # self.tensor_coords["valid_datetime"] = xarray.Variable(_dims, _vals)
-
-    def adjust_step(self):
-        # TODO: ensure only called once
-        if self.timedelta_step and "step" in self.tensor_coords:
-            from earthkit.data.utils.dates import step_to_delta
-
-            d, v = self.tensor_coords["step"]
-            self.tensor_coords["step"] = (d, [step_to_delta(x) for x in v])
-
-    def _get_field_coords(self):
-        r = {}
-        for k, v in self.grid.coords.items():
-            dims = {x: self.grid.dims[x] for x in self.grid.coords_dim[k]}
-            r[k] = xarray.Variable(dims, v)
-        return r
-
-    def _compare(self, name, vals1, vals2):
-        pass
+                raise ValueError("valid_time coord could not be created")
+            self.tensor_coords["valid_time"] = Coord.make("valid_time", _vals, dims=_dims)
 
     def build(self):
         xr_vars = {}
-        # dims = profile.dim_keys
 
         # we assume each variable forms a full cube
         for variable in self.profile.variables:
             xr_vars[variable] = self.make_variable(self.ds, self.dims, self.profile.variable_key, variable)
 
-        # self.adjust_step()
-
-        # attrs = self.attributes.copy()
-        # attrs.update(self.profile.attributes())
-        # attrs = self.profile.adjust_attributes(attrs)
         attrs = self.profile.g_attrs.attrs(self.ds)
-        coords = self.profile.rename_coords(self.coords)
+        coords = self.profile.rename_coords(self.coords())
         dataset = xarray.Dataset(xr_vars, coords=coords, attrs=attrs)
-
-        # dataset = self.profile.rename_dims(dataset)
-        # dataset = self.profile.rename_coords(dataset)
         return dataset
 
     def make_variable(self, ds, dims, key, name):
@@ -247,25 +164,44 @@ class TensorBackendBuilder:
 
         tensor_dims = []
         for d in dims:
-            if len(ds_var.index(d)) > 1 or (not self.profile.squeeze and len(ds_var.index(d)) >= 1):
+            num = len(ds_var.index(d.key))
+            if num == 0:
+                continue
+                if d.name not in self.profile.ensure_dims:
+                    raise ValueError(f"Dimension {d} has no valid values")
+            elif num > 1:
+                tensor_dims.append(d)
+            elif not self.profile.squeeze or d.name in self.profile.ensure_dims:
                 tensor_dims.append(d)
 
-        print("tensor_dims", tensor_dims)
+        tensor_dim_keys = [d.key for d in tensor_dims]
+        # print("tensor_dim_keys", tensor_dim_keys)
         tensor = ds_var.to_tensor(
-            *tensor_dims,
+            *tensor_dim_keys,
             sort=False,
             progress_bar=False,
             field_dims_and_coords=(self.grid.dims, self.grid.coords),
             flatten_values=self.flatten_values,
         )
 
+        var_dims = []
+        for d in tensor_dims:
+            k, c = d.as_coord(d.key, tensor.user_coords[d.key], tensor)
+            if k not in self.tensor_coords:
+                self.tensor_coords[k] = c
+            var_dims.append(k)
+        var_dims.extend(tensor.field_dims)
+
+        self.collect_date_coords(tensor)
+
         # print(f" full_dims={tensor.full_dims}")
         # print(f" full_shape={tensor.full_shape}")
 
-        self.collect_coords(tensor)
-
-        var_dims = self.var_dims(tensor)
-        var_dims = self.profile.rename_dims(var_dims)
+        # self.collect_coords(tensor)
+        # var_dims = self.var_dims(tensor)
+        # var_dims = [d.key for d in tensor_dims]
+        # var_dims = self.profile.rename_dims(var_dims)
+        # print(f"var_dims={var_dims}")
 
         backend_array = TensorBackendArray(
             tensor,
@@ -275,7 +211,6 @@ class TensorBackendBuilder:
             name,
         )
 
-        # print("tensor.full_shape", tensor.full_shape)
         data = indexing.LazilyIndexedArray(backend_array)
 
         # Get metadata keys which are common for all fields, and not listed in dataset attrs
@@ -287,27 +222,7 @@ class TensorBackendBuilder:
         }
 
         var_attrs = self.profile.remap(var_attrs)
-        # var_attrs = {k: v[0] for k, v in ds_var.indices().items() if len(v) == 1}
 
-        # var_attrs = _get_common_attributes(
-        #     ek_variable.source,
-        #     [k for k in var_metadata_keys if k not in attributes],
-        # )
-
-        # print(f"var_attrs: {var_attrs}")
-
-        # if hasattr(ds_var[0], "_offset") and hasattr(ekds, "path"):
-        #     var_attrs["metadata"] = (
-        #         "grib_handle",
-        #         ekds.path,
-        #         ds_var[0]._offset,
-        #     )
-        # else:
-        #     var_attrs["metadata"] = ("id", id(ds_var[0].metadata()))
-
-        # # print(f" -> var_attrs: {var_attrs}")
-
-        # print("var_dims=", var_dims)
         var = xarray.Variable(var_dims, data, attrs=var_attrs)
         return var
 
@@ -316,26 +231,9 @@ class DatasetBuilder:
     def __init__(
         self,
         ds,
-        # var_key=None,
-        var_metadata_keys=None,
-        # variable_mapping=None,
-        # drop_variables=None,
-        # extra_index_keys=None,
-        # ignore_index_keys=None,
-        # dims=None,
-        # squeeze=True,
-        # auto_split=False,
-        # split_dims=None,
         flatten_values=False,
         remapping=None,
         profile="mars",
-        # base_datetime_dim=False,
-        # valid_datetime_dim=False,
-        # valid_datetime_coord=False,
-        # timedelta_step=False,
-        # level_and_type_dim=False,
-        # level_per_type_dim=False,
-        add_geo_coords=True,
         merge_cf_and_pf=False,
         errors=None,
         array_module=numpy,
@@ -344,7 +242,7 @@ class DatasetBuilder:
         """
         auto_split: bool
             When it is True and the data does not form a complete hypercube automatically
-            tries to split the data into multiple hypercubes and returns a list of datasets (one
+            tries to split it into multiple hypercubes and returns a list of datasets (one
             dataset per hypercube). When it is False and the data does not form a complete hypercube
             rases an error. Default is False.
         split_dims: str, or iterable of str, None
@@ -354,81 +252,25 @@ class DatasetBuilder:
         self.ds = ds
         self.kwargs = kwargs
 
-        # self.var_key = var_key
-        self.var_metadata_keys = ensure_iterable(var_metadata_keys)
-        # self.variable_mapping = variable_mapping
-        # self.drop_variables = ensure_iterable(drop_variables)
-        # self.extra_index_keys = ensure_iterable(extra_index_keys)
-        # self.ignore_index_keys = ensure_iterable(ignore_index_keys)
-        # self.dims = ensure_iterable(dims)
-        # self.squeeze = squeeze
-        # self.auto_split = auto_split
-        # self.split_dims = ensure_iterable(split_dims)
         self.flatten_values = flatten_values
         self.remapping = remapping
         self.profile_name = profile
-        # self.base_datetime_dim = base_datetime_dim
-        # self.valid_datetime_dim = valid_datetime_dim
-        # self.valid_datetime_coord = valid_datetime_coord
-        # self.timedelta_step = timedelta_step
-        # self.level_and_type_dim = level_and_type_dim
-        # self.level_per_type_dim = level_per_type_dim
-        self.add_geo_coords = add_geo_coords
         self.merge_cf_and_pf = merge_cf_and_pf
         self.errors = errors
         self.array_module = array_module
-
         self.grids = {}
-
-        # patches = None
-        # if self.merge_cf_and_pf:
-        #     patches = {"type": {"cf": "pf"}, "number": {None: 0}}
-
-        # self.remapping = build_remapping(self.remapping, patches)
 
     def parse(self):
         assert not hasattr(self.ds, "_ek_builder")
+        from .fieldlist import WrappedFieldList
+        from .profile import Profile
 
         patches = None
         if self.merge_cf_and_pf:
             patches = {"type": {"cf": "pf"}, "number": {None: 0}}
-
         remapping = build_remapping(self.remapping, patches)
 
-        from .profile import Profile
-
         profile = Profile.make(self.profile_name, remapping=remapping, **self.kwargs)
-        # profile = profile(
-        #     remapping=remapping,
-        #     var_key=self.var_key,
-        #     extra_index_keys=self.extra_index_keys,
-        #     drop_variables=self.drop_variables,
-        #     valid_datetime_dim=self.valid_datetime_dim,
-        #     base_datetime_dim=self.base_datetime_dim,
-        #     valid_datetime_coord=self.valid_datetime_coord,
-        #     level_per_type_dim=self.level_per_type_dim,
-        #     squeeze=self.squeeze,
-        # )
-
-        # print(f"var_metadata_keys: {self.var_metadata_keys}")
-        # print(f"profile index_keys={profile.index_keys}")
-        # print(f"profile dim_keys={profile.dim_keys}")
-        if isinstance(self.var_metadata_keys, str):
-            # get first field
-            first = self.ds[0]
-
-            from .profile import get_metadata_keys
-
-            self.var_metadata_keys = get_metadata_keys(self.var_metadata_keys, first.metadata())
-
-            # release first field
-            first = None
-
-        assert isinstance(self.var_metadata_keys, list)
-        profile.add_keys(self.var_metadata_keys)
-        # print(f"profile index_keys={profile.index_keys}")
-
-        from .fieldlist import WrappedFieldList
 
         # create new fieldlist and ensure all the required metadata is kept in memory
         ds = WrappedFieldList(self.ds, profile.index_keys, remapping=remapping)
@@ -437,28 +279,19 @@ class DatasetBuilder:
 
         # global attributes are keys which are the same for all the fields
         # attributes = {k: v[0] for k, v in ds_ori.indices().items() if len(v) == 1}
-        attributes = ds.common_indices()
+        global_attrs = ds.common_indices()
 
         # LOG.info(f"{attributes=}")
 
         if hasattr(ds, "path"):
-            attributes["ekds_source"] = ds.path
+            global_attrs["ekds_source"] = ds.path
 
-        # attributes["institution"] = "European Centre fot Medium-range Weather Forecasts"
-
-        # print(f"attributes: {attributes}")
-
-        profile.update(ds, attributes)
+        profile.update(ds, global_attrs)
 
         # the data is only sorted once
         ds_sorted = ds.order_by(profile.sort_keys)
 
-        # dims = profile.dim_keys
-
-        # print(f"sort_keys: {profile.sort_keys}")
-        # print(f"dims: {profile.dim_keys}")
-
-        return ds, ds_sorted, profile, attributes
+        return ds, ds_sorted, profile, global_attrs
 
     def grid(self, ds):
         grids = ds.index("md5GridSection")
@@ -482,19 +315,15 @@ class SingleDatasetBuilder(DatasetBuilder):
         super().__init__(*args, **kwargs)
 
     def build(self):
-        ds, ds_sorted, profile, attributes = self.parse()
-        dims = profile.dim_keys
+        ds, ds_sorted, profile, global_attrs = self.parse()
+        dims = profile.dims.to_list()
         builder = TensorBackendBuilder(
             ds_sorted,
             profile,
             dims,
-            attributes,
+            global_attrs,
             grid=self.grid(ds),
             flatten_values=self.flatten_values,
-            timedelta_step=profile.step_as_timedelta,
-            valid_datetime_coord=profile.add_valid_time_coord,
-            level_per_type_dim=profile.add_level_per_type_dim,
-            geo_coords=self.add_geo_coords,
             array_module=numpy,
         )
 
@@ -514,7 +343,7 @@ class SplitDatasetBuilder(DatasetBuilder):
     def build(self):
         from .splitter import Splitter
 
-        _, ds_sorted, profile, attributes = self.parse()
+        _, ds_sorted, profile, global_attrs = self.parse()
         splitter = Splitter.make(self.auto_split, self.split_dims)
         datasets = []
         for s_dims, s_ds in splitter.split(ds_sorted, profile):
@@ -523,13 +352,9 @@ class SplitDatasetBuilder(DatasetBuilder):
                 s_ds,
                 profile,
                 s_dims,
-                attributes,
+                global_attrs=global_attrs,
                 grid=self.grid(s_ds),
                 flatten_values=self.flatten_values,
-                timedelta_step=profile.step_as_timedelta,
-                valid_datetime_coord=profile.add_valid_datetime_coord,
-                level_per_type_dim=profile.add_level_per_type_dim,
-                geo_coords=self.add_geo_coords,
                 array_module=numpy,
             )
 

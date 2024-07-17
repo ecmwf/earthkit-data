@@ -18,6 +18,7 @@ LOG = logging.getLogger(__name__)
 
 GEO_KEYS = ["md5GridSection"]
 MANDATORY_KEYS = GEO_KEYS
+IGNORE_ATTRS = ["md5GridSection"]
 
 CUSTOM_VARIABLE_KEYS = ["param_level"]
 VARIABLE_KEYS = [
@@ -99,11 +100,16 @@ class Profile:
 
     def __init__(
         self,
+        vocabulary=None,
         index_keys=None,
         variable_key=None,
         drop_variables=None,
+        attrs=None,
+        attrs_strategy=None,
         variable_attrs=None,
         extra_variable_attrs=None,
+        drop_variable_attrs=None,
+        variable_attrs_strategy=None,
         global_attrs=None,
         extra_global_attrs=None,
         drop_global_attrs=None,
@@ -115,18 +121,20 @@ class Profile:
         fixed_dims=None,
         squeeze=True,
         remapping=None,
-        add_valid_time_dim=False,
-        add_forecast_ref_time_dim=False,
+        time_dim_mode="forecast",
+        time_dim_mapping=None,
         add_valid_time_coord=False,
-        step_as_timedelta=False,
-        add_level_and_type_dim=False,
-        add_level_per_type_dim=False,
+        decode_time=True,
+        # step_as_timedelta=False,
+        level_dim_mode="level",
         coord_attrs=None,
         dim_coord_mapping=None,
         attr_mapping=None,
         level_maps=None,
         merge_pf_and_cf=False,
         attrs_mode=None,
+        attrs_mapping=None,
+        add_geo_coords=True,
         **kwargs,
     ):
 
@@ -136,7 +144,12 @@ class Profile:
         def _ensure_dict(d):
             return {} if d is None else d
 
+        from .dim import Vocabulary
+
+        self.vocabulary = Vocabulary.make(vocabulary)
+
         self.fixed_dims = _ensure_dict(fixed_dims)
+        self.attrs = ensure_iterable(attrs)
         self.variable_attrs = _ensure_dict(variable_attrs)
         self.attr_mapping = _ensure_dict(attr_mapping)
         self.dim_coord_mapping = _ensure_dict(dim_coord_mapping)
@@ -144,12 +157,17 @@ class Profile:
         self.coord_attrs = _ensure_dict(coord_attrs)
         self.level_maps = _ensure_dict(level_maps)
         self.squeeze = squeeze
-        self.add_valid_time_dim = add_valid_time_dim
-        self.add_forecast_ref_time_dim = add_forecast_ref_time_dim
+        self.time_dim_mode = time_dim_mode
+        self.time_dim_mapping = _ensure_dict(time_dim_mapping)
+        self.decode_time = decode_time
+        # self.add_valid_time_dim = add_valid_time_dim
+        # self.add_forecast_ref_time_dim = add_forecast_ref_time_dim
         self.add_valid_time_coord = add_valid_time_coord
-        self.step_as_timedelta = step_as_timedelta
-        self.add_level_and_type_dim = add_level_and_type_dim
-        self.add_level_per_type_dim = add_level_per_type_dim
+        # self.step_as_timedelta = step_as_timedelta
+        self.level_dim_mode = level_dim_mode
+        # self.add_level_and_type_dim = add_level_and_type_dim
+        # self.add_level_per_type_dim = add_level_per_type_dim
+        self.add_geo_coords = add_geo_coords
         self.variable_key = variable_key
 
         self.global_attrs = _ensure_dict(global_attrs)
@@ -161,18 +179,27 @@ class Profile:
         self.drop_dims = ensure_iterable(drop_dims)
         self.ensure_dims = ensure_iterable(ensure_dims)
 
+        # if self.add_forecast_ref_time_dim and self.add_valid_time_dim:
+        #     raise ValueError("Cannot add both forecast_ref_time and valid_time dims")
+
         self.index_keys = ensure_iterable(index_keys)
-        self.add_keys(ensure_iterable(MANDATORY_KEYS))
+        # self.add_keys(ensure_iterable(MANDATORY_KEYS))
         # self.add_keys(ensure_iterable(extra_dims))
         # print("INIT index_keys", self.index_keys)
-        if variable_key is not None:
-            self.add_keys([variable_key])
+        # if variable_key is not None:
+        #     self.add_keys([variable_key])
 
         from .attrs import GlobalAttrs
         from .dim import Dims
 
+        print("INIT index_keys", self.index_keys)
         self.dims = Dims(self)
         self.g_attrs = GlobalAttrs(self)
+
+        self.add_keys(ensure_iterable(MANDATORY_KEYS))
+        self.add_keys(self.attrs)
+        self.add_keys(self.variable_attrs)
+        self.add_keys(self.global_attrs)
 
         # print("INIT dim_keys", self.dim_keys)
         self.drop_variables = drop_variables
@@ -180,10 +207,12 @@ class Profile:
         self.variables = []
         self.frozen_variable_key = variable_key is not None
         self.variable_key = variable_key if variable_key is not None else self.guess_variable_key()
+        if self.variable_key is not None:
+            self.add_keys([self.variable_key])
 
         # print("INIT variable key", self.variable_key)
-        # print("INIT index_keys", self.index_keys)
-        # print("INIT dim_keys", self.dim_keys)
+        print("INIT index_keys", self.index_keys)
+        print("INIT dim_keys", self.dim_keys)
 
     @staticmethod
     def make(name, *args, **kwargs):
@@ -195,15 +224,23 @@ class Profile:
         conf = conf.copy()
         options = conf.pop("frozen_options", {})
 
+        if isinstance(options, list):
+            options = {}
+
         for k, v in kwargs.items():
             if v is not None and k in conf and conf[k] != v:
                 raise ValueError(f"Cannot specify {k} as a kwarg. It is a frozen option in profile={name}")
 
         kwargs = dict(**kwargs)
+        # print("kwargs", kwargs)
+        # print("options", options)
         kwargs.update(options)
         conf.update(kwargs)
 
         return cls(*args, **conf)
+
+    def make_dims(self):
+        return self.dims.make_dims()
 
     @property
     def dim_keys(self):
@@ -225,15 +262,6 @@ class Profile:
                 return k
 
         return VARIABLE_KEYS[0]
-
-    def remove_dims(self, keys):
-        self.dims = [d for d in self.dims if any(k in d for k in keys)]
-
-    def _remove_dim_keys(self, drop_keys):
-        self.dim_keys = [key for key in self.dim_keys if key not in drop_keys]
-
-    def _squeeze(self, ds, attributes):
-        self.dim_keys = [key for key in self.dim_keys if key in ds.indices() and key not in attributes]
 
     def update_variables(self, ds):
         self.variables = ds.index(self.variable_key)
@@ -257,7 +285,7 @@ class Profile:
     def update_dims(self, ds, attributes):
         # variable keys cannot be dimensions
         variable_keys = VARIABLE_KEYS + [self.variable_key]
-        self.dims.deactivate(variable_keys, others=True)
+        self.dims.remove(variable_keys, others=True)
         self.dims.update(ds, attributes, variable_keys)
         assert self.variable_key not in self.dim_keys
 
@@ -318,3 +346,6 @@ class Profile:
             return self.attr_mapping.get(k, k)
 
         return {_remap(k): v for k, v in d.items()}
+
+    def collect_coords(self, tensor):
+        return self.dims.as_coord(tensor)

@@ -37,6 +37,7 @@ class Metadata(metaclass=ABCMeta):
         DATETIME,
         GRIDSPEC,
         "base_datetime",
+        "forecast_reference_time",
         "step_timedelta",
         "param_level",
         "level_and_type",
@@ -215,7 +216,7 @@ class Metadata(metaclass=ABCMeta):
             try:
                 if key == DATETIME:
                     return self._valid_datetime().isoformat()
-                elif key == "base_datetime":
+                elif key in ["base_datetime", "forecast_reference_time"]:
                     return self._base_datetime().isoformat()
                 elif key == "step_timedelta":
                     return self._step_timedelta

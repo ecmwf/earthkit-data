@@ -149,6 +149,7 @@ class XarrayMixIn:
                 open_object,
                 # decode_cf=False,
                 **xarray_open_dataset_kwargs,
+                **kwargs,
             )
 
         else:
