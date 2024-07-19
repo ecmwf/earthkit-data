@@ -128,11 +128,11 @@ class VirtualGribMetadata(RawMetadata):
 
     def datetime(self):
         return {
-            "base_time": self._base_datetime(),
-            "valid_time": self._valid_datetime(),
+            "base_time": self.base_datetime(),
+            "valid_time": self.valid_datetime(),
         }
 
-    def _base_datetime(self):
+    def base_datetime(self):
         date = int(self.get("date", None))
         time = int(self.get("time", None))
         return datetime.datetime(
@@ -143,7 +143,7 @@ class VirtualGribMetadata(RawMetadata):
             time % 100,
         )
 
-    def _valid_datetime(self):
+    def valid_datetime(self):
         step = self.get("endStep", None)
         return self._base_datetime() + step_to_delta(step)
 

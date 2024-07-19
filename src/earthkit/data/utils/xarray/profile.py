@@ -11,6 +11,7 @@ import logging
 import os
 import threading
 
+from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
 LOG = logging.getLogger(__name__)
@@ -61,6 +62,22 @@ def get_metadata_keys(tag, metadata):
         return []
 
     raise ValueError(f"Unsupported metadata tag={tag}")
+
+
+class RemappingBuilder:
+    def __init__(self, remappings, patches=None):
+        self.remappings = dict(**ensure_dict(remappings))
+        self.patches = dict(**ensure_dict(patches))
+
+    def build(self):
+        from earthkit.data.core.order import build_remapping
+
+        return build_remapping(self.remappings, patches=self.patches)
+
+    def add(self, remapping, patches=None):
+        self.remappings.update(remapping)
+        if patches is not None:
+            self.patches.update(patches)
 
 
 class ProfileConf:
@@ -135,30 +152,28 @@ class Profile:
         attrs_mode=None,
         attrs_mapping=None,
         add_geo_coords=True,
+        merge_cf_and_pf=False,
         **kwargs,
     ):
 
         if kwargs:
             raise ValueError(f"Profile got unsupported arguments: {kwargs}")
 
-        def _ensure_dict(d):
-            return {} if d is None else d
-
         from .dim import Vocabulary
 
         self.vocabulary = Vocabulary.make(vocabulary)
 
-        self.fixed_dims = _ensure_dict(fixed_dims)
+        self.fixed_dims = ensure_iterable(fixed_dims)
         self.attrs = ensure_iterable(attrs)
-        self.variable_attrs = _ensure_dict(variable_attrs)
-        self.attr_mapping = _ensure_dict(attr_mapping)
-        self.dim_coord_mapping = _ensure_dict(dim_coord_mapping)
-        self.global_attrs = _ensure_dict(global_attrs)
-        self.coord_attrs = _ensure_dict(coord_attrs)
-        self.level_maps = _ensure_dict(level_maps)
+        self.variable_attrs = ensure_iterable(variable_attrs)
+        self.attr_mapping = ensure_dict(attr_mapping)
+        self.dim_coord_mapping = ensure_dict(dim_coord_mapping)
+        self.global_attrs = ensure_dict(global_attrs)
+        self.coord_attrs = ensure_dict(coord_attrs)
+        self.level_maps = ensure_dict(level_maps)
         self.squeeze = squeeze
         self.time_dim_mode = time_dim_mode
-        self.time_dim_mapping = _ensure_dict(time_dim_mapping)
+        self.time_dim_mapping = ensure_dict(time_dim_mapping)
         self.decode_time = decode_time
         # self.add_valid_time_dim = add_valid_time_dim
         # self.add_forecast_ref_time_dim = add_forecast_ref_time_dim
@@ -170,14 +185,15 @@ class Profile:
         self.add_geo_coords = add_geo_coords
         self.variable_key = variable_key
 
-        self.global_attrs = _ensure_dict(global_attrs)
-        self.extra_global_attrs = _ensure_dict(extra_global_attrs)
+        self.global_attrs = ensure_dict(global_attrs)
+        self.extra_global_attrs = ensure_dict(extra_global_attrs)
         self.drop_global_attrs = ensure_iterable(drop_global_attrs)
         self.global_attrs_strategy = global_attrs_strategy
         self.predefined_dims = ensure_iterable(predefined_dims)
         self.extra_dims = ensure_iterable(extra_dims)
         self.drop_dims = ensure_iterable(drop_dims)
         self.ensure_dims = ensure_iterable(ensure_dims)
+        self.merge_cf_and_pf = merge_cf_and_pf
 
         # if self.add_forecast_ref_time_dim and self.add_valid_time_dim:
         #     raise ValueError("Cannot add both forecast_ref_time and valid_time dims")
@@ -188,6 +204,22 @@ class Profile:
         # print("INIT index_keys", self.index_keys)
         # if variable_key is not None:
         #     self.add_keys([variable_key])
+
+        patches = dict()
+        if self.merge_cf_and_pf:
+            patches = {"type": {"cf": "pf"}, "number": {None: 0}}
+        self.remapping = RemappingBuilder(remapping, patches)
+
+        self.variables = []
+        self.variable_key = variable_key
+        if variable_key is None:
+            raise ValueError("variable_key must be set!")
+        self.add_keys([self.variable_key])
+
+        # self.frozen_variable_key = variable_key is not None
+        # self.variable_key = variable_key if self.frozen_variable_key else self.guess_variable_key()
+        # if self.variable_key is not None:
+        #     self.add_keys([self.variable_key])
 
         from .attrs import GlobalAttrs
         from .dim import Dims
@@ -203,12 +235,6 @@ class Profile:
 
         # print("INIT dim_keys", self.dim_keys)
         self.drop_variables = drop_variables
-
-        self.variables = []
-        self.frozen_variable_key = variable_key is not None
-        self.variable_key = variable_key if variable_key is not None else self.guess_variable_key()
-        if self.variable_key is not None:
-            self.add_keys([self.variable_key])
 
         # print("INIT variable key", self.variable_key)
         print("INIT index_keys", self.index_keys)
@@ -227,16 +253,15 @@ class Profile:
         if isinstance(options, list):
             options = {}
 
-        for k, v in kwargs.items():
-            if v is not None and k in conf and conf[k] != v:
-                raise ValueError(f"Cannot specify {k} as a kwarg. It is a frozen option in profile={name}")
+        # for k, v in kwargs.items():
+        #     if v is not None and k in conf and conf[k] != v:
+        #         raise ValueError(f"Cannot specify {k} as a kwarg. It is a frozen option in profile={name}")
 
         kwargs = dict(**kwargs)
         # print("kwargs", kwargs)
         # print("options", options)
         kwargs.update(options)
-        conf.update(kwargs)
-
+        conf.update((k, v) for k, v in kwargs.items() if v is not None)
         return cls(*args, **conf)
 
     def make_dims(self):
@@ -266,18 +291,18 @@ class Profile:
     def update_variables(self, ds):
         self.variables = ds.index(self.variable_key)
 
-        if not self.frozen_variable_key and self.variable_key in VARIABLE_KEYS:
-            # try to find a valid variable out of the predefined variable keys
-            if not self.variables:
-                for k in VARIABLE_KEYS:
-                    if k != self.variable_key:
-                        self.variables = ds.index(k)
-                        if self.variables:
-                            self.variable_key = k
-                            break
-        else:
-            if self.drop_variables:
-                self.variables = [v for v in self.variables if v not in self.drop_variables]
+        # if not self.frozen_variable_key and self.variable_key in VARIABLE_KEYS:
+        #     # try to find a valid variable out of the predefined variable keys
+        #     if not self.variables:
+        #         for k in VARIABLE_KEYS:
+        #             if k != self.variable_key:
+        #                 self.variables = ds.index(k)
+        #                 if self.variables:
+        #                     self.variable_key = k
+        #                     break
+        # else:
+        if self.drop_variables:
+            self.variables = [v for v in self.variables if v not in self.drop_variables]
 
         if not self.variables:
             raise ValueError(f"No metadata values found for variable key {self.variable_key}")

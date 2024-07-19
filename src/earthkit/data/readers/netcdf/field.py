@@ -172,12 +172,12 @@ class XArrayMetadata(RawMetadata):
             time=self.get("time", None),
         )
 
-    def _base_datetime(self):
-        v = self._valid_datetime()
+    def base_datetime(self):
+        v = self.valid_datetime()
         if v is not None:
             return v - timedelta(hours=self.get("hour", 0))
 
-    def _valid_datetime(self):
+    def valid_datetime(self):
         if self.time is not None:
             return to_datetime(self.time)
 

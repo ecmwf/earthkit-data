@@ -7,7 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 import warnings
 from functools import cached_property
 
@@ -17,6 +16,7 @@ from earthkit.data.decorators import cached_method
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
+from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import step_to_delta
 from earthkit.data.utils.projections import Projection
 
@@ -436,27 +436,28 @@ class GribMetadata(Metadata):
             self._geo = GribFieldGeography(self)
         return self._geo
 
-    def _base_datetime(self):
-        date = self.get("date", None)
-        time = self.get("time", None)
-        return self._build_datetime(date, time)
+    def base_datetime(self):
+        return self._datetime("dataDate", "dataTime")
 
-    def _valid_datetime(self):
-        date = self.get("validityDate", None)
-        time = self.get("validityTime", None)
-        return self._build_datetime(date, time)
+    def valid_datetime(self):
+        return self._datetime("validityDate", "validityTime")
 
-    def _build_datetime(self, date, time):
-        return datetime.datetime(
-            date // 10000,
-            date % 10000 // 100,
-            date % 100,
-            time // 100,
-            time % 100,
-        )
+    def reference_datetime(self):
+        return self._datetime("referenceDate", "referenceTime")
 
-    def _step_timedelta(self):
+    def indexing_datetime(self):
+        return self._datetime("indexingDate", "indexingTime")
+
+    def step_timedelta(self):
         return step_to_delta(self.get("step", None))
+
+    def _datetime(self, date_key, time_key):
+        date = self.get(date_key, None)
+        if date is not None:
+            time = self.get(time_key, None)
+            if time is not None:
+                return datetime_from_grib(date, time)
+        return None
 
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.

@@ -13,8 +13,6 @@ import numpy
 import xarray
 import xarray.core.indexing as indexing
 
-from earthkit.data.core.order import build_remapping
-
 LOG = logging.getLogger(__name__)
 
 
@@ -74,6 +72,12 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         # print(f"field.index={field_index} coords={r.user_coords}")
         # result = r.to_numpy(index=field_index).squeeze()
         result = r.to_numpy(index=field_index)
+
+        # ensure axes are squeezed when needed
+        singles = [i for i in list(range(len(r.user_shape))) if isinstance(key[i], int)]
+        if singles:
+            result = result.squeeze(axis=tuple(singles))
+
         # print("result", result.shape)
         # result = self.ekds.isel(**isels).to_numpy()
 
@@ -232,9 +236,8 @@ class DatasetBuilder:
         self,
         ds,
         flatten_values=False,
-        remapping=None,
+        # remapping=None,
         profile="mars",
-        merge_cf_and_pf=False,
         errors=None,
         array_module=numpy,
         **kwargs,
@@ -253,9 +256,9 @@ class DatasetBuilder:
         self.kwargs = kwargs
 
         self.flatten_values = flatten_values
-        self.remapping = remapping
+        # self.remapping = remapping
         self.profile_name = profile
-        self.merge_cf_and_pf = merge_cf_and_pf
+        # self.merge_cf_and_pf = merge_cf_and_pf
         self.errors = errors
         self.array_module = array_module
         self.grids = {}
@@ -265,17 +268,16 @@ class DatasetBuilder:
         from .fieldlist import WrappedFieldList
         from .profile import Profile
 
-        patches = None
-        if self.merge_cf_and_pf:
-            patches = {"type": {"cf": "pf"}, "number": {None: 0}}
-        remapping = build_remapping(self.remapping, patches)
+        profile = Profile.make(self.profile_name, **self.kwargs)
 
-        profile = Profile.make(self.profile_name, remapping=remapping, **self.kwargs)
+        remapping = profile.remapping.build()
+        print(f"{remapping=}")
+        print(f"{profile.remapping=}")
 
-        # create new fieldlist and ensure all the required metadata is kept in memory
+        # create a new fieldlist and ensure all the required metadata is kept in memory
         ds = WrappedFieldList(self.ds, profile.index_keys, remapping=remapping)
         # print(f"{remapping=}")
-        # print(f"ds: {ds.indices()}")
+        print(f"ds: {ds.indices()}")
 
         # global attributes are keys which are the same for all the fields
         # attributes = {k: v[0] for k, v in ds_ori.indices().items() if len(v) == 1}

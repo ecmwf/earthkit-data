@@ -61,12 +61,13 @@ class DateTimeCoord(Coord):
 
 
 class TimeCoord(Coord):
-    def convert(self, profile):
-        if profile.decode_time:
-            from earthkit.data.utils.dates import to_time_list
+    pass
+    # def convert(self, profile):
+    #     if profile.decode_time:
+    #         from earthkit.data.utils.dates import to_time_list
 
-            return to_time_list(self.vals)
-        return super().convert(profile)
+    #         return to_time_list(self.vals)
+    #     return super().convert(profile)
 
 
 class StepCoord(Coord):

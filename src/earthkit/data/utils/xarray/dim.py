@@ -9,7 +9,6 @@
 
 import logging
 
-from earthkit.data.core.order import build_remapping
 from earthkit.data.utils import ensure_iterable
 
 LOG = logging.getLogger(__name__)
@@ -41,15 +40,25 @@ class CompoundKey:
 
 class ParamLevelKey(CompoundKey):
     name = "param_level"
-    keys = ["param", "level"]
+    keys = ["param", "level", "levelist"]
 
 
-class LevelAndTypeKey(CompoundKey):
-    name = "level_and_type"
-    keys = ["level", "levtype"]
+# class LevelAndTypeKey(CompoundKey):
+#     name = "level_and_type"
+#     keys = ["level", "levtype"]
 
 
-COMPOUND_KEYS = {v.name: v for v in [ParamLevelKey, LevelAndTypeKey]}
+COMPOUND_KEYS = {v.name: v for v in [ParamLevelKey]}
+LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels", "typeOfLevel", "levtype"]
+
+
+def find_alias(key):
+    keys = [LEVEL_KEYS]
+    r = []
+    for k in keys:
+        if key in k:
+            r.extend(k)
+    return r
 
 
 class Vocabulary:
@@ -77,93 +86,416 @@ class CFVocabulary(Vocabulary):
 VOCABULARIES = {"mars": MarsVocabulary, "cf": CFVocabulary}
 
 
-class DimGroup:
+class Dim:
     name = None
-    names = None
+    key = None
+    alias = None
+    drop = None
+    # predefined_index = -1
 
-    def __init__(self, dims, used):
-        self.used = {d: dims[d] for d in used}
-        self.ignored = {k: v for k, v in dims.items() if k not in self.used}
-        assert all(n in self.used or n in self.ignored for n in self.names)
+    def __init__(self, owner, name=None, key=None, active=True):
+        self.owner = owner
+        self.profile = owner.profile
+        self.active = active
+        self.alias = ensure_iterable(self.alias)
+        self.drop = ensure_iterable(self.drop)
+        if name is not None:
+            self.name = name
+
+        if self.key is None:
+            self.key = self.name
+
+        self.coords = {}
+
+    def copy(self):
+        return self.__class__(self.owner)
+
+    def _replace_dim(self, key_src, key_dst):
+        if key_dst not in self.profile.dim_keys:
+            try:
+                idx = self.profile.dim_keys.index(key_src)
+                self.profile.dim_keys[idx] = key_dst
+            except ValueError:
+                self.profile.dim_keys.append(key_dst)
+
+    def __contains__(self, key):
+        return key == self.name or key in self.alias
+
+    def allowed(self, key):
+        return key not in self and key not in self.drop
+
+    def check(self):
+        if self.active:
+            self.active = self.condition()
+            if self.active:
+                self.deactivate_drop_list()
+
+    def condition(self):
+        return True
+
+    def update(self, ds, attributes, squeeze=True):
+        # if self.key in ds.indices():
+        #     print(f"-> {self.name} key={self.key} active={self.active} ds={ds.index(self.key)}")
+
+        if not self.active:
+            return
+
+        # sanity check
+        if self.profile.variable_key in self:
+            raise ValueError(
+                (
+                    f"Variable key {self.profile.var_key} cannot be in "
+                    f"dimension={self.name} group={self.group}"
+                )
+            )
+
+        # assert self.name in self.profile.dim_keys, f"self.name={self.name}"
+        if self.key not in self.profile.ensure_dims:
+            if squeeze:
+                if not (self.key in ds.indices() and len(ds.index(self.key)) > 1):
+                    self.active = False
+            else:
+                if not (self.key in ds.indices() and len(ds.index(self.key)) >= 1):
+                    self.active = False
+
+        self.deactivate_drop_list()
+
+    def deactivate_drop_list(self):
+        self.owner.deactivate([self.name, self.key] + self.drop, ignore_dim=self)
+
+    def as_coord(self, key, values, tensor):
+        if key not in self.coords:
+            from .coord import Coord
+
+            self.coords[key] = Coord.make(key, values, ds=tensor.source)
+        return key, self.coords[key]
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(name={self.name}, key={self.key})"
+
+
+class DateDim(Dim):
+    name = "date"
+    drop = ["valid_datetime", "base_datetime", "forecast_reference_time"]
+
+
+class TimeDim(Dim):
+    name = "time"
+    drop = ["valid_datetime", "base_datetime"]
+
+
+class StepDim(Dim):
+    name = "step"
+    drop = ["valid_datetime", "stepRange"]
+
+
+class ValidTimeDim(Dim):
+    name = "valid_time"
+    # key = "valid_datetime"
+    drop = ["time", "date", "step", "base_datetime", "validityTime", "validityDate", "valid_datetime"]
+    rank = 1
+
+
+class ForecastRefTimeDim(Dim):
+    name = "forecast_reference_time"
+    drop = ["time", "date", "valid_datetime", "dataTime", "dataDate"]
+    alias = ["base_datetime"]
+
+
+class IndexingTimeDim(Dim):
+    name = "indexing_time"
+    drop = ["indexingTime", "indexingDate"]
+
+
+class ReferenceTimeDim(Dim):
+    name = "reference_time"
+    drop = ["referenceTime", "referenceDate"]
+
+
+class CustomForecastRefDim(Dim):
+    @staticmethod
+    def _datetime(val):
+        if not val:
+            return None
+        else:
+            from earthkit.data.utils.dates import datetime_from_grib
+
+            try:
+                date, time = val.split("_")
+                return datetime_from_grib(int(date), int(time)).isoformat()
+            except Exception:
+                return val
+
+    def __init__(self, owner, keys, *args, active=True, **kwargs):
+        if isinstance(keys, str):
+            self.key = keys
+        elif isinstance(keys, list) and len(keys) == 2:
+            date = keys[0]
+            time = keys[1]
+            self.key = f"{date}_{time}"
+            self.drop = [date, time]
+            if active:
+                owner.register_remapping(
+                    {self.key: "{" + date + "}_{" + time + "}"},
+                    patch={self.key: CustomForecastRefDim._datetime},
+                )
+        else:
+            raise ValueError(f"Invalid keys={keys}")
+        super().__init__(owner, *args, active=active, **kwargs)
+
+    def copy(self):
+        return self.__class__(self.owner, self.key)
+
+
+class LevelDim(Dim):
+    drop = ["levelist", "level"]
+    alias = "levelist"
+
+    def __init__(self, owner, key, *args, **kwargs):
+        self.key = key
+        self.name = key
+        super().__init__(owner, *args, **kwargs)
+
+    def copy(self):
+        return self.__class__(self.owner, self.key)
+
+
+class LevelPerTypeDim(Dim):
+    name = "level_per_type"
+    drop = ["levelist", "levtype", "typeOfLevel"]
+
+    def __init__(self, owner, level_key, level_type_key, *args, **kwargs):
+        self.key = level_key
+        self.level_key = level_key
+        self.level_type_key = level_type_key
+        super().__init__(owner, *args, **kwargs)
+
+    def copy(self):
+        return self.__class__(self.owner, self.level_key, self.level_type_key)
+
+    def as_coord(self, key, values, tensor):
+        lev_type = tensor.source[0].metadata(self.level_type_key)
+        if not lev_type:
+            raise ValueError(f"{d.type_key} not found in metadata")
+
+        if lev_type not in self.coords:
+            from .coord import Coord
+
+            coord = Coord.make(lev_type, list(values), ds=tensor.source)
+            self.coords[lev_type] = coord
+        return lev_type, self.coords[lev_type]
+
+
+class LevelAndTypeDim(Dim):
+    name = "level_and_type"
+    drop = ["level", "levelist", "typeOfLevel", "levtype"]
+
+    def __init__(self, owner, level_key, level_type_key, active=True, *args, **kwargs):
+        self.level_key = level_key
+        self.level_type_key = level_type_key
+        if active:
+            owner.register_remapping(
+                {self.name: "{" + self.level_key + "}{" + self.level_type_key + "}"},
+            )
+        super().__init__(owner, *args, active=active, **kwargs)
+
+    def copy(self):
+        return self.__class__(self.owner, self.level_key, self.level_type_key, active=self.active)
+
+
+class LevelTypeDim(Dim):
+    name = "levtype"
+    drop = ["typeOfLevel"]
+
+    def update(self, ds, attributes, squeeze=True):
+        # print("UPDATE levtype", ds.index("levtype"))
+        super().update(ds, attributes, squeeze)
+        if self.active and not squeeze and len(ds.index(self.name)) < 2:
+            self.active = False
+
+
+class TypeOfLevelDim(Dim):
+    name = "typeOfLevel"
+    drop = ["levtype"]
+
+    def update(self, ds, attributes, squeeze=True):
+        # print("UPDATE typeOfLevel", ds.index("typeOfLevel"))
+        super().update(ds, attributes, squeeze)
+        if self.active and not squeeze and len(ds.index(self.name)) < 2:
+            self.active = False
+
+
+class NumberDim(Dim):
+    name = "number"
+    drop = []
+
+
+class RemappingDim(Dim):
+    def __init__(self, owner, name, keys):
+        self.name = name
+        self.drop = self.build_drop(keys)
+        super().__init__(owner)
+
+    def build_drop(self, keys):
+        r = list(keys)
+        for k in keys:
+            r.extend(find_alias(k))
+        return r
+
+
+class CompoundKeyDim(RemappingDim):
+    def __init__(self, owner, ck):
+        # self.name = ck.name
+        # # self.ck = ck
+        # self.drop = ck.keys
+        super().__init__(owner, ck.name, ck.keys)
+
+
+class OtherDim(Dim):
+    drop = []
+
+    def __init__(self, owner, name, *args, **kwargs):
+        self.name = name
+        super().__init__(owner, *args, **kwargs)
+
+    def copy(self):
+        return self.__class__(self.owner, self.name)
+
+
+class DimMode:
+    def make_dim(self, owner, name, *args, **kwargs):
+        if name in PREDEFINED_DIMS:
+            return PREDEFINED_DIMS[name](owner, *args, **kwargs)
+        return OtherDim(owner, name, *args, **kwargs)
+
+    def build(self, profile, owner, active=True):
+        return {name: self.make_dim(owner, name, active=active) for name in self.default}
+
+
+class ForecastTimeDimMode(DimMode):
+    name = "forecast"
+    default = ["forecast_reference_time", "step"]
+    mappings = {"seasonal": {"datetime": "indexing_time", "step": "forecastMonth"}}
+
+    def build(self, profile, owner, active=True):
+        mapping = profile.time_dim_mapping
+        if mapping:
+            if isinstance(mapping, str):
+                mapping = self.mappings.get(mapping, None)
+                if mapping is None:
+                    raise ValueError(f"Unknown mapping={mapping}")
+
+            if isinstance(mapping, dict):
+                step = mapping.get("step", None)
+                if step is None:
+                    raise ValueError(f"step is required in mapping={mapping}")
+
+                datetime = mapping.get("datetime", None)
+                if datetime:
+                    return {name: self.make_dim(owner, name, active=active) for name in [datetime, step]}
+                else:
+                    datetime = [mapping["date"], mapping["time"]]
+                    dim1 = CustomForecastRefDim(owner, datetime, active=active)
+                    dim2 = self.make_dim(owner, step, active=active)
+                    return {d.name: d for d in [dim1, dim2]}
+            else:
+                raise ValueError(f"Unsupported mapping type={type(mapping)}")
+
+        else:
+            return {name: self.make_dim(owner, name, active=active) for name in self.default}
+
+
+class ValidTimeDimMode(DimMode):
+    name = "valid_time"
+    default = ["valid_time"]
+
+
+class RawTimeDimMode(DimMode):
+    name = "raw"
+    default = ["date", "time", "step"]
+
+
+class LevelDimMode(DimMode):
+    name = "level"
+    default = ["level"]
+    dim = LevelDim
+    alias = LEVEL_KEYS
+
+    def build(self, profile, owner, **kwargs):
+        level_key = profile.vocabulary.level()
+        level_type_key = profile.vocabulary.level_type()
+        return {self.name: self.dim(owner, level_key, level_type_key, **kwargs)}
+
+
+class LevelPerTypeDimMode(LevelDimMode):
+    name = "level_per_type"
+    default = ["level_per_type"]
+    dim = LevelPerTypeDim
+
+
+class LevelAndTypeDimMode(LevelDimMode):
+    name = "level_and_type"
+    default = ["level_and_type"]
+    dim = LevelAndTypeDim
+
+
+TIME_DIM_MODES = {v.name: v for v in [ForecastTimeDimMode, ValidTimeDimMode, RawTimeDimMode]}
+LEVEL_DIM_MODES = {v.name: v for v in [LevelDimMode, LevelPerTypeDimMode, LevelAndTypeDimMode]}
+
+
+class DimGroup:
+    used = {}
+    ignored = {}
 
     def dims(self):
         return self.used, self.ignored
 
-    def make_dim(self, name, *args, **kwargs):
-        if name in PREDEFINED_DIMS:
-            return PREDEFINED_DIMS[name](*args, **kwargs)
-        return OtherDim(*args, **kwargs)
-
 
 class NumberDimGroup(DimGroup):
     name = "number"
-    names = ["number"]
 
     def __init__(self, profile, owner):
-        dims = {name: self.make_dim(name, owner) for name in self.names}
-        used = ["number"]
-        super().__init__(dims, used)
-
-    def collect(self, tensor):
-        pass
+        self.used = {self.name: NumberDim(owner)}
 
 
 class TimeDimGroup(DimGroup):
     name = "time"
-    names = ["forecast_reference_time", "date", "time", "step", "valid_time"]
 
     def __init__(self, profile, owner):
-        dims = {name: self.make_dim(name, owner) for name in self.names}
+        mode = TIME_DIM_MODES.get(profile.time_dim_mode, None)
+        if mode is None:
+            raise ValueError(f"Unknown time_dim_mode={profile.time_dim_mode}")
 
-        used = []
-        if profile.time_dim_mode == "forecast":
-            used = ["forecast_reference_time", "step"]
-        elif profile.time_dim_mode == "valid":
-            used = ["valid_time"]
-        else:
-            used = ["date", "time", "step"]
-
-        super().__init__(dims, used)
+        mode = mode()
+        self.used = mode.build(profile, owner)
+        self.ignored = {
+            k: v().build(profile, owner, active=False) for k, v in TIME_DIM_MODES.items() if v != mode
+        }
 
 
 class LevelDimGroup(DimGroup):
     name = "level"
-    names = ["level", "level_per_type", "level_and_type"]
 
     def __init__(self, profile, owner):
-        level_key = profile.vocabulary.level()
-        level_type_key = profile.vocabulary.level_type()
+        mode = LEVEL_DIM_MODES.get(profile.level_dim_mode, None)
+        if mode is None:
+            raise ValueError(f"Unknown level_dim_mode={profile.level_dim_mode}")
 
-        dims = {
-            "level": LevelDim(owner, level_key),
-            "level_per_type": LevelPerTypeDim(owner, level_key, level_type_key),
-            "level_and_type": LevelAndTypeDim(owner, level_key, level_type_key),
+        mode = mode()
+        self.used = mode.build(profile, owner)
+        self.ignored = {
+            k: v().build(profile, owner, active=False) for k, v in LEVEL_DIM_MODES.items() if v != mode
         }
-
-        print(f"level_dim_mode={profile.level_dim_mode}")
-        used = []
-        if profile.level_dim_mode == "level":
-            used = ["level"]
-        elif profile.level_dim_mode == "per_type":
-            used = ["level_per_type"]
-        elif profile.level_dim_mode == "and_type":
-            used = ["level_and_type"]
-
-        super().__init__(dims, used)
 
 
 DIM_GROUPS = {v.name: v for v in [NumberDimGroup, TimeDimGroup, LevelDimGroup]}
 
 
-class DimId:
-    def __init__(self, name):
-        self.name = name
-        self.id = name + name(self(id))
-
-
 class Dims:
-    def __init__(self, profile, dims=None, remapping=None):
+    def __init__(self, profile, dims=None):
         self.profile = profile
+        # self.extra_remappings = {}
+        # self.extra_patches = {}
 
         if dims is not None:
             self.dims = dims
@@ -174,12 +506,37 @@ class Dims:
 
         # print("INIT index_keys", self.profile.index_keys)
 
-        # each remapping is a dimension
-        remapping = build_remapping(remapping)
+        # initial check for variable-related keys
+        from .profile import VARIABLE_KEYS
+
+        var_keys = [self.profile.variable_key] + VARIABLE_KEYS
+        keys = list(self.profile.index_keys)
+        if self.profile.variable_key in keys:
+            keys.remove(self.profile.variable_key)
+        keys += self.profile.extra_dims + self.profile.fixed_dims
+        for k in keys:
+            if k in var_keys:
+                print("index_keys=", self.profile.index_keys)
+                print("extra_dims=", self.profile.extra_dims)
+                print("fixed_dims=", self.profile.fixed_dims)
+                raise ValueError(f"Variable-related key {k} cannot be a dimension")
+
+        # each remapping is a dimension. They can contain variable related keys.
+        remapping = self.profile.remapping.build()
         if remapping:
             for k in remapping.lists:
                 self.dims[k] = RemappingDim(self, k, remapping.lists[k])
 
+        # search for compound keys. Note: the variable key can be a compound key
+        # so has to added here. If a remapping uses the same key name, the compound
+        # key is not added.
+        for k in [self.profile.variable_key] + keys:
+            if not remapping or k not in remapping.lists:
+                ck = CompoundKey.make(k)
+                if ck is not None:
+                    self.dims[k] = CompoundKeyDim(self, ck)
+
+        # add predefined dimensions
         self.core_dim_order = []
         groups = {}
         for k, v in DIM_GROUPS.items():
@@ -195,24 +552,20 @@ class Dims:
                     ignored[k] = v
             ignored.update(ignored)
 
-        keys = self.profile.index_keys + self.profile.extra_dims
-
-        # each index key can define a dimension
-        # compound keys: If a remapping uses the same key name, the compound
-        # key is not added.s
+        # each key can define a dimension
         for k in keys:
             if k not in self.dims and k not in ignored:
                 if not remapping or k not in remapping.lists:
-                    ck = CompoundKey.make(k)
-                    if ck is not None:
-                        self.dims[k] = CompoundKeyDim(self, ck)
-                    else:
-                        self.dims[k] = OtherDim(self, name=k)
+                    self.dims[k] = OtherDim(self, name=k)
 
         # check dims consistency. The ones can be used
         # marked as active
         for k, d in self.dims.items():
             d.check()
+
+        # check for any dimensions related to variable keys. These have to
+        # be removed from the list of active dims.
+        self.deactivate(var_keys, others=True, collect=True)
 
         # only the active dims are used
         self.dims = {k: v for k, v in self.dims.items() if v.active}
@@ -229,6 +582,9 @@ class Dims:
             keys.append(d.key)
 
         self.profile.add_keys(keys)
+
+    def register_remapping(self, remapping, patch=None):
+        self.profile.remapping.add(remapping, patch)
 
     def deactivate(self, keys, ignore_dim=None, others=False, collect=False):
         names = []
@@ -288,224 +644,6 @@ class Dims:
         if copy:
             return [d.copy() for d in self.dims.values()]
         return list(self.dims.values())
-
-
-class Dim:
-    name = None
-    key = None
-    alias = None
-    drop = None
-    # predefined_index = -1
-
-    def __init__(self, owner, name=None, key=None):
-        self.owner = owner
-        self.profile = owner.profile
-        self.active = True
-        self.alias = ensure_iterable(self.alias)
-        self.drop = ensure_iterable(self.drop)
-        if name is not None:
-            self.name = name
-
-        if self.key is None:
-            self.key = self.name
-
-        self.coords = {}
-
-    def copy(self):
-        return self.__class__(self.owner)
-
-    def _replace_dim(self, key_src, key_dst):
-        if key_dst not in self.profile.dim_keys:
-            try:
-                idx = self.profile.dim_keys.index(key_src)
-                self.profile.dim_keys[idx] = key_dst
-            except ValueError:
-                self.profile.dim_keys.append(key_dst)
-
-    def __contains__(self, key):
-        return key == self.name or key in self.alias
-
-    def allowed(self, key):
-        return key not in self and key not in self.drop
-
-    def check(self):
-        if self.active:
-            self.active = self.condition()
-            if self.active:
-                self.deactivate_drop_list()
-
-    def condition(self):
-        return True
-
-    def update(self, ds, attributes, squeeze=True):
-        # if self.key in ds.indices():
-        #     print(f"-> {self.name} key={self.key} active={self.active} ds={ds.index(self.key)}")
-
-        if not self.active:
-            return
-
-        # sanity check
-        if self.profile.variable_key in self:
-            raise ValueError(
-                (
-                    f"Variable key {self.profile.var_key} cannot be in "
-                    f"dimension={self.name} group={self.group}"
-                )
-            )
-
-        # assert self.name in self.profile.dim_keys, f"self.name={self.name}"
-        if squeeze:
-            if not (self.key in ds.indices() and len(ds.index(self.key)) > 1):
-                self.active = False
-        else:
-            if not (self.key in ds.indices() and len(ds.index(self.key)) >= 1):
-                self.active = False
-
-        self.deactivate_drop_list()
-
-    def deactivate_drop_list(self):
-        self.owner.deactivate([self.name, self.key] + self.drop, ignore_dim=self)
-
-    def as_coord(self, key, values, tensor):
-        if key not in self.coords:
-            from .coord import Coord
-
-            self.coords[key] = Coord.make(key, values, ds=tensor.source)
-        return key, self.coords[key]
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(name={self.name}, key={self.key})"
-
-
-class DateDim(Dim):
-    name = "date"
-    drop = ["valid_datetime", "base_datetime", "forecast_reference_time"]
-
-
-class TimeDim(Dim):
-    name = "time"
-    drop = ["valid_datetime", "base_datetime"]
-
-
-class StepDim(Dim):
-    name = "step"
-    drop = ["valid_datetime", "stepRange"]
-
-
-class ValidTimeDim(Dim):
-    name = "valid_time"
-    drop = ["time", "date", "step", "base_datetime", "validityTime", "validityDate"]
-    rank = 1
-
-
-class ForecastRefTimeDim(Dim):
-    name = "forecast_reference_time"
-    drop = ["time", "date", "valid_datetime", "dataTime", "dataDate"]
-    alias = ["base_datetime"]
-
-
-class LevelDim(Dim):
-    drop = ["levelist", "level"]
-    alias = "levelist"
-
-    def __init__(self, owner, key, *args, **kwargs):
-        self.key = key
-        self.name = key
-        super().__init__(owner, *args, **kwargs)
-
-    def copy(self):
-        return self.__class__(self.owner, self.key)
-
-
-class LevelPerTypeDim(Dim):
-    name = "level_per_type"
-    drop = ["levelist", "levtype", "typeOfLevel"]
-
-    def __init__(self, owner, level_key, level_type_key, *args, **kwargs):
-        self.key = level_key
-        self.level_key = level_key
-        self.level_type_key = level_type_key
-        super().__init__(owner, *args, **kwargs)
-
-    def copy(self):
-        return self.__class__(self.owner, self.level_key, self.level_type_key)
-
-    def as_coord(self, key, values, tensor):
-        lev_type = tensor.source[0].metadata(self.level_type_key)
-        if not lev_type:
-            raise ValueError(f"{d.type_key} not found in metadata")
-
-        if lev_type not in self.coords:
-            from .coord import Coord
-
-            coord = Coord.make(lev_type, list(values), ds=tensor.source)
-            self.coords[lev_type] = coord
-        return lev_type, self.coords[lev_type]
-
-
-class LevelAndTypeDim(Dim):
-    name = "level_and_type"
-    drop = ["level", "levelist", "typeOfLevel", "levtype"]
-
-    def adjust_dims(self):
-        self._insert_at("level", self.name)
-        super().adjust_dims()
-
-    def condition(self):
-        return False
-
-
-class LevelTypeDim(Dim):
-    name = "levtype"
-    drop = ["typeOfLevel"]
-
-    def update(self, ds, attributes, squeeze=True):
-        # print("UPDATE levtype", ds.index("levtype"))
-        super().update(ds, attributes, squeeze)
-        if self.active and not squeeze and len(ds.index(self.name)) < 2:
-            self.active = False
-
-
-class TypeOfLevelDim(Dim):
-    name = "typeOfLevel"
-    drop = ["levtype"]
-
-    def update(self, ds, attributes, squeeze=True):
-        # print("UPDATE typeOfLevel", ds.index("typeOfLevel"))
-        super().update(ds, attributes, squeeze)
-        if self.active and not squeeze and len(ds.index(self.name)) < 2:
-            self.active = False
-
-
-class NumberDim(Dim):
-    name = "number"
-    drop = []
-
-
-class RemappingDim(Dim):
-    def __init__(self, owner, name, keys):
-        self.name = name
-        self.drop = keys
-        super().__init__(owner)
-
-
-class CompoundKeyDim(Dim):
-    def __init__(self, owner, ck):
-        self.name = ck.name
-        self.ck = ck
-        self.drop = ck.keys
-        super().__init__(owner)
-
-
-class OtherDim(Dim):
-    drop = []
-
-    def __init__(self, owner, name, *args, **kwargs):
-        self.name = name
-        super().__init__(owner, *args, **kwargs)
-
-    def copy(self):
-        return self.__class__(self.owner, self.name)
 
 
 PREDEFINED_DIMS = {}

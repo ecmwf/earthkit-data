@@ -39,7 +39,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
 )
 def test_xr_engine_basic(file):
     ds = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", file))
-    res = ds.to_xarray(_legacy=False)
+    res = ds.to_xarray()
     assert res is not None
 
 
@@ -48,7 +48,7 @@ def test_xr_engine_detailed_check():
         "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_regular_ll.grib")
     )
 
-    ds = ds_ek.to_xarray()
+    ds = ds_ek.to_xarray(time_dim_mode="raw", decode_time=False)
     assert ds is not None
 
     # dataset
@@ -223,6 +223,8 @@ def test_xr_engine_detailed_flatten_check():
     kwargs = {
         "xarray_open_dataset_kwargs": {
             "backend_kwargs": {
+                "time_dim_mode": "raw",
+                "decode_time": False,
                 "flatten_values": True,
             }
         }

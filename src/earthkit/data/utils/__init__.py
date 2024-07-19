@@ -153,3 +153,12 @@ def ensure_iterable(obj):
     if isinstance(obj, str) or not isinstance(obj, collections.abc.Iterable):
         return [obj]
     return obj
+
+
+def ensure_dict(obj):
+    if obj is None:
+        return dict()
+    else:
+        if not isinstance(obj, dict):
+            raise ValueError(f"Expected a dict, got {type(obj)}")
+        return obj

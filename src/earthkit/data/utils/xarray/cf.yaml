@@ -1,46 +1,51 @@
 frozen_options:
-  fixed_dims: true
-  add_valid_time_coord: true
+  # fixed_dims: true
+  # add_valid_time_coord: true
   # add_forecast_reference_dim: true
-  step_as_timedelta: true
+  # step_as_timedelta: true
   # no_levtype_dim: true
   merge_pf_and_cf: true
   # merge_pl_levels: true
   variable_key: cfVarName
-index_keys:
-- cfVarName
-- number
-- valid_datetime
-- forecast_reference_time
-- step
-- level
-- class
-- stream
-- type
-- expver
-- date
-- hdate
-- andate
-- time
-- antime
-- step
-- reference
-- anoffset
-- verify
-- fcmonth
-- fcperiod
-- leadtime
-- opttime
-- origin
-- domain
-- method
-- diagnostic
-- iteration
-- number
-- quantile
-- units
+# index_keys:
+# - cfVarName
+# - number
+# - valid_datetime
+# - forecast_reference_time
+# - step
+# - level
+# - class
+# - stream
+# - type
+# - expver
+# - date
+# - hdate
+# - andate
+# - time
+# - antime
+# - step
+# - reference
+# - anoffset
+# - verify
+# - fcmonth
+# - fcperiod
+# - leadtime
+# - opttime
+# - origin
+# - domain
+# - method
+# - diagnostic
+# - iteration
+# - number
+# - quantile
+# - units
 
 vocabulary: cf
+
+
+attrs:
+- levtype
+- units
 
 attrs_mode: fixed
 

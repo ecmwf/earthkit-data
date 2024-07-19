@@ -461,6 +461,21 @@ class Field(Base):
         """
         return self._metadata.datetime()
 
+    def valid_datetime(self):
+        self._not_implemented()
+
+    def base_datetime(self):
+        self._not_implemented()
+
+    def h_datetime(self):
+        self._not_implemented()
+
+    def an_datetime(self):
+        self._not_implemented()
+
+    def indexing_datetime(self):
+        self._not_implemented()
+
     def metadata(self, *keys, astype=None, **kwargs):
         r"""Return metadata values from the field.
 

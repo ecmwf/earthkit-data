@@ -37,11 +37,20 @@ class Metadata(metaclass=ABCMeta):
         DATETIME,
         GRIDSPEC,
         "base_datetime",
-        "forecast_reference_time",
+        "reference_datetime",
+        "indexing_datetime",
         "step_timedelta",
         "param_level",
-        "level_and_type",
     ]
+
+    CUSTOM_KEY_ALIASES = {
+        "valid_time": "valid_datetime",
+        "forecast_reference_time": "base_datetime",
+        "base_time": "base_datetime",
+        "indexing_time": "indexing_datetime",
+    }
+
+    CUSTOM_KEYS += list(CUSTOM_KEY_ALIASES.keys())
 
     extra = None
 
@@ -214,18 +223,12 @@ class Metadata(metaclass=ABCMeta):
     def _get_custom_key(self, key, default=None, raise_on_missing=True, **kwargs):
         if self._is_custom_key(key):
             try:
-                if key == DATETIME:
-                    return self._valid_datetime().isoformat()
-                elif key in ["base_datetime", "forecast_reference_time"]:
-                    return self._base_datetime().isoformat()
-                elif key == "step_timedelta":
-                    return self._step_timedelta
-                elif key == "param_level":
-                    return self.get("param", astype=str) + self.get("level", astype=str)
-                elif key == "level_and_type":
-                    return self.get("level", astype=str) + self.get("levtype", astype=str)
-                elif key == GRIDSPEC:
-                    return self.grid_spec
+                key = self.CUSTOM_KEY_ALIASES.get(key, key)
+                v = getattr(self, key)()
+                if key.endswith("_datetime"):
+                    if v is not None:
+                        return v.isoformat()
+                return v
             except Exception as e:
                 if not raise_on_missing:
                     return default
@@ -299,20 +302,29 @@ class Metadata(metaclass=ABCMeta):
 
         """
         return {
-            "base_time": self._base_datetime(),
-            "valid_time": self._valid_datetime(),
+            "base_time": self.base_datetime(),
+            "valid_time": self.valid_datetime(),
         }
 
     @abstractmethod
-    def _base_datetime(self):
+    def base_datetime(self):
         pass
 
     @abstractmethod
-    def _valid_datetime(self):
+    def valid_datetime(self):
         pass
 
-    def _step_timedelta(self):
-        pass
+    def reference_datetime(self):
+        return None
+
+    def indexing_datetime(self):
+        return None
+
+    def step_timedelta(self):
+        return self.valid_datetime() - self.base_datetime()
+
+    def param_level(self):
+        return self.get("param", astype=str) + self.get("level", astype=str)
 
     @property
     def geography(self):
@@ -434,10 +446,13 @@ class RawMetadata(Metadata):
     def _items(self):
         pass
 
-    def _base_datetime(self):
+    def base_datetime(self):
         return None
 
-    def _valid_datetime(self):
+    def valid_datetime(self):
+        return None
+
+    def step_timedelta(self):
         return None
 
     def as_namespace(self, namespace):

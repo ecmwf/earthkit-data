@@ -35,11 +35,14 @@ class ForcingMetadata(RawMetadata):
     def geography(self):
         return self._geo
 
-    def _base_datetime(self):
+    def base_datetime(self):
         return None
 
-    def _valid_datetime(self):
+    def valid_datetime(self):
         return datetime.datetime.fromisoformat(self["valid_datetime"])
+
+    def step_timedelta(self):
+        return datetime.timedelta()
 
 
 class ForcingMaker:

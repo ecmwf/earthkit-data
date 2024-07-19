@@ -103,8 +103,11 @@ def to_date_list(obj):
 
 
 def to_time(dt):
+    if isinstance(dt, float):
+        dt = int(dt)
+
     if isinstance(dt, int):
-        h = dt / 100
+        h = int(dt / 100)
         m = dt % 100
         return datetime.time(hour=h, minute=m)
 
@@ -152,3 +155,13 @@ def step_to_delta(step):
             return datetime.timedelta(seconds=sec)
 
     raise ValueError(f"Unsupported ecCodes step: {step}")
+
+
+def datetime_from_grib(date, time):
+    return datetime.datetime(
+        date // 10000,
+        date % 10000 // 100,
+        date % 100,
+        time // 100,
+        time % 100,
+    )
