@@ -166,7 +166,7 @@ class TensorBackendBuilder:
     def make_variable(self, ds, dims, key, name):
         ds_var = ds.sel(**{key: name})
 
-        tensor_dims, _ = self.prepare_tensor(ds_var, dims, name)
+        tensor_dims, _, tensor_attrs = self.prepare_tensor(ds_var, dims, name)
 
         tensor_dim_keys = [d.key for d in tensor_dims]
 
@@ -215,6 +215,7 @@ class TensorBackendBuilder:
         var_attrs = {
             k: ds_var.index(k)[0] for k in self.profile.var_attributes() if len(ds_var.index(k)) >= 1
         }
+        var_attrs.update(tensor_attrs)
 
         var_attrs = self.profile.remap(var_attrs)
 
@@ -224,6 +225,8 @@ class TensorBackendBuilder:
     def prepare_tensor(self, ds, dims, name):
         tensor_dims = []
         tensor_coords = {}
+        tensor_attrs = {}
+        tensor_attrs_keys = []
         from .coord import ListDiff
         from .coord import list_to_str
 
@@ -235,23 +238,44 @@ class TensorBackendBuilder:
                 continue
                 if d.name not in self.profile.ensure_dims:
                     raise ValueError(f"Dimension {d} has no valid values")
-            elif num > 1 or not self.profile.squeeze or d.name in self.profile.ensure_dims:
-                tensor_dims.append(d)
-                tensor_coords[d.key] = ds.index(d.key)
-                if d.key in self.tensor_coords:
-                    v1 = self.tensor_coords[d.key].vals
-                    v2 = tensor_coords[d.key]
-                    diff = ListDiff.diff(v1, v2, name=d.key)
-                    if not diff.same:
-                        raise ValueError(
-                            (
-                                f'Variable "{name}" has inconsistent dimension "{d.key}" compared '
-                                f"to other variables. Expected values: {list_to_str(v1)}, "
-                                f"got: {list_to_str(v2)}. {diff.diff_text}"
+            else:
+                if num == 1 and d.name in self.profile.dims_as_attrs:
+                    tensor_attrs_keys.append(d.key)
+
+                elif num > 1 or not self.profile.squeeze or d.name in self.profile.ensure_dims:
+                    tensor_dims.append(d)
+                    tensor_coords[d.key] = ds.index(d.key)
+                    if d.key in self.tensor_coords:
+                        v1 = self.tensor_coords[d.key].vals
+                        v2 = tensor_coords[d.key]
+                        diff = ListDiff.diff(v1, v2, name=d.key)
+                        if not diff.same:
+                            raise ValueError(
+                                (
+                                    f'Variable "{name}" has inconsistent dimension "{d.key}" compared '
+                                    f"to other variables. Expected values: {list_to_str(v1)}, "
+                                    f"got: {list_to_str(v2)}. {diff.diff_text}"
+                                )
                             )
-                        )
-        # check if fieldlist forms a full hypercube with respect to the the dims/coordinate
-        return tensor_dims, tensor_coords
+
+        # TODO: do not hardcode extra attributes
+        if tensor_attrs_keys:
+            first = ds[0]
+            dim_names = [d.key for d in tensor_dims]
+
+            def _add_extra(key):
+                if key not in dim_names:
+                    tensor_attrs[key] = first.metadata(key, default=None)
+
+            for k in tensor_attrs_keys:
+                tensor_attrs[k] = first.metadata(k, default=None)
+                if k == "level":
+                    _add_extra("typeOfLevel")
+                elif k == "levelist":
+                    _add_extra("levtype")
+
+        # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinate
+        return tensor_dims, tensor_coords, tensor_attrs
 
 
 class DatasetBuilder:

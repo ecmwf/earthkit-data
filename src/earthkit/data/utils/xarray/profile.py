@@ -135,6 +135,7 @@ class Profile:
         drop_dims=None,
         ensure_dims=None,
         fixed_dims=None,
+        dims_as_attrs=None,
         squeeze=True,
         remapping=None,
         time_dim_mode="forecast",
@@ -192,6 +193,7 @@ class Profile:
         self.extra_dims = ensure_iterable(extra_dims)
         self.drop_dims = ensure_iterable(drop_dims)
         self.ensure_dims = ensure_iterable(ensure_dims)
+        self.dims_as_attrs = ensure_iterable(dims_as_attrs)
         self.merge_cf_and_pf = merge_cf_and_pf
 
         # if self.add_forecast_ref_time_dim and self.add_valid_time_dim:
