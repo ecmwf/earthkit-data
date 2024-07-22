@@ -169,7 +169,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             return builder.build()
         else:
             from .builder import SingleDatasetBuilder
-        return SingleDatasetBuilder(fieldlist, **_kwargs).build()
+
+            return SingleDatasetBuilder(fieldlist, **_kwargs).build()
 
     @classmethod
     def guess_can_open(cls, filename_or_obj):
