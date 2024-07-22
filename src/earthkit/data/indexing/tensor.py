@@ -107,12 +107,15 @@ class CubeChecker:
         if field_num == cube_num:
             return
 
+        from earthkit.data.utils.xarray.coord import list_to_str
+
         coord_keys = list(self.tensor._user_coords.keys())
+        dims = "\n".join([f"{k} {list_to_str(v)}" for k, v in self.tensor._user_coords.items()])
         text_num = (
-            f"Input does not form a full hypercube with dimensions={coord_keys}."
+            f"Input does not form a full hypercube."
             f" Expected number of fields based on the dimensions does not match "
             f"actual number of fields: {cube_num} != {field_num}.\n"
-            f"Dimension sizes: {self.tensor._user_dims}"
+            f"Dimensions: \n {dims}"
         )
 
         if not details:
@@ -124,6 +127,7 @@ class CubeChecker:
                 index, f, t_coords, f_coords, name, diff = r
                 assert index is not None
                 assert index >= 0
+
                 text_dims = (
                     f"\nFirst difference from the expected dimensions occurs at field[{index}]"
                     f' for dimension "{name}". Expected {t_coords[diff.diff_index]}'
@@ -714,6 +718,7 @@ class FieldListTensor(TensorCore):
     #     return coords
 
     def make_valid_datetime(self):
+        # TODO: make it more general
         dims_opt = [
             ["base_datetime", "step"],
             ["base_datetime"],

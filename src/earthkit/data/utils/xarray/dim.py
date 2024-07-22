@@ -648,9 +648,9 @@ class Dims:
 
     def var_dim_found_error_message(self, keys):
         return (
-            f"Variable-related keys {keys} cannot be dimensions. They must"
-            " be specified as the variable_key, which can only be set to single key. "
-            f'Current settings: variable_key="{self.profile.variable_key}"'
+            f'Variable-related keys "{keys}"" cannot be dimensions. Such a key'
+            " must be specified as the variable_key. The variable_key can only "
+            f'be set to a single key, its current value is "{self.profile.variable_key}"'
         )
 
     def register_remapping(self, remapping, patch=None):

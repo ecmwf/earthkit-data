@@ -98,10 +98,11 @@ class ListDiff:
 
 def list_to_str(vals, n=10):
     try:
+        size = f"({len(vals)}) "
         if len(vals) <= n:
-            return str(vals)
+            return size + str(vals)
         else:
-            lst = "[" + ", ".join(str(vals[: n - 1])) + "..., " + str(vals[-1]) + "]"
+            lst = size + "[" + ", ".join(str(vals[: n - 1])) + "..., " + str(vals[-1]) + "]"
             return lst
     except Exception:
         return vals
