@@ -75,16 +75,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             on top of the automatically generated ones.
         extra_global_attrs: str, iterable of str, None
             Metadata key or list+_ of metadata keys to include as additional global attributes on top of
-            the automatically generated ones.
-        # variable_mapping: str, dict, None
-        #     Mapping to change variable names in the generated dataset. Variable names are defined
-        #     by using the ``variable_keys`` metadata key. Whether this name is altered depends on the
-        #     value of ``variable_mapping`:
-        #     - None: the variable names are not altered
-        #     - "auto": the names starting with a number are altered by placing the number
-        #        at the end and adding the "m" suffix. E.g. "2t" -> "t2m"
-        #     - dict: applies a mapping of the form {old_name: new_name}
-        #     The default is None.
+            the automatically generated ones. Default is None.
         extra_dims:  str, or iterable of str, None
             Metadata key or list of metadata keys to use as additional dimensions. Only enabled when
             no ``fixed_dims`` is specified. Default is None.
@@ -97,6 +88,10 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         ensure_dims: str, or iterable of str, None
             Metadata key or list of metadata keys that should be used as dimensions even
             when ``squeeze=True``. Default is None.
+        dims_as_attrs: str, or iterable of str, None
+            Dimension or list of dimensions which should be turned to variable metadata
+            attributes if they have only one value for the given variable. Default is None.
+            be used as va. Default is None.
         squeeze: bool
             Remove dimensions which has one or zero valid values. Not applies to dimension in
             ``ensure_dims``. Default is True.
@@ -111,27 +106,28 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             Define new metadata keys for indexing. Default is None.
         profile: str
             The profile to use for creating the dataset. Default is "mars".
-        time_dim_mode: str,
+        time_dim_mode: str
             The possible values are:
+
             - "forecast": The ``date`` and ``time`` dimensions are combined into a single dimension
-            called `forecast_reference_time` with datetime64 values.
+              called `forecast_reference_time` with datetime64 values.
             - "valid_time": The ``date``, ``time`` and ``step`` dimensions are combined into a single
-            dimension called `valid_time` with np.datetime64 values. Default is False.
+              dimension called `valid_time` with np.datetime64 values. Default is False.
             - "raw": The ``date``, ``time`` and "step" dimensions used.
         step_as_timedelta: bool
             Convert the ``step`` dimension to np.timedelta64 values. Default is False.
         decode_time: bool
+            Decode the datetime coordinates to datetime64 values, while step coordinates to timedelta64
+            values. Default is True.
         add_valid_time_coord: bool
             Add a `valid_time` coordinate containing np.datetime64 values to the
             dataset. Only can be used when ``add_valid_time_dim`` is False. Default is False.
         level_dim_mode: str
             The possible values are:
-                - "level": Use a single dimension for level.
-                - "level_per_type": Use a separate dimension for each level type.
-                - "level_and_type": Use a single dimension for combined level and type of level.
-        merge_cf_and_pf: bool
-            Treat ENS control forecasts as if they had "type=pf" and "number=0" metadata values.
-            Default is False.
+
+            - "level": Use a single dimension for level.
+            - "level_per_type": Use a separate dimension for each level type.
+            - "level_and_type": Use a single dimension for combined level and type of level.
         add_geo_coords: bool
             Add geographic coordinates to the dataset when field values are represented by
             a single "values" dimension. Default is True.

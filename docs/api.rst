@@ -41,7 +41,9 @@ CSV
 
 - :py:class:`~data.readers.csv.CSVReader`
 
-
+Xarray engine
+--------------
+- :py:class:`~data.utils.xarray.engine.EarthkitBackendEntrypoint`
 
 Other
 --------
