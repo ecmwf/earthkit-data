@@ -67,6 +67,15 @@ class Remapping(dict):
             return joiner.join(lst)
         return joiner.format_name(name, **kwargs)
 
+    def keys(self, name):
+        if name in self.lists:
+            if not callable(self.lists[name]):
+                lst = []
+                for i, bit in enumerate(self.lists[name]):
+                    if i % 2 == 1:
+                        lst.append(bit)
+                return lst
+
     def as_dict(self):
         return dict(self)
 

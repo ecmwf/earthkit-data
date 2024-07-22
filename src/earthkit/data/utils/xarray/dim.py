@@ -128,6 +128,7 @@ VOCABULARIES = {"mars": MarsVocabulary, "cf": CFVocabulary}
 class Dim:
     name = None
     key = None
+    keys = []
     alias = None
     drop = None
     # predefined_index = -1
@@ -149,21 +150,22 @@ class Dim:
     def copy(self):
         return self.__class__(self.owner)
 
-    def _replace_dim(self, key_src, key_dst):
-        if key_dst not in self.profile.dim_keys:
-            try:
-                idx = self.profile.dim_keys.index(key_src)
-                self.profile.dim_keys[idx] = key_dst
-            except ValueError:
-                self.profile.dim_keys.append(key_dst)
+    # def _replace_dim(self, key_src, key_dst):
+    #     if key_dst not in self.profile.dim_keys:
+    #         try:
+    #             idx = self.profile.dim_keys.index(key_src)
+    #             self.profile.dim_keys[idx] = key_dst
+    #         except ValueError:
+    #             self.profile.dim_keys.append(key_dst)
 
     def __contains__(self, key):
-        return key == self.name or key in self.alias
+        return key in [self.name, self.key] or key in self.keys or key in self.alias
 
     def allowed(self, key):
         return key not in self and key not in self.drop
 
     def check(self):
+        # print(f"CHECK {self.name} {self.key} {self.active}")
         if self.active:
             self.active = self.condition()
             if self.active:
@@ -370,6 +372,7 @@ class NumberDim(Dim):
 class RemappingDim(Dim):
     def __init__(self, owner, name, keys):
         self.name = name
+        self.keys = [k for k in keys if k]
         self.drop = self.build_drop(keys)
         super().__init__(owner)
 
@@ -379,13 +382,19 @@ class RemappingDim(Dim):
             r.extend(find_alias(k))
         return r
 
+    def copy(self):
+        return self.__class__(self.owner, self.name, self.keys)
+
 
 class CompoundKeyDim(RemappingDim):
     def __init__(self, owner, ck):
         # self.name = ck.name
-        # # self.ck = ck
+        self.ck = ck
         # self.drop = ck.keys
         super().__init__(owner, ck.name, ck.keys)
+
+    def copy(self):
+        return self.__class__(self.owner, self.ck)
 
 
 class OtherDim(Dim):
@@ -531,8 +540,6 @@ DIM_GROUPS = {v.name: v for v in [NumberDimGroup, TimeDimGroup, LevelDimGroup]}
 class Dims:
     def __init__(self, profile, dims=None):
         self.profile = profile
-        # self.extra_remappings = {}
-        # self.extra_patches = {}
 
         if dims is not None:
             self.dims = dims
@@ -548,21 +555,29 @@ class Dims:
 
         var_keys = [self.profile.variable_key] + VARIABLE_KEYS
         keys = list(self.profile.index_keys)
+        # if self.profile.variable_key in keys:
+        #     keys.remove(self.profile.variable_key)
+        keys += self.profile.extra_dims + self.profile.ensure_dims + self.profile.fixed_dims
         if self.profile.variable_key in keys:
             keys.remove(self.profile.variable_key)
-        keys += self.profile.extra_dims + self.profile.ensure_dims + self.profile.fixed_dims
+
+        invalid_var_keys = []
         for k in keys:
             if k in var_keys:
+                assert k != self.profile.variable_key
+                invalid_var_keys.append(k)
                 # print("index_keys=", self.profile.index_keys)
                 # print("extra_dims=", self.profile.extra_dims)
                 # print("fixed_dims=", self.profile.fixed_dims)
-                raise ValueError(f'Variable-related key "{k}" cannot be a dimension')
+
+        if invalid_var_keys:
+            raise ValueError(self.var_dim_found_error_message(invalid_var_keys))
 
         # each remapping is a dimension. They can contain variable related keys.
         remapping = self.profile.remapping.build()
         if remapping:
             for k in remapping.lists:
-                self.dims[k] = RemappingDim(self, k, remapping.lists[k])
+                self.dims[k] = RemappingDim(self, k, remapping.keys(k))
 
         # search for compound keys. Note: the variable key can be a compound key
         # so has to be added here. If a remapping uses the same key name, the compound
@@ -595,14 +610,20 @@ class Dims:
                 if not remapping or k not in remapping.lists:
                     self.dims[k] = OtherDim(self, name=k)
 
+        # print(f"INIT dims={self.dims}")
         # check dims consistency. The ones can be used
         # marked as active
         for k, d in self.dims.items():
             d.check()
-
+        # print(f" -> dims={self.dims}")
         # check for any dimensions related to variable keys. These have to
         # be removed from the list of active dims.
-        self.deactivate(var_keys, others=True, collect=True)
+        var_dims = self.deactivate(var_keys, others=True, collect=True)
+        if var_dims:
+            if self.profile.variable_key in var_dims:
+                var_dims.remove(self.profile.variable_key)
+            if var_dims:
+                raise ValueError(self.var_dim_found_error_message(var_dims))
 
         # only the active dims are used
         dims = {k: v for k, v in self.dims.items() if v.active and k not in self.core_dim_order}
@@ -625,6 +646,13 @@ class Dims:
 
         self.profile.add_keys(keys)
 
+    def var_dim_found_error_message(self, keys):
+        return (
+            f"Variable-related keys {keys} cannot be dimensions. They must"
+            " be specified as the variable_key, which can only be set to single key. "
+            f'Current settings: variable_key="{self.profile.variable_key}"'
+        )
+
     def register_remapping(self, remapping, patch=None):
         self.profile.remapping.add(remapping, patch)
 
@@ -633,7 +661,7 @@ class Dims:
         for d in self.dims.values():
             if d.active and d != ignore_dim:
                 if any(key in d for key in keys):
-                    # print(f"deactivate name={self.name} d={d.name} self.group={self.all_dims}")
+                    # print(f"deactivate d={d.name} keys={keys}")
                     d.active = False
                     if others:
                         d.deactivate_drop_list()
@@ -642,9 +670,6 @@ class Dims:
 
         if collect:
             return names
-
-            # if d.active and self.same(d):
-            #     d.active = False
 
     def remove(self, keys, ignore_dim=None, others=False, collect=False):
         self.deactivate(keys, ignore_dim, others, collect)

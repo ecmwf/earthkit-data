@@ -98,13 +98,13 @@ def test_xr_dims_input_fieldlist():
     assert ds.index("param_level") == ["r_1000", "r_850", "t_1000", "t_850"]
 
     remapping = {
-        "param_level": "{param}_{level}",
+        "_class": "_{class}",
         "level_and_type": "{level}_{levtype}",
     }
-    prof = Profile.make("mars", variable_key="param_level", remapping=remapping)
+    prof = Profile.make("mars", variable_key="param", remapping=remapping)
     ds = load_wrapped_fieldlist(DS_DATE_LEV, prof, remapping=prof.remapping.build())
     assert ds.index("param") == ["r", "t"]
-    assert ds.index("param_level") == ["r_1000", "r_850", "t_1000", "t_850"]
+    assert ds.index("_class") == ["_od"]
     assert ds.index("level_and_type") == ["1000_pl", "850_pl"]
 
 

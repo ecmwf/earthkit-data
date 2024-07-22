@@ -158,9 +158,13 @@ class Coord:
 class DateTimeCoord(Coord):
     def convert(self, profile):
         if profile.decode_time:
-            from earthkit.data.utils.dates import to_datetime_list
+            import numpy as np
 
-            return to_datetime_list(self.vals)
+            if not (isinstance(self.vals, np.ndarray) and np.issubdtype(self.vals.dtype, np.datetime64)):
+                from earthkit.data.utils.dates import to_datetime_list
+
+                return to_datetime_list(self.vals)
+            return self.vals
         return super().convert(profile)
 
 

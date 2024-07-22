@@ -93,8 +93,6 @@ def to_datetime_list(datetimes):  # noqa C901
 
         return [to_datetime(x) for x in datetimes]
 
-    datetimes = get_wrapper(datetimes)
-
     return to_datetime_list(datetimes.to_datetime_list())
 
 
