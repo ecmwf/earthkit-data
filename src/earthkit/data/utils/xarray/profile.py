@@ -95,7 +95,6 @@ class ProfileConf:
             with self._lock:
                 here = os.path.dirname(__file__)
                 path = os.path.join(here, f"{name}.yaml")
-                print("path", here)
                 if os.path.exists(path):
                     import yaml
 
@@ -224,7 +223,7 @@ class Profile:
         from .attrs import GlobalAttrs
         from .dim import Dims
 
-        print("INIT index_keys", self.index_keys)
+        # print("INIT index_keys", self.index_keys)
         self.dims = Dims(self)
         self.g_attrs = GlobalAttrs(self)
 
@@ -237,8 +236,8 @@ class Profile:
         self.drop_variables = drop_variables
 
         # print("INIT variable key", self.variable_key)
-        print("INIT index_keys", self.index_keys)
-        print("INIT dim_keys", self.dim_keys)
+        # print("INIT index_keys", self.index_keys)
+        # print("INIT dim_keys", self.dim_keys)
 
     @staticmethod
     def make(name, *args, **kwargs):

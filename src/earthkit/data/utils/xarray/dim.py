@@ -50,14 +50,53 @@ class ParamLevelKey(CompoundKey):
 
 COMPOUND_KEYS = {v.name: v for v in [ParamLevelKey]}
 LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels", "typeOfLevel", "levtype"]
+DATE_KEYS = ["date", "andate", "validityDate", "dataDate", "hdate", "referenceDate", "indexingDate"]
+TIME_KEYS = ["time", "antime", "validityTime", "dataTime", "referenceTime", "indexingTime"]
+STEP_KEYS = ["step", "endStep", "stepRange"]
+VALID_DATETIME_KEYS = ["valid_time", "valid_datetime"]
+BASE_DATETIME_KEYS = [
+    "forecast_reference_time",
+    "base_time",
+    "base_datetime",
+    "reference_time",
+    "reference_datetime",
+    "indexing_time",
+    "indexing_datetime",
+]
+DATETIME_KEYS = BASE_DATETIME_KEYS + VALID_DATETIME_KEYS
 
 
-def find_alias(key):
-    keys = [LEVEL_KEYS]
+def get_keys(keys, drop=None):
+    r = list(keys)
+    if drop:
+        drop = ensure_iterable(drop)
+        r = [k for k in r if k not in drop]
+    return r
+
+
+def find_related_keys(key, drop=None):
+    keys = [LEVEL_KEYS, DATE_KEYS]
     r = []
     for k in keys:
         if key in k:
             r.extend(k)
+
+    if drop:
+        drop = ensure_iterable(drop)
+        r = [k for k in r if k not in drop]
+    return r
+
+
+def find_alias(key, drop=None):
+    keys = [LEVEL_KEYS, DATE_KEYS]
+    r = []
+    for k in keys:
+        if key in k:
+            r.extend(k)
+
+    if drop:
+        drop = ensure_iterable(drop)
+        r = [k for k in r if k not in drop]
     return r
 
 
@@ -176,40 +215,38 @@ class Dim:
 
 class DateDim(Dim):
     name = "date"
-    drop = ["valid_datetime", "base_datetime", "forecast_reference_time"]
+    drop = get_keys(DATE_KEYS + DATETIME_KEYS, drop=name)
 
 
 class TimeDim(Dim):
     name = "time"
-    drop = ["valid_datetime", "base_datetime"]
+    drop = get_keys(TIME_KEYS + DATETIME_KEYS, drop=name)
 
 
 class StepDim(Dim):
     name = "step"
-    drop = ["valid_datetime", "stepRange"]
+    drop = get_keys(STEP_KEYS + VALID_DATETIME_KEYS, drop=name)
 
 
 class ValidTimeDim(Dim):
     name = "valid_time"
-    # key = "valid_datetime"
-    drop = ["time", "date", "step", "base_datetime", "validityTime", "validityDate", "valid_datetime"]
-    rank = 1
+    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop=name)
 
 
 class ForecastRefTimeDim(Dim):
     name = "forecast_reference_time"
-    drop = ["time", "date", "valid_datetime", "dataTime", "dataDate"]
+    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop=name)
     alias = ["base_datetime"]
 
 
 class IndexingTimeDim(Dim):
     name = "indexing_time"
-    drop = ["indexingTime", "indexingDate"]
+    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop=name)
 
 
 class ReferenceTimeDim(Dim):
     name = "reference_time"
-    drop = ["referenceTime", "referenceDate"]
+    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop=name)
 
 
 class CustomForecastRefDim(Dim):
@@ -248,12 +285,12 @@ class CustomForecastRefDim(Dim):
 
 
 class LevelDim(Dim):
-    drop = ["levelist", "level"]
     alias = "levelist"
 
     def __init__(self, owner, key, *args, **kwargs):
         self.key = key
         self.name = key
+        self.drop = get_keys(LEVEL_KEYS, drop=self.name)
         super().__init__(owner, *args, **kwargs)
 
     def copy(self):
@@ -262,7 +299,7 @@ class LevelDim(Dim):
 
 class LevelPerTypeDim(Dim):
     name = "level_per_type"
-    drop = ["levelist", "levtype", "typeOfLevel"]
+    drop = get_keys(LEVEL_KEYS, drop=name)
 
     def __init__(self, owner, level_key, level_type_key, *args, **kwargs):
         self.key = level_key
@@ -288,7 +325,7 @@ class LevelPerTypeDim(Dim):
 
 class LevelAndTypeDim(Dim):
     name = "level_and_type"
-    drop = ["level", "levelist", "typeOfLevel", "levtype"]
+    drop = get_keys(LEVEL_KEYS, drop=name)
 
     def __init__(self, owner, level_key, level_type_key, active=True, *args, **kwargs):
         self.level_key = level_key
@@ -513,13 +550,13 @@ class Dims:
         keys = list(self.profile.index_keys)
         if self.profile.variable_key in keys:
             keys.remove(self.profile.variable_key)
-        keys += self.profile.extra_dims + self.profile.fixed_dims
+        keys += self.profile.extra_dims + self.profile.ensure_dims + self.profile.fixed_dims
         for k in keys:
             if k in var_keys:
-                print("index_keys=", self.profile.index_keys)
-                print("extra_dims=", self.profile.extra_dims)
-                print("fixed_dims=", self.profile.fixed_dims)
-                raise ValueError(f"Variable-related key {k} cannot be a dimension")
+                # print("index_keys=", self.profile.index_keys)
+                # print("extra_dims=", self.profile.extra_dims)
+                # print("fixed_dims=", self.profile.fixed_dims)
+                raise ValueError(f'Variable-related key "{k}" cannot be a dimension')
 
         # each remapping is a dimension. They can contain variable related keys.
         remapping = self.profile.remapping.build()
@@ -528,7 +565,7 @@ class Dims:
                 self.dims[k] = RemappingDim(self, k, remapping.lists[k])
 
         # search for compound keys. Note: the variable key can be a compound key
-        # so has to added here. If a remapping uses the same key name, the compound
+        # so has to be added here. If a remapping uses the same key name, the compound
         # key is not added.
         for k in [self.profile.variable_key] + keys:
             if not remapping or k not in remapping.lists:
@@ -544,7 +581,7 @@ class Dims:
             groups[k] = gr
             used, ignored = gr.dims()
             for k, v in used.items():
-                print(f"ADD DIM {k} {v}")
+                # print(f"ADD DIM {k} {v}")
                 if k not in self.dims:
                     self.dims[k] = v
                     self.core_dim_order.append(k)
@@ -568,13 +605,18 @@ class Dims:
         self.deactivate(var_keys, others=True, collect=True)
 
         # only the active dims are used
-        self.dims = {k: v for k, v in self.dims.items() if v.active}
+        dims = {k: v for k, v in self.dims.items() if v.active and k not in self.core_dim_order}
+        for k in self.core_dim_order:
+            if self.dims[k].active:
+                dims[k] = self.dims[k]
+
+        self.dims = dims
 
         # # ignored dims are used for later checks?
         # self.ignore = ignored
         # self.ignore.update({k: v for k, v in self.dims.items() if not v.active})
 
-        print(f"INIT dims={self.dims.keys()}")
+        # print(f"INIT dims={self.dims.keys()}")
 
         # ensure all the required keys are in the profile
         keys = []

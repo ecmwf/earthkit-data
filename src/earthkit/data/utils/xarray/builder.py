@@ -106,7 +106,7 @@ class TensorBackendBuilder:
         self.ds = ds
         self.profile = profile
         self.dims = dims
-        print("Builder, dims=", dims)
+        # print("Builder, dims=", dims)
         self.global_attrs = global_attrs
 
         self.flatten_values = flatten_values
@@ -142,6 +142,7 @@ class TensorBackendBuilder:
         if (
             self.profile.add_valid_time_coord
             and "valid_time" not in tensor.user_dims
+            and "valid_datetime" not in tensor.user_coords
             and "valid_time" not in self.tensor_coords
         ):
             from .coord import Coord
@@ -153,7 +154,6 @@ class TensorBackendBuilder:
 
     def build(self):
         xr_vars = {}
-
         # we assume each variable forms a full cube
         for variable in self.profile.variables:
             xr_vars[variable] = self.make_variable(self.ds, self.dims, self.profile.variable_key, variable)
@@ -166,24 +166,15 @@ class TensorBackendBuilder:
     def make_variable(self, ds, dims, key, name):
         ds_var = ds.sel(**{key: name})
 
-        tensor_dims = []
-        for d in dims:
-            num = len(ds_var.index(d.key))
-            if num == 0:
-                continue
-                if d.name not in self.profile.ensure_dims:
-                    raise ValueError(f"Dimension {d} has no valid values")
-            elif num > 1:
-                tensor_dims.append(d)
-            elif not self.profile.squeeze or d.name in self.profile.ensure_dims:
-                tensor_dims.append(d)
+        tensor_dims, _ = self.prepare_tensor(ds_var, dims, name)
 
         tensor_dim_keys = [d.key for d in tensor_dims]
-        # print("tensor_dim_keys", tensor_dim_keys)
+
         tensor = ds_var.to_tensor(
             *tensor_dim_keys,
             sort=False,
             progress_bar=False,
+            # user_coords=tensor_coords,
             field_dims_and_coords=(self.grid.dims, self.grid.coords),
             flatten_values=self.flatten_values,
         )
@@ -230,6 +221,38 @@ class TensorBackendBuilder:
         var = xarray.Variable(var_dims, data, attrs=var_attrs)
         return var
 
+    def prepare_tensor(self, ds, dims, name):
+        tensor_dims = []
+        tensor_coords = {}
+        from .coord import ListDiff
+        from .coord import list_to_str
+
+        # print(f"prepare_tensor: {name=} {dims=}")
+        # First check if the dims/coords are consistent with the tensors of the previous variables
+        for d in dims:
+            num = len(ds.index(d.key))
+            if num == 0:
+                continue
+                if d.name not in self.profile.ensure_dims:
+                    raise ValueError(f"Dimension {d} has no valid values")
+            elif num > 1 or not self.profile.squeeze or d.name in self.profile.ensure_dims:
+                tensor_dims.append(d)
+                tensor_coords[d.key] = ds.index(d.key)
+                if d.key in self.tensor_coords:
+                    v1 = self.tensor_coords[d.key].vals
+                    v2 = tensor_coords[d.key]
+                    diff = ListDiff.diff(v1, v2, name=d.key)
+                    if not diff.same:
+                        raise ValueError(
+                            (
+                                f'Variable "{name}" has inconsistent dimension "{d.key}" compared '
+                                f"to other variables. Expected values: {list_to_str(v1)}, "
+                                f"got: {list_to_str(v2)}. {diff.diff_text}"
+                            )
+                        )
+        # check if fieldlist forms a full hypercube with respect to the the dims/coordinate
+        return tensor_dims, tensor_coords
+
 
 class DatasetBuilder:
     def __init__(
@@ -271,13 +294,13 @@ class DatasetBuilder:
         profile = Profile.make(self.profile_name, **self.kwargs)
 
         remapping = profile.remapping.build()
-        print(f"{remapping=}")
-        print(f"{profile.remapping=}")
+        # print(f"{remapping=}")
+        # print(f"{profile.remapping=}")
 
         # create a new fieldlist and ensure all the required metadata is kept in memory
         ds = WrappedFieldList(self.ds, profile.index_keys, remapping=remapping)
         # print(f"{remapping=}")
-        print(f"ds: {ds.indices()}")
+        # print(f"ds: {ds.indices()}")
 
         # global attributes are keys which are the same for all the fields
         # attributes = {k: v[0] for k, v in ds_ori.indices().items() if len(v) == 1}
