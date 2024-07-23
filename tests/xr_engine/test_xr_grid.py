@@ -37,7 +37,7 @@ def grid_list(files=None):
 
 @pytest.mark.parametrize(
     "file,dims,coords,distinct_ll",
-    # grid_list(files=["regular_ll_single_point.grib1"]),
+    # grid_list(files=["sh_t32.grib1"]),
     grid_list(),
 )
 def test_xr_engine_grid(file, dims, coords, distinct_ll):
@@ -63,5 +63,5 @@ def test_xr_engine_grid(file, dims, coords, distinct_ll):
             lat = ll["lat"]
             lon = ll["lon"]
 
-        assert np.allclose(a.latitude, lat)
-        assert np.allclose(a.longitude, lon)
+        assert np.allclose(a.latitude.values, lat)
+        assert np.allclose(a.longitude.values, lon)

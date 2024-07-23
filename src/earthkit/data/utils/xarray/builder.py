@@ -8,7 +8,6 @@
 #
 
 import logging
-from collections import defaultdict
 
 import numpy
 import xarray
@@ -17,13 +16,6 @@ import xarray.core.indexing as indexing
 from earthkit.data.utils import ensure_iterable
 
 LOG = logging.getLogger(__name__)
-
-
-class Grid:
-    def __init__(self, field, flatten_values=False):
-        from earthkit.data.indexing.tensor import FieldListTensor
-
-        self.dims, self.coords, self.coords_dim = FieldListTensor._field_part(field, flatten_values)
 
 
 class VariableBuilder:
@@ -143,7 +135,6 @@ class TensorBackendBuilder:
         self.dims = dims
         # print("Builder, dims=", dims)
         self.common_metadata = common_metadata
-        self.global_attrs = defaultdict(list)
 
         self.flatten_values = flatten_values
         self.array_module = array_module
@@ -155,9 +146,11 @@ class TensorBackendBuilder:
         # coords describing the field dimensions
         self.field_coords = {}
 
+        from .grid import TensorGrid
+
         self.grid = grid
         if self.grid is None:
-            self.grid = Grid(self.ds[0], self.flatten_values)
+            self.grid = TensorGrid(self.ds[0], self.flatten_values)
 
         if self.profile.add_geo_coords:
             self.field_coords = self._make_field_coords()
@@ -287,27 +280,6 @@ class TensorBackendBuilder:
                     tensor_coords[d.key] = ds.index(d.key)
                     self.check_tensor_coords(name, d.key, tensor_coords)
 
-        # first = ds[0]
-        # for k in self.profile.attrs:
-        #     v = first.metadata(k, default=None)
-        #     if v is not None:
-        #         tensor_attrs[k] = v
-
-        # # TODO: do not hardcode extra attributes
-        # if extra_tensor_attrs_keys:
-        #     dim_names = [d.key for d in tensor_dims]
-
-        #     def _add_extra(key):
-        #         if key not in dim_names:
-        #             tensor_attrs[key] = first.metadata(key, default=None)
-
-        #     for k in extra_tensor_attrs_keys:
-        #         tensor_attrs[k] = first.metadata(k, default=None)
-        #         if k == "level":
-        #             _add_extra("typeOfLevel")
-        #         elif k == "levelist":
-        #             _add_extra("levtype")
-
         # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinate
         return tensor_dims, tensor_coords, extra_tensor_attrs
 
@@ -403,7 +375,9 @@ class DatasetBuilder:
         grid = grids[0]
         key = (grid, self.flatten_values)
         if key not in self.grids:
-            self.grids = {key: Grid(ds[0], self.flatten_values)}
+            from .grid import TensorGrid
+
+            self.grids = {key: TensorGrid(ds[0], self.flatten_values)}
         return self.grids[key]
 
 

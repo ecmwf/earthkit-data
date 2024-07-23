@@ -496,7 +496,9 @@ class FieldListTensor(TensorCore):
         if field_dims_and_coords is not None:
             field_dims, field_coords = field_dims_and_coords
         else:
-            field_dims, field_coords, _ = FieldListTensor._field_part(source[0], flatten_values)
+            from earthkit.data.utils.xarray.grid import TensorGrid
+
+            field_dims, field_coords, _ = TensorGrid.build(source[0], flatten_values)
 
         # first = source[0]
 
@@ -600,122 +602,6 @@ class FieldListTensor(TensorCore):
         assert len(coords) == len(self._user_coords)
         ds = self.source[tuple(dataset_indexes)]
         return self.from_tensor(self, ds, coords)
-
-    # @staticmethod
-    # def _get_shape(coords):
-    #     return tuple(len(v) for _, v in coords.items())
-
-    @staticmethod
-    def _field_part(field, flatten_values):
-        field_shape = field.shape
-
-        if flatten_values:
-            field_shape = (math.prod(field_shape),)
-
-        assert isinstance(field_shape, tuple), (
-            field_shape,
-            field,
-        )
-
-        coords = {}
-        dims = {}
-        coords_dim = {}
-
-        # print(f"{field_shape=}")
-
-        if len(field_shape) == 1:
-            dims["values"] = field_shape[0]
-            try:
-                ll = field.to_latlon(flatten=True)
-                coords["latitude"] = np.atleast_1d(ll["lat"])
-                coords["longitude"] = np.atleast_1d(ll["lon"])
-                coords_dim = {k: ("values",) for k in coords}
-            except Exception:
-                pass
-        elif len(field_shape) == 2:
-            try:
-                geo = field.metadata().geography
-                lat = np.atleast_1d(geo.distinct_latitudes())
-                if len(lat) == field_shape[0]:
-                    lon = np.atleast_1d(geo.distinct_longitudes())
-                    if len(lon) == field_shape[1]:
-                        coords["latitude"] = lat
-                        coords["longitude"] = lon
-                        coords_dim["latitude"] = ("latitude",)
-                        coords_dim["longitude"] = ("longitude",)
-                        dims["latitude"] = lat.size
-                        dims["longitude"] = lon.size
-                        assert coords["latitude"].size == field_shape[0]
-                        assert coords["longitude"].size == field_shape[1]
-                        assert dims["latitude"] == field_shape[0]
-                        assert dims["longitude"] == field_shape[1]
-            except Exception as e:
-                print(e)
-                pass
-
-            if not coords or not dims:
-                ll = field.to_latlon(flatten=False)
-                coords["latitude"] = np.atleast_1d(ll["lat"])
-                coords["longitude"] = np.atleast_1d(ll["lon"])
-                coords_dim = {k: ("y", "x") for k in coords}
-                dims["y"] = field_shape[0]
-                dims["x"] = field_shape[1]
-                assert coords["latitude"].shape == field_shape
-                assert coords["longitude"].shape == field_shape
-        else:
-            raise ValueError(f"Unsupported field shape {field_shape}")
-
-        if hasattr(field, "unload"):
-            field.unload()
-
-        for k, v in coords.items():
-            assert k in coords_dim, f"{k=}, {coords_dim=}"
-            assert all(x in dims for x in coords_dim[k]), f"{k=}, {coords_dim=} {dims=}"
-            assert v.size == math.prod([dims[x] for x in coords_dim[k]])
-
-        return dims, coords, coords_dim
-
-    # @staticmethod
-    # def _get_field_shape(field, flatten_values):
-    #     field_shape = field.shape
-
-    #     if flatten_values:
-    #         field_shape = (math.prod(field_shape),)
-
-    #     assert isinstance(field_shape, tuple), (
-    #         field_shape,
-    #         field,
-    #     )
-    #     return field_shape
-
-    # @staticmethod
-    # def make_geo_coords(field, field_shape):
-    #     from earthkit.data.utils.diag import Diag
-
-    #     coords = {}
-
-    #     # diag = Diag("T")
-    #     if len(field_shape) == 1:
-    #         coords["values"] = np.linspace(0, field_shape[0], field_shape[0], dtype=int)
-
-    #     if len(field_shape) == 2:
-    #         f = field
-    #         # diag(" LATLON")
-    #         geo = f.metadata().geography
-    #         lat = geo.distinct_latitudes()
-    #         lon = geo.distinct_longitudes()
-    #         # diag(" LATLON")
-    #         if len(lat) == field_shape[0] and len(lon) == field_shape[1]:
-    #             coords["latitude"] = lat
-    #             coords["longitude"] = lon
-    #         else:
-    #             coords["x"] = np.linspace(0, field_shape[0], field_shape[0], dtype=int)
-    #             coords["y"] = np.linspace(0, field_shape[1], field_shape[1], dtype=int)
-
-    #         if hasattr(f, "unload"):
-    #             f.unload()
-    #     # diag(" LATLON")
-    #     return coords
 
     def make_valid_datetime(self):
         # TODO: make it more general
