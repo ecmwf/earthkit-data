@@ -42,8 +42,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         source_type="file",
         variable_key=None,
         drop_variables=None,
-        extra_variable_attrs=None,
-        extra_global_attrs=None,
+        # extra_variable_attrs=None,
+        # extra_global_attrs=None,
         extra_dims=None,
         drop_dims=None,
         ensure_dims=None,
@@ -57,10 +57,10 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         time_dim_mapping=None,
         add_valid_time_coord=False,
         decode_time=True,
-        # step_as_timedelta=False,
         level_dim_mode="level",
         add_geo_coords=True,
         merge_cf_and_pf=False,
+        strict=True,
         errors=None,
         array_module=numpy,
     ):
@@ -70,12 +70,12 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             defined as a dimension. When None, the key is automatically determined.
         drop_variables: str, or iterable of str, None
             A variable or list of variables to drop from the dataset. Default is None.
-        extra_variable_attrs: str, iterable of str, None
-            Metadata key or list of metadata keys to include as additional variable attributes
-            on top of the automatically generated ones.
-        extra_global_attrs: str, iterable of str, None
-            Metadata key or list+_ of metadata keys to include as additional global attributes on top of
-            the automatically generated ones. Default is None.
+        # extra_variable_attrs: str, iterable of str, None
+        #     Metadata key or list of metadata keys to include as additional variable attributes
+        #     on top of the automatically generated ones.
+        # extra_global_attrs: str, iterable of str, None
+        #     Metadata key or list+_ of metadata keys to include as additional global attributes on top of
+        #     the automatically generated ones. Default is None.
         extra_dims:  str, or iterable of str, None
             Metadata key or list of metadata keys to use as additional dimensions. Only enabled when
             no ``fixed_dims`` is specified. Default is None.
@@ -114,8 +114,6 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             - "valid_time": The ``date``, ``time`` and ``step`` dimensions are combined into a single
               dimension called `valid_time` with np.datetime64 values. Default is False.
             - "raw": The ``date``, ``time`` and "step" dimensions used.
-        step_as_timedelta: bool
-            Convert the ``step`` dimension to np.timedelta64 values. Default is False.
         decode_time: bool
             Decode the datetime coordinates to datetime64 values, while step coordinates to timedelta64
             values. Default is True.
@@ -131,6 +129,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         add_geo_coords: bool
             Add geographic coordinates to the dataset when field values are represented by
             a single "values" dimension. Default is True.
+        strict: bool
+            Perform stricter checks on hypercube consistency. Default is True.
         errors: str, None
             How to handle errors. Default is None.
         array_module: module
@@ -138,9 +138,9 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         """
         _kwargs = dict(
             variable_key=variable_key,
-            extra_variable_attrs=extra_variable_attrs,
+            # extra_variable_attrs=extra_variable_attrs,
             drop_variables=drop_variables,
-            extra_global_attrs=extra_global_attrs,
+            # extra_global_attrs=extra_global_attrs,
             extra_dims=extra_dims,
             drop_dims=drop_dims,
             fixed_dims=fixed_dims,
@@ -154,10 +154,10 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             time_dim_mapping=time_dim_mapping,
             decode_time=decode_time,
             add_valid_time_coord=add_valid_time_coord,
-            # step_as_timedelta=step_as_timedelta,
             level_dim_mode=level_dim_mode,
             add_geo_coords=add_geo_coords,
             merge_cf_and_pf=merge_cf_and_pf,
+            strict=strict,
             errors=errors,
             array_module=array_module,
         )

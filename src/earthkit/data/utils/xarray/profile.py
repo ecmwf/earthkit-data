@@ -145,7 +145,7 @@ class Profile:
         # step_as_timedelta=False,
         level_dim_mode="level",
         coord_attrs=None,
-        dim_coord_mapping=None,
+        mapping=None,
         attr_mapping=None,
         level_maps=None,
         merge_pf_and_cf=False,
@@ -153,6 +153,7 @@ class Profile:
         attrs_mapping=None,
         add_geo_coords=True,
         merge_cf_and_pf=False,
+        strict=True,
         **kwargs,
     ):
 
@@ -161,19 +162,30 @@ class Profile:
 
         from .dim import Vocabulary
 
+        self.strict = strict
+
         self.vocabulary = Vocabulary.make(vocabulary)
 
         self.fixed_dims = ensure_iterable(fixed_dims)
+
+        self.attr_mapping = ensure_dict(attr_mapping)
+        self.mapping = ensure_dict(mapping)
+
+        self.attrs_strategy = attrs_strategy
         self.attrs = ensure_iterable(attrs)
         self.variable_attrs = ensure_iterable(variable_attrs)
-        self.attr_mapping = ensure_dict(attr_mapping)
-        self.dim_coord_mapping = ensure_dict(dim_coord_mapping)
-        self.global_attrs = ensure_dict(global_attrs)
-        self.coord_attrs = ensure_dict(coord_attrs)
+        self.global_attrs = ensure_iterable(global_attrs)
+
+        self.coord_attrs = ensure_iterable(coord_attrs)
+
         self.level_maps = ensure_dict(level_maps)
         self.squeeze = squeeze
         self.time_dim_mode = time_dim_mode
-        self.time_dim_mapping = ensure_dict(time_dim_mapping)
+
+        self.time_dim_mapping = time_dim_mapping
+        if time_dim_mapping is None:
+            self.time_dim_mapping = {}
+
         self.decode_time = decode_time
         # self.add_valid_time_dim = add_valid_time_dim
         # self.add_forecast_ref_time_dim = add_forecast_ref_time_dim
@@ -185,7 +197,6 @@ class Profile:
         self.add_geo_coords = add_geo_coords
         self.variable_key = variable_key
 
-        self.global_attrs = ensure_dict(global_attrs)
         self.extra_global_attrs = ensure_dict(extra_global_attrs)
         self.drop_global_attrs = ensure_iterable(drop_global_attrs)
         self.global_attrs_strategy = global_attrs_strategy
@@ -222,17 +233,25 @@ class Profile:
         # if self.variable_key is not None:
         #     self.add_keys([self.variable_key])
 
-        from .attrs import GlobalAttrs
+        # from .attrs import GlobalAttrs
         from .dim import Dims
 
         # print("INIT index_keys", self.index_keys)
         self.dims = Dims(self)
-        self.g_attrs = GlobalAttrs(self)
 
         self.add_keys(ensure_iterable(MANDATORY_KEYS))
-        self.add_keys(self.attrs)
-        self.add_keys(self.variable_attrs)
-        self.add_keys(self.global_attrs)
+
+        for k in self.variable_attrs:
+            if k not in self.attrs:
+                self.attrs.append(k)
+
+        for k in self.global_attrs:
+            if isinstance(k, str) and k not in self.attrs:
+                self.attrs.append(k)
+
+        # self.add_keys(self.attrs)
+        # self.add_keys(self.variable_attrs)
+        # self.add_keys(self.global_attrs)
 
         # print("INIT dim_keys", self.dim_keys)
         self.drop_variables = drop_variables
@@ -358,10 +377,10 @@ class Profile:
             raise ValueError(f"Cannot determine level type for coordinate {name}")
 
     def rename_dims(self, dims):
-        return [self.dim_coord_mapping.get(d, d) for d in dims]
+        return [self.mapping.get(d, d) for d in dims]
 
     def rename_coords(self, coords):
-        return {self.dim_coord_mapping.get(k, k): v for k, v in coords.items()}
+        return {self.mapping.get(k, k): v for k, v in coords.items()}
 
     def adjust_attributes(self, attrs):
         attrs.pop("units", None)
@@ -369,9 +388,14 @@ class Profile:
 
     def remap(self, d):
         def _remap(k):
-            return self.attr_mapping.get(k, k)
+            return self.mapping.get(k, k)
 
         return {_remap(k): v for k, v in d.items()}
 
     def collect_coords(self, tensor):
         return self.dims.as_coord(tensor)
+
+    def attrs_builder(self):
+        from .attrs import AttrsBuilder
+
+        return AttrsBuilder(self)

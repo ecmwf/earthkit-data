@@ -1,57 +1,55 @@
-# options:
-#   fixed_dims: true
-#   valid_datetime_coord: true
-#   base_datetime_coord: true
-#   timedelta_step: true
-#   no_levtype_dim: true
-#   merge_pf_and_cf: true
-#   merge_pl_levels: true
-#   var_key: cfVarName
-
-frozen_options:
-- predefined_dims
-- global_attrs_strategy
-
 vocabulary: mars
 
-# variables
 variable_key: param
-
-attrs:
-- levtype
-- units
 
 attrs_strategy: unique_keys
 
-# variable attributes
+attrs:
+- param
+- cfName
+- name
+- paramId
+- units
+- class
+- stream
+- levtype
+- type
+- expver
+- date
+- hdate
+- andate
+- time
+- antime
+- reference
+- anoffset
+- verify
+- fcmonth
+- fcperiod
+- leadtime
+- opttime
+- origin
+- domain
+- method
+- diagnostic
+- iteration
+- number
+- quantile
+- levelist
+
 variable_attrs:
+- cfName
+- name
+- paramId
 - units
 
-# attributes
-attrs_mapping:
-  cfName: standard_name
-
-# global attributes
 global_attrs:
-drop_global_attrs:
-- units
+- Conventions: CF-1.8
+- institution: ECMWF
 
-
-# # dimensions
-# predefined_dims:
-# - number
-# - forecast_reference_time
-# - date
-# - time
-# - step
-# - valid_time
-# - levelist
-# - level_per_type
-
-dim_coord_mapping:
-  valid_datetime: valid_time
-  base_time: forecast_reference_time
-  base_datetime: forecast_reference_time
+# generic mapping for variables, attributes and coordinates
+mapping:
+  cfName: standard_name
+  name: long_name
 
 coord_attrs:
   latitude:
@@ -63,17 +61,17 @@ coord_attrs:
     standard_name: longitude
     long_name: longitude
   forecast_reference_time:
-    # "units": "seconds since 1970-01-01T00:00:00",
-    # "calendar": "proleptic_gregorian",
+    # units: seconds since 1970-01-01T00:00:00
+    # calendar: proleptic_gregorian
     standard_name: forecast_reference_time
     long_name: initial time of forecast
   step:
-    # "units": "hours",
+    # units: hours
     standard_name: forecast_period
     long_name: time since forecast_reference_time
   valid_time:
-    # "units": "seconds since 1970-01-01T00:00:00",
-    # "calendar": "proleptic_gregorian",
+    # units: seconds since 1970-01-01T00:00:00
+    # calendar: proleptic_gregorian
     standard_name: time
     long_name: valid_time
 

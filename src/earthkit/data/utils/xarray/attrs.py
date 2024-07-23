@@ -8,26 +8,73 @@
 #
 
 import logging
+from collections import defaultdict
 
 LOG = logging.getLogger(__name__)
 
 
-class GlobalAttrs:
+class AttrsBuilder:
     def __init__(self, profile):
         self.profile = profile
-        self.strategy = profile.global_attrs_strategy
+        self.strategy = profile.attrs_strategy
 
-    def attrs(self, ds):
-        attrs = dict(**self.profile.global_attrs)
-
+    def build(self, *args, **kwargs):
         if self.strategy == "unique_keys":
-            for k in self.profile.index_keys:
-                v = ds.index(k)
-                if len(v) == 1:
-                    attrs[k] = v[0]
+            method = self._build_unique
+        else:
+            method = self._build
 
-        for k in self.profile.drop_global_attrs:
-            if k in attrs:
-                del attrs[k]
+        global_attrs = method(*args, **kwargs)
 
-        return attrs
+        # add fixed global attrs
+        for k in self.profile.global_attrs:
+            if isinstance(k, dict):
+                for k1, v1 in k.items():
+                    if k1 not in global_attrs:
+                        global_attrs[k1] = v1
+
+        return global_attrs
+
+    def _build_unique(self, ds, t_vars, remap=True):
+        attrs = defaultdict(set)
+        if remap:
+            remap = self.profile.remap
+
+        for var_obj in t_vars.values():
+            var_obj.load_attrs_data(self.profile.attrs, strict=self.profile.strict)
+            for k, v in var_obj.attrs.items():
+                attrs[k].update(v)
+
+        global_attrs = defaultdict(list)
+        for k, v in attrs.items():
+            if len(v) == 1 and k not in self.profile.variable_attrs:
+                global_attrs[k] = list(v)[0]
+
+        for var_obj in t_vars.values():
+            var_obj.build_attrs(drop_keys=global_attrs.keys(), remap=remap)
+
+        return global_attrs
+
+    def _build(self, ds, t_vars, remap=True):
+        global_attrs = dict()
+        if remap:
+            remap = self.profile.remap
+
+        if self.profile.strict:
+            for var_obj in t_vars.values():
+                var_obj.load_attrs_data(self.profile.variable_attrs, strict=self.profile.strict)
+                var_obj.build_attrs(remap=remap)
+        else:
+            for var_obj in t_vars.values():
+                var_obj.load_attrs_data(self.profile.variable_attrs, strict=self.profile.strict)
+                var_obj.build_attrs(remap=remap)
+
+            global_attrs = dict()
+            first = ds[0]
+            for k, v in self.profile.global_attrs:
+                if isinstance(v, str):
+                    v = first.metadata(v, default=None)
+                    if v is not None:
+                        global_attrs[k] = v
+
+        return global_attrs

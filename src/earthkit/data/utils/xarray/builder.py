@@ -8,10 +8,13 @@
 #
 
 import logging
+from collections import defaultdict
 
 import numpy
 import xarray
 import xarray.core.indexing as indexing
+
+from earthkit.data.utils import ensure_iterable
 
 LOG = logging.getLogger(__name__)
 
@@ -21,6 +24,38 @@ class Grid:
         from earthkit.data.indexing.tensor import FieldListTensor
 
         self.dims, self.coords, self.coords_dim = FieldListTensor._field_part(field, flatten_values)
+
+
+class VariableBuilder:
+    def __init__(self, var_dims, data, extra_attr_keys, tensor):
+        self.var_dims = var_dims
+        self.data = data
+        self.attrs = {}
+        self.extra_attr_keys = ensure_iterable(extra_attr_keys)
+        self.tensor = tensor
+
+    def build(self):
+        return xarray.Variable(self.var_dims, self.data, attrs=self.attrs)
+
+    def load_attrs_data(self, keys, strict=True):
+        keys = keys + self.extra_attr_keys
+        if strict:
+            for k in keys:
+                if k not in self.var_dims and k not in self.attrs:
+                    self.attrs[k] = self.tensor.source.index(k)
+        else:
+            first = self.tensor.source[0]
+            for k in keys:
+                if k not in self.var_dims and k not in self.attrs:
+                    v = first.metadata(k, default=None)
+                    if v is not None:
+                        self.attrs[k] = [v]
+
+    def build_attrs(self, drop_keys=None, remap=None):
+        drop_keys = ensure_iterable(drop_keys)
+        self.attrs = {k: v[0] for k, v in self.attrs.items() if k not in drop_keys and len(v) == 1}
+        if callable(remap):
+            self.attrs = remap(self.attrs)
 
 
 class TensorBackendArray(xarray.backends.common.BackendArray):
@@ -98,7 +133,7 @@ class TensorBackendBuilder:
         ds,
         profile,
         dims,
-        global_attrs,
+        common_metadata=None,
         grid=None,
         flatten_values=False,
         array_module=numpy,
@@ -107,7 +142,8 @@ class TensorBackendBuilder:
         self.profile = profile
         self.dims = dims
         # print("Builder, dims=", dims)
-        self.global_attrs = global_attrs
+        self.common_metadata = common_metadata
+        self.global_attrs = defaultdict(list)
 
         self.flatten_values = flatten_values
         self.array_module = array_module
@@ -153,21 +189,27 @@ class TensorBackendBuilder:
             self.tensor_coords["valid_time"] = Coord.make("valid_time", _vals, dims=_dims)
 
     def build(self):
-        xr_vars = {}
+        t_vars = {}
         # we assume each variable forms a full cube
         for variable in self.profile.variables:
-            xr_vars[variable] = self.make_variable(self.ds, self.dims, self.profile.variable_key, variable)
+            t_vars[variable] = self.make_variable(self.ds, self.dims, self.profile.variable_key, variable)
 
-        attrs = self.profile.g_attrs.attrs(self.ds)
+        builder = self.profile.attrs_builder()
+        global_attrs = builder.build(self.ds, t_vars, remap=True)
+
+        # global_attrs = self.profile.g_attrs.attrs(self.ds, t_vars)
+        # global_attrs = self.profile.remap(global_attrs)
+
         coords = self.profile.rename_coords(self.coords())
-        dataset = xarray.Dataset(xr_vars, coords=coords, attrs=attrs)
+
+        xr_vars = {k: v.build() for k, v in t_vars.items()}
+        dataset = xarray.Dataset(xr_vars, coords=coords, attrs=global_attrs)
         return dataset
 
     def make_variable(self, ds, dims, key, name):
         ds_var = ds.sel(**{key: name})
 
-        tensor_dims, _, tensor_attrs = self.prepare_tensor(ds_var, dims, name)
-
+        tensor_dims, _, extra_tensor_attrs = self.prepare_tensor(ds_var, dims, name)
         tensor_dim_keys = [d.key for d in tensor_dims]
 
         tensor = ds_var.to_tensor(
@@ -212,23 +254,21 @@ class TensorBackendBuilder:
         # kk = [k for k in self.profile.index_keys if k not in self.attributes]
         # var_attrs = ds.common_attributes_other(ds_var, kk)
 
-        var_attrs = {
-            k: ds_var.index(k)[0] for k in self.profile.var_attributes() if len(ds_var.index(k)) >= 1
-        }
-        var_attrs.update(tensor_attrs)
+        # var_attrs = {
+        #     k: ds_var.index(k)[0] for k in self.profile.var_attributes() if len(ds_var.index(k)) >= 1
+        # }
+        # var_attrs.update(tensor_attrs)
 
-        var_attrs = self.profile.remap(var_attrs)
+        # var_attrs = self.profile.remap(var_attrs)
 
-        var = xarray.Variable(var_dims, data, attrs=var_attrs)
+        var = VariableBuilder(var_dims, data, extra_tensor_attrs, tensor)
+        # var = xarray.Variable(var_dims, data, attrs=var_attrs)
         return var
 
     def prepare_tensor(self, ds, dims, name):
         tensor_dims = []
         tensor_coords = {}
-        tensor_attrs = {}
-        tensor_attrs_keys = []
-        from .coord import ListDiff
-        from .coord import list_to_str
+        extra_tensor_attrs = []
 
         # print(f"prepare_tensor: {name=} {dims=}")
         # First check if the dims/coords are consistent with the tensors of the previous variables
@@ -240,42 +280,56 @@ class TensorBackendBuilder:
                     raise ValueError(f"Dimension {d} has no valid values")
             else:
                 if num == 1 and d.name in self.profile.dims_as_attrs:
-                    tensor_attrs_keys.append(d.key)
+                    extra_tensor_attrs.append(d.key)
 
                 elif num > 1 or not self.profile.squeeze or d.name in self.profile.ensure_dims:
                     tensor_dims.append(d)
                     tensor_coords[d.key] = ds.index(d.key)
-                    if d.key in self.tensor_coords:
-                        v1 = self.tensor_coords[d.key].vals
-                        v2 = tensor_coords[d.key]
-                        diff = ListDiff.diff(v1, v2, name=d.key)
-                        if not diff.same:
-                            raise ValueError(
-                                (
-                                    f'Variable "{name}" has inconsistent dimension "{d.key}" compared '
-                                    f"to other variables. Expected values: {list_to_str(v1)}, "
-                                    f"got: {list_to_str(v2)}. {diff.diff_text}"
-                                )
-                            )
+                    self.check_tensor_coords(name, d.key, tensor_coords)
 
-        # TODO: do not hardcode extra attributes
-        if tensor_attrs_keys:
-            first = ds[0]
-            dim_names = [d.key for d in tensor_dims]
+        # first = ds[0]
+        # for k in self.profile.attrs:
+        #     v = first.metadata(k, default=None)
+        #     if v is not None:
+        #         tensor_attrs[k] = v
 
-            def _add_extra(key):
-                if key not in dim_names:
-                    tensor_attrs[key] = first.metadata(key, default=None)
+        # # TODO: do not hardcode extra attributes
+        # if extra_tensor_attrs_keys:
+        #     dim_names = [d.key for d in tensor_dims]
 
-            for k in tensor_attrs_keys:
-                tensor_attrs[k] = first.metadata(k, default=None)
-                if k == "level":
-                    _add_extra("typeOfLevel")
-                elif k == "levelist":
-                    _add_extra("levtype")
+        #     def _add_extra(key):
+        #         if key not in dim_names:
+        #             tensor_attrs[key] = first.metadata(key, default=None)
+
+        #     for k in extra_tensor_attrs_keys:
+        #         tensor_attrs[k] = first.metadata(k, default=None)
+        #         if k == "level":
+        #             _add_extra("typeOfLevel")
+        #         elif k == "levelist":
+        #             _add_extra("levtype")
 
         # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinate
-        return tensor_dims, tensor_coords, tensor_attrs
+        return tensor_dims, tensor_coords, extra_tensor_attrs
+
+    def check_tensor_coords(self, var_name, coord_name, tensor_coords):
+        if not self.profile.strict:
+            return
+
+        if coord_name in self.tensor_coords:
+            from .coord import ListDiff
+            from .coord import list_to_str
+
+            v1 = self.tensor_coords[coord_name].vals
+            v2 = tensor_coords[coord_name]
+            diff = ListDiff.diff(v1, v2, name=coord_name)
+            if not diff.same:
+                raise ValueError(
+                    (
+                        f'Variable "{var_name}" has inconsistent dimension "{coord_name}" compared '
+                        f"to other variables. Expected values: {list_to_str(v1)}, "
+                        f"got: {list_to_str(v2)}. {diff.diff_text}"
+                    )
+                )
 
 
 class DatasetBuilder:

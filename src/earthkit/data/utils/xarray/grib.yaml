@@ -1,78 +1,22 @@
-frozen_options:
-  # fixed_dims: true
-  # add_valid_time_coord: true
-  # add_forecast_reference_dim: true
-  # step_as_timedelta: true
-  # no_levtype_dim: true
-  merge_pf_and_cf: true
-  # merge_pl_levels: true
-  variable_key: cfVarName
-# index_keys:
-# - cfVarName
-# - number
-# - valid_datetime
-# - forecast_reference_time
-# - step
-# - level
-# - class
-# - stream
-# - type
-# - expver
-# - date
-# - hdate
-# - andate
-# - time
-# - antime
-# - step
-# - reference
-# - anoffset
-# - verify
-# - fcmonth
-# - fcperiod
-# - leadtime
-# - opttime
-# - origin
-# - domain
-# - method
-# - diagnostic
-# - iteration
-# - number
-# - quantile
-# - units
+vocabulary: grib
 
-vocabulary: cf
-
-
-attrs:
-- levtype
-- units
+variable_key: param
 
 attrs_mode: fixed
 
 variable_attrs:
 - cfName
+- name
 - units
-
-attrs_mapping:
-  cfName: standard_name
-
-# allow_remapping: false
-
-
-# key_roles:
-#   level: level
-#   level_type: typeOfLevel
-#   time: forecast_reference_time
-#   number: number
-
-dim_coord_mapping:
-  valid_datetime: valid_time
-  base_time: forecast_reference_time
-  base_datetime: forecast_reference_time
-  levelist: level
+- typeOfLevel
 
 global_attrs:
-  Conventions: CF-1.8
+- Conventions: CF-1.8
+- institution: ECMWF
+
+mapping:
+  cfName: standard_name
+  name: long_name
 
 coord_attrs:
   latitude:

@@ -114,7 +114,7 @@ class MarsVocabulary(Vocabulary):
         return "levtype"
 
 
-class CFVocabulary(Vocabulary):
+class GribVocabulary(Vocabulary):
     def level(self):
         return "level"
 
@@ -122,7 +122,7 @@ class CFVocabulary(Vocabulary):
         return "typeOfLevel"
 
 
-VOCABULARIES = {"mars": MarsVocabulary, "cf": CFVocabulary}
+VOCABULARIES = {"mars": MarsVocabulary, "grib": GribVocabulary}
 
 
 class Dim:
