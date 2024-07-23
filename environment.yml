@@ -50,5 +50,3 @@ dependencies:
 - nbsphinx
 - ipykernel
 - geopandas
-- cupy
-- cudatoolkit==11.8
