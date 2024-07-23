@@ -487,7 +487,7 @@ class Field(Base):
             Positional arguments specifying metadata keys. Can be empty, in this case all
             the keys from the specified ``namespace`` will
             be used. (See examples below).
-        astype: type name, :obj:`list` or :obj:`tuple`
+        astype: type name,5 :obj:`list` or :obj:`tuple`
             Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
             Otherwise, must have same the number of elements as ``keys``. Only used when
             ``keys`` is not empty.
