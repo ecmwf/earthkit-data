@@ -47,7 +47,7 @@ class FDBSource(Source):
         fdb5_home = os.environ.get("FDB5_HOME", None)
         fdb5_conf = os.environ.get("FDB5_CONFIG", None)
         fdb5_config_file = os.environ.get("FDB5_CONFIG_FILE", None)
-        if fdb5_home is None or (fdb5_conf is None and fdb5_config_file is None):
+        if fdb5_home is None and (fdb5_conf is None and fdb5_config_file is None):
             raise ValueError(
                 """FDB5_HOME and either FDB5_CONFIG or FDB5_CONFIG_FILE need to be set.
                 See: https://fields-database.readthedocs.io for details about FDB."""
