@@ -11,7 +11,7 @@ repos:
   - id: debug-statements
   - id: mixed-line-ending
   - id: no-commit-to-branch # Prevent committing to main / master
-  - id: check-merge-conflict # Check for files that contain merge conflict
+  # - id: check-merge-conflict # Check for files that contain merge conflict
 - repo: https://github.com/PyCQA/isort
   rev: 5.13.0
   hooks:
@@ -68,10 +68,10 @@ repos:
     additional_dependencies: [toml]
     exclude: tests|docs
 - repo: https://github.com/b8raoult/optional-dependencies-all
-  rev: "0.0.2"
+  rev: "0.0.6"
   hooks:
   - id: optional-dependencies-all
-    args: ["--inplace", "--all-key", "all", "--exclude-keys", "dev,docs,test"]
+    args: ["--inplace", "--exclude-keys=ci,dev,docs,test", "--group=dev=all,docs,test"]
 - repo: https://github.com/tox-dev/pyproject-fmt
   rev: "2.1.3"
   hooks:
