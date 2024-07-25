@@ -684,17 +684,17 @@ class Field(Base):
             self._metadata.get("number", None),
         )
 
-    @abstractmethod
-    def _attributes(self, names, remapping=None):
+    def _attributes(self, names, remapping=None, default=None):
         result = {}
         metadata = self._metadata.get
         if remapping is not None:
             metadata = remapping(metadata)
 
         for name in names:
-            # result[name] = metadata(name, None)
-            result[name] = metadata(name)
+            result[name] = metadata(name, default=default)
         return result
+
+        # return {name: metadata(name) for name in names}
 
 
 class FieldList(Index):
@@ -782,12 +782,13 @@ class FieldList(Index):
 
     def _find_all_index_dict(self):
         indices = defaultdict(set)
+        keys = self._default_index_keys()
         for f in self:
-            for k in self._default_index_keys():
-                v = f.metadata(k, default=None)
-                if v is None:
-                    continue
-                indices[k].add(v)
+            v = f.metadata(keys, default=None)
+            for i, k in enumerate(keys):
+                # v = f.metadata(k, default=None)
+                if v[i] is None:
+                    indices[k].add(v[i])
 
         return {k: sorted(list(v)) for k, v in indices.items()}
 

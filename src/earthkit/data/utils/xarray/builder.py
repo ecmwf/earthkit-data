@@ -31,17 +31,19 @@ class VariableBuilder:
 
     def load_attrs_data(self, keys, strict=True):
         keys = keys + self.extra_attr_keys
+        attr_keys = []
+        for k in keys:
+            if k not in self.var_dims and k not in attr_keys:
+                attr_keys.append(k)
+
+        # TODO: do we need a strict mode here? The extra cost has to be justified
         if strict:
-            for k in keys:
-                if k not in self.var_dims and k not in self.attrs:
-                    self.attrs[k] = self.tensor.source.index(k)
+            from .fieldlist import unique_values
+
+            self.attrs = unique_values(self.tensor.source, attr_keys)
         else:
             first = self.tensor.source[0]
-            for k in keys:
-                if k not in self.var_dims and k not in self.attrs:
-                    v = first.metadata(k, default=None)
-                    if v is not None:
-                        self.attrs[k] = [v]
+            self.attrs = {k: [v] for k, v in first._attributes(attr_keys, default=None).items()}
 
     def build_attrs(self, drop_keys=None, remap=None):
         drop_keys = ensure_iterable(drop_keys)
@@ -202,14 +204,14 @@ class TensorBackendBuilder:
     def make_variable(self, ds, dims, key, name):
         ds_var = ds.sel(**{key: name})
 
-        tensor_dims, _, extra_tensor_attrs = self.prepare_tensor(ds_var, dims, name)
+        tensor_dims, tensor_coords, extra_tensor_attrs = self.prepare_tensor(ds_var, dims, name)
         tensor_dim_keys = [d.key for d in tensor_dims]
 
         tensor = ds_var.to_tensor(
             *tensor_dim_keys,
             sort=False,
             progress_bar=False,
-            # user_coords=tensor_coords,
+            user_dims_and_coords=tensor_coords,
             field_dims_and_coords=(self.grid.dims, self.grid.coords),
             flatten_values=self.flatten_values,
         )
@@ -265,8 +267,14 @@ class TensorBackendBuilder:
 
         # print(f"prepare_tensor: {name=} {dims=}")
         # First check if the dims/coords are consistent with the tensors of the previous variables
+
+        from .fieldlist import unique_values
+
+        vals = unique_values(ds, [d.key for d in dims])
+
         for d in dims:
-            num = len(ds.index(d.key))
+            # num = len(ds.index(d.key))
+            num = len(vals[d.key])
             if num == 0:
                 continue
                 if d.name not in self.profile.ensure_dims:
@@ -277,7 +285,8 @@ class TensorBackendBuilder:
 
                 elif num > 1 or not self.profile.squeeze or d.name in self.profile.ensure_dims:
                     tensor_dims.append(d)
-                    tensor_coords[d.key] = ds.index(d.key)
+                    # tensor_coords[d.key] = ds.index(d.key)
+                    tensor_coords[d.key] = vals[d.key]
                     self.check_tensor_coords(name, d.key, tensor_coords)
 
         # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinate

@@ -32,6 +32,23 @@ def _get_common_attributes(ds, keys):
     return common_entries
 
 
+def unique_values(ds, names, skip_missing=True):
+    vals = defaultdict(dict)
+    for f in ds:
+        # field metadata must support multiple keys
+        m = f.metadata(names, default=None)
+        for k, v in zip(names, m):
+            vals[k][v] = True
+
+    vals = {k: tuple(values.keys()) for k, values in vals.items()}
+
+    for k, v in vals.items():
+        if skip_missing:
+            v = [x for x in v if x is not None]
+        vals[k] = sorted(v)
+    return vals
+
+
 class WrappedFieldList(FieldArray):
     def __init__(self, fieldlist, keys, db=None, fields=None, remapping=None):
         super().__init__()
@@ -88,6 +105,21 @@ class WrappedFieldList(FieldArray):
 
     def common_indices(self):
         return {k: v[0] for k, v in self.indices().items() if len(v) == 1}
+
+    def unique_values(self, names, **kwargs):
+        """Implementation adapted to work with WrappedFieldList"""
+        vals = defaultdict(dict)
+        for f in self.fields:
+            m = f._attributes(names, default=None)
+            for k, v in m.items():
+                vals[k][v] = True
+
+        vals = {k: tuple(values.keys()) for k, values in vals.items()}
+
+        for k, v in vals.items():
+            v = [x for x in v if x is not None]
+            vals[k] = sorted(v)
+        return vals
 
 
 # def flatten_arg(func):
@@ -170,3 +202,11 @@ class WrappedField:
         v = self.field.to_numpy(*args, **kwargs)
         self.unload()
         return v
+
+    def _attributes(self, names, remapping=None, default=None):
+        metadata = self.metadata
+        if remapping is not None:
+            metadata = remapping(metadata)
+
+        result = metadata(names, default=default)
+        return dict(zip(names, result))

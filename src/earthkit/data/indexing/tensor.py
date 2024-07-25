@@ -482,9 +482,14 @@ class FieldListTensor(TensorCore):
         # Get a mapping of user names to unique values
         # With possible reduce dimensionality if the user uses 'level+param'
         if names:
-            user_coords = CubeCoords(ds.unique_values(*names, remapping=remapping, progress_bar=progress_bar))
-            for k, v in user_coords.items():
-                user_coords[k] = sorted(v)
+            if user_dims_and_coords:
+                user_coords = CubeCoords(user_dims_and_coords)
+            else:
+                user_coords = CubeCoords(
+                    ds.unique_values(*names, remapping=remapping, progress_bar=progress_bar)
+                )
+                for k, v in user_coords.items():
+                    user_coords[k] = sorted(v)
         else:
             user_coords = CubeCoords()
 

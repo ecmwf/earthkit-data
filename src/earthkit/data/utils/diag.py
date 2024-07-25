@@ -100,4 +100,4 @@ class Diag:
 
     def __call__(self, label=""):
         self.time(label)
-        # self.memory(label)
+        self.memory(label)

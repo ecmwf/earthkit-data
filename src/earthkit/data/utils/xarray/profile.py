@@ -251,7 +251,7 @@ class Profile:
 
         # self.add_keys(self.attrs)
         # self.add_keys(self.variable_attrs)
-        # self.add_keys(self.global_attrs)
+        # self.add_keys([k for k in self.global_attrs if isinstance(k, str)])
 
         # print("INIT dim_keys", self.dim_keys)
         self.drop_variables = drop_variables
