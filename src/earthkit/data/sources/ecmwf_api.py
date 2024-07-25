@@ -57,6 +57,12 @@ class ECMWFApi(FileSource):
 
         requests = self.requests(**request)
 
+        self.expect_any = False
+        for k, v in requests[0].items():
+            if k.lower() == "expect" and isinstance(v, str) and v.lower() == "any":
+                self.expect_any = True
+                break
+
         self.service()  # Trigger password prompt before threading
 
         nthreads = min(self.settings("number-of-download-threads"), len(requests))
@@ -117,3 +123,9 @@ class ECMWFApi(FileSource):
             # odc_read_odb_kwargs=odc_read_odb_kwargs,
             **kwargs,
         )
+
+    def empty_reader(self, *args, **kwargs):
+        if self.expect_any:
+            from .empty import EmptySource
+
+            return EmptySource()
