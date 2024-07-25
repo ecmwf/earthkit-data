@@ -786,8 +786,7 @@ class FieldList(Index):
         for f in self:
             v = f.metadata(keys, default=None)
             for i, k in enumerate(keys):
-                # v = f.metadata(k, default=None)
-                if v[i] is None:
+                if v[i] is not None:
                     indices[k].add(v[i])
 
         return {k: sorted(list(v)) for k, v in indices.items()}

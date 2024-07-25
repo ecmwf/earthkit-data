@@ -145,7 +145,7 @@ class VirtualGribMetadata(RawMetadata):
 
     def valid_datetime(self):
         step = self.get("endStep", None)
-        return self._base_datetime() + step_to_delta(step)
+        return self.base_datetime() + step_to_delta(step)
 
     def _default_step(self, astype=None):
         step = "0"

@@ -27,7 +27,7 @@ def test_icon_to_xarray(fl_type, array_backend):
     # test the conversion to xarray for an icon (unstructured grid) grib file.
     g = load_grib_data("test_icon.grib", fl_type, array_backend, folder="data")
 
-    ds = g.to_xarray()
+    ds = g.to_xarray(engine="cfgrib")
     assert len(ds.data_vars) == 1
     # Dataset contains 9 levels and 9 grid points per level
     ref_levs = g.metadata("level")
@@ -43,7 +43,9 @@ def test_to_xarray_filter_by_keys(fl_type, array_backend):
     assert len(g) > 1
 
     # see github #250
-    r = g.to_xarray(xarray_open_dataset_kwargs={"backend_kwargs": {"filter_by_keys": {"shortName": "t"}}})
+    r = g.to_xarray(
+        engine="cfgrib", xarray_open_dataset_kwargs={"backend_kwargs": {"filter_by_keys": {"shortName": "t"}}}
+    )
 
     assert len(r.data_vars) == 1
     assert r["t"].sizes["isobaricInhPa"] == 1

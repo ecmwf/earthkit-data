@@ -150,7 +150,7 @@ class GribCodesHandle(CodesHandle):
     def get(self, name, ktype=None, **kwargs):
         if name == "values":
             return self.get_values()
-        elif name == "m5GridSection":
+        elif name == "md5GridSection":
             return self.get_md5GridSection()
 
         return super().get(name, ktype, **kwargs)

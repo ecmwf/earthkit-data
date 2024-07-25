@@ -32,7 +32,6 @@ def get_fields_from_ds(
     field_type=None,
     check_only=False,
 ):  # noqa C901
-    has_values = False
 
     fields = []
 
@@ -85,7 +84,6 @@ def get_fields_from_ds(
             if (
                 standard_name.lower() in GEOGRAPHIC_COORDS["x"]
                 or (long_name == "longitude")
-                or (coord == "longitude")
                 or (axis == "X")
                 or coord_name.lower() in GEOGRAPHIC_COORDS["x"]
             ):
@@ -95,24 +93,18 @@ def get_fields_from_ds(
             if (
                 standard_name.lower() in GEOGRAPHIC_COORDS["y"]
                 or (long_name == "latitude")
-                or (coord == "latitude")
                 or (axis == "Y")
                 or coord_name.lower() in GEOGRAPHIC_COORDS["y"]
             ):
                 has_lat = True
                 use = True
 
-            if coord == "values":
-                # If "values" is a coordinate, use it as a field identifier
-                has_values = True
-                use = True
-
             # Of course, not every one sets the standard_name
             if (
                 standard_name in ["time", "forecast_reference_time"]
                 or long_name in ["time"]
+                or coord_name.lower() in ["time"]
                 or axis == "T"
-                or coord in ["time", "forecast_reference_time"]
             ):
                 # we might not be able to convert time to datetime
                 try:
@@ -138,13 +130,10 @@ def get_fields_from_ds(
             if axis in ("X", "Y"):
                 use = True
 
-            if axis in ("values"):
-                use = True
-
             if not use:
                 coordinates.append(OtherCoordinate(c, coord in info))
 
-        if not (has_lat and has_lon) and not has_values:
+        if not (has_lat and has_lon):
             # self.log.info("NetCDFReader: skip %s (Not a 2 field)", name)
             continue
 
