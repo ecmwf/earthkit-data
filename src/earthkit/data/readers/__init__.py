@@ -148,6 +148,16 @@ def _unknown(method_name, source, path_or_data, **kwargs):
     return unknowns[method_name](source, path_or_data, **kwargs)
 
 
+def _non_existing(source, path, **kwargs):
+    if hasattr(source, "empty_reader"):
+        return source.empty_reader(path, **kwargs)
+
+
+def _empty(source, path, **kwargs):
+    if hasattr(source, "empty_reader"):
+        return source.empty_reader(path, **kwargs)
+
+
 def reader(source, path, **kwargs):
     """Create the reader for a file/directory specified by path"""
     assert isinstance(path, str), source
@@ -169,9 +179,15 @@ def reader(source, path, **kwargs):
     LOG.debug("Reader for %s", path)
 
     if not os.path.exists(path):
+        r = _non_existing(source, path, **kwargs)
+        if r is not None:
+            return r
         raise FileExistsError(f"No such file exists: '{path}'")
 
     if os.path.getsize(path) == 0:
+        r = _empty(source, path, **kwargs)
+        if r is not None:
+            return r
         raise Exception(f"File is empty: '{path}'")
 
     n_bytes = SETTINGS.get("reader-type-check-bytes")
