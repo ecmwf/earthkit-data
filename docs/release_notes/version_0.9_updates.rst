@@ -2,6 +2,15 @@ Version 0.9 Updates
 /////////////////////////
 
 
+Version 0.9.3
+===============
+
+Fixes
+++++++
+
+- When "expect=any" is used in a request for the :ref:`data-sources-mars` source and no data is available :func:`from_source` now returns an empty fieldlist. Previously an exception was thrown.
+
+
 Version 0.9.2
 ===============
 
