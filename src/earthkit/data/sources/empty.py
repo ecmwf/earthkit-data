@@ -19,5 +19,8 @@ class EmptySource(FieldList):
     def __len__(self):
         return 0
 
+    def mutate_source(self):
+        return self
+
 
 source = EmptySource
