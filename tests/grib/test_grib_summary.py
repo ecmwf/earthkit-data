@@ -409,6 +409,8 @@ def test_grib_dump(fl_type, array_backend):
         {
             "title": "geography",
             "data": {
+                "Ni": 12,
+                "Nj": 7,
                 "bitmapPresent": 0,
                 "latitudeOfFirstGridPointInDegrees": 90.0,
                 "longitudeOfFirstGridPointInDegrees": 0.0,
