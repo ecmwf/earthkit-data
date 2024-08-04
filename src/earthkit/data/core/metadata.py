@@ -37,6 +37,10 @@ class Metadata(metaclass=ABCMeta):
 
     extra = None
 
+    def __init__(self, cache=None):
+        if cache is not None:
+            cache = {}
+
     def __iter__(self):
         """Return an iterator over the metadata keys."""
         return iter(self.keys())
@@ -174,14 +178,21 @@ class Metadata(metaclass=ABCMeta):
             a missing value.
 
         """
+        if self.cache is not None:
+            key = (key, default, astype, raise_on_missing)
+            if key in self.cache:
+                return self.cache[key]
+
         if self._is_extra_key(key):
-            return self._get_extra_key(key, default=default, astype=astype)
+            v = self._get_extra_key(key, default=default, astype=astype)
         if self._is_custom_key(key):
-            return self._get_custom_key(
-                key, default=default, astype=astype, raise_on_missing=raise_on_missing
-            )
+            v = self._get_custom_key(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
         else:
-            return self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+            v = self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+
+        if self.cache is not None:
+            self.cache[key] = v
+        return v
 
     @abstractmethod
     def _get(self, key, astype=None, default=None, raise_on_missing=False):

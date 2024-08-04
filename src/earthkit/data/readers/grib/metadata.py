@@ -9,6 +9,7 @@
 
 import datetime
 import warnings
+from abc import abstractmethod
 from functools import cached_property
 
 from earthkit.data.core.geography import Geography
@@ -306,13 +307,33 @@ class GribMetadata(Metadata):
 
     __handle_type = None
 
-    def __init__(self, handle, extra=None):
-        if not isinstance(handle, self._handle_type()):
-            raise TypeError(f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}")
-        self._handle = handle
+    # def __init__(self, field, extra=None):
+    #     self.field = field
+    #     self._geo = None
+    #     if extra is not None:
+    #         self.extra = extra
+
+    @abstractmethod
+    @property
+    def _handle(self):
+        pass
+
+    def __init__(self, extra=None, cache=None):
+        # if not isinstance(handle, self._handle_type()):
+        #     raise TypeError(f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}")
+        # self._handle = handle
         self._geo = None
         if extra is not None:
             self.extra = extra
+        super().__init__(cache=cache)
+
+    # def __init__(self, handle, extra=None):
+    #     if not isinstance(handle, self._handle_type()):
+    #         raise TypeError(f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}")
+    #     self._handle = handle
+    #     self._geo = None
+    #     if extra is not None:
+    #         self.extra = extra
 
     @staticmethod
     def _handle_type():
@@ -355,6 +376,7 @@ class GribMetadata(Metadata):
         v = self._handle.get(key, ktype=astype, **_kwargs)
         if key == "shortName" and v == "~":
             v = self._handle.get("paramId", ktype=str, **_kwargs)
+
         return v
 
     def _is_custom_key(self, key):
@@ -393,7 +415,7 @@ class GribMetadata(Metadata):
             vals = np.zeros(new_value_size)
             handle.set_values(vals)
 
-        return GribMetadata(handle, extra=extra)
+        return StandAloneGribMetadata(handle, extra=extra)
 
     def as_namespace(self, namespace=None):
         r"""Return all the keys/values from a namespace.
@@ -493,6 +515,31 @@ class GribMetadata(Metadata):
 
     def _hide_internal_keys(self):
         return RestrictedGribMetadata(self)
+
+
+class GribFieldMetadata(GribMetadata):
+    def __init__(self, field, extra=None):
+        self._field = field
+        assert field is not None
+
+        self._cache = {}
+        super().__init__(extra=extra, cache=self._cache)
+
+    @property
+    def _handle(self):
+        return self._field.handle
+
+
+class StandAloneGribMetadata(GribMetadata):
+    def __init__(self, handle, extra=None):
+        if not isinstance(handle, self._handle_type()):
+            raise TypeError(f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}")
+        self.__handle = handle
+        super().__init__(extra=extra)
+
+    @property
+    def _handle(self):
+        return self.__handle
 
 
 # TODO: this is a temporary solution

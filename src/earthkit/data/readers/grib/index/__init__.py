@@ -12,6 +12,8 @@ import math
 import os
 from abc import abstractmethod
 
+from lru import LRU
+
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
@@ -217,10 +219,30 @@ class GribMultiFieldList(GribFieldList, MultiIndex):
 
 
 class GribFieldListInFiles(GribFieldList):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        GRIB_FIELD_CACHE_SIZE = int(os.environ.get("CLIMETLAB_GRIB_FIELD_CACHE_SIZE", 1000))
+        self._lru_cache = LRU(GRIB_FIELD_CACHE_SIZE)
+
+        CLIMETLAB_HANDLE_CACHE_SIZE = int(os.environ.get("CLIMETLAB_HANDLE_CACHE_SIZE", 10))
+
+        self._handle_cache = LRU(CLIMETLAB_HANDLE_CACHE_SIZE)
+
     def _getitem(self, n):
+        # TODO: check if we need a mutex here
         if isinstance(n, int):
-            part = self.part(n if n >= 0 else len(self) + n)
-            return GribField(part.path, part.offset, part.length, self.array_backend)
+            if n < 0:
+                n += len(self)
+            if n not in self._lru_cache:
+                part = self.part(n)
+                self._lru_cache[n] = GribField(
+                    part.path, part.offset, part.length, self.array_backend, self._handle_cache
+                )
+            return self._lru_cache[n]
+
+        # if isinstance(n, int):
+        #     part = self.part(n if n >= 0 else len(self) + n)
+        #     return GribField(part.path, part.offset, part.length, self.array_backend)
 
     def __len__(self):
         return self.number_of_parts()

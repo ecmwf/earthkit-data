@@ -241,16 +241,24 @@ class GribField(Field):
         Size of the message (in bytes)
     """
 
-    def __init__(self, path, offset, length, backend):
+    def __init__(self, path, offset, length, backend, handle_cache=None):
         super().__init__(backend)
         self.path = path
         self._offset = offset
         self._length = length
         self._handle = None
+        self._handle_cache = handle_cache
+        self._metadata = {}
 
     @property
     def handle(self):
         r""":class:`CodesHandle`: Gets an object providing access to the low level GRIB message structure."""
+        if self._handle_cache is not None:
+            key = (self.path, self._offset)
+            if key not in self._handle_cache:
+                self._handle_cache[key] = GribCodesReader.from_cache(self.path).at_offset(self._offset)
+            return self._handle_cache[key]
+
         if self._handle is None:
             assert self._offset is not None
             self._handle = GribCodesReader.from_cache(self.path).at_offset(self._offset)
