@@ -29,27 +29,43 @@ class VariableBuilder:
     def build(self):
         return xarray.Variable(self.var_dims, self.data, attrs=self.attrs)
 
-    def load_attrs_data(self, keys, strict=True):
+    def load_attrs(self, keys, strict=True):
         keys = keys + self.extra_attr_keys
         attr_keys = []
+        attrs = {}
+        ns_keys = []
         for k in keys:
             if k not in self.var_dims and k not in attr_keys:
-                attr_keys.append(k)
+                if k.startswith("namespace="):
+                    ns_keys.append(k.split("=")[1])
+                else:
+                    attr_keys.append(k)
+
+        first = None
 
         # TODO: do we need a strict mode here? The extra cost has to be justified
         if strict:
             from .fieldlist import unique_values
 
-            self.attrs = unique_values(self.tensor.source, attr_keys)
+            attrs = unique_values(self.tensor.source, attr_keys)
         else:
             first = self.tensor.source[0]
-            self.attrs = {k: [v] for k, v in first._attributes(attr_keys, default=None).items()}
+            attrs = {k: [v] for k, v in first._attributes(attr_keys, default=None).items()}
 
-    def build_attrs(self, drop_keys=None, remap=None):
+        if ns_keys:
+            if not first:
+                first = self.tensor.source[0]
+            r = first.metadata(namespace=ns_keys)
+            for k, v in r.items():
+                attrs[k] = [v]
+
+        self.attrs = attrs
+
+    def adjust_attrs(self, drop_keys=None, rename=None):
         drop_keys = ensure_iterable(drop_keys)
         self.attrs = {k: v[0] for k, v in self.attrs.items() if k not in drop_keys and len(v) == 1}
-        if callable(remap):
-            self.attrs = remap(self.attrs)
+        if callable(rename):
+            self.attrs = rename(self.attrs)
 
 
 class TensorBackendArray(xarray.backends.common.BackendArray):
@@ -127,7 +143,7 @@ class TensorBackendBuilder:
         ds,
         profile,
         dims,
-        common_metadata=None,
+        # common_metadata=None,
         grid=None,
         flatten_values=False,
         array_module=numpy,
@@ -136,7 +152,7 @@ class TensorBackendBuilder:
         self.profile = profile
         self.dims = dims
         # print("Builder, dims=", dims)
-        self.common_metadata = common_metadata
+        # self.common_metadata = common_metadata
 
         self.flatten_values = flatten_values
         self.array_module = array_module
@@ -179,9 +195,10 @@ class TensorBackendBuilder:
             from .coord import Coord
 
             _dims, _vals = tensor.make_valid_datetime()
-            if _dims is None or _vals is None:
-                raise ValueError("valid_time coord could not be created")
-            self.tensor_coords["valid_time"] = Coord.make("valid_time", _vals, dims=_dims)
+            if _dims is not None and _vals is not None:
+                # if _dims is None or _vals is None:
+                #     raise ValueError("valid_time coord could not be created")
+                self.tensor_coords["valid_time"] = Coord.make("valid_time", _vals, dims=_dims)
 
     def build(self):
         t_vars = {}
@@ -189,16 +206,13 @@ class TensorBackendBuilder:
         for variable in self.profile.variables:
             t_vars[variable] = self.make_variable(self.ds, self.dims, self.profile.variable_key, variable)
 
-        builder = self.profile.attrs_builder()
-        global_attrs = builder.build(self.ds, t_vars, remap=True)
+        # build variable and global attributes
+        xr_attrs = self.profile.attrs.builder.build(self.ds, t_vars, rename=True)
 
-        # global_attrs = self.profile.g_attrs.attrs(self.ds, t_vars)
-        # global_attrs = self.profile.remap(global_attrs)
+        xr_coords = self.profile.rename_coords(self.coords())
+        xr_vars = {self.profile.rename_variable(k): v.build() for k, v in t_vars.items()}
 
-        coords = self.profile.rename_coords(self.coords())
-
-        xr_vars = {k: v.build() for k, v in t_vars.items()}
-        dataset = xarray.Dataset(xr_vars, coords=coords, attrs=global_attrs)
+        dataset = xarray.Dataset(xr_vars, coords=xr_coords, attrs=xr_attrs)
         return dataset
 
     def make_variable(self, ds, dims, key, name):
@@ -206,6 +220,8 @@ class TensorBackendBuilder:
 
         tensor_dims, tensor_coords, extra_tensor_attrs = self.prepare_tensor(ds_var, dims, name)
         tensor_dim_keys = [d.key for d in tensor_dims]
+
+        # print("tensor_dims", tensor_dims)
 
         tensor = ds_var.to_tensor(
             *tensor_dim_keys,
@@ -272,18 +288,21 @@ class TensorBackendBuilder:
 
         vals = unique_values(ds, [d.key for d in dims])
 
+        # print("ensure_dims", self.profile.dims.ensure_dims)
+
         for d in dims:
             # num = len(ds.index(d.key))
             num = len(vals[d.key])
+            # print(f"  {d.key=} {vals[d.key]}")
             if num == 0:
                 continue
-                if d.name not in self.profile.ensure_dims:
+                if d.name not in self.profile.dims.ensure_dims:
                     raise ValueError(f"Dimension {d} has no valid values")
             else:
-                if num == 1 and d.name in self.profile.dims_as_attrs:
+                if num == 1 and d.name in self.profile.dims.dims_as_attrs:
                     extra_tensor_attrs.append(d.key)
 
-                elif num > 1 or not self.profile.squeeze or d.name in self.profile.ensure_dims:
+                elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
                     tensor_dims.append(d)
                     # tensor_coords[d.key] = ds.index(d.key)
                     tensor_coords[d.key] = vals[d.key]
@@ -293,24 +312,10 @@ class TensorBackendBuilder:
         return tensor_dims, tensor_coords, extra_tensor_attrs
 
     def check_tensor_coords(self, var_name, coord_name, tensor_coords):
-        if not self.profile.strict:
-            return
+        if self.profile.strict:
+            from .check import check_coords
 
-        if coord_name in self.tensor_coords:
-            from .coord import ListDiff
-            from .coord import list_to_str
-
-            v1 = self.tensor_coords[coord_name].vals
-            v2 = tensor_coords[coord_name]
-            diff = ListDiff.diff(v1, v2, name=coord_name)
-            if not diff.same:
-                raise ValueError(
-                    (
-                        f'Variable "{var_name}" has inconsistent dimension "{coord_name}" compared '
-                        f"to other variables. Expected values: {list_to_str(v1)}, "
-                        f"got: {list_to_str(v2)}. {diff.diff_text}"
-                    )
-                )
+            check_coords(var_name, coord_name, tensor_coords, self.tensor_coords)
 
 
 class DatasetBuilder:
@@ -318,7 +323,6 @@ class DatasetBuilder:
         self,
         ds,
         flatten_values=False,
-        # remapping=None,
         profile="mars",
         errors=None,
         array_module=numpy,
@@ -338,9 +342,7 @@ class DatasetBuilder:
         self.kwargs = kwargs
 
         self.flatten_values = flatten_values
-        # self.remapping = remapping
-        self.profile_name = profile
-        # self.merge_cf_and_pf = merge_cf_and_pf
+        self.profile = profile
         self.errors = errors
         self.array_module = array_module
         self.grids = {}
@@ -350,7 +352,7 @@ class DatasetBuilder:
         from .fieldlist import WrappedFieldList
         from .profile import Profile
 
-        profile = Profile.make(self.profile_name, **self.kwargs)
+        profile = Profile.make(self.profile, **self.kwargs)
 
         remapping = profile.remapping.build()
         # print(f"{remapping=}")
@@ -363,19 +365,23 @@ class DatasetBuilder:
 
         # global attributes are keys which are the same for all the fields
         # attributes = {k: v[0] for k, v in ds_ori.indices().items() if len(v) == 1}
-        global_attrs = ds.common_indices()
+        # global_attrs = ds.common_indices()
 
         # LOG.info(f"{attributes=}")
 
-        if hasattr(ds, "path"):
-            global_attrs["ekds_source"] = ds.path
+        # if hasattr(ds, "path"):
+        #     global_attrs["ekds_source"] = ds.path
 
-        profile.update(ds, global_attrs)
+        # print("parse dims", profile.dim_keys)
+
+        profile.update(ds)
+
+        # print("parse dims", profile.dim_keys)
 
         # the data is only sorted once
         ds_sorted = ds.order_by(profile.sort_keys)
 
-        return ds, ds_sorted, profile, global_attrs
+        return ds, ds_sorted, profile
 
     def grid(self, ds):
         grids = ds.index("md5GridSection")
@@ -394,20 +400,19 @@ class SingleDatasetBuilder(DatasetBuilder):
     def __init__(self, *args, **kwargs):
         auto_split = kwargs.get("auto_split", False)
         split_dims = kwargs.get("split_dims", None)
-
         if auto_split or split_dims:
             raise ValueError("SingleDatasetMaker does not support splitting")
 
         super().__init__(*args, **kwargs)
 
     def build(self):
-        ds, ds_sorted, profile, global_attrs = self.parse()
+        ds, ds_sorted, profile = self.parse()
         dims = profile.dims.to_list()
+        # print("SingleDatasetBuilder.build dims", dims)
         builder = TensorBackendBuilder(
             ds_sorted,
             profile,
             dims,
-            global_attrs,
             grid=self.grid(ds),
             flatten_values=self.flatten_values,
             array_module=numpy,
@@ -417,19 +422,21 @@ class SingleDatasetBuilder(DatasetBuilder):
 
 
 class SplitDatasetBuilder(DatasetBuilder):
-    def __init__(self, *args, **kwargs):
-        auto_split = kwargs.get("auto_split", False)
-        split_dims = kwargs.get("split_dims", None)
+    def __init__(self, *args, backend_kwargs=None, **kwargs):
+        self.auto_split = backend_kwargs.pop("auto_split", False)
+        self.split_dims = backend_kwargs.pop("split_dims", None)
+        self.backend_kwargs = dict(**backend_kwargs)
+        self.xr_open_dataset_kwargs = dict(**kwargs)
 
-        if not auto_split and not split_dims:
+        if not self.auto_split and not self.split_dims:
             raise ValueError("SplitDatasetMaker requires split or split_dims")
 
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, split_dims=self.split_dims, **backend_kwargs)
 
     def build(self):
         from .splitter import Splitter
 
-        _, ds_sorted, profile, global_attrs = self.parse()
+        _, ds_sorted, profile = self.parse()
         splitter = Splitter.make(self.auto_split, self.split_dims)
         datasets = []
         for s_dims, s_ds in splitter.split(ds_sorted, profile):
@@ -438,14 +445,38 @@ class SplitDatasetBuilder(DatasetBuilder):
                 s_ds,
                 profile,
                 s_dims,
-                global_attrs=global_attrs,
                 grid=self.grid(s_ds),
                 flatten_values=self.flatten_values,
                 array_module=numpy,
             )
 
             s_ds._ek_builder = builder
-            datasets.append(xarray.open_dataset(s_ds, **self.kwargs))
+            datasets.append(
+                xarray.open_dataset(s_ds, backend_kwargs=self.backend_kwargs, **self.xr_open_dataset_kwargs)
+            )
             s_ds._ek_builder = None
 
         return datasets[0] if len(datasets) == 1 else datasets
+
+    def parse(self):
+        assert not hasattr(self.ds, "_ek_builder")
+        from .fieldlist import WrappedFieldList
+        from .profile import Profile
+
+        profile = Profile.make(self.profile, **self.kwargs)
+
+        remapping = profile.remapping.build()
+
+        # create a new fieldlist and ensure all the required metadata is kept in memory
+        ds = WrappedFieldList(self.ds, profile.index_keys, remapping=remapping)
+
+        # print("dims", profile.dim_keys)
+
+        profile.update(ds)
+
+        # print("dims", profile.dim_keys)
+
+        # the data is only sorted once
+        ds_sorted = ds.order_by(profile.sort_keys)
+
+        return ds, ds_sorted, profile

@@ -10,6 +10,7 @@
 import math
 from abc import abstractmethod
 from collections import defaultdict
+from functools import cached_property
 
 from earthkit.data.core import Base
 from earthkit.data.core.index import Index
@@ -707,8 +708,6 @@ class FieldList(Index):
         defaults to "numpy".
     """
 
-    _md_indices = {}
-
     def __init__(self, array_backend=None, **kwargs):
         self._array_backend = ensure_backend(array_backend)
         super().__init__(**kwargs)
@@ -765,13 +764,17 @@ class FieldList(Index):
             return False
 
     @cached_method
-    def _default_index_keys(self):
+    def _default_md_index_keys(self):
         if len(self) > 0:
             return self[0].metadata().index_keys()
         else:
             return []
 
-    def _find_index_values(self, key):
+    @cached_property
+    def _md_indices(self):
+        return dict()
+
+    def _md_index_value(self, key):
         values = set()
         for f in self:
             v = f.metadata(key, default=None)
@@ -780,12 +783,17 @@ class FieldList(Index):
 
         return sorted(list(values))
 
-    def _find_all_index_dict(self):
+    # def _find_all_index_dict(self):
+
+    @cached_property
+    def _default_md_indices(self):
+        # def _collect_default_indices(self):
         indices = defaultdict(set)
-        keys = self._default_index_keys()
+        keys = self._default_md_index_keys()
         for f in self:
             v = f.metadata(keys, default=None)
             for i, k in enumerate(keys):
+                # v = f.metadata(k, default=None)
                 if v[i] is not None:
                     indices[k].add(v[i])
 
@@ -830,12 +838,16 @@ class FieldList(Index):
         used in :obj:`indices`.
 
         """
-        if not self._md_indices:
-            self._md_indices = self._find_all_index_dict()
+        r = self._default_md_indices
+        r.update(self._md_indices)
+
+        # if not self._md_indices:
+        #     self._md_indices = self._collect_default_indices()
+        # elif len(self._md_indices) < len(self._default_index_keys) or
         if squeeze:
-            return {k: v for k, v in self._md_indices.items() if len(v) > 1}
+            return {k: v for k, v in r.items() if len(v) > 1}
         else:
-            return self._md_indices
+            return r
 
     def index(self, key):
         r"""Return the unique, sorted values of the specified metadata ``key`` from all the fields.
@@ -864,10 +876,15 @@ class FieldList(Index):
         [300, 400, 500, 700, 850, 1000]
 
         """
-        if key in self.indices():
-            return self.indices()[key]
+        if key in self._md_indices:
+            return self._md_indices[key]
 
-        self._md_indices[key] = self._find_index_values(key)
+        if key in self._default_md_indices:
+            return self._default_md_indices[key]
+
+        # if key in self.indices():
+        #     return self.indices()[key]
+        self._md_indices[key] = self._md_index_value(key)
         return self._md_indices[key]
 
     def to_numpy(self, **kwargs):

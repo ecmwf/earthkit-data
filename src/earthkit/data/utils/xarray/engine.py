@@ -32,7 +32,7 @@ def from_earthkit(ds, **kwargs):
         from .builder import SplitDatasetBuilder
 
         backend_kwargs = kwargs.pop("backend_kwargs", {})
-        return SplitDatasetBuilder(ds, **backend_kwargs, **kwargs).build()
+        return SplitDatasetBuilder(ds, backend_kwargs=backend_kwargs, **kwargs).build()
 
 
 class EarthkitBackendEntrypoint(BackendEntrypoint):
@@ -40,62 +40,139 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         self,
         filename_or_obj,
         source_type="file",
-        variable_key=None,
+        profile="mars",
+        variable_key="param",
         drop_variables=None,
-        # extra_variable_attrs=None,
-        # extra_global_attrs=None,
+        rename_variables=None,
         extra_dims=None,
         drop_dims=None,
         ensure_dims=None,
         fixed_dims=None,
+        dim_roles=None,
+        rename_dims=None,
         dims_as_attrs=None,
-        # squeeze=True,
-        flatten_values=False,
-        remapping=None,
-        profile="mars",
         time_dim_mode="forecast",
-        time_dim_mapping=None,
-        add_valid_time_coord=False,
-        decode_time=True,
         level_dim_mode="level",
+        squeeze=True,
+        add_valid_time_coord=True,
+        decode_time=True,
         add_geo_coords=True,
-        merge_cf_and_pf=False,
-        mapping=None,
+        remapping=None,
+        flatten_values=False,
+        attrs_mode="fixed",
+        attrs=["cfName", "name", "units", "typeOfLevel"],
+        variable_attrs=None,
+        global_attrs=None,
+        coord_attrs=None,
+        rename_attrs={"cfName": "standard_name", "name": "long_name"},
         strict=True,
         errors=None,
         array_module=numpy,
     ):
         r"""
+        filename_or_obj, str, Path or earthkit object
+            Input GRIB file or object to be converted to an xarray dataset.
+        profile: str, dict or None
+            Provide custom default values for the kwargs. Two built-in profiles are available by using their
+            names: "mars" and "grid". Otherwise an explicit dict can be used. None is equivalent to an empty
+            dict. When a kwarg is specified it will override the profile values.
         variable_key: str, None
-            Metadata key to use for defining the dataset variables. It cannot be
-            defined as a dimension. When None, the key is automatically determined.
+            Metadata key to specify the dataset variables. It cannot be
+            defined as a dimension. Default is "param".
         drop_variables: str, or iterable of str, None
             A variable or list of variables to drop from the dataset. Default is None.
-        # extra_variable_attrs: str, iterable of str, None
-        #     Metadata key or list of metadata keys to include as additional variable attributes
-        #     on top of the automatically generated ones.
-        # extra_global_attrs: str, iterable of str, None
-        #     Metadata key or list+_ of metadata keys to include as additional global attributes on top of
-        #     the automatically generated ones. Default is None.
+        rename_variables: dict, None
+            Mapping to rename variables. Default is None.
         extra_dims:  str, or iterable of str, None
-            Metadata key or list of metadata keys to use as additional dimensions. Only enabled when
-            no ``fixed_dims`` is specified. Default is None.
+            Metadata key or list of metadata keys to use as additional dimensions on top of the
+            predefined dimensions. Only enabled when no ``fixed_dims`` is specified. Default is None.
         drop_dims:  str, or iterable of str, None
-            Metadata key or list of metadata keys to ignore as dimensions. Default is None.
-        fixed_dims: str, or iterable of str, None
-            Metadata key or list of metadata keys in the order they should be used as dimensions. When
-            defined no other dimensions will be used. Might be incompatible with some
-            other options. Default is None.
+            Metadata key or list of metadata keys to be ignored as dimensions. Default is None.
+            Default is None.
         ensure_dims: str, or iterable of str, None
             Metadata key or list of metadata keys that should be used as dimensions even
             when ``squeeze=True``. Default is None.
+        fixed_dims: str, or iterable of str, None
+            Metadata key or list of metadata keys in the order they should be used as dimensions. When
+            defined no other dimensions will be used. Might be incompatible with other settings.
+            Default is None.
+        dim_roles: dict
+            Specify the "roles" used to form the predefined dimensions. The predefined dimensions are
+            automatically generated when no ``fixed_dims`` specified and comprise the following
+            (in a fixed order):
+
+            - ensemble forecast member dimension
+            - temporal dimensions (controlled by ``time_dim_mode``)
+            - vertical dimensions (controlled by ``level_dim_mode``)
+
+            ``dim_roles`` is a mapping between the "roles" and the metadata keys representing the roles.
+            The possible roles are as follows:
+
+            - "ens": metadata key interpreted as ensemble forecast members
+            - "date": metadata key interpreted as date part of the "forecast_reference_time"
+            - "time": metadata key interpreted as time part of the "forecast_reference_time"
+            - "step": metadata key interpreted as forecast step
+            - "forecast_reference_time": if not specified or None or empty the forecast reference
+              time is built using the "date" and "time" roles
+            - "valid_time": if not specified or None or empty the valid time is built using the
+              "validityDate" and "validityTime" metadata keys
+            - "level": metadata key interpreted as level
+            - "level_type": metadata key interpreted as level type
+
+            The default values are as follows:
+
+            .. code-block:: python
+
+                {
+                    "ens": "number",
+                    "date": "dataDate",
+                    "time": "dataTime",
+                    "step": "step",
+                    "forecast_reference_time": None,
+                    "valid_date": None,
+                    "level": "level",
+                    "level_type": "typeOfLevel",
+                }
+
+            ``dims_roles`` behaves differently to the other kwargs in the sense that
+            it does not override but update the default values. So e.g. to change only "ens" in
+            the defaults it is enough to specify: "dim_roles={"ens": "perturbationNumber"}.
+        rename_dims: dict, None
+            Mapping to rename dimensions. Default is None.
         dims_as_attrs: str, or iterable of str, None
-            Dimension or list of dimensions which should be turned to variable metadata
+            Dimension or list of dimensions which should be turned to variable
             attributes if they have only one value for the given variable. Default is None.
-            be used as va. Default is None.
+        time_dim_mode: str
+            Define how predefined temporal dimensions are formed. The possible values are as follows:
+
+            - "forecast": adds two dimensions:
+
+              - "forecast_reference_time": built from the "date" and "time" roles
+                (see ``dim_roles``) as np.datetime64 values
+              - "step": built from the "step" role. When ``decode_time=True`` the values are
+                np.timedelta64
+            - "valid_time": adds a dimension called "valid_time" as described by the "valid_time"
+              role (see ``dim_roles``). Will contain np.datetime64 values,
+            - "raw": the "date", "time" and "step" roles are turned into 3 separate dimensions
+        level_dim_mode: str
+            Define how predefined vertical dimensions are formed. The possible values are:
+
+            - "level": adds a single dimension according to the "level" role (see ``dim_roles``)
+            - "level_per_type": adds a separate dimensions for each level type based on the
+              "level" and "level_type" roles.
+            - "level_and_type": Use a single dimension for combined level and type of level.
         squeeze: bool
-            Remove dimensions which has one or zero valid values. Not applies to dimension in
+            Remove dimensions which has only one valid values. Not applies to dimension in
             ``ensure_dims``. Default is True.
+        add_valid_time_coord: bool
+            Add a `valid_time` coordinate containing np.datetime64 values to the
+            dataset. Only can be used when ``add_valid_time_dim`` is False. Default is False.
+        decode_time: bool
+            Decode the datetime coordinates to datetime64 values, while step coordinates to timedelta64
+            values. Default is True.
+        add_geo_coords: bool
+            Add geographic coordinates to the dataset when field values are represented by
+            a single "values" dimension. Default is True.
         flatten_values: bool
             Flatten the values per field resulting in a single dimension called
             "values" representing a field. Otherwise the field shape is used to form
@@ -103,33 +180,28 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             reduced Gaussian) or are spectral (e.g. spherical harmonics) this option is
             ignored and the field values are always represented by a single "values"
             dimension. Default is False.
+        attrs_mode: str
+            Define how attributes are generated. The possible values are:
+
+            - "fixed": Use the attributes defined in ``variable_attrs`` as variables
+              attributes and ``global_attrs`` as global attributes.
+            - "unique": Use all the attributes defined in ``attrs``, ``variable_attrs``
+              and ``global_attrs``. When an attribute has unique a value for a dataset
+              it will be a global attribute, otherwise it will be a variable attribute.
+              However keys in ``variable_attrs`` are always used as variable attributes,
+              while keys in ``global_attrs`` are always used as global attributes.
+        attrs: str or list, None
+            List of metadata keys to use as attributes.
+        variable_attrs: str or list, None
+            Metadata key or keys to use as variable attributes. Default is None.
+        global_attrs: , None
+            Metadata key or keys to use as global attributes. Default is None.
+        coord_attrs: dict, None
+            Define rules to construct coordinate attributes. Default is None.
+        rename_attrs: dict, None
+            A dictionary of attribute to rename. Default is None.
         remapping: dict, None
             Define new metadata keys for indexing. Default is None.
-        profile: str
-            The profile to use for creating the dataset. Default is "mars".
-        time_dim_mode: str
-            The possible values are:
-
-            - "forecast": The ``date`` and ``time`` dimensions are combined into a single dimension
-              called `forecast_reference_time` with datetime64 values.
-            - "valid_time": The ``date``, ``time`` and ``step`` dimensions are combined into a single
-              dimension called `valid_time` with np.datetime64 values. Default is False.
-            - "raw": The ``date``, ``time`` and "step" dimensions used.
-        decode_time: bool
-            Decode the datetime coordinates to datetime64 values, while step coordinates to timedelta64
-            values. Default is True.
-        add_valid_time_coord: bool
-            Add a `valid_time` coordinate containing np.datetime64 values to the
-            dataset. Only can be used when ``add_valid_time_dim`` is False. Default is False.
-        level_dim_mode: str
-            The possible values are:
-
-            - "level": Use a single dimension for level.
-            - "level_per_type": Use a separate dimension for each level type.
-            - "level_and_type": Use a single dimension for combined level and type of level.
-        add_geo_coords: bool
-            Add geographic coordinates to the dataset when field values are represented by
-            a single "values" dimension. Default is True.
         strict: bool
             Perform stricter checks on hypercube consistency. Default is True.
         errors: str, None
@@ -138,27 +210,31 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             The module to use for array operations. Default is numpy.
         """
         _kwargs = dict(
+            profile=profile,
             variable_key=variable_key,
-            # extra_variable_attrs=extra_variable_attrs,
             drop_variables=drop_variables,
-            # extra_global_attrs=extra_global_attrs,
+            rename_variables=rename_variables,
             extra_dims=extra_dims,
             drop_dims=drop_dims,
-            fixed_dims=fixed_dims,
             ensure_dims=ensure_dims,
+            fixed_dims=fixed_dims,
+            rename_dims=rename_dims,
+            dim_roles=dim_roles,
             dims_as_attrs=dims_as_attrs,
-            # squeeze=squeeze,
+            time_dim_mode=time_dim_mode,
+            level_dim_mode=level_dim_mode,
+            squeeze=squeeze,
+            attrs_mode=attrs_mode,
+            attrs=attrs,
+            variable_attrs=variable_attrs,
+            global_attrs=global_attrs,
+            coord_attrs=coord_attrs,
+            rename_attrs=rename_attrs,
+            add_valid_time_coord=add_valid_time_coord,
+            add_geo_coords=add_geo_coords,
             flatten_values=flatten_values,
             remapping=remapping,
-            profile=profile,
-            time_dim_mode=time_dim_mode,
-            time_dim_mapping=time_dim_mapping,
             decode_time=decode_time,
-            add_valid_time_coord=add_valid_time_coord,
-            level_dim_mode=level_dim_mode,
-            add_geo_coords=add_geo_coords,
-            merge_cf_and_pf=merge_cf_and_pf,
-            mapping=mapping,
             strict=strict,
             errors=errors,
             array_module=array_module,

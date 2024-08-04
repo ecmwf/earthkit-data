@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import numpy as np
 
 from earthkit.data import from_source
 from earthkit.data.utils.xarray.fieldlist import WrappedFieldList
@@ -47,3 +48,20 @@ def load_wrapped_fieldlist(d, profile, **kwargs):
         raise ValueError(f"Invalid data type={type(d)}")
 
     return WrappedFieldList(ds, keys=profile.index_keys, **kwargs)
+
+
+def compare_coords(ds, ref_coords):
+    for k, v in ref_coords.items():
+        assert ds.sizes[k] == len(v), f"{k=} {ds.sizes[k]} != {len(v)}"
+        if isinstance(v[0], str):
+            assert ds.coords[k].values == v
+        elif hasattr(v[0], "dtype") and np.issubdtype(v[0].dtype, np.datetime64):
+            assert len(ds.coords[k].values) == len(v)
+            for i, vv in enumerate(v):
+                assert ds.coords[k].values[i] == vv, f"{k=} {ds.coords[k].values[i]} != {vv}"
+        elif hasattr(v[0], "dtype") and np.issubdtype(v[0].dtype, np.timedelta64):
+            assert len(ds.coords[k].values) == len(v)
+            for i, vv in enumerate(v):
+                assert ds.coords[k].values[i] == vv, f"{k=} {ds.coords[k].values[i]} != {vv}"
+        else:
+            assert np.allclose(ds.coords[k].values, np.asarray(v))

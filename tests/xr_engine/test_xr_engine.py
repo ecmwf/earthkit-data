@@ -48,7 +48,7 @@ def test_xr_engine_detailed_check():
         "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_regular_ll.grib")
     )
 
-    ds = ds_ek.to_xarray(time_dim_mode="raw", decode_time=False)
+    ds = ds_ek.to_xarray(time_dim_mode="raw", decode_time=False, add_valid_time_coord=False)
     assert ds is not None
 
     # dataset
@@ -226,6 +226,7 @@ def test_xr_engine_detailed_flatten_check():
                 "time_dim_mode": "raw",
                 "decode_time": False,
                 "flatten_values": True,
+                "add_valid_time_coord": False,
             }
         }
     }

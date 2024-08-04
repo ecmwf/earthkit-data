@@ -101,7 +101,9 @@ def test_xr_dims_input_fieldlist():
         "_class": "_{class}",
         "level_and_type": "{level}_{levtype}",
     }
-    prof = Profile.make("mars", variable_key="param", remapping=remapping)
+    prof = Profile.make(
+        "mars", variable_key="param", remapping=remapping, extra_dims=["_class", "level_and_type"]
+    )
     ds = load_wrapped_fieldlist(DS_DATE_LEV, prof, remapping=prof.remapping.build())
     assert ds.index("param") == ["r", "t"]
     assert ds.index("_class") == ["_od"]
@@ -111,15 +113,26 @@ def test_xr_dims_input_fieldlist():
 @pytest.mark.parametrize(
     "kwargs,var_key,variables,dim_keys",
     [
-        ({}, "param", ["r", "t"], ["levelist"]),
-        ({"time_dim_mode": "forecast"}, "param", ["r", "t"], ["levelist"]),
-        ({"squeeze": False, "time_dim_mode": "raw"}, "param", ["r", "t"], ["time", "step", "levelist"]),
+        ({}, "param", ["r", "t"], ["step", "levelist"]),
+        (
+            {"time_dim_mode": "forecast"},
+            "param",
+            ["r", "t"],
+            ["step", "levelist"],
+        ),
+        (
+            {"squeeze": False, "time_dim_mode": "raw"},
+            "param",
+            ["r", "t"],
+            ["time", "step", "levelist"],
+        ),
     ],
 )
 def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
     prof = Profile.make("mars", **kwargs)
     ds = load_wrapped_fieldlist(DS_LEV, prof)
-    prof.update(ds, _attributes(ds))
+    # prof.update(ds, _attributes(ds))
+    prof.update(ds)
     assert prof.variable_key == var_key
     assert prof.variables == variables
     assert prof.dim_keys == dim_keys
@@ -128,18 +141,18 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
 @pytest.mark.parametrize(
     "kwargs,var_key,variables,dims",
     [
-        ({"time_dim_mode": "raw"}, "param", ["r", "t"], ["date", "levelist"]),
+        ({"time_dim_mode": "raw"}, "param", ["r", "t"], ["date", "time", "step", "levelist"]),
         (
             {"time_dim_mode": "forecast"},
             "param",
             ["r", "t"],
-            ["forecast_reference_time", "levelist"],
+            ["forecast_reference_time", "step", "levelist"],
         ),
         (
             {"time_dim_mode": "raw", "variable_key": "param_level"},
             "param_level",
             ["r1000", "r850", "t1000", "t850"],
-            ["date"],
+            ["date", "time", "step"],
         ),
         # (
         #     {"time_dim_mode": "raw", "extra_dims": "param_level"},
@@ -160,25 +173,29 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             },
             "param_level",
             ["r_1000", "r_850", "t_1000", "t_850"],
-            ["date"],
+            ["date", "time", "step"],
         ),
         (
             {"time_dim_mode": "raw", "variable_key": "shortName"},
             "shortName",
             ["r", "t"],
-            ["date", "levelist"],
+            ["date", "time", "step", "levelist"],
         ),
         (
             {"time_dim_mode": "raw", "variable_key": "shortName", "drop_variables": ["r"]},
             "shortName",
             ["t"],
-            ["date", "levelist"],
+            ["date", "time", "step", "levelist"],
         ),
         (
             {"time_dim_mode": "raw", "variable_key": "param_level", "drop_variables": ["r", "r1000"]},
             "param_level",
             ["r850", "t1000", "t850"],
-            ["date"],
+            [
+                "date",
+                "time",
+                "step",
+            ],
         ),
         # (
         #     {"use_level_per_type_dim": True},
@@ -190,7 +207,60 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             {"time_dim_mode": "raw", "level_dim_mode": "level_and_type"},
             "param",
             ["r", "t"],
-            {"date": ["20210101", "20210102"], "level_and_type": ["1000pl", "850pl"]},
+            {
+                "date": ["20210101", "20210102"],
+                "time": ["12"],
+                "step": [0],
+                "level_and_type": ["1000pl", "850pl"],
+            },
+        ),
+        (
+            {"time_dim_mode": "raw", "extra_dims": "class"},
+            "param",
+            ["r", "t"],
+            {
+                "class": ["od"],
+                "date": ["20210101", "20210102"],
+                "time": ["12"],
+                "step": [0],
+                "levelist": [850, 1000],
+            },
+        ),
+        (
+            {"time_dim_mode": "raw", "ensure_dims": "class"},
+            "param",
+            ["r", "t"],
+            {
+                "class": ["od"],
+                "date": ["20210101", "20210102"],
+                "time": ["12"],
+                "step": [0],
+                "levelist": [850, 1000],
+            },
+        ),
+        (
+            {"time_dim_mode": "raw", "ensure_dims": ["class", "step"]},
+            "param",
+            ["r", "t"],
+            {
+                "class": ["od"],
+                "date": ["20210101", "20210102"],
+                "time": ["12"],
+                "step": [0],
+                "levelist": [850, 1000],
+            },
+        ),
+        (
+            {"time_dim_mode": "raw", "extra_dims": "class", "squeeze": False},
+            "param",
+            ["r", "t"],
+            {
+                "class": ["od"],
+                "date": ["20210101", "20210102"],
+                "time": ["12"],
+                "step": [0],
+                "levelist": [850, 1000],
+            },
         ),
     ],
 )
@@ -203,14 +273,15 @@ def test_xr_dims_ds_date_lev(kwargs, var_key, variables, dims):
     # print(f"ds: {ds.indices()}")
 
     # ds.load(prof.index_keys)
-    prof.update(ds, _attributes(ds))
+    # prof.update(ds, _attributes(ds))
+    prof.update(ds)
     assert prof.variable_key == var_key
     assert prof.variables == variables
 
     if isinstance(dims, list):
         assert prof.dim_keys == dims
     elif isinstance(dims, dict):
-        assert len(prof.dim_keys) == len(dims)
+        assert prof.dim_keys == list(dims.keys())
         for k in prof.dim_keys:
             assert ds.index(k) == dims[k]
     else:
@@ -220,7 +291,7 @@ def test_xr_dims_ds_date_lev(kwargs, var_key, variables, dims):
 @pytest.mark.parametrize(
     "kwargs,var_key,variables,dim_keys",
     [
-        ({"time_dim_mode": "raw"}, "param", ["2t", "msl", "r", "t"], ["date", "levelist"]),
+        ({"time_dim_mode": "raw"}, "param", ["2t", "msl", "r", "t"], ["date", "time", "step", "levelist"]),
         # ({"base_datetime_dim": True}, "param", ["r", "t"], ["levelist"]),
         # ({"squeeze": False}, "param", ["r", "t"], ["time", "step", "levelist"]),
     ],
@@ -228,7 +299,8 @@ def test_xr_dims_ds_date_lev(kwargs, var_key, variables, dims):
 def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
     prof = Profile.make("mars", **kwargs)
     ds = load_wrapped_fieldlist(DS_DATE_SFC_PL, prof)
-    prof.update(ds, _attributes(ds))
+    # prof.update(ds, _attributes(ds))
+    prof.update(ds)
     assert prof.variable_key == var_key
     assert prof.variables == variables
     assert prof.dim_keys == dim_keys

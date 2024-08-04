@@ -8,73 +8,122 @@
 #
 
 import logging
+from abc import ABCMeta
+from abc import abstractmethod
 from collections import defaultdict
+
+from earthkit.data.utils import ensure_dict
+from earthkit.data.utils import ensure_iterable
 
 LOG = logging.getLogger(__name__)
 
 
-class AttrsBuilder:
-    def __init__(self, profile):
+class GlobalAttrs:
+    def __init__(self, attrs):
+        self.fixed = {}
+        self.keys = []
+        attrs = ensure_iterable(attrs)
+        for k in attrs:
+            if isinstance(k, str):
+                self.keys.append(k)
+            elif isinstance(k, dict):
+                for k1, v1 in k.items():
+                    self.fixed[k1] = v1
+            else:
+                raise ValueError(f"Invalid global attribute: {k}. Must be a str or a dict.")
+
+
+class Attrs:
+    def __init__(self, profile, attrs_mode, attrs, variable_attrs, global_attrs, coord_attrs, rename_attrs):
         self.profile = profile
-        self.strategy = profile.attrs_strategy
+        self.attrs = ensure_iterable(attrs)
+        self.variable_attrs = ensure_iterable(variable_attrs)
+        self.global_attrs = GlobalAttrs(global_attrs)
+        self.coord_attrs = ensure_dict(coord_attrs)
+        self.rename_attrs_map = ensure_dict(rename_attrs)
 
-    def build(self, *args, **kwargs):
-        if self.strategy == "unique_keys":
-            method = self._build_unique
+        for k in self.variable_attrs + self.global_attrs.keys:
+            if k not in self.attrs:
+                self.attrs.append(k)
+
+        self.builder = self._make_builder(attrs_mode)(profile, self)
+
+    @staticmethod
+    def _make_builder(mode):
+        if mode == "unique":
+            return UniqueAttrBuilder
+        elif mode == "fixed":
+            return FixedAttrBuilder
         else:
-            method = self._build
+            raise ValueError(f"Invalid attrs_mode: {mode}. Must be one of 'unique', 'fixed'.")
 
-        global_attrs = method(*args, **kwargs)
+
+class AttrsBuilder(metaclass=ABCMeta):
+    def __init__(self, profile, attrs):
+        self.profile = profile
+        self.attrs = attrs
+
+    @abstractmethod
+    def _build(self, *args, **kwargs):
+        pass
+
+    def build(self, *args, rename=True, **kwargs):
+        def _rename(d):
+            return {self.attrs.rename_attrs_map.get(k, k): v for k, v in d.items()}
+
+        def _id(x):
+            return x
+
+        if rename:
+            rename = _rename
+        else:
+            rename = _id
+
+        global_attrs = rename(self._build(*args, rename=rename, **kwargs))
 
         # add fixed global attrs
-        for k in self.profile.global_attrs:
-            if isinstance(k, dict):
-                for k1, v1 in k.items():
-                    if k1 not in global_attrs:
-                        global_attrs[k1] = v1
+        for k, v in self.attrs.global_attrs.fixed.items():
+            if k not in global_attrs:
+                global_attrs[k] = v
+
+        # TODO: make it optional
+        global_attrs.pop("units", None)
 
         return global_attrs
 
-    def _build_unique(self, ds, t_vars, remap=True):
+
+class UniqueAttrBuilder(AttrsBuilder):
+    def _build(self, ds, t_vars, rename=None):
         attrs = defaultdict(set)
-        if remap:
-            remap = self.profile.remap
 
         for var_obj in t_vars.values():
-            var_obj.load_attrs_data(self.profile.attrs, strict=self.profile.strict)
-            for k, v in var_obj.attrs.items():
-                attrs[k].update(v)
+            var_obj.load_attrs(self.attrs.attrs, strict=self.profile.strict)
+            attrs.update(var_obj.attrs)
 
         global_attrs = defaultdict(list)
         for k, v in attrs.items():
-            if len(v) == 1 and k not in self.profile.variable_attrs:
+            if len(v) == 1 and k not in self.attrs.variable_attrs:
                 global_attrs[k] = list(v)[0]
 
         for var_obj in t_vars.values():
-            var_obj.build_attrs(drop_keys=global_attrs.keys(), remap=remap)
+            var_obj.adjust_attrs(drop_keys=global_attrs.keys(), rename=rename)
 
         return global_attrs
 
-    def _build(self, ds, t_vars, remap=True):
+
+class FixedAttrBuilder(AttrsBuilder):
+    def _build(self, ds, t_vars, rename=None):
         global_attrs = dict()
-        if remap:
-            remap = self.profile.remap
 
-        if self.profile.strict:
-            for var_obj in t_vars.values():
-                var_obj.load_attrs_data(self.profile.variable_attrs, strict=self.profile.strict)
-                var_obj.build_attrs(remap=remap)
-        else:
-            for var_obj in t_vars.values():
-                var_obj.load_attrs_data(self.profile.variable_attrs, strict=self.profile.strict)
-                var_obj.build_attrs(remap=remap)
+        for var_obj in t_vars.values():
+            var_obj.load_attrs(self.attrs.variable_attrs, strict=self.profile.strict)
+            var_obj.adjust_attrs(rename=rename)
 
-            global_attrs = dict()
-            first = ds[0]
-            for k, v in self.profile.global_attrs:
-                if isinstance(v, str):
-                    v = first.metadata(v, default=None)
-                    if v is not None:
-                        global_attrs[k] = v
+        global_attrs = dict()
+        first = ds[0]
+        for k in self.attrs.global_attrs.keys:
+            v = first.metadata(k, default=None)
+            if v is not None:
+                global_attrs[k] = v
 
         return global_attrs

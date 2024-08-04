@@ -1,8 +1,14 @@
-vocabulary: mars
+dim_roles:
+  ens: number
+  date: date
+  time: time
+  step: step
+  level: levelist
+  level_type: levtype
 
 variable_key: param
 
-attrs_strategy: unique_keys
+attrs_mode: unique
 
 attrs:
 - param
@@ -47,7 +53,7 @@ global_attrs:
 - institution: ECMWF
 
 # generic mapping for variables, attributes and coordinates
-mapping:
+rename_attrs:
   cfName: standard_name
   name: long_name
 

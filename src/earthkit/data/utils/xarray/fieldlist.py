@@ -33,6 +33,9 @@ def _get_common_attributes(ds, keys):
 
 
 def unique_values(ds, names, skip_missing=True):
+    if isinstance(names, str):
+        names = [names]
+
     vals = defaultdict(dict)
     for f in ds:
         # field metadata must support multiple keys
