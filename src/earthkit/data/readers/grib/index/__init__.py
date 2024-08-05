@@ -11,8 +11,7 @@ import logging
 import math
 import os
 from abc import abstractmethod
-
-from lru import LRU
+from collections import defaultdict
 
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.index import MaskIndex
@@ -221,31 +220,71 @@ class GribMultiFieldList(GribFieldList, MultiIndex):
 class GribFieldListInFiles(GribFieldList):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        GRIB_FIELD_CACHE_SIZE = int(os.environ.get("CLIMETLAB_GRIB_FIELD_CACHE_SIZE", 1000))
-        self._lru_cache = LRU(GRIB_FIELD_CACHE_SIZE)
 
-        CLIMETLAB_HANDLE_CACHE_SIZE = int(os.environ.get("CLIMETLAB_HANDLE_CACHE_SIZE", 10))
+        from earthkit.data.core.settings import SETTINGS
 
-        self._handle_cache = LRU(CLIMETLAB_HANDLE_CACHE_SIZE)
+        if SETTINGS.get("grib-field-cache"):
+            # TODO: the number of fields might be available only later on (e.g. fieldlists with
+            # SQL index. Consider making _field_cache a cached property
+            n = len(self)
+            if n > 0:
+                from lru import LRU
+
+                self._field_cache = LRU(n)
+            else:
+                self._field_cache = None
+        else:
+            self._field_cache = None
+
+        handle_cache_size = SETTINGS.get("grib-handle-cache-size")
+        if handle_cache_size > 0:
+            from lru import LRU
+
+            self._handle_cache = LRU(handle_cache_size)
+        else:
+            self._handle_cache = None
 
     def _getitem(self, n):
         # TODO: check if we need a mutex here
         if isinstance(n, int):
             if n < 0:
                 n += len(self)
-            if n not in self._lru_cache:
-                part = self.part(n)
-                self._lru_cache[n] = GribField(
-                    part.path, part.offset, part.length, self.array_backend, self._handle_cache
-                )
-            return self._lru_cache[n]
+            part = self.part(n)
 
-        # if isinstance(n, int):
-        #     part = self.part(n if n >= 0 else len(self) + n)
-        #     return GribField(part.path, part.offset, part.length, self.array_backend)
+            if self._field_cache is not None and n in self._field_cache:
+                return self._field_cache[n]
+
+            field = GribField(
+                part.path,
+                part.offset,
+                part.length,
+                self.array_backend,
+                handle_cache=self._handle_cache,
+            )
+
+            if self._field_cache is not None:
+                self._field_cache[n] = field
+
+            return field
 
     def __len__(self):
         return self.number_of_parts()
+
+    def _diag(self):
+        r = defaultdict(lambda: 0)
+        for f in self:
+            if f._handle is not None:
+                r["handle_count"] += 1
+
+            try:
+                md_cache = f._metadata.get.cache_info()
+                r["metadata_cache_hits"] += md_cache.hits
+                r["metadata_cache_misses"] += md_cache.misses
+                r["metadata_cache_size"] += md_cache.currsize
+            except Exception:
+                pass
+
+        return r
 
     @abstractmethod
     def part(self, n):

@@ -115,15 +115,9 @@ class Field(Base):
             return self._array_backend.array_ns.reshape(v, n)
         return v
 
-    def _make_metadata(self):
-        r"""Create a field metadata object."""
-        self._not_implemented()
-
     @property
     def _metadata(self):
         r"""Metadata: Get the object representing the field's metadata."""
-        if self.__metadata is None:
-            self.__metadata = self._make_metadata()
         return self.__metadata
 
     def to_numpy(self, flatten=False, dtype=None, index=None):
@@ -464,7 +458,8 @@ class Field(Base):
     def metadata(self, *keys, astype=None, **kwargs):
         r"""Return metadata values from the field.
 
-        When called without any arguments returns a :obj:`Metadata` object.
+        When called without any arguments returns a :obj:`Metadata` object, which for GRIB data contains
+        a clone of the ecCodes handle of the GRIB message.
 
         Parameters
         ----------
@@ -568,7 +563,7 @@ class Field(Base):
         """
         # when called without arguments returns the metadata object
         if len(keys) == 0 and astype is None and len(kwargs) == 0:
-            return self._metadata
+            return self._metadata.override()
 
         namespace = kwargs.pop("namespace", None)
         key, namespace, astype, key_arg_type = metadata_argument(*keys, namespace=namespace, astype=astype)
@@ -747,7 +742,7 @@ class FieldList(Index):
     @cached_method
     def _default_index_keys(self):
         if len(self) > 0:
-            return self[0].metadata().index_keys()
+            return self[0]._metadata.index_keys()
         else:
             return []
 
@@ -1110,7 +1105,7 @@ class FieldList(Index):
     @cached_method
     def _default_ls_keys(self):
         if len(self) > 0:
-            return self[0].metadata().ls_keys()
+            return self[0]._metadata.ls_keys()
         else:
             return []
 
@@ -1201,7 +1196,7 @@ class FieldList(Index):
     @cached_method
     def _describe_keys(self):
         if len(self) > 0:
-            return self[0].metadata().describe_keys()
+            return self[0]._metadata.describe_keys()
         else:
             return []
 
@@ -1370,9 +1365,9 @@ class FieldList(Index):
     @cached_method
     def _is_shared_grid(self):
         if len(self) > 0:
-            grid = self[0].metadata().geography._unique_grid_id()
+            grid = self[0]._metadata.geography._unique_grid_id()
             if grid is not None:
-                return all(f.metadata().geography._unique_grid_id() == grid for f in self)
+                return all(f._metadata.geography._unique_grid_id() == grid for f in self)
         return False
 
     @detect_out_filename

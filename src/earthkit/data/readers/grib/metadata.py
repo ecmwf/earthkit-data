@@ -307,25 +307,17 @@ class GribMetadata(Metadata):
 
     __handle_type = None
 
-    # def __init__(self, field, extra=None):
-    #     self.field = field
-    #     self._geo = None
-    #     if extra is not None:
-    #         self.extra = extra
-
     @abstractmethod
-    @property
     def _handle(self):
         pass
 
-    def __init__(self, extra=None, cache=None):
+    def __init__(self, shrunk=False, **kwargs):
         # if not isinstance(handle, self._handle_type()):
         #     raise TypeError(f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}")
         # self._handle = handle
         self._geo = None
-        if extra is not None:
-            self.extra = extra
-        super().__init__(cache=cache)
+        self._shrunk = shrunk
+        super().__init__(**kwargs)
 
     # def __init__(self, handle, extra=None):
     #     if not isinstance(handle, self._handle_type()):
@@ -396,16 +388,25 @@ class GribMetadata(Metadata):
             d.update(md)
 
         handle = self._handle.clone(headers_only=True)
-        # whether headers_only=True works depends on the eccCodes version and the
-        # message properties. We check it by comparing the message lengths.
-        shrunk = handle.get_long("totalLength") < self._handle.get_long("totalLength")
 
-        # some keys, needed later, are not copied into the clone when
-        # headers_only=True. We store them as extra keys.
-        if shrunk:
-            extra = {"bitsPerValue": self._handle.get("bitsPerValue", default=0)}
+        if self._shrunk:
+            shrunk = True
+            extra = self.extra
 
-        handle.set_multiple(d)
+        else:
+            # whether headers_only=True works depends on the eccCodes version and the
+            # message properties. We check it by comparing the message lengths.
+            shrunk = handle.get_long("totalLength") < self._handle.get_long("totalLength")
+
+            # some keys, needed later, are not copied into the clone when
+            # headers_only=True. We store them as extra keys.
+            if shrunk:
+                extra = {"bitsPerValue": self._handle.get("bitsPerValue", default=0)}
+            else:
+                extra = None
+
+        if d:
+            handle.set_multiple(d)
 
         # we need to set the values to the new size otherwise the clone generated
         # with headers_only=True will be inconsistent
@@ -415,7 +416,7 @@ class GribMetadata(Metadata):
             vals = np.zeros(new_value_size)
             handle.set_values(vals)
 
-        return StandAloneGribMetadata(handle, extra=extra)
+        return StandAloneGribMetadata(handle, extra=extra, shrunk=shrunk)
 
     def as_namespace(self, namespace=None):
         r"""Return all the keys/values from a namespace.
@@ -513,17 +514,14 @@ class GribMetadata(Metadata):
 
         return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
 
-    def _hide_internal_keys(self):
-        return RestrictedGribMetadata(self)
-
 
 class GribFieldMetadata(GribMetadata):
-    def __init__(self, field, extra=None):
+    """Represent the metadata of a GRIB field owning an ecCodes handle."""
+
+    def __init__(self, field, **kwargs):
         self._field = field
         assert field is not None
-
-        self._cache = {}
-        super().__init__(extra=extra, cache=self._cache)
+        super().__init__(**kwargs)
 
     @property
     def _handle(self):
@@ -531,19 +529,25 @@ class GribFieldMetadata(GribMetadata):
 
 
 class StandAloneGribMetadata(GribMetadata):
-    def __init__(self, handle, extra=None):
+    """Represent standalone GRIB metadata owning its ecCodes handle."""
+
+    def __init__(self, handle, **kwargs):
         if not isinstance(handle, self._handle_type()):
             raise TypeError(f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}")
         self.__handle = handle
-        super().__init__(extra=extra)
+        self._kwargs = dict(**kwargs)
+        super().__init__(**kwargs)
 
     @property
     def _handle(self):
         return self.__handle
 
+    def _hide_internal_keys(self):
+        return RestrictedGribMetadata(self)
+
 
 # TODO: this is a temporary solution
-class RestrictedGribMetadata(GribMetadata):
+class RestrictedGribMetadata(StandAloneGribMetadata):
     """Hide internal keys and namespaces in GRIB metadata"""
 
     EKD_NAMESPACE = "grib"
@@ -578,7 +582,8 @@ class RestrictedGribMetadata(GribMetadata):
     INTERNAL_NAMESPACES = ["statistics"]
 
     def __init__(self, md):
-        super().__init__(md._handle, extra=md.extra)
+        assert isinstance(md, StandAloneGribMetadata)
+        super().__init__(md._handle, **md._kwargs)
 
     @cached_method
     def _len(self):
@@ -642,7 +647,8 @@ class RestrictedGribMetadata(GribMetadata):
                 else:
                     return default
 
-        return super().get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        v = super().get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        return v
 
     def namespaces(self):
         if self.INTERNAL_NAMESPACES:
@@ -662,3 +668,7 @@ class RestrictedGribMetadata(GribMetadata):
 
     def _hide_internal_keys(self):
         return self
+
+    def override(self, *args, **kwargs):
+        md = super().override(*args, **kwargs)
+        return RestrictedGribMetadata(md)

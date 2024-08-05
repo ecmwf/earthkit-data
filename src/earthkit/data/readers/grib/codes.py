@@ -9,12 +9,13 @@
 
 import logging
 import os
+from functools import cached_property
 
 import eccodes
 import numpy as np
 
 from earthkit.data.core.fieldlist import Field
-from earthkit.data.readers.grib.metadata import GribMetadata
+from earthkit.data.readers.grib.metadata import GribFieldMetadata
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
 from earthkit.data.utils.message import CodesReader
@@ -29,6 +30,12 @@ for k in ("ls", "geography", "mars", "parameter", "statistics", "time", "vertica
 
 def missing_is_none(x):
     return None if x == 2147483647 else x
+
+
+class Diag:
+    def __init__(self, fieldlist):
+        self.id = id(fieldlist)
+        self.diag = {"handle_create_count": 0}
 
 
 class GribCodesFloatArrayAccessor:
@@ -248,7 +255,6 @@ class GribField(Field):
         self._length = length
         self._handle = None
         self._handle_cache = handle_cache
-        self._metadata = {}
 
     @property
     def handle(self):
@@ -274,8 +280,11 @@ class GribField(Field):
             self._offset = int(self.handle.get("offset"))
         return self._offset
 
-    def _make_metadata(self):
-        return GribMetadata(self.handle)
+    @cached_property
+    def _metadata(self):
+        from earthkit.data.core.settings import SETTINGS
+
+        return GribFieldMetadata(self, cache=SETTINGS.get("grib-metadata-cache"))
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (
