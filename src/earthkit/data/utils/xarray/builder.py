@@ -69,15 +69,21 @@ class VariableBuilder:
 
 
 class TensorBackendArray(xarray.backends.common.BackendArray):
-    def __init__(self, tensor, dims, shape, xp, variable):
+    def __init__(self, tensor, dims, shape, xp, dtype, variable):
         super().__init__()
         self.tensor = tensor
         self.dims = dims
         self.shape = shape
-        self.dtype = xp.dtype(xp.float64)
-        self.xp = xp
+
+        # xp and dtype must be set for xarray
+        self.xp = xp if xp is not None else numpy
+        if dtype is None:
+            dtype = numpy.dtype("float64")
+        self.dtype = xp.dtype(dtype)
+
         self._var = variable
 
+    @property
     def nbytes(self):
         from math import prod
 
@@ -116,7 +122,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         field_index = r.field_indexes(key)
         # print(f"field.index={field_index} coords={r.user_coords}")
         # result = r.to_numpy(index=field_index).squeeze()
-        result = r.to_numpy(index=field_index)
+        result = r.to_numpy(index=field_index, dtype=self.dtype)
 
         # ensure axes are squeezed when needed
         singles = [i for i in list(range(len(r.user_shape))) if isinstance(key[i], int)]
@@ -132,7 +138,8 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         # Loading as numpy but then converting. This needs to be changed upstream (eccodes)
         # to load directly into cupy.
         # Maybe some incompatibilities when trying to copy from FFI to cupy directly
-        result = self.xp.asarray(result)
+        if self.xp and self.xp != numpy:
+            result = self.xp.asarray(result)
 
         return result
 
@@ -146,6 +153,7 @@ class TensorBackendBuilder:
         # common_metadata=None,
         grid=None,
         flatten_values=False,
+        dtype=None,
         array_module=numpy,
     ):
         self.ds = ds
@@ -155,6 +163,7 @@ class TensorBackendBuilder:
         # self.common_metadata = common_metadata
 
         self.flatten_values = flatten_values
+        self.dtype = dtype
         self.array_module = array_module
 
         # coords within the tensor describing the non-field dimensions.
@@ -182,7 +191,7 @@ class TensorBackendBuilder:
         r = {}
         for k, v in self.grid.coords.items():
             dims = {x: self.grid.dims[x] for x in self.grid.coords_dim[k]}
-            r[k] = xarray.Variable(dims, v, self.profile.add_coord_attrs(k))
+            r[k] = xarray.Variable(dims, v, self.profile.attrs.coord_attrs.get(k, {}))
         return r
 
     def collect_date_coords(self, tensor):
@@ -256,6 +265,7 @@ class TensorBackendBuilder:
             var_dims,
             tensor.full_shape,
             self.array_module,
+            self.dtype,
             name,
         )
 
@@ -325,6 +335,7 @@ class DatasetBuilder:
         flatten_values=False,
         profile="mars",
         errors=None,
+        dtype=None,
         array_module=numpy,
         **kwargs,
     ):
@@ -344,6 +355,7 @@ class DatasetBuilder:
         self.flatten_values = flatten_values
         self.profile = profile
         self.errors = errors
+        self.dtype = dtype
         self.array_module = array_module
         self.grids = {}
 
@@ -374,6 +386,8 @@ class DatasetBuilder:
 
         # print("parse dims", profile.dim_keys)
 
+        # print("ds keys", ds.db[0].keys())
+        # print("ds indices", ds._md_indices)
         profile.update(ds)
 
         # print("parse dims", profile.dim_keys)
@@ -415,6 +429,7 @@ class SingleDatasetBuilder(DatasetBuilder):
             dims,
             grid=self.grid(ds),
             flatten_values=self.flatten_values,
+            dtype=self.dtype,
             array_module=numpy,
         )
 
@@ -447,6 +462,7 @@ class SplitDatasetBuilder(DatasetBuilder):
                 s_dims,
                 grid=self.grid(s_ds),
                 flatten_values=self.flatten_values,
+                dtype=self.dtype,
                 array_module=numpy,
             )
 

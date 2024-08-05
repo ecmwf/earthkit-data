@@ -67,6 +67,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         rename_attrs={"cfName": "standard_name", "name": "long_name"},
         strict=True,
         errors=None,
+        dtype=None,
         array_module=numpy,
     ):
         r"""
@@ -197,7 +198,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         global_attrs: , None
             Metadata key or keys to use as global attributes. Default is None.
         coord_attrs: dict, None
-            Define rules to construct coordinate attributes. Default is None.
+            To be documented. Default is None.
         rename_attrs: dict, None
             A dictionary of attribute to rename. Default is None.
         remapping: dict, None
@@ -206,6 +207,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             Perform stricter checks on hypercube consistency. Default is True.
         errors: str, None
             How to handle errors. Default is None.
+        dtype: str, numpy.dtype or None
+            Typecode or data-type of the array data.
         array_module: module
             The module to use for array operations. Default is numpy.
         """
@@ -237,6 +240,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             decode_time=decode_time,
             strict=strict,
             errors=errors,
+            dtype=dtype,
             array_module=array_module,
         )
 

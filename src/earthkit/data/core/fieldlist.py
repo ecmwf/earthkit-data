@@ -766,7 +766,8 @@ class FieldList(Index):
     @cached_method
     def _default_md_index_keys(self):
         if len(self) > 0:
-            return self[0].metadata().index_keys()
+            # return self[0].metadata().index_keys()
+            return self[0]._metadata.index_keys()
         else:
             return []
 

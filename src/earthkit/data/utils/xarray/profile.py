@@ -10,6 +10,7 @@
 import logging
 import os
 import threading
+from functools import cached_property
 
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
@@ -81,7 +82,7 @@ class ProfileConf:
 
     def _load(self, name):
         with self._lock:
-            if name not in self._conf:
+            if name not in self._conf and name != "defaults":
                 here = os.path.dirname(__file__)
                 path = os.path.join(here, f"{name}.yaml")
                 if os.path.exists(path):
@@ -95,6 +96,22 @@ class ProfileConf:
                         raise
                 else:
                     raise ValueError(f"Profile {name} not found! path={path}")
+
+    @cached_property
+    def defaults(self):
+        here = os.path.dirname(__file__)
+        path = os.path.join(here, "defaults.yaml")
+        if os.path.exists(path):
+            import yaml
+
+            try:
+                with open(path, "r") as f:
+                    return yaml.safe_load(f)
+            except Exception as e:
+                LOG.exception(f"Failed read profile defaults file {path}. {e}")
+                raise
+        else:
+            raise ValueError(f"Profile defaults not found! path={path}")
 
 
 PROFILE_CONF = ProfileConf()
@@ -204,14 +221,24 @@ class Profile:
     @classmethod
     def from_conf(cls, name, conf, *args, **kwargs):
         conf = conf.copy()
-        # options = conf.pop("frozen_options", {})
-
-        # if isinstance(options, list):
-        #     options = {}
-
         kwargs = dict(**kwargs)
-        # kwargs.update(options)
+
+        # kwargs replace settings in conf. The exception is the defaults,
+        # where options containing a dict are updated with the kwargs values.
+        defaults = dict(**PROFILE_CONF.defaults)
+        for k, v in conf.items():
+            if k in defaults and v is not None and isinstance(defaults[k], dict):
+                defaults[k].update(v)
+
+        for k, v in kwargs.items():
+            if k in defaults and v is not None and isinstance(defaults[k], dict):
+                defaults[k].update(v)
+
         conf.update((k, v) for k, v in kwargs.items() if v is not None)
+
+        for k, v in defaults.items():
+            conf[k] = v
+
         return cls(*args, **conf)
 
     @property
@@ -295,20 +322,20 @@ class Profile:
         keys += [k for k in self.dim_keys if k not in keys]
         return keys
 
-    def var_attributes(self):
-        return self.variable_attrs
+    # def var_attributes(self):
+    #     return self.variable_attrs
 
-    def add_coord_attrs(self, name):
-        return self.attrs.coord_attrs.get(name, {})
+    # def add_coord_attrs(self, name):
+    #     return self.attrs.coord_attrs.get(name, {})
 
-    def add_level_coord_attrs(self, name, levtype):
-        # print("add_level_coord_attrs", name, levtype)
-        level_key = self.level_maps.get("key", None)
-        if level_key in levtype:
-            return self.level_maps.get(levtype[level_key], {})
-        else:
-            return {}
-            # raise ValueError(f"Cannot determine level type for coordinate {name}")
+    # def add_level_coord_attrs(self, name, levtype):
+    #     # print("add_level_coord_attrs", name, levtype)
+    #     level_key = self.level_coord_attrs.get("key", None)
+    #     if level_key in levtype:
+    #         return self.level_coord_attr.get(levtype[level_key], {})
+    #     else:
+    #         return {}
+    #         # raise ValueError(f"Cannot determine level type for coordinate {name}")
 
     def rename_dims(self, dims):
         return [self.dims.rename_dims_map.get(d, d) for d in dims]

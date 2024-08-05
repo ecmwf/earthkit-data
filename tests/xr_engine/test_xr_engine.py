@@ -384,3 +384,13 @@ def test_xr_engine_detailed_flatten_check():
     assert r.shape == (2, 2)
     vals_ref = np.array([[269.00918579, 268.78610229], [268.57771301, 268.08932495]])
     assert np.allclose(r.values, vals_ref)
+
+
+def test_xr_engine_dtype():
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_regular_ll.grib"))
+
+    ds = ds_ek.to_xarray(dtype=np.float32)
+    assert ds["t"].values.dtype == np.float32
+
+    ds = ds_ek.to_xarray(dtype=np.float64)
+    assert ds["t"].values.dtype == np.float64

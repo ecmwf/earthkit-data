@@ -56,7 +56,7 @@ class Coord:
         return {}
 
     def attrs(self, name, profile):
-        return profile.add_coord_attrs(name)
+        return profile.attrs.coord_attrs.get(name, {})
 
     @staticmethod
     def _to_datetime_list(vals):
@@ -107,17 +107,22 @@ class StepCoord(Coord):
 
 class LevelCoord(Coord):
     def __init__(self, name, vals, dims=None, ds=None):
-        self.levtype = {}
+        self.level_type = {}
         if ds is not None:
             for k in ["levtype", "typeOfLevel"]:
-                if k in ds.indices():
-                    self.levtype[k] = ds.index(k)[0]
-                else:
-                    v = ds[0].metadata(k, default=None)
-                    if v is not None:
-                        self.levtype[k] = v
+                v = ds[0].metadata(k, default=None)
+                if v is not None:
+                    self.level_type[k] = v
 
         super().__init__(name, vals, dims)
 
     def attrs(self, name, profile):
-        return profile.add_level_coord_attrs(name, self.levtype)
+        attrs = profile.attrs
+        conf = attrs.coord_attrs.get(name, {})
+        if conf:
+            key = conf["key"]
+            if key in self.level_type:
+                level_type = self.level_type[key]
+                return conf.get(level_type, {})
+        return {}
+        # raise ValueError(f"Cannot determine level type for coordinate {name}")

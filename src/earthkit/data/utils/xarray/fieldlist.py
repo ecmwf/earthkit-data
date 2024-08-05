@@ -78,6 +78,8 @@ class WrappedFieldList(FieldArray):
             for k, v in r.items():
                 if v is not None:
                     indices[k].add(v)
+                else:
+                    indices[k]
 
         # TODO: check if values are of the same type per key
         self._md_indices = {k: sorted(list(v)) for k, v in indices.items()}

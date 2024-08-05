@@ -65,8 +65,6 @@ KEYS = (
     + BASE_DATETIME_KEYS
 )
 
-DIM_ROLES = {"ens": "number", "level": "level", "level_type": "typeOfLevel"}
-
 
 def get_keys(keys, drop=None):
     r = list(keys)
@@ -531,10 +529,7 @@ class Dims:
 
         self.profile = profile
 
-        self.dim_roles = dict(**DIM_ROLES)
-        if dim_roles:
-            self.dim_roles.update(dim_roles)
-
+        self.dim_roles = dim_roles
         self.extra_dims = ensure_iterable(extra_dims)
         self.drop_dims = ensure_iterable(drop_dims)
         self.ensure_dims = ensure_iterable(ensure_dims)
