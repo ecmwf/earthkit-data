@@ -224,8 +224,8 @@ class GribFieldListInFiles(GribFieldList):
         from earthkit.data.core.settings import SETTINGS
 
         if SETTINGS.get("grib-field-cache"):
-            # TODO: the number of fields might be available only later on (e.g. fieldlists with
-            # SQL index. Consider making _field_cache a cached property
+            # TODO: the number of fields might only be available only later (e.g. fieldlists with
+            # an SQL index). Consider making _field_cache a cached property.
             n = len(self)
             if n > 0:
                 from lru import LRU
