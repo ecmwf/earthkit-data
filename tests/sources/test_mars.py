@@ -48,6 +48,38 @@ def test_mars_grib_2():
     assert len(s) == 2
 
 
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_MARS, reason="No access to MARS")
+def test_mars_grib_expect_any_1():
+    ds = from_source(
+        "mars",
+        expect="any",
+        param=["2t", "msl"],
+        levtype="sfc",
+        area=[50, -50, 20, 50],
+        grid=[2, 2],
+        date="1054-05-10",
+    )
+
+    assert len(ds) == 0
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_MARS, reason="No access to MARS")
+def test_mars_grib_expect_any_2():
+    with pytest.raises(Exception):
+        from_source(
+            "mars",
+            param=["2t", "msl"],
+            levtype="sfc",
+            area=[50, -50, 20, 50],
+            grid=[2, 2],
+            date="1054-05-10",
+        )
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
