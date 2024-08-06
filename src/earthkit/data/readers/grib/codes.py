@@ -248,27 +248,31 @@ class GribField(Field):
         Size of the message (in bytes)
     """
 
-    def __init__(self, path, offset, length, backend, handle_cache=None):
+    HANDLE_CREATE_COUNT = 0
+
+    def __init__(self, path, offset, length, backend, cache=None):
         super().__init__(backend)
         self.path = path
         self._offset = offset
         self._length = length
         self._handle = None
-        self._handle_cache = handle_cache
+        self._cache = cache
 
     @property
     def handle(self):
         r""":class:`CodesHandle`: Gets an object providing access to the low level GRIB message structure."""
-        if self._handle_cache is not None:
-            key = (self.path, self._offset)
-            if key not in self._handle_cache:
-                self._handle_cache[key] = GribCodesReader.from_cache(self.path).at_offset(self._offset)
-            return self._handle_cache[key]
+        if self._cache is not None:
+            handle = self._cache.handle(self, create=self._create_handle)
+            if handle is not None:
+                return handle
 
         if self._handle is None:
             assert self._offset is not None
-            self._handle = GribCodesReader.from_cache(self.path).at_offset(self._offset)
+            self._handle = GribField._create_handle(self)
         return self._handle
+
+    def _create_handle(self):
+        return GribCodesReader.from_cache(self.path).at_offset(self.offset)
 
     def _values(self, dtype=None):
         return self.handle.get_values(dtype=dtype)
@@ -282,9 +286,10 @@ class GribField(Field):
 
     @cached_property
     def _metadata(self):
-        from earthkit.data.core.settings import SETTINGS
-
-        return GribFieldMetadata(self, cache=SETTINGS.get("grib-metadata-cache"))
+        cache = False
+        if self._cache is not None:
+            cache = self._cache.use_metadata_cache
+        return GribFieldMetadata(self, cache=cache)
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (

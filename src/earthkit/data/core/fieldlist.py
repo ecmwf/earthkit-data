@@ -21,6 +21,8 @@ from earthkit.data.utils.array import ensure_backend
 from earthkit.data.utils.array import numpy_backend
 from earthkit.data.utils.metadata import metadata_argument
 
+_DEFAULT_NONE_KWARGS = {"default": None}
+
 
 class Field(Base):
     r"""Represent a Field."""
@@ -561,6 +563,10 @@ class Field(Base):
         >>> r["name"]
         '2 metre temperature'
         """
+        # the most important use case
+        if len(keys) == 1 and isinstance(keys[0], str) and astype is None and kwargs == _DEFAULT_NONE_KWARGS:
+            return self._metadata.get(keys[0])
+
         # when called without arguments returns the metadata object
         if len(keys) == 0 and astype is None and len(kwargs) == 0:
             return self._metadata.override()

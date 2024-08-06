@@ -217,61 +217,111 @@ class GribMultiFieldList(GribFieldList, MultiIndex):
         FieldList._init_from_multi(self, self)
 
 
-class GribFieldListInFiles(GribFieldList):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+class GribCache:
+    def __init__(self, owner, grib_field_cache, grib_handle_cache_size, grib_metadata_cache):
         from earthkit.data.core.settings import SETTINGS
 
-        if SETTINGS.get("grib-field-cache"):
-            # TODO: the number of fields might only be available only later (e.g. fieldlists with
-            # an SQL index). Consider making _field_cache a cached property.
-            n = len(self)
-            if n > 0:
-                from lru import LRU
+        grib_field_cache = (
+            grib_field_cache if grib_field_cache is not None else SETTINGS.get("grib-field-cache")
+        )
+        grib_handle_cache_size = (
+            grib_handle_cache_size
+            if grib_handle_cache_size is not None
+            else SETTINGS.get("grib-handle-cache-size")
+        )
+        self.use_metadata_cache = (
+            grib_metadata_cache if grib_metadata_cache is not None else SETTINGS.get("grib-metadata-cache")
+        )
 
-                self._field_cache = LRU(n)
-            else:
-                self._field_cache = None
-        else:
-            self._field_cache = None
-
-        handle_cache_size = SETTINGS.get("grib-handle-cache-size")
-        if handle_cache_size > 0:
+        self.field_cache = None
+        if grib_field_cache:
             from lru import LRU
 
-            self._handle_cache = LRU(handle_cache_size)
-        else:
-            self._handle_cache = None
+            # TODO: the number of fields might only be available only later (e.g. fieldlists with
+            # an SQL index). Consider making _field_cache a cached property.
+            n = len(owner)
+            if n > 0:
+                self.field_cache = LRU(n)
+
+        self.handle_cache = None
+        if grib_handle_cache_size > 0:
+            from lru import LRU
+
+            self.handle_cache = LRU(grib_handle_cache_size)
+
+        self.handle_create_count = 0
+        self.field_create_count = 0
+
+    def field(self, n, create=None):
+        if self.field_cache is not None:
+            if n in self.field_cache:
+                return self.field_cache[n]
+            elif callable(create):
+                field = create(n)
+                self.field_cache[n] = field
+                self.field_create_count += 1
+                return field
+
+    def handle(self, field, create=None):
+        if self.handle_cache is not None:
+            key = (field.path, field._offset)
+            if key in self.handle_cache:
+                return self.handle_cache[key]
+            elif callable(create):
+                handle = create()
+                self.handle_create_count += 1
+                self.handle_cache[key] = handle
+                return handle
+
+    def diag(self):
+        r = defaultdict(int)
+        if self.field_cache is not None:
+            r["field_cache_size"] = len(self.field_cache)
+            r["field_cache_create_count"] = self.field_create_count
+
+        if self.handle_cache is not None:
+            r["handle_cache_size"] = len(self.handle_cache)
+            r["handle_cache_create_count"] = self.handle_create_count
+
+        return r
+
+
+class GribFieldListInFiles(GribFieldList):
+    def __init__(
+        self, *args, grib_field_cache=None, grib_handle_cache_size=None, grib_metadata_cache=None, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self._caches = GribCache(self, grib_field_cache, grib_handle_cache_size, grib_metadata_cache)
+
+    def _create_field(self, n):
+        part = self.part(n)
+        return GribField(
+            part.path,
+            part.offset,
+            part.length,
+            self.array_backend,
+            cache=self._caches,
+        )
 
     def _getitem(self, n):
         # TODO: check if we need a mutex here
         if isinstance(n, int):
             if n < 0:
                 n += len(self)
-            part = self.part(n)
 
-            if self._field_cache is not None and n in self._field_cache:
-                return self._field_cache[n]
-
-            field = GribField(
-                part.path,
-                part.offset,
-                part.length,
-                self.array_backend,
-                handle_cache=self._handle_cache,
-            )
-
-            if self._field_cache is not None:
-                self._field_cache[n] = field
-
-            return field
+            field = self._caches.field(n, create=self._create_field)
+            if field is not None:
+                return field
+            else:
+                return self._create_field(n)
 
     def __len__(self):
         return self.number_of_parts()
 
     def _diag(self):
-        r = defaultdict(lambda: 0)
+        r = defaultdict(int)
+        r.update(self._caches.diag())
+
         for f in self:
             if f._handle is not None:
                 r["handle_count"] += 1
