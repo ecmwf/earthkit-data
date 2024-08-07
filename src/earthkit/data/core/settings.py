@@ -214,19 +214,19 @@ SETTINGS_AND_HELP = {
     ),
     "grib-field-cache": _(
         True,
-        """Cache GRIB fields in memory when GRIB data is read form disk. The number of actual
-        GRIB handles stored per fieldlist is controlled by ``grib-handle-cache-size``. Please note that if
-        ``grib-handle-cache-size`` is 0 and ``grib-field-cache`` is enabled all the related GRIB handles
-        will be stored in memory.""",
+        """Cache GRIB fields in memory for GRIB data on disk. The number of actual
+        GRIB handles stored in memory per fieldlist is controlled by ``grib-handle-cache-size``.""",
     ),
     "grib-handle-cache-size": _(
-        10,
-        "Number of GRIB handles cached in memory per fieldlist when GRIB data is read form disk.",
+        1,
+        """Number of GRIB handles cached in memory per fieldlist for GRIB data on disk. When > 0 fields
+        can only access GRIB handles from this cache. When 0 each field will have its own GRIB handle
+        in memory.""",
         none_ok=True,
     ),
     "grib-metadata-cache": _(
         True,
-        """Cache GRIB metadata in memory when reading GRIB data from disk.""",
+        """Cache GRIB metadata in memory for GRIB data on disk.""",
     ),
 }
 

@@ -32,12 +32,6 @@ def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
-class Diag:
-    def __init__(self, fieldlist):
-        self.id = id(fieldlist)
-        self.diag = {"handle_create_count": 0}
-
-
 class GribCodesFloatArrayAccessor:
     HAS_FLOAT_SUPPORT = None
     KEY = None
