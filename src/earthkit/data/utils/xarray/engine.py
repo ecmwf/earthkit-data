@@ -41,7 +41,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         filename_or_obj,
         source_type="file",
         profile="mars",
-        variable_key="param",
+        variable_key=None,
         drop_variables=None,
         rename_variables=None,
         extra_dims=None,
@@ -51,32 +51,33 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         dim_roles=None,
         rename_dims=None,
         dims_as_attrs=None,
-        time_dim_mode="forecast",
-        level_dim_mode="level",
-        squeeze=True,
-        add_valid_time_coord=True,
-        decode_time=True,
-        add_geo_coords=True,
-        remapping=None,
-        flatten_values=False,
-        attrs_mode="fixed",
-        attrs=["cfName", "name", "units", "typeOfLevel"],
+        time_dim_mode=None,
+        level_dim_mode=None,
+        squeeze=None,
+        add_valid_time_coord=None,
+        decode_time=None,
+        add_geo_coords=None,
+        attrs_mode=None,
+        attrs=None,
         variable_attrs=None,
         global_attrs=None,
         coord_attrs=None,
-        rename_attrs={"cfName": "standard_name", "name": "long_name"},
-        strict=True,
-        errors=None,
+        rename_attrs=None,
+        remapping=None,
+        flatten_values=None,
+        strict=None,
         dtype=None,
-        array_module=numpy,
+        array_module=None,
+        errors=None,
     ):
         r"""
         filename_or_obj, str, Path or earthkit object
             Input GRIB file or object to be converted to an xarray dataset.
         profile: str, dict or None
-            Provide custom default values for the kwargs. Two built-in profiles are available by using their
-            names: "mars" and "grid". Otherwise an explicit dict can be used. None is equivalent to an empty
-            dict. When a kwarg is specified it will override the profile values.
+            Provide custom default values for the kwargs with the exception of ``remapping``. Two built-in
+            profiles are available by using their names: "mars" and "grid". Otherwise an explicit dict can
+            be used. None is equivalent to an empty dict. When a kwarg is specified it will update
+            a default value if it is a dict otherwise it will overwrite it.
         variable_key: str, None
             Metadata key to specify the dataset variables. It cannot be
             defined as a dimension. Default is "param".
@@ -97,7 +98,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             Metadata key or list of metadata keys in the order they should be used as dimensions. When
             defined no other dimensions will be used. Might be incompatible with other settings.
             Default is None.
-        dim_roles: dict
+        dim_roles: dict, None
             Specify the "roles" used to form the predefined dimensions. The predefined dimensions are
             automatically generated when no ``fixed_dims`` specified and comprise the following
             (in a fixed order):
@@ -143,8 +144,9 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         dims_as_attrs: str, or iterable of str, None
             Dimension or list of dimensions which should be turned to variable
             attributes if they have only one value for the given variable. Default is None.
-        time_dim_mode: str
-            Define how predefined temporal dimensions are formed. The possible values are as follows:
+        time_dim_mode: str, None
+            Define how predefined temporal dimensions are formed. The default is "forecast".
+            The possible values are as follows:
 
             - "forecast": adds two dimensions:
 
@@ -155,34 +157,35 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             - "valid_time": adds a dimension called "valid_time" as described by the "valid_time"
               role (see ``dim_roles``). Will contain np.datetime64 values,
             - "raw": the "date", "time" and "step" roles are turned into 3 separate dimensions
-        level_dim_mode: str
-            Define how predefined vertical dimensions are formed. The possible values are:
+        level_dim_mode: str, None
+            Define how predefined vertical dimensions are formed. The default is "level".
+            The possible values are:
 
             - "level": adds a single dimension according to the "level" role (see ``dim_roles``)
             - "level_per_type": adds a separate dimensions for each level type based on the
               "level" and "level_type" roles.
             - "level_and_type": Use a single dimension for combined level and type of level.
-        squeeze: bool
+        squeeze: bool, None
             Remove dimensions which has only one valid values. Not applies to dimension in
             ``ensure_dims``. Default is True.
-        add_valid_time_coord: bool
+        add_valid_time_coord: bool, None
             Add a `valid_time` coordinate containing np.datetime64 values to the
             dataset. Only can be used when ``add_valid_time_dim`` is False. Default is False.
-        decode_time: bool
+        decode_time: bool, None
             Decode the datetime coordinates to datetime64 values, while step coordinates to timedelta64
             values. Default is True.
-        add_geo_coords: bool
+        add_geo_coords: bool, None
             Add geographic coordinates to the dataset when field values are represented by
             a single "values" dimension. Default is True.
-        flatten_values: bool
+        flatten_values: bool, None
             Flatten the values per field resulting in a single dimension called
             "values" representing a field. Otherwise the field shape is used to form
             the field dimensions. When the fields are defined on an unstructured grid (e.g.
             reduced Gaussian) or are spectral (e.g. spherical harmonics) this option is
             ignored and the field values are always represented by a single "values"
             dimension. Default is False.
-        attrs_mode: str
-            Define how attributes are generated. The possible values are:
+        attrs_mode: str, None
+            Define how attributes are generated. Default is "fixes". The possible values are:
 
             - "fixed": Use the attributes defined in ``variable_attrs`` as variables
               attributes and ``global_attrs`` as global attributes.
@@ -203,10 +206,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             A dictionary of attribute to rename. Default is None.
         remapping: dict, None
             Define new metadata keys for indexing. Default is None.
-        strict: bool
+        strict: bool, None
             Perform stricter checks on hypercube consistency. Default is True.
-        errors: str, None
-            How to handle errors. Default is None.
         dtype: str, numpy.dtype or None
             Typecode or data-type of the array data.
         array_module: module
@@ -239,9 +240,9 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             remapping=remapping,
             decode_time=decode_time,
             strict=strict,
-            errors=errors,
             dtype=dtype,
             array_module=array_module,
+            errors=errors,
         )
 
         fieldlist = self._fieldlist(filename_or_obj, source_type)

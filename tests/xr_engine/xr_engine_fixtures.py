@@ -64,4 +64,4 @@ def compare_coords(ds, ref_coords):
             for i, vv in enumerate(v):
                 assert ds.coords[k].values[i] == vv, f"{k=} {ds.coords[k].values[i]} != {vv}"
         else:
-            assert np.allclose(ds.coords[k].values, np.asarray(v))
+            assert np.allclose(ds.coords[k].values, np.asarray(v)), f"{k=}"

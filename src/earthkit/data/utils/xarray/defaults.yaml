@@ -1,3 +1,42 @@
+# variables
+variable_key: param
+drop_variables: []
+rename_variables: {}
+
+# dimensions
+extra_dims: []
+drop_dims: []
+ensure_dims: []
+fixed_dims: []
+split_dims: []
+rename_dims: {}
+dims_as_attrs: []
+time_dim_mode: forecast
+level_dim_mode: level
+squeeze: true
+
+# attributes
+attrs_mode: "fixed"
+attrs: []
+variable_attrs: []
+global_attrs: []
+rename_attrs: {}
+
+# coordinates
+add_valid_time_coord: false
+add_geo_coords: true
+decode_time: true
+
+# values
+flatten_values: false
+dtype: float64
+array_module: numpy
+
+# other
+strict: true
+errors: raise
+
+
 dim_roles:
   ens: number
   date: date

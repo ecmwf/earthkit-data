@@ -22,37 +22,6 @@ GEO_KEYS = ["md5GridSection"]
 MANDATORY_KEYS = GEO_KEYS
 IGNORE_ATTRS = ["md5GridSection"]
 
-# CUSTOM_VARIABLE_KEYS = ["param_level"]
-# VARIABLE_KEYS = [
-#     "param",
-#     "variable",
-#     "parameter",
-#     "shortName",
-#     "long_name",
-#     "name",
-#     "cfName",
-#     "cfVarName",
-# ] + CUSTOM_VARIABLE_KEYS
-
-
-# CUSTOM_KEYS = ["valid_datetime", "base_datetime", "level_and_type"]
-
-# DEFAULT_METADATA_KEYS = {
-#     "CF": [
-#         "shortName",
-#         "units",
-#         "name",
-#         "cfName",
-#         "cfVarName",
-#         "missingValue",
-#         "totalNumber",
-#         "numberOfDirections",
-#         "numberOfFrequencies",
-#         "NV",
-#         "gridDefinitionDescription",
-#     ]
-# }
-
 
 class RemappingBuilder:
     def __init__(self, remappings, patches=None):
@@ -118,34 +87,11 @@ PROFILE_CONF = ProfileConf()
 
 
 class Profile:
+    USER_ONLY_OPTIONS = ["remapping", "patches"]
+
     def __init__(
         self,
-        variable_key="param",
-        drop_variables=None,
-        rename_variables=None,
-        extra_dims=None,
-        drop_dims=None,
-        ensure_dims=None,
-        fixed_dims=None,
-        split_dims=None,
-        rename_dims=None,
-        dims_as_attrs=None,
-        dim_roles=None,
-        time_dim_mode="forecast",
-        level_dim_mode="level",
-        squeeze=True,
-        attrs_mode=None,
-        attrs=None,
-        variable_attrs=None,
-        global_attrs=None,
-        coord_attrs=None,
-        rename_attrs=None,
-        remapping=None,
-        add_valid_time_coord=False,
-        add_geo_coords=True,
-        decode_time=True,
-        strict=True,
-        level_maps=None,
+        **kwargs,
     ):
         from .attrs import Attrs
         from .dim import Dims
@@ -153,46 +99,66 @@ class Profile:
         self.index_keys = []
 
         patches = dict()
-        self.remapping = RemappingBuilder(remapping, patches)
+        self.remapping = RemappingBuilder(kwargs.pop("remapping", None), patches)
 
         # variables
         self.variables = []
-        self.variable_key = variable_key
-        if variable_key is None:
+        self.variable_key = kwargs.pop("variable_key")
+        if self.variable_key is None:
             raise ValueError("variable_key must be set!")
 
         self.add_keys([self.variable_key])
-        self.drop_variables = drop_variables
-        self.rename_variables_map = ensure_dict(rename_variables)
+        self.drop_variables = kwargs.pop("drop_variables")
+        self.rename_variables_map = kwargs.pop("rename_variables")
 
         # dims
         self.dims = Dims(
             self,
-            extra_dims,
-            drop_dims,
-            ensure_dims,
-            fixed_dims,
-            split_dims,
-            rename_dims,
-            dim_roles,
-            dims_as_attrs,
-            time_dim_mode,
-            level_dim_mode,
-            squeeze,
+            kwargs.pop("extra_dims"),
+            kwargs.pop("drop_dims"),
+            kwargs.pop("ensure_dims"),
+            kwargs.pop("fixed_dims"),
+            kwargs.pop("split_dims"),
+            kwargs.pop("rename_dims"),
+            kwargs.pop("dim_roles"),
+            kwargs.pop("dims_as_attrs"),
+            kwargs.pop("time_dim_mode"),
+            kwargs.pop("level_dim_mode"),
+            kwargs.pop("squeeze"),
         )
 
-        self.level_maps = ensure_dict(level_maps)
-
         # coordinates
-        self.add_valid_time_coord = add_valid_time_coord
-        self.add_geo_coords = add_geo_coords
+        self.add_valid_time_coord = kwargs.pop("add_valid_time_coord")
+        self.add_geo_coords = kwargs.pop("add_geo_coords")
 
         # attributes
-        self.attrs = Attrs(self, attrs_mode, attrs, variable_attrs, global_attrs, coord_attrs, rename_attrs)
+        self.attrs = Attrs(
+            self,
+            kwargs.pop("attrs_mode"),
+            kwargs.pop("attrs"),
+            kwargs.pop("variable_attrs"),
+            kwargs.pop("global_attrs"),
+            kwargs.pop("coord_attrs"),
+            kwargs.pop("rename_attrs"),
+        )
 
         # generic
-        self.decode_time = decode_time
-        self.strict = strict
+        self.decode_time = kwargs.pop("decode_time")
+        self.strict = kwargs.pop("strict")
+        self.errors = kwargs.pop("errors")
+
+        # values
+        self.flatten_values = kwargs.pop("flatten_values")
+        self.dtype = kwargs.pop("dtype")
+        self.array_module = kwargs.pop("array_module")
+
+        if self.array_module == "numpy":
+            import numpy as np
+
+            self.array_module = np
+
+        if kwargs:
+            raise ValueError(f"Unsupported options: {kwargs}")
 
         self.add_keys(ensure_iterable(MANDATORY_KEYS))
 
@@ -220,26 +186,43 @@ class Profile:
 
     @classmethod
     def from_conf(cls, name, conf, *args, **kwargs):
-        conf = conf.copy()
-        kwargs = dict(**kwargs)
+        import copy
 
-        # kwargs replace settings in conf. The exception is the defaults,
-        # where options containing a dict are updated with the kwargs values.
-        defaults = dict(**PROFILE_CONF.defaults)
-        for k, v in conf.items():
-            if k in defaults and v is not None and isinstance(defaults[k], dict):
-                defaults[k].update(v)
+        kwargs = copy.deepcopy(kwargs)
+        opt = copy.deepcopy(PROFILE_CONF.defaults)
 
-        for k, v in kwargs.items():
-            if k in defaults and v is not None and isinstance(defaults[k], dict):
-                defaults[k].update(v)
+        for d in [conf, kwargs]:
+            for k, v in d.items():
+                if k in PROFILE_CONF.defaults and v is not None:
+                    if isinstance(PROFILE_CONF.defaults[k], dict):
+                        if not isinstance(v, dict):
+                            raise ValueError(f"Expected dict for key {k} in profile {name}")
+                        if "__overwrite__" in v:
+                            v.pop("__overwrite__")
+                            opt[k] = v
+                        else:
+                            opt[k].update(v)
+                    elif isinstance(PROFILE_CONF.defaults[k], list):
+                        opt[k] = ensure_iterable(v)
+                    else:
+                        opt[k] = v
+                elif k not in PROFILE_CONF.defaults:
+                    if k in cls.USER_ONLY_OPTIONS:
+                        opt[k] = v
+                    else:
+                        raise ValueError(f"Unknown key {k} in profile {name}")
 
-        conf.update((k, v) for k, v in kwargs.items() if v is not None)
+        def _check_type(k, v, t):
+            if isinstance(PROFILE_CONF.defaults[k], t):
+                if not isinstance(v, t):
+                    raise ValueError(f"Expected {t.__name__} for key {k} in profile {name}")
+                return True
 
-        for k, v in defaults.items():
-            conf[k] = v
+        for k, v in opt.items():
+            if k in PROFILE_CONF.defaults:
+                any(_check_type(k, v, t) for t in [dict, list, bool])
 
-        return cls(*args, **conf)
+        return cls(*args, **opt)
 
     @property
     def dim_keys(self):
@@ -251,20 +234,6 @@ class Profile:
     def prepend_keys(self, keys):
         if keys:
             self.index_keys = keys + [k for k in self.index_keys if k not in keys]
-
-    # def guess_variable_key(self):
-    #     """If any remapping/compound key contains a param key, the variable key is set
-    #     to that key.
-    #     """
-    #     names = self.dims.deactivate(VARIABLE_KEYS, others=True, collect=True)
-    #     if names:
-    #         return names[0]
-
-    #     for k in CUSTOM_VARIABLE_KEYS:
-    #         if k in self.index_keys:
-    #             return k
-
-    #     return VARIABLE_KEYS[0]
 
     def update_variables(self, ds):
         self.variables = ds.index(self.variable_key)
@@ -321,21 +290,6 @@ class Profile:
         keys = self.dims.split_dims + [self.variable_key]
         keys += [k for k in self.dim_keys if k not in keys]
         return keys
-
-    # def var_attributes(self):
-    #     return self.variable_attrs
-
-    # def add_coord_attrs(self, name):
-    #     return self.attrs.coord_attrs.get(name, {})
-
-    # def add_level_coord_attrs(self, name, levtype):
-    #     # print("add_level_coord_attrs", name, levtype)
-    #     level_key = self.level_coord_attrs.get("key", None)
-    #     if level_key in levtype:
-    #         return self.level_coord_attr.get(levtype[level_key], {})
-    #     else:
-    #         return {}
-    #         # raise ValueError(f"Cannot determine level type for coordinate {name}")
 
     def rename_dims(self, dims):
         return [self.dims.rename_dims_map.get(d, d) for d in dims]

@@ -8,6 +8,7 @@
 #
 
 import logging
+from functools import cached_property
 
 import numpy
 import xarray
@@ -150,11 +151,7 @@ class TensorBackendBuilder:
         ds,
         profile,
         dims,
-        # common_metadata=None,
         grid=None,
-        flatten_values=False,
-        dtype=None,
-        array_module=numpy,
     ):
         self.ds = ds
         self.profile = profile
@@ -162,9 +159,9 @@ class TensorBackendBuilder:
         # print("Builder, dims=", dims)
         # self.common_metadata = common_metadata
 
-        self.flatten_values = flatten_values
-        self.dtype = dtype
-        self.array_module = array_module
+        self.flatten_values = profile.flatten_values
+        self.dtype = profile.dtype
+        self.array_module = profile.array_module
 
         # coords within the tensor describing the non-field dimensions.
         # Note: in the tensor the corresponding dims are called user_dims
@@ -332,11 +329,10 @@ class DatasetBuilder:
     def __init__(
         self,
         ds,
-        flatten_values=False,
+        # flatten_values=False,
         profile="mars",
-        errors=None,
-        dtype=None,
-        array_module=numpy,
+        # dtype=None,
+        # array_module=numpy,
         **kwargs,
     ):
         """
@@ -352,26 +348,31 @@ class DatasetBuilder:
         self.ds = ds
         self.kwargs = kwargs
 
-        self.flatten_values = flatten_values
-        self.profile = profile
-        self.errors = errors
-        self.dtype = dtype
-        self.array_module = array_module
+        # self.flatten_values = flatten_values
+        self.profile_name = profile
+        # self.dtype = dtype
+        # self.array_module = array_module
         self.grids = {}
+
+    @cached_property
+    def profile(self):
+        from .profile import Profile
+
+        return Profile.make(self.profile_name, **self.kwargs)
 
     def parse(self):
         assert not hasattr(self.ds, "_ek_builder")
         from .fieldlist import WrappedFieldList
-        from .profile import Profile
 
-        profile = Profile.make(self.profile, **self.kwargs)
+        # from .profile import Profile
+        # profile = Profile.make(self.profile, **self.kwargs)
 
-        remapping = profile.remapping.build()
+        remapping = self.profile.remapping.build()
         # print(f"{remapping=}")
         # print(f"{profile.remapping=}")
 
         # create a new fieldlist and ensure all the required metadata is kept in memory
-        ds = WrappedFieldList(self.ds, profile.index_keys, remapping=remapping)
+        ds = WrappedFieldList(self.ds, self.profile.index_keys, remapping=remapping)
         # print(f"{remapping=}")
         # print(f"ds: {ds.indices()}")
 
@@ -388,25 +389,25 @@ class DatasetBuilder:
 
         # print("ds keys", ds.db[0].keys())
         # print("ds indices", ds._md_indices)
-        profile.update(ds)
+        self.profile.update(ds)
 
         # print("parse dims", profile.dim_keys)
 
         # the data is only sorted once
-        ds_sorted = ds.order_by(profile.sort_keys)
+        ds_sorted = ds.order_by(self.profile.sort_keys)
 
-        return ds, ds_sorted, profile
+        return ds, ds_sorted
 
     def grid(self, ds):
         grids = ds.index("md5GridSection")
         if len(grids) != 1:
             raise ValueError(f"Expected one grid, got {len(grids)}")
         grid = grids[0]
-        key = (grid, self.flatten_values)
+        key = (grid, self.profile.flatten_values)
         if key not in self.grids:
             from .grid import TensorGrid
 
-            self.grids = {key: TensorGrid(ds[0], self.flatten_values)}
+            self.grids = {key: TensorGrid(ds[0], self.profile.flatten_values)}
         return self.grids[key]
 
 
@@ -420,17 +421,14 @@ class SingleDatasetBuilder(DatasetBuilder):
         super().__init__(*args, **kwargs)
 
     def build(self):
-        ds, ds_sorted, profile = self.parse()
-        dims = profile.dims.to_list()
+        ds, ds_sorted = self.parse()
+        dims = self.profile.dims.to_list()
         # print("SingleDatasetBuilder.build dims", dims)
         builder = TensorBackendBuilder(
             ds_sorted,
-            profile,
+            self.profile,
             dims,
             grid=self.grid(ds),
-            flatten_values=self.flatten_values,
-            dtype=self.dtype,
-            array_module=numpy,
         )
 
         return builder.build()
@@ -451,19 +449,16 @@ class SplitDatasetBuilder(DatasetBuilder):
     def build(self):
         from .splitter import Splitter
 
-        _, ds_sorted, profile = self.parse()
+        _, ds_sorted = self.parse()
         splitter = Splitter.make(self.auto_split, self.split_dims)
         datasets = []
-        for s_dims, s_ds in splitter.split(ds_sorted, profile):
+        for s_dims, s_ds in splitter.split(ds_sorted, self.profile):
             # print(f"split_dims: {s_dims}   {type(s_ds)}")
             builder = TensorBackendBuilder(
                 s_ds,
-                profile,
+                self.profile,
                 s_dims,
                 grid=self.grid(s_ds),
-                flatten_values=self.flatten_values,
-                dtype=self.dtype,
-                array_module=numpy,
             )
 
             s_ds._ek_builder = builder
@@ -474,25 +469,25 @@ class SplitDatasetBuilder(DatasetBuilder):
 
         return datasets[0] if len(datasets) == 1 else datasets
 
-    def parse(self):
-        assert not hasattr(self.ds, "_ek_builder")
-        from .fieldlist import WrappedFieldList
-        from .profile import Profile
+    # def parse(self):
+    #     assert not hasattr(self.ds, "_ek_builder")
+    #     from .fieldlist import WrappedFieldList
+    #     from .profile import Profile
 
-        profile = Profile.make(self.profile, **self.kwargs)
+    #     self.profile = Profile.make(self.profile, **self.kwargs)
 
-        remapping = profile.remapping.build()
+    #     remapping = profile.remapping.build()
 
-        # create a new fieldlist and ensure all the required metadata is kept in memory
-        ds = WrappedFieldList(self.ds, profile.index_keys, remapping=remapping)
+    #     # create a new fieldlist and ensure all the required metadata is kept in memory
+    #     ds = WrappedFieldList(self.ds, profile.index_keys, remapping=remapping)
 
-        # print("dims", profile.dim_keys)
+    #     # print("dims", profile.dim_keys)
 
-        profile.update(ds)
+    #     profile.update(ds)
 
-        # print("dims", profile.dim_keys)
+    #     # print("dims", profile.dim_keys)
 
-        # the data is only sorted once
-        ds_sorted = ds.order_by(profile.sort_keys)
+    #     # the data is only sorted once
+    #     ds_sorted = ds.order_by(profile.sort_keys)
 
-        return ds, ds_sorted, profile
+    #     return ds, ds_sorted, profile
