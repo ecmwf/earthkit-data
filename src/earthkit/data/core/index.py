@@ -192,9 +192,6 @@ class Index(Source):
     def __len__(self):
         self._not_implemented()
 
-    def _normalize_kwargs_names(self, **kwargs):
-        return kwargs
-
     def sel(self, *args, remapping=None, **kwargs):
         """Uses metadata values to select a subset of the elements from a fieldlist-like object.
 
@@ -287,7 +284,6 @@ class Index(Source):
         GribField(t,850,20180801,1200,0,0)
         """
         kwargs = normalize_selection(*args, **kwargs)
-        kwargs = self._normalize_kwargs_names(**kwargs)
         if not kwargs:
             return self
 
@@ -382,7 +378,6 @@ class Index(Source):
 
         """
         kwargs = normalize_selection(*args, **kwargs)
-        kwargs = self._normalize_kwargs_names(**kwargs)
         if not kwargs:
             return self
 
@@ -487,7 +482,6 @@ class Index(Source):
         GribField(u,850,20180801,1200,0,0)
         """
         kwargs = normalize_order_by(*args, **kwargs)
-        kwargs = self._normalize_kwargs_names(**kwargs)
 
         remapping = build_remapping(remapping, patches)
 
