@@ -47,7 +47,7 @@ class ProfileConf:
     def get(self, name):
         if name not in self._conf:
             self._load(name)
-        return dict(**self._conf[name])
+        return self._conf[name]
 
     def _load(self, name):
         with self._lock:

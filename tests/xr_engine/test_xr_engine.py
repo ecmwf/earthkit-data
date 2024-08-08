@@ -17,6 +17,7 @@ from earthkit.data import from_source
 from earthkit.data.testing import earthkit_remote_test_data_file
 
 
+@pytest.mark.cache
 @pytest.mark.parametrize(
     "file",
     [
@@ -43,6 +44,7 @@ def test_xr_engine_basic(file):
     assert res is not None
 
 
+@pytest.mark.cache
 def test_xr_engine_detailed_check():
     ds_ek = from_source(
         "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_regular_ll.grib")
@@ -215,6 +217,7 @@ def test_xr_engine_detailed_check():
     assert np.allclose(r.values, vals_ref)
 
 
+@pytest.mark.cache
 def test_xr_engine_detailed_flatten_check():
     ds_ek = from_source(
         "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_regular_ll.grib")

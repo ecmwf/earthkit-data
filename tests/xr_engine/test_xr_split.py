@@ -16,6 +16,7 @@ from earthkit.data import from_source
 from earthkit.data.testing import earthkit_remote_test_data_file
 
 
+@pytest.mark.cache
 @pytest.mark.parametrize(
     "kwargs,num,variables,dim_keys,split_values",
     [

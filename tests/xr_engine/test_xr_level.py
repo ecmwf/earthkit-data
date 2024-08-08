@@ -16,17 +16,19 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.xarray.profile import PROFILE_CONF
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
 from xr_engine_fixtures import compare_coords  # noqa: E402
 
 
+@pytest.mark.cache
 @pytest.mark.parametrize(
     "kwargs,dims",
     [
         (
-            {"level_dim_mode": "level"},
+            {"profile": "mars", "level_dim_mode": "level"},
             {"levelist": [300, 400, 500, 700, 850, 1000]},
         ),
     ],
@@ -43,3 +45,115 @@ def test_xr_level(kwargs, dims):
     assert dim_order == list(dims.keys())
 
     compare_coords(ds, dims)
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "fname,kwargs,dims,levtype",
+    [
+        (
+            "pl_regular_ll.grib",
+            {"profile": "grib", "level_dim_mode": "level"},
+            {"level": [300, 400, 500, 700, 850, 1000]},
+            "isobaricInhPa",
+        ),
+        (
+            "pl_80_Pa.grib2",
+            {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
+            {"level": [80]},
+            "isobaricInPa",
+        ),
+        (
+            "hl_1000_m_asl.grib2",
+            {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
+            {"level": [100, 1000, 2000, 3000]},
+            "heightAboveSea",
+        ),
+        (
+            "hl_1000_m_agr.grib2",
+            {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
+            {"level": [500, 1000, 2500, 10000]},
+            "heightAboveGround",
+        ),
+        (
+            "pt_320_K.grib1",
+            {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
+            {"level": [320]},
+            "theta",
+        ),
+        (
+            "pv_1500.grib1",
+            {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
+            {"level": [1500]},
+            "potentialVorticity",
+        ),
+        (
+            "soil_7.grib1",
+            {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
+            {"level": [7]},
+            "depthBelowLand",
+        ),
+        (
+            "sol_3.grib2",
+            {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
+            {"level": [3]},
+            "snowLayer",
+        ),
+        (
+            "ml_77.grib2",
+            {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
+            {"level": [77]},
+            "hybrid",
+        ),
+        (
+            "sfc_regular_ll.grib",
+            {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
+            {"level": [0]},
+            "surface",
+        ),
+        (
+            "mean_sea_level_reduced_ll.grib1",
+            {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
+            {"level": [0]},
+            "meanSea",
+        ),
+        (
+            "gen_vert_layer.grib",
+            {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
+            {"level": [1]},
+            "generalVerticalLayer",
+        ),
+        (
+            "pl_regular_ll.grib",
+            {"profile": "mars", "level_dim_mode": "level"},
+            {"levelist": [300, 400, 500, 700, 850, 1000]},
+            "pl",
+        ),
+        (
+            "pl_80_Pa.grib2",
+            {"profile": "mars", "level_dim_mode": "level", "ensure_dims": "levelist"},
+            {"levelist": [0.8]},
+            "pl",
+        ),
+        (
+            "pt_320_K.grib1",
+            {"profile": "mars", "level_dim_mode": "level", "ensure_dims": "levelist"},
+            {"levelist": [320]},
+            "pt",
+        ),
+        (
+            "pv_1500.grib1",
+            {"profile": "mars", "level_dim_mode": "level", "ensure_dims": "levelist"},
+            {"levelist": [1500]},
+            "pv",
+        ),
+    ],
+)
+def test_xr_level_attr(fname, kwargs, dims, levtype):
+    ds_ek = from_source("url", earthkit_remote_test_data_file(f"test-data/xr_engine/level/{fname}"))
+
+    ds = ds_ek.to_xarray(**kwargs)
+    compare_coords(ds, dims)
+
+    level_dim = next(iter(dims))
+    ds.coords[level_dim].attrs == PROFILE_CONF.defaults["coord_attrs"][level_dim][levtype]

@@ -20,9 +20,10 @@ attrs_mode: "fixed"
 attrs: []
 variable_attrs: []
 global_attrs: []
-rename_attrs: {}
+rename_attrs:
+  cfName: standard_name
+  name: long_name
 
-# coordinates
 add_valid_time_coord: false
 add_geo_coords: true
 decode_time: true
@@ -35,7 +36,6 @@ array_module: numpy
 # other
 strict: true
 errors: raise
-
 
 dim_roles:
   ens: number
@@ -72,6 +72,35 @@ coord_attrs:
     long_name: valid_time
   level:
     key: typeOfLevel
+    depthBelowLand:
+      units: m
+      positive: down
+      long_name: soil depth
+      standard_name: depth
+    depthBelowLandLayer:
+      units: m
+      positive: down
+      long_name: soil depth
+      standard_name: depth
+    generalVerticalLayer:
+      units: 1
+      long_name: general vertical layer
+      standard_name: unknown
+    heightAboveGround:
+      units: m
+      positive: up
+      long_name: height above the surface
+      standard_name: height
+    heightAboveSea:
+      units: m
+      positive: up
+      long_name: height above mean sea level
+      standard_name: height_above_mean_sea_level
+    hybrid:
+      units: 1
+      positive: down
+      long_name: hybrid level
+      standard_name: atmosphere_hybrid_sigma_pressure_coordinate
     isobaricInhPa:
       units: hPa
       positive: down
@@ -84,16 +113,61 @@ coord_attrs:
       stored_direction: decreasing
       standard_name: air_pressure
       long_name: pressure
-    heightAboveGround:
-      units: m
-      positive: up
-      long_name: height above the surface
+    isobaricLayer:
+      units: Pa
+      positive: down
+      stored_direction: decreasing
+      standard_name: air_pressure
+      long_name: pressure
+    meanSea:
+      long_name: mean sea level
       standard_name: height
+    potentialVorticity:
+      units: 10-9 K m2 kg-1 s-1
+      long_name: potential vorticity
+      standard_name: ertel_potential_vorticity
+    snowLayer:
+      units: 1
+      positive: down
+      long_name: snow layer
+      standard_name: unknown
+    surface:
+      long_name: surface
+      standard_name: surface
+    theta:
+      units: K
+      positive: up
+      long_name: air_potential_temperature
+      standard_name: air_potential_temperature
+
   levelist:
     key: levtype
+    ml:
+      units: 1
+      positive: down
+      stored_direction: decreasing
+      standard_name: air_pressure
+      long_name: pressure
     pl:
       units: hPa
       positive: down
       stored_direction: decreasing
       standard_name: air_pressure
       long_name: pressure
+    pt:
+      units: K
+      positive: up
+      long_name: potential temperature
+      standard_name: height
+    pv:
+      units: 1O-9 K m2 kg-1 s-1
+      positive: up
+      long_name: potential vorticity
+      standard_name: height
+    sfc:
+      long_name: surface
+      standard_name: surface
+    sol:
+      units: 1
+      long_name: snow layer
+      standard_name: unknown

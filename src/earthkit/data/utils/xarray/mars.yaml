@@ -51,8 +51,3 @@ variable_attrs:
 global_attrs:
 - Conventions: CF-1.8
 - institution: ECMWF
-
-# generic mapping for variables, attributes and coordinates
-rename_attrs:
-  cfName: standard_name
-  name: long_name

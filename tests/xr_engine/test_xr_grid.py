@@ -35,6 +35,7 @@ def grid_list(files=None):
             yield (item["file"], item["dims"], item["coords"], item["distinct_ll"])
 
 
+@pytest.mark.cache
 @pytest.mark.parametrize(
     "file,dims,coords,distinct_ll",
     # grid_list(files=["sh_t32.grib1"]),

@@ -52,6 +52,8 @@ def load_wrapped_fieldlist(d, profile, **kwargs):
 
 def compare_coords(ds, ref_coords):
     for k, v in ref_coords.items():
+        assert k in ds.coords, f"{k=} not in {ds.coords}"
+        assert k in ds.sizes, f"{k=} not in {ds.sizes}"
         assert ds.sizes[k] == len(v), f"{k=} {ds.sizes[k]} != {len(v)}"
         if isinstance(v[0], str):
             assert ds.coords[k].values == v
@@ -64,4 +66,4 @@ def compare_coords(ds, ref_coords):
             for i, vv in enumerate(v):
                 assert ds.coords[k].values[i] == vv, f"{k=} {ds.coords[k].values[i]} != {vv}"
         else:
-            assert np.allclose(ds.coords[k].values, np.asarray(v)), f"{k=}"
+            assert np.allclose(ds.coords[k].values, np.asarray(v)), f"{k=} {ds.coords[k].values} != {v}"
