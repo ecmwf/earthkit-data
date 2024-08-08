@@ -64,6 +64,12 @@ def test_xr_level(kwargs, dims):
             "isobaricInPa",
         ),
         (
+            "hpa_and_pa.grib",
+            {"profile": "mars", "level_dim_mode": "level", "ensure_dims": "levelist"},
+            {"levelist": [0.01, 0.1, 1]},
+            "pl",
+        ),
+        (
             "hl_1000_m_asl.grib2",
             {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
             {"level": [100, 1000, 2000, 3000]},
@@ -152,6 +158,12 @@ def test_xr_level(kwargs, dims):
             {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "levelist"},
             {"levelist": [3]},
             "sol",
+        ),
+        (
+            "hpa_and_pa.grib",
+            {"profile": "mars", "level_dim_mode": "level", "ensure_dims": "levelist"},
+            {"levelist": [0.01, 0.1, 1]},
+            "pl",
         ),
     ],
 )
