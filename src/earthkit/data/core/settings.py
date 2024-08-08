@@ -212,6 +212,22 @@ SETTINGS_AND_HELP = {
         {validator}""",
         validator=IntervalValidator(Interval(8, 4096)),
     ),
+    "grib-field-cache": _(
+        True,
+        """Cache GRIB fields in memory for GRIB data on disk. The number of actual
+        GRIB handles stored in memory per fieldlist is controlled by ``grib-handle-cache-size``.""",
+    ),
+    "grib-handle-cache-size": _(
+        1,
+        """Number of GRIB handles cached in memory per fieldlist for GRIB data on disk. When > 0 fields
+        can only access GRIB handles from this cache. When 0 each field will have its own GRIB handle
+        in memory.""",
+        none_ok=True,
+    ),
+    "grib-metadata-cache": _(
+        True,
+        """Cache GRIB metadata in memory for GRIB data on disk.""",
+    ),
 }
 
 

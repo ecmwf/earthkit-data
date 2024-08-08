@@ -144,6 +144,8 @@ class XArrayMetadata(RawMetadata):
         super().__init__(d)
 
     def override(self, *args, **kwargs):
+        if not args and not kwargs:
+            return self
         return None
 
     @property
@@ -216,7 +218,8 @@ class XArrayField(Field):
             + ")"
         )
 
-    def _make_metadata(self):
+    @cached_property
+    def _metadata(self):
         return XArrayMetadata(self)
 
     def to_xarray(self):
@@ -272,5 +275,6 @@ class NetCDFMetadata(XArrayMetadata):
 
 
 class NetCDFField(XArrayField):
-    def _make_metadata(self):
+    @cached_property
+    def _metadata(self):
         return NetCDFMetadata(self)

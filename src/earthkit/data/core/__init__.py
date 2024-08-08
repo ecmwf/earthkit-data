@@ -103,7 +103,9 @@ class Base(metaclass=MetaBase):
         returns the list of unique values for each attributes
         """
         from earthkit.data.core.order import build_remapping
-        from earthkit.data.utils.progbar import progress_bar
+
+        if progress_bar:
+            from earthkit.data.utils.progbar import progress_bar
 
         assert len(coords)
         assert all(isinstance(k, str) for k in coords), coords

@@ -13,7 +13,8 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.metadata import RawMetadata
-from earthkit.data.readers.grib.metadata import GribMetadata
+from earthkit.data.readers.grib.metadata import GribFieldMetadata
+from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 
@@ -104,17 +105,24 @@ def test_raw_metadata_override_with_kwarg():
 
 def test_grib_metadata_create():
     f = from_source("file", earthkit_examples_file("test.grib"))
-    md = f[0].metadata()
-    assert isinstance(md, GribMetadata)
+    f0 = f[0]
+    md = f0.metadata()
+    assert isinstance(md, StandAloneGribMetadata)
+    assert md._handle is not None
+    assert md._handle != f0._handle
+
+    md = f0._metadata
+    assert isinstance(md, GribFieldMetadata)
+    assert md._handle == f0.handle
 
     # cannot create from dict
     with pytest.raises(TypeError):
-        GribMetadata({"shortName": "u", "typeOfLevel": "pl", "levelist": 1000})
+        StandAloneGribMetadata({"shortName": "u", "typeOfLevel": "pl", "levelist": 1000})
 
     # cannot create from raw metadata
     raw_md = RawMetadata({"shortName": "u", "typeOfLevel": "pl", "levelist": 1000})
     with pytest.raises(TypeError):
-        GribMetadata(raw_md)
+        StandAloneGribMetadata(raw_md)
 
 
 def test_grib_metadata_get():
@@ -265,7 +273,7 @@ def test_grib_metadata_override_extra():
     assert md["shortName"] == "2t"
 
     extra = {"my_custom_key": "2", "shortName": "N", "perturbationNumber": 2}
-    md = GribMetadata(md._handle, extra=extra)
+    md = StandAloneGribMetadata(md._handle, extra=extra)
 
     assert md["my_custom_key"] == "2"
     assert md["perturbationNumber"] == 2

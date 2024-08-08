@@ -20,9 +20,20 @@ class GRIBReader(GribFieldListInOneFile, Reader):
 
     def __init__(self, source, path, parts=None):
         array_backend = source._kwargs.get("array_backend", None)
+        grib_field_cache = source._kwargs.get("grib_field_cache", None)
+        grib_handle_cache_size = source._kwargs.get("grib_handle_cache_size", None)
+        grib_metadata_cache = source._kwargs.get("grib_metadata_cache", None)
 
         Reader.__init__(self, source, path)
-        GribFieldListInOneFile.__init__(self, path, parts=parts, array_backend=array_backend)
+        GribFieldListInOneFile.__init__(
+            self,
+            path,
+            parts=parts,
+            array_backend=array_backend,
+            grib_field_cache=grib_field_cache,
+            grib_handle_cache_size=grib_handle_cache_size,
+            grib_metadata_cache=grib_metadata_cache,
+        )
 
     def __repr__(self):
         return "GRIBReader(%s)" % (self.path,)

@@ -9,12 +9,13 @@
 
 import logging
 import os
+from functools import cached_property
 
 import eccodes
 import numpy as np
 
 from earthkit.data.core.fieldlist import Field
-from earthkit.data.readers.grib.metadata import GribMetadata
+from earthkit.data.readers.grib.metadata import GribFieldMetadata
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
 from earthkit.data.utils.message import CodesReader
@@ -241,20 +242,31 @@ class GribField(Field):
         Size of the message (in bytes)
     """
 
-    def __init__(self, path, offset, length, backend):
+    HANDLE_CREATE_COUNT = 0
+
+    def __init__(self, path, offset, length, backend, cache=None):
         super().__init__(backend)
         self.path = path
         self._offset = offset
         self._length = length
         self._handle = None
+        self._cache = cache
 
     @property
     def handle(self):
         r""":class:`CodesHandle`: Gets an object providing access to the low level GRIB message structure."""
+        if self._cache is not None:
+            handle = self._cache.handle(self, create=self._create_handle)
+            if handle is not None:
+                return handle
+
         if self._handle is None:
             assert self._offset is not None
-            self._handle = GribCodesReader.from_cache(self.path).at_offset(self._offset)
+            self._handle = GribField._create_handle(self)
         return self._handle
+
+    def _create_handle(self):
+        return GribCodesReader.from_cache(self.path).at_offset(self.offset)
 
     def _values(self, dtype=None):
         return self.handle.get_values(dtype=dtype)
@@ -266,8 +278,12 @@ class GribField(Field):
             self._offset = int(self.handle.get("offset"))
         return self._offset
 
-    def _make_metadata(self):
-        return GribMetadata(self.handle)
+    @cached_property
+    def _metadata(self):
+        cache = False
+        if self._cache is not None:
+            cache = self._cache.use_metadata_cache
+        return GribFieldMetadata(self, cache=cache)
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (

@@ -30,6 +30,7 @@ dependencies:
   - eccovjson>=0.0.5
   - earthkit-geo>=0.2.0
 - tqdm>=4.63.0
+- lru-dict
 - markdown
 - make
 - mypy
