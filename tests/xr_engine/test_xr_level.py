@@ -147,6 +147,12 @@ def test_xr_level(kwargs, dims):
             {"levelist": [1500]},
             "pv",
         ),
+        (
+            "sol_3.grib2",
+            {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "levelist"},
+            {"levelist": [3]},
+            "sol",
+        ),
     ],
 )
 def test_xr_level_attr(fname, kwargs, dims, levtype):
