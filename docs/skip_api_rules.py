@@ -154,6 +154,8 @@ def _skip_api_items(app, what, name, obj, skip, options):
         "data.readers.grib.codes.GribField",
         "data.readers.grib.index.GribFieldList",
         "data.readers.grib.metadata.GribMetadata",
+        "data.readers.grib.metadata.GribFieldMetadata",
+        "data.readers.grib.metadata.StandAloneGribMetadata",
         "data.readers.csv.CSVReader",
         "data.sources.numpy_list.NumpyField",
         "data.sources.numpy_list.NumpyFieldList",
