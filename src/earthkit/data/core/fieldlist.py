@@ -118,6 +118,8 @@ class Field(Base):
     @property
     def _metadata(self):
         r"""Metadata: Get the object representing the field's metadata."""
+        if self.__metadata is None:
+            self.__metadata = self._make_metadata()
         return self.__metadata
 
     def to_numpy(self, flatten=False, dtype=None, index=None):
