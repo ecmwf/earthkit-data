@@ -184,8 +184,8 @@ def _skip_api_items(app, what, name, obj, skip, options):
         "data.readers.csv.CSVReader",
         "data.sources.numpy_list.NumpyField",
         "data.sources.numpy_list.NumpyFieldList",
-        "data.sources.numpy_list.ArrayField",
-        "data.sources.numpy_list.ArrayFieldList",
+        "data.sources.array_list.ArrayField",
+        "data.sources.array_list.ArrayFieldList",
         "data.utils.bbox.BoundingBox",
     ]:
         skip = True
