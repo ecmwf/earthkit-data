@@ -103,6 +103,26 @@ _skip_methods = {
         "statistics",
         "xarray_open_dataset_kwargs",
     ],
+    "data.source.numpy_list.ArrayField": ["merge", "mutate"],
+    "data.source.numpy_list.ArrayFieldList": [
+        "cache_file",
+        "dataset",
+        "from_dict",
+        "from_mask",
+        "from_multi",
+        "from_slice",
+        "full",
+        "graph",
+        "ignore",
+        "merge",
+        "mutate",
+        "new_mask_index",
+        "parent",
+        "scaled",
+        "settings",
+        "statistics",
+        "xarray_open_dataset_kwargs",
+    ],
 }
 
 
@@ -123,6 +143,7 @@ def _skip_api_items(app, what, name, obj, skip, options):
         "data.readers.grib.metadata",
         "data.readers.csv",
         "data.sources",
+        "data.sources.array_list",
         "data.sources.numpy_list",
         "data.utils",
         "data.utils.bbox",
@@ -141,6 +162,7 @@ def _skip_api_items(app, what, name, obj, skip, options):
         "data.readers.csv",
         "data.sources",
         "data.sources.numpy_list",
+        "data.sources.numpy_list",
         "data.utils",
         "data.utils.bbox",
     ]:
@@ -158,9 +180,12 @@ def _skip_api_items(app, what, name, obj, skip, options):
         "data.readers.grib.metadata.GribMetadata",
         "data.readers.grib.metadata.GribFieldMetadata",
         "data.readers.grib.metadata.StandAloneGribMetadata",
+        "data.readers.grib.metadata.RestrictedGribMetadata",
         "data.readers.csv.CSVReader",
         "data.sources.numpy_list.NumpyField",
         "data.sources.numpy_list.NumpyFieldList",
+        "data.sources.numpy_list.ArrayField",
+        "data.sources.numpy_list.ArrayFieldList",
         "data.utils.bbox.BoundingBox",
     ]:
         skip = True
