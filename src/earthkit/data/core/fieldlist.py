@@ -119,6 +119,7 @@ class Field(Base):
     def _metadata(self):
         r"""Metadata: Get the object representing the field's metadata."""
         if self.__metadata is None:
+            # TODO: remove this legacy method
             self.__metadata = self._make_metadata()
         return self.__metadata
 
