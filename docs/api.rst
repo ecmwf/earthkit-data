@@ -18,6 +18,8 @@ Metadata
 - :py:class:`~data.core.metadata.Metadata`
 - :py:class:`~data.core.metadata.RawMetadata`
 - :py:class:`~data.readers.grib.metadata.GribMetadata`
+- :py:class:`~data.readers.grib.metadata.GribFieldMetadata`
+- :py:class:`~data.readers.grib.metadata.StandAloneGribMetadata`
 
 Numpy fields
 ---------------

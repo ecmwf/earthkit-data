@@ -38,9 +38,6 @@ class ArrayField(Field):
         super().__init__(array_backend, raw_values_backend=array_backend, metadata=metadata)
         self._array = array
 
-    def _make_metadata(self):
-        pass
-
     def _values(self, dtype=None):
         """Native array type"""
         if dtype is None:
