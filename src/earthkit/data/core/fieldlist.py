@@ -21,8 +21,6 @@ from earthkit.data.utils.array import ensure_backend
 from earthkit.data.utils.array import numpy_backend
 from earthkit.data.utils.metadata import metadata_argument
 
-_DEFAULT_NONE_KWARGS = {"default": None}
-
 
 class Field(Base):
     r"""Represent a Field."""
@@ -120,6 +118,9 @@ class Field(Base):
     @property
     def _metadata(self):
         r"""Metadata: Get the object representing the field's metadata."""
+        if self.__metadata is None:
+            # TODO: remove this legacy method
+            self.__metadata = self._make_metadata()
         return self.__metadata
 
     def to_numpy(self, flatten=False, dtype=None, index=None):
@@ -460,8 +461,7 @@ class Field(Base):
     def metadata(self, *keys, astype=None, **kwargs):
         r"""Return metadata values from the field.
 
-        When called without any arguments returns a :obj:`Metadata` object, which for GRIB data contains
-        a clone of the ecCodes handle of the GRIB message.
+        When called without any arguments returns a :obj:`Metadata` object.
 
         Parameters
         ----------
@@ -563,13 +563,9 @@ class Field(Base):
         >>> r["name"]
         '2 metre temperature'
         """
-        # the most important use case
-        if len(keys) == 1 and isinstance(keys[0], str) and astype is None and kwargs == _DEFAULT_NONE_KWARGS:
-            return self._metadata.get(keys[0])
-
         # when called without arguments returns the metadata object
         if len(keys) == 0 and astype is None and len(kwargs) == 0:
-            return self._metadata.override()
+            return self._metadata
 
         namespace = kwargs.pop("namespace", None)
         key, namespace, astype, key_arg_type = metadata_argument(*keys, namespace=namespace, astype=astype)

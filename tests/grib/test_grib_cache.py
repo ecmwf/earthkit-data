@@ -88,10 +88,10 @@ def test_grib_cache_basic(handle_cache_size):
 
         assert diag["metadata_cache_hits"] >= 18 * 4
 
-        # metadata object is decoupled from the field object
+        # metadata object is not decoupled from the field object
         md = ds[0].metadata()
-        assert not hasattr(md, "_field")
-        assert ds[0].handle != md._handle
+        assert hasattr(md, "_field")
+        assert ds[0].handle == md._handle
 
 
 def test_grib_cache_no_handle():
@@ -131,7 +131,7 @@ def test_grib_cache_no_handle():
         for k, v in ref.items():
             assert diag[k] == v, f"{k}={diag[k]} != {v}"
 
-        # metadata object is decoupled from the field object
+        # metadata object is not decoupled from the field object
         md = ds[0].metadata()
-        assert not hasattr(md, "_field")
-        assert ds[0]._handle != md._handle
+        assert hasattr(md, "_field")
+        assert ds[0]._handle == md._handle

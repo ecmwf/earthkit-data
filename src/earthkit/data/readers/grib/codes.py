@@ -242,8 +242,6 @@ class GribField(Field):
         Size of the message (in bytes)
     """
 
-    HANDLE_CREATE_COUNT = 0
-
     def __init__(self, path, offset, length, backend, cache=None):
         super().__init__(backend)
         self.path = path

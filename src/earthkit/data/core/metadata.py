@@ -46,8 +46,11 @@ class Metadata(metaclass=ABCMeta):
     INDEX_KEYS = []
     CUSTOM_KEYS = [DATETIME, GRIDSPEC]
 
+    extra = None
+
     def __init__(self, extra=None, cache=False):
-        self.extra = extra
+        if extra is not None:
+            self.extra = extra
         if cache:
             self.get = memoise(self.get)
 

@@ -9,11 +9,13 @@
 # nor does it submit to any jurisdiction.
 #
 
+import numpy as np
 import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
+from earthkit.data.readers.grib.metadata import RestrictedGribMetadata
 from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
@@ -105,14 +107,11 @@ def test_raw_metadata_override_with_kwarg():
 
 def test_grib_metadata_create():
     f = from_source("file", earthkit_examples_file("test.grib"))
+
     f0 = f[0]
     md = f0.metadata()
-    assert isinstance(md, StandAloneGribMetadata)
-    assert md._handle is not None
-    assert md._handle != f0._handle
-
-    md = f0._metadata
     assert isinstance(md, GribFieldMetadata)
+    assert md._handle is not None
     assert md._handle == f0.handle
 
     # cannot create from dict
@@ -296,6 +295,50 @@ def test_grib_metadata_override_extra():
         assert k != ""
         assert v is not None
         break
+
+
+def test_grib_metadata_override_headers_only_true():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ref_size = ds[0].metadata("totalLength")
+
+    md1 = ds[0].metadata().override(headers_only_clone=True)
+    assert isinstance(md1, StandAloneGribMetadata)
+    assert md1._handle is not None
+    assert md1._handle != ds[0]._handle
+    assert md1["totalLength"] - ref_size < -10
+    assert md1._shrunk
+
+    md2 = md1._hide_internal_keys()
+    assert isinstance(md2, RestrictedGribMetadata)
+    assert md2._handle is not None
+    assert md2._handle != ds[0]._handle
+    assert md2._handle == md1._handle
+    assert md2._shrunk
+
+    with pytest.raises(KeyError):
+        md2["average"]
+
+
+def test_grib_metadata_override_headers_only_false():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ref_size = ds[0].metadata("totalLength")
+
+    md1 = ds[0].metadata().override(headers_only_clone=False)
+    assert isinstance(md1, StandAloneGribMetadata)
+    assert md1._handle is not None
+    assert md1._handle != ds[0]._handle
+    assert np.isclose(md1["totalLength"], ref_size)
+    assert not md1._shrunk
+
+    md2 = md1._hide_internal_keys()
+    assert isinstance(md2, RestrictedGribMetadata)
+    assert md2._handle is not None
+    assert md2._handle != ds[0]._handle
+    assert md2._handle == md1._handle
+    assert not md2._shrunk
+
+    with pytest.raises(KeyError):
+        md2["average"]
 
 
 if __name__ == "__main__":
