@@ -1,9 +1,9 @@
-.. _grib-caching:
+.. _grib-memory:
 
 GRIB field memory management
 //////////////////////////////
 
-:ref:`grib` is a message-based binary format, where each message is regarded as a field. For GRIB reading earthkit-data relies on :xref:`eccodes`, which when loading a message into memory representing it as a ``GRIB handle``. In the low level API the GRIB handle is the object that stores the data and metadata of a GRIB field, therefore it can use up a significant amount of memory.
+:ref:`grib` is a message-based binary format, where each message is regarded as a field. For reading GRIB earthkit-data relies on :xref:`eccodes`, which when loading a message into memory representing it as a ``GRIB handle``. In the low level API the GRIB handle is the object that stores the data and metadata of a GRIB field, therefore it can use up a significant amount of memory.
 
 Determining when a GRIB handle needs to be created and when can be released is important for memory management. Earthkit-data provides several settings to control this behaviour depending on how we actually read the data.
 
@@ -53,7 +53,7 @@ This technique also works for GRIB data on disk, we just need to read it as a :r
 Reading data from disk and partially store it in memory
 ===========================================================
 
-When reading :ref:`grib` data from disk as a :ref:`file source <data-sources-file>` it is represented as a fieldlist and loaded lazily. After the (fast) initial scan for field offsets and lengths no actual fields are created and no data is read into memory. When we start using the fieldlist, e.g. by iterating over the fields, using slicing or subsetting etc., the fields will be created on demand and the related GRIB handles will be loaded from the data on disk when needed. Whether this data or part of it stays in memory depends on the following :ref:`settings <settings>`:
+When reading :ref:`grib` data from disk as a :ref:`file source <data-sources-file>` it is represented as a fieldlist and loaded lazily. After the (fast) initial scan for field offsets and lengths no actual fields are created and no data is read into memory. When we start using the fieldlist, e.g. by iterating over the fields, accessing data or metadtata etc., the fields will be created on demand and the related GRIB handles will be loaded from disk when needed. Whether this data or part of it stays in memory depends on the following :ref:`settings <settings>`:
 
 - :ref:`store-grib-fields-in-memory <store-grib-fields-in-memory>`
 - :ref:`grib-handle-cache-size <grib-handle-cache-size>`
@@ -88,4 +88,4 @@ When ``grib-handle-cache-size`` is set to a positive value (default is 1) an in-
 use-grib-metadata-cache
 +++++++++++++++++++++++++++++++++++
 
-When ``use-grib-metadata-cache`` is ``True`` (this is the default) all the fields will cache their metadata access. This is an in memory-cache attached to the field and implemented for the low-level metadata accessor for individual keys. This can be useful when the same metadata keys are accessed multiple times for the same field.
+When ``use-grib-metadata-cache`` is ``True`` (this is the default) all the fields will cache their metadata access. This is an in memory-cache attached to the field and implemented for the low-level metadata accessor for individual keys. The metadata cache can be useful when the same metadata keys are accessed multiple times for the same field.

@@ -215,7 +215,8 @@ SETTINGS_AND_HELP = {
     "store-grib-fields-in-memory": _(
         True,
         """Store GRIB fields in memory when data is read from disk. The number of actual
-        GRIB handles stored in memory per fieldlist is controlled by ``grib-handle-cache-size``.""",
+        GRIB handles stored in memory per fieldlist is controlled by
+        ``grib-handle-cache-size``. See :doc:`/guide/misc/grib_memory` for more information.""",
     ),
     "grib-handle-cache-size": _(
         1,
@@ -225,7 +226,8 @@ SETTINGS_AND_HELP = {
     ),
     "use-grib-metadata-cache": _(
         True,
-        """Use in-memory cache attached to each field for GRIB metadata access when data read from disk.""",
+        """Use in-memory cache attached to each field for GRIB metadata access when
+        data is read from disk.""",
     ),
 }
 

@@ -12,4 +12,3 @@ User guide
    settings
    caching
    misc/index.rst
-   misc/grib_memory.rst
