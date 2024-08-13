@@ -218,11 +218,13 @@ class GribMultiFieldList(GribFieldList, MultiIndex):
 
 
 class GribCache:
-    def __init__(self, owner, grib_field_cache, grib_handle_cache_size, grib_metadata_cache):
+    def __init__(self, owner, store_grib_fields_in_memory, grib_handle_cache_size, use_grib_metadata_cache):
         from earthkit.data.core.settings import SETTINGS
 
         grib_field_cache = (
-            grib_field_cache if grib_field_cache is not None else SETTINGS.get("grib-field-cache")
+            store_grib_fields_in_memory
+            if store_grib_fields_in_memory is not None
+            else SETTINGS.get("store-grib-fields-in-memory")
         )
         grib_handle_cache_size = (
             grib_handle_cache_size
@@ -230,7 +232,9 @@ class GribCache:
             else SETTINGS.get("grib-handle-cache-size")
         )
         self.use_metadata_cache = (
-            grib_metadata_cache if grib_metadata_cache is not None else SETTINGS.get("grib-metadata-cache")
+            use_grib_metadata_cache
+            if use_grib_metadata_cache is not None
+            else SETTINGS.get("use-grib-metadata-cache")
         )
 
         self.field_cache = None
@@ -251,6 +255,10 @@ class GribCache:
 
         self.handle_create_count = 0
         self.field_create_count = 0
+
+    @property
+    def use_temporary_handle(self):
+        return self.handle_cache is None and self.field_cache is not None
 
     def field(self, n, create=None):
         if self.field_cache is not None:

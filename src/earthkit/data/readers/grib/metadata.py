@@ -675,7 +675,3 @@ class RestrictedGribMetadata(StandAloneGribMetadata):
 
     def _hide_internal_keys(self):
         return self
-
-    def override(self, *args, **kwargs):
-        md = super().override(*args, **kwargs)
-        return RestrictedGribMetadata(md)

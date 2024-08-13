@@ -564,7 +564,7 @@ class Field(Base):
         '2 metre temperature'
         """
         # when called without arguments returns the metadata object
-        if len(keys) == 0 and astype is None and len(kwargs) == 0:
+        if len(keys) == 0 and astype is None and not kwargs:
             return self._metadata
 
         namespace = kwargs.pop("namespace", None)

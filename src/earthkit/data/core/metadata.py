@@ -30,8 +30,11 @@ class Metadata(metaclass=ABCMeta):
 
     Parameters
     ----------
+    extra: dict, None
+        Extra key/value pairs to be added on top of the underlying metadata. Default is None.
     cache: bool
-        Enable caching of all the calls to :meth:`get`. Default is False.
+        Enable caching of all the calls to :meth:`get`. Default is False. The cache
+        is attached to the instance.
 
     Examples
     --------
@@ -162,6 +165,8 @@ class Metadata(metaclass=ABCMeta):
 
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         r"""Return the value for ``key``.
+
+        When the instance is created with ``cache=True`` all the result is cached.
 
         Parameters
         ----------

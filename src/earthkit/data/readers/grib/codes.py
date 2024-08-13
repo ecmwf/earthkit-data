@@ -9,6 +9,7 @@
 
 import logging
 import os
+from collections import defaultdict
 from functools import cached_property
 
 import eccodes
@@ -254,10 +255,16 @@ class GribField(Field):
     def handle(self):
         r""":class:`CodesHandle`: Gets an object providing access to the low level GRIB message structure."""
         if self._cache is not None:
+            # when there is no handle cache but fields are stored in memory
+            # a temporary handle is created for each access
+            if self._cache.use_temporary_handle:
+                return GribField._create_handle(self)
+            # otherwise tries to get the handle from the cache if the cache is available
             handle = self._cache.handle(self, create=self._create_handle)
             if handle is not None:
                 return handle
 
+        # create a new handle and store it in the field
         if self._handle is None:
             assert self._offset is not None
             self._handle = GribField._create_handle(self)
@@ -293,14 +300,6 @@ class GribField(Field):
             self._metadata.get("number", None),
         )
 
-    # def _get(self, name):
-    #     """Private, for testing only"""
-    #     # paramId is renamed as param to get rid of the
-    #     # additional '.128' (in earthkit/data/scripts/grib.py)
-    #     if name == "param":
-    #         name = "paramId"
-    #     return self.handle.get(name)
-
     def write(self, f, bits_per_value=None):
         r"""Writes the message to a file object.
 
@@ -329,3 +328,14 @@ class GribField(Field):
         bytes
         """
         return self.handle.get_buffer()
+
+    def _diag(self):
+        r = r = defaultdict(int)
+        try:
+            md_cache = self._metadata.get.cache_info()
+            r["metadata_cache_hits"] += md_cache.hits
+            r["metadata_cache_misses"] += md_cache.misses
+            r["metadata_cache_size"] += md_cache.currsize
+        except Exception:
+            pass
+        return r
