@@ -80,7 +80,7 @@ The actual memory used by a field depends on whether it stores the GRIB handle o
 grib-handle-cache-size
 ++++++++++++++++++++++++++++
 
-When ``grib-handle-cache-size`` is set to a positive value (default is 1) an in-memory GRIB handle cache is attached to the fieldlist. The cache size determines how many GRIB handles are stored in memory. This is an LRU cache so when it is full the least recently used GRIB handle is removed and a new GRIB message is loaded from disk and added to the cache.
+``grib-handle-cache-size`` (default is 1) specifies the number of GRIB handles stored in an in-memory cache per fieldlist.  This is an LRU cache so when it is full the least recently used GRIB handle is removed and a new GRIB message is loaded from disk and added to the cache. To disable it set ``grib-handle-cache-size`` to 0. See :ref:`store-grib-fields-in-memory <store-grib-fields-in-memory>` for more details on how the individual fields use this cache.
 
 
 .. _use-grib-metadata-cache:
