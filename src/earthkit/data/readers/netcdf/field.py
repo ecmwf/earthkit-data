@@ -220,7 +220,8 @@ class XArrayField(Field):
             + ")"
         )
 
-    def _make_metadata(self):
+    @cached_property
+    def _metadata(self):
         return XArrayMetadata(self)
 
     def to_xarray(self):
@@ -276,5 +277,6 @@ class NetCDFMetadata(XArrayMetadata):
 
 
 class NetCDFField(XArrayField):
-    def _make_metadata(self):
+    @cached_property
+    def _metadata(self):
         return NetCDFMetadata(self)

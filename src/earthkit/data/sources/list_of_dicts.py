@@ -179,9 +179,6 @@ class VirtualGribField(Field):
         else:
             return v.astype(dtype)
 
-    def _make_metadata(self):
-        pass
-
 
 class GribFromDicts(GribFieldList):
     def __init__(self, list_of_dicts, *args, **kwargs):

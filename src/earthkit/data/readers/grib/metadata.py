@@ -8,6 +8,7 @@
 #
 
 import warnings
+from abc import abstractmethod
 from functools import cached_property
 
 from earthkit.data.core.geography import Geography
@@ -250,26 +251,11 @@ class GribFieldGeography(Geography):
 
 
 class GribMetadata(Metadata):
-    """Represent the metadata of a GRIB field.
+    """GRIB metadata.
 
-    Parameters
-    ----------
-    handle: :obj:`GribCodesHandle`
-        Object representing the ecCodes GRIB handle of the field.
-
-    :obj:`GribMetadata` is created internally by a :obj:`GribField` and we can use
-    the field's :meth:`metadata` method to access it.
-
-    >>> ds = earthkit.data.from_source("file", "docs/examples/test4.grib")
-    >>> md = ds[0].metadata()
-    >>> md["shortName"]
-    't'
-    >>> md.get("shortName")
-    't'
-    >>> md.get("nonExistentKey")
-    >>> md.get("nonExistentKey", 12)
-    12
-
+    :obj:`GribMetadata` is an abstract class and should not be instantiated directly.
+    There are two concrete implementations: :class:`GribFieldMetadata` and
+    :class:`StandAloneGribMetadata`.
     """
 
     LS_KEYS = [
@@ -317,13 +303,14 @@ class GribMetadata(Metadata):
 
     __handle_type = None
 
-    def __init__(self, handle, extra=None):
-        if not isinstance(handle, self._handle_type()):
-            raise TypeError(f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}")
-        self._handle = handle
+    @abstractmethod
+    def _handle(self):
+        pass
+
+    def __init__(self, shrunk=False, **kwargs):
         self._geo = None
-        if extra is not None:
-            self.extra = extra
+        self._shrunk = shrunk
+        super().__init__(**kwargs)
 
     @staticmethod
     def _handle_type():
@@ -371,7 +358,7 @@ class GribMetadata(Metadata):
     def _is_custom_key(self, key):
         return key in self.CUSTOM_KEYS
 
-    def override(self, *args, **kwargs):
+    def override(self, *args, headers_only_clone=True, **kwargs):
         d = dict(*args, **kwargs)
 
         new_value_size = None
@@ -384,17 +371,27 @@ class GribMetadata(Metadata):
             md, new_value_size = GridSpecConverter.to_metadata(gridspec, edition=edition)
             d.update(md)
 
-        handle = self._handle.clone(headers_only=True)
-        # whether headers_only=True works depends on the eccCodes version and the
-        # message properties. We check it by comparing the message lengths.
-        shrunk = handle.get_long("totalLength") < self._handle.get_long("totalLength")
+        handle = self._handle.clone(headers_only=headers_only_clone)
 
-        # some keys, needed later, are not copied into the clone when
-        # headers_only=True. We store them as extra keys.
-        if shrunk:
-            extra = {"bitsPerValue": self._handle.get("bitsPerValue", default=0)}
+        if self._shrunk:
+            shrunk = True
+            extra = self.extra
+        elif headers_only_clone:
+            # whether headers_only=True works depends on the eccCodes version and the
+            # message properties. We check it by comparing the message lengths.
+            shrunk = handle.get_long("totalLength") < self._handle.get_long("totalLength")
 
-        handle.set_multiple(d)
+            # some keys, needed later, are not copied into the clone when
+            # headers_only=True. We store them as extra keys.
+            if shrunk:
+                extra = {"bitsPerValue": self._handle.get("bitsPerValue", default=0)}
+            else:
+                extra = None
+        else:
+            shrunk = False
+
+        if d:
+            handle.set_multiple(d)
 
         # we need to set the values to the new size otherwise the clone generated
         # with headers_only=True will be inconsistent
@@ -404,7 +401,7 @@ class GribMetadata(Metadata):
             vals = np.zeros(new_value_size)
             handle.set_values(vals)
 
-        return GribMetadata(handle, extra=extra)
+        return StandAloneGribMetadata(handle, extra=extra, shrunk=shrunk)
 
     def as_namespace(self, namespace=None):
         r"""Return all the keys/values from a namespace.
@@ -506,13 +503,75 @@ class GribMetadata(Metadata):
 
         return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
 
+
+class GribFieldMetadata(GribMetadata):
+    """Represent the metadata of a GRIB field.
+
+    :obj:`GribFieldMetadata` is created internally by a :obj:`GribField`. It does not
+    own the ecCodes GRIB handle but can access it through the :obj:`GribField`.
+    Calling :meth:`metadata` without arguments on a :obj:`GribField` returns this object.
+    """
+
+    def __init__(self, field, **kwargs):
+        self._field = field
+        assert field is not None
+        super().__init__(**kwargs)
+
+    @property
+    def _handle(self):
+        return self._field.handle
+
+    def _hide_internal_keys(self):
+        r = self.override()
+        return RestrictedGribMetadata(r)
+
+
+class StandAloneGribMetadata(GribMetadata):
+    """Represent standalone GRIB metadata owning an ecCodes GRIB handle.
+
+    :class:`StandAloneGribMetadata` possesses its own ecCodes handle. Calling
+    :meth:`override` on :obj:`GribMetadata` always returns a
+    :class:`StandAloneGribMetadata` object.
+
+    >>> ds = earthkit.data.from_source("file", "docs/examples/test4.grib")
+    >>> md = ds[0].metadata()
+    >>> md["shortName"]
+    't'
+    >>> md.get("shortName")
+    't'
+    >>> md.get("nonExistentKey")
+    >>> md.get("nonExistentKey", 12)
+    12
+
+    Examples
+    --------
+    :ref:`/examples/grib_metadata_object.ipynb`
+
+    """
+
+    def __init__(self, handle, **kwargs):
+        if not isinstance(handle, self._handle_type()):
+            raise TypeError(f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}")
+        self.__handle = handle
+        self._kwargs = dict(**kwargs)
+        super().__init__(**kwargs)
+
+    @property
+    def _handle(self):
+        return self.__handle
+
     def _hide_internal_keys(self):
         return RestrictedGribMetadata(self)
 
 
 # TODO: this is a temporary solution
-class RestrictedGribMetadata(GribMetadata):
-    """Hide internal keys and namespaces in GRIB metadata"""
+class RestrictedGribMetadata(StandAloneGribMetadata):
+    """Hide internal keys and namespaces in GRIB metadata.
+
+    Examples
+    --------
+    :ref:`/examples/grib_metadata_object.ipynb`
+    """
 
     EKD_NAMESPACE = "grib"
 
@@ -546,7 +605,8 @@ class RestrictedGribMetadata(GribMetadata):
     INTERNAL_NAMESPACES = ["statistics"]
 
     def __init__(self, md):
-        super().__init__(md._handle, extra=md.extra)
+        assert isinstance(md, StandAloneGribMetadata)
+        super().__init__(md._handle, shrunk=md._shrunk, extra=md.extra)
 
     @cached_method
     def _len(self):

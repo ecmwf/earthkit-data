@@ -54,6 +54,10 @@ class Metadata(metaclass=ABCMeta):
 
     extra = None
 
+    def __init__(self, extra=None):
+        if extra is not None:
+            self.extra = extra
+
     def __iter__(self):
         """Return an iterator over the metadata keys."""
         return iter(self.keys())

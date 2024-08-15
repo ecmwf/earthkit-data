@@ -116,14 +116,11 @@ class Field(Base):
             return self._array_backend.array_ns.reshape(v, n)
         return v
 
-    def _make_metadata(self):
-        r"""Create a field metadata object."""
-        self._not_implemented()
-
     @property
     def _metadata(self):
         r"""Metadata: Get the object representing the field's metadata."""
         if self.__metadata is None:
+            # TODO: remove this legacy method
             self.__metadata = self._make_metadata()
         return self.__metadata
 
@@ -480,7 +477,8 @@ class Field(Base):
     def metadata(self, *keys, astype=None, **kwargs):
         r"""Return metadata values from the field.
 
-        When called without any arguments returns a :obj:`Metadata` object.
+        When called without any arguments returns a :obj:`Metadata` object, which for GRIB data
+        it always owns its own copy of the ecCodes handle of the GRIB message.
 
         Parameters
         ----------

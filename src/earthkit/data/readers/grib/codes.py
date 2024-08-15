@@ -9,12 +9,13 @@
 
 import logging
 import os
+from functools import cached_property
 
 import eccodes
 import numpy as np
 
 from earthkit.data.core.fieldlist import Field
-from earthkit.data.readers.grib.metadata import GribMetadata
+from earthkit.data.readers.grib.metadata import GribFieldMetadata
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
 from earthkit.data.utils.message import CodesReader
@@ -284,8 +285,9 @@ class GribField(Field):
             self._offset = int(self.handle.get("offset"))
         return self._offset
 
-    def _make_metadata(self):
-        return GribMetadata(self.handle)
+    @cached_property
+    def _metadata(self):
+        return GribFieldMetadata(self)
 
     def _metadata_class(self):
         return GribMetadata
