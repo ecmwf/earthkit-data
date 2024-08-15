@@ -19,7 +19,8 @@ dependencies:
 - entrypoints
 - jupyterlab
 - ecmwf-api-client>=1.6.1
-- cdsapi
+- cdsapi>=0.7.0
+- cads-api-client>=1.2.0
 - hda
 - pip:
   - multiurl
