@@ -226,7 +226,8 @@ SETTINGS_AND_HELP = {
     ),
     "grib-handle-cache-size": _(
         1,
-        """Number of GRIB handles cached in memory per fieldlist with data on disk.
+        """Maximum number of GRIB handles cached in memory per fieldlist with data on disk.
+        Used when ``grib-handle-policy`` is ``cache``.
         See :doc:`/guide/misc/grib_memory` for more information.""",
         none_ok=True,
     ),

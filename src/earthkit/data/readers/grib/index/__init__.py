@@ -223,11 +223,6 @@ class GribResourceManager:
     ):
         from earthkit.data.core.settings import SETTINGS
 
-        # print("grib_field_policy", grib_field_policy, SETTINGS.get("grib-field-policy"))
-        # print("grib_handle_policy", grib_handle_policy, SETTINGS.get("grib-handle-policy"))
-        # print("grib_handle_cache_size", grib_handle_cache_size, SETTINGS.get("grib-handle-cache-size"))
-        # print("use_grib_metadata_cache", use_grib_metadata_cache, SETTINGS.get("use-grib-metadata-cache"))
-
         def _get(v, name):
             return v if v is not None else SETTINGS.get(name)
 
@@ -333,10 +328,9 @@ class GribResourceManager:
                     r["current_handle_count"] += 1
 
                 try:
-                    md_cache = f._metadata.get.cache_info()
-                    r["metadata_cache_hits"] += md_cache.hits
-                    r["metadata_cache_misses"] += md_cache.misses
-                    r["metadata_cache_size"] += md_cache.currsize
+                    md_cache = f._diag()
+                    for k in ["metadata_cache_hits", "metadata_cache_misses", "metadata_cache_size"]:
+                        r[k] += md_cache[k]
                 except Exception:
                     pass
 
@@ -386,24 +380,6 @@ class GribFieldListInFiles(GribFieldList):
 
     def _diag(self):
         return self._manager.diag()
-        # r = defaultdict(int)
-        # r.update(self._manager.diag())
-
-        # if self._manager.field_cache is not None:
-
-        # for f in self:
-        #     if f._handle is not None:
-        #         r["current_handle_count"] += 1
-
-        #     try:
-        #         md_cache = f._metadata.get.cache_info()
-        #         r["metadata_cache_hits"] += md_cache.hits
-        #         r["metadata_cache_misses"] += md_cache.misses
-        #         r["metadata_cache_size"] += md_cache.currsize
-        #     except Exception:
-        #         pass
-
-        # return r
 
     @abstractmethod
     def part(self, n):
