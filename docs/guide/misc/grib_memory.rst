@@ -3,7 +3,7 @@
 GRIB field memory management
 //////////////////////////////
 
-:ref:`grib` is a message-based binary format, where each message is regarded as a field. For reading GRIB earthkit-data relies on :xref:`eccodes`, which when loading a message into memory representing it as a ``GRIB handle``. In the low level API the GRIB handle is the object that stores the data and metadata of a GRIB field, therefore it can use up a significant amount of memory.
+:ref:`grib` is a message-based binary format, where each message is regarded as a field. For reading GRIB earthkit-data relies on :xref:`eccodes`, which when loading a message into memory representing it as a ``GRIB handle``. In the low level API the GRIB handle is the object that holds the data and metadata of a GRIB field, therefore it can use up a significant amount of memory.
 
 Determining when a GRIB handle needs to be created and when it can be released is important for memory management. Earthkit-data provides several settings to control this behaviour depending on how we actually read the data.
 
@@ -50,42 +50,76 @@ This technique also works for GRIB data on disk, we just need to read it as a :r
 
     Use this option carefully since your data might not fit into memory.
 
-Reading data from disk and partially store it in memory
+Reading data from disk and partially keep it in memory
 ===========================================================
 
-When reading :ref:`grib` data from disk as a :ref:`file source <data-sources-file>` it is represented as a fieldlist and loaded lazily. After the (fast) initial scan for field offsets and lengths, no actual fields are created and no data is read into memory. When we start using the fieldlist, e.g. by iterating over the fields, accessing data or metadtata etc., the fields will be created on demand and the related GRIB handles will be loaded from disk when needed. Whether this data or part of it stays in memory depends on the following :ref:`settings <settings>`:
+When reading :ref:`grib` data from disk as a :ref:`file source <data-sources-file>` it is represented as a fieldlist and loaded lazily. After the (fast) initial scan for field offsets and lengths, no actual fields are created and no data is read into memory. When we start using the fieldlist, e.g. by iterating over the fields, accessing data or metadata etc., the fields will be created **on demand** and the related GRIB handles will be loaded from disk **when needed**. Whether this data or part of it stays in memory depends on the following :ref:`settings <settings>`:
 
-- :ref:`store-grib-fields-in-memory <store-grib-fields-in-memory>`
+- :ref:`grib-field-policy <grib-field-policy>`
+- :ref:`grib-handle-policy <grib-handle-policy>`
 - :ref:`grib-handle-cache-size <grib-handle-cache-size>`
 - :ref:`use-grib-metadata-cache <use-grib-metadata-cache>`
 
-.. _store-grib-fields-in-memory:
+.. _grib-field-policy:
 
-store-grib-fields-in-memory
+grib-field-policy
 ++++++++++++++++++++++++++++
 
-When ``store-grib-fields-in-memory`` is ``True`` (this is the default), once a field is created it will be stored in the fieldlist. Otherwise the field will be created on demand and deleted when it goes out of scope.
+Controls whether fields are kept in memory. The default is ``"persistent"``. The possible values are:
 
-The actual memory used by a field depends on whether it stores the GRIB handle of the related GRIB message. This is controlled by the :ref:`grib-handle-cache-size <grib-handle-cache-size>` settings:
+- ``"persistent"``: fields are kept in memory until the fieldlist is deleted
+- ``"temporary"``: fields are deleted when they go out of scope and recreated on demand
 
- - When ``grib-handle-cache-size > 0`` the field objects themselves are lightweight and only store the GRIB handle cache index, while the actual GRIB handles are stored in the cache, which is attached to the fieldlist.
- - When ``grib-handle-cache-size == 0`` the behaviour depends on ``store-grib-fields-in-memory``:
+The actual memory used by a field depends on whether it owns the GRIB handle of the related GRIB message. This is controlled by the :ref:`grib-handle-policy <grib-handle-policy>` settings.
 
-    - when ``store-grib-fields-in-memory`` is ``True`` the fields do not own their GRIB handle but for each call to data and metadata access, a new GRIB handle is created and released once the access has finished. This can be useful when the fields have to be kept in memory but the memory usage should be kept low.
-    - when ``store-grib-fields-in-memory`` is ``False`` the fields are created on demand and will store their own GRIB handle in memory until they get deleted (when going out of scope).
+A field can also cache its metadata access that adds up to the memory usage. This is controlled by the :ref:`use-grib-metadata-cache <use-grib-metadata-cache>` settings.
 
+.. _grib-handle-policy:
+
+grib-handle-policy
+++++++++++++++++++++++++++++
+
+Controls whether GRIB handles are kept in memory. The default is ``"cache"``. The possible values are:
+
+- ``"cache"``: an in-memory LRU cache is created for the GRIB handles in the fieldlist. The maximum number of GRIB handles kept in this cache is controlled by :ref:`grib-handle-cache-size <grib-handle-cache-size>`. In this mode field objects are lightweight and only store the GRIB handle cache index, and can only access the GRIB handles via the cache.
+- ``"persistent"``: once a GRIB handle is created a field keeps it in memory until the field is deleted
+- ``"temporary"``: for each call to data and metadata access on a field a new GRIB handle is created and released once the access has finished.
 
 .. _grib-handle-cache-size:
 
 grib-handle-cache-size
 ++++++++++++++++++++++++++++
 
-``grib-handle-cache-size`` (default is 1) specifies the number of GRIB handles stored in an in-memory cache per fieldlist.  This is an LRU cache so when it is full the least recently used GRIB handle is removed and a new GRIB message is loaded from disk and added to the cache. To disable it set ``grib-handle-cache-size`` to 0. See :ref:`store-grib-fields-in-memory <store-grib-fields-in-memory>` for more details on how the individual fields use this cache.
-
+When :ref:`grib-handle-policy <grib-handle-policy>` is ``"cache"`` the settings ``grib-handle-cache-size`` (default is ``1``) specifies the maximum number of GRIB handles kept in an in-memory cache per fieldlist. This is an LRU cache so when it is full the least recently used GRIB handle is removed and a new GRIB message is loaded from disk and added to the cache.
 
 .. _use-grib-metadata-cache:
 
 use-grib-metadata-cache
 +++++++++++++++++++++++++++++++++++
 
-When ``use-grib-metadata-cache`` is ``True`` (this is the default) all the fields will cache their metadata access. This is an in memory-cache attached to the field and implemented for the low-level metadata accessor for individual keys. The metadata cache can be useful when the same metadata keys are accessed multiple times for the same field.
+When ``use-grib-metadata-cache`` is ``True`` (this is the default) all the fields will cache their metadata access. This is an in memory-cache attached to the field and implemented for the low-level metadata accessor for individual keys. This cache can be useful when the same metadata keys are accessed multiple times for the same field.
+
+
+Overriding the settings
+++++++++++++++++++++++++++++
+
+It is possible to override the :ref:`settings` for the 4 parameters above for a given fieldlist by passing them as keyword arguments to :func:`from_source`. The parameter names are the same but the dashes are replaced by underscores. When a parameter is not specified in :func:`from_source` or is set to None its value is taken from the actual :ref:`settings`. E.g.:
+
+.. code-block:: python
+
+    import earthkit.data
+
+    ds = earthkit.data.from_source(
+        "file",
+        "test6.grib",
+        grib_field_policy="persistent",
+        grib_handle_policy="temporary",
+        grib_handle_cache_size=0,
+        use_grib_metadata_cache=True,
+    )
+
+
+
+.. .. note::
+
+..     The default settings are chosen to keep the memory usage low and the performance high. However, depending on the use case, the settings can be adjusted to optimize the memory usage and performanc

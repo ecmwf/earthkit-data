@@ -212,22 +212,29 @@ SETTINGS_AND_HELP = {
         {validator}""",
         validator=IntervalValidator(Interval(8, 4096)),
     ),
-    "store-grib-fields-in-memory": _(
-        True,
-        """Store GRIB fields in memory when data is read from disk. The number of actual
-        GRIB handles stored in memory per fieldlist is controlled by
-        ``grib-handle-cache-size``. See :doc:`/guide/misc/grib_memory` for more information.""",
+    "grib-field-policy": _(
+        "persistent",
+        """GRIB field management policy for fieldlists with data on disk.  {validator}
+        See :doc:`/guide/misc/grib_memory` for more information.""",
+        validator=ListValidator(["persistent", "temporary"]),
+    ),
+    "grib-handle-policy": _(
+        "cache",
+        """GRIB handle management policy for fieldlists with data on disk.  {validator}
+        See :doc:`/guide/misc/grib_memory` for more information.""",
+        validator=ListValidator(["cache", "persistent", "temporary"]),
     ),
     "grib-handle-cache-size": _(
         1,
-        """Number of GRIB handles cached in memory per fieldlist when data is read from disk.
+        """Number of GRIB handles cached in memory per fieldlist with data on disk.
         See :doc:`/guide/misc/grib_memory` for more information.""",
         none_ok=True,
     ),
     "use-grib-metadata-cache": _(
         True,
-        """Use in-memory cache attached to each field for GRIB metadata access when
-        data is read from disk.""",
+        """Use in-memory cache kept in each field for GRIB metadata access in
+        fieldlists with data on disk.
+        See :doc:`/guide/misc/grib_memory` for more information.""",
     ),
 }
 

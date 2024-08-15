@@ -104,9 +104,6 @@ class Base(metaclass=MetaBase):
         """
         from earthkit.data.core.order import build_remapping
 
-        if progress_bar:
-            from earthkit.data.utils.progbar import progress_bar
-
         assert len(coords)
         assert all(isinstance(k, str) for k in coords), coords
 
@@ -114,10 +111,13 @@ class Base(metaclass=MetaBase):
         iterable = self
 
         if progress_bar:
-            iterable = progress_bar(
-                iterable=self,
-                desc=f"Finding coords in dataset for {coords}",
-            )
+            from earthkit.data.utils.progbar import progress_bar
+
+            if progress_bar:
+                iterable = progress_bar(
+                    iterable=self,
+                    desc=f"Finding coords in dataset for {coords}",
+                )
 
         vals = defaultdict(dict)
         for f in iterable:

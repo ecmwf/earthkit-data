@@ -231,7 +231,7 @@ class GribCodesReader(CodesReader):
 
 
 class GribField(Field):
-    r"""Represents a GRIB message in a GRIB file.
+    r"""Represent a GRIB message in a GRIB file.
 
     Parameters
     ----------
@@ -243,31 +243,28 @@ class GribField(Field):
         Size of the message (in bytes)
     """
 
-    def __init__(self, path, offset, length, backend, cache=None):
+    _handle = None
+
+    def __init__(self, path, offset, length, backend, manager=None):
         super().__init__(backend)
         self.path = path
         self._offset = offset
         self._length = length
-        self._handle = None
-        self._cache = cache
+        self._manager = manager
 
     @property
     def handle(self):
-        r""":class:`CodesHandle`: Gets an object providing access to the low level GRIB message structure."""
-        if self._cache is not None:
-            # when there is no handle cache but fields are stored in memory
-            # a temporary handle is created for each access
-            if self._cache.use_temporary_handle:
-                return GribField._create_handle(self)
-            # otherwise tries to get the handle from the cache if the cache is available
-            handle = self._cache.handle(self, create=self._create_handle)
-            if handle is not None:
-                return handle
+        r""":class:`CodesHandle`: Get an object providing access to the low level GRIB message structure."""
+        if self._manager is not None:
+            handle = self._manager.handle(self, self._create_handle)
+            if handle is None:
+                raise RuntimeError(f"Could not get a handle for offset={self.offset} in {self.path}")
+            return handle
 
-        # create a new handle and store it in the field
+        # create a new handle and keep it in the field
         if self._handle is None:
             assert self._offset is not None
-            self._handle = GribField._create_handle(self)
+            self._handle = self._create_handle()
         return self._handle
 
     def _create_handle(self):
@@ -286,8 +283,8 @@ class GribField(Field):
     @cached_property
     def _metadata(self):
         cache = False
-        if self._cache is not None:
-            cache = self._cache.use_metadata_cache
+        if self._manager is not None:
+            cache = self._manager.use_grib_metadata_cache
         return GribFieldMetadata(self, cache=cache)
 
     def __repr__(self):
