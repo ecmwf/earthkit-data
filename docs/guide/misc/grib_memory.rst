@@ -121,5 +121,5 @@ In addition to changing the :ref:`settings` themselves, it is possible to overri
 
 
 .. note::
-   The default settings are chosen to keep the memory usage low and the performance high. However, depending on the use case, the settings can be adjusted to optimize the memory 
+   The default settings are chosen to keep the memory usage low and the performance high. However, depending on the use case, the settings can be adjusted to optimize the memory
    usage and performance.
