@@ -23,8 +23,8 @@ We can read :ref:`grib` data as a :ref:`stream <streams>` iterator e.g. with the
 
 Here, field ``f`` is not attached to a fieldlist and only exists in the scope of the iteration (in the for loop). During its existence the field keeps the GRIB handle in memory and if used in the way shown above, only one field can exist at a time. Once the stream is consumed there is no way to access the data again (unless we read it with :func:`from_source` again).
 
-Reading all the GRIB data into memory
-========================================
+Reading all GRIB data from a stream into memory
+===============================================
 
 We can load :ref:`grib` data fully into memory when we read it as a :ref:`stream <streams>` with the ``read_all=True`` option in :func:`from_source`.
 
@@ -37,21 +37,8 @@ We can load :ref:`grib` data fully into memory when we read it as a :ref:`stream
 
 With this, the entire ``ds`` fieldlist, including all the fields and the related GRIB handles, are stored in memory.
 
-This technique also works for GRIB data on disk, we just need to read it as a :ref:`stream source <data-sources-stream>`.
-
-.. code-block:: python
-
-    import earthkit.data
-
-    f = open("test6.grib", "rb")
-    ds = earthkit.data.from_source("stream", f, read_all=True)
-
-.. warning::
-
-    Use this option carefully since your data might not fit into memory.
-
-Reading data from disk and partially keep it in memory
-===========================================================
+Reading data from disk and managing its memory
+==============================================
 
 When reading :ref:`grib` data from disk as a :ref:`file source <data-sources-file>`, it is represented as a fieldlist and loaded lazily. After the (fast) initial scan for field offsets and lengths, no actual fields are created and no data is read into memory. When we start using the fieldlist, e.g. by iterating over the fields, accessing data or metadata etc., the fields will be created **on demand** and the related GRIB handles will be loaded from disk **when needed**. Whether this data or part of it stays in memory depends on the following :ref:`settings <settings>`:
 
@@ -117,6 +104,24 @@ In addition to changing the :ref:`settings` themselves, it is possible to overri
         grib_handle_cache_size=0,
         use_grib_metadata_cache=True,
     )
+
+
+Reading data from disk as a stream
+++++++++++++++++++++++++++++++++++
+
+Whilst the usual way of reading GRIB data from disk loads fields lazily (i.e. only when they are actually used), it is also possible to read all
+fields up-front and keep them in memory by reading it as a :ref:`stream source <data-sources-stream>` with the ``read_all=True`` option.
+
+.. code-block:: python
+
+    import earthkit.data
+
+    f = open("test6.grib", "rb")
+    ds = earthkit.data.from_source("stream", f, read_all=True)
+
+.. warning::
+
+    Use this option carefully since your data might not fit into memory.
 
 
 
