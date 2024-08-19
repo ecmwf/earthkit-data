@@ -50,9 +50,8 @@ dependencies = [
   "xarray>=0.19",
 ]
 optional-dependencies.all = [
-  "cads-api-client>=1.2",
   "cartopy",
-  "cdsapi>=0.7",
+  "cdsapi>=0.7.1",
   "eccovjson>=0.0.5",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
@@ -63,17 +62,15 @@ optional-dependencies.all = [
   "pyodc",
 ]
 optional-dependencies.cds = [
-  "cads-api-client>=1.2",
-  "cdsapi>=0.7",
+  "cdsapi>=0.7.1",
 ]
 optional-dependencies.ci = [
   "array-api-compat",
   "torch",
 ]
 optional-dependencies.dev = [
-  "cads-api-client>=1.2",
   "cartopy",
-  "cdsapi>=0.7",
+  "cdsapi>=0.7.1",
   "earthkit-data-demo-source",
   "eccovjson>=0.0.5",
   "ecmwf-api-client>=1.6.1",
