@@ -40,6 +40,7 @@ dependencies = [
   "filelock",
   "jinja2",
   "jsonschema",
+  "lru-dict",
   "markdown",
   "multiurl",
   "netcdf4",

@@ -11,6 +11,7 @@ import logging
 import math
 import os
 from abc import abstractmethod
+from collections import defaultdict
 
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.index import MaskIndex
@@ -216,14 +217,169 @@ class GribMultiFieldList(GribFieldList, MultiIndex):
         FieldList._init_from_multi(self, self)
 
 
+class GribResourceManager:
+    def __init__(
+        self, owner, grib_field_policy, grib_handle_policy, grib_handle_cache_size, use_grib_metadata_cache
+    ):
+        from earthkit.data.core.settings import SETTINGS
+
+        def _get(v, name):
+            return v if v is not None else SETTINGS.get(name)
+
+        self.grib_field_policy = _get(grib_field_policy, "grib-field-policy")
+        self.grib_handle_policy = _get(grib_handle_policy, "grib-handle-policy")
+        self.grib_handle_cache_size = _get(grib_handle_cache_size, "grib-handle-cache-size")
+        self.use_grib_metadata_cache = _get(use_grib_metadata_cache, "use-grib-metadata-cache")
+
+        # fields
+        self.field_cache = None
+        if self.grib_field_policy == "persistent":
+            from lru import LRU
+
+            # TODO: the number of fields might only be available only later (e.g. fieldlists with
+            # an SQL index). Consider making _field_cache a cached property.
+            n = len(owner)
+            if n > 0:
+                self.field_cache = LRU(n)
+
+        # handles
+        self.handle_cache = None
+        if self.grib_handle_policy == "cache":
+            if self.grib_handle_cache_size > 0:
+                from lru import LRU
+
+                self.handle_cache = LRU(self.grib_handle_cache_size)
+            else:
+                raise ValueError(
+                    'grib_handle_cache_size must be greater than 0 when grib_handle_policy="cache"'
+                )
+
+        self.handle_create_count = 0
+        self.field_create_count = 0
+
+        # check consistency
+        if self.field_cache is not None:
+            self.grib_field_policy == "persistent"
+        else:
+            self.grib_field_policy == "temporary"
+
+        if self.handle_cache is not None:
+            self.grib_handle_policy == "cache"
+        else:
+            self.grib_handle_policy in ["persistent", "temporary"]
+
+    def field(self, n, create):
+        if self.grib_field_policy == "persistent":
+            if n in self.field_cache:
+                return self.field_cache[n]
+            else:
+                field = create(n)
+                self._field_created()
+                self.field_cache[n] = field
+                return field
+        else:
+            self._field_created()
+            return create(n)
+
+    def handle(self, field, create):
+        if self.grib_handle_policy == "cache":
+            key = (field.path, field._offset)
+            if key in self.handle_cache:
+                return self.handle_cache[key]
+            else:
+                handle = create()
+                self._handle_created()
+                self.handle_cache[key] = handle
+                return handle
+        elif self.grib_handle_policy == "persistent":
+            if field._handle is None:
+                field._handle = create()
+                self._handle_created()
+            return field._handle
+        elif self.grib_handle_policy == "temporary":
+            self._handle_created()
+            return create()
+
+    def _field_created(self):
+        self.field_create_count += 1
+
+    def _handle_created(self):
+        self.handle_create_count += 1
+
+    def diag(self):
+        r = defaultdict(int)
+        r["grib_field_policy"] = self.grib_field_policy
+        r["grib_handle_policy"] = self.grib_handle_policy
+        r["grib_handle_cache_size"] = self.grib_handle_cache_size
+
+        if self.field_cache is not None:
+            r["field_cache_size"] = len(self.field_cache)
+
+        r["field_create_count"] = self.field_create_count
+
+        if self.handle_cache is not None:
+            r["handle_cache_size"] = len(self.handle_cache)
+
+        r["handle_create_count"] = self.handle_create_count
+
+        if self.field_cache is not None:
+            for f in self.field_cache.values():
+                if f._handle is not None:
+                    r["current_handle_count"] += 1
+
+                try:
+                    md_cache = f._diag()
+                    for k in ["metadata_cache_hits", "metadata_cache_misses", "metadata_cache_size"]:
+                        r[k] += md_cache[k]
+                except Exception:
+                    pass
+
+        return r
+
+
 class GribFieldListInFiles(GribFieldList):
+    def __init__(
+        self,
+        *args,
+        grib_field_policy=None,
+        grib_handle_policy=None,
+        grib_handle_cache_size=None,
+        use_grib_metadata_cache=None,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self._manager = GribResourceManager(
+            self, grib_field_policy, grib_handle_policy, grib_handle_cache_size, use_grib_metadata_cache
+        )
+
+    def _create_field(self, n):
+        part = self.part(n)
+        field = GribField(
+            part.path,
+            part.offset,
+            part.length,
+            self.array_backend,
+            manager=self._manager,
+        )
+        if field is None:
+            raise RuntimeError(f"Could not get a handle for part={part}")
+        return field
+
     def _getitem(self, n):
+        # TODO: check if we need a mutex here
         if isinstance(n, int):
-            part = self.part(n if n >= 0 else len(self) + n)
-            return GribField(part.path, part.offset, part.length, self.array_backend)
+            if n < 0:
+                n += len(self)
+            if n >= len(self):
+                raise IndexError(f"Index {n} out of range")
+
+            return self._manager.field(n, self._create_field)
 
     def __len__(self):
         return self.number_of_parts()
+
+    def _diag(self):
+        return self._manager.diag()
 
     @abstractmethod
     def part(self, n):

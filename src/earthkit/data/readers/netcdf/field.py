@@ -144,6 +144,8 @@ class XArrayMetadata(RawMetadata):
         super().__init__(d)
 
     def override(self, *args, **kwargs):
+        if not args and not kwargs:
+            return self
         return None
 
     @property

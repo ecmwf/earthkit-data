@@ -212,6 +212,31 @@ SETTINGS_AND_HELP = {
         {validator}""",
         validator=IntervalValidator(Interval(8, 4096)),
     ),
+    "grib-field-policy": _(
+        "persistent",
+        """GRIB field management policy for fieldlists with data on disk.  {validator}
+        See :doc:`/guide/misc/grib_memory` for more information.""",
+        validator=ListValidator(["persistent", "temporary"]),
+    ),
+    "grib-handle-policy": _(
+        "cache",
+        """GRIB handle management policy for fieldlists with data on disk.  {validator}
+        See :doc:`/guide/misc/grib_memory` for more information.""",
+        validator=ListValidator(["cache", "persistent", "temporary"]),
+    ),
+    "grib-handle-cache-size": _(
+        1,
+        """Maximum number of GRIB handles cached in memory per fieldlist with data on disk.
+        Used when ``grib-handle-policy`` is ``cache``.
+        See :doc:`/guide/misc/grib_memory` for more information.""",
+        none_ok=True,
+    ),
+    "use-grib-metadata-cache": _(
+        True,
+        """Use in-memory cache kept in each field for GRIB metadata access in
+        fieldlists with data on disk.
+        See :doc:`/guide/misc/grib_memory` for more information.""",
+    ),
 }
 
 

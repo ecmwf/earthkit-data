@@ -461,8 +461,7 @@ class Field(Base):
     def metadata(self, *keys, astype=None, **kwargs):
         r"""Return metadata values from the field.
 
-        When called without any arguments returns a :obj:`Metadata` object, which for GRIB data
-        it always owns its own copy of the ecCodes handle of the GRIB message.
+        When called without any arguments returns a :obj:`Metadata` object.
 
         Parameters
         ----------
@@ -565,7 +564,7 @@ class Field(Base):
         '2 metre temperature'
         """
         # when called without arguments returns the metadata object
-        if len(keys) == 0 and astype is None and len(kwargs) == 0:
+        if len(keys) == 0 and astype is None and not kwargs:
             return self._metadata
 
         namespace = kwargs.pop("namespace", None)
@@ -745,7 +744,7 @@ class FieldList(Index):
     @cached_method
     def _default_index_keys(self):
         if len(self) > 0:
-            return self[0].metadata().index_keys()
+            return self[0]._metadata.index_keys()
         else:
             return []
 
@@ -1108,7 +1107,7 @@ class FieldList(Index):
     @cached_method
     def _default_ls_keys(self):
         if len(self) > 0:
-            return self[0].metadata().ls_keys()
+            return self[0]._metadata.ls_keys()
         else:
             return []
 
@@ -1199,7 +1198,7 @@ class FieldList(Index):
     @cached_method
     def _describe_keys(self):
         if len(self) > 0:
-            return self[0].metadata().describe_keys()
+            return self[0]._metadata.describe_keys()
         else:
             return []
 
@@ -1368,9 +1367,9 @@ class FieldList(Index):
     @cached_method
     def _is_shared_grid(self):
         if len(self) > 0:
-            grid = self[0].metadata().geography._unique_grid_id()
+            grid = self[0]._metadata.geography._unique_grid_id()
             if grid is not None:
-                return all(f.metadata().geography._unique_grid_id() == grid for f in self)
+                return all(f._metadata.geography._unique_grid_id() == grid for f in self)
         return False
 
     @detect_out_filename
