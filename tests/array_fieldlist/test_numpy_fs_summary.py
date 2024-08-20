@@ -56,6 +56,8 @@ def test_array_fl_dump():
             "title": "geography",
             "data": {
                 # "bitmapPresent": 0,
+                "Ni": 12,
+                "Nj": 7,
                 "latitudeOfFirstGridPointInDegrees": 90.0,
                 "longitudeOfFirstGridPointInDegrees": 0.0,
                 "latitudeOfLastGridPointInDegrees": -90.0,
