@@ -19,8 +19,7 @@ dependencies:
 - entrypoints
 - jupyterlab
 - ecmwf-api-client>=1.6.1
-- cdsapi>=0.7.0
-- cads-api-client>=1.2.0
+- cdsapi>=0.7.1
 - hda
 - pip:
   - multiurl
@@ -31,6 +30,7 @@ dependencies:
   - eccovjson>=0.0.5
   - earthkit-geo>=0.2.0
 - tqdm>=4.63.0
+- lru-dict
 - markdown
 - make
 - mypy

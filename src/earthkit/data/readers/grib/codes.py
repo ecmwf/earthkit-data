@@ -9,6 +9,7 @@
 
 import logging
 import os
+from collections import defaultdict
 from functools import cached_property
 
 import eccodes
@@ -16,6 +17,7 @@ import numpy as np
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
+from earthkit.data.readers.grib.metadata import GribMetadata
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
 from earthkit.data.utils.message import CodesReader
@@ -233,7 +235,7 @@ class GribCodesReader(CodesReader):
 
 
 class GribField(Field):
-    r"""Represents a GRIB message in a GRIB file.
+    r"""Represent a GRIB message in a GRIB file.
 
     Parameters
     ----------
@@ -245,20 +247,32 @@ class GribField(Field):
         Size of the message (in bytes)
     """
 
-    def __init__(self, path, offset, length, backend):
+    _handle = None
+
+    def __init__(self, path, offset, length, backend, manager=None):
         super().__init__(backend)
         self.path = path
         self._offset = offset
         self._length = length
-        self._handle = None
+        self._manager = manager
 
     @property
     def handle(self):
-        r""":class:`CodesHandle`: Gets an object providing access to the low level GRIB message structure."""
+        r""":class:`CodesHandle`: Get an object providing access to the low level GRIB message structure."""
+        if self._manager is not None:
+            handle = self._manager.handle(self, self._create_handle)
+            if handle is None:
+                raise RuntimeError(f"Could not get a handle for offset={self.offset} in {self.path}")
+            return handle
+
+        # create a new handle and keep it in the field
         if self._handle is None:
             assert self._offset is not None
-            self._handle = GribCodesReader.from_cache(self.path).at_offset(self._offset)
+            self._handle = self._create_handle()
         return self._handle
+
+    def _create_handle(self):
+        return GribCodesReader.from_cache(self.path).at_offset(self.offset)
 
     def _values(self, dtype=None):
         return self.handle.get_values(dtype=dtype)
@@ -287,7 +301,10 @@ class GribField(Field):
 
     @cached_property
     def _metadata(self):
-        return GribFieldMetadata(self)
+        cache = False
+        if self._manager is not None:
+            cache = self._manager.use_grib_metadata_cache
+        return GribFieldMetadata(self, cache=cache)
 
     def _metadata_class(self):
         return GribMetadata
@@ -301,14 +318,6 @@ class GribField(Field):
             self._metadata.get("step", None),
             self._metadata.get("number", None),
         )
-
-    # def _get(self, name):
-    #     """Private, for testing only"""
-    #     # paramId is renamed as param to get rid of the
-    #     # additional '.128' (in earthkit/data/scripts/grib.py)
-    #     if name == "param":
-    #         name = "paramId"
-    #     return self.handle.get(name)
 
     def write(self, f, bits_per_value=None):
         r"""Writes the message to a file object.
@@ -338,3 +347,14 @@ class GribField(Field):
         bytes
         """
         return self.handle.get_buffer()
+
+    def _diag(self):
+        r = r = defaultdict(int)
+        try:
+            md_cache = self._metadata.get.cache_info()
+            r["metadata_cache_hits"] += md_cache.hits
+            r["metadata_cache_misses"] += md_cache.misses
+            r["metadata_cache_size"] += md_cache.currsize
+        except Exception:
+            pass
+        return r

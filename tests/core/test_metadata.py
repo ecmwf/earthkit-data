@@ -112,7 +112,7 @@ def test_grib_metadata_create():
     md = f0.metadata()
     assert isinstance(md, GribFieldMetadata)
     assert md._handle is not None
-    assert md._handle == f0._handle
+    assert md._handle == f0.handle
 
     # cannot create from dict
     with pytest.raises(TypeError):

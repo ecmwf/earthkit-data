@@ -8,6 +8,7 @@
 #
 
 import logging
+from functools import cached_property
 
 import eccodes
 
@@ -15,6 +16,7 @@ from earthkit.data.readers import Reader
 from earthkit.data.readers.grib.codes import GribCodesHandle
 from earthkit.data.readers.grib.codes import GribField
 from earthkit.data.readers.grib.index import GribFieldList
+from earthkit.data.readers.grib.metadata import GribFieldMetadata
 from earthkit.data.utils.array import ensure_backend
 
 LOG = logging.getLogger(__name__)
@@ -128,6 +130,10 @@ class GribFieldInMemory(GribField):
     @GribField.handle.getter
     def offset(self):
         return None
+
+    @cached_property
+    def _metadata(self):
+        return GribFieldMetadata(self)
 
     @staticmethod
     def to_fieldlist(fields):
