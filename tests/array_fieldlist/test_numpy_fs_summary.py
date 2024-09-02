@@ -121,6 +121,12 @@ def test_array_fl_dump():
         },
     ]
 
+    from earthkit.data.utils.message import ECC_FEATURES
+
+    if not ECC_FEATURES.has_Ni_Nj_in_geo_namespace():
+        ref[1]["data"].pop("Ni")
+        ref[1]["data"].pop("Nj")
+
     assert len(r) == len(namespaces)
     assert isinstance(r, list)
     for d in r:
