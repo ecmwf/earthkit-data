@@ -70,3 +70,9 @@ Examples:
     - :ref:`/examples/grib_metadata.ipynb`
     - :ref:`/examples/grib_selection.ipynb`
     - :ref:`/examples/grib_missing.ipynb`
+
+
+Memory management
+++++++++++++++++++++
+
+See details :ref:`here <grib-memory>`.

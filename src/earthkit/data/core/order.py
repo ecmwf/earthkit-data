@@ -72,7 +72,7 @@ def _build_remapping(mapping):
     if mapping is None:
         return Remapping({})
 
-    if not isinstance(mapping, Remapping) and isinstance(mapping, dict):
+    if not isinstance(mapping, (Remapping, Patch)) and isinstance(mapping, dict):
         return Remapping(mapping)
 
     return mapping

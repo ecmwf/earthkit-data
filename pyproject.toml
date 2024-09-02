@@ -40,6 +40,7 @@ dependencies = [
   "filelock",
   "jinja2",
   "jsonschema",
+  "lru-dict",
   "markdown",
   "multiurl",
   "netcdf4",
@@ -87,7 +88,6 @@ optional-dependencies.dev = [
   "pytest-forked",
   "pytest-timeout",
 ]
-
 optional-dependencies.eccovjson = [
   "eccovjson>=0.0.5",
 ]
