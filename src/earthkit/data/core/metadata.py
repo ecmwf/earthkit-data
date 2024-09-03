@@ -9,9 +9,15 @@
 
 from abc import ABCMeta
 from abc import abstractmethod
+from functools import lru_cache
 
 from earthkit.data.core.constants import DATETIME
 from earthkit.data.core.constants import GRIDSPEC
+
+try:
+    from functools import cache as memoise  # noqa
+except ImportError:
+    memoise = lru_cache
 
 
 class Metadata(metaclass=ABCMeta):
@@ -21,6 +27,14 @@ class Metadata(metaclass=ABCMeta):
     with :obj:`override`, which always creates a new object.
 
     Implemented in subclasses: :obj:`RawMetadata`, :obj:`GribMetadata`.
+
+    Parameters
+    ----------
+    extra: dict, None
+        Extra key/value pairs to be added on top of the underlying metadata. Default is None.
+    cache: bool
+        Enable caching of all the calls to :meth:`get`. Default is False. The cache
+        is attached to the instance.
 
     Examples
     --------
@@ -36,6 +50,12 @@ class Metadata(metaclass=ABCMeta):
     CUSTOM_KEYS = [DATETIME, GRIDSPEC]
 
     extra = None
+
+    def __init__(self, extra=None, cache=False):
+        if extra is not None:
+            self.extra = extra
+        if cache:
+            self.get = memoise(self.get)
 
     def __iter__(self):
         """Return an iterator over the metadata keys."""
@@ -146,6 +166,8 @@ class Metadata(metaclass=ABCMeta):
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         r"""Return the value for ``key``.
 
+        When the instance is created with ``cache=True`` all the result is cached.
+
         Parameters
         ----------
         key: str
@@ -175,13 +197,12 @@ class Metadata(metaclass=ABCMeta):
 
         """
         if self._is_extra_key(key):
-            return self._get_extra_key(key, default=default, astype=astype)
-        if self._is_custom_key(key):
-            return self._get_custom_key(
-                key, default=default, astype=astype, raise_on_missing=raise_on_missing
-            )
+            v = self._get_extra_key(key, default=default, astype=astype)
+        elif self._is_custom_key(key):
+            v = self._get_custom_key(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
         else:
-            return self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+            v = self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        return v
 
     @abstractmethod
     def _get(self, key, astype=None, default=None, raise_on_missing=False):
@@ -192,7 +213,6 @@ class Metadata(metaclass=ABCMeta):
 
     def _get_extra_key(self, key, default=None, astype=None, **kwargs):
         v = self.extra.get(key, default)
-
         if astype is not None and v is not None:
             try:
                 return astype(v)
@@ -274,6 +294,7 @@ class Metadata(metaclass=ABCMeta):
         -------
         dict of datatime.datetime
             Dict with items "base_time" and "valid_time".
+
 
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
@@ -372,6 +393,7 @@ class RawMetadata(Metadata):
 
     def __init__(self, *args, **kwargs):
         self._d = dict(*args, **kwargs)
+        super().__init__()
 
     def override(self, *args, **kwargs):
         d = dict(**self._d)

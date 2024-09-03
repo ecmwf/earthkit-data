@@ -55,6 +55,9 @@ class EccodesFeatures:
             kwargs.pop("headers_only", None)
         return kwargs
 
+    def has_Ni_Nj_in_geo_namespace(self):
+        return self._version >= (2, 37, 0)
+
     @property
     def versions(self):
         return f"ecCodes: {self._version} eccodes-python: {self._py_version}"

@@ -40,6 +40,7 @@ GRIB
     grib_selection.ipynb
     grib_indexing.ipynb
     grib_missing.ipynb
+    grib_metadata_object.ipynb
     numpy_fieldlist.ipynb
     grib_array_backends.ipynb
     grib_nearest_gridpoint.ipynb

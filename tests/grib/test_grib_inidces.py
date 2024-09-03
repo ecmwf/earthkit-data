@@ -27,7 +27,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 def test_grib_indices_base(fl_type, array_backend):
     ds = load_grib_data("tuv_pl.grib", fl_type, array_backend)
 
-    ref = {
+    ref_full = {
         "class": ["od"],
         "stream": ["oper"],
         "levtype": ["pl"],
@@ -42,7 +42,7 @@ def test_grib_indices_base(fl_type, array_backend):
     }
 
     r = ds.indices()
-    assert r == ref
+    assert r == ref_full
 
     ref = {
         "levelist": [300, 400, 500, 700, 850, 1000],
@@ -54,6 +54,15 @@ def test_grib_indices_base(fl_type, array_backend):
     ref = ["t", "u", "v"]
     r = ds.index("param")
     assert r == ref
+
+    ref = [300, 400, 500, 700, 850, 1000]
+    ref_full["level"] = ref
+
+    r = ds.index("level")
+    assert r == ref
+
+    r = ds.indices()
+    assert r == ref_full
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -155,7 +164,7 @@ def test_grib_indices_multi(fl_type, array_backend):
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_indices_multi_Del(fl_type, array_backend):
+def test_grib_indices_multi_sel(fl_type, array_backend):
     f1 = load_grib_data("tuv_pl.grib", fl_type, array_backend)
     f2 = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")
     ds = f1 + f2

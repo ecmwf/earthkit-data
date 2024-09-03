@@ -68,7 +68,6 @@ class FieldListInFilesWithSqlIndex(FieldListInFilesWithDBIndex):
         # print("Not using remapping here")
 
         coords = {k: None for k in coords}
-        coords = self._normalize_kwargs_names(**coords)
         coords = list(coords.keys())
         # print("coords:", coords)
         values = self.db.unique_values(*coords, remapping=remapping).values()
@@ -84,7 +83,6 @@ class FieldListInFilesWithSqlIndex(FieldListInFilesWithDBIndex):
 
     def sel(self, *args, remapping=None, **kwargs):
         kwargs = normalize_selection(*args, **kwargs)
-        kwargs = self._normalize_kwargs_names(**kwargs)
         if DATETIME in kwargs and kwargs[DATETIME] is not None:
             kwargs = _normalize_grib_kwargs_values(**kwargs)
 
@@ -94,7 +92,6 @@ class FieldListInFilesWithSqlIndex(FieldListInFilesWithDBIndex):
 
     def order_by(self, *args, remapping=None, **kwargs):
         kwargs = normalize_order_by(*args, **kwargs)
-        kwargs = self._normalize_kwargs_names(**kwargs)
 
         out = self
 
