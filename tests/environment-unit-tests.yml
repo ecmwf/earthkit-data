@@ -48,7 +48,7 @@ dependencies:
 - sphinx-autoapi
 - sphinx_rtd_theme
 - sphinxcontrib-apidoc
-- sphinx_issues
+- sphinx-issues
 - nbformat
 - nbconvert
 - nbsphinx

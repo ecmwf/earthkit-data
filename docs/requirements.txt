@@ -7,7 +7,7 @@ sphinx-rtd-theme
 nbsphinx
 setuptools
 sphinx-autoapi
-sphinx_issues
+sphinx-issues
 entrypoints
 pandas
 tqdm
