@@ -37,6 +37,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "autoapi.extension",
+    "sphinx_issues",
     "earthkit.data.sphinxext.xref",
     "earthkit.data.sphinxext.module_output",
 ]
@@ -62,6 +63,10 @@ autoapi_add_toctree_entry = False
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 napoleon_preprocess_types = True
+
+# Path to GitHub repo {group}/{project}  (note that `group` is the GitHub user or organization)
+issues_github_path = "ecmwf/earthkit-data"
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
