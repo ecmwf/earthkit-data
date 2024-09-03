@@ -142,7 +142,7 @@ The following code shows how to change the ``user-cache-directory`` settings:
   >>> settings.get("user-cache-directory")  # Find the current cache directory
   /tmp/earthkit-data-myusername
   >>> # Change the value of the setting
-  >>> settings.set("cache-user-directory", "/big-disk/earthkit-data-cache")
+  >>> settings.set("user-cache-directory", "/big-disk/earthkit-data-cache")
 
   # Python kernel restarted
 
