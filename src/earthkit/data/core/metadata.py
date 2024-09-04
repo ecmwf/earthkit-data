@@ -9,15 +9,9 @@
 
 from abc import ABCMeta
 from abc import abstractmethod
-from functools import lru_cache
 
 from earthkit.data.core.constants import DATETIME
 from earthkit.data.core.constants import GRIDSPEC
-
-try:
-    from functools import cache as memoise  # noqa
-except ImportError:
-    memoise = lru_cache
 
 
 class Metadata(metaclass=ABCMeta):
@@ -68,11 +62,9 @@ class Metadata(metaclass=ABCMeta):
 
     extra = None
 
-    def __init__(self, extra=None, cache=False):
+    def __init__(self, extra=None):
         if extra is not None:
             self.extra = extra
-        if cache:
-            self.get = memoise(self.get)
 
     def __iter__(self):
         """Return an iterator over the metadata keys."""

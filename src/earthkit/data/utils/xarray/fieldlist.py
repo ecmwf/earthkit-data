@@ -11,6 +11,7 @@
 import logging
 from collections import defaultdict
 
+from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.order import build_remapping
 from earthkit.data.indexing.fieldlist import FieldArray
 
@@ -52,7 +53,50 @@ def unique_values(ds, names, skip_missing=True):
     return vals
 
 
-class WrappedFieldList(FieldArray):
+class WrappedFieldList(FieldList):
+    def __init__(self, fieldlist, keys, remapping=None):
+        super().__init__()
+
+        self.ds = fieldlist
+        self.db = dict()
+        # self.remapping = build_remapping(remapping)
+        self.remapping = remapping
+        if self.remapping is not None:
+            self.remapping = build_remapping(remapping)
+
+        self._parse(keys)
+        self._parse(keys)
+
+    def _parse(self, keys):
+        indices = defaultdict(set)
+        for i, f in enumerate(self.ds):
+            r = f._attributes(keys, remapping=self.remapping)
+            # self.db.append(r)
+            # self.append(WrappedField(None, r, self.ds, i))
+
+            for k, v in r.items():
+                if v is not None:
+                    indices[k].add(v)
+                else:
+                    indices[k]
+
+        self.db = {k: sorted(list(v)) for k, v in indices.items()}
+
+    def index(self, key, squeeze=True):
+        # print(f"called {key=}")
+        if key not in self.db:
+            # print(f"Key={key} not found in local metadata")
+            return self.ds.index(key, squeeze=squeeze)
+        return self.db[key]
+
+    def __getitem__(self, n):
+        return self.ds[n]
+
+    def __len__(self):
+        return len(self.ds)
+
+
+class WrappedFieldList1(FieldArray):
     def __init__(self, fieldlist, keys, db=None, fields=None, remapping=None):
         super().__init__()
         self.ds = fieldlist

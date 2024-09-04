@@ -475,10 +475,10 @@ class Index(Source):
         (we created key "param_level" from "param" and "levelist"):
 
         >>> ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
-        >>> for f in ds.order_by(
-        ...     param_level=ordering, remapping={"param_level": "{param}{levelist}"}
-        ... ):
+        >>> remapping = {"param_level": "{param}{levelist}"}
+        >>> for f in ds.order_by(param_level=ordering, remapping=remapping):
         ...     print(f)
+        ...
         GribField(t,850,20180801,1200,0,0)
         GribField(t,1000,20180801,1200,0,0)
         GribField(u,1000,20180801,1200,0,0)

@@ -23,6 +23,58 @@ from earthkit.data.utils.array import numpy_backend
 from earthkit.data.utils.metadata import metadata_argument
 
 
+class FieldListIndices:
+    def __init__(self, field_list):
+        self.fs = field_list
+        self.user_indices = dict()
+
+    @cached_property
+    def default_index_keys(self):
+        if len(self.fs) > 0:
+            return self.fs[0]._metadata.index_keys()
+        else:
+            return []
+
+    def _index_value(self, key):
+        values = set()
+        for f in self.fs:
+            v = f.metadata(key, default=None)
+            if v is not None:
+                values.add(v)
+
+        return sorted(list(values))
+
+    @cached_property
+    def default_indices(self):
+        indices = defaultdict(set)
+        keys = self.default_index_keys
+        for f in self.fs:
+            v = f.metadata(keys, default=None)
+            for i, k in enumerate(keys):
+                if v[i] is not None:
+                    indices[k].add(v[i])
+
+        return {k: sorted(list(v)) for k, v in indices.items()}
+
+    def indices(self, squeeze=False):
+        r = {**self.default_indices, **self.user_indices}
+
+        if squeeze:
+            return {k: v for k, v in r.items() if len(v) > 1}
+        else:
+            return r
+
+    def index(self, key):
+        if key in self.user_indices:
+            return self.user_indices[key]
+
+        if key in self.default_index_keys:
+            return self.default_indices[key]
+
+        self.user_indices[key] = self._index_value(key)
+        return self.user_indices[key]
+
+
 class Field(Base):
     r"""Represent a Field."""
 
@@ -760,42 +812,9 @@ class FieldList(Index):
         else:
             return False
 
-    @cached_method
-    def _default_md_index_keys(self):
-        if len(self) > 0:
-            # return self[0].metadata().index_keys()
-            return self[0]._metadata.index_keys()
-        else:
-            return []
-
     @cached_property
     def _md_indices(self):
-        return dict()
-
-    def _md_index_value(self, key):
-        values = set()
-        for f in self:
-            v = f.metadata(key, default=None)
-            if v is not None:
-                values.add(v)
-
-        return sorted(list(values))
-
-    # def _find_all_index_dict(self):
-
-    @cached_property
-    def _default_md_indices(self):
-        # def _collect_default_indices(self):
-        indices = defaultdict(set)
-        keys = self._default_md_index_keys()
-        for f in self:
-            v = f.metadata(keys, default=None)
-            for i, k in enumerate(keys):
-                # v = f.metadata(k, default=None)
-                if v[i] is not None:
-                    indices[k].add(v[i])
-
-        return {k: sorted(list(v)) for k, v in indices.items()}
+        return FieldListIndices(self)
 
     def indices(self, squeeze=False):
         r"""Return the unique, sorted values for a set of metadata keys (see below)
@@ -836,16 +855,7 @@ class FieldList(Index):
         used in :obj:`indices`.
 
         """
-        r = self._default_md_indices
-        r.update(self._md_indices)
-
-        # if not self._md_indices:
-        #     self._md_indices = self._collect_default_indices()
-        # elif len(self._md_indices) < len(self._default_index_keys) or
-        if squeeze:
-            return {k: v for k, v in r.items() if len(v) > 1}
-        else:
-            return r
+        return self._md_indices.indices(squeeze=squeeze)
 
     def index(self, key):
         r"""Return the unique, sorted values of the specified metadata ``key`` from all the fields.
@@ -874,16 +884,7 @@ class FieldList(Index):
         [300, 400, 500, 700, 850, 1000]
 
         """
-        if key in self._md_indices:
-            return self._md_indices[key]
-
-        if key in self._default_md_indices:
-            return self._default_md_indices[key]
-
-        # if key in self.indices():
-        #     return self.indices()[key]
-        self._md_indices[key] = self._md_index_value(key)
-        return self._md_indices[key]
+        return self._md_indices.index(key)
 
     def to_numpy(self, **kwargs):
         r"""Return all the fields' values as an ndarray. It is formed as the array of the

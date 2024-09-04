@@ -1,6 +1,13 @@
 Version 0.9 Updates
 /////////////////////////
 
+Version 0.9.4
+===============
+
+Changes
++++++++
+
+- Increased the minimum version of the `cdsapi` package to 0.7.1.
 
 Version 0.9.3
 ===============
