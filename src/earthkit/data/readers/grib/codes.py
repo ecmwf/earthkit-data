@@ -285,6 +285,8 @@ class GribField(Field):
         cache = False
         if self._manager is not None:
             cache = self._manager.use_grib_metadata_cache
+            if cache:
+                cache = self._manager._make_metadata_cache()
         return GribFieldMetadata(self, cache=cache)
 
     def __repr__(self):
@@ -329,10 +331,10 @@ class GribField(Field):
     def _diag(self):
         r = r = defaultdict(int)
         try:
-            md_cache = self._metadata.get.cache_info()
+            md_cache = self._metadata._cache
+            r["metadata_cache_size"] += len(md_cache)
             r["metadata_cache_hits"] += md_cache.hits
             r["metadata_cache_misses"] += md_cache.misses
-            r["metadata_cache_size"] += md_cache.currsize
         except Exception:
             pass
         return r
