@@ -13,7 +13,6 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data import settings
-from earthkit.data.readers.grib.index import GribResourceManager
 from earthkit.data.testing import earthkit_examples_file
 
 
@@ -40,6 +39,8 @@ class TestMetadataCache:
 
 @pytest.fixture
 def patch_metadata_cache(monkeypatch):
+    from earthkit.data.readers.grib.index import GribResourceManager
+
     def patched_make_metadata_cache(self):
         return TestMetadataCache()
 
