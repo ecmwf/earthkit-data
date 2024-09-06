@@ -9,6 +9,7 @@
 
 import logging
 import os
+import weakref
 from collections import defaultdict
 from functools import cached_property
 
@@ -250,7 +251,7 @@ class GribField(Field):
         self.path = path
         self._offset = offset
         self._length = length
-        self._manager = manager
+        self._manager = weakref.proxy(manager)
 
     @property
     def handle(self):
