@@ -251,7 +251,10 @@ class GribField(Field):
         self.path = path
         self._offset = offset
         self._length = length
-        self._manager = weakref.proxy(manager)
+        if manager is not None:
+            self._manager = weakref.proxy(manager)
+        else:
+            self._manager = None
 
     @property
     def handle(self):
