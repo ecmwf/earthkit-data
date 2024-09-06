@@ -39,12 +39,12 @@ class TestMetadataCache:
 
 @pytest.fixture
 def patch_metadata_cache(monkeypatch):
-    from earthkit.data.readers.grib.index import GribResourceManager
+    from earthkit.data.readers.grib.codes import GribField
 
     def patched_make_metadata_cache(self):
         return TestMetadataCache()
 
-    monkeypatch.setattr(GribResourceManager, "_make_metadata_cache", patched_make_metadata_cache)
+    monkeypatch.setattr(GribField, "_make_metadata_cache", patched_make_metadata_cache)
 
 
 def _check_diag(diag, ref):
@@ -66,9 +66,6 @@ def test_grib_cache_basic(handle_cache_size, patch_metadata_cache):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == 18
 
-        cache = ds._manager
-        assert cache
-
         # unique values
         ref_vals = ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
@@ -86,8 +83,8 @@ def test_grib_cache_basic(handle_cache_size, patch_metadata_cache):
         _check_diag(ds._diag(), ref)
 
         for i, f in enumerate(ds):
-            assert i in cache.field_cache, f"{i} not in cache"
-            assert id(f) == id(cache.field_cache[i]), f"{i} not the same object"
+            assert i in ds._field_manager.cache, f"{i} not in cache"
+            assert id(f) == id(ds._field_manager.cache[i]), f"{i} not the same object"
 
         _check_diag(ds._diag(), ref)
 
@@ -144,9 +141,6 @@ def test_grib_cache_basic_non_patched():
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == 18
 
-        cache = ds._manager
-        assert cache
-
         # unique values
         ref_vals = ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
@@ -163,8 +157,8 @@ def test_grib_cache_basic_non_patched():
         _check_diag(ds._diag(), ref)
 
         for i, f in enumerate(ds):
-            assert i in cache.field_cache, f"{i} not in cache"
-            assert id(f) == id(cache.field_cache[i]), f"{i} not the same object"
+            assert i in ds._field_manager.cache, f"{i} not in cache"
+            assert id(f) == id(ds._field_manager.cache[i]), f"{i} not the same object"
 
         _check_diag(ds._diag(), ref)
 
@@ -216,14 +210,11 @@ def test_grib_cache_options_1(patch_metadata_cache):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == 18
 
-        cache = ds._manager
-        assert cache
-
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
-        assert cache.field_cache is not None
-        assert cache.handle_cache is None
+        assert ds._field_manager.cache is not None
+        assert ds._handle_manager.cache is None
 
         ref = {
             "field_cache_size": 18,
@@ -238,8 +229,8 @@ def test_grib_cache_options_1(patch_metadata_cache):
         _check_diag(ds._diag(), ref)
 
         for i, f in enumerate(ds):
-            assert i in cache.field_cache, f"{i} not in cache"
-            assert id(f) == id(cache.field_cache[i]), f"{i} not the same object"
+            assert i in ds._field_manager.cache, f"{i} not in cache"
+            assert id(f) == id(ds._field_manager.cache[i]), f"{i} not the same object"
 
         _check_diag(ds._diag(), ref)
 
@@ -296,14 +287,11 @@ def test_grib_cache_options_2(patch_metadata_cache):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == 18
 
-        cache = ds._manager
-        assert cache
-
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
-        assert cache.field_cache is not None
-        assert cache.handle_cache is None
+        assert ds._field_manager.cache is not None
+        assert ds._handle_manager.cache is None
 
         ref = {
             "field_cache_size": 18,
@@ -318,8 +306,8 @@ def test_grib_cache_options_2(patch_metadata_cache):
         _check_diag(ds._diag(), ref)
 
         for i, f in enumerate(ds):
-            assert i in cache.field_cache, f"{i} not in cache"
-            assert id(f) == id(cache.field_cache[i]), f"{i} not the same object"
+            assert i in ds._field_manager.cache, f"{i} not in cache"
+            assert id(f) == id(ds._field_manager.cache[i]), f"{i} not the same object"
 
         _check_diag(ds._diag(), ref)
 
@@ -378,14 +366,11 @@ def test_grib_cache_options_3(patch_metadata_cache):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == 18
 
-        cache = ds._manager
-        assert cache
-
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
-        assert cache.field_cache is not None
-        assert cache.handle_cache is not None
+        assert ds._field_manager.cache is not None
+        assert ds._handle_manager.cache is not None
 
         ref = {
             "field_cache_size": 18,
@@ -401,8 +386,8 @@ def test_grib_cache_options_3(patch_metadata_cache):
         _check_diag(ds._diag(), ref)
 
         for i, f in enumerate(ds):
-            assert i in cache.field_cache, f"{i} not in cache"
-            assert id(f) == id(cache.field_cache[i]), f"{i} not the same object"
+            assert i in ds._field_manager.cache, f"{i} not in cache"
+            assert id(f) == id(ds._field_manager.cache[i]), f"{i} not the same object"
 
         _check_diag(ds._diag(), ref)
 
@@ -458,9 +443,6 @@ def test_grib_cache_options_4(patch_metadata_cache):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == 18
 
-        cache = ds._manager
-        assert cache
-
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
@@ -477,8 +459,8 @@ def test_grib_cache_options_4(patch_metadata_cache):
 
         _check_diag(ds._diag(), ref)
 
-        assert cache.field_cache is None
-        assert cache.handle_cache is None
+        assert ds._field_manager.cache is None
+        assert ds._handle_manager.cache is None
 
         # metadata object is not decoupled from the field object
         md = ds[0].metadata()
@@ -552,9 +534,6 @@ def test_grib_cache_options_5(patch_metadata_cache):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == 18
 
-        cache = ds._manager
-        assert cache
-
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
@@ -571,8 +550,8 @@ def test_grib_cache_options_5(patch_metadata_cache):
 
         _check_diag(ds._diag(), ref)
 
-        assert cache.field_cache is None
-        assert cache.handle_cache is None
+        assert ds._field_manager.cache is None
+        assert ds._handle_manager.cache is None
 
         # metadata object is not decoupled from the field object
         md = ds[0].metadata()
@@ -648,9 +627,6 @@ def test_grib_cache_options_6(patch_metadata_cache):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
         assert len(ds) == 18
 
-        cache = ds._manager
-        assert cache
-
         # unique values
         ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
 
@@ -667,8 +643,8 @@ def test_grib_cache_options_6(patch_metadata_cache):
 
         _check_diag(ds._diag(), ref)
 
-        assert cache.field_cache is None
-        assert cache.handle_cache is not None
+        assert ds._field_manager.cache is None
+        assert ds._handle_manager.cache is not None
 
         # metadata object is not decoupled from the field object
         md = ds[0].metadata()
@@ -735,9 +711,6 @@ def test_grib_cache_use_kwargs_1():
 
     ds = from_source("file", earthkit_examples_file("tuv_pl.grib"), **_kwargs)
     assert len(ds) == 18
-
-    cache = ds._manager
-    assert cache
 
     # unique values
     ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
