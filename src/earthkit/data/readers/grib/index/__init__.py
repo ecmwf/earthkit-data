@@ -309,9 +309,6 @@ class GribHandleManager:
     def _handle_created(self):
         self.handle_create_count += 1
 
-    def _make_metadata_cache(self):
-        return dict()
-
     def diag(self):
         r = defaultdict(int)
         r["grib_handle_policy"] = self.policy
