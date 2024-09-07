@@ -245,18 +245,19 @@ class GribField(Field):
 
     _handle = None
 
-    def __init__(self, path, offset, length, backend, manager=None):
+    def __init__(self, path, offset, length, backend, handle_manager=None, use_metadata_cache=False):
         super().__init__(backend)
         self.path = path
         self._offset = offset
         self._length = length
-        self._manager = manager
+        self._handle_manager = handle_manager
+        self._use_metadata_cache = use_metadata_cache
 
     @property
     def handle(self):
         r""":class:`CodesHandle`: Get an object providing access to the low level GRIB message structure."""
-        if self._manager is not None:
-            handle = self._manager.handle(self, self._create_handle)
+        if self._handle_manager is not None:
+            handle = self._handle_manager.handle(self, self._create_handle)
             if handle is None:
                 raise RuntimeError(f"Could not get a handle for offset={self.offset} in {self.path}")
             return handle
@@ -282,12 +283,13 @@ class GribField(Field):
 
     @cached_property
     def _metadata(self):
-        cache = False
-        if self._manager is not None:
-            cache = self._manager.use_grib_metadata_cache
-            if cache:
-                cache = self._manager._make_metadata_cache()
+        cache = self._use_metadata_cache
+        if cache:
+            cache = self._make_metadata_cache()
         return GribFieldMetadata(self, cache=cache)
+
+    def _make_metadata_cache(self):
+        return dict()
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (
