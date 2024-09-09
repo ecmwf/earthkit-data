@@ -69,11 +69,14 @@ optional-dependencies.ci = [
   "array-api-compat",
   "torch",
 ]
+optional-dependencies.covjsonkit = [
+  "covjsonkit>=0.0.19",
+]
 optional-dependencies.dev = [
   "cartopy",
   "cdsapi>=0.7.1",
-  "earthkit-data-demo-source",
   "covjsonkit>=0.0.19",
+  "earthkit-data-demo-source",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
   "geopandas",
@@ -87,9 +90,6 @@ optional-dependencies.dev = [
   "pytest-cov",
   "pytest-forked",
   "pytest-timeout",
-]
-optional-dependencies.covjsonkit = [
-  "covjsonkit>=0.0.19",
 ]
 optional-dependencies.ecmwf-opendata = [
   "ecmwf-opendata>=0.3.3",
