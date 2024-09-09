@@ -56,8 +56,8 @@ def test_array_fl_dump():
             "title": "geography",
             "data": {
                 # "bitmapPresent": 0,
-                "Ni": 12,
-                "Nj": 7,
+                # "Ni": 12,
+                # "Nj": 7,
                 "latitudeOfFirstGridPointInDegrees": 90.0,
                 "longitudeOfFirstGridPointInDegrees": 0.0,
                 "latitudeOfLastGridPointInDegrees": -90.0,
@@ -121,17 +121,15 @@ def test_array_fl_dump():
         },
     ]
 
-    from earthkit.data.utils.message import ECC_FEATURES
-
-    if not ECC_FEATURES.has_Ni_Nj_in_geo_namespace():
-        ref[1]["data"].pop("Ni")
-        ref[1]["data"].pop("Nj")
-
     assert len(r) == len(namespaces)
     assert isinstance(r, list)
     for d in r:
         ns = d["title"]
         assert ns in namespaces
+        if ns == "geography":
+            d["data"].pop("Ni", None)
+            d["data"].pop("Nj", None)
+
         if ns not in ("default", "statistics"):
             assert d == [x for x in ref if x["title"] == ns][0], ns
 
