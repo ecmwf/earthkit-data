@@ -2,6 +2,15 @@ Version 0.10 Updates
 /////////////////////////
 
 
+Version 0.10.1
+===============
+
+Fixes
+++++++
+
+- Fixed memory leak in GRIB field metadata cache
+
+
 Version 0.10.0
 ===============
 
