@@ -329,10 +329,7 @@ class DatasetBuilder:
     def __init__(
         self,
         ds,
-        # flatten_values=False,
         profile="mars",
-        # dtype=None,
-        # array_module=numpy,
         **kwargs,
     ):
         """
@@ -347,11 +344,7 @@ class DatasetBuilder:
         """
         self.ds = ds
         self.kwargs = kwargs
-
-        # self.flatten_values = flatten_values
         self.profile_name = profile
-        # self.dtype = dtype
-        # self.array_module = array_module
         self.grids = {}
 
     @cached_property
@@ -372,7 +365,7 @@ class DatasetBuilder:
         # print(f"{profile.remapping=}")
 
         # create a new fieldlist and ensure all the required metadata is kept in memory
-        ds = WrappedFieldList(self.ds, self.profile.index_keys, remapping=remapping)
+        ds = WrappedFieldList(self.ds, keys=self.profile.index_keys, remapping=remapping)
         # print(f"{remapping=}")
         # print(f"ds: {ds.indices()}")
 

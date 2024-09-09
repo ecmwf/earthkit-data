@@ -54,18 +54,24 @@ def unique_values(ds, names, skip_missing=True):
 
 
 class WrappedFieldList(FieldList):
-    def __init__(self, fieldlist, keys, remapping=None):
+    def __init__(self, fieldlist, keys=None, db=None, remapping=None):
         super().__init__()
 
         self.ds = fieldlist
-        self.db = dict()
+        if db is not None:
+            self.db = db
+        else:
+            self.db = dict()
         # self.remapping = build_remapping(remapping)
         self.remapping = remapping
         if self.remapping is not None:
             self.remapping = build_remapping(remapping)
 
-        self._parse(keys)
-        self._parse(keys)
+        if db is not None:
+            self.db = db
+        else:
+            self.db = dict()
+            self._parse(keys)
 
     def _parse(self, keys):
         indices = defaultdict(set)
@@ -82,11 +88,11 @@ class WrappedFieldList(FieldList):
 
         self.db = {k: sorted(list(v)) for k, v in indices.items()}
 
-    def index(self, key, squeeze=True):
+    def index(self, key):
         # print(f"called {key=}")
         if key not in self.db:
             # print(f"Key={key} not found in local metadata")
-            return self.ds.index(key, squeeze=squeeze)
+            return self.ds.index(key)
         return self.db[key]
 
     def __getitem__(self, n):
