@@ -110,7 +110,7 @@ except Exception:
     NO_FDB = True
 
 NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
-NO_ECCOVJSON = not modules_installed("eccovjson")
+NO_COVJSONKIT = not modules_installed("covjsonkit")
 NO_PYTORCH = not modules_installed("torch")
 NO_CUPY = not modules_installed("cupy")
 if not NO_CUPY:
