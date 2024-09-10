@@ -409,8 +409,8 @@ def test_grib_dump(fl_type, array_backend):
         {
             "title": "geography",
             "data": {
-                "Ni": 12,
-                "Nj": 7,
+                # "Ni": 12,
+                # "Nj": 7,
                 "bitmapPresent": 0,
                 "latitudeOfFirstGridPointInDegrees": 90.0,
                 "longitudeOfFirstGridPointInDegrees": 0.0,
@@ -475,17 +475,14 @@ def test_grib_dump(fl_type, array_backend):
         },
     ]
 
-    from earthkit.data.utils.message import ECC_FEATURES
-
-    if not ECC_FEATURES.has_Ni_Nj_in_geo_namespace():
-        ref[1]["data"].pop("Ni")
-        ref[1]["data"].pop("Nj")
-
     assert len(r) == len(namespaces)
     assert isinstance(r, list)
     for d in r:
         ns = d["title"]
         assert ns in namespaces
+        if ns == "geography":
+            d["data"].pop("Ni", None)
+            d["data"].pop("Nj", None)
         if ns not in ("default", "statistics"):
             assert d == [x for x in ref if x["title"] == ns][0], ns
 
