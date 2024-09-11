@@ -18,9 +18,7 @@ LOG = logging.getLogger(__name__)
 class Splitter(metaclass=ABCMeta):
     @staticmethod
     def grids(ds):
-        from .fieldlist import unique_values
-
-        v = unique_values(ds, ["md5GridSection"])
+        v = ds.unique_values(["md5GridSection"])
         return v["md5GridSection"]
 
     @abstractmethod
@@ -58,10 +56,7 @@ class DimSplitter(Splitter):
         grids = self.grids(ds)
         from itertools import product
 
-        from .fieldlist import unique_values
-
-        dims = unique_values(ds, self.split_dims)
-        # dims = {k: ds.index(k) for k in self.split_dims}
+        dims = ds.unique_values(self.split_dims)
         if len(grids) > 1:
             dims["md5GridSection"] = grids
 

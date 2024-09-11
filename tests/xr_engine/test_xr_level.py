@@ -31,9 +31,13 @@ from xr_engine_fixtures import compare_coords  # noqa: E402
             {"profile": "mars", "level_dim_mode": "level"},
             {"levelist": [300, 400, 500, 700, 850, 1000]},
         ),
+        (
+            {"profile": "mars", "level_dim_mode": "level_and_type"},
+            {"level_and_type": ["1000pl", "300pl", "400pl", "500pl", "700pl", "850pl"]},
+        ),
     ],
 )
-def test_xr_level(kwargs, dims):
+def test_xr_level_dim(kwargs, dims):
     ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_regular_ll.grib"))
 
     ds = ds_ek.to_xarray(**kwargs)

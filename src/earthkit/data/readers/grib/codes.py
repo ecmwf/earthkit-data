@@ -274,21 +274,6 @@ class GribField(Field):
     def _values(self, dtype=None):
         return self.handle.get_values(dtype=dtype)
 
-    def unload(self):
-        pass
-        if self._handle is not None:
-            # import gc
-
-            self.__metadata = None
-            # gc.collect()
-            # print(f"REF={gc.get_referrers(self._handle)}")
-            # try:
-            #     eccodes.codes_release(self._handle._handle)
-            # except:
-            #     pass
-            self._handle = None
-            # gc.collect()
-
     @property
     def offset(self):
         r"""number: Gets the offset (in bytes) of the GRIB field within the GRIB file."""

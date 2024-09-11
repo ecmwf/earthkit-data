@@ -149,8 +149,8 @@ class TensorGrid:
             else:
                 raise ValueError(f"Unsupported field shape {field_shape}")
 
-        if hasattr(field, "unload"):
-            field.unload()
+        # if hasattr(field, "unload"):
+        #     field.unload()
 
         for k, v in coords.items():
             assert k in coords_dim, f"{k=}, {coords_dim=}"

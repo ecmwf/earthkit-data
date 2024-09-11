@@ -46,9 +46,9 @@ class VariableBuilder:
 
         # TODO: do we need a strict mode here? The extra cost has to be justified
         if strict:
-            from .fieldlist import unique_values
+            # from .fieldlist import unique_values
 
-            attrs = unique_values(self.tensor.source, attr_keys)
+            attrs = self.tensor.source.unique_values(attr_keys)
         else:
             first = self.tensor.source[0]
             attrs = {k: [v] for k, v in first._attributes(attr_keys, default=None).items()}
@@ -291,10 +291,12 @@ class TensorBackendBuilder:
         # print(f"prepare_tensor: {name=} {dims=}")
         # First check if the dims/coords are consistent with the tensors of the previous variables
 
-        from .fieldlist import unique_values
+        # from .fieldlist import unique_values
 
-        vals = unique_values(ds, [d.key for d in dims])
+        # remapping = self.profile.remapping.build()
+        vals = ds.unique_values([d.key for d in dims])
 
+        # print("unique_values", vals)
         # print("ensure_dims", self.profile.dims.ensure_dims)
 
         for d in dims:

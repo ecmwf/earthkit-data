@@ -348,7 +348,6 @@ class GribMetadata(Metadata):
             _kwargs["default"] = default
 
         key = _key_name(key)
-
         # special case when  "shortName" is "~".
         v = self._handle.get(key, ktype=astype, **_kwargs)
         if key == "shortName" and v == "~":

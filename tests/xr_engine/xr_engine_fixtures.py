@@ -56,7 +56,7 @@ def compare_coords(ds, ref_coords):
         assert k in ds.sizes, f"{k=} not in {ds.sizes}"
         assert ds.sizes[k] == len(v), f"{k=} {ds.sizes[k]} != {len(v)}"
         if isinstance(v[0], str):
-            assert ds.coords[k].values == v
+            assert ds.coords[k].values.tolist() == v
         elif hasattr(v[0], "dtype") and np.issubdtype(v[0].dtype, np.datetime64):
             assert len(ds.coords[k].values) == len(v)
             for i, vv in enumerate(v):
