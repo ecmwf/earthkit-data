@@ -39,6 +39,7 @@ class ArrayBackendManager:
 
     def find_for_array(self, v, guess=None):
         self._load()
+
         if guess is not None and guess.is_native_array(v):
             return guess
 
@@ -229,6 +230,9 @@ def get_backend(array, guess=None, strict=True):
 
     if guess is not None:
         guess = ensure_backend(guess)
+
+    if isinstance(array, list):
+        return guess
 
     b = _MANAGER.find_for_array(array, guess=guess)
     if strict and guess is not None and b is not guess:

@@ -15,6 +15,7 @@ import numpy as np
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.geography import Geography
+from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
@@ -96,6 +97,13 @@ class XArrayMetadata(RawMetadata):
     ]
     MARS_KEYS = ["param", "step", "levelist", "levtype", "number", "date", "time"]
 
+    CUSTOM_ACCESSOR = MetadataAccessor(
+        {
+            "valid_datetime": ["valid_datetime", "valid_time"],
+            "base_datetime": ["base_datetime", "forecast_reference_time", "base_time"],
+        }
+    )
+
     def __init__(self, field):
         if not isinstance(field, XArrayField):
             raise TypeError(f"XArrayMetadata: expected field type XArrayField, got {type(field)}")
@@ -174,12 +182,12 @@ class XArrayMetadata(RawMetadata):
             time=self.get("time", None),
         )
 
-    def _base_datetime(self):
-        v = self._valid_datetime()
+    def base_datetime(self):
+        v = self.valid_datetime()
         if v is not None:
             return v - timedelta(hours=self.get("hour", 0))
 
-    def _valid_datetime(self):
+    def valid_datetime(self):
         if self.time is not None:
             return to_datetime(self.time)
 

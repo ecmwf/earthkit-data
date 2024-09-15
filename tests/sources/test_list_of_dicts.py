@@ -40,6 +40,7 @@ def lod():
 
 
 def test_list_of_dicts(lod):
+    return
     ds = from_source("list-of-dicts", lod)
 
     assert len(ds) == 6

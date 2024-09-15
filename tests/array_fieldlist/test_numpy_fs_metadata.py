@@ -80,7 +80,7 @@ def test_array_fl_metadata_keys():
         break
 
     items = md.items()
-    assert len(items) == md_num
+    assert len(list(items)) == md_num
 
     for k, v in md.items():
         assert isinstance(k, str)
