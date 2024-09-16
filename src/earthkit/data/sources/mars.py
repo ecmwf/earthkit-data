@@ -25,6 +25,10 @@ from .ecmwf_api import MARSAPIKeyPrompt
 LOG = logging.getLogger(__name__)
 
 
+def _no_log(msg):
+    pass
+
+
 class StandaloneMarsClient:
     EXE = "/usr/local/bin/mars"
 
@@ -43,11 +47,21 @@ class StandaloneMarsClient:
                 f.write(req_str + "\n")
             LOG.debug(f"Sending Mars request: '{req_str}'")
 
+            log = {}
+            if log is None:
+                log = {"stdout": subprocess.DEVNULL}
+            elif self.log and isinstance(self.log, dict):
+                log = self.log
+
             subprocess.run(
-                [self.EXE, filename],
-                env=dict(os.environ, MARS_AUTO_SPLIT_BY_DATES="1"),
-                check=True,
+                [self.EXE, filename], env=dict(os.environ, MARS_AUTO_SPLIT_BY_DATES="1"), check=True, **log
             )
+
+    @staticmethod
+    def enabled():
+        if SETTINGS.get("use-standalone-mars-client-when-available"):
+            return os.path.exists(StandaloneMarsClient.EXE)
+        return False
 
 
 class MarsRetriever(ECMWFApi):
@@ -61,17 +75,24 @@ class MarsRetriever(ECMWFApi):
             prompt.check()
 
             try:
-                return ecmwfapi.ECMWFService("mars")
+                return self._make_service()
             except Exception as e:
                 if ".ecmwfapirc" in str(e) or not prompt.env_configured():
                     LOG.warning(e)
                     LOG.exception(f"Could not load ecmwf api (mars) client. {e}")
                     prompt.ask_user_and_save()
-                    return ecmwfapi.ECMWFService("mars")
-
+                    return self._make_service()
                 raise
         else:
-            return ecmwfapi.ECMWFService("mars")
+            return self._make_service()
+
+    def _make_service(self):
+        kwargs = {}
+        if self.log is None:
+            kwargs = {"log": _no_log}
+        elif self.log != "default":
+            kwargs = {"log": self.log}
+        return ecmwfapi.ECMWFService("mars", **kwargs)
 
 
 source = MarsRetriever

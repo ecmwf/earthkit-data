@@ -13,6 +13,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.testing import NO_MARS
+from earthkit.data.testing import NO_MARS_API
 
 
 @pytest.mark.long_test
@@ -78,6 +79,63 @@ def test_mars_grib_expect_any_2():
             grid=[2, 2],
             date="1054-05-10",
         )
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_MARS, reason="No access to MARS")
+def test_mars_grib_log_1():
+    s = from_source(
+        "mars",
+        prompt=False,
+        log="default",
+        param=["2t", "msl"],
+        levtype="sfc",
+        area=[50, -50, 20, 50],
+        grid=[2, 2],
+        date="2023-05-10",
+    )
+    assert len(s) == 2
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_MARS, reason="No access to MARS")
+def test_mars_grib_log_2():
+    s = from_source(
+        "mars",
+        prompt=False,
+        log=None,
+        param=["2t", "msl"],
+        levtype="sfc",
+        area=[50, -50, 20, 50],
+        grid=[2, 2],
+        date="2023-05-10",
+    )
+    assert len(s) == 2
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_MARS_API, reason="No access to MARS")
+def test_mars_grib_log_3():
+    res = 0
+
+    def _my_log(msg):
+        nonlocal res
+        res = 1
+
+    s = from_source(
+        "mars",
+        prompt=False,
+        log=_my_log,
+        param=["2t", "msl"],
+        levtype="sfc",
+        area=[50, -50, 20, 50],
+        grid=[2, 2],
+        date="2023-05-10",
+    )
+    assert len(s) == 2
 
 
 if __name__ == "__main__":
