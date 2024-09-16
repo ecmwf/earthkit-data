@@ -28,7 +28,6 @@ LOG = logging.getLogger(__name__)
 def _no_log(msg):
     pass
 
-
 class StandaloneMarsClient:
     EXE = "/usr/local/bin/mars"
 
@@ -52,9 +51,11 @@ class StandaloneMarsClient:
 
             log = {}
             if self.log is None:
-                log = {"stdout": subprocess.DEVNULL}
+                log = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
             elif self.log and isinstance(self.log, dict):
                 log = self.log
+            elif self.log != "default":
+                raise ValueError(f"Unsupported log type={type(self.log)}")
 
             subprocess.run(
                 [self.EXE, filename], env=dict(os.environ, MARS_AUTO_SPLIT_BY_DATES="1"), check=True, **log
@@ -93,8 +94,11 @@ class MarsRetriever(ECMWFApi):
         kwargs = {}
         if self.log is None:
             kwargs = {"log": _no_log}
-        elif self.log != "default":
+        elif callable(self.log):
             kwargs = {"log": self.log}
+        elif self.log != "default":
+            raise ValueError(f"Unsupported log type={type(self.log)}")
+        
         return ecmwfapi.ECMWFService("mars", **kwargs)
 
 
