@@ -9,38 +9,65 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+import os
+import sys
 
 import numpy as np
 import pytest
 
-from earthkit.data import from_source
+# from earthkit.data import from_source
+# from earthkit.data.indexing.fieldlist import FieldArray
+# from earthkit.data.sources.array_list import ArrayField
 
 
-@pytest.fixture
-def lod_distinct_ll():
-    prototype = {
-        "latitudes": [-10.0, 0.0, 10.0],
-        "longitudes": [20, 40.0],
-        "values": [1, 2, 3, 4, 5, 6],
-        "valid_datetime": "2018-08-01T09:00:00Z",
-    }
-    return [
-        {"param": "t", "levelist": 500, **prototype},
-        {"param": "t", "levelist": 850, **prototype},
-        {"param": "u", "levelist": 500, **prototype},
-        {"param": "u", "levelist": 850, **prototype},
-        {"param": "d", "levelist": 850, **prototype},
-        {"param": "d", "levelist": 600, **prototype},
-    ]
+here = os.path.dirname(__file__)
+sys.path.insert(0, here)
+# from conftest import *
+
+from conftest import build_lod_fieldlist  # noqa: E402
 
 
-def test_lod_distinct_ll(lod_distinct_ll):
-    return
-    ds = from_source("list-of-dicts", lod_distinct_ll)
+@pytest.mark.parametrize("lod", ["lod_distinct_ll", "lod_distinct_ll_list_values"])
+@pytest.mark.parametrize("mode", ["list-of-dicts", "loop"])
+def test_lod_core(lod, mode, request):
+    ds = build_lod_fieldlist(request.getfixturevalue(lod), mode)
 
     assert len(ds) == 6
     ref = [("t", 500), ("t", 850), ("u", 500), ("u", 850), ("d", 850), ("d", 600)]
     assert ds.metadata("param", "levelist") == ref
+    assert ds.metadata("shortName", "level") == ref
+
+    assert ds[0].shape == (3, 2)
+
+    lat_ref = np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]])
+    lon_ref = np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]])
+
+    ll = ds[0].to_latlon()
+    lat = ll["lat"]
+    lon = ll["lon"]
+    assert np.allclose(lat, lat_ref)
+    assert np.allclose(lon, lon_ref)
+
+    val_ref = [[1, 2], [3, 4], [5, 6]]
+    print(ds[0].to_numpy())
+    print(ds.to_numpy())
+
+    assert ds[0].to_numpy().shape == (3, 2)
+    assert np.allclose(ds[0].to_numpy(), np.array(val_ref))
+
+    assert ds.to_numpy().shape == (6, 3, 2)
+    assert np.allclose(ds.to_numpy(), np.array([val_ref for _ in range(6)]))
+
+
+@pytest.mark.parametrize("mode", ["list-of-dicts", "loop"])
+def test_lod_ll(lod_distinct_ll, mode):
+    ds = build_lod_fieldlist(lod_distinct_ll, mode)
+
+    assert len(ds) == 6
+    ref = [("t", 500), ("t", 850), ("u", 500), ("u", 850), ("d", 850), ("d", 600)]
+    assert ds.metadata("param", "levelist") == ref
+    assert ds.metadata("shortName", "level") == ref
 
     assert ds[0].shape == (3, 2)
 
@@ -69,12 +96,10 @@ def test_lod_distinct_ll(lod_distinct_ll):
     with pytest.raises(AssertionError):
         ds[0].resolution
 
-    # assert ds[0].metadata("step") == "0"
-
-    # assert ds[0].datetime() == {
-    #     "base_time": datetime.datetime(2018, 8, 1, 9, 0),
-    #     "valid_time": datetime.datetime(2018, 8, 1, 9, 0),
-    # }
+    assert ds[0].datetime() == {
+        "base_time": None,
+        "valid_time": datetime.datetime(2018, 8, 1, 9, 0),
+    }
 
 
 if __name__ == "__main__":

@@ -44,6 +44,12 @@ class ArrayField(Field):
         if isinstance(metadata, dict):
             metadata = UserMetadata(metadata, values=array)
 
+        if array_backend is None:
+            array_backend = get_backend(array, guess=array_backend, strict=True)
+
+        if array_backend is None:
+            raise ValueError("array_backend must be provided")
+
         super().__init__(array_backend, raw_values_backend=array_backend, metadata=metadata)
         self._array = array
 

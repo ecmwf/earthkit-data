@@ -71,10 +71,9 @@ def make_geography(metadata):
                         f"shape! lat={lat.shape}, lon={lon.shape}, val={val.shape}"
                     )
                 )
+            if lat.ndim == 2:
+                return StructuredGeography(metadata)
             return UserGeography(metadata)
-            # if lat.ndim == 2:
-            #     return StructuredGeography(metadata)
-            # return UnstructuredGeography(metadata)
         raise ValueError("Unsupported metadata")
     else:
         raise
@@ -145,6 +144,10 @@ class UserGeography(Geography):
 
     def mars_grid(self):
         raise NotImplementedError("mars_grid is not implemented for this geography")
+
+
+class StructuredGeography(UserGeography):
+    pass
 
 
 class RegularDistinctLLGeography(UserGeography):
