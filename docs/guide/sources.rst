@@ -682,9 +682,9 @@ mars
 
     - `web API`_ based access:
 
-      - "default": the built-in logging of `web API`_ is used
+      - "default": the built-in logging of `web API`_ is used (the log is written to stdout)
       - None: turn off logging
-      - callable:  the log is written to the specified callable. The callable should accept a single argument, a string with the log message.
+      - callable: the log is written to the specified callable. The callable should accept a single argument, a string with the log message.
 
       .. code-block:: python
 
@@ -700,8 +700,8 @@ mars
 
     - direct MARS access:
 
-      - "default": log is written to the standard output
-      - None: turn off logging for standard output. Standard error is still logged.
+      - "default": log is written to stdout
+      - None: turn off logging
       - dict specifying the "stdout" or/and the "stderr" kwargs for Pythons's ``subrocess.run()`` method
 
   :type log: str, None, callable, dict

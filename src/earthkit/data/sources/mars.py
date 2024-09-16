@@ -28,6 +28,7 @@ LOG = logging.getLogger(__name__)
 def _no_log(msg):
     pass
 
+
 class StandaloneMarsClient:
     EXE = "/usr/local/bin/mars"
 
@@ -98,7 +99,7 @@ class MarsRetriever(ECMWFApi):
             kwargs = {"log": self.log}
         elif self.log != "default":
             raise ValueError(f"Unsupported log type={type(self.log)}")
-        
+
         return ecmwfapi.ECMWFService("mars", **kwargs)
 
 
