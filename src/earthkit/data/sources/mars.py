@@ -32,7 +32,10 @@ def _no_log(msg):
 class StandaloneMarsClient:
     EXE = "/usr/local/bin/mars"
 
-    def execute(self, request, target):
+    def __init__(self, log="default"):
+        self.log = log
+
+    def execute(self, request, target, log=None):
         req = ["retrieve,"]
 
         for k, v in request.items():
@@ -48,7 +51,7 @@ class StandaloneMarsClient:
             LOG.debug(f"Sending Mars request: '{req_str}'")
 
             log = {}
-            if log is None:
+            if self.log is None:
                 log = {"stdout": subprocess.DEVNULL}
             elif self.log and isinstance(self.log, dict):
                 log = self.log
@@ -68,7 +71,7 @@ class MarsRetriever(ECMWFApi):
     def service(self):
         if SETTINGS.get("use-standalone-mars-client-when-available"):
             if os.path.exists(StandaloneMarsClient.EXE):
-                return StandaloneMarsClient()
+                return StandaloneMarsClient(self.log)
 
         if self.prompt:
             prompt = MARSAPIKeyPrompt()
