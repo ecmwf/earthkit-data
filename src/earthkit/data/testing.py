@@ -95,6 +95,10 @@ NO_MARS_DIRECT = not StandaloneMarsClient.enabled()
 NO_MARS_API = not (NO_MARS_DIRECT and os.path.exists(os.path.expanduser("~/.ecmwfapirc")))
 NO_MARS = NO_MARS_API and NO_MARS_DIRECT
 
+HAS_MARS = not NO_MARS
+HAS_MARS_API = not NO_MARS_API
+HAS_MARS_DIRECT = not NO_MARS_DIRECT
+
 NO_CDS = not os.path.exists(os.path.expanduser("~/.cdsapirc"))
 NO_HDA = not os.path.exists(os.path.expanduser("~/.hdarc"))
 IN_GITHUB = os.environ.get("GITHUB_WORKFLOW") is not None
