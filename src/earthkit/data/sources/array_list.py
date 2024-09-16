@@ -46,7 +46,14 @@ class ArrayField(Field):
             return self.array_backend.array_ns.astype(self._array, dtype, copy=False)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}()"
+        return self.__class__.__name__ + "(%s,%s,%s,%s,%s,%s)" % (
+            self._metadata.get("shortName", None),
+            self._metadata.get("levelist", None),
+            self._metadata.get("date", None),
+            self._metadata.get("time", None),
+            self._metadata.get("step", None),
+            self._metadata.get("number", None),
+        )
 
     def write(self, f, **kwargs):
         r"""Write the field to a file object.
