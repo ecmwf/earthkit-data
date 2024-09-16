@@ -144,7 +144,7 @@ def test_mars_grib_log_3():
 @pytest.mark.download
 @pytest.mark.skipif(NO_MARS or (NO_MARS_DIRECT and not NO_MARS_API), reason="No access to MARS")
 def test_mars_grib_log_4():
-    with temp_file as tmp:
+    with temp_file() as tmp:
         with open(tmp, "w") as f:
             s = from_source(
                 "mars",
