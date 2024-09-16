@@ -18,6 +18,7 @@ from earthkit.data import from_object
 from earthkit.data import from_source
 from earthkit.data.readers.text import TextReader
 from earthkit.data.sources.empty import EmptySource
+from earthkit.data.sources.mars import StandaloneMarsClient
 
 LOG = logging.getLogger(__name__)
 
@@ -90,7 +91,10 @@ def modules_installed(*modules):
     return True
 
 
-NO_MARS = not os.path.exists(os.path.expanduser("~/.ecmwfapirc"))
+NO_MARS_DIRECT = not StandaloneMarsClient.enabled()
+NO_MARS_API = not (NO_MARS_DIRECT and os.path.exists(os.path.expanduser("~/.ecmwfapirc")))
+NO_MARS = NO_MARS_API and NO_MARS_DIRECT
+
 NO_CDS = not os.path.exists(os.path.expanduser("~/.cdsapirc"))
 NO_HDA = not os.path.exists(os.path.expanduser("~/.hdarc"))
 IN_GITHUB = os.environ.get("GITHUB_WORKFLOW") is not None
