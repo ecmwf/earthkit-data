@@ -108,7 +108,6 @@ class XArrayMetadata(RawMetadata):
         if not isinstance(field, XArrayField):
             raise TypeError(f"XArrayMetadata: expected field type XArrayField, got {type(field)}")
         self._field = field
-        self._geo = None
 
         data_array = field._ds[field.variable]
         d = dict(data_array.attrs)
@@ -156,11 +155,9 @@ class XArrayMetadata(RawMetadata):
             return self
         return None
 
-    @property
+    @cached_property
     def geography(self):
-        if self._geo is None:
-            self._geo = XArrayFieldGeography(self, self._field._ds, self._field.variable)
-        return self._geo
+        return XArrayFieldGeography(self, self._field._ds, self._field.variable)
 
     def as_namespace(self, namespace=None):
         if not isinstance(namespace, str) and namespace is not None:
@@ -191,14 +188,18 @@ class XArrayMetadata(RawMetadata):
         if self.time is not None:
             return to_datetime(self.time)
 
-    def _get(self, key, **kwargs):
+    def _get(self, key, default=None, raise_on_missing=False, **kwargs):
         if key.startswith("mars."):
             key = key[5:]
             if key not in self.MARS_KEYS:
-                if kwargs.get("raise_on_missing", False):
+                if raise_on_missing:
                     raise KeyError(f"Invalid key '{key}' in namespace='mars'")
                 else:
-                    return kwargs.get("default", None)
+                    return default
+                # if kwargs.get("raise_on_missing", False):
+                #     raise KeyError(f"Invalid key '{key}' in namespace='mars'")
+                # else:
+                #     return kwargs.get("default", None)
 
         def _key_name(key):
             if key == "param":
@@ -207,7 +208,7 @@ class XArrayMetadata(RawMetadata):
                 key = "level"
             return key
 
-        return super()._get(_key_name(key), **kwargs)
+        return super()._get(_key_name(key), default=default, raise_on_missing=raise_on_missing, **kwargs)
 
 
 class XArrayField(Field):

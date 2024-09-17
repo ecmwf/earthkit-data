@@ -327,7 +327,7 @@ def test_grib_metadata_type_qualifier(fl_type, array_backend):
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_metadata_astype(fl_type, array_backend):
+def test_grib_metadata_astype_core(fl_type, array_backend):
     f = load_grib_data("tuv_pl.grib", fl_type, array_backend)[0:4]
 
     # to str
