@@ -2,6 +2,15 @@ Version 0.10 Updates
 /////////////////////////
 
 
+Version 0.10.2
+===============
+
+Fixes
+++++++
+
+- Fixed issue when generating output with reduced Gaussian surface GRIB data did not work
+
+
 Version 0.10.1
 ===============
 

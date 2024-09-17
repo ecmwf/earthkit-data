@@ -343,9 +343,10 @@ class GribCoder:
             else:
                 levtype = "sfc"
 
-        if octahedral:
+        if octahedral or levtype == "sfc":
             return f"reduced_gg_{levtype}_grib{edition}"
         else:
+
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
 
 
