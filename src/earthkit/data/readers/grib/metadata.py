@@ -306,7 +306,6 @@ class GribMetadata(Metadata):
     __handle_type = None
 
     def __init__(self, **kwargs):
-        self._geo = None
         super().__init__(**kwargs)
 
     @staticmethod
@@ -359,9 +358,6 @@ class GribMetadata(Metadata):
         if key == "shortName" and v == "~":
             v = self._handle.get("paramId", ktype=str, **_kwargs)
         return v
-
-    def _is_custom_key(self, key):
-        return key in self.CUSTOM_KEYS
 
     def _copy_key(self, target_handle, key):
         v_ori = self._handle.get(key, default=None)
@@ -426,11 +422,9 @@ class GribMetadata(Metadata):
             namespace = None
         return self._handle.as_namespace(namespace)
 
-    @property
+    @cached_property
     def geography(self):
-        if self._geo is None:
-            self._geo = GribFieldGeography(self)
-        return self._geo
+        return GribFieldGeography(self)
 
     def base_datetime(self):
         return self._datetime("dataDate", "dataTime")

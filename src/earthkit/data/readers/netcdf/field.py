@@ -108,7 +108,6 @@ class XArrayMetadata(RawMetadata):
         if not isinstance(field, XArrayField):
             raise TypeError(f"XArrayMetadata: expected field type XArrayField, got {type(field)}")
         self._field = field
-        self._geo = None
 
         data_array = field._ds[field.variable]
         d = dict(data_array.attrs)
@@ -156,11 +155,9 @@ class XArrayMetadata(RawMetadata):
             return self
         return None
 
-    @property
+    @cached_property
     def geography(self):
-        if self._geo is None:
-            self._geo = XArrayFieldGeography(self, self._field._ds, self._field.variable)
-        return self._geo
+        return XArrayFieldGeography(self, self._field._ds, self._field.variable)
 
     def as_namespace(self, namespace=None):
         if not isinstance(namespace, str) and namespace is not None:
