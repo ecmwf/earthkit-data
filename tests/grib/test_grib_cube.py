@@ -10,9 +10,11 @@
 #
 
 import numpy as np
+import pytest
 
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_test_data_file
 
 
 def test_grib_cube():
@@ -122,6 +124,15 @@ def test_grib_cubelet():
     for i, cb in enumerate(c.iterate_cubelets(reading_chunks)):
         assert cb.to_numpy().shape == (7, 12)
         assert np.isclose(cb.to_numpy()[0, 0], ref[i])
+
+
+def test_grib_cube_non_hypercube():
+    ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+    ds += from_source("file", earthkit_test_data_file("ml_data.grib"))[:2]
+    assert len(ds) == 18 + 2
+
+    with pytest.raises(ValueError):
+        ds.cube("param", "level")
 
 
 if __name__ == "__main__":
