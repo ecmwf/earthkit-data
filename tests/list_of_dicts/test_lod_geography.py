@@ -18,7 +18,7 @@ import pytest
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
 
-from conftest import build_lod_fieldlist  # noqa: E402
+from lod_fixtures import build_lod_fieldlist  # noqa: E402
 
 
 @pytest.mark.parametrize("mode", ["list-of-dicts", "loop"])

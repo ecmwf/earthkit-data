@@ -16,16 +16,10 @@ import sys
 import numpy as np
 import pytest
 
-# from earthkit.data import from_source
-# from earthkit.data.indexing.fieldlist import FieldArray
-# from earthkit.data.sources.array_list import ArrayField
-
-
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-# from conftest import *
 
-from conftest import build_lod_fieldlist  # noqa: E402
+from lod_fixtures import build_lod_fieldlist  # noqa: E402
 
 
 @pytest.mark.parametrize("lod", ["lod_distinct_ll", "lod_distinct_ll_list_values"])

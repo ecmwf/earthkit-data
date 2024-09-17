@@ -77,8 +77,7 @@ def make_geography(metadata):
             return UserGeography(metadata)
         raise ValueError("Unsupported metadata")
     else:
-        raise
-        # return VirtualGribGeography(metadata)
+        raise ValueError("Unsupported metadata key 'gridType'")
 
 
 class UserGeography(Geography):
@@ -222,193 +221,6 @@ class RegularDistinctLLGeography(UserGeography):
         return [self.dx(), self.dy()]
 
 
-# class StructuredGeography(VirtualGeography):
-#     def __init__(self, metadata):
-#         super().__init__(metadata)
-#         assert metadata.get("latitudes").ndim == 2
-#         assert metadata.get("longitudes").ndim == 2
-#         assert metadata.get("values").ndim == 2
-
-#     # def resolution(self):
-#     #     raise NotImplementedError("resolution is not implemented for structured grids")
-
-
-# class UnstructuredGeography(VirtualGeography):
-#     def __init__(self, metadata):
-#         super().__init__(metadata)
-#         assert metadata.get("latitudes").ndim == 1
-#         assert metadata.get("longitudes").ndim == 1
-#         assert metadata.get("values").ndim == 1
-
-#     # def resolution(self):
-#     #     raise NotImplementedError("resolution is not implemented for structured grids")
-
-
-# class VirtualGribGeography(VirtualGeography):
-#     def __init__(self, metadata):
-#         super().__init__(metadata)
-#         self.check_rotated_support()
-
-#     def x(self, dtype=None):
-#         grid_type = self.metadata.get("gridType", None)
-#         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-#             return self.longitudes(dtype=dtype)
-
-#     def y(self, dtype=None):
-#         grid_type = self.metadata.get("gridType", None)
-#         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-#             return self.latitudes(dtype=dtype)
-
-#     def shape(self):
-#         Nj = self.metadata.get("Nj", None)
-#         Ni = self.metadata.get("Ni", None)
-#         if Ni is None or Nj is None:
-#             n = len(self.metadata.get("values"))
-#             return (n,)  # shape must be a tuple
-#         return (Nj, Ni)
-
-#     def _unique_grid_id(self):
-#         v = self.metadata.get("md5GridSection", None)
-#         if v is None:
-#             v = (self.metadata.get("gridType"), self.shape())
-#         return v
-
-#     def north(self):
-#         v = self.metadata.get("latitudeOfFirstGridPointInDegrees", None)
-#         if v is None:
-#             v = np.amax(self.latitudes())
-#         return v
-
-#     def south(self):
-#         v = self.metadata.get("latitudeOfLastGridPointInDegrees", None)
-#         if v is None:
-#             v = np.amin(self.latitudes())
-#         return v
-
-#     def west(self):
-#         v = self.metadata.get("longitudeOfFirstGridPointInDegrees", None)
-#         if v is None:
-#             v = np.amin(self.longitudes())
-#         return v
-
-#     def east(self):
-#         v = self.metadata.get("longitudeOfLastGridPointInDegrees", None)
-#         if v is None:
-#             v = np.amax(self.longitudes())
-#         return v
-
-#     def projection(self):
-#         return Projection.from_proj_string(self.metadata.get("projTargetString", None))
-
-#     # def bounding_box(self):
-#     #     return BoundingBox(
-#     #         north=self.north(),
-#     #         south=self.south(),
-#     #         west=self.west(),
-#     #         east=self.east(),
-#     #     )
-
-#     # def gridspec(self):
-#     #     return None
-#     #     # return make_gridspec(self.metadata)
-
-#     def resolution(self):
-#         grid_type = self.metadata.get("gridType")
-
-#         if grid_type in ("reduced_gg", "reduced_rotated_gg"):
-#             return self.metadata.get("gridName")
-
-#         if grid_type in ("regular_ll", "rotated_ll"):
-#             x = self.metadata.get("DxInDegrees")
-#             y = self.metadata.get("DyInDegrees")
-#             x = round(x * 1_000_000) / 1_000_000
-#             y = round(y * 1_000_000) / 1_000_000
-#             assert x == y, (x, y)
-#             return x
-
-#         if grid_type == "lambert":
-#             x = self.metadata.get("DxInMetres")
-#             y = self.metadata.get("DyInMetres")
-#             assert x == y, (x, y)
-#             return str(x / 1000).replace(".", "p") + "km"
-
-#         raise ValueError(f"Unknown gridType={grid_type}")
-
-#     def mars_grid(self):
-#         if len(self.shape()) == 2:
-#             return [
-#                 self.metadata.get("iDirectionIncrementInDegrees"),
-#                 self.metadata.get("jDirectionIncrementInDegrees"),
-#             ]
-
-#         return self.metadata.get("gridName")
-
-#     # def mars_area(self):
-#     #     north = self.metadata.get("latitudeOfFirstGridPointInDegrees")
-#     #     south = self.metadata.get("latitudeOfLastGridPointInDegrees")
-#     #     west = self.metadata.get("longitudeOfFirstGridPointInDegrees")
-#     #     east = self.metadata.get("longitudeOfLastGridPointInDegrees")
-#     #     return [north, west, south, east]
-
-#     @property
-#     def rotation(self):
-#         return (
-#             self.metadata.get("latitudeOfSouthernPoleInDegrees"),
-#             self.metadata.get("longitudeOfSouthernPoleInDegrees"),
-#             self.metadata.get("angleOfRotationInDegrees"),
-#         )
-
-#     @cached_property
-#     def rotated(self):
-#         grid_type = self.metadata.get("gridType")
-#         return "rotated" in grid_type
-
-#     @cached_property
-#     def rotated_iterator(self):
-#         return self.metadata.get("iteratorDisableUnrotate") is not None
-
-#     def check_rotated_support(self):
-#         if self.rotated and self.metadata.get("gridType") == "reduced_rotated_gg":
-#             from earthkit.data.utils.message import ECC_FEATURES
-
-#             if not ECC_FEATURES.version >= (2, 35, 0):
-#                 raise RuntimeError("gridType=rotated_reduced_gg requires ecCodes >= 2.35.0")
-
-#     def latitudes_unrotated(self, **kwargs):
-#         if not self.rotated:
-#             return self.latitudes(**kwargs)
-
-#         if not self.rotated_iterator:
-#             from earthkit.geo.rotate import unrotate
-
-#             grid_type = self.metadata.get("gridType")
-#             warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
-#             lat, lon = self.latitudes(**kwargs), self.longitudes(**kwargs)
-#             south_pole_lat, south_pole_lon, _ = self.rotation
-#             lat, lon = unrotate(lat, lon, south_pole_lat, south_pole_lon)
-#             return lat
-
-#         with self.metadata._handle._set_tmp("iteratorDisableUnrotate", 1, 0):
-#             return self.latitudes(**kwargs)
-
-#     def longitudes_unrotated(self, **kwargs):
-#         if not self.rotated:
-#             return self.longitudes(**kwargs)
-
-#         if not self.rotated_iterator:
-#             from earthkit.geo.rotate import unrotate
-
-#             grid_type = self.metadata.get("gridType")
-#             warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
-#             lat, lon = self.latitudes(**kwargs), self.longitudes(**kwargs)
-#             south_pole_lat, south_pole_lon, _ = self.rotation
-#             lat, lon = unrotate(lat, lon, south_pole_lat, south_pole_lon)
-#             return lon
-
-#         with self.metadata._handle._set_tmp("iteratorDisableUnrotate", 1, 0):
-#             return self.longitudes(**kwargs)
-
-
 class UserMetadata(Metadata):
     ALIASES = [
         ("dataDate", "date"),
@@ -459,13 +271,13 @@ class UserMetadata(Metadata):
                             if k in self._data:
                                 return k
 
-        key = _key_name(key)
-        if key is None:
+        key_n = _key_name(key)
+        if key_n is None:
             if raise_on_missing:
                 raise KeyError(f"Key={key} not found")
             return default
 
-        v = self._data[key]
+        v = self._data[key_n]
         if astype is None:
             return v
         else:
@@ -520,4 +332,4 @@ class UserMetadata(Metadata):
         return make_geography(self)
 
     def override(self, *args, **kwargs):
-        raise NotImplementedError("override is not implemented for UserFieldMetadata")
+        raise NotImplementedError("override is not implemented for UserMetadata")

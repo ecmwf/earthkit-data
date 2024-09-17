@@ -123,6 +123,9 @@ def step_to_delta(step):
 
 
 def datetime_from_grib(date, time):
+    date = int(date)
+    time = int(time)
+
     return datetime.datetime(
         date // 10000,
         date % 10000 // 100,
