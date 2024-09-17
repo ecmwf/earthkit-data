@@ -53,16 +53,18 @@ class DimSplitter(Splitter):
         self.split_dims = split_dims
 
     def split(self, ds, profile):
-        grids = self.grids(ds)
+        # grids = self.grids(ds)
         from itertools import product
 
         dims = ds.unique_values(self.split_dims)
-        if len(grids) > 1:
-            dims["md5GridSection"] = grids
+        # if len(grids) > 1:
+        #     dims["md5GridSection"] = grids
 
         for x in product(*dims.values()):
             y = dict(zip(dims.keys(), x))
             ds_sel = ds.sel(**y)
+            if len(ds_sel) == 0:
+                raise ValueError(f"No field found for selection={y}")
             yield profile.dims.to_list(), ds_sel
 
 
@@ -77,7 +79,7 @@ class AutoSplitter(Splitter):
             dims = {k: ds_gr.index(k) for k in profile.dim_keys}
             t_dims = []
             for d in dims:
-                if len(ds_gr.index(d)) > 1 or (not profile.squeeze and len(ds_gr.index(d)) == 1):
+                if len(ds_gr.index(d)) > 1 or (not profile.dims.squeeze and len(ds_gr.index(d)) == 1):
                     t_dims.append(d)
 
             # try to see if dims form a cube

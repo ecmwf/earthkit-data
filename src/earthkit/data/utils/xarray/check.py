@@ -29,7 +29,6 @@ def list_to_str(vals, n=10):
 
 
 def check_coords(var_name, coord_name, coords, ref_coords):
-    print(f"Checking {coord_name} for {var_name} {coords} {ref_coords}")
     if coord_name in ref_coords:
         v1 = ref_coords[coord_name].vals
         v2 = coords[coord_name]
