@@ -156,7 +156,7 @@ class GribFieldGeography(Geography):
             assert x == y, (x, y)
             return x
 
-        if grid_type == "lambert":
+        if grid_type in ["lambert", "lambert_azimuthal_equal_area"]:
             x = self.metadata.get("DxInMetres")
             y = self.metadata.get("DyInMetres")
             assert x == y, (x, y)
