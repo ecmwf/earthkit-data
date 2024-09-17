@@ -50,7 +50,7 @@ def test_lod_geo_distinct_ll(lod_distinct_ll, mode):
     assert np.allclose(gr[0], lat_ref.flatten())
     assert np.allclose(gr[1], lon_ref.flatten())
 
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(AssertionError):
         ds[0].resolution
 
     ll = ds.to_latlon()

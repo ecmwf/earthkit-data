@@ -22,16 +22,26 @@ class MetadataAccessor:
         a list/tuple of strings.
     """
 
-    def __init__(self, conf):
+    def __init__(self, conf, aliases=None):
         self.keys = set()
         self.methods = dict()
+        aliases = aliases or dict()
         for k, v in conf.items():
             if isinstance(v, str):
                 self.keys.add(v)
             else:
                 self.keys.update(v)
+
+            if isinstance(v, str):
+                v = [v]
+
             for kv in v:
                 self.methods[kv] = k
+
+            for gr in aliases:
+                for gr_k in gr:
+                    if gr_k in v:
+                        self.methods[gr_k] = k
 
     def __contains__(self, key):
         return key in self.keys

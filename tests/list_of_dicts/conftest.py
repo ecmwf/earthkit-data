@@ -93,6 +93,18 @@ def lod_ll_2D_values():
     return _build_list(prototype)
 
 
+@pytest.fixture
+def lod_ll_step():
+    prototype = {
+        "latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
+        "longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
+        "values": np.array([1, 2, 3, 4, 5, 6]),
+        "valid_datetime": "2018-08-01T09:00:00",
+        "step": 6,
+    }
+    return _build_list(prototype)
+
+
 def build_lod_fieldlist(lod, mode):
     if mode == "list-of-dicts":
         return from_source("list-of-dicts", lod)

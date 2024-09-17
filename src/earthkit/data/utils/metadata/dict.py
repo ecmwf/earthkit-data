@@ -14,6 +14,7 @@ import numpy as np
 
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
+from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import step_to_delta
@@ -418,6 +419,15 @@ class UserMetadata(Metadata):
         ("param", "shortName"),
     ]
 
+    CUSTOM_ACCESSOR = MetadataAccessor(
+        {
+            "base_datetime": "base_datetime",
+            "valid_datetime": "valid_datetime",
+            "step_timedelta": "step_timedelta",
+        },
+        aliases=ALIASES,
+    )
+
     LS_KEYS = ["param", "level", "base_datetime", "valid_datetime", "step", "number", set]
 
     def __init__(self, d, values=None):
@@ -471,6 +481,10 @@ class UserMetadata(Metadata):
         if v is not None:
             return v
 
+        v = self.step_timedelta()
+        if v is not None:
+            return self.valid_datetime() - v
+
     def valid_datetime(self):
         if "valid_datetime" in self._data:
             v = self._data["valid_datetime"]
@@ -485,7 +499,8 @@ class UserMetadata(Metadata):
         if "step_timedelta" in self._data:
             return self._data["step_timedelta"]
         v = self._get_one(["endStep", "step"])
-        return step_to_delta(v)
+        if v is not None:
+            return step_to_delta(v)
 
     def _datetime(self, date_key, time_key):
         date = self.get(date_key, None)
