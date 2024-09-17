@@ -2,6 +2,15 @@ Version 0.10 Updates
 /////////////////////////
 
 
+Version 0.10.3
+===============
+
+Fixes
+++++++
+
+- Fixed issue when building a FieldCube crashed while generating error message due to missing "number" metadata key in input GRIB data (:pr:`456`).
+
+
 Version 0.10.2
 ===============
 
