@@ -47,8 +47,6 @@ class MetadataAccessor:
                             self.methods[gr_k] = k
                             self.keys.add(gr_k)
 
-        print("methods", self.methods)
-
     def __contains__(self, key):
         return key in self.keys
 
@@ -62,7 +60,6 @@ class MetadataAccessor:
         key: str
             Metadata key
         """
-        # print(f"  GET {key} {default=} {astype=} {raise_on_missing=}")
         try:
             v = getattr(md, self.methods[key])()
             # TODO: add automatic conversion support
@@ -79,23 +76,13 @@ class MetadataAccessor:
 
 def cacheable_metadata(func):
     @functools.wraps(func)
-    # def wrapped(self, *args, **kwargs):
     def wrapped(self, key, default=None, *, astype=None, raise_on_missing=False):
-        #  (key, default, astype, raise_on_missing)
-        # if len(args) == 2:
-        #     kwargs["default"] = args[-1]
-        #     args = [args[0]]
-        # print(f"  WRAP {self._cache}")
         if self._cache is not None:
-            # cache_id = (*args, *(kwargs.values()))
             cache_id = (key, default, astype, raise_on_missing)
-            # print(f" CH ID {cache_id} {self._cache=}")
             if cache_id in self._cache:
                 return self._cache[cache_id]
 
-            # print(f" CH ADD {key}")
             v = func(self, key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-            # print(" -> v=", v)
             self._cache[cache_id] = v
             return v
         else:
@@ -107,10 +94,6 @@ def cacheable_metadata(func):
 def custom_accessor(func):
     @functools.wraps(func)
     def wrapped(self, key, *args, **kwargs):
-        # if len(args) == 1:
-        #     kwargs["default"] = args[0]
-        #     args = []
-        # print("AC key", key, "args", args, "kwargs", kwargs)
         if self.CUSTOM_ACCESSOR and key in self.CUSTOM_ACCESSOR:
             return self.CUSTOM_ACCESSOR.get(self, key, *args, **kwargs)
         return func(self, key, *args, **kwargs)
@@ -206,17 +189,6 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
-    # @classmethod
-    # def custom_accessor(cls):
-    #     if not cls._CUSTOM_ACCESSOR:
-    #         cls._CUSTOM_ACCESSOR = MetadataAccessor(cls)
-    #     return cls._CUSTOM_ACCESSOR
-
-    # @abstractmethod
-    # def _custom_accessor():
-    #     pass
-
-    # @abstractmethod
     @cacheable_metadata
     @custom_accessor
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
@@ -253,25 +225,6 @@ class Metadata(metaclass=ABCMeta):
 
         """
         return self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-
-        # pass
-        # # if self._cache is not None:
-        # #     cache_id = (key, default, astype, raise_on_missing)
-        # #     if cache_id in self._cache:
-        # #         return self._cache[cache_id]
-        # return self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-
-        # if self.CUSTOM_ACCESSOR and key in self.CUSTOM_ACCESSOR:
-        #     v = self.CUSTOM_ACCESSOR.get(
-        #         self, key, default=default, astype=astype, raise_on_missing=raise_on_missing
-        #     )
-        # else:
-        #     v = self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-
-        # # if self._cache is not None:
-        # #     self._cache[cache_id] = v
-
-        # return v
 
     @abstractmethod
     def _get(self, key, astype=None, default=None, raise_on_missing=False):
