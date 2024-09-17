@@ -18,7 +18,7 @@ import pytest
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from constants_fixtures import load_constants_fs  # noqa: E402
+from forcings_fixtures import load_forcings_fs  # noqa: E402
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -28,8 +28,8 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
     assert np.isclose(v.mean(), meanv, eps)
 
 
-def test_contants_values():
-    ds, md = load_constants_fs(last_step=12)
+def test_forcings_values():
+    ds, _ = load_forcings_fs(last_step=12)
     eps = 1e-5
     num = len(ds)
 
@@ -59,8 +59,8 @@ def test_contants_values():
     )
 
 
-def test_constants_to_numpy():
-    ds, md = load_constants_fs(last_step=12)
+def test_forcings_to_numpy():
+    ds, _ = load_forcings_fs(last_step=12)
     eps = 1e-5
     num = len(ds)
 
@@ -111,8 +111,8 @@ def test_constants_to_numpy():
         ({"flatten": False}, (16, 11, 19)),
     ],
 )
-def test_constants_to_numpy_shape(options, expected_shape):
-    ds, _ = load_constants_fs(last_step=12)
+def test_forcings_to_numpy_shape(options, expected_shape):
+    ds, _ = load_forcings_fs(last_step=12)
     num = 16
     eps = 1e-5
 
@@ -137,8 +137,8 @@ def test_constants_to_numpy_shape(options, expected_shape):
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_constants_to_numpy_dtype(dtype):
-    ds, _ = load_constants_fs(last_step=12)
+def test_forcings_to_numpy_dtype(dtype):
+    ds, _ = load_forcings_fs(last_step=12)
 
     v = ds[0].to_numpy(dtype=dtype)
     assert v.dtype == dtype
@@ -159,8 +159,8 @@ def test_constants_to_numpy_dtype(dtype):
         ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
     ],
 )
-def test_constants_field_data(kwarg, expected_shape, expected_dtype):
-    ds, _ = load_constants_fs(params=["longitude"], last_step=12)
+def test_forcings_field_data(kwarg, expected_shape, expected_dtype):
+    ds, _ = load_forcings_fs(params=["longitude"], last_step=12)
 
     latlon = ds[0].to_latlon(**kwarg)
     v = ds[0].to_numpy(**kwarg)
@@ -209,8 +209,8 @@ def test_constants_field_data(kwarg, expected_shape, expected_dtype):
         ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
     ],
 )
-def test_constants_fieldlist_data(kwarg, expected_shape, expected_dtype):
-    ds, _ = load_constants_fs(params=["longitude"], last_step=12)
+def test_forcings_fieldlist_data(kwarg, expected_shape, expected_dtype):
+    ds, _ = load_forcings_fs(params=["longitude"], last_step=12)
     num = 2
 
     latlon = ds.to_latlon(**kwarg)

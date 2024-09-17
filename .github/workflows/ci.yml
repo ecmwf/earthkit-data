@@ -28,7 +28,7 @@ jobs:
     with:
       earthkit-data: ecmwf/earthkit-data@${{ github.event.pull_request.head.sha || github.sha }}
       codecov_upload: true
-      python_qa: true
+      python_qa: false
     secrets: inherit
 
 

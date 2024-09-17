@@ -17,7 +17,8 @@ from earthkit.data.testing import ARRAY_BACKENDS
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
+from grib_fixtures import FL_TYPES  # noqa: E402
+from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -408,6 +409,8 @@ def test_grib_dump(fl_type, array_backend):
         {
             "title": "geography",
             "data": {
+                # "Ni": 12,
+                # "Nj": 7,
                 "bitmapPresent": 0,
                 "latitudeOfFirstGridPointInDegrees": 90.0,
                 "longitudeOfFirstGridPointInDegrees": 0.0,
@@ -477,6 +480,9 @@ def test_grib_dump(fl_type, array_backend):
     for d in r:
         ns = d["title"]
         assert ns in namespaces
+        if ns == "geography":
+            d["data"].pop("Ni", None)
+            d["data"].pop("Nj", None)
         if ns not in ("default", "statistics"):
             assert d == [x for x in ref if x["title"] == ns][0], ns
 

@@ -664,7 +664,7 @@ fdb
 mars
 --------------
 
-.. py:function:: from_source("mars", *args, prompt=True, **kwargs)
+.. py:function:: from_source("mars", *args, prompt=True, log="default", **kwargs)
   :noindex:
 
   The ``mars`` source will retrieve data from the ECMWF MARS (Meteorological Archival and Retrieval System) archive. In addition
@@ -673,7 +673,7 @@ mars
 
   To figure out which data you need, or discover relevant data available in MARS, see the publicly accessible `MARS catalog`_ (or this `access restricted catalog <https://apps.ecmwf.int/mars-catalogue/>`_).
 
-  The MARS access is direct when the MARS client is installed (as at ECMWF), otherwise it will use the `web API`_. In order to use the `web API`_ you will need to register and retrieve an access token. For a more extensive documentation about MARS, please refer to the `MARS user documentation`_.
+  The MARS access is direct when the MARS client is installed (as at ECMWF) and the ``use-standalone-mars-client-when-available`` :ref:`settings <settings>` is True (this is the default), otherwise it will use the `web API`_. In order to use the `web API`_ you will need to register and retrieve an access token. For a more extensive documentation about MARS, please refer to the `MARS user documentation`_.
 
   :param tuple *args: positional arguments specifying the request as a dict
   :param bool prompt: when True it can offer a prompt to specify the credentials for `web API`_ and write them into the default RC file ``~/.ecmwfapirc``. The prompt only appears when:
@@ -681,6 +681,33 @@ mars
     - no `web API`_ RC file exists at the default location ``~/.ecmwfapirc``
     - no `web API`_ RC file exists at the location specified via the ``ECMWF_API_RC_FILE`` environment variable
     - no credentials specified via the ``ECMWF_API_URL`` and ``ECMWF_API_KEY``  environment variables
+  :param log: control the logging of the retrieval. The behaviour depends on the underlying MARS client used:
+
+    - `web API`_ based access:
+
+      - "default": the built-in logging of `web API`_ is used (the log is written to stdout)
+      - None: turn off logging
+      - callable: the log is written to the specified callable. The callable should accept a single argument, a string with the log message.
+
+      .. code-block:: python
+
+          import earthkit.data
+
+
+          def my_logging_function(msg):
+              print("message=", msg)
+
+
+          request = {...}
+          ds = earthkit.data.from_source("mars", request, log=my_logging_function)
+
+    - direct MARS access:
+
+      - "default": log is written to stdout
+      - None: turn off logging
+      - dict specifying the "stdout" or/and the "stderr" kwargs for Pythons's ``subrocess.run()`` method
+
+  :type log: str, None, callable, dict
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves analysis GRIB data for a subarea for 2 surface parameters:

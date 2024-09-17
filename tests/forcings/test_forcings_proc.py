@@ -20,13 +20,14 @@ from earthkit.data.testing import earthkit_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from constants_fixtures import all_params, load_constants_fs  # noqa: E402
+from forcings_fixtures import all_params  # noqa: E402
+from forcings_fixtures import load_forcings_fs  # noqa: E402
 
 
 def _build_proc_ref():
     import yaml
 
-    ds, _ = load_constants_fs(params=all_params, last_step=12)
+    ds, _ = load_forcings_fs(params=all_params, last_step=12)
     d = {}
     for p in all_params:
         # print(f"p={p}")
@@ -43,13 +44,11 @@ def _build_proc_ref():
         yaml.dump(d, outfile, sort_keys=True)
 
 
-def test_constants_proc():
-    with open(
-        earthkit_test_data_file(os.path.join("constants", "proc.yaml")), "r"
-    ) as f:
+def test_forcings_proc():
+    with open(earthkit_test_data_file(os.path.join("forcings", "proc.yaml")), "r") as f:
         ref = yaml.safe_load(f)
 
-    ds, _ = load_constants_fs(params=all_params, last_step=12)
+    ds, _ = load_forcings_fs(params=all_params, last_step=12)
 
     for p in all_params:
         f = ds.sel(param=p, valid_datetime="2020-05-13T18:00:00")
@@ -62,8 +61,8 @@ def test_constants_proc():
 
 
 @pytest.mark.parametrize("param,coord", [("latitude", "lat"), ("longitude", "lon")])
-def test_constants_proc_latlon(param, coord):
-    ds, _ = load_constants_fs(params=all_params, last_step=12)
+def test_forcings_proc_latlon(param, coord):
+    ds, _ = load_forcings_fs(params=all_params, last_step=12)
 
     latlon = ds[0].to_latlon(flatten=True)
     coord = latlon[coord]

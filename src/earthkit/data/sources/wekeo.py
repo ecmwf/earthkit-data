@@ -76,13 +76,7 @@ class ApiClient(hda.Client):
         for result in matches.results:
             query = {"jobId": matches.job_id, "uri": result["url"]}
             url = DataOrderRequest(self).run(query)
-            out.append(
-                os.path.abspath(
-                    self.stream(
-                        result.get("filename"), result.get("size"), target, *url
-                    )
-                )
-            )
+            out.append(os.path.abspath(self.stream(result.get("filename"), result.get("size"), target, *url)))
         return out
 
     def download(self, download_dir: str = "."):

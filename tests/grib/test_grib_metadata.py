@@ -17,11 +17,13 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import ARRAY_BACKENDS, earthkit_examples_file
+from earthkit.data.testing import ARRAY_BACKENDS
+from earthkit.data.testing import earthkit_examples_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
+from grib_fixtures import FL_TYPES  # noqa: E402
+from grib_fixtures import load_grib_data  # noqa: E402
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -186,9 +188,7 @@ def test_grib_metadata_double_astype_18(fl_type, array_backend, key, astype):
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 def test_grib_get_long_array_1(fl_type, array_backend):
-    f = load_grib_data(
-        "rgg_small_subarea_cellarea_ref.grib", fl_type, array_backend, folder="data"
-    )
+    f = load_grib_data("rgg_small_subarea_cellarea_ref.grib", fl_type, array_backend, folder="data")
 
     assert len(f) == 1
     pl = f.metadata("pl")
@@ -545,6 +545,18 @@ def test_message(fl_type, array_backend):
     v = f[1].message()
     assert len(v) == 526
     assert v[:4] == b"GRIB"
+
+
+@pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize("array_backend", [None])
+def test_grib_tilde_shortname(fl_type, array_backend):
+    f = load_grib_data("tilde_shortname.grib", fl_type, array_backend, folder="data")
+
+    assert f[0].metadata("shortName") == "106"
+    assert f[0].metadata("shortName", astype=int) == 0
+    assert f[0].metadata("paramId") == 106
+    assert f[0].metadata("paramId", astype=int) == 106
+    assert f[0].metadata("param") == "106"
 
 
 if __name__ == "__main__":

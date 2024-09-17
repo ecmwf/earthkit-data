@@ -35,9 +35,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
     ],
 )
 def test_grib_single_url_parts(parts, expected_meta):
-    ds = from_source(
-        "url", earthkit_remote_test_data_file("examples/test6.grib"), parts=parts
-    )
+    ds = from_source("url", earthkit_remote_test_data_file("examples/test6.grib"), parts=parts)
 
     assert len(ds) == len(expected_meta)
     if len(ds) > 0:
@@ -53,9 +51,7 @@ def test_grib_single_url_parts(parts, expected_meta):
     ],
 )
 def test_grib_single_url_parts_1(parts, expected_meta):
-    ds = from_source(
-        "url", [earthkit_remote_test_data_file("examples/test6.grib"), parts]
-    )
+    ds = from_source("url", [earthkit_remote_test_data_file("examples/test6.grib"), parts])
 
     assert len(ds) == len(expected_meta)
 

@@ -14,12 +14,12 @@ import eccodes
 from pdbufr.high_level_bufr.bufr import bufr_code_is_coord
 
 from earthkit.data.core import Base
-from earthkit.data.core.index import Index, MaskIndex, MultiIndex
-from earthkit.data.utils.message import (
-    CodesHandle,
-    CodesMessagePositionIndex,
-    CodesReader,
-)
+from earthkit.data.core.index import Index
+from earthkit.data.core.index import MaskIndex
+from earthkit.data.core.index import MultiIndex
+from earthkit.data.utils.message import CodesHandle
+from earthkit.data.utils.message import CodesMessagePositionIndex
+from earthkit.data.utils.message import CodesReader
 from earthkit.data.utils.metadata import metadata_argument
 from earthkit.data.utils.parts import Part
 from earthkit.data.utils.summary import make_bufr_html_tree
@@ -281,9 +281,7 @@ class BUFRMessage(Base):
         (2, 101)
 
         """
-        key, namespace, astype, key_arg_type = metadata_argument(
-            *keys, namespace=None, astype=astype
-        )
+        key, namespace, astype, key_arg_type = metadata_argument(*keys, namespace=None, astype=astype)
 
         assert isinstance(key, list)
         assert isinstance(namespace, (list, tuple))
@@ -292,9 +290,9 @@ class BUFRMessage(Base):
             assert isinstance(astype, (list, tuple))
             r = [self.handle.get(k, ktype=kt, **kwargs) for k, kt in zip(key, astype)]
 
-            if key_arg_type == str:
+            if key_arg_type is str:
                 return r[0]
-            elif key_arg_type == tuple:
+            elif key_arg_type is tuple:
                 return tuple(r)
             else:
                 return r
@@ -461,7 +459,6 @@ class BUFRListMixIn(PandasMixIn):
         Pandas DataFrame
             See  :obj:`ls`.
 
-
         The following calls are equivalent:
 
             .. code-block:: python
@@ -493,7 +490,6 @@ class BUFRListMixIn(PandasMixIn):
         -------
         Pandas DataFrame
             See  :obj:`ls`.
-
 
         The following calls are equivalent:
 
@@ -568,7 +564,6 @@ class BUFRList(BUFRListMixIn, Index):
         object
             Returns a new object with the filtered elements. It contains a view to the data in the
             original object, so no data is copied.
-
 
         Filter conditions are specified by a set of **metadata** keys either by a dictionary (in
         ``*args``) or a set of ``**kwargs``. Both single or multiple keys are allowed to use and each
@@ -654,9 +649,7 @@ class BUFRInOneFile(BUFRInFiles):
     @property
     def _positions(self):
         if self.__positions is None:
-            self.__positions = BufrCodesMessagePositionIndex(
-                self.path, parts=self._file_parts
-            )
+            self.__positions = BufrCodesMessagePositionIndex(self.path, parts=self._file_parts)
         return self.__positions
 
     def part(self, n):

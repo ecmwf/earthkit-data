@@ -7,9 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 
-from earthkit.data.core.constants import DATETIME, GRIDSPEC
+from earthkit.data.core.constants import DATETIME
+from earthkit.data.core.constants import GRIDSPEC
 
 
 class Metadata(metaclass=ABCMeta):
@@ -19,6 +21,14 @@ class Metadata(metaclass=ABCMeta):
     with :obj:`override`, which always creates a new object.
 
     Implemented in subclasses: :obj:`RawMetadata`, :obj:`GribMetadata`.
+
+    Parameters
+    ----------
+    extra: dict, None
+        Extra key/value pairs to be added on top of the underlying metadata. Default is None.
+    cache: bool
+        Enable caching of all the calls to :meth:`get`. Default is False. The cache
+        is attached to the instance.
 
     Examples
     --------
@@ -34,6 +44,14 @@ class Metadata(metaclass=ABCMeta):
     CUSTOM_KEYS = [DATETIME, GRIDSPEC]
 
     extra = None
+
+    def __init__(self, extra=None, cache=False):
+        if extra is not None:
+            self.extra = extra
+        if cache is False:
+            self._cache = None
+        else:
+            self._cache = dict() if cache is True else cache
 
     def __iter__(self):
         """Return an iterator over the metadata keys."""
@@ -144,6 +162,8 @@ class Metadata(metaclass=ABCMeta):
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         r"""Return the value for ``key``.
 
+        When the instance is created with ``cache=True`` all the result is cached.
+
         Parameters
         ----------
         key: str
@@ -172,16 +192,22 @@ class Metadata(metaclass=ABCMeta):
             a missing value.
 
         """
+        if self._cache is not None:
+            cache_id = (key, default, astype, raise_on_missing)
+            if cache_id in self._cache:
+                return self._cache[cache_id]
+
         if self._is_extra_key(key):
-            return self._get_extra_key(key, default=default, astype=astype)
-        if self._is_custom_key(key):
-            return self._get_custom_key(
-                key, default=default, astype=astype, raise_on_missing=raise_on_missing
-            )
+            v = self._get_extra_key(key, default=default, astype=astype)
+        elif self._is_custom_key(key):
+            v = self._get_custom_key(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
         else:
-            return self._get(
-                key, default=default, astype=astype, raise_on_missing=raise_on_missing
-            )
+            v = self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+
+        if self._cache is not None:
+            self._cache[cache_id] = v
+
+        return v
 
     @abstractmethod
     def _get(self, key, astype=None, default=None, raise_on_missing=False):
@@ -192,7 +218,6 @@ class Metadata(metaclass=ABCMeta):
 
     def _get_extra_key(self, key, default=None, astype=None, **kwargs):
         v = self.extra.get(key, default)
-
         if astype is not None and v is not None:
             try:
                 return astype(v)
@@ -373,6 +398,7 @@ class RawMetadata(Metadata):
 
     def __init__(self, *args, **kwargs):
         self._d = dict(*args, **kwargs)
+        super().__init__()
 
     def override(self, *args, **kwargs):
         d = dict(**self._d)

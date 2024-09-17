@@ -101,8 +101,7 @@ class PandasDataFrameWrapper(PandasSeriesWrapper):
     """
 
     def to_pandas(self):
-        """
-        Return a `pandas.DataFrame` representation of the data.
+        """Return a `pandas.DataFrame` representation of the data.
 
         Returns
         -------
@@ -111,8 +110,7 @@ class PandasDataFrameWrapper(PandasSeriesWrapper):
         return self.data
 
     def to_xarray(self, **kwargs):
-        """
-        Return a `xarray.Dataset` representation of the data.
+        """Return a `xarray.Dataset` representation of the data.
 
         Returns
         -------
@@ -148,9 +146,7 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
         self.fields = None
 
     def __iter__(self):
-        """
-        Iterate over features in geojson via pandas
-        """
+        """Iterate over features in geojson via pandas"""
         self._scan()
         return iter(self.fields)
 
@@ -166,18 +162,12 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
             self.fields = self.get_fields()
 
     def get_fields(self):
-        """
-        For geopandas, a field is a feature
-        """
+        """For geopandas, a field is a feature"""
         return [row[1] for row in self.data.iterrows()]
 
     def bounding_box(self):
-        """
-        For geopandas, get bounding box and convert to EK.BoundingBox type
-        """
-        return BoundingBox(
-            north=self.north, south=self.south, east=self.east, west=self.west
-        )
+        """For geopandas, get bounding box and convert to EK.BoundingBox type"""
+        return BoundingBox(north=self.north, south=self.south, east=self.east, west=self.west)
 
 
 def wrapper(data, *args, **kwargs):

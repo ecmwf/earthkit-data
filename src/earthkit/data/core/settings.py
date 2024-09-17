@@ -12,7 +12,8 @@ import getpass
 import logging
 import os
 import tempfile
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 from contextlib import contextmanager
 from typing import Callable
 
@@ -20,13 +21,11 @@ import yaml
 
 from earthkit.data import __version__ as VERSION
 from earthkit.data.utils.html import css
-from earthkit.data.utils.humanize import (
-    as_bytes,
-    as_percent,
-    as_seconds,
-    interval_to_human,
-    list_to_human,
-)
+from earthkit.data.utils.humanize import as_bytes
+from earthkit.data.utils.humanize import as_percent
+from earthkit.data.utils.humanize import as_seconds
+from earthkit.data.utils.humanize import interval_to_human
+from earthkit.data.utils.humanize import list_to_human
 from earthkit.data.utils.interval import Interval
 
 LOG = logging.getLogger(__name__)
@@ -134,9 +133,7 @@ class Setting:
 
     def validate(self, name, value):
         if self.validator is not None and not self.validator.check(value):
-            raise ValueError(
-                f"Settings {name} cannot be set to {value}. {self.validator.explain()}"
-            )
+            raise ValueError(f"Settings {name} cannot be set to {value}. {self.validator.explain()}")
 
 
 _ = Setting
@@ -214,6 +211,31 @@ SETTINGS_AND_HELP = {
         """Number of bytes read from the beginning of a source to identify its type.
         {validator}""",
         validator=IntervalValidator(Interval(8, 4096)),
+    ),
+    "grib-field-policy": _(
+        "persistent",
+        """GRIB field management policy for fieldlists with data on disk.  {validator}
+        See :doc:`/guide/misc/grib_memory` for more information.""",
+        validator=ListValidator(["persistent", "temporary"]),
+    ),
+    "grib-handle-policy": _(
+        "cache",
+        """GRIB handle management policy for fieldlists with data on disk.  {validator}
+        See :doc:`/guide/misc/grib_memory` for more information.""",
+        validator=ListValidator(["cache", "persistent", "temporary"]),
+    ),
+    "grib-handle-cache-size": _(
+        1,
+        """Maximum number of GRIB handles cached in memory per fieldlist with data on disk.
+        Used when ``grib-handle-policy`` is ``cache``.
+        See :doc:`/guide/misc/grib_memory` for more information.""",
+        none_ok=True,
+    ),
+    "use-grib-metadata-cache": _(
+        True,
+        """Use in-memory cache kept in each field for GRIB metadata access in
+        fieldlists with data on disk.
+        See :doc:`/guide/misc/grib_memory` for more information.""",
     ),
 }
 

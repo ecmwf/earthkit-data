@@ -45,10 +45,11 @@ class MARSAPIKeyPrompt(APIKeyPrompt):
 
 
 class ECMWFApi(FileSource):
-    def __init__(self, *args, prompt=True, **kwargs):
+    def __init__(self, *args, prompt=True, log="default", **kwargs):
         super().__init__()
 
         self.prompt = prompt
+        self.log = log
 
         request = {}
         for a in args:
@@ -56,6 +57,12 @@ class ECMWFApi(FileSource):
         request.update(kwargs)
 
         requests = self.requests(**request)
+
+        self.expect_any = False
+        for k, v in requests[0].items():
+            if k.lower() == "expect" and isinstance(v, str) and v.lower() == "any":
+                self.expect_any = True
+                break
 
         self.service()  # Trigger password prompt before threading
 
@@ -117,3 +124,9 @@ class ECMWFApi(FileSource):
             # odc_read_odb_kwargs=odc_read_odb_kwargs,
             **kwargs,
         )
+
+    def empty_reader(self, *args, **kwargs):
+        if self.expect_any:
+            from .empty import EmptySource
+
+            return EmptySource()

@@ -17,7 +17,7 @@ import pytest
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from constants_fixtures import load_constants_fs  # noqa: E402
+from forcings_fixtures import load_forcings_fs  # noqa: E402
 
 
 @pytest.mark.parametrize(
@@ -43,8 +43,8 @@ from constants_fixtures import load_constants_fs  # noqa: E402
         (dict(INVALIDKEY="sin_logitude"), []),
     ],
 )
-def test_constants_sel_single_file_1(params, expected_meta):
-    ds, _ = load_constants_fs()
+def test_forcings_sel_single_file_1(params, expected_meta):
+    ds, _ = load_forcings_fs()
 
     g = ds.sel(**params)
     assert len(g) == len(expected_meta)
@@ -54,8 +54,8 @@ def test_constants_sel_single_file_1(params, expected_meta):
     return
 
 
-def test_constants_sel_single_file_as_dict():
-    ds, _ = load_constants_fs()
+def test_forcings_sel_single_file_as_dict():
+    ds, _ = load_forcings_fs()
 
     g = ds.sel(
         {

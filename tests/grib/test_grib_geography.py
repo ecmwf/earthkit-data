@@ -16,17 +16,16 @@ import numpy as np
 import pytest
 
 import earthkit.data
-from earthkit.data.testing import (
-    ARRAY_BACKENDS,
-    check_array_type,
-    earthkit_examples_file,
-    earthkit_test_data_file,
-)
+from earthkit.data.testing import ARRAY_BACKENDS
+from earthkit.data.testing import check_array_type
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import projections
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
+from grib_fixtures import FL_TYPES  # noqa: E402
+from grib_fixtures import load_grib_data  # noqa: E402
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -205,9 +204,7 @@ def test_grib_projection_ll(fl_type, array_backend, index):
         g = f[index]
     else:
         g = f
-    assert isinstance(
-        g.projection(), (projections.EquidistantCylindrical, projections.LongLat)
-    )
+    assert isinstance(g.projection(), (projections.EquidistantCylindrical, projections.LongLat))
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -232,6 +229,7 @@ def test_grib_projection_mercator(fl_type, array_backend):
         (earthkit_examples_file("test.grib"), 4.0),
         (earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"), "O1280"),
         (earthkit_test_data_file("rotated_N32_subarea.grib"), "N32"),
+        (earthkit_test_data_file("rotated_wind_20x20.grib"), 20),
     ],
 )
 def test_grib_resolution(path, expected_value):
@@ -306,9 +304,7 @@ def test_grib_mars_grid(path, expected_value):
 
 def test_grib_grid_points_rotated_ll():
     """The"""
-    ds = earthkit.data.from_source(
-        "file", earthkit_test_data_file("rotated_wind_20x20.grib")
-    )
+    ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_wind_20x20.grib"))
 
     # grid points
     res = ds[0].grid_points()
@@ -336,9 +332,7 @@ def test_grib_grid_points_rotated_ll():
 
 
 def test_grib_grid_points_rotated_rgg():
-    ds = earthkit.data.from_source(
-        "file", earthkit_test_data_file("rotated_N32_subarea.grib")
-    )
+    ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_N32_subarea.grib"))
 
     # grid points
     res = ds[0].grid_points()

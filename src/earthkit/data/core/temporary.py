@@ -76,8 +76,7 @@ def temp_directory(dir=None):
 
 
 class TmpEnv:
-    """
-    A context manager that temporarily sets environment variables.
+    """A context manager that temporarily sets environment variables.
 
     Usage:
     >>> import os

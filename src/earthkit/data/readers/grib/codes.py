@@ -9,17 +9,17 @@
 
 import logging
 import os
+from collections import defaultdict
+from functools import cached_property
 
 import eccodes
 import numpy as np
 
 from earthkit.data.core.fieldlist import Field
-from earthkit.data.readers.grib.metadata import GribMetadata
-from earthkit.data.utils.message import (
-    CodesHandle,
-    CodesMessagePositionIndex,
-    CodesReader,
-)
+from earthkit.data.readers.grib.metadata import GribFieldMetadata
+from earthkit.data.utils.message import CodesHandle
+from earthkit.data.utils.message import CodesMessagePositionIndex
+from earthkit.data.utils.message import CodesReader
 
 LOG = logging.getLogger(__name__)
 
@@ -39,9 +39,7 @@ class GribCodesFloatArrayAccessor:
 
     def __init__(self):
         if GribCodesFloatArrayAccessor.HAS_FLOAT_SUPPORT is None:
-            GribCodesFloatArrayAccessor.HAS_FLOAT_SUPPORT = hasattr(
-                eccodes, "codes_get_float_array"
-            )
+            GribCodesFloatArrayAccessor.HAS_FLOAT_SUPPORT = hasattr(eccodes, "codes_get_float_array")
 
     def get(self, handle, dtype=None):
         v = eccodes.codes_get_array(handle, self.KEY)
@@ -233,7 +231,7 @@ class GribCodesReader(CodesReader):
 
 
 class GribField(Field):
-    r"""Represents a GRIB message in a GRIB file.
+    r"""Represent a GRIB message in a GRIB file.
 
     Parameters
     ----------
@@ -245,20 +243,33 @@ class GribField(Field):
         Size of the message (in bytes)
     """
 
-    def __init__(self, path, offset, length, backend):
+    _handle = None
+
+    def __init__(self, path, offset, length, backend, handle_manager=None, use_metadata_cache=False):
         super().__init__(backend)
         self.path = path
         self._offset = offset
         self._length = length
-        self._handle = None
+        self._handle_manager = handle_manager
+        self._use_metadata_cache = use_metadata_cache
 
     @property
     def handle(self):
-        r""":class:`CodesHandle`: Gets an object providing access to the low level GRIB message structure."""
+        r""":class:`CodesHandle`: Get an object providing access to the low level GRIB message structure."""
+        if self._handle_manager is not None:
+            handle = self._handle_manager.handle(self, self._create_handle)
+            if handle is None:
+                raise RuntimeError(f"Could not get a handle for offset={self.offset} in {self.path}")
+            return handle
+
+        # create a new handle and keep it in the field
         if self._handle is None:
             assert self._offset is not None
-            self._handle = GribCodesReader.from_cache(self.path).at_offset(self._offset)
+            self._handle = self._create_handle()
         return self._handle
+
+    def _create_handle(self):
+        return GribCodesReader.from_cache(self.path).at_offset(self.offset)
 
     def _values(self, dtype=None):
         return self.handle.get_values(dtype=dtype)
@@ -270,8 +281,15 @@ class GribField(Field):
             self._offset = int(self.handle.get("offset"))
         return self._offset
 
-    def _make_metadata(self):
-        return GribMetadata(self.handle)
+    @cached_property
+    def _metadata(self):
+        cache = self._use_metadata_cache
+        if cache:
+            cache = self._make_metadata_cache()
+        return GribFieldMetadata(self, cache=cache)
+
+    def _make_metadata_cache(self):
+        return dict()
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (
@@ -282,14 +300,6 @@ class GribField(Field):
             self._metadata.get("step", None),
             self._metadata.get("number", None),
         )
-
-    # def _get(self, name):
-    #     """Private, for testing only"""
-    #     # paramId is renamed as param to get rid of the
-    #     # additional '.128' (in earthkit/data/scripts/grib.py)
-    #     if name == "param":
-    #         name = "paramId"
-    #     return self.handle.get(name)
 
     def write(self, f, bits_per_value=None):
         r"""Writes the message to a file object.
@@ -319,3 +329,14 @@ class GribField(Field):
         bytes
         """
         return self.handle.get_buffer()
+
+    def _diag(self):
+        r = r = defaultdict(int)
+        try:
+            md_cache = self._metadata._cache
+            r["metadata_cache_size"] += len(md_cache)
+            r["metadata_cache_hits"] += md_cache.hits
+            r["metadata_cache_misses"] += md_cache.misses
+        except Exception:
+            pass
+        return r

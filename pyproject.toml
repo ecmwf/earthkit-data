@@ -1,103 +1,162 @@
 [build-system]
-requires = ["setuptools>=61", "setuptools-scm>=8.0"]
+requires = [
+  "setuptools>=61",
+  "setuptools-scm>=8",
+]
 
 [project]
+name = "earthkit-data"
+description = "A format-agnostic Python interface for geospatial data"
+readme = "README.md"
+license = { text = "Apache License Version 2.0" }
 authors = [
-  {name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int"}
+  { name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int" },
 ]
+requires-python = ">=3.8"
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: Apache Software License",
-  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
-  "Operating System :: OS Independent"
+]
+dynamic = [
+  "version",
 ]
 dependencies = [
   "cfgrib>=0.9.10.1",
-  "eccodes>=1.7.0",
   "dask",
+  "earthkit-geo>=0.2",
+  "earthkit-meteo>=0.0.1",
+  "eccodes>=1.7",
   "entrypoints",
   "filelock",
   "jinja2",
   "jsonschema",
+  "lru-dict",
   "markdown",
   "multiurl",
   "netcdf4",
   "pandas",
-  "pdbufr>=0.11.0",
+  "pdbufr>=0.11",
   "pyyaml",
-  "tqdm>=4.63.0",
-  "xarray>=0.19.0",
-  "earthkit-geo>=0.2.0",
-  "earthkit-meteo>=0.0.1"
+  "tqdm>=4.63",
+  "xarray>=0.19",
 ]
-description = "A format-agnostic Python interface for geospatial data"
-dynamic = ["version"]
-license = {text = "Apache License Version 2.0"}
-name = "earthkit-data"
-readme = "README.md"
-requires-python = ">= 3.8"
-
-[project.optional-dependencies]
-all = [
-  "earthkit-data[mars]",
-  "earthkit-data[cds]",
-  "earthkit-data[ecmwf-opendata]",
-  "earthkit-data[fdb]",
-  "earthkit-data[polytope]",
-  "earthkit-data[wekeo]",
-  "earthkit-data[odb]",
-  "earthkit-data[projection]",
-  "earthkit-data[geopandas]",
-  "earthkit-data[eccovjson]",
-  "earthkit-data[s3]"
+optional-dependencies.all = [
+  "aws-requests-auth",
+  "cartopy",
+  "cdsapi>=0.7.1",
+  "covjsonkit>=0.0.19",
+  "ecmwf-api-client>=1.6.1",
+  "ecmwf-opendata>=0.3.3",
+  "geopandas",
+  "hda",
+  "polytope-client>=0.7.4",
+  "pyfdb",
+  "pyodc",
 ]
-cds = ["cdsapi"]
-eccovjson = ["eccovjson>=0.0.5"]
-ecmwf-opendata = ["ecmwf-opendata>=0.3.3"]
-fdb = ["pyfdb"]
-geopandas = ["geopandas"]
-mars = ["ecmwf-api-client>=1.6.1"]
-odb = ["pyodc"]
-polytope = ["polytope-client>=0.7.4"]
-projection = ["cartopy"]
-s3 = ["aws-requests-auth"]
-test = [
-  "earthkit-data[all]",
+optional-dependencies.cds = [
+  "cdsapi>=0.7.1",
+]
+optional-dependencies.ci = [
+  "array-api-compat",
+  "torch",
+]
+optional-dependencies.covjsonkit = [
+  "covjsonkit>=0.0.19",
+]
+optional-dependencies.dev = [
+  "aws-requests-auth",
+  "cartopy",
+  "cdsapi>=0.7.1",
+  "covjsonkit>=0.0.19",
+  "earthkit-data-demo-source",
+  "ecmwf-api-client>=1.6.1",
+  "ecmwf-opendata>=0.3.3",
+  "geopandas",
+  "hda",
+  "nbconvert",
+  "nbformat",
+  "polytope-client>=0.7.4",
+  "pyfdb",
+  "pyodc",
   "pytest",
   "pytest-cov",
   "pytest-forked",
   "pytest-timeout",
-  "nbformat",
-  "nbconvert"
 ]
-wekeo = ["hda"]
+optional-dependencies.ecmwf-opendata = [
+  "ecmwf-opendata>=0.3.3",
+]
+optional-dependencies.fdb = [
+  "pyfdb",
+]
+optional-dependencies.geopandas = [
+  "geopandas",
+]
+optional-dependencies.mars = [
+  "ecmwf-api-client>=1.6.1",
+]
+optional-dependencies.odb = [
+  "pyodc",
+]
+optional-dependencies.polytope = [
+  "polytope-client>=0.7.4",
+]
+optional-dependencies.projection = [
+  "cartopy",
+]
+optional-dependencies.s3 = [
+  "aws-requests-auth",
+]
+optional-dependencies.test = [
+  "earthkit-data-demo-source",
+  "nbconvert",
+  "nbformat",
+  "pytest",
+  "pytest-cov",
+  "pytest-forked",
+  "pytest-timeout",
+]
+optional-dependencies.wekeo = [
+  "hda",
+]
+urls.Documentation = "https://earthkit-data.readthedocs.io/"
+urls.Homepage = "https://github.com/ecmwf/earthkit-data/"
+urls.Issues = "https://github.com/ecmwf/earthkit-data.issues"
+urls.Repository = "https://github.com/ecmwf/earthkit-data/"
 
-[project.urls]
-Documentation = "https://earthkit-data.readthedocs.io/"
-Homepage = "https://github.com/ecmwf/earthkit-data/"
-Issues = "https://github.com/ecmwf/earthkit-data.issues"
-Repository = "https://github.com/ecmwf/earthkit-data/"
+[tool.setuptools.packages.find]
+include = [
+  "earthkit.data",
+]
+where = [
+  "src/",
+]
 
-[tool.coverage.run]
-branch = "true"
+[tool.setuptools_scm]
+version_file = "src/earthkit/data/_version.py"
 
 [tool.isort]
 profile = "black"
 
+[tool.coverage.run]
+branch = "true"
+
 [tool.pydocstyle]
-add_ignore = ["D1", "D200", "D205", "D400", "D401"]
+add_ignore = [
+  "D1",
+  "D200",
+  "D205",
+  "D400",
+  "D401",
+]
 convention = "numpy"
-
-[tool.setuptools.packages.find]
-include = ["earthkit.data"]
-where = ["src/"]
-
-[tool.setuptools_scm]
-version_file = "src/earthkit/data/_version.py"

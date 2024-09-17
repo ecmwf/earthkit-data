@@ -15,11 +15,9 @@ import sys
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.utils.serialise import (
-    SERIALISATION,
-    deserialise_state,
-    serialise_state,
-)
+from earthkit.data.utils.serialise import SERIALISATION
+from earthkit.data.utils.serialise import deserialise_state
+from earthkit.data.utils.serialise import serialise_state
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -32,7 +30,7 @@ from indexing_fixtures import get_tmp_fixture  # noqa E402
 @pytest.mark.parametrize("params", (["t", "u"], ["u", "t"]))
 @pytest.mark.parametrize("levels", ([500, 850], [850, 500]))
 def test_indexing_pickle(mode, params, levels):
-    tmp, path = get_tmp_fixture(mode)
+    _, path = get_tmp_fixture(mode)
     ds = from_source("file", path, indexing=True)
 
     request = dict(

@@ -82,7 +82,7 @@ class _CustomOrder:
     ],
 )
 def test_indexing_order_by_grib_file(mode, params, expected_meta):
-    tmp, path = get_tmp_fixture(mode)
+    _, path = get_tmp_fixture(mode)
     ds = from_source("file", path, indexing=True)
     assert len(ds) == 18
 

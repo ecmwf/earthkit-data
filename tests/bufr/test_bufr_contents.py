@@ -9,7 +9,8 @@
 # nor does it submit to any jurisdiction.
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file, earthkit_remote_test_data_file
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_remote_test_data_file
 
 
 def test_bufr_iteration():
@@ -39,9 +40,7 @@ def test_bufr_metadata():
 def test_bufr_metadata_uncompressed():
     ds = from_source(
         "url",
-        earthkit_remote_test_data_file(
-            "test-data/synop_multi_subset_uncompressed.bufr"
-        ),
+        earthkit_remote_test_data_file("test-data/synop_multi_subset_uncompressed.bufr"),
     )
     assert len(ds) == 1
     f = ds[0]

@@ -14,14 +14,14 @@ import os
 import pytest
 import yaml
 
-from earthkit.data import FieldList, from_source
+from earthkit.data import FieldList
+from earthkit.data import from_source
 from earthkit.data.core.gridspec import GridSpec
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.readers.grib.gridspec import GridSpecConverter, make_gridspec
-from earthkit.data.testing import (
-    earthkit_remote_test_data_file,
-    earthkit_test_data_file,
-)
+from earthkit.data.readers.grib.gridspec import GridSpecConverter
+from earthkit.data.readers.grib.gridspec import make_gridspec
+from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.testing import earthkit_test_data_file
 
 SUPPORTED_GRID_TYPES = [
     "sh",
@@ -40,9 +40,7 @@ def _make_gridspec_list(grid_types):
         grid_types = [grid_types]
 
     for gr in grid_types:
-        with open(
-            earthkit_test_data_file(os.path.join("gridspec", f"{gr}.yaml")), "r"
-        ) as f:
+        with open(earthkit_test_data_file(os.path.join("gridspec", f"{gr}.yaml")), "r") as f:
             r = yaml.safe_load(f)
             for t in r:
                 assert "file" in t, f"Missing 'file' key in {t}"

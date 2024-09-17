@@ -17,7 +17,8 @@ import tempfile
 import numpy as np
 import pandas as pd
 
-from earthkit.data import from_object, wrappers
+from earthkit.data import from_object
+from earthkit.data import wrappers
 from earthkit.data.wrappers import pandas as pd_wrapper
 
 LOG = logging.getLogger(__name__)

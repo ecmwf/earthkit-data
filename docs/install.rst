@@ -47,7 +47,7 @@ Alternatively, you can install the following components:
     - odb: provides full support for the :ref:`odb` data type
     - geopandas: adds geojson/geopandas support
     - projection: adds projection support
-    - eccovjson: provides access to coverage json data served by the :ref:`data-sources-polytope` source
+    - covjsonkit: provides access to coverage json data served by the :ref:`data-sources-polytope` source
 
 E.g. to add :ref:`data-sources-mars`  support you can use:
 

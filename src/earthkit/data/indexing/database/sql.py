@@ -22,16 +22,14 @@ from earthkit.data.core.order import build_remapping
 from earthkit.data.indexing.database.json import json_serialiser
 from earthkit.data.utils.parts import Part
 
-from . import (
-    FILEPARTS_KEY_NAMES,
-    MORE_KEY_NAMES,
-    MORE_KEY_NAMES_WITH_UNDERSCORE,
-    STATISTICS_KEY_NAMES,
-    Database,
-    FloatDBKey,
-    IntDBKey,
-    StrDBKey,
-)
+from . import FILEPARTS_KEY_NAMES
+from . import MORE_KEY_NAMES
+from . import MORE_KEY_NAMES_WITH_UNDERSCORE
+from . import STATISTICS_KEY_NAMES
+from . import Database
+from . import FloatDBKey
+from . import IntDBKey
+from . import StrDBKey
 
 LOG = logging.getLogger(__name__)
 
@@ -41,10 +39,7 @@ def dump_sql(statement):
     statement = statement.replace(";", " ;")
     statement = statement.replace("(", " (")
     lst = statement.split()
-    lst = [
-        "userorder_entries_...\n" if x.startswith("userorder_entries") else x
-        for x in lst
-    ]
+    lst = ["userorder_entries_...\n" if x.startswith("userorder_entries") else x for x in lst]
     print(" ".join(lst))
 
 
@@ -116,9 +111,7 @@ class EntriesLoader:
             pass
 
         try:
-            execute(
-                self.connection, "ALTER TABLE entries DROP COLUMN i_param_levelist;"
-            )
+            execute(self.connection, "ALTER TABLE entries DROP COLUMN i_param_levelist;")
         except sqlite3.OperationalError:
             pass
 
@@ -166,9 +159,7 @@ class EntriesLoader:
 
     def _add_column(self, k, v):
         dbkey = self._build_dbkey(k, v)
-        statement = (
-            f"ALTER TABLE {self.table_name} ADD COLUMN {dbkey.name} {dbkey.sql_type};"
-        )
+        statement = f"ALTER TABLE {self.table_name} ADD COLUMN {dbkey.name} {dbkey.sql_type};"
         LOG.debug("%s", statement)
         try:
             execute(self.connection, statement)
@@ -257,11 +248,7 @@ class SqlFilter:
         m.update(str(kwargs).encode("utf-8"))
         m.update(str(self.remapping.as_dict()).encode("utf-8"))
         m.update(str(self.__class__.__name__).encode("utf-8"))
-        m.update(
-            json.dumps(self.kwargs, sort_keys=True, default=json_serialiser).encode(
-                "utf-8"
-            )
-        )
+        m.update(json.dumps(self.kwargs, sort_keys=True, default=json_serialiser).encode("utf-8"))
         return m.hexdigest()
 
     def __str__(self):
@@ -274,9 +261,7 @@ class SqlFilter:
     def create_new_view(self, db, view):
         new_view = "entries_" + self.h(parent_view=view)
         assert new_view != view
-        view_statement = self.create_view_statement(
-            db, old_view=view, new_view=new_view
-        )
+        view_statement = self.create_view_statement(db, old_view=view, new_view=new_view)
         if not view_statement:
             # nothing to do
             return view
@@ -347,10 +332,7 @@ class SqlRemapping(SqlFilter):
             return None
 
         assert new_view != old_view
-        return (
-            f"CREATE TEMP VIEW IF NOT EXISTS {new_view} AS SELECT *, {select} "
-            f"FROM {old_view};"
-        )
+        return f"CREATE TEMP VIEW IF NOT EXISTS {new_view} AS SELECT *, {select} " f"FROM {old_view};"
 
 
 class SqlOrder(SqlFilter):
@@ -508,8 +490,7 @@ class SqlDatabase(Database, VersionedDatabaseMixin):
         return self._connection._conn
 
     def unique_values(self, *coords, remapping=None, progress_bar=True):
-        """
-        Given a list of metadata attributes, such as date, param, levels,
+        """Given a list of metadata attributes, such as date, param, levels,
         returns the list of unique values for each attributes
         """
         remapping = build_remapping(remapping)
@@ -524,10 +505,7 @@ class SqlDatabase(Database, VersionedDatabaseMixin):
             for c in coords:
                 column = entryname_to_dbname(c)
                 try:
-                    values = [
-                        v[0]
-                        for v in execute(con, f"SELECT DISTINCT {column} FROM {view};")
-                    ]
+                    values = [v[0] for v in execute(con, f"SELECT DISTINCT {column} FROM {view};")]
                     LOG.debug("Reordered values for {column}", column, values)
                     results[column] = values
                 except sqlite3.OperationalError:
@@ -558,8 +536,7 @@ class SqlDatabase(Database, VersionedDatabaseMixin):
         return count
 
     def lookup_parts(self, limit=None, offset=None, resolve_paths=True):
-        """
-        Look into the database and provide entries as Parts.
+        """Look into the database and provide entries as Parts.
         limit: Returns only "limit" entries (used for paging).
         offset: Skip the first "offset" entries (used for paging).
         """
@@ -572,8 +549,7 @@ class SqlDatabase(Database, VersionedDatabaseMixin):
         return parts
 
     def lookup_dicts(self, limit=None, offset=None, remove_none=True, with_parts=None):
-        """
-        Return entries dicts as they where inserted into the database.
+        """Return entries dicts as they where inserted into the database.
         limit: Returns only "limit" entries (used for paging).
         offset: Skip the first "offset" entries (used for paging).
         """

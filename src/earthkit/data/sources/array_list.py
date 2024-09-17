@@ -10,8 +10,10 @@
 import logging
 import math
 
-from earthkit.data.core.fieldlist import Field, FieldList
-from earthkit.data.core.index import MaskIndex, MultiIndex
+from earthkit.data.core.fieldlist import Field
+from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.index import MaskIndex
+from earthkit.data.core.index import MultiIndex
 from earthkit.data.readers.grib.pandas import PandasMixIn
 from earthkit.data.readers.grib.xarray import XarrayMixIn
 from earthkit.data.utils.array import get_backend
@@ -33,13 +35,8 @@ class ArrayField(Field):
     """
 
     def __init__(self, array, metadata, array_backend):
-        super().__init__(
-            array_backend, raw_values_backend=array_backend, metadata=metadata
-        )
+        super().__init__(array_backend, raw_values_backend=array_backend, metadata=metadata)
         self._array = array
-
-    def _make_metadata(self):
-        pass
 
     def _values(self, dtype=None):
         """Native array type"""
@@ -49,7 +46,14 @@ class ArrayField(Field):
             return self.array_backend.array_ns.astype(self._array, dtype, copy=False)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}()"
+        return self.__class__.__name__ + "(%s,%s,%s,%s,%s,%s)" % (
+            self._metadata.get("shortName", None),
+            self._metadata.get("levelist", None),
+            self._metadata.get("date", None),
+            self._metadata.get("time", None),
+            self._metadata.get("step", None),
+            self._metadata.get("number", None),
+        )
 
     def write(self, f, **kwargs):
         r"""Write the field to a file object.
@@ -136,13 +140,9 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
     @classmethod
     def merge(cls, sources):
         if not all(isinstance(_, ArrayFieldListCore) for _ in sources):
-            raise ValueError(
-                "ArrayFieldList can only be merged to another ArrayFieldLists"
-            )
+            raise ValueError("ArrayFieldList can only be merged to another ArrayFieldLists")
         if not all(s.array_backend is s[0].array_backend for s in sources):
-            raise ValueError(
-                "Only fieldlists with the same array backend can be merged"
-            )
+            raise ValueError("Only fieldlists with the same array backend can be merged")
 
         merger = ListMerger(sources)
         return merger.to_fieldlist()
@@ -154,9 +154,7 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
         if self[0]._array_matches(self._array[0], **kwargs):
             return self
         else:
-            return type(self)(
-                self.to_array(array_backend=array_backend, **kwargs), self._metadata
-            )
+            return type(self)(self.to_array(array_backend=array_backend, **kwargs), self._metadata)
 
     def save(self, filename, append=False, check_nans=True, bits_per_value=None):
         r"""Write all the fields into a file.
@@ -212,9 +210,7 @@ class ListMerger:
             for f in s:
                 array.append(f._array)
                 metadata.append(f._metadata)
-        array_backend = (
-            None if len(self.sources) == 0 else self.sources[0].array_backend
-        )
+        array_backend = None if len(self.sources) == 0 else self.sources[0].array_backend
         return ArrayFieldList(array, metadata, array_backend=array_backend)
 
 
@@ -236,9 +232,7 @@ class ArrayFieldList(ArrayFieldListCore):
             return ArrayField(self._array[n], self._metadata[n], self.array_backend)
 
     def __len__(self):
-        return (
-            len(self._array) if isinstance(self._array, list) else self._array.shape[0]
-        )
+        return len(self._array) if isinstance(self._array, list) else self._array.shape[0]
 
 
 class ArrayMaskFieldList(ArrayFieldListCore, MaskIndex):

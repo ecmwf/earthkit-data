@@ -10,7 +10,8 @@
 #
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file, earthkit_remote_test_data_file
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_remote_test_data_file
 
 
 def test_bufr_concat():
@@ -19,9 +20,7 @@ def test_bufr_concat():
     ds = ds1 + ds2
 
     assert len(ds) == 20
-    md = [x._header("dataCategory") for x in ds1] + [
-        x._header("dataCategory") for x in ds2
-    ]
+    md = [x._header("dataCategory") for x in ds1] + [x._header("dataCategory") for x in ds2]
     assert md == [2] * 10 + [0] * 10
 
 

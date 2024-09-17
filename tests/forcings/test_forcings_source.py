@@ -15,14 +15,15 @@ import os
 import sys
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file, earthkit_test_data_file
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from constants_fixtures import all_params  # noqa: E402
+from forcings_fixtures import all_params  # noqa: E402
 
 
-def test_constant_source_1():
+def test_forcings_source_1():
     sample = from_source("file", earthkit_examples_file("test.grib"))
 
     start = sample[0].datetime()["valid_time"]
@@ -36,7 +37,7 @@ def test_constant_source_1():
     params = all_params
 
     ds = from_source(
-        "constants",
+        "forcings",
         sample,
         date=dates,
         param=all_params,
@@ -52,7 +53,7 @@ def test_constant_source_1():
         assert f.metadata("param") == r[1]
 
 
-def test_constant_2():
+def test_forcings_2():
     sample = from_source("file", earthkit_examples_file("test.grib"))
 
     start = sample[0].datetime()["valid_time"]
@@ -68,7 +69,7 @@ def test_constant_2():
 
     ntimes = 4
     ds = from_source(
-        "constants",
+        "forcings",
         sample,
         date=dates,
         time=f"0/to/18/by/{24//ntimes}",
@@ -85,7 +86,7 @@ def test_constant_2():
         assert f.metadata("param") == r[1]
 
 
-def test_constant_3():
+def test_forcings_3():
     sample = from_source("file", earthkit_test_data_file("t_time_series.grib"))
 
     dates = [
@@ -99,7 +100,7 @@ def test_constant_3():
     params = all_params
 
     ds = from_source(
-        "constants",
+        "forcings",
         sample,
         param=params,
     )

@@ -87,10 +87,8 @@ class FieldCube:
         # print(self.source[3])
 
         # Get a mapping of user names to unique values
-        # With possible reduce dimentionality if the user use 'level+param'
-        self.user_coords = self.source.unique_values(
-            *names, remapping=remapping, patches=patches
-        )
+        # With possible reduce dimensionality if the user use 'level+param'
+        self.user_coords = self.source.unique_values(*names, remapping=remapping, patches=patches)
 
         self.user_shape = tuple(len(v) for k, v in self.user_coords.items())
 
@@ -98,11 +96,9 @@ class FieldCube:
             details = []
             for key, v in self.user_coords.items():
                 details.append(f"{key=} ({len(v)}) {v}")
-            assert not isinstance(
-                self.source, str
-            ), f"Not expecting a str here ({self.source})"
+            assert not isinstance(self.source, str), f"Not expecting a str here ({self.source})"
             for i, f in enumerate(self.source):
-                details.append(f"{i}={f} {f.metadata('number')}")
+                details.append(f"{i}={f} {f.metadata('number', default=None)}")
                 if i > 30:
                     details.append("...")
                     break
@@ -257,9 +253,7 @@ class Cubelet:
         self.flatten_values = cube.flatten_values
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}({self.coords},index_names={self._coords_names})"
-        )
+        return f"{self.__class__.__name__}({self.coords},index_names={self._coords_names})"
 
     @property
     def extended_icoords(self):

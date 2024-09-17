@@ -10,12 +10,69 @@
 import math
 from abc import abstractmethod
 from collections import defaultdict
+from functools import cached_property
 
 from earthkit.data.core import Base
-from earthkit.data.core.index import Index, MaskIndex, MultiIndex
-from earthkit.data.decorators import cached_method, detect_out_filename
-from earthkit.data.utils.array import ensure_backend, numpy_backend
+from earthkit.data.core.index import Index
+from earthkit.data.core.index import MaskIndex
+from earthkit.data.core.index import MultiIndex
+from earthkit.data.decorators import cached_method
+from earthkit.data.decorators import detect_out_filename
+from earthkit.data.utils.array import ensure_backend
+from earthkit.data.utils.array import numpy_backend
 from earthkit.data.utils.metadata import metadata_argument
+
+
+class FieldListIndices:
+    def __init__(self, field_list):
+        self.fs = field_list
+        self.user_indices = dict()
+
+    @cached_property
+    def default_index_keys(self):
+        if len(self.fs) > 0:
+            return self.fs[0]._metadata.index_keys()
+        else:
+            return []
+
+    def _index_value(self, key):
+        values = set()
+        for f in self.fs:
+            v = f.metadata(key, default=None)
+            if v is not None:
+                values.add(v)
+
+        return sorted(list(values))
+
+    @cached_property
+    def default_indices(self):
+        indices = defaultdict(set)
+        keys = self.default_index_keys
+        for f in self.fs:
+            v = f.metadata(keys, default=None)
+            for i, k in enumerate(keys):
+                if v[i] is not None:
+                    indices[k].add(v[i])
+
+        return {k: sorted(list(v)) for k, v in indices.items()}
+
+    def indices(self, squeeze=False):
+        r = {**self.default_indices, **self.user_indices}
+
+        if squeeze:
+            return {k: v for k, v in r.items() if len(v) > 1}
+        else:
+            return r
+
+    def index(self, key):
+        if key in self.user_indices:
+            return self.user_indices[key]
+
+        if key in self.default_index_keys:
+            return self.default_indices[key]
+
+        self.user_indices[key] = self._index_value(key)
+        return self.user_indices[key]
 
 
 class Field(Base):
@@ -111,18 +168,15 @@ class Field(Base):
             return self._array_backend.array_ns.reshape(v, n)
         return v
 
-    def _make_metadata(self):
-        r"""Create a field metadata object."""
-        self._not_implemented()
-
     @property
     def _metadata(self):
         r"""Metadata: Get the object representing the field's metadata."""
         if self.__metadata is None:
+            # TODO: remove this legacy method
             self.__metadata = self._make_metadata()
         return self.__metadata
 
-    def to_numpy(self, flatten=False, dtype=None):
+    def to_numpy(self, flatten=False, dtype=None, index=None):
         r"""Return the values stored in the field as an ndarray.
 
         Parameters
@@ -133,6 +187,9 @@ class Field(Base):
         dtype: str, numpy.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
+        index: ndarray indexing object, optional
+            The index of the values and to be extracted. When it
+            is None all the values are extracted
 
         Returns
         -------
@@ -144,10 +201,12 @@ class Field(Base):
         v = numpy_backend().to_array(v, self.raw_values_backend)
         shape = self._required_shape(flatten)
         if shape != v.shape:
-            return v.reshape(shape)
+            v = v.reshape(shape)
+        if index is not None:
+            v = v[index]
         return v
 
-    def to_array(self, flatten=False, dtype=None, array_backend=None):
+    def to_array(self, flatten=False, dtype=None, array_backend=None, index=None):
         r"""Return the values stored in the field in the
         format of :attr:`array_backend`.
 
@@ -159,6 +218,9 @@ class Field(Base):
         dtype: str, array.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
+        index: array indexing object, optional
+            The index of the values and to be extracted. When it
+            is None all the values are extracted
 
         Returns
         -------
@@ -173,17 +235,21 @@ class Field(Base):
         )
         shape = self._required_shape(flatten)
         if shape != v.shape:
-            return self._array_backend.array_ns.reshape(v, shape)
+            v = self._array_backend.array_ns.reshape(v, shape)
+        if index is not None:
+            v = v[index]
         return v
 
-    def _required_shape(self, flatten):
-        return self.shape if not flatten else (math.prod(self.shape),)
+    def _required_shape(self, flatten, shape=None):
+        if shape is None:
+            shape = self.shape
+        return shape if not flatten else (math.prod(shape),)
 
     def _array_matches(self, array, flatten=False, dtype=None):
         shape = self._required_shape(flatten)
         return shape == array.shape and (dtype is None or dtype == array.dtype)
 
-    def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None):
+    def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None, index=None):
         r"""Return the values and/or the geographical coordinates for each grid point.
 
         Parameters
@@ -197,7 +263,9 @@ class Field(Base):
         dtype: str, array.dtype or None
             Typecode or data-type of the arrays. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
-
+        index: array indexing object, optional
+            The index of the values and or the latitudes/longitudes to be extracted. When it
+            is None all the values and/or coordinates are extracted.
 
         Returns
         -------
@@ -206,7 +274,6 @@ class Field(Base):
             (following the order in ``keys``). When ``keys`` is a single value only the
             array belonging to the key is returned. The array format is specified by
             :attr:`array_backend`.
-
 
         Examples
         --------
@@ -250,21 +317,22 @@ class Field(Base):
             if k not in _keys:
                 raise ValueError(f"data: invalid argument: {k}")
 
-        r = [
-            self._to_array(_keys[k][0](dtype=dtype), source_backend=_keys[k][1])
-            for k in keys
-        ]
-        shape = self._required_shape(flatten)
-        if shape != r[0].shape:
-            # r = [x.reshape(shape) for x in r]
-            r = [self._array_backend.array_ns.reshape(x, shape) for x in r]
+        r = []
+        for k in keys:
+            v = self._to_array(_keys[k][0](dtype=dtype), source_backend=_keys[k][1])
+            shape = self._required_shape(flatten)
+            if shape != v.shape:
+                v = self._array_backend.array_ns.reshape(v, shape)
+            if index is not None:
+                v = v[index]
+            r.append(v)
 
         if len(r) == 1:
             return r[0]
         else:
             return self._array_backend.array_ns.stack(r)
 
-    def to_points(self, flatten=False, dtype=None):
+    def to_points(self, flatten=False, dtype=None, index=None):
         r"""Return the geographical coordinates in the data's original
         Coordinate Reference System (CRS).
 
@@ -277,6 +345,9 @@ class Field(Base):
             Typecode or data-type of the arrays. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is
             ``float64``.
+        index: array indexing object, optional
+            The index of the coordinates to be extracted. When it is None
+            all the values are extracted.
 
         Returns
         -------
@@ -304,16 +375,17 @@ class Field(Base):
             if shape != x.shape:
                 x = self._array_backend.array_ns.reshape(x, shape)
                 y = self._array_backend.array_ns.reshape(y, shape)
+            if index is not None:
+                x = x[index]
+                y = y[index]
             return dict(x=x, y=y)
         elif self.projection().CARTOPY_CRS == "PlateCarree":
-            lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype)
+            lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
             return dict(x=lon, y=lat)
         else:
-            raise ValueError(
-                "to_points(): geographical coordinates in original CRS are not available"
-            )
+            raise ValueError("to_points(): geographical coordinates in original CRS are not available")
 
-    def to_latlon(self, flatten=False, dtype=None):
+    def to_latlon(self, flatten=False, dtype=None, index=None):
         r"""Return the latitudes/longitudes of all the gridpoints in the field.
 
         Parameters
@@ -325,6 +397,9 @@ class Field(Base):
             Typecode or data-type of the arrays. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is
             ``float64``.
+        index: array indexing object, optional
+            The index of the latitudes/longitudes to be extracted. When it is None
+            all the values are extracted.
 
         Returns
         -------
@@ -338,7 +413,7 @@ class Field(Base):
         to_points
 
         """
-        lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype)
+        lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
         return dict(lat=lat, lon=lon)
 
     def grid_points(self):
@@ -427,7 +502,6 @@ class Field(Base):
         dict of datatime.datetime
             Dict with items "base_time" and "valid_time".
 
-
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
         >>> ds[4].datetime()
@@ -486,7 +560,6 @@ class Field(Base):
         KeyError
             If no ``default`` is set and a key is not found in the message or it has a missing value.
 
-
         Examples
         --------
         >>> import earthkit.data
@@ -544,13 +617,11 @@ class Field(Base):
         '2 metre temperature'
         """
         # when called without arguments returns the metadata object
-        if len(keys) == 0 and astype is None and len(kwargs) == 0:
+        if len(keys) == 0 and astype is None and not kwargs:
             return self._metadata
 
         namespace = kwargs.pop("namespace", None)
-        key, namespace, astype, key_arg_type = metadata_argument(
-            *keys, namespace=namespace, astype=astype
-        )
+        key, namespace, astype, key_arg_type = metadata_argument(*keys, namespace=namespace, astype=astype)
 
         assert isinstance(key, list)
         assert isinstance(namespace, (list, tuple))
@@ -574,9 +645,9 @@ class Field(Base):
                 for k, kt in zip(key, astype)
             ]
 
-            if key_arg_type == str:
+            if key_arg_type is str:
                 return r[0]
-            elif key_arg_type == tuple:
+            elif key_arg_type is tuple:
                 return tuple(r)
             else:
                 return r
@@ -666,8 +737,6 @@ class FieldList(Index):
         defaults to "numpy".
     """
 
-    _md_indices = {}
-
     def __init__(self, array_backend=None, **kwargs):
         self._array_backend = ensure_backend(array_backend)
         super().__init__(**kwargs)
@@ -723,31 +792,9 @@ class FieldList(Index):
         else:
             return False
 
-    @cached_method
-    def _default_index_keys(self):
-        if len(self) > 0:
-            return self[0].metadata().index_keys()
-        else:
-            return []
-
-    def _find_index_values(self, key):
-        values = set()
-        for f in self:
-            v = f.metadata(key, default=None)
-            if v is not None:
-                values.add(v)
-        return sorted(list(values))
-
-    def _find_all_index_dict(self):
-        indices = defaultdict(set)
-        for f in self:
-            for k in self._default_index_keys():
-                v = f.metadata(k, default=None)
-                if v is None:
-                    continue
-                indices[k].add(v)
-
-        return {k: sorted(list(v)) for k, v in indices.items()}
+    @cached_property
+    def _md_indices(self):
+        return FieldListIndices(self)
 
     def indices(self, squeeze=False):
         r"""Return the unique, sorted values for a set of metadata keys (see below)
@@ -788,12 +835,7 @@ class FieldList(Index):
         used in :obj:`indices`.
 
         """
-        if not self._md_indices:
-            self._md_indices = self._find_all_index_dict()
-        if squeeze:
-            return {k: v for k, v in self._md_indices.items() if len(v) > 1}
-        else:
-            return self._md_indices
+        return self._md_indices.indices(squeeze=squeeze)
 
     def index(self, key):
         r"""Return the unique, sorted values of the specified metadata ``key`` from all the fields.
@@ -822,11 +864,7 @@ class FieldList(Index):
         [300, 400, 500, 700, 850, 1000]
 
         """
-        if key in self.indices():
-            return self.indices()[key]
-
-        self._md_indices[key] = self._find_index_values(key)
-        return self._md_indices[key]
+        return self._md_indices.index(key)
 
     def to_numpy(self, **kwargs):
         r"""Return all the fields' values as an ndarray. It is formed as the array of the
@@ -876,13 +914,12 @@ class FieldList(Index):
 
     @property
     def values(self):
-        r"""array-likr: Get all the fields' values as a 2D array. It is formed as the array of
+        r"""array-like: Get all the fields' values as a 2D array. It is formed as the array of
         :obj:`GribField.values <data.readers.grib.codes.GribField.values>` per field.
 
         See Also
         --------
         to_array
-
 
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
@@ -901,7 +938,13 @@ class FieldList(Index):
         x = [f.values for f in self]
         return self._array_backend.array_ns.stack(x)
 
-    def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None):
+    def data(
+        self,
+        keys=("lat", "lon", "value"),
+        flatten=False,
+        dtype=None,
+        index=None,
+    ):
         r"""Return the values and/or the geographical coordinates.
 
         Only works when all the fields have the same grid geometry.
@@ -918,6 +961,9 @@ class FieldList(Index):
             Typecode or data-type of the arrays. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is
             ``float64``.
+        index: array indexing object, optional
+            The index of the values to be extracted from each field. When it is None all the
+            values are extracted.
 
         Returns
         -------
@@ -928,12 +974,10 @@ class FieldList(Index):
             * the longitudes array from the first field when "lon" is in ``keys``
             * a values array per field when "values" is in ``keys``
 
-
         Raises
         ------
         ValueError
             When not all the fields have the same grid geometry.
-
 
         Examples
         --------
@@ -972,7 +1016,7 @@ class FieldList(Index):
                 keys = [keys]
 
             if "lat" in keys or "lon" in keys:
-                latlon = self[0].to_latlon(flatten=flatten, dtype=dtype)
+                latlon = self[0].to_latlon(flatten=flatten, dtype=dtype, index=index)
 
             r = []
             for k in keys:
@@ -981,10 +1025,9 @@ class FieldList(Index):
                 elif k == "lon":
                     r.append(latlon["lon"])
                 elif k == "value":
-                    r.extend([f.to_array(flatten=flatten, dtype=dtype) for f in self])
+                    r.extend([f.to_array(flatten=flatten, dtype=dtype, index=index) for f in self])
                 else:
                     raise ValueError(f"data: invalid argument: {k}")
-
             return self._array_backend.array_ns.stack(r)
 
         elif len(self) == 0:
@@ -1078,15 +1121,13 @@ class FieldList(Index):
                 for i in pos_range:
                     yield (self[i]._attributes(keys))
 
-        _keys = (
-            self._default_ls_keys() if namespace is None else dict(namespace=namespace)
-        )
+        _keys = self._default_ls_keys() if namespace is None else dict(namespace=namespace)
         return ls(_proc, _keys, n=n, keys=keys, extra_keys=extra_keys)
 
     @cached_method
     def _default_ls_keys(self):
         if len(self) > 0:
-            return self[0].metadata().ls_keys()
+            return self[0]._metadata.ls_keys()
         else:
             return []
 
@@ -1112,16 +1153,15 @@ class FieldList(Index):
         ls
         tail
 
-
         The following calls are equivalent:
 
-            .. code-block:: python
+        .. code-block:: python
 
-                ds.head()
-                ds.head(5)
-                ds.head(n=5)
-                ds.ls(5)
-                ds.ls(n=5)
+            ds.head()
+            ds.head(5)
+            ds.head(n=5)
+            ds.ls(5)
+            ds.ls(n=5)
 
         """
         if n <= 0:
@@ -1150,16 +1190,15 @@ class FieldList(Index):
         head
         ls
 
-
         The following calls are equivalent:
 
-            .. code-block:: python
+        .. code-block:: python
 
-                ds.tail()
-                ds.tail(5)
-                ds.tail(n=5)
-                ds.ls(-5)
-                ds.ls(n=-5)
+            ds.tail()
+            ds.tail(5)
+            ds.tail(n=5)
+            ds.ls(-5)
+            ds.ls(n=-5)
 
         """
         if n <= 0:
@@ -1179,7 +1218,7 @@ class FieldList(Index):
     @cached_method
     def _describe_keys(self):
         if len(self) > 0:
-            return self[0].metadata().describe_keys()
+            return self[0]._metadata.describe_keys()
         else:
             return []
 
@@ -1190,7 +1229,6 @@ class FieldList(Index):
         -------
         dict of datatime.datetime
             Dict with items "base_time" and "valid_time".
-
 
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
@@ -1241,11 +1279,14 @@ class FieldList(Index):
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
-    def to_latlon(self, **kwargs):
+    def to_latlon(self, index=None, **kwargs):
         r"""Return the latitudes/longitudes shared by all the fields.
 
         Parameters
         ----------
+        index: array indexing object, optional
+            The index of the latitudes/longitudes to be extracted. When it is None
+            all the values are extracted.
         **kwargs: dict, optional
             Keyword arguments passed to
             :meth:`Field.to_latlon() <data.core.fieldlist.Field.to_latlon>`
@@ -1346,11 +1387,9 @@ class FieldList(Index):
     @cached_method
     def _is_shared_grid(self):
         if len(self) > 0:
-            grid = self[0].metadata().geography._unique_grid_id()
+            grid = self[0]._metadata.geography._unique_grid_id()
             if grid is not None:
-                return all(
-                    f.metadata().geography._unique_grid_id() == grid for f in self
-                )
+                return all(f._metadata.geography._unique_grid_id() == grid for f in self)
         return False
 
     @detect_out_filename

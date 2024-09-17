@@ -58,7 +58,7 @@ from indexing_fixtures import get_tmp_fixture  # noqa
     ],
 )
 def test_indexing_isel_grib_file(mode, params, expected_meta, metadata_keys):
-    tmp, path = get_tmp_fixture(mode)
+    _, path = get_tmp_fixture(mode)
     ds = from_source("file", path, indexing=True)
     assert len(ds) == 18
 
@@ -78,7 +78,7 @@ def test_indexing_isel_grib_file(mode, params, expected_meta, metadata_keys):
 
 @pytest.mark.cache
 def test_indexing_isel_grib_file_invalid_key():
-    tmp, path = get_tmp_fixture("file")
+    _, path = get_tmp_fixture("file")
     ds = from_source("file", path, indexing=True)
     assert len(ds) == 18
 

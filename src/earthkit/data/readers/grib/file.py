@@ -19,12 +19,23 @@ class GRIBReader(GribFieldListInOneFile, Reader):
     appendable = True  # GRIB messages can be added to the same file
 
     def __init__(self, source, path, parts=None):
-        array_backend = source._kwargs.get("array_backend", None)
+
+        _kwargs = {}
+        for k in [
+            "array_backend",
+            "grib_field_policy",
+            "grib_handle_policy",
+            "grib_handle_cache_size",
+            "use_grib_metadata_cache",
+        ]:
+            _kwargs[k] = source._kwargs.get(k, None)
+
+        for k in source._kwargs:
+            if "-" in k:
+                raise KeyError(f"Invalid option {k} in GRIBReader. Option names must not contain '-'.")
 
         Reader.__init__(self, source, path)
-        GribFieldListInOneFile.__init__(
-            self, path, parts=parts, array_backend=array_backend
-        )
+        GribFieldListInOneFile.__init__(self, path, parts=parts, **_kwargs)
 
     def __repr__(self):
         return "GRIBReader(%s)" % (self.path,)

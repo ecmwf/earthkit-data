@@ -17,7 +17,8 @@ import pytest
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import FL_TYPES, load_grib_data  # noqa: E402
+from grib_fixtures import FL_TYPES  # noqa: E402
+from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -42,11 +43,7 @@ def test_to_xarray_filter_by_keys(fl_type, array_backend):
     assert len(g) > 1
 
     # see github #250
-    r = g.to_xarray(
-        xarray_open_dataset_kwargs={
-            "backend_kwargs": {"filter_by_keys": {"shortName": "t"}}
-        }
-    )
+    r = g.to_xarray(xarray_open_dataset_kwargs={"backend_kwargs": {"filter_by_keys": {"shortName": "t"}}})
 
     assert len(r.data_vars) == 1
     assert r["t"].sizes["isobaricInhPa"] == 1

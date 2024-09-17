@@ -19,7 +19,14 @@ GEOGRAPHIC_COORDS = {
 
 
 def as_datetime(self, time):
-    return datetime.datetime.strptime(str(time)[:19], "%Y-%m-%dT%H:%M:%S")
+    if isinstance(time, datetime.datetime):
+        return time
+    elif hasattr(time, "isoformat"):
+        return datetime.datetime.fromisoformat(time.isoformat())
+    elif hasattr(time, "to_datetime"):
+        return time.to_datetime()
+    else:
+        return datetime.datetime.strptime(str(time)[:19], "%Y-%m-%dT%H:%M:%S")
 
 
 def as_level(self, level):

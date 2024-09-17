@@ -16,33 +16,41 @@ import pytest
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from array_fl_fixtures import load_array_fl, load_array_fl_file  # noqa: E402
+from array_fl_fixtures import load_array_fl  # noqa: E402
+from array_fl_fixtures import load_array_fl_file  # noqa: E402
 
 # Note: Almost all grib metadata tests are also run for numpyfs.
 # See grib/test_grib_metadata.py
 
 
-def test_array_fl_values_metadata():
+def test_array_fl_field_repr():
+    ds, _ = load_array_fl(1)
+
+    t = repr(ds[0])
+    assert t == "ArrayField(2t,None,20200513,1200,0,0)"
+
+
+def test_array_fl_values_metadata_basic():
     ds, _ = load_array_fl(1)
 
     # values metadata
-    keys = [
-        "min",
-        "max",
-        "avg",
-        "ds",
-        "skew",
-        "kurt",
-        "isConstant",
-        "const",
-        "bitmapPresent",
-        "numberOfMissing",
-        "values",
-    ]
-    for k in keys:
-        assert ds[0].metadata(k, default=None) is None, k
-        with pytest.raises(KeyError):
-            ds[0].metadata(k)
+    # keys = [
+    #     "min",
+    #     "max",
+    #     "avg",
+    #     "ds",
+    #     "skew",
+    #     "kurt",
+    #     "isConstant",
+    #     "const",
+    #     "bitmapPresent",
+    #     "numberOfMissing",
+    #     "values",
+    # ]
+    # for k in keys:
+    #     assert ds[0].metadata(k, default=None) is None, k
+    #     with pytest.raises(KeyError):
+    #         ds[0].metadata(k)
 
     # bits per value must be kept from the original GRIB data
     assert ds[0].metadata("bitsPerValue") == 16

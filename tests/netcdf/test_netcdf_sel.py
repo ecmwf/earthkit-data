@@ -11,7 +11,8 @@
 
 import pytest
 
-from earthkit.data.testing import earthkit_examples_file, load_nc_or_xr_source
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import load_nc_or_xr_source
 
 
 @pytest.mark.parametrize("mode", ["nc", "xr"])

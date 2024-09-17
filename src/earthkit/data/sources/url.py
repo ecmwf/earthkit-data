@@ -130,7 +130,8 @@ class UrlBase(FileSource):
     ):
         super().__init__(filter=filter, merger=merger)
 
-        from earthkit.data.utils.url import UrlSpec, UrlSpecItem
+        from earthkit.data.utils.url import UrlSpec
+        from earthkit.data.utils.url import UrlSpecItem
 
         if isinstance(url, UrlSpecItem):
             self.url_spec = UrlSpec(url)
@@ -147,7 +148,7 @@ class UrlBase(FileSource):
             self.url_spec = UrlSpec(url, **url_kwargs)
 
         self._kwargs = kwargs
-        LOG.debug(f"url={self.url} url_parts={self.url_parts} _kwargs={self._kwargs}")
+        LOG.debug(f"url={self.url} url_parts={self.url_parts} auth={self.auth} _kwargs={self._kwargs}")
 
     def connect_to_mirror(self, mirror):
         return mirror.connection_for_url(self, self.url, self.url_parts)
@@ -467,7 +468,7 @@ class SingleUrlStream(UrlBase):
             **self.url_spec[0].kwargs,
         )
 
-        size, mode, skip, trust_size = downloader.estimate_size(None)
+        _, _, _, _ = downloader.estimate_size(None)
 
         # cache data may contain the result of the http HEAD request
         h = downloader.cache_data()
@@ -475,9 +476,7 @@ class SingleUrlStream(UrlBase):
             self.content_type = h.get("content-type")
 
         stream = downloader.make_stream()
-        return RequestIterStreamer(
-            stream(chunk_size=self.url_spec[0].kwargs["chunk_size"])
-        )
+        return RequestIterStreamer(stream(chunk_size=self.url_spec[0].kwargs["chunk_size"]))
 
 
 source = Url

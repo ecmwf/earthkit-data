@@ -11,16 +11,17 @@ import logging
 import math
 import os
 from abc import abstractmethod
+from collections import defaultdict
 
 from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.core.index import MaskIndex, MultiIndex
-from earthkit.data.decorators import alias_argument, detect_out_filename
-from earthkit.data.indexing.database import (
-    FILEPARTS_KEY_NAMES,
-    MORE_KEY_NAMES,
-    MORE_KEY_NAMES_WITH_UNDERSCORE,
-    STATISTICS_KEY_NAMES,
-)
+from earthkit.data.core.index import MaskIndex
+from earthkit.data.core.index import MultiIndex
+from earthkit.data.decorators import alias_argument
+from earthkit.data.decorators import detect_out_filename
+from earthkit.data.indexing.database import FILEPARTS_KEY_NAMES
+from earthkit.data.indexing.database import MORE_KEY_NAMES
+from earthkit.data.indexing.database import MORE_KEY_NAMES_WITH_UNDERSCORE
+from earthkit.data.indexing.database import STATISTICS_KEY_NAMES
 from earthkit.data.readers.grib.codes import GribField
 from earthkit.data.readers.grib.pandas import PandasMixIn
 from earthkit.data.readers.grib.xarray import XarrayMixIn
@@ -104,9 +105,7 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
     _availability = None
 
     def __init__(self, *args, **kwargs):
-        if self.availability_path is not None and os.path.exists(
-            self.availability_path
-        ):
+        if self.availability_path is not None and os.path.exists(self.availability_path):
             self._availability = Availability(self.availability_path)
 
         # Index.__init__(self, *args, **kwargs)
@@ -123,21 +122,15 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
     @classmethod
     def merge(cls, sources):
         if not all(isinstance(_, GribFieldList) for _ in sources):
-            raise ValueError(
-                "GribFieldList can only be merged to another GribFieldLists"
-            )
+            raise ValueError("GribFieldList can only be merged to another GribFieldLists")
         if not all(s.array_backend is s[0].array_backend for s in sources):
-            raise ValueError(
-                "Only fieldlists with the same array backend can be merged"
-            )
+            raise ValueError("Only fieldlists with the same array backend can be merged")
 
         return GribMultiFieldList(sources)
 
     def _custom_availability(self, ignore_keys=None, filter_keys=lambda k: True):
         def dicts():
-            for i in progress_bar(
-                iterable=range(len(self)), desc="Building availability"
-            ):
+            for i in progress_bar(iterable=range(len(self)), desc="Building availability"):
                 dic = self.get_metadata(i)
 
                 for k in list(dic.keys()):
@@ -172,11 +165,7 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
         return self.availability
 
     def _is_full_hypercube(self):
-        non_empty_coords = {
-            k: v
-            for k, v in self.availability._tree.unique_values().items()
-            if len(v) > 1
-        }
+        non_empty_coords = {k: v for k, v in self.availability._tree.unique_values().items() if len(v) > 1}
         expected_size = math.prod([len(v) for k, v in non_empty_coords.items()])
         return len(self) == expected_size
 
@@ -228,14 +217,179 @@ class GribMultiFieldList(GribFieldList, MultiIndex):
         FieldList._init_from_multi(self, self)
 
 
+class GribFieldManager:
+    def __init__(self, policy, owner):
+        self.policy = policy
+        self.cache = None
+
+        if self.policy == "persistent":
+            from lru import LRU
+
+            # TODO: the number of fields might only be available only later (e.g. fieldlists with
+            # an SQL index). Consider making cache a cached property.
+            n = len(owner)
+            if n > 0:
+                self.cache = LRU(n)
+
+        self.field_create_count = 0
+
+        # check consistency
+        if self.cache is not None:
+            assert self.policy == "persistent"
+
+    def field(self, n, create):
+        if self.cache is not None:
+            if n in self.cache:
+                return self.cache[n]
+            else:
+                field = create(n)
+                self._field_created()
+                self.cache[n] = field
+                return field
+        else:
+            self._field_created()
+            return create(n)
+
+    def _field_created(self):
+        self.field_create_count += 1
+
+    def diag(self):
+        r = defaultdict(int)
+        r["grib_field_policy"] = self.policy
+        if self.cache is not None:
+            r["field_cache_size"] = len(self.cache)
+
+        r["field_create_count"] = self.field_create_count
+        return r
+
+
+class GribHandleManager:
+    def __init__(self, policy, cache_size):
+        self.policy = policy
+        self.max_cache_size = cache_size
+        self.cache = None
+
+        if self.policy == "cache":
+            if self.max_cache_size > 0:
+                from lru import LRU
+
+                self.cache = LRU(self.max_cache_size)
+            else:
+                raise ValueError(
+                    'grib_handle_cache_size must be greater than 0 when grib_handle_policy="cache"'
+                )
+
+        self.handle_create_count = 0
+
+        # check consistency
+        if self.cache is not None:
+            self.policy == "cache"
+        else:
+            self.policy in ["persistent", "temporary"]
+
+    def handle(self, field, create):
+        if self.policy == "cache":
+            key = (field.path, field._offset)
+            if key in self.cache:
+                return self.cache[key]
+            else:
+                handle = create()
+                self._handle_created()
+                self.cache[key] = handle
+                return handle
+        elif self.policy == "persistent":
+            if field._handle is None:
+                field._handle = create()
+                self._handle_created()
+            return field._handle
+        elif self.policy == "temporary":
+            self._handle_created()
+            return create()
+
+    def _handle_created(self):
+        self.handle_create_count += 1
+
+    def diag(self):
+        r = defaultdict(int)
+        r["grib_handle_policy"] = self.policy
+        r["grib_handle_cache_size"] = self.max_cache_size
+        if self.cache is not None:
+            r["handle_cache_size"] = len(self.cache)
+
+        r["handle_create_count"] = self.handle_create_count
+        return r
+
+
 class GribFieldListInFiles(GribFieldList):
+    def __init__(
+        self,
+        *args,
+        grib_field_policy=None,
+        grib_handle_policy=None,
+        grib_handle_cache_size=None,
+        use_grib_metadata_cache=None,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+
+        from earthkit.data.core.settings import SETTINGS
+
+        def _get_opt(v, name):
+            return v if v is not None else SETTINGS.get(name)
+
+        self._field_manager = GribFieldManager(_get_opt(grib_field_policy, "grib-field-policy"), self)
+        self._handle_manager = GribHandleManager(
+            _get_opt(grib_handle_policy, "grib-handle-policy"),
+            _get_opt(grib_handle_cache_size, "grib-handle-cache-size"),
+        )
+
+        self._use_metadata_cache = _get_opt(use_grib_metadata_cache, "use-grib-metadata-cache")
+
+    def _create_field(self, n):
+        part = self.part(n)
+        field = GribField(
+            part.path,
+            part.offset,
+            part.length,
+            self.array_backend,
+            handle_manager=self._handle_manager,
+            use_metadata_cache=self._use_metadata_cache,
+        )
+        if field is None:
+            raise RuntimeError(f"Could not get a handle for part={part}")
+        return field
+
     def _getitem(self, n):
+        # TODO: check if we need a mutex here
         if isinstance(n, int):
-            part = self.part(n if n >= 0 else len(self) + n)
-            return GribField(part.path, part.offset, part.length, self.array_backend)
+            if n < 0:
+                n += len(self)
+            if n >= len(self):
+                raise IndexError(f"Index {n} out of range")
+
+            return self._field_manager.field(n, self._create_field)
 
     def __len__(self):
         return self.number_of_parts()
+
+    def _diag(self):
+        r = defaultdict(int)
+        r.update(self._field_manager.diag())
+        r.update(self._handle_manager.diag())
+
+        if self._field_manager.cache is not None:
+            for f in self._field_manager.cache.values():
+                if f._handle is not None:
+                    r["current_handle_count"] += 1
+
+                if self._use_metadata_cache:
+                    try:
+                        md_cache = f._diag()
+                        for k in ["metadata_cache_hits", "metadata_cache_misses", "metadata_cache_size"]:
+                            r[k] += md_cache[k]
+                    except Exception:
+                        pass
+        return r
 
     @abstractmethod
     def part(self, n):

@@ -30,9 +30,7 @@ class FDBSource(Source):
 
         for k in ["group_by", "batch_size"]:
             if k in kwargs:
-                raise ValueError(
-                    f"Invalid argument '{k}' for FDBSource. Deprecated since 0.8.0."
-                )
+                raise ValueError(f"Invalid argument '{k}' for FDBSource. Deprecated since 0.8.0.")
 
         self._stream_kwargs = dict()
         for k in ["read_all"]:

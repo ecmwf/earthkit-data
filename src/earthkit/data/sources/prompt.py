@@ -14,7 +14,9 @@ import re
 import stat
 from getpass import getpass
 
-from earthkit.data.core.ipython import HTML, display, ipython_active
+from earthkit.data.core.ipython import HTML
+from earthkit.data.core.ipython import display
+from earthkit.data.core.ipython import ipython_active
 from earthkit.data.utils.humanize import list_to_human
 
 LOG = logging.getLogger(__name__)
@@ -72,9 +74,7 @@ class Prompt:
     def _rc_message(self):
         if self.owner.rcfile:
             if self.owner.rcfile_env:
-                return RC_MESSAGE_EXT.format(
-                    rcfile=self.owner.rcfile, rcfile_env=self.owner.rcfile_env
-                )
+                return RC_MESSAGE_EXT.format(rcfile=self.owner.rcfile, rcfile_env=self.owner.rcfile_env)
             else:
                 return RC_MESSAGE_BASE.format(rcfile=self.owner.rcfile)
 

@@ -14,9 +14,11 @@ from contextlib import contextmanager
 from importlib import import_module
 from unittest.mock import patch
 
-from earthkit.data import from_object, from_source
+from earthkit.data import from_object
+from earthkit.data import from_source
 from earthkit.data.readers.text import TextReader
 from earthkit.data.sources.empty import EmptySource
+from earthkit.data.sources.mars import StandaloneMarsClient
 
 LOG = logging.getLogger(__name__)
 
@@ -29,9 +31,7 @@ _NETWORK_PATCHER = patch("socket.socket", side_effect=OfflineError)
 
 _REMOTE_TEST_DATA_URL = "https://get.ecmwf.int/repository/test-data/earthkit-data/"
 
-_ROOT_DIR = top = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-)
+_ROOT_DIR = top = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 if not os.path.exists(os.path.join(_ROOT_DIR, "tests", "data")):
     _ROOT_DIR = "./"
 
@@ -91,7 +91,10 @@ def modules_installed(*modules):
     return True
 
 
-NO_MARS = not os.path.exists(os.path.expanduser("~/.ecmwfapirc"))
+NO_MARS_DIRECT = not StandaloneMarsClient.enabled()
+NO_MARS_API = not (NO_MARS_DIRECT and os.path.exists(os.path.expanduser("~/.ecmwfapirc")))
+NO_MARS = NO_MARS_API and NO_MARS_DIRECT
+
 NO_CDS = not os.path.exists(os.path.expanduser("~/.cdsapirc"))
 NO_HDA = not os.path.exists(os.path.expanduser("~/.hdarc"))
 IN_GITHUB = os.environ.get("GITHUB_WORKFLOW") is not None
@@ -111,7 +114,7 @@ except Exception:
     NO_FDB = True
 
 NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
-NO_ECCOVJSON = not modules_installed("eccovjson")
+NO_COVJSONKIT = not modules_installed("covjsonkit")
 NO_PYTORCH = not modules_installed("torch")
 NO_CUPY = not modules_installed("cupy")
 if not NO_CUPY:

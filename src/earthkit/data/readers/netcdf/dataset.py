@@ -15,15 +15,13 @@ LOG = logging.getLogger(__name__)
 
 
 GEOGRAPHIC_COORDS = {
-    "x": ["x", "projection_x_coordinate", "lon", "longitude"],
-    "y": ["y", "projection_y_coordinate", "lat", "latitude"],
+    "x": ["x", "X", "xc", "projection_x_coordinate", "lon", "longitude"],
+    "y": ["y", "Y", "yc", "projection_y_coordinate", "lat", "latitude"],
 }
 
 
 class DataSet:
-    """
-    Class that wraps a xarray dataset to provide caching
-    """
+    """Class that wraps a xarray dataset to provide caching"""
 
     def __init__(self, ds):
         self._ds = ds
@@ -117,9 +115,18 @@ class DataSet:
         keys, coords = self._get_xy_coords(data_array)
 
         points = dict()
-        if "latitude" in self._ds and "longitude" in self._ds:
-            latitude = self._ds["latitude"]
-            longitude = self._ds["longitude"]
+
+        def _get_ll(keys):
+            for key in keys:
+                if key in self._ds:
+                    return self._ds[key]
+
+        lat_keys = ["latitude", "lat"]
+        lon_keys = ["longitude", "lon"]
+        latitude = _get_ll(lat_keys)
+        longitude = _get_ll(lon_keys)
+
+        if latitude is not None and longitude is not None:
             if latitude.dims == coords and longitude.dims == coords:
                 latitude = latitude.data
                 longitude = longitude.data

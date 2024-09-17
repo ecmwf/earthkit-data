@@ -14,7 +14,8 @@ from importlib import import_module
 
 from earthkit.data.core import Base
 from earthkit.data.core.settings import SETTINGS
-from earthkit.data.decorators import detect_out_filename, locked
+from earthkit.data.decorators import detect_out_filename
+from earthkit.data.decorators import locked
 
 LOG = logging.getLogger(__name__)
 
@@ -135,7 +136,9 @@ def _find_reader(method_name, source, path_or_data, **kwargs):
 
 
 def _unknown(method_name, source, path_or_data, **kwargs):
-    from .unknown import UnknownMemoryReader, UnknownReader, UnknownStreamReader
+    from .unknown import UnknownMemoryReader
+    from .unknown import UnknownReader
+    from .unknown import UnknownStreamReader
 
     unknowns = {
         "reader": UnknownReader,
@@ -143,6 +146,16 @@ def _unknown(method_name, source, path_or_data, **kwargs):
         "memory_reader": UnknownMemoryReader,
     }
     return unknowns[method_name](source, path_or_data, **kwargs)
+
+
+def _non_existing(source, path, **kwargs):
+    if hasattr(source, "empty_reader"):
+        return source.empty_reader(path, **kwargs)
+
+
+def _empty(source, path, **kwargs):
+    if hasattr(source, "empty_reader"):
+        return source.empty_reader(path, **kwargs)
 
 
 def reader(source, path, **kwargs):
@@ -155,13 +168,9 @@ def reader(source, path, **kwargs):
         if callable(reader):
             return reader(source, path)
         if isinstance(reader, str):
-            return _readers()[reader.replace("-", "_")](
-                source, path, magic=None, deeper_check=False
-            )
+            return _readers()[reader.replace("-", "_")](source, path, magic=None, deeper_check=False)
 
-        raise TypeError(
-            "Provided reader must be a callable or a string, not %s" % type(reader)
-        )
+        raise TypeError("Provided reader must be a callable or a string, not %s" % type(reader))
 
     if os.path.isdir(path):
         from .directory import DirectoryReader
@@ -170,9 +179,15 @@ def reader(source, path, **kwargs):
     LOG.debug("Reader for %s", path)
 
     if not os.path.exists(path):
+        r = _non_existing(source, path, **kwargs)
+        if r is not None:
+            return r
         raise FileExistsError(f"No such file exists: '{path}'")
 
     if os.path.getsize(path) == 0:
+        r = _empty(source, path, **kwargs)
+        if r is not None:
+            return r
         raise Exception(f"File is empty: '{path}'")
 
     n_bytes = SETTINGS.get("reader-type-check-bytes")

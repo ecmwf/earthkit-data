@@ -35,14 +35,10 @@ def test_netcdf_to_xarray_args():
 
     ds = from_source(
         "url",
-        earthkit_remote_test_data_file(
-            "test-data", "20220401-C3S-L3S_FIRE-BA-OLCI-AREA_3-fv1.1.nc"
-        ),
+        earthkit_remote_test_data_file("test-data", "20220401-C3S-L3S_FIRE-BA-OLCI-AREA_3-fv1.1.nc"),
     )
 
-    r = ds.to_xarray(
-        xarray_open_mfdataset_kwargs=dict(decode_cf=False, decode_times=False)
-    )
+    r = ds.to_xarray(xarray_open_mfdataset_kwargs=dict(decode_cf=False, decode_times=False))
     assert r["JD"].dtype == "int16"
     r["JD"].shape == (1, 20880, 28440)
     assert np.isclose(r["JD"].values.min(), -2)

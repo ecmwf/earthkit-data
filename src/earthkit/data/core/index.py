@@ -14,8 +14,10 @@ from abc import abstractmethod
 from collections import defaultdict
 
 import earthkit.data
-from earthkit.data.core.order import build_remapping, normalize_order_by
-from earthkit.data.core.select import normalize_selection, selection_from_index
+from earthkit.data.core.order import build_remapping
+from earthkit.data.core.order import normalize_order_by
+from earthkit.data.core.select import normalize_selection
+from earthkit.data.core.select import selection_from_index
 from earthkit.data.sources import Source
 
 LOG = logging.getLogger(__name__)
@@ -43,9 +45,7 @@ class Selection(OrderOrSelection):
 
             def __call__(self, x):
                 if self.first and x is not None:
-                    self.lst = [
-                        type(x) if not type(x) is type(y) else y for y in self.lst
-                    ]
+                    self.lst = [type(x) if type(x) is not type(y) else y for y in self.lst]
                     self.first = False
                 return x in self.lst
 
@@ -105,8 +105,13 @@ class OrderBase(OrderOrSelection):
 
     def compare_elements(self, a, b):
         assert callable(self.remapping), (type(self.remapping), self.remapping)
-        a_metadata = self.remapping(a.metadata)
-        b_metadata = self.remapping(b.metadata)
+        if self.remapping:
+            a_metadata = self.remapping(a.metadata)
+            b_metadata = self.remapping(b.metadata)
+        else:
+            a_metadata = a.metadata
+            b_metadata = b.metadata
+
         for k, v in self.actions.items():
             n = v(a_metadata(k, default=None), b_metadata(k, default=None))
             if n != 0:
@@ -162,9 +167,7 @@ class Order(OrderBase):
                 actions[k] = v
                 continue
 
-            assert isinstance(
-                v, (list, tuple)
-            ), f"Invalid argument for {k}: {v} ({type(v)})"
+            assert isinstance(v, (list, tuple)), f"Invalid argument for {k}: {v} ({type(v)})"
 
             order = {}
             for i, key in enumerate(v):
@@ -194,9 +197,6 @@ class Index(Source):
     def __len__(self):
         self._not_implemented()
 
-    def _normalize_kwargs_names(self, **kwargs):
-        return kwargs
-
     def sel(self, *args, remapping=None, **kwargs):
         """Uses metadata values to select a subset of the elements from a fieldlist-like object.
 
@@ -223,7 +223,6 @@ class Index(Source):
         object
             Returns a new object with the filtered elements. It contains a view to the data in the
             original object, so no data is copied.
-
 
         Filter conditions are specified by a set of **metadata** keys either by a dictionary (in
         ``*args``) or a set of ``**kwargs``. Both single or multiple keys are allowed to use and each
@@ -263,7 +262,6 @@ class Index(Source):
         GribField(t,400,20180801,1200,0,0)
         GribField(t,300,20180801,1200,0,0)
 
-
         Selecting by multiple keys ("param", "level") with a list and slice of values:
 
         >>> subset = ds.sel(param=["u", "v"], level=slice(400, 700))
@@ -291,7 +289,6 @@ class Index(Source):
         GribField(t,850,20180801,1200,0,0)
         """
         kwargs = normalize_selection(*args, **kwargs)
-        kwargs = self._normalize_kwargs_names(**kwargs)
         if not kwargs:
             return self
 
@@ -299,9 +296,7 @@ class Index(Source):
         if selection.is_empty:
             return self
 
-        indices = (
-            i for i, element in enumerate(self) if selection.match_element(element)
-        )
+        indices = (i for i, element in enumerate(self) if selection.match_element(element))
 
         return self.new_mask_index(self, indices)
 
@@ -323,7 +318,6 @@ class Index(Source):
         object
             Returns a new object with the filtered elements. It contains a view to the data in
             the original object, so no data is copied.
-
 
         :obj:`isel` works similarly to :obj:`sel` but conditions are specified by indices of metadata
         keys. A metadata index stores the unique, **sorted** values of the corresponding metadata key
@@ -389,7 +383,6 @@ class Index(Source):
 
         """
         kwargs = normalize_selection(*args, **kwargs)
-        kwargs = self._normalize_kwargs_names(**kwargs)
         if not kwargs:
             return self
 
@@ -426,7 +419,6 @@ class Index(Source):
         object
             Returns a new object with reordered elements. It contains a view to the data in the
             original object, so no data is copied.
-
 
         Ordering by a single metadata key ("param"). The default ordering direction
         is ``ascending``:
@@ -483,10 +475,10 @@ class Index(Source):
         (we created key "param_level" from "param" and "levelist"):
 
         >>> ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
-        >>> for f in ds.order_by(
-        ...     param_level=ordering, remapping={"param_level": "{param}{levelist}"}
-        ... ):
+        >>> remapping = {"param_level": "{param}{levelist}"}
+        >>> for f in ds.order_by(param_level=ordering, remapping=remapping):
         ...     print(f)
+        ...
         GribField(t,850,20180801,1200,0,0)
         GribField(t,1000,20180801,1200,0,0)
         GribField(u,1000,20180801,1200,0,0)
@@ -495,7 +487,6 @@ class Index(Source):
         GribField(u,850,20180801,1200,0,0)
         """
         kwargs = normalize_order_by(*args, **kwargs)
-        kwargs = self._normalize_kwargs_names(**kwargs)
 
         remapping = build_remapping(remapping, patches)
 

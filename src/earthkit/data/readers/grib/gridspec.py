@@ -9,7 +9,8 @@
 
 import logging
 import re
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 from functools import lru_cache
 
 from earthkit.data.core.gridspec import GridSpec
@@ -133,9 +134,7 @@ class GridSpecMaker(RawMetadata):
             raise ValueError(f"Unsupported grib grid type={grid_type}")
 
         if "rotated" in d["grid_type"]:
-            raise ValueError(
-                f"gridspec is not supported for rotated grids {grid_type=}"
-            )
+            raise ValueError(f"gridspec is not supported for rotated grids {grid_type=}")
         self.grid_conf = dict(self.conf["types"][self.grid_type])
         d["type"] = self.grid_type
 
@@ -265,9 +264,7 @@ class GridSpecConverter(metaclass=ABCMeta):
         # create converter and generate metadata
         # maker = gridspec_converters.get(spec_type, None)
         if maker is None:
-            raise ValueError(
-                f"GridSpecConverter: unsupported gridspec type={spec_type}"
-            )
+            raise ValueError(f"GridSpecConverter: unsupported gridspec type={spec_type}")
         else:
             converter = maker(spec, spec_type, edition)
             return converter.run(), converter.grid_size
@@ -284,9 +281,7 @@ class GridSpecConverter(metaclass=ABCMeta):
                     return k, gs
 
         if spec_type is None:
-            raise ValueError(
-                f"GridSpecConverter: could not determine type of gridspec={spec}"
-            )
+            raise ValueError(f"GridSpecConverter: could not determine type of gridspec={spec}")
 
         return spec_type, gridspec_converters.get(spec_type, None)
 

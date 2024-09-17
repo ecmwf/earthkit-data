@@ -11,9 +11,7 @@
 try:
     import ecmwf.opendata
 except ImportError:
-    raise ImportError(
-        "ECMWF Open Data access requires 'ecmwf-opendata' to be installed"
-    )
+    raise ImportError("ECMWF Open Data access requires 'ecmwf-opendata' to be installed")
 
 from .file import FileSource
 
@@ -33,9 +31,7 @@ class EODRetriever(FileSource):
 
         self.source_kwargs = self.request(**kwargs)
 
-        self.client = ecmwf.opendata.Client(
-            source=source, model=model, preserve_request_order=True
-        )
+        self.client = ecmwf.opendata.Client(source=source, model=model, preserve_request_order=True)
 
         self.path = self._retrieve(self.source_kwargs)
 

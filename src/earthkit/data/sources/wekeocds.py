@@ -51,9 +51,7 @@ class ApiClient(WekeoClient):
             query = {"jobId": matches.job_id, "uri": result["url"]}
             # matches.debug(result)
             url = DataOrderRequest(self).run(query)
-            out.append(
-                self.stream(result.get("filename"), result.get("size"), target, *url)
-            )
+            out.append(self.stream(result.get("filename"), result.get("size"), target, *url))
         return [os.path.abspath(_) for _ in out]
 
 
