@@ -53,3 +53,5 @@ def test_lod_metadata_step(lod_ll_step, mode):
     assert ds[0].datetime() == {"base_time": base_ref, "valid_time": valid_ref}
     assert ds[0].metadata("step") == 6
     assert ds[0].metadata().step_timedelta() == datetime.timedelta(hours=6)
+
+    assert ds[1].metadata("forecast_reference_time") == "2018-08-01T03:00:00"

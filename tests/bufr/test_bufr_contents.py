@@ -8,6 +8,8 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
+import pytest
+
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_remote_test_data_file
@@ -37,6 +39,7 @@ def test_bufr_metadata():
     assert ds.metadata("dataCategory") == [2] * 10
 
 
+@pytest.mark.download
 def test_bufr_metadata_uncompressed():
     ds = from_source(
         "url",
@@ -49,6 +52,7 @@ def test_bufr_metadata_uncompressed():
     assert f.is_uncompressed() is True
 
 
+@pytest.mark.download
 def test_bufr_metadata_compressed():
     ds = from_source(
         "url",

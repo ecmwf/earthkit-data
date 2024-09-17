@@ -191,14 +191,18 @@ class XArrayMetadata(RawMetadata):
         if self.time is not None:
             return to_datetime(self.time)
 
-    def _get(self, key, **kwargs):
+    def _get(self, key, default=None, raise_on_missing=False, **kwargs):
         if key.startswith("mars."):
             key = key[5:]
             if key not in self.MARS_KEYS:
-                if kwargs.get("raise_on_missing", False):
+                if raise_on_missing:
                     raise KeyError(f"Invalid key '{key}' in namespace='mars'")
                 else:
-                    return kwargs.get("default", None)
+                    return default
+                # if kwargs.get("raise_on_missing", False):
+                #     raise KeyError(f"Invalid key '{key}' in namespace='mars'")
+                # else:
+                #     return kwargs.get("default", None)
 
         def _key_name(key):
             if key == "param":
@@ -207,7 +211,7 @@ class XArrayMetadata(RawMetadata):
                 key = "level"
             return key
 
-        return super()._get(_key_name(key), **kwargs)
+        return super()._get(_key_name(key), default=default, raise_on_missing=raise_on_missing, **kwargs)
 
 
 class XArrayField(Field):

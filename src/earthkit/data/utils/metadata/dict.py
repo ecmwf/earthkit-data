@@ -237,7 +237,14 @@ class UserMetadata(Metadata):
             "valid_datetime": "valid_datetime",
             "step_timedelta": "step_timedelta",
         },
-        aliases=ALIASES,
+        aliases=[
+            ("dataDate", "date"),
+            ("dataTime", "time"),
+            ("forecast_reference_time", "base_datetime"),
+            ("level", "levelist"),
+            ("step", "endStep", "stepRange"),
+            ("param", "shortName"),
+        ],
     )
 
     LS_KEYS = ["param", "level", "base_datetime", "valid_datetime", "step", "number", set]
@@ -260,7 +267,7 @@ class UserMetadata(Metadata):
     def items(self):
         return self._data.items()
 
-    def _get(self, key, astype=None, default=None, raise_on_missing=True):
+    def _get(self, key, default=None, astype=None, raise_on_missing=False):
         def _key_name(key):
             if key in self._data:
                 return key

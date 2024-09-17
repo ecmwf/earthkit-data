@@ -339,7 +339,7 @@ class GribMetadata(Metadata):
     def items(self):
         return self._handle.items()
 
-    def _get(self, key, astype=None, default=None, raise_on_missing=False):
+    def _get(self, key, default=None, astype=None, raise_on_missing=False):
         def _key_name(key):
             if key == "param":
                 key = "shortName"
