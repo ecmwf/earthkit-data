@@ -116,5 +116,20 @@ def step_to_delta(step):
                 raise ValueError(f"Unsupported ecCodes step units in step: {step}")
             sec = int(step[:-1]) * factor
             return datetime.timedelta(seconds=sec)
+    elif isinstance(step, datetime.timedelta):
+        return step
 
     raise ValueError(f"Unsupported ecCodes step: {step}")
+
+
+def datetime_from_grib(date, time):
+    date = int(date)
+    time = int(time)
+
+    return datetime.datetime(
+        date // 10000,
+        date % 10000 // 100,
+        date % 100,
+        time // 100,
+        time % 100,
+    )

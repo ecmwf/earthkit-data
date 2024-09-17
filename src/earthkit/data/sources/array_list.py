@@ -16,7 +16,9 @@ from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
 from earthkit.data.readers.grib.pandas import PandasMixIn
 from earthkit.data.readers.grib.xarray import XarrayMixIn
+from earthkit.data.utils.array import ensure_backend
 from earthkit.data.utils.array import get_backend
+from earthkit.data.utils.metadata.dict import UserMetadata
 
 LOG = logging.getLogger(__name__)
 
@@ -34,7 +36,20 @@ class ArrayField(Field):
         Array backend. Must match the type of ``array``.
     """
 
-    def __init__(self, array, metadata, array_backend):
+    def __init__(self, array, metadata, array_backend=None):
+        if isinstance(array, list):
+            array_backend = ensure_backend(array_backend)
+            array = array_backend.from_other(array)
+
+        if isinstance(metadata, dict):
+            metadata = UserMetadata(metadata, values=array)
+
+        if array_backend is None:
+            array_backend = get_backend(array, guess=array_backend, strict=True)
+
+        if array_backend is None:
+            raise ValueError("array_backend must be provided")
+
         super().__init__(array_backend, raw_values_backend=array_backend, metadata=metadata)
         self._array = array
 
@@ -77,6 +92,16 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
 
         if not isinstance(self._metadata, list):
             self._metadata = [self._metadata]
+
+        if isinstance(self._array, list):
+            if len(self._array) == 0:
+                raise ValueError("array must not be empty")
+            if isinstance(self._array[0], list):
+                array_backend = ensure_backend(array_backend)
+                self._array = [array_backend.from_other(a) for a in self._array]
+            elif isinstance(self._array[0], (int, float)):
+                array_backend = ensure_backend(array_backend)
+                self._array = array_backend.from_other(self._array)
 
         # get backend and check consistency
         array_backend = get_backend(self._array, guess=array_backend, strict=True)
