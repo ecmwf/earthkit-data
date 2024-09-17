@@ -53,7 +53,7 @@ def _check_diag(diag, ref):
 
 
 @pytest.mark.parametrize("handle_cache_size", [1, 5])
-def test_grib_cache_basic(handle_cache_size, patch_metadata_cache):
+def test_grib_cache_basic_patched(handle_cache_size, patch_metadata_cache):
 
     with settings.temporary(
         {
@@ -68,6 +68,9 @@ def test_grib_cache_basic(handle_cache_size, patch_metadata_cache):
 
         # unique values
         ref_vals = ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
+
+        # for f in ds:
+        #     print(f.metadata()._cache.data)
 
         diag = ds._diag()
         ref = {

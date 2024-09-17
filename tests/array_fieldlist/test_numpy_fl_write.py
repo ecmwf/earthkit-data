@@ -32,7 +32,7 @@ LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_array_fl_grib_write(array_backend):
+def test_array_fl_grib_write_to_path(array_backend):
     ds = from_source("file", earthkit_examples_file("test.grib"), array_backend=array_backend)
     ns = get_array_namespace(array_backend)
 
@@ -47,6 +47,29 @@ def test_array_fl_grib_write(array_backend):
 
     with temp_file() as tmp:
         r.save(tmp)
+        assert os.path.exists(tmp)
+        r_tmp = from_source("file", tmp, array_backend=array_backend)
+        v_tmp = r_tmp[0].values
+        assert ns.allclose(v1, v_tmp)
+
+
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+def test_array_fl_grib_write_to_filehandle(array_backend):
+    ds = from_source("file", earthkit_examples_file("test.grib"), array_backend=array_backend)
+    ns = get_array_namespace(array_backend)
+
+    assert ds[0].metadata("shortName") == "2t"
+    assert len(ds) == 2
+    v1 = ds[0].values + 1
+    check_array_type(v1, array_backend)
+
+    md = ds[0].metadata()
+    md1 = md.override(shortName="msl")
+    r = FieldList.from_array(v1, md1)
+
+    with temp_file() as tmp:
+        with open(tmp, "wb") as fh:
+            r.write(fh)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp, array_backend=array_backend)
         v_tmp = r_tmp[0].values

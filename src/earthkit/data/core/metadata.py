@@ -10,8 +10,64 @@
 from abc import ABCMeta
 from abc import abstractmethod
 
-from earthkit.data.core.constants import DATETIME
-from earthkit.data.core.constants import GRIDSPEC
+
+class MetadataAccessor:
+    r"""Helper class to access metadata using dedicated methods on a metadata object.
+
+    Parameters
+    ----------
+    conf: dict
+        Dictionary with method names as keys and metadata keys to be accessed with the
+        given method as values. The metadata keys can be a string or
+        a list/tuple of strings.
+    """
+
+    def __init__(self, conf, aliases=None):
+        self.keys = set()
+        self.methods = dict()
+        aliases = aliases or dict()
+        for k, v in conf.items():
+            if isinstance(v, str):
+                self.keys.add(v)
+            else:
+                self.keys.update(v)
+
+            if isinstance(v, str):
+                v = [v]
+
+            for kv in v:
+                self.methods[kv] = k
+
+            for gr in aliases:
+                for gr_k in gr:
+                    if gr_k in v:
+                        self.methods[gr_k] = k
+
+    def __contains__(self, key):
+        return key in self.keys
+
+    def get(self, md, key, default=None, astype=None, raise_on_missing=False):
+        """Return the value for ``key``.
+
+        Parameters
+        ----------
+        md: Metadata
+            Metadata object featuring the method to access the value of ``key``.
+        key: str
+            Metadata key
+        """
+        try:
+            v = getattr(md, self.methods[key])()
+            # TODO: add automatic conversion
+            if self.methods[key].endswith("_datetime"):
+                if v is not None:
+                    return v.isoformat()
+            return v
+        except Exception as e:
+            if not raise_on_missing:
+                return default
+            else:
+                raise KeyError(f"{key}, reason={e}")
 
 
 class Metadata(metaclass=ABCMeta):
@@ -24,8 +80,6 @@ class Metadata(metaclass=ABCMeta):
 
     Parameters
     ----------
-    extra: dict, None
-        Extra key/value pairs to be added on top of the underlying metadata. Default is None.
     cache: bool
         Enable caching of all the calls to :meth:`get`. Default is False. The cache
         is attached to the instance.
@@ -41,50 +95,24 @@ class Metadata(metaclass=ABCMeta):
     LS_KEYS = []
     DESCRIBE_KEYS = []
     INDEX_KEYS = []
-    CUSTOM_KEYS = [
-        DATETIME,
-        GRIDSPEC,
-        "base_datetime",
-        "reference_datetime",
-        "indexing_datetime",
-        "step_timedelta",
-        "param_level",
-    ]
+    CUSTOM_ACCESSOR = None
 
-    CUSTOM_KEY_ALIASES = {
-        "valid_time": "valid_datetime",
-        "forecast_reference_time": "base_datetime",
-        "base_time": "base_datetime",
-        "indexing_time": "indexing_datetime",
-    }
+    _cache = None
 
-    CUSTOM_KEYS += list(CUSTOM_KEY_ALIASES.keys())
-
-    extra = None
-
-    def __init__(self, extra=None, cache=False):
-        if extra is not None:
-            self.extra = extra
+    def __init__(self, cache=False):
         if cache is False:
             self._cache = None
         else:
             self._cache = dict() if cache is True else cache
 
+    @abstractmethod
     def __iter__(self):
         """Return an iterator over the metadata keys."""
-        return iter(self.keys())
-
-    def __len__(self):
-        r"""Return the number of metadata entries."""
-        if not self.extra:
-            return self._len()
-        else:
-            extra = sum([1 for x in self.extra if not self._contains(x)])
-            return extra + self._len()
+        pass
 
     @abstractmethod
-    def _len(self):
-        r"""Return the number of metadata entries without the extra items."""
+    def __len__(self):
+        r"""Return the number of metadata entries."""
         pass
 
     def __getitem__(self, key):
@@ -97,6 +125,7 @@ class Metadata(metaclass=ABCMeta):
         """
         return self.get(key, raise_on_missing=True)
 
+    @abstractmethod
     def __contains__(self, key):
         r"""Check if ``key`` is available.
 
@@ -104,23 +133,9 @@ class Metadata(metaclass=ABCMeta):
         -------
         bool
         """
-        if not self.extra:
-            return self._contains(key)
-        else:
-            if key in self.extra:
-                return True
-            return self._contains(key)
-
-    @abstractmethod
-    def _contains(self, key):
-        r"""Check if ``key`` is available in the non extra-keys.
-
-        Returns
-        -------
-        bool
-        """
         pass
 
+    @abstractmethod
     def keys(self):
         r"""Return the metadata keys.
 
@@ -129,45 +144,11 @@ class Metadata(metaclass=ABCMeta):
         Iterable of str
 
         """
-        if not self.extra:
-            return self._keys()
-        else:
-            extra = [x for x in self.extra if x not in self._keys()]
-            if len(extra) == 0:
-                return self._keys()
-            else:
-                r = list(self._keys()) + extra
-                return r
-
-    @abstractmethod
-    def _keys(self):
-        r"""Return the metadata keys without the extra keys.
-
-        Returns
-        -------
-        Iterable of str
-
-        """
         pass
 
+    @abstractmethod
     def items(self):
         r"""Return the metadata items.
-
-        Returns
-        -------
-        Iterable of :obj:`(key,value)` pairs
-
-        """
-        if not self.extra:
-            return self._items()
-        else:
-            r = dict(self._items())
-            r.update(self.extra)
-            return r.items()
-
-    @abstractmethod
-    def _items(self):
-        r"""Return the metadata items without the extra keys.
 
         Returns
         -------
@@ -214,10 +195,10 @@ class Metadata(metaclass=ABCMeta):
             if cache_id in self._cache:
                 return self._cache[cache_id]
 
-        if self._is_extra_key(key):
-            v = self._get_extra_key(key, default=default, astype=astype)
-        elif self._is_custom_key(key):
-            v = self._get_custom_key(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        if self.CUSTOM_ACCESSOR and key in self.CUSTOM_ACCESSOR:
+            v = self.CUSTOM_ACCESSOR.get(
+                self, key, default=default, astype=astype, raise_on_missing=raise_on_missing
+            )
         else:
             v = self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
 
@@ -229,36 +210,6 @@ class Metadata(metaclass=ABCMeta):
     @abstractmethod
     def _get(self, key, astype=None, default=None, raise_on_missing=False):
         pass
-
-    def _is_extra_key(self, key):
-        return self.extra is not None and key in self.extra
-
-    def _get_extra_key(self, key, default=None, astype=None, **kwargs):
-        v = self.extra.get(key, default)
-        if astype is not None and v is not None:
-            try:
-                return astype(v)
-            except Exception:
-                return None
-        return v
-
-    def _is_custom_key(self, key):
-        return key in self.CUSTOM_KEYS and key not in self
-
-    def _get_custom_key(self, key, default=None, raise_on_missing=True, **kwargs):
-        if self._is_custom_key(key):
-            try:
-                key = self.CUSTOM_KEY_ALIASES.get(key, key)
-                v = getattr(self, key)()
-                if key.endswith("_datetime"):
-                    if v is not None:
-                        return v.isoformat()
-                return v
-            except Exception as e:
-                if not raise_on_missing:
-                    return default
-                else:
-                    raise KeyError(f"{key}, reason={e}")
 
     @abstractmethod
     def override(self, *args, **kwargs):
@@ -340,18 +291,6 @@ class Metadata(metaclass=ABCMeta):
     def valid_datetime(self):
         pass
 
-    def reference_datetime(self):
-        return None
-
-    def indexing_datetime(self):
-        return None
-
-    def step_timedelta(self):
-        return self.valid_datetime() - self.base_datetime()
-
-    def param_level(self):
-        return self.get("param", astype=str) + self.get("level", astype=str)
-
     @property
     def geography(self):
         r""":obj:`Geography`: Get geography description.
@@ -392,6 +331,105 @@ class Metadata(metaclass=ABCMeta):
 
     def _hide_internal_keys(self):
         return self
+
+
+class WrappedMetadata:
+    def __init__(self, metadata, extra=None, hidden=None, merge=True):
+        self.metadata = metadata
+        self.extra = extra if extra is not None else dict()
+        self.hidden = hidden if hidden is not None else []
+
+        for k in self.hidden:
+            if k in self.extra:
+                raise ValueError(f"Hidden key {k} is also in extra")
+
+        if merge and isinstance(metadata, WrappedMetadata):
+            self.metadata = metadata.metadata
+            v = dict(**metadata.extra)
+            v.update(self.extra)
+            self.extra = v
+            for x in metadata.hidden:
+                if x not in self.hidden:
+                    self.hidden.append(x)
+
+    def __len__(self):
+        r"""Return the number of metadata entries."""
+        return len(self.keys())
+
+    def __contains__(self, key):
+        r"""Check if ``key`` is available.
+
+        Returns
+        -------
+        bool
+        """
+        if self._is_hidden(key):
+            return False
+        if key in self.extra:
+            return True
+        return key in self.metadata
+
+    def _is_hidden(self, key):
+        return key in self.hidden
+
+    def keys(self):
+        r"""Return the metadata keys.
+
+        Returns
+        -------
+        Iterable of str
+
+        """
+        r = list(self.metadata.keys())
+        if self.extra:
+            r += [x for x in self.extra if x not in r]
+        if self.hidden:
+            r = [x for x in r if x not in self.hidden]
+        return r
+
+    def items(self):
+        r"""Return the metadata items.
+
+        Returns
+        -------
+        Iterable of :obj:`(key,value)` pairs
+
+        """
+        for k in self.keys():
+            if self._is_hidden(k):
+                continue
+            if k in self.extra:
+                yield k, self.extra[k]
+            else:
+                yield k, self.metadata.get(k)
+
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False, **kwargs):
+        if self._is_hidden(key):
+            if raise_on_missing:
+                raise KeyError(key)
+            return default
+
+        if key in self.extra:
+            v = self.extra[key]
+            if astype is not None and v is not None:
+                try:
+                    return astype(v)
+                except Exception:
+                    return None
+            return v
+        return self.metadata.get(
+            key, default=default, astype=astype, raise_on_missing=raise_on_missing, **kwargs
+        )
+
+    def override(self, *args, **kwargs):
+        md = self.metadata.override(*args, **kwargs)
+        return self.__class__(md, self.extra, hidden=self.hidden, merge=True)
+
+    def __getitem__(self, key):
+        return self.get(key, raise_on_missing=True)
+
+    def __getattr__(self, name):
+        return getattr(self.metadata, name)
 
 
 class RawMetadata(Metadata):
@@ -439,14 +477,11 @@ class RawMetadata(Metadata):
     def __len__(self):
         return len(self._d)
 
-    def _len(self):
-        return self._len()
-
     def __contains__(self, key):
         return key in self._d
 
-    def _contains(self, key):
-        pass
+    def __iter__(self):
+        return iter(self.keys())
 
     def _get(self, key, astype=None, default=None, raise_on_missing=False):
         if not raise_on_missing:
@@ -464,22 +499,13 @@ class RawMetadata(Metadata):
     def keys(self):
         return self._d.keys()
 
-    def _keys(self):
-        pass
-
     def items(self):
         return self._d.items()
-
-    def _items(self):
-        pass
 
     def base_datetime(self):
         return None
 
     def valid_datetime(self):
-        return None
-
-    def step_timedelta(self):
         return None
 
     def as_namespace(self, namespace):

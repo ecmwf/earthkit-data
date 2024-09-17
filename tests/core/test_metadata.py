@@ -263,7 +263,47 @@ def test_grib_metadata_override_invalid():
     assert "EncodingError" in e.typename
 
 
-def test_grib_metadata_override_extra():
+def test_grib_metadata_override_headers_only_true():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ref_size = ds[0].metadata("totalLength")
+
+    md1 = ds[0].metadata().override(headers_only_clone=True)
+    assert isinstance(md1, StandAloneGribMetadata)
+    assert md1._handle is not None
+    assert md1._handle != ds[0]._handle
+    assert md1["totalLength"] - ref_size < -10
+
+    md2 = md1._hide_internal_keys()
+    assert isinstance(md2, RestrictedGribMetadata)
+    assert md2._handle is not None
+    assert md2._handle != ds[0]._handle
+    assert md2._handle == md1._handle
+
+    with pytest.raises(KeyError):
+        md2["average"]
+
+
+def test_grib_metadata_override_headers_only_false():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ref_size = ds[0].metadata("totalLength")
+
+    md1 = ds[0].metadata().override(headers_only_clone=False)
+    assert isinstance(md1, StandAloneGribMetadata)
+    assert md1._handle is not None
+    assert md1._handle != ds[0]._handle
+    assert np.isclose(md1["totalLength"], ref_size)
+
+    md2 = md1._hide_internal_keys()
+    assert isinstance(md2, RestrictedGribMetadata)
+    assert md2._handle is not None
+    assert md2._handle != ds[0]._handle
+    assert md2._handle == md1._handle
+
+    with pytest.raises(KeyError):
+        md2["average"]
+
+
+def test_grib_metadata_wrapped():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds[0].metadata()
     md_num = len(md)
@@ -272,7 +312,11 @@ def test_grib_metadata_override_extra():
     assert md["shortName"] == "2t"
 
     extra = {"my_custom_key": "2", "shortName": "N", "perturbationNumber": 2}
-    md = StandAloneGribMetadata(md._handle, extra=extra)
+    md_ori = StandAloneGribMetadata(md._handle)
+    from earthkit.data.core.metadata import WrappedMetadata
+
+    # extra keys are not added to the metadata
+    md = WrappedMetadata(md_ori, extra=extra)
 
     assert md["my_custom_key"] == "2"
     assert md["perturbationNumber"] == 2
@@ -288,7 +332,7 @@ def test_grib_metadata_override_extra():
         break
 
     items = md.items()
-    assert len(items) == md_num + 1
+    assert len([k for k, _ in items]) == md_num + 1
 
     for k, v in md.items():
         assert isinstance(k, str)
@@ -296,49 +340,63 @@ def test_grib_metadata_override_extra():
         assert v is not None
         break
 
+    # wrap again
+    md = WrappedMetadata(md, extra={"my_custom_key": "3"})
 
-def test_grib_metadata_override_headers_only_true():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    ref_size = ds[0].metadata("totalLength")
+    assert md["my_custom_key"] == "3"
+    assert md["perturbationNumber"] == 2
+    assert md["shortName"] == "N"
+    assert md["typeOfLevel"] == "surface"
 
-    md1 = ds[0].metadata().override(headers_only_clone=True)
-    assert isinstance(md1, StandAloneGribMetadata)
-    assert md1._handle is not None
-    assert md1._handle != ds[0]._handle
-    assert md1["totalLength"] - ref_size < -10
-    assert md1._shrunk
+    keys = md.keys()
+    assert len(keys) == md_num + 1
 
-    md2 = md1._hide_internal_keys()
-    assert isinstance(md2, RestrictedGribMetadata)
-    assert md2._handle is not None
-    assert md2._handle != ds[0]._handle
-    assert md2._handle == md1._handle
-    assert md2._shrunk
+    for k in md.keys():
+        assert isinstance(k, str)
+        assert k != ""
+        break
 
-    with pytest.raises(KeyError):
-        md2["average"]
+    items = md.items()
+    assert len([k for k, _ in items]) == md_num + 1
 
+    for k, v in md.items():
+        assert isinstance(k, str)
+        assert k != ""
+        assert v is not None
+        break
 
-def test_grib_metadata_override_headers_only_false():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    ref_size = ds[0].metadata("totalLength")
+    # hide keys
+    # hidden cannot overlap with extra
+    with pytest.raises(ValueError):
+        WrappedMetadata(md_ori, extra=extra, hidden=["shortName"])
 
-    md1 = ds[0].metadata().override(headers_only_clone=False)
-    assert isinstance(md1, StandAloneGribMetadata)
-    assert md1._handle is not None
-    assert md1._handle != ds[0]._handle
-    assert np.isclose(md1["totalLength"], ref_size)
-    assert not md1._shrunk
-
-    md2 = md1._hide_internal_keys()
-    assert isinstance(md2, RestrictedGribMetadata)
-    assert md2._handle is not None
-    assert md2._handle != ds[0]._handle
-    assert md2._handle == md1._handle
-    assert not md2._shrunk
+    md = WrappedMetadata(md_ori, extra=extra, hidden=["level"])
+    assert md["my_custom_key"] == "2"
+    assert md["perturbationNumber"] == 2
+    assert md["shortName"] == "N"
+    assert md["typeOfLevel"] == "surface"
 
     with pytest.raises(KeyError):
-        md2["average"]
+        md["level"]
+
+    assert md.get("level", None) is None
+
+    keys = md.keys()
+    assert len(keys) == md_num
+
+    for k in md.keys():
+        assert isinstance(k, str)
+        assert k != ""
+        break
+
+    items = md.items()
+    assert len([k for k, _ in items]) == md_num
+
+    for k, v in md.items():
+        assert isinstance(k, str)
+        assert k != ""
+        assert v is not None
+        break
 
 
 if __name__ == "__main__":

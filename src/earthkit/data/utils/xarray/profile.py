@@ -286,7 +286,7 @@ class Profile:
 
         # print("UPDATE variable_key", self.variable_key)
         # print("UPDATE variables", self.variables)
-        # print(" -> dim_keys", self.dim_keys)
+        print(" -> dim_keys", self.dim_keys)
 
     @property
     def sort_keys(self):

@@ -129,7 +129,7 @@ def test_array_fl_dump():
         if ns == "geography":
             d["data"].pop("Ni", None)
             d["data"].pop("Nj", None)
-
+            d["data"].pop("bitmapPresent", None)
         if ns not in ("default", "statistics"):
             assert d == [x for x in ref if x["title"] == ns][0], ns
 

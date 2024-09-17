@@ -96,6 +96,17 @@ Shapefile
 
     shapefile.ipynb
 
+Dictionary input
+++++++++++++++++++++++
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    fields_from_dict_in_loop.ipynb
+    list_of_dict*
+
+
 Other inputs
 +++++++++++++
 
@@ -105,7 +116,7 @@ Other inputs
 
     from_object.ipynb
     pandas.ipynb
-    list_of_dict*
+
 
 Xarray_engine
 +++++++++++++

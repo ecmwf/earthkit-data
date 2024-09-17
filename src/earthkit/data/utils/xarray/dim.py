@@ -195,7 +195,7 @@ class Dim:
                 (f"Variable key {self.profile.variable_key} cannot be in " f"dimension={self.name}")
             )
 
-        # print(f"key={self.key} index={ds.index(self.key)}")
+        print(f"key={self.key} index={ds.index(self.key)}")
 
         if len(ds.index(self.key)) == 0:
             self.active = False

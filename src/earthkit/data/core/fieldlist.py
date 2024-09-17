@@ -20,7 +20,7 @@ from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import detect_out_filename
 from earthkit.data.utils.array import ensure_backend
 from earthkit.data.utils.array import numpy_backend
-from earthkit.data.utils.metadata import metadata_argument
+from earthkit.data.utils.metadata.args import metadata_argument
 
 
 class FieldListIndices:
