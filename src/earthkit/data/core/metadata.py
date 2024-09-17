@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import functools
 from abc import ABCMeta
 from abc import abstractmethod
 
@@ -17,9 +18,10 @@ class MetadataAccessor:
     Parameters
     ----------
     conf: dict
-        Dictionary with method names as keys and metadata keys to be accessed with the
-        given method as values. The metadata keys can be a string or
-        a list/tuple of strings.
+        Dictionary mapping method names to metadata keys that should be accessed with the given method.m
+        The metadata keys can be a string or a list/tuple of strings.
+    aliases: list of iterables, optional
+        Groups of metadata keys that should be accessed with the same method.
     """
 
     def __init__(self, conf, aliases=None):
@@ -39,14 +41,16 @@ class MetadataAccessor:
                 self.methods[kv] = k
 
             for gr in aliases:
-                for gr_k in gr:
-                    if gr_k in v:
-                        self.methods[gr_k] = k
+                if any(gr_k in v for gr_k in gr):
+                    for gr_k in gr:
+                        if gr_k not in self.keys:
+                            self.methods[gr_k] = k
+                            self.keys.add(gr_k)
 
     def __contains__(self, key):
         return key in self.keys
 
-    def get(self, md, key, default=None, astype=None, raise_on_missing=False):
+    def get(self, md, key, default=None, *, astype=None, raise_on_missing=False):
         """Return the value for ``key``.
 
         Parameters
@@ -58,7 +62,7 @@ class MetadataAccessor:
         """
         try:
             v = getattr(md, self.methods[key])()
-            # TODO: add automatic conversion
+            # TODO: add automatic conversion support
             if self.methods[key].endswith("_datetime"):
                 if v is not None:
                     return v.isoformat()
@@ -68,6 +72,33 @@ class MetadataAccessor:
                 return default
             else:
                 raise KeyError(f"{key}, reason={e}")
+
+
+def cacheable_metadata(func):
+    @functools.wraps(func)
+    def wrapped(self, key, default=None, *, astype=None, raise_on_missing=False):
+        if self._cache is not None:
+            cache_id = (key, default, astype, raise_on_missing)
+            if cache_id in self._cache:
+                return self._cache[cache_id]
+
+            v = func(self, key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+            self._cache[cache_id] = v
+            return v
+        else:
+            return func(self, key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+
+    return wrapped
+
+
+def custom_accessor(func):
+    @functools.wraps(func)
+    def wrapped(self, key, *args, **kwargs):
+        if self.CUSTOM_ACCESSOR and key in self.CUSTOM_ACCESSOR:
+            return self.CUSTOM_ACCESSOR.get(self, key, *args, **kwargs)
+        return func(self, key, *args, **kwargs)
+
+    return wrapped
 
 
 class Metadata(metaclass=ABCMeta):
@@ -80,7 +111,7 @@ class Metadata(metaclass=ABCMeta):
 
     Parameters
     ----------
-    cache: bool
+    cache: bool, dict-like, optional
         Enable caching of all the calls to :meth:`get`. Default is False. The cache
         is attached to the instance.
 
@@ -95,15 +126,16 @@ class Metadata(metaclass=ABCMeta):
     LS_KEYS = []
     DESCRIBE_KEYS = []
     INDEX_KEYS = []
+    ALIASES = []
     CUSTOM_ACCESSOR = None
 
     _cache = None
 
     def __init__(self, cache=False):
-        if cache is False:
-            self._cache = None
-        else:
-            self._cache = dict() if cache is True else cache
+        if cache is True:
+            self._cache = dict()
+        elif cache is not False and cache is not None:
+            self._cache = cache
 
     @abstractmethod
     def __iter__(self):
@@ -157,6 +189,8 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
+    @cacheable_metadata
+    @custom_accessor
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         r"""Return the value for ``key``.
 
@@ -190,22 +224,7 @@ class Metadata(metaclass=ABCMeta):
             a missing value.
 
         """
-        if self._cache is not None:
-            cache_id = (key, default, astype, raise_on_missing)
-            if cache_id in self._cache:
-                return self._cache[cache_id]
-
-        if self.CUSTOM_ACCESSOR and key in self.CUSTOM_ACCESSOR:
-            v = self.CUSTOM_ACCESSOR.get(
-                self, key, default=default, astype=astype, raise_on_missing=raise_on_missing
-            )
-        else:
-            v = self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-
-        if self._cache is not None:
-            self._cache[cache_id] = v
-
-        return v
+        return self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
 
     @abstractmethod
     def _get(self, key, astype=None, default=None, raise_on_missing=False):
@@ -417,6 +436,7 @@ class WrappedMetadata:
                 except Exception:
                     return None
             return v
+
         return self.metadata.get(
             key, default=default, astype=astype, raise_on_missing=raise_on_missing, **kwargs
         )
@@ -483,7 +503,7 @@ class RawMetadata(Metadata):
     def __iter__(self):
         return iter(self.keys())
 
-    def _get(self, key, astype=None, default=None, raise_on_missing=False):
+    def _get(self, key, default=None, astype=None, raise_on_missing=False):
         if not raise_on_missing:
             v = self._d.get(key, default)
         else:
