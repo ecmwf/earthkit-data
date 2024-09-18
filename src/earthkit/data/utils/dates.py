@@ -170,3 +170,9 @@ def datetime_from_grib(date, time):
         time // 100,
         time % 100,
     )
+
+
+def datetime_to_grib(dt):
+    date = int(dt.strftime("%Y%m%d"))
+    time = dt.hour * 100 + dt.minute
+    return date, time

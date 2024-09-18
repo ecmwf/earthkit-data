@@ -28,6 +28,10 @@ class VariableBuilder:
         self.tensor = tensor
 
     def build(self):
+        self.attrs["metadata"] = (
+            "message",
+            self.tensor.source[0].metadata().override()._handle.get_buffer(),
+        )
         return xarray.Variable(self.var_dims, self.data, attrs=self.attrs)
 
     def load_attrs(self, keys, strict=True):
@@ -46,8 +50,6 @@ class VariableBuilder:
 
         # TODO: do we need a strict mode here? The extra cost has to be justified
         if strict:
-            # from .fieldlist import unique_values
-
             attrs = self.tensor.source.unique_values(attr_keys)
         else:
             first = self.tensor.source[0]

@@ -8,7 +8,6 @@
 #
 
 import logging
-from itertools import product
 
 import numpy
 import xarray
@@ -277,28 +276,33 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         return ds
 
 
+# def _to_grib_metadata(coord):
+
+
 def data_array_to_list(da):
-    dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon"]]
+    dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon", "latitude", "longitude"]]
     coords = {key: value for key, value in da.coords.items() if key in dims}
+    for k, v in coords.items():
+        print(k, v.name, v.values)
 
-    data_list = []
-    metadata_list = []
-    for values in product(*[coords[dim].values for dim in dims]):
-        local_coords = dict(zip(dims, values))
-        xa_field = da.sel(**local_coords)
+    # data_list = []
+    # metadata_list = []
+    # for values in product(*[coords[dim].values for dim in dims]):
+    #     local_coords = dict(zip(dims, values))
+    #     xa_field = da.sel(**local_coords)
 
-        # extract metadata from object
-        if hasattr(da, "earthkit"):
-            metadata = da.earthkit.metadata
-        else:
-            raise ValueError(
-                "Earthkit attribute not found in DataArray. Required for conversion to FieldList!"
-            )
+    #     # extract metadata from object
+    #     if hasattr(da, "earthkit"):
+    #         metadata = da.earthkit.metadata
+    #     else:
+    #         raise ValueError(
+    #             "Earthkit attribute not found in DataArray. Required for conversion to FieldList!"
+    #         )
 
-        metadata = metadata.override(**local_coords)
-        data_list.append(xa_field.values)
-        metadata_list.append(metadata)
-    return data_list, metadata_list
+    #     metadata = metadata.override(**local_coords)
+    #     data_list.append(xa_field.values)
+    #     metadata_list.append(metadata)
+    # return data_list, metadata_list
 
 
 class XarrayEarthkit:
@@ -315,25 +319,34 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     # Making it not a property so it behaves like a regular earthkit metadata object
     @property
     def metadata(self):
-        _metadata = self._obj.attrs.get("metadata", tuple())
-        if len(_metadata) < 1:
-            from earthkit.data.readers.netcdf import XArrayMetadata
+        md = self._obj.attrs.get("metadata", tuple())
+        if len(md) == 2:
+            name, data = md
+            if name == "msg":
+                from earthkit.data.readers.grib.memory import GribMessageMemoryReader
+                from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
 
-            return XArrayMetadata(self._obj)
-        if "id" == _metadata[0]:
-            import ctypes
+                handle = GribMessageMemoryReader(data)[0].handle
+                return StandAloneGribMetadata(handle)
 
-            return ctypes.cast(_metadata[1], ctypes.py_object).value
-        elif "grib_handle" == _metadata[0]:
-            from earthkit.data.readers.grib.codes import GribCodesReader
-            from earthkit.data.readers.grib.metadata import GribMetadata
+        # if len(_metadata) < 1:
+        #     from earthkit.data.readers.netcdf import XArrayMetadata
 
-            handle = GribCodesReader.from_cache(_metadata[1]).at_offset(_metadata[2])
-            return GribMetadata(handle)
-        else:
-            from earthkit.data.readers.netcdf import XArrayMetadata
+        #     return XArrayMetadata(self._obj)
+        # if "id" == _metadata[0]:
+        #     import ctypes
 
-            return XArrayMetadata(self._obj)
+        #     return ctypes.cast(_metadata[1], ctypes.py_object).value
+        # elif "grib_handle" == _metadata[0]:
+        #     from earthkit.data.readers.grib.codes import GribCodesReader
+        #     from earthkit.data.readers.grib.metadata import GribMetadata
+
+        #     handle = GribCodesReader.from_cache(_metadata[1]).at_offset(_metadata[2])
+        #     return GribMetadata(handle)
+        # else:
+        #     from earthkit.data.readers.netcdf import XArrayMetadata
+
+        #     return XArrayMetadata(self._obj)
 
     # Corentin property method:
     # @property
