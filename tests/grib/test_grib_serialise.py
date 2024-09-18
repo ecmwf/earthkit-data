@@ -45,15 +45,15 @@ def test_grib_serialise_array_field(fl_type, array_backend):
     ds = ds0.to_fieldlist()
 
     for idx in range(len(ds)):
-        pickled_f = pickle.dumps(ds[0])
+        pickled_f = pickle.dumps(ds[idx])
         f2 = pickle.loads(pickled_f)
 
-        assert np.allclose(ds[0].values, f2.values), f"index={idx}"
-        assert np.allclose(ds[0].to_numpy(), f2.to_numpy()), f"index={idx}"
+        assert np.allclose(ds[idx].values, f2.values), f"index={idx}"
+        assert np.allclose(ds[idx].to_numpy(), f2.to_numpy()), f"index={idx}"
 
         keys = ["param", "date", "time", "step", "level", "gridType", "type"]
         for k in keys:
-            assert ds[0].metadata(k) == f2.metadata(k), f"index={idx}"
+            assert ds[idx].metadata(k) == f2.metadata(k), f"index={idx}"
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
