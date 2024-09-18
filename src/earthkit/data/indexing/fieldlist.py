@@ -25,3 +25,41 @@ class FieldArray(FieldList):
 
     def __repr__(self) -> str:
         return f"FieldArray({len(self.fields)})"
+
+
+class WrappedField:
+    def __init__(self, field):
+        self._field = field
+
+    def __getattr__(self, name):
+        return getattr(self._field, name)
+
+    def __repr__(self) -> str:
+        return repr(self._field)
+
+
+class NewDataField(WrappedField):
+    def __init__(self, field, data):
+        super().__init__(field)
+        self._data = data
+
+    def to_numpy(self, flatten=False, dtype=None, index=None):
+        data = self._data
+        if dtype is not None:
+            data = data.astype(dtype)
+        if flatten:
+            data = data.flatten()
+        if index is not None:
+            data = data[index]
+        return data
+
+
+class NewMetadataField(WrappedField):
+    def __init__(self, field, **kwargs):
+        super().__init__(field)
+        self._metadata = kwargs
+
+    def metadata(self, *args, **kwargs):
+        if len(args) == 1 and args[0] in self._metadata:
+            return self._metadata[args[0]]
+        return self._field.metadata(*args, **kwargs)
