@@ -267,6 +267,35 @@ def test_grib_output_tp():
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="ignore_cleanup_errors requires Python 3.10 or later",
+)
+@pytest.mark.parametrize("array", [True, False])
+def test_grib_output_field_template(array):
+    data = np.random.random((7, 12))
+
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        ds = from_source("file", earthkit_examples_file("test6.grib"))
+        if array:
+            ds = ds.to_fieldlist()
+
+        path = os.path.join(tmp, "a.grib")
+        f = earthkit.data.new_grib_output(path, template=ds[0], date=20010101)
+        f.write(data, param="pt", bitsPerValue=16)
+        f.close()
+
+        ds = earthkit.data.from_source("file", path)
+
+        assert ds[0].metadata("date") == 20010101
+        assert ds[0].metadata("param") == "pt"
+        assert ds[0].metadata("levtype") == "pl"
+        assert ds[0].metadata("edition") == 1
+        assert ds[0].metadata("generatingProcessIdentifier") == 255
+
+        assert np.allclose(ds[0].to_numpy(), data, rtol=1e-2, atol=1e-2)
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
