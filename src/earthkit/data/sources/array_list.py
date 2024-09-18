@@ -84,6 +84,20 @@ class ArrayField(Field):
 
         write(f, self.to_numpy(flatten=True), self._metadata, **kwargs)
 
+    def __getstate__(self) -> dict:
+        ret = {}
+        ret["_array"] = self._array
+        ret["_metadata"] = self._metadata
+        ret["_array_backend"] = self._array_backend.name
+        return ret
+
+    def __setstate__(self, state: dict):
+        self._array = state.pop("_array")
+        metadata = state.pop("_metadata")
+        array_backend = state.pop("_array_backend")
+        array_backend = ensure_backend(array_backend)
+        super().__init__(array_backend, raw_values_backend=array_backend, metadata=metadata)
+
 
 class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
     def __init__(self, array, metadata, *args, array_backend=None, **kwargs):
@@ -203,6 +217,28 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
             check_nans=check_nans,
             bits_per_value=bits_per_value,
         )
+
+    def __getstate__(self) -> dict:
+        ret = {}
+        ret["_array"] = self._array
+        ret["_metadata"] = self._metadata
+        ret["_array_backend"] = self._array_backend.name
+        return ret
+
+    def __setstate__(self, state: dict):
+        self._array = state.pop("_array")
+        self._metadata = state.pop("_metadata")
+        array_backend = state.pop("_array_backend")
+        array_backend = ensure_backend(array_backend)
+        super().__init__(array_backend, raw_values_backend=array_backend, metadata=self._metadata)
+
+    # def __getstate__(self):
+    #     for f in self:
+
+    # def __setstate__(self, state):
+    #     self._array = state[0]
+    #     self._metadata = state[1]
+    #     self.array_backend = state[2]
 
 
 # class MultiUnwindMerger:
