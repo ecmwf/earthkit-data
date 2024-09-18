@@ -563,6 +563,16 @@ class StandAloneGribMetadata(GribMetadata):
     def _hide_internal_keys(self):
         return RestrictedGribMetadata(self)
 
+    def __getstate__(self) -> dict:
+        ret = {}
+        ret["_handle"] = self._handle.get_buffer()
+        return ret
+
+    def __setstate__(self, state: dict):
+        from earthkit.data.readers.grib.memory import GribMessageMemoryReader
+
+        self.__handle = next(GribMessageMemoryReader(state.pop("_handle"))).handle
+
 
 class RestrictedGribMetadata(WrappedMetadata):
     """Hide internal keys and namespaces in GRIB metadata.
@@ -659,3 +669,16 @@ class RestrictedGribMetadata(WrappedMetadata):
 
     def _hide_internal_keys(self):
         return self
+
+    def __getstate__(self) -> dict:
+        ret = {}
+        ret["metadata"] = self.metadata
+        return ret
+
+    def __setstate__(self, state: dict):
+        md = state.pop("metadata")
+        super().__init__(md, hidden=self.INTERNAL_KEYS)
+
+        # from earthkit.data.readers.grib.memory import GribMessageMemoryReader
+
+        # self.__handle = next(GribMessageMemoryReader(state.pop("_handle"))).handle
