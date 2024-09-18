@@ -84,6 +84,10 @@ class ArrayField(Field):
 
         write(f, self.to_numpy(flatten=True), self._metadata, **kwargs)
 
+    @property
+    def handle(self):
+        return self._metadata._handle
+
     def __getstate__(self) -> dict:
         ret = {}
         ret["_array"] = self._array
@@ -231,14 +235,6 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
         array_backend = state.pop("_array_backend")
         array_backend = ensure_backend(array_backend)
         super().__init__(array_backend, raw_values_backend=array_backend, metadata=self._metadata)
-
-    # def __getstate__(self):
-    #     for f in self:
-
-    # def __setstate__(self, state):
-    #     self._array = state[0]
-    #     self._metadata = state[1]
-    #     self.array_backend = state[2]
 
 
 # class MultiUnwindMerger:
