@@ -678,7 +678,3 @@ class RestrictedGribMetadata(WrappedMetadata):
     def __setstate__(self, state: dict):
         md = state.pop("metadata")
         super().__init__(md, hidden=self.INTERNAL_KEYS)
-
-        # from earthkit.data.readers.grib.memory import GribMessageMemoryReader
-
-        # self.__handle = next(GribMessageMemoryReader(state.pop("_handle"))).handle
