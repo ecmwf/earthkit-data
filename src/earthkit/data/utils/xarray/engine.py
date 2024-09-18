@@ -276,9 +276,6 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         return ds
 
 
-# def _to_grib_metadata(coord):
-
-
 def data_array_to_list(da):
     dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon", "latitude", "longitude"]]
     coords = {key: value for key, value in da.coords.items() if key in dims}
