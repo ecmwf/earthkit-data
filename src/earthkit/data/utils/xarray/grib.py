@@ -92,7 +92,7 @@ def update_metadata(metadata, compulsory):
         metadata["typeOfLevel"] = levtype_remap[v]
 
 
-def data_array_to_field(da):
+def data_array_to_fields(da):
     from earthkit.data.sources.array_list import ArrayField
 
     dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon", "latitude", "longitude"]]
@@ -100,7 +100,6 @@ def data_array_to_field(da):
     # for k, v in coords.items():
     #     print(k, v.name, v.values)
 
-    fields = []
     for values in product(*[coords[dim].values for dim in dims]):
         local_coords = dict(zip(dims, values))
         grib_metadata = dict(**local_coords)
@@ -117,6 +116,4 @@ def data_array_to_field(da):
             )
 
         metadata = metadata.override(grib_metadata)
-        fields.append(ArrayField(xa_field.values, metadata))
-
-    return fields
+        yield ArrayField(xa_field.values, metadata)

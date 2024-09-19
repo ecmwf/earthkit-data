@@ -276,9 +276,15 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
 
 class XarrayEarthkit:
+    def to_fieldlist(self):
+        from earthkit.data.indexing.fieldlist import FieldArray
+
+        return FieldArray([f for f in self._to_fields()])
+
     def to_grib(self, filename):
-        fl = self.to_fieldlist()
-        fl.save(filename)
+        with open(filename, "wb") as out:
+            for f in self._to_fields():
+                f.write(out)
 
 
 @xarray.register_dataarray_accessor("earthkit")
@@ -299,13 +305,11 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
                 handle = next(GribMessageMemoryReader(data)).handle
                 return StandAloneGribMetadata(handle)
 
-    def to_fieldlist(self):
-        from earthkit.data.indexing.fieldlist import FieldArray
+    def _to_fields(self):
+        from .grib import data_array_to_fields
 
-        from .grib import data_array_to_field
-
-        fields = data_array_to_field(self._obj)
-        return FieldArray(fields)
+        for f in data_array_to_fields(self._obj):
+            yield f
 
 
 @xarray.register_dataset_accessor("earthkit")
@@ -313,13 +317,9 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
 
-    def to_fieldlist(self):
-        from earthkit.data.indexing.fieldlist import FieldArray
+    def _to_fields(self):
+        from .grib import data_array_to_fields
 
-        from .grib import data_array_to_field
-
-        fields = []
         for var in self._obj.data_vars:
-            da = self._obj
-            fields.extend(data_array_to_field(da[var]))
-        return FieldArray(fields)
+            for f in data_array_to_fields(self._obj[var]):
+                yield f
