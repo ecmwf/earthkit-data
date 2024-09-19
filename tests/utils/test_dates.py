@@ -11,9 +11,12 @@
 
 from datetime import timedelta
 
+import numpy as np
 import pytest
 
+from earthkit.data.utils.dates import numpy_timedelta_to_timedelta
 from earthkit.data.utils.dates import step_to_delta
+from earthkit.data.utils.dates import step_to_grib
 
 
 @pytest.mark.parametrize(
@@ -39,6 +42,59 @@ def test_step_to_delta(step, expected_delta, error):
     else:
         with pytest.raises(error):
             step_to_delta(step)
+
+
+@pytest.mark.parametrize(
+    "td,expected_delta,error",
+    [
+        (np.timedelta64(61, "s"), timedelta(minutes=1, seconds=1), None),
+        (np.timedelta64((2 * 3600 + 61) * 1000, "ms"), timedelta(hours=2, minutes=1, seconds=1), None),
+        (
+            np.timedelta64((2 * 3600 + 61) * 1000 * 1000 * 1000, "ns"),
+            timedelta(hours=2, minutes=1, seconds=1),
+            None,
+        ),
+    ],
+)
+def test_numpy_timedelta_to_timedelta(td, expected_delta, error):
+    if error is None:
+        assert numpy_timedelta_to_timedelta(td) == expected_delta
+    else:
+        with pytest.raises(error):
+            numpy_timedelta_to_timedelta(td)
+
+
+@pytest.mark.parametrize(
+    "step,expected_value,error",
+    [
+        (0, 0, None),
+        (6, 6, None),
+        (12, 12, None),
+        (120, 120, None),
+        ("0h", "0h", None),
+        ("6h", "6h", None),
+        ("12h", "12h", None),
+        ("120h", "120h", None),
+        ("6m", "6m", None),
+        ("6s", "6s", None),
+        (np.timedelta64(6, "h"), 6, None),
+        (np.timedelta64(6 * 3600 * 1000, "ms"), 6, None),
+        (np.timedelta64(6 * 3600 * 1000 * 1000 * 1000, "ns"), 6, None),
+        (np.timedelta64(61, "s"), "61s", None),
+        (np.timedelta64((2 * 3600 + 61) * 1000, "ms"), "7261s", None),
+        (
+            np.timedelta64((2 * 3600 + 61) * 1000 * 1000 * 1000, "ns"),
+            "7261s",
+            None,
+        ),
+    ],
+)
+def test_step_to_grib(step, expected_value, error):
+    if error is None:
+        assert step_to_grib(step) == expected_value
+    else:
+        with pytest.raises(error):
+            step_to_grib(step)
 
 
 if __name__ == "__main__":

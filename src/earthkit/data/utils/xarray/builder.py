@@ -28,7 +28,7 @@ class VariableBuilder:
         self.tensor = tensor
 
     def build(self):
-        self.attrs["metadata"] = (
+        self.attrs["_metadata"] = (
             "message",
             self.tensor.source[0].metadata().override()._handle.get_buffer(),
         )

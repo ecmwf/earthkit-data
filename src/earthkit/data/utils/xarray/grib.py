@@ -9,14 +9,16 @@
 
 import datetime
 import logging
+from itertools import product
 
 from earthkit.data.utils.dates import datetime_to_grib
+from earthkit.data.utils.dates import step_to_grib
 from earthkit.data.utils.dates import to_datetime
 
 LOG = logging.getLogger(__name__)
 
 
-def update_metadata(self, metadata, compulsory):
+def update_metadata(metadata, compulsory):
     # # TODO: revisit that logic
     # combined = Combined(handle, metadata)
 
@@ -48,6 +50,9 @@ def update_metadata(self, metadata, compulsory):
             metadata["date"] = date.year * 10000 + date.month * 100 + date.day
         else:
             metadata["date"] = int(metadata["date"])
+
+    if "step" in metadata:
+        metadata["step"] = step_to_grib(metadata["step"])
 
     if "stream" not in metadata:
         if "number" in metadata:
@@ -85,3 +90,33 @@ def update_metadata(self, metadata, compulsory):
     if "levtype" in metadata:
         v = metadata.pop("levtype")
         metadata["typeOfLevel"] = levtype_remap[v]
+
+
+def data_array_to_field(da):
+    from earthkit.data.sources.array_list import ArrayField
+
+    dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon", "latitude", "longitude"]]
+    coords = {key: value for key, value in da.coords.items() if key in dims}
+    # for k, v in coords.items():
+    #     print(k, v.name, v.values)
+
+    fields = []
+    for values in product(*[coords[dim].values for dim in dims]):
+        local_coords = dict(zip(dims, values))
+        grib_metadata = dict(**local_coords)
+        update_metadata(grib_metadata, [])
+
+        xa_field = da.sel(**local_coords)
+
+        # extract metadata from object
+        if hasattr(da, "earthkit"):
+            metadata = da.earthkit.metadata
+        else:
+            raise ValueError(
+                "Earthkit attribute not found in DataArray. Required for conversion to FieldList!"
+            )
+
+        metadata = metadata.override(grib_metadata)
+        fields.append(ArrayField(xa_field.values, metadata))
+
+    return fields

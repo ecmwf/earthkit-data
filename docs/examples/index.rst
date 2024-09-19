@@ -129,6 +129,7 @@ Xarray_engine
     xarray_engine_split.ipynb
     grib_cube.ipynb
     grib_to_xarray.ipynb
+    xarray_engine_to_grib.ipynb
 
 
 Miscellaneous

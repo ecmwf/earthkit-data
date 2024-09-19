@@ -159,6 +159,34 @@ def step_to_delta(step):
     raise ValueError(f"Unsupported ecCodes step: {step}")
 
 
+def numpy_timedelta_to_timedelta(td):
+    td = td.astype("timedelta64[s]").astype(int)
+    return datetime.timedelta(seconds=int(td))
+
+
+def step_to_grib(step):
+    if isinstance(step, (int, str)):
+        return step
+    elif hasattr(step, "dtype") and np.issubdtype(step.dtype, np.timedelta64):
+        step = numpy_timedelta_to_timedelta(step)
+
+    if isinstance(step, datetime.timedelta):
+        hours, minutes, seconds = (
+            int(step.total_seconds() // 3600),
+            int(step.seconds // 60 % 60),
+            int(step.seconds % 60),
+        )
+        if seconds == 0:
+            if minutes == 0:
+                return hours
+            else:
+                return f"{hours*60}{minutes}m"
+        else:
+            return f"{int(step.total_seconds())}s"
+
+    raise ValueError(f"Cannot convert step={step} of type={type(step)} to grib metadata")
+
+
 def datetime_from_grib(date, time):
     date = int(date)
     time = int(time)

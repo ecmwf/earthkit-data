@@ -9,7 +9,6 @@
 
 import logging
 
-import numpy
 import xarray
 from xarray.backends import BackendEntrypoint
 
@@ -276,32 +275,6 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         return ds
 
 
-def data_array_to_list(da):
-    dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon", "latitude", "longitude"]]
-    coords = {key: value for key, value in da.coords.items() if key in dims}
-    for k, v in coords.items():
-        print(k, v.name, v.values)
-
-    # data_list = []
-    # metadata_list = []
-    # for values in product(*[coords[dim].values for dim in dims]):
-    #     local_coords = dict(zip(dims, values))
-    #     xa_field = da.sel(**local_coords)
-
-    #     # extract metadata from object
-    #     if hasattr(da, "earthkit"):
-    #         metadata = da.earthkit.metadata
-    #     else:
-    #         raise ValueError(
-    #             "Earthkit attribute not found in DataArray. Required for conversion to FieldList!"
-    #         )
-
-    #     metadata = metadata.override(**local_coords)
-    #     data_list.append(xa_field.values)
-    #     metadata_list.append(metadata)
-    # return data_list, metadata_list
-
-
 class XarrayEarthkit:
     def to_grib(self, filename):
         fl = self.to_fieldlist()
@@ -316,54 +289,23 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     # Making it not a property so it behaves like a regular earthkit metadata object
     @property
     def metadata(self):
-        md = self._obj.attrs.get("metadata", tuple())
+        md = self._obj.attrs.get("_metadata", tuple())
         if len(md) == 2:
             name, data = md
-            if name == "msg":
+            if name == "message":
                 from earthkit.data.readers.grib.memory import GribMessageMemoryReader
                 from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
 
-                handle = GribMessageMemoryReader(data)[0].handle
+                handle = next(GribMessageMemoryReader(data)).handle
                 return StandAloneGribMetadata(handle)
 
-        # if len(_metadata) < 1:
-        #     from earthkit.data.readers.netcdf import XArrayMetadata
-
-        #     return XArrayMetadata(self._obj)
-        # if "id" == _metadata[0]:
-        #     import ctypes
-
-        #     return ctypes.cast(_metadata[1], ctypes.py_object).value
-        # elif "grib_handle" == _metadata[0]:
-        #     from earthkit.data.readers.grib.codes import GribCodesReader
-        #     from earthkit.data.readers.grib.metadata import GribMetadata
-
-        #     handle = GribCodesReader.from_cache(_metadata[1]).at_offset(_metadata[2])
-        #     return GribMetadata(handle)
-        # else:
-        #     from earthkit.data.readers.netcdf import XArrayMetadata
-
-        #     return XArrayMetadata(self._obj)
-
-    # Corentin property method:
-    # @property
-    # def metadata(self):
-    #     return self._obj.attrs.get("metadata", None)
-
-    # @metadata.setter
-    # def metadata(self, value):
-    #     self._obj.attrs["metadata"] = value
-
-    # @metadata.deleter
-    # def metadata(self):
-    #     self._obj.attrs.pop("metadata", None)
-
     def to_fieldlist(self):
-        from earthkit.data import FieldList
+        from earthkit.data.indexing.fieldlist import FieldArray
 
-        data_list, metadata_list = data_array_to_list(self._obj)
-        field_list = FieldList.from_numpy(numpy.array(data_list), metadata_list)
-        return field_list
+        from .grib import data_array_to_field
+
+        fields = data_array_to_field(self._obj)
+        return FieldArray(fields)
 
 
 @xarray.register_dataset_accessor("earthkit")
@@ -372,14 +314,12 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
         self._obj = xarray_obj
 
     def to_fieldlist(self):
-        from earthkit.data import FieldList
+        from earthkit.data.indexing.fieldlist import FieldArray
 
-        data_list = []
-        metadata_list = []
+        from .grib import data_array_to_field
+
+        fields = []
         for var in self._obj.data_vars:
             da = self._obj
-            da_data, da_metadata = data_array_to_list(da)
-            data_list.extend(da_data)
-            metadata_list.extend(da_metadata)
-        field_list = FieldList.from_numpy(numpy.array(data_list), metadata_list)
-        return field_list
+            fields.extend(data_array_to_field(da[var]))
+        return FieldArray(fields)
