@@ -173,12 +173,8 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
 def wrapper(data, *args, **kwargs):
     from earthkit.data.utils import is_module_loaded
 
-    print("wrapper")
-
     if not is_module_loaded("pandas"):
         return None
-
-    print("->wrapper")
 
     import pandas as pd
 

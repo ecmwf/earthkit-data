@@ -8,7 +8,7 @@ Version 0.10.4
 Fixes
 ++++++
 
-- Fixed issue when pandas was unnecessarily imported
+- Fixed issue when pandas was unnecessarily imported (:pr:`468`).
 
 
 
