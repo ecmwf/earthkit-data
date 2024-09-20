@@ -17,8 +17,8 @@ from earthkit.data.core.metadata import Metadata
 from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import datetime_from_grib
-from earthkit.data.utils.dates import to_timedelta
 from earthkit.data.utils.dates import to_datetime
+from earthkit.data.utils.dates import to_timedelta
 from earthkit.data.utils.projections import Projection
 
 LOG = logging.getLogger(__name__)

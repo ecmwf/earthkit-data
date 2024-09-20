@@ -14,17 +14,31 @@ import datetime
 import numpy as np
 import pytest
 
+from earthkit.data.utils.dates import date_to_grib
+from earthkit.data.utils.dates import datetime_to_grib
 from earthkit.data.utils.dates import mars_like_date_list
 from earthkit.data.utils.dates import numpy_datetime_to_datetime
 from earthkit.data.utils.dates import numpy_timedelta_to_timedelta
+from earthkit.data.utils.dates import step_to_grib
+from earthkit.data.utils.dates import time_to_grib
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_datetime_list
 from earthkit.data.utils.dates import to_time
 from earthkit.data.utils.dates import to_timedelta
-from earthkit.data.utils.dates import step_to_grib
-from earthkit.data.utils.dates import date_to_grib
-from earthkit.data.utils.dates import time_to_grib
-from earthkit.data.utils.dates import datetime_to_grib
+
+# Change to utc once aware datetime objects will be used
+# tzinfo = datetime.timezone.utc
+tzinfo = None
+
+
+def relative_date(n):
+    """Since it is based on calling now() returns both the relative date and day after."""
+    if n <= 0:
+        d = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=n)
+        d = datetime.datetime(d.year, d.month, d.day)
+        return (d, d + datetime.timedelta(days=1))
+    else:
+        raise ValueError(f"{n=} must be negative")
 
 
 @pytest.mark.parametrize(
@@ -40,13 +54,20 @@ from earthkit.data.utils.dates import datetime_to_grib
         ("2002-05-02T06:11", datetime.datetime(2002, 5, 2, 6, 11), None),
         ("2002-05-02T06:11:03", datetime.datetime(2002, 5, 2, 6, 11, 3), None),
         (datetime.datetime(2002, 5, 2, 6, 11, 3), datetime.datetime(2002, 5, 2, 6, 11, 3), None),
-        (np.datetime64("2002-05-02"), datetime.datetime(2002, 5, 2, tzinfo=datetime.timezone.utc), None),
-        (np.datetime64(0, "Y"), datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc), None),
+        (np.datetime64("2002-05-02"), datetime.datetime(2002, 5, 2, tzinfo=tzinfo), None),
+        (np.datetime64(0, "Y"), datetime.datetime(1970, 1, 1, tzinfo=tzinfo), None),
+        (0, relative_date(0), None),
+        (-1, relative_date(-1), None),
+        (1, None, ValueError),
+        (20020, None, ValueError),
     ],
 )
 def test_to_datetime(d, expected_value, error):
     if error is None:
-        assert to_datetime(d) == expected_value
+        if isinstance(expected_value, tuple):
+            assert to_datetime(d) in expected_value
+        else:
+            assert to_datetime(d) == expected_value
     else:
         with pytest.raises(error):
             to_datetime(d)
@@ -124,7 +145,7 @@ def test_mars_like_date_list(args, expected_value, error):
         (20020502, [datetime.datetime(2002, 5, 2)], None),
         ("20020502", [datetime.datetime(2002, 5, 2)], None),
         (datetime.datetime(2002, 5, 2), [datetime.datetime(2002, 5, 2)], None),
-        (np.datetime64("2002-05-02"), [datetime.datetime(2002, 5, 2, tzinfo=datetime.timezone.utc)], None),
+        (np.datetime64("2002-05-02"), [datetime.datetime(2002, 5, 2, tzinfo=tzinfo)], None),
     ],
 )
 def test_to_datetime_list(d, expected_value, error):
@@ -212,21 +233,21 @@ def test_numpy_timedelta_to_timedelta(td, expected_delta, error):
 @pytest.mark.parametrize(
     "td,expected_delta,error",
     [
-        (np.datetime64("2002-05-02"), datetime.datetime(2002, 5, 2, tzinfo=datetime.timezone.utc), None),
+        (np.datetime64("2002-05-02"), datetime.datetime(2002, 5, 2, tzinfo=tzinfo), None),
         (
             np.datetime64("2002-05-02T06"),
-            datetime.datetime(2002, 5, 2, 6, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2002, 5, 2, 6, tzinfo=tzinfo),
             None,
         ),
         (
             np.datetime64("2002-05-02T06:23"),
-            datetime.datetime(2002, 5, 2, 6, 23, tzinfo=datetime.timezone.utc),
+            datetime.datetime(2002, 5, 2, 6, 23, tzinfo=tzinfo),
             None,
         ),
-        (np.datetime64(0, "s"), datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc), None),
-        (np.datetime64(30, "s"), datetime.datetime(1970, 1, 1, 0, 0, 30, tzinfo=datetime.timezone.utc), None),
-        (np.datetime64(30, "m"), datetime.datetime(1970, 1, 1, 0, 30, tzinfo=datetime.timezone.utc), None),
-        (np.datetime64(30, "h"), datetime.datetime(1970, 1, 2, 6, tzinfo=datetime.timezone.utc), None),
+        (np.datetime64(0, "s"), datetime.datetime(1970, 1, 1, tzinfo=tzinfo), None),
+        (np.datetime64(30, "s"), datetime.datetime(1970, 1, 1, 0, 0, 30, tzinfo=tzinfo), None),
+        (np.datetime64(30, "m"), datetime.datetime(1970, 1, 1, 0, 30, tzinfo=tzinfo), None),
+        (np.datetime64(30, "h"), datetime.datetime(1970, 1, 2, 6, tzinfo=tzinfo), None),
     ],
 )
 def test_numpy_datetime_to_datetime(td, expected_delta, error):

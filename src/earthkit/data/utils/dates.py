@@ -166,7 +166,7 @@ def numpy_timedelta_to_timedelta(td):
 
 def numpy_datetime_to_datetime(dt):
     dt = dt.astype("datetime64[s]").astype(int)
-    return datetime.datetime.fromtimestamp(int(dt), datetime.timezone.utc)
+    return datetime.datetime.fromtimestamp(int(dt), datetime.timezone.utc).replace(tzinfo=None)
 
 
 def date_to_grib(d):
@@ -175,8 +175,7 @@ def date_to_grib(d):
         if isinstance(d, datetime.datetime):
             return int(d.year * 10000 + d.month * 100 + d.day)
     except Exception as e:
-        pass
-    raise ValueError(f"Cannot convert date={d} of type={type(d)} to grib metadata. {e}")
+        raise ValueError(f"Cannot convert date={d} of type={type(d)} to grib metadata. {e}")
 
 
 def time_to_grib(t):
