@@ -17,7 +17,7 @@ from earthkit.data.core.metadata import Metadata
 from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import datetime_from_grib
-from earthkit.data.utils.dates import step_to_delta
+from earthkit.data.utils.dates import to_timedelta
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.projections import Projection
 
@@ -319,7 +319,7 @@ class UserMetadata(Metadata):
             return self._data["step_timedelta"]
         v = self._get_one(["endStep", "step"])
         if v is not None:
-            return step_to_delta(v)
+            return to_timedelta(v)
 
     def _datetime(self, date_key, time_key):
         date = self.get(date_key, None)
