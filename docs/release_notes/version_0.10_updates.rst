@@ -2,6 +2,16 @@ Version 0.10 Updates
 /////////////////////////
 
 
+Version 0.10.4
+===============
+
+Fixes
+++++++
+
+- Fixed issue when pandas was unnecessarily imported 
+
+
+
 Version 0.10.3
 ===============
 

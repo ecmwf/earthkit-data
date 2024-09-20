@@ -6,9 +6,11 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+
 import inspect
 import json
 import re
+import sys
 
 import yaml
 
@@ -151,3 +153,7 @@ def ensure_iterable(obj):
     if isinstance(obj, str) or not isinstance(obj, collections.abc.Iterable):
         return [obj]
     return obj
+
+
+def is_module_loaded(module_name):
+    return module_name in sys.modules
