@@ -439,7 +439,11 @@ class SplitDatasetBuilder(DatasetBuilder):
         self.xr_open_dataset_kwargs = dict(**kwargs)
 
         if not self.auto_split and not self.split_dims:
-            raise ValueError("SplitDatasetMaker requires split or split_dims")
+            raise ValueError("SplitDatasetMaker requires auto_split or split_dims")
+
+        # auto_split is experimental and not yet supported
+        if self.auto_split:
+            raise ValueError("auto_split is not yet supported")
 
         super().__init__(*args, split_dims=self.split_dims, **backend_kwargs)
 

@@ -292,7 +292,6 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
 
-    # Making it not a property so it behaves like a regular earthkit metadata object
     @property
     def metadata(self):
         md = self._obj.attrs.get("_metadata", tuple())
@@ -304,6 +303,13 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
                 handle = next(GribMessageMemoryReader(data)).handle
                 return StandAloneGribMetadata(handle)
+
+        raise ValueError(
+            (
+                "Could not generate earthkit metadata from xarray object."
+                "Attribute '_metadata' is missing or contains incorrect data."
+            )
+        )
 
     def _to_fields(self):
         from .grib import data_array_to_fields

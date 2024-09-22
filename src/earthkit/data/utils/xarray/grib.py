@@ -11,8 +11,10 @@ import datetime
 import logging
 from itertools import product
 
+from earthkit.data.utils.dates import date_to_grib
 from earthkit.data.utils.dates import datetime_to_grib
 from earthkit.data.utils.dates import step_to_grib
+from earthkit.data.utils.dates import time_to_grib
 from earthkit.data.utils.dates import to_datetime
 
 LOG = logging.getLogger(__name__)
@@ -32,24 +34,15 @@ def update_metadata(metadata, compulsory):
         metadata["date"] = date
         metadata["time"] = time
 
-    if "time" in metadata:  # TODO, use a normalizer
-        try:
-            time = int(metadata["time"])
-            if time < 100:
-                metadata["time"] = time * 100
-        except ValueError:
-            pass
-
-    if "time" not in metadata and "date" in metadata:
-        date = metadata["date"]
-        metadata["time"] = date.hour * 100 + date.minute
+    if "time" in metadata:
+        metadata["time"] = time_to_grib(metadata["time"])
 
     if "date" in metadata:
-        if isinstance(metadata["date"], datetime.datetime):
-            date = metadata["date"]
-            metadata["date"] = date.year * 10000 + date.month * 100 + date.day
-        else:
-            metadata["date"] = int(metadata["date"])
+        date = metadata["date"]
+        metadata["date"] = date_to_grib(date)
+        if "time" not in metadata:
+            if isinstance(date, datetime.datetime):
+                metadata["time"] = date.hour * 100 + date.minute
 
     if "step" in metadata:
         metadata["step"] = step_to_grib(metadata["step"])

@@ -26,20 +26,26 @@ def to_datetime(dt):
     if isinstance(dt, datetime.date):
         return datetime.datetime(dt.year, dt.month, dt.day)
 
-    if isinstance(dt, np.datetime64):
-        # Looks like numpy dates conversion vary
-        dt = dt.astype(datetime.datetime)
+    if hasattr(dt, "dtype") and np.issubdtype(dt.dtype, np.datetime64):
+        return numpy_datetime_to_datetime(dt)
 
-        if isinstance(dt, datetime.datetime):
-            return dt
+    # if isinstance(dt, np.datetime64):
+    #     # Looks like numpy dates conversion vary
+    #     dt = dt.astype(datetime.datetime)
 
-        if isinstance(dt, datetime.date):
-            return to_datetime(dt)
+    #     if isinstance(dt, datetime.datetime):
+    #         return dt
 
-        if isinstance(dt, int):
-            return datetime.datetime.utcfromtimestamp(dt * 1e-9)
+    #     if isinstance(dt, datetime.date):
+    #         return to_datetime(dt)
 
-        raise ValueError("Failed to convert numpy datetime {}".format((dt, type(dt))))
+    #     if isinstance(dt, int):
+    #         return datetime.datetime.fromtimestamp(dt * 1e-9, tz=datetime.timezone.utc)
+
+    #     raise ValueError("Failed to convert numpy datetime {}".format((dt, type(dt))))
+
+    if isinstance(dt, np.int64):
+        dt = int(dt)
 
     dt = get_wrapper(dt)
 
@@ -47,16 +53,16 @@ def to_datetime(dt):
 
 
 def mars_like_date_list(start, end, by):
-    """Return a list of datetime objects from start to end .
+    """Return a list of datetime objects from start to end.
 
     Parameters
     ----------
-    start : [type]
-        [description]
-    end : [type]
-        [description]
-    by : [type]
-        [description]
+    start : datetime.datetime
+        Start datetime object
+    end : datetime.datetime
+        End datetime object]
+    by : int
+        Hours between each datetime object
 
     Returns
     -------
@@ -125,7 +131,7 @@ def to_time(dt):
         dt = dt.astype(datetime.datetime)
 
         if isinstance(dt, datetime.datetime):
-            return dt.time
+            return dt.time()
 
         if isinstance(dt, datetime.date):
             return to_datetime(dt)
@@ -139,24 +145,53 @@ def to_time_list(times):
     return [to_time(x) for x in times]
 
 
-def step_to_delta(step):
-    # TODO: make it work for all the ecCodes step formats
-    if isinstance(step, int):
-        return datetime.timedelta(hours=step)
-    elif isinstance(step, str):
-        if re.fullmatch(NUM_STEP_PATTERN, step):
-            sec = int(step) * 3600
-            return datetime.timedelta(seconds=sec)
-        elif re.fullmatch(SUFFIX_STEP_PATTERN, step):
-            factor = ECC_SECONDS_FACTORS.get(step[-1], None)
-            if factor is None:
-                raise ValueError(f"Unsupported ecCodes step units in step: {step}")
-            sec = int(step[:-1]) * factor
-            return datetime.timedelta(seconds=sec)
-    elif isinstance(step, datetime.timedelta):
-        return step
+def to_timedelta(td):
+    if isinstance(td, int):
+        return datetime.timedelta(hours=td)
 
-    raise ValueError(f"Unsupported ecCodes step: {step}")
+    # eccodes step format
+    # TODO: make it work for all the ecCodes step formats
+    if isinstance(td, str):
+        if re.fullmatch(NUM_STEP_PATTERN, td):
+            return datetime.timedelta(hours=int(td))
+
+        if re.fullmatch(SUFFIX_STEP_PATTERN, td):
+            factor = ECC_SECONDS_FACTORS.get(td[-1], None)
+            if factor is None:
+                raise ValueError(f"Unsupported ecCodes step units in step: {td}")
+            return datetime.timedelta(seconds=int(td[:-1]) * factor)
+
+    if isinstance(td, datetime.timedelta):
+        return td
+
+    if isinstance(td, np.timedelta64):
+        return numpy_timedelta_to_timedelta(td)
+
+    raise ValueError("Failed to convert td={td} type={type(td) to timedelta")
+
+
+def step_to_delta(step):
+    return to_timedelta(step)
+
+
+# # TODO: make it work for all the ecCodes step formats
+
+#     if isinstance(step, int):
+#         return datetime.timedelta(hours=step)
+#     elif isinstance(step, str):
+#         if re.fullmatch(NUM_STEP_PATTERN, step):
+#             sec = int(step) * 3600
+#             return datetime.timedelta(seconds=sec)
+#         elif re.fullmatch(SUFFIX_STEP_PATTERN, step):
+#             factor = ECC_SECONDS_FACTORS.get(step[-1], None)
+#             if factor is None:
+#                 raise ValueError(f"Unsupported ecCodes step units in step: {step}")
+#             sec = int(step[:-1]) * factor
+#             return datetime.timedelta(seconds=sec)
+#     elif isinstance(step, datetime.timedelta):
+#         return step
+
+#     raise ValueError(f"Unsupported ecCodes step: {step}")
 
 
 def numpy_timedelta_to_timedelta(td):
@@ -164,11 +199,56 @@ def numpy_timedelta_to_timedelta(td):
     return datetime.timedelta(seconds=int(td))
 
 
+def numpy_datetime_to_datetime(dt):
+    dt = dt.astype("datetime64[s]").astype(int)
+    return datetime.datetime.fromtimestamp(int(dt), datetime.timezone.utc)
+
+
+def date_to_grib(d):
+    try:
+        d = to_datetime(d)
+        if isinstance(d, datetime.datetime):
+            return int(d.year * 10000 + d.month * 100 + d.day)
+    except Exception as e:
+        raise ValueError(f"Cannot convert date={d} of type={type(d)} to grib metadata. {e}")
+
+    # if isinstance(d, str):
+
+    # if isinstance(d, int):
+    #     return d
+    # elif isinstance(d, str):
+    #     return int(d)
+    # elif isinstance(d, np.int64):
+    #     return int(d)
+    # elif hasattr(d, "dtype") and np.issubdtype(d.dtype, np.datetime64):
+    #     d = numpy_datetime_to_datetime(d)
+
+    # if isinstance(d, datetime.datetime):
+    #     return int(d.year * 10000 + d.month * 100 + d.day)
+
+    # raise ValueError(f"Cannot convert date={d} of type={type(d)} to grib metadata")
+
+
+def time_to_grib(t):
+    try:
+        t = int(t)
+        if t < 100:
+            t = t * 100
+    except ValueError:
+        pass
+
+    return t
+
+
 def step_to_grib(step):
     if isinstance(step, (int, str)):
         return step
-    elif hasattr(step, "dtype") and np.issubdtype(step.dtype, np.timedelta64):
-        step = numpy_timedelta_to_timedelta(step)
+    elif isinstance(step, np.int64):
+        return int(step)
+
+    step = to_timedelta(step)
+    # elif hasattr(step, "dtype") and np.issubdtype(step.dtype, np.timedelta64):
+    #     step = numpy_timedelta_to_timedelta(step)
 
     if isinstance(step, datetime.timedelta):
         hours, minutes, seconds = (
@@ -187,6 +267,13 @@ def step_to_grib(step):
     raise ValueError(f"Cannot convert step={step} of type={type(step)} to grib metadata")
 
 
+def datetime_to_grib(dt):
+    dt = to_datetime(dt)
+    date = int(dt.strftime("%Y%m%d"))
+    time = dt.hour * 100 + dt.minute
+    return date, time
+
+
 def datetime_from_grib(date, time):
     date = int(date)
     time = int(time)
@@ -198,9 +285,3 @@ def datetime_from_grib(date, time):
         time // 100,
         time % 100,
     )
-
-
-def datetime_to_grib(dt):
-    date = int(dt.strftime("%Y%m%d"))
-    time = dt.hour * 100 + dt.minute
-    return date, time
