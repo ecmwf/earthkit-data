@@ -17,15 +17,13 @@ from earthkit.data.readers.grib.codes import GribCodesHandle
 from earthkit.data.readers.grib.codes import GribField
 from earthkit.data.readers.grib.index import GribFieldList
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
-from earthkit.data.utils.array import ensure_backend
 
 LOG = logging.getLogger(__name__)
 
 
 class GribMemoryReader(Reader):
-    def __init__(self, array_backend=None, **kwargs):
+    def __init__(self, **kwargs):
         self._peeked = None
-        self._array_backend = ensure_backend(array_backend)
 
     def __iter__(self):
         return self
@@ -47,7 +45,7 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            return GribFieldInMemory(GribCodesHandle(handle, None, None), self._array_backend)
+            return GribFieldInMemory(GribCodesHandle(handle, None, None))
 
     def batched(self, n):
         from earthkit.data.utils.batch import batched
@@ -119,8 +117,8 @@ class GribStreamReader(GribMemoryReader):
 class GribFieldInMemory(GribField):
     """Represents a GRIB message in memory"""
 
-    def __init__(self, handle, array_backend=None):
-        super().__init__(None, None, None, array_backend)
+    def __init__(self, handle):
+        super().__init__(None, None, None)
         self._handle = handle
 
     @GribField.handle.getter
@@ -144,10 +142,8 @@ class GribFieldListInMemory(GribFieldList, Reader):
     """Represent a GRIB field list in memory"""
 
     @staticmethod
-    def from_fields(fields, array_backend=None):
-        if array_backend is None and len(fields) > 0:
-            array_backend = fields[0].array_backend
-        fs = GribFieldListInMemory(None, None, array_backend=array_backend)
+    def from_fields(fields):
+        fs = GribFieldListInMemory(None, None)
         fs._fields = fields
         fs._loaded = True
         return fs

@@ -10,17 +10,24 @@
 #
 
 
+import os
+import sys
+
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import earthkit_examples_file
 
+here = os.path.dirname(__file__)
+sys.path.insert(0, here)
+from grib_fixtures import FL_ARRAYS  # noqa: E402
+from grib_fixtures import load_grib_data  # noqa: E402
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+
+@pytest.mark.parametrize("fl_type", FL_ARRAYS)
 @pytest.mark.parametrize("group", ["param"])
-def test_grib_group_by(array_backend, group):
-    ds = from_source("file", earthkit_examples_file("test6.grib"), array_backend=array_backend)
+def test_grib_group_by(fl_type, group):
+    ds, array_backend = load_grib_data(earthkit_examples_file("test6.grib"), fl_type)
 
     ref = [
         [("t", 1000), ("t", 850)],
@@ -31,7 +38,7 @@ def test_grib_group_by(array_backend, group):
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 2
         assert f.metadata(("param", "level")) == ref[i]
-        afl = f.to_fieldlist(array_backend=array_backend)
+        afl = f.to_fieldlist(array_backend=array_backend._name)
         assert afl is not f
         assert len(afl) == 2
         cnt += len(f)
@@ -39,14 +46,10 @@ def test_grib_group_by(array_backend, group):
     assert cnt == len(ds)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("fl_type", FL_ARRAYS)
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
-def test_grib_multi_group_by(array_backend, group):
-    ds = from_source(
-        "file",
-        [earthkit_examples_file("test4.grib"), earthkit_examples_file("test6.grib")],
-        array_backend=array_backend,
-    )
+def test_grib_multi_group_by(fl_type, group):
+    ds, _ = load_grib_data(["test4.grib", "test6.grib"], fl_type)
 
     ref = [
         [("t", 500), ("z", 500)],

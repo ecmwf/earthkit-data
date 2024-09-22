@@ -22,7 +22,7 @@ class GRIBReader(GribFieldListInOneFile, Reader):
 
         _kwargs = {}
         for k in [
-            "array_backend",
+            # "array_backend",
             "grib_field_policy",
             "grib_handle_policy",
             "grib_handle_cache_size",

@@ -21,13 +21,13 @@ from earthkit.data.core.temporary import temp_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
+from grib_fixtures import FL_FILE  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
-@pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_grib_serialise_metadata(fl_type, array_backend):
-    ds = load_grib_data("test.grib", fl_type, array_backend)
+@pytest.mark.parametrize("fl_type", FL_FILE)
+def test_grib_serialise_metadata(fl_type):
+    ds, _ = load_grib_data("test.grib", fl_type)
 
     md = ds[0].metadata().override()
     pickled_md = pickle.dumps(md)
@@ -38,10 +38,9 @@ def test_grib_serialise_metadata(fl_type, array_backend):
         assert md[k] == md2[k]
 
 
-@pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_grib_serialise_array_field(fl_type, array_backend):
-    ds0 = load_grib_data("test.grib", fl_type, array_backend)
+@pytest.mark.parametrize("fl_type", FL_FILE)
+def test_grib_serialise_array_field(fl_type):
+    ds0, _ = load_grib_data("test.grib", fl_type)
     ds = ds0.to_fieldlist()
 
     for idx in range(len(ds)):
@@ -56,10 +55,9 @@ def test_grib_serialise_array_field(fl_type, array_backend):
             assert ds[idx].metadata(k) == f2.metadata(k), f"index={idx}"
 
 
-@pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_grib_serialise_array_fieldlist(fl_type, array_backend):
-    ds0 = load_grib_data("test.grib", fl_type, array_backend)
+@pytest.mark.parametrize("fl_type", FL_FILE)
+def test_grib_serialise_array_fieldlist(fl_type):
+    ds0, _ = load_grib_data("test.grib", fl_type)
     ds = ds0.to_fieldlist()
 
     pickled_f = pickle.dumps(ds)
@@ -81,7 +79,7 @@ def test_grib_serialise_array_fieldlist(fl_type, array_backend):
     with temp_file() as tmp:
         ds2.save(tmp)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp, array_backend=array_backend)
+        r_tmp = from_source("file", tmp)
         assert len(ds2) == len(r_tmp)
         v_tmp = r_tmp[0].to_numpy()
         assert np.allclose(v1 + 1, v_tmp)
