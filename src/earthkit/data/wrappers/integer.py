@@ -17,7 +17,7 @@ class IntWrapper(Wrapper):
 
     def to_datetime(self):
         if self.data <= 0:
-            date = datetime.datetime.utcnow() + datetime.timedelta(days=self.data)
+            date = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=self.data)
             return datetime.datetime(date.year, date.month, date.day)
         else:
             return datetime.datetime(self.data // 10000, self.data % 10000 // 100, self.data % 100)
