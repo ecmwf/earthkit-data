@@ -19,7 +19,7 @@ from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import datetime_from_grib
-from earthkit.data.utils.dates import step_to_delta
+from earthkit.data.utils.dates import to_timedelta
 from earthkit.data.utils.projections import Projection
 
 
@@ -450,7 +450,7 @@ class GribMetadata(Metadata):
         return self._datetime("indexingDate", "indexingTime")
 
     def step_timedelta(self):
-        return step_to_delta(self.get("step", None))
+        return to_timedelta(self.get("step", None))
 
     def _datetime(self, date_key, time_key):
         date = self.get(date_key, None)

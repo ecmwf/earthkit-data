@@ -29,21 +29,6 @@ def to_datetime(dt):
     if hasattr(dt, "dtype") and np.issubdtype(dt.dtype, np.datetime64):
         return numpy_datetime_to_datetime(dt)
 
-    # if isinstance(dt, np.datetime64):
-    #     # Looks like numpy dates conversion vary
-    #     dt = dt.astype(datetime.datetime)
-
-    #     if isinstance(dt, datetime.datetime):
-    #         return dt
-
-    #     if isinstance(dt, datetime.date):
-    #         return to_datetime(dt)
-
-    #     if isinstance(dt, int):
-    #         return datetime.datetime.fromtimestamp(dt * 1e-9, tz=datetime.timezone.utc)
-
-    #     raise ValueError("Failed to convert numpy datetime {}".format((dt, type(dt))))
-
     if isinstance(dt, np.int64):
         dt = int(dt)
 
@@ -60,14 +45,13 @@ def mars_like_date_list(start, end, by):
     start : datetime.datetime
         Start datetime object
     end : datetime.datetime
-        End datetime object]
+        End datetime object
     by : int
         Hours between each datetime object
 
     Returns
     -------
-    [type]
-        [description]
+    list of datetime.datetime
     """
     assert by > 0, by
     assert end >= start
@@ -112,31 +96,36 @@ def to_time(dt):
     if isinstance(dt, float):
         dt = int(dt)
 
+    if isinstance(dt, str):
+        if len(dt) <= 4:
+            dt = int(dt)
+        else:
+            return to_datetime(dt).time()
+
+    if isinstance(dt, np.int64):
+        dt = int(dt)
+
     if isinstance(dt, int):
-        h = int(dt / 100)
-        m = dt % 100
-        return datetime.time(hour=h, minute=m)
+        if dt >= 2400:
+            return to_datetime(dt).time()
+        else:
+            h = int(dt / 100)
+            m = dt % 100
+            return datetime.time(hour=h, minute=m)
 
     if isinstance(dt, datetime.time):
         return dt
 
     if isinstance(dt, datetime.datetime):
-        return datetime.time
+        return dt.time()
 
     if isinstance(dt, datetime.date):
-        return datetime.time()
+        return dt.time()
 
-    if isinstance(dt, np.datetime64):
-        # Looks like numpy dates conversion vary
-        dt = dt.astype(datetime.datetime)
+    if hasattr(dt, "dtype") and np.issubdtype(dt.dtype, np.datetime64):
+        return numpy_datetime_to_datetime(dt).time()
 
-        if isinstance(dt, datetime.datetime):
-            return dt.time()
-
-        if isinstance(dt, datetime.date):
-            return to_datetime(dt)
-
-        raise ValueError("Failed to convert numpy datetime {}".format((dt, type(dt))))
+    raise ValueError(f"Failed to convert time={dt} of type={type(dt)} to datetime.time")
 
 
 def to_time_list(times):
@@ -170,30 +159,6 @@ def to_timedelta(td):
     raise ValueError("Failed to convert td={td} type={type(td) to timedelta")
 
 
-def step_to_delta(step):
-    return to_timedelta(step)
-
-
-# # TODO: make it work for all the ecCodes step formats
-
-#     if isinstance(step, int):
-#         return datetime.timedelta(hours=step)
-#     elif isinstance(step, str):
-#         if re.fullmatch(NUM_STEP_PATTERN, step):
-#             sec = int(step) * 3600
-#             return datetime.timedelta(seconds=sec)
-#         elif re.fullmatch(SUFFIX_STEP_PATTERN, step):
-#             factor = ECC_SECONDS_FACTORS.get(step[-1], None)
-#             if factor is None:
-#                 raise ValueError(f"Unsupported ecCodes step units in step: {step}")
-#             sec = int(step[:-1]) * factor
-#             return datetime.timedelta(seconds=sec)
-#     elif isinstance(step, datetime.timedelta):
-#         return step
-
-#     raise ValueError(f"Unsupported ecCodes step: {step}")
-
-
 def numpy_timedelta_to_timedelta(td):
     td = td.astype("timedelta64[s]").astype(int)
     return datetime.timedelta(seconds=int(td))
@@ -201,7 +166,7 @@ def numpy_timedelta_to_timedelta(td):
 
 def numpy_datetime_to_datetime(dt):
     dt = dt.astype("datetime64[s]").astype(int)
-    return datetime.datetime.fromtimestamp(int(dt), datetime.timezone.utc)
+    return datetime.datetime.fromtimestamp(int(dt), datetime.timezone.utc).replace(tzinfo=None)
 
 
 def date_to_grib(d):
@@ -211,22 +176,6 @@ def date_to_grib(d):
             return int(d.year * 10000 + d.month * 100 + d.day)
     except Exception as e:
         raise ValueError(f"Cannot convert date={d} of type={type(d)} to grib metadata. {e}")
-
-    # if isinstance(d, str):
-
-    # if isinstance(d, int):
-    #     return d
-    # elif isinstance(d, str):
-    #     return int(d)
-    # elif isinstance(d, np.int64):
-    #     return int(d)
-    # elif hasattr(d, "dtype") and np.issubdtype(d.dtype, np.datetime64):
-    #     d = numpy_datetime_to_datetime(d)
-
-    # if isinstance(d, datetime.datetime):
-    #     return int(d.year * 10000 + d.month * 100 + d.day)
-
-    # raise ValueError(f"Cannot convert date={d} of type={type(d)} to grib metadata")
 
 
 def time_to_grib(t):
@@ -247,8 +196,6 @@ def step_to_grib(step):
         return int(step)
 
     step = to_timedelta(step)
-    # elif hasattr(step, "dtype") and np.issubdtype(step.dtype, np.timedelta64):
-    #     step = numpy_timedelta_to_timedelta(step)
 
     if isinstance(step, datetime.timedelta):
         hours, minutes, seconds = (
