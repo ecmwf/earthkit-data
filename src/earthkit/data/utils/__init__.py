@@ -9,6 +9,7 @@
 import inspect
 import json
 import re
+import sys
 
 import yaml
 
@@ -162,3 +163,7 @@ def ensure_dict(obj):
         if not isinstance(obj, dict):
             raise ValueError(f"Expected a dict, got {type(obj)}")
         return obj
+
+
+def is_module_loaded(module_name):
+    return module_name in sys.modules

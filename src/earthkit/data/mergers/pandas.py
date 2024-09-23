@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import pandas as pd
-
 
 def merge(
     sources=None,
@@ -16,6 +14,8 @@ def merge(
     reader_class=None,
     **kwargs,
 ):
+    import pandas as pd
+
     options = dict(ignore_index=True)  # Renumber all indices
     options.update(kwargs)
     return pd.concat([s.to_pandas(**kwargs) for s in sources], **options)
