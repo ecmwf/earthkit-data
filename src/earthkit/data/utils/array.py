@@ -315,16 +315,6 @@ def match(v1, v2):
     get_backend(v1) == get_backend(v2)
 
 
-# def match_array(array, expected_backend, expected_dtype=None):
-#     b1 = get_backend(array)
-#     b2 = get_backend(expected_backend)
-#     print("b1=", b1)
-#     print("b2=", b2)
-
-#     if b1 != b2:
-#         return False
-
-#     if expected_dtype is not None:
-#         return b2.match_dtype(array, expected_dtype)
-
-#     return True
+# added for backward compatibility
+def ensure_backend(backend):
+    return None

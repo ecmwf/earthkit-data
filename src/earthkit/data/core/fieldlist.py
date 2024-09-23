@@ -709,7 +709,13 @@ class FieldList(Index):
         if "array_backend" in kwargs:
             import warnings
 
-            warnings.warn("array_backend option is not supported any longer in FieldLits", DeprecationWarning)
+            warnings.warn(
+                (
+                    "array_backend option is not supported any longer in FieldList!"
+                    " Use to_fieldlist() instead"
+                ),
+                DeprecationWarning,
+            )
             kwargs.pop("array_backend", None)
 
         super().__init__(**kwargs)
