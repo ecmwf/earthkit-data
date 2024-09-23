@@ -33,26 +33,36 @@ class SimpleFieldList(FieldList):
 
     def __setstate__(self, state: dict):
         self.fields = state.pop("_fields")
-        # self._array = state.pop("_array")
-        # self._metadata = state.pop("_metadata")
-        # super().__init__(metadata=self._metadata)
 
     def to_pandas(self, *args, **kwargs):
-        from earthkit.data.readers.grib.pandas import PandasMixIn
+        # TODO make it generic
+        if len(self) > 0:
+            if self[0]._metadata.data_format() == "grib":
+                from earthkit.data.readers.grib.pandas import PandasMixIn
 
-        class _C(PandasMixIn, SimpleFieldList):
-            pass
+                class _C(PandasMixIn, SimpleFieldList):
+                    pass
 
-        return _C(self.fields).to_pandas(*args, **kwargs)
+                return _C(self.fields).to_pandas(*args, **kwargs)
+        else:
+            import pandas as pd
+
+            return pd.DataFrame()
 
     def to_xarray(self, *args, **kwargs):
-        from earthkit.data.readers.grib.xarray import XarrayMixIn
+        # TODO make it generic
+        if len(self) > 0:
+            if self[0]._metadata.data_format() == "grib":
+                from earthkit.data.readers.grib.xarray import XarrayMixIn
 
-        class _C(XarrayMixIn, SimpleFieldList):
-            pass
+                class _C(XarrayMixIn, SimpleFieldList):
+                    pass
 
-        print("len(self.fields)=", len(self.fields))
-        return _C(self.fields).to_xarray(*args, **kwargs)
+                return _C(self.fields).to_xarray(*args, **kwargs)
+        else:
+            import xarray as xr
+
+            return xr.Dataset()
 
     def mutate_source(self):
         return self
@@ -68,8 +78,6 @@ class SimpleFieldList(FieldList):
     def merge(cls, sources):
         if not all(isinstance(_, SimpleFieldList) for _ in sources):
             raise ValueError("SimpleFieldList can only be merged to another SimpleFieldLists")
-        # if not all(s.array_backend is s[0].array_backend for s in sources):
-        #     raise ValueError("Only fieldlists with the same array backend can be merged")
 
         from itertools import chain
 
