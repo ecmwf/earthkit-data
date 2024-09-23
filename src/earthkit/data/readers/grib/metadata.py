@@ -20,7 +20,6 @@ from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import to_timedelta
-from earthkit.data.utils.projections import Projection
 
 
 def missing_is_none(x):
@@ -125,6 +124,8 @@ class GribFieldGeography(Geography):
         >>> ds.projection().to_proj_string()
         '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
         """
+        from earthkit.data.utils.projections import Projection
+
         return Projection.from_proj_string(self.metadata.get("projTargetString", None))
 
     def bounding_box(self):
