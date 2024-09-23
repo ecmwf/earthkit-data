@@ -160,6 +160,9 @@ class Field(Base):
         dtype: str, array.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
+        array_backend: str, module or None
+            The array backend to be used. When it is :obj:`None` the underlying array format
+            of the field is used.
         index: array indexing object, optional
             The index of the values and to be extracted. When it
             is None all the values are extracted
@@ -201,7 +204,8 @@ class Field(Base):
         -------
         array-like
             An multi-dimensional array containing one array per key is returned
-            (following the order in ``keys``). When ``keys`` is a single value only the
+            (following the order in ``keys``). The underlying array format
+            of the field is used. When ``keys`` is a single value only the
             array belonging to the key is returned.
 
         Examples
@@ -291,7 +295,8 @@ class Field(Base):
         -------
         dict
             Dictionary with items "x" and "y", containing the arrays of the x and
-            y coordinates, respectively.
+            y coordinates, respectively. The underlying array format
+            of the field is used.
 
         Raises
         ------
@@ -346,7 +351,8 @@ class Field(Base):
         -------
         dict
             Dictionary with items "lat" and "lon", containing the arrays of the latitudes and
-            longitudes, respectively.
+            longitudes, respectively. The underlying array format
+            of the field is used.
 
         See Also
         --------
@@ -687,17 +693,20 @@ class Field(Base):
         return v
 
     def _reshape(self, v, flatten):
+        """Reshape the array to the required shape."""
         shape = self._required_shape(flatten)
         if shape != v.shape:
             v = array_namespace(v).reshape(v, shape)
         return v
 
     def _required_shape(self, flatten, shape=None):
+        """Return the required shape of the array."""
         if shape is None:
             shape = self.shape
         return shape if not flatten else (math.prod(shape),)
 
     def _array_matches(self, array, flatten=False, dtype=None):
+        """Check if the array matches the field and conditions."""
         shape = self._required_shape(flatten)
         return shape == array.shape and (dtype is None or dtype == array.dtype)
 
@@ -728,7 +737,21 @@ class FieldList(Index):
 
     @staticmethod
     def from_fields(fields):
-        raise NotImplementedError
+        r"""Create a :class:`SimpleFieldList`.
+
+        Parameters
+        ----------
+        fields: list
+            List of :obj:`Field` objects.
+
+        Returns
+        -------
+        :class:`SimpleFieldList`
+
+        """
+        from earthkit.data.indexing.fieldlist import SimpleFieldList
+
+        return SimpleFieldList(fields)
 
     @staticmethod
     def from_numpy(array, metadata):
@@ -736,21 +759,19 @@ class FieldList(Index):
 
     @staticmethod
     def from_array(array, metadata):
-        r"""Create an :class:`ArrayFieldList`.
+        r"""Create an :class:`SimpleFieldList`.
 
         Parameters
         ----------
         array: array-like, list
             The fields' values. When it is a list it must contain one array per field.
-            The array type must be supported by :class:`ArrayBackend`.
-        metadata: list
-            The fields' metadata. Must contain one :class:`Metadata` object per field.
+        metadata: list, :class:`Metadata`
+            The fields' metadata. Must contain one :class:`Metadata` object per field. Or
+            it can be a single :class:`Metadata` object when all the fields have the same metadata.
 
-        In the generated :class:`ArrayFieldList`, each field is represented by an array
+        In the generated :class:`SimpleFieldList`, each field is represented by an array
         storing the field values and a :class:`MetaData` object holding
         the field metadata. The shape and dtype of the array is controlled by the ``kwargs``.
-        Please note that generated :class:`ArrayFieldList` stores all the field values in
-        a single array.
         """
         from earthkit.data.sources.array_list import from_array
 
@@ -1384,7 +1405,7 @@ class FieldList(Index):
         --------
         :obj:`write`
         :meth:`GribFieldList.save() <data.readers.grib.index.GribFieldList.save>`
-        :meth:`NumpyFieldList.save() <data.sources.numpy_list.NumpyFieldList.save>`
+        :meth:`SimpleFieldList.save() <data.indexing.fieldlist.SimpleFieldList.save>`
 
         """
         flag = "wb" if not append else "ab"
@@ -1417,7 +1438,7 @@ class FieldList(Index):
 
         Parameters
         ----------
-        array_backend: str, :obj:`ArrayBackend`
+        array_backend: str, module, :obj:`ArrayBackend`
             Specifies the array backend for the generated :class:`FieldList`. The array
             type must be supported by :class:`ArrayBackend`.
 
@@ -1429,12 +1450,12 @@ class FieldList(Index):
         -------
         :class:`FieldList`
             - the current :class:`FieldList` if it is already in the required format
-            - a new :class:`ArrayFieldList` otherwise
+            - a new :class:`SimpleFieldList` with :class`ArrayField` fields otherwise
 
         Examples
         --------
         The following example will convert a fieldlist read from a file into a
-        :class:`ArrayFieldList` storing single precision field values.
+        :class:`SimpleFieldList` storing single precision field values.
 
         >>> import numpy as np
         >>> import earthkit.data
@@ -1443,20 +1464,17 @@ class FieldList(Index):
         'docs/examples/tuv_pl.grib'
         >>> r = ds.to_fieldlist(array_backend="numpy", dtype=np.float32)
         >>> r
-        ArrayFieldList(fields=18)
+        SimpleFieldList(fields=18)
         >>> hasattr(r, "path")
         False
         >>> r.to_numpy().dtype
         dtype('float32')
 
         """
-        return self._to_array_fieldlist(array_backend=array_backend, **kwargs)
-
-    def _to_array_fieldlist(self, **kwargs):
         array = []
         md = []
         for f in self:
-            array.append(f.to_array(**kwargs))
+            array.append(f.to_array(array_backend=array_backend, **kwargs))
             md.append(f._metadata)
         return self.from_array(array, md)
 

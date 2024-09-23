@@ -54,6 +54,9 @@ class SimpleFieldList(FieldList):
         print("len(self.fields)=", len(self.fields))
         return _C(self.fields).to_xarray(*args, **kwargs)
 
+    def mutate_source(self):
+        return self
+
     @classmethod
     def new_mask_index(self, *args, **kwargs):
         assert len(args) == 2
@@ -68,12 +71,9 @@ class SimpleFieldList(FieldList):
         # if not all(s.array_backend is s[0].array_backend for s in sources):
         #     raise ValueError("Only fieldlists with the same array backend can be merged")
 
-        fields = []
-        for s in sources:
-            for f in s:
-                fields.append(f)
+        from itertools import chain
 
-        return cls(fields)
+        return cls.from_fields(list(chain(*[f for f in sources])))
 
 
 # For backwards compatibility

@@ -12,10 +12,10 @@ from functools import cached_property
 
 import eccodes
 
+from earthkit.data.indexing.fieldlist import SimpleFieldList
 from earthkit.data.readers import Reader
 from earthkit.data.readers.grib.codes import GribCodesHandle
 from earthkit.data.readers.grib.codes import GribField
-from earthkit.data.readers.grib.index import GribFieldList
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
 
 LOG = logging.getLogger(__name__)
@@ -138,50 +138,24 @@ class GribFieldInMemory(GribField):
         return GribFieldListInMemory.from_fields(fields)
 
 
-class GribFieldListInMemory(GribFieldList, Reader):
-    """Represent a GRIB field list in memory"""
-
-    @staticmethod
-    def from_fields(fields):
-        fs = GribFieldListInMemory(None, None)
-        fs._fields = fields
-        fs._loaded = True
-        return fs
+class GribFieldListInMemory(SimpleFieldList):
+    """Represent a GRIB field list in memory loaded lazily"""
 
     def __init__(self, source, reader, *args, **kwargs):
         """The reader must support __next__."""
-        if source is not None:
-            Reader.__init__(self, source, None)
-        GribFieldList.__init__(self, *args, **kwargs)
-
         self._reader = reader
         self._loaded = False
-        self._fields = []
 
     def __len__(self):
         self._load()
-        return len(self._fields)
+        return super().__len__()
 
-    def _getitem(self, n):
+    def __getitem__(self, n):
         self._load()
-        if isinstance(n, int):
-            n = n if n >= 0 else len(self) + n
-            return self._fields[n]
+        return super().__getitem__(n)
 
     def _load(self):
         if not self._loaded:
-            self._fields = [f for f in self._reader]
+            self.fields = [f for f in self._reader]
             self._loaded = True
             self._reader = None
-
-    def mutate_source(self):
-        return self
-
-    @classmethod
-    def merge(cls, readers):
-        assert all(isinstance(s, GribFieldListInMemory) for s in readers), readers
-        assert len(readers) > 1
-
-        from itertools import chain
-
-        return GribFieldListInMemory.from_fields(list(chain(*[f for f in readers])))
