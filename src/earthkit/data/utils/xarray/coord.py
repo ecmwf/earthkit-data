@@ -94,9 +94,9 @@ class TimeCoord(Coord):
 class StepCoord(Coord):
     def convert(self, profile):
         if profile.decode_time:
-            from earthkit.data.utils.dates import step_to_delta
+            from earthkit.data.utils.dates import to_timedelta
 
-            return [step_to_delta(x) for x in self.vals]
+            return [to_timedelta(x) for x in self.vals]
         return super().convert(profile)
 
     def encoding(self, profile):
