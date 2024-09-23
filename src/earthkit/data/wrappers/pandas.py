@@ -171,17 +171,19 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
 
 
 def wrapper(data, *args, **kwargs):
+    from earthkit.data.utils import is_module_loaded
+
+    if not is_module_loaded("pandas"):
+        return None
+
     import pandas as pd
 
-    try:
+    if is_module_loaded("geopandas"):
         import geopandas as gpd
 
-        has_gpd = True
-    except ImportError:
-        has_gpd = False
+        if isinstance(data, gpd.geodataframe.GeoDataFrame):
+            return GeoPandasDataFrameWrapper(data, *args, **kwargs)
 
-    if has_gpd and isinstance(data, gpd.geodataframe.GeoDataFrame):
-        return GeoPandasDataFrameWrapper(data, *args, **kwargs)
     if isinstance(data, pd.DataFrame):
         return PandasDataFrameWrapper(data, *args, **kwargs)
     if isinstance(data, pd.Series):

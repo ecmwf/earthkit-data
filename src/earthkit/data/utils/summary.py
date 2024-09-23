@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.core.ipython import ipython_active
-
 
 def drop_unwanted_series(df, key=None, axis=1):
     if df is None:
@@ -136,6 +134,8 @@ class NamespaceDump(dict):
         self._kwargs = kwargs
 
     def _repr_html_(self):
+        from earthkit.data.core.ipython import ipython_active
+
         if ipython_active:
             from earthkit.data.utils.html import tab
             from earthkit.data.utils.html import table_from_dict
@@ -330,6 +330,8 @@ class BUFRHtmlTree:
 
 
 def make_bufr_html_tree(data, title, subset, compressed, uncompressed):
+    from earthkit.data.core.ipython import ipython_active
+
     tree = BUFRTree(data, subset, compressed, uncompressed).make_tree()
     if ipython_active:
         from IPython.display import HTML
