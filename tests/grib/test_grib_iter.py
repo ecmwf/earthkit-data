@@ -27,7 +27,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
 @pytest.mark.parametrize("group", ["param"])
 def test_grib_group_by(fl_type, group):
-    ds, array_backend = load_grib_data(earthkit_examples_file("test6.grib"), fl_type)
+    ds, array_backend = load_grib_data("test6.grib", fl_type)
 
     ref = [
         [("t", 1000), ("t", 850)],
