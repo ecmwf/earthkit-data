@@ -103,7 +103,7 @@ def test_xr_write_1(kwargs):
     "kwargs",
     [
         {"profile": "mars", "time_dim_mode": "valid_time"},
-        # {"profile": "mars", "time_dim_mode": "valid_time", "decode_time": False},
+        {"profile": "mars", "time_dim_mode": "valid_time", "decode_time": False},
     ],
 )
 def test_xr_write_2(kwargs):
@@ -129,9 +129,6 @@ def test_xr_write_2(kwargs):
     assert r.index("shortName") == ["t"]
     assert r.index("step") == [0]
     assert np.allclose(ref_t_vals + 1.0, r.sel(param="t", time=600, level=500).to_numpy())
-
-    print(r.metadata("base_datetime"))
-    print(r.metadata("valid_datetime"))
 
     ref_base = ["2024-06-03T00:00:00", "2024-06-03T00:00:00", "2024-06-03T06:00:00", "2024-06-03T06:00:00"]
 
