@@ -19,7 +19,6 @@ from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
-from earthkit.data.utils.projections import Projection
 
 from .coords import LevelSlice
 from .coords import TimeSlice
@@ -54,6 +53,8 @@ class XArrayFieldGeography(Geography):
         return self.shape
 
     def projection(self):
+        from earthkit.data.utils.projections import Projection
+
         return Projection.from_cf_grid_mapping(**self._grid_mapping().attrs)
 
     def bounding_box(self):

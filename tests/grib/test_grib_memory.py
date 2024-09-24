@@ -21,6 +21,7 @@ def test_grib_from_memory():
         assert len(fs) == 1
         sn = fs.metadata("param")
         assert sn == ["2t"]
+        assert fs[0].metadata("shortName") == "2t"
 
 
 def test_grib_save_when_loaded_from_memory():
