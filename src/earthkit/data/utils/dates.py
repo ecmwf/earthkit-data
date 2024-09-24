@@ -179,6 +179,8 @@ def date_to_grib(d):
 
 
 def time_to_grib(t):
+    if isinstance(t, datetime.time):
+        return t.hour * 100 + t.minute
     try:
         t = int(t)
         if t < 100:

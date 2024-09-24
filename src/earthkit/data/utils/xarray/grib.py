@@ -28,6 +28,11 @@ def update_metadata(metadata, compulsory):
     #     if combined["type"] == "an":
     #         metadata["type"] = "fc"
 
+    if "valid_time" in metadata:
+        dt = to_datetime(metadata.pop("valid_time"))
+        metadata["date"] = dt.date()
+        metadata["time"] = dt.time()
+
     if "forecast_reference_time" in metadata:
         date, time = datetime_to_grib(to_datetime(metadata["forecast_reference_time"]))
         metadata.pop("forecast_reference_time")
