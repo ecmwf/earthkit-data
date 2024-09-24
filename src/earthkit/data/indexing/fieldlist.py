@@ -68,11 +68,11 @@ class SimpleFieldList(FieldList):
         return self
 
     @classmethod
-    def new_mask_index(self, *args, **kwargs):
+    def new_mask_index(cls, *args, **kwargs):
         assert len(args) == 2
         fs = args[0]
         indices = list(args[1])
-        return SimpleFieldList(fields=[fs.fields[i] for i in indices])
+        return cls.from_fields([fs.fields[i] for i in indices])
 
     @classmethod
     def merge(cls, sources):
