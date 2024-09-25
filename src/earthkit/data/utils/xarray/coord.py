@@ -62,10 +62,15 @@ class Coord:
     def _to_datetime_list(vals):
         import numpy as np
 
-        if not (isinstance(vals, np.ndarray) and np.issubdtype(vals.dtype, np.datetime64)):
-            from earthkit.data.utils.dates import to_datetime_list
+        from earthkit.data.utils.dates import to_datetime_list
 
+        # datetime64 arrays are already in the required format
+        if isinstance(vals, np.ndarray):
+            if not np.issubdtype(vals.dtype, np.datetime64):
+                return to_datetime_list(vals.tolist())
+        else:
             return to_datetime_list(vals)
+
         return vals
 
 

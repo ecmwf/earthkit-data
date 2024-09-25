@@ -118,14 +118,15 @@ Other inputs
     pandas.ipynb
 
 
-Xarray_engine
+Xarray engine
 +++++++++++++
 
 .. toctree::
     :maxdepth: 1
     :glob:
 
-    xarray_engine_demo.ipynb
+    xarray_engine_overview.ipynb
+    xarray_engine_temporal.ipynb
     xarray_engine_split.ipynb
     grib_cube.ipynb
     grib_to_xarray.ipynb

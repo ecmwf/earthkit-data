@@ -165,23 +165,28 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             - "level_and_type": Use a single dimension for combined level and type of level.
         squeeze: bool, None
             Remove dimensions which has only one valid values. Not applies to dimension in
-            ``ensure_dims``. Default is True.
+            ``ensure_dims``. Its default value (None) expands
+            to True unless the ``profile`` overwrites it.
         add_valid_time_coord: bool, None
-            Add a `valid_time` coordinate containing np.datetime64 values to the
-            dataset. Only can be used when ``add_valid_time_dim`` is False. Default is False.
+            Add the `valid_time` coordinate containing np.datetime64 values to the
+            dataset. Only makes effect when ``time_dim_mode`` is not "valid_time". Its default
+            value (None) expands to False unless the ``profile`` overwrites it.
         decode_time: bool, None
             Decode the datetime coordinates to datetime64 values, while step coordinates to timedelta64
-            values. Default is True.
+            values. Its default value (None) expands
+            to True unless the ``profile`` overwrites it.
         add_geo_coords: bool, None
             Add geographic coordinates to the dataset when field values are represented by
-            a single "values" dimension. Default is True.
+            a single "values" dimension. Its default value (None) expands
+            to True unless the ``profile`` overwrites it.
         flatten_values: bool, None
             Flatten the values per field resulting in a single dimension called
             "values" representing a field. Otherwise the field shape is used to form
             the field dimensions. When the fields are defined on an unstructured grid (e.g.
             reduced Gaussian) or are spectral (e.g. spherical harmonics) this option is
             ignored and the field values are always represented by a single "values"
-            dimension. Default is False.
+            dimension.  Its default value (None) expands
+            to False unless the ``profile`` overwrites it.
         attrs_mode: str, None
             Define how attributes are generated. Default is "fixes". The possible values are:
 
@@ -205,7 +210,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         remapping: dict, None
             Define new metadata keys for indexing. Default is None.
         strict: bool, None
-            Perform stricter checks on hypercube consistency. Default is True.
+            Perform stricter checks on hypercube consistency. Its default value (None) expands
+            to True unless the ``profile`` overwrites it.
         dtype: str, numpy.dtype or None
             Typecode or data-type of the array data.
         array_module: module

@@ -488,11 +488,13 @@ class FieldListTensor(TensorCore):
         ds = self.source[tuple(dataset_indexes)]
         return self.from_tensor(self, ds, coords)
 
-    def make_valid_datetime(self):
+    def make_valid_datetime(self, dtype="datetime64[ns]"):
         # TODO: make it more general
         dims_opt = [
             ["base_datetime", "step"],
             ["base_datetime"],
+            ["forecast_reference_time", "step"],
+            ["forecast_reference_time"],
             ["date", "time", "step"],
             ["date", "time"],
             ["date", "step"],
@@ -527,7 +529,7 @@ class FieldListTensor(TensorCore):
                             datetime.datetime.fromisoformat(x)
                             for x in self.source.sel(**other_coords).metadata("valid_datetime")
                         ],
-                        dtype="datetime64[ns]",
+                        dtype=dtype,
                     )
 
                     shape = tuple([self.user_dims[d] for d in dims])
@@ -539,7 +541,7 @@ class FieldListTensor(TensorCore):
 
                     vals = np.array(
                         [datetime.datetime.fromisoformat(x) for x in self.source.metadata("valid_datetime")],
-                        dtype="datetime64[ns]",
+                        dtype=dtype,
                     )
 
                     shape = tuple([self.user_dims[d] for d in dims])

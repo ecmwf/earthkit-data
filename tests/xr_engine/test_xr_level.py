@@ -20,7 +20,7 @@ from earthkit.data.utils.xarray.profile import PROFILE_CONF
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from xr_engine_fixtures import compare_coords  # noqa: E402
+from xr_engine_fixtures import compare_dims  # noqa: E402
 
 
 @pytest.mark.cache
@@ -41,14 +41,7 @@ def test_xr_level_dim(kwargs, dims):
     ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_regular_ll.grib"))
 
     ds = ds_ek.to_xarray(**kwargs)
-
-    dim_order = []
-    for d in ds["t"].dims:
-        if d in dims:
-            dim_order.append(d)
-    assert dim_order == list(dims.keys())
-
-    compare_coords(ds, dims)
+    compare_dims(ds, dims, order_ref_var="t")
 
 
 @pytest.mark.cache
@@ -175,7 +168,7 @@ def test_xr_level_attr(fname, kwargs, dims, levtype):
     ds_ek = from_source("url", earthkit_remote_test_data_file(f"test-data/xr_engine/level/{fname}"))
 
     ds = ds_ek.to_xarray(**kwargs)
-    compare_coords(ds, dims)
+    compare_dims(ds, dims)
 
     level_dim = next(iter(dims))
     ds.coords[level_dim].attrs == PROFILE_CONF.defaults["coord_attrs"][level_dim][levtype]
