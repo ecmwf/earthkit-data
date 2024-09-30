@@ -1,7 +1,7 @@
 .. _xr_engine:
 
-Xarray engine
-////////////////////
+Xarray engine overview
+////////////////////////
 
 Earthkit-data comes with its own Xarray engine called "earthkit" to perform conversions between :ref:`grib` and Xarray data.
 
@@ -61,6 +61,8 @@ The following notebooks give details about how :py:meth:`~data.readers.grib.inde
 
 - :ref:`/examples/xarray_engine_overview.ipynb`
 - :ref:`/examples/xarray_engine_temporal.ipynb`
+- :ref:`/examples/xarray_engine_field_dims.ipynb`
+- :ref:`/examples/xarray_engine_split.ipynb`
 
 Converting Xarray to GRIB
 -------------------------
@@ -92,3 +94,7 @@ It is also possible to directly write the Xarray into a GRIB file when calling :
 .. code-block:: python
 
     ds_xr.earthkit.to_grib("_from_xr_2.grib")
+
+For further details see the following notebook:
+
+  - :ref:`/examples/xarray_engine_to_grib.ipynb`

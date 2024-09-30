@@ -123,6 +123,7 @@ class Dim:
     key = None
     alias = None
     drop = None
+    enforce_unique = False
 
     def __init__(self, owner, name=None, key=None, alias=None, drop=None, active=True):
         self.owner = owner
@@ -197,7 +198,9 @@ class Dim:
 
         # print(f"key={self.key} index={ds.index(self.key)}")
 
-        if len(ds.index(self.key)) == 0:
+        vals = ds.index(self.key)
+
+        if len(vals) == 0:
             self.active = False
 
         # assert self.name in self.profile.dim_keys, f"self.name={self.name}"
@@ -304,6 +307,11 @@ class CustomForecastRefDim(Dim):
 
 class LevelDim(Dim):
     alias = get_keys(LEVEL_KEYS)
+
+
+class LevelTypeDim(Dim):
+    alias = get_keys(LEVEL_TYPE_KEYS)
+    enforce_unique = True
 
 
 class LevelPerTypeDim(Dim):
@@ -441,7 +449,11 @@ class LevelDimMode(DimMode):
 
     def build(self, profile, owner, **kwargs):
         level_key = owner.dim_roles["level"]
-        return {level_key: LevelDim(owner, key=level_key, **kwargs)}
+        level_type_key = owner.dim_roles["level_type"]
+        return {
+            level_key: LevelDim(owner, key=level_key, **kwargs),
+            level_type_key: LevelTypeDim(owner, key=level_type_key, **kwargs),
+        }
 
 
 class LevelAndTypeDimMode(DimMode):

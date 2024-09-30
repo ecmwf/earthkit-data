@@ -75,7 +75,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             Provide custom default values for most of the kwargs. Currently, the "mars" and "grid" built-in
             profiles are available, otherwise an explicit dict can
             be used. None is equivalent to an empty dict. When a kwarg is specified it will update
-            a default value if it is a dict otherwise it will overwrite it. See: :xref:`xr_profile` for more
+            a default value if it is a dict otherwise it will overwrite it. See: :ref:`xr_profile` for more
             information.
         variable_key: str, None
             Metadata key to specify the dataset variables. It cannot be

@@ -80,9 +80,14 @@ class XarrayMixIn:
         Parameters
         ----------
         engine: str, optional
-            The Xarray engine to use for generating the dataset. Default value is ``earthkit``.
+            The Xarray engine to use for generating the dataset. Default value is ``"earthkit"``.
             If set to ``cfgrib``, the :xref:`cfgrib` engine is used. No other values are
             supported.
+        split_dims: str, or iterable of str, None
+            Dimension or list of dimensions to use for splitting the data into multiple hypercubes.
+            Default is None. Only used when ``engine="earthkit"``. Please note that ``split_dims``
+            is not a valid option when the Xarray is directly generated via
+            :py:meth:`xarray.open_dataset`.
         xarray_open_dataset_kwargs: dict, optional
             Keyword arguments passed to :py:func:`xarray.open_dataset`.  Either this or ``**kwargs`` can
             be used, but not both.
@@ -91,13 +96,13 @@ class XarrayMixIn:
             keywords are automatically grouped and passed as ``backend_kwargs``.  Either ``**kwargs``
             or ``xarray_open_dataset_kwargs`` can be used, but not both.
 
-            When ``engine`` is ``earthkit`` the following engine specific kwargs are supported:
+            When ``engine="earthkit"`` the following engine specific kwargs are supported:
 
             * profile: str, dict or None
                 Provide custom default values for most of the kwargs. Currently, the "mars" and "grid"
                 built-in profiles are available, otherwise an explicit dict can be used. None is equivalent
                 to an empty dict. When a kwarg is specified it will update
-                a default value if it is a dict otherwise it will overwrite it. See: :xref:`xr_profile` for
+                a default value if it is a dict otherwise it will overwrite it. See: :ref:`xr_profile` for
                 more information.
             * variable_key: str, None
                 Metadata key to specify the dataset variables. It cannot be
@@ -240,9 +245,7 @@ class XarrayMixIn:
             * array_module: module
                 The module to use for array operations. Default is numpy.
 
-            When ``engine`` is ``cfgrib`` the following engine specific kwargs are supported:
-
-            Other keyword arguments when ``engine`` is ``cfgrib``:
+            When ``engine="cfgrib"`` the following engine specific kwargs are supported:
 
             * ignore_keys: list, None
                 It specifies the metadata keys that should be ignored when reading

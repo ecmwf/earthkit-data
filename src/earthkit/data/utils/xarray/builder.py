@@ -307,12 +307,15 @@ class TensorBackendBuilder:
             # print(f"  {d.key=} {vals[d.key]}")
             if num == 0:
                 continue
-                if d.name not in self.profile.dims.ensure_dims:
-                    raise ValueError(f"Dimension {d} has no valid values")
+                # if d.name not in self.profile.dims.ensure_dims:
+                #     raise ValueError(f"Dimension {d} has no valid values for variable={name}")
             else:
-                if num == 1 and d.name in self.profile.dims.dims_as_attrs:
+                if num > 1 and d.enforce_unique:
+                    raise ValueError(
+                        f"Dimension '{d.name}' of variable '{name}' has multiple values={vals[d.key]}"
+                    )
+                elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
                     extra_tensor_attrs.append(d.key)
-
                 elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
                     tensor_dims.append(d)
                     # tensor_coords[d.key] = ds.index(d.key)
