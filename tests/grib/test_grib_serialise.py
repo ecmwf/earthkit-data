@@ -164,3 +164,16 @@ def test_grib_serialise_stream_2():
 
     assert len(ds2) == 2
     assert ds.metadata("shortName") == ["2t", "msl"]
+
+
+def test_grib_serialise_file_parts():
+    parts = (240, 150)
+
+    ds = from_source("file", earthkit_examples_file("test6.grib"), parts=parts)
+    assert len(ds) == 1
+
+    pickled_f = pickle.dumps(ds)
+    ds2 = pickle.loads(pickled_f)
+
+    assert len(ds2) == 1
+    assert ds2[0].metadata(["param", "level"]) == ["u", 1000]
