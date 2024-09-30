@@ -31,6 +31,7 @@ repos:
   hooks:
   - id: blackdoc
     additional_dependencies: [black==23.3.0]
+    exclude: xr_engine_profile_rst\.py
 - repo: https://github.com/PyCQA/flake8
   rev: 6.1.0
   hooks:

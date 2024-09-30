@@ -224,6 +224,39 @@ class Profile:
 
         return cls(*args, **opt)
 
+    @classmethod
+    def to_docs(cls, name):
+        import copy
+
+        if name is None:
+            conf = {}
+        else:
+            conf = PROFILE_CONF.get(name)
+
+        opt = copy.deepcopy(PROFILE_CONF.defaults)
+
+        for k, v in conf.items():
+            if k in PROFILE_CONF.defaults and v is not None:
+                if isinstance(PROFILE_CONF.defaults[k], dict):
+                    if not isinstance(v, dict):
+                        raise ValueError(f"Expected dict for key {k} in profile {name}")
+                    if "__overwrite__" in v:
+                        v.pop("__overwrite__")
+                        opt[k] = v
+                    else:
+                        opt[k].update(v)
+                elif isinstance(PROFILE_CONF.defaults[k], list):
+                    opt[k] = ensure_iterable(v)
+                else:
+                    opt[k] = v
+            elif k not in PROFILE_CONF.defaults:
+                if k in cls.USER_ONLY_OPTIONS:
+                    opt[k] = v
+                else:
+                    raise ValueError(f"Unknown key {k} in profile {name}")
+
+        return opt
+
     @property
     def dim_keys(self):
         return self.dims.active_dim_keys

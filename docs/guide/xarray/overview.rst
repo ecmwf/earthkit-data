@@ -1,0 +1,94 @@
+.. _xr_engine:
+
+Xarray engine
+////////////////////
+
+Earthkit-data comes with its own Xarray engine called "earthkit" to perform conversions between :ref:`grib` and Xarray data.
+
+Creating Xarray from GRIB
+--------------------------
+
+Using to_xarray()
+++++++++++++++++++
+
+We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~data.readers.grib.xarray.XarrayMixIn.to_xarray` on a GRIB fieldlist object.
+
+.. code-block:: python
+
+    >>> import earthkit.data as ekd
+    >>> ds_fl = ekd.from_source("sample", "pl_regular_ll_small.grib")
+    >>> ds_xr = ds_fl.to_xarray()
+    >>> ds_xr
+    <xarray.Dataset> Size: 176kB
+    Dimensions:  (forecast_reference_time: 4, step: 2, levelist: 2,
+                  latitude: 19, longitude: 36)
+    Coordinates:
+        * forecast_reference_time  (forecast_reference_time) datetime64[ns] 32B 202...
+        * step                     (step) timedelta64[ns] 16B 00:00:00 06:00:00
+        * levelist                 (levelist) int64 16B 500 700
+        * latitude                 (latitude) float64 152B 90.0 80.0 ... -80.0 -90.0
+        * longitude                (longitude) float64 288B 0.0 10.0 ... 340.0 350.0
+    Data variables:
+        r                        (forecast_reference_time, step, levelist, latitude, longitude) float64 88kB ...
+        t                        (forecast_reference_time, step, levelist, latitude, longitude) float64 88kB ...
+     ...
+
+
+Using open_dataset()
+++++++++++++++++++++
+
+We can also use the Xarray engine to read GRIB data directly with :py:func:`xarray.open_dataset` function. Naturally, this feature requires earthkit-data to be installed.
+
+.. code-block:: python
+
+    >>> import xarray as xr
+    >>> ds_xr = xr.open_dataset("pl_regular_ll_small.grib", engine="earthkit")
+    >>> ds_xr
+    <xarray.Dataset> Size: 176kB
+    ...
+
+
+Profiles
++++++++++
+
+:py:meth:`~data.readers.grib.xarray.XarrayMixIn.to_xarray` has a large number of keyword arguments to control how the Xarray dataset is generated. To simplify the usage we can define :ref:`profiles <xr_profile>` providing custom defaults for most of the keyword arguments. For more details see :ref:`xr_profile`.
+
+
+Examples
++++++++++
+
+The following notebooks give details about how :py:meth:`~data.readers.grib.xarray.XarrayMixIn.to_xarray` can be used:
+
+- :ref:`/examples/xarray_engine_overview.ipynb`
+- :ref:`/examples/xarray_engine_temporal.ipynb`
+
+Converting Xarray to GRIB
+-------------------------
+
+.. warning::
+
+    This is an experimental feature and it is not yet fully supported.
+
+Xarray datasets created with the earthkit engine can be converted back to GRIB format by using :py:meth:`~data.utils.xarray.engine.XarrayEarthkit.to_fieldlist` on the ``earthkit`` accessor of the Xarray object. If the original Xarray was modified we must ensure the variable attributes are copied to the new Xarray dataset. By default, variable attributes are not kept in Xarray computations so we need to set the global Xarray ``keep_attrs`` option to enable it.
+
+.. code-block:: python
+
+    >>> import xarray as xr
+    >>> xr.set_options(keep_attrs=True)
+    >>> ds_xr += 1
+    >>> ds_fl1 = ds_xr.earthkit.to_fieldlist()
+    >>> ds_fl1[0]
+    ArrayField(r,500,20240603,0,0,0)
+
+The generated GRIB fieldlist can be saved to disk using the :py:meth:`~data.readers.grib.index.GribFieldList.save` method.
+
+.. code-block:: python
+
+    ds_fl1.save("_from_xr_1.grib")
+
+
+It is also possible to directly write the Xarray into a GRIB file when calling :py:meth:`~data.utils.xarray.engine.XarrayEarthkit.to_grib` on the ``earthkit`` accessor. This will be a more memory efficient way to write GRIB to disk than generating a fieldlist first.
+
+.. code-block:: python
+
+    ds_xr.earthkit.to_grib("_from_xr_2.grib")
