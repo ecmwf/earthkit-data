@@ -72,13 +72,14 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         filename_or_obj, str, Path or earthkit object
             Input GRIB file or object to be converted to an xarray dataset.
         profile: str, dict or None
-            Provide custom default values for the kwargs with the exception of ``remapping``. Two built-in
-            profiles are available by using their names: "mars" and "grid". Otherwise an explicit dict can
+            Provide custom default values for most of the kwargs. Currently, the "mars" and "grid" built-in
+            profiles are available, otherwise an explicit dict can
             be used. None is equivalent to an empty dict. When a kwarg is specified it will update
-            a default value if it is a dict otherwise it will overwrite it.
+            a default value if it is a dict otherwise it will overwrite it. See: :xref:`xr_profile` for more
+            information.
         variable_key: str, None
             Metadata key to specify the dataset variables. It cannot be
-            defined as a dimension. Default is "param".
+            defined as a dimension. Default is "param" (in earthkit-data this is the same as "shortName").
         drop_variables: str, or iterable of str, None
             A variable or list of variables to drop from the dataset. Default is None.
         rename_variables: dict, None
