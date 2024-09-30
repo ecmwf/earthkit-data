@@ -11,7 +11,7 @@ Creating Xarray from GRIB
 Using to_xarray()
 ++++++++++++++++++
 
-We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~data.readers.grib.xarray.XarrayMixIn.to_xarray` on a GRIB fieldlist object.
+We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` on a GRIB fieldlist object.
 
 .. code-block:: python
 
@@ -51,13 +51,13 @@ We can also use the Xarray engine to read GRIB data directly with :py:func:`xarr
 Profiles
 +++++++++
 
-:py:meth:`~data.readers.grib.xarray.XarrayMixIn.to_xarray` has a large number of keyword arguments to control how the Xarray dataset is generated. To simplify the usage we can define :ref:`profiles <xr_profile>` providing custom defaults for most of the keyword arguments. For more details see :ref:`xr_profile`.
+:py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` has a large number of keyword arguments to control how the Xarray dataset is generated. To simplify the usage we can define :ref:`profiles <xr_profile>` providing custom defaults for most of the keyword arguments. For more details see :ref:`xr_profile`.
 
 
 Examples
 +++++++++
 
-The following notebooks give details about how :py:meth:`~data.readers.grib.xarray.XarrayMixIn.to_xarray` can be used:
+The following notebooks give details about how :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` can be used:
 
 - :ref:`/examples/xarray_engine_overview.ipynb`
 - :ref:`/examples/xarray_engine_temporal.ipynb`
