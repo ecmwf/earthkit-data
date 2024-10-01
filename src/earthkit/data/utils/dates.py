@@ -125,6 +125,16 @@ def to_time(dt):
     if hasattr(dt, "dtype") and np.issubdtype(dt.dtype, np.datetime64):
         return numpy_datetime_to_datetime(dt).time()
 
+    if hasattr(dt, "dtype") and np.issubdtype(dt.dtype, np.timedelta64):
+        dt = numpy_timedelta_to_timedelta(dt)
+
+    if isinstance(dt, datetime.timedelta):
+        return datetime.time(
+            hour=int(dt.total_seconds()) // 3600,
+            minute=int(dt.total_seconds()) // 60 % 60,
+            second=int(dt.total_seconds()) % 60,
+        )
+
     raise ValueError(f"Failed to convert time={dt} of type={type(dt)} to datetime.time")
 
 
@@ -137,6 +147,9 @@ def to_time_list(times):
 def to_timedelta(td):
     if isinstance(td, int):
         return datetime.timedelta(hours=td)
+
+    if isinstance(td, datetime.time):
+        return datetime.timedelta(hours=td.hour, minutes=td.minute, seconds=td.second)
 
     # eccodes step format
     # TODO: make it work for all the ecCodes step formats
@@ -153,10 +166,10 @@ def to_timedelta(td):
     if isinstance(td, datetime.timedelta):
         return td
 
-    if isinstance(td, np.timedelta64):
+    if np.issubdtype(td, np.timedelta64):
         return numpy_timedelta_to_timedelta(td)
 
-    raise ValueError("Failed to convert td={td} type={type(td) to timedelta")
+    raise ValueError(f"Failed to convert td={td} type={type(td)} to timedelta")
 
 
 def numpy_timedelta_to_timedelta(td):
@@ -169,6 +182,25 @@ def numpy_datetime_to_datetime(dt):
     return datetime.datetime.fromtimestamp(int(dt), datetime.timezone.utc).replace(tzinfo=None)
 
 
+def timedeltas_to_int(td):
+    def _gcd(td):
+        if td.total_seconds() % 3600 == 0:
+            return datetime.timedelta(hours=1)
+        if td.total_seconds() % 60 == 0:
+            return datetime.timedelta(minutes=1)
+        if td.microseconds == 0:
+            return datetime.timedelta(seconds=1)
+        else:
+            return td.resolution
+
+    if not isinstance(td, (list, tuple)):
+        td = [td]
+
+    resolution = min([_gcd(x) for x in td])
+    resolution_secs = int(resolution.total_seconds())
+    return [int(x.total_seconds() / resolution_secs) for x in td], resolution
+
+
 def date_to_grib(d):
     try:
         d = to_datetime(d)
@@ -179,6 +211,8 @@ def date_to_grib(d):
 
 
 def time_to_grib(t):
+    t = to_time(t)
+
     if isinstance(t, datetime.time):
         return t.hour * 100 + t.minute
     try:

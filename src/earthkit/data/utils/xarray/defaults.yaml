@@ -26,7 +26,8 @@ rename_attrs:
 
 add_valid_time_coord: false
 add_geo_coords: true
-decode_time: true
+decode_times: true
+decode_timedelta: None
 
 # values
 flatten_values: false

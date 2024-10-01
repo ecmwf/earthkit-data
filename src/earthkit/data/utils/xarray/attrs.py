@@ -97,8 +97,7 @@ class UniqueAttrBuilder(AttrsBuilder):
         attrs = defaultdict(set)
 
         for var_obj in t_vars.values():
-            var_obj.load_attrs(self.attrs.attrs, strict=self.profile.strict)
-            attrs.update(var_obj.attrs)
+            attrs.update(var_obj.load_attrs(self.attrs.attrs, strict=self.profile.strict))
 
         global_attrs = defaultdict(list)
         for k, v in attrs.items():

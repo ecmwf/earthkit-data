@@ -143,7 +143,8 @@ class Profile:
         )
 
         # generic
-        self.decode_time = kwargs.pop("decode_time")
+        self.decode_times = kwargs.pop("decode_times")
+        self.decode_timedelta = kwargs.pop("decode_timedelta")
         self.strict = kwargs.pop("strict")
         self.errors = kwargs.pop("errors")
 
@@ -221,6 +222,9 @@ class Profile:
         for k, v in opt.items():
             if k in PROFILE_CONF.defaults:
                 any(_check_type(k, v, t) for t in [dict, list, bool])
+
+        if opt["decode_timedelta"] is None:
+            opt["decode_timdelta"] = opt["decode_times"]
 
         return cls(*args, **opt)
 

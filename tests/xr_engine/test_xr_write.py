@@ -22,8 +22,8 @@ from earthkit.data.testing import earthkit_remote_test_data_file
     [
         {"profile": "mars", "time_dim_mode": "raw"},
         {"profile": "mars", "time_dim_mode": "forecast"},
-        {"profile": "mars", "time_dim_mode": "raw", "decode_time": False},
-        {"profile": "mars", "time_dim_mode": "forecast", "decode_time": False},
+        {"profile": "mars", "time_dim_mode": "raw", "decode_times": False, "decode_timedelta": False},
+        {"profile": "mars", "time_dim_mode": "forecast", "decode_times": False, "decode_timedelta": False},
     ],
 )
 def test_xr_write_1(kwargs):
@@ -103,7 +103,7 @@ def test_xr_write_1(kwargs):
     "kwargs",
     [
         {"profile": "mars", "time_dim_mode": "valid_time"},
-        {"profile": "mars", "time_dim_mode": "valid_time", "decode_time": False},
+        {"profile": "mars", "time_dim_mode": "valid_time", "decode_times": False, "decode_timedelta": False},
     ],
 )
 def test_xr_write_2(kwargs):

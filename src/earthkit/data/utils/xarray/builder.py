@@ -20,22 +20,22 @@ LOG = logging.getLogger(__name__)
 
 
 class VariableBuilder:
-    def __init__(self, var_dims, data, extra_attr_keys, tensor):
+    def __init__(self, var_dims, data, local_attr_keys, tensor):
         self.var_dims = var_dims
         self.data = data
-        self.attrs = {}
-        self.extra_attr_keys = ensure_iterable(extra_attr_keys)
+        self._attrs = {}
+        self.local_keys = ensure_iterable(local_attr_keys)
         self.tensor = tensor
 
     def build(self):
-        self.attrs["_earthkit"] = (
+        self._attrs["_earthkit"] = (
             "message",
             self.tensor.source[0].metadata().override()._handle.get_buffer(),
         )
-        return xarray.Variable(self.var_dims, self.data, attrs=self.attrs)
+        return xarray.Variable(self.var_dims, self.data, attrs=self._attrs)
 
     def load_attrs(self, keys, strict=True):
-        keys = keys + self.extra_attr_keys
+        keys = keys + self.local_keys
         attr_keys = []
         attrs = {}
         ns_keys = []
@@ -62,13 +62,20 @@ class VariableBuilder:
             for k, v in r.items():
                 attrs[k] = [v]
 
-        self.attrs = attrs
+        self._attrs = attrs
+
+        return {k: v for k, v in self._attrs.items() if k not in self.local_keys}
 
     def adjust_attrs(self, drop_keys=None, rename=None):
         drop_keys = ensure_iterable(drop_keys)
-        self.attrs = {k: v[0] for k, v in self.attrs.items() if k not in drop_keys and len(v) == 1}
+        drop_keys = [k for k in drop_keys if k not in self.local_keys]
+        self._attrs = {k: v[0] for k, v in self._attrs.items() if k not in drop_keys and len(v) == 1}
         if callable(rename):
-            self.attrs = rename(self.attrs)
+            self._attrs = rename(self._attrs)
+
+    @property
+    def attrs(self):
+        return self._attrs
 
 
 class TensorBackendArray(xarray.backends.common.BackendArray):
@@ -313,6 +320,7 @@ class TensorBackendBuilder:
                         f"Dimension '{d.name}' of variable '{name}' has multiple values={vals[d.key]}"
                     )
                 elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
+                    print("extra_tensor_attrs", d.key)
                     extra_tensor_attrs.append(d.key)
                 elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
                     tensor_dims.append(d)

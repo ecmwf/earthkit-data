@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import logging
 
 from .dim import DATE_KEYS
@@ -81,33 +82,61 @@ class DateTimeCoord(Coord):
 
 class DateCoord(Coord):
     def convert(self, profile):
-        if profile.decode_time:
+        if profile.decode_times:
             return Coord._to_datetime_list(self.vals)
         return super().convert(profile)
 
 
 class TimeCoord(Coord):
-    pass
-    # def convert(self, profile):
-    #     if profile.decode_time:
-    #         from earthkit.data.utils.dates import to_time_list
-
-    #         return to_time_list(self.vals)
-    #     return super().convert(profile)
-
-
-class StepCoord(Coord):
     def convert(self, profile):
-        if profile.decode_time:
+        if profile.decode_timedelta:
+            from earthkit.data.utils.dates import to_time
             from earthkit.data.utils.dates import to_timedelta
 
-            return [to_timedelta(x) for x in self.vals]
+            return [to_timedelta(to_time(x)) for x in self.vals]
         return super().convert(profile)
 
     def encoding(self, profile):
-        if profile.decode_time:
+        if profile.decode_timedelta:
             return ({"dtype": "timedelta64[s]"},)
         return {}
+
+
+class StepCoord(Coord):
+    resolution = None
+    RESOLUTION_UNITS = {
+        datetime.timedelta(hours=1): "hours",
+        datetime.timedelta(minutes=1): "minutes",
+        datetime.timedelta(seconds=1): "seconds",
+    }
+
+    def convert(self, profile):
+        from earthkit.data.utils.dates import to_timedelta
+
+        vals = [to_timedelta(x) for x in self.vals]
+
+        if profile.decode_timedelta:
+            return vals
+        else:
+            from earthkit.data.utils.dates import timedeltas_to_int
+
+            vals, self.resolution = timedeltas_to_int(vals)
+
+        return vals
+
+    def encoding(self, profile):
+        if profile.decode_timedelta:
+            return ({"dtype": "timedelta64[s]"},)
+        return {}
+
+    def attrs(self, name, profile):
+        attrs = super().attrs(name, profile)
+        if self.resolution:
+            if self.resolution in self.RESOLUTION_UNITS:
+                attrs["units"] = self.RESOLUTION_UNITS[self.resolution]
+            else:
+                raise ValueError(f"Unsupported step resolution {self.resolution}")
+        return attrs
 
 
 class LevelCoord(Coord):

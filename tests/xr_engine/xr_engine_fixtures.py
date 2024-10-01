@@ -50,10 +50,13 @@ def load_wrapped_fieldlist(d, profile, **kwargs):
     return WrappedFieldList(ds, keys=profile.index_keys, **kwargs)
 
 
-def compare_dims(ds, ref_coords, order_ref_var=None):
+def compare_dims(ds, ref_coords, order_ref_var=None, sizes=False):
     compare_dim_order(ds, ref_coords, order_ref_var=order_ref_var)
-    for k, v in ref_coords.items():
-        compare_coord(ds, k, v, mode="dim")
+    if not sizes:
+        for k, v in ref_coords.items():
+            compare_coord(ds, k, v, mode="dim")
+    else:
+        compare_dim_size(ds, ref_coords)
 
 
 def compare_coords(ds, ref_coords):
@@ -92,4 +95,14 @@ def compare_dim_order(ds, dims, order_ref_var):
     for d in ds[order_ref_var].dims:
         if d in dims:
             dim_order.append(d)
-    assert dim_order == list(dims.keys()), f"{dim_order=} != {list(dims.keys())}"
+
+    if isinstance(dims, dict):
+        assert dim_order == list(dims.keys()), f"{dim_order=} != {list(dims.keys())}"
+    else:
+        assert dim_order == dims, f"{dim_order=} != {dims}"
+
+
+def compare_dim_size(ds, dims):
+    for name, v in dims.items():
+        assert name in ds.sizes, f"{name=} not in {ds.sizes}"
+        assert ds.sizes[name] == v, f"{name=} {ds.sizes[name]} != {v}"

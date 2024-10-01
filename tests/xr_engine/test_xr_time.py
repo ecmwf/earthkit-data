@@ -28,19 +28,19 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
     "kwargs,dims",
     [
         (
-            {"time_dim_mode": "raw", "decode_time": False},
+            {"time_dim_mode": "raw", "decode_times": False, "decode_timedelta": False},
             {"date": [20240603, 20240604], "time": [0, 1200], "step": [0, 6]},
         ),
         (
             {"time_dim_mode": "raw"},
             {
                 "date": [np.datetime64("2024-06-03", "ns"), np.datetime64("2024-06-04", "ns")],
-                "time": [0, 1200],
+                "time": [np.timedelta64(0, "s"), np.timedelta64(43200, "s")],
                 "step": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
             },
         ),
         (
-            {"time_dim_mode": "forecast", "decode_time": False},
+            {"time_dim_mode": "forecast", "decode_times": False, "decode_timedelta": False},
             {
                 "forecast_reference_time": [
                     np.datetime64("2024-06-03T00", "ns"),
@@ -64,7 +64,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
             },
         ),
         (
-            {"time_dim_mode": "valid_time", "decode_time": False},
+            {"time_dim_mode": "valid_time", "decode_times": False, "decode_timedelta": False},
             {
                 "valid_time": [
                     np.datetime64("2024-06-03T00", "ns"),
@@ -79,7 +79,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
             },
         ),
         (
-            {"time_dim_mode": "valid_time", "decode_time": True},
+            {"time_dim_mode": "valid_time", "decode_times": True, "decode_timedelta": True},
             {
                 "valid_time": [
                     np.datetime64("2024-06-03T00", "ns"),
@@ -108,7 +108,8 @@ def test_xr_time_basic(kwargs, dims):
         (
             {
                 "dim_roles": {"date": "indexingDate", "time": "indexingTime", "step": "forecastMonth"},
-                "decode_time": False,
+                "decode_times": False,
+                "decode_timedelta": False,
             },
             {
                 "indexing_time": [
@@ -121,7 +122,8 @@ def test_xr_time_basic(kwargs, dims):
         (
             {
                 "dim_roles": {"forecast_reference_time": "indexing_time", "step": "forecastMonth"},
-                "decode_time": False,
+                "decode_times": False,
+                "decode_timedelta": False,
             },
             {
                 "indexing_time": [
@@ -148,7 +150,9 @@ def test_xr_valid_time_coord():
         "url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_regular_ll_small.grib")
     ).sel(date=20240603, time=[0, 1200])
 
-    ds = ds_ek.to_xarray(time_dim_mode="forecast", add_valid_time_coord=True, decode_time=False)
+    ds = ds_ek.to_xarray(
+        time_dim_mode="forecast", add_valid_time_coord=True, decode_times=False, decode_timedelta=False
+    )
 
     dims = {
         "forecast_reference_time": [

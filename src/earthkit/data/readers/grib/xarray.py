@@ -196,20 +196,28 @@ class XarrayMixIn:
                 ``ensure_dims``. Its default value (None) expands
                 to True unless the ``profile`` overwrites it.
             * add_valid_time_coord: bool, None
-                Add the `valid_time` coordinate containing np.datetime64 values to the
+                If True, add the `valid_time` coordinate containing np.datetime64 values to the
                 dataset. Only makes effect when ``time_dim_mode`` is not "valid_time". Its default
                 value (None) expands to False unless the ``profile`` overwrites it.
-            * decode_time: bool, None
-                Decode the datetime coordinates to datetime64 values, while step coordinates to timedelta64
-                values. Its default value (None) expands
-                to True unless the ``profile`` overwrites it.
+            * decode_times: bool, None
+                If True, decode date and datetime coordinates into datetime64 values. If False, leave
+                coordinates representing date-like GRIB keys (e.g. "date", "validityDate") encoded as
+                native int values. The default value (None) expands to True unless the ``profile``
+                overwrites it.
+            * decode_timedelta: bool, None
+                If True, decode coordinates representing time-like or duration-like GRIB keys
+                (e.g. "time", "validityTime", "step") into timedelta64 values. If False, leave time-like
+                coordinates encoded as native int values, while duration-like coordinates will be encoded
+                as int with the units attached to the coordinate as the "units" attribute.
+                If None (default), assume the same value of ``decode_times`` unless the ``profile``
+                overwrites it.
             * add_geo_coords: bool, None
                 Add geographic coordinates to the dataset when field values are represented by
                 a single "values" dimension. Its default value (None) expands
                 to True unless the ``profile`` overwrites it.
             * flatten_values: bool, None
-                Flatten the values per field resulting in a single dimension called
-                "values" representing a field. Otherwise the field shape is used to form
+                If True, flatten the values per field resulting in a single dimension called
+                "values" representing a field. If False, the field shape is used to form
                 the field dimensions. When the fields are defined on an unstructured grid (e.g.
                 reduced Gaussian) or are spectral (e.g. spherical harmonics) this option is
                 ignored and the field values are always represented by a single "values"
@@ -238,7 +246,7 @@ class XarrayMixIn:
             * remapping: dict, None
                 Define new metadata keys for indexing. Default is None.
             * strict: bool, None
-                Perform stricter checks on hypercube consistency. Its default value (None) expands
+                If True, perform stricter checks on hypercube consistency. Its default value (None) expands
                 to True unless the ``profile`` overwrites it.
             * dtype: str, numpy.dtype or None
                 Typecode or data-type of the array data.
