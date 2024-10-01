@@ -66,3 +66,25 @@ def test_xr_engine_grid(file, dims, coords, distinct_ll):
 
         assert np.allclose(a.latitude.values, lat)
         assert np.allclose(a.longitude.values, lon)
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "add_geo_coords",
+    [False, True],
+)
+def test_xr_engine_add_geo_coords(add_geo_coords):
+    ds = from_source(
+        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "grid", "reduced_gg_O32.grib1")
+    )
+
+    a = ds.to_xarray(add_geo_coords=add_geo_coords)
+
+    assert list(a.sizes.keys())[-1] == "values"
+
+    if add_geo_coords:
+        assert "latitude" in a.coords
+        assert "longitude" in a.coords
+    else:
+        assert "latitude" not in a.coords
+        assert "longitude" not in a.coords

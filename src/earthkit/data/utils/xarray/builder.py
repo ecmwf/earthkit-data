@@ -28,7 +28,7 @@ class VariableBuilder:
         self.tensor = tensor
 
     def build(self):
-        self.attrs["_metadata"] = (
+        self.attrs["_earthkit"] = (
             "message",
             self.tensor.source[0].metadata().override()._handle.get_buffer(),
         )
@@ -158,8 +158,6 @@ class TensorBackendBuilder:
         self.ds = ds
         self.profile = profile
         self.dims = dims
-        # print("Builder, dims=", dims)
-        # self.common_metadata = common_metadata
 
         self.flatten_values = profile.flatten_values
         self.dtype = profile.dtype

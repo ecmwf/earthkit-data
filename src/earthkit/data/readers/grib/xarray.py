@@ -216,7 +216,7 @@ class XarrayMixIn:
                 dimension.  Its default value (None) expands
                 to False unless the ``profile`` overwrites it.
             * attrs_mode: str, None
-                Define how attributes are generated. Default is "fixes". The possible values are:
+                Define how attributes are generated. Default is "fixed". The possible values are:
 
                 - "fixed": Use the attributes defined in ``variable_attrs`` as variables
                 attributes and ``global_attrs`` as global attributes.

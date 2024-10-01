@@ -189,7 +189,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             dimension.  Its default value (None) expands
             to False unless the ``profile`` overwrites it.
         attrs_mode: str, None
-            Define how attributes are generated. Default is "fixes". The possible values are:
+            Define how attributes are generated. Default is "fixed". The possible values are:
 
             - "fixed": Use the attributes defined in ``variable_attrs`` as variables
               attributes and ``global_attrs`` as global attributes.
@@ -301,7 +301,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
     @property
     def metadata(self):
-        md = self._obj.attrs.get("_metadata", tuple())
+        md = self._obj.attrs.get("_earthkit", tuple())
         if len(md) == 2:
             name, data = md
             if name == "message":
@@ -314,7 +314,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         raise ValueError(
             (
                 "Could not generate earthkit metadata from xarray object."
-                "Attribute '_metadata' is missing or contains incorrect data."
+                "Attribute '_earthkit' is missing or contains incorrect data."
             )
         )
 
