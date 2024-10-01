@@ -139,6 +139,11 @@ class GribFieldInMemory(GribField):
     def to_fieldlist(fields):
         return GribFieldListInMemory.from_fields(fields)
 
+    @staticmethod
+    def from_buffer(buf):
+        handle = eccodes.codes_new_from_message(buf)
+        return GribFieldInMemory(GribCodesHandle(handle, None, None), None)
+
 
 class GribFieldListInMemory(GribFieldList, Reader):
     """Represent a GRIB field list in memory"""
@@ -189,3 +194,14 @@ class GribFieldListInMemory(GribFieldList, Reader):
         from itertools import chain
 
         return GribFieldListInMemory.from_fields(list(chain(*[f for f in readers])))
+
+    def __getstate__(self):
+        self._load()
+        r = {"messages": [f.message() for f in self]}
+        return r
+
+    def __setstate__(self, state):
+        fields = [GribFieldInMemory.from_buffer(m) for m in state["messages"]]
+        self.__init__(None, None)
+        self._fields = fields
+        self._loaded = True

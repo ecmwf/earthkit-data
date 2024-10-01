@@ -213,11 +213,34 @@ class GribMaskFieldList(GribFieldList, MaskIndex):
         MaskIndex.__init__(self, *args, **kwargs)
         FieldList._init_from_mask(self, self)
 
+    def __getstate__(self):
+        r = {}
+        r["mask_index"] = self._index
+        r["mask_indices"] = self._indices
+        return r
+
+    def __setstate__(self, state):
+        _index = state["mask_index"]
+        _indices = state["mask_indices"]
+        self.__init__(_index, _indices)
+
 
 class GribMultiFieldList(GribFieldList, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
         FieldList._init_from_multi(self, self)
+
+    def __getstate__(self):
+        r = {}
+        r["multi_indexes"] = self._indexes
+        r["kwargs"] = self._kwargs
+        return r
+
+    def __setstate__(self, state):
+        self.__init__(
+            state["multi_indexes"],
+            **state["kwargs"],
+        )
 
 
 class GribFieldManager:
