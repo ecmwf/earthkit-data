@@ -16,7 +16,7 @@ We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~data.
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> ds_fl = ekd.from_source("sample", "pl_regular_ll_small.grib")
+    >>> ds_fl = ekd.from_source("sample", "pl.grib")
     >>> ds_xr = ds_fl.to_xarray()
     >>> ds_xr
     <xarray.Dataset> Size: 176kB
@@ -42,7 +42,7 @@ We can also use the Xarray engine to read GRIB data directly with :py:func:`xarr
 .. code-block:: python
 
     >>> import xarray as xr
-    >>> ds_xr = xr.open_dataset("pl_regular_ll_small.grib", engine="earthkit")
+    >>> ds_xr = xr.open_dataset("pl.grib", engine="earthkit")
     >>> ds_xr
     <xarray.Dataset> Size: 176kB
     ...
@@ -61,6 +61,7 @@ The following notebooks give details about how :py:meth:`~data.readers.grib.inde
 
 - :ref:`/examples/xarray_engine_overview.ipynb`
 - :ref:`/examples/xarray_engine_temporal.ipynb`
+- :ref:`/examples/xarray_engine_level.ipynb`
 - :ref:`/examples/xarray_engine_field_dims.ipynb`
 - :ref:`/examples/xarray_engine_split.ipynb`
 
