@@ -45,11 +45,27 @@ def test_xr_engine_basic(file):
 
 
 @pytest.mark.cache
-def test_xr_engine_detailed_check():
+@pytest.mark.parametrize("api", ["earthkit", "xr"])
+def test_xr_engine_detailed_check(api):
     ds_ek = from_source(
         "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_regular_ll.grib")
     )
 
+    if api == "earthkit":
+        ds = ds_ek.to_xarray(
+            time_dim_mode="raw", decode_times=False, decode_timedelta=False, add_valid_time_coord=False
+        )
+    else:
+        import xarray as xr
+
+        ds = xr.open_dataset(
+            ds_ek.path,
+            engine="earthkit",
+            time_dim_mode="raw",
+            decode_times=False,
+            decode_timedelta=False,
+            add_valid_time_coord=False,
+        )
     ds = ds_ek.to_xarray(
         time_dim_mode="raw", decode_times=False, decode_timedelta=False, add_valid_time_coord=False
     )
