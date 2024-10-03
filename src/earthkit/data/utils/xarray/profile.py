@@ -224,7 +224,7 @@ class Profile:
                 any(_check_type(k, v, t) for t in [dict, list, bool])
 
         if opt["decode_timedelta"] is None:
-            opt["decode_timdelta"] = opt["decode_times"]
+            opt["decode_timedelta"] = opt["decode_times"]
 
         return cls(*args, **opt)
 
