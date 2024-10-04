@@ -6,7 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-
 import inspect
 import json
 import re
@@ -150,9 +149,20 @@ def load_json_or_yaml(path):
 def ensure_iterable(obj):
     import collections.abc
 
+    if obj is None:
+        return []
     if isinstance(obj, str) or not isinstance(obj, collections.abc.Iterable):
         return [obj]
     return obj
+
+
+def ensure_dict(obj):
+    if obj is None:
+        return dict()
+    else:
+        if not isinstance(obj, dict):
+            raise ValueError(f"Expected a dict, got {type(obj)}")
+        return obj
 
 
 def is_module_loaded(module_name):

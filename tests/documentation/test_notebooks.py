@@ -35,6 +35,8 @@ SKIP = [
     "demo_source_plugin.ipynb",
     "ecmwf_open_data.ipynb",
     "shapefile.ipynb",
+    "grib_to_xarray.ipynb",
+    "xarray_engine.ipynb",
     "netcdf_opendap.ipynb",
 ]
 

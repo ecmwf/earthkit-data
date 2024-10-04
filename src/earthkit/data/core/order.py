@@ -25,7 +25,7 @@ class Remapping(dict):
                 v = re.split(r"\{([^}]*)\}", v)
             self.lists[k] = v
 
-    def __call__(self, func):
+    def __call__(self, func, joiner=None):
         if not self:
             return func
 
@@ -39,7 +39,10 @@ class Remapping(dict):
             def join(self, args):
                 return "".join(str(x) for x in args)
 
-        joiner = CustomJoiner()
+        if joiner is None:
+            joiner = CustomJoiner()
+        else:
+            joiner = joiner(func)
 
         def wrapped(name, **kwargs):
             return self.substitute(name, joiner, **kwargs)
@@ -63,6 +66,15 @@ class Remapping(dict):
                     lst.append(joiner.format_string(bit))
             return joiner.join(lst)
         return joiner.format_name(name, **kwargs)
+
+    def keys(self, name):
+        if name in self.lists:
+            if not callable(self.lists[name]):
+                lst = []
+                for i, bit in enumerate(self.lists[name]):
+                    if i % 2 == 1:
+                        lst.append(bit)
+                return lst
 
     def as_dict(self):
         return dict(self)

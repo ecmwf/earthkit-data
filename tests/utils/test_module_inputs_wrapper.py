@@ -71,7 +71,7 @@ def test_transform_function_inputs_reader_to_xarray_typesetting():
     ek_reader_result = WRAPPED_XR_ONES_LIKE_TYPE_SETTING(EK_GRIB_READER)
     # Will return a dataarray because that is first value in type-set Union
     assert isinstance(ek_reader_result, xr.DataArray)
-    assert ek_reader_result.equals(xr.ones_like(EK_GRIB_READER.to_xarray().t2m))
+    assert ek_reader_result.equals(xr.ones_like(EK_GRIB_READER.to_xarray()["2t"]))
 
 
 def test_transform_module_inputs_reader_to_xarray():
@@ -80,7 +80,7 @@ def test_transform_module_inputs_reader_to_xarray():
     ek_reader_result = WRAPPED_DUMMY_MODULE.xarray_ones_like(EK_GRIB_READER)
     # Data array because type-setting of function has dataarray first
     assert isinstance(ek_reader_result, xr.DataArray)
-    assert ek_reader_result.equals(xr.ones_like(EK_GRIB_READER.to_xarray()).t2m)
+    assert ek_reader_result.equals(xr.ones_like(EK_GRIB_READER.to_xarray())["2t"])
 
 
 def test_transform_function_inputs_wrapper_to_xarray():

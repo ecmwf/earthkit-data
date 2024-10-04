@@ -48,6 +48,7 @@ GRIB
     grib_fdb_write.ipynb
     grib_to_netcdf.ipynb
 
+
 NetCDF
 ++++++
 
@@ -115,6 +116,24 @@ Other inputs
 
     from_object.ipynb
     pandas.ipynb
+
+
+.. _examples_xr_engine:
+
+Xarray engine
++++++++++++++
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    xarray_engine_overview.ipynb
+    xarray_engine_temporal.ipynb
+    xarray_engine_level.ipynb
+    xarray_engine_variable_key.ipynb
+    xarray_engine_field_dims.ipynb
+    xarray_engine_to_grib.ipynb
+    xarray_engine_split.ipynb
 
 
 Miscellaneous

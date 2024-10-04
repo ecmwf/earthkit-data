@@ -160,7 +160,7 @@ class GribFieldListInMemory(GribFieldList, Reader):
     def __init__(self, source, reader, *args, **kwargs):
         """The reader must support __next__."""
         if source is not None:
-            Reader.__init__(self, source, None)
+            Reader.__init__(self, source, "")
         GribFieldList.__init__(self, *args, **kwargs)
 
         self._reader = reader

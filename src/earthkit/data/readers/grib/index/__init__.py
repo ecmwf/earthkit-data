@@ -26,7 +26,8 @@ from earthkit.data.readers.grib.codes import GribField
 from earthkit.data.readers.grib.pandas import PandasMixIn
 from earthkit.data.readers.grib.xarray import XarrayMixIn
 from earthkit.data.utils.availability import Availability
-from earthkit.data.utils.progbar import progress_bar
+
+# from earthkit.data.utils.progbar import progress_bar
 
 LOG = logging.getLogger(__name__)
 
@@ -129,6 +130,8 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
         return GribMultiFieldList(sources)
 
     def _custom_availability(self, ignore_keys=None, filter_keys=lambda k: True):
+        from earthkit.data.utils.progbar import progress_bar
+
         def dicts():
             for i in progress_bar(iterable=range(len(self)), desc="Building availability"):
                 dic = self.get_metadata(i)

@@ -51,8 +51,16 @@ def test_remapping_repeated():
 @pytest.mark.parametrize(
     "remapping,patch,expected_values",
     [
-        ({}, {"type": {"cf": "pf"}, "number": 12, "name": None}, {"type": "pf", "number": 12, "name": None}),
-        ({"type": "{type}{number}"}, {"type": {"cf0": "x"}}, {"type": "x", "number": 0, "name": "t2m"}),
+        (
+            {},
+            {"type": {"cf": "pf"}, "number": 12, "name": None},
+            {"type": "pf", "number": 12, "name": None},
+        ),
+        (
+            {"type": "{type}{number}"},
+            {"type": {"cf0": "x"}},
+            {"type": "x", "number": 0, "name": "t2m"},
+        ),
         ({}, {"type": lambda x: "x"}, {"type": "x", "number": 0, "name": "t2m"}),
         ({}, {"type": True}, {"type": True, "number": 0, "name": "t2m"}),
         (None, {"type": True}, {"type": True, "number": 0, "name": "t2m"}),

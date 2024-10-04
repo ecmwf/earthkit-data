@@ -236,6 +236,7 @@ class UserMetadata(Metadata):
             "base_datetime": "base_datetime",
             "valid_datetime": "valid_datetime",
             "step_timedelta": "step_timedelta",
+            "param_level": "param_level",
         },
         aliases=[
             ("dataDate", "date"),
@@ -247,7 +248,7 @@ class UserMetadata(Metadata):
         ],
     )
 
-    LS_KEYS = ["param", "level", "base_datetime", "valid_datetime", "step", "number", set]
+    LS_KEYS = ["param", "level", "base_datetime", "valid_datetime", "step", "number"]
 
     def __init__(self, d, values=None):
         self._data = d
@@ -328,6 +329,9 @@ class UserMetadata(Metadata):
             if time is not None:
                 return datetime_from_grib(date, time)
         return None
+
+    def param_level(self):
+        return f"{self.get('param')}{self.get('level', default='')}"
 
     def _get_one(self, keys):
         for k in keys:

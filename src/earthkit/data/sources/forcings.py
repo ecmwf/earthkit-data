@@ -41,6 +41,9 @@ class ForcingMetadata(RawMetadata):
     def valid_datetime(self):
         return datetime.datetime.fromisoformat(self["valid_datetime"])
 
+    def step_timedelta(self):
+        return datetime.timedelta()
+
 
 class ForcingMaker:
     def __init__(self, field):

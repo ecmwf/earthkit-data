@@ -36,7 +36,7 @@ class ModuleOutput(Directive):
 
             module = import_module("..%s" % (name.replace("-", "_"),), package=__name__)
 
-            from earthkit.data.sphinxext import generate_settings_rst as module
+            # from earthkit.data.sphinxext import generate_settings_rst as module
 
             sys.stdout = StringIO()
             module.execute(*args)
