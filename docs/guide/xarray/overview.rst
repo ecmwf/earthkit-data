@@ -33,6 +33,10 @@ We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~data.
         t                        (forecast_reference_time, step, levelist, latitude, longitude) float64 88kB ...
      ...
 
+.. note::
+
+    By default, :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` uses the "earthkit" engine to generate Xarray. The previously used :xref:`cfgrib` engine is still available and can be invoked with the ``engine="cfgrib"`` option.
+
 
 Using open_dataset()
 ++++++++++++++++++++
@@ -59,12 +63,8 @@ Examples
 
 The following notebooks give details about how :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` can be used:
 
-- :ref:`/examples/xarray_engine_overview.ipynb`
-- :ref:`/examples/xarray_engine_temporal.ipynb`
-- :ref:`/examples/xarray_engine_level.ipynb`
-- :ref:`/examples/xarray_engine_variable_key.ipynb`
-- :ref:`/examples/xarray_engine_field_dims.ipynb`
-- :ref:`/examples/xarray_engine_split.ipynb`
+- :ref:`Xarray engine examples <examples_xr_engine>`
+
 
 Converting Xarray to GRIB
 -------------------------
@@ -99,4 +99,18 @@ It is also possible to directly write the Xarray into a GRIB file when calling :
 
 For further details see the following notebook:
 
-  - :ref:`/examples/xarray_engine_to_grib.ipynb`
+- :ref:`/examples/xarray_engine_to_grib.ipynb`
+
+
+Converting GRIB to NetCDF
+----------------------------
+
+To convert GRIB data to NetCDF first we need to convert GRIB to Xarray with :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` then generate NetCDF from it with :py:meth:`xarray.Dataset.to_netcdf`. Earthkit-data attaches some special attributes to the generated Xarray dataset that we do not want to write to NetCDF. In order to achieve this we need to call :py:meth:`xarray.Dataset.to_netcdf` on the ``earthkit`` accessor and not directly on the Xarray dataset.
+
+.. code-block:: python
+
+    ds_xr.earthkit.to_netcdf("_from_grib.nc")
+
+For further details see the following notebook:
+
+- :ref:`/examples/grib_to_netcdf.ipynb`

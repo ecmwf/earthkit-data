@@ -221,7 +221,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             Define new metadata keys for indexing. Default is None.
         strict: bool, None
             If True, perform stricter checks on hypercube consistency. Its default value (None) expands
-            to True unless the ``profile`` overwrites it.
+            to False unless the ``profile`` overwrites it.
         dtype: str, numpy.dtype or None
             Typecode or data-type of the array data.
         array_module: module
@@ -346,3 +346,22 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
         for var in self._obj.data_vars:
             for f in data_array_to_fields(self._obj[var]):
                 yield f
+
+    def _remove_earthkit_attrs(self):
+        """Create a copy of the dataset and remove earthkit attributes."""
+        ds = self._obj.copy()
+        for var in ds.data_vars:
+            if "_earthkit" in ds[var].attrs:
+                del ds[var].attrs["_earthkit"]
+
+        return ds
+
+    def to_netcdf(self, *args, **kwargs):
+        """Remove earthkit attributes before writing to netcdf."""
+        ds = self._obj
+        for var in self._obj.data_vars:
+            if "_earthkit" in self._obj[var].attrs:
+                ds = self._remove_earthkit_attrs()
+                break
+
+        return ds.to_netcdf(*args, **kwargs)

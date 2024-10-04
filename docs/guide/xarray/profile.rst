@@ -1,6 +1,6 @@
 .. _xr_profile:
 
-Xarray engine profiles
+Xarray engine: profiles
 -------------------------
 
 :py:meth:`~data.readers.grib.xarray.XarrayMixIn.to_xarray` has a large number of keyword arguments to control how the Xarray dataset is generated. To simplify the usage we can define **profiles** providing custom defaults for most of the keyword arguments. Profiles can be specified via the ``profile`` kwarg, which accepts the following values:

@@ -38,7 +38,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
     ],
 )
 def test_xr_level_dim(kwargs, dims):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_regular_ll.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
 
     ds = ds_ek.to_xarray(**kwargs)
     compare_dims(ds, dims, order_ref_var="t")
@@ -49,7 +49,7 @@ def test_xr_level_dim(kwargs, dims):
     "fname,kwargs,dims,levtype",
     [
         (
-            "pl_regular_ll.grib",
+            "pl.grib",
             {"profile": "grib", "level_dim_mode": "level"},
             {"level": [300, 400, 500, 700, 850, 1000]},
             "isobaricInhPa",
@@ -109,11 +109,17 @@ def test_xr_level_dim(kwargs, dims):
             "hybrid",
         ),
         (
-            "sfc_regular_ll.grib",
+            "sfc.grib1",
             {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
             {"level": [0]},
             "surface",
         ),
+        # (
+        #     "sfc.grib2",
+        #     {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
+        #     {"level": [0]},
+        #     "surface",
+        # ),
         (
             "mean_sea_level_reduced_ll.grib1",
             {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
@@ -127,7 +133,7 @@ def test_xr_level_dim(kwargs, dims):
             "generalVerticalLayer",
         ),
         (
-            "pl_regular_ll.grib",
+            "pl.grib",
             {"profile": "mars", "level_dim_mode": "level"},
             {"levelist": [300, 400, 500, 700, 850, 1000]},
             "pl",

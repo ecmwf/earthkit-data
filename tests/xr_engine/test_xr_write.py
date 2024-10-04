@@ -27,7 +27,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
     ],
 )
 def test_xr_write_1(kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_regular_ll.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
 
     ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy()
@@ -107,7 +107,7 @@ def test_xr_write_1(kwargs):
     ],
 )
 def test_xr_write_2(kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_regular_ll.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(date=20240603, time=0, param=["t", "r"], level=[500, 850])
 
     ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy()

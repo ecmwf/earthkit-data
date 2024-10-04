@@ -96,7 +96,6 @@ class TensorCore(metaclass=ABCMeta):
     _field_coords = None
     _field_dims = None
     _field_shape = None
-    # _coords = None
     _array = None
     _data = None
     flatten_values = None
@@ -174,9 +173,6 @@ class TensorCore(metaclass=ABCMeta):
 
     def sel(self, *args, remapping=None, **kwargs):
         kwargs = normalize_selection(*args, **kwargs)
-        # kwargs = self._normalize_kwargs_names(**kwargs)
-        # if not kwargs:
-        #     return self
 
         r = {}
         for k, v in kwargs.items():
@@ -235,11 +231,11 @@ class TensorCore(metaclass=ABCMeta):
                 if isinstance(idx, (int, slice)):
                     # print(f"{k=} {idx=} {self._user_coords[k]}")
                     v = self._user_coords[k][idx]
-                    if not isinstance(v, (list, np.ndarray)):
-                        v = [v]
+                    if not isinstance(v, (list, tuple, np.ndarray)):
+                        v = (v,)
                     r[k] = v
                 elif isinstance(idx, list):
-                    r[k] = [self._user_coords[k][i] for i in idx]
+                    r[k] = tuple([self._user_coords[k][i] for i in idx])
             else:
                 r[k] = self._user_coords[k]
         return r
@@ -265,10 +261,10 @@ class TensorCore(metaclass=ABCMeta):
         if shape != self._full_shape:
             raise ValueError(f"shape={self._full_shape} does not match shape deduced from coords={shape}")
 
-    def copy(self, data=None):
-        if data is None:
-            data = self.to_numpy().copy()
-        return ArrayTensor(data, self.user_coords, self.field_shape)
+    # def copy(self, data=None):
+    #     if data is None:
+    #         data = self.to_numpy().copy()
+    #     return ArrayTensor(data, self.user_coords, self.field_shape)
 
     @staticmethod
     def _coords_shape(coords):
@@ -288,6 +284,7 @@ class FieldListTensor(TensorCore):
         field_dims,
         flatten_values,
     ):
+        # print(f"FieldListTensor user_coords={user_coords}")
         # print(f"FieldListTensor field_coords={field_coords.keys()} {field_dims=}")
 
         self.source = source
@@ -308,19 +305,6 @@ class FieldListTensor(TensorCore):
 
     @classmethod
     def from_tensor(cls, owner, source, user_coords):
-        # # print(f"from_tensor {coords=}")
-        # user_shape = tuple(len(v) for _, v in user_coords.items())
-        # flatten_values = owner.flatten_values
-
-        # # field_shape = FieldListTensor._get_field_shape(source[0], flatten_values)
-        # user_shape = [x for x in shape[: -len(field_shape)]]
-        # if len(user_shape) == 1:
-        #     user_shape = (user_shape,)
-        # else:
-        #     user_shape = tuple(user_shape)
-
-        # # return cls(source, coords, user_shape, field_shape, flatten_values)
-
         return cls(
             source,
             user_coords,
@@ -337,7 +321,7 @@ class FieldListTensor(TensorCore):
         remapping=None,
         flatten_values=False,
         sort=True,
-        progress_bar=True,
+        progress_bar=False,
         user_dims_and_coords=None,
         field_dims_and_coords=None,
     ):
@@ -369,13 +353,9 @@ class FieldListTensor(TensorCore):
                     ds.unique_values(*names, remapping=remapping, progress_bar=progress_bar)
                 )
                 for k, v in user_coords.items():
-                    user_coords[k] = sorted(v)
+                    user_coords[k] = tuple(sorted(v))
         else:
             user_coords = CubeCoords()
-
-        # print(f"{self.user_coords=}")
-
-        # user_shape = tuple(len(v) for _, v in user_coords.items())
 
         # field properties
         if field_dims_and_coords is not None:
@@ -385,49 +365,6 @@ class FieldListTensor(TensorCore):
 
             field_dims, field_coords, _ = TensorGrid.build(source[0], flatten_values)
 
-        # first = source[0]
-
-        # # determine field shape
-        # field_shape = FieldListTensor._get_field_shape(first, flatten_values)
-        # real_field_shape = first.shape
-
-        # # shape = user_shape + field_shape
-
-        # if field_coords is None or not field_coords:
-        #     field_coords = FieldListTensor.make_geo_coords(source[0], field_shape)
-        # coords.update(geo_coords)
-
-        # from earthkit.data.utils.diag import Diag
-
-        # diag = Diag("T")
-        # if len(field_shape) == 1:
-        #     coords["values"] = np.linspace(0, field_shape[0], field_shape[0], dtype=int)
-
-        # if len(field_shape) == 2:
-        #     if geo_coords is not None:
-        #         for k, v in geo_coords.items():
-        #             coords[k] = v
-        #     else:
-        #         f = source[0]
-        #         diag(" LATLON")
-        #         geo = f.metadata().geography
-        #         lat = geo.distinct_latitudes()
-        #         lon = geo.distinct_longitudes()
-        #         diag(" LATLON")
-        #         if len(lat) == field_shape[0] and len(lon) == field_shape[1]:
-        #             coords["latitude"] = lat
-        #             coords["longitude"] = lon
-        #         else:
-        #             coords["x"] = np.linspace(
-        #                 0, field_shape[0], field_shape[0], dtype=int
-        #             )
-        #             coords["y"] = np.linspace(
-        #                 0, field_shape[1], field_shape[1], dtype=int
-        #             )
-
-        #         if hasattr(f, "unload"):
-        #             f.unload()
-        # diag(" LATLON")
         return cls(source, user_coords, field_coords, field_dims, flatten_values)
 
     @flatten_arg
@@ -549,18 +486,18 @@ class FieldListTensor(TensorCore):
         return None, None
 
 
-class ArrayTensor(TensorCore):
-    def __init__(self, array, coords, field_shape):
-        self._array = array
-        self._coords = coords
-        self._shape = self._array.shape
-        self._field_shape = field_shape
+# class ArrayTensor(TensorCore):
+#     def __init__(self, array, coords, field_shape):
+#         self._array = array
+#         self._coords = coords
+#         self._shape = self._array.shape
+#         self._field_shape = field_shape
 
-    def to_numpy(self, **kwargs):
-        return self._array
+#     def to_numpy(self, **kwargs):
+#         return self._array
 
-    def _subset(self, indexes):
-        coords = self._subset_coords(indexes)
-        # print(f"{indexes=}")
-        data = self._array[indexes]
-        return ArrayTensor(data, coords, self.field_shape)
+#     def _subset(self, indexes):
+#         coords = self._subset_coords(indexes)
+#         # print(f"{indexes=}")
+#         data = self._array[indexes]
+#         return ArrayTensor(data, coords, self.field_shape)

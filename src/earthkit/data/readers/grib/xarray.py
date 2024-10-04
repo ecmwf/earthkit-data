@@ -247,7 +247,7 @@ class XarrayMixIn:
                 Define new metadata keys for indexing. Default is None.
             * strict: bool, None
                 If True, perform stricter checks on hypercube consistency. Its default value (None) expands
-                to True unless the ``profile`` overwrites it.
+                to False unless the ``profile`` overwrites it.
             * dtype: str, numpy.dtype or None
                 Typecode or data-type of the array data.
             * array_module: module

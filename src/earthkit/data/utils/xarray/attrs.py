@@ -107,6 +107,12 @@ class UniqueAttrBuilder(AttrsBuilder):
         for var_obj in t_vars.values():
             var_obj.adjust_attrs(drop_keys=global_attrs.keys(), rename=rename)
 
+        for k in self.attrs.variable_attrs:
+            if k in global_attrs:
+                global_attrs.pop(k)
+
+        global_attrs = {k: v for k, v in global_attrs.items() if v is not None}
+
         return global_attrs
 
 

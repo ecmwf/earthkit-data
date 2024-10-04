@@ -63,7 +63,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
 )
 def test_xr_dims_as_attrs(kwargs, coords, dims, attrs):
     ds0 = from_source(
-        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_regular_ll_small.grib")
+        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_small.grib")
     )
 
     ds = ds0.to_xarray(**kwargs)

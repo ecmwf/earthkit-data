@@ -118,6 +118,8 @@ Other inputs
     pandas.ipynb
 
 
+.. _examples_xr_engine:
+
 Xarray engine
 +++++++++++++
 
@@ -129,7 +131,6 @@ Xarray engine
     xarray_engine_temporal.ipynb
     xarray_engine_level.ipynb
     xarray_engine_variable_key.ipynb
-    # grib_cube.ipynb
     xarray_engine_field_dims.ipynb
     xarray_engine_to_grib.ipynb
     xarray_engine_split.ipynb

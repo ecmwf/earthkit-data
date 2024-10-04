@@ -21,7 +21,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
 @pytest.mark.parametrize(
     "file",
     [
-        "pl_regular_ll.grib",
+        "pl.grib",
         # "era5-levels-members",
         # "fields_with_missing_values",
         # "lambert_grid",
@@ -47,9 +47,7 @@ def test_xr_engine_basic(file):
 @pytest.mark.cache
 @pytest.mark.parametrize("api", ["earthkit", "xr"])
 def test_xr_engine_detailed_check(api):
-    ds_ek = from_source(
-        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_regular_ll.grib")
-    )
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
 
     if api == "earthkit":
         ds = ds_ek.to_xarray(
@@ -237,9 +235,7 @@ def test_xr_engine_detailed_check(api):
 
 @pytest.mark.cache
 def test_xr_engine_detailed_flatten_check():
-    ds_ek = from_source(
-        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_regular_ll.grib")
-    )
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
 
     kwargs = {
         "xarray_open_dataset_kwargs": {
@@ -409,7 +405,7 @@ def test_xr_engine_detailed_flatten_check():
 
 
 def test_xr_engine_dtype():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_regular_ll.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
 
     ds = ds_ek.to_xarray(dtype=np.float32)
     assert ds["t"].values.dtype == np.float32

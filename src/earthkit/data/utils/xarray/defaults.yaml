@@ -35,7 +35,7 @@ dtype: float64
 array_module: numpy
 
 # other
-strict: true
+strict: false
 errors: raise
 
 dim_roles:

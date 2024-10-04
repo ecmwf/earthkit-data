@@ -170,18 +170,14 @@ class TensorBackendBuilder:
         self.dtype = profile.dtype
         self.array_module = profile.array_module
 
-        # coords within the tensor describing the non-field dimensions.
+        # these coords inside the the tensor are called user_coords
         # Note: in the tensor the corresponding dims are called user_dims
         self.tensor_coords = {}
 
         # coords describing the field dimensions
         self.field_coords = {}
 
-        from .grid import TensorGrid
-
-        self.grid = grid
-        if self.grid is None:
-            self.grid = TensorGrid(self.ds[0], self.flatten_values)
+        self.grid = self._ensure_grid(grid)
 
         if self.profile.add_geo_coords:
             self.field_coords = self._make_field_coords()
@@ -190,6 +186,13 @@ class TensorBackendBuilder:
         r = {k: v.to_xr_var(self.profile) for k, v in self.tensor_coords.items()}
         r.update(self.field_coords)
         return r
+
+    def _ensure_grid(self, grid):
+        if grid is None:
+            from .grid import TensorGrid
+
+            grid = TensorGrid(self.ds[0], self.flatten_values)
+        return grid
 
     def _make_field_coords(self):
         r = {}

@@ -96,7 +96,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
     ],
 )
 def test_xr_time_basic(kwargs, dims):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_regular_ll.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
 
     ds = ds_ek.to_xarray(**kwargs)
     compare_dims(ds, dims, order_ref_var="t")
@@ -146,9 +146,9 @@ def test_xr_time_seasonal(kwargs, dims):
 
 
 def test_xr_valid_time_coord():
-    ds_ek = from_source(
-        "url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_regular_ll_small.grib")
-    ).sel(date=20240603, time=[0, 1200])
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_small.grib")).sel(
+        date=20240603, time=[0, 1200]
+    )
 
     ds = ds_ek.to_xarray(
         time_dim_mode="forecast", add_valid_time_coord=True, decode_times=False, decode_timedelta=False

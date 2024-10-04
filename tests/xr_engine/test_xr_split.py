@@ -39,9 +39,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
     ],
 )
 def test_xr_split(kwargs, num, variables, dim_keys, split_values):
-    ds_ek = from_source(
-        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_regular_ll.grib")
-    )
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
 
     dim_keys = dim_keys + ["latitude", "longitude"]
     ds_lst = ds_ek.to_xarray(**kwargs)
