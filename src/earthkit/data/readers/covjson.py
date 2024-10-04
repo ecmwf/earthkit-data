@@ -16,11 +16,11 @@ from earthkit.data.readers import Reader
 class XarrayMixIn:
     def to_xarray(self, **kwargs):
         try:
-            from eccovjson.api import Eccovjson
+            from covjsonkit.api import Covjsonkit
         except ImportError:
-            raise ImportError("covjason handling requires 'eccovjson' to be installed")
+            raise ImportError("covjson handling requires 'covjsonkit' to be installed")
 
-        decoder = Eccovjson().decode(self._json())
+        decoder = Covjsonkit().decode(self._json())
         return decoder.to_xarray()
 
 

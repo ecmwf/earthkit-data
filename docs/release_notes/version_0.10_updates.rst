@@ -2,6 +2,15 @@ Version 0.10 Updates
 /////////////////////////
 
 
+Version 0.10.5
+===============
+
+Changes
++++++++
+
+- Use covjsonkit package instead of eccovjson (:pr:`445`).
+
+
 Version 0.10.4
 ===============
 
@@ -9,7 +18,6 @@ Fixes
 ++++++
 
 - Fixed issue when pandas was unnecessarily imported (:pr:`468`).
-
 
 
 Version 0.10.3
