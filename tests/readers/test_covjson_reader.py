@@ -11,7 +11,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_COVJSONKIT
+from earthkit.data.testing import NO_ECCOVJSON
 from earthkit.data.testing import earthkit_test_data_file
 
 
@@ -20,7 +20,7 @@ def test_covjson():
     assert ds
 
 
-@pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
+@pytest.mark.skipif(NO_ECCOVJSON, reason="no eccovjson available")
 def test_covjson_to_xarray():
     ds = from_source("file", earthkit_test_data_file("time_series.covjson"))
     assert ds
@@ -28,7 +28,7 @@ def test_covjson_to_xarray():
     assert len(a.data_vars) == 1
 
 
-@pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
+@pytest.mark.skipif(NO_ECCOVJSON, reason="no eccovjson available")
 def test_covjson_memory():
     with open(earthkit_test_data_file("time_series.covjson"), "r") as f:
         d = f.read().encode()
@@ -39,7 +39,7 @@ def test_covjson_memory():
     assert len(a.data_vars) == 1
 
 
-@pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
+@pytest.mark.skipif(NO_ECCOVJSON, reason="no eccovjson available")
 def test_covjson_stream():
     stream = open(earthkit_test_data_file("time_series.covjson"), "rb")
 
@@ -54,7 +54,7 @@ def test_covjson_stream():
         next(it)
 
 
-@pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
+@pytest.mark.skipif(NO_ECCOVJSON, reason="no eccovjson available")
 def test_covjson_stream_memory():
     stream = open(earthkit_test_data_file("time_series.covjson"), "rb")
 
