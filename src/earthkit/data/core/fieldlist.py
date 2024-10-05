@@ -20,7 +20,7 @@ from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import detect_out_filename
 from earthkit.data.utils.array import ensure_backend
 from earthkit.data.utils.array import numpy_backend
-from earthkit.data.utils.metadata import metadata_argument
+from earthkit.data.utils.metadata.args import metadata_argument
 
 
 class FieldListIndices:
@@ -511,6 +511,21 @@ class Field(Base):
         """
         return self._metadata.datetime()
 
+    def valid_datetime(self):
+        self._not_implemented()
+
+    def base_datetime(self):
+        self._not_implemented()
+
+    def h_datetime(self):
+        self._not_implemented()
+
+    def an_datetime(self):
+        self._not_implemented()
+
+    def indexing_datetime(self):
+        self._not_implemented()
+
     def metadata(self, *keys, astype=None, **kwargs):
         r"""Return metadata values from the field.
 
@@ -719,12 +734,17 @@ class Field(Base):
             self._metadata.get("number", None),
         )
 
-    @abstractmethod
-    def _attributes(self, names):
+    def _attributes(self, names, remapping=None, default=None):
         result = {}
+        metadata = self._metadata.get
+        if remapping is not None:
+            metadata = remapping(metadata)
+
         for name in names:
-            result[name] = self._metadata.get(name, None)
+            result[name] = metadata(name, default=default)
         return result
+
+        # return {name: metadata(name) for name in names}
 
 
 class FieldList(Index):
@@ -1434,6 +1454,11 @@ class FieldList(Index):
         """
         for s in self:
             s.write(f, **kwargs)
+
+    def to_tensor(self, *args, **kwargs):
+        from earthkit.data.indexing.tensor import FieldListTensor
+
+        return FieldListTensor.from_fieldlist(self, *args, **kwargs)
 
     def to_fieldlist(self, array_backend=None, **kwargs):
         r"""Convert to a new :class:`FieldList`.

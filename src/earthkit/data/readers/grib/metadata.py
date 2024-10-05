@@ -7,18 +7,19 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 import warnings
 from abc import abstractmethod
 from functools import cached_property
 
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
-from earthkit.data.decorators import cached_method
+from earthkit.data.core.metadata import MetadataAccessor
+from earthkit.data.core.metadata import WrappedMetadata
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
-from earthkit.data.utils.projections import Projection
+from earthkit.data.utils.dates import datetime_from_grib
+from earthkit.data.utils.dates import to_timedelta
 
 
 def missing_is_none(x):
@@ -29,6 +30,10 @@ class GribFieldGeography(Geography):
     def __init__(self, metadata):
         self.metadata = metadata
         self.check_rotated_support()
+
+    @cached_property
+    def spectral(self):
+        return self.metadata._handle.get("gridType", "") == "sh"
 
     def latitudes(self, dtype=None):
         r"""Return the latitudes of the field.
@@ -47,6 +52,12 @@ class GribFieldGeography(Geography):
         ndarray
         """
         return self.metadata._handle.get_longitudes(dtype=dtype)
+
+    def distinct_latitudes(self, dtype=None):
+        return self.metadata._handle.get("distinctLatitudes", dtype=dtype)
+
+    def distinct_longitudes(self, dtype=None):
+        return self.metadata._handle.get("distinctLongitudes", dtype=dtype)
 
     def x(self, dtype=None):
         r"""Return the x coordinates in the field's original CRS.
@@ -123,6 +134,8 @@ class GribFieldGeography(Geography):
         >>> ds.projection().to_proj_string()
         '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
         """
+        from earthkit.data.utils.projections import Projection
+
         return Projection.from_proj_string(self.metadata.get("projTargetString", None))
 
     def bounding_box(self):
@@ -156,7 +169,7 @@ class GribFieldGeography(Geography):
             assert x == y, (x, y)
             return x
 
-        if grid_type == "lambert":
+        if grid_type in ["lambert", "lambert_azimuthal_equal_area"]:
             x = self.metadata.get("DxInMetres")
             y = self.metadata.get("DyInMetres")
             assert x == y, (x, y)
@@ -290,15 +303,21 @@ class GribMetadata(Metadata):
 
     DATA_FORMAT = "grib"
 
+    CUSTOM_ACCESSOR = MetadataAccessor(
+        {
+            "valid_datetime": ["valid_datetime", "valid_time"],
+            "gridspec": ["grid_spec", "gridspec"],
+            "base_datetime": ["base_datetime", "forecast_reference_time", "base_time"],
+            "reference_datetime": "reference_datetime",
+            "indexing_datetime": ["indexing_time", "indexing_datetime"],
+            "step_timedelta": "step_timedelta",
+            "param_level": "param_level",
+        }
+    )
+
     __handle_type = None
 
-    @abstractmethod
-    def _handle(self):
-        pass
-
-    def __init__(self, shrunk=False, **kwargs):
-        self._geo = None
-        self._shrunk = shrunk
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     @staticmethod
@@ -312,19 +331,26 @@ class GribMetadata(Metadata):
             GribMetadata.__handle_type = GribCodesHandle
         return GribMetadata.__handle_type
 
-    def _len(self):
-        return sum(map(lambda i: 1, self._keys()))
+    @abstractmethod
+    def _handle(self):
+        pass
 
-    def _contains(self, key):
+    def __len__(self):
+        return sum(map(lambda i: 1, self.keys()))
+
+    def __contains__(self, key):
         return self._handle.__contains__(key)
 
-    def _keys(self):
+    def __iter__(self):
+        return self.keys()
+
+    def keys(self):
         return self._handle.keys()
 
-    def _items(self):
+    def items(self):
         return self._handle.items()
 
-    def _get(self, key, astype=None, default=None, raise_on_missing=False):
+    def _get(self, key, default=None, astype=None, raise_on_missing=False):
         def _key_name(key):
             if key == "param":
                 key = "shortName"
@@ -338,20 +364,24 @@ class GribMetadata(Metadata):
 
         key = _key_name(key)
 
-        # special case when  "shortName" is "~".
         v = self._handle.get(key, ktype=astype, **_kwargs)
+
+        # special case when  "shortName" is "~".
         if key == "shortName" and v == "~":
             v = self._handle.get("paramId", ktype=str, **_kwargs)
         return v
 
-    def _is_custom_key(self, key):
-        return key in self.CUSTOM_KEYS
+    def _copy_key(self, target_handle, key):
+        v_ori = self._handle.get(key, default=None)
+        v_new = target_handle.get(key, default=None)
+        if v_ori is not None and v_new is not None and v_ori != v_new:
+            target_handle.set_long(key, v_ori)
 
     def override(self, *args, headers_only_clone=True, **kwargs):
         d = dict(*args, **kwargs)
 
         new_value_size = None
-        extra = None
+        # extra = None
         gridspec = d.pop("gridspec", None)
         if gridspec is not None:
             from earthkit.data.readers.grib.gridspec import GridSpecConverter
@@ -362,22 +392,10 @@ class GribMetadata(Metadata):
 
         handle = self._handle.clone(headers_only=headers_only_clone)
 
-        if self._shrunk:
-            shrunk = True
-            extra = self.extra
-        elif headers_only_clone:
-            # whether headers_only=True works depends on the eccCodes version and the
-            # message properties. We check it by comparing the message lengths.
-            shrunk = handle.get_long("totalLength") < self._handle.get_long("totalLength")
-
-            # some keys, needed later, are not copied into the clone when
-            # headers_only=True. We store them as extra keys.
-            if shrunk:
-                extra = {"bitsPerValue": self._handle.get("bitsPerValue", default=0)}
-            else:
-                extra = None
-        else:
-            shrunk = False
+        # some keys, needed later, are not copied into the clone when
+        # headers_only=True. We store them as extra keys.
+        if "bitsPerValue" not in d:
+            self._copy_key(handle, "bitsPerValue")
 
         if d:
             handle.set_multiple(d)
@@ -390,7 +408,7 @@ class GribMetadata(Metadata):
             vals = np.zeros(new_value_size)
             handle.set_values(vals)
 
-        return StandAloneGribMetadata(handle, extra=extra, shrunk=shrunk)
+        return StandAloneGribMetadata(handle)
 
     def as_namespace(self, namespace=None):
         r"""Return all the keys/values from a namespace.
@@ -416,30 +434,38 @@ class GribMetadata(Metadata):
             namespace = None
         return self._handle.as_namespace(namespace)
 
-    @property
+    @cached_property
     def geography(self):
-        if self._geo is None:
-            self._geo = GribFieldGeography(self)
-        return self._geo
+        return GribFieldGeography(self)
 
-    def _base_datetime(self):
-        date = self.get("date", None)
-        time = self.get("time", None)
-        return self._build_datetime(date, time)
+    def base_datetime(self):
+        return self._datetime("dataDate", "dataTime")
 
-    def _valid_datetime(self):
-        date = self.get("validityDate", None)
-        time = self.get("validityTime", None)
-        return self._build_datetime(date, time)
+    def valid_datetime(self):
+        return self._datetime("validityDate", "validityTime")
 
-    def _build_datetime(self, date, time):
-        return datetime.datetime(
-            date // 10000,
-            date % 10000 // 100,
-            date % 100,
-            time // 100,
-            time % 100,
-        )
+    def reference_datetime(self):
+        return self._datetime("referenceDate", "referenceTime")
+
+    def indexing_datetime(self):
+        return self._datetime("indexingDate", "indexingTime")
+
+    def step_timedelta(self):
+        return to_timedelta(self.get("step", None))
+
+    def _datetime(self, date_key, time_key):
+        date = self.get(date_key, None)
+        if date is not None:
+            time = self.get(time_key, None)
+            if time is not None:
+                return datetime_from_grib(date, time)
+        return None
+
+    def param_level(self):
+        return f"{self.get('shortName')}{self.get('level', default='')}"
+
+    def namespaces(self):
+        return self.NAMESPACES
 
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
@@ -473,7 +499,12 @@ class GribMetadata(Metadata):
         """
         from earthkit.data.utils.summary import format_namespace_dump
 
-        namespace = self.NAMESPACES if namespace is all else [namespace]
+        if namespace is all:
+            namespace = self.namespaces()
+        else:
+            if isinstance(namespace, str):
+                namespace = [namespace]
+
         r = []
         for ns in namespace:
             v = self.as_namespace(ns)
@@ -538,7 +569,6 @@ class StandAloneGribMetadata(GribMetadata):
         if not isinstance(handle, self._handle_type()):
             raise TypeError(f"GribMetadata: expected handle type {self._handle_type()}, got {type(handle)}")
         self.__handle = handle
-        self._kwargs = dict(**kwargs)
         super().__init__(**kwargs)
 
     @property
@@ -548,9 +578,18 @@ class StandAloneGribMetadata(GribMetadata):
     def _hide_internal_keys(self):
         return RestrictedGribMetadata(self)
 
+    def __getstate__(self) -> dict:
+        ret = {}
+        ret["_handle"] = self._handle.get_buffer()
+        return ret
 
-# TODO: this is a temporary solution
-class RestrictedGribMetadata(StandAloneGribMetadata):
+    def __setstate__(self, state: dict):
+        from earthkit.data.readers.grib.memory import GribMessageMemoryReader
+
+        self.__handle = next(GribMessageMemoryReader(state.pop("_handle"))).handle
+
+
+class RestrictedGribMetadata(WrappedMetadata):
     """Hide internal keys and namespaces in GRIB metadata.
 
     Examples
@@ -586,24 +625,17 @@ class RestrictedGribMetadata(StandAloneGribMetadata):
         "referenceValueError",
         "unpackedError",
         "values",
+        # "numberOfPoints",
+        # "numberOfDataPoints",
+        "latLonValues",
     ]
     INTERNAL_NAMESPACES = ["statistics"]
 
     def __init__(self, md):
         assert isinstance(md, StandAloneGribMetadata)
-        super().__init__(md._handle, shrunk=md._shrunk, extra=md.extra)
+        super().__init__(md, hidden=self.INTERNAL_KEYS)
 
-    @cached_method
-    def _len(self):
-        if self.INTERNAL_KEYS:
-            # NOTE: argumentless super cannot be used in list comprehension
-            m = super()._contains
-            surplus = [1 for x in self.INTERNAL_KEYS if not m(x)]
-            return super()._len() + len(surplus)
-        else:
-            return super()._len()
-
-    def _is_internal(self, key):
+    def _is_hidden(self, key):
         ns, _, name = key.partition(".")
         if name == "":
             name = key
@@ -612,33 +644,7 @@ class RestrictedGribMetadata(StandAloneGribMetadata):
         if ns == self.EKD_NAMESPACE:
             return False
         else:
-            return name in self.INTERNAL_KEYS
-
-    def _contains(self, key):
-        if self.INTERNAL_KEYS:
-            return not self._is_internal(key) and super()._contains(key)
-        else:
-            return super()._contains(key)
-
-    def _keys(self):
-        if self.INTERNAL_KEYS:
-            r = []
-            for k in super()._keys():
-                if k not in self.INTERNAL_KEYS:
-                    r.append(k)
-            return r
-        else:
-            return super()._keys()
-
-    def _items(self):
-        if self.INTERNAL_KEYS:
-            r = {}
-            for k, v in super()._items():
-                if k not in self.INTERNAL_KEYS:
-                    r[k] = v
-            return r.items()
-        else:
-            return super()._items()
+            return name in self.hidden
 
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         ns, _, name = key.partition(".")
@@ -648,30 +654,42 @@ class RestrictedGribMetadata(StandAloneGribMetadata):
 
         if ns == self.EKD_NAMESPACE:
             key = name
-        else:
-            if name in self.INTERNAL_KEYS:
-                if raise_on_missing:
-                    raise KeyError(key)
-                else:
-                    return default
 
         return super().get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
 
     def namespaces(self):
         if self.INTERNAL_NAMESPACES:
-            return [x for x in super().namespaces() if x not in self.INTERNAL_NAMESPACES]
+            return [x for x in self.metadata.namespaces() if x not in self.INTERNAL_NAMESPACES]
         else:
-            return super().namespaces()
+            return self.metadata.namespaces()
 
     def as_namespace(self, namespace):
         if namespace in self.INTERNAL_NAMESPACES:
             return {}
 
-        r = super().as_namespace(namespace)
+        r = self.metadata.as_namespace(namespace)
         for k in list(r.keys()):
             if k in self.INTERNAL_KEYS:
                 del r[k]
         return r
 
+    def dump(self, namespace=all, **kwargs):
+        if namespace is all:
+            namespace = self.namespaces()
+        return self.metadata.dump(namespace=namespace, **kwargs)
+
+    def override(self, *args, **kwargs):
+        r = self.metadata.override(*args, **kwargs)
+        return RestrictedGribMetadata(r)
+
     def _hide_internal_keys(self):
         return self
+
+    def __getstate__(self) -> dict:
+        ret = {}
+        ret["metadata"] = self.metadata
+        return ret
+
+    def __setstate__(self, state: dict):
+        md = state.pop("metadata")
+        super().__init__(md, hidden=self.INTERNAL_KEYS)

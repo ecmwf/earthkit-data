@@ -26,7 +26,8 @@ from earthkit.data.readers.grib.codes import GribField
 from earthkit.data.readers.grib.pandas import PandasMixIn
 from earthkit.data.readers.grib.xarray import XarrayMixIn
 from earthkit.data.utils.availability import Availability
-from earthkit.data.utils.progbar import progress_bar
+
+# from earthkit.data.utils.progbar import progress_bar
 
 LOG = logging.getLogger(__name__)
 
@@ -129,6 +130,8 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
         return GribMultiFieldList(sources)
 
     def _custom_availability(self, ignore_keys=None, filter_keys=lambda k: True):
+        from earthkit.data.utils.progbar import progress_bar
+
         def dicts():
             for i in progress_bar(iterable=range(len(self)), desc="Building availability"):
                 dic = self.get_metadata(i)
@@ -210,11 +213,34 @@ class GribMaskFieldList(GribFieldList, MaskIndex):
         MaskIndex.__init__(self, *args, **kwargs)
         FieldList._init_from_mask(self, self)
 
+    def __getstate__(self):
+        r = {}
+        r["mask_index"] = self._index
+        r["mask_indices"] = self._indices
+        return r
+
+    def __setstate__(self, state):
+        _index = state["mask_index"]
+        _indices = state["mask_indices"]
+        self.__init__(_index, _indices)
+
 
 class GribMultiFieldList(GribFieldList, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
         FieldList._init_from_multi(self, self)
+
+    def __getstate__(self):
+        r = {}
+        r["multi_indexes"] = self._indexes
+        r["kwargs"] = self._kwargs
+        return r
+
+    def __setstate__(self, state):
+        self.__init__(
+            state["multi_indexes"],
+            **state["kwargs"],
+        )
 
 
 class GribFieldManager:

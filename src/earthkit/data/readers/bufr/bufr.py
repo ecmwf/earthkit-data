@@ -20,7 +20,7 @@ from earthkit.data.core.index import MultiIndex
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
 from earthkit.data.utils.message import CodesReader
-from earthkit.data.utils.metadata import metadata_argument
+from earthkit.data.utils.metadata.args import metadata_argument
 from earthkit.data.utils.parts import Part
 from earthkit.data.utils.summary import make_bufr_html_tree
 

@@ -9,6 +9,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import pickle
+
 import pytest
 
 from earthkit.data import from_source
@@ -53,7 +55,8 @@ def _check_diag(diag, ref):
 
 
 @pytest.mark.parametrize("handle_cache_size", [1, 5])
-def test_grib_cache_basic(handle_cache_size, patch_metadata_cache):
+@pytest.mark.parametrize("serialise", [True, False])
+def test_grib_cache_basic_patched(handle_cache_size, serialise, patch_metadata_cache):
 
     with settings.temporary(
         {
@@ -64,10 +67,17 @@ def test_grib_cache_basic(handle_cache_size, patch_metadata_cache):
         }
     ):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+        if serialise:
+            pickled_f = pickle.dumps(ds)
+            ds = pickle.loads(pickled_f)
+
         assert len(ds) == 18
 
         # unique values
         ref_vals = ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
+
+        # for f in ds:
+        #     print(f.metadata()._cache.data)
 
         diag = ds._diag()
         ref = {

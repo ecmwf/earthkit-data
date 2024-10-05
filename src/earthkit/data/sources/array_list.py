@@ -16,7 +16,9 @@ from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
 from earthkit.data.readers.grib.pandas import PandasMixIn
 from earthkit.data.readers.grib.xarray import XarrayMixIn
+from earthkit.data.utils.array import ensure_backend
 from earthkit.data.utils.array import get_backend
+from earthkit.data.utils.metadata.dict import UserMetadata
 
 LOG = logging.getLogger(__name__)
 
@@ -34,7 +36,20 @@ class ArrayField(Field):
         Array backend. Must match the type of ``array``.
     """
 
-    def __init__(self, array, metadata, array_backend):
+    def __init__(self, array, metadata, array_backend=None):
+        if isinstance(array, list):
+            array_backend = ensure_backend(array_backend)
+            array = array_backend.from_other(array)
+
+        if isinstance(metadata, dict):
+            metadata = UserMetadata(metadata, values=array)
+
+        if array_backend is None:
+            array_backend = get_backend(array, guess=array_backend, strict=True)
+
+        if array_backend is None:
+            raise ValueError("array_backend must be provided")
+
         super().__init__(array_backend, raw_values_backend=array_backend, metadata=metadata)
         self._array = array
 
@@ -69,6 +84,24 @@ class ArrayField(Field):
 
         write(f, self.to_numpy(flatten=True), self._metadata, **kwargs)
 
+    @property
+    def handle(self):
+        return self._metadata._handle
+
+    def __getstate__(self) -> dict:
+        ret = {}
+        ret["_array"] = self._array
+        ret["_metadata"] = self._metadata
+        ret["_array_backend"] = self._array_backend.name
+        return ret
+
+    def __setstate__(self, state: dict):
+        self._array = state.pop("_array")
+        metadata = state.pop("_metadata")
+        array_backend = state.pop("_array_backend")
+        array_backend = ensure_backend(array_backend)
+        super().__init__(array_backend, raw_values_backend=array_backend, metadata=metadata)
+
 
 class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
     def __init__(self, array, metadata, *args, array_backend=None, **kwargs):
@@ -77,6 +110,16 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
 
         if not isinstance(self._metadata, list):
             self._metadata = [self._metadata]
+
+        if isinstance(self._array, list):
+            if len(self._array) == 0:
+                raise ValueError("array must not be empty")
+            if isinstance(self._array[0], list):
+                array_backend = ensure_backend(array_backend)
+                self._array = [array_backend.from_other(a) for a in self._array]
+            elif isinstance(self._array[0], (int, float)):
+                array_backend = ensure_backend(array_backend)
+                self._array = array_backend.from_other(self._array)
 
         # get backend and check consistency
         array_backend = get_backend(self._array, guess=array_backend, strict=True)
@@ -178,6 +221,20 @@ class ArrayFieldListCore(PandasMixIn, XarrayMixIn, FieldList):
             check_nans=check_nans,
             bits_per_value=bits_per_value,
         )
+
+    def __getstate__(self) -> dict:
+        ret = {}
+        ret["_array"] = self._array
+        ret["_metadata"] = self._metadata
+        ret["_array_backend"] = self._array_backend.name
+        return ret
+
+    def __setstate__(self, state: dict):
+        self._array = state.pop("_array")
+        self._metadata = state.pop("_metadata")
+        array_backend = state.pop("_array_backend")
+        array_backend = ensure_backend(array_backend)
+        super().__init__(array_backend, raw_values_backend=array_backend, metadata=self._metadata)
 
 
 # class MultiUnwindMerger:

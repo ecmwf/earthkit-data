@@ -391,22 +391,37 @@ memory
 .. py:function:: from_source("memory", buffer)
   :noindex:
 
-  The ``memory`` source will read data from a memory buffer. Currently it only works for a ``buffer`` storing a single :ref:`grib` message or CoverageJson data.
+  The ``memory`` source will read data from a memory buffer. Currently it only works for a ``buffer`` storing a single :ref:`grib` message or CoverageJson data. The result is a FieldList object storing all the data in memory.
 
-  Please note that a buffer can always be read as a :ref:`stream source <data-sources-stream>` using ``io.BytesIO``.
+  .. code-block:: python
+
+      import earthkit.data
+
+      # buffer storing a GRIB message
+      buffer = ...
+
+      ds = earthkit.data.from_source("memory", bufr)
+
+      # f is the only GribField in ds
+      f = ds[0]
+
+
+  Please note that a buffer can always be read as a :ref:`stream source <data-sources-stream>` using ``io.BytesIO``. The equivalent code to the example above using a stream is:
 
   .. code-block:: python
 
       import io
       import earthkit.data
 
-      # buffer stores GRIB messages
+      # buffer storing a GRIB message
       buffer = ...
       stream = io.BytesIO(buffer)
 
-      ds = earthkit.data.from_source("stream", stream)
-      for f in ds:
-          print(f.metadata("param"))
+      ds = earthkit.data.from_source("stream", stream, real_all=True)
+
+      # f is the only GribField in ds
+      f = ds[0]
+
 
 
 .. _data-sources-multi:
