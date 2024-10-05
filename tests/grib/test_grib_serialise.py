@@ -18,6 +18,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
+from earthkit.data.testing import earthkit_examples_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -84,7 +85,7 @@ def test_grib_serialise_array_fieldlist(fl_type, representation):
 
     keys = ["param", "date", "time", "step", "level", "gridType", "type"]
     for k in keys:
-        ds.metadata(k) == ds.metadata(k)
+        ds2.metadata(k) == ds.metadata(k)
 
     r = ds2.sel(param="2t")
     assert len(r) == 1
@@ -99,3 +100,91 @@ def test_grib_serialise_array_fieldlist(fl_type, representation):
         assert len(ds2) == len(r_tmp)
         v_tmp = r_tmp[0].to_numpy()
         assert np.allclose(v1 + 1, v_tmp)
+
+
+@pytest.mark.parametrize("fl_type", ["file"])
+def test_grib_serialise_file_fieldlist_core(fl_type):
+    ds, _ = load_grib_data("test.grib", fl_type)
+
+    pickled_f = pickle.dumps(ds)
+    ds2 = pickle.loads(pickled_f)
+
+    assert len(ds) == len(ds2)
+    assert np.allclose(ds.values, ds2.values)
+
+    keys = ["param", "date", "time", "step", "level", "gridType", "type"]
+    for k in keys:
+        ds2.metadata(k) == ds.metadata(k)
+
+    r = ds2.sel(param="2t")
+    assert len(r) == 1
+
+
+@pytest.mark.parametrize("fl_type", ["file"])
+def test_grib_serialise_file_fieldlist_sel(fl_type):
+    ds0, _ = load_grib_data("test6.grib", fl_type)
+    ds = ds0.sel(param="t")
+    assert len(ds) == 2
+
+    pickled_f = pickle.dumps(ds)
+    ds2 = pickle.loads(pickled_f)
+
+    assert len(ds2) == 2
+    assert np.allclose(ds.values, ds2.values)
+
+    keys = ["param", "date", "time", "step", "level", "gridType", "type"]
+    for k in keys:
+        ds2.metadata(k) == ds.metadata(k)
+
+    r = ds2.sel(level=850)
+    assert len(r) == 1
+
+
+@pytest.mark.parametrize("fl_type", ["file"])
+def test_grib_serialise_file_fieldlist_concat(fl_type):
+    ds00, _ = load_grib_data("test.grib", fl_type)
+    ds01, _ = load_grib_data("test6.grib", fl_type)
+    ds = ds00 + ds01
+    assert len(ds) == 8
+
+    pickled_f = pickle.dumps(ds)
+    ds2 = pickle.loads(pickled_f)
+
+    assert len(ds2) == 8
+    assert np.allclose(ds[:2].values, ds2[:2].values)
+    assert np.allclose(ds[2:].values, ds2[2:].values)
+
+    keys = ["param", "date", "time", "step", "level", "gridType", "type"]
+    for k in keys:
+        ds2.metadata(k) == ds.metadata(k)
+
+
+def test_grib_serialise_stream_1():
+    with open(earthkit_examples_file("test.grib"), "rb") as f:
+        ds = from_source("stream", f)
+        with pytest.raises(NotImplementedError):
+            pickle.dumps(ds)
+
+
+def test_grib_serialise_stream_2():
+    with open(earthkit_examples_file("test.grib"), "rb") as f:
+        ds = from_source("stream", f, read_all=True)
+        pickled_f = pickle.dumps(ds)
+
+    ds2 = pickle.loads(pickled_f)
+
+    assert len(ds2) == 2
+    assert ds.metadata("shortName") == ["2t", "msl"]
+
+
+def test_grib_serialise_file_parts():
+    parts = (240, 150)
+
+    ds = from_source("file", earthkit_examples_file("test6.grib"), parts=parts)
+    assert len(ds) == 1
+
+    pickled_f = pickle.dumps(ds)
+    ds2 = pickle.loads(pickled_f)
+
+    assert len(ds2) == 1
+    assert ds2[0].metadata(["param", "level"]) == ["u", 1000]

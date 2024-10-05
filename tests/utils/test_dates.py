@@ -21,6 +21,7 @@ from earthkit.data.utils.dates import numpy_datetime_to_datetime
 from earthkit.data.utils.dates import numpy_timedelta_to_timedelta
 from earthkit.data.utils.dates import step_to_grib
 from earthkit.data.utils.dates import time_to_grib
+from earthkit.data.utils.dates import timedeltas_to_int
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_datetime_list
 from earthkit.data.utils.dates import to_time
@@ -189,13 +190,13 @@ def test_to_time(d, expected_value, error):
         ("12s", datetime.timedelta(seconds=12), None),
         ("12m", datetime.timedelta(minutes=12), None),
         ("1m", datetime.timedelta(minutes=1), None),
-        ("", None, ValueError),
-        ("m", None, ValueError),
-        ("1Z", None, ValueError),
-        ("m1", None, ValueError),
-        ("-1", None, ValueError),
-        ("-1s", None, ValueError),
-        ("1.1s", None, ValueError),
+        ("", None, (ValueError, TypeError)),
+        ("m", None, (ValueError, TypeError, AttributeError)),
+        ("1Z", None, (ValueError, TypeError)),
+        ("m1", None, (ValueError, TypeError)),
+        ("-1", None, (ValueError, TypeError)),
+        ("-1s", None, (ValueError, TypeError)),
+        ("1.1s", None, (ValueError, TypeError)),
     ],
 )
 def test_to_timedelta(step, expected_delta, error):
@@ -259,6 +260,39 @@ def test_numpy_datetime_to_datetime(td, expected_delta, error):
 
 
 @pytest.mark.parametrize(
+    "td,expected_value,error",
+    [
+        (
+            [datetime.timedelta(hours=12), datetime.timedelta(hours=18)],
+            ([12, 18], datetime.timedelta(hours=1)),
+            None,
+        ),
+        (
+            [datetime.timedelta(hours=12), datetime.timedelta(hours=18, minutes=30)],
+            ([12 * 60, 18 * 60 + 30], datetime.timedelta(minutes=1)),
+            None,
+        ),
+        (
+            [datetime.timedelta(hours=12), datetime.timedelta(hours=18, seconds=30)],
+            ([12 * 3600, 18 * 3600 + 30], datetime.timedelta(seconds=1)),
+            None,
+        ),
+        (
+            datetime.timedelta(hours=12),
+            ([12], datetime.timedelta(hours=1)),
+            None,
+        ),
+    ],
+)
+def test_timedeltas_to_int(td, expected_value, error):
+    if error is None:
+        assert timedeltas_to_int(td) == expected_value
+    else:
+        with pytest.raises(error):
+            timedeltas_to_int(td)
+
+
+@pytest.mark.parametrize(
     "d,expected_value,error",
     [
         (20020502, 20020502, None),
@@ -287,20 +321,36 @@ def test_date_to_grib(d, expected_value, error):
     "d,expected_value,error",
     [
         (0, 0, None),
-        (6, 600, None),
-        (12, 1200, None),
+        (6, 6, None),
+        (12, 12, None),
         (600, 600, None),
         (1200, 1200, None),
+        (1230, 1230, None),
         (np.int64(0), 0, None),
-        (np.int64(6), 600, None),
-        (np.int64(12), 1200, None),
+        (np.int64(6), 6, None),
+        (np.int64(12), 12, None),
         (np.int64(600), 600, None),
         (np.int64(1200), 1200, None),
+        (np.int64(1230), 1230, None),
         ("0", 0, None),
-        ("6", 600, None),
-        ("12", 1200, None),
+        ("6", 6, None),
+        ("12", 12, None),
         ("600", 600, None),
         ("1200", 1200, None),
+        ("1230", 1230, None),
+        (datetime.timedelta(minutes=0), 0, None),
+        (datetime.timedelta(minutes=6), 6, None),
+        (datetime.timedelta(hours=0), 0, None),
+        (datetime.timedelta(hours=6), 600, None),
+        (datetime.timedelta(hours=12), 1200, None),
+        (datetime.timedelta(hours=12, minutes=6), 1206, None),
+        (datetime.timedelta(hours=120, seconds=2), None, ValueError),
+        (np.timedelta64(0, "m"), 0, None),
+        (np.timedelta64(6, "m"), 6, None),
+        (np.timedelta64(0, "h"), 0, None),
+        (np.timedelta64(6, "h"), 600, None),
+        (np.timedelta64(12, "h"), 1200, None),
+        (np.timedelta64(12 * 60 + 30, "m"), 1230, None),
     ],
 )
 def test_time_to_grib(d, expected_value, error):

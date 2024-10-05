@@ -137,13 +137,28 @@ class GribFieldInMemory(GribField):
     def to_fieldlist(fields):
         return GribFieldListInMemory.from_fields(fields)
 
+    @staticmethod
+    def from_buffer(buf):
+        handle = eccodes.codes_new_from_message(buf)
+        return GribFieldInMemory(GribCodesHandle(handle, None, None))
+
 
 class GribFieldListInMemory(SimpleFieldList):
     """Represent a GRIB field list in memory loaded lazily"""
 
+    # @staticmethod
+    # def from_fields(fields):
+    #     if array_backend is None and len(fields) > 0:
+    #         array_backend = fields[0].array_backend
+    #     fs = GribFieldListInMemory(None, None, array_backend=array_backend)
+    #     fs.fields = fields
+    #     fs._loaded = True
+    #     return fs
+
     def __init__(self, source, reader, *args, **kwargs):
         """The reader must support __next__."""
-        self._reader = reader
+        if source is not None:
+            self._reader = reader
         self._loaded = False
 
     def __len__(self):
@@ -159,3 +174,26 @@ class GribFieldListInMemory(SimpleFieldList):
             self.fields = [f for f in self._reader]
             self._loaded = True
             self._reader = None
+
+    def mutate_source(self):
+        return self
+
+    @classmethod
+    def merge(cls, readers):
+        assert all(isinstance(s, GribFieldListInMemory) for s in readers), readers
+        assert len(readers) > 1
+
+        from itertools import chain
+
+        return GribFieldListInMemory.from_fields(list(chain(*[f for f in readers])))
+
+    def __getstate__(self):
+        self._load()
+        r = {"messages": [f.message() for f in self]}
+        return r
+
+    def __setstate__(self, state):
+        fields = [GribFieldInMemory.from_buffer(m) for m in state["messages"]]
+        self.__init__(None, None)
+        self.fields = fields
+        self._loaded = True

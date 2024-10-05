@@ -347,3 +347,12 @@ def make_bufr_html_tree(data, title, subset, compressed, uncompressed):
         return HTML(style + t)
 
     return tree
+
+
+def ncdump(path):
+    import subprocess
+
+    result = subprocess.run(["ncdump", "-h", path], stdout=subprocess.PIPE)
+    t = result.stdout.decode("utf-8").split("\n")
+    for line in t:
+        print(line)

@@ -31,6 +31,10 @@ class GribFieldGeography(Geography):
         self.metadata = metadata
         self.check_rotated_support()
 
+    @cached_property
+    def spectral(self):
+        return self.metadata._handle.get("gridType", "") == "sh"
+
     def latitudes(self, dtype=None):
         r"""Return the latitudes of the field.
 
@@ -48,6 +52,12 @@ class GribFieldGeography(Geography):
         ndarray
         """
         return self.metadata._handle.get_longitudes(dtype=dtype)
+
+    def distinct_latitudes(self, dtype=None):
+        return self.metadata._handle.get("distinctLatitudes", dtype=dtype)
+
+    def distinct_longitudes(self, dtype=None):
+        return self.metadata._handle.get("distinctLongitudes", dtype=dtype)
 
     def x(self, dtype=None):
         r"""Return the x coordinates in the field's original CRS.
@@ -301,6 +311,7 @@ class GribMetadata(Metadata):
             "reference_datetime": "reference_datetime",
             "indexing_datetime": ["indexing_time", "indexing_datetime"],
             "step_timedelta": "step_timedelta",
+            "param_level": "param_level",
         }
     )
 
@@ -449,6 +460,9 @@ class GribMetadata(Metadata):
             if time is not None:
                 return datetime_from_grib(date, time)
         return None
+
+    def param_level(self):
+        return f"{self.get('shortName')}{self.get('level', default='')}"
 
     def namespaces(self):
         return self.NAMESPACES

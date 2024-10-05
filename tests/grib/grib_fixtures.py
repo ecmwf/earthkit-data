@@ -34,7 +34,7 @@ def load_grib_data(filename, fl_type, folder="example"):
     elif folder == "data":
         path = [earthkit_test_data_file(name) for name in filename]
     else:
-        raise ValueError("Invalid folder={folder}")
+        raise ValueError(f"Invalid folder={folder}")
 
     if fl_type == "file":
         return from_source("file", path), get_backend("numpy")
@@ -42,7 +42,7 @@ def load_grib_data(filename, fl_type, folder="example"):
         array_backend = fl_type
         return load_array_fieldlist(path, array_backend), get_backend(array_backend)
     else:
-        raise ValueError("Invalid fl_type={fl_type}")
+        raise ValueError(f"Invalid fl_type={fl_type}")
 
 
 FL_TYPES = ["file"]

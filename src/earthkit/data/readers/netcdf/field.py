@@ -216,6 +216,10 @@ class XArrayField(Field):
     def __init__(self, ds, variable, slices, non_dim_coords):
         super().__init__()
         self._ds = ds
+        self._da = ds[variable]
+
+        # self.north, self.west, self.south, self.east = ds.bbox(variable)
+
         self.variable = variable
         self.slices = slices
         self.non_dim_coords = non_dim_coords
