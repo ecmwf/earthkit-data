@@ -17,8 +17,8 @@ from earthkit.data.core.metadata import Metadata
 from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import datetime_from_grib
-from earthkit.data.utils.dates import step_to_delta
 from earthkit.data.utils.dates import to_datetime
+from earthkit.data.utils.dates import to_timedelta
 from earthkit.data.utils.projections import Projection
 
 LOG = logging.getLogger(__name__)
@@ -236,6 +236,7 @@ class UserMetadata(Metadata):
             "base_datetime": "base_datetime",
             "valid_datetime": "valid_datetime",
             "step_timedelta": "step_timedelta",
+            "param_level": "param_level",
         },
         aliases=[
             ("dataDate", "date"),
@@ -247,7 +248,7 @@ class UserMetadata(Metadata):
         ],
     )
 
-    LS_KEYS = ["param", "level", "base_datetime", "valid_datetime", "step", "number", set]
+    LS_KEYS = ["param", "level", "base_datetime", "valid_datetime", "step", "number"]
 
     def __init__(self, d, values=None):
         self._data = d
@@ -319,7 +320,7 @@ class UserMetadata(Metadata):
             return self._data["step_timedelta"]
         v = self._get_one(["endStep", "step"])
         if v is not None:
-            return step_to_delta(v)
+            return to_timedelta(v)
 
     def _datetime(self, date_key, time_key):
         date = self.get(date_key, None)
@@ -328,6 +329,9 @@ class UserMetadata(Metadata):
             if time is not None:
                 return datetime_from_grib(date, time)
         return None
+
+    def param_level(self):
+        return f"{self.get('param')}{self.get('level', default='')}"
 
     def _get_one(self, keys):
         for k in keys:

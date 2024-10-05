@@ -6,8 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-import pandas as pd
-
 from earthkit.data.translators import Translator
 
 
@@ -19,6 +17,8 @@ class PandasSeriesTranslator(Translator):
 
     def __call__(self):
         """Series requested, if DataFrame return the first column"""
+        import pandas as pd
+
         if isinstance(self.data, pd.DataFrame):
             return self.data.iloc[:, 0]
 
@@ -30,6 +30,8 @@ class PandasDataFrameTranslator(PandasSeriesTranslator):
 
     def __call__(self):
         """Return DataFrame, if Series convert to DataFrame."""
+        import pandas as pd
+
         if isinstance(self.data, pd.Series):
             return self.data.to_frame()
 
@@ -42,6 +44,7 @@ class GeoPandasDataFrameTranslator(PandasSeriesTranslator):
     def __call__(self):
         """Return GeoDataFrame, if normal pandas convert to geopandas."""
         import geopandas as gpd
+        import pandas as pd
 
         if isinstance(self.data, pd.DataFrame):
             return gpd.GeoDataFrame(self.data)
@@ -50,15 +53,19 @@ class GeoPandasDataFrameTranslator(PandasSeriesTranslator):
 
 
 def translator(data, cls, *args, **kwargs):
-    try:
+    from earthkit.data.utils import is_module_loaded
+
+    if not is_module_loaded("pandas"):
+        return None
+
+    import pandas as pd
+
+    if is_module_loaded("geopandas"):
         import geopandas as gpd
 
-        l_gpd = True
-    except ImportError:
-        l_gpd = False
+        if cls in [gpd.geodataframe.GeoDataFrame]:
+            return GeoPandasDataFrameTranslator(data, *args, **kwargs)
 
-    if l_gpd and cls in [gpd.geodataframe.GeoDataFrame]:
-        return GeoPandasDataFrameTranslator(data, *args, **kwargs)
     if cls in [pd.DataFrame]:
         return PandasDataFrameTranslator(data, *args, **kwargs)
     if cls in [pd.Series]:

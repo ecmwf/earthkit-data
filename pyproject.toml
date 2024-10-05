@@ -50,6 +50,7 @@ dependencies = [
   "tqdm>=4.63",
   "xarray>=0.19",
 ]
+
 optional-dependencies.all = [
   "cartopy",
   "cdsapi>=0.7.1",
@@ -128,6 +129,8 @@ urls.Documentation = "https://earthkit-data.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-data/"
 urls.Issues = "https://github.com/ecmwf/earthkit-data.issues"
 urls.Repository = "https://github.com/ecmwf/earthkit-data/"
+
+entry-points."xarray.backends".earthkit = "earthkit.data.utils.xarray.engine:EarthkitBackendEntrypoint"
 
 [tool.setuptools.packages.find]
 include = [

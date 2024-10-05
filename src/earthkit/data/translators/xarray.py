@@ -6,8 +6,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-import xarray as xr
-
 from earthkit.data.translators import Translator
 
 
@@ -21,7 +19,7 @@ class XArrayDataArrayTranslator(Translator):
 
     def __call__(self):
         """Data-Array requested, if Dataset return the first data variable in dataset."""
-        # import xarray as xr
+        import xarray as xr
 
         if isinstance(self.data, xr.Dataset):
             first_data_var = list(self.data.data_vars)[0]
@@ -37,7 +35,7 @@ class XArrayDatasetTranslator(XArrayDataArrayTranslator):
 
     def __call__(self):
         """Dataset requested, if DataArray convert to Dataset."""
-        # import xarray as xr
+        import xarray as xr
 
         if isinstance(self.data, xr.DataArray):
             return self.data.to_dataset()
@@ -46,7 +44,7 @@ class XArrayDatasetTranslator(XArrayDataArrayTranslator):
 
 
 def translator(data, cls, *args, **kwargs):
-    # import xarray as xr
+    import xarray as xr
 
     if cls in [xr.DataArray]:
         return XArrayDataArrayTranslator(data, *args, **kwargs)

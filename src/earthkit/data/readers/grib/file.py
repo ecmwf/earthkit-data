@@ -43,3 +43,26 @@ class GRIBReader(GribFieldListInOneFile, Reader):
     def mutate_source(self):
         # A GRIBReader is a source itself
         return self
+
+    def __getstate__(self):
+        r = {"kwargs": self.source._kwargs, "messages": []}
+        for f in self:
+            r["messages"].append(f.message())
+        return r
+
+    def __setstate__(self, state):
+        from earthkit.data import from_source
+        from earthkit.data.core.caching import cache_file
+
+        def _create(path, args):
+            with open(path, "wb") as f:
+                for message in state["messages"]:
+                    f.write(message)
+
+        path = cache_file(
+            "GRIBReader",
+            _create,
+            [],
+        )
+        ds = from_source("file", path)
+        self.__init__(ds.source, path)

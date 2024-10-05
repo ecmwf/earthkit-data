@@ -205,6 +205,9 @@ class StreamFieldList(FieldList, Source):
     def group_by(self, *keys, **kwargs):
         return self._source.group_by(*keys)
 
+    def __getstate__(self):
+        raise NotImplementedError("StreamFieldList cannot be pickled")
+
 
 class Stream:
     def __init__(self, stream=None, maker=None, **kwargs):

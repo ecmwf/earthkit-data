@@ -243,6 +243,9 @@ class XArrayFieldList(XArrayFieldListCore):
     def __len__(self):
         return len(self.fields)
 
+    def __repr__(self):
+        return "XArrayFieldList "  # TODO: some __repr__ of the data: {self.data}
+
 
 class XArrayMaskFieldList(XArrayFieldListCore, MaskIndex):
     def __init__(self, *args, **kwargs):
