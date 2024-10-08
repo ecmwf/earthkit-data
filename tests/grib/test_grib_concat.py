@@ -101,6 +101,22 @@ def test_grib_concat_3b(mode):
     _check_save_to_disk(ds, 26, md)
 
 
+@pytest.mark.parametrize("mode", ["oper", "multi"])
+def test_grib_concat_mixed(mode):
+    ds1 = from_source("file", earthkit_examples_file("test.grib"))
+    ds2 = ds1.to_fieldlist()
+    md = ds1.metadata("param") + ds2.metadata("param")
+
+    if mode == "oper":
+        ds = ds1 + ds2
+    else:
+        ds = from_source("multi", ds1, ds2)
+
+    assert len(ds) == 4
+    assert ds.metadata("param") == md
+    _check_save_to_disk(ds, 4, md)
+
+
 def test_grib_from_empty_1():
     ds_e = FieldList()
     ds = from_source("file", earthkit_examples_file("test.grib"))

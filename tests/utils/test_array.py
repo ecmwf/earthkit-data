@@ -13,43 +13,49 @@ import pytest
 
 from earthkit.data.testing import NO_CUPY
 from earthkit.data.testing import NO_PYTORCH
-from earthkit.data.utils.array import ensure_backend
+from earthkit.data.utils.array import _CUPY
+from earthkit.data.utils.array import _NUMPY
+from earthkit.data.utils.array import _PYTORCH
 from earthkit.data.utils.array import get_backend
+
+"""These tests are for the array backend utilities mostly used in other tests."""
 
 
 def test_utils_array_backend_numpy():
-    b = ensure_backend("numpy")
+    b = get_backend("numpy")
     assert b.name == "numpy"
+    assert b is _NUMPY
 
     import numpy as np
 
     v = np.ones(10)
     v_lst = [1.0] * 10
 
-    assert b.is_native_array(v)
     assert id(b.to_numpy(v)) == id(v)
-    assert id(b.from_backend(v, b)) == id(v)
-    assert id(b.from_backend(v, None)) == id(v)
+    assert id(b.from_numpy(v)) == id(v)
+    assert id(b.from_other(v)) == id(v)
+
     assert np.allclose(b.from_other(v_lst, dtype=np.float64), v)
     assert get_backend(v) is b
-    assert get_backend(v, guess=b) is b
+    assert get_backend(np) is b
 
-    assert np.isclose(b.array_ns.mean(v), 1.0)
+    assert np.isclose(b.namespace.mean(v), 1.0)
 
     if not NO_PYTORCH:
         import torch
 
         v_pt = torch.ones(10, dtype=torch.float64)
-        pt_b = ensure_backend("pytorch")
-        r = b.to_backend(v, pt_b)
+        pt_b = get_backend("pytorch")
+        r = pt_b.from_other(v)
         assert torch.is_tensor(r)
         assert torch.allclose(r, v_pt)
 
 
 @pytest.mark.skipif(NO_PYTORCH, reason="No pytorch installed")
 def test_utils_array_backend_pytorch():
-    b = ensure_backend("pytorch")
+    b = get_backend("pytorch")
     assert b.name == "pytorch"
+    assert b is _PYTORCH
 
     import numpy as np
     import torch
@@ -58,27 +64,22 @@ def test_utils_array_backend_pytorch():
     v_np = np.ones(10, dtype=np.float64)
     v_lst = [1.0] * 10
 
-    assert b.is_native_array(v)
-    assert id(b.from_backend(v, b)) == id(v)
-    assert id(b.from_backend(v, None)) == id(v)
-    assert torch.allclose(b.from_backend(v_np, None), v)
     assert torch.allclose(b.from_numpy(v_np), v)
     assert torch.allclose(b.from_other(v_lst, dtype=torch.float64), v)
     assert get_backend(v) is b
-    assert get_backend(v, guess=b) is b
 
-    np_b = ensure_backend("numpy")
-    r = b.to_backend(v, np_b)
+    r = b.to_numpy(v)
     assert isinstance(r, np.ndarray)
     assert np.allclose(r, v_np)
 
-    assert np.isclose(b.array_ns.mean(v), 1.0)
+    assert np.isclose(b.namespace.mean(v), 1.0)
 
 
 @pytest.mark.skipif(NO_CUPY, reason="No pytorch installed")
 def test_utils_array_backend_cupy():
-    b = ensure_backend("cupy")
+    b = get_backend("cupy")
     assert b.name == "cupy"
+    assert b is _CUPY
 
     import cupy as cp
     import numpy as np
@@ -87,20 +88,18 @@ def test_utils_array_backend_cupy():
     v_np = np.ones(10, dtype=np.float64)
     v_lst = [1.0] * 10
 
-    assert b.is_native_array(v)
-    assert id(b.from_backend(v, b)) == id(v)
-    assert id(b.from_backend(v, None)) == id(v)
-    assert cp.allclose(b.from_backend(v_np, None), v)
+    # assert b.is_native_array(v)
+    # assert id(b.from_backend(v, b)) == id(v)
+    # assert id(b.from_backend(v, None)) == id(v)
+    assert cp.allclose(b.from_numpy(v_np, None), v)
     assert cp.allclose(b.from_other(v_lst, dtype=cp.float64), v)
     assert get_backend(v) is b
-    assert get_backend(v, guess=b) is b
 
-    np_b = ensure_backend("numpy")
-    r = b.to_backend(v, np_b)
+    r = b.to_numpy(v)
     assert isinstance(r, np.ndarray)
     assert np.allclose(r, v_np)
 
-    assert np.isclose(b.array_ns.mean(v), 1.0)
+    assert np.isclose(b.namespace.mean(v), 1.0)
 
 
 if __name__ == "__main__":

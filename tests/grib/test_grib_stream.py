@@ -63,20 +63,21 @@ def test_grib_from_stream_iter():
         assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_from_stream_fieldlist_backend(array_backend):
-    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream, array_backend=array_backend)
+# @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+# def test_grib_from_stream_fieldlist_backend(array_backend):
+#     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+#         ds = from_source("stream", stream, array_backend=array_backend)
 
-        assert isinstance(ds, StreamFieldList)
 
-        assert ds.array_backend.name == array_backend
-        assert ds.to_array().shape == (6, 7, 12)
+#         assert isinstance(ds, StreamFieldList)
 
-        assert sum([1 for _ in ds]) == 0
+#         # assert ds.array_backend.name == array_backend
+#         assert ds.to_array().shape == (6, 7, 12)
 
-        with pytest.raises((RuntimeError, ValueError)):
-            ds.to_array()
+#         assert sum([1 for _ in ds]) == 0
+
+#         with pytest.raises((RuntimeError, ValueError)):
+#             ds.to_array()
 
 
 @pytest.mark.parametrize(
@@ -135,9 +136,11 @@ def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shap
         for i, f in enumerate(ds.batched(2)):
             df = f.to_fieldlist(array_backend="numpy", **convert_kwargs)
             assert df.metadata(("param", "level")) == ref[i], i
-            assert df._array.shape == expected_shape, i
             assert df.to_numpy(**convert_kwargs).shape == expected_shape, i
-            assert df.to_fieldlist(array_backend="numpy", **convert_kwargs) is df, i
+            df1 = df.to_fieldlist(array_backend="numpy", **convert_kwargs)
+            assert df1 is not df, i
+            assert df1.metadata(("param", "level")) == ref[i], i
+            assert df1.to_numpy(**convert_kwargs).shape == expected_shape, i
 
         # stream consumed, no data is available
         assert sum([1 for _ in ds]) == 0
@@ -147,7 +150,7 @@ def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shap
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
 def test_grib_from_stream_group_by(array_backend, group):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream, array_backend=array_backend)
+        ds = from_source("stream", stream)
 
         # no methods are available
         with pytest.raises((TypeError, NotImplementedError)):
@@ -199,9 +202,12 @@ def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_sha
             df = f.to_fieldlist(array_backend="numpy", **convert_kwargs)
             assert len(df) == 3
             assert df.metadata(("param", "level")) == ref[i]
-            assert df._array.shape == expected_shape
             assert df.to_numpy(**convert_kwargs).shape == expected_shape
-            assert df.to_fieldlist(array_backend="numpy", **convert_kwargs) is df
+            df1 = df.to_fieldlist(array_backend="numpy", **convert_kwargs)
+            assert df1 is not df
+            assert len(df1) == 3
+            assert df1.metadata(("param", "level")) == ref[i]
+            assert df1.to_numpy(**convert_kwargs).shape == expected_shape
 
         # stream consumed, no data is available
         assert sum([1 for _ in ds]) == 0
@@ -318,8 +324,11 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
             vals = ds.to_numpy(**convert_kwargs)[:, 0]
 
         assert np.allclose(vals, ref)
-        assert ds._array.shape == expected_shape
-        assert ds.to_fieldlist(array_backend="numpy", **convert_kwargs) is ds
+        assert ds.to_numpy(**convert_kwargs).shape == expected_shape
+        ds1 = ds.to_fieldlist(array_backend="numpy", **convert_kwargs)
+        assert ds1 is not ds
+        assert len(ds1) == 6
+        assert ds1.to_numpy(**convert_kwargs).shape == expected_shape
 
 
 def test_grib_save_when_loaded_from_stream():

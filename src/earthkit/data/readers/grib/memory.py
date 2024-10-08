@@ -12,20 +12,18 @@ from functools import cached_property
 
 import eccodes
 
+from earthkit.data.indexing.fieldlist import SimpleFieldList
 from earthkit.data.readers import Reader
 from earthkit.data.readers.grib.codes import GribCodesHandle
 from earthkit.data.readers.grib.codes import GribField
-from earthkit.data.readers.grib.index import GribFieldList
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
-from earthkit.data.utils.array import ensure_backend
 
 LOG = logging.getLogger(__name__)
 
 
 class GribMemoryReader(Reader):
-    def __init__(self, array_backend=None, **kwargs):
+    def __init__(self, **kwargs):
         self._peeked = None
-        self._array_backend = ensure_backend(array_backend)
 
     def __iter__(self):
         return self
@@ -47,7 +45,7 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            return GribFieldInMemory(GribCodesHandle(handle, None, None), self._array_backend)
+            return GribFieldInMemory(GribCodesHandle(handle, None, None))
 
     def batched(self, n):
         from earthkit.data.utils.batch import batched
@@ -119,8 +117,8 @@ class GribStreamReader(GribMemoryReader):
 class GribFieldInMemory(GribField):
     """Represents a GRIB message in memory"""
 
-    def __init__(self, handle, array_backend=None):
-        super().__init__(None, None, None, array_backend)
+    def __init__(self, handle):
+        super().__init__(None, None, None)
         self._handle = handle
 
     @GribField.handle.getter
@@ -142,44 +140,38 @@ class GribFieldInMemory(GribField):
     @staticmethod
     def from_buffer(buf):
         handle = eccodes.codes_new_from_message(buf)
-        return GribFieldInMemory(GribCodesHandle(handle, None, None), None)
+        return GribFieldInMemory(GribCodesHandle(handle, None, None))
 
 
-class GribFieldListInMemory(GribFieldList, Reader):
-    """Represent a GRIB field list in memory"""
+class GribFieldListInMemory(SimpleFieldList):
+    """Represent a GRIB field list in memory loaded lazily"""
 
-    @staticmethod
-    def from_fields(fields, array_backend=None):
-        if array_backend is None and len(fields) > 0:
-            array_backend = fields[0].array_backend
-        fs = GribFieldListInMemory(None, None, array_backend=array_backend)
-        fs._fields = fields
-        fs._loaded = True
-        return fs
+    # @staticmethod
+    # def from_fields(fields):
+    #     if array_backend is None and len(fields) > 0:
+    #         array_backend = fields[0].array_backend
+    #     fs = GribFieldListInMemory(None, None, array_backend=array_backend)
+    #     fs.fields = fields
+    #     fs._loaded = True
+    #     return fs
 
     def __init__(self, source, reader, *args, **kwargs):
         """The reader must support __next__."""
         if source is not None:
-            Reader.__init__(self, source, "")
-        GribFieldList.__init__(self, *args, **kwargs)
-
-        self._reader = reader
+            self._reader = reader
         self._loaded = False
-        self._fields = []
 
     def __len__(self):
         self._load()
-        return len(self._fields)
+        return super().__len__()
 
-    def _getitem(self, n):
+    def __getitem__(self, n):
         self._load()
-        if isinstance(n, int):
-            n = n if n >= 0 else len(self) + n
-            return self._fields[n]
+        return super().__getitem__(n)
 
     def _load(self):
         if not self._loaded:
-            self._fields = [f for f in self._reader]
+            self.fields = [f for f in self._reader]
             self._loaded = True
             self._reader = None
 
@@ -203,5 +195,5 @@ class GribFieldListInMemory(GribFieldList, Reader):
     def __setstate__(self, state):
         fields = [GribFieldInMemory.from_buffer(m) for m in state["messages"]]
         self.__init__(None, None)
-        self._fields = fields
+        self.fields = fields
         self._loaded = True

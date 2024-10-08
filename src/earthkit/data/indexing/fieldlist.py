@@ -10,7 +10,7 @@
 from earthkit.data.core.fieldlist import FieldList
 
 
-class FieldArray(FieldList):
+class SimpleFieldList(FieldList):
     def __init__(self, fields=None):
         self.fields = fields if fields is not None else []
 
@@ -25,3 +25,64 @@ class FieldArray(FieldList):
 
     def __repr__(self) -> str:
         return f"FieldArray({len(self.fields)})"
+
+    def __getstate__(self) -> dict:
+        ret = {}
+        ret["_fields"] = self.fields
+        return ret
+
+    def __setstate__(self, state: dict):
+        self.fields = state.pop("_fields")
+
+    def to_pandas(self, *args, **kwargs):
+        # TODO make it generic
+        if len(self) > 0:
+            if self[0]._metadata.data_format() == "grib":
+                from earthkit.data.readers.grib.pandas import PandasMixIn
+
+                class _C(PandasMixIn, SimpleFieldList):
+                    pass
+
+                return _C(self.fields).to_pandas(*args, **kwargs)
+        else:
+            import pandas as pd
+
+            return pd.DataFrame()
+
+    def to_xarray(self, *args, **kwargs):
+        # TODO make it generic
+        if len(self) > 0:
+            if self[0]._metadata.data_format() == "grib":
+                from earthkit.data.readers.grib.xarray import XarrayMixIn
+
+                class _C(XarrayMixIn, SimpleFieldList):
+                    pass
+
+                return _C(self.fields).to_xarray(*args, **kwargs)
+        else:
+            import xarray as xr
+
+            return xr.Dataset()
+
+    def mutate_source(self):
+        return self
+
+    @classmethod
+    def new_mask_index(cls, *args, **kwargs):
+        assert len(args) == 2
+        fs = args[0]
+        indices = list(args[1])
+        return cls.from_fields([fs.fields[i] for i in indices])
+
+    @classmethod
+    def merge(cls, sources):
+        if not all(isinstance(_, SimpleFieldList) for _ in sources):
+            raise ValueError("SimpleFieldList can only be merged to another SimpleFieldLists")
+
+        from itertools import chain
+
+        return cls.from_fields(list(chain(*[f for f in sources])))
+
+
+# For backwards compatibility
+FieldArray = SimpleFieldList

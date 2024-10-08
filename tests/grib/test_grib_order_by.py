@@ -15,7 +15,6 @@ import sys
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import ARRAY_BACKENDS
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -25,9 +24,8 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_order_by_single_message(fl_type, array_backend):
-    s = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
+def test_grib_order_by_single_message(fl_type):
+    s, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     r = s.order_by("shortName")
     assert len(r) == 1
@@ -56,7 +54,6 @@ class _CustomOrder:
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "params,expected_meta",
     [
@@ -104,11 +101,10 @@ class _CustomOrder:
 )
 def test_grib_order_by_single_file_(
     fl_type,
-    array_backend,
     params,
     expected_meta,
 ):
-    f = load_grib_data("test6.grib", fl_type, array_backend)
+    f, _ = load_grib_data("test6.grib", fl_type)
 
     g = f.order_by(params)
     assert len(g) == len(f)
@@ -118,7 +114,6 @@ def test_grib_order_by_single_file_(
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "params,expected_meta",
     [
@@ -147,9 +142,9 @@ def test_grib_order_by_single_file_(
         ),
     ],
 )
-def test_grib_order_by_multi_file(fl_type, array_backend, params, expected_meta):
-    f1 = load_grib_data("test4.grib", fl_type, array_backend)
-    f2 = load_grib_data("test6.grib", fl_type, array_backend)
+def test_grib_order_by_multi_file(fl_type, params, expected_meta):
+    f1, _ = load_grib_data("test4.grib", fl_type)
+    f2, _ = load_grib_data("test6.grib", fl_type)
     f = from_source("multi", [f1, f2])
 
     g = f.order_by(params)
@@ -160,9 +155,8 @@ def test_grib_order_by_multi_file(fl_type, array_backend, params, expected_meta)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_order_by_with_sel(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_order_by_with_sel(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     g = f.sel(level=500)
     assert len(g) == 3
@@ -178,9 +172,8 @@ def test_grib_order_by_with_sel(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_order_by_valid_datetime(fl_type, array_backend):
-    f = load_grib_data("t_time_series.grib", fl_type, array_backend, folder="data")
+def test_grib_order_by_valid_datetime(fl_type):
+    f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
     g = f.order_by(valid_datetime="descending")
     assert len(g) == 10
@@ -202,9 +195,8 @@ def test_grib_order_by_valid_datetime(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_order_by_remapping(fl_type, array_backend):
-    ds = load_grib_data("test6.grib", fl_type, array_backend)
+def test_grib_order_by_remapping(fl_type):
+    ds, _ = load_grib_data("test6.grib", fl_type)
 
     ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
     ref = [("t", 850), ("t", 1000), ("u", 1000), ("v", 850), ("v", 1000), ("u", 850)]

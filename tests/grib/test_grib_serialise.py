@@ -22,32 +22,47 @@ from earthkit.data.testing import earthkit_examples_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
+from grib_fixtures import FL_NUMPY  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
-@pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_grib_serialise_metadata(fl_type, array_backend):
-    ds = load_grib_data("test.grib", fl_type, array_backend)
+def _pickle(data, representation):
+    if representation == "file":
+        with temp_file() as tmp:
+            with open(tmp, "wb") as f:
+                pickle.dump(data, f)
 
+            with open(tmp, "rb") as f:
+                data_res = pickle.load(f)
+    elif representation == "memory":
+        pickled_data = pickle.dumps(data)
+        data_res = pickle.loads(pickled_data)
+    else:
+        raise ValueError(f"Invalid representation: {representation}")
+    return data_res
+
+
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+@pytest.mark.parametrize("representation", ["file", "memory"])
+def test_grib_serialise_metadata(fl_type, representation):
+    ds, _ = load_grib_data("test.grib", fl_type)
     md = ds[0].metadata().override()
-    pickled_md = pickle.dumps(md)
-    md2 = pickle.loads(pickled_md)
+
+    md2 = _pickle(md, representation)
 
     keys = ["param", "date", "time", "step", "level", "gridType", "type"]
     for k in keys:
         assert md[k] == md2[k]
 
 
-@pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_grib_serialise_array_field(fl_type, array_backend):
-    ds0 = load_grib_data("test.grib", fl_type, array_backend)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+@pytest.mark.parametrize("representation", ["file", "memory"])
+def test_grib_serialise_array_field_memory(fl_type, representation):
+    ds0, _ = load_grib_data("test.grib", fl_type)
     ds = ds0.to_fieldlist()
 
     for idx in range(len(ds)):
-        pickled_f = pickle.dumps(ds[idx])
-        f2 = pickle.loads(pickled_f)
+        f2 = _pickle(ds[idx], representation)
 
         assert np.allclose(ds[idx].values, f2.values), f"index={idx}"
         assert np.allclose(ds[idx].to_numpy(), f2.to_numpy()), f"index={idx}"
@@ -57,14 +72,13 @@ def test_grib_serialise_array_field(fl_type, array_backend):
             assert ds[idx].metadata(k) == f2.metadata(k), f"index={idx}"
 
 
-@pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_grib_serialise_array_fieldlist(fl_type, array_backend):
-    ds0 = load_grib_data("test.grib", fl_type, array_backend)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+@pytest.mark.parametrize("representation", ["file", "memory"])
+def test_grib_serialise_array_fieldlist(fl_type, representation):
+    ds0, _ = load_grib_data("test.grib", fl_type)
     ds = ds0.to_fieldlist()
 
-    pickled_f = pickle.dumps(ds)
-    ds2 = pickle.loads(pickled_f)
+    ds2 = _pickle(ds, representation)
 
     assert len(ds) == len(ds2)
     assert np.allclose(ds.values, ds2.values)
@@ -82,16 +96,15 @@ def test_grib_serialise_array_fieldlist(fl_type, array_backend):
     with temp_file() as tmp:
         ds2.save(tmp)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp, array_backend=array_backend)
+        r_tmp = from_source("file", tmp)
         assert len(ds2) == len(r_tmp)
         v_tmp = r_tmp[0].to_numpy()
         assert np.allclose(v1 + 1, v_tmp)
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_grib_serialise_file_fieldlist_core(fl_type, array_backend):
-    ds = load_grib_data("test.grib", fl_type, array_backend)
+def test_grib_serialise_file_fieldlist_core(fl_type):
+    ds, _ = load_grib_data("test.grib", fl_type)
 
     pickled_f = pickle.dumps(ds)
     ds2 = pickle.loads(pickled_f)
@@ -108,9 +121,8 @@ def test_grib_serialise_file_fieldlist_core(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_grib_serialise_file_fieldlist_sel(fl_type, array_backend):
-    ds0 = load_grib_data("test6.grib", fl_type, array_backend)
+def test_grib_serialise_file_fieldlist_sel(fl_type):
+    ds0, _ = load_grib_data("test6.grib", fl_type)
     ds = ds0.sel(param="t")
     assert len(ds) == 2
 
@@ -129,11 +141,10 @@ def test_grib_serialise_file_fieldlist_sel(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_grib_serialise_file_fieldlist_concat(fl_type, array_backend):
-    ds = load_grib_data("test.grib", fl_type, array_backend) + load_grib_data(
-        "test6.grib", fl_type, array_backend
-    )
+def test_grib_serialise_file_fieldlist_concat(fl_type):
+    ds00, _ = load_grib_data("test.grib", fl_type)
+    ds01, _ = load_grib_data("test6.grib", fl_type)
+    ds = ds00 + ds01
     assert len(ds) == 8
 
     pickled_f = pickle.dumps(ds)

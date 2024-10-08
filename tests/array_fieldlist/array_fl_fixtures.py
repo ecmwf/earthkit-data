@@ -26,7 +26,8 @@ def load_array_fl(num, array_backend=None):
     ds_in = []
     md = []
     for fname in files:
-        ds_in.append(from_source("file", earthkit_examples_file(fname), array_backend=array_backend))
+        ds = from_source("file", earthkit_examples_file(fname))
+        ds_in.append(ds.to_fieldlist(array_backend=array_backend))
         md += ds_in[-1].metadata("param")
 
     ds = []
@@ -38,7 +39,8 @@ def load_array_fl(num, array_backend=None):
 
 
 def load_array_fl_file(fname, array_backend=None):
-    ds_in = from_source("file", earthkit_examples_file(fname), array_backend=array_backend)
+    ds_in = from_source("file", earthkit_examples_file(fname))
+    ds_in = ds_in.to_fieldlist(array_backend=array_backend)
     md = ds_in.metadata("param")
 
     ds = FieldList.from_array(ds_in.values, [m.override(edition=1) for m in ds_in.metadata()])
@@ -101,7 +103,6 @@ def check_array_fl_from_to_fieldlist(ds, ds_input, md_full, array_backend=None, 
     assert ns.allclose(ds[0].to_array(**np_kwargs), ds_input[0][0].to_array(**np_kwargs))
 
     assert ds.to_array(**np_kwargs).shape == ds_input[0].to_array(**np_kwargs).shape
-    assert ds._array.shape == ds_input[0].to_array(**np_kwargs).shape
 
     # check slice
     r = ds[1]
