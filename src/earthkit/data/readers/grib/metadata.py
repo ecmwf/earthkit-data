@@ -415,7 +415,14 @@ class GribMetadata(Metadata):
 
         if namespace == "default" or namespace == "":
             namespace = None
-        return self._handle.as_namespace(namespace)
+        r = self._handle.as_namespace(namespace)
+
+        # special case when  "param" is "~".
+        if r is not None:
+            for k in ("shortName", "param"):
+                if k in r and r[k] == "~":
+                    r[k] = self.get(k)
+        return r
 
     @property
     def geography(self):
