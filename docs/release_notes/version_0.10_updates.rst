@@ -1,6 +1,16 @@
 Version 0.10 Updates
 /////////////////////////
 
+Version 0.10.7
+===============
+
+Fixes
+++++++
+
+- When "param" or "shortName" in a namespace is "~" in the GRIB header :func:`metadata` now returns the value of "paramId" as a str for both these keys in the relevant namespaces. Previously "~" was returned.
+
+
+Version 0.9.0
 
 Version 0.10.4
 ===============
