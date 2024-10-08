@@ -540,6 +540,9 @@ def test_grib_tilde_shortname(fl_type):
     assert f[0].metadata("paramId", astype=int) == 106
     assert f[0].metadata("param") == "106"
 
+    assert f[0].metadata(namespace="mars")["param"] == "106"
+    assert f[0].metadata(namespace="parameter")["shortName"] == "106"
+
 
 if __name__ == "__main__":
     from earthkit.data.testing import main
