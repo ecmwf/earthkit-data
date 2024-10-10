@@ -13,6 +13,7 @@ import logging
 from .dim import DATE_KEYS
 from .dim import DATETIME_KEYS
 from .dim import LEVEL_KEYS
+from .dim import MONTH_KEYS
 from .dim import STEP_KEYS
 from .dim import TIME_KEYS
 
@@ -20,12 +21,25 @@ LOG = logging.getLogger(__name__)
 
 
 class Coord:
-    def __init__(self, name, vals, dims=None, ds=None):
+    def __init__(self, name, vals, dims=None, ds=None, component=None):
         self.name = name
         self.vals = vals
         self.dims = dims
         if not self.dims:
             self.dims = (self.name,)
+        self.component = component
+
+        if self.component:
+            assert isinstance(self.component, tuple)
+            assert len(self.component) == 2
+            if len(self.vals) != len(self.component[1]):
+                raise ValueError(
+                    (
+                        f"Invalid remapping for {name=}. Number of coordinate values"
+                        " does not match number of component values,"
+                        f" {len(self.vals)} != {len(self.component[1])}"
+                    )
+                )
 
     @staticmethod
     def make(name, *args, **kwargs):
@@ -33,8 +47,10 @@ class Coord:
             return DateTimeCoord(name, *args, **kwargs)
         elif name in DATE_KEYS:
             return DateCoord(name, *args, **kwargs)
-        if name in TIME_KEYS:
+        elif name in TIME_KEYS:
             return TimeCoord(name, *args, **kwargs)
+        elif name in MONTH_KEYS:
+            return MonthCoord(name, *args, **kwargs)
         elif name in STEP_KEYS:
             return StepCoord(name, *args, **kwargs)
         elif name in LEVEL_KEYS:
@@ -57,7 +73,10 @@ class Coord:
         return {}
 
     def attrs(self, name, profile):
-        return profile.attrs.coord_attrs.get(name, {})
+        attrs = profile.attrs.coord_attrs.get(name, {})
+        if self.component:
+            attrs["_earthkit"] = {"keys": self.component[0], "values": self.component[1]}
+        return attrs
 
     @staticmethod
     def _to_datetime_list(vals):
@@ -78,6 +97,12 @@ class Coord:
 class DateTimeCoord(Coord):
     def convert(self, profile):
         return Coord._to_datetime_list(self.vals)
+
+    def attrs(self, name, profile):
+        attrs = profile.attrs.coord_attrs.get(name, {})
+        if self.component:
+            attrs["_earthkit"] = {"keys": self.component[0]}
+        return attrs
 
 
 class DateCoord(Coord):
@@ -139,8 +164,12 @@ class StepCoord(Coord):
         return attrs
 
 
+class MonthCoord(Coord):
+    pass
+
+
 class LevelCoord(Coord):
-    def __init__(self, name, vals, dims=None, ds=None):
+    def __init__(self, name, vals, dims=None, ds=None, **kwargs):
         self.level_type = {}
         if ds is not None:
             for k in ["levtype", "typeOfLevel"]:
@@ -148,7 +177,7 @@ class LevelCoord(Coord):
                 if v is not None:
                     self.level_type[k] = v
 
-        super().__init__(name, vals, dims)
+        super().__init__(name, vals, dims, **kwargs)
 
     def attrs(self, name, profile):
         attrs = profile.attrs
