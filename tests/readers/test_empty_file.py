@@ -21,7 +21,7 @@ def test_empty_file_reader():
 
 
 def test_nonexisting_file_reader():
-    with pytest.raises(FileExistsError):
+    with pytest.raises(FileNotFoundError):
         earthkit.data.from_source("file", "__nonexistingfile__")
 
 
