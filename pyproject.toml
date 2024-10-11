@@ -93,14 +93,14 @@ optional-dependencies.dev = [
   "pytest-timeout",
 ]
 optional-dependencies.docs = [
+  "nbsphinx",
   "pygments>=2.6.1",
   "sphinx>=7.3.7",
-  "sphinx-rtd-theme",
-  "nbsphinx",
   "sphinx-autoapi",
-  "sphinx-issues",
-  "sphinx-tabs",
   "sphinx-copybutton",
+  "sphinx-issues",
+  "sphinx-rtd-theme",
+  "sphinx-tabs",
 ]
 optional-dependencies.ecmwf-opendata = [
   "ecmwf-opendata>=0.3.3",
