@@ -41,7 +41,7 @@ We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~data.
 Using open_dataset()
 ++++++++++++++++++++
 
-We can also use the Xarray engine to read GRIB data directly with :py:func:`xarray.open_dataset` function. Naturally, this feature requires earthkit-data to be installed.
+We can also use the Xarray engine to read GRIB data directly with the :py:func:`xarray.open_dataset` function. Naturally, this feature requires earthkit-data to be installed.
 
 .. code-block:: python
 

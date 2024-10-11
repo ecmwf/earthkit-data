@@ -11,6 +11,7 @@ import logging
 
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
+from earthkit.data.utils.dates import datetime_from_grib
 
 LOG = logging.getLogger(__name__)
 
@@ -41,7 +42,8 @@ LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels"]
 LEVEL_TYPE_KEYS = ["typeOfLevel", "levtype"]
 DATE_KEYS = ["date", "andate", "validityDate", "dataDate", "hdate", "referenceDate", "indexingDate"]
 TIME_KEYS = ["time", "antime", "validityTime", "dataTime", "referenceTime", "indexingTime"]
-STEP_KEYS = ["step", "endStep", "stepRange"]
+STEP_KEYS = ["step", "endStep", "stepRange", "forecastMonth"]
+MONTH_KEYS = ["forecastMonth"]
 VALID_DATETIME_KEYS = ["valid_time", "valid_datetime"]
 BASE_DATETIME_KEYS = [
     "forecast_reference_time",
@@ -214,12 +216,15 @@ class Dim:
     def deactivate_drop_list(self):
         self.owner.deactivate([self.name, self.key] + self.drop, ignore_dim=self)
 
-    def as_coord(self, key, values, tensor):
+    def as_coord(self, key, values, component, tensor):
         if key not in self.coords:
             from .coord import Coord
 
-            self.coords[key] = Coord.make(key, values, ds=tensor.source)
+            self.coords[key] = Coord.make(key, values, ds=tensor.source, component=component)
         return key, self.coords[key]
+
+    def remapping_keys(self):
+        return []
 
     def __repr__(self):
         return f"{self.__class__.__name__}(name={self.name}, key={self.key})"
@@ -271,8 +276,6 @@ class CustomForecastRefDim(Dim):
         if not val:
             return None
         else:
-            from earthkit.data.utils.dates import datetime_from_grib
-
             try:
                 date, time = val.split("_")
                 return datetime_from_grib(int(date), int(time)).isoformat()
@@ -327,10 +330,10 @@ class LevelPerTypeDim(Dim):
     def copy(self):
         return self.__class__(self.owner, self.level_key, self.level_type_key)
 
-    def as_coord(self, key, values, tensor):
+    def as_coord(self, key, values, component, tensor):
         lev_type = tensor.source[0].metadata(self.level_type_key)
         if not lev_type:
-            raise ValueError(f"{d.type_key} not found in metadata")
+            raise ValueError(f"{self.level_type_key} not found in metadata")
 
         if lev_type not in self.coords:
             from .coord import Coord
@@ -356,19 +359,25 @@ class LevelAndTypeDim(Dim):
     def copy(self):
         return self.__class__(self.owner, self.level_key, self.level_type_key, active=self.active)
 
+    def remapping_keys(self):
+        return [self.level_key, self.level_type_key]
+
 
 class RemappingDim(Dim):
-    def __init__(self, owner, name, keys):
+    def __init__(self, owner, name, keys, **kwargs):
         self.name = name
         self.keys = [k for k in keys if k]
         self.drop = self.build_drop(keys)
-        super().__init__(owner)
+        super().__init__(owner, **kwargs)
 
     def build_drop(self, keys):
         r = list(keys)
         for k in keys:
             r.extend(find_alias(k))
         return r
+
+    def remapping_keys(self):
+        return self.keys
 
     def copy(self):
         return self.__class__(self.owner, self.name, self.keys)
@@ -613,7 +622,7 @@ class Dims:
         remapping_dims = {}
         if remapping:
             for k in remapping.lists:
-                d = RemappingDim(self, k, remapping.keys(k))
+                d = RemappingDim(self, k, remapping.components(k))
                 if k == self.profile.variable_key:
                     self.var_key_dim = d
                 elif k in keys:
