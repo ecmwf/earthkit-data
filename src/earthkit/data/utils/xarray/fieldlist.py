@@ -100,11 +100,6 @@ class IndexDB:
     def __repr__(self) -> str:
         return f"IndexDB(_index={self._index}, component={self._component})"
 
-    # def component_keys(self, key):
-    #     if key not in self._component:
-    #         raise KeyError(f"Could not find component for {key=}")
-    #     return self._component[key][0]
-
 
 class WrappedFieldList(FieldList):
     def __init__(self, fieldlist, keys=None, db=None, remapping=None):
@@ -122,12 +117,6 @@ class WrappedFieldList(FieldList):
             self.db = IndexDB(*self.unique_values(keys, component=True))
 
         assert self.db
-
-        # self.db = dict()
-        # if db is not None:
-        #     self.db = db
-        # elif keys:
-        #     self.db = self.unique_values(keys)
 
     def index(self, key, component=False):
         # print(f"called {key=}")
@@ -165,14 +154,7 @@ class WrappedFieldList(FieldList):
         if isinstance(names, str):
             names = [names]
 
-        # indices = dict()
-        # components = dict()
-        # keys = list(names)
         keys, indices, components = self.db.collect(names, component=component)
-        # for k in names:
-        #     if k in self.db:
-        #         indices[k] = self.db.index[k]
-        #         keys.remove(k)
 
         if keys:
             vals = defaultdict(dict)
@@ -186,11 +168,6 @@ class WrappedFieldList(FieldList):
                 r = f._attributes(keys, remapping=self.remapping, joiner=joiner)
                 for k, v in r.items():
                     vals[k][v] = True
-                    # if k in self.remapping:
-                    #     vals[k][v[0]] = True
-                    #     vals[WrappedFieldList.components_key(k)][v[1]] = True
-                    # else:
-                    #     vals[k][v[0]] = True
 
             vals = {k: tuple(values.keys()) for k, values in vals.items()}
 
@@ -213,8 +190,6 @@ class WrappedFieldList(FieldList):
                     indices[k] = v
 
         if component:
-            # print(f"{indices=}")
-            # print(f"{components=}")
             return indices, components
         else:
             return indices
