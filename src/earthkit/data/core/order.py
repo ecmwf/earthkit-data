@@ -39,6 +39,10 @@ class Remapping(dict):
             def join(self, args):
                 return "".join(str(x) for x in args)
 
+            @staticmethod
+            def patch(patch, value):
+                return patch(value)
+
         if joiner is None:
             joiner = CustomJoiner()
         else:
@@ -67,7 +71,7 @@ class Remapping(dict):
             return joiner.join(lst)
         return joiner.format_name(name, **kwargs)
 
-    def keys(self, name):
+    def components(self, name):
         if name in self.lists:
             if not callable(self.lists[name]):
                 lst = []
@@ -75,6 +79,7 @@ class Remapping(dict):
                     if i % 2 == 1:
                         lst.append(bit)
                 return lst
+        return []
 
     def as_dict(self):
         return dict(self)
@@ -108,13 +113,16 @@ class Patch(dict):
         # For JSON, we simply forward to the remapping
         super().__init__(proc.as_dict())
 
-    def __call__(self, func):
-        next = self.proc(func)
+    def __call__(self, func, joiner=None):
+        next = self.proc(func, joiner=joiner)
 
         def wrapped(name, **kwargs):
             result = next(name, **kwargs)
             if name == self.name:
-                result = self.patch(result)
+                if joiner is not None:
+                    result = joiner.patch(self.patch, result)
+                else:
+                    result = self.patch(result)
             return result
 
         return wrapped
@@ -122,6 +130,9 @@ class Patch(dict):
 
     def as_dict(self):
         return dict(self)
+
+    def components(self, name):
+        return self.proc.components(name)
 
 
 def build_remapping(mapping, patches=None):

@@ -680,11 +680,11 @@ class Field(Base):
             self._metadata.get("number", None),
         )
 
-    def _attributes(self, names, remapping=None, default=None):
+    def _attributes(self, names, remapping=None, joiner=None, default=None):
         result = {}
         metadata = self._metadata.get
         if remapping is not None:
-            metadata = remapping(metadata)
+            metadata = remapping(metadata, joiner=joiner)
 
         for name in names:
             result[name] = metadata(name, default=default)

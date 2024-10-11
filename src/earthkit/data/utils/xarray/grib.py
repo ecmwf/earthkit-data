@@ -21,13 +21,6 @@ LOG = logging.getLogger(__name__)
 
 
 def update_metadata(metadata, compulsory):
-    # # TODO: revisit that logic
-    # combined = Combined(handle, metadata)
-
-    # if "step" in metadata or "endStep" in metadata:
-    #     if combined["type"] == "an":
-    #         metadata["type"] = "fc"
-
     if "valid_time" in metadata:
         dt = to_datetime(metadata.pop("valid_time"))
         metadata["date"] = dt.date()
@@ -57,16 +50,6 @@ def update_metadata(metadata, compulsory):
             metadata["stream"] = "enfo"
             metadata.setdefault("type", "pf")
 
-    # if "number" in metadata:
-    #     compulsory += ("numberOfForecastsInEnsemble",)
-    #     productDefinitionTemplateNumber = {"tp": 11}
-    #     metadata["productDefinitionTemplateNumber"] = productDefinitionTemplateNumber.get(
-    #         handle.get("shortName"), 1
-    #     )
-
-    # if metadata.get("type") in ("pf", "cf"):
-    #     metadata.setdefault("typeOfGeneratingProcess", 4)
-
     if "levelist" in metadata:
         metadata.setdefault("levtype", "pl")
 
@@ -90,28 +73,67 @@ def update_metadata(metadata, compulsory):
         metadata["typeOfLevel"] = levtype_remap[v]
 
 
-def data_array_to_fields(da):
+def coord_to_component(coord):
+    if "_earthkit" in coord.attrs:
+        keys = coord.attrs["_earthkit"].get("keys", [])
+        values = coord.attrs["_earthkit"].get("values", [])
+
+        # for datetime composite coords only the keys are added as an attribute
+        if not values and len(coord) == 2:
+            values = [datetime_to_grib(to_datetime(x)) for x in coord.values]
+
+        if len(coord) == len(values):
+            r = [[a, *b] for a, b in zip(coord.values, values)]
+            return r, keys
+        else:
+            raise ValueError(f"Cannot extract components for coordinate {coord.name}")
+    return None
+
+
+def data_array_to_fields(da, metadata=None):
     from earthkit.data.sources.array_list import ArrayField
 
     dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon", "latitude", "longitude"]]
-    coords = {key: value for key, value in da.coords.items() if key in dims}
-    # for k, v in coords.items():
-    #     print(k, v.name, v.values)
+    coords = {k: v for k, v in da.coords.items() if k in dims}
+    components = {}
+    for k in coords:
+        c = coord_to_component(coords[k])
+        if c:
+            coords[k] = c[0]
+            components[k] = c[1]
+        else:
+            coords[k] = coords[k].values
 
-    for values in product(*[coords[dim].values for dim in dims]):
+    # print(f"{coords=}")
+
+    for values in product(*[coords[dim] for dim in dims]):
+
+        # field
         local_coords = dict(zip(dims, values))
-        grib_metadata = dict(**local_coords)
-        update_metadata(grib_metadata, [])
+        for k in components:
+            local_coords[k] = local_coords[k][0]
 
+        # print("local_coords", local_coords)
         xa_field = da.sel(**local_coords)
 
+        # metadata
+        grib_metadata = dict(zip(dims, values))
+        for k in components:
+            # print(f"{k=}")
+            # print(grib_metadata[k])
+            grib_metadata.update(dict(zip(components[k], grib_metadata[k][1:])))
+            # print(f"-> {grib_metadata=}")
+            del grib_metadata[k]
+        update_metadata(grib_metadata, [])
+
         # extract metadata from object
-        if hasattr(da, "earthkit"):
-            metadata = da.earthkit.metadata
-        else:
-            raise ValueError(
-                "Earthkit attribute not found in DataArray. Required for conversion to FieldList!"
-            )
+        if metadata is None:
+            if hasattr(da, "earthkit"):
+                metadata = da.earthkit.metadata
+            else:
+                raise ValueError(
+                    "Earthkit attribute not found in DataArray. Required for conversion to FieldList!"
+                )
 
         metadata = metadata.override(grib_metadata)
         yield ArrayField(xa_field.values, metadata)
