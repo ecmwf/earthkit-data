@@ -92,6 +92,16 @@ optional-dependencies.dev = [
   "pytest-forked",
   "pytest-timeout",
 ]
+optional-dependencies.docs = [
+  "pygments>=2.6.1",
+  "sphinx>=7.3.7",
+  "sphinx-rtd-theme",
+  "nbsphinx",
+  "sphinx-autoapi",
+  "sphinx-issues",
+  "sphinx-tabs",
+  "sphinx-copybutton",
+]
 optional-dependencies.ecmwf-opendata = [
   "ecmwf-opendata>=0.3.3",
 ]
@@ -113,7 +123,7 @@ optional-dependencies.polytope = [
 optional-dependencies.projection = [
   "cartopy",
 ]
-optional-dependencies.test = [
+optional-dependencies.tests = [
   "earthkit-data-demo-source",
   "nbconvert",
   "nbformat",
