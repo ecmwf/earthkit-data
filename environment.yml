@@ -33,6 +33,7 @@ dependencies:
 - lru-dict
 - markdown
 - aws-requests-auth
+- botocore
 - make
 - mypy
 - myst-parser
