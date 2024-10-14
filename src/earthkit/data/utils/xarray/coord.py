@@ -60,10 +60,11 @@ class Coord:
     def to_xr_var(self, profile):
         import xarray
 
-        c = profile.rename_coords({self.name: None})
-        name = list(c.keys())[0]
+        name = self.name
         return xarray.Variable(
-            profile.rename_dims(self.dims), self.convert(profile), self.attrs(name, profile)
+            self.dims,
+            self.convert(profile),
+            self.attrs(name, profile),
         )
 
     def convert(self, profile):
