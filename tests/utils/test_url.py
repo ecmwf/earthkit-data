@@ -195,7 +195,7 @@ from earthkit.data.utils.url import UrlSpec
     ],
 )
 def test_url_spec(urls, _kwargs, expected_url, expected_parts, expected_items):
-    r = UrlSpec(urls, **_kwargs)
+    r = UrlSpec.from_urls(urls, **_kwargs)
 
     assert r.url == expected_url
     assert r.parts == expected_parts
@@ -224,7 +224,43 @@ def test_url_spec(urls, _kwargs, expected_url, expected_parts, expected_items):
 )
 def test_url_spec_bad(urls, _kwargs, expected_url, expected_parts, expected_items):
     with pytest.raises(ValueError):
-        UrlSpec(urls, **_kwargs)
+        UrlSpec.from_urls(urls, **_kwargs)
+
+
+@pytest.mark.parametrize(
+    "urls,_kwargs,expected_url,expected_parts,expected_items",
+    [
+        (
+            [{"url": "b.grib", "chunk_size": 12}, {"url": "a.grib"}],
+            {"parts": (0, 2)},
+            ("a.grib", "b.grib"),
+            ((SimplePart(offset=0, length=2),), (SimplePart(offset=0, length=2),)),
+            [
+                (
+                    "a.grib",
+                    (SimplePart(offset=0, length=2),),
+                    {},
+                ),
+                (
+                    "b.grib",
+                    (SimplePart(offset=0, length=2),),
+                    {"chunk_size": 12},
+                ),
+            ],
+        ),
+    ],
+)
+def test_url_spec_sorted(urls, _kwargs, expected_url, expected_parts, expected_items):
+    r = UrlSpec.from_urls(urls, **_kwargs)
+    r1 = r.sorted()
+
+    assert r1.url != r.url
+    # assert r1.parts != r.parts
+    assert r1.url == expected_url
+    assert r1.parts == expected_parts
+
+    for i, x in enumerate(r1):
+        assert x == expected_items[i]
 
 
 if __name__ == "__main__":

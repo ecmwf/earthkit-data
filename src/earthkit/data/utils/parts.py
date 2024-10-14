@@ -151,16 +151,25 @@ class PathAndParts:
     sequence = None
 
     def __init__(self, path, parts):
-        self.path, self.parts = self._parse(path, parts)
+        """Should not be instantiated directly.
+        The public API are the factory methods."""
+        self.path = path
+        self.parts = parts
+
+    @classmethod
+    def from_paths(cls, path, parts):
+        path, parts = cls._parse(path, parts, cls.sequence, cls.compress)
+        return cls(path, parts)
 
     def is_empty(self):
         return not (self.parts is not None and any(x is not None for x in self.parts))
 
     def update(self, path):
         if self.path != path:
-            self.path, self.parts = self._parse(path, self.parts)
+            self.path, self.parts = self._parse(path, self.parts, self.sequence, self.compress)
 
-    def _parse(self, paths, parts):
+    @staticmethod
+    def _parse(paths, parts, sequence, compress):
         """Preprocess paths and parts.
 
         Parameters
@@ -182,7 +191,7 @@ class PathAndParts:
         """
         if parts is None:
             if isinstance(paths, str):
-                if self.sequence:
+                if sequence:
                     return [paths], [None]
                 else:
                     return paths, None
@@ -190,11 +199,11 @@ class PathAndParts:
                 return paths, [None] * len(paths)
 
         paths = check_urls_and_parts(paths, parts)
-        paths_and_parts = ensure_urls_and_parts(paths, parts, compress=self.compress)
+        paths_and_parts = ensure_urls_and_parts(paths, parts, compress=compress)
 
         paths, parts = zip(*paths_and_parts)
         assert len(paths) == len(parts)
-        if not self.sequence and len(paths) == 1:
+        if not sequence and len(paths) == 1:
             return paths[0], parts[0]
         else:
             return paths, parts
@@ -209,3 +218,9 @@ class PathAndParts:
             path = [self.path]
             parts = [self.parts]
         return zip(path, parts)
+
+    def sorted(self):
+        if not isinstance(self.path, str):
+            path, parts = zip(*sorted(zip(self.path, self.parts), key=lambda x: x[0]))
+            return self.__class__(path, parts)
+        return self.__class__(self.path, self.parts)

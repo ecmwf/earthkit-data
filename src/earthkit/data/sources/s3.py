@@ -226,7 +226,7 @@ class S3Source(FileSource):
                 **self._stream_kwargs,
             )
         else:
-            return MultiUrl(url_spec, fake_headers=fake_headers)
+            return MultiUrl(url_spec, sort_urls=False, fake_headers=fake_headers)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"

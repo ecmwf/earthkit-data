@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-
+import copy
 from collections import namedtuple
 
 from earthkit.data.utils import ensure_sequence
@@ -53,19 +53,24 @@ class UrlSourcePathAndParts(PathAndParts):
 
 
 class UrlSpec:
-    def __init__(self, urls, **kwargs):
-        self.spec = []
+    def __init__(self, spec, urls_and_parts):
+        """Should not be instantiated directly.
+        The public API are the factory methods."""
+        self.spec = spec
+        self.url_and_parts = urls_and_parts
 
+    @classmethod
+    def from_urls(cls, urls, **kwargs):
+        spec = []
         if isinstance(urls, UrlSpecItem):
-            self.spec.append(urls)
-            self.url_and_parts = UrlSourcePathAndParts(urls.url, urls.parts)
+            spec.append(urls)
+            url_and_parts = UrlSourcePathAndParts.from_paths(urls.url, urls.parts)
         else:
             url, _kwargs, parts_kwarg = parse_url_args(urls, **kwargs)
-            self.url_and_parts = UrlSourcePathAndParts(url, parts_kwarg)
-
-            self.spec = []
-            for i, x in enumerate(self.url_and_parts):
-                self.spec.append(UrlSpecItem(x[0], x[1], _kwargs[i]))
+            url_and_parts = UrlSourcePathAndParts.from_paths(url, parts_kwarg)
+            for i, x in enumerate(url_and_parts):
+                spec.append(UrlSpecItem(x[0], x[1], _kwargs[i]))
+        return cls(spec, url_and_parts)
 
     def __len__(self):
         return len(self.spec)
@@ -86,3 +91,8 @@ class UrlSpec:
 
     def zipped(self):
         return self.url_and_parts.zipped()
+
+    def sorted(self):
+        spec = sorted(copy.deepcopy(self.spec), key=lambda spec: spec[0])
+        url_and_parts = self.url_and_parts.sorted()
+        return UrlSpec(spec, url_and_parts)

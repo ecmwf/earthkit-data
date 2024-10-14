@@ -134,7 +134,7 @@ class UrlBase(FileSource):
         from earthkit.data.utils.url import UrlSpecItem
 
         if isinstance(url, UrlSpecItem):
-            self.url_spec = UrlSpec(url)
+            self.url_spec = UrlSpec.from_urls(url)
         else:
             url_kwargs = dict(
                 chunk_size=chunk_size,
@@ -145,7 +145,7 @@ class UrlBase(FileSource):
                 fake_headers=fake_headers,
                 auth=auth,
             )
-            self.url_spec = UrlSpec(url, **url_kwargs)
+            self.url_spec = UrlSpec.from_urls(url, **url_kwargs)
 
         self._kwargs = kwargs
         LOG.debug(f"url={self.url} url_parts={self.url_parts} auth={auth} _kwargs={self._kwargs}")
@@ -204,7 +204,6 @@ class Url(UrlBase):
         *,
         update_if_out_of_date=False,
         force=None,
-        parallel=True,
         stream=False,
         **kwargs,
     ):
@@ -212,15 +211,9 @@ class Url(UrlBase):
 
         self.update_if_out_of_date = update_if_out_of_date
         self.force = force
-        self.parallel = parallel
         self.stream = stream
 
-        # if self.stream and self.parallel:
-        #     raise ValueError(f"URL: parallel=True is not allowed when stream=True")
-
-        self._call_multi = self.parallel and len(self.url_spec) > 1
-
-        if not self.stream and not self._call_multi:
+        if not self.stream:
             self._download()
 
     def mutate(self):
@@ -233,11 +226,6 @@ class Url(UrlBase):
             from .stream import make_stream_source_from_other
 
             return make_stream_source_from_other(s, **self._kwargs)
-        elif self._call_multi:
-            assert self.parallel
-            from earthkit.data.sources.multi_url import MultiUrl
-
-            return MultiUrl(self.url_spec, **self._kwargs)
 
         return super().mutate()
 
