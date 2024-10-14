@@ -14,10 +14,13 @@ import sys
 
 import pytest
 
+from earthkit.data import from_source
+from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.utils.xarray.profile import Profile
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
+from xr_engine_fixtures import compare_dim_order  # noqa: E402
 from xr_engine_fixtures import load_wrapped_fieldlist  # noqa: E402
 
 DS_LEV = {
@@ -314,3 +317,25 @@ def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
     assert prof.variable_key == var_key
     assert prof.variables == variables
     assert prof.dim_keys == dim_keys
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "kwargs,dim_keys",
+    [
+        (
+            {"profile": "mars", "time_dim_mode": "raw", "rename_dims": {"levelist": "zz"}},
+            ["date", "time", "step", "zz"],
+        ),
+    ],
+)
+def test_xr_rename_dims(kwargs, dim_keys):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds = ds_ek.to_xarray(**kwargs)
+    num = len(ds)
+
+    dim_keys = dim_keys + ["latitude", "longitude"]
+    assert len(ds) == num
+
+    for v in ds:
+        compare_dim_order(ds, dim_keys, v)

@@ -331,11 +331,8 @@ class Profile:
         keys += [k for k in self.dim_keys if k not in keys]
         return keys
 
-    def rename_dims(self, dims):
-        return [self.dims.rename_dims_map.get(d, d) for d in dims]
-
-    def rename_coords(self, coords):
-        return {self.dims.rename_dims_map.get(k, k): v for k, v in coords.items()}
+    def rename_dims_map(self):
+        return self.dims.rename_dims_map
 
     def rename_variable(self, v):
         return self.rename_variables_map.get(v, v)

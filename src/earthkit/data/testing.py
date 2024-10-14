@@ -125,6 +125,8 @@ if not NO_CUPY:
     except Exception:
         NO_CUPY = True
 
+NO_S3_AUTH = not modules_installed("aws_requests_auth")
+
 
 def MISSING(*modules):
     return not modules_installed(*modules)
