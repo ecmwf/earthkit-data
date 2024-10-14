@@ -226,10 +226,13 @@ class TensorBackendBuilder:
         # build variable and global attributes
         xr_attrs = self.profile.attrs.builder.build(self.ds, t_vars, rename=True)
 
-        xr_coords = self.profile.rename_coords(self.coords())
+        xr_coords = self.coords()
         xr_vars = {self.profile.rename_variable(k): v.build() for k, v in t_vars.items()}
 
         dataset = xarray.Dataset(xr_vars, coords=xr_coords, attrs=xr_attrs)
+        if self.profile.rename_dims_map():
+            dataset = dataset.rename(self.profile.rename_dims_map())
+
         return dataset
 
     def make_variable(self, ds, dims, key, name):
@@ -275,7 +278,6 @@ class TensorBackendBuilder:
         # self.collect_coords(tensor)
         # var_dims = self.var_dims(tensor)
         # var_dims = [d.key for d in tensor_dims]
-        # var_dims = self.profile.rename_dims(var_dims)
         # print(f"var_dims={var_dims}")
 
         backend_array = TensorBackendArray(
