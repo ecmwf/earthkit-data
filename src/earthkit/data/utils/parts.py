@@ -148,6 +148,7 @@ def compress_parts(parts):
 
 class PathAndParts:
     compress = None
+    sequence = None
 
     def __init__(self, path, parts):
         self.path, self.parts = self._parse(path, parts)
@@ -181,7 +182,10 @@ class PathAndParts:
         """
         if parts is None:
             if isinstance(paths, str):
-                return paths, None
+                if self.sequence:
+                    return [paths], [None]
+                else:
+                    return paths, None
             elif isinstance(paths, (list, tuple)) and all(isinstance(p, str) for p in paths):
                 return paths, [None] * len(paths)
 
@@ -190,7 +194,7 @@ class PathAndParts:
 
         paths, parts = zip(*paths_and_parts)
         assert len(paths) == len(parts)
-        if len(paths) == 1:
+        if not self.sequence and len(paths) == 1:
             return paths[0], parts[0]
         else:
             return paths, parts

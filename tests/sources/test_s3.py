@@ -18,8 +18,6 @@ from earthkit.data.testing import NO_S3_AUTH
 def _check_s3_credentials():
     import os
 
-    # os.environ["AWS_ACCESS_KEY_ID"] = "6E1JAZ50GYUJ6QX5D2LD"
-    # os.environ["AWS_SECRET_ACCESS_KEY"] = "InuBIinbRovQ1AXAZh3MeSue6LKkoCzCbTaHsknQ"
     key_id = os.environ.get("AWS_ACCESS_KEY_ID", None)
     key = os.environ.get("AWS_SECRET_ACCESS_KEY", None)
     if key_id and key:
@@ -142,7 +140,7 @@ def test_s3_ewc_private_single_parts(parts, expected_meta):
     assert ds.metadata(("param", "level")) == expected_meta
 
 
-def test_s3_ewc_public_stream():
+def test_s3_ewc_public_stream_core():
     r = {
         "endpoint": "object-store.os-api.cci1.ecmwf.int",
         "bucket": "earthkit-test-data-public",

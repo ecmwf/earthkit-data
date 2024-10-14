@@ -21,22 +21,15 @@ DEFAULT_ENDPOINT = "s3.amazonaws.com"
 DEFAULT_REGION = "eu-west-2"
 
 
-def request_to_resource(requests):
-    def _make_part(offset, length):
-        if offset is not None:
-            offset = int(offset)
-
-        if length is not None:
-            length = int(length)
-
-        if offset is not None or length is not None:
-            return [(offset, length)]
-
+def request_to_resource(requests, global_credentials):
     resources = []
     for r in requests:
         bucket = r["bucket"]
         endpoint = r.get("endpoint", DEFAULT_ENDPOINT)
         o = ensure_sequence(r["objects"])
+        credentials = S3Credentials.from_other(global_credentials)
+        credentials.update(r)
+        credentials.check()
         for obj in o:
             if isinstance(obj, str):
                 key = obj
@@ -45,13 +38,52 @@ def request_to_resource(requests):
                 key = obj["object"]
                 region = obj.get("region", DEFAULT_REGION)
                 parts = obj.get("parts", None)
-                resources.append(S3Resource(endpoint, bucket, region, key, parts=parts))
+                resources.append(
+                    S3Resource(
+                        endpoint,
+                        bucket,
+                        region,
+                        key,
+                        parts=parts,
+                        credentials=credentials,
+                    )
+                )
+
     return resources
 
 
+class S3Credentials:
+    def __init__(self, aws_access_key, aws_secret_access_key, aws_token=None):
+        self.aws_access_key = aws_access_key
+        self.aws_secret_access_key = aws_secret_access_key
+        self.aws_token = aws_token
+
+    def check(self):
+        if self.aws_access_key and not self.aws_secret_access_key:
+            raise ValueError("When aws_access_key is provided, aws_secret_access_key must also be provided")
+
+        if not self.aws_access_key and self.aws_secret_access_key:
+            raise ValueError("When aws_secret_access_key is provided, aws_access_key must also be provided")
+
+    @classmethod
+    def from_other(self, other):
+        if other is None:
+            return self(None, None)
+        return self(*[other.aws_access_key, other.aws_secret_access_key, other.aws_token])
+
+    def valid(self):
+        return self.aws_access_key and self.aws_secret_access_key
+
+    def update(self, obj):
+        self.aws_access_key = self.aws_access_key or obj.get("aws_access_key", None)
+        self.aws_secret_access_key = self.aws_secret_access_key or obj.get("aws_secret_access_key", None)
+        self.aws_token = self.aws_token or obj.get("aws_token", None)
+
+
 class S3Authenticator:
-    def __init__(self, region):
+    def __init__(self, region, credentials=None):
         self.region = region
+        self.credentials = credentials
 
     @staticmethod
     def _host(url):
@@ -60,6 +92,28 @@ class S3Authenticator:
         return urlparse(url).netloc
 
     def __call__(self, r):
+        if self.credentials is not None and self.credentials.valid():
+            return self._base_auth(r)
+
+        return self._boto_auth(r)
+
+    def _base_auth(self, r):
+        assert self.credentials is not None
+        assert self.credentials.valid()
+        from aws_requests_auth import AWSRequestsAuth
+
+        host = self._host(r.url)
+        auth = AWSRequestsAuth(
+            aws_access_key=self.credentials.aws_access_key,
+            aws_secret_access_key=self.credentials.aws_secret_access_key,
+            aws_host=host,
+            aws_region=self.region,
+            aws_service="s3",
+            aws_token=self.credentials.aws_token,
+        )
+        return auth(r)
+
+    def _boto_auth(self, r):
         from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
 
         host = self._host(r.url)
@@ -70,7 +124,7 @@ class S3Authenticator:
         )
 
         # BotoAWSRequestsAuth raises AttributeError when no credentials are found
-        # because it wants to call a method on a None object. Until this is handled
+        # due to calling a method on a None object. Until this is handled
         # correctly in aws_requests_auth we raise a properly worded exception.
         try:
             return auth(r)
@@ -85,12 +139,13 @@ class S3Authenticator:
 
 
 class S3Resource:
-    def __init__(self, endpoint, bucket, region, key, parts=None):
+    def __init__(self, endpoint, bucket, region, key, parts=None, credentials=None):
         self.endpoint = endpoint
         self.region = region
         self.bucket = bucket
         self.key = key
         self.parts = parts
+        self.credentials = credentials
 
     @property
     def url(self):
@@ -112,72 +167,66 @@ class S3Resource:
 class S3Source(FileSource):
     """Represent an AWS S3 bucket source"""
 
-    def __init__(self, *args, anon=True, stream=False, **kwargs) -> None:
+    def __init__(
+        self,
+        *args,
+        stream=False,
+        read_all=False,
+        anon=True,
+        aws_access_key=None,
+        aws_secret_access_key=None,
+        aws_token=None,
+        **kwargs,
+    ) -> None:
         super().__init__()
 
         self.anon = anon
 
-        self._stream_kwargs = dict()
-        for k in ["read_all"]:
-            if k in kwargs:
-                self._stream_kwargs[k] = kwargs.pop(k)
-
         self.stream = stream
+        self._stream_kwargs = dict(read_all=read_all)
+
+        def _collect(r):
+            if isinstance(r, dict):
+                self.request.append(r)
+            elif isinstance(r, (list, tuple)):
+                for x in r:
+                    _collect(x)
+            else:
+                raise ValueError(f"Invalid request: {r}")
 
         self.request = []
         for a in args:
-            self.request.append(a)
+            _collect(a)
 
-        self.resources = request_to_resource(self.request)
+        self.credentials = S3Credentials(aws_access_key, aws_secret_access_key, aws_token)
+        self.resources = request_to_resource(self.request, self.credentials)
 
     def mutate(self):
-        if self.stream:
-            urls = []
-            has_parts = any(r.parts is not None for r in self.resources)
-
+        url_spec = []
+        has_parts = any(r.parts is not None for r in self.resources)
+        for r in self.resources:
+            spec = {"url": r.url}
             if has_parts:
-                for r in self.resources:
-                    urls.append([r.url, r.parts])
-            else:
-                for r in self.resources:
-                    urls.append(r.url)
+                spec["parts"] = r.parts
+            if not self.anon:
+                auth = S3Authenticator(r.region, credentials=r.credentials)
+                spec["auth"] = auth
+            url_spec.append(spec)
 
-            if not self.anon and has_parts:
-                fake_headers = {"accept-ranges": "bytes"}
-            else:
-                fake_headers = None
-
-            auth = self.make_auth()
-
-            if self.stream:
-                return Url(
-                    urls,
-                    auth=auth,
-                    fake_headers=fake_headers,
-                    stream=True,
-                    **self._stream_kwargs,
-                )
+        if not self.anon and has_parts:
+            fake_headers = {"accept-ranges": "bytes"}
         else:
-            url_spec = []
-            has_parts = any(r.parts is not None for r in self.resources)
-            for r in self.resources:
-                spec = {"url": r.url}
-                if has_parts:
-                    spec["parts"] = r.parts
-                if not self.anon:
-                    auth = S3Authenticator(r.region)
-                    spec["auth"] = auth
-                url_spec.append(spec)
+            fake_headers = None
 
-            if not self.anon and has_parts:
-                fake_headers = {"accept-ranges": "bytes"}
-            else:
-                fake_headers = None
-
+        if self.stream:
+            return Url(
+                url_spec,
+                fake_headers=fake_headers,
+                stream=True,
+                **self._stream_kwargs,
+            )
+        else:
             return MultiUrl(url_spec, fake_headers=fake_headers)
-
-    def make_auth(self):
-        return S3Authenticator() if not self.anon else None
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"

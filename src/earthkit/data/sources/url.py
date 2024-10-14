@@ -148,7 +148,7 @@ class UrlBase(FileSource):
             self.url_spec = UrlSpec(url, **url_kwargs)
 
         self._kwargs = kwargs
-        LOG.debug(f"url={self.url} url_parts={self.url_parts} auth={self.auth} _kwargs={self._kwargs}")
+        LOG.debug(f"url={self.url} url_parts={self.url_parts} auth={auth} _kwargs={self._kwargs}")
 
     def connect_to_mirror(self, mirror):
         return mirror.connection_for_url(self, self.url, self.url_parts)
@@ -183,17 +183,19 @@ class Url(UrlBase):
 
     Parameters
     ----------
-    url: str, list, tuple
-        Single url or a list/tuple of urls. A url item can be:
+    url: str, list, tuple, UrlSpecItem, dict or an iterable of these
+        A single ``url`` can be:
 
         * a str
         * a list/tuple of two items. The first item is the url as a str, while the second
           item defines the parts for the given url. In this case the ``parts`` kwargs
           cannot be used.
+        * a UrlSpecItem
+        * a dict with same content as UrlSpecItem. Mandatory key is "url" and optionally
+          "parts" and "kwargs" can be used.
 
-        When ``url`` is a list/tuple these two formats cannot be mixed so either all the url
-        items are str or a list/tuple of url and parts.
-
+        Multiple urls can be provided as a list/tuple of of the single url formats above.
+        Mixing single url formats in a list/tuple is not allowed.
     """
 
     def __init__(
@@ -444,6 +446,7 @@ class SingleUrlStream(UrlBase):
 
         from urllib.parse import urlparse
 
+        assert isinstance(self.url, (list, tuple)), f"{self.url=}"
         o = urlparse(self.url[0])
         if o.scheme not in ("http", "https"):
             raise NotImplementedError(f"Streams are not supported for {o.scheme} urls")
