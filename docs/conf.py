@@ -99,6 +99,7 @@ html_css_files = ["style.css"]
 html_logo = "_static/earthkit-data.png"
 
 xref_links = {
+    "botocore": ("botocore", "https://botocore.amazonaws.com/v1/documentation/api/latest/index.html"),
     "cfgrib": ("cfgirb", "https://github.com/ecmwf/cfgrib"),
     "earthkit": ("earthkit", "https://earthkit.readthedocs.io/en/latest/"),
     "earthkit-geo": (
@@ -124,6 +125,7 @@ xref_links = {
     ),
     "odb": ("ODB", "https://odc.readthedocs.io/en/latest/content/introduction.html"),
     "pyodc": ("pyodc", "https://github.com/ecmwf/pyodc"),
+    "s3cmd": ("s3cmd", "https://s3tools.org/s3cmd"),
 }
 
 

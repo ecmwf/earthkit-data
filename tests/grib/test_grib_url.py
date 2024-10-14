@@ -43,6 +43,27 @@ def test_grib_single_url_parts(parts, expected_meta):
 
 
 @pytest.mark.parametrize(
+    "parts,expected_meta",
+    [
+        ([(0, 150)], [("t", 1000)]),
+        ([(240, 150)], [("u", 1000)]),
+        ([(240, 480)], [("u", 1000), ("v", 1000)]),
+    ],
+)
+def test_grib_single_url_parts_1(parts, expected_meta):
+    ds = from_source("url", [earthkit_remote_test_data_file("examples/test6.grib"), parts])
+
+    assert len(ds) == len(expected_meta)
+
+    cnt = 0
+    for i, f in enumerate(ds):
+        assert f.metadata(("param", "level")) == expected_meta[i], i
+        cnt += 1
+
+    assert cnt == len(expected_meta)
+
+
+@pytest.mark.parametrize(
     "parts1,parts2,expected_meta",
     [
         (

@@ -25,6 +25,7 @@ LOG = logging.getLogger(__name__)
 
 class FileSourcePathAndParts(PathAndParts):
     compress = False
+    sequence = False
 
 
 class FileSourceMeta(type(Source), type(os.PathLike)):
@@ -43,7 +44,7 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
         Source.__init__(self, **kwargs)
         self.filter = filter
         self.merger = merger
-        self._path_and_parts = FileSourcePathAndParts(path, parts)
+        self._path_and_parts = FileSourcePathAndParts.from_paths(path, parts)
 
         if self._kwargs.get("indexing", False):
             if not self._path_and_parts.is_empty():

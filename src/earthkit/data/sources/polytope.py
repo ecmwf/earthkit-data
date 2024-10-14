@@ -105,7 +105,7 @@ class Polytope(Source):
                 **self._stream_kwargs,
             )
         else:
-            return MultiUrl(urls)
+            return MultiUrl(urls, sort_urls=False)
 
 
 source = Polytope

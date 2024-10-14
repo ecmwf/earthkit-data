@@ -156,6 +156,14 @@ def ensure_iterable(obj):
     return obj
 
 
+def ensure_sequence(obj):
+    import collections.abc
+
+    if isinstance(obj, str) or not isinstance(obj, collections.abc.Sequence):
+        return [obj]
+    return obj
+
+
 def ensure_dict(obj):
     if obj is None:
         return dict()

@@ -204,6 +204,9 @@ def test_url_netcdf_source_save():
 
 
 if __name__ == "__main__":
+    import logging
+
     from earthkit.data.testing import main
 
+    logging.basicConfig(level=logging.DEBUG)
     main(__file__)
