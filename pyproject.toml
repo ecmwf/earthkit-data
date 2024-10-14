@@ -127,6 +127,7 @@ optional-dependencies.projection = [
 ]
 optional-dependencies.s3 = [
   "aws-requests-auth",
+  "botocore",
 ]
 optional-dependencies.test = [
   "earthkit-data-demo-source",
