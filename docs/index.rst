@@ -37,6 +37,7 @@ reference systems and bounding boxes.
    howtos
    guide/index
    api
+   development
 
 .. toctree::
    :maxdepth: 1
@@ -44,7 +45,6 @@ reference systems and bounding boxes.
 
    install
    release_notes/index
-   development
    licence
 
 .. toctree::

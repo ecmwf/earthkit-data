@@ -54,7 +54,8 @@ def test_polytope_odb():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_POLYTOPE, reason="No access to Polytope Web API")
-def test_polytope_grib():
+@pytest.mark.parametrize("kwargs", [{"stream": False}, {"stream": True, "read_all": True}])
+def test_polytope_grib_all(kwargs):
     request = {
         "stream": "oper",
         "levtype": "pl",
@@ -69,7 +70,46 @@ def test_polytope_grib():
         "domain": "g",
     }
 
-    ds = from_source("polytope", "ecmwf-mars", request, stream=False)
+    ds = from_source("polytope", "ecmwf-mars", request, **kwargs)
 
     assert len(ds) == 2
     assert ds.metadata("level") == [500, 500]
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_POLYTOPE, reason="No access to Polytope Web API")
+def test_polytope_grib_stream():
+    request = {
+        "stream": "oper",
+        "levtype": "pl",
+        "levellist": "500",
+        "param": "129.128",
+        "step": "0/12",
+        "time": "00:00:00",
+        "date": "20200915",
+        "type": "fc",
+        "class": "rd",
+        "expver": "hsvs",
+        "domain": "g",
+    }
+
+    ds = from_source("polytope", "ecmwf-mars", request, stream=True)
+
+    # no fieldlist methods are available
+    with pytest.raises((TypeError, NotImplementedError)):
+        len(ds)
+
+    ref = [
+        ("z", 500),
+        ("z", 500),
+    ]
+    cnt = 0
+    for i, f in enumerate(ds):
+        assert f.metadata(("param", "level")) == ref[i], i
+        cnt += 1
+
+    assert cnt == len(ref)
+
+    # stream consumed, no data is available
+    assert sum([1 for _ in ds]) == 0

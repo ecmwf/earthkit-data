@@ -20,18 +20,19 @@ LOG = logging.getLogger(__name__)
 
 
 class VariableBuilder:
-    def __init__(self, var_dims, data, local_attr_keys, tensor):
+    def __init__(self, var_dims, data, local_attr_keys, tensor, remapping):
         self.var_dims = var_dims
         self.data = data
         self._attrs = {}
         self.local_keys = ensure_iterable(local_attr_keys)
         self.tensor = tensor
+        self.remapping = remapping
 
     def build(self):
-        self._attrs["_earthkit"] = (
-            "message",
-            self.tensor.source[0].metadata().override()._handle.get_buffer(),
-        )
+        attrs = {
+            "message": self.tensor.source[0].metadata().override()._handle.get_buffer(),
+        }
+        self._attrs["_earthkit"] = attrs
         return xarray.Variable(self.var_dims, self.data, attrs=self._attrs)
 
     def load_attrs(self, keys, strict=True):
@@ -225,16 +226,21 @@ class TensorBackendBuilder:
         # build variable and global attributes
         xr_attrs = self.profile.attrs.builder.build(self.ds, t_vars, rename=True)
 
-        xr_coords = self.profile.rename_coords(self.coords())
+        xr_coords = self.coords()
         xr_vars = {self.profile.rename_variable(k): v.build() for k, v in t_vars.items()}
 
         dataset = xarray.Dataset(xr_vars, coords=xr_coords, attrs=xr_attrs)
+        if self.profile.rename_dims_map():
+            dataset = dataset.rename(self.profile.rename_dims_map())
+
         return dataset
 
     def make_variable(self, ds, dims, key, name):
         ds_var = ds.sel(**{key: name})
 
-        tensor_dims, tensor_coords, extra_tensor_attrs = self.prepare_tensor(ds_var, dims, name)
+        tensor_dims, tensor_coords, tensor_coords_component, extra_tensor_attrs = self.prepare_tensor(
+            ds_var, dims, name
+        )
         tensor_dim_keys = [d.key for d in tensor_dims]
 
         # print("tensor_dims", tensor_dims)
@@ -250,7 +256,15 @@ class TensorBackendBuilder:
 
         var_dims = []
         for d in tensor_dims:
-            k, c = d.as_coord(d.key, tensor.user_coords[d.key], tensor)
+            # Create coord for each dimension
+            # Dimensions like "level_per_type" are templates and will be
+            # added as multiple concrete dimensions to the dataset
+            k, c = d.as_coord(
+                d.key,
+                values=tensor.user_coords[d.key],
+                component=tensor_coords_component.get(d.key, None),
+                tensor=tensor,
+            )
             if k not in self.tensor_coords:
                 self.tensor_coords[k] = c
             var_dims.append(k)
@@ -264,7 +278,6 @@ class TensorBackendBuilder:
         # self.collect_coords(tensor)
         # var_dims = self.var_dims(tensor)
         # var_dims = [d.key for d in tensor_dims]
-        # var_dims = self.profile.rename_dims(var_dims)
         # print(f"var_dims={var_dims}")
 
         backend_array = TensorBackendArray(
@@ -289,13 +302,16 @@ class TensorBackendBuilder:
 
         # var_attrs = self.profile.remap(var_attrs)
 
-        var = VariableBuilder(var_dims, data, extra_tensor_attrs, tensor)
+        remapping = self.profile.remapping.build()
+
+        var = VariableBuilder(var_dims, data, extra_tensor_attrs, tensor, remapping)
         # var = xarray.Variable(var_dims, data, attrs=var_attrs)
         return var
 
     def prepare_tensor(self, ds, dims, name):
         tensor_dims = []
         tensor_coords = {}
+        tensor_coords_component = {}
         extra_tensor_attrs = []
 
         # print(f"prepare_tensor: {name=} {dims=}")
@@ -304,7 +320,7 @@ class TensorBackendBuilder:
         # from .fieldlist import unique_values
 
         # remapping = self.profile.remapping.build()
-        vals = ds.unique_values([d.key for d in dims])
+        vals, component_vals = ds.unique_values([d.key for d in dims], component=True)
 
         # print("unique_values", vals)
         # print("ensure_dims", self.profile.dims.ensure_dims)
@@ -323,16 +339,17 @@ class TensorBackendBuilder:
                         f"Dimension '{d.name}' of variable '{name}' has multiple values={vals[d.key]}"
                     )
                 elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
-                    print("extra_tensor_attrs", d.key)
                     extra_tensor_attrs.append(d.key)
                 elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
                     tensor_dims.append(d)
                     # tensor_coords[d.key] = ds.index(d.key)
                     tensor_coords[d.key] = vals[d.key]
+                    if d.key in component_vals:
+                        tensor_coords_component[d.key] = component_vals[d.key]
                     self.check_tensor_coords(name, d.key, tensor_coords)
 
         # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinate
-        return tensor_dims, tensor_coords, extra_tensor_attrs
+        return tensor_dims, tensor_coords, tensor_coords_component, extra_tensor_attrs
 
     def check_tensor_coords(self, var_name, coord_name, tensor_coords):
         if self.profile.strict:
@@ -384,6 +401,9 @@ class DatasetBuilder:
         ds = WrappedFieldList(self.ds, keys=self.profile.index_keys, remapping=remapping)
         # print(f"{remapping=}")
         # print(f"ds: {ds.indices()}")
+
+        # print(f"ds: {ds.index('level_and_type')}")
+        # print("components", ds.index("level_and_type", component=True))
 
         # global attributes are keys which are the same for all the fields
         # attributes = {k: v[0] for k, v in ds_ori.indices().items() if len(v) == 1}
@@ -481,26 +501,3 @@ class SplitDatasetBuilder(DatasetBuilder):
             s_ds._ek_builder = None
 
         return datasets[0] if len(datasets) == 1 else datasets
-
-    # def parse(self):
-    #     assert not hasattr(self.ds, "_ek_builder")
-    #     from .fieldlist import WrappedFieldList
-    #     from .profile import Profile
-
-    #     self.profile = Profile.make(self.profile, **self.kwargs)
-
-    #     remapping = profile.remapping.build()
-
-    #     # create a new fieldlist and ensure all the required metadata is kept in memory
-    #     ds = WrappedFieldList(self.ds, profile.index_keys, remapping=remapping)
-
-    #     # print("dims", profile.dim_keys)
-
-    #     profile.update(ds)
-
-    #     # print("dims", profile.dim_keys)
-
-    #     # the data is only sorted once
-    #     ds_sorted = ds.order_by(profile.sort_keys)
-
-    #     return ds, ds_sorted, profile

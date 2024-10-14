@@ -311,15 +311,14 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
     @property
     def metadata(self):
-        md = self._obj.attrs.get("_earthkit", tuple())
-        if len(md) == 2:
-            name, data = md
-            if name == "message":
-                from earthkit.data.readers.grib.memory import GribMessageMemoryReader
-                from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
+        md = self._obj.attrs.get("_earthkit", dict())
+        if "message" in md:
+            data = md["message"]
+            from earthkit.data.readers.grib.memory import GribMessageMemoryReader
+            from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
 
-                handle = next(GribMessageMemoryReader(data)).handle
-                return StandAloneGribMetadata(handle)
+            handle = next(GribMessageMemoryReader(data)).handle
+            return StandAloneGribMetadata(handle)
 
         raise ValueError(
             (
@@ -331,7 +330,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     def _to_fields(self):
         from .grib import data_array_to_fields
 
-        for f in data_array_to_fields(self._obj):
+        for f in data_array_to_fields(self._obj, metadata=self.metadata):
             yield f
 
 

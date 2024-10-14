@@ -398,7 +398,6 @@ def test_xr_engine_detailed_flatten_check():
     assert np.allclose(r.values, vals_ref)
 
     r = da.loc[:, 0, :, 500, 9 * 36 + 0]
-    print(da.coords["levelist"])
     assert r.shape == (2, 2)
     vals_ref = np.array([[269.00918579, 268.78610229], [268.57771301, 268.08932495]])
     assert np.allclose(r.values, vals_ref)
