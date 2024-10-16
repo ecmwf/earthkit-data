@@ -11,11 +11,6 @@ import logging
 import os
 import subprocess
 
-try:
-    import ecmwfapi
-except ImportError:
-    raise ImportError("MARS access requires 'ecmwf-api-client' to be installed")
-
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.core.temporary import temp_file
 
@@ -99,6 +94,11 @@ class MarsRetriever(ECMWFApi):
             kwargs = {"log": self.log}
         elif self.log != "default":
             raise ValueError(f"Unsupported log type={type(self.log)}")
+
+        try:
+            import ecmwfapi
+        except ImportError:
+            raise ImportError("MARS access requires 'ecmwf-api-client' to be installed")
 
         return ecmwfapi.ECMWFService("mars", **kwargs)
 
