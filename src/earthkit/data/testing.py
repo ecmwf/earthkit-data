@@ -92,7 +92,7 @@ def modules_installed(*modules):
 
 
 NO_MARS_DIRECT = not StandaloneMarsClient.enabled()
-NO_MARS_API = not (NO_MARS_DIRECT and os.path.exists(os.path.expanduser("~/.ecmwfapirc")))
+NO_MARS_API = not os.path.exists(os.path.expanduser("~/.ecmwfapirc"))
 NO_MARS = NO_MARS_API and NO_MARS_DIRECT
 
 NO_CDS = not os.path.exists(os.path.expanduser("~/.cdsapirc"))

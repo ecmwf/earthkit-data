@@ -17,7 +17,7 @@ from earthkit.data.utils.xarray.fieldlist import CollectorJoiner
 data = {"type": "cf", "number": 0, "name": "t2m"}
 
 
-def fn(key):
+def fn(key, **kwargs):
     return data[key]
 
 
