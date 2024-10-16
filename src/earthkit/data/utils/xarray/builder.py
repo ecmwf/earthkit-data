@@ -8,6 +8,8 @@
 #
 
 import logging
+from abc import ABCMeta
+from abc import abstractmethod
 from functools import cached_property
 
 import numpy
@@ -155,7 +157,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         return result
 
 
-class TensorBackendBuilder:
+class BackendDataBuilder(metaclass=ABCMeta):
     def __init__(
         self,
         ds,
@@ -221,7 +223,7 @@ class TensorBackendBuilder:
         t_vars = {}
         # we assume each variable forms a full cube
         for variable in self.profile.variables:
-            t_vars[variable] = self.make_variable(self.ds, self.dims, self.profile.variable_key, variable)
+            t_vars[variable] = self.build_variable(self.ds, self.dims, self.profile.variable_key, variable)
 
         # build variable and global attributes
         xr_attrs = self.profile.attrs.builder.build(self.ds, t_vars, rename=True)
@@ -233,9 +235,16 @@ class TensorBackendBuilder:
         if self.profile.rename_dims_map():
             dataset = dataset.rename(self.profile.rename_dims_map())
 
+        if "source" not in dataset.encoding:
+            dataset.encoding["source"] = None
+
         return dataset
 
-    def make_variable(self, ds, dims, key, name):
+    @abstractmethod
+    def build_values(self, *args, **kwargs):
+        pass
+
+    def build_variable(self, ds, dims, key, name):
         ds_var = ds.sel(**{key: name})
 
         tensor_dims, tensor_coords, tensor_coords_component, extra_tensor_attrs = self.prepare_tensor(
@@ -290,6 +299,8 @@ class TensorBackendBuilder:
         )
 
         data = indexing.LazilyIndexedArray(backend_array)
+
+        data = self.build_values(tensor, var_dims, name)
 
         # Get metadata keys which are common for all fields, and not listed in dataset attrs
         # kk = [k for k in self.profile.index_keys if k not in self.attributes]
@@ -358,11 +369,42 @@ class TensorBackendBuilder:
             check_coords(var_name, coord_name, tensor_coords, self.tensor_coords)
 
 
+class TensorBackendDataBuilder(BackendDataBuilder):
+    def build_values(self, tensor, var_dims, name):
+        backend_array = TensorBackendArray(
+            tensor,
+            var_dims,
+            tensor.full_shape,
+            self.array_module,
+            self.dtype,
+            name,
+        )
+
+        data = indexing.LazilyIndexedArray(backend_array)
+        return data
+
+
+class MemoryBackendDataBuilder(BackendDataBuilder):
+    def build_values(self, tensor, var_dims, name):
+        vals = []
+        for f in tensor.source:
+            vals.append(f.to_numpy())
+            f.release()
+        vals = numpy.array(vals)
+
+        data = vals
+        return data
+
+
+DATA_BUILDERS = {"tensor": TensorBackendDataBuilder, "memory": MemoryBackendDataBuilder}
+
+
 class DatasetBuilder:
     def __init__(
         self,
         ds,
         profile="mars",
+        mode="tensor",
         **kwargs,
     ):
         """
@@ -376,6 +418,11 @@ class DatasetBuilder:
             Default is None.
         """
         self.ds = ds
+        self.backend_mode = mode
+        if mode not in DATA_BUILDERS:
+            raise ValueError(f"Invalid backend mode: {mode}")
+        self.builder = DATA_BUILDERS[mode]
+
         self.kwargs = kwargs
         self.profile_name = profile
         self.grids = {}
@@ -453,7 +500,7 @@ class SingleDatasetBuilder(DatasetBuilder):
         ds, ds_sorted = self.parse()
         dims = self.profile.dims.to_list()
         # print("SingleDatasetBuilder.build dims", dims)
-        builder = TensorBackendBuilder(
+        builder = self.builder(
             ds_sorted,
             self.profile,
             dims,
@@ -487,7 +534,7 @@ class SplitDatasetBuilder(DatasetBuilder):
         datasets = []
         for s_dims, s_ds in splitter.split(ds_sorted, self.profile):
             # print(f"split_dims: {s_dims}   {type(s_ds)}")
-            builder = TensorBackendBuilder(
+            builder = self.builder(
                 s_ds,
                 self.profile,
                 s_dims,
