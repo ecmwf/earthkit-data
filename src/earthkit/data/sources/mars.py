@@ -44,6 +44,12 @@ class StandaloneMarsClient:
                 check=True,
             )
 
+    @staticmethod
+    def enabled():
+        if SETTINGS.get("use-standalone-mars-client-when-available"):
+            return os.path.exists(StandaloneMarsClient.EXE)
+        return False
+
 
 class MarsRetriever(ECMWFApi):
     def service(self):
