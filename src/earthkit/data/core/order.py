@@ -31,6 +31,8 @@ class Remapping(dict):
 
         class CustomJoiner:
             def format_name(self, x, **kwargs):
+                if "default" not in kwargs:
+                    kwargs["default"] = None
                 return func(x, **kwargs)
 
             def format_string(self, x):

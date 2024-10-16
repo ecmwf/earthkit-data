@@ -526,7 +526,7 @@ class Field(Base):
     def indexing_datetime(self):
         self._not_implemented()
 
-    def metadata(self, *keys, astype=None, **kwargs):
+    def metadata(self, *keys, astype=None, remapping=None, patches=None, **kwargs):
         r"""Return metadata values from the field.
 
         When called without any arguments returns a :obj:`Metadata` object.
@@ -541,6 +541,12 @@ class Field(Base):
             Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
             Otherwise, must have same the number of elements as ``keys``. Only used when
             ``keys`` is not empty.
+        remapping: dict, optional
+            Creates new metadata keys from existing ones that we can refer to in ``*args`` and
+            ``**kwargs``. E.g. to define a new
+            key "param_level" as the concatenated value of the "param" and "level" keys use::
+
+                remapping={"param_level": "{param}{level}"}
         **kwargs: dict, optional
             Other keyword arguments:
 
@@ -631,6 +637,13 @@ class Field(Base):
         >>> r["name"]
         '2 metre temperature'
         """
+
+        if remapping is not None or patches is not None:
+            from earthkit.data.core.order import build_remapping
+
+            remapping = build_remapping(remapping, patches)
+            return remapping(self.metadata)(*keys, astype=astype, **kwargs)
+
         # when called without arguments returns the metadata object
         if len(keys) == 0 and astype is None and not kwargs:
             return self._metadata
