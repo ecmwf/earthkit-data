@@ -1,6 +1,16 @@
 Version 0.10 Updates
 /////////////////////////
 
+
+Version 0.10.8
+===============
+
+Fixes
+++++++
+
+- Fixed issue when tried to import "ecmwf-api-client" unnecessarily when the standalone MARS client was invoked for retrieving data from MARS.
+
+
 Version 0.10.7
 ===============
 

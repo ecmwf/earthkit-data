@@ -11,11 +11,6 @@ import logging
 import os
 import subprocess
 
-try:
-    import ecmwfapi
-except ImportError:
-    raise ImportError("MARS access requires 'ecmwf-api-client' to be installed")
-
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.core.temporary import temp_file
 
@@ -49,12 +44,23 @@ class StandaloneMarsClient:
                 check=True,
             )
 
+    @staticmethod
+    def enabled():
+        if SETTINGS.get("use-standalone-mars-client-when-available"):
+            return os.path.exists(StandaloneMarsClient.EXE)
+        return False
+
 
 class MarsRetriever(ECMWFApi):
     def service(self):
         if SETTINGS.get("use-standalone-mars-client-when-available"):
             if os.path.exists(StandaloneMarsClient.EXE):
                 return StandaloneMarsClient()
+
+        try:
+            import ecmwfapi
+        except ImportError:
+            raise ImportError("MARS access requires 'ecmwf-api-client' to be installed")
 
         if self.prompt:
             prompt = MARSAPIKeyPrompt()
