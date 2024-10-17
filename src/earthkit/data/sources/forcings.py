@@ -217,7 +217,7 @@ class ForcingMaker:
 
 
 class ForcingField(Field):
-    def __init__(self, maker, date, param, proc, number=None, array_backend=None):
+    def __init__(self, maker, date, param, proc, number=None):
         self.maker = maker
         self.date = date
         self.param = param
@@ -234,7 +234,6 @@ class ForcingField(Field):
             levtype=None,
         )
         super().__init__(
-            array_backend,
             metadata=ForcingMetadata(d, self.maker.field.metadata().geography),
         )
 
@@ -378,7 +377,6 @@ class ForcingsFieldList(ForcingsFieldListCore):
                 param,
                 self.procs[param],
                 number=number,
-                array_backend=self.array_backend,
             )
 
 

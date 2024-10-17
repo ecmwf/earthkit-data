@@ -245,8 +245,8 @@ class GribField(Field):
 
     _handle = None
 
-    def __init__(self, path, offset, length, backend, handle_manager=None, use_metadata_cache=False):
-        super().__init__(backend)
+    def __init__(self, path, offset, length, handle_manager=None, use_metadata_cache=False):
+        super().__init__()
         self.path = path
         self._offset = offset
         self._length = length

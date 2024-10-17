@@ -174,24 +174,26 @@ def load_nc_or_xr_source(path, mode):
         return from_object(xarray.open_dataset(path))
 
 
-def check_array_type(v, backend, **kwargs):
-    from earthkit.data.utils.array import ensure_backend
+def check_array_type(array, expected_backend, dtype=None):
+    from earthkit.data.utils.array import get_backend
 
-    b = ensure_backend(backend)
-    assert b.is_native_array(v, **kwargs), f"{type(v)}, {backend=}, {kwargs=}"
+    b1 = get_backend(array)
+    b2 = get_backend(expected_backend)
+
+    assert b1 == b2, f"{b1=}, {b2=}"
+
+    expected_dtype = dtype
+    if expected_dtype is not None:
+        assert b2.match_dtype(array, expected_dtype), f"{array.dtype}, {expected_dtype=}"
 
 
 def get_array_namespace(backend):
-    from earthkit.data.utils.array import ensure_backend
+    if backend is None:
+        backend = "numpy"
 
-    return ensure_backend(backend).array_ns
+    from earthkit.data.utils.array import get_backend
 
-
-def get_array(v, backend, **kwargs):
-    from earthkit.data.utils.array import ensure_backend
-
-    b = ensure_backend(backend)
-    return b.from_other(v, **kwargs)
+    return get_backend(backend).namespace
 
 
 ARRAY_BACKENDS = ["numpy"]

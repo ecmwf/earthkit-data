@@ -20,15 +20,19 @@ import pytest
 import earthkit.data
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import earthkit_examples_file
+
+here = os.path.dirname(__file__)
+sys.path.insert(0, here)
+from grib_fixtures import FL_ARRAYS  # noqa: E402
+from grib_fixtures import load_grib_data  # noqa: E402
 
 EPSILON = 1e-4
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_save_when_loaded_from_file(array_backend):
-    fs = from_source("file", earthkit_examples_file("test6.grib"), array_backend=array_backend)
+@pytest.mark.parametrize("fl_type", FL_ARRAYS)
+def test_grib_save_when_loaded_from_file(fl_type):
+    fs, _ = load_grib_data("test6.grib", fl_type)
     assert len(fs) == 6
     with temp_file() as tmp:
         fs.save(tmp)
