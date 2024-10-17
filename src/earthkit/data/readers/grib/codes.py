@@ -9,7 +9,6 @@
 
 import logging
 import os
-from collections import defaultdict
 from functools import cached_property
 
 import eccodes
@@ -329,14 +328,3 @@ class GribField(Field):
         bytes
         """
         return self.handle.get_buffer()
-
-    def _diag(self):
-        r = r = defaultdict(int)
-        try:
-            md_cache = self._metadata._cache
-            r["metadata_cache_size"] += len(md_cache)
-            r["metadata_cache_hits"] += md_cache.hits
-            r["metadata_cache_misses"] += md_cache.misses
-        except Exception:
-            pass
-        return r

@@ -45,7 +45,6 @@ When reading :ref:`grib` data from disk as a :ref:`file source <data-sources-fil
 - :ref:`grib-field-policy <grib-field-policy>`
 - :ref:`grib-handle-policy <grib-handle-policy>`
 - :ref:`grib-handle-cache-size <grib-handle-cache-size>`
-- :ref:`use-grib-metadata-cache <use-grib-metadata-cache>`
 
 .. _grib-field-policy:
 
@@ -79,18 +78,10 @@ grib-handle-cache-size
 
 When :ref:`grib-handle-policy <grib-handle-policy>` is ``"cache"``, the setting ``grib-handle-cache-size`` (default is ``1``) specifies the maximum number of GRIB handles kept in an in-memory cache per fieldlist. This is an LRU cache, so when it is full, the least recently used GRIB handle is removed and a new GRIB message is loaded from disk and added to the cache.
 
-.. _use-grib-metadata-cache:
-
-use-grib-metadata-cache
-+++++++++++++++++++++++++++++++++++
-
-When ``use-grib-metadata-cache`` is ``True`` (this is the default) all the fields will cache their metadata access. This is an in-memory cache attached to the field and implemented for the low-level metadata accessor for individual keys. This cache can be useful when the same metadata keys are accessed multiple times for the same field.
-
-
 Overriding the settings
 ++++++++++++++++++++++++++++
 
-In addition to changing the :ref:`settings` themselves, it is possible to override the 4 parameters above when loading a given fieldlist by passing them as keyword arguments to :func:`from_source`. The parameter names are the same but the dashes are replaced by underscores. When a parameter is not specified in :func:`from_source` or is set to None, its value is taken from the actual :ref:`settings`. E.g.:
+In addition to changing the :ref:`settings` themselves, it is possible to override the parameters above when loading a given fieldlist by passing them as keyword arguments to :func:`from_source`. The parameter names are the same but the dashes are replaced by underscores. When a parameter is not specified in :func:`from_source` or is set to None, its value is taken from the actual :ref:`settings`. E.g.:
 
 .. code-block:: python
 
@@ -102,7 +93,6 @@ In addition to changing the :ref:`settings` themselves, it is possible to overri
         grib_field_policy="persistent",
         grib_handle_policy="temporary",
         grib_handle_cache_size=0,
-        use_grib_metadata_cache=True,
     )
 
 

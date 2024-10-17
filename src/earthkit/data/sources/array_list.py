@@ -27,7 +27,7 @@ class ArrayField(Field):
         Metadata object describing the field metadata.
     """
 
-    def __init__(self, array, metadata):
+    def __init__(self, array, metadata, use_metadata_cache=False):
         if isinstance(array, list):
             import numpy as np
 
@@ -38,6 +38,7 @@ class ArrayField(Field):
 
             metadata = UserMetadata(metadata, values=array)
 
+        # TODO: this solution is questionable due to performance reasons
         metadata = metadata._hide_internal_keys()
 
         super().__init__(metadata=metadata)

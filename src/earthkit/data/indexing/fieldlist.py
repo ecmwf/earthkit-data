@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+from collections import defaultdict
+
 from earthkit.data.core.fieldlist import FieldList
 
 
@@ -82,6 +84,17 @@ class SimpleFieldList(FieldList):
         from itertools import chain
 
         return cls.from_fields(list(chain(*[f for f in sources])))
+
+    def _diag(self):
+        r = defaultdict(int)
+        for f in self:
+            try:
+                md_cache = f._diag()
+                for k in ["metadata_cache_hits", "metadata_cache_misses", "metadata_cache_size"]:
+                    r[k] += md_cache[k]
+            except Exception:
+                pass
+        return r
 
 
 # For backwards compatibility

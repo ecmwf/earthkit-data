@@ -705,6 +705,28 @@ class Field(Base):
 
         # return {name: metadata(name) for name in names}
 
+    def to_field(self, **kwargs):
+        r"""Convert the object to a :obj:`Field`.
+
+        Returns
+        -------
+        :obj:`Field`
+        """
+        from earthkit.data.sources.array_list import ArrayField
+
+        return ArrayField(self.to_array(**kwargs), self._metadata.override())
+
+    def _diag(self):
+        r = r = defaultdict(int)
+        try:
+            md_cache = self._metadata._cache
+            r["metadata_cache_size"] += len(md_cache)
+            r["metadata_cache_hits"] += md_cache.hits
+            r["metadata_cache_misses"] += md_cache.misses
+        except Exception:
+            pass
+        return r
+
     @staticmethod
     def _flatten(v):
         """Flatten the array without copying the data."
@@ -893,6 +915,27 @@ class FieldList(Index):
         """
         return self._md_indices.index(key)
 
+    def _as_array(self, accessor, **kwargs):
+        """Use pre-allocated target array to store the field values."""
+
+        def _vals(f):
+            return getattr(f, accessor)(**kwargs) if not is_property else getattr(f, accessor)
+
+        n = len(self)
+        if n > 0:
+            it = iter(self)
+            first = next(it)
+            is_property = isinstance(getattr(first.__class__, accessor), property)
+            vals = _vals(first)
+            ns = array_namespace(vals)
+            shape = (n, *vals.shape)
+            r = ns.empty(shape, dtype=vals.dtype)
+            r[0] = vals
+            for i, f in enumerate(it, start=1):
+                r[i] = _vals(f)
+
+            return r
+
     def to_numpy(self, **kwargs):
         r"""Return all the fields' values as an ndarray. It is formed as the array of the
         :obj:`data.core.fieldlist.Field.to_numpy` values per field.
@@ -912,9 +955,7 @@ class FieldList(Index):
         to_array
         values
         """
-        import numpy as np
-
-        return np.array([f.to_numpy(**kwargs) for f in self])
+        return self._as_array("to_numpy", **kwargs)
 
     def to_array(self, **kwargs):
         r"""Return all the fields' values as an array. It is formed as the array of the
@@ -935,10 +976,7 @@ class FieldList(Index):
         values
         to_numpy
         """
-        x = [f.to_array(**kwargs) for f in self]
-        if len(x) == 0:
-            return None
-        return array_namespace(x[0]).stack(x)
+        return self._as_array("to_array", **kwargs)
 
     @property
     def values(self):
@@ -963,10 +1001,7 @@ class FieldList(Index):
         array([262.78027344, 267.44726562, 268.61230469])
 
         """
-        x = [f.values for f in self]
-        if len(x) == 0:
-            return None
-        return array_namespace(x[0]).stack(x)
+        return self._as_array("values")
 
     def data(
         self,
@@ -1509,12 +1544,7 @@ class FieldList(Index):
         dtype('float32')
 
         """
-        array = []
-        md = []
-        for f in self:
-            array.append(f.to_array(array_backend=array_backend, **kwargs))
-            md.append(f._metadata)
-        return self.from_array(array, md)
+        return self.from_fields([f.to_field(array_backend=array_backend, **kwargs) for f in self])
 
     def cube(self, *args, **kwargs):
         from earthkit.data.indexing.cube import FieldCube
