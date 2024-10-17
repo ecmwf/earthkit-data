@@ -289,16 +289,16 @@ class BackendDataBuilder(metaclass=ABCMeta):
         # var_dims = [d.key for d in tensor_dims]
         # print(f"var_dims={var_dims}")
 
-        backend_array = TensorBackendArray(
-            tensor,
-            var_dims,
-            tensor.full_shape,
-            self.array_module,
-            self.dtype,
-            name,
-        )
+        # backend_array = TensorBackendArray(
+        #     tensor,
+        #     var_dims,
+        #     tensor.full_shape,
+        #     self.array_module,
+        #     self.dtype,
+        #     name,
+        # )
 
-        data = indexing.LazilyIndexedArray(backend_array)
+        # data = indexing.LazilyIndexedArray(backend_array)
 
         data = self.build_values(tensor, var_dims, name)
 
@@ -386,11 +386,20 @@ class TensorBackendDataBuilder(BackendDataBuilder):
 
 class MemoryBackendDataBuilder(BackendDataBuilder):
     def build_values(self, tensor, var_dims, name):
-        vals = []
-        for f in tensor.source:
-            vals.append(f.to_numpy())
-            f.release()
-        vals = numpy.array(vals)
+        # vals = []
+        # for f in tensor.source:
+        #     vals.append(f.to_numpy())
+        #     # f.release()
+        # vals = numpy.array(vals).reshape(tensor.full_shape)
+
+        vals = numpy.empty((len(tensor.source), *tensor.field_shape))
+        for i, f in enumerate(tensor.source):
+            vals[i] = f.to_numpy()
+            # f.release()
+        vals = vals.reshape(tensor.full_shape)
+
+        # vals = numpy.ones((len(tensor.source), *tensor.field_shape))
+        # vals = vals.reshape(tensor.full_shape)
 
         data = vals
         return data
@@ -403,8 +412,8 @@ class DatasetBuilder:
     def __init__(
         self,
         ds,
-        profile="mars",
-        mode="tensor",
+        mode=None,
+        profile=None,
         **kwargs,
     ):
         """
@@ -417,14 +426,15 @@ class DatasetBuilder:
             Dimension or list of dimensions to use for splitting the data into multiple hypercubes.
             Default is None.
         """
+        self.backend_mode = mode if mode else "tensor"
+        self.profile_name = profile
         self.ds = ds
-        self.backend_mode = mode
-        if mode not in DATA_BUILDERS:
-            raise ValueError(f"Invalid backend mode: {mode}")
-        self.builder = DATA_BUILDERS[mode]
+
+        if self.backend_mode not in DATA_BUILDERS:
+            raise ValueError(f"Invalid backend mode: {self.backend_mode}")
+        self.builder = DATA_BUILDERS[self.backend_mode]
 
         self.kwargs = kwargs
-        self.profile_name = profile
         self.grids = {}
 
     @cached_property
@@ -448,6 +458,7 @@ class DatasetBuilder:
         ds = WrappedFieldList(self.ds, keys=self.profile.index_keys, remapping=remapping)
         # print(f"{remapping=}")
         # print(f"ds: {ds.indices()}")
+        # print(f"ds.db: {ds.db}")
 
         # print(f"ds: {ds.index('level_and_type')}")
         # print("components", ds.index("level_and_type", component=True))

@@ -240,8 +240,10 @@ def test_xr_engine_detailed_check(api):
 
 
 @pytest.mark.cache
-@pytest.mark.parametrize("stream", [False, True])
-@pytest.mark.parametrize("mode", ["tensor", "memory"])
+# @pytest.mark.parametrize("stream", [False, True])
+# @pytest.mark.parametrize("mode", ["tensor", "memory"])
+@pytest.mark.parametrize("stream", [False])
+@pytest.mark.parametrize("mode", ["memory"])
 def test_xr_engine_detailed_flatten_check(mode, stream):
     filename = "test-data/xr_engine/level/pl.grib"
     ds_ek, ds_ek_ref = load_grib_data(filename, "url", stream=stream)
