@@ -9,13 +9,19 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
 import pickle
+import sys
 
 import pytest
 
 from earthkit.data import from_source
 from earthkit.data import settings
 from earthkit.data.testing import earthkit_examples_file
+
+here = os.path.dirname(__file__)
+sys.path.insert(0, here)
+from grib_fixtures import load_grib_data  # noqa: E402
 
 
 class TestMetadataCache:
@@ -56,7 +62,7 @@ def _check_diag(diag, ref):
 
 @pytest.mark.parametrize("handle_cache_size", [1, 5])
 @pytest.mark.parametrize("serialise", [True, False])
-def test_grib_cache_basic_patched(handle_cache_size, serialise, patch_metadata_cache):
+def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metadata_cache):
 
     with settings.temporary(
         {
@@ -67,6 +73,7 @@ def test_grib_cache_basic_patched(handle_cache_size, serialise, patch_metadata_c
         }
     ):
         ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+
         if serialise:
             pickled_f = pickle.dumps(ds)
             ds = pickle.loads(pickled_f)
@@ -137,7 +144,7 @@ def test_grib_cache_basic_patched(handle_cache_size, serialise, patch_metadata_c
         assert ds[0].handle == md._handle
 
 
-def test_grib_cache_basic_non_patched():
+def test_grib_cache_basic_file_non_patched():
     """This test is the same as test_grib_cache_basic but without the patch_metadata_cache fixture.
     So metadata cache hits and misses are not counted."""
 
@@ -207,6 +214,75 @@ def test_grib_cache_basic_non_patched():
         md = ds[0].metadata()
         assert hasattr(md, "_field")
         assert ds[0].handle == md._handle
+
+
+@pytest.mark.parametrize("serialise", [True, False])
+@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+def test_grib_cache_basic_metadata_patched(serialise, fl_type, patch_metadata_cache):
+
+    with settings.temporary(
+        {
+            "grib-field-policy": "persistent",
+            "grib-handle-policy": "cache",
+            "grib-handle-cache-size": 1,
+            "use-grib-metadata-cache": True,
+        }
+    ):
+        ds, _ = load_grib_data("tuv_pl.grib", fl_type)
+
+        if serialise:
+            pickled_f = pickle.dumps(ds)
+            ds = pickle.loads(pickled_f)
+
+        assert len(ds) == 18
+
+        # unique values
+        ref_vals = ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
+
+        # for f in ds:
+        #     print(f.metadata()._cache.data)
+
+        diag = ds._diag()
+        ref = {
+            "metadata_cache_hits": 0,
+            "metadata_cache_misses": 18 * 6,
+            "metadata_cache_size": 18 * 6,
+        }
+        _check_diag(ds._diag(), ref)
+
+        # unique values repeated
+        vals = ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
+
+        assert vals == ref_vals
+
+        ref = {
+            "metadata_cache_hits": 18 * 4,
+            "metadata_cache_misses": 18 * 6,
+            "metadata_cache_size": 18 * 6,
+        }
+        _check_diag(ds._diag(), ref)
+
+        # order by
+        ds.order_by(["levelist", "valid_datetime", "paramId", "levtype"])
+        diag = ds._diag()
+        ref = {
+            "metadata_cache_misses": 18 * 6,
+            "metadata_cache_size": 18 * 6,
+        }
+        _check_diag(ds._diag(), ref)
+
+        assert diag["metadata_cache_hits"] >= 18 * 4
+
+        # metadata object is not decoupled from the field object
+        md = ds[0].metadata()
+        if fl_type != "array":
+            # handle is taken from the field
+            assert hasattr(md, "_field")
+            assert ds[0].handle == md._handle
+        else:
+            # handle is not taken from the metadata
+            assert not hasattr(md, "_field")
+            assert ds[0].handle == md._handle
 
 
 def test_grib_cache_options_1(patch_metadata_cache):
@@ -712,7 +788,7 @@ def test_grib_cache_options_6(patch_metadata_cache):
         _check_diag(ds._diag(), ref)
 
 
-def test_grib_cache_use_kwargs_1():
+def test_grib_cache_file_use_kwargs_1():
     _kwargs = {
         "grib_field_policy": "temporary",
         "grib_handle_policy": "persistent",
@@ -740,7 +816,7 @@ def test_grib_cache_use_kwargs_1():
     _check_diag(ds._diag(), ref)
 
 
-def test_grib_cache_use_kwargs_2():
+def test_grib_cache_file_use_kwargs_2():
     _kwargs = {
         "grib-field-policy": "temporary",
         "grib_handle_policy": "persistent",
@@ -750,3 +826,87 @@ def test_grib_cache_use_kwargs_2():
 
     with pytest.raises(KeyError):
         from_source("file", earthkit_examples_file("tuv_pl.grib"), **_kwargs)
+
+
+@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+def test_grib_cache_metadata_use_kwargs_1(fl_type, patch_metadata_cache):
+    with settings.temporary(
+        {
+            "grib-field-policy": "persistent",
+            "grib-handle-policy": "cache",
+            "grib-handle-cache-size": 1,
+            "use-grib-metadata-cache": False,
+        }
+    ):
+
+        _kwargs = {
+            "use_grib_metadata_cache": True,
+        }
+
+        ds, _ = load_grib_data("tuv_pl.grib", fl_type, **_kwargs)
+
+        assert len(ds) == 18
+
+        # unique values
+        ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
+
+        ref = {
+            "metadata_cache_hits": 0,
+            "metadata_cache_misses": 108,
+            "metadata_cache_size": 108,
+        }
+
+        _check_diag(ds._diag(), ref)
+
+        # unique values
+        ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
+
+        ref = {
+            "metadata_cache_hits": 72,
+            "metadata_cache_misses": 108,
+            "metadata_cache_size": 108,
+        }
+
+        _check_diag(ds._diag(), ref)
+
+
+@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+def test_grib_cache_metadata_use_kwargs_2(fl_type, patch_metadata_cache):
+    with settings.temporary(
+        {
+            "grib-field-policy": "persistent",
+            "grib-handle-policy": "cache",
+            "grib-handle-cache-size": 1,
+            "use-grib-metadata-cache": True,
+        }
+    ):
+
+        _kwargs = {
+            "use_grib_metadata_cache": False,
+        }
+
+        ds, _ = load_grib_data("tuv_pl.grib", fl_type, **_kwargs)
+
+        assert len(ds) == 18
+
+        # unique values
+        ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
+
+        ref = {
+            "metadata_cache_hits": 0,
+            "metadata_cache_misses": 0,
+            "metadata_cache_size": 0,
+        }
+
+        _check_diag(ds._diag(), ref)
+
+        # unique values
+        ds.unique_values("paramId", "levelist", "levtype", "valid_datetime")
+
+        ref = {
+            "metadata_cache_hits": 0,
+            "metadata_cache_misses": 0,
+            "metadata_cache_size": 0,
+        }
+
+        _check_diag(ds._diag(), ref)

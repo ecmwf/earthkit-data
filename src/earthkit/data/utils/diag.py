@@ -19,7 +19,7 @@ class TimeDiag:
     def elapsed(self):
         return time.time() - self.start
 
-    def __call__(self, label=""):
+    def __call__(self, label="", as_str=False):
         curr = time.time()
         delta = curr - self.prev
         self.prev = curr
@@ -31,11 +31,16 @@ class TimeDiag:
             else:
                 label = f"[{self.name}]"
 
-        print(f"{label} elapsed={self.elapsed():.3f} delta={delta:.3f}")
+        s = f"{label}elapsed={self.elapsed():.3f}s delta={delta:.3f}s"
+
+        if as_str:
+            return s
+        else:
+            print(s)
 
 
 class MemoryDiag:
-    def __init__(self, name=""):
+    def __init__(self, name="", peak=False):
         import os
         import platform
 
@@ -45,6 +50,7 @@ class MemoryDiag:
         self.proc = psutil.Process()
         self.prev = 0
         self.scale = 1
+        self.add_peak = peak
 
         try:
             if os.name == "posix" and platform.system() == "Darwin":
@@ -74,7 +80,7 @@ class MemoryDiag:
         rss = getrusage(RUSAGE_SELF).ru_maxrss
         return self.scale_to_mbytes(rss)
 
-    def __call__(self, label="", delta=True):
+    def __call__(self, label="", delta=True, as_str=False):
         m = self.current()
         _delta = m - self.prev
         self.prev = m
@@ -87,17 +93,30 @@ class MemoryDiag:
             else:
                 label = f"[{self.name}]"
 
+        s = ""
         if delta:
-            print(f"{label} c={m:.3f}  d={_delta:.3f}")
+            s = f"{label}curr={m:.3f}MB delta={_delta:.3f}MB"
         else:
-            print(f"{label} c={m:.3f}")
+            s = f"{label}curr={m:.3f}MB"
+
+        if self.add_peak:
+            s += f" peak={self.peak():.3f}MB"
+
+        if as_str:
+            return s
+        else:
+            print(s)
 
 
 class Diag:
-    def __init__(self, name=""):
+    def __init__(self, name="", peak=False):
         self.time = TimeDiag(name)
-        self.memory = MemoryDiag(name)
+        self.memory = MemoryDiag(name, peak=peak)
 
     def __call__(self, label=""):
-        self.time(label)
-        self.memory(label)
+        if label:
+            label = f"[{label:10}] "
+        return f"{label}{self.time(as_str=True)} {self.memory(as_str=True)}"
+
+    def peak(self):
+        return self.memory.peak()

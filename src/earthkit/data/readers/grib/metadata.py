@@ -408,7 +408,12 @@ class GribMetadata(Metadata):
             vals = np.zeros(new_value_size)
             handle.set_values(vals)
 
-        return StandAloneGribMetadata(handle)
+        # ensure that the cache settings are the same
+        cache = self._cache
+        if cache is not None:
+            cache = cache.__class__()
+
+        return StandAloneGribMetadata(handle, cache=cache)
 
     def as_namespace(self, namespace=None):
         r"""Return all the keys/values from a namespace.
@@ -588,12 +593,19 @@ class StandAloneGribMetadata(GribMetadata):
     def __getstate__(self) -> dict:
         ret = {}
         ret["_handle"] = self._handle.get_buffer()
+        # we do not serialize the cache contents
+        ret["_cache"] = self._cache if self._cache is None else self._cache.__class__
         return ret
 
     def __setstate__(self, state: dict):
         from earthkit.data.readers.grib.memory import GribMessageMemoryReader
 
+        cache = state.pop("_cache")
+        if cache is not None:
+            cache = cache()
+
         self.__handle = next(GribMessageMemoryReader(state.pop("_handle"))).handle
+        self._cache = cache
 
 
 class RestrictedGribMetadata(WrappedMetadata):
