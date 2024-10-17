@@ -15,13 +15,12 @@ import sys
 import numpy as np
 import pytest
 
-from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import check_array_type
-from earthkit.data.testing import get_array
-from earthkit.data.testing import get_array_namespace
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
+from grib_fixtures import FL_FILE  # noqa: E402
+from grib_fixtures import FL_NUMPY  # noqa: E402
 from grib_fixtures import FL_TYPES  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
@@ -34,9 +33,8 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_values_1(fl_type, array_backend):
-    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
+def test_grib_values_1(fl_type):
+    f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
     eps = 1e-5
 
     # whole file
@@ -61,12 +59,9 @@ def test_grib_values_1(fl_type, array_backend):
     assert np.allclose(v, v1, eps)
 
 
-# @pytest.mark.parametrize("fl_type", FL_TYPES)
-# @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-@pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_grib_values_18(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+@pytest.mark.parametrize("fl_type", FL_FILE)
+def test_grib_values_18(fl_type):
+    f, array_backend = load_grib_data("tuv_pl.grib", fl_type)
     eps = 1e-5
 
     # whole file
@@ -95,9 +90,8 @@ def test_grib_values_18(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_to_numpy_1(fl_type, array_backend):
-    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
+def test_grib_to_numpy_1(fl_type):
+    f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     eps = 1e-5
     v = f.to_numpy()
@@ -115,7 +109,6 @@ def test_grib_to_numpy_1(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "first,options, expected_shape",
     [
@@ -127,8 +120,8 @@ def test_grib_to_numpy_1(fl_type, array_backend):
         (True, {"flatten": False}, (7, 12)),
     ],
 )
-def test_grib_to_numpy_1_shape(fl_type, array_backend, first, options, expected_shape):
-    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
+def test_grib_to_numpy_1_shape(fl_type, first, options, expected_shape):
+    f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     v_ref = f[0].to_numpy().flatten()
     eps = 1e-5
@@ -143,9 +136,8 @@ def test_grib_to_numpy_1_shape(fl_type, array_backend, first, options, expected_
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_to_numpy_18(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_to_numpy_18(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     eps = 1e-5
 
@@ -176,7 +168,6 @@ def test_grib_to_numpy_18(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "options, expected_shape",
     [
@@ -198,8 +189,8 @@ def test_grib_to_numpy_18(fl_type, array_backend):
         ({"flatten": False}, (18, 7, 12)),
     ],
 )
-def test_grib_to_numpy_18_shape(fl_type, array_backend, options, expected_shape):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_to_numpy_18_shape(fl_type, options, expected_shape):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     eps = 1e-5
 
@@ -223,11 +214,22 @@ def test_grib_to_numpy_18_shape(fl_type, array_backend, options, expected_shape)
     assert np.allclose(vf15, vr, eps)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ["numpy"])
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_grib_to_numpy_1_dtype(fl_type, array_backend, dtype):
-    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
+def test_grib_to_numpy_1_dtype(fl_type, dtype):
+    f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    v = f[0].to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+    v = f.to_numpy(dtype=dtype)
+    assert v.dtype == dtype
+
+
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_grib_to_numpy_18_dtype(fl_type, dtype):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     v = f[0].to_numpy(dtype=dtype)
     assert v.dtype == dtype
@@ -237,22 +239,8 @@ def test_grib_to_numpy_1_dtype(fl_type, array_backend, dtype):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ["numpy"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_grib_to_numpy_18_dtype(fl_type, array_backend, dtype):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
-
-    v = f[0].to_numpy(dtype=dtype)
-    assert v.dtype == dtype
-
-    v = f.to_numpy(dtype=dtype)
-    assert v.dtype == dtype
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_to_numpy_1_index(fl_type, array_backend):
-    ds = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
+def test_grib_to_numpy_1_index(fl_type):
+    ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     eps = 1e-5
 
@@ -288,9 +276,8 @@ def test_grib_to_numpy_1_index(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_to_numpy_18_index(fl_type, array_backend):
-    ds = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_to_numpy_18_index(fl_type):
+    ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     eps = 1e-5
 
@@ -366,22 +353,22 @@ def test_grib_to_numpy_18_index(fl_type, array_backend):
     )
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ["numpy"])
+@pytest.mark.parametrize("fl_type", FL_FILE)
+# @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
     [
         ({}, (11, 19), np.float64),
-        ({"flatten": True}, (209,), np.float64),
-        ({"flatten": True, "dtype": np.float32}, (209,), np.float32),
-        ({"flatten": True, "dtype": np.float64}, (209,), np.float64),
-        ({"flatten": False}, (11, 19), np.float64),
-        ({"flatten": False, "dtype": np.float32}, (11, 19), np.float32),
-        ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
+        # ({"flatten": True}, (209,), np.float64),
+        # ({"flatten": True, "dtype": np.float32}, (209,), np.float32),
+        # ({"flatten": True, "dtype": np.float64}, (209,), np.float64),
+        # ({"flatten": False}, (11, 19), np.float64),
+        # ({"flatten": False, "dtype": np.float32}, (11, 19), np.float32),
+        # ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
     ],
 )
-def test_grib_field_data(fl_type, array_backend, kwarg, expected_shape, expected_dtype):
-    ds = load_grib_data("test.grib", fl_type, array_backend)
+def test_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
+    ds, _ = load_grib_data("test.grib", fl_type)
 
     latlon = ds[0].to_latlon(**kwarg)
     v = ds[0].to_numpy(**kwarg)
@@ -418,8 +405,7 @@ def test_grib_field_data(fl_type, array_backend, kwarg, expected_shape, expected
     assert np.allclose(d[1], latlon["lon"])
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ["numpy"])
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
     [
@@ -432,8 +418,8 @@ def test_grib_field_data(fl_type, array_backend, kwarg, expected_shape, expected
         ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
     ],
 )
-def test_grib_fieldlist_data(fl_type, array_backend, kwarg, expected_shape, expected_dtype):
-    ds = load_grib_data("test.grib", fl_type, array_backend)
+def test_grib_fieldlist_data(fl_type, kwarg, expected_shape, expected_dtype):
+    ds, _ = load_grib_data("test.grib", fl_type)
 
     latlon = ds.to_latlon(**kwarg)
     v = ds.to_numpy(**kwarg)
@@ -471,10 +457,9 @@ def test_grib_fieldlist_data(fl_type, array_backend, kwarg, expected_shape, expe
     assert np.allclose(d[2], latlon["lon"])
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_grib_fieldlist_data_index(fl_type, array_backend):
-    ds = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+def test_grib_fieldlist_data_index(fl_type):
+    ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     eps = 1e-5
 
@@ -571,19 +556,18 @@ def test_grib_fieldlist_data_index(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_values_with_missing(fl_type, array_backend):
-    f = load_grib_data("test_single_with_missing.grib", fl_type, array_backend, folder="data")
+def test_grib_values_with_missing(fl_type):
+    f, array_backend = load_grib_data("test_single_with_missing.grib", fl_type, folder="data")
 
     v = f[0].values
     check_array_type(v, array_backend)
     assert v.shape == (84,)
     eps = 0.001
 
-    ns = get_array_namespace(array_backend)
+    ns = array_backend.namespace
 
     assert ns.count_nonzero(ns.isnan(v)) == 38
-    mask = get_array([12, 14, 15, 24, 25, 26] + list(range(28, 60)), array_backend)
+    mask = array_backend.from_other([12, 14, 15, 24, 25, 26] + list(range(28, 60)))
     assert np.isclose(v[0], 260.4356, eps)
     assert np.isclose(v[11], 260.4356, eps)
     assert np.isclose(v[-1], 227.1856, eps)

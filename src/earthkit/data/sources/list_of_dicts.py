@@ -12,7 +12,6 @@ import logging
 from earthkit.data.utils.metadata.dict import UserMetadata
 
 from . import Source
-from .array_list import ArrayFieldList
 
 LOG = logging.getLogger(__name__)
 
@@ -23,13 +22,19 @@ class FieldlistFromDicts(Source):
         self._kwargs = kwargs
 
     def mutate(self):
-        array = []
-        metadata = []
+        import numpy as np
+
+        from earthkit.data.indexing.fieldlist import SimpleFieldList
+
+        from .array_list import ArrayField
+
+        fields = []
         for f in self.d:
             v = f["values"]
-            array.append(v)
-            metadata.append(UserMetadata(f, values=v))
-        return ArrayFieldList(array, metadata, **self._kwargs)
+            if isinstance(v, list):
+                v = np.array(v)
+            fields.append(ArrayField(v, UserMetadata(f, values=v)))
+        return SimpleFieldList(fields=fields)
 
 
 source = FieldlistFromDicts

@@ -213,8 +213,8 @@ class XArrayMetadata(RawMetadata):
 
 
 class XArrayField(Field):
-    def __init__(self, ds, variable, slices, non_dim_coords, array_backend):
-        super().__init__(array_backend)
+    def __init__(self, ds, variable, slices, non_dim_coords):
+        super().__init__()
         self._ds = ds
         self._da = ds[variable]
 
