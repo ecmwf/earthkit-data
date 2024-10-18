@@ -15,6 +15,7 @@ from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.index import Selection
 from earthkit.data.core.index import normalize_selection
 from earthkit.data.core.order import build_remapping
+from earthkit.data.indexing.fieldlist import SimpleFieldList
 
 LOG = logging.getLogger(__name__)
 
@@ -193,3 +194,12 @@ class WrappedFieldList(FieldList):
             return indices, components
         else:
             return indices
+
+
+class SinglePassFieldList(SimpleFieldList):
+    def __init__(self, fieldlist):
+        super().__init__()
+
+    def parse(self, fieldlist):
+        for f in fieldlist:
+            self.append(f)

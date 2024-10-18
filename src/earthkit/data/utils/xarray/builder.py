@@ -181,7 +181,6 @@ class BackendDataBuilder(metaclass=ABCMeta):
         self.field_coords = {}
 
         self.grid = self._ensure_grid(grid)
-
         if self.profile.add_geo_coords:
             self.field_coords = self._make_field_coords()
 
@@ -227,11 +226,10 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         # build variable and global attributes
         xr_attrs = self.profile.attrs.builder.build(self.ds, t_vars, rename=True)
-
         xr_coords = self.coords()
         xr_vars = {self.profile.rename_variable(k): v.build() for k, v in t_vars.items()}
-
         dataset = xarray.Dataset(xr_vars, coords=xr_coords, attrs=xr_attrs)
+
         if self.profile.rename_dims_map():
             dataset = dataset.rename(self.profile.rename_dims_map())
 
@@ -316,6 +314,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
         remapping = self.profile.remapping.build()
 
         var = VariableBuilder(var_dims, data, extra_tensor_attrs, tensor, remapping)
+
         # var = xarray.Variable(var_dims, data, attrs=var_attrs)
         return var
 
@@ -392,16 +391,16 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
         #     # f.release()
         # vals = numpy.array(vals).reshape(tensor.full_shape)
 
-        vals = numpy.empty((len(tensor.source), *tensor.field_shape))
-        for i, f in enumerate(tensor.source):
-            vals[i] = f.to_numpy()
-            # f.release()
-        vals = vals.reshape(tensor.full_shape)
+        # vals = numpy.empty((len(tensor.source), *tensor.field_shape))
+        # for i, f in enumerate(tensor.source):
+        #     vals[i] = f.to_numpy()
+        #     # f.release()
+        # vals = vals.reshape(tensor.full_shape)
 
         # vals = numpy.ones((len(tensor.source), *tensor.field_shape))
         # vals = vals.reshape(tensor.full_shape)
 
-        data = vals
+        data = tensor.to_numpy(dtype=self.dtype)
         return data
 
 
@@ -487,10 +486,12 @@ class DatasetBuilder:
 
     def grid(self, ds):
         grids = ds.index("md5GridSection")
+
         if len(grids) != 1:
             raise ValueError(f"Expected one grid, got {len(grids)}")
         grid = grids[0]
         key = (grid, self.profile.flatten_values)
+
         if key not in self.grids:
             from .grid import TensorGrid
 
@@ -517,8 +518,8 @@ class SingleDatasetBuilder(DatasetBuilder):
             dims,
             grid=self.grid(ds),
         )
-
-        return builder.build()
+        r = builder.build()
+        return r
 
 
 class SplitDatasetBuilder(DatasetBuilder):

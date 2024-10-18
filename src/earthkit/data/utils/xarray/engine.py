@@ -25,6 +25,9 @@ def from_earthkit(ds, **kwargs):
     if not auto_split and not split_dims:
         backend_kwargs.pop("auto_split", None)
         backend_kwargs.pop("split_dims", None)
+        # from .builder import SingleDatasetBuilder
+
+        # return SingleDatasetBuilder(ds, **backend_kwargs).build()
         return xarray.open_dataset(ds, **kwargs)
     else:
         from .builder import SplitDatasetBuilder
