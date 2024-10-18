@@ -198,7 +198,7 @@ class WrappedFieldList(FieldList):
 
 class SinglePassFieldList(SimpleFieldList):
     def __init__(self, fieldlist):
-        super().__init__()
+        self.parse(fieldlist)
 
     def parse(self, fieldlist):
         for f in fieldlist:
