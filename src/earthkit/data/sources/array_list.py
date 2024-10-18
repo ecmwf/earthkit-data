@@ -38,6 +38,7 @@ class ArrayField(Field):
 
             metadata = UserMetadata(metadata, values=array)
 
+        # TODO: this solution is questionable due to performance reasons
         metadata = metadata._hide_internal_keys()
 
         super().__init__(metadata=metadata)

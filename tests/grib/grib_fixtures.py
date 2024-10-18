@@ -9,7 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-
 from earthkit.data import from_source
 from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import earthkit_examples_file
@@ -17,15 +16,15 @@ from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils.array import get_backend
 
 
-def load_array_fieldlist(path, array_backend):
-    ds = from_source("file", path)
+def load_array_fieldlist(path, array_backend, **kwargs):
+    ds = from_source("file", path, **kwargs)
     return ds.to_fieldlist(array_backend=array_backend)
     # return FieldList.from_array(
     #     ds.values, [m.override(generatingProcessIdentifier=120) for m in ds.metadata()]
     # )
 
 
-def load_grib_data(filename, fl_type, folder="example"):
+def load_grib_data(filename, fl_type, folder="example", **kwargs):
     if isinstance(filename, str):
         filename = [filename]
 
@@ -37,10 +36,19 @@ def load_grib_data(filename, fl_type, folder="example"):
         raise ValueError(f"Invalid folder={folder}")
 
     if fl_type == "file":
-        return from_source("file", path), get_backend("numpy")
+        return from_source("file", path, **kwargs), get_backend("numpy")
     elif fl_type in ARRAY_BACKENDS:
         array_backend = fl_type
-        return load_array_fieldlist(path, array_backend), get_backend(array_backend)
+        return load_array_fieldlist(path, array_backend, **kwargs), get_backend(array_backend)
+    elif fl_type == "array":
+        return load_array_fieldlist(path, "numpy", **kwargs), get_backend("numpy")
+    elif fl_type == "memory":
+        assert len(path) == 1
+        with open(path[0], "rb") as f:
+            ds = from_source("stream", f, read_all=True, **kwargs)
+            len(ds)  # force reading
+            return ds, get_backend("numpy")
+
     else:
         raise ValueError(f"Invalid fl_type={fl_type}")
 
