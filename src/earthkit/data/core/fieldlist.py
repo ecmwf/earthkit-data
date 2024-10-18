@@ -705,27 +705,26 @@ class Field(Base):
 
         # return {name: metadata(name) for name in names}
 
-    def to_field(self, **kwargs):
-        r"""Convert the object to a :obj:`Field`.
+    def to_field(self, array_backend=None, **kwargs):
+        r"""Convert to a new :class:`Field`.
+
+        Parameters
+        ----------
+        array_backend: str, module, :obj:`ArrayBackend`
+            Specifies the array backend for the generated :class:`Field`. The array
+            type must be supported by :class:`ArrayBackend`.
+
+        **kwargs: dict, optional
+            ``kwargs`` are passed to :obj:`to_array` to
+            extract the field values the resulting object will store.
 
         Returns
         -------
-        :obj:`Field`
+        :class:`ArrayField`
         """
         from earthkit.data.sources.array_list import ArrayField
 
-        return ArrayField(self.to_array(**kwargs), self._metadata.override())
-
-    def _diag(self):
-        r = r = defaultdict(int)
-        try:
-            md_cache = self._metadata._cache
-            r["metadata_cache_size"] += len(md_cache)
-            r["metadata_cache_hits"] += md_cache.hits
-            r["metadata_cache_misses"] += md_cache.misses
-        except Exception:
-            pass
-        return r
+        return ArrayField(self.to_array(array_backend=array_backend, **kwargs), self._metadata.override())
 
     @staticmethod
     def _flatten(v):
@@ -1506,9 +1505,6 @@ class FieldList(Index):
     def to_fieldlist(self, array_backend=None, **kwargs):
         r"""Convert to a new :class:`FieldList`.
 
-        When the :class:`FieldList` is already in the required format no new
-        :class:`FieldList` is created but the current one is returned.
-
         Parameters
         ----------
         array_backend: str, module, :obj:`ArrayBackend`
@@ -1521,9 +1517,8 @@ class FieldList(Index):
 
         Returns
         -------
-        :class:`FieldList`
-            - the current :class:`FieldList` if it is already in the required format
-            - a new :class:`SimpleFieldList` with :class`ArrayField` fields otherwise
+        :class:`SimpleFieldList`
+            - a new fieldlist containing :class`ArrayField` fields
 
         Examples
         --------
@@ -1559,6 +1554,12 @@ class FieldList(Index):
     def merge(cls, sources):
         assert all(isinstance(_, FieldList) for _ in sources)
         return MultiFieldList(sources)
+
+    def _cache_diag(self):
+        """For testing only"""
+        from earthkit.data.utils.diag import metadata_cache_diag
+
+        return metadata_cache_diag(self)
 
 
 class MaskFieldList(FieldList, MaskIndex):

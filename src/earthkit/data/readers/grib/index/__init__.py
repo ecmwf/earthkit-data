@@ -394,23 +394,21 @@ class GribFieldListInFiles(GribFieldList):
     def __len__(self):
         return self.number_of_parts()
 
-    def _diag(self):
+    def _cache_diag(self):
+        """For testing only"""
         r = defaultdict(int)
         r.update(self._field_manager.diag())
         r.update(self._handle_manager.diag())
 
         if self._field_manager.cache is not None:
+            from earthkit.data.utils.diag import collect_field_metadata_cache_diag
+
             for f in self._field_manager.cache.values():
                 if f._handle is not None:
                     r["current_handle_count"] += 1
 
                 if self._use_metadata_cache:
-                    try:
-                        md_cache = f._diag()
-                        for k in ["metadata_cache_hits", "metadata_cache_misses", "metadata_cache_size"]:
-                            r[k] += md_cache[k]
-                    except Exception:
-                        pass
+                    collect_field_metadata_cache_diag(f, r)
         return r
 
     @abstractmethod

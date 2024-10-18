@@ -27,7 +27,7 @@ class ArrayField(Field):
         Metadata object describing the field metadata.
     """
 
-    def __init__(self, array, metadata, use_metadata_cache=False):
+    def __init__(self, array, metadata):
         if isinstance(array, list):
             import numpy as np
 

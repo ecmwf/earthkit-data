@@ -8,6 +8,7 @@
 #
 
 import time
+from collections import defaultdict
 
 
 class TimeDiag:
@@ -120,3 +121,37 @@ class Diag:
 
     def peak(self):
         return self.memory.peak()
+
+
+def metadata_cache_diag(fieldlist):
+    r = defaultdict(int)
+    for f in fieldlist:
+        collect_field_metadata_cache_diag(f, r)
+        # try:
+        #     md_cache = f._diag()
+        #     for k in ["metadata_cache_hits", "metadata_cache_misses", "metadata_cache_size"]:
+        #         r[k] += md_cache[k]
+        # except Exception:
+        #     pass
+    return r
+
+
+def collect_field_metadata_cache_diag(field, r):
+    try:
+        md_cache = field_cache_diag(field)
+        for k in ["metadata_cache_hits", "metadata_cache_misses", "metadata_cache_size"]:
+            r[k] += md_cache[k]
+    except Exception:
+        pass
+
+
+def field_cache_diag(field):
+    r = defaultdict(int)
+    try:
+        md_cache = field.metadata()._cache
+        r["metadata_cache_size"] += len(md_cache)
+        r["metadata_cache_hits"] += md_cache.hits
+        r["metadata_cache_misses"] += md_cache.misses
+    except Exception:
+        pass
+    return r
