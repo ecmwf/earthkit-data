@@ -85,5 +85,44 @@ class SimpleFieldList(FieldList):
         return cls.from_fields(list(chain(*[f for f in sources])))
 
 
+class WrappedField:
+    def __init__(self, field):
+        self._field = field
+
+    def __getattr__(self, name):
+        return getattr(self._field, name)
+
+    def __repr__(self) -> str:
+        return repr(self._field)
+
+
+# class NewDataField(WrappedField):
+#     def __init__(self, field, data):
+#         super().__init__(field)
+#         self._data = data
+#         self.shape = data.shape
+
+#     def to_numpy(self, flatten=False, dtype=None, index=None):
+#         data = self._data
+#         if dtype is not None:
+#             data = data.astype(dtype)
+#         if flatten:
+#             data = data.flatten()
+#         if index is not None:
+#             data = data[index]
+#         return data
+
+
+class NewFieldMetadataWrapper:
+    def __init__(self, field, **kwargs):
+        from earthkit.data.core.metadata import WrappedMetadata
+
+        self.__metadata = WrappedMetadata(field._metadata, extra=kwargs, owner=field)
+
+    @property
+    def _metadata(self):
+        return self.__metadata
+
+
 # For backwards compatibility
 FieldArray = SimpleFieldList

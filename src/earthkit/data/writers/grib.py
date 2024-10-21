@@ -13,7 +13,7 @@ from . import Writer
 class GribWriter(Writer):
     DATA_FORMAT = "grib"
 
-    def write(self, f, values, metadata, check_nans=True, bits_per_value=None):
+    def write(self, f, field, values=None, check_nans=True, bits_per_value=None):
         r"""Write a GRIB field to a file object.
 
         Parameters
@@ -30,25 +30,25 @@ class GribWriter(Writer):
             Set the ``bitsPerValue`` GRIB key in the generated GRIB message. When
             None the ``bitsPerValue`` stored in the metadata will be used.
         """
-        handle = metadata._handle.clone()
 
-        if bits_per_value is None:
-            bits_per_value = metadata.get("bitsPerValue", 0)
+        from earthkit.data.readers.grib.output import new_grib_output
 
-        if bits_per_value != 0:
-            handle.set_long("bitsPerValue", bits_per_value)
+        output = new_grib_output(f, template=field)
 
-        if check_nans:
-            import numpy as np
+        md = {}
+        # wrapped metadata
+        if hasattr(field._metadata, "extra"):
+            md = {k: field._metadata._extra_value(k) for k, v in field._metadata.extra.items()}
 
-            if np.isnan(values).any():
-                missing_value = handle.MISSING_VALUE
-                values = np.nan_to_num(values, nan=missing_value)
-                handle.set_double("missingValue", missing_value)
-                handle.set_long("bitmapPresent", 1)
+        if bits_per_value is not None:
+            if field._metadata.get("bitsPerValue", 0) != bits_per_value:
+                md["bitsPerValue"] = bits_per_value
 
-        handle.set_values(values)
-        handle.write(f)
+        # keep the original generatingProcessIdentifier if not set
+        if "generatingProcessIdentifier" not in md:
+            md["generatingProcessIdentifier"] = None
+
+        output.write(values, check_nans=check_nans, missing_value=field.handle.MISSING_VALUE, **md)
 
 
 Writer = GribWriter

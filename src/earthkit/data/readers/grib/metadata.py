@@ -14,6 +14,7 @@ from functools import cached_property
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
 from earthkit.data.core.metadata import MetadataAccessor
+from earthkit.data.core.metadata import MetadataCacheHandler
 from earthkit.data.core.metadata import WrappedMetadata
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.readers.grib.gridspec import make_gridspec
@@ -301,24 +302,20 @@ class GribMetadata(Metadata):
         "vertical",
     ]
 
-    DATA_FORMAT = "grib"
-
-    CUSTOM_ACCESSOR = MetadataAccessor(
-        {
-            "valid_datetime": ["valid_datetime", "valid_time"],
-            "gridspec": ["grid_spec", "gridspec"],
-            "base_datetime": ["base_datetime", "forecast_reference_time", "base_time"],
-            "reference_datetime": "reference_datetime",
-            "indexing_datetime": ["indexing_time", "indexing_datetime"],
-            "step_timedelta": "step_timedelta",
-            "param_level": "param_level",
-        }
-    )
+    ACCESSORS = {
+        "valid_datetime": ["valid_datetime", "valid_time"],
+        "gridspec": ["grid_spec", "gridspec"],
+        "base_datetime": ["base_datetime", "forecast_reference_time", "base_time"],
+        "reference_datetime": "reference_datetime",
+        "indexing_datetime": ["indexing_time", "indexing_datetime"],
+        "step_timedelta": "step_timedelta",
+        "param_level": "param_level",
+    }
 
     __handle_type = None
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, cache=None, **kwargs):
+        self._cache = MetadataCacheHandler.make(cache)
 
     @staticmethod
     def _handle_type():
@@ -350,7 +347,9 @@ class GribMetadata(Metadata):
     def items(self):
         return self._handle.items()
 
-    def _get(self, key, default=None, astype=None, raise_on_missing=False):
+    @MetadataCacheHandler.cache_get
+    @MetadataAccessor(ACCESSORS)
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         def _key_name(key):
             if key == "param":
                 key = "shortName"
@@ -409,11 +408,10 @@ class GribMetadata(Metadata):
             handle.set_values(vals)
 
         # ensure that the cache settings are the same
-        cache = self._cache
-        if cache is not None:
-            cache = cache.__class__()
+        return StandAloneGribMetadata(handle, cache=MetadataCacheHandler.clone_empty(self._cache))
 
-        return StandAloneGribMetadata(handle, cache=cache)
+    def namespaces(self):
+        return self.NAMESPACES
 
     def as_namespace(self, namespace=None):
         r"""Return all the keys/values from a namespace.
@@ -450,6 +448,12 @@ class GribMetadata(Metadata):
     def geography(self):
         return GribFieldGeography(self)
 
+    def datetime(self):
+        return {
+            "base_time": self.base_datetime(),
+            "valid_time": self.valid_datetime(),
+        }
+
     def base_datetime(self):
         return self._datetime("dataDate", "dataTime")
 
@@ -475,9 +479,6 @@ class GribMetadata(Metadata):
 
     def param_level(self):
         return f"{self.get('shortName')}{self.get('level', default='')}"
-
-    def namespaces(self):
-        return self.NAMESPACES
 
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
@@ -530,6 +531,22 @@ class GribMetadata(Metadata):
                 )
 
         return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
+
+    def ls_keys(self):
+        return self.LS_KEYS
+
+    def describe_keys(self):
+        return self.DESCRIBE_KEYS
+
+    def index_keys(self):
+        return self.INDEX_KEYS
+
+    def data_format(self):
+        return "grib"
+
+    @property
+    def gridspec(self):
+        return self.geography.gridspec()
 
 
 class GribFieldMetadata(GribMetadata):
@@ -594,18 +611,14 @@ class StandAloneGribMetadata(GribMetadata):
         ret = {}
         ret["_handle"] = self._handle.get_buffer()
         # we do not serialize the cache contents
-        ret["_cache"] = self._cache if self._cache is None else self._cache.__class__
+        ret["_cache"] = MetadataCacheHandler.serialise(self._cache)
         return ret
 
     def __setstate__(self, state: dict):
         from earthkit.data.readers.grib.memory import GribMessageMemoryReader
 
-        cache = state.pop("_cache")
-        if cache is not None:
-            cache = cache()
-
+        self._cache = MetadataCacheHandler.deserialise(state.pop("_cache"))
         self.__handle = next(GribMessageMemoryReader(state.pop("_handle"))).handle
-        self._cache = cache
 
 
 class RestrictedGribMetadata(WrappedMetadata):

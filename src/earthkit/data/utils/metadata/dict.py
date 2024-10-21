@@ -231,22 +231,12 @@ class UserMetadata(Metadata):
         ("param", "shortName"),
     ]
 
-    CUSTOM_ACCESSOR = MetadataAccessor(
-        {
-            "base_datetime": "base_datetime",
-            "valid_datetime": "valid_datetime",
-            "step_timedelta": "step_timedelta",
-            "param_level": "param_level",
-        },
-        aliases=[
-            ("dataDate", "date"),
-            ("dataTime", "time"),
-            ("forecast_reference_time", "base_datetime"),
-            ("level", "levelist"),
-            ("step", "endStep", "stepRange"),
-            ("param", "shortName"),
-        ],
-    )
+    ACCESSORS = {
+        "base_datetime": "base_datetime",
+        "valid_datetime": "valid_datetime",
+        "step_timedelta": "step_timedelta",
+        "param_level": "param_level",
+    }
 
     LS_KEYS = ["param", "level", "base_datetime", "valid_datetime", "step", "number"]
 
@@ -259,6 +249,9 @@ class UserMetadata(Metadata):
     def __contains__(self, key):
         return key in self._data
 
+    def __getitem__(self, key):
+        return self.get(key, raise_on_missing=True)
+
     def __iter__(self):
         return iter(self._keys())
 
@@ -268,7 +261,8 @@ class UserMetadata(Metadata):
     def items(self):
         return self._data.items()
 
-    def _get(self, key, default=None, astype=None, raise_on_missing=False):
+    @MetadataAccessor(ACCESSORS, ALIASES)
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         def _key_name(key):
             if key in self._data:
                 return key
@@ -290,6 +284,12 @@ class UserMetadata(Metadata):
             return v
         else:
             return astype(v)
+
+    def datetime(self):
+        return {
+            "base_time": self.base_datetime(),
+            "valid_time": self.valid_datetime(),
+        }
 
     def base_datetime(self):
         v = self._get_one(["base_datetime", "forecast_reference_time"])
@@ -344,3 +344,27 @@ class UserMetadata(Metadata):
 
     def override(self, *args, **kwargs):
         raise NotImplementedError("override is not implemented for UserMetadata")
+
+    def namespaces(self):
+        return []
+
+    def as_namespace(self, namespace=None):
+        return {}
+
+    def dump(self, **kwargs):
+        return None
+
+    def ls_keys(self):
+        return self.LS_KEYS
+
+    def describe_keys(self):
+        return []
+
+    def index_keys(self):
+        return None
+
+    def data_format(self):
+        return "dict"
+
+    def _hide_internal_keys(self):
+        return self
