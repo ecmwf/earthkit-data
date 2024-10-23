@@ -139,10 +139,6 @@ class GribFieldInMemory(GribField):
     def offset(self):
         return None
 
-    # @cached_property
-    # def _metadata(self):
-    #     return GribFieldMetadata(self)
-
     @staticmethod
     def to_fieldlist(fields):
         return GribFieldListInMemory.from_fields(fields)
@@ -153,6 +149,9 @@ class GribFieldInMemory(GribField):
         return GribFieldInMemory(
             GribCodesHandle(handle, None, None), use_metadata_cache=get_use_grib_metadata_cache()
         )
+
+    def _release(self):
+        self._handle = None
 
 
 class GribFieldListInMemory(SimpleFieldList):

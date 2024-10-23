@@ -240,11 +240,9 @@ def test_xr_engine_detailed_check(api):
 
 
 @pytest.mark.cache
-# @pytest.mark.parametrize("stream", [False, True])
-# @pytest.mark.parametrize("mode", ["tensor", "memory"])
-@pytest.mark.parametrize("stream", [False])
-@pytest.mark.parametrize("mode", ["memory"])
-def test_xr_engine_detailed_flatten_check(mode, stream):
+@pytest.mark.parametrize("stream", [False, True])
+@pytest.mark.parametrize("release_fields", [False, True])
+def test_xr_engine_detailed_flatten_check(stream, release_fields):
     filename = "test-data/xr_engine/level/pl.grib"
     ds_ek, ds_ek_ref = load_grib_data(filename, "url", stream=stream)
 
@@ -256,7 +254,7 @@ def test_xr_engine_detailed_flatten_check(mode, stream):
                 "decode_timedelta": False,
                 "flatten_values": True,
                 "add_valid_time_coord": False,
-                "mode": mode,
+                "release_fields": release_fields,
             }
         }
     }

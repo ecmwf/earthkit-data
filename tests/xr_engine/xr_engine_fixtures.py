@@ -15,7 +15,7 @@ from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.utils.xarray.fieldlist import WrappedFieldList
+from earthkit.data.utils.xarray.fieldlist import XArrayInputFieldList
 
 
 def load_fieldlist(d):
@@ -50,7 +50,7 @@ def load_wrapped_fieldlist(d, profile, **kwargs):
     else:
         raise ValueError(f"Invalid data type={type(d)}")
 
-    return WrappedFieldList(ds, keys=profile.index_keys, **kwargs)
+    return XArrayInputFieldList(ds, keys=profile.index_keys, **kwargs)
 
 
 def compare_dims(ds, ref_coords, order_ref_var=None, sizes=False):

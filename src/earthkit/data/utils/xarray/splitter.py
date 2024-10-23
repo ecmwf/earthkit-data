@@ -8,7 +8,6 @@
 #
 
 import logging
-import math
 from abc import ABCMeta
 from abc import abstractmethod
 
@@ -31,9 +30,9 @@ class Splitter(metaclass=ABCMeta):
             return NoSplitter()
         elif split_dims:
             return DimSplitter(split_dims)
-        elif auto_split:
-            return AutoSplitter()
-        else:
+            # elif auto_split:
+            #     return AutoSplitter()
+            # else:
             raise ValueError("Invalid split configuration")
 
 
@@ -68,54 +67,54 @@ class DimSplitter(Splitter):
             yield profile.dims.to_list(), ds_sel
 
 
-class AutoSplitter(Splitter):
-    def split(self, ds, profile):
-        grids = self.grids(ds)
-        dims = {k: ds.index(k) for k in profile.dim_keys}
+# class AutoSplitter(Splitter):
+#     def split(self, ds, profile):
+#         grids = self.grids(ds)
+#         dims = {k: ds.index(k) for k in profile.dim_keys}
 
-        for ds_gr, grid in self.ds_grids(grids, ds):
-            holes = {k: False for k in profile.dim_keys}
-            cube_vars = []
-            dims = {k: ds_gr.index(k) for k in profile.dim_keys}
-            t_dims = []
-            for d in dims:
-                if len(ds_gr.index(d)) > 1 or (not profile.dims.squeeze and len(ds_gr.index(d)) == 1):
-                    t_dims.append(d)
+#         for ds_gr, grid in self.ds_grids(grids, ds):
+#             holes = {k: False for k in profile.dim_keys}
+#             cube_vars = []
+#             dims = {k: ds_gr.index(k) for k in profile.dim_keys}
+#             t_dims = []
+#             for d in dims:
+#                 if len(ds_gr.index(d)) > 1 or (not profile.dims.squeeze and len(ds_gr.index(d)) == 1):
+#                     t_dims.append(d)
 
-            # try to see if dims form a cube
-            for v in profile.variables:
-                keys = {profile.variable_key: v}
-                ds_var = ds_gr.sel(**keys)
+#             # try to see if dims form a cube
+#             for v in profile.variables:
+#                 keys = {profile.variable_key: v}
+#                 ds_var = ds_gr.sel(**keys)
 
-                if len(ds_var) > 0:
-                    n = math.prod([len(ds_var.index(d)) for d in profile.dim_keys])
-                    # print(f" -> n={n} len={len(ds_var)}")
-                    if n == len(ds_var):
-                        cube_vars.append(v)
-                    else:
-                        for h in self.dims_hole(ds_var, t_dims):
-                            holes[h] = True
+#                 if len(ds_var) > 0:
+#                     n = math.prod([len(ds_var.index(d)) for d in profile.dim_keys])
+#                     # print(f" -> n={n} len={len(ds_var)}")
+#                     if n == len(ds_var):
+#                         cube_vars.append(v)
+#                     else:
+#                         for h in self.dims_hole(ds_var, t_dims):
+#                             holes[h] = True
 
-            holes = [k for k in holes if holes[k]]
-            # print("holes=", holes)
-            if not holes:
-                yield t_dims, ds_gr
-            else:
-                splitter = DimSplitter(holes)
-                yield splitter.split(ds, profile)
+#             holes = [k for k in holes if holes[k]]
+#             # print("holes=", holes)
+#             if not holes:
+#                 yield t_dims, ds_gr
+#             else:
+#                 splitter = DimSplitter(holes)
+#                 yield splitter.split(ds, profile)
 
-    def ds_grids(self, grids, ds):
-        if len(grids) == 1:
-            yield ds
-        elif len(grids) > 1:
-            for gr in grids:
-                ds_sel = ds.sel(md5GridSection=gr)
-                yield ds_sel, gr
+#     def ds_grids(self, grids, ds):
+#         if len(grids) == 1:
+#             yield ds
+#         elif len(grids) > 1:
+#             for gr in grids:
+#                 ds_sel = ds.sel(md5GridSection=gr)
+#                 yield ds_sel, gr
 
-    def dims_hole(self, ds, full_dims):
-        holes = []
-        dims = {k: ds.index(k) for k in full_dims}
-        for d in dims:
-            if dims[d] != full_dims[d]:
-                holes.append(d)
-        return holes
+#     def dims_hole(self, ds, full_dims):
+#         holes = []
+#         dims = {k: ds.index(k) for k in full_dims}
+#         for d in dims:
+#             if dims[d] != full_dims[d]:
+#                 holes.append(d)
+#         return holes

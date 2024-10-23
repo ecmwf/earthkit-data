@@ -208,8 +208,10 @@ class StreamFieldList(FieldList, Source):
         raise NotImplementedError("StreamFieldList cannot be pickled")
 
     def to_xarray(self, **kwargs):
+        from earthkit.data.core.fieldlist import FieldList
+
         fields = [f for f in self]
-        return self._source.to_fieldlist(fields).to_xarray(**kwargs)
+        return FieldList.from_fields(fields).to_xarray(**kwargs)
 
 
 class Stream:
