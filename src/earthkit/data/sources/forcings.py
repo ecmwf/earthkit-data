@@ -305,11 +305,26 @@ def index_to_coords(index: int, shape):
 
 
 class ForcingsFieldListCore(FieldList):
-    def __init__(self, source_or_dataset, request={}, **kwargs):
+    def __init__(self, source_or_dataset=None, *, request={}, **kwargs):
         request = dict(**request)
         request.update(kwargs)
 
         self.request = self._request(**request)
+
+        def find_latlon():
+            lats = None
+            for k in ["latitudes", "latitude"]:
+                if k in self.request:
+                    lats = np.asarray(self.request.pop(k))
+                    break
+
+            lons = None
+            for k in ["longitudes", "longitude"]:
+                if k in self.request:
+                    lons = np.asarray(self.request.pop(k))
+                    break
+
+            return lats, lons
 
         def find_numbers(source_or_dataset):
             if "number" in self.request:
@@ -344,6 +359,22 @@ class ForcingsFieldListCore(FieldList):
             )
 
             return source_or_dataset.unique_values("valid_datetime")["valid_datetime"]
+
+        if source_or_dataset is None:
+            lats, lons = find_latlon()
+            if lats is None:
+                raise ValueError("latitudes must be specified when no source or dataset provided")
+
+            if lons is None:
+                raise ValueError("longitudes must be specified when no source or dataset provided")
+
+            from earthkit.data import from_source
+
+            vals = np.ones(lats.shape)
+            d = {"values": vals, "latitudes": lats, "longitudes": lons}
+            # d.update(self.request)
+
+            source_or_dataset = from_source("list-of-dicts", [d])
 
         self.dates = find_dates(source_or_dataset)
 
