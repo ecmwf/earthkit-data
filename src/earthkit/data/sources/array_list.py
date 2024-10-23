@@ -11,6 +11,7 @@ import logging
 import math
 
 from earthkit.data.core.fieldlist import Field
+from earthkit.data.indexing.fieldlist import NewFieldMetadataWrapper
 from earthkit.data.utils.array import array_namespace
 
 LOG = logging.getLogger(__name__)
@@ -39,9 +40,10 @@ class ArrayField(Field):
             metadata = UserMetadata(metadata, values=array)
 
         # TODO: this solution is questionable due to performance reasons
-        metadata = metadata._hide_internal_keys()
+        if metadata is not None:
+            metadata = metadata._hide_internal_keys()
 
-        super().__init__(metadata=metadata)
+        self.__metadata = metadata
         self._array = array
 
     def _values(self, dtype=None):
@@ -73,7 +75,11 @@ class ArrayField(Field):
         """
         from earthkit.data.writers import write
 
-        write(f, self.to_numpy(flatten=True), self._metadata, **kwargs)
+        write(f, self, values=self.to_numpy(flatten=True), **kwargs)
+
+    @property
+    def _metadata(self):
+        return self.__metadata
 
     @property
     def handle(self):
@@ -87,8 +93,16 @@ class ArrayField(Field):
 
     def __setstate__(self, state: dict):
         self._array = state.pop("_array")
-        metadata = state.pop("_metadata")
-        super().__init__(metadata=metadata)
+        self.__metadata = state.pop("_metadata")
+
+    def copy(self, **kwargs):
+        return NewMetadataArrayField(self, **kwargs)
+
+
+class NewMetadataArrayField(NewFieldMetadataWrapper, ArrayField):
+    def __init__(self, field, **kwargs):
+        NewFieldMetadataWrapper.__init__(self, field, **kwargs)
+        ArrayField.__init__(self, field._array, None)
 
 
 def from_array(array, metadata):

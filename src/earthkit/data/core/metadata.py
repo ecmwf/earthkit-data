@@ -73,32 +73,56 @@ class MetadataAccessor:
             else:
                 raise KeyError(f"{key}, reason={e}")
 
+    def __call__(self, func):
+        @functools.wraps(func)
+        def wrapped(cls, key, *args, **kwargs):
+            if key in self:
+                return self.get(cls, key, *args, **kwargs)
+            return func(cls, key, *args, **kwargs)
 
-def cacheable_metadata(func):
-    @functools.wraps(func)
-    def wrapped(self, key, default=None, *, astype=None, raise_on_missing=False):
-        if self._cache is not None:
-            cache_id = (key, default, astype, raise_on_missing)
-            if cache_id in self._cache:
-                return self._cache[cache_id]
-
-            v = func(self, key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-            self._cache[cache_id] = v
-            return v
-        else:
-            return func(self, key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-
-    return wrapped
+        return wrapped
 
 
-def custom_accessor(func):
-    @functools.wraps(func)
-    def wrapped(self, key, *args, **kwargs):
-        if self.CUSTOM_ACCESSOR and key in self.CUSTOM_ACCESSOR:
-            return self.CUSTOM_ACCESSOR.get(self, key, *args, **kwargs)
-        return func(self, key, *args, **kwargs)
+class MetadataCacheHandler:
+    @staticmethod
+    def make(cache=None):
+        if cache is True:
+            return dict()
+        elif cache is not False and cache is not None:
+            return cache
 
-    return wrapped
+    @staticmethod
+    def clone_empty(cache):
+        if cache is not None:
+            return cache.__class__()
+
+    @staticmethod
+    def serialise(cache):
+        if cache is not None:
+            return cache.__class__
+
+    @staticmethod
+    def deserialise(state):
+        cache = state
+        if state is not None:
+            return cache()
+
+    @staticmethod
+    def cache_get(func):
+        @functools.wraps(func)
+        def wrapped(self, key, default=None, *, astype=None, raise_on_missing=False):
+            if self._cache is not None:
+                cache_id = (key, default, astype, raise_on_missing)
+                if cache_id in self._cache:
+                    return self._cache[cache_id]
+
+                v = func(self, key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+                self._cache[cache_id] = v
+                return v
+            else:
+                return func(self, key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+
+        return wrapped
 
 
 class Metadata(metaclass=ABCMeta):
@@ -120,22 +144,6 @@ class Metadata(metaclass=ABCMeta):
     - :ref:`/examples/metadata.ipynb`
 
     """
-
-    DATA_FORMAT = None
-    NAMESPACES = []
-    LS_KEYS = []
-    DESCRIBE_KEYS = []
-    INDEX_KEYS = []
-    ALIASES = []
-    CUSTOM_ACCESSOR = None
-
-    _cache = None
-
-    def __init__(self, cache=False):
-        if cache is True:
-            self._cache = dict()
-        elif cache is not False and cache is not None:
-            self._cache = cache
 
     @abstractmethod
     def __iter__(self):
@@ -189,12 +197,9 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
-    @cacheable_metadata
-    @custom_accessor
+    @abstractmethod
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         r"""Return the value for ``key``.
-
-        When the instance is created with ``cache=True`` all the result is cached.
 
         Parameters
         ----------
@@ -224,10 +229,6 @@ class Metadata(metaclass=ABCMeta):
             a missing value.
 
         """
-        return self._get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-
-    @abstractmethod
-    def _get(self, key, astype=None, default=None, raise_on_missing=False):
         pass
 
     @abstractmethod
@@ -249,6 +250,7 @@ class Metadata(metaclass=ABCMeta):
         """
         pass
 
+    @abstractmethod
     def namespaces(self):
         r"""Return the available namespaces.
 
@@ -256,8 +258,9 @@ class Metadata(metaclass=ABCMeta):
         -------
         list of str
         """
-        return self.NAMESPACES
+        pass
 
+    @abstractmethod
     def as_namespace(self, namespace=None):
         r"""Return all the keys/values from a namespace.
 
@@ -273,14 +276,14 @@ class Metadata(metaclass=ABCMeta):
             All the keys/values from the `namespace`.
 
         """
-        if namespace is None or namespace == "":
-            return {k: v for k, v in self.items()}
-        return {}
+        pass
 
+    @abstractmethod
     def dump(self, **kwargs):
         r"""Generate a dump from the metadata content."""
-        return None
+        pass
 
+    @abstractmethod
     def datetime(self):
         r"""Return the date and time of the field.
 
@@ -297,10 +300,7 @@ class Metadata(metaclass=ABCMeta):
         'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
 
         """
-        return {
-            "base_time": self.base_datetime(),
-            "valid_time": self.valid_datetime(),
-        }
+        pass
 
     @abstractmethod
     def base_datetime(self):
@@ -311,33 +311,30 @@ class Metadata(metaclass=ABCMeta):
         pass
 
     @property
+    @abstractmethod
     def geography(self):
         r""":obj:`Geography`: Get geography description.
 
         If it is not available None is returned.
         """
-        return None
+        pass
 
-    @property
-    def gridspec(self):
-        r""":class:`~data.core.gridspec.GridSpec`: Get grid description.
-
-        If it is not available None is returned.
-        """
-        return None if self.geography is None else self.geography.gridspec()
-
+    @abstractmethod
     def ls_keys(self):
         r"""Return the keys to be used with the :meth:`ls` method."""
-        return self.LS_KEYS
+        pass
 
+    @abstractmethod
     def describe_keys(self):
         r"""Return the keys to be used with the :meth:`describe` method."""
-        return self.DESCRIBE_KEYS
+        pass
 
+    @abstractmethod
     def index_keys(self):
         r"""Return the keys to be used with the :meth:`indices` method."""
-        return self.INDEX_KEYS
+        pass
 
+    @abstractmethod
     def data_format(self):
         r"""Return the underlying data format.
 
@@ -346,17 +343,27 @@ class Metadata(metaclass=ABCMeta):
         str
 
         """
-        return self.DATA_FORMAT
+        pass
 
+    @abstractmethod
     def _hide_internal_keys(self):
-        return self
+        """If the metadata object has internal keys, hide them.
+
+        Returns
+        -------
+        WrappedMetadata, Metadata
+            If the metadata object has internal keys, return a new wrapped object with the
+            internal keys hidden. Otherwise return the metadata object itself.
+        """
+        pass
 
 
 class WrappedMetadata:
-    def __init__(self, metadata, extra=None, hidden=None, merge=True):
+    def __init__(self, metadata, extra=None, hidden=None, owner=None, merge=True):
         self.metadata = metadata
         self.extra = extra if extra is not None else dict()
         self.hidden = hidden if hidden is not None else []
+        self.owner = owner
 
         for k in self.hidden:
             if k in self.extra:
@@ -429,7 +436,7 @@ class WrappedMetadata:
             return default
 
         if key in self.extra:
-            v = self.extra[key]
+            v = self._extra_value(key)
             if astype is not None and v is not None:
                 try:
                     return astype(v)
@@ -440,6 +447,25 @@ class WrappedMetadata:
         return self.metadata.get(
             key, default=default, astype=astype, raise_on_missing=raise_on_missing, **kwargs
         )
+
+    def _extra_value(self, key):
+        v = self.extra[key]
+        if callable(v):
+            v = v(self.owner, key, self.metadata)
+        return v
+
+    def as_namespace(self, namespace):
+        r = dict()
+        if namespace is None:
+            r = dict(self.items())
+            for k, v in self.extra.items():
+                if k in r:
+                    r[k] = self._extra_value(k)
+        else:
+            r = self.metadata.as_namespace(namespace)
+            # TODO: add filtering based on extra
+
+        return r
 
     def override(self, *args, **kwargs):
         md = self.metadata.override(*args, **kwargs)
@@ -489,21 +515,25 @@ class RawMetadata(Metadata):
         self._d = dict(*args, **kwargs)
         super().__init__()
 
-    def override(self, *args, **kwargs):
-        d = dict(**self._d)
-        d.update(*args, **kwargs)
-        return RawMetadata(d)
-
     def __len__(self):
         return len(self._d)
 
     def __contains__(self, key):
         return key in self._d
 
+    def __getitem__(self, key):
+        return self.get(key, raise_on_missing=True)
+
     def __iter__(self):
         return iter(self.keys())
 
-    def _get(self, key, default=None, astype=None, raise_on_missing=False):
+    def keys(self):
+        return self._d.keys()
+
+    def items(self):
+        return self._d.items()
+
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         if not raise_on_missing:
             v = self._d.get(key, default)
         else:
@@ -516,11 +546,19 @@ class RawMetadata(Metadata):
                 return None
         return v
 
-    def keys(self):
-        return self._d.keys()
+    def override(self, *args, **kwargs):
+        d = dict(**self._d)
+        d.update(*args, **kwargs)
+        return RawMetadata(d)
 
-    def items(self):
-        return self._d.items()
+    def namespaces(self):
+        return []
+
+    def as_namespace(self, namespace):
+        return {}
+
+    def datetime(self):
+        return None
 
     def base_datetime(self):
         return None
@@ -528,8 +566,27 @@ class RawMetadata(Metadata):
     def valid_datetime(self):
         return None
 
-    def as_namespace(self, namespace):
-        return {}
+    @property
+    def geography(self):
+        return None
+
+    def dump(self, **kwargs):
+        return None
+
+    def ls_keys(self):
+        return []
+
+    def describe_keys(self):
+        return []
+
+    def index_keys(self):
+        return []
+
+    def data_format(self):
+        return None
+
+    def _hide_internal_keys(self):
+        return self
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self._d.__repr__()})"
