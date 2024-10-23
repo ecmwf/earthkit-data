@@ -79,12 +79,6 @@ class FieldListIndices:
 class Field(Base):
     r"""Represent a Field."""
 
-    def __init__(
-        self,
-        metadata=None,
-    ):
-        self.__metadata = metadata
-
     @abstractmethod
     def _values(self, dtype=None):
         r"""Return the raw values extracted from the underlying storage format
@@ -113,12 +107,10 @@ class Field(Base):
         return self._flatten(self._values())
 
     @property
+    @abstractmethod
     def _metadata(self):
         r"""Metadata: Get the object representing the field's metadata."""
-        if self.__metadata is None:
-            # TODO: remove this legacy method
-            self.__metadata = self._make_metadata()
-        return self.__metadata
+        self._not_implemented()
 
     def to_numpy(self, flatten=False, dtype=None, index=None):
         r"""Return the values stored in the field as an ndarray.
@@ -637,6 +629,16 @@ class Field(Base):
         else:
             return self._metadata.as_namespace(None)
 
+    @abstractmethod
+    def copy(self, **kwargs):
+        r"""Return a copy of the field.
+
+        Returns
+        -------
+        :obj:`Field`
+        """
+        self._not_implemented()
+
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
 
@@ -667,6 +669,28 @@ class Field(Base):
 
         """
         return self._metadata.dump(namespace=namespace, **kwargs)
+
+    def save(self, filename, append=False, **kwargs):
+        r"""Write the field into a file.
+
+        Parameters
+        ----------
+        filename: str, optional
+            The target file path, if not defined attempts will be made to detect the filename
+        append: bool, optional
+            When it is true append data to the target file. Otherwise
+            the target file be overwritten if already exists. Default is False
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`write`.
+
+        See Also
+        --------
+        :obj:`write`
+
+        """
+        flag = "wb" if not append else "ab"
+        with open(filename, flag) as f:
+            self.write(f, **kwargs)
 
     def __getitem__(self, key):
         """Return the value of the metadata ``key``."""

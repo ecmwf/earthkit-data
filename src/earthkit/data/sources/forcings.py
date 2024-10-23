@@ -10,6 +10,7 @@
 import datetime
 import itertools
 import logging
+from functools import cached_property
 
 import numpy as np
 
@@ -19,6 +20,7 @@ from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalize
+from earthkit.data.indexing.fieldlist import NewFieldMetadataWrapper
 from earthkit.data.utils.dates import to_datetime
 
 LOG = logging.getLogger(__name__)
@@ -35,6 +37,12 @@ class ForcingMetadata(RawMetadata):
     def geography(self):
         return self._geo
 
+    def datetime(self):
+        return {
+            "base_time": self.base_datetime(),
+            "valid_time": self.valid_datetime(),
+        }
+
     def base_datetime(self):
         return None
 
@@ -43,6 +51,9 @@ class ForcingMetadata(RawMetadata):
 
     def step_timedelta(self):
         return datetime.timedelta()
+
+    def ls_keys(self):
+        return self.LS_KEYS
 
 
 class ForcingMaker:
@@ -225,17 +236,18 @@ class ForcingField(Field):
         self.number = number
         # self._shape = shape
         # self._geometry = self.maker.field.metadata().geography
+
+    @cached_property
+    def _metadata(self):
         d = dict(
-            valid_datetime=date if isinstance(date, str) else date.isoformat(),
-            param=param,
+            valid_datetime=self.date if isinstance(self.date, str) else self.date.isoformat(),
+            param=self.param,
             level=None,
             levelist=None,
-            number=number,
+            number=self.number,
             levtype=None,
         )
-        super().__init__(
-            metadata=ForcingMetadata(d, self.maker.field.metadata().geography),
-        )
+        return ForcingMetadata(d, self.maker.field.metadata().geography)
 
     def _values(self, dtype=None):
         values = self.proc(self.date)
@@ -243,8 +255,17 @@ class ForcingField(Field):
             values = values.astype(dtype)
         return values
 
+    def copy(self, **kwargs):
+        return NewMetadataForcingField(self, **kwargs)
+
     def __repr__(self):
         return "ForcingField(%s,%s,%s)" % (self.param, self.date, self.number)
+
+
+class NewMetadataForcingField(NewFieldMetadataWrapper, ForcingField):
+    def __init__(self, field, **kwargs):
+        NewFieldMetadataWrapper.__init__(self, field, **kwargs)
+        ForcingField.__init__(self, field.maker, field.date, field.param, field.proc, number=field.number)
 
 
 def make_datetime(date, time):
