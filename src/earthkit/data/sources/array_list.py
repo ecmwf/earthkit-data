@@ -11,7 +11,7 @@ import logging
 import math
 
 from earthkit.data.core.fieldlist import Field
-from earthkit.data.indexing.fieldlist import NewFieldMetadataWrapper
+from earthkit.data.indexing.fieldlist import NewFieldWrapper
 from earthkit.data.utils.array import array_namespace
 
 LOG = logging.getLogger(__name__)
@@ -96,12 +96,12 @@ class ArrayField(Field):
         self.__metadata = state.pop("_metadata")
 
     def copy(self, **kwargs):
-        return NewMetadataArrayField(self, **kwargs)
+        return NewArrayField(self, **kwargs)
 
 
-class NewMetadataArrayField(NewFieldMetadataWrapper, ArrayField):
+class NewArrayField(NewFieldWrapper, ArrayField):
     def __init__(self, field, **kwargs):
-        NewFieldMetadataWrapper.__init__(self, field, **kwargs)
+        NewFieldWrapper.__init__(self, field, **kwargs)
         ArrayField.__init__(self, field._array, None)
 
 

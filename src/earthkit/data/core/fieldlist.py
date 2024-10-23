@@ -729,7 +729,7 @@ class Field(Base):
 
         # return {name: metadata(name) for name in names}
 
-    def to_field(self, array_backend=None, **kwargs):
+    def to_field(self, flatten=False, dtype=None, array_backend=None, values=None, **kwargs):
         r"""Convert to a new :class:`Field`.
 
         Parameters
@@ -748,7 +748,17 @@ class Field(Base):
         """
         from earthkit.data.sources.array_list import ArrayField
 
-        return ArrayField(self.to_array(array_backend=array_backend, **kwargs), self._metadata.override())
+        if values is None:
+            values = self.to_array(
+                flatten=flatten,
+                dtype=dtype,
+                array_backend=array_backend,
+            )
+
+        return ArrayField(
+            values,
+            self._metadata.override(**kwargs),
+        )
 
     @staticmethod
     def _flatten(v):

@@ -124,5 +124,33 @@ class NewFieldMetadataWrapper:
         return self.__metadata
 
 
+class NewFieldWrapper:
+    def __init__(self, field, values=None, **kwargs):
+        self._field = field
+        self.__values = values
+
+        if kwargs:
+            from earthkit.data.core.metadata import WrappedMetadata
+
+            self.__metadata = WrappedMetadata(field._metadata, extra=kwargs, owner=field)
+        else:
+            self.__metadata = field._metadata
+
+    def _values(self, dtype=None):
+        if self.__values is None:
+            return self._field._values(dtype=dtype)
+        else:
+            if dtype is None:
+                return self.__values
+            return self.__values.astype(dtype)
+
+    @property
+    def _metadata(self):
+        return self.__metadata
+
+    def _has_new_values(self):
+        return self.__values is not None
+
+
 # For backwards compatibility
 FieldArray = SimpleFieldList

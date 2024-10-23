@@ -15,7 +15,7 @@ import eccodes
 import numpy as np
 
 from earthkit.data.core.fieldlist import Field
-from earthkit.data.indexing.fieldlist import NewFieldMetadataWrapper
+from earthkit.data.indexing.fieldlist import NewFieldWrapper
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
@@ -326,12 +326,12 @@ class GribField(Field):
         return self.handle.get_buffer()
 
     def copy(self, **kwargs):
-        return NewMetadataGribField(self, **kwargs)
+        return NewGribField(self, **kwargs)
 
 
-class NewMetadataGribField(NewFieldMetadataWrapper, GribField):
+class NewGribField(NewFieldWrapper, GribField):
     def __init__(self, field, **kwargs):
-        NewFieldMetadataWrapper.__init__(self, field, **kwargs)
+        NewFieldWrapper.__init__(self, field, **kwargs)
         self._handle = field._handle
         GribField.__init__(
             self,
