@@ -38,6 +38,9 @@ def test_grib_copy_metadata(fl_type):
     def _func3(field, key, original_metadata):
         return original_metadata.get("param") + "_" + str(original_metadata.get("levelist"))
 
+    def _func4(field, key, original_metadata):
+        return original_metadata[key] + 200
+
     # ---------------
     # field
     # ---------------
@@ -87,6 +90,30 @@ def test_grib_copy_metadata(fl_type):
         assert f_saved.metadata("shortName") == "q"
         assert f_saved.metadata("level") == 600
         assert f_saved.metadata("levelist") == 600
+
+    # ---------------------
+    # field - repeated use
+    # ---------------------
+
+    f = ds_ori[0].copy(
+        param="q",
+        levelist=_func1,
+        mars_area=_func2,
+        name=_func3,
+    )
+
+    f = f.copy(param="pt", levelist=_func4)
+
+    assert f.metadata("param") == "pt"
+    assert f.metadata("shortName") == "t"
+    assert f.metadata("level") == 500
+
+    # TODO: this should be 800
+    assert f.metadata("levelist") == 700
+    assert f.metadata("date", "param") == (20070101, "pt")
+    assert f.metadata("param", "date") == ("pt", 20070101)
+    assert np.allclose(np.array(f.metadata("mars_area")), np.array([90.0, 0.0, -90.0, 359.0]))
+    assert f.metadata("name") == "t_500"
 
     # ---------------
     # fieldlist
@@ -145,7 +172,6 @@ def test_grib_copy_values(fl_type):
     assert f.metadata("levelist") == 500
     assert f.metadata("date", "param") == (20070101, "t")
     assert f.metadata("param", "date") == ("t", 20070101)
-
     assert np.allclose(f.values, vals_ori + 1)
     assert np.allclose(ds_ori[0].values, vals_ori)
 
@@ -159,6 +185,22 @@ def test_grib_copy_values(fl_type):
         assert f_saved.metadata("level") == 500
         assert f_saved.metadata("levelist") == 500
         assert np.allclose(f_saved.values, vals_ori + 1)
+
+    # ---------------------
+    # field - repeated use
+    # ---------------------
+
+    f = ds_ori[0].copy(values=vals_ori + 1)
+    f = f.copy(values=vals_ori + 2)
+
+    assert f.metadata("param") == "t"
+    assert f.metadata("shortName") == "t"
+    assert f.metadata("level") == 500
+    assert f.metadata("levelist") == 500
+    assert f.metadata("date", "param") == (20070101, "t")
+    assert f.metadata("param", "date") == ("t", 20070101)
+    assert np.allclose(f.values, vals_ori + 2)
+    assert np.allclose(ds_ori[0].values, vals_ori)
 
     # ---------------
     # fieldlist
@@ -209,6 +251,9 @@ def test_grib_copy_combined(fl_type):
     def _func1(field, key, original_metadata):
         return original_metadata[key] + 100
 
+    def _func2(field, key, original_metadata):
+        return original_metadata[key] + 200
+
     # ---------------
     # field
     # ---------------
@@ -219,7 +264,6 @@ def test_grib_copy_combined(fl_type):
         levelist=_func1,
     )
 
-    assert isinstance(f, ArrayField)
     assert f.metadata("param") == "q"
     assert f.metadata("shortName") == "t"
     assert f.metadata("level") == 500
@@ -239,6 +283,28 @@ def test_grib_copy_combined(fl_type):
         assert f_saved.metadata("level") == 600
         assert f_saved.metadata("levelist") == 600
         assert np.allclose(f_saved.values, vals_ori + 1)
+
+    # ---------------------
+    # field - repeated use
+    # ---------------------
+
+    f = ds_ori[0].copy(
+        values=vals_ori + 1,
+        param="q",
+        levelist=_func1,
+    )
+    f = f.copy(values=vals_ori + 2, param="pt", levelist=_func2)
+
+    assert f.metadata("param") == "pt"
+    assert f.metadata("shortName") == "t"
+    assert f.metadata("level") == 500
+
+    # this should be 800
+    assert f.metadata("levelist") == 700
+    assert f.metadata("date", "param") == (20070101, "pt")
+    assert f.metadata("param", "date") == ("pt", 20070101)
+    assert np.allclose(f.values, vals_ori + 2)
+    assert np.allclose(ds_ori[0].values, vals_ori)
 
     # ---------------
     # fieldlist
@@ -300,6 +366,7 @@ def test_grib_copy_to_field(fl_type):
         level=600,
     )
 
+    assert isinstance(f, ArrayField)
     assert f.metadata("param") == "q"
     assert f.metadata("shortName") == "q"
     assert f.metadata("level") == 600
@@ -353,13 +420,3 @@ def test_grib_copy_to_field(fl_type):
         assert ds_saved.metadata("levelist") == [600, 600]
         assert np.allclose(ds_saved[0].values, vals_ori + 1)
         assert np.allclose(ds_saved[1].values, vals_ori + 2)
-
-    # TODO: implement the following
-    # serialise
-    # pickled_f = pickle.dumps(ds)
-    # ds_1 = pickle.loads(pickled_f)
-
-    # assert ds_1.metadata("param") == ["q", "q"]
-    # assert ds_1.metadata("shortName") == ["q", "q"]
-    # assert ds_1.metadata("level") == [600, 600]
-    # assert ds_1.metadata("levelist") == [600, 600]
