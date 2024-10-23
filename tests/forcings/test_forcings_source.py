@@ -14,6 +14,8 @@ import itertools
 import os
 import sys
 
+import pytest
+
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
@@ -113,6 +115,75 @@ def test_forcings_3():
     for f, r in zip(ds, ref):
         assert f.metadata("valid_datetime") == r[0].isoformat()
         assert f.metadata("param") == r[1]
+
+
+@pytest.mark.parametrize("lat_key,lon_key", [("latitudes", "longitudes"), ("latitude", "longitude")])
+def test_forcings_from_lat_lon_core(lat_key, lon_key):
+    sample = from_source("file", earthkit_test_data_file("t_time_series.grib"))
+
+    dates = [
+        datetime.datetime(2020, 12, 21, 12, 0),
+        datetime.datetime(2020, 12, 21, 15, 0),
+        datetime.datetime(2020, 12, 21, 18, 0),
+        datetime.datetime(2020, 12, 21, 21, 0),
+        datetime.datetime(2020, 12, 23, 12, 0),
+    ]
+
+    params = all_params
+
+    ll = sample[0].to_latlon()
+    lats = ll["lat"]
+    lons = ll["lon"]
+
+    d = {}
+    d[lat_key] = lats
+    d[lon_key] = lons
+
+    ds = from_source("forcings", **d, date=dates, param=params)
+
+    num = len(dates) * len(params)
+    assert len(ds) == num
+
+    ref = [(d, p) for d, p in itertools.product(dates, params)]
+    assert len(ds) == len(ref)
+    for f, r in zip(ds, ref):
+        assert f.metadata("valid_datetime") == r[0].isoformat()
+        assert f.metadata("param") == r[1]
+
+
+def test_forcings_from_lat_lon_bad():
+    sample = from_source("file", earthkit_test_data_file("t_time_series.grib"))
+
+    params = all_params
+
+    ll = sample[0].to_latlon()
+    lats = ll["lat"]
+    lons = ll["lon"]
+
+    with pytest.raises(ValueError):
+        from_source(
+            "forcings",
+            latitudes=lats,
+            param=params,
+        )
+    with pytest.raises(ValueError):
+        from_source(
+            "forcings",
+            latitude=lats,
+            param=params,
+        )
+    with pytest.raises(ValueError):
+        from_source(
+            "forcings",
+            longitudes=lons,
+            param=params,
+        )
+    with pytest.raises(ValueError):
+        from_source(
+            "forcings",
+            longitude=lons,
+            param=params,
+        )
 
 
 if __name__ == "__main__":

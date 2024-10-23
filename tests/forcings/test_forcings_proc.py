@@ -24,10 +24,11 @@ from forcings_fixtures import all_params  # noqa: E402
 from forcings_fixtures import load_forcings_fs  # noqa: E402
 
 
-def _build_proc_ref():
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
+def _build_proc_ref(input_data):
     import yaml
 
-    ds, _ = load_forcings_fs(params=all_params, last_step=12)
+    ds, _ = load_forcings_fs(params=all_params, last_step=12, input_data=input_data)
     d = {}
     for p in all_params:
         # print(f"p={p}")
@@ -44,11 +45,12 @@ def _build_proc_ref():
         yaml.dump(d, outfile, sort_keys=True)
 
 
-def test_forcings_proc():
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
+def test_forcings_proc(input_data):
     with open(earthkit_test_data_file(os.path.join("forcings", "proc.yaml")), "r") as f:
         ref = yaml.safe_load(f)
 
-    ds, _ = load_forcings_fs(params=all_params, last_step=12)
+    ds, _ = load_forcings_fs(params=all_params, last_step=12, input_data=input_data)
 
     for p in all_params:
         f = ds.sel(param=p, valid_datetime="2020-05-13T18:00:00")
@@ -60,9 +62,10 @@ def test_forcings_proc():
         assert np.isclose(np.nanmean(v), r["mean"])
 
 
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
 @pytest.mark.parametrize("param,coord", [("latitude", "lat"), ("longitude", "lon")])
-def test_forcings_proc_latlon(param, coord):
-    ds, _ = load_forcings_fs(params=all_params, last_step=12)
+def test_forcings_proc_latlon(input_data, param, coord):
+    ds, _ = load_forcings_fs(params=all_params, last_step=12, input_data=input_data)
 
     latlon = ds[0].to_latlon(flatten=True)
     coord = latlon[coord]
