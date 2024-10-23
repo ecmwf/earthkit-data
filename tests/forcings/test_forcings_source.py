@@ -118,8 +118,11 @@ def test_forcings_3():
 
 
 @pytest.mark.parametrize("lat_key,lon_key", [("latitudes", "longitudes"), ("latitude", "longitude")])
-def test_forcings_from_lat_lon_core(lat_key, lon_key):
-    sample = from_source("file", earthkit_test_data_file("t_time_series.grib"))
+@pytest.mark.parametrize(
+    "filename", ["t_time_series.grib", "rgg_small_subarea_cellarea_ref.grib", "mercator.grib"]
+)
+def test_forcings_from_lat_lon_core(lat_key, lon_key, filename):
+    sample = from_source("file", earthkit_test_data_file(filename))
 
     dates = [
         datetime.datetime(2020, 12, 21, 12, 0),
@@ -131,7 +134,7 @@ def test_forcings_from_lat_lon_core(lat_key, lon_key):
 
     params = all_params
 
-    ll = sample[0].to_latlon()
+    ll = sample[0].to_latlon()  # flatten=True is important here
     lats = ll["lat"]
     lons = ll["lon"]
 
@@ -149,6 +152,7 @@ def test_forcings_from_lat_lon_core(lat_key, lon_key):
     for f, r in zip(ds, ref):
         assert f.metadata("valid_datetime") == r[0].isoformat()
         assert f.metadata("param") == r[1]
+        assert f.to_numpy().shape == lats.shape
 
 
 def test_forcings_from_lat_lon_bad():
