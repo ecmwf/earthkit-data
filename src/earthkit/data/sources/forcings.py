@@ -20,7 +20,7 @@ from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalize
-from earthkit.data.indexing.fieldlist import NewFieldMetadataWrapper
+from earthkit.data.indexing.fieldlist import NewFieldWrapper
 from earthkit.data.utils.dates import to_datetime
 
 LOG = logging.getLogger(__name__)
@@ -256,15 +256,15 @@ class ForcingField(Field):
         return values
 
     def copy(self, **kwargs):
-        return NewMetadataForcingField(self, **kwargs)
+        return NewForcingField(self, **kwargs)
 
     def __repr__(self):
         return "ForcingField(%s,%s,%s)" % (self.param, self.date, self.number)
 
 
-class NewMetadataForcingField(NewFieldMetadataWrapper, ForcingField):
+class NewForcingField(NewFieldWrapper, ForcingField):
     def __init__(self, field, **kwargs):
-        NewFieldMetadataWrapper.__init__(self, field, **kwargs)
+        NewFieldWrapper.__init__(self, field, **kwargs)
         ForcingField.__init__(self, field.maker, field.date, field.param, field.proc, number=field.number)
 
 
