@@ -17,7 +17,7 @@ from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.core.metadata import RawMetadata
-from earthkit.data.indexing.fieldlist import NewFieldMetadataWrapper
+from earthkit.data.indexing.fieldlist import NewFieldWrapper
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
 
@@ -296,12 +296,12 @@ class XArrayField(Field):
         return tidy(self._ds[self._ds[self.variable].grid_mapping].attrs)
 
     def copy(self, **kwargs):
-        return NewMetadataXarrayField(self, **kwargs)
+        return NewXarrayField(self, **kwargs)
 
 
-class NewMetadataXarrayField(NewFieldMetadataWrapper, XArrayField):
+class NewXarrayField(NewFieldWrapper, XArrayField):
     def __init__(self, field, **kwargs):
-        NewFieldMetadataWrapper.__init__(self, field, **kwargs)
+        NewFieldWrapper.__init__(self, field, **kwargs)
         XArrayField.__init__(self, field.ds, field.variable, field.slices, field.non_dim_coords)
 
 

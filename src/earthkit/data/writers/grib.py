@@ -48,6 +48,13 @@ class GribWriter(Writer):
         if "generatingProcessIdentifier" not in md:
             md["generatingProcessIdentifier"] = None
 
+        if values is None:
+            try:
+                if field._has_new_values():
+                    values = field.values
+            except AttributeError:
+                pass
+
         output.write(values, check_nans=check_nans, missing_value=field.handle.MISSING_VALUE, **md)
 
 
