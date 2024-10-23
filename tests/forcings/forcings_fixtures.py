@@ -36,7 +36,7 @@ all_params = [
 ]
 
 
-def load_forcings_fs(params=None, first_step=6, last_step=72):
+def load_forcings_fs(params=None, first_step=6, last_step=72, input_data="grib"):
     sample = from_source("file", earthkit_examples_file("test.grib"))
 
     if params is None:
@@ -57,12 +57,29 @@ def load_forcings_fs(params=None, first_step=6, last_step=72):
     for step in range(first_step, last_step + step_increment, step_increment):
         dates.append(start + datetime.timedelta(hours=step))
 
-    ds = from_source(
-        "forcings",
-        sample,
-        date=dates,
-        param=params,
-    )
+    if input_data == "grib":
+        ds = from_source(
+            "forcings",
+            sample,
+            date=dates,
+            param=params,
+        )
+    elif input_data == "latlon":
+        d = {}
+        ll = sample[0].to_latlon()
+        d["latitudes"] = ll["lat"]
+        d["longitudes"] = ll["lon"]
+        # d["date"] = sample[0].metadata("date")
+        # d["param"] = sample[0].metadata("param")
+        ds = from_source(
+            "forcings",
+            **d,
+            date=dates,
+            param=params,
+        )
+    else:
+        raise ValueError(f"Unknown input_data: {input_data}")
+
     assert len(ds) == len(dates) * len(params)
 
     md = [[d.isoformat(), p] for d, p in itertools.product(dates, params)]

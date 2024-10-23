@@ -20,6 +20,7 @@ sys.path.insert(0, here)
 from forcings_fixtures import load_forcings_fs  # noqa: E402
 
 
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
 @pytest.mark.parametrize(
     "params,expected_meta",
     [
@@ -43,8 +44,8 @@ from forcings_fixtures import load_forcings_fs  # noqa: E402
         (dict(INVALIDKEY="sin_logitude"), []),
     ],
 )
-def test_forcings_sel_single_file_1(params, expected_meta):
-    ds, _ = load_forcings_fs()
+def test_forcings_sel_single_file_1(input_data, params, expected_meta):
+    ds, _ = load_forcings_fs(input_data=input_data)
 
     g = ds.sel(**params)
     assert len(g) == len(expected_meta)
@@ -54,8 +55,9 @@ def test_forcings_sel_single_file_1(params, expected_meta):
     return
 
 
-def test_forcings_sel_single_file_as_dict():
-    ds, _ = load_forcings_fs()
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
+def test_forcings_sel_single_file_as_dict(input_data):
+    ds, _ = load_forcings_fs(input_data=input_data)
 
     g = ds.sel(
         {
