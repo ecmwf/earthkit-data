@@ -87,7 +87,7 @@ class ArrayField(Field):
 
     def _release(self):
         self._array = None
-        self._metadata = None
+        self.__metadata = None
 
     def __getstate__(self) -> dict:
         ret = {}

@@ -394,7 +394,6 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
         t_vars = {}
 
         groups = self.ds.group(self.profile.variable_key, self.profile.variables)
-        self.ds = None
 
         # we assume each variable forms a full cube
         for name in groups:
@@ -420,7 +419,7 @@ class DatasetBuilder:
         self,
         ds,
         release_fields=None,
-        profile=None,
+        profile="mars",
         **kwargs,
     ):
         """
@@ -491,7 +490,7 @@ class DatasetBuilder:
         # print("ds indices", ds._md_indices)
         self.profile.update(ds)
 
-        # print("parse dims", profile.dim_keys)
+        # print("parse dims", self.profile.dim_keys)
 
         # the data is only sorted once
         ds = ds.order_by(self.profile.sort_keys)
