@@ -44,12 +44,12 @@ class FDBSource(Source):
             self.request.update(a)
         self.request.update(kwargs)
 
-        fdb_home = os.environ.get("FDB_HOME", None)
-        fdb_conf = os.environ.get("FDB5_CONFIG", None)
-        if fdb_home is None and fdb_conf is None:
+        fdb5_home = os.environ.get("FDB5_HOME", None)
+        fdb5_conf = os.environ.get("FDB5_CONFIG", None)
+        fdb5_config_file = os.environ.get("FDB5_CONFIG_FILE", None)
+        if fdb5_home is None and (fdb5_conf is None and fdb5_config_file is None):
             raise ValueError(
-                """Neither FDB_HOME nor FDB5_CONFIG environment variable
-                was set! Please define either one to access FDB.
+                """FDB5_HOME and either FDB5_CONFIG or FDB5_CONFIG_FILE need to be set.
                 See: https://fields-database.readthedocs.io for details about FDB."""
             )
 
