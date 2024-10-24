@@ -367,6 +367,17 @@ class FieldListTensor(TensorCore):
 
         return cls(source, user_coords, field_coords, field_dims, flatten_values)
 
+    def clear(self):
+        self.source = None
+        self._user_coords = None
+        self._user_shape = None
+        self._user_dims = None
+        self._field_coords = None
+        self._field_shape = None
+        self._field_dims = None
+        self._full_shape = None
+        self.flatten_values = None
+
     @flatten_arg
     def to_numpy(self, index=None, **kwargs):
         if index is not None:

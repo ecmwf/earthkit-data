@@ -145,6 +145,8 @@ class Profile:
         # generic
         self.decode_times = kwargs.pop("decode_times")
         self.decode_timedelta = kwargs.pop("decode_timedelta")
+        self.lazy_load = kwargs.pop("lazy_load")
+        self.release_source = kwargs.pop("release_source")
         self.strict = kwargs.pop("strict")
         self.errors = kwargs.pop("errors")
 
@@ -171,6 +173,7 @@ class Profile:
 
     @staticmethod
     def make(name_or_def, *args, **kwargs):
+        # print("name_or_def", name_or_def)
         if name_or_def is None:
             name_or_def = {}
 
@@ -281,14 +284,6 @@ class Profile:
         if not self.variables:
             raise ValueError(f"No metadata values found for variable key {self.variable_key}")
 
-    def update_dims(self, ds, attributes):
-        # variable keys cannot be dimensions
-        variable_keys = [self.variable_key]
-        # variable_keys = VARIABLE_KEYS + [self.variable_key]
-        # self.dims.remove(variable_keys, others=True)
-        self.dims.update(ds, attributes, variable_keys)
-        assert self.variable_key not in self.dim_keys
-
     def update(self, ds):
         """
         Parameters
@@ -313,9 +308,6 @@ class Profile:
         # self.dims.remove(variable_keys, others=True)
         self.dims.update(ds)
         assert self.variable_key not in self.dim_keys
-
-        # self.update_variables(ds)
-        #         self.update_dims(ds, attributes)
 
         assert self.variable_key is not None
         assert self.variables

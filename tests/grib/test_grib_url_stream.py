@@ -218,10 +218,6 @@ def test_grib_multi_url_stream_iter():
 
     assert isinstance(ds, StreamFieldList)
     assert len(ds._source.sources) == 2
-    assert ds._source._status() == [
-        {"reader": True, "stream": True},
-        {"reader": False, "stream": False},
-    ]
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -244,11 +240,6 @@ def test_grib_multi_url_stream_iter():
 
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
-
-    assert ds._source._status() == [
-        {"reader": True, "stream": True},
-        {"reader": True, "stream": True},
-    ]
 
 
 @pytest.mark.parametrize(

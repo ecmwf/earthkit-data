@@ -829,8 +829,8 @@ class FieldList(Index):
 
         Parameters
         ----------
-        fields: list
-            List of :obj:`Field` objects.
+        fields: iterable
+            Iterable of :obj:`Field` objects.
 
         Returns
         -------
@@ -839,7 +839,7 @@ class FieldList(Index):
         """
         from earthkit.data.indexing.fieldlist import SimpleFieldList
 
-        return SimpleFieldList(fields)
+        return SimpleFieldList([f for f in fields])
 
     @staticmethod
     def from_numpy(array, metadata):
@@ -966,7 +966,6 @@ class FieldList(Index):
             r[0] = vals
             for i, f in enumerate(it, start=1):
                 r[i] = _vals(f)
-
             return r
 
     def to_numpy(self, **kwargs):

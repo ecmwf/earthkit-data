@@ -35,6 +35,8 @@ dtype: float64
 array_module: numpy
 
 # other
+lazy_load: true
+release_source: false
 strict: false
 errors: raise
 

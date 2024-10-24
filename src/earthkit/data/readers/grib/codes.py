@@ -302,7 +302,7 @@ class GribField(Field):
         )
 
     def write(self, f, **kwargs):
-        r"""Writes the message to a file object.
+        r"""Write the message to a file object.
 
         Parameters
         ----------
@@ -317,7 +317,7 @@ class GribField(Field):
         write(f, self, **kwargs)
 
     def message(self):
-        r"""Returns a buffer containing the encoded message.
+        r"""Return a buffer containing the encoded message.
 
         Returns
         -------

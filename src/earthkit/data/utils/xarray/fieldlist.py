@@ -101,7 +101,7 @@ class IndexDB:
         return f"IndexDB(_index={self._index}, component={self._component})"
 
 
-class WrappedFieldList(FieldList):
+class XArrayInputFieldList(FieldList):
     def __init__(self, fieldlist, keys=None, db=None, remapping=None):
         super().__init__()
         self.ds = fieldlist
@@ -134,6 +134,25 @@ class WrappedFieldList(FieldList):
     def __len__(self):
         return len(self.ds)
 
+    def make_releasable(self):
+        print("Making releasable")
+        self.ds = FieldList.from_fields([ReleasableField(f) for f in self.ds])
+
+    def group(self, key, values):
+        groups = defaultdict(list)
+        for f in self.ds:
+            v = str(f.metadata(key, default=None))
+            if v in values:
+                groups[v].append(f)
+
+        for k, v in groups.items():
+            if not v:
+                continue
+            db = None
+            groups[k] = XArrayInputFieldList(FieldList.from_fields(v), db=db, remapping=self.remapping)
+
+        return groups
+
     def sel(self, *args, **kwargs):
         assert "remapping" not in kwargs
         assert "patches" not in kwargs
@@ -141,14 +160,17 @@ class WrappedFieldList(FieldList):
         db = None
         # if not args and self.db and all(k in self.db for k in kwargs):
         #     db = self.db.filter(**kwargs)
-        return WrappedFieldList(ds, db=db, remapping=self.remapping)
+        return XArrayInputFieldList(ds, db=db, remapping=self.remapping)
 
     def order_by(self, *args, **kwargs):
         assert "remapping" not in kwargs
         assert "patches" not in kwargs
-        return WrappedFieldList(
-            self.ds.order_by(*args, remapping=self.remapping, **kwargs), db=self.db, remapping=self.remapping
+        ds = XArrayInputFieldList(
+            self.ds.order_by(*args, remapping=self.remapping, **kwargs),
+            db=self.db,
+            remapping=self.remapping,
         )
+        return ds
 
     def unique_values(self, names, component=False):
         if isinstance(names, str):
@@ -193,3 +215,42 @@ class WrappedFieldList(FieldList):
             return indices, components
         else:
             return indices
+
+
+class ReleasableField:
+    def __init__(self, field):
+        self.field = field
+        self.keep = True
+        self.released = False
+
+    def to_numpy(self, *args, **kwargs):
+        if self.released:
+            return None
+
+        r = self.field.to_numpy(*args, **kwargs)
+        if not self.keep:
+            self._release()
+        return r
+
+    def to_array(self, *args, **kwargs):
+        if self.released:
+            return None
+
+        r = self.field.to_array(*args, **kwargs)
+        if not self.keep:
+            self._release()
+        return r
+
+    def _release(self):
+        if not self.released:
+            if hasattr(self.field, "_release"):
+                self.field._release()
+            self.released = True
+
+    def metadata(self, *args, **kwargs):
+        if self.released:
+            return None
+        return self.field.metadata(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self.field, name)
