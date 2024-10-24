@@ -207,7 +207,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             If True, the resulting DataSet will load data lazily from the
             underlying data source. If False, a DataSet holding all the data in memory
             and decoupled from the backend source will be created.
-            Using ``lazily=False`` with ``release_source=True`` can provide optimised
+            Using ``lazy_load=False`` with ``release_source=True`` can provide optimised
             memory usage in certain cases. The default value of ``lazy_load`` (None)
             expands to True unless the ``profile`` overwrites it.
         release_source: bool, None
