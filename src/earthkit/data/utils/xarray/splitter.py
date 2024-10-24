@@ -25,15 +25,13 @@ class Splitter(metaclass=ABCMeta):
         pass
 
     @staticmethod
-    def make(auto_split, split_dims):
+    def make(split_dims, auto_split=False):
+        """TODO: auto_split is not implemented"""
         if not auto_split and not split_dims:
             return NoSplitter()
         elif split_dims:
             return DimSplitter(split_dims)
-            # elif auto_split:
-            #     return AutoSplitter()
-            # else:
-            raise ValueError("Invalid split configuration")
+        raise ValueError("Invalid split configuration")
 
 
 class NoSplitter(Splitter):

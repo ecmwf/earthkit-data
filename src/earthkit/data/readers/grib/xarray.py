@@ -192,7 +192,7 @@ class XarrayMixIn:
                 "level" and "level_type" roles.
                 - "level_and_type": Use a single dimension for combined level and type of level.
             * squeeze: bool, None
-                Remove dimensions which has only one valid values. Not applies to dimension in
+                Remove dimensions which have only one valid value. Not applies to dimensions in
                 ``ensure_dims``. Its default value (None) expands
                 to True unless the ``profile`` overwrites it.
             * add_valid_time_coord: bool, None
@@ -245,6 +245,22 @@ class XarrayMixIn:
                 A dictionary of attribute to rename. Default is None.
             * remapping: dict, None
                 Define new metadata keys for indexing. Default is None.
+            * lazy_load: bool, None
+                If True, the resulting DataSet will load data lazily from the
+                underlying data source. If False, a DataSet holding all the data in memory
+                and decoupled from the backend source will be created.
+                Using ``lazily=False`` with ``release_source=True`` can provide optimised
+                memory usage in certain cases. The default value of ``lazy_load`` (None)
+                expands to True unless the ``profile`` overwrites it.
+            * release_source: bool, None
+                Only used when ``lazy_load=False``. If True, memory held in the input fields are
+                released as soon as their values are copied into the resulting DataSet. This is
+                done per field to avoid memory spikes. The release operation is currently
+                only supported for GRIB fields stored entirely in memory, e.g. when read from a
+                :ref:`stream <streams>`. When a field does not support the release operation, this
+                option is ignored. Having run :obj:`to_xarray` the input data becomes unusable,
+                so use this option carefully. The default value of ``release_source`` (None) expands
+                to False unless the ``profile`` overwrites it.
             * strict: bool, None
                 If True, perform stricter checks on hypercube consistency. Its default value (None) expands
                 to False unless the ``profile`` overwrites it.
@@ -287,9 +303,11 @@ class XarrayMixIn:
         --------
         >>> import earthkit.data
         >>> fs = earthkit.data.from_source("file", "test6.grib")
+        >>> ds = fs.to_xarray(time_dim_mode="forecast")
+        >>> # also possible to use the xarray_open_dataset_kwargs
         >>> ds = fs.to_xarray(
         ...     xarray_open_dataset_kwargs={
-        ...         "backend_kwargs": {"ignore_keys": ["number"]}
+        ...         "backend_kwargs": {"time_dim_mode": "forecast"}
         ...     }
         ... )
 
@@ -349,7 +367,7 @@ class XarrayMixIn:
         # print(f"{kwargs=}")
         # print(f"{xarray_open_dataset_kwargs=}")
 
-        from earthkit.data.utils.xarray.engine import from_earthkit
+        from earthkit.data.utils.xarray.builder import from_earthkit
 
         return from_earthkit(self, **xarray_open_dataset_kwargs)
 
