@@ -132,13 +132,6 @@ class StreamSource(Source):
 
         return stream
 
-    def _status(self):
-        """For testing purposes."""
-        return {
-            "reader": self._reader_ is not None,
-            "stream": self._stream._stream is not None,
-        }
-
 
 class MultiStreamSource(Source):
     def __init__(self, sources, read_all=False, **kwargs):
@@ -181,10 +174,6 @@ class MultiStreamSource(Source):
             else:
                 raise TypeError(f"Invalid source={s}")
         return r
-
-    def _status(self):
-        """For testing purposes."""
-        return [s._status() for s in self.sources]
 
 
 class StreamFieldList(FieldList, Source):
