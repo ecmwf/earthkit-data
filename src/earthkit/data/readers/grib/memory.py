@@ -155,6 +155,9 @@ class GribFieldInMemory(GribField):
             GribCodesHandle(handle, None, None), use_metadata_cache=get_use_grib_metadata_cache()
         )
 
+    def _release(self):
+        self._handle = None
+
     def copy(self, **kwargs):
         return NewGribFieldInMemory(self, **kwargs)
 

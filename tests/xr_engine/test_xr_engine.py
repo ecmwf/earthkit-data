@@ -9,12 +9,18 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
+import sys
 
 import numpy as np
 import pytest
 
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_remote_test_data_file
+
+here = os.path.dirname(__file__)
+sys.path.insert(0, here)
+from xr_engine_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.cache
@@ -234,8 +240,12 @@ def test_xr_engine_detailed_check(api):
 
 
 @pytest.mark.cache
-def test_xr_engine_detailed_flatten_check():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
+@pytest.mark.parametrize("stream", [False, True])
+@pytest.mark.parametrize("lazy_load", [False, True])
+@pytest.mark.parametrize("release_source", [False, True])
+def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source):
+    filename = "test-data/xr_engine/level/pl.grib"
+    ds_ek, ds_ek_ref = load_grib_data(filename, "url", stream=stream)
 
     kwargs = {
         "xarray_open_dataset_kwargs": {
@@ -245,6 +255,8 @@ def test_xr_engine_detailed_flatten_check():
                 "decode_timedelta": False,
                 "flatten_values": True,
                 "add_valid_time_coord": False,
+                "lazy_load": lazy_load,
+                "release_source": release_source,
             }
         }
     }
@@ -253,7 +265,7 @@ def test_xr_engine_detailed_flatten_check():
     assert ds is not None
 
     # dataset
-    ll = ds_ek[0].to_latlon(flatten=True)
+    ll = ds_ek_ref[0].to_latlon(flatten=True)
     lats = ll["lat"]
     lons = ll["lon"]
     data_vars = ["r", "t", "u", "v", "z"]
@@ -393,7 +405,7 @@ def test_xr_engine_detailed_flatten_check():
         ]
     )
 
-    v_ek = ds_ek.sel(param="t", time=0, levelist=500).to_numpy(flatten=True)
+    v_ek = ds_ek_ref.sel(param="t", time=0, levelist=500).to_numpy(flatten=True)
     assert np.allclose(r.values.flatten(), v_ek[:, [9 * 36, 10 * 36, 11 * 36]].flatten())
     assert np.allclose(r.values, vals_ref)
 

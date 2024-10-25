@@ -12,7 +12,10 @@
 import numpy as np
 
 from earthkit.data import from_source
-from earthkit.data.utils.xarray.fieldlist import WrappedFieldList
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.xarray.fieldlist import XArrayInputFieldList
 
 
 def load_fieldlist(d):
@@ -47,7 +50,7 @@ def load_wrapped_fieldlist(d, profile, **kwargs):
     else:
         raise ValueError(f"Invalid data type={type(d)}")
 
-    return WrappedFieldList(ds, keys=profile.index_keys, **kwargs)
+    return XArrayInputFieldList(ds, keys=profile.index_keys, **kwargs)
 
 
 def compare_dims(ds, ref_coords, order_ref_var=None, sizes=False):
@@ -106,3 +109,30 @@ def compare_dim_size(ds, dims):
     for name, v in dims.items():
         assert name in ds.sizes, f"{name=} not in {ds.sizes}"
         assert ds.sizes[name] == v, f"{name=} {ds.sizes[name]} != {v}"
+
+
+def load_grib_data(filename, source, stream=False, folder="example"):
+    if source == "url":
+        path = earthkit_remote_test_data_file(filename)
+    else:
+        if folder == "example":
+            path = earthkit_examples_file(filename)
+        elif folder == "data":
+            path = earthkit_test_data_file(filename)
+        else:
+            raise ValueError("Invalid folder={folder}")
+
+    if source == "file":
+        ds = from_source("file", path)
+    elif source == "url":
+        ds = from_source("url", path)
+    else:
+        raise ValueError("Invalid source={source}")
+
+    ds_ref = ds
+
+    if stream:
+        f = open(ds.path, "rb")
+        ds = from_source("stream", f)
+
+    return ds, ds_ref

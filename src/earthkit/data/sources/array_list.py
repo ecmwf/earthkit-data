@@ -85,6 +85,10 @@ class ArrayField(Field):
     def handle(self):
         return self._metadata._handle
 
+    def _release(self):
+        self._array = None
+        self.__metadata = None
+
     def __getstate__(self) -> dict:
         ret = {}
         ret["_array"] = self._array

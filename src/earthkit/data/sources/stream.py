@@ -9,6 +9,7 @@
 
 import itertools
 import logging
+from functools import cached_property
 
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.readers import stream_reader
@@ -31,15 +32,13 @@ class StreamMemorySource(MemoryBaseSource):
         if not isinstance(stream, Stream):
             raise ValueError(f"Invalid stream={stream}")
         self._stream = stream
-        self._reader_ = None
 
-    @property
+    @cached_property
     def _reader(self):
-        if self._reader_ is None:
-            self._reader_ = stream_reader(self, self._stream.stream, True, **self._kwargs)
-            if self._reader_ is None:
-                raise TypeError(f"could not create reader for stream={self._stream}")
-        return self._reader_
+        reader = stream_reader(self, self._stream.stream, True, **self._kwargs)
+        if reader is None:
+            raise TypeError(f"could not create reader for stream={self._stream}")
+        return reader
 
     def mutate(self):
         source = self._reader.mutate_source()
@@ -52,9 +51,10 @@ class StreamMemorySource(MemoryBaseSource):
 class StreamSource(Source):
     def __init__(self, stream, *, read_all=False, **kwargs):
         super().__init__()
-        self._reader_ = None
         self._stream = self._wrap_stream(stream)
         self.memory = read_all
+
+        # TODO: remove this check in a future release
         for k in ["group_by", "batch_size"]:
             if k in kwargs:
                 raise ValueError(f"Invalid argument '{k}' for StreamSource. Deprecated since 0.8.0.")
@@ -74,13 +74,12 @@ class StreamSource(Source):
                 return StreamFieldList(self._reader, **self._kwargs)
         return self
 
-    @property
+    @cached_property
     def _reader(self):
-        if self._reader_ is None:
-            self._reader_ = stream_reader(self, self._stream.stream, False, **self._kwargs)
-            if self._reader_ is None:
-                raise TypeError(f"could not create reader for stream={self._stream.stream}")
-        return self._reader_
+        reader = stream_reader(self, self._stream.stream, False, **self._kwargs)
+        if reader is None:
+            raise TypeError(f"could not create reader for stream={self._stream.stream}")
+        return reader
 
     def batched(self, n):
         """Iterate through the stream in batches of ``n``.
@@ -133,13 +132,6 @@ class StreamSource(Source):
 
         return stream
 
-    def _status(self):
-        """For testing purposes."""
-        return {
-            "reader": self._reader_ is not None,
-            "stream": self._stream._stream is not None,
-        }
-
 
 class MultiStreamSource(Source):
     def __init__(self, sources, read_all=False, **kwargs):
@@ -183,10 +175,6 @@ class MultiStreamSource(Source):
                 raise TypeError(f"Invalid source={s}")
         return r
 
-    def _status(self):
-        """For testing purposes."""
-        return [s._status() for s in self.sources]
-
 
 class StreamFieldList(FieldList, Source):
     def __init__(self, source, **kwargs):
@@ -207,6 +195,12 @@ class StreamFieldList(FieldList, Source):
 
     def __getstate__(self):
         raise NotImplementedError("StreamFieldList cannot be pickled")
+
+    def to_xarray(self, **kwargs):
+        from earthkit.data.core.fieldlist import FieldList
+
+        fields = [f for f in self]
+        return FieldList.from_fields(fields).to_xarray(**kwargs)
 
 
 class Stream:

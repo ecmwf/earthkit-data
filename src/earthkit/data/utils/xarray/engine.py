@@ -15,24 +15,6 @@ from xarray.backends import BackendEntrypoint
 LOG = logging.getLogger(__name__)
 
 
-def from_earthkit(ds, **kwargs):
-    backend_kwargs = kwargs.get("backend_kwargs", {})
-    auto_split = backend_kwargs.get("auto_split", False)
-    split_dims = backend_kwargs.get("split_dims", None)
-
-    assert kwargs["engine"] == "earthkit"
-
-    if not auto_split and not split_dims:
-        backend_kwargs.pop("auto_split", None)
-        backend_kwargs.pop("split_dims", None)
-        return xarray.open_dataset(ds, **kwargs)
-    else:
-        from .builder import SplitDatasetBuilder
-
-        backend_kwargs = kwargs.pop("backend_kwargs", {})
-        return SplitDatasetBuilder(ds, backend_kwargs=backend_kwargs, **kwargs).build()
-
-
 class EarthkitBackendEntrypoint(BackendEntrypoint):
     def open_dataset(
         self,
@@ -64,6 +46,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         rename_attrs=None,
         remapping=None,
         flatten_values=None,
+        lazy_load=None,
+        release_source=None,
         strict=None,
         dtype=None,
         array_module=None,
@@ -166,7 +150,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
               "level" and "level_type" roles.
             - "level_and_type": Use a single dimension for combined level and type of level.
         squeeze: bool, None
-            Remove dimensions which has only one valid values. Not applies to dimension in
+            Remove dimensions which have only one valid value. Not applies to dimensions in
             ``ensure_dims``. Its default value (None) expands
             to True unless the ``profile`` overwrites it.
         add_valid_time_coord: bool, None
@@ -219,6 +203,22 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             A dictionary of attribute to rename. Default is None.
         remapping: dict, None
             Define new metadata keys for indexing. Default is None.
+        lazy_load: bool, None
+            If True, the resulting DataSet will load data lazily from the
+            underlying data source. If False, a DataSet holding all the data in memory
+            and decoupled from the backend source will be created.
+            Using ``lazy_load=False`` with ``release_source=True`` can provide optimised
+            memory usage in certain cases. The default value of ``lazy_load`` (None)
+            expands to True unless the ``profile`` overwrites it.
+        release_source: bool, None
+            Only used when ``lazy_load=False``. If True, memory held in the input fields are
+            released as soon as their values are copied into the resulting DataSet. This is
+            done per field to avoid memory spikes. The release operation is currently
+            only supported for GRIB fields stored entirely in memory, e.g. when read from a
+            :ref:`stream <streams>`. When a field does not support the release operation, this
+            option is ignored. Having run :obj:`to_xarray` the input data becomes unusable,
+            so use this option carefully. The default value of ``release_source`` (None) expands
+            to False unless the ``profile`` overwrites it.
         strict: bool, None
             If True, perform stricter checks on hypercube consistency. Its default value (None) expands
             to False unless the ``profile`` overwrites it.
@@ -254,6 +254,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             remapping=remapping,
             decode_times=decode_times,
             decode_timedelta=decode_timedelta,
+            lazy_load=lazy_load,
+            release_source=release_source,
             strict=strict,
             dtype=dtype,
             array_module=array_module,
