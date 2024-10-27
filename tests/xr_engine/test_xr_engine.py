@@ -243,7 +243,8 @@ def test_xr_engine_detailed_check(api):
 @pytest.mark.parametrize("stream", [False, True])
 @pytest.mark.parametrize("lazy_load", [False, True])
 @pytest.mark.parametrize("release_source", [False, True])
-def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source):
+@pytest.mark.parametrize("direct_backend", [False, True])
+def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source, direct_backend):
     filename = "test-data/xr_engine/level/pl.grib"
     ds_ek, ds_ek_ref = load_grib_data(filename, "url", stream=stream)
 
@@ -257,6 +258,7 @@ def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source):
                 "add_valid_time_coord": False,
                 "lazy_load": lazy_load,
                 "release_source": release_source,
+                "direct_backend": direct_backend,
             }
         }
     }
@@ -415,6 +417,32 @@ def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source):
     assert np.allclose(r.values, vals_ref)
 
 
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"split_dims": ["step"]},
+        {"split_dims": None},
+        {"direct_backend": None},
+        {"direct_backend": True},
+        {"direct_backend": False},
+    ],
+)
+def test_xr_engine_invalid_kwargs(kwargs):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
+
+    import xarray as xr
+
+    with pytest.raises(TypeError):
+        xr.open_dataset(
+            ds_ek.path,
+            engine="earthkit",
+            time_dim_mode="raw",
+            **kwargs,
+        )
+
+
+@pytest.mark.cache
 def test_xr_engine_dtype():
     ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
 

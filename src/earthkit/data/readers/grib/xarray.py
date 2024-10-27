@@ -268,6 +268,11 @@ class XarrayMixIn:
                 Typecode or data-type of the array data.
             * array_module: module
                 The module to use for array operations. Default is numpy.
+            * direct_backend: bool, None
+                If True, the backend is used directly bypassing :py:meth:`xarray.open_dataset`
+                and ignoring all non-backend related kwargs. If False, the data is read via
+                :py:meth:`xarray.open_dataset`. Its default value (None) expands
+                to False unless the ``profile`` overwrites it.
 
             When ``engine="cfgrib"`` the following engine specific kwargs are supported:
 
@@ -367,9 +372,13 @@ class XarrayMixIn:
         # print(f"{kwargs=}")
         # print(f"{xarray_open_dataset_kwargs=}")
 
+        # separate backend_kwargs from other_kwargs
+        backend_kwargs = xarray_open_dataset_kwargs.pop("backend_kwargs", None)
+        other_kwargs = xarray_open_dataset_kwargs
+
         from earthkit.data.utils.xarray.builder import from_earthkit
 
-        return from_earthkit(self, **xarray_open_dataset_kwargs)
+        return from_earthkit(self, backend_kwargs=backend_kwargs, other_kwargs=other_kwargs)
 
     def to_xarray_cfgrib(self, user_kwargs):
         xarray_open_dataset_kwargs = {}
