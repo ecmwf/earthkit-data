@@ -43,6 +43,9 @@ class GRIBReader(GribFieldListInOneFile, Reader):
         # A GRIBReader is a source itself
         return self
 
+    def is_streamable_file(self):
+        return True
+
     def __getstate__(self):
         r = {"kwargs": self.source._kwargs, "messages": []}
         for f in self:

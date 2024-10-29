@@ -300,125 +300,6 @@ class Url(UrlBase):
         return False
 
 
-class RequestIterStreamer:
-    """Expose fixed chunk-based stream reader used in mutiurl as a
-    stream supporting a generic read method.
-    """
-
-    def __init__(self, iter_content):
-        from collections import deque
-
-        self.iter_content = iter_content
-        self.content = deque()
-        self.position = 0
-        self.total = 0
-        self.consumed = False
-
-    def _ensure_content(self, size):
-        while self.total < size:
-            try:
-                self.content.append(next(self.iter_content))
-                self.total += len(self.content[-1])
-            except StopIteration:
-                break
-
-    def _read(self, size):
-        assert len(self.content) > 0
-
-        start = self.position
-        length = min(len(self.content[0]) - start, size)
-        end = start + length
-        data = self.content[0][start:end]
-        last = 0
-        size -= length
-
-        if size > 0:
-            d = [data]
-            for i in range(1, len(self.content)):
-                start = 0
-                length = min(len(self.content[i]) - start, size)
-                end = start + length
-                d.append(self.content[i][start:end])
-                last = i
-                size -= length
-                if size <= 0:
-                    break
-            data = data = b"".join(d)
-
-        return data, last, end, size
-
-    def read(self, size=-1):
-        if size < -1 or size == 0 or self.consumed:
-            return bytes()
-
-        if size == -1:
-            return self.readall()
-
-        self._ensure_content(size)
-        if len(self.content) == 0 or self.total == 0:
-            self.close()
-            return bytes()
-
-        data, last, self.position, missing_size = self._read(size)
-        # LOG.debug(f"{size=} {last=} pos={self.position} {missing_size=}")
-        if missing_size > 0:
-            self.close()
-        else:
-            if self.position == len(self.content[last]):
-                last += 1
-                self.position = 0
-
-            if last > 0:
-                for _ in range(0, last):
-                    self.content.popleft()
-
-            self.total = sum(len(x) for x in self.content)
-            self.total -= self.position
-
-        return data
-
-    def readall(self):
-        if self.consumed:
-            return bytes()
-
-        first = self.read(self.total)
-        if len(first) == 0:
-            first = next(self.iter_content)
-        res = [first]
-
-        for d in self.iter_content:
-            res.append(d)
-
-        self.close()
-
-        if len(res) == 1:
-            return res[0]
-        else:
-            return b"".join(res)
-
-    def peek(self, size):
-        if size <= 0 or self.consumed:
-            return bytes()
-
-        self._ensure_content(size)
-        data, _, _, _ = self._read(size)
-        return data
-
-    def close(self):
-        if not self.closed:
-            self._clear()
-
-    @property
-    def closed(self):
-        return self.consumed
-
-    def _clear(self):
-        self.iter_content = None
-        self.content.clear()
-        self.position = 0
-        self.consumed = True
-
-
 class SingleUrlStream(UrlBase):
     def __init__(
         self,
@@ -437,7 +318,7 @@ class SingleUrlStream(UrlBase):
         assert isinstance(self.url, (list, tuple)), f"{self.url=}"
         o = urlparse(self.url[0])
         if o.scheme not in ("http", "https"):
-            raise NotImplementedError(f"Streams are not supported for {o.scheme} urls")
+            raise NotImplementedError(f"Streams are not supported for scheme={o.scheme} urls")
 
     def mutate(self):
         from .stream import _from_source
@@ -445,6 +326,8 @@ class SingleUrlStream(UrlBase):
         return _from_source(self, **self._kwargs)
 
     def to_stream(self):
+        from earthkit.data.utils.stream import RequestIterStreamer
+
         downloader = Downloader(
             self.url_spec.zipped(),
             timeout=SETTINGS.get("url-download-timeout"),

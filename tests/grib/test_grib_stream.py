@@ -17,6 +17,7 @@ from earthkit.data.core.temporary import temp_file
 from earthkit.data.sources.stream import StreamFieldList
 from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_remote_test_data_file
 
 
 def repeat_list_items(items, count):
@@ -463,6 +464,72 @@ def test_grib_multi_stream_memory():
         ("t", 500),
         ("t", 850),
     ]
+
+
+def test_grib_concat_stream():
+    stream1 = open(earthkit_examples_file("test.grib"), "rb")
+    ds1 = from_source("stream", stream1)
+    ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True)
+    ds3 = from_source("url", earthkit_remote_test_data_file("examples/test6.grib"), stream=True)
+
+    ds = ds1 + ds2 + ds3
+
+    ref = [
+        ("2t", 0),
+        ("msl", 0),
+        ("t", 500),
+        ("z", 500),
+        ("t", 850),
+        ("z", 850),
+        ("t", 1000),
+        ("u", 1000),
+        ("v", 1000),
+        ("t", 850),
+        ("u", 850),
+        ("v", 850),
+    ]
+    cnt = 0
+    for i, f in enumerate(ds):
+        assert f.metadata(("param", "level")) == ref[i], i
+        cnt += 1
+
+    assert cnt == len(ref)
+
+    # stream consumed, no data is available
+    assert sum([1 for _ in ds]) == 0
+
+
+def test_grib_concat_stream_memory():
+    stream1 = open(earthkit_examples_file("test.grib"), "rb")
+    ds1 = from_source("stream", stream1, read_all=True)
+    ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True, read_all=True)
+    ds3 = from_source(
+        "url", earthkit_remote_test_data_file("examples/test6.grib"), stream=True, read_all=True
+    )
+
+    ds = ds1 + ds2 + ds3
+
+    ref = [
+        ("2t", 0),
+        ("msl", 0),
+        ("t", 500),
+        ("z", 500),
+        ("t", 850),
+        ("z", 850),
+        ("t", 1000),
+        ("u", 1000),
+        ("v", 1000),
+        ("t", 850),
+        ("u", 850),
+        ("v", 850),
+    ]
+
+    assert len(ds) == len(ref)
+    assert ds.metadata(("param", "level")) == ref
+
+    # repeat the test to check that data is still in memory
+    assert len(ds) == len(ref)
+    assert ds.metadata(("param", "level")) == ref
 
 
 if __name__ == "__main__":

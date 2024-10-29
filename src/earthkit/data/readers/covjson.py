@@ -42,6 +42,9 @@ class CovjsonReader(XarrayMixIn, Reader):
             d = json.load(f)
             return d
 
+    def is_streamable_file(self):
+        return True
+
 
 class CovjsonStreamReader(Reader):
     def __init__(self, stream):
