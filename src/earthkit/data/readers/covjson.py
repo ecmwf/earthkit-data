@@ -48,7 +48,7 @@ class CovjsonReader(XarrayMixIn, Reader):
 
 class CovjsonStreamReader(Reader):
     def __init__(self, stream):
-        self.stream = stream
+        self._stream = stream
 
     def __iter__(self):
         return self
@@ -56,7 +56,7 @@ class CovjsonStreamReader(Reader):
     def __next__(self):
         import json
 
-        d = self.stream.read()
+        d = self._stream.read()
         if d:
             return CovjsonInMemory(json.loads(d))
         else:
