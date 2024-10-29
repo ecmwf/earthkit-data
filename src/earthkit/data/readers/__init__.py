@@ -186,7 +186,7 @@ def reader(source, path, **kwargs):
     if os.path.isdir(path):
         from .directory import DirectoryReader
 
-        return DirectoryReader(source, path, **kwargs).mutate()
+        return DirectoryReader(source, path).mutate()
     LOG.debug("Reader for %s", path)
 
     if not os.path.exists(path):

@@ -17,11 +17,12 @@ class FilePartStreamReader:
     def __iter__(self):
         yield from self._iter_chunks()
 
-    def __iter_full_parts(self):
-        with open(self.path, "rb") as f:
-            for offset, length in self.parts:
-                f.seek(offset)
-                yield f.read(length)
+    # TODO: use this method alternatively
+    # def __iter_full_parts(self):
+    #     with open(self.path, "rb") as f:
+    #         for offset, length in self.parts:
+    #             f.seek(offset)
+    #             yield f.read(length)
 
     def _iter_chunks(self):
         with open(self.path, "rb") as f:

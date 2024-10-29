@@ -66,7 +66,7 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
             if len(self.path) == 1:
                 self.path = self.path[0]
             else:
-                r = from_source(
+                return from_source(
                     "multi",
                     [
                         from_source("file", p, parts=part, filter=self.filter, **self._kwargs)
@@ -75,7 +75,6 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
                     filter=self.filter,
                     merger=self.merger,
                 )
-                return r
 
         # here we must have a file or a directory
         if self._kwargs.get("indexing", False):
