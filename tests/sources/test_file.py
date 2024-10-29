@@ -17,6 +17,7 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import make_tgz
 from earthkit.data.testing import preserve_cwd
 
 LOG = logging.getLogger(__name__)
@@ -276,7 +277,9 @@ def test_file_multi_directory_with_tar():
         with temp_directory() as tmpdir2:
             s1.save(os.path.join(tmpdir2, "a.grib"))
             s3.save(os.path.join(tmpdir2, "b.grib"))
-            os.system("tar -czf %s %s" % (os.path.join(tmpdir2, "test.tar.gz"), tmpdir2))
+
+            paths = [os.path.join(tmpdir2, f) for f in ["a.grib", "b.grib"]]
+            make_tgz(tmpdir2, "test.tar.gz", paths)
 
             ds = from_source("file", [tmpdir1, tmpdir2])
             assert len(ds) == 22, len(ds)
