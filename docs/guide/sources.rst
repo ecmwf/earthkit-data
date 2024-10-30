@@ -68,19 +68,23 @@ We can get data from a given source by using :func:`from_source`:
 file
 ----
 
-.. py:function:: from_source("file", path, expand_user=True, expand_vars=False, unix_glob=True, recursive_glob=True, parts=None)
+.. py:function:: from_source("file", path, expand_user=True, expand_vars=False, unix_glob=True, recursive_glob=True, filter=None, parts=None)
   :noindex:
 
   The simplest source is ``file``, which can access a local file/list of files.
 
-  :param path: input path(s). Each path can contain the :ref:`parts <parts>` defining the byte ranges to read.
+  :param path: input path(s). Each path can be a file path or a directory path. If it is a directory path, it is recursively scanned for supported files. When a path is an archive format such as ``.zip``, ``.tar``, ``.tar.gz``, etc, *earthkit-data* will attempt to open it and extract any usable files, which are then stored in the :ref:`cache <caching>`. Each filepath can contain the :ref:`parts <parts>` defining the byte ranges to read.
   :type path: str, list, tuple
   :param bool expand_user: replace the leading ~ or ~user in ``path`` by that user's home directory. See ``os.path.expanduser``
   :param bool expand_vars:  expand shell environment variables in ``path``. See ``os.path.expandpath``
   :param bool unix_glob: allow UNIX globbing in ``path``
   :param bool recursive_glob: allow recursive scanning of directories. Only used when ``uxix_glob`` is True
+  :param filter: apply filter to the files read from directories or archives. The filter can be a callable or a string. If it is a string, it is interpreted as a UNIX glob pattern. If it is a callable, it should accept the full file path as a string and return a boolean.
+  :type filter: str, callable
   :param parts: the :ref:`parts <parts>` to read from the file(s) specified by ``path``. Cannot be used when ``path`` already defines the :ref:`parts <parts>`.
   :type parts: pair, list or tuple of pairs, None
+  :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Directories and archives are supported. Stream based access is only available for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`. *New in version 0.11.0*
+  :param bool read_all: if ``True``, all the data is read straight to memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.11.0*
 
   *earthkit-data* will inspect the content of the files to check for any of the
   supported :ref:`data formats <data-format>`.
@@ -131,6 +135,7 @@ file
     - :ref:`/examples/files.ipynb`
     - :ref:`/examples/multi_files.ipynb`
     - :ref:`/examples/file_parts.ipynb`
+    - :ref:`/examples/file_stream.ipynb`
     - :ref:`/examples/tar_files.ipynb`
     - :ref:`/examples/grib_overview.ipynb`
     - :ref:`/examples/bufr_temp.ipynb`
@@ -195,7 +200,6 @@ url
   :type parts: pair, list or tuple of pairs, None
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs. See details about streams :ref:`here <streams>`.
   :param bool read_all: if ``True``, all the data is read straight to memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
-  :type group_by: str, list of str
   :param dict **kwargs: other keyword arguments specifying the request
 
   .. code-block:: python

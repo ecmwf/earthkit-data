@@ -137,7 +137,8 @@ class MultiStreamSource(Source):
     def __init__(self, sources, read_all=False, **kwargs):
         super().__init__(**kwargs)
         self.memory = read_all
-        self.sources = self._from_sources(sources)
+        sources = self._from_sources(sources)
+        self.sources = [s.mutate() for s in sources if not s.ignore()]
 
     def mutate(self):
         if self.memory:
@@ -145,8 +146,11 @@ class MultiStreamSource(Source):
 
             return MultiSource([s.mutate() for s in self.sources])
         else:
-            first = self.sources[0]
-            if hasattr(first._reader, "to_fieldlist"):
+            if not any(isinstance(s, StreamFieldList) for s in self.sources):
+                first = self.sources[0]
+                if hasattr(first._reader, "to_fieldlist"):
+                    return StreamFieldList(self, **self._kwargs)
+            if all(isinstance(s, StreamFieldList) for s in self.sources):
                 return StreamFieldList(self, **self._kwargs)
 
         return self
@@ -167,13 +171,34 @@ class MultiStreamSource(Source):
     def _from_sources(self, sources):
         r = []
         for s in sources:
-            if isinstance(s, StreamSource):
+            if isinstance(s, (StreamSource, StreamFieldList, StreamMemorySource)):
                 r.append(s)
             elif isinstance(s, Stream):
                 r.append(StreamSource(s, read_all=self.memory))
+            elif isinstance(s, MultiStreamSource):
+                r.extend(s.sources)
             else:
                 raise TypeError(f"Invalid source={s}")
         return r
+
+    def to_xarray(self, **kwargs):
+        from earthkit.data.core.fieldlist import FieldList
+
+        fields = [f for f in self]
+        return FieldList.from_fields(fields).to_xarray(**kwargs)
+
+    @classmethod
+    def merge(cls, sources):
+        s = []
+        for source in sources:
+            if isinstance(source, StreamSource):
+                s.append(source)
+            elif isinstance(source, MultiStreamSource):
+                s.extend(source.sources)
+            else:
+                s.append(source)
+
+        return MultiStreamSource(s)
 
 
 class StreamFieldList(FieldList, Source):
@@ -202,6 +227,12 @@ class StreamFieldList(FieldList, Source):
         fields = [f for f in self]
         return FieldList.from_fields(fields).to_xarray(**kwargs)
 
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(s, StreamFieldList) for s in sources), sources
+        assert len(sources) > 1
+        return MultiStreamSource.merge(sources)
+
 
 class Stream:
     def __init__(self, stream=None, maker=None, **kwargs):
@@ -216,6 +247,12 @@ class Stream:
         if self._stream is None:
             self._stream = self.maker()
         return self._stream
+
+    def ignore(self):
+        return False
+
+    def mutate(self):
+        return self
 
 
 def make_stream_source_from_other(source, **kwargs):

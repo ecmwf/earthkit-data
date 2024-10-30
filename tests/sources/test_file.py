@@ -17,6 +17,7 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import make_tgz
 from earthkit.data.testing import preserve_cwd
 
 LOG = logging.getLogger(__name__)
@@ -144,17 +145,171 @@ def test_file_source_odb():
 #             LOG.exception("unlink(%s)", home_file)
 
 
-def test_glob():
-    s = from_source("file", earthkit_examples_file("test.grib"))
+def test_file_glob():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
     with temp_directory() as tmpdir:
-        s.save(os.path.join(tmpdir, "a.grib"))
-        s.save(os.path.join(tmpdir, "b.grib"))
+        ds.save(os.path.join(tmpdir, "a.grib"))
+        ds.save(os.path.join(tmpdir, "b.grib"))
 
-        s = from_source("file", os.path.join(tmpdir, "*.grib"))
-        assert len(s) == 4, len(s)
+        ds = from_source("file", os.path.join(tmpdir, "*.grib"))
+        assert len(ds) == 4, len(ds)
 
-        s = from_source("file", tmpdir)
-        assert len(s) == 4, len(s)
+        ds = from_source("file", tmpdir)
+        assert len(ds) == 4, len(ds)
+
+
+def test_file_single_directory():
+    s1 = from_source("file", earthkit_examples_file("test.grib"))
+    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+    with temp_directory() as tmpdir:
+        s1.save(os.path.join(tmpdir, "a.grib"))
+        s2.save(os.path.join(tmpdir, "b.grib"))
+
+        ds = from_source("file", tmpdir)
+        assert len(ds) == 6, len(ds)
+
+        ref = [
+            ("2t", 0),
+            ("msl", 0),
+            ("t", 500),
+            ("z", 500),
+            ("t", 850),
+            ("z", 850),
+        ]
+        assert ds.metadata(("param", "level")) == ref
+
+
+def test_file_multi_directory():
+    s1 = from_source("file", earthkit_examples_file("test.grib"))
+    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+    s3 = from_source("file", earthkit_examples_file("test6.grib"))
+    with temp_directory() as tmpdir1:
+        s1.save(os.path.join(tmpdir1, "a.grib"))
+        s2.save(os.path.join(tmpdir1, "b.grib"))
+
+        with temp_directory() as tmpdir2:
+            s1.save(os.path.join(tmpdir2, "a.grib"))
+            s3.save(os.path.join(tmpdir2, "b.grib"))
+
+            ds = from_source("file", [tmpdir1, tmpdir2])
+            assert len(ds) == 14, len(ds)
+
+            ref = [
+                ("2t", 0),
+                ("msl", 0),
+                ("t", 500),
+                ("z", 500),
+                ("t", 850),
+                ("z", 850),
+                ("2t", 0),
+                ("msl", 0),
+                ("t", 1000),
+                ("u", 1000),
+                ("v", 1000),
+                ("t", 850),
+                ("u", 850),
+                ("v", 850),
+            ]
+
+            assert ds.metadata(("param", "level")) == ref
+
+
+@pytest.mark.parametrize("filter_kwarg", [(lambda x: "b.grib" in x), ("*b.grib")])
+def test_file_single_directory_filter(filter_kwarg):
+    s1 = from_source("file", earthkit_examples_file("test.grib"))
+    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+    with temp_directory() as tmpdir:
+        s1.save(os.path.join(tmpdir, "a.grib"))
+        s2.save(os.path.join(tmpdir, "b.grib"))
+
+        ds = from_source("file", tmpdir, filter=filter_kwarg)
+        assert len(ds) == 4, len(ds)
+
+        ref = [
+            ("t", 500),
+            ("z", 500),
+            ("t", 850),
+            ("z", 850),
+        ]
+        assert ds.metadata(("param", "level")) == ref
+
+
+@pytest.mark.parametrize("filter_kwarg", [(lambda x: "b.grib" in x), ("*b.grib")])
+def test_file_multi_directory_filter(filter_kwarg):
+    s1 = from_source("file", earthkit_examples_file("test.grib"))
+    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+    s3 = from_source("file", earthkit_examples_file("test6.grib"))
+    with temp_directory() as tmpdir1:
+        s1.save(os.path.join(tmpdir1, "a.grib"))
+        s2.save(os.path.join(tmpdir1, "b.grib"))
+
+        with temp_directory() as tmpdir2:
+            s1.save(os.path.join(tmpdir2, "a.grib"))
+            s3.save(os.path.join(tmpdir2, "b.grib"))
+
+            ds = from_source("file", [tmpdir1, tmpdir2], filter=filter_kwarg)
+            assert len(ds) == 10, len(ds)
+
+            ref = [
+                ("t", 500),
+                ("z", 500),
+                ("t", 850),
+                ("z", 850),
+                ("t", 1000),
+                ("u", 1000),
+                ("v", 1000),
+                ("t", 850),
+                ("u", 850),
+                ("v", 850),
+            ]
+
+            assert ds.metadata(("param", "level")) == ref
+
+
+def test_file_multi_directory_with_tar():
+    s1 = from_source("file", earthkit_examples_file("test.grib"))
+    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+    s3 = from_source("file", earthkit_examples_file("test6.grib"))
+    with temp_directory() as tmpdir1:
+        s1.save(os.path.join(tmpdir1, "a.grib"))
+        s2.save(os.path.join(tmpdir1, "b.grib"))
+
+        with temp_directory() as tmpdir2:
+            s1.save(os.path.join(tmpdir2, "a.grib"))
+            s3.save(os.path.join(tmpdir2, "b.grib"))
+
+            paths = [os.path.join(tmpdir2, f) for f in ["a.grib", "b.grib"]]
+            make_tgz(tmpdir2, "test.tar.gz", paths)
+
+            ds = from_source("file", [tmpdir1, tmpdir2])
+            assert len(ds) == 22, len(ds)
+
+            ref = [
+                ("2t", 0),
+                ("msl", 0),
+                ("t", 500),
+                ("z", 500),
+                ("t", 850),
+                ("z", 850),
+                ("2t", 0),
+                ("msl", 0),
+                ("t", 1000),
+                ("u", 1000),
+                ("v", 1000),
+                ("t", 850),
+                ("u", 850),
+                ("v", 850),
+                ("2t", 0),
+                ("msl", 0),
+                ("t", 1000),
+                ("u", 1000),
+                ("v", 1000),
+                ("t", 850),
+                ("u", 850),
+                ("v", 850),
+            ]
+
+            assert ds.metadata(("param", "level")) == ref
 
 
 if __name__ == "__main__":
