@@ -1,8 +1,5 @@
 [build-system]
-requires = [
-  "setuptools>=61",
-  "setuptools-scm>=8",
-]
+requires = [ "setuptools>=61", "setuptools-scm>=8" ]
 
 [project]
 name = "earthkit-data"
@@ -27,9 +24,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dynamic = [
-  "version",
-]
+dynamic = [ "version" ]
 dependencies = [
   "array-api-compat",
   "cfgrib>=0.9.10.1",
@@ -56,7 +51,7 @@ optional-dependencies.all = [
   "aws-requests-auth",
   "cartopy",
   "cdsapi>=0.7.1",
-  "covjsonkit>=0.0.19",
+  "covjsonkit>=0.0.25",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
   "geopandas",
@@ -65,20 +60,14 @@ optional-dependencies.all = [
   "pyfdb",
   "pyodc",
 ]
-optional-dependencies.cds = [
-  "cdsapi>=0.7.1",
-]
-optional-dependencies.ci = [
-  "torch",
-]
-optional-dependencies.covjsonkit = [
-  "covjsonkit>=0.0.19",
-]
+optional-dependencies.cds = [ "cdsapi>=0.7.1" ]
+optional-dependencies.ci = [ "torch" ]
+optional-dependencies.covjsonkit = [ "covjsonkit>=0.0.25" ]
 optional-dependencies.dev = [
   "aws-requests-auth",
   "cartopy",
   "cdsapi>=0.7.1",
-  "covjsonkit>=0.0.19",
+  "covjsonkit>=0.0.25",
   "earthkit-data-demo-source",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
@@ -104,31 +93,14 @@ optional-dependencies.docs = [
   "sphinx-rtd-theme",
   "sphinx-tabs",
 ]
-optional-dependencies.ecmwf-opendata = [
-  "ecmwf-opendata>=0.3.3",
-]
-optional-dependencies.fdb = [
-  "pyfdb",
-]
-optional-dependencies.geopandas = [
-  "geopandas",
-]
-optional-dependencies.mars = [
-  "ecmwf-api-client>=1.6.1",
-]
-optional-dependencies.odb = [
-  "pyodc",
-]
-optional-dependencies.polytope = [
-  "polytope-client>=0.7.4",
-]
-optional-dependencies.projection = [
-  "cartopy",
-]
-optional-dependencies.s3 = [
-  "aws-requests-auth",
-  "botocore",
-]
+optional-dependencies.ecmwf-opendata = [ "ecmwf-opendata>=0.3.3" ]
+optional-dependencies.fdb = [ "pyfdb" ]
+optional-dependencies.geopandas = [ "geopandas" ]
+optional-dependencies.mars = [ "ecmwf-api-client>=1.6.1" ]
+optional-dependencies.odb = [ "pyodc" ]
+optional-dependencies.polytope = [ "polytope-client>=0.7.4" ]
+optional-dependencies.projection = [ "cartopy" ]
+optional-dependencies.s3 = [ "aws-requests-auth", "botocore" ]
 optional-dependencies.test = [
   "earthkit-data-demo-source",
   "nbconvert",
@@ -138,9 +110,7 @@ optional-dependencies.test = [
   "pytest-forked",
   "pytest-timeout",
 ]
-optional-dependencies.wekeo = [
-  "hda",
-]
+optional-dependencies.wekeo = [ "hda" ]
 urls.Documentation = "https://earthkit-data.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-data/"
 urls.Issues = "https://github.com/ecmwf/earthkit-data.issues"
@@ -149,12 +119,8 @@ urls.Repository = "https://github.com/ecmwf/earthkit-data/"
 entry-points."xarray.backends".earthkit = "earthkit.data.utils.xarray.engine:EarthkitBackendEntrypoint"
 
 [tool.setuptools.packages.find]
-include = [
-  "earthkit.data",
-]
-where = [
-  "src/",
-]
+include = [ "earthkit.data" ]
+where = [ "src/" ]
 
 [tool.setuptools_scm]
 version_file = "src/earthkit/data/_version.py"
@@ -166,11 +132,5 @@ profile = "black"
 branch = "true"
 
 [tool.pydocstyle]
-add_ignore = [
-  "D1",
-  "D200",
-  "D205",
-  "D400",
-  "D401",
-]
+add_ignore = [ "D1", "D200", "D205", "D400", "D401" ]
 convention = "numpy"
