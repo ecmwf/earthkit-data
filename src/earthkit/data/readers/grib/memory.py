@@ -113,10 +113,17 @@ class GribStreamReader(GribMemoryReader):
         self._reader = eccodes.StreamReader(stream)
 
     def __del__(self):
-        self._stream.close()
+        try:
+            self._stream.close()
+        except Exception:
+            pass
 
     def _next_handle(self):
-        return self._reader._next_handle()
+        try:
+            return self._reader._next_handle()
+        except Exception:
+            self._stream.close()
+            raise
 
     def mutate(self):
         return self

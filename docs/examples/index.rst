@@ -14,6 +14,7 @@ Data sources
     files.ipynb
     multi_files.ipynb
     file_parts.ipynb
+    file_stream.ipynb
     tar_files.ipynb
     data_from_stream.ipynb
     url.ipynb
