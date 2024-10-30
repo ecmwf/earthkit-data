@@ -15,11 +15,18 @@ import numpy
 import xarray
 import xarray.core.indexing as indexing
 
+from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
 from .profile import Profile
 
 LOG = logging.getLogger(__name__)
+
+# These backend_kwargs are also direct xarray.open_dataset kwargs
+BACKEND_AND_XR_OPEN_DS_KWARGS = ["decode_times", "decode_timedelta", "drop_variables"]
+
+# These kwargs cannot be passed to xarray.open_dataset (not even inside backend_kwargs)
+NON_XR_OPEN_DS_KWARGS = ["split_dims", "direct_backend"]
 
 
 class VariableBuilder:
@@ -407,25 +414,31 @@ class DatasetBuilder:
     def __init__(
         self,
         ds,
-        profile="mars",
-        **kwargs,
+        backend_kwargs=None,
+        other_kwargs=None,
     ):
-        self.profile = Profile.make(profile, **kwargs)
         self.ds = ds
+        backend_kwargs = ensure_dict(backend_kwargs)
+        other_kwargs = ensure_dict(other_kwargs)
+
+        # collect backend and other kwargs that can be passed to xarray.open_dataset
+        self.backend_kwargs = dict(**backend_kwargs)
+        for k in NON_XR_OPEN_DS_KWARGS:
+            self.backend_kwargs.pop(k, None)
+        self.xr_open_dataset_kwargs = dict(**other_kwargs)
+
+        profile = backend_kwargs.pop("profile", Profile.DEFAULT_PROFILE_NAME)
+        self.profile = Profile.make(profile, **backend_kwargs)
 
         if self.profile.lazy_load:
             self.builder = TensorBackendDataBuilder
         else:
             self.builder = MemoryBackendDataBuilder
 
-        self.kwargs = kwargs
+        self.split_dims = self.profile.dims.split_dims
+        self.direct_backend = self.profile.direct_backend
+
         self.grids = {}
-
-    # @cached_property
-    # def profile(self):
-    #     from .profile import Profile
-
-    #     return Profile.make(self.profile_name, **self.kwargs)
 
     def parse(self):
         assert not hasattr(self.ds, "_ek_builder")
@@ -438,7 +451,6 @@ class DatasetBuilder:
 
         # create a new fieldlist for optimised access to unique values
         ds = XArrayInputFieldList(self.ds, keys=self.profile.index_keys, remapping=remapping)
-
         # LOG.debug(f"{ds.db=}")
         LOG.debug(f"before update: {self.profile.dim_keys=}")
 
@@ -470,12 +482,16 @@ class DatasetBuilder:
 
 
 class SingleDatasetBuilder(DatasetBuilder):
-    def __init__(self, *args, **kwargs):
-        split_dims = kwargs.get("split_dims", None)
-        if split_dims:
+    def __init__(self, *args, from_xr=False, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.split_dims:
             raise ValueError("SingleDatasetMaker does not support splitting")
 
-        super().__init__(*args, **kwargs)
+        if from_xr and self.direct_backend:
+            raise ValueError(
+                "SingleDatasetMaker does not support direct_backend=True when invoked from xarray"
+            )
 
     def build(self):
         ds_sorted = self.parse()
@@ -492,20 +508,16 @@ class SingleDatasetBuilder(DatasetBuilder):
 
 
 class SplitDatasetBuilder(DatasetBuilder):
-    def __init__(self, *args, backend_kwargs=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
         split_dims: str, or iterable of str, None
             Dimension or list of dimensions to use for splitting the data into multiple hypercubes.
             Default is None.
         """
-        self.split_dims = backend_kwargs.pop("split_dims", None)
-        self.backend_kwargs = dict(**backend_kwargs)
-        self.xr_open_dataset_kwargs = dict(**kwargs)
+        super().__init__(*args, **kwargs)
 
         if not self.split_dims:
             raise ValueError("SplitDatasetMaker requires split_dims")
-
-        super().__init__(*args, split_dims=self.split_dims, **backend_kwargs)
 
     def build(self):
         from .splitter import Splitter
@@ -523,29 +535,65 @@ class SplitDatasetBuilder(DatasetBuilder):
             )
 
             s_ds._ek_builder = builder
-            datasets.append(
-                xarray.open_dataset(s_ds, backend_kwargs=self.backend_kwargs, **self.xr_open_dataset_kwargs)
-            )
-            s_ds._ek_builder = None
+            if self.direct_backend:
+                datasets.append(builder.build())
+            else:
+                s_ds._ek_builder = builder
+                datasets.append(
+                    xarray.open_dataset(
+                        s_ds, backend_kwargs=self.backend_kwargs, **self.xr_open_dataset_kwargs
+                    )
+                )
+                s_ds._ek_builder = None
 
         return datasets[0] if len(datasets) == 1 else datasets
 
 
-def from_earthkit(ds, **kwargs):
-    """Create an xarray dataset from an earthkit fieldlist."""
-    backend_kwargs = kwargs.get("backend_kwargs", {})
-    split_dims = backend_kwargs.get("split_dims", None)
+def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
+    """Create an xarray dataset from an earthkit fieldlist.
 
-    assert kwargs["engine"] == "earthkit"
+    Parameters
+    ----------
+    ds: FieldList
+        The input fieldlist.
+    backend_kwargs: dict, optional
+        Backend kwargs that can be passed to
+        :py:meth:`xarray.open_dataset` as "backend_kwargs".
+    other_kwargs: dict, optional
+        Additional kwargs passed to :py:meth:`xarray.open_dataset`. Cannot contain
+        any of the keys in ``backend_kwargs``.
+    """
+    backend_kwargs = ensure_dict(backend_kwargs)
+    other_kwargs = ensure_dict(other_kwargs)
 
-    if not split_dims:
-        backend_kwargs.pop("split_dims", None)
+    # certain kwargs are both backend_kwargs and other_kwargs. We copy them to
+    # backend_kwargs_full
+    backend_kwargs_full = dict(**backend_kwargs)
+    for k in BACKEND_AND_XR_OPEN_DS_KWARGS:
+        if k in other_kwargs:
+            backend_kwargs_full[k] = other_kwargs[k]
 
-        if len(kwargs) == 1:
-            assert kwargs["engine"] == "earthkit"
-            return SingleDatasetBuilder(ds, **backend_kwargs).build()
+    # to create the profile we need all the possible backend_kwargs (bar profile)
+    profile = backend_kwargs_full.pop("profile", Profile.DEFAULT_PROFILE_NAME)
+    profile = Profile.make(profile, **backend_kwargs_full)
+
+    # the backend  builder is directly called bypassing xarray.open_dataset
+    if profile.direct_backend:
+        backend_kwargs_full["profile"] = profile
+        if not profile.dims.split_dims:
+            return SingleDatasetBuilder(ds, backend_kwargs=backend_kwargs_full).build()
         else:
-            return xarray.open_dataset(ds, **kwargs)
+            return SplitDatasetBuilder(ds, backend_kwargs=backend_kwargs_full).build()
+    # xarray.open_dataset is called
     else:
-        backend_kwargs = kwargs.pop("backend_kwargs", {})
-        return SplitDatasetBuilder(ds, backend_kwargs=backend_kwargs, **kwargs).build()
+        assert other_kwargs["engine"] == "earthkit"
+        backend_kwargs["profile"] = profile
+
+        # certain kwargs are not allowed in xarray.open_dataset
+        for k in NON_XR_OPEN_DS_KWARGS:
+            backend_kwargs.pop(k, None)
+
+        if not profile.dims.split_dims:
+            return xarray.open_dataset(ds, backend_kwargs=backend_kwargs, **other_kwargs)
+        else:
+            return SplitDatasetBuilder(ds, backend_kwargs=backend_kwargs, other_kwargs=other_kwargs).build()

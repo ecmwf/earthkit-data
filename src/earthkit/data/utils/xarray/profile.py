@@ -88,6 +88,7 @@ PROFILE_CONF = ProfileConf()
 
 class Profile:
     USER_ONLY_OPTIONS = ["remapping", "patches"]
+    DEFAULT_PROFILE_NAME = "mars"
 
     def __init__(
         self,
@@ -147,6 +148,7 @@ class Profile:
         self.decode_timedelta = kwargs.pop("decode_timedelta")
         self.lazy_load = kwargs.pop("lazy_load")
         self.release_source = kwargs.pop("release_source")
+        self.direct_backend = kwargs.pop("direct_backend")
         self.strict = kwargs.pop("strict")
         self.errors = kwargs.pop("errors")
 
@@ -174,6 +176,10 @@ class Profile:
     @staticmethod
     def make(name_or_def, *args, **kwargs):
         # print("name_or_def", name_or_def)
+
+        if isinstance(name_or_def, Profile):
+            return name_or_def
+
         if name_or_def is None:
             name_or_def = {}
 
