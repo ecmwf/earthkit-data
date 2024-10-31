@@ -1,3 +1,12 @@
+# (C) Copyright 2024 ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation
+# nor does it submit to any jurisdiction.
+#
+
 import mimetypes
 from functools import cached_property
 
@@ -90,9 +99,12 @@ class GeoTIFFMetadata(RawMetadata):
             self._geo = GeoTIFFGeography(self._field._da)
         return self._geo
 
+    def ls_keys(self):
+        return self.LS_KEYS
+
 
 class GeoTIFFField(Field):
-    """A band of a GeoTIFF file"""
+    """A GeoTIFF band"""
 
     def __init__(self, da, band, geography=None):
         super().__init__()
@@ -124,6 +136,7 @@ class GeoTIFFField(Field):
 
 
 class GeoTIFFFieldList(FieldList):
+    """A list of GeoTIFF bands"""
 
     FIELD_TYPE = GeoTIFFField
 
