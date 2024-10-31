@@ -14,21 +14,27 @@ from . import Reader
 
 class GeoTIFFGeography(Geography):
 
-    def __init__(self, metadata, da):
-        self._metadata = metadata
-        self._da = da
-        self.x_dim = da.rio.x_dim
-        self.y_dim = da.rio.y_dim
+    def __init__(self, ds):
+        self._ds = ds
+        self.x_dim = ds.rio.x_dim
+        self.y_dim = ds.rio.y_dim
+
+    def _latlon_coords(self):
+        from pyproj import Transformer
+
+        return Transformer.from_crs(self._ds.rio.crs, "EPSG:4326", always_xy=True).transform(
+            *self._xy_coords()
+        )
 
     def latitudes(self, dtype=None):
-        raise NotImplementedError
+        return self._latlon_coords()[0]
 
     def longitudes(self, dtype=None):
-        raise NotImplementedError
+        return self._latlon_coords()[1]
 
     def _xy_coords(self):
-        x = self._da.coords[self.x_dim].values
-        y = self._da.coords[self.y_dim].values
+        x = self._ds.coords[self.x_dim].values
+        y = self._ds.coords[self.y_dim].values
         return np.meshgrid(x, y)
 
     def x(self, dtype=None):
@@ -37,65 +43,61 @@ class GeoTIFFGeography(Geography):
     def y(self, dtype=None):
         return self._xy_coords()[1]
 
-    # @property
     def shape(self):
-        return self._da.rio.height, self._da.rio.width
+        return self._ds.rio.height, self._ds.rio.width
 
     def _unique_grid_id(self):
-        raise NotImplementedError
+        return (*self.shape(), self._ds.rio.crs.to_wkt())
 
     def projection(self):
         return Projection.from_cf_grid_mapping(**self._grid_mapping)
 
     @property
     def _grid_mapping(self):
-        if self._da.rio.grid_mapping == "spatial_ref":
-            return self._metadata.spatial_ref
-        raise NotImplementedError
+        if self._ds.rio.grid_mapping == "spatial_ref":
+            return self._ds.coords["spatial_ref"].attrs
+        self._not_implemented()
 
     def bounding_box(self):
-        left, bottom, right, top = self._da.rio.transform_bounds("+proj=latlon")
+        left, bottom, right, top = self._ds.rio.transform_bounds("EPSG:4326")
         return BoundingBox(north=top, west=left, south=bottom, east=right)
 
     def gridspec(self):
-        raise NotImplementedError
+        self._not_implemented()
 
     def resolution(self):
-        return self._da.rio.resolution()
+        return self._ds.rio.resolution()
 
     def mars_grid(self):
-        raise NotImplementedError
+        self._not_implemented()
 
     def mars_area(self):
-        raise NotImplementedError
+        self._not_implemented()
 
 
 class GeoTIFFMetadata(RawMetadata):
 
     LS_KEYS = ["variable", "band"]
 
-    def __init__(self, field, band):
+    def __init__(self, field, band, geography=None):
         self._field = field
-        self._geo = None
+        self._geo = geography
         super().__init__({"variable": field._da.name, "band": band, **field._da.attrs})
 
     @property
     def geography(self):
         if self._geo is None:
-            self._geo = GeoTIFFGeography(self, self._field._da)
+            self._geo = GeoTIFFGeography(self._field._da)
         return self._geo
-
-    @property
-    def spatial_ref(self):
-        return self._field._da.coords["spatial_ref"].attrs
 
 
 class GeoTIFFField(Field):
     """A band of a GeoTIFF file"""
 
-    def __init__(self, da, band, array_backend):
+    def __init__(self, da, band, array_backend, geography=None):
         super().__init__(array_backend)
         self._da = da
+        self._geo = geography
         self.band = band
 
     def __repr__(self):
@@ -103,13 +105,22 @@ class GeoTIFFField(Field):
 
     @cached_property
     def _metadata(self):
-        return GeoTIFFMetadata(self, self.band)
+        return GeoTIFFMetadata(self, self.band, geography=self._geo)
 
     def to_xarray(self):
         return self._da
 
+    def to_pandas(self):
+        # Series with x and y in MultiIndex, not y-Index and x in columns
+        series = self._da.to_pandas().stack()
+        series.name = self._da.name
+        return series
+
     def _values(self, dtype=None):
         return self._da.values.astype(dtype)
+
+    def write(self, f):
+        self._not_implemented()
 
 
 class GeoTIFFFieldList(FieldList):
@@ -119,7 +130,9 @@ class GeoTIFFFieldList(FieldList):
     def __init__(self, path, **kwargs):
         self._fields = None
         self.path = path
-        self._ds = self.rioxarray_read(band_as_variable=True)
+        self._ds = self.rioxarray_read(band_as_variable=True, mask_and_scale=True, decode_times=True)
+        # Shared geography instance for all fields/bands
+        self._geo = GeoTIFFGeography(self._ds)
         super().__init__(**kwargs)
 
     def rioxarray_read(self, **kwargs):
@@ -134,6 +147,12 @@ class GeoTIFFFieldList(FieldList):
 
     def to_xarray(self, **kwargs):
         return self.rioxarray_read(**kwargs)
+
+    def to_pandas(self):
+        import pandas as pd
+
+        series = [field.to_pandas() for field in self]
+        return pd.concat(series, keys=[s.name for s in series])
 
     def __len__(self):
         return len(self._ds.data_vars)
@@ -150,12 +169,22 @@ class GeoTIFFFieldList(FieldList):
 
     def _get_fields(self, ds, names=None):
         fields = []
+        # Follow GDAL convention and count GeoTIFF bands from 1
         for band, (name, da) in enumerate(ds.data_vars.items(), start=1):
-            # Prefer long_name over band_* naming for band_as_variable=True
+            # Prefer long_name over band_* naming of band_as_variable=True
             if "long_name" in da.attrs:
                 da = da.rename(da.attrs["long_name"])
-            fields.append(self.FIELD_TYPE(da, band, array_backend=self.array_backend))
+            fields.append(self.FIELD_TYPE(da, band, array_backend=self.array_backend, geography=self._geo))
         return fields
+
+    def describe(self, *args, **kwargs):
+        self._not_implemented()
+
+    def save(self, filename, append=False, **kwargs):
+        self._not_implemented()
+
+    def write(self, f, **kwargs):
+        self._not_implemented()
 
 
 class GeoTIFFReader(GeoTIFFFieldList, Reader):
@@ -166,6 +195,9 @@ class GeoTIFFReader(GeoTIFFFieldList, Reader):
 
     def __repr__(self):
         return f"GeoTIFFReader({self.path})"
+
+    def mutate_source(self):
+        return self
 
 
 def reader(source, path, **kwargs):
