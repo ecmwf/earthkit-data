@@ -692,6 +692,27 @@ class Field(Base):
         with open(filename, flag) as f:
             self.write(f, **kwargs)
 
+    def to_target(self, target, *args, **kwargs):
+        r"""Write the field into a target object.
+
+        Parameters
+        ----------
+        target: object
+            The target object to write the field into.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`write`.
+
+        See Also
+        --------
+        :obj:`write`
+
+        """
+        from earthkit.data.writer import find_target
+
+        target = find_target(target)
+        target.write(self, *args, **kwargs)
+        # self.write(target, **kwargs)
+
     def __getitem__(self, key):
         """Return the value of the metadata ``key``."""
         return self._metadata.get(key)
