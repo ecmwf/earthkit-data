@@ -94,8 +94,8 @@ class GeoTIFFMetadata(RawMetadata):
 class GeoTIFFField(Field):
     """A band of a GeoTIFF file"""
 
-    def __init__(self, da, band, array_backend, geography=None):
-        super().__init__(array_backend)
+    def __init__(self, da, band, geography=None):
+        super().__init__()
         self._da = da
         self._geo = geography
         self.band = band
@@ -174,7 +174,7 @@ class GeoTIFFFieldList(FieldList):
             # Prefer long_name over band_* naming of band_as_variable=True
             if "long_name" in da.attrs:
                 da = da.rename(da.attrs["long_name"])
-            fields.append(self.FIELD_TYPE(da, band, array_backend=self.array_backend, geography=self._geo))
+            fields.append(self.FIELD_TYPE(da, band, geography=self._geo))
         return fields
 
     def describe(self, *args, **kwargs):
