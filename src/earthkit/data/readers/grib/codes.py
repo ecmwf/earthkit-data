@@ -9,13 +9,13 @@
 
 import logging
 import os
-from collections import defaultdict
 from functools import cached_property
 
 import eccodes
 import numpy as np
 
 from earthkit.data.core.fieldlist import Field
+from earthkit.data.indexing.fieldlist import NewFieldWrapper
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
@@ -245,18 +245,19 @@ class GribField(Field):
 
     _handle = None
 
-    def __init__(self, path, offset, length, backend, manager=None):
-        super().__init__(backend)
+    def __init__(self, path, offset, length, handle_manager=None, use_metadata_cache=False):
+        super().__init__()
         self.path = path
         self._offset = offset
         self._length = length
-        self._manager = manager
+        self._handle_manager = handle_manager
+        self._use_metadata_cache = use_metadata_cache
 
     @property
     def handle(self):
         r""":class:`CodesHandle`: Get an object providing access to the low level GRIB message structure."""
-        if self._manager is not None:
-            handle = self._manager.handle(self, self._create_handle)
+        if self._handle_manager is not None:
+            handle = self._handle_manager.handle(self, self._create_handle)
             if handle is None:
                 raise RuntimeError(f"Could not get a handle for offset={self.offset} in {self.path}")
             return handle
@@ -282,10 +283,13 @@ class GribField(Field):
 
     @cached_property
     def _metadata(self):
-        cache = False
-        if self._manager is not None:
-            cache = self._manager.use_grib_metadata_cache
+        cache = self._use_metadata_cache
+        if cache:
+            cache = self._make_metadata_cache()
         return GribFieldMetadata(self, cache=cache)
+
+    def _make_metadata_cache(self):
+        return dict()
 
     def __repr__(self):
         return "GribField(%s,%s,%s,%s,%s,%s)" % (
@@ -297,7 +301,7 @@ class GribField(Field):
             self._metadata.get("number", None),
         )
 
-    def write(self, f, bits_per_value=None):
+    def write(self, f, **kwargs):
         r"""Writes the message to a file object.
 
         Parameters
@@ -308,14 +312,9 @@ class GribField(Field):
             Set the ``bitsPerValue`` GRIB key in the generated GRIB message. When
             None the ``bitsPerValue`` stored in the metadata will be used.
         """
-        if bits_per_value is not None:
-            handle = self.handle.clone()
-            handle.set_long("bitsPerValue", bits_per_value)
-        else:
-            handle = self.handle
+        from earthkit.data.writers import write
 
-        # assert isinstance(f, io.IOBase)
-        handle.write_to(f)
+        write(f, self, **kwargs)
 
     def message(self):
         r"""Returns a buffer containing the encoded message.
@@ -326,13 +325,19 @@ class GribField(Field):
         """
         return self.handle.get_buffer()
 
-    def _diag(self):
-        r = r = defaultdict(int)
-        try:
-            md_cache = self._metadata.get.cache_info()
-            r["metadata_cache_hits"] += md_cache.hits
-            r["metadata_cache_misses"] += md_cache.misses
-            r["metadata_cache_size"] += md_cache.currsize
-        except Exception:
-            pass
-        return r
+    def copy(self, **kwargs):
+        return NewGribField(self, **kwargs)
+
+
+class NewGribField(NewFieldWrapper, GribField):
+    def __init__(self, field, **kwargs):
+        NewFieldWrapper.__init__(self, field, **kwargs)
+        self._handle = field._handle
+        GribField.__init__(
+            self,
+            field.path,
+            field._offset,
+            field._length,
+            handle_manager=field._handle_manager,
+            use_metadata_cache=field._use_metadata_cache,
+        )

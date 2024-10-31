@@ -17,17 +17,16 @@ import pytest
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
-from grib_fixtures import FL_TYPES  # noqa: E402
+from grib_fixtures import FL_NUMPY  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_icon_to_xarray(fl_type, array_backend):
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+def test_icon_to_xarray(fl_type):
     # test the conversion to xarray for an icon (unstructured grid) grib file.
-    g = load_grib_data("test_icon.grib", fl_type, array_backend, folder="data")
+    g, _ = load_grib_data("test_icon.grib", fl_type, folder="data")
 
-    ds = g.to_xarray()
+    ds = g.to_xarray(engine="cfgrib")
     assert len(ds.data_vars) == 1
     # Dataset contains 9 levels and 9 grid points per level
     ref_levs = g.metadata("level")
@@ -35,24 +34,24 @@ def test_icon_to_xarray(fl_type, array_backend):
     assert ds["pres"].sizes["values"] == 6
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_to_xarray_filter_by_keys(fl_type, array_backend):
-    g = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+def test_to_xarray_filter_by_keys(fl_type):
+    g, _ = load_grib_data("tuv_pl.grib", fl_type)
     g = g.sel(param="t", level=500) + g.sel(param="u")
     assert len(g) > 1
 
     # see github #250
-    r = g.to_xarray(xarray_open_dataset_kwargs={"backend_kwargs": {"filter_by_keys": {"shortName": "t"}}})
+    r = g.to_xarray(
+        engine="cfgrib", xarray_open_dataset_kwargs={"backend_kwargs": {"filter_by_keys": {"shortName": "t"}}}
+    )
 
     assert len(r.data_vars) == 1
     assert r["t"].sizes["isobaricInhPa"] == 1
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ["numpy"])
-def test_grib_to_pandas(fl_type, array_backend):
-    f = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+def test_grib_to_pandas(fl_type):
+    f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     # all points
     df = f.to_pandas()

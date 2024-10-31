@@ -16,7 +16,6 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import ARRAY_BACKENDS
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -27,9 +26,8 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_sel_single_message(fl_type, array_backend):
-    s = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
+def test_grib_sel_single_message(fl_type):
+    s, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     r = s.sel(shortName="2t")
     assert len(r) == 1
@@ -37,7 +35,6 @@ def test_grib_sel_single_message(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
     [
@@ -65,8 +62,8 @@ def test_grib_sel_single_message(fl_type, array_backend):
         ),
     ],
 )
-def test_grib_sel_single_file_1(fl_type, array_backend, params, expected_meta, metadata_keys):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_sel_single_file_1(fl_type, params, expected_meta, metadata_keys):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     g = f.sel(**params)
     assert len(g) == len(expected_meta)
@@ -80,9 +77,8 @@ def test_grib_sel_single_file_1(fl_type, array_backend, params, expected_meta, m
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_sel_single_file_2(fl_type, array_backend):
-    f = load_grib_data("t_time_series.grib", fl_type, array_backend, folder="data")
+def test_grib_sel_single_file_2(fl_type):
+    f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
     g = f.sel(shortName=["t"], step=[3, 6])
     assert len(g) == 2
@@ -102,9 +98,8 @@ def test_grib_sel_single_file_2(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_sel_single_file_as_dict(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_sel_single_file_as_dict(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     g = f.sel({"shortName": "t", "level": [500, 700], "mars.type": "an"})
     assert len(g) == 2
@@ -115,7 +110,6 @@ def test_grib_sel_single_file_as_dict(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "param_id,level,expected_meta",
     [
@@ -127,8 +121,8 @@ def test_grib_sel_single_file_as_dict(fl_type, array_backend):
         (131, (slice(510, 520)), []),
     ],
 )
-def test_grib_sel_slice_single_file(fl_type, array_backend, param_id, level, expected_meta):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_sel_slice_single_file(fl_type, param_id, level, expected_meta):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     g = f.sel(paramId=param_id, level=level)
     assert len(g) == len(expected_meta)
@@ -137,10 +131,12 @@ def test_grib_sel_slice_single_file(fl_type, array_backend, param_id, level, exp
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_sel_multi_file(fl_type, array_backend):
-    f1 = load_grib_data("tuv_pl.grib", fl_type, array_backend)
-    f2 = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")
+def test_grib_sel_multi_file(fl_type):
+    f1, _ = load_grib_data(
+        "tuv_pl.grib",
+        fl_type,
+    )
+    f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
     f = from_source("multi", [f1, f2])
 
     # single resulting field
@@ -155,10 +151,9 @@ def test_grib_sel_multi_file(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_sel_slice_multi_file(fl_type, array_backend):
-    f1 = load_grib_data("tuv_pl.grib", fl_type, array_backend)
-    f2 = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")
+def test_grib_sel_slice_multi_file(fl_type):
+    f1, _ = load_grib_data("tuv_pl.grib", fl_type)
+    f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
 
     f = from_source("multi", [f1, f2])
 
@@ -171,10 +166,9 @@ def test_grib_sel_slice_multi_file(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_sel_date(fl_type, array_backend):
+def test_grib_sel_date(fl_type):
     # date and time
-    f = load_grib_data("t_time_series.grib", fl_type, array_backend, folder="data")
+    f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
     g = f.sel(date=20201221, time=1200, step=9)
     # g = f.sel(date="20201221", time="12", step="9")
@@ -190,9 +184,8 @@ def test_grib_sel_date(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_sel_valid_datetime(fl_type, array_backend):
-    f = load_grib_data("t_time_series.grib", fl_type, array_backend, folder="data")
+def test_grib_sel_valid_datetime(fl_type):
+    f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
     g = f.sel(valid_datetime="2020-12-21T21:00:00")
     assert len(g) == 2
@@ -207,9 +200,8 @@ def test_grib_sel_valid_datetime(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_isel_single_message(fl_type, array_backend):
-    s = load_grib_data("test_single.grib", fl_type, array_backend, folder="data")
+def test_grib_isel_single_message(fl_type):
+    s, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     r = s.isel(shortName=0)
     assert len(r) == 1
@@ -217,7 +209,6 @@ def test_grib_isel_single_message(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
     [
@@ -254,8 +245,8 @@ def test_grib_isel_single_message(fl_type, array_backend):
         ),
     ],
 )
-def test_grib_isel_single_file(fl_type, array_backend, params, expected_meta, metadata_keys):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_isel_single_file(fl_type, params, expected_meta, metadata_keys):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     g = f.isel(**params)
     assert len(g) == len(expected_meta)
@@ -268,7 +259,6 @@ def test_grib_isel_single_file(fl_type, array_backend, params, expected_meta, me
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "param_id,level,expected_meta",
     [
@@ -280,8 +270,8 @@ def test_grib_isel_single_file(fl_type, array_backend, params, expected_meta, me
         (1, (slice(None, None, 2)), [[131, 850], [131, 500], [131, 300]]),
     ],
 )
-def test_grib_isel_slice_single_file(fl_type, array_backend, param_id, level, expected_meta):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_isel_slice_single_file(fl_type, param_id, level, expected_meta):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     g = f.isel(paramId=param_id, level=level)
     assert len(g) == len(expected_meta)
@@ -290,9 +280,8 @@ def test_grib_isel_slice_single_file(fl_type, array_backend, param_id, level, ex
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_isel_slice_invalid(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_isel_slice_invalid(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     with pytest.raises(IndexError):
         f.isel(level=500)
@@ -302,10 +291,9 @@ def test_grib_isel_slice_invalid(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_isel_multi_file(fl_type, array_backend):
-    f1 = load_grib_data("tuv_pl.grib", fl_type, array_backend)
-    f2 = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")
+def test_grib_isel_multi_file(fl_type):
+    f1, _ = load_grib_data("tuv_pl.grib", fl_type)
+    f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
     f = from_source("multi", [f1, f2])
 
     # single resulting field
@@ -319,10 +307,9 @@ def test_grib_isel_multi_file(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_isel_slice_multi_file(fl_type, array_backend):
-    f1 = load_grib_data("tuv_pl.grib", fl_type, array_backend)
-    f2 = load_grib_data("ml_data.grib", fl_type, array_backend, folder="data")
+def test_grib_isel_slice_multi_file(fl_type):
+    f1, _ = load_grib_data("tuv_pl.grib", fl_type)
+    f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
     f = from_source("multi", [f1, f2])
 
     g = f.isel(shortName=1, level=slice(20, 22))
@@ -334,18 +321,16 @@ def test_grib_isel_slice_multi_file(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_sel_remapping_1(fl_type, array_backend):
-    ds = load_grib_data("test6.grib", fl_type, array_backend)
+def test_grib_sel_remapping_1(fl_type):
+    ds, _ = load_grib_data("test6.grib", fl_type)
     ref = [("t", 850)]
     r = ds.sel(param_level="t850", remapping={"param_level": "{param}{levelist}"})
     assert r.metadata("param", "level") == ref
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_sel_remapping_2(fl_type, array_backend):
-    ds = load_grib_data("test6.grib", fl_type, array_backend)
+def test_grib_sel_remapping_2(fl_type):
+    ds, _ = load_grib_data("test6.grib", fl_type)
     ref = [("u", 1000), ("t", 850)]
     r = ds.sel(param_level=["t850", "u1000"], remapping={"param_level": "{param}{levelist}"})
     assert r.metadata("param", "level") == ref

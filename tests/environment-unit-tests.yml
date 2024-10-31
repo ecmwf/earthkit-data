@@ -24,17 +24,19 @@ dependencies:
 - hda
 - jsonschema
 - pip:
-  - multiurl
+  - multiurl>=0.3.0
   - git+https://github.com/ecmwf/pyfdb
   - ecmwf-opendata>=0.3.3
   - polytope-client>=0.7.4
   - earthkit-meteo>=0.0.1
   - git+https://github.com/ecmwf/earthkit-data-demo-source
-  - eccovjson>=0.0.5
+  - covjsonkit>=0.0.19
   - earthkit-geo>=0.2.0
 - tqdm>=4.63.0
 - lru-dict
 - markdown
+- aws-requests-auth
+- botocore
 - make
 - mypy
 - myst-parser
@@ -48,6 +50,9 @@ dependencies:
 - sphinx-autoapi
 - sphinx_rtd_theme
 - sphinxcontrib-apidoc
+- sphinx-issues
+- sphinx-tabs
+- sphinx-copybutton
 - nbformat
 - nbconvert
 - nbsphinx

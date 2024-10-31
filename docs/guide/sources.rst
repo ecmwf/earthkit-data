@@ -54,6 +54,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve NetCDF data from `OPEnDAP <https://en.wikipedia.org/wiki/OPeNDAP>`_ services
     * - :ref:`data-sources-polytope`
       - retrieve data from the `Polytope services <https://polytope-client.readthedocs.io/en/latest/>`_
+    * - :ref:`data-sources-s3`
+      - retrieve data from Amazon S3 buckets
     * - :ref:`data-sources-wekeo`
       - retrieve data from `WEkEO`_ using the WEkEO grammar
     * - :ref:`data-sources-wekeocds`
@@ -191,8 +193,8 @@ url
   :param bool unpack: for archive formats such as ``.zip``, ``.tar``, ``.tar.gz``, etc, *earthkit-data* will attempt to open it and extract any usable file. To keep the downloaded file as is use ``unpack=False``
   :param parts: the :ref:`parts <parts>` to read from the resource(s) specified by ``url``. Cannot be used when ``url`` already defines the :ref:`parts <parts>`.
   :type parts: pair, list or tuple of pairs, None
-  :param bool stream: when it is ``True`` the data is read as a :ref:`stream <streams>`. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs. See details about streams :ref:`here <streams>`.
-  :param bool read_all: when it is ``True`` all the data is read straight to memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
+  :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs. See details about streams :ref:`here <streams>`.
+  :param bool read_all: if ``True``, all the data is read straight to memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :type group_by: str, list of str
   :param dict **kwargs: other keyword arguments specifying the request
 
@@ -309,7 +311,7 @@ stream
 
   :param stream: the stream(s)
   :type stream: stream, list, tuple
-  :param bool read_all: when it is ``True`` all the data is read into memory from a stream. Used when ``stream=True``. *New in version 0.8.0*
+  :param bool read_all: if ``True``, all the data is read into memory from a stream. Used when ``stream=True``. *New in version 0.8.0*
 
   In the examples below, for simplicity, we create a file stream from a :ref:`grib` file. By default :ref:`from_source() <data-sources-stream>` returns an object that can only be used as an iterator.
 
@@ -389,22 +391,37 @@ memory
 .. py:function:: from_source("memory", buffer)
   :noindex:
 
-  The ``memory`` source will read data from a memory buffer. Currently it only works for a ``buffer`` storing a single :ref:`grib` message or CoverageJson data.
+  The ``memory`` source will read data from a memory buffer. Currently it only works for a ``buffer`` storing a single :ref:`grib` message or CoverageJson data. The result is a FieldList object storing all the data in memory.
 
-  Please note that a buffer can always be read as a :ref:`stream source <data-sources-stream>` using ``io.BytesIO``.
+  .. code-block:: python
+
+      import earthkit.data
+
+      # buffer storing a GRIB message
+      buffer = ...
+
+      ds = earthkit.data.from_source("memory", bufr)
+
+      # f is the only GribField in ds
+      f = ds[0]
+
+
+  Please note that a buffer can always be read as a :ref:`stream source <data-sources-stream>` using ``io.BytesIO``. The equivalent code to the example above using a stream is:
 
   .. code-block:: python
 
       import io
       import earthkit.data
 
-      # buffer stores GRIB messages
+      # buffer storing a GRIB message
       buffer = ...
       stream = io.BytesIO(buffer)
 
-      ds = earthkit.data.from_source("stream", stream)
-      for f in ds:
-          print(f.metadata("param"))
+      ds = earthkit.data.from_source("stream", stream, real_all=True)
+
+      # f is the only GribField in ds
+      f = ds[0]
+
 
 
 .. _data-sources-multi:
@@ -479,7 +496,7 @@ cds
 
   :param str dataset: the name of the CDS dataset
   :param tuple *args: specify the request as dict. A sequence of dicts can be used to specify multiple requests.
-  :param bool prompt: when True it can offer a prompt to specify the credentials for cdsapi_ and write them into the default RC file ``~/.cdsapirc``. The prompt only appears when:
+  :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for cdsapi_ and write them into the default RC file ``~/.cdsapirc``. The prompt only appears when:
 
     - no cdsapi_ RC file exists at the default location ``~/.cdsapirc``
     - no cdsapi_ RC file exists at the location specified via the ``CDSAPI_RC`` environment variable
@@ -578,8 +595,8 @@ fdb
   The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
 
   :param tuple *args: positional arguments specifying the request as a dict
-  :param bool stream: when it is ``True`` the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
-  :param bool read_all: when it is ``True`` all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
+  :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
+  :param bool read_all: if ``True``, all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves analysis :ref:`grib` data for 3 surface parameters as stream.
@@ -624,6 +641,7 @@ fdb
       len=2 [('2d', 0), ('msl', 0)]
       len=2 [('2t', 0), ('2d', 0)]
 
+  We can use ``batch_size=2`` to read 2 fields at a time. ``ds`` is still just an iterator, but ``f`` is now a :obj:`FieldList <data.readers.grib.index.FieldList>` containing 2 fields:
 
   When using ``group_by()`` we can iterate through the stream in groups defined by metadata keys. In this case each iteration step yields a :obj:`FieldList <data.readers.grib.index.FieldList>`.
 
@@ -661,7 +679,7 @@ fdb
 mars
 --------------
 
-.. py:function:: from_source("mars", *args, prompt=True, **kwargs)
+.. py:function:: from_source("mars", *args, prompt=True, log="default", **kwargs)
   :noindex:
 
   The ``mars`` source will retrieve data from the ECMWF MARS (Meteorological Archival and Retrieval System) archive. In addition
@@ -670,14 +688,41 @@ mars
 
   To figure out which data you need, or discover relevant data available in MARS, see the publicly accessible `MARS catalog`_ (or this `access restricted catalog <https://apps.ecmwf.int/mars-catalogue/>`_).
 
-  The MARS access is direct when the MARS client is installed (as at ECMWF), otherwise it will use the `web API`_. In order to use the `web API`_ you will need to register and retrieve an access token. For a more extensive documentation about MARS, please refer to the `MARS user documentation`_.
+  The MARS access is direct when the MARS client is installed (as at ECMWF) and the ``use-standalone-mars-client-when-available`` :ref:`settings <settings>` is True (this is the default), otherwise it will use the `web API`_. In order to use the `web API`_ you will need to register and retrieve an access token. For a more extensive documentation about MARS, please refer to the `MARS user documentation`_.
 
   :param tuple *args: positional arguments specifying the request as a dict
-  :param bool prompt: when True it can offer a prompt to specify the credentials for `web API`_ and write them into the default RC file ``~/.ecmwfapirc``. The prompt only appears when:
+  :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for `web API`_ and write them into the default RC file ``~/.ecmwfapirc``. The prompt only appears when:
 
     - no `web API`_ RC file exists at the default location ``~/.ecmwfapirc``
     - no `web API`_ RC file exists at the location specified via the ``ECMWF_API_RC_FILE`` environment variable
     - no credentials specified via the ``ECMWF_API_URL`` and ``ECMWF_API_KEY``  environment variables
+  :param log: control the logging of the retrieval. The behaviour depends on the underlying MARS client used:
+
+    - `web API`_ based access:
+
+      - "default": the built-in logging of `web API`_ is used (the log is written to stdout)
+      - None: turn off logging
+      - callable: the log is written to the specified callable. The callable should accept a single argument, a string with the log message.
+
+      .. code-block:: python
+
+          import earthkit.data
+
+
+          def my_logging_function(msg):
+              print("message=", msg)
+
+
+          request = {...}
+          ds = earthkit.data.from_source("mars", request, log=my_logging_function)
+
+    - direct MARS access:
+
+      - "default": log is written to stdout
+      - None: turn off logging
+      - dict specifying the "stdout" or/and the "stderr" kwargs for Pythons's ``subrocess.run()`` method
+
+  :type log: str, None, callable, dict
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves analysis GRIB data for a subarea for 2 surface parameters:
@@ -736,8 +781,8 @@ polytope
   :param str address: specify the address of the polytope service
   :param str user_email: specify the user email credential. Must be used together with ``user_key``. This is an alternative to using the ``POLYTOPE_USER_EMAIL`` environment variable. *New in version 0.7.0*
   :param str user_key: specify the user key credential. Must be used together with ``user_email``. This is an alternative to using the ``POLYTOPE_USER_KEY`` environment variable. *New in version 0.7.0*
-  :param bool stream: when ``True`` the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
-  :param bool read_all: when ``True`` all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
+  :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
+  :param bool read_all: if ``True``, all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :param dict **kwargs: other keyword arguments, these can include options passed to the polytope-client_
 
 
@@ -773,6 +818,110 @@ polytope
       - :ref:`/examples/polytope.ipynb`
 
 
+.. _data-sources-s3:
+
+s3
+---
+
+.. py:function:: from_source("s3", *args, anon=True, aws_access_key=None, aws_secret_access_key=None, aws_token=None, stream=False, read_all=False)
+  :noindex:
+
+  *New in version 0.11.0*
+
+  The ``s3`` source provides access to `Amazon S3 buckets <https://aws.amazon.com/s3/>`_.
+
+  :param tuple *args: positional arguments specifying the request(s). Each request is represented by a dict. See detailed description below. A sequence of dicts can also be used to specify multiple requests.
+  :param bool anon: if ``True`` use anonymous access, this will only work for public buckets. If ``False``, use the ``aws_access_key``, ``aws_secret_access_key`` and ``aws_token`` credentials. These can also be specified as part of the request (request values override the kwargs). If no credentials provided use :xref:`botocore` to load the `aws credentials`_ from:
+
+    - `environment variables <https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html#using-environment-variables>`_
+    - `a configuration file <https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html#using-a-configuration-file>`_. Note that this does not include :xref:`s3cmd` configuration files (e.g. ".s3cfg").
+  :param str aws_access_key: the AWS access key. Can be overridden in a request. Used when ``anon=False``.
+  :param str aws_secret_access_key: the AWS secret access key. Can be overridden in a request. Used when ``anon=False``.
+  :param str aws_token: the AWS token only used for AWS Security Token Service (AWS STS) temporary credentials. Can be overridden in a request. Used when ``anon=False``.
+  :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
+  :param bool read_all: if ``True``, all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``.
+
+  A **request** is a dictionary describing a single or multiple objects in a given bucket. It has the following format:
+
+      .. code-block::
+
+          {
+              "endpoint": endpoint,  # optional
+              "region": region,  # optional
+              "bucket": bucket,
+              "objects": objects,
+              "aws_access_key": aws_access_key,  # optional
+              "aws_secret_access_key": aws_secret_access_key,  # optional
+              "aws_token": aws_token,  # optional
+          }
+
+  where:
+
+        - "endpoint": specifies the S3 endpoint (optional). Defaults to ``"s3.amazonaws.com"``
+        - "region": specifies the AWS region (optional). Defaults to ``"eu-west-2"``
+        - "bucket": specifies the bucket name
+        - "objects": specifies the object in the bucket. A list/tuple of objects can be provided.
+        - "aws_access_key": the AWS access key (optional). It overrides ``aws_access_key``. Only used when ``anon=False``.
+        - "aws_secret_access_key": the AWS secret access key (optional). It overrides ``aws_secret_access_key``. Only used when ``anon=False``.
+        - "aws_token": the AWS token (optional). It overrides ``aws_token``. Only used when ``anon=False``.
+
+
+  An object can be:
+
+    - the name of the object as a str
+    - a dict in the following format:
+
+      .. code-block::
+
+          {"object": name, "parts": parts}
+
+      where the optional "parts" can specify the :ref:`parts <parts>` (byte ranges) to read.
+
+
+  The following examples retrieve :ref:`grib` data from a publicly available bucket on the European Weather Cloud (EWC).
+
+  .. code-block:: python
+
+    >>> import earthkit.data
+    >>> req = {
+    ...     "endpoint": "object-store.os-api.cci1.ecmwf.int",
+    ...     "bucket": "earthkit-test-data-public",
+    ...     "objects": "test6.grib",
+    ... }
+    >>> ds = earthkit.data.from_source("s3", req, anon=True)
+    >>> ds.ls()
+      centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
+    0   ecmf         t  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
+    1   ecmf         u  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
+    2   ecmf         v  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
+    3   ecmf         t  isobaricInhPa    850  20180801      1200         0       an       0  regular_ll
+    4   ecmf         u  isobaricInhPa    850  20180801      1200         0       an       0  regular_ll
+    5   ecmf         v  isobaricInhPa    850  20180801      1200         0       an       0  regular_ll
+
+
+  .. code-block:: python
+
+    >>> req = {
+    ...     "endpoint": "object-store.os-api.cci1.ecmwf.int",
+    ...     "bucket": "earthkit-test-data-public",
+    ...     "objects": [
+    ...         {"object": "test6.grib", "parts": (0, 240)},
+    ...         {"object": "tuv_pl.grib", "parts": (2400, 240)},
+    ...     ],
+    ... }
+    >>>
+    >>> ds = earthkit.data.from_source("s3", req, anon=True)
+    >>> ds.ls()
+      centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
+    0   ecmf         t  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
+    1   ecmf         u  isobaricInhPa    500  20180801      1200         0       an       0  regular_ll
+
+
+  Further examples:
+
+      - :ref:`/examples/s3.ipynb`
+
+
 .. _data-sources-wekeo:
 
 wekeo
@@ -785,7 +934,7 @@ wekeo
 
   :param str dataset: the name of the WEkEO dataset
   :param tuple *args: specify the request as a dict
-  :param bool prompt: when True it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
+  :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
 
     - no hda_ RC file exists at the default location ``~/.hdarc``
     - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
@@ -835,7 +984,7 @@ wekeocds
 
   :param str dataset: the name of the WEkEO dataset
   :param tuple *args: specify the request as a dict
-  :param bool prompt: when True it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
+  :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
 
     - no hda_ RC file exists at the default location ``~/.hdarc``
     - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
@@ -885,3 +1034,5 @@ wekeocds
 .. _hda: https://pypi.org/project/hda
 
 .. _polytope-client: https://pypi.org/project/polytope-client
+
+.. _aws credentials: http://boto3.readthedocs.io/en/latest/guide/configuration.html#configuring-credentials

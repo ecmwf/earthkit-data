@@ -126,6 +126,11 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
 
 
 def wrapper(data, *args, **kwargs):
+    from earthkit.data.utils import is_module_loaded
+
+    if not is_module_loaded("xarray"):
+        return None
+
     import xarray as xr
 
     ds = None

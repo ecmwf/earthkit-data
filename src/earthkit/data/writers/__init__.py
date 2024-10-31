@@ -27,10 +27,10 @@ class Writer(metaclass=ABCMeta):
         pass
 
 
-def write(f, values, metadata, **kwargs):
-    x = _writers(metadata.data_format())
+def write(f, field, **kwargs):
+    x = _writers(field._metadata.data_format())
     c = x()
-    c.write(f, values, metadata, **kwargs)
+    c.write(f, field, **kwargs)
 
 
 @locked

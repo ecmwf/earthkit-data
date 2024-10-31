@@ -182,7 +182,7 @@ def reader(source, path, **kwargs):
         r = _non_existing(source, path, **kwargs)
         if r is not None:
             return r
-        raise FileExistsError(f"No such file exists: '{path}'")
+        raise FileNotFoundError(f"No such file exists: '{path}'")
 
     if os.path.getsize(path) == 0:
         r = _empty(source, path, **kwargs)

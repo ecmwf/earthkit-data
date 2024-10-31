@@ -20,16 +20,18 @@ sys.path.insert(0, here)
 from forcings_fixtures import load_forcings_fs  # noqa: E402
 
 
-def test_forcings_single_index_bad():
-    ds, _ = load_forcings_fs()
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
+def test_forcings_single_index_bad(input_data):
+    ds, _ = load_forcings_fs(input_data=input_data)
     idx = len(ds) + 10
     with pytest.raises(IndexError):
         ds[idx]
 
 
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
 @pytest.mark.parametrize("index", [0, 2, 95, -1, -96])
-def test_forcings_single_index(index):
-    ds, md = load_forcings_fs()
+def test_forcings_single_index(input_data, index):
+    ds, md = load_forcings_fs(input_data=input_data)
     num = len(ds)
     r = ds[index]
 
@@ -43,6 +45,7 @@ def test_forcings_single_index(index):
     assert len(ds) == num
 
 
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
 @pytest.mark.parametrize(
     "indexes",
     [
@@ -54,8 +57,8 @@ def test_forcings_single_index(index):
         slice(91, None),
     ],
 )
-def test_forcings_slice(indexes):
-    ds, md = load_forcings_fs()
+def test_forcings_slice(input_data, indexes):
+    ds, md = load_forcings_fs(input_data=input_data)
     num = len(ds)
     r = ds[indexes]
 
@@ -71,6 +74,7 @@ def test_forcings_slice(indexes):
     assert len(ds) == num
 
 
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
 @pytest.mark.parametrize(
     "indexes1,indexes2",
     [
@@ -79,8 +83,8 @@ def test_forcings_slice(indexes):
         ((1, 16, 5, 9), (1, 3)),
     ],
 )
-def test_forcings_array_indexing(indexes1, indexes2):
-    ds, md = load_forcings_fs()
+def test_forcings_array_indexing(input_data, indexes1, indexes2):
+    ds, md = load_forcings_fs(input_data=input_data)
 
     # first subset
     r = ds[indexes1]
@@ -97,6 +101,7 @@ def test_forcings_array_indexing(indexes1, indexes2):
     assert r1.metadata(["valid_datetime", "param"]) == ref_md
 
 
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
 @pytest.mark.skip(reason="Index range checking disabled")
 @pytest.mark.parametrize(
     "indexes",
@@ -106,14 +111,15 @@ def test_forcings_array_indexing(indexes1, indexes2):
         ((1, 16, 5, 9), (1, 3)),
     ],
 )
-def test_forcings_array_indexing_bad(indexes):
-    ds, _ = load_forcings_fs()
+def test_forcings_array_indexing_bad(input_data, indexes):
+    ds, _ = load_forcings_fs(input_data=input_data)
     with pytest.raises(IndexError):
         ds[indexes]
 
 
-def test_forcings_fieldlist_iterator():
-    ds, md = load_forcings_fs()
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
+def test_forcings_fieldlist_iterator(input_data):
+    ds, md = load_forcings_fs(input_data=input_data)
     # sn = ds.metadata(["valid_datetime", "param"])
     sn = md
     assert len(sn) == len(ds)

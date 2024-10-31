@@ -263,7 +263,47 @@ def test_grib_metadata_override_invalid():
     assert "EncodingError" in e.typename
 
 
-def test_grib_metadata_override_extra():
+def test_grib_metadata_override_headers_only_true():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ref_size = ds[0].metadata("totalLength")
+
+    md1 = ds[0].metadata().override(headers_only_clone=True)
+    assert isinstance(md1, StandAloneGribMetadata)
+    assert md1._handle is not None
+    assert md1._handle != ds[0]._handle
+    assert md1["totalLength"] - ref_size < -10
+
+    md2 = md1._hide_internal_keys()
+    assert isinstance(md2, RestrictedGribMetadata)
+    assert md2._handle is not None
+    assert md2._handle != ds[0]._handle
+    assert md2._handle == md1._handle
+
+    with pytest.raises(KeyError):
+        md2["average"]
+
+
+def test_grib_metadata_override_headers_only_false():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ref_size = ds[0].metadata("totalLength")
+
+    md1 = ds[0].metadata().override(headers_only_clone=False)
+    assert isinstance(md1, StandAloneGribMetadata)
+    assert md1._handle is not None
+    assert md1._handle != ds[0]._handle
+    assert np.isclose(md1["totalLength"], ref_size)
+
+    md2 = md1._hide_internal_keys()
+    assert isinstance(md2, RestrictedGribMetadata)
+    assert md2._handle is not None
+    assert md2._handle != ds[0]._handle
+    assert md2._handle == md1._handle
+
+    with pytest.raises(KeyError):
+        md2["average"]
+
+
+def test_grib_metadata_wrapped_core():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds[0].metadata()
     md_num = len(md)
@@ -272,7 +312,11 @@ def test_grib_metadata_override_extra():
     assert md["shortName"] == "2t"
 
     extra = {"my_custom_key": "2", "shortName": "N", "perturbationNumber": 2}
-    md = StandAloneGribMetadata(md._handle, extra=extra)
+    md_ori = StandAloneGribMetadata(md._handle)
+    from earthkit.data.core.metadata import WrappedMetadata
+
+    # extra keys are not added to the metadata
+    md = WrappedMetadata(md_ori, extra=extra)
 
     assert md["my_custom_key"] == "2"
     assert md["perturbationNumber"] == 2
@@ -288,7 +332,65 @@ def test_grib_metadata_override_extra():
         break
 
     items = md.items()
-    assert len(items) == md_num + 1
+    assert len([k for k, _ in items]) == md_num + 1
+
+    for k, v in md.items():
+        assert isinstance(k, str)
+        assert k != ""
+        assert v is not None
+        break
+
+    # wrap again
+    md = WrappedMetadata(md, extra={"my_custom_key": "3"})
+
+    assert md["my_custom_key"] == "3"
+    assert md["perturbationNumber"] == 2
+    assert md["shortName"] == "N"
+    assert md["typeOfLevel"] == "surface"
+
+    keys = md.keys()
+    assert len(keys) == md_num + 1
+
+    for k in md.keys():
+        assert isinstance(k, str)
+        assert k != ""
+        break
+
+    items = md.items()
+    assert len([k for k, _ in items]) == md_num + 1
+
+    for k, v in md.items():
+        assert isinstance(k, str)
+        assert k != ""
+        assert v is not None
+        break
+
+    # hide keys
+    # hidden cannot overlap with extra
+    with pytest.raises(ValueError):
+        WrappedMetadata(md_ori, extra=extra, hidden=["shortName"])
+
+    md = WrappedMetadata(md_ori, extra=extra, hidden=["level"])
+    assert md["my_custom_key"] == "2"
+    assert md["perturbationNumber"] == 2
+    assert md["shortName"] == "N"
+    assert md["typeOfLevel"] == "surface"
+
+    with pytest.raises(KeyError):
+        md["level"]
+
+    assert md.get("level", None) is None
+
+    keys = md.keys()
+    assert len(keys) == md_num
+
+    for k in md.keys():
+        assert isinstance(k, str)
+        assert k != ""
+        break
+
+    items = md.items()
+    assert len([k for k, _ in items]) == md_num
 
     for k, v in md.items():
         assert isinstance(k, str)
@@ -297,48 +399,41 @@ def test_grib_metadata_override_extra():
         break
 
 
-def test_grib_metadata_override_headers_only_true():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    ref_size = ds[0].metadata("totalLength")
+def test_grib_metadata_wrapped_callable():
+    ds = from_source("file", earthkit_examples_file("test4.grib"))
+    md = ds[0].metadata()
+    assert md["perturbationNumber"] == 0
+    assert md["shortName"] == "t"
+    assert md["levelist"] == 500
 
-    md1 = ds[0].metadata().override(headers_only_clone=True)
-    assert isinstance(md1, StandAloneGribMetadata)
-    assert md1._handle is not None
-    assert md1._handle != ds[0]._handle
-    assert md1["totalLength"] - ref_size < -10
-    assert md1._shrunk
+    def _func1(fs, key, original_metadata):
+        return original_metadata.get("param") + "_" + original_metadata.get("levelist", astype=str)
 
-    md2 = md1._hide_internal_keys()
-    assert isinstance(md2, RestrictedGribMetadata)
-    assert md2._handle is not None
-    assert md2._handle != ds[0]._handle
-    assert md2._handle == md1._handle
-    assert md2._shrunk
+    def _func2(fs, key, original_metadata):
+        return fs.mars_area
 
-    with pytest.raises(KeyError):
-        md2["average"]
+    def _func3(fs, key, original_metadata):
+        return "_" + str(original_metadata.get(key))
 
+    extra = {
+        "my_custom_key": "2",
+        "name": _func1,
+        "mars_area": _func2,
+        "gridType": _func3,
+        "perturbationNumber": 3,
+    }
+    md_ori = StandAloneGribMetadata(md._handle)
+    from earthkit.data.core.metadata import WrappedMetadata
 
-def test_grib_metadata_override_headers_only_false():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    ref_size = ds[0].metadata("totalLength")
+    # extra keys are not added to the metadata
+    md = WrappedMetadata(md_ori, extra=extra, owner=ds[0])
 
-    md1 = ds[0].metadata().override(headers_only_clone=False)
-    assert isinstance(md1, StandAloneGribMetadata)
-    assert md1._handle is not None
-    assert md1._handle != ds[0]._handle
-    assert np.isclose(md1["totalLength"], ref_size)
-    assert not md1._shrunk
-
-    md2 = md1._hide_internal_keys()
-    assert isinstance(md2, RestrictedGribMetadata)
-    assert md2._handle is not None
-    assert md2._handle != ds[0]._handle
-    assert md2._handle == md1._handle
-    assert not md2._shrunk
-
-    with pytest.raises(KeyError):
-        md2["average"]
+    assert md["my_custom_key"] == "2"
+    assert md["perturbationNumber"] == 3
+    assert md["name"] == "t_500"
+    assert np.allclose(np.array(md["mars_area"]), np.array([90.0, 0.0, -90.0, 359.0]))
+    assert md["gridType"] == "_regular_ll"
+    assert md["typeOfLevel"] == "isobaricInhPa"
 
 
 if __name__ == "__main__":

@@ -1,0 +1,21 @@
+dim_roles:
+  ens: number
+  date: dataDate
+  time: dataTime
+  step: step
+  level: level
+  level_type: typeOfLevel
+
+variable_key: param
+
+attrs_mode: fixed
+
+variable_attrs:
+- cfName
+- name
+- units
+- typeOfLevel
+
+global_attrs:
+- Conventions: CF-1.8
+- institution: ECMWF

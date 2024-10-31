@@ -23,6 +23,13 @@ from array_fl_fixtures import load_array_fl_file  # noqa: E402
 # See grib/test_grib_metadata.py
 
 
+def test_array_fl_field_repr():
+    ds, _ = load_array_fl(1)
+
+    t = repr(ds[0])
+    assert t == "ArrayField(2t,None,20200513,1200,0,0)"
+
+
 def test_array_fl_values_metadata_basic():
     ds, _ = load_array_fl(1)
 
@@ -80,7 +87,7 @@ def test_array_fl_metadata_keys():
         break
 
     items = md.items()
-    assert len(items) == md_num
+    assert len(list(items)) == md_num
 
     for k, v in md.items():
         assert isinstance(k, str)

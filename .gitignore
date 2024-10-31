@@ -214,9 +214,9 @@ docs/examples/*.zip
 docs/examples/_*
 docs/examples/earthkit_use_cases/*.grib
 docs/examples/_fdb
-docs/examples/*.db
-docs/examples/*.json
-docs/examples/*.geojson
+docs/experimental/_*
+docs/experimental/*.grib*
+
 
 # PyBuilder
 .pybuilder/
@@ -364,3 +364,5 @@ notebooks/data/*/
 _dev
 
 test.db
+
+*.idx

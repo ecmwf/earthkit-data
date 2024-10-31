@@ -1,0 +1,53 @@
+dim_roles:
+  ens: number
+  date: date
+  time: time
+  step: step
+  level: levelist
+  level_type: levtype
+
+variable_key: param
+
+attrs_mode: unique
+
+attrs:
+- param
+- cfName
+- name
+- paramId
+- units
+- class
+- stream
+- levtype
+- type
+- expver
+- date
+- hdate
+- andate
+- time
+- antime
+- reference
+- anoffset
+- verify
+- fcmonth
+- fcperiod
+- leadtime
+- opttime
+- origin
+- domain
+- method
+- diagnostic
+- iteration
+- number
+- quantile
+- levelist
+
+variable_attrs:
+- cfName
+- name
+- paramId
+- units
+
+global_attrs:
+- Conventions: CF-1.8
+- institution: ECMWF

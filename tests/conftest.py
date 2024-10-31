@@ -7,6 +7,11 @@ SKIP = {
     "documentation": None,
 }
 
+# Import all fixtures from list of plugins
+pytest_plugins = [
+    "list_of_dicts.lod_fixtures",
+]
+
 
 def pytest_configure(config):
     pytest.CDS_TIMEOUT = config.getoption("--cds-timeout")

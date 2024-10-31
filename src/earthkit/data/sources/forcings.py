@@ -10,6 +10,7 @@
 import datetime
 import itertools
 import logging
+from functools import cached_property
 
 import numpy as np
 
@@ -19,6 +20,7 @@ from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalize
+from earthkit.data.indexing.fieldlist import NewFieldWrapper
 from earthkit.data.utils.dates import to_datetime
 
 LOG = logging.getLogger(__name__)
@@ -35,11 +37,23 @@ class ForcingMetadata(RawMetadata):
     def geography(self):
         return self._geo
 
-    def _base_datetime(self):
+    def datetime(self):
+        return {
+            "base_time": self.base_datetime(),
+            "valid_time": self.valid_datetime(),
+        }
+
+    def base_datetime(self):
         return None
 
-    def _valid_datetime(self):
+    def valid_datetime(self):
         return datetime.datetime.fromisoformat(self["valid_datetime"])
+
+    def step_timedelta(self):
+        return datetime.timedelta()
+
+    def ls_keys(self):
+        return self.LS_KEYS
 
 
 class ForcingMaker:
@@ -214,7 +228,7 @@ class ForcingMaker:
 
 
 class ForcingField(Field):
-    def __init__(self, maker, date, param, proc, number=None, array_backend=None):
+    def __init__(self, maker, date, param, proc, number=None):
         self.maker = maker
         self.date = date
         self.param = param
@@ -222,18 +236,18 @@ class ForcingField(Field):
         self.number = number
         # self._shape = shape
         # self._geometry = self.maker.field.metadata().geography
+
+    @cached_property
+    def _metadata(self):
         d = dict(
-            valid_datetime=date if isinstance(date, str) else date.isoformat(),
-            param=param,
+            valid_datetime=self.date if isinstance(self.date, str) else self.date.isoformat(),
+            param=self.param,
             level=None,
             levelist=None,
-            number=number,
+            number=self.number,
             levtype=None,
         )
-        super().__init__(
-            array_backend,
-            metadata=ForcingMetadata(d, self.maker.field.metadata().geography),
-        )
+        return ForcingMetadata(d, self.maker.field.metadata().geography)
 
     def _values(self, dtype=None):
         values = self.proc(self.date)
@@ -241,8 +255,17 @@ class ForcingField(Field):
             values = values.astype(dtype)
         return values
 
+    def copy(self, **kwargs):
+        return NewForcingField(self, **kwargs)
+
     def __repr__(self):
         return "ForcingField(%s,%s,%s)" % (self.param, self.date, self.number)
+
+
+class NewForcingField(NewFieldWrapper, ForcingField):
+    def __init__(self, field, **kwargs):
+        NewFieldWrapper.__init__(self, field, **kwargs)
+        ForcingField.__init__(self, field.maker, field.date, field.param, field.proc, number=field.number)
 
 
 def make_datetime(date, time):
@@ -282,11 +305,26 @@ def index_to_coords(index: int, shape):
 
 
 class ForcingsFieldListCore(FieldList):
-    def __init__(self, source_or_dataset, request={}, **kwargs):
+    def __init__(self, source_or_dataset=None, *, request={}, **kwargs):
         request = dict(**request)
         request.update(kwargs)
 
         self.request = self._request(**request)
+
+        def find_latlon():
+            lats = None
+            for k in ["latitudes", "latitude"]:
+                if k in self.request:
+                    lats = np.asarray(self.request.pop(k))
+                    break
+
+            lons = None
+            for k in ["longitudes", "longitude"]:
+                if k in self.request:
+                    lons = np.asarray(self.request.pop(k))
+                    break
+
+            return lats, lons
 
         def find_numbers(source_or_dataset):
             if "number" in self.request:
@@ -321,6 +359,22 @@ class ForcingsFieldListCore(FieldList):
             )
 
             return source_or_dataset.unique_values("valid_datetime")["valid_datetime"]
+
+        if source_or_dataset is None:
+            lats, lons = find_latlon()
+            if lats is None:
+                raise ValueError("latitudes must be specified when no source or dataset provided")
+
+            if lons is None:
+                raise ValueError("longitudes must be specified when no source or dataset provided")
+
+            from earthkit.data import from_source
+
+            vals = np.ones(lats.shape)
+            d = {"values": vals, "latitudes": lats, "longitudes": lons}
+            # d.update(self.request)
+
+            source_or_dataset = from_source("list-of-dicts", [d])
 
         self.dates = find_dates(source_or_dataset)
 
@@ -375,7 +429,6 @@ class ForcingsFieldList(ForcingsFieldListCore):
                 param,
                 self.procs[param],
                 number=number,
-                array_backend=self.array_backend,
             )
 
 

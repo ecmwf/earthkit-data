@@ -37,6 +37,9 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "autoapi.extension",
+    "sphinx_issues",
+    "sphinx_tabs.tabs",
+    "sphinx_copybutton",
     "earthkit.data.sphinxext.xref",
     "earthkit.data.sphinxext.module_output",
 ]
@@ -62,6 +65,12 @@ autoapi_add_toctree_entry = False
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 napoleon_preprocess_types = True
+
+# Path to GitHub repo {group}/{project}  (note that `group` is the GitHub user or organization)
+issues_github_path = "ecmwf/earthkit-data"
+
+# sphinx_tabs configuration
+# sphinx_tabs_disable_css_loading = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -90,6 +99,7 @@ html_css_files = ["style.css"]
 html_logo = "_static/earthkit-data.png"
 
 xref_links = {
+    "botocore": ("botocore", "https://botocore.amazonaws.com/v1/documentation/api/latest/index.html"),
     "cfgrib": ("cfgirb", "https://github.com/ecmwf/cfgrib"),
     "earthkit": ("earthkit", "https://earthkit.readthedocs.io/en/latest/"),
     "earthkit-geo": (
@@ -115,10 +125,14 @@ xref_links = {
     ),
     "odb": ("ODB", "https://odc.readthedocs.io/en/latest/content/introduction.html"),
     "pyodc": ("pyodc", "https://github.com/ecmwf/pyodc"),
+    "s3cmd": ("s3cmd", "https://s3tools.org/s3cmd"),
 }
 
 
-intersphinx_mapping = {"pandas": ("https://pandas.pydata.org/docs/", None)}
+intersphinx_mapping = {
+    "pandas": ("https://pandas.pydata.org/docs/", None),
+    "xarray": ("https://docs.xarray.dev/en/latest/", None),
+}
 
 
 def setup(app):

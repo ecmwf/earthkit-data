@@ -77,6 +77,7 @@ class GribCoder:
         metadata={},
         template=None,
         return_bytes=False,
+        missing_value=9999,
         **kwargs,
     ):
         # Make a copy as we may modify it
@@ -105,7 +106,7 @@ class GribCoder:
 
             if np.isnan(values).any():
                 # missing_value = np.finfo(values.dtype).max
-                missing_value = 9999
+                missing_value = missing_value
                 values = np.nan_to_num(values, nan=missing_value)
                 metadata["missingValue"] = missing_value
                 metadata["bitmapPresent"] = 1
@@ -120,8 +121,13 @@ class GribCoder:
             for k in ("class", "type", "stream", "expver", "setLocalDefinition"):
                 metadata.pop(k, None)
 
+        # TODO: revisit that logic
         if "generatingProcessIdentifier" not in metadata:
             metadata["generatingProcessIdentifier"] = 255
+        else:
+            # kee
+            if metadata["generatingProcessIdentifier"] is None:
+                metadata.pop("generatingProcessIdentifier")
 
         LOG.debug("GribOutput.metadata %s", metadata)
 
@@ -343,9 +349,10 @@ class GribCoder:
             else:
                 levtype = "sfc"
 
-        if octahedral:
+        if octahedral or levtype == "sfc":
             return f"reduced_gg_{levtype}_grib{edition}"
         else:
+
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
 
 

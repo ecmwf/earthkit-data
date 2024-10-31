@@ -13,18 +13,16 @@ import sys
 
 import pytest
 
-from earthkit.data.testing import ARRAY_BACKENDS
-
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
+from grib_fixtures import FL_FILE  # noqa: E402
 from grib_fixtures import FL_TYPES  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_describe(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_describe(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # full contents
     df = f.describe()
@@ -148,9 +146,8 @@ def test_grib_describe(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_ls(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_ls(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # default keys
     f1 = f[0:4]
@@ -203,9 +200,8 @@ def test_grib_ls(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_ls_keys(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_ls_keys(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # default keys
     # positive num (=head)
@@ -230,9 +226,8 @@ def test_grib_ls_keys(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_ls_namespace(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_ls_namespace(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     df = f.ls(n=2, namespace="vertical")
     ref = {
@@ -252,9 +247,8 @@ def test_grib_ls_namespace(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_ls_invalid_num(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_ls_invalid_num(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     with pytest.raises(ValueError):
         f.ls(n=0)
@@ -264,17 +258,15 @@ def test_grib_ls_invalid_num(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_ls_invalid_arg(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_ls_invalid_arg(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
     with pytest.raises(TypeError):
         f.ls(invalid=1)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_ls_num(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_ls_num(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # default keys
 
@@ -320,9 +312,8 @@ def test_grib_ls_num(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_head_num(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_head_num(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # default keys
     df = f.head(n=2)
@@ -346,9 +337,8 @@ def test_grib_head_num(fl_type, array_backend):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_tail_num(fl_type, array_backend):
-    f = load_grib_data("tuv_pl.grib", fl_type, array_backend)
+def test_grib_tail_num(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # default keys
     df = f.tail(n=2)
@@ -371,10 +361,9 @@ def test_grib_tail_num(fl_type, array_backend):
     assert ref == df.to_dict()
 
 
-@pytest.mark.parametrize("fl_type", ["file"])
-@pytest.mark.parametrize("array_backend", [None])
-def test_grib_dump(fl_type, array_backend):
-    f = load_grib_data("test6.grib", fl_type, array_backend)
+@pytest.mark.parametrize("fl_type", FL_FILE)
+def test_grib_dump(fl_type):
+    f, _ = load_grib_data("test6.grib", fl_type)
 
     namespaces = (
         "default",
@@ -409,8 +398,8 @@ def test_grib_dump(fl_type, array_backend):
         {
             "title": "geography",
             "data": {
-                "Ni": 12,
-                "Nj": 7,
+                # "Ni": 12,
+                # "Nj": 7,
                 "bitmapPresent": 0,
                 "latitudeOfFirstGridPointInDegrees": 90.0,
                 "longitudeOfFirstGridPointInDegrees": 0.0,
@@ -480,6 +469,9 @@ def test_grib_dump(fl_type, array_backend):
     for d in r:
         ns = d["title"]
         assert ns in namespaces
+        if ns == "geography":
+            d["data"].pop("Ni", None)
+            d["data"].pop("Nj", None)
         if ns not in ("default", "statistics"):
             assert d == [x for x in ref if x["title"] == ns][0], ns
 

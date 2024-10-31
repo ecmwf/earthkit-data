@@ -9,6 +9,7 @@
 import inspect
 import json
 import re
+import sys
 
 import yaml
 
@@ -148,6 +149,29 @@ def load_json_or_yaml(path):
 def ensure_iterable(obj):
     import collections.abc
 
+    if obj is None:
+        return []
     if isinstance(obj, str) or not isinstance(obj, collections.abc.Iterable):
         return [obj]
     return obj
+
+
+def ensure_sequence(obj):
+    import collections.abc
+
+    if isinstance(obj, str) or not isinstance(obj, collections.abc.Sequence):
+        return [obj]
+    return obj
+
+
+def ensure_dict(obj):
+    if obj is None:
+        return dict()
+    else:
+        if not isinstance(obj, dict):
+            raise ValueError(f"Expected a dict, got {type(obj)}")
+        return obj
+
+
+def is_module_loaded(module_name):
+    return module_name in sys.modules

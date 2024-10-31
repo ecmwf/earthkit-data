@@ -1,0 +1,185 @@
+- file: regular_ll.grib1
+  dims:
+    latitude: 19
+    longitude: 36
+  coords:
+    latitude:
+    - latitude
+    - 19
+    longitude:
+    - longitude
+    - 36
+  distinct_ll: true
+- file: regular_ll.grib2
+  dims:
+    latitude: 19
+    longitude: 36
+  coords:
+    latitude:
+    - latitude
+    - 19
+    longitude:
+    - longitude
+    - 36
+  distinct_ll: true
+- file: regular_ll_subarea.grib1
+  dims:
+    latitude: 4
+    longitude: 5
+  coords:
+    latitude:
+    - latitude
+    - 4
+    longitude:
+    - longitude
+    - 5
+  distinct_ll: true
+- file: regular_ll_single_point.grib1
+  dims:
+    latitude: 1
+    longitude: 1
+  coords:
+    latitude:
+    - latitude
+    - 1
+    longitude:
+    - longitude
+    - 1
+  distinct_ll: true
+- file: rotated_ll.grib1
+  dims:
+    y: 19
+    x: 36
+  coords:
+    latitude:
+    - - y
+      - x
+    - - 19
+      - 36
+    longitude:
+    - - y
+      - x
+    - - 19
+      - 36
+  distinct_ll: false
+- file: rotated_ll_subarea.grib1
+  dims:
+    y: 5
+    x: 5
+  coords:
+    latitude:
+    - - y
+      - x
+    - - 5
+      - 5
+    longitude:
+    - - y
+      - x
+    - - 5
+      - 5
+  distinct_ll: false
+- file: reduced_gg_N32.grib1
+  dims:
+    values: 6114
+  coords:
+    latitude:
+    - values
+    - 6114
+    longitude:
+    - values
+    - 6114
+  distinct_ll: false
+- file: reduced_gg_O32.grib1
+  dims:
+    values: 5248
+  coords:
+    latitude:
+    - values
+    - 5248
+    longitude:
+    - values
+    - 5248
+  distinct_ll: false
+- file: regular_gg_F16.grib1
+  dims:
+    latitude: 32
+    longitude: 64
+  coords:
+    latitude:
+    - latitude
+    - 32
+    longitude:
+    - longitude
+    - 64
+  distinct_ll: true
+- file: reduced_rotated_gg_N32.grib1
+  dims:
+    values: 6114
+  coords:
+    latitude:
+    - values
+    - 6114
+    longitude:
+    - values
+    - 6114
+  distinct_ll: false
+- file: reduced_rotated_gg_O32.grib1
+  dims:
+    values: 5248
+  coords:
+    latitude:
+    - values
+    - 5248
+    longitude:
+    - values
+    - 5248
+  distinct_ll: false
+- file: reduced_rotated_gg_subarea_N32.grib1
+  dims:
+    values: 225
+  coords:
+    latitude:
+    - values
+    - 225
+    longitude:
+    - values
+    - 225
+  distinct_ll: false
+- file: reduced_rotated_gg_subarea_O32.grib1
+  dims:
+    values: 225
+  coords:
+    latitude:
+    - values
+    - 225
+    longitude:
+    - values
+    - 225
+  distinct_ll: false
+- file: healpix_H8.grib2
+  dims:
+    values: 768
+  coords:
+    latitude:
+    - values
+    - 768
+    longitude:
+    - values
+    - 768
+  distinct_ll: false
+- file: healpix_H8_nested.grib2
+  dims:
+    values: 768
+  coords:
+    latitude:
+    - values
+    - 768
+    longitude:
+    - values
+    - 768
+  distinct_ll: false
+- file: sh_t32.grib1
+  dims:
+    values: 1122
+  coords: {}
+  distinct_ll: false
