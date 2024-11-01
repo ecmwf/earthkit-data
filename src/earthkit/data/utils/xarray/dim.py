@@ -399,8 +399,10 @@ class OtherDim(Dim):
 class DimMode:
     default = []
 
-    def build(self, profile, owner, active=True):
-        return {name: make_dim(owner, name, active=active) for name in self.default}
+    def build(self, profile, owner, active=True, dims=None):
+        if not dims:
+            dims = self.default
+        return {name: make_dim(owner, name, active=active) for name in dims}
 
 
 class ForecastTimeDimMode(DimMode):
@@ -451,6 +453,12 @@ class ValidTimeDimMode(DimMode):
 class RawTimeDimMode(DimMode):
     name = "raw"
     default = ["date", "time", "step"]
+
+    def build(self, profile, owner, active=True):
+        date = owner.dim_roles["date"]
+        time = owner.dim_roles["time"]
+        step = owner.dim_roles["step"]
+        return super().build(profile, owner, active=active, dims=[date, time, step])
 
 
 class LevelDimMode(DimMode):
