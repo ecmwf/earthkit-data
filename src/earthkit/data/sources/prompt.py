@@ -76,7 +76,10 @@ class Prompt:
             if self.owner.rcfile_env:
                 return RC_MESSAGE_EXT.format(rcfile=self.owner.rcfile, rcfile_env=self.owner.rcfile_env)
             else:
-                return RC_MESSAGE_BASE.format(rcfile=self.owner.rcfile)
+                if hasattr(self.owner, "rc_message_base"):
+                    return self.owner.rc_message_base.format(rcfile=self.owner.rcfile)
+                else:
+                    return RC_MESSAGE_BASE.format(rcfile=self.owner.rcfile)
 
         return ""
 

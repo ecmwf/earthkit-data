@@ -451,11 +451,19 @@ ads
 .. py:function:: from_source("ads", dataset, *args, **kwargs)
   :noindex:
 
-  The ``ads`` source accesses the `Copernicus Atmosphere Data Store`_ (ADS), using the cdsapi_ package. In addition to data retrieval, ``request`` also has post-processing options such as ``grid`` and ``area`` for re-gridding and sub-area extraction respectively.
+  The ``ads`` source accesses the `Copernicus Atmosphere Data Store`_ (ADS), using the cdsapi_ package.  In addition to data retrieval, the request has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively. It can
+  also contain the earthkit-data specific :ref:`split_on <split_on>` parameter.
 
   :param str dataset: the name of the ADS dataset
   :param tuple *args: specify the request as a dict
   :param dict **kwargs: other keyword arguments specifying the request
+
+  .. note::
+
+    Currently, for accessing ADS earthkit-data requires the credentials for cdsapi_ to be stored in the RC file ``~/.adsapirc``.
+
+    When no ``~/.adsapirc`` RC file exists a prompt will appear to specify the credentials for cdsapi_ and write them into ``~/.adsapirc``.
+
 
   The following example retrieves CAMS global reanalysis GRIB data for 2 parameters:
 
@@ -474,7 +482,7 @@ ads
 
   Data downloaded from the ADS is stored in the the :ref:`cache <caching>`.
 
-  To access data from the ADS, you will need to register and retrieve an access token. The process is described `here <https://ads.atmosphere.copernicus.eu/api-how-to>`__. For more information, see the `ADS_knowledge base`_.
+  To access data from the ADS, you will need to register and retrieve an access token. The process is described `here <https://ads.atmosphere.copernicus.eu/how-to-api>`__. For more information, see the `ADS_knowledge base`_.
 
   Further examples:
 
@@ -540,7 +548,7 @@ cds
 
   Data downloaded from the CDS is stored in the the :ref:`cache <caching>`.
 
-  To access data from the CDS, you will need to register and retrieve an access token. The process is described `here <https://cds.climate.copernicus.eu/api-how-to>`__. For more information, see the `CDS_knowledge base`_.
+  To access data from the CDS, you will need to register and retrieve an access token. The process is described `here <https://cds.climate.copernicus.eu/how-to-api>`__. For more information, see the `CDS_knowledge base`_.
 
   Further examples:
 

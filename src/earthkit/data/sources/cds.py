@@ -45,21 +45,21 @@ LOG = logging.getLogger(__name__)
 
 class CDSAPIKeyPrompt(APIKeyPrompt):
     register_or_sign_in_url = "https://cds.climate.copernicus.eu/"
-    retrieve_api_key_url = "https://cds.climate.copernicus.eu/api-how-to"
+    retrieve_api_key_url = "https://cds.climate.copernicus.eu/how-to-api"
 
     prompts = [
         dict(
             name="url",
-            default="https://cds.climate.copernicus.eu/api/v2",
+            default="https://cds.climate.copernicus.eu/api",
             title="API url",
             validate=r"http.?://.*",
         ),
         dict(
             name="key",
-            example="123:abcdef01-0000-1111-2222-0123456789ab",
+            example="abcdef01-0000-1111-2222-0123456789ab",
             title="API key",
             hidden=True,
-            validate=r"\d+:[\-0-9a-f]+",
+            validate=r"[\-0-9a-f]+",
         ),
     ]
 

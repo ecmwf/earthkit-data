@@ -14,10 +14,13 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.testing import NO_HDA
 
+CDS_TIMEOUT = pytest.CDS_TIMEOUT
+
 
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_HDA, reason="No access to WEKEO")
+@pytest.mark.timeout(CDS_TIMEOUT)
 @pytest.mark.parametrize("prompt", [True, False])
 def test_wekeo_grib_1_prompt(prompt):
     s = from_source(
@@ -38,6 +41,7 @@ def test_wekeo_grib_1_prompt(prompt):
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_HDA, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_wekeo_grib_2():
     s = from_source(
         "wekeocds",
@@ -57,6 +61,7 @@ def test_wekeo_grib_2():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_HDA, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_wekeo_grib_3():
     s = from_source(
         "wekeocds",
@@ -75,6 +80,7 @@ def test_wekeo_grib_3():
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_HDA, reason="No access to CDS")
+@pytest.mark.timeout(CDS_TIMEOUT)
 def test_wekeo_netcdf():
     s = from_source(
         "wekeocds",
