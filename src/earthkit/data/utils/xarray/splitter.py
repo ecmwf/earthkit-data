@@ -10,6 +10,7 @@
 import logging
 from abc import ABCMeta
 from abc import abstractmethod
+from itertools import product
 
 LOG = logging.getLogger(__name__)
 
@@ -49,20 +50,40 @@ class DimSplitter(Splitter):
     def __init__(self, split_dims):
         self.split_dims = split_dims
 
-    def split(self, ds, profile):
+    def split(self, builder):
         # grids = self.grids(ds)
-        from itertools import product
+        # from .fieldlist import XArrayInputFieldList
 
-        dims = ds.unique_values(self.split_dims)
-        # if len(grids) > 1:
-        #     dims["md5GridSection"] = grids
+        # # LOG.debug(f"split_dims={self.split_dims}")
+        # ds_xr = XArrayInputFieldList(builder.ds, keys=profile.index_keys, remapping=remapping)
+
+        # dims = builder.ds.unique_values(*self.split_dims)
+        # # if len(grids) > 1:
+        # #     dims["md5GridSection"] = grids
+        ds_xr, dims = builder.prepare(self.split_dims)
 
         for x in product(*dims.values()):
             y = dict(zip(dims.keys(), x))
-            ds_sel = ds.sel(**y)
-            if len(ds_sel) == 0:
+            ds_sel = ds_xr.sel(**y)
+            ds_sort, profile = builder.parse(ds_sel, None)
+            if len(ds_sort) == 0:
                 raise ValueError(f"No field found for selection={y}")
-            yield profile.dims.to_list(), ds_sel
+            yield ds_sort, profile
+
+    # def split(self, ds, profile):
+    #     # grids = self.grids(ds)
+    #     from itertools import product
+
+    #     dims = ds.unique_values(self.split_dims)
+    #     # if len(grids) > 1:
+    #     #     dims["md5GridSection"] = grids
+
+    #     for x in product(*dims.values()):
+    #         y = dict(zip(dims.keys(), x))
+    #         ds_sel = ds.sel(**y)
+    #         if len(ds_sel) == 0:
+    #             raise ValueError(f"No field found for selection={y}")
+    #         yield profile.dims.to_list(), ds_sel
 
 
 # class AutoSplitter(Splitter):

@@ -135,7 +135,6 @@ class XArrayInputFieldList(FieldList):
         return len(self.ds)
 
     def make_releasable(self):
-        print("Making releasable")
         self.ds = FieldList.from_fields([ReleasableField(f) for f in self.ds])
 
     def group(self, key, values):
@@ -163,14 +162,24 @@ class XArrayInputFieldList(FieldList):
         return XArrayInputFieldList(ds, db=db, remapping=self.remapping)
 
     def order_by(self, *args, **kwargs):
+        LOG.debug(f"order_by({args=}, {kwargs=})")
+        if isinstance(self.ds, XArrayInputFieldList):
+            kwargs.pop("remapping", None)
+
         assert "remapping" not in kwargs
         assert "patches" not in kwargs
-        ds = XArrayInputFieldList(
-            self.ds.order_by(*args, remapping=self.remapping, **kwargs),
-            db=self.db,
-            remapping=self.remapping,
-        )
-        return ds
+
+        if isinstance(self.ds, XArrayInputFieldList):
+            ds = self.ds.order_by(*args, **kwargs)
+            return ds
+        else:
+            ds = self.ds.order_by(*args, remapping=self.remapping, **kwargs)
+            ds = XArrayInputFieldList(
+                ds,
+                db=self.db,
+                remapping=self.remapping,
+            )
+            return ds
 
     def unique_values(self, names, component=False):
         if isinstance(names, str):

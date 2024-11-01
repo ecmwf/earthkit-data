@@ -174,11 +174,14 @@ class Profile:
         # print("INIT dim_keys", self.dim_keys)
 
     @staticmethod
-    def make(name_or_def, *args, **kwargs):
+    def make(name_or_def, *args, force=False, **kwargs):
         # print("name_or_def", name_or_def)
 
         if isinstance(name_or_def, Profile):
-            return name_or_def
+            if force:
+                name_or_def = None
+            else:
+                return name_or_def
 
         if name_or_def is None:
             name_or_def = {}
