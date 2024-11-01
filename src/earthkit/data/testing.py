@@ -116,6 +116,7 @@ except Exception:
 NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
 NO_COVJSONKIT = not modules_installed("covjsonkit")
 NO_PYTORCH = not modules_installed("torch")
+NO_RIOXARRAY = not modules_installed("rioxarray")
 NO_CUPY = not modules_installed("cupy")
 if not NO_CUPY:
     try:
