@@ -50,7 +50,7 @@ dependencies = [
 optional-dependencies.all = [
   "aws-requests-auth",
   "cartopy",
-  "cdsapi>=0.7.1",
+  "cdsapi>=0.7.2",
   "covjsonkit>=0.0.25",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
@@ -60,15 +60,16 @@ optional-dependencies.all = [
   "pyfdb",
   "pyodc",
 ]
-optional-dependencies.cds = [ "cdsapi>=0.7.1" ]
+optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
 optional-dependencies.ci = [ "torch" ]
 optional-dependencies.covjsonkit = [ "covjsonkit>=0.0.25" ]
 optional-dependencies.dev = [
   "aws-requests-auth",
   "cartopy",
-  "cdsapi>=0.7.1",
+  "cdsapi>=0.7.2",
   "covjsonkit>=0.0.25",
   "earthkit-data-demo-source",
+  "eccovjson>=0.0.5",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
   "geopandas",

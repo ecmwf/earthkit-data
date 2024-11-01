@@ -2,6 +2,17 @@ Version 0.10 Updates
 /////////////////////////
 
 
+Version 0.10.9
+===============
+
+Fixes
+++++++
+
+- Fixed issue when setting up :ref:`data-sources-cds` source credentials via the prompt did not work.
+- Fixed issue when setting up :ref:`data-sources-ads` source credentials via the prompt did not work.
+- Increased ``cdsapi`` dependency to version 0.7.2 to be compatible with the new CDS/ADS services.
+
+
 Version 0.10.8
 ===============
 
