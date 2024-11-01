@@ -171,6 +171,24 @@ def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims):
         ),
         (
             {
+                "time_dim_mode": "forecast",
+                "dim_roles": {"step": "fcmonth"},
+                "decode_times": False,
+                "decode_timedelta": False,
+            },
+            {
+                "number": [0, 1, 2],
+                "forecast_reference_time": [
+                    np.datetime64("1993-10-01", "ns"),
+                    np.datetime64("1994-10-01", "ns"),
+                    np.datetime64("1995-10-01", "ns"),
+                    np.datetime64("1996-10-01", "ns"),
+                ],
+                "fcmonth": [1, 2, 3, 4, 5, 6],
+            },
+        ),
+        (
+            {
                 "time_dim_mode": "raw",
                 "dim_roles": {"step": "forecastMonth"},
                 "decode_times": False,
