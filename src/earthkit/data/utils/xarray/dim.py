@@ -42,8 +42,8 @@ LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels"]
 LEVEL_TYPE_KEYS = ["typeOfLevel", "levtype"]
 DATE_KEYS = ["date", "andate", "validityDate", "dataDate", "hdate", "referenceDate", "indexingDate"]
 TIME_KEYS = ["time", "antime", "validityTime", "dataTime", "referenceTime", "indexingTime"]
-STEP_KEYS = ["step", "endStep", "stepRange", "forecastMonth"]
-MONTH_KEYS = ["forecastMonth"]
+STEP_KEYS = ["step", "endStep", "stepRange", "forecastMonth", "fcmonth"]
+MONTH_KEYS = ["forecastMonth", "fcmonth"]
 VALID_DATETIME_KEYS = ["valid_time", "valid_datetime"]
 BASE_DATETIME_KEYS = [
     "forecast_reference_time",
