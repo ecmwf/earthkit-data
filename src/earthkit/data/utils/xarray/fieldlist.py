@@ -102,7 +102,7 @@ class IndexDB:
 
 
 class XArrayInputFieldList(FieldList):
-    def __init__(self, fieldlist, keys=None, db=None, remapping=None):
+    def __init__(self, fieldlist, keys=None, db=None, remapping=None, scan_only=False):
         super().__init__()
         self.ds = fieldlist
 
@@ -203,7 +203,10 @@ class XArrayInputFieldList(FieldList):
 
             for k, v in vals.items():
                 v = [x for x in v if x is not None]
-                vals[k] = sorted(v)
+                if all(isinstance(x, int) for x in v):
+                    vals[k] = sorted(v)
+                else:
+                    vals[k] = sorted(v, key=str)
 
             if component and self.remapping:
                 for k, v in vals.items():
