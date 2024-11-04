@@ -162,7 +162,6 @@ class XArrayInputFieldList(FieldList):
         return XArrayInputFieldList(ds, db=db, remapping=self.remapping)
 
     def order_by(self, *args, **kwargs):
-        LOG.debug(f"order_by({args=}, {kwargs=})")
         if isinstance(self.ds, XArrayInputFieldList):
             kwargs.pop("remapping", None)
 
