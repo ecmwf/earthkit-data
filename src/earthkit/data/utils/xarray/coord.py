@@ -60,6 +60,8 @@ class Coord:
     def to_xr_var(self, profile):
         import xarray
 
+        # LOG.debug(f"{self.name=}" + str(self.convert(profile)))
+
         name = self.name
         return xarray.Variable(
             self.dims,

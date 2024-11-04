@@ -89,7 +89,7 @@ class XarrayMixIn:
             is not a valid option when the Xarray is directly generated via
             :py:meth:`xarray.open_dataset`.
         xarray_open_dataset_kwargs: dict, optional
-            Keyword arguments passed to :py:func:`xarray.open_dataset`.  Either this or ``**kwargs`` can
+            Keyword arguments passed to :py:func:`xarray.open_dataset`. Either this or ``**kwargs`` can
             be used, but not both.
         **kwargs: dict, optional
             Any keyword arguments that can be passed to :py:func:`xarray.open_dataset`. Engine specific
@@ -283,26 +283,27 @@ class XarrayMixIn:
             * For the rest of the supported keyword arguments, please refer to the
               :xref:`cfgrib` documentation.
 
-        The default keyword arguments are as follows::
-
-        - when ``engine`` is "earthkit":
-
-            {"backend_kwargs"= {"errors": "raise"},
-            "cache": True, "chunks": None, "engine": "earthkit"}
-
-        - when ``engine`` is "cfgrib":
-
-            {"backend_kwargs": {"errors": "raise", "ignore_keys": [], "squeeze": False,},
-            "cache": True, "chunks": None, "engine": "cfgrib"}
-
-        Please note that:
-
-        - settings ``errors="raise"`` and ``engine`` are always enforced and cannot
-            be changed.
 
         Returns
         -------
         xarray DataSet or list of xarray DataSets
+
+
+        The default values of ``xarray_open_dataset_kwargs`` or ``**kwargs`` passed
+        to :py:func:`xarray.open_dataset` are as follows:
+
+            - when ``engine="earthkit"``::
+
+               {"cache": True, "chunks": None, "engine": "earthkit"}
+
+            - when ``engine="cfgrib"``::
+
+                {"backend_kwargs": {"errors": "raise", "ignore_keys": [], "squeeze": False,},
+                "cache": True, "chunks": None, "engine": "cfgrib"}
+
+        Please note that settings ``errors="raise"`` and ``engine`` are always enforced
+        and cannot be changed.
+
 
         Examples
         --------

@@ -227,41 +227,6 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         array_module: module
             The module to use for array operations. Default is numpy.
         """
-        _kwargs = dict(
-            profile=profile,
-            variable_key=variable_key,
-            drop_variables=drop_variables,
-            rename_variables=rename_variables,
-            extra_dims=extra_dims,
-            drop_dims=drop_dims,
-            ensure_dims=ensure_dims,
-            fixed_dims=fixed_dims,
-            rename_dims=rename_dims,
-            dim_roles=dim_roles,
-            dims_as_attrs=dims_as_attrs,
-            time_dim_mode=time_dim_mode,
-            level_dim_mode=level_dim_mode,
-            squeeze=squeeze,
-            attrs_mode=attrs_mode,
-            attrs=attrs,
-            variable_attrs=variable_attrs,
-            global_attrs=global_attrs,
-            coord_attrs=coord_attrs,
-            rename_attrs=rename_attrs,
-            add_valid_time_coord=add_valid_time_coord,
-            add_geo_coords=add_geo_coords,
-            flatten_values=flatten_values,
-            remapping=remapping,
-            decode_times=decode_times,
-            decode_timedelta=decode_timedelta,
-            lazy_load=lazy_load,
-            release_source=release_source,
-            strict=strict,
-            dtype=dtype,
-            array_module=array_module,
-            errors=errors,
-        )
-
         fieldlist = self._fieldlist(filename_or_obj, source_type)
 
         if hasattr(fieldlist, "_ek_builder"):
@@ -270,7 +235,41 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         else:
             from .builder import SingleDatasetBuilder
 
-            return SingleDatasetBuilder(fieldlist, from_xr=True, backend_kwargs=_kwargs).build()
+            _kwargs = dict(
+                variable_key=variable_key,
+                drop_variables=drop_variables,
+                rename_variables=rename_variables,
+                extra_dims=extra_dims,
+                drop_dims=drop_dims,
+                ensure_dims=ensure_dims,
+                fixed_dims=fixed_dims,
+                rename_dims=rename_dims,
+                dim_roles=dim_roles,
+                dims_as_attrs=dims_as_attrs,
+                time_dim_mode=time_dim_mode,
+                level_dim_mode=level_dim_mode,
+                squeeze=squeeze,
+                attrs_mode=attrs_mode,
+                attrs=attrs,
+                variable_attrs=variable_attrs,
+                global_attrs=global_attrs,
+                coord_attrs=coord_attrs,
+                rename_attrs=rename_attrs,
+                add_valid_time_coord=add_valid_time_coord,
+                add_geo_coords=add_geo_coords,
+                flatten_values=flatten_values,
+                remapping=remapping,
+                decode_times=decode_times,
+                decode_timedelta=decode_timedelta,
+                lazy_load=lazy_load,
+                release_source=release_source,
+                strict=strict,
+                dtype=dtype,
+                array_module=array_module,
+                errors=errors,
+            )
+
+            return SingleDatasetBuilder(fieldlist, profile, from_xr=True, backend_kwargs=_kwargs).build()
 
     @classmethod
     def guess_can_open(cls, filename_or_obj):

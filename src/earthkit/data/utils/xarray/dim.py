@@ -169,9 +169,6 @@ class Dim:
 
         self.coords = {}
 
-    def copy(self):
-        return self.__class__(self.owner, name=self.name, key=self.key, alias=self.alias, drop=self.drop)
-
     def __contains__(self, key):
         return key in [self.name, self.key] or key in self.alias
 
@@ -216,11 +213,11 @@ class Dim:
     def deactivate_drop_list(self):
         self.owner.deactivate([self.name, self.key] + self.drop, ignore_dim=self)
 
-    def as_coord(self, key, values, component, tensor):
+    def as_coord(self, key, values, component, source):
         if key not in self.coords:
             from .coord import Coord
 
-            self.coords[key] = Coord.make(key, values, ds=tensor.source, component=component)
+            self.coords[key] = Coord.make(key, values, ds=source, component=component)
         return key, self.coords[key]
 
     def remapping_keys(self):
@@ -304,9 +301,6 @@ class CustomForecastRefDim(Dim):
             return date[:-4] + "_time"
         return f"{date}_{time}"
 
-    def copy(self):
-        return self.__class__(self.owner, self.key)
-
 
 class LevelDim(Dim):
     alias = get_keys(LEVEL_KEYS)
@@ -326,9 +320,6 @@ class LevelPerTypeDim(Dim):
         self.level_key = level_key
         self.level_type_key = level_type_key
         super().__init__(owner, *args, **kwargs)
-
-    def copy(self):
-        return self.__class__(self.owner, self.level_key, self.level_type_key)
 
     def as_coord(self, key, values, component, tensor):
         lev_type = tensor.source[0].metadata(self.level_type_key)
@@ -356,9 +347,6 @@ class LevelAndTypeDim(Dim):
             )
         super().__init__(owner, *args, active=active, **kwargs)
 
-    def copy(self):
-        return self.__class__(self.owner, self.level_key, self.level_type_key, active=self.active)
-
     def remapping_keys(self):
         return [self.level_key, self.level_type_key]
 
@@ -379,17 +367,11 @@ class RemappingDim(Dim):
     def remapping_keys(self):
         return self.keys
 
-    def copy(self):
-        return self.__class__(self.owner, self.name, self.keys)
-
 
 class CompoundKeyDim(RemappingDim):
     def __init__(self, owner, ck):
         self.ck = ck
         super().__init__(owner, ck.name, ck.keys)
-
-    def copy(self):
-        return self.__class__(self.owner, self.ck)
 
 
 class OtherDim(Dim):
@@ -567,7 +549,7 @@ class Dims:
         self.fixed_dims = ensure_iterable(fixed_dims)
         self.split_dims = ensure_iterable(split_dims)
         self.rename_dims_map = ensure_dict(rename_dims)
-        self.dims_as_attrs = ensure_iterable(dims_as_attrs)
+        self.dims_as_attrs = list(ensure_iterable(dims_as_attrs))
         self.time_dim_mode = time_dim_mode
         self.level_dim_mode = level_dim_mode
         self.squeeze = squeeze
@@ -611,8 +593,6 @@ class Dims:
                     dims[k] = self.dims[k]
 
             self.dims = dims
-
-        # print(f"INIT dims={self.dims.keys()}")
 
         # ensure all the required keys are in the profile
         keys = []
@@ -811,12 +791,20 @@ class Dims:
                 d = _get(k)
                 name, coord = d.as_coord(k, v, tensor)
                 r[name] = coord
+
         return r
 
-    def to_list(self, copy=True):
-        if copy:
-            return [d.copy() for d in self.dims.values()]
+    def to_list(self):
         return list(self.dims.values())
+
+    def get_dims(self, names):
+        r = []
+        for name in names:
+            if name in self.dims:
+                r.append(self.dims[name])
+            else:
+                r.append(make_dim(self, name=name))
+        return r
 
 
 PREDEFINED_DIMS = {}

@@ -30,12 +30,15 @@ NON_XR_OPEN_DS_KWARGS = ["split_dims", "direct_backend"]
 
 
 class VariableBuilder:
-    def __init__(self, name, var_dims, data_maker, local_attr_keys, tensor, remapping):
+    def __init__(
+        self, name, var_dims, data_maker, tensor, remapping, local_attr_keys=None, fixed_local_attrs=None
+    ):
         self.name = name
         self.var_dims = var_dims
         self.data_maker = data_maker
         self._attrs = {}
         self.local_keys = ensure_iterable(local_attr_keys)
+        self.fixed_local_attrs = ensure_dict(fixed_local_attrs)
         self.tensor = tensor
         self.remapping = remapping
 
@@ -44,6 +47,7 @@ class VariableBuilder:
             "message": self.tensor.source[0].metadata().override()._handle.get_buffer(),
         }
         self._attrs["_earthkit"] = attrs
+        self._attrs.update(self.fixed_local_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
         return xarray.Variable(self.var_dims, data, attrs=self._attrs)
 
@@ -53,7 +57,7 @@ class VariableBuilder:
         attrs = {}
         ns_keys = []
         for k in keys:
-            if k not in self.var_dims and k not in attr_keys:
+            if k not in self.var_dims and k not in attr_keys and k not in self.fixed_local_attrs:
                 if k.startswith("namespace="):
                     ns_keys.append(k.split("=")[1])
                 else:
@@ -168,13 +172,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
 
 
 class BackendDataBuilder(metaclass=ABCMeta):
-    def __init__(
-        self,
-        ds,
-        profile,
-        dims,
-        grid=None,
-    ):
+    def __init__(self, ds, profile, dims, grid=None, fixed_local_attrs=None):
         self.ds = ds
         self.profile = profile
         self.dims = dims
@@ -189,6 +187,8 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         # coords describing the field dimensions
         self.field_coords = {}
+
+        self.fixed_local_attrs = ensure_dict(fixed_local_attrs)
 
         self.grid = self._ensure_grid(grid)
         if self.profile.add_geo_coords:
@@ -257,13 +257,14 @@ class BackendDataBuilder(metaclass=ABCMeta):
         pass
 
     def pre_build_variable(self, ds_var, dims, name):
-        tensor_dims, tensor_coords, tensor_coords_component, extra_tensor_attrs = self.prepare_tensor(
+        tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs = self.prepare_tensor(
             ds_var, dims, name
         )
+
         tensor_dim_keys = [d.key for d in tensor_dims]
 
-        LOG.debug(f"{tensor_dims=} {tensor_coords=} {tensor_coords_component=} {extra_tensor_attrs=}")
-        LOG.debug(f"{tensor_dim_keys=}")
+        # LOG.debug(f"{tensor_dims=} {tensor_coords=} {tensor_coords_component=} {tensor_extra_attrs=}")
+        # LOG.debug(f"{tensor_dim_keys=}")
 
         tensor = ds_var.to_tensor(
             *tensor_dim_keys,
@@ -280,10 +281,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             # Dimensions like "level_per_type" are templates and will be
             # added as multiple concrete dimensions to the dataset
             k, c = d.as_coord(
-                d.key,
-                values=tensor.user_coords[d.key],
-                component=tensor_coords_component.get(d.key, None),
-                tensor=tensor,
+                d.key, tensor.user_coords[d.key], tensor_coords_component.get(d.key, None), tensor.source
             )
             if k not in self.tensor_coords:
                 self.tensor_coords[k] = c
@@ -294,7 +292,15 @@ class BackendDataBuilder(metaclass=ABCMeta):
         data_maker = self.build_values
         remapping = self.profile.remapping.build()
 
-        var_builder = VariableBuilder(name, var_dims, data_maker, extra_tensor_attrs, tensor, remapping)
+        var_builder = VariableBuilder(
+            name,
+            var_dims,
+            data_maker,
+            tensor,
+            remapping,
+            local_attr_keys=tensor_extra_attrs,
+            fixed_local_attrs=self.fixed_local_attrs,
+        )
 
         return var_builder
 
@@ -302,15 +308,16 @@ class BackendDataBuilder(metaclass=ABCMeta):
         tensor_dims = []
         tensor_coords = {}
         tensor_coords_component = {}
-        extra_tensor_attrs = []
+        tensor_extra_attrs = []
 
-        LOG.debug(f"{name=} {dims=}")
+        # LOG.debug(f"{name=} {dims=}")
 
         # First check if the dims/coords are consistent with the tensors of the previous variables
         vals, component_vals = ds.unique_values([d.key for d in dims], component=True)
 
-        LOG.debug(f"unique_values={vals}")
-        LOG.debug(f"ensure_dims={self.profile.dims.ensure_dims}")
+        # LOG.debug(f"unique_values={vals}")
+        # LOG.debug(f"ensure_dims={self.profile.dims.ensure_dims}")
+        # LOG.debug(f"dims_as_attrs={self.profile.dims.dims_as_attrs}")
 
         for d in dims:
             num = len(vals[d.key])
@@ -325,7 +332,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
                         f"Dimension '{d.name}' of variable '{name}' has multiple values={vals[d.key]}"
                     )
                 elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
-                    extra_tensor_attrs.append(d.key)
+                    tensor_extra_attrs.append(d.key)
                 elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
                     tensor_dims.append(d)
                     tensor_coords[d.key] = vals[d.key]
@@ -334,7 +341,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
                     self.check_tensor_coords(name, d.key, tensor_coords)
 
         # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinates
-        return tensor_dims, tensor_coords, tensor_coords_component, extra_tensor_attrs
+        return tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
 
     def check_tensor_coords(self, var_name, coord_name, tensor_coords):
         if self.profile.strict:
@@ -414,22 +421,23 @@ class DatasetBuilder:
     def __init__(
         self,
         ds,
+        profile,
         backend_kwargs=None,
-        other_kwargs=None,
     ):
         self.ds = ds
         backend_kwargs = ensure_dict(backend_kwargs)
-        other_kwargs = ensure_dict(other_kwargs)
+        assert "profile" not in backend_kwargs
 
-        # collect backend and other kwargs that can be passed to xarray.open_dataset
-        self.backend_kwargs = dict(**backend_kwargs)
-        for k in NON_XR_OPEN_DS_KWARGS:
-            self.backend_kwargs.pop(k, None)
-        self.xr_open_dataset_kwargs = dict(**other_kwargs)
+        if isinstance(profile, Profile):
+            self.profile = profile
+        else:
+            self.profile = Profile.make(profile, **backend_kwargs)
 
-        profile = backend_kwargs.pop("profile", Profile.DEFAULT_PROFILE_NAME)
-        self.profile = Profile.make(profile, **backend_kwargs)
+        backend_kwargs = ensure_dict(backend_kwargs)
+        self.profile_kwargs = dict(**backend_kwargs)
 
+        # LOG.debug(f"{self.profile.name=}")
+        # LOG.debug(f"{backend_kwargs=}")
         if self.profile.lazy_load:
             self.builder = TensorBackendDataBuilder
         else:
@@ -440,31 +448,35 @@ class DatasetBuilder:
 
         self.grids = {}
 
-    def parse(self):
-        assert not hasattr(self.ds, "_ek_builder")
+    def parse(self, ds, profile=None, full=False):
+        assert not hasattr(ds, "_ek_builder")
         from .fieldlist import XArrayInputFieldList
 
-        remapping = self.profile.remapping.build()
+        if profile is None:
+            profile = self.profile.copy()
 
-        LOG.debug(f"{remapping=}")
-        LOG.debug(f"{self.profile.remapping=}")
+        remapping = profile.remapping.build()
+
+        # LOG.debug(f"{remapping=}")
+        # LOG.debug(f"{profile.remapping=}")
+        # LOG.debug(f"{profile.index_keys=}")
 
         # create a new fieldlist for optimised access to unique values
-        ds = XArrayInputFieldList(self.ds, keys=self.profile.index_keys, remapping=remapping)
+        ds_xr = XArrayInputFieldList(ds, keys=profile.index_keys, remapping=remapping)
         # LOG.debug(f"{ds.db=}")
-        LOG.debug(f"before update: {self.profile.dim_keys=}")
 
-        self.profile.update(ds)
+        # LOG.debug(f"before update: {profile.dim_keys=}")
+        profile.update(ds_xr)
+        # LOG.debug(f"after update: {profile.dim_keys=}")
 
-        LOG.debug(f"after update: {self.profile.dim_keys=}")
-
+        # LOG.debug(f"{profile.sort_keys=}")
         # the data is only sorted once
-        ds = ds.order_by(self.profile.sort_keys)
+        ds_xr = ds_xr.order_by(profile.sort_keys)
 
-        if not self.profile.lazy_load and self.profile.release_source:
-            ds.make_releasable()
+        if not profile.lazy_load and profile.release_source:
+            ds_xr.make_releasable()
 
-        return ds
+        return ds_xr, profile
 
     def grid(self, ds):
         grids = ds.index("md5GridSection")
@@ -494,7 +506,7 @@ class SingleDatasetBuilder(DatasetBuilder):
             )
 
     def build(self):
-        ds_sorted = self.parse()
+        ds_sorted, _ = self.parse(self.ds, self.profile)
         dims = self.profile.dims.to_list()
         LOG.debug(f"{dims=}")
         builder = self.builder(
@@ -508,43 +520,53 @@ class SingleDatasetBuilder(DatasetBuilder):
 
 
 class SplitDatasetBuilder(DatasetBuilder):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, backend_kwargs=None, other_kwargs=None):
         """
         split_dims: str, or iterable of str, None
             Dimension or list of dimensions to use for splitting the data into multiple hypercubes.
             Default is None.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, backend_kwargs=backend_kwargs)
+
+        if not self.direct_backend:
+            self.xr_open_dataset_kwargs = ensure_dict(other_kwargs)
+            backend_kwargs = {}
+            backend_kwargs["profile"] = self.profile
+            self.xr_open_dataset_kwargs["backend_kwargs"] = backend_kwargs
 
         if not self.split_dims:
             raise ValueError("SplitDatasetMaker requires split_dims")
 
+    def prepare(self, keys):
+        from .fieldlist import XArrayInputFieldList
+
+        remapping = self.profile.remapping.build()
+
+        # LOG.debug(f"split_dims={self.split_dims}")
+        ds_xr = XArrayInputFieldList(self.ds, keys=self.profile.index_keys, remapping=remapping)
+
+        vals = ds_xr.unique_values(*keys)
+
+        return ds_xr, vals
+
     def build(self):
         from .splitter import Splitter
 
-        ds_sorted = self.parse()
         splitter = Splitter.make(self.split_dims)
         datasets = []
-        for s_dims, s_ds in splitter.split(ds_sorted, self.profile):
-            LOG.debug(f"{s_dims=} type of s_ds={type(s_ds)}")
-            builder = self.builder(
-                s_ds,
-                self.profile,
-                s_dims,
-                grid=self.grid(s_ds),
-            )
+        for ds, profile, split_coords in splitter.split(self):
+            dims = profile.dims.to_list()
+            LOG.debug(f"splitting {dims=} type of s_ds={type(ds)} {split_coords=}")
+            split_coords.pop(profile.variable_key, None)
+            builder = self.builder(ds, profile, dims, grid=self.grid(ds), fixed_local_attrs=split_coords)
 
-            s_ds._ek_builder = builder
+            ds._ek_builder = builder
             if self.direct_backend:
                 datasets.append(builder.build())
             else:
-                s_ds._ek_builder = builder
-                datasets.append(
-                    xarray.open_dataset(
-                        s_ds, backend_kwargs=self.backend_kwargs, **self.xr_open_dataset_kwargs
-                    )
-                )
-                s_ds._ek_builder = None
+                ds._ek_builder = builder
+                datasets.append(xarray.open_dataset(ds, **self.xr_open_dataset_kwargs))
+                ds._ek_builder = None
 
         return datasets[0] if len(datasets) == 1 else datasets
 
@@ -566,34 +588,32 @@ def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
     backend_kwargs = ensure_dict(backend_kwargs)
     other_kwargs = ensure_dict(other_kwargs)
 
-    # certain kwargs are both backend_kwargs and other_kwargs. We copy them to
-    # backend_kwargs_full
-    backend_kwargs_full = dict(**backend_kwargs)
+    # certain kwargs are both backend_kwargs and other_kwargs. We need all of
+    # these for the profile
+    profile_kwargs = dict(**backend_kwargs)
     for k in BACKEND_AND_XR_OPEN_DS_KWARGS:
         if k in other_kwargs:
-            backend_kwargs_full[k] = other_kwargs[k]
+            profile_kwargs[k] = other_kwargs[k]
 
     # to create the profile we need all the possible backend_kwargs (bar profile)
-    profile = backend_kwargs_full.pop("profile", Profile.DEFAULT_PROFILE_NAME)
-    profile = Profile.make(profile, **backend_kwargs_full)
+    profile = profile_kwargs.pop("profile", Profile.DEFAULT_PROFILE_NAME)
+    profile = Profile.make(profile, **profile_kwargs)
 
-    # the backend  builder is directly called bypassing xarray.open_dataset
+    # the backend builder is directly called bypassing xarray.open_dataset
     if profile.direct_backend:
-        backend_kwargs_full["profile"] = profile
         if not profile.dims.split_dims:
-            return SingleDatasetBuilder(ds, backend_kwargs=backend_kwargs_full).build()
+            return SingleDatasetBuilder(ds, profile).build()
         else:
-            return SplitDatasetBuilder(ds, backend_kwargs=backend_kwargs_full).build()
+            return SplitDatasetBuilder(ds, profile).build()
     # xarray.open_dataset is called
     else:
+        # LOG.debug(f"from_earthkit {backend_kwargs=} {profile_kwargs=}")
         assert other_kwargs["engine"] == "earthkit"
-        backend_kwargs["profile"] = profile
-
-        # certain kwargs are not allowed in xarray.open_dataset
-        for k in NON_XR_OPEN_DS_KWARGS:
-            backend_kwargs.pop(k, None)
-
         if not profile.dims.split_dims:
+            backend_kwargs["profile"] = profile
+            # certain kwargs are not allowed in xarray.open_dataset
+            for k in NON_XR_OPEN_DS_KWARGS:
+                backend_kwargs.pop(k, None)
             return xarray.open_dataset(ds, backend_kwargs=backend_kwargs, **other_kwargs)
         else:
-            return SplitDatasetBuilder(ds, backend_kwargs=backend_kwargs, other_kwargs=other_kwargs).build()
+            return SplitDatasetBuilder(ds, profile, other_kwargs=other_kwargs).build()

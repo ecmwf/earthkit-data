@@ -38,6 +38,7 @@ reference systems and bounding boxes.
    guide/index
    api
    development
+   _api/data/index
 
 .. toctree::
    :maxdepth: 1

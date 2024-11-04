@@ -92,11 +92,14 @@ class Profile:
 
     def __init__(
         self,
+        name=None,
         **kwargs,
     ):
         from .attrs import Attrs
         from .dim import Dims
 
+        self._kwargs = dict(**kwargs)
+        self.name = name
         self.index_keys = []
 
         patches = dict()
@@ -174,11 +177,14 @@ class Profile:
         # print("INIT dim_keys", self.dim_keys)
 
     @staticmethod
-    def make(name_or_def, *args, **kwargs):
+    def make(name_or_def, *args, force=False, **kwargs):
         # print("name_or_def", name_or_def)
 
         if isinstance(name_or_def, Profile):
-            return name_or_def
+            if force:
+                return name_or_def.copy()
+            else:
+                return name_or_def
 
         if name_or_def is None:
             name_or_def = {}
@@ -235,7 +241,7 @@ class Profile:
         if opt["decode_timedelta"] is None:
             opt["decode_timedelta"] = opt["decode_times"]
 
-        return cls(*args, **opt)
+        return cls(*args, name=name, **opt)
 
     @classmethod
     def to_docs(cls, name):
@@ -269,6 +275,9 @@ class Profile:
                     raise ValueError(f"Unknown key {k} in profile {name}")
 
         return opt
+
+    def copy(self):
+        return Profile(name=self.name, **self._kwargs)
 
     @property
     def dim_keys(self):
