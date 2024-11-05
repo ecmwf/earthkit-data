@@ -18,6 +18,7 @@ import xarray.core.indexing as indexing
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
+from .attrs import AttrList
 from .profile import Profile
 
 LOG = logging.getLogger(__name__)
@@ -33,6 +34,28 @@ class VariableBuilder:
     def __init__(
         self, name, var_dims, data_maker, tensor, remapping, local_attr_keys=None, fixed_local_attrs=None
     ):
+        """
+        Create a builder for a single variable in the dataset.
+
+        Parameters
+        ----------
+        name: str
+            The name of the variable.
+        var_dims: list
+            The dimensions of the variable.
+        data_maker: callable
+            A function that generates the data object stored in the xarray variable.
+        tensor: Tensor
+            The tensor object that contains the data.
+        remapping: Remapping
+            The remapping object that contains the remapping information.
+        local_attr_keys: list, optional
+            A list of metadata keys that are used to collect local attributes. These attributes
+            are not taken into account by the attribute policies.
+        fixed_local_attrs: dict, optional
+            A dictionary of fixed local attributes that are added to the variable. These attributes
+            are not taken into account by the attribute policies.
+        """
         self.name = name
         self.var_dims = var_dims
         self.data_maker = data_maker
@@ -51,42 +74,80 @@ class VariableBuilder:
         data = self.data_maker(self.tensor, self.var_dims, self.name)
         return xarray.Variable(self.var_dims, data, attrs=self._attrs)
 
-    def load_attrs(self, keys, strict=True):
-        keys = keys + self.local_keys
-        attr_keys = []
-        attrs = {}
-        ns_keys = []
-        for k in keys:
-            if k not in self.var_dims and k not in attr_keys and k not in self.fixed_local_attrs:
-                if k.startswith("namespace="):
-                    ns_keys.append(k.split("=")[1])
-                else:
-                    attr_keys.append(k)
+    def collect_attrs(self, attrs, strict=True, extra_attrs=None):
+        """Load the attributes for the variable.
+
+        Parameters
+        ----------
+        attrs: list
+            A list of attributes to be collected.
+        strict: bool, optional
+            If True, perform a strict check on the attributes.
+        collect: list, optional
+            A list of attributes that are collected but not added to the variable attributes.
+        """
+        attrs = attrs + AttrList(self.local_keys)
+
+        res = {}
+        keys_strict = []
+        fixed_attrs = {}
 
         first = None
 
+        def _metadata():
+            nonlocal first
+            return self.tensor.source[0].metadata() if not first else first
+
+        for a in attrs:
+            if a.name not in self.var_dims and a.name not in res and a.name not in self.fixed_local_attrs:
+                if a.fixed():
+                    fixed_attrs[a.name] = a.value()
+                elif callable(a):
+                    res.update(a(_metadata()))
+                else:
+                    if strict:
+                        keys_strict.append(a.name)
+                    else:
+                        res.update(a.get(_metadata()))
+
         # TODO: do we need a strict mode here? The extra cost has to be justified
-        if strict:
-            attrs = self.tensor.source.unique_values(attr_keys)
-        else:
-            first = self.tensor.source[0]
-            attrs = {k: [v] for k, v in first._attributes(attr_keys, default=None).items()}
+        if keys_strict:
+            assert strict
+            res.update(self.tensor.source.unique_values(keys_strict))
 
-        if ns_keys:
-            if not first:
-                first = self.tensor.source[0]
-            r = first.metadata(namespace=ns_keys)
-            for k, v in r.items():
-                attrs[k] = [v]
+        self._attrs = res
+        self._attrs.update(fixed_attrs)
 
-        self._attrs = attrs
+        # extra attributes to be collected but not added to the variable
+        collected_attrs = {}
+        if extra_attrs:
+            res = {}
+            fixed_attrs = {}
+            for a in extra_attrs:
+                if a.fixed():
+                    fixed_attrs[a.name] = a.value()
+                elif callable(a):
+                    res.update(a(_metadata()))
+                elif isinstance(a, str):
+                    res.update(a.get(_metadata()))
 
-        return {k: v for k, v in self._attrs.items() if k not in self.local_keys}
+            collected_attrs.update(res)
+            collected_attrs.update(fixed_attrs)
+
+        return {k: v for k, v in self._attrs.items() if k not in self.local_keys}, collected_attrs
 
     def adjust_attrs(self, drop_keys=None, rename=None):
         drop_keys = ensure_iterable(drop_keys)
         drop_keys = [k for k in drop_keys if k not in self.local_keys]
-        self._attrs = {k: v[0] for k, v in self._attrs.items() if k not in drop_keys and len(v) == 1}
+        r = {}
+        for k, v in self._attrs.items():
+            if k not in drop_keys:
+                if isinstance(v, list) and len(v) == 1:
+                    r[k] = v[0]
+                else:
+                    r[k] = v
+        self._attrs = r
+        # self._attrs = {k: v[0] for k, v in self._attrs.items() if k not in drop_keys and len(v) == 1}
         if callable(rename):
             self._attrs = rename(self._attrs)
 

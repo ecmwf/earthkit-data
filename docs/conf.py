@@ -136,6 +136,6 @@ intersphinx_mapping = {
 
 
 def setup(app):
-    pass
+    from skip_api_rules import _skip_api_items
 
-    # app.connect("autoapi-skip-member", _skip_api_items)
+    app.connect("autoapi-skip-member", _skip_api_items)
