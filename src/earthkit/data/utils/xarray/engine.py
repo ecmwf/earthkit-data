@@ -70,7 +70,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         rename_variables: dict, None
             Mapping to rename variables. Default is None.
         extra_dims:  str, or iterable of str, None
-            Metadata key or list of metadata keys to use as additional dimensions on top of the
+            Metadata key or list of metadata keys to be used as additional dimensions on top of the
             predefined dimensions. Only enabled when no ``fixed_dims`` is specified. Default is None.
         drop_dims:  str, or iterable of str, None
             Metadata key or list of metadata keys to be ignored as dimensions. Default is None.
@@ -139,7 +139,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
               - "step": built from the "step" role. When ``decode_time=True`` the values are
                 np.timedelta64
             - "valid_time": adds a dimension called "valid_time" as described by the "valid_time"
-              role (see ``dim_roles``). Will contain np.datetime64 values,
+              role (see ``dim_roles``). Will contain np.datetime64 values.
             - "raw": the "date", "time" and "step" roles are turned into 3 separate dimensions
         level_dim_mode: str, None
             Define how predefined vertical dimensions are formed. The default is "level".
@@ -191,12 +191,23 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
               it will be a global attribute, otherwise it will be a variable attribute.
               However keys in ``variable_attrs`` are always used as variable attributes,
               while keys in ``global_attrs`` are always used as global attributes.
-        attrs: str or list, None
-            List of metadata keys to use as attributes.
-        variable_attrs: str or list, None
-            Metadata key or keys to use as variable attributes. Default is None.
-        global_attrs: , None
-            Metadata key or keys to use as global attributes. Default is None.
+        attrs: str, number, callable, dict or list of these, None
+            Attribute or list of attributes. Only used when ``attrs_mode`` is ``unique``.
+            Its default value (None) expands to [] unless the ``profile`` overwrites it.
+            The following attributes are supported:
+
+            - str: Name of the attribute used as a metadata key to generate the value of the attribute
+            - callable: A callable that takes a Metadata object and returns a dict of attributes
+            - dict: A dictionary of attributes with the keys as the attribute names.
+              If the value is a callable it takes the attribute name and a Metadata object and
+              returns the value of the attribute. Otherwise the value is interpreted as a
+              pre-defined value for the attribute.
+        variable_attrs: str, number, callable, dict or list of these, None
+            Variable attribute or attributes. For the allowed values see ``attrs``. Its
+            default value (None) expands to [] unless the ``profile`` overwrites it.
+        global_attrs: str, number, dict or list of these, None
+            Global attribute or attributes. For the allowed values see ``attrs``. Its
+            default value (None) expands to [] unless the ``profile`` overwrites it.
         coord_attrs: dict, None
             To be documented. Default is None.
         rename_attrs: dict, None
@@ -204,7 +215,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         remapping: dict, None
             Define new metadata keys for indexing. Default is None.
         lazy_load: bool, None
-            If True, the resulting DataSet will load data lazily from the
+            If True, the resulting Dataset will load data lazily from the
             underlying data source. If False, a DataSet holding all the data in memory
             and decoupled from the backend source will be created.
             Using ``lazy_load=False`` with ``release_source=True`` can provide optimised
@@ -212,7 +223,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             expands to True unless the ``profile`` overwrites it.
         release_source: bool, None
             Only used when ``lazy_load=False``. If True, memory held in the input fields are
-            released as soon as their values are copied into the resulting DataSet. This is
+            released as soon as their values are copied into the resulting Dataset. This is
             done per field to avoid memory spikes. The release operation is currently
             only supported for GRIB fields stored entirely in memory, e.g. when read from a
             :ref:`stream <streams>`. When a field does not support the release operation, this
