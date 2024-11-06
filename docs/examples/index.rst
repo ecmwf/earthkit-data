@@ -106,7 +106,8 @@ Dictionary input
     :glob:
 
     fields_from_dict_in_loop.ipynb
-    list_of_dict*
+    list_of_dicts_overview
+    list_of_dicts_geography
 
 
 Other inputs

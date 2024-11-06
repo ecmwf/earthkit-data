@@ -110,6 +110,8 @@ class VariableBuilder:
                     else:
                         res.update(a.get(_metadata()))
 
+        res = {k: v for k, v in res.items() if v is not None}
+
         # TODO: do we need a strict mode here? The extra cost has to be justified
         if keys_strict:
             assert strict
@@ -131,7 +133,8 @@ class VariableBuilder:
                 elif isinstance(a, str):
                     res.update(a.get(_metadata()))
 
-            collected_attrs.update(res)
+            res = {k: v for k, v in res.items() if v is not None}
+            collected_attrs = res
             collected_attrs.update(fixed_attrs)
 
         return {k: v for k, v in self._attrs.items() if k not in self.local_keys}, collected_attrs

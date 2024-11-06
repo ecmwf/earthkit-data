@@ -24,68 +24,103 @@ from earthkit.data.utils.projections import Projection
 LOG = logging.getLogger(__name__)
 
 
-def make_geography(metadata):
-    if "gridType" not in metadata:
-        lat = metadata.get("latitudes", None)
-        lon = metadata.get("longitudes", None)
-        val = metadata.get("values")
+def uniform_resolution(vals):
+    if len(vals) > 1:
+        delta = np.diff(vals)
+        if np.allclose(delta, delta[0]):
+            return delta[0]
+    return None
 
+
+def make_geography(metadata):
+    lat = metadata.get("latitudes", None)
+    lon = metadata.get("longitudes", None)
+    val = metadata.get("values")
+
+    # lat = np.asarray(lat, dtype=float)
+    # lon = np.asarray(lon, dtype=float)
+
+    val = np.asarray(val, dtype=float)
+
+    distinct = False
+    if lat is None or lon is None:
+        lat = metadata.get("distinctLatitudes", None)
+        lon = metadata.get("distinctLongitudes", None)
         lat = np.asarray(lat, dtype=float)
         lon = np.asarray(lon, dtype=float)
-        val = np.asarray(val, dtype=float)
-
-        distinct = False
-        if lat is None or lon is None:
-            lat = metadata.get("distinctLatitudes", None)
-            lon = metadata.get("distinctLongitudes", None)
-            lat = np.asarray(lat, dtype=float)
-            lon = np.asarray(lon, dtype=float)
-            if lat is None:
-                raise ValueError("No distinctLatitudes found")
-            if lon is None:
-                raise ValueError("No distinctLongitudes found")
-            if len(lat.shape) != 1:
-                return ValueError(f"distinct latitudes must be 1D array! shape={lat.shape} unsupported")
-            if len(lon.shape) != 1:
-                return ValueError(f"distinctLongitudes must be 1D array! shape={lon.shape} unsupported")
-
-            distinct = True
-        elif lat.size * lon.size == val.size:
-            if len(lat.shape) != 1:
-                return ValueError(
-                    f"latitudes must be 1D array when holding distinct values! shape={lat.shape} unsupported"
+        if lat is None:
+            raise ValueError("No latitudes or distinctLatitudes found")
+        if lon is None:
+            raise ValueError("No longitudes or distinctLongitudes found")
+        if len(lat.shape) != 1:
+            return ValueError(f"distinct latitudes must be 1D array! shape={lat.shape} unsupported")
+        if len(lon.shape) != 1:
+            return ValueError(f"distinctLongitudes must be 1D array! shape={lon.shape} unsupported")
+        if lat.size * lon.size != val.size:
+            raise ValueError(
+                (
+                    "Distinct latitudes and longitudes do not match number of values. "
+                    f"Expected number=({lat.size * lon.size}), got={val.size}"
                 )
-            if len(lon.shape) != 1:
-                return ValueError(
-                    f"longitudes must be 1D array when holding distinct values! shape={lon.shape} unsupported"
-                )
-            distinct = True
+            )
 
-        if distinct:
-            return RegularDistinctLLGeography(metadata)
-
-        if lat.size == lon.size == val.size:
-            if lat.shape != lon.shape or lat.shape != val.shape:
-                raise ValueError(
-                    (
-                        "latitudes, longitudes and values must have the same "
-                        f"shape! lat={lat.shape}, lon={lon.shape}, val={val.shape}"
-                    )
-                )
-            if lat.ndim == 2:
-                return StructuredGeography(metadata)
-            return UserGeography(metadata)
-        raise ValueError("Unsupported metadata")
+        distinct = True
     else:
-        raise ValueError("Unsupported metadata key 'gridType'")
+        lat = np.asarray(lat, dtype=float)
+        lon = np.asarray(lon, dtype=float)
+        if lat.size * lon.size == val.size:
+            if len(lat.shape) != 1:
+                return ValueError(
+                    f"latitudes must be a 1D array when holding distinct values! shape={lat.shape} unsupported"
+                )
+            if len(lon.shape) != 1:
+                return ValueError(
+                    f"longitudes must be a 1D array when holding distinct values! shape={lon.shape} unsupported"
+                )
+            distinct = True
+
+    assert lat is not None
+    assert lon is not None
+
+    if distinct:
+        dx = uniform_resolution(lon)
+        dy = uniform_resolution(lat)
+
+        if dx is not None and dy is not None:
+            # metadata["DxInDegrees"] = dx
+            # metadata["DyInDegrees"] = dy
+            return RegularDistinctLLGeography(metadata)
+        else:
+            return DistinctLLGeography(metadata)
+
+    if lat.shape != lon.shape:
+        raise ValueError(f"latitudes and longitudes must have the same shape. {lat.shape} != {lon.shape}")
+
+    if lat.size == val.size:
+        if lat.shape != val.shape:
+            shape = lat.shape if lat.ndim > val.ndim else val.shape
+        else:
+            shape = lat.shape
+
+        return UserGeography(metadata, shape=shape)
+
+    else:
+        raise ValueError(
+            (
+                "latitudes and longitudes do not match number of values. "
+                f"Expected number=({lat.size * lon.size}), got={val.size}"
+            )
+        )
 
 
 class UserGeography(Geography):
-    def __init__(self, metadata):
+    def __init__(self, metadata, shape=None):
         self.metadata = metadata
+        self._shape = shape
 
     def latitudes(self, dtype=None):
         v = self.metadata.get("latitudes")
+        v = np.asarray(v)
         if dtype is None:
             return v
         else:
@@ -93,6 +128,7 @@ class UserGeography(Geography):
 
     def longitudes(self, dtype=None):
         v = self.metadata.get("longitudes")
+        v = np.asarray(v)
         if dtype is None:
             return v
         else:
@@ -105,6 +141,8 @@ class UserGeography(Geography):
         raise NotImplementedError("y is not implemented for this geography")
 
     def shape(self):
+        if self._shape is not None:
+            return self._shape
         return self.latitudes().shape
 
     def _unique_grid_id(self):
@@ -146,11 +184,11 @@ class UserGeography(Geography):
         raise NotImplementedError("mars_grid is not implemented for this geography")
 
 
-class StructuredGeography(UserGeography):
-    pass
+# class StructuredGeography(UserGeography):
+#     pass
 
 
-class RegularDistinctLLGeography(UserGeography):
+class DistinctLLGeography(UserGeography):
     def __init__(self, metadata):
         super().__init__(metadata)
 
@@ -194,6 +232,9 @@ class RegularDistinctLLGeography(UserGeography):
         Nj = len(self._distinct_latitudes())
         Ni = len(self._distinct_longitudes())
         return (Nj, Ni)
+
+
+class RegularDistinctLLGeography(DistinctLLGeography):
 
     def dx(self):
         x = self.metadata.get("DxInDegrees", None)
@@ -312,8 +353,11 @@ class UserMetadata(Metadata):
             return v
 
         base_dt = self.base_datetime()
-        if base_dt is None:
-            return base_dt + self.step_timedelta()
+        if base_dt is not None:
+            td = self.step_timedelta()
+            if td is not None:
+                return base_dt + td
+            return base_dt
 
     def step_timedelta(self):
         if "step_timedelta" in self._data:
