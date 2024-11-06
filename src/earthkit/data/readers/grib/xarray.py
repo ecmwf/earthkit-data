@@ -297,7 +297,7 @@ class XarrayMixIn:
 
         Returns
         -------
-        xarray Dataset or list of xarray Datasets
+        Xarray Dataset or list of Xarray Datasets
 
 
         The default values of ``xarray_open_dataset_kwargs`` or ``**kwargs`` passed
