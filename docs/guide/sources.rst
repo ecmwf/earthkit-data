@@ -38,6 +38,8 @@ We can get data from a given source by using :func:`from_source`:
       - read data from a stream
     * - :ref:`data-sources-memory`
       - read data from a memory buffer
+    * - :ref:`data-sources-lod`
+      - read data from a list of dictionaries
     * - :ref:`data-sources-multi`
       - read data from multiple sources
     * - :ref:`data-sources-ads`
@@ -427,6 +429,94 @@ memory
       f = ds[0]
 
 
+.. _data-sources-lod:
+
+list-of-dicts
+--------------
+
+.. py:function:: from_source("list-of-dicts", list_of_dicts)
+  :noindex:
+
+  The ``list-of-dicts`` source will read data from a list of dictionaries. Each dictionary represents a single field and
+  the result is a FieldList consisting of ArrayField fields.
+
+  .. note::
+
+    No attempt is made to represent the fields internally as GRIB messages, so field functionalities are limited,
+    and some of them may not work at all. The fields cannot be saved to a GRIB file.
+
+  The only **required** key for a dictionary is "values", which represents the data values. It can be a list, tuple or an ndarray.
+  All the other keys define the **metadata** and are optional. However, many field functionalities require the existence
+  of specific keys (see below).
+
+  The keys that might be interpreted internally can be grouped into the following categories:
+
+  Geography keys:
+
+    - "latitudes": the latitudes, iterable or ndarray
+    - "longitudes": the longitudes, iterable or ndarray
+    - "distinctLatitudes": the distinct latitudes, iterable or ndarray
+    - "distinctLongitudes": the distinct longitudes, iterable or ndarray
+
+    These keys are required to make any geography related field functionalities work
+    (e.g. :py:meth:`to_latlon`). The role of the keys depends on the grid type:
+
+    - structured grids: "latitudes" and "longitudes" can define the distinct
+      latitudes and longitudes or the full grid. The keys "distinctLatitudes" and "distinctLongitudes" are
+      only used when "latitudes" and "longitudes" are not present and in this
+      case they define the distinct latitudes and longitudes.
+    - other grids: "latitudes" and "longitudes" must have the same number of points as "values".
+
+    When other GRIB related geography keys are present, no attempt is made to check if they are consistent
+    with the grid defined by "latitudes" and "longitudes". Therefore their usage is strongly discouraged.
+
+    See: :ref:`/examples/list_of_dicts_geography.ipynb` for more details.
+
+  Parameter keys:
+
+    - "param": the parameter name, alias to "shortName" if missing. Must be a str.
+    - "shortName": the parameter name, alias to "param" if missing. Must be a str.
+
+  Temporal keys:
+
+    - "date": the date part of the forecast reference time. Must be an int as YYYYMMDD
+      (the same format as the "date" ecCodes GRIB key).
+    - "time": the time part of the forecast reference time. Must be an int as hhmm with leading zeros omitted
+      (the same format as the "time" ecCodes GRIB key).
+    - "dataDate": alias to "date"
+    - "dataTime": alias to "time"
+    - "forecast_reference_time": the forecast reference time. Must be a datetime object. If not present
+      it is automatically built from "date" and "time" or from "valid_datetime" and "step".
+    - "base_datetime": alias to "forecast_reference_time"
+    - "valid_datetime": the valid datetime. Must be a datetime object. If not present
+      it is automatically built from "forecast_reference_time" and "step".
+    - "step": the forecast step. If it is an int, it specifies the number of hours. If it is a str it must
+      use the same format as the "step" ecCodes GRIB key. Can be a timedelta object.
+    - "step_timedelta": the step timedelta. Must be a timedelta object. If not present
+      it is automatically built from "step".
+
+  Level keys:
+
+    - "level": the level value. Must be a number.
+    - "levelist": the level value. Must be a number.
+    - "typeOfLevel": the type of level. Must be a str.
+    - "levtype": the type of level. Must be a str.
+
+    These keys are supposed to be the same as the corresponding GRIB keys.
+
+  Ensemble keys:
+
+    - "number": the ensemble member number. Must be an int.
+
+  Other keys:
+
+    Other keys can be used to store additional metadata. They are not used by the field functionalities.
+
+  Further examples:
+
+      - :ref:`/examples/fields_from_dict_in_loop.ipynb`
+      - :ref:`/examples/list_of_dicts_overview.ipynb`
+      - :ref:`/examples/list_of_dicts_geography.ipynb`
 
 .. _data-sources-multi:
 

@@ -321,15 +321,15 @@ class LevelPerTypeDim(Dim):
         self.level_type_key = level_type_key
         super().__init__(owner, *args, **kwargs)
 
-    def as_coord(self, key, values, component, tensor):
-        lev_type = tensor.source[0].metadata(self.level_type_key)
+    def as_coord(self, key, values, component, source):
+        lev_type = source[0].metadata(self.level_type_key)
         if not lev_type:
             raise ValueError(f"{self.level_type_key} not found in metadata")
 
         if lev_type not in self.coords:
             from .coord import Coord
 
-            coord = Coord.make(lev_type, list(values), ds=tensor.source)
+            coord = Coord.make(lev_type, list(values), ds=source)
             self.coords[lev_type] = coord
         return lev_type, self.coords[lev_type]
 
@@ -789,7 +789,7 @@ class Dims:
         for k, v in tensor.user_coords.items():
             for d in self.dims.values():
                 d = _get(k)
-                name, coord = d.as_coord(k, v, tensor)
+                name, coord = d.as_coord(k, v, tensor.source)
                 r[name] = coord
 
         return r

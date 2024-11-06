@@ -98,9 +98,10 @@ def test_lod_geo_ll_flat(lod_ll_flat, mode):
     assert np.allclose(lon, lon_ref)
 
 
+@pytest.mark.parametrize("data", ["lod_ll_2D_all", "lod_ll_2D_ll", "lod_ll_2D_values"])
 @pytest.mark.parametrize("mode", ["list-of-dicts", "loop"])
-def test_lod_geo_ll_2D_all(lod_ll_2D_all, mode, request):
-    ds = build_lod_fieldlist(lod_ll_2D_all, mode)
+def test_lod_geo_ll_2D(request, data, mode):
+    ds = build_lod_fieldlist(request.getfixturevalue(data), mode)
 
     assert len(ds) == 6
     assert ds[0].shape == (3, 2)
@@ -137,9 +138,14 @@ def test_lod_geo_ll_2D_all(lod_ll_2D_all, mode, request):
     assert np.allclose(lon, lon_ref)
 
 
+@pytest.mark.parametrize("data", ["lod_ll_flat_invalid"])
 @pytest.mark.parametrize("mode", ["list-of-dicts", "loop"])
-def test_lod_geo_ll_2D_values(lod_ll_2D_values, mode, request):
-    ds = build_lod_fieldlist(lod_ll_2D_values, mode)
+def test_lod_geo_invalid(
+    request,
+    data,
+    mode,
+):
+    ds = build_lod_fieldlist(request.getfixturevalue(data), mode)
 
     assert len(ds) == 6
     with pytest.raises(ValueError):
