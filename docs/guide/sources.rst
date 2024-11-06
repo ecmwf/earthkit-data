@@ -510,7 +510,7 @@ list-of-dicts
 
   Other keys:
 
-    Other keys can be used to store additional metadata. They are not used by the field functionalities.
+    Other keys can be used to store additional metadata.
 
   Further examples:
 

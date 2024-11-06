@@ -70,9 +70,7 @@ def test_xr_engine_detailed_check(api):
             decode_timedelta=False,
             add_valid_time_coord=False,
         )
-    ds = ds_ek.to_xarray(
-        time_dim_mode="raw", decode_times=False, decode_timedelta=False, add_valid_time_coord=False
-    )
+
     assert ds is not None
 
     # dataset
@@ -451,3 +449,59 @@ def test_xr_engine_dtype():
 
     ds = ds_ek.to_xarray(dtype=np.float64)
     assert ds["t"].values.dtype == np.float64
+
+
+@pytest.mark.cache
+def test_xr_engine_single_field():
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = ds_ek[0]
+
+    ds = ds_ek.to_xarray(
+        time_dim_mode="raw",
+        decode_times=False,
+        decode_timedelta=False,
+        add_valid_time_coord=False,
+        squeeze=True,
+    )
+
+    lats = np.linspace(90, -90, 19)
+    lons = np.linspace(0, 350, 36)
+
+    attrs_ref = {
+        "param": "t",
+        "standard_name": "air_temperature",
+        "long_name": "Temperature",
+        "paramId": 130,
+        "class": "od",
+        "stream": "oper",
+        "levtype": "pl",
+        "type": "fc",
+        "expver": "0001",
+        "date": 20240603,
+        "time": 0,
+        "domain": "g",
+        "number": 0,
+        "levelist": 1000,
+        "Conventions": "CF-1.8",
+        "institution": "ECMWF",
+    }
+
+    assert ds.attrs == attrs_ref
+
+    data_vars = ["t"]
+
+    coords_ref_full = {
+        "latitude": lats,
+        "longitude": lons,
+    }
+
+    dims_ref_full = {
+        "latitude": 19,
+        "longitude": 36,
+    }
+
+    assert len(ds.dims) == len(dims_ref_full)
+    assert len(ds.coords) == len(coords_ref_full)
+    for k, v in coords_ref_full.items():
+        assert np.allclose(ds.coords[k].values, v)
+    assert [v for v in ds.data_vars] == data_vars
