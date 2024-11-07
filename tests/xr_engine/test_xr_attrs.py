@@ -136,8 +136,16 @@ def test_xr_dims_as_attrs(kwargs, coords, dims, attrs):
                 "attrs_mode": "fixed",
                 "variable_attrs": [
                     "shortName",
+                    "key=levtype",
+                    "namespace=parameter",
                     _get_attrs,
-                    {"edition": _get_attrs_for_key_1, "typeOfLevel": _get_attrs_for_key_2, "param": "test"},
+                    {
+                        "edition": _get_attrs_for_key_1,
+                        "typeOfLevel": _get_attrs_for_key_2,
+                        "param": "test",
+                        "mykey1": "key=levelist",
+                        "mykey2": "namespace=vertical",
+                    },
                 ],
                 "time_dim_mode": "raw",
                 "decode_times": False,
@@ -153,11 +161,21 @@ def test_xr_dims_as_attrs(kwargs, coords, dims, attrs):
             {"date": 2, "time": 2, "step": 2, "levelist": 2},
             {
                 "shortName": "t",
+                "levtype": "pl",
+                "parameter": {
+                    "centre": "ecmf",
+                    "paramId": 130,
+                    "units": "K",
+                    "name": "Temperature",
+                    "shortName": "t",
+                },
                 "gridType": "regular_ll",
                 "units": "K",
-                "edition": "1_test1",
+                "edition": "K_test1",
                 "typeOfLevel": "isobaricInhPa_test2",
                 "param": "test",
+                "mykey1": 500,
+                "mykey2": {"typeOfLevel": "isobaricInhPa", "level": 500},
             },
         ),
     ],
@@ -171,5 +189,6 @@ def test_xr_attrs_types(kwargs, coords, dims, attrs):
     compare_coords(ds, coords)
     compare_dims(ds, dims, sizes=True)
 
+    print(ds["t"].attrs)
     for k, v in attrs.items():
-        ds["t"].attrs[k] == v
+        assert ds["t"].attrs[k] == v, f"{k}"
