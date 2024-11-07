@@ -24,8 +24,7 @@ class Attr:
     Parameters
     ----------
     name : str
-        The name of the attribute. Used as a metadata key to
-        retrieve the attribute value.
+        The name of the attribute.
     """
 
     def __init__(self, name):
@@ -34,14 +33,51 @@ class Attr:
     def value(self):
         return None
 
-    def get(self, metadata):
-        return {self.name: metadata.get(self.name, default=None)}
-
     def fixed(self):
         False
 
+
+class KeyAttr(Attr):
+    """Metadata key attribute class.
+
+    Parameters
+    ----------
+    name : str
+        The name of the attribute.
+    key : str, None
+        The metadata key to retrieve the attribute value. If None,
+        the name is used as the key.
+    """
+
+    def __init__(self, name, key=None):
+        super().__init__(name)
+        self.key = key if key is not None else name
+
+    def get(self, metadata):
+        return {self.name: metadata.get(self.key, default=None)}
+
     def __repr__(self) -> str:
-        return f"Attr({self.name})"
+        return f"KeyAttr({self.name})"
+
+
+class NamespaceAttr(Attr):
+    """Namespace attribute.
+
+    Parameters
+    ----------
+    name : str
+        The name of the metadata namespace
+    """
+
+    def __init__(self, name, ns=None):
+        super().__init__(name)
+        self.ns = ns if ns is not None else name
+
+    def get(self, metadata):
+        return {self.name: metadata.as_namespace(self.ns)}
+
+    def __repr__(self) -> str:
+        return f"NamespaceAttr({self.name}, ns={self.ns})"
 
 
 class FixedAttr(Attr):
@@ -62,27 +98,14 @@ class FixedAttr(Attr):
     def value(self):
         return self._value
 
+    def get(self, metadata):
+        return self._value
+
     def fixed(self):
         return True
 
     def __repr__(self) -> str:
         return f"FixedAttr({self.name}, {self._value})"
-
-
-class NamespaceAttr(Attr):
-    """Namespace attribute.
-
-    Parameters
-    ----------
-    name : str
-        The name of the metadata namespace
-    """
-
-    def get(self, metadata):
-        return metadata.as_namespace(self.name)
-
-    def __repr__(self) -> str:
-        return f"NamespaceAttr({self.name})"
 
 
 class CallableAttr(Attr):
@@ -114,22 +137,44 @@ class CallableAttr(Attr):
 class AttrList(list):
     def __init__(self, attrs):
         attrs = ensure_iterable(attrs)
+
         for k in attrs:
-            if isinstance(k, str):
-                if k.startswith("namespace="):
-                    self.append(NamespaceAttr(k[len("namespace=") :]))
-                else:
-                    self.append(Attr(k))
-            elif callable(k):
-                self.append(CallableAttr(None, k))
-            elif isinstance(k, dict):
+            if isinstance(k, dict):
                 for k1, v1 in k.items():
-                    if callable(v1):
-                        self.append(CallableAttr(k1, v1))
-                    else:
-                        self.append(FixedAttr(k1, v1))
+                    self.append(self._make(v1, name=k1))
             else:
-                raise ValueError(f"Invalid  attribute: {k}. Must be a str, callable or dict.")
+                self.append(self._make(k))
+
+    @staticmethod
+    def _make(val, name=None):
+        if name is not None and not isinstance(name, str):
+            raise ValueError(f"Attribute name must be a string: {name=}")
+
+        if isinstance(val, Attr):
+            return val
+        elif isinstance(val, str):
+            if val.startswith("namespace="):
+                ns = val[len("namespace=") :]
+                if name is None:
+                    name = ns
+                return NamespaceAttr(name, ns=ns)
+            elif val.startswith("key="):
+                key = val[len("key=") :]
+                if name is None:
+                    name = key
+                return KeyAttr(name, key=key)
+            elif name is None:
+                name = val
+                key = val
+                return KeyAttr(val, key=key)
+            else:
+                return FixedAttr(name, val)
+        elif callable(val):
+            return CallableAttr(name, val)
+        elif name is not None:
+            return FixedAttr(name, val)
+        else:
+            raise ValueError(f"Invalid attribute: {name=} value={val}")
 
     def fixed(self):
         return [attr for attr in self if attr.fixed()]
