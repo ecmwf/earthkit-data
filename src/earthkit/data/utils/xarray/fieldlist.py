@@ -48,6 +48,7 @@ class IndexSelection(Selection):
 
 class IndexDB:
     def __init__(self, index, component):
+        # print(f"IndexDB: {index=}, {component=}")
         self._index = index if index is not None else dict()
         self._component = component if component is not None else dict()
 
@@ -56,7 +57,7 @@ class IndexDB:
         if key not in self._index:
             # # LOG.debug(f"Key={key} not found in IndexDB")
             if maker is not None:
-                self._index[key] = maker(key)[key]
+                self._index[key] = maker(key)[0][key]
             else:
                 raise KeyError(f"Could not find index for {key=}")
         return self._index[key]
@@ -102,7 +103,7 @@ class IndexDB:
 
 
 class XArrayInputFieldList(FieldList):
-    def __init__(self, fieldlist, keys=None, db=None, remapping=None, scan_only=False):
+    def __init__(self, fieldlist, keys=None, db=None, remapping=None, scan_only=False, component=True):
         super().__init__()
         self.ds = fieldlist
 
@@ -114,7 +115,7 @@ class XArrayInputFieldList(FieldList):
         if db is not None:
             self.db = db
         elif keys:
-            self.db = IndexDB(*self.unique_values(keys, component=True))
+            self.db = IndexDB(*self.unique_values(keys, component=component))
 
         assert self.db
 
@@ -225,7 +226,7 @@ class XArrayInputFieldList(FieldList):
         if component:
             return indices, components
         else:
-            return indices
+            return indices, None
 
 
 class ReleasableField:

@@ -252,6 +252,9 @@ class XarrayMixIn:
                 default value (None) expands to [] unless the ``profile`` overwrites it.
             * coord_attrs: dict, None
                 To be documented. Default is None.
+            * add_earthkit_attrs: bool, None
+                If True, add earthkit specific attributes to the dataset. Its default value
+                (None) expands to True unless the ``profile`` overwrites it.
             * rename_attrs: dict, None
                 A dictionary of attribute to rename. Default is None.
             * remapping: dict, None

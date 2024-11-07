@@ -146,6 +146,8 @@ class Profile:
             kwargs.pop("rename_attrs"),
         )
 
+        self.add_earthkit_attrs = kwargs.pop("add_earthkit_attrs")
+
         # generic
         self.decode_times = kwargs.pop("decode_times")
         self.decode_timedelta = kwargs.pop("decode_timedelta")

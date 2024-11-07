@@ -505,3 +505,23 @@ def test_xr_engine_single_field():
     for k, v in coords_ref_full.items():
         assert np.allclose(ds.coords[k].values, v)
     assert [v for v in ds.data_vars] == data_vars
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("add", [False, True])
+def test_xr_engine_add_earthkit_attrs(add):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = ds_ek[0]
+
+    ds = ds_ek.to_xarray(
+        time_dim_mode="raw",
+        decode_times=False,
+        decode_timedelta=False,
+        add_valid_time_coord=False,
+        add_earthkit_attrs=add,
+    )
+
+    if add:
+        assert "_earthkit" in ds["t"].attrs
+    else:
+        assert "_earthkit" not in ds["t"].attrs
