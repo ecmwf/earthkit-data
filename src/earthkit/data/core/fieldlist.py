@@ -781,6 +781,48 @@ class Field(Base):
             self._metadata.override(**kwargs),
         )
 
+    def to_xarray(self, *args, **kwargs):
+        """Convert the Field into an Xarray Dataset.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments passed to :obj:`FieldList.to_xarray`.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`FieldList.to_xarray`.
+
+        Returns
+        -------
+        Xarray Dataset
+
+        """
+        return self._to_fieldlist().to_xarray(*args, **kwargs)
+
+    def ls(self, *args, **kwargs):
+        r"""Generate a list like summary using a set of metadata keys.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments passed to :obj:`FieldList.ls`.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`FieldList.ls`.
+
+        Returns
+        -------
+        Pandas DataFrame
+            DataFrame with one row.
+
+        """
+        return self._to_fieldlist().ls(*args, **kwargs)
+
+    def describe(self, *args, **kwargs):
+        r"""Generate a summary of the Field."""
+        return self._to_fieldlist().describe(*args, **kwargs)
+
+    def _to_fieldlist(self):
+        return FieldList.from_fields([self])
+
     @staticmethod
     def _flatten(v):
         """Flatten the array without copying the data."
@@ -1250,8 +1292,7 @@ class FieldList(Index):
             return []
 
     def head(self, n=5, **kwargs):
-        r"""Generate a list like summary of the first ``n``
-        :obj:`GribField <data.readers.grib.codes.GribField>`\ s using a set of metadata keys.
+        r"""Generate a list like summary of the first ``n`` :obj:`Field`\ s.
         Same as calling :obj:`ls` with ``n``.
 
         Parameters
@@ -1287,8 +1328,7 @@ class FieldList(Index):
         return self.ls(n=n, **kwargs)
 
     def tail(self, n=5, **kwargs):
-        r"""Generate a list like summary of the last ``n``
-        :obj:`GribField <data.readers.grib.codes.GribField>`\ s using a set of metadata keys.
+        r"""Generate a list like summary of the last ``n`` :obj:`Field`\ s.
         Same as calling :obj:`ls` with ``-n``.
 
         Parameters

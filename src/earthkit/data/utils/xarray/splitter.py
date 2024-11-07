@@ -10,6 +10,7 @@
 import logging
 from abc import ABCMeta
 from abc import abstractmethod
+from itertools import product
 
 LOG = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ LOG = logging.getLogger(__name__)
 class Splitter(metaclass=ABCMeta):
     @staticmethod
     def grids(ds):
-        v = ds.unique_values(["md5GridSection"])
+        v, _ = ds.unique_values(["md5GridSection"])
         return v["md5GridSection"]
 
     @abstractmethod
@@ -37,7 +38,6 @@ class Splitter(metaclass=ABCMeta):
 class NoSplitter(Splitter):
     def split(self, ds, profile):
         grids = self.grids(ds)
-        # print(f"grids={grids}")
         if len(grids) != 1:
             raise ValueError(f"Expected one grid, got {len(grids)}")
 
@@ -49,20 +49,16 @@ class DimSplitter(Splitter):
     def __init__(self, split_dims):
         self.split_dims = split_dims
 
-    def split(self, ds, profile):
-        # grids = self.grids(ds)
-        from itertools import product
-
-        dims = ds.unique_values(self.split_dims)
-        # if len(grids) > 1:
-        #     dims["md5GridSection"] = grids
+    def split(self, builder):
+        ds_xr, dims = builder.prepare(self.split_dims)
 
         for x in product(*dims.values()):
             y = dict(zip(dims.keys(), x))
-            ds_sel = ds.sel(**y)
-            if len(ds_sel) == 0:
+            ds_sel = ds_xr.sel(**y)
+            ds_sort, profile = builder.parse(ds_sel, None)
+            if len(ds_sort) == 0:
                 raise ValueError(f"No field found for selection={y}")
-            yield profile.dims.to_list(), ds_sel
+            yield ds_sort, profile, y
 
 
 # class AutoSplitter(Splitter):

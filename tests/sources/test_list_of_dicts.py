@@ -48,7 +48,10 @@ def test_list_of_dicts(lod):
 
     assert ds[0].metadata("step", default=None) is None
 
-    assert ds[0].datetime() == {"base_time": datetime.datetime(2018, 8, 1, 12, 0), "valid_time": None}
+    assert ds[0].datetime() == {
+        "base_time": datetime.datetime(2018, 8, 1, 12, 0),
+        "valid_time": datetime.datetime(2018, 8, 1, 12, 0),
+    }
 
 
 if __name__ == "__main__":

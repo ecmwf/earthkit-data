@@ -48,6 +48,7 @@ class IndexSelection(Selection):
 
 class IndexDB:
     def __init__(self, index, component):
+        # print(f"IndexDB: {index=}, {component=}")
         self._index = index if index is not None else dict()
         self._component = component if component is not None else dict()
 
@@ -56,7 +57,7 @@ class IndexDB:
         if key not in self._index:
             # # LOG.debug(f"Key={key} not found in IndexDB")
             if maker is not None:
-                self._index[key] = maker(key)[key]
+                self._index[key] = maker(key)[0][key]
             else:
                 raise KeyError(f"Could not find index for {key=}")
         return self._index[key]
@@ -102,7 +103,7 @@ class IndexDB:
 
 
 class XArrayInputFieldList(FieldList):
-    def __init__(self, fieldlist, keys=None, db=None, remapping=None):
+    def __init__(self, fieldlist, keys=None, db=None, remapping=None, scan_only=False, component=True):
         super().__init__()
         self.ds = fieldlist
 
@@ -114,7 +115,7 @@ class XArrayInputFieldList(FieldList):
         if db is not None:
             self.db = db
         elif keys:
-            self.db = IndexDB(*self.unique_values(keys, component=True))
+            self.db = IndexDB(*self.unique_values(keys, component=component))
 
         assert self.db
 
@@ -135,7 +136,6 @@ class XArrayInputFieldList(FieldList):
         return len(self.ds)
 
     def make_releasable(self):
-        print("Making releasable")
         self.ds = FieldList.from_fields([ReleasableField(f) for f in self.ds])
 
     def group(self, key, values):
@@ -163,14 +163,23 @@ class XArrayInputFieldList(FieldList):
         return XArrayInputFieldList(ds, db=db, remapping=self.remapping)
 
     def order_by(self, *args, **kwargs):
+        if isinstance(self.ds, XArrayInputFieldList):
+            kwargs.pop("remapping", None)
+
         assert "remapping" not in kwargs
         assert "patches" not in kwargs
-        ds = XArrayInputFieldList(
-            self.ds.order_by(*args, remapping=self.remapping, **kwargs),
-            db=self.db,
-            remapping=self.remapping,
-        )
-        return ds
+
+        if isinstance(self.ds, XArrayInputFieldList):
+            ds = self.ds.order_by(*args, **kwargs)
+            return ds
+        else:
+            ds = self.ds.order_by(*args, remapping=self.remapping, **kwargs)
+            ds = XArrayInputFieldList(
+                ds,
+                db=self.db,
+                remapping=self.remapping,
+            )
+            return ds
 
     def unique_values(self, names, component=False):
         if isinstance(names, str):
@@ -195,7 +204,10 @@ class XArrayInputFieldList(FieldList):
 
             for k, v in vals.items():
                 v = [x for x in v if x is not None]
-                vals[k] = sorted(v)
+                if all(isinstance(x, int) for x in v):
+                    vals[k] = sorted(v)
+                else:
+                    vals[k] = sorted(v, key=str)
 
             if component and self.remapping:
                 for k, v in vals.items():
@@ -214,7 +226,7 @@ class XArrayInputFieldList(FieldList):
         if component:
             return indices, components
         else:
-            return indices
+            return indices, None
 
 
 class ReleasableField:
