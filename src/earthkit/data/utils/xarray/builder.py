@@ -65,11 +65,13 @@ class VariableBuilder:
         self.tensor = tensor
         self.remapping = remapping
 
-    def build(self):
-        attrs = {
-            "message": self.tensor.source[0].metadata().override()._handle.get_buffer(),
-        }
-        self._attrs["_earthkit"] = attrs
+    def build(self, add_earthkit_attrs=True):
+        if add_earthkit_attrs:
+            attrs = {
+                "message": self.tensor.source[0].metadata().override()._handle.get_buffer(),
+            }
+            self._attrs["_earthkit"] = attrs
+
         self._attrs.update(self.fixed_local_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
         return xarray.Variable(self.var_dims, data, attrs=self._attrs)
@@ -299,7 +301,10 @@ class BackendDataBuilder(metaclass=ABCMeta):
         xr_coords = self.coords()
 
         # build variables
-        xr_vars = {self.profile.rename_variable(k): v.build() for k, v in var_builders.items()}
+        xr_vars = {
+            self.profile.rename_variable(k): v.build(add_earthkit_attrs=self.profile.add_earthkit_attrs)
+            for k, v in var_builders.items()
+        }
 
         # build dataset
         dataset = xarray.Dataset(xr_vars, coords=xr_coords, attrs=xr_attrs)
@@ -377,7 +382,9 @@ class BackendDataBuilder(metaclass=ABCMeta):
         # LOG.debug(f"{name=} {dims=}")
 
         # First check if the dims/coords are consistent with the tensors of the previous variables
-        vals, component_vals = ds.unique_values([d.key for d in dims], component=True)
+        vals, component_vals = ds.unique_values(
+            [d.key for d in dims], component=self.profile.add_earthkit_attrs
+        )
 
         # LOG.debug(f"unique_values={vals}")
         # LOG.debug(f"ensure_dims={self.profile.dims.ensure_dims}")
@@ -526,7 +533,9 @@ class DatasetBuilder:
         # LOG.debug(f"{profile.index_keys=}")
 
         # create a new fieldlist for optimised access to unique values
-        ds_xr = XArrayInputFieldList(ds, keys=profile.index_keys, remapping=remapping)
+        ds_xr = XArrayInputFieldList(
+            ds, keys=profile.index_keys, remapping=remapping, component=profile.add_earthkit_attrs
+        )
         # LOG.debug(f"{ds.db=}")
 
         # LOG.debug(f"before update: {profile.dim_keys=}")

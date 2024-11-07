@@ -77,7 +77,7 @@ class Coord:
 
     def attrs(self, name, profile):
         attrs = profile.attrs.coord_attrs.get(name, {})
-        if self.component:
+        if profile.add_earthkit_attrs and self.component:
             attrs["_earthkit"] = {"keys": self.component[0], "values": self.component[1]}
         return attrs
 

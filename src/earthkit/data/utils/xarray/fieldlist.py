@@ -102,7 +102,7 @@ class IndexDB:
 
 
 class XArrayInputFieldList(FieldList):
-    def __init__(self, fieldlist, keys=None, db=None, remapping=None, scan_only=False):
+    def __init__(self, fieldlist, keys=None, db=None, remapping=None, scan_only=False, component=True):
         super().__init__()
         self.ds = fieldlist
 
@@ -114,7 +114,7 @@ class XArrayInputFieldList(FieldList):
         if db is not None:
             self.db = db
         elif keys:
-            self.db = IndexDB(*self.unique_values(keys, component=True))
+            self.db = IndexDB(*self.unique_values(keys, component=component))
 
         assert self.db
 
@@ -225,7 +225,7 @@ class XArrayInputFieldList(FieldList):
         if component:
             return indices, components
         else:
-            return indices
+            return indices, None
 
 
 class ReleasableField:
