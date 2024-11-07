@@ -20,6 +20,7 @@ attrs_mode: "fixed"
 attrs: []
 variable_attrs: []
 global_attrs: []
+add_earthkit_attrs: true
 rename_attrs:
   cfName: standard_name
   name: long_name

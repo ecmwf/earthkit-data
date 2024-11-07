@@ -43,6 +43,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         variable_attrs=None,
         global_attrs=None,
         coord_attrs=None,
+        add_earthkit_attrs=None,
         rename_attrs=None,
         remapping=None,
         flatten_values=None,
@@ -214,6 +215,9 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             default value (None) expands to [] unless the ``profile`` overwrites it.
         coord_attrs: dict, None
             To be documented. Default is None.
+        add_earthkit_attrs: bool, None
+            If True, add earthkit specific attributes to the dataset. Its default value
+            (None) expands to True unless the ``profile`` overwrites it.
         rename_attrs: dict, None
             A dictionary of attribute to rename. Default is None.
         remapping: dict, None
@@ -269,6 +273,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 variable_attrs=variable_attrs,
                 global_attrs=global_attrs,
                 coord_attrs=coord_attrs,
+                add_earthkit_attrs=add_earthkit_attrs,
                 rename_attrs=rename_attrs,
                 add_valid_time_coord=add_valid_time_coord,
                 add_geo_coords=add_geo_coords,
