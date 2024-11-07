@@ -117,7 +117,8 @@ class VariableBuilder:
         # TODO: do we need a strict mode here? The extra cost has to be justified
         if keys_strict:
             assert strict
-            res.update(self.tensor.source.unique_values(keys_strict))
+            v, _ = self.tensor.source.unique_values(keys_strict)
+            res.update(v)
 
         self._attrs = res
         self._attrs.update(fixed_attrs)
@@ -618,7 +619,7 @@ class SplitDatasetBuilder(DatasetBuilder):
         # LOG.debug(f"split_dims={self.split_dims}")
         ds_xr = XArrayInputFieldList(self.ds, keys=self.profile.index_keys, remapping=remapping)
 
-        vals = ds_xr.unique_values(*keys)
+        vals, _ = ds_xr.unique_values(*keys)
 
         return ds_xr, vals
 

@@ -48,6 +48,7 @@ class IndexSelection(Selection):
 
 class IndexDB:
     def __init__(self, index, component):
+        # print(f"IndexDB: {index=}, {component=}")
         self._index = index if index is not None else dict()
         self._component = component if component is not None else dict()
 
@@ -56,7 +57,7 @@ class IndexDB:
         if key not in self._index:
             # # LOG.debug(f"Key={key} not found in IndexDB")
             if maker is not None:
-                self._index[key] = maker(key)[key]
+                self._index[key] = maker(key)[0][key]
             else:
                 raise KeyError(f"Could not find index for {key=}")
         return self._index[key]
