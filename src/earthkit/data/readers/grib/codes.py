@@ -312,9 +312,10 @@ class GribField(Field):
             Set the ``bitsPerValue`` GRIB key in the generated GRIB message. When
             None the ``bitsPerValue`` stored in the metadata will be used.
         """
-        from earthkit.data.writers import write
+        self.handle.write(f)
+        # from earthkit.data.writers import write
 
-        write(f, self, **kwargs)
+        # write(f, self, **kwargs)
 
     def message(self):
         r"""Return a buffer containing the encoded message.
