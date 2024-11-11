@@ -59,45 +59,61 @@ class Combined:
 
 
 class GribEncoder(Encoder):
-    def __init__(self, template=None, **kwargs):
-        self.template = template
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self._bbox = {}
-        self.kwargs = kwargs
 
     @normalize_grib_keys
     @normalize("date", "date")
     def _normalize_kwargs_names(self, **kwargs):
         return kwargs
 
+    def _get_handle(self, data, values, metadata, template, compulsory):
+        # print(
+        #     f"Data: {data}    Values: {values}    Metadata: {metadata}    Template: {template}    Compulsory: {compulsory}"
+        # )
+        if data is not None and values and template:
+            raise ValueError("Cannot provide data, values and template together")
+
+        # write values from data to template
+        if values is None and data and template:
+            values = data.values
+
+        if template is None:
+            if data is not None:
+                handle = data.handle.clone()
+            handle = self.handle_from_metadata(values, metadata, compulsory)
+        else:
+            handle = template.handle.clone()
+
+        return handle
+
     def encode(
         self,
-        *,
+        data=None,
         values=None,
         check_nans=False,
         metadata={},
         template=None,
         return_bytes=False,
         missing_value=9999,
-        **kwargs,
+        # **kwargs,
     ):
         # Make a copy as we may modify it
-        md = self._normalize_kwargs_names(**self.kwargs)
+        md = self._normalize_kwargs_names(**self.metadata)
         md.update(self._normalize_kwargs_names(**metadata))
-        md.update(self._normalize_kwargs_names(**kwargs))
-
+        # md.update(self._normalize_kwargs_names(**kwargs))
         metadata = md
-
-        print("metadata", metadata)
-
-        compulsory = (("date", "referenceDate"), ("param", "paramId", "shortName"))
 
         if template is None:
             template = self.template
 
-        if template is None:
-            handle = self.handle_from_metadata(values, metadata, compulsory)
-        else:
-            handle = template.handle.clone()
+        if data is not None and values is None and template is None and not check_nans and not metadata:
+            return data.handle
+
+        compulsory = (("date", "referenceDate"), ("param", "paramId", "shortName"))
+
+        handle = self._get_handle(data, values, metadata, template, compulsory)
 
         # print("->", metadata)
         self.update_metadata(handle, metadata, compulsory)
@@ -209,7 +225,7 @@ class GribEncoder(Encoder):
             metadata["typeOfLevel"] = levtype_remap[v]
 
     def handle_from_metadata(self, values, metadata, compulsory):
-        from .codes import GribCodesHandle  # Lazy loading of eccodes
+        from earthkit.data.readers.grib.codes import GribCodesHandle  # Lazy loading of eccodes
 
         if len(values.shape) == 1:
             sample = self._gg_field(values, metadata)

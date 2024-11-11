@@ -1591,6 +1591,10 @@ class FieldList(Index):
         for s in self:
             s.write(f, **kwargs)
 
+    def to_target(self, target, **kwargs):
+        for f in self:
+            target.write(f, **kwargs)
+
     def to_tensor(self, *args, **kwargs):
         from earthkit.data.indexing.tensor import FieldListTensor
 

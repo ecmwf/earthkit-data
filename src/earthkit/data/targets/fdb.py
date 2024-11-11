@@ -17,7 +17,8 @@ LOG = logging.getLogger(__name__)
 
 
 class FDBTarget(Target):
-    def __init__(self, fdb):
+    def __init__(self, fdb, **kwargs):
+        super().__init__(**kwargs)
         self._fdb = fdb
 
     @property
@@ -28,10 +29,21 @@ class FDBTarget(Target):
             self._fdb = pyfdb.FDB()
         return self._fdb
 
-    def write(self, data, data_format=None, encoder=None, **kwargs):
-        encoder = _find_encoder(data, encoder, data_format, **kwargs)
+    def write(self, data=None, encoder=None, template=None, **kwargs):
+        from earthkit.data.core.fieldlist import FieldList
 
-        d = encoder.encode(data, **kwargs)
-        self.fdb.archive(d.message())
+        if encoder is None:
+            encoder = self._coder
+
+        if template is None:
+            template = self.template
+
+        if isinstance(data, FieldList):
+            data.to_target(self, encoder=encoder, template=template, **kwargs)
+        else:
+            encoder = _find_encoder(data, encoder, template=template, **kwargs)
+
+            d = encoder.encode(data)
+            self.fdb.archive(d.message())
 
     # fdb.flush()

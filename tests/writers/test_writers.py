@@ -16,11 +16,11 @@ from earthkit.data.testing import earthkit_examples_file
 
 
 def test_writers_core():
+    from earthkit.data.targets.file import FileTarget
     from earthkit.data.writers import Target
     from earthkit.data.writers import find_target
     from earthkit.data.writers import to_target
     from earthkit.data.writers import write
-    from earthkit.data.writers.file import FileTarget
 
     assert Target
     assert find_target

@@ -19,7 +19,9 @@ LOG = logging.getLogger(__name__)
 
 
 class FileTarget(Target):
-    def __init__(self, file, split_output=False, template=None, encoder=None, append=False, **kwargs):
+    def __init__(self, file, split_output=False, append=False, **kwargs):
+        super().__init__(**kwargs)
+
         self._files = {}
         self.fileobj = None
         self.filename = None
@@ -36,10 +38,6 @@ class FileTarget(Target):
         else:
             self.split_output = None
 
-        self._coder = encoder
-
-        # self._coder = GribCoder(template=template, **kwargs)
-
     def close(self):
         for f in self._files.values():
             f.close()
@@ -50,18 +48,7 @@ class FileTarget(Target):
     def __exit__(self, exc_type, exc_value, trace):
         self.close()
 
-    # @abstractmethod
-    # def write(
-    #     self,
-    #     values,
-    #     check_nans=False,
-    #     metadata={},
-    #     template=None,
-    #     **kwargs,
-    # ):
-    #     pass
-
-    def f(self, handle):
+    def _f(self, handle):
         if self.fileobj:
             return self.fileobj, None
 
@@ -76,41 +63,27 @@ class FileTarget(Target):
 
         return self._files[path], path
 
-    def write(self, data, data_format=None, encoder=None, **kwargs):
+    def write(self, data=None, encoder=None, template=None, **kwargs):
         from earthkit.data.core.fieldlist import FieldList
 
+        if encoder is None:
+            encoder = self._coder
+
+        if template is None:
+            template = self.template
+
         if isinstance(data, FieldList):
-            # if encoder is None:
-            #     encoder = self._coder
-
-            # encoder = _find_encoder(data, encoder, data_format, **kwargs)
-
-            # print("encoder", encoder)
-            # f, path = self.f(encoder)
-
-            self._write_fieldlist(data, encoder, data_format, **kwargs)
+            data.to_target(self, encoder=encoder, template=template, **kwargs)
         else:
             if encoder is None:
                 encoder = self._coder
 
-            encoder = _find_encoder(data, encoder, data_format, **kwargs)
+            encoder = _find_encoder(data, encoder, template=template, **kwargs)
+            # print("encoder", encoder)
 
-            f, _ = self.f(encoder)
+            f, _ = self._f(encoder)
             data = encoder.encode(data)
             data.write(f)
-
-    def _write_fieldlist(self, data, encoder, data_format, **kwargs):
-        if encoder is None:
-            encoder = self._coder
-
-        encoder = _find_encoder(data[0], encoder, data_format, **kwargs)
-
-        print("encoder", encoder)
-        f, _ = self.f(encoder)
-
-        for field in data:
-            d = encoder.encode(template=field)
-            d.write(f)
 
 
 Target = FileTarget

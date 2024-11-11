@@ -13,8 +13,6 @@ import re
 from abc import ABCMeta
 from abc import abstractmethod
 from importlib import import_module
-from io import IOBase
-from types import UnionType
 
 from earthkit.data.decorators import locked
 
@@ -34,18 +32,21 @@ class DataPresenter:
         self.data.write(target.f)
 
 
-class Encoder:
-    def __init__(self, template=None, **kwargs):
-        pass
+class Encoder(metaclass=ABCMeta):
+    def __init__(self, template=None, metadata=None, **kwargs):
+        self.template = template
+        self.metadata = metadata or {}
+        self.kwargs = kwargs
 
+    @abstractmethod
     def encode(
         self,
-        data,
+        data=None,
         values=None,
         check_nans=False,
         metadata={},
         template=None,
-        return_bytes=False,
+        # return_bytes=False,
         missing_value=9999,
         **kwargs,
     ):
@@ -53,7 +54,9 @@ class Encoder:
 
 
 class DefaultEncoder(Encoder):
-    def encode(self, data, **kwargs):
+    def encode(self, data=None, **kwargs):
+        if data is None:
+            raise ValueError("No data to encode")
         return data
 
 
@@ -73,29 +76,59 @@ def _encoders():
                         w = getattr(module, "Encoder")
                         # _ENCODERS[w.DATA_FORMAT] = w
                         _ENCODERS[name] = w
-                except Exception:
+                except Exception as e:
                     LOG.exception("Error loading encoder %s", name)
 
     return _ENCODERS
 
 
-def _find_encoder(data, encoder=None, data_format=None, **kwargs):
-    if data_format is not None and not isinstance(data_format, str):
-        raise ValueError(f"data_format must be a str or None, got {data_format=}")
+def _get_encoder(name, data_format=None):
+    if data_format is not None:
+        combined_name = f"{data_format}_to_{name}"
+        r = _encoders().get(combined_name, None)
+        if r:
+            return r
+    # print(f"{name=}, {data_format=}")
+    r = _encoders().get(name, None)
+    if r is None:
+        raise ValueError(f"Unknown encoder {name=} {data_format=}")
+    return r
 
-    if encoder is None and isinstance(data_format, str):
-        encoder = data_format
 
-    if hasattr(data, "metadata"):
-        encoder = data.metadata().data_format()
+def _find_encoder(data, encoder=None, **kwargs):
+    # if data_format is not None and not isinstance(data_format, str):
+    #     raise ValueError(f"data_format must be a str or None, got {data_format=}")
 
-    if isinstance(encoder, str):
-        if encoder not in _encoders():
-            raise ValueError(f"Unknown encoder={encoder}")
-        encoder = _encoders()[encoder](data, **kwargs)
+    # print(f"_encoders()={_encoders()}")
 
-    if encoder is None:
-        encoder = DefaultEncoder()
+    if not isinstance(encoder, Encoder):
+        data_format = None
+        if data is not None:
+            if hasattr(data, "metadata"):
+                data_format = data.metadata().data_format()
+                if data_format:
+                    if encoder is None:
+                        encoder = data_format
+                        data_format = None
+                    elif encoder == data_format:
+                        data_format = None
+        elif encoder is None:
+            raise ValueError("No data or encoder")
+
+        # print(f"{data=}, {encoder=}, {data_format=}")
+
+        if encoder is None:
+            raise ValueError(f"Could not create encoder for {data=}, {encoder=}")
+        if not isinstance(encoder, str):
+            raise ValueError(f"Unsupported encoder={encoder}. Must be a str or Encoder")
+
+        encoder = _get_encoder(encoder, data_format=data_format)
+        assert encoder is not None
+        # print("ENCODER kwargs", kwargs)
+        encoder = encoder(**kwargs)
+
+    # if encoder is None:
+    #     encoder = DefaultEncoder()
 
     if isinstance(encoder, Encoder):
         return encoder
