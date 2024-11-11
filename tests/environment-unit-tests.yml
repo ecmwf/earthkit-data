@@ -25,7 +25,7 @@ dependencies:
 - jsonschema
 - pip:
   - multiurl>=0.3.0
-  - git+https://github.com/ecmwf/pyfdb
+  - pyfdb>=0.1.0
   - ecmwf-opendata>=0.3.3
   - polytope-client>=0.7.4
   - earthkit-meteo>=0.0.1
