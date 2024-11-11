@@ -25,12 +25,18 @@ LOG = logging.getLogger(__name__)
 
 
 class FDBSource(Source):
-    def __init__(self, *args, stream=True, **kwargs):
+    def __init__(self, *args, stream=True, config=None, userconfig=None, **kwargs):
         super().__init__()
 
         for k in ["group_by", "batch_size"]:
             if k in kwargs:
                 raise ValueError(f"Invalid argument '{k}' for FDBSource. Deprecated since 0.8.0.")
+
+        self._fdb_kwargs = {}
+        if config is not None:
+            self._fdb_kwargs["config"] = config
+        if userconfig is not None:
+            self._fdb_kwargs["userconfig"] = userconfig
 
         self._stream_kwargs = dict()
         for k in ["read_all"]:
@@ -44,6 +50,10 @@ class FDBSource(Source):
             self.request.update(a)
         self.request.update(kwargs)
 
+        if not (config or userconfig):
+            self._check_env()
+
+    def _check_env(self):
         fdb_home = os.environ.get("FDB_HOME", None)
         fdb_conf = os.environ.get("FDB5_CONFIG", None)
         if fdb_home is None and fdb_conf is None:
@@ -54,21 +64,23 @@ class FDBSource(Source):
             )
 
     def mutate(self):
+        fdb = pyfdb.FDB(**self._fdb_kwargs)
         if self.stream:
-            stream = pyfdb.retrieve(self.request)
+            stream = fdb.retrieve(self.request)
             return StreamSource(stream, **self._stream_kwargs)
         else:
-            return FDBFileSource(self.request)
+            return FDBFileSource(fdb, self.request)
 
 
 class FDBFileSource(FileSource):
-    def __init__(self, request):
+    def __init__(self, fdb, request):
         super().__init__()
+        self.fdb = fdb
         self.path = self._retrieve(request)
 
     def _retrieve(self, request):
         def retrieve(target, request):
-            with open(target, "wb") as o, pyfdb.retrieve(request) as i:
+            with open(target, "wb") as o, self.fdb.retrieve(request) as i:
                 shutil.copyfileobj(i, o)
 
         return self.cache_file(

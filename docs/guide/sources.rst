@@ -691,12 +691,14 @@ ecmwf-open-data
 fdb
 ---
 
-.. py:function:: from_source("fdb", *args, stream=True, read_all=False, **kwargs)
+.. py:function:: from_source("fdb", *args, config=None, userconfig=None, stream=True, read_all=False, **kwargs)
   :noindex:
 
   The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
 
   :param tuple *args: positional arguments specifying the request as a dict
+  :param dict,str config: the FDB configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 0.11.0*
+  :param dict,str userconfig: the FDB user configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 0.11.0*
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
   :param bool read_all: if ``True``, all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :param dict **kwargs: other keyword arguments specifying the request
