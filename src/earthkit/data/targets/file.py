@@ -86,4 +86,4 @@ class FileTarget(Target):
             data.write(f)
 
 
-Target = FileTarget
+target = FileTarget

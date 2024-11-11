@@ -66,8 +66,8 @@ def _targets():
                 name, _ = os.path.splitext(path)
                 try:
                     module = import_module(f".{name}", package=__name__)
-                    if hasattr(module, "Target"):
-                        w = getattr(module, "Target")
+                    if hasattr(module, "target"):
+                        w = getattr(module, "target")
                         # _TARGETS[w.DATA_FORMAT] = w
                         _TARGETS[name] = w
                 except Exception:

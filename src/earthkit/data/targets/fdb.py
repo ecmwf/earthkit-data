@@ -17,7 +17,7 @@ LOG = logging.getLogger(__name__)
 
 
 class FDBTarget(Target):
-    def __init__(self, fdb, config=None, **kwargs):
+    def __init__(self, fdb=None, config=None, **kwargs):
         super().__init__(**kwargs)
         self._fdb = fdb
         self.config = config or {}
@@ -45,7 +45,9 @@ class FDBTarget(Target):
             encoder = _find_encoder(data, encoder, template=template, **kwargs)
 
             d = encoder.encode(data)
-            self.fdb.archive(d.get_message())
+            self.fdb.archive(d.get_buffer())
 
     def flush(self):
         self.fdb.flush()
+
+target = FDBTarget
