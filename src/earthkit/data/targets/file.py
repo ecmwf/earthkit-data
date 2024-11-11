@@ -72,17 +72,21 @@ class FileTarget(Target):
         if template is None:
             template = self.template
 
+        # kwargs = dict(**kwargs)
+        # kwargs["template"] = template
+
         if isinstance(data, FieldList):
             data.to_target(self, encoder=encoder, template=template, **kwargs)
         else:
             if encoder is None:
                 encoder = self._coder
 
-            encoder = _find_encoder(data, encoder, template=template, **kwargs)
+            # this can consume kwargs
+            encoder = _find_encoder(data, encoder)
             # print("encoder", encoder)
 
             f, _ = self._f(encoder)
-            data = encoder.encode(data)
+            data = encoder.encode(data, template=template, **kwargs)
             data.write(f)
 
 

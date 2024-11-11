@@ -82,7 +82,8 @@ class GribEncoder(Encoder):
         if template is None:
             if data is not None:
                 handle = data.handle.clone()
-            handle = self.handle_from_metadata(values, metadata, compulsory)
+            else:
+                handle = self.handle_from_metadata(values, metadata, compulsory)
         else:
             handle = template.handle.clone()
 

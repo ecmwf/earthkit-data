@@ -125,7 +125,8 @@ def _find_encoder(data, encoder=None, **kwargs):
         encoder = _get_encoder(encoder, data_format=data_format)
         assert encoder is not None
         # print("ENCODER kwargs", kwargs)
-        encoder = encoder(**kwargs)
+        encoder = encoder()
+        kwargs = {}
 
     # if encoder is None:
     #     encoder = DefaultEncoder()
