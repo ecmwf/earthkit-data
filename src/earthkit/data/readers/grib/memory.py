@@ -165,7 +165,7 @@ class GribFieldInMemory(GribField):
     def _release(self):
         self._handle = None
 
-    def copy(self, **kwargs):
+    def copy_(self, **kwargs):
         return NewGribFieldInMemory(self, **kwargs)
 
 

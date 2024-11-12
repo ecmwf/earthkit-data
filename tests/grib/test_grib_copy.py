@@ -26,7 +26,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
-def test_grib_copy_metadata(fl_type):
+def test_grib_clone_metadata(fl_type):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     def _func1(field, key, original_metadata):
@@ -45,7 +45,7 @@ def test_grib_copy_metadata(fl_type):
     # field
     # ---------------
 
-    f = ds_ori[0].copy(
+    f = ds_ori[0].clone(
         param="q",
         levelist=_func1,
         mars_area=_func2,
@@ -79,7 +79,7 @@ def test_grib_copy_metadata(fl_type):
     # write back to grib
     # we can only have ecCodes keys
     with temp_file() as tmp:
-        f = ds_ori[0].copy(
+        f = ds_ori[0].clone(
             param="q",
             levelist=_func1,
         )
@@ -95,14 +95,14 @@ def test_grib_copy_metadata(fl_type):
     # field - repeated use
     # ---------------------
 
-    f = ds_ori[0].copy(
+    f = ds_ori[0].clone(
         param="q",
         levelist=_func1,
         mars_area=_func2,
         name=_func3,
     )
 
-    f = f.copy(param="pt", levelist=_func4)
+    f = f.clone(param="pt", levelist=_func4)
 
     assert f.metadata("param") == "pt"
     assert f.metadata("shortName") == "t"
@@ -121,7 +121,7 @@ def test_grib_copy_metadata(fl_type):
 
     fields = []
     for i in range(2):
-        f = ds_ori[i].copy(
+        f = ds_ori[i].clone(
             param="q",
             levelist=_func1,
         )
@@ -155,7 +155,7 @@ def test_grib_copy_metadata(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
-def test_grib_copy_values(fl_type):
+def test_grib_clone_values(fl_type):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -164,7 +164,7 @@ def test_grib_copy_values(fl_type):
     # field
     # ---------------
 
-    f = ds_ori[0].copy(values=vals_ori + 1)
+    f = ds_ori[0].clone(values=vals_ori + 1)
 
     assert f.metadata("param") == "t"
     assert f.metadata("shortName") == "t"
@@ -190,8 +190,8 @@ def test_grib_copy_values(fl_type):
     # field - repeated use
     # ---------------------
 
-    f = ds_ori[0].copy(values=vals_ori + 1)
-    f = f.copy(values=vals_ori + 2)
+    f = ds_ori[0].clone(values=vals_ori + 1)
+    f = f.clone(values=vals_ori + 2)
 
     assert f.metadata("param") == "t"
     assert f.metadata("shortName") == "t"
@@ -208,7 +208,7 @@ def test_grib_copy_values(fl_type):
 
     fields = []
     for i in range(2):
-        f = ds_ori[i].copy(values=vals_ori + i + 1)
+        f = ds_ori[i].clone(values=vals_ori + i + 1)
         fields.append(f)
 
     ds = FieldList.from_fields(fields)
@@ -243,7 +243,7 @@ def test_grib_copy_values(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
-def test_grib_copy_combined(fl_type):
+def test_grib_clone_combined(fl_type):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -258,7 +258,7 @@ def test_grib_copy_combined(fl_type):
     # field
     # ---------------
 
-    f = ds_ori[0].copy(
+    f = ds_ori[0].clone(
         values=vals_ori + 1,
         param="q",
         levelist=_func1,
@@ -288,12 +288,12 @@ def test_grib_copy_combined(fl_type):
     # field - repeated use
     # ---------------------
 
-    f = ds_ori[0].copy(
+    f = ds_ori[0].clone(
         values=vals_ori + 1,
         param="q",
         levelist=_func1,
     )
-    f = f.copy(values=vals_ori + 2, param="pt", levelist=_func2)
+    f = f.clone(values=vals_ori + 2, param="pt", levelist=_func2)
 
     assert f.metadata("param") == "pt"
     assert f.metadata("shortName") == "t"
@@ -312,7 +312,7 @@ def test_grib_copy_combined(fl_type):
 
     fields = []
     for i in range(2):
-        f = ds_ori[i].copy(
+        f = ds_ori[i].clone(
             values=vals_ori + i + 1,
             param="q",
             levelist=_func1,
@@ -360,10 +360,20 @@ def test_grib_copy_to_field(fl_type):
     # field
     # ---------------
 
-    f = ds_ori[0].to_field(
-        values=vals_ori + 1,
-        shortName="q",
-        level=600,
+    md = (
+        ds_ori[0]
+        .metadata()
+        .override(
+            shortName="q",
+            level=600,
+        )
+    )
+
+    f = ds_ori[0].copy(
+        vals_ori + 1,
+        md,
+        # shortName="q",
+        # level=600,
     )
 
     assert isinstance(f, ArrayField)
@@ -393,10 +403,19 @@ def test_grib_copy_to_field(fl_type):
 
     fields = []
     for i in range(2):
-        f = ds_ori[i].to_field(
-            values=vals_ori + i + 1,
-            shortName="q",
-            level=600,
+        md = (
+            ds_ori[i]
+            .metadata()
+            .override(
+                shortName="q",
+                level=600,
+            )
+        )
+        f = ds_ori[i].copy(
+            vals_ori + i + 1,
+            md,
+            # shortName="q",
+            # level=600,
         )
         assert isinstance(f, ArrayField)
         fields.append(f)

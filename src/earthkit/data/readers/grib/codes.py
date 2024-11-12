@@ -325,7 +325,7 @@ class GribField(Field):
         """
         return self.handle.get_buffer()
 
-    def copy(self, **kwargs):
+    def clone(self, **kwargs):
         return NewGribField(self, **kwargs)
 
 
