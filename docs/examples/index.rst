@@ -137,6 +137,7 @@ Xarray engine
     xarray_engine_field_dims.ipynb
     xarray_engine_to_grib.ipynb
     xarray_engine_split.ipynb
+    xarray_engine_seasonal.ipynb
 
 
 Miscellaneous
