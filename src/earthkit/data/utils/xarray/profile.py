@@ -247,6 +247,7 @@ class Profile:
 
     @classmethod
     def to_docs(cls, name):
+        """Used to generate documentation"""
         import copy
 
         if name is None:
