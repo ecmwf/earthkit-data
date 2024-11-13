@@ -125,17 +125,17 @@ class NewFieldMetadataWrapper:
 
 
 class NewFieldWrapper:
-    def __init__(self, field, values=None, metadata=None):
+    def __init__(self, field, values=None, **kwargs):
         self._field = field
         self.__values = values
 
-        if values is None and metadata is None:
-            raise ValueError("values and metadata cannot be both None")
+        if values is None and not kwargs:
+            raise ValueError("either values or kwargs must be provided")
 
-        if metadata:
+        if kwargs:
             from earthkit.data.core.metadata import WrappedMetadata
 
-            self.__metadata = WrappedMetadata(field._metadata, extra=metadata, owner=field)
+            self.__metadata = WrappedMetadata(field._metadata, extra=kwargs, owner=field)
         else:
             self.__metadata = field._metadata
 

@@ -1773,7 +1773,7 @@ class FieldList(Index):
         dtype('float32')
 
         """
-        return self.from_fields([f.to_field(array_backend=array_backend, **kwargs) for f in self])
+        return self.from_fields([f.copy(array_backend=array_backend, **kwargs) for f in self])
 
     def cube(self, *args, **kwargs):
         from earthkit.data.indexing.cube import FieldCube
