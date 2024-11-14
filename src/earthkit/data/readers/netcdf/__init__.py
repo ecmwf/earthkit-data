@@ -21,9 +21,9 @@ class NetCDFFieldListReader(NetCDFFieldListFromFile, Reader):
     def __repr__(self):
         return "NetCDFFieldListReader(%s)" % (self.path,)
 
-    # def mutate_source(self):
-    #     # A NetCDFReader is a source itself
-    #     return self
+    def mutate_source(self):
+        # A NetCDFReader is a source itself
+        return self
 
 
 class NetCDFFieldListUrlReader(NetCDFFieldListFromURL, Reader):
