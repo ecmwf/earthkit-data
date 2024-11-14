@@ -7,7 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import mimetypes
 from functools import cached_property
 
 import numpy as np
@@ -213,7 +212,17 @@ class GeoTIFFReader(GeoTIFFFieldList, Reader):
         return self
 
 
-def reader(source, path, **kwargs):
-    kind, _ = mimetypes.guess_type(path)
-    if kind == "image/tiff":
+def _match_magic(magic):
+    if magic is not None:
+        # https://docs.ogc.org/is/19-008r4/19-008r4.html#_tiff_core_test
+        # Bytes 0-1: 'II' (little endian) or 'MM' (big endian)
+        # Bytes 2-3: 42 as short in the corresponding byte order
+        # Bytes 4-7: offset to first image file directory
+        # ASCII: I = 73, M = 77, * = 42
+        return len(magic) >= 8 and magic[:4] in {b"II*\x00", b"MM\x00*"}
+    return False
+
+
+def reader(source, path, *, magic=None, **kwargs):
+    if _match_magic(magic):
         return GeoTIFFReader(source, path)
