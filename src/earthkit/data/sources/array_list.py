@@ -40,8 +40,8 @@ class ArrayField(Field):
             metadata = UserMetadata(metadata, values=array)
 
         # TODO: this solution is questionable due to performance reasons
-        # if metadata is not None:
-        #     metadata = metadata._hide_internal_keys()
+        if metadata is not None:
+            metadata = metadata._hide_internal_keys()
 
         self._metadata_ = metadata
         self._array_ = array

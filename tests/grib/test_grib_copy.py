@@ -370,10 +370,8 @@ def test_grib_copy_to_field(fl_type):
     )
 
     f = ds_ori[0].copy(
-        vals_ori + 1,
-        md,
-        # shortName="q",
-        # level=600,
+        values=vals_ori + 1,
+        metadata=md,
     )
 
     assert isinstance(f, ArrayField)
@@ -412,10 +410,8 @@ def test_grib_copy_to_field(fl_type):
             )
         )
         f = ds_ori[i].copy(
-            vals_ori + i + 1,
-            md,
-            # shortName="q",
-            # level=600,
+            values=vals_ori + i + 1,
+            metadata=md,
         )
         assert isinstance(f, ArrayField)
         fields.append(f)

@@ -255,7 +255,7 @@ class ForcingField(Field):
             values = values.astype(dtype)
         return values
 
-    def copy(self, **kwargs):
+    def clone(self, **kwargs):
         return NewForcingField(self, **kwargs)
 
     def __repr__(self):

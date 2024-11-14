@@ -295,7 +295,7 @@ class XArrayField(Field):
 
         return tidy(self._ds[self._ds[self.variable].grid_mapping].attrs)
 
-    def copy(self, **kwargs):
+    def clone(self, **kwargs):
         return NewXarrayField(self, **kwargs)
 
 

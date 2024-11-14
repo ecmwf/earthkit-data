@@ -629,127 +629,6 @@ class Field(Base):
         else:
             return self._metadata.as_namespace(None)
 
-    @abstractmethod
-    def clone(self, values=None, **kwargs):
-        r"""Create a new :class:`Field` the with updated values and metadata.
-
-        Parameters
-        ----------
-        values: array-like or None
-            The values to be stored in the new :class:`Field`. When it is ``None`` the values
-            will be accessed via the original field.
-        **kwargs: dict, optional
-            Keys and values to update the metadata with. Metadata values can also be ``callables``
-            with the following positional arguments: original_field, key, original_metadata.
-            The new :class:`Field` will contain a reference to the original metadata object and
-            keys not present in ``kwargs`` will be accessed from the original field.
-
-        Returns
-        -------
-        :class:`Field`
-            The new field with updated values and metadata keeping a
-            reference to the original field.
-
-        Raises
-        ------
-        ValueError
-            If ``values`` and ``kwargs`` are both unset.
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-
-        """
-        self.not_implemented()
-        # if values is None and not kwargs:
-        #     raise ValueError("clone: values or kwargs must be provided")
-        # return self._clone(values=values, metadata=metadata)
-
-        # from earthkit.data.core.metadata import Metadata
-        # from earthkit.data.sources.array_list import ArrayField
-        # from earthkit.data.sources.array_list import WrappedArrayField
-
-        # full_copy = values is None and metadata is None and not kwargs
-        # if full_copy:
-        #     values = self.to_array(
-        #         flatten=flatten if flatten is not None else False,
-        #         dtype=dtype,
-        #         array_backend=array_backend,
-        #     )
-        #     return ArrayField(self.to_array(), self._metadata)
-
-        # if isinstance(metadata, Metadata):
-        #     if values is not None:
-        #         return ArrayField(values, metadata)
-        #     else:
-        #         return WrappedArrayField(self, metadata)
-
-        # if metadata is None:
-        #     metadata = dict(**kwargs)
-        # elif not isinstance(metadata, dict):
-        #     raise ValueError(f"clone: unsupported metadata type={type(metadata)}")
-
-        # return self._clone(values=values, metadata=metadata)
-
-        # if metadata is None and kwargs:
-        #     metadata = WrappedMetadata(self._metadata, owner=self, extra=kwargs)
-        # elif isinstance(metadata, dict):
-        #     metadata = WrappedMetadata(self._metadata, owner=self, extra=metadata)
-
-        # wrap = False
-
-        # if metadata is None:
-        #     if kwargs:
-        #         metadata = WrappedMetadata(self._metadata, owner=self, extra=kwargs)
-        #     else:
-        #         metadata = self._metadata
-        # elif isinstance(metadata, dict):
-        #     metadata = WrappedMetadata(self._metadata, owner=self, extra=metadata)
-        # elif isinstance(metadata, Metadata):
-        #     metadata = metadata
-
-        # if values is not None:
-
-        # print("META", metadata)
-
-        # if values is None:
-        #     if flatten is None and dtype is None and array_backend is None:
-        #         wrap = True
-        #     else:
-        #         values = self.to_array(
-        #             flatten=flatten if flatten is not None else False,
-        #             dtype=dtype,
-        #             array_backend=array_backend,
-        #         )
-        # if wrap:
-        #     return WrappedArrayField(self, metadata)
-        # else:
-        #     return ArrayField(values, metadata)
-
-    # def copy(self, values=None, flatten=False, dtype=None, array_backend=None, metadata=None, **kwargs):
-    #     from earthkit.data.sources.array_list import ArrayField
-
-    #     if values is None:
-    #         values = self.to_array(
-    #             flatten=flatten,
-    #             dtype=dtype,
-    #             array_backend=array_backend,
-    #         )
-    #     if metadata is None:
-    #         metadata = self._metadata.override(**kwargs)
-    #     elif isinstance(metadata, dict):
-    #         metadata = self._metadata.override(**metadata)
-
-    #     return ArrayField(
-    #         values,
-    #         metadata,
-    #     )
-
-    @abstractmethod
-    def _clone(self, values=None, metadata=None):
-        self._not_implemented()
-
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
 
@@ -840,41 +719,36 @@ class Field(Base):
 
         # return {name: metadata(name) for name in names}
 
-    # def copy(self, values=None, flatten=False, dtype=None, array_backend=None):
-    #     from earthkit.data.sources.array_list import ArrayField
+    @abstractmethod
+    def clone(self, *, values=None, **kwargs):
+        r"""Create a new :class:`Field` the with updated values and metadata.
 
-    #     if values is None:
-    #         values = self.to_array(
-    #             flatten=flatten,
-    #             dtype=dtype,
-    #             array_backend=array_backend,
-    #         )
-    #     if metadata is None:
-    #         metadata = self._metadata.override(**kwargs)
-    #     elif isinstance(metadata, dict):
-    #         metadata = self._metadata.override(**metadata)
+        Parameters
+        ----------
+        values: array-like or None
+            The values to be stored in the new :class:`Field`. When it is ``None`` the resulting
+            :class:`Field` will access the values from the original field.
+        **kwargs: dict, optional
+            Keys and values to update the metadata with. Metadata values can also be ``callables``
+            with the following positional arguments: original_field, key, original_metadata.
+            The new :class:`Field` will contain a reference to the original metadata object and
+            keys not present in ``kwargs`` will be accessed from the original field.
 
-    #     return ArrayField(
-    #         values,
-    #         metadata,
-    #     )
+        Returns
+        -------
+        :class:`Field`
+            The new field with updated values and metadata keeping a
+            reference to the original field.
 
-    # def copy(self, values=None, flatten=None, dtype=None, array_backend=None, metadata=None):
-    #     from earthkit.data.core.metadata import Metadata
+        Raises
+        ------
+        ValueError
+            If ``values`` and ``kwargs`` are both unset.
 
-    #     if values is None:
-    #         values = self.to_array()
+        """
+        self.not_implemented()
 
-    #     if metadata is None:
-    #         metadata = self._metadata
-    #     if not isinstance(metadata, Metadata):
-    #         raise ValueError(f"copy: metadata must be a Metadata object, got {type(metadata)}")
-
-    #     return self.clone(
-    #         values=values, flatten=flatten, dtype=dtype, array_backend=array_backend, metadata=metadata
-    #     )
-
-    def copy(self, values=None, flatten=False, dtype=None, array_backend=None, metadata=None):
+    def copy(self, *, values=None, flatten=False, dtype=None, array_backend=None, metadata=None):
         r"""Create a new :class:`ArrayField` by copying the values and metadata.
 
         Parameters
@@ -898,7 +772,7 @@ class Field(Base):
             of the field is used. Only used when ``values`` is not provided.
         metadata: :class:`Metadata` or None
             The metadata to be stored in the new :class:`Field`. When it is :obj:`None`
-            the copy of the metadata of the original field is used.
+            a copy of the metadata of the original field is used.
 
         Returns
         -------
