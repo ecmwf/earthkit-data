@@ -16,7 +16,6 @@ from ..core.fieldlist import FieldList
 from ..core.geography import Geography
 from ..core.metadata import RawMetadata
 from ..utils.bbox import BoundingBox
-from ..utils.projections import Projection
 from . import Reader
 
 
@@ -58,6 +57,8 @@ class GeoTIFFGeography(Geography):
         return (*self.shape(), self._ds.rio.crs.to_wkt())
 
     def projection(self):
+        from ..utils.projections import Projection
+
         return Projection.from_cf_grid_mapping(**self._grid_mapping)
 
     @property
