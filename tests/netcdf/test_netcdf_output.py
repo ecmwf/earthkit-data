@@ -22,11 +22,13 @@ def test_netcdf_fieldlist_save():
     ds = from_source("file", earthkit_examples_file("test.nc"))
 
     # the file must be saved without loading the fields
-    assert ds._reader._fields is None
+    # assert ds._reader._fields is None
+    assert ds._fields is None
 
     with temp_file() as tmp:
         ds.save(tmp)
-        assert ds._reader._fields is None
+        # assert ds._reader._fields is None
+        assert ds._fields is None
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
         assert len(r_tmp) == 2
