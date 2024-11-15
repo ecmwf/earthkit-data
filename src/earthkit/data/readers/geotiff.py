@@ -65,23 +65,33 @@ class GeoTIFFGeography(Geography):
     def _grid_mapping(self):
         if self._ds.rio.grid_mapping == "spatial_ref":
             return self._ds.coords["spatial_ref"].attrs
-        self._not_implemented()
+        raise NotImplementedError
 
     def bounding_box(self):
         left, bottom, right, top = self._ds.rio.transform_bounds("EPSG:4326")
         return BoundingBox(north=top, west=left, south=bottom, east=right)
 
     def gridspec(self):
-        self._not_implemented()
+        raise NotImplementedError
 
     def resolution(self):
-        return self._ds.rio.resolution()
+        # Get width and height of pixels in units of the CRS
+        x, y = self._ds.rio.resolution()
+        crs = self._ds.rio.crs
+        units, factor = crs.units_factor
+        # Geographic coordinate systems use latitude and longitude
+        if crs.is_geographic and units == "degree":
+            x = abs(round(x * 1_000_000) / 1_000_000)
+            y = abs(round(y * 1_000_000) / 1_000_000)
+            assert x == y, (x, y)
+            return x
+        raise NotImplementedError(f"resolution for {crs} ({units}, {factor})")
 
     def mars_grid(self):
-        self._not_implemented()
+        raise NotImplementedError
 
     def mars_area(self):
-        self._not_implemented()
+        raise NotImplementedError
 
 
 class GeoTIFFMetadata(RawMetadata):
