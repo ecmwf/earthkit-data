@@ -2,6 +2,15 @@ Version 0.10 Updates
 /////////////////////////
 
 
+Version 0.10.10
+===============
+
+Changes
++++++++
+
+- Use ``covjsonkit`` instead of ``ecccovjson`` to read data retrieved from the  :ref:`data-sources-polytope` source.
+
+
 Version 0.10.9
 ===============
 
