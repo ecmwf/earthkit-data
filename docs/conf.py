@@ -96,6 +96,7 @@ html_logo = "_static/earthkit-data.png"
 
 xref_links = {
     "cfgrib": ("cfgirb", "https://github.com/ecmwf/cfgrib"),
+    "covjsonkit": ("covjsonkit", "https://github.com/ecmwf/covjsonkit"),
     "earthkit": ("earthkit", "https://earthkit.readthedocs.io/en/latest/"),
     "earthkit-geo": (
         "earthkit-geo",
