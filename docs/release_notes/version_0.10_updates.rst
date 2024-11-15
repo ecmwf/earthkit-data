@@ -8,7 +8,7 @@ Version 0.10.10
 Changes
 +++++++
 
-- Use ``covjsonkit`` instead of ``ecccovjson`` to read data retrieved from the  :ref:`data-sources-polytope` source.
+- Use ``covjsonkit`` instead of ``ecccovjson`` to read coverage json data retrieved from the  :ref:`data-sources-polytope` source (:pr:`445`).
 
 
 Version 0.10.9
