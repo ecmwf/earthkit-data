@@ -2,6 +2,15 @@ Version 0.10 Updates
 /////////////////////////
 
 
+Version 0.10.11
+===============
+
+Changes
++++++++
+
+- Requires ``covjsonkit>=0.0.28``
+
+
 Version 0.10.10
 ===============
 
