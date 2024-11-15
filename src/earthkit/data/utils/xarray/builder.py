@@ -8,69 +8,152 @@
 #
 
 import logging
-from functools import cached_property
+from abc import ABCMeta
+from abc import abstractmethod
 
 import numpy
 import xarray
 import xarray.core.indexing as indexing
 
+from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
+
+from .attrs import AttrList
+from .profile import Profile
 
 LOG = logging.getLogger(__name__)
 
+# These backend_kwargs are also direct xarray.open_dataset kwargs
+BACKEND_AND_XR_OPEN_DS_KWARGS = ["decode_times", "decode_timedelta", "drop_variables"]
+
+# These kwargs cannot be passed to xarray.open_dataset (not even inside backend_kwargs)
+NON_XR_OPEN_DS_KWARGS = ["split_dims", "direct_backend"]
+
 
 class VariableBuilder:
-    def __init__(self, var_dims, data, local_attr_keys, tensor, remapping):
+    def __init__(
+        self, name, var_dims, data_maker, tensor, remapping, local_attr_keys=None, fixed_local_attrs=None
+    ):
+        """
+        Create a builder for a single variable in the dataset.
+
+        Parameters
+        ----------
+        name: str
+            The name of the variable.
+        var_dims: list
+            The dimensions of the variable.
+        data_maker: callable
+            A function that generates the data object stored in the xarray variable.
+        tensor: Tensor
+            The tensor object that contains the data.
+        remapping: Remapping
+            The remapping object that contains the remapping information.
+        local_attr_keys: list, optional
+            A list of metadata keys that are used to collect local attributes. These attributes
+            are not taken into account by the attribute policies.
+        fixed_local_attrs: dict, optional
+            A dictionary of fixed local attributes that are added to the variable. These attributes
+            are not taken into account by the attribute policies.
+        """
+        self.name = name
         self.var_dims = var_dims
-        self.data = data
+        self.data_maker = data_maker
         self._attrs = {}
         self.local_keys = ensure_iterable(local_attr_keys)
+        self.fixed_local_attrs = ensure_dict(fixed_local_attrs)
         self.tensor = tensor
         self.remapping = remapping
 
-    def build(self):
-        attrs = {
-            "message": self.tensor.source[0].metadata().override()._handle.get_buffer(),
-        }
-        self._attrs["_earthkit"] = attrs
-        return xarray.Variable(self.var_dims, self.data, attrs=self._attrs)
+    def build(self, add_earthkit_attrs=True):
+        if add_earthkit_attrs:
+            attrs = {
+                "message": self.tensor.source[0].metadata().override()._handle.get_buffer(),
+            }
+            self._attrs["_earthkit"] = attrs
 
-    def load_attrs(self, keys, strict=True):
-        keys = keys + self.local_keys
-        attr_keys = []
-        attrs = {}
-        ns_keys = []
-        for k in keys:
-            if k not in self.var_dims and k not in attr_keys:
-                if k.startswith("namespace="):
-                    ns_keys.append(k.split("=")[1])
-                else:
-                    attr_keys.append(k)
+        self._attrs.update(self.fixed_local_attrs)
+        data = self.data_maker(self.tensor, self.var_dims, self.name)
+        return xarray.Variable(self.var_dims, data, attrs=self._attrs)
+
+    def collect_attrs(self, attrs, strict=True, extra_attrs=None):
+        """Load the attributes for the variable.
+
+        Parameters
+        ----------
+        attrs: list
+            A list of attributes to be collected.
+        strict: bool, optional
+            If True, perform a strict check on the attributes.
+        collect: list, optional
+            A list of attributes that are collected but not added to the variable attributes.
+        """
+        attrs = attrs + AttrList(self.local_keys)
+
+        res = {}
+        keys_strict = []
+        fixed_attrs = {}
 
         first = None
 
+        def _metadata():
+            nonlocal first
+            return self.tensor.source[0].metadata() if not first else first
+
+        for a in attrs:
+            if a.name not in self.var_dims and a.name not in res and a.name not in self.fixed_local_attrs:
+                if a.fixed():
+                    fixed_attrs[a.name] = a.value()
+                elif callable(a):
+                    res.update(a(_metadata()))
+                else:
+                    if strict:
+                        keys_strict.append(a.name)
+                    else:
+                        res.update(a.get(_metadata()))
+
+        res = {k: v for k, v in res.items() if v is not None}
+
         # TODO: do we need a strict mode here? The extra cost has to be justified
-        if strict:
-            attrs = self.tensor.source.unique_values(attr_keys)
-        else:
-            first = self.tensor.source[0]
-            attrs = {k: [v] for k, v in first._attributes(attr_keys, default=None).items()}
+        if keys_strict:
+            assert strict
+            v, _ = self.tensor.source.unique_values(keys_strict)
+            res.update(v)
 
-        if ns_keys:
-            if not first:
-                first = self.tensor.source[0]
-            r = first.metadata(namespace=ns_keys)
-            for k, v in r.items():
-                attrs[k] = [v]
+        self._attrs = res
+        self._attrs.update(fixed_attrs)
 
-        self._attrs = attrs
+        # extra attributes to be collected but not added to the variable
+        collected_attrs = {}
+        if extra_attrs:
+            res = {}
+            fixed_attrs = {}
+            for a in extra_attrs:
+                if a.fixed():
+                    fixed_attrs[a.name] = a.value()
+                elif callable(a):
+                    res.update(a(_metadata()))
+                elif isinstance(a, str):
+                    res.update(a.get(_metadata()))
 
-        return {k: v for k, v in self._attrs.items() if k not in self.local_keys}
+            res = {k: v for k, v in res.items() if v is not None}
+            collected_attrs = res
+            collected_attrs.update(fixed_attrs)
+
+        return {k: v for k, v in self._attrs.items() if k not in self.local_keys}, collected_attrs
 
     def adjust_attrs(self, drop_keys=None, rename=None):
         drop_keys = ensure_iterable(drop_keys)
         drop_keys = [k for k in drop_keys if k not in self.local_keys]
-        self._attrs = {k: v[0] for k, v in self._attrs.items() if k not in drop_keys and len(v) == 1}
+        r = {}
+        for k, v in self._attrs.items():
+            if k not in drop_keys:
+                if isinstance(v, list) and len(v) == 1:
+                    r[k] = v[0]
+                else:
+                    r[k] = v
+        self._attrs = r
+        # self._attrs = {k: v[0] for k, v in self._attrs.items() if k not in drop_keys and len(v) == 1}
         if callable(rename):
             self._attrs = rename(self._attrs)
 
@@ -155,14 +238,8 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         return result
 
 
-class TensorBackendBuilder:
-    def __init__(
-        self,
-        ds,
-        profile,
-        dims,
-        grid=None,
-    ):
+class BackendDataBuilder(metaclass=ABCMeta):
+    def __init__(self, ds, profile, dims, grid=None, fixed_local_attrs=None):
         self.ds = ds
         self.profile = profile
         self.dims = dims
@@ -171,15 +248,16 @@ class TensorBackendBuilder:
         self.dtype = profile.dtype
         self.array_module = profile.array_module
 
-        # these coords inside the the tensor are called user_coords
-        # Note: in the tensor the corresponding dims are called user_dims
+        # Note: these coords inside the tensor are called user_coords and
+        # the corresponding dims are called user_dims
         self.tensor_coords = {}
 
         # coords describing the field dimensions
         self.field_coords = {}
 
-        self.grid = self._ensure_grid(grid)
+        self.fixed_local_attrs = ensure_dict(fixed_local_attrs)
 
+        self.grid = self._ensure_grid(grid)
         if self.profile.add_geo_coords:
             self.field_coords = self._make_field_coords()
 
@@ -213,37 +291,50 @@ class TensorBackendBuilder:
 
             _dims, _vals = tensor.make_valid_datetime()
             if _dims is not None and _vals is not None:
-                # if _dims is None or _vals is None:
-                #     raise ValueError("valid_time coord could not be created")
                 self.tensor_coords["valid_time"] = Coord.make("valid_time", _vals, dims=_dims)
 
     def build(self):
-        t_vars = {}
         # we assume each variable forms a full cube
-        for variable in self.profile.variables:
-            t_vars[variable] = self.make_variable(self.ds, self.dims, self.profile.variable_key, variable)
+        var_builders = self.pre_build_variables()
 
         # build variable and global attributes
-        xr_attrs = self.profile.attrs.builder.build(self.ds, t_vars, rename=True)
-
+        xr_attrs = self.profile.attrs.builder.build(self.ds, var_builders, rename=True)
         xr_coords = self.coords()
-        xr_vars = {self.profile.rename_variable(k): v.build() for k, v in t_vars.items()}
 
+        # build variables
+        xr_vars = {
+            self.profile.rename_variable(k): v.build(add_earthkit_attrs=self.profile.add_earthkit_attrs)
+            for k, v in var_builders.items()
+        }
+
+        # build dataset
         dataset = xarray.Dataset(xr_vars, coords=xr_coords, attrs=xr_attrs)
+
         if self.profile.rename_dims_map():
             dataset = dataset.rename(self.profile.rename_dims_map())
 
+        if "source" not in dataset.encoding:
+            dataset.encoding["source"] = None
+
         return dataset
 
-    def make_variable(self, ds, dims, key, name):
-        ds_var = ds.sel(**{key: name})
+    @abstractmethod
+    def build_values(self, *args, **kwargs):
+        pass
 
-        tensor_dims, tensor_coords, tensor_coords_component, extra_tensor_attrs = self.prepare_tensor(
+    @abstractmethod
+    def pre_build_variables(self):
+        pass
+
+    def pre_build_variable(self, ds_var, dims, name):
+        tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs = self.prepare_tensor(
             ds_var, dims, name
         )
+
         tensor_dim_keys = [d.key for d in tensor_dims]
 
-        # print("tensor_dims", tensor_dims)
+        # LOG.debug(f"{tensor_dims=} {tensor_coords=} {tensor_coords_component=} {tensor_extra_attrs=}")
+        # LOG.debug(f"{tensor_dim_keys=}")
 
         tensor = ds_var.to_tensor(
             *tensor_dim_keys,
@@ -260,10 +351,7 @@ class TensorBackendBuilder:
             # Dimensions like "level_per_type" are templates and will be
             # added as multiple concrete dimensions to the dataset
             k, c = d.as_coord(
-                d.key,
-                values=tensor.user_coords[d.key],
-                component=tensor_coords_component.get(d.key, None),
-                tensor=tensor,
+                d.key, tensor.user_coords[d.key], tensor_coords_component.get(d.key, None), tensor.source
             )
             if k not in self.tensor_coords:
                 self.tensor_coords[k] = c
@@ -271,15 +359,91 @@ class TensorBackendBuilder:
         var_dims.extend(tensor.field_dims)
 
         self.collect_date_coords(tensor)
+        data_maker = self.build_values
+        remapping = self.profile.remapping.build()
 
-        # print(f" full_dims={tensor.full_dims}")
-        # print(f" full_shape={tensor.full_shape}")
+        var_builder = VariableBuilder(
+            name,
+            var_dims,
+            data_maker,
+            tensor,
+            remapping,
+            local_attr_keys=tensor_extra_attrs,
+            fixed_local_attrs=self.fixed_local_attrs,
+        )
 
-        # self.collect_coords(tensor)
-        # var_dims = self.var_dims(tensor)
-        # var_dims = [d.key for d in tensor_dims]
-        # print(f"var_dims={var_dims}")
+        return var_builder
 
+    def prepare_tensor(self, ds, dims, name):
+        tensor_dims = []
+        tensor_coords = {}
+        tensor_coords_component = {}
+        tensor_extra_attrs = []
+
+        # LOG.debug(f"{name=} {dims=}")
+
+        vals, component_vals = ds.unique_values(
+            [d.key for d in dims], component=self.profile.add_earthkit_attrs
+        )
+
+        # LOG.debug(f"unique_values={vals}")
+        # LOG.debug(f"ensure_dims={self.profile.dims.ensure_dims}")
+        # LOG.debug(f"dims_as_attrs={self.profile.dims.dims_as_attrs}")
+
+        for d in dims:
+            num = len(vals[d.key])
+            # LOG.debug(f"  {d.key=} {vals[d.key]}")
+            if num == 0:
+                continue
+                # if d.name not in self.profile.dims.ensure_dims:
+                #     raise ValueError(f"Dimension {d} has no valid values for variable={name}")
+            else:
+                if num > 1 and d.enforce_unique:
+                    raise ValueError(
+                        f"Dimension '{d.name}' of variable '{name}' cannot have multiple values={vals[d.key]}"
+                    )
+                elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
+                    tensor_extra_attrs.append(d.key)
+                elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
+                    tensor_dims.append(d)
+                    tensor_coords[d.key] = vals[d.key]
+                    if d.key in component_vals:
+                        tensor_coords_component[d.key] = component_vals[d.key]
+
+                    # check if the dims/coords are consistent with the tensors of
+                    # the previous variables
+                    self.check_tensor_coords(name, d.key, tensor_coords)
+
+        # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinates
+        return tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
+
+    def check_tensor_coords(self, var_name, coord_name, tensor_coords):
+        from .check import check_coords
+
+        check_coords(var_name, coord_name, tensor_coords, self.tensor_coords)
+
+
+class TensorBackendDataBuilder(BackendDataBuilder):
+    """Build a dataset using memory backend.
+
+    Each variable contain a TensorBackendArray object that loads the data on demand from
+    the GRIB using the associated TensorFieldList. This solution can work bot for GRIB data
+    stored in memory or on disk.
+    """
+
+    def pre_build_variables(self):
+        """Generate a builder for each variable"""
+        builders = {}
+
+        # we assume each variable forms a full cube
+        for name in self.profile.variables:
+            ds_var = self.ds.sel(**{self.profile.variable_key: name})
+            builders[name] = self.pre_build_variable(ds_var, self.dims, name)
+
+        return builders
+
+    def build_values(self, tensor, var_dims, name):
+        """Generate the data object stored in the xarray variable"""
         backend_array = TensorBackendArray(
             tensor,
             var_dims,
@@ -290,149 +454,113 @@ class TensorBackendBuilder:
         )
 
         data = indexing.LazilyIndexedArray(backend_array)
+        return data
 
-        # Get metadata keys which are common for all fields, and not listed in dataset attrs
-        # kk = [k for k in self.profile.index_keys if k not in self.attributes]
-        # var_attrs = ds.common_attributes_other(ds_var, kk)
 
-        # var_attrs = {
-        #     k: ds_var.index(k)[0] for k in self.profile.var_attributes() if len(ds_var.index(k)) >= 1
-        # }
-        # var_attrs.update(tensor_attrs)
+class MemoryBackendDataBuilder(BackendDataBuilder):
+    """Build a dataset using memory backend.
 
-        # var_attrs = self.profile.remap(var_attrs)
+    Each variable contain data values in memory copied from the input fields. As soon as a
+    field's values are copied, the field is immediately released and its memory is freed if the
+    field supports this operation. Fields released in this way are not available for further access.
+    """
 
-        remapping = self.profile.remapping.build()
+    def pre_build_variables(self):
+        """Generate a builder for each variable"""
+        builders = {}
+        groups = self.ds.group(self.profile.variable_key, self.profile.variables)
 
-        var = VariableBuilder(var_dims, data, extra_tensor_attrs, tensor, remapping)
-        # var = xarray.Variable(var_dims, data, attrs=var_attrs)
-        return var
+        # we assume each variable forms a full cube
+        for name in groups:
+            ds_var = groups[name]
+            builders[name] = self.pre_build_variable(ds_var, self.dims, name)
 
-    def prepare_tensor(self, ds, dims, name):
-        tensor_dims = []
-        tensor_coords = {}
-        tensor_coords_component = {}
-        extra_tensor_attrs = []
+        return builders
 
-        # print(f"prepare_tensor: {name=} {dims=}")
-        # First check if the dims/coords are consistent with the tensors of the previous variables
+    def build_values(self, tensor, var_dims, name):
+        """Generate the data object stored in the xarray variable"""
 
-        # from .fieldlist import unique_values
+        # At this point all the fields must be a ReleasableField.
+        # We mark the fields so that their data will be released on the next
+        # values access.
+        if self.profile.release_source:
+            for f in tensor.source:
+                f.keep = False
 
-        # remapping = self.profile.remapping.build()
-        vals, component_vals = ds.unique_values([d.key for d in dims], component=True)
-
-        # print("unique_values", vals)
-        # print("ensure_dims", self.profile.dims.ensure_dims)
-
-        for d in dims:
-            # num = len(ds.index(d.key))
-            num = len(vals[d.key])
-            # print(f"  {d.key=} {vals[d.key]}")
-            if num == 0:
-                continue
-                # if d.name not in self.profile.dims.ensure_dims:
-                #     raise ValueError(f"Dimension {d} has no valid values for variable={name}")
-            else:
-                if num > 1 and d.enforce_unique:
-                    raise ValueError(
-                        f"Dimension '{d.name}' of variable '{name}' has multiple values={vals[d.key]}"
-                    )
-                elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
-                    extra_tensor_attrs.append(d.key)
-                elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
-                    tensor_dims.append(d)
-                    # tensor_coords[d.key] = ds.index(d.key)
-                    tensor_coords[d.key] = vals[d.key]
-                    if d.key in component_vals:
-                        tensor_coords_component[d.key] = component_vals[d.key]
-                    self.check_tensor_coords(name, d.key, tensor_coords)
-
-        # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinate
-        return tensor_dims, tensor_coords, tensor_coords_component, extra_tensor_attrs
-
-    def check_tensor_coords(self, var_name, coord_name, tensor_coords):
-        if self.profile.strict:
-            from .check import check_coords
-
-            check_coords(var_name, coord_name, tensor_coords, self.tensor_coords)
+        return tensor.to_numpy(dtype=self.dtype)
 
 
 class DatasetBuilder:
     def __init__(
         self,
         ds,
-        profile="mars",
-        **kwargs,
+        profile,
+        backend_kwargs=None,
     ):
-        """
-        auto_split: bool
-            When it is True and the data does not form a complete hypercube automatically
-            tries to split it into multiple hypercubes and returns a list of datasets (one
-            dataset per hypercube). When it is False and the data does not form a complete hypercube
-            rases an error. Default is False.
-        split_dims: str, or iterable of str, None
-            Dimension or list of dimensions to use for splitting the data into multiple hypercubes.
-            Default is None.
-        """
         self.ds = ds
-        self.kwargs = kwargs
-        self.profile_name = profile
+        backend_kwargs = ensure_dict(backend_kwargs)
+        assert "profile" not in backend_kwargs
+
+        if isinstance(profile, Profile):
+            self.profile = profile
+        else:
+            self.profile = Profile.make(profile, **backend_kwargs)
+
+        backend_kwargs = ensure_dict(backend_kwargs)
+        self.profile_kwargs = dict(**backend_kwargs)
+
+        # LOG.debug(f"{self.profile.name=}")
+        # LOG.debug(f"{backend_kwargs=}")
+        if self.profile.lazy_load:
+            self.builder = TensorBackendDataBuilder
+        else:
+            self.builder = MemoryBackendDataBuilder
+
+        self.split_dims = self.profile.dims.split_dims
+        self.direct_backend = self.profile.direct_backend
+
         self.grids = {}
 
-    @cached_property
-    def profile(self):
-        from .profile import Profile
+    def parse(self, ds, profile=None, full=False):
+        assert not hasattr(ds, "_ek_builder")
+        from .fieldlist import XArrayInputFieldList
 
-        return Profile.make(self.profile_name, **self.kwargs)
+        if profile is None:
+            profile = self.profile.copy()
 
-    def parse(self):
-        assert not hasattr(self.ds, "_ek_builder")
-        from .fieldlist import WrappedFieldList
+        remapping = profile.remapping.build()
 
-        # from .profile import Profile
-        # profile = Profile.make(self.profile, **self.kwargs)
+        # LOG.debug(f"{remapping=}")
+        # LOG.debug(f"{profile.remapping=}")
+        # LOG.debug(f"{profile.index_keys=}")
 
-        remapping = self.profile.remapping.build()
-        # print(f"{remapping=}")
-        # print(f"{profile.remapping=}")
+        # create a new fieldlist for optimised access to unique values
+        ds_xr = XArrayInputFieldList(
+            ds, keys=profile.index_keys, remapping=remapping, component=profile.add_earthkit_attrs
+        )
+        # LOG.debug(f"{ds.db=}")
 
-        # create a new fieldlist and ensure all the required metadata is kept in memory
-        ds = WrappedFieldList(self.ds, keys=self.profile.index_keys, remapping=remapping)
-        # print(f"{remapping=}")
-        # print(f"ds: {ds.indices()}")
+        # LOG.debug(f"before update: {profile.dim_keys=}")
+        profile.update(ds_xr)
+        # LOG.debug(f"after update: {profile.dim_keys=}")
 
-        # print(f"ds: {ds.index('level_and_type')}")
-        # print("components", ds.index("level_and_type", component=True))
-
-        # global attributes are keys which are the same for all the fields
-        # attributes = {k: v[0] for k, v in ds_ori.indices().items() if len(v) == 1}
-        # global_attrs = ds.common_indices()
-
-        # LOG.info(f"{attributes=}")
-
-        # if hasattr(ds, "path"):
-        #     global_attrs["ekds_source"] = ds.path
-
-        # print("parse dims", profile.dim_keys)
-
-        # print("ds keys", ds.db[0].keys())
-        # print("ds indices", ds._md_indices)
-        self.profile.update(ds)
-
-        # print("parse dims", profile.dim_keys)
-
+        # LOG.debug(f"{profile.sort_keys=}")
         # the data is only sorted once
-        ds_sorted = ds.order_by(self.profile.sort_keys)
+        ds_xr = ds_xr.order_by(profile.sort_keys)
 
-        return ds, ds_sorted
+        if not profile.lazy_load and profile.release_source:
+            ds_xr.make_releasable()
+
+        return ds_xr, profile
 
     def grid(self, ds):
         grids = ds.index("md5GridSection")
+
         if len(grids) != 1:
             raise ValueError(f"Expected one grid, got {len(grids)}")
         grid = grids[0]
         key = (grid, self.profile.flatten_values)
+
         if key not in self.grids:
             from .grid import TensorGrid
 
@@ -441,63 +569,126 @@ class DatasetBuilder:
 
 
 class SingleDatasetBuilder(DatasetBuilder):
-    def __init__(self, *args, **kwargs):
-        auto_split = kwargs.get("auto_split", False)
-        split_dims = kwargs.get("split_dims", None)
-        if auto_split or split_dims:
-            raise ValueError("SingleDatasetMaker does not support splitting")
-
+    def __init__(self, *args, from_xr=False, **kwargs):
         super().__init__(*args, **kwargs)
 
+        if self.split_dims:
+            raise ValueError("SingleDatasetMaker does not support splitting")
+
+        if from_xr and self.direct_backend:
+            raise ValueError(
+                "SingleDatasetMaker does not support direct_backend=True when invoked from xarray"
+            )
+
     def build(self):
-        ds, ds_sorted = self.parse()
+        ds_sorted, _ = self.parse(self.ds, self.profile)
         dims = self.profile.dims.to_list()
-        # print("SingleDatasetBuilder.build dims", dims)
-        builder = TensorBackendBuilder(
+        LOG.debug(f"{dims=}")
+        builder = self.builder(
             ds_sorted,
             self.profile,
             dims,
-            grid=self.grid(ds),
+            grid=self.grid(ds_sorted),
         )
-
-        return builder.build()
+        r = builder.build()
+        return r
 
 
 class SplitDatasetBuilder(DatasetBuilder):
-    def __init__(self, *args, backend_kwargs=None, **kwargs):
-        self.auto_split = backend_kwargs.pop("auto_split", False)
-        self.split_dims = backend_kwargs.pop("split_dims", None)
-        self.backend_kwargs = dict(**backend_kwargs)
-        self.xr_open_dataset_kwargs = dict(**kwargs)
+    def __init__(self, *args, backend_kwargs=None, other_kwargs=None):
+        """
+        split_dims: str, or iterable of str, None
+            Dimension or list of dimensions to use for splitting the data into multiple hypercubes.
+            Default is None.
+        """
+        super().__init__(*args, backend_kwargs=backend_kwargs)
 
-        if not self.auto_split and not self.split_dims:
-            raise ValueError("SplitDatasetMaker requires auto_split or split_dims")
+        if not self.direct_backend:
+            self.xr_open_dataset_kwargs = ensure_dict(other_kwargs)
+            backend_kwargs = {}
+            backend_kwargs["profile"] = self.profile
+            self.xr_open_dataset_kwargs["backend_kwargs"] = backend_kwargs
 
-        # auto_split is experimental and not yet supported
-        if self.auto_split:
-            raise ValueError("auto_split is not yet supported")
+        if not self.split_dims:
+            raise ValueError("SplitDatasetMaker requires split_dims")
 
-        super().__init__(*args, split_dims=self.split_dims, **backend_kwargs)
+    def prepare(self, keys):
+        from .fieldlist import XArrayInputFieldList
+
+        remapping = self.profile.remapping.build()
+
+        # LOG.debug(f"split_dims={self.split_dims}")
+        ds_xr = XArrayInputFieldList(self.ds, keys=self.profile.index_keys, remapping=remapping)
+
+        vals, _ = ds_xr.unique_values(*keys)
+
+        return ds_xr, vals
 
     def build(self):
         from .splitter import Splitter
 
-        _, ds_sorted = self.parse()
-        splitter = Splitter.make(self.auto_split, self.split_dims)
+        splitter = Splitter.make(self.split_dims)
         datasets = []
-        for s_dims, s_ds in splitter.split(ds_sorted, self.profile):
-            # print(f"split_dims: {s_dims}   {type(s_ds)}")
-            builder = TensorBackendBuilder(
-                s_ds,
-                self.profile,
-                s_dims,
-                grid=self.grid(s_ds),
-            )
+        for ds, profile, split_coords in splitter.split(self):
+            dims = profile.dims.to_list()
+            LOG.debug(f"splitting {dims=} type of s_ds={type(ds)} {split_coords=}")
+            split_coords.pop(profile.variable_key, None)
+            builder = self.builder(ds, profile, dims, grid=self.grid(ds), fixed_local_attrs=split_coords)
 
-            s_ds._ek_builder = builder
-            datasets.append(
-                xarray.open_dataset(s_ds, backend_kwargs=self.backend_kwargs, **self.xr_open_dataset_kwargs)
-            )
-            s_ds._ek_builder = None
+            ds._ek_builder = builder
+            if self.direct_backend:
+                datasets.append(builder.build())
+            else:
+                ds._ek_builder = builder
+                datasets.append(xarray.open_dataset(ds, **self.xr_open_dataset_kwargs))
+                ds._ek_builder = None
 
         return datasets[0] if len(datasets) == 1 else datasets
+
+
+def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
+    """Create an xarray dataset from an earthkit fieldlist.
+
+    Parameters
+    ----------
+    ds: FieldList
+        The input fieldlist.
+    backend_kwargs: dict, optional
+        Backend kwargs that can be passed to
+        :py:meth:`xarray.open_dataset` as "backend_kwargs".
+    other_kwargs: dict, optional
+        Additional kwargs passed to :py:meth:`xarray.open_dataset`. Cannot contain
+        any of the keys in ``backend_kwargs``.
+    """
+    backend_kwargs = ensure_dict(backend_kwargs)
+    other_kwargs = ensure_dict(other_kwargs)
+
+    # certain kwargs are both backend_kwargs and other_kwargs. We need all of
+    # these for the profile
+    profile_kwargs = dict(**backend_kwargs)
+    for k in BACKEND_AND_XR_OPEN_DS_KWARGS:
+        if k in other_kwargs:
+            profile_kwargs[k] = other_kwargs[k]
+
+    # to create the profile we need all the possible backend_kwargs (bar profile)
+    profile = profile_kwargs.pop("profile", Profile.DEFAULT_PROFILE_NAME)
+    profile = Profile.make(profile, **profile_kwargs)
+
+    # the backend builder is directly called bypassing xarray.open_dataset
+    if profile.direct_backend:
+        if not profile.dims.split_dims:
+            return SingleDatasetBuilder(ds, profile).build()
+        else:
+            return SplitDatasetBuilder(ds, profile).build()
+    # xarray.open_dataset is called
+    else:
+        # LOG.debug(f"from_earthkit {backend_kwargs=} {profile_kwargs=}")
+        assert other_kwargs["engine"] == "earthkit"
+        if not profile.dims.split_dims:
+            backend_kwargs["profile"] = profile
+            # certain kwargs are not allowed in xarray.open_dataset
+            for k in NON_XR_OPEN_DS_KWARGS:
+                backend_kwargs.pop(k, None)
+            return xarray.open_dataset(ds, backend_kwargs=backend_kwargs, **other_kwargs)
+        else:
+            return SplitDatasetBuilder(ds, profile, other_kwargs=other_kwargs).build()

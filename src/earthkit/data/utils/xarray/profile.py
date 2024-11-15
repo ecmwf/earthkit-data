@@ -88,14 +88,18 @@ PROFILE_CONF = ProfileConf()
 
 class Profile:
     USER_ONLY_OPTIONS = ["remapping", "patches"]
+    DEFAULT_PROFILE_NAME = "mars"
 
     def __init__(
         self,
+        name=None,
         **kwargs,
     ):
         from .attrs import Attrs
         from .dim import Dims
 
+        self._kwargs = dict(**kwargs)
+        self.name = name
         self.index_keys = []
 
         patches = dict()
@@ -142,9 +146,14 @@ class Profile:
             kwargs.pop("rename_attrs"),
         )
 
+        self.add_earthkit_attrs = kwargs.pop("add_earthkit_attrs")
+
         # generic
         self.decode_times = kwargs.pop("decode_times")
         self.decode_timedelta = kwargs.pop("decode_timedelta")
+        self.lazy_load = kwargs.pop("lazy_load")
+        self.release_source = kwargs.pop("release_source")
+        self.direct_backend = kwargs.pop("direct_backend")
         self.strict = kwargs.pop("strict")
         self.errors = kwargs.pop("errors")
 
@@ -170,7 +179,15 @@ class Profile:
         # print("INIT dim_keys", self.dim_keys)
 
     @staticmethod
-    def make(name_or_def, *args, **kwargs):
+    def make(name_or_def, *args, force=False, **kwargs):
+        # print("name_or_def", name_or_def)
+
+        if isinstance(name_or_def, Profile):
+            if force:
+                return name_or_def.copy()
+            else:
+                return name_or_def
+
         if name_or_def is None:
             name_or_def = {}
 
@@ -226,10 +243,11 @@ class Profile:
         if opt["decode_timedelta"] is None:
             opt["decode_timedelta"] = opt["decode_times"]
 
-        return cls(*args, **opt)
+        return cls(*args, name=name, **opt)
 
     @classmethod
     def to_docs(cls, name):
+        """Used to generate documentation"""
         import copy
 
         if name is None:
@@ -261,6 +279,9 @@ class Profile:
 
         return opt
 
+    def copy(self):
+        return Profile(name=self.name, **self._kwargs)
+
     @property
     def dim_keys(self):
         return self.dims.active_dim_keys
@@ -280,14 +301,6 @@ class Profile:
 
         if not self.variables:
             raise ValueError(f"No metadata values found for variable key {self.variable_key}")
-
-    def update_dims(self, ds, attributes):
-        # variable keys cannot be dimensions
-        variable_keys = [self.variable_key]
-        # variable_keys = VARIABLE_KEYS + [self.variable_key]
-        # self.dims.remove(variable_keys, others=True)
-        self.dims.update(ds, attributes, variable_keys)
-        assert self.variable_key not in self.dim_keys
 
     def update(self, ds):
         """
@@ -313,9 +326,6 @@ class Profile:
         # self.dims.remove(variable_keys, others=True)
         self.dims.update(ds)
         assert self.variable_key not in self.dim_keys
-
-        # self.update_variables(ds)
-        #         self.update_dims(ds, attributes)
 
         assert self.variable_key is not None
         assert self.variables

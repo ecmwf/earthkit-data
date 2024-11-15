@@ -24,6 +24,7 @@ from xr_engine_fixtures import compare_coords  # noqa: E402
 from xr_engine_fixtures import compare_dims  # noqa: E402
 
 
+@pytest.mark.cache
 @pytest.mark.parametrize(
     "kwargs,dims",
     [
@@ -102,6 +103,7 @@ def test_xr_time_basic(kwargs, dims):
     compare_dims(ds, dims, order_ref_var="t")
 
 
+@pytest.mark.cache
 @pytest.mark.parametrize(
     "kwargs,dims",
     [
@@ -135,7 +137,7 @@ def test_xr_time_basic(kwargs, dims):
         ),
     ],
 )
-def test_xr_time_seasonal(kwargs, dims):
+def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims):
     ds_ek = from_source(
         "url",
         earthkit_remote_test_data_file("test-data/xr_engine/date/jma_seasonal_fc_ref_time_per_member.grib"),
@@ -145,6 +147,79 @@ def test_xr_time_seasonal(kwargs, dims):
     compare_dims(ds, dims, order_ref_var="2t")
 
 
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "kwargs,dims",
+    [
+        (
+            {
+                "time_dim_mode": "forecast",
+                "dim_roles": {"step": "forecastMonth"},
+                "decode_times": False,
+                "decode_timedelta": False,
+            },
+            {
+                "number": [0, 1, 2],
+                "forecast_reference_time": [
+                    np.datetime64("1993-10-01", "ns"),
+                    np.datetime64("1994-10-01", "ns"),
+                    np.datetime64("1995-10-01", "ns"),
+                    np.datetime64("1996-10-01", "ns"),
+                ],
+                "forecastMonth": [1, 2, 3, 4, 5, 6],
+            },
+        ),
+        (
+            {
+                "time_dim_mode": "forecast",
+                "dim_roles": {"step": "fcmonth"},
+                "decode_times": False,
+                "decode_timedelta": False,
+            },
+            {
+                "number": [0, 1, 2],
+                "forecast_reference_time": [
+                    np.datetime64("1993-10-01", "ns"),
+                    np.datetime64("1994-10-01", "ns"),
+                    np.datetime64("1995-10-01", "ns"),
+                    np.datetime64("1996-10-01", "ns"),
+                ],
+                "fcmonth": [1, 2, 3, 4, 5, 6],
+            },
+        ),
+        (
+            {
+                "time_dim_mode": "raw",
+                "dim_roles": {"step": "forecastMonth"},
+                "decode_times": False,
+                "decode_timedelta": False,
+                "ensure_dims": ["number", "date", "time", "forecastMonth"],
+            },
+            {
+                "number": [0, 1, 2],
+                "date": [
+                    np.datetime64("1993-10-01", "ns"),
+                    np.datetime64("1994-10-01", "ns"),
+                    np.datetime64("1995-10-01", "ns"),
+                    np.datetime64("1996-10-01", "ns"),
+                ],
+                "time": [np.timedelta64(0, "s")],
+                "forecastMonth": [1, 2, 3, 4, 5, 6],
+            },
+        ),
+    ],
+)
+def test_xr_time_seasonal_monthly_simple(kwargs, dims):
+    ds_ek = from_source(
+        "url",
+        earthkit_remote_test_data_file("test-data/xr_engine/date/seasonal_monthly.grib"),
+    )
+
+    ds = ds_ek.to_xarray(**kwargs)
+    compare_dims(ds, dims, order_ref_var="2t")
+
+
+@pytest.mark.cache
 def test_xr_valid_time_coord():
     ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_small.grib")).sel(
         date=20240603, time=[0, 1200]

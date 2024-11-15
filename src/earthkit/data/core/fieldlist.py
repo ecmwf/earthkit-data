@@ -760,6 +760,48 @@ class Field(Base):
             self._metadata.override(**kwargs),
         )
 
+    def to_xarray(self, *args, **kwargs):
+        """Convert the Field into an Xarray Dataset.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments passed to :obj:`FieldList.to_xarray`.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`FieldList.to_xarray`.
+
+        Returns
+        -------
+        Xarray Dataset
+
+        """
+        return self._to_fieldlist().to_xarray(*args, **kwargs)
+
+    def ls(self, *args, **kwargs):
+        r"""Generate a list like summary using a set of metadata keys.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments passed to :obj:`FieldList.ls`.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`FieldList.ls`.
+
+        Returns
+        -------
+        Pandas DataFrame
+            DataFrame with one row.
+
+        """
+        return self._to_fieldlist().ls(*args, **kwargs)
+
+    def describe(self, *args, **kwargs):
+        r"""Generate a summary of the Field."""
+        return self._to_fieldlist().describe(*args, **kwargs)
+
+    def _to_fieldlist(self):
+        return FieldList.from_fields([self])
+
     @staticmethod
     def _flatten(v):
         """Flatten the array without copying the data."
@@ -829,8 +871,8 @@ class FieldList(Index):
 
         Parameters
         ----------
-        fields: list
-            List of :obj:`Field` objects.
+        fields: iterable
+            Iterable of :obj:`Field` objects.
 
         Returns
         -------
@@ -839,7 +881,7 @@ class FieldList(Index):
         """
         from earthkit.data.indexing.fieldlist import SimpleFieldList
 
-        return SimpleFieldList(fields)
+        return SimpleFieldList([f for f in fields])
 
     @staticmethod
     def from_numpy(array, metadata):
@@ -966,7 +1008,6 @@ class FieldList(Index):
             r[0] = vals
             for i, f in enumerate(it, start=1):
                 r[i] = _vals(f)
-
             return r
 
     def to_numpy(self, **kwargs):
@@ -1230,8 +1271,7 @@ class FieldList(Index):
             return []
 
     def head(self, n=5, **kwargs):
-        r"""Generate a list like summary of the first ``n``
-        :obj:`GribField <data.readers.grib.codes.GribField>`\ s using a set of metadata keys.
+        r"""Generate a list like summary of the first ``n`` :obj:`Field`\ s.
         Same as calling :obj:`ls` with ``n``.
 
         Parameters
@@ -1267,8 +1307,7 @@ class FieldList(Index):
         return self.ls(n=n, **kwargs)
 
     def tail(self, n=5, **kwargs):
-        r"""Generate a list like summary of the last ``n``
-        :obj:`GribField <data.readers.grib.codes.GribField>`\ s using a set of metadata keys.
+        r"""Generate a list like summary of the last ``n`` :obj:`Field`\ s.
         Same as calling :obj:`ls` with ``-n``.
 
         Parameters

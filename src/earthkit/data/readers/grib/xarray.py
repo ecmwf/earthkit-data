@@ -16,6 +16,8 @@ from earthkit.data.utils.serialise import serialise_state
 
 LOG = logging.getLogger(__name__)
 
+_WARNED_ABOUT_EARTHKIT = False
+
 
 class ItemWrapperForCfGrib:
     def __init__(self, item, ignore_keys=[]):
@@ -73,9 +75,9 @@ class XarrayMixIn:
             chunks=None,  # Set to 'auto' for lazy loading
         )
 
-    def to_xarray(self, engine="earthkit", xarray_open_dataset_kwargs=None, **kwargs):
+    def to_xarray(self, engine=None, xarray_open_dataset_kwargs=None, **kwargs):
         """
-        Convert the FieldList into an Xarray DataSet.
+        Convert the FieldList into an Xarray Dataset.
 
         Parameters
         ----------
@@ -89,7 +91,7 @@ class XarrayMixIn:
             is not a valid option when the Xarray is directly generated via
             :py:meth:`xarray.open_dataset`.
         xarray_open_dataset_kwargs: dict, optional
-            Keyword arguments passed to :py:func:`xarray.open_dataset`.  Either this or ``**kwargs`` can
+            Keyword arguments passed to :py:func:`xarray.open_dataset`. Either this or ``**kwargs`` can
             be used, but not both.
         **kwargs: dict, optional
             Any keyword arguments that can be passed to :py:func:`xarray.open_dataset`. Engine specific
@@ -112,7 +114,7 @@ class XarrayMixIn:
             * rename_variables: dict, None
                 Mapping to rename variables. Default is None.
             * extra_dims: str, or iterable of str, None
-                Metadata key or list of metadata keys to use as additional dimensions on top of the
+                Metadata key or list of metadata keys to be used as additional dimensions on top of the
                 predefined dimensions. Only enabled when no ``fixed_dims`` is specified. Default is None.
             * drop_dims:  str, or iterable of str, None
                 Metadata key or list of metadata keys to be ignored as dimensions. Default is None.
@@ -141,9 +143,9 @@ class XarrayMixIn:
                 - "time": metadata key interpreted as time part of the "forecast_reference_time"
                 - "step": metadata key interpreted as forecast step
                 - "forecast_reference_time": if not specified or None or empty the forecast reference
-                time is built using the "date" and "time" roles
+                  time is built using the "date" and "time" roles
                 - "valid_time": if not specified or None or empty the valid time is built using the
-                "validityDate" and "validityTime" metadata keys
+                  "validityDate" and "validityTime" metadata keys
                 - "level": metadata key interpreted as level
                 - "level_type": metadata key interpreted as level type
 
@@ -176,12 +178,12 @@ class XarrayMixIn:
 
                 - "forecast": adds two dimensions:
 
-                - "forecast_reference_time": built from the "date" and "time" roles
+                  - "forecast_reference_time": built from the "date" and "time" roles
                     (see ``dim_roles``) as np.datetime64 values
-                - "step": built from the "step" role. When ``decode_time=True`` the values are
+                  - "step": built from the "step" role. When ``decode_time=True`` the values are
                     np.timedelta64
                 - "valid_time": adds a dimension called "valid_time" as described by the "valid_time"
-                role (see ``dim_roles``). Will contain np.datetime64 values,
+                  role (see ``dim_roles``). Will contain np.datetime64 values.
                 - "raw": the "date", "time" and "step" roles are turned into 3 separate dimensions
             * level_dim_mode: str, None
                 Define how predefined vertical dimensions are formed. The default is "level".
@@ -189,10 +191,10 @@ class XarrayMixIn:
 
                 - "level": adds a single dimension according to the "level" role (see ``dim_roles``)
                 - "level_per_type": adds a separate dimensions for each level type based on the
-                "level" and "level_type" roles.
+                  "level" and "level_type" roles.
                 - "level_and_type": Use a single dimension for combined level and type of level.
             * squeeze: bool, None
-                Remove dimensions which has only one valid values. Not applies to dimension in
+                Remove dimensions which have only one valid value. Not applies to dimensions in
                 ``ensure_dims``. Its default value (None) expands
                 to True unless the ``profile`` overwrites it.
             * add_valid_time_coord: bool, None
@@ -227,24 +229,58 @@ class XarrayMixIn:
                 Define how attributes are generated. Default is "fixed". The possible values are:
 
                 - "fixed": Use the attributes defined in ``variable_attrs`` as variables
-                attributes and ``global_attrs`` as global attributes.
+                  attributes and ``global_attrs`` as global attributes.
                 - "unique": Use all the attributes defined in ``attrs``, ``variable_attrs``
-                and ``global_attrs``. When an attribute has unique a value for a dataset
-                it will be a global attribute, otherwise it will be a variable attribute.
-                However keys in ``variable_attrs`` are always used as variable attributes,
-                while keys in ``global_attrs`` are always used as global attributes.
-            * attrs: str or list, None
-                List of metadata keys to use as attributes.
-            * variable_attrs: str or list, None
-                Metadata key or keys to use as variable attributes. Default is None.
-            * global_attrs: , None
-                Metadata key or keys to use as global attributes. Default is None.
+                  and ``global_attrs``. When an attribute has unique a value for a dataset
+                  it will be a global attribute, otherwise it will be a variable attribute.
+                  However keys in ``variable_attrs`` are always used as variable attributes,
+                  while keys in ``global_attrs`` are always used as global attributes.
+            * attrs: str, number, callable, dict or list of these, None
+                Attribute or list of attributes. Only used when ``attrs_mode`` is ``unique``.
+                Its default value (None) expands to [] unless the ``profile`` overwrites it.
+                The following attributes are supported:
+
+                - str: Name of the attribute used as a metadata key to generate the value of
+                  the attribute. Can also be specified by prefixing with "key=" (e.g. "key=level").
+                  When prefixed with "namespace=" it specifies a metadata namespace
+                  (e.g. "namespace=parameter"), which will be added as a dict to the attribute.
+                - callable: A callable that takes a Metadata object and returns a dict of attributes
+                - dict: A dictionary of attributes with the keys as the attribute names.
+                  If the value is a callable it takes the attribute name and a Metadata object and
+                  returns the value of the attribute. A str value prefixed with "key=" or
+                  "namespace=" is interpreted as explained above. Any other values are used as the
+                  pre-defined value for the attribute.
+            * variable_attrs: str, number, callable, dict or list of these, None
+                Variable attribute or attributes. For the allowed values see ``attrs``. Its
+                default value (None) expands to [] unless the ``profile`` overwrites it.
+            * global_attrs: str, number, dict or list of these, None
+                Global attribute or attributes. For the allowed values see ``attrs``. Its
+                default value (None) expands to [] unless the ``profile`` overwrites it.
             * coord_attrs: dict, None
                 To be documented. Default is None.
+            * add_earthkit_attrs: bool, None
+                If True, add earthkit specific attributes to the dataset. Its default value
+                (None) expands to True unless the ``profile`` overwrites it.
             * rename_attrs: dict, None
                 A dictionary of attribute to rename. Default is None.
             * remapping: dict, None
                 Define new metadata keys for indexing. Default is None.
+            * lazy_load: bool, None
+                If True, the resulting Dataset will load data lazily from the
+                underlying data source. If False, a Dataset holding all the data in memory
+                and decoupled from the backend source will be created.
+                Using ``lazy_load=False`` with ``release_source=True`` can provide optimised
+                memory usage in certain cases. The default value of ``lazy_load`` (None)
+                expands to True unless the ``profile`` overwrites it.
+            * release_source: bool, None
+                Only used when ``lazy_load=False``. If True, memory held in the input fields are
+                released as soon as their values are copied into the resulting Dataset. This is
+                done per field to avoid memory spikes. The release operation is currently
+                only supported for GRIB fields stored entirely in memory, e.g. when read from a
+                :ref:`stream <streams>`. When a field does not support the release operation, this
+                option is ignored. Having run :obj:`to_xarray` the input data becomes unusable,
+                so use this option carefully. The default value of ``release_source`` (None) expands
+                to False unless the ``profile`` overwrites it.
             * strict: bool, None
                 If True, perform stricter checks on hypercube consistency. Its default value (None) expands
                 to False unless the ``profile`` overwrites it.
@@ -252,6 +288,11 @@ class XarrayMixIn:
                 Typecode or data-type of the array data.
             * array_module: module
                 The module to use for array operations. Default is numpy.
+            * direct_backend: bool, None
+                If True, the backend is used directly bypassing :py:meth:`xarray.open_dataset`
+                and ignoring all non-backend related kwargs. If False, the data is read via
+                :py:meth:`xarray.open_dataset`. Its default value (None) expands
+                to False unless the ``profile`` overwrites it.
 
             When ``engine="cfgrib"`` the following engine specific kwargs are supported:
 
@@ -262,38 +303,53 @@ class XarrayMixIn:
             * For the rest of the supported keyword arguments, please refer to the
               :xref:`cfgrib` documentation.
 
-        The default keyword arguments are as follows::
-
-        - when ``engine`` is "earthkit":
-
-            {"backend_kwargs"= {"errors": "raise"},
-            "cache": True, "chunks": None, "engine": "earthkit"}
-
-        - when ``engine`` is "cfgrib":
-
-            {"backend_kwargs": {"errors": "raise", "ignore_keys": [], "squeeze": False,},
-            "cache": True, "chunks": None, "engine": "cfgrib"}
-
-        Please note that:
-
-        - settings ``errors="raise"`` and ``engine`` are always enforced and cannot
-            be changed.
 
         Returns
         -------
-        xarray DataSet or list of xarray DataSets
+        Xarray Dataset or list of Xarray Datasets
+
+
+        The default values of ``xarray_open_dataset_kwargs`` or ``**kwargs`` passed
+        to :py:func:`xarray.open_dataset` are as follows:
+
+            - when ``engine="earthkit"``::
+
+               {"cache": True, "chunks": None, "engine": "earthkit"}
+
+            - when ``engine="cfgrib"``::
+
+                {"backend_kwargs": {"errors": "raise", "ignore_keys": [], "squeeze": False,},
+                "cache": True, "chunks": None, "engine": "cfgrib"}
+
+        Please note that settings ``errors="raise"`` and ``engine`` are always enforced
+        and cannot be changed.
+
 
         Examples
         --------
         >>> import earthkit.data
         >>> fs = earthkit.data.from_source("file", "test6.grib")
+        >>> ds = fs.to_xarray(time_dim_mode="forecast")
+        >>> # also possible to use the xarray_open_dataset_kwargs
         >>> ds = fs.to_xarray(
         ...     xarray_open_dataset_kwargs={
-        ...         "backend_kwargs": {"ignore_keys": ["number"]}
+        ...         "backend_kwargs": {"time_dim_mode": "forecast"}
         ...     }
         ... )
 
         """
+        if engine is None:
+            engine = "earthkit"
+            global _WARNED_ABOUT_EARTHKIT
+            if not _WARNED_ABOUT_EARTHKIT:
+                LOG.warning(
+                    (
+                        "From version 0.11.0 the default engine for to_xarray is 'earthkit'. "
+                        "Use engine=`cfgrib` to invoke the cfgrib engine."
+                    )
+                )
+                _WARNED_ABOUT_EARTHKIT = True
+
         engines = {"earthkit": self.to_xarray_earthkit, "cfgrib": self.to_xarray_cfgrib}
         if engine not in engines:
             raise ValueError(f"Unsupported engine: {engine}. Please use one of {list(engines.keys())}")
@@ -349,9 +405,13 @@ class XarrayMixIn:
         # print(f"{kwargs=}")
         # print(f"{xarray_open_dataset_kwargs=}")
 
-        from earthkit.data.utils.xarray.engine import from_earthkit
+        # separate backend_kwargs from other_kwargs
+        backend_kwargs = xarray_open_dataset_kwargs.pop("backend_kwargs", None)
+        other_kwargs = xarray_open_dataset_kwargs
 
-        return from_earthkit(self, **xarray_open_dataset_kwargs)
+        from earthkit.data.utils.xarray.builder import from_earthkit
+
+        return from_earthkit(self, backend_kwargs=backend_kwargs, other_kwargs=other_kwargs)
 
     def to_xarray_cfgrib(self, user_kwargs):
         xarray_open_dataset_kwargs = {}

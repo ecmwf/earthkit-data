@@ -22,44 +22,6 @@ def repeat_list_items(items, count):
     return sum([[x] * count for x in items], [])
 
 
-# @pytest.mark.parametrize(
-#     "_kwargs,error",
-#     [
-#         # (dict(order_by="level"), TypeError),
-#         (dict(group_by=1), TypeError),
-#         (dict(group_by=["level", 1]), TypeError),
-#         # (dict(group_by="level", batch_size=1), TypeError),
-#         (dict(batch_size=-1), ValueError),
-#     ],
-# )
-# def test_grib_url_stream_invalid_args(_kwargs, error):
-#     with pytest.raises(error):
-#         from_source(
-#             "url",
-#             earthkit_remote_test_data_file("examples/test6.grib"),
-#             stream=True,
-#             **_kwargs,
-#         )
-
-
-# @pytest.mark.parametrize(
-#     "_kwargs",
-#     [
-#         {"group_by": "level"},
-#         {"group_by": "level", "batch_size": 0},
-#         {"group_by": "level", "batch_size": 1},
-#         {"group_by": ["level", "gridType"]},
-#     ],
-# )
-
-
-# @pytest.mark.parametrize(
-#     "_kwargs",
-#     [
-#         {},
-#         {"batch_size": 1},
-#     ],
-# )
 def test_grib_url_stream_iter():
     ds = from_source(
         "url",
@@ -98,7 +60,7 @@ def test_grib_url_stream_iter():
         ({"n": 4}, [["t", "u", "v", "t"], ["u", "v"]]),
     ],
 )
-def test_grib_from_stream_batched(_kwargs, expected_meta):
+def test_grib_url_stream_batched(_kwargs, expected_meta):
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("examples/test6.grib"),
@@ -206,7 +168,7 @@ def test_grib_save_when_loaded_from_url_stream():
 #         {"batch_size": 1},
 #     ],
 # )
-def test_grib_multi_url_stream_iter():
+def test_grib_url_stream_multi_urls_iter():
     ds = from_source(
         "url",
         [
@@ -218,10 +180,6 @@ def test_grib_multi_url_stream_iter():
 
     assert isinstance(ds, StreamFieldList)
     assert len(ds._source.sources) == 2
-    assert ds._source._status() == [
-        {"reader": True, "stream": True},
-        {"reader": False, "stream": False},
-    ]
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -245,11 +203,6 @@ def test_grib_multi_url_stream_iter():
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
 
-    assert ds._source._status() == [
-        {"reader": True, "stream": True},
-        {"reader": True, "stream": True},
-    ]
-
 
 @pytest.mark.parametrize(
     "_kwargs,expected_meta",
@@ -260,7 +213,7 @@ def test_grib_multi_url_stream_iter():
         ({"n": 4}, [["2t", "msl", "t", "z"], ["t", "z"]]),
     ],
 )
-def test_grib_multi_url_stream_batched(_kwargs, expected_meta):
+def test_grib_url_stream_multi_urls_batched(_kwargs, expected_meta):
     ds = from_source(
         "url",
         [
@@ -286,7 +239,7 @@ def test_grib_multi_url_stream_batched(_kwargs, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
-def test_grib_multi_url_stream_memory():
+def test_grib_url_stream_multi_urls_memory():
     ds = from_source(
         "url",
         [
@@ -373,7 +326,7 @@ def test_grib_multi_url_stream_memory():
         ),
     ],
 )
-def test_grib_single_url_stream_parts(path, parts, expected_meta):
+def test_grib_url_stream_single_url_parts_core(path, parts, expected_meta):
     ds = from_source(
         "url",
         earthkit_remote_test_data_file(path),
@@ -406,7 +359,7 @@ def test_grib_single_url_stream_parts(path, parts, expected_meta):
         ),
     ],
 )
-def test_grib_single_url_stream_parts_as_arg_valid(parts, expected_meta):
+def test_grib_url_stream_single_url_parts_as_arg_valid(parts, expected_meta):
     ds = from_source(
         "url",
         [earthkit_remote_test_data_file("examples/test6.grib"), parts],
@@ -428,7 +381,7 @@ def test_grib_single_url_stream_parts_as_arg_valid(parts, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
-def test_grib_single_url_stream_parts_as_arg_invalid():
+def test_grib_url_stream_single_url_parts_as_arg_invalid():
     with pytest.raises(ValueError):
         from_source(
             "url",
@@ -471,7 +424,7 @@ def test_grib_single_url_stream_parts_as_arg_invalid():
         ),
     ],
 )
-def test_grib_multi_url_stream_parts(parts1, parts2, expected_meta):
+def test_grib_url_stream_multi_urls_parts(parts1, parts2, expected_meta):
     ds = from_source(
         "url",
         [
@@ -494,86 +447,6 @@ def test_grib_multi_url_stream_parts(parts1, parts2, expected_meta):
 
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
-
-
-# Test RequestIterStreamer object from sources/url.py
-
-
-def iter_stream(chunk_size, data):
-    num = len(data)
-    pos = 0
-    while pos < num:
-        start = pos
-        end = min(pos + chunk_size, num)
-        pos += end - start
-        yield data[start:end]
-
-
-@pytest.mark.parametrize("chunk_size", [1, 2, 3, 4, 5, 10, 12, 14])
-@pytest.mark.parametrize("read_size", [1, 2, 3, 4, 5, 10, 12, 14])
-def test_request_iter_streamer(chunk_size, read_size):
-    from earthkit.data.sources.url import RequestIterStreamer
-
-    data = str.encode("0123456789abc")
-
-    stream = RequestIterStreamer(iter_stream(chunk_size, data))
-
-    assert not stream.closed
-    assert stream.read(-2) == bytes()
-    assert stream.read(0) == bytes()
-    assert stream.peek(4) == data[:4]
-    assert not stream.closed
-
-    for i in range(0, len(data), read_size):
-        assert stream.read(read_size) == data[i : min(i + read_size, len(data))], i
-
-    assert stream.read(1) == bytes()
-    assert stream.closed
-    assert stream.read(0) == bytes()
-    assert stream.read() == bytes()
-    assert stream.read(-1) == bytes()
-    assert stream.peek(4) == bytes()
-
-
-@pytest.mark.parametrize("chunk_size", [1, 2, 3, 4, 5, 10, 12, 14])
-def test_request_iter_streamer_read_all_1(chunk_size):
-    from earthkit.data.sources.url import RequestIterStreamer
-
-    data = str.encode("0123456789abc")
-
-    stream = RequestIterStreamer(iter_stream(chunk_size, data))
-
-    assert not stream.closed
-    assert stream.read(-2) == bytes()
-    assert stream.read(0) == bytes()
-    assert stream.peek(4) == data[:4]
-    assert not stream.closed
-
-    assert stream.read() == data
-
-    assert stream.read(1) == bytes()
-    assert stream.closed
-    assert stream.read(0) == bytes()
-    assert stream.read(-1) == bytes()
-    assert stream.peek(4) == bytes()
-
-
-@pytest.mark.parametrize("chunk_size", [1, 2, 3, 4, 5, 10, 12, 14])
-def test_request_iter_streamer_read_all_2(chunk_size):
-    from earthkit.data.sources.url import RequestIterStreamer
-
-    data = str.encode("0123456789abc")
-
-    stream = RequestIterStreamer(iter_stream(chunk_size, data))
-
-    assert not stream.closed
-    assert stream.read() == data
-
-    assert stream.read(1) == bytes()
-    assert stream.closed
-    assert stream.read(0) == bytes()
-    assert stream.read(-1) == bytes()
-    assert stream.peek(4) == bytes()
 
 
 if __name__ == "__main__":

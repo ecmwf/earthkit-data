@@ -15,7 +15,6 @@ LOG = logging.getLogger(__name__)
 
 class Remapping(dict):
     # inherit from dict to make it serialisable
-
     def __init__(self, remapping):
         super().__init__(remapping)
 
@@ -99,7 +98,6 @@ def _build_remapping(mapping):
 
 class Patch(dict):
     # inherit from dict to make it serialisable
-
     def __init__(self, proc, name, patch):
         self.proc = proc
         self.name = name

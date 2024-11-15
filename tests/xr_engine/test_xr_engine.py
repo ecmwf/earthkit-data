@@ -9,12 +9,18 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
+import sys
 
 import numpy as np
 import pytest
 
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_remote_test_data_file
+
+here = os.path.dirname(__file__)
+sys.path.insert(0, here)
+from xr_engine_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.cache
@@ -64,9 +70,7 @@ def test_xr_engine_detailed_check(api):
             decode_timedelta=False,
             add_valid_time_coord=False,
         )
-    ds = ds_ek.to_xarray(
-        time_dim_mode="raw", decode_times=False, decode_timedelta=False, add_valid_time_coord=False
-    )
+
     assert ds is not None
 
     # dataset
@@ -234,8 +238,13 @@ def test_xr_engine_detailed_check(api):
 
 
 @pytest.mark.cache
-def test_xr_engine_detailed_flatten_check():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
+@pytest.mark.parametrize("stream", [False, True])
+@pytest.mark.parametrize("lazy_load", [False, True])
+@pytest.mark.parametrize("release_source", [False, True])
+@pytest.mark.parametrize("direct_backend", [False, True])
+def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source, direct_backend):
+    filename = "test-data/xr_engine/level/pl.grib"
+    ds_ek, ds_ek_ref = load_grib_data(filename, "url", stream=stream)
 
     kwargs = {
         "xarray_open_dataset_kwargs": {
@@ -245,6 +254,9 @@ def test_xr_engine_detailed_flatten_check():
                 "decode_timedelta": False,
                 "flatten_values": True,
                 "add_valid_time_coord": False,
+                "lazy_load": lazy_load,
+                "release_source": release_source,
+                "direct_backend": direct_backend,
             }
         }
     }
@@ -253,7 +265,7 @@ def test_xr_engine_detailed_flatten_check():
     assert ds is not None
 
     # dataset
-    ll = ds_ek[0].to_latlon(flatten=True)
+    ll = ds_ek_ref[0].to_latlon(flatten=True)
     lats = ll["lat"]
     lons = ll["lon"]
     data_vars = ["r", "t", "u", "v", "z"]
@@ -393,7 +405,7 @@ def test_xr_engine_detailed_flatten_check():
         ]
     )
 
-    v_ek = ds_ek.sel(param="t", time=0, levelist=500).to_numpy(flatten=True)
+    v_ek = ds_ek_ref.sel(param="t", time=0, levelist=500).to_numpy(flatten=True)
     assert np.allclose(r.values.flatten(), v_ek[:, [9 * 36, 10 * 36, 11 * 36]].flatten())
     assert np.allclose(r.values, vals_ref)
 
@@ -403,6 +415,32 @@ def test_xr_engine_detailed_flatten_check():
     assert np.allclose(r.values, vals_ref)
 
 
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"split_dims": ["step"]},
+        {"split_dims": None},
+        {"direct_backend": None},
+        {"direct_backend": True},
+        {"direct_backend": False},
+    ],
+)
+def test_xr_engine_invalid_kwargs(kwargs):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
+
+    import xarray as xr
+
+    with pytest.raises(TypeError):
+        xr.open_dataset(
+            ds_ek.path,
+            engine="earthkit",
+            time_dim_mode="raw",
+            **kwargs,
+        )
+
+
+@pytest.mark.cache
 def test_xr_engine_dtype():
     ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
 
@@ -411,3 +449,79 @@ def test_xr_engine_dtype():
 
     ds = ds_ek.to_xarray(dtype=np.float64)
     assert ds["t"].values.dtype == np.float64
+
+
+@pytest.mark.cache
+def test_xr_engine_single_field():
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = ds_ek[0]
+
+    ds = ds_ek.to_xarray(
+        time_dim_mode="raw",
+        decode_times=False,
+        decode_timedelta=False,
+        add_valid_time_coord=False,
+        squeeze=True,
+    )
+
+    lats = np.linspace(90, -90, 19)
+    lons = np.linspace(0, 350, 36)
+
+    attrs_ref = {
+        "param": "t",
+        "standard_name": "air_temperature",
+        "long_name": "Temperature",
+        "paramId": 130,
+        "class": "od",
+        "stream": "oper",
+        "levtype": "pl",
+        "type": "fc",
+        "expver": "0001",
+        "date": 20240603,
+        "time": 0,
+        "domain": "g",
+        "number": 0,
+        "levelist": 1000,
+        "Conventions": "CF-1.8",
+        "institution": "ECMWF",
+    }
+
+    assert ds.attrs == attrs_ref
+
+    data_vars = ["t"]
+
+    coords_ref_full = {
+        "latitude": lats,
+        "longitude": lons,
+    }
+
+    dims_ref_full = {
+        "latitude": 19,
+        "longitude": 36,
+    }
+
+    assert len(ds.dims) == len(dims_ref_full)
+    assert len(ds.coords) == len(coords_ref_full)
+    for k, v in coords_ref_full.items():
+        assert np.allclose(ds.coords[k].values, v)
+    assert [v for v in ds.data_vars] == data_vars
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("add", [False, True])
+def test_xr_engine_add_earthkit_attrs(add):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = ds_ek[0]
+
+    ds = ds_ek.to_xarray(
+        time_dim_mode="raw",
+        decode_times=False,
+        decode_timedelta=False,
+        add_valid_time_coord=False,
+        add_earthkit_attrs=add,
+    )
+
+    if add:
+        assert "_earthkit" in ds["t"].attrs
+    else:
+        assert "_earthkit" not in ds["t"].attrs

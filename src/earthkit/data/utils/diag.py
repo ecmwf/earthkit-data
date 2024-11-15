@@ -11,11 +11,29 @@ import time
 from collections import defaultdict
 
 
-class TimeDiag:
+class DiagCore:
     def __init__(self, name=""):
         self.name = name
+
+    def _build_label(self, label):
+        if label:
+            label = f"[{label:10}] "
+
+        if self.name:
+            name = f"[{self.name:10}] "
+            if label:
+                label = f"{name}{label}"
+            else:
+                label = f"{name}"
+
+        return label
+
+
+class TimeDiag(DiagCore):
+    def __init__(self, name="", **kwargs):
         self.start = time.time()
         self.prev = self.start
+        super().__init__(name=name, **kwargs)
 
     def elapsed(self):
         return time.time() - self.start
@@ -24,14 +42,7 @@ class TimeDiag:
         curr = time.time()
         delta = curr - self.prev
         self.prev = curr
-        if label:
-            label = f"[{label:10}] "
-        if self.name:
-            if label:
-                label = f"[{self.name}] {label}"
-            else:
-                label = f"[{self.name}]"
-
+        label = self._build_label(label)
         s = f"{label}elapsed={self.elapsed():.3f}s delta={delta:.3f}s"
 
         if as_str:
@@ -40,14 +51,13 @@ class TimeDiag:
             print(s)
 
 
-class MemoryDiag:
-    def __init__(self, name="", peak=False):
+class MemoryDiag(DiagCore):
+    def __init__(self, name="", peak=False, **kwargs):
         import os
         import platform
 
         import psutil
 
-        self.name = name
         self.proc = psutil.Process()
         self.prev = 0
         self.scale = 1
@@ -58,6 +68,8 @@ class MemoryDiag:
                 self.scale = 1.0 / (1024 * 1024)
         except Exception:
             pass
+
+        super().__init__(name=name, **kwargs)
 
     def scale_to_mbytes(self, v):
         return v * self.scale
@@ -85,14 +97,7 @@ class MemoryDiag:
         m = self.current()
         _delta = m - self.prev
         self.prev = m
-        if label:
-            label = f"[{label:10}] "
-
-        if self.name:
-            if label:
-                label = f"[{self.name}] {label}"
-            else:
-                label = f"[{self.name}]"
+        label = self._build_label(label)
 
         s = ""
         if delta:
@@ -109,15 +114,17 @@ class MemoryDiag:
             print(s)
 
 
-class Diag:
-    def __init__(self, name="", peak=False):
-        self.time = TimeDiag(name)
-        self.memory = MemoryDiag(name, peak=peak)
+class Diag(DiagCore):
+    def __init__(self, name="", peak=False, **kwargs):
+        self.time = TimeDiag("")
+        self.memory = MemoryDiag("", peak=peak)
+        super().__init__(name=name, **kwargs)
 
     def __call__(self, label=""):
-        if label:
-            label = f"[{label:10}] "
-        return f"{label}{self.time(as_str=True)} {self.memory(as_str=True)}"
+        label = str(label)
+        label = self._build_label(label)
+        s = f"{label}{self.time(as_str=True)} {self.memory(as_str=True)}"
+        print(s)
 
     def peak(self):
         return self.memory.peak()
@@ -127,12 +134,6 @@ def metadata_cache_diag(fieldlist):
     r = defaultdict(int)
     for f in fieldlist:
         collect_field_metadata_cache_diag(f, r)
-        # try:
-        #     md_cache = f._diag()
-        #     for k in ["metadata_cache_hits", "metadata_cache_misses", "metadata_cache_size"]:
-        #         r[k] += md_cache[k]
-        # except Exception:
-        #     pass
     return r
 
 

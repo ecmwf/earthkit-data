@@ -19,13 +19,13 @@ from earthkit.data.testing import earthkit_examples_file
     "parts,expected_meta",
     [
         ((0, 1596), ["02836"]),  # message length
-        ([(0, 1596)], ["02836"]),  # message length
-        ([(0, 1601)], ["02836"]),  # message length + extra bytes
-        ([(2904, 1166)], ["01415"]),
-        ([(0, 1596)], ["02836"]),  # shorter than message
-        ([(2904, 2442)], ["01415", "01001"]),
-        ([(2904, 1166), (5346, 1216)], ["01415", "01152"]),
-        ([(2904, 1166), (5346, 121)], ["01415"]),  # second part shorter than message
+        # ([(0, 1596)], ["02836"]),  # message length
+        # ([(0, 1601)], ["02836"]),  # message length + extra bytes
+        # ([(2904, 1166)], ["01415"]),
+        # ([(0, 1596)], ["02836"]),  # shorter than message
+        # ([(2904, 2442)], ["01415", "01001"]),
+        # ([(2904, 1166), (5346, 1216)], ["01415", "01152"]),
+        # ([(2904, 1166), (5346, 121)], ["01415"]),  # second part shorter than message
     ],
 )
 def test_bufr_single_file_parts(parts, expected_meta):

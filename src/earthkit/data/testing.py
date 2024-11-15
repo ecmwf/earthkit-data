@@ -108,10 +108,15 @@ except Exception:
 try:
     import pyfdb  # noqa
 
-    fdb_home = os.environ.get("FDB_HOME", None)
-    NO_FDB = fdb_home is None
+    NO_FDB = False
 except Exception:
     NO_FDB = True
+
+NO_PROD_FDB = NO_FDB
+if not NO_PROD_FDB:
+    fdb_home = os.environ.get("FDB_HOME", None)
+    NO_PROD_FDB = fdb_home is None
+
 
 NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
 NO_COVJSONKIT = not modules_installed("covjsonkit")
@@ -203,6 +208,15 @@ if not NO_PYTORCH:
 
 if not NO_CUPY:
     ARRAY_BACKENDS.append("cupy")
+
+
+def make_tgz(target_dir, target_name, paths):
+    import tarfile
+
+    tar = tarfile.open(os.path.join(target_dir, target_name), "w:gz")
+    for p in paths:
+        tar.add(p)
+    tar.close()
 
 
 def main(path):

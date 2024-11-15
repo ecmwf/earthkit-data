@@ -5,9 +5,11 @@ Streams
 
 We can read :ref:`grib` and CoverageJson data as a stream by using the ``stream=True`` option in :func:`from_source`. It is only available for the following sources:
 
+- :ref:`data-sources-file`
 - :ref:`data-sources-url`
 - :ref:`data-sources-fdb`
 - :ref:`data-sources-polytope`
+- :ref:`data-sources-s3`
 
 Iterating over a stream
 ------------------------
@@ -76,5 +78,6 @@ Further examples
 -----------------
 
 - :ref:`/examples/data_from_stream.ipynb`
+- :ref:`/examples/file_stream.ipynb`
 - :ref:`/examples/fdb.ipynb`
 - :ref:`/examples/url_stream.ipynb`

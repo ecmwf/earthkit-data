@@ -38,6 +38,8 @@ We can get data from a given source by using :func:`from_source`:
       - read data from a stream
     * - :ref:`data-sources-memory`
       - read data from a memory buffer
+    * - :ref:`data-sources-lod`
+      - read data from a list of dictionaries
     * - :ref:`data-sources-multi`
       - read data from multiple sources
     * - :ref:`data-sources-ads`
@@ -68,19 +70,23 @@ We can get data from a given source by using :func:`from_source`:
 file
 ----
 
-.. py:function:: from_source("file", path, expand_user=True, expand_vars=False, unix_glob=True, recursive_glob=True, parts=None)
+.. py:function:: from_source("file", path, expand_user=True, expand_vars=False, unix_glob=True, recursive_glob=True, filter=None, parts=None)
   :noindex:
 
   The simplest source is ``file``, which can access a local file/list of files.
 
-  :param path: input path(s). Each path can contain the :ref:`parts <parts>` defining the byte ranges to read.
+  :param path: input path(s). Each path can be a file path or a directory path. If it is a directory path, it is recursively scanned for supported files. When a path is an archive format such as ``.zip``, ``.tar``, ``.tar.gz``, etc, *earthkit-data* will attempt to open it and extract any usable files, which are then stored in the :ref:`cache <caching>`. Each filepath can contain the :ref:`parts <parts>` defining the byte ranges to read.
   :type path: str, list, tuple
   :param bool expand_user: replace the leading ~ or ~user in ``path`` by that user's home directory. See ``os.path.expanduser``
   :param bool expand_vars:  expand shell environment variables in ``path``. See ``os.path.expandpath``
   :param bool unix_glob: allow UNIX globbing in ``path``
   :param bool recursive_glob: allow recursive scanning of directories. Only used when ``uxix_glob`` is True
+  :param filter: apply filter to the files read from directories or archives. The filter can be a callable or a string. If it is a string, it is interpreted as a UNIX glob pattern. If it is a callable, it should accept the full file path as a string and return a boolean.
+  :type filter: str, callable
   :param parts: the :ref:`parts <parts>` to read from the file(s) specified by ``path``. Cannot be used when ``path`` already defines the :ref:`parts <parts>`.
   :type parts: pair, list or tuple of pairs, None
+  :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Directories and archives are supported. Stream based access is only available for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`. *New in version 0.11.0*
+  :param bool read_all: if ``True``, all the data is read straight to memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.11.0*
 
   *earthkit-data* will inspect the content of the files to check for any of the
   supported :ref:`data formats <data-format>`.
@@ -131,6 +137,7 @@ file
     - :ref:`/examples/files.ipynb`
     - :ref:`/examples/multi_files.ipynb`
     - :ref:`/examples/file_parts.ipynb`
+    - :ref:`/examples/file_stream.ipynb`
     - :ref:`/examples/tar_files.ipynb`
     - :ref:`/examples/grib_overview.ipynb`
     - :ref:`/examples/bufr_temp.ipynb`
@@ -195,7 +202,6 @@ url
   :type parts: pair, list or tuple of pairs, None
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise the data is retrieved into a file and stored in the :ref:`cache <caching>`. This option only works for GRIB data. No archive formats supported (``unpack`` is ignored). ``stream`` only works for ``http`` and ``https`` URLs. See details about streams :ref:`here <streams>`.
   :param bool read_all: if ``True``, all the data is read straight to memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
-  :type group_by: str, list of str
   :param dict **kwargs: other keyword arguments specifying the request
 
   .. code-block:: python
@@ -423,6 +429,94 @@ memory
       f = ds[0]
 
 
+.. _data-sources-lod:
+
+list-of-dicts
+--------------
+
+.. py:function:: from_source("list-of-dicts", list_of_dicts)
+  :noindex:
+
+  The ``list-of-dicts`` source will read data from a list of dictionaries. Each dictionary represents a single field and
+  the result is a FieldList consisting of ArrayField fields.
+
+  .. note::
+
+    No attempt is made to represent the fields internally as GRIB messages, so field functionalities are limited,
+    and some of them may not work at all. The fields cannot be saved to a GRIB file.
+
+  The only **required** key for a dictionary is "values", which represents the data values. It can be a list, tuple or an ndarray.
+  All the other keys define the **metadata** and are optional. However, many field functionalities require the existence
+  of specific keys (see below).
+
+  The keys that might be interpreted internally can be grouped into the following categories:
+
+  Geography keys:
+
+    - "latitudes": the latitudes, iterable or ndarray
+    - "longitudes": the longitudes, iterable or ndarray
+    - "distinctLatitudes": the distinct latitudes, iterable or ndarray
+    - "distinctLongitudes": the distinct longitudes, iterable or ndarray
+
+    These keys are required to make any geography related field functionalities work
+    (e.g. :py:meth:`to_latlon`). The role of the keys depends on the grid type:
+
+    - structured grids: "latitudes" and "longitudes" can define the distinct
+      latitudes and longitudes or the full grid. The keys "distinctLatitudes" and "distinctLongitudes" are
+      only used when "latitudes" and "longitudes" are not present and in this
+      case they define the distinct latitudes and longitudes.
+    - other grids: "latitudes" and "longitudes" must have the same number of points as "values".
+
+    When other GRIB related geography keys are present, no attempt is made to check if they are consistent
+    with the grid defined by "latitudes" and "longitudes". Therefore their usage is strongly discouraged.
+
+    See: :ref:`/examples/list_of_dicts_geography.ipynb` for more details.
+
+  Parameter keys:
+
+    - "param": the parameter name, alias to "shortName" if missing. Must be a str.
+    - "shortName": the parameter name, alias to "param" if missing. Must be a str.
+
+  Temporal keys:
+
+    - "date": the date part of the forecast reference time. Must be an int as YYYYMMDD
+      (the same format as the "date" ecCodes GRIB key).
+    - "time": the time part of the forecast reference time. Must be an int as hhmm with leading zeros omitted
+      (the same format as the "time" ecCodes GRIB key).
+    - "dataDate": alias to "date"
+    - "dataTime": alias to "time"
+    - "forecast_reference_time": the forecast reference time. Must be a datetime object. If not present
+      it is automatically built from "date" and "time" or from "valid_datetime" and "step".
+    - "base_datetime": alias to "forecast_reference_time"
+    - "valid_datetime": the valid datetime. Must be a datetime object. If not present
+      it is automatically built from "forecast_reference_time" and "step".
+    - "step": the forecast step. If it is an int, it specifies the number of hours. If it is a str it must
+      use the same format as the "step" ecCodes GRIB key. Can be a timedelta object.
+    - "step_timedelta": the step timedelta. Must be a timedelta object. If not present
+      it is automatically built from "step".
+
+  Level keys:
+
+    - "level": the level value. Must be a number.
+    - "levelist": the level value. Must be a number.
+    - "typeOfLevel": the type of level. Must be a str.
+    - "levtype": the type of level. Must be a str.
+
+    These keys are supposed to be the same as the corresponding GRIB keys.
+
+  Ensemble keys:
+
+    - "number": the ensemble member number. Must be an int.
+
+  Other keys:
+
+    Other keys can be used to store additional metadata.
+
+  Further examples:
+
+      - :ref:`/examples/fields_from_dict_in_loop.ipynb`
+      - :ref:`/examples/list_of_dicts_overview.ipynb`
+      - :ref:`/examples/list_of_dicts_geography.ipynb`
 
 .. _data-sources-multi:
 
@@ -453,11 +547,19 @@ ads
 .. py:function:: from_source("ads", dataset, *args, **kwargs)
   :noindex:
 
-  The ``ads`` source accesses the `Copernicus Atmosphere Data Store`_ (ADS), using the cdsapi_ package. In addition to data retrieval, ``request`` also has post-processing options such as ``grid`` and ``area`` for re-gridding and sub-area extraction respectively.
+  The ``ads`` source accesses the `Copernicus Atmosphere Data Store`_ (ADS), using the cdsapi_ package.  In addition to data retrieval, the request has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively. It can
+  also contain the earthkit-data specific :ref:`split_on <split_on>` parameter.
 
   :param str dataset: the name of the ADS dataset
   :param tuple *args: specify the request as a dict
   :param dict **kwargs: other keyword arguments specifying the request
+
+  .. note::
+
+    Currently, for accessing ADS earthkit-data requires the credentials for cdsapi_ to be stored in the RC file ``~/.adsapirc``.
+
+    When no ``~/.adsapirc`` RC file exists a prompt will appear to specify the credentials for cdsapi_ and write them into ``~/.adsapirc``.
+
 
   The following example retrieves CAMS global reanalysis GRIB data for 2 parameters:
 
@@ -476,7 +578,7 @@ ads
 
   Data downloaded from the ADS is stored in the the :ref:`cache <caching>`.
 
-  To access data from the ADS, you will need to register and retrieve an access token. The process is described `here <https://ads.atmosphere.copernicus.eu/api-how-to>`__. For more information, see the `ADS_knowledge base`_.
+  To access data from the ADS, you will need to register and retrieve an access token. The process is described `here <https://ads.atmosphere.copernicus.eu/how-to-api>`__. For more information, see the `ADS_knowledge base`_.
 
   Further examples:
 
@@ -542,7 +644,7 @@ cds
 
   Data downloaded from the CDS is stored in the the :ref:`cache <caching>`.
 
-  To access data from the CDS, you will need to register and retrieve an access token. The process is described `here <https://cds.climate.copernicus.eu/api-how-to>`__. For more information, see the `CDS_knowledge base`_.
+  To access data from the CDS, you will need to register and retrieve an access token. The process is described `here <https://cds.climate.copernicus.eu/how-to-api>`__. For more information, see the `CDS_knowledge base`_.
 
   Further examples:
 
@@ -589,12 +691,14 @@ ecmwf-open-data
 fdb
 ---
 
-.. py:function:: from_source("fdb", *args, stream=True, read_all=False, **kwargs)
+.. py:function:: from_source("fdb", *args, config=None, userconfig=None, stream=True, read_all=False, **kwargs)
   :noindex:
 
   The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
 
   :param tuple *args: positional arguments specifying the request as a dict
+  :param dict,str config: the FDB configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 0.11.0*
+  :param dict,str userconfig: the FDB user configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 0.11.0*
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
   :param bool read_all: if ``True``, all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :param dict **kwargs: other keyword arguments specifying the request

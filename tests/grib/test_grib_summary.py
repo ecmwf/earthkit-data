@@ -146,6 +146,35 @@ def test_grib_describe(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
+def test_grib_describe_single_field(fl_type):
+    f_in, _ = load_grib_data("tuv_pl.grib", fl_type)
+    f = f_in[0]
+
+    # full contents
+    df = f.describe()
+    df = df.data
+
+    ref = {
+        "level": {("t", "isobaricInhPa"): "1000"},
+        "date": {("t", "isobaricInhPa"): "20180801"},
+        "time": {("t", "isobaricInhPa"): "1200"},
+        "step": {("t", "isobaricInhPa"): "0"},
+        "paramId": {("t", "isobaricInhPa"): "130"},
+        "class": {("t", "isobaricInhPa"): "od"},
+        "stream": {("t", "isobaricInhPa"): "oper"},
+        "type": {("t", "isobaricInhPa"): "an"},
+        "experimentVersionNumber": {("t", "isobaricInhPa"): "0001"},
+    }
+
+    assert ref == df.to_dict()
+
+    # repeated use
+    df = f.describe()
+    df = df.data
+    assert ref == df.to_dict()
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_ls(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
@@ -308,6 +337,52 @@ def test_grib_ls_num(fl_type):
     assert ref == df.to_dict()
 
     df = f.ls(-2)
+    assert ref == df.to_dict()
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+def test_grib_ls_single_field(fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
+
+    # default keys
+    f1 = f[0]
+    df = f1.ls()
+
+    ref = {
+        "centre": {0: "ecmf"},
+        "shortName": {0: "t"},
+        "typeOfLevel": {
+            0: "isobaricInhPa",
+        },
+        "level": {0: 1000},
+        "dataDate": {0: 20180801},
+        "dataTime": {0: 1200},
+        "stepRange": {0: "0"},
+        "dataType": {0: "an"},
+        "number": {0: 0},
+        "gridType": {0: "regular_ll"},
+    }
+
+    assert ref == df.to_dict()
+
+    # extra keys
+    f1 = f[0]
+    df = f1.ls(extra_keys=["paramId"])
+
+    ref = {
+        "centre": {0: "ecmf"},
+        "shortName": {0: "t"},
+        "typeOfLevel": {0: "isobaricInhPa"},
+        "level": {0: 1000},
+        "dataDate": {0: 20180801},
+        "dataTime": {0: 1200},
+        "stepRange": {0: "0"},
+        "dataType": {0: "an"},
+        "number": {0: 0},
+        "gridType": {0: "regular_ll"},
+        "paramId": {0: 130},
+    }
+
     assert ref == df.to_dict()
 
 

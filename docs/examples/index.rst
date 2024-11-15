@@ -14,6 +14,7 @@ Data sources
     files.ipynb
     multi_files.ipynb
     file_parts.ipynb
+    file_stream.ipynb
     tar_files.ipynb
     data_from_stream.ipynb
     url.ipynb
@@ -105,7 +106,8 @@ Dictionary input
     :glob:
 
     fields_from_dict_in_loop.ipynb
-    list_of_dict*
+    list_of_dicts_overview
+    list_of_dicts_geography
 
 
 Other inputs
@@ -135,6 +137,7 @@ Xarray engine
     xarray_engine_field_dims.ipynb
     xarray_engine_to_grib.ipynb
     xarray_engine_split.ipynb
+    xarray_engine_seasonal.ipynb
 
 
 Miscellaneous

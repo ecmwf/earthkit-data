@@ -44,6 +44,17 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
         return self.source.filter
 
     @property
+    def parts(self):
+        if hasattr(self.source, "parts"):
+            return self.source.parts
+
+    @property
+    def stream(self):
+        if hasattr(self.source, "stream"):
+            return self.source.stream
+        return False
+
+    @property
     def merger(self):
         return self.source.merger
 

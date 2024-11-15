@@ -19,15 +19,15 @@ dependencies:
 - entrypoints
 - jupyterlab
 - ecmwf-api-client>=1.6.1
-- cdsapi>=0.7.1
+- cdsapi>=0.7.2
 - hda
 - pip:
   - multiurl>=0.3.0
-  - git+https://github.com/ecmwf/pyfdb
+  - pyfdb>=0.1.0
   - ecmwf-opendata>=0.1.2
   - polytope-client>=0.7.4
   - earthkit-meteo>=0.0.1
-  - covjsonkit>=0.0.19
+  - covjsonkit>=0.0.25
   - earthkit-geo>=0.2.0
 - tqdm>=4.63.0
 - lru-dict
