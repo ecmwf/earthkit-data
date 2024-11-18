@@ -11,11 +11,12 @@ from functools import cached_property
 
 import numpy as np
 
-from ..core.fieldlist import Field
-from ..core.fieldlist import FieldList
-from ..core.geography import Geography
-from ..core.metadata import RawMetadata
-from ..utils.bbox import BoundingBox
+from earthkit.data.core.fieldlist import Field
+from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.geography import Geography
+from earthkit.data.core.metadata import RawMetadata
+from earthkit.data.utils.bbox import BoundingBox
+
 from . import Reader
 
 
@@ -27,7 +28,10 @@ class GeoTIFFGeography(Geography):
         self.y_dim = ds.rio.y_dim
 
     def _latlon_coords(self):
-        from pyproj import Transformer
+        try:
+            from pyproj import Transformer
+        except ImportError:
+            raise ImportError("geotiff handling requires 'pyproj' to be installed")
 
         return Transformer.from_crs(self._ds.rio.crs, "EPSG:4326", always_xy=True).transform(
             *self._xy_coords()
@@ -57,7 +61,7 @@ class GeoTIFFGeography(Geography):
         return (*self.shape(), self._ds.rio.crs.to_wkt())
 
     def projection(self):
-        from ..utils.projections import Projection
+        from earthkit.data.utils.projections import Projection
 
         return Projection.from_cf_grid_mapping(**self._grid_mapping)
 
@@ -159,7 +163,10 @@ class GeoTIFFFieldList(FieldList):
         super().__init__(**kwargs)
 
     def rioxarray_read(self, **kwargs):
-        import rioxarray
+        try:
+            import rioxarray
+        except ImportError:
+            raise ImportError("geotiff handling requires 'rioxarray' to be installed")
 
         options = dict()
         options.update(kwargs.get("rioxarray_open_rasterio_kwargs", {}))
@@ -211,7 +218,6 @@ class GeoTIFFFieldList(FieldList):
 
 
 class GeoTIFFReader(GeoTIFFFieldList, Reader):
-
     def __init__(self, source, path):
         Reader.__init__(self, source, path)
         GeoTIFFFieldList.__init__(self, path)
