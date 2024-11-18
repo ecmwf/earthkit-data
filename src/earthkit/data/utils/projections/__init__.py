@@ -132,6 +132,12 @@ class Mercator(Projection):
     CARTOPY_CRS = "Mercator"
 
 
+class TransverseMercator(Projection):
+    PROJ_NAME = "tmerc"
+    CF_GRID_MAPPING_NAME = "transverse_mercator"
+    CARTOPY_CRS = "TransverseMercator"
+
+
 _PROJECTIONS = [
     EquidistantCylindrical,
     LongLat,
@@ -139,4 +145,5 @@ _PROJECTIONS = [
     LambertConformal,
     AlbersEqualArea,
     Mercator,
+    TransverseMercator,
 ]
