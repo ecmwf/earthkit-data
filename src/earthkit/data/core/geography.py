@@ -83,7 +83,6 @@ class Geography(metaclass=ABCMeta):
         """
         pass
 
-    @property
     @abstractmethod
     def shape(self):
         r"""Return the shape of the grid or data values.
