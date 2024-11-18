@@ -91,6 +91,14 @@ CoverageJSON
     polytope_polygon_coverage.ipynb
     polytope_vertical_profile.ipynb
 
+GeoTIFF
++++++++++++++
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    geotiff.ipynb
 
 GeoJSON/GeoPandas
 +++++++++++++++++++++++++++++
