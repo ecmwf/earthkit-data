@@ -26,7 +26,7 @@ CF_PARAMS_TO_KWARGS = {
 CF_PARAMS_TO_GLOBE_KWARGS = {
     "semi_major_axis": "semimajor_axis",
     "semi_minor_axis": "semiminor_axis",
-    "inverse_flattening": "flattening",
+    "inverse_flattening": "inverse_flattening",
 }
 
 

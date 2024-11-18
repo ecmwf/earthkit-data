@@ -45,9 +45,11 @@ Alternatively, you can install the following components:
     - fdb: provides access to the :ref:`data-sources-fdb` source
     - polytope: provides access to the :ref:`data-sources-polytope` source
     - odb: provides full support for the :ref:`odb` data type
-    - geopandas: adds geojson/geopandas support
+    - geopandas: adds GeoJSON/GeoPandas support
     - projection: adds projection support
-    - covjsonkit: provides access to coverage json data served by the :ref:`data-sources-polytope` source
+    - covjsonkit: provides access to CoverageJSON data served by the :ref:`data-sources-polytope` source
+    - s3: provides access to non-public :ref:`s3 <data-sources-s3>` buckets (new in version *0.11.0*)
+    - geotiff: adds GeoTIFF support (new in version *0.11.0*)
 
 E.g. to add :ref:`data-sources-mars`  support you can use:
 
