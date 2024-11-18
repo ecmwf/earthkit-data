@@ -382,7 +382,6 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         # LOG.debug(f"{name=} {dims=}")
 
-        # First check if the dims/coords are consistent with the tensors of the previous variables
         vals, component_vals = ds.unique_values(
             [d.key for d in dims], component=self.profile.add_earthkit_attrs
         )
@@ -401,7 +400,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             else:
                 if num > 1 and d.enforce_unique:
                     raise ValueError(
-                        f"Dimension '{d.name}' of variable '{name}' has multiple values={vals[d.key]}"
+                        f"Dimension '{d.name}' of variable '{name}' cannot have multiple values={vals[d.key]}"
                     )
                 elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
                     tensor_extra_attrs.append(d.key)
@@ -410,16 +409,18 @@ class BackendDataBuilder(metaclass=ABCMeta):
                     tensor_coords[d.key] = vals[d.key]
                     if d.key in component_vals:
                         tensor_coords_component[d.key] = component_vals[d.key]
+
+                    # check if the dims/coords are consistent with the tensors of
+                    # the previous variables
                     self.check_tensor_coords(name, d.key, tensor_coords)
 
         # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinates
         return tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
 
     def check_tensor_coords(self, var_name, coord_name, tensor_coords):
-        if self.profile.strict:
-            from .check import check_coords
+        from .check import check_coords
 
-            check_coords(var_name, coord_name, tensor_coords, self.tensor_coords)
+        check_coords(var_name, coord_name, tensor_coords, self.tensor_coords)
 
 
 class TensorBackendDataBuilder(BackendDataBuilder):

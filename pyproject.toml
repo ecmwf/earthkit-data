@@ -9,14 +9,13 @@ license = { text = "Apache License Version 2.0" }
 authors = [
   { name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int" },
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: Apache Software License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -57,7 +56,7 @@ optional-dependencies.all = [
   "geopandas",
   "hda",
   "polytope-client>=0.7.4",
-  "pyfdb",
+  "pyfdb>=0.1",
   "pyodc",
 ]
 optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
@@ -77,7 +76,7 @@ optional-dependencies.dev = [
   "nbconvert",
   "nbformat",
   "polytope-client>=0.7.4",
-  "pyfdb",
+  "pyfdb>=0.1",
   "pyodc",
   "pytest",
   "pytest-cov",
@@ -95,7 +94,7 @@ optional-dependencies.docs = [
   "sphinx-tabs",
 ]
 optional-dependencies.ecmwf-opendata = [ "ecmwf-opendata>=0.3.3" ]
-optional-dependencies.fdb = [ "pyfdb" ]
+optional-dependencies.fdb = [ "pyfdb>=0.1" ]
 optional-dependencies.geopandas = [ "geopandas" ]
 optional-dependencies.mars = [ "ecmwf-api-client>=1.6.1" ]
 optional-dependencies.odb = [ "pyodc" ]

@@ -31,6 +31,7 @@ def test_grib_file_numpy_backend(_kwargs):
     assert getattr(ds, "path", None) is None
     assert len(ds) == 6
 
+    assert ds[0].array_backend == _NUMPY
     assert isinstance(ds[0].values, np.ndarray)
     assert ds[0].values.shape == (84,)
 
@@ -58,6 +59,7 @@ def test_grib_file_numpy_backend(_kwargs):
     assert len(ds1) == len(ds)
     assert getattr(ds1, "path", None) is None
     assert get_backend(ds1[0].to_array()) == _NUMPY
+    assert ds1[0].array_backend == _NUMPY
 
 
 @pytest.mark.skipif(NO_PYTORCH, reason="No pytorch installed")
@@ -70,6 +72,7 @@ def test_grib_file_pytorch_backend():
 
     import torch
 
+    assert ds[0].array_backend == _PYTORCH
     assert torch.is_tensor(ds[0].values)
     assert ds[0].values.shape == (84,)
 
@@ -101,6 +104,7 @@ def test_grib_file_pytorch_backend():
     assert len(ds1) == len(ds)
     assert getattr(ds1, "path", None) is None
     assert get_backend(ds1[0].to_array()) == _PYTORCH
+    assert ds1[0].array_backend == _PYTORCH
 
 
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")

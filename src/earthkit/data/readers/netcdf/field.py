@@ -51,7 +51,7 @@ class XArrayFieldGeography(Geography):
         return tuple([self.data_array.coords[v].size for v in coords])
 
     def _unique_grid_id(self):
-        return self.shape
+        return self.shape()
 
     def projection(self):
         from earthkit.data.utils.projections import Projection
@@ -80,12 +80,10 @@ class XArrayFieldGeography(Geography):
         # TODO: implement resolution
         return None
 
-    @property
     def mars_grid(self):
         # TODO: implement mars_grid
         return None
 
-    @property
     def mars_area(self):
         # TODO: code me
         return [self.north, self.west, self.south, self.east]
