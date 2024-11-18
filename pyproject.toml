@@ -20,6 +20,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
@@ -45,12 +46,10 @@ dependencies = [
   "tqdm>=4.63",
   "xarray>=0.19",
 ]
-
 optional-dependencies.all = [
-  "aws-requests-auth",
   "cartopy",
   "cdsapi>=0.7.2",
-  "covjsonkit>=0.0.25",
+  "covjsonkit>=0.0.28",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
   "geopandas",
@@ -64,14 +63,12 @@ optional-dependencies.all = [
 ]
 optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
 optional-dependencies.ci = [ "torch" ]
-optional-dependencies.covjsonkit = [ "covjsonkit>=0.0.25" ]
+optional-dependencies.covjsonkit = [ "covjsonkit>=0.0.28" ]
 optional-dependencies.dev = [
-  "aws-requests-auth",
   "cartopy",
   "cdsapi>=0.7.2",
-  "covjsonkit>=0.0.25",
+  "covjsonkit>=0.0.28",
   "earthkit-data-demo-source",
-  "eccovjson>=0.0.5",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
   "geopandas",
