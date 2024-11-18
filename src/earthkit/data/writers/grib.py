@@ -55,7 +55,7 @@ class GribWriter(Writer):
             except AttributeError:
                 pass
 
-        output.write(values, check_nans=check_nans, missing_value=field.handle.MISSING_VALUE, **md)
+        output.write(values, check_nans=check_nans, missing_value=field.handle.MISSING_VALUE - 1, **md)
 
 
 Writer = GribWriter

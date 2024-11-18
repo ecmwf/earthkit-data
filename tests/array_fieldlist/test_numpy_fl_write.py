@@ -109,6 +109,8 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs):
         r.save(tmp, **_kwargs)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
+        v_tmp = r_tmp[0].values
+        assert np.isnan(v_tmp[0])
         r_tmp = r_tmp.to_fieldlist(array_backend=array_backend)
         v_tmp = r_tmp[0].values
         assert ns.isnan(v_tmp[0])
