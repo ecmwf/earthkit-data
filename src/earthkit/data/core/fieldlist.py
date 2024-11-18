@@ -21,6 +21,7 @@ from earthkit.data.decorators import detect_out_filename
 from earthkit.data.utils.array import array_namespace
 from earthkit.data.utils.array import array_to_numpy
 from earthkit.data.utils.array import convert_array
+from earthkit.data.utils.array import get_backend
 from earthkit.data.utils.metadata.args import metadata_argument
 
 
@@ -78,6 +79,11 @@ class FieldListIndices:
 
 class Field(Base):
     r"""Represent a Field."""
+
+    @property
+    def array_backend(self):
+        r""":obj:`ArrayBackend`: Return the array backend of the field."""
+        return get_backend(self._values())
 
     @abstractmethod
     def _values(self, dtype=None):
