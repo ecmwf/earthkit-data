@@ -18,7 +18,7 @@ from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils.projections import TransverseMercator
 
 
-@pytest.mark.skipif(NO_RIOXARRAY, "rioxarray not available")
+@pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
 @pytest.mark.with_proj
 def test_geotiff_reader_with_multiband():
     s = from_source("file", earthkit_test_data_file("dgm50hs_col_32_368_5616_nw.tif"))
