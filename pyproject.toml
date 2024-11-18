@@ -62,7 +62,7 @@ optional-dependencies.all = [
   "rioxarray",
 ]
 optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
-optional-dependencies.ci = [ "torch" ]
+optional-dependencies.ci = [ "numpy" ]
 optional-dependencies.covjsonkit = [ "covjsonkit>=0.0.28" ]
 optional-dependencies.dev = [
   "cartopy",
