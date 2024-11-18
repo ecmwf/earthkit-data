@@ -16,43 +16,54 @@ Major features
 API changes
 +++++++++++++
 
-- Removed the ``array_backend`` properties from Field and FieldList, so there is no array backend assigned to these objects any longer. Also removed the "array_backend" option from :func:`from_source`. The new and oldSee :ref:`/examples/grib_array_backends.ipynb`
+- No array backend is assigned to a Fieldlist any longer. Removed the ``array_backend`` property from FieldList, and the ``array_backend`` keyword from :func:`from_source`. Data accessing methods like :py:meth:`to_array` and :py:meth:`data` still accept the ``array_backend`` option. Now, each Field in a FieldList can have a different array backend reflecting the actual storage type of the values (:pr:`471`).
 
-: code-block :: python
+  You can still create a :py:class:`SimpleFieldList` with a single array backend by using the :meth:`~data.core.fieldlist.FieldList.to_fieldlist` method. For example:
 
-    # Old way
-    fields = from_source("file", "my.grib", array_backend="pytorch")
+  .. code-block:: python
 
-    # New way
-    ds = from_source("file", "my.grib").to_fieldlist(array_backend="pytorch")
+      # Old way
+      fields = from_source("file", "my.grib", array_backend="pytorch").to_fieldlist()
+
+      # New way
+      ds = from_source("file", "my.grib").to_fieldlist(array_backend="pytorch")
+
+- Removed :py:class:`ArrayFieldList`. Its functionality is covered by :py:class:`SimpleFieldList` (:pr:`471`).
+- :meth:`~data.core.fieldlist.FieldList.from_array` and :meth:`~data.core.fieldlist.FieldList.to_fieldlist` now return an :py:class:`ArrayFieldList`
 
 See :ref:`/examples/grib_array_backends.ipynb` for more details.
 
 
 Changes
 ++++++++
--  I see I put 'meteo' into the slides, but that does not mean anything.
+- Added new :ref:`data-sources-s3` source to access AWS S3 buckets (:pr:`484`). See the notebook examples:
 
-- Added new :ref:`data-sources-s3` source to access AWS S3 buckets. See the :ref:`/examples/s3.ipynb` notebook example. (:pr:`484`)
-- Added :ref:`stream <streams>` support for :ref:`data-sources-file` source (:pr:`500`)
+  - :ref:`/examples/s3.ipynb`
+
+- Added :ref:`stream <streams>` support for the :ref:`data-sources-file` source (:pr:`500`)
 - Allowed concatenation of :ref:`stream <streams>` sources (:pr:`500`)
-- TODO: refactor array fieldlists (:pr:`471`)
-- TODO: alter field metadata (:pr:`493`)
-- TODO: alter field values (:pr:`496`)
-- TODO: :ref:`data-sources-lod` source. See notebooks: :ref:`examples_lod` (:pr:`461`, :pr:`511`)
-- added serialisation to GRIB fieldlists and Metadata (:pr:`463`, :pr:`474`)
-- TODO: improved in-memory GRIB field implementation (:pr:`492`)
-- enabled to use :ref:`data-sources-forcings` without providing a source (:pr:`495`)
-- implemented the repr to ArrayField by (:pr:`455`)
-- added ``remapping`` option to :py:meth:`Field.metadata` (:pr:`488`)
-- added ``handle`` property to ArrayField (:pr:`464`)
-- added the :py:func:`Field.to_xarray`, :py:func:`Field.ls` and :py:func:`Field.describe` methods (:pr:`513`)
-- allowed logging control for :ref:`data-sources-mars` source (:pr:`457`)
-- added support for "lambert_azimuthal_equal_area" metadata (:pr:`452`)
+- Added :py:class:`SimpleFieldList`, which can store a list of arbitrary Fields (:pr:`471`). See the notebook examples:
 
-Other
-++++++
--  Use the ``covjsonkit`` package instead of ``eccovjson`` (:pr:`445`)
+  - :ref:`/examples/grib_array_backends.ipynb`
+
+- Added :meth:`~data.core.fieldlist.Field.clone` to alter field metadata and values (:pr:`493`, :pr:`496`). See the notebook examples:
+
+  - :ref:`/examples/grib_modification.ipynb`
+
+- Reimplemented and documented the :ref:`data-sources-lod` source, which is now generating a :py:class:`SimpleFieldList` and is not bound to GRIB specific metadata (:pr:`461`, :pr:`511`). See the notebook examples:
+
+  - :ref:`examples_lod`
+
+- Added serialisation to GRIB fieldlists and Metadata (:pr:`463`, :pr:`474`)
+- Improved in-memory GRIB field implementation (:pr:`492`)
+- Enabled to use :ref:`data-sources-forcings` without providing a source (:pr:`495`)
+- Implemented the repr to ArrayField by (:pr:`455`)
+- Added ``remapping`` option to :py:meth:`Field.metadata` (:pr:`488`)
+- Added ``handle`` property to ArrayField (:pr:`464`)
+- Added the :py:func:`Field.to_xarray`, :py:func:`Field.ls` and :py:func:`Field.describe` methods (:pr:`513`)
+- Allowed logging control for :ref:`data-sources-mars` source (:pr:`457`)
+- Added support for "lambert_azimuthal_equal_area" metadata (:pr:`452`)
+
 
 Fixes
 +++++
