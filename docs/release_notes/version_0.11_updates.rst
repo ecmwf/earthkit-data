@@ -40,6 +40,10 @@ Changes
 
   - :ref:`/examples/s3.ipynb`
 
+- Added support for geotiff files (:pr:`503`). See the notebook examples:
+
+  - :ref:`/examples/geotiff.ipynb`
+
 - Added :ref:`stream <streams>` support for the :ref:`data-sources-file` source (:pr:`500`)
 - Allowed concatenation of :ref:`stream <streams>` sources (:pr:`500`)
 - Added :py:class:`SimpleFieldList`, which can store a list of arbitrary Fields (:pr:`471`). See the notebook examples:
