@@ -920,7 +920,9 @@ polytope
   Further examples:
 
       - :ref:`/examples/polytope.ipynb`
-
+      - :ref:`/examples/polytope_time_series.ipynb`
+      - :ref:`/examples/polytope_polygon_coverage.ipynb`
+      - :ref:`/examples/polytope_vertical_profile.ipynb`
 
 .. _data-sources-s3:
 

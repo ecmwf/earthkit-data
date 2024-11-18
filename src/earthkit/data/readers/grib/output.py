@@ -131,8 +131,15 @@ class GribCoder:
 
         LOG.debug("GribOutput.metadata %s", metadata)
 
-        for k, v in metadata.items():
-            handle.set(k, v)
+        try:
+            # Try to set all metadata at once
+            # This is needed when we set multiple keys that are interdependent
+            handle.set_multiple(metadata)
+        except Exception as e:
+            LOG.error("Failed to set metadata at once: %s", e)
+            # Try again, but one by one
+            for k, v in metadata.items():
+                handle.set(k, v)
 
         if values is not None:
             handle.set_values(values)

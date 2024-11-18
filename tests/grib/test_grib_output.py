@@ -53,6 +53,28 @@ def test_grib_save_bits_per_value(_kwargs, expected_value):
         assert ds1.metadata("bitsPerValue") == [expected_value] * len(ds)
 
 
+# TODO: if we use missing_value = np.finfo(np.float32).max the test fails
+@pytest.mark.parametrize("missing_value", [100000.0, np.finfo(np.float32).max - 1])
+def test_grib_output_missing_value(missing_value):
+    fld = from_source("file", earthkit_examples_file("test.grib"))[0]
+
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        path = os.path.join(tmp, "a.grib")
+
+        values = fld.values
+        values[0] = np.nan
+        assert not np.isnan(values[1])
+
+        f = earthkit.data.new_grib_output(path)
+        f.write(values, check_nans=True, missing_value=missing_value, template=fld)
+        f.close()
+
+        ds = earthkit.data.from_source("file", path)
+        assert ds[0].metadata("bitmapPresent") == 1
+        assert np.isnan(ds[0].values[0])
+        assert not np.isnan(values[1])
+
+
 @pytest.mark.skipif(
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
