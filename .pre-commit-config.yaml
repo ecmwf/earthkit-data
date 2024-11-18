@@ -2,17 +2,17 @@ repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v5.0.0
   hooks:
-  - id: trailing-whitespace  # Trailing whitespace checker
-  - id: end-of-file-fixer # Ensure files end in a newline
+  - id: trailing-whitespace     # Trailing whitespace checker
+  - id: end-of-file-fixer     # Ensure files end in a newline
   - id: check-json
-  - id: check-yaml # Check YAML files for syntax errors only
+  - id: check-yaml     # Check YAML files for syntax errors only
     args: [--unsafe, --allow-multiple-documents]
   - id: check-toml
-  # - id: check-added-large-files
-  - id: debug-statements # Check for debugger imports and py37+ breakpoint()
+      # - id: check-added-large-files
+  - id: debug-statements     # Check for debugger imports and py37+ breakpoint()
   - id: mixed-line-ending
-  - id: no-commit-to-branch # Prevent committing to main / master
-  - id: check-merge-conflict # Check for files that contain merge conflict
+  - id: no-commit-to-branch     # Prevent committing to main / master
+  - id: check-merge-conflict     # Check for files that contain merge conflict
     exclude: /README\.rst$|^docs/.*\.rst$
 - repo: https://github.com/PyCQA/isort
   rev: 5.13.2
@@ -58,6 +58,6 @@ repos:
   hooks:
   - id: sphinx-lint
 - repo: https://github.com/tox-dev/pyproject-fmt
-  rev: "2.2.4"
+  rev: "v2.5.0"
   hooks:
   - id: pyproject-fmt
