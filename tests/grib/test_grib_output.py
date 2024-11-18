@@ -70,7 +70,6 @@ def test_grib_output_missing_value(missing_value):
         f.close()
 
         ds = earthkit.data.from_source("file", path)
-        # assert np.isclose(ds[0].metadata("missingValue"), missing_value)
         assert ds[0].metadata("bitmapPresent") == 1
         assert np.isnan(ds[0].values[0])
         assert not np.isnan(values[1])
