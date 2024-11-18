@@ -29,14 +29,14 @@ API changes
       ds = from_source("file", "my.grib").to_fieldlist(array_backend="pytorch")
 
 - Removed :py:class:`ArrayFieldList`. Its functionality is covered by :py:class:`SimpleFieldList` (:pr:`471`).
-- :meth:`~data.core.fieldlist.FieldList.from_array` and :meth:`~data.core.fieldlist.FieldList.to_fieldlist` now return an :py:class:`ArrayFieldList`
+- :meth:`~data.core.fieldlist.FieldList.from_array` and :meth:`~data.core.fieldlist.FieldList.to_fieldlist` now return an :py:class:`SimpleFieldList`
 
 See :ref:`/examples/grib_array_backends.ipynb` for more details.
 
 
 Changes
 ++++++++
-- Added new :ref:`data-sources-s3` source to access AWS S3 buckets (:pr:`484`). See the notebook examples:
+- Added the :ref:`data-sources-s3` source to access AWS S3 buckets (:pr:`484`). See the notebook examples:
 
   - :ref:`/examples/s3.ipynb`
 

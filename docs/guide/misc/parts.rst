@@ -68,3 +68,13 @@ When we use this mode the ``parts`` kwarg cannot be used!
 Examples:
 
     - :ref:`/examples/file_parts.ipynb`
+
+
+Specifying the parts for S3
+---------------------------
+
+For the :ref:`data-sources-s3` source the parts have to be specified within the request.
+
+Examples:
+
+    - :ref:`/examples/s3.ipynb`
