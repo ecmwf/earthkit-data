@@ -165,6 +165,25 @@ def test_mars_grib_log_4():
         assert t
 
 
+@pytest.mark.long_test
+@pytest.mark.download
+def test_mars_grib_save():
+    ds = from_source(
+        "mars",
+        param="2t",
+        levtype="sfc",
+        grid=[30, 30],
+        date=-1,
+    )
+    assert len(ds) == 1
+
+    with temp_file() as tmp:
+        ds.save(tmp)
+
+        ds1 = from_source("file", tmp)
+        assert len(ds1) == 1
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
