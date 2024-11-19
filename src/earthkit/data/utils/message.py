@@ -228,13 +228,14 @@ class CodesHandle(eccodes.Message):
         return self._from_raw_handle(eccodes.codes_clone(self._handle, **kwargs))
 
     def set_multiple(self, values):
-        try:
-            assert self.path is None, "Only cloned handles can have values changed"
-            eccodes.codes_set_key_vals(self._handle, values)
-        except Exception as e:
-            LOG.error(f"Error setting: {values}")
-            LOG.exception(e)
-            raise
+        if values:
+            try:
+                assert self.path is None, "Only cloned handles can have values changed"
+                eccodes.codes_set_key_vals(self._handle, values)
+            except Exception as e:
+                LOG.error(f"Error setting: {values}")
+                LOG.exception(e)
+                raise
 
     def set_long(self, name, value):
         try:
