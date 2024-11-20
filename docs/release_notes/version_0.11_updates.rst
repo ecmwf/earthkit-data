@@ -2,6 +2,16 @@ Version 0.11 Updates
 /////////////////////////
 
 
+Version 0.11.1
+===============
+
+Fixes
+++++++
+
+- Dependencies for GeoTIFF support are not installed when earthkit-data is installed with ``pip install earthkit-data[all]``. This step was necessary to make installation work when GDAL is not available. These dependencies need to be installed separately with ``pip install earthkit-data[geotiff]``. See :ref:`install`.
+
+
+
 Version 0.11.0
 ===============
 
