@@ -186,9 +186,8 @@ class JaxBackend(ArrayBackend):
         return v.numpy()
 
     def from_numpy(self, v):
-        import jax.numpy as jarray
 
-        return jarray.array(v)
+        return self.from_other(v)
 
     def from_other(self, v, **kwargs):
         import jax.numpy as jarray
