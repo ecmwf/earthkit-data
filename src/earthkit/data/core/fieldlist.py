@@ -726,30 +726,34 @@ class Field(Base):
         # return {name: metadata(name) for name in names}
 
     @abstractmethod
-    def clone(self, *, values=None, **kwargs):
-        r"""Create a new :class:`Field` the with updated values and metadata.
+    def clone(self, *, values=None, metadata=None, **kwargs):
+        r"""Create a new :class:`ClonedField` the with updated values and/or metadata.
 
         Parameters
         ----------
         values: array-like or None
-            The values to be stored in the new :class:`Field`. When it is ``None`` the resulting
-            :class:`Field` will access the values from the original field.
+            The values to be stored in the new :class:`ClonedField`. When it is ``None`` the resulting
+            :class:`ClonedField` will access the values from the original field.
+        metadata: dict, :class:`Metadata` or None
+            If it is a dictionary, it is merged with ``**kwargs`` and interpreted in the same way
+            as ``**kwargs``. If it is a :class:`Metadata` object, it is used as the new metadata. In
+            this case ``**kwargs`` cannot be used.
         **kwargs: dict, optional
             Keys and values to update the metadata with. Metadata values can also be ``callables``
             with the following positional arguments: original_field, key, original_metadata.
-            The new :class:`Field` will contain a reference to the original metadata object and
+            The new :class:`ClonedField` will contain a reference to the original metadata object and
             keys not present in ``kwargs`` will be accessed from the original field.
 
         Returns
         -------
-        :class:`Field`
-            The new field with updated values and metadata keeping a
+        :class:`ClonedField`
+            The new field with updated values and/or metadata keeping a
             reference to the original field.
 
         Raises
         ------
         ValueError
-            If ``values`` and ``kwargs`` are both unset.
+            If ``metadata`` is a :class:`Metadata` object and ``**kwargs`` is not empty.
 
         """
         self.not_implemented()

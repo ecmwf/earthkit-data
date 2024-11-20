@@ -351,6 +351,72 @@ def test_grib_clone_combined(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+def test_grib_clone_default(fl_type):
+    ds_ori, _ = load_grib_data("test4.grib", fl_type)
+
+    vals_ori = ds_ori[0].values
+
+    # ---------------
+    # field
+    # ---------------
+
+    f = ds_ori[0].clone()
+
+    assert f.metadata("param") == "t"
+    assert f.metadata("shortName") == "t"
+    assert f.metadata("level") == 500
+    assert f.metadata("levelist") == 500
+    assert f.metadata("date", "param") == (20070101, "t")
+    assert f.metadata("param", "date") == ("t", 20070101)
+    assert np.allclose(f.values, vals_ori)
+    assert np.allclose(ds_ori[0].values, vals_ori)
+
+    # write back to grib
+    # we can only have ecCodes keys
+    with temp_file() as tmp:
+        f.save(tmp)
+        f_saved = from_source("file", tmp)[0]
+        assert f_saved.metadata("param") == "t"
+        assert f_saved.metadata("shortName") == "t"
+        assert f_saved.metadata("level") == 500
+        assert f_saved.metadata("levelist") == 500
+        assert np.allclose(f_saved.values, vals_ori)
+
+
+@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+def test_grib_clone_with_metadata_object(fl_type):
+    ds_ori, _ = load_grib_data("test4.grib", fl_type)
+
+    vals_ori = ds_ori[0].values
+
+    md = ds_ori[0].metadata().override(shortName="q", level=600)
+
+    f = ds_ori[0].clone(metadata=md)
+
+    assert f.metadata("param") == "q"
+    assert f.metadata("shortName") == "q"
+    assert f.metadata("level") == 600
+    assert f.metadata("levelist") == 600
+    assert f.metadata("date", "param") == (20070101, "q")
+    assert f.metadata("param", "date") == ("q", 20070101)
+    assert np.allclose(f.values, vals_ori)
+    assert np.allclose(ds_ori[0].values, vals_ori)
+
+    # write back to grib
+    with temp_file() as tmp:
+        f.save(tmp)
+        f_saved = from_source("file", tmp)[0]
+        assert f_saved.metadata("param") == "q"
+        assert f_saved.metadata("shortName") == "q"
+        assert f_saved.metadata("level") == 600
+        assert f_saved.metadata("levelist") == 600
+        assert np.allclose(f_saved.values, vals_ori)
+
+    with pytest.raises(ValueError):
+        ds_ori[0].clone(metadata=md, param="q")
+
+
+@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 def test_grib_copy_to_field(fl_type):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
