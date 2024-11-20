@@ -123,7 +123,7 @@ NO_COVJSONKIT = not modules_installed("covjsonkit")
 NO_PYTORCH = not modules_installed("torch")
 NO_RIOXARRAY = not modules_installed("rioxarray")
 NO_CUPY = not modules_installed("cupy")
-NO_CUPY = not modules_installed("jax")
+NO_JAX = not modules_installed("jax")
 if not NO_CUPY:
     try:
         import cupy as cp
