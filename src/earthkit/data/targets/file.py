@@ -89,5 +89,18 @@ class FileTarget(Target):
             data = encoder.encode(data, template=template, **kwargs)
             data.write(f)
 
+    def _write_field(self, data, encoder=None, template=None, **kwargs):
+        print("encoder", encoder, "template", template, "kwargs", kwargs)
+        if encoder is None:
+            encoder = self._coder
+
+        # this can consume kwargs
+        encoder = _find_encoder(data, encoder)
+        # print("encoder", encoder)
+
+        f, _ = self._f(encoder)
+        data = encoder.encode(data, template=template, **kwargs)
+        data.write(f)
+
 
 target = FileTarget

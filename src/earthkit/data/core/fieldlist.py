@@ -12,6 +12,8 @@ from abc import abstractmethod
 from collections import defaultdict
 from functools import cached_property
 
+import deprecation
+
 from earthkit.data.core import Base
 from earthkit.data.core.index import Index
 from earthkit.data.core.index import MaskIndex
@@ -1554,6 +1556,7 @@ class FieldList(Index):
                 return all(f._metadata.geography._unique_grid_id() == grid for f in self)
         return False
 
+    @deprecation.deprecated(removed_in="0.12.0", details="Use to_target() instead")
     @detect_out_filename
     def save(self, filename, append=False, **kwargs):
         r"""Write all the fields into a file.
@@ -1575,10 +1578,19 @@ class FieldList(Index):
         :meth:`SimpleFieldList.save() <data.indexing.fieldlist.SimpleFieldList.save>`
 
         """
-        flag = "wb" if not append else "ab"
-        with open(filename, flag) as f:
-            self.write(f, **kwargs)
+        metadata = {}
+        bits_per_value = kwargs.pop("bits_per_value", None)
+        if bits_per_value is not None:
+            metadata = {"bitsPerValue": bits_per_value}
 
+        self.to_target("file", filename, append=append, metadata=metadata, **kwargs)
+
+        # original code
+        # flag = "wb" if not append else "ab"
+        # with open(filename, flag) as f:
+        #     self.write(f, **kwargs)
+
+    @deprecation.deprecated(removed_in="0.12.0", details="Use to_target() instead")
     def write(self, f, **kwargs):
         r"""Write all the fields to a file object.
 
@@ -1594,12 +1606,35 @@ class FieldList(Index):
         read
 
         """
-        for s in self:
-            s.write(f, **kwargs)
+        from earthkit.data.targets import make_target
 
-    def to_target(self, target, **kwargs):
+        metadata = {}
+        bits_per_value = kwargs.pop("bits_per_value", None)
+        if bits_per_value is not None:
+            metadata = {"bitsPerValue": bits_per_value}
+
+        target = make_target("file", **kwargs)
+        self.to_target(target, metadata=metadata, **kwargs)
+
+        # original code
+        # for s in self:
+        #     s.write(f, **kwargs)
+
+    def to_target(self, target, *args, **kwargs):
+        print(f"writing top= {kwargs}")
+        if isinstance(target, str):
+            from earthkit.data.targets import make_target
+
+            target = make_target(target, *args, **kwargs)
+
+            kwargs.pop("append", None)
+            # skip the target a
+
+            # target._write_fieldlist(self, **kwargs)
+
         for f in self:
-            target.write(f, **kwargs)
+            print(f"writing {kwargs}")
+            target._write_field(f, **kwargs)
 
     def to_tensor(self, *args, **kwargs):
         from earthkit.data.indexing.tensor import FieldListTensor
