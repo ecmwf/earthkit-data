@@ -265,8 +265,6 @@ def backend_from_array(array, raise_exception=True):
         elif _NAMESPACE.api.is_jax_array(array):
             return _JAX
 
-    print(array)
-
     if raise_exception:
         raise ValueError(f"Can't find namespace for array type={type(array)}")
 
