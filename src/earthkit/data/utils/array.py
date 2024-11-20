@@ -167,6 +167,40 @@ class PytorchBackend(ArrayBackend):
         return {"float64": torch.float64, "float32": torch.float32}
 
 
+class JaxBackend(ArrayBackend):
+    _name = "jax"
+    _module_name = "jax"
+
+    def _make_sample(self):
+        import jax.numpy as jarray
+
+        return jarray.ones(2)
+
+    @cached_property
+    def module(self):
+        import jax.numpy as jarray
+
+        return jarray
+
+    def to_numpy(self, v):
+        return v.numpy()
+
+    def from_numpy(self, v):
+
+        return self.from_other(v)
+
+    def from_other(self, v, **kwargs):
+        import jax.numpy as jarray
+
+        return jarray.array(v, **kwargs)
+
+    @cached_property
+    def dtypes(self):
+        import jax.numpy as jarray
+
+        return {"float64": jarray.float64, "float32": jarray.float32}
+
+
 class CupyBackend(ArrayBackend):
     _name = "cupy"
     _module_name = "cupy"
@@ -203,8 +237,9 @@ class CupyBackend(ArrayBackend):
 _NUMPY = NumpyBackend()
 _PYTORCH = PytorchBackend()
 _CUPY = CupyBackend()
+_JAX = JaxBackend()
 
-_BACKENDS = [_NUMPY, _PYTORCH, _CUPY]
+_BACKENDS = [_NUMPY, _PYTORCH, _CUPY, _JAX]
 _BACKENDS_BY_NAME = {v._name: v for v in _BACKENDS}
 _BACKENDS_BY_MODULE = {v._module_name: v for v in _BACKENDS}
 
@@ -226,6 +261,8 @@ def backend_from_array(array, raise_exception=True):
             return _PYTORCH
         elif _NAMESPACE.api.is_cupy_array(array):
             return _CUPY
+        elif _NAMESPACE.api.is_jax_array(array):
+            return _JAX
 
     if raise_exception:
         raise ValueError(f"Can't find namespace for array type={type(array)}")
