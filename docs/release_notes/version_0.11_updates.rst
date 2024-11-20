@@ -50,7 +50,7 @@ Changes
 
   - :ref:`/examples/grib_array_backends.ipynb`
 
-- Added :meth:`~data.core.fieldlist.Field.clone` to alter field metadata and values (:pr:`493`, :pr:`496`). See the notebook examples:
+- Added :meth:`~data.core.fieldlist.Field.clone` and :py:meth:`~data.core.fieldlist.Field.copy` to alter field metadata and values (:pr:`493`, :pr:`496`, :pr:`522`). See the notebook examples:
 
   - :ref:`/examples/grib_modification.ipynb`
 

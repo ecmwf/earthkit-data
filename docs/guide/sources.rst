@@ -439,13 +439,13 @@ forcings
 .. py:function:: from_source("forcings", source_or_dataset=None, *, request={}, **kwargs)
   :noindex:
 
-  :param source_or_dataset: the input data. Can the object returned from :py:func:`from_source` or a FieldLists. If it is None a :ref:`data-sources-lod` source is built from the ``request``. The first field in this data is used a template to build the forcing fields.
+  :param source_or_dataset: the input data. It can the object returned from :py:func:`from_source` or a FieldLists. If it is None a :ref:`data-sources-lod` source is built from the ``request``. The first field in this data is used a template to build the forcing fields.
   :type source_or_dataset: Source, FieldList or None
-  :param request: if ``True``, all the data is read into memory from a stream. Used when ``stream=True``. *New in version 0.8.0*
+  :param request: specify the request
+  :type request: dict
   :param dict **kwargs: other keyword arguments specifying the request
 
-  The ``memory`` source will read data from a memory buffer. Currently it only works for a ``buffer`` storing a single :ref:`grib` message or CoverageJson data. The result is a FieldList object storing all the data in memory.
-
+  The ``forcings`` source generate forcings fields.
 
 
 .. _data-sources-lod:
