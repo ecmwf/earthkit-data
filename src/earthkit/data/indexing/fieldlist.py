@@ -9,6 +9,8 @@
 
 
 from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.metadata import Metadata
+from earthkit.data.core.metadata import WrappedMetadata
 
 
 class SimpleFieldList(FieldList):
@@ -96,43 +98,36 @@ class WrappedField:
         return repr(self._field)
 
 
-# class NewDataField(WrappedField):
-#     def __init__(self, field, data):
-#         super().__init__(field)
-#         self._data = data
-#         self.shape = data.shape
-
-#     def to_numpy(self, flatten=False, dtype=None, index=None):
-#         data = self._data
-#         if dtype is not None:
-#             data = data.astype(dtype)
-#         if flatten:
-#             data = data.flatten()
-#         if index is not None:
-#             data = data[index]
-#         return data
-
-
-class NewFieldMetadataWrapper:
-    def __init__(self, field, **kwargs):
-        from earthkit.data.core.metadata import WrappedMetadata
-
-        self.__metadata = WrappedMetadata(field._metadata, extra=kwargs, owner=field)
-
-    @property
-    def _metadata(self):
-        return self.__metadata
-
-
-class NewFieldWrapper:
-    def __init__(self, field, values=None, **kwargs):
+class ClonedFieldCore:
+    def __init__(self, field, values=None, metadata=None, **kwargs):
         self._field = field
         self.__values = values
 
-        if kwargs:
-            from earthkit.data.core.metadata import WrappedMetadata
+        if metadata is not None:
+            if isinstance(metadata, dict):
+                metadata = dict(**metadata)
+            elif isinstance(metadata, (Metadata, WrappedMetadata)):
+                if kwargs:
+                    raise ValueError("metadata and kwargs cannot be used together")
+            else:
+                raise ValueError(
+                    "metadata must be a dict, Metadata or WrappedMetadata, got %s" % type(metadata)
+                )
 
-            self.__metadata = WrappedMetadata(field._metadata, extra=kwargs, owner=field)
+        if metadata is None:
+            metadata = dict()
+
+        assert metadata is not None
+
+        if kwargs:
+            if isinstance(metadata, dict):
+                metadata.update(kwargs)
+
+        if metadata:
+            if isinstance(metadata, dict):
+                self.__metadata = WrappedMetadata(field._metadata, extra=metadata, owner=field)
+            else:
+                self.__metadata = metadata
         else:
             self.__metadata = field._metadata
 
@@ -149,7 +144,11 @@ class NewFieldWrapper:
         return self.__metadata
 
     def _has_new_values(self):
-        return self.__values is not None
+        return self._values
+
+    @property
+    def handle(self):
+        return self._metadata._handle
 
 
 # For backwards compatibility

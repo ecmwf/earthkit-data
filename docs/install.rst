@@ -20,7 +20,7 @@ The package installed like this is **minimal** supporting only GRIB and NetCDF d
 Installing all the optional packages
 ++++++++++++++++++++++++++++++++++++++++
 
-You can install **earthkit-data** with all the optional packages in one go by using:
+You can install **earthkit-data** with all the optional packages (with the exception of "geotiff" dependencies, see below) in one go by using:
 
 .. code-block:: bash
 
@@ -49,7 +49,7 @@ Alternatively, you can install the following components:
     - projection: adds projection support
     - covjsonkit: provides access to CoverageJSON data served by the :ref:`data-sources-polytope` source
     - s3: provides access to non-public :ref:`s3 <data-sources-s3>` buckets (new in version *0.11.0*)
-    - geotiff: adds GeoTIFF support (new in version *0.11.0*)
+    - geotiff: adds GeoTIFF support (new in version *0.11.0*). Please note that this is not included in the ``[all]`` option and has to be invoked separately.
 
 E.g. to add :ref:`data-sources-mars`  support you can use:
 

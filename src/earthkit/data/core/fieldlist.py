@@ -637,16 +637,6 @@ class Field(Base):
         else:
             return self._metadata.as_namespace(None)
 
-    @abstractmethod
-    def copy(self, **kwargs):
-        r"""Return a copy of the field.
-
-        Returns
-        -------
-        :obj:`Field`
-        """
-        self._not_implemented()
-
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
 
@@ -758,18 +748,64 @@ class Field(Base):
 
         # return {name: metadata(name) for name in names}
 
-    def to_field(self, flatten=False, dtype=None, array_backend=None, values=None, **kwargs):
-        r"""Convert to a new :class:`Field`.
+    @abstractmethod
+    def clone(self, *, values=None, metadata=None, **kwargs):
+        r"""Create a new :class:`ClonedField` the with updated values and/or metadata.
 
         Parameters
         ----------
-        array_backend: str, module, :obj:`ArrayBackend`
-            Specifies the array backend for the generated :class:`Field`. The array
-            type must be supported by :class:`ArrayBackend`.
-
+        values: array-like or None
+            The values to be stored in the new :class:`ClonedField`. When it is ``None`` the resulting
+            :class:`ClonedField` will access the values from the original field.
+        metadata: dict, :class:`Metadata` or None
+            If it is a dictionary, it is merged with ``**kwargs`` and interpreted in the same way
+            as ``**kwargs``. If it is a :class:`Metadata` object, it is used as the new metadata. In
+            this case ``**kwargs`` cannot be used.
         **kwargs: dict, optional
-            ``kwargs`` are passed to :obj:`to_array` to
-            extract the field values the resulting object will store.
+            Keys and values to update the metadata with. Metadata values can also be ``callables``
+            with the following positional arguments: original_field, key, original_metadata.
+            The new :class:`ClonedField` will contain a reference to the original metadata object and
+            keys not present in ``kwargs`` will be accessed from the original field.
+
+        Returns
+        -------
+        :class:`ClonedField`
+            The new field with updated values and/or metadata keeping a
+            reference to the original field.
+
+        Raises
+        ------
+        ValueError
+            If ``metadata`` is a :class:`Metadata` object and ``**kwargs`` is not empty.
+
+        """
+        self.not_implemented()
+
+    def copy(self, *, values=None, flatten=False, dtype=None, array_backend=None, metadata=None):
+        r"""Create a new :class:`ArrayField` by copying the values and metadata.
+
+        Parameters
+        ----------
+        values: array-like or None
+            The values to be stored in the new :class:`Field`. When it is ``None`` the values
+            extracted from the original field by using :obj:`to_array` with ``flatten``, ``dtype``
+            and ``array_backend`` and copied to the new field.
+        flatten: bool
+            Control the shape of the values when they are extracted from the original field.
+            When ``True``, flatten the array, otherwise the field's shape is kept. Only used when
+            ``values`` is not provided.
+        dtype: str, array.dtype or None
+            Control the typecode or data-type of the values when they are extracted from
+            the original field. If :obj:`None`, the default type used by the underlying
+            data accessor is used. For GRIB it is ``float64``. Only used when  ``values``
+            is not provided.
+        array_backend: str, module or None
+            Control the array backend of the values when they are extracted from
+            the original field. If :obj:`None`, the underlying array format
+            of the field is used. Only used when ``values`` is not provided.
+        metadata: :class:`Metadata` or None
+            The metadata to be stored in the new :class:`Field`. When it is :obj:`None`
+            a copy of the metadata of the original field is used.
 
         Returns
         -------
@@ -784,9 +820,12 @@ class Field(Base):
                 array_backend=array_backend,
             )
 
+        if metadata is None:
+            metadata = self._metadata.override()
+
         return ArrayField(
             values,
-            self._metadata.override(**kwargs),
+            metadata,
         )
 
     def to_xarray(self, *args, **kwargs):
@@ -1678,7 +1717,7 @@ class FieldList(Index):
         dtype('float32')
 
         """
-        return self.from_fields([f.to_field(array_backend=array_backend, **kwargs) for f in self])
+        return self.from_fields([f.copy(array_backend=array_backend, **kwargs) for f in self])
 
     def cube(self, *args, **kwargs):
         from earthkit.data.indexing.cube import FieldCube

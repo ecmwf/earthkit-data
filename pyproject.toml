@@ -58,9 +58,6 @@ optional-dependencies.all = [
   "polytope-client>=0.7.4",
   "pyfdb>=0.1",
   "pyodc",
-  "pyproj",
-  "rasterio",
-  "rioxarray",
 ]
 optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
 optional-dependencies.ci = [ "numpy" ]
