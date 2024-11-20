@@ -5,8 +5,8 @@ Version 0.11 Updates
 Version 0.11.0
 ===============
 
-Major features
-++++++++++++++
+New Xarray engine
+++++++++++++++++++
 
 - Added new Xarray engine called ``"earthkit"``. This is the new default when calling :meth:`~data.core.fieldlist.FieldList.to_xarray`. The ``"cfgrib"`` engine is still available and can be used by passing ``engine="cfgrib"`` to :meth:`~data.core.fieldlist.FieldList.to_xarray`. For details see:
 

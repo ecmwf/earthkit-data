@@ -38,6 +38,8 @@ We can get data from a given source by using :func:`from_source`:
       - read data from a stream
     * - :ref:`data-sources-memory`
       - read data from a memory buffer
+    * - :ref:`data-sources-forcings`
+      - generate forcing data
     * - :ref:`data-sources-lod`
       - read data from a list of dictionaries
     * - :ref:`data-sources-multi`
@@ -427,6 +429,23 @@ memory
 
       # f is the only GribField in ds
       f = ds[0]
+
+
+.. _data-sources-forcings:
+
+forcings
+--------------
+
+.. py:function:: from_source("forcings", source_or_dataset=None, *, request={}, **kwargs)
+  :noindex:
+
+  :param source_or_dataset: the input data. Can the object returned from :py:func:`from_source` or a FieldLists. If it is None a :ref:`data-sources-lod` source is built from the ``request``. The first field in this data is used a template to build the forcing fields.
+  :type source_or_dataset: Source, FieldList or None
+  :param request: if ``True``, all the data is read into memory from a stream. Used when ``stream=True``. *New in version 0.8.0*
+  :param dict **kwargs: other keyword arguments specifying the request
+
+  The ``memory`` source will read data from a memory buffer. Currently it only works for a ``buffer`` storing a single :ref:`grib` message or CoverageJson data. The result is a FieldList object storing all the data in memory.
+
 
 
 .. _data-sources-lod:
