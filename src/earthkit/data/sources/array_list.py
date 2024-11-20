@@ -11,7 +11,7 @@ import logging
 import math
 
 from earthkit.data.core.fieldlist import Field
-from earthkit.data.indexing.fieldlist import NewFieldWrapper
+from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.utils.array import array_namespace
 
 LOG = logging.getLogger(__name__)
@@ -43,8 +43,12 @@ class ArrayField(Field):
         if metadata is not None:
             metadata = metadata._hide_internal_keys()
 
-        self.__metadata = metadata
-        self._array = array
+        self._metadata_ = metadata
+        self._array_ = array
+
+    @property
+    def _array(self):
+        return self._array_
 
     def _values(self, dtype=None):
         """Native array type"""
@@ -79,15 +83,15 @@ class ArrayField(Field):
 
     @property
     def _metadata(self):
-        return self.__metadata
+        return self._metadata_
 
     @property
     def handle(self):
         return self._metadata._handle
 
     def _release(self):
-        self._array = None
-        self.__metadata = None
+        self._array_ = None
+        self._metadata_ = None
 
     def __getstate__(self) -> dict:
         ret = {}
@@ -96,16 +100,16 @@ class ArrayField(Field):
         return ret
 
     def __setstate__(self, state: dict):
-        self._array = state.pop("_array")
-        self.__metadata = state.pop("_metadata")
+        self._array_ = state.pop("_array")
+        self._metadata_ = state.pop("_metadata")
 
-    def copy(self, **kwargs):
-        return NewArrayField(self, **kwargs)
+    def clone(self, **kwargs):
+        return ClonedArrayField(self, **kwargs)
 
 
-class NewArrayField(NewFieldWrapper, ArrayField):
+class ClonedArrayField(ClonedFieldCore, ArrayField):
     def __init__(self, field, **kwargs):
-        NewFieldWrapper.__init__(self, field, **kwargs)
+        ClonedFieldCore.__init__(self, field, **kwargs)
         ArrayField.__init__(self, field._array, None)
 
 
