@@ -15,7 +15,7 @@ import eccodes
 import numpy as np
 
 from earthkit.data.core.fieldlist import Field
-from earthkit.data.indexing.fieldlist import NewFieldWrapper
+from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
@@ -325,13 +325,13 @@ class GribField(Field):
         """
         return self.handle.get_buffer()
 
-    def copy(self, **kwargs):
-        return NewGribField(self, **kwargs)
+    def clone(self, **kwargs):
+        return ClonedGribField(self, **kwargs)
 
 
-class NewGribField(NewFieldWrapper, GribField):
+class ClonedGribField(ClonedFieldCore, GribField):
     def __init__(self, field, **kwargs):
-        NewFieldWrapper.__init__(self, field, **kwargs)
+        ClonedFieldCore.__init__(self, field, **kwargs)
         self._handle = field._handle
         GribField.__init__(
             self,

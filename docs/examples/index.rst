@@ -43,6 +43,7 @@ GRIB
     grib_indexing.ipynb
     grib_missing.ipynb
     grib_metadata_object.ipynb
+    grib_modification.ipynb
     numpy_fieldlist.ipynb
     grib_array_backends.ipynb
     grib_nearest_gridpoint.ipynb

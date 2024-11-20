@@ -90,7 +90,7 @@ def test_grib_serialise_array_fieldlist(fl_type, representation):
     r = ds2.sel(param="2t")
     assert len(r) == 1
 
-    ds2[0]._array += 1
+    ds2[0]._array_ += 1
     v1 = ds[0]._array
 
     with temp_file() as tmp:

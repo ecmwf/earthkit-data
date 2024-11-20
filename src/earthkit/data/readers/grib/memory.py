@@ -11,7 +11,7 @@ import logging
 
 import eccodes
 
-from earthkit.data.indexing.fieldlist import NewFieldWrapper
+from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.indexing.fieldlist import SimpleFieldList
 from earthkit.data.readers import Reader
 from earthkit.data.readers.grib.codes import GribCodesHandle
@@ -165,13 +165,13 @@ class GribFieldInMemory(GribField):
     def _release(self):
         self._handle = None
 
-    def copy(self, **kwargs):
-        return NewGribFieldInMemory(self, **kwargs)
+    def clone(self, **kwargs):
+        return ClonedGribFieldInMemory(self, **kwargs)
 
 
-class NewGribFieldInMemory(NewFieldWrapper, GribFieldInMemory):
+class ClonedGribFieldInMemory(ClonedFieldCore, GribFieldInMemory):
     def __init__(self, field, **kwargs):
-        NewFieldWrapper.__init__(self, field, **kwargs)
+        ClonedFieldCore.__init__(self, field, **kwargs)
         self._handle = field._handle
         GribFieldInMemory.__init__(
             self,
