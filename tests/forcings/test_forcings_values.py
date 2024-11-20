@@ -28,8 +28,9 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
     assert np.isclose(v.mean(), meanv, eps)
 
 
-def test_forcings_values():
-    ds, _ = load_forcings_fs(last_step=12)
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
+def test_forcings_values(input_data):
+    ds, _ = load_forcings_fs(last_step=12, input_data=input_data)
     eps = 1e-5
     num = len(ds)
 
@@ -59,8 +60,9 @@ def test_forcings_values():
     )
 
 
-def test_forcings_to_numpy():
-    ds, _ = load_forcings_fs(last_step=12)
+@pytest.mark.parametrize("input_data", ["grib", "latlon"])
+def test_forcings_to_numpy(input_data):
+    ds, _ = load_forcings_fs(last_step=12, input_data=input_data)
     eps = 1e-5
     num = len(ds)
 

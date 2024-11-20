@@ -18,7 +18,7 @@ class XarrayMixIn:
         try:
             from covjsonkit.api import Covjsonkit
         except ImportError:
-            raise ImportError("covjason handling requires 'covjsonkit' to be installed")
+            raise ImportError("covjson handling requires 'covjsonkit' to be installed")
 
         decoder = Covjsonkit().decode(self._json())
         return decoder.to_xarray()
@@ -42,10 +42,13 @@ class CovjsonReader(XarrayMixIn, Reader):
             d = json.load(f)
             return d
 
+    def is_streamable_file(self):
+        return True
+
 
 class CovjsonStreamReader(Reader):
     def __init__(self, stream):
-        self.stream = stream
+        self._stream = stream
 
     def __iter__(self):
         return self
@@ -53,7 +56,7 @@ class CovjsonStreamReader(Reader):
     def __next__(self):
         import json
 
-        d = self.stream.read()
+        d = self._stream.read()
         if d:
             return CovjsonInMemory(json.loads(d))
         else:

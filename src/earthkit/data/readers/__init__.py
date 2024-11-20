@@ -44,6 +44,17 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
         return self.source.filter
 
     @property
+    def parts(self):
+        if hasattr(self.source, "parts"):
+            return self.source.parts
+
+    @property
+    def stream(self):
+        if hasattr(self.source, "stream"):
+            return self.source.stream
+        return False
+
+    @property
     def merger(self):
         return self.source.merger
 
@@ -182,7 +193,7 @@ def reader(source, path, **kwargs):
         r = _non_existing(source, path, **kwargs)
         if r is not None:
             return r
-        raise FileExistsError(f"No such file exists: '{path}'")
+        raise FileNotFoundError(f"No such file exists: '{path}'")
 
     if os.path.getsize(path) == 0:
         r = _empty(source, path, **kwargs)

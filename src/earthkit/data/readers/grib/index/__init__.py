@@ -26,7 +26,8 @@ from earthkit.data.readers.grib.codes import GribField
 from earthkit.data.readers.grib.pandas import PandasMixIn
 from earthkit.data.readers.grib.xarray import XarrayMixIn
 from earthkit.data.utils.availability import Availability
-from earthkit.data.utils.progbar import progress_bar
+
+# from earthkit.data.utils.progbar import progress_bar
 
 LOG = logging.getLogger(__name__)
 
@@ -123,12 +124,11 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
     def merge(cls, sources):
         if not all(isinstance(_, GribFieldList) for _ in sources):
             raise ValueError("GribFieldList can only be merged to another GribFieldLists")
-        if not all(s.array_backend is s[0].array_backend for s in sources):
-            raise ValueError("Only fieldlists with the same array backend can be merged")
-
         return GribMultiFieldList(sources)
 
     def _custom_availability(self, ignore_keys=None, filter_keys=lambda k: True):
+        from earthkit.data.utils.progbar import progress_bar
+
         def dicts():
             for i in progress_bar(iterable=range(len(self)), desc="Building availability"):
                 dic = self.get_metadata(i)
@@ -210,11 +210,34 @@ class GribMaskFieldList(GribFieldList, MaskIndex):
         MaskIndex.__init__(self, *args, **kwargs)
         FieldList._init_from_mask(self, self)
 
+    def __getstate__(self):
+        r = {}
+        r["mask_index"] = self._index
+        r["mask_indices"] = self._indices
+        return r
+
+    def __setstate__(self, state):
+        _index = state["mask_index"]
+        _indices = state["mask_indices"]
+        self.__init__(_index, _indices)
+
 
 class GribMultiFieldList(GribFieldList, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
         FieldList._init_from_multi(self, self)
+
+    def __getstate__(self):
+        r = {}
+        r["multi_indexes"] = self._indexes
+        r["kwargs"] = self._kwargs
+        return r
+
+    def __setstate__(self, state):
+        self.__init__(
+            state["multi_indexes"],
+            **state["kwargs"],
+        )
 
 
 class GribFieldManager:
@@ -351,7 +374,6 @@ class GribFieldListInFiles(GribFieldList):
             part.path,
             part.offset,
             part.length,
-            self.array_backend,
             handle_manager=self._handle_manager,
             use_metadata_cache=self._use_metadata_cache,
         )
@@ -372,23 +394,21 @@ class GribFieldListInFiles(GribFieldList):
     def __len__(self):
         return self.number_of_parts()
 
-    def _diag(self):
+    def _cache_diag(self):
+        """For testing only"""
         r = defaultdict(int)
         r.update(self._field_manager.diag())
         r.update(self._handle_manager.diag())
 
         if self._field_manager.cache is not None:
+            from earthkit.data.utils.diag import collect_field_metadata_cache_diag
+
             for f in self._field_manager.cache.values():
                 if f._handle is not None:
                     r["current_handle_count"] += 1
 
                 if self._use_metadata_cache:
-                    try:
-                        md_cache = f._diag()
-                        for k in ["metadata_cache_hits", "metadata_cache_misses", "metadata_cache_size"]:
-                            r[k] += md_cache[k]
-                    except Exception:
-                        pass
+                    collect_field_metadata_cache_diag(f, r)
         return r
 
     @abstractmethod

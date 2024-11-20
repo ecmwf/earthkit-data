@@ -22,8 +22,8 @@ dependencies:
 - cdsapi>=0.7.2
 - hda
 - pip:
-  - multiurl
-  - git+https://github.com/ecmwf/pyfdb
+  - multiurl>=0.3.0
+  - pyfdb>=0.1.0
   - ecmwf-opendata>=0.1.2
   - polytope-client>=0.7.4
   - earthkit-meteo>=0.0.1
@@ -32,6 +32,8 @@ dependencies:
 - tqdm>=4.63.0
 - lru-dict
 - markdown
+- aws-requests-auth
+- botocore
 - make
 - mypy
 - myst-parser
@@ -47,6 +49,8 @@ dependencies:
 - sphinx_rtd_theme
 - sphinxcontrib-apidoc
 - sphinx-issues
+- sphinx-tabs
+- sphinx-copybutton
 - nbformat
 - nbconvert
 - nbsphinx

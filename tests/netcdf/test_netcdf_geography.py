@@ -58,6 +58,14 @@ def test_netcdf_to_points_1(dtype, expected_dtype):
         eps=eps,
     )
 
+    # fieldlist
+    v = ds.to_points(flatten=True, dtype=dtype)
+    assert isinstance(v, dict)
+    assert isinstance(v["x"], np.ndarray)
+    assert isinstance(v["y"], np.ndarray)
+    assert v["x"].dtype == expected_dtype
+    assert v["y"].dtype == expected_dtype
+
 
 def test_netcdf_to_points_2():
     ds = from_source("file", earthkit_examples_file("test.nc"))
@@ -127,12 +135,18 @@ def test_netcdf_to_latlon():
         assert np.isclose(v["lat"][y, x], 57)
 
 
-def test_bbox():
+def test_netcdf_bbox():
     ds = from_source("file", earthkit_examples_file("test.nc"))
     bb = ds.bounding_box()
     assert len(bb) == 2
     for b in bb:
         assert b.as_tuple() == (73, -27, 33, 45)
+
+
+def test_netcdf_mars_area():
+    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ref = [73, -27, 33, 45]
+    assert np.allclose(np.asarray(ds[0].mars_area), np.asarray(ref))
 
 
 def test_netcdf_proj_string_non_cf():

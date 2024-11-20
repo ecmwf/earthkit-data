@@ -10,6 +10,7 @@
 import logging
 
 from earthkit.data.readers import Reader
+from earthkit.data.sources import Source
 from earthkit.data.sources.file import FileSource
 from earthkit.data.utils import string_to_args
 
@@ -67,6 +68,22 @@ class Merger:
         elif issubclass(self.common, Reader):
             self.reader_class = self.common
             self.paths = [s.path for s in self.sources]
+        elif issubclass(self.common, Source):
+            # to enable the merging of a FieldList and a FileSource
+            # needed for test_netcdf_wrong_concat_var
+            readers = []
+            paths = []
+            for s in self.sources:
+                if isinstance(s, FileSource):
+                    readers.append(s._reader)
+                    paths.append(s.path)
+                elif isinstance(s, Reader):
+                    readers.append(s)
+                    paths.append(s.path)
+
+            if len(readers) == len(self.sources):
+                self.reader_class = _nearest_common_class(readers)
+                self.paths = paths
 
     @property
     def paths_or_sources(self):

@@ -47,7 +47,6 @@ def make_file_filter(filter, top):
 class DirectoryReader(Reader):
     def __init__(self, source, path):
         super().__init__(source, path)
-
         self._content = []
 
         filter = make_file_filter(self.filter, self.path)
@@ -66,6 +65,8 @@ class DirectoryReader(Reader):
 
     def mutate_source(self):
         if os.path.exists(os.path.join(self.path, ".zattrs")):
+            if self.stream:
+                raise ValueError("Cannot stream zarr directories")
             return from_source("zarr", self.path)
 
         return from_source(
@@ -76,6 +77,9 @@ class DirectoryReader(Reader):
                     path=path,
                     filter=self.filter,
                     merger=self.merger,
+                    stream=self.stream,
+                    parts=self.parts,
+                    **self.source._kwargs,
                 )
                 for path in sorted(self._content)
             ],

@@ -20,15 +20,19 @@ import pytest
 import earthkit.data
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import earthkit_examples_file
+
+here = os.path.dirname(__file__)
+sys.path.insert(0, here)
+from grib_fixtures import FL_ARRAYS  # noqa: E402
+from grib_fixtures import load_grib_data  # noqa: E402
 
 EPSILON = 1e-4
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_save_when_loaded_from_file(array_backend):
-    fs = from_source("file", earthkit_examples_file("test6.grib"), array_backend=array_backend)
+@pytest.mark.parametrize("fl_type", FL_ARRAYS)
+def test_grib_save_when_loaded_from_file(fl_type):
+    fs, _ = load_grib_data("test6.grib", fl_type)
     assert len(fs) == 6
     with temp_file() as tmp:
         fs.save(tmp)
@@ -47,6 +51,28 @@ def test_grib_save_bits_per_value(_kwargs, expected_value):
         ds.save(tmp, **_kwargs)
         ds1 = from_source("file", tmp)
         assert ds1.metadata("bitsPerValue") == [expected_value] * len(ds)
+
+
+# TODO: if we use missing_value = np.finfo(np.float32).max the test fails
+@pytest.mark.parametrize("missing_value", [100000.0, np.finfo(np.float32).max - 1])
+def test_grib_output_missing_value(missing_value):
+    fld = from_source("file", earthkit_examples_file("test.grib"))[0]
+
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        path = os.path.join(tmp, "a.grib")
+
+        values = fld.values
+        values[0] = np.nan
+        assert not np.isnan(values[1])
+
+        f = earthkit.data.new_grib_output(path)
+        f.write(values, check_nans=True, missing_value=missing_value, template=fld)
+        f.close()
+
+        ds = earthkit.data.from_source("file", path)
+        assert ds[0].metadata("bitmapPresent") == 1
+        assert np.isnan(ds[0].values[0])
+        assert not np.isnan(values[1])
 
 
 @pytest.mark.skipif(
@@ -265,6 +291,35 @@ def test_grib_output_tp():
         assert ds[0].metadata("Nj") == 181
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="ignore_cleanup_errors requires Python 3.10 or later",
+)
+@pytest.mark.parametrize("array", [True, False])
+def test_grib_output_field_template(array):
+    data = np.random.random((7, 12))
+
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        ds = from_source("file", earthkit_examples_file("test6.grib"))
+        if array:
+            ds = ds.to_fieldlist()
+
+        path = os.path.join(tmp, "a.grib")
+        f = earthkit.data.new_grib_output(path, template=ds[0], date=20010101)
+        f.write(data, param="pt", bitsPerValue=16)
+        f.close()
+
+        ds = earthkit.data.from_source("file", path)
+
+        assert ds[0].metadata("date") == 20010101
+        assert ds[0].metadata("param") == "pt"
+        assert ds[0].metadata("levtype") == "pl"
+        assert ds[0].metadata("edition") == 1
+        assert ds[0].metadata("generatingProcessIdentifier") == 255
+
+        assert np.allclose(ds[0].to_numpy(), data, rtol=1e-2, atol=1e-2)
 
 
 if __name__ == "__main__":

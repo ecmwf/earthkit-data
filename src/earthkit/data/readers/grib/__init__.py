@@ -25,10 +25,11 @@ def _is_default(magic, content_type):
     return (magic is None or len(magic) == 0) and (content_type is None or len(content_type) == 0)
 
 
-def reader(source, path, *, magic=None, deeper_check=False, parts=None, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
         from .file import GRIBReader
 
+        parts = source.parts if hasattr(source, "parts") else None
         return GRIBReader(source, path, parts=parts)
 
 

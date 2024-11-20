@@ -17,6 +17,7 @@ from earthkit.data.core.temporary import temp_file
 from earthkit.data.sources.stream import StreamFieldList
 from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_remote_test_data_file
 
 
 def repeat_list_items(items, count):
@@ -63,20 +64,21 @@ def test_grib_from_stream_iter():
         assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-def test_grib_from_stream_fieldlist_backend(array_backend):
-    with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream, array_backend=array_backend)
+# @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+# def test_grib_from_stream_fieldlist_backend(array_backend):
+#     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
+#         ds = from_source("stream", stream, array_backend=array_backend)
 
-        assert isinstance(ds, StreamFieldList)
 
-        assert ds.array_backend.name == array_backend
-        assert ds.to_array().shape == (6, 7, 12)
+#         assert isinstance(ds, StreamFieldList)
 
-        assert sum([1 for _ in ds]) == 0
+#         # assert ds.array_backend.name == array_backend
+#         assert ds.to_array().shape == (6, 7, 12)
 
-        with pytest.raises((RuntimeError, ValueError)):
-            ds.to_array()
+#         assert sum([1 for _ in ds]) == 0
+
+#         with pytest.raises((RuntimeError, ValueError)):
+#             ds.to_array()
 
 
 @pytest.mark.parametrize(
@@ -135,9 +137,11 @@ def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shap
         for i, f in enumerate(ds.batched(2)):
             df = f.to_fieldlist(array_backend="numpy", **convert_kwargs)
             assert df.metadata(("param", "level")) == ref[i], i
-            assert df._array.shape == expected_shape, i
             assert df.to_numpy(**convert_kwargs).shape == expected_shape, i
-            assert df.to_fieldlist(array_backend="numpy", **convert_kwargs) is df, i
+            df1 = df.to_fieldlist(array_backend="numpy", **convert_kwargs)
+            assert df1 is not df, i
+            assert df1.metadata(("param", "level")) == ref[i], i
+            assert df1.to_numpy(**convert_kwargs).shape == expected_shape, i
 
         # stream consumed, no data is available
         assert sum([1 for _ in ds]) == 0
@@ -147,7 +151,7 @@ def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shap
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
 def test_grib_from_stream_group_by(array_backend, group):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream, array_backend=array_backend)
+        ds = from_source("stream", stream)
 
         # no methods are available
         with pytest.raises((TypeError, NotImplementedError)):
@@ -199,9 +203,12 @@ def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_sha
             df = f.to_fieldlist(array_backend="numpy", **convert_kwargs)
             assert len(df) == 3
             assert df.metadata(("param", "level")) == ref[i]
-            assert df._array.shape == expected_shape
             assert df.to_numpy(**convert_kwargs).shape == expected_shape
-            assert df.to_fieldlist(array_backend="numpy", **convert_kwargs) is df
+            df1 = df.to_fieldlist(array_backend="numpy", **convert_kwargs)
+            assert df1 is not df
+            assert len(df1) == 3
+            assert df1.metadata(("param", "level")) == ref[i]
+            assert df1.to_numpy(**convert_kwargs).shape == expected_shape
 
         # stream consumed, no data is available
         assert sum([1 for _ in ds]) == 0
@@ -318,8 +325,11 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
             vals = ds.to_numpy(**convert_kwargs)[:, 0]
 
         assert np.allclose(vals, ref)
-        assert ds._array.shape == expected_shape
-        assert ds.to_fieldlist(array_backend="numpy", **convert_kwargs) is ds
+        assert ds.to_numpy(**convert_kwargs).shape == expected_shape
+        ds1 = ds.to_fieldlist(array_backend="numpy", **convert_kwargs)
+        assert ds1 is not ds
+        assert len(ds1) == 6
+        assert ds1.to_numpy(**convert_kwargs).shape == expected_shape
 
 
 def test_grib_save_when_loaded_from_stream():
@@ -454,6 +464,72 @@ def test_grib_multi_stream_memory():
         ("t", 500),
         ("t", 850),
     ]
+
+
+def test_grib_concat_stream():
+    stream1 = open(earthkit_examples_file("test.grib"), "rb")
+    ds1 = from_source("stream", stream1)
+    ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True)
+    ds3 = from_source("url", earthkit_remote_test_data_file("examples/test6.grib"), stream=True)
+
+    ds = ds1 + ds2 + ds3
+
+    ref = [
+        ("2t", 0),
+        ("msl", 0),
+        ("t", 500),
+        ("z", 500),
+        ("t", 850),
+        ("z", 850),
+        ("t", 1000),
+        ("u", 1000),
+        ("v", 1000),
+        ("t", 850),
+        ("u", 850),
+        ("v", 850),
+    ]
+    cnt = 0
+    for i, f in enumerate(ds):
+        assert f.metadata(("param", "level")) == ref[i], i
+        cnt += 1
+
+    assert cnt == len(ref)
+
+    # stream consumed, no data is available
+    assert sum([1 for _ in ds]) == 0
+
+
+def test_grib_concat_stream_memory():
+    stream1 = open(earthkit_examples_file("test.grib"), "rb")
+    ds1 = from_source("stream", stream1, read_all=True)
+    ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True, read_all=True)
+    ds3 = from_source(
+        "url", earthkit_remote_test_data_file("examples/test6.grib"), stream=True, read_all=True
+    )
+
+    ds = ds1 + ds2 + ds3
+
+    ref = [
+        ("2t", 0),
+        ("msl", 0),
+        ("t", 500),
+        ("z", 500),
+        ("t", 850),
+        ("z", 850),
+        ("t", 1000),
+        ("u", 1000),
+        ("v", 1000),
+        ("t", 850),
+        ("u", 850),
+        ("v", 850),
+    ]
+
+    assert len(ds) == len(ref)
+    assert ds.metadata(("param", "level")) == ref
+
+    # repeat the test to check that data is still in memory
+    assert len(ds) == len(ref)
+    assert ds.metadata(("param", "level")) == ref
 
 
 if __name__ == "__main__":

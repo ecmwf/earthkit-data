@@ -28,7 +28,6 @@ LOG = logging.getLogger(__name__)
 
 def get_fields_from_ds(
     ds,
-    array_backend,
     field_type=None,
     check_only=False,
 ):  # noqa C901
@@ -145,7 +144,7 @@ def get_fields_from_ds(
             if check_only:
                 return True
 
-            fields.append(field_type(ds, name, slices, non_dim_coords, array_backend))
+            fields.append(field_type(ds, name, slices, non_dim_coords))
 
     # if not fields:
     #     raise Exception("NetCDFReader no 2D fields found in %s" % (self.path,))
@@ -174,7 +173,6 @@ class XArrayFieldListCore(FieldList):
         if self._fields is None:
             return get_fields_from_ds(
                 DataSet(self.xr_dataset),
-                self.array_backend,
                 field_type=self.FIELD_TYPE,
                 check_only=True,
             )
@@ -182,7 +180,7 @@ class XArrayFieldListCore(FieldList):
             return len(self._fields) > 0
 
     def _get_fields(self, ds):
-        return get_fields_from_ds(ds, self.array_backend, field_type=self.FIELD_TYPE)
+        return get_fields_from_ds(ds, field_type=self.FIELD_TYPE)
 
     def to_pandas(self, **kwargs):
         return self.to_xarray(**kwargs).to_pandas()
@@ -242,6 +240,9 @@ class XArrayFieldList(XArrayFieldListCore):
 
     def __len__(self):
         return len(self.fields)
+
+    def __repr__(self):
+        return "XArrayFieldList "  # TODO: some __repr__ of the data: {self.data}
 
 
 class XArrayMaskFieldList(XArrayFieldListCore, MaskIndex):

@@ -45,10 +45,11 @@ class MARSAPIKeyPrompt(APIKeyPrompt):
 
 
 class ECMWFApi(FileSource):
-    def __init__(self, *args, prompt=True, **kwargs):
+    def __init__(self, *args, prompt=True, log="default", **kwargs):
         super().__init__()
 
         self.prompt = prompt
+        self.log = log
 
         request = {}
         for a in args:

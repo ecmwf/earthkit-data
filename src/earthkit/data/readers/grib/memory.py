@@ -8,24 +8,31 @@
 #
 
 import logging
-from functools import cached_property
 
 import eccodes
 
+from earthkit.data.indexing.fieldlist import ClonedFieldCore
+from earthkit.data.indexing.fieldlist import SimpleFieldList
 from earthkit.data.readers import Reader
 from earthkit.data.readers.grib.codes import GribCodesHandle
 from earthkit.data.readers.grib.codes import GribField
-from earthkit.data.readers.grib.index import GribFieldList
-from earthkit.data.readers.grib.metadata import GribFieldMetadata
-from earthkit.data.utils.array import ensure_backend
 
 LOG = logging.getLogger(__name__)
 
 
+def get_use_grib_metadata_cache():
+    from earthkit.data.core.settings import SETTINGS
+
+    return SETTINGS.get("use-grib-metadata-cache")
+
+
 class GribMemoryReader(Reader):
-    def __init__(self, array_backend=None, **kwargs):
+    def __init__(self, use_grib_metadata_cache=None, **kwargs):
         self._peeked = None
-        self._array_backend = ensure_backend(array_backend)
+        self.consumed_ = False
+        self._use_metadata_cache = (
+            use_grib_metadata_cache if use_grib_metadata_cache is not None else get_use_grib_metadata_cache()
+        )
 
     def __iter__(self):
         return self
@@ -47,7 +54,9 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            return GribFieldInMemory(GribCodesHandle(handle, None, None), self._array_backend)
+            return GribFieldInMemory(
+                GribCodesHandle(handle, None, None), use_metadata_cache=self._use_metadata_cache
+            )
 
     def batched(self, n):
         from earthkit.data.utils.batch import batched
@@ -104,10 +113,17 @@ class GribStreamReader(GribMemoryReader):
         self._reader = eccodes.StreamReader(stream)
 
     def __del__(self):
-        self._stream.close()
+        try:
+            self._stream.close()
+        except Exception:
+            pass
 
     def _next_handle(self):
-        return self._reader._next_handle()
+        try:
+            return self._reader._next_handle()
+        except Exception:
+            self._stream.close()
+            raise
 
     def mutate(self):
         return self
@@ -119,8 +135,8 @@ class GribStreamReader(GribMemoryReader):
 class GribFieldInMemory(GribField):
     """Represents a GRIB message in memory"""
 
-    def __init__(self, handle, array_backend=None):
-        super().__init__(None, None, None, array_backend)
+    def __init__(self, handle, use_metadata_cache=False):
+        super().__init__(None, None, None, use_metadata_cache=use_metadata_cache)
         self._handle = handle
 
     @GribField.handle.getter
@@ -131,50 +147,59 @@ class GribFieldInMemory(GribField):
     def offset(self):
         return None
 
-    @cached_property
-    def _metadata(self):
-        return GribFieldMetadata(self)
+    # @cached_property
+    # def _metadata(self):
+    #     return GribFieldMetadata(self)
 
     @staticmethod
     def to_fieldlist(fields):
         return GribFieldListInMemory.from_fields(fields)
 
-
-class GribFieldListInMemory(GribFieldList, Reader):
-    """Represent a GRIB field list in memory"""
-
     @staticmethod
-    def from_fields(fields, array_backend=None):
-        if array_backend is None and len(fields) > 0:
-            array_backend = fields[0].array_backend
-        fs = GribFieldListInMemory(None, None, array_backend=array_backend)
-        fs._fields = fields
-        fs._loaded = True
-        return fs
+    def from_buffer(buf):
+        handle = eccodes.codes_new_from_message(buf)
+        return GribFieldInMemory(
+            GribCodesHandle(handle, None, None), use_metadata_cache=get_use_grib_metadata_cache()
+        )
+
+    def _release(self):
+        self._handle = None
+
+    def clone(self, **kwargs):
+        return ClonedGribFieldInMemory(self, **kwargs)
+
+
+class ClonedGribFieldInMemory(ClonedFieldCore, GribFieldInMemory):
+    def __init__(self, field, **kwargs):
+        ClonedFieldCore.__init__(self, field, **kwargs)
+        self._handle = field._handle
+        GribFieldInMemory.__init__(
+            self,
+            field._handle,
+            use_metadata_cache=field._use_metadata_cache,
+        )
+
+
+class GribFieldListInMemory(SimpleFieldList):
+    """Represent a GRIB field list in memory loaded lazily"""
 
     def __init__(self, source, reader, *args, **kwargs):
         """The reader must support __next__."""
         if source is not None:
-            Reader.__init__(self, source, None)
-        GribFieldList.__init__(self, *args, **kwargs)
-
-        self._reader = reader
+            self._reader = reader
         self._loaded = False
-        self._fields = []
 
     def __len__(self):
         self._load()
-        return len(self._fields)
+        return super().__len__()
 
-    def _getitem(self, n):
+    def __getitem__(self, n):
         self._load()
-        if isinstance(n, int):
-            n = n if n >= 0 else len(self) + n
-            return self._fields[n]
+        return super().__getitem__(n)
 
     def _load(self):
         if not self._loaded:
-            self._fields = [f for f in self._reader]
+            self.fields = [f for f in self._reader]
             self._loaded = True
             self._reader = None
 
@@ -189,3 +214,14 @@ class GribFieldListInMemory(GribFieldList, Reader):
         from itertools import chain
 
         return GribFieldListInMemory.from_fields(list(chain(*[f for f in readers])))
+
+    def __getstate__(self):
+        self._load()
+        r = {"messages": [f.message() for f in self]}
+        return r
+
+    def __setstate__(self, state):
+        fields = [GribFieldInMemory.from_buffer(m) for m in state["messages"]]
+        self.__init__(None, None)
+        self.fields = fields
+        self._loaded = True

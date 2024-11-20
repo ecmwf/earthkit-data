@@ -17,14 +17,21 @@ from earthkit.data import from_source
 from earthkit.data.testing import NO_CUPY
 from earthkit.data.testing import NO_PYTORCH
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.array import _CUPY
+from earthkit.data.utils.array import _NUMPY
+from earthkit.data.utils.array import _PYTORCH
+from earthkit.data.utils.array import get_backend
 
 
 @pytest.mark.parametrize("_kwargs", [{}, {"array_backend": "numpy"}])
 def test_grib_file_numpy_backend(_kwargs):
-    ds = from_source("file", earthkit_examples_file("test6.grib"), **_kwargs)
+    ds = from_source("file", earthkit_examples_file("test6.grib"))
+    ds = ds.to_fieldlist(**_kwargs)
 
+    assert getattr(ds, "path", None) is None
     assert len(ds) == 6
 
+    assert ds[0].array_backend == _NUMPY
     assert isinstance(ds[0].values, np.ndarray)
     assert ds[0].values.shape == (84,)
 
@@ -46,20 +53,26 @@ def test_grib_file_numpy_backend(_kwargs):
     assert isinstance(ds.to_numpy(), np.ndarray)
     assert ds.to_numpy().shape == (6, 7, 12)
 
+    assert get_backend(ds[0].to_array()) == _NUMPY
+
     ds1 = ds.to_fieldlist()
     assert len(ds1) == len(ds)
-    assert ds1.array_backend.name == "numpy"
     assert getattr(ds1, "path", None) is None
+    assert get_backend(ds1[0].to_array()) == _NUMPY
+    assert ds1[0].array_backend == _NUMPY
 
 
 @pytest.mark.skipif(NO_PYTORCH, reason="No pytorch installed")
 def test_grib_file_pytorch_backend():
-    ds = from_source("file", earthkit_examples_file("test6.grib"), array_backend="pytorch")
+    ds = from_source("file", earthkit_examples_file("test6.grib"))
+    ds = ds.to_fieldlist(array_backend="pytorch")
 
+    assert getattr(ds, "path", None) is None
     assert len(ds) == 6
 
     import torch
 
+    assert ds[0].array_backend == _PYTORCH
     assert torch.is_tensor(ds[0].values)
     assert ds[0].values.shape == (84,)
 
@@ -85,18 +98,23 @@ def test_grib_file_pytorch_backend():
     assert isinstance(x, np.ndarray)
     assert x.shape == (6, 7, 12)
 
+    assert get_backend(ds[0].to_array()) == _PYTORCH
+
     ds1 = ds.to_fieldlist()
     assert len(ds1) == len(ds)
-    assert ds1.array_backend.name == "pytorch"
     assert getattr(ds1, "path", None) is None
+    assert get_backend(ds1[0].to_array()) == _PYTORCH
+    assert ds1[0].array_backend == _PYTORCH
 
 
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
 def test_grib_file_cupy_backend():
-    ds = from_source("file", earthkit_examples_file("test6.grib"), array_backend="cupy")
+    ds = from_source("file", earthkit_examples_file("test6.grib"))
+    ds = ds.to_fieldlist(array_backend="cupy")
 
     import cupy as cp
 
+    assert getattr(ds, "path", None) is None
     assert len(ds) == 6
 
     assert isinstance(ds[0].values, cp.ndarray)
@@ -124,10 +142,12 @@ def test_grib_file_cupy_backend():
     assert isinstance(x, np.ndarray)
     assert x.shape == (6, 7, 12)
 
+    assert get_backend(ds[0].to_array()) == _CUPY
+
     ds1 = ds.to_fieldlist()
     assert len(ds1) == len(ds)
-    assert ds1.array_backend.name == "cupy"
     assert getattr(ds1, "path", None) is None
+    assert get_backend(ds1[0].to_array()) == _CUPY
 
 
 def test_grib_array_numpy_backend():
@@ -165,17 +185,17 @@ def test_grib_array_numpy_backend():
 
 @pytest.mark.skipif(NO_PYTORCH, reason="No pytorch installed")
 def test_grib_array_pytorch_backend():
-    s = from_source("file", earthkit_examples_file("test6.grib"), array_backend="pytorch")
+    s = from_source("file", earthkit_examples_file("test6.grib"))
+
+    import torch
 
     ds = FieldList.from_array(
-        s.values,
+        torch.tensor(s.values),
         [m for m in s.metadata()],
     )
     assert len(ds) == 6
     with pytest.raises(AttributeError):
         ds.path
-
-    import torch
 
     assert torch.is_tensor(ds[0].values)
     assert ds[0].values.shape == (84,)
@@ -201,17 +221,17 @@ def test_grib_array_pytorch_backend():
 
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
 def test_grib_array_cupy_backend():
-    s = from_source("file", earthkit_examples_file("test6.grib"), array_backend="cupy")
+    s = from_source("file", earthkit_examples_file("test6.grib"))
+
+    import cupy as cp
 
     ds = FieldList.from_array(
-        s.values,
+        cp.array(s.values),
         [m for m in s.metadata()],
     )
     assert len(ds) == 6
     with pytest.raises(AttributeError):
         ds.path
-
-    import cupy as cp
 
     assert isinstance(ds[0].values, cp.ndarray)
     assert ds[0].values.shape == (84,)

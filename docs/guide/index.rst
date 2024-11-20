@@ -11,4 +11,5 @@ User guide
    streams
    settings
    caching
+   xarray/index.rst
    misc/index.rst

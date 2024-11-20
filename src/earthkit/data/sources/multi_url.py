@@ -13,30 +13,33 @@ from .multi import MultiSource
 
 
 class MultiUrl(MultiSource):
-    def __init__(self, urls, *args, filter=None, merger=None, force=None, lazily=True, **kwargs):
-        if not isinstance(urls, (list, tuple)):
-            urls = [urls]
+    def __init__(
+        self, urls, *args, filter=None, merger=None, force=None, lazily=True, sort_urls=False, **kwargs
+    ):
+        from earthkit.data.utils.url import UrlSpec
 
-        # if filter is not None:
-        #     urls = [url for url in urls if filter(url)]
+        if isinstance(urls, UrlSpec):
+            url_spec = urls
+        else:
+            url_spec = UrlSpec.from_urls(urls, **kwargs)
 
-        assert len(urls)
+        assert len(url_spec) > 0
 
-        if len(urls) > 1 and isinstance(urls[0], str):
-            urls = sorted(urls)
+        if sort_urls:
+            url_spec = url_spec.sorted()
 
         sources = [
             from_source(
                 "url",
-                url,
+                x,
                 filter=filter,
                 merger=merger,
                 force=force,
                 # Load lazily so we can do parallel downloads
                 lazily=lazily,
-                **kwargs,
+                # **x["kwargs"]
             )
-            for url in urls
+            for x in url_spec
         ]
 
         super().__init__(sources, filter=filter, merger=merger)

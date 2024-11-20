@@ -9,13 +9,13 @@
 
 import logging
 import os
-from collections import defaultdict
 from functools import cached_property
 
 import eccodes
 import numpy as np
 
 from earthkit.data.core.fieldlist import Field
+from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
@@ -245,8 +245,8 @@ class GribField(Field):
 
     _handle = None
 
-    def __init__(self, path, offset, length, backend, handle_manager=None, use_metadata_cache=False):
-        super().__init__(backend)
+    def __init__(self, path, offset, length, handle_manager=None, use_metadata_cache=False):
+        super().__init__()
         self.path = path
         self._offset = offset
         self._length = length
@@ -301,8 +301,8 @@ class GribField(Field):
             self._metadata.get("number", None),
         )
 
-    def write(self, f, bits_per_value=None):
-        r"""Writes the message to a file object.
+    def write(self, f, **kwargs):
+        r"""Write the message to a file object.
 
         Parameters
         ----------
@@ -312,17 +312,12 @@ class GribField(Field):
             Set the ``bitsPerValue`` GRIB key in the generated GRIB message. When
             None the ``bitsPerValue`` stored in the metadata will be used.
         """
-        if bits_per_value is not None:
-            handle = self.handle.clone()
-            handle.set_long("bitsPerValue", bits_per_value)
-        else:
-            handle = self.handle
+        from earthkit.data.writers import write
 
-        # assert isinstance(f, io.IOBase)
-        handle.write_to(f)
+        write(f, self, **kwargs)
 
     def message(self):
-        r"""Returns a buffer containing the encoded message.
+        r"""Return a buffer containing the encoded message.
 
         Returns
         -------
@@ -330,13 +325,19 @@ class GribField(Field):
         """
         return self.handle.get_buffer()
 
-    def _diag(self):
-        r = r = defaultdict(int)
-        try:
-            md_cache = self._metadata._cache
-            r["metadata_cache_size"] += len(md_cache)
-            r["metadata_cache_hits"] += md_cache.hits
-            r["metadata_cache_misses"] += md_cache.misses
-        except Exception:
-            pass
-        return r
+    def clone(self, **kwargs):
+        return ClonedGribField(self, **kwargs)
+
+
+class ClonedGribField(ClonedFieldCore, GribField):
+    def __init__(self, field, **kwargs):
+        ClonedFieldCore.__init__(self, field, **kwargs)
+        self._handle = field._handle
+        GribField.__init__(
+            self,
+            field.path,
+            field._offset,
+            field._length,
+            handle_manager=field._handle_manager,
+            use_metadata_cache=field._use_metadata_cache,
+        )

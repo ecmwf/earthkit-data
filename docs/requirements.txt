@@ -8,6 +8,8 @@ nbsphinx
 setuptools
 sphinx-autoapi
 sphinx-issues
+sphinx-tabs
+sphinx-copybutton
 entrypoints
 pandas
 tqdm

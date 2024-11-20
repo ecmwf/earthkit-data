@@ -25,6 +25,7 @@ LOG = logging.getLogger(__name__)
 
 class FileSourcePathAndParts(PathAndParts):
     compress = False
+    sequence = False
 
 
 class FileSourceMeta(type(Source), type(os.PathLike)):
@@ -39,17 +40,28 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     _reader_ = None
     content_type = None
 
-    def __init__(self, path=None, filter=None, merger=None, parts=None, **kwargs):
+    def __init__(self, path=None, filter=None, merger=None, parts=None, stream=False, **kwargs):
         Source.__init__(self, **kwargs)
         self.filter = filter
         self.merger = merger
-        self._path_and_parts = FileSourcePathAndParts(path, parts)
-
+        self._path_and_parts = FileSourcePathAndParts.from_paths(path, parts)
+        self.stream = stream
         if self._kwargs.get("indexing", False):
+            if self.stream:
+                raise ValueError("Cannot stream when indexing is enabled!")
             if not self._path_and_parts.is_empty():
                 raise ValueError("Cannot specify parts when indexing is enabled!")
 
     def mutate(self):
+        if self.stream:
+            return StreamFileSource(
+                self._path_and_parts,
+                filter=self.filter,
+                merger=self.merger,
+                stream=True,
+                **self._kwargs,
+            )
+
         if isinstance(self.path, (list, tuple)):
             if len(self.path) == 1:
                 self.path = self.path[0]
@@ -57,7 +69,7 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
                 return from_source(
                     "multi",
                     [
-                        from_source("file", p, parts=part, **self._kwargs)
+                        from_source("file", p, parts=part, filter=self.filter, **self._kwargs)
                         for p, part in zip(self.path, self.parts)
                     ],
                     filter=self.filter,
@@ -78,6 +90,7 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
         if source not in (None, self):
             source._parent = self
             return source
+
         return self
 
     def ignore(self):
@@ -93,7 +106,12 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     @property
     def _reader(self):
         if self._reader_ is None:
-            self._reader_ = reader(self, self.path, content_type=self.content_type, parts=self.parts)
+            self._reader_ = reader(
+                self,
+                self.path,
+                content_type=self.content_type,
+                # parts=self.parts,
+            )
         return self._reader_
 
     def __iter__(self):
@@ -213,6 +231,74 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
 class IndexedFileSource(FileSource):
     def mutate(self):
         pass
+
+
+class StreamFileSource(FileSource):
+    def __init__(self, path_and_parts, **kwargs):
+        super().__init__(None, **kwargs)
+        self._path_and_parts = path_and_parts
+
+    def mutate(self):
+        assert self.stream
+        if isinstance(self.path, (list, tuple)):
+            if len(self.path) == 1:
+                self.path = self.path[0]
+            else:
+                return from_source(
+                    "multi",
+                    [
+                        from_source("file", p, parts=part, filter=self.filter, stream=True, **self._kwargs)
+                        for p, part in zip(self.path, self.parts)
+                    ],
+                    filter=self.filter,
+                    merger=self.merger,
+                )
+
+        # here we must have a file or a directory
+        if self._kwargs.get("indexing", False):
+            raise ValueError("Cannot stream when indexing is enabled!")
+
+        # Give a chance to directories and zip files
+        # to return a multi-source
+        source = self._reader.mutate_source()
+        if source not in (None, self):
+            if hasattr(source, "is_streamable_file") and source.is_streamable_file():
+                # when we reach this stage the source must be a file that can be streamed
+                from .stream import make_stream_source_from_other
+
+                return make_stream_source_from_other(
+                    [SingleStreamFileSource(source.path, self.parts)], **self._kwargs
+                )
+            else:
+                return source
+        return self
+
+    @property
+    def _reader(self):
+        if self._reader_ is None:
+            self._reader_ = reader(
+                self,
+                self.path,
+                content_type=self.content_type,
+            )
+        return self._reader_
+
+
+class SingleStreamFileSource:
+    def __init__(self, path, parts):
+        self.path = path
+        self.parts = parts
+
+    def to_stream(self):
+        if not self.parts:
+            f = open(self.path, "rb")
+            return f
+        else:
+            from earthkit.data.utils.stream import FilePartStreamReader
+            from earthkit.data.utils.stream import RequestIterStreamer
+
+            stream = FilePartStreamReader(self.path, self.parts)
+            return RequestIterStreamer(iter(stream))
 
 
 class File(FileSource):

@@ -15,7 +15,9 @@ import numpy as np
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.geography import Geography
+from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.core.metadata import RawMetadata
+from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
 
@@ -49,7 +51,7 @@ class XArrayFieldGeography(Geography):
         return tuple([self.data_array.coords[v].size for v in coords])
 
     def _unique_grid_id(self):
-        return self.shape
+        return self.shape()
 
     def projection(self):
         from earthkit.data.utils.projections import Projection
@@ -78,12 +80,10 @@ class XArrayFieldGeography(Geography):
         # TODO: implement resolution
         return None
 
-    @property
     def mars_grid(self):
         # TODO: implement mars_grid
         return None
 
-    @property
     def mars_area(self):
         # TODO: code me
         return [self.north, self.west, self.south, self.east]
@@ -97,11 +97,15 @@ class XArrayMetadata(RawMetadata):
     ]
     MARS_KEYS = ["param", "step", "levelist", "levtype", "number", "date", "time"]
 
+    ACCESSORS = {
+        "valid_datetime": ["valid_datetime", "valid_time"],
+        "base_datetime": ["base_datetime", "forecast_reference_time", "base_time"],
+    }
+
     def __init__(self, field):
         if not isinstance(field, XArrayField):
             raise TypeError(f"XArrayMetadata: expected field type XArrayField, got {type(field)}")
         self._field = field
-        self._geo = None
 
         data_array = field._ds[field.variable]
         d = dict(data_array.attrs)
@@ -149,11 +153,12 @@ class XArrayMetadata(RawMetadata):
             return self
         return None
 
-    @property
+    @cached_property
     def geography(self):
-        if self._geo is None:
-            self._geo = XArrayFieldGeography(self, self._field._ds, self._field.variable)
-        return self._geo
+        return XArrayFieldGeography(self, self._field._ds, self._field.variable)
+
+    def namespaces(self):
+        return self.NAMESPACES
 
     def as_namespace(self, namespace=None):
         if not isinstance(namespace, str) and namespace is not None:
@@ -175,23 +180,34 @@ class XArrayMetadata(RawMetadata):
             time=self.get("time", None),
         )
 
-    def _base_datetime(self):
-        v = self._valid_datetime()
+    def datetime(self):
+        return {
+            "base_time": self.base_datetime(),
+            "valid_time": self.valid_datetime(),
+        }
+
+    def base_datetime(self):
+        v = self.valid_datetime()
         if v is not None:
             return v - timedelta(hours=self.get("hour", 0))
 
-    def _valid_datetime(self):
+    def valid_datetime(self):
         if self.time is not None:
             return to_datetime(self.time)
 
-    def _get(self, key, **kwargs):
+    @MetadataAccessor(ACCESSORS)
+    def get(self, key, default=None, *, raise_on_missing=False, **kwargs):
         if key.startswith("mars."):
             key = key[5:]
             if key not in self.MARS_KEYS:
-                if kwargs.get("raise_on_missing", False):
+                if raise_on_missing:
                     raise KeyError(f"Invalid key '{key}' in namespace='mars'")
                 else:
-                    return kwargs.get("default", None)
+                    return default
+                # if kwargs.get("raise_on_missing", False):
+                #     raise KeyError(f"Invalid key '{key}' in namespace='mars'")
+                # else:
+                #     return kwargs.get("default", None)
 
         def _key_name(key):
             if key == "param":
@@ -200,13 +216,20 @@ class XArrayMetadata(RawMetadata):
                 key = "level"
             return key
 
-        return super()._get(_key_name(key), **kwargs)
+        return super().get(_key_name(key), default=default, raise_on_missing=raise_on_missing, **kwargs)
+
+    def ls_keys(self):
+        return self.LS_KEYS
 
 
 class XArrayField(Field):
-    def __init__(self, ds, variable, slices, non_dim_coords, array_backend):
-        super().__init__(array_backend)
+    def __init__(self, ds, variable, slices, non_dim_coords):
+        super().__init__()
         self._ds = ds
+        self._da = ds[variable]
+
+        # self.north, self.west, self.south, self.east = ds.bbox(variable)
+
         self.variable = variable
         self.slices = slices
         self.non_dim_coords = non_dim_coords
@@ -269,6 +292,15 @@ class XArrayField(Field):
         # )
 
         return tidy(self._ds[self._ds[self.variable].grid_mapping].attrs)
+
+    def clone(self, **kwargs):
+        return ClonedXarrayField(self, **kwargs)
+
+
+class ClonedXarrayField(ClonedFieldCore, XArrayField):
+    def __init__(self, field, **kwargs):
+        ClonedFieldCore.__init__(self, field, **kwargs)
+        XArrayField.__init__(self, field.ds, field.variable, field.slices, field.non_dim_coords)
 
 
 class NetCDFMetadata(XArrayMetadata):
