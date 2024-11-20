@@ -166,6 +166,7 @@ class PytorchBackend(ArrayBackend):
 
         return {"float64": torch.float64, "float32": torch.float32}
 
+
 class JaxBackend(ArrayBackend):
     _name = "jax"
     _module_name = "jax"
@@ -199,7 +200,7 @@ class JaxBackend(ArrayBackend):
         import jax.numpy as jarray
 
         return {"float64": jarray.float64, "float32": jarray.float32}
-    
+
 
 class CupyBackend(ArrayBackend):
     _name = "cupy"
@@ -263,7 +264,7 @@ def backend_from_array(array, raise_exception=True):
             return _CUPY
         elif _NAMESPACE.api.is_jax_array(array):
             return _JAX
-        
+
     print(array)
 
     if raise_exception:

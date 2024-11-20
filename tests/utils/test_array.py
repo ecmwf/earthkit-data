@@ -12,12 +12,12 @@
 import pytest
 
 from earthkit.data.testing import NO_CUPY
-from earthkit.data.testing import NO_PYTORCH
 from earthkit.data.testing import NO_JAX
+from earthkit.data.testing import NO_PYTORCH
 from earthkit.data.utils.array import _CUPY
+from earthkit.data.utils.array import _JAX
 from earthkit.data.utils.array import _NUMPY
 from earthkit.data.utils.array import _PYTORCH
-from earthkit.data.utils.array import _JAX
 from earthkit.data.utils.array import get_backend
 
 """These tests are for the array backend utilities mostly used in other tests."""
