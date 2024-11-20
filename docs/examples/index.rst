@@ -119,6 +119,8 @@ Shapefile
 
     shapefile.ipynb
 
+.. _examples_lod:
+
 Dictionary input
 ++++++++++++++++++++++
 
