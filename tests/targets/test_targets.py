@@ -42,6 +42,20 @@ def test_target_grib_save_compat():
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
+def test_target_grib_write_compat():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    vals_ref = ds.values[:, :4]
+
+    with temp_file() as path:
+        with open(path, "wb") as f:
+            ds.write(f)
+
+        ds1 = from_source("file", path)
+        assert len(ds) == len(ds1)
+        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert np.allclose(ds1.values[:, :4], vals_ref)
+
+
 def test_writers_core():
     # from earthkit.data.targets.file import FileTarget
     # from earthkit.data.targets import Target
