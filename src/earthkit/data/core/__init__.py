@@ -65,14 +65,19 @@ class Base(metaclass=MetaBase):
 
     # I/O
     @abstractmethod
-    def save(self, path, **kwargs):
-        """Writes data into the specified ``path``."""
+    def to_target(self, *args, **kwargs):
+        """Writes data into the specified target."""
         self._not_implemented()
 
-    @abstractmethod
-    def write(self, f, **kwargs):
-        """Writes data to the ``f`` file object."""
-        self._not_implemented()
+    # @abstractmethod
+    # def save(self, path, **kwargs):
+    #     """Writes data into the specified ``path``."""
+    #     self._not_implemented()
+
+    # @abstractmethod
+    # def write(self, f, **kwargs):
+    #     """Writes data to the ``f`` file object."""
+    #     self._not_implemented()
 
     @abstractmethod
     def datetime(self):

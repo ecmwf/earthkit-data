@@ -10,6 +10,8 @@
 import itertools
 import logging
 
+import deprecation
+
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.mergers import make_merger
 from earthkit.data.mergers import merge_by_class
@@ -84,10 +86,22 @@ class MultiSource(Source):
         string = ",".join(repr(s) for s in self.sources)
         return f"{self.__class__.__name__}({string})"
 
+    @deprecation.deprecated(deprecated_in="0.12.0", removed_in="0.13.0", details="Use to_target() instead")
     def save(self, path, **kwargs):
-        with open(path, "wb") as f:
-            for s in self.sources:
-                s.write(f, **kwargs)
+        from earhkit.data.targets import make_target
+
+        target = make_target("file", path, **kwargs)
+        self.to_target(target, **kwargs)
+        # with open(path, "wb") as f:
+        #     for s in self.sources:
+        #         s.write(f, **kwargs)
+
+    def to_target(self, *args, **kwargs):
+        from earhkit.data.targets import make_target
+
+        target = make_target(*args, **kwargs)
+        for s in self.sources:
+            target.write(s, **kwargs)
 
     def graph(self, depth=0):
         print(" " * depth, self.__class__.__name__, self.merger)

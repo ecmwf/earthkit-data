@@ -12,6 +12,8 @@ import os
 import weakref
 from importlib import import_module
 
+import deprecation
+
 from earthkit.data.core import Base
 from earthkit.data.core.settings import SETTINGS
 from earthkit.data.decorators import detect_out_filename
@@ -74,12 +76,35 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
         return self.source.cache_file(*args, **kwargs)
 
     @detect_out_filename
+    @deprecation.deprecated(deprecated_in="0.12.0", removed_in="0.13.0", details="Use to_target() instead")
     def save(self, path, **kwargs):
-        mode = "wb" if self.binary else "w"
-        with open(path, mode) as f:
-            self.write(f, **kwargs)
+        from earthkit.data.targets import find_target
 
+        target = find_target("file", path, **kwargs)
+        target.write(self, **kwargs)
+
+        # mode = "wb" if self.binary else "w"
+        # with open(path, mode) as f:
+        #     self.write(f, **kwargs)
+
+    @deprecation.deprecated(deprecated_in="0.12.0", removed_in="0.13.0", details="Use to_target() instead")
     def write(self, f, **kwargs):
+        from earthkit.data.targets import find_target
+
+        target = find_target("file", f, **kwargs)
+        target.write(self, **kwargs)
+
+        # if not self.appendable:
+        #     assert f.tell() == 0
+        # mode = "rb" if self.binary else "r"
+        # with open(self.path, mode) as g:
+        #     while True:
+        #         chunk = g.read(1024 * 1024)
+        #         if not chunk:
+        #             break
+        #         f.write(chunk)
+
+    def _to_file(self, f, **kwargs):
         if not self.appendable:
             assert f.tell() == 0
         mode = "rb" if self.binary else "r"

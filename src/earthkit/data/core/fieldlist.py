@@ -668,6 +668,7 @@ class Field(Base):
         """
         return self._metadata.dump(namespace=namespace, **kwargs)
 
+    @deprecation.deprecated(deprecated_in="0.12.0", removed_in="0.13.0", details="Use to_target() instead")
     def save(self, filename, append=False, **kwargs):
         r"""Write the field into a file.
 
@@ -686,9 +687,11 @@ class Field(Base):
         :obj:`write`
 
         """
-        flag = "wb" if not append else "ab"
-        with open(filename, flag) as f:
-            self.write(f, **kwargs)
+        self.to_target(filename, append=append, **kwargs)
+        # the original implementation is in the write method
+        # flag = "wb" if not append else "ab"
+        # with open(filename, flag) as f:
+        #     self.write(f, **kwargs)
 
     def to_target(self, target, *args, **kwargs):
         r"""Write the field into a target object.
@@ -705,10 +708,10 @@ class Field(Base):
         :obj:`write`
 
         """
-        from earthkit.data.writer import find_target
+        from earthkit.data.targets import find_target
 
-        target = find_target(target)
-        target.write(self, *args, **kwargs)
+        target = find_target(target, *args, **kwargs)
+        target.write(self, **kwargs)
         # self.write(target, **kwargs)
 
     def __getitem__(self, key):
