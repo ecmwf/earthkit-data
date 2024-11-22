@@ -31,6 +31,7 @@ SKIP = [
     "ads.ipynb",
     "wekeo.ipynb",
     "polytope.ipynb",
+    "polytope_feature.ipynb",
     "polytope_polygon_coverage.ipynb",
     "polytope_time_series.ipynb",
     "polytope_vertical_profile.ipynb",

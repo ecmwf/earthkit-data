@@ -57,7 +57,7 @@ We can get data from a given source by using :func:`from_source`:
     * - :ref:`data-sources-opendap`
       - retrieve NetCDF data from `OPEnDAP <https://en.wikipedia.org/wiki/OPeNDAP>`_ services
     * - :ref:`data-sources-polytope`
-      - retrieve data from the `Polytope services <https://polytope-client.readthedocs.io/en/latest/>`_
+      - retrieve fields from the `Polytope services <https://polytope.readthedocs.io/en/latest/>`_
     * - :ref:`data-sources-s3`
       - retrieve data from Amazon S3 buckets
     * - :ref:`data-sources-wekeo`
@@ -897,7 +897,7 @@ polytope
 .. py:function:: from_source("polytope", collection, *args, address=None, user_email=None, user_key=None, stream=True, read_all=False, **kwargs)
   :noindex:
 
-  The ``polytope`` source accesses the `Polytope web services <https://polytope-client.readthedocs.io/en/latest/>`_ , using the polytope-client_ package.
+  The ``polytope`` source accesses the `Polytope web services <https://polytope.readthedocs.io/en/latest/>`_ , using the polytope-client_ package.
 
   :param str collection: the name of the polytope collection
   :param tuple *args: specify the request as a dict
@@ -939,6 +939,7 @@ polytope
   Further examples:
 
       - :ref:`/examples/polytope.ipynb`
+      - :ref:`/examples/polytope_feature.ipynb`
       - :ref:`/examples/polytope_time_series.ipynb`
       - :ref:`/examples/polytope_polygon_coverage.ipynb`
       - :ref:`/examples/polytope_vertical_profile.ipynb`
