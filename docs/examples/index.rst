@@ -27,6 +27,7 @@ Data sources
     ecmwf_open_data.ipynb
     fdb.ipynb
     polytope.ipynb
+    polytope_feature.ipynb
     s3.ipynb
     wekeo.ipynb
 
