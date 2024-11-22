@@ -64,39 +64,45 @@ class FileTarget(Target):
         return self._files[path], path
 
     def write(self, data=None, encoder=None, template=None, **kwargs):
-        from earthkit.data.core.fieldlist import FieldList
-
-        if encoder is None:
-            encoder = self._coder
-
-        if template is None:
-            template = self.template
-
-        # kwargs = dict(**kwargs)
-        # kwargs["template"] = template
-
-        if isinstance(data, FieldList):
-            data.to_target(self, encoder=encoder, template=template, **kwargs)
+        if data is not None:
+            data._write_to_target(self, encoder=encoder, template=template, **kwargs)
         else:
-            if encoder is None:
-                encoder = self._coder
+            pass
 
-            # this can consume kwargs
-            encoder = _find_encoder(data, encoder)
-            # print("encoder", encoder)
+        # from earthkit.data.core.fieldlist import FieldList
 
-            f, _ = self._f(encoder)
-            data = encoder.encode(data, template=template, **kwargs)
-            data.write(f)
+        # if encoder is None:
+        #     encoder = self._coder
+
+        # if template is None:
+        #     template = self.template
+
+        # # kwargs = dict(**kwargs)
+        # # kwargs["template"] = template
+
+        # if isinstance(data, FieldList):
+        #     data.to_target(self, encoder=encoder, template=template, **kwargs)
+        # else:
+        #     if encoder is None:
+        #         encoder = self._coder
+
+        #     # this can consume kwargs
+        #     encoder = _find_encoder(data, encoder)
+        #     # print("encoder", encoder)
+
+        #     f, _ = self._f(encoder)
+        #     data = encoder.encode(data, template=template, **kwargs)
+        #     data.write(f)
 
     def _write_field(self, data, encoder=None, template=None, **kwargs):
         print("encoder", encoder, "template", template, "kwargs", kwargs)
         if encoder is None:
             encoder = self._coder
 
+        print("-> encoder", encoder)
         # this can consume kwargs
         encoder = _find_encoder(data, encoder)
-        # print("encoder", encoder)
+        print("-> encoder", encoder)
 
         f, _ = self._f(encoder)
         data = encoder.encode(data, template=template, **kwargs)

@@ -1662,21 +1662,35 @@ class FieldList(Index):
         # for s in self:
         #     s.write(f, **kwargs)
 
-    def to_target(self, target, *args, **kwargs):
-        print(f"writing top= {kwargs}")
-        if isinstance(target, str):
-            from earthkit.data.targets import make_target
-
-            target = make_target(target, *args, **kwargs)
-
-            kwargs.pop("append", None)
-            # skip the target a
-
-            # target._write_fieldlist(self, **kwargs)
-
+    def _write_to_target(self, target, **kwargs):
         for f in self:
-            print(f"writing {kwargs}")
+            # print(f"writing {kwargs}")
             target._write_field(f, **kwargs)
+            # target._write_fieldlist(self, *args, **kwargs)
+
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import make_target
+
+        target = make_target(target, *args, **kwargs)
+        kwargs.pop("append", None)
+        target.write(self, **kwargs)
+
+        # print(f"writing top= {kwargs}")
+        # if isinstance(target, str):
+        #     from earthkit.data.targets import make_target
+
+        #     target = make_target(target, *args, **kwargs)
+
+        #     kwargs.pop("append", None)
+        #     # skip the target a
+
+        #     # target._write_fieldlist(self, **kwargs)
+
+        # target.write(self, **kwargs)
+
+        # for f in self:
+        #     print(f"writing {kwargs}")
+        #     target._write_field(f, **kwargs)
 
     def to_tensor(self, *args, **kwargs):
         from earthkit.data.indexing.tensor import FieldListTensor
