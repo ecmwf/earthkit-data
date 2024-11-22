@@ -19,23 +19,27 @@ from . import Target
 LOG = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from multio.plans import Client
+    from typing import Any
+    from typing import Dict
+
     from multio.multio import Multio
-    from typing import Any, Dict
+    from multio.plans import Client
+
     from earthkit.data.core.metadata import Metadata
 
 GEOGRAPHY_ALIASES: dict[str, list[str]] = {
-    'north': ['latitudeOfFirstGridPointInDegrees'],
-    'west': ['longitudeOfFirstGridPointInDegrees'],
-    'south': ['latitudeOfLastGridPointInDegrees'],
-    'east': ['longitudeOfLastGridPointInDegrees'],
-    'west_east_increment': ['iDirectionIncrementInDegrees'],
-    'south_north_increment': ['jDirectionIncrementInDegrees'],
-    'Ni': ['Ni', 'N'],
-    'Nj': ['Nj'],
-    'gridType': ['gridType'],
-    'pl': ['pl'],
+    "north": ["latitudeOfFirstGridPointInDegrees"],
+    "west": ["longitudeOfFirstGridPointInDegrees"],
+    "south": ["latitudeOfLastGridPointInDegrees"],
+    "east": ["longitudeOfLastGridPointInDegrees"],
+    "west_east_increment": ["iDirectionIncrementInDegrees"],
+    "south_north_increment": ["jDirectionIncrementInDegrees"],
+    "Ni": ["Ni", "N"],
+    "Nj": ["Nj"],
+    "gridType": ["gridType"],
+    "pl": ["pl"],
 }
+
 
 def geography_translate(metadata: Metadata) -> dict:
     """Translate geography metadata from earthkit to multio"""
@@ -52,8 +56,8 @@ def geography_translate(metadata: Metadata) -> dict:
         multio_geo[multio_key] = geo_namespace.pop(valid_key[0])
 
     multio_geo.update(geo_namespace)
-    if 'pl' in multio_geo:
-        multio_geo['pl'] = ','.join(map(str, multio_geo['pl'].tolist()))
+    if "pl" in multio_geo:
+        multio_geo["pl"] = ",".join(map(str, multio_geo["pl"].tolist()))
     return multio_geo
 
 
@@ -80,8 +84,8 @@ class MultioTarget(Target):
 
     @property
     def server(self) -> Multio:
-        from multio import MultioPlan
         from multio import Multio
+        from multio import MultioPlan
 
         if self._server is None:
             with MultioPlan(self.plan):
@@ -105,7 +109,7 @@ class MultioTarget(Target):
 
     def _write_field(self, data, encoder=None, template=None, **kwargs):
         _ = encoder
-        kwargs.pop('plan', None)
+        kwargs.pop("plan", None)
 
         import multio
 
