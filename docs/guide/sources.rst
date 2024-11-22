@@ -57,7 +57,9 @@ We can get data from a given source by using :func:`from_source`:
     * - :ref:`data-sources-opendap`
       - retrieve NetCDF data from `OPEnDAP <https://en.wikipedia.org/wiki/OPeNDAP>`_ services
     * - :ref:`data-sources-polytope`
-      - retrieve data from the `Polytope services <https://polytope-client.readthedocs.io/en/latest/>`_
+      - retrieve fields from the `Polytope services <https://polytope.readthedocs.io/en/latest/>`_
+    * - :ref:`data-sources-polytope-fe`
+      - retrieve features from the `Polytope Feature Extraction <https://polytope.readthedocs.io/en/latest/>`_
     * - :ref:`data-sources-s3`
       - retrieve data from Amazon S3 buckets
     * - :ref:`data-sources-wekeo`
