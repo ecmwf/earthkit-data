@@ -88,6 +88,7 @@ CoverageJSON
     :maxdepth: 1
     :glob:
 
+    polytope_feature.ipynb
     polytope_time_series.ipynb
     polytope_polygon_coverage.ipynb
     polytope_vertical_profile.ipynb
