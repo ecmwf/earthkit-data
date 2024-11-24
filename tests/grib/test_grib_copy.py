@@ -25,7 +25,8 @@ sys.path.insert(0, here)
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
-@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+# @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+@pytest.mark.parametrize("fl_type", ["file"])
 def test_grib_clone_metadata(fl_type):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 

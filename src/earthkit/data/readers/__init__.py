@@ -104,6 +104,9 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
         #             break
         #         f.write(chunk)
 
+    def _write(self, target, **kwargs):
+        target._write_reader(self, **kwargs)
+
     def _to_file(self, f, **kwargs):
         if not self.appendable:
             assert f.tell() == 0

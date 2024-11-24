@@ -72,7 +72,7 @@ class GribEncoder(Encoder):
         # print(
         #     f"Data: {data}    Values: {values}    Metadata: {metadata}    Template: {template}    Compulsory: {compulsory}"
         # )
-        if data is not None and values and template:
+        if data is not None and values is not None and template:
             raise ValueError("Cannot provide data, values and template together")
 
         # write values from data to template
@@ -93,7 +93,7 @@ class GribEncoder(Encoder):
         self,
         data=None,
         values=None,
-        check_nans=False,
+        check_nans=True,
         metadata={},
         template=None,
         return_bytes=False,
@@ -116,14 +116,16 @@ class GribEncoder(Encoder):
 
         handle = self._get_handle(data, values, metadata, template, compulsory)
 
-        # print("->", metadata)
+        print("check_nans=", check_nans)
+        print("-> metadata=", metadata)
         self.update_metadata(handle, metadata, compulsory)
-        # print("<-", metadata)
+        print("  metadata=", metadata)
 
         if check_nans and values is not None:
             import numpy as np
 
             if np.isnan(values).any():
+                print("hasNone")
                 # missing_value = np.finfo(values.dtype).max
                 missing_value = missing_value
                 values = np.nan_to_num(values, nan=missing_value)
@@ -131,6 +133,8 @@ class GribEncoder(Encoder):
                 metadata["bitmapPresent"] = 1
 
         metadata = {k: v for k, v in sorted(metadata.items(), key=lambda x: order(x[0]))}
+
+        print("  metadata=", metadata)
 
         if str(metadata.get("edition")) == "1":
             for k in NOT_IN_EDITION_1:
@@ -140,13 +144,18 @@ class GribEncoder(Encoder):
             for k in ("class", "type", "stream", "expver", "setLocalDefinition"):
                 metadata.pop(k, None)
 
-        # TODO: revisit that logic
-        if "generatingProcessIdentifier" not in metadata:
-            metadata["generatingProcessIdentifier"] = 255
-        else:
-            # kee
+        # keep the original generatingProcessIdentifier if not set
+        if "generatingProcessIdentifier" in metadata:
             if metadata["generatingProcessIdentifier"] is None:
                 metadata.pop("generatingProcessIdentifier")
+
+        # # TODO: revisit that logic
+        # if "generatingProcessIdentifier" not in metadata:
+        #     metadata["generatingProcessIdentifier"] = 255
+        # else:
+        #     # kee
+        #     if metadata["generatingProcessIdentifier"] is None:
+        #         metadata.pop("generatingProcessIdentifier")
 
         LOG.debug("GribOutput.metadata %s", metadata)
 

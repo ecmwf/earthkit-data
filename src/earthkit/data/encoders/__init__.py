@@ -21,15 +21,18 @@ LOG = logging.getLogger(__name__)
 _ENCODERS = {}
 
 
-class DataPresenter:
-    def __init__(self, data):
-        self.data = data
+_SUFFIXES = {".grib": "grib", ".nc": "netcdf", ".png": "png"}
 
-    def to_bytes(self, data):
-        return data
 
-    def to_file(self, target):
-        self.data.write(target.f)
+# class DataPresenter:
+#     def __init__(self, data):
+#         self.data = data
+
+#     def to_bytes(self, data):
+#         return data
+
+#     def to_file(self, target):
+#         self.data.write(target.f)
 
 
 class Encoder(metaclass=ABCMeta):
@@ -95,38 +98,69 @@ def _get_encoder(name, data_format=None):
     return r
 
 
-def _find_encoder(data, encoder=None, **kwargs):
+def _find_encoder(data, encoder=None, suffix=None, **kwargs):
     # if data_format is not None and not isinstance(data_format, str):
     #     raise ValueError(f"data_format must be a str or None, got {data_format=}")
 
     # print(f"_encoders()={_encoders()}")
 
-    if not isinstance(encoder, Encoder):
-        data_format = None
-        if data is not None:
-            if hasattr(data, "metadata"):
-                data_format = data.metadata().data_format()
-                if data_format:
-                    if encoder is None:
-                        encoder = data_format
-                        data_format = None
-                    elif encoder == data_format:
-                        data_format = None
-        elif encoder is None:
-            raise ValueError("No data or encoder")
+    if isinstance(encoder, Encoder):
+        return encoder
 
-        # print(f"{data=}, {encoder=}, {data_format=}")
+    if encoder is None and suffix is not None:
+        encoder = _SUFFIXES.get(suffix, None)
 
-        if encoder is None:
-            raise ValueError(f"Could not create encoder for {data=}, {encoder=}")
-        if not isinstance(encoder, str):
-            raise ValueError(f"Unsupported encoder={encoder}. Must be a str or Encoder")
-
-        encoder = _get_encoder(encoder, data_format=data_format)
+    if isinstance(encoder, str):
+        encoder = _get_encoder(encoder)
         assert encoder is not None
-        # print("ENCODER kwargs", kwargs)
-        encoder = encoder()
-        kwargs = {}
+        return encoder()
+
+    if encoder is not None:
+        raise ValueError(f"Unsupported encoder={encoder}. Must be a str or Encoder")
+
+    assert encoder is None
+
+    # try to guess encoder from data
+    if data is not None:
+        if hasattr(data, "metadata"):
+            data_format = data.metadata().data_format()
+            if data_format:
+                encoder = data_format
+                encoder = _get_encoder(encoder)
+                assert encoder is not None
+                return encoder()
+
+    else:
+        raise ValueError("No data or encoder")
+
+    # try to guess f
+
+    # if not isinstance(encoder, Encoder):
+    #     data_format = None
+    #     if data is not None:
+    #         if hasattr(data, "metadata"):
+    #             data_format = data.metadata().data_format()
+    #             if data_format:
+    #                 if encoder is None:
+    #                     encoder = data_format
+    #                     data_format = None
+    #                 elif encoder == data_format:
+    #                     data_format = None
+    #     elif encoder is None:
+    #         raise ValueError("No data or encoder")
+
+    #     # print(f"{data=}, {encoder=}, {data_format=}")
+
+    #     if encoder is None:
+    #         raise ValueError(f"Could not create encoder for {data=}, {encoder=}")
+    #     if not isinstance(encoder, str):
+    #         raise ValueError(f"Unsupported encoder={encoder}. Must be a str or Encoder")
+
+    #     encoder = _get_encoder(encoder, data_format=data_format)
+    #     assert encoder is not None
+    #     # print("ENCODER kwargs", kwargs)
+    #     encoder = encoder()
+    #     kwargs = {}
 
     # if encoder is None:
     #     encoder = DefaultEncoder()

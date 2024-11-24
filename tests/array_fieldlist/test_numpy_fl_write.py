@@ -31,8 +31,7 @@ from array_fl_fixtures import load_array_fl  # noqa: E402
 LOG = logging.getLogger(__name__)
 
 
-# @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-@pytest.mark.parametrize("array_backend", ["numpy"])
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 def test_array_fl_grib_write_to_path(array_backend):
     ds = from_source("file", earthkit_examples_file("test.grib"))
     ds = ds.to_fieldlist(array_backend=array_backend)

@@ -150,6 +150,20 @@ class ClonedFieldCore:
     def handle(self):
         return self._metadata._handle
 
+    def _write(self, target, **kwargs):
+
+        md = {}
+        # wrapped metadata
+        if hasattr(self._metadata, "extra"):
+            md = {k: self._metadata._extra_value(k) for k, v in self._metadata.extra.items()}
+
+        target._write_field(
+            self,
+            values=self._values(),
+            metadata=md,
+            **kwargs,
+        )
+
 
 # For backwards compatibility
 FieldArray = SimpleFieldList

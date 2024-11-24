@@ -49,8 +49,16 @@ def make_target(name, *args, **kwargs):
     return target(*args, **kwargs)
 
 
-def to_target(name, *args, **kwargs):
-    target = make_target(name, *args, **kwargs)
+def ensure_target(target_or_name, *args, **kwargs):
+    if isinstance(target_or_name, Target):
+        return target_or_name
+    target = make_target(target_or_name, *args, **kwargs)
+    return target
+
+
+def to_target(target, *args, **kwargs):
+    target = ensure_target(target, *args, **kwargs)
+    kwargs.pop("append", None)
     target.write(**kwargs)
 
 

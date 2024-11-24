@@ -8,6 +8,7 @@
 #
 
 import logging
+import os
 import re
 from io import IOBase
 
@@ -26,12 +27,15 @@ class FileTarget(Target):
         self.fileobj = None
         self.filename = None
         self.append = append
+        self.ext = None
 
         if isinstance(file, IOBase):
             self.fileobj = file
             split_output = False
         else:
             self.filename = file
+            if self.filename is not None:
+                _, self.ext = os.path.splitext(self.filename)
 
         if split_output:
             self.split_output = re.findall(r"\{(.*?)\}", self.filename)
@@ -65,7 +69,8 @@ class FileTarget(Target):
 
     def write(self, data=None, encoder=None, template=None, **kwargs):
         if data is not None:
-            data._write_to_target(self, encoder=encoder, template=template, **kwargs)
+            # data._write_to_target(self, encoder=encoder, template=template, **kwargs)
+            data._write(self, encoder=encoder, template=template, **kwargs)
         else:
             pass
 
@@ -94,19 +99,36 @@ class FileTarget(Target):
         #     data = encoder.encode(data, template=template, **kwargs)
         #     data.write(f)
 
+    def _write_reader(self, reader, **kwargs):
+        f, _ = self._f(None)
+
+        if not reader.appendable:
+            assert f.tell() == 0
+        mode = "rb" if reader.binary else "r"
+        with open(reader.path, mode) as g:
+            while True:
+                chunk = g.read(1024 * 1024)
+                if not chunk:
+                    break
+                f.write(chunk)
+
     def _write_field(self, data, encoder=None, template=None, **kwargs):
-        print("encoder", encoder, "template", template, "kwargs", kwargs)
+        print("encoder", encoder, "template", template, "kwargs", kwargs.keys())
         if encoder is None:
             encoder = self._coder
 
         print("-> encoder", encoder)
         # this can consume kwargs
-        encoder = _find_encoder(data, encoder)
+        encoder = _find_encoder(data, encoder, suffix=self.ext)
         print("-> encoder", encoder)
 
         f, _ = self._f(encoder)
-        data = encoder.encode(data, template=template, **kwargs)
-        data.write(f)
+        d = encoder.encode(data, template=template, **kwargs)
+        d.write(f)
+
+    def _write_fieldlist(self, data, encoder=None, template=None, **kwargs):
+        for f in data:
+            f.to_target(self, encoder=encoder, template=template, **kwargs)
 
 
 target = FileTarget

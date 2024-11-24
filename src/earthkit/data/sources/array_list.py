@@ -10,6 +10,8 @@
 import logging
 import math
 
+import deprecation
+
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.utils.array import array_namespace
@@ -67,6 +69,18 @@ class ArrayField(Field):
             self._metadata.get("number", None),
         )
 
+    def _write(self, target, **kwargs):
+        target._write_field(self, values=self.to_numpy(flatten=True), **kwargs)
+
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self, **kwargs)
+
+        # target = ensure_target(target, *args, **kwargs)
+        # target._write_field(self, values=self.to_numpy(flatten=True), **kwargs)
+
+    @deprecation.deprecated(deprecated_in="0.12.0", removed_in="0.13.0", details="Use to_target() instead")
     def write(self, f, **kwargs):
         r"""Write the field to a file object.
 
@@ -77,9 +91,14 @@ class ArrayField(Field):
         **kwargs: dict, optional
             Other keyword arguments passed to :meth:`data.writers.grib.GribWriter.write`.
         """
-        from earthkit.data.writers import write
+        from earthkit.data.targets import make_target
 
-        write(f, self, values=self.to_numpy(flatten=True), **kwargs)
+        target = make_target("file", f, **kwargs)
+        self.to_target(target, **kwargs)
+
+        # from earthkit.data.writers import write
+
+        # write(f, self, values=self.to_numpy(flatten=True), **kwargs)
 
     @property
     def _metadata(self):
