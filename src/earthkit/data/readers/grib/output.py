@@ -18,29 +18,10 @@ from earthkit.data.utils.humanize import list_to_human
 
 LOG = logging.getLogger(__name__)
 
-ACCUMULATIONS = {("tp", 2): {"productDefinitionTemplateNumber": 8}}
-
-_ORDER = (
-    "edition",
-    "setLocalDefinition",
-    "typeOfGeneratingProcess",
-    "productDefinitionTemplateNumber",
-)
-
 NOT_IN_EDITION_1 = (
     "productDefinitionTemplateNumber",
     "typeOfGeneratingProcess",
 )
-
-
-ORDER = {}
-for i, k in enumerate(_ORDER):
-    ORDER[k] = i
-
-
-def order(key):
-    ORDER.setdefault(key, len(ORDER))
-    return ORDER[key]
 
 
 class Combined:
@@ -97,9 +78,7 @@ class GribCoder:
         else:
             handle = template.handle.clone()
 
-        # print("->", metadata)
         self.update_metadata(handle, metadata, compulsory)
-        # print("<-", metadata)
 
         if check_nans and values is not None:
             import numpy as np
@@ -110,8 +89,6 @@ class GribCoder:
                 values = np.nan_to_num(values, nan=missing_value)
                 metadata["missingValue"] = missing_value
                 metadata["bitmapPresent"] = 1
-
-        metadata = {k: v for k, v in sorted(metadata.items(), key=lambda x: order(x[0]))}
 
         if str(metadata.get("edition")) == "1":
             for k in NOT_IN_EDITION_1:
@@ -131,15 +108,26 @@ class GribCoder:
 
         LOG.debug("GribOutput.metadata %s", metadata)
 
+        single = {}
+        multiple = {}
+        for k, v in metadata.items():
+            if isinstance(v, (int, float, str, bool)):
+                single[k] = v
+            else:
+                multiple[k] = v
+
         try:
             # Try to set all metadata at once
             # This is needed when we set multiple keys that are interdependent
-            handle.set_multiple(metadata)
+            handle.set_multiple(single)
         except Exception as e:
             LOG.error("Failed to set metadata at once: %s", e)
             # Try again, but one by one
-            for k, v in metadata.items():
+            for k, v in single.items():
                 handle.set(k, v)
+
+        for k, v in multiple.items():
+            handle.set(k, v)
 
         if values is not None:
             handle.set_values(values)
@@ -183,10 +171,7 @@ class GribCoder:
 
         if "number" in metadata:
             compulsory += ("numberOfForecastsInEnsemble",)
-            productDefinitionTemplateNumber = {"tp": 11}
-            metadata["productDefinitionTemplateNumber"] = productDefinitionTemplateNumber.get(
-                handle.get("shortName"), 1
-            )
+            metadata.setDefault("productDefinitionTemplateNumber", 1)  # 11 for accumulations
 
         if metadata.get("type") in ("pf", "cf"):
             metadata.setdefault("typeOfGeneratingProcess", 4)
@@ -225,25 +210,6 @@ class GribCoder:
 
         metadata.setdefault("bitsPerValue", 16)
         metadata["scanningMode"] = 0
-
-        metadata.update(
-            ACCUMULATIONS.get(
-                (
-                    metadata.get("paramId"),
-                    metadata.get("edition", 2),
-                ),
-                {},
-            )
-        )
-        metadata.update(
-            ACCUMULATIONS.get(
-                (
-                    metadata.get("shortName"),
-                    metadata.get("edition", 2),
-                ),
-                {},
-            )
-        )
 
         if "class" in metadata or "type" in metadata or "stream" in metadata or "expver" in metadata:
             # MARS labelling
