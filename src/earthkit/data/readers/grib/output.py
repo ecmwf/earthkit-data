@@ -171,7 +171,7 @@ class GribCoder:
 
         if "number" in metadata:
             compulsory += ("numberOfForecastsInEnsemble",)
-            metadata.setDefault("productDefinitionTemplateNumber", 1)  # 11 for accumulations
+            metadata.setdefault("productDefinitionTemplateNumber", 1)  # 11 for accumulations
 
         if metadata.get("type") in ("pf", "cf"):
             metadata.setdefault("typeOfGeneratingProcess", 4)
