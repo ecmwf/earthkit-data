@@ -157,10 +157,13 @@ class ClonedFieldCore:
         if hasattr(self._metadata, "extra"):
             md = {k: self._metadata._extra_value(k) for k, v in self._metadata.extra.items()}
 
+        metadata = kwargs.pop("metadata", {})
+        metadata.update(md)
+
         target._write_field(
             self,
             values=self._values(),
-            metadata=md,
+            metadata=metadata,
             **kwargs,
         )
 

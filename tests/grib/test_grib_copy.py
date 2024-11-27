@@ -19,6 +19,8 @@ from earthkit.data import FieldList
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.sources.array_list import ArrayField
+from earthkit.data.testing import WRITE_TO_FILE_METHODS
+from earthkit.data.testing import write_to_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -27,7 +29,8 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("fl_type", ["file"])
-def test_grib_clone_metadata(fl_type):
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_grib_clone_metadata(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     def _func1(field, key, original_metadata):
@@ -85,7 +88,8 @@ def test_grib_clone_metadata(fl_type):
             levelist=_func1,
         )
 
-        f.save(tmp)
+        write_to_file(write_method, tmp, f)
+        # f.save(tmp)
         f_saved = from_source("file", tmp)[0]
         assert f_saved.metadata("param") == "q"
         assert f_saved.metadata("shortName") == "q"
@@ -137,7 +141,8 @@ def test_grib_clone_metadata(fl_type):
 
     # write back to grib
     with temp_file() as tmp:
-        ds.save(tmp)
+        write_to_file(write_method, tmp, ds)
+        # ds.save(tmp)
         ds_saved = from_source("file", tmp)
         assert ds_saved.metadata("param") == ["q", "q"]
         assert ds_saved.metadata("shortName") == ["q", "q"]
@@ -156,7 +161,8 @@ def test_grib_clone_metadata(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
-def test_grib_clone_values(fl_type):
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_grib_clone_values(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -179,7 +185,7 @@ def test_grib_clone_values(fl_type):
     # write back to grib
     # we can only have ecCodes keys
     with temp_file() as tmp:
-        f.save(tmp)
+        write_to_file(write_method, tmp, f)
         f_saved = from_source("file", tmp)[0]
         assert f_saved.metadata("param") == "t"
         assert f_saved.metadata("shortName") == "t"
@@ -223,7 +229,7 @@ def test_grib_clone_values(fl_type):
 
     # write back to grib
     with temp_file() as tmp:
-        ds.save(tmp)
+        write_to_file(write_method, tmp, ds)
         ds_saved = from_source("file", tmp)
         assert ds_saved.metadata("param") == ["t", "z"]
         assert ds_saved.metadata("shortName") == ["t", "z"]

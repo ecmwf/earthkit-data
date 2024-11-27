@@ -235,7 +235,9 @@ def write_to_file(mode, path, ds, **kwargs):
     elif mode == "save":
         ds.save(path, **kwargs)
     elif mode == "write":
-        with open(path, "wb") as f:
+        append = kwargs.pop("append", False)
+        flag = "wb" if not append else "ab"
+        with open(path, flag) as f:
             ds.write(f, **kwargs)
     else:
         raise ValueError(f"Invalid {mode=}")

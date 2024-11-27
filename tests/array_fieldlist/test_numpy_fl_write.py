@@ -85,9 +85,7 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
     assert not ns.isnan(r[0].values[1])
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, r)
-
-        # r.save(tmp, **_kwargs)
+        write_to_file(write_method, tmp, r, **_kwargs)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
         v_tmp = r_tmp[0].values
@@ -98,7 +96,8 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
         assert not ns.isnan(v_tmp[1])
 
 
-def test_array_fl_grib_write_check_nans_bad():
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_array_fl_grib_write_check_nans_bad(write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     assert ds[0].metadata("shortName") == "2t"
@@ -122,10 +121,11 @@ def test_array_fl_grib_write_check_nans_bad():
         from eccodes import EncodingError
 
         with pytest.raises(EncodingError):
-            r.save(tmp, check_nans=False)
+            write_to_file(write_method, tmp, r, check_nans=False)
 
 
-def test_array_fl_grib_write_append():
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_array_fl_grib_write_append(write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     assert ds[0].metadata("shortName") == "2t"
@@ -143,7 +143,7 @@ def test_array_fl_grib_write_append():
 
     # save to disk
     tmp = temp_file()
-    r1.save(tmp.path)
+    write_to_file(write_method, tmp.path, r1)
     assert os.path.exists(tmp.path)
     r_tmp = from_source("file", tmp.path)
     assert len(r_tmp) == 1
@@ -151,14 +151,15 @@ def test_array_fl_grib_write_append():
     r_tmp = None
 
     # append
-    r2.save(tmp.path, append=True)
+    write_to_file(write_method, tmp.path, r2, append=True)
     assert os.path.exists(tmp.path)
     r_tmp = from_source("file", tmp.path)
     assert len(r_tmp) == 2
     assert r_tmp.metadata("shortName") == ["msl", "2d"]
 
 
-def test_array_fl_grib_write_generating_proc_id():
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_array_fl_grib_write_generating_proc_id(write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     assert ds[0].metadata("shortName") == "2t"
@@ -175,7 +176,7 @@ def test_array_fl_grib_write_generating_proc_id():
 
     # save to disk
     with temp_file() as tmp:
-        r1.save(tmp)
+        write_to_file(write_method, tmp, r1)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
         assert len(r_tmp) == 2
@@ -194,14 +195,15 @@ def test_array_fl_grib_write_generating_proc_id():
     "_kwargs,expected_value",
     [({}, None), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, None)],
 )
-def test_array_fl_grib_write_bits_per_value(array_backend, _kwargs, expected_value):
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_array_fl_grib_write_bits_per_value(array_backend, _kwargs, expected_value, write_method):
     ds, _ = load_array_fl(1, array_backend)
 
     if expected_value is None:
         expected_value = ds[0].metadata("bitsPerValue")
 
     with temp_file() as tmp:
-        ds.save(tmp, **_kwargs)
+        write_to_file(write_method, tmp, ds, **_kwargs)
         ds1 = from_source("file", tmp)
         assert ds1.metadata("bitsPerValue") == [expected_value] * len(ds)
 

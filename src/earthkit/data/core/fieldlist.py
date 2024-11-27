@@ -693,6 +693,9 @@ class Field(Base):
         # with open(filename, flag) as f:
         #     self.write(f, **kwargs)
 
+    def write(self, f, **kwargs):
+        self.to_target("file", f, **kwargs)
+
     def _write(self, target, **kwargs):
         target._write_field(self, **kwargs)
 
