@@ -24,7 +24,7 @@ dependencies:
 - hda
 - jsonschema
 - pip:
-  - multiurl>=0.3.0
+  - multiurl>=0.3.3
   - pyfdb>=0.1.0
   - ecmwf-opendata>=0.3.3
   - polytope-client>=0.7.4
@@ -37,7 +37,7 @@ dependencies:
 - markdown
 - aws-requests-auth
 - botocore
-- make
+- makeßß
 - mypy
 - myst-parser
 - pre-commit
@@ -58,3 +58,4 @@ dependencies:
 - nbsphinx
 - ipykernel
 - geopandas
+- array-api-compat

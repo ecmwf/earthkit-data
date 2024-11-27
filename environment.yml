@@ -22,7 +22,7 @@ dependencies:
 - cdsapi>=0.7.2
 - hda
 - pip:
-  - multiurl>=0.3.0
+  - multiurl>=0.3.3
   - pyfdb>=0.1.0
   - ecmwf-opendata>=0.1.2
   - polytope-client>=0.7.4
@@ -56,3 +56,4 @@ dependencies:
 - nbsphinx
 - ipykernel
 - geopandas
+- array-api-compat
