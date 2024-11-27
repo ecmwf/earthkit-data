@@ -10,6 +10,7 @@
 import datetime
 import logging
 import re
+from functools import lru_cache
 from io import IOBase
 
 from earthkit.data.decorators import normalize
@@ -18,29 +19,12 @@ from earthkit.data.utils.humanize import list_to_human
 
 LOG = logging.getLogger(__name__)
 
-ACCUMULATIONS = {("tp", 2): {"productDefinitionTemplateNumber": 8}}
-
-_ORDER = (
-    "edition",
-    "setLocalDefinition",
-    "typeOfGeneratingProcess",
-    "productDefinitionTemplateNumber",
-)
-
 NOT_IN_EDITION_1 = (
     "productDefinitionTemplateNumber",
     "typeOfGeneratingProcess",
 )
 
-
-ORDER = {}
-for i, k in enumerate(_ORDER):
-    ORDER[k] = i
-
-
-def order(key):
-    ORDER.setdefault(key, len(ORDER))
-    return ORDER[key]
+CACHE = {}
 
 
 class Combined:
@@ -97,9 +81,7 @@ class GribCoder:
         else:
             handle = template.handle.clone()
 
-        # print("->", metadata)
         self.update_metadata(handle, metadata, compulsory)
-        # print("<-", metadata)
 
         if check_nans and values is not None:
             import numpy as np
@@ -110,8 +92,6 @@ class GribCoder:
                 values = np.nan_to_num(values, nan=missing_value)
                 metadata["missingValue"] = missing_value
                 metadata["bitmapPresent"] = 1
-
-        metadata = {k: v for k, v in sorted(metadata.items(), key=lambda x: order(x[0]))}
 
         if str(metadata.get("edition")) == "1":
             for k in NOT_IN_EDITION_1:
@@ -131,15 +111,26 @@ class GribCoder:
 
         LOG.debug("GribOutput.metadata %s", metadata)
 
+        single = {}
+        multiple = {}
+        for k, v in metadata.items():
+            if isinstance(v, (int, float, str, bool)):
+                single[k] = v
+            else:
+                multiple[k] = v
+
         try:
             # Try to set all metadata at once
             # This is needed when we set multiple keys that are interdependent
-            handle.set_multiple(metadata)
+            handle.set_multiple(single)
         except Exception as e:
             LOG.error("Failed to set metadata at once: %s", e)
             # Try again, but one by one
-            for k, v in metadata.items():
+            for k, v in single.items():
                 handle.set(k, v)
+
+        for k, v in multiple.items():
+            handle.set(k, v)
 
         if values is not None:
             handle.set_values(values)
@@ -183,10 +174,7 @@ class GribCoder:
 
         if "number" in metadata:
             compulsory += ("numberOfForecastsInEnsemble",)
-            productDefinitionTemplateNumber = {"tp": 11}
-            metadata["productDefinitionTemplateNumber"] = productDefinitionTemplateNumber.get(
-                handle.get("shortName"), 1
-            )
+            metadata.setdefault("productDefinitionTemplateNumber", 1)  # 11 for accumulations
 
         if metadata.get("type") in ("pf", "cf"):
             metadata.setdefault("typeOfGeneratingProcess", 4)
@@ -223,27 +211,9 @@ class GribCoder:
         else:
             raise ValueError(f"Invalid shape {values.shape} for GRIB, must be 1 or 2 dimension ")
 
+        # assert False, sample
         metadata.setdefault("bitsPerValue", 16)
         metadata["scanningMode"] = 0
-
-        metadata.update(
-            ACCUMULATIONS.get(
-                (
-                    metadata.get("paramId"),
-                    metadata.get("edition", 2),
-                ),
-                {},
-            )
-        )
-        metadata.update(
-            ACCUMULATIONS.get(
-                (
-                    metadata.get("shortName"),
-                    metadata.get("edition", 2),
-                ),
-                {},
-            )
-        )
 
         if "class" in metadata or "type" in metadata or "stream" in metadata or "expver" in metadata:
             # MARS labelling
@@ -343,10 +313,10 @@ class GribCoder:
             assert len(pl) == 2 * N, (len(pl), 2 * N)
             metadata["pl"] = pl
             metadata["longitudeOfLastGridPointInDegrees"] = 360 - max(pl) / 360
+            metadata["Nj"] = len(pl)
         else:
-            # Assumed to be set properly in the sample
-            # metadata["longitudeOfLastGridPointInDegrees"] = east
-            pass
+            # We just want the PL
+            metadata.update(_gg_pl(N))
 
         edition = metadata.get("edition", 2)
         levtype = metadata.get("levtype")
@@ -359,8 +329,42 @@ class GribCoder:
         if octahedral or levtype == "sfc":
             return f"reduced_gg_{levtype}_grib{edition}"
         else:
-
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
+
+
+@lru_cache(maxsize=None)
+def _gg_pl(N):
+    import eccodes
+
+    sample = None
+    result = {}
+    try:
+        sample = eccodes.codes_new_from_samples(
+            f"reduced_gg_pl_{N}_grib2",
+            eccodes.CODES_PRODUCT_GRIB,
+        )
+
+        for key in ("N", "Ni", "Nj"):
+            result[key] = eccodes.codes_get(sample, key)
+
+        for key in (
+            "latitudeOfFirstGridPointInDegrees",
+            "longitudeOfFirstGridPointInDegrees",
+            "latitudeOfLastGridPointInDegrees",
+            "longitudeOfLastGridPointInDegrees",
+            "iDirectionIncrementInDegrees",
+        ):
+            result[key] = eccodes.codes_get_double(sample, key)
+
+        pl = eccodes.codes_get_long_array(sample, "pl")
+        result["pl"] = pl.tolist()
+        result["gridType"] = "reduced_gg"
+
+        return result
+
+    finally:
+        if sample is not None:
+            eccodes.codes_release(sample)
 
 
 class GribOutput:
