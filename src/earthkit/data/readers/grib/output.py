@@ -10,6 +10,7 @@
 import datetime
 import logging
 import re
+from functools import lru_cache
 from io import IOBase
 
 from earthkit.data.decorators import normalize
@@ -22,6 +23,8 @@ NOT_IN_EDITION_1 = (
     "productDefinitionTemplateNumber",
     "typeOfGeneratingProcess",
 )
+
+CACHE = {}
 
 
 class Combined:
@@ -208,6 +211,7 @@ class GribCoder:
         else:
             raise ValueError(f"Invalid shape {values.shape} for GRIB, must be 1 or 2 dimension ")
 
+        # assert False, sample
         metadata.setdefault("bitsPerValue", 16)
         metadata["scanningMode"] = 0
 
@@ -309,10 +313,10 @@ class GribCoder:
             assert len(pl) == 2 * N, (len(pl), 2 * N)
             metadata["pl"] = pl
             metadata["longitudeOfLastGridPointInDegrees"] = 360 - max(pl) / 360
+            metadata["Nj"] = len(pl)
         else:
-            # Assumed to be set properly in the sample
-            # metadata["longitudeOfLastGridPointInDegrees"] = east
-            pass
+            # We just want the PL
+            metadata.update(_gg_pl(N))
 
         edition = metadata.get("edition", 2)
         levtype = metadata.get("levtype")
@@ -325,8 +329,42 @@ class GribCoder:
         if octahedral or levtype == "sfc":
             return f"reduced_gg_{levtype}_grib{edition}"
         else:
-
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
+
+
+@lru_cache(maxsize=None)
+def _gg_pl(N):
+    import eccodes
+
+    sample = None
+    result = {}
+    try:
+        sample = eccodes.codes_new_from_samples(
+            f"reduced_gg_pl_{N}_grib2",
+            eccodes.CODES_PRODUCT_GRIB,
+        )
+
+        for key in ("N", "Ni", "Nj"):
+            result[key] = eccodes.codes_get(sample, key)
+
+        for key in (
+            "latitudeOfFirstGridPointInDegrees",
+            "longitudeOfFirstGridPointInDegrees",
+            "latitudeOfLastGridPointInDegrees",
+            "longitudeOfLastGridPointInDegrees",
+            "iDirectionIncrementInDegrees",
+        ):
+            result[key] = eccodes.codes_get_double(sample, key)
+
+        pl = eccodes.codes_get_long_array(sample, "pl")
+        result["pl"] = pl.tolist()
+        result["gridType"] = "reduced_gg"
+
+        return result
+
+    finally:
+        if sample is not None:
+            eccodes.codes_release(sample)
 
 
 class GribOutput:
