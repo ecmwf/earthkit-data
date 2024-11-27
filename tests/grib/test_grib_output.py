@@ -20,7 +20,9 @@ import pytest
 import earthkit.data
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
+from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import write_to_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -31,11 +33,12 @@ EPSILON = 1e-4
 
 
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
-def test_grib_save_when_loaded_from_file(fl_type):
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_grib_save_when_loaded_from_file(fl_type, write_method):
     fs, _ = load_grib_data("test6.grib", fl_type)
     assert len(fs) == 6
     with temp_file() as tmp:
-        fs.save(tmp)
+        write_to_file(write_method, tmp, fs)
         fs_saved = from_source("file", tmp)
         assert len(fs) == len(fs_saved)
 
@@ -44,11 +47,12 @@ def test_grib_save_when_loaded_from_file(fl_type):
     "_kwargs,expected_value",
     [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
 )
-def test_grib_save_bits_per_value(_kwargs, expected_value):
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_grib_save_bits_per_value(_kwargs, expected_value, write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     with temp_file() as tmp:
-        ds.save(tmp, **_kwargs)
+        write_to_file(write_method, tmp, ds, **_kwargs)
         ds1 = from_source("file", tmp)
         assert ds1.metadata("bitsPerValue") == [expected_value] * len(ds)
 

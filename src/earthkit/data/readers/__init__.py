@@ -78,10 +78,12 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
     @detect_out_filename
     @deprecation.deprecated(deprecated_in="0.12.0", removed_in="0.13.0", details="Use to_target() instead")
     def save(self, path, **kwargs):
-        from earthkit.data.targets import find_target
+        self.to_target("file", path, **kwargs)
 
-        target = find_target("file", path, **kwargs)
-        target.write(self, **kwargs)
+        # from earthkit.data.targets import find_target
+
+        # target = find_target("file", path, **kwargs)
+        # target.write(self, **kwargs)
 
         # mode = "wb" if self.binary else "w"
         # with open(path, mode) as f:
@@ -89,11 +91,12 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
 
     @deprecation.deprecated(deprecated_in="0.12.0", removed_in="0.13.0", details="Use to_target() instead")
     def write(self, f, **kwargs):
+        self.to_target("file", f, **kwargs)
+
         from earthkit.data.targets import find_target
 
-        target = find_target("file", f, **kwargs)
-        target.write(self, **kwargs)
-
+        # target = find_target("file", f, **kwargs)
+        # target.write(self, **kwargs)
         # if not self.appendable:
         #     assert f.tell() == 0
         # mode = "rb" if self.binary else "r"
@@ -107,16 +110,21 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
     def _write(self, target, **kwargs):
         target._write_reader(self, **kwargs)
 
-    def _to_file(self, f, **kwargs):
-        if not self.appendable:
-            assert f.tell() == 0
-        mode = "rb" if self.binary else "r"
-        with open(self.path, mode) as g:
-            while True:
-                chunk = g.read(1024 * 1024)
-                if not chunk:
-                    break
-                f.write(chunk)
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self, **kwargs)
+
+    # def _to_file(self, f, **kwargs):
+    #     if not self.appendable:
+    #         assert f.tell() == 0ß
+    #     mode = "rb" if self.binary else "r"
+    #     with open(self.path, mode) as g:
+    #         while True:
+    #             chunk = g.read(1024 * 1024)
+    #             if not chunk:
+    #                 break
+    #             f.write(chunk)
 
     def __fspath__(self):
         return self.path
