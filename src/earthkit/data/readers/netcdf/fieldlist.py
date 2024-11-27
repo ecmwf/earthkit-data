@@ -285,8 +285,19 @@ class NetCDFFieldList(XArrayFieldListCore):
         #     return xr.open_dataset(self.path, **kwargs)
         return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
 
-    def write(self, *args, **kwargs):
-        return self.to_netcdf(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     return self.to_netcdf(*args, **kwargs)
+
+    # def write(self, *args, **kwargs):
+    #     return self.to_netcdf(*args, **kwargs)
+
+    def _write(self, target, **kwargs):
+        target._from_xarray(self, self.to)
+
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self, **kwargs)
 
 
 class NetCDFFieldListFromFileOrURL(NetCDFFieldList):

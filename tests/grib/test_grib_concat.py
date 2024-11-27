@@ -19,7 +19,7 @@ from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file
 
 
-def _check_save_to_disk(ds, len_ref, meta_ref, write_method):
+def _check_save_to_disk(ds, len_ref, meta_ref):
     # save to disk
     tmp = temp_file()
     ds.to_target("file", tmp.path)

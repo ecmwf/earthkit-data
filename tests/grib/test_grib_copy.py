@@ -89,7 +89,6 @@ def test_grib_clone_metadata(fl_type, write_method):
         )
 
         write_to_file(write_method, tmp, f)
-        # f.save(tmp)
         f_saved = from_source("file", tmp)[0]
         assert f_saved.metadata("param") == "q"
         assert f_saved.metadata("shortName") == "q"
@@ -142,7 +141,6 @@ def test_grib_clone_metadata(fl_type, write_method):
     # write back to grib
     with temp_file() as tmp:
         write_to_file(write_method, tmp, ds)
-        # ds.save(tmp)
         ds_saved = from_source("file", tmp)
         assert ds_saved.metadata("param") == ["q", "q"]
         assert ds_saved.metadata("shortName") == ["q", "q"]
@@ -250,7 +248,8 @@ def test_grib_clone_values(fl_type, write_method):
 
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
-def test_grib_clone_combined(fl_type):
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_grib_clone_combined(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -283,7 +282,7 @@ def test_grib_clone_combined(fl_type):
     # write back to grib
     # we can only have ecCodes keys
     with temp_file() as tmp:
-        f.save(tmp)
+        write_to_file(write_method, tmp, f)
         f_saved = from_source("file", tmp)[0]
         assert f_saved.metadata("param") == "q"
         assert f_saved.metadata("shortName") == "q"
@@ -337,7 +336,7 @@ def test_grib_clone_combined(fl_type):
 
     # write back to grib
     with temp_file() as tmp:
-        ds.save(tmp)
+        write_to_file(write_method, tmp, ds)
         ds_saved = from_source("file", tmp)
         assert ds_saved.metadata("param") == ["q", "q"]
         assert ds_saved.metadata("shortName") == ["q", "q"]
@@ -358,7 +357,8 @@ def test_grib_clone_combined(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
-def test_grib_clone_default(fl_type):
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_grib_clone_default(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -381,7 +381,7 @@ def test_grib_clone_default(fl_type):
     # write back to grib
     # we can only have ecCodes keys
     with temp_file() as tmp:
-        f.save(tmp)
+        write_to_file(write_method, tmp, f)
         f_saved = from_source("file", tmp)[0]
         assert f_saved.metadata("param") == "t"
         assert f_saved.metadata("shortName") == "t"
@@ -391,7 +391,8 @@ def test_grib_clone_default(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
-def test_grib_clone_with_metadata_object(fl_type):
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_grib_clone_with_metadata_object(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -411,7 +412,7 @@ def test_grib_clone_with_metadata_object(fl_type):
 
     # write back to grib
     with temp_file() as tmp:
-        f.save(tmp)
+        write_to_file(write_method, tmp, f)
         f_saved = from_source("file", tmp)[0]
         assert f_saved.metadata("param") == "q"
         assert f_saved.metadata("shortName") == "q"
@@ -424,7 +425,8 @@ def test_grib_clone_with_metadata_object(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
-def test_grib_copy_to_field(fl_type):
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_grib_copy_to_field(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -460,7 +462,7 @@ def test_grib_copy_to_field(fl_type):
     # write back to grib
     # we can only have ecCodes keys
     with temp_file() as tmp:
-        f.save(tmp)
+        write_to_file(write_method, tmp, f)
         f_saved = from_source("file", tmp)[0]
         assert f_saved.metadata("param") == "q"
         assert f_saved.metadata("shortName") == "q"
@@ -500,7 +502,7 @@ def test_grib_copy_to_field(fl_type):
 
     # write back to grib
     with temp_file() as tmp:
-        ds.save(tmp)
+        write_to_file(write_method, tmp, ds)
         ds_saved = from_source("file", tmp)
         assert ds_saved.metadata("param") == ["q", "q"]
         assert ds_saved.metadata("shortName") == ["q", "q"]

@@ -110,6 +110,8 @@ def _find_encoder(data, encoder=None, suffix=None, **kwargs):
     if encoder is None and suffix is not None:
         encoder = _SUFFIXES.get(suffix, None)
 
+    print("encoder", encoder, "suffix", suffix)
+
     if isinstance(encoder, str):
         encoder = _get_encoder(encoder)
         assert encoder is not None
