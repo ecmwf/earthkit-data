@@ -37,7 +37,7 @@ dependencies:
 - markdown
 - aws-requests-auth
 - botocore
-- makeßß
+- make
 - mypy
 - myst-parser
 - pre-commit
