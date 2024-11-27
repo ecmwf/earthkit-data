@@ -2,6 +2,17 @@ Version 0.11 Updates
 /////////////////////////
 
 
+
+Version 0.11.2
+===============
+
+Fixes
+++++++
+
+- Allowed encoding PL arrays for :py:class:`GribCoder` (:pr:`546`).
+
+
+
 Version 0.11.1
 ===============
 
