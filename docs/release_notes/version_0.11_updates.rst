@@ -2,6 +2,29 @@ Version 0.11 Updates
 /////////////////////////
 
 
+Version 0.11.3
+===============
+
+Fixes
+++++++
+
+- Fixed issue when :py:meth:`to_numpy` could not be called on a FieldList (:pr:`551`).
+- Fixed issue when the :ref:`data-sources-lod` source did not raise an exception when the geography was not correctly specified (:pr:`549`).
+- Increased the minimum version of ``multiurl`` to 0.3.3
+
+
+
+
+Version 0.11.2
+===============
+
+Fixes
+++++++
+
+- Allowed encoding PL arrays for :py:class:`GribCoder` (:pr:`546`).
+
+
+
 Version 0.11.1
 ===============
 
