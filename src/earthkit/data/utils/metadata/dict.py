@@ -53,9 +53,9 @@ def make_geography(metadata):
         if lon is None:
             raise ValueError("No longitudes or distinctLongitudes found")
         if len(lat.shape) != 1:
-            return ValueError(f"distinct latitudes must be 1D array! shape={lat.shape} unsupported")
+            raise ValueError(f"distinct latitudes must be 1D array! shape={lat.shape} unsupported")
         if len(lon.shape) != 1:
-            return ValueError(f"distinctLongitudes must be 1D array! shape={lon.shape} unsupported")
+            raise ValueError(f"distinctLongitudes must be 1D array! shape={lon.shape} unsupported")
         if lat.size * lon.size != val.size:
             raise ValueError(
                 (
@@ -70,11 +70,11 @@ def make_geography(metadata):
         lon = np.asarray(lon, dtype=float)
         if lat.size * lon.size == val.size:
             if len(lat.shape) != 1:
-                return ValueError(
+                raise ValueError(
                     f"latitudes must be a 1D array when holding distinct values! shape={lat.shape} unsupported"
                 )
             if len(lon.shape) != 1:
-                return ValueError(
+                raise ValueError(
                     f"longitudes must be a 1D array when holding distinct values! shape={lon.shape} unsupported"
                 )
             distinct = True
