@@ -1045,7 +1045,7 @@ class FieldList(Index):
         if n > 0:
             it = iter(self)
             first = next(it)
-            is_property = isinstance(getattr(first.__class__, accessor), property)
+            is_property = not callable(getattr(first, accessor, None))
             vals = _vals(first)
             ns = array_namespace(vals)
             shape = (n, *vals.shape)
