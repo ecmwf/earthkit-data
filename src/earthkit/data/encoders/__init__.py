@@ -98,7 +98,7 @@ def _get_encoder(name, data_format=None):
     return r
 
 
-def _find_encoder(data, encoder=None, suffix=None, **kwargs):
+def _find_encoder(data, encoder=None, default_encoder=None, suffix=None, **kwargs):
     # if data_format is not None and not isinstance(data_format, str):
     #     raise ValueError(f"data_format must be a str or None, got {data_format=}")
 
@@ -107,8 +107,12 @@ def _find_encoder(data, encoder=None, suffix=None, **kwargs):
     if isinstance(encoder, Encoder):
         return encoder
 
-    if encoder is None and suffix is not None:
-        encoder = _SUFFIXES.get(suffix, None)
+    if encoder is None:
+        if suffix is not None:
+            encoder = _SUFFIXES.get(suffix, None)
+        if encoder is None:
+            if default_encoder is not None:
+                encoder = default_encoder
 
     print("encoder", encoder, "suffix", suffix)
 

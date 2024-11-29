@@ -43,6 +43,17 @@ def order(key):
     return ORDER[key]
 
 
+class GribAdaptor:
+    def __init__(self, handle):
+        self.handle = handle
+
+    def to_bytes(self, data):
+        return self.handle.get_message()
+
+    def to_file(self, f):
+        self.handle.write(f)
+
+
 class Combined:
     def __init__(self, handle, metadata):
         self.handle = handle
@@ -110,7 +121,7 @@ class GribEncoder(Encoder):
             template = self.template
 
         if data is not None and values is None and template is None and not check_nans and not metadata:
-            return data.handle
+            return GribAdaptor(data.handle)
 
         compulsory = (("date", "referenceDate"), ("param", "paramId", "shortName"))
 
@@ -168,7 +179,7 @@ class GribEncoder(Encoder):
         if return_bytes:
             return handle.get_message()
 
-        return handle
+        return GribAdaptor(handle)
 
     def update_metadata(self, handle, metadata, compulsory):
         # TODO: revisit that logic

@@ -681,14 +681,9 @@ class Field(Base):
             the target file be overwritten if already exists. Default is False
         **kwargs: dict, optional
             Other keyword arguments passed to :obj:`write`.
-
-        See Also
-        --------
-        :obj:`write`
-
         """
         self.to_target("file", filename, append=append, **kwargs)
-        # the original implementation is in the write method
+        # the original implementation
         # flag = "wb" if not append else "ab"
         # with open(filename, flag) as f:
         #     self.write(f, **kwargs)
@@ -696,8 +691,9 @@ class Field(Base):
     def write(self, f, **kwargs):
         self.to_target("file", f, **kwargs)
 
-    def _write(self, target, **kwargs):
-        target._write_field(self, **kwargs)
+    def _to_target(self, target, **kwargs):
+        assert target is not None
+        target._write(self, **kwargs)
 
     def to_target(self, target, *args, **kwargs):
         r"""Write the field into a target object.
@@ -706,22 +702,14 @@ class Field(Base):
         ----------
         target: object
             The target object to write the field into.
+        *args: tuple
+            Positional arguments used to specify the target object.
         **kwargs: dict, optional
-            Other keyword arguments passed to :obj:`write`.
-
-        See Also
-        --------
-        :obj:`write`
-
+            Other keyword arguments used to write the field into the target object.
         """
         from earthkit.data.targets import to_target
 
         to_target(target, *args, data=self, **kwargs)
-
-        # target = ensure_target(target, *args, **kwargs)
-        # target._write_field(self, **kwargs)
-        # target.write(self, **kwargs)
-        # self.write(target, **kwargs)
 
     def __getitem__(self, key):
         """Return the value of the metadata ``key``."""
@@ -1671,52 +1659,15 @@ class FieldList(Index):
         # for s in self:
         #     s.write(f, **kwargs)
 
-    # def _write_to_target(self, target, **kwargs):
-    #     for f in self:
-    #         # print(f"writing {kwargs}")
-    #         target._write_field(f, **kwargs)
-    #         # target._write_fieldlist(self, *args, **kwargs)
-
-    def _write(self, target, **kwargs):
+    def _to_target(self, target, **kwargs):
+        assert target is not None
         for f in self:
-            # print(f"writing {kwargs}")
-            f._write(target, **kwargs)
-            # target._write_field(f, **kwargs)
+            f.to_target(target, **kwargs)
 
     def to_target(self, target, *args, **kwargs):
         from earthkit.data.targets import to_target
 
         to_target(target, *args, data=self, **kwargs)
-
-        # if target is not None:
-        #     target.write(self, **kwargs)
-        # else:
-        #     from earthkit.data.targets import to_target
-
-        #     to_target(target, *args, data=self, **kwargs)
-
-        # from earthkit.data.targets import make_target
-
-        # target = make_target(target, *args, **kwargs)
-        # kwargs.pop("append", None)
-        # target._write_fieldlist(self, **kwargs)
-
-        # print(f"writing top= {kwargs}")
-        # if isinstance(target, str):
-        #     from earthkit.data.targets import make_target
-
-        #     target = make_target(target, *args, **kwargs)
-
-        #     kwargs.pop("append", None)
-        #     # skip the target a
-
-        #     # target._write_fieldlist(self, **kwargs)
-
-        # target.write(self, **kwargs)
-
-        # for f in self:
-        #     print(f"writing {kwargs}")
-        #     target._write_field(f, **kwargs)
 
     def to_tensor(self, *args, **kwargs):
         from earthkit.data.indexing.tensor import FieldListTensor

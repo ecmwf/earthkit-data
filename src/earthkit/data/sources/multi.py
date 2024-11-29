@@ -88,20 +88,22 @@ class MultiSource(Source):
 
     @deprecation.deprecated(deprecated_in="0.12.0", removed_in="0.13.0", details="Use to_target() instead")
     def save(self, path, **kwargs):
-        from earhkit.data.targets import make_target
+        self.to_target("file", path, **kwargs)
 
-        target = make_target("file", path, **kwargs)
-        self.to_target(target, **kwargs)
+        # original code
         # with open(path, "wb") as f:
         #     for s in self.sources:
         #         s.write(f, **kwargs)
 
-    def to_target(self, *args, **kwargs):
-        from earhkit.data.targets import make_target
-
-        target = make_target(*args, **kwargs)
+    def _to_target(self, target, **kwargs):
+        assert target is not None
         for s in self.sources:
-            target.write(s, **kwargs)
+            target.write(data=s, **kwargs)
+
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self, **kwargs)
 
     def graph(self, depth=0):
         print(" " * depth, self.__class__.__name__, self.merger)

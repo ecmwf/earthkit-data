@@ -223,6 +223,13 @@ class XArrayFieldListCore(FieldList):
     def new_mask_index(cls, *args, **kwargs):
         return XArrayMaskFieldList(*args, **kwargs)
 
+    def _to_target(self, target, **kwargs):
+        assert target is not None
+        encoder = kwargs.get("encoder", None)
+        if encoder is None and kwargs.get("default_encoder", None) is None:
+            kwargs["default_encoder"] = "netcdf"
+        target._write(self, **kwargs)
+
 
 class XArrayFieldList(XArrayFieldListCore):
     VERSION = 1
@@ -290,14 +297,6 @@ class NetCDFFieldList(XArrayFieldListCore):
 
     # def write(self, *args, **kwargs):
     #     return self.to_netcdf(*args, **kwargs)
-
-    def _write(self, target, **kwargs):
-        target._from_xarray(self, self.to)
-
-    def to_target(self, target, *args, **kwargs):
-        from earthkit.data.targets import to_target
-
-        to_target(target, *args, data=self, **kwargs)
 
 
 class NetCDFFieldListFromFileOrURL(NetCDFFieldList):

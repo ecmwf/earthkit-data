@@ -70,7 +70,8 @@ class FileTarget(Target):
     def write(self, data=None, encoder=None, template=None, **kwargs):
         if data is not None:
             # data._write_to_target(self, encoder=encoder, template=template, **kwargs)
-            data._write(self, encoder=encoder, template=template, **kwargs)
+            # data._write(self, encoder=encoder, template=template, **kwargs)
+            data._to_target(self, encoder=encoder, template=template, **kwargs)
         else:
             pass
 
@@ -112,23 +113,43 @@ class FileTarget(Target):
                     break
                 f.write(chunk)
 
-    def _write_field(self, data, encoder=None, template=None, **kwargs):
+    def _write(self, data, encoder=None, default_encoder=None, template=None, **kwargs):
         print("encoder", encoder, "template", template, "kwargs", kwargs.keys())
         if encoder is None:
             encoder = self._coder
 
         print("-> encoder", encoder)
         # this can consume kwargs
-        encoder = _find_encoder(data, encoder, suffix=self.ext)
+        encoder = _find_encoder(data, encoder, default_encoder=default_encoder, suffix=self.ext)
         print("-> encoder", encoder)
 
         f, _ = self._f(encoder)
         d = encoder.encode(data, template=template, **kwargs)
-        d.write(f)
+        d.to_file(f)
 
-    def _write_fieldlist(self, data, encoder=None, template=None, **kwargs):
-        for f in data:
-            f.to_target(self, encoder=encoder, template=template, **kwargs)
+    # def _write_field(self, data, encoder=None, template=None, **kwargs):
+    #     print("encoder", encoder, "template", template, "kwargs", kwargs.keys())
+    #     if encoder is None:
+    #         encoder = self._coder
+
+    #     print("-> encoder", encoder)
+    #     # this can consume kwargs
+    #     encoder = _find_encoder(data, encoder, suffix=self.ext)
+    #     print("-> encoder", encoder)
+
+    #     f, _ = self._f(encoder)
+    #     d = encoder.encode(data, template=template, **kwargs)
+    #     d.write(f)
+
+    # def _write_fieldlist(self, data, encoder=None, template=None, **kwargs):
+    #     for f in data:
+    #         f.to_target(self, encoder=encoder, template=template, **kwargs)
+
+    # def _write_xr_fieldlist(self, data, encoder=None, template=None, **kwargs):
+    #     encoder = _find_encoder(data, encoder, suffix=self.ext)
+    #     f, _ = self._f(encoder)
+    #     d = encoder.encode(data, template=template, **kwargs)
+    #     d.write(f)
 
 
 target = FileTarget

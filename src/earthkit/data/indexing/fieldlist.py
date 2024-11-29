@@ -150,7 +150,8 @@ class ClonedFieldCore:
     def handle(self):
         return self._metadata._handle
 
-    def _write(self, target, **kwargs):
+    def _to_target(self, target, **kwargs):
+        assert target is not None
 
         md = {}
         # wrapped metadata
@@ -160,7 +161,7 @@ class ClonedFieldCore:
         metadata = kwargs.pop("metadata", {})
         metadata.update(md)
 
-        target._write_field(
+        target._write(
             self,
             values=self._values(),
             metadata=metadata,

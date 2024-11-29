@@ -10,18 +10,33 @@
 #
 
 import numpy as np
+import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
+from earthkit.data.encoders.grib import GribEncoder
+from earthkit.data.targets import to_target
 from earthkit.data.testing import earthkit_examples_file
 
 
-def test_target_grib_1():
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {},
+        {"encoder": "grib"},
+        {"encoder": GribEncoder()},
+    ],
+)
+@pytest.mark.parametrize("direct_call", [True, False])
+def test_target_file_grib_core(kwargs, direct_call):
     ds = from_source("file", earthkit_examples_file("test.grib"))
     vals_ref = ds.values[:, :4]
 
     with temp_file() as path:
-        ds.to_target("file", path)
+        if direct_call:
+            to_target("file", path, data=ds, **kwargs)
+        else:
+            ds.to_target("file", path, **kwargs)
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
@@ -29,7 +44,45 @@ def test_target_grib_1():
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
-def test_target_grib_save_compat():
+def test_target_file_grib_append():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    vals_ref = ds.values[:, :4]
+
+    with temp_file() as path:
+        ds.to_target("file", path)
+        ds.to_target("file", path, append=True)
+
+        ds1 = from_source("file", path)
+        assert len(ds1) == len(ds) * 2
+        assert ds1.metadata("shortName") == ["2t", "msl"] * 2
+        assert np.allclose(ds1.values[:2, :4], vals_ref)
+        assert np.allclose(ds1.values[2:, :4], vals_ref)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"metadata": {"shortName": "2d", "bitsPerValue": 12}},
+        {"encoder": "grib", "metadata": {"shortName": "2d", "bitsPerValue": 12}},
+        {"encoder": GribEncoder(), "metadata": {"shortName": "2d", "bitsPerValue": 12}},
+        {"encoder": GribEncoder(metadata={"shortName": "2d", "bitsPerValue": 12})},
+    ],
+)
+def test_target_file_grib_set_metadata(kwargs):
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    vals_ref = ds.values[:, :4]
+
+    with temp_file() as path:
+        ds.to_target("file", path, **kwargs)
+
+        ds1 = from_source("file", path)
+        assert len(ds) == len(ds1)
+        assert ds1.metadata("shortName") == ["2d", "2d"]
+        assert ds1.metadata("bitsPerValue") == [12, 12]
+        assert np.allclose(ds1.values[:, :4], vals_ref, rtol=1e-1)
+
+
+def test_target_file_grib_save_compat():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     vals_ref = ds.values[:, :4]
 
@@ -42,7 +95,7 @@ def test_target_grib_save_compat():
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
-def test_target_grib_write_compat():
+def test_target_file_grib_write_compat():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     vals_ref = ds.values[:, :4]
 
@@ -54,6 +107,15 @@ def test_target_grib_write_compat():
         assert len(ds) == len(ds1)
         assert ds1.metadata("shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
+
+
+def test_target_file_odb():
+    ds = from_source("file", earthkit_examples_file("test.odb"))
+    with temp_file() as path:
+        ds.to_target("file", path)
+        ds1 = from_source("file", path)
+        df = ds1.to_pandas()
+        assert len(df) == 717
 
 
 def test_writers_core():

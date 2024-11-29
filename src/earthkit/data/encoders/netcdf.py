@@ -24,8 +24,8 @@ class NetCDFAdaptor:
     def to_file(self, f):
         self.ds.to_netcdf(f)
 
-    def write(self, f):
-        self.ds.to_netcdf(f)
+    # def write(self, f):
+    #     self.ds.to_netcdf(f)
 
 
 class NetCDFEncoder(Encoder):

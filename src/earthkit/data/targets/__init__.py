@@ -13,8 +13,6 @@ from abc import ABCMeta
 from abc import abstractmethod
 from importlib import import_module
 
-from earthkit.data.decorators import locked
-
 LOG = logging.getLogger(__name__)
 
 
@@ -34,6 +32,18 @@ class Target(metaclass=ABCMeta):
     ):
         pass
 
+    @abstractmethod
+    def _write(
+        self,
+        data,
+        **kwargs,
+    ):
+        pass
+
+    @abstractmethod
+    def _write_reader(self, reader, **kwargs):
+        pass
+
     def __enter__(self):
         return self
 
@@ -41,12 +51,58 @@ class Target(metaclass=ABCMeta):
         return
 
 
-def make_target(name, *args, **kwargs):
-    target = _targets().get(name, None)
-    if target is None:
-        raise ValueError(f"Unknown target {name}")
+class TargetLoader:
+    kind = "target"
 
-    return target(*args, **kwargs)
+    def load_module(self, module):
+        return import_module(module, package=__name__).target
+
+    def load_entry(self, entry):
+        entry = entry.load()
+        if callable(entry):
+            return entry
+        return entry.target
+
+    def load_remote(self, name):
+        return None
+
+
+class TargetMaker:
+    TARGETS = {}
+
+    def __call__(self, name, *args, **kwargs):
+        loader = TargetLoader()
+
+        if name in self.TARGETS:
+            klass = self.TARGETS[name]
+        else:
+            from earthkit.data.core.plugins import find_plugin
+
+            klass = find_plugin(os.path.dirname(__file__), name, loader)
+            self.TARGETS[name] = klass
+
+        target = klass(*args, **kwargs)
+
+        if getattr(target, "name", None) is None:
+            target.name = name
+
+        return target
+
+    def __getattr__(self, name):
+        return self(name.replace("_", "-"))
+
+
+get_target = TargetMaker()
+
+
+def make_target(name, *args, **kwargs):
+    return get_target(name, *args, **kwargs)
+
+    # target = _targets().get(name, None)
+    # if target is None:
+    #     raise ValueError(f"Unknown target {name}")
+
+    # return target(*args, **kwargs)
 
 
 def ensure_target(target_or_name, *args, **kwargs):
@@ -62,23 +118,23 @@ def to_target(target, *args, **kwargs):
     target.write(**kwargs)
 
 
-@locked
-def _targets():
-    if not _TARGETS:
-        here = os.path.dirname(__file__)
-        for path in sorted(os.listdir(here)):
-            if path[0] in ("_", "."):
-                continue
+# @locked
+# def _targets():
+#     if not _TARGETS:
+#         here = os.path.dirname(__file__)
+#         for path in sorted(os.listdir(here)):
+#             if path[0] in ("_", "."):
+#                 continue
 
-            if path.endswith(".py") or os.path.isdir(os.path.join(here, path)):
-                name, _ = os.path.splitext(path)
-                try:
-                    module = import_module(f".{name}", package=__name__)
-                    if hasattr(module, "target"):
-                        w = getattr(module, "target")
-                        # _TARGETS[w.DATA_FORMAT] = w
-                        _TARGETS[name] = w
-                except Exception:
-                    LOG.exception("Error loading writer %s", name)
+#             if path.endswith(".py") or os.path.isdir(os.path.join(here, path)):
+#                 name, _ = os.path.splitext(path)
+#                 try:
+#                     module = import_module(f".{name}", package=__name__)
+#                     if hasattr(module, "target"):
+#                         w = getattr(module, "target")
+#                         # _TARGETS[w.DATA_FORMAT] = w
+#                         _TARGETS[name] = w
+#                 except Exception:
+#                     LOG.exception("Error loading writer %s", name)
 
-    return _TARGETS
+#     return _TARGETS

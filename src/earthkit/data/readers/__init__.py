@@ -80,11 +80,7 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
     def save(self, path, **kwargs):
         self.to_target("file", path, **kwargs)
 
-        # from earthkit.data.targets import find_target
-
-        # target = find_target("file", path, **kwargs)
-        # target.write(self, **kwargs)
-
+        # original code
         # mode = "wb" if self.binary else "w"
         # with open(path, mode) as f:
         #     self.write(f, **kwargs)
@@ -93,10 +89,7 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
     def write(self, f, **kwargs):
         self.to_target("file", f, **kwargs)
 
-        from earthkit.data.targets import find_target
-
-        # target = find_target("file", f, **kwargs)
-        # target.write(self, **kwargs)
+        # original code
         # if not self.appendable:
         #     assert f.tell() == 0
         # mode = "rb" if self.binary else "r"
@@ -107,24 +100,14 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
         #             break
         #         f.write(chunk)
 
-    def _write(self, target, **kwargs):
+    def _to_target(self, target, **kwargs):
+        assert target is not None
         target._write_reader(self, **kwargs)
 
     def to_target(self, target, *args, **kwargs):
         from earthkit.data.targets import to_target
 
         to_target(target, *args, data=self, **kwargs)
-
-    # def _to_file(self, f, **kwargs):
-    #     if not self.appendable:
-    #         assert f.tell() == 0ß
-    #     mode = "rb" if self.binary else "r"
-    #     with open(self.path, mode) as g:
-    #         while True:
-    #             chunk = g.read(1024 * 1024)
-    #             if not chunk:
-    #                 break
-    #             f.write(chunk)
 
     def __fspath__(self):
         return self.path
