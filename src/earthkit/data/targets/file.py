@@ -12,14 +12,30 @@ import os
 import re
 from io import IOBase
 
-from earthkit.data.encoders import _find_encoder
-
 from . import Target
 
 LOG = logging.getLogger(__name__)
 
 
 class FileTarget(Target):
+    """
+    File target
+
+    Parameters:
+    -----------
+    file: str or file-like object
+        The file path or file-like object to write to.
+    split_output: bool
+        If True, the output file name defines a pattern with metadata keys in the
+        format of ``{key}``. Data items (e.g. fields) are written into a file that name is
+        created by substituting the relevant metadata values into the filename pattern.
+        Only used if file is a path.
+    append: bool
+        If True, the file is opened in append mode. Only used if file is a path.
+    **kwargs:
+        Additional keyword arguments passed to the parent class
+    """
+
     def __init__(self, file, split_output=False, append=False, **kwargs):
         super().__init__(**kwargs)
 
@@ -46,18 +62,21 @@ class FileTarget(Target):
         for f in self._files.values():
             f.close()
 
+    def finish(self):
+        self.close()
+
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, trace):
         self.close()
 
-    def _f(self, handle):
+    def _f(self, data):
         if self.fileobj:
             return self.fileobj, None
 
         if self.split_output:
-            path = self.filename.format(**{k: handle.get(k) for k in self.split_output})
+            path = self.filename.format(**{k: data.metadata(k) for k in self.split_output})
         else:
             path = self.filename
 
@@ -67,38 +86,10 @@ class FileTarget(Target):
 
         return self._files[path], path
 
-    def write(self, data=None, encoder=None, template=None, **kwargs):
-        if data is not None:
-            # data._write_to_target(self, encoder=encoder, template=template, **kwargs)
-            # data._write(self, encoder=encoder, template=template, **kwargs)
-            data._to_target(self, encoder=encoder, template=template, **kwargs)
-        else:
-            pass
-
-        # from earthkit.data.core.fieldlist import FieldList
-
-        # if encoder is None:
-        #     encoder = self._coder
-
-        # if template is None:
-        #     template = self.template
-
-        # # kwargs = dict(**kwargs)
-        # # kwargs["template"] = template
-
-        # if isinstance(data, FieldList):
-        #     data.to_target(self, encoder=encoder, template=template, **kwargs)
-        # else:
-        #     if encoder is None:
-        #         encoder = self._coder
-
-        #     # this can consume kwargs
-        #     encoder = _find_encoder(data, encoder)
-        #     # print("encoder", encoder)
-
-        #     f, _ = self._f(encoder)
-        #     data = encoder.encode(data, template=template, **kwargs)
-        #     data.write(f)
+    def _write_data(self, data, **kwargs):
+        d = self.encode(data, suffix=self.ext, **kwargs)
+        f, _ = self._f(d)
+        d.to_file(f)
 
     def _write_reader(self, reader, **kwargs):
         f, _ = self._f(None)
@@ -113,43 +104,18 @@ class FileTarget(Target):
                     break
                 f.write(chunk)
 
-    def _write(self, data, encoder=None, default_encoder=None, template=None, **kwargs):
-        print("encoder", encoder, "template", template, "kwargs", kwargs.keys())
-        if encoder is None:
-            encoder = self._coder
+    def _write_field(self, field, **kwargs):
+        self._write_data(field, **kwargs)
 
-        print("-> encoder", encoder)
-        # this can consume kwargs
-        encoder = _find_encoder(data, encoder, default_encoder=default_encoder, suffix=self.ext)
-        print("-> encoder", encoder)
-
-        f, _ = self._f(encoder)
-        d = encoder.encode(data, template=template, **kwargs)
-        d.to_file(f)
-
-    # def _write_field(self, data, encoder=None, template=None, **kwargs):
-    #     print("encoder", encoder, "template", template, "kwargs", kwargs.keys())
-    #     if encoder is None:
-    #         encoder = self._coder
-
-    #     print("-> encoder", encoder)
-    #     # this can consume kwargs
-    #     encoder = _find_encoder(data, encoder, suffix=self.ext)
-    #     print("-> encoder", encoder)
-
-    #     f, _ = self._f(encoder)
-    #     d = encoder.encode(data, template=template, **kwargs)
-    #     d.write(f)
-
-    # def _write_fieldlist(self, data, encoder=None, template=None, **kwargs):
-    #     for f in data:
-    #         f.to_target(self, encoder=encoder, template=template, **kwargs)
-
-    # def _write_xr_fieldlist(self, data, encoder=None, template=None, **kwargs):
-    #     encoder = _find_encoder(data, encoder, suffix=self.ext)
-    #     f, _ = self._f(encoder)
-    #     d = encoder.encode(data, template=template, **kwargs)
-    #     d.write(f)
+    def _write_fieldlist(self, fieldlist, encoder=None, template=None, **kwargs):
+        r = self.encode(fieldlist, suffix=self.ext, **kwargs)
+        try:
+            for d in r:
+                f, _ = self._f(d)
+                d.to_file(f)
+        except TypeError:
+            f, _ = self._f(r)
+            r.to_file(f)
 
 
 target = FileTarget

@@ -230,6 +230,9 @@ class XArrayFieldListCore(FieldList):
             kwargs["default_encoder"] = "netcdf"
         target._write(self, **kwargs)
 
+    def _encode_grib(self, encoder, **kwargs):
+        return encoder._from_xarray(self.to_xarray(), **kwargs)
+
 
 class XArrayFieldList(XArrayFieldListCore):
     VERSION = 1

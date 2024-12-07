@@ -22,7 +22,7 @@ class NetCDFAdaptor:
         return self.ds.to_netcdf(None)
 
     def to_file(self, f):
-        self.ds.to_netcdf(f)
+        self.ds.earthkit.to_netcdf(f)
 
     # def write(self, f):
     #     self.ds.to_netcdf(f)
@@ -54,6 +54,12 @@ class NetCDFEncoder(Encoder):
 
     # def _from_grib(self, data, **kwargs):
     #     return data.to_xarray()
+
+    def _encode_field(self, field, **kwargs):
+        return self.encode(field, **kwargs)
+
+    def _encode_fieldlist(self, data, **kwargs):
+        return self.encode(data, **kwargs)
 
 
 Encoder = NetCDFEncoder

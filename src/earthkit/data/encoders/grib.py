@@ -33,6 +33,9 @@ NOT_IN_EDITION_1 = (
 )
 
 
+COMPULSORY = (("date", "referenceDate"), ("param", "paramId", "shortName"))
+
+
 ORDER = {}
 for i, k in enumerate(_ORDER):
     ORDER[k] = i
@@ -47,11 +50,14 @@ class GribAdaptor:
     def __init__(self, handle):
         self.handle = handle
 
-    def to_bytes(self, data):
-        return self.handle.get_message()
+    def to_bytes(self):
+        return self.handle.get_buffer()
 
     def to_file(self, f):
         self.handle.write(f)
+
+    def metadata(self, key):
+        return self.handle.get(key)
 
 
 class Combined:
@@ -79,58 +85,73 @@ class GribEncoder(Encoder):
     def _normalize_kwargs_names(self, **kwargs):
         return kwargs
 
-    def _get_handle(self, data, values, metadata, template, compulsory):
-        # print(
-        #     f"Data: {data}    Values: {values}    Metadata: {metadata}    Template: {template}    Compulsory: {compulsory}"
-        # )
-        if data is not None and values is not None and template:
-            raise ValueError("Cannot provide data, values and template together")
-
-        # write values from data to template
-        if values is None and data and template:
-            values = data.values
-
-        if template is None:
-            if data is not None:
-                handle = data.handle.clone()
-            else:
-                handle = self.handle_from_metadata(values, metadata, compulsory)
-        else:
-            handle = template.handle.clone()
-
-        return handle
-
     def encode(
         self,
         data=None,
         values=None,
         check_nans=True,
-        metadata={},
+        metadata=None,
         template=None,
-        return_bytes=False,
         missing_value=9999,
-        # **kwargs,
+        **kwargs,
     ):
-        # Make a copy as we may modify it
-        md = self._normalize_kwargs_names(**self.metadata)
-        md.update(self._normalize_kwargs_names(**metadata))
-        # md.update(self._normalize_kwargs_names(**kwargs))
-        metadata = md
-
         if template is None:
             template = self.template
 
-        if data is not None and values is None and template is None and not check_nans and not metadata:
-            return GribAdaptor(data.handle)
+        if data is not None and values is not None and template:
+            raise ValueError("Cannot provide data, values and template together")
 
-        compulsory = (("date", "referenceDate"), ("param", "paramId", "shortName"))
+        metadata = metadata if metadata is not None else {}
+        md = self._normalize_kwargs_names(**self.metadata)
+        md.update(self._normalize_kwargs_names(**metadata))
+        md.update(self._normalize_kwargs_names(**kwargs))
+        metadata = md
 
-        handle = self._get_handle(data, values, metadata, template, compulsory)
+        kwargs = dict()
+        kwargs["values"] = values
+        kwargs["check_nans"] = check_nans
+        kwargs["metadata"] = metadata
+        kwargs["missing_value"] = missing_value
 
-        print("check_nans=", check_nans)
-        print("-> metadata=", metadata)
+        if data is not None:
+            return data._encode(self, template=template, **kwargs)
+        else:
+            handle = self._get_handle(template=template, values=values, metadata=metadata)
+            return self._encode(handle=handle, **kwargs)
+
+    def _encode_field(self, field, values=None, template=None, metadata=None, **kwargs):
+        # check if the field is already encoded in the desired format
+        if values is None and template is None and not metadata:
+            return GribAdaptor(field.handle)
+
+        if values is None and template:
+            values = field.values
+
+        handle = self._get_handle(field=field, values=values, metadata=metadata, template=template)
+        return self._encode(handle=handle, metadata=metadata, **kwargs)
+
+    def _encode_fieldlist(self, fs, **kwargs):
+        for f in fs:
+            yield self._encode_field(f, **kwargs)
+
+    def _encode(
+        self,
+        handle,
+        values=None,
+        check_nans=True,
+        metadata=None,
+        missing_value=9999,
+    ):
+        # the handle is already cloned
+        assert handle is not None
+
+        # Make a copy as we may modify it
+        if metadata is None:
+            metadata = {}
+
+        compulsory = COMPULSORY
+
         self.update_metadata(handle, metadata, compulsory)
-        print("  metadata=", metadata)
 
         if check_nans and values is not None:
             import numpy as np
@@ -144,8 +165,6 @@ class GribEncoder(Encoder):
                 metadata["bitmapPresent"] = 1
 
         metadata = {k: v for k, v in sorted(metadata.items(), key=lambda x: order(x[0]))}
-
-        print("  metadata=", metadata)
 
         if str(metadata.get("edition")) == "1":
             for k in NOT_IN_EDITION_1:
@@ -175,9 +194,6 @@ class GribEncoder(Encoder):
 
         if values is not None:
             handle.set_values(values)
-
-        if return_bytes:
-            return handle.get_message()
 
         return GribAdaptor(handle)
 
@@ -245,6 +261,17 @@ class GribEncoder(Encoder):
             v = metadata.pop("levtype")
             metadata["typeOfLevel"] = levtype_remap[v]
 
+    def _get_handle(self, field=None, values=None, metadata=None, template=None):
+        handle = self.handle_from_template(template)
+        if handle is None and field is not None:
+            handle = self.handle_from_field(field)
+        if handle is None:
+            if values is None:
+                raise ValueError("No values to encode")
+            handle = self.handle_from_metadata(values, metadata, COMPULSORY)
+
+        return handle
+
     def handle_from_metadata(self, values, metadata, compulsory):
         from earthkit.data.readers.grib.codes import GribCodesHandle  # Lazy loading of eccodes
 
@@ -292,6 +319,18 @@ class GribEncoder(Encoder):
 
         LOG.debug("GribCodesHandle.from_sample(%s)", sample)
         return GribCodesHandle.from_sample(sample)
+
+    def handle_from_template(self, template):
+        handle = None
+        if template is None:
+            template = self.template
+        if template is not None:
+            handle = template.handle.clone()
+        return handle
+
+    def handle_from_field(self, field):
+        if hasattr(field, "handle"):
+            return field.handle.clone()
 
     def _ll_field(self, values, metadata):
         Nj, Ni = values.shape

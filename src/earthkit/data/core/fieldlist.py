@@ -711,6 +711,12 @@ class Field(Base):
 
         to_target(target, *args, data=self, **kwargs)
 
+    def default_encoder(self):
+        return self._metadata.data_format()
+
+    def _encode(self, encoder, **kwargs):
+        return encoder._encode_field(self, **kwargs)
+
     def __getitem__(self, key):
         """Return the value of the metadata ``key``."""
         return self._metadata.get(key)
@@ -1661,13 +1667,14 @@ class FieldList(Index):
 
     def _to_target(self, target, **kwargs):
         assert target is not None
-        for f in self:
-            f.to_target(target, **kwargs)
+        target._write_fieldlist(self, **kwargs)
 
-    def to_target(self, target, *args, **kwargs):
-        from earthkit.data.targets import to_target
+    def default_encoder(self):
+        if len(self) > 0:
+            return self[0]._metadata.data_format()
 
-        to_target(target, *args, data=self, **kwargs)
+    def _encode(self, encoder, **kwargs):
+        return encoder._encode_fieldlist(self, **kwargs)
 
     def to_tensor(self, *args, **kwargs):
         from earthkit.data.indexing.tensor import FieldListTensor

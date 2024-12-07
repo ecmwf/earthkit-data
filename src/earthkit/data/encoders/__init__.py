@@ -24,6 +24,20 @@ _ENCODERS = {}
 _SUFFIXES = {".grib": "grib", ".nc": "netcdf", ".png": "png"}
 
 
+class EncodedDataAdaptor(metaclass=ABCMeta):
+    @abstractmethod
+    def to_bytes(self):
+        pass
+
+    @abstractmethod
+    def to_file(self, f):
+        pass
+
+    @abstractmethod
+    def metadata(self, key):
+        pass
+
+
 # class DataPresenter:
 #     def __init__(self, data):
 #         self.data = data
@@ -53,6 +67,14 @@ class Encoder(metaclass=ABCMeta):
         missing_value=9999,
         **kwargs,
     ):
+        pass
+
+    @abstractmethod
+    def _encode_field(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def _encode_fieldlist(self, *args, **kwargs):
         pass
 
 
@@ -98,7 +120,7 @@ def _get_encoder(name, data_format=None):
     return r
 
 
-def _find_encoder(data, encoder=None, default_encoder=None, suffix=None, **kwargs):
+def _find_encoder(data, encoder=None, suffix=None, **kwargs):
     # if data_format is not None and not isinstance(data_format, str):
     #     raise ValueError(f"data_format must be a str or None, got {data_format=}")
 
@@ -111,8 +133,11 @@ def _find_encoder(data, encoder=None, default_encoder=None, suffix=None, **kwarg
         if suffix is not None:
             encoder = _SUFFIXES.get(suffix, None)
         if encoder is None:
-            if default_encoder is not None:
-                encoder = default_encoder
+            if hasattr(data, "default_encoder"):
+                print("data.default_encoder", data.default_encoder())
+                encoder = data.default_encoder()
+            # if default_encoder is not None:
+            #     encoder = default_encoder
 
     print("encoder", encoder, "suffix", suffix)
 
@@ -125,6 +150,8 @@ def _find_encoder(data, encoder=None, default_encoder=None, suffix=None, **kwarg
         raise ValueError(f"Unsupported encoder={encoder}. Must be a str or Encoder")
 
     assert encoder is None
+
+    raise ValueError("No data or encoder")
 
     # try to guess encoder from data
     if data is not None:
