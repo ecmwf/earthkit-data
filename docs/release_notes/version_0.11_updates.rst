@@ -8,7 +8,7 @@ Version 0.11.4
 Fixes
 ++++++
 
-- Enforced the use of ``headers_only_clone=False`` when calling :meth:`GribMetadata.override() <data.readers.grib.metadata.GribMetadata.override>`. It was a necessary step to fix issues when writing :py:class:`ArrayField`\ containing :class:`~data.readers.grib.metadata.grib.GribMetadata` to disk. This is considered a temporary change until the issues with ``headers_only_clone`` are sorted out.
+- Enforced the use of ``headers_only_clone=False`` when calling :meth:`GribMetadata.override() <data.readers.grib.metadata.GribMetadata.override>`. It was a necessary step to fix issues when writing :py:class:`ArrayField`\ containing :class:`~data.readers.grib.metadata.grib.GribMetadata` to disk. This is considered a temporary change until the issues with ``headers_only_clone`` are sorted out (:pr:`555`).
 
 
 Version 0.11.3
