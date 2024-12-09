@@ -379,6 +379,10 @@ class GribMetadata(Metadata):
     def override(self, *args, headers_only_clone=True, **kwargs):
         d = dict(*args, **kwargs)
 
+        # using headers_only_clone=True can cause problems when we want to write GRIB
+        # to disk or modify the generated handle. Until it is fixed, we use headers_only_clone=False.
+        headers_only_clone = False
+
         new_value_size = None
         # extra = None
         gridspec = d.pop("gridspec", None)
