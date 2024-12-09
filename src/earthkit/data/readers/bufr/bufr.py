@@ -459,6 +459,8 @@ class BUFRListMixIn(PandasMixIn):
         Pandas DataFrame
             See  :obj:`ls`.
 
+        Notes
+        -----
         The following calls are equivalent:
 
             .. code-block:: python
@@ -491,6 +493,8 @@ class BUFRListMixIn(PandasMixIn):
         Pandas DataFrame
             See  :obj:`ls`.
 
+        Notes
+        -----
         The following calls are equivalent:
 
             .. code-block:: python
@@ -565,6 +569,8 @@ class BUFRList(BUFRListMixIn, Index):
             Returns a new object with the filtered elements. It contains a view to the data in the
             original object, so no data is copied.
 
+        Notes
+        -----
         Filter conditions are specified by a set of **metadata** keys either by a dictionary (in
         ``*args``) or a set of ``**kwargs``. Both single or multiple keys are allowed to use and each
         can specify the following type of filter values:
