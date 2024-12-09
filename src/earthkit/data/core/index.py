@@ -225,6 +225,8 @@ class Index(Source):
             Returns a new object with the filtered elements. It contains a view to the data in the
             original object, so no data is copied.
 
+        Notes
+        -----
         Filter conditions are specified by a set of **metadata** keys either by a dictionary (in
         ``*args``) or a set of ``**kwargs``. Both single or multiple keys are allowed to use and each
         can specify the following type of filter values:
@@ -320,6 +322,8 @@ class Index(Source):
             Returns a new object with the filtered elements. It contains a view to the data in
             the original object, so no data is copied.
 
+        Notes
+        -----
         :obj:`isel` works similarly to :obj:`sel` but conditions are specified by indices of metadata
         keys. A metadata index stores the unique, **sorted** values of the corresponding metadata key
         from all the fields in the input data. If the object is a
@@ -421,6 +425,8 @@ class Index(Source):
             Returns a new object with reordered elements. It contains a view to the data in the
             original object, so no data is copied.
 
+        Examples
+        --------
         Ordering by a single metadata key ("param"). The default ordering direction
         is ``ascending``:
 

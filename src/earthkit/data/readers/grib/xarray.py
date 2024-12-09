@@ -308,7 +308,8 @@ class XarrayMixIn:
         -------
         Xarray Dataset or list of Xarray Datasets
 
-
+        Notes
+        -----
         The default values of ``xarray_open_dataset_kwargs`` or ``**kwargs`` passed
         to :py:func:`xarray.open_dataset` are as follows:
 
