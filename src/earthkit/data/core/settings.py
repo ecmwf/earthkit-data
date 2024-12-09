@@ -574,7 +574,6 @@ try:
     # if s != settings:
     #     save = True
 
-    print("settings version", settings.get("version"), "current version", VERSION)
     if settings.get("version") < VERSION:
         save = True
 
