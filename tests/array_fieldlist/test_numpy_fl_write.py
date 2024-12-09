@@ -22,6 +22,7 @@ from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import check_array_type
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.testing import get_array_namespace
 
 here = os.path.dirname(__file__)
@@ -215,6 +216,63 @@ def test_array_fl_grib_write_generating_proc_id():
 )
 def test_array_fl_grib_write_bits_per_value(array_backend, _kwargs, expected_value):
     ds, _ = load_array_fl(1, array_backend)
+
+    if expected_value is None:
+        expected_value = ds[0].metadata("bitsPerValue")
+
+    with temp_file() as tmp:
+        ds.save(tmp, **_kwargs)
+        ds1 = from_source("file", tmp)
+        assert ds1.metadata("bitsPerValue") == [expected_value] * len(ds)
+
+
+@pytest.mark.parametrize(
+    "filename,shape",
+    [
+        (earthkit_examples_file("test.grib"), (11, 19)),
+        (earthkit_test_data_file("O32_global.grib1"), (5248,)),
+        (earthkit_test_data_file("O32_global.grib2"), (5248,)),
+    ],
+)
+def test_array_fl_grib_single_write_to_path(filename, shape):
+    ds = from_source("file", filename)
+
+    assert len(ds) >= 1
+    v1 = ds[0].values + 1
+
+    md = ds[0].metadata()
+    md1 = md.override(shortName="msl")
+    r = FieldList.from_array(v1, md1)
+    assert r[0].shape == shape
+
+    with temp_file() as tmp:
+        r.save(tmp)
+        assert os.path.exists(tmp)
+        r_tmp = from_source("file", tmp)
+        # r_tmp = r_tmp.to_fieldlist(array_backend=array_backend)
+        assert r_tmp[0].shape == shape
+        assert r_tmp[0].metadata("shortName") == "msl"
+        v_tmp = r_tmp[0].values
+        assert np.allclose(v1, v_tmp)
+
+
+@pytest.mark.parametrize(
+    "filename,shape",
+    [
+        (earthkit_examples_file("test.grib"), (11, 19)),
+        (earthkit_test_data_file("O32_global.grib1"), (5248,)),
+        (earthkit_test_data_file("O32_global.grib2"), (5248,)),
+    ],
+)
+@pytest.mark.parametrize(
+    "_kwargs,expected_value",
+    [({}, None), ({"bits_per_value": 8}, 8), ({"bits_per_value": None}, None)],
+)
+def test_array_fl_grib_single_write_bits_per_value(filename, shape, _kwargs, expected_value):
+    ds0 = from_source("file", filename)
+
+    ds = ds0.from_fields([ds0[0].copy()])
+    assert ds[0].shape == shape
 
     if expected_value is None:
         expected_value = ds[0].metadata("bitsPerValue")
