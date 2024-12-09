@@ -586,5 +586,4 @@ except Exception:
 
 SETTINGS = Settings(settings_yaml, settings)
 if save:
-    print("Saving settings")
     SETTINGS._save()
