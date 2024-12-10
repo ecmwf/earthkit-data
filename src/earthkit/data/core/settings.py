@@ -33,6 +33,8 @@ LOG = logging.getLogger(__name__)
 DOT_EARTHKIT_DATA = os.path.expanduser("~/.earthkit_data")
 EARTHKIT_SETTINGS_DIR = DOT_EARTHKIT_DATA
 
+ENV_PREFIX = "EARTHKIT-DATA-"
+
 
 class Validator(metaclass=ABCMeta):
     @abstractmethod
@@ -327,6 +329,10 @@ class Settings:
         if name not in SETTINGS_AND_HELP:
             raise KeyError("No setting name '%s'" % (name,))
 
+        st, value = self._env(name)
+        if st:
+            return value
+
         settings_item = SETTINGS_AND_HELP[name]
 
         getter, none_ok = (
@@ -545,6 +551,13 @@ class Settings:
     @auto_save_settings.setter
     def auto_save_settings(self, v):
         Settings._auto_save_settings = v
+
+    @staticmethod
+    def _env(name):
+        name = ENV_PREFIX + name.upper().replace("-", "_")
+        if name in os.environ:
+            return (True, os.environ.get(name))
+        return (False, None)
 
 
 save = False
