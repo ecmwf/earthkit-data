@@ -830,7 +830,8 @@ class Cache:
         size: int
             total number of bytes stored in the cache
 
-
+        Examples
+        --------
         >>> from earthkit.data import cache
         >>> cache.summary_dump_database()
         (40, 846785699)
@@ -965,6 +966,8 @@ def cache_file(
     path: str
         Full path to the cache file.
 
+    Notes
+    -----
     The behaviour depends on the cache policy:
 
     - If the cache-policy is ``user`` or ``temporary`` the file is created in the
