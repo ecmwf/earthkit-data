@@ -292,7 +292,8 @@ class Metadata(metaclass=ABCMeta):
         dict of datatime.datetime
             Dict with items "base_time" and "valid_time".
 
-
+        Examples
+        --------
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
         >>> ds[4].datetime()

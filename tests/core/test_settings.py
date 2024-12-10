@@ -175,25 +175,46 @@ def test_settings_temporary_nested():
 @pytest.mark.parametrize("autosave", [True, False])
 def test_settings_temporary_autosave(autosave):
     v_ori = settings.auto_save_settings
-    s = read_settings_yaml()
-    if s:
-        with settings.temporary():
-            settings.auto_save_settings = autosave
-            v = settings.get("number-of-download-threads")
-            settings.set("number-of-download-threads", v + 10)
+    with settings.temporary():
+        settings.auto_save_settings = autosave
+        v = settings.get("number-of-download-threads")
+        settings.set("number-of-download-threads", v + 10)
+        s = read_settings_yaml()
+        if s:
             assert s["number-of-download-threads"] == v
-        assert settings.auto_save_settings == autosave
+    assert settings.auto_save_settings == autosave
     settings.auto_save_settings = v_ori
 
 
-def test_settings_auto_save():
+def test_settings_auto_save_1():
     v_ori = settings.auto_save_settings
     settings.auto_save_settings = False
+    v = settings.get("number-of-download-threads")
+    settings.set("number-of-download-threads", v + 10)
+    assert settings.get("number-of-download-threads") == v + 10
     s = read_settings_yaml()
     if s:
-        v = settings.get("number-of-download-threads")
-        settings.set("number-of-download-threads", v + 10)
         assert s["number-of-download-threads"] == v
+    settings.auto_save_settings = v_ori
+
+
+def test_settings_auto_save_2():
+    v_ori = settings.auto_save_settings
+    settings.auto_save_settings = True
+
+    v = settings.get("number-of-download-threads")
+    settings.set("number-of-download-threads", v + 10)
+    assert settings.get("number-of-download-threads") == v + 10
+    s = read_settings_yaml()
+    if s:
+        assert s["number-of-download-threads"] == v + 10
+
+    settings.set("number-of-download-threads", v)
+    assert settings.get("number-of-download-threads") == v
+    s = read_settings_yaml()
+    if s:
+        assert s["number-of-download-threads"] == v + 10
+
     settings.auto_save_settings = v_ori
 
 
