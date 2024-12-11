@@ -25,8 +25,6 @@ def _no_log(msg):
 
 
 class StandaloneMarsClient:
-    COMMAND = os.environ.get("MARS_CLIENT_COMMAND", "/usr/local/bin/mars")
-
     def __init__(self, log="default"):
         self.log = log
 
@@ -54,16 +52,20 @@ class StandaloneMarsClient:
                 raise ValueError(f"Unsupported log type={type(self.log)}")
 
             subprocess.run(
-                [self.COMMAND, filename],
+                [self.command(), filename],
                 env=dict(os.environ, MARS_AUTO_SPLIT_BY_DATES="1"),
                 check=True,
                 **log,
             )
 
     @staticmethod
+    def command():
+        return os.environ.get("MARS_CLIENT_COMMAND", "/usr/local/bin/mars")
+
+    @staticmethod
     def enabled():
         return SETTINGS.get("use-standalone-mars-client-when-available") and os.path.exists(
-            StandaloneMarsClient.COMMAND
+            StandaloneMarsClient.command()
         )
 
 
