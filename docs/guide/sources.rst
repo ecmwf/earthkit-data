@@ -811,7 +811,9 @@ mars
 
   To figure out which data you need, or discover relevant data available in MARS, see the publicly accessible `MARS catalog`_ (or this `access restricted catalog <https://apps.ecmwf.int/mars-catalogue/>`_).
 
-  The MARS access is direct when the MARS client is installed (as at ECMWF) and the ``use-standalone-mars-client-when-available`` :ref:`settings <settings>` is True (this is the default), otherwise it will use the `web API`_. In order to use the `web API`_ you will need to register and retrieve an access token. For a more extensive documentation about MARS, please refer to the `MARS user documentation`_.
+  If the ``use-standalone-mars-client-when-available`` :ref:`settings <settings>` is True and the MARS client is installed (e.g. at ECMWF) the MARS access is direct. In this case the MARS client command can be specified via the ``MARS_CLIENT_EXECUTABLE`` environment variable. When it is not set the ``"/usr/local/bin/mars"`` path will be used.
+
+  If the standalone MARS client is not available or not enabled the `web API`_ will be used. In order to use the `web API`_ you will need to register and retrieve an access token. For a more extensive documentation about MARS, please refer to the `MARS user documentation`_.
 
   :param tuple *args: positional arguments specifying the request as a dict
   :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for `web API`_ and write them into the default RC file ``~/.ecmwfapirc``. The prompt only appears when:
