@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+
 import pytest
 
 from earthkit.data import settings
@@ -214,6 +215,26 @@ def test_settings_auto_save_2():
     s = read_settings_yaml()
     if s:
         assert s["number-of-download-threads"] == v + 10
+
+    settings.auto_save_settings = v_ori
+
+
+@pytest.mark.parametrize(
+    "value,error", [("10000", None), (10000, None), ("1b", ValueError), ("A", ValueError)]
+)
+def test_settings_env(monkeypatch, value, error):
+    env_key = "EARTHKIT_DATA_NUMBER_OF_DOWNLOAD_THREADS"
+    monkeypatch.setenv(env_key, value)
+
+    v_ori = settings.auto_save_settings
+    settings.auto_save_settings = True
+
+    if error is None:
+        v = settings.get("number-of-download-threads")
+        assert v == 10000
+    else:
+        with pytest.raises(error):
+            settings.get("number-of-download-threads")
 
     settings.auto_save_settings = v_ori
 
