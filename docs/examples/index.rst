@@ -172,6 +172,7 @@ Miscellaneous
     :glob:
 
     settings.ipynb
+    settings_env_vars.ipynb
     cache.ipynb
     projection.ipynb
     metadata.ipynb
