@@ -57,7 +57,8 @@ class StandaloneMarsClient:
 
     @staticmethod
     def enabled():
-        return StandaloneMarsClient.command(check=True) is not None
+        cmd = StandaloneMarsClient.command(check=True)
+        return cmd is not None and cmd != ""
 
     @staticmethod
     def command(check=True):
