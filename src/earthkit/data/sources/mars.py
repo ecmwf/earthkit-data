@@ -25,8 +25,6 @@ def _no_log(msg):
 
 
 class StandaloneMarsClient:
-    EXE = "/usr/local/bin/mars"
-
     def __init__(self, log="default"):
         self.log = log
 
@@ -59,16 +57,23 @@ class StandaloneMarsClient:
 
     @staticmethod
     def enabled():
-        if SETTINGS.get("use-standalone-mars-client-when-available"):
-            return os.path.exists(StandaloneMarsClient.EXE)
-        return False
+        return StandaloneMarsClient.command(check=True) is not None
+
+    @staticmethod
+    def command(check=True):
+        cmd = os.environ.get("MARS_CLIENT_COMMAND", "/usr/local/bin/mars")
+        if check:
+            if SETTINGS.get("use-standalone-mars-client-when-available"):
+                if os.path.exists(cmd):
+                    return cmd
+        else:
+            return cmd
 
 
 class MarsRetriever(ECMWFApi):
     def service(self):
-        if SETTINGS.get("use-standalone-mars-client-when-available"):
-            if os.path.exists(StandaloneMarsClient.EXE):
-                return StandaloneMarsClient(self.log)
+        if StandaloneMarsClient.enabled():
+            return StandaloneMarsClient(self.log)
 
         if self.prompt:
             prompt = MARSAPIKeyPrompt()
