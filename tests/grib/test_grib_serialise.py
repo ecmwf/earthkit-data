@@ -48,7 +48,6 @@ def test_grib_serialise_metadata(fl_type, representation):
     ds, _ = load_grib_data("test.grib", fl_type)
     md = ds[0].metadata().override()
 
-    print("type(md)", type(md))
     md2 = _pickle(md, representation)
 
     keys = ["param", "date", "time", "step", "level", "gridType", "type"]

@@ -76,7 +76,6 @@ def test_grib_metadata_override_headers_only_true_core():
     ref_size = ds[0].metadata("totalLength")
 
     md1 = ds[0].metadata().override(headers_only_clone=True)
-    print("type(md1)", type(md1))
     assert isinstance(md1, WrappedMetadata)
     assert md1._handle is not None
     assert md1._handle != ds[0]._handle
@@ -85,17 +84,11 @@ def test_grib_metadata_override_headers_only_true_core():
     assert md1["shortName"] == "2t"
     assert md1["typeOfLevel"] == "surface"
 
-    print("HIDE")
     md2 = md1._hide_internal_keys()
-    print("type(md2)", type(md2))
-    print("type(md2.metadata)", type(md2.metadata))
-    print("md2.hidden", md2.hidden)
-    print("md2.extra", md2.extra)
     assert isinstance(md2, RestrictedGribMetadata)
     assert md2._handle is not None
     assert md2._handle != ds[0]._handle
     assert md2._handle == md1._handle
-    print("extra", md2.extra)
     assert md2.extra == {"bitsPerValue": 16}
     assert md2["bitsPerValue"] == 16
     assert md2["shortName"] == "2t"
@@ -105,7 +98,6 @@ def test_grib_metadata_override_headers_only_true_core():
         md2["average"]
 
     md3 = md2.override(headers_only_clone=True, shortName="2d")
-    print("type(md3)", type(md3))
     assert isinstance(md3, RestrictedGribMetadata)
     assert md3._handle is not None
     assert md3._handle != ds[0]._handle
@@ -121,7 +113,6 @@ def test_grib_metadata_override_headers_only_true_core():
     assert md4 is md3
 
     md5 = md3.override(headers_only_clone=True, bitsPerValue=8)
-    print("type(md5)", type(md5))
     assert isinstance(md5, RestrictedGribMetadata)
     assert md5._handle is not None
     assert md5._handle != ds[0]._handle

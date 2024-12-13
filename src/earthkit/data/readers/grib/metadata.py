@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import logging
 import warnings
 from abc import abstractmethod
 from functools import cached_property
@@ -21,6 +22,8 @@ from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import to_timedelta
+
+LOG = logging.getLogger(__name__)
 
 
 def missing_is_none(x):
@@ -409,13 +412,26 @@ class GribMetadata(Metadata):
                 extra[k] = v
 
         if d:
-            handle.set_multiple(d)
+            single = {}
+            multiple = {}
+            for k, v in d.items():
+                if isinstance(v, (int, float, str, bool)):
+                    single[k] = v
+                else:
+                    multiple[k] = v
 
-        # if "bitsPerValue" not in d:
-        #     self._copy_key(handle, "bitsPerValue")
+            try:
+                # Try to set all metadata at once
+                # This is needed when we set multiple keys that are interdependent
+                handle.set_multiple(single)
+            except Exception as e:
+                LOG.error("Failed to set metadata at once: %s", e)
+                # Try again, but one by one
+                for k, v in single.items():
+                    handle.set(k, v)
 
-        # if d:
-        #     handle.set_multiple(d)
+            for k, v in multiple.items():
+                handle.set(k, v)
 
         # we need to set the values to the new size otherwise the clone generated
         # with headers_only=True will be inconsistent

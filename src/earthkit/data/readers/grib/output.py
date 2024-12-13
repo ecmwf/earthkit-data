@@ -44,7 +44,6 @@ class Combined:
 
 class GribCoder:
     def __init__(self, template=None, **kwargs):
-
         self.template = template
         self._bbox = {}
         self.kwargs = kwargs
@@ -80,10 +79,7 @@ class GribCoder:
             handle = self.handle_from_metadata(values, metadata, compulsory)
         else:
             handle = template.handle.clone()
-            template_md = self._template_metadata(template, handle)
-            for k, v in template_md.items():
-                if k not in metadata:
-                    metadata[k] = v
+            self.update_metadata_from_template(metadata, template, handle)
 
         self.update_metadata(handle, metadata, compulsory)
 
@@ -335,21 +331,28 @@ class GribCoder:
         else:
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
 
-    def _template_metadata(self, template, handle):
-        assert template is not None
-        from earthkit.data.core.metadata import Metadata
+    def update_metadata_from_template(self, metadata, template, handle):
+        # the template can contain extra metadata that is not encoded in the handle.
+        # We need to make sure that this metadata is not lost.
+        if "bitsPerValue" not in metadata:
+            assert template is not None
+            from earthkit.data.core.metadata import Metadata
 
-        if isinstance(template, Metadata):
-            bpv = template.get("bitsPerValue", None)
-        elif hasattr(template, "metadata"):
-            bpv = template.metadata("bitsPerValue", default=None)
-        else:
             bpv = None
+            if isinstance(template, Metadata):
+                bpv = template.get("bitsPerValue", None)
+            elif hasattr(template, "metadata"):
+                bpv = template.metadata("bitsPerValue", default=None)
+            else:
+                try:
+                    bpv = template.handle.get("bitsPerValue", None)
+                except Exception:
+                    bpv = None
 
-        bpv_h = handle.get("bitsPerValue", None)
-        if bpv is not None and bpv != 0 and bpv != bpv_h:
-            return {"bitsPerValue": bpv}
-        return {}
+            if bpv is not None and bpv != 0:
+                bpv_h = handle.get("bitsPerValue", None)
+                if bpv != bpv_h:
+                    metadata["bitsPerValue"] = bpv
 
 
 @lru_cache(maxsize=None)

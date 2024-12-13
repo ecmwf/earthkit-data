@@ -360,6 +360,39 @@ class Metadata(metaclass=ABCMeta):
 
 
 class WrappedMetadata:
+    r"""Wrapper around metadata.
+
+    Metadata is a dict-like immutable object. Modification is possible
+    with :obj:`override`, which always creates a new object.
+
+    Implemented in subclasses: :obj:`RawMetadata`, :obj:`GribMetadata`.
+
+    Parameters
+    ----------
+    metadata: Metadata
+        The metadata object to wrap.
+    extra: dict-like, optional
+        Additional metadata entries, which are not part of the original metadata. Takes precedence over the entries in ``metadata``.
+    hidden: list of str, None, optional
+        Metadata keys to hide from ``metadata``.
+    hidden_namespaces: list of str, None, optional
+        Namespaces to hide from ``metadata``.
+    enforced_namespaces: list of str, None, optional
+        Keys in these namespaces are cannot be hidden.
+    owner: object, optional
+        The owner of the metadata.
+    merge: bool, optional
+        If True and ``metadata`` is a :class:`WrappedMetadata`, merge ``extra``,
+        ``hidden``, ``hidden_namespaces``, and ``enforced_namespaces`` from
+        ``metatadata`` and also replaces ``metadata`` with the Metadata object
+        stored in it.
+
+    Examples
+    --------
+    - :ref:`/examples/metadata.ipynb`
+
+    """
+
     def __init__(
         self,
         metadata,
