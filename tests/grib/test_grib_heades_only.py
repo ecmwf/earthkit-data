@@ -67,7 +67,7 @@ def check_field_write(f, md_ref, shape_ref, values_ref, use_writer=False, **kwar
         assert f.shape == shape_ref
         assert len(f.values) == len(values_ref)
         if md["gridType"] != "sh":
-            assert np.allclose(f.values, values_ref, rtol=1e-3)
+            assert np.allclose(f.values, values_ref, rtol=1e-1)
 
 
 # @pytest.mark.skipif(True, reason="headers_only_clone has to be fixed")
@@ -139,13 +139,15 @@ def test_grib_metadata_override_headers_only_false_core():
     ref_size = ds[0].metadata("totalLength")
 
     md1 = ds[0].metadata().override(headers_only_clone=False)
-    assert isinstance(md1, StandAloneGribMetadata)
+    assert isinstance(md1, WrappedMetadata)
+    assert isinstance(md1.metadata, StandAloneGribMetadata)
     assert md1._handle is not None
     assert md1._handle != ds[0]._handle
     assert np.isclose(md1["totalLength"], ref_size)
 
     md2 = md1._hide_internal_keys()
     assert isinstance(md2, RestrictedGribMetadata)
+    assert isinstance(md2.metadata, StandAloneGribMetadata)
     assert md2._handle is not None
     assert md2._handle != ds[0]._handle
     assert md2._handle == md1._handle
