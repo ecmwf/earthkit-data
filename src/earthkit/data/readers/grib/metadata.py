@@ -361,6 +361,10 @@ class GribMetadata(Metadata):
         if not raise_on_missing:
             _kwargs["default"] = default
 
+        # allow using "grib." prefix.
+        if key.startswith("grib."):
+            key = key[5:]
+
         key = _key_name(key)
 
         v = self._handle.get(key, ktype=astype, **_kwargs)
@@ -379,12 +383,7 @@ class GribMetadata(Metadata):
     def override(self, *args, headers_only_clone=True, **kwargs):
         d = dict(*args, **kwargs)
 
-        # using headers_only_clone=True can cause problems when we want to write GRIB
-        # to disk or modify the generated handle. Until it is fixed, we use headers_only_clone=False.
-        headers_only_clone = False
-
         new_value_size = None
-        # extra = None
         gridspec = d.pop("gridspec", None)
         if gridspec is not None:
             from earthkit.data.readers.grib.gridspec import GridSpecConverter
@@ -395,13 +394,28 @@ class GribMetadata(Metadata):
 
         handle = self._handle.clone(headers_only=headers_only_clone)
 
+        extra = {}
+
         # some keys, needed later, are not copied into the clone when
-        # headers_only=True. We store them as extra keys.
-        if "bitsPerValue" not in d:
-            self._copy_key(handle, "bitsPerValue")
+        # headers_only=True. We cannot even set them in the cloned handle because
+        # it would lead to inconsistencies. We will store them as extra keys.
+        # if headers_only_clone:
+        k = "bitsPerValue"
+        if k in d:
+            extra[k] = d.pop(k)
+        else:
+            v = self.get(k, default=None)
+            if v is not None and v > 0:
+                extra[k] = v
 
         if d:
             handle.set_multiple(d)
+
+        # if "bitsPerValue" not in d:
+        #     self._copy_key(handle, "bitsPerValue")
+
+        # if d:
+        #     handle.set_multiple(d)
 
         # we need to set the values to the new size otherwise the clone generated
         # with headers_only=True will be inconsistent
@@ -412,7 +426,12 @@ class GribMetadata(Metadata):
             handle.set_values(vals)
 
         # ensure that the cache settings are the same
-        return StandAloneGribMetadata(handle, cache=MetadataCacheHandler.clone_empty(self._cache))
+        r = StandAloneGribMetadata(handle, cache=MetadataCacheHandler.clone_empty(self._cache))
+
+        if extra:
+            r = WrappedMetadata(r, extra=extra)
+
+        return r
 
     def namespaces(self):
         return self.NAMESPACES
@@ -552,6 +571,9 @@ class GribMetadata(Metadata):
     def gridspec(self):
         return self.geography.gridspec()
 
+    def _make_restricted(self, r):
+        return RestrictedGribMetadata(self)
+
 
 class GribFieldMetadata(GribMetadata):
     """Represent the metadata of a GRIB field.
@@ -633,7 +655,7 @@ class RestrictedGribMetadata(WrappedMetadata):
     :ref:`/examples/grib_metadata_object.ipynb`
     """
 
-    EKD_NAMESPACE = "grib"
+    EKD_NAMESPACE = ["grib"]
 
     # ideally bitsPerValue should be here. However, it is treated as an
     # extra key and cannot be an internal key.
@@ -667,65 +689,20 @@ class RestrictedGribMetadata(WrappedMetadata):
     ]
     INTERNAL_NAMESPACES = ["statistics"]
 
-    def __init__(self, md):
-        assert isinstance(md, StandAloneGribMetadata)
-        super().__init__(md, hidden=self.INTERNAL_KEYS)
-
-    def _is_hidden(self, key):
-        ns, _, name = key.partition(".")
-        if name == "":
-            name = key
-            ns = ""
-
-        if ns == self.EKD_NAMESPACE:
-            return False
-        else:
-            return name in self.hidden
-
-    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
-        ns, _, name = key.partition(".")
-        if name == "":
-            name = key
-            ns = ""
-
-        if ns == self.EKD_NAMESPACE:
-            key = name
-
-        return super().get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-
-    def namespaces(self):
-        if self.INTERNAL_NAMESPACES:
-            return [x for x in self.metadata.namespaces() if x not in self.INTERNAL_NAMESPACES]
-        else:
-            return self.metadata.namespaces()
-
-    def as_namespace(self, namespace):
-        if namespace in self.INTERNAL_NAMESPACES:
-            return {}
-
-        r = self.metadata.as_namespace(namespace)
-        for k in list(r.keys()):
-            if k in self.INTERNAL_KEYS:
-                del r[k]
-        return r
-
-    def dump(self, namespace=all, **kwargs):
-        if namespace is all:
-            namespace = self.namespaces()
-        return self.metadata.dump(namespace=namespace, **kwargs)
-
-    def override(self, *args, **kwargs):
-        r = self.metadata.override(*args, **kwargs)
-        return RestrictedGribMetadata(r)
+    def __init__(self, metadata):
+        super().__init__(
+            metadata,
+            hidden=self.INTERNAL_KEYS,
+            hidden_namespaces=self.INTERNAL_NAMESPACES,
+            enforced_namespaces=self.EKD_NAMESPACE,
+        )
 
     def _hide_internal_keys(self):
         return self
 
     def __getstate__(self) -> dict:
-        ret = {}
-        ret["metadata"] = self.metadata
-        return ret
+        state = super().__getstate__()
+        return state
 
     def __setstate__(self, state: dict):
-        md = state.pop("metadata")
-        super().__init__(md, hidden=self.INTERNAL_KEYS)
+        super().__setstate__(state)

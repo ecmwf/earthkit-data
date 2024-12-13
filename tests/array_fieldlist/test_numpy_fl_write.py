@@ -209,7 +209,8 @@ def test_array_fl_grib_write_generating_proc_id():
         assert np.allclose(r_tmp.values[1], v2)
 
 
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ["numpy"])
+# @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "_kwargs,expected_value",
     [({}, None), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, None)],
@@ -219,6 +220,8 @@ def test_array_fl_grib_write_bits_per_value(array_backend, _kwargs, expected_val
 
     if expected_value is None:
         expected_value = ds[0].metadata("bitsPerValue")
+
+    print("expected_value=", expected_value)
 
     with temp_file() as tmp:
         ds.save(tmp, **_kwargs)

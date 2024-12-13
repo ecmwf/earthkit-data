@@ -80,6 +80,10 @@ class GribCoder:
             handle = self.handle_from_metadata(values, metadata, compulsory)
         else:
             handle = template.handle.clone()
+            template_md = self._template_metadata(template, handle)
+            for k, v in template_md.items():
+                if k not in metadata:
+                    metadata[k] = v
 
         self.update_metadata(handle, metadata, compulsory)
 
@@ -330,6 +334,22 @@ class GribCoder:
             return f"reduced_gg_{levtype}_grib{edition}"
         else:
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
+
+    def _template_metadata(self, template, handle):
+        assert template is not None
+        from earthkit.data.core.metadata import Metadata
+
+        if isinstance(template, Metadata):
+            bpv = template.get("bitsPerValue", None)
+        elif hasattr(template, "metadata"):
+            bpv = template.metadata("bitsPerValue", default=None)
+        else:
+            bpv = None
+
+        bpv_h = handle.get("bitsPerValue", None)
+        if bpv is not None and bpv != 0 and bpv != bpv_h:
+            return {"bitsPerValue": bpv}
+        return {}
 
 
 @lru_cache(maxsize=None)

@@ -360,10 +360,21 @@ class Metadata(metaclass=ABCMeta):
 
 
 class WrappedMetadata:
-    def __init__(self, metadata, extra=None, hidden=None, owner=None, merge=True):
+    def __init__(
+        self,
+        metadata,
+        extra=None,
+        hidden=None,
+        hidden_namespaces=None,
+        enforced_namespaces=None,
+        owner=None,
+        merge=True,
+    ):
         self.metadata = metadata
         self.extra = extra if extra is not None else dict()
         self.hidden = hidden if hidden is not None else []
+        self.hidden_namespaces = hidden_namespaces
+        self.enforced_namespaces = enforced_namespaces
         self.owner = owner
 
         for k in self.hidden:
@@ -375,9 +386,9 @@ class WrappedMetadata:
             v = dict(**metadata.extra)
             v.update(self.extra)
             self.extra = v
-            for x in metadata.hidden:
-                if x not in self.hidden:
-                    self.hidden.append(x)
+            self.merge_list(metadata.hidden, self.hidden)
+            self.merge_list(metadata.hidden_namespaces, self.hidden_namespaces)
+            self.merge_list(metadata.enforced_namespaces, self.enforced_namespaces)
 
     def __len__(self):
         r"""Return the number of metadata entries."""
@@ -397,7 +408,16 @@ class WrappedMetadata:
         return key in self.metadata
 
     def _is_hidden(self, key):
-        return key in self.hidden
+        name = key
+        if "." in key:
+            ns, _, name = key.partition(".")
+            if name == "":
+                name = key
+                ns = ""
+            if ns and self.enforced_namespaces and ns in self.enforced_namespaces:
+                return False
+
+        return name in self.hidden
 
     def keys(self):
         r"""Return the metadata keys.
@@ -455,28 +475,104 @@ class WrappedMetadata:
             v = v(self.owner, key, self.metadata)
         return v
 
+    def namespaces(self):
+        if self.hidden_namespaces:
+            return [x for x in self.metadata.namespaces() if x not in self.hidden_namespaces]
+        else:
+            return self.metadata.namespaces()
+
     def as_namespace(self, namespace):
+        print("as_namespace namespace=", namespace)
+        if self.hidden_namespaces and namespace in self.hidden_namespaces:
+            return {}
+
         r = dict()
         if namespace is None:
             r = dict(self.items())
-            for k, v in self.extra.items():
+            for k, _ in self.extra.items():
                 if k in r:
                     r[k] = self._extra_value(k)
         else:
             r = self.metadata.as_namespace(namespace)
+            for k in list(r.keys()):
+                if k in self.hidden:
+                    del r[k]
             # TODO: add filtering based on extra
 
         return r
 
+    def dump(self, namespace=all, **kwargs):
+        if namespace is all:
+            namespace = self.namespaces()
+        return self.metadata.dump(namespace=namespace, **kwargs)
+
     def override(self, *args, **kwargs):
         md = self.metadata.override(*args, **kwargs)
-        return self.__class__(md, self.extra, hidden=self.hidden, merge=True)
+        if self.metadata is md:
+            return self
+        return self._clone(md)
+
+    def _hide_internal_keys(self):
+        if self.hidden:
+            return self
+
+        md = self.metadata._hide_internal_keys()
+        if self.metadata is md:
+            return self
+        elif isinstance(md, WrappedMetadata) and md.metadata is self.metadata:
+            md._update(self)
+            return md
+        else:
+            return self._clone(md)
+
+    @staticmethod
+    def merge_list(v1, v2):
+        if v1 and v2:
+            if v2 is None:
+                v2 = list(v1)
+                return v2
+            r = [x for x in v1 if x not in v2]
+            if r:
+                v2 = list(v2)
+                v2.extend(r)
+
+    def _update(self, other):
+        assert isinstance(other, WrappedMetadata)
+        v = dict(**other.extra)
+        # self.extra.update(other.extra)
+        v.update(self.extra)
+        self.extra = v
+        self.merge_list(other.hidden, self.hidden)
+        self.merge_list(other.hidden_namespaces, self.hidden_namespaces)
+        self.merge_list(other.enforced_namespaces, self.enforced_namespaces)
+
+    def _clone(self, metadata):
+        r = self.__class__(metadata)
+        r._update(self)
+        return r
 
     def __getitem__(self, key):
         return self.get(key, raise_on_missing=True)
 
     def __getattr__(self, name):
         return getattr(self.metadata, name)
+
+    def __getstate__(self) -> dict:
+        ret = {}
+        ret["extra"] = self.extra
+        ret["hidden"] = self.hidden
+        ret["hidden_namespaces"] = self.hidden_namespaces
+        ret["enforced_namespaces"] = self.enforced_namespaces
+        ret["metadata"] = self.metadata
+        return ret
+
+    def __setstate__(self, state: dict):
+        md = state.pop("metadata")
+        self.metadata = md
+        self.extra = state.pop("extra")
+        self.hidden = state.pop("hidden")
+        self.hidden_namespaces = state.pop("hidden_namespaces")
+        self.enforced_namespaces = state.pop("enforced_namespaces")
 
 
 class RawMetadata(Metadata):
