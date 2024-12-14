@@ -364,7 +364,7 @@ class GribMetadata(Metadata):
         if not raise_on_missing:
             _kwargs["default"] = default
 
-        # allow using "grib." prefix.
+        # allow using the "grib." prefix.
         if key.startswith("grib."):
             key = key[5:]
 
@@ -384,6 +384,34 @@ class GribMetadata(Metadata):
             target_handle.set_long(key, v_ori)
 
     def override(self, *args, headers_only_clone=True, **kwargs):
+        r"""Create a new metadata object by cloning a new GRIB handle and setting the keys in it.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments. When present must be a dict with the GRIB keys to set in
+            the new GRIB handle.
+        headers_only_clone: bool, optional
+            If True, the new GRIB handle will be created with headers_only=True to reduce the
+            data section. With this the GRIB handle size will be significantly smaller, but the
+            data section becomes unusable. Default is True.
+        **kwargs: dict, optional
+            Other keyword arguments specifying the GRIB keys to set.
+
+        Returns
+        -------
+        :class:`WrappedMetadata`
+            The new metadata object. There is always a :class:`StandAloneGribMetadata` object
+            created containing the new GRIB handle updated with the specified keys.
+            It is then wrapped in a :class:`WrappedMetadata` object storing ``"bitsPerValue"``
+            as an extra key.
+
+
+        Notes
+        -----
+        - When ``"bitsPerValue"`` is a key to set it is not written to the new handle. Instead, it
+          is stored as an extra key in the resulting :class:`WrappedMetadata` object.
+        """
         d = dict(*args, **kwargs)
 
         new_value_size = None
@@ -399,17 +427,34 @@ class GribMetadata(Metadata):
 
         extra = {}
 
-        # some keys, needed later, are not copied into the clone when
-        # headers_only=True. We cannot even set them in the cloned handle because
-        # it would lead to inconsistencies. We will store them as extra keys.
-        # if headers_only_clone:
-        k = "bitsPerValue"
-        if k in d:
-            extra[k] = d.pop(k)
+        # For the steps below consider the followings:
+        # - we cannot reliably determine whether the original handle is reduced or not
+        # - "bitsPerValue" needs a special treatment, because it cannot be set without
+        #   repacking the data.
+        # - we want to carry "bitsPerValue" over to the clone if possible
+
+        # When headers_only=True, "bitsPerValue" in the clone is unreliable. Since we need to
+        # carry "bitsPerValue" over ideally we should copy it into the clone but we
+        # cannot do it since we just trimmed down the data section, so a proper repacking
+        # is not possible. As a solution, we will generate a WrappedMetadata object and
+        # store the original "bitsPerValue" in the extra dict.
+        # When headers_only=False, we do not know whether the original handle was trimmed down
+        # or not. Therefore, instead of applying complicated logic we follow the same
+        # approach as for headers_only=True.
+        key = "bitsPerValue"
+        if key in d:
+            extra[key] = d.pop(key)
         else:
-            v = self.get(k, default=None)
+            # we get the value form the original metadata object and not from the handle since
+            # the handle can already be trimmed down
+            v = self.get(key, default=None)
             if v is not None and v > 0:
-                extra[k] = v
+                extra[key] = v
+            # as a fallback we try to get the value from the clone
+            else:
+                v_clone = handle.get(key, None)
+                if v_clone is not None and v_clone > 0:
+                    extra[key] = v_clone
 
         if d:
             single = {}
@@ -442,7 +487,10 @@ class GribMetadata(Metadata):
             handle.set_values(vals)
 
         # ensure that the cache settings are the same
-        r = StandAloneGribMetadata(handle, cache=MetadataCacheHandler.clone_empty(self._cache))
+        r = StandAloneGribMetadata(
+            handle,
+            cache=MetadataCacheHandler.clone_empty(self._cache),
+        )
 
         if extra:
             r = WrappedMetadata(r, extra=extra)

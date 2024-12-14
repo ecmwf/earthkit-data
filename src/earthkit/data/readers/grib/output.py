@@ -332,24 +332,30 @@ class GribCoder:
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
 
     def update_metadata_from_template(self, metadata, template, handle):
-        # the template can contain extra metadata that is not encoded in the handle.
-        # We need to make sure that this metadata is not lost.
-        if "bitsPerValue" not in metadata:
-            assert template is not None
-            from earthkit.data.core.metadata import Metadata
+        # the template can contain extra metadata that is not encoded in the handle
+        bpv = None
+        if hasattr(template, "metadata"):
+            template_md = template.metadata()
+            from earthkit.data.core.metadata import WrappedMetadata
 
-            bpv = None
-            if isinstance(template, Metadata):
-                bpv = template.get("bitsPerValue", None)
-            elif hasattr(template, "metadata"):
+            if isinstance(template_md, WrappedMetadata):
+                for k in template_md.extra.keys():
+                    if k != "bitsPerValue" and k not in metadata:
+                        metadata[k] = template_md.get(k)
+
+            if "bitsPerValue" not in metadata:
                 bpv = template.metadata("bitsPerValue", default=None)
-            else:
+
+        # Either the handle has valid bitsPerValue or has to be extracted
+        # from the template and added to the metadata to be encoded
+        if "bitsPerValue" not in metadata:
+            if bpv is None:
                 try:
                     bpv = template.handle.get("bitsPerValue", None)
                 except Exception:
                     bpv = None
 
-            if bpv is not None and bpv != 0:
+            if bpv is not None and bpv > 0:
                 bpv_h = handle.get("bitsPerValue", None)
                 if bpv != bpv_h:
                     metadata["bitsPerValue"] = bpv

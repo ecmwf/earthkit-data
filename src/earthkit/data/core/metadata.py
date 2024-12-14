@@ -360,19 +360,18 @@ class Metadata(metaclass=ABCMeta):
 
 
 class WrappedMetadata:
-    r"""Wrapper around metadata.
-
-    Metadata is a dict-like immutable object. Modification is possible
-    with :obj:`override`, which always creates a new object.
-
-    Implemented in subclasses: :obj:`RawMetadata`, :obj:`GribMetadata`.
+    r"""Wrapper around a Metadata object to add extra metadata entries and hide some keys.
 
     Parameters
     ----------
     metadata: Metadata
         The metadata object to wrap.
     extra: dict-like, optional
-        Additional metadata entries, which are not part of the original metadata. Takes precedence over the entries in ``metadata``.
+        Additional metadata entries, which are not part of ``metadata``.
+        Methods like `:obj:get` first search for entries in `extra` before
+        querying ``metadata``. The ``extra`` entries can be callables that
+        take the following arguments: owner, key, metadata (where metadata
+        is the wrapped metadata object).
     hidden: list of str, None, optional
         Metadata keys to hide from ``metadata``.
     hidden_namespaces: list of str, None, optional
@@ -380,17 +379,16 @@ class WrappedMetadata:
     enforced_namespaces: list of str, None, optional
         Keys in these namespaces are cannot be hidden.
     owner: object, optional
-        The owner of the metadata.
+        The owner.
     merge: bool, optional
-        If True and ``metadata`` is a :class:`WrappedMetadata`, merge ``extra``,
-        ``hidden``, ``hidden_namespaces``, and ``enforced_namespaces`` from
-        ``metatadata`` and also replaces ``metadata`` with the Metadata object
-        stored in it.
+        Used when True and ``metadata`` is a :class:`WrappedMetadata`. In this case
+        merge ``extra``, ``hidden``, ``hidden_namespaces``, and ``enforced_namespaces``
+        from the original metadata and also replaces it with the object the original
+        metadata wrapped.
 
-    Examples
-    --------
-    - :ref:`/examples/metadata.ipynb`
-
+    Raises
+    ------
+    ValueError: If a key in ``hidden`` is also in ``extra``.
     """
 
     def __init__(
@@ -416,12 +414,7 @@ class WrappedMetadata:
 
         if merge and isinstance(metadata, WrappedMetadata):
             self.metadata = metadata.metadata
-            v = dict(**metadata.extra)
-            v.update(self.extra)
-            self.extra = v
-            self.merge_list(metadata.hidden, self.hidden)
-            self.merge_list(metadata.hidden_namespaces, self.hidden_namespaces)
-            self.merge_list(metadata.enforced_namespaces, self.enforced_namespaces)
+            self._update(metadata)
 
     def __len__(self):
         r"""Return the number of metadata entries."""
@@ -592,16 +585,15 @@ class WrappedMetadata:
 
     def __getstate__(self) -> dict:
         ret = {}
+        ret["metadata"] = self.metadata
         ret["extra"] = self.extra
         ret["hidden"] = self.hidden
         ret["hidden_namespaces"] = self.hidden_namespaces
         ret["enforced_namespaces"] = self.enforced_namespaces
-        ret["metadata"] = self.metadata
         return ret
 
     def __setstate__(self, state: dict):
-        md = state.pop("metadata")
-        self.metadata = md
+        self.metadata = state.pop("metadata")
         self.extra = state.pop("extra")
         self.hidden = state.pop("hidden")
         self.hidden_namespaces = state.pop("hidden_namespaces")
