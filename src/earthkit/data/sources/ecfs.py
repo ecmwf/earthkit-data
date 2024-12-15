@@ -8,11 +8,7 @@
 #
 
 import logging
-import os
 import subprocess
-
-from earthkit.data.core.settings import SETTINGS
-from earthkit.data.core.temporary import temp_file
 
 from .file import FileSource
 

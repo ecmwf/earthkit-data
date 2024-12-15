@@ -27,7 +27,7 @@ def _ignore(*args, **kwargs):
     pass
 
 
-SCHEME_TO_SOURCE = {"ec:": "ecfs"}
+SCHEME_TO_SOURCE = {"ec:": "ecfs", "ecfs:": "ecfs"}
 
 
 def download_and_cache(
