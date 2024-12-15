@@ -19,51 +19,6 @@ from .file import FileSource
 LOG = logging.getLogger(__name__)
 
 
-class StandaloneMarsClient:
-    def __init__(self, log="default"):
-        self.log = log
-
-    def execute(self, request, target, log=None):
-        req = ["retrieve,"]
-
-        for k, v in request.items():
-            if isinstance(v, (list, tuple)):
-                v = "/".join([str(x) for x in v])
-            req += [f"{k}={v},"]
-
-        req += [f'target="{target}"']
-        req_str = "\n".join(req)
-        with temp_file() as filename:
-            with open(filename, "w") as f:
-                f.write(req_str + "\n")
-            LOG.debug(f"Sending Mars request: '{req_str}'")
-
-            log = {}
-            if self.log is None:
-                log = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
-            elif self.log and isinstance(self.log, dict):
-                log = self.log
-            elif self.log != "default":
-                raise ValueError(f"Unsupported log type={type(self.log)}")
-
-            subprocess.run(
-                [self.command(), filename],
-                env=dict(os.environ, MARS_AUTO_SPLIT_BY_DATES="1"),
-                check=True,
-                **log,
-            )
-
-    @staticmethod
-    def command():
-        return os.environ.get("MARS_CLIENT_COMMAND", "/usr/local/bin/mars")
-
-    @staticmethod
-    def enabled():
-        return SETTINGS.get("use-standalone-mars-client-when-available") and os.path.exists(
-            StandaloneMarsClient.command()
-        )
-
-
 class ECFSRetriever(FileSource):
     def __init__(
         self,
