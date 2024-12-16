@@ -253,3 +253,33 @@ def test_grib_metadata_headers_only_clone_false_grids(file):
 
     # save to disk, with the given bitsPerValue
     check_field_write(f, md_ref_1, shape_ref, vals_ref, use_writer=True)
+
+
+def test_grib_headers_only_clone_standalone_metadata():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    md_ref = {
+        "param": "2t",
+        "date": 20200513,
+        "time": 1200,
+        "step": 0,
+        "level": 0,
+        "gridType": "regular_ll",
+        "type": "an",
+    }
+
+    md0 = ds[0].metadata().override()
+    md1 = StandAloneGribMetadata(md0._handle)
+    for k, v in md_ref.items():
+        assert md1[k] == v
+
+    # the handle does not contain bitsPerValue
+    assert md1["bitsPerValue"] == 0
+
+    md0 = ds[0].metadata().override(bitsPerValue=8)
+    md1 = StandAloneGribMetadata(md0._handle)
+    for k, v in md_ref.items():
+        assert md1[k] == v
+
+    # the handle does not contain bitsPerValue
+    assert md1["bitsPerValue"] == 0
