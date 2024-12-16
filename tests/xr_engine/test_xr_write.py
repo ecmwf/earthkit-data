@@ -225,3 +225,29 @@ def test_xr_write_seasonal():
     assert sorted(r.metadata(["indexingDate", "indexingTime", "forecastMonth"])) == sorted(
         ds_ek.metadata(["indexingDate", "indexingTime", "forecastMonth"])
     )
+
+
+def test_xr_write_bits_per_value():
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
+
+    ref_bpm = ds_ek[0].metadata("bitsPerValue")
+    assert ref_bpm == 16
+
+    ds_ek = ds_ek.to_fieldlist()
+    ds_ek = ds_ek.from_fields([f.clone(bitsPerValue=8) for f in ds_ek])
+    assert ds_ek[0].metadata("bitsPerValue") == 8
+    assert ds_ek[0].handle.get("bitsPerValue") == 0
+
+    import xarray as xr
+
+    xr.set_options(keep_attrs=True)
+
+    ds = ds_ek.to_xarray(**{"profile": "mars", "time_dim_mode": "raw"})
+    ds += 1
+
+    # data-array
+    r = ds["t"].earthkit.to_fieldlist()
+    assert len(r) == 16
+    assert r.index("shortName") == ["t"]
+    assert r[0].metadata("bitsPerValue") == 8
