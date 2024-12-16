@@ -48,6 +48,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from the `Copernicus Atmosphere Data Store <https://ads.atmosphere.copernicus.eu/>`_ (ADS)
     * - :ref:`data-sources-cds`
       - retrieve data from the `Copernicus Climate Data Store <https://cds.climate.copernicus.eu/>`_ (CDS)
+    * - :ref:`data-sources-ecfs`
+      - retrieve data from the ECMWF `ECFS File Storage system <https://confluence.ecmwf.int/display/UDOC/ECFS+user+documentation>`_
     * - :ref:`data-sources-eod`
       - retrieve `ECMWF open data <https://www.ecmwf.int/en/forecasts/datasets/open-data>`_
     * - :ref:`data-sources-fdb`
@@ -668,6 +670,19 @@ cds
   Further examples:
 
       - :ref:`/examples/cds.ipynb`
+
+
+.. _data-sources-ecfs:
+
+ecfs
+-------------------
+
+.. py:function:: from_source("ecfs", path)
+  :noindex:
+
+  The ``ecfs`` source provides access to `ECMWF's File Storage system <https://confluence.ecmwf.int/display/UDOC/ECFS+user+documentation>`_. This service is only available at ECMWF.
+
+  The ``path`` has to start with ``ec:`` followed by the path to the file to retrieve.
 
 
 .. _data-sources-eod:
