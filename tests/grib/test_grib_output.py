@@ -306,6 +306,8 @@ def test_grib_output_field_template(array):
         if array:
             ds = ds.to_fieldlist()
 
+        assert ds[0].metadata("bitsPerValue") == 4
+
         path = os.path.join(tmp, "a.grib")
         f = earthkit.data.new_grib_output(path, template=ds[0], date=20010101)
         f.write(data, param="pt", bitsPerValue=16)
@@ -318,6 +320,7 @@ def test_grib_output_field_template(array):
         assert ds[0].metadata("levtype") == "pl"
         assert ds[0].metadata("edition") == 1
         assert ds[0].metadata("generatingProcessIdentifier") == 255
+        assert ds[0].metadata("bitsPerValue") == 16
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=1e-2, atol=1e-2)
 

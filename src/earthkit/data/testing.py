@@ -10,6 +10,7 @@
 import logging
 import os
 import pathlib
+import shutil
 from contextlib import contextmanager
 from importlib import import_module
 from unittest.mock import patch
@@ -123,6 +124,7 @@ NO_COVJSONKIT = not modules_installed("covjsonkit")
 NO_PYTORCH = not modules_installed("torch")
 NO_RIOXARRAY = not modules_installed("rioxarray")
 NO_CUPY = not modules_installed("cupy")
+NO_JAX = not modules_installed("jax")
 if not NO_CUPY:
     try:
         import cupy as cp
@@ -132,6 +134,11 @@ if not NO_CUPY:
         NO_CUPY = True
 
 NO_S3_AUTH = not modules_installed("aws_requests_auth")
+NO_GEO = not modules_installed("earthkit-data")
+try:
+    NO_ECFS = not os.path.exists(shutil.which("ecp"))
+except Exception:
+    NO_ECFS = True
 
 
 def MISSING(*modules):

@@ -12,8 +12,10 @@
 import pytest
 
 from earthkit.data.testing import NO_CUPY
+from earthkit.data.testing import NO_JAX
 from earthkit.data.testing import NO_PYTORCH
 from earthkit.data.utils.array import _CUPY
+from earthkit.data.utils.array import _JAX
 from earthkit.data.utils.array import _NUMPY
 from earthkit.data.utils.array import _PYTORCH
 from earthkit.data.utils.array import get_backend
@@ -75,7 +77,7 @@ def test_utils_array_backend_pytorch():
     assert np.isclose(b.namespace.mean(v), 1.0)
 
 
-@pytest.mark.skipif(NO_CUPY, reason="No pytorch installed")
+@pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
 def test_utils_array_backend_cupy():
     b = get_backend("cupy")
     assert b.name == "cupy"
@@ -93,6 +95,33 @@ def test_utils_array_backend_cupy():
     # assert id(b.from_backend(v, None)) == id(v)
     assert cp.allclose(b.from_numpy(v_np, None), v)
     assert cp.allclose(b.from_other(v_lst, dtype=cp.float64), v)
+    assert get_backend(v) is b
+
+    r = b.to_numpy(v)
+    assert isinstance(r, np.ndarray)
+    assert np.allclose(r, v_np)
+
+    assert np.isclose(b.namespace.mean(v), 1.0)
+
+
+@pytest.mark.skipif(NO_JAX, reason="No jax installed")
+def test_utils_array_backend_jax():
+    b = get_backend("jax")
+    assert b.name == "jax"
+    assert b is _JAX
+
+    import jax.numpy as ja
+    import numpy as np
+
+    v = ja.ones(10, dtype=ja.float64)
+    v_np = np.ones(10, dtype=np.float64)
+    v_lst = [1.0] * 10
+
+    # assert b.is_native_array(v)
+    # assert id(b.from_backend(v, b)) == id(v)
+    # assert id(b.from_backend(v, None)) == id(v)
+    assert ja.allclose(b.from_numpy(v_np, None), v)
+    assert ja.allclose(b.from_other(v_lst, dtype=ja.float64), v)
     assert get_backend(v) is b
 
     r = b.to_numpy(v)

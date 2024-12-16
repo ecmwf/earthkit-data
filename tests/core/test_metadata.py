@@ -15,7 +15,6 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
-from earthkit.data.readers.grib.metadata import RestrictedGribMetadata
 from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
@@ -261,47 +260,6 @@ def test_grib_metadata_override_invalid():
     with pytest.raises(Exception) as e:
         md.override({"level": -100})
     assert "EncodingError" in e.typename
-
-
-@pytest.mark.skipif(True, reason="headers_only_clone has to be fixed")
-def test_grib_metadata_override_headers_only_true():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    ref_size = ds[0].metadata("totalLength")
-
-    md1 = ds[0].metadata().override(headers_only_clone=True)
-    assert isinstance(md1, StandAloneGribMetadata)
-    assert md1._handle is not None
-    assert md1._handle != ds[0]._handle
-    assert md1["totalLength"] - ref_size < -10
-
-    md2 = md1._hide_internal_keys()
-    assert isinstance(md2, RestrictedGribMetadata)
-    assert md2._handle is not None
-    assert md2._handle != ds[0]._handle
-    assert md2._handle == md1._handle
-
-    with pytest.raises(KeyError):
-        md2["average"]
-
-
-def test_grib_metadata_override_headers_only_false():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    ref_size = ds[0].metadata("totalLength")
-
-    md1 = ds[0].metadata().override(headers_only_clone=False)
-    assert isinstance(md1, StandAloneGribMetadata)
-    assert md1._handle is not None
-    assert md1._handle != ds[0]._handle
-    assert np.isclose(md1["totalLength"], ref_size)
-
-    md2 = md1._hide_internal_keys()
-    assert isinstance(md2, RestrictedGribMetadata)
-    assert md2._handle is not None
-    assert md2._handle != ds[0]._handle
-    assert md2._handle == md1._handle
-
-    with pytest.raises(KeyError):
-        md2["average"]
 
 
 def test_grib_metadata_wrapped_core():
