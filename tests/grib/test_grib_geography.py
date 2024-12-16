@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 
 import earthkit.data
+from earthkit.data.testing import NO_GEO
 from earthkit.data.testing import check_array_type
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
@@ -291,6 +292,7 @@ def test_grib_mars_grid(path, expected_value):
         assert np.allclose(np.asarray(ds[0].mars_grid), np.asarray(expected_value))
 
 
+@pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")
 def test_grib_grid_points_rotated_ll():
     """The"""
     ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_wind_20x20.grib"))
@@ -320,6 +322,7 @@ def test_grib_grid_points_rotated_ll():
     assert np.allclose(res[1], ref[1])
 
 
+@pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")
 def test_grib_grid_points_rotated_rgg():
     ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_N32_subarea.grib"))
 
