@@ -45,6 +45,7 @@ Alternatively, you can install the following components:
     - fdb: provides access to the :ref:`data-sources-fdb` source
     - polytope: provides access to the :ref:`data-sources-polytope` source
     - odb: provides full support for the :ref:`odb` data type
+    - geo: enables to use Field.points_unrotated()
     - geopandas: adds GeoJSON/GeoPandas support
     - projection: adds projection support
     - covjsonkit: provides access to CoverageJSON data served by the :ref:`data-sources-polytope` source

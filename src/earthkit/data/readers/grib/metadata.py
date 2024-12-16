@@ -226,7 +226,12 @@ class GribFieldGeography(Geography):
             return self.latitudes(**kwargs)
 
         if not self.rotated_iterator:
-            from earthkit.geo.rotate import unrotate
+            try:
+                from earthkit.geo.rotate import unrotate
+            except ImportError:
+                raise ImportError(
+                    "GribFieldGeography.latitudes_unrotated requires 'earthkit-geo' to be installed"
+                )
 
             grid_type = self.metadata.get("gridType")
             warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
@@ -243,7 +248,12 @@ class GribFieldGeography(Geography):
             return self.longitudes(**kwargs)
 
         if not self.rotated_iterator:
-            from earthkit.geo.rotate import unrotate
+            try:
+                from earthkit.geo.rotate import unrotate
+            except ImportError:
+                raise ImportError(
+                    "GribFieldGeography.longitudes_unrotated requires 'earthkit-geo' to be installed"
+                )
 
             grid_type = self.metadata.get("gridType")
             warnings.warn(f"ecCodes does not support rotated iterator for {grid_type}")
