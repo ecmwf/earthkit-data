@@ -134,6 +134,7 @@ if not NO_CUPY:
 
 NO_S3_AUTH = not modules_installed("aws_requests_auth")
 NO_GEO = not modules_installed("earthkit-data")
+NO_ECFS = not os.path.exists("ecp")
 
 
 def MISSING(*modules):
