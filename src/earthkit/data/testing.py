@@ -10,6 +10,7 @@
 import logging
 import os
 import pathlib
+import shutil
 from contextlib import contextmanager
 from importlib import import_module
 from unittest.mock import patch
@@ -134,7 +135,10 @@ if not NO_CUPY:
 
 NO_S3_AUTH = not modules_installed("aws_requests_auth")
 NO_GEO = not modules_installed("earthkit-data")
-NO_ECFS = not os.path.exists("ecp")
+try:
+    NO_ECFS = not os.path.exists(shutil.which("ecp"))
+except Exception:
+    NO_ECFS = True
 
 
 def MISSING(*modules):
