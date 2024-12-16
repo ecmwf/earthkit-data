@@ -15,7 +15,7 @@ from earthkit.data import from_source
 from earthkit.data.testing import NO_ECFS
 
 
-@pytest.mark.long
+@pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.ecfs
 @pytest.mark.skipif(NO_ECFS, reason="No access to ECFS")
