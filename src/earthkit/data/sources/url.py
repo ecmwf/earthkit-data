@@ -27,6 +27,9 @@ def _ignore(*args, **kwargs):
     pass
 
 
+SCHEME_TO_SOURCE = {"ec:": "ecfs", "ecfs:": "ecfs"}
+
+
 def download_and_cache(
     url,
     *,
@@ -209,6 +212,14 @@ class Url(UrlBase):
     ):
         super().__init__(url, **kwargs)
 
+        self.other_source = None
+
+        if isinstance(url, str):
+            for scheme, source in SCHEME_TO_SOURCE.items():
+                if url.startswith(scheme):
+                    self.other_source = (source, url, kwargs)
+                    return
+
         self.update_if_out_of_date = update_if_out_of_date
         self.force = force
         self.stream = stream
@@ -217,6 +228,13 @@ class Url(UrlBase):
             self._download()
 
     def mutate(self):
+
+        if self.other_source:
+            from earthkit.data import from_source
+
+            source, url, kwargs = self.other_source
+            return from_source(source, url, **kwargs)
+
         if self.stream:
             s = []
             # create one stream source per url
