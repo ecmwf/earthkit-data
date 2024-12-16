@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import logging
 import warnings
 from abc import abstractmethod
 from functools import cached_property
@@ -21,6 +22,8 @@ from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import to_timedelta
+
+LOG = logging.getLogger(__name__)
 
 
 def missing_is_none(x):
@@ -371,6 +374,10 @@ class GribMetadata(Metadata):
         if not raise_on_missing:
             _kwargs["default"] = default
 
+        # allow using the "grib." prefix.
+        if key.startswith("grib."):
+            key = key[5:]
+
         key = _key_name(key)
 
         v = self._handle.get(key, ktype=astype, **_kwargs)
@@ -387,14 +394,37 @@ class GribMetadata(Metadata):
             target_handle.set_long(key, v_ori)
 
     def override(self, *args, headers_only_clone=True, **kwargs):
+        r"""Create a new metadata object by cloning a new GRIB handle and setting the keys in it.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments. When present must be a dict with the GRIB keys to set in
+            the new GRIB handle.
+        headers_only_clone: bool, optional
+            If True, the new GRIB handle will be created with headers_only=True to reduce the
+            data section. With this the GRIB handle size will be significantly smaller, but the
+            data section becomes unusable. Default is True.
+        **kwargs: dict, optional
+            Other keyword arguments specifying the GRIB keys to set.
+
+        Returns
+        -------
+        :class:`WrappedMetadata`
+            The new metadata object. There is always a :class:`StandAloneGribMetadata` object
+            created containing the new GRIB handle updated with the specified keys.
+            It is then wrapped in a :class:`WrappedMetadata` object storing ``"bitsPerValue"``
+            as an extra key.
+
+
+        Notes
+        -----
+        - When ``"bitsPerValue"`` is a key to set it is not written to the new handle. Instead, it
+          is stored as an extra key in the resulting :class:`WrappedMetadata` object.
+        """
         d = dict(*args, **kwargs)
 
-        # using headers_only_clone=True can cause problems when we want to write GRIB
-        # to disk or modify the generated handle. Until it is fixed, we use headers_only_clone=False.
-        headers_only_clone = False
-
         new_value_size = None
-        # extra = None
         gridspec = d.pop("gridspec", None)
         if gridspec is not None:
             from earthkit.data.readers.grib.gridspec import GridSpecConverter
@@ -405,13 +435,58 @@ class GribMetadata(Metadata):
 
         handle = self._handle.clone(headers_only=headers_only_clone)
 
-        # some keys, needed later, are not copied into the clone when
-        # headers_only=True. We store them as extra keys.
-        if "bitsPerValue" not in d:
-            self._copy_key(handle, "bitsPerValue")
+        extra = {}
+
+        # For the steps below consider the followings:
+        # - we cannot reliably determine whether the original handle is reduced or not
+        # - "bitsPerValue" needs a special treatment, because it cannot be set without
+        #   repacking the data.
+        # - we want to carry "bitsPerValue" over to the clone if possible
+
+        # When headers_only=True, "bitsPerValue" in the clone is unreliable. Since we need to
+        # carry "bitsPerValue" over ideally we should copy it into the clone but we
+        # cannot do it since we just trimmed down the data section, so a proper repacking
+        # is not possible. As a solution, we will generate a WrappedMetadata object and
+        # store the original "bitsPerValue" in the extra dict.
+        # When headers_only=False, we do not know whether the original handle was trimmed down
+        # or not. Therefore, instead of applying complicated logic we follow the same
+        # approach as for headers_only=True.
+        key = "bitsPerValue"
+        if key in d:
+            extra[key] = d.pop(key)
+        else:
+            # we get the value form the original metadata object and not from the handle since
+            # the handle can already be trimmed down
+            v = self.get(key, default=None)
+            if v is not None and v > 0:
+                extra[key] = v
+            # as a fallback we try to get the value from the clone
+            else:
+                v_clone = handle.get(key, None)
+                if v_clone is not None and v_clone > 0:
+                    extra[key] = v_clone
 
         if d:
-            handle.set_multiple(d)
+            single = {}
+            multiple = {}
+            for k, v in d.items():
+                if isinstance(v, (int, float, str, bool)):
+                    single[k] = v
+                else:
+                    multiple[k] = v
+
+            try:
+                # Try to set all metadata at once
+                # This is needed when we set multiple keys that are interdependent
+                handle.set_multiple(single)
+            except Exception as e:
+                LOG.error("Failed to set metadata at once: %s", e)
+                # Try again, but one by one
+                for k, v in single.items():
+                    handle.set(k, v)
+
+            for k, v in multiple.items():
+                handle.set(k, v)
 
         # we need to set the values to the new size otherwise the clone generated
         # with headers_only=True will be inconsistent
@@ -422,7 +497,15 @@ class GribMetadata(Metadata):
             handle.set_values(vals)
 
         # ensure that the cache settings are the same
-        return StandAloneGribMetadata(handle, cache=MetadataCacheHandler.clone_empty(self._cache))
+        r = StandAloneGribMetadata(
+            handle,
+            cache=MetadataCacheHandler.clone_empty(self._cache),
+        )
+
+        if extra:
+            r = WrappedMetadata(r, extra=extra)
+
+        return r
 
     def namespaces(self):
         return self.NAMESPACES
@@ -562,6 +645,9 @@ class GribMetadata(Metadata):
     def gridspec(self):
         return self.geography.gridspec()
 
+    def _make_restricted(self, r):
+        return RestrictedGribMetadata(self)
+
 
 class GribFieldMetadata(GribMetadata):
     """Represent the metadata of a GRIB field.
@@ -643,7 +729,7 @@ class RestrictedGribMetadata(WrappedMetadata):
     :ref:`/examples/grib_metadata_object.ipynb`
     """
 
-    EKD_NAMESPACE = "grib"
+    EKD_NAMESPACE = ["grib"]
 
     # ideally bitsPerValue should be here. However, it is treated as an
     # extra key and cannot be an internal key.
@@ -677,65 +763,20 @@ class RestrictedGribMetadata(WrappedMetadata):
     ]
     INTERNAL_NAMESPACES = ["statistics"]
 
-    def __init__(self, md):
-        assert isinstance(md, StandAloneGribMetadata)
-        super().__init__(md, hidden=self.INTERNAL_KEYS)
-
-    def _is_hidden(self, key):
-        ns, _, name = key.partition(".")
-        if name == "":
-            name = key
-            ns = ""
-
-        if ns == self.EKD_NAMESPACE:
-            return False
-        else:
-            return name in self.hidden
-
-    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
-        ns, _, name = key.partition(".")
-        if name == "":
-            name = key
-            ns = ""
-
-        if ns == self.EKD_NAMESPACE:
-            key = name
-
-        return super().get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-
-    def namespaces(self):
-        if self.INTERNAL_NAMESPACES:
-            return [x for x in self.metadata.namespaces() if x not in self.INTERNAL_NAMESPACES]
-        else:
-            return self.metadata.namespaces()
-
-    def as_namespace(self, namespace):
-        if namespace in self.INTERNAL_NAMESPACES:
-            return {}
-
-        r = self.metadata.as_namespace(namespace)
-        for k in list(r.keys()):
-            if k in self.INTERNAL_KEYS:
-                del r[k]
-        return r
-
-    def dump(self, namespace=all, **kwargs):
-        if namespace is all:
-            namespace = self.namespaces()
-        return self.metadata.dump(namespace=namespace, **kwargs)
-
-    def override(self, *args, **kwargs):
-        r = self.metadata.override(*args, **kwargs)
-        return RestrictedGribMetadata(r)
+    def __init__(self, metadata):
+        super().__init__(
+            metadata,
+            hidden=self.INTERNAL_KEYS,
+            hidden_namespaces=self.INTERNAL_NAMESPACES,
+            enforced_namespaces=self.EKD_NAMESPACE,
+        )
 
     def _hide_internal_keys(self):
         return self
 
     def __getstate__(self) -> dict:
-        ret = {}
-        ret["metadata"] = self.metadata
-        return ret
+        state = super().__getstate__()
+        return state
 
     def __setstate__(self, state: dict):
-        md = state.pop("metadata")
-        super().__init__(md, hidden=self.INTERNAL_KEYS)
+        super().__setstate__(state)

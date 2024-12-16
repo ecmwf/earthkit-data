@@ -32,7 +32,7 @@ def load_array_fl(num, array_backend=None):
 
     ds = []
     for x in ds_in:
-        print("len", len(x))
+        # print("len", len(x))
         ds.append(FieldList.from_array(x.values, [m.override(edition=1) for m in x.metadata()]))
 
     return (*ds, md)

@@ -48,5 +48,7 @@ def metadata_argument(*args, namespace=None, astype=None):
         namespace = []
     elif isinstance(namespace, str) or namespace == all:
         namespace = [namespace]
+    elif namespace == [""]:
+        namespace = []
 
     return (key, namespace, astype, key_arg_type)

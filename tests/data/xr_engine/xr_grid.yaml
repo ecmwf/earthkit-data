@@ -89,7 +89,29 @@
     - values
     - 6114
   distinct_ll: false
+- file: reduced_gg_N32.grib2
+  dims:
+    values: 6114
+  coords:
+    latitude:
+    - values
+    - 6114
+    longitude:
+    - values
+    - 6114
+  distinct_ll: false
 - file: reduced_gg_O32.grib1
+  dims:
+    values: 5248
+  coords:
+    latitude:
+    - values
+    - 5248
+    longitude:
+    - values
+    - 5248
+  distinct_ll: false
+- file: reduced_gg_O32.grib2
   dims:
     values: 5248
   coords:

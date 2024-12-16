@@ -67,8 +67,10 @@ class VariableBuilder:
 
     def build(self, add_earthkit_attrs=True):
         if add_earthkit_attrs:
+            md = self.tensor.source[0].metadata().override()
             attrs = {
-                "message": self.tensor.source[0].metadata().override()._handle.get_buffer(),
+                "message": md._handle.get_buffer(),
+                "bitsPerValue": md.get("bitsPerValue", 0),
             }
             self._attrs["_earthkit"] = attrs
 

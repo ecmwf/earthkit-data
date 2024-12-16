@@ -44,7 +44,6 @@ class Combined:
 
 class GribCoder:
     def __init__(self, template=None, **kwargs):
-
         self.template = template
         self._bbox = {}
         self.kwargs = kwargs
@@ -80,6 +79,7 @@ class GribCoder:
             handle = self.handle_from_metadata(values, metadata, compulsory)
         else:
             handle = template.handle.clone()
+            self.update_metadata_from_template(metadata, template, handle)
 
         self.update_metadata(handle, metadata, compulsory)
 
@@ -330,6 +330,35 @@ class GribCoder:
             return f"reduced_gg_{levtype}_grib{edition}"
         else:
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
+
+    def update_metadata_from_template(self, metadata, template, handle):
+        # the template can contain extra metadata that is not encoded in the handle
+        bpv = None
+        if hasattr(template, "metadata"):
+            template_md = template.metadata()
+            from earthkit.data.core.metadata import WrappedMetadata
+
+            if isinstance(template_md, WrappedMetadata):
+                for k in template_md.extra.keys():
+                    if k != "bitsPerValue" and k not in metadata:
+                        metadata[k] = template_md.get(k)
+
+            if "bitsPerValue" not in metadata:
+                bpv = template.metadata("bitsPerValue", default=None)
+
+        # Either the handle has valid bitsPerValue or has to be extracted
+        # from the template and added to the metadata to be encoded
+        if "bitsPerValue" not in metadata:
+            if bpv is None:
+                try:
+                    bpv = template.handle.get("bitsPerValue", None)
+                except Exception:
+                    bpv = None
+
+            if bpv is not None and bpv > 0:
+                bpv_h = handle.get("bitsPerValue", None)
+                if bpv != bpv_h:
+                    metadata["bitsPerValue"] = bpv
 
 
 @lru_cache(maxsize=None)
