@@ -30,7 +30,6 @@ dependencies = [
   "cfgrib>=0.9.10.1",
   "dask",
   "deprecation",
-  "earthkit-geo>=0.2",
   "earthkit-meteo>=0.0.1",
   "eccodes>=1.7",
   "entrypoints",
@@ -51,6 +50,7 @@ optional-dependencies.all = [
   "cartopy",
   "cdsapi>=0.7.2",
   "covjsonkit>=0.0.28",
+  "earthkit-geo>=0.2",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
   "geopandas",
@@ -67,6 +67,7 @@ optional-dependencies.dev = [
   "cdsapi>=0.7.2",
   "covjsonkit>=0.0.28",
   "earthkit-data-demo-source",
+  "earthkit-geo>=0.2",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
   "geopandas",
@@ -93,6 +94,7 @@ optional-dependencies.docs = [
 ]
 optional-dependencies.ecmwf-opendata = [ "ecmwf-opendata>=0.3.3" ]
 optional-dependencies.fdb = [ "pyfdb>=0.1" ]
+optional-dependencies.geo = [ "earthkit-geo>=0.2" ]
 optional-dependencies.geopandas = [ "geopandas" ]
 optional-dependencies.geotiff = [ "pyproj", "rasterio", "rioxarray" ]
 optional-dependencies.mars = [ "ecmwf-api-client>=1.6.1" ]

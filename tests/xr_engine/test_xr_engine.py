@@ -464,6 +464,8 @@ def test_xr_engine_single_field():
         squeeze=True,
     )
 
+    vals_ref = ds_ek.to_numpy()
+
     lats = np.linspace(90, -90, 19)
     lons = np.linspace(0, 350, 36)
 
@@ -505,6 +507,19 @@ def test_xr_engine_single_field():
     for k, v in coords_ref_full.items():
         assert np.allclose(ds.coords[k].values, v)
     assert [v for v in ds.data_vars] == data_vars
+
+    da = ds["t"]
+
+    r = da[:, :]
+    r.shape == (19, 36)
+    assert np.allclose(r.values, vals_ref)
+
+    r = da[2:4, 6:8]
+    assert r.shape == (2, 2)
+    assert np.allclose(r.values, vals_ref[2:4, 6:8])
+
+    v = da.sel(latitude=0, longitude=0, method="nearest")
+    assert np.allclose(v, vals_ref[9, 0])
 
 
 @pytest.mark.cache

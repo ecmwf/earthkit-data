@@ -448,6 +448,8 @@ class Field(Base):
         dict of datatime.datetime
             Dict with items "base_time" and "valid_time".
 
+        Examples
+        --------
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
         >>> ds[4].datetime()
@@ -1365,6 +1367,8 @@ class FieldList(Index):
         ls
         tail
 
+        Notes
+        -----
         The following calls are equivalent:
 
         .. code-block:: python
@@ -1401,6 +1405,8 @@ class FieldList(Index):
         head
         ls
 
+        Notes
+        -----
         The following calls are equivalent:
 
         .. code-block:: python
@@ -1441,6 +1447,8 @@ class FieldList(Index):
         dict of datatime.datetime
             Dict with items "base_time" and "valid_time".
 
+        Examples
+        --------
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
         >>> ds.datetime()

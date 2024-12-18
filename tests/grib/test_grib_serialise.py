@@ -18,6 +18,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
+from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import write_to_file
@@ -55,6 +56,29 @@ def test_grib_serialise_metadata(fl_type, representation):
     keys = ["param", "date", "time", "step", "level", "gridType", "type"]
     for k in keys:
         assert md[k] == md2[k]
+
+
+@pytest.mark.parametrize("representation", ["file", "memory"])
+def test_grib_serialise_standalone_metadata(representation):
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    md_ref = {
+        "param": "2t",
+        "date": 20200513,
+        "time": 1200,
+        "step": 0,
+        "level": 0,
+        "gridType": "regular_ll",
+        "type": "an",
+    }
+
+    md = StandAloneGribMetadata(ds[0].handle)
+    for k, v in md_ref.items():
+        assert md[k] == v
+
+    md2 = _pickle(md, representation)
+    for k, v in md_ref.items():
+        assert md2[k] == v
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
