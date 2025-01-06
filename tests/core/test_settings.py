@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+
 import pytest
 
 from earthkit.data import settings
@@ -175,25 +176,66 @@ def test_settings_temporary_nested():
 @pytest.mark.parametrize("autosave", [True, False])
 def test_settings_temporary_autosave(autosave):
     v_ori = settings.auto_save_settings
-    s = read_settings_yaml()
-    if s:
-        with settings.temporary():
-            settings.auto_save_settings = autosave
-            v = settings.get("number-of-download-threads")
-            settings.set("number-of-download-threads", v + 10)
+    with settings.temporary():
+        settings.auto_save_settings = autosave
+        v = settings.get("number-of-download-threads")
+        settings.set("number-of-download-threads", v + 10)
+        s = read_settings_yaml()
+        if s:
             assert s["number-of-download-threads"] == v
-        assert settings.auto_save_settings == autosave
+    assert settings.auto_save_settings == autosave
     settings.auto_save_settings = v_ori
 
 
-def test_settings_auto_save():
+def test_settings_auto_save_1():
     v_ori = settings.auto_save_settings
     settings.auto_save_settings = False
+    v = settings.get("number-of-download-threads")
+    settings.set("number-of-download-threads", v + 10)
+    assert settings.get("number-of-download-threads") == v + 10
     s = read_settings_yaml()
     if s:
-        v = settings.get("number-of-download-threads")
-        settings.set("number-of-download-threads", v + 10)
         assert s["number-of-download-threads"] == v
+    settings.auto_save_settings = v_ori
+
+
+def test_settings_auto_save_2():
+    v_ori = settings.auto_save_settings
+    settings.auto_save_settings = True
+
+    v = settings.get("number-of-download-threads")
+    settings.set("number-of-download-threads", v + 10)
+    assert settings.get("number-of-download-threads") == v + 10
+    s = read_settings_yaml()
+    if s:
+        assert s["number-of-download-threads"] == v + 10
+
+    settings.set("number-of-download-threads", v)
+    assert settings.get("number-of-download-threads") == v
+    s = read_settings_yaml()
+    if s:
+        assert s["number-of-download-threads"] == v + 10
+
+    settings.auto_save_settings = v_ori
+
+
+@pytest.mark.parametrize(
+    "value,error", [("10000", None), (10000, None), ("1b", ValueError), ("A", ValueError)]
+)
+def test_settings_env(monkeypatch, value, error):
+    env_key = "EARTHKIT_DATA_NUMBER_OF_DOWNLOAD_THREADS"
+    monkeypatch.setenv(env_key, value)
+
+    v_ori = settings.auto_save_settings
+    settings.auto_save_settings = True
+
+    if error is None:
+        v = settings.get("number-of-download-threads")
+        assert v == 10000
+    else:
+        with pytest.raises(error):
+            settings.get("number-of-download-threads")
+
     settings.auto_save_settings = v_ori
 
 

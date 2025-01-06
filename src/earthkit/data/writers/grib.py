@@ -36,9 +36,6 @@ class GribWriter(Writer):
         output = new_grib_output(f, template=field)
 
         md = {}
-        # wrapped metadata
-        if hasattr(field._metadata, "extra"):
-            md = {k: field._metadata._extra_value(k) for k, v in field._metadata.extra.items()}
 
         if bits_per_value is not None:
             if field._metadata.get("bitsPerValue", 0) != bits_per_value:
@@ -49,11 +46,15 @@ class GribWriter(Writer):
             md["generatingProcessIdentifier"] = None
 
         if values is None:
-            try:
-                if field._has_new_values():
-                    values = field.values
-            except AttributeError:
-                pass
+            # when bitsPerValue is set, we need to repack the values
+            if "bitsPerValue" in md:
+                values = field.values
+            else:
+                try:
+                    if field._has_new_values():
+                        values = field.values
+                except AttributeError:
+                    pass
 
         output.write(values, check_nans=check_nans, missing_value=field.handle.MISSING_VALUE - 1, **md)
 

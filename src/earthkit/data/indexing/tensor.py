@@ -390,7 +390,7 @@ class FieldListTensor(TensorCore):
             n = self.source.to_numpy(index=index, **kwargs)
             shape = list(self._user_shape)
             shape += list(n.shape[1:])
-            return n.reshape(*shape)
+            return n.reshape(*shape) if len(shape) > 0 else n
 
     @flatten_arg
     def latitudes(self, **kwargs):

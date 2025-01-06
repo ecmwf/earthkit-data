@@ -25,8 +25,6 @@ def _no_log(msg):
 
 
 class StandaloneMarsClient:
-    EXE = "/usr/local/bin/mars"
-
     def __init__(self, log="default"):
         self.log = log
 
@@ -54,21 +52,27 @@ class StandaloneMarsClient:
                 raise ValueError(f"Unsupported log type={type(self.log)}")
 
             subprocess.run(
-                [self.EXE, filename], env=dict(os.environ, MARS_AUTO_SPLIT_BY_DATES="1"), check=True, **log
+                [self.command(), filename],
+                env=dict(os.environ, MARS_AUTO_SPLIT_BY_DATES="1"),
+                check=True,
+                **log,
             )
 
     @staticmethod
+    def command():
+        return os.environ.get("MARS_CLIENT_COMMAND", "/usr/local/bin/mars")
+
+    @staticmethod
     def enabled():
-        if SETTINGS.get("use-standalone-mars-client-when-available"):
-            return os.path.exists(StandaloneMarsClient.EXE)
-        return False
+        return SETTINGS.get("use-standalone-mars-client-when-available") and os.path.exists(
+            StandaloneMarsClient.command()
+        )
 
 
 class MarsRetriever(ECMWFApi):
     def service(self):
-        if SETTINGS.get("use-standalone-mars-client-when-available"):
-            if os.path.exists(StandaloneMarsClient.EXE):
-                return StandaloneMarsClient(self.log)
+        if StandaloneMarsClient.enabled():
+            return StandaloneMarsClient(self.log)
 
         if self.prompt:
             prompt = MARSAPIKeyPrompt()
