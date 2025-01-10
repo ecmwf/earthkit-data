@@ -15,22 +15,21 @@ from . import Encoder
 LOG = logging.getLogger(__name__)
 
 
-class NetCDFEncodedData(EncodedData):
-    def __init__(self, ds):
-        self.ds = ds
+class CSVEncodedData(EncodedData):
+    def __init__(self, df):
+        self.df = df
 
     def to_bytes(self):
-        return self.ds.to_netcdf(None)
+        raise NotImplementedError
 
-    def to_file(self, f):
-        self.ds.earthkit.to_netcdf(f)
-        # self.ds.to_netcdf(f)
+    def to_file(self, f, **kwargs):
+        self.df.to_csv(f, **kwargs)
 
     def metadata(self, key):
         raise NotImplementedError
 
 
-class NetCDFEncoder(Encoder):
+class CSVEncoder(Encoder):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -47,26 +46,15 @@ class NetCDFEncoder(Encoder):
         else:
             raise ValueError("No data to encode")
 
-    def _encode(
-        self,
-        data=None,
-        values=None,
-        min=None,
-        max=None,
-        check_nans=False,
-        metadata={},
-        template=None,
-        # return_bytes=False,
-        missing_value=9999,
-        **kwargs,
-    ):
-        return NetCDFEncodedData(data.to_xarray())
+    def _encode(self, data, **kwargs):
+        assert data is not None
+        return CSVEncodedData(data.to_pandas())
 
     def _encode_field(self, field, **kwargs):
         return self._encode(field, **kwargs)
 
-    def _encode_fieldlist(self, data, **kwargs):
-        return self._encode(data, **kwargs)
+    def _encode_fieldlist(self, fieldlist, **kwargs):
+        raise NotImplementedError
 
 
-encoder = NetCDFEncoder
+encoder = CSVEncoder

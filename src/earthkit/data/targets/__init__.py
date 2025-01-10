@@ -17,9 +17,6 @@ from importlib import import_module
 LOG = logging.getLogger(__name__)
 
 
-# _TARGETS = {}
-
-
 class Target(metaclass=ABCMeta):
     """
     Represent a target.
@@ -29,21 +26,20 @@ class Target(metaclass=ABCMeta):
     encoder: str, Encoder, None
         The encoder to use to encode the data. Can be overridden in the the :obj:`write` method.
         When a string is passed, the encoder is looked up in the available encoders. When None,
-        the encoder will be determined from the data to write (if possible) or from the :class:`Target` properties.
+        the encoder will be determined from the data to write (if possible) or from
+        the :class:`Target` properties.
     template: obj, None
         The template to use to encode the data. Can be overridden in the :obj:`write` method.
 
     The :class:`Target` is used to write data to a specific location. The target can be
     a file, a database, a remote server, etc.
-
-    :class:`Target` is an abstract class and should not be used directly. Instead, use one
-    of the concrete implementations.
     """
 
-    def __init__(self, encoder=None, template=None):
+    def __init__(self, encoder=None, template=None, **kwargs):
         self._encoder = encoder
         self._template = template
 
+    @abstractmethod
     def write(
         self,
         data=None,
@@ -63,7 +59,9 @@ class Target(metaclass=ABCMeta):
         encoder: str, Encoder, None
             The encoder to use to encode the data.
             When a string is passed, the encoder is looked up in the available encoders. When None,
-            the encoder the :class:`Target` was created with will be used if available. Otherwise, the encoder will be determined from the data to write (if possible) or from the :class:`Target` properties.
+            the encoder the :class:`Target` was created with will be used if available. Otherwise,
+            the encoder will be determined from the data to write (if possible) or from
+            the :class:`Target` properties.
         template: obj, None
             The template to use to encode the data. When None,
             the template the :class:`Target` was created with will be used if available.
@@ -72,17 +70,21 @@ class Target(metaclass=ABCMeta):
         **kwargs: dict
             Other keyword arguments passed to the encoder.
         """
-        if data is not None:
-            data._to_target(self, encoder=encoder, template=template, metadata=metadata, **kwargs)
-        else:
-            self._write_data(None, encoder=encoder, template=template, metadata=metadata, **kwargs)
+        pass
 
     @abstractmethod
-    def _write_data(
+    def _write(
         self,
         data,
         **kwargs,
     ):
+        """Write generic data to the target.
+
+        Parameters:
+        -----------
+        data:
+            Data to write to the target.
+        """
         pass
 
     @abstractmethod
@@ -126,17 +128,45 @@ class Target(metaclass=ABCMeta):
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
-    def encode(self, data, encoder=None, default_encoder=None, template=None, suffix=None, **kwargs):
-        from earthkit.data.encoders import _find_encoder
+    def _encode(self, data, encoder=None, default_encoder=None, template=None, suffix=None, **kwargs):
+        """Encode data
+
+        Returns
+        -------
+        :class:`EncodedData`
+            The encoded data.
+        """
+        from earthkit.data.encoders import make_encoder
 
         if encoder is None:
             encoder = self._encoder
-        encoder = _find_encoder(data, encoder, default_encoder=default_encoder, suffix=suffix)
+        encoder = make_encoder(data, encoder, default_encoder=default_encoder, suffix=suffix)
 
         if template is None:
             template = self._template
 
         return encoder.encode(data, template=template, **kwargs)
+
+
+class SimpleTarget(Target):
+    def write(
+        self,
+        data=None,
+        **kwargs,
+    ):
+        if data is not None:
+            data._write(self, **kwargs)
+        else:
+            self._write(None, **kwargs)
+
+    def _write_reader(self, reader, **kwargs):
+        raise NotImplementedError
+
+    def _write_field(self, field, **kwargs):
+        self._write(field, **kwargs)
+
+    def _write_fieldlist(self, fieldlist, **kwargs):
+        self._write(fieldlist, **kwargs)
 
 
 class TargetLoader:
@@ -158,7 +188,12 @@ class TargetLoader:
 class TargetMaker:
     TARGETS = {}
 
-    def __call__(self, name, *args, **kwargs):
+    def __call__(self, name_or_target, *args, **kwargs):
+        if isinstance(name_or_target, Target):
+            return name_or_target
+
+        name = name_or_target
+
         loader = TargetLoader()
 
         if name in self.TARGETS:
@@ -183,23 +218,6 @@ class TargetMaker:
 get_target = TargetMaker()
 
 
-def make_target(name, *args, **kwargs):
-    return get_target(name, *args, **kwargs)
-
-    # target = _targets().get(name, None)
-    # if target is None:
-    #     raise ValueError(f"Unknown target {name}")
-
-    # return target(*args, **kwargs)
-
-
-def ensure_target(target_or_name, *args, **kwargs):
-    if isinstance(target_or_name, Target):
-        return target_or_name
-    target = make_target(target_or_name, *args, **kwargs)
-    return target
-
-
 @lru_cache
 def target_kwargs(target_type):
     import inspect
@@ -213,33 +231,17 @@ def target_kwargs(target_type):
 
 
 def to_target(target, *args, **kwargs):
-    if not isinstance(target, str):
-        raise ValueError(f"Invalid target {target}. Must be a string")
+    """Write data to a target.
 
-    with ensure_target(target, *args, **kwargs) as t:
-        for k in target_kwargs(type(target)) + target_kwargs(Target):
+    This is a top level function that writes data to a target.
+
+    Parameters:
+    -----------
+    target: str
+        The target to write to. Must be a string.
+    """
+    with get_target(target, *args, **kwargs) as t:
+        for k in [*target_kwargs(type(t)), *target_kwargs(Target)]:
             kwargs.pop(k, None)
 
         t.write(**kwargs)
-
-
-# @locked
-# def _targets():
-#     if not _TARGETS:
-#         here = os.path.dirname(__file__)
-#         for path in sorted(os.listdir(here)):
-#             if path[0] in ("_", "."):
-#                 continue
-
-#             if path.endswith(".py") or os.path.isdir(os.path.join(here, path)):
-#                 name, _ = os.path.splitext(path)
-#                 try:
-#                     module = import_module(f".{name}", package=__name__)
-#                     if hasattr(module, "target"):
-#                         w = getattr(module, "target")
-#                         # _TARGETS[w.DATA_FORMAT] = w
-#                         _TARGETS[name] = w
-#                 except Exception:
-#                     LOG.exception("Error loading writer %s", name)
-
-#     return _TARGETS

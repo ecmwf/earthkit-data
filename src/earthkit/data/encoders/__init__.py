@@ -9,7 +9,6 @@
 
 import logging
 import os
-import re
 from abc import ABCMeta
 from abc import abstractmethod
 from importlib import import_module
@@ -18,38 +17,54 @@ from earthkit.data.decorators import locked
 
 LOG = logging.getLogger(__name__)
 
-_ENCODERS = {}
 
-
+"""Assign encoders to file suffixes"""
 _SUFFIXES = {".grib": "grib", ".nc": "netcdf", ".png": "png"}
 
 
-class EncodedDataAdaptor(metaclass=ABCMeta):
+class EncodedData(metaclass=ABCMeta):
+    """Base class for representing encoded data.
+
+    It is meant to be used by a :class:`Target` to write/add data to a given target.
+    It is the return value from the :meth:`Encoder.encode` method.
+    """
+
     @abstractmethod
     def to_bytes(self):
+        """Return the data as a bytesarray"""
         pass
 
     @abstractmethod
     def to_file(self, f):
+        """Write the data to a file.
+
+        Parameters:
+        -----------
+        f: file-like object
+            File-like object to write to
+        """
         pass
 
     @abstractmethod
-    def metadata(self, key):
+    def metadata(self, key=None):
         pass
 
 
-# class DataPresenter:
-#     def __init__(self, data):
-#         self.data = data
-
-#     def to_bytes(self, data):
-#         return data
-
-#     def to_file(self, target):
-#         self.data.write(target.f)
-
-
 class Encoder(metaclass=ABCMeta):
+    """Base class for encoders.
+
+    An encoder is used to encode data to a specific format that can be used by a :class:`Target`.
+
+    Parameters:
+    -----------
+    template: obj, None
+        The template to use to encode the data. Can be overridden in the :obj:`encode` method.
+    metadata: dict, None
+        Metadata to use when encoding the data. Can be overridden in the :obj:`encode` method.
+    **kwargs:
+        Additional keyword arguments
+    """
+
     def __init__(self, template=None, metadata=None, **kwargs):
         self.template = template
         self.metadata = metadata or {}
@@ -63,69 +78,125 @@ class Encoder(metaclass=ABCMeta):
         check_nans=False,
         metadata={},
         template=None,
-        # return_bytes=False,
         missing_value=9999,
         **kwargs,
-    ):
+    ) -> EncodedData:
+        """Encode the data.
+
+        Parameters:
+        -----------
+        data: obj, None
+            The data to encode. Should be used via double dispatch. Must have an ``_encode()``
+            method,  which will call the appropriate ``_encode_*`` method on the :class:`Encoder`.
+        values: obj, None
+            The values to encode.
+        check_nans: bool
+            If True, check for NaN values in the data and replace them with the ``missing_value``.
+        metadata: dict
+            Metadata to use when encoding the data. When None,
+            the metadata the :class:`Encoder` was created with will be used if available.
+        template: obj, None
+            The template to use to encode the data. When None,
+            the template the :class:`Encoder` was created with will be used if available.
+        missing_value: number
+            The value to use for missing values.
+        **kwargs: dict
+            Additional keyword arguments.
+
+        Returns:
+        --------
+        EncodedData
+            The encoded data.
+        """
         pass
 
     @abstractmethod
-    def _encode_field(self, *args, **kwargs):
+    def _encode(self, data, **kwargs) -> EncodedData:
+        """Subclass implementation of the encoding logic.
+
+        Parameters:
+        -----------
+        field: :obj:`Base`
+            The data to encode
+
+        Double dispatch method that called from a ``data`` to encode itself."""
         pass
 
     @abstractmethod
-    def _encode_fieldlist(self, *args, **kwargs):
+    def _encode_field(self, field, **kwargs) -> EncodedData:
+        """Subclass implementation of the encoding logic for a Field.
+
+        Parameters:
+        -----------
+        field: :obj:`Field`
+            The Field to encode
+
+        Double dispatch method that called from ``field`` to encode itself."""
+        pass
+
+    @abstractmethod
+    def _encode_fieldlist(self, fieldlist, **kwargs) -> EncodedData:
+        """Subclass implementation of the encoding logic for a FieldList.
+
+        Parameters:
+        -----------
+        fieldlist: :obj:`FieldList`
+            The FieldList to encode
+
+        Double dispatch method that called from ``fieldlist`` to encode itself."""
         pass
 
 
-class DefaultEncoder(Encoder):
-    def encode(self, data=None, **kwargs):
-        if data is None:
-            raise ValueError("No data to encode")
-        return data
+class EncoderLoader:
+    kind = "encoder"
+
+    def load_module(self, module):
+        return import_module(module, package=__name__).encoder
+
+    def load_entry(self, entry):
+        entry = entry.load()
+        if callable(entry):
+            return entry
+        return entry.encoder
+
+    def load_remote(self, name):
+        return None
 
 
-@locked
-def _encoders():
-    if not _ENCODERS:
-        here = os.path.dirname(__file__)
-        for path in sorted(os.listdir(here)):
-            if path[0] in ("_", "."):
-                continue
+class EncoderMaker:
+    ENCODERS = {}
 
-            if path.endswith(".py") or os.path.isdir(os.path.join(here, path)):
-                name, _ = os.path.splitext(path)
-                try:
-                    module = import_module(f".{name}", package=__name__)
-                    if hasattr(module, "Encoder"):
-                        w = getattr(module, "Encoder")
-                        # _ENCODERS[w.DATA_FORMAT] = w
-                        _ENCODERS[name] = w
-                except Exception as e:
-                    LOG.exception("Error loading encoder %s", name)
+    def __call__(self, name_or_encoder, *args, **kwargs):
+        if isinstance(name_or_encoder, Encoder):
+            return name_or_encoder
 
-    return _ENCODERS
+        name = name_or_encoder
 
+        loader = EncoderLoader()
 
-def _get_encoder(name, data_format=None):
-    if data_format is not None:
-        combined_name = f"{data_format}_to_{name}"
-        r = _encoders().get(combined_name, None)
-        if r:
-            return r
-    # print(f"{name=}, {data_format=}")
-    r = _encoders().get(name, None)
-    if r is None:
-        raise ValueError(f"Unknown encoder {name=} {data_format=}")
-    return r
+        if name in self.ENCODERS:
+            klass = self.ENCODERS[name]
+        else:
+            from earthkit.data.core.plugins import find_plugin
+
+            klass = find_plugin(os.path.dirname(__file__), name, loader)
+            self.ENCODERS[name] = klass
+
+        encoder = klass(*args, **kwargs)
+
+        if getattr(encoder, "name", None) is None:
+            encoder.name = name
+
+        return encoder
+
+    def __getattr__(self, name):
+        return self(name.replace("_", "-"))
 
 
-def _find_encoder(data, encoder=None, suffix=None, **kwargs):
-    # if data_format is not None and not isinstance(data_format, str):
-    #     raise ValueError(f"data_format must be a str or None, got {data_format=}")
+get_encoder = EncoderMaker()
 
-    # print(f"_encoders()={_encoders()}")
 
+def make_encoder(data, encoder=None, suffix=None, **kwargs):
     if isinstance(encoder, Encoder):
         return encoder
 
@@ -134,17 +205,17 @@ def _find_encoder(data, encoder=None, suffix=None, **kwargs):
             encoder = _SUFFIXES.get(suffix, None)
         if encoder is None:
             if hasattr(data, "default_encoder"):
-                print("data.default_encoder", data.default_encoder())
+                # print("data.default_encoder", data.default_encoder())
                 encoder = data.default_encoder()
             # if default_encoder is not None:
             #     encoder = default_encoder
 
-    print("encoder", encoder, "suffix", suffix)
+    # print("encoder", encoder, "suffix", suffix)
 
     if isinstance(encoder, str):
-        encoder = _get_encoder(encoder)
+        encoder = get_encoder(encoder, **kwargs)
         assert encoder is not None
-        return encoder()
+        return encoder
 
     if encoder is not None:
         raise ValueError(f"Unsupported encoder={encoder}. Must be a str or Encoder")
@@ -152,51 +223,3 @@ def _find_encoder(data, encoder=None, suffix=None, **kwargs):
     assert encoder is None
 
     raise ValueError("No data or encoder")
-
-    # try to guess encoder from data
-    if data is not None:
-        if hasattr(data, "metadata"):
-            data_format = data.metadata().data_format()
-            if data_format:
-                encoder = data_format
-                encoder = _get_encoder(encoder)
-                assert encoder is not None
-                return encoder()
-
-    else:
-        raise ValueError("No data or encoder")
-
-    # try to guess f
-
-    # if not isinstance(encoder, Encoder):
-    #     data_format = None
-    #     if data is not None:
-    #         if hasattr(data, "metadata"):
-    #             data_format = data.metadata().data_format()
-    #             if data_format:
-    #                 if encoder is None:
-    #                     encoder = data_format
-    #                     data_format = None
-    #                 elif encoder == data_format:
-    #                     data_format = None
-    #     elif encoder is None:
-    #         raise ValueError("No data or encoder")
-
-    #     # print(f"{data=}, {encoder=}, {data_format=}")
-
-    #     if encoder is None:
-    #         raise ValueError(f"Could not create encoder for {data=}, {encoder=}")
-    #     if not isinstance(encoder, str):
-    #         raise ValueError(f"Unsupported encoder={encoder}. Must be a str or Encoder")
-
-    #     encoder = _get_encoder(encoder, data_format=data_format)
-    #     assert encoder is not None
-    #     # print("ENCODER kwargs", kwargs)
-    #     encoder = encoder()
-    #     kwargs = {}
-
-    # if encoder is None:
-    #     encoder = DefaultEncoder()
-
-    if isinstance(encoder, Encoder):
-        return encoder

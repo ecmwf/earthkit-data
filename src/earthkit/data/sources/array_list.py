@@ -67,12 +67,13 @@ class ArrayField(Field):
             self._metadata.get("number", None),
         )
 
-    def _to_target(self, target, *args, **kwargs):
-        assert target is not None
+    def _encode(self, encoder, **kwargs):
+        """Double dispatch to the encoder"""
         values = kwargs.pop("values", None)
         if values is None:
             values = self.to_numpy(flatten=True)
-        target._write(self, values=values, **kwargs)
+
+        return encoder._encode_field(self, values=values, **kwargs)
 
     @property
     def _metadata(self):

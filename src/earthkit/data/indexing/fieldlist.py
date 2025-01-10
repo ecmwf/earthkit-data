@@ -150,9 +150,8 @@ class ClonedFieldCore:
     def handle(self):
         return self._metadata._handle
 
-    def _to_target(self, target, **kwargs):
-        assert target is not None
-
+    def _encode(self, encoder, **kwargs):
+        """Double dispatch to the encoder"""
         md = {}
         # wrapped metadata
         if hasattr(self._metadata, "extra"):
@@ -161,12 +160,11 @@ class ClonedFieldCore:
         metadata = kwargs.pop("metadata", {})
         metadata.update(md)
 
-        target._write(
-            self,
-            values=self._values(),
-            metadata=metadata,
-            **kwargs,
-        )
+        values = kwargs.pop("values", None)
+        if values is None:
+            values = self._values()
+
+        return encoder._encode_field(self, values=values, metadata=metadata, **kwargs)
 
 
 # For backwards compatibility

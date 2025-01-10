@@ -86,7 +86,7 @@ class MultiSource(Source):
         string = ",".join(repr(s) for s in self.sources)
         return f"{self.__class__.__name__}({string})"
 
-    @deprecation.deprecated(deprecated_in="0.12.0", removed_in="0.13.0", details="Use to_target() instead")
+    @deprecation.deprecated(deprecated_in="0.13.0", removed_in="0.14.0", details="Use to_target() instead")
     def save(self, path, **kwargs):
         self.to_target("file", path, **kwargs)
 
@@ -95,7 +95,7 @@ class MultiSource(Source):
         #     for s in self.sources:
         #         s.write(f, **kwargs)
 
-    def _to_target(self, target, **kwargs):
+    def _write(self, target, **kwargs):
         assert target is not None
         for s in self.sources:
             target.write(data=s, **kwargs)

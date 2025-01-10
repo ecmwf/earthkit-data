@@ -223,15 +223,18 @@ class XArrayFieldListCore(FieldList):
     def new_mask_index(cls, *args, **kwargs):
         return XArrayMaskFieldList(*args, **kwargs)
 
-    def _to_target(self, target, **kwargs):
+    def _write(self, target, **kwargs):
         assert target is not None
         encoder = kwargs.get("encoder", None)
         if encoder is None and kwargs.get("default_encoder", None) is None:
             kwargs["default_encoder"] = "netcdf"
-        target._write(self, **kwargs)
+        target._write_fieldlist(self, **kwargs)
 
     def _encode_grib(self, encoder, **kwargs):
         return encoder._from_xarray(self.to_xarray(), **kwargs)
+
+    def default_encoder(self):
+        return "netcdf"
 
 
 class XArrayFieldList(XArrayFieldListCore):
@@ -354,11 +357,11 @@ class NetCDFMaskFieldList(NetCDFFieldList, MaskIndex):
     def to_xarray(self, *args, **kwargs):
         self._not_implemented()
 
-    @deprecation.deprecated(deprecated_in="0.12.0", removed_in="0.13.0", details="Use to_target() instead")
+    @deprecation.deprecated(deprecated_in="0.13.0", removed_in="0.14.0", details="Use to_target() instead")
     def write(self, *args, **kwargs):
         self._not_implemented()
 
-    @deprecation.deprecated(deprecated_in="0.12.0", removed_in="0.13.0", details="Use to_target() instead")
+    @deprecation.deprecated(deprecated_in="0.13.0", removed_in="0.14.0", details="Use to_target() instead")
     def save(self, *args, **kwargs):
         self._not_implemented()
 

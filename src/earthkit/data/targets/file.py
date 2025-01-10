@@ -12,24 +12,24 @@ import os
 import re
 from io import IOBase
 
-from . import Target
+from . import SimpleTarget
 
 LOG = logging.getLogger(__name__)
 
 
-class FileTarget(Target):
+class FileTarget(SimpleTarget):
     """
-    File target
+    File target.
 
     Parameters:
     -----------
     file: str or file-like object
         The file path or file-like object to write to.
     split_output: bool
-        If True, the output file name defines a pattern with metadata keys in the
-        format of ``{key}``. Data items (e.g. fields) are written into a file that name is
-        created by substituting the relevant metadata values into the filename pattern.
-        Only used if file is a path.
+        If True, the output file name defines a pattern containing metadata keys in the
+        format of ``{key}``. Each data item (e.g. a field) will be written into a file
+        with a name created by substituting the relevant metadata values in the
+        filename pattern. Only used if file is a path.
     append: bool
         If True, the file is opened in append mode. Only used if file is a path.
     **kwargs:
@@ -62,9 +62,6 @@ class FileTarget(Target):
         for f in self._files.values():
             f.close()
 
-    def finish(self):
-        self.close()
-
     def __enter__(self):
         return self
 
@@ -86,10 +83,15 @@ class FileTarget(Target):
 
         return self._files[path], path
 
-    def _write_data(self, data, **kwargs):
-        d = self.encode(data, suffix=self.ext, **kwargs)
-        f, _ = self._f(d)
-        d.to_file(f)
+    def _write(self, data, **kwargs):
+        r = self._encode(data, suffix=self.ext, **kwargs)
+        if hasattr(r, "__iter__"):
+            for d in r:
+                f, _ = self._f(d)
+                d.to_file(f)
+        else:
+            f, _ = self._f(r)
+            r.to_file(f)
 
     def _write_reader(self, reader, **kwargs):
         f, _ = self._f(None)
@@ -103,19 +105,6 @@ class FileTarget(Target):
                 if not chunk:
                     break
                 f.write(chunk)
-
-    def _write_field(self, field, **kwargs):
-        self._write_data(field, **kwargs)
-
-    def _write_fieldlist(self, fieldlist, encoder=None, template=None, **kwargs):
-        r = self.encode(fieldlist, suffix=self.ext, **kwargs)
-        try:
-            for d in r:
-                f, _ = self._f(d)
-                d.to_file(f)
-        except TypeError:
-            f, _ = self._f(r)
-            r.to_file(f)
 
 
 target = FileTarget

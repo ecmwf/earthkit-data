@@ -9,47 +9,44 @@
 
 import logging
 
-from . import Target
+from . import SimpleTarget
 
 LOG = logging.getLogger(__name__)
 
 
-class FDBTarget(Target):
-    def __init__(self, fdb=None, config=None, **kwargs):
+class FDBTarget(SimpleTarget):
+    def __init__(self, fdb=None, config=None, userconfig=None, **kwargs):
         super().__init__(**kwargs)
         self._fdb = fdb
-        self.config = config or {}
+        self._fdb_kwargs = {}
+        if config is not None:
+            self._fdb_kwargs["config"] = config
+        if userconfig is not None:
+            self._fdb_kwargs["userconfig"] = userconfig
 
     @property
     def fdb(self):
         if self._fdb is None:
             import pyfdb
 
-            self._fdb = pyfdb.FDB(config=self.config)
+            self._fdb = pyfdb.FDB(**self._fdb_kwargs)
         return self._fdb
 
     def flush(self):
         self.fdb.flush()
 
-    def finish(self):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, trace):
         self.flush()
 
-    def _write_data(self, data, **kwargs):
-        d = self.encode(data, **kwargs)
-        self.fdb.archive(d.to_bytes())
-
-    def _write_reader(self, reader, **kwargs):
-        raise NotImplementedError
-
-    def _write_field(self, field, **kwargs):
-        self._write_data(field, **kwargs)
-
-    def _write_fieldlist(self, fieldlist, **kwargs):
-        r = self.encode(fieldlist, **kwargs)
-        try:
+    def _write(self, data, **kwargs):
+        r = self._encode(data, **kwargs)
+        if hasattr(r, "__iter__"):
             for d in r:
                 self.fdb.archive(d.to_bytes())
-        except TypeError:
+        else:
             self.fdb.archive(r.to_bytes())
 
 
