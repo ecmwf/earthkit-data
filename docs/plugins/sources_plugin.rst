@@ -26,16 +26,14 @@ This package must contain a Python class inherited from :class:`earthkit.data.So
 
     from earthkit_data_my_source import MyClass
 
-Please note that in this line the package name to import form has to contain "_" characters.
+Please note that in the line above the package name has to contain "_" characters.
 
-In the ``setup.cfg`` file of the package the ``entry_points``
+In the ``pyproject.toml`` file of the package the ``entry_points``
 integration must be set as follow:
 
-.. code-block:: ini
+.. code-block:: toml
 
-    [options.entry_points]
-    earthkit.data.sources =
-        my-source = earthkit_data_my_source:MyClass
+    entry-points."earthkit.data.sources".my-source = "earthkit_data_my_source:MyClass"
 
 
 With this we could use the new source in :func:`from_source` as:
@@ -49,7 +47,7 @@ With this we could use the new source in :func:`from_source` as:
 
 .. note::
 
-  The source name used in :func:`from_source` is only defined in the ``entry_points`` block in ``setup.cfg``, so it is not deduced from the package name.
+  The source name used in :func:`from_source` is only defined in the ``entry_points`` block in ``pyproject.toml``, so it is not deduced from the package name.
 
 
 Example
@@ -57,11 +55,11 @@ Example
 
 The ``earthkit-data-demo-source`` package demonstrates how to implement a ``sources plugin``. Its source code is located at https://github.com/ecmwf/earthkit-data-demo-source. This plugin enables earthkit-data to access data from an SQL database.
 
-This demo package is not hosted on PyPI but we need to install it from github:
+This demo package can be installed as:
 
 .. code-block:: shell
 
-  pip install git+https://github.com/ecmwf/earthkit-data-demo-source
+  pip install earthkit-data-demo-source
 
 Having finished the installation, tabular data can be read in earthkit-data as follows:
 
@@ -78,13 +76,11 @@ Having finished the installation, tabular data can be read in earthkit-data as f
     )
     df = ds.to_pandas()
 
-The integration is performed by ``entry_points`` is defined in  ``setup.cfg``.
+The integration is performed by ``entry_points`` defined in  ``pyproject.toml``.
 
-.. code-block:: ini
+.. code-block:: toml
 
-    [options.entry_points]
-    earthkit.data.sources =
-        demo-source = earthkit_data_demo_source:DemoSource
+    entry-points."earthkit.data.sources".demo-source = "earthkit_data_demo_source:DemoSource"
 
 
 See the :ref:`/examples/demo_sources_plugin.ipynb` notebook for the full example.
