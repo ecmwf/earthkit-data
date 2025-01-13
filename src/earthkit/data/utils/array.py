@@ -148,7 +148,7 @@ class PytorchBackend(ArrayBackend):
         return torch
 
     def to_numpy(self, v):
-        return v.numpy()
+        return v.cpu().numpy()
 
     def from_numpy(self, v):
         import torch
