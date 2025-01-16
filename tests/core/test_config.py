@@ -180,7 +180,7 @@ def test_config_temporary_autosave_1():
         with config.temporary(config_yaml=config_file):
             # now config should contain the default values
             # we ensure that the configs are saved into the file
-            config._save()
+            config.save_as(config_file)
 
             key = "number-of-download-threads"
 
@@ -207,7 +207,7 @@ def test_config_temporary_autosave_2():
         with config.temporary(config_yaml=config_file):
             # now config should contain the default values
             # we ensure that the config is saved into the file
-            config._save()
+            config.save_as(config_file)
 
             key = "number-of-download-threads"
 
@@ -243,8 +243,8 @@ def test_config_env(monkeypatch, value, error):
     env_key = "EARTHKIT_DATA_NUMBER_OF_DOWNLOAD_THREADS"
     monkeypatch.setenv(env_key, value)
 
-    v_ori = config.autosave
-    config.autosave = True
+    # v_ori = config.autosave
+    # config.autosave = True
 
     if error is None:
         v = config.get("number-of-download-threads")
@@ -253,7 +253,7 @@ def test_config_env(monkeypatch, value, error):
         with pytest.raises(error):
             config.get("number-of-download-threads")
 
-    config.autosave = v_ori
+    # config.autosave = v_ori
 
 
 if __name__ == "__main__":

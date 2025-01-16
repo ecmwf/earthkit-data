@@ -550,6 +550,7 @@ class Config:
                 exc_info=True,
             )
 
+    @forward
     def save_as(self, path):
         try:
             save_config(path, self._config)
