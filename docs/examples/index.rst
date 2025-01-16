@@ -171,8 +171,8 @@ Miscellaneous
     :maxdepth: 1
     :glob:
 
-    settings.ipynb
-    settings_env_vars.ipynb
+    config.ipynb
+    config_env_vars.ipynb
     cache.ipynb
     projection.ipynb
     metadata.ipynb

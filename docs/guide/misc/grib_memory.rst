@@ -5,7 +5,7 @@ GRIB field memory management
 
 :ref:`grib` is a message-based binary format, where each message is regarded as a field. For reading GRIB, earthkit-data relies on :xref:`eccodes`, which, when loading a message into memory, represents it as a ``GRIB handle``. In the low level API, the GRIB handle is the object that holds the data and metadata of a GRIB field, therefore it can use up a significant amount of memory.
 
-Determining when a GRIB handle needs to be created and when it can be released is important for memory management. Earthkit-data provides several settings to control this behaviour depending on how we actually read the data.
+Determining when a GRIB handle needs to be created and when it can be released is important for memory management. Earthkit-data provides several config options to control this behaviour depending on how we actually read the data.
 
 Reading GRIB data as a stream iterator
 ========================================
@@ -40,7 +40,7 @@ With this, the entire ``ds`` fieldlist, including all the fields and the related
 Reading data from disk and managing its memory
 ==============================================
 
-When reading :ref:`grib` data from disk as a :ref:`file source <data-sources-file>`, it is represented as a fieldlist and loaded lazily. After the (fast) initial scan for field offsets and lengths, no actual fields are created and no data is read into memory. When we start using the fieldlist, e.g. by iterating over the fields, accessing data or metadata etc., the fields will be created **on demand** and the related GRIB handles will be loaded from disk **when needed**. Whether this data or part of it stays in memory depends on the following :ref:`settings <settings>`:
+When reading :ref:`grib` data from disk as a :ref:`file source <data-sources-file>`, it is represented as a fieldlist and loaded lazily. After the (fast) initial scan for field offsets and lengths, no actual fields are created and no data is read into memory. When we start using the fieldlist, e.g. by iterating over the fields, accessing data or metadata etc., the fields will be created **on demand** and the related GRIB handles will be loaded from disk **when needed**. Whether this data or part of it stays in memory depends on the following :ref:`config <config>`:
 
 - :ref:`grib-field-policy <grib-field-policy>`
 - :ref:`grib-handle-policy <grib-handle-policy>`
@@ -56,9 +56,9 @@ Controls whether fields are kept in memory. The default is ``"persistent"``. The
 - ``"persistent"``: fields are kept in memory until the fieldlist is deleted
 - ``"temporary"``: fields are deleted when they go out of scope and recreated on demand
 
-The actual memory used by a field depends on whether it owns the GRIB handle of the related GRIB message. This is controlled by the :ref:`grib-handle-policy <grib-handle-policy>` settings.
+The actual memory used by a field depends on whether it owns the GRIB handle of the related GRIB message. This is controlled by the :ref:`grib-handle-policy <grib-handle-policy>` config option.
 
-A field can also cache its metadata access for performance, thus increasing memory usage. This is controlled by the :ref:`use-grib-metadata-cache <use-grib-metadata-cache>` settings.
+A field can also cache its metadata access for performance, thus increasing memory usage. This is controlled by the :ref:`use-grib-metadata-cache <use-grib-metadata-cache>` config option.
 
 .. _grib-handle-policy:
 
@@ -76,12 +76,12 @@ Controls whether GRIB handles are kept in memory. The default is ``"cache"``. Th
 grib-handle-cache-size
 ++++++++++++++++++++++++++++
 
-When :ref:`grib-handle-policy <grib-handle-policy>` is ``"cache"``, the setting ``grib-handle-cache-size`` (default is ``1``) specifies the maximum number of GRIB handles kept in an in-memory cache per fieldlist. This is an LRU cache, so when it is full, the least recently used GRIB handle is removed and a new GRIB message is loaded from disk and added to the cache.
+When :ref:`grib-handle-policy <grib-handle-policy>` is ``"cache"``, the config option ``grib-handle-cache-size`` (default is ``1``) specifies the maximum number of GRIB handles kept in an in-memory cache per fieldlist. This is an LRU cache, so when it is full, the least recently used GRIB handle is removed and a new GRIB message is loaded from disk and added to the cache.
 
-Overriding the settings
+Overriding the configuration
 ++++++++++++++++++++++++++++
 
-In addition to changing the :ref:`settings` themselves, it is possible to override the parameters above when loading a given fieldlist by passing them as keyword arguments to :func:`from_source`. The parameter names are the same but the dashes are replaced by underscores. When a parameter is not specified in :func:`from_source` or is set to None, its value is taken from the actual :ref:`settings`. E.g.:
+In addition to changing the :ref:`config`, it is possible to override the parameters discussed above when loading a given fieldlist by passing them as keyword arguments to :func:`from_source`. The parameter names are the same but the dashes are replaced by underscores. When a parameter is not specified in :func:`from_source` or is set to None, its value is taken from the actual :ref:`config`. E.g.:
 
 .. code-block:: python
 
@@ -116,5 +116,5 @@ fields up-front and keep them in memory by reading it as a :ref:`stream source <
 
 
 .. note::
-   The default settings are chosen to keep the memory usage low and the performance high. However, depending on the use case, the settings can be adjusted to optimize the memory
+   The default config options are chosen to keep the memory usage low and the performance high. However, depending on the use case, the configuration can be adjusted to optimize the memory
    usage and performance.

@@ -13,7 +13,7 @@ import weakref
 from importlib import import_module
 
 from earthkit.data.core import Base
-from earthkit.data.core.settings import SETTINGS
+from earthkit.data.core.config import CONFIG
 from earthkit.data.decorators import detect_out_filename
 from earthkit.data.decorators import locked
 
@@ -201,7 +201,7 @@ def reader(source, path, **kwargs):
             return r
         raise Exception(f"File is empty: '{path}'")
 
-    n_bytes = SETTINGS.get("reader-type-check-bytes")
+    n_bytes = CONFIG.get("reader-type-check-bytes")
     with open(path, "rb") as f:
         magic = f.read(n_bytes)
 
@@ -219,7 +219,7 @@ def reader(source, path, **kwargs):
 def memory_reader(source, buffer, **kwargs):
     """Create a reader for data held in a memory buffer"""
     assert isinstance(buffer, (bytes, bytearray)), source
-    n_bytes = SETTINGS.get("reader-type-check-bytes")
+    n_bytes = CONFIG.get("reader-type-check-bytes")
     magic = buffer[: min(n_bytes, len(buffer) - 1)]
 
     return _find_reader("memory_reader", source, buffer, magic=magic, **kwargs)
@@ -230,7 +230,7 @@ def stream_reader(source, stream, memory, **kwargs):
     magic = None
     if hasattr(stream, "peek") and callable(stream.peek):
         try:
-            n_bytes = SETTINGS.get("reader-type-check-bytes")
+            n_bytes = CONFIG.get("reader-type-check-bytes")
             magic = stream.peek(n_bytes)
             if len(magic) > n_bytes:
                 magic = magic[:n_bytes]

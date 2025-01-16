@@ -11,8 +11,8 @@
 
 import re
 
-from earthkit.data.core.settings import SETTINGS_AND_HELP
-from earthkit.data.core.settings import env_var_name
+from earthkit.data.core.config import CONFIG_AND_HELP
+from earthkit.data.core.config import env_var_name
 
 
 def execute(*args):
@@ -21,10 +21,10 @@ def execute(*args):
     print("   :header-rows: 1")
     print("   :widths: 40 60")
     print()
-    print("   * - Name")
-    print("     - Environment Variable")
+    print("   * - Config option name")
+    print("     - Environment variable")
     print()
-    for k, v in sorted(SETTINGS_AND_HELP.items()):
+    for k, v in sorted(CONFIG_AND_HELP.items()):
         if len(args) and not any(re.match(arg, k) for arg in args):
             continue
 

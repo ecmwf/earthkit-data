@@ -9,7 +9,7 @@ User guide
    data
    data_format/index.rst
    streams
-   settings
+   config
    caching
    xarray/index.rst
    misc/index.rst

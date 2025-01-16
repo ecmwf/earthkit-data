@@ -12,10 +12,6 @@ import datetime
 import numpy as np
 import pytest
 
-from earthkit.data import from_source
-from earthkit.data.indexing.fieldlist import FieldArray
-from earthkit.data.sources.array_list import ArrayField
-
 
 def _build_list(prototype):
     return [
@@ -171,10 +167,14 @@ def lod_ll_forecast_4():
 
 
 def build_lod_fieldlist(lod, mode):
+    from earthkit.data import from_source
+    from earthkit.data.indexing.fieldlist import SimpleFieldList
+    from earthkit.data.sources.array_list import ArrayField
+
     if mode == "list-of-dicts":
         return from_source("list-of-dicts", lod)
     elif mode == "loop":
-        ds = FieldArray()
+        ds = SimpleFieldList()
         for f in lod:
             ds.append(ArrayField(f["values"], f))
         return ds

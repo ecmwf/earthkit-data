@@ -21,9 +21,9 @@ LOG = logging.getLogger(__name__)
 
 
 def get_use_grib_metadata_cache():
-    from earthkit.data.core.settings import SETTINGS
+    from earthkit.data.core.config import CONFIG
 
-    return SETTINGS.get("use-grib-metadata-cache")
+    return CONFIG.get("use-grib-metadata-cache")
 
 
 class GribMemoryReader(Reader):

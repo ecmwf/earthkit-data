@@ -355,10 +355,10 @@ class GribFieldListInFiles(GribFieldList):
     ):
         super().__init__(*args, **kwargs)
 
-        from earthkit.data.core.settings import SETTINGS
+        from earthkit.data.core.config import CONFIG
 
         def _get_opt(v, name):
-            return v if v is not None else SETTINGS.get(name)
+            return v if v is not None else CONFIG.get(name)
 
         self._field_manager = GribFieldManager(_get_opt(grib_field_policy, "grib-field-policy"), self)
         self._handle_manager = GribHandleManager(
