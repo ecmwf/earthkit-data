@@ -66,7 +66,7 @@ class ECMWFApi(FileSource):
 
         self.service()  # Trigger password prompt before threading
 
-        nthreads = min(self.settings("number-of-download-threads"), len(requests))
+        nthreads = min(self.config("number-of-download-threads"), len(requests))
 
         if nthreads < 2:
             self.path = [self._retrieve(r) for r in requests]

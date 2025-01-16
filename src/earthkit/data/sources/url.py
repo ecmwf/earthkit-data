@@ -13,7 +13,7 @@ import logging
 from multiurl import Downloader
 
 from earthkit.data.core.caching import cache_file
-from earthkit.data.core.settings import SETTINGS
+from earthkit.data.core.config import CONFIG
 from earthkit.data.core.statistics import record_statistics
 from earthkit.data.utils.parts import PathAndParts
 from earthkit.data.utils.progbar import progress_bar
@@ -52,7 +52,7 @@ def download_and_cache(
     downloader = Downloader(
         url,
         chunk_size=chunk_size,
-        timeout=SETTINGS.get("url-download-timeout"),
+        timeout=CONFIG.get("url-download-timeout"),
         verify=verify,
         parts=parts,
         range_method=range_method,
@@ -76,11 +76,11 @@ def download_and_cache(
         return
 
     def out_of_date(url, path, cache_data):
-        if SETTINGS.get("check-out-of-date-urls") is False:
+        if CONFIG.get("check-out-of-date-urls") is False:
             return False
 
         if downloader.out_of_date(path, cache_data):
-            if SETTINGS.get("download-out-of-date-urls") or update_if_out_of_date:
+            if CONFIG.get("download-out-of-date-urls") or update_if_out_of_date:
                 LOG.warning(
                     "Invalidating cache version and re-downloading %s",
                     url,
@@ -261,7 +261,7 @@ class Url(UrlBase):
 
         self.downloader = Downloader(
             self.url_spec.zipped(),
-            timeout=SETTINGS.get("url-download-timeout"),
+            timeout=CONFIG.get("url-download-timeout"),
             statistics_gatherer=record_statistics,
             progress_bar=progress_bar,
             resume_transfers=True,
@@ -300,11 +300,11 @@ class Url(UrlBase):
             self.content_type = h.get("content-type")
 
     def out_of_date(self, url, path, cache_data):
-        if SETTINGS.get("check-out-of-date-urls") is False:
+        if CONFIG.get("check-out-of-date-urls") is False:
             return False
 
         if self.downloader.out_of_date(path, cache_data):
-            if SETTINGS.get("download-out-of-date-urls") or self.update_if_out_of_date:
+            if CONFIG.get("download-out-of-date-urls") or self.update_if_out_of_date:
                 LOG.warning(
                     "Invalidating cache version and re-downloading %s",
                     self.url,
@@ -348,7 +348,7 @@ class SingleUrlStream(UrlBase):
 
         downloader = Downloader(
             self.url_spec.zipped(),
-            timeout=SETTINGS.get("url-download-timeout"),
+            timeout=CONFIG.get("url-download-timeout"),
             # verify=self.verify,
             # range_method=self.range_method,
             # http_headers=self.prepare_headers(self.url),
