@@ -59,3 +59,4 @@ dependencies:
 - ipykernel
 - geopandas
 - array-api-compat
+- deprecation
