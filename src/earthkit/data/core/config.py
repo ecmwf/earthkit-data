@@ -629,73 +629,97 @@ class Config:
         return (False, None, None)
 
 
-def _config_file():
-    name = env_var_name(CONFIG_FILE_ENV_NAME)
-    if name in os.environ:
-        return os.environ[name]
-
-    return os.path.expanduser(os.path.join(CONFIG_DIR, CONFIG_FILE_NAME))
-
-
 # TODO: remove this function when the old config (aka settings) is not used anymore
-def migrate_old_config():
-    old_config_yaml = os.path.expanduser(OLD_CONFIG_FILE)
-    if os.path.exists(old_config_yaml):
+def _migrate_old_config(config_file):
+    old_config_file = os.path.expanduser(OLD_CONFIG_FILE)
+    if os.path.exists(old_config_file):
         config = dict(**DEFAULTS)
         try:
-            with open(old_config_yaml) as f:
+            with open(old_config_file) as f:
                 s = yaml.load(f, Loader=yaml.SafeLoader)
                 if not isinstance(s, dict):
                     return False
 
                 config.update(s)
-                save_config(config_yaml, config)
+                save_config(config_file, config)
                 return True
         except Exception:
-            pass
+            LOG.error(
+                f"Cannot migrate old settings to earthkit-data config file={config_file}",
+                exc_info=True,
+            )
     return False
 
 
+def _init_config_file():
+    config_file = None
+
+    name = env_var_name(CONFIG_FILE_ENV_NAME)
+    if name in os.environ:
+        config_file = os.environ[name]
+    if not config_file:
+        config_file = os.path.expanduser(os.path.join(CONFIG_DIR, CONFIG_FILE_NAME))
+
+    if config_file is None:
+        LOG.error("Cannot construct earthkit-data config file path")
+        return None
+
+    try:
+        config_dir = os.path.dirname(config_file)
+        if not os.path.exists(config_dir):
+            ori_mask = os.umask(0o077)
+            os.makedirs(config_dir, 0o700)
+            os.umask(ori_mask)
+    except Exception:
+        LOG.error(
+            f"Cannot create earthkit-data config directory={config_dir}",
+            exc_info=True,
+        )
+
+    if os.path.exists(config_dir):
+        try:
+            if not os.path.exists(config_file):
+                if not _migrate_old_config(config_file):
+                    save_config(config_yaml, DEFAULTS)
+        except Exception:
+            LOG.error(
+                f"Cannot save settings to earthkit-data config file={config_file}",
+                exc_info=True,
+            )
+
+    return config_file
+
+
+def _init_config(config_yaml):
+    save = False
+    config = dict(**DEFAULTS)
+    try:
+        with open(config_yaml) as f:
+            s = yaml.load(f, Loader=yaml.SafeLoader)
+            if not isinstance(s, dict):
+                s = {}
+
+            config.update(s)
+
+        # if s != config:
+        #     save = True
+
+        if config.get("version") < VERSION:
+            save = True
+
+    except Exception:
+        LOG.error(
+            "Cannot load earthkit-data config (%s), reverting to defaults",
+            config_yaml,
+            exc_info=True,
+        )
+
+    return config, save
+
+
 save = False
-config_yaml = _config_file()
-
-try:
-    config_dir = os.path.dirname(config_yaml)
-    if not os.path.exists(config_dir):
-        ori_mask = os.umask(0o077)
-        os.makedirs(config_dir, 0o700)
-        os.umask(ori_mask)
-    if not os.path.exists(config_yaml):
-        if not migrate_old_config():
-            save_config(config_yaml, DEFAULTS)
-except Exception:
-    LOG.error(
-        "Cannot create earthkit-data config directory, using defaults (%s)",
-        config_yaml,
-        exc_info=True,
-    )
-
-config = dict(**DEFAULTS)
-try:
-    with open(config_yaml) as f:
-        s = yaml.load(f, Loader=yaml.SafeLoader)
-        if not isinstance(s, dict):
-            s = {}
-
-        config.update(s)
-
-    # if s != config:
-    #     save = True
-
-    if config.get("version") < VERSION:
-        save = True
-
-except Exception:
-    LOG.error(
-        "Cannot load earthkit-data config (%s), reverting to defaults",
-        config_yaml,
-        exc_info=True,
-    )
+config_yaml = _init_config_file()
+config, save = _init_config(config_yaml)
 
 CONFIG = Config(config_yaml, config)
 if save:
