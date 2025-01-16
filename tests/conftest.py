@@ -65,20 +65,20 @@ def pytest_runtest_setup(item):
     need_cache = "cache" in marks_in_items
 
     # settings
-    from earthkit.data import settings
+    from earthkit.data import config
 
     # ensure settings are not saved automatically
-    settings.auto_save_settings = False
+    config.autosave = False
 
     # ensure all the tests use the default settings
     if marked_no_cache_init:
         # do not broadcast setting changes, otherwise
         # the cache would be initialised
-        settings._notify_enabled = False
-        settings.reset()
-        settings._notify_enabled = True
+        config._notify_enabled = False
+        config.reset()
+        config._notify_enabled = True
     elif need_cache:
-        settings.reset()
-        settings.set("cache-policy", "user")
+        config.reset()
+        config.set("cache-policy", "user")
     else:
-        settings.reset()
+        config.reset()

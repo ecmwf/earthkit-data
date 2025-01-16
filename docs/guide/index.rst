@@ -11,7 +11,7 @@ User guide
    encoders
    targets
    streams
-   settings
+   config
    caching
    xarray/index.rst
    misc/index.rst

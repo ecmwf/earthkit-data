@@ -9,14 +9,18 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
 
 import pytest
 
 from earthkit.data import settings
 from earthkit.data.core.temporary import temp_directory
+from earthkit.data.core.temporary import temp_file
+
+# TODO: remove all these tests when settings are removed
 
 
-def read_settings_yaml(path="~/.earthkit-data/settings.yaml"):
+def read_settings_yaml(path=os.path.expanduser("~/.config/earthkit/data/config.yaml")):
     try:
         with open(path) as f:
             import yaml
@@ -173,50 +177,65 @@ def test_settings_temporary_nested():
         assert settings.get("number-of-download-threads") == 7
 
 
-@pytest.mark.parametrize("autosave", [True, False])
-def test_settings_temporary_autosave(autosave):
-    v_ori = settings.auto_save_settings
-    with settings.temporary():
-        settings.auto_save_settings = autosave
-        v = settings.get("number-of-download-threads")
-        settings.set("number-of-download-threads", v + 10)
-        s = read_settings_yaml()
-        if s:
-            assert s["number-of-download-threads"] == v
-    assert settings.auto_save_settings == autosave
-    settings.auto_save_settings = v_ori
+def test_settings_temporary_autosave_1():
+    with temp_file() as config_file:
+        with settings.temporary(config_yaml=config_file):
+            # now settings should contain the default values
+            # we ensure that the settings are saved into the file
+            settings._save()
+
+            key = "number-of-download-threads"
+
+            v_ori = settings.auto_save_settings
+            settings.auto_save_settings = False
+
+            # when a key has a default value, it is not saved into the settings file
+            s = read_settings_yaml(config_file)
+            assert key not in s
+
+            v = settings.get(key)
+            settings.set(key, v + 10)
+            assert settings.get(key) == v + 10
+
+            # the settings file should be the same
+            s = read_settings_yaml(config_file)
+            assert key not in s
+
+            settings.auto_save_settings = v_ori
 
 
-def test_settings_auto_save_1():
-    v_ori = settings.auto_save_settings
-    settings.auto_save_settings = False
-    v = settings.get("number-of-download-threads")
-    settings.set("number-of-download-threads", v + 10)
-    assert settings.get("number-of-download-threads") == v + 10
-    s = read_settings_yaml()
-    if s:
-        assert s["number-of-download-threads"] == v
-    settings.auto_save_settings = v_ori
+def test_settings_temporary_autosave_2():
+    with temp_file() as config_file:
+        with settings.temporary(config_yaml=config_file):
+            # now settings should contain the default values
+            # we ensure that the settings are saved into the file
+            settings._save()
 
+            key = "number-of-download-threads"
 
-def test_settings_auto_save_2():
-    v_ori = settings.auto_save_settings
-    settings.auto_save_settings = True
+            v_ori = settings.auto_save_settings
+            settings.auto_save_settings = True
 
-    v = settings.get("number-of-download-threads")
-    settings.set("number-of-download-threads", v + 10)
-    assert settings.get("number-of-download-threads") == v + 10
-    s = read_settings_yaml()
-    if s:
-        assert s["number-of-download-threads"] == v + 10
+            # when a key has a default value, it is not saved into the settings file
+            s = read_settings_yaml(config_file)
+            assert key not in s
 
-    settings.set("number-of-download-threads", v)
-    assert settings.get("number-of-download-threads") == v
-    s = read_settings_yaml()
-    if s:
-        assert s["number-of-download-threads"] == v + 10
+            v = settings.get(key)
+            v_new = v + 10
+            settings.set(key, v_new)
+            assert settings.get(key) == v_new
 
-    settings.auto_save_settings = v_ori
+            # the file changed
+            s = read_settings_yaml(config_file)
+            assert s[key] == v_new
+
+            settings.auto_save_settings = False
+            settings.set(key, v)
+            assert settings.get(key) == v
+            s = read_settings_yaml(config_file)
+            assert s[key] == v_new
+
+            settings.auto_save_settings = v_ori
 
 
 @pytest.mark.parametrize(

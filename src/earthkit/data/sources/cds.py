@@ -120,7 +120,7 @@ class CdsRetriever(FileSource):
 
         self.client()  # Trigger password prompt before threading
 
-        nthreads = min(self.settings("number-of-download-threads"), len(self.requests))
+        nthreads = min(self.config("number-of-download-threads"), len(self.requests))
 
         if nthreads < 2:
             self.path = [self._retrieve(dataset, r) for r in self.requests]

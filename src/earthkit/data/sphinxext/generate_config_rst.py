@@ -13,7 +13,7 @@ import getpass
 import os
 import re
 
-from earthkit.data.core.settings import SETTINGS_AND_HELP
+from earthkit.data.core.config import CONFIG_AND_HELP
 
 HOME = os.path.expanduser("~/")
 USER = getpass.getuser()
@@ -50,7 +50,7 @@ def execute(*args):
     print("     - Default")
     print("     - Description")
     print()
-    for k, v in sorted(SETTINGS_AND_HELP.items()):
+    for k, v in sorted(CONFIG_AND_HELP.items()):
         if len(args) and not any(re.match(arg, k) for arg in args):
             continue
 

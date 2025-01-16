@@ -29,7 +29,7 @@ from abc import abstractmethod
 from copy import deepcopy
 from random import randrange
 
-from earthkit.data.core.settings import SETTINGS
+from earthkit.data.core.config import CONFIG
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.utils import humanize
 from earthkit.data.utils.html import css
@@ -186,8 +186,8 @@ class CacheManager(threading.Thread):
     def _ensure_in_cache(self, path):
         assert self._policy.file_in_cache_directory(path), f"File not in cache {path}"
 
-    def _settings_changed(self, policy):
-        LOG.debug("Settings changed")
+    def _config_changed(self, policy):
+        LOG.debug("Config changed")
         self._policy = policy
         self._connection = None  # The user may have changed the cache directory
         self._check_cache_size()
@@ -575,15 +575,15 @@ class CachePolicy(metaclass=ABCMeta):
     _name = None
 
     def __init__(self):
-        self._settings = {k: SETTINGS.get(k) for k in self.CACHE_KEYS}
+        self._config = {k: CONFIG.get(k) for k in self.CACHE_KEYS}
 
     @property
     def name(self):
         return self._name
 
     @staticmethod
-    def from_settings():
-        name = SETTINGS.get("cache-policy")
+    def from_config():
+        name = CONFIG.get("cache-policy")
         p = _cache_policies.get(name, None)
         if p is not None:
             return p()
@@ -591,15 +591,15 @@ class CachePolicy(metaclass=ABCMeta):
             raise NotImplementedError(f"Unknown cache policy={name}")
 
     def outdated(self):
-        return any(self._settings.get(k) != SETTINGS.get(k) for k in self.OUTDATED_CHECK_KEYS)
+        return any(self._config.get(k) != CONFIG.get(k) for k in self.OUTDATED_CHECK_KEYS)
 
     def update(self):
         changed = False
         for k in self.CACHE_KEYS:
-            if self._settings.get(k) != SETTINGS.get(k):
+            if self._config.get(k) != CONFIG.get(k):
                 changed = True
             if k not in self.OUTDATED_CHECK_KEYS:
-                self._settings[k] = SETTINGS.get(k)
+                self._config[k] = CONFIG.get(k)
         return changed
 
     @abstractmethod
@@ -672,7 +672,7 @@ class NoCachePolicy(CachePolicy):
     def directory(self):
         if self._dir is None:
             if self._dir is None:
-                root_dir = self._expand_path(self._settings.get("temporary-directory-root"))
+                root_dir = self._expand_path(self._config.get("temporary-directory-root"))
                 self._dir = temp_directory(dir=root_dir)
         return self._dir.path
 
@@ -698,7 +698,7 @@ class UserCachePolicy(CachePolicy):
 
     def __init__(self):
         super().__init__()
-        self._path = self._expand_path(self._settings.get("user-cache-directory"))
+        self._path = self._expand_path(self._config.get("user-cache-directory"))
         if not os.path.exists(self._path):
             os.makedirs(self._path, exist_ok=True)
 
@@ -709,16 +709,16 @@ class UserCachePolicy(CachePolicy):
         return self._path
 
     def use_message_position_index_cache(self):
-        return self._settings.get("use-message-position-index-cache")
+        return self._config.get("use-message-position-index-cache")
 
     def is_cache_size_managed(self):
         return self.maximum_cache_size() is not None or self.maximum_cache_disk_usage() is not None
 
     def maximum_cache_size(self):
-        return self._settings.get("maximum-cache-size")
+        return self._config.get("maximum-cache-size")
 
     def maximum_cache_disk_usage(self):
-        return self._settings.get("maximum-cache-disk-usage")
+        return self._config.get("maximum-cache-disk-usage")
 
     def __repr__(self):
         r = (
@@ -737,7 +737,7 @@ class TmpCachePolicy(UserCachePolicy):
 
     def __init__(self):
         super().__init__()
-        root_dir = self._expand_path(self._settings.get("temporary-cache-directory-root"))
+        root_dir = self._expand_path(self._config.get("temporary-cache-directory-root"))
         self._dir = temp_directory(dir=root_dir)
 
     def directory(self):
@@ -778,17 +778,17 @@ class Cache:
 
     def _make_policy(self):
         if self._policy is None:
-            self._policy = CachePolicy.from_settings()
+            self._policy = CachePolicy.from_config()
             LOG.debug(f"Cache: created cache policy={self._policy}")
             if self._policy.managed():
                 with self._manager_lock:
                     if self._manager is None:
                         self._manager = CacheManager()
                         self._manager.start()
-                    self._call_manager_settings_changed()
+                    self._call_manager_config_changed()
 
-    def _settings_changed(self):
-        LOG.debug("Cache: settings_changed, cache-policy=" + SETTINGS.get("cache-policy"))
+    def _config_changed(self):
+        LOG.debug("Cache: config_changed, cache-policy=" + CONFIG.get("cache-policy"))
         if self.policy.outdated():
             with self._policy_lock:
                 # Check again, another thread/process may have modified the policy
@@ -797,7 +797,7 @@ class Cache:
                     self._make_policy()
         elif self.policy.update() and self.policy.managed():
             with self._manager_lock:
-                self._call_manager_settings_changed()
+                self._call_manager_config_changed()
 
     def _call_manager(self, forget, name, *args, **kwargs):
         if self.policy.managed() and self._manager is not None:
@@ -811,8 +811,8 @@ class Cache:
                     s = self._manager.enqueue(func, *args, **kwargs)
                     return s.result()
 
-    def _call_manager_settings_changed(self):
-        s = self._manager.enqueue(self._manager._settings_changed, deepcopy(self._policy))
+    def _call_manager_config_changed(self):
+        s = self._manager.enqueue(self._manager._config_changed, deepcopy(self._policy))
         return s.result()
 
     def _dump_database(self, *args, **kwargs):
@@ -851,17 +851,17 @@ class Cache:
         """Check the cache size and trim it down when needed.
 
         Automatically runs when a new entry is added to the cache or the
-        :ref:`cache_settings` change. Does not work when the
+        :ref:`cache_config` change. Does not work when the
         ``cache-policy`` is "off".
 
         The algorithm includes three steps:
 
         - first, the cache size is determined
         - next, if the size is larger than the limit defined by
-          the ``maximum-cache-size`` settings the oldest cache entries are
+          the ``maximum-cache-size`` config the oldest cache entries are
           removed until the desired size reached
         - finally, if the size is larger than the limit defined by the
-          ``maximum-cache-disk-usage`` settings the oldest cache entries are
+          ``maximum-cache-disk-usage`` config the oldest cache entries are
           removed until the desired size reached
 
         """
@@ -1098,4 +1098,4 @@ def auxiliary_cache_file(
 
 
 # housekeeping()
-SETTINGS.on_change(CACHE._settings_changed)
+CONFIG.on_change(CACHE._config_changed)

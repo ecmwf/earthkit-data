@@ -20,8 +20,8 @@ from earthkit.data.wrappers import get_wrapper as from_object
 
 from .arguments.transformers import ALL
 from .core.caching import CACHE as cache
+from .core.config import CONFIG as config
 from .core.fieldlist import FieldList
-from .core.settings import SETTINGS as settings
 from .encoders import get_encoder
 from .indexing.fieldlist import SimpleFieldList
 from .readers.grib.output import new_grib_output
@@ -33,6 +33,8 @@ from .targets import get_target
 from .targets import to_target
 from .utils.examples import download_example_file
 from .utils.examples import remote_example_file
+
+settings = config
 
 __all__ = [
     "ALL",
@@ -48,6 +50,7 @@ __all__ = [
     "transform",
     "new_grib_output",
     "remote_example_file",
+    "config",
     "settings",
     "SimpleFieldList",
     "Source",

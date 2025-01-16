@@ -132,7 +132,7 @@ class MultiSource(Source):
         if not has_callables:
             return sources
 
-        nthreads = min(self.settings("number-of-download-threads"), len(callables))
+        nthreads = min(self.config("number-of-download-threads"), len(callables))
         if nthreads < 2:
             return [s() for s in sources]
 
