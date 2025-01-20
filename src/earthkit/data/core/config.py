@@ -681,7 +681,7 @@ def _init_config_file():
         try:
             if not os.path.exists(config_file):
                 if not _migrate_old_config(config_file):
-                    save_config(config_yaml, DEFAULTS)
+                    save_config(config_file, DEFAULTS)
         except Exception:
             LOG.error(
                 f"Cannot save settings to earthkit-data config file={config_file}",
