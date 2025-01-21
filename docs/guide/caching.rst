@@ -15,7 +15,7 @@ Please note that the earthkit-data cache configuration is managed through the :d
 
 .. warning::
 
-  By default the caching is disabled, i.e. the :ref:`cache-policy <cache_policies>` is "off".
+  By default the caching is disabled, i.e. the :ref:`cache-policy <cache_policies>` is :ref:`off <off_cache_policy>`.
 
 .. warning::
 
@@ -206,7 +206,7 @@ Examples:
       >>> cache.policy.name
       'user'
       >>> cache.directory()
-      '/var/folders/ng/g0zkhc2s42xbslpsywwp_26m0000gn/T/earthkit-data-cgr'
+      '/var/folders/ng/g0zkhc2s42xbslpsywwp_26m0000gn/T/earthkit-data-myusername'
       >>> cache.size()
       846785699
       >>> cache.summary_dump_database()

@@ -14,8 +14,8 @@ import sys
 
 import pytest
 
+from earthkit.data import config
 from earthkit.data import from_source
-from earthkit.data import settings
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file
@@ -49,11 +49,11 @@ def test_url_source_check_out_of_date():
         )
 
     with temp_directory() as tmpdir:
-        with settings.temporary():
-            settings.set("user-cache-directory", tmpdir)
+        with config.temporary():
+            config.set("user-cache-directory", tmpdir)
             load()
 
-            settings.set("check-out-of-date-urls", False)
+            config.set("check-out-of-date-urls", False)
             with network_off():
                 load()
 
