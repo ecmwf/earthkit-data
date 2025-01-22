@@ -48,7 +48,7 @@ dependencies = [
 optional-dependencies.all = [
   "cartopy",
   "cdsapi>=0.7.2",
-  "covjsonkit>=0.0.28",
+  "covjsonkit>=0.1.1",
   "earthkit-geo>=0.2",
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
@@ -60,11 +60,11 @@ optional-dependencies.all = [
 ]
 optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
 optional-dependencies.ci = [ "numpy" ]
-optional-dependencies.covjsonkit = [ "covjsonkit>=0.0.28" ]
+optional-dependencies.covjsonkit = [ "covjsonkit>=0.1.1" ]
 optional-dependencies.dev = [
   "cartopy",
   "cdsapi>=0.7.2",
-  "covjsonkit>=0.0.28",
+  "covjsonkit>=0.1.1",
   "earthkit-data-demo-source",
   "earthkit-geo>=0.2",
   "ecmwf-api-client>=1.6.1",
