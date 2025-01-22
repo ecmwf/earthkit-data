@@ -25,6 +25,19 @@ def _is_default(magic, content_type):
     return (magic is None or len(magic) == 0) and (content_type is None or len(content_type) == 0)
 
 
+def is_grib_file(path):
+    from earthkit.data.core.settings import SETTINGS
+
+    n_bytes = SETTINGS.get("reader-type-check-bytes")
+    magic = None
+    with open(path, "rb") as f:
+        magic = f.read(n_bytes)
+
+    if _match_magic(magic, False):
+        return True
+    return _match_magic(magic, True)
+
+
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
         from .file import GRIBReader
