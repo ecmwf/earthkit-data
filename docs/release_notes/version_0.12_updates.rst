@@ -1,6 +1,20 @@
 Version 0.12 Updates
 /////////////////////////
 
+Version 0.12.1
+===============
+
+Changes
+++++++++
+
+- Increased covjsonkit version to 0.1.1
+
+Fixes
+++++++++
+
+- Fixed issue when the earthkit Xarray engine prevented opening geotiff with :py:meth:`xarray.open_dataset()` (:pr:`591`)
+- Fixed issue when no "units" attribute was added to the Xarray dataset generated from a single GRIB variable (:pr:`592`)
+
 
 Version 0.12.0
 ===============
