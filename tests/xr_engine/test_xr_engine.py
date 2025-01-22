@@ -469,10 +469,14 @@ def test_xr_engine_single_field():
     lats = np.linspace(90, -90, 19)
     lons = np.linspace(0, 350, 36)
 
-    attrs_ref = {
-        "param": "t",
+    var_attrs_ref = {
         "standard_name": "air_temperature",
         "long_name": "Temperature",
+        "units": "K",
+    }
+
+    global_attrs_ref = {
+        "param": "t",
         "paramId": 130,
         "class": "od",
         "stream": "oper",
@@ -488,7 +492,7 @@ def test_xr_engine_single_field():
         "institution": "ECMWF",
     }
 
-    assert ds.attrs == attrs_ref
+    assert ds.attrs == global_attrs_ref
 
     data_vars = ["t"]
 
@@ -509,6 +513,9 @@ def test_xr_engine_single_field():
     assert [v for v in ds.data_vars] == data_vars
 
     da = ds["t"]
+
+    for k, v in var_attrs_ref.items():
+        assert da.attrs[k] == v
 
     r = da[:, :]
     r.shape == (19, 36)
