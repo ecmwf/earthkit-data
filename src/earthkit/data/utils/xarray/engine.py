@@ -188,10 +188,12 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             - "fixed": Use the attributes defined in ``variable_attrs`` as variables
               attributes and ``global_attrs`` as global attributes.
             - "unique": Use all the attributes defined in ``attrs``, ``variable_attrs``
-              and ``global_attrs``. When an attribute has unique a value for a dataset
+              and ``global_attrs``. When an attribute has unique value for a dataset
               it will be a global attribute, otherwise it will be a variable attribute.
-              However keys in ``variable_attrs`` are always used as variable attributes,
-              while keys in ``global_attrs`` are always used as global attributes.
+              However, this logic is only applied if a unique variable attribute can be
+              a global attribute according to the CF conventions Appendix A. (e.g. "units" cannot
+              be a global attribute). Additionally, keys in ``variable_attrs`` are always used as
+              variable attributes, while keys in ``global_attrs`` are always used as global attributes.
         attrs: str, number, callable, dict or list of these, None
             Attribute or list of attributes. Only used when ``attrs_mode`` is ``unique``.
             Its default value (None) expands to [] unless the ``profile`` overwrites it.
