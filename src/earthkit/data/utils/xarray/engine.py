@@ -188,10 +188,12 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             - "fixed": Use the attributes defined in ``variable_attrs`` as variables
               attributes and ``global_attrs`` as global attributes.
             - "unique": Use all the attributes defined in ``attrs``, ``variable_attrs``
-              and ``global_attrs``. When an attribute has unique a value for a dataset
+              and ``global_attrs``. When an attribute has unique value for a dataset
               it will be a global attribute, otherwise it will be a variable attribute.
-              However keys in ``variable_attrs`` are always used as variable attributes,
-              while keys in ``global_attrs`` are always used as global attributes.
+              However, this logic is only applied if a unique variable attribute can be
+              a global attribute according to the CF conventions Appendix A. (e.g. "units" cannot
+              be a global attribute). Additionally, keys in ``variable_attrs`` are always used as
+              variable attributes, while keys in ``global_attrs`` are always used as global attributes.
         attrs: str, number, callable, dict or list of these, None
             Attribute or list of attributes. Only used when ``attrs_mode`` is ``unique``.
             Its default value (None) expands to [] unless the ``profile`` overwrites it.
@@ -293,7 +295,21 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
     @classmethod
     def guess_can_open(cls, filename_or_obj):
-        return True  # filename_or_obj.endswith(".grib")
+        try:
+            from earthkit.data.core import Base
+
+            if isinstance(filename_or_obj, Base):
+                return True
+            elif isinstance(filename_or_obj, str):
+                from earthkit.data.readers.grib import is_grib_file
+
+                return is_grib_file(filename_or_obj)
+        except Exception:
+            LOG.debug(
+                "Failed to guess if %s can be opened by the earthkit backend", filename_or_obj, exc_info=True
+            )
+
+        return False
 
     @staticmethod
     def _fieldlist(filename_or_obj, source_type):
@@ -301,15 +317,10 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
         if isinstance(filename_or_obj, Base):
             ds = filename_or_obj
-        # TODO: Add Path? or handle with try statement
         elif isinstance(filename_or_obj, str):
             from earthkit.data import from_source
 
             ds = from_source(source_type, filename_or_obj)
-        else:
-            from earthkit.data import from_object
-
-            ds = from_object(filename_or_obj)
         return ds
 
 
