@@ -34,7 +34,7 @@ def read_config_yaml(path=os.path.expanduser("~/.config/earthkit/data/config.yam
 @pytest.mark.parametrize(
     "param,default_value,new_value",
     [
-        ("number-of-download-threads", 5, 2),
+        ("url-download-timeout", 30, 5),
     ],
 )
 def test_configs_params_set_reset(param, default_value, new_value):
@@ -62,7 +62,7 @@ def test_config_invalid():
 
     # invalid value
     with pytest.raises(ValueError):
-        config.set("number-of-download-threads", "A")
+        config.set("url-download-timeout", "A")
 
 
 @pytest.mark.parametrize(
@@ -128,51 +128,51 @@ def test_config_set_cache_numbers():
 
 def test_config_set_multi():
     with config.temporary():
-        config.set("number-of-download-threads", 7)
-        assert config.get("number-of-download-threads") == 7
+        config.set("url-download-timeout", 7)
+        assert config.get("url-download-timeout") == 7
 
-        config.set({"number-of-download-threads": 2, "url-download-timeout": 21})
-        assert config.get("number-of-download-threads") == 2
-        assert config.get("url-download-timeout") == 21
+        config.set({"url-download-timeout": 2, "check-out-of-date-urls": False})
+        assert config.get("url-download-timeout") == 2
+        assert not config.get("check-out-of-date-urls")
 
-        config.set(number_of_download_threads=3, url_download_timeout=11)
-        assert config.get("number-of-download-threads") == 3
+        config.set(url_download_timeout=11, check_out_of_date_urls=False)
         assert config.get("url-download-timeout") == 11
+        assert not config.get("check-out-of-date-urls")
 
         with pytest.raises(KeyError):
-            config.set({"number-of-download-threads": 2, "-invalid-": 21})
+            config.set({"url-download-timeout": 2, "-invalid-": 21})
 
         with pytest.raises(KeyError):
-            config.set(number_of_download_threads=3, __invalid__=11)
+            config.set(url_download_timeout=3, __invalid__=11)
 
 
 def test_config_temporary_single():
-    with config.temporary("number-of-download-threads", 7):
-        assert config.get("number-of-download-threads") == 7
+    with config.temporary("url-download-timeout", 7):
+        assert config.get("url-download-timeout") == 7
 
-    with config.temporary({"number-of-download-threads": 7}):
-        assert config.get("number-of-download-threads") == 7
+    with config.temporary({"url-download-timeout": 7}):
+        assert config.get("url-download-timeout") == 7
 
-    with config.temporary(number_of_download_threads=7):
-        assert config.get("number-of-download-threads") == 7
+    with config.temporary(url_download_timeout=7):
+        assert config.get("url-download-timeout") == 7
 
 
 def test_config_temporary_multi():
-    with config.temporary({"number-of-download-threads": 2, "url-download-timeout": 21}):
-        assert config.get("number-of-download-threads") == 2
-        assert config.get("url-download-timeout") == 21
+    with config.temporary({"url-download-timeout": 2, "check-out-of-date-urls": False}):
+        assert config.get("url-download-timeout") == 2
+        assert not config.get("check-out-of-date-urls")
 
-    with config.temporary(number_of_download_threads=3, url_download_timeout=11):
-        assert config.get("number-of-download-threads") == 3
-        assert config.get("url-download-timeout") == 11
+    with config.temporary(url_download_timeout=3, check_out_of_date_urls=False):
+        assert config.get("url-download-timeout") == 3
+        assert not config.get("check-out-of-date-urls")
 
 
 def test_config_temporary_nested():
-    with config.temporary("number-of-download-threads", 7):
-        assert config.get("number-of-download-threads") == 7
-        with config.temporary("number-of-download-threads", 10):
-            assert config.get("number-of-download-threads") == 10
-        assert config.get("number-of-download-threads") == 7
+    with config.temporary("url-download-timeout", 7):
+        assert config.get("url-download-timeout") == 7
+        with config.temporary("url-download-timeout", 10):
+            assert config.get("url-download-timeout") == 10
+        assert config.get("url-download-timeout") == 7
 
 
 def test_config_temporary_autosave_1():
@@ -182,7 +182,7 @@ def test_config_temporary_autosave_1():
             # we ensure that the configs are saved into the file
             config.save_as(config_file)
 
-            key = "number-of-download-threads"
+            key = "url-download-timeout"
 
             v_ori = config.autosave
             config.autosave = False
@@ -209,7 +209,7 @@ def test_config_temporary_autosave_2():
             # we ensure that the config is saved into the file
             config.save_as(config_file)
 
-            key = "number-of-download-threads"
+            key = "url-download-timeout"
 
             v_ori = config.autosave
             config.autosave = True
@@ -240,18 +240,18 @@ def test_config_temporary_autosave_2():
     "value,error", [("10000", None), (10000, None), ("1b", ValueError), ("A", ValueError)]
 )
 def test_config_env(monkeypatch, value, error):
-    env_key = "EARTHKIT_DATA_NUMBER_OF_DOWNLOAD_THREADS"
+    env_key = "EARTHKIT_DATA_URL_DOWNLOAD_TIMEOUT"
     monkeypatch.setenv(env_key, value)
 
     # v_ori = config.autosave
     # config.autosave = True
 
     if error is None:
-        v = config.get("number-of-download-threads")
+        v = config.get("url-download-timeout")
         assert v == 10000
     else:
         with pytest.raises(error):
-            config.get("number-of-download-threads")
+            config.get("url-download-timeout")
 
     # config.autosave = v_ori
 

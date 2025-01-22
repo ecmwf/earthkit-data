@@ -11,8 +11,8 @@
 
 import pytest
 
+from earthkit.data import config
 from earthkit.data import from_source
-from earthkit.data import settings
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file
 
@@ -56,7 +56,7 @@ def test_reader_padding_bytes(file_path, expected_type, expected_len):
     assert "file.File" in str(type(ds))
     assert "unknown" in str(type(ds._reader)).lower()
 
-    with settings.temporary("reader-type-check-bytes", 100):
+    with config.temporary("reader-type-check-bytes", 100):
         ds = from_source("file", tmp.path)
         if hasattr(ds, "_reader"):
             assert expected_type in str(type(ds._reader)).lower()

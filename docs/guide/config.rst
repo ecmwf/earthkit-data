@@ -58,8 +58,8 @@ We can create a temporary configuration (as a context manager) as a copy of the 
 
 Output::
 
-    8
-    12
+    30
+    5
     11
 
 .. warning::
@@ -93,47 +93,46 @@ Environment variables
 
 Each configuration parameter has a corresponding environment variable (see the full list :ref:`here <config_env_table>`). When an environment variable is set, it takes precedence over the config parameter as the following examples show.
 
-First, let us assume that the value of  ``number-of-download-threads`` is 5 in the config file and no environment variable is set.
+First, let us assume that the value of  ``url-download-timeout`` is 5 in the config file and no environment variable is set.
 
 .. code-block:: python
 
     >>> from earthkit.data import config
-    >>> config.get("number-of-download-threads")
-    5
+    >>> config.get("url-download-timeout")
+    30
 
-Then, set the environment variable ``EARTHKIT_DATA_NUMBER_OF_DOWNLOAD_THREADS``.
+Then, set the environment variable ``EARTHKIT_DATA_URL_DOWNLOAD_TIMEOUT``.
 
 .. code-block:: bash
 
-    export EARTHKIT_DATA_NUMBER_OF_DOWNLOAD_THREADS=26
-
+    export EARTHKIT_REGRID_URL_DOWNLOAD_TIMEOUT=5
 
 .. code-block:: python
 
     >>> from earthkit.data import config
-    >>> config.get("number-of-download-threads")
-    26
+    >>> config.get("url-download-timeout")
+    5
     >>> config.env()
-    {'number-of-download-threads': ('EARTHKIT_DATA_NUMBER_OF_DOWNLOAD_THREADS', '26')}
-    >>> config.set("number-of-download-threads", 10)
-    UserWarning: Config option 'number-of-download-threads' is also set by environment variable
-    'EARTHKIT_DATA_NUMBER_OF_DOWNLOAD_THREADS'.The environment variable takes precedence and
+    {'url-download-timeout': ('EARTHKIT_DATA_URL_DOWNLOAD_TIMEOUT', '5')}
+    >>> config.set("url-download-timeout", 10)
+    UserWarning: Config option 'url-download-timeout' is also set by environment variable
+    'EARTHKIT_DATA_URL_DOWNLOAD_TIMEOUT'.The environment variable takes precedence and
     its value is returned when calling get(). Still, the value set here will be
     saved to the config file.
-    >>> config.get("number-of-download-threads")
-    26
+    >>> config.get("url-download-timeout")
+    5
 
 Finally, unset the environment variable and check the config value again, which is now the value from the config file.
 
 .. code-block:: bash
 
-    unset EARTHKIT_DATA_NUMBER_OF_DOWNLOAD_THREADS
+    unset EARTHKIT_DATA_URL_DOWNLOAD_TIMEOUT
 
 
 .. code-block:: python
 
     >>> from earthkit.data import config
-    >>> config.get("number-of-download-threads")
+    >>> config.get("url-download-timeout")
     10
 
 
