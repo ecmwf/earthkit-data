@@ -293,7 +293,21 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
     @classmethod
     def guess_can_open(cls, filename_or_obj):
-        return True  # filename_or_obj.endswith(".grib")
+        try:
+            from earthkit.data.core import Base
+
+            if isinstance(filename_or_obj, Base):
+                return True
+            elif isinstance(filename_or_obj, str):
+                from earthkit.data.readers.grib import is_grib_file
+
+                return is_grib_file(filename_or_obj)
+        except Exception:
+            LOG.debug(
+                "Failed to guess if %s can be opened by the earthkit backend", filename_or_obj, exc_info=True
+            )
+
+        return False
 
     @staticmethod
     def _fieldlist(filename_or_obj, source_type):
@@ -301,15 +315,10 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
         if isinstance(filename_or_obj, Base):
             ds = filename_or_obj
-        # TODO: Add Path? or handle with try statement
         elif isinstance(filename_or_obj, str):
             from earthkit.data import from_source
 
             ds = from_source(source_type, filename_or_obj)
-        else:
-            from earthkit.data import from_object
-
-            ds = from_object(filename_or_obj)
         return ds
 
 
