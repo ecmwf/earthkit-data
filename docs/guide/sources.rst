@@ -1081,7 +1081,7 @@ wekeo
 
     - no hda_ RC file exists at the default location ``~/.hdarc``
     - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
-    - no credentials specified via the ``HDA_URL``, ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
+    - no credentials specified via the ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves Normalized Difference Vegetation Index data derived from EO satellite imagery in NetCDF format:
@@ -1092,16 +1092,11 @@ wekeo
 
       ds = earthkit.data.from_source(
           "wekeo",
-          "EO:CLMS:DAT:CGLS_GLOBAL_NDVI300_V1_333M",
+          "EO:CLMS:DAT:CLMS_GLOBAL_DMP_1KM_V2_10DAILY_NETCDF",
           request={
-              "datasetId": "EO:CLMS:DAT:CGLS_GLOBAL_NDVI300_V1_333M",
-              "dateRangeSelectValues": [
-                  {
-                      "name": "dtrange",
-                      "start": "2014-01-01T00:00:00.000Z",
-                      "end": "2014-01-01T23:59:59.999Z",
-                  }
-              ],
+              "dataset_id": "EO:CLMS:DAT:CLMS_GLOBAL_DMP_1KM_V2_10DAILY_NETCDF",
+              "startdate": "2019-01-01T00:00:00.000Z",
+              "enddate": "2019-01-01T23:59:59.999Z",
           },
       )
 
@@ -1131,7 +1126,7 @@ wekeocds
 
     - no hda_ RC file exists at the default location ``~/.hdarc``
     - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
-    - no credentials specified via the ``HDA_URL``, ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
+    - no credentials specified via the ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves ERA5 surface data for multiple days in GRIB format:
@@ -1142,14 +1137,14 @@ wekeocds
 
       ds = earthkit.data.from_source(
           "wekeocds",
-          "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS",
+          "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS_MONTHLY_MEANS",
           variable=["2m_temperature", "mean_sea_level_pressure"],
-          product_type=["reanalysis"],
+          product_type=["monthly_averaged_reanalysis_by_hour_of_day"],
           year=["2012"],
           month=["12"],
-          day=["12", "13", "14", "15"],
           time=["11:00"],
-          format="grib",
+          data_format="grib",
+          download_format="zip",
       )
 
   Data downloaded from WEkEO is stored in the the :ref:`cache <caching>`.
