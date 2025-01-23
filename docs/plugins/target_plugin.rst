@@ -3,7 +3,7 @@
 Targets plugins
 =============================
 
-** New in version 0.0.13 **
+*New in version 0.13.0*
 
 What is a target?
 ------------------

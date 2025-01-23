@@ -696,7 +696,7 @@ class Field(Base):
 
     def _write(self, target, **kwargs):
         assert target is not None
-        target._write_field(self, **kwargs)
+        target._write(self, **kwargs)
 
     def to_target(self, target, *args, **kwargs):
         r"""Write the field into a target object.
@@ -1677,7 +1677,7 @@ class FieldList(Index):
 
     def _write(self, target, **kwargs):
         assert target is not None
-        target._write_fieldlist(self, **kwargs)
+        target._write(self, **kwargs)
 
     def default_encoder(self):
         if len(self) > 0:

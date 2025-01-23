@@ -83,15 +83,45 @@ def test_grib_output_missing_value(missing_value):
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
 )
-def test_grib_output_latlon():
+def test_grib_output_latlon_1():
     data = np.random.random((181, 360))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         path = os.path.join(tmp, "a.grib")
 
-        f = earthkit.data.new_grib_output(path, date=20010101)
-        f.write(data, param="2t")
+        # f = earthkit.data.new_grib_output(path, date=20010101)
+        # f.write(data, param="2t")
+        # f.close()
+
+        f = earthkit.data.new_grib_output(path, metadata=dict(date=20010101))
+        f.write(values=data, param="2t")
         f.close()
+
+        ds = earthkit.data.from_source("file", path)
+        print(ds[0])
+
+        assert ds[0].metadata("date") == 20010101
+        assert ds[0].metadata("param") == "2t"
+        assert ds[0].metadata("levtype") == "sfc"
+        assert ds[0].metadata("edition") == 2
+        assert ds[0].metadata("generatingProcessIdentifier") == 255
+
+        assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="ignore_cleanup_errors requires Python 3.10 or later",
+)
+def test_grib_output_latlon_2():
+    data = np.random.random((181, 360))
+
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        path = os.path.join(tmp, "a.grib")
+
+        t = earthkit.data.get_target("file", path, date=20010101, generatingProcessIdentifier=255)
+        t.write(data, param="2t")
+        t.close()
 
         ds = earthkit.data.from_source("file", path)
         print(ds[0])

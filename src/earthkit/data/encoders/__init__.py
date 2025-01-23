@@ -13,8 +13,6 @@ from abc import ABCMeta
 from abc import abstractmethod
 from importlib import import_module
 
-from earthkit.data.decorators import locked
-
 LOG = logging.getLogger(__name__)
 
 
@@ -68,7 +66,7 @@ class Encoder(metaclass=ABCMeta):
     def __init__(self, template=None, metadata=None, **kwargs):
         self.template = template
         self.metadata = metadata or {}
-        self.kwargs = kwargs
+        self.metadata.update(kwargs)
 
     @abstractmethod
     def encode(
@@ -196,8 +194,9 @@ class EncoderMaker:
 get_encoder = EncoderMaker()
 
 
-def make_encoder(data, encoder=None, suffix=None, **kwargs):
+def make_encoder(data, encoder=None, suffix=None, metadata=None, **kwargs):
     if isinstance(encoder, Encoder):
+        encoder.metadata.update(metadata or {})
         return encoder
 
     if encoder is None:
@@ -213,7 +212,7 @@ def make_encoder(data, encoder=None, suffix=None, **kwargs):
     # print("encoder", encoder, "suffix", suffix)
 
     if isinstance(encoder, str):
-        encoder = get_encoder(encoder, **kwargs)
+        encoder = get_encoder(encoder, metadata=metadata, **kwargs)
         assert encoder is not None
         return encoder
 

@@ -30,14 +30,17 @@ class Target(metaclass=ABCMeta):
         the :class:`Target` properties.
     template: obj, None
         The template to use to encode the data. Can be overridden in the :obj:`write` method.
+    metadata: dict, None
+        Metadata to pass to the encoder.
 
     The :class:`Target` is used to write data to a specific location. The target can be
     a file, a database, a remote server, etc.
     """
 
-    def __init__(self, encoder=None, template=None, **kwargs):
+    def __init__(self, encoder=None, template=None, metadata=None, **kwargs):
         self._encoder = encoder
         self._template = template
+        self._metadata = metadata or {}
 
     @abstractmethod
     def write(
@@ -99,28 +102,6 @@ class Target(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _write_field(self, field, **kwargs):
-        """Write a Field to the target.
-
-        Parameters:
-        -----------
-        field: :obj:`Field`
-            The field to write to the target.
-        """
-        pass
-
-    @abstractmethod
-    def _write_fieldlist(self, fieldlist, **kwargs):
-        """Write a FieldList to the target.
-
-        Parameters:
-        -----------
-        field: :obj:`FieldList`
-            The fieldlist to write to the target.
-        """
-        pass
-
-    @abstractmethod
     def __enter__(self):
         pass
 
@@ -128,7 +109,7 @@ class Target(metaclass=ABCMeta):
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
-    def _encode(self, data, encoder=None, default_encoder=None, template=None, suffix=None, **kwargs):
+    def _encode(self, data, encoder=None, template=None, suffix=None, **kwargs):
         """Encode data
 
         Returns
@@ -138,9 +119,13 @@ class Target(metaclass=ABCMeta):
         """
         from earthkit.data.encoders import make_encoder
 
+        if data is None:
+            data = self._data
+
         if encoder is None:
             encoder = self._encoder
-        encoder = make_encoder(data, encoder, default_encoder=default_encoder, suffix=suffix)
+
+        encoder = make_encoder(data, encoder, suffix=suffix, metadata=self._metadata)
 
         if template is None:
             template = self._template
@@ -155,18 +140,15 @@ class SimpleTarget(Target):
         **kwargs,
     ):
         if data is not None:
-            data._write(self, **kwargs)
+            if hasattr(data, "_write"):
+                data._write(self, **kwargs)
+            else:
+                self._write(None, values=data, **kwargs)
         else:
             self._write(None, **kwargs)
 
     def _write_reader(self, reader, **kwargs):
         raise NotImplementedError
-
-    def _write_field(self, field, **kwargs):
-        self._write(field, **kwargs)
-
-    def _write_fieldlist(self, fieldlist, **kwargs):
-        self._write(fieldlist, **kwargs)
 
 
 class TargetLoader:
@@ -240,8 +222,11 @@ def to_target(target, *args, **kwargs):
     target: str
         The target to write to. Must be a string.
     """
+
+    data = kwargs.pop("data", None)
+
     with get_target(target, *args, **kwargs) as t:
         for k in [*target_kwargs(type(t)), *target_kwargs(Target)]:
             kwargs.pop(k, None)
 
-        t.write(**kwargs)
+        t.write(data=data, **kwargs)

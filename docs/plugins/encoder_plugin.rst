@@ -3,10 +3,10 @@
 Encoders plugins
 =============================
 
-** New in version 0.0.13 **
+*New in version 0.13.0*
 
 What is an encoder?
-------------------
+-------------------
 
 A :class:`Encoder` is a Python class in earthkit-data that can write/add data
 to a given location. There are several built-in :ref:`encoder <data-encoders>`, the most
@@ -19,14 +19,14 @@ A **encoders plugin** is a Python package with a name that must start with ``ear
 
 .. code-block:: shell
 
-    pip install earthkit-data-my-target
+    pip install earthkit-data-my-encoder
 
 
-This package must contain a Python class inherited from :class:`earthkit.data.Target` to implement writing to a custom data target. Let us suppose the new class is called "MyClass". We should be able to import the class as:
+This package must contain a Python class inherited from :class:`earthkit.data.Encoder` to implement writing to a custom data target. Let us suppose the new class is called "MyClass". We should be able to import the class as:
 
 .. code-block:: python
 
-    from earthkit_data_my_target import MyClass
+    from earthkit_data_my_encoder import MyClass
 
 Please note that in the line above the package name has to contain "_" characters.
 
@@ -35,54 +35,54 @@ integration must be set as follow:
 
 .. code-block:: toml
 
-    entry-points."earthkit.data.targets".my-target = "earthkit_data_my_target:MyClass"
+    entry-points."earthkit.data.encoders".my-encoder = "earthkit_data_my_encoder:MyClass"
 
 
-With this we could use the new target in :func:`to_target` as:
+With this we could use the new encoder in :func:`get_encoder` or :func:`to_target` as:
 
 .. code-block:: python
 
     import earthkit.data
 
-    ds = earthkit.data.to_target("my-target", ...)
+    encoder = earthkit.data.get_encoder("my-encoder", ...)
+    ds = earthkit.data.to_target("file", encoder="my_encoder", ...)
+    ds = earthkit.data.to_target("file", encoder=encoder, ...)
 
 
 .. note::
 
-  The target name used in :func:`from_target` is only defined in the ``entry_points`` block in ``pyproject.toml``, so it is not deduced from the package name.
+  The encoder name used in the examples above is only defined in the ``entry_points`` block in ``pyproject.toml``, so it is not deduced from the package name.
 
 
 Example
 -------
 
-The ``earthkit-data-demo-target`` package demonstrates how to implement a ``targets plugin``. Its source code is located at https://github.com/ecmwf/earthkit-data-demo-target. This plugin enables earthkit-data to access data from an SQL database.
+The ``earthkit-data-demo-encoder`` package demonstrates how to implement a ``encoder plugin``. Its source code is located at https://github.com/ecmwf/earthkit-data-demo-encoder. This plugin enables earthkit-data to encode fields as a PNG.
 
 This demo package can be installed as:
 
 .. code-block:: shell
 
-  pip install earthkit-data-demo-target
+  pip install earthkit-data-demo-encoder
 
-Having finished the installation, tabular data can be read in earthkit-data as follows:
+Having finished the installation, GRIB data can written to a PNG file asn follows:
 
 .. code-block:: python
 
     import earthkit.data
 
-    # assume you have test.db available
-    ds = earthkit.data.to_target(
-        "demo-target",
-        "sqlite:///test.db",
-        "select * from data;",
-        parse_dates=["time"],
-    )
-    df = ds.to_pandas()
+    # get some GRIB data
+    ds = earthkit.data.from_source("sample", "test.grib")
+
+    # we write the first field into a PNG file
+    ds[0].to_target("file", "_my_test.png", encoder="demo-encoder")
+
 
 The integration is performed by ``entry_points`` defined in  ``pyproject.toml``.
 
 .. code-block:: toml
 
-    entry-points."earthkit.data.targets".demo-target = "earthkit_data_demo_target:DemoTarget"
+    entry-points."earthkit.data.encoders".demo-encoder = "earthkit_data_demo_encoder:DemoEncoder"
 
 
-See the :ref:`/examples/demo_targets_plugin.ipynb` notebook for the full example.
+See the :ref:`/examples/demo_encoders_plugin.ipynb` notebook for the full example.
