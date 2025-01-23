@@ -22,15 +22,15 @@ from earthkit.data.testing import NO_HDA
 def test_wekeo_download(prompt):
     s = from_source(
         "wekeo",
-        "EO:CLMS:DAT:CLMS_GLOBAL_DMP_1KM_V2_10DAILY_NETCDF",
+        "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
         prompt=prompt,
         request={
-            "dataset_id": "EO:CLMS:DAT:CLMS_GLOBAL_DMP_1KM_V2_10DAILY_NETCDF",
+            "dataset_id": "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
             "startdate": "2019-01-01T00:00:00.000Z",
             "enddate": "2019-01-01T23:59:59.999Z",
         },
     )
-    assert len(s) == 8
+    assert len(s) == 1
 
 
 if __name__ == "__main__":
