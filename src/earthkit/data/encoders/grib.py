@@ -65,6 +65,41 @@ class Combined:
         return self.handle.get(key, default=None)
 
 
+@lru_cache(maxsize=None)
+def _gg_pl(N):
+    import eccodes
+
+    sample = None
+    result = {}
+    try:
+        sample = eccodes.codes_new_from_samples(
+            f"reduced_gg_pl_{N}_grib2",
+            eccodes.CODES_PRODUCT_GRIB,
+        )
+
+        for key in ("N", "Ni", "Nj"):
+            result[key] = eccodes.codes_get(sample, key)
+
+        for key in (
+            "latitudeOfFirstGridPointInDegrees",
+            "longitudeOfFirstGridPointInDegrees",
+            "latitudeOfLastGridPointInDegrees",
+            "longitudeOfLastGridPointInDegrees",
+            "iDirectionIncrementInDegrees",
+        ):
+            result[key] = eccodes.codes_get_double(sample, key)
+
+        pl = eccodes.codes_get_long_array(sample, "pl")
+        result["pl"] = pl.tolist()
+        result["gridType"] = "reduced_gg"
+
+        return result
+
+    finally:
+        if sample is not None:
+            eccodes.codes_release(sample)
+
+
 class GribHandleMaker:
     """Create a new GribCodesHandle from a template, field or metadata"""
 
@@ -258,7 +293,7 @@ class GribHandleMaker:
             metadata["Nj"] = len(pl)
         else:
             # We just want the PL
-            metadata.update(self._gg_pl(N))
+            metadata.update(_gg_pl(N))
 
         edition = metadata.get("edition", 2)
         levtype = metadata.get("levtype")
@@ -273,41 +308,6 @@ class GribHandleMaker:
         else:
 
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
-
-    @lru_cache(maxsize=None)
-    @staticmethod
-    def _gg_pl(N):
-        import eccodes
-
-        sample = None
-        result = {}
-        try:
-            sample = eccodes.codes_new_from_samples(
-                f"reduced_gg_pl_{N}_grib2",
-                eccodes.CODES_PRODUCT_GRIB,
-            )
-
-            for key in ("N", "Ni", "Nj"):
-                result[key] = eccodes.codes_get(sample, key)
-
-            for key in (
-                "latitudeOfFirstGridPointInDegrees",
-                "longitudeOfFirstGridPointInDegrees",
-                "latitudeOfLastGridPointInDegrees",
-                "longitudeOfLastGridPointInDegrees",
-                "iDirectionIncrementInDegrees",
-            ):
-                result[key] = eccodes.codes_get_double(sample, key)
-
-            pl = eccodes.codes_get_long_array(sample, "pl")
-            result["pl"] = pl.tolist()
-            result["gridType"] = "reduced_gg"
-
-            return result
-
-        finally:
-            if sample is not None:
-                eccodes.codes_release(sample)
 
 
 class GribEncoder(Encoder):

@@ -76,7 +76,7 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
         return self.source.cache_file(*args, **kwargs)
 
     @detect_out_filename
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in="0.14.0", details="Use to_target() instead")
+    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
     def save(self, path, **kwargs):
         self.to_target("file", path, **kwargs)
 
@@ -85,7 +85,7 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
         # with open(path, mode) as f:
         #     self.write(f, **kwargs)
 
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in="0.14.0", details="Use to_target() instead")
+    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
     def write(self, f, **kwargs):
         self.to_target("file", f, **kwargs)
 

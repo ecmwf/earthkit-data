@@ -670,7 +670,7 @@ class Field(Base):
         """
         return self._metadata.dump(namespace=namespace, **kwargs)
 
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in="0.14.0", details="Use to_target() instead")
+    @deprecation.deprecated(deprecated_in="0.13.0", details="Use to_target() instead")
     def save(self, filename, append=False, **kwargs):
         r"""Write the field into a file.
 
@@ -690,7 +690,7 @@ class Field(Base):
         # with open(filename, flag) as f:
         #     self.write(f, **kwargs)
 
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in="0.14.0", details="Use to_target() instead")
+    @deprecation.deprecated(deprecated_in="0.13.0", details="Use to_target() instead")
     def write(self, f, **kwargs):
         self.to_target("file", f, **kwargs)
 
@@ -1611,7 +1611,7 @@ class FieldList(Index):
                 return all(f._metadata.geography._unique_grid_id() == grid for f in self)
         return False
 
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in="0.14.0", details="Use to_target() instead")
+    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
     @detect_out_filename
     def save(self, filename, append=False, **kwargs):
         r"""Write all the fields into a file.
@@ -1645,7 +1645,7 @@ class FieldList(Index):
         # with open(filename, flag) as f:
         #     self.write(f, **kwargs)
 
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in="0.14.0", details="Use to_target() instead")
+    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
     def write(self, f, **kwargs):
         r"""Write all the fields to a file object.
 
@@ -1661,15 +1661,13 @@ class FieldList(Index):
         read
 
         """
-        from earthkit.data.targets import get_target
 
         metadata = {}
         bits_per_value = kwargs.pop("bits_per_value", None)
         if bits_per_value is not None:
             metadata = {"bitsPerValue": bits_per_value}
 
-        target = get_target("file", f, **kwargs)
-        self.to_target(target, metadata=metadata, **kwargs)
+        self.to_target("file", f, metadata=metadata, **kwargs)
 
         # original code
         # for s in self:

@@ -357,11 +357,11 @@ class NetCDFMaskFieldList(NetCDFFieldList, MaskIndex):
     def to_xarray(self, *args, **kwargs):
         self._not_implemented()
 
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in="0.14.0", details="Use to_target() instead")
+    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
     def write(self, *args, **kwargs):
         self._not_implemented()
 
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in="0.14.0", details="Use to_target() instead")
+    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
     def save(self, *args, **kwargs):
         self._not_implemented()
 

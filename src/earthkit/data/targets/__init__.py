@@ -119,9 +119,6 @@ class Target(metaclass=ABCMeta):
         """
         from earthkit.data.encoders import make_encoder
 
-        if data is None:
-            data = self._data
-
         if encoder is None:
             encoder = self._encoder
 
