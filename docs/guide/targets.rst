@@ -100,7 +100,7 @@ file
 .. py:function:: to_target("file", file, split_output=False, append=False, data=None, encoder=None, template=None, metadata=None, **kwargs)
   :noindex:
 
-  The simplest source is ``file``, which can access a local file/list of files.
+  The simplest target is ``file``, which can access a local file/list of files.
 
   :param file: The file path or file-like object to write to.
   :type file: str or file-like object
