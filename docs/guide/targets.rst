@@ -32,9 +32,15 @@ There are three different ways to write/add data to a given target:
     to_target("file", "_my_res_2.grib", data=ds)
 
     # Method 3: using a target object
-    from earthkit.data.targets import FileTarget
+    from earthkit.data import get_target
 
-    with FileTarget("_my_res_3.grib") as t:
+    with get_target("file", "_my_res_3.grib") as t:
+        t.write(ds)
+
+    # Method 4: using a target object
+    from earthkit.data.targets.file import FileTarget
+
+    with FileTarget("_my_res_4.grib") as t:
         t.write(ds)
 
 
