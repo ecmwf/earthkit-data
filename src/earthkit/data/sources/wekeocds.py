@@ -8,10 +8,9 @@
 #
 
 import logging
-import os
 
 try:
-    from hda.api import DataOrderRequest
+    from hda.api import DataOrderRequest  # noqa
 except ImportError:
     raise ImportError("WEkEO access requires 'hda' to be installed")
 
@@ -33,26 +32,24 @@ class ApiClient(WekeoClient):
         super().__init__(self, *args, **kwargs)
 
     def retrieve(self, name, request, target=None):
-        rq = {
-            "datasetId": name,
-            "multiStringSelectValues": [
-                {
-                    "name": _name,
-                    "value": _value if isinstance(_value, list) else [_value],
-                }
+        rq = {"dataset_id": name}
+        rq.update(
+            {
+                _name: (
+                    _value
+                    if isinstance(_value, list) or _name in ("data_format", "download_format")
+                    else [_value]
+                )
                 for _name, _value in request.items()
-            ],
-        }
+            }
+        )
+
         if "area" in request:
-            rq.update({"boundingBoxValues": {"name": "area", "bbox": request["area"]}})
-        matches = self.search(rq)
-        out = []
-        for result in matches.results:
-            query = {"jobId": matches.job_id, "uri": result["url"]}
-            # matches.debug(result)
-            url = DataOrderRequest(self).run(query)
-            out.append(self.stream(result.get("filename"), result.get("size"), target, *url))
-        return [os.path.abspath(_) for _ in out]
+            rq.update({"bbox": request["area"]})
+
+        request["request"] = rq
+
+        return super().retrieve(name, request, target)
 
 
 class WekeoCdsRetriever(FileSource):
@@ -102,12 +99,6 @@ class WekeoCdsRetriever(FileSource):
     @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
     def requests(self, **kwargs):
-        if "year" in kwargs:
-            if "month" not in kwargs:
-                kwargs["month"] = [f"{i+1:02}" for i in range(0, 12)]
-            if "day" not in kwargs:
-                kwargs["day"] = [f"{i+1:02}" for i in range(0, 31)]
-
         split_on = kwargs.pop("split_on", None)
         if split_on is None or not isinstance(kwargs.get(split_on), (list, tuple)):
             return [kwargs]

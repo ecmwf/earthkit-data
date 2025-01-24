@@ -16,7 +16,6 @@ except ImportError:
     raise ImportError("WEkEO access requires 'hda' to be installed")
 
 import yaml
-from hda.api import DataOrderRequest
 
 from earthkit.data.core.thread import SoftThreadPool
 
@@ -31,12 +30,6 @@ class HDAAPIKeyPrompt(APIKeyPrompt):
     retrieve_api_key_url = "https://www.wekeo.eu"
 
     prompts = [
-        dict(
-            name="url",
-            default="https://wekeo-broker.apps.mercator.dpi.wekeo.eu/databroker",
-            title="API url",
-            validate=r"http.?://.*",
-        ),
         dict(
             name="user",
             example="name",
@@ -55,7 +48,7 @@ class HDAAPIKeyPrompt(APIKeyPrompt):
 
     rcfile = "~/.hdarc"
     rcfile_env = "HDA_RC"
-    config_env = ("HDA_URL", "HDA_USER", "HDA_PASSWORD")
+    config_env = ("HDA_USER", "HDA_PASSWORD")
 
     def save(self, input, file):
         yaml.dump(input, file, default_flow_style=False)
@@ -74,17 +67,10 @@ class ApiClient(hda.Client):
         matches = self.search(request["request"])
         out = []
         for result in matches.results:
-            query = {"jobId": matches.job_id, "uri": result["url"]}
-            url = DataOrderRequest(self).run(query)
-            out.append(os.path.abspath(self.stream(result.get("filename"), result.get("size"), target, *url)))
+            self.accept_tac(matches.dataset)
+            download_id = matches._get_download_id(result)
+            out.append(os.path.abspath(self.stream(download_id, result["properties"]["size"], target)))
         return out
-
-    def download(self, download_dir: str = "."):
-        for result in self.results:
-            query = {"jobId": self.jobId, "uri": result["url"]}
-            self.debug(result)
-            url = DataOrderRequest(self.client).run(query)
-            self.stream(result.get("filename"), result.get("size"), download_dir, *url)
 
 
 EXTENSIONS = {
