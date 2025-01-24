@@ -54,7 +54,7 @@ optional-dependencies.all = [
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
   "geopandas",
-  "hda",
+  "hda>=2.22",
   "polytope-client>=0.7.4",
   "pyfdb>=0.1",
   "pyodc",
@@ -71,7 +71,7 @@ optional-dependencies.dev = [
   "ecmwf-api-client>=1.6.1",
   "ecmwf-opendata>=0.3.3",
   "geopandas",
-  "hda",
+  "hda>=2.22",
   "nbconvert",
   "nbformat",
   "polytope-client>=0.7.4",
@@ -111,7 +111,7 @@ optional-dependencies.test = [
   "pytest-forked",
   "pytest-timeout",
 ]
-optional-dependencies.wekeo = [ "hda" ]
+optional-dependencies.wekeo = [ "hda>=2.22" ]
 urls.Documentation = "https://earthkit-data.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-data/"
 urls.Issues = "https://github.com/ecmwf/earthkit-data.issues"

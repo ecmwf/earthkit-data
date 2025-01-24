@@ -20,7 +20,7 @@ dependencies:
 - jupyterlab
 - ecmwf-api-client>=1.6.1
 - cdsapi>=0.7.2
-- hda
+- hda>=2.22
 - pip:
   - multiurl>=0.3.3
   - pyfdb>=0.1.0

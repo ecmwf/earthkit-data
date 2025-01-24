@@ -25,15 +25,15 @@ CDS_TIMEOUT = pytest.CDS_TIMEOUT
 def test_wekeo_grib_1_prompt(prompt):
     s = from_source(
         "wekeocds",
-        "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS",
+        "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS",
         variable=["2m_temperature", "mean_sea_level_pressure"],
-        product_type=["reanalysis"],
+        product_type=["monthly_averaged_reanalysis_by_hour_of_day"],
         year=["2012"],
         month=["12"],
-        day=["12"],
         time=["13:00"],
         prompt=prompt,
-        format="grib",
+        data_format="grib",
+        download_format="zip",
     )
     assert len(s) == 2
 
@@ -45,14 +45,14 @@ def test_wekeo_grib_1_prompt(prompt):
 def test_wekeo_grib_2():
     s = from_source(
         "wekeocds",
-        "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS",
+        "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS",
         variable=["2m_temperature", "mean_sea_level_pressure"],
-        product_type=["reanalysis"],
+        product_type=["monthly_averaged_reanalysis_by_hour_of_day"],
         year=["2012"],
         month=["12"],
-        day=["12"],
         time=["13:00"],
-        format="grib",
+        data_format="grib",
+        download_format="zip",
         split_on="variable",
     )
     assert len(s) == 2
@@ -65,16 +65,16 @@ def test_wekeo_grib_2():
 def test_wekeo_grib_3():
     s = from_source(
         "wekeocds",
-        "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS",
+        "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS",
         variable=["2m_temperature", "mean_sea_level_pressure"],
-        product_type=["reanalysis"],
+        product_type=["monthly_averaged_reanalysis_by_hour_of_day"],
         year=["2012"],
         month=["12"],
-        day=["12", "13", "14", "15"],
         time=["13:00"],
-        format="grib",
+        data_format="grib",
+        download_format="zip",
     )
-    assert len(s) == 8
+    assert len(s) == 2
 
 
 @pytest.mark.long_test
@@ -84,14 +84,14 @@ def test_wekeo_grib_3():
 def test_wekeo_netcdf():
     s = from_source(
         "wekeocds",
-        "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS",
+        "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS",
         variable=["2m_temperature", "mean_sea_level_pressure"],
-        product_type=["reanalysis"],
+        product_type=["monthly_averaged_reanalysis_by_hour_of_day"],
         year=["2012"],
         month=["12"],
-        day=["12"],
         time=["13:00"],
-        format="netcdf",
+        data_format="netcdf",
+        download_format="zip",
     )
     assert len(s) == 2
 
