@@ -8,14 +8,46 @@
 #
 
 import logging
+import os
 from abc import ABCMeta
 from abc import abstractmethod
 from collections import defaultdict
+from functools import cached_property
 
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
 LOG = logging.getLogger(__name__)
+
+
+class CFAttrs:
+    def _load(self):
+        here = os.path.dirname(__file__)
+        path = os.path.join(here, "cf_attrs.yaml")
+        if os.path.exists(path):
+            import yaml
+
+            try:
+                with open(path, "r") as f:
+                    return yaml.safe_load(f)
+            except Exception as e:
+                LOG.exception(f"Failed read CF attributes file {path}. {e}")
+                raise
+        else:
+            raise ValueError(f"CF attributes file not found! path={path}")
+
+    @cached_property
+    def attrs(self):
+        return self._load()
+
+    def can_be_global(self, name):
+        item = self.attrs.get(name, None)
+        if item:
+            return "G" in item["use"]
+        return True
+
+
+CF_ATTRS = CFAttrs()
 
 
 class Attr:
@@ -238,7 +270,7 @@ class AttrsBuilder(metaclass=ABCMeta):
                 global_attrs[item.name] = item.value()
 
         # TODO: make it optional
-        global_attrs.pop("units", None)
+        # global_attrs.pop("units", None)
 
         return global_attrs
 
@@ -257,12 +289,23 @@ class UniqueAttrBuilder(AttrsBuilder):
             if len(v) == 1 and k not in self.attrs.variable_attrs:
                 global_attrs[k] = list(v)[0]
 
-        for var_obj in t_vars.values():
-            var_obj.adjust_attrs(drop_keys=global_attrs.keys(), rename=rename)
+        # Some attrs cannot be global according to the CF convention.
+        # These are removed from global attrs and kept as variable attrs.
+        global_attrs_keys = list(global_attrs.keys())
+        global_attrs_renamed_keys = global_attrs_keys
+        if rename:
+            global_attrs_renamed_keys = list(rename(global_attrs).keys())
+
+        for k1, k2 in zip(global_attrs_keys, global_attrs_renamed_keys):
+            if not CF_ATTRS.can_be_global(k1) or not CF_ATTRS.can_be_global(k2):
+                global_attrs.pop(k1)
 
         for k in self.attrs.variable_attrs:
             if k in global_attrs:
                 global_attrs.pop(k)
+
+        for var_obj in t_vars.values():
+            var_obj.adjust_attrs(drop_keys=global_attrs.keys(), rename=rename)
 
         global_attrs = {k: v for k, v in global_attrs.items() if v is not None}
 

@@ -32,6 +32,16 @@ def test_geotiff_reader_with_multiband():
     assert s[0].shape == (294, 315)
 
 
+@pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
+@pytest.mark.with_proj
+def test_geotiff_bypassing_xr_engine():
+    import xarray as xr
+
+    # the earthkit xarray engine should not try to handle this file but leave it to the rioxarray backend
+    da = xr.open_dataarray(earthkit_test_data_file("dgm50hs_col_32_368_5616_nw.tif"))
+    assert da.name == "band_data"
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
