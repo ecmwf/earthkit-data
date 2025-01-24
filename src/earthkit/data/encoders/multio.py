@@ -1,4 +1,4 @@
-# (C) Copyright 2023 ECMWF.
+# (C) Copyright 2024- ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -22,7 +22,8 @@ GEOGRAPHY_ALIASES: dict[str, list[str]] = {
     "east": ["longitudeOfLastGridPointInDegrees"],
     "west_east_increment": ["iDirectionIncrementInDegrees"],
     "south_north_increment": ["jDirectionIncrementInDegrees"],
-    "Ni": ["Ni", "N"],
+    "Ni": ["Ni"],
+    "N": ["N"],
     "Nj": ["Nj"],
     "gridType": ["gridType"],
     "pl": ["pl"],
@@ -55,6 +56,7 @@ def earthkit_to_multio(metadata):
     metad.update(geography_translate(metadata))
     metad.pop("levtype", None)
     metad.pop("param", None)
+    metad.pop("type", None)
     metad.pop("bitmapPresent", None)
 
     metad["paramId"] = metadata["paramId"]

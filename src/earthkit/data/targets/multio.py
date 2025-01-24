@@ -5,7 +5,8 @@
 # In applying this licence, ECMWF does not waive the privileges and immunities
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
-#
+
+from __future__ import annotations
 
 import logging
 import math
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     from typing import Any
     from typing import Dict
 
-    from multio.multio import Multio
+    from multio import Multio
     from multio.plans import Client
 
 
@@ -30,17 +31,6 @@ class MultioTarget(SimpleTarget):
     def __init__(self, plan: Client | os.PathLike | str | Dict[str, Any], **kwargs):
         super().__init__(**kwargs)
         self.plan = plan
-
-    @property
-    def server(self) -> Multio:
-        if self._server is None:
-            from multio import Multio
-            from multio import MultioPlan
-
-            with MultioPlan(self.plan):
-                server = Multio()
-                self._server = server
-        return self._server
 
     def __enter__(self):
         return self
@@ -69,8 +59,10 @@ class MultioTarget(SimpleTarget):
             }
         )
 
-        with self.server as server:
-            import multio
+        import multio
+
+        with multio.MultioPlan(self.plan):
+            server = multio.Multio()
 
             server_metadata = multio.Metadata(server, metadata)
             server.write_field(server_metadata, array)
