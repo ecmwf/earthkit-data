@@ -36,7 +36,7 @@ class FileTarget(SimpleTarget):
         Additional keyword arguments passed to the parent class
     """
 
-    def __init__(self, file, split_output=False, append=False, **kwargs):
+    def __init__(self, file=None, *, split_output=False, append=False, **kwargs):
         super().__init__(**kwargs)
 
         self._files = {}
@@ -52,6 +52,12 @@ class FileTarget(SimpleTarget):
             self.filename = file
             if self.filename is not None:
                 _, self.ext = os.path.splitext(self.filename)
+
+            if self.filename is None:
+                self.filename = self._detect_filename(*kwargs)
+
+            if self.filename is None:
+                raise TypeError("Please provide an output filename")
 
         if split_output:
             self.split_output = re.findall(r"\{(.*?)\}", self.filename)
@@ -82,6 +88,12 @@ class FileTarget(SimpleTarget):
             self._files[path] = open(path, flag)
 
         return self._files[path], path
+
+    def _detect_filename(self, data=None):
+        if data is not None:
+            for attr in ["source_filename", "path"]:
+                if hasattr(self, attr) and getattr(self, attr) is not None:
+                    return [os.path.basename(getattr(self, attr))]
 
     def _write(self, data, **kwargs):
         r = self._encode(data, suffix=self.ext, **kwargs)

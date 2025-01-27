@@ -220,10 +220,10 @@ def to_target(target, *args, **kwargs):
         The target to write to. Must be a string.
     """
 
-    data = kwargs.pop("data", None)
+    # data = kwargs.pop("data", None)
 
     with get_target(target, *args, **kwargs) as t:
         for k in [*target_kwargs(type(t)), *target_kwargs(Target)]:
             kwargs.pop(k, None)
 
-        t.write(data=data, **kwargs)
+        t.write(**kwargs)
