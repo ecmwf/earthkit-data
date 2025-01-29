@@ -50,6 +50,7 @@ def make_fdb_config(path):
     return config
 
 
+@pytest.mark.skipif(NO_FDB, reason="No access to FDB")
 @pytest.mark.parametrize(
     "kwargs",
     [
