@@ -24,7 +24,7 @@ class FileTarget(SimpleTarget):
     Parameters:
     -----------
     file: str or file-like object
-        The file path or file-like object to write to.
+        The file path or file-like object to write to. When None, tries to detect not defined attempts will be made to detect the filename
     split_output: bool
         If True, the output file name defines a pattern containing metadata keys in the
         format of ``{key}``. Each data item (e.g. a field) will be written into a file
@@ -54,9 +54,9 @@ class FileTarget(SimpleTarget):
                 _, self.ext = os.path.splitext(self.filename)
 
             if self.filename is None:
-                self.filename = self._detect_filename(*kwargs)
+                self.filename = self._guess_filename(*kwargs)
 
-            if self.filename is None:
+            if not self.filename:
                 raise TypeError("Please provide an output filename")
 
         if split_output:
@@ -89,11 +89,34 @@ class FileTarget(SimpleTarget):
 
         return self._files[path], path
 
-    def _detect_filename(self, data=None):
+    def _guess_filename(self, data=None):
+        """Try to guess filename from data when not provided"""
         if data is not None:
             for attr in ["source_filename", "path"]:
                 if hasattr(self, attr) and getattr(self, attr) is not None:
                     return [os.path.basename(getattr(self, attr))]
+
+    def _check_overwrite(self, data):
+        """Ensure we do not overwrite file that is being read"""
+        if (
+            data is not None
+            and self.filename is not None
+            and os.path.isfile(self.filename)
+            and hasattr(data, "path")
+            and data.path is not None
+            and os.path.isfile(data.path)
+            and os.path.samefile(self.filename, data.path)
+        ):
+            import warnings
+
+            warnings.warn(UserWarning(f"Earthkit refusing to overwrite the file being read: {self.filename}"))
+            return False
+        return True
+
+    def write(self, data=None, **kwargs):
+        if not self._check_overwrite(data):
+            return
+        super().write(data, **kwargs)
 
     def _write(self, data, **kwargs):
         r = self._encode(data, suffix=self.ext, **kwargs)

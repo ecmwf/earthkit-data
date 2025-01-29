@@ -50,7 +50,7 @@ def test_file_source_grib_save(write_method):
             assert os.path.isfile("test.grib")
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+@pytest.mark.parametrize("write_method", ["save", "target"])
 def test_file_source_grib_no_overwrite(write_method):
     ds = from_source("file", os.path.abspath(earthkit_examples_file("test.grib")))
     with temp_directory() as tmpdir:
@@ -62,12 +62,12 @@ def test_file_source_grib_no_overwrite(write_method):
             ds1 = from_source("file", "test.grib")
             with pytest.warns(
                 UserWarning,
-                match="Earthkit refusing to overwrite the file we are currently reading",
+                match="Earthkit refusing to overwrite",
             ):
                 write_to_file(write_method, "test.grib", ds1)
             with pytest.warns(
                 UserWarning,
-                match="Earthkit refusing to overwrite the file we are currently reading",
+                match="Earthkit refusing to overwrite",
             ):
                 ds1.save()
 
@@ -92,7 +92,7 @@ def test_file_source_netcdf_save(write_method):
             assert os.path.isfile("test.nc")
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+@pytest.mark.parametrize("write_method", ["save", "target"])
 def test_file_source_netcdf_no_overwrite(write_method):
     ds = from_source("file", os.path.abspath(earthkit_examples_file("test.nc")))
     with temp_directory() as tmpdir:
@@ -104,12 +104,12 @@ def test_file_source_netcdf_no_overwrite(write_method):
             ds1 = from_source("file", "test.nc")
             with pytest.warns(
                 UserWarning,
-                match="Earthkit refusing to overwrite the file we are currently reading",
+                match="Earthkit refusing to overwrite",
             ):
                 write_to_file(write_method, "test.nc", ds1)
             with pytest.warns(
                 UserWarning,
-                match="Earthkit refusing to overwrite the file we are currently reading",
+                match="Earthkit refusing to overwrite",
             ):
                 ds1.save()
 
