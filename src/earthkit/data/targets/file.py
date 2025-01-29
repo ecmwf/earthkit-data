@@ -24,7 +24,9 @@ class FileTarget(SimpleTarget):
     Parameters:
     -----------
     file: str or file-like object
-        The file path or file-like object to write to. When None, tries to detect not defined attempts will be made to detect the filename
+        The file path or file-like object to write to. When None, tries to guess the file name
+        from the ``data`` if it is passed as a kwarg.
+        When the file name cannot be constructed, a ValueError is raised.
     split_output: bool
         If True, the output file name defines a pattern containing metadata keys in the
         format of ``{key}``. Each data item (e.g. a field) will be written into a file
@@ -34,6 +36,10 @@ class FileTarget(SimpleTarget):
         If True, the file is opened in append mode. Only used if file is a path.
     **kwargs:
         Additional keyword arguments passed to the parent class
+
+    Raises:
+    -------
+    ValueError: If the file name is not specified and cannot be constructed.
     """
 
     def __init__(self, file=None, *, split_output=False, append=False, **kwargs):
@@ -57,7 +63,7 @@ class FileTarget(SimpleTarget):
                 self.filename = self._guess_filename(*kwargs)
 
             if not self.filename:
-                raise TypeError("Please provide an output filename")
+                raise ValueError("Please provide an output filename")
 
         if split_output:
             self.split_output = re.findall(r"\{(.*?)\}", self.filename)
