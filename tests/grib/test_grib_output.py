@@ -19,6 +19,7 @@ import pytest
 
 import earthkit.data
 from earthkit.data import from_source
+from earthkit.data.core.temporary import temp_directory
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file
 
@@ -323,6 +324,31 @@ def test_grib_output_field_template(array):
         assert ds[0].metadata("bitsPerValue") == 16
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=1e-2, atol=1e-2)
+
+
+@pytest.mark.parametrize(
+    "pattern,expected_value",
+    [
+        ("{shortName}", {"t": 2, "u": 2, "v": 2}),
+        ("{shortName}_{level}", {"t_1000": 1, "t_850": 1, "u_1000": 1, "u_850": 1, "v_1000": 1, "v_850": 1}),
+        ("{date}_{time}_{step}", {"20180801_1200_0": 6}),
+    ],
+)
+def test_grib_output_filename_pattern(pattern, expected_value):
+    ds = from_source("file", earthkit_examples_file("test6.grib"))
+
+    with temp_directory() as tmp:
+        f = earthkit.data.new_grib_output(os.path.join(tmp, f"{pattern}.grib"), split_output=True)
+
+        for x in ds:
+            f.write(x.values, template=x)
+
+        f.close()
+
+        for k, count in expected_value.items():
+            path = os.path.join(tmp, f"{k}.grib")
+            assert os.path.exists(path)
+            assert len(from_source("file", path)) == count
 
 
 if __name__ == "__main__":
