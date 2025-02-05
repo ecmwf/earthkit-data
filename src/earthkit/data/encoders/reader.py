@@ -15,24 +15,29 @@ from . import Encoder
 LOG = logging.getLogger(__name__)
 
 
-class NetCDFEncodedData(EncodedData):
-    def __init__(self, ds):
-        self.ds = ds
+class ReaderEncodedData(EncodedData):
+    def __init__(self, d):
+        self.d = d
 
     def to_bytes(self):
-        return self.ds.to_netcdf(None)
+        raise NotImplementedError
 
-    def to_file(self, f):
-        if hasattr(f, "earthkit"):
-            f.write(self.ds.to_netcdf(None))
-        else:
-            self.ds.to_netcdf(f)
+    def to_file(self, f, **kwargs):
+        # if not self.d.appendable:
+        #     assert f.tell() == 0
+        mode = "rb" if self.d.binary else "r"
+        with open(self.d.path, mode) as g:
+            while True:
+                chunk = g.read(1024 * 1024)
+                if not chunk:
+                    break
+                f.write(chunk)
 
     def metadata(self, key):
         raise NotImplementedError
 
 
-class NetCDFEncoder(Encoder):
+class ReaderEncoder(Encoder):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -49,26 +54,19 @@ class NetCDFEncoder(Encoder):
         else:
             raise ValueError("No data to encode")
 
-    def _encode(
-        self,
-        data=None,
-        values=None,
-        min=None,
-        max=None,
-        check_nans=False,
-        metadata={},
-        template=None,
-        # return_bytes=False,
-        missing_value=9999,
-        **kwargs,
-    ):
-        return NetCDFEncodedData(data.to_xarray())
+    def _encode(self, data, **kwargs):
+        assert data is not None
+        from earthkit.data.readers import Reader
+
+        if issubclass(data.__class__, Reader):
+            return ReaderEncodedData(data)
+        raise ValueError("data is not a Reader")
 
     def _encode_field(self, field, **kwargs):
-        return self._encode(field, **kwargs)
+        raise NotImplementedError
 
-    def _encode_fieldlist(self, data, **kwargs):
-        return self._encode(data, **kwargs)
+    def _encode_fieldlist(self, fieldlist, **kwargs):
+        return self._encode(fieldlist, **kwargs)
 
 
-encoder = NetCDFEncoder
+encoder = ReaderEncoder

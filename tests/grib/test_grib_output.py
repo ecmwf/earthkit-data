@@ -34,10 +34,14 @@ from grib_fixtures import load_grib_data  # noqa: E402
 EPSILON = 1e-4
 
 
-def new_grib_output_compat(*args, **kwargs):
+def new_grib_output_compat(*args, split_output=False, **kwargs):
     from earthkit.data.targets.file import FileTarget
+    from earthkit.data.targets.file_pattern import FilePatternTarget
 
-    return FileTarget(*args, encoder="grib", **kwargs)
+    if split_output:
+        return FilePatternTarget(*args, encoder="grib", **kwargs)
+    else:
+        return FileTarget(*args, encoder="grib", **kwargs)
 
 
 def new_grib_coder_compat(*args, **kwargs):
@@ -470,6 +474,7 @@ def test_grib_output_field_template(mode, array):
         assert np.allclose(ds[0].to_numpy(), data, rtol=1e-2, atol=1e-2)
 
 
+@pytest.mark.parametrize("mode", ["ori", "compat", "target"])
 @pytest.mark.parametrize(
     "pattern,expected_value",
     [
@@ -479,16 +484,30 @@ def test_grib_output_field_template(mode, array):
         ("{date}_{time}_{step:03}", {"20180801_1200_000": 6}),
     ],
 )
-def test_grib_output_filename_pattern(pattern, expected_value):
+def test_grib_output_filename_pattern(mode, pattern, expected_value):
     ds = from_source("file", earthkit_examples_file("test6.grib"))
 
     with temp_directory() as tmp:
-        f = earthkit.data.new_grib_output(os.path.join(tmp, f"{pattern}.grib"), split_output=True)
+        path = os.path.join(tmp, f"{pattern}.grib")
 
-        for x in ds:
-            f.write(x.values, template=x)
+        if mode == "ori":
+            f = earthkit.data.new_grib_output(path, split_output=True)
+            for x in ds:
+                f.write(x.values, template=x)
 
-        f.close()
+            f.close()
+        elif mode == "compat":
+            f = new_grib_output_compat(path, split_output=True)
+
+            for x in ds:
+                f.write(values=x.values, template=x)
+            f.close()
+        elif mode == "target":
+            to_target(
+                "file-pattern",
+                path,
+                data=ds,
+            )
 
         for k, count in expected_value.items():
             path = os.path.join(tmp, f"{k}.grib")

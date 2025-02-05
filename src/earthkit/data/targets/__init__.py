@@ -76,32 +76,6 @@ class Target(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _write(
-        self,
-        data,
-        **kwargs,
-    ):
-        """Write generic data to the target.
-
-        Parameters:
-        -----------
-        data:
-            Data to write to the target.
-        """
-        pass
-
-    @abstractmethod
-    def _write_reader(self, reader, **kwargs):
-        """Write a Reader to the target.
-
-        Parameters:
-        -----------
-        reader: :obj:`Reader`
-            The Reader whose data is written to the target.
-        """
-        pass
-
-    @abstractmethod
     def __enter__(self):
         pass
 
@@ -110,7 +84,7 @@ class Target(metaclass=ABCMeta):
         pass
 
     def _encode(self, data, encoder=None, template=None, suffix=None, **kwargs):
-        """Encode data
+        """Encode data.
 
         Returns
         -------
@@ -137,15 +111,26 @@ class SimpleTarget(Target):
         **kwargs,
     ):
         if data is not None:
-            if hasattr(data, "_write"):
-                data._write(self, **kwargs)
+            if hasattr(data, "sources"):
+                for d in data.sources:
+                    self.write(d, **kwargs)
+            elif hasattr(data, "to_target"):
+                self._write(data, **kwargs)
             else:
                 self._write(None, values=data, **kwargs)
         else:
             self._write(None, **kwargs)
 
-    def _write_reader(self, reader, **kwargs):
-        raise NotImplementedError
+    @abstractmethod
+    def _write(self, data, **kwargs):
+        """Write generic data to the target.
+
+        Parameters:
+        -----------
+        data:
+            Data to write to the target.
+        """
+        pass
 
 
 class TargetLoader:

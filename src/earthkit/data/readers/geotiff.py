@@ -228,6 +228,9 @@ class GeoTIFFReader(GeoTIFFFieldList, Reader):
     def mutate_source(self):
         return self
 
+    def default_encoder(self):
+        return Reader.default_encoder(self)
+
 
 def _match_magic(magic):
     if magic is not None:

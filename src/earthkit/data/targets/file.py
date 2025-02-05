@@ -9,7 +9,6 @@
 
 import logging
 import os
-import re
 from io import IOBase
 
 from . import SimpleTarget
@@ -27,11 +26,6 @@ class FileTarget(SimpleTarget):
         The file path or file-like object to write to. When None, tries to guess the file name
         from the ``data`` if it is passed as a kwarg.
         When the file name cannot be constructed, a ValueError is raised.
-    split_output: bool
-        If True, the output file name defines a pattern containing metadata keys in the
-        format of ``{key}``. Each data item (e.g. a field) will be written into a file
-        with a name created by substituting the relevant metadata values in the
-        filename pattern. Only used if file is a path.
     append: bool
         If True, the file is opened in append mode. Only used if file is a path.
     **kwargs:
@@ -42,18 +36,17 @@ class FileTarget(SimpleTarget):
     ValueError: If the file name is not specified and cannot be constructed.
     """
 
-    def __init__(self, file=None, *, split_output=False, append=False, **kwargs):
+    def __init__(self, file=None, *, append=False, **kwargs):
         super().__init__(**kwargs)
 
-        self._files = {}
         self.fileobj = None
+        self._tmp_fileobj = None
         self.filename = None
         self.append = append
         self.ext = None
 
         if isinstance(file, IOBase):
             self.fileobj = file
-            split_output = False
         else:
             self.filename = file
             if self.filename is not None:
@@ -65,14 +58,9 @@ class FileTarget(SimpleTarget):
             if not self.filename:
                 raise ValueError("Please provide an output filename")
 
-        if split_output:
-            self.split_output = re.findall(r"\{(.*?)\}", self.filename)
-        else:
-            self.split_output = None
-
     def close(self):
-        for f in self._files.values():
-            f.close()
+        if self._tmp_fileobj:
+            self._tmp_fileobj.close()
 
     def __enter__(self):
         return self
@@ -80,20 +68,14 @@ class FileTarget(SimpleTarget):
     def __exit__(self, exc_type, exc_value, trace):
         self.close()
 
-    def _f(self, data):
+    def _f(self):
         if self.fileobj:
-            return self.fileobj, None
+            return self.fileobj
 
-        if self.split_output:
-            path = self.filename.format(**{k: data.metadata(k) for k in self.split_output})
-        else:
-            path = self.filename
-
-        if path not in self._files:
+        if not self._tmp_fileobj:
             flag = "wb" if not self.append else "ab"
-            self._files[path] = open(path, flag)
-
-        return self._files[path], path
+            self._tmp_fileobj = open(self.filename, flag)
+        return self._tmp_fileobj
 
     def _guess_filename(self, data=None):
         """Try to guess filename from data when not provided"""
@@ -119,33 +101,17 @@ class FileTarget(SimpleTarget):
             return False
         return True
 
-    def write(self, data=None, **kwargs):
+    def _write(self, data=None, **kwargs):
         if not self._check_overwrite(data):
             return
-        super().write(data, **kwargs)
 
-    def _write(self, data, **kwargs):
         r = self._encode(data, suffix=self.ext, **kwargs)
+        f = self._f()
         if hasattr(r, "__iter__"):
             for d in r:
-                f, _ = self._f(d)
                 d.to_file(f)
         else:
-            f, _ = self._f(r)
             r.to_file(f)
-
-    def _write_reader(self, reader, **kwargs):
-        f, _ = self._f(None)
-
-        if not reader.appendable:
-            assert f.tell() == 0
-        mode = "rb" if reader.binary else "r"
-        with open(reader.path, mode) as g:
-            while True:
-                chunk = g.read(1024 * 1024)
-                if not chunk:
-                    break
-                f.write(chunk)
 
 
 target = FileTarget

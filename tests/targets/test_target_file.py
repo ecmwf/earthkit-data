@@ -20,7 +20,9 @@ from earthkit.data.core.temporary import temp_file
 from earthkit.data.encoders.grib import GribEncoder
 from earthkit.data.targets import to_target
 from earthkit.data.targets.file import FileTarget
+from earthkit.data.testing import NO_RIOXARRAY
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_test_data_file
 
 
 @pytest.mark.parametrize(
@@ -191,6 +193,35 @@ def test_target_file_grib_to_netcdf():
         assert len(ds1) == len(ds)
         assert ds1.metadata("param") == ["2t", "msl"]
         # assert np.allclose(ds1.values[:, :4], vals_ref)
+
+
+@pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
+@pytest.mark.with_proj
+def test_target_file_geotiff():
+    ds = from_source("file", earthkit_test_data_file("dgm50hs_col_32_368_5616_nw.tif"))
+    assert len(ds) == 3
+
+    with temp_file() as path:
+        ds.to_target("file", path)
+
+        ds1 = from_source("file", path)
+        assert len(ds) == len(ds1)
+        from earthkit.data.readers.geotiff import GeoTIFFField
+
+        assert isinstance(ds[0], GeoTIFFField)
+
+
+@pytest.mark.xfail(reason="Not implemented")
+@pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
+@pytest.mark.with_proj
+def test_target_file_geotiff_to_netcdf():
+    ds = from_source("file", earthkit_test_data_file("dgm50hs_col_32_368_5616_nw.tif"))
+    assert len(ds) == 3
+
+    with temp_file() as path:
+        ds.to_target("file", path)
+
+        assert os.path.exists(path)
 
 
 def test_writers_core():

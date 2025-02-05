@@ -95,11 +95,6 @@ class MultiSource(Source):
         #     for s in self.sources:
         #         s.write(f, **kwargs)
 
-    def _write(self, target, **kwargs):
-        assert target is not None
-        for s in self.sources:
-            target.write(data=s, **kwargs)
-
     def to_target(self, target, *args, **kwargs):
         from earthkit.data.targets import to_target
 

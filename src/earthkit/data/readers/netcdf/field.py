@@ -302,9 +302,6 @@ class XArrayField(Field):
     def to_target(self, *args, **kwargs):
         raise NotImplementedError
 
-    def _write(self, *args, **kwargs):
-        raise NotImplementedError
-
     def _encode(self, *args, **kwargs):
         raise NotImplementedError
 

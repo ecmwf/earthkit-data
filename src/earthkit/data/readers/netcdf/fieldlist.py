@@ -223,12 +223,12 @@ class XArrayFieldListCore(FieldList):
     def new_mask_index(cls, *args, **kwargs):
         return XArrayMaskFieldList(*args, **kwargs)
 
-    def _write(self, target, **kwargs):
-        assert target is not None
-        encoder = kwargs.get("encoder", None)
-        if encoder is None and kwargs.get("default_encoder", None) is None:
-            kwargs["default_encoder"] = "netcdf"
-        target._write(self, **kwargs)
+    # def _write(self, target, **kwargs):
+    #     assert target is not None
+    #     encoder = kwargs.get("encoder", None)
+    #     if encoder is None and kwargs.get("default_encoder", None) is None:
+    #         kwargs["default_encoder"] = "netcdf"
+    #     target._write(self, **kwargs)
 
     def _encode_grib(self, encoder, **kwargs):
         return encoder._from_xarray(self.to_xarray(), **kwargs)

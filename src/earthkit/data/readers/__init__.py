@@ -100,14 +100,16 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
         #             break
         #         f.write(chunk)
 
-    def _write(self, target, **kwargs):
-        assert target is not None
-        target._write_reader(self, **kwargs)
-
     def to_target(self, target, *args, **kwargs):
         from earthkit.data.targets import to_target
 
         to_target(target, *args, data=self, **kwargs)
+
+    def _encode(self, encoder, **kwargs):
+        return encoder._encode(self, **kwargs)
+
+    def default_encoder(self):
+        return "reader"
 
     def __fspath__(self):
         return self.path

@@ -206,10 +206,6 @@ def make_encoder(data, encoder=None, suffix=None, metadata=None, **kwargs):
             if hasattr(data, "default_encoder"):
                 # print("data.default_encoder", data.default_encoder())
                 encoder = data.default_encoder()
-            # if default_encoder is not None:
-            #     encoder = default_encoder
-
-    # print("encoder", encoder, "suffix", suffix)
 
     if isinstance(encoder, str):
         encoder = get_encoder(encoder, metadata=metadata, **kwargs)

@@ -67,8 +67,5 @@ class MultioTarget(SimpleTarget):
             server_metadata = multio.Metadata(server, metadata)
             server.write_field(server_metadata, array)
 
-    def _write_reader(self, reader, **kwargs):
-        raise NotImplementedError
-
 
 target = MultioTarget
