@@ -23,8 +23,8 @@ class NetCDFEncodedData(EncodedData):
         return self.ds.to_netcdf(None)
 
     def to_file(self, f):
-        if hasattr(f, "earthkit"):
-            f.write(self.ds.to_netcdf(None))
+        if hasattr(self.ds, "earthkit"):
+            f.write(self.ds.earthkit.to_netcdf(None))
         else:
             self.ds.to_netcdf(f)
 
