@@ -83,26 +83,6 @@ class Target(metaclass=ABCMeta):
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
-    def _encode(self, data, encoder=None, template=None, suffix=None, **kwargs):
-        """Encode data.
-
-        Returns
-        -------
-        :class:`EncodedData`
-            The encoded data.
-        """
-        from earthkit.data.encoders import make_encoder
-
-        if encoder is None:
-            encoder = self._encoder
-
-        encoder = make_encoder(data, encoder, suffix=suffix, metadata=self._metadata)
-
-        if template is None:
-            template = self._template
-
-        return encoder.encode(data, template=template, **kwargs)
-
 
 class SimpleTarget(Target):
     def write(
@@ -131,6 +111,26 @@ class SimpleTarget(Target):
             Data to write to the target.
         """
         pass
+
+    def _encode(self, data, encoder=None, template=None, suffix=None, **kwargs):
+        """Encode data.
+
+        Returns
+        -------
+        :class:`EncodedData`
+            The encoded data.
+        """
+        from earthkit.data.encoders import make_encoder
+
+        if encoder is None:
+            encoder = self._encoder
+
+        encoder = make_encoder(data, encoder, suffix=suffix, metadata=self._metadata)
+
+        if template is None:
+            template = self._template
+
+        return encoder.encode(data, template=template, **kwargs)
 
 
 class TargetLoader:

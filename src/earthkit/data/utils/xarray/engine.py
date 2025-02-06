@@ -331,9 +331,11 @@ class XarrayEarthkit:
         return FieldArray([f for f in self._to_fields()])
 
     def to_grib(self, filename):
-        with open(filename, "wb") as out:
+        from earthkit.data.targets import get_target
+
+        with get_target("file", filename) as target:
             for f in self._to_fields():
-                f.write(out)
+                target.write(f)
 
 
 @xarray.register_dataarray_accessor("earthkit")
