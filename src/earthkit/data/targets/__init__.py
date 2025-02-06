@@ -96,8 +96,11 @@ class SimpleTarget(Target):
                     self.write(d, **kwargs)
             elif hasattr(data, "to_target"):
                 self._write(data, **kwargs)
-            else:
+            elif "values" not in kwargs:
+                # TODO: this should be reviewed
                 self._write(None, values=data, **kwargs)
+            else:
+                raise ValueError("Cannot write data to target")
         else:
             self._write(None, **kwargs)
 
