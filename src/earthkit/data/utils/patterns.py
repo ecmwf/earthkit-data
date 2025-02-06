@@ -11,6 +11,7 @@ import itertools
 import re
 
 from .dates import to_datetime
+from .dates import to_timedelta
 
 RE1 = re.compile(r"{([^}]*)}")
 RE2 = re.compile(r"\(([^}]*)\)")
@@ -62,6 +63,28 @@ class Datetime:
         return to_datetime(value).strftime(self.format)
 
 
+class DatetimeDelta:
+    def __init__(self, params):
+        params_list = params.split(";")
+        if len(params_list) != 2:
+            raise ValueError(
+                "Invalid parameters '{}' for class DatetimeDelta, expected (delta;format)".format(params)
+            )
+        self.delta = params_list[0].strip()
+        self.format = params_list[1].strip()
+
+    def substitute(self, value, name):
+        sign = -1 if self.delta[0] == "-" else 1
+        search_delta = re.search(r"\d(.*)", self.delta)
+        if search_delta:
+            delta = search_delta.group(0)
+        else:
+            raise ValueError("Invalid value '{}' for delta, expected a number".format(self.delta))
+
+        valid_date = to_datetime(value) + sign * to_timedelta(delta)
+        return valid_date.strftime(self.format)
+
+
 class Str:
     def __init__(self, format="%s"):
         self.format = format
@@ -78,6 +101,7 @@ TYPES = {
     "float": Float,
     "date": Datetime,
     "strftime": Datetime,
+    "strftimedelta": DatetimeDelta,
     "enum": Enum,
 }
 
