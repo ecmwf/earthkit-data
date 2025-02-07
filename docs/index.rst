@@ -38,6 +38,7 @@ reference systems and bounding boxes.
    guide/index
    api
    development
+   deprecations
 
 .. toctree::
    :maxdepth: 1
