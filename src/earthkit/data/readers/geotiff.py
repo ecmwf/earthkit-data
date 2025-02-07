@@ -210,11 +210,11 @@ class GeoTIFFFieldList(FieldList):
     def describe(self, *args, **kwargs):
         self._not_implemented()
 
-    def save(self, filename, append=False, **kwargs):
-        self._not_implemented()
+    # def save(self, filename, append=False, **kwargs):
+    #     self._not_implemented()
 
-    def write(self, f, **kwargs):
-        self._not_implemented()
+    # def write(self, f, **kwargs):
+    #     self._not_implemented()
 
 
 class GeoTIFFReader(GeoTIFFFieldList, Reader):
@@ -227,6 +227,9 @@ class GeoTIFFReader(GeoTIFFFieldList, Reader):
 
     def mutate_source(self):
         return self
+
+    def default_encoder(self):
+        return Reader.default_encoder(self)
 
 
 def _match_magic(magic):

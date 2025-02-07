@@ -508,7 +508,6 @@ class WrappedMetadata:
             return self.metadata.namespaces()
 
     def as_namespace(self, namespace):
-        print("as_namespace namespace=", namespace)
         if self.hidden_namespaces and namespace in self.hidden_namespaces:
             return {}
 
