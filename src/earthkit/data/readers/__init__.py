@@ -109,7 +109,7 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
         return encoder._encode(self, **kwargs)
 
     def default_encoder(self):
-        return "reader"
+        return "internal-pass-through"
 
     def __fspath__(self):
         return self.path

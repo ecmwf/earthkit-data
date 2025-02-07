@@ -62,11 +62,8 @@ class FileTarget(SimpleTarget):
         if self._tmp_fileobj:
             self._tmp_fileobj.close()
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, trace):
-        self.close()
+    def flush(self):
+        self._f().flush()
 
     def _f(self):
         if self.fileobj:

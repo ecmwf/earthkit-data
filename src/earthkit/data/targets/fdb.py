@@ -32,14 +32,11 @@ class FDBTarget(SimpleTarget):
             self._fdb = pyfdb.FDB(**self._fdb_kwargs)
         return self._fdb
 
+    def close(self):
+        self.flush()
+
     def flush(self):
         self.fdb.flush()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, trace):
-        self.flush()
 
     def _write(self, data, **kwargs):
         r = self._encode(data, **kwargs)

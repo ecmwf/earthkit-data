@@ -32,6 +32,12 @@ class MultioTarget(SimpleTarget):
         super().__init__(**kwargs)
         self.plan = plan
 
+    def close(self):
+        pass
+
+    def flush(self):
+        pass
+
     def __enter__(self):
         return self
 
