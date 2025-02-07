@@ -31,6 +31,7 @@ from .sources import from_source_lazily
 from .sources.array_list import ArrayField
 from .targets import create_target
 from .targets import to_target
+from .utils import array as array_api
 from .utils.examples import download_example_file
 from .utils.examples import remote_example_file
 
@@ -38,6 +39,7 @@ settings = config
 
 __all__ = [
     "ALL",
+    "array_api",
     "ArrayField",
     "cache",
     "create_encoder",
