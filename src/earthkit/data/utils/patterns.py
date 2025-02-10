@@ -75,11 +75,14 @@ class DatetimeDelta:
 
     def substitute(self, value, name):
         sign = -1 if self.delta[0] == "-" else 1
-        search_delta = re.search(r"\d(.*)", self.delta)
-        if search_delta:
-            delta = search_delta.group(0)
+        if re.fullmatch(r"[-\+]?\d+[hms]?", self.delta):
+            delta = re.search(r"\d+[hms]?", self.delta).group(0)
         else:
-            raise ValueError("Invalid value '{}' for delta, expected a number".format(self.delta))
+            raise ValueError(
+                "Invalid value '{}' for delta, expected time in hour (h), minute (m) or second (s)".format(
+                    self.delta
+                )
+            )
 
         valid_date = to_datetime(value) + sign * to_timedelta(delta)
         return valid_date.strftime(self.format)
