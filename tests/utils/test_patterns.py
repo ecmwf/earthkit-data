@@ -26,6 +26,16 @@ from earthkit.data.utils.patterns import Pattern
             {"my_date": datetime.datetime(2020, 5, 13), "name": ["t2", "msl"]},
             ["test_2020-05-13_t2.grib", "test_2020-05-13_msl.grib"],
         ),
+        (
+            "test_{date:strftimedelta(-6;%Y-%m-%d_%H)}.grib",
+            {"date": [datetime.datetime(2020, 5, 11), datetime.datetime(2020, 5, 11, 6)]},
+            ["test_2020-05-10_18.grib", "test_2020-05-11_00.grib"],
+        ),
+        (
+            "test_{date:strftimedelta(60m;%Y-%m-%d_%H)}.grib",
+            {"date": [datetime.datetime(2020, 5, 11), datetime.datetime(2020, 5, 11, 6)]},
+            ["test_2020-05-11_01.grib", "test_2020-05-11_07.grib"],
+        ),
     ],
 )
 def test_pattern_core(pattern, values, expected_value):
