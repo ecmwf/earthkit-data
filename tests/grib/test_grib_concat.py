@@ -150,6 +150,17 @@ def test_grib_from_empty_3():
     _check_save_to_disk(ds3, 8, md)
 
 
+# See github issue #588
+def test_grib_concat_large():
+    ds_e = from_source("empty")
+    ds1 = from_source("file", earthkit_examples_file("test.grib"))
+
+    for _ in range(2000):
+        ds_e += ds1.sel(param="msl")
+
+    assert len(ds_e) == 2000
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
