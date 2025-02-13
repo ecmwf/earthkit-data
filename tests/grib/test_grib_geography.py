@@ -220,6 +220,8 @@ def test_grib_projection_mercator(fl_type):
         (earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"), "O1280"),
         (earthkit_test_data_file("rotated_N32_subarea.grib"), "N32"),
         (earthkit_test_data_file("rotated_wind_20x20.grib"), 20),
+        (earthkit_test_data_file("mercator.grib"), None),
+        (earthkit_test_data_file("ll_10_20.grib"), None),
     ],
 )
 def test_grib_resolution(path, expected_value):
@@ -227,6 +229,8 @@ def test_grib_resolution(path, expected_value):
 
     if isinstance(expected_value, str):
         assert ds[0].resolution == expected_value
+    elif expected_value is None:
+        assert ds[0].resolution is None
     else:
         assert np.isclose(ds[0].resolution, expected_value)
 
