@@ -74,23 +74,6 @@ class MarsRetriever(ECMWFApi):
         if StandaloneMarsClient.enabled():
             return StandaloneMarsClient(self.log)
 
-        if self.prompt:
-            prompt = MARSAPIKeyPrompt()
-            prompt.check()
-
-            try:
-                return self._make_service()
-            except Exception as e:
-                if ".ecmwfapirc" in str(e) or not prompt.env_configured():
-                    LOG.warning(e)
-                    LOG.exception(f"Could not load ecmwf api (mars) client. {e}")
-                    prompt.ask_user_and_save()
-                    return self._make_service()
-                raise
-        else:
-            return self._make_service()
-
-    def _make_service(self):
         kwargs = {}
         if self.log is None:
             kwargs = {"log": _no_log}
@@ -103,6 +86,20 @@ class MarsRetriever(ECMWFApi):
             import ecmwfapi
         except ImportError:
             raise ImportError("MARS access requires 'ecmwf-api-client' to be installed")
+
+        if self.prompt:
+            prompt = MARSAPIKeyPrompt()
+            prompt.check()
+
+            try:
+                return ecmwfapi.ECMWFService("mars", **kwargs)
+            except Exception as e:
+                if ".ecmwfapirc" in str(e) or not self.prompt.has_config_env():
+                    LOG.warning(e)
+                    LOG.exception(f"Could not load ecmwf api (mars) client. {e}")
+                    prompt.ask_user_and_save()
+                else:
+                    raise
 
         return ecmwfapi.ECMWFService("mars", **kwargs)
 
