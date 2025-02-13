@@ -56,6 +56,7 @@ class MultioTarget(SimpleTarget):
         metadata.update(
             {
                 "globalSize": math.prod(array.shape),
+                **self._metadata,
             }
         )
 
