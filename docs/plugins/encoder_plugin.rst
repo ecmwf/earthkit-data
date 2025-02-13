@@ -38,15 +38,15 @@ integration must be set as follow:
     entry-points."earthkit.data.encoders".my-encoder = "earthkit_data_my_encoder:MyClass"
 
 
-With this we could use the new encoder in :func:`get_encoder` or :func:`to_target` as:
+With this we could use the new encoder in :func:`create_encoder` or :func:`to_target` as:
 
 .. code-block:: python
 
-    import earthkit.data
+    import earthkit.data as ekd
 
-    encoder = earthkit.data.get_encoder("my-encoder", ...)
-    ds = earthkit.data.to_target("file", encoder="my_encoder", ...)
-    ds = earthkit.data.to_target("file", encoder=encoder, ...)
+    encoder = ekd.create_encoder("my-encoder", ...)
+    ds = ekd.to_target("file", encoder="my_encoder", ...)
+    ds = ekd.to_target("file", encoder=encoder, ...)
 
 
 .. note::
@@ -57,15 +57,15 @@ With this we could use the new encoder in :func:`get_encoder` or :func:`to_targe
 Example
 -------
 
-The ``earthkit-data-demo-encoder`` package demonstrates how to implement a ``encoder plugin``. Its source code is located at https://github.com/ecmwf/earthkit-data-demo-encoder. This plugin enables earthkit-data to encode fields as a PNG.
+The ``earthkit-data-demo-encoder-png`` package demonstrates how to implement a ``encoder plugin``. Its source code is located at https://github.com/ecmwf/earthkit-data-demo-encoder-png. This plugin enables earthkit-data to encode fields as a PNG.
 
 This demo package can be installed as:
 
 .. code-block:: shell
 
-  pip install earthkit-data-demo-encoder
+  pip install earthkit-data-demo-encoder-png
 
-Having finished the installation, GRIB data can written to a PNG file asn follows:
+Having finished the installation, GRIB data can be written to a PNG file as follows:
 
 .. code-block:: python
 
@@ -75,14 +75,14 @@ Having finished the installation, GRIB data can written to a PNG file asn follow
     ds = earthkit.data.from_source("sample", "test.grib")
 
     # we write the first field into a PNG file
-    ds[0].to_target("file", "_my_test.png", encoder="demo-encoder")
+    ds[0].to_target("file", "_my_test.png", encoder="demo-encoder-png")
 
 
 The integration is performed by ``entry_points`` defined in  ``pyproject.toml``.
 
 .. code-block:: toml
 
-    entry-points."earthkit.data.encoders".demo-encoder = "earthkit_data_demo_encoder:DemoEncoder"
+    entry-points."earthkit.data.encoders".demo-encoder-png = "earthkit_data_demo_encoder_png:DemoEncoderPng"
 
 
 See the :ref:`/examples/demo_encoders_plugin.ipynb` notebook for the full example.

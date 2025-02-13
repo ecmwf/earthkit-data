@@ -15,7 +15,7 @@ from . import Encoder
 LOG = logging.getLogger(__name__)
 
 
-class ReaderEncodedData(EncodedData):
+class _InternalPassThroughEncodedData(EncodedData):
     def __init__(self, d):
         self.d = d
 
@@ -37,7 +37,9 @@ class ReaderEncodedData(EncodedData):
         raise NotImplementedError
 
 
-class ReaderEncoder(Encoder):
+class _InternalPassThroughEncoder(Encoder):
+    """A pass-through encoder implemented for Readers"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -59,7 +61,7 @@ class ReaderEncoder(Encoder):
         from earthkit.data.readers import Reader
 
         if issubclass(data.__class__, Reader):
-            return ReaderEncodedData(data)
+            return _InternalPassThroughEncodedData(data)
         raise ValueError("data is not a Reader")
 
     def _encode_field(self, field, **kwargs):
@@ -69,4 +71,4 @@ class ReaderEncoder(Encoder):
         return self._encode(fieldlist, **kwargs)
 
 
-encoder = ReaderEncoder
+encoder = _InternalPassThroughEncoder

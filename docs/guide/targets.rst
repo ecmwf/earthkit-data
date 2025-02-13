@@ -16,10 +16,10 @@ There are three different ways to write/add data to a given target:
 
 .. code-block:: python
 
-    import earthkit.data
+    import earthkit.data as ekd
 
     # read GRIB data into a fieldlist
-    ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+    ds = ekd.from_source("file", "docs/examples/test.grib")
 
     # write the fieldlist to a file in different ways
 
@@ -27,14 +27,10 @@ There are three different ways to write/add data to a given target:
     ds.to_target("file", "_my_res_1.grib")
 
     # Method 2: using the standalone to_target() method
-    from earthkit.data import to_target
-
-    to_target("file", "_my_res_2.grib", data=ds)
+    ekd.to_target("file", "_my_res_2.grib", data=ds)
 
     # Method 3: using a target object
-    from earthkit.data import get_target
-
-    with get_target("file", "_my_res_3.grib") as t:
+    with ekd.create_target("file", "_my_res_3.grib") as t:
         t.write(ds)
 
     # Method 4: using a target object

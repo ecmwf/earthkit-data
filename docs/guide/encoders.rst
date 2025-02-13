@@ -5,12 +5,12 @@ Encoders
 
 An **encoder** is used to generate data in a suitable format that can be written/added to a :ref:`target <data-targets>`. Encoders are typically used implicitly via :func:`to_target` but we can also instantiate a :class:`Encoder` and work with it directly.
 
-get_encoder()
+create_encoder()
 ---------------------------
 
-We can create an :class:`Encoder` via :func:`get_encoder`.
+We can create an :class:`Encoder` via :func:`create_encoder`.
 
-.. py:function:: get_encoder(name, *args, **kwargs)
+.. py:function:: create_encoder(name, *args, **kwargs)
 
   Create an encoder specified by ``name`` .
 

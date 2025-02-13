@@ -1,6 +1,16 @@
 Version 0.12 Updates
 /////////////////////////
 
+
+Version 0.12.2
+===============
+
+Fixes
+++++++++
+
+- Fixed issue when failed to build a fieldlist with concatenation because maximum recursion depth exceeded (:pr:`599`)
+
+
 Version 0.12.1
 ===============
 

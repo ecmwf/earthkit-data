@@ -76,6 +76,14 @@ class Target(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def close(self):
+        pass
+
+    @abstractmethod
+    def flush(self):
+        pass
+
+    @abstractmethod
     def __enter__(self):
         pass
 
@@ -96,8 +104,11 @@ class SimpleTarget(Target):
                     self.write(d, **kwargs)
             elif hasattr(data, "to_target"):
                 self._write(data, **kwargs)
+            # elif "values" not in kwargs:
+            #     # TODO: this should be reviewed
+            #     self._write(None, values=data, **kwargs)
             else:
-                self._write(None, values=data, **kwargs)
+                raise ValueError("Cannot write data to target")
         else:
             self._write(None, **kwargs)
 
@@ -131,6 +142,12 @@ class SimpleTarget(Target):
             template = self._template
 
         return encoder.encode(data, template=template, **kwargs)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
 
 class TargetLoader:
@@ -179,7 +196,7 @@ class TargetMaker:
         return self(name.replace("_", "-"))
 
 
-get_target = TargetMaker()
+create_target = TargetMaker()
 
 
 @lru_cache
@@ -207,7 +224,7 @@ def to_target(target, *args, **kwargs):
 
     # data = kwargs.pop("data", None)
 
-    with get_target(target, *args, **kwargs) as t:
+    with create_target(target, *args, **kwargs) as t:
         for k in [*target_kwargs(type(t)), *target_kwargs(Target)]:
             kwargs.pop(k, None)
 

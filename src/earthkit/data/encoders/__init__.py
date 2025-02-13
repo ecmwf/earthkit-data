@@ -17,7 +17,19 @@ LOG = logging.getLogger(__name__)
 
 
 """Assign encoders to file suffixes"""
-_SUFFIXES = {".grib": "grib", ".nc": "netcdf", ".png": "png"}
+_SUFFIXES = {
+    (".grib", ".grb", "grib1", "grib2"): "grib",
+    (".nc", ".nc3", ".nc4", ".netcdf"): "netcdf",
+}
+
+
+def _suffix_to_encoder(suffix):
+    for suffixes, encoder in _SUFFIXES.items():
+        if isinstance(suffixes, str):
+            if suffix == suffixes:
+                return encoder
+        elif suffix in suffixes:
+            return encoder
 
 
 class EncodedData(metaclass=ABCMeta):
@@ -191,7 +203,7 @@ class EncoderMaker:
         return self(name.replace("_", "-"))
 
 
-get_encoder = EncoderMaker()
+create_encoder = EncoderMaker()
 
 
 def make_encoder(data, encoder=None, suffix=None, metadata=None, **kwargs):
@@ -201,14 +213,14 @@ def make_encoder(data, encoder=None, suffix=None, metadata=None, **kwargs):
 
     if encoder is None:
         if suffix is not None:
-            encoder = _SUFFIXES.get(suffix, None)
+            encoder = _suffix_to_encoder(suffix)
         if encoder is None:
             if hasattr(data, "default_encoder"):
                 # print("data.default_encoder", data.default_encoder())
                 encoder = data.default_encoder()
 
     if isinstance(encoder, str):
-        encoder = get_encoder(encoder, metadata=metadata, **kwargs)
+        encoder = create_encoder(encoder, metadata=metadata, **kwargs)
         assert encoder is not None
         return encoder
 

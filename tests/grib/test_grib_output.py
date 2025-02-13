@@ -66,13 +66,27 @@ def test_grib_save_when_loaded_from_file(fl_type, write_method):
     [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
 )
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_bits_per_value(_kwargs, expected_value, write_method):
+def test_grib_save_bits_per_value_fieldlist(_kwargs, expected_value, write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     with temp_file() as tmp:
         write_to_file(write_method, tmp, ds, **_kwargs)
         ds1 = from_source("file", tmp)
         assert ds1.metadata("bitsPerValue") == [expected_value] * len(ds)
+
+
+@pytest.mark.parametrize(
+    "_kwargs,expected_value",
+    [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
+)
+@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+def test_grib_save_bits_per_value_single_field(_kwargs, expected_value, write_method):
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    with temp_file() as tmp:
+        write_to_file(write_method, tmp, ds[0], **_kwargs)
+        ds1 = from_source("file", tmp)
+        assert ds1.metadata("bitsPerValue") == [expected_value]
 
 
 # TODO: if we use missing_value = np.finfo(np.float32).max the test fails

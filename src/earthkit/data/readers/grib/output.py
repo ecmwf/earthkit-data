@@ -463,11 +463,11 @@ class GribOutput:
         return self._files[path], path
 
 
-@deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use get_target() instead")
+@deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use create_target() instead")
 def new_grib_output(*args, **kwargs):
     return GribOutput(*args, **kwargs)
 
 
-@deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use get_encoder() instead")
+@deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use create_encoder() instead")
 def new_grib_coder(*args, **kwargs):
     return GribCoder(*args, **kwargs)

@@ -27,6 +27,15 @@ from earthkit.data.utils.array import get_backend
 from earthkit.data.utils.metadata.args import metadata_argument
 
 
+def _bits_per_value_to_metadata(**kwargs):
+    # TODO: remove this function when save() and write() are removed
+    metadata = {}
+    bits_per_value = kwargs.pop("bits_per_value", None)
+    if bits_per_value is not None:
+        metadata = {"bitsPerValue": bits_per_value}
+    return metadata, kwargs
+
+
 class FieldListIndices:
     def __init__(self, field_list):
         self.fs = field_list
@@ -684,7 +693,10 @@ class Field(Base):
         **kwargs: dict, optional
             Other keyword arguments passed to :obj:`write`.
         """
-        self.to_target("file", filename, append=append, **kwargs)
+        metadata = kwargs.pop("metadata", None)
+        if metadata is None:
+            metadata, kwargs = _bits_per_value_to_metadata(**kwargs)
+        self.to_target("file", filename, append=append, metadata=metadata, **kwargs)
         # the original implementation
         # flag = "wb" if not append else "ab"
         # with open(filename, flag) as f:
@@ -692,7 +704,10 @@ class Field(Base):
 
     @deprecation.deprecated(deprecated_in="0.13.0", details="Use to_target() instead")
     def write(self, f, **kwargs):
-        self.to_target("file", f, **kwargs)
+        metadata = kwargs.pop("metadata", None)
+        if metadata is None:
+            metadata, kwargs = _bits_per_value_to_metadata(**kwargs)
+        self.to_target("file", f, metadata=metadata, **kwargs)
 
     def to_target(self, target, *args, **kwargs):
         r"""Write the field into a target object.
@@ -1629,11 +1644,7 @@ class FieldList(Index):
         :meth:`SimpleFieldList.save() <data.indexing.fieldlist.SimpleFieldList.save>`
 
         """
-        metadata = {}
-        bits_per_value = kwargs.pop("bits_per_value", None)
-        if bits_per_value is not None:
-            metadata = {"bitsPerValue": bits_per_value}
-
+        metadata, kwargs = _bits_per_value_to_metadata(**kwargs)
         self.to_target("file", filename, append=append, metadata=metadata, **kwargs)
 
         # original code
@@ -1657,12 +1668,7 @@ class FieldList(Index):
         read
 
         """
-
-        metadata = {}
-        bits_per_value = kwargs.pop("bits_per_value", None)
-        if bits_per_value is not None:
-            metadata = {"bitsPerValue": bits_per_value}
-
+        metadata, kwargs = _bits_per_value_to_metadata(**kwargs)
         self.to_target("file", f, metadata=metadata, **kwargs)
 
         # original code

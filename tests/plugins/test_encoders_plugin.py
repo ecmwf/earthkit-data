@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.encoders import get_encoder
+from earthkit.data.encoders import create_encoder
 from earthkit.data.targets import to_target
 
 NO_DEMO_ENCODER = True
@@ -27,7 +27,7 @@ def test_demo_encoder_plugin_1():
     with temp_file() as tmp:
         d = np.random.normal(0, 1, (10, 15))
 
-        encoder = get_encoder("demo-encoder")
+        encoder = create_encoder("demo-encoder")
         assert encoder is not None
 
         d = encoder.encode(values=d)

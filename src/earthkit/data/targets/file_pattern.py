@@ -52,11 +52,9 @@ class FilePatternTarget(SimpleTarget):
         for f in self._files.values():
             f.close()
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, trace):
-        self.close()
+    def flush(self):
+        for f in self._files.values():
+            f.flush()
 
     def _f(self, data):
         keys = {k.split(":")[0]: data.metadata(k.split(":")[0]) for k in self.split_output}
