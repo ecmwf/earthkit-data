@@ -170,16 +170,17 @@ class GribFieldGeography(Geography):
             y = self.metadata.get("DyInDegrees")
             x = round(x * 1_000_000) / 1_000_000
             y = round(y * 1_000_000) / 1_000_000
-            assert x == y, (x, y)
-            return x
+            return x if x == y else None
 
         if grid_type in ["lambert", "lambert_azimuthal_equal_area"]:
             x = self.metadata.get("DxInMetres")
             y = self.metadata.get("DyInMetres")
-            assert x == y, (x, y)
-            return str(x / 1000).replace(".", "p") + "km"
+            if x == y:
+                return str(x / 1000).replace(".", "p") + "km"
+            else:
+                return None
 
-        raise ValueError(f"Unknown gridType={grid_type}")
+        # raise ValueError(f"Unknown gridType={grid_type}")
 
     def mars_grid(self):
         if len(self.shape()) == 2:

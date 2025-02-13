@@ -82,14 +82,14 @@ class GeoTIFFGeography(Geography):
         # Get width and height of pixels in units of the CRS
         x, y = self._ds.rio.resolution()
         crs = self._ds.rio.crs
-        units, factor = crs.units_factor
+        units, _ = crs.units_factor
         # Geographic coordinate systems use latitude and longitude
         if crs.is_geographic and units == "degree":
             x = abs(round(x * 1_000_000) / 1_000_000)
             y = abs(round(y * 1_000_000) / 1_000_000)
-            assert x == y, (x, y)
-            return x
-        raise NotImplementedError(f"resolution for {crs} ({units}, {factor})")
+            if x == y:
+                return x
+        # raise NotImplementedError(f"resolution for {crs} ({units}, {factor})")
 
     def mars_grid(self):
         raise NotImplementedError

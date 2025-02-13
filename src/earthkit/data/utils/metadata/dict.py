@@ -175,7 +175,8 @@ class UserGeography(Geography):
         return None
 
     def resolution(self):
-        raise NotImplementedError("resolution is not implemented for this geography")
+        return None
+        # raise NotImplementedError("resolution is not implemented for this geography")
 
     def mars_area(self):
         return [self.north(), self.west(), self.south(), self.east()]
@@ -255,8 +256,8 @@ class RegularDistinctLLGeography(DistinctLLGeography):
     def resolution(self):
         x = self.dx()
         y = self.dy()
-        assert x == y, (x, y)
-        return x
+        if x == y:
+            return x
 
     def mars_grid(self):
         return [self.dx(), self.dy()]

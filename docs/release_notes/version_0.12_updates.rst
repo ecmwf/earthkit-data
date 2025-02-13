@@ -2,6 +2,20 @@ Version 0.12 Updates
 /////////////////////////
 
 
+Version 0.12.3
+===============
+
+Changes
+++++++++
+
+- ``Field.resolution()`` now returns None when the resolution cannot be determined. Previously it failed with an assertion in this case (:pr:`616`)
+
+Fixes
+++++++++
+
+- Fixed issue when there was a crash during checking missing MARS credentials when calling ``from_source("mars", ...)``. It only happened when ``ecmwfapi`` was used for MARS retrievals. (:pr:`615`)
+
+
 Version 0.12.2
 ===============
 
