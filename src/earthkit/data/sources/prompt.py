@@ -63,7 +63,8 @@ class RegexValidate:
         self.pattern = pattern
 
     def __call__(self, value):
-        assert re.fullmatch(self.pattern, value), (self.pattern, value)
+        if not re.fullmatch(self.pattern, value):
+            raise ValueError(f"Value={value} does not match pattern={self.pattern}")
         return value
 
 
@@ -234,3 +235,6 @@ class APIKeyPrompt:
 
     def validate(self, input):
         return input
+
+    def rcfile_name(self):
+        return os.path.basename(os.path.expanduser(self.rcfile))
