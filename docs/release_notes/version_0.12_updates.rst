@@ -8,7 +8,7 @@ Version 0.12.3
 Changes
 ++++++++
 
-- ``Field.resolution()`` now returns None when the resolution cannot be determined. Previously it failed with an assertion in this case (:pr:`616`)
+- ``Field.resolution()`` now returns None when the resolution cannot be determined. Previously, it failed with an assertion (:pr:`616`)
 
 Fixes
 ++++++++
