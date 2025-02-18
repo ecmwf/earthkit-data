@@ -48,15 +48,15 @@ Examples:
 to_target()
 ---------------------------
 
-We can write data to a given target by using :func:`to_target`. It can be either invoked on a data object or the data object can be specified as ``data``.
+We can write data to a given target by using :func:`to_target`. It can be either invoked on a :ref:`data object <data-object>` data object or the :ref:`data object <data-object>` can be specified as ``data``.
 
 .. py:function:: to_target(name, *args, data=None, **kwargs)
 
-  Write data :ref:`data object <data-object>` to the target specified by ``name`` .
+  Write data to the target specified by ``name`` .
 
   :param str name: the target (see below)
   :param tuple *args: specify target parameters
-  :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
+  :param data: specify the :ref:`data object <data-object>` to write. Cannot be set when :func:`to_target` is called on a data object.
   :param dict **kwargs: specify additional target parameters. Also specify the encoder parameters.
 
 
@@ -75,16 +75,14 @@ Built in targets
     * - :ref:`data-targets-file`
       - write data to a file/files
       - :py:class:`FileTarget`
+    * - :ref:`data-targets-file-pattern`
+      - write data to a file/files
+      - :py:class:`FilePatternTarget`
     * - :ref:`data-targets-fdb`
       - add data to a `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
       - :py:class:`FDBTarget`
-    * - :ref:`data-targets-multio`
-      - add data to Multio
-      - :py:class:`MultioTarget`
 
 ----------------------------------
-
-
 
 
 
@@ -98,9 +96,8 @@ file
 
   The simplest target is ``file``, which can access a local file/list of files.
 
-  :param file: The file path or file-like object to write to.
-  :type file: str or file-like object
-  :param bool split_output: If True, the output file name defines a pattern containing metadata keys in the format of ``{key}``. Each data item (e.g. a field) will be written into a file with a name created by substituting the relevant metadata values in the filename pattern. E.g. ``"{param}_{level}_{typeOfLevel}.grib"``. Only used if ``file`` is a path.
+  :param file: The file path or file-like object to write to. When None, tries to guess the file name from the ``data`` if it is passed as a kwarg.
+  :type file: str, file-like object or None
   :param bool append:  If True, the file is opened in append mode. Only used if ``file`` is a path.
   :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
   :param encoder: The encoder to use to encode the data. When it is a str, the encoder is looked up in
@@ -111,6 +108,42 @@ file
   :param template: The template to be used by the encoder.
   :type template: obj, None
   :param dict **kwargs: other keyword arguments passed to the encoder
+
+
+.. _data-targets-file-pattern:
+
+file-pattern
+------------
+
+.. py:function:: to_target("file-pattern", file, append=False, data=None, encoder=None, template=None, metadata=None, **kwargs)
+  :noindex:
+
+  The simplest target is ``file``, which can access a local file/list of files.
+
+  :param file: The file path to write to. The output file name defines a pattern containing metadata keys in the format of ``{key}``. Each data item (e.g. a field) will be written into a file with a name created by substituting the relevant metadata values in the filename pattern.
+  :type file: str
+  :param bool append:  If True, the files are opened in append mode.
+  :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
+  :param encoder: The encoder to use to encode the data. When it is a str, the encoder is looked up in
+    the available :ref:`data-encoders`. When None, the encoder type will be determined from the data
+    to write (if possible) or from the :class:`Target` properties. When a suitable encoder cannot be instantiated raises
+    ValueError.
+  :type encoder: str, :py:class:`Encoder`, None
+  :param template: The template to be used by the encoder.
+  :type template: obj, None
+  :param dict **kwargs: other keyword arguments passed to the encoder
+
+
+  .. code-block:: python
+
+      import earthkit.data as ekd
+
+      # read GRIB data into a fieldlist. 
+      # Contains 2 fields: msl and 2t
+      ds = ekd.from_source("sample", "test.grib")
+
+      # this code results in 2 files: _my_res_msl.grib and _my_res_2t.grib 
+      ds.to_target("file-pattern", "_my_res_{shortName}.grib")
 
 
 
@@ -139,17 +172,17 @@ fdb
   :param dict **kwargs: other keyword arguments passed to the encoder
 
 
-.. _data-targets-multio:
+.. .. _data-targets-multio:
 
-multio
-------
+.. multio
+.. ------
 
-.. py:function:: to_target("multio", plan=None, data=None, template=None, metadata=None, **kwargs)
-  :noindex:
+.. .. py:function:: to_target("multio", plan=None, data=None, template=None, metadata=None, **kwargs)
+..   :noindex:
 
-  :param plan:  Multio plan
-  :type plan: Client, os.PathLike, str, dict
-  :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
-  :param template: The template to be used by the encoder.
-  :type template: obj, None
-  :param dict **kwargs: other keyword arguments passed to the encoder
+..   :param plan:  Multio plan
+..   :type plan: Client, os.PathLike, str, dict
+..   :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
+..   :param template: The template to be used by the encoder.
+..   :type template: obj, None
+..   :param dict **kwargs: other keyword arguments passed to the encoder
