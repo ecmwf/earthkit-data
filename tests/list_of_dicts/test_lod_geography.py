@@ -50,8 +50,7 @@ def test_lod_geo_distinct_ll(lod_distinct_ll, mode):
     assert np.allclose(gr[0], lat_ref.flatten())
     assert np.allclose(gr[1], lon_ref.flatten())
 
-    with pytest.raises(AssertionError):
-        ds[0].resolution
+    assert ds[0].resolution is None
 
     ll = ds.to_latlon()
     lat = ll["lat"]
@@ -88,8 +87,7 @@ def test_lod_geo_ll_flat(lod_ll_flat, mode):
     assert np.allclose(gr[0], lat_ref.flatten())
     assert np.allclose(gr[1], lon_ref.flatten())
 
-    with pytest.raises(NotImplementedError):
-        ds[0].resolution
+    assert ds[0].resolution is None
 
     ll = ds.to_latlon()
     lat = ll["lat"]
@@ -128,8 +126,7 @@ def test_lod_geo_ll_2D(request, data, mode):
     assert np.allclose(gr[0], lat_ref.flatten())
     assert np.allclose(gr[1], lon_ref.flatten())
 
-    with pytest.raises(NotImplementedError):
-        ds[0].resolution
+    assert ds[0].resolution is None
 
     ll = ds.to_latlon()
     lat = ll["lat"]
