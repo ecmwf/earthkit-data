@@ -87,8 +87,7 @@ def test_lod_ll(lod_distinct_ll, mode):
     assert np.allclose(gr[0], lat_ref.flatten())
     assert np.allclose(gr[1], lon_ref.flatten())
 
-    with pytest.raises(AssertionError):
-        ds[0].resolution
+    assert ds[0].resolution is None
 
     assert ds[0].datetime() == {
         "base_time": None,
