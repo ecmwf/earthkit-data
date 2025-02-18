@@ -138,11 +138,11 @@ file-pattern
 
       import earthkit.data as ekd
 
-      # read GRIB data into a fieldlist. 
+      # read GRIB data into a fieldlist.
       # Contains 2 fields: msl and 2t
       ds = ekd.from_source("sample", "test.grib")
 
-      # this code results in 2 files: _my_res_msl.grib and _my_res_2t.grib 
+      # this code results in 2 files: _my_res_msl.grib and _my_res_2t.grib
       ds.to_target("file-pattern", "_my_res_{shortName}.grib")
 
 
