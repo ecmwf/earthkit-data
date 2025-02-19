@@ -154,10 +154,19 @@ class GeoTIFFFieldList(FieldList):
 
     FIELD_TYPE = GeoTIFFField
 
+    DEFAULT_XARRAY_KWARGS = {
+        # Splitting bands into individual variables preserves band-specific metadata.
+        "band_as_variable": True,
+        # Mask and scale values by default to match xarray's default behaviour.
+        # Note: masked values are set to NaN, so all values are returned as floats.
+        "mask_and_scale": True,
+        "decode_times": True,
+    }
+
     def __init__(self, path, **kwargs):
         self._fields = None
         self.path = path
-        self._ds = self.rioxarray_read(band_as_variable=True, mask_and_scale=True, decode_times=True)
+        self._ds = self.rioxarray_read()
         # Shared geography instance for all fields/bands
         self._geo = GeoTIFFGeography(self._ds)
         super().__init__(**kwargs)
@@ -168,10 +177,9 @@ class GeoTIFFFieldList(FieldList):
         except ImportError:
             raise ImportError("geotiff handling requires 'rioxarray' to be installed")
 
-        options = dict()
-        options.update(kwargs.get("rioxarray_open_rasterio_kwargs", {}))
-        if not options:
-            options = dict(**kwargs)
+        options = dict(**self.DEFAULT_XARRAY_KWARGS)
+        # Read options from dedicated kwarg if exists, otherwise use all kwargs
+        options.update(kwargs.get("rioxarray_open_rasterio_kwargs", kwargs))
 
         return rioxarray.open_rasterio(self.path, **options)
 
