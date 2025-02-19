@@ -20,6 +20,7 @@ LOG = logging.getLogger(__name__)
 _SUFFIXES = {
     (".grib", ".grb", "grib1", "grib2"): "grib",
     (".nc", ".nc3", ".nc4", ".netcdf"): "netcdf",
+    (".tiff", ".tif"): "geotiff",
 }
 
 
