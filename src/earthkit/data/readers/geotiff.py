@@ -235,14 +235,11 @@ class GeoTIFFReader(GeoTIFFFieldList, Reader):
 
 
 def _match_magic(magic):
-    if magic is not None:
-        # https://docs.ogc.org/is/19-008r4/19-008r4.html#_tiff_core_test
-        # Bytes 0-1: 'II' (little endian) or 'MM' (big endian)
-        # Bytes 2-3: 42 as short in the corresponding byte order
-        # Bytes 4-7: offset to first image file directory
-        # ASCII: I = 73, M = 77, * = 42
-        return len(magic) >= 8 and magic[:4] in {b"II*\x00", b"MM\x00*"}
-    return False
+    # https://docs.ogc.org/is/19-008r4/19-008r4.html#_tiff_core_test
+    # Bytes 0-1: 'II' (little endian) or 'MM' (big endian)
+    # Bytes 2-3: 42 as short in the corresponding byte order
+    # Bytes 4-7: offset to first image file directory
+    return magic is not None and len(magic) >= 8 and magic[:4] in {b"II*\x00", b"MM\x00*"}
 
 
 def reader(source, path, *, magic=None, **kwargs):
