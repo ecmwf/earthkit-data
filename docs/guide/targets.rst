@@ -70,7 +70,7 @@ Built in targets
 
 **earthkit-data** has the following built-in targets:
 
-  .. list-table:: 
+  .. list-table::
     :widths: 20 60 20
     :header-rows: 1
 
@@ -182,19 +182,20 @@ fdb
   :type template: obj, None
   :param dict **kwargs: other keyword arguments passed to the encoder
 
-  
+
   .. code-block:: python
 
-        import earthkit.data as ekd
-        ds = ekd.from_source("sample", "tuv_pl.grib")
+      import earthkit.data as ekd
 
-        # config contains the FDB configuration
+      ds = ekd.from_source("sample", "tuv_pl.grib")
 
-        # writing a field
-        ds[0].to_target("fdb", config=config)
+      # config contains the FDB configuration
 
-        # writing a whole fieldlist
-        ds.to_target("fdb", config=config)
+      # writing a field
+      ds[0].to_target("fdb", config=config)
+
+      # writing a whole fieldlist
+      ds.to_target("fdb", config=config)
 
 
   See the following notebook examples for further details:

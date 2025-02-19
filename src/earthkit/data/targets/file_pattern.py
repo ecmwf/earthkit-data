@@ -49,14 +49,30 @@ class FilePatternTarget(SimpleTarget):
         self.split_output = re.findall(r"\{(.*?)\}", self.filename)
 
     def close(self):
+        """Close the target and closing all the files.
+
+        The target will not be able to write anymore.
+
+        Raises:
+        -------
+        ValueError: If the target is already closed.
+        """
+        self._mark_closed()
         for f in self._files.values():
             f.close()
 
     def flush(self):
+        """Flush all the files.
+
+        -------
+        ValueError: If the target is already closed.
+        """
         for f in self._files.values():
             f.flush()
 
     def _f(self, data):
+        self._raise_if_closed()
+
         keys = {k.split(":")[0]: data.metadata(k.split(":")[0]) for k in self.split_output}
         path = self.filename.format(**keys)
 

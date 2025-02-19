@@ -73,15 +73,37 @@ class Target(metaclass=ABCMeta):
             Metadata to pass to the encoder.
         **kwargs: dict
             Other keyword arguments passed to the encoder.
+
+        Raises:
+        -------
+        ValueError: If the target is already closed.
         """
         pass
 
     @abstractmethod
     def close(self):
+        """Close the target.
+
+        The implementation must close the target and release any resources.
+        It must also call :obj:`_mark_closed`. The target will not be able
+        to write anymore.
+
+        Raises:
+        -------
+        ValueError: If the target is already closed.
+        """
         pass
 
     @abstractmethod
     def flush(self):
+        """Flush the target.
+
+        Some targets may require to flush the data to the underlying storage.
+
+        Raises:
+        -------
+        ValueError: If the target is already closed.
+        """
         pass
 
     @abstractmethod
@@ -92,12 +114,19 @@ class Target(metaclass=ABCMeta):
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
-    def _close(self):
-        self._check_closed()
+    @property
+    def closed(self):
+        """Check if the target is closed."""
+        return self._closed
+
+    def _mark_closed(self):
+        """Register the target as closed."""
+        self._raise_if_closed()
         self._closed = True
 
-    def _check_closed(self):
-        if self._closed:
+    def _raise_if_closed(self):
+        """Raise an error if the target is closed."""
+        if self.closed:
             raise ValueError("Target is closed")
 
 
@@ -107,6 +136,8 @@ class SimpleTarget(Target):
         data=None,
         **kwargs,
     ):
+        self._raise_if_closed()
+
         if data is not None:
             if hasattr(data, "sources"):
                 for d in data.sources:
@@ -133,7 +164,7 @@ class SimpleTarget(Target):
         pass
 
     def _encode(self, data, encoder=None, template=None, suffix=None, **kwargs):
-        """Encode data.
+        """Helper method to encode data.
 
         Returns
         -------

@@ -33,9 +33,24 @@ class FDBTarget(SimpleTarget):
         return self._fdb
 
     def close(self):
+        """Close the target and flush the fdb.
+
+        The target will not be able to write anymore.
+
+        Raises:
+        -------
+        ValueError: If the target is already closed.
+        """
         self.flush()
 
     def flush(self):
+        """Flush the fdb.
+
+        Raises:
+        -------
+        ValueError: If the target is already closed.
+        """
+        self._raise_if_closed()
         self.fdb.flush()
 
     def _write(self, data, **kwargs):

@@ -68,16 +68,28 @@ class FileTarget(SimpleTarget):
         """Close the file if :obj:`FileTarget` was created with a file path.
 
         If :obj:`FileTarget` was created with a file object this call has no effect.
+        The target will not be able to write anymore.
+
+        Raises:
+        -------
+        ValueError: If the target is already closed.
         """
-        self._close()
+        self._mark_closed()
         if self._tmp_fileobj:
             self._tmp_fileobj.close()
 
     def flush(self):
-        """Flush the file."""
+        """Flush the file.
+
+        Raises:
+        -------
+        ValueError: If the target is already closed.
+        """
         self._f().flush()
 
     def _f(self):
+        self._raise_if_closed()
+
         if self.fileobj:
             return self.fileobj
 
@@ -111,7 +123,6 @@ class FileTarget(SimpleTarget):
         return True
 
     def _write(self, data=None, **kwargs):
-        self._check_closed()
         if not self._check_overwrite(data):
             return
 

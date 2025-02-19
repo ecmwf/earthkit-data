@@ -114,7 +114,7 @@ def test_target_file_grib_set_metadata(kwargs):
 
 
 @pytest.mark.parametrize("per_field", [True, False])
-def test_target_file_grib_direct_api(per_field):
+def test_target_file_grib_direct_api_with_path(per_field):
     ds = from_source("file", earthkit_examples_file("test.grib"))
     vals_ref = ds.values[:, :4]
 
@@ -126,6 +126,53 @@ def test_target_file_grib_direct_api(per_field):
         else:
             target.write(ds)
         target.close()
+
+        # once closed, we cannot write anymore
+        with pytest.raises(Exception):
+            target.write(ds)
+
+        with pytest.raises(Exception):
+            target.close()
+
+        with pytest.raises(Exception):
+            target.flush()
+
+        ds1 = from_source("file", path)
+        assert len(ds) == len(ds1)
+        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert np.allclose(ds1.values[:, :4], vals_ref)
+
+
+@pytest.mark.parametrize("per_field", [True, False])
+def test_target_file_grib_direct_api_with_object(per_field):
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    vals_ref = ds.values[:, :4]
+
+    with temp_file() as path:
+        with open(path, "wb") as fp:
+            target = FileTarget(fp)
+            if per_field:
+                for f in ds:
+                    target.write(f)
+            else:
+                target.write(ds)
+            target.close()
+
+            assert target.closed
+            assert not fp.closed
+
+            # once closed, we cannot write anymore
+            with pytest.raises(ValueError):
+                target.write(ds)
+
+            with pytest.raises(ValueError):
+                target.close()
+
+            with pytest.raises(ValueError):
+                target.flush()
+
+            assert target.closed
+            assert not fp.closed
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
