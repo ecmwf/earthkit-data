@@ -59,13 +59,18 @@ We can write data to a given target by using :func:`to_target`. It can be either
   :param data: specify the :ref:`data object <data-object>` to write. Cannot be set when :func:`to_target` is called on a data object.
   :param dict **kwargs: specify additional target parameters. Also specify the encoder parameters.
 
+Target objects
+---------------------
+
+
+
 
 Built in targets
 ---------------------
 
 **earthkit-data** has the following built-in targets:
 
-  .. list-table:: Data targets
+  .. list-table:: 
     :widths: 20 60 20
     :header-rows: 1
 
@@ -74,13 +79,13 @@ Built in targets
       - Class
     * - :ref:`data-targets-file`
       - write data to a file/files
-      - :py:class:`FileTarget`
+      - :py:class:`~data.targets.FileTarget`
     * - :ref:`data-targets-file-pattern`
-      - write data to a file/files
-      - :py:class:`FilePatternTarget`
+      - write data to multiple files based on a filename pattern
+      - :py:class:`~data.targets.FilePatternTarget`
     * - :ref:`data-targets-fdb`
       - add data to a `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
-      - :py:class:`FDBTarget`
+      - :py:class:`~data.targets.FDBTarget`
 
 ----------------------------------
 
@@ -91,13 +96,13 @@ Built in targets
 file
 ----
 
-.. py:function:: to_target("file", file, split_output=False, append=False, data=None, encoder=None, template=None, metadata=None, **kwargs)
+.. py:function:: to_target("file", file, append=False, data=None, encoder=None, template=None, metadata=None, **kwargs)
   :noindex:
 
-  The simplest target is ``file``, which can access a local file/list of files.
+  The simplest target is ``file``, which can access a local file.
 
-  :param file: The file path or file-like object to write to. When None, tries to guess the file name from the ``data`` if it is passed as a kwarg.
-  :type file: str, file-like object or None
+  :param file:  The file path or file-like object to write to. When None, tries to guess the file name from the ``data`` if it is passed as a kwarg. When the file name cannot be constructed, a ValueError is raised. When ``file`` is a path, a file object is automatically created and closed when the target is closed. When ``file`` is a file object, its ownership is not transferred to the target. As a consequence, the file object is not closed when the writing is finished and :func:`to_target` returns.
+  :type file: str, file-like object, None
   :param bool append:  If True, the file is opened in append mode. Only used if ``file`` is a path.
   :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
   :param encoder: The encoder to use to encode the data. When it is a str, the encoder is looked up in
@@ -110,6 +115,12 @@ file
   :param dict **kwargs: other keyword arguments passed to the encoder
 
 
+  See the following notebook examples for further details:
+
+    - :ref:`/examples/grib_to_file_target.ipynb`
+
+
+
 .. _data-targets-file-pattern:
 
 file-pattern
@@ -118,7 +129,7 @@ file-pattern
 .. py:function:: to_target("file-pattern", file, append=False, data=None, encoder=None, template=None, metadata=None, **kwargs)
   :noindex:
 
-  The simplest target is ``file``, which can access a local file/list of files.
+  The ``file-pattern`` target writes data into multiple files based on a filename pattern.
 
   :param file: The file path to write to. The output file name defines a pattern containing metadata keys in the format of ``{key}``. Each data item (e.g. a field) will be written into a file with a name created by substituting the relevant metadata values in the filename pattern.
   :type file: str
@@ -170,6 +181,27 @@ fdb
   :param template: The template to be used by the encoder.
   :type template: obj, None
   :param dict **kwargs: other keyword arguments passed to the encoder
+
+  
+  .. code-block:: python
+
+        import earthkit.data as ekd
+        ds = ekd.from_source("sample", "tuv_pl.grib")
+
+        # config contains the FDB configuration
+
+        # writing a field
+        ds[0].to_target("fdb", config=config)
+
+        # writing a whole fieldlist
+        ds.to_target("fdb", config=config)
+
+
+  See the following notebook examples for further details:
+
+    - :ref:`/examples/grib_to_fdb_target.ipynb`
+
+
 
 
 .. .. _data-targets-multio:

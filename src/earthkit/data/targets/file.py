@@ -22,14 +22,17 @@ class FileTarget(SimpleTarget):
 
     Parameters:
     -----------
-    file: str or file-like object
+    file: str, file-like, None
         The file path or file-like object to write to. When None, tries to guess the file name
         from the ``data`` if it is passed as a kwarg.
         When the file name cannot be constructed, a ValueError is raised.
+        When ``file`` is a path, a file object is automatically created and closed when the target is closed.
+        When ``file`` is a file object, its ownership is not transferred to the target. As a consequence,
+        the file object is not closed when the target is closed, even if :obj:`close` is called explicitly.
     append: bool
-        If True, the file is opened in append mode. Only used if file is a path.
+        If True, the file is opened in append mode. Only used if ``file`` is a path.
     **kwargs:
-        Additional keyword arguments passed to the parent class
+        Additional keyword arguments passed to the parent class.
 
     Raises:
     -------
@@ -58,11 +61,20 @@ class FileTarget(SimpleTarget):
             if not self.filename:
                 raise ValueError("Please provide an output filename")
 
+    def __del__(self):
+        self.close()
+
     def close(self):
+        """Close the file if :obj:`FileTarget` was created with a file path.
+
+        If :obj:`FileTarget` was created with a file object this call has no effect.
+        """
+        self._close()
         if self._tmp_fileobj:
             self._tmp_fileobj.close()
 
     def flush(self):
+        """Flush the file."""
         self._f().flush()
 
     def _f(self):
@@ -99,11 +111,12 @@ class FileTarget(SimpleTarget):
         return True
 
     def _write(self, data=None, **kwargs):
+        self._check_closed()
         if not self._check_overwrite(data):
             return
 
-        r = self._encode(data, suffix=self.ext, **kwargs)
         f = self._f()
+        r = self._encode(data, suffix=self.ext, **kwargs)
         if hasattr(r, "__iter__"):
             for d in r:
                 d.to_file(f)

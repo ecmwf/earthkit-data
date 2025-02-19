@@ -41,6 +41,7 @@ class Target(metaclass=ABCMeta):
         self._encoder = encoder
         self._template = template
         self._metadata = metadata or {}
+        self._closed = False
 
     @abstractmethod
     def write(
@@ -90,6 +91,14 @@ class Target(metaclass=ABCMeta):
     @abstractmethod
     def __exit__(self, exc_type, exc_value, traceback):
         pass
+
+    def _close(self):
+        self._check_closed()
+        self._closed = True
+
+    def _check_closed(self):
+        if self._closed:
+            raise ValueError("Target is closed")
 
 
 class SimpleTarget(Target):
