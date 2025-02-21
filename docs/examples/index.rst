@@ -39,7 +39,8 @@ GRIB
 
     grib_overview.ipynb
     grib_metadata.ipynb
-    grib_lat_lon_value.ipynb
+    grib_lat_lon_value_ll.ipynb
+    grib_lat_lon_value_rgg.ipynb
     grib_selection.ipynb
     grib_indexing.ipynb
     grib_missing.ipynb

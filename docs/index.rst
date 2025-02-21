@@ -1,9 +1,25 @@
 Welcome to earthkit-data's documentation
 ======================================================
 
+|Static Badge| |image1| |Code Coverage| |License: Apache 2.0| |Latest
+Release|
+
+.. |Static Badge| image:: https://github.com/ecmwf/codex/raw/refs/heads/main/ESEE/foundation_badge.svg
+   :target: https://github.com/ecmwf/codex/raw/refs/heads/main/ESEE
+.. |image1| image:: https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity/incubating_badge.svg
+   :target: https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity
+.. |Code Coverage| image:: https://codecov.io/gh/ecmwf/earthkit-data/branch/develop/graph/badge.svg
+   :target: https://codecov.io/gh/ecmwf/earthkit-data
+.. |License: Apache 2.0| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+   :target: https://opensource.org/licenses/apache-2-0
+.. |Latest Release| image:: https://img.shields.io/github/v/release/ecmwf/earthkit-data?color=blue&label=Release&style=flat-square
+   :target: https://github.com/ecmwf/earthkit-data/releases
+
+
 .. warning::
 
-   This project is in the **BETA** stage of development. Please be aware that interfaces and functionality may change as the project develops. If this software is to be used in operational systems you are **strongly advised to use a released tag in your system configuration**, and you should be willing to accept incoming changes and bug fixes that require adaptations on your part. ECMWF **does use** this software in operations and abides by the same caveats.
+    This software is **Incubating** and subject to ECMWF's guidelines on `Software Maturity <https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity>`_.
+
 
 **earthkit-data** is a format-agnostic Python interface for geospatial data with a focus on meteorology and
 climate science. It is the data handling component of :xref:`earthkit`.
@@ -12,17 +28,22 @@ climate science. It is the data handling component of :xref:`earthkit`.
 geospatial input types (:ref:`grib`, :ref:`netcdf` and more) and transform them into
 familiar scientific Python objects (including numpy arrays, pandas dataframes, xarray datasets).
 
+**earthkit-data** provides additional convenient methods for quickly inspecting certain
+features of your input data, such as data dimensionality, axes, coordinate
+reference systems and bounding boxes.
+
+Quick start
+-----------
+
 .. code-block:: python
 
-    data = earthkit.data.from_source("file", "my-data.nc")
+    import earthkit.data as ekd
+
+    data = ekd.from_source("sample", "test.grib")
     arr = data.to_numpy()
     df = data.to_pandas()
     dataset = data.to_xarray()
 
-
-**earthkit-data** provides additional convenient methods for quickly inspecting certain
-features of your input data, such as data dimensionality, axes, coordinate
-reference systems and bounding boxes.
 
 .. toctree::
    :maxdepth: 1
