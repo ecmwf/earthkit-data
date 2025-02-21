@@ -56,9 +56,9 @@ def example_list():
 def test_example(tmpdir, path):
     print("test_example path=", path)
     full = os.path.join(EXAMPLES, path)
-    if not path.startswith("/"):
-        path = os.path.join(os.getcwd(), path)
-    print("  ->", path)
+    if not full.startswith("/"):
+        full = os.path.join(os.getcwd(), full)
+    print("  ->", full)
     with tmpdir.as_cwd():
         with open(full) as f:
             exec(f.read(), dict(__file__=full), {})
