@@ -44,6 +44,7 @@ class Combined:
         return self.handle.get(key, default=None)
 
 
+@deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use GribEncoder instead")
 class GribCoder:
     def __init__(self, template=None, **kwargs):
         self.template = template
@@ -398,6 +399,7 @@ def _gg_pl(N):
             eccodes.codes_release(sample)
 
 
+@deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use FileTarget instead")
 class GribOutput:
     def __init__(self, file, split_output=False, template=None, **kwargs):
         self._files = {}

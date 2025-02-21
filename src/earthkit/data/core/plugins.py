@@ -34,7 +34,8 @@ PLUGINS = {}
 
 REGISTERED = defaultdict(dict)
 
-AVAILABLE_KINDS = ["source", "target"]
+# TODO: add target and encoder when implemented
+AVAILABLE_KINDS = ["source"]
 
 
 def refresh(kind=None):

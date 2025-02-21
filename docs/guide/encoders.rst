@@ -37,12 +37,13 @@ Built in encoders
     * - netcdf
       - encode data as NetCDF
       - :py:class:`NetCDFEncoder`
+    * - geotiff
+      - encode data as GeoTIFF
+      - :py:class:`GeoTIFFEncoder`
     * - csv
       - encode data as CSV
       - :py:class:`CSVEncoder`
-    * - multio
-      - encode data for Multio
-      - :py:class:`MultioEncoder`
+
 
 Examples
 ----------
