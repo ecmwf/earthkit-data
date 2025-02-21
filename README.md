@@ -49,7 +49,7 @@ df = data[0].to_pandas()
 dataset = data.to_xarray()
 ```
 
-## Install
+## Installation
 
 Install from PyPI:
 
