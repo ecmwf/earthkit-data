@@ -13,6 +13,8 @@ import re
 from functools import lru_cache
 from io import IOBase
 
+import deprecation
+
 from earthkit.data.decorators import normalize
 from earthkit.data.decorators import normalize_grib_keys
 from earthkit.data.utils.humanize import list_to_human
@@ -42,6 +44,7 @@ class Combined:
         return self.handle.get(key, default=None)
 
 
+@deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use GribEncoder instead")
 class GribCoder:
     def __init__(self, template=None, **kwargs):
         self.template = template
@@ -396,6 +399,7 @@ def _gg_pl(N):
             eccodes.codes_release(sample)
 
 
+@deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use FileTarget instead")
 class GribOutput:
     def __init__(self, file, split_output=False, template=None, **kwargs):
         self._files = {}
@@ -461,9 +465,11 @@ class GribOutput:
         return self._files[path], path
 
 
+@deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use create_target() instead")
 def new_grib_output(*args, **kwargs):
     return GribOutput(*args, **kwargs)
 
 
+@deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use create_encoder() instead")
 def new_grib_coder(*args, **kwargs):
     return GribCoder(*args, **kwargs)
