@@ -54,7 +54,10 @@ def example_list():
 
 @pytest.mark.parametrize("path", example_list())
 def test_example(tmpdir, path):
+    print(path)
     full = os.path.join(EXAMPLES, path)
+    if not path.startswith("/"):
+        path = os.path.join(os.getcwd() + path)
     with tmpdir.as_cwd():
         with open(full) as f:
             exec(f.read(), dict(__file__=full), {})

@@ -61,9 +61,6 @@ class FileTarget(SimpleTarget):
             if not self.filename:
                 raise ValueError("Please provide an output filename")
 
-    def __del__(self):
-        self.close()
-
     def close(self):
         """Close the file if :obj:`FileTarget` was created with a file path.
 
