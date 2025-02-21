@@ -21,6 +21,7 @@ from earthkit.data.wrappers import get_wrapper as from_object
 from .arguments.transformers import ALL
 from .core.caching import CACHE as cache
 from .core.config import CONFIG as config
+from .core.fieldlist import Field
 from .core.fieldlist import FieldList
 from .encoders import create_encoder
 from .indexing.fieldlist import SimpleFieldList
@@ -45,6 +46,7 @@ __all__ = [
     "create_encoder",
     "create_target",
     "download_example_file",
+    "Field",
     "FieldList",
     "from_source",
     "from_source_lazily",
