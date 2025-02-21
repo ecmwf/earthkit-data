@@ -38,7 +38,7 @@
 A format-agnostic interface for geospatial data with a focus on meteorology and
 climate science.
 
-# Quick Start
+## Quick Start
 
 ```python
 import earthkit.data as ekd
