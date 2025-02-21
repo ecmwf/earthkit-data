@@ -7,13 +7,13 @@ Each target is represented by a :py:class:`Target` object. The target object can
 
 A :py:class:`Target` object has the following methods/properties:
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
 
    * - Method/property
      - Description
    * - :py:meth:`~Target.write`
-     - Write data to the target. Attempting to write to a closed target raises a ValueError. 
+     - Write data to the target. Attempting to write to a closed target raises a ValueError.
    * - :py:meth:`~Target.close`
      - Close the target and release resources. Once closed, the target cannot be written to anymore. Attempting to call write, close or flush on a closed target raises a ValueError.
    * - :py:meth:`~Target.flush`
@@ -34,7 +34,7 @@ This example writes a FieldList to a target.
     ds = ekd.from_source("file", "docs/examples/test.grib")
 
     # writing in a loop field by field
-    t = ekd.create_target("file", "_my_res.grib"):
+    t = ekd.create_target("file", "_my_res.grib")
     for f in ds:
         t.write(f)
     t.close()
@@ -42,14 +42,14 @@ This example writes a FieldList to a target.
     # t cannot be written to anymore
 
     # writing in one go
-    t = ekd.create_target("file", "_my_res_1.grib"):
+    t = ekd.create_target("file", "_my_res_1.grib")
     t.write(ds)
     t.close()
 
     # t cannot be written to anymore
 
 
-Target objects can also be used a context manager. When used as a context manager, the target is automatically closed when the context is exited.   
+Target objects can also be used a context manager. When used as a context manager, the target is automatically closed when the context is exited.
 
 .. code-block:: python
 
@@ -76,5 +76,4 @@ Create a new target :py:class:`Target` object.
 
   :param str name: the target (see :ref:`built-in-targets`)
   :param tuple *args: specify target parameters
-  :param dict **kwargs: specify additional target parameters. Also specify the encoder parameters.  
-
+  :param dict **kwargs: specify additional target parameters. Also specify the encoder parameters.
