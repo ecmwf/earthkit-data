@@ -1,15 +1,13 @@
 Welcome to earthkit-data's documentation
 ======================================================
 
-|Static Badge| |image1| |Code Coverage| |License: Apache 2.0| |Latest
+|Static Badge| |image1| |License: Apache 2.0| |Latest
 Release|
 
 .. |Static Badge| image:: https://github.com/ecmwf/codex/raw/refs/heads/main/ESEE/foundation_badge.svg
    :target: https://github.com/ecmwf/codex/raw/refs/heads/main/ESEE
 .. |image1| image:: https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity/incubating_badge.svg
    :target: https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity
-.. |Code Coverage| image:: https://codecov.io/gh/ecmwf/earthkit-data/branch/develop/graph/badge.svg
-   :target: https://codecov.io/gh/ecmwf/earthkit-data
 .. |License: Apache 2.0| image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
    :target: https://opensource.org/licenses/apache-2-0
 .. |Latest Release| image:: https://img.shields.io/github/v/release/ecmwf/earthkit-data?color=blue&label=Release&style=flat-square
