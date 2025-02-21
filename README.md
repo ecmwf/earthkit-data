@@ -45,7 +45,7 @@ import earthkit.data as ekd
 
 data = ekd.from_source("sample", "test.grib")
 arr = data.to_numpy()
-df = data[0].to_pandas()
+df = data.to_pandas()
 dataset = data.to_xarray()
 ```
 
