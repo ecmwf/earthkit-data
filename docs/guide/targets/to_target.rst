@@ -1,52 +1,7 @@
-.. _data-targets:
-
-Targets
-===============
-
-A **target** can represent a file, a database, a remote server etc. Data is written/added to a target by using a suitable :ref:`encoder <data-encoders>`.
-
-Writing data to a target
-----------------------------
-
-There are three different ways to write/add data to a given target:
-
-  - using :func:`to_target` on a data object
-  - using the standalone :func:`to_target` method
-  - using a :py:class:`Target` object
-
-.. code-block:: python
-
-    import earthkit.data as ekd
-
-    # read GRIB data into a fieldlist
-    ds = ekd.from_source("file", "docs/examples/test.grib")
-
-    # write the fieldlist to a file in different ways
-
-    # Method 1: using to_target() on the data object
-    ds.to_target("file", "_my_res_1.grib")
-
-    # Method 2: using the standalone to_target() method
-    ekd.to_target("file", "_my_res_2.grib", data=ds)
-
-    # Method 3: using a target object
-    with ekd.create_target("file", "_my_res_3.grib") as t:
-        t.write(ds)
-
-    # Method 4: using a target object
-    from earthkit.data.targets.file import FileTarget
-
-    with FileTarget("_my_res_4.grib") as t:
-        t.write(ds)
-
-
-Examples:
-
-  - :ref:`/examples/grib_to_file_target.ipynb`
-  - :ref:`/examples/grib_to_fdb_target.ipynb`
+.. _to-target:
 
 to_target()
----------------------------
+====================
 
 We can write data to a given target by using :func:`to_target`. It can be either invoked on a :ref:`data object <data-object>` data object or the :ref:`data object <data-object>` can be specified as ``data``.
 
@@ -59,10 +14,8 @@ We can write data to a given target by using :func:`to_target`. It can be either
   :param data: specify the :ref:`data object <data-object>` to write. Cannot be set when :func:`to_target` is called on a data object.
   :param dict **kwargs: specify additional target parameters. Also specify the encoder parameters.
 
-Target objects
----------------------
 
-
+.. _built-in-targets:
 
 
 Built in targets
@@ -77,21 +30,19 @@ Built in targets
     * - Name
       - Description
       - Class
-    * - :ref:`data-targets-file`
+    * - :ref:`targets-file`
       - write data to a file/files
       - :py:class:`~data.targets.FileTarget`
-    * - :ref:`data-targets-file-pattern`
+    * - :ref:`targets-file-pattern`
       - write data to multiple files based on a filename pattern
       - :py:class:`~data.targets.FilePatternTarget`
-    * - :ref:`data-targets-fdb`
+    * - :ref:`targets-fdb`
       - add data to a `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
       - :py:class:`~data.targets.FDBTarget`
 
-----------------------------------
 
 
-
-.. _data-targets-file:
+.. _targets-file:
 
 file
 ----
@@ -106,7 +57,7 @@ file
   :param bool append:  If True, the file is opened in append mode. Only used if ``file`` is a path.
   :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
   :param encoder: The encoder to use to encode the data. When it is a str, the encoder is looked up in
-    the available :ref:`data-encoders`. When None, the encoder type will be determined from the data
+    the available :ref:`encoders`. When None, the encoder type will be determined from the data
     to write (if possible) or from the :class:`Target` properties. When a suitable encoder cannot be instantiated raises
     ValueError.
   :type encoder: str, :py:class:`Encoder`, None
@@ -121,7 +72,7 @@ file
 
 
 
-.. _data-targets-file-pattern:
+.. _targets-file-pattern:
 
 file-pattern
 ------------
@@ -136,7 +87,7 @@ file-pattern
   :param bool append:  If True, the files are opened in append mode.
   :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
   :param encoder: The encoder to use to encode the data. When it is a str, the encoder is looked up in
-    the available :ref:`data-encoders`. When None, the encoder type will be determined from the data
+    the available :ref:`encoders`. When None, the encoder type will be determined from the data
     to write (if possible) or from the :class:`Target` properties. When a suitable encoder cannot be instantiated raises
     ValueError.
   :type encoder: str, :py:class:`Encoder`, None
@@ -158,7 +109,7 @@ file-pattern
 
 
 
-.. _data-targets-fdb:
+.. _targets-fdb:
 
 fdb
 ----
@@ -174,7 +125,7 @@ fdb
   :param dict,str userconfig: the FDB user configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. Only used if no ``fdb`` is specified.
   :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
   :param encoder: The encoder to use to encode the data. When it is a str, the encoder is looked up in
-    the available :ref:`data-encoders`. When None, the encoder type will be determined from the data
+    the available :ref:`encoders`. When None, the encoder type will be determined from the data
     to write (if possible) or from the :class:`Target` properties. When a suitable encoder cannot be instantiated raises
     ValueError.
   :type encoder: str, :py:class:`Encoder`, None

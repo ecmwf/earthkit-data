@@ -9,7 +9,7 @@ User guide
    data
    data_format/index.rst
    encoders
-   targets
+   targets/index.rst
    streams
    config
    caching

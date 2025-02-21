@@ -116,7 +116,7 @@ class Target(metaclass=ABCMeta):
 
     @property
     def closed(self):
-        """Check if the target is closed."""
+        """True if the target is closed, False otherwise."""
         return self._closed
 
     def _mark_closed(self):

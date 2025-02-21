@@ -22,5 +22,4 @@ The currently supported list of plugin types is as follows:
    :maxdepth: 1
 
    sources_plugin
-   encoder_plugin
-   target_plugin
+   
