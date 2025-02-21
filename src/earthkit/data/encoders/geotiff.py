@@ -16,7 +16,6 @@ LOG = logging.getLogger(__name__)
 
 
 class GeoTIFFEncodedData(EncodedData):
-
     _GDAL_DRIVER = "GTiff"
 
     def __init__(self, ds):
@@ -42,7 +41,6 @@ class GeoTIFFEncodedData(EncodedData):
 
 
 class GeoTIFFEncoder(Encoder):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 

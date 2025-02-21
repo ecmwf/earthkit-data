@@ -244,6 +244,23 @@ def test_target_file_grib_to_netcdf():
 
 @pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
 @pytest.mark.with_proj
+def test_target_file_grib_to_geotiff():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    vals_ref = ds.values[:, :4]
+
+    with temp_file() as path:
+        ds.to_target("file", path, encoder="geotiff")
+
+        ds1 = from_source("file", path)
+        assert len(ds1) == len(ds)
+        from earthkit.data.readers.geotiff import GeoTIFFField
+
+        assert isinstance(ds1[0], GeoTIFFField)
+        assert np.allclose(ds1.values[:, :4], vals_ref)
+
+
+@pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
+@pytest.mark.with_proj
 def test_target_file_geotiff():
     ds = from_source("file", earthkit_test_data_file("dgm50hs_col_32_368_5616_nw.tif"))
     assert len(ds) == 3
