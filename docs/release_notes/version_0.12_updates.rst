@@ -2,6 +2,19 @@ Version 0.12 Updates
 /////////////////////////
 
 
+Version 0.12.4
+===============
+
+Changes
+++++++++
+
+- made :py:class:`Field` available as a top level import
+
+  .. code-block:: python
+
+      from earthkit.data import Field
+
+
 Version 0.12.3
 ===============
 
