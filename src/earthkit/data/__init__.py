@@ -20,6 +20,7 @@ from earthkit.data.wrappers import get_wrapper as from_object
 
 from .arguments.transformers import ALL
 from .core.caching import CACHE as cache
+from .core.fieldlist import Field
 from .core.fieldlist import FieldList
 from .core.settings import SETTINGS as settings
 from .indexing.fieldlist import SimpleFieldList
@@ -36,6 +37,7 @@ __all__ = [
     "ArrayField",
     "cache",
     "download_example_file",
+    "Field",
     "FieldList",
     "from_source",
     "from_source_lazily",
