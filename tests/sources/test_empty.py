@@ -13,7 +13,7 @@ from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
 
 
-def test_empty_source():
+def test_empty_source_len():
     ds = from_source("empty")
     assert len(ds) == 0
 
@@ -52,3 +52,9 @@ def test_empty_source_concat3():
     assert len(ds) == 2
     meta = ds.metadata("shortName")
     assert meta == ["2t", "msl"]
+
+
+def test_empty_source_iterate():
+    ds = from_source("empty")
+    for _ in ds:
+        assert False, "Empty source should not iterate"
