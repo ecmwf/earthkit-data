@@ -16,6 +16,9 @@ class EmptySource(FieldList):
         # Used by multi-source
         return True
 
+    def __getitem__(self, key):
+        raise IndexError("Empty source")
+
     def __len__(self):
         return 0
 
