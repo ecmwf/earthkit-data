@@ -2,6 +2,16 @@ Version 0.12 Updates
 /////////////////////////
 
 
+Version 0.12.5
+===============
+
+Fixed
+++++++++
+
+- Fixed issue when trying to iterate an empty source caused a crash (:pr:`630`)
+
+
+
 Version 0.12.4
 ===============
 
