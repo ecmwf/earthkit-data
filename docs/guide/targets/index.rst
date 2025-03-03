@@ -53,5 +53,8 @@ There are different ways to write/add data to a given target:
 
 Examples:
 
+  - :ref:`/examples/file_target.ipynb`
   - :ref:`/examples/grib_to_file_target.ipynb`
+  - :ref:`/examples/grib_to_file_pattern_target.ipynb`
   - :ref:`/examples/grib_to_fdb_target.ipynb`
+  - :ref:`/examples/grib_to_geotiff.ipynb`

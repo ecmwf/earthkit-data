@@ -3,7 +3,7 @@
 to_target()
 ====================
 
-We can write data to a given target by using :func:`to_target`. It can be either invoked on a :ref:`data object <data-object>` data object or the :ref:`data object <data-object>` can be specified as ``data``.
+We can write data to a given target by using :func:`to_target`. It can be either invoked on a :ref:`data object <data-object>` or the :ref:`data object <data-object>` can be specified as ``data``.
 
 .. py:function:: to_target(name, *args, data=None, **kwargs)
 
@@ -41,7 +41,6 @@ Built in targets
       - :py:class:`~data.targets.FDBTarget`
 
 
-
 .. _targets-file:
 
 file
@@ -52,7 +51,7 @@ file
 
   The ``file`` target writes data into a file.
 
-  :param file:  The file path or file-like object to write to. When None, tries to guess the file name from the ``data`` if it is passed as a kwarg. When the file name cannot be constructed, a ValueError is raised. When ``file`` is a path, a file object is automatically created and closed when the target is closed. When ``file`` is a file object, its ownership is not transferred to the target. As a consequence, the file object is not closed when the writing is finished and :func:`to_target` returns.
+  :param file:  The file path or file-like object to write to. When None, tries to guess the file name from the ``data`` if it is passed as a kwarg. When the file name cannot be constructed, a ValueError is raised. When ``file`` is a path, a file object is automatically created and closed when the target is closed. When ``file`` is a file-like object, its ownership is not transferred to the target. As a consequence, the file-like object is not closed when the writing is finished and :func:`to_target` returns.
   :type file: str, file-like object, None
   :param bool append:  If True, the file is opened in append mode. Only used if ``file`` is a path.
   :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
@@ -68,9 +67,10 @@ file
 
   Notebook examples:
 
+    - :ref:`/examples/file_target.ipynb`
     - :ref:`/examples/grib_to_file_target.ipynb`
-
-
+    - :ref:`/examples/grib_to_file_pattern_target.ipynb`
+    - :ref:`/examples/grib_to_geotiff.ipynb`
 
 .. _targets-file-pattern:
 
@@ -107,6 +107,10 @@ file-pattern
       # this code results in 2 files: _my_res_msl.grib and _my_res_2t.grib
       ds.to_target("file-pattern", "_my_res_{shortName}.grib")
 
+
+  Notebook examples:
+
+    - :ref:`/examples/grib_to_file_pattern_target.ipynb`
 
 
 .. _targets-fdb:

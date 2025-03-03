@@ -171,8 +171,11 @@ Targets and encoders
     :maxdepth: 1
     :glob:
 
+    file_target.ipynb
     grib_to_file_target.ipynb
+    grib_to_file_pattern_target.ipynb
     grib_to_fdb_target.ipynb
+    grib_to_geotiff.ipynb
     grib_encoder.ipynb
 
 Miscellaneous
