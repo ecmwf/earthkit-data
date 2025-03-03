@@ -159,14 +159,14 @@ file-pattern
   The ``file-pattern`` source will build paths from the pattern specified,
   using the other arguments to fill the pattern. Each argument can be a list
   to iterate and create the cartesian product of all lists.
-  Then each file is read in the same ways as with :ref:`file source <data-sources-file>`.
+  Then each file is read in the same ways as with the :ref:`file source <data-sources-file>`.
 
   .. code-block:: python
 
       import datetime
-      import earthkit.data
+      import earthkit.data as ekd
 
-      ds = earthkit.data.from_source(
+      ds = ekd.from_source(
           "file-pattern",
           "path/to/data-{my_date:date(%Y-%m-%d)}-{run_time}-{param}.grib",
           {
@@ -183,6 +183,26 @@ file-pattern
     path/to/data-2020-05-02-12-msl.grib
     path/to/data-2020-05-02-18-t2.grib
     path/to/data-2020-05-02-18-msl.grib
+
+
+  .. code-block:: python
+
+      import datetime
+      import earthkit.data as ekd
+
+      ds = ekd.from_source(
+          "file-pattern",
+          "path/to/data-{my_date:strftime(-6;%Y%m%d%H)}-006-{param}.grib",
+          {
+              "my_date": datetime.datetime(2020, 5, 2, 0),
+              "param": ["t2", "msl"],
+          },
+      )
+
+  The code above will read the following files::
+
+    path/to/data-2020050118-006-t2.grib
+    path/to/data-2020050118-006-msl.grib
 
 Further examples:
 

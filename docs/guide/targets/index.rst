@@ -5,6 +5,9 @@ Targets
 
 A **target** can represent a file, a database, a remote server etc. Data is written/added to a target by using a suitable :ref:`encoder <data-encoders>`.
 
+Details
+----------------
+
 
 .. toctree::
    :maxdepth: 1
@@ -13,10 +16,10 @@ A **target** can represent a file, a database, a remote server etc. Data is writ
    target_objects
 
 
-Writing data to a target
+Overview
 ----------------------------
 
-There are three different ways to write/add data to a given target:
+There are different ways to write/add data to a given target:
 
   - using :func:`to_target` on a data object
   - using the standalone :func:`to_target` method

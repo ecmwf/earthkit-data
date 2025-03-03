@@ -1,10 +1,20 @@
 Release notes
 =============
 
+Deprecated features
++++++++++++++++++++++
+
 .. toctree::
     :maxdepth: 1
 
     deprecations
+
+Version updates
++++++++++++++++++++++
+
+.. toctree::
+    :maxdepth: 1
+
     version_0.13_updates
     version_0.12_updates
     version_0.11_updates
