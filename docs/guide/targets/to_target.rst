@@ -50,7 +50,7 @@ file
 .. py:function:: to_target("file", file, append=False, data=None, encoder=None, template=None, metadata=None, **kwargs)
   :noindex:
 
-  The simplest target is ``file``, which can access a local file.
+  The ``file`` target writes data into a file.
 
   :param file:  The file path or file-like object to write to. When None, tries to guess the file name from the ``data`` if it is passed as a kwarg. When the file name cannot be constructed, a ValueError is raised. When ``file`` is a path, a file object is automatically created and closed when the target is closed. When ``file`` is a file object, its ownership is not transferred to the target. As a consequence, the file object is not closed when the writing is finished and :func:`to_target` returns.
   :type file: str, file-like object, None
@@ -66,7 +66,7 @@ file
   :param dict **kwargs: other keyword arguments passed to the encoder
 
 
-  See the following notebook examples for further details:
+  Notebook examples:
 
     - :ref:`/examples/grib_to_file_target.ipynb`
 
@@ -149,7 +149,7 @@ fdb
       ds.to_target("fdb", config=config)
 
 
-  See the following notebook examples for further details:
+  Notebook examples:
 
     - :ref:`/examples/grib_to_fdb_target.ipynb`
 
