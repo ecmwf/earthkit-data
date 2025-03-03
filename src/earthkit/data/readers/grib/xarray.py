@@ -73,7 +73,7 @@ class XarrayMixIn:
             chunks=None,  # Set to 'auto' for lazy loading
         )
 
-    def to_xarray(self, engine=None, xarray_open_dataset_kwargs=None, **kwargs):
+    def to_xarray(self, engine="earthkit", xarray_open_dataset_kwargs=None, **kwargs):
         """
         Convert the FieldList into an Xarray Dataset.
 
