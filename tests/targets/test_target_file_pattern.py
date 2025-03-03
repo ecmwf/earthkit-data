@@ -73,3 +73,26 @@ def test_target_file_pattern_grib_keys(pattern, expected_value):
             path = os.path.join(tmp, f"{k}.grib")
             assert os.path.exists(path)
             assert len(from_source("file", path)) == count
+
+
+def test_target_file_pattern_grib_metadata():
+    ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+
+    with temp_directory() as tmp:
+        # setting GRIB keys for the output
+        ds.to_target(
+            "file-pattern",
+            os.path.join(tmp, "{shortName}_{level}.grib"),
+            metadata={"date": 20250108},
+            bitsPerValue=8,
+        )
+
+        for p in ["t", "u", "v"]:
+            path = os.path.join(tmp, f"{p}_850.grib")
+            assert os.path.exists(path)
+            ds1 = from_source("file", path)
+            assert len(ds1) == 1
+            assert ds1.metadata("shortName") == [p]
+            assert ds1.metadata("level") == [850]
+            assert ds1.metadata("date") == [20250108]
+            assert ds1.metadata("bitsPerValue") == [8]
