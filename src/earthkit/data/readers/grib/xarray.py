@@ -16,8 +16,6 @@ from earthkit.data.utils.serialise import serialise_state
 
 LOG = logging.getLogger(__name__)
 
-_WARNED_ABOUT_EARTHKIT = False
-
 
 class ItemWrapperForCfGrib:
     def __init__(self, item, ignore_keys=[]):
@@ -75,7 +73,7 @@ class XarrayMixIn:
             chunks=None,  # Set to 'auto' for lazy loading
         )
 
-    def to_xarray(self, engine=None, xarray_open_dataset_kwargs=None, **kwargs):
+    def to_xarray(self, engine="earthkit", xarray_open_dataset_kwargs=None, **kwargs):
         """
         Convert the FieldList into an Xarray Dataset.
 
@@ -341,18 +339,6 @@ class XarrayMixIn:
         ... )
 
         """
-        if engine is None:
-            engine = "earthkit"
-            global _WARNED_ABOUT_EARTHKIT
-            if not _WARNED_ABOUT_EARTHKIT:
-                LOG.warning(
-                    (
-                        "From version 0.11.0 the default engine for to_xarray is 'earthkit'. "
-                        "Use engine=`cfgrib` to invoke the cfgrib engine."
-                    )
-                )
-                _WARNED_ABOUT_EARTHKIT = True
-
         engines = {"earthkit": self.to_xarray_earthkit, "cfgrib": self.to_xarray_cfgrib}
         if engine not in engines:
             raise ValueError(f"Unsupported engine: {engine}. Please use one of {list(engines.keys())}")
