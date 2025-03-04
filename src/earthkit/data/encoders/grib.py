@@ -40,7 +40,7 @@ class GribEncodedData(EncodedData):
 
     def metadata(self, key=None):
         if key:
-            return self.handle.get(key)
+            return self.to_field().metadata(key, default=None)
         else:
             raise NotImplementedError
 

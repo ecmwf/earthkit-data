@@ -52,6 +52,8 @@ def test_target_file_pattern_grib_core(kwargs, direct_call):
     "pattern,expected_value",
     [
         ("{shortName}", {"t": 2, "u": 2, "v": 2}),
+        ("{param}", {"t": 2, "u": 2, "v": 2}),
+        ("{mars.param}", {"130.128": 2, "131.128": 2, "132.128": 2}),
         ("{shortName}_{level}", {"t_1000": 1, "t_850": 1, "u_1000": 1, "u_850": 1, "v_1000": 1, "v_850": 1}),
         ("{date}_{time}_{step}", {"20180801_1200_0": 6}),
         ("{date}_{time}_{step:03}", {"20180801_1200_000": 6}),
