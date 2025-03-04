@@ -76,7 +76,7 @@ This functionality is now replaced by the :ref:`targets <data-targets>`.
    * - New code
    * -
 
-        .. literalinclude:: include/migrated_data_write.py
+       .. literalinclude:: include/migrated_data_write.py
 
 
 
@@ -103,6 +103,38 @@ This functionality is now replaced by the :ref:`targets <data-targets>`.
    * -
 
         .. literalinclude:: include/migrated_new_grib_output.py
+
+
+The ``split_output=True`` option of  :func:`new_grib_output` is not supported by the :ref:`file <targets-file>` target but implemented by the :ref:`file-pattern <targets-file-pattern>` target.
+
+.. list-table::
+   :header-rows: 0
+
+   * - Deprecated code
+   * -
+
+        .. literalinclude:: include/deprec_new_grib_output_split.py
+
+   * - New code
+   * -
+
+        .. literalinclude:: include/migrated_new_grib_output_split.py
+
+
+.. warning::
+
+    When using :func:`new_grib_output` the ``{param}`` pattern substitutes the value of the ``"param"`` ecCodes key from the GRIB header. However, with the :ref:`targets <data-targets>` the ``{param}`` pattern substitutes the value of the ``"shortName"`` key. This is to match the behaviour of ``Field.metadata("param")``, which always returns the value of the ``"shortName"``. If you still want to use the value of the ``"param"`` ecCodes key you need to use the ``{mars.param}`` pattern instead.
+
+
+    .. code-block:: python
+
+        # Deprecated code
+        new_grib_output("file", "output_{param}.grib", split_output=True)
+        ...
+
+        # New code
+        to_target("file-pattern", "output_{mars.param}.grib")
+
 
 
 .. _deprecated-griboutput:

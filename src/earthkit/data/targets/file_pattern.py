@@ -48,6 +48,16 @@ class FilePatternTarget(SimpleTarget):
 
         self.split_output = re.findall(r"\{(.*?)\}", self.filename)
 
+        # change format pattern to use positional arguments. This allows using keys
+        # containing a dot, e.g. mars.param
+        for i, s in enumerate(self.split_output):
+            if ":" in s:
+                pos_key = f"{i}:" + s.split(":")[1]
+            else:
+                pos_key = f"{i}"
+
+            self.filename = self.filename.replace(f"{s}", pos_key)
+
     def close(self):
         """Close the target and closing all the files.
 
@@ -73,8 +83,8 @@ class FilePatternTarget(SimpleTarget):
     def _f(self, data):
         self._raise_if_closed()
 
-        keys = {k.split(":")[0]: data.metadata(k.split(":")[0]) for k in self.split_output}
-        path = self.filename.format(**keys)
+        keys = [data.metadata(k.split(":")[0]) for k in self.split_output]
+        path = self.filename.format(*keys)
 
         if path not in self._files:
             flag = "wb" if not self.append else "ab"
