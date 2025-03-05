@@ -37,7 +37,7 @@ class ArrayField(Field):
         if isinstance(metadata, dict):
             from earthkit.data.utils.metadata.dict import UserMetadata
 
-            metadata = UserMetadata(metadata, values=array)
+            metadata = UserMetadata(metadata, shape=array.shape)
 
         # TODO: this solution is questionable due to performance reasons
         if metadata is not None:
