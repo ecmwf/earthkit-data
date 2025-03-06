@@ -44,8 +44,8 @@ def test_lod_core(lod, mode, request):
     assert np.allclose(lon, lon_ref)
 
     val_ref = [[1, 2], [3, 4], [5, 6]]
-    print(ds[0].to_numpy())
-    print(ds.to_numpy())
+    # print(ds[0].to_numpy())
+    # print(ds.to_numpy())
 
     assert ds[0].to_numpy().shape == (3, 2)
     assert np.allclose(ds[0].to_numpy(), np.array(val_ref))
