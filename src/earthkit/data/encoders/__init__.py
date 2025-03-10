@@ -18,7 +18,7 @@ LOG = logging.getLogger(__name__)
 
 """Assign encoders to file suffixes"""
 _SUFFIXES = {
-    (".grib", ".grb", "grib1", "grib2"): "grib",
+    (".grib", ".grb", ".grib1", ".grib2", ".grb1", ".grb2"): "grib",
     (".nc", ".nc3", ".nc4", ".netcdf"): "netcdf",
     (".tiff", ".tif"): "geotiff",
 }
