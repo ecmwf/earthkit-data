@@ -14,10 +14,10 @@ We can read :ref:`grib` data as a :ref:`stream <streams>` iterator e.g. with the
 
 .. code-block:: python
 
-    import earthkit.data
+    import earthkit.data as ekd
 
     url = "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test6.grib"
-    ds = earthkit.data.from_source("url", url, stream=True)
+    ds = ekd.from_source("url", url, stream=True)
     for f in fields:
         print(f)
 
@@ -30,10 +30,10 @@ We can load :ref:`grib` data fully into memory when we read it as a :ref:`stream
 
 .. code-block:: python
 
-    import earthkit.data
+    import earthkit.data as ekd
 
     url = "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test6.grib"
-    ds = earthkit.data.from_source("url", url, stream=True, read_all=True)
+    ds = ekd.from_source("url", url, stream=True, read_all=True)
 
 With this, the entire ``ds`` fieldlist, including all the fields and the related GRIB handles, are stored in memory.
 
@@ -85,9 +85,9 @@ In addition to changing the :ref:`config`, it is possible to override the parame
 
 .. code-block:: python
 
-    import earthkit.data
+    import earthkit.data as ekd
 
-    ds = earthkit.data.from_source(
+    ds = ekd.from_source(
         "file",
         "test6.grib",
         grib_field_policy="persistent",
@@ -104,10 +104,10 @@ fields up-front and keep them in memory by reading it as a :ref:`stream source <
 
 .. code-block:: python
 
-    import earthkit.data
+    import earthkit.data as ekd
 
     f = open("test6.grib", "rb")
-    ds = earthkit.data.from_source("stream", f, read_all=True)
+    ds = ekd.from_source("stream", f, read_all=True)
 
 .. warning::
 

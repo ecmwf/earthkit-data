@@ -17,10 +17,10 @@ In addition to changing the :ref:`config`, it is possible to override ``use-grib
 
 .. code-block:: python
 
-    import earthkit.data
+    import earthkit.data as ekd
 
     # will override the config
-    ds = earthkit.data.from_source(
+    ds = ekd.from_source(
         "file",
         "test6.grib",
         use_grib_metadata_cache=False,
