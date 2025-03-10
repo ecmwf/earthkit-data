@@ -12,10 +12,6 @@ import datetime
 import numpy as np
 import pytest
 
-from earthkit.data import from_source
-from earthkit.data.indexing.fieldlist import FieldArray
-from earthkit.data.sources.array_list import ArrayField
-
 
 def _build_list(prototype):
     return [
@@ -170,11 +166,24 @@ def lod_ll_forecast_4():
     return _build_list(prototype)
 
 
+@pytest.fixture
+def lod_no_latlon():
+    prototype = {
+        "values": np.array([1, 2, 3, 4, 5, 6]),
+        "valid_datetime": "2018-08-01T09:00:00",
+    }
+    return _build_list(prototype)
+
+
 def build_lod_fieldlist(lod, mode):
+    from earthkit.data import from_source
+    from earthkit.data.indexing.fieldlist import SimpleFieldList
+    from earthkit.data.sources.array_list import ArrayField
+
     if mode == "list-of-dicts":
         return from_source("list-of-dicts", lod)
     elif mode == "loop":
-        ds = FieldArray()
+        ds = SimpleFieldList()
         for f in lod:
             ds.append(ArrayField(f["values"], f))
         return ds

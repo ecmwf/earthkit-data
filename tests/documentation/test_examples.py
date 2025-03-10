@@ -20,10 +20,13 @@ IGNORE = [
     "xml2rst.py",
     "actions.py",
     "generate-examples-maps.py",
-    "settings-set.py",
-    "settings-reset.py",
-    "settings-temporary.py",
+    "config-set.py",
+    "config-reset.py",
+    "config-temporary.py",
     "xref.py",
+    "skip_api_rules.py",
+    "deprec_settings.py",
+    "migrated_settings.py",
 ]
 
 EXAMPLES = earthkit_file("docs")
@@ -41,12 +44,24 @@ def example_list():
     return sorted(examples)
 
 
-# @pytest.mark.skipif(not IN_GITHUB, reason="Not on GITHUB")
+# # @pytest.mark.skipif(not IN_GITHUB, reason="Not on GITHUB")
+# @pytest.mark.parametrize("path", example_list())
+# def test_example(path):
+#     full = os.path.join(EXAMPLES, path)
+#     with open(full) as f:
+#         exec(f.read(), dict(__file__=full), {})
+
+
 @pytest.mark.parametrize("path", example_list())
-def test_example(path):
+def test_example(tmpdir, path):
+    print("test_example path=", path)
     full = os.path.join(EXAMPLES, path)
-    with open(full) as f:
-        exec(f.read(), dict(__file__=full), {})
+    if not full.startswith("/"):
+        full = os.path.join(os.getcwd(), full)
+    print("  ->", full)
+    with tmpdir.as_cwd():
+        with open(full) as f:
+            exec(f.read(), dict(__file__=full), {})
 
 
 if __name__ == "__main__":

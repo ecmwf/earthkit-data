@@ -12,9 +12,9 @@ Single key
 
   .. code-block:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
-      ds = earthkit.data.from_source(
+      ds = ekd.from_source(
           "cds",
           "reanalysis-era5-single-levels",
           variable=["2t", "msl"],
@@ -35,9 +35,9 @@ A sequence of keys can also be specified:
 
   .. code-block:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
-      ds = earthkit.data.from_source(
+      ds = ekd.from_source(
           "cds",
           "reanalysis-era5-single-levels",
           variable=["2t", "msl"],
@@ -63,9 +63,9 @@ By specifying a dict we can define grouping per key for the splitting:
 
   .. code-block:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
-      ds = earthkit.data.from_source(
+      ds = ekd.from_source(
           "cds",
           "reanalysis-era5-single-levels",
           variable=["2t", "2d", "msl", "sstk"],

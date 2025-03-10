@@ -21,7 +21,7 @@ dependencies:
 - jupyterlab
 - ecmwf-api-client>=1.6.1
 - cdsapi>=0.7.2
-- hda
+- hda>2.22
 - jsonschema
 - pip:
   - multiurl>=0.3.3
@@ -59,3 +59,4 @@ dependencies:
 - ipykernel
 - geopandas
 - array-api-compat
+- deprecation

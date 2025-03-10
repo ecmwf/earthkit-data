@@ -687,3 +687,6 @@ class BUFRReader(BUFRInOneFile, Reader):
     def mutate_source(self):
         # A BUFRReader is a source itself
         return self
+
+    def default_encoder(self):
+        return Reader.default_encoder(self)

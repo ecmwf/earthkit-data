@@ -1,16 +1,16 @@
 import earthkit.data
 
 # Change the location of the user defined cache:
-earthkit.data.settings.set("user-cache-directory", "/big-disk/earthkit-data-cache")
+earthkit.data.config.set("user-cache-directory", "/big-disk/earthkit-data-cache")
 
-# Change number of download threads
-earthkit.data.settings.set("number-of-download-threads", 7)
+# Change download timeout
+earthkit.data.config.set("url-download-timeout", "1m")
 
 # Multiple values can be set together. The argument list
 # can be a dictionary:
-earthkit.data.settings.set({"number-of-download-threads": 7, "url-download-timeout": "1m"})
+earthkit.data.config.set({"url-download-timeout": "1m", "check-out-of-date-urls": True})
 
 # Alternatively, we can use keyword arguments. However, because
 # the “-” character is not allowed in variable names in Python we have
 # to replace “-” with “_” in all the keyword arguments:
-earthkit.data.settings.set(number_of_download_threads=8, url_download_timeout="2m")
+earthkit.data.config.set(url_download_timeout="1m", check_out_of_date_urls=True)

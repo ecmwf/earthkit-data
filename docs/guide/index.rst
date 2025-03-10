@@ -8,8 +8,10 @@ User guide
    sources
    data
    data_format/index.rst
+   encoders
+   targets/index.rst
    streams
-   settings
+   config
    caching
    xarray/index.rst
    misc/index.rst

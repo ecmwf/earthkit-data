@@ -13,8 +13,8 @@ We can read/retrieve GRIB data with :func:`from_source`. The resulting object wi
 
 .. code-block:: python
 
-    >>> import earthkit.data
-    >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+    >>> import earthkit.data as ekd
+    >>> ds = ekd.from_source("file", "docs/examples/test.grib")
 
     >>> len(ds)
     2

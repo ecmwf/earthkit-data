@@ -12,8 +12,10 @@ import os
 import weakref
 from importlib import import_module
 
+import deprecation
+
 from earthkit.data.core import Base
-from earthkit.data.core.settings import SETTINGS
+from earthkit.data.core.config import CONFIG
 from earthkit.data.decorators import detect_out_filename
 from earthkit.data.decorators import locked
 
@@ -74,21 +76,40 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
         return self.source.cache_file(*args, **kwargs)
 
     @detect_out_filename
+    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
     def save(self, path, **kwargs):
-        mode = "wb" if self.binary else "w"
-        with open(path, mode) as f:
-            self.write(f, **kwargs)
+        self.to_target("file", path, **kwargs)
 
+        # original code
+        # mode = "wb" if self.binary else "w"
+        # with open(path, mode) as f:
+        #     self.write(f, **kwargs)
+
+    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
     def write(self, f, **kwargs):
-        if not self.appendable:
-            assert f.tell() == 0
-        mode = "rb" if self.binary else "r"
-        with open(self.path, mode) as g:
-            while True:
-                chunk = g.read(1024 * 1024)
-                if not chunk:
-                    break
-                f.write(chunk)
+        self.to_target("file", f, **kwargs)
+
+        # original code
+        # if not self.appendable:
+        #     assert f.tell() == 0
+        # mode = "rb" if self.binary else "r"
+        # with open(self.path, mode) as g:
+        #     while True:
+        #         chunk = g.read(1024 * 1024)
+        #         if not chunk:
+        #             break
+        #         f.write(chunk)
+
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self, **kwargs)
+
+    def _encode(self, encoder, **kwargs):
+        return encoder._encode(self, **kwargs)
+
+    def default_encoder(self):
+        return "internal-pass-through"
 
     def __fspath__(self):
         return self.path
@@ -201,7 +222,7 @@ def reader(source, path, **kwargs):
             return r
         raise Exception(f"File is empty: '{path}'")
 
-    n_bytes = SETTINGS.get("reader-type-check-bytes")
+    n_bytes = CONFIG.get("reader-type-check-bytes")
     with open(path, "rb") as f:
         magic = f.read(n_bytes)
 
@@ -219,7 +240,7 @@ def reader(source, path, **kwargs):
 def memory_reader(source, buffer, **kwargs):
     """Create a reader for data held in a memory buffer"""
     assert isinstance(buffer, (bytes, bytearray)), source
-    n_bytes = SETTINGS.get("reader-type-check-bytes")
+    n_bytes = CONFIG.get("reader-type-check-bytes")
     magic = buffer[: min(n_bytes, len(buffer) - 1)]
 
     return _find_reader("memory_reader", source, buffer, magic=magic, **kwargs)
@@ -230,7 +251,7 @@ def stream_reader(source, stream, memory, **kwargs):
     magic = None
     if hasattr(stream, "peek") and callable(stream.peek):
         try:
-            n_bytes = SETTINGS.get("reader-type-check-bytes")
+            n_bytes = CONFIG.get("reader-type-check-bytes")
             magic = stream.peek(n_bytes)
             if len(magic) > n_bytes:
                 magic = magic[:n_bytes]

@@ -154,10 +154,19 @@ class GeoTIFFFieldList(FieldList):
 
     FIELD_TYPE = GeoTIFFField
 
+    DEFAULT_XARRAY_KWARGS = {
+        # Splitting bands into individual variables preserves band-specific metadata.
+        "band_as_variable": True,
+        # Mask and scale values by default to match xarray's default behaviour.
+        # Note: masked values are set to NaN, so all values are returned as floats.
+        "mask_and_scale": True,
+        "decode_times": True,
+    }
+
     def __init__(self, path, **kwargs):
         self._fields = None
         self.path = path
-        self._ds = self.rioxarray_read(band_as_variable=True, mask_and_scale=True, decode_times=True)
+        self._ds = self.rioxarray_read()
         # Shared geography instance for all fields/bands
         self._geo = GeoTIFFGeography(self._ds)
         super().__init__(**kwargs)
@@ -168,10 +177,9 @@ class GeoTIFFFieldList(FieldList):
         except ImportError:
             raise ImportError("geotiff handling requires 'rioxarray' to be installed")
 
-        options = dict()
-        options.update(kwargs.get("rioxarray_open_rasterio_kwargs", {}))
-        if not options:
-            options = dict(**kwargs)
+        options = dict(**self.DEFAULT_XARRAY_KWARGS)
+        # Read options from dedicated kwarg if exists, otherwise use all kwargs
+        options.update(kwargs.get("rioxarray_open_rasterio_kwargs", kwargs))
 
         return rioxarray.open_rasterio(self.path, **options)
 
@@ -210,12 +218,6 @@ class GeoTIFFFieldList(FieldList):
     def describe(self, *args, **kwargs):
         self._not_implemented()
 
-    def save(self, filename, append=False, **kwargs):
-        self._not_implemented()
-
-    def write(self, f, **kwargs):
-        self._not_implemented()
-
 
 class GeoTIFFReader(GeoTIFFFieldList, Reader):
     def __init__(self, source, path):
@@ -228,16 +230,16 @@ class GeoTIFFReader(GeoTIFFFieldList, Reader):
     def mutate_source(self):
         return self
 
+    def default_encoder(self):
+        return Reader.default_encoder(self)
+
 
 def _match_magic(magic):
-    if magic is not None:
-        # https://docs.ogc.org/is/19-008r4/19-008r4.html#_tiff_core_test
-        # Bytes 0-1: 'II' (little endian) or 'MM' (big endian)
-        # Bytes 2-3: 42 as short in the corresponding byte order
-        # Bytes 4-7: offset to first image file directory
-        # ASCII: I = 73, M = 77, * = 42
-        return len(magic) >= 8 and magic[:4] in {b"II*\x00", b"MM\x00*"}
-    return False
+    # https://docs.ogc.org/is/19-008r4/19-008r4.html#_tiff_core_test
+    # Bytes 0-1: 'II' (little endian) or 'MM' (big endian)
+    # Bytes 2-3: 42 as short in the corresponding byte order
+    # Bytes 4-7: offset to first image file directory
+    return magic is not None and len(magic) >= 8 and magic[:4] in {b"II*\x00", b"MM\x00*"}
 
 
 def reader(source, path, *, magic=None, **kwargs):

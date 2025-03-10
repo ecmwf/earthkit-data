@@ -11,7 +11,7 @@ import logging
 import os
 import subprocess
 
-from earthkit.data.core.settings import SETTINGS
+from earthkit.data.core.config import CONFIG
 from earthkit.data.core.temporary import temp_file
 
 from .ecmwf_api import ECMWFApi
@@ -64,7 +64,7 @@ class StandaloneMarsClient:
 
     @staticmethod
     def enabled():
-        return SETTINGS.get("use-standalone-mars-client-when-available") and os.path.exists(
+        return CONFIG.get("use-standalone-mars-client-when-available") and os.path.exists(
             StandaloneMarsClient.command()
         )
 

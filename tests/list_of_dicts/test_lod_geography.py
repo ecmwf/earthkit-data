@@ -149,6 +149,24 @@ def test_lod_geo_invalid(
         ds[0].shape
 
 
+@pytest.mark.parametrize("data", ["lod_no_latlon"])
+@pytest.mark.parametrize("mode", ["list-of-dicts", "loop"])
+def test_lod_no_latlon(
+    request,
+    data,
+    mode,
+):
+    ds = build_lod_fieldlist(request.getfixturevalue(data), mode)
+
+    assert len(ds) == 6
+    assert ds[0].shape == (6,)
+    assert ds[0].values.shape == (6,)
+    assert ds.values.shape == (6, 6)
+
+    with pytest.raises(ValueError):
+        ds[0].to_latlon()
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 

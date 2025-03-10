@@ -14,9 +14,9 @@ from importlib import import_module
 
 from earthkit.data.core import Base
 from earthkit.data.core.caching import cache_file
+from earthkit.data.core.config import CONFIG
 from earthkit.data.core.plugins import find_plugin
 from earthkit.data.core.plugins import register as register_plugin
-from earthkit.data.core.settings import SETTINGS
 
 
 class Source(Base):
@@ -36,8 +36,8 @@ class Source(Base):
     def __init__(self, **kwargs):
         self._kwargs = kwargs
 
-    def settings(self, name):
-        return SETTINGS.get(name)
+    def config(self, name):
+        return CONFIG.get(name)
 
     def mutate(self):
         # Give a chance to `multi` to change source
@@ -98,6 +98,14 @@ class Source(Base):
 
     def graph(self, depth=0):
         print(" " * depth, self)
+
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self, **kwargs)
+
+    def default_encoder(self):
+        return None
 
 
 class SourceLoader:

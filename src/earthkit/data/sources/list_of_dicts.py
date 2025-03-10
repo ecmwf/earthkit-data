@@ -33,7 +33,7 @@ class FieldlistFromDicts(Source):
             v = f["values"]
             if isinstance(v, list):
                 v = np.array(v)
-            fields.append(ArrayField(v, UserMetadata(f, values=v)))
+            fields.append(ArrayField(v, UserMetadata(f, shape=v.shape)))
         return SimpleFieldList(fields=fields)
 
 

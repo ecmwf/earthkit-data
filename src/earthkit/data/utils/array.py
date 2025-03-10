@@ -148,7 +148,7 @@ class PytorchBackend(ArrayBackend):
         return torch
 
     def to_numpy(self, v):
-        return v.numpy()
+        return v.cpu().numpy()
 
     def from_numpy(self, v):
         import torch
@@ -183,10 +183,11 @@ class JaxBackend(ArrayBackend):
         return jarray
 
     def to_numpy(self, v):
-        return v.numpy()
+        import numpy as np
+
+        return np.array(v)
 
     def from_numpy(self, v):
-
         return self.from_other(v)
 
     def from_other(self, v, **kwargs):
