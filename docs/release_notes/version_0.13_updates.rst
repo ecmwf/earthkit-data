@@ -20,7 +20,7 @@ Deprecations
 Configuration
 ++++++++++++++++++
 
-- The "settings" has been renamed as :ref:`config <config>`. The API did not change with the exception of ``settings.auto_save_settings``, which now is ``config.autosave``. The "settings" object is still available for backward compatibility but will be removed in a future release. Users are encouraged to migrate the code to use ``config`` instead. (:pr:`586`)
+- The "settings" has been renamed to :ref:`config <config>`. The API did not change with the exception of ``settings.auto_save_settings``, which now is ``config.autosave``. The "settings" object is still available for backward compatibility but will be removed in a future release. Users are encouraged to migrate the code to use ``config`` instead. (:pr:`586`)
 - The configuration file changed to ``~/.config/earthkit/data/config.yaml``. When it is not available, the old configuration file at "~/.config/earthkit/settings.yaml" is loaded and saved into the new path. This is done until "settings" is removed.
 - As new feature, the configuration file can be specified via the ``EARTHKIT_DATA_CONFIG_FILE`` environmental variable. The environmental variable takes precedence over the default configuration file (it is only read at startup).
 
@@ -30,7 +30,7 @@ See :ref:`here <deprecated-settings>` for more details.
 New writer API
 +++++++++++++++
 
-- Introduced a new Writer API to facilitate the creation of custom data writers. It is based on :ref:`targets <targets>` that can represent a file, a database, a remote server etc and are able write data by using a suitable :ref:`encoder <data-encoders>` (:pr:`596`).
+- Introduced a new Writer API to facilitate the creation of custom data writers. It is based on :ref:`targets <targets>` that can represent a file, a database, a remote server etc and are able write data by using a suitable :ref:`encoder <encoders>` (:pr:`596`).
 - The existing writing mechanisms are still kept ensuring backward compatibility, but marked deprecated and will be removed in a future release. For all deprecated methods/objects, see as follows:
 
   - :ref:`deprecated-data-save`
@@ -42,8 +42,11 @@ New writer API
 
 See the notebook examples:
 
+  - :ref:`/examples/file_target.ipynb`
   - :ref:`/examples/grib_to_file_target.ipynb`
+  - :ref:`/examples/grib_to_file_pattern_target.ipynb`
   - :ref:`/examples/grib_to_fdb_target.ipynb`
+  - :ref:`/examples/grib_to_geotiff.ipynb`
   - :ref:`/examples/grib_encoder.ipynb`
 
 New features

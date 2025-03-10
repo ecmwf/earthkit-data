@@ -8,7 +8,7 @@ Version 0.13.0
 
 .. _deprecated-settings:
 
-The "settings" has been renamed as :ref:`config <config>`
+The "settings" has been renamed to :ref:`config <config>`
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 The API did not change with the exception of ``settings.auto_save_settings``, which now is ``config.autosave``.
