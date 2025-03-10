@@ -2,6 +2,15 @@ Version 0.13 Updates
 /////////////////////////
 
 
+Version 0.13.1
+===============
+
+Fixes
+++++++++++
+
+- Fixed issue when :ref:`to_target() <targets-file>` could not assign an encoder to the ".grib1" and ".grib2" suffixes (:pr:`643`)
+
+
 Version 0.13.0
 ===============
 
