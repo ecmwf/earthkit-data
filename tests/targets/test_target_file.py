@@ -76,12 +76,13 @@ def test_target_file_grib_non_append():
         assert len(ds1) == 2
 
 
-def test_target_file_grib_encoder_from_suffix():
+@pytest.mark.parametrize("suffix", ["grib", "grb", "grib1", "grib2", "grb1", "grb2"])
+def test_target_file_grib_encoder_from_suffix(suffix):
     ds = from_source("file", earthkit_examples_file("test.grib"))
     vals_ref = ds.values[:, :4]
 
     with temp_directory() as t_dir:
-        path = os.path.join(t_dir, "_r.grib")
+        path = os.path.join(t_dir, f"_r.{suffix}")
         ds.to_target("file", path)
 
         ds1 = from_source("file", path)
