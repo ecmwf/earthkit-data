@@ -48,18 +48,19 @@ Encoders
 ---------
 
 - :py:class:`~data.encoders.encoder.Encoder`
-- :py:class:`~data.encoders.encoder.grib.GribEncoder`
-- :py:class:`~data.encoders.encoder.netcdf.NetCDFEncoder`
-- :py:class:`~data.encoders.encoder.geotiff.GeoTiffEncoder`
-- :py:class:`~data.encoders.encoder.csv.CSVEncoder`
+- :py:class:`~data.encoders.grib.GribEncoder`
+- :py:class:`~data.encoders.netcdf.NetCDFEncoder`
+- :py:class:`~data.encoders.geotiff.GeoTiffEncoder`
+- :py:class:`~data.encoders.csv.CSVEncoder`
 
 
 Targets
 ---------
 
 - :py:class:`~data.targets.target.Target`
-- :py:class:`~data.targets.target.file.FileTarget`
-- :py:class:`~data.targets.target.fdb.FdbTarget`
+- :py:class:`~data.targets.file.FileTarget`
+- :py:class:`~data.targets.file.FilePatternTarget`
+- :py:class:`~data.targets.fdb.FdbTarget`
 
 Xarray engine
 --------------
