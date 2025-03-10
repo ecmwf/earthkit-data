@@ -56,13 +56,27 @@ file
   :param bool append:  If True, the file is opened in append mode. Only used if ``file`` is a path.
   :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
   :param encoder: The encoder to use to encode the data. When it is a str, the encoder is looked up in
-    the available :ref:`encoders`. When None, the encoder type will be determined from the data
-    to write (if possible) or from the :class:`Target` properties. When a suitable encoder cannot be instantiated raises
-    ValueError.
+    the available :ref:`encoders <encoders>`. When None, the encoder type will be determined from the data
+    to write (if possible), from the target file suffix or from the :class:`Target` properties. When a
+    suitable encoder cannot be instantiated a ValueError is raise.
   :type encoder: str, :py:class:`Encoder`, None
   :param template: The template to be used by the encoder.
   :type template: obj, None
   :param dict **kwargs: other keyword arguments passed to the encoder
+
+
+  .. code-block:: python
+
+      import earthkit.data as ekd
+
+      # read GRIB data into a fieldlist.
+      ds = ekd.from_source("sample", "test.grib")
+
+      # write first field
+      ds[0].to_target("file", "_my_res_1.grib")
+
+      # write whole fieldlist
+      ds.to_target("file", "_my_res_2.grib")
 
 
   Notebook examples:
@@ -87,9 +101,8 @@ file-pattern
   :param bool append:  If True, the files are opened in append mode.
   :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
   :param encoder: The encoder to use to encode the data. When it is a str, the encoder is looked up in
-    the available :ref:`encoders`. When None, the encoder type will be determined from the data
-    to write (if possible) or from the :class:`Target` properties. When a suitable encoder cannot be instantiated raises
-    ValueError.
+    the available :ref:`encoders <encoders>`. When None, the encoder type will be determined from the data
+    to write (if possible), from the target file suffix or from the :class:`Target` properties. When a suitable encoder cannot be instantiated a ValueError is raised.
   :type encoder: str, :py:class:`Encoder`, None
   :param template: The template to be used by the encoder.
   :type template: obj, None
@@ -129,9 +142,8 @@ fdb
   :param dict,str userconfig: the FDB user configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. Only used if no ``fdb`` is specified.
   :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
   :param encoder: The encoder to use to encode the data. When it is a str, the encoder is looked up in
-    the available :ref:`encoders`. When None, the encoder type will be determined from the data
-    to write (if possible) or from the :class:`Target` properties. When a suitable encoder cannot be instantiated raises
-    ValueError.
+    the available :ref:`encoders <encoders>`. When None, the encoder type will be determined from the data
+    to write (if possible) or from the :class:`Target` properties. When a suitable encoder cannot be instantiated a ValueError is raised.
   :type encoder: str, :py:class:`Encoder`, None
   :param template: The template to be used by the encoder.
   :type template: obj, None

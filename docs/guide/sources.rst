@@ -102,29 +102,29 @@ file
 
   .. code:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
       # UNIX globbing is allowed by default
-      ds = earthkit.data.from_source("file", "path/to/t_*.grib")
+      ds = ekd.from_source("file", "path/to/t_*.grib")
 
       # list of files can be specified
-      ds = earthkit.data.from_source("file", ["path/to/f1.grib", "path/to/f2.grib"])
+      ds = ekd.from_source("file", ["path/to/f1.grib", "path/to/f2.grib"])
 
       # a path can be a directory, in this case it is recursively scanned for supported files
-      ds = earthkit.data.from_source("file", "path/to/dir")
+      ds = ekd.from_source("file", "path/to/dir")
 
 
   The following examples using parts:
 
   .. code:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
       # reading only certain parts (byte ranges) from a single file
-      ds = earthkit.data.from_source("file", "my.grib", parts=[(0, 150), (400, 160)])
+      ds = ekd.from_source("file", "my.grib", parts=[(0, 150), (400, 160)])
 
       # reading only certain parts (byte ranges) from multiple files
-      ds = earthkit.data.from_source(
+      ds = ekd.from_source(
           "file",
           [
               ("a.grib", (0, 150)),
@@ -230,8 +230,8 @@ url
 
   .. code-block:: python
 
-      >>> import earthkit.data
-      >>> ds = earthkit.data.from_source(
+      >>> import earthkit.data as ekd
+      >>> ds = ekd.from_source(
       ...     "url",
       ...     "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test4.grib",
       ... )
@@ -244,8 +244,8 @@ url
 
   .. code-block:: python
 
-      >>> import earthkit.data
-      >>> ds = earthkit.data.from_source(
+      >>> import earthkit.data as ekd
+      >>> ds = ekd.from_source(
       ...     "url",
       ...     "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test4.grib",
       ...     parts=[(0, 130428), (260856, 130428)],
@@ -280,9 +280,9 @@ url-pattern
 
   .. code-block:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
-      ds = earthkit.data.from_source(
+      ds = ekd.from_source(
           "url-pattern",
           "https://www.example.com/data-{foo}-{bar}-{qux}.csv",
           foo=[1, 2, 3],
@@ -320,8 +320,8 @@ sample
 
   .. code-block:: python
 
-    >>> import earthkit.data
-    >>> ds = earthkit.data.from_source("sample", "storm_ophelia_wind_850.grib")
+    >>> import earthkit.data as ekd
+    >>> ds = ekd.from_source("sample", "storm_ophelia_wind_850.grib")
     >>> ds.ls()
       centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
     0   ecmf         u  isobaricInhPa    850  20171016         0         0       an       0  regular_ll
@@ -347,9 +347,9 @@ stream
 
   .. code-block:: python
 
-      >>> import earthkit.data
+      >>> import earthkit.data as ekd
       >>> stream = open("docs/examples/test4.grib", "rb")
-      >>> ds = earthkit.data.from_source("stream", stream)
+      >>> ds = ekd.from_source("stream", stream)
 
       # f is a GribField
       >>> for f in ds:
@@ -364,9 +364,9 @@ stream
 
     .. code-block:: python
 
-      >>> import earthkit.data
+      >>> import earthkit.data as ekd
       >>> stream = open("docs/examples/test4.grib", "rb")
-      >>> ds = earthkit.data.from_source("stream", stream, batch_size=2)
+      >>> ds = ekd.from_source("stream", stream, batch_size=2)
 
        # f is a FieldList
       >>> for f in ds.batched(2):
@@ -380,9 +380,9 @@ stream
 
     .. code-block:: python
 
-      >>> import earthkit.data
+      >>> import earthkit.data as ekd
       >>> stream = open("docs/examples/test4.grib", "rb")
-      >>> ds = earthkit.data.from_source("stream", stream)
+      >>> ds = ekd.from_source("stream", stream)
 
       # f is a FieldList
       >>> for f in ds.group_by("level"):
@@ -395,9 +395,9 @@ stream
 
     .. code-block:: python
 
-      >>> import earthkit.data
+      >>> import earthkit.data as ekd
       >>> stream = open("docs/examples/test4.grib", "rb")
-      >>> ds = earthkit.data.from_source("stream", stream, read_all=True)
+      >>> ds = ekd.from_source("stream", stream, read_all=True)
 
       # ds is empty at this point, but calling any method on it will
       # consume the whole stream
@@ -425,12 +425,12 @@ memory
 
   .. code-block:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
       # buffer storing a GRIB message
       buffer = ...
 
-      ds = earthkit.data.from_source("memory", bufr)
+      ds = ekd.from_source("memory", bufr)
 
       # f is the only GribField in ds
       f = ds[0]
@@ -441,13 +441,13 @@ memory
   .. code-block:: python
 
       import io
-      import earthkit.data
+      import earthkit.data as ekd
 
       # buffer storing a GRIB message
       buffer = ...
       stream = io.BytesIO(buffer)
 
-      ds = earthkit.data.from_source("stream", stream, real_all=True)
+      ds = ekd.from_source("stream", stream, real_all=True)
 
       # f is the only GribField in ds
       f = ds[0]
@@ -606,9 +606,9 @@ ads
 
   .. code-block:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
-      ds = earthkit.data.from_source(
+      ds = ekd.from_source(
           "ads",
           "cams-global-reanalysis-eac4",
           variable=["particulate_matter_10um", "particulate_matter_1um"],
@@ -650,9 +650,9 @@ cds
 
   .. code-block:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
-      ds = earthkit.data.from_source(
+      ds = ekd.from_source(
           "cds",
           "reanalysis-era5-single-levels",
           variable=["2t", "msl"],
@@ -666,7 +666,7 @@ cds
 
   .. code-block:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
       req = dict(
           variable=["2t", "msl"],
@@ -676,7 +676,7 @@ cds
           date="2012-05-10",
       )
 
-      ds = earthkit.data.from_source(
+      ds = ekd.from_source(
           "cds",
           "reanalysis-era5-single-levels",
           req,
@@ -762,7 +762,7 @@ fdb
 
   .. code-block:: python
 
-      >>> import earthkit.data
+      >>> import earthkit.data as ekd
       >>> request = {
       ...     "class": "od",
       ...     "expver": "0001",
@@ -776,7 +776,7 @@ fdb
       ...     "param": [151, 167, 168],
       ... }
       >>>
-      >>> ds = earthkit.data.from_source("fdb", request)
+      >>> ds = ekd.from_source("fdb", request)
       >>> for f in ds:
       ...     print(f)
       ...
@@ -791,7 +791,7 @@ fdb
 
   .. code-block:: python
 
-      >>> ds = earthkit.data.from_source("fdb", request)
+      >>> ds = ekd.from_source("fdb", request)
       >>> for f in ds.batched(2):
       ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
       ...
@@ -805,7 +805,7 @@ fdb
 
   .. code-block:: python
 
-      >>> ds = earthkit.data.from_source("fdb", request)
+      >>> ds = ekd.from_source("fdb", request)
       >>> for f in ds.group_by("time"):
       ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
       ...
@@ -816,8 +816,8 @@ fdb
 
   .. code-block:: python
 
-      >>> import earthkit.data
-      >>> ds = earthkit.data.from_source("fdb", request, read_all=True)
+      >>> import earthkit.data as ekd
+      >>> ds = ekd.from_source("fdb", request, read_all=True)
 
       # ds is empty at this point, but calling any method on it will
       # consume the whole stream
@@ -866,7 +866,7 @@ mars
 
       .. code-block:: python
 
-          import earthkit.data
+          import earthkit.data as ekd
 
 
           def my_logging_function(msg):
@@ -874,7 +874,7 @@ mars
 
 
           request = {...}
-          ds = earthkit.data.from_source("mars", request, log=my_logging_function)
+          ds = ekd.from_source("mars", request, log=my_logging_function)
 
     - direct MARS access:
 
@@ -889,9 +889,9 @@ mars
 
   .. code-block:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
-      ds = earthkit.data.from_source(
+      ds = ekd.from_source(
           "mars",
           {
               "param": ["2t", "msl"],
@@ -950,7 +950,7 @@ polytope
 
   .. code-block:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
       request = {
           "stream": "oper",
@@ -966,7 +966,7 @@ polytope
           "domain": "g",
       }
 
-      ds = earthkit.data.from_source("polytope", "ecmwf-mars", request, stream=False)
+      ds = ekd.from_source("polytope", "ecmwf-mars", request, stream=False)
 
   Data downloaded from the polytope service is stored in the the :ref:`cache <caching>`. However,
   please note that, in the current version, each call to  :func:`from_source` will download the data again.
@@ -1045,13 +1045,13 @@ s3
 
   .. code-block:: python
 
-    >>> import earthkit.data
+    >>> import earthkit.data as ekd
     >>> req = {
     ...     "endpoint": "object-store.os-api.cci1.ecmwf.int",
     ...     "bucket": "earthkit-test-data-public",
     ...     "objects": "test6.grib",
     ... }
-    >>> ds = earthkit.data.from_source("s3", req, anon=True)
+    >>> ds = ekd.from_source("s3", req, anon=True)
     >>> ds.ls()
       centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
     0   ecmf         t  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
@@ -1073,7 +1073,7 @@ s3
     ...     ],
     ... }
     >>>
-    >>> ds = earthkit.data.from_source("s3", req, anon=True)
+    >>> ds = ekd.from_source("s3", req, anon=True)
     >>> ds.ls()
       centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
     0   ecmf         t  isobaricInhPa   1000  20180801      1200         0       an       0  regular_ll
@@ -1108,9 +1108,9 @@ wekeo
 
   .. code-block:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
-      ds = earthkit.data.from_source(
+      ds = ekd.from_source(
           "wekeo",
           "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
           request={
@@ -1153,9 +1153,9 @@ wekeocds
 
   .. code-block:: python
 
-      import earthkit.data
+      import earthkit.data as ekd
 
-      ds = earthkit.data.from_source(
+      ds = ekd.from_source(
           "wekeocds",
           "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS_MONTHLY_MEANS",
           variable=["2m_temperature", "mean_sea_level_pressure"],

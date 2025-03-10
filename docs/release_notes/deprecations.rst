@@ -42,7 +42,7 @@ See details :ref:`here <deprecated-settings>`.
 Data object :func:`save` is deprecated
 ++++++++++++++++++++++++++++++++++++++++++++
 
-This functionality is now replaced by the :ref:`targets <data-targets>`.
+This functionality is replaced by the :ref:`targets <data-targets>`.
 
 .. list-table::
    :header-rows: 0
@@ -85,7 +85,7 @@ This functionality is now replaced by the :ref:`targets <data-targets>`.
 :func:`new_grib_output` is deprecated
 ++++++++++++++++++++++++++++++++++++++++++++
 
-:func:`new_grib_output` returns a new :py:class:`GribOutput` object. Its functionality is now replaced by the :ref:`targets <data-targets>`.
+:func:`new_grib_output` returns a new :py:class:`GribOutput` object. Its functionality is replaced by the :ref:`targets <data-targets>`.
 
 .. warning::
 
@@ -142,7 +142,7 @@ The ``split_output=True`` option of  :func:`new_grib_output` is not supported by
 :py:class:`GribOutput` is deprecated
 ++++++++++++++++++++++++++++++++++++++++++++
 
-Its functionality is now replaced by the :ref:`targets <data-targets>` instead. For details see :ref:`migrating new_grib_output() <deprecated-new-grib-output>`.
+Its functionality is replaced by the :ref:`targets <data-targets>` instead. For details see :ref:`migrating new_grib_output() <deprecated-new-grib-output>`.
 
 
 .. _deprecated-new-grib-coder:
@@ -150,7 +150,7 @@ Its functionality is now replaced by the :ref:`targets <data-targets>` instead. 
 :func:`new_grib_coder` is deprecated
 ++++++++++++++++++++++++++++++++++++++++++++
 
-:func:`new_grib_coder` returns a new :py:class:`GribCoder` object. Its functionality is now replaced by the :ref:`targets <data-targets>`.
+:func:`new_grib_coder` returns a new :py:class:`GribCoder` object. Its functionality is replaced by the :ref:`targets <data-targets>`.
 
 .. warning::
 
@@ -176,4 +176,4 @@ Its functionality is now replaced by the :ref:`targets <data-targets>` instead. 
 :py:class:`GribCoder` is deprecated
 ++++++++++++++++++++++++++++++++++++++++++++
 
-Its functionality is now replaced by the :ref:`encoders <data-endoders>`. For details see :ref:`migrating new_grib_coder() <deprecated-new-grib-coder>`.
+Its functionality is replaced by the :ref:`encoders <data-endoders>`. For details see :ref:`migrating new_grib_coder() <deprecated-new-grib-coder>`.

@@ -52,5 +52,5 @@ New features
 - Refactored :ref:`data-sources-wekeo` and :ref:`data-sources-wekeocds` to use ``hda`` version 2 (:pr:`593`). The minimum ``hda`` version is now 2.22.
 - Added support for patterns with dates using timedelta as ``strftimedlta()`` for the :ref:`data-sources-file-pattern` source (:pr:`606`)
 - Enabled using string formatter for output file patterns in :ref:`new_grib_output <deprecated-new-grib-output>` and :ref:`GribOutput <deprecated-griboutput>` (:pr:`603`)
-- Enabled creating :ref:`data-sources-lod` fieldlists without latitudes/longitudes
+- Enabled creating :ref:`data-sources-lod` fieldlists without latitudes/longitudes (:pr:`636`)
 - Added :py:meth:`cpu` to the torch backend (:pr:`578`)

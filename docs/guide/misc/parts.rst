@@ -29,15 +29,15 @@ For both sources we can use the ``parts`` kwarg to define the parts for all the 
 
 .. code-block:: python
 
+    import earthkit.data as ekd
+
     # file
-    ds = earthkit.data.from_source("file", "my.grib", parts=(0, 150))
-    ds = earthkit.data.from_source("file", "my.grib", parts=[(0, 150), (400, 160)])
+    ds = ekd.from_source("file", "my.grib", parts=(0, 150))
+    ds = ekd.from_source("file", "my.grib", parts=[(0, 150), (400, 160)])
 
     # url
-    ds = earthkit.data.from_source("url", "http://my-host/my.grib", parts=(0, 150))
-    ds = earthkit.data.from_source(
-        "url", "http://my-host/my.grib", parts=[(0, 150), (400, 160)]
-    )
+    ds = ekd.from_source("url", "http://my-host/my.grib", parts=(0, 150))
+    ds = ekd.from_source("url", "http://my-host/my.grib", parts=[(0, 150), (400, 160)])
 
 
 Specifying the parts for each file
@@ -52,8 +52,10 @@ If we have multiple paths/urls and want to specify different parts for each we n
 
 .. code-block:: python
 
+    import earthkit.data as ekd
+
     # file
-    ds = earthkit.data.from_source(
+    ds = ekd.from_source(
         "file",
         [
             ("a.grib", (0, 150)),

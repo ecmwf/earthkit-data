@@ -3,17 +3,26 @@
 Targets
 ===============
 
-A **target** can represent a file, a database, a remote server etc. Data is written/added to a target by using a suitable :ref:`encoder <data-encoders>`.
+A **target** can represent a file, a database, a remote server etc. Data is written/added to a target by using a suitable :ref:`encoder <encoders>`.
 
 Details
 ----------------
-
 
 .. toctree::
    :maxdepth: 1
 
    to_target
    target_objects
+
+
+Examples
+------------
+
+  - :ref:`/examples/file_target.ipynb`
+  - :ref:`/examples/grib_to_file_target.ipynb`
+  - :ref:`/examples/grib_to_file_pattern_target.ipynb`
+  - :ref:`/examples/grib_to_fdb_target.ipynb`
+  - :ref:`/examples/grib_to_geotiff.ipynb`
 
 
 Overview
@@ -49,12 +58,3 @@ There are different ways to write/add data to a given target:
 
     with FileTarget("_my_res_4.grib") as t:
         t.write(ds)
-
-
-Examples:
-
-  - :ref:`/examples/file_target.ipynb`
-  - :ref:`/examples/grib_to_file_target.ipynb`
-  - :ref:`/examples/grib_to_file_pattern_target.ipynb`
-  - :ref:`/examples/grib_to_fdb_target.ipynb`
-  - :ref:`/examples/grib_to_geotiff.ipynb`
