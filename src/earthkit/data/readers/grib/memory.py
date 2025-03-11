@@ -185,8 +185,7 @@ class GribFieldListInMemory(SimpleFieldList):
 
     def __init__(self, source, reader, *args, **kwargs):
         """The reader must support __next__."""
-        if source is not None:
-            self._reader = reader
+        self._reader = reader
         self._loaded = False
 
     def __len__(self):
@@ -198,6 +197,7 @@ class GribFieldListInMemory(SimpleFieldList):
         return super().__getitem__(n)
 
     def _load(self):
+        # TODO: make it thread safe
         if not self._loaded:
             self.fields = [f for f in self._reader]
             self._loaded = True
