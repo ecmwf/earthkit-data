@@ -11,6 +11,7 @@
 
 import logging
 import os
+import shutil
 
 import pytest
 
@@ -19,6 +20,7 @@ from earthkit.data.core.temporary import temp_directory
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import make_tgz
+from earthkit.data.testing import make_zip
 from earthkit.data.testing import preserve_cwd
 from earthkit.data.testing import write_to_file
 
@@ -323,6 +325,76 @@ def test_file_multi_directory_with_tar(write_method):
             ]
 
             assert ds.metadata(("param", "level")) == ref
+
+
+def test_file_grib_tar_with_single_file():
+    with temp_directory() as tmpdir:
+        path = os.path.join(tmpdir, "a.grib")
+        shutil.copy(earthkit_examples_file("test.grib"), path)
+        make_tgz(tmpdir, "test.tar.gz", [path])
+        t_path = os.path.join(tmpdir, "test.tar.gz")
+
+        ds = from_source("file", t_path)
+        assert len(ds) == 2, len(ds)
+        assert os.path.basename(ds.path) == "a.grib"
+
+
+def test_file_grib_zip_with_single_file():
+    with temp_directory() as tmpdir:
+        path = os.path.join(tmpdir, "a.grib")
+        shutil.copy(earthkit_examples_file("test.grib"), path)
+        make_zip(tmpdir, "test.zip", [path])
+        t_path = os.path.join(tmpdir, "test.zip")
+
+        ds = from_source("file", t_path)
+        assert len(ds) == 2, len(ds)
+        assert os.path.basename(ds.path) == "a.grib"
+
+
+def test_file_netcdf_tar_with_single_file():
+    with temp_directory() as tmpdir:
+        path = os.path.join(tmpdir, "a.nc")
+        shutil.copy(earthkit_examples_file("test.nc"), path)
+        make_tgz(tmpdir, "test.tar.gz", [path])
+        t_path = os.path.join(tmpdir, "test.tar.gz")
+
+        ds = from_source("file", t_path)
+        assert len(ds) == 2, len(ds)
+        assert os.path.basename(ds.path) == "a.nc"
+
+
+def test_file_netcdf_zip_with_single_file_1():
+    with temp_directory() as tmpdir:
+        path = os.path.join(tmpdir, "a.nc")
+        shutil.copy(earthkit_examples_file("test.nc"), path)
+        make_zip(tmpdir, "test.zip", [path])
+        ar_path = os.path.join(tmpdir, "test.zip")
+
+        ds = from_source("file", ar_path)
+        assert len(ds) == 2, len(ds)
+        assert os.path.basename(ds.path) == "a.nc"
+
+
+def test_file_netcdf_zip_with_single_file_2():
+    # This NetCDF is not read into a fieldlist
+    import xarray as xr
+
+    N = 3
+    ds_in = xr.DataArray(range(N), coords={"dim_0": range(N)}, name="foo").to_dataset()
+    # print(ds_in)
+
+    with temp_directory() as tmpdir:
+
+        path = os.path.join(tmpdir, "a.nc")
+        ds_in["foo"].to_netcdf(path)
+
+        make_zip(tmpdir, "test.zip", [path])
+        z_path = os.path.join(tmpdir, "test.zip")
+
+        ds = from_source("file", z_path)
+
+        # print(f"{ds=}")
+        assert os.path.basename(ds.path) == "a.nc"
 
 
 if __name__ == "__main__":

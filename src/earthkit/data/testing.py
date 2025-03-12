@@ -220,10 +220,18 @@ if not NO_CUPY:
 def make_tgz(target_dir, target_name, paths):
     import tarfile
 
-    tar = tarfile.open(os.path.join(target_dir, target_name), "w:gz")
-    for p in paths:
-        tar.add(p)
-    tar.close()
+    with tarfile.open(os.path.join(target_dir, target_name), "w:gz") as tar:
+        for p in paths:
+            tar.add(p)
+    # tar.close()
+
+
+def make_zip(target_dir, target_name, paths):
+    import zipfile
+
+    with zipfile.ZipFile(os.path.join(target_dir, target_name), "a") as zipf:
+        for p in paths:
+            zipf.write(p)
 
 
 WRITE_TO_FILE_METHODS = ["target", "save", "write"]
