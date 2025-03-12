@@ -27,7 +27,7 @@ class SimpleFieldList(FieldList):
         return len(self.fields)
 
     def __repr__(self) -> str:
-        return f"FieldArray({len(self.fields)})"
+        return f"SimpleFieldList({len(self)})"
 
     def __getstate__(self) -> dict:
         ret = {}

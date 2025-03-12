@@ -2,6 +2,15 @@ Version 0.13 Updates
 /////////////////////////
 
 
+Version 0.13.2
+===============
+
+Fixes
+++++++++++
+
+- Fixed issue when could not read GRIB data from FDB streams in multiprocessing (:pr:`647`)
+
+
 Version 0.13.1
 ===============
 
