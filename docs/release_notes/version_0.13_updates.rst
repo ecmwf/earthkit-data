@@ -1,6 +1,14 @@
 Version 0.13 Updates
 /////////////////////////
 
+Version 0.13.3
+===============
+
+Fixes
+++++++++++
+
+- Fixed issue when could not convert ZIP containing a single NetCDF file to Xarray (:pr:`650`)
+
 
 Version 0.13.2
 ===============
