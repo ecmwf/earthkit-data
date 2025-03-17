@@ -132,7 +132,7 @@ class BUFRCodesHandle(CodesHandle):
         return self.__iter__()
 
     def as_namespace(self, namespace=None):
-        return {k: self.get(k) for k in self.keys(namespace=namespace)}
+        return {k: self.get(k, default=None) for k in self.keys(namespace=namespace)}
 
 
 class BUFRCodesReader(CodesReader):
