@@ -1,6 +1,16 @@
 Version 0.13 Updates
 /////////////////////////
 
+
+Version 0.13.4
+===============
+
+Fixes
+++++++++++
+
+- Fixed issue when iterating through the keys and values in some BUFR messages failed with KeyError (:pr:`653`)
+
+
 Version 0.13.3
 ===============
 
