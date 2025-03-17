@@ -39,6 +39,7 @@ dependencies:
 - myst-parser
 - pre-commit
 - pydata-sphinx-theme
+- pyfakefs
 - pytest
 - pytest-cov
 - pytest-forked
