@@ -47,8 +47,8 @@ class XArrayFieldGeography(Geography):
         return self.ds._get_xy(self.data_array, flatten=True, dtype=dtype)[1]
 
     def shape(self):
-        _, coords = self.ds._get_xy_coords(self.data_array)
-        return tuple([self.data_array.coords[v].size for v in coords])
+        _, dims = self.ds._get_xy_dims(self.data_array)
+        return tuple([self.ds.sizes[v] for v in dims])
 
     def _unique_grid_id(self):
         return self.shape()
