@@ -106,23 +106,34 @@ def test_hive_filter(request, fx, filters, expected_files):
     assert sorted(expected_files) == sorted(res_files)
 
 
+class FileCountDiag:
+    def __init__(self):
+        self.count = 0
+
+    def reset(self):
+        self.count = 0
+
+
 def test_hive_sel_1():
     from earthkit.data import from_source
 
     root = earthkit_test_data_file("pattern/1")
     pattern = "{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
 
-    ds = from_source("hive", os.path.join(root, pattern))
+    ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True)
 
     # assert ds.root == path
-
+    diag = FileCountDiag()
     # using hive partitioning keys
-    r = ds.sel(shortName="t", step=12)
+    r = ds.sel(shortName="t", step=12, file_count_diag=diag)
+    assert diag.count == 1
     assert len(r) == 6
 
     md_ref = [("t", 1000, 12), ("t", 850, 12), ("t", 700, 12), ("t", 500, 12), ("t", 400, 12), ("t", 300, 12)]
     assert r.metadata("shortName", "level", "step") == md_ref
 
     # using hive partitioning keys + extra keys from GRIB header
-    r = ds.sel(shortName="t", step=12, levtype="pl")
+    diag.reset()
+    r = ds.sel(shortName="t", step=12, levtype="pl", file_count_diag=diag)
+    assert diag.count == 1
     assert len(r) == 6
