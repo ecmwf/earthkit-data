@@ -41,8 +41,8 @@ class DataSet:
     def bbox(self, variable):
         data_array = self[variable]
 
-        keys, coords = self._get_xy_coords(data_array)
-        key = ("bbox", tuple(keys), tuple(coords))
+        keys, dims = self._get_xy_dims(data_array)
+        key = ("bbox", tuple(keys), tuple(dims))
         if key in self._cache:
             return self._cache[key]
 
@@ -59,7 +59,7 @@ class DataSet:
         self._cache[key] = (north, west, south, east)
         return self._cache[key]
 
-    def _get_xy_coords(self, data_array):
+    def _get_xy_dims(self, data_array):
         if (
             len(data_array.dims) >= 2
             and data_array.dims[-1] in GEOGRAPHIC_COORDS["x"]
@@ -68,39 +68,63 @@ class DataSet:
             return ("y", "x"), (data_array.dims[-2], data_array.dims[-1])
 
         keys = []
-        coords = []
+        dims = []
         axes = ("x", "y")
         for dim in data_array.dims:
             for ax in axes:
                 candidates = GEOGRAPHIC_COORDS.get(ax, [])
                 if dim in candidates:
                     keys.append(ax)
-                    coords.append(dim)
+                    dims.append(dim)
                 else:
                     ax = data_array.coords[dim].attrs.get("axis", "").lower()
                     if ax in axes:
                         keys.append(ax)
-                        coords.append(dim)
+                        dims.append(dim)
             if len(keys) == 2:
-                return tuple(keys), tuple(coords)
+                return tuple(keys), tuple(dims)
+
+        # 1D geo coord
+        if not keys or not dims:
+            dim = "values"
+            if data_array.dims and data_array.dims[-1] == dim:
+                for x, y in zip(GEOGRAPHIC_COORDS["x"], GEOGRAPHIC_COORDS["y"]):
+                    if x in data_array.coords and y in data_array.coords:
+                        if (
+                            len(data_array.coords[x].dims) == 1
+                            and len(data_array.coords[y].dims) == 1
+                            and data_array.coords[x].dims[-1] == dim
+                            and data_array.coords[y].dims[-1] == dim
+                        ):
+                            return tuple(["x"]), tuple([dim])
+                for x, y in zip(GEOGRAPHIC_COORDS["x"], GEOGRAPHIC_COORDS["y"]):
+                    if x in self._ds.variables and y in self._ds.variables:
+                        if (
+                            len(self._ds[x].dims) == 1
+                            and len(self._ds[y].dims) == 1
+                            and self._ds[x].dims[-1] == dim
+                            and self._ds[y].dims[-1] == dim
+                        ):
+                            return tuple(["x"]), tuple([dim])
 
         for ax in axes:
             if ax not in keys:
-                raise ValueError(f"No coordinate found with axis '{ax}'")
+                raise ValueError(f"No dimension found with axis '{ax}'")
 
-        return keys, coords
+        return keys, dims
 
     def _get_xy(self, data_array, flatten=False, dtype=None):
-        keys, coords = self._get_xy_coords(data_array)
-        key = ("grid_points", tuple(keys), tuple(coords))
+        keys, dims = self._get_xy_dims(data_array)
+        key = ("grid_points", tuple(keys), tuple(dims))
 
         if key in self._cache:
             points = self._cache[key]
         else:
             points = dict()
-            v0, v1 = data_array.coords[coords[0]], data_array.coords[coords[1]]
-            points[keys[1]], points[keys[0]] = np.meshgrid(v1, v0)
-            self._cache[key] = points
+            if all(d in data_array.coords for d in dims):
+                v0, v1 = data_array.coords[dims[0]], data_array.coords[dims[1]]
+                points[keys[1]], points[keys[0]] = np.meshgrid(v1, v0)
+                self._cache[key] = points
 
         if flatten:
             points["x"] = points["x"].reshape(-1)
@@ -112,36 +136,57 @@ class DataSet:
             return points["x"], points["y"]
 
     def _get_latlon(self, data_array, flatten=False, dtype=None):
-        keys, coords = self._get_xy_coords(data_array)
+        keys, dims = self._get_xy_dims(data_array)
 
         points = dict()
 
-        def _get_ll(keys):
+        def _get_ll_var(keys):
             for key in keys:
                 if key in self._ds:
                     return self._ds[key]
 
+        def _get_ll_coord(keys):
+            for key in keys:
+                if key in self._ds.coords:
+                    return self._ds.coords[key]
+
         lat_keys = ["latitude", "lat"]
         lon_keys = ["longitude", "lon"]
-        latitude = _get_ll(lat_keys)
-        longitude = _get_ll(lon_keys)
+        latitude = _get_ll_var(lat_keys)
+        longitude = _get_ll_var(lon_keys)
 
+        # lat-lon variables
         if latitude is not None and longitude is not None:
-            if latitude.dims == coords and longitude.dims == coords:
+            if latitude.dims == dims and longitude.dims == dims:
                 latitude = latitude.data
                 longitude = longitude.data
                 points["y"] = latitude
                 points["x"] = longitude
 
+        # lat-lon coordinates
         if not points:
-            key = ("grid_points", tuple(keys), tuple(coords))
+            latitude = _get_ll_coord(lat_keys)
+            longitude = _get_ll_coord(lon_keys)
+            if latitude is not None and longitude is not None:
+                if latitude.dims == dims and longitude.dims == dims:
+                    latitude = latitude.data
+                    longitude = longitude.data
+                    points["y"] = latitude
+                    points["x"] = longitude
+
+        # lat-lon meshgrid
+        if not points:
+            key = ("grid_points", tuple(keys), tuple(dims))
 
             if key in self._cache:
                 points = self._cache[key]
             else:
-                v0, v1 = data_array.coords[coords[0]], data_array.coords[coords[1]]
-                points[keys[1]], points[keys[0]] = np.meshgrid(v1, v0)
-                self._cache[key] = points
+                if all(d in data_array.coords for d in dims):
+                    v0, v1 = data_array.coords[dims[0]], data_array.coords[dims[1]]
+                    points[keys[1]], points[keys[0]] = np.meshgrid(v1, v0)
+                    self._cache[key] = points
+                else:
+                    raise ValueError(f"Could not find lat-lon coordinates for {data_array.name}")
 
         if flatten:
             points["x"] = points["x"].reshape(-1)

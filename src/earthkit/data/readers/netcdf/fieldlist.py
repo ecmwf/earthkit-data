@@ -28,6 +28,12 @@ from .field import XArrayField
 LOG = logging.getLogger(__name__)
 
 
+def get_geo_vars(ds):
+    for x, y in zip(GEOGRAPHIC_COORDS["x"], GEOGRAPHIC_COORDS["y"]):
+        if x in ds.variables and y in ds.variables:
+            return x, y
+
+
 def get_fields_from_ds(
     ds,
     field_type=None,
@@ -43,6 +49,11 @@ def get_fields_from_ds(
         if isinstance(attr_val, str):
             skip.update(attr_val.split(" "))
 
+    skip_vars = set()
+    geo_vars = get_geo_vars(ds)
+    if geo_vars:
+        skip_vars.update(geo_vars)
+
     for name in ds.data_vars:
         v = ds[name]
         _skip_attr(v, "coordinates")
@@ -50,9 +61,12 @@ def get_fields_from_ds(
         _skip_attr(v, "grid_mapping")
 
     for name in ds.data_vars:
+        if name in skip_vars:
+            continue
+
         # Select only geographical variables
-        has_lat = False
-        has_lon = False
+        has_lat = geo_vars is not None
+        has_lon = geo_vars is not None
 
         if name in skip:
             continue
@@ -66,6 +80,7 @@ def get_fields_from_ds(
         info = [value for value in v.coords if value not in v.dims]
         non_dim_coords = {}
         for coord in v.coords:
+            # print(f"{coord=}")
             if coord not in v.dims:
                 non_dim_coords[coord] = ds[coord].values
                 continue
@@ -81,7 +96,7 @@ def get_fields_from_ds(
 
             # LOG.debug(f"{standard_name=} {long_name=} {axis=} {coord_name}")
             use = False
-
+            # print(f"{standard_name=} {long_name=} {axis=} {coord_name}")
             if (
                 standard_name.lower() in GEOGRAPHIC_COORDS["x"]
                 or (long_name == "longitude")
