@@ -54,7 +54,7 @@ class XArrayFieldGeography(Geography):
         return self.shape()
 
     def projection(self):
-        from earthkit.data.s.projections import Projection
+        from earthkit.data.utils.projections import Projection
 
         return Projection.from_cf_grid_mapping(**self._grid_mapping().attrs)
 

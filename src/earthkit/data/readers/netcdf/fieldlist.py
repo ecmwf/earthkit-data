@@ -29,9 +29,16 @@ LOG = logging.getLogger(__name__)
 
 
 def get_geo_vars(ds):
+    "" "Return the names and dims if the geographic coordinates are variables in the dataset" ""
     for x, y in zip(GEOGRAPHIC_COORDS["x"], GEOGRAPHIC_COORDS["y"]):
         if x in ds.variables and y in ds.variables:
-            return x, y
+            dims_x = set(ds[x].dims)
+            dims_y = set(ds[y].dims)
+            dims = set()
+            if dims_x == dims_y:
+                dims = dims_x
+            return (x, y), dims
+    return None, None
 
 
 def get_fields_from_ds(
@@ -50,7 +57,7 @@ def get_fields_from_ds(
             skip.update(attr_val.split(" "))
 
     skip_vars = set()
-    geo_vars = get_geo_vars(ds)
+    geo_vars, geo_vars_dims = get_geo_vars(ds)
     if geo_vars:
         skip_vars.update(geo_vars)
 
@@ -65,8 +72,8 @@ def get_fields_from_ds(
             continue
 
         # Select only geographical variables
-        has_lat = geo_vars is not None
-        has_lon = geo_vars is not None
+        has_lat = None
+        has_lon = None
 
         if name in skip:
             continue
@@ -148,6 +155,12 @@ def get_fields_from_ds(
 
             if not use:
                 coordinates.append(OtherCoordinate(c, coord in info))
+
+        if not (has_lat and has_lon):
+            # handle the case where the lat/lon are variables
+            if geo_vars and geo_vars_dims and all([d in v.dims for d in geo_vars_dims]):
+                has_lat = True
+                has_lon = True
 
         if not (has_lat and has_lon):
             # self.log.info("NetCDFReader: skip %s (Not a 2 field)", name)

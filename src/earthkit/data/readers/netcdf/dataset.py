@@ -60,6 +60,9 @@ class DataSet:
         return self._cache[key]
 
     def _get_xy_dims(self, data_array):
+        # TODO: refactor it
+
+        # the last 2 dimensions are y,x
         if (
             len(data_array.dims) >= 2
             and data_array.dims[-1] in GEOGRAPHIC_COORDS["x"]
@@ -67,6 +70,15 @@ class DataSet:
         ):
             return ("y", "x"), (data_array.dims[-2], data_array.dims[-1])
 
+        # the last 2 dimensions are x, y
+        if (
+            len(data_array.dims) >= 2
+            and data_array.dims[-1] in GEOGRAPHIC_COORDS["y"]
+            and data_array.dims[-2] in GEOGRAPHIC_COORDS["x"]
+        ):
+            return ("x", "y"), (data_array.dims[-2], data_array.dims[-1])
+
+        # try to find the x and y dimensions
         keys = []
         dims = []
         axes = ("x", "y")
@@ -84,21 +96,14 @@ class DataSet:
             if len(keys) == 2:
                 return tuple(keys), tuple(dims)
 
-        # 1D geo coord
+        # 1D geographic coordinates using the dim='values' convention
         if not keys or not dims:
             dim = "values"
             if data_array.dims and data_array.dims[-1] == dim:
                 for x, y in zip(GEOGRAPHIC_COORDS["x"], GEOGRAPHIC_COORDS["y"]):
-                    if x in data_array.coords and y in data_array.coords:
-                        if (
-                            len(data_array.coords[x].dims) == 1
-                            and len(data_array.coords[y].dims) == 1
-                            and data_array.coords[x].dims[-1] == dim
-                            and data_array.coords[y].dims[-1] == dim
-                        ):
-                            return tuple(["x"]), tuple([dim])
-                for x, y in zip(GEOGRAPHIC_COORDS["x"], GEOGRAPHIC_COORDS["y"]):
-                    if x in self._ds.variables and y in self._ds.variables:
+                    if (x in data_array.coords or x in self._ds.variables) and (
+                        y in data_array.coords or y in self._ds.variables
+                    ):
                         if (
                             len(self._ds[x].dims) == 1
                             and len(self._ds[y].dims) == 1
@@ -114,6 +119,8 @@ class DataSet:
         return keys, dims
 
     def _get_xy(self, data_array, flatten=False, dtype=None):
+        # TODO: refactor it
+
         keys, dims = self._get_xy_dims(data_array)
         key = ("grid_points", tuple(keys), tuple(dims))
 
@@ -136,43 +143,28 @@ class DataSet:
             return points["x"], points["y"]
 
     def _get_latlon(self, data_array, flatten=False, dtype=None):
+        # TODO: refactor it
         keys, dims = self._get_xy_dims(data_array)
 
         points = dict()
 
-        def _get_ll_var(keys):
+        def _get_ll(keys):
             for key in keys:
                 if key in self._ds:
                     return self._ds[key]
 
-        def _get_ll_coord(keys):
-            for key in keys:
-                if key in self._ds.coords:
-                    return self._ds.coords[key]
-
         lat_keys = ["latitude", "lat"]
         lon_keys = ["longitude", "lon"]
-        latitude = _get_ll_var(lat_keys)
-        longitude = _get_ll_var(lon_keys)
+        latitude = _get_ll(lat_keys)
+        longitude = _get_ll(lon_keys)
 
-        # lat-lon variables
+        # lat-lon variable/coordinate available
         if latitude is not None and longitude is not None:
             if latitude.dims == dims and longitude.dims == dims:
                 latitude = latitude.data
                 longitude = longitude.data
                 points["y"] = latitude
                 points["x"] = longitude
-
-        # lat-lon coordinates
-        if not points:
-            latitude = _get_ll_coord(lat_keys)
-            longitude = _get_ll_coord(lon_keys)
-            if latitude is not None and longitude is not None:
-                if latitude.dims == dims and longitude.dims == dims:
-                    latitude = latitude.data
-                    longitude = longitude.data
-                    points["y"] = latitude
-                    points["x"] = longitude
 
         # lat-lon meshgrid
         if not points:
