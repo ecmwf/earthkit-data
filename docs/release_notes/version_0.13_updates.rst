@@ -2,6 +2,16 @@ Version 0.13 Updates
 /////////////////////////
 
 
+
+Version 0.13.5
+===============
+
+Fixes
+++++++++++
+
+- Fixed issue when NetCDF data with 1D latitudes/longitudes appearing as variables was not parsed into a fieldlist when read with :func:`from_source` (:pr:`658`)
+
+
 Version 0.13.4
 ===============
 
