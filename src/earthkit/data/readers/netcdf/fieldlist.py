@@ -28,6 +28,19 @@ from .field import XArrayField
 LOG = logging.getLogger(__name__)
 
 
+def get_geo_vars(ds):
+    "" "Return the names and dims if the geographic coordinates are variables in the dataset" ""
+    for x, y in zip(GEOGRAPHIC_COORDS["x"], GEOGRAPHIC_COORDS["y"]):
+        if x in ds.variables and y in ds.variables:
+            dims_x = set(ds[x].dims)
+            dims_y = set(ds[y].dims)
+            dims = set()
+            if dims_x == dims_y:
+                dims = dims_x
+            return (x, y), dims
+    return None, None
+
+
 def get_fields_from_ds(
     ds,
     field_type=None,
@@ -43,6 +56,11 @@ def get_fields_from_ds(
         if isinstance(attr_val, str):
             skip.update(attr_val.split(" "))
 
+    skip_vars = set()
+    geo_vars, geo_vars_dims = get_geo_vars(ds)
+    if geo_vars:
+        skip_vars.update(geo_vars)
+
     for name in ds.data_vars:
         v = ds[name]
         _skip_attr(v, "coordinates")
@@ -50,9 +68,12 @@ def get_fields_from_ds(
         _skip_attr(v, "grid_mapping")
 
     for name in ds.data_vars:
+        if name in skip_vars:
+            continue
+
         # Select only geographical variables
-        has_lat = False
-        has_lon = False
+        has_lat = None
+        has_lon = None
 
         if name in skip:
             continue
@@ -66,6 +87,7 @@ def get_fields_from_ds(
         info = [value for value in v.coords if value not in v.dims]
         non_dim_coords = {}
         for coord in v.coords:
+            # print(f"{coord=}")
             if coord not in v.dims:
                 non_dim_coords[coord] = ds[coord].values
                 continue
@@ -81,7 +103,7 @@ def get_fields_from_ds(
 
             # LOG.debug(f"{standard_name=} {long_name=} {axis=} {coord_name}")
             use = False
-
+            # print(f"{standard_name=} {long_name=} {axis=} {coord_name}")
             if (
                 standard_name.lower() in GEOGRAPHIC_COORDS["x"]
                 or (long_name == "longitude")
@@ -133,6 +155,12 @@ def get_fields_from_ds(
 
             if not use:
                 coordinates.append(OtherCoordinate(c, coord in info))
+
+        if not (has_lat and has_lon):
+            # handle the case where the lat/lon are variables
+            if geo_vars and geo_vars_dims and all([d in v.dims for d in geo_vars_dims]):
+                has_lat = True
+                has_lon = True
 
         if not (has_lat and has_lon):
             # self.log.info("NetCDFReader: skip %s (Not a 2 field)", name)
