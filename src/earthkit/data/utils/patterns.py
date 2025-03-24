@@ -8,6 +8,7 @@
 #
 
 import itertools
+import logging
 import os
 import re
 from functools import cached_property
@@ -15,6 +16,8 @@ from pathlib import Path
 
 from .dates import to_datetime
 from .dates import to_timedelta
+
+LOG = logging.getLogger(__name__)
 
 RE1 = re.compile(r"{([^}]*)}")
 RE2 = re.compile(r"\(([^}]*)\)")
@@ -125,8 +128,8 @@ class Constant:
     def substitute_all(self, params):
         return self.value
 
-    def match(self, value):
-        return self.value == value
+    # def match(self, value):
+    #     return self.value == value
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.value})"
@@ -218,49 +221,6 @@ class Variable:
             return [self.kind.substitute(x, self.name) for x in v]
         return None
 
-    # def match(self, value, params):
-    #     """Match pattern against value and parameters
-
-    #     Parameters
-    #     ----------
-    #     value : str
-    #         Value to match
-    #     params : dict
-    #         Parameters to match against by substituting the values belonging
-    #         to the parameter name in ``params`` into the pattern.
-
-    #     Returns
-    #     -------
-    #     bool
-    #         True if the value matches the pattern.
-
-    #     Example
-    #     -------
-    #     >>> v = Variable("my_date:date(%Y-%m-%d)")
-    #     >>> v.match("2000-01-02", {"my_date": ["2000-01-01", "2000-01-02"]})
-    #     True
-
-    #     >>> v = Variable("my_date:date(%Y-%m-%d)")
-    #     >>> v.match("2000-01-02", {"my_date": "2000-01-01"})
-    #     False
-
-    #     >>> v = Variable("my_date:date(%Y-%m-%d)")
-    #     >>> v.match("2000-01-01", {"level": "500"})
-    #     True
-
-    #     """
-    #     if self.name in params:
-    #         v = params[self.name]
-    #         print(f"match: {self.name=} {value=} {v=}")
-    #         if isinstance(v, list):
-    #             return value in v
-    #         else:
-    #             return value == v
-    #     else:
-    #         return value != ""
-    #     print("match", self.name, self.kind, self.value)
-    #     return False
-
     def __repr__(self):
         return f"Variable({self.name},{self.value},{self.kind})"
 
@@ -286,12 +246,9 @@ class Pattern:
     def __init__(self, pattern, ignore_missing_keys=False):
         self.ignore_missing_keys = ignore_missing_keys
 
-        print(f"{pattern=}")
-
         self.pattern = []
         self.variables = []
         for i, p in enumerate(RE1.split(pattern)):
-            print(f"i={i} p={p}")
             if i % 2 == 0:
                 if p != "":
                     self.pattern.append(Constant(p))
@@ -415,7 +372,7 @@ class HivePattern:
         self.root = ""
         self.rest = ""
         path_parts = path.parts
-        print(pattern, "->", path_parts)
+        LOG.debug(f"{pattern=} {path_parts=}")
         self.parts = [Pattern(x) for x in path_parts]
         for i, part in enumerate(self.parts):
             if part.is_constant():
@@ -442,15 +399,15 @@ class HivePattern:
         assert len(self.fixed_keys) == len(values)
         # self.fixed_keys = params
 
-        print("root=", self.root)
-        print("rest=", self.rest)
-        print("keys=", self.keys)
-        print("fixed_keys=", self.fixed_keys)
+        LOG.debug(f"root={self.root}")
+        LOG.debug(f"rest={self.rest}")
+        LOG.debug(f"keys={self.keys}")
+        LOG.debug(f"fixed_keys={self.fixed_keys}")
         for p in self.parts:
-            print(" p=", p)
-            print("   re=", p.regex)
+            LOG.debug(f" {p=}")
+            LOG.debug(f"   re={p.regex}")
 
-        print()
+        LOG.debug()
 
     def scan(self, *args, **kwargs):
         params = {}
@@ -467,7 +424,7 @@ class HivePattern:
         # print("params=", params)
 
         rest = Path(self.rest).parts
-        print("rest=", rest)
+        LOG.debug(f"{rest=}")
 
         res = []
 
@@ -487,15 +444,15 @@ class HivePattern:
         for k in keys:
             keys[k] = set([str(x) for x in keys[k]])
 
-        print("keys=", keys)
+        LOG.debug(f"{keys=}")
 
         root_num = len(Path(self.root).parts)
 
         last = len(self.parts) - 1
         for root, dirs, files in os.walk(self.root):
-            print("walk: root=", root)
+            LOG.debug(f"walk: {root=}")
             index = len(Path(root).parts) - root_num
-            print("index=", index, "last=", last)
+            LOG.debug(f"{index=} {last=}")
             # index = _get_index(root)
             part = self.parts[index]
 
@@ -506,9 +463,8 @@ class HivePattern:
                     g = self.collect(d, part, keys)
                     if g is None:
                         exclude.append(d)
-                print("   exclude=", exclude)
+                LOG.debug(f"   {exclude=}")
                 if exclude:
-                    print("  ????")
                     dirs[:] = [d for d in dirs if d not in exclude]
                     continue
 
@@ -519,9 +475,9 @@ class HivePattern:
                     d = self.collect(file, part, keys)
                     if d:
                         res.append(os.path.join(root, file))
-                        print("MATCH")
+                        LOG.debug("MATCH")
                     else:
-                        print("NO MATCH")
+                        LOG.debug("NO MATCH")
 
         return res
 
@@ -533,7 +489,7 @@ class HivePattern:
             if len(group) == len(part.variables):
                 for k, v in group.items():
                     if k in keys:
-                        print(f"  {k=} {v=} {keys[k]=}")
+                        LOG.debug(f"  {k=} {v=} {keys[k]=}")
                         if v not in keys[k]:
                             return None
             return group

@@ -13,6 +13,7 @@ import os
 
 import pytest
 
+from earthkit.data import from_source
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils.patterns import HivePattern
 
@@ -93,15 +94,15 @@ def test_hive_full_scan(request, fx):
     ],
 )
 def test_hive_filter(request, fx, filters, expected_files):
-    pattern, files = request.getfixturevalue(fx)
+    pattern, _ = request.getfixturevalue(fx)
 
     # files = _build_fs(md, fs_pattern, date_format)
-    print(f"files={files}")
+    # print(f"files={files}")
 
     p = HivePattern(pattern, {})
     res_files = p.scan(filters)
 
-    print(f"res_files={res_files}")
+    # print(f"res_files={res_files}")
 
     assert sorted(expected_files) == sorted(res_files)
 
@@ -115,8 +116,6 @@ class FileCountDiag:
 
 
 def test_hive_sel_1():
-    from earthkit.data import from_source
-
     root = earthkit_test_data_file("pattern/1")
     pattern = "{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
 
@@ -137,3 +136,13 @@ def test_hive_sel_1():
     r = ds.sel(shortName="t", step=12, levtype="pl", file_count_diag=diag)
     assert diag.count == 1
     assert len(r) == 6
+
+
+def test_hive_sel_2():
+    root = earthkit_test_data_file("pattern/invalid")
+    pattern = "_{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
+
+    ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True)
+
+    r = ds.sel(shortName="t", step=12)
+    assert len(r) == 0
