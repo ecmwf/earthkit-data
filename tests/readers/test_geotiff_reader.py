@@ -20,7 +20,9 @@ from earthkit.data.utils.projections import TransverseMercator
 
 @pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
 @pytest.mark.with_proj
-@pytest.mark.parametrize("fname", [("dgm50hs_col_32_368_5616_nw.tif"), ("dgm50hs_col_32_368_5616_nw_bigtiff.tiff")])
+@pytest.mark.parametrize(
+    "fname", [("dgm50hs_col_32_368_5616_nw.tif"), ("dgm50hs_col_32_368_5616_nw_bigtiff.tiff")]
+)
 def test_geotiff_reader_with_multiband(fname):
     s = from_source("file", earthkit_test_data_file(fname))
     assert len(s) == 3
