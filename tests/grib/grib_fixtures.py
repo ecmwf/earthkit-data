@@ -9,11 +9,12 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.utils.array import get_backend
+
 from earthkit.data import from_source
 from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.utils.array import get_backend
 
 
 def load_array_fieldlist(path, array_backend, **kwargs):

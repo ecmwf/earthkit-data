@@ -16,7 +16,7 @@ import sys
 import pytest
 
 from earthkit.data.testing import MISSING
-from earthkit.data.testing import NO_PYTORCH
+from earthkit.data.testing import NO_TORCH
 from earthkit.data.testing import earthkit_file
 
 # See https://www.blog.pythonlibrary.org/2018/10/16/testing-jupyter-notebooks/
@@ -45,7 +45,7 @@ SKIP = [
     "netcdf_opendap.ipynb",
 ]
 
-if NO_PYTORCH:
+if NO_TORCH:
     SKIP.append("grib_array_backends.ipynb")
 
 

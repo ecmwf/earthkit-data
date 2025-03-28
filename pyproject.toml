@@ -31,6 +31,7 @@ dependencies = [
   "dask",
   "deprecation",
   "earthkit-meteo>=0.0.1",
+  "earthkit-utils",
   "eccodes>=1.7",
   "entrypoints",
   "filelock",
