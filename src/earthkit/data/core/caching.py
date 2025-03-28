@@ -1035,6 +1035,7 @@ def cache_file(
     else:
         # path can be a file or a directory. We have to make the name unique.
         m = hashlib.sha256()
+        m.update(json.dumps(args, sort_keys=True, default=default_serialiser).encode("utf-8"))
         m.update(datetime.datetime.now().isoformat().encode("utf-8"))
         m.update(str(randrange(10000000)).encode("utf-8"))
 
