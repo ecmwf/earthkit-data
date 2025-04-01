@@ -12,6 +12,7 @@
 import numpy as np
 import pytest
 
+from earthkit.data import from_object
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_remote_test_data_file
@@ -30,7 +31,7 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
     "dtype,expected_dtype",
     [(None, np.float64), (np.float32, np.float32), (np.float64, np.float64)],
 )
-def test_netcdf_to_points_1(dtype, expected_dtype):
+def test_netcdf_to_points_ll_1(dtype, expected_dtype):
     ds = from_source("file", earthkit_test_data_file("test_single.nc"))
 
     eps = 1e-5
@@ -67,7 +68,7 @@ def test_netcdf_to_points_1(dtype, expected_dtype):
     assert v["y"].dtype == expected_dtype
 
 
-def test_netcdf_to_points_2():
+def test_netcdf_to_points_ll_2():
     ds = from_source("file", earthkit_examples_file("test.nc"))
 
     assert len(ds) == 2
@@ -101,7 +102,7 @@ def test_netcdf_to_points_2():
         assert np.isclose(v["y"][y, x], 57)
 
 
-def test_netcdf_to_latlon():
+def test_netcdf_to_latlon_ll():
     ds = from_source("file", earthkit_examples_file("test.nc"))
 
     assert len(ds) == 2
@@ -179,6 +180,21 @@ def test_netcdf_proj_string_laea():
     )
 
 
+def test_netcdf_geometry_laea():
+    ds = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
+
+    assert len(ds) == 3
+    assert ds[0].shape == (950, 1000)
+
+    bb = ds.bounding_box()
+    assert len(bb) == 3  # 3 fields
+    for b in bb:
+        assert np.allclose(
+            np.asarray(b.as_list()),
+            np.asarray([72.64162436391234, -35.034023999999995, 23.942342882929605, 73.93767587613708]),
+        )
+
+
 def test_netcdf_to_points_laea():
     ds = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
 
@@ -251,12 +267,320 @@ def test_netcdf_to_latlon_laea():
             assert np.isclose(v["lat"][x], ref[i]), f"{i=}, {x=}"
 
 
-def test_netcdf_forecast_reference_time():
-    ds = from_source("url", earthkit_remote_test_data_file("test-data", "fa_ta850.nc"))
+@pytest.mark.parametrize(
+    "lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude"), ("y", "x"), ("Y", "X")]
+)
+def test_netcdf_geography_2d_1a(lat_name, lon_name):
+    # Dimensions:  (level: 2, lat: 3, lon: 2)
+    # Coordinates:
+    #   * level    (level) int64 16B 700 500
+    #   * lat      (lat) int64 24B 50 40 30
+    #   * lon      (lon) int64 16B 0 10
+    # Data variables:
+    #     a        (level, lat, lon) int64 96B 11 12 21 22 31 32 14 15 24 25 34 35
+    import xarray as xr
 
-    assert len(ds) == 37
-    assert ds[0].metadata("valid_datetime") == "2020-01-23T00:00:00"
-    assert ds[5].metadata("valid_datetime") == "2020-01-23T05:00:00"
+    dims = {"level": 2, lat_name: 3, lon_name: 2}
+    coords = {
+        "level": np.array([700, 500]),
+        lat_name: np.array([50, 40, 30]),
+        lon_name: np.array([0, 10]),
+    }
+
+    lats = [[50, 50], [40, 40], [30, 30]]
+    lons = [[0, 10], [0, 10], [0, 10]]
+
+    data = np.array(
+        [
+            [[1, 2], [3, 4], [5, 6]],
+            [[7, 8], [9, 10], [11, 12]],
+        ]
+    )
+
+    a = xr.Variable(dims, data)
+    v = {"a": a}
+    ds_in = xr.Dataset(v, coords=coords)
+
+    print(ds_in)
+
+    ds = from_object(ds_in)
+    assert len(ds) == 2
+    assert np.allclose(ds.metadata("level"), coords["level"])
+    for i in range(2):
+        assert ds[i].shape == (3, 2)
+        b = ds[i].bounding_box()
+        assert np.allclose(
+            np.asarray(b.as_list()),
+            np.asarray([50.0, 0.0, 30.0, 10]),
+        )
+
+    with pytest.raises(AttributeError):
+        ds.projection()
+
+    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
+        assert ll["lat"].shape == (3, 2)
+        assert ll["lon"].shape == (3, 2)
+        assert np.allclose(ll["lat"], lats)
+        assert np.allclose(ll["lon"], lons)
+
+    for ll in [ds[0].to_points(), ds.to_points()]:
+        assert ll["x"].shape == (3, 2)
+        assert ll["y"].shape == (3, 2)
+        assert np.allclose(ll["y"], lats)
+        assert np.allclose(ll["x"], lons)
+
+    assert ds[0].shape == (3, 2)
+    assert np.allclose(ds[0].to_numpy(), ds_in["a"].sel(level=700).as_numpy())
+    assert ds[1].shape == (3, 2)
+    assert np.allclose(ds[1].to_numpy(), ds_in["a"].sel(level=500).as_numpy())
+
+
+@pytest.mark.parametrize(
+    "lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude"), ("y", "x"), ("Y", "X")]
+)
+def test_netcdf_geography_2d_1b(lat_name, lon_name):
+    # Dimensions:  (level: 2, lon: 2, lat: 3)
+    # Coordinates:
+    #   * level    (level) int64 16B 700 500
+    #   * lat      (lat) int64 24B 50 40 30
+    #   * lon      (lon) int64 16B 0 10
+    # Data variables:
+    #     a        (level, lon, lat) int64 96B 1 2 3 4 5 6 7 8 9 10 11 12
+    import xarray as xr
+
+    dims = {"level": 2, lon_name: 2, lat_name: 3}
+    coords = {
+        "level": np.array([700, 500]),
+        lat_name: np.array([50, 40, 30]),
+        lon_name: np.array([0, 10]),
+    }
+
+    lats = [[50, 40, 30], [50, 40, 30]]
+    lons = [[0, 0, 0], [10, 10, 10]]
+
+    data = np.array(
+        [
+            [[1, 2, 3], [4, 5, 6]],
+            [[7, 8, 9], [10, 11, 12]],
+        ]
+    )
+
+    a = xr.Variable(dims, data)
+    v = {"a": a}
+    ds_in = xr.Dataset(v, coords=coords)
+
+    ds = from_object(ds_in)
+    assert len(ds) == 2
+    assert np.allclose(ds.metadata("level"), coords["level"])
+    for i in range(2):
+        assert ds[i].shape == (2, 3)
+        b = ds[i].bounding_box()
+        assert np.allclose(
+            np.asarray(b.as_list()),
+            np.asarray([50.0, 0.0, 30.0, 10]),
+        )
+
+    with pytest.raises(AttributeError):
+        ds.projection()
+
+    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
+        assert ll["lat"].shape == (2, 3)
+        assert ll["lon"].shape == (2, 3)
+        assert np.allclose(ll["lat"], lats)
+        assert np.allclose(ll["lon"], lons)
+
+    for ll in [ds[0].to_points(), ds.to_points()]:
+        assert ll["x"].shape == (2, 3)
+        assert ll["y"].shape == (2, 3)
+        assert np.allclose(ll["y"], lats)
+        assert np.allclose(ll["x"], lons)
+
+    assert ds[0].shape == (2, 3)
+    assert np.allclose(ds[0].to_numpy(), ds_in["a"].sel(level=700).as_numpy())
+    assert ds[1].shape == (2, 3)
+    assert np.allclose(ds[1].to_numpy(), ds_in["a"].sel(level=500).as_numpy())
+
+
+@pytest.mark.parametrize(
+    "lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude"), ("y", "x"), ("Y", "X")]
+)
+def test_netcdf_geography_2d_2(lat_name, lon_name):
+    # Dimensions:  (level: 2, y: 3, x: 2)
+    # Coordinates:
+    #   * level    (level) int64 16B 700 500
+    #     lat      (y, x) int64 48B 50 50 40 40 30 30
+    #     lon      (y, x) int64 48B 0 10 0 10 0 10
+    # Dimensions without coordinates: y, x
+    # Data variables:
+    #     a        (level, y, x) int64 96B 11 12 21 22 31 32 14 15 24 25 34 35
+
+    import xarray as xr
+
+    dims = {"level": 2, "y": 3, "x": 2}
+    coords = {
+        "level": np.array([700, 500]),
+        lat_name: (["y", "x"], np.array([[50, 50], [40, 40], [30, 30]])),
+        lon_name: (["y", "x"], np.array([[0, 10], [0, 10], [0, 10]])),
+    }
+
+    data = np.array(
+        [
+            [[11, 12], [21, 22], [31, 32]],
+            [[14, 15], [24, 25], [34, 35]],
+        ]
+    )
+
+    a = xr.Variable(dims, data)
+    v = {"a": a}
+    ds_in = xr.Dataset(v, coords=coords)
+
+    ds = from_object(ds_in)
+    assert len(ds) == 2
+    assert np.allclose(ds.metadata("level"), coords["level"])
+
+    for i in range(2):
+        assert ds[i].shape == (3, 2)
+        b = ds[i].bounding_box()
+        assert np.allclose(
+            np.asarray(b.as_list()),
+            np.asarray([50.0, 0.0, 30.0, 10]),
+        )
+
+    with pytest.raises(AttributeError):
+        ds.projection()
+
+    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
+        assert ll["lat"].shape == (3, 2)
+        assert ll["lon"].shape == (3, 2)
+        assert np.allclose(ll["lat"], coords[lat_name][1])
+        assert np.allclose(ll["lon"], coords[lon_name][1])
+
+
+@pytest.mark.parametrize("lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude")])
+def test_netcdf_geography_2d_3(lat_name, lon_name):
+    # Dimensions:  (level: 2, y: 3, x: 2)
+    # Coordinates:
+    #   * level    (level) int64 16B 700 500
+    # Dimensions without coordinates: y, x
+    # Data variables:
+    #     a        (level, y, x) int64 96B 11 12 21 22 31 32 14 15 24 25 34 35
+    #     lat      (y, x) int64 48B 50 50 40 40 30 30
+    #     lon      (y, x) int64 48B 0 10 0 10 0 10
+
+    import xarray as xr
+
+    dims = {"level": 2, "y": 3, "x": 2}
+    coords = {
+        "level": np.array([700, 500]),
+    }
+
+    data = np.array(
+        [
+            [[11, 12], [21, 22], [31, 32]],
+            [[14, 15], [24, 25], [34, 35]],
+        ]
+    )
+
+    a = xr.Variable(dims, data)
+    lat = xr.Variable({"y": 3, "x": 3}, np.array([[50, 50], [40, 40], [30, 30]]))
+    lon = xr.Variable({"y": 3, "x": 3}, np.array([[0, 10], [0, 10], [0, 10]]))
+    v = {"a": a, lat_name: lat, lon_name: lon}
+    ds_in = xr.Dataset(v, coords=coords)
+
+    ds = from_object(ds_in)
+    assert len(ds) == 2
+    assert np.allclose(ds.metadata("level"), coords["level"])
+
+    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
+        assert ll["lat"].shape == (3, 2)
+        assert ll["lon"].shape == (3, 2)
+        assert np.allclose(ll["lat"], lat.data)
+        assert np.allclose(ll["lon"], lon.data)
+
+
+@pytest.mark.parametrize("lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude")])
+def test_netcdf_geography_1d_1(lat_name, lon_name):
+    # Dimensions:  (level: 2, values: 9)
+    # Coordinates:
+    #   * level    (level) int64 16B 700 500
+    #     lat      (values) int64 72B 50 50 50 40 40 40 30 30 30
+    #     lon      (values) int64 72B 0 10 20 0 10 20 0 10 20
+    # Dimensions without coordinates: values
+    # Data variables:
+    #     a        (level, values) int64 144B 11 12 13 21 22 23 ... 24 25 26 34 35 36
+
+    import xarray as xr
+
+    dims = {"level": 2, "values": 9}
+    coords = {
+        "level": np.array([700, 500]),
+        lat_name: ("values", np.array([50, 50, 50, 40, 40, 40, 30, 30, 30])),
+        lon_name: ("values", np.array([0, 10, 20, 0, 10, 20, 0, 10, 20])),
+    }
+
+    data = np.array(
+        [
+            [11, 12, 13, 21, 22, 23, 31, 32, 33],
+            [14, 15, 16, 24, 25, 26, 34, 35, 36],
+        ]
+    )
+
+    a = xr.Variable(dims, data)
+    v = {"a": a}
+    ds_in = xr.Dataset(v, coords=coords)
+
+    ds = from_object(ds_in)
+    assert len(ds) == 2
+    assert np.allclose(ds.metadata("level"), coords["level"])
+
+    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
+        assert ll["lat"].shape == (9,)
+        assert ll["lon"].shape == (9,)
+        assert np.allclose(ll["lat"], coords[lat_name][1])
+        assert np.allclose(ll["lon"], coords[lon_name][1])
+
+
+@pytest.mark.parametrize("lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude")])
+def test_netcdf_geography_1d_2(lat_name, lon_name):
+    # Dimensions:  (level: 2, values: 9)
+    # Coordinates:
+    # * level    (level) int64 16B 700 500
+    # Dimensions without coordinates: values
+    # Data variables:
+    #     a        (level, values) int64 144B 11 12 13 21 22 23 ... 24 25 26 34 35 36
+    #     lat      (values) int64 72B 50 50 50 40 40 40 30 30 30
+    #     lon      (values) int64 72B 0 10 20 0 10 20 0 10 20
+
+    import xarray as xr
+
+    dims = {"level": 2, "values": 9}
+    coords = {
+        "level": np.array([700, 500]),
+    }
+
+    data = np.array(
+        [
+            [11, 12, 13, 21, 22, 23, 31, 32, 33],
+            [14, 15, 16, 24, 25, 26, 34, 35, 36],
+        ]
+    )
+
+    a = xr.Variable(dims, data)
+    lat = xr.Variable({"values": 9}, np.array([50, 50, 50, 40, 40, 40, 30, 30, 30]))
+    lon = xr.Variable({"values": 9}, np.array([0, 10, 20, 0, 10, 20, 0, 10, 20]))
+
+    v = {"a": a, lat_name: lat, lon_name: lon}
+    ds_in = xr.Dataset(v, coords=coords)
+
+    ds = from_object(ds_in)
+    assert len(ds) == 2
+    assert np.allclose(ds.metadata("level"), coords["level"])
+
+    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
+        assert ll["lat"].shape == (9,)
+        assert ll["lon"].shape == (9,)
+        assert np.allclose(ll["lat"], lat.data)
+        assert np.allclose(ll["lon"], lon.data)
 
 
 if __name__ == "__main__":
