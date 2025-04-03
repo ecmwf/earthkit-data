@@ -264,16 +264,14 @@ class GribFieldManager:
 
     def field(self, n, create):
         if self.cache is not None:
-            if n in self.cache:
-                return self.cache[n]
-            else:
-                with self.lock:
-                    if n not in self.cache:
-                        field = create(n)
-                        self._field_created()
-                        self.cache[n] = field
-                        return field
+            with self.lock:
+                if n in self.cache:
                     return self.cache[n]
+                else:
+                    field = create(n)
+                    self._field_created()
+                    self.cache[n] = field
+                    return field
         else:
             self._field_created()
             return create(n)
@@ -319,8 +317,8 @@ class GribHandleManager:
 
     def handle(self, field, create):
         if self.policy == "cache":
+            key = (field.path, field._offset)
             with self.lock:
-                key = (field.path, field._offset)
                 if key in self.cache:
                     return self.cache[key]
                 else:
@@ -334,6 +332,7 @@ class GribHandleManager:
                     if field._handle is None:
                         field._handle = create()
                         self._handle_created()
+                    return field._handle
             return field._handle
         elif self.policy == "temporary":
             self._handle_created()
