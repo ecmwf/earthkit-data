@@ -18,6 +18,7 @@ from earthkit.data import from_source
 from earthkit.data.testing import earthkit_remote_test_data_file
 
 
+@pytest.mark.long_test
 @pytest.mark.cache
 @pytest.mark.parametrize(
     "field_policy",
@@ -48,7 +49,39 @@ from earthkit.data.testing import earthkit_remote_test_data_file
         {"chunks": -1},
     ],
 )
-def test_xr_engine_chunk(field_policy, handle_policy, _kwargs):
+def test_xr_engine_chunk_1(field_policy, handle_policy, _kwargs):
+    with config.temporary(**field_policy, **handle_policy):
+        ds_in = from_source(
+            "url", earthkit_remote_test_data_file("test-data", "xr_engine", "date", "t2_1_year_hourly.grib")
+        )
+
+        ds = ds_in.to_xarray(time_dim_mode="valid_time", **_kwargs)
+
+        assert ds is not None
+
+        r = ds["2t"].mean("valid_time").load()
+
+        assert np.isclose(r.values.mean(), 275.9938876277779)
+
+
+# This test is a copy of the previous one, but only using the default config
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "_kwargs",
+    [
+        {},
+        {"chunks": "auto"},
+        {"chunks": {"valid_time": 1}},
+        {"chunks": {"valid_time": 10}},
+        {"chunks": {"valid_time": (100, 200, 432), "latitude": (4, 5, 4), "longitude": (13, 3, 8)}},
+        {"chunks": -1},
+    ],
+)
+def test_xr_engine_chunk_2(_kwargs):
+    # the default settings
+    field_policy = {"grib-field-policy": "persistent"}
+    handle_policy = {"grib-handle-policy": "cache", "grib-handle-cache-size": 1}
+
     with config.temporary(**field_policy, **handle_policy):
         ds_in = from_source(
             "url", earthkit_remote_test_data_file("test-data", "xr_engine", "date", "t2_1_year_hourly.grib")
