@@ -2,7 +2,7 @@ Version 0.13 Updates
 /////////////////////////
 
 
-Version 0.13.7  
+Version 0.13.7
 ===============
 
 Fixes
