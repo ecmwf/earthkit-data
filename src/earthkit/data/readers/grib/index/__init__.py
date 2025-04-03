@@ -10,6 +10,7 @@
 import logging
 import math
 import os
+import threading
 from abc import abstractmethod
 from collections import defaultdict
 
@@ -244,6 +245,7 @@ class GribFieldManager:
     def __init__(self, policy, owner):
         self.policy = policy
         self.cache = None
+        self.lock = threading.Lock()
 
         if self.policy == "persistent":
             from lru import LRU
@@ -262,13 +264,14 @@ class GribFieldManager:
 
     def field(self, n, create):
         if self.cache is not None:
-            if n in self.cache:
-                return self.cache[n]
-            else:
-                field = create(n)
-                self._field_created()
-                self.cache[n] = field
-                return field
+            with self.lock:
+                if n in self.cache:
+                    return self.cache[n]
+                else:
+                    field = create(n)
+                    self._field_created()
+                    self.cache[n] = field
+                    return field
         else:
             self._field_created()
             return create(n)
@@ -287,10 +290,12 @@ class GribFieldManager:
 
 
 class GribHandleManager:
+    # TODO: split into policies
     def __init__(self, policy, cache_size):
         self.policy = policy
         self.max_cache_size = cache_size
         self.cache = None
+        self.lock = threading.Lock()
 
         if self.policy == "cache":
             if self.max_cache_size > 0:
@@ -313,17 +318,21 @@ class GribHandleManager:
     def handle(self, field, create):
         if self.policy == "cache":
             key = (field.path, field._offset)
-            if key in self.cache:
-                return self.cache[key]
-            else:
-                handle = create()
-                self._handle_created()
-                self.cache[key] = handle
-                return handle
+            with self.lock:
+                if key in self.cache:
+                    return self.cache[key]
+                else:
+                    handle = create()
+                    self._handle_created()
+                    self.cache[key] = handle
+                    return handle
         elif self.policy == "persistent":
             if field._handle is None:
-                field._handle = create()
-                self._handle_created()
+                with self.lock:
+                    if field._handle is None:
+                        field._handle = create()
+                        self._handle_created()
+                    return field._handle
             return field._handle
         elif self.policy == "temporary":
             self._handle_created()
@@ -382,7 +391,6 @@ class GribFieldListInFiles(GribFieldList):
         return field
 
     def _getitem(self, n):
-        # TODO: check if we need a mutex here
         if isinstance(n, int):
             if n < 0:
                 n += len(self)

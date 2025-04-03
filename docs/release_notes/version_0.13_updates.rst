@@ -2,6 +2,34 @@ Version 0.13 Updates
 /////////////////////////
 
 
+Version 0.13.7
+===============
+
+Fixes
+++++++++++
+
+- Fixed issue when Xarray created from GRIB with chunks failed in computations  (:pr:`669`).
+
+
+Version 0.13.6
+===============
+
+This release reverts the changes introduced in version 0.13.5, which caused a regression (:issue:`663`). The issue will be addressed in a future release.
+
+
+Version 0.13.5
+===============
+
+Fixes
+++++++++++
+
+- Fixed issue when NetCDF data with 1D latitudes/longitudes appearing as variables was not parsed into a fieldlist when read with :func:`from_source` (:pr:`658`).
+
+.. warning::
+
+    This release introduced a regression (:issue:`663`) and was reverted in version 0.13.6. The issue will be addressed in a future release.
+
+
 Version 0.13.4
 ===============
 
