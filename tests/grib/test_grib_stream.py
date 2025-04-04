@@ -66,23 +66,6 @@ def test_grib_from_stream_iter():
         assert sum([1 for _ in ds]) == 0
 
 
-# @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-# def test_grib_from_stream_fieldlist_backend(array_backend):
-#     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-#         ds = from_source("stream", stream, array_backend=array_backend)
-
-
-#         assert isinstance(ds, StreamFieldList)
-
-#         # assert ds.array_backend.name == array_backend
-#         assert ds.to_array().shape == (6, 7, 12)
-
-#         assert sum([1 for _ in ds]) == 0
-
-#         with pytest.raises((RuntimeError, ValueError)):
-#             ds.to_array()
-
-
 @pytest.mark.parametrize(
     "_kwargs,expected_meta",
     [
@@ -166,7 +149,7 @@ def test_grib_from_stream_group_by(array_backend, group):
         for i, f in enumerate(ds.group_by(group)):
             assert len(f) == 3
             assert f.metadata(("param", "level")) == ref[i]
-            afl = f.to_fieldlist(array_backend=array_backend)
+            afl = f.to_fieldlist(array_backend=array_backend.name)
             assert afl is not f
             assert len(afl) == 3
 
