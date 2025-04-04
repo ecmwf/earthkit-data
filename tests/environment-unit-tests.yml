@@ -1,62 +1,62 @@
 name: earthkit-data
 channels:
-  - conda-forge
-  - nodefaults
+- conda-forge
+- nodefaults
 dependencies:
-  - eccodes=>2.35.0
-  - python-eccodes>=1.7.0
-  - pip
-  - numpy
-  - pandas
-  - xarray>=0.19.0
-  - cartopy
-  - dask
-  - netcdf4
-  - cfgrib>=0.9.10.1
-  - pdbufr>=0.11.0
-  - pyodc
-  - filelock
-  - pyyaml
-  - entrypoints
-  - jupyterlab
-  - ecmwf-api-client>=1.6.1
-  - cdsapi>=0.7.2
-  - hda>2.22
-  - jsonschema
-  - pip:
-      - multiurl>=0.3.3
-      - pyfdb>=0.1.0
-      - ecmwf-opendata>=0.3.3
-      - polytope-client>=0.7.4
-      - earthkit-meteo>=0.0.1
-      - git+https://github.com/ecmwf/earthkit-data-demo-source
-      - covjsonkit>=0.1.1
-      - earthkit-geo>=0.2.0
-      - earthkit-utils>=0.0.1
-  - tqdm>=4.63.0
-  - lru-dict
-  - markdown
-  - aws-requests-auth
-  - botocore
-  - make
-  - mypy
-  - myst-parser
-  - pre-commit
-  - pydata-sphinx-theme
-  - pytest
-  - pytest-cov
-  - pytest-forked
-  - pytest-timeout
-  - sphinx
-  - sphinx-autoapi
-  - sphinx_rtd_theme
-  - sphinxcontrib-apidoc
-  - sphinx-issues
-  - sphinx-tabs
-  - sphinx-copybutton
-  - nbformat
-  - nbconvert
-  - nbsphinx
-  - ipykernel
-  - geopandas
-  - deprecation
+- eccodes=>2.35.0
+- python-eccodes>=1.7.0
+- pip
+- numpy
+- pandas
+- xarray>=0.19.0
+- cartopy
+- dask
+- netcdf4
+- cfgrib>=0.9.10.1
+- pdbufr>=0.11.0
+- pyodc
+- filelock
+- pyyaml
+- entrypoints
+- jupyterlab
+- ecmwf-api-client>=1.6.1
+- cdsapi>=0.7.2
+- hda>2.22
+- jsonschema
+- pip:
+  - multiurl>=0.3.3
+  - pyfdb>=0.1.0
+  - ecmwf-opendata>=0.3.3
+  - polytope-client>=0.7.4
+  - earthkit-meteo>=0.0.1
+  - git+https://github.com/ecmwf/earthkit-data-demo-source
+  - covjsonkit>=0.1.1
+  - earthkit-geo>=0.2.0
+  - earthkit-utils>=0.0.1
+- tqdm>=4.63.0
+- lru-dict
+- markdown
+- aws-requests-auth
+- botocore
+- make
+- mypy
+- myst-parser
+- pre-commit
+- pydata-sphinx-theme
+- pytest
+- pytest-cov
+- pytest-forked
+- pytest-timeout
+- sphinx
+- sphinx-autoapi
+- sphinx_rtd_theme
+- sphinxcontrib-apidoc
+- sphinx-issues
+- sphinx-tabs
+- sphinx-copybutton
+- nbformat
+- nbconvert
+- nbsphinx
+- ipykernel
+- geopandas
+- deprecation
