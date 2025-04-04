@@ -14,9 +14,9 @@ import re
 import sys
 
 import pytest
+from earthkit.utils.testing import NO_TORCH
 
 from earthkit.data.testing import MISSING
-from earthkit.data.testing import NO_TORCH
 from earthkit.data.testing import earthkit_file
 
 # See https://www.blog.pythonlibrary.org/2018/10/16/testing-jupyter-notebooks/
