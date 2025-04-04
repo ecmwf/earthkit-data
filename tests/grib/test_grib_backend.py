@@ -15,11 +15,11 @@ from earthkit.utils.array import _CUPY
 from earthkit.utils.array import _NUMPY
 from earthkit.utils.array import _TORCH
 from earthkit.utils.array import get_backend
+from earthkit.utils.testing import NO_CUPY
+from earthkit.utils.testing import NO_TORCH
 
 from earthkit.data import FieldList
 from earthkit.data import from_source
-from earthkit.data.testing import NO_CUPY
-from earthkit.data.testing import NO_TORCH
 from earthkit.data.testing import earthkit_examples_file
 
 
@@ -184,7 +184,7 @@ def test_grib_array_numpy_backend():
 
 
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
-def test_grib_array_pytorch_backend():
+def test_grib_array_torch_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
 
     import torch

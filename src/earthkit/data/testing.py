@@ -15,6 +15,8 @@ from contextlib import contextmanager
 from importlib import import_module
 from unittest.mock import patch
 
+from earthkit.utils.testing import get_array_backend
+
 from earthkit.data import from_object
 from earthkit.data import from_source
 from earthkit.data.readers.text import TextReader
@@ -178,53 +180,7 @@ def load_nc_or_xr_source(path, mode):
 
 
 # Array backends
-NO_TORCH = not modules_installed("torch")
-NO_CUPY = not modules_installed("cupy")
-NO_JAX = not modules_installed("jax")
-if not NO_CUPY:
-    try:
-        import cupy as cp
-
-        a = cp.ones(2)
-    except Exception:
-        NO_CUPY = True
-
-ARRAY_BACKENDS = ["numpy"]
-if not NO_TORCH:
-    ARRAY_BACKENDS.append("torch")
-
-if not NO_CUPY:
-    ARRAY_BACKENDS.append("cupy")
-
-
-def check_array_type(array, expected_backend, dtype=None):
-    from earthkit.utils.testing import check_array_type
-
-    return check_array_type(array, expected_backend, dtype=dtype)
-    # from earthkit.utils.array import get_backend
-
-    # b1 = get_backend(array)
-    # b2 = get_backend(expected_backend)
-
-    # assert b1 == b2, f"{b1=}, {b2=}"
-
-    # expected_dtype = dtype
-    # if expected_dtype is not None:
-    #     assert b2.match_dtype(array, expected_dtype), f"{array.dtype}, {expected_dtype=}"
-
-
-def get_array_namespace(backend):
-    from earthkit.utils.testing import get_array_namespace
-
-    return get_array_namespace(backend)
-
-
-# if backend is None:
-#         backend = "numpy"
-
-#     from earthkit.utils.array import get_backend
-
-#     return get_backend(backend).namespace
+ARRAY_BACKENDS = get_array_backend(["numpy", "torch", "cupy", "jax"], raise_on_missing=False)
 
 
 def make_tgz(target_dir, target_name, paths):

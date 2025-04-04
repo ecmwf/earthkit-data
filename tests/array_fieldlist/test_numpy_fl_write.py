@@ -15,16 +15,15 @@ import sys
 
 import numpy as np
 import pytest
+from earthkit.utils.testing import check_array_type
 
 from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import check_array_type
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.testing import get_array_namespace
 from earthkit.data.testing import write_to_file
 
 here = os.path.dirname(__file__)
@@ -37,10 +36,9 @@ LOG = logging.getLogger(__name__)
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_array_fl_grib_write_to_path(array_backend, write_method):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    ds = ds.to_fieldlist(array_backend=array_backend)
 
-    ns = get_array_namespace(array_backend)
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = ds.to_fieldlist(array_backend=array_backend.name)
 
     assert ds[0].metadata("shortName") == "2t"
     assert len(ds) == 2
@@ -55,18 +53,21 @@ def test_array_fl_grib_write_to_path(array_backend, write_method):
         write_to_file(write_method, tmp, r)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
-        r_tmp = r_tmp.to_fieldlist(array_backend=array_backend)
+        r_tmp = r_tmp.to_fieldlist(array_backend=array_backend.name)
         v_tmp = r_tmp[0].values
-        assert ns.allclose(v1, v_tmp)
+        assert array_backend.allclose(v1, v_tmp)
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("_kwargs", [{}, {"check_nans": True}])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
+
     ds = from_source("file", earthkit_examples_file("test.grib"))
-    ds = ds.to_fieldlist(array_backend=array_backend)
-    ns = get_array_namespace(array_backend)
+    ds = ds.to_fieldlist(array_backend=array_backend.name)
+    # ns = get_array_namespace(array_backend)
+
+    ns = array_backend.compat_namespace
 
     assert ds[0].metadata("shortName") == "2t"
 
@@ -91,7 +92,7 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
         r_tmp = from_source("file", tmp)
         v_tmp = r_tmp[0].values
         assert np.isnan(v_tmp[0])
-        r_tmp = r_tmp.to_fieldlist(array_backend=array_backend)
+        r_tmp = r_tmp.to_fieldlist(array_backend=array_backend.name)
         v_tmp = r_tmp[0].values
         assert ns.isnan(v_tmp[0])
         assert not ns.isnan(v_tmp[1])

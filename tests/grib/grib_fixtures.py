@@ -9,7 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.utils.array import get_backend
+from earthkit.utils.testing import get_array_backend
 
 from earthkit.data import from_source
 from earthkit.data.testing import ARRAY_BACKENDS
@@ -37,25 +37,23 @@ def load_grib_data(filename, fl_type, folder="example", **kwargs):
         raise ValueError(f"Invalid folder={folder}")
 
     if fl_type == "file":
-        return from_source("file", path, **kwargs), get_backend("numpy")
-    elif fl_type in ARRAY_BACKENDS:
-        array_backend = fl_type
-        return load_array_fieldlist(path, array_backend, **kwargs), get_backend(array_backend)
+        return from_source("file", path, **kwargs), get_array_backend("numpy")
     elif fl_type == "array":
-        return load_array_fieldlist(path, "numpy", **kwargs), get_backend("numpy")
+        return load_array_fieldlist(path, "numpy", **kwargs), get_array_backend("numpy")
     elif fl_type == "memory":
         assert len(path) == 1
         with open(path[0], "rb") as f:
             ds = from_source("stream", f, read_all=True, **kwargs)
             len(ds)  # force reading
-            return ds, get_backend("numpy")
-
+            return ds, get_array_backend("numpy")
+    elif array_backend := get_array_backend(fl_type):
+        return load_array_fieldlist(path, array_backend, **kwargs), array_backend
     else:
         raise ValueError(f"Invalid fl_type={fl_type}")
 
 
 FL_TYPES = ["file"]
-FL_TYPES.extend(ARRAY_BACKENDS)
-FL_ARRAYS = ARRAY_BACKENDS
+FL_TYPES.extend([b.name for b in ARRAY_BACKENDS])
+FL_ARRAYS = [b.name for b in ARRAY_BACKENDS]
 FL_NUMPY = ["file", "numpy"]
 FL_FILE = ["file"]
