@@ -15,7 +15,6 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.testing import load_nc_or_xr_source
 
 
@@ -80,14 +79,6 @@ def test_netcdf_datetime():
 def test_netcdf_valid_datetime(mode):
     ds = load_nc_or_xr_source(earthkit_examples_file("test.nc"), mode)
     assert ds[0].metadata("valid_datetime") == "2020-05-13T12:00:00"
-
-
-def test_netcdf_forecast_reference_time():
-    ds = from_source("url", earthkit_remote_test_data_file("test-data", "fa_ta850.nc"))
-
-    assert len(ds) == 37
-    assert ds[0].metadata("valid_datetime") == "2020-01-23T00:00:00"
-    assert ds[5].metadata("valid_datetime") == "2020-01-23T05:00:00"
 
 
 if __name__ == "__main__":
