@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import copy
 import logging
 
 from earthkit.data.utils import ensure_dict
@@ -344,6 +345,7 @@ class XarrayMixIn:
             raise ValueError(f"Unsupported engine: {engine}. Please use one of {list(engines.keys())}")
 
         user_xarray_open_dataset_kwargs = ensure_dict(xarray_open_dataset_kwargs)
+        user_xarray_open_dataset_kwargs = copy.deepcopy(user_xarray_open_dataset_kwargs)
         if user_xarray_open_dataset_kwargs and kwargs:
             raise ValueError("Cannot specify extra keyword arguments when xarray_open_dataset_kwargs is set.")
 

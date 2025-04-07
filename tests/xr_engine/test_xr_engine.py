@@ -24,6 +24,17 @@ from xr_engine_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("engine", ["earthkit", "cfgrib"])
+def test_xr_engine_kwargs_unchanged(engine):
+    ds = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_small.grib"))
+
+    _kwargs = {"squeeze": True}
+    res = ds.to_xarray(engine=engine, xarray_open_dataset_kwargs=_kwargs)
+    assert res is not None
+    assert _kwargs == {"squeeze": True}
+
+
+@pytest.mark.cache
 @pytest.mark.parametrize(
     "file",
     [
