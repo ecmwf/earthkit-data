@@ -60,3 +60,4 @@ dependencies:
 - geopandas
 - array-api-compat
 - deprecation
+- zarr>=3.0.0
