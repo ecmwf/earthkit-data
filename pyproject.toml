@@ -112,6 +112,7 @@ optional-dependencies.test = [
   "pytest-timeout",
 ]
 optional-dependencies.wekeo = [ "hda>=2.22" ]
+optional-dependencies.zarr = [ "zarr>=3" ]
 urls.Documentation = "https://earthkit-data.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-data/"
 urls.Issues = "https://github.com/ecmwf/earthkit-data.issues"
