@@ -34,12 +34,10 @@ class NumpyZipReader(Reader):
 
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
-    if magic is None:  # Bypass check and force
-        return NumpyReader(source, path)
+    if magic is not None:
+        if magic[:6] == b"\x93NUMPY":
+            return NumpyReader(source, path)
 
-    if magic[:6] == b"\x93NUMPY":
-        return NumpyReader(source, path)
-
-    _, extension = os.path.splitext(path)
-    if magic[:4] == b"PK\x03\x04" and extension == ".npz":
-        return NumpyZipReader(source, path)
+        _, extension = os.path.splitext(path)
+        if magic[:4] == b"PK\x03\x04" and extension == ".npz":
+            return NumpyZipReader(source, path)

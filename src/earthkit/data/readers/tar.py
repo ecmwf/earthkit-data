@@ -32,7 +32,7 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     # We don't use tarfile.is_tarfile() because is
     # returns true given a file of zeros
 
-    kind, compression = mimetypes.guess_type(path)
+    kind, _ = mimetypes.guess_type(path)
 
-    if magic is None or kind == "application/x-tar":
+    if kind == "application/x-tar":
         return TarReader(source, path, compression)

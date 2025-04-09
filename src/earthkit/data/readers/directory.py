@@ -103,5 +103,5 @@ class DirectoryReader(Reader):
 
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
-    if magic is None and os.path.isdir(path):
+    if magic is None and os.path.isdir(path) and not os.path.exists(os.path.join(path, ".zattrs")):
         return DirectoryReader(source, path)

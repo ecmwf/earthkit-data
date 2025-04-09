@@ -9,6 +9,7 @@
 
 from . import Reader
 from .netcdf.fieldlist import XArrayFieldList
+import os
 
 
 class ZarrReader(XArrayFieldList, Reader):
@@ -33,5 +34,6 @@ class ZarrReader(XArrayFieldList, Reader):
         return f"ZarrReader({self.path})"
 
 
-def reader(source, path, *, magic=None, **kwargs):
-    return None
+def reader(source, path, *, magic=None, deeper_check, **kwargs):
+    if os.path.exists(os.path.join(path, ".zattrs")):
+        return ZarrReader(source, path)
