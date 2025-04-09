@@ -7,23 +7,30 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .. import from_object
 from . import Reader
+from .netcdf.fieldlist import XArrayFieldList
 
 
-class ZarrReader(Reader):
-    """"""
+class ZarrReader(XArrayFieldList, Reader):
 
     def __init__(self, source, path, **kwargs):
-        super().__init__(source, path, **kwargs)
-        self._path = path
-        self._kwargs = kwargs
+        Reader.__init__(self, source, path, **kwargs)
+        XArrayFieldList.__init__(self, self._open_zarr(**kwargs))
 
     def mutate_source(self):
+        return self
+
+    def to_xarray(self, **kwargs):
+        return self._open_zarr(**kwargs)
+
+    def _open_zarr(self, **kwargs):
         import xarray as xr
 
-        ds = xr.open_zarr(self._path, **self._kwargs)
-        return from_object(ds)
+        options = kwargs.get("xarray_open_zarr_kwargs", kwargs)
+        return xr.open_zarr(self.path, **options)
+
+    def __repr__(self):
+        return f"ZarrReader({self.path})"
 
 
 def reader(source, path, *, magic=None, **kwargs):
