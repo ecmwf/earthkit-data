@@ -203,7 +203,7 @@ def reader(source, path, **kwargs):
             return _readers()[reader.replace("-", "_")](source, path, magic=None, deeper_check=False)
 
         raise TypeError("Provided reader must be a callable or a string, not %s" % type(reader))
-    
+
     if not os.path.exists(path):
         r = _non_existing(source, path, **kwargs)
         if r is not None:

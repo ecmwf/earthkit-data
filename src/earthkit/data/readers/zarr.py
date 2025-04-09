@@ -7,9 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
+import os
+
 from . import Reader
 from .netcdf.fieldlist import XArrayFieldList
-import os
 
 
 class ZarrReader(XArrayFieldList, Reader):

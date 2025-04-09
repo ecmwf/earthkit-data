@@ -61,11 +61,6 @@ class DirectoryReader(Reader):
         return self
 
     def mutate_source(self):
-        if os.path.exists(os.path.join(self.path, ".zattrs")):
-            if self.stream:
-                raise ValueError("Cannot stream zarr directories")
-            return from_source("zarr", self.path)
-
         if len(self._content) == 1:
             return from_source(
                 "file",
