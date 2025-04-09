@@ -1,0 +1,213 @@
+{
+  "metadata": {
+    ".zgroup": {
+      "zarr_format": 2
+    },
+    ".zattrs": {
+      "Conventions": "CF-1.6",
+      "history": "2024-04-24 15:40:12 GMT by grib_to_netcdf-2.36.0: /Users/cgr/install/eccodes/release/bin/grib_to_netcdf -o test4.nc test4.grib"
+    },
+    "z/.zattrs": {
+      "units": "m**2 s**-2",
+      "long_name": "Geopotential",
+      "standard_name": "geopotential",
+      "add_offset": 33425.29356267787,
+      "scale_factor": 0.7605308942631956,
+      "missing_value": -32767,
+      "_ARRAY_DIMENSIONS": [
+        "time",
+        "level",
+        "latitude",
+        "longitude"
+      ]
+    },
+    "z/.zarray": {
+      "shape": [
+        1,
+        2,
+        181,
+        360
+      ],
+      "chunks": [
+        1,
+        1,
+        181,
+        360
+      ],
+      "fill_value": -32767,
+      "order": "C",
+      "filters": null,
+      "dimension_separator": ".",
+      "compressor": {
+        "id": "blosc",
+        "cname": "lz4",
+        "clevel": 5,
+        "shuffle": 1,
+        "blocksize": 0,
+        "typesize": null
+      },
+      "zarr_format": 2,
+      "dtype": "<i2"
+    },
+    "t/.zattrs": {
+      "units": "K",
+      "long_name": "Temperature",
+      "standard_name": "air_temperature",
+      "add_offset": 264.2162222145165,
+      "scale_factor": 0.001225614912271656,
+      "missing_value": -32767,
+      "_ARRAY_DIMENSIONS": [
+        "time",
+        "level",
+        "latitude",
+        "longitude"
+      ]
+    },
+    "t/.zarray": {
+      "shape": [
+        1,
+        2,
+        181,
+        360
+      ],
+      "chunks": [
+        1,
+        1,
+        181,
+        360
+      ],
+      "fill_value": -32767,
+      "order": "C",
+      "filters": null,
+      "dimension_separator": ".",
+      "compressor": {
+        "id": "blosc",
+        "cname": "lz4",
+        "clevel": 5,
+        "shuffle": 1,
+        "blocksize": 0,
+        "typesize": null
+      },
+      "zarr_format": 2,
+      "dtype": "<i2"
+    },
+    "longitude/.zattrs": {
+      "units": "degrees_east",
+      "long_name": "longitude",
+      "_ARRAY_DIMENSIONS": [
+        "longitude"
+      ]
+    },
+    "longitude/.zarray": {
+      "shape": [
+        360
+      ],
+      "chunks": [
+        360
+      ],
+      "fill_value": "NaN",
+      "order": "C",
+      "filters": null,
+      "dimension_separator": ".",
+      "compressor": {
+        "id": "blosc",
+        "cname": "lz4",
+        "clevel": 5,
+        "shuffle": 1,
+        "blocksize": 0,
+        "typesize": null
+      },
+      "zarr_format": 2,
+      "dtype": "<f4"
+    },
+    "time/.zattrs": {
+      "long_name": "time",
+      "units": "hours since 1900-01-01",
+      "calendar": "gregorian",
+      "_ARRAY_DIMENSIONS": [
+        "time"
+      ]
+    },
+    "time/.zarray": {
+      "shape": [
+        1
+      ],
+      "chunks": [
+        1
+      ],
+      "fill_value": null,
+      "order": "C",
+      "filters": null,
+      "dimension_separator": ".",
+      "compressor": {
+        "id": "blosc",
+        "cname": "lz4",
+        "clevel": 5,
+        "shuffle": 1,
+        "blocksize": 0,
+        "typesize": null
+      },
+      "zarr_format": 2,
+      "dtype": "<i4"
+    },
+    "level/.zattrs": {
+      "units": "millibars",
+      "long_name": "pressure_level",
+      "_ARRAY_DIMENSIONS": [
+        "level"
+      ]
+    },
+    "level/.zarray": {
+      "shape": [
+        2
+      ],
+      "chunks": [
+        2
+      ],
+      "fill_value": null,
+      "order": "C",
+      "filters": null,
+      "dimension_separator": ".",
+      "compressor": {
+        "id": "blosc",
+        "cname": "lz4",
+        "clevel": 5,
+        "shuffle": 1,
+        "blocksize": 0,
+        "typesize": null
+      },
+      "zarr_format": 2,
+      "dtype": "<i4"
+    },
+    "latitude/.zattrs": {
+      "units": "degrees_north",
+      "long_name": "latitude",
+      "_ARRAY_DIMENSIONS": [
+        "latitude"
+      ]
+    },
+    "latitude/.zarray": {
+      "shape": [
+        181
+      ],
+      "chunks": [
+        181
+      ],
+      "fill_value": "NaN",
+      "order": "C",
+      "filters": null,
+      "dimension_separator": ".",
+      "compressor": {
+        "id": "blosc",
+        "cname": "lz4",
+        "clevel": 5,
+        "shuffle": 1,
+        "blocksize": 0,
+        "typesize": null
+      },
+      "zarr_format": 2,
+      "dtype": "<f4"
+    }
+  },
+  "zarr_consolidated_format": 1
+}
