@@ -2,6 +2,15 @@ Version 0.13 Updates
 /////////////////////////
 
 
+Version 0.13.8
+===============
+
+Fixes
+++++++++++
+
+- Fixed issue when kwargs passed to the Xarray engine as a dict were modified in-place (:pr:`671`).
+
+
 Version 0.13.7
 ===============
 
