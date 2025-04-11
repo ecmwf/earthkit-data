@@ -10,6 +10,7 @@
 import logging
 import os
 import shutil
+from functools import cached_property
 
 try:
     import pyfdb
@@ -25,13 +26,14 @@ LOG = logging.getLogger(__name__)
 
 
 class FDBSource(Source):
-    def __init__(self, *args, stream=True, config=None, userconfig=None, **kwargs):
+    def __init__(self, *args, stream=True, config=None, userconfig=None, lazy=False, **kwargs):
         super().__init__()
 
         for k in ["group_by", "batch_size"]:
             if k in kwargs:
                 raise ValueError(f"Invalid argument '{k}' for FDBSource. Deprecated since 0.8.0.")
 
+        self.lazy = lazy
         self._fdb_kwargs = {}
         if config is not None:
             self._fdb_kwargs["config"] = config
@@ -64,12 +66,19 @@ class FDBSource(Source):
             )
 
     def mutate(self):
-        fdb = pyfdb.FDB(**self._fdb_kwargs)
-        if self.stream:
-            stream = fdb.retrieve(self.request)
-            return StreamSource(stream, **self._stream_kwargs)
+        if not self.lazy:
+            fdb = pyfdb.FDB(**self._fdb_kwargs)
+            if self.stream:
+                stream = fdb.retrieve(self.request)
+                return StreamSource(stream, **self._stream_kwargs)
+            else:
+                return FDBFileSource(fdb, self.request)
         else:
-            return FDBFileSource(fdb, self.request)
+            mapper = RequestMappaper(self._fdb_kwargs, self.request)
+            retriever = FdbRetriever(self._fdb_kwargs)
+            from earthkit.data.readers.grib.virtual import VirtualGribFieldList
+
+            return VirtualGribFieldList(mapper, retriever)
 
 
 class FDBFileSource(FileSource):
@@ -87,6 +96,46 @@ class FDBFileSource(FileSource):
             retrieve,
             request,
         )
+
+
+class FdbRetriever:
+    def __init__(self, fdb_kwargs):
+        self.fdb_kwargs = fdb_kwargs
+
+    def get(self, request):
+        fdb = pyfdb.FDB(**self.fdb_kwargs)
+        s = FDBFileSource(fdb, request)
+        return s.path
+
+
+class RequestMappaper:
+    def __init__(self, fdb_kwargs, request, **kwargs):
+        self.fdb_kwargs = fdb_kwargs
+        self.request = request
+        self.md = {
+            "stepRange": "step",
+            "typeOfLevel": "leveltype",
+            "level": "levelist",
+            "dataDate": "date",
+            "dataTime": "time",
+        }
+
+    @cached_property
+    def field_requests(self):
+        return self._scan()
+
+    def _scan(self):
+        r = []
+        fdb = pyfdb.FDB(**self.fdb_kwargs)
+        for el in fdb.list(self.request, True, True):
+            r.append(el["keys"])
+        return r
+
+    def request_at(self, index):
+        return self.field_requests[index]
+
+    def __len__(self):
+        return len(self.field_requests)
 
 
 source = FDBSource
