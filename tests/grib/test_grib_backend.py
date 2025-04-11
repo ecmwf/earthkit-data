@@ -11,16 +11,16 @@
 
 import numpy as np
 import pytest
+from earthkit.utils.array import _CUPY
+from earthkit.utils.array import _NUMPY
+from earthkit.utils.array import _TORCH
+from earthkit.utils.array import get_backend
+from earthkit.utils.testing import NO_CUPY
+from earthkit.utils.testing import NO_TORCH
 
 from earthkit.data import FieldList
 from earthkit.data import from_source
-from earthkit.data.testing import NO_CUPY
-from earthkit.data.testing import NO_PYTORCH
 from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.utils.array import _CUPY
-from earthkit.data.utils.array import _NUMPY
-from earthkit.data.utils.array import _PYTORCH
-from earthkit.data.utils.array import get_backend
 
 
 @pytest.mark.parametrize("_kwargs", [{}, {"array_backend": "numpy"}])
@@ -62,7 +62,7 @@ def test_grib_file_numpy_backend(_kwargs):
     assert ds1[0].array_backend == _NUMPY
 
 
-@pytest.mark.skipif(NO_PYTORCH, reason="No pytorch installed")
+@pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 def test_grib_file_pytorch_backend():
     ds = from_source("file", earthkit_examples_file("test6.grib"))
     ds = ds.to_fieldlist(array_backend="pytorch")
@@ -72,7 +72,7 @@ def test_grib_file_pytorch_backend():
 
     import torch
 
-    assert ds[0].array_backend == _PYTORCH
+    assert ds[0].array_backend == _TORCH
     assert torch.is_tensor(ds[0].values)
     assert ds[0].values.shape == (84,)
 
@@ -98,13 +98,13 @@ def test_grib_file_pytorch_backend():
     assert isinstance(x, np.ndarray)
     assert x.shape == (6, 7, 12)
 
-    assert get_backend(ds[0].to_array()) == _PYTORCH
+    assert get_backend(ds[0].to_array()) == _TORCH
 
     ds1 = ds.to_fieldlist()
     assert len(ds1) == len(ds)
     assert getattr(ds1, "path", None) is None
-    assert get_backend(ds1[0].to_array()) == _PYTORCH
-    assert ds1[0].array_backend == _PYTORCH
+    assert get_backend(ds1[0].to_array()) == _TORCH
+    assert ds1[0].array_backend == _TORCH
 
 
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
@@ -183,8 +183,8 @@ def test_grib_array_numpy_backend():
     assert ds.to_numpy().shape == (6, 7, 12)
 
 
-@pytest.mark.skipif(NO_PYTORCH, reason="No pytorch installed")
-def test_grib_array_pytorch_backend():
+@pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
+def test_grib_array_torch_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
 
     import torch

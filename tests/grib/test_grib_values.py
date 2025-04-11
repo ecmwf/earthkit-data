@@ -14,8 +14,7 @@ import sys
 
 import numpy as np
 import pytest
-
-from earthkit.data.testing import check_array_type
+from earthkit.utils.testing import check_array_type
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
