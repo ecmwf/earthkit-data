@@ -132,7 +132,7 @@ class BUFRCodesHandle(CodesHandle):
         return self.__iter__()
 
     def as_namespace(self, namespace=None):
-        return {k: self.get(k) for k in self.keys(namespace=namespace)}
+        return {k: self.get(k, default=None) for k in self.keys(namespace=namespace)}
 
 
 class BUFRCodesReader(CodesReader):
@@ -687,3 +687,6 @@ class BUFRReader(BUFRInOneFile, Reader):
     def mutate_source(self):
         # A BUFRReader is a source itself
         return self
+
+    def default_encoder(self):
+        return Reader.default_encoder(self)

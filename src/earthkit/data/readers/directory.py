@@ -15,7 +15,6 @@ import shutil
 from earthkit.data import from_source
 
 from . import Reader
-from . import reader as find_reader
 
 LOG = logging.getLogger(__name__)
 
@@ -59,8 +58,6 @@ class DirectoryReader(Reader):
                     self._content.append(full)
 
     def mutate(self):
-        if len(self._content) == 1:
-            return find_reader(self.source, self._content[0])
         return self
 
     def mutate_source(self):
@@ -68,6 +65,17 @@ class DirectoryReader(Reader):
             if self.stream:
                 raise ValueError("Cannot stream zarr directories")
             return from_source("zarr", self.path)
+
+        if len(self._content) == 1:
+            return from_source(
+                "file",
+                path=self._content[0],
+                filter=self.filter,
+                merger=self.merger,
+                stream=self.stream,
+                parts=self.parts,
+                **self.source._kwargs,
+            )
 
         return from_source(
             "multi",

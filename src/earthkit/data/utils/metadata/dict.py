@@ -32,7 +32,7 @@ def uniform_resolution(vals):
     return None
 
 
-def make_geography(metadata):
+def make_geography(metadata, values_shape=None):
     lat = metadata.get("latitudes", None)
     lon = metadata.get("longitudes", None)
     val = metadata.get("values")
@@ -46,25 +46,48 @@ def make_geography(metadata):
     if lat is None or lon is None:
         lat = metadata.get("distinctLatitudes", None)
         lon = metadata.get("distinctLongitudes", None)
-        lat = np.asarray(lat, dtype=float)
-        lon = np.asarray(lon, dtype=float)
-        if lat is None:
-            raise ValueError("No latitudes or distinctLatitudes found")
-        if lon is None:
-            raise ValueError("No longitudes or distinctLongitudes found")
-        if len(lat.shape) != 1:
-            raise ValueError(f"distinct latitudes must be 1D array! shape={lat.shape} unsupported")
-        if len(lon.shape) != 1:
-            raise ValueError(f"distinctLongitudes must be 1D array! shape={lon.shape} unsupported")
-        if lat.size * lon.size != val.size:
-            raise ValueError(
-                (
-                    "Distinct latitudes and longitudes do not match number of values. "
-                    f"Expected number=({lat.size * lon.size}), got={val.size}"
-                )
-            )
+        if values_shape is None:
+            if lat is None:
+                raise ValueError("No latitudes or distinctLatitudes found")
+            if lon is None:
+                raise ValueError("No longitudes or distinctLongitudes found")
 
-        distinct = True
+            lat = np.asarray(lat, dtype=float)
+            lon = np.asarray(lon, dtype=float)
+
+            if len(lat.shape) != 1:
+                raise ValueError(f"distinct latitudes must be 1D array! shape={lat.shape} unsupported")
+            if len(lon.shape) != 1:
+                raise ValueError(f"distinctLongitudes must be 1D array! shape={lon.shape} unsupported")
+            if lat.size * lon.size != val.size:
+                raise ValueError(
+                    (
+                        "Distinct latitudes and longitudes do not match number of values. "
+                        f"Expected number=({lat.size * lon.size}), got={val.size}"
+                    )
+                )
+            distinct = True
+        else:
+            if lat is not None and lon is not None:
+                lat = np.asarray(lat, dtype=float)
+                lon = np.asarray(lon, dtype=float)
+
+                if len(lat.shape) != 1:
+                    raise ValueError(f"distinct latitudes must be 1D array! shape={lat.shape} unsupported")
+                if len(lon.shape) != 1:
+                    raise ValueError(f"distinctLongitudes must be 1D array! shape={lon.shape} unsupported")
+                if lat.size * lon.size != val.size:
+                    raise ValueError(
+                        (
+                            "Distinct latitudes and longitudes do not match number of values. "
+                            f"Expected number=({lat.size * lon.size}), got={val.size}"
+                        )
+                    )
+                distinct = True
+
+            else:
+                lat = None
+                lon = None
     else:
         lat = np.asarray(lat, dtype=float)
         lon = np.asarray(lon, dtype=float)
@@ -79,10 +102,18 @@ def make_geography(metadata):
                 )
             distinct = True
 
-    assert lat is not None
-    assert lon is not None
+    no_latlon = lat is None or lon is None
+
+    if no_latlon:
+        assert values_shape is not None
+
+    if values_shape is None:
+        assert lat is not None
+        assert lon is not None
 
     if distinct:
+        assert not no_latlon
+
         dx = uniform_resolution(lon)
         dy = uniform_resolution(lat)
 
@@ -93,24 +124,27 @@ def make_geography(metadata):
         else:
             return DistinctLLGeography(metadata)
 
-    if lat.shape != lon.shape:
-        raise ValueError(f"latitudes and longitudes must have the same shape. {lat.shape} != {lon.shape}")
-
-    if lat.size == val.size:
-        if lat.shape != val.shape:
-            shape = lat.shape if lat.ndim > val.ndim else val.shape
-        else:
-            shape = lat.shape
-
-        return UserGeography(metadata, shape=shape)
-
+    if no_latlon:
+        return UserGeography(metadata, shape=values_shape)
     else:
-        raise ValueError(
-            (
-                "latitudes and longitudes do not match number of values. "
-                f"Expected number=({lat.size * lon.size}), got={val.size}"
+        if lat.shape != lon.shape:
+            raise ValueError(f"latitudes and longitudes must have the same shape. {lat.shape} != {lon.shape}")
+
+        if lat.size == val.size:
+            if lat.shape != val.shape:
+                shape = lat.shape if lat.ndim > val.ndim else val.shape
+            else:
+                shape = lat.shape
+
+            return UserGeography(metadata, shape=shape)
+
+        else:
+            raise ValueError(
+                (
+                    "latitudes and longitudes do not match number of values. "
+                    f"Expected number=({lat.size * lon.size}), got={val.size}"
+                )
             )
-        )
 
 
 class UserGeography(Geography):
@@ -175,7 +209,8 @@ class UserGeography(Geography):
         return None
 
     def resolution(self):
-        raise NotImplementedError("resolution is not implemented for this geography")
+        return None
+        # raise NotImplementedError("resolution is not implemented for this geography")
 
     def mars_area(self):
         return [self.north(), self.west(), self.south(), self.east()]
@@ -255,8 +290,8 @@ class RegularDistinctLLGeography(DistinctLLGeography):
     def resolution(self):
         x = self.dx()
         y = self.dy()
-        assert x == y, (x, y)
-        return x
+        if x == y:
+            return x
 
     def mars_grid(self):
         return [self.dx(), self.dy()]
@@ -281,8 +316,9 @@ class UserMetadata(Metadata):
 
     LS_KEYS = ["param", "level", "base_datetime", "valid_datetime", "step", "number"]
 
-    def __init__(self, d, values=None):
+    def __init__(self, d, shape=None, **kwargs):
         self._data = d
+        self._shape = shape
 
     def __len__(self):
         return len(self._data)
@@ -384,7 +420,7 @@ class UserMetadata(Metadata):
 
     @cached_property
     def geography(self):
-        return make_geography(self)
+        return make_geography(self, values_shape=self._shape)
 
     def override(self, *args, **kwargs):
         raise NotImplementedError("override is not implemented for UserMetadata")

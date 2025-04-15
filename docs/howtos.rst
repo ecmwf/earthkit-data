@@ -12,9 +12,9 @@ save the results of a :ref:`MARS retrieval <data-sources-mars>` into a file:
 
 .. code-block:: python
 
-    import earthkit.data
+    import earthkit.data as ekd
 
-    ds = earthkit.data.from_source(
+    ds = ekd.from_source(
         "mars",
         param=["2t", "msl"],
         levtype="sfc",
@@ -23,7 +23,7 @@ save the results of a :ref:`MARS retrieval <data-sources-mars>` into a file:
         date="2023-05-10",
     )
 
-    ds.save("my_data.grib")
+    ds.to_target("file", "my_data.grib")
 
 
 How to convert GRIB to Xarray?
@@ -41,7 +41,7 @@ When calling :func:`to_xarray` for NetCDF data it calls ``xarray.open_mfdataset`
 
 .. code-block:: python
 
-    import earthkit.data
+    import earthkit.data as ekd
 
     req = {
         "format": "zip",
@@ -55,7 +55,7 @@ When calling :func:`to_xarray` for NetCDF data it calls ``xarray.open_mfdataset`
         "region": "europe",
     }
 
-    ds = earthkit.data.from_source("cds", "satellite-fire-burned-area", req)
+    ds = ekd.from_source("cds", "satellite-fire-burned-area", req)
     r = ds.to_xarray(
         xarray_open_mfdataset_kwargs=dict(decode_cf=False, decode_times=False)
     )

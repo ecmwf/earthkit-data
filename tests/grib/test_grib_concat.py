@@ -22,7 +22,7 @@ from earthkit.data.testing import earthkit_examples_file
 def _check_save_to_disk(ds, len_ref, meta_ref):
     # save to disk
     tmp = temp_file()
-    ds.save(tmp.path)
+    ds.to_target("file", tmp.path)
     assert os.path.exists(tmp.path)
     r_tmp = from_source("file", tmp.path)
     assert len(r_tmp) == len_ref
@@ -148,6 +148,17 @@ def test_grib_from_empty_3():
     ds3 = ds_e + ds1 + ds2
     assert len(ds3) == 8
     _check_save_to_disk(ds3, 8, md)
+
+
+# See github issue #588
+def test_grib_concat_large():
+    ds_e = from_source("empty")
+    ds1 = from_source("file", earthkit_examples_file("test.grib"))
+
+    for _ in range(2000):
+        ds_e += ds1.sel(param="msl")
+
+    assert len(ds_e) == 2000
 
 
 if __name__ == "__main__":

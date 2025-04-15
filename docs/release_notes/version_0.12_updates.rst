@@ -1,6 +1,53 @@
 Version 0.12 Updates
 /////////////////////////
 
+
+Version 0.12.5
+===============
+
+Fixed
+++++++++
+
+- Fixed issue when trying to iterate an empty source caused a crash (:pr:`630`)
+
+
+
+Version 0.12.4
+===============
+
+Changes
+++++++++
+
+- made :py:class:`Field` available as a top level import
+
+  .. code-block:: python
+
+      from earthkit.data import Field
+
+
+Version 0.12.3
+===============
+
+Changes
+++++++++
+
+- ``Field.resolution()`` now returns None when the resolution cannot be determined. Previously, it failed with an assertion (:pr:`616`)
+
+Fixes
+++++++++
+
+- Fixed issue when there was a crash during checking missing MARS credentials when calling ``from_source("mars", ...)``. It only happened when ``ecmwfapi`` was used for MARS retrievals. (:pr:`615`)
+
+
+Version 0.12.2
+===============
+
+Fixes
+++++++++
+
+- Fixed issue when failed to build a fieldlist with concatenation because maximum recursion depth exceeded (:pr:`599`)
+
+
 Version 0.12.1
 ===============
 

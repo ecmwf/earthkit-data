@@ -44,8 +44,8 @@ def test_lod_core(lod, mode, request):
     assert np.allclose(lon, lon_ref)
 
     val_ref = [[1, 2], [3, 4], [5, 6]]
-    print(ds[0].to_numpy())
-    print(ds.to_numpy())
+    # print(ds[0].to_numpy())
+    # print(ds.to_numpy())
 
     assert ds[0].to_numpy().shape == (3, 2)
     assert np.allclose(ds[0].to_numpy(), np.array(val_ref))
@@ -87,8 +87,7 @@ def test_lod_ll(lod_distinct_ll, mode):
     assert np.allclose(gr[0], lat_ref.flatten())
     assert np.allclose(gr[1], lon_ref.flatten())
 
-    with pytest.raises(AssertionError):
-        ds[0].resolution
+    assert ds[0].resolution is None
 
     assert ds[0].datetime() == {
         "base_time": None,

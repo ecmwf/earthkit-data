@@ -50,8 +50,7 @@ def test_lod_geo_distinct_ll(lod_distinct_ll, mode):
     assert np.allclose(gr[0], lat_ref.flatten())
     assert np.allclose(gr[1], lon_ref.flatten())
 
-    with pytest.raises(AssertionError):
-        ds[0].resolution
+    assert ds[0].resolution is None
 
     ll = ds.to_latlon()
     lat = ll["lat"]
@@ -88,8 +87,7 @@ def test_lod_geo_ll_flat(lod_ll_flat, mode):
     assert np.allclose(gr[0], lat_ref.flatten())
     assert np.allclose(gr[1], lon_ref.flatten())
 
-    with pytest.raises(NotImplementedError):
-        ds[0].resolution
+    assert ds[0].resolution is None
 
     ll = ds.to_latlon()
     lat = ll["lat"]
@@ -128,8 +126,7 @@ def test_lod_geo_ll_2D(request, data, mode):
     assert np.allclose(gr[0], lat_ref.flatten())
     assert np.allclose(gr[1], lon_ref.flatten())
 
-    with pytest.raises(NotImplementedError):
-        ds[0].resolution
+    assert ds[0].resolution is None
 
     ll = ds.to_latlon()
     lat = ll["lat"]
@@ -150,6 +147,24 @@ def test_lod_geo_invalid(
     assert len(ds) == 6
     with pytest.raises(ValueError):
         ds[0].shape
+
+
+@pytest.mark.parametrize("data", ["lod_no_latlon"])
+@pytest.mark.parametrize("mode", ["list-of-dicts", "loop"])
+def test_lod_no_latlon(
+    request,
+    data,
+    mode,
+):
+    ds = build_lod_fieldlist(request.getfixturevalue(data), mode)
+
+    assert len(ds) == 6
+    assert ds[0].shape == (6,)
+    assert ds[0].values.shape == (6,)
+    assert ds.values.shape == (6, 6)
+
+    with pytest.raises(ValueError):
+        ds[0].to_latlon()
 
 
 if __name__ == "__main__":

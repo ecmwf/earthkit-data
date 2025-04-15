@@ -34,6 +34,7 @@ PLUGINS = {}
 
 REGISTERED = defaultdict(dict)
 
+# TODO: add target and encoder when implemented
 AVAILABLE_KINDS = ["source"]
 
 
@@ -135,7 +136,7 @@ def find_plugin(directories: Union[str, List[str]], name: str, loader, refreshed
                         return loader.load_module(full.replace("/", "."))
 
     if not refreshed:
-        LOG.debug("Cannot find {loader.kind} 'name'. Refreshing plugin list.")
+        LOG.debug("Cannot find {loader.kind} {name}'. Refreshing plugin list.")
         refresh(loader.kind)
         return find_plugin(directories, name, loader, refreshed=True)
 

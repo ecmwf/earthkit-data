@@ -43,7 +43,7 @@ class StreamMemorySource(MemoryBaseSource):
     def mutate(self):
         source = self._reader.mutate_source()
         if source not in (None, self):
-            source._parent = self
+            # source._parent = self
             return source
         return self
 

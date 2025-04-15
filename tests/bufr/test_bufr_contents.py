@@ -8,7 +8,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-import pytest
 
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
@@ -39,7 +38,6 @@ def test_bufr_metadata():
     assert ds.metadata("dataCategory") == [2] * 10
 
 
-@pytest.mark.download
 def test_bufr_metadata_uncompressed():
     ds = from_source(
         "url",
@@ -52,7 +50,6 @@ def test_bufr_metadata_uncompressed():
     assert f.is_uncompressed() is True
 
 
-@pytest.mark.download
 def test_bufr_metadata_compressed():
     ds = from_source(
         "url",
@@ -63,6 +60,21 @@ def test_bufr_metadata_compressed():
     assert f.subset_count() == 51
     assert f.is_compressed() is True
     assert f.is_uncompressed() is False
+
+
+def test_bufr_metadata_tc_compressed():
+    ds = from_source("url", earthkit_remote_test_data_file("test-data/ens_tropical_cyclon.bufr3"))
+    assert len(ds) == 1
+    f = ds[0]
+    assert f.subset_count() == 3
+    assert f.is_compressed() is True
+    assert f.is_uncompressed() is False
+
+    for k in f:
+        assert k
+
+    for k, v in f.metadata().items():
+        assert k
 
 
 if __name__ == "__main__":

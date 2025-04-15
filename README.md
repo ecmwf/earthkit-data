@@ -1,30 +1,65 @@
-# earthkit-data
+<p align="center">
+  <picture>
+    <source srcset="https://github.com/ecmwf/logos/raw/refs/heads/main/logos/earthkit/earthkit-data-dark.svg" media="(prefers-color-scheme: dark)">
+    <img src="https://github.com/ecmwf/logos/raw/refs/heads/main/logos/earthkit/earthkit-data-light.svg" height="120">
+  </picture>
+</p>
 
-<img src="docs/_static/earthkit-data.png" width="120">
+<p align="center">
+  <a href="https://github.com/ecmwf/codex/raw/refs/heads/main/ESEE">
+    <img src="https://github.com/ecmwf/codex/raw/refs/heads/main/ESEE/foundation_badge.svg" alt="ECMWF Software EnginE">
+  </a>
+  <a href="https://github.com/ecmwf/codex/raw/refs/heads/main/Project Maturity">
+    <img src="https://github.com/ecmwf/codex/raw/refs/heads/main/Project Maturity/incubating_badge.svg" alt="Maturity Level">
+  </a>
+  <!-- <a href="https://codecov.io/gh/ecmwf/earthkit-data">
+    <img src="https://codecov.io/gh/ecmwf/earthkit-data/branch/main/graph/badge.svg" alt="Code Coverage">
+  </a> -->
+  <a href="https://opensource.org/licenses/apache-2-0">
+    <img src="https://img.shields.io/badge/Licence-Apache 2.0-blue.svg" alt="Licence">
+  </a>
+  <a href="https://github.com/ecmwf/earthkit-data/releases">
+    <img src="https://img.shields.io/github/v/release/ecmwf/earthkit-data?color=purple&label=Release" alt="Latest Release">
+  </a>
+  <!-- <a href="https://earthkit-data.readthedocs.io/en/latest/?badge=latest">
+    <img src="https://readthedocs.org/projects/earthkit-data/badge/?version=latest" alt="Documentation Status">
+  </a> -->
+</p>
 
-[![PyPI version fury.io](https://badge.fury.io/py/earthkit-data.svg)](https://pypi.python.org/pypi/earthkit-data/)
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/earthkit-data.svg)](https://pypi.python.org/pypi/earthkit-data/)
+<p align="center">
+  <a href="#quick-start">Quick Start</a>
+  •
+  <a href="#installation">Installation</a>
+  •
+  <a href="https://earthkit-data.readthedocs.io/en/latest/">Documentation</a>
+</p>
 
-**DISCLAIMER**
+> \[!IMPORTANT\]
+> This software is **Incubating** and subject to ECMWF's guidelines on [Software Maturity](https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity).
 
-> This project is in the **BETA** stage of development. Please be aware that interfaces and functionality may change as the project develops. If this software is to be used in operational systems you are **strongly advised to use a released tag in your system configuration**, and you should be willing to accept incoming changes and bug fixes that require adaptations on your part. ECMWF **does use** this software in operations and abides by the same caveats.
+**earthkit-data** is a format-agnostic interface for geospatial data with a focus on meteorology and
+climate science. It is the data handling component of [earthkit](https://github.com/ecmwf/earthkit).
 
-A format-agnostic interface for geospatial data with a focus on meteorology and
-climate science.
+## Quick Start
 
-## Documentation
+```python
+import earthkit.data as ekd
 
-The documentation can be found at https://earthkit-data.readthedocs.io/.
+data = ekd.from_source("sample", "test.grib")
+arr = data.to_numpy()
+df = data.to_pandas()
+dataset = data.to_xarray()
+```
 
-## Install
+## Installation
 
-Install via `pip` with:
+Install from PyPI:
 
 ```
-$ pip install earthkit-data
+pip install earthkit-data
 ```
 
-More details, such as how to install any necessary binaries, can be found  at https://earthkit-data.readthedocs.io/en/latest/install.html.
+More details, such as optional dependencies can be found at https://earthkit-data.readthedocs.io/en/latest/install.html.
 
 Alternatively, install via `conda` with:
 
@@ -32,9 +67,7 @@ Alternatively, install via `conda` with:
 $ conda install earthkit-data -c conda-forge
 ```
 
-This will bring in some necessary binary dependencies for you.
-
-## License
+## Licence
 
 ```
 Copyright 2022, European Centre for Medium Range Weather Forecasts.

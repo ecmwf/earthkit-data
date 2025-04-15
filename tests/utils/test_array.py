@@ -93,7 +93,7 @@ def test_utils_array_backend_cupy():
     # assert b.is_native_array(v)
     # assert id(b.from_backend(v, b)) == id(v)
     # assert id(b.from_backend(v, None)) == id(v)
-    assert cp.allclose(b.from_numpy(v_np, None), v)
+    assert cp.allclose(b.from_numpy(v_np), v)
     assert cp.allclose(b.from_other(v_lst, dtype=cp.float64), v)
     assert get_backend(v) is b
 
@@ -120,7 +120,7 @@ def test_utils_array_backend_jax():
     # assert b.is_native_array(v)
     # assert id(b.from_backend(v, b)) == id(v)
     # assert id(b.from_backend(v, None)) == id(v)
-    assert ja.allclose(b.from_numpy(v_np, None), v)
+    assert ja.allclose(b.from_numpy(v_np), v)
     assert ja.allclose(b.from_other(v_lst, dtype=ja.float64), v)
     assert get_backend(v) is b
 

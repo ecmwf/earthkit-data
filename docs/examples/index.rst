@@ -39,7 +39,8 @@ GRIB
 
     grib_overview.ipynb
     grib_metadata.ipynb
-    grib_lat_lon_value.ipynb
+    grib_lat_lon_value_ll.ipynb
+    grib_lat_lon_value_rgg.ipynb
     grib_selection.ipynb
     grib_indexing.ipynb
     grib_missing.ipynb
@@ -163,6 +164,19 @@ Xarray engine
     xarray_engine_split.ipynb
     xarray_engine_seasonal.ipynb
 
+Targets and encoders
++++++++++++++++++++++
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    file_target.ipynb
+    grib_to_file_target.ipynb
+    grib_to_file_pattern_target.ipynb
+    grib_to_fdb_target.ipynb
+    grib_to_geotiff.ipynb
+    grib_encoder.ipynb
 
 Miscellaneous
 +++++++++++++

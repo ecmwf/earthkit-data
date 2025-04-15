@@ -41,11 +41,11 @@ Data objects can be concatenated with the "+" operator:
 
 .. code-block:: python
 
-    >>> import earthkit.data
-    >>> ds1 = earthkit.data.from_source("file", "docs/examples/test.grib")
+    >>> import earthkit.data as ekd
+    >>> ds1 = ekd.from_source("file", "docs/examples/test.grib")
     >>> len(ds1)
     2
-    >>> ds2 = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> ds2 = ekd.from_source("file", "docs/examples/test6.grib")
     >>> len(ds2)
     6
     >>> ds = ds1 + ds2
@@ -63,8 +63,8 @@ In the the following example we read a GRIB file from disk. In the iteration eac
 
 .. code-block:: python
 
-    >>> import earthkit.data
-    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> import earthkit.data as ekd
+    >>> ds = ekd.from_source("file", "docs/examples/test6.grib")
 
     >>> len(ds)
     6
@@ -90,8 +90,8 @@ In the the following example we read a GRIB file from disk and iterate through i
 
 .. code-block:: python
 
-    >>> import earthkit.data
-    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> import earthkit.data as ekd
+    >>> ds = ekd.from_source("file", "docs/examples/test6.grib")
 
     >>> for f in ds.batched(2):
     ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
@@ -112,8 +112,8 @@ In the the following example we read a GRIB file from disk and iterate through i
 
 .. code-block:: python
 
-    >>> import earthkit.data
-    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> import earthkit.data as ekd
+    >>> ds = ekd.from_source("file", "docs/examples/test6.grib")
 
     >>> for f in ds.group_by("level"):
     ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
@@ -131,8 +131,8 @@ When an earthkit-data data `source` or dataset provides a :class:`~data.core.fie
 
 .. code-block:: python
 
-    >>> import earthkit.data
-    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> import earthkit.data as ekd
+    >>> ds = ekd.from_source("file", "docs/examples/test6.grib")
 
     >>> len(ds)
     6
@@ -185,8 +185,8 @@ The following example demonstrates the usage of ``.sel()``. The input data conta
 
 .. code-block:: python
 
-    >>> import earthkit.data
-    >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+    >>> import earthkit.data as ekd
+    >>> ds = ekd.from_source("file", "docs/examples/tuv_pl.grib")
 
     >>> len(ds)
     18
@@ -234,8 +234,8 @@ The following example demonstrates the usage of ``.isel()``. The input data cont
 
 .. code:: python
 
-    >>> import earthkit.data
-    >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+    >>> import earthkit.data as ekd
+    >>> ds = ekd.from_source("file", "docs/examples/tuv_pl.grib")
 
     >>> len(ds)
     18
@@ -282,8 +282,8 @@ For more details see: :meth:`~data.core.fieldlist.FieldList.order_by`
 
 .. code-block:: python
 
-    >>> import earthkit.data
-    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> import earthkit.data as ekd
+    >>> ds = ekd.from_source("file", "docs/examples/test6.grib")
 
     >>> len(ds)
     6
@@ -336,8 +336,8 @@ In the following example the input GRIB data contains 6 fields each defined on a
 
 .. code-block:: python
 
-    >>> import earthkit.data
-    >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+    >>> import earthkit.data as ekd
+    >>> ds = ekd.from_source("file", "docs/examples/test6.grib")
 
     >>> ds.to_numpy().shape
     (6, 7, 12)

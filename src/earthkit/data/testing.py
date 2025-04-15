@@ -220,10 +220,41 @@ if not NO_CUPY:
 def make_tgz(target_dir, target_name, paths):
     import tarfile
 
-    tar = tarfile.open(os.path.join(target_dir, target_name), "w:gz")
-    for p in paths:
-        tar.add(p)
-    tar.close()
+    with tarfile.open(os.path.join(target_dir, target_name), "w:gz") as tar:
+        for p in paths:
+            tar.add(p)
+    # tar.close()
+
+
+def make_zip(target_dir, target_name, paths):
+    import zipfile
+
+    with zipfile.ZipFile(os.path.join(target_dir, target_name), "a") as zipf:
+        for p in paths:
+            zipf.write(p)
+
+
+WRITE_TO_FILE_METHODS = ["target", "save", "write"]
+
+
+def write_to_file(mode, path, ds, **kwargs):
+    if mode == "target":
+        bits_per_value = kwargs.pop("bits_per_value", None)
+        md = kwargs.get("metadata", {})
+        if bits_per_value is not None:
+            md.update({"bitsPerValue": bits_per_value})
+            kwargs["metadata"] = md
+
+        ds.to_target("file", path, **kwargs)
+    elif mode == "save":
+        ds.save(path, **kwargs)
+    elif mode == "write":
+        append = kwargs.pop("append", False)
+        flag = "wb" if not append else "ab"
+        with open(path, flag) as f:
+            ds.write(f, **kwargs)
+    else:
+        raise ValueError(f"Invalid {mode=}")
 
 
 def main(path):

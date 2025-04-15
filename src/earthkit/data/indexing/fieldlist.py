@@ -27,7 +27,7 @@ class SimpleFieldList(FieldList):
         return len(self.fields)
 
     def __repr__(self) -> str:
-        return f"FieldArray({len(self.fields)})"
+        return f"SimpleFieldList({len(self)})"
 
     def __getstate__(self) -> dict:
         ret = {}
@@ -149,6 +149,22 @@ class ClonedFieldCore:
     @property
     def handle(self):
         return self._metadata._handle
+
+    def _encode(self, encoder, **kwargs):
+        """Double dispatch to the encoder"""
+        md = {}
+        # wrapped metadata
+        if hasattr(self._metadata, "extra"):
+            md = {k: self._metadata._extra_value(k) for k, v in self._metadata.extra.items()}
+
+        metadata = kwargs.pop("metadata", {})
+        metadata.update(md)
+
+        values = kwargs.pop("values", None)
+        if values is None:
+            values = self._values()
+
+        return encoder._encode_field(self, values=values, metadata=metadata, **kwargs)
 
 
 # For backwards compatibility
