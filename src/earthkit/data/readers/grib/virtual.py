@@ -88,7 +88,7 @@ class VirtualGribField(Field):
             **kwargs,
         )
 
-    def _one_metadata(self, key, **kwargs):
+    def _one_metadata(self, key, remapping=None, patches=None, **kwargs):
         # print(f"one_metadata key={key} kwargs={kwargs}")
         if key in self.extra:
             return self.extra[key]
@@ -109,7 +109,8 @@ class VirtualGribField(Field):
         if key in ("valid_datetime", "valid_time"):
             return self._valid_datetime.isoformat()
 
-        return super().metadata(key, **kwargs)
+        return self._metadata.get(key, **kwargs)
+        # return super().one_metadata(key, **kwargs)
 
     @property
     def _metadata(self):
@@ -145,9 +146,6 @@ class VirtualGribFieldList(GribFieldList):
 
     def mutate(self):
         return self
-
-    # def ls(self):
-    #     return self.reference.ls()
 
     def _getitem(self, n):
         if isinstance(n, int):
