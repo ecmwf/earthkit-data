@@ -38,7 +38,7 @@ def test_grib_group_by(fl_type, group):
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 2
         assert f.metadata(("param", "level")) == ref[i]
-        afl = f.to_fieldlist(array_backend=array_backend._name)
+        afl = f.to_fieldlist(array_backend=array_backend.name)
         assert afl is not f
         assert len(afl) == 2
         cnt += len(f)
