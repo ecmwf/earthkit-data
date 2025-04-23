@@ -14,10 +14,10 @@ import sys
 
 import numpy as np
 import pytest
+from earthkit.utils.testing import check_array_type
 
 import earthkit.data
 from earthkit.data.testing import NO_GEO
-from earthkit.data.testing import check_array_type
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import projections
