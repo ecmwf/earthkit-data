@@ -53,7 +53,7 @@ optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
 optional-dependencies.ci = [ "numpy" ]
 optional-dependencies.covjsonkit = [ "covjsonkit>=0.1.1" ]
 optional-dependencies.dev = [
-  "earthkit-data[all,docs,tests]",
+  "earthkit-data[all,docs,test]",
 ]
 optional-dependencies.docs = [
   "nbsphinx",
@@ -75,7 +75,7 @@ optional-dependencies.odb = [ "pyodc" ]
 optional-dependencies.polytope = [ "polytope-client>=0.7.4" ]
 optional-dependencies.projection = [ "cartopy" ]
 optional-dependencies.s3 = [ "aws-requests-auth", "botocore" ]
-optional-dependencies.tests = [
+optional-dependencies.test = [
   "earthkit-data-demo-source",
   "nbconvert",
   "nbformat",
