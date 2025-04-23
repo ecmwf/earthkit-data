@@ -263,6 +263,8 @@ class Field(Base):
         for k in keys:
             # TODO: convert dtype
             v = _keys[k](dtype=dtype)
+            if v is None:
+                raise ValueError(f"data: {k} not available")
             v = self._reshape(v, flatten)
             if index is not None:
                 v = v[index]

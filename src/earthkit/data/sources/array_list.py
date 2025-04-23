@@ -58,6 +58,11 @@ class ArrayField(Field):
         else:
             return array_namespace(self._array).astype(self._array, dtype, copy=False)
 
+    @property
+    def shape(self):
+        v = super().shape
+        return v if v is not None else self._array.shape
+
     def __repr__(self):
         return self.__class__.__name__ + "(%s,%s,%s,%s,%s,%s)" % (
             self._metadata.get("shortName", None),
