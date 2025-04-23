@@ -47,40 +47,13 @@ dependencies = [
   "xarray>=0.19",
 ]
 optional-dependencies.all = [
-  "cartopy",
-  "cdsapi>=0.7.2",
-  "covjsonkit>=0.1.1",
-  "earthkit-geo>=0.2",
-  "ecmwf-api-client>=1.6.1",
-  "ecmwf-opendata>=0.3.3",
-  "geopandas",
-  "hda>=2.22",
-  "polytope-client>=0.7.4",
-  "pyfdb>=0.1",
-  "pyodc",
+  "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geo,geopandas,geotiff,mars,odb,polytope,projection,s3,wekeo]",
 ]
 optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
 optional-dependencies.ci = [ "numpy" ]
 optional-dependencies.covjsonkit = [ "covjsonkit>=0.1.1" ]
 optional-dependencies.dev = [
-  "cartopy",
-  "cdsapi>=0.7.2",
-  "covjsonkit>=0.1.1",
-  "earthkit-data-demo-source",
-  "earthkit-geo>=0.2",
-  "ecmwf-api-client>=1.6.1",
-  "ecmwf-opendata>=0.3.3",
-  "geopandas",
-  "hda>=2.22",
-  "nbconvert",
-  "nbformat",
-  "polytope-client>=0.7.4",
-  "pyfdb>=0.1",
-  "pyodc",
-  "pytest",
-  "pytest-cov",
-  "pytest-forked",
-  "pytest-timeout",
+  "earthkit-data[all,docs,test]",
 ]
 optional-dependencies.docs = [
   "nbsphinx",
