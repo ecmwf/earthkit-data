@@ -153,13 +153,28 @@ file
 file-pattern
 --------------
 
-.. py:function:: from_source("file-pattern", pattern, *args, **kwargs)
+.. py:function:: from_source("file-pattern", pattern, *args, hive_partitioning=False, **kwargs)
   :noindex:
+
+
 
   The ``file-pattern`` source will build paths from the pattern specified,
   using the other arguments to fill the pattern. Each argument can be a list
   to iterate and create the cartesian product of all lists.
   Then each file is read in the same ways as with the :ref:`file source <data-sources-file>`.
+
+
+  :param pattern: input path pattern using ``{}`` to define pattern parameters. 
+  :type pattern: str
+  :param tuple *args: specify the pattern parameters. Each parameter can be a list to iterate and create the cartesian product of all lists.
+  :param hive_partitioning: if ``True``, the pattern is interpreted as a Hive partitioning pattern. The pattern must contain the following parameters: ``year``, ``month``, ``day``, ``hour``. The pattern can also contain the following parameters: ``run_time``, ``param``. The values of these parameters are used to build the path. The other parameters are used to build the file name.
+  :param dict **kwargs: other keyword arguments specifying the request
+  
+  
+  
+  Each path can be a file path or a directory path. If it is a directory path, it is recursively scanned for supported files. When a path is an archive format such as ``.zip``, ``.tar``, ``.tar.gz``, etc, *earthkit-data* will attempt to open it and extract any usable files, which are then stored in the :ref:`cache <caching>`. Each filepath can contain the :ref:`parts <parts>` defining the byte ranges to read.
+  :type path: str, list, tuple 
+
 
   .. code-block:: python
 
