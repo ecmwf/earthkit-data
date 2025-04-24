@@ -7,12 +7,12 @@
 # nor does it submit to any jurisdiction.
 #
 
+import copy
 import logging
 from functools import cached_property
 from math import prod
 
 import numpy as np
-import copy
 
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
