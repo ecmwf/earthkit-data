@@ -12,6 +12,7 @@ from functools import cached_property
 from math import prod
 
 import numpy as np
+import copy
 
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
@@ -452,7 +453,27 @@ class UserMetadata(Metadata):
         return make_geography(self, values_shape=self._shape)
 
     def override(self, *args, **kwargs):
-        raise NotImplementedError("override is not implemented for UserMetadata")
+        r"""Create a new metadata object by cloning the underlying metadata and setting the keys in it.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments. When present must be a dict with the keys to set in
+            the new metadata.
+        **kwargs: dict, optional
+            Other keyword arguments specifying the metadata keys to set.
+
+        Returns
+        -------
+        :class:`UserMetadata`
+            The new metadata object. A copy of the original metadata with the keys set in it.
+        """
+        d = dict(*args, **kwargs)
+        d.copy()
+        existing = self._data.copy()
+
+        existing.update(d)
+        return UserMetadata(existing, shape=copy.copy(self._shape))
 
     def namespaces(self):
         return []
@@ -461,7 +482,35 @@ class UserMetadata(Metadata):
         return {}
 
     def dump(self, **kwargs):
-        return None
+        r"""Generate dump with all the metadata keys.
+
+        In a Jupyter notebook it is represented as a tabbed interface.
+
+        Parameters
+        ----------
+        **kwargs: dict, optional
+            Other keyword arguments used for testing only
+
+        Returns
+        -------
+        NamespaceDump
+            Dict-like object with one item per namespace. In a Jupyter notebook represented
+            as a tabbed interface to browse the dump contents.
+
+        Examples
+        --------
+        :ref:`/examples/grib_metadata.ipynb`
+
+        """
+        from earthkit.data.utils.summary import format_namespace_dump
+
+        r = [
+            {
+                "title": "metadata",
+                "data": self._data,
+            }
+        ]
+        return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
 
     def ls_keys(self):
         return self.LS_KEYS

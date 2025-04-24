@@ -73,3 +73,47 @@ def test_array_field_usermetadata_geom(_kwargs):
     assert np.allclose(lat, meta["latitudes"])
     assert np.allclose(lon, meta["longitudes"])
     assert np.allclose(f.values, vals)
+
+@pytest.mark.parametrize(
+    "initial, update, expected",
+    [
+        ({"shortName": "2t"}, {}, {"shortName": "2t"}),  # No update
+        ({"shortName": "2t"}, {"shortName": "msl"}, {"shortName": "msl"}),  # Update existing key
+        ({"shortName": "2t"}, {"longName": "Temperature"}, {"shortName": "2t", "longName": "Temperature"}),  # Add new key
+        ({}, {"shortName": "2t"}, {"shortName": "2t"}),  # Add key to empty metadata
+        ({"shortName": "2t", "longName": "Temperature"}, {"shortName": "temperature"}, {"shortName": "temperature", "longName": "Temperature"}),  # Update one key, keep others
+    ],
+)
+def test_array_field_usermetadata_override(initial, update, expected):
+    meta = UserMetadata(initial)
+    new_meta = meta.override(update)
+
+    # Check that the updated metadata matches the expected result
+    for k, v in expected.items():
+        assert new_meta[k] == v
+
+    # Ensure the original metadata remains unchanged
+    for k, v in initial.items():
+        assert meta[k] == v
+
+    # Check that the updated metadata contains all expected keys
+    for k in update:
+        if k in initial:
+            assert meta[k] == initial[k]
+        else:
+            assert k not in meta
+
+def test_array_field_usermetadata_override_shape():
+    meta = UserMetadata(
+        {},
+        shape = (10,1)
+    )
+    new_meta = meta.override(
+        {
+            "shortName": "2t",
+            "longName": "Temperature",
+        }
+    )
+    new_meta._shape = None
+    assert new_meta._shape is None
+    assert meta._shape is not None
