@@ -87,6 +87,7 @@ def test_array_field_usermetadata_geom(_kwargs):
 def test_array_field_usermetadata_override(initial, update, expected):
     meta = UserMetadata(initial)
     new_meta = meta.override(update)
+    _ = meta.override(**update)
 
     # Check that the updated metadata matches the expected result
     for k, v in expected.items():
