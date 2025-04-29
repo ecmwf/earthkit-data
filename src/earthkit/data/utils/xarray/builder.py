@@ -632,8 +632,10 @@ class SplitDatasetBuilder(DatasetBuilder):
 
         splitter = Splitter.make(self.split_dims)
         datasets = []
+        split_coords_list = []
         for ds, profile, split_coords in splitter.split(self):
             dims = profile.dims.to_list()
+            split_coords_list.append(dict(split_coords))
             LOG.debug(f"splitting {dims=} type of s_ds={type(ds)} {split_coords=}")
             split_coords.pop(profile.variable_key, None)
             builder = self.builder(ds, profile, dims, grid=self.grid(ds), fixed_local_attrs=split_coords)
@@ -646,7 +648,7 @@ class SplitDatasetBuilder(DatasetBuilder):
                 datasets.append(xarray.open_dataset(ds, **self.xr_open_dataset_kwargs))
                 ds._ek_builder = None
 
-        return datasets[0] if len(datasets) == 1 else datasets
+        return (datasets[0], split_coords_list[0]) if len(datasets) == 1 else (datasets, split_coords_list)
 
 
 def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
