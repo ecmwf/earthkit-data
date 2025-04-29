@@ -622,7 +622,8 @@ class SplitDatasetBuilder(DatasetBuilder):
         # LOG.debug(f"split_dims={self.split_dims}")
         ds_xr = XArrayInputFieldList(self.ds, keys=self.profile.index_keys, remapping=remapping)
 
-        vals, _ = ds_xr.unique_values(*keys)
+        vals, _ = ds_xr.unique_values(keys)
+        LOG.debug(f"{keys=}, {vals=}")
 
         return ds_xr, vals
 
