@@ -67,4 +67,3 @@ def test_xarray_to_numpy():
     
     arr_1d = ds.to_numpy(flatten=True)
     assert arr_1d.shape == (6,)
-    
