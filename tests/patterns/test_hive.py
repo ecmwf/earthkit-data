@@ -18,11 +18,25 @@ from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils.patterns import HivePattern
 
 
-@pytest.mark.parametrize("fx", ["hive_fs_1", "hive_fs_2", "hive_fs_3", "hive_fs_4"])
+@pytest.mark.parametrize("fx", ["hive_fs_1", "hive_fs_2", "hive_fs_3", "hive_fs_4", "hive_fs_5"])
 def test_hive_full_scan(request, fx):
-    pattern, files = request.getfixturevalue(fx)
+    pattern, files, _ = request.getfixturevalue(fx)
 
     p = HivePattern(pattern, {})
+    res_files = p.scan()
+
+    assert sorted(files) == sorted(res_files)
+
+
+@pytest.mark.parametrize("fx", ["hive_fs_5"])
+def test_hive_full_scan_with_fixed(request, fx):
+    pattern, files, values = request.getfixturevalue(fx)
+
+    v = {
+        "shortName": values["shortName"],
+    }
+
+    p = HivePattern(pattern, v)
     res_files = p.scan()
 
     assert sorted(files) == sorted(res_files)
@@ -94,7 +108,7 @@ def test_hive_full_scan(request, fx):
     ],
 )
 def test_hive_filter(request, fx, filters, expected_files):
-    pattern, _ = request.getfixturevalue(fx)
+    pattern, _, _ = request.getfixturevalue(fx)
 
     # files = _build_fs(md, fs_pattern, date_format)
     # print(f"files={files}")
@@ -146,3 +160,110 @@ def test_hive_sel_2():
 
     r = ds.sel(shortName="t", step=12)
     assert len(r) == 0
+
+
+def test_hive_init_1():
+    pattern = "{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
+    p = HivePattern(pattern)
+
+    assert p.pattern == pattern
+    assert p.keys == ["shortName", "date", "step"]
+    assert p.dynamic_keys == ["shortName", "date", "step"]
+    assert p.fixed_single_keys == {}
+    assert p.fixed_multi_keys == {}
+    assert p.root == ""
+    assert p.rest == pattern
+
+    assert len(p.parts) == 1
+    ref = ["shortName", "date", "step"]
+    for i, v in enumerate(p.parts[0].variables):
+        assert v.name == ref[i]
+
+
+def test_hive_init_2():
+    pattern = "root_d/{year}/fc/t_{level}b_/a{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
+    p = HivePattern(pattern)
+
+    assert p.pattern == pattern
+    assert p.keys == ["year", "level", "shortName", "date", "step"]
+    assert p.dynamic_keys == ["year", "level", "shortName", "date", "step"]
+    assert p.fixed_single_keys == {}
+    assert p.fixed_multi_keys == {}
+    assert p.root == "root_d"
+    assert p.rest == pattern[7:]
+
+    assert len(p.parts) == 4
+    ref = [["year"], [], ["level"], ["shortName", "date", "step"]]
+    for i, part in enumerate(p.parts):
+        assert len(part.variables) == len(ref[i])
+        for k, v in enumerate(part.variables):
+            assert v.name == ref[i][k]
+
+    ref = [False, True, False, False]
+    for i, part in enumerate(p.parts):
+        assert part.is_constant() == ref[i]
+
+    assert p.parts[0].match("2023")
+    assert p.parts[0].match("2_2_3")
+    assert p.parts[1].match("fc")
+    assert not p.parts[1].match("an")
+    assert p.parts[2].match("t_500_b_")
+    assert not p.parts[2].match("t_500_b")
+    assert not p.parts[2].match("500")
+
+    m = p.parts[3].match("at2m_2023-01-21_345.grib")
+    assert m is not None
+    assert m.groupdict() == {"shortName": "t2m", "date": "2023-01-21", "step": "345"}
+
+    m = p.parts[3].match("a_t2m_2023-01-21_345.grib")
+    assert m is not None
+    assert m.groupdict() == {"shortName": "_t2m", "date": "2023-01-21", "step": "345"}
+
+    m = p.parts[3].match("at2m2023-01-21_345.grib")
+    assert m is None
+
+
+def test_hive_init_3():
+    pattern = "root_d/{year}/fc/t_{level}b_/a{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
+    p = HivePattern(pattern, {"year": [2023, 2024], "level": "500", "shortName": "t"})
+
+    assert p.pattern == pattern
+    assert set(p.keys) == {"year", "level", "shortName", "date", "step"}
+    assert p.dynamic_keys == ["date", "step"]
+    assert p.fixed_single_keys == {"level": "500", "shortName": "t"}
+    assert p.fixed_multi_keys == {"year": [2023, 2024]}
+    assert p.root == "root_d"
+    assert p.rest == "{year}/fc/t_500b_/at_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
+
+    assert len(p.parts) == 4
+    ref = [["year"], [], [], ["date", "step"]]
+    for i, part in enumerate(p.parts):
+        assert len(part.variables) == len(ref[i])
+        for k, v in enumerate(part.variables):
+            assert v.name == ref[i][k]
+
+    ref = [False, True, True, False]
+    for i, part in enumerate(p.parts):
+        assert part.is_constant() == ref[i]
+
+    assert p.parts[0].match("2023")
+    assert p.parts[0].match("2024")
+    assert p.parts[0].match("2025")
+    assert p.parts[0].match("2_2_3")
+    assert p.parts[1].match("fc")
+    assert not p.parts[1].match("an")
+    assert p.parts[2].match("t_500b_")
+    assert not p.parts[2].match("at_500b_")
+    assert not p.parts[2].match("t_500b__")
+    assert not p.parts[2].match("t_500_b")
+    assert not p.parts[2].match("500")
+
+    m = p.parts[3].match("at_2023-01-21_345.grib")
+    assert m is not None
+    assert m.groupdict() == {"date": "2023-01-21", "step": "345"}
+
+    m = p.parts[3].match("a_t_2023-01-21_345.grib")
+    assert m is None
+
+    m = p.parts[3].match("at2023-01-21_345.grib")
+    assert m is None

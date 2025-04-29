@@ -68,6 +68,20 @@ def hive_fs_4(fs):
     return build_hive_fs(pattern, values, sample, num, fs)
 
 
+@pytest.fixture
+def hive_fs_5(fs):
+    pattern = "/my_root/{step}/{shortName}/{date:date(%Y-%m-%d)}.grib"
+    values = {
+        "shortName": "t",
+        "date": [datetime.datetime(2020, 5, 11), datetime.datetime(2020, 5, 12)],
+        "step": [0, 6, 12],
+    }
+    sample = "/my_root/0/t/2020-05-11.grib"
+    num = 6
+
+    return build_hive_fs(pattern, values, sample, num, fs)
+
+
 def build_hive_fs(pattern, values, sample, file_num, fs):
     from earthkit.data.utils.patterns import Pattern
 
@@ -79,4 +93,4 @@ def build_hive_fs(pattern, values, sample, file_num, fs):
     for f in files:
         fs.create_file(f)
 
-    return pattern, files
+    return pattern, files, values

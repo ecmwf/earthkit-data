@@ -13,6 +13,7 @@ import datetime
 
 import pytest
 
+from earthkit.data.utils.patterns import Function
 from earthkit.data.utils.patterns import Pattern
 from earthkit.data.utils.patterns import Variable
 
@@ -22,10 +23,16 @@ from earthkit.data.utils.patterns import Variable
     [
         ("level", {"level": "500"}, "500", None),
         ("level:int", {"level": 500}, "500", None),
+        ("level:int(%04d)", {"level": 500}, "0500", None),
         ("level:int", {"level": "500"}, None, ValueError),
+        ("level:float", {"level": 500}, "500", None),
+        ("level:float", {"level": 500.0}, "500", None),
+        ("level:float", {"level": 500.1}, "500.1", None),
+        ("level:float(%.02f)", {"level": 500.1}, "500.10", None),
         ("level:enum(925,500,700)", {"level": "500"}, "500", None),
         ("level:enum(925,500,700)", {"level": 500}, "500", ValueError),
         ("level:enum(925,500,700)", {"level": "1000"}, None, ValueError),
+        ("my_date:date(%Y-%m-%d)", {"my_date": "20200513"}, "2020-05-13", None),
         ("my_date:date(%Y-%m-%d)", {"my_date": datetime.datetime(2020, 5, 13)}, "2020-05-13", None),
         ("my_date:strftime(%Y-%m-%d)", {"my_date": datetime.datetime(2020, 5, 13)}, "2020-05-13", None),
         (
@@ -77,6 +84,21 @@ def test_pattern_variable_substitute_all(pattern, values, expected_value, error)
 
 
 @pytest.mark.parametrize(
+    "pattern,values,expected_value,error",
+    [
+        ("param|lower", {"param": "TeST"}, "test", None),
+    ],
+)
+def test_pattern_function_substitute(pattern, values, expected_value, error):
+    v = Function(pattern)
+    if not error:
+        assert v.substitute(values) == expected_value
+    else:
+        with pytest.raises(error):
+            v.substitute(values)
+
+
+@pytest.mark.parametrize(
     "pattern,value,expected_value",
     [
         ("level", "level", {}),
@@ -120,6 +142,7 @@ def test_pattern_match(pattern, value, expected_value):
             {"date": [datetime.datetime(2020, 5, 11), datetime.datetime(2020, 5, 11, 6)]},
             ["test_2020-05-11_01.grib", "test_2020-05-11_07.grib"],
         ),
+        ("test_{param|lower}", {"param": ["T", "z"]}, ["test_t", "test_z"]),
     ],
 )
 def test_pattern_core(pattern, values, expected_value):

@@ -156,68 +156,95 @@ file-pattern
 .. py:function:: from_source("file-pattern", pattern, *args, hive_partitioning=False, **kwargs)
   :noindex:
 
+  The ``file-pattern`` source reads data from paths specified by a :ref:`pattern <patterns>`.
 
-
-  The ``file-pattern`` source will build paths from the pattern specified,
-  using the other arguments to fill the pattern. Each argument can be a list
-  to iterate and create the cartesian product of all lists.
-  Then each file is read in the same ways as with the :ref:`file source <data-sources-file>`.
-
-
-  :param pattern: input path pattern using ``{}`` to define pattern parameters. 
+  :param pattern: input path pattern using ``{}`` brackets to define parameters that can be substituted. See :ref:`patterns <patterns>` for details.
   :type pattern: str
-  :param tuple *args: specify the pattern parameters. Each parameter can be a list to iterate and create the cartesian product of all lists.
-  :param hive_partitioning: if ``True``, the pattern is interpreted as a Hive partitioning pattern. The pattern must contain the following parameters: ``year``, ``month``, ``day``, ``hour``. The pattern can also contain the following parameters: ``run_time``, ``param``. The values of these parameters are used to build the path. The other parameters are used to build the file name.
-  :param dict **kwargs: other keyword arguments specifying the request
-  
-  
-  
-  Each path can be a file path or a directory path. If it is a directory path, it is recursively scanned for supported files. When a path is an archive format such as ``.zip``, ``.tar``, ``.tar.gz``, etc, *earthkit-data* will attempt to open it and extract any usable files, which are then stored in the :ref:`cache <caching>`. Each filepath can contain the :ref:`parts <parts>` defining the byte ranges to read.
-  :type path: str, list, tuple 
+  :param tuple *args: specify the values to substitute into the parameters ``pattern``. Each parameter can be a list/tuple or a single value.
+  :param hive_partitioning: control how the ``pattern`` is interpreted. See details below.
+  :type hive_partitioning: bool
+  :param dict **kwargs: other keyword arguments specifying the parameter values
+
+  The actual behaviour and the type of the returned object depend on ``hive_partitioning``:
+
+hive_partioning=False
+////////////////////////////
+
+  When ``hive_partitioning`` is ``False``, first, the pattern parameters are substituted with the values specified by the ``*args`` and ``**kwargs``, see :ref:`patterns <patterns>` for details. For this, all the possible values must be specified for each pattern parameter. Next, the paths are constructed by taking the Cartesian product of the substituted values. Finally, the resulting paths are read and :ref:`from_source <data-sources-file-pattern>` returns a single object (for GRIB data it will be a :py:class:`Fieldlist`).
+
+    .. code-block:: python
+
+        import datetime
+        import earthkit.data as ekd
+
+        # ds is a fieldlist
+        ds = ekd.from_source(
+            "file-pattern",
+            "path/to/data-{my_date:date(%Y-%m-%d)}-{run_time}-{param}.grib",
+            {
+                "my_date": datetime.datetime(2020, 5, 2),
+                "run_time": [12, 18],
+                "param": ["t2", "msl"],
+            },
+        )
 
 
-  .. code-block:: python
+    The code above substitutes "my_date", "run_time" and "param" into the ``pattern`` and constructs the following file paths read into single GRIB :py:class:`Fieldlist`::
 
-      import datetime
-      import earthkit.data as ekd
-
-      ds = ekd.from_source(
-          "file-pattern",
-          "path/to/data-{my_date:date(%Y-%m-%d)}-{run_time}-{param}.grib",
-          {
-              "my_date": datetime.datetime(2020, 5, 2),
-              "run_time": [12, 18],
-              "param": ["t2", "msl"],
-          },
-      )
+        path/to/data-2020-05-02-12-t2.grib
+        path/to/data-2020-05-02-12-msl.grib
+        path/to/data-2020-05-02-18-t2.grib
+        path/to/data-2020-05-02-18-msl.grib
 
 
-  The code above will read the following files::
+hive_partioning=True
+/////////////////////////////
 
-    path/to/data-2020-05-02-12-t2.grib
-    path/to/data-2020-05-02-12-msl.grib
-    path/to/data-2020-05-02-18-t2.grib
-    path/to/data-2020-05-02-18-msl.grib
+    When ``hive_partitioning`` is ``True``, the ``pattern`` defines a Hive partitioning with each pattern parameter interpreted as a metadata key. The returned object has a limited scope only supporting the :meth:`sel` method. Calling any of these methods will trigger a filesystem scan for all the matching files. During this scan, if the required metadata is present in the pattern no files will be opened at all to extract their metadata, which can be an enormous optimisation. Another advantage is that during the scan entire file system branches can be skipped based simply on inspecting the actual file path.
 
+    Pattern values are optional, but can be still specified to restrict the search to a specific set of values.
 
-  .. code-block:: python
+    For the hive partitioning example below let us suppose we have the following directory structure containing several years of GRIB data:
 
-      import datetime
-      import earthkit.data as ekd
+    .. code-block:: text
 
-      ds = ekd.from_source(
-          "file-pattern",
-          "path/to/data-{my_date:strftime(-6;%Y%m%d%H)}-006-{param}.grib",
-          {
-              "my_date": datetime.datetime(2020, 5, 2, 0),
-              "param": ["t2", "msl"],
-          },
-      )
+        mydir/
+            20230101/
+                myfile_t.grib
+                myfile_r.grib
+                myfile_u.grib
+                myfile_v.grib
+            20230102/
+                myfile_t.grib
+                myfile_r.grib
+                myfile_u.grib
+                myfile_v.grib
+            20230103/
+                myfile_t.grib
+                myfile_r.grib
+                myfile_u.grib
+                myfile_v.grib
+            20230104/
+            ...
 
-  The code above will read the following files::
+    .. code-block:: python
 
-    path/to/data-2020050118-006-t2.grib
-    path/to/data-2020050118-006-msl.grib
+        import datetime
+        import earthkit.data as ekd
+
+        # At this point nothing is scanned/read yet. ds only has the
+        # sel() method.
+        ds = from_source(
+            "file-pattern", "mydir/{date}/myfile_{param}.grib", hive_partitioning=True
+        )
+
+        # The following line will trigger a filesystem scan
+        # for all the matching files. The scan will be limited to the
+        # "mydir/20230101/" sub-directory and non of the GRIB files will be
+        # opened to extract their metadata. The returned object will
+        # be a :py:class:`Fieldlist`.
+        ds1 = ds.sel(date="20230101", param=["t", "r"])
+
 
 Further examples:
 

@@ -7,6 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
+from typing import Any as TypingAny
+from typing import Dict
+from typing import Optional
+from typing import Union
+
 from earthkit.data.sources import Source
 from earthkit.data.sources import from_source
 from earthkit.data.sources.empty import EmptySource
@@ -17,10 +22,15 @@ from earthkit.data.utils.patterns import Pattern
 
 
 class HiveFilePattern(Source):
-    def __init__(self, pattern, params, **kwargs):
+    def __init__(self, pattern: str, params: Dict[str, TypingAny], **kwargs: TypingAny) -> None:
         self.scanner = HivePattern(pattern, params)
 
-    def sel(self, *args, file_count_diag=None, **kwargs):
+    def sel(
+        self,
+        *args: Dict[str, TypingAny],
+        file_count_diag: Optional[TypingAny] = None,
+        **kwargs: TypingAny,
+    ) -> Union[EmptySource, MultiSource]:
         from earthkit.data.core.index import normalize_selection
 
         kwargs = normalize_selection(*args, **kwargs)
@@ -32,8 +42,6 @@ class HiveFilePattern(Source):
         if rest:
             out = EmptySource()
             for f in self.scanner.scan(**kwargs):
-                print(f"{f=}")
-                print(f"{rest=}")
                 ds = from_source("file", f)
                 out += ds.sel(**rest)
                 if file_count_diag:
@@ -55,7 +63,15 @@ class HiveFilePattern(Source):
 
 
 class FilePattern(MultiSource):
-    def __init__(self, pattern, *args, filter=None, merger=None, hive_partitioning=False, **kwargs):
+    def __init__(
+        self,
+        pattern: str,
+        *args: Dict[str, TypingAny],
+        filter: Optional[TypingAny] = None,
+        merger: Optional[TypingAny] = None,
+        hive_partitioning: bool = False,
+        **kwargs: TypingAny,
+    ) -> None:
         self.hive_partitioning = hive_partitioning
 
         if not self.hive_partitioning:
@@ -74,7 +90,7 @@ class FilePattern(MultiSource):
             params.update(kwargs)
             self.params = params
 
-    def mutate(self):
+    def mutate(self) -> Union["HiveFilePattern", "FilePattern"]:
         if self.hive_partitioning:
             return HiveFilePattern(self.pattern, self.params)
         else:
