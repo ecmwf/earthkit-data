@@ -58,14 +58,17 @@ class XArrayDataArrayWrapper(Wrapper):
         """
         return self.data
 
-    def to_numpy(self):
+    def to_numpy(self, flatten=False):
         """Return a numpy `ndarray` representation of the data.
 
         Returns
         -------
         numpy.ndarray
         """
-        return self.data.to_numpy()
+        arr = self.data.to_numpy()
+        if flatten:
+            arr = arr.flatten()
+        return arr
 
     def to_pandas(self, *args, **kwargs):
         """Return a pandas `dataframe` representation of the data.
@@ -91,14 +94,17 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
     methods.
     """
 
-    def to_numpy(self):
+    def to_numpy(self, flatten=False):
         """Return a numpy `ndarray` representation of the data.
 
         Returns
         -------
         numpy.ndarray
         """
-        return self.data.to_array().to_numpy()
+        arr = self.data.to_array().to_numpy()
+        if flatten:
+            arr = arr.flatten()
+        return arr
 
     # def component(self, component):
     #     """
