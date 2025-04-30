@@ -469,11 +469,10 @@ class UserMetadata(Metadata):
             The new metadata object. A copy of the original metadata with the keys set in it.
         """
         d = dict(*args, **kwargs)
-        d.copy()
-        existing = self._data.copy()
-
+        existing = copy.deepcopy(self._data)
         existing.update(d)
-        return UserMetadata(existing, shape=copy.copy(self._shape))
+        
+        return UserMetadata(existing, shape=copy.deepcopy(self._shape))
 
     def namespaces(self):
         return []
