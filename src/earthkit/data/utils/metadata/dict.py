@@ -471,7 +471,7 @@ class UserMetadata(Metadata):
         d = dict(*args, **kwargs)
         existing = copy.deepcopy(self._data)
         existing.update(d)
-        
+
         return UserMetadata(existing, shape=copy.deepcopy(self._shape))
 
     def namespaces(self):
