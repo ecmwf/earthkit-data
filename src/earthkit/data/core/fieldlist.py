@@ -931,6 +931,34 @@ class Field(Base):
         shape = self._required_shape(flatten)
         return shape == array.shape and (dtype is None or dtype == array.dtype)
 
+    # def __getattr__(self, name):
+    #     from functools import partial
+
+    #     if name in comp_unary:
+    #         op = comp_unary[name]
+    #         return partial(self._unary_op, self, op)
+    #     elif name in comp:
+    #         op = comp[name]
+    #         return partial(self._binary_op, self, op)
+    #     else:
+    #         return super().__getattr__(name)
+
+    # # def __add__(self, other):
+    # #     op = comp["__add__"]
+    # #     return self._binary_op(op, self, other)
+
+    # def _unary_op(self, oper):
+    #     v = oper(self.values)
+    #     r = self.clone(values=v)
+    #     return r
+
+    # def _binary_op(self, oper, x, y):
+    #     vx = self.values
+    #     vy = y.values
+    #     v = oper(vx, vy)
+    #     r = self.clone(values=v)
+    #     return r
+
 
 class FieldList(Index):
     r"""Represent a list of :obj:`Field` \s."""
