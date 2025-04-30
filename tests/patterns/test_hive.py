@@ -121,12 +121,20 @@ def test_hive_filter(request, fx, filters, expected_files):
     assert sorted(expected_files) == sorted(res_files)
 
 
-class FileCountDiag:
+class HiveDiag:
     def __init__(self):
-        self.count = 0
+        self.file_count = 0
+        self.sel_count = 0
+
+    def file(self, count):
+        self.file_count += count
+
+    def sel(self, count):
+        self.sel_count += count
 
     def reset(self):
-        self.count = 0
+        self.file_count = 0
+        self.sel_count = 0
 
 
 def test_hive_sel_1():
@@ -136,10 +144,11 @@ def test_hive_sel_1():
     ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True)
 
     # assert ds.root == path
-    diag = FileCountDiag()
+    diag = HiveDiag()
     # using hive partitioning keys
-    r = ds.sel(shortName="t", step=12, file_count_diag=diag)
-    assert diag.count == 1
+    r = ds.sel(shortName="t", step=12, _hive_diag=diag)
+    assert diag.file_count == 1
+    assert diag.sel_count == 0
     assert len(r) == 6
 
     md_ref = [("t", 1000, 12), ("t", 850, 12), ("t", 700, 12), ("t", 500, 12), ("t", 400, 12), ("t", 300, 12)]
@@ -147,8 +156,9 @@ def test_hive_sel_1():
 
     # using hive partitioning keys + extra keys from GRIB header
     diag.reset()
-    r = ds.sel(shortName="t", step=12, levtype="pl", file_count_diag=diag)
-    assert diag.count == 1
+    r = ds.sel(shortName="t", step=12, levtype="pl", _hive_diag=diag)
+    assert diag.file_count == 1
+    assert diag.sel_count == 1
     assert len(r) == 6
 
 

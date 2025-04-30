@@ -29,7 +29,7 @@ class HiveFilePattern(Source):
     def sel(
         self,
         *args: Tuple[Dict[str, TypingAny]],
-        file_count_diag: Optional[TypingAny] = None,
+        _hive_diag: Optional[TypingAny] = None,
         **kwargs: TypingAny,
     ) -> Union[EmptySource, MultiSource]:
         from earthkit.data.core.index import normalize_selection
@@ -45,14 +45,16 @@ class HiveFilePattern(Source):
             for f in self.scanner.scan(**kwargs):
                 ds = from_source("file", f)
                 out += ds.sel(**rest)
-                if file_count_diag:
-                    file_count_diag.count += 1
+                if _hive_diag:
+                    _hive_diag.file(1)
+                    _hive_diag.sel(1)
+
             return out
         else:
             sources = [File(f) for f in self.scanner.scan(**kwargs)]
 
-            if file_count_diag:
-                file_count_diag.count += len(sources)
+            if _hive_diag:
+                _hive_diag.file(len(sources))
 
             src = MultiSource(sources)
 
