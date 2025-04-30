@@ -167,10 +167,10 @@ def test_hive_init_1():
     p = HivePattern(pattern)
 
     assert p.pattern == pattern
-    assert p.keys == ["shortName", "date", "step"]
-    assert p.dynamic_keys == ["shortName", "date", "step"]
-    assert p.fixed_single_keys == {}
-    assert p.fixed_multi_keys == {}
+    assert p.params == ["shortName", "date", "step"]
+    assert p.dynamic_params == ["shortName", "date", "step"]
+    assert p.fixed_single_params == {}
+    assert p.fixed_multi_params == {}
     assert p.root == ""
     assert p.rest == pattern
 
@@ -185,10 +185,10 @@ def test_hive_init_2():
     p = HivePattern(pattern)
 
     assert p.pattern == pattern
-    assert p.keys == ["year", "level", "shortName", "date", "step"]
-    assert p.dynamic_keys == ["year", "level", "shortName", "date", "step"]
-    assert p.fixed_single_keys == {}
-    assert p.fixed_multi_keys == {}
+    assert p.params == ["year", "level", "shortName", "date", "step"]
+    assert p.dynamic_params == ["year", "level", "shortName", "date", "step"]
+    assert p.fixed_single_params == {}
+    assert p.fixed_multi_params == {}
     assert p.root == "root_d"
     assert p.rest == pattern[7:]
 
@@ -228,10 +228,10 @@ def test_hive_init_3():
     p = HivePattern(pattern, {"year": [2023, 2024], "level": "500", "shortName": "t"})
 
     assert p.pattern == pattern
-    assert set(p.keys) == {"year", "level", "shortName", "date", "step"}
-    assert p.dynamic_keys == ["date", "step"]
-    assert p.fixed_single_keys == {"level": "500", "shortName": "t"}
-    assert p.fixed_multi_keys == {"year": [2023, 2024]}
+    assert set(p.params) == {"year", "level", "shortName", "date", "step"}
+    assert p.dynamic_params == ["date", "step"]
+    assert p.fixed_single_params == {"level": "500", "shortName": "t"}
+    assert p.fixed_multi_params == {"year": [2023, 2024]}
     assert p.root == "root_d"
     assert p.rest == "{year}/fc/t_500b_/at_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
 

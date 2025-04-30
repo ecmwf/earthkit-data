@@ -74,13 +74,13 @@ def test_pattern_variable_substitute(pattern, values, expected_value, error):
         ),
     ],
 )
-def test_pattern_variable_substitute_all(pattern, values, expected_value, error):
+def test_pattern_variable_substitute_many(pattern, values, expected_value, error):
     v = Variable(pattern)
     if not error:
-        assert v.substitute_all(values) == expected_value
+        assert v.substitute_many(values) == expected_value
     else:
         with pytest.raises(error):
-            v.substitute_all(values)
+            v.substitute_many(values)
 
 
 @pytest.mark.parametrize(

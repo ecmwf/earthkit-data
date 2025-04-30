@@ -10,6 +10,7 @@
 from typing import Any as TypingAny
 from typing import Dict
 from typing import Optional
+from typing import Tuple
 from typing import Union
 
 from earthkit.data.sources import Source
@@ -27,7 +28,7 @@ class HiveFilePattern(Source):
 
     def sel(
         self,
-        *args: Dict[str, TypingAny],
+        *args: Tuple[Dict[str, TypingAny]],
         file_count_diag: Optional[TypingAny] = None,
         **kwargs: TypingAny,
     ) -> Union[EmptySource, MultiSource]:
@@ -35,7 +36,7 @@ class HiveFilePattern(Source):
 
         kwargs = normalize_selection(*args, **kwargs)
 
-        rest = {k: v for k, v in kwargs.items() if k not in self.scanner.keys}
+        rest = {k: v for k, v in kwargs.items() if k not in self.scanner.params}
         for k in rest:
             del kwargs[k]
 
@@ -66,7 +67,7 @@ class FilePattern(MultiSource):
     def __init__(
         self,
         pattern: str,
-        *args: Dict[str, TypingAny],
+        *args: Tuple[Dict[str, TypingAny]],
         filter: Optional[TypingAny] = None,
         merger: Optional[TypingAny] = None,
         hive_partitioning: bool = False,

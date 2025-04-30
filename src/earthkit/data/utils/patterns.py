@@ -334,7 +334,10 @@ class Constant:
         """
         return self.value
 
-    def substitute_all(self, params: Dict[str, TypingAny]) -> TypingAny:
+    def substitute_many(self, params: Dict[str, TypingAny], **kwargs: TypingAny) -> TypingAny:
+        return [self.value]
+
+    def pattern(self) -> str:
         return self.value
 
     def __repr__(self) -> str:
@@ -361,26 +364,24 @@ class Variable:
 
         self.value = value
 
-    def substitute(self, params: Dict[str, TypingAny], allow_missing_keys: bool = False) -> TypingAny:
+    def substitute(self, params: Dict[str, TypingAny]) -> TypingAny:
         """Substitute value for a parameter.
 
         Parameters
         ----------
         params : dict
             The value belonging to ``self.name`` in ``params`` are
-            substituted into the Variable. The value to substitute must be a single value.
-            If ``self.name`` is not in  ``params``, a ValueError is raised unless ``allow_missing_keys`` is True.
-        allow_missing_keys : bool, optional
-            Whether to allow `self.name` not to be present in `params`.
+            substituted into the Variable. The value to substitute must be a
+            single value.
 
         Returns
         -------
-            Substituted values. If ``self.name`` is not in ``params``, and ``allow_missing_keys`` is True None ``{self.value}`` is returned.
+            Substituted value.
 
         Raises
         ------
         ValueError
-            If ``self.name`` is not in ``params`` and ``allow_missing_keys`` is False.
+            If ``self.name`` is not in ``params``.
 
         Example
         -------
@@ -391,18 +392,13 @@ class Variable:
         >>> v = Variable("my_date:date(%Y-%m-%d)")
         >>> v.substitute({"level": "500"})
         ValueError: Missing parameter 'my_date'
-
-        >>> v = Variable("my_date:date(%Y-%m-%d)")
-        >>> v.substitute({"level": "500"}, allow_missing_keys=True)
-        '{my_date:date(%Y-%m-%d)}'
         """
-        if self.name not in params:
-            if allow_missing_keys:
-                return "{" + self.value + "}"
+        if self.name in params:
+            return self.kind.substitute(params[self.name], self.name)
+        else:
             raise ValueError("Missing parameter '{}'".format(self.name))
-        return self.kind.substitute(params[self.name], self.name)
 
-    def substitute_all(self, params: Dict[str, TypingAny]) -> Optional[List[TypingAny]]:
+    def substitute_many(self, params: Dict[str, TypingAny]) -> Optional[List[TypingAny]]:
         """Substitute all values for a parameter.
 
         Parameters
@@ -414,29 +410,37 @@ class Variable:
         Returns
         -------
         list
-            List of substituted values. When ``self.name`` is not
-            in ``params``, None is returned.
+            List of substituted values.
+        Raises
+        ------
+        ValueError
+            If ``self.name`` is not in ``params``.
+
 
         Example
         -------
         >>> v = Variable("my_date:date(%Y-%m-%d)")
-        >>> v.substitute_all({"my_date": ["2000-01-01", "2000-01-02"]})
+        >>> v.substitute_many({"my_date": ["2000-01-01", "2000-01-02"]})
         ['2000-01-01', '2000-01-02']
 
         >>> v = Variable("my_date:date(%Y-%m-%d)")
-        >>> v.substitute_all({"my_date": "2000-01-01"})
+        >>> v.substitute_many({"my_date": "2000-01-01"})
         ['2000-01-01']
 
         >>> v = Variable("my_date:date(%Y-%m-%d)")
-        >>> v.substitute_all({"level": "500"})
-        None
+        >>> v.substitute_many({"level": "500"})
+        ValueError: Missing parameter 'my_date'
         """
         if self.name in params:
             v = params[self.name]
             if not isinstance(v, list):
                 v = [v]
             return [self.kind.substitute(x, self.name) for x in v]
-        return None
+        else:
+            raise ValueError("Missing parameter '{}'".format(self.name))
+
+    def pattern(self) -> str:
+        return "{" + self.value + "}"
 
     def __repr__(self) -> str:
         return f"Variable({self.name},{self.value},{self.kind})"
@@ -446,20 +450,20 @@ FUNCTIONS = dict(lower=lambda s: s.lower())
 
 
 class Function:
-    """Represents a function applied to a variable in a pattern."""
+    """Represents a function applied to a variable in a pattern.
+
+    Parameters
+    ----------
+    value : str
+        The function definition string.
+    """
 
     def __init__(self, value: str) -> None:
-        """Initialise the Function type.
-
-        Parameters
-        ----------
-        value : str
-            The function definition string.
-        """
         functions = value.split("|")
         self.name = functions[0]
         self.variable = Variable(functions[0])
         self.functions = functions[1:]
+        self._pattern = value
 
     def substitute(self, params: Dict[str, TypingAny], **kwargs: TypingAny) -> TypingAny:
         """Substitute the variable and apply functions.
@@ -474,23 +478,33 @@ class Function:
         Any
             The substituted and transformed value.
         """
-        value = self.variable.substitute(params)
+        value = self.variable.substitute(params, **kwargs)
         for f in self.functions:
             value = FUNCTIONS[f](value)
         return value
 
+    def substitute_many(self, params: Dict[str, TypingAny], **kwargs: TypingAny) -> TypingAny:
+        value = self.variable.substitute_many(params, **kwargs)
+        res = []
+        for f in self.functions:
+            for v in value:
+                res.append(FUNCTIONS[f](v))
+        return res
+
+    def pattern(self) -> str:
+        return self._pattern
+
 
 class Pattern:
-    """Represents a pattern with variables and constants."""
+    """Represents a pattern with variables and constants.
+
+    Parameters
+    ----------
+    pattern : str
+        The pattern string.
+    """
 
     def __init__(self, pattern: str) -> None:
-        """Initialise the Pattern type.
-
-        Parameters
-        ----------
-        pattern : str
-            The pattern string.
-        """
         self.pattern = []
         self.variables = []
         for i, p in enumerate(RE1.split(pattern)):
@@ -515,8 +529,7 @@ class Pattern:
     def substitute(
         self,
         *args: Tuple[Dict[str, TypingAny]],
-        allow_missing_keys: bool = False,
-        allow_extra_keys: bool = False,
+        allow_extra: bool = False,
         **kwargs: TypingAny,
     ) -> Union[str, List[str]]:
         """Substitute values into the pattern.
@@ -525,10 +538,8 @@ class Pattern:
         ----------
         args : tuple of dict
             Positional dictionaries of parameters to substitute.
-        allow_missing_keys : bool, optional
-            Whether to allow missing keys in the parameters.
-        allow_extra_keys : bool, optional
-            Whether to allow extra keys in the parameters.
+        allow_extra : bool, optional
+            Whether to allow using input with parameters not part of the Pattern.
         kwargs : dict
             Additional keyword arguments for substitution.
 
@@ -540,7 +551,7 @@ class Pattern:
         Raises
         ------
         ValueError
-            If there are unused parameters and `allow_extra_keys` is False.
+            If there are unused parameters and `allow_extra` is False.
         """
         params = {}
         for a in args:
@@ -549,28 +560,21 @@ class Pattern:
 
         for k, v in params.items():
             if isinstance(v, list):
-                return self._substitute_many(
-                    params, allow_missing_keys=allow_missing_keys, allow_extra_keys=allow_extra_keys
-                )
+                return self._substitute_many(params, allow_extra=allow_extra)
 
-        return self._substitute_one(
-            params, allow_missing_keys=allow_missing_keys, allow_extra_keys=allow_extra_keys
-        )
-        # TODO: discuss if this should be:
-        # return [self._substitute_one(params)]
+        return self._substitute_one(params, allow_extra=allow_extra)
 
     def _substitute_one(
         self,
         params: Dict[str, TypingAny],
-        allow_missing_keys: bool = False,
-        allow_extra_keys: bool = False,
+        allow_extra: bool = False,
     ) -> str:
         used = set(params.keys())
         result = []
         for p in self.pattern:
             used.discard(p.name)
-            result.append(p.substitute(params, allow_missing_keys=allow_missing_keys))
-        if used and not allow_extra_keys:
+            result.append(p.substitute(params))
+        if used and not allow_extra:
             raise ValueError("Unused parameter(s): {}".format(used))
 
         return "".join(str(x) for x in result)
@@ -578,8 +582,7 @@ class Pattern:
     def _substitute_many(
         self,
         params: Dict[str, TypingAny],
-        allow_missing_keys: bool = False,
-        allow_extra_keys: bool = False,
+        allow_extra: bool = False,
     ) -> List[str]:
         for k, v in list(params.items()):
             if not isinstance(v, list):
@@ -588,15 +591,37 @@ class Pattern:
         seen = set()
         result = []
         for n in (dict(zip(params.keys(), x)) for x in itertools.product(*params.values())):
-            m = self.substitute(n)
+            m = self.substitute(n, allow_extra=allow_extra)
             if m not in seen:
                 seen.add(m)
                 result.append(m)
 
         return result
 
+    def _subpattern(self, params: Dict[str, TypingAny]) -> str:
+        """Substitute the pattern with the given parameters.
+
+        Parameters
+        ----------
+        params : dict
+            The parameters to substitute. Each parameter must be a single value.
+
+        Returns
+        -------
+        str
+            The substituted pattern.
+        """
+        result = []
+        for p in self.pattern:
+            try:
+                result.append(p.substitute(params))
+            except ValueError:
+                result.append(p.pattern())
+
+        return "".join(str(x) for x in result)
+
     def match(self, value: str) -> Optional[re.Match]:
-        """Match pattern regex against value
+        """Match pattern regex against value.
 
         Parameters
         ----------
@@ -651,35 +676,54 @@ class Pattern:
 
 
 class HivePattern:
-    """Hive pattern for file names."""
+    """Hive pattern.
+
+    Parameters
+    ----------
+    pattern : str
+        The hive pattern string.
+    values : dict, optional
+        Dictionary of values for substitution, by default None.
+
+    Attributes
+    ----------
+    pattern : str
+        The original pattern string.
+    root : str
+        The root directory of the pattern. This is the beginning of the path not containing
+        any pattern parameters.
+    rest : str
+        The remaining part of the pattern after the root.
+    params : list
+        List of parameters in the pattern.
+    dynamic_params : list
+        List of parameters without user specified values in the pattern.
+    fixed_single_params : dict
+        Dictionary of user specified single value parameters.
+    fixed_multi_keys : dict
+        Dictionary of user specified multi value parameters.
+    parts : list
+        List of pattern parts. Each part is a Pattern object representing a part of the path.
+    """
 
     def __init__(self, pattern: str, values: Optional[Dict[str, TypingAny]] = None) -> None:
-        """Initialise the HivePattern type.
-
-        Parameters
-        ----------
-        pattern : str
-            The hive pattern string.
-        values : dict, optional
-            Dictionary of values for substitution, by default None.
-        """
         self.pattern = pattern
         values = values or {}
         values = dict(values)
 
         # substitute single values into the pattern
         pattern = Pattern(pattern)
-        self.fixed_single_keys = {}
+        self.fixed_single_params = {}
         for k in list(values.keys()):
             v = values[k]
             LOG.debug(f" {k=} {v=}")
             if isinstance(v, (list, tuple)):
                 if len(v) == 1:
-                    self.fixed_single_keys[k] = values.pop(k)[0]
+                    self.fixed_single_params[k] = values.pop(k)[0]
             elif v:
-                self.fixed_single_keys[k] = values.pop(k)
+                self.fixed_single_params[k] = values.pop(k)
 
-        pattern = pattern.substitute(self.fixed_single_keys, allow_missing_keys=True)
+        pattern = pattern._subpattern(self.fixed_single_params)
 
         # analyze path structure and turn each file path part into a
         # pattern
@@ -699,27 +743,27 @@ class HivePattern:
                 self.parts = parts[i:]
                 break
 
-        self.keys = list(self.fixed_single_keys.keys())
-        self.dynamic_keys = []
-        self.fixed_multi_keys = {}
+        self.params = list(self.fixed_single_params.keys())
+        self.dynamic_params = []
+        self.fixed_multi_params = {}
         for p in self.parts:
             for v in p.variables:
-                if v.name is not self.keys:
-                    s = v.substitute_all(values)
-                    if s is not None:
-                        self.fixed_multi_keys[v.name] = s
-                    else:
-                        self.dynamic_keys.append(v.name)
-                    self.keys.append(v.name)
+                if v.name is not self.params:
+                    try:
+                        s = v.substitute_many(values)
+                        self.fixed_multi_params[v.name] = s
+                    except ValueError:
+                        self.dynamic_params.append(v.name)
+                    self.params.append(v.name)
 
-        assert len(self.fixed_multi_keys) == len(values), f"{len(self.fixed_multi_keys)} != {len(values)}"
+        assert len(self.fixed_multi_params) == len(values), f"{len(self.fixed_multi_params)} != {len(values)}"
 
         LOG.debug(f"root={self.root}")
         LOG.debug(f"rest={self.rest}")
-        LOG.debug(f"keys={self.keys}")
-        LOG.debug(f"dynamic_keys={self.dynamic_keys}")
-        LOG.debug(f"fixed_single_keys={self.fixed_single_keys}")
-        LOG.debug(f"fixed_multi_keys={self.fixed_multi_keys}")
+        LOG.debug(f"params={self.params}")
+        LOG.debug(f"dynamic_params={self.dynamic_params}")
+        LOG.debug(f"fixed_single_params={self.fixed_single_params}")
+        LOG.debug(f"fixed_multi_params={self.fixed_multi_params}")
         for p in self.parts:
             LOG.debug(f" {p=}")
             LOG.debug(f"   re={p.regex}")
@@ -729,7 +773,7 @@ class HivePattern:
 
         Parameters
         ----------
-        args : tuple of dict
+        args : tuple of dicts
             Positional dictionaries of parameters for scanning.
         kwargs : dict
             Additional keyword arguments for scanning.
@@ -738,43 +782,43 @@ class HivePattern:
         -------
         list
             List of file paths matching the pattern.
+
+        Raises
+        ------
+        ValueError
+            If a parameter is not valid for the pattern.
         """
-        params = {}
+        params_in = {}
         for a in args:
-            params.update(a)
-        params.update(kwargs)
+            params_in.update(a)
+        params_in.update(kwargs)
 
-        for k in list(params.keys()):
-            if isinstance(params[k], tuple):
-                params[k] = list(params[k])
-            elif not isinstance(params[k], list):
-                params[k] = [params[k]]
-
-        rest = Path(self.rest).parts
-        LOG.debug(f"{rest=}")
+        for k in list(params_in.keys()):
+            if isinstance(params_in[k], tuple):
+                params_in[k] = list(params_in[k])
+            elif not isinstance(params_in[k], list):
+                params_in[k] = [params_in[k]]
 
         # determine param values to use
-        keys = {}
-        for k, v in params.items():
-            if k in self.fixed_single_keys:
-                if self.fixed_single_keys[k] not in v:
+        params = {}
+        for k, v in params_in.items():
+            if k in self.fixed_single_params:
+                if self.fixed_single_params[k] not in v:
                     return []
 
-            elif k in self.fixed_multi_keys:
-                v1 = [v1 for v1 in v if v1 in self.fixed_multi_keys[k]]
+            elif k in self.fixed_multi_params:
+                v1 = [v1 for v1 in v if v1 in self.fixed_multi_params[k]]
                 if v1:
-                    keys[k] = v1
+                    params[k] = v1
                 else:
                     return []
-            elif k in self.dynamic_keys:
-                keys[k] = v
+            elif k in self.dynamic_params:
+                params[k] = v
             else:
                 raise ValueError(f"Invalid key '{k}' not in pattern")
 
-        for k in keys:
-            keys[k] = set([str(x) for x in keys[k]])
-
-        LOG.debug(f"{keys=}")
+        for k in params:
+            params[k] = set([str(x) for x in params[k]])
 
         root_num = len(Path(self.root).parts)
         last = len(self.parts) - 1
@@ -782,20 +826,19 @@ class HivePattern:
 
         # walk the file system
         for root, dirs, files in os.walk(self.root):
-            LOG.debug(f"walk: {root=}")
+            # LOG.debug(f"walk: {root=}")
             index = len(Path(root).parts) - root_num
-            LOG.debug(f"{index=} {last=}")
-            # index = _get_index(root)
+            # LOG.debug(f"{index=} {last=}")
             part = self.parts[index]
 
             # intermediate level
             if index != last:
                 exclude = []
                 for d in dirs:
-                    g = self.collect(d, part, keys)
+                    g = self.collect(d, part, params)
                     if g is None:
                         exclude.append(d)
-                LOG.debug(f"   {exclude=}")
+                # LOG.debug(f"   {exclude=}")
                 if exclude:
                     dirs[:] = [d for d in dirs if d not in exclude]
                     continue
@@ -803,17 +846,15 @@ class HivePattern:
             # last level (collection)
             else:
                 for file in files:
-                    LOG.debug("  ", file)
-                    d = self.collect(file, part, keys)
+                    # LOG.debug(f"  {file=}")
+                    d = self.collect(file, part, params)
                     if d:
                         res.append(os.path.join(root, file))
-                        LOG.debug("MATCH")
-                    else:
-                        LOG.debug("NO MATCH")
+                        # LOG.debug("   match")
 
         return res
 
-    def collect(self, file: str, part: Pattern, keys: Dict[str, set[str]]) -> Optional[Dict[str, str]]:
+    def collect(self, file: str, part: Pattern, params: Dict[str, set[str]]) -> Optional[Dict[str, str]]:
         # LOG.debug(f"  match={file}")
         m = part.regex.match(file)
         if m:
@@ -823,9 +864,9 @@ class HivePattern:
             group = m.groupdict()
             if len(group) == len(part.variables):
                 for k, v in group.items():
-                    if k in keys:
-                        # LOG.debug(f"  {k=} {v=} {keys[k]=}")
-                        if v not in keys[k]:
+                    if k in params:
+                        # LOG.debug(f"  {k=} {v=} {params[k]=}")
+                        if v not in params[k]:
                             return None
                 return group
         return None
