@@ -79,6 +79,7 @@ optional-dependencies.test = [
   "earthkit-data-demo-source",
   "nbconvert",
   "nbformat",
+  "pyfakefs",
   "pytest",
   "pytest-cov",
   "pytest-forked",
