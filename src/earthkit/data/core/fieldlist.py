@@ -950,9 +950,6 @@ class Field(Base):
         r = self.clone(values=v)
         return r
 
-    def apply_ufunc(self, func, *args, **kwargs):
-        return self._unary_op(func)
-
 
 @wrap_maths
 class FieldList(Index):
@@ -1776,16 +1773,13 @@ class FieldList(Index):
         from earthkit.data.utils.compute import get_method
 
         method = "loop"
-        return get_method(method, self).unary_op(oper)
+        return get_method(method).unary_op(oper, self)
 
     def _binary_op(self, oper, y):
         from earthkit.data.utils.compute import get_method
 
         method = "loop"
-        return get_method(method, self).binary_op(oper, y)
-
-    def apply_ufunc(self, func, *args, **kwargs):
-        return self._unary_op(func)
+        return get_method(method).binary_op(oper, self, y)
 
 
 class MaskFieldList(FieldList, MaskIndex):

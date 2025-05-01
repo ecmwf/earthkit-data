@@ -15,6 +15,8 @@ import sys
 import numpy as np
 import pytest
 
+from earthkit.data.utils.compute import apply_ufunc
+
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
 from grib_fixtures import FL_NUMPY  # noqa: E402
@@ -279,6 +281,12 @@ def test_grib_compute_ufunc(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
     val, val_ref = operand(ds).val()
 
-    res = val.apply_ufunc(np.sin)
-    ref = np.sin(val_ref)
+    def func(x, y):
+        return np.sin(x) + y * 2
+
+    ds1 = val
+    ds2 = val + 1
+
+    res = apply_ufunc(func, ds1, ds2)
+    ref = func(val_ref, val_ref + 1)
     assert array_backend.allclose(res.values, ref, equal_nan=True)

@@ -61,12 +61,43 @@ def wrap_maths(cls):
     return cls
 
 
-class Compute(metaclass=ABCMeta):
-    def __init__(self, x):
-        self.x = x
-        if len(x) == 0:
-            raise ValueError("FieldList x must not be empty")
+def apply_ufunc(func, *args):
+    from earthkit.data.core.fieldlist import Field
+    from earthkit.data.core.fieldlist import FieldList
 
+    x = [get_wrapper(a) for a in args]
+
+    d = None
+
+    if len(x) == 1:
+        d = x[0]
+        return d._unary_op(func)
+    else:
+        num = 0
+        for a in x:
+            if isinstance(a, FieldList):
+                n = len(a)
+                if n > num:
+                    num = n
+                    d = a
+        if d is not None:
+            return get_method("loop").apply_ufunc(func, d, *x)
+
+        for a in x:
+            if isinstance(a, Field):
+                d = a
+                d = FieldList.from_fields([d])
+                r = get_method("loop").apply_ufunc(func, d, *x)
+                assert len(r) == 1
+                return r
+
+        if all(hasattr(a, "values") for a in x):
+            return func([f.values for f in x])
+
+    raise ValueError("Cannot find a suitable object to apply ufunc")
+
+
+class Compute(metaclass=ABCMeta):
     @abstractmethod
     def unary_op(self, oper):
         pass
@@ -77,73 +108,74 @@ class Compute(metaclass=ABCMeta):
 
 
 class LoopCompute(Compute):
-    def create_fieldlist(self, y):
+    @staticmethod
+    def create_fieldlist(ref, x):
         from earthkit.data.core.fieldlist import Field
         from earthkit.data.core.fieldlist import FieldList
 
-        y = get_wrapper(y)
+        x = get_wrapper(x)
 
-        if isinstance(y, FieldList):
-            return y
+        if isinstance(x, FieldList):
+            return x
 
-        from earthkit.data.sources.array_list import from_array
-        from earthkit.data.utils.metadata.dict import UserMetadata
+        if isinstance(x, Field):
+            return FieldList.from_fields([x])
+        elif hasattr(x, "values"):
+            from earthkit.data.sources.array_list import from_array
+            from earthkit.data.utils.metadata.dict import UserMetadata
 
-        if isinstance(y, Field):
-            return FieldList.from_fields([y])
-        elif hasattr(y, "values"):
-            x_field_shape = self.x[0].shape
-            y_val = y.values
+            x_val = x.values
             from earthkit.utils.array import array_namespace
 
-            xp = array_namespace(y_val)
-            y_val = xp.asarray(y_val)
+            xp = array_namespace(x_val)
+            x_val = xp.asarray(x_val)
 
             # single value
-            if y_val.size == 1:
-                return from_array([y_val], [UserMetadata()])
+            if x_val.size == 1:
+                return from_array([x_val], [UserMetadata()])
             # multiple values
             else:
-                y_shape = y_val.shape
-                if len(y_shape) > 1:
-                    y_field_shape = y_shape[1:]
-                    if math.prod(x_field_shape) == math.prod(y_field_shape):
-                        return from_array(y_val, [UserMetadata()] * y_shape[0])
-                elif math.prod(x_field_shape) == math.prod(y_shape):
-                    return from_array([y_val], [UserMetadata()])
-                elif y_shape[0] == len(self.x):
-                    return from_array(y_val, [UserMetadata()] * y_shape[0])
+                ref_field_shape = ref[0].shape
+                x_shape = x_val.shape
+                if len(x_shape) > 1:
+                    x_field_shape = x_shape[1:]
+                    if math.prod(ref_field_shape) == math.prod(x_field_shape):
+                        return from_array(x_val, [UserMetadata()] * x_shape[0])
+                elif math.prod(ref_field_shape) == math.prod(x_shape):
+                    return from_array([x_val], [UserMetadata()])
+                elif x_shape[0] == len(ref):
+                    return from_array(x_val, [UserMetadata()] * x_shape[0])
 
-            assumed_x_shape = tuple(len(self.x), **x_field_shape)
+            assumed_ref_shape = tuple(len(ref), **ref_field_shape)
+            raise ValueError(f"y shape={x.shape} cannot be used with x shape={assumed_ref_shape}")
 
-            raise ValueError(f"y shape={y.shape} cannot be used with x shape={assumed_x_shape}")
+        raise ValueError(f"y type={type(x)} cannot be used with x type={type(ref)}")
 
-        raise ValueError(f"y type={type(y)} cannot be used with x type={type(self.x)}")
-
-    def unary_op(self, oper):
+    @staticmethod
+    def unary_op(oper, x):
         r = []
-        for f in self.x:
+        for f in x:
             f = f._unary_op(oper)
             # f.to_disk()
             r.append(f)
-        return self.x.from_fields(r)
+        return x.from_fields(r)
 
-    def binary_op(self, oper, y):
+    @staticmethod
+    def binary_op(oper, x, y):
         from earthkit.data.core.fieldlist import FieldList
 
-        assert isinstance(self.x, FieldList)
+        assert isinstance(x, FieldList)
 
-        x = self.x
-        y = self.create_fieldlist(y)
+        y = LoopCompute.create_fieldlist(x, y)
         assert isinstance(y, FieldList)
 
         if len(y) == 0:
             raise ValueError("FieldList y must not be empty")
-        if len(self.x) != len(y):
+        if len(x) != len(y):
             from itertools import repeat
 
-            if len(self.x) == 1:
-                x = repeat(self.x[0])
+            if len(x) == 1:
+                x = repeat(x[0])
             elif len(y) == 1:
                 y = repeat(y[0])
             else:
@@ -156,12 +188,41 @@ class LoopCompute(Compute):
             r.append(f)
         return FieldList.from_fields(r)
 
+    @staticmethod
+    def apply_ufunc(func, ref, *args, template=None):
+        from earthkit.data.core.fieldlist import FieldList
+
+        x = [get_wrapper(a) for a in args]
+        ds = []
+        for i, a in enumerate(x):
+            if a is not ref:
+                a = LoopCompute.create_fieldlist(ref, a)
+                if len(a) == 0:
+                    raise ValueError(f"FieldList {a} at index={i} must not be empty")
+                if len(ref) != len(a):
+                    from itertools import repeat
+
+                    if len(a) == 1:
+                        a = repeat(a[0])
+                    else:
+                        raise ValueError("FieldLists must have the same length or one of them must be 1")
+            ds.append(a)
+
+        r = []
+        for f_ref, *f_ds in zip(ref, *ds):
+            x = [f.values for f in f_ds]
+            vx = func(*x)
+            f = f_ref.clone(values=vx)
+            # f.to_disk()
+            r.append(f)
+        return FieldList.from_fields(r)
+
 
 methods = {"loop": LoopCompute}
 
 
-def get_method(method, *args, **kwargs):
+def get_method(method):
     m = methods.get(method)
     if m is None:
         raise ValueError(f"Unknown method: {method}")
-    return m(*args, **kwargs)
+    return m
