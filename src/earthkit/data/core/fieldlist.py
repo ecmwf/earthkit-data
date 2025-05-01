@@ -91,8 +91,6 @@ class FieldListIndices:
 
 @wrap_maths
 class Field(Base):
-    WRAP_MATHS_ATTRS = {"__sub__"}
-
     @property
     def array_backend(self):
         r""":obj:`ArrayBackend`: Return the array backend of the field."""
@@ -958,7 +956,6 @@ class Field(Base):
 
 @wrap_maths
 class FieldList(Index):
-    WRAP_MATHS_ATTRS = {"__sub__"}
     r"""Represent a list of :obj:`Field` \s."""
 
     def __init__(self, **kwargs):
