@@ -24,6 +24,7 @@ from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import detect_out_filename
+from earthkit.data.utils.compute import wrap_maths
 from earthkit.data.utils.metadata.args import metadata_argument
 
 
@@ -34,41 +35,6 @@ def _bits_per_value_to_metadata(**kwargs):
     if bits_per_value is not None:
         metadata = {"bitsPerValue": bits_per_value}
     return metadata, kwargs
-
-
-def wrap_maths(cls):
-    from .compute import COMP_BINARY
-
-    def wrap_unary_method(fn):
-        def wrapper(self, *args, **kwargs):
-            return self._unary_op(fn, *args, **kwargs)
-
-        return wrapper
-
-    def wrap_binary_method(op):
-        def wrapper(self, *args, **kwargs):
-            return self._binary_op(op, *args, **kwargs)
-
-        return wrapper
-
-    # def wrap_binary_method(op):
-    #     def wrapper(self, *args, **kwargs):
-    #         return _binary_op(op, self, *args, **kwargs)
-
-    #     return wrapper
-
-    for name in COMP_BINARY:
-        op = COMP_BINARY[name]
-        setattr(cls, name, wrap_binary_method(op))
-
-    # for name in cls.WRAP_MATHS_ATTRS:
-    #     if name in COMP_BINARY:
-    #         it = COMP_BINARY[name]
-    #         setattr(cls, name, wrap_binary_method(it))
-    #     elif name in COMP_UNARY:
-    #         it = COMP_UNARY[name]
-    #         setattr(cls, name, wrap_unary_method(it))
-    return cls
 
 
 class FieldListIndices:
@@ -967,29 +933,6 @@ class Field(Base):
         shape = self._required_shape(flatten)
         return shape == array.shape and (dtype is None or dtype == array.dtype)
 
-    # def __sub__(self, other):
-    #     # from functools import partial
-    #     from .compute import COMP_BINARY
-
-    #     return self._binary_op(COMP_BINARY["__sub__"], other)
-
-    #     # return partial(self._binary_op, self, op)
-
-    # def __getattr__(self, name):
-    #     from functools import partial
-    #     from .compute import COMP_BINARY, COMP_UNARY
-
-    #     print("Field.__getattr__", name)
-
-    #     if name in COMP_UNARY:
-    #         op = COMP_UNARY[name]
-    #         return partial(self._unary_op, self, op)
-    #     elif name in COMP_BINARY:
-    #         op = COMP_BINARY[name]
-    #         return partial(self._binary_op, self, op)
-    #     else:
-    #         return super().__getattr__(name)
-
     def _unary_op(self, oper):
         v = oper(self.values)
         r = self.clone(values=v)
@@ -999,11 +942,18 @@ class Field(Base):
         from earthkit.data.wrappers import get_wrapper
 
         y = get_wrapper(y)
+        if isinstance(y, FieldList):
+            x = FieldList.from_fields([self])
+            return x._binary_op(oper, y)
+
         vx = self.values
         vy = y.values
         v = oper(vx, vy)
         r = self.clone(values=v)
         return r
+
+    def apply_ufunc(self, func, *args, **kwargs):
+        return self._unary_op(func)
 
 
 @wrap_maths
@@ -1826,16 +1776,19 @@ class FieldList(Index):
         return metadata_cache_diag(self)
 
     def _unary_op(self, oper):
-        from .compute import get_method
+        from earthkit.data.utils.compute import get_method
 
         method = "loop"
-        return get_method(method).unary_op(oper, self)
+        return get_method(method, self).unary_op(oper)
 
-    def _binary_op(self, oper, x):
-        from .compute import get_method
+    def _binary_op(self, oper, y):
+        from earthkit.data.utils.compute import get_method
 
         method = "loop"
-        return get_method(method).binary_op(oper, self, x)
+        return get_method(method, self).binary_op(oper, y)
+
+    def apply_ufunc(self, func, *args, **kwargs):
+        return self._unary_op(func)
 
 
 class MaskFieldList(FieldList, MaskIndex):

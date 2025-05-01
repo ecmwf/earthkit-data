@@ -345,8 +345,8 @@ class UserMetadata(Metadata):
 
     LS_KEYS = ["param", "level", "base_datetime", "valid_datetime", "step", "number"]
 
-    def __init__(self, d, shape=None, **kwargs):
-        self._data = d
+    def __init__(self, d=None, shape=None, **kwargs):
+        self._data = d or {}
         self._shape = shape
 
     def __len__(self):
