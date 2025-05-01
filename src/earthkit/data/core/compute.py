@@ -8,27 +8,7 @@
 #
 
 
-from earthkit.data import SimpleFieldList
 from earthkit.data.wrappers import get_wrapper
-
-# def func1(x):
-#     from earthkit.utils import array_namespace
-
-#     xp = array_namespace(x)
-#     return xp.sin(x)
-
-
-# c = ekd.apply_ufunc(func1, a)
-
-# func2 = lambda x: np.sin(x)
-
-# c = ekd.apply_ufunc(func2, a)
-
-# target = FdbTarget(conf=myconf)
-# ekd.add(a, b, target=target)
-
-# np.sin(a)
-
 
 COMP_UNARY = {"__neg__": lambda x: -x, "__pos__": lambda x: +x}
 
@@ -50,23 +30,41 @@ COMP_BINARY = {
 }
 
 
-def apply_ufunc(func, *args, **kwargs):
-    """Apply a ufunc to the data.
+def _unary_op(self, oper, x):
+    v = oper(self.values)
+    r = self.clone(values=v)
+    return r
 
-    Parameters
-    ----------
-    func : callable
-        The function to apply to the data.
-    args : tuple
-        The arguments to pass to the function.
-    kwargs : dict
-        The keyword arguments to pass to the function.
 
-    Returns
-    -------
-    FieldList
-        A new FieldList containing the results of applying the function to the data.
-    """
+def _binary_op(oper, x, y):
+    from earthkit.data.wrappers import get_wrapper
+
+    x = get_wrapper(x)
+    y = get_wrapper(y)
+    vx = x.values
+    vy = y.values
+    v = oper(vx, vy)
+    r = x.clone(values=v)
+    return r
+
+
+# def apply_ufunc(func, *args, **kwargs):
+#     """Apply a ufunc to the data.
+
+#     Parameters
+#     ----------
+#     func : callable
+#         The function to apply to the data.
+#     args : tuple
+#         The arguments to pass to the function.
+#     kwargs : dict
+#         The keyword arguments to pass to the function.
+
+#     Returns
+#     -------
+#     FieldList
+#         A new FieldList containing the results of applying the function to the data.
+#     """
 
 
 class Compute:
@@ -76,20 +74,29 @@ class Compute:
 class LoopCompute(Compute):
     @staticmethod
     def unary_op(oper, x):
+        from .fieldlist import FieldList
+
         r = []
         for f in x:
             f = f._unary_op(oper)
             f.to_disk()
             r.append(f)
-        return SimpleFieldList(r)
+        return FieldList.from_fields(r)
 
     @staticmethod
     def binary_op(oper, x, y):
+        from .fieldlist import Field
+        from .fieldlist import FieldList
+
         r = []
 
         from itertools import repeat
 
         if isinstance(x, FieldList) and isinstance(y, FieldList):
+            if len(x) == 0:
+                raise ValueError("FieldList x must not be empty")
+            if len(y) == 0:
+                raise ValueError("FieldList y must not be empty")
             if len(x) != len(y):
                 if len(x) == 1:
                     x = repeat(x[0])
@@ -97,35 +104,44 @@ class LoopCompute(Compute):
                     y = repeat(y[0])
                 else:
                     raise ValueError("FieldLists must have the same length")
-
         elif isinstance(x, FieldList):
             if isinstance(y, Field):
                 y = repeat(y)
             elif isinstance(y, (float, int)):
-                y = repeat(get_wrapper(y))
+                y = repeat(y)
             else:
                 raise ValueError("FieldList and Field must be of the same type")
+        elif isinstance(y, FieldList):
+            if isinstance(x, Field):
+                y = repeat(get_wrapper(y))
+            elif isinstance(y, (float, int)):
+                y = repeat(get_wrapper(y))
+            else:
+                raise ValueError("Unsupported type for y")
+
         else:
-            raise ValueError("FieldList and Field must be of the same type")
+            raise ValueError("Either x or y must be a FieldList")
 
         for f1, f2 in zip(x, y):
             f = f1._binary_op(oper, f2)
-            f.to_disk()
+            # f.to_disk()
             r.append(f)
-        return SimpleFieldList(r)
+        return FieldList.from_fields(r)
 
-    @staticmethod
-    def apply_ufunc(func, *args, **kwargs):
-        x = [get_wrapper(a) for a in args]
-        num = 0
-        for i in range(num):
-            v = func(*[a.values for a in x[i]], **kwargs)
-            return v
+    # @staticmethod
+    # def apply_ufunc(func, *args, **kwargs):
+    #     x = [get_wrapper(a) for a in args]
+    #     num = 0
+    #     for i in range(num):
+    #         v = func(*[a.values for a in x[i]], **kwargs)
+    #         return v
 
 
 class FullBlockCompute(Compute):
     @staticmethod
     def unary_op(oper, x):
+        from earthkit.data import SimpleFieldList
+
         v = oper(x.values)
         r = []
         for vx, f in zip(x, v):
@@ -136,6 +152,11 @@ class FullBlockCompute(Compute):
 
     @staticmethod
     def binary_op(oper, x, y):
+        from earthkit.data import SimpleFieldList
+
+        from .fieldlist import Field
+        from .fieldlist import FieldList
+
         r = []
 
         from itertools import repeat
@@ -172,76 +193,55 @@ class FullBlockCompute(Compute):
         return SimpleFieldList(r)
 
 
-class FieldList:
-    method = "loop"
+methods = {"loop": LoopCompute, "all": FullBlockCompute}
 
-    # def __add__(self, other):
-    #     return self._binary_op(comp["__add__"], self, other)
 
-    # def __radd__(self, other):
-    #     return self._binary_op(comp["__radd__"], self, other)
-
-    def __getattr__(self, name):
-        from functools import partial
-
-        if name in COMP_UNARY:
-            op = COMP_UNARY[name]
-            return partial(self._unary_op, self, op)
-        elif name in COMP_BINARY:
-            op = COMP_BINARY[name]
-            return partial(self._binary_op, self, op)
-        else:
-            return super().__getattr__(name)
-
-    @staticmethod
-    def _unary_op(oper, x, method=None):
-        # x = get_wrapper(x)
-
-        if method == "loop":
-            return LoopCompute.unary_op(oper, x)
-        elif method == "all":
-            return FullBlockCompute.unary_op(oper, x)
-
-        raise ValueError(f"Unknown method: {method}")
-
-    @staticmethod
-    def _binary_op(oper, x, y, method=None):
-        # x = get_wrapper(x)
-        # y = get_wrapper(y)
-
-        if method == "loop":
-            return LoopCompute.binary_op(oper, x, y)
-        elif method == "all":
-            return FullBlockCompute.binary_op(oper, x, y)
-
+def get_method(method):
+    m = methods.get(method)
+    if m is None:
         raise ValueError(f"Unknown method: {method}")
 
 
-class Field:
-    def __getattr__(self, name):
-        from functools import partial
+# class FieldList:
+#     method = "loop"
 
-        if name in COMP_UNARY:
-            op = COMP_UNARY[name]
-            return partial(self._unary_op, self, op)
-        elif name in COMP_BINARY:
-            op = COMP_BINARY[name]
-            return partial(self._binary_op, self, op)
-        else:
-            return super().__getattr__(name)
+#     # def __add__(self, other):
+#     #     return self._binary_op(comp["__add__"], self, other)
 
-    # def __add__(self, other):
-    #     op = comp["__add__"]
-    #     return self._binary_op(op, self, other)
+#     # def __radd__(self, other):
+#     #     return self._binary_op(comp["__radd__"], self, other)
 
-    def _unary_op(self, oper):
-        v = oper(self.values)
-        r = self.clone(values=v)
-        return r
+#     def __getattr__(self, name):
+#         from functools import partial
 
-    def _binary_op(self, oper, x, y):
-        vx = self.values
-        vy = y.values
-        v = oper(vx, vy)
-        r = self.clone(values=v)
-        return r
+#         if name in COMP_UNARY:
+#             op = COMP_UNARY[name]
+#             return partial(self._unary_op, self, op)
+#         elif name in COMP_BINARY:
+#             op = COMP_BINARY[name]
+#             return partial(self._binary_op, self, op)
+#         else:
+#             return super().__getattr__(name)
+
+#     @staticmethod
+#     def _unary_op(oper, x, method=None):
+#         # x = get_wrapper(x)
+
+#         if method == "loop":
+#             return LoopCompute.unary_op(oper, x)
+#         elif method == "all":
+#             return FullBlockCompute.unary_op(oper, x)
+
+#         raise ValueError(f"Unknown method: {method}")
+
+#     @staticmethod
+#     def _binary_op(oper, x, y, method=None):
+#         # x = get_wrapper(x)
+#         # y = get_wrapper(y)
+
+#         if method == "loop":
+#             return LoopCompute.binary_op(oper, x, y)
+#         elif method == "all":
+#             return FullBlockCompute.binary_op(oper, x, y)
+
+#         raise ValueError(f"Unknown method: {method}")

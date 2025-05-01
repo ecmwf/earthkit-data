@@ -36,6 +36,41 @@ def _bits_per_value_to_metadata(**kwargs):
     return metadata, kwargs
 
 
+def wrap_maths(cls):
+    from .compute import COMP_BINARY
+
+    def wrap_unary_method(fn):
+        def wrapper(self, *args, **kwargs):
+            return self._unary_op(fn, *args, **kwargs)
+
+        return wrapper
+
+    def wrap_binary_method(op):
+        def wrapper(self, *args, **kwargs):
+            return self._binary_op(op, *args, **kwargs)
+
+        return wrapper
+
+    # def wrap_binary_method(op):
+    #     def wrapper(self, *args, **kwargs):
+    #         return _binary_op(op, self, *args, **kwargs)
+
+    #     return wrapper
+
+    for name in COMP_BINARY:
+        op = COMP_BINARY[name]
+        setattr(cls, name, wrap_binary_method(op))
+
+    # for name in cls.WRAP_MATHS_ATTRS:
+    #     if name in COMP_BINARY:
+    #         it = COMP_BINARY[name]
+    #         setattr(cls, name, wrap_binary_method(it))
+    #     elif name in COMP_UNARY:
+    #         it = COMP_UNARY[name]
+    #         setattr(cls, name, wrap_unary_method(it))
+    return cls
+
+
 class FieldListIndices:
     def __init__(self, field_list):
         self.fs = field_list
@@ -88,8 +123,9 @@ class FieldListIndices:
         return self.user_indices[key]
 
 
+@wrap_maths
 class Field(Base):
-    r"""Represent a Field."""
+    WRAP_MATHS_ATTRS = {"__sub__"}
 
     @property
     def array_backend(self):
@@ -931,36 +967,48 @@ class Field(Base):
         shape = self._required_shape(flatten)
         return shape == array.shape and (dtype is None or dtype == array.dtype)
 
+    # def __sub__(self, other):
+    #     # from functools import partial
+    #     from .compute import COMP_BINARY
+
+    #     return self._binary_op(COMP_BINARY["__sub__"], other)
+
+    #     # return partial(self._binary_op, self, op)
+
     # def __getattr__(self, name):
     #     from functools import partial
+    #     from .compute import COMP_BINARY, COMP_UNARY
 
-    #     if name in comp_unary:
-    #         op = comp_unary[name]
+    #     print("Field.__getattr__", name)
+
+    #     if name in COMP_UNARY:
+    #         op = COMP_UNARY[name]
     #         return partial(self._unary_op, self, op)
-    #     elif name in comp:
-    #         op = comp[name]
+    #     elif name in COMP_BINARY:
+    #         op = COMP_BINARY[name]
     #         return partial(self._binary_op, self, op)
     #     else:
     #         return super().__getattr__(name)
 
-    # # def __add__(self, other):
-    # #     op = comp["__add__"]
-    # #     return self._binary_op(op, self, other)
+    def _unary_op(self, oper):
+        v = oper(self.values)
+        r = self.clone(values=v)
+        return r
 
-    # def _unary_op(self, oper):
-    #     v = oper(self.values)
-    #     r = self.clone(values=v)
-    #     return r
+    def _binary_op(self, oper, y):
+        from earthkit.data.wrappers import get_wrapper
 
-    # def _binary_op(self, oper, x, y):
-    #     vx = self.values
-    #     vy = y.values
-    #     v = oper(vx, vy)
-    #     r = self.clone(values=v)
-    #     return r
+        y = get_wrapper(y)
+        vx = self.values
+        vy = y.values
+        v = oper(vx, vy)
+        r = self.clone(values=v)
+        return r
 
 
+@wrap_maths
 class FieldList(Index):
+    WRAP_MATHS_ATTRS = {"__sub__"}
     r"""Represent a list of :obj:`Field` \s."""
 
     def __init__(self, **kwargs):
@@ -1776,6 +1824,18 @@ class FieldList(Index):
         from earthkit.data.utils.diag import metadata_cache_diag
 
         return metadata_cache_diag(self)
+
+    def _unary_op(self, oper):
+        from .compute import get_method
+
+        method = "loop"
+        return get_method(method).unary_op(oper, self)
+
+    def _binary_op(self, oper, x):
+        from .compute import get_method
+
+        method = "loop"
+        return get_method(method).binary_op(oper, self, x)
 
 
 class MaskFieldList(FieldList, MaskIndex):
