@@ -648,7 +648,7 @@ class SplitDatasetBuilder(DatasetBuilder):
                 datasets.append(xarray.open_dataset(ds, **self.xr_open_dataset_kwargs))
                 ds._ek_builder = None
 
-        return (datasets[0], split_coords_list[0]) if len(datasets) == 1 else (datasets, split_coords_list)
+        return datasets, split_coords_list
 
 
 def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
