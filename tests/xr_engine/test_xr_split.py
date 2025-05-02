@@ -43,17 +43,17 @@ from earthkit.data.testing import earthkit_remote_test_data_file
             None,
             ["valid_time"],
             [
-                {'stream': 'enda', 'dataType': 'an', 'edition': 1, 'Ni': 18},
-                {'stream': 'enda', 'dataType': 'em', 'edition': 1, 'Ni': 18},
-                {'stream': 'enda', 'dataType': 'es', 'edition': 1, 'Ni': 18},
-                {'stream': 'enda', 'dataType': 'fc', 'edition': 1, 'Ni': 18},
-                {'stream': 'enda', 'dataType': 'fc', 'edition': 2, 'Ni': 18},
-                {'stream': 'ewda', 'dataType': 'an', 'edition': 1, 'Ni': 12},
-                {'stream': 'ewda', 'dataType': 'em', 'edition': 1, 'Ni': 12},
-                {'stream': 'ewda', 'dataType': 'es', 'edition': 1, 'Ni': 12},
-                {'stream': 'oper', 'dataType': 'an', 'edition': 1, 'Ni': 36},
-                {'stream': 'oper', 'dataType': 'fc', 'edition': 1, 'Ni': 36},
-                {'stream': 'wave', 'dataType': 'an', 'edition': 1, 'Ni': 18},
+                {"stream": "enda", "dataType": "an", "edition": 1, "Ni": 18},
+                {"stream": "enda", "dataType": "em", "edition": 1, "Ni": 18},
+                {"stream": "enda", "dataType": "es", "edition": 1, "Ni": 18},
+                {"stream": "enda", "dataType": "fc", "edition": 1, "Ni": 18},
+                {"stream": "enda", "dataType": "fc", "edition": 2, "Ni": 18},
+                {"stream": "ewda", "dataType": "an", "edition": 1, "Ni": 12},
+                {"stream": "ewda", "dataType": "em", "edition": 1, "Ni": 12},
+                {"stream": "ewda", "dataType": "es", "edition": 1, "Ni": 12},
+                {"stream": "oper", "dataType": "an", "edition": 1, "Ni": 36},
+                {"stream": "oper", "dataType": "fc", "edition": 1, "Ni": 36},
+                {"stream": "wave", "dataType": "an", "edition": 1, "Ni": 18},
             ],
         ),
         # ({"base_datetime_dim": True}, "param", ["r", "t"], ["levelist"]),
@@ -67,8 +67,10 @@ def test_xr_split(url_suffix, kwargs, num, variables, dim_keys, split_values):
     ds_lst, split_coords_lst = ds_ek.to_xarray(**kwargs)
     assert len(ds_lst) == num
     assert len(split_coords_lst) == len(split_values)
+
     def dict_to_frozenset_of_kvpairs(d):
         return frozenset(d.items())
+
     _split_coords_lst = frozenset(map(dict_to_frozenset_of_kvpairs, split_coords_lst))
     _split_values = frozenset(map(dict_to_frozenset_of_kvpairs, split_values))
     assert _split_coords_lst == _split_values
