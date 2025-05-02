@@ -21,7 +21,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
     "url_suffix,kwargs,num,variables,dim_keys,split_values",
     [
         (
-            ["level", "pl.grib"], 
+            ["level", "pl.grib"],
             {"time_dim_mode": "raw", "split_dims": ["step"]},
             2,
             ["2t", "msl", "r", "t"],
@@ -29,7 +29,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
             [{"step": 0}, {"step": 6}],
         ),
         (
-            ["level", "pl.grib"], 
+            ["level", "pl.grib"],
             {"time_dim_mode": "raw", "split_dims": ["step"], "ensure_dims": "step"},
             2,
             ["2t", "msl", "r", "t"],
@@ -37,7 +37,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
             [{"step": 0}, {"step": 6}],
         ),
         (
-            ["cds-reanalysis-era5-single-levels-20230101-low-resol.grib"], 
+            ["cds-reanalysis-era5-single-levels-20230101-low-resol.grib"],
             {"time_dim_mode": "valid_time", "split_dims": ["stream", "dataType", "edition", "Ni"]},
             11,
             None,
@@ -53,7 +53,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
                 {'stream': 'ewda', 'dataType': 'es', 'edition': 1, 'Ni': 12},
                 {'stream': 'oper', 'dataType': 'an', 'edition': 1, 'Ni': 36},
                 {'stream': 'oper', 'dataType': 'fc', 'edition': 1, 'Ni': 36},
-                {'stream': 'wave', 'dataType': 'an', 'edition': 1, 'Ni': 18}, 
+                {'stream': 'wave', 'dataType': 'an', 'edition': 1, 'Ni': 18},
             ],
         ),
         # ({"base_datetime_dim": True}, "param", ["r", "t"], ["levelist"]),
