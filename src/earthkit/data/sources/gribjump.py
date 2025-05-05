@@ -15,6 +15,8 @@ except ImportError:
 import itertools
 import os
 from typing import Any
+from typing import Optional
+from typing import Union
 
 import numpy as np
 
@@ -24,8 +26,8 @@ from earthkit.data.sources.array_list import ArrayField
 from earthkit.data.utils.metadata.dict import UserMetadata
 
 
-def expand_multivalued_dicts(
-    request: dict[str, str | list[str]],
+def expand_dict_with_lists(
+    request: dict[str, Union[str, list[str]]],
 ) -> list[dict[str, str]]:
     """
     Expands a dictionary containing list values into multiple dictionaries representing all possible combinations.
@@ -46,7 +48,7 @@ def expand_multivalued_dicts(
         ]
 
     Args:
-        request (dict[str, str | list[str]]): Dictionary with string keys and either string
+        request (dict[str, Union[str, list[str]]]): Dictionary with string keys and either string
             or list of strings as values.
 
     Returns:
@@ -72,7 +74,7 @@ def expand_multivalued_dicts(
 
 
 class FieldExtractList(SimpleFieldList):
-    """Lazily loaded representation of the points extrated from multiple fields using GribJump.
+    """Lazily loaded representation of the points extracted from multiple fields using GribJump.
 
     For simplicity, this class currently inherits from SimpleFieldList and is
     inspired by the FieldlistFromDicts and GribFieldListInMemory classes.
@@ -86,7 +88,7 @@ class FieldExtractList(SimpleFieldList):
     * FieldExtractList.sel is quite brittle as any filter value must be a string.
      The underlying metadata is stored as a dictionary of strings, and no
      automatic type conversion is done. Any more complex filtering and slicing
-     will not work for most data types. Also, order_by and simialr methods will
+     will not work for most data types. Also, order_by and similar methods will
      perform lexicographical sorting on the string values.
     * Efficient lazy loading of selections / slices only is not supported.
     * Pickling / unpickling might not work.
@@ -146,9 +148,9 @@ class GribJumpSource(Source):
         self,
         request: dict,
         *,
-        ranges: list[tuple[int, int]] | None = None,
-        mask: np.ndarray | None = None,
-        indices: np.ndarray | None = None,
+        ranges: Optional[list[tuple[int, int]]] = None,
+        mask: Optional[np.ndarray] = None,
+        indices: Optional[np.ndarray] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -159,7 +161,7 @@ class GribJumpSource(Source):
                 f"Got {ranges=}, {mask=}, {indices=}"
             )
         self._ranges = ranges
-        self._masks = mask
+        self._mask = mask
         self._indices = indices
 
         self._check_env()
@@ -201,7 +203,8 @@ class GribJumpSource(Source):
 
         Since GribJump returns its result arrays without metadata, we need to split the
         request into many single requests to later map the outputs to the correct fields.
-        Additionally performs some basic validation and converts all values to strings.
+        Additionally performs some basic validation and converts all values to strings since
+        GribJump only supports string values in the request.
         """
 
         request = request.copy()
@@ -221,14 +224,14 @@ class GribJumpSource(Source):
             else:
                 request[k] = [str(i) for i in v]
 
-        expanded_requests = expand_multivalued_dicts(request)
+        expanded_requests = expand_dict_with_lists(request)
         return expanded_requests
 
     def _build_extraction_requests(self, mars_requests: list[dict[str, str]]) -> list[pygj.ExtractionRequest]:
         if self._ranges is not None:
             requests = [pygj.ExtractionRequest(request, self._ranges) for request in mars_requests]
-        elif self._masks is not None:
-            requests = [pygj.ExtractionRequest.from_mask(request, self._masks) for request in mars_requests]
+        elif self._mask is not None:
+            requests = [pygj.ExtractionRequest.from_mask(request, self._mask) for request in mars_requests]
         elif self._indices is not None:
             requests = [
                 pygj.ExtractionRequest.from_indices(request, self._indices) for request in mars_requests

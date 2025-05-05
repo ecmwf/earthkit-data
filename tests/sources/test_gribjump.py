@@ -24,8 +24,8 @@ from earthkit.data.testing import earthkit_test_data_file
 
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
-def test_expand_multivalued_dicts():
-    from earthkit.data.sources.gribjump import expand_multivalued_dicts
+def test_expand_dict_with_lists():
+    from earthkit.data.sources.gribjump import expand_dict_with_lists
 
     request = {
         "b": ["hello", "world"],
@@ -41,15 +41,15 @@ def test_expand_multivalued_dicts():
         {"a": 3, "b": "world", "c": 5},
     ]
 
-    expanded_requests = expand_multivalued_dicts(request)
+    expanded_requests = expand_dict_with_lists(request)
     assert expanded_requests == expected_dicts
 
-    assert expand_multivalued_dicts({}) == [{}]
-    assert expand_multivalued_dicts({"a": 1}) == [{"a": 1}]
-    assert expand_multivalued_dicts({"a": 1, "b": 2}) == [{"a": 1, "b": 2}]
+    assert expand_dict_with_lists({}) == [{}]
+    assert expand_dict_with_lists({"a": 1}) == [{"a": 1}]
+    assert expand_dict_with_lists({"a": 1, "b": 2}) == [{"a": 1, "b": 2}]
 
     with pytest.raises(ValueError, match="Cannot expand dictionary with empty list"):
-        expand_multivalued_dicts({"a": 1, "b": []})
+        expand_dict_with_lists({"a": 1, "b": []})
 
 
 @pytest.fixture
