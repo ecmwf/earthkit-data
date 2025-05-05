@@ -23,6 +23,27 @@ from earthkit.data.core.temporary import temp_env
 from earthkit.data.testing import earthkit_test_data_file
 
 
+def test_expand_multivalued_dicts():
+    from earthkit.data.sources.gribjump import expand_multivalued_dicts
+
+    request = {
+        "b": ["hello", "world"],
+        "a": [1, 2, 3],
+        "c": 5,
+    }
+    expected_dicts = [
+        {"a": 1, "b": "hello", "c": 5},
+        {"a": 1, "b": "world", "c": 5},
+        {"a": 2, "b": "hello", "c": 5},
+        {"a": 2, "b": "world", "c": 5},
+        {"a": 3, "b": "hello", "c": 5},
+        {"a": 3, "b": "world", "c": 5},
+    ]
+
+    expanded_requests = expand_multivalued_dicts(request)
+    assert expanded_requests == expected_dicts
+
+
 @pytest.fixture
 def setup_fdb_with_gribjump():
     import pyfdb
@@ -55,10 +76,9 @@ def setup_fdb_with_gribjump():
         gj_config_path.write_text(yaml.dump(gj_config))
 
         with temp_env(
-            # FDB5_CONFIG="",
             FDB5_CONFIG_FILE=str(fdb_config_path),
             FDB_ENABLE_GRIBJUMP="1",
-            FDB_HOME="",
+            FDB_HOME=str(fdb_dir),
             GRIBJUMP_CONFIG_FILE=str(gj_config_path),
             GRIBJUMP_IGNORE_GRID="1",
         ):

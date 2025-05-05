@@ -18,29 +18,42 @@ from typing import Any
 
 import numpy as np
 
+from earthkit.data.indexing.fieldlist import SimpleFieldList
 from earthkit.data.sources import Source
+from earthkit.data.sources.array_list import ArrayField
+from earthkit.data.utils.metadata.dict import UserMetadata
 
 
 def expand_multivalued_dicts(
     request: dict[str, str | list[str]],
 ) -> list[dict[str, str]]:
     """
-    Expands a dictionary with list values into multiple dictionaries,
-    each containing one combination of the list values.
+    Expands a dictionary containing list values into multiple dictionaries representing all possible combinations.
+
+    For each list-type value in the input dictionary, this function creates all possible combinations
+    with other list values, while keeping non-list values constant across all output dictionaries.
+
+    The list keys are sorted alphabetically before generating combinations to ensure consistent
+    and deterministic ordering of the output dictionaries regardless of the original key order.
 
     Example:
         Input: {'a': [1, 2], 'b': [3, 4], 'c': 5}
-        Output: [{'a': 1, 'b': 3, 'c': 5}, {'a': 1, 'b': 4, 'c': 5},
-                 {'a': 2, 'b': 3, 'c': 5}, {'a': 2, 'b': 4, 'c': 5}]
+        Output: [
+            {'a': 1, 'b': 3, 'c': 5},
+            {'a': 1, 'b': 4, 'c': 5},
+            {'a': 2, 'b': 3, 'c': 5},
+            {'a': 2, 'b': 4, 'c': 5}
+        ]
 
     Args:
-        request (dict): The original dictionary containing keys and values.
+        request (dict[str, str | list[str]]): Dictionary with string keys and either string
+            or list of strings as values.
 
     Returns:
-        list: A list of dictionaries, each representing a unique combination
-              of the list values in the original dictionary.
+        list[dict[str, str]]: A list of dictionaries, where each dictionary contains one
+            specific combination of the input list values, with non-list values preserved.
     """
-    list_keywords = [k for k, v in request.items() if isinstance(v, list)]
+    list_keywords = sorted(k for k, v in request.items() if isinstance(v, list))
     values = [request[k] for k in list_keywords]
     expanded_requests = []
     for combination in itertools.product(*values):
@@ -49,6 +62,76 @@ def expand_multivalued_dicts(
             new_request[k] = v
         expanded_requests.append(new_request)
     return expanded_requests
+
+
+class FieldExtractList(SimpleFieldList):
+    """Lazily loaded representation of the points extrated from multiple fields using GribJump.
+
+    For simplicity, this class currently inherits from SimpleFieldList and is
+    inspired by the FieldlistFromDicts and GribFieldListInMemory classes.
+    However, it is not a complete implementation and can break in unexpected
+    ways. The main reason for this is that although the arrays with the
+    extracted values are represented as ArrayFields, they are not truly proper
+    Field implementations. They are neither stored as 2D grids, nor do they
+    possess any geographical information or well-defined metadata.
+
+    Known limitations:
+    * FieldExtractList.sel is quite brittle as any filter value must be a string.
+     The underlying metadata is stored as a dictionary of strings, and no
+     automatic type conversion is done. Any more complex filtering and slicing
+     will not work for most data types. Also, order_by and simialr methods will
+     perform lexicographical sorting on the string values.
+    * Efficient lazy loading of selections / slices only is not supported.
+    * Pickling / unpickling might not work.
+    * to_pandas and to_xarray methods are not implemented.
+    """
+
+    def __init__(
+        self,
+        gj: pygj.GribJump,
+        requests: list[dict[str, str]],
+        extraction_requests: list[pygj.ExtractionRequest],
+    ):
+        if len(requests) != len(extraction_requests):
+            raise ValueError(
+                f"Number of MARS requests ({len(requests)}) and GribJump extraction requests ({len(extraction_requests)}) must match."
+            )
+        self._gj = gj
+        self._requests = requests
+        self._extraction_requests = extraction_requests
+        self._loaded = False
+
+        super().__init__(fields=None)  # The fields attribute is set lazily
+
+    def __len__(self):
+        self._load()
+        return super().__len__()
+
+    def __getitem__(self, n):
+        self._load()
+        return super().__getitem__(n)
+
+    def _load(self):
+        if self._loaded:
+            return
+
+        extraction_results = self._gj.extract(self._extraction_requests)
+
+        fields = []
+        for i, result in enumerate(extraction_results):
+            arr = result.values_flat
+            metadata = self._requests[i]
+            field = ArrayField(arr, UserMetadata(metadata, shape=arr.shape))
+            fields.append(field)
+
+        self.fields = fields
+        self._loaded = True
+
+    def to_xarray(self, *args, **kwargs):
+        self._not_implemented()
+
+    def to_pandas(self, *args, **kwargs):
+        self._not_implemented()
 
 
 class GribJumpSource(Source):
@@ -74,12 +157,22 @@ class GribJumpSource(Source):
 
         self._check_env()
         self._gj = pygj.GribJump()
-        self._requests = self._split_mars_requests(request)
+
+        self._mars_requests = self._split_mars_requests(request)
+        self._gj_extraction_requests = self._build_extraction_requests(self._mars_requests)
 
     def _check_env(self):
+        fdb_conf = os.environ.get("FDB5_CONFIG", None)
+        fdb_home = os.environ.get("FDB_HOME", None)
         gj_config_file = os.environ.get("GRIBJUMP_CONFIG_FILE", None)
         gj_ignore_grid = os.environ.get("GRIBJUMP_IGNORE_GRID", None)
 
+        if fdb_home is None and fdb_conf is None:
+            raise RuntimeError(
+                """Neither FDB_HOME nor FDB5_CONFIG environment variable
+                was set! Please define either one to access FDB.
+                See: https://fields-database.readthedocs.io for details about FDB."""
+            )
         if gj_config_file is None:
             raise RuntimeError(
                 "Environment variable 'GRIBJUMP_CONFIG_FILE' is not set but "
@@ -113,7 +206,7 @@ class GribJumpSource(Source):
                 # TODO: Check if there are valid reasons to use '/' apart from
                 # lists and ranges.
                 raise ValueError(
-                    f"Found unexpected '/' in value '{v}' for keyword '{k}'. "
+                    f"Found unsupported list or range using '/' in value '{v}' for keyword '{k}'. "
                     "Use Python lists to load from multiple fields."
                 )
             elif not isinstance(v, list):
@@ -121,30 +214,28 @@ class GribJumpSource(Source):
             else:
                 request[k] = [str(i) for i in v]
 
-        # Expand the request into all combinations of the list values
         expanded_requests = expand_multivalued_dicts(request)
         return expanded_requests
 
-    def _build_extraction_requests(self) -> list[pygj.ExtractionRequest]:
+    def _build_extraction_requests(self, mars_requests: list[dict[str, str]]) -> list[pygj.ExtractionRequest]:
         if self._ranges is not None:
-            requests = [pygj.ExtractionRequest(request, self._ranges) for request in self._requests]
+            requests = [pygj.ExtractionRequest(request, self._ranges) for request in mars_requests]
         elif self._masks is not None:
-            requests = [pygj.ExtractionRequest.from_mask(request, self._masks) for request in self._requests]
+            requests = [pygj.ExtractionRequest.from_mask(request, self._masks) for request in mars_requests]
         elif self._indices is not None:
             requests = [
-                pygj.ExtractionRequest.from_indices(request, self._indices) for request in self._requests
+                pygj.ExtractionRequest.from_indices(request, self._indices) for request in mars_requests
             ]
         else:
-            raise ValueError(
-                "No valid extraction request found. " "Please set either 'ranges', 'mask' or 'indices'."
-            )
+            raise ValueError("No valid extraction method specified.")
         return requests
 
-    def to_numpy(self, **kwargs):
-        extract_iter = self._gj.extract(self._build_extraction_requests())
-        flattened_arrays = [res.values_flat for res in extract_iter]
-        combined_array = np.stack(flattened_arrays)
-        return combined_array
+    def mutate(self):
+        return FieldExtractList(
+            self._gj,
+            self._mars_requests,
+            self._gj_extraction_requests,
+        )
 
 
 source = GribJumpSource
