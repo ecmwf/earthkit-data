@@ -49,3 +49,21 @@ def test_xarray_lazy_fieldlist_scan():
     assert ds._fields is None
     assert len(ds) == 2
     assert len(ds._fields) == 2
+
+
+@pytest.mark.no_eccodes
+def test_xarray_to_numpy():
+    import xarray as xr
+
+    data_array = xr.DataArray(
+        [[1, 2, 3], [4, 5, 6]],
+        dims=["x", "y"],
+        coords={"x": [1, 2], "y": [3, 4, 5]},
+    )
+    ds = from_object(data_array)
+
+    arr_2d = ds.to_numpy()
+    assert arr_2d.shape == (2, 3)
+
+    arr_1d = ds.to_numpy(flatten=True)
+    assert arr_1d.shape == (6,)
