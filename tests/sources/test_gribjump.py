@@ -13,16 +13,17 @@
 import shutil
 from pathlib import Path
 
-import numpy as np
 import pytest
 import yaml
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.core.temporary import temp_env
+from earthkit.data.testing import NO_GRIBJUMP
 from earthkit.data.testing import earthkit_test_data_file
 
 
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
 def test_expand_multivalued_dicts():
     from earthkit.data.sources.gribjump import expand_multivalued_dicts
 
@@ -42,6 +43,13 @@ def test_expand_multivalued_dicts():
 
     expanded_requests = expand_multivalued_dicts(request)
     assert expanded_requests == expected_dicts
+
+    assert expand_multivalued_dicts({}) == [{}]
+    assert expand_multivalued_dicts({"a": 1}) == [{"a": 1}]
+    assert expand_multivalued_dicts({"a": 1, "b": 2}) == [{"a": 1, "b": 2}]
+
+    with pytest.raises(ValueError, match="Cannot expand dictionary with empty list"):
+        expand_multivalued_dicts({"a": 1, "b": []})
 
 
 @pytest.fixture
@@ -95,7 +103,10 @@ def seed_fdb(setup_fdb_with_gribjump):
     yield setup_fdb_with_gribjump
 
 
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
 def test_gribjump_with_ranges(seed_fdb):
+    import numpy as np
+
     request = {
         "class": "od",
         "date": "20201221",
@@ -117,7 +128,10 @@ def test_gribjump_with_ranges(seed_fdb):
     assert arr.shape == (2, 3)
 
 
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
 def test_gribjump_with_mask(seed_fdb):
+    import numpy as np
+
     request = {
         "class": "od",
         "date": "20201221",
@@ -140,7 +154,10 @@ def test_gribjump_with_mask(seed_fdb):
     assert arr.shape == (2, 7)
 
 
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
 def test_gribjump_with_indices(seed_fdb):
+    import numpy as np
+
     request = {
         "class": "od",
         "date": "20201221",
@@ -163,7 +180,39 @@ def test_gribjump_with_indices(seed_fdb):
     assert arr.shape == (2, 7)
 
 
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
+def test_gribjump_source_against_manually_masked_grid(seed_fdb):
+    import numpy as np
+
+    request = {
+        "class": "od",
+        "date": "20201221",
+        "domain": "g",
+        "expver": "0001",
+        "levelist": "1000",
+        "levtype": "pl",
+        "param": "129",
+        "step": [0, 6],
+        "stream": "oper",
+        "time": "1200",
+        "type": "fc",
+    }
+
+    mask = (np.eye(7, 12, dtype=bool) | np.eye(7, 12, k=1, dtype=bool)).ravel()
+
+    gj_source = from_source("gribjump", request, mask=mask)
+    file_source = from_source("file", earthkit_test_data_file("t_time_series.grib"))
+
+    expected_arr = file_source.sel(step=[0, 6], param="z").to_numpy().reshape(2, -1)[:, mask]
+    extracted_arr = gj_source.to_numpy()
+
+    assert np.allclose(expected_arr, extracted_arr)
+
+
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
 def test_gribjump_with_invalid_options(seed_fdb):
+    import numpy as np
+
     request = {
         "class": "od",
         "date": "20201221",

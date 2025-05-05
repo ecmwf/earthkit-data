@@ -53,10 +53,17 @@ def expand_multivalued_dicts(
         list[dict[str, str]]: A list of dictionaries, where each dictionary contains one
             specific combination of the input list values, with non-list values preserved.
     """
+    if empty_list_keys := [k for k, v in request.items() if isinstance(v, list) and len(v) == 0]:
+        raise ValueError(
+            "Cannot expand dictionary with empty list. "
+            f"Found empty list for keys: {', '.join(empty_list_keys)}"
+        )
+
     list_keywords = sorted(k for k, v in request.items() if isinstance(v, list))
-    values = [request[k] for k in list_keywords]
+    lists = [request[k] for k in list_keywords]
+
     expanded_requests = []
-    for combination in itertools.product(*values):
+    for combination in itertools.product(*lists):
         new_request = request.copy()
         for k, v in zip(list_keywords, combination):
             new_request[k] = v
