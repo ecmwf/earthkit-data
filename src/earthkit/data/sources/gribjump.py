@@ -118,6 +118,8 @@ class GribJumpSource(Source):
                 )
             elif not isinstance(v, list):
                 request[k] = str(v)
+            else:
+                request[k] = [str(i) for i in v]
 
         # Expand the request into all combinations of the list values
         expanded_requests = expand_multivalued_dicts(request)
@@ -125,24 +127,16 @@ class GribJumpSource(Source):
 
     def _build_extraction_requests(self) -> list[pygj.ExtractionRequest]:
         if self._ranges is not None:
-            requests = [
-                pygj.ExtractionRequest(request, self._ranges)
-                for request in self._requests
-            ]
+            requests = [pygj.ExtractionRequest(request, self._ranges) for request in self._requests]
         elif self._masks is not None:
-            requests = [
-                pygj.ExtractionRequest.from_mask(request, self._masks)
-                for request in self._requests
-            ]
+            requests = [pygj.ExtractionRequest.from_mask(request, self._masks) for request in self._requests]
         elif self._indices is not None:
             requests = [
-                pygj.ExtractionRequest.from_indices(request, self._indices)
-                for request in self._requests
+                pygj.ExtractionRequest.from_indices(request, self._indices) for request in self._requests
             ]
         else:
             raise ValueError(
-                "No valid extraction request found. "
-                "Please set either 'ranges', 'mask' or 'indices'."
+                "No valid extraction request found. " "Please set either 'ranges', 'mask' or 'indices'."
             )
         return requests
 

@@ -18,7 +18,8 @@ import pytest
 import yaml
 
 from earthkit.data import from_source
-from earthkit.data.core.temporary import temp_directory, temp_env
+from earthkit.data.core.temporary import temp_directory
+from earthkit.data.core.temporary import temp_env
 from earthkit.data.testing import earthkit_test_data_file
 
 
@@ -161,8 +162,11 @@ def test_gribjump_with_invalid_options(seed_fdb):
         from_source(
             "gribjump",
             request,
-            ranges=[(0, 1), (10, 12)],
-            indices=np.array([0, 7, 14, 21, 28, 35, 42])
+        )
+
+    with pytest.raises(ValueError, match="Exactly one of"):
+        from_source(
+            "gribjump", request, ranges=[(0, 1), (10, 12)], indices=np.array([0, 7, 14, 21, 28, 35, 42])
         )
 
 
