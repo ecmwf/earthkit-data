@@ -806,8 +806,8 @@ fdb
     - :meth:`~data.core.fieldlist.FieldList.to_xarray` works without retrieving the GRIB data
     - the retrieved GRIB data is not cached (either in memory or on disk) but gets deleted as soon as the data values are extracted. Repeated request for the data values will trigger a new retrieval.
     - the resulting :py:class:`FieldList` always retrives one GRIB field as a reference and stores it in memory throughout the lifetime of the :py:class:`FieldList`. This is managed internally.
-    
-    When ``lazy=True`` the ``stream`` and ``read_all`` options are ignored. Please note that this is an **experimental** feature. *New in version 0.14.0*  
+
+    When ``lazy=True`` the ``stream`` and ``read_all`` options are ignored. Please note that this is an **experimental** feature. *New in version 0.14.0*
   :param dict **kwargs: other keyword arguments specifying the request
 
   The following example retrieves analysis :ref:`grib` data for 3 surface parameters as stream.
