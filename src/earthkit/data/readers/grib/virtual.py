@@ -24,10 +24,10 @@ LOG = logging.getLogger(__name__)
 
 
 class VirtualGribField(Field):
-    def __init__(self, owner, request, md, reference=None):
+    def __init__(self, owner, request, metadata_alias, reference=None):
         self.owner = owner
         self.request = request
-        self.md = md
+        self.metadata_alias = metadata_alias
         self.reference = reference
 
         self.extra = {}
@@ -94,8 +94,8 @@ class VirtualGribField(Field):
             return self.extra[key]
         if key in self.request:
             return self.request[key]
-        if key in self.md and key in self.request:
-            return self.request[self.md[key]]
+        if key in self.metadata_alias and key in self.request:
+            return self.request[self.metadata_alias[key]]
 
         if key == "number":
             return 0
@@ -110,12 +110,11 @@ class VirtualGribField(Field):
             return self._valid_datetime.isoformat()
 
         return self._metadata.get(key, **kwargs)
-        # return super().one_metadata(key, **kwargs)
 
     @property
     def _metadata(self):
         r = {**self.request, **self.extra}
-        for k, v in self.md.items():
+        for k, v in self.metadata_alias.items():
             if k not in r and v in r:
                 r[k] = r[v]
 
@@ -135,14 +134,15 @@ class VirtualGribField(Field):
 
 class VirtualGribFieldList(GribFieldList):
     def __init__(self, request_mapper, retriever):
-        self.mapper = request_mapper
+        self.request_mapper = request_mapper
         self.retriever = retriever
 
-        path = self.retriever.get(self.mapper.request_at(0))
+        path = self.retriever.get(self.request_mapper.request_at(0))
         self.reference = from_source("file", path)[0]
+        self._info_cache = {}
 
     def __len__(self):
-        return len(self.mapper)
+        return len(self.request_mapper)
 
     def mutate(self):
         return self
@@ -155,13 +155,22 @@ class VirtualGribFieldList(GribFieldList):
                 raise IndexError(f"Index {n} out of range")
 
             return VirtualGribField(
-                self, self.mapper.request_at(n), self.mapper.md, reference=self.reference if n == 0 else None
+                self,
+                self.request_mapper.request_at(n),
+                self.request_mapper.metadata_alias,
+                reference=self.reference if n == 0 else None,
             )
 
     def _get_info(self, param):
-        ref_request = self.mapper.request_at(0)
+        if param in self._info_cache:
+            return self._info_cache[param]
+
+        ref_request = self.request_mapper.request_at(0)
         if param == ref_request.get("param"):
-            return self.reference._attributes(["shortName", "name", "units", "cfName"])
+            r = self.reference._attributes(["shortName", "name", "units", "cfName"])
         else:
             md = self.reference.metadata().override(paramId=param)
-            return {k: md.get(k, None) for k in ["shortName", "name", "units", "cfName"]}
+            r = {k: md.get(k, None) for k in ["shortName", "name", "units", "cfName"]}
+
+        self._info_cache[param] = r
+        return r

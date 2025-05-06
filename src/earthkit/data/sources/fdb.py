@@ -10,7 +10,6 @@
 import logging
 import os
 import shutil
-from functools import cached_property
 
 try:
     import pyfdb
@@ -19,6 +18,7 @@ except ImportError:
 
 from earthkit.data.sources.file import FileSource
 from earthkit.data.sources.stream import StreamSource
+from earthkit.data.utils.request import RequestMapper
 
 from . import Source
 
@@ -74,8 +74,8 @@ class FDBSource(Source):
             else:
                 return FDBFileSource(fdb, self.request)
         else:
-            mapper = RequestMappaper(self._fdb_kwargs, self.request)
-            retriever = FdbRetriever(self._fdb_kwargs)
+            mapper = FDBRequestMapper(self.request, fdb_kwargs=self._fdb_kwargs)
+            retriever = FDBRetriever(self._fdb_kwargs)
             from earthkit.data.readers.grib.virtual import VirtualGribFieldList
 
             return VirtualGribFieldList(mapper, retriever)
@@ -98,7 +98,7 @@ class FDBFileSource(FileSource):
         )
 
 
-class FdbRetriever:
+class FDBRetriever:
     def __init__(self, fdb_kwargs):
         self.fdb_kwargs = fdb_kwargs
 
@@ -108,11 +108,11 @@ class FdbRetriever:
         return s.path
 
 
-class RequestMappaper:
-    def __init__(self, fdb_kwargs, request, **kwargs):
-        self.fdb_kwargs = fdb_kwargs
-        self.request = request
-        self.md = {
+class FDBRequestMapper(RequestMapper):
+    def __init__(self, request, fdb_kwargs=None, **kwargs):
+        super().__init__(request, **kwargs)
+        self.fdb_kwargs = fdb_kwargs or {}
+        self.metadata_alias = {
             "stepRange": "step",
             "typeOfLevel": "leveltype",
             "level": "levelist",
@@ -120,22 +120,12 @@ class RequestMappaper:
             "dataTime": "time",
         }
 
-    @cached_property
-    def field_requests(self):
-        return self._scan()
-
-    def _scan(self):
+    def _build(self):
         r = []
         fdb = pyfdb.FDB(**self.fdb_kwargs)
         for el in fdb.list(self.request, True, True):
             r.append(el["keys"])
         return r
-
-    def request_at(self, index):
-        return self.field_requests[index]
-
-    def __len__(self):
-        return len(self.field_requests)
 
 
 source = FDBSource
