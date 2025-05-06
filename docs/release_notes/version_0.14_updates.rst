@@ -22,8 +22,8 @@ See the :ref:`/examples/xarray_engine_split.ipynb` notebook example.
 New features
 +++++++++++++++++
 
-- Added the ``hive_partitioning`` option to the :ref:`data-sources-file-pattern` source to allow running :func:`sel` effectively on GRIB data stored in a :ref:`hive partitioning <file-pattern-hive-partioning>` structure (:pr:`659`).
-- Added experimental support for lazy loading FDB data (:pr:`677`). See :ref:`data-sources-fdb` for details.
+- Added the ``hive_partitioning`` option to the :ref:`data-sources-file-pattern` source to allow running :func:`sel` effectively on GRIB data stored in a :ref:`hive partitioning <file-pattern-hive-partioning>` structure (:pr:`659`). 
+- Added experimental support for lazy loading FDB data (:pr:`677`). See the ``lazy`` option in the :ref:`data-sources-fdb` source for details.
 - Added the ``flatten`` argument to the :func:`to_numpy` methods of the Xarray DataArray and Dataset wrapper classes (:pr:`685`).
 - Implemented the :func:`override` and :func:`dump` methods for :py:class:`UserMetadata` (:pr:`683`)
 - Added support for the ``bigtiff`` format (:pr:`656`). 
