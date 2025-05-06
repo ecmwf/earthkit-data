@@ -15,6 +15,8 @@ except ImportError:  # pragma: no cover
     # Local copy or not installed with setuptools
     __version__ = "999"
 
+from earthkit.utils import array as array_api
+
 from earthkit.data.translators import transform
 from earthkit.data.wrappers import get_wrapper as from_object
 
@@ -32,7 +34,6 @@ from .sources import from_source_lazily
 from .sources.array_list import ArrayField
 from .targets import create_target
 from .targets import to_target
-from .utils import array as array_api
 from .utils.examples import download_example_file
 from .utils.examples import remote_example_file
 

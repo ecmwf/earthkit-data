@@ -32,6 +32,7 @@ dependencies:
   - git+https://github.com/ecmwf/earthkit-data-demo-source
   - covjsonkit>=0.1.1
   - earthkit-geo>=0.2.0
+  - earthkit-utils>=0.0.1
 - tqdm>=4.63.0
 - lru-dict
 - markdown
@@ -42,6 +43,7 @@ dependencies:
 - myst-parser
 - pre-commit
 - pydata-sphinx-theme
+- pyfakefs
 - pytest
 - pytest-cov
 - pytest-forked
@@ -58,5 +60,4 @@ dependencies:
 - nbsphinx
 - ipykernel
 - geopandas
-- array-api-compat
 - deprecation

@@ -13,6 +13,10 @@ from collections import defaultdict
 from functools import cached_property
 
 import deprecation
+from earthkit.utils.array import array_namespace
+from earthkit.utils.array import array_to_numpy
+from earthkit.utils.array import convert_array
+from earthkit.utils.array import get_backend
 
 from earthkit.data.core import Base
 from earthkit.data.core.index import Index
@@ -20,10 +24,6 @@ from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import detect_out_filename
-from earthkit.data.utils.array import array_namespace
-from earthkit.data.utils.array import array_to_numpy
-from earthkit.data.utils.array import convert_array
-from earthkit.data.utils.array import get_backend
 from earthkit.data.utils.metadata.args import metadata_argument
 
 
@@ -263,6 +263,8 @@ class Field(Base):
         for k in keys:
             # TODO: convert dtype
             v = _keys[k](dtype=dtype)
+            if v is None:
+                raise ValueError(f"data: {k} not available")
             v = self._reshape(v, flatten)
             if index is not None:
                 v = v[index]

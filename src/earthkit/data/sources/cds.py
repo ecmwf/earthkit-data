@@ -145,7 +145,6 @@ class CdsRetriever(FileSource):
         return return_object
 
     @staticmethod
-    @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
     def _normalize_request(**kwargs):
         return kwargs

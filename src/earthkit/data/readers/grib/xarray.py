@@ -307,7 +307,11 @@ class XarrayMixIn:
 
         Returns
         -------
-        Xarray Dataset or list of Xarray Datasets
+        Xarray Dataset or tuple
+            When ``split_dims`` is unset a Dataset is returned. When ``engine="earthkit"``
+            and ``split_dims`` is set a tuple is returned. The first element of the tuple is the list
+            of Datasets and the second element is the list of corresponding dictionaries with
+            the spitting keys/values (one dictionary per Dataset).
 
         Notes
         -----
