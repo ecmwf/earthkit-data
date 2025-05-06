@@ -56,7 +56,6 @@ class VirtualGribField(Field):
         return base
 
     def _attributes(self, names, remapping=None, joiner=None, default=None):
-        # print("CALLED")
         result = {}
         metadata = self.metadata
         if remapping is not None:
@@ -67,11 +66,9 @@ class VirtualGribField(Field):
         return result
 
     def metadata(self, *keys, astype=None, remapping=None, patches=None, **kwargs):
-        # print(f"metadata keys={keys} {kwargs=}")
         if (not kwargs or kwargs == {"default": None}) and keys:
             if isinstance(keys[0], (list, tuple)):
                 keys = keys[0]
-            # print(f"  -> keys={keys}")
             if keys and isinstance(keys[0], str):
                 r = []
                 for k in keys:
