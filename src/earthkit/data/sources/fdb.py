@@ -18,6 +18,7 @@ except ImportError:
 
 from earthkit.data.sources.file import FileSource
 from earthkit.data.sources.stream import StreamSource
+from earthkit.data.utils.request import RequestMapper
 
 from . import Source
 
@@ -25,13 +26,14 @@ LOG = logging.getLogger(__name__)
 
 
 class FDBSource(Source):
-    def __init__(self, *args, stream=True, config=None, userconfig=None, **kwargs):
+    def __init__(self, *args, stream=True, config=None, userconfig=None, lazy=False, **kwargs):
         super().__init__()
 
         for k in ["group_by", "batch_size"]:
             if k in kwargs:
                 raise ValueError(f"Invalid argument '{k}' for FDBSource. Deprecated since 0.8.0.")
 
+        self.lazy = lazy
         self._fdb_kwargs = {}
         if config is not None:
             self._fdb_kwargs["config"] = config
@@ -64,12 +66,19 @@ class FDBSource(Source):
             )
 
     def mutate(self):
-        fdb = pyfdb.FDB(**self._fdb_kwargs)
-        if self.stream:
-            stream = fdb.retrieve(self.request)
-            return StreamSource(stream, **self._stream_kwargs)
+        if not self.lazy:
+            fdb = pyfdb.FDB(**self._fdb_kwargs)
+            if self.stream:
+                stream = fdb.retrieve(self.request)
+                return StreamSource(stream, **self._stream_kwargs)
+            else:
+                return FDBFileSource(fdb, self.request)
         else:
-            return FDBFileSource(fdb, self.request)
+            mapper = FDBRequestMapper(self.request, fdb_kwargs=self._fdb_kwargs)
+            retriever = FDBRetriever(self._fdb_kwargs)
+            from earthkit.data.readers.grib.virtual import VirtualGribFieldList
+
+            return VirtualGribFieldList(mapper, retriever)
 
 
 class FDBFileSource(FileSource):
@@ -87,6 +96,36 @@ class FDBFileSource(FileSource):
             retrieve,
             request,
         )
+
+
+class FDBRetriever:
+    def __init__(self, fdb_kwargs):
+        self.fdb_kwargs = fdb_kwargs
+
+    def get(self, request):
+        fdb = pyfdb.FDB(**self.fdb_kwargs)
+        s = FDBFileSource(fdb, request)
+        return s.path
+
+
+class FDBRequestMapper(RequestMapper):
+    def __init__(self, request, fdb_kwargs=None, **kwargs):
+        super().__init__(request, **kwargs)
+        self.fdb_kwargs = fdb_kwargs or {}
+        self.metadata_alias = {
+            "stepRange": "step",
+            "typeOfLevel": "leveltype",
+            "level": "levelist",
+            "dataDate": "date",
+            "dataTime": "time",
+        }
+
+    def _build(self):
+        r = []
+        fdb = pyfdb.FDB(**self.fdb_kwargs)
+        for el in fdb.list(self.request, True, True):
+            r.append(el["keys"])
+        return r
 
 
 source = FDBSource
