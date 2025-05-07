@@ -120,7 +120,7 @@ if not NO_PROD_FDB:
     fdb_home = os.environ.get("FDB_HOME", None)
     NO_PROD_FDB = fdb_home is None
 
-
+NO_GRIBJUMP = NO_FDB or not modules_installed("pygribjump")
 NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
 NO_COVJSONKIT = not modules_installed("covjsonkit")
 NO_RIOXARRAY = not modules_installed("rioxarray")
