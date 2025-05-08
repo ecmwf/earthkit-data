@@ -61,3 +61,4 @@ dependencies:
 - ipykernel
 - geopandas
 - deprecation
+- zarr>=3.0.0

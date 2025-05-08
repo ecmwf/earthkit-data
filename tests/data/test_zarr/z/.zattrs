@@ -1,0 +1,14 @@
+{
+  "units": "m**2 s**-2",
+  "long_name": "Geopotential",
+  "standard_name": "geopotential",
+  "add_offset": 33425.29356267787,
+  "scale_factor": 0.7605308942631956,
+  "missing_value": -32767,
+  "_ARRAY_DIMENSIONS": [
+    "time",
+    "level",
+    "latitude",
+    "longitude"
+  ]
+}
