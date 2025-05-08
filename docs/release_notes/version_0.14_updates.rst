@@ -2,6 +2,14 @@ Version 0.14 Updates
 /////////////////////////
 
 
+Version 0.14.1
+===============
+
+Fixes
++++++++++++++++++
+
+- Fixed issue when Xarray computations used excessive memory when the data was created with the Xarray engine using chunking (:pr:`694`).
+
 Version 0.14.0
 ===============
 
