@@ -103,9 +103,9 @@ class FDBRetriever:
         self.fdb_kwargs = fdb_kwargs
 
     def get(self, request):
-        fdb = pyfdb.FDB(**self.fdb_kwargs)
-        s = FDBFileSource(fdb, request)
-        return s.path
+        from . import from_source
+
+        return from_source("fdb", request, stream=True, read_all=True, **self.fdb_kwargs)
 
 
 class FDBRequestMapper(RequestMapper):
