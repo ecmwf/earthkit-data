@@ -10,7 +10,6 @@
 import logging
 from functools import cached_property
 
-from earthkit.data import from_source
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.metadata import WrappedMetadata
 from earthkit.data.utils.dates import date_to_grib
@@ -120,13 +119,12 @@ class VirtualGribField(Field):
     def _values(self, dtype=None):
         return self._field._values(dtype=dtype)
 
-    @cached_property
+    @property
     def _field(self):
         if self.reference:
             return self.reference
         else:
-            p = self.owner.retriever.get(self.request)
-            return from_source("file", p, stream=True, read_all=True)[0]
+            return self.owner.retriever.get(self.request)[0]
 
 
 class VirtualGribFieldList(GribFieldList):
@@ -134,8 +132,6 @@ class VirtualGribFieldList(GribFieldList):
         self.request_mapper = request_mapper
         self.retriever = retriever
 
-        path = self.retriever.get(self.request_mapper.request_at(0))
-        self.reference = from_source("file", path)[0]
         self._info_cache = {}
 
     def __len__(self):
@@ -143,6 +139,10 @@ class VirtualGribFieldList(GribFieldList):
 
     def mutate(self):
         return self
+
+    @cached_property
+    def reference(self):
+        return self.retriever.get(self.request_mapper.request_at(0))[0]
 
     def _getitem(self, n):
         if isinstance(n, int):
