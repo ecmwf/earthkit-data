@@ -141,7 +141,11 @@ class ForcingMaker:
 
     def julian_day(self, date):
         date = to_datetime(date)
-        delta = date - datetime.datetime(date.year, 1, 1)
+        if date.tzinfo is not None and date.tzinfo.utcoffset(date) is not None:
+            year_start = datetime.datetime(date.year, 1, 1, tzinfo=date.tzinfo)
+        else:
+            year_start = datetime.datetime(date.year, 1, 1)
+        delta = date - year_start
         julian_day = delta.days + delta.seconds / 86400.0
         return np.full((np.prod(self.field.shape),), julian_day)
 
@@ -156,7 +160,11 @@ class ForcingMaker:
     def local_time(self, date):
         lon = self.longitude(date)
         date = to_datetime(date)
-        delta = date - datetime.datetime(date.year, date.month, date.day)
+        if date.tzinfo is not None and date.tzinfo.utcoffset(date) is not None:
+            day_start = datetime.datetime(date.year, date.month, date.day, tzinfo=date.tzinfo)
+        else:
+            day_start = datetime.datetime(date.year, date.month, date.day)
+        delta = date - day_start
         hours_since_midnight = (delta.days + delta.seconds / 86400.0) * 24
         return (lon / 360.0 * 24.0 + hours_since_midnight) % 24
 
