@@ -8,6 +8,7 @@
 #
 
 import logging
+import threading
 from abc import ABCMeta
 from abc import abstractmethod
 
@@ -176,8 +177,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         if dtype is None:
             dtype = numpy.dtype("float64")
         self.dtype = xp.dtype(dtype)
-
-        self._var = variable
+        self.lock = threading.Lock()
 
     @property
     def nbytes(self):
@@ -205,39 +205,37 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         # patched in local copy for now, but could construct this ourself
 
     def _raw_indexing_method(self, key: tuple):
-        # must be threadsafe
-        # print("_var", self._var)
-        # print(f"dims: {self.dims} key: {key} shape: {self.shape}")
-        # isels = dict(zip(self.dims, key))
-        # r = self.ekds.isel(**isels)
-        # print(f"t-coords={self.tensor.user_coords}")
-        r = self.tensor[key]
-        # print(r.source.ls())
-        # print(f"r-shape: {r.user_shape}")
+        with self.lock:
+            # print("_var", self._var)
+            # print(f"dims: {self.dims} key: {key} shape: {self.shape}")
+            # print(f"t-coords={self.tensor.user_coords}")
+            r = self.tensor[key]
+            # print(r.source.ls())
+            # print(f"r-shape: {r.user_shape}")
 
-        field_index = r.field_indexes(key)
-        # print(f"field.index={field_index} coords={r.user_coords}")
-        # result = r.to_numpy(index=field_index).squeeze()
-        result = r.to_numpy(index=field_index, dtype=self.dtype)
+            field_index = r.field_indexes(key)
+            # print(f"field.index={field_index} coords={r.user_coords}")
+            # result = r.to_numpy(index=field_index).squeeze()
+            result = r.to_numpy(index=field_index, dtype=self.dtype)
 
-        # ensure axes are squeezed when needed
-        singles = [i for i in list(range(len(r.user_shape))) if isinstance(key[i], int)]
-        if singles:
-            result = result.squeeze(axis=tuple(singles))
+            # ensure axes are squeezed when needed
+            singles = [i for i in list(range(len(r.user_shape))) if isinstance(key[i], int)]
+            if singles:
+                result = result.squeeze(axis=tuple(singles))
 
-        # print("result", result.shape)
-        # result = self.ekds.isel(**isels).to_numpy()
+            # print("result", result.shape)
+            # result = self.ekds.isel(**isels).to_numpy()
 
-        # print("result", result.shape)
-        # print(f"Loaded {self.xp.__name__} with shape: {result.shape}")
+            # print("result", result.shape)
+            # print(f"Loaded {self.xp.__name__} with shape: {result.shape}")
 
-        # Loading as numpy but then converting. This needs to be changed upstream (eccodes)
-        # to load directly into cupy.
-        # Maybe some incompatibilities when trying to copy from FFI to cupy directly
-        if self.xp and self.xp != numpy:
-            result = self.xp.asarray(result)
+            # Loading as numpy but then converting. This needs to be changed upstream (eccodes)
+            # to load directly into cupy.
+            # Maybe some incompatibilities when trying to copy from FFI to cupy directly
+            if self.xp and self.xp != numpy:
+                result = self.xp.asarray(result)
 
-        return result
+            return result
 
 
 class BackendDataBuilder(metaclass=ABCMeta):
