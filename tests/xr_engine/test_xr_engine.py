@@ -542,7 +542,7 @@ def test_xr_engine_single_field():
 
 @pytest.mark.cache
 @pytest.mark.parametrize("add", [False, True])
-def test_xr_engine_add_earthkit_attrs(add):
+def test_xr_engine_add_earthkit_attrs_1(add):
     ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
     ds_ek = ds_ek[0]
 
@@ -558,3 +558,16 @@ def test_xr_engine_add_earthkit_attrs(add):
         assert "_earthkit" in ds["t"].attrs
     else:
         assert "_earthkit" not in ds["t"].attrs
+
+
+@pytest.mark.cache
+def test_xr_engine_add_earthkit_attrs_2(add):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = ds_ek[0]
+
+    ds = ds_ek.to_xarray(
+        add_earthkit_attrs=False,
+    )
+
+    assert ds
+    assert "_earthkit" not in ds["t"].attrs
