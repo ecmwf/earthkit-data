@@ -15,10 +15,11 @@ LOG = logging.getLogger(__name__)
 
 
 class ZarrTarget(SimpleTarget):
-    def __init__(self, store, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._store = store
         self._zarr_kwargs = kwargs
+        self._ekd_kwargs = kwargs.pop("earthkit_to_xarray_kwargs", {})
+        self._xr_kwargs = kwargs.pop("xarray_to_zarr_kwargs", {})
         self._encoder = "zarr"
 
     def close(self):
@@ -42,9 +43,9 @@ class ZarrTarget(SimpleTarget):
         pass
 
     def _write(self, data, **kwargs):
-        r = self._encode(data, **kwargs)
+        r = self._encode(data, earthkit_to_xarray_kwargs=self._ekd_kwargs)
         ds = r.to_xarray()
-        ds.to_zarr(self._store)
+        ds.to_zarr(**self._xr_kwargs)
 
 
 target = ZarrTarget
