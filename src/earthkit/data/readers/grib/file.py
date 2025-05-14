@@ -47,24 +47,28 @@ class GRIBReader(GribFieldListInOneFile, Reader):
         return True
 
     def __getstate__(self):
-        if True:
-            r = {"kwargs": self.source._kwargs, "path": self.path, "positions": self._positions}
-            return r
+        from earthkit.data.core.config import CONFIG
+
+        policy = CONFIG.get("grib-file-serialisation-policy")
+        r = {"serialisation_policy": policy, "kwargs": self.source._kwargs}
+
+        if policy == "path":
+            r["path"] = self.path
+            r["positions"] = self._positions
         else:
-            r = {"kwargs": self.source._kwargs, "messages": []}
-            for f in self:
-                r["messages"].append(f.message())
-            return r
+            r["messages"] = [f.message() for f in self]
+
+        return r
 
     def __setstate__(self, state):
-        if True:
+        policy = state["serialisation_policy"]
+        if policy == "path":
             from earthkit.data import from_source
 
             path = state["path"]
             ds = from_source("file", path, **state["kwargs"])
-            print("setstate", state["kwargs"])
             self.__init__(ds.source, path, positions=state["positions"])
-        else:
+        elif policy == "memory":
             from earthkit.data import from_source
             from earthkit.data.core.caching import cache_file
 
@@ -80,3 +84,5 @@ class GRIBReader(GribFieldListInOneFile, Reader):
             )
             ds = from_source("file", path)
             self.__init__(ds.source, path)
+        else:
+            raise ValueError(f"Unknown serialisation policy {policy}")
