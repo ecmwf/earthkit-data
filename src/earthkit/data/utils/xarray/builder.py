@@ -8,7 +8,6 @@
 #
 
 import logging
-import threading
 from abc import ABCMeta
 from abc import abstractmethod
 
@@ -33,7 +32,14 @@ NON_XR_OPEN_DS_KWARGS = ["split_dims", "direct_backend"]
 
 class VariableBuilder:
     def __init__(
-        self, name, var_dims, data_maker, tensor, remapping, local_attr_keys=None, fixed_local_attrs=None
+        self,
+        name,
+        var_dims,
+        data_maker,
+        tensor,
+        remapping,
+        local_attr_keys=None,
+        fixed_local_attrs=None,
     ):
         """
         Create a builder for a single variable in the dataset.
@@ -166,18 +172,21 @@ class VariableBuilder:
 
 
 class TensorBackendArray(xarray.backends.common.BackendArray):
-    def __init__(self, tensor, dims, shape, xp, dtype, variable):
+    def __init__(self, tensor, dims, shape, xp, dtype, var_name):
         super().__init__()
         self.tensor = tensor
         self.dims = dims
         self.shape = shape
+        self._var_name = var_name
 
         # xp and dtype must be set for xarray
         self.xp = xp if xp is not None else numpy
         if dtype is None:
             dtype = numpy.dtype("float64")
         self.dtype = xp.dtype(dtype)
-        self.lock = threading.Lock()
+        from dask.utils import SerializableLock
+
+        self.lock = SerializableLock()
 
     @property
     def nbytes(self):
@@ -206,16 +215,20 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
 
     def _raw_indexing_method(self, key: tuple):
         with self.lock:
-            # print("_var", self._var)
-            # print(f"dims: {self.dims} key: {key} shape: {self.shape}")
-            # print(f"t-coords={self.tensor.user_coords}")
-            r = self.tensor[key]
-            # print(r.source.ls())
-            # print(f"r-shape: {r.user_shape}")
+            # LOG.debug(f"TensorBackendArray._raw_indexing_method var={self._var_name}")
+            # LOG.debug(f"   dims={self.dims} key={key} shape={self.shape}")
+            # LOG.debug(f"   tensor.user_coords={self.tensor.user_coords}")
 
+            r = self.tensor[key]
+            # LOG.debug(f"   cubelet user_shape={r.user_shape}")
+
+            # LOG.debug(f"   {r.user_shape=}")
             field_index = r.field_indexes(key)
-            # print(f"field.index={field_index} coords={r.user_coords}")
-            # result = r.to_numpy(index=field_index).squeeze()
+            if self.tensor.is_full_field(field_index):
+                field_index = None
+
+            # LOG.debug(f"   {field_index=}")
+
             result = r.to_numpy(index=field_index, dtype=self.dtype)
 
             # ensure axes are squeezed when needed
@@ -223,15 +236,9 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
             if singles:
                 result = result.squeeze(axis=tuple(singles))
 
-            # print("result", result.shape)
-            # result = self.ekds.isel(**isels).to_numpy()
+            # LOG.debug(f"   {result.shape=}")
 
-            # print("result", result.shape)
-            # print(f"Loaded {self.xp.__name__} with shape: {result.shape}")
-
-            # Loading as numpy but then converting. This needs to be changed upstream (eccodes)
-            # to load directly into cupy.
-            # Maybe some incompatibilities when trying to copy from FFI to cupy directly
+            # Loading as numpy but then converting to the target array module
             if self.xp and self.xp != numpy:
                 result = self.xp.asarray(result)
 
@@ -444,6 +451,10 @@ class TensorBackendDataBuilder(BackendDataBuilder):
 
     def build_values(self, tensor, var_dims, name):
         """Generate the data object stored in the xarray variable"""
+        # There is no need for the extra structures in the wrapped source in the
+        # tensor any longer. It is replaced by the original unwrapped fieldlist.
+        tensor.source = tensor.source.unwrap()
+
         backend_array = TensorBackendArray(
             tensor,
             var_dims,

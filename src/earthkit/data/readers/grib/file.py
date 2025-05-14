@@ -18,7 +18,7 @@ LOG = logging.getLogger(__name__)
 class GRIBReader(GribFieldListInOneFile, Reader):
     appendable = True  # GRIB messages can be added to the same file
 
-    def __init__(self, source, path, parts=None):
+    def __init__(self, source, path, parts=None, positions=None):
         _kwargs = {}
         for k in [
             # "array_backend",
@@ -34,7 +34,7 @@ class GRIBReader(GribFieldListInOneFile, Reader):
                 raise KeyError(f"Invalid option {k} in GRIBReader. Option names must not contain '-'.")
 
         Reader.__init__(self, source, path)
-        GribFieldListInOneFile.__init__(self, path, parts=parts, **_kwargs)
+        GribFieldListInOneFile.__init__(self, path, parts=parts, positions=positions, **_kwargs)
 
     def __repr__(self):
         return "GRIBReader(%s)" % (self.path,)
@@ -47,24 +47,36 @@ class GRIBReader(GribFieldListInOneFile, Reader):
         return True
 
     def __getstate__(self):
-        r = {"kwargs": self.source._kwargs, "messages": []}
-        for f in self:
-            r["messages"].append(f.message())
-        return r
+        if True:
+            r = {"kwargs": self.source._kwargs, "path": self.path, "positions": self._positions}
+            return r
+        else:
+            r = {"kwargs": self.source._kwargs, "messages": []}
+            for f in self:
+                r["messages"].append(f.message())
+            return r
 
     def __setstate__(self, state):
-        from earthkit.data import from_source
-        from earthkit.data.core.caching import cache_file
+        if True:
+            from earthkit.data import from_source
 
-        def _create(path, args):
-            with open(path, "wb") as f:
-                for message in state["messages"]:
-                    f.write(message)
+            path = state["path"]
+            ds = from_source("file", path, **state["kwargs"])
+            print("setstate", state["kwargs"])
+            self.__init__(ds.source, path, positions=state["positions"])
+        else:
+            from earthkit.data import from_source
+            from earthkit.data.core.caching import cache_file
 
-        path = cache_file(
-            "GRIBReader",
-            _create,
-            [],
-        )
-        ds = from_source("file", path)
-        self.__init__(ds.source, path)
+            def _create(path, args):
+                with open(path, "wb") as f:
+                    for message in state["messages"]:
+                        f.write(message)
+
+            path = cache_file(
+                "GRIBReader",
+                _create,
+                [],
+            )
+            ds = from_source("file", path)
+            self.__init__(ds.source, path)

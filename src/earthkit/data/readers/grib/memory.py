@@ -168,6 +168,12 @@ class GribFieldInMemory(GribField):
     def clone(self, **kwargs):
         return ClonedGribFieldInMemory(self, **kwargs)
 
+    def __getstate__(self):
+        return {"message": self.message()}
+
+    def __setstate__(self, state):
+        self.__init__(GribCodesHandle.from_message(state["message"]))
+
 
 class ClonedGribFieldInMemory(ClonedFieldCore, GribFieldInMemory):
     def __init__(self, field, **kwargs):
@@ -216,11 +222,13 @@ class GribFieldListInMemory(SimpleFieldList):
         return GribFieldListInMemory.from_fields(list(chain(*[f for f in readers])))
 
     def __getstate__(self):
+        print("GribFieldListInMemory.__getstate__")
         self._load()
         r = {"messages": [f.message() for f in self]}
         return r
 
     def __setstate__(self, state):
+        print("GribFieldListInMemory.__setstate__")
         fields = [GribFieldInMemory.from_buffer(m) for m in state["messages"]]
         self.__init__(None, None)
         self.fields = fields
