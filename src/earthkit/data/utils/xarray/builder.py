@@ -414,7 +414,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
                     tensor_dims.append(d)
                     tensor_coords[d.key] = vals[d.key]
-                    if d.key in component_vals:
+                    if component_vals and d.key in component_vals:
                         tensor_coords_component[d.key] = component_vals[d.key]
 
                     # check if the dims/coords are consistent with the tensors of
