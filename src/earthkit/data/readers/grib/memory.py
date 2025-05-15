@@ -222,13 +222,11 @@ class GribFieldListInMemory(SimpleFieldList):
         return GribFieldListInMemory.from_fields(list(chain(*[f for f in readers])))
 
     def __getstate__(self):
-        print("GribFieldListInMemory.__getstate__")
         self._load()
         r = {"messages": [f.message() for f in self]}
         return r
 
     def __setstate__(self, state):
-        print("GribFieldListInMemory.__setstate__")
         fields = [GribFieldInMemory.from_buffer(m) for m in state["messages"]]
         self.__init__(None, None)
         self.fields = fields
