@@ -96,7 +96,6 @@ def test_xr_engine_chunk_2(_kwargs):
         assert np.isclose(r.values.mean(), 275.9938876277779)
 
 
-# @pytest.mark.skipif(True, reason="Needs to be fixed")
 @pytest.mark.cache
 @pytest.mark.parametrize(
     "_kwargs",
