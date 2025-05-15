@@ -210,6 +210,55 @@ def test_gribjump_source_against_manually_masked_grid(seed_fdb):
 
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
+def test_gribjump_selection(seed_fdb):
+    import numpy as np
+
+    request = {
+        "class": "od",
+        "date": "20201221",
+        "domain": "g",
+        "expver": "0001",
+        "levelist": "1000",
+        "levtype": "pl",
+        "param": "129",
+        "step": [0, 6],
+        "stream": "oper",
+        "time": "1200",
+        "type": "fc",
+    }
+
+    indices = np.array([0, 7, 14, 21, 28, 35, 42])
+    source = from_source("gribjump", request, indices=indices)
+
+    arr_orig = source.to_numpy()
+    arr_subset = source.sel(step=6).to_numpy()
+
+    assert arr_subset.shape == (1, 7)
+    assert np.allclose(arr_orig[[1]], arr_subset)
+
+
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
+def test_gribjump_with_mixed_types_in_lists(seed_fdb):
+
+    request = {
+        "class": "od",
+        "date": "20201221",
+        "domain": "g",
+        "expver": "0001",
+        "levelist": "1000",
+        "levtype": "pl",
+        "param": "129",
+        "step": [0, "6"],
+        "stream": "oper",
+        "time": "1200",
+        "type": "fc",
+    }
+
+    with pytest.raises(TypeError):
+        from_source("gribjump", request, ranges=[(1, 2)])
+
+
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
 def test_gribjump_with_invalid_options(seed_fdb):
     import numpy as np
 
@@ -235,7 +284,10 @@ def test_gribjump_with_invalid_options(seed_fdb):
 
     with pytest.raises(ValueError, match="Exactly one of"):
         from_source(
-            "gribjump", request, ranges=[(0, 1), (10, 12)], indices=np.array([0, 7, 14, 21, 28, 35, 42])
+            "gribjump",
+            request,
+            ranges=[(0, 1), (10, 12)],
+            indices=np.array([0, 7, 14, 21, 28, 35, 42]),
         )
 
 

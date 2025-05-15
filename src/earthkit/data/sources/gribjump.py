@@ -85,11 +85,10 @@ class FieldExtractList(SimpleFieldList):
     possess any geographical information or well-defined metadata.
 
     Known limitations:
-    * FieldExtractList.sel is quite brittle as any filter value must be a string.
-     The underlying metadata is stored as a dictionary of strings, and no
-     automatic type conversion is done. Any more complex filtering and slicing
-     will not work for most data types. Also, order_by and similar methods will
-     perform lexicographical sorting on the string values.
+    * FieldExtractList.sel is quite brittle as any filter values must have the same type
+      as the metadata in the user's request dictionary. The actual type of the underlying
+      MARS keyword is not respected. So ".sel(step=0) would not work with a request
+      {"step": "0"} but only {"step": 0}.
     * Efficient lazy loading of selections / slices only is not supported.
     * Pickling / unpickling might not work.
     * to_pandas and to_xarray methods are not implemented.
@@ -203,31 +202,32 @@ class GribJumpSource(Source):
 
         Since GribJump returns its result arrays without metadata, we need to split the
         request into many single requests to later map the outputs to the correct fields.
-        Additionally performs some basic validation and converts all values to strings since
-        GribJump only supports string values in the request.
+        Additionally performs some basic validation.
         """
 
         request = request.copy()
 
-        # Check for invalid values and cast anything but lists to strings
+        # Check if user passed unspoorted lists and ranges as strings using "/"
         for k in request.keys():
             v = request[k]
             if isinstance(v, str) and "/" in v:
-                # TODO: Check if there are valid reasons to use '/' apart from
-                # lists and ranges.
                 raise ValueError(
                     f"Found unsupported list or range using '/' in value '{v}' for keyword '{k}'. "
                     "Use Python lists to load from multiple fields."
                 )
-            elif not isinstance(v, list):
-                request[k] = str(v)
-            else:
-                request[k] = [str(i) for i in v]
+            elif isinstance(v, list) and len({type(v_) for v_ in v}) != 1:
+                raise TypeError(
+                    f"All list values must share the same type but found types {set(map(type, v))} "
+                    f"in {k}={v}"
+                )
 
         expanded_requests = expand_dict_with_lists(request)
         return expanded_requests
 
     def _build_extraction_requests(self, mars_requests: list[dict[str, str]]) -> list[pygj.ExtractionRequest]:
+        # GribJump currently only supports strings as request values
+        mars_requests = [{k: str(v) for (k, v) in req.items()} for req in mars_requests]
+
         if self._ranges is not None:
             requests = [pygj.ExtractionRequest(request, self._ranges) for request in mars_requests]
         elif self._mask is not None:
