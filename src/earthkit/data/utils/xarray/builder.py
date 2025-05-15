@@ -74,12 +74,13 @@ class VariableBuilder:
 
     def build(self, add_earthkit_attrs=True):
         if add_earthkit_attrs:
-            md = self.tensor.source[0].metadata().override()
-            attrs = {
-                "message": md._handle.get_buffer(),
-                "bitsPerValue": md.get("bitsPerValue", 0),
-            }
-            self._attrs["_earthkit"] = attrs
+            if hasattr(self.tensor.source[0], "handle"):
+                md = self.tensor.source[0].metadata().override()
+                attrs = {
+                    "message": md._handle.get_buffer(),
+                    "bitsPerValue": md.get("bitsPerValue", 0),
+                }
+                self._attrs["_earthkit"] = attrs
 
         self._attrs.update(self.fixed_local_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
@@ -567,15 +568,19 @@ class DatasetBuilder:
     def grid(self, ds):
         grids = ds.index("md5GridSection")
 
-        if len(grids) != 1:
-            raise ValueError(f"Expected one grid, got {len(grids)}")
-        grid = grids[0]
+        if not grids:
+            grid = "_custom_" + str(id(ds))
+        else:
+            # if len(grids) != 1:
+            #     raise ValueError(f"Expected one grid, got {len(grids)}")
+            grid = grids[0]
+
         key = (grid, self.profile.flatten_values)
 
         if key not in self.grids:
             from .grid import TensorGrid
 
-            self.grids = {key: TensorGrid(ds[0], self.profile.flatten_values)}
+            self.grids[key] = TensorGrid(ds[0], self.profile.flatten_values)
         return self.grids[key]
 
 
