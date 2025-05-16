@@ -96,7 +96,6 @@ def test_xr_engine_chunk_2(_kwargs):
         assert np.isclose(r.values.mean(), 275.9938876277779)
 
 
-@pytest.mark.skipif(True, reason="Needs to be fixed")
 @pytest.mark.cache
 @pytest.mark.parametrize(
     "_kwargs",
@@ -106,6 +105,7 @@ def test_xr_engine_chunk_2(_kwargs):
         {"chunks": {"valid_time": 1}},
         {"chunks": {"valid_time": 10}},
         {"chunks": {"valid_time": (100, 200, 432), "latitude": (4, 5, 4), "longitude": (13, 3, 8)}},
+        {"chunks": {"valid_time": 100, "latitude": 4, "longitude": 7}},
         {"chunks": -1},
     ],
 )

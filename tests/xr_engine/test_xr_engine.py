@@ -561,7 +561,7 @@ def test_xr_engine_add_earthkit_attrs_1(add):
 
 
 @pytest.mark.cache
-def test_xr_engine_add_earthkit_attrs_2(add):
+def test_xr_engine_add_earthkit_attrs_2():
     ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
     ds_ek = ds_ek[0]
 

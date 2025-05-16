@@ -180,6 +180,9 @@ class NoGeography(Geography):
     def mars_grid(self):
         raise NotImplementedError("mars_grid is not implemented for this geography")
 
+    def grid_type(self):
+        return "none"
+
 
 class UserGeography(Geography):
     def __init__(self, metadata, shape=None):
@@ -252,6 +255,9 @@ class UserGeography(Geography):
     def mars_grid(self):
         raise NotImplementedError("mars_grid is not implemented for this geography")
 
+    def grid_type(self):
+        return "_unstructured"
+
 
 class DistinctLLGeography(UserGeography):
     def __init__(self, metadata):
@@ -298,9 +304,11 @@ class DistinctLLGeography(UserGeography):
         Ni = len(self._distinct_longitudes())
         return (Nj, Ni)
 
+    def grid_type(self):
+        return "_distinct_ll"
+
 
 class RegularDistinctLLGeography(DistinctLLGeography):
-
     def dx(self):
         x = self.metadata.get("DxInDegrees", None)
         if x is None:
@@ -326,6 +334,9 @@ class RegularDistinctLLGeography(DistinctLLGeography):
     def mars_grid(self):
         return [self.dx(), self.dy()]
 
+    def grid_type(self):
+        return "_regular_ll"
+
 
 class UserMetadata(Metadata):
     ALIASES = [
@@ -342,6 +353,7 @@ class UserMetadata(Metadata):
         "valid_datetime": "valid_datetime",
         "step_timedelta": "step_timedelta",
         "param_level": "param_level",
+        "_grid_type": "gridType",
     }
 
     LS_KEYS = ["param", "level", "base_datetime", "valid_datetime", "step", "number"]
@@ -442,6 +454,11 @@ class UserMetadata(Metadata):
 
     def param_level(self):
         return f"{self.get('param')}{self.get('level', default='')}"
+
+    def _grid_type(self):
+        if "gridType" in self._data:
+            return self._data["gridType"]
+        return self.geography.grid_type()
 
     def _get_one(self, keys):
         for k in keys:

@@ -18,7 +18,7 @@ LOG = logging.getLogger(__name__)
 class GRIBReader(GribFieldListInOneFile, Reader):
     appendable = True  # GRIB messages can be added to the same file
 
-    def __init__(self, source, path, parts=None):
+    def __init__(self, source, path, parts=None, positions=None):
         _kwargs = {}
         for k in [
             # "array_backend",
@@ -34,7 +34,7 @@ class GRIBReader(GribFieldListInOneFile, Reader):
                 raise KeyError(f"Invalid option {k} in GRIBReader. Option names must not contain '-'.")
 
         Reader.__init__(self, source, path)
-        GribFieldListInOneFile.__init__(self, path, parts=parts, **_kwargs)
+        GribFieldListInOneFile.__init__(self, path, parts=parts, positions=positions, **_kwargs)
 
     def __repr__(self):
         return "GRIBReader(%s)" % (self.path,)
@@ -47,24 +47,42 @@ class GRIBReader(GribFieldListInOneFile, Reader):
         return True
 
     def __getstate__(self):
-        r = {"kwargs": self.source._kwargs, "messages": []}
-        for f in self:
-            r["messages"].append(f.message())
+        from earthkit.data.core.config import CONFIG
+
+        policy = CONFIG.get("grib-file-serialisation-policy")
+        r = {"serialisation_policy": policy, "kwargs": self.source._kwargs}
+
+        if policy == "path":
+            r["path"] = self.path
+            r["positions"] = self._positions
+        else:
+            r["messages"] = [f.message() for f in self]
+
         return r
 
     def __setstate__(self, state):
-        from earthkit.data import from_source
-        from earthkit.data.core.caching import cache_file
+        policy = state["serialisation_policy"]
+        if policy == "path":
+            from earthkit.data import from_source
 
-        def _create(path, args):
-            with open(path, "wb") as f:
-                for message in state["messages"]:
-                    f.write(message)
+            path = state["path"]
+            ds = from_source("file", path, **state["kwargs"])
+            self.__init__(ds.source, path, positions=state["positions"])
+        elif policy == "memory":
+            from earthkit.data import from_source
+            from earthkit.data.core.caching import cache_file
 
-        path = cache_file(
-            "GRIBReader",
-            _create,
-            [],
-        )
-        ds = from_source("file", path)
-        self.__init__(ds.source, path)
+            def _create(path, args):
+                with open(path, "wb") as f:
+                    for message in state["messages"]:
+                        f.write(message)
+
+            path = cache_file(
+                "GRIBReader",
+                _create,
+                [],
+            )
+            ds = from_source("file", path)
+            self.__init__(ds.source, path)
+        else:
+            raise ValueError(f"Unknown serialisation policy {policy}")

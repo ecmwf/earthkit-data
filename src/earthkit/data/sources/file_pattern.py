@@ -97,7 +97,7 @@ class FilePattern(MultiSource):
         if self.hive_partitioning:
             return HiveFilePattern(self.pattern, self.params)
         else:
-            return self
+            return super().mutate()
 
 
 source = FilePattern
