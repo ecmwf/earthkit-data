@@ -55,6 +55,8 @@ class DimSplitter(Splitter):
         for x in product(*dims.values()):
             y = dict(zip(dims.keys(), x))
             ds_sel = ds_xr.sel(**y)
+            if len(ds_sel) == 0:
+                continue
             ds_sort, profile = builder.parse(ds_sel, None)
             if len(ds_sort) == 0:
                 raise ValueError(f"No field found for selection={y}")

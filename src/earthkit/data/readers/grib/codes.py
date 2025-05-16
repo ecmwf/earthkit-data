@@ -191,6 +191,7 @@ class GribCodesHandle(CodesHandle):
             "latitudes",
             "longitudes",
             "values",
+            "bitmap",
         }
         for key in self.keys(namespace=namespace):
             if key not in ignore:
@@ -328,6 +329,21 @@ class GribField(Field):
 
     def clone(self, **kwargs):
         return ClonedGribField(self, **kwargs)
+
+    def __getstate__(self):
+        state = super().__getstate__()
+        state["path"] = self.path
+        state["offset"] = self._offset
+        state["length"] = self._length
+        state["use_metadata_cache"] = self._use_metadata_cache
+        return state
+
+    def __setstate__(self, state):
+        self.path = state["path"]
+        self._offset = state["offset"]
+        self._length = state["length"]
+        self._use_metadata_cache = state["use_metadata_cache"]
+        self._handle_manager = None
 
 
 class ClonedGribField(ClonedFieldCore, GribField):

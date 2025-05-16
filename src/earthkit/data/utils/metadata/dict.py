@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import copy
 import logging
 from functools import cached_property
 from math import prod
@@ -179,6 +180,9 @@ class NoGeography(Geography):
     def mars_grid(self):
         raise NotImplementedError("mars_grid is not implemented for this geography")
 
+    def grid_type(self):
+        return "none"
+
 
 class UserGeography(Geography):
     def __init__(self, metadata, shape=None):
@@ -251,6 +255,9 @@ class UserGeography(Geography):
     def mars_grid(self):
         raise NotImplementedError("mars_grid is not implemented for this geography")
 
+    def grid_type(self):
+        return "_unstructured"
+
 
 class DistinctLLGeography(UserGeography):
     def __init__(self, metadata):
@@ -297,9 +304,11 @@ class DistinctLLGeography(UserGeography):
         Ni = len(self._distinct_longitudes())
         return (Nj, Ni)
 
+    def grid_type(self):
+        return "_distinct_ll"
+
 
 class RegularDistinctLLGeography(DistinctLLGeography):
-
     def dx(self):
         x = self.metadata.get("DxInDegrees", None)
         if x is None:
@@ -325,6 +334,9 @@ class RegularDistinctLLGeography(DistinctLLGeography):
     def mars_grid(self):
         return [self.dx(), self.dy()]
 
+    def grid_type(self):
+        return "_regular_ll"
+
 
 class UserMetadata(Metadata):
     ALIASES = [
@@ -341,6 +353,7 @@ class UserMetadata(Metadata):
         "valid_datetime": "valid_datetime",
         "step_timedelta": "step_timedelta",
         "param_level": "param_level",
+        "_grid_type": "gridType",
     }
 
     LS_KEYS = ["param", "level", "base_datetime", "valid_datetime", "step", "number"]
@@ -442,6 +455,11 @@ class UserMetadata(Metadata):
     def param_level(self):
         return f"{self.get('param')}{self.get('level', default='')}"
 
+    def _grid_type(self):
+        if "gridType" in self._data:
+            return self._data["gridType"]
+        return self.geography.grid_type()
+
     def _get_one(self, keys):
         for k in keys:
             if k in self._data:
@@ -452,7 +470,26 @@ class UserMetadata(Metadata):
         return make_geography(self, values_shape=self._shape)
 
     def override(self, *args, **kwargs):
-        raise NotImplementedError("override is not implemented for UserMetadata")
+        r"""Create a new metadata object by cloning the underlying metadata and setting the keys in it.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments. When present must be a dict with the keys to set in
+            the new metadata.
+        **kwargs: dict, optional
+            Other keyword arguments specifying the metadata keys to set.
+
+        Returns
+        -------
+        :class:`UserMetadata`
+            The new metadata object. A copy of the original metadata with the keys set in it.
+        """
+        d = dict(*args, **kwargs)
+        existing = copy.deepcopy(self._data)
+        existing.update(d)
+
+        return UserMetadata(existing, shape=copy.deepcopy(self._shape))
 
     def namespaces(self):
         return []
@@ -461,7 +498,35 @@ class UserMetadata(Metadata):
         return {}
 
     def dump(self, **kwargs):
-        return None
+        r"""Generate dump with all the metadata keys.
+
+        In a Jupyter notebook it is represented as a tabbed interface.
+
+        Parameters
+        ----------
+        **kwargs: dict, optional
+            Other keyword arguments used for testing only
+
+        Returns
+        -------
+        NamespaceDump
+            Dict-like object with one item per namespace. In a Jupyter notebook represented
+            as a tabbed interface to browse the dump contents.
+
+        Examples
+        --------
+        :ref:`/examples/grib_metadata.ipynb`
+
+        """
+        from earthkit.data.utils.summary import format_namespace_dump
+
+        r = [
+            {
+                "title": "metadata",
+                "data": self._data,
+            }
+        ]
+        return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
 
     def ls_keys(self):
         return self.LS_KEYS
