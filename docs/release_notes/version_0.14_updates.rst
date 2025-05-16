@@ -1,6 +1,14 @@
 Version 0.14 Updates
 /////////////////////////
 
+Version 0.14.3
+===============
+
+Fixes
++++++++++++++++++
+
+- Fixed issue when getting GRIB metadata for the "geography" namespace caused a crash when the "bitmap" key was present in the namespace. The "bitmap" key is now ignored in the "geography" namespace.
+
 Version 0.14.2
 ===============
 
