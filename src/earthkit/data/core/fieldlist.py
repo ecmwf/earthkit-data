@@ -1113,6 +1113,7 @@ class FieldList(Index):
             first = next(it)
             is_property = not callable(getattr(first, accessor, None))
             vals = _vals(first)
+            first = None
             ns = array_namespace(vals)
             shape = (n, *vals.shape)
             r = ns.empty(shape, dtype=vals.dtype)

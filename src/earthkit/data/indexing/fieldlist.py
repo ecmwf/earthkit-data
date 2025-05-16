@@ -55,7 +55,7 @@ class SimpleFieldList(FieldList):
     def to_xarray(self, *args, **kwargs):
         # TODO make it generic
         if len(self) > 0:
-            if self[0]._metadata.data_format() == "grib":
+            if self[0]._metadata.data_format() in ("grib", "dict"):
                 from earthkit.data.readers.grib.xarray import XarrayMixIn
 
                 class _C(XarrayMixIn, SimpleFieldList):

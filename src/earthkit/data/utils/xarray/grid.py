@@ -15,19 +15,26 @@ import numpy as np
 LOG = logging.getLogger(__name__)
 
 
+# TODO: refactor this when earthkit.geo grid support is implemented
 class Grid:
     def __init__(self, field):
         self.field = field
 
     @staticmethod
     def make(field):
+        # NOTE: underscore grid types are coming from UserMetadata
         grid_type = field.metadata("gridType", default=None)
-        if grid_type == "regular_ll":
+
+        if grid_type in ["regular_ll", "_regular_ll"]:
             return RegularLLGrid(field)
-        elif grid_type in ["regular_gg", "mercator"]:
+        elif grid_type in ["regular_gg", "mercator", "_rectified_ll"]:
             return RectifiedLLGrid(field)
         elif grid_type in ["sh"]:
             return SpectralGrid(field)
+        elif grid_type is None or grid_type == "none":
+            return NonGrid(field)
+        elif grid_type == "_unstructured":
+            return Grid(field)
         else:
             return Grid(field)
 
@@ -71,11 +78,19 @@ class RectifiedLLGrid(Grid):
 
 
 class SpectralGrid(Grid):
-    def to_latlon(self):
+    def to_latlon(self, field_shape=None):
         return None, None
 
     def is_spectral(self):
         return True
+
+
+class NonGrid(Grid):
+    def to_latlon(self, field_shape=None):
+        return None, None
+
+    def is_spectral(self):
+        return False
 
 
 class TensorGrid:
