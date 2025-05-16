@@ -191,6 +191,7 @@ class GribCodesHandle(CodesHandle):
             "latitudes",
             "longitudes",
             "values",
+            "bitmap",
         }
         for key in self.keys(namespace=namespace):
             if key not in ignore:
