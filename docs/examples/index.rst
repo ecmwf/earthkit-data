@@ -163,6 +163,7 @@ Xarray engine
     xarray_engine_to_grib.ipynb
     xarray_engine_split.ipynb
     xarray_engine_seasonal.ipynb
+    xarray_engine_chunks.ipynb
 
 Targets and encoders
 +++++++++++++++++++++

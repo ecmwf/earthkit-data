@@ -246,6 +246,11 @@ CONFIG_AND_HELP = {
         fieldlists with data on disk.
         See :doc:`/guide/misc/grib_memory` for more information.""",
     ),
+    "grib-file-serialisation-policy": _(
+        "path",
+        """GRIB file serialisation policy for fieldlists with data on disk. {validator}""",
+        validator=ListValidator(["path", "memory"]),
+    ),
 }
 
 
