@@ -129,14 +129,12 @@ class FieldExtractList(SimpleFieldList):
         for i, result in enumerate(extraction_results):
             arr = result.values_flat
             metadata = self._requests[i]
+            # TODO: Allow modifying user metadata (e.g. to use hdate as forecast reference time)
             field = ArrayField(arr, UserMetadata(metadata, shape=arr.shape))
             fields.append(field)
 
         self.fields = fields
         self._loaded = True
-
-    def to_xarray(self, *args, **kwargs):
-        self._not_implemented()
 
     def to_pandas(self, *args, **kwargs):
         self._not_implemented()
