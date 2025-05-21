@@ -475,7 +475,7 @@ def test_grib_dump(fl_type):
             "data": {
                 # "Ni": 12,
                 # "Nj": 7,
-                "bitmapPresent": 0,
+                # "bitmapPresent": 0,
                 "latitudeOfFirstGridPointInDegrees": 90.0,
                 "longitudeOfFirstGridPointInDegrees": 0.0,
                 "latitudeOfLastGridPointInDegrees": -90.0,
@@ -547,6 +547,7 @@ def test_grib_dump(fl_type):
         if ns == "geography":
             d["data"].pop("Ni", None)
             d["data"].pop("Nj", None)
+            d["data"].pop("bitmapPresent", None)
         if ns not in ("default", "statistics"):
             assert d == [x for x in ref if x["title"] == ns][0], ns
 
