@@ -1,0 +1,14 @@
+{
+  "units": "K",
+  "long_name": "Temperature",
+  "standard_name": "air_temperature",
+  "add_offset": 264.2162222145165,
+  "scale_factor": 0.001225614912271656,
+  "missing_value": -32767,
+  "_ARRAY_DIMENSIONS": [
+    "time",
+    "level",
+    "latitude",
+    "longitude"
+  ]
+}

@@ -34,5 +34,5 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
 
     kind, compression = mimetypes.guess_type(path)
 
-    if magic is None or kind == "application/x-tar":
+    if kind == "application/x-tar":
         return TarReader(source, path, compression)
