@@ -35,7 +35,7 @@ class ZarrReader(XArrayFieldList, Reader):
         return f"ZarrReader({self.path})"
 
 
-def reader(source, path, *, magic=None, deeper_check, **kwargs):
+def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if (
         os.path.exists(os.path.join(path, ".zarray"))
         or os.path.exists(os.path.join(path, ".zgroup"))
