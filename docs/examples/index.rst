@@ -133,6 +133,7 @@ Dictionary input
     fields_from_dict_in_loop.ipynb
     list_of_dicts_overview
     list_of_dicts_geography
+    list_of_dicts_to_xarray
 
 
 Other inputs
@@ -163,6 +164,7 @@ Xarray engine
     xarray_engine_to_grib.ipynb
     xarray_engine_split.ipynb
     xarray_engine_seasonal.ipynb
+    xarray_engine_chunks.ipynb
 
 Targets and encoders
 +++++++++++++++++++++

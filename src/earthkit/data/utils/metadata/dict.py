@@ -7,8 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
+import copy
 import logging
 from functools import cached_property
+from math import prod
 
 import numpy as np
 
@@ -35,17 +37,18 @@ def uniform_resolution(vals):
 def make_geography(metadata, values_shape=None):
     lat = metadata.get("latitudes", None)
     lon = metadata.get("longitudes", None)
-    val = metadata.get("values")
 
-    # lat = np.asarray(lat, dtype=float)
-    # lon = np.asarray(lon, dtype=float)
-
-    val = np.asarray(val, dtype=float)
+    values_size = prod(values_shape) if values_shape else None
 
     distinct = False
     if lat is None or lon is None:
         lat = metadata.get("distinctLatitudes", None)
         lon = metadata.get("distinctLongitudes", None)
+
+        # it is possible to have no geography at all.
+        if lat is None and lon is None:
+            return NoGeography(values_shape)
+
         if values_shape is None:
             if lat is None:
                 raise ValueError("No latitudes or distinctLatitudes found")
@@ -59,13 +62,6 @@ def make_geography(metadata, values_shape=None):
                 raise ValueError(f"distinct latitudes must be 1D array! shape={lat.shape} unsupported")
             if len(lon.shape) != 1:
                 raise ValueError(f"distinctLongitudes must be 1D array! shape={lon.shape} unsupported")
-            if lat.size * lon.size != val.size:
-                raise ValueError(
-                    (
-                        "Distinct latitudes and longitudes do not match number of values. "
-                        f"Expected number=({lat.size * lon.size}), got={val.size}"
-                    )
-                )
             distinct = True
         else:
             if lat is not None and lon is not None:
@@ -76,11 +72,11 @@ def make_geography(metadata, values_shape=None):
                     raise ValueError(f"distinct latitudes must be 1D array! shape={lat.shape} unsupported")
                 if len(lon.shape) != 1:
                     raise ValueError(f"distinctLongitudes must be 1D array! shape={lon.shape} unsupported")
-                if lat.size * lon.size != val.size:
+                if lat.size * lon.size != values_size:
                     raise ValueError(
                         (
                             "Distinct latitudes and longitudes do not match number of values. "
-                            f"Expected number=({lat.size * lon.size}), got={val.size}"
+                            f"Expected number=({lat.size * lon.size}), got={values_size}"
                         )
                     )
                 distinct = True
@@ -91,29 +87,21 @@ def make_geography(metadata, values_shape=None):
     else:
         lat = np.asarray(lat, dtype=float)
         lon = np.asarray(lon, dtype=float)
-        if lat.size * lon.size == val.size:
-            if len(lat.shape) != 1:
-                raise ValueError(
-                    f"latitudes must be a 1D array when holding distinct values! shape={lat.shape} unsupported"
-                )
-            if len(lon.shape) != 1:
-                raise ValueError(
-                    f"longitudes must be a 1D array when holding distinct values! shape={lon.shape} unsupported"
-                )
-            distinct = True
+        if values_size is not None:
+            if lat.size * lon.size == values_size:
+                if len(lat.shape) != 1:
+                    raise ValueError(
+                        f"latitudes must be a 1D array when holding distinct values! shape={lat.shape} unsupported"
+                    )
+                if len(lon.shape) != 1:
+                    raise ValueError(
+                        f"longitudes must be a 1D array when holding distinct values! shape={lon.shape} unsupported"
+                    )
+                distinct = True
 
-    no_latlon = lat is None or lon is None
-
-    if no_latlon:
-        assert values_shape is not None
-
-    if values_shape is None:
-        assert lat is not None
-        assert lon is not None
+    assert lat is not None and lon is not None
 
     if distinct:
-        assert not no_latlon
-
         dx = uniform_resolution(lon)
         dy = uniform_resolution(lat)
 
@@ -123,28 +111,77 @@ def make_geography(metadata, values_shape=None):
             return RegularDistinctLLGeography(metadata)
         else:
             return DistinctLLGeography(metadata)
-
-    if no_latlon:
-        return UserGeography(metadata, shape=values_shape)
     else:
         if lat.shape != lon.shape:
             raise ValueError(f"latitudes and longitudes must have the same shape. {lat.shape} != {lon.shape}")
 
-        if lat.size == val.size:
-            if lat.shape != val.shape:
-                shape = lat.shape if lat.ndim > val.ndim else val.shape
-            else:
-                shape = lat.shape
+        if values_shape is not None:
+            if lat.size == values_size:
+                if values_shape is not None:
+                    if lat.shape != values_shape:
+                        shape = lat.shape if lat.ndim > len(values_shape) else values_shape
+                    else:
+                        shape = lat.shape
+                else:
+                    shape = lat.shape
 
+                return UserGeography(metadata, shape=shape)
+
+            else:
+                raise ValueError(
+                    (
+                        "latitudes and longitudes do not match number of values. "
+                        f"Expected number=({lat.size * lon.size}), got={values_size}"
+                    )
+                )
+        else:
+            shape = lat.shape
             return UserGeography(metadata, shape=shape)
 
-        else:
-            raise ValueError(
-                (
-                    "latitudes and longitudes do not match number of values. "
-                    f"Expected number=({lat.size * lon.size}), got={val.size}"
-                )
-            )
+
+class NoGeography(Geography):
+    def __init__(self, shape):
+        self._shape = shape
+
+    def latitudes(self, dtype=None):
+        return None
+
+    def longitudes(self, dtype=None):
+        return None
+
+    def x(self, dtype=None):
+        raise NotImplementedError("x is not implemented for this geography")
+
+    def y(self, dtype=None):
+        raise NotImplementedError("y is not implemented for this geography")
+
+    def shape(self):
+        return self._shape
+
+    def _unique_grid_id(self):
+        return self.shape()
+
+    def projection(self):
+        return None
+
+    def bounding_box(self):
+        return None
+
+    def gridspec(self):
+        return None
+
+    def resolution(self):
+        return None
+        # raise NotImplementedError("resolution is not implemented for this geography")
+
+    def mars_area(self):
+        return None
+
+    def mars_grid(self):
+        raise NotImplementedError("mars_grid is not implemented for this geography")
+
+    def grid_type(self):
+        return "none"
 
 
 class UserGeography(Geography):
@@ -218,9 +255,8 @@ class UserGeography(Geography):
     def mars_grid(self):
         raise NotImplementedError("mars_grid is not implemented for this geography")
 
-
-# class StructuredGeography(UserGeography):
-#     pass
+    def grid_type(self):
+        return "_unstructured"
 
 
 class DistinctLLGeography(UserGeography):
@@ -268,9 +304,11 @@ class DistinctLLGeography(UserGeography):
         Ni = len(self._distinct_longitudes())
         return (Nj, Ni)
 
+    def grid_type(self):
+        return "_distinct_ll"
+
 
 class RegularDistinctLLGeography(DistinctLLGeography):
-
     def dx(self):
         x = self.metadata.get("DxInDegrees", None)
         if x is None:
@@ -296,6 +334,9 @@ class RegularDistinctLLGeography(DistinctLLGeography):
     def mars_grid(self):
         return [self.dx(), self.dy()]
 
+    def grid_type(self):
+        return "_regular_ll"
+
 
 class UserMetadata(Metadata):
     ALIASES = [
@@ -312,6 +353,7 @@ class UserMetadata(Metadata):
         "valid_datetime": "valid_datetime",
         "step_timedelta": "step_timedelta",
         "param_level": "param_level",
+        "_grid_type": "gridType",
     }
 
     LS_KEYS = ["param", "level", "base_datetime", "valid_datetime", "step", "number"]
@@ -413,6 +455,11 @@ class UserMetadata(Metadata):
     def param_level(self):
         return f"{self.get('param')}{self.get('level', default='')}"
 
+    def _grid_type(self):
+        if "gridType" in self._data:
+            return self._data["gridType"]
+        return self.geography.grid_type()
+
     def _get_one(self, keys):
         for k in keys:
             if k in self._data:
@@ -423,7 +470,26 @@ class UserMetadata(Metadata):
         return make_geography(self, values_shape=self._shape)
 
     def override(self, *args, **kwargs):
-        raise NotImplementedError("override is not implemented for UserMetadata")
+        r"""Create a new metadata object by cloning the underlying metadata and setting the keys in it.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments. When present must be a dict with the keys to set in
+            the new metadata.
+        **kwargs: dict, optional
+            Other keyword arguments specifying the metadata keys to set.
+
+        Returns
+        -------
+        :class:`UserMetadata`
+            The new metadata object. A copy of the original metadata with the keys set in it.
+        """
+        d = dict(*args, **kwargs)
+        existing = copy.deepcopy(self._data)
+        existing.update(d)
+
+        return UserMetadata(existing, shape=copy.deepcopy(self._shape))
 
     def namespaces(self):
         return []
@@ -432,7 +498,35 @@ class UserMetadata(Metadata):
         return {}
 
     def dump(self, **kwargs):
-        return None
+        r"""Generate dump with all the metadata keys.
+
+        In a Jupyter notebook it is represented as a tabbed interface.
+
+        Parameters
+        ----------
+        **kwargs: dict, optional
+            Other keyword arguments used for testing only
+
+        Returns
+        -------
+        NamespaceDump
+            Dict-like object with one item per namespace. In a Jupyter notebook represented
+            as a tabbed interface to browse the dump contents.
+
+        Examples
+        --------
+        :ref:`/examples/grib_metadata.ipynb`
+
+        """
+        from earthkit.data.utils.summary import format_namespace_dump
+
+        r = [
+            {
+                "title": "metadata",
+                "data": self._data,
+            }
+        ]
+        return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
 
     def ls_keys(self):
         return self.LS_KEYS

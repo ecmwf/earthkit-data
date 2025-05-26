@@ -10,9 +10,10 @@
 import logging
 import math
 
+from earthkit.utils.array import array_namespace
+
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
-from earthkit.data.utils.array import array_namespace
 
 LOG = logging.getLogger(__name__)
 
@@ -56,6 +57,11 @@ class ArrayField(Field):
             return self._array
         else:
             return array_namespace(self._array).astype(self._array, dtype, copy=False)
+
+    @property
+    def shape(self):
+        v = super().shape
+        return v if v is not None else self._array.shape
 
     def __repr__(self):
         return self.__class__.__name__ + "(%s,%s,%s,%s,%s,%s)" % (

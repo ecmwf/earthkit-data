@@ -10,6 +10,7 @@ SKIP = {
 # Import all fixtures from list of plugins
 pytest_plugins = [
     "list_of_dicts.lod_fixtures",
+    "patterns.patterns_fixtures",
 ]
 
 

@@ -15,7 +15,7 @@ from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import get_array_namespace
+from earthkit.data.testing import get_array_backend
 
 
 def load_array_fl(num, array_backend=None):
@@ -51,11 +51,11 @@ def load_array_fl_file(fname, array_backend=None):
 def check_array_fl(ds, ds_input, md_full, array_backend=None):
     assert len(ds_input) in [1, 2, 3]
 
-    ns = get_array_namespace(array_backend)
+    array_backend = get_array_backend(array_backend)
 
     assert len(ds) == len(md_full)
     assert ds.metadata("param") == md_full
-    assert ns.allclose(ds[0].values, ds_input[0][0].values)
+    assert array_backend.allclose(ds[0].values, ds_input[0][0].values)
 
     # # values metadata
     # keys = ["min", "max"]
@@ -72,15 +72,15 @@ def check_array_fl(ds, ds_input, md_full, array_backend=None):
         assert r.metadata("param") == ["msl", "t"]
         assert r[0].metadata("param") == "msl"
         assert r[1].metadata("param") == "t"
-        assert ns.allclose(r[0].values, ds_input[0][1].values)
-        assert ns.allclose(r[1].values, ds_input[1][0].values)
+        assert array_backend.allclose(r[0].values, ds_input[0][1].values)
+        assert array_backend.allclose(r[1].values, ds_input[1][0].values)
 
         # check sel
         r = ds.sel(shortName="msl")
         assert len(r) == 1
         assert r.metadata("shortName") == ["msl"]
         assert r[0].metadata("param") == "msl"
-        assert ns.allclose(r[0].values, ds_input[0][1].values)
+        assert array_backend.allclose(r[0].values, ds_input[0][1].values)
 
     if len(ds_input) == 3:
         r = ds[1:13:4]
@@ -96,11 +96,11 @@ def check_array_fl_from_to_fieldlist(ds, ds_input, md_full, array_backend=None, 
     assert len(ds) == len(md_full)
     assert ds.metadata("param") == md_full
 
-    ns = get_array_namespace(array_backend)
+    array_backend = get_array_backend(array_backend)
 
     np_kwargs = {"flatten": flatten, "dtype": dtype}
 
-    assert ns.allclose(ds[0].to_array(**np_kwargs), ds_input[0][0].to_array(**np_kwargs))
+    assert array_backend.allclose(ds[0].to_array(**np_kwargs), ds_input[0][0].to_array(**np_kwargs))
 
     assert ds.to_array(**np_kwargs).shape == ds_input[0].to_array(**np_kwargs).shape
 
@@ -114,15 +114,15 @@ def check_array_fl_from_to_fieldlist(ds, ds_input, md_full, array_backend=None, 
         assert r.metadata("param") == ["msl", "t"]
         assert r[0].metadata("param") == "msl"
         assert r[1].metadata("param") == "t"
-        assert ns.allclose(r[0].to_array(**np_kwargs), ds_input[0][1].to_array(**np_kwargs))
-        assert ns.allclose(r[1].to_array(**np_kwargs), ds_input[1][0].to_array(**np_kwargs))
+        assert array_backend.allclose(r[0].to_array(**np_kwargs), ds_input[0][1].to_array(**np_kwargs))
+        assert array_backend.allclose(r[1].to_array(**np_kwargs), ds_input[1][0].to_array(**np_kwargs))
 
         # check sel
         r = ds.sel(shortName="msl")
         assert len(r) == 1
         assert r.metadata("shortName") == ["msl"]
         assert r[0].metadata("param") == "msl"
-        assert ns.allclose(r[0].to_array(**np_kwargs), ds_input[0][1].to_array(**np_kwargs))
+        assert array_backend.allclose(r[0].to_array(**np_kwargs), ds_input[0][1].to_array(**np_kwargs))
 
     if len(ds_input) == 3:
         r = ds[1:13:4]

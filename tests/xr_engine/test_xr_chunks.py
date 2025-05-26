@@ -94,3 +94,33 @@ def test_xr_engine_chunk_2(_kwargs):
         r = ds["2t"].mean("valid_time").load()
 
         assert np.isclose(r.values.mean(), 275.9938876277779)
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "_kwargs",
+    [
+        {},
+        {"chunks": "auto"},
+        {"chunks": {"valid_time": 1}},
+        {"chunks": {"valid_time": 10}},
+        {"chunks": {"valid_time": (100, 200, 432), "latitude": (4, 5, 4), "longitude": (13, 3, 8)}},
+        {"chunks": {"valid_time": 100, "latitude": 4, "longitude": 7}},
+        {"chunks": -1},
+    ],
+)
+def test_xr_engine_chunk_3(_kwargs):
+    # in-memory fieldlist
+    ds_in = from_source(
+        "url",
+        earthkit_remote_test_data_file("test-data", "xr_engine", "date", "t2_1_year_hourly.grib"),
+        stream=True,
+        read_all=True,
+    )
+
+    ds = ds_in.to_xarray(time_dim_mode="valid_time", **_kwargs)
+    assert ds is not None
+
+    r = ds["2t"].mean("valid_time").load()
+
+    assert np.isclose(r.values.mean(), 275.9938876277779)

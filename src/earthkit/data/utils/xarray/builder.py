@@ -32,7 +32,14 @@ NON_XR_OPEN_DS_KWARGS = ["split_dims", "direct_backend"]
 
 class VariableBuilder:
     def __init__(
-        self, name, var_dims, data_maker, tensor, remapping, local_attr_keys=None, fixed_local_attrs=None
+        self,
+        name,
+        var_dims,
+        data_maker,
+        tensor,
+        remapping,
+        local_attr_keys=None,
+        fixed_local_attrs=None,
     ):
         """
         Create a builder for a single variable in the dataset.
@@ -67,12 +74,13 @@ class VariableBuilder:
 
     def build(self, add_earthkit_attrs=True):
         if add_earthkit_attrs:
-            md = self.tensor.source[0].metadata().override()
-            attrs = {
-                "message": md._handle.get_buffer(),
-                "bitsPerValue": md.get("bitsPerValue", 0),
-            }
-            self._attrs["_earthkit"] = attrs
+            if hasattr(self.tensor.source[0], "handle"):
+                md = self.tensor.source[0].metadata().override()
+                attrs = {
+                    "message": md._handle.get_buffer(),
+                    "bitsPerValue": md.get("bitsPerValue", 0),
+                }
+                self._attrs["_earthkit"] = attrs
 
         self._attrs.update(self.fixed_local_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
@@ -165,19 +173,21 @@ class VariableBuilder:
 
 
 class TensorBackendArray(xarray.backends.common.BackendArray):
-    def __init__(self, tensor, dims, shape, xp, dtype, variable):
+    def __init__(self, tensor, dims, shape, xp, dtype, var_name):
         super().__init__()
         self.tensor = tensor
         self.dims = dims
         self.shape = shape
+        self._var_name = var_name
 
         # xp and dtype must be set for xarray
         self.xp = xp if xp is not None else numpy
         if dtype is None:
             dtype = numpy.dtype("float64")
         self.dtype = xp.dtype(dtype)
+        from dask.utils import SerializableLock
 
-        self._var = variable
+        self.lock = SerializableLock()
 
     @property
     def nbytes(self):
@@ -205,39 +215,35 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         # patched in local copy for now, but could construct this ourself
 
     def _raw_indexing_method(self, key: tuple):
-        # must be threadsafe
-        # print("_var", self._var)
-        # print(f"dims: {self.dims} key: {key} shape: {self.shape}")
-        # isels = dict(zip(self.dims, key))
-        # r = self.ekds.isel(**isels)
-        # print(f"t-coords={self.tensor.user_coords}")
-        r = self.tensor[key]
-        # print(r.source.ls())
-        # print(f"r-shape: {r.user_shape}")
+        with self.lock:
+            # LOG.debug(f"TensorBackendArray._raw_indexing_method var={self._var_name}")
+            # LOG.debug(f"   dims={self.dims} key={key} shape={self.shape}")
+            # LOG.debug(f"   tensor.user_coords={self.tensor.user_coords}")
 
-        field_index = r.field_indexes(key)
-        # print(f"field.index={field_index} coords={r.user_coords}")
-        # result = r.to_numpy(index=field_index).squeeze()
-        result = r.to_numpy(index=field_index, dtype=self.dtype)
+            r = self.tensor[key]
+            # LOG.debug(f"   cubelet user_shape={r.user_shape}")
 
-        # ensure axes are squeezed when needed
-        singles = [i for i in list(range(len(r.user_shape))) if isinstance(key[i], int)]
-        if singles:
-            result = result.squeeze(axis=tuple(singles))
+            # LOG.debug(f"   {r.user_shape=}")
+            field_index = r.field_indexes(key)
+            if self.tensor.is_full_field(field_index):
+                field_index = None
 
-        # print("result", result.shape)
-        # result = self.ekds.isel(**isels).to_numpy()
+            # LOG.debug(f"   {field_index=}")
 
-        # print("result", result.shape)
-        # print(f"Loaded {self.xp.__name__} with shape: {result.shape}")
+            result = r.to_numpy(index=field_index, dtype=self.dtype)
 
-        # Loading as numpy but then converting. This needs to be changed upstream (eccodes)
-        # to load directly into cupy.
-        # Maybe some incompatibilities when trying to copy from FFI to cupy directly
-        if self.xp and self.xp != numpy:
-            result = self.xp.asarray(result)
+            # ensure axes are squeezed when needed
+            singles = [i for i in list(range(len(r.user_shape))) if isinstance(key[i], int)]
+            if singles:
+                result = result.squeeze(axis=tuple(singles))
 
-        return result
+            # LOG.debug(f"   {result.shape=}")
+
+            # Loading as numpy but then converting to the target array module
+            if self.xp and self.xp != numpy:
+                result = self.xp.asarray(result)
+
+            return result
 
 
 class BackendDataBuilder(metaclass=ABCMeta):
@@ -409,7 +415,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
                     tensor_dims.append(d)
                     tensor_coords[d.key] = vals[d.key]
-                    if d.key in component_vals:
+                    if component_vals and d.key in component_vals:
                         tensor_coords_component[d.key] = component_vals[d.key]
 
                     # check if the dims/coords are consistent with the tensors of
@@ -446,6 +452,10 @@ class TensorBackendDataBuilder(BackendDataBuilder):
 
     def build_values(self, tensor, var_dims, name):
         """Generate the data object stored in the xarray variable"""
+        # There is no need for the extra structures in the wrapped source in the
+        # tensor any longer. It is replaced by the original unwrapped fieldlist.
+        tensor.source = tensor.source.unwrap()
+
         backend_array = TensorBackendArray(
             tensor,
             var_dims,
@@ -558,15 +568,19 @@ class DatasetBuilder:
     def grid(self, ds):
         grids = ds.index("md5GridSection")
 
-        if len(grids) != 1:
-            raise ValueError(f"Expected one grid, got {len(grids)}")
-        grid = grids[0]
+        if not grids:
+            grid = "_custom_" + str(id(ds))
+        else:
+            # if len(grids) != 1:
+            #     raise ValueError(f"Expected one grid, got {len(grids)}")
+            grid = grids[0]
+
         key = (grid, self.profile.flatten_values)
 
         if key not in self.grids:
             from .grid import TensorGrid
 
-            self.grids = {key: TensorGrid(ds[0], self.profile.flatten_values)}
+            self.grids[key] = TensorGrid(ds[0], self.profile.flatten_values)
         return self.grids[key]
 
 
@@ -622,7 +636,8 @@ class SplitDatasetBuilder(DatasetBuilder):
         # LOG.debug(f"split_dims={self.split_dims}")
         ds_xr = XArrayInputFieldList(self.ds, keys=self.profile.index_keys, remapping=remapping)
 
-        vals, _ = ds_xr.unique_values(*keys)
+        vals, _ = ds_xr.unique_values(keys)
+        LOG.debug(f"{keys=}, {vals=}")
 
         return ds_xr, vals
 
@@ -631,8 +646,10 @@ class SplitDatasetBuilder(DatasetBuilder):
 
         splitter = Splitter.make(self.split_dims)
         datasets = []
+        split_coords_list = []
         for ds, profile, split_coords in splitter.split(self):
             dims = profile.dims.to_list()
+            split_coords_list.append(dict(split_coords))
             LOG.debug(f"splitting {dims=} type of s_ds={type(ds)} {split_coords=}")
             split_coords.pop(profile.variable_key, None)
             builder = self.builder(ds, profile, dims, grid=self.grid(ds), fixed_local_attrs=split_coords)
@@ -645,7 +662,7 @@ class SplitDatasetBuilder(DatasetBuilder):
                 datasets.append(xarray.open_dataset(ds, **self.xr_open_dataset_kwargs))
                 ds._ek_builder = None
 
-        return datasets[0] if len(datasets) == 1 else datasets
+        return datasets, split_coords_list
 
 
 def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
