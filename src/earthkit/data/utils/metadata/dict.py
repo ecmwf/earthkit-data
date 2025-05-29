@@ -416,6 +416,10 @@ class UserMetadata(Metadata):
             v = to_datetime(v)
             return v
 
+        v = self._datetime("hdate", "time")
+        if v is not None:
+            return v
+
         v = self._datetime("date", "time")
         if v is not None:
             return v
