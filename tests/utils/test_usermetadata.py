@@ -58,7 +58,7 @@ def test_usermetadata_geom(_kwargs):
     assert meta["time"] == 300
     assert meta["base_datetime"] == "2018-08-01T03:00:00"
     assert meta.base_datetime() == datetime.datetime(2018, 8, 1, 3, 0)
-    assert meta.geography.shape == (10,)
+    assert meta.geography.shape() == (10,)
 
     lat = meta.geography.latitudes()
     lon = meta.geography.longitudes()
