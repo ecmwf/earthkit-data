@@ -1,0 +1,7 @@
+{
+  "units": "millibars",
+  "long_name": "pressure_level",
+  "_ARRAY_DIMENSIONS": [
+    "level"
+  ]
+}
