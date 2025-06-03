@@ -204,27 +204,26 @@ def reader(source, path, **kwargs):
 
         raise TypeError("Provided reader must be a callable or a string, not %s" % type(reader))
 
-    if os.path.isdir(path):
-        from .directory import DirectoryReader
-
-        return DirectoryReader(source, path).mutate()
-    LOG.debug("Reader for %s", path)
-
     if not os.path.exists(path):
         r = _non_existing(source, path, **kwargs)
         if r is not None:
             return r
         raise FileNotFoundError(f"No such file exists: '{path}'")
 
-    if os.path.getsize(path) == 0:
-        r = _empty(source, path, **kwargs)
-        if r is not None:
-            return r
-        raise Exception(f"File is empty: '{path}'")
+    LOG.debug("Reader for %s", path)
 
-    n_bytes = CONFIG.get("reader-type-check-bytes")
-    with open(path, "rb") as f:
-        magic = f.read(n_bytes)
+    if os.path.isdir(path):
+        magic = None
+    else:
+        if os.path.getsize(path) == 0:
+            r = _empty(source, path, **kwargs)
+            if r is not None:
+                return r
+            raise Exception(f"File is empty: '{path}'")
+
+        n_bytes = CONFIG.get("reader-type-check-bytes")
+        with open(path, "rb") as f:
+            magic = f.read(n_bytes)
 
     LOG.debug("Looking for a reader for %s (%s)", path, magic)
 

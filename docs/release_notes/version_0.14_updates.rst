@@ -1,6 +1,14 @@
 Version 0.14 Updates
 /////////////////////////
 
+Version 0.14.3
+===============
+
+Fixes
++++++++++++++++++
+
+- Fixed issue when getting GRIB metadata for the "geography" namespace caused a crash when the "bitmap" key was present in the namespace. The "bitmap" key is now ignored in the "geography" namespace.
+
 Version 0.14.2
 ===============
 
@@ -35,6 +43,11 @@ When :meth:`~data.core.fieldlist.FieldList.to_xarray` is called with ``split_dim
 
 See the :ref:`/examples/xarray_engine_split.ipynb` notebook example.
 
+
+Patterns
++++++++++++++++++++++++++++++
+
+The ``allow_missing_keys`` keyword argument was removed from :py:meth:`Patterns.__init__`. When :py:class:`Patterns` was created with ``allow_missing_keys=True`` it allowed passing parameters to :py:meth:`Patterns.substitue` which were not part of the pattern. This behaviour can now be controlled by passing the ``allow_extra=True`` keyword argument to each :py:meth:`Patterns.substitue` call. This is a **breaking change** (:pr:`659`).
 
 New features
 +++++++++++++++++
