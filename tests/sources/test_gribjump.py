@@ -103,11 +103,36 @@ def seed_fdb(setup_fdb_with_gribjump):
     yield setup_fdb_with_gribjump
 
 
-@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
-def test_gribjump_with_ranges(seed_fdb):
+@pytest.fixture
+def ranges():
+    return dict(ranges=[(0, 1), (5, 9), (25, 27)])
+
+
+@pytest.fixture
+def indices():
     import numpy as np
 
-    request = {
+    return dict(indices=np.array([0, 5, 6, 7, 8, 25, 26]))
+
+
+@pytest.fixture
+def mask():
+    import numpy as np
+
+    mask = np.zeros((7, 12), dtype=bool)
+    mask[0, 0] = True
+    mask[0, 5:9] = True
+    mask[2, 1:3] = True
+    return dict(mask=mask)
+
+
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
+@pytest.mark.parametrize("method", ["ranges", "indices", "mask"])
+def test_gribjump_to_numpy(seed_fdb, method, request):
+    import numpy as np
+
+    kwargs = request.getfixturevalue(method)
+    mars_request = {
         "class": "od",
         "date": "20201221",
         "domain": "g",
@@ -121,19 +146,44 @@ def test_gribjump_with_ranges(seed_fdb):
         "type": "fc",
     }
 
-    source = from_source("gribjump", request, ranges=[(0, 1), (10, 12)])
+    arr_expected = np.array(
+        [
+            [
+                1743.06591797,
+                1743.06591797,
+                1743.06591797,
+                1743.06591797,
+                1743.06591797,
+                1607.31591797,
+                1721.81591797,
+            ],
+            [
+                1641.43701172,
+                1641.43701172,
+                1641.43701172,
+                1641.43701172,
+                1641.43701172,
+                1702.31201172,
+                1887.18701172,
+            ],
+        ]
+    )
+    source = from_source("gribjump", mars_request, **kwargs)
     arr = source.to_numpy()
 
     assert arr is not None and isinstance(arr, np.ndarray)
-    assert arr.shape == (2, 3)
+    assert arr.shape == (2, 7)
+    np.testing.assert_array_almost_equal(arr, arr_expected)
 
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
-def test_gribjump_with_mask(seed_fdb):
+@pytest.mark.parametrize("method", ["ranges", "indices", "mask"])
+def test_gribjump_to_xarray(seed_fdb, method, request):
     import numpy as np
     import xarray as xr
 
-    request = {
+    kwargs = request.getfixturevalue(method)
+    mars_request = {
         "class": "od",
         "date": "20201221",
         "domain": "g",
@@ -147,16 +197,36 @@ def test_gribjump_with_mask(seed_fdb):
         "type": "fc",
     }
 
-    mask = np.eye(7, 12, dtype=bool)
-    source = from_source("gribjump", request, mask=mask)
-    arr = source.to_numpy()
+    arr_expected = np.array(
+        [
+            [
+                1743.06591797,
+                1743.06591797,
+                1743.06591797,
+                1743.06591797,
+                1743.06591797,
+                1607.31591797,
+                1721.81591797,
+            ],
+            [
+                1641.43701172,
+                1641.43701172,
+                1641.43701172,
+                1641.43701172,
+                1641.43701172,
+                1702.31201172,
+                1887.18701172,
+            ],
+        ]
+    )
+    source = from_source("gribjump", mars_request, **kwargs)
     ds = source.to_xarray()
 
     ds_expected = xr.Dataset(
-        {"129": (("step", "index"), arr)},
+        {"129": (("step", "index"), arr_expected)},
         coords={
             "step": np.array([0, 21600000000000], dtype="timedelta64[ns]"),
-            "index": np.array([0, 13, 26, 39, 52, 65, 78]),
+            "index": np.array([0, 5, 6, 7, 8, 25, 26]),
         },
         attrs={
             "class": "od",
@@ -166,71 +236,16 @@ def test_gribjump_with_mask(seed_fdb):
             "levelist": "1000",
             "levtype": "pl",
             "stream": "oper",
+            "param": "129",
             "time": "1200",
             "type": "fc",
-            "Conventions:": "CF-1.8",
+            "Conventions": "CF-1.8",
             "institution": "ECMWF",
         },
     )
-
-    assert arr is not None and isinstance(arr, np.ndarray)
-    assert arr.shape == (2, 7)
-    xr.testing.assert_equal(ds, ds_expected)
-
-
-@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
-def test_gribjump_with_indices(seed_fdb):
-    import numpy as np
-
-    request = {
-        "class": "od",
-        "date": "20201221",
-        "domain": "g",
-        "expver": "0001",
-        "levelist": "1000",
-        "levtype": "pl",
-        "param": "129",
-        "step": [0, 6],
-        "stream": "oper",
-        "time": "1200",
-        "type": "fc",
-    }
-
-    indices = np.array([0, 7, 14, 21, 28, 35, 42])
-    source = from_source("gribjump", request, indices=indices)
-    arr = source.to_numpy()
-
-    assert arr is not None and isinstance(arr, np.ndarray)
-    assert arr.shape == (2, 7)
-
-
-@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
-def test_gribjump_source_against_manually_masked_grid(seed_fdb):
-    import numpy as np
-
-    request = {
-        "class": "od",
-        "date": "20201221",
-        "domain": "g",
-        "expver": "0001",
-        "levelist": "1000",
-        "levtype": "pl",
-        "param": "129",
-        "step": [0, 6],
-        "stream": "oper",
-        "time": "1200",
-        "type": "fc",
-    }
-
-    mask = (np.eye(7, 12, dtype=bool) | np.eye(7, 12, k=1, dtype=bool)).ravel()
-
-    gj_source = from_source("gribjump", request, mask=mask)
-    file_source = from_source("file", earthkit_test_data_file("t_time_series.grib"))
-
-    expected_arr = file_source.sel(step=[0, 6], param="z").to_numpy().reshape(2, -1)[:, mask]
-    extracted_arr = gj_source.to_numpy()
-
-    assert np.allclose(expected_arr, extracted_arr)
+    xr.testing.assert_allclose(ds, ds_expected)
+    assert ds_expected.attrs == ds.attrs
+    assert set(ds_expected.coords.keys()) == set(ds.coords.keys())
 
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")

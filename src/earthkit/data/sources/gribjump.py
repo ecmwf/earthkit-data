@@ -104,6 +104,16 @@ class FieldExtractList(SimpleFieldList):
             raise ValueError(
                 f"Number of MARS requests ({len(requests)}) and GribJump extraction requests ({len(extraction_requests)}) must match."
             )
+        if len(requests) == 0:
+            raise ValueError(
+                "FieldExtractList requires at least one extraction request, but received an empty list"
+            )
+        ranges = extraction_requests[0].ranges
+        if invalid_requests := [req for req in extraction_requests if req.ranges != ranges]:
+            raise ValueError(
+                f"ExtractionRequests must request same ranges but found {len(invalid_requests)} requests with different ranges"
+            )
+
         self._gj = gj
         self._requests = requests
         self._extraction_requests = extraction_requests
@@ -129,15 +139,12 @@ class FieldExtractList(SimpleFieldList):
         fields = []
         indices = None
         for i, (request, result) in enumerate(zip(self._extraction_requests, extraction_results)):
-            arr = result.values_flat
             if indices is None:
+                # We can assume that all arrays reference the same indices
+                # because we checked in the constructor that all extraction
+                # requests share the same ranges.
                 indices = request.indices()
-            else:
-                if not np.array_equal(indices, request.indices()):
-                    raise ValueError(
-                        "Found GribJump result with different indices. "
-                        "All requests must specify the same ranges to construct an xarray Dataset"
-                    )
+            arr = result.values_flat
             metadata = self._requests[i]
             field = ArrayField(arr, UserMetadata(metadata, shape=arr.shape))
             fields.append(field)
@@ -146,16 +153,13 @@ class FieldExtractList(SimpleFieldList):
         self._loaded = True
         self._grid_indices = indices
 
-    def to_pandas(self, *args, **kwargs):
-        self._not_implemented()
-
     def to_xarray(self, *args, **kwargs):
-        assert (
-            self._grid_indices is not None
-        ), f"Grid indices must be known before converting to xarray. {self._grid_indices=}"
         ds = super().to_xarray(*args, **kwargs)
         ds = ds.rename_dims({"values": "index"}).assign_coords({"index": self._grid_indices})
         return ds
+
+    def to_pandas(self, *args, **kwargs):
+        self._not_implemented()
 
 
 class GribJumpSource(Source):
