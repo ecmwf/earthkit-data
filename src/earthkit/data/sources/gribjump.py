@@ -108,6 +108,7 @@ class FieldExtractList(SimpleFieldList):
         self._requests = requests
         self._extraction_requests = extraction_requests
         self._loaded = False
+        self._grid_indices = None
 
         super().__init__(fields=None)  # The fields attribute is set lazily
 
@@ -126,18 +127,35 @@ class FieldExtractList(SimpleFieldList):
         extraction_results = self._gj.extract(self._extraction_requests)
 
         fields = []
-        for i, result in enumerate(extraction_results):
+        indices = None
+        for i, (request, result) in enumerate(zip(self._extraction_requests, extraction_results)):
             arr = result.values_flat
+            if indices is None:
+                indices = request.indices()
+            else:
+                if not np.array_equal(indices, request.indices()):
+                    raise ValueError(
+                        "Found GribJump result with different indices. "
+                        "All requests must specify the same ranges to construct an xarray Dataset"
+                    )
             metadata = self._requests[i]
-            # TODO: Allow modifying user metadata (e.g. to use hdate as forecast reference time)
             field = ArrayField(arr, UserMetadata(metadata, shape=arr.shape))
             fields.append(field)
 
         self.fields = fields
         self._loaded = True
+        self._grid_indices = indices
 
     def to_pandas(self, *args, **kwargs):
         self._not_implemented()
+
+    def to_xarray(self, *args, **kwargs):
+        assert (
+            self._grid_indices is not None
+        ), f"Grid indices must be known before converting to xarray. {self._grid_indices=}"
+        ds = super().to_xarray(*args, **kwargs)
+        ds = ds.rename_dims({"values": "index"}).assign_coords({"index": self._grid_indices})
+        return ds
 
 
 class GribJumpSource(Source):

@@ -153,8 +153,11 @@ def test_gribjump_with_mask(seed_fdb):
     ds = source.to_xarray()
 
     ds_expected = xr.Dataset(
-        {"129": (("step", "values"), arr)},
-        coords={"step": np.array([0, 21600000000000], dtype="timedelta64[ns]")},
+        {"129": (("step", "index"), arr)},
+        coords={
+            "step": np.array([0, 21600000000000], dtype="timedelta64[ns]"),
+            "index": np.array([0, 13, 26, 39, 52, 65, 78]),
+        },
         attrs={
             "class": "od",
             "date": "20201221",
@@ -172,7 +175,7 @@ def test_gribjump_with_mask(seed_fdb):
 
     assert arr is not None and isinstance(arr, np.ndarray)
     assert arr.shape == (2, 7)
-    assert ds.equals(ds_expected)
+    xr.testing.assert_equal(ds, ds_expected)
 
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
