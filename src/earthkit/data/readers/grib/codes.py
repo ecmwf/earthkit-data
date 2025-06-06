@@ -151,6 +151,16 @@ class GribCodesHandle(CodesHandle):
             return self.get_values()
         elif name == "md5GridSection":
             return self.get_md5GridSection()
+        elif name == "gridSpec":
+            # Temporary measure because from ecCodes 2.41.0, when we ask for the gridSpec
+            # ecCodes raises a gribapi.errors.FunctionNotImplementedError exception, which is
+            # not caught by the  high level eccodes API even if a default value is provided.
+            if "default" in kwargs:
+                try:
+                    return super().get(name, ktype, **kwargs)
+                except Exception as e:
+                    if "FunctionNotImplementedError" in str(type(e)):
+                        return kwargs.get("default", None)
 
         return super().get(name, ktype, **kwargs)
 
