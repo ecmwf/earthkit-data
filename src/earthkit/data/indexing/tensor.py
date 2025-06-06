@@ -497,10 +497,12 @@ class FieldListTensor(TensorCore):
         print(f"{keys=}")
         for dims in dims_opt:
             if all(d in keys for d in dims):
+                print("Found dims:", dims)
                 # use same dim order as in user_dims
+                dims = [keys[d] for d in dims]
                 dims = [d for d in dims if d in self.user_dims]
                 other_dims = [d for d in self.user_dims if d not in dims]
-                # print(f"{dims=} {other_dims=}")
+                print(f"{dims=} {other_dims=}")
                 if other_dims:
                     import datetime
 
