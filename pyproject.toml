@@ -47,7 +47,7 @@ dependencies = [
   "xarray>=0.19",
 ]
 optional-dependencies.all = [
-  "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geo,geopandas,geotiff,mars,odb,polytope,projection,s3,wekeo]",
+  "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geo,geopandas,mars,odb,polytope,projection,s3,wekeo]",
 ]
 optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
 optional-dependencies.ci = [ "numpy" ]
