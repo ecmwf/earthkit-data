@@ -1,6 +1,17 @@
 Version 0.14 Updates
 /////////////////////////
 
+
+Version 0.14.4
+===============
+
+Fixes
+++++++
+
+- Fixed issue when getting the "gridSpec" GRIB metadata key with a default value caused a crash when ecCodes 2.41.0 was used. (:pr:`719`).
+- Now, dependencies for GeoTIFF support are not installed when earthkit-data is installed with ``pip install earthkit-data[all]``. This step was necessary to make installation work when GDAL is not available. These dependencies need to be installed separately with ``pip install earthkit-data[geotiff]``. See :ref:`install`. (:pr:`718`).
+
+
 Version 0.14.3
 ===============
 

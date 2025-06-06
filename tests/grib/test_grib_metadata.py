@@ -544,6 +544,13 @@ def test_grib_tilde_shortname(fl_type):
     assert f[0].metadata(namespace="parameter")["shortName"] == "106"
 
 
+def test_grib_gridspec_key():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    ds[0].metadata("gridSpec", default=None)  # Should not raise an error
+    ds.metadata("gridSpec", default=None)  # Should not raise an error
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
