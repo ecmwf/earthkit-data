@@ -1,8 +1,8 @@
 dim_roles:
-  ens: number
+  number: number
   date: dataDate
   time: dataTime
-  step: step
+  step: step_timedelta
   level: level
   level_type: typeOfLevel
 

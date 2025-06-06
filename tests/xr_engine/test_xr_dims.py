@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import os
 import sys
 
@@ -116,22 +117,25 @@ def test_xr_dims_input_fieldlist():
 @pytest.mark.parametrize(
     "kwargs,var_key,variables,dim_keys",
     [
-        ({}, "param", ["r", "t"], ["step", "levelist"]),
+        ({}, "param", ["r", "t"], ["step_timedelta", "levelist"]),
         (
-            {"time_dim_mode": "forecast"},
+            {"time_dim_mode": "forecast", "keep_dim_role_names": False},
             "param",
             ["r", "t"],
-            ["step", "levelist"],
+            ["step_timedelta", "levelist"],
         ),
         (
-            {"squeeze": False, "time_dim_mode": "raw"},
+            {"squeeze": False, "time_dim_mode": "raw", "keep_dim_role_names": False},
             "param",
             ["r", "t"],
-            ["time", "step", "levelist"],
+            ["time", "step_timedelta", "levelist"],
         ),
     ],
 )
 def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
+    """Test for the internal profile/dimension object. Cannot use all the options since
+    many tasks are performed elsewhere in the engine."""
+    # TODO: consider removing this test
     prof = Profile.make("mars", **kwargs)
     ds = load_wrapped_fieldlist(DS_LEV, prof)
     # prof.update(ds, _attributes(ds))
@@ -144,128 +148,121 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
 @pytest.mark.parametrize(
     "kwargs,var_key,variables,dims",
     [
-        # ({"time_dim_mode": "raw"}, "param", ["r", "t"], ["date", "time", "step", "levelist"]),
         (
-            {"time_dim_mode": "forecast"},
+            {"time_dim_mode": "forecast", "keep_dim_role_names": False},
             "param",
             ["r", "t"],
-            ["forecast_reference_time", "step", "levelist", "levtype"],
+            ["forecast_reference_time", "step_timedelta", "levelist", "levtype"],
         ),
         (
-            {"time_dim_mode": "raw", "variable_key": "param_level"},
+            {"time_dim_mode": "raw", "variable_key": "param_level", "keep_dim_role_names": False},
             "param_level",
             ["r1000", "r850", "t1000", "t850"],
-            ["date", "time", "step", "levtype"],
+            ["date", "time", "step_timedelta", "levtype"],
         ),
-        # (
-        #     {"time_dim_mode": "raw", "extra_dims": "param_level"},
-        #     "param_level",
-        #     [
-        #         "r1000",
-        #         "r850",
-        #         "t1000",
-        #         "t850",
-        #     ],
-        #     ["date"],
-        # ),
         (
             {
                 "time_dim_mode": "raw",
                 "variable_key": "param_level",
                 "remapping": {"param_level": "{param}_{level}"},
+                "keep_dim_role_names": False,
             },
             "param_level",
             ["r_1000", "r_850", "t_1000", "t_850"],
-            ["date", "time", "step", "levtype"],
+            ["date", "time", "step_timedelta", "levtype"],
         ),
         (
-            {"time_dim_mode": "raw", "variable_key": "shortName"},
+            {"time_dim_mode": "raw", "variable_key": "shortName", "keep_dim_role_names": False},
             "shortName",
             ["r", "t"],
-            ["date", "time", "step", "levelist", "levtype"],
+            ["date", "time", "step_timedelta", "levelist", "levtype"],
         ),
         (
-            {"time_dim_mode": "raw", "variable_key": "shortName", "drop_variables": ["r"]},
+            {
+                "time_dim_mode": "raw",
+                "variable_key": "shortName",
+                "drop_variables": ["r"],
+                "keep_dim_role_names": False,
+            },
             "shortName",
             ["t"],
-            ["date", "time", "step", "levelist", "levtype"],
+            ["date", "time", "step_timedelta", "levelist", "levtype"],
         ),
         (
-            {"time_dim_mode": "raw", "variable_key": "param_level", "drop_variables": ["r", "r1000"]},
+            {
+                "time_dim_mode": "raw",
+                "variable_key": "param_level",
+                "drop_variables": ["r", "r1000"],
+                "keep_dim_role_names": False,
+            },
             "param_level",
             ["r850", "t1000", "t850"],
             [
                 "date",
                 "time",
-                "step",
+                "step_timedelta",
                 "levtype",
             ],
         ),
-        # (
-        #     {"use_level_per_type_dim": True},
-        #     "param",
-        #     ["r", "t"],
-        #     {"date": ["20210101", "20210102"], "level_per_type": ["850pl", "1000pl"]},
-        # ),
         (
-            {"time_dim_mode": "raw", "level_dim_mode": "level_and_type"},
+            {"time_dim_mode": "raw", "level_dim_mode": "level_and_type", "keep_dim_role_names": False},
             "param",
             ["r", "t"],
             {
                 "date": ["20210101", "20210102"],
                 "time": ["12"],
-                "step": [0],
+                "step_timedelta": [datetime.timedelta(hours=0)],
                 "level_and_type": ["1000pl", "850pl"],
             },
         ),
         (
-            {"time_dim_mode": "raw", "extra_dims": "class"},
+            {"time_dim_mode": "raw", "extra_dims": "class", "keep_dim_role_names": False},
             "param",
             ["r", "t"],
             {
                 "class": ["od"],
                 "date": ["20210101", "20210102"],
                 "time": ["12"],
-                "step": [0],
+                "step_timedelta": [datetime.timedelta(hours=0)],
                 "levelist": [850, 1000],
                 "levtype": ["pl"],
             },
         ),
         (
-            {"time_dim_mode": "raw", "ensure_dims": "class"},
+            {"time_dim_mode": "raw", "ensure_dims": "class", "keep_dim_role_names": False},
             "param",
             ["r", "t"],
             {
                 "class": ["od"],
                 "date": ["20210101", "20210102"],
                 "time": ["12"],
-                "step": [0],
+                "step_timedelta": [datetime.timedelta(hours=0)],
                 "levelist": [850, 1000],
                 "levtype": ["pl"],
             },
         ),
         (
-            {"time_dim_mode": "raw", "ensure_dims": ["class", "step"]},
+            {"time_dim_mode": "raw", "ensure_dims": ["class", "step"], "keep_dim_role_names": False},
             "param",
             ["r", "t"],
             {
                 "class": ["od"],
                 "date": ["20210101", "20210102"],
                 "time": ["12"],
-                "step": [0],
+                "step_timedelta": [datetime.timedelta(hours=0)],
                 "levelist": [850, 1000],
                 "levtype": ["pl"],
             },
         ),
         (
-            {"time_dim_mode": "raw", "extra_dims": "class", "squeeze": False},
+            {"time_dim_mode": "raw", "extra_dims": "class", "squeeze": False, "keep_dim_role_names": False},
             "param",
             ["r", "t"],
             {
                 "class": ["od"],
                 "date": ["20210101", "20210102"],
                 "time": ["12"],
-                "step": [0],
+                "step_timedelta": [datetime.timedelta(hours=0)],
                 "levelist": [850, 1000],
                 "levtype": ["pl"],
             },
@@ -273,6 +270,9 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
     ],
 )
 def test_xr_dims_ds_date_lev(kwargs, var_key, variables, dims):
+    """Test for the internal profile/dimension object. Cannot use all the options since
+    many tasks are performed elsewhere in the engine."""
+    # TODO: consider removing this test
 
     prof = Profile.make("mars", **kwargs)
     ds = load_wrapped_fieldlist(DS_DATE_LEV, prof, remapping=prof.remapping.build())
@@ -303,13 +303,16 @@ def test_xr_dims_ds_date_lev(kwargs, var_key, variables, dims):
             {"time_dim_mode": "raw"},
             "param",
             ["2t", "msl", "r", "t"],
-            ["date", "time", "step", "levelist", "levtype"],
+            ["date", "time", "step_timedelta", "levelist", "levtype"],
         ),
         # ({"base_datetime_dim": True}, "param", ["r", "t"], ["levelist", "levtype"]),
         # ({"squeeze": False}, "param", ["r", "t"], ["time", "step", "levelist", "levtype"]),
     ],
 )
 def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
+    """Test for the internal profile/dimension object. Cannot use all the options since
+    many tasks are performed elsewhere in the engine."""
+    # TODO: consider removing this test
     prof = Profile.make("mars", **kwargs)
     ds = load_wrapped_fieldlist(DS_DATE_SFC_PL, prof)
     # prof.update(ds, _attributes(ds))
@@ -324,12 +327,136 @@ def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
     "kwargs,dim_keys",
     [
         (
-            {"profile": "mars", "time_dim_mode": "raw", "rename_dims": {"levelist": "zz"}},
+            {
+                "profile": "mars",
+                "time_dim_mode": "raw",
+                "rename_dims": {"levelist": "zz"},
+                "keep_dim_role_names": False,
+            },
+            ["date", "time", "step_timedelta", "zz"],
+        ),
+        (
+            {
+                "profile": "mars",
+                "time_dim_mode": "raw",
+                "rename_dims": {"level": "zz"},
+            },
             ["date", "time", "step", "zz"],
         ),
     ],
 )
 def test_xr_rename_dims(kwargs, dim_keys):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds = ds_ek.to_xarray(**kwargs)
+    num = len(ds)
+
+    dim_keys = dim_keys + ["latitude", "longitude"]
+    assert len(ds) == num
+
+    for v in ds:
+        compare_dim_order(ds, dim_keys, v)
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "kwargs,dim_keys",
+    [
+        (
+            {
+                "profile": "mars",
+                "fixed_dims": ["date", "time", "step", "level"],
+            },
+            ["date", "time", "step", "level"],
+        ),
+        (
+            {
+                "profile": "mars",
+                "fixed_dims": ["level", "date", "time", "step"],
+            },
+            ["level", "date", "time", "step"],
+        ),
+        (
+            {
+                "profile": "mars",
+                "fixed_dims": [{"my_date": "date"}, ("my_time", "time"), "step", "level"],
+            },
+            ["my_date", "my_time", "step", "level"],
+        ),
+        (
+            {
+                "profile": "mars",
+                "fixed_dims": ["forecast_reference_time", "endStep", "level"],
+            },
+            ["forecast_reference_time", "endStep", "level"],
+        ),
+        (
+            {
+                "profile": "mars",
+                "fixed_dims": ["forecast_reference_time", ("step", "endStep"), "level"],
+            },
+            ["forecast_reference_time", "step", "level"],
+        ),
+    ],
+)
+def test_xr_fixed_dims(kwargs, dim_keys):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds = ds_ek.to_xarray(**kwargs)
+    num = len(ds)
+
+    dim_keys = dim_keys + ["latitude", "longitude"]
+    assert len(ds) == num
+
+    for v in ds:
+        compare_dim_order(ds, dim_keys, v)
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "kwargs,dim_keys",
+    [
+        (
+            {
+                "profile": "mars",
+                "drop_dims": "number",
+                "time_dim_mode": "raw",
+                "squeeze": False,
+                "keep_dim_role_names": True,
+            },
+            ["date", "time", "step", "level", "level_type"],
+        ),
+        (
+            {
+                "profile": "mars",
+                "drop_dims": ["level_type", "number"],
+                "time_dim_mode": "raw",
+                "squeeze": False,
+                "keep_dim_role_names": True,
+            },
+            ["date", "time", "step", "level"],
+        ),
+        (
+            {
+                "profile": "mars",
+                "drop_dims": "number",
+                "time_dim_mode": "raw",
+                "squeeze": False,
+                "keep_dim_role_names": False,
+            },
+            ["date", "time", "step_timedelta", "levelist", "levtype"],
+        ),
+        (
+            {
+                "profile": "mars",
+                "drop_dims": ["levtype", "number"],
+                "time_dim_mode": "raw",
+                "squeeze": False,
+                "keep_dim_role_names": False,
+            },
+            ["date", "time", "step_timedelta", "levelist"],
+        ),
+    ],
+)
+def test_xr_drop_dims(kwargs, dim_keys):
     ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
     ds = ds_ek.to_xarray(**kwargs)
     num = len(ds)

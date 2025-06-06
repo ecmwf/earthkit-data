@@ -443,7 +443,8 @@ class FieldListTensor(TensorCore):
         ds = self.source[tuple(dataset_indexes)]
         return self.from_tensor(self, ds, coords)
 
-    def make_valid_datetime(self, dtype="datetime64[ns]"):
+    def make_valid_datetime(self, dims, dtype="datetime64[ns]"):
+
         # TODO: make it more general
         dims_opt = [
             ["base_datetime", "step"],
@@ -457,11 +458,85 @@ class FieldListTensor(TensorCore):
             ["step"],
         ]
 
+        # in the tensor the dims.coords are GRIB keys
         for k in ["valid_datetime", "valid_time"]:
             if k in self.user_coords:
                 import datetime
 
                 return (k,), [datetime.datetime.fromisoformat(x) for x in self.user_coords[k]]
+
+        DIM_ROLES = {
+            "forecast_reference_time": ("forecast_reference_time", "base_datetime"),
+            "step": ("step_timedelta", "step", "ensStep", "stepRange"),
+            "date": ("date", "dataDate"),
+            "time": ("time", "dataTime"),
+        }
+
+        keys = {}
+        for k in DIM_ROLES:
+            for d in dims:
+                if d.name == k:
+                    keys[k] = d.key
+                    break
+            if k not in keys:
+                for d in self.user_dims:
+                    if d in DIM_ROLES[k]:
+                        keys[k] = d
+                        break
+
+        dims_opt = [
+            ["forecast_reference_time", "step"],
+            ["forecast_reference_time"],
+            ["date", "time", "step"],
+            ["date", "time"],
+            ["date", "step"],
+            ["time", "step"],
+            ["step"],
+        ]
+
+        print(f"{keys=}")
+        for dims in dims_opt:
+            if all(d in keys for d in dims):
+                # use same dim order as in user_dims
+                dims = [d for d in dims if d in self.user_dims]
+                other_dims = [d for d in self.user_dims if d not in dims]
+                # print(f"{dims=} {other_dims=}")
+                if other_dims:
+                    import datetime
+
+                    import numpy as np
+
+                    other_coords = {
+                        k: next(iter(self.user_coords[k])) for k in other_dims if k in self.user_coords
+                    }
+
+                    vals = np.array(
+                        [
+                            datetime.datetime.fromisoformat(x)
+                            for x in self.source.sel(**other_coords).metadata("valid_datetime")
+                        ],
+                        dtype=dtype,
+                    )
+
+                    shape = tuple([self.user_dims[d] for d in dims])
+                    return tuple(dims), vals.reshape(shape)
+                else:
+                    import datetime
+
+                    import numpy as np
+
+                    vals = np.array(
+                        [datetime.datetime.fromisoformat(x) for x in self.source.metadata("valid_datetime")],
+                        dtype=dtype,
+                    )
+
+                    shape = tuple([self.user_dims[d] for d in dims])
+                    return tuple(dims), vals.reshape(shape)
+        return None, None
+
+        # print(f"{keys=}")
+
+        # print(f"{keys=}")
 
         # print(f"{self.user_dims=}")
         for dims in dims_opt:

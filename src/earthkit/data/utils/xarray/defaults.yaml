@@ -43,7 +43,7 @@ strict: false
 errors: raise
 
 dim_roles:
-  ens: number
+  number: number
   date: date
   time: time
   step: step
@@ -51,6 +51,8 @@ dim_roles:
   valid_time:
   level: level
   level_type: typeOfLevel
+
+keep_dim_role_names: true
 
 coord_attrs:
   latitude:

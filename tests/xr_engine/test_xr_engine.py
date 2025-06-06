@@ -20,6 +20,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
+from xr_engine_fixtures import compare_coords  # noqa: E402
 from xr_engine_fixtures import load_grib_data  # noqa: E402
 
 
@@ -63,12 +64,16 @@ def test_xr_engine_basic(file):
 
 @pytest.mark.cache
 @pytest.mark.parametrize("api", ["earthkit", "xr"])
-def test_xr_engine_detailed_check(api):
+def test_xr_engine_detailed_check_1(api):
     ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
 
     if api == "earthkit":
         ds = ds_ek.to_xarray(
-            time_dim_mode="raw", decode_times=False, decode_timedelta=False, add_valid_time_coord=False
+            time_dim_mode="raw",
+            decode_times=False,
+            decode_timedelta=False,
+            add_valid_time_coord=False,
+            keep_dim_role_names=False,
         )
     else:
         import xarray as xr
@@ -80,6 +85,7 @@ def test_xr_engine_detailed_check(api):
             decode_times=False,
             decode_timedelta=False,
             add_valid_time_coord=False,
+            keep_dim_role_names=False,
         )
 
     assert ds is not None
@@ -92,7 +98,7 @@ def test_xr_engine_detailed_check(api):
     coords_ref_full = {
         "date": np.array([20240603, 20240604]),
         "time": np.array([0, 1200]),
-        "step": np.array([0, 6]),
+        "step_timedelta": [0, 6],
         "levelist": np.array([300, 400, 500, 700, 850, 1000]),
         "latitude": lats,
         "longitude": lons,
@@ -101,16 +107,14 @@ def test_xr_engine_detailed_check(api):
     dims_ref_full = {
         "date": 2,
         "time": 2,
-        "step": 2,
+        "step_timedelta": 2,
         "levelist": 6,
         "latitude": 19,
         "longitude": 36,
     }
 
     assert len(ds.dims) == len(dims_ref_full)
-    assert len(ds.coords) == len(coords_ref_full)
-    for k, v in coords_ref_full.items():
-        assert np.allclose(ds.coords[k].values, v)
+    compare_coords(ds, coords_ref_full)
     assert [v for v in ds.data_vars] == data_vars
 
     # data variable
@@ -119,47 +123,37 @@ def test_xr_engine_detailed_check(api):
     assert ds["u"].as_numpy().shape == (2, 2, 2, 6, 19, 36)
     assert ds["u"].to_numpy().shape == (2, 2, 2, 6, 19, 36)
     r = ds["u"]
-    assert len(r.coords) == len(coords_ref_full)
-    for k, v in coords_ref_full.items():
-        assert np.allclose(r.coords[k].values, v)
+    compare_coords(r, coords_ref_full)
 
     # sel() on dataset
     r = ds.sel(date=20240603, time=[0, 1200])
     coords_ref = dict(coords_ref_full)
     coords_ref["date"] = np.array([20240603])
-    assert len(r.coords) == len(coords_ref)
-    for k, v in coords_ref.items():
-        assert np.allclose(r.coords[k].values, v)
+    compare_coords(r, coords_ref)
     assert [v for v in r.data_vars] == data_vars
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 19, 36)
-    r1 = r["u"].sel(step=6, levelist=[1000, 300])
+    r1 = r["u"].sel(step_timedelta=6, levelist=[1000, 300])
     assert r1.shape == (2, 2, 19, 36)
-    coords_ref["step"] = np.array([6])
+    coords_ref["step_timedelta"] = [6]
     coords_ref["levelist"] = np.array([1000, 300])
-    assert len(r1.coords) == len(coords_ref)
-    for k, v in coords_ref.items():
-        assert np.allclose(r1.coords[k].values, v)
+    compare_coords(r1, coords_ref)
 
     # isel() on dataset
     r = ds.isel(date=0, time=[0, 1])
     coords_ref = dict(coords_ref_full)
     coords_ref["date"] = np.array([20240603])
-    assert len(r.coords) == len(coords_ref)
-    for k, v in coords_ref.items():
-        assert np.allclose(r.coords[k].values, v)
+    compare_coords(r, coords_ref)
     assert [v for v in r.data_vars] == data_vars
 
     # isel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 19, 36)
-    r1 = r["u"].isel(step=1, levelist=[0, -1])
+    r1 = r["u"].isel(step_timedelta=1, levelist=[0, -1])
     assert r1.shape == (2, 2, 19, 36)
-    coords_ref["step"] = np.array([6])
+    coords_ref["step_timedelta"] = [6]
     coords_ref["levelist"] = np.array([300, 1000])
-    assert len(r1.coords) == len(coords_ref)
-    for k, v in coords_ref.items():
-        assert np.allclose(r1.coords[k].values, v)
+    compare_coords(r1, coords_ref)
 
     # slicing of data variable
     da = ds["u"]
@@ -173,8 +167,7 @@ def test_xr_engine_detailed_check(api):
     assert len(r.dims) == len(dims_ref)
     coords_ref = dict(coords_ref_full)
     coords_ref["time"] = np.array([0])
-    for k, v in coords_ref.items():
-        assert np.allclose(r.coords[k].values, v)
+    compare_coords(r, coords_ref)
 
     r = da[:, 0, :, 3:5]
     assert r.shape == (2, 2, 2, 19, 36)
@@ -186,8 +179,7 @@ def test_xr_engine_detailed_check(api):
     coords_ref = dict(coords_ref_full)
     coords_ref["time"] = np.array([0])
     coords_ref["levelist"] = np.array([700, 850])
-    for k, v in coords_ref.items():
-        assert np.allclose(r.coords[k].values, v)
+    compare_coords(r, coords_ref)
 
     r = da.loc[:, 0, :, [700, 850]]
     assert r.shape == (2, 2, 2, 19, 36)
@@ -199,8 +191,184 @@ def test_xr_engine_detailed_check(api):
     coords_ref = dict(coords_ref_full)
     coords_ref["time"] = np.array([0])
     coords_ref["levelist"] = np.array([700, 850])
-    for k, v in coords_ref.items():
-        assert np.allclose(r.coords[k].values, v)
+    compare_coords(r, coords_ref)
+
+    # lat-lon
+    da = ds["t"]
+
+    r = da[:, 0, :, 2, 9, 0]
+    assert r.shape == (2, 2)
+    vals_ref = np.array([[269.00918579, 268.78610229], [268.57771301, 268.08932495]])
+    assert np.allclose(r.values, vals_ref)
+
+    r = da[:, 0, :, 2, 9:12, :2]
+    assert r.shape == (2, 2, 3, 2)
+    vals_ref = np.array(
+        [
+            [
+                [
+                    [269.00918579, 269.31680298],
+                    [269.70254517, 269.81387329],
+                    [267.50527954, 266.83828735],
+                ],
+                [
+                    [268.78610229, 268.80758667],
+                    [269.52731323, 269.75680542],
+                    [266.61813354, 267.12106323],
+                ],
+            ],
+            [
+                [
+                    [268.57771301, 269.03767395],
+                    [269.33357239, 269.56111145],
+                    [264.75154114, 266.55036926],
+                ],
+                [
+                    [268.08932495, 268.35983276],
+                    [269.01803589, 269.02389526],
+                    [264.29733276, 266.08248901],
+                ],
+            ],
+        ]
+    )
+    assert np.allclose(r.values, vals_ref)
+
+    r = da.loc[:, 0, :, 500, 0, 0]
+    assert r.shape == (2, 2)
+    vals_ref = np.array([[269.00918579, 268.78610229], [268.57771301, 268.08932495]])
+    assert np.allclose(r.values, vals_ref)
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("api", ["earthkit", "xr"])
+def test_xr_engine_detailed_check_2(api):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
+
+    if api == "earthkit":
+        ds = ds_ek.to_xarray(
+            time_dim_mode="raw",
+            decode_times=False,
+            decode_timedelta=False,
+            add_valid_time_coord=False,
+            keep_dim_role_names=True,
+        )
+    else:
+        import xarray as xr
+
+        ds = xr.open_dataset(
+            ds_ek.path,
+            engine="earthkit",
+            time_dim_mode="raw",
+            decode_times=False,
+            decode_timedelta=False,
+            add_valid_time_coord=False,
+            keep_dim_role_names=True,
+        )
+
+    assert ds is not None
+
+    # dataset
+    lats = np.linspace(90, -90, 19)
+    lons = np.linspace(0, 350, 36)
+    data_vars = ["r", "t", "u", "v", "z"]
+
+    coords_ref_full = {
+        "date": np.array([20240603, 20240604]),
+        "time": np.array([0, 1200]),
+        "step": [0, 6],
+        "level": np.array([300, 400, 500, 700, 850, 1000]),
+        "latitude": lats,
+        "longitude": lons,
+    }
+
+    dims_ref_full = {
+        "date": 2,
+        "time": 2,
+        "step": 2,
+        "level": 6,
+        "latitude": 19,
+        "longitude": 36,
+    }
+
+    assert len(ds.dims) == len(dims_ref_full)
+    compare_coords(ds, coords_ref_full)
+    assert [v for v in ds.data_vars] == data_vars
+
+    # data variable
+    assert ds["u"].shape == (2, 2, 2, 6, 19, 36)
+    assert ds["u"].values.shape == (2, 2, 2, 6, 19, 36)
+    assert ds["u"].as_numpy().shape == (2, 2, 2, 6, 19, 36)
+    assert ds["u"].to_numpy().shape == (2, 2, 2, 6, 19, 36)
+    r = ds["u"]
+    compare_coords(r, coords_ref_full)
+
+    # sel() on dataset
+    r = ds.sel(date=20240603, time=[0, 1200])
+    coords_ref = dict(coords_ref_full)
+    coords_ref["date"] = np.array([20240603])
+    compare_coords(r, coords_ref)
+    assert [v for v in r.data_vars] == data_vars
+
+    # sel() on data variable of filtered dataset
+    assert r["u"].shape == (2, 2, 6, 19, 36)
+    r1 = r["u"].sel(step=6, level=[1000, 300])
+    assert r1.shape == (2, 2, 19, 36)
+    coords_ref["step"] = [6]
+    coords_ref["level"] = np.array([1000, 300])
+    compare_coords(r1, coords_ref)
+
+    # isel() on dataset
+    r = ds.isel(date=0, time=[0, 1])
+    coords_ref = dict(coords_ref_full)
+    coords_ref["date"] = np.array([20240603])
+    compare_coords(r, coords_ref)
+    assert [v for v in r.data_vars] == data_vars
+
+    # isel() on data variable of filtered dataset
+    assert r["u"].shape == (2, 2, 6, 19, 36)
+    r1 = r["u"].isel(step=1, level=[0, -1])
+    assert r1.shape == (2, 2, 19, 36)
+    coords_ref["step"] = [6]
+    coords_ref["level"] = np.array([300, 1000])
+    compare_coords(r1, coords_ref)
+
+    # slicing of data variable
+    da = ds["u"]
+
+    r = da[:, 0]
+    assert r.shape == (2, 2, 6, 19, 36)
+    assert r.values.shape == (2, 2, 6, 19, 36)
+    assert r.to_numpy().shape == (2, 2, 6, 19, 36)
+    dims_ref = dict(dims_ref_full)
+    dims_ref.pop("time")
+    assert len(r.dims) == len(dims_ref)
+    coords_ref = dict(coords_ref_full)
+    coords_ref["time"] = np.array([0])
+    compare_coords(r, coords_ref)
+
+    r = da[:, 0, :, 3:5]
+    assert r.shape == (2, 2, 2, 19, 36)
+    assert r.values.shape == (2, 2, 2, 19, 36)
+    assert r.to_numpy().shape == (2, 2, 2, 19, 36)
+    dims_ref = dict(dims_ref_full)
+    dims_ref.pop("time")
+    assert len(r.dims) == len(dims_ref)
+    coords_ref = dict(coords_ref_full)
+    coords_ref["time"] = np.array([0])
+    coords_ref["level"] = np.array([700, 850])
+    compare_coords(r, coords_ref)
+
+    r = da.loc[:, 0, :, [700, 850]]
+    assert r.shape == (2, 2, 2, 19, 36)
+    assert r.values.shape == (2, 2, 2, 19, 36)
+    assert r.to_numpy().shape == (2, 2, 2, 19, 36)
+    dims_ref = dict(dims_ref_full)
+    dims_ref.pop("time")
+    assert len(r.dims) == len(dims_ref)
+    coords_ref = dict(coords_ref_full)
+    coords_ref["time"] = np.array([0])
+    coords_ref["level"] = np.array([700, 850])
+    compare_coords(r, coords_ref)
 
     # lat-lon
     da = ds["t"]
@@ -253,7 +421,7 @@ def test_xr_engine_detailed_check(api):
 @pytest.mark.parametrize("lazy_load", [False, True])
 @pytest.mark.parametrize("release_source", [False, True])
 @pytest.mark.parametrize("direct_backend", [False, True])
-def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source, direct_backend):
+def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, direct_backend):
     filename = "test-data/xr_engine/level/pl.grib"
     ds_ek, ds_ek_ref = load_grib_data(filename, "url", stream=stream)
 
@@ -268,6 +436,7 @@ def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source, dir
                 "lazy_load": lazy_load,
                 "release_source": release_source,
                 "direct_backend": direct_backend,
+                "keep_dim_role_names": False,
             }
         }
     }
@@ -284,7 +453,7 @@ def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source, dir
     coords_ref_full = {
         "date": np.array([20240603, 20240604]),
         "time": np.array([0, 1200]),
-        "step": np.array([0, 6]),
+        "step_timedelta": np.array([0, 6]),
         "levelist": np.array([300, 400, 500, 700, 850, 1000]),
         "latitude": lats,
         "longitude": lons,
@@ -293,7 +462,7 @@ def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source, dir
     dims_ref_full = {
         "date": 2,
         "time": 2,
-        "step": 2,
+        "step_timedelta": 2,
         "levelist": 6,
         "values": 684,
     }
@@ -325,9 +494,9 @@ def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source, dir
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 684)
-    r1 = r["u"].sel(step=6, levelist=[1000, 300])
+    r1 = r["u"].sel(step_timedelta=6, levelist=[1000, 300])
     assert r1.shape == (2, 2, 684)
-    coords_ref["step"] = np.array([6])
+    coords_ref["step_timedelta"] = np.array([6])
     coords_ref["levelist"] = np.array([1000, 300])
     assert len(r1.coords) == len(coords_ref)
     for k, v in coords_ref.items():
@@ -344,9 +513,9 @@ def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source, dir
 
     # isel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 684)
-    r1 = r["u"].isel(step=1, levelist=[0, -1])
+    r1 = r["u"].isel(step_timedelta=1, levelist=[0, -1])
     assert r1.shape == (2, 2, 684)
-    coords_ref["step"] = np.array([6])
+    coords_ref["step_timedelta"] = np.array([6])
     coords_ref["levelist"] = np.array([300, 1000])
     assert len(r1.coords) == len(coords_ref)
     for k, v in coords_ref.items():
@@ -392,6 +561,170 @@ def test_xr_engine_detailed_flatten_check(stream, lazy_load, release_source, dir
     coords_ref["levelist"] = np.array([700, 850])
     for k, v in coords_ref.items():
         assert np.allclose(r.coords[k].values, v)
+
+    # level=500, lat=0, lon=0
+    da = ds["t"]
+
+    r = da[:, 0, :, 2, 9 * 36 + 0]
+    assert r.shape == (2, 2)
+    vals_ref = np.array([[269.00918579, 268.78610229], [268.57771301, 268.08932495]])
+    assert np.allclose(r.values, vals_ref)
+
+    r = da[:, 0, :, 2, [9 * 36, 10 * 36, 11 * 36]]
+    assert r.shape == (2, 2, 3)
+    vals_ref = np.array(
+        [
+            [
+                [269.00918579, 269.70254517, 267.50527954],
+                [268.78610229, 269.52731323, 266.61813354],
+            ],
+            [
+                [268.57771301, 269.33357239, 264.75154114],
+                [268.08932495, 269.01803589, 264.29733276],
+            ],
+        ]
+    )
+
+    v_ek = ds_ek_ref.sel(param="t", time=0, levelist=500).to_numpy(flatten=True)
+    assert np.allclose(r.values.flatten(), v_ek[:, [9 * 36, 10 * 36, 11 * 36]].flatten())
+    assert np.allclose(r.values, vals_ref)
+
+    r = da.loc[:, 0, :, 500, 9 * 36 + 0]
+    assert r.shape == (2, 2)
+    vals_ref = np.array([[269.00918579, 268.78610229], [268.57771301, 268.08932495]])
+    assert np.allclose(r.values, vals_ref)
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("stream", [False, True])
+@pytest.mark.parametrize("lazy_load", [False, True])
+@pytest.mark.parametrize("release_source", [False, True])
+@pytest.mark.parametrize("direct_backend", [False, True])
+def test_xr_engine_detailed_flatten_check_2(stream, lazy_load, release_source, direct_backend):
+    filename = "test-data/xr_engine/level/pl.grib"
+    ds_ek, ds_ek_ref = load_grib_data(filename, "url", stream=stream)
+
+    kwargs = {
+        "xarray_open_dataset_kwargs": {
+            "backend_kwargs": {
+                "time_dim_mode": "raw",
+                "decode_times": False,
+                "decode_timedelta": False,
+                "flatten_values": True,
+                "add_valid_time_coord": False,
+                "lazy_load": lazy_load,
+                "release_source": release_source,
+                "direct_backend": direct_backend,
+                "keep_dim_role_names": True,
+            }
+        }
+    }
+
+    ds = ds_ek.to_xarray(**kwargs)
+    assert ds is not None
+
+    # dataset
+    ll = ds_ek_ref[0].to_latlon(flatten=True)
+    lats = ll["lat"]
+    lons = ll["lon"]
+    data_vars = ["r", "t", "u", "v", "z"]
+
+    coords_ref_full = {
+        "date": np.array([20240603, 20240604]),
+        "time": np.array([0, 1200]),
+        "step": np.array([0, 6]),
+        "level": np.array([300, 400, 500, 700, 850, 1000]),
+        "latitude": lats,
+        "longitude": lons,
+    }
+
+    dims_ref_full = {
+        "date": 2,
+        "time": 2,
+        "step": 2,
+        "level": 6,
+        "values": 684,
+    }
+
+    assert len(ds.dims) == len(dims_ref_full)
+    compare_coords(ds, coords_ref_full)
+    assert [v for v in ds.data_vars] == data_vars
+
+    # data variable
+    assert ds["u"].shape == (2, 2, 2, 6, 684)
+    assert ds["u"].values.shape == (2, 2, 2, 6, 684)
+    assert ds["u"].as_numpy().shape == (2, 2, 2, 6, 684)
+    assert ds["u"].to_numpy().shape == (2, 2, 2, 6, 684)
+    r = ds["u"]
+    compare_coords(r, coords_ref_full)
+
+    # sel() on dataset
+    r = ds.sel(date=20240603, time=[0, 1200])
+    coords_ref = dict(coords_ref_full)
+    coords_ref["date"] = np.array([20240603])
+    compare_coords(r, coords_ref)
+    assert [v for v in r.data_vars] == data_vars
+
+    # sel() on data variable of filtered dataset
+    assert r["u"].shape == (2, 2, 6, 684)
+    r1 = r["u"].sel(step=6, level=[1000, 300])
+    assert r1.shape == (2, 2, 684)
+    coords_ref["step"] = np.array([6])
+    coords_ref["level"] = np.array([1000, 300])
+    compare_coords(r1, coords_ref)
+
+    # isel() on dataset
+    r = ds.isel(date=0, time=[0, 1])
+    coords_ref = dict(coords_ref_full)
+    coords_ref["date"] = np.array([20240603])
+    compare_coords(r, coords_ref)
+    assert [v for v in r.data_vars] == data_vars
+
+    # isel() on data variable of filtered dataset
+    assert r["u"].shape == (2, 2, 6, 684)
+    r1 = r["u"].isel(step=1, level=[0, -1])
+    assert r1.shape == (2, 2, 684)
+    coords_ref["step"] = np.array([6])
+    coords_ref["level"] = np.array([300, 1000])
+    compare_coords(r1, coords_ref)
+
+    # slicing of data variable
+    da = ds["u"]
+
+    r = da[:, 0]
+    assert r.shape == (2, 2, 6, 684)
+    assert r.values.shape == (2, 2, 6, 684)
+    assert r.to_numpy().shape == (2, 2, 6, 684)
+    dims_ref = dict(dims_ref_full)
+    dims_ref.pop("time")
+    assert len(r.dims) == len(dims_ref)
+    coords_ref = dict(coords_ref_full)
+    coords_ref["time"] = np.array([0])
+    compare_coords(r, coords_ref)
+
+    r = da[:, 0, :, 3:5]
+    assert r.shape == (2, 2, 2, 684)
+    assert r.values.shape == (2, 2, 2, 684)
+    assert r.to_numpy().shape == (2, 2, 2, 684)
+    dims_ref = dict(dims_ref_full)
+    dims_ref.pop("time")
+    assert len(r.dims) == len(dims_ref)
+    coords_ref = dict(coords_ref_full)
+    coords_ref["time"] = np.array([0])
+    coords_ref["level"] = np.array([700, 850])
+    compare_coords(r, coords_ref)
+
+    r = da.loc[:, 0, :, [700, 850]]
+    assert r.shape == (2, 2, 2, 684)
+    assert r.values.shape == (2, 2, 2, 684)
+    assert r.to_numpy().shape == (2, 2, 2, 684)
+    dims_ref = dict(dims_ref_full)
+    dims_ref.pop("time")
+    assert len(r.dims) == len(dims_ref)
+    coords_ref = dict(coords_ref_full)
+    coords_ref["time"] = np.array([0])
+    coords_ref["level"] = np.array([700, 850])
+    compare_coords(r, coords_ref)
 
     # level=500, lat=0, lon=0
     da = ds["t"]
