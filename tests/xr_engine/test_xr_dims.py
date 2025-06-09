@@ -247,6 +247,24 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             ["r", "t"],
             {
                 "class": ["od"],
+                "step": [0],
+                "date": ["20210101", "20210102"],
+                "time": ["12"],
+                "step_timedelta": [datetime.timedelta(hours=0)],
+                "levelist": [850, 1000],
+                "levtype": ["pl"],
+            },
+        ),
+        (
+            {
+                "time_dim_mode": "raw",
+                "ensure_dims": ["class", "step_timedelta"],
+                "keep_dim_role_names": False,
+            },
+            "param",
+            ["r", "t"],
+            {
+                "class": ["od"],
                 "date": ["20210101", "20210102"],
                 "time": ["12"],
                 "step_timedelta": [datetime.timedelta(hours=0)],

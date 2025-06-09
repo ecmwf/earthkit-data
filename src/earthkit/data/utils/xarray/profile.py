@@ -332,9 +332,6 @@ class Profile:
         assert self.variables
         assert self.variable_key not in self.dim_keys
 
-        print("UPDATE dims", self.dims.dims)
-        print("UPDATE dim_keys", self.dim_keys)
-
         # print("UPDATE variable_key", self.variable_key)
         # print("UPDATE variables", self.variables)
         # print(" -> dim_keys", self.dim_keys)

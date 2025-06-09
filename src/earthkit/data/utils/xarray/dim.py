@@ -99,7 +99,7 @@ def make_dim(owner, *args, name=None, key=None, **kwargs):
     if ck is not None:
         d = CompoundKeyDim(owner, ck)
     else:
-        print("args", args, "kwargs", kwargs, "name", name, "key", key)
+        # print("args", args, "kwargs", kwargs, "name", name, "key", key)
         d = OtherDim(owner, *args, name=name, key=key, **kwargs)
     return d
 
@@ -667,7 +667,7 @@ class DimHandler:
 
             self.dims = dims
 
-        print(f"self.dims={self.dims}")
+        # LOG.debug(f"self.dims={self.dims}")
 
         # for d in self.dims.values():
         #     if d.name != d.key:

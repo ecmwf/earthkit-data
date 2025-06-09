@@ -458,6 +458,29 @@ def test_xr_time_seasonal_monthly_simple(kwargs, dims, step_units):
             ("step", "hours"),
             {
                 "valid_time": [
+                    [np.datetime64("2024-06-03T00", "ns"), np.datetime64("2024-06-03T12", "ns")],
+                    [np.datetime64("2024-06-03T06", "ns"), np.datetime64("2024-06-03T18", "ns")],
+                ]
+            },
+        ),
+        (
+            {
+                "time_dim_mode": "forecast",
+                "add_valid_time_coord": True,
+                "decode_times": False,
+                "decode_timedelta": False,
+                "keep_dim_role_names": False,
+            },
+            {
+                "forecast_reference_time": [
+                    np.datetime64("2024-06-03T00", "ns"),
+                    np.datetime64("2024-06-03T12", "ns"),
+                ],
+                "step_timedelta": [0, 6],
+            },
+            ("step_timedelta", "hours"),
+            {
+                "valid_time": [
                     [np.datetime64("2024-06-03T00", "ns"), np.datetime64("2024-06-03T06", "ns")],
                     [np.datetime64("2024-06-03T12", "ns"), np.datetime64("2024-06-03T18", "ns")],
                 ]
@@ -472,16 +495,14 @@ def test_xr_valid_time_coord(kwargs, dims, step_units, coords):
 
     ds = ds_ek.to_xarray(**kwargs)
 
-    print(ds)
-
     compare_dims(ds, dims, order_ref_var="t")
 
     vt = ds.coords["valid_time"]
-    assert vt.dims == ("forecast_reference_time", "step")
-
-    # ref = [
-    #     [np.datetime64("2024-06-03T00", "ns"), np.datetime64("2024-06-03T06", "ns")],
-    #     [np.datetime64("2024-06-03T12", "ns"), np.datetime64("2024-06-03T18", "ns")],
-    # ]
+    assert vt.dims == tuple(dims.keys())
 
     compare_coords(ds, coords)
+
+    if step_units is not None:
+        assert (
+            ds[step_units[0]].attrs["units"] == step_units[1]
+        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
