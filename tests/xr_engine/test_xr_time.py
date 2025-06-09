@@ -506,3 +506,73 @@ def test_xr_valid_time_coord(kwargs, dims, step_units, coords):
         assert (
             ds[step_units[0]].attrs["units"] == step_units[1]
         ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "kwargs,dims,step_units",
+    [
+        (
+            {
+                "time_dim_mode": "raw",
+                "keep_dim_role_names": True,
+                "ensure_dims": ["date", "time", "step"],
+            },
+            {
+                "date": [np.datetime64("2011-12-15", "ns")],
+                "time": [np.timedelta64(12, "h")],
+                "step": [
+                    np.timedelta64(12, "h"),
+                    np.timedelta64(18, "h"),
+                    np.timedelta64(24, "h"),
+                    np.timedelta64(30, "h"),
+                    np.timedelta64(36, "h"),
+                ],
+            },
+            None,
+        ),
+    ],
+)
+def test_xr_time_step_range_1(kwargs, dims, step_units):
+    ds_ek = from_source(
+        "url", earthkit_remote_test_data_file("test-data/xr_engine/date/wgust_step_range.grib1")
+    )
+
+    ds = ds_ek.to_xarray(**kwargs)
+    compare_dims(ds, dims, order_ref_var="10fg6")
+
+    if step_units is not None:
+        assert (
+            ds[step_units[0]].attrs["units"] == step_units[1]
+        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "kwargs,dims,step_units",
+    [
+        (
+            {
+                "time_dim_mode": "raw",
+                "keep_dim_role_names": True,
+                "ensure_dims": ["date", "time", "step"],
+            },
+            {
+                "date": [np.datetime64("2025-05-27", "ns")],
+                "time": [np.timedelta64(0, "ns")],
+                "step": [np.timedelta64(72, "h")],
+            },
+            None,
+        ),
+    ],
+)
+def test_xr_time_step_range_2(kwargs, dims, step_units):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/date/tp_step_range.grib2"))
+
+    ds = ds_ek.to_xarray(**kwargs)
+    compare_dims(ds, dims, order_ref_var="lsp")
+
+    if step_units is not None:
+        assert (
+            ds[step_units[0]].attrs["units"] == step_units[1]
+        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
