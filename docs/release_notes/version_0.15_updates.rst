@@ -19,7 +19,7 @@ Breaking changes
 - Separated the dimension names from the metadata keys used to generate the dimensions. Dimensions associated with the dimension roles are now taking the name of the :ref:`dimension role <_xr_dim_roles>`, irrespective of the metadata key the dimension role is mapped to. E.g.: the "level_type" dimension role now generates a dimension called "level_type". Previously, the dimension name was the name of the associated metadata key: e.g. it was "levtype" in the :ref:`default <xr_profile_mars>` profile. The old behaviour can still be invoked by using the newly added ``dim_name_from_role_name=False`` option. See: :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray`.
 
 
-- The ``step`` dimension role is now mapped to the ``step_timedelta`` metadata key, which is the ``datatime.timedelta`` representation of the ``"endStep"`` GRIB/metadata key. Previously, this role was mapped to the ``"step"`` key. Please note that due to this change when ``dim_name_from_role_name=False`` is used the step dimension will be called "step_timedelta" instead of "step".
+- The ``step`` dimension role is now mapped to the ``step_timedelta`` metadata key, which is the ``datetime.timedelta`` representation of the ``"endStep"`` GRIB/metadata key. Previously, this role was mapped to the ``"step"`` key. Please note that due to this change when ``dim_name_from_role_name=False`` is used the step dimension will be called "step_timedelta" instead of "step".
 
 
 Other changes
