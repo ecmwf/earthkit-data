@@ -33,7 +33,7 @@ def normalize_selection(*args, **kwargs):
             or v is ALL
             or callable(v)
             or isinstance(v, (list, tuple, set, slice))
-            or isinstance(v, (str, int, float, datetime.datetime))
+            or isinstance(v, (str, int, float, datetime.datetime, datetime.timedelta))
         ), f"Unsupported type: {type(v)} for key {k}"
     return _kwargs
 

@@ -565,7 +565,10 @@ class GribMetadata(Metadata):
         return self._datetime("indexingDate", "indexingTime")
 
     def step_timedelta(self):
-        return to_timedelta(self.get("step", None))
+        v = self.get("endStep", None)
+        if v is None:
+            v = self.get("step", None)
+        return to_timedelta(v)
 
     def _datetime(self, date_key, time_key):
         date = self.get(date_key, None)

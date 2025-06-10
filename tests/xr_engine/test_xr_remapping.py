@@ -38,18 +38,52 @@ def test_xr_remapping_1():
 
 
 @pytest.mark.cache
-def test_xr_remapping_2():
+@pytest.mark.parametrize(
+    "kwargs,coords,dims",
+    [
+        (
+            dict(
+                dim_roles={"level": "_k"},
+                level_dim_mode="level",
+                remapping={"_k": "{levelist}_{levtype}"},
+                dim_name_from_role_name=False,
+            ),
+            {"_k": ["500_pl", "700_pl"]},
+            {"forecast_reference_time": 4, "step_timedelta": 2, "_k": 2, "latitude": 19, "longitude": 36},
+        ),
+        (
+            dict(
+                dim_roles={"level": "_k"},
+                level_dim_mode="level",
+                remapping={"_k": "{levelist}_{levtype}"},
+                dim_name_from_role_name=True,
+            ),
+            {"level": ["500_pl", "700_pl"]},
+            {"forecast_reference_time": 4, "step": 2, "level": 2, "latitude": 19, "longitude": 36},
+        ),
+        (
+            dict(
+                dim_roles={"level": "_k"},
+                level_dim_mode="level",
+                remapping={"_k": "{levelist}_{levtype}"},
+                rename_dims={"level": "_k"},
+                dim_name_from_role_name=True,
+            ),
+            {"_k": ["500_pl", "700_pl"]},
+            {"forecast_reference_time": 4, "step": 2, "_k": 2, "latitude": 19, "longitude": 36},
+        ),
+    ],
+)
+def test_xr_remapping_2(kwargs, coords, dims):
     ds0 = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_small.grib"))
-    ds = ds0.to_xarray(
-        dim_roles={"level": "_k"}, level_dim_mode="level", remapping={"_k": "{levelist}_{levtype}"}
-    )
+    ds = ds0.to_xarray(**kwargs)
 
     data_vars = ["r", "t"]
 
     assert [v for v in ds.data_vars] == data_vars
 
-    coords = {"_k": ["500_pl", "700_pl"]}
+    # coords = {"_k": ["500_pl", "700_pl"]}
     compare_coords(ds, coords)
 
-    dims = {"forecast_reference_time": 4, "step": 2, "_k": 2, "latitude": 19, "longitude": 36}
+    # dims = {"forecast_reference_time": 4, "step_timedelta": 2, "_k": 2, "latitude": 19, "longitude": 36}
     compare_dims(ds, dims, sizes=True)

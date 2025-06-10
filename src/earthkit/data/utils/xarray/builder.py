@@ -297,7 +297,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
         ):
             from .coord import Coord
 
-            _dims, _vals = tensor.make_valid_datetime()
+            _dims, _vals = tensor.make_valid_datetime(self.dims)
             if _dims is not None and _vals is not None:
                 self.tensor_coords["valid_time"] = Coord.make("valid_time", _vals, dims=_dims)
 
@@ -318,8 +318,13 @@ class BackendDataBuilder(metaclass=ABCMeta):
         # build dataset
         dataset = xarray.Dataset(xr_vars, coords=xr_coords, attrs=xr_attrs)
 
-        if self.profile.rename_dims_map():
-            dataset = dataset.rename(self.profile.rename_dims_map())
+        dataset = self.profile.rename_dataset_dims(dataset)
+
+        # dim_map = self.profile.rename_dims_map()
+        # if dim_map:
+        #     d = {k: v for k, v in dim_map.items() if k in dataset.dims}
+        #     if d:
+        #         dataset = dataset.rename(d)
 
         if "source" not in dataset.encoding:
             dataset.encoding["source"] = None
@@ -544,7 +549,7 @@ class DatasetBuilder:
 
         # LOG.debug(f"{remapping=}")
         # LOG.debug(f"{profile.remapping=}")
-        # LOG.debug(f"{profile.index_keys=}")
+        LOG.debug(f"{profile.index_keys=}")
 
         # create a new fieldlist for optimised access to unique values
         ds_xr = XArrayInputFieldList(
