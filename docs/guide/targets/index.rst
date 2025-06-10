@@ -23,6 +23,7 @@ Examples
   - :ref:`/examples/grib_to_file_pattern_target.ipynb`
   - :ref:`/examples/grib_to_fdb_target.ipynb`
   - :ref:`/examples/grib_to_geotiff.ipynb`
+  - :ref:`/examples/grib_to_zarr_target.ipynb`
 
 
 Overview

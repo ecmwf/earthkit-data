@@ -39,6 +39,10 @@ Built in targets
     * - :ref:`targets-fdb`
       - add data to a `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
       - :py:class:`~data.targets.FDBTarget`
+    * - :ref:`targets-zarr`
+      - add data to a `zarr <https://zarr.dev>`_ store
+      - :py:class:`~data.targets.ZarrTarget`
+
 
 
 .. _targets-file:
@@ -170,6 +174,25 @@ fdb
     - :ref:`/examples/grib_to_fdb_target.ipynb`
 
 
+.. _targets-zarr:
+
+zarr
+----
+
+.. py:function:: to_target("zarr", earthkit_to_xarray_kwargs=None, xarray_to_zarr_kwargs=None, data=None)
+  :noindex:
+
+  The ``zarr`` target writes to a `zarr <https://zarr.dev>`_ store.
+
+  :param dict earthkit_to_xarray_kwargs: the keyword arguments passed to the :func:`to_xarray` function. If not provided, the default values are used.
+  :param dict xarray_to_zarr_kwargs: the keyword arguments passed to the :py:func:`xarray.Dataset.to_zarr` function. As a bare minimum, the ``store`` keyword argument must be provided.
+  :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
+
+  This target converts the data to an :ref:`xarray.Dataset <xarray-dataset>` and then writes it to a zarr store using the :py:func:`xarray.Dataset.to_zarr` function. The conversion to an xarray dataset is done by the :func:`to_xarray` function.
+
+  Notebook examples:
+
+    - :ref:`/examples/grib_to_zarr_target.ipynb`
 
 
 .. .. _data-targets-multio:

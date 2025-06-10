@@ -181,6 +181,7 @@ Targets and encoders
     grib_to_file_pattern_target.ipynb
     grib_to_fdb_target.ipynb
     grib_to_geotiff.ipynb
+    grib_to_zarr_target.ipynb
     grib_encoder.ipynb
 
 Miscellaneous
