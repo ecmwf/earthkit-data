@@ -168,7 +168,10 @@ class StepCoord(Coord):
 
 
 class MonthCoord(Coord):
-    pass
+    def attrs(self, name, profile):
+        attrs = super().attrs(name, profile)
+        attrs["units"] = "months"
+        return attrs
 
 
 class LevelCoord(Coord):

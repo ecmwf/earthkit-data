@@ -1,6 +1,34 @@
 Deprecations
 =============
 
+
+.. _deprecated-0.15.0:
+
+Version 0.15.0
+-----------------
+
+.. _deprecated-ens-dim-role:
+
+The "ens" dimension role has been renamed to "number"
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The name of the ensemble member :ref:`dimension role <_xr_dim_roles>` changed to "number" from "ens" in the ``dim_roles`` option of :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray`. The old name is still available for backward compatibility but will be removed in a future release.
+
+.. list-table::
+   :header-rows: 0
+
+   * - Deprecated code
+   * -
+
+        .. literalinclude:: include/deprec_ens_dim_role.py
+
+   * - New code
+   * -
+
+        .. literalinclude:: include/migrated_ens_dim_role.py
+
+
+
 .. _deprecated-0.13.0:
 
 Version 0.13.0

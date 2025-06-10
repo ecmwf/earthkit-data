@@ -96,7 +96,7 @@ class Profile:
         **kwargs,
     ):
         from .attrs import Attrs
-        from .dim import Dims
+        from .dim import DimHandler
 
         self._kwargs = dict(**kwargs)
         self.name = name
@@ -116,7 +116,7 @@ class Profile:
         self.rename_variables_map = kwargs.pop("rename_variables")
 
         # dims
-        self.dims = Dims(
+        self.dims = DimHandler(
             self,
             kwargs.pop("extra_dims"),
             kwargs.pop("drop_dims"),
@@ -125,6 +125,7 @@ class Profile:
             kwargs.pop("split_dims"),
             kwargs.pop("rename_dims"),
             kwargs.pop("dim_roles"),
+            kwargs.pop("dim_name_from_role_name"),
             kwargs.pop("dims_as_attrs"),
             kwargs.pop("time_dim_mode"),
             kwargs.pop("level_dim_mode"),
@@ -346,3 +347,6 @@ class Profile:
 
     def rename_variable(self, v):
         return self.rename_variables_map.get(v, v)
+
+    def rename_dataset_dims(self, dataset):
+        return self.dims.rename_dataset_dims(dataset)

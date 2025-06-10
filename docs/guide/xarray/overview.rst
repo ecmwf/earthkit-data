@@ -25,12 +25,12 @@ We can convert :ref:`grib` data into an Xarray dataset by using :py:meth:`~data.
     Coordinates:
         * forecast_reference_time  (forecast_reference_time) datetime64[ns] 32B 202...
         * step                     (step) timedelta64[ns] 16B 00:00:00 06:00:00
-        * levelist                 (levelist) int64 16B 500 700
+        * level                    (level) int64 16B 500 700
         * latitude                 (latitude) float64 152B 90.0 80.0 ... -80.0 -90.0
         * longitude                (longitude) float64 288B 0.0 10.0 ... 340.0 350.0
     Data variables:
-        r                        (forecast_reference_time, step, levelist, latitude, longitude) float64 88kB ...
-        t                        (forecast_reference_time, step, levelist, latitude, longitude) float64 88kB ...
+        r                        (forecast_reference_time, step, level, latitude, longitude) float64 88kB ...
+        t                        (forecast_reference_time, step, level, latitude, longitude) float64 88kB ...
      ...
 
 .. note::
@@ -50,6 +50,11 @@ We can also use the Xarray engine to read GRIB data directly with the :py:func:`
     >>> ds_xr
     <xarray.Dataset> Size: 176kB
     ...
+
+Dimensions
+++++++++++
+
+The pivotal question when generating the Xarray dataset is how to form the dimensions. The :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` method has a number of options to control the dimensions. Please see more details in the :ref:`dimensions <xr_dim>` section.
 
 
 Profiles
