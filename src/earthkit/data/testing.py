@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import importlib.util
 import logging
 import os
 import pathlib
@@ -131,6 +132,12 @@ try:
     NO_ECFS = not os.path.exists(shutil.which("ecp"))
 except Exception:
     NO_ECFS = True
+
+
+if importlib.util.find_spec("zarr") is not None:
+    NO_ZARR = False
+else:
+    NO_ZARR = True
 
 
 def MISSING(*modules):
