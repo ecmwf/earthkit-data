@@ -52,7 +52,7 @@ dim_roles:
   level: level
   level_type: typeOfLevel
 
-keep_dim_role_names: true
+dim_name_from_role_name: true
 
 coord_attrs:
   latitude:

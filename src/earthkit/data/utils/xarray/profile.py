@@ -125,7 +125,7 @@ class Profile:
             kwargs.pop("split_dims"),
             kwargs.pop("rename_dims"),
             kwargs.pop("dim_roles"),
-            kwargs.pop("keep_dim_role_names"),
+            kwargs.pop("dim_name_from_role_name"),
             kwargs.pop("dims_as_attrs"),
             kwargs.pop("time_dim_mode"),
             kwargs.pop("level_dim_mode"),

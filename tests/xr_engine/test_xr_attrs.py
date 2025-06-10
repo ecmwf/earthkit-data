@@ -48,7 +48,7 @@ def _get_attrs_for_key_2(key, metadata):
                 "decode_times": False,
                 "decode_timedelta": False,
                 "strict": True,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {
                 "date": [20240603, 20240604],
@@ -67,7 +67,7 @@ def _get_attrs_for_key_2(key, metadata):
                 "decode_times": False,
                 "decode_timedelta": False,
                 "strict": True,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {
                 "date": [20240603, 20240604],
@@ -86,7 +86,7 @@ def _get_attrs_for_key_2(key, metadata):
                 "decode_times": False,
                 "decode_timedelta": False,
                 "strict": False,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {
                 "date": [20240603, 20240604],
@@ -105,7 +105,7 @@ def _get_attrs_for_key_2(key, metadata):
                 "decode_times": False,
                 "decode_timedelta": False,
                 "strict": False,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {
                 "date": [20240603, 20240604],
@@ -156,7 +156,7 @@ def test_xr_dims_as_attrs(kwargs, coords, dims, attrs):
                 "decode_times": False,
                 "decode_timedelta": False,
                 "strict": False,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {
                 "date": [20240603, 20240604],

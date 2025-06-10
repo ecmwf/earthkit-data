@@ -115,7 +115,6 @@ class OrderBase(OrderOrSelection):
 
         for k, v in self.actions.items():
             n = v(a_metadata(k, default=None), b_metadata(k, default=None))
-            print(f"Comparing {k}: {a_metadata(k, default=None)} vs {b_metadata(k, default=None)} -> {n}")
             if n != 0:
                 return n
         return 0

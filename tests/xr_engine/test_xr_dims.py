@@ -119,13 +119,13 @@ def test_xr_dims_input_fieldlist():
     [
         ({}, "param", ["r", "t"], ["step_timedelta", "levelist"]),
         (
-            {"time_dim_mode": "forecast", "keep_dim_role_names": False},
+            {"time_dim_mode": "forecast", "dim_name_from_role_name": False},
             "param",
             ["r", "t"],
             ["step_timedelta", "levelist"],
         ),
         (
-            {"squeeze": False, "time_dim_mode": "raw", "keep_dim_role_names": False},
+            {"squeeze": False, "time_dim_mode": "raw", "dim_name_from_role_name": False},
             "param",
             ["r", "t"],
             ["time", "step_timedelta", "levelist"],
@@ -149,13 +149,13 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
     "kwargs,var_key,variables,dims",
     [
         (
-            {"time_dim_mode": "forecast", "keep_dim_role_names": False},
+            {"time_dim_mode": "forecast", "dim_name_from_role_name": False},
             "param",
             ["r", "t"],
             ["forecast_reference_time", "step_timedelta", "levelist", "levtype"],
         ),
         (
-            {"time_dim_mode": "raw", "variable_key": "param_level", "keep_dim_role_names": False},
+            {"time_dim_mode": "raw", "variable_key": "param_level", "dim_name_from_role_name": False},
             "param_level",
             ["r1000", "r850", "t1000", "t850"],
             ["date", "time", "step_timedelta", "levtype"],
@@ -165,14 +165,14 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
                 "time_dim_mode": "raw",
                 "variable_key": "param_level",
                 "remapping": {"param_level": "{param}_{level}"},
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             "param_level",
             ["r_1000", "r_850", "t_1000", "t_850"],
             ["date", "time", "step_timedelta", "levtype"],
         ),
         (
-            {"time_dim_mode": "raw", "variable_key": "shortName", "keep_dim_role_names": False},
+            {"time_dim_mode": "raw", "variable_key": "shortName", "dim_name_from_role_name": False},
             "shortName",
             ["r", "t"],
             ["date", "time", "step_timedelta", "levelist", "levtype"],
@@ -182,7 +182,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
                 "time_dim_mode": "raw",
                 "variable_key": "shortName",
                 "drop_variables": ["r"],
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             "shortName",
             ["t"],
@@ -193,7 +193,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
                 "time_dim_mode": "raw",
                 "variable_key": "param_level",
                 "drop_variables": ["r", "r1000"],
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             "param_level",
             ["r850", "t1000", "t850"],
@@ -205,7 +205,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             ],
         ),
         (
-            {"time_dim_mode": "raw", "level_dim_mode": "level_and_type", "keep_dim_role_names": False},
+            {"time_dim_mode": "raw", "level_dim_mode": "level_and_type", "dim_name_from_role_name": False},
             "param",
             ["r", "t"],
             {
@@ -216,7 +216,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             },
         ),
         (
-            {"time_dim_mode": "raw", "extra_dims": "class", "keep_dim_role_names": False},
+            {"time_dim_mode": "raw", "extra_dims": "class", "dim_name_from_role_name": False},
             "param",
             ["r", "t"],
             {
@@ -229,7 +229,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             },
         ),
         (
-            {"time_dim_mode": "raw", "ensure_dims": "class", "keep_dim_role_names": False},
+            {"time_dim_mode": "raw", "ensure_dims": "class", "dim_name_from_role_name": False},
             "param",
             ["r", "t"],
             {
@@ -242,7 +242,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             },
         ),
         (
-            {"time_dim_mode": "raw", "ensure_dims": ["class", "step"], "keep_dim_role_names": False},
+            {"time_dim_mode": "raw", "ensure_dims": ["class", "step"], "dim_name_from_role_name": False},
             "param",
             ["r", "t"],
             {
@@ -259,7 +259,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             {
                 "time_dim_mode": "raw",
                 "ensure_dims": ["class", "step_timedelta"],
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             "param",
             ["r", "t"],
@@ -273,7 +273,12 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             },
         ),
         (
-            {"time_dim_mode": "raw", "extra_dims": "class", "squeeze": False, "keep_dim_role_names": False},
+            {
+                "time_dim_mode": "raw",
+                "extra_dims": "class",
+                "squeeze": False,
+                "dim_name_from_role_name": False,
+            },
             "param",
             ["r", "t"],
             {
@@ -349,7 +354,7 @@ def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
                 "profile": "mars",
                 "time_dim_mode": "raw",
                 "rename_dims": {"levelist": "zz"},
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             ["date", "time", "step_timedelta", "zz"],
         ),
@@ -438,7 +443,7 @@ def test_xr_fixed_dims(kwargs, dim_keys):
                 "drop_dims": "number",
                 "time_dim_mode": "raw",
                 "squeeze": False,
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             ["date", "time", "step", "level", "level_type"],
         ),
@@ -448,7 +453,7 @@ def test_xr_fixed_dims(kwargs, dim_keys):
                 "drop_dims": ["level_type", "number"],
                 "time_dim_mode": "raw",
                 "squeeze": False,
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             ["date", "time", "step", "level"],
         ),
@@ -458,7 +463,7 @@ def test_xr_fixed_dims(kwargs, dim_keys):
                 "drop_dims": "number",
                 "time_dim_mode": "raw",
                 "squeeze": False,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             ["date", "time", "step_timedelta", "levelist", "levtype"],
         ),
@@ -468,7 +473,7 @@ def test_xr_fixed_dims(kwargs, dim_keys):
                 "drop_dims": ["levtype", "number"],
                 "time_dim_mode": "raw",
                 "squeeze": False,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             ["date", "time", "step_timedelta", "levelist"],
         ),

@@ -211,7 +211,7 @@ def test_xr_write_seasonal():
     ds = ds_ek.to_xarray(
         time_dim_mode="forecast",
         dim_roles={"date": "indexingDate", "time": "indexingTime", "step": "forecastMonth"},
-        keep_dim_role_names=False,
+        dim_name_from_role_name=False,
     )
 
     import xarray as xr

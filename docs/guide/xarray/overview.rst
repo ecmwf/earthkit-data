@@ -54,7 +54,7 @@ We can also use the Xarray engine to read GRIB data directly with the :py:func:`
 Dimensions
 ++++++++++
 
-The generated Xarray dataset will have the following dimensions:
+The pivotal question when generating the Xarray dataset is how to form the dimensions. The :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` method has a number of options to control the dimensions. Please see more details in the :ref:`dimensions <xr_dim>` section.
 
 
 Profiles

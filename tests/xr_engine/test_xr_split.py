@@ -22,7 +22,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
     [
         (
             ["level", "pl.grib"],
-            {"time_dim_mode": "raw", "split_dims": ["step"], "keep_dim_role_names": False},
+            {"time_dim_mode": "raw", "split_dims": ["step"], "dim_name_from_role_name": False},
             2,
             ["2t", "msl", "r", "t"],
             ["date", "time", "levelist"],
@@ -34,7 +34,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
                 "time_dim_mode": "raw",
                 "split_dims": ["step"],
                 "ensure_dims": "step",
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             2,
             ["2t", "msl", "r", "t"],
@@ -46,7 +46,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
             {
                 "time_dim_mode": "valid_time",
                 "split_dims": ["stream", "dataType", "edition", "Ni"],
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             11,
             None,
@@ -67,7 +67,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
         ),
         (
             ["level", "pl.grib"],
-            {"time_dim_mode": "raw", "split_dims": ["step"], "keep_dim_role_names": True},
+            {"time_dim_mode": "raw", "split_dims": ["step"], "dim_name_from_role_name": True},
             2,
             ["2t", "msl", "r", "t"],
             ["date", "time", "level"],
@@ -79,7 +79,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
                 "time_dim_mode": "raw",
                 "split_dims": ["step"],
                 "ensure_dims": "step",
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             2,
             ["2t", "msl", "r", "t"],

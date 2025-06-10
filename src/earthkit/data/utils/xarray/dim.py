@@ -592,7 +592,7 @@ class DimHandler:
         split_dims,
         rename_dims,
         dim_roles,
-        keep_dim_role_names,
+        dim_name_from_role_name,
         dims_as_attrs,
         time_dim_mode,
         level_dim_mode,
@@ -601,8 +601,8 @@ class DimHandler:
 
         self.profile = profile
 
-        self.dim_roles = DimRole(dim_roles, name_as_key=keep_dim_role_names)
-        # self.keep_dim_role_names = keep_dim_role_names
+        self.dim_roles = DimRole(dim_roles, name_as_key=dim_name_from_role_name)
+        # self.dim_name_from_role_name = dim_name_from_role_name
         self.extra_dims = ensure_dim_map(extra_dims)
         self.drop_dims = ensure_iterable(drop_dims)
         self.ensure_dims = ensure_iterable(ensure_dims)
@@ -618,7 +618,7 @@ class DimHandler:
         #     Warning.deprecated("'ens' key in dim_roles is deprecated. Use 'number' instead")
         #     self.dim_roles["number"] = self.dim_roles.pop("ens")
 
-        # if self.keep_dim_role_names:
+        # if self.dim_name_from_role_name:
         #     d = {v: k for k, v in self.dim_roles.items()}
         #     for k in list(self.rename_dims_map.keys()):
         #         if k in self.dim_roles:
@@ -678,7 +678,7 @@ class DimHandler:
         #             self.rename_dims_map[d.key] = d.name
         #         else d
 
-        # if self.keep_dim_role_names:
+        # if self.dim_name_from_role_name:
         #     d = {v: k for k, v in self.dim_roles.items()}
         #     for k in list(self.rename_dims_map.keys()):
         #         if k in self.dim_roles:

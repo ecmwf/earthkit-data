@@ -3,7 +3,7 @@
 Dimensions
 ==================
 
-One of the most important aspect of the :ref:`xr_engine` is how it generates dimensions in the Xarray dataset.
+One of the most important aspect of the :ref:`xr_engine` is how it generates dimensions in the Xarray dataset with :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray`.
 
 .. _xr_dim_roles:
 .. _xr_predefined_dims:
@@ -61,9 +61,9 @@ The possible roles are as follows:
      - "levtype"
      - "typeOfLevel"
 
-By default, the dimension names are the same as the role names. To use the associated metadata keys instead use the ``keep_dim_role_names=False`` option.
+By default, the dimension names are the same as the role names. To use the associated metadata keys instead use the ``dim_name_from_role_name=False`` option.
 
-the metadata keys. However, this can be controlled with the ``keep_dim_role_names`` option. If set to ``False``, the dimension names will be the same as the dimension roles. This is useful when you want to use the dimension roles in your code, as they are more descriptive than the metadata keys.
+the metadata keys. However, this can be controlled with the ``dim_name_from_role_name`` option. If set to ``False``, the dimension names will be the same as the dimension roles. This is useful when you want to use the dimension roles in your code, as they are more descriptive than the metadata keys.
 
 .. note::
 

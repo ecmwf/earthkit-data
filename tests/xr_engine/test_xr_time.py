@@ -33,7 +33,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
                 "time_dim_mode": "raw",
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             {"date": [20240603, 20240604], "time": [0, 1200], "step": [0, 6]},
             ("step", "hours"),
@@ -41,7 +41,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         (
             {
                 "time_dim_mode": "raw",
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             {
                 "date": [np.datetime64("2024-06-03", "ns"), np.datetime64("2024-06-04", "ns")],
@@ -55,7 +55,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
                 "time_dim_mode": "forecast",
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             {
                 "forecast_reference_time": [
@@ -71,7 +71,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         (
             {
                 "time_dim_mode": "forecast",
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             {
                 "forecast_reference_time": [
@@ -89,7 +89,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
                 "time_dim_mode": "valid_time",
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             {
                 "valid_time": [
@@ -110,7 +110,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
                 "time_dim_mode": "valid_time",
                 "decode_times": True,
                 "decode_timedelta": True,
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             {
                 "valid_time": [
@@ -131,7 +131,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
                 "time_dim_mode": "raw",
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {"date": [20240603, 20240604], "time": [0, 1200], "step_timedelta": [0, 6]},
             ("step_timedelta", "hours"),
@@ -139,7 +139,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         (
             {
                 "time_dim_mode": "raw",
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {
                 "date": [np.datetime64("2024-06-03", "ns"), np.datetime64("2024-06-04", "ns")],
@@ -171,7 +171,7 @@ def test_xr_time_basic(kwargs, dims, step_units):
                 "dim_roles": {"date": "indexingDate", "time": "indexingTime", "step": "forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {
                 "indexing_time": [
@@ -187,7 +187,7 @@ def test_xr_time_basic(kwargs, dims, step_units):
                 "dim_roles": {"forecast_reference_time": "indexing_time", "step": "forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {
                 "indexing_time": [
@@ -203,7 +203,7 @@ def test_xr_time_basic(kwargs, dims, step_units):
                 "dim_roles": {"date": "indexingDate", "time": "indexingTime", "step": "forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             {
                 "forecast_reference_time": [
@@ -219,7 +219,7 @@ def test_xr_time_basic(kwargs, dims, step_units):
                 "dim_roles": {"forecast_reference_time": "indexing_time", "step": "forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             {
                 "forecast_reference_time": [
@@ -257,7 +257,7 @@ def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims, step_units):
                 "dim_roles": {"step": "forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {
                 "number": [0, 1, 2],
@@ -277,7 +277,7 @@ def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims, step_units):
                 "dim_roles": {"step": "fcmonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {
                 "number": [0, 1, 2],
@@ -298,7 +298,7 @@ def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims, step_units):
                 "decode_times": False,
                 "decode_timedelta": False,
                 "ensure_dims": ["number", "date", "time", "forecastMonth"],
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {
                 "number": [0, 1, 2],
@@ -319,7 +319,7 @@ def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims, step_units):
                 "dim_roles": {"step": "forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             {
                 "number": [0, 1, 2],
@@ -339,7 +339,7 @@ def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims, step_units):
                 "dim_roles": {"step": "fcmonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             {
                 "number": [0, 1, 2],
@@ -360,7 +360,7 @@ def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims, step_units):
                 "decode_times": False,
                 "decode_timedelta": False,
                 "ensure_dims": ["number", "date", "time", "step"],
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             {
                 "number": [0, 1, 2],
@@ -402,7 +402,7 @@ def test_xr_time_seasonal_monthly_simple(kwargs, dims, step_units):
                 "add_valid_time_coord": True,
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             },
             {
                 "forecast_reference_time": [
@@ -469,7 +469,7 @@ def test_xr_time_seasonal_monthly_simple(kwargs, dims, step_units):
                 "add_valid_time_coord": True,
                 "decode_times": False,
                 "decode_timedelta": False,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             },
             {
                 "forecast_reference_time": [
@@ -515,7 +515,7 @@ def test_xr_valid_time_coord(kwargs, dims, step_units, coords):
         (
             {
                 "time_dim_mode": "raw",
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
                 "ensure_dims": ["date", "time", "step"],
             },
             {
@@ -554,20 +554,22 @@ def test_xr_time_step_range_1(kwargs, dims, step_units):
         (
             {
                 "time_dim_mode": "raw",
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
                 "ensure_dims": ["date", "time", "step"],
             },
             {
                 "date": [np.datetime64("2025-05-27", "ns")],
                 "time": [np.timedelta64(0, "ns")],
-                "step": [np.timedelta64(72, "h")],
+                "step": [np.timedelta64(72, "h"), np.timedelta64(73, "h")],
             },
             None,
         ),
     ],
 )
 def test_xr_time_step_range_2(kwargs, dims, step_units):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/date/tp_step_range.grib2"))
+    ds_ek = from_source(
+        "url", earthkit_remote_test_data_file("test-data/xr_engine/date/lsp_step_range.grib2")
+    )
 
     ds = ds_ek.to_xarray(**kwargs)
     compare_dims(ds, dims, order_ref_var="lsp")

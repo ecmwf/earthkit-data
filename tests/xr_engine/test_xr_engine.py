@@ -73,7 +73,7 @@ def test_xr_engine_detailed_check_1(api):
             decode_times=False,
             decode_timedelta=False,
             add_valid_time_coord=False,
-            keep_dim_role_names=False,
+            dim_name_from_role_name=False,
         )
     else:
         import xarray as xr
@@ -85,7 +85,7 @@ def test_xr_engine_detailed_check_1(api):
             decode_times=False,
             decode_timedelta=False,
             add_valid_time_coord=False,
-            keep_dim_role_names=False,
+            dim_name_from_role_name=False,
         )
 
     assert ds is not None
@@ -250,7 +250,7 @@ def test_xr_engine_detailed_check_2(api):
             decode_times=False,
             decode_timedelta=False,
             add_valid_time_coord=False,
-            keep_dim_role_names=True,
+            dim_name_from_role_name=True,
         )
     else:
         import xarray as xr
@@ -262,7 +262,7 @@ def test_xr_engine_detailed_check_2(api):
             decode_times=False,
             decode_timedelta=False,
             add_valid_time_coord=False,
-            keep_dim_role_names=True,
+            dim_name_from_role_name=True,
         )
 
     assert ds is not None
@@ -436,7 +436,7 @@ def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, d
                 "lazy_load": lazy_load,
                 "release_source": release_source,
                 "direct_backend": direct_backend,
-                "keep_dim_role_names": False,
+                "dim_name_from_role_name": False,
             }
         }
     }
@@ -615,7 +615,7 @@ def test_xr_engine_detailed_flatten_check_2(stream, lazy_load, release_source, d
                 "lazy_load": lazy_load,
                 "release_source": release_source,
                 "direct_backend": direct_backend,
-                "keep_dim_role_names": True,
+                "dim_name_from_role_name": True,
             }
         }
     }
