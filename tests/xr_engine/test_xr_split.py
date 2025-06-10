@@ -22,7 +22,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
     [
         (
             ["level", "pl.grib"],
-            {"time_dim_mode": "raw", "split_dims": ["step"]},
+            {"time_dim_mode": "raw", "split_dims": ["step"], "dim_name_from_role_name": False},
             2,
             ["2t", "msl", "r", "t"],
             ["date", "time", "levelist"],
@@ -30,7 +30,12 @@ from earthkit.data.testing import earthkit_remote_test_data_file
         ),
         (
             ["level", "pl.grib"],
-            {"time_dim_mode": "raw", "split_dims": ["step"], "ensure_dims": "step"},
+            {
+                "time_dim_mode": "raw",
+                "split_dims": ["step"],
+                "ensure_dims": "step",
+                "dim_name_from_role_name": False,
+            },
             2,
             ["2t", "msl", "r", "t"],
             ["date", "time", "step", "levelist"],
@@ -38,7 +43,11 @@ from earthkit.data.testing import earthkit_remote_test_data_file
         ),
         (
             ["cds-reanalysis-era5-single-levels-20230101-low-resol.grib"],
-            {"time_dim_mode": "valid_time", "split_dims": ["stream", "dataType", "edition", "Ni"]},
+            {
+                "time_dim_mode": "valid_time",
+                "split_dims": ["stream", "dataType", "edition", "Ni"],
+                "dim_name_from_role_name": False,
+            },
             11,
             None,
             ["valid_time"],
@@ -55,6 +64,27 @@ from earthkit.data.testing import earthkit_remote_test_data_file
                 {"stream": "oper", "dataType": "fc", "edition": 1, "Ni": 36},
                 {"stream": "wave", "dataType": "an", "edition": 1, "Ni": 18},
             ],
+        ),
+        (
+            ["level", "pl.grib"],
+            {"time_dim_mode": "raw", "split_dims": ["step"], "dim_name_from_role_name": True},
+            2,
+            ["2t", "msl", "r", "t"],
+            ["date", "time", "level"],
+            [{"step": 0}, {"step": 6}],
+        ),
+        (
+            ["level", "pl.grib"],
+            {
+                "time_dim_mode": "raw",
+                "split_dims": ["step"],
+                "ensure_dims": "step",
+                "dim_name_from_role_name": True,
+            },
+            2,
+            ["2t", "msl", "r", "t"],
+            ["date", "time", "step", "level"],
+            [{"step": 0}, {"step": 6}],
         ),
         # ({"base_datetime_dim": True}, "param", ["r", "t"], ["levelist"]),
         # ({"squeeze": False}, "param", ["r", "t"], ["time", "step", "levelist"]),

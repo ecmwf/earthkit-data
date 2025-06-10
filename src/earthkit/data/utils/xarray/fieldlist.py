@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-
+import datetime
 import logging
 from collections import defaultdict
 
@@ -210,7 +210,7 @@ class XArrayInputFieldList(FieldList):
 
             for k, v in vals.items():
                 v = [x for x in v if x is not None]
-                if all(isinstance(x, int) for x in v):
+                if all(isinstance(x, (int, datetime.timedelta)) for x in v):
                     vals[k] = sorted(v)
                 else:
                     vals[k] = sorted(v, key=str)
