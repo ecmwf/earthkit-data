@@ -7,7 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import importlib.util
 import logging
 import os
 import pathlib
@@ -134,10 +133,14 @@ except Exception:
     NO_ECFS = True
 
 
-if importlib.util.find_spec("zarr") is not None:
-    NO_ZARR = False
-else:
-    NO_ZARR = True
+NO_ZARR = True
+try:
+    import zarr  # noqa
+
+    if int(zarr.__version__.split(".")[0]) >= 3:
+        NO_ZARR = False
+except Exception:
+    pass
 
 
 def MISSING(*modules):
