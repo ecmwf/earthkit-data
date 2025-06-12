@@ -11,7 +11,15 @@ import logging
 
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
-from earthkit.data.utils.dates import datetime_from_grib
+
+from .level_dim import PREDEFINED_DIMS as predefined_level_dims
+from .level_dim import LevelDimBuilder
+from .number_dim import PREDEFINED_DIMS as predefined_number_dims
+from .number_dim import NumberDimBuilder
+from .time_dim import PREDEFINED_DIMS as predefined_time_dims
+from .time_dim import TimeDimBuilder
+
+# from earthkit.data.utils.dates import datetime_from_grib
 
 LOG = logging.getLogger(__name__)
 
@@ -231,135 +239,6 @@ class Dim:
         return f"{self.__class__.__name__}(name={self.name}, key={self.key})"
 
 
-class NumberDim(Dim):
-    alias = get_keys(ENS_KEYS)
-
-
-class DateDim(Dim):
-    name = "date"
-    drop = get_keys(DATE_KEYS + DATETIME_KEYS, drop="date")
-
-
-class TimeDim(Dim):
-    name = "time"
-    drop = get_keys(TIME_KEYS + DATETIME_KEYS, drop="time")
-
-
-# class StepDim(Dim):
-#     name = "step"
-#     drop = get_keys(STEP_KEYS + VALID_DATETIME_KEYS, drop="step")
-
-
-class StepDim(Dim):
-    name = "step"
-    drop = get_keys(STEP_KEYS + VALID_DATETIME_KEYS, drop=["step_timedelta"])
-
-
-class ValidTimeDim(Dim):
-    name = "valid_time"
-    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="valid_time")
-
-
-class ForecastRefTimeDim(Dim):
-    name = "forecast_reference_time"
-    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="forecast_reference_time")
-    alias = ["base_datetime"]
-
-
-class IndexingTimeDim(Dim):
-    name = "indexing_time"
-    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="indexing_time")
-
-
-class ReferenceTimeDim(Dim):
-    name = "reference_time"
-    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="reference_time")
-
-
-class CustomForecastRefDim(Dim):
-    @staticmethod
-    def _datetime(val):
-        if not val:
-            return None
-        else:
-            try:
-                date, time = val.split("_")
-                return datetime_from_grib(int(date), int(time)).isoformat()
-            except Exception:
-                return val
-
-    def __init__(self, owner, keys, *args, active=True, **kwargs):
-        if isinstance(keys, str):
-            self.key = keys
-        elif isinstance(keys, list) and len(keys) == 2:
-            date = keys[0]
-            time = keys[1]
-            self.key = self._name(date, time)
-            self.drop = [date, time]
-            if active:
-                owner.register_remapping(
-                    {self.key: "{" + date + "}_{" + time + "}"},
-                    patch={self.key: CustomForecastRefDim._datetime},
-                )
-        else:
-            raise ValueError(f"Invalid keys={keys}")
-        super().__init__(owner, *args, active=active, **kwargs)
-
-    def _name(self, date, time):
-        if date.endswith("Date") and time.endswith("Time") and date[:-4] == time[:-4]:
-            return date[:-4] + "_time"
-        return f"{date}_{time}"
-
-
-class LevelDim(Dim):
-    alias = get_keys(LEVEL_KEYS)
-
-
-class LevelTypeDim(Dim):
-    alias = get_keys(LEVEL_TYPE_KEYS)
-    enforce_unique = True
-
-
-class LevelPerTypeDim(Dim):
-    name = "_level_per_type"
-    drop = get_keys(LEVEL_KEYS + LEVEL_TYPE_KEYS, drop=name)
-
-    def __init__(self, owner, level_key, level_type_key, *args, **kwargs):
-        self.key = level_key
-        self.level_key = level_key
-        self.level_type_key = level_type_key
-        super().__init__(owner, *args, **kwargs)
-
-    def as_coord(self, key, values, component, source):
-        lev_type = source[0].metadata(self.level_type_key)
-        if not lev_type:
-            raise ValueError(f"{self.level_type_key} not found in metadata")
-
-        if lev_type not in self.coords:
-            from .coord import Coord
-
-            coord = Coord.make(lev_type, list(values), ds=source)
-            self.coords[lev_type] = coord
-        return lev_type, self.coords[lev_type]
-
-
-class LevelAndTypeDim(Dim):
-    name = "level_and_type"
-    drop = get_keys(LEVEL_KEYS + LEVEL_TYPE_KEYS, drop=name)
-
-    def __init__(self, owner, level_key, level_type_key, active=True, *args, **kwargs):
-        self.level_key = level_key
-        self.level_type_key = level_type_key
-        if active:
-            owner.register_remapping(
-                {self.name: "{" + self.level_key + "}{" + self.level_type_key + "}"},
-            )
-        super().__init__(owner, *args, active=active, **kwargs)
-
-    def remapping_keys(self):
-        return [self.level_key, self.level_type_key]
-
-
 class RemappingDim(Dim):
     def __init__(self, owner, name, keys, **kwargs):
         self.name = name
@@ -424,142 +303,12 @@ class DimMode:
         return {name: make_dim(owner, name=name, key=key, active=active) for name, key in dims.items()}
 
 
-class ForecastTimeDimMode(DimMode):
-    name = "forecast"
-    DATES = ["date", "dataDate"]
-    TIMES = ["time", "dataTime"]
-
-    def build(self, profile, owner, active=True):
-        ref_time_key, ref_time_name = owner.dim_roles.role("forecast_reference_time", raise_error=False)
-
-        if ref_time_key == "forecast_reference_time":
-            ref_time_dim = ForecastRefTimeDim(owner, name=ref_time_name, active=active)
-        elif ref_time_key:
-            ref_time_dim = make_dim(owner, name=ref_time_name, key=ref_time_key, active=active)
-        else:
-            date, _ = owner.dim_roles.role("date")
-            time, _ = owner.dim_roles.role("time")
-            built_in = date in self.DATES and time in self.TIMES
-            if built_in:
-                ref_time_dim = ForecastRefTimeDim(owner, name=ref_time_name, active=active)
-            else:
-                ref_time_dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
-
-        step_key, step_name = owner.dim_roles.role("step")
-        step_dim = make_dim(owner, name=step_name, key=step_key, active=active)
-
-        self.register_ref_time_key(ref_time_dim.key)
-        self.register_step_key(step_dim.key)
-
-        return {d.name: d for d in [ref_time_dim, step_dim]}
-
-    def register_ref_time_key(self, name):
-        global BASE_DATETIME_KEYS
-        global VALID_DATETIME_KEYS
-        if name not in BASE_DATETIME_KEYS:
-            BASE_DATETIME_KEYS.append(name)
-
-    def register_step_key(self, name):
-        global STEP_KEYS
-        if name not in STEP_KEYS:
-            STEP_KEYS.append(name)
-
-
-class ValidTimeDimMode(DimMode):
-    name = "valid_time"
-    default = {"valid_time": "valid_time"}
-
-
-class RawTimeDimMode(DimMode):
-    name = "raw"
-
-    def build(self, profile, owner, active=True):
-        dims = {}
-        for k in ["date", "time", "step"]:
-            key, name = owner.dim_roles.role(k)
-            dims[name] = key
-        return super().build(profile, owner, active=active, dims=dims)
-
-
-class LevelDimMode(DimMode):
-    name = "level"
-
-    def build(self, profile, owner, **kwargs):
-        # level
-        key, name = owner.dim_roles.role("level")
-        level_dim = LevelDim(owner, name=name, key=key, **kwargs)
-
-        # level_type
-        key, name = owner.dim_roles.role("level_type")
-        level_type_dim = LevelTypeDim(owner, name=name, key=key, **kwargs)
-
-        return {level_dim.key: level_dim, level_type_dim.key: level_type_dim}
-
-
-class LevelAndTypeDimMode(DimMode):
-    name = "level_and_type"
-    dim = LevelAndTypeDim
-
-    def build(self, profile, owner, **kwargs):
-
-        level_key, _ = owner.dim_roles.role("level")
-        level_type_key, _ = owner.dim_roles.role("level_type")
-        return {self.name: self.dim(owner, level_key, level_type_key, **kwargs)}
-
-
-class LevelPerTypeDimMode(LevelAndTypeDimMode):
-    name = "level_per_type"
-    dim = LevelPerTypeDim
-
-
-TIME_DIM_MODES = {v.name: v for v in [ForecastTimeDimMode, ValidTimeDimMode, RawTimeDimMode]}
-LEVEL_DIM_MODES = {v.name: v for v in [LevelDimMode, LevelPerTypeDimMode, LevelAndTypeDimMode]}
-
-
 class DimBuilder:
     used = {}
     ignored = {}
 
     def dims(self):
         return self.used, self.ignored
-
-
-class NumberDimBuilder(DimBuilder):
-    name = "number"
-
-    def __init__(self, profile, owner):
-        key, name = owner.dim_roles.role("number")
-        self.used = {self.name: NumberDim(owner, name=name, key=key)}
-
-
-class TimeDimBuilder(DimBuilder):
-    name = "time"
-
-    def __init__(self, profile, owner):
-        mode = TIME_DIM_MODES.get(owner.time_dim_mode, None)
-        if mode is None:
-            raise ValueError(f"Unknown time_dim_mode={owner.time_dim_mode}")
-
-        mode = mode()
-        self.used = mode.build(profile, owner)
-        self.ignored = {
-            k: v().build(profile, owner, active=False) for k, v in TIME_DIM_MODES.items() if v != mode
-        }
-
-
-class LevelDimBuilder(DimBuilder):
-    name = "level"
-
-    def __init__(self, profile, owner):
-        mode = LEVEL_DIM_MODES.get(owner.level_dim_mode, None)
-        if mode is None:
-            raise ValueError(f"Unknown level_dim_mode={owner.level_dim_mode}")
-
-        mode = mode()
-        self.used = mode.build(profile, owner)
-        self.ignored = {
-            k: v().build(profile, owner, active=False) for k, v in LEVEL_DIM_MODES.items() if v != mode
-        }
 
 
 DIM_BUILDERS = {v.name: v for v in [NumberDimBuilder, TimeDimBuilder, LevelDimBuilder]}
@@ -597,6 +346,7 @@ class DimHandler:
         time_dim_mode,
         level_dim_mode,
         squeeze,
+        data=None,
     ):
 
         self.profile = profile
@@ -632,7 +382,7 @@ class DimHandler:
         if self.fixed_dims:
             self.dims = self._init_fixed_dims()
         else:
-            dims = self._init_dims()
+            dims = self._init_dims(data)
 
             assert self.var_key_dim
 
@@ -740,7 +490,7 @@ class DimHandler:
         dims = {k: make_dim(self, name=k, key=v) for k, v in self.fixed_dims.items()}
         return dims
 
-    def _init_dims(self):
+    def _init_dims(self, data=None):
         assert not self.fixed_dims
 
         for k in self.drop_dims:
@@ -795,7 +545,7 @@ class DimHandler:
         ignored = {}
         self.core_dim_order = []
         for k, v in DIM_BUILDERS.items():
-            builder = v(self.profile, self)
+            builder = v(self.profile, self, data=data)
             used, ignored = builder.dims()
             for k, v in used.items():
                 core_dims[k] = v
@@ -921,19 +671,7 @@ class DimHandler:
 
 
 PREDEFINED_DIMS = {}
-for i, d in enumerate(
-    [
-        NumberDim,
-        ForecastRefTimeDim,
-        DateDim,
-        TimeDim,
-        StepDim,
-        ValidTimeDim,
-        LevelDim,
-        LevelPerTypeDim,
-        LevelAndTypeDim,
-    ]
-):
+for i, d in enumerate([*predefined_number_dims, *predefined_time_dims, *predefined_level_dims]):
     if d.name:
         PREDEFINED_DIMS[d.name] = d
     else:

@@ -86,6 +86,17 @@ class ProfileConf:
 PROFILE_CONF = ProfileConf()
 
 
+class LazyDimHandler:
+    def __init__(self, profile, data=None, **kwargs):
+        self.profile = profile
+        self.data = data
+        self._kwargs = kwargs
+        self._dims = None
+
+    def __getattribute__(self, name):
+        return super().__getattribute__(name)
+
+
 class Profile:
     USER_ONLY_OPTIONS = ["remapping", "patches"]
     DEFAULT_PROFILE_NAME = "mars"
@@ -93,10 +104,10 @@ class Profile:
     def __init__(
         self,
         name=None,
+        data=None,
         **kwargs,
     ):
         from .attrs import Attrs
-        from .dim import DimHandler
 
         self._kwargs = dict(**kwargs)
         self.name = name
@@ -116,21 +127,57 @@ class Profile:
         self.rename_variables_map = kwargs.pop("rename_variables")
 
         # dims
-        self.dims = DimHandler(
-            self,
-            kwargs.pop("extra_dims"),
-            kwargs.pop("drop_dims"),
-            kwargs.pop("ensure_dims"),
-            kwargs.pop("fixed_dims"),
-            kwargs.pop("split_dims"),
-            kwargs.pop("rename_dims"),
-            kwargs.pop("dim_roles"),
-            kwargs.pop("dim_name_from_role_name"),
-            kwargs.pop("dims_as_attrs"),
-            kwargs.pop("time_dim_mode"),
-            kwargs.pop("level_dim_mode"),
-            kwargs.pop("squeeze"),
-        )
+        self._dims_kwargs = {
+            k: kwargs.pop(k, None)
+            for k in [
+                "extra_dims",
+                "drop_dims",
+                "ensure_dims",
+                "fixed_dims",
+                "split_dims",
+                "rename_dims",
+                "dim_roles",
+                "dim_name_from_role_name",
+                "dims_as_attrs",
+                "time_dim_mode",
+                "level_dim_mode",
+                "squeeze",
+            ]
+        }
+
+        self.split_dims = self._dims_kwargs["split_dims"]
+
+        #     "extra_dims": kwargs.pop("extra_dims"),
+        #     "drop_dims": kwargs.pop("drop_dims"),
+        #     "ensure_dims": kwargs.pop("ensure_dims"),
+        #     "fixed_dims": kwargs.pop("fixed_dims"),
+        #     "split_dims": kwargs.pop("split_dims"),
+        #     "rename_dims": kwargs.pop("rename_dims"),
+        #     "dim_roles": kwargs.pop("dim_roles"),
+        #     "dim_name_from_role_name": kwargs.pop("dim_name_from_role_name"),
+        #     "dims_as_attrs": kwargs.pop("dims_as_attrs"),
+        #     "time_dim_mode": kwargs.pop("time_dim_mode"),
+        #     "level_dim_mode": kwargs.pop("level_dim_mode"),
+        #     "squeeze": kwargs.pop("squeeze"),
+        # }
+
+        # self.split_dims = self._dims_kwargs["split_dims"]
+
+        # self.dims = DimHandler(
+        #     self,
+        #     kwargs.pop("extra_dims"),
+        #     kwargs.pop("drop_dims"),
+        #     kwargs.pop("ensure_dims"),
+        #     kwargs.pop("fixed_dims"),
+        #     kwargs.pop("split_dims"),
+        #     kwargs.pop("rename_dims"),
+        #     kwargs.pop("dim_roles"),
+        #     kwargs.pop("dim_name_from_role_name"),
+        #     kwargs.pop("dims_as_attrs"),
+        #     kwargs.pop("time_dim_mode"),
+        #     kwargs.pop("level_dim_mode"),
+        #     kwargs.pop("squeeze"),
+        # )
 
         # coordinates
         self.add_valid_time_coord = kwargs.pop("add_valid_time_coord")
@@ -173,7 +220,7 @@ class Profile:
 
         self.add_keys(ensure_iterable(MANDATORY_KEYS))
 
-        self.prepend_keys(self.dims.split_dims)
+        # self.prepend_keys(self.dims.split_dims)
 
         # print("INIT variable key", self.variable_key)
         # print("INIT index_keys", self.index_keys)
@@ -283,6 +330,26 @@ class Profile:
     def copy(self):
         return Profile(name=self.name, **self._kwargs)
 
+    def _make_dims(self, data=None):
+        """
+        Create a new DimHandler instance with the current configuration.
+        """
+        from .dim import DimHandler
+
+        dims = DimHandler(
+            self,
+            data=data,
+            **self._dims_kwargs,
+        )
+
+        self.prepend_keys(dims.split_dims)
+
+    @property
+    def dims(self):
+        if self._dims is None:
+            self._dims = self._make_dims()
+        return self._dims
+
     @property
     def dim_keys(self):
         return self.dims.active_dim_keys
@@ -293,6 +360,13 @@ class Profile:
     def prepend_keys(self, keys):
         if keys:
             self.index_keys = keys + [k for k in self.index_keys if k not in keys]
+
+    def delayed_init(self, data):
+        assert self._dims is None, "Profile already initialized!"
+        self._dims = self._make_dims(data=data)
+        # from .dim import DimHandler
+
+        # self._dims = DimHandler(self, data=data, **self._dims_kwargs)
 
     def update_variables(self, ds):
         self.variables = ds.index(self.variable_key)

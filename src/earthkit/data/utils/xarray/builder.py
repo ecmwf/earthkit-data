@@ -545,6 +545,8 @@ class DatasetBuilder:
         if profile is None:
             profile = self.profile.copy()
 
+        profile.delayed_init(ds)
+
         remapping = profile.remapping.build()
 
         # LOG.debug(f"{remapping=}")
@@ -700,7 +702,7 @@ def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
 
     # the backend builder is directly called bypassing xarray.open_dataset
     if profile.direct_backend:
-        if not profile.dims.split_dims:
+        if not profile.split_dims:
             return SingleDatasetBuilder(ds, profile).build()
         else:
             return SplitDatasetBuilder(ds, profile).build()
@@ -708,7 +710,7 @@ def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
     else:
         # LOG.debug(f"from_earthkit {backend_kwargs=} {profile_kwargs=}")
         assert other_kwargs["engine"] == "earthkit"
-        if not profile.dims.split_dims:
+        if not profile.split_dims:
             backend_kwargs["profile"] = profile
             # certain kwargs are not allowed in xarray.open_dataset
             for k in NON_XR_OPEN_DS_KWARGS:
