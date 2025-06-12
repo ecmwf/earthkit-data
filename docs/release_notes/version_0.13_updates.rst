@@ -2,6 +2,15 @@ Version 0.13 Updates
 /////////////////////////
 
 
+Version 0.13.9
+===============
+
+Fixes
+++++++
+
+- Fixed issue when getting the "gridSpec" GRIB metadata key with a default value caused a crash when ecCodes 2.41.0 was used. (:pr:`719`).
+
+
 Version 0.13.8
 ===============
 
