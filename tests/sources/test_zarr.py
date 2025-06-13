@@ -19,7 +19,7 @@ from earthkit.data.testing import earthkit_test_data_file
 
 @pytest.mark.skipif(NO_ZARR, reason="Zarr not installed")
 def test_zarr_source():
-    ds = from_source("xarray-zarr", earthkit_test_data_file("test_zarr/"))
+    ds = from_source("zarr", earthkit_test_data_file("test_zarr/"))
     assert len(ds) == 4
     assert isinstance(ds[0], XArrayField)
     assert isinstance(ds[1], XArrayField)

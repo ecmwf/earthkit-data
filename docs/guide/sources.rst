@@ -66,6 +66,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from `WEkEO`_ using the WEkEO grammar
     * - :ref:`data-sources-wekeocds`
       - retrieve `CDS <https://cds.climate.copernicus.eu/>`_ data stored on `WEkEO`_ using the `cdsapi`_ grammar
+    * - :ref:`data-sources-zarr`
+      - load data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store
 
 ----------------------------------
 
@@ -1227,6 +1229,22 @@ wekeocds
   Further examples:
 
       - :ref:`/examples/wekeo.ipynb`
+
+
+
+.. _data-sources-zarr:
+
+zarr
+--------
+
+.. py:function:: from_source("zarr", path)
+  :noindex:
+
+  The ``zarr`` source accesses data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store. Internally the data is loaded via the :py:meth:`xarray.open_zarr` method. So only Zarr data supported by Xarray can be accessed.
+
+  :param str path: path or URL to the Zarr store
+
+
 
 
 .. _MARS catalog: https://apps.ecmwf.int/archive-catalogue/

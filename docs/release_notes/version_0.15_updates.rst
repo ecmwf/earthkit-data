@@ -44,9 +44,9 @@ Other changes
 New Xarray engine notebooks
 ------------------------------
 
-- :ref:`/examples/xr_engine_step_range.ipynb`
-- :ref:`/examples/xr_engine_ensemble.ipynb`
-- :ref:`/examples/xr_engine_squeeze.ipynb`
+- :ref:`/examples/xarray_engine_step_ranges.ipynb`
+- :ref:`/examples/xarray_engine_ensemble.ipynb`
+- :ref:`/examples/xarray_engine_squeeze.ipynb`
 - :ref:`/examples/xarray_engine_chunks.ipynb`
 - :ref:`/examples/list_of_dicts_to_xarray.ipynb`
 
@@ -55,6 +55,8 @@ New Xarray engine notebooks
 New features
 +++++++++++++++++
 
+- Added :ref:`zarr <data-sources-zarr>` source to read Zarr data (:pr:`675`).
+- Added the :ref:`targets-zarr` target (:pr:`716`). See the :ref:`/examples/grib_to_zarr_target.ipynb` notebook example.
 - Added new config option ``grib-file-serialisation-policy`` to control how GRIB data on disk is pickled. The options are "path" and "memory". The default is "path". Previously, only "memory" was implemented (:pr:`700`).
 - Added serialisation to GRIB fields (both on disk and in-memory) (:pr:`700`)
 
