@@ -69,7 +69,7 @@ class DirectoryReader(Reader):
         ):
             if self.stream:
                 raise ValueError("Cannot stream zarr directories")
-            return from_source("xarray-zarr", self.path)
+            return from_source("xarray", self.path)
 
         if len(self._content) == 1:
             return from_source(
