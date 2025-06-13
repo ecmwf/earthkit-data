@@ -107,7 +107,7 @@ class GribHandleMaker:
         self.template = template
         self._bbox = {}
 
-    def make(self, field=None, values=None, metadata=None, template=None):
+    def make(self, field=None, values=None, metadata=None, template=None, use_metadata_from_data=True):
         """Create a new GribCodesHandle from a template, field or metadata
         May modify existing metadata
 
@@ -134,6 +134,20 @@ class GribHandleMaker:
         if handle is None:
             if values is None:
                 raise ValueError("No values to encode")
+            if field is not None:
+                _IGNORE_KEYS = ("values", "latitudes", "longitudes", "lat", "lon", "handle")
+                values = values.reshape(field.shape)
+                if use_metadata_from_data:
+                    md = {}
+                    for k, v in field.metadata().items():
+                        if (
+                            k not in metadata
+                            and "_" not in k
+                            and not k.startswith("_")
+                            and k not in _IGNORE_KEYS
+                        ):
+                            md[k] = v
+                    metadata.update(md)
             handle = self.handle_from_metadata(values, metadata, COMPULSORY)
 
         return handle
@@ -333,6 +347,7 @@ class GribEncoder(Encoder):
         metadata=None,
         template=None,
         missing_value=9999,
+        use_metadata_from_data=True,
         **kwargs,
     ):
         """
@@ -353,6 +368,8 @@ class GribEncoder(Encoder):
             Return the encoded message as bytes
         missing_value: float
             The value to use for NaNs
+        use_metadata_from_data: bool
+            Use the metadata from the field if available to construct the message
         kwargs: dict
             Additional metadata to encode
         """
@@ -384,7 +401,9 @@ class GribEncoder(Encoder):
         kwargs["can_infer_time"] = can_infer_time
 
         if data is not None:
-            return data._encode(self, template=template, **kwargs)
+            return data._encode(
+                self, template=template, use_metadata_from_data=use_metadata_from_data, **kwargs
+            )
         else:
             handle = self._get_handle(template=template, values=values, metadata=metadata)
             return self._make_message(handle, **kwargs)
@@ -402,7 +421,9 @@ class GribEncoder(Encoder):
     def _encode(self, data, **kwargs):
         raise NotImplementedError
 
-    def _encode_field(self, field, values=None, template=None, metadata=None, **kwargs):
+    def _encode_field(
+        self, field, values=None, template=None, metadata=None, use_metadata_from_data=True, **kwargs
+    ):
         # check if the field is already encoded in the desired format
 
         if values is None and template is None and not metadata:
@@ -411,7 +432,13 @@ class GribEncoder(Encoder):
         if values is None and template:
             values = field.values
 
-        handle = self._get_handle(field=field, values=values, metadata=metadata, template=template)
+        handle = self._get_handle(
+            field=field,
+            values=values,
+            metadata=metadata,
+            template=template,
+            use_metadata_from_data=use_metadata_from_data,
+        )
         return self._make_message(handle, values=values, metadata=metadata, **kwargs)
 
     def _encode_fieldlist(self, fs, **kwargs):
