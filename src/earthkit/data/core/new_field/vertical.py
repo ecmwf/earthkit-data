@@ -13,6 +13,11 @@ from abc import abstractmethod
 
 
 class Vertical(metaclass=ABCMeta):
+    KEYS = (
+        "level",
+        "level_type",
+    )
+
     @property
     @abstractmethod
     def level(self):

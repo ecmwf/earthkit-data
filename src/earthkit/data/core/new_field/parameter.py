@@ -13,6 +13,11 @@ from abc import abstractmethod
 
 
 class Parameter(metaclass=ABCMeta):
+    KEYS = (
+        "name",
+        "units",
+    )
+
     @property
     @abstractmethod
     def name(self):

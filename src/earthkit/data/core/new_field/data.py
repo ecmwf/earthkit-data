@@ -16,6 +16,8 @@ from earthkit.utils.array import array_namespace
 
 
 class Data(metaclass=ABCMeta):
+    KEYS = None
+
     @property
     @abstractmethod
     def values(self):
@@ -114,3 +116,29 @@ class SimpleData(Data):
         """Check if the array matches the field and conditions."""
         shape = self._required_shape(flatten)
         return shape == array.shape and (dtype is None or dtype == array.dtype)
+
+
+class NumpyData(SimpleData):
+    """A simple data class that uses NumPy for array operations."""
+
+    def __init__(self, values):
+        self._values = values
+
+    def get_values(self, dtype=None):
+        """Get the values stored in the field as an array."""
+        if dtype is not None:
+            return self._values.astype(dtype)
+        return self._values
+
+
+class ArrayData(SimpleData):
+    """A simple data class that uses an array-like structure for values."""
+
+    def __init__(self, values):
+        self._values = values
+
+    def get_values(self, dtype=None):
+        """Get the values stored in the field as an array."""
+        if dtype is not None:
+            return array_namespace(self._values).astype(dtype)
+        return self._values

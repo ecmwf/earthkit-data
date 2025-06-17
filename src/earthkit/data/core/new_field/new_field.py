@@ -7,10 +7,13 @@
 # nor does it submit to any jurisdiction.
 #
 
+
+from abc import abstractmethod
+
 from earthkit.utils.array import array_to_numpy
 from earthkit.utils.array import convert_array
 
-from earthkit.data.core.base import Base
+from earthkit.data.core import Base
 
 
 class Field(Base):
@@ -24,6 +27,26 @@ class Field(Base):
         self.geometry = geometry
         self.vertical = vertical
         self.labels = labels
+
+    @classmethod
+    def from_field(
+        cls,
+        field,
+        **kwargs,
+    ):
+        r"""Create a Field object from another Field object."""
+
+        kwargs = kwargs.copy()
+        _kwargs = {}
+
+        for name in ["data", "time", "parameter", "geometry", "vertical", "labels"]:
+            v = kwargs.pop(name, None)
+            if v is not None:
+                _kwargs[name] = v
+            else:
+                _kwargs[name] = getattr(field, name)
+
+        return cls(**_kwargs, **kwargs)
 
     @classmethod
     def from_grib(cls, handle, **kwargs):
@@ -47,6 +70,24 @@ class Field(Base):
             vertical=vertical,
             **kwargs,
         )
+
+    # @classmethod
+    # def from_dict(cls, **kwargs):
+    #     d = dict(**kwargs)
+    #     data = DictData(d)
+    #     time = DictTime(d)
+    #     parameter = DictParameter(d)
+    #     geometry = DictGeography(d)
+    #     vertical = DictVertical(d)
+    #     labels = Labels(d)
+    #     return cls(
+    #         data=data,
+    #         time=time,
+    #         parameter=parameter,
+    #         geometry=geometry,
+    #         vertical=vertical,
+    #         labels=labels,
+    #     )
 
     @property
     def shape(self):
@@ -107,6 +148,65 @@ class Field(Base):
         shape = self.data.target_shape(v, flatten, self.shape)
         return self.data.reshape(v, shape)
 
+    def set_numpy(self, array):
+        from earthkit.data.core.new_field.data import NumpyData
+
+        return Field.from_field(self, data=NumpyData(array))
+
+    def set_step(self, step):
+        return Field.from_field(self, time=self.time.set_step(step))
+
+    def set_labels(self, *args, **kwargs):
+        r"""Set a label for the field.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments to be passed to the label setter.
+        **kwargs: dict
+            Keyword arguments to be passed to the label setter.
+
+        Returns
+        -------
+        Field
+            A new Field object with the updated label.
+        """
+
+        d = dict(*args, **kwargs)
+        return Field(self, label=self.label.set(d))
+
+    def to_target(self, target, *args, **kwargs):
+        r"""Write the field into a target object.
+
+        Parameters
+        ----------
+        target: object
+            The target object to write the field into.
+        *args: tuple
+            Positional arguments used to specify the target object.
+        **kwargs: dict, optional
+            Other keyword arguments used to write the field into the target object.
+        """
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self, **kwargs)
+
+    def default_encoder(self):
+        return self._metadata.data_format()
+
+    def _encode(self, encoder, **kwargs):
+        """Double dispatch to the encoder"""
+        return encoder._encode_field(self, **kwargs)
+
+    # @staticmethod
+    # def create_sel(self, **kwargs):
+    #     for k, v in kwargs.items():
+    #         part, _, name = k.partition(".")
+    #         if
+
+    #         part = k.split(".", 1)
+    #             raise ValueError(f"Unknown selection key: {k}")
+
 
 def _create_handle(path, offset):
     from earthkit.data.readers.grib.codes import GribCodesReader
@@ -117,3 +217,41 @@ def _create_handle(path, offset):
 def _create_grib_field(path, offset):
     handle = _create_handle(path, offset)
     return Field.from_grib(handle)
+
+
+class FieldList(Base):
+    @abstractmethod
+    def __getitem__(self, n):
+        pass
+
+    @abstractmethod
+    def __len__(self):
+        pass
+
+
+class SimpleFieldList(FieldList):
+    def __init__(self, fields):
+        r"""Initialize a FieldList object."""
+        self.fields = fields
+
+    def append(self, field):
+        self.fields.append(field)
+
+    def __getitem__(self, n):
+        return self.fields[n]
+
+    def __len__(self):
+        return len(self.fields)
+
+    def sel(self, *args, **kwargs):
+        from earthkit.data.core.select import normalize_selection
+
+        kwargs = normalize_selection(*args, **kwargs)
+        if not kwargs:
+            return self
+
+        # sel = Field.create_sel(**kwargs)
+
+        # for field in self.fields:
+        #     if not field.sel(**kwargs):
+        #         return SimpleFieldList([])

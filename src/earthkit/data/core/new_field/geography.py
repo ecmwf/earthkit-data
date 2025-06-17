@@ -13,6 +13,12 @@ from abc import abstractmethod
 
 
 class Geography(metaclass=ABCMeta):
+    KEYS = (
+        "latitudes",
+        "longitudes",
+        "projection",
+    )
+
     @property
     @abstractmethod
     def latitudes(self):

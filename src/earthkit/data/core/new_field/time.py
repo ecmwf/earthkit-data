@@ -12,6 +12,14 @@ from abc import abstractmethod
 
 
 class Time(metaclass=ABCMeta):
+    KEYS = (
+        "base_datetime",
+        "forecast_reference_time",
+        "valid_datetime",
+        "step",
+        "range",
+    )
+
     @property
     @abstractmethod
     def base_datetime(self):
