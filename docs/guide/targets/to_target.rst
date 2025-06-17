@@ -182,13 +182,13 @@ zarr
 .. py:function:: to_target("zarr", earthkit_to_xarray_kwargs=None, xarray_to_zarr_kwargs=None, data=None)
   :noindex:
 
-  The ``zarr`` target writes to a `zarr <https://zarr.dev>`_ store.
+  The ``zarr`` target writes to a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store.
 
   :param dict earthkit_to_xarray_kwargs: the keyword arguments passed to the :func:`to_xarray` function. If not provided, the default values are used.
   :param dict xarray_to_zarr_kwargs: the keyword arguments passed to the :py:func:`xarray.Dataset.to_zarr` function. As a bare minimum, the ``store`` keyword argument must be provided.
   :param data: specify the data to write. Cannot be set when :func:`to_target` is called on a data object.
 
-  This target converts the data to an :ref:`xarray.Dataset <xarray-dataset>` and then writes it to a zarr store using the :py:func:`xarray.Dataset.to_zarr` function. The conversion to an xarray dataset is done by the :func:`to_xarray` function.
+  This target converts the data to an :ref:`xarray.Dataset <xarray-dataset>` and then writes it to a Zarr store using the :py:func:`xarray.Dataset.to_zarr` function. The conversion to an Xarray dataset is done by the :func:`to_xarray` function.
 
   Notebook examples:
 
