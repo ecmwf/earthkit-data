@@ -1240,7 +1240,9 @@ zarr
 .. py:function:: from_source("zarr", path)
   :noindex:
 
-  The ``zarr`` source accesses data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store. Internally the data is loaded via the :py:meth:`xarray.open_zarr` method. So only Zarr data supported by Xarray can be accessed.
+  *New in version 0.15.0*
+
+  The ``zarr`` source accesses data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store. Internally the data is loaded via the :py:meth:`xarray.open_zarr` method,  so only Zarr data supported by Xarray can be accessed. Requires ``zarr >= 3`` version.
 
   :param str path: path or URL to the Zarr store
 
