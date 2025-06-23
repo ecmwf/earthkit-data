@@ -7,15 +7,16 @@
 # nor does it submit to any jurisdiction.
 #
 
+
 from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import to_timedelta
 
-from .data import SimpleData
-from .geography import Geography
-from .labels import Labels
-from .parameter import Parameter
-from .time import Time
-from .vertical import Vertical
+from ..data import SimpleData
+from ..geography import Geography
+from ..labels import Labels
+from ..parameter import Parameter
+from ..time import Time
+from ..vertical import Vertical
 
 
 def missing_is_none(x):

@@ -8,12 +8,63 @@
 #
 
 
-from abc import abstractmethod
-
 from earthkit.utils.array import array_to_numpy
 from earthkit.utils.array import convert_array
 
 from earthkit.data.core import Base
+
+
+class FieldKeys:
+    r"""Keys used to access the field attributes."""
+
+    # PARTS = {}
+    # KEYS = {}
+
+    def __init__(self):
+        from .data import Data as data
+        from .geography import Geography as geography
+        from .parameter import Parameter as parameter
+        from .time import Time as time
+        from .vertical import Vertical as vertical
+
+        self.PARTS = {
+            "data": data.KEYS,
+            "time": time.KEYS,
+            "parameter": parameter.KEYS,
+            "geometry": geography.KEYS,
+            "vertical": vertical.KEYS,
+        }
+
+        self.KEYS = []
+        self.SINGLE_KEYS = {}
+        for part, keys in self.PARTS.items():
+            if keys:
+                for k in keys:
+                    if k in self.KEYS:
+                        raise ValueError(f"Key '{k}' already exists in FieldKeys. ")
+                    self.KEYS.append(part + "." + k)
+                    self.KEYS.append(k)
+                    self.SINGLE_KEYS[k] = part
+                    # self.SINGLE_KEYS[k + "." + k] = part
+
+    def __contains__(self, key):
+        r"""Check if the key is in the FieldKeys."""
+        return key in self.KEYS
+
+    def get(self, key):
+        if key in self.KEYS:
+            if key in self.SINGLE_KEYS:
+                part = self.SINGLE_KEYS[key]
+                name = key
+            else:
+                part, name = key.split(".", 1)
+
+            print(f"key: {key} -> part: {part}, name: {name}")
+            return part, name
+        return None, None
+
+
+FIELD_KEYS = FieldKeys()
 
 
 class Field(Base):
@@ -50,11 +101,11 @@ class Field(Base):
 
     @classmethod
     def from_grib(cls, handle, **kwargs):
-        from .grib import GribData
-        from .grib import GribGeography
-        from .grib import GribParameter
-        from .grib import GribTime
-        from .grib import GribVertical
+        from .grib.grib import GribData
+        from .grib.grib import GribGeography
+        from .grib.grib import GribParameter
+        from .grib.grib import GribTime
+        from .grib.grib import GribVertical
 
         data = GribData(handle)
         parameter = GribParameter(handle)
@@ -198,14 +249,72 @@ class Field(Base):
         """Double dispatch to the encoder"""
         return encoder._encode_field(self, **kwargs)
 
-    # @staticmethod
-    # def create_sel(self, **kwargs):
-    #     for k, v in kwargs.items():
-    #         part, _, name = k.partition(".")
-    #         if
+    def metadata(self, key, default=None):
+        return self._get(key)
 
-    #         part = k.split(".", 1)
-    #             raise ValueError(f"Unknown selection key: {k}")
+    def _get(self, key):
+        if self.labels and key in self.labels:
+            return self.labels[key]
+        part, name = FIELD_KEYS.get(key)
+        if part:
+            part = getattr(self, part)
+            if key in part.KEYS:
+                return getattr(part, key)
+        elif name:
+            return getattr(self, name)
+        else:
+            raise KeyError(f"Key {key} not found in field")
+
+    def dump(self, namespace=all, **kwargs):
+        r"""Generate dump with all the metadata keys belonging to ``namespace``.
+
+        In a Jupyter notebook it is represented as a tabbed interface.
+
+        Parameters
+        ----------
+        namespace: :obj:`str`, :obj:`list`, :obj:`tuple`, :obj:`None` or :obj:`all`
+            The namespace to dump. The following `namespace` values
+            have a special meaning:
+
+            - :obj:`all`: all the available namespaces will be used.
+            - None or empty str: all the available keys will be used
+                (without a namespace qualifier)
+
+        **kwargs: dict, optional
+            Other keyword arguments used for testing only
+
+        Returns
+        -------
+        NamespaceDump
+            Dict-like object with one item per namespace. In a Jupyter notebook represented
+            as a tabbed interface to browse the dump contents.
+
+        Examples
+        --------
+        :ref:`/examples/grib_metadata.ipynb`
+
+        """
+        from earthkit.data.utils.summary import format_namespace_dump
+
+        if namespace is all:
+            namespace = self.namespaces()
+        else:
+            if isinstance(namespace, str):
+                namespace = [namespace]
+
+        r = []
+        for ns in namespace:
+            v = self.as_namespace(ns)
+            if v:
+                r.append(
+                    {
+                        "title": ns if ns else "default",
+                        "data": v,
+                        "tooltip": f"Keys in the ecCodes {ns} namespace",
+                    }
+                )
+
+        return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
 
 
 def _create_handle(path, offset):
@@ -217,41 +326,3 @@ def _create_handle(path, offset):
 def _create_grib_field(path, offset):
     handle = _create_handle(path, offset)
     return Field.from_grib(handle)
-
-
-class FieldList(Base):
-    @abstractmethod
-    def __getitem__(self, n):
-        pass
-
-    @abstractmethod
-    def __len__(self):
-        pass
-
-
-class SimpleFieldList(FieldList):
-    def __init__(self, fields):
-        r"""Initialize a FieldList object."""
-        self.fields = fields
-
-    def append(self, field):
-        self.fields.append(field)
-
-    def __getitem__(self, n):
-        return self.fields[n]
-
-    def __len__(self):
-        return len(self.fields)
-
-    def sel(self, *args, **kwargs):
-        from earthkit.data.core.select import normalize_selection
-
-        kwargs = normalize_selection(*args, **kwargs)
-        if not kwargs:
-            return self
-
-        # sel = Field.create_sel(**kwargs)
-
-        # for field in self.fields:
-        #     if not field.sel(**kwargs):
-        #         return SimpleFieldList([])

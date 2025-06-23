@@ -48,3 +48,9 @@ class Time(metaclass=ABCMeta):
     def range(self):
         """Return the forecast period of the time object."""
         pass
+
+    def _get(self, key):
+        """Get the value of the key."""
+        if key in self.KEYS:
+            return getattr(self, key)
+        raise KeyError(f"Key '{key}' not found in Time object.")

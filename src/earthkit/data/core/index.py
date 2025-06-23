@@ -92,6 +92,9 @@ class Selection(OrderOrSelection):
     def match_element(self, element):
         metadata = self.remapping(element.metadata)
         # print("MATCH", [(k, v(metadata(k, default=None)), element) for k, v in self.actions.items()])
+        # print("Matching element", element)
+        # for k, v in self.actions.items():
+        #     print("  -> ", k, v, metadata(k, default=None))
         return all(v(metadata(k, default=None)) for k, v in self.actions.items())
 
 
