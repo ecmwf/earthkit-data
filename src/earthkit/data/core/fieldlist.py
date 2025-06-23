@@ -1750,6 +1750,21 @@ class FieldList(Index):
 
         return metadata_cache_diag(self)
 
+    def _getitem(self, key):
+        if type(self) is FieldList:
+            raise IndexError("Empty FieldList")
+        return super()._getitem(key)
+
+    def __len__(self):
+        if type(self) is FieldList:
+            # When the concrete type is Fieldlist we assume the object was
+            # created with Fieldlist() i.e. it is empty.
+            return 0
+        return super().__len__()
+
+    def mutate_source(self):
+        return self
+
 
 class MaskFieldList(FieldList, MaskIndex):
     def __init__(self, *args, **kwargs):
