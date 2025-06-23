@@ -94,6 +94,14 @@ New features
 - Added the :ref:`targets-zarr` target (:pr:`716`). See the :ref:`/examples/grib_to_zarr_target.ipynb` notebook example.
 - Added new config option ``grib-file-serialisation-policy`` to control how GRIB data on disk is pickled. The options are "path" and "memory". The default is "path". Previously, only "memory" was implemented (:pr:`700`).
 - Added serialisation to GRIB fields (both on disk and in-memory) (:pr:`700`)
+- Enabled specifying earthkit Xarray engine options via the ``earthkit_to_xarray_kwargs`` kwarg in :func:`to_target` when converting GRIB to NetCDF. See the :ref:`/examples/grib_to_netcdf.ipynb` notebook example. E.g.
+
+    .. code-block:: python
+
+        ds.to_target(
+            "netcdf", "pl.nc", earthkit_to_xarray_kwargs={"flatten_values": True}
+        )
+
 
 
 Fixes

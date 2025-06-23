@@ -62,7 +62,17 @@ class NetCDFEncoder(Encoder):
         missing_value=9999,
         **kwargs,
     ):
-        return NetCDFEncodedData(data.to_xarray())
+        _kwargs = kwargs.copy()
+        if data is not None:
+            # TODO: find better way to check if the earthkit engine is used
+            if hasattr(data, "to_xarray_earthkit"):
+                earthkit_to_xarray_kwargs = _kwargs.pop("earthkit_to_xarray_kwargs", {})
+                earthkit_to_xarray_kwargs["add_earthkit_attrs"] = False
+                _kwargs = earthkit_to_xarray_kwargs
+        else:
+            _kwargs = {}
+
+        return NetCDFEncodedData(data.to_xarray(**_kwargs))
 
     def _encode_field(self, field, **kwargs):
         return self._encode(field, **kwargs)
