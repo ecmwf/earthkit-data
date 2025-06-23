@@ -230,7 +230,7 @@ def test_target_file_odb():
         assert len(df) == 717
 
 
-def test_target_file_grib_to_netcdf():
+def test_target_file_grib_to_netcdf_1():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     # vals_ref = ds.values[:, :4]
 
@@ -240,7 +240,28 @@ def test_target_file_grib_to_netcdf():
         ds1 = from_source("file", path)
         assert len(ds1) == len(ds)
         assert ds1.metadata("param") == ["2t", "msl"]
-        # assert np.allclose(ds1.values[:, :4], vals_ref)
+
+        ds2 = ds1.to_xarray()
+        assert "values" not in ds2.sizes
+
+
+def test_target_file_grib_to_netcdf_2():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    # vals_ref = ds.values[:, :4]
+
+    with temp_file() as path:
+        ds.to_target("file", path, encoder="netcdf", earthkit_to_xarray_kwargs={"flatten_values": True})
+
+        ds1 = from_source("file", path)
+        ds2 = ds1.to_xarray()
+
+        for name in ["2t", "msl"]:
+            assert name in ds2.data_vars
+
+        for name in ["latitude", "longitude"]:
+            assert name in ds2.coords
+
+        assert "values" in ds2.sizes
 
 
 @pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
