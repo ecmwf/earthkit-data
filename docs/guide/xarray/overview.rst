@@ -107,14 +107,31 @@ For further details see the following notebook:
 - :ref:`/examples/xarray_engine_to_grib.ipynb`
 
 
+.. _xr_grib_to_netcdf:
+
+
 Converting GRIB to NetCDF
 ----------------------------
 
-To convert GRIB data to NetCDF first we need to convert GRIB to Xarray with :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` then generate NetCDF from it with :py:meth:`xarray.Dataset.to_netcdf`. Earthkit-data attaches some special attributes to the generated Xarray dataset that we do not want to write to NetCDF. In order to achieve this we need to call :py:meth:`xarray.Dataset.to_netcdf` on the ``earthkit`` accessor and not directly on the Xarray dataset.
+To convert GRIB data to NetCDF first we need to convert GRIB to Xarray with :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` then generate NetCDF from it with :py:meth:`xarray.Dataset.to_netcdf`. Earthkit-data attaches some special attributes to the generated Xarray dataset that cannot be written to NetCDF. In order to make ``to_netcdf()`` work we need to invoke it on the ``earthkit`` accessor and not directly on the Xarray dataset.
 
 .. code-block:: python
 
+    import earthkit.data as ekd
+
+    ds_fl = ekd.from_source("sample", "pl.grib")
+    ds_xr = ds_fl.to_xarray()
     ds_xr.earthkit.to_netcdf("_from_grib.nc")
+
+Alternatively, we can use the ``add_earthkit_attrs=False`` option in :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray`. In this case we can call :py:meth:`xarray.Dataset.to_netcdf` directly on the Xarray dataset without using the ``earthkit`` accessor.
+
+.. code-block:: python
+
+    import earthkit.data as ekd
+
+    ds_fl = ekd.from_source("sample", "pl.grib")
+    ds_xr = ds_fl.to_xarray(add_earthkit_attrs=False)
+    ds_xr.to_netcdf("_from_grib.nc")
 
 For further details see the following notebook:
 
