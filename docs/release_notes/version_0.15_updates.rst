@@ -16,15 +16,16 @@ Xarray engine
 Breaking changes
 -------------------
 
-- Separated the dimension names from the metadata keys used to generate the dimensions. Dimensions associated with the dimension roles are now taking the name of the :ref:`dimension role <_xr_dim_roles>`, irrespective of the metadata key the dimension role is mapped to. The example belows shows what this means for e.g. the "level" dimension role when the :ref:`mars profile <xr_profile_mars>`  (the default) is used. In this case the "level" role is mapped to the "levelist" ecCodes GRIB key.    
-  
+- Separated the dimension names from the metadata keys used to generate the dimensions. Dimensions associated with the dimension roles are now taking the name of the :ref:`dimension role <_xr_dim_roles>`, irrespective of the metadata key the dimension role is mapped to. The example belows shows what this means for e.g. the "level" dimension role when the :ref:`mars profile <xr_profile_mars>`  (the default) is used. In this case the "level" role is mapped to the "levelist" ecCodes GRIB key.
+
     .. code-block:: python
-    
+
         import earthkit.data as ekd
+
         ds_fl = ekd.from_source("sample", "pl.grib")
         ds_fl.to_xarray().coords
 
-    
+
     With the new code the dimension/coordinate name will be "level". So the output is as follows::
 
         Coordinates:
@@ -33,7 +34,7 @@ Breaking changes
         * level                    (level) int64 16B 500 700
         * latitude                 (latitude) float64 152B 90.0 80.0 ... -80.0 -90.0
         * longitude                (longitude) float64 288B 0.0 10.0 ... 340.0 350.0
-        
+
 
     However, using the previous version the output would be as follows::
 
@@ -43,13 +44,13 @@ Breaking changes
         * levelist                 (levelist) int64 16B 500 700
         * latitude                 (latitude) float64 152B 90.0 80.0 ... -80.0 -90.0
         * longitude                (longitude) float64 288B 0.0 10.0 ... 340.0 350.0
-   
+
 
   The old behaviour can still be invoked by using the newly added ``dim_name_from_role_name=False`` option. See: :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray`.
 
 
 - The ``step`` dimension role is now mapped to the ``step_timedelta`` metadata key, which is the ``datetime.timedelta`` representation of the ``"endStep"`` GRIB/metadata key. Previously, this role was mapped to the ``"step"`` key. This change was necessary for the following reasons:
-  
+
   - allows handling cases when the ``step`` key contains ranges as a str in the form of e.g.  "12-24"
   - allows proper sorting of the "step" dimension values when building the dataset
 
