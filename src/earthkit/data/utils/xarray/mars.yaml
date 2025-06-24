@@ -1,8 +1,8 @@
 dim_roles:
-  ens: number
+  number: number
   date: date
   time: time
-  step: step
+  step: step_timedelta
   level: levelist
   level_type: levtype
 

@@ -168,6 +168,12 @@ class GribFieldInMemory(GribField):
     def clone(self, **kwargs):
         return ClonedGribFieldInMemory(self, **kwargs)
 
+    def __getstate__(self):
+        return {"message": self.message()}
+
+    def __setstate__(self, state):
+        self.__init__(GribCodesHandle.from_message(state["message"]))
+
 
 class ClonedGribFieldInMemory(ClonedFieldCore, GribFieldInMemory):
     def __init__(self, field, **kwargs):

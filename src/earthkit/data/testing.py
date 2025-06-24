@@ -133,6 +133,16 @@ except Exception:
     NO_ECFS = True
 
 
+NO_ZARR = True
+try:
+    import zarr  # noqa
+
+    if int(zarr.__version__.split(".")[0]) >= 3:
+        NO_ZARR = False
+except Exception:
+    pass
+
+
 def MISSING(*modules):
     return not modules_installed(*modules)
 

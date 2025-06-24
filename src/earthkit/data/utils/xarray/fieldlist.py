@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-
+import datetime
 import logging
 from collections import defaultdict
 
@@ -103,6 +103,12 @@ class IndexDB:
 
 
 class XArrayInputFieldList(FieldList):
+    """
+    A wrapper around a fieldlist that stores unique values.
+
+    Only for internal use for building Xarray datasets.
+    """
+
     def __init__(self, fieldlist, keys=None, db=None, remapping=None, scan_only=False, component=True):
         super().__init__()
         self.ds = fieldlist
@@ -204,7 +210,7 @@ class XArrayInputFieldList(FieldList):
 
             for k, v in vals.items():
                 v = [x for x in v if x is not None]
-                if all(isinstance(x, int) for x in v):
+                if all(isinstance(x, (int, datetime.timedelta)) for x in v):
                     vals[k] = sorted(v)
                 else:
                     vals[k] = sorted(v, key=str)
@@ -227,6 +233,26 @@ class XArrayInputFieldList(FieldList):
             return indices, components
         else:
             return indices, None
+
+    def unwrap(self):
+        ds = self.ds
+        while isinstance(ds, XArrayInputFieldList):
+            ds = ds.ds
+        return ds
+
+    def __getstate__(self):
+        """As a simplification, only serialise the unwrapped fieldlist.
+        We can assume that when there is a need for serialisation the wrapper
+        structure can be discarded.
+        """
+        r = {}
+        r["ds"] = self.unwrap()
+        return r
+
+    def __setstate__(self, state):
+        self.ds = state["ds"]
+        self.db = None
+        self.remapping = None
 
 
 class ReleasableField:

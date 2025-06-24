@@ -25,12 +25,12 @@ class GribFieldListInOneFile(GribFieldListInFiles):
     def availability_path(self):
         return os.path.join(self.path, ".availability.pickle")
 
-    def __init__(self, path, parts=None, **kwargs):
+    def __init__(self, path, parts=None, positions=None, **kwargs):
         assert isinstance(path, str), path
 
         self.path = path
         self._file_parts = parts
-        self.__positions = None
+        self.__positions = positions
         super().__init__(**kwargs)
 
     @property

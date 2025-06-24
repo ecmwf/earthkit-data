@@ -404,6 +404,13 @@ class FieldListTensor(TensorCore):
         assert len(indexes) == len(self._full_shape)
         return indexes[len(self._user_shape) :]
 
+    def is_full_field(self, indexes):
+        assert len(indexes) == len(self._field_shape)
+        for i, s in enumerate(indexes):
+            if not (s is None or s == slice(None, None, None) or s == slice(0, self._field_shape[i], 1)):
+                return False
+        return True
+
     def _subset(self, indexes):
         """Only allow subsetting for the user coordinates.
         Indices for the field coordinates are ignored.
@@ -436,11 +443,38 @@ class FieldListTensor(TensorCore):
         ds = self.source[tuple(dataset_indexes)]
         return self.from_tensor(self, ds, coords)
 
-    def make_valid_datetime(self, dtype="datetime64[ns]"):
+    def make_valid_datetime(self, dims_map, dtype="datetime64[ns]"):
         # TODO: make it more general
-        dims_opt = [
-            ["base_datetime", "step"],
-            ["base_datetime"],
+
+        for k in ["valid_datetime", "valid_time"]:
+            if k in self.user_coords:
+                import datetime
+
+                return (k,), [datetime.datetime.fromisoformat(x) for x in self.user_coords[k]]
+
+        # in the tensor the dims.coords are GRIB keys
+        # dims_map is a mapping from dim names to GRIB keys
+        DIM_ROLES = {
+            "forecast_reference_time": ("forecast_reference_time", "base_datetime"),
+            "step": ("step_timedelta", "step", "ensStep", "stepRange"),
+            "date": ("date", "dataDate"),
+            "time": ("time", "dataTime"),
+        }
+
+        # map dim roles to keys available in the tensor
+        keys = {}
+        for k in DIM_ROLES:
+            for d in dims_map:
+                if d.name == k:
+                    keys[k] = d.key
+                    break
+            if k not in keys:
+                for d in self.user_dims:
+                    if d in DIM_ROLES[k]:
+                        keys[k] = d
+                        break
+
+        DIM_COMBINATIONS = [
             ["forecast_reference_time", "step"],
             ["forecast_reference_time"],
             ["date", "time", "step"],
@@ -450,19 +484,14 @@ class FieldListTensor(TensorCore):
             ["step"],
         ]
 
-        for k in ["valid_datetime", "valid_time"]:
-            if k in self.user_coords:
-                import datetime
-
-                return (k,), [datetime.datetime.fromisoformat(x) for x in self.user_coords[k]]
-
-        # print(f"{self.user_dims=}")
-        for dims in dims_opt:
-            if all(d in self.user_dims for d in dims):
+        for dims in DIM_COMBINATIONS:
+            if all(d in keys for d in dims):
+                dims_step = [keys[d] for d in dims]
                 # use same dim order as in user_dims
-                dims = [d for d in dims if d in self.user_dims]
+                dims = [d for d in self.user_dims if d in dims_step]
+                assert len(dims) == len(dims_step), f"Duplicate dims in {dims}"
                 other_dims = [d for d in self.user_dims if d not in dims]
-                # print(f"{dims=} {other_dims=}")
+
                 if other_dims:
                     import datetime
 
@@ -496,19 +525,26 @@ class FieldListTensor(TensorCore):
                     return tuple(dims), vals.reshape(shape)
         return None, None
 
+    def __getstate__(self):
+        r = {}
+        r["source"] = self.source
+        r["user_coords"] = self.user_coords
+        r["user_shape"] = self.user_shape
+        r["user_dims"] = self.user_dims
+        r["field_coords"] = self.field_coords
+        r["field_shape"] = self.field_shape
+        r["field_dims"] = self.field_dims
+        r["full_shape"] = self.full_shape
+        r["flatten_values"] = self.flatten_values
+        return r
 
-# class ArrayTensor(TensorCore):
-#     def __init__(self, array, coords, field_shape):
-#         self._array = array
-#         self._coords = coords
-#         self._shape = self._array.shape
-#         self._field_shape = field_shape
-
-#     def to_numpy(self, **kwargs):
-#         return self._array
-
-#     def _subset(self, indexes):
-#         coords = self._subset_coords(indexes)
-#         # print(f"{indexes=}")
-#         data = self._array[indexes]
-#         return ArrayTensor(data, coords, self.field_shape)
+    def __setstate__(self, state):
+        self.source = state["source"]
+        self._user_coords = state["user_coords"]
+        self._user_shape = state["user_shape"]
+        self._user_dims = state["user_dims"]
+        self._field_coords = state["field_coords"]
+        self._field_shape = state["field_shape"]
+        self._field_dims = state["field_dims"]
+        self._full_shape = state["full_shape"]
+        self.flatten_values = state["flatten_values"]

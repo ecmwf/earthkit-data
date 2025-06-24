@@ -72,7 +72,7 @@ optional-dependencies.geopandas = [ "geopandas" ]
 optional-dependencies.geotiff = [ "pyproj", "rasterio", "rioxarray" ]
 optional-dependencies.mars = [ "ecmwf-api-client>=1.6.1" ]
 optional-dependencies.odb = [ "pyodc" ]
-optional-dependencies.polytope = [ "polytope-client>=0.7.4" ]
+optional-dependencies.polytope = [ "polytope-client>=0.7.6" ]
 optional-dependencies.projection = [ "cartopy" ]
 optional-dependencies.s3 = [ "aws-requests-auth", "botocore" ]
 optional-dependencies.test = [
@@ -86,6 +86,7 @@ optional-dependencies.test = [
   "pytest-timeout",
 ]
 optional-dependencies.wekeo = [ "hda>=2.22" ]
+optional-dependencies.zarr = [ "zarr>=3" ]
 urls.Documentation = "https://earthkit-data.readthedocs.io/"
 urls.Homepage = "https://github.com/ecmwf/earthkit-data/"
 urls.Issues = "https://github.com/ecmwf/earthkit-data.issues"

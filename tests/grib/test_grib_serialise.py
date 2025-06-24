@@ -16,6 +16,7 @@ import sys
 import numpy as np
 import pytest
 
+from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
@@ -25,6 +26,7 @@ from earthkit.data.testing import write_to_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
+from grib_fixtures import FL_FILE  # noqa: E402
 from grib_fixtures import FL_NUMPY  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
@@ -215,3 +217,20 @@ def test_grib_serialise_file_parts():
 
     assert len(ds2) == 1
     assert ds2[0].metadata(["param", "level"]) == ["u", 1000]
+
+
+@pytest.mark.parametrize("fl_type", FL_FILE)
+@pytest.mark.parametrize("representation", ["file", "memory"])
+@pytest.mark.parametrize("policy", ["path", "memory"])
+def test_grib_serialise_policy(fl_type, representation, policy):
+    ds, _ = load_grib_data("test.grib", fl_type)
+
+    with config.temporary({"grib-file-serialisation-policy": policy}):
+        ds2 = _pickle(ds, representation)
+
+        assert len(ds2) == len(ds)
+        assert ds2.values.shape == ds.values.shape
+        if policy == "path":
+            assert ds2.path == ds.path
+        else:
+            assert ds2.path != ds.path
