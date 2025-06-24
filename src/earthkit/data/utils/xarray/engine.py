@@ -375,17 +375,43 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
 
 class XarrayEarthkit:
+    import deprecated
+
     def to_fieldlist(self):
         from earthkit.data.indexing.fieldlist import FieldArray
 
         return FieldArray([f for f in self._to_fields()])
 
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self._generator(), **kwargs)
+
+    @deprecated.deprecated(version="0.15.0", reason="Use `to_target` instead.")
     def to_grib(self, filename):
         from earthkit.data.targets import create_target
 
         with create_target("file", filename) as target:
             for f in self._to_fields():
                 target.write(f)
+
+    def _generator(self):
+        from earthkit.data import FieldList
+
+        class GeneratorFieldList(FieldList):
+            def __init__(self, data):
+                self._data = data
+
+            def mutate(self):
+                return self
+
+            def __iter__(self):
+                return self._data
+
+            def default_encoder(self):
+                return "grib"
+
+        return GeneratorFieldList(self._to_fields())
 
 
 @xarray.register_dataarray_accessor("earthkit")
