@@ -76,7 +76,7 @@ Other Xarray engine changes
 - Improved the serialisation of GRIB fieldlists to reduce memory usage when Xarray is generated with chunks (:pr:`700`). See the :ref:`/examples/xarray_engine_chunks.ipynb` notebook example.
 - TensorBackendArray, which implements the lazy loading of DataArrays in the Xarray engine, now uses a ``dask.utils.SerializableLock`` when accessing the data (:pr:`700`).
 - Enabled converting :ref:`data-sources-lod` fieldlists into Xarray (:pr:`701`). See the :ref:`/examples/list_of_dicts_to_xarray.ipynb` notebook example.
-- Enabled converting Xarray generated with the earthkit fieldlist into GRIB using :func:`to_target` (:pr:`730`). See :ref:`xr_to_grib` and the related :ref:`/examples/xarray_engine_to_grib.ipynb` notebook example.
+- Enabled converting Xarray generated with the earthkit engine into GRIB using :func:`to_target` (:pr:`730`). See :ref:`xr_to_grib` and the related :ref:`/examples/xarray_engine_to_grib.ipynb` notebook example.
 
 New Xarray engine notebooks
 ------------------------------
@@ -92,7 +92,7 @@ New Xarray engine notebooks
 New features
 +++++++++++++++++
 
-- Added :ref:`zarr <data-sources-zarr>` source to read Zarr data (:pr:`675`).
+- Added the :ref:`zarr <data-sources-zarr>` source to read Zarr data (:pr:`675`).
 - Added the :ref:`targets-zarr` target (:pr:`716`). See the :ref:`/examples/grib_to_zarr_target.ipynb` notebook example.
 - Added new config option ``grib-file-serialisation-policy`` to control how GRIB data on disk is pickled. The options are "path" and "memory". The default is "path". Previously, only "memory" was implemented (:pr:`700`).
 - Added serialisation to GRIB fields (both on disk and in-memory) (:pr:`700`)
