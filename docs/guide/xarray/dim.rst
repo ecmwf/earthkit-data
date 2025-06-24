@@ -98,13 +98,4 @@ See the following notebooks for examples of how this works:
 Extra dimensions
 ----------------------
 
-The ``extra_dims`` option allows to add extra dimensions to the Xarray dataset on top of the predefined ones. E.g.
-
-
-
-Fixed dimensions
-----------------------
-
-
-Split dimensions
-----------------------
+The ``extra_dims`` option allows to add extra dimensions to the Xarray dataset on top of the predefined ones.
