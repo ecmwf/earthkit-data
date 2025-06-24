@@ -375,7 +375,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
 
 class XarrayEarthkit:
-    import deprecation
+    # import deprecation
 
     def to_fieldlist(self):
         from earthkit.data.indexing.fieldlist import FieldArray
@@ -387,7 +387,7 @@ class XarrayEarthkit:
 
         to_target(target, *args, data=self._generator(), **kwargs)
 
-    @deprecation.deprecated(version="0.15.0", reason="Use `to_target` instead.")
+    # @deprecation.deprecated(deprecated_in="0.15.0", details="Use `to_target` instead.")
     def to_grib(self, filename):
         from earthkit.data.targets import create_target
 
