@@ -9,6 +9,7 @@
 
 
 from earthkit.data.core.index import Index
+from earthkit.data.sources import Source
 
 
 class FieldList(Index):
@@ -49,6 +50,9 @@ class SimpleFieldList(FieldList):
     def __len__(self):
         return len(self.fields)
 
+    def mutate_source(self):
+        return self
+
     @classmethod
     def new_mask_index(cls, *args, **kwargs):
         assert len(args) == 2
@@ -64,3 +68,39 @@ class SimpleFieldList(FieldList):
         from itertools import chain
 
         return cls.from_fields(list(chain(*[f for f in sources])))
+
+
+class StreamFieldList(FieldList, Source):
+    def __init__(self, source, **kwargs):
+        FieldList.__init__(self, **kwargs)
+        self._source = source
+
+    def mutate(self):
+        return self
+
+    def __iter__(self):
+        return iter(self._source)
+
+    def batched(self, n):
+        return self._source.batched(n)
+
+    def group_by(self, *keys, **kwargs):
+        return self._source.group_by(*keys)
+
+    def __getstate__(self):
+        raise NotImplementedError("StreamFieldList cannot be pickled")
+
+    # def to_xarray(self, **kwargs):
+    #     from earthkit.data.core.fieldlist import FieldList
+
+    #     fields = [f for f in self]
+    #     return FieldList.from_fields(fields).to_xarray(**kwargs)
+
+    # @classmethod
+    # def merge(cls, sources):
+    #     assert all(isinstance(s, StreamFieldList) for s in sources), sources
+    #     assert len(sources) > 1
+    #     return MultiStreamSource.merge(sources)
+
+    def default_encoder(self):
+        return None

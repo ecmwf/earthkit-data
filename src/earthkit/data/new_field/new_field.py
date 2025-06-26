@@ -7,10 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-
-from earthkit.utils.array import array_to_numpy
-from earthkit.utils.array import convert_array
-
 from earthkit.data.core import Base
 
 
@@ -31,7 +27,7 @@ class FieldKeys:
             "data": data.KEYS,
             "time": time.KEYS,
             "parameter": parameter.KEYS,
-            "geometry": geography.KEYS,
+            "geography": geography.KEYS,
             "vertical": vertical.KEYS,
         }
 
@@ -69,13 +65,13 @@ FIELD_KEYS = FieldKeys()
 
 class Field(Base):
     def __init__(
-        self, data=None, time=None, parameter=None, geometry=None, vertical=None, labels=None, **kwargs
+        self, data=None, time=None, parameter=None, geography=None, vertical=None, labels=None, **kwargs
     ):
         r"""Initialize a Field object."""
         self.data = data
         self.time = time
         self.parameter = parameter
-        self.geometry = geometry
+        self.geography = geography
         self.vertical = vertical
         self.labels = labels
 
@@ -90,7 +86,7 @@ class Field(Base):
         kwargs = kwargs.copy()
         _kwargs = {}
 
-        for name in ["data", "time", "parameter", "geometry", "vertical", "labels"]:
+        for name in ["data", "time", "parameter", "geography", "vertical", "labels"]:
             v = kwargs.pop(name, None)
             if v is not None:
                 _kwargs[name] = v
@@ -101,23 +97,47 @@ class Field(Base):
 
     @classmethod
     def from_grib(cls, handle, **kwargs):
-        from .grib.grib import GribData
-        from .grib.grib import GribGeography
-        from .grib.grib import GribParameter
-        from .grib.grib import GribTime
-        from .grib.grib import GribVertical
+        from earthkit.data.new_field.grib.grib import GribData
+        from earthkit.data.new_field.grib.grib import GribGeography
+        from earthkit.data.new_field.grib.grib import GribParameter
+        from earthkit.data.new_field.grib.grib import GribTime
+        from earthkit.data.new_field.grib.grib import GribVertical
 
         data = GribData(handle)
         parameter = GribParameter(handle)
         time = GribTime(handle)
-        geometry = GribGeography(handle)
+        geography = GribGeography(handle)
         vertical = GribVertical(handle)
 
         return cls(
             data=data,
             parameter=parameter,
             time=time,
-            geometry=geometry,
+            geography=geography,
+            vertical=vertical,
+            **kwargs,
+        )
+
+    @classmethod
+    def from_xarray(cls, variable, selection, **kwargs):
+        r"""Create a Field object from an XArray field."""
+        from earthkit.data.new_field.xarray.xarray import XArrayData
+        from earthkit.data.new_field.xarray.xarray import XArrayGeography
+        from earthkit.data.new_field.xarray.xarray import XArrayParameter
+        from earthkit.data.new_field.xarray.xarray import XArrayTime
+        from earthkit.data.new_field.xarray.xarray import XArrayVertical
+
+        data = XArrayData(variable, selection)
+        parameter = XArrayParameter(variable)
+        time = XArrayTime(variable, selection)
+        geography = XArrayGeography(variable, selection)
+        vertical = XArrayVertical(variable, selection)
+
+        return cls(
+            data=data,
+            parameter=parameter,
+            time=time,
+            geography=geography,
             vertical=vertical,
             **kwargs,
         )
@@ -128,21 +148,21 @@ class Field(Base):
     #     data = DictData(d)
     #     time = DictTime(d)
     #     parameter = DictParameter(d)
-    #     geometry = DictGeography(d)
+    #     geography = DictGeography(d)
     #     vertical = DictVertical(d)
     #     labels = Labels(d)
     #     return cls(
     #         data=data,
     #         time=time,
     #         parameter=parameter,
-    #         geometry=geometry,
+    #         geography=geography,
     #         vertical=vertical,
     #         labels=labels,
     #     )
 
     @property
     def shape(self):
-        return self.geometry.shape
+        return self.geography.shape
 
     @property
     def values(self):
@@ -167,9 +187,7 @@ class Field(Base):
             Field values
 
         """
-        v = array_to_numpy(self.data.get_values(dtype=dtype))
-        shape = self.data.target_shape(v, flatten, self.shape)
-        return self.data.reshape(v, shape)
+        return self.data.to_numpy(self.shape, flatten=flatten, dtype=dtype)
 
     def to_array(self, flatten=False, dtype=None, array_backend=None):
         r"""Return the values stored in the field.
@@ -188,19 +206,14 @@ class Field(Base):
 
         Returns
         -------
-        array-array
+        array-like
             Field values.
 
         """
-        v = self.data.get_values(dtype=dtype)
-        if array_backend is not None:
-            v = convert_array(v, target_backend=array_backend)
-
-        shape = self.data.target_shape(v, flatten, self.shape)
-        return self.data.reshape(v, shape)
+        return self.data.to_array(self.shape, flatten=flatten, dtype=dtype, array_backend=array_backend)
 
     def set_numpy(self, array):
-        from earthkit.data.core.new_field.data import NumpyData
+        from earthkit.data.new_field.data import NumpyData
 
         return Field.from_field(self, data=NumpyData(array))
 
@@ -315,14 +328,3 @@ class Field(Base):
                 )
 
         return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
-
-
-def _create_handle(path, offset):
-    from earthkit.data.readers.grib.codes import GribCodesReader
-
-    return GribCodesReader.from_cache(path).at_offset(offset)
-
-
-def _create_grib_field(path, offset):
-    handle = _create_handle(path, offset)
-    return Field.from_grib(handle)

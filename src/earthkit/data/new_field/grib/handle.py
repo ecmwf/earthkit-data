@@ -230,6 +230,11 @@ class MemoryGribHandle(GribHandle):
     def __init__(self, handle):
         self._handle = handle
 
+    @classmethod
+    def from_raw_handle(cls, handle):
+        """Create a MemoryGribHandle from an existing handle."""
+        return cls(GribCodesHandle(handle, None, None))
+
     @property
     def handle(self):
         return self._handle

@@ -40,10 +40,18 @@ def is_grib_file(path):
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
-        from .file import GRIBReader
+        from earthkit.data.core.new_field.grib.file import GRIBReader
+
+        # from .file import GRIBReader
 
         parts = source.parts if hasattr(source, "parts") else None
         return GRIBReader(source, path, parts=parts)
+
+        # from earthkit.data.readers.grib.file import GRIBReader
+        # # from .file import GRIBReader
+
+        # parts = source.parts if hasattr(source, "parts") else None
+        # return GRIBReader(source, path, parts=parts)
 
 
 def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):
@@ -65,10 +73,21 @@ def stream_reader(
     **kwargs,
 ):
     if _is_default(magic, content_type) or _match_magic(magic, deeper_check):
-        from .memory import GribFieldListInMemory
-        from .memory import GribStreamReader
+        # from earthkit.data.core.new_field.grib.memory import GribFieldListInMemory
+        from earthkit.data.core.new_field.grib.memory import GribStreamReader
 
         r = GribStreamReader(stream, **kwargs)
         if memory:
-            r = GribFieldListInMemory(source, r, **kwargs)
+            from earthkit.data.new_field.fieldlist import SimpleFieldList
+
+            fields = [f for f in r]
+            r = SimpleFieldList(fields)
         return r
+
+        # from .memory import GribFieldListInMemory
+        # from .memory import GribStreamReader
+
+        # r = GribStreamReader(stream, **kwargs)
+        # if memory:
+        #     r = GribFieldListInMemory(source, r, **kwargs)
+        # return r

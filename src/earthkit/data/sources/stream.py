@@ -11,7 +11,9 @@ import itertools
 import logging
 from functools import cached_property
 
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.new_field.fieldlist import StreamFieldList
+
+# from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.readers import stream_reader
 from earthkit.data.sources.memory import MemoryBaseSource
 
@@ -201,40 +203,40 @@ class MultiStreamSource(Source):
         return MultiStreamSource(s)
 
 
-class StreamFieldList(FieldList, Source):
-    def __init__(self, source, **kwargs):
-        FieldList.__init__(self, **kwargs)
-        self._source = source
+# class StreamFieldList(FieldList, Source):
+#     def __init__(self, source, **kwargs):
+#         FieldList.__init__(self, **kwargs)
+#         self._source = source
 
-    def mutate(self):
-        return self
+#     def mutate(self):
+#         return self
 
-    def __iter__(self):
-        return iter(self._source)
+#     def __iter__(self):
+#         return iter(self._source)
 
-    def batched(self, n):
-        return self._source.batched(n)
+#     def batched(self, n):
+#         return self._source.batched(n)
 
-    def group_by(self, *keys, **kwargs):
-        return self._source.group_by(*keys)
+#     def group_by(self, *keys, **kwargs):
+#         return self._source.group_by(*keys)
 
-    def __getstate__(self):
-        raise NotImplementedError("StreamFieldList cannot be pickled")
+#     def __getstate__(self):
+#         raise NotImplementedError("StreamFieldList cannot be pickled")
 
-    def to_xarray(self, **kwargs):
-        from earthkit.data.core.fieldlist import FieldList
+#     def to_xarray(self, **kwargs):
+#         from earthkit.data.core.fieldlist import FieldList
 
-        fields = [f for f in self]
-        return FieldList.from_fields(fields).to_xarray(**kwargs)
+#         fields = [f for f in self]
+#         return FieldList.from_fields(fields).to_xarray(**kwargs)
 
-    @classmethod
-    def merge(cls, sources):
-        assert all(isinstance(s, StreamFieldList) for s in sources), sources
-        assert len(sources) > 1
-        return MultiStreamSource.merge(sources)
+#     @classmethod
+#     def merge(cls, sources):
+#         assert all(isinstance(s, StreamFieldList) for s in sources), sources
+#         assert len(sources) > 1
+#         return MultiStreamSource.merge(sources)
 
-    def default_encoder(self):
-        return None
+#     def default_encoder(self):
+#         return None
 
 
 class Stream:
