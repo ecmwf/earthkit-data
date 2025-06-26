@@ -2,6 +2,7 @@
 variable_key: param
 drop_variables: []
 rename_variables: {}
+mono_variable: false
 
 # dimensions
 extra_dims: []
