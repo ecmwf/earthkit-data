@@ -127,25 +127,9 @@ def mask():
     return dict(mask=mask)
 
 
-@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
-@pytest.mark.parametrize("method", ["ranges", "indices", "mask"])
-def test_gribjump_to_numpy(seed_fdb, method, request):
+@pytest.fixture
+def arr_expected():
     import numpy as np
-
-    kwargs = request.getfixturevalue(method)
-    mars_request = {
-        "class": "od",
-        "date": "20201221",
-        "domain": "g",
-        "expver": "0001",
-        "levelist": "1000",
-        "levtype": "pl",
-        "param": "129",
-        "step": [0, 6],
-        "stream": "oper",
-        "time": "1200",
-        "type": "fc",
-    }
 
     arr_expected = np.array(
         [
@@ -169,34 +153,13 @@ def test_gribjump_to_numpy(seed_fdb, method, request):
             ],
         ]
     )
-    source = from_source("gribjump", mars_request, **kwargs)
-    arr = source.to_numpy()
-
-    assert arr is not None and isinstance(arr, np.ndarray)
-    assert arr.shape == (2, 7)
-    np.testing.assert_array_almost_equal(arr, arr_expected)
+    return arr_expected
 
 
-@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
-@pytest.mark.parametrize("method", ["ranges", "indices", "mask"])
-def test_gribjump_to_xarray(seed_fdb, method, request):
+@pytest.fixture
+def ds_expected_with_coords():
     import numpy as np
     import xarray as xr
-
-    kwargs = request.getfixturevalue(method)
-    mars_request = {
-        "class": "od",
-        "date": "20201221",
-        "domain": "g",
-        "expver": "0001",
-        "levelist": "1000",
-        "levtype": "pl",
-        "param": "129",
-        "step": [0, 6],
-        "stream": "oper",
-        "time": "1200",
-        "type": "fc",
-    }
 
     arr_expected = np.array(
         [
@@ -242,10 +205,6 @@ def test_gribjump_to_xarray(seed_fdb, method, request):
             60.0,
         ]
     )
-
-    source = from_source("gribjump", mars_request, coords_from_fdb=True, **kwargs)
-    ds = source.to_xarray()
-
     ds_expected = xr.Dataset(
         {"129": (("step", "index"), arr_expected)},
         coords={
@@ -269,9 +228,98 @@ def test_gribjump_to_xarray(seed_fdb, method, request):
             "institution": "ECMWF",
         },
     )
+    return ds_expected
+
+
+@pytest.fixture
+def ds_expected(ds_expected_with_coords):
+    # Remove coordinates to match the expected output
+    ds = ds_expected_with_coords.drop_vars(["latitude", "longitude"])
+    return ds
+
+
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
+@pytest.mark.parametrize("method", ["ranges", "indices", "mask"])
+def test_gribjump_to_numpy(seed_fdb, arr_expected, method, request):
+    import numpy as np
+
+    kwargs = request.getfixturevalue(method)
+    mars_request = {
+        "class": "od",
+        "date": "20201221",
+        "domain": "g",
+        "expver": "0001",
+        "levelist": "1000",
+        "levtype": "pl",
+        "param": "129",
+        "step": [0, 6],
+        "stream": "oper",
+        "time": "1200",
+        "type": "fc",
+    }
+
+    source = from_source("gribjump", mars_request, **kwargs)
+    arr = source.to_numpy()
+
+    assert arr is not None and isinstance(arr, np.ndarray)
+    assert arr.shape == (2, 7)
+    np.testing.assert_array_almost_equal(arr, arr_expected)
+
+
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
+@pytest.mark.parametrize("method", ["ranges", "indices", "mask"])
+def test_gribjump_to_xarray_without_coords(seed_fdb, ds_expected, method, request):
+    import xarray as xr
+
+    kwargs = request.getfixturevalue(method)
+    mars_request = {
+        "class": "od",
+        "date": "20201221",
+        "domain": "g",
+        "expver": "0001",
+        "levelist": "1000",
+        "levtype": "pl",
+        "param": "129",
+        "step": [0, 6],
+        "stream": "oper",
+        "time": "1200",
+        "type": "fc",
+    }
+
+    source = from_source("gribjump", mars_request, **kwargs)
+    ds = source.to_xarray()
+
     xr.testing.assert_allclose(ds, ds_expected)
     assert ds_expected.attrs == ds.attrs
     assert set(ds_expected.coords.keys()) == set(ds.coords.keys())
+
+
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
+@pytest.mark.parametrize("method", ["ranges", "indices", "mask"])
+def test_gribjump_to_xarray_with_coords(seed_fdb, ds_expected_with_coords, method, request):
+    import xarray as xr
+
+    kwargs = request.getfixturevalue(method)
+    mars_request = {
+        "class": "od",
+        "date": "20201221",
+        "domain": "g",
+        "expver": "0001",
+        "levelist": "1000",
+        "levtype": "pl",
+        "param": "129",
+        "step": [0, 6],
+        "stream": "oper",
+        "time": "1200",
+        "type": "fc",
+    }
+
+    source = from_source("gribjump", mars_request, coords_from_fdb=True, **kwargs)
+    ds = source.to_xarray()
+
+    xr.testing.assert_allclose(ds, ds_expected_with_coords)
+    assert ds_expected_with_coords.attrs == ds.attrs
+    assert set(ds_expected_with_coords.coords.keys()) == set(ds.coords.keys())
 
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
