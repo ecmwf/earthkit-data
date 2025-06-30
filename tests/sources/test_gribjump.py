@@ -351,6 +351,26 @@ def test_gribjump_selection(seed_fdb):
 
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
+def test_gribjump_to_xarray_with_coords_does_not_fail_for_grids(seed_fdb):
+    mars_request = {
+        "class": "od",
+        "date": "20201221",
+        "domain": "g",
+        "expver": "0001",
+        "levelist": "1000",
+        "levtype": "pl",
+        "param": "129",
+        "step": [0, 6],
+        "stream": "oper",
+        "time": "1200",
+        "type": "fc",
+    }
+
+    source = from_source("gribjump", mars_request, coords_from_fdb=True, indices=[0])
+    source.to_xarray()
+
+
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
 def test_gribjump_with_mixed_types_in_lists(seed_fdb):
 
     request = {
