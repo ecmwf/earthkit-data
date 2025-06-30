@@ -51,6 +51,7 @@ class CubeChecker:
         for i, f in enumerate(self.tensor.source):
             t_coords = self.tensor._index_to_coords_value(i, self.tensor)
             f_coords = f.metadata(coord_keys)
+            print(f"Checking field[{i}] with coords {t_coords} vs {f_coords}")
             diff = ListDiff.diff(t_coords, f_coords)
             if not diff.same:
                 name = ""
@@ -102,6 +103,9 @@ class CubeChecker:
             f"actual number of fields: {cube_num} != {field_num}.\n"
             f"Dimensions: \n {dims}"
         )
+
+        print(text_num)
+        print(coord_keys)
 
         if not details:
             raise ValueError(text_num)
