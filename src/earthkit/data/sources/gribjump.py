@@ -12,6 +12,7 @@ try:
 except ImportError:
     raise ImportError("GribJump access requires 'pygribjump' to be installed")
 
+import dataclasses
 import itertools
 import os
 from typing import Any
@@ -73,6 +74,27 @@ def expand_dict_with_lists(
     return expanded_requests
 
 
+@dataclasses.dataclass
+class ExtractionRequest:
+    """
+    Simple wrapper of pygribjump.ExtractionRequest and the original FDB request dict.
+
+    Can be removed once pygribjump.ExtractionRequest provides a reference to the request dictionary.
+    """
+
+    extraction_request: pygj.ExtractionRequest
+    request: dict[str, str]
+
+    @property
+    def ranges(self) -> list[tuple[int, int]]:
+        """Returns the ranges of the extraction request."""
+        return self.extraction_request.ranges
+
+    def indices(self) -> np.ndarray:
+        """Returns the indices of the extraction request."""
+        return self.extraction_request.indices()
+
+
 class FieldExtractList(SimpleFieldList):
     """Lazily loaded representation of the points extracted from multiple fields using GribJump.
 
@@ -91,32 +113,25 @@ class FieldExtractList(SimpleFieldList):
       {"step": "0"} but only {"step": 0}.
     * Efficient lazy loading of selections / slices only is not supported.
     * Pickling / unpickling might not work.
-    * to_pandas and to_xarray methods are not implemented.
     """
 
     def __init__(
         self,
         gj: pygj.GribJump,
-        requests: list[dict[str, str]],
-        extraction_requests: list[pygj.ExtractionRequest],
+        requests: list[ExtractionRequest],
     ):
-        if len(requests) != len(extraction_requests):
-            raise ValueError(
-                f"Number of MARS requests ({len(requests)}) and GribJump extraction requests ({len(extraction_requests)}) must match."
-            )
         if len(requests) == 0:
             raise ValueError(
                 "FieldExtractList requires at least one extraction request, but received an empty list"
             )
-        ranges = extraction_requests[0].ranges
-        if invalid_requests := [req for req in extraction_requests if req.ranges != ranges]:
+        ranges = requests[0].ranges
+        if invalid_requests := [req for req in requests if req.ranges != ranges]:
             raise ValueError(
                 f"ExtractionRequests must request same ranges but found {len(invalid_requests)} requests with different ranges"
             )
 
         self._gj = gj
         self._requests = requests
-        self._extraction_requests = extraction_requests
         self._loaded = False
         self._grid_indices = None
 
@@ -134,18 +149,19 @@ class FieldExtractList(SimpleFieldList):
         if self._loaded:
             return
 
-        extraction_results = self._gj.extract(self._extraction_requests)
+        extraction_requests = [req.extraction_request for req in self._requests]
+        extraction_results = self._gj.extract(extraction_requests)
 
         fields = []
         indices = None
-        for i, (request, result) in enumerate(zip(self._extraction_requests, extraction_results)):
+        for i, (request, result) in enumerate(zip(self._requests, extraction_results)):
             if indices is None:
                 # We can assume that all arrays reference the same indices
                 # because we checked in the constructor that all extraction
                 # requests share the same ranges.
                 indices = request.indices()
             arr = result.values_flat
-            metadata = self._requests[i]
+            metadata = self._requests[i].request
             field = ArrayField(arr, UserMetadata(metadata, shape=arr.shape))
             fields.append(field)
 
@@ -187,7 +203,7 @@ class GribJumpSource(Source):
         self._gj = pygj.GribJump()
 
         self._mars_requests = self._split_mars_requests(request)
-        self._gj_extraction_requests = self._build_extraction_requests(self._mars_requests)
+        self._extraction_requests = self._build_extraction_requests(self._mars_requests)
 
     def _check_env(self):
         fdb_conf = os.environ.get("FDB5_CONFIG", None)
@@ -244,27 +260,30 @@ class GribJumpSource(Source):
         expanded_requests = expand_dict_with_lists(request)
         return expanded_requests
 
-    def _build_extraction_requests(self, mars_requests: list[dict[str, str]]) -> list[pygj.ExtractionRequest]:
+    def _build_extraction_request(self, request: dict[str, str]) -> ExtractionRequest:
+        """Builds a single extraction request from the given request dictionary."""
         # GribJump currently only supports strings as request values
-        mars_requests = [{k: str(v) for (k, v) in req.items()} for req in mars_requests]
+        stringified_request_dict = {k: str(v) for (k, v) in request.items()}
 
         if self._ranges is not None:
-            requests = [pygj.ExtractionRequest(request, self._ranges) for request in mars_requests]
+            extraction_request = pygj.ExtractionRequest(stringified_request_dict, self._ranges)
         elif self._mask is not None:
-            requests = [pygj.ExtractionRequest.from_mask(request, self._mask) for request in mars_requests]
+            extraction_request = pygj.ExtractionRequest.from_mask(stringified_request_dict, self._mask)
         elif self._indices is not None:
-            requests = [
-                pygj.ExtractionRequest.from_indices(request, self._indices) for request in mars_requests
-            ]
+            extraction_request = pygj.ExtractionRequest.from_indices(stringified_request_dict, self._indices)
         else:
             raise ValueError("No valid extraction method specified.")
-        return requests
+        return ExtractionRequest(extraction_request, request)
+
+    def _build_extraction_requests(self, mars_requests: list[dict[str, str]]) -> list[ExtractionRequest]:
+        """Builds extraction requests from the given MARS requests."""
+        extraction_requests = [self._build_extraction_request(request) for request in mars_requests]
+        return extraction_requests
 
     def mutate(self):
         return FieldExtractList(
             self._gj,
-            self._mars_requests,
-            self._gj_extraction_requests,
+            self._extraction_requests,
         )
 
 
