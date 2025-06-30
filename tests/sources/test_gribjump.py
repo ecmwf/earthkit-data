@@ -123,6 +123,7 @@ def mask():
     mask[0, 0] = True
     mask[0, 5:9] = True
     mask[2, 1:3] = True
+    mask = mask.ravel()
     return dict(mask=mask)
 
 
@@ -219,6 +220,29 @@ def test_gribjump_to_xarray(seed_fdb, method, request):
             ],
         ]
     )
+    latitude_expected = np.array(
+        [
+            90.0,
+            90.0,
+            90.0,
+            90.0,
+            90.0,
+            30.0,
+            30.0,
+        ]
+    )
+    longitude_expected = np.array(
+        [
+            0.0,
+            150.0,
+            180.0,
+            210.0,
+            240.0,
+            30.0,
+            60.0,
+        ]
+    )
+
     source = from_source("gribjump", mars_request, **kwargs)
     ds = source.to_xarray()
 
@@ -227,6 +251,8 @@ def test_gribjump_to_xarray(seed_fdb, method, request):
         coords={
             "step": np.array([0, 21600000000000], dtype="timedelta64[ns]"),
             "index": np.array([0, 5, 6, 7, 8, 25, 26]),
+            "latitude": ("index", latitude_expected),
+            "longitude": ("index", longitude_expected),
         },
         attrs={
             "class": "od",
