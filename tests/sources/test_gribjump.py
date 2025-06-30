@@ -243,7 +243,7 @@ def test_gribjump_to_xarray(seed_fdb, method, request):
         ]
     )
 
-    source = from_source("gribjump", mars_request, **kwargs)
+    source = from_source("gribjump", mars_request, coords_from_fdb=True, **kwargs)
     ds = source.to_xarray()
 
     ds_expected = xr.Dataset(

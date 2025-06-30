@@ -22,7 +22,9 @@ from typing import Union
 import numpy as np
 
 from earthkit.data.indexing.fieldlist import SimpleFieldList
+from earthkit.data.readers.grib.metadata import GribMetadata
 from earthkit.data.sources import Source
+from earthkit.data.sources import from_source
 from earthkit.data.sources.array_list import ArrayField
 from earthkit.data.utils.metadata.dict import UserMetadata
 
@@ -80,6 +82,13 @@ class ExtractionRequest:
     Simple wrapper of pygribjump.ExtractionRequest and the original FDB request dict.
 
     Can be removed once pygribjump.ExtractionRequest provides a reference to the request dictionary.
+
+    Parameters
+    ----------
+    extraction_request : pygj.ExtractionRequest
+        The GribJump extraction request object.
+    request : dict[str, str]
+        The original request dictionary used to create the extraction request.
     """
 
     extraction_request: pygj.ExtractionRequest
@@ -119,6 +128,7 @@ class FieldExtractList(SimpleFieldList):
         self,
         gj: pygj.GribJump,
         requests: list[ExtractionRequest],
+        reference_metadata: Optional[GribMetadata] = None,
     ):
         if len(requests) == 0:
             raise ValueError(
@@ -134,6 +144,7 @@ class FieldExtractList(SimpleFieldList):
         self._requests = requests
         self._loaded = False
         self._grid_indices = None
+        self._reference_metadata = reference_metadata
 
         super().__init__(fields=None)  # The fields attribute is set lazily
 
@@ -151,6 +162,7 @@ class FieldExtractList(SimpleFieldList):
 
         extraction_requests = [req.extraction_request for req in self._requests]
         extraction_results = self._gj.extract(extraction_requests)
+        geography = {}
 
         fields = []
         indices = None
@@ -161,8 +173,25 @@ class FieldExtractList(SimpleFieldList):
                 # requests share the same ranges.
                 indices = request.indices()
             arr = result.values_flat
-            metadata = self._requests[i].request
-            field = ArrayField(arr, UserMetadata(metadata, shape=arr.shape))
+
+            if self._reference_metadata is not None and not geography:
+                reference_geography = self._reference_metadata.geography
+                grid_latitudes = reference_geography.latitudes()[indices]
+                grid_longitudes = reference_geography.longitudes()[indices]
+                geography = {
+                    "latitudes": grid_latitudes,
+                    "longitudes": grid_longitudes,
+                }
+
+            metadata = UserMetadata(
+                {
+                    **geography,
+                    **self._requests[i].request,
+                },
+                shape=arr.shape,
+            )
+
+            field = ArrayField(arr, metadata)
             fields.append(field)
 
         self.fields = fields
@@ -186,6 +215,7 @@ class GribJumpSource(Source):
         ranges: Optional[list[tuple[int, int]]] = None,
         mask: Optional[np.ndarray] = None,
         indices: Optional[np.ndarray] = None,
+        coords_from_fdb: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -202,6 +232,7 @@ class GribJumpSource(Source):
         self._check_env()
         self._gj = pygj.GribJump()
 
+        self._coords_from_fdb = coords_from_fdb
         self._mars_requests = self._split_mars_requests(request)
         self._extraction_requests = self._build_extraction_requests(self._mars_requests)
 
@@ -281,9 +312,20 @@ class GribJumpSource(Source):
         return extraction_requests
 
     def mutate(self):
+        # TODO: Find a more elegant way to load the reference metadata lazily
+        # and in the right place.
+        reference_metadata: GribMetadata | None = None
+        if self._coords_from_fdb:
+            fdb_source = from_source("fdb", self._mars_requests[0], stream=False)
+            fdb_metadatas = fdb_source.metadata()
+            if not fdb_metadatas:
+                # TODO: This should be handled more gracefully
+                raise ValueError("FDB source returned no metadata.")
+            reference_metadata = fdb_metadatas[0]
         return FieldExtractList(
             self._gj,
             self._extraction_requests,
+            reference_metadata=reference_metadata,
         )
 
 
