@@ -163,6 +163,7 @@ Xarray engine
     xarray_engine_level.ipynb
     xarray_engine_ensemble.ipynb
     xarray_engine_variable_key.ipynb
+    xarray_engine_mono_variable.ipynb
     xarray_engine_field_dims.ipynb
     xarray_engine_to_grib.ipynb
     xarray_engine_split.ipynb

@@ -75,7 +75,7 @@ def compare_coord(ds, name, ref_vals, mode="coord"):
 
     vals = ds.coords[name].values
     if isinstance(ref_vals[0], str):
-        assert vals.tolist() == ref_vals
+        assert vals.tolist() == ref_vals, f"{name=} {vals.tolist()} != {ref_vals}"
     else:
         vals = np.asarray(vals).flatten()
         ref_vals = np.asarray(ref_vals).flatten()
