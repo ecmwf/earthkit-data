@@ -16,6 +16,7 @@ from earthkit.data import from_source
 from earthkit.data import to_target
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.dates import datetime_to_grib
 
 
 @pytest.mark.cache
@@ -167,6 +168,8 @@ def test_xr_write_level_and_type():
     xr.set_options(keep_attrs=True)
 
     ds = ds_ek.to_xarray(level_dim_mode="level_and_type")
+
+    print(ds)
     ds += 1
 
     # TODO: currently base_time + step is lost when valid_time dim is used
@@ -228,6 +231,147 @@ def test_xr_write_seasonal():
     assert sorted(r.metadata(["indexingDate", "indexingTime", "forecastMonth"])) == sorted(
         ds_ek.metadata(["indexingDate", "indexingTime", "forecastMonth"])
     )
+
+
+@pytest.mark.cache
+def test_xr_write_step_range_valid_time():
+    ds_ek = from_source(
+        "url",
+        earthkit_remote_test_data_file("test-data/xr_engine/date/wgust_step_range.grib1"),
+    )
+    assert len(ds_ek) == 5
+
+    ds = ds_ek.to_xarray(
+        time_dim_mode="valid_time",
+    )
+
+    import xarray as xr
+
+    xr.set_options(keep_attrs=True)
+    ds += 1
+
+    # dataset
+    r = ds.earthkit.to_fieldlist()
+    assert len(r) == 5
+
+    keys = [
+        "dataDate",
+        "dataTime",
+        "step",
+        "startStep",
+        "endStep",
+        "validityDate",
+        "validityTime",
+    ]
+
+    ref = [
+        [20111216, 0, 0, 0, 0, 20111216, 0],
+        [20111216, 600, 0, 0, 0, 20111216, 600],
+        [20111216, 1200, 0, 0, 0, 20111216, 1200],
+        [20111216, 1800, 0, 0, 0, 20111216, 1800],
+        [20111217, 0, 0, 0, 0, 20111217, 0],
+    ]
+
+    for f, f_ref in zip(r, ref):
+        assert f.metadata(keys) == f_ref, f"Expected: {f_ref}\nGot: {f.metadata(keys)}"
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "_kwargs",
+    [
+        {},
+        {"add_valid_time_coord": True},
+    ],
+)
+def test_xr_write_step_range_forecast(_kwargs):
+    ds_ek = from_source(
+        "url",
+        earthkit_remote_test_data_file("test-data/xr_engine/date/wgust_step_range.grib1"),
+    )
+    assert len(ds_ek) == 5
+
+    ds = ds_ek.to_xarray(time_dim_mode="forecast", **_kwargs)
+
+    import xarray as xr
+
+    xr.set_options(keep_attrs=True)
+    ds += 1
+
+    # dataset
+    r = ds.earthkit.to_fieldlist()
+    assert len(r) == 5
+
+    keys = [
+        "dataDate",
+        "dataTime",
+        "step",
+        "stepRange",
+        "startStep",
+        "endStep",
+        "validityDate",
+        "validityTime",
+    ]
+
+    ref = [
+        [20111215, 1200, 12, "6-12", 6, 12, 20111216, 0],
+        [20111215, 1200, 18, "12-18", 12, 18, 20111216, 600],
+        [20111215, 1200, 24, "18-24", 18, 24, 20111216, 1200],
+        [20111215, 1200, 30, "24-30", 24, 30, 20111216, 1800],
+        [20111215, 1200, 36, "30-36", 30, 36, 20111217, 0],
+    ]
+
+    for f, f_ref in zip(r, ref):
+        assert f.metadata(keys) == f_ref, f"Expected: {f_ref}\nGot: {f.metadata(keys)}"
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize(
+    "_kwargs",
+    [
+        {},
+        {"add_valid_time_coord": True},
+    ],
+)
+def test_xr_write_step_range_raw(_kwargs):
+    ds_ek = from_source(
+        "url",
+        earthkit_remote_test_data_file("test-data/xr_engine/date/wgust_step_range.grib1"),
+    )
+    assert len(ds_ek) == 5
+
+    ds = ds_ek.to_xarray(time_dim_mode="raw", **_kwargs)
+
+    import xarray as xr
+
+    xr.set_options(keep_attrs=True)
+    ds += 1
+
+    # dataset
+    r = ds.earthkit.to_fieldlist()
+    assert len(r) == 5
+
+    keys = [
+        "dataDate",
+        "dataTime",
+        "step",
+        "stepRange",
+        "startStep",
+        "endStep",
+        "validityDate",
+        "validityTime",
+    ]
+
+    ref = [
+        [20111215, 1200, 12, "6-12", 6, 12, 20111216, 0],
+        [20111215, 1200, 18, "12-18", 12, 18, 20111216, 600],
+        [20111215, 1200, 24, "18-24", 18, 24, 20111216, 1200],
+        [20111215, 1200, 30, "24-30", 24, 30, 20111216, 1800],
+        [20111215, 1200, 36, "30-36", 30, 36, 20111217, 0],
+    ]
+
+    for f, f_ref in zip(r, ref):
+        assert f.metadata(keys) == f_ref, f"Expected: {f_ref}\nGot: {f.metadata(keys)}"
 
 
 def test_xr_write_bits_per_value():
@@ -351,3 +495,36 @@ def test_xr_write_to_file_1(method, kwargs):
 
         assert sorted(r.metadata("base_datetime")) == sorted(ds_ek.metadata("base_datetime"))
         assert sorted(r.metadata("valid_datetime")) == sorted(ds_ek.metadata("valid_datetime"))
+
+
+@pytest.mark.cache
+def test_xr_write_forecast_per_month():
+    ds_ek = from_source(
+        "url", earthkit_remote_test_data_file("test-data/xr_engine/date/2_months_6_hourly.grib")
+    )
+
+    ds = ds_ek.to_xarray(time_dim_mode="valid_time")
+    r = ds.earthkit.to_fieldlist()
+    assert len(r) == 236
+
+    ref = []
+    start = np.datetime64("1979-01-01T06:00:00", "ns")
+    end = np.datetime64("1979-03-01T00:00:00", "ns")
+    while start <= end:
+        base_date, base_time = datetime_to_grib(start)
+        ref.append([base_date, base_time, 0, "0", 0, 0, base_date, base_time])
+        start += np.timedelta64(6, "h")
+
+    keys = [
+        "dataDate",
+        "dataTime",
+        "step",
+        "stepRange",
+        "startStep",
+        "endStep",
+        "validityDate",
+        "validityTime",
+    ]
+
+    for f, f_ref in zip(r, ref):
+        assert f.metadata(keys) == f_ref, f"Expected: {f_ref}\nGot: {f.metadata(keys)}"
