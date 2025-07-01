@@ -130,21 +130,12 @@ class FieldExtractList(SimpleFieldList):
         requests: list[ExtractionRequest],
         reference_metadata: Optional[GribMetadata] = None,
     ):
-        if len(requests) == 0:
-            raise ValueError(
-                "FieldExtractList requires at least one extraction request, but received an empty list"
-            )
-        ranges = requests[0].ranges
-        if invalid_requests := [req for req in requests if req.ranges != ranges]:
-            raise ValueError(
-                f"ExtractionRequests must request same ranges but found {len(invalid_requests)} requests with different ranges"
-            )
-
         self._gj = gj
         self._requests = requests
+        self._reference_metadata = reference_metadata
+
         self._loaded = False
         self._grid_indices = None
-        self._reference_metadata = reference_metadata
 
         super().__init__(fields=None)  # The fields attribute is set lazily
 
@@ -166,12 +157,16 @@ class FieldExtractList(SimpleFieldList):
 
         fields = []
         indices = None
+        ranges = None
         for i, (request, result) in enumerate(zip(self._requests, extraction_results)):
-            if indices is None:
-                # We can assume that all arrays reference the same indices
-                # because we checked in the constructor that all extraction
-                # requests share the same ranges.
+            if ranges is None:
+                ranges = request.ranges
                 indices = request.indices()
+            else:
+                if request.ranges != ranges:
+                    raise ValueError(
+                        f"Extraction request {i} has different ranges than the first request: {request.ranges} != {ranges}"
+                    )
             arr = result.values_flat
 
             if self._reference_metadata is not None and not geography:
