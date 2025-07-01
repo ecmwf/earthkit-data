@@ -45,7 +45,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
         {"chunks": "auto"},
         {"chunks": {"valid_time": 1}},
         {"chunks": {"valid_time": 10}},
-        {"chunks": {"valid_time": (100, 200, 432), "latitude": (4, 5, 4), "longitude": (13, 3, 8)}},
+        {"chunks": {"valid_time": (100, 200, 432), "latitude": (1, 2), "longitude": (2, 1)}},
         {"chunks": -1},
     ],
 )
@@ -61,7 +61,7 @@ def test_xr_engine_chunk_1(field_policy, handle_policy, _kwargs):
 
         r = ds["2t"].mean("valid_time").load()
 
-        assert np.isclose(r.values.mean(), 275.9938876277779)
+        assert np.isclose(r.values.mean(), 287.2627299620878)
 
 
 # This test is a copy of the previous one, but only using the default config
@@ -73,7 +73,7 @@ def test_xr_engine_chunk_1(field_policy, handle_policy, _kwargs):
         {"chunks": "auto"},
         {"chunks": {"valid_time": 1}},
         {"chunks": {"valid_time": 10}},
-        {"chunks": {"valid_time": (100, 200, 432), "latitude": (4, 5, 4), "longitude": (13, 3, 8)}},
+        {"chunks": {"valid_time": (100, 200, 432), "latitude": (1, 2), "longitude": (2, 1)}},
         {"chunks": -1},
     ],
 )
@@ -93,7 +93,7 @@ def test_xr_engine_chunk_2(_kwargs):
 
         r = ds["2t"].mean("valid_time").load()
 
-        assert np.isclose(r.values.mean(), 275.9938876277779)
+        assert np.isclose(r.values.mean(), 287.2627299620878)
 
 
 @pytest.mark.cache
@@ -104,8 +104,8 @@ def test_xr_engine_chunk_2(_kwargs):
         {"chunks": "auto"},
         {"chunks": {"valid_time": 1}},
         {"chunks": {"valid_time": 10}},
-        {"chunks": {"valid_time": (100, 200, 432), "latitude": (4, 5, 4), "longitude": (13, 3, 8)}},
-        {"chunks": {"valid_time": 100, "latitude": 4, "longitude": 7}},
+        {"chunks": {"valid_time": (100, 200, 432), "latitude": (1, 2), "longitude": (2, 1)}},
+        {"chunks": {"valid_time": 100, "latitude": 2, "longitude": 1}},
         {"chunks": -1},
     ],
 )
@@ -123,4 +123,4 @@ def test_xr_engine_chunk_3(_kwargs):
 
     r = ds["2t"].mean("valid_time").load()
 
-    assert np.isclose(r.values.mean(), 275.9938876277779)
+    assert np.isclose(r.values.mean(), 287.2627299620878)
