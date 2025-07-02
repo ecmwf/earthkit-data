@@ -8,14 +8,11 @@
 #
 
 
-from earthkit.data.utils.dates import datetime_from_grib
-from earthkit.data.utils.dates import to_timedelta
 
 from ..data import SimpleData
 from ..geography import Geography
 from ..labels import Labels
 from ..parameter import Parameter
-from ..time import Time
 from ..vertical import Vertical
 
 
@@ -45,49 +42,49 @@ class GribParameter(Parameter):
         return self.handle.get("units", None)
 
 
-class GribTime(Time):
-    def __init__(self, handle):
-        self.handle = handle
+# class GribTime(Time):
+#     def __init__(self, handle):
+#         self.handle = handle
 
-    @property
-    def base_datetime(self):
-        return self._datetime("dataDate", "dataTime")
+#     @property
+#     def base_datetime(self):
+#         return self._datetime("dataDate", "dataTime")
 
-    @property
-    def valid_datetime(self):
-        return self._datetime("validityDate", "validityTime")
+#     @property
+#     def valid_datetime(self):
+#         return self._datetime("validityDate", "validityTime")
 
-    # def reference_datetime(self):
-    #     return self._datetime("referenceDate", "referenceTime")
+#     # def reference_datetime(self):
+#     #     return self._datetime("referenceDate", "referenceTime")
 
-    # def indexing_datetime(self):
-    #     return self._datetime("indexingDate", "indexingTime")
+#     # def indexing_datetime(self):
+#     #     return self._datetime("indexingDate", "indexingTime")
 
-    @property
-    def step(self):
-        v = self._get("endStep", None)
-        if v is None:
-            v = self._get("step", None)
-        return to_timedelta(v)
+#     @property
+#     def step(self):
+#         v = self._get("endStep", None)
+#         if v is None:
+#             v = self._get("step", None)
+#         return to_timedelta(v)
 
-    @property
-    def range(self):
-        v = self._get("endStep", None)
-        if v is None:
-            v = self._get("step", None)
-        return to_timedelta(v)
+#     @property
+#     def range(self):
+#         v = self._get("endStep", None)
+#         if v is None:
+#             v = self._get("step", None)
+#         return to_timedelta(v)
 
-    def _get(self, key, default=None):
-        """Get a value from the handle, returning default if not found."""
-        return self.handle.get(key, default)
+#     def _get(self, key, default=None):
+#         """Get a value from the handle, returning default if not found."""
+#         return self.handle.get(key, default)
 
-    def _datetime(self, date_key, time_key):
-        date = self._get(date_key, None)
-        if date is not None:
-            time = self._get(time_key, None)
-            if time is not None:
-                return datetime_from_grib(date, time)
-        return None
+#     def _datetime(self, date_key, time_key):
+#         date = self._get(date_key, None)
+#         if date is not None:
+#             time = self._get(time_key, None)
+#             if time is not None:
+#                 return datetime_from_grib(date, time)
+#         return None
 
 
 class GribGeography(Geography):

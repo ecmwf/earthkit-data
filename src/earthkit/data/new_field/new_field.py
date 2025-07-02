@@ -100,8 +100,8 @@ class Field(Base):
         from earthkit.data.new_field.grib.grib import GribData
         from earthkit.data.new_field.grib.grib import GribGeography
         from earthkit.data.new_field.grib.grib import GribParameter
-        from earthkit.data.new_field.grib.grib import GribTime
         from earthkit.data.new_field.grib.grib import GribVertical
+        from earthkit.data.new_field.grib.time import GribTime
 
         data = GribData(handle)
         parameter = GribParameter(handle)

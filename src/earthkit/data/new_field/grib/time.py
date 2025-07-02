@@ -46,10 +46,15 @@ class GribTime(Time):
 
     @property
     def range(self):
-        v = self._get("endStep", None)
-        if v is None:
-            v = self._get("step", None)
-        return to_timedelta(v)
+        end = self._get("endStep", None)
+        if end is None:
+            return to_timedelta(0)
+
+        start = self._get("startStep", None)
+        if start is None:
+            start = to_timedelta(0)
+
+        return to_timedelta(end) - to_timedelta(start)
 
     def _get(self, key, default=None):
         """Get a value from the handle, returning default if not found."""
@@ -63,19 +68,16 @@ class GribTime(Time):
                 return datetime_from_grib(date, time)
         return None
 
-    # def set_step(self, step):
-    #     """Set the step value."""
-    #     if step is None:
-    #         self.handle.set("step", 2147483647)
-    #     else:
-    #         self.handle.set("step", step.total_seconds() // 3600)
+    def set_step(self, step):
+        return NewStepTime(step, self)
 
 
-class WrappedTime(Time):
+class WrappedTime:
     def __init__(self, time):
         self._time = time
 
     def __getattr__(self, item):
+        # print("calling __getattr__ on WrappedTime", item)
         return getattr(self._time, item)
 
 
@@ -93,7 +95,7 @@ class NewStepTime(WrappedTime):
 
     @property
     def valid_datetime(self):
-        return self.data.base_datetime + self._step
+        return self.base_datetime + self._step
 
 
 class NewValidDateTime(WrappedTime):
