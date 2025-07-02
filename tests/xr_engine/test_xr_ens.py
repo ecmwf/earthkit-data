@@ -74,7 +74,7 @@ def test_xr_number_dim_missing():
         "url", earthkit_remote_test_data_file("test-data", "xr_engine", "date", "t2_td2_1_year.grib")
     )
 
-    ds = ds_ek[10].to_xarray(time_dim_mode="valid_time", ensure_dims="number", defaults={"number": 10})
+    ds = ds_ek[10].to_xarray(time_dim_mode="valid_time", ensure_dims="number", fill={"number": 10})
     assert ds is not None
 
     dims = {"number": [10]}

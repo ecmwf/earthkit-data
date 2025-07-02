@@ -320,8 +320,8 @@ class XarrayMixIn:
                 (None) expands to True unless the ``profile`` overwrites it.
             * rename_attrs: dict, None
                 A dictionary of attribute to rename. Default is None.
-            * defaults: dict, None
-                Define defaults to metadata keys. Default is None.
+            * fill: dict, None
+                Define fill values to metadata keys. Default is None.
             * remapping: dict, None
                 Define new metadata keys for indexing. Default is None.
             * lazy_load: bool, None
