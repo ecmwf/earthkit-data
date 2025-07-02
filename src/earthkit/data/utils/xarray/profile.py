@@ -202,6 +202,18 @@ class Profile:
         self.index_keys = []
 
         patches = dict()
+
+        # defaults
+        defaults = kwargs.pop("defaults", None)
+        if defaults:
+            if not isinstance(self.defaults, dict):
+                raise ValueError("defaults must be a dict!")
+            for k, v in self.defaults.items():
+                if isinstance(v, (str, int, float, bool)):
+                    patches[k] = lambda x: x if x is not None else v
+                elif isinstance(v, dict) or callable(v):
+                    patches[k] = v
+
         self.remapping = RemappingBuilder(kwargs.pop("remapping", None), patches)
 
         # variables
