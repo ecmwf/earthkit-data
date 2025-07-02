@@ -66,3 +66,16 @@ def test_xr_number_dim(kwargs, dims):
 
     ds = ds_ek.to_xarray(**kwargs)
     compare_dims(ds, dims, order_ref_var="t")
+
+
+@pytest.mark.cache
+def test_xr_number_dim_missing():
+    ds_ek = from_source(
+        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "date", "t2_td2_1_year.grib")
+    )
+
+    ds = ds_ek[10].to_xarray(time_dim_mode="valid_time", ensure_dims="number", defaults={"number": 10})
+    assert ds is not None
+
+    dims = {"number": [10]}
+    compare_dims(ds, dims, order_ref_var="2t")
