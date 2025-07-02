@@ -10,6 +10,8 @@
 import logging
 import os
 import threading
+from abc import ABCMeta
+from abc import abstractmethod
 from functools import cached_property
 
 from earthkit.data.utils import ensure_dict
@@ -86,8 +88,105 @@ class ProfileConf:
 PROFILE_CONF = ProfileConf()
 
 
+class ProfileVariable(metaclass=ABCMeta):
+    key = None
+
+    @property
+    @abstractmethod
+    def is_mono(self):
+        pass
+
+    @abstractmethod
+    def update(self, ds):
+        """
+        Parameters
+        ----------
+        ds: fieldlist
+            FieldList object with cached metadata
+        """
+        pass
+
+    @abstractmethod
+    def check(self, profile):
+        """
+        Check the variable against the profile.
+        This is called after the variable has been updated.
+        """
+        pass
+
+
+class KeyVariable(ProfileVariable):
+    def __init__(self, key, drop, rename_map):
+        self.key = key
+        self.drop = drop
+        self.rename_map = rename_map
+        self.variables = []
+
+    @property
+    def is_mono(self):
+        return False
+
+    def rename(self, v):
+        """
+        Rename the variable using the rename map.
+        If the variable is not in the rename map, return the original name.
+        """
+        return self.rename_map.get(v, v)
+
+    def update(self, ds):
+        """
+        Parameters
+        ----------
+        ds: fieldlist
+            FieldList object with cached metadata
+        """
+
+        self.variables = ds.index(self.key)
+
+        if self.drop:
+            self.variables = [v for v in self.variables if v not in self.drop]
+
+        if not self.variables:
+            raise ValueError(f"No metadata values found for variable key {self.key}")
+
+    def check(self, profile):
+        assert self.key not in profile.dim_keys
+        assert self.key is not None
+        assert self.variables
+        assert self.key not in profile.dim_keys
+
+
+class MonoVariable(ProfileVariable):
+    def __init__(self, name=None):
+        self.name = name or "data"
+
+    @property
+    def is_mono(self):
+        return True
+
+    def rename(self, v):
+        """
+        Rename the variable using the rename map.
+        If the variable is not in the rename map, return the original name.
+        """
+        return v
+
+    def update(self, ds):
+        """
+        Parameters
+        ----------
+        ds: fieldlist
+            FieldList object with cached metadata
+        """
+        # MonoVariable does not have a key, so no update needed
+        pass
+
+    def check(self, profile):
+        pass
+
+
 class Profile:
-    USER_ONLY_OPTIONS = ["remapping", "patches"]
+    USER_ONLY_OPTIONS = ["remapping", "patches", "fill"]
     DEFAULT_PROFILE_NAME = "mars"
 
     def __init__(
@@ -103,17 +202,36 @@ class Profile:
         self.index_keys = []
 
         patches = dict()
+
+        # defaults
+        fill_md = kwargs.pop("fill", None)
+        if fill_md:
+            if not isinstance(fill_md, dict):
+                raise ValueError("fill must be a dict!")
+            for k, v in fill_md.items():
+                if isinstance(v, (str, int, float, bool)):
+                    patches[k] = lambda x: x if x is not None else v
+                elif isinstance(v, dict) or callable(v):
+                    patches[k] = v
+
         self.remapping = RemappingBuilder(kwargs.pop("remapping", None), patches)
 
         # variables
-        self.variables = []
-        self.variable_key = kwargs.pop("variable_key")
-        if self.variable_key is None:
-            raise ValueError("variable_key must be set!")
-
-        self.add_keys([self.variable_key])
-        self.drop_variables = kwargs.pop("drop_variables")
-        self.rename_variables_map = kwargs.pop("rename_variables")
+        mono_variable = kwargs.pop("mono_variable")
+        variable_key = kwargs.pop("variable_key")
+        drop_variables = kwargs.pop("drop_variables")
+        rename_variables_map = kwargs.pop("rename_variables")
+        if mono_variable:
+            mono_variable_name = None
+            if isinstance(mono_variable, str):
+                mono_variable_name = mono_variable
+            self.variable = MonoVariable(name=mono_variable_name)
+        else:
+            if variable_key:
+                self.variable = KeyVariable(variable_key, drop_variables, rename_variables_map)
+                self.add_keys([self.variable.key])
+            else:
+                raise ValueError("variable_key must be a non-empty str!")
 
         # dims
         self.dims = DimHandler(
@@ -294,14 +412,15 @@ class Profile:
         if keys:
             self.index_keys = keys + [k for k in self.index_keys if k not in keys]
 
-    def update_variables(self, ds):
-        self.variables = ds.index(self.variable_key)
+    # def update_variables(self, ds):
+    #     if not self.mono:
+    #         self.variables = ds.index(self.variable_key)
 
-        if self.drop_variables:
-            self.variables = [v for v in self.variables if v not in self.drop_variables]
+    #         if self.drop_variables:
+    #             self.variables = [v for v in self.variables if v not in self.drop_variables]
 
-        if not self.variables:
-            raise ValueError(f"No metadata values found for variable key {self.variable_key}")
+    #         if not self.variables:
+    #             raise ValueError(f"No metadata values found for variable key {self.variable_key}")
 
     def update(self, ds):
         """
@@ -314,23 +433,29 @@ class Profile:
         """
         # print("index_keys", self.index_keys)
         # print("dim_keys", self.dim_keys)
-
-        self.variables = ds.index(self.variable_key)
-
-        if self.drop_variables:
-            self.variables = [v for v in self.variables if v not in self.drop_variables]
-
-        if not self.variables:
-            raise ValueError(f"No metadata values found for variable key {self.variable_key}")
-
-        # variable_keys = VARIABLE_KEYS + [self.variable_key]
-        # self.dims.remove(variable_keys, others=True)
+        self.variable.update(ds)
         self.dims.update(ds)
-        assert self.variable_key not in self.dim_keys
+        self.variable.check(self)
 
-        assert self.variable_key is not None
-        assert self.variables
-        assert self.variable_key not in self.dim_keys
+        # if not self.mono:
+        #     self.variables = ds.index(self.variable_key)
+
+        #     if self.drop_variables:
+        #         self.variables = [v for v in self.variables if v not in self.drop_variables]
+
+        #     if not self.variables:
+        #         raise ValueError(f"No metadata values found for variable key {self.variable_key}")
+
+        #     # variable_keys = VARIABLE_KEYS + [self.variable_key]
+        #     # self.dims.remove(variable_keys, others=True)
+        #     self.dims.update(ds)
+        #     assert self.variable_key not in self.dim_keys
+
+        #     assert self.variable_key is not None
+        #     assert self.variables
+        #     assert self.variable_key not in self.dim_keys
+        # else:
+        #     self.dims.update(ds)
 
         # print("UPDATE variable_key", self.variable_key)
         # print("UPDATE variables", self.variables)
@@ -338,15 +463,18 @@ class Profile:
 
     @property
     def sort_keys(self):
-        keys = self.dims.split_dims + [self.variable_key]
+        if self.variable.key:
+            keys = self.dims.split_dims + [self.variable.key]
+        else:
+            keys = self.dims.split_dims
         keys += [k for k in self.dim_keys if k not in keys]
         return keys
 
     def rename_dims_map(self):
         return self.dims.rename_dims_map
 
-    def rename_variable(self, v):
-        return self.rename_variables_map.get(v, v)
+    # def rename_variable(self, v):
+    #     return self.variable.rename_map.get(v, v)
 
     def rename_dataset_dims(self, dataset):
         return self.dims.rename_dataset_dims(dataset)

@@ -140,8 +140,8 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
     ds = load_wrapped_fieldlist(DS_LEV, prof)
     # prof.update(ds, _attributes(ds))
     prof.update(ds)
-    assert prof.variable_key == var_key
-    assert prof.variables == variables
+    assert prof.variable.key == var_key
+    assert prof.variable.variables == variables
     assert prof.dim_keys == dim_keys
 
 
@@ -306,8 +306,8 @@ def test_xr_dims_ds_date_lev(kwargs, var_key, variables, dims):
     # ds.load(prof.index_keys)
     # prof.update(ds, _attributes(ds))
     prof.update(ds)
-    assert prof.variable_key == var_key
-    assert prof.variables == variables
+    assert prof.variable.key == var_key
+    assert prof.variable.variables == variables
 
     if isinstance(dims, list):
         assert prof.dim_keys == dims
@@ -340,8 +340,8 @@ def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
     ds = load_wrapped_fieldlist(DS_DATE_SFC_PL, prof)
     # prof.update(ds, _attributes(ds))
     prof.update(ds)
-    assert prof.variable_key == var_key
-    assert prof.variables == variables
+    assert prof.variable.key == var_key
+    assert prof.variable.variables == variables
     assert prof.dim_keys == dim_keys
 
 

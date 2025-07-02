@@ -311,7 +311,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         # build variables
         xr_vars = {
-            self.profile.rename_variable(k): v.build(add_earthkit_attrs=self.profile.add_earthkit_attrs)
+            self.profile.variable.rename(k): v.build(add_earthkit_attrs=self.profile.add_earthkit_attrs)
             for k, v in var_builders.items()
         }
 
@@ -448,10 +448,15 @@ class TensorBackendDataBuilder(BackendDataBuilder):
         """Generate a builder for each variable"""
         builders = {}
 
-        # we assume each variable forms a full cube
-        for name in self.profile.variables:
-            ds_var = self.ds.sel(**{self.profile.variable_key: name})
-            builders[name] = self.pre_build_variable(ds_var, self.dims, name)
+        if self.profile.variable.is_mono:
+            name = self.profile.variable.name
+            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
+        else:
+            # we assume each variable forms a full cube
+            key = self.profile.variable.key
+            for name in self.profile.variable.variables:
+                ds_var = self.ds.sel(**{key: name})
+                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
 
         return builders
 
@@ -485,12 +490,17 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
     def pre_build_variables(self):
         """Generate a builder for each variable"""
         builders = {}
-        groups = self.ds.group(self.profile.variable_key, self.profile.variables)
 
-        # we assume each variable forms a full cube
-        for name in groups:
-            ds_var = groups[name]
-            builders[name] = self.pre_build_variable(ds_var, self.dims, name)
+        if self.profile.variable.is_mono:
+            name = self.profile.variable.name
+            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
+        else:
+            groups = self.ds.group(self.profile.variable.key, self.profile.variable.variables)
+
+            # we assume each variable forms a full cube
+            for name in groups:
+                ds_var = groups[name]
+                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
 
         return builders
 
@@ -656,7 +666,7 @@ class SplitDatasetBuilder(DatasetBuilder):
             dims = profile.dims.to_list()
             split_coords_list.append(dict(split_coords))
             LOG.debug(f"splitting {dims=} type of s_ds={type(ds)} {split_coords=}")
-            split_coords.pop(profile.variable_key, None)
+            split_coords.pop(profile.variable.key, None)
             builder = self.builder(ds, profile, dims, grid=self.grid(ds), fixed_local_attrs=split_coords)
 
             ds._ek_builder = builder
