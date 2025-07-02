@@ -47,6 +47,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         coord_attrs=None,
         add_earthkit_attrs=None,
         rename_attrs=None,
+        fill=None,
         remapping=None,
         flatten_values=None,
         lazy_load=None,
@@ -280,6 +281,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             (None) expands to True unless the ``profile`` overwrites it.
         rename_attrs: dict, None
             A dictionary of attribute to rename. Default is None.
+        fill: dict, None
+            Define fill values to metadata keys. Default is None.
         remapping: dict, None
             Define new metadata keys for indexing. Default is None.
         lazy_load: bool, None
@@ -340,6 +343,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 add_valid_time_coord=add_valid_time_coord,
                 add_geo_coords=add_geo_coords,
                 flatten_values=flatten_values,
+                fill=fill,
                 remapping=remapping,
                 decode_times=decode_times,
                 decode_timedelta=decode_timedelta,

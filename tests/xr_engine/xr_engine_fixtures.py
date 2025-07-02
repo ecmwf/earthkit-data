@@ -95,6 +95,7 @@ def compare_dim_order(ds, dims, order_ref_var, check_coord=True):
         return
 
     dim_order = []
+
     for d in ds[order_ref_var].dims:
         if d in dims:
             dim_order.append(d)
