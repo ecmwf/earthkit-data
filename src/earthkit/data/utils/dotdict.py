@@ -8,6 +8,7 @@
 #
 
 import json
+import os
 from typing import Any
 
 import yaml
@@ -103,7 +104,7 @@ class DotDict(dict):
         return cls(data)
 
     @classmethod
-    def from_json_file(cls, path: str) -> DotDict:
+    def from_json_file(cls, path: str) -> "DotDict":
         """Create a DotDict from a JSON file.
 
         Parameters
@@ -123,7 +124,7 @@ class DotDict(dict):
         return cls(data)
 
     @classmethod
-    def from_toml_file(cls, path: str) -> DotDict:
+    def from_toml_file(cls, path: str) -> "DotDict":
         """Create a DotDict from a TOML file.
 
         Parameters

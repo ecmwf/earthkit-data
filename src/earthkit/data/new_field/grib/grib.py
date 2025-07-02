@@ -8,7 +8,6 @@
 #
 
 
-
 from ..data import SimpleData
 from ..geography import Geography
 from ..labels import Labels
