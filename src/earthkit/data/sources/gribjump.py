@@ -21,6 +21,7 @@ from typing import Union
 
 import numpy as np
 
+from earthkit.data.core.gridspec import GridSpec
 from earthkit.data.indexing.fieldlist import SimpleFieldList
 from earthkit.data.readers.grib.metadata import GribMetadata
 from earthkit.data.sources import Source
@@ -74,6 +75,19 @@ def expand_dict_with_lists(
             new_request[k] = v
         expanded_requests.append(new_request)
     return expanded_requests
+
+
+def verify_gridspec(expected: dict, actual: GridSpec) -> None:
+    actual = dict(actual)
+    for key, value in expected.items():
+        if key not in actual:
+            raise ValueError(f"Gridspec mismatch for key '{key}': expected {value}, got None")
+        if isinstance(value, (list, np.ndarray)):
+            if not np.array_equal(value, actual[key]):
+                raise ValueError(f"Gridspec mismatch for key '{key}': expected {value}, got {actual[key]}")
+        else:
+            if value != actual[key]:
+                raise ValueError(f"Gridspec mismatch for key '{key}': expected {value}, got {actual[key]}")
 
 
 @dataclasses.dataclass
@@ -158,14 +172,14 @@ class FieldExtractList(SimpleFieldList):
         fields = []
         indices = None
         ranges = None
-        for i, (request, result) in enumerate(zip(self._requests, extraction_results)):
+        for request, result in zip(self._requests, extraction_results):
             if ranges is None:
                 ranges = request.ranges
                 indices = request.indices()
             else:
                 if request.ranges != ranges:
                     raise ValueError(
-                        f"Extraction request {i} has different ranges than the first request: {request.ranges} != {ranges}"
+                        f"Extraction request has different ranges than the first request: {request.ranges} != {ranges}"
                     )
             arr = result.values_flat
 
@@ -181,7 +195,7 @@ class FieldExtractList(SimpleFieldList):
             metadata = UserMetadata(
                 {
                     **geography,
-                    **self._requests[i].request,
+                    **request.request,
                 },
                 shape=arr.shape,
             )
@@ -211,6 +225,7 @@ class GribJumpSource(Source):
         mask: Optional[np.ndarray] = None,
         indices: Optional[np.ndarray] = None,
         coords_from_fdb: bool = False,
+        verify_gridspec: Optional[dict] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -220,6 +235,11 @@ class GribJumpSource(Source):
                 "Exactly one of 'ranges', 'mask' or 'indices' must be set. "
                 f"Got {ranges=}, {mask=}, {indices=}"
             )
+        if verify_gridspec is not None and not coords_from_fdb:
+            raise ValueError(
+                "If 'verify_gridspec' is set, 'coords_from_fdb' must also be set to True. "
+                f"Got {coords_from_fdb=}, {verify_gridspec=}"
+            )
         self._ranges = ranges
         self._mask = mask
         self._indices = indices
@@ -228,6 +248,7 @@ class GribJumpSource(Source):
         self._gj = pygj.GribJump()
 
         self._coords_from_fdb = coords_from_fdb
+        self._verify_gridspec = verify_gridspec
         self._mars_requests = self._split_mars_requests(request)
         self._extraction_requests = self._build_extraction_requests(self._mars_requests)
 
@@ -317,6 +338,11 @@ class GribJumpSource(Source):
                 # TODO: This should be handled more gracefully
                 raise ValueError("FDB source returned no metadata.")
             reference_metadata = fdb_metadatas[0]
+            verify_gridspec(
+                self._verify_gridspec or {},
+                reference_metadata.gridspec,
+            )
+
         return FieldExtractList(
             self._gj,
             self._extraction_requests,
