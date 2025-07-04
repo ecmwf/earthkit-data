@@ -66,6 +66,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from `WEkEO`_ using the WEkEO grammar
     * - :ref:`data-sources-wekeocds`
       - retrieve `CDS <https://cds.climate.copernicus.eu/>`_ data stored on `WEkEO`_ using the `cdsapi`_ grammar
+    * - :ref:`data-sources-gribjump`
+      - retrieve data from the `FDB (Fields DataBase)`_ using the `gribjump`_ library
 
 ----------------------------------
 
@@ -1253,14 +1255,15 @@ gribjump
       Default is ``False``. Please note that no validation is performed to
       ensure that all retrieved fields share the same grid and therefore coordinates.
 
-    ::note::
+  .. note::
 
-    This source is experimental and may change in future versions.
-    There is no mechanism to verify that the accessed GRIB messages use the grid
-    expected by the user. The provided ranges might, therefore, correspond to unexpected
-    points on the grid.
+  This source is experimental and may change in future versions.
+  There is no mechanism to verify that the accessed GRIB messages use the grid
+  expected by the user. The provided ranges might, therefore, correspond to unexpected
+  points on the grid.
 
   The following example retrieves a subset from a GRIB message in the FDB using a boolean mask:
+
   .. code-block:: python
 
       import earthkit.data as ekd
@@ -1284,7 +1287,6 @@ gribjump
 
       source = ekd.from_source("gribjump", request, ranges=ranges)
       ds = source.to_xarray()
-
 
   Further examples:
 
