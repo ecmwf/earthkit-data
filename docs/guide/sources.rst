@@ -1229,6 +1229,68 @@ wekeocds
       - :ref:`/examples/wekeo.ipynb`
 
 
+.. _data-sources-gribjump:
+
+gribjump
+--------
+
+.. py:function:: from_source("gribjump", request, *, ranges=None, mask=None, indices=None, coords_from_fdb=False, **kwargs)
+  :noindex:
+
+  The ``gribjump`` source enables fast retrieval of subsets of GRIB messages from the `FDB (Fields DataBase)`_ using the `gribjump`_ library.
+  It requires both the `pygribjump`_ and `pyfdb`_ packages to be installed.
+  Exactly one of the parameters ``ranges``, ``mask`` or ``indices`` must be specified at a time.
+
+  :param dict request: the fdb request as a dict
+  :param list ranges: a list of tuples specifying the ranges of 1D grid indices to retrieve in the form
+      [(start1, end1), (start2, end2), ...]. Ranges are exclusive, meaning that the end index is not included in the range
+  :param numpy.array mask: a 1D boolean mask specifying which grid points to retrieve
+  :param numpy.array indices: a 1D array of grid indices to retrieve
+  :param bool coords_from_fdb: if ``True``, loads the full first message from
+      the FDB to extract the coordinates at the specified indices. This is useful
+      when the coordinates are needed for the retrieved data. If ``False``, the
+      coordinates are not loaded, which can speed up the retrieval process.
+      Default is ``False``. Please note that no validation is performed to
+      ensure that all retrieved fields share the same grid and therefore coordinates.
+
+    ::note::
+
+    This source is experimental and may change in future versions.
+    There is no mechanism to verify that the accessed GRIB messages use the grid
+    expected by the user. The provided ranges might, therefore, correspond to unexpected
+    points on the grid.
+
+  The following example retrieves a subset from a GRIB message in the FDB using a boolean mask:
+  .. code-block:: python
+
+      import earthkit.data as ekd
+      import numpy as np
+
+      request = {
+          "class": "od",
+          "type": "fc",
+          "stream": "oper",
+          "expver": "0001",
+          "repres": "gg",
+          "levtype": "sfc",
+          "param": "2t",
+          "date": "20250703",
+          "time": 0,
+          "step": list(range(0, 24, 6)),
+          "domain": "g",
+      }
+
+      ranges = [(0, 10), (20, 30)]
+
+      source = ekd.from_source("gribjump", request, ranges=ranges)
+      ds = source.to_xarray()
+
+
+  Further examples:
+
+      - :ref:`/examples/gribjump.ipynb`
+
+
 .. _MARS catalog: https://apps.ecmwf.int/archive-catalogue/
 .. _MARS user documentation: https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation
 .. _web API: https://www.ecmwf.int/en/forecasts/access-forecasts/ecmwf-web-api
