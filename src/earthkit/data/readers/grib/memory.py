@@ -88,6 +88,7 @@ class GribMessageMemoryReader(GribMemoryReader):
     def __init__(self, buf, **kwargs):
         super().__init__(**kwargs)
         self.buf = buf
+        self._index = 0
 
     def __del__(self):
         self.buf = None
@@ -95,8 +96,11 @@ class GribMessageMemoryReader(GribMemoryReader):
     def _next_handle(self):
         if self.buf is None:
             return None
-        handle = eccodes.codes_new_from_message(self.buf)
-        self.buf = None
+        handle = eccodes.codes_new_from_message(self.buf[self._index :])
+        self._index += eccodes.codes_get(handle, "totalLength")
+
+        if self._index >= len(self.buf):
+            self.buf = None
         return handle
 
 
