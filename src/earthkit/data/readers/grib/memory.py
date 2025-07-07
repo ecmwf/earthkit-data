@@ -96,9 +96,15 @@ class GribMessageMemoryReader(GribMemoryReader):
     def _next_handle(self):
         if self.buf is None:
             return None
-        handle = eccodes.codes_new_from_message(self.buf[self._index :])
-        self._index += eccodes.codes_get(handle, "totalLength")
 
+        handle = eccodes.codes_new_from_message(self.buf[self._index :])
+
+        try:
+            handle_length = eccodes.codes_get(handle, "totalLength")
+        except Exception:
+            return None
+
+        self._index += handle_length
         if self._index >= len(self.buf):
             self.buf = None
         return handle
