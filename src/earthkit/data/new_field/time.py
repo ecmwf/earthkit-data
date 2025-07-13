@@ -10,6 +10,10 @@
 from abc import ABCMeta
 from abc import abstractmethod
 
+from earthkit.data.utils.dates import datetime_from_grib
+from earthkit.data.utils.dates import to_datetime
+from earthkit.data.utils.dates import to_timedelta
+
 
 class Time(metaclass=ABCMeta):
     KEYS = (
@@ -54,3 +58,98 @@ class Time(metaclass=ABCMeta):
         if key in self.KEYS:
             return getattr(self, key)
         raise KeyError(f"Key '{key}' not found in Time object.")
+
+
+class TimeSpec:
+    """A specification for a time object."""
+
+    def __init__(self, base_datetime=None, step=None, step_range=None):
+        self._base_datetime = base_datetime
+        # self._valid_datetime = valid_datetime
+        self._step = step
+        self._step_range = step_range
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create a UserTime object from a dictionary."""
+        if not isinstance(data, dict):
+            raise TypeError("data must be a dictionary")
+        return cls(**data)
+
+    @classmethod
+    def from_grib(cls, handle):
+        def _get(key, default=None):
+            return handle.get(key, default)
+
+        def _datetime(date_key, time_key):
+            date = _get(date_key, None)
+            if date is not None:
+                time = _get(time_key, None)
+                if time is not None:
+                    return datetime_from_grib(date, time)
+            return None
+
+        base = _datetime("dataDate", "dataTime")
+        v = _get("endStep", None)
+        if v is None:
+            v = _get("step", None)
+        step = to_timedelta(v)
+
+        end = _get("endStep", None)
+        if end is None:
+            return to_timedelta(0)
+
+        start = _get("startStep", None)
+        if start is None:
+            start = to_timedelta(0)
+
+        step_range = to_timedelta(end) - to_timedelta(start)
+
+        return cls(
+            base_datetime=to_datetime(base),
+            step=step,
+            step_range=step_range,
+        )
+
+    def to_dict(self):
+        """Convert the TimeSpec object to a dictionary."""
+        return {
+            "base_datetime": self.base_datetime,
+            "valid_datetime": self.valid_datetime,
+            "step": self.step,
+            "range": self.range,
+        }
+
+    @property
+    def base_datetime(self):
+        """Return the base datetime of the time object."""
+        return self._base_datetime
+
+    @property
+    def forecast_reference_time(self):
+        """Return the forecast reference time of the time object."""
+        return self._base_datetime
+
+    @property
+    def valid_datetime(self):
+        """Return the valid datetime of the time object."""
+        return self._base_datetime + self._step
+
+    @property
+    def step(self):
+        """Return the forecast period of the time object."""
+        return self._step
+
+    @property
+    def step_range(self):
+        """Return the forecast period of the time object."""
+        return self._step_range
+
+    def set_step(self, step):
+        """Set the step value."""
+        step = to_timedelta(step)
+        return TimeSpec(
+            base_datetime=self.base_datetime,
+            step=step,
+            step_range=self.step_range,
+        )
