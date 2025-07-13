@@ -10,6 +10,7 @@
 #
 
 import os
+import pathlib
 import sys
 
 import numpy as np
@@ -56,9 +57,25 @@ def test_xr_engine_kwargs_unchanged(engine):
         # "t_analysis_and_fc_0",
     ],
 )
-def test_xr_engine_basic(file):
+def test_xr_engine_basic(api, file):
     ds = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", file))
     res = ds.to_xarray()
+    assert res is not None
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("path_maker", [lambda x: x, lambda x: pathlib.Path(x)])
+def test_xr_engine_open_dataset_path(path_maker):
+
+    ds = from_source("sample", "pl.grib")
+    path = path_maker(ds.path)
+
+    import xarray as xr
+
+    res = xr.open_dataset(
+        path,
+        engine="earthkit",
+    )
     assert res is not None
 
 
