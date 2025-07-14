@@ -363,11 +363,14 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
     @staticmethod
     def _fieldlist(filename_or_obj, source_type):
+        import os
+        import pathlib
+
         from earthkit.data.core import Base
 
         if isinstance(filename_or_obj, Base):
             ds = filename_or_obj
-        elif isinstance(filename_or_obj, str):
+        elif isinstance(filename_or_obj, (str, os.PathLike, pathlib.Path)):
             from earthkit.data import from_source
 
             ds = from_source(source_type, filename_or_obj)

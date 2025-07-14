@@ -2,6 +2,15 @@ Version 0.15 Updates
 /////////////////////////
 
 
+Version 0.15.1
+===============
+
+Fixes
++++++++++++++++++
+
+- Fixed issue when :func:`xarray.open_dataset` did not work with the "earthkit" engine when a ``pathlib.Path`` object specified the input data (:pr:`741`).
+
+
 Version 0.15.0
 ===============
 
