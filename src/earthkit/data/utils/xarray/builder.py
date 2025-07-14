@@ -11,7 +11,6 @@ import logging
 from abc import ABCMeta
 from abc import abstractmethod
 
-import numpy
 import xarray
 import xarray.core.indexing as indexing
 
@@ -179,23 +178,8 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         self.dims = dims
         self.shape = shape
         self._var_name = var_name
-
-        # xp and dtype must be set for xarray
-        # self.xp = xp if xp is not None else numpy
-
-        # from earthkit.data.utils.array import get_backend
-
-        if xp is not None:
-            from earthkit.utils.array import get_backend
-
-            self.xp = get_backend(xp).namespace
-        else:
-            self.xp = numpy
-
-        if dtype is None:
-            dtype = "float64"
-        self.dtype = getattr(self.xp, dtype)
-        self._dtype = numpy.dtype(dtype)
+        self.dtype = dtype
+        self.xp = xp
 
         from dask.utils import SerializableLock
 
@@ -255,8 +239,6 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
             if singles:
                 result = result.squeeze(axis=tuple(singles))
 
-            print("dtype", result.dtype)
-
             return result
 
 
@@ -267,8 +249,22 @@ class BackendDataBuilder(metaclass=ABCMeta):
         self.dims = dims
 
         self.flatten_values = profile.flatten_values
-        self.dtype = profile.dtype
-        self.array_module = profile.array_module
+
+        # Array backend/namespace
+        array_module = profile.array_module
+        if array_module is None:
+            array_module = "numpy"
+
+        from earthkit.utils.array import get_backend
+
+        self.array_backend = get_backend(array_module)
+        assert self.array_backend is not None, f"Unsupported array_module : {array_module}"
+        self.array_module = self.array_backend.namespace
+
+        dtype = profile.dtype
+        if dtype is None:
+            dtype = "float64"
+        self.dtype = self.array_backend.dtype(dtype)
 
         # Note: these coords inside the tensor are called user_coords and
         # the corresponding dims are called user_dims
@@ -528,7 +524,7 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
             for f in tensor.source:
                 f.keep = False
 
-        return tensor.to_numpy(dtype=self.dtype)
+        return tensor.to_array(dtype=self.dtype, array_backend=self.array_backend)
 
 
 class DatasetBuilder:
