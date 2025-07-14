@@ -181,10 +181,22 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         self._var_name = var_name
 
         # xp and dtype must be set for xarray
-        self.xp = xp if xp is not None else numpy
+        # self.xp = xp if xp is not None else numpy
+
+        # from earthkit.data.utils.array import get_backend
+
+        if xp is not None:
+            from earthkit.utils.array import get_backend
+
+            self.xp = get_backend(xp).namespace
+        else:
+            self.xp = numpy
+
         if dtype is None:
-            dtype = numpy.dtype("float64")
-        self.dtype = xp.dtype(dtype)
+            dtype = "float64"
+        self.dtype = getattr(self.xp, dtype)
+        self._dtype = numpy.dtype(dtype)
+
         from dask.utils import SerializableLock
 
         self.lock = SerializableLock()
@@ -230,18 +242,20 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
 
             # LOG.debug(f"   {field_index=}")
 
-            result = r.to_numpy(index=field_index, dtype=self.dtype)
+            try:
+                result = r.to_array(index=field_index, array_backend=self.xp)
+            except Exception as e:
+                LOG.exception("Error in to_array:", e)
+                raise
+
+            # LOG.debug(f"   {result.shape=}"
 
             # ensure axes are squeezed when needed
             singles = [i for i in list(range(len(r.user_shape))) if isinstance(key[i], int)]
             if singles:
                 result = result.squeeze(axis=tuple(singles))
 
-            # LOG.debug(f"   {result.shape=}")
-
-            # Loading as numpy but then converting to the target array module
-            if self.xp and self.xp != numpy:
-                result = self.xp.asarray(result)
+            print("dtype", result.dtype)
 
             return result
 
