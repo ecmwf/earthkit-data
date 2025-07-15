@@ -435,61 +435,71 @@ class XarrayEarthkit:
         return GeneratorFieldList(self._to_fields())
 
 
-# def _move_array_to_device(arr, device, backend, *args, **kwargs):
-#     """
-#     Return a copy/view of *arr* located on *device*.
+def _move_array_to_device(arr, device, backend, *args, **kwargs):
+    """
+    Return a copy/view of *arr* located on *device*.
 
-#     Parameters
-#     ----------
-#     arr      : array‑like
-#     device   : backend‑specific device spec or str
-#     backend  : {"torch", "cupy", "jax", None, …}, optional
-#                • "torch"/"pytorch" – always use PyTorch  
-#                • "cupy" – convert/move with CuPy  
-#                • "jax" – move with JAX  
-#                • any other value – the module will be imported and queried for an
-#                  Array‑API namespace.
-#     *args, **kwargs : forwarded to the underlying backend call.
-#     """
-#     # -------------------------- forced backend path -------------------------
-#     if backend is not None:
-#         bk = backend.lower()
-#         if bk in {"torch", "pytorch"}:
-#             import torch
+    Parameters
+    ----------
+    arr      : array‑like
+    device   : backend‑specific device spec or str
+    backend  : {"torch", "cupy", "jax", None, …}, optional
+               • "torch"/"pytorch" – always use PyTorch
+               • "cupy" – convert/move with CuPy
+               • "jax" – move with JAX
+               • any other value – the module will be imported and queried for an
+                 Array‑API namespace.
+    *args, **kwargs : forwarded to the underlying backend call.
+    """
+    # -------------------------- forced backend path -------------------------
+    if backend is not None:
+        bk = backend.lower()
+        if bk in {"torch", "pytorch"}:
+            from earthkit.utils.array import get_backend
 
-#             if not isinstance(arr, torch.Tensor):
-#                 arr = torch.as_tensor(arr)
-#             return arr.to(device, *args, **kwargs)
+            b = get_backend("torch")
+            a = b.namespace.to_device(arr, device, *args, **kwargs)
+            print("type", type(a), hasattr(a, "__array_function__"))
+            print(". ", hasattr(a, "__array_ufunc__"))
+            print(". ", hasattr(a, "__array_namespace__"))
+            return a  # ensure the backend is loaded
 
-#         elif bk == "cupy":
-#             import cupy as cp
-#             # CuPy uses integer devices; "cuda:1" ➜ 1, "cuda" ➜ 0
-#             if isinstance(device, str) and device.startswith("cuda"):
-#                 _, _, idx = device.partition(":")
-#                 dev_id = int(idx) if idx else 0
-#             else:
-#                 dev_id = device
-#             with cp.cuda.Device(dev_id):
-#                 return cp.asarray(arr) if not isinstance(arr, cp.ndarray) else arr
+            # import torch
 
-#         elif bk == "jax":
-#             import jax
-#             import jax.numpy as jnp
+            # if not isinstance(arr, torch.Tensor):
+            #     arr = torch.as_tensor(arr)
 
-#             tgt = jax.devices(device)[0] if isinstance(device, str) else device
-#             return jax.device_put(arr, tgt)
+            return arr.to(device, *args, **kwargs)
 
-#         else:  # generic: try to import and fall back to Array API
-#             mod = __import__(backend)
-#             xp = getattr(mod, "__array_namespace__", lambda: mod)()
-#             if hasattr(xp, "to_device"):
-#                 return xp.to_device(arr, device, *args, **kwargs)
-#             return xp.asarray(arr, device=device, copy=False, *args, **kwargs)
-#     else:
-#         raise ValueError(
-#             "The 'backend' argument must be specified. "
-#             "Use 'numpy', 'torch', 'cupy', 'jax' or a custom backend module name."
-#         )
+        elif bk == "cupy":
+            import cupy as cp
+
+            # CuPy uses integer devices; "cuda:1" ➜ 1, "cuda" ➜ 0
+            if isinstance(device, str) and device.startswith("cuda"):
+                _, _, idx = device.partition(":")
+                dev_id = int(idx) if idx else 0
+            else:
+                dev_id = device
+            with cp.cuda.Device(dev_id):
+                return cp.asarray(arr) if not isinstance(arr, cp.ndarray) else arr
+
+        elif bk == "jax":
+            import jax
+
+            tgt = jax.devices(device)[0] if isinstance(device, str) else device
+            return jax.device_put(arr, tgt)
+
+        else:  # generic: try to import and fall back to Array API
+            mod = __import__(backend)
+            xp = getattr(mod, "__array_namespace__", lambda: mod)()
+            if hasattr(xp, "to_device"):
+                return xp.to_device(arr, device, *args, **kwargs)
+            return xp.asarray(arr, device=device, copy=False, *args, **kwargs)
+    else:
+        raise ValueError(
+            "The 'backend' argument must be specified. "
+            "Use 'numpy', 'torch', 'cupy', 'jax' or a custom backend module name."
+        )
 
 
 @xarray.register_dataarray_accessor("earthkit")
@@ -543,14 +553,12 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
         return ds.to_netcdf(*args, **kwargs)
 
-    # def to_device(self, device, backend=None, *args, **kwargs):
-    #     """Return a **new** DataArray whose data live on *device*."""
-    #     moved = _move_array_to_device(
-    #         self._obj.data, device, backend, *args, **kwargs
-    #     )
-    #     da = self._obj.copy(deep=False)
-    #     da.data = moved
-    #     return da
+    def to_device(self, device, backend=None, *args, **kwargs):
+        """Return a **new** DataArray whose data live on *device*."""
+        moved = _move_array_to_device(self._obj.data, device, backend, *args, **kwargs)
+        da = self._obj.copy(deep=False)
+        da.data = moved
+        return da
 
 
 @xarray.register_dataset_accessor("earthkit")
@@ -584,11 +592,9 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
 
         return ds.to_netcdf(*args, **kwargs)
 
-    # def to_device(self, device, backend=None, *args, **kwargs):
-    #     """Return a **new** Dataset with every data‑variable on *device*."""
-    #     ds = self._obj.copy(deep=False)
-    #     for name, var in ds.data_vars.items():
-    #         ds[name].data = _move_array_to_device(
-    #             var.data, device, backend, *args, **kwargs
-    #         )
-    #     return ds
+    def to_device(self, device, backend=None, *args, **kwargs):
+        """Return a **new** Dataset with every data‑variable on *device*."""
+        ds = self._obj.copy(deep=False)
+        for name, var in ds.data_vars.items():
+            ds[name].data = _move_array_to_device(var.data, device, backend, *args, **kwargs)
+        return ds
