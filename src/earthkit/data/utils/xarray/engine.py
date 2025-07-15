@@ -434,60 +434,71 @@ class XarrayEarthkit:
 
         return GeneratorFieldList(self._to_fields())
 
-    @staticmethod
-    def _move_array_to_device(v, device, array_backend, *args, **kwargs):
-        """
-        Return a copy/view of arr* located on *device*.
+    # @staticmethod
+    # def _move_array_to_device(v, device, array_backend, *args, **kwargs):
+    #     """
+    #     Return a copy/view of arr* located on *device*.
 
-        Parameters
-        ----------
-        arr      : array-like
-        device   : backend‑specific device spec or str
-        backend  : {"torch", "cupy", "jax", None, …}, optional
-                • "torch"/"pytorch" - always use PyTorch
-                • "cupy" - convert/move with CuPy
-                • "jax" - move with JAX
-                • any other value - the module will be imported and queried for an
-                    Array‑API namespace.
-        *args, **kwargs : forwarded to the underlying backend call.
-        """
-        # -------------------------- forced backend path -------------------------
-        from earthkit.utils.array import get_backend
+    #     Parameters
+    #     ----------
+    #     arr      : array-like
+    #     device   : backend‑specific device spec or str
+    #     backend  : {"torch", "cupy", "jax", None, …}, optional
+    #             • "torch"/"pytorch" - always use PyTorch
+    #             • "cupy" - convert/move with CuPy
+    #             • "jax" - move with JAX
+    #             • any other value - the module will be imported and queried for an
+    #                 Array‑API namespace.
+    #     *args, **kwargs : forwarded to the underlying backend call.
+    #     """
+    #     # -------------------------- forced backend path -------------------------
+    #     from earthkit.utils.array import get_backend
 
-        if array_backend is None:
-            array_backend = get_backend(v)
-        else:
-            array_backend = get_backend(array_backend)
+    #     if array_backend is None:
+    #         array_backend = get_backend(v)
+    #     else:
+    #         array_backend = get_backend(array_backend)
 
-        if array_backend is None:
-            raise ValueError("Unsupported array_backend: {}".format(array_backend))
+    #     if array_backend is None:
+    #         raise ValueError("Unsupported array_backend: {}".format(array_backend))
 
-        return array_backend.to_device(v, device, *args, **kwargs)
+    #     return array_backend.to_device(v, device, *args, **kwargs)
 
 
-def _move_array_to_device(arr, device, backend, *args, **kwargs):
-    """
-    Return a copy/view of *arr* located on *device*.
+# def _move_array_to_device(arr, device, *args, array_backend=None,  **kwargs):
+#     """
+#     Return a copy/view of *arr* located on *device*.
 
-    Parameters
-    ----------
-    arr      : array-like
-    device   : backend‑specific device spec or str
-    backend  : {"torch", "cupy", "jax", None, …}, optional
-               • "torch"/"pytorch" - always use PyTorch
-               • "cupy" - convert/move with CuPy
-               • "jax" - move with JAX
-               • any other value - the module will be imported and queried for an
-                 Array‑API namespace.
-    *args, **kwargs : forwarded to the underlying backend call.
-    """
-    # -------------------------- forced backend path -------------------------
-    from earthkit.utils.array import get_backend
+#     Parameters
+#     ----------
+#     arr      : array-like
+#     device   : backend‑specific device spec or str
+#     backend  : {"torch", "cupy", "jax", None, …}, optional
+#                • "torch"/"pytorch" - always use PyTorch
+#                • "cupy" - convert/move with CuPy
+#                • "jax" - move with JAX
+#                • any other value - the module will be imported and queried for an
+#                  Array‑API namespace.
+#     *args, **kwargs : forwarded to the underlying backend call.
+#     """
+#     # -------------------------- forced backend path -------------------------
+#     from earthkit.utils.array import get_backend
 
-    backend = get_backend(backend)
-    assert backend is not None, "The 'backend' argument must be specified."
+#     if array_backend is None:
+#         if device == "cpu":
+#             array_backend = get_backend("numpy")
+#         else:
+#             current_backend = get_backend(arr)
+#             if current_backend.name == "numpy":
+#                 array_backend = get_backend("cupy")
+#             else:
+#                 array_backend = current_backend
+#     else:
+#         backend = get_backend(array_backend)
+    
+#     assert backend is not None, "The 'backend' argument must be specified."
 
-    return backend.to_device(arr, device, *args, **kwargs)
+#     return backend.to_device(arr, device, *args, **kwargs)
 
     # if backend is not None:
     #     bk = backend.lower()
@@ -587,9 +598,10 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
         return ds.to_netcdf(*args, **kwargs)
 
-    def to_device(self, device, backend=None, *args, **kwargs):
+    def to_device(self, device, *args, array_backend=None, **kwargs):
         """Return a **new** DataArray whose data live on *device*."""
-        moved = self._move_array_to_device(self._obj.data, device, backend, *args, **kwargs)
+        from earthkit.utils.array import to_device
+        moved = to_device(self._obj.data, device, *args, array_backend=array_backend,  **kwargs)
         da = self._obj.copy(deep=False)
         da.data = moved
         return da
@@ -628,7 +640,8 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
 
     def to_device(self, device, *args, array_backend=None, **kwargs):
         """Return a new Dataset with every data variable on the specified ``device``."""
+        from earthkit.utils.array import to_device
         ds = self._obj.copy(deep=False)
         for name, var in ds.data_vars.items():
-            ds[name].data = self._move_array_to_device(var.data, device, array_backend, *args, **kwargs)
+            ds[name].data = to_device(var.data, device, *args, array_backend=array_backend,  **kwargs)
         return ds
