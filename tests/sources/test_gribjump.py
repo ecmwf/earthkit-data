@@ -367,7 +367,9 @@ def test_gribjump_to_xarray_with_coords_does_not_fail_for_grids(seed_fdb):
     }
 
     source = from_source("gribjump", mars_request, coords_from_fdb=True, indices=[0])
-    source.to_xarray()
+    ds = source.to_xarray()
+    assert set(ds.dims) == {"step", "index"}
+    assert set(ds.coords) == {"step", "index", "latitude", "longitude"}
 
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")

@@ -208,8 +208,23 @@ class FieldExtractList(SimpleFieldList):
         self._grid_indices = indices
 
     def to_xarray(self, *args, **kwargs):
+        kwargs = kwargs.copy()
+
+        flatten_values = kwargs.setdefault("flatten_values", True)
+        rename_dims = kwargs.setdefault("rename_dims", {"values": "index"})
+        if not flatten_values:
+            raise ValueError(
+                "GribJump source only supports flattening of values. "
+                "Please skip the 'flatten_values' argument or set it to True."
+            )
+        if rename_dims.get("values") != "index":
+            raise ValueError(
+                "GribJump source does not support renaming 'values' dimension. "
+                "Please remove 'values' from 'rename_dims' argument."
+            )
+
         ds = super().to_xarray(*args, **kwargs)
-        ds = ds.rename_dims({"values": "index"}).assign_coords({"index": self._grid_indices})
+        ds = ds.assign_coords({"index": self._grid_indices})
         return ds
 
     def to_pandas(self, *args, **kwargs):
