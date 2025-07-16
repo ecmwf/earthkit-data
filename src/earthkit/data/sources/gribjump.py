@@ -167,7 +167,6 @@ class FieldExtractList(SimpleFieldList):
 
         extraction_requests = [req.extraction_request for req in self._requests]
         extraction_results = self._gj.extract(extraction_requests)
-        geography = {}
 
         fields = []
         indices = None
@@ -182,23 +181,10 @@ class FieldExtractList(SimpleFieldList):
                         f"Extraction request has different ranges than the first request: {request.ranges} != {ranges}"
                     )
             arr = result.values_flat
+            shape = arr.shape
 
-            if self._reference_metadata is not None and not geography:
-                reference_geography = self._reference_metadata.geography
-                grid_latitudes = reference_geography.latitudes()[indices]
-                grid_longitudes = reference_geography.longitudes()[indices]
-                geography = {
-                    "latitudes": grid_latitudes,
-                    "longitudes": grid_longitudes,
-                }
-
-            metadata = UserMetadata(
-                {
-                    **geography,
-                    **request.request,
-                },
-                shape=arr.shape,
-            )
+            metadata = UserMetadata(request.request, shape=shape)
+            metadata = self._enrich_metadata_with_coordinates(indices, metadata)
 
             field = ArrayField(arr, metadata)
             fields.append(field)
@@ -206,6 +192,22 @@ class FieldExtractList(SimpleFieldList):
         self.fields = fields
         self._loaded = True
         self._grid_indices = indices
+
+    def _enrich_metadata_with_coordinates(self, indices: np.ndarray, metadata: UserMetadata) -> UserMetadata:
+        """Enriches the metadata with coordinates if reference metadata is available."""
+        if self._reference_metadata is None:
+            return metadata
+
+        reference_geography = self._reference_metadata.geography
+        grid_latitudes = reference_geography.latitudes()[indices]
+        grid_longitudes = reference_geography.longitudes()[indices]
+        metadata = metadata.override(
+            {
+                "latitudes": grid_latitudes,
+                "longitudes": grid_longitudes,
+            }
+        )
+        return metadata
 
     def to_xarray(self, *args, **kwargs):
         kwargs = kwargs.copy()
