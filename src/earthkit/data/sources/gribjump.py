@@ -28,6 +28,7 @@ from earthkit.data.readers.grib.metadata import GribMetadata
 from earthkit.data.sources import Source
 from earthkit.data.sources import from_source
 from earthkit.data.sources.array_list import ArrayField
+from earthkit.data.sources.fdb import FDBRetriever
 from earthkit.data.utils.metadata.dict import UserMetadata
 
 
@@ -202,14 +203,15 @@ class FieldExtractList(SimpleFieldList):
         self,
         gj: pygj.GribJump,
         requests: ExtractionRequestCollection,
-        reference_metadata: Optional[GribMetadata] = None,
+        fdb_retriever: Optional[FDBRetriever] = None,
     ):
         self._gj = gj
         self._requests = requests
-        self._reference_metadata = reference_metadata
+        self._fdb_retriever = fdb_retriever
 
         self._loaded = False
         self._grid_indices = None
+        self._reference_metadata: Optional[GribMetadata] = None
 
         super().__init__(fields=None)  # The fields attribute is set lazily
 
@@ -253,12 +255,30 @@ class FieldExtractList(SimpleFieldList):
         self._loaded = True
         self._grid_indices = indices
 
+    def _load_reference_metadata(self):
+        """Loads the reference metadata from the FDB retriever if available."""
+        if self._fdb_retriever is None:
+            return None
+        if self._reference_metadata is not None:
+            return self._reference_metadata
+
+        fields = self._fdb_retriever.get(self._requests[0].request)
+        metadatas = fields.metadata()
+        if not metadatas:
+            raise ValueError("FDB retriever returned no metadata.")
+        if len(metadatas) != 1:
+            raise ValueError(f"Expected exactly one metadata for the first request, got {len(metadatas)}.")
+        metadata = metadatas[0]
+        assert isinstance(metadata, GribMetadata), type(metadata)
+        self._reference_metadata = metadata
+        return metadata
+
     def _enrich_metadata_with_coordinates(self, indices: np.ndarray, metadata: UserMetadata) -> UserMetadata:
         """Enriches the metadata with coordinates if reference metadata is available."""
-        if self._reference_metadata is None:
+        if (reference_metadata := self._load_reference_metadata()) is None:
             return metadata
 
-        reference_geography = self._reference_metadata.geography
+        reference_geography = reference_metadata.geography
         grid_latitudes = reference_geography.latitudes()[indices]
         grid_longitudes = reference_geography.longitudes()[indices]
         metadata = metadata.override(
@@ -406,10 +426,13 @@ class GribJumpSource(Source):
             indices=self._indices,
         )
 
+        # TODO: Allow proper configuration of the FDB retriever
+        fdb_retriever = FDBRetriever({}) if self._coords_from_fdb else None
+
         return FieldExtractList(
             self._gj,
             requests=extraction_requests,
-            reference_metadata=reference_metadata,
+            fdb_retriever=fdb_retriever,
         )
 
 
