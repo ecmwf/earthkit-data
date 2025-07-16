@@ -108,23 +108,74 @@ class XarrayMixIn:
             * variable_key: str, None
                 Metadata key to specify the dataset variables. It cannot be
                 defined as a dimension. Default is "param" (in earthkit-data this is the same as "shortName").
+                Only enabled when ``mono_variable`` is False or None.
             * drop_variables: str, or iterable of str, None
-                A variable or list of variables to drop from the dataset. Default is None.
+                A variable or list of variables to drop from the dataset. Default is None. Only used when
+                ``variable_key`` is enabled.
             * rename_variables: dict, None
-                Mapping to rename variables. Default is None.
-            * extra_dims: str, or iterable of str, None
-                Metadata key or list of metadata keys to be used as additional dimensions on top of the
-                predefined dimensions. Only enabled when no ``fixed_dims`` is specified. Default is None.
+                Mapping to rename variables. Default is None. Only used  when
+                ``variable_key`` is enabled.
+            * mono_variable: bool, str, None
+                If True or str, the dataset will contain a single variable called "data" (or the value
+                of the ``mono_variable`` kwarg when it is a str). If False, the dataset will contain
+                one variable for each distinct value of ``variable_key`` metadata key. The default value
+                (None) expands to False unless the ``profile`` overwrites it.
+            * extra_dims:  str, or iterable of str, None
+                Define additional dimensions on top of the predefined dimensions. Only enabled when no
+                ``fixed_dims`` is specified. Default is None. It can be a single item or a list. Each
+                item is either a metadata key, or a dict/tuple defining mapping between the dimension
+                name and the metadata key. The whole option can be a dict. E.g.
+
+                .. code-block:: python
+
+                    # use key "expver" as a dimension
+                    extra_dims = "expver"
+                    # use keys "expver" and "steam" as a dimension
+                    extra_dims = ["expver", "stream"]
+                    # define dimensions "expver", mars_stream" and "mars_type" from
+                    # metadata keys "expver", "stream" and "type"
+                    extra_dims = [
+                        "expver",
+                        {"mars_stream": "stream"},
+                        ("mars_type", "type"),
+                    ]
+                    extra_dims = [
+                        {
+                            "expver": "expver",
+                            "mars_stream": "stream",
+                            "mars_type": "type",
+                        }
+                    ]
+
             * drop_dims:  str, or iterable of str, None
-                Metadata key or list of metadata keys to be ignored as dimensions. Default is None.
+                Single or multiple dimensions to be ignored. Default is None.
                 Default is None.
             * ensure_dims: str, or iterable of str, None
-                Metadata key or list of metadata keys that should be used as dimensions even
-                when ``squeeze=True``. Default is None.
+                Dimension or dimensions that should be kept even when ``squeeze=True`` and their size
+                is only 1. Default is None.
             * fixed_dims: str, or iterable of str, None
-                Metadata key or list of metadata keys in the order they should be used as dimensions. When
-                defined no other dimensions will be used. Might be incompatible with other settings.
-                Default is None.
+                Define all the dimensions to be generated. When used no other dimensions will be created.
+                Might be incompatible with other settings. Default is None. It can be a single item or a list.
+                Each item is either a metadata key, or a dict/tuple defining mapping between the dimension
+                name and the metadata key. The whole option can be a dict. E.g.:
+
+                .. code-block:: python
+
+                    # use key "step" as a dimension
+                    fixed_dims = "step"
+                    # use keys "step" and "levelist" as a dimension
+                    extra_dims = ["step", "levelist"]
+                    # define dimensions "step", level" and "level_type" from
+                    # metadata keys "step", "levelist" and "levtype"
+                    extra_dims = [
+                        "step",
+                        {"level": "levelist"},
+                        ("level_type", "levtype"),
+                    ]
+                    extra_dims = [
+                        {"step": "step", "level": "levelist", "level_type": "levtype"}
+                    ]
+
             * dim_roles: dict, None
                 Specify the "roles" used to form the predefined dimensions. The predefined dimensions are
                 automatically generated when no ``fixed_dims`` specified and comprise the following
@@ -137,7 +188,7 @@ class XarrayMixIn:
                 ``dim_roles`` is a mapping between the "roles" and the metadata keys representing the roles.
                 The possible roles are as follows:
 
-                - "ens": metadata key interpreted as ensemble forecast members
+                - "number": metadata key interpreted as ensemble forecast members
                 - "date": metadata key interpreted as date part of the "forecast_reference_time"
                 - "time": metadata key interpreted as time part of the "forecast_reference_time"
                 - "step": metadata key interpreted as forecast step
@@ -153,7 +204,7 @@ class XarrayMixIn:
                 .. code-block:: python
 
                     {
-                        "ens": "number",
+                        "number": "number",
                         "date": "dataDate",
                         "time": "dataTime",
                         "step": "step",
@@ -164,8 +215,13 @@ class XarrayMixIn:
                     }
 
                 ``dims_roles`` behaves differently to the other kwargs in the sense that
-                it does not override but update the default values. So e.g. to change only "ens" in
-                the defaults it is enough to specify: "dim_roles={"ens": "perturbationNumber"}.
+                it does not override but update the default values. So e.g. to change only "number" in
+                the defaults it is enough to specify: "dim_roles={"number": "perturbationNumber"}.
+            * dim_name_from_role_name: bool, None
+                If True, the dimension names are formed from the role names. Otherwise the
+                dimension names are formed from the metadata keys specified in ``dim_roles``.
+                Its default value (None) expands to True unless the ``profile`` overwrites it.
+                Only used when no `fixed_dims`` are specified. *New in version 0.15.0*.
             * rename_dims: dict, None
                 Mapping to rename dimensions. Default is None.
             * dims_as_attrs: str, or iterable of str, None
@@ -264,6 +320,8 @@ class XarrayMixIn:
                 (None) expands to True unless the ``profile`` overwrites it.
             * rename_attrs: dict, None
                 A dictionary of attribute to rename. Default is None.
+            * fill: dict, None
+                Define fill values to metadata keys. Default is None.
             * remapping: dict, None
                 Define new metadata keys for indexing. Default is None.
             * lazy_load: bool, None

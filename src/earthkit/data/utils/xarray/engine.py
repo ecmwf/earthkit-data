@@ -24,11 +24,13 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         variable_key=None,
         drop_variables=None,
         rename_variables=None,
+        mono_variable=None,
         extra_dims=None,
         drop_dims=None,
         ensure_dims=None,
         fixed_dims=None,
         dim_roles=None,
+        dim_name_from_role_name=None,
         rename_dims=None,
         dims_as_attrs=None,
         time_dim_mode=None,
@@ -45,6 +47,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         coord_attrs=None,
         add_earthkit_attrs=None,
         rename_attrs=None,
+        fill=None,
         remapping=None,
         flatten_values=None,
         lazy_load=None,
@@ -66,23 +69,74 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         variable_key: str, None
             Metadata key to specify the dataset variables. It cannot be
             defined as a dimension. Default is "param" (in earthkit-data this is the same as "shortName").
+            Only enabled when ``mono_variable`` is False or None.
         drop_variables: str, or iterable of str, None
-            A variable or list of variables to drop from the dataset. Default is None.
+            A variable or list of variables to drop from the dataset. Default is None. Only used when
+            ``variable_key`` is enabled.
         rename_variables: dict, None
-            Mapping to rename variables. Default is None.
+            Mapping to rename variables. Default is None. Only used  when
+            ``variable_key`` is enabled.
+        mono_variable: bool, str, None
+            If True or str, the dataset will contain a single variable called "data" (or the value
+            of the ``mono_variable`` kwarg when it is a str). If False, the dataset will contain
+            one variable for each distinct value of ``variable_key`` metadata key. The default value
+            (None) expands to False unless the ``profile`` overwrites it.
         extra_dims:  str, or iterable of str, None
-            Metadata key or list of metadata keys to be used as additional dimensions on top of the
-            predefined dimensions. Only enabled when no ``fixed_dims`` is specified. Default is None.
+            Define additional dimensions on top of the predefined dimensions. Only enabled when no
+            ``fixed_dims`` is specified. Default is None. It can be a single item or a list. Each
+            item is either a metadata key, or a dict/tuple defining mapping between the dimension
+            name and the metadata key. The whole option can be a dict. E.g.
+
+            .. code-block:: python
+
+                # use key "expver" as a dimension
+                extra_dims = "expver"
+                # use keys "expver" and "steam" as a dimension
+                extra_dims = ["expver", "stream"]
+                # define dimensions "expver", mars_stream" and "mars_type" from
+                # metadata keys "expver", "stream" and "type"
+                extra_dims = [
+                    "expver",
+                    {"mars_stream": "stream"},
+                    ("mars_type", "type"),
+                ]
+                extra_dims = [
+                    {
+                        "expver": "expver",
+                        "mars_stream": "stream",
+                        "mars_type": "type",
+                    }
+                ]
+
         drop_dims:  str, or iterable of str, None
-            Metadata key or list of metadata keys to be ignored as dimensions. Default is None.
+            Single or multiple dimensions to be ignored. Default is None.
             Default is None.
         ensure_dims: str, or iterable of str, None
-            Metadata key or list of metadata keys that should be used as dimensions even
-            when ``squeeze=True``. Default is None.
+            Dimension or dimensions that should be kept even when ``squeeze=True`` and their size
+            is only 1. Default is None.
         fixed_dims: str, or iterable of str, None
-            Metadata key or list of metadata keys in the order they should be used as dimensions. When
-            defined no other dimensions will be used. Might be incompatible with other settings.
-            Default is None.
+            Define all the dimensions to be generated. When used no other dimensions will be created.
+            Might be incompatible with other settings. Default is None. It can be a single item or a list.
+            Each item is either a metadata key, or a dict/tuple defining mapping between the dimension
+            name and the metadata key. The whole option can be a dict. E.g.
+
+            .. code-block:: python
+
+                # use key "step" as a dimension
+                fixed_dims = "step"
+                # use keys "step" and "levelist" as a dimension
+                extra_dims = ["step", "levelist"]
+                # define dimensions "step", level" and "level_type" from
+                # metadata keys "step", "levelist" and "levtype"
+                extra_dims = [
+                    "step",
+                    {"level": "levelist"},
+                    ("level_type", "levtype"),
+                ]
+                extra_dims = [
+                    {"step": "step", "level": "levelist", "level_type": "levtype"}
+                ]
+
         dim_roles: dict, None
             Specify the "roles" used to form the predefined dimensions. The predefined dimensions are
             automatically generated when no ``fixed_dims`` specified and comprise the following
@@ -95,7 +149,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             ``dim_roles`` is a mapping between the "roles" and the metadata keys representing the roles.
             The possible roles are as follows:
 
-            - "ens": metadata key interpreted as ensemble forecast members
+            - "number": metadata key interpreted as ensemble forecast members
             - "date": metadata key interpreted as date part of the "forecast_reference_time"
             - "time": metadata key interpreted as time part of the "forecast_reference_time"
             - "step": metadata key interpreted as forecast step
@@ -111,7 +165,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             .. code-block:: python
 
                 {
-                    "ens": "number",
+                    "number": "number",
                     "date": "dataDate",
                     "time": "dataTime",
                     "step": "step",
@@ -122,8 +176,13 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 }
 
             ``dims_roles`` behaves differently to the other kwargs in the sense that
-            it does not override but update the default values. So e.g. to change only "ens" in
-            the defaults it is enough to specify: "dim_roles={"ens": "perturbationNumber"}.
+            it does not override but update the default values. So e.g. to change only "number" in
+            the defaults it is enough to specify: "dim_roles={"number": "perturbationNumber"}.
+        dim_name_from_role_name: bool, None
+            If True, the dimension names are formed from the role names. Otherwise the
+            dimension names are formed from the metadata keys specified in ``dim_roles``.
+            Its default value (None) expands to True unless the ``profile`` overwrites it.
+            Only used when no `fixed_dims`` are specified. *New in version 0.15.0*.
         rename_dims: dict, None
             Mapping to rename dimensions. Default is None.
         dims_as_attrs: str, or iterable of str, None
@@ -222,6 +281,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             (None) expands to True unless the ``profile`` overwrites it.
         rename_attrs: dict, None
             A dictionary of attribute to rename. Default is None.
+        fill: dict, None
+            Define fill values to metadata keys. Default is None.
         remapping: dict, None
             Define new metadata keys for indexing. Default is None.
         lazy_load: bool, None
@@ -260,12 +321,14 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 variable_key=variable_key,
                 drop_variables=drop_variables,
                 rename_variables=rename_variables,
+                mono_variable=mono_variable,
                 extra_dims=extra_dims,
                 drop_dims=drop_dims,
                 ensure_dims=ensure_dims,
                 fixed_dims=fixed_dims,
                 rename_dims=rename_dims,
                 dim_roles=dim_roles,
+                dim_name_from_role_name=dim_name_from_role_name,
                 dims_as_attrs=dims_as_attrs,
                 time_dim_mode=time_dim_mode,
                 level_dim_mode=level_dim_mode,
@@ -280,6 +343,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 add_valid_time_coord=add_valid_time_coord,
                 add_geo_coords=add_geo_coords,
                 flatten_values=flatten_values,
+                fill=fill,
                 remapping=remapping,
                 decode_times=decode_times,
                 decode_timedelta=decode_timedelta,
@@ -313,11 +377,14 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
     @staticmethod
     def _fieldlist(filename_or_obj, source_type):
+        import os
+        import pathlib
+
         from earthkit.data.core import Base
 
         if isinstance(filename_or_obj, Base):
             ds = filename_or_obj
-        elif isinstance(filename_or_obj, str):
+        elif isinstance(filename_or_obj, (str, os.PathLike, pathlib.Path)):
             from earthkit.data import from_source
 
             ds = from_source(source_type, filename_or_obj)
@@ -330,12 +397,42 @@ class XarrayEarthkit:
 
         return FieldArray([f for f in self._to_fields()])
 
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self._generator(), **kwargs)
+
     def to_grib(self, filename):
+        import warnings
+
+        warnings.warn(
+            "The `to_grib` is deprecated in 0.15.0 and will be removed in a future version. "
+            "Use `to_target` instead.",
+            DeprecationWarning,
+        )
         from earthkit.data.targets import create_target
 
         with create_target("file", filename) as target:
             for f in self._to_fields():
                 target.write(f)
+
+    def _generator(self):
+        from earthkit.data import FieldList
+
+        class GeneratorFieldList(FieldList):
+            def __init__(self, data):
+                self._data = data
+
+            def mutate(self):
+                return self
+
+            def __iter__(self):
+                return self._data
+
+            def default_encoder(self):
+                return "grib"
+
+        return GeneratorFieldList(self._to_fields())
 
 
 @xarray.register_dataarray_accessor("earthkit")

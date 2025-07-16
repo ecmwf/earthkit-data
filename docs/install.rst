@@ -9,7 +9,7 @@ Installing from PyPI
 Minimal installation
 +++++++++++++++++++++++++
 
-Install **earthkit-data** with python3 (>= 3.8) and ``pip`` as follows:
+Install **earthkit-data** with python3 (>= 3.9) and ``pip`` as follows:
 
 .. code-block:: bash
 
@@ -20,7 +20,7 @@ The package installed like this is **minimal** supporting only GRIB and NetCDF d
 Installing all the optional packages
 ++++++++++++++++++++++++++++++++++++++++
 
-You can install **earthkit-data** with all the optional packages (with the exception of "geotiff" dependencies, see below) in one go by using:
+You can install **earthkit-data** with all the optional packages (with the exception of the "geotiff" and "zarr" dependencies, see below) in one go by using:
 
 .. code-block:: bash
 
@@ -52,7 +52,7 @@ Alternatively, you can install the following components:
     - s3: provides access to non-public :ref:`s3 <data-sources-s3>` buckets (new in version *0.11.0*)
     - geotiff: adds GeoTIFF support (new in version *0.11.0*). Please note that this is not included in the ``[all]`` option and has to be invoked separately.
     - gribjump: provides access to the :ref:`data-sources-gribjump` source
-
+    - zarr: provides access to the :ref:`data-sources-zarr` source (new in version *0.15.0*). Please note that this is not included in the ``[all]`` option and has to be invoked separately.
 
 E.g. to add :ref:`data-sources-mars`  support you can use:
 
@@ -78,30 +78,9 @@ Install **earthkit-data** via ``conda`` with:
 
 This will bring in some necessary binary dependencies for you.
 
+
 Installing the binary dependencies
 --------------------------------------
-
-ecCodes
-+++++++++++
-
-**earthkit-data** depends on the ECMWF :xref:`eccodes` library
-that must be installed on the system and accessible as a shared library.
-
-When earthkit-data is installed from ``conda`` ecCodes will **also be installed** for you. Otherwise, you need to install it using one of the following methods:
-
-    - The easiest way to install it is to use ``conda``:
-
-        .. code-block:: bash
-
-            conda install eccodes -c conda-forge
-
-    - On a MacOS it is also available from ``HomeBrew``:
-
-        .. code-block:: bash
-
-            brew install eccodes
-
-    - As an alternative you may install the official source distribution by following the instructions `here <https://software.ecmwf.int/wiki/display/ECC/ecCodes+installation>`_.
 
 FDB
 +++++

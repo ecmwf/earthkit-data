@@ -42,7 +42,7 @@ LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels"]
 LEVEL_TYPE_KEYS = ["typeOfLevel", "levtype"]
 DATE_KEYS = ["date", "andate", "validityDate", "dataDate", "hdate", "referenceDate", "indexingDate"]
 TIME_KEYS = ["time", "antime", "validityTime", "dataTime", "referenceTime", "indexingTime"]
-STEP_KEYS = ["step", "endStep", "stepRange", "forecastMonth", "fcmonth"]
+STEP_KEYS = ["step_timedelta", "step", "endStep", "stepRange", "forecastMonth", "fcmonth"]
 MONTH_KEYS = ["forecastMonth", "fcmonth"]
 VALID_DATETIME_KEYS = ["valid_time", "valid_datetime"]
 BASE_DATETIME_KEYS = [
@@ -89,15 +89,18 @@ def find_alias(key, drop=None):
     return r
 
 
-def make_dim(owner, name, *args, **kwargs):
-    if name in PREDEFINED_DIMS:
-        return PREDEFINED_DIMS[name](owner, *args, key=name, **kwargs)
+def make_dim(owner, *args, name=None, key=None, **kwargs):
+    predef_key = key or name
+
+    if predef_key in PREDEFINED_DIMS:
+        return PREDEFINED_DIMS[predef_key](owner, *args, name=name, key=key, **kwargs)
 
     ck = CompoundKey.make(name)
     if ck is not None:
         d = CompoundKeyDim(owner, ck)
     else:
-        d = OtherDim(owner, name, *args, **kwargs)
+        # print("args", args, "kwargs", kwargs, "name", name, "key", key)
+        d = OtherDim(owner, *args, name=name, key=key, **kwargs)
     return d
 
 
@@ -123,6 +126,7 @@ class Dim:
 
     name = None
     key = None
+    label = None
     alias = None
     drop = None
     enforce_unique = False
@@ -190,9 +194,9 @@ class Dim:
             return
 
         # sanity check
-        if self.profile.variable_key in self:
+        if self.profile.variable.key in self:
             raise ValueError(
-                (f"Variable key {self.profile.variable_key} cannot be in " f"dimension={self.name}")
+                (f"Variable key {self.profile.variable.key} cannot be in " f"dimension={self.name}")
             )
 
         # print(f"key={self.key} index={ds.index(self.key)}")
@@ -233,38 +237,43 @@ class NumberDim(Dim):
 
 class DateDim(Dim):
     name = "date"
-    drop = get_keys(DATE_KEYS + DATETIME_KEYS, drop=name)
+    drop = get_keys(DATE_KEYS + DATETIME_KEYS, drop="date")
 
 
 class TimeDim(Dim):
     name = "time"
-    drop = get_keys(TIME_KEYS + DATETIME_KEYS, drop=name)
+    drop = get_keys(TIME_KEYS + DATETIME_KEYS, drop="time")
+
+
+# class StepDim(Dim):
+#     name = "step"
+#     drop = get_keys(STEP_KEYS + VALID_DATETIME_KEYS, drop="step")
 
 
 class StepDim(Dim):
     name = "step"
-    drop = get_keys(STEP_KEYS + VALID_DATETIME_KEYS, drop=name)
+    drop = get_keys(STEP_KEYS + VALID_DATETIME_KEYS, drop=["step_timedelta"])
 
 
 class ValidTimeDim(Dim):
     name = "valid_time"
-    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop=name)
+    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="valid_time")
 
 
 class ForecastRefTimeDim(Dim):
     name = "forecast_reference_time"
-    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop=name)
+    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="forecast_reference_time")
     alias = ["base_datetime"]
 
 
 class IndexingTimeDim(Dim):
     name = "indexing_time"
-    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop=name)
+    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="indexing_time")
 
 
 class ReferenceTimeDim(Dim):
     name = "reference_time"
-    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop=name)
+    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="reference_time")
 
 
 class CustomForecastRefDim(Dim):
@@ -378,13 +387,41 @@ class OtherDim(Dim):
     pass
 
 
+class DimRole:
+    NAMES = ("number", "date", "time", "step", "level", "level_type", "forecast_reference_time", "valid_time")
+
+    def __init__(self, d, name_as_key=True):
+        self.d = d
+        self.name_as_key = name_as_key
+
+        if "ens" in d:
+            import warnings
+
+            warnings.warn("'ens' key in dim_roles is deprecated. Use 'number' instead", DeprecationWarning)
+            self.d["number"] = self.d.pop("ens")
+
+        for k in d:
+            if k not in self.NAMES:
+                raise ValueError(f"Invalid dim role name={k}. Must be one of {self.NAMES}")
+
+    def role(self, name, default=None, raise_error=True):
+        if name in self.d:
+            return self.d[name], name if self.name_as_key else self.d[name]
+        if default is not None:
+            return default
+        if raise_error:
+            raise ValueError(f"Dim role {name} not found in {self.d}")
+        else:
+            return default, default
+
+
 class DimMode:
-    default = []
+    default = {}  # maps key to name
 
     def build(self, profile, owner, active=True, dims=None):
         if not dims:
             dims = self.default
-        return {name: make_dim(owner, name, active=active) for name in dims}
+        return {name: make_dim(owner, name=name, key=key, active=active) for name, key in dims.items()}
 
 
 class ForecastTimeDimMode(DimMode):
@@ -393,25 +430,26 @@ class ForecastTimeDimMode(DimMode):
     TIMES = ["time", "dataTime"]
 
     def build(self, profile, owner, active=True):
-        ref_time = owner.dim_roles.get("forecast_reference_time", None)
-        if ref_time == "forecast_reference_time":
-            ref_time_dim = ForecastRefTimeDim(owner, active=active)
-        elif ref_time:
-            ref_time_dim = make_dim(owner, ref_time, active=active)
+        ref_time_key, ref_time_name = owner.dim_roles.role("forecast_reference_time", raise_error=False)
+
+        if ref_time_key == "forecast_reference_time":
+            ref_time_dim = ForecastRefTimeDim(owner, name=ref_time_name, active=active)
+        elif ref_time_key:
+            ref_time_dim = make_dim(owner, name=ref_time_name, key=ref_time_key, active=active)
         else:
-            date = owner.dim_roles["date"]
-            time = owner.dim_roles["time"]
+            date, _ = owner.dim_roles.role("date")
+            time, _ = owner.dim_roles.role("time")
             built_in = date in self.DATES and time in self.TIMES
             if built_in:
-                ref_time_dim = ForecastRefTimeDim(owner, active=active)
+                ref_time_dim = ForecastRefTimeDim(owner, name=ref_time_name, active=active)
             else:
-                ref_time_dim = CustomForecastRefDim(owner, [date, time], active=active)
+                ref_time_dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
 
-        step = owner.dim_roles["step"]
-        step_dim = make_dim(owner, step, active=active)
+        step_key, step_name = owner.dim_roles.role("step")
+        step_dim = make_dim(owner, name=step_name, key=step_key, active=active)
 
-        self.register_ref_time_key(ref_time_dim.name)
-        self.register_step_key(step_dim.name)
+        self.register_ref_time_key(ref_time_dim.key)
+        self.register_step_key(step_dim.key)
 
         return {d.name: d for d in [ref_time_dim, step_dim]}
 
@@ -429,30 +467,33 @@ class ForecastTimeDimMode(DimMode):
 
 class ValidTimeDimMode(DimMode):
     name = "valid_time"
-    default = ["valid_time"]
+    default = {"valid_time": "valid_time"}
 
 
 class RawTimeDimMode(DimMode):
     name = "raw"
-    default = ["date", "time", "step"]
 
     def build(self, profile, owner, active=True):
-        date = owner.dim_roles["date"]
-        time = owner.dim_roles["time"]
-        step = owner.dim_roles["step"]
-        return super().build(profile, owner, active=active, dims=[date, time, step])
+        dims = {}
+        for k in ["date", "time", "step"]:
+            key, name = owner.dim_roles.role(k)
+            dims[name] = key
+        return super().build(profile, owner, active=active, dims=dims)
 
 
 class LevelDimMode(DimMode):
     name = "level"
 
     def build(self, profile, owner, **kwargs):
-        level_key = owner.dim_roles["level"]
-        level_type_key = owner.dim_roles["level_type"]
-        return {
-            level_key: LevelDim(owner, key=level_key, **kwargs),
-            level_type_key: LevelTypeDim(owner, key=level_type_key, **kwargs),
-        }
+        # level
+        key, name = owner.dim_roles.role("level")
+        level_dim = LevelDim(owner, name=name, key=key, **kwargs)
+
+        # level_type
+        key, name = owner.dim_roles.role("level_type")
+        level_type_dim = LevelTypeDim(owner, name=name, key=key, **kwargs)
+
+        return {level_dim.key: level_dim, level_type_dim.key: level_type_dim}
 
 
 class LevelAndTypeDimMode(DimMode):
@@ -460,8 +501,9 @@ class LevelAndTypeDimMode(DimMode):
     dim = LevelAndTypeDim
 
     def build(self, profile, owner, **kwargs):
-        level_key = owner.dim_roles["level"]
-        level_type_key = owner.dim_roles["level_type"]
+
+        level_key, _ = owner.dim_roles.role("level")
+        level_type_key, _ = owner.dim_roles.role("level_type")
         return {self.name: self.dim(owner, level_key, level_type_key, **kwargs)}
 
 
@@ -486,8 +528,8 @@ class NumberDimBuilder(DimBuilder):
     name = "number"
 
     def __init__(self, profile, owner):
-        ens_key = owner.dim_roles["ens"]
-        self.used = {self.name: NumberDim(owner, key=ens_key)}
+        key, name = owner.dim_roles.role("number")
+        self.used = {self.name: NumberDim(owner, name=name, key=key)}
 
 
 class TimeDimBuilder(DimBuilder):
@@ -523,7 +565,23 @@ class LevelDimBuilder(DimBuilder):
 DIM_BUILDERS = {v.name: v for v in [NumberDimBuilder, TimeDimBuilder, LevelDimBuilder]}
 
 
-class Dims:
+def ensure_dim_map(d):
+    if isinstance(d, dict):
+        return d
+    d = ensure_iterable(d)
+    r = {}
+    for k in d:
+        if isinstance(k, str):
+            r[k] = k
+        elif isinstance(k, tuple) and len(k) == 2:
+            r[k[0]] = k[1]
+        elif isinstance(k, dict):
+            for kk, vv in k.items():
+                r[kk] = vv
+    return r
+
+
+class DimHandler:
     def __init__(
         self,
         profile,
@@ -534,6 +592,7 @@ class Dims:
         split_dims,
         rename_dims,
         dim_roles,
+        dim_name_from_role_name,
         dims_as_attrs,
         time_dim_mode,
         level_dim_mode,
@@ -542,17 +601,31 @@ class Dims:
 
         self.profile = profile
 
-        self.dim_roles = dim_roles
-        self.extra_dims = ensure_iterable(extra_dims)
+        self.dim_roles = DimRole(dim_roles, name_as_key=dim_name_from_role_name)
+        # self.dim_name_from_role_name = dim_name_from_role_name
+        self.extra_dims = ensure_dim_map(extra_dims)
         self.drop_dims = ensure_iterable(drop_dims)
         self.ensure_dims = ensure_iterable(ensure_dims)
-        self.fixed_dims = ensure_iterable(fixed_dims)
+        self.fixed_dims = ensure_dim_map(fixed_dims)
         self.split_dims = ensure_iterable(split_dims)
         self.rename_dims_map = ensure_dict(rename_dims)
         self.dims_as_attrs = list(ensure_iterable(dims_as_attrs))
         self.time_dim_mode = time_dim_mode
         self.level_dim_mode = level_dim_mode
         self.squeeze = squeeze
+
+        # if "ens" in self.dim_roles:
+        #     Warning.deprecated("'ens' key in dim_roles is deprecated. Use 'number' instead")
+        #     self.dim_roles["number"] = self.dim_roles.pop("ens")
+
+        # if self.dim_name_from_role_name:
+        #     d = {v: k for k, v in self.dim_roles.items()}
+        #     for k in list(self.rename_dims_map.keys()):
+        #         if k in self.dim_roles:
+        #             d[self.dim_roles[k]] = self.rename_dims_map.pop(k)
+
+        #     d.update(self.rename_dims_map)
+        #     self.rename_dims_map = d
 
         self.var_key_dim = None
 
@@ -574,15 +647,17 @@ class Dims:
             for k, d in self.dims.items():
                 d.check()
 
-            var_keys = ["__var_key_dim__", self.profile.variable_key]
+            var_keys = ["__var_key_dim__"]
+            if self.profile.variable.key:
+                var_keys.append(self.profile.variable.key)
 
             # print(f" -> dims={self.dims}")
             # check for any dimensions related to variable keys. These have to
             # be removed from the list of active dims.
             var_dims = self.deactivate(var_keys, others=True, collect=True)
             if var_dims:
-                if self.profile.variable_key in var_dims:
-                    var_dims.remove(self.profile.variable_key)
+                if self.profile.variable.key in var_dims:
+                    var_dims.remove(self.profile.variable.key)
                 if var_dims:
                     raise ValueError(self.var_dim_found_error_message(var_dims))
 
@@ -593,6 +668,28 @@ class Dims:
                     dims[k] = self.dims[k]
 
             self.dims = dims
+
+        # LOG.debug(f"self.dims={self.dims}")
+
+        # for d in self.dims.values():
+        #     if d.name != d.key:
+        #         if d.name in self.rename_dims_map:
+        #             self.rename_dims_map[d.key] = d.name
+        #         else d
+        #         if d.key not in self.rename_dims_map:
+        #             self.rename_dims_map[d.key] = d.name
+        #         else d
+
+        # if self.dim_name_from_role_name:
+        #     d = {v: k for k, v in self.dim_roles.items()}
+        #     for k in list(self.rename_dims_map.keys()):
+        #         if k in self.dim_roles:
+        #             d[self.dim_roles[k]] = self.rename_dims_map.pop(k)
+
+        #     d.update(self.rename_dims_map)
+        #     self.rename_dims_map = d
+
+        self.var_key_dim = None
 
         # ensure all the required keys are in the profile
         keys = []
@@ -611,7 +708,7 @@ class Dims:
         if remapping:
             for k in remapping.lists:
                 d = RemappingDim(self, k, remapping.components(k))
-                if k == self.profile.variable_key:
+                if k == self.profile.variable.key:
                     self.var_key_dim = d
                 elif k in keys:
                     remapping_dims[k] = d
@@ -622,8 +719,8 @@ class Dims:
     def _init_fixed_dims(self):
         assert self.fixed_dims
 
-        if self.profile.variable_key in self.fixed_dims:
-            raise ValueError((f"Variable key {self.profile.variable_key} cannot be in fixed_dims."))
+        if self.profile.variable.key in self.fixed_dims:
+            raise ValueError((f"Variable key {self.profile.variable.key} cannot be in fixed_dims."))
         if self.extra_dims:
             raise ValueError(f"extra_dims={self.extra_dims} cannot be used with fixed_dims")
         if self.drop_dims:
@@ -640,8 +737,9 @@ class Dims:
         #                 )
         #             )
 
-        self.ensure_dims = [k for k in self.fixed_dims]
-        dims = {k: make_dim(self, name=k) for k in self.fixed_dims}
+        # self.ensure_dims = [k for k in self.fixed_dims]
+        self.ensure_dims = list(self.fixed_dims.keys())
+        dims = {k: make_dim(self, name=k, key=v) for k, v in self.fixed_dims.items()}
         return dims
 
     def _init_dims(self):
@@ -664,17 +762,21 @@ class Dims:
                     r.append(k)
             return r
 
-        var_keys = [self.profile.variable_key]
+        if self.profile.variable.key:
+            var_keys = [self.profile.variable.key]
+        else:
+            var_keys = []
 
         # non-core dims
-        keys = self.extra_dims + self.ensure_dims
+        keys = list(self.extra_dims.keys()) + self.ensure_dims
         keys = _remove_duplicates(keys)
 
         remapping_dims = self._init_remapping_dims(keys)
         dims = dict(**remapping_dims)
 
         if not self.var_key_dim:
-            self.var_key_dim = make_dim(self, name=self.profile.variable_key)
+            assert self.profile.variable.key is not None
+            self.var_key_dim = make_dim(self, name=self.profile.variable.key)
 
         # dims at this point can only contain remapping dims
         for k in keys:
@@ -739,7 +841,7 @@ class Dims:
         return (
             f'Variable-related keys "{keys}"" cannot be dimensions. Such a key'
             " must be specified as the variable_key. The variable_key can only "
-            f'be set to a single key. Its current value is "{self.profile.variable_key}"'
+            f'be set to a single key. Its current value is "{self.profile.variable.key}"'
         )
 
     def register_remapping(self, remapping, patch=None):
@@ -805,6 +907,23 @@ class Dims:
             else:
                 r.append(make_dim(self, name=name))
         return r
+
+    def rename_dataset_dims(self, dataset):
+        # first rename the dimensions where the name and key are different
+        mapping = {}
+        for d in self.dims.values():
+            if d.key in dataset.dims and d.name != d.key:
+                mapping[d.key] = d.name
+        if mapping:
+            dataset = dataset.rename(mapping)
+
+        # then apply the user defined rename_dims_map
+        if self.rename_dims_map:
+            mapping = {k: v for k, v in self.rename_dims_map.items() if k in dataset.dims}
+            if mapping:
+                dataset = dataset.rename(mapping)
+
+        return dataset
 
 
 PREDEFINED_DIMS = {}

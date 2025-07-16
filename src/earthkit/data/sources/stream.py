@@ -233,6 +233,9 @@ class StreamFieldList(FieldList, Source):
         assert len(sources) > 1
         return MultiStreamSource.merge(sources)
 
+    def default_encoder(self):
+        return None
+
 
 class Stream:
     def __init__(self, stream=None, maker=None, **kwargs):

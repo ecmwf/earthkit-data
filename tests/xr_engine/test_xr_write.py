@@ -13,6 +13,8 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data import to_target
+from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_remote_test_data_file
 
 
@@ -211,6 +213,7 @@ def test_xr_write_seasonal():
     ds = ds_ek.to_xarray(
         time_dim_mode="forecast",
         dim_roles={"date": "indexingDate", "time": "indexingTime", "step": "forecastMonth"},
+        dim_name_from_role_name=False,
     )
 
     import xarray as xr
@@ -251,3 +254,100 @@ def test_xr_write_bits_per_value():
     assert len(r) == 16
     assert r.index("shortName") == ["t"]
     assert r[0].metadata("bitsPerValue") == 8
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("method", ["to_grib", "to_target_on_obj", "to_target_func"])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"profile": "mars", "time_dim_mode": "raw"},
+    ],
+)
+def test_xr_write_to_file_1(method, kwargs):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
+
+    ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy()
+    ref_r_vals = ds_ek.sel(param="r", step=6, level=500).to_numpy()
+
+    import xarray as xr
+
+    xr.set_options(keep_attrs=True)
+
+    ds = ds_ek.to_xarray(**kwargs)
+    ds += 1
+
+    # data-array
+    with temp_file() as path:
+        if method == "to_grib":
+            ds["t"].earthkit.to_grib(path)
+        elif method == "to_target_on_obj":
+            ds["t"].earthkit.to_target("file", path)
+        elif method == "to_target_func":
+            to_target("file", path, data=ds["t"])
+
+        r = from_source("file", path)
+
+        assert len(r) == 16
+        assert r.index("shortName") == ["t"]
+        assert np.allclose(ref_t_vals + 1.0, r.sel(param="t", step=6, level=500).to_numpy())
+
+        ref_base = [
+            "2024-06-03T00:00:00",
+            "2024-06-03T00:00:00",
+            "2024-06-03T00:00:00",
+            "2024-06-03T00:00:00",
+            "2024-06-03T12:00:00",
+            "2024-06-03T12:00:00",
+            "2024-06-03T12:00:00",
+            "2024-06-03T12:00:00",
+            "2024-06-04T00:00:00",
+            "2024-06-04T00:00:00",
+            "2024-06-04T00:00:00",
+            "2024-06-04T00:00:00",
+            "2024-06-04T12:00:00",
+            "2024-06-04T12:00:00",
+            "2024-06-04T12:00:00",
+            "2024-06-04T12:00:00",
+        ]
+
+        ref_valid = [
+            "2024-06-03T00:00:00",
+            "2024-06-03T00:00:00",
+            "2024-06-03T06:00:00",
+            "2024-06-03T06:00:00",
+            "2024-06-03T12:00:00",
+            "2024-06-03T12:00:00",
+            "2024-06-03T18:00:00",
+            "2024-06-03T18:00:00",
+            "2024-06-04T00:00:00",
+            "2024-06-04T00:00:00",
+            "2024-06-04T06:00:00",
+            "2024-06-04T06:00:00",
+            "2024-06-04T12:00:00",
+            "2024-06-04T12:00:00",
+            "2024-06-04T18:00:00",
+            "2024-06-04T18:00:00",
+        ]
+
+        assert r.metadata("base_datetime") == ref_base
+        assert r.metadata("valid_datetime") == ref_valid
+
+    # dataset
+    with temp_file() as path:
+        if method == "to_grib":
+            ds.earthkit.to_grib(path)
+        elif method == "to_target_on_obj":
+            ds.earthkit.to_target("file", path)
+        elif method == "to_target_func":
+            to_target("file", path, data=ds)
+
+        r = from_source("file", path)
+        assert len(r) == 16 * 2
+        assert set(r.index("shortName")) == set(["t", "r"])
+        assert np.allclose(ref_t_vals + 1.0, r.sel(param="t", step=6, level=500).to_numpy())
+        assert np.allclose(ref_r_vals + 1.0, r.sel(param="r", step=6, level=500).to_numpy())
+
+        assert sorted(r.metadata("base_datetime")) == sorted(ds_ek.metadata("base_datetime"))
+        assert sorted(r.metadata("valid_datetime")) == sorted(ds_ek.metadata("valid_datetime"))

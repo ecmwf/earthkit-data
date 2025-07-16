@@ -15,24 +15,24 @@ from . import Encoder
 LOG = logging.getLogger(__name__)
 
 
-class NetCDFEncodedData(EncodedData):
+class ZarrEncodedData(EncodedData):
     def __init__(self, ds):
         self.ds = ds
 
     def to_bytes(self):
-        return self.ds.to_netcdf(None)
+        return None
 
     def to_file(self, f):
-        if hasattr(self.ds, "earthkit"):
-            f.write(self.ds.earthkit.to_netcdf(None))
-        else:
-            self.ds.to_netcdf(f)
+        return None
+
+    def to_xarray(self):
+        return self.ds
 
     def metadata(self, key):
         raise NotImplementedError
 
 
-class NetCDFEncoder(Encoder):
+class ZarrEncoder(Encoder):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -62,23 +62,19 @@ class NetCDFEncoder(Encoder):
         missing_value=9999,
         **kwargs,
     ):
-        _kwargs = kwargs.copy()
-        if data is not None:
-            # TODO: find better way to check if the earthkit engine is used
-            if hasattr(data, "to_xarray_earthkit"):
-                earthkit_to_xarray_kwargs = _kwargs.pop("earthkit_to_xarray_kwargs", {})
-                earthkit_to_xarray_kwargs["add_earthkit_attrs"] = False
-                _kwargs = earthkit_to_xarray_kwargs
-        else:
-            _kwargs = {}
-
-        return NetCDFEncodedData(data.to_xarray(**_kwargs))
+        return ZarrEncodedData(data.to_xarray(add_earthkit_attrs=False))
 
     def _encode_field(self, field, **kwargs):
-        return self._encode(field, **kwargs)
+        raise NotImplementedError("ZarrEncoder does not support encoding individual fields.")
 
     def _encode_fieldlist(self, data, **kwargs):
-        return self._encode(data, **kwargs)
+        earthkit_to_xarray_kwargs = kwargs.pop("earthkit_to_xarray_kwargs", {})
+        # earthkit_to_xarray_kwargs.update(kwargs)
+        earthkit_to_xarray_kwargs["add_earthkit_attrs"] = False
+        kwargs = earthkit_to_xarray_kwargs
+
+        ds = data.to_xarray(**kwargs)
+        return ZarrEncodedData(ds)
 
 
-encoder = NetCDFEncoder
+encoder = ZarrEncoder

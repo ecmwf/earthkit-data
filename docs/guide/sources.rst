@@ -68,6 +68,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve `CDS <https://cds.climate.copernicus.eu/>`_ data stored on `WEkEO`_ using the `cdsapi`_ grammar
     * - :ref:`data-sources-gribjump`
       - retrieve data from the `FDB (Fields DataBase)`_ using the `gribjump`_ library
+    * - :ref:`data-sources-zarr`
+      - load data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store
 
 ----------------------------------
 
@@ -1291,6 +1293,24 @@ gribjump
   Further examples:
 
       - :ref:`/examples/gribjump.ipynb`
+
+
+
+.. _data-sources-zarr:
+
+zarr
+--------
+
+.. py:function:: from_source("zarr", path)
+  :noindex:
+
+  *New in version 0.15.0*
+
+  The ``zarr`` source accesses data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store. Internally the data is loaded via the :py:meth:`xarray.open_zarr` method,  so only Zarr data supported by Xarray can be accessed. Requires ``zarr >= 3`` version.
+
+  :param str path: path or URL to the Zarr store
+
+
 
 
 .. _MARS catalog: https://apps.ecmwf.int/archive-catalogue/

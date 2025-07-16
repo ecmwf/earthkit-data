@@ -297,7 +297,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
         ):
             from .coord import Coord
 
-            _dims, _vals = tensor.make_valid_datetime()
+            _dims, _vals = tensor.make_valid_datetime(self.dims)
             if _dims is not None and _vals is not None:
                 self.tensor_coords["valid_time"] = Coord.make("valid_time", _vals, dims=_dims)
 
@@ -311,15 +311,20 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         # build variables
         xr_vars = {
-            self.profile.rename_variable(k): v.build(add_earthkit_attrs=self.profile.add_earthkit_attrs)
+            self.profile.variable.rename(k): v.build(add_earthkit_attrs=self.profile.add_earthkit_attrs)
             for k, v in var_builders.items()
         }
 
         # build dataset
         dataset = xarray.Dataset(xr_vars, coords=xr_coords, attrs=xr_attrs)
 
-        if self.profile.rename_dims_map():
-            dataset = dataset.rename(self.profile.rename_dims_map())
+        dataset = self.profile.rename_dataset_dims(dataset)
+
+        # dim_map = self.profile.rename_dims_map()
+        # if dim_map:
+        #     d = {k: v for k, v in dim_map.items() if k in dataset.dims}
+        #     if d:
+        #         dataset = dataset.rename(d)
 
         if "source" not in dataset.encoding:
             dataset.encoding["source"] = None
@@ -443,10 +448,15 @@ class TensorBackendDataBuilder(BackendDataBuilder):
         """Generate a builder for each variable"""
         builders = {}
 
-        # we assume each variable forms a full cube
-        for name in self.profile.variables:
-            ds_var = self.ds.sel(**{self.profile.variable_key: name})
-            builders[name] = self.pre_build_variable(ds_var, self.dims, name)
+        if self.profile.variable.is_mono:
+            name = self.profile.variable.name
+            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
+        else:
+            # we assume each variable forms a full cube
+            key = self.profile.variable.key
+            for name in self.profile.variable.variables:
+                ds_var = self.ds.sel(**{key: name})
+                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
 
         return builders
 
@@ -480,12 +490,17 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
     def pre_build_variables(self):
         """Generate a builder for each variable"""
         builders = {}
-        groups = self.ds.group(self.profile.variable_key, self.profile.variables)
 
-        # we assume each variable forms a full cube
-        for name in groups:
-            ds_var = groups[name]
-            builders[name] = self.pre_build_variable(ds_var, self.dims, name)
+        if self.profile.variable.is_mono:
+            name = self.profile.variable.name
+            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
+        else:
+            groups = self.ds.group(self.profile.variable.key, self.profile.variable.variables)
+
+            # we assume each variable forms a full cube
+            for name in groups:
+                ds_var = groups[name]
+                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
 
         return builders
 
@@ -544,7 +559,7 @@ class DatasetBuilder:
 
         # LOG.debug(f"{remapping=}")
         # LOG.debug(f"{profile.remapping=}")
-        # LOG.debug(f"{profile.index_keys=}")
+        LOG.debug(f"{profile.index_keys=}")
 
         # create a new fieldlist for optimised access to unique values
         ds_xr = XArrayInputFieldList(
@@ -651,7 +666,7 @@ class SplitDatasetBuilder(DatasetBuilder):
             dims = profile.dims.to_list()
             split_coords_list.append(dict(split_coords))
             LOG.debug(f"splitting {dims=} type of s_ds={type(ds)} {split_coords=}")
-            split_coords.pop(profile.variable_key, None)
+            split_coords.pop(profile.variable.key, None)
             builder = self.builder(ds, profile, dims, grid=self.grid(ds), fixed_local_attrs=split_coords)
 
             ds._ek_builder = builder
