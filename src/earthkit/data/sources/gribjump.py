@@ -15,6 +15,7 @@ except ImportError:
 import dataclasses
 import itertools
 import os
+from collections import UserList
 from typing import Any
 from typing import Optional
 from typing import Union
@@ -118,6 +119,65 @@ class ExtractionRequest:
         return self.extraction_request.indices()
 
 
+def build_extraction_request(
+    request: dict[str, str],
+    ranges: Optional[list[tuple[int, int]]] = None,
+    mask: Optional[np.ndarray] = None,
+    indices: Optional[np.ndarray] = None,
+) -> ExtractionRequest:
+    """
+    Builds an ExtractionRequest from the given request dictionary and optional parameters.
+
+    Parameters
+    ----------
+    request : dict[str, str]
+        The request dictionary containing MARS keywords.
+    ranges : Optional[list[tuple[int, int]]], optional
+        The ranges for the extraction request, by default None.
+    mask : Optional[np.ndarray], optional
+        The mask for the extraction request, by default None.
+    indices : Optional[np.ndarray], optional
+        The indices for the extraction request, by default None.
+
+    Returns
+    -------
+    ExtractionRequest
+        The constructed ExtractionRequest object.
+    """
+    stringified_request_dict = {k: str(v) for (k, v) in request.items()}
+
+    if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
+        raise ValueError(
+            "Exactly one of 'ranges', 'mask' or 'indices' must be set. " f"Got {ranges=}, {mask=}, {indices=}"
+        )
+
+    if ranges is not None:
+        extraction_request = pygj.ExtractionRequest(stringified_request_dict, ranges)
+    elif mask is not None:
+        extraction_request = pygj.ExtractionRequest.from_mask(stringified_request_dict, mask)
+    elif indices is not None:
+        extraction_request = pygj.ExtractionRequest.from_indices(stringified_request_dict, indices)
+    else:
+        raise ValueError("No valid extraction method specified. Provide either ranges, mask, or indices.")
+
+    return ExtractionRequest(extraction_request, request)
+
+
+class ExtractionRequestCollection(UserList):
+
+    @classmethod
+    def from_mars_requests(
+        cls,
+        mars_requests: list[dict[str, str]],
+        ranges: Optional[list[tuple[int, int]]] = None,
+        mask: Optional[np.ndarray] = None,
+        indices: Optional[np.ndarray] = None,
+    ) -> "ExtractionRequestCollection":
+        """Creates an ExtractionRequestCollection from MARS requests."""
+        extraction_requests = [build_extraction_request(req, ranges, mask, indices) for req in mars_requests]
+        return cls(extraction_requests)
+
+
 class FieldExtractList(SimpleFieldList):
     """Lazily loaded representation of the points extracted from multiple fields using GribJump.
 
@@ -141,7 +201,7 @@ class FieldExtractList(SimpleFieldList):
     def __init__(
         self,
         gj: pygj.GribJump,
-        requests: list[ExtractionRequest],
+        requests: ExtractionRequestCollection,
         reference_metadata: Optional[GribMetadata] = None,
     ):
         self._gj = gj
@@ -267,7 +327,6 @@ class GribJumpSource(Source):
         self._coords_from_fdb = coords_from_fdb
         self._verify_gridspec = verify_gridspec
         self._mars_requests = self._split_mars_requests(request)
-        self._extraction_requests = self._build_extraction_requests(self._mars_requests)
 
     def _check_env(self):
         fdb_conf = os.environ.get("FDB5_CONFIG", None)
@@ -324,26 +383,6 @@ class GribJumpSource(Source):
         expanded_requests = expand_dict_with_lists(request)
         return expanded_requests
 
-    def _build_extraction_request(self, request: dict[str, str]) -> ExtractionRequest:
-        """Builds a single extraction request from the given request dictionary."""
-        # GribJump currently only supports strings as request values
-        stringified_request_dict = {k: str(v) for (k, v) in request.items()}
-
-        if self._ranges is not None:
-            extraction_request = pygj.ExtractionRequest(stringified_request_dict, self._ranges)
-        elif self._mask is not None:
-            extraction_request = pygj.ExtractionRequest.from_mask(stringified_request_dict, self._mask)
-        elif self._indices is not None:
-            extraction_request = pygj.ExtractionRequest.from_indices(stringified_request_dict, self._indices)
-        else:
-            raise ValueError("No valid extraction method specified.")
-        return ExtractionRequest(extraction_request, request)
-
-    def _build_extraction_requests(self, mars_requests: list[dict[str, str]]) -> list[ExtractionRequest]:
-        """Builds extraction requests from the given MARS requests."""
-        extraction_requests = [self._build_extraction_request(request) for request in mars_requests]
-        return extraction_requests
-
     def mutate(self):
         # TODO: Find a more elegant way to load the reference metadata lazily
         # and in the right place.
@@ -360,9 +399,16 @@ class GribJumpSource(Source):
                 reference_metadata.gridspec,
             )
 
+        extraction_requests = ExtractionRequestCollection.from_mars_requests(
+            self._mars_requests,
+            ranges=self._ranges,
+            mask=self._mask,
+            indices=self._indices,
+        )
+
         return FieldExtractList(
             self._gj,
-            self._extraction_requests,
+            requests=extraction_requests,
             reference_metadata=reference_metadata,
         )
 
