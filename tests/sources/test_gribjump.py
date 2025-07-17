@@ -25,31 +25,40 @@ from earthkit.data.testing import earthkit_test_data_file
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
 def test_expand_dict_with_lists():
-    from earthkit.data.sources.gribjump import expand_dict_with_lists
+    from earthkit.data.sources.gribjump import split_mars_requests
 
     request = {
-        "b": ["hello", "world"],
-        "a": [1, 2, 3],
-        "c": 5,
+        "step": [0, 6, 12],
+        "param": ["129", "130"],
+        "date": "20230101",
+        "time": "1200",
     }
-    expected_dicts = [
-        {"a": 1, "b": "hello", "c": 5},
-        {"a": 1, "b": "world", "c": 5},
-        {"a": 2, "b": "hello", "c": 5},
-        {"a": 2, "b": "world", "c": 5},
-        {"a": 3, "b": "hello", "c": 5},
-        {"a": 3, "b": "world", "c": 5},
+    result = split_mars_requests(request)
+    assert result == [
+        {"param": "129", "step": 0, "date": "20230101", "time": "1200"},
+        {"param": "129", "step": 6, "date": "20230101", "time": "1200"},
+        {"param": "129", "step": 12, "date": "20230101", "time": "1200"},
+        {"param": "130", "step": 0, "date": "20230101", "time": "1200"},
+        {"param": "130", "step": 6, "date": "20230101", "time": "1200"},
+        {"param": "130", "step": 12, "date": "20230101", "time": "1200"},
     ]
 
-    expanded_requests = expand_dict_with_lists(request)
-    assert expanded_requests == expected_dicts
+    assert split_mars_requests({}) == [{}]
+    assert split_mars_requests({"a": 1}) == [{"a": 1}]
+    assert split_mars_requests({"a": 1, "b": 2}) == [{"a": 1, "b": 2}]
 
-    assert expand_dict_with_lists({}) == [{}]
-    assert expand_dict_with_lists({"a": 1}) == [{"a": 1}]
-    assert expand_dict_with_lists({"a": 1, "b": 2}) == [{"a": 1, "b": 2}]
-
+    # Error: empty list
     with pytest.raises(ValueError, match="Cannot expand dictionary with empty list"):
-        expand_dict_with_lists({"a": 1, "b": []})
+        split_mars_requests({"a": 1, "b": []})
+
+    # Error: unsupported "/" syntax
+    with pytest.raises(ValueError, match="Found unsupported list or range using '/'"):
+        split_mars_requests({"param": "129/130", "date": "20230101"})
+
+    # Error: mixed types in lists
+    request_mixed = {"param": [129, "130"], "date": "20230101"}
+    with pytest.raises(TypeError, match="All list values must share the same type"):
+        split_mars_requests(request_mixed)
 
 
 @pytest.fixture

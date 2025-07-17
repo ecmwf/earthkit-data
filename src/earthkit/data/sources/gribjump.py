@@ -18,7 +18,6 @@ import os
 from collections import UserList
 from typing import Any
 from typing import Optional
-from typing import Union
 
 import numpy as np
 
@@ -31,40 +30,58 @@ from earthkit.data.sources.fdb import FDBRetriever
 from earthkit.data.utils.metadata.dict import UserMetadata
 
 
-def expand_dict_with_lists(
-    request: dict[str, Union[str, list[str]]],
-) -> list[dict[str, str]]:
+def split_mars_requests(request: dict[str, Any]) -> list[dict[str, str]]:
+    """Splits a MARS request into individual single-field requests by expanding list values.
+
+    Creates all possible combinations of list values in the request dictionary,
+    generating separate requests for each field. This is required because GribJump
+    returns result arrays without metadata, so each field must be requested individually
+    to map outputs correctly.
+
+    Parameters
+    ----------
+    request : dict[str, Any]
+        The request dictionary containing MARS keywords with potentially list values.
+        List keys are sorted alphabetically to ensure deterministic ordering.
+
+    Returns
+    -------
+    list[dict[str, str]]
+        A list of individual request dictionaries, each representing a single field.
+        All values are converted to strings.
+
+    Raises
+    ------
+    ValueError
+        If the request contains unsupported "/" syntax for lists/ranges or empty lists.
+    TypeError
+        If list values contain mixed types.
+
+    Examples
+    --------
+    >>> split_mars_requests({"param": ["2t", "msl"], "date": "20230101"})
+    [{'param': '2t', 'date': '20230101'}, {'param': 'msl', 'date': '20230101'}]
+
+    >>> split_mars_requests({"param": ["2t", "msl"], "step": [0, 6]})
+    [{'param': '2t', 'step': '0'}, {'param': '2t', 'step': '6'},
+     {'param': 'msl', 'step': '0'}, {'param': 'msl', 'step': '6'}]
     """
-    Expands a dictionary containing list values into multiple dictionaries representing all possible combinations.
+    request = request.copy()
 
-    For each list-type value in the input dictionary, this function creates all possible combinations
-    with other list values, while keeping non-list values constant across all output dictionaries.
-
-    The list keys are sorted alphabetically before generating combinations to ensure consistent
-    and deterministic ordering of the output dictionaries regardless of the original key order.
-
-    Example:
-        Input: {'a': [1, 2], 'b': [3, 4], 'c': 5}
-        Output: [
-            {'a': 1, 'b': 3, 'c': 5},
-            {'a': 1, 'b': 4, 'c': 5},
-            {'a': 2, 'b': 3, 'c': 5},
-            {'a': 2, 'b': 4, 'c': 5}
-        ]
-
-    Args:
-        request (dict[str, Union[str, list[str]]]): Dictionary with string keys and either string
-            or list of strings as values.
-
-    Returns:
-        list[dict[str, str]]: A list of dictionaries, where each dictionary contains one
-            specific combination of the input list values, with non-list values preserved.
-    """
-    if empty_list_keys := [k for k, v in request.items() if isinstance(v, list) and len(v) == 0]:
-        raise ValueError(
-            "Cannot expand dictionary with empty list. "
-            f"Found empty list for keys: {', '.join(empty_list_keys)}"
-        )
+    # Validation
+    for k in request.keys():
+        v = request[k]
+        if isinstance(v, str) and "/" in v:
+            raise ValueError(
+                f"Found unsupported list or range using '/' in value '{v}' for keyword '{k}'. "
+                "Use Python lists to load from multiple fields."
+            )
+        elif isinstance(v, list) and len(v) == 0:
+            raise ValueError(f"Cannot expand dictionary with empty list. " f"Found empty list for key '{k}'.")
+        elif isinstance(v, list) and len({type(v_) for v_ in v}) != 1:
+            raise TypeError(
+                f"All list values must share the same type but found types {set(map(type, v))} " f"in {k}={v}"
+            )
 
     list_keywords = sorted(k for k, v in request.items() if isinstance(v, list))
     lists = [request[k] for k in list_keywords]
@@ -369,7 +386,7 @@ class GribJumpSource(Source):
 
         self._coords_from_fdb = coords_from_fdb
         self._verify_gridspec = verify_gridspec
-        self._mars_requests = self._split_mars_requests(request)
+        self._mars_requests = split_mars_requests(request)
 
     def _check_env(self):
         fdb_conf = os.environ.get("FDB5_CONFIG", None)
@@ -397,34 +414,6 @@ class GribJumpSource(Source):
                 "Environment variable 'GRIBJUMP_IGNORE_GRID' is not set but "
                 "must be set (to '1' or 'True') for the 'gribjump' source to work."
             )
-
-    @staticmethod
-    def _split_mars_requests(request: dict[str, Any]) -> list[dict[str, str]]:
-        """Splits request into many single requests that load one field each.
-
-        Since GribJump returns its result arrays without metadata, we need to split the
-        request into many single requests to later map the outputs to the correct fields.
-        Additionally performs some basic validation.
-        """
-
-        request = request.copy()
-
-        # Check if user passed unspoorted lists and ranges as strings using "/"
-        for k in request.keys():
-            v = request[k]
-            if isinstance(v, str) and "/" in v:
-                raise ValueError(
-                    f"Found unsupported list or range using '/' in value '{v}' for keyword '{k}'. "
-                    "Use Python lists to load from multiple fields."
-                )
-            elif isinstance(v, list) and len({type(v_) for v_ in v}) != 1:
-                raise TypeError(
-                    f"All list values must share the same type but found types {set(map(type, v))} "
-                    f"in {k}={v}"
-                )
-
-        expanded_requests = expand_dict_with_lists(request)
-        return expanded_requests
 
     def mutate(self):
         # TODO: Allow proper configuration of the FDB retriever
