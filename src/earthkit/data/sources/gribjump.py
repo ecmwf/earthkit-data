@@ -26,7 +26,6 @@ from earthkit.data.core.gridspec import GridSpec
 from earthkit.data.indexing.fieldlist import SimpleFieldList
 from earthkit.data.readers.grib.metadata import GribMetadata
 from earthkit.data.sources import Source
-from earthkit.data.sources import from_source
 from earthkit.data.sources.array_list import ArrayField
 from earthkit.data.sources.fdb import FDBRetriever
 from earthkit.data.utils.metadata.dict import UserMetadata
@@ -155,6 +154,12 @@ def build_extraction_request(
     if ranges is not None:
         extraction_request = pygj.ExtractionRequest(stringified_request_dict, ranges)
     elif mask is not None:
+        if not isinstance(mask, np.ndarray):
+            raise TypeError(f"Expected 'mask' to be a numpy array, got {type(mask)}")
+        if not np.issubdtype(mask.dtype, np.bool_):
+            raise ValueError(f"Expected 'mask' to be a boolean array, got {mask.dtype}")
+        if mask.ndim != 1:
+            raise ValueError(f"Expected 'mask' to be a 1D numpy array, got {mask.ndim}D")
         extraction_request = pygj.ExtractionRequest.from_mask(stringified_request_dict, mask)
     elif indices is not None:
         extraction_request = pygj.ExtractionRequest.from_indices(stringified_request_dict, indices)
@@ -174,7 +179,25 @@ class ExtractionRequestCollection(UserList):
         mask: Optional[np.ndarray] = None,
         indices: Optional[np.ndarray] = None,
     ) -> "ExtractionRequestCollection":
-        """Creates an ExtractionRequestCollection from MARS requests."""
+        """Creates an ExtractionRequestCollection from MARS requests.
+
+        One of the parameters `ranges`, `mask`, or `indices` must be provided.
+
+        Parameters
+        ----------
+        mars_requests : list[dict[str, str]]
+            List of MARS requests, each represented as a dictionary of keywords.
+        ranges : Optional[list[tuple[int, int]]], optional
+            The ranges for the extraction requests, by default None.
+        mask : Optional[np.ndarray], optional
+            The mask for the extraction requests, by default None.
+        indices : Optional[np.ndarray], optional
+            The indices for the extraction requests, by default None.
+        Returns
+        -------
+        ExtractionRequestCollection
+            A collection of ExtractionRequest objects created from the MARS requests.
+        """
         extraction_requests = [build_extraction_request(req, ranges, mask, indices) for req in mars_requests]
         return cls(extraction_requests)
 
@@ -404,20 +427,8 @@ class GribJumpSource(Source):
         return expanded_requests
 
     def mutate(self):
-        # TODO: Find a more elegant way to load the reference metadata lazily
-        # and in the right place.
-        reference_metadata: GribMetadata | None = None
-        if self._coords_from_fdb:
-            fdb_source = from_source("fdb", self._mars_requests[0], stream=False)
-            fdb_metadatas = fdb_source.metadata()
-            if not fdb_metadatas:
-                # TODO: This should be handled more gracefully
-                raise ValueError("FDB source returned no metadata.")
-            reference_metadata = fdb_metadatas[0]
-            verify_gridspec(
-                self._verify_gridspec or {},
-                reference_metadata.gridspec,
-            )
+        # TODO: Allow proper configuration of the FDB retriever
+        fdb_retriever = FDBRetriever({}) if self._coords_from_fdb else None
 
         extraction_requests = ExtractionRequestCollection.from_mars_requests(
             self._mars_requests,
@@ -425,9 +436,6 @@ class GribJumpSource(Source):
             mask=self._mask,
             indices=self._indices,
         )
-
-        # TODO: Allow proper configuration of the FDB retriever
-        fdb_retriever = FDBRetriever({}) if self._coords_from_fdb else None
 
         return FieldExtractList(
             self._gj,

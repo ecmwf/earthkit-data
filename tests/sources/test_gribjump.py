@@ -468,6 +468,49 @@ def test_gribjump_with_invalid_options(seed_fdb):
         )
 
 
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
+def test_gribjump_with_invalid_mask(seed_fdb):
+    import numpy as np
+
+    request = {
+        "class": "od",
+        "date": "20201221",
+        "domain": "g",
+        "expver": "0001",
+        "levelist": "1000",
+        "levtype": "pl",
+        "param": "129",
+        "step": [0, 6],
+        "stream": "oper",
+        "time": "1200",
+        "type": "fc",
+    }
+
+    with pytest.raises(ValueError, match="Expected 'mask' to be a 1D numpy array"):
+        mask = np.array([[True, False], [False, True]], dtype=bool)
+        from_source(
+            "gribjump",
+            request,
+            mask=mask,
+        )
+
+    with pytest.raises(ValueError, match="Expected 'mask' to be a boolean array"):
+        mask = np.array([1, 0, 1], dtype=int)
+        from_source(
+            "gribjump",
+            request,
+            mask=mask,
+        )
+
+    with pytest.raises(TypeError, match="Expected 'mask' to be a numpy array"):
+        mask = [True, False, True]
+        from_source(
+            "gribjump",
+            request,
+            mask=mask,
+        )
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 
