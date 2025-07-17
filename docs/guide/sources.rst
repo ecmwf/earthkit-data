@@ -1262,11 +1262,6 @@ gribjump
 
   .. warning::
 
-  This source is **experimental** and may change in future versions without
-  warning. It performs **no validation** that the specified grid indices
-  correspond to the fields' actual underlying grids. The provided ranges might,
-  therefore, correspond to unexpected points on the grid. This source is also
-  currently **not thread-safe**.
 
   The following example retrieves a subset from a GRIB message in the FDB using a boolean mask:
 

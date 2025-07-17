@@ -163,6 +163,7 @@ def build_extraction_request(
         if not np.issubdtype(mask.dtype, np.bool_):
             raise ValueError(f"Expected 'mask' to be a boolean array, got {mask.dtype}")
         if mask.ndim != 1:
+            # NOTE: We could relax this and just always call 'mask.ravel()' internally.
             raise ValueError(f"Expected 'mask' to be a 1D numpy array, got {mask.ndim}D")
         extraction_request = pygj.ExtractionRequest.from_mask(stringified_request_dict, mask)
     elif indices is not None:
