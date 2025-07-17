@@ -269,6 +269,24 @@ def test_mask_to_ranges(mask, expected_ranges):
 
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
+@pytest.mark.parametrize(
+    "mask,error_type",
+    [
+        ([], ValueError),
+        ([1, 0, 1], ValueError),
+        ([[False, True], [True, False]], ValueError),
+    ],
+)
+def test_mask_to_ranges_errors(mask, error_type):
+    import numpy as np
+
+    from earthkit.data.sources.gribjump import mask_to_ranges
+
+    with pytest.raises(error_type):
+        mask_to_ranges(np.array(mask))
+
+
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
 @pytest.mark.parametrize("method", ["ranges", "indices", "mask"])
 def test_gribjump_to_numpy(seed_fdb, arr_expected, method, request):
     import numpy as np
