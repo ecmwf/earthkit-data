@@ -21,7 +21,6 @@ from typing import Optional
 
 import numpy as np
 
-from earthkit.data.core.gridspec import GridSpec
 from earthkit.data.indexing.fieldlist import SimpleFieldList
 from earthkit.data.readers.grib.metadata import GribMetadata
 from earthkit.data.sources import Source
@@ -93,19 +92,6 @@ def split_mars_requests(request: dict[str, Any]) -> list[dict[str, str]]:
             new_request[k] = v
         expanded_requests.append(new_request)
     return expanded_requests
-
-
-def verify_gridspec(expected: dict, actual: GridSpec) -> None:
-    actual = dict(actual)
-    for key, value in expected.items():
-        if key not in actual:
-            raise ValueError(f"Gridspec mismatch for key '{key}': expected {value}, got None")
-        if isinstance(value, (list, np.ndarray)):
-            if not np.array_equal(value, actual[key]):
-                raise ValueError(f"Gridspec mismatch for key '{key}': expected {value}, got {actual[key]}")
-        else:
-            if value != actual[key]:
-                raise ValueError(f"Gridspec mismatch for key '{key}': expected {value}, got {actual[key]}")
 
 
 @dataclasses.dataclass
@@ -362,7 +348,6 @@ class GribJumpSource(Source):
         mask: Optional[np.ndarray] = None,
         indices: Optional[np.ndarray] = None,
         coords_from_fdb: bool = False,
-        verify_gridspec: Optional[dict] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -372,11 +357,6 @@ class GribJumpSource(Source):
                 "Exactly one of 'ranges', 'mask' or 'indices' must be set. "
                 f"Got {ranges=}, {mask=}, {indices=}"
             )
-        if verify_gridspec is not None and not coords_from_fdb:
-            raise ValueError(
-                "If 'verify_gridspec' is set, 'coords_from_fdb' must also be set to True. "
-                f"Got {coords_from_fdb=}, {verify_gridspec=}"
-            )
         self._ranges = ranges
         self._mask = mask
         self._indices = indices
@@ -385,7 +365,6 @@ class GribJumpSource(Source):
         self._gj = pygj.GribJump()
 
         self._coords_from_fdb = coords_from_fdb
-        self._verify_gridspec = verify_gridspec
         self._mars_requests = split_mars_requests(request)
 
     def _check_env(self):

@@ -382,48 +382,6 @@ def test_gribjump_to_xarray_with_coords_does_not_fail_for_grids(seed_fdb):
 
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
-def test_gribjump_verifies_gridspec(seed_fdb):
-
-    request = {
-        "class": "od",
-        "date": "20201221",
-        "domain": "g",
-        "expver": "0001",
-        "levelist": "1000",
-        "levtype": "pl",
-        "param": "129",
-        "step": [0, 6],
-        "stream": "oper",
-        "time": "1200",
-        "type": "fc",
-    }
-
-    def assert_okay(gridspec):
-        source = from_source(
-            "gribjump", request, ranges=[(1, 5)], coords_from_fdb=True, verify_gridspec=gridspec
-        )
-        source.to_xarray()
-
-    def assert_raises(expected_error, gridspec):
-        with pytest.raises(expected_error):
-            source = from_source(
-                "gribjump", request, ranges=[(1, 5)], coords_from_fdb=True, verify_gridspec=gridspec
-            )
-            source.to_xarray()
-
-    assert_okay({})
-    assert_okay({"type": "regular_ll"})
-    assert_okay({"type": "regular_ll", "grid": [30.0, 30.0]})
-    assert_raises(ValueError, {"grid": [35.0, 30.0]})
-    assert_raises(ValueError, {"type": "regular_ll", "grid": [35.0, 30.0]})
-    assert_raises(ValueError, {"grid": "O320"})
-    assert_raises(
-        ValueError,
-        {"type": "regular_ll", "grid": [30.0, 30.0], "projection": "lambert"},
-    )
-
-
-@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
 def test_gribjump_with_mixed_types_in_lists(seed_fdb):
 
     request = {
