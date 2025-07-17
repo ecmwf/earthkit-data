@@ -1242,8 +1242,15 @@ gribjump
   :noindex:
 
   The ``gribjump`` source enables fast retrieval of subsets of GRIB messages from the `FDB (Fields DataBase)`_ using the `gribjump`_ library.
-  It requires both the `pygribjump`_ and `pyfdb`_ packages to be installed.
+  It requires both `pygribjump`_ and `pyfdb`_ to be installed.
   Exactly one of the parameters ``ranges``, ``mask`` or ``indices`` must be specified at a time.
+
+  .. warning::
+     ⚠️ This source is **experimental** and may change in future versions without
+     warning. It performs **no validation** that the specified grid indices
+     correspond to the fields' actual underlying grids. The provided ranges
+     might, therefore, correspond to unexpected points on the grid. This source
+     is also currently **not thread-safe**.
 
   :param dict request: the fdb request as a dict
   :param list ranges: a list of tuples specifying the ranges of 1D grid indices to retrieve in the form
@@ -1252,15 +1259,13 @@ gribjump
   :param numpy.array indices: a 1D array of grid indices to retrieve
   :param bool fetch_coords_from_fdb: if ``True``, loads the first field's metadata from
       the FDB to extract the coordinates at the specified indices. If ``False``, the
-      coordinates are not loaded, which can speed up the retrieval process.
+      coordinates are not loaded and no separate FDB request is made.
       Default is ``False``. Please note that no validation is performed to
       ensure that all fields in the requests share the same grid.
   :param dict fdb_kwargs: only used when ``fetch_coords_from_fdb=True``. A dict of
       keyword arguments passed to the `pyfdb.FDB` constructor. This allows to
       specify the FDB configuration, user configuration, etc. If not provided, the
       default configuration is used.
-
-  .. warning::
 
 
   The following example retrieves a subset from a GRIB message in the FDB using a boolean mask:

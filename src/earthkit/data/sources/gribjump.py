@@ -45,9 +45,8 @@ def split_mars_requests(request: dict[str, Any]) -> list[dict[str, Any]]:
 
     Returns
     -------
-    list[dict[str, str]]
+    list[dict[str, Any]]
         A list of individual request dictionaries, each representing a single field.
-        All values are converted to strings.
 
     Raises
     ------
@@ -112,6 +111,7 @@ def mask_to_ranges(mask: np.ndarray) -> list[tuple[int, int]]:
     if not np.issubdtype(mask.dtype, np.bool_):
         raise ValueError(f"Expected 'mask' to be a boolean array, got {mask.dtype}")
     if mask.ndim != 1:
+        # NOTE: We could relax this and allow 2D masks, which we flatten using .ravel().
         raise ValueError(f"Expected 'mask' to be a 1D numpy array, got {mask.ndim}D")
 
     padded = np.concatenate(([False], mask, [False]))
@@ -140,7 +140,7 @@ class ExtractionRequest:
     """
 
     extraction_request: pygj.ExtractionRequest
-    request: dict[str, str]
+    request: dict[str, Any]
 
     @property
     def ranges(self) -> list[tuple[int, int]]:
@@ -187,13 +187,6 @@ def build_extraction_request(
     if ranges is not None:
         extraction_request = pygj.ExtractionRequest(stringified_request_dict, ranges)
     elif mask is not None:
-        if not isinstance(mask, np.ndarray):
-            raise TypeError(f"Expected 'mask' to be a numpy array, got {type(mask)}")
-        if not np.issubdtype(mask.dtype, np.bool_):
-            raise ValueError(f"Expected 'mask' to be a boolean array, got {mask.dtype}")
-        if mask.ndim != 1:
-            # NOTE: We could relax this and just always call 'mask.ravel()' internally.
-            raise ValueError(f"Expected 'mask' to be a 1D numpy array, got {mask.ndim}D")
         extraction_request = pygj.ExtractionRequest.from_mask(stringified_request_dict, mask)
     elif indices is not None:
         extraction_request = pygj.ExtractionRequest.from_indices(stringified_request_dict, indices)
