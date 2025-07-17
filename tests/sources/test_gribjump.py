@@ -24,7 +24,7 @@ from earthkit.data.testing import earthkit_test_data_file
 
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
-def test_expand_dict_with_lists():
+def test_split_mars_requests():
     from earthkit.data.sources.gribjump import split_mars_requests
 
     request = {

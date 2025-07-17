@@ -29,7 +29,7 @@ from earthkit.data.sources.fdb import FDBRetriever
 from earthkit.data.utils.metadata.dict import UserMetadata
 
 
-def split_mars_requests(request: dict[str, Any]) -> list[dict[str, str]]:
+def split_mars_requests(request: dict[str, Any]) -> list[dict[str, Any]]:
     """Splits a MARS request into individual single-field requests by expanding list values.
 
     Creates all possible combinations of list values in the request dictionary,
@@ -62,8 +62,8 @@ def split_mars_requests(request: dict[str, Any]) -> list[dict[str, str]]:
     [{'param': '2t', 'date': '20230101'}, {'param': 'msl', 'date': '20230101'}]
 
     >>> split_mars_requests({"param": ["2t", "msl"], "step": [0, 6]})
-    [{'param': '2t', 'step': '0'}, {'param': '2t', 'step': '6'},
-     {'param': 'msl', 'step': '0'}, {'param': 'msl', 'step': '6'}]
+    [{'param': '2t', 'step': 0}, {'param': '2t', 'step': 6},
+     {'param': 'msl', 'step': 0}, {'param': 'msl', 'step': 6}]
     """
     request = request.copy()
 
