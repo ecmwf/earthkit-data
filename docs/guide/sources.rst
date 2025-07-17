@@ -1238,7 +1238,7 @@ wekeocds
 gribjump
 --------
 
-.. py:function:: from_source("gribjump", request, *, ranges=None, mask=None, indices=None, coords_from_fdb=False, **kwargs)
+.. py:function:: from_source("gribjump", request, *, ranges=None, mask=None, indices=None, fetch_coords_from_fdb=False, fdb_kwargs=None, **kwargs)
   :noindex:
 
   The ``gribjump`` source enables fast retrieval of subsets of GRIB messages from the `FDB (Fields DataBase)`_ using the `gribjump`_ library.
@@ -1250,19 +1250,23 @@ gribjump
       [(start1, end1), (start2, end2), ...]. Ranges are exclusive, meaning that the end index is not included in the range
   :param numpy.array mask: a 1D boolean mask specifying which grid points to retrieve
   :param numpy.array indices: a 1D array of grid indices to retrieve
-  :param bool coords_from_fdb: if ``True``, loads the full first message from
-      the FDB to extract the coordinates at the specified indices. This is useful
-      when the coordinates are needed for the retrieved data. If ``False``, the
+  :param bool fetch_coords_from_fdb: if ``True``, loads the first field's metadata from
+      the FDB to extract the coordinates at the specified indices. If ``False``, the
       coordinates are not loaded, which can speed up the retrieval process.
       Default is ``False``. Please note that no validation is performed to
-      ensure that all retrieved fields share the same grid and therefore coordinates.
+      ensure that all fields in the requests share the same grid.
+  :param dict fdb_kwargs: only used when ``fetch_coords_from_fdb=True``. A dict of
+      keyword arguments passed to the `pyfdb.FDB` constructor. This allows to
+      specify the FDB configuration, user configuration, etc. If not provided, the
+      default configuration is used.
 
-  .. note::
+  .. warning::
 
-  This source is experimental and may change in future versions.
-  There is no mechanism to verify that the accessed GRIB messages use the grid
-  expected by the user. The provided ranges might, therefore, correspond to unexpected
-  points on the grid.
+  This source is **experimental** and may change in future versions without
+  warning. It performs **no validation** that the specified grid indices
+  correspond to the fields' actual underlying grids. The provided ranges might,
+  therefore, correspond to unexpected points on the grid. This source is also
+  currently **not thread-safe**.
 
   The following example retrieves a subset from a GRIB message in the FDB using a boolean mask:
 

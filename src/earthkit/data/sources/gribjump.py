@@ -99,7 +99,8 @@ class ExtractionRequest:
     """
     Simple wrapper of pygribjump.ExtractionRequest and the original FDB request dict.
 
-    Can be removed once pygribjump.ExtractionRequest provides a reference to the request dictionary.
+    Can be removed once pygribjump.ExtractionRequest provides a reference to the request dictionary
+    with original MARS keyword types.
 
     Parameters
     ----------
@@ -206,23 +207,30 @@ class ExtractionRequestCollection(UserList):
 
 
 class FieldExtractList(SimpleFieldList):
-    """Lazily loaded representation of the points extracted from multiple fields using GribJump.
+    """Lazily loaded representation of points extracted from multiple fields using GribJump.
 
-    For simplicity, this class currently inherits from SimpleFieldList and is
-    inspired by the FieldlistFromDicts and GribFieldListInMemory classes.
-    However, it is not a complete implementation and can break in unexpected
-    ways. The main reason for this is that although the arrays with the
-    extracted values are represented as ArrayFields, they are not truly proper
-    Field implementations. They are neither stored as 2D grids, nor do they
-    possess any geographical information or well-defined metadata.
+    .. warning::
+        This implementation is **not thread-safe**. Concurrent access from multiple threads
+        may result in race conditions during lazy loading. Use appropriate synchronization
+        if accessing from multiple threads.
 
-    Known limitations:
-    * FieldExtractList.sel is quite brittle as any filter values must have the same type
-      as the metadata in the user's request dictionary. The actual type of the underlying
-      MARS keyword is not respected. So ".sel(step=0) would not work with a request
-      {"step": "0"} but only {"step": 0}.
-    * Efficient lazy loading of selections / slices only is not supported.
-    * Pickling / unpickling might not work.
+    .. note::
+        This class should not be instantiated directly. Use the ``gribjump`` source instead:
+        ``earthkit.data.from_source("gribjump", request, ranges=ranges)``
+
+    This class inherits from SimpleFieldList and provides lazy loading of grid point
+    extractions from GRIB fields via GribJump. FieldList operations like ``sel()``,
+    ``group_by()``, etc. might work but are not guaranteed to be fully functional.
+
+    Known Limitations
+    -----------------
+    * **No validation**: Grid indices are not validated against actual field grids.
+        Incorrect indices may return unexpected grid points.
+    * **Not thread-safe**: Concurrent access may cause race conditions during lazy loading.
+    * **Limited metadata**: Only metadata from the request dictionary is available,
+        except for latitude/longitude coordinates when ``fetch_coords_from_fdb=True`` is used.
+    * **No efficient slicing**: Lazy loading of selections/slices is not supported.
+    * **Serialization issues**: Pickling/unpickling might not work reliably.
     """
 
     def __init__(
@@ -235,11 +243,12 @@ class FieldExtractList(SimpleFieldList):
         self._requests = requests
         self._fdb_retriever = fdb_retriever
 
+        # These attributes are set lazily after loading the data.
         self._loaded = False
         self._grid_indices = None
         self._reference_metadata: Optional[GribMetadata] = None
 
-        super().__init__(fields=None)  # The fields attribute is set lazily
+        super().__init__(fields=None)
 
     def __len__(self):
         self._load()
@@ -340,6 +349,15 @@ class FieldExtractList(SimpleFieldList):
 
 
 class GribJumpSource(Source):
+    """Source for extracting grid points from GRIB messages in an FDB with GribJump.
+
+    ⚠️ This source is experimental and may change in future versions without
+    warning. It performs no validation that the specified grid indices
+    correspond to the fields' actual underlying grids. The provided ranges
+    might, therefore, correspond to unexpected points on the grid. This source
+    is also currently not thread-safe.
+    """
+
     def __init__(
         self,
         request: dict,
@@ -347,9 +365,30 @@ class GribJumpSource(Source):
         ranges: Optional[list[tuple[int, int]]] = None,
         mask: Optional[np.ndarray] = None,
         indices: Optional[np.ndarray] = None,
-        coords_from_fdb: bool = False,
+        fetch_coords_from_fdb: bool = False,
+        fdb_kwargs: Optional[dict[str, Any]] = None,
         **kwargs,
     ):
+        """
+        Parameters
+        ----------
+        request : dict
+            The MARS request dictionary describing the fields to retrieve.
+        ranges : Optional[list[tuple[int, int]]], optional
+            The ranges of grid indices to retrieve, by default None.
+        mask : Optional[np.ndarray], optional
+            A 1D boolean mask specifying which grid points to retrieve, by default None.
+        indices : Optional[np.ndarray], optional
+            A 1D array of grid indices to retrieve, by default None.
+        fetch_coords_from_fdb : bool, optional
+            If set to True, loads the first field's metadata from the FDB to extract the coordinates
+            at the specified indices.
+        fdb_kwargs : Optional[dict[str, Any]], optional
+            Only used when `fetch_coords_from_fdb=True`. A dict of
+            keyword arguments passed to the `pyfdb.FDB` constructor. These arguments are only passed
+            to the FDB when fetching coordinates and is not used by GribJump for the extraction itself.
+        """
+
         super().__init__(**kwargs)
 
         if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
@@ -364,7 +403,8 @@ class GribJumpSource(Source):
         self._check_env()
         self._gj = pygj.GribJump()
 
-        self._coords_from_fdb = coords_from_fdb
+        self._coords_from_fdb = fetch_coords_from_fdb
+        self._fdb_kwargs = fdb_kwargs if fdb_kwargs is not None else {}
         self._mars_requests = split_mars_requests(request)
 
     def _check_env(self):
@@ -395,16 +435,13 @@ class GribJumpSource(Source):
             )
 
     def mutate(self):
-        # TODO: Allow proper configuration of the FDB retriever
-        fdb_retriever = FDBRetriever({}) if self._coords_from_fdb else None
-
         extraction_requests = ExtractionRequestCollection.from_mars_requests(
             self._mars_requests,
             ranges=self._ranges,
             mask=self._mask,
             indices=self._indices,
         )
-
+        fdb_retriever = FDBRetriever(self._fdb_kwargs) if self._coords_from_fdb else None
         return FieldExtractList(
             self._gj,
             requests=extraction_requests,
