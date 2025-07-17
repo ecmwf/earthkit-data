@@ -94,6 +94,35 @@ def split_mars_requests(request: dict[str, Any]) -> list[dict[str, Any]]:
     return expanded_requests
 
 
+def mask_to_ranges(mask: np.ndarray) -> list[tuple[int, int]]:
+    """Converts a boolean mask to ranges of indices where the mask is True.
+
+    Parameters
+    ----------
+    mask : np.ndarray
+        A 1D boolean numpy array.
+
+    Returns
+    -------
+    list[tuple[int, int]]
+        A list of tuples representing the start and end indices of True segments in the mask.
+    """
+    if not isinstance(mask, np.ndarray):
+        raise TypeError(f"Expected 'mask' to be a numpy array, got {type(mask)}")
+    if not np.issubdtype(mask.dtype, np.bool_):
+        raise ValueError(f"Expected 'mask' to be a boolean array, got {mask.dtype}")
+    if mask.ndim != 1:
+        raise ValueError(f"Expected 'mask' to be a 1D numpy array, got {mask.ndim}D")
+
+    padded = np.concatenate(([False], mask, [False]))
+    d = np.diff(padded.astype(int))
+    starts = np.where(d == 1)[0]
+    ends = np.where(d == -1)[0]
+
+    ranges = list(zip(starts, ends))
+    return ranges
+
+
 @dataclasses.dataclass
 class ExtractionRequest:
     """
@@ -203,6 +232,19 @@ class ExtractionRequestCollection(UserList):
         ExtractionRequestCollection
             A collection of ExtractionRequest objects created from the MARS requests.
         """
+
+        if sum(opt is not None for opt in (ranges, mask, indices)) != 1:
+            raise ValueError(
+                "Exactly one of 'ranges', 'mask' or 'indices' must be set. "
+                f"Got {ranges=}, {mask=}, {indices=}"
+            )
+
+        if mask is not None:
+            # Since PyGribJump converts the mask to ranges internally,
+            # we convert it to ranges here once to avoid doing this multiple times.
+            ranges = mask_to_ranges(mask)
+            mask = None
+
         extraction_requests = [build_extraction_request(req, ranges, mask, indices) for req in mars_requests]
         return cls(extraction_requests)
 

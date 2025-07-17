@@ -23,44 +23,6 @@ from earthkit.data.testing import NO_GRIBJUMP
 from earthkit.data.testing import earthkit_test_data_file
 
 
-@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
-def test_split_mars_requests():
-    from earthkit.data.sources.gribjump import split_mars_requests
-
-    request = {
-        "step": [0, 6, 12],
-        "param": ["129", "130"],
-        "date": "20230101",
-        "time": "1200",
-    }
-    result = split_mars_requests(request)
-    assert result == [
-        {"param": "129", "step": 0, "date": "20230101", "time": "1200"},
-        {"param": "129", "step": 6, "date": "20230101", "time": "1200"},
-        {"param": "129", "step": 12, "date": "20230101", "time": "1200"},
-        {"param": "130", "step": 0, "date": "20230101", "time": "1200"},
-        {"param": "130", "step": 6, "date": "20230101", "time": "1200"},
-        {"param": "130", "step": 12, "date": "20230101", "time": "1200"},
-    ]
-
-    assert split_mars_requests({}) == [{}]
-    assert split_mars_requests({"a": 1}) == [{"a": 1}]
-    assert split_mars_requests({"a": 1, "b": 2}) == [{"a": 1, "b": 2}]
-
-    # Error: empty list
-    with pytest.raises(ValueError, match="Cannot expand dictionary with empty list"):
-        split_mars_requests({"a": 1, "b": []})
-
-    # Error: unsupported "/" syntax
-    with pytest.raises(ValueError, match="Found unsupported list or range using '/'"):
-        split_mars_requests({"param": "129/130", "date": "20230101"})
-
-    # Error: mixed types in lists
-    request_mixed = {"param": [129, "130"], "date": "20230101"}
-    with pytest.raises(TypeError, match="All list values must share the same type"):
-        split_mars_requests(request_mixed)
-
-
 @pytest.fixture
 def setup_fdb_with_gribjump():
     import pyfdb
@@ -245,6 +207,65 @@ def ds_expected(ds_expected_with_coords):
     # Remove coordinates to match the expected output
     ds = ds_expected_with_coords.drop_vars(["latitude", "longitude"])
     return ds
+
+
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
+def test_split_mars_requests():
+    from earthkit.data.sources.gribjump import split_mars_requests
+
+    request = {
+        "step": [0, 6, 12],
+        "param": ["129", "130"],
+        "date": "20230101",
+        "time": "1200",
+    }
+    result = split_mars_requests(request)
+    assert result == [
+        {"param": "129", "step": 0, "date": "20230101", "time": "1200"},
+        {"param": "129", "step": 6, "date": "20230101", "time": "1200"},
+        {"param": "129", "step": 12, "date": "20230101", "time": "1200"},
+        {"param": "130", "step": 0, "date": "20230101", "time": "1200"},
+        {"param": "130", "step": 6, "date": "20230101", "time": "1200"},
+        {"param": "130", "step": 12, "date": "20230101", "time": "1200"},
+    ]
+
+    assert split_mars_requests({}) == [{}]
+    assert split_mars_requests({"a": 1}) == [{"a": 1}]
+    assert split_mars_requests({"a": 1, "b": 2}) == [{"a": 1, "b": 2}]
+
+    # Error: empty list
+    with pytest.raises(ValueError, match="Cannot expand dictionary with empty list"):
+        split_mars_requests({"a": 1, "b": []})
+
+    # Error: unsupported "/" syntax
+    with pytest.raises(ValueError, match="Found unsupported list or range using '/'"):
+        split_mars_requests({"param": "129/130", "date": "20230101"})
+
+    # Error: mixed types in lists
+    request_mixed = {"param": [129, "130"], "date": "20230101"}
+    with pytest.raises(TypeError, match="All list values must share the same type"):
+        split_mars_requests(request_mixed)
+
+
+@pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
+@pytest.mark.parametrize(
+    "mask,expected_ranges",
+    [
+        ([False, False, False], []),
+        ([True, True, False], [(0, 2)]),
+        ([False, False, True], [(2, 3)]),
+        ([False, False, True, True, False, True, False], [(2, 4), (5, 6)]),
+        ([True, False, True, True, True, False, True], [(0, 1), (2, 5), (6, 7)]),
+    ],
+)
+def test_mask_to_ranges(mask, expected_ranges):
+    import numpy as np
+
+    from earthkit.data.sources.gribjump import mask_to_ranges
+
+    mask = np.array(mask, dtype=bool)
+    result = mask_to_ranges(mask)
+    assert result == expected_ranges
 
 
 @pytest.mark.skipif(NO_GRIBJUMP, reason="pygribjump or pyfdb not available")
