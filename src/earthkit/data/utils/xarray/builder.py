@@ -251,15 +251,14 @@ class BackendDataBuilder(metaclass=ABCMeta):
         self.flatten_values = profile.flatten_values
 
         # Array backend/namespace
-        array_module = profile.array_module
-        if array_module is None:
-            array_module = "numpy"
+        array_backend = profile.array_backend
+        if array_backend is None:
+            array_backend = "numpy"
 
         from earthkit.utils.array import get_backend
 
-        self.array_backend = get_backend(array_module)
-        assert self.array_backend is not None, f"Unsupported array_module : {array_module}"
-        self.array_module = self.array_backend.namespace
+        self.array_backend = get_backend(array_backend)
+        assert self.array_backend is not None, f"Unsupported array_backend : {array_backend}"
 
         dtype = profile.dtype
         if dtype is None:
@@ -480,7 +479,7 @@ class TensorBackendDataBuilder(BackendDataBuilder):
             tensor,
             var_dims,
             tensor.full_shape,
-            self.array_module,
+            self.array_backend.namespace,
             self.dtype,
             name,
         )

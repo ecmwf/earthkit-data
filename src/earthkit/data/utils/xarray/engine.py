@@ -55,6 +55,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         strict=None,
         dtype=None,
         array_module=None,
+        array_backend=None,
         errors=None,
     ):
         r"""
@@ -306,8 +307,9 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             to False unless the ``profile`` overwrites it.
         dtype: str, numpy.dtype or None
             Typecode or data-type of the array data.
-        array_module: module
-            The module to use for array operations. Default is numpy.
+        array_backend: str, array namespace, ArrayBackend, None
+            The array backend/namespace to use for array operations. The default value (None) is
+            expanded to "numpy".
         """
         fieldlist = self._fieldlist(filename_or_obj, source_type)
 
@@ -316,6 +318,13 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             return builder.build()
         else:
             from .builder import SingleDatasetBuilder
+
+            if array_module is not None:
+                import warnings
+
+                warnings.warn("'array_module' is deprecated. Use 'array_backend' instead", DeprecationWarning)
+                if array_backend is None:
+                    array_backend = array_module
 
             _kwargs = dict(
                 variable_key=variable_key,
@@ -351,7 +360,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 release_source=release_source,
                 strict=strict,
                 dtype=dtype,
-                array_module=array_module,
+                array_backend=array_backend,
                 errors=errors,
             )
 
