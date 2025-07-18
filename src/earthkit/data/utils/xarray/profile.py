@@ -279,12 +279,18 @@ class Profile:
         # values
         self.flatten_values = kwargs.pop("flatten_values")
         self.dtype = kwargs.pop("dtype")
-        self.array_module = kwargs.pop("array_module")
+        self.array_backend = kwargs.pop("array_backend")
 
-        if self.array_module == "numpy":
-            import numpy as np
+        if "array_module" in kwargs:
+            raise ValueError(
+                "'array_module' is deprecated. Use 'array_backend' instead. "
+                "If you are using 'array_module', please update your code to use 'array_backend'."
+            )
 
-            self.array_module = np
+        # if self.array_backend == "numpy":
+        #     import numpy as np
+
+        #     self.array_module = np
 
         if kwargs:
             raise ValueError(f"Unsupported options: {kwargs}")
@@ -327,6 +333,19 @@ class Profile:
 
         kwargs = copy.deepcopy(kwargs)
         opt = copy.deepcopy(PROFILE_CONF.defaults)
+
+        def _deprec_array_module(data):
+            """Deprecated: use 'array_backend' instead"""
+            if "array_module" in data:
+                import warnings
+
+                warnings.warn("'array_module' is deprecated. Use 'array_backend' instead", DeprecationWarning)
+
+                array_module = kwargs.pop("array_module")
+                if data.get("array_backend", None) is None:
+                    data["array_backend"] = array_module
+
+        _deprec_array_module(kwargs)
 
         for d in [conf, kwargs]:
             for k, v in d.items():
