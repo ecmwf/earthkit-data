@@ -50,7 +50,7 @@ class GribCodesFloatArrayAccessor:
 
     @staticmethod
     def to_numpy_dtype(dtype):
-        from earthkit.utils.array import to_numpy_dtype
+        from earthkit.utils.array.dtype import to_numpy_dtype
 
         return to_numpy_dtype(dtype, default=np.float64)
 

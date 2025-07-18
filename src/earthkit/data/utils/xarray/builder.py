@@ -227,7 +227,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
             # LOG.debug(f"   {field_index=}")
 
             try:
-                result = r.to_array(index=field_index, array_backend=self.xp)
+                result = r.to_array(index=field_index, array_backend=self.xp, dtype=self.dtype)
             except Exception as e:
                 LOG.exception("Error in to_array:", e)
                 raise
@@ -264,7 +264,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
         dtype = profile.dtype
         if dtype is None:
             dtype = "float64"
-        self.dtype = self.array_backend.dtype(dtype)
+        self.dtype = self.array_backend.make_dtype(dtype)
 
         # Note: these coords inside the tensor are called user_coords and
         # the corresponding dims are called user_dims

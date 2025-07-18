@@ -782,14 +782,21 @@ def test_xr_engine_invalid_kwargs(kwargs):
 
 
 @pytest.mark.cache
-def test_xr_engine_dtype():
+@pytest.mark.parametrize(
+    "dtype,expected_dtype",
+    [
+        (np.float32, np.float32),
+        ("float32", np.float32),
+        (np.float64, np.float64),
+        ("float64", np.float64),
+    ],
+)
+def test_xr_engine_dtype(dtype, expected_dtype):
     ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
 
-    ds = ds_ek.to_xarray(dtype=np.float32)
-    assert ds["t"].values.dtype == np.float32
-
-    ds = ds_ek.to_xarray(dtype=np.float64)
-    assert ds["t"].values.dtype == np.float64
+    ds = ds_ek.to_xarray(dtype=dtype)
+    assert ds["t"].data.dtype == expected_dtype
+    assert ds["t"].values.dtype == expected_dtype
 
 
 @pytest.mark.cache
