@@ -142,18 +142,21 @@ class SimpleTarget(Target):
             if hasattr(data, "sources"):
                 for d in data.sources:
                     self.write(d, **kwargs)
-            elif hasattr(data, "to_target"):
-                self._write(data, **kwargs)
+
+            self._write(data, **kwargs)
+
+            # elif hasattr(data, "to_target"):
+            #     self._write(data, **kwargs)
             # Xarray generated with earthkit
-            elif hasattr(data, "earthkit"):
-                accessor = data.earthkit
-                if hasattr(accessor, "_to_fields") and hasattr(accessor, "_generator"):
-                    self._write(accessor._generator(), **kwargs)
+            # elif hasattr(data, "earthkit"):
+            #     accessor = data.earthkit
+            #     if hasattr(accessor, "_to_fields") and hasattr(accessor, "_generator"):
+            #         self._write(accessor._generator(), **kwargs)
             # elif "values" not in kwargs:
             #     # TODO: this should be reviewed
             #     self._write(None, values=data, **kwargs)
-            else:
-                raise ValueError("Cannot write data to target")
+            # else:
+            #     raise ValueError("Cannot write data to target")
         else:
             self._write(None, **kwargs)
 

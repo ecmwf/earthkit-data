@@ -285,7 +285,7 @@ def test_xr_write_to_file_1(method, kwargs):
         elif method == "to_target_on_obj":
             ds["t"].earthkit.to_target("file", path)
         elif method == "to_target_func":
-            to_target("file", path, data=ds["t"])
+            to_target("file", path, data=ds["t"], encoder="grib")
 
         r = from_source("file", path)
 
@@ -341,7 +341,7 @@ def test_xr_write_to_file_1(method, kwargs):
         elif method == "to_target_on_obj":
             ds.earthkit.to_target("file", path)
         elif method == "to_target_func":
-            to_target("file", path, data=ds)
+            to_target("file", path, data=ds, encoder="grib")
 
         r = from_source("file", path)
         assert len(r) == 16 * 2

@@ -67,7 +67,7 @@ class StrWrapper(Wrapper):
         return self.data
 
 
-def wrapper(data, *args, **kwargs):
+def wrapper(data, *args, fieldlist=False, **kwargs):
     if isinstance(data, str):
         return StrWrapper(data)
     return None

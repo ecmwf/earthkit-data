@@ -80,5 +80,8 @@ class NetCDFEncoder(Encoder):
     def _encode_fieldlist(self, data, **kwargs):
         return self._encode(data, **kwargs)
 
+    def _encode_xarray(self, data, **kwargs):
+        raise NotImplementedError
+
 
 encoder = NetCDFEncoder

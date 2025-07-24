@@ -157,6 +157,18 @@ class Encoder(metaclass=ABCMeta):
         Double dispatch method that called from ``fieldlist`` to encode itself."""
         pass
 
+    @abstractmethod
+    def _encode_xarray(self, data, **kwargs) -> EncodedData:
+        """Subclass implementation of the encoding logic for Xarray data.
+
+        Parameters:
+        -----------
+        data: Xarray DataArray or Dataset
+            The data to encode
+
+        Double dispatch method that called from ``data`` to encode itself."""
+        pass
+
 
 class EncoderLoader:
     kind = "encoder"
