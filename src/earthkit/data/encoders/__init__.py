@@ -40,6 +40,8 @@ class EncodedData(metaclass=ABCMeta):
     It is the return value from the :meth:`Encoder.encode` method.
     """
 
+    prefer_file_path = False
+
     @abstractmethod
     def to_bytes(self):
         """Return the data as a bytesarray"""

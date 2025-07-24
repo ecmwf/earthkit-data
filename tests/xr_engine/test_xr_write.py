@@ -394,7 +394,6 @@ def test_xr_write_to_netcdf_file_dataarray(method, kwargs):
     xr.set_options(keep_attrs=True)
 
     ds = ds_ek.to_xarray(**kwargs)
-    print(ds)
     ds += 1
 
     # data-array
@@ -406,7 +405,7 @@ def test_xr_write_to_netcdf_file_dataarray(method, kwargs):
         elif method == "to_target_func":
             to_target("file", path, data=ds["t"], encoder="netcdf")
 
-        r = xr.open_dataset(path, engine="netcdf4")
+        r = xr.open_dataset(path, engine="netcdf4", decode_times=False)
 
         for name in ["t"]:
             assert name in r.data_vars
@@ -448,7 +447,7 @@ def test_xr_write_to_netcdf_file_dataset(method, kwargs):
         elif method == "to_target_func":
             to_target("file", path, data=ds, encoder="netcdf")
 
-        r = xr.open_dataset(path, engine="netcdf4")
+        r = xr.open_dataset(path, engine="netcdf4", decode_times=False)
 
         for name in ["t", "r"]:
             assert name in r.data_vars

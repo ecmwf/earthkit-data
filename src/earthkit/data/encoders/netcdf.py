@@ -16,17 +16,20 @@ LOG = logging.getLogger(__name__)
 
 
 class NetCDFEncodedData(EncodedData):
+    prefer_file_path = True
+
     def __init__(self, ds):
         self.ds = ds
 
     def to_bytes(self):
         return self.ds.to_netcdf(None)
 
-    def to_file(self, f):
+    def to_file(self, file):
         if hasattr(self.ds, "earthkit"):
-            f.write(self.ds.earthkit.to_netcdf(None))
+            self.ds.earthkit.to_netcdf(file)
+
         else:
-            self.ds.to_netcdf(f)
+            self.ds.to_netcdf(file)
 
     def metadata(self, key):
         raise NotImplementedError
