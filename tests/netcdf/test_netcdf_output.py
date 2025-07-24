@@ -15,6 +15,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
+from earthkit.data.testing import IN_GITHUB
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import write_to_file
@@ -59,6 +60,7 @@ def test_netcdf_fieldlist_subset_save_2(write_method):
             write_to_file(write_method, tmp, r)
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Some runners crash in Xarray")
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_netcdf_fieldlist_multi_subset_save(write_method):
     ds1 = from_source("file", earthkit_examples_file("test.nc"))
@@ -74,6 +76,7 @@ def test_netcdf_fieldlist_multi_subset_save(write_method):
         assert len(r_tmp) == 20
 
 
+@pytest.mark.skipif(IN_GITHUB, reason="Some runners crash in Xarray")
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_netcdf_fieldlist_multi_subset_save_bad(write_method):
     ds1 = from_source("file", earthkit_examples_file("test.nc"))
