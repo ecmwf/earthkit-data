@@ -16,6 +16,13 @@ LOG = logging.getLogger(__name__)
 
 
 class NetCDFEncodedData(EncodedData):
+    # Prefer file path when writing to netCDF files. The reason is as follows:
+    #
+    # The Xarray.to_netcdf() documentation states that:
+    # ... file-like objects are only supported by the scipy engine.
+    # If no path is provided, this function returns the resulting netCDF file as bytes;
+    # in this case, we need to use scipy, which does not support netCDF version 4
+    # (the default format becomes NETCDF3_64BIT).
     prefer_file_path = True
 
     def __init__(self, ds):
