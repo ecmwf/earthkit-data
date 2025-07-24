@@ -409,7 +409,7 @@ class XarrayEarthkit:
     def to_target(self, target, *args, **kwargs):
         from earthkit.data.targets import to_target
 
-        to_target(target, *args, data=self._generator(), **kwargs)
+        to_target(target, *args, data=self._obj, **kwargs)
 
     def to_grib(self, filename):
         import warnings

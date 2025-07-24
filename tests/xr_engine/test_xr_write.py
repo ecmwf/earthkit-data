@@ -264,12 +264,11 @@ def test_xr_write_bits_per_value():
         {"profile": "mars", "time_dim_mode": "raw"},
     ],
 )
-def test_xr_write_to_file_1(method, kwargs):
+def test_xr_write_to_grib_file_dataarray(method, kwargs):
     ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
 
     ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy()
-    ref_r_vals = ds_ek.sel(param="r", step=6, level=500).to_numpy()
 
     import xarray as xr
 
@@ -283,9 +282,9 @@ def test_xr_write_to_file_1(method, kwargs):
         if method == "to_grib":
             ds["t"].earthkit.to_grib(path)
         elif method == "to_target_on_obj":
-            ds["t"].earthkit.to_target("file", path)
+            ds["t"].earthkit.to_target("file", path, encoder="grib")
         elif method == "to_target_func":
-            to_target("file", path, data=ds["t"])
+            to_target("file", path, data=ds["t"], encoder="grib")
 
         r = from_source("file", path)
 
@@ -334,14 +333,37 @@ def test_xr_write_to_file_1(method, kwargs):
         assert r.metadata("base_datetime") == ref_base
         assert r.metadata("valid_datetime") == ref_valid
 
+
+@pytest.mark.cache
+@pytest.mark.parametrize("method", ["to_grib", "to_target_on_obj", "to_target_func"])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"profile": "mars", "time_dim_mode": "raw"},
+    ],
+)
+def test_xr_write_to_grib_file_dataset(method, kwargs):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
+
+    ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy()
+    ref_r_vals = ds_ek.sel(param="r", step=6, level=500).to_numpy()
+
+    import xarray as xr
+
+    xr.set_options(keep_attrs=True)
+
+    ds = ds_ek.to_xarray(**kwargs)
+    ds += 1
+
     # dataset
     with temp_file() as path:
         if method == "to_grib":
             ds.earthkit.to_grib(path)
         elif method == "to_target_on_obj":
-            ds.earthkit.to_target("file", path)
+            ds.earthkit.to_target("file", path, encoder="grib")
         elif method == "to_target_func":
-            to_target("file", path, data=ds)
+            to_target("file", path, data=ds, encoder="grib")
 
         r = from_source("file", path)
         assert len(r) == 16 * 2
@@ -351,3 +373,87 @@ def test_xr_write_to_file_1(method, kwargs):
 
         assert sorted(r.metadata("base_datetime")) == sorted(ds_ek.metadata("base_datetime"))
         assert sorted(r.metadata("valid_datetime")) == sorted(ds_ek.metadata("valid_datetime"))
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("method", ["to_netcdf", "to_target_on_obj", "to_target_func"])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"profile": "mars", "time_dim_mode": "raw"},
+    ],
+)
+def test_xr_write_to_netcdf_file_dataarray(method, kwargs):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = ds_ek.sel(param=["t"], level=[500, 850])
+
+    ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy().flatten()
+
+    import xarray as xr
+
+    xr.set_options(keep_attrs=True)
+
+    ds = ds_ek.to_xarray(**kwargs)
+    ds += 1
+
+    # data-array
+    with temp_file() as path:
+        if method == "to_netcdf":
+            ds["t"].earthkit.to_netcdf(path)
+        elif method == "to_target_on_obj":
+            ds["t"].earthkit.to_target("file", path, encoder="netcdf")
+        elif method == "to_target_func":
+            to_target("file", path, data=ds["t"], encoder="netcdf")
+
+        r = xr.open_dataset(path, engine="netcdf4", decode_times=False)
+
+        for name in ["t"]:
+            assert name in r.data_vars
+
+        for name in ["latitude", "longitude"]:
+            assert name in r.coords
+
+        assert np.allclose(ref_t_vals + 1.0, r["t"].isel(step=1, level=0).to_numpy().flatten())
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("method", ["to_netcdf", "to_target_on_obj", "to_target_func"])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"profile": "mars", "time_dim_mode": "raw"},
+    ],
+)
+def test_xr_write_to_netcdf_file_dataset(method, kwargs):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
+
+    ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy().flatten()
+    ref_r_vals = ds_ek.sel(param="r", step=6, level=500).to_numpy().flatten()
+
+    import xarray as xr
+
+    xr.set_options(keep_attrs=True)
+
+    ds = ds_ek.to_xarray(**kwargs)
+    ds += 1
+
+    # dataset
+    with temp_file() as path:
+        if method == "to_netcdf":
+            ds.earthkit.to_netcdf(path)
+        elif method == "to_target_on_obj":
+            ds.earthkit.to_target("file", path, encoder="netcdf")
+        elif method == "to_target_func":
+            to_target("file", path, data=ds, encoder="netcdf")
+
+        r = xr.open_dataset(path, engine="netcdf4", decode_times=False)
+
+        for name in ["t", "r"]:
+            assert name in r.data_vars
+
+        for name in ["latitude", "longitude"]:
+            assert name in r.coords
+
+        assert np.allclose(ref_t_vals + 1.0, r["t"].isel(step=1, level=0).to_numpy().flatten())
+        assert np.allclose(ref_r_vals + 1.0, r["r"].isel(step=1, level=0).to_numpy().flatten())
