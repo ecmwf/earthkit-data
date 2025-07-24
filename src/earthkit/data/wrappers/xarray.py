@@ -165,7 +165,6 @@ def wrapper(data, *args, fieldlist=True, **kwargs):
         except ValueError:
             return XArrayDataArrayWrapper(data, *args, **kwargs)
 
-    print("XArrayDatasetWrapper fieldlist=", fieldlist)
     if ds is not None:
         if not fieldlist:
             return XArrayDatasetWrapper(ds, *args, **kwargs)

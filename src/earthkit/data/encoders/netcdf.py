@@ -44,7 +44,7 @@ class NetCDFEncoder(Encoder):
         if data is not None:
             from earthkit.data.wrappers import get_wrapper
 
-            data = get_wrapper(data)
+            data = get_wrapper(data, fieldlist=False)
             return data._encode(self, **kwargs)
         else:
             raise ValueError("No data to encode")
@@ -81,7 +81,7 @@ class NetCDFEncoder(Encoder):
         return self._encode(data, **kwargs)
 
     def _encode_xarray(self, data, **kwargs):
-        raise NotImplementedError
+        return NetCDFEncodedData(data)
 
 
 encoder = NetCDFEncoder
