@@ -88,3 +88,24 @@ def test_xr_engine_add_geo_coords(add_geo_coords):
     else:
         assert "latitude" not in a.coords
         assert "longitude" not in a.coords
+
+
+@pytest.mark.cache
+def test_xr_engine_gridspec():
+    ds = from_source(
+        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "grid", "reduced_gg_O32.grib1")
+    )
+
+    r = ds.to_xarray()
+
+    gs = r["r"].earthkit.grid_spec
+    assert gs["type"] == "reduced_gg"
+    assert gs["grid"] == "O32"
+
+    gs = r["t"].earthkit.grid_spec
+    assert gs["type"] == "reduced_gg"
+    assert gs["grid"] == "O32"
+
+    gs = r.earthkit.grid_spec
+    assert gs["type"] == "reduced_gg"
+    assert gs["grid"] == "O32"
