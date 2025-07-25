@@ -304,7 +304,7 @@ class FieldExtractList(SimpleFieldList):
 
         extraction_requests = [req.extraction_request for req in self._requests]
 
-        context = {"client": "earthkit-data", "source_type": "gribjump"}
+        context = {"origin": "earthkit-data"}
         extraction_results = self._gj.extract(extraction_requests, ctx=context)
 
         fields = []
