@@ -37,6 +37,10 @@ def split_mars_requests(request: dict[str, Any]) -> list[dict[str, Any]]:
     returns result arrays without metadata, so each field must be requested individually
     to map outputs correctly.
 
+    NOTE: Parsing of MARS requests should ideally not be handled here but in a dedicated
+    component like pymetkit. Consider updating this function once something appropriate
+    is available.
+
     Parameters
     ----------
     request : dict[str, Any]
@@ -66,7 +70,7 @@ def split_mars_requests(request: dict[str, Any]) -> list[dict[str, Any]]:
     """
     request = request.copy()
 
-    # Validation
+    # Validate request values
     for k in request.keys():
         v = request[k]
         if isinstance(v, str) and "/" in v:
