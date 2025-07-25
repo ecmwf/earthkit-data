@@ -67,7 +67,7 @@ def setup_fdb_with_gribjump():
 
 @pytest.fixture
 def seed_fdb(setup_fdb_with_gribjump):
-    ds = from_source("file", earthkit_test_data_file("t_time_series.grib"))
+    ds = from_source("file", earthkit_test_data_file("t_gribjump.grib"))
     for f in ds:
         setup_fdb_with_gribjump.archive(f.message())
     setup_fdb_with_gribjump.flush()
@@ -188,7 +188,7 @@ def ds_expected_with_coords():
             "class": "od",
             "date": "20201221",
             "domain": "g",
-            "expver": "0001",
+            "expver": "xxxx",
             "levelist": "1000",
             "levtype": "pl",
             "stream": "oper",
@@ -296,7 +296,7 @@ def test_gribjump_to_numpy(seed_fdb, arr_expected, method, request):
         "class": "od",
         "date": "20201221",
         "domain": "g",
-        "expver": "0001",
+        "expver": "xxxx",
         "levelist": "1000",
         "levtype": "pl",
         "param": "129",
@@ -324,7 +324,7 @@ def test_gribjump_to_xarray_without_coords(seed_fdb, ds_expected, method, reques
         "class": "od",
         "date": "20201221",
         "domain": "g",
-        "expver": "0001",
+        "expver": "xxxx",
         "levelist": "1000",
         "levtype": "pl",
         "param": "129",
@@ -352,7 +352,7 @@ def test_gribjump_to_xarray_with_coords(seed_fdb, ds_expected_with_coords, metho
         "class": "od",
         "date": "20201221",
         "domain": "g",
-        "expver": "0001",
+        "expver": "xxxx",
         "levelist": "1000",
         "levtype": "pl",
         "param": "129",
@@ -378,7 +378,7 @@ def test_gribjump_selection(seed_fdb):
         "class": "od",
         "date": "20201221",
         "domain": "g",
-        "expver": "0001",
+        "expver": "xxxx",
         "levelist": "1000",
         "levtype": "pl",
         "param": "129",
@@ -404,7 +404,7 @@ def test_gribjump_to_xarray_with_coords_does_not_fail_for_grids(seed_fdb):
         "class": "od",
         "date": "20201221",
         "domain": "g",
-        "expver": "0001",
+        "expver": "xxxx",
         "levelist": "1000",
         "levtype": "pl",
         "param": "129",
@@ -427,7 +427,7 @@ def test_gribjump_with_mixed_types_in_lists(seed_fdb):
         "class": "od",
         "date": "20201221",
         "domain": "g",
-        "expver": "0001",
+        "expver": "xxxx",
         "levelist": "1000",
         "levtype": "pl",
         "param": "129",
@@ -449,7 +449,7 @@ def test_gribjump_with_invalid_options(seed_fdb):
         "class": "od",
         "date": "20201221",
         "domain": "g",
-        "expver": "0001",
+        "expver": "xxxx",
         "levelist": "1000",
         "levtype": "pl",
         "param": "129",
@@ -482,7 +482,7 @@ def test_gribjump_with_invalid_mask(seed_fdb):
         "class": "od",
         "date": "20201221",
         "domain": "g",
-        "expver": "0001",
+        "expver": "xxxx",
         "levelist": "1000",
         "levtype": "pl",
         "param": "129",
