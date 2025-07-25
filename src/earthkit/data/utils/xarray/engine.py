@@ -504,6 +504,14 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         da.data = moved
         return da
 
+    @property
+    def grid_spec(self):
+        """Return the grid specification of the DataArray."""
+        try:
+            return self.metadata.gridspec
+        except Exception:
+            return None
+
 
 @xarray.register_dataset_accessor("earthkit")
 class XarrayEarthkitDataSet(XarrayEarthkit):
@@ -544,3 +552,14 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
         for name, var in ds.data_vars.items():
             ds[name].data = to_device(var.data, device, *args, array_backend=array_backend, **kwargs)
         return ds
+
+    @property
+    def grid_spec(self):
+        """Return the grid specification of the DataSet."""
+        try:
+            # return grid spec of the first data variable
+            var = list(self._obj.data_vars.values())[0]
+            return var.earthkit.grid_spec
+
+        except Exception:
+            return None
