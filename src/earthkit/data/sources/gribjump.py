@@ -444,22 +444,25 @@ class GribJumpSource(Source):
         self._mars_requests = split_mars_requests(request)
 
     def _check_env(self):
-        fdb_conf = os.environ.get("FDB5_CONFIG", None)
         fdb_home = os.environ.get("FDB_HOME", None)
+        fdb_config = os.environ.get("FDB5_CONFIG", None)
+        fdb_config_file = os.environ.get("FDB5_CONFIG_FILE", None)
+
+        gj_home = os.environ.get("GRIBJUMP_HOME", None)
         gj_config_file = os.environ.get("GRIBJUMP_CONFIG_FILE", None)
         gj_ignore_grid = os.environ.get("GRIBJUMP_IGNORE_GRID", None)
 
-        if fdb_home is None and fdb_conf is None:
+        if fdb_home is None and fdb_config is None and fdb_config_file is None:
             raise RuntimeError(
-                """Neither FDB_HOME nor FDB5_CONFIG environment variable
-                was set! Please define either one to access FDB.
+                """Neither FDB_HOME, FDB5_CONFIG, nor FDB5_CONFIG_FILE environment variable
+                was set! Please define at least one to access FDB.
                 See: https://fields-database.readthedocs.io for details about FDB."""
             )
-        if gj_config_file is None:
+        if gj_home is None and gj_config_file is None:
             raise RuntimeError(
-                "Environment variable 'GRIBJUMP_CONFIG_FILE' is not set but "
-                "is required by GribJump. Please set it to the path of the GribJump "
-                "configuration file."
+                """Neither GRIBJUMP_HOME nor GRIBJUMP_CONFIG_FILE environment variable
+                was set! Please define at least one to access GribJump.
+                See: https://github.com/ecmwf/gribjump for details about GribJump."""
             )
         if gj_ignore_grid is None:
             # We could consider setting this automatically but this would need
