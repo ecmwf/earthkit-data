@@ -174,7 +174,7 @@ The third option is to use the :func:`to_target` method to convert GRIB directly
     import earthkit.data as ekd
 
     ds_fl = ekd.from_source("sample", "pl.grib")
-    ds.fl.to_target("file", "_from_grib.nc")
+    ds_fl.to_target("file", "_from_grib.nc")
 
 
 To control the Xarray conversion we can pass options to the earthkit Xarray engine with ``earthkit_to_xarray_kwargs``. In this case ``add_earthkit_attrs=False`` is always enforced.
@@ -184,7 +184,7 @@ To control the Xarray conversion we can pass options to the earthkit Xarray engi
     import earthkit.data as ekd
 
     ds_fl = ekd.from_source("sample", "pl.grib")
-    ds.fl.to_target(
+    ds_fl.to_target(
         "file", "_from_grib.nc", earthkit_to_xarray_kwargs={"flatten_values": True}
     )
 
