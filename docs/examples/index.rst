@@ -169,6 +169,7 @@ Xarray engine
     xarray_engine_split.ipynb
     xarray_engine_squeeze.ipynb
     xarray_engine_chunks.ipynb
+    xarray_cupy.ipynb
 
 Targets and encoders
 +++++++++++++++++++++

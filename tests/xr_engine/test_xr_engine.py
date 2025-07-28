@@ -10,6 +10,7 @@
 #
 
 import os
+import pathlib
 import sys
 
 import numpy as np
@@ -36,29 +37,25 @@ def test_xr_engine_kwargs_unchanged(engine):
 
 
 @pytest.mark.cache
-@pytest.mark.parametrize(
-    "file",
-    [
-        "pl.grib",
-        # "era5-levels-members",
-        # "fields_with_missing_values",
-        # "lambert_grid",
-        # "reduced_gg",
-        # "regular_gg_sfc",
-        # "regular_gg_pl",
-        # "regular_gg_ml",
-        # "regular_gg_ml_g2",
-        # "regular_ll_sfc",
-        # "regular_ll_msl",
-        # "scanning_mode_64",
-        # "single_gridpoint",
-        # "spherical_harmonics",
-        # "t_analysis_and_fc_0",
-    ],
-)
-def test_xr_engine_basic(file):
-    ds = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", file))
+def test_xr_engine_basic():
+    ds = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
     res = ds.to_xarray()
+    assert res is not None
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("path_maker", [lambda x: x, lambda x: pathlib.Path(x)])
+def test_xr_engine_open_dataset_path(path_maker):
+
+    ds = from_source("sample", "pl.grib")
+    path = path_maker(ds.path)
+
+    import xarray as xr
+
+    res = xr.open_dataset(
+        path,
+        engine="earthkit",
+    )
     assert res is not None
 
 
@@ -785,14 +782,21 @@ def test_xr_engine_invalid_kwargs(kwargs):
 
 
 @pytest.mark.cache
-def test_xr_engine_dtype():
+@pytest.mark.parametrize(
+    "dtype,expected_dtype",
+    [
+        (np.float32, np.float32),
+        ("float32", np.float32),
+        (np.float64, np.float64),
+        ("float64", np.float64),
+    ],
+)
+def test_xr_engine_dtype(dtype, expected_dtype):
     ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
 
-    ds = ds_ek.to_xarray(dtype=np.float32)
-    assert ds["t"].values.dtype == np.float32
-
-    ds = ds_ek.to_xarray(dtype=np.float64)
-    assert ds["t"].values.dtype == np.float64
+    ds = ds_ek.to_xarray(dtype=dtype)
+    assert ds["t"].data.dtype == expected_dtype
+    assert ds["t"].values.dtype == expected_dtype
 
 
 @pytest.mark.cache
