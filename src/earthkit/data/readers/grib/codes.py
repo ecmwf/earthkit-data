@@ -48,6 +48,12 @@ class GribCodesFloatArrayAccessor:
         else:
             return v
 
+    @staticmethod
+    def to_numpy_dtype(dtype):
+        from earthkit.utils.array.dtype import to_numpy_dtype
+
+        return to_numpy_dtype(dtype, default=np.float64)
+
 
 class GribCodesValueAccessor(GribCodesFloatArrayAccessor):
     KEY = "values"
@@ -56,6 +62,7 @@ class GribCodesValueAccessor(GribCodesFloatArrayAccessor):
         super().__init__()
 
     def get(self, handle, dtype=None):
+        dtype = self.to_numpy_dtype(dtype)
         if dtype is np.float32 and self.HAS_FLOAT_SUPPORT:
             return eccodes.codes_get_array(handle, self.KEY, ktype=dtype)
         else:
@@ -68,12 +75,20 @@ class GribCodesLatitudeAccessor(GribCodesFloatArrayAccessor):
     def __init__(self):
         super().__init__()
 
+    def get(self, handle, dtype=None):
+        dtype = self.to_numpy_dtype(dtype)
+        return super().get(handle, dtype=dtype)
+
 
 class GribCodesLongitudeAccessor(GribCodesFloatArrayAccessor):
     KEY = "longitudes"
 
     def __init__(self):
         super().__init__()
+
+    def get(self, handle, dtype=None):
+        dtype = self.to_numpy_dtype(dtype)
+        return super().get(handle, dtype=dtype)
 
 
 VALUE_ACCESSOR = GribCodesValueAccessor()
