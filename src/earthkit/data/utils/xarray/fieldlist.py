@@ -155,7 +155,7 @@ class XArrayInputFieldList(FieldList):
             if not v:
                 continue
             db = None
-            groups[k] = XArrayInputFieldList(FieldList.from_fields(v), db=db, remapping=self.remapping)
+            groups[k] = type(self)(FieldList.from_fields(v), db=db, remapping=self.remapping)
 
         return groups
 
@@ -166,7 +166,7 @@ class XArrayInputFieldList(FieldList):
         db = None
         # if not args and self.db and all(k in self.db for k in kwargs):
         #     db = self.db.filter(**kwargs)
-        return XArrayInputFieldList(ds, db=db, remapping=self.remapping)
+        return type(self)(ds, db=db, remapping=self.remapping)
 
     def order_by(self, *args, **kwargs):
         if isinstance(self.ds, XArrayInputFieldList):
