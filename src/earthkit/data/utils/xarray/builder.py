@@ -376,6 +376,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 d.key, tensor.user_coords[d.key], tensor_coords_component.get(d.key, None), tensor.source
             )
             if k not in self.tensor_coords:
+                # PW: ??? what does self.tensor_coords apart from being used in coords check (disabled for now while building tensor with holes)
                 self.tensor_coords[k] = c
             var_dims.append(k)
         var_dims.extend(tensor.field_dims)
@@ -434,7 +435,8 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
                     # check if the dims/coords are consistent with the tensors of
                     # the previous variables
-                    self.check_tensor_coords(name, d.key, tensor_coords)
+                    # PW: if tensors with holes are permitted, don't check!
+                    # self.check_tensor_coords(name, d.key, tensor_coords)
 
         # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinates
         return tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
@@ -571,7 +573,9 @@ class DatasetBuilder:
         LOG.debug(f"{profile.index_keys=}")
 
         # create a new fieldlist for optimised access to unique values
-        ds_xr = XArrayInputFieldList(
+        # TODO: dispatch to an appropriate class
+        xarray_cls = XArrayInputFieldList if full else XArrayInputFieldList
+        ds_xr = xarray_cls(
             ds, keys=profile.index_keys, remapping=remapping, component=profile.add_earthkit_attrs
         )
         # LOG.debug(f"{ds.db=}")
@@ -582,6 +586,7 @@ class DatasetBuilder:
 
         # LOG.debug(f"{profile.sort_keys=}")
         # the data is only sorted once
+        # TODO: can we skip sorting? It is heavily used in tests, in order to make an output dataset canonical...
         ds_xr = ds_xr.order_by(profile.sort_keys)
 
         if not profile.lazy_load and profile.release_source:
@@ -632,6 +637,20 @@ class SingleDatasetBuilder(DatasetBuilder):
         )
         r = builder.build()
         return r
+
+        # PW: maybe apply changes here?
+        # grid = self.grid(ds_sorted)
+        # xarray_obj_by_var = {}
+        # for name in self.profile.variables:
+        #     ds_var = ds_sorted.sel(**{self.profile.variable_key: name})
+        #     builder = self.builder(
+        #         ds_var,
+        #         self.profile,
+        #         dims,
+        #         grid=grid,
+        #     )
+        #     xarray_obj_by_var[name] = builder.build()
+        # return xarray_obj_by_var
 
 
 class SplitDatasetBuilder(DatasetBuilder):
