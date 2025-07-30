@@ -369,8 +369,13 @@ def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
     ],
 )
 def test_xr_rename_dims(kwargs, dim_keys):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    # ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("file", "/Users/ecm8620/data/tensor/test_sparse_1.grib")
+    _ = ds_ek.sel(level=400)
     ds = ds_ek.to_xarray(**kwargs)
+    print(ds["r"])
+    a = ds["r"].sel(zz=1000).values
+    print(a)
     num = len(ds)
 
     dim_keys = dim_keys + ["latitude", "longitude"]
