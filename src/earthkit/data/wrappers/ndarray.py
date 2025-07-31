@@ -18,6 +18,10 @@ class NumpyNDArrayWrapper(Wrapper):
     def __init__(self, data):
         self.data = data
 
+    @property
+    def values(self):
+        return self.data
+
     def to_numpy(self):
         """Return a numpy `ndarray` representation of the data.
 
