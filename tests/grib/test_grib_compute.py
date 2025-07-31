@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import math
 import os
 import sys
 
@@ -39,14 +40,21 @@ class ArraySingleValueOperand(ComputeOperand):
     def val(self):
         xp = self.array_backend.namespace
         v = xp.asarray([(i + 1) * 10 for i in range(len(self.ds))])
-        v_ref = xp.asarray([xp.zeros(self.ds[0].values.size) + (i + 1) * 10 for i in range(len(self.ds))])
+
+        size = self.ds[0].values.size
+        if callable(size):
+            size = math.prod(self.ds[0].values.shape)
+
+        z = xp.zeros(size)
+        z = [z + xp.asarray((i + 1) * 10) for i in range(len(self.ds))]
+        v_ref = xp.stack(z)
         return v, v_ref
 
 
 class ArrayFieldOperand(ComputeOperand):
     def val(self):
         xp = self.array_backend.namespace
-        return self.ds[0].values, xp.array([self.ds[0].values for _ in range(len(self.ds))])
+        return self.ds[0].values, xp.asarray([self.ds[0].values for _ in range(len(self.ds))])
 
 
 class ArrayFieldListOperand(ComputeOperand):
@@ -289,4 +297,17 @@ def test_grib_compute_ufunc(fl_type, operand):
 
     res = apply_ufunc(func, ds1, ds2)
     ref = func(val_ref, val_ref + 1)
+    assert array_backend.allclose(res.values, ref, equal_nan=True)
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("operand", UNARY_OPERANDS)
+def test_grib_compute_sin(fl_type, operand):
+    ds, array_backend = load_grib_data("test.grib", fl_type)
+    val, val_ref = operand(ds).val()
+
+    xp = array_backend.namespace
+
+    res = val.sin()
+    ref = xp.sin(val_ref)
     assert array_backend.allclose(res.values, ref, equal_nan=True)
