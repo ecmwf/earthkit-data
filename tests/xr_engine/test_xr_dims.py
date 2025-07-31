@@ -373,8 +373,11 @@ def test_xr_rename_dims(kwargs, dim_keys):
     ds_ek = from_source("file", "/Users/ecm8620/data/tensor/test_sparse_1.grib")
     _ = ds_ek.sel(level=400)
     ds = ds_ek.to_xarray(**kwargs)
-    print(ds["r"])
-    a = ds["r"].sel(zz=1000).values
+    # print(ds["r"])
+    # a = ds["r"]
+    # b = a.values
+    a = ds["r"].sel(zz=1000).data
+    # print(b)
     print(a)
     num = len(ds)
 
