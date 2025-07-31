@@ -186,7 +186,7 @@ class MonoVariable(ProfileVariable):
 
 
 class Profile:
-    USER_ONLY_OPTIONS = ["remapping", "patches", "fill"]
+    USER_ONLY_OPTIONS = ["remapping", "patches", "fill_metadata"]
     DEFAULT_PROFILE_NAME = "mars"
 
     def __init__(
@@ -204,10 +204,10 @@ class Profile:
         patches = dict()
 
         # defaults
-        fill_md = kwargs.pop("fill", None)
+        fill_md = kwargs.pop("fill_metadata", None)
         if fill_md:
             if not isinstance(fill_md, dict):
-                raise ValueError("fill must be a dict!")
+                raise ValueError("fill_metadata must be a dict!")
             for k, v in fill_md.items():
                 if isinstance(v, (str, int, float, bool)):
                     patches[k] = lambda x: x if x is not None else v
