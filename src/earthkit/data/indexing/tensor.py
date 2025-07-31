@@ -14,6 +14,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 import numpy as np
+from earthkit.utils.array import array_namespace
 
 from earthkit.data.core.index import Selection
 from earthkit.data.core.index import normalize_selection
@@ -388,26 +389,7 @@ class FieldListTensor(TensorCore):
         self._user_coords_to_fl_idx = None
         self.flatten_values = None
 
-    @flatten_arg
-    def to_numpy(self, index=None, **kwargs):
-        if index is not None:
-            if all(i == slice(None, None, None) for i in index):
-                index = None
-
-        # Fill in the holes in the tensor self with NaN's:
-        # do so by embedding appropriately the first axis of nd-array obtained from self.source.to_numpy
-        # into the 1d-axis of the length prod(self._user_shape). The embedding should be derived from
-        # the mapping user_coords -> fl_idx (self._user_coords_to_fl_idx)
-        if index is None:
-            arr = self.source.to_numpy(**kwargs)
-            shape = self.full_shape
-        else:
-            # TODO: Shouldn't shape be "updated" according to index?
-            # Or maybe index can refer only to field dimensions?
-            arr = self.source.to_numpy(index=index, **kwargs)
-            shape = list(self._user_shape)
-            shape += list(arr.shape[1:])
-
+    def _fill_holes(self, arr, shape, index):
         # TODO: check what happens with shape when index=(a, b) - identifies a point, not a subdomain, of the lon-lat.
         # Are the field dimensions squeezed then? Is it possible to have the axis=0 squeezed?
         # If both can happen, then it is not possible to know which axes we have and which axes have been squeezed...
@@ -429,7 +411,10 @@ class FieldListTensor(TensorCore):
                 len(field_coord[idx]) for field_coord, idx in zip(self.field_coords.values(), index)
             )
 
-        nan_block = np.full(shape=cur_field_shape, fill_value=np.nan, dtype=arr.dtype)
+        # We want the holes to be handled by the same array backend as arr.
+        # TODO: on the same device? Is numpy < 2.0.0 patched in earthkit to accept "device" kwarg?
+        xp = array_namespace(arr)
+        nan_block = xp.full(shape=cur_field_shape, fill_value=xp.nan, dtype=arr.dtype, device=arr.device)
 
         # perform the embedding
         arr_in_blocks = []
@@ -437,8 +422,29 @@ class FieldListTensor(TensorCore):
             i = self._user_coords_to_fl_idx.get(coords)
             block = arr[i] if i is not None else nan_block
             arr_in_blocks.append(block)
-        arr_filled = np.stack(arr_in_blocks)
-        return arr_filled.reshape(*shape) if len(shape) > 0 else arr
+        arr_filled = xp.stack(arr_in_blocks)
+        return arr_filled.reshape(shape) if len(shape) > 0 else arr
+
+    @flatten_arg
+    def to_numpy(self, index=None, **kwargs):
+        if index is not None:
+            if all(i == slice(None, None, None) for i in index):
+                index = None
+
+        # Fill in the holes in the tensor self with NaN's:
+        # do so by embedding appropriately the first axis of nd-array obtained from self.source.to_numpy
+        # into the 1d-axis of the length prod(self._user_shape). The embedding should be derived from
+        # the mapping user_coords -> fl_idx (self._user_coords_to_fl_idx)
+        if index is None:
+            arr = self.source.to_numpy(**kwargs)
+            shape = self.full_shape
+        else:
+            # TODO: Shouldn't shape be "updated" according to index?
+            # Or maybe index can refer only to field dimensions?
+            arr = self.source.to_numpy(index=index, **kwargs)
+            shape = list(self._user_shape)
+            shape += list(arr.shape[1:])
+        return self._fill_holes(arr, shape, index)
 
     @flatten_arg
     def to_array(self, index=None, **kwargs):
@@ -446,13 +452,22 @@ class FieldListTensor(TensorCore):
             if all(i == slice(None, None, None) for i in index):
                 index = None
 
+        # Fill in the holes in the tensor self with NaN's:
+        # do so by embedding appropriately the first axis of nd-array obtained from self.source.to_numpy
+        # into the 1d-axis of the length prod(self._user_shape). The embedding should be derived from
+        # the mapping user_coords -> fl_idx (self._user_coords_to_fl_idx)
         if index is None:
-            return self.source.to_array(**kwargs).reshape(*self.full_shape)
+            arr = self.source.to_array(**kwargs)
+            shape = self.full_shape
         else:
-            n = self.source.to_array(index=index, **kwargs)
+            # TODO: Shouldn't shape be "updated" according to index?
+            # Or maybe index can refer only to field dimensions?
+            arr = self.source.to_array(index=index, **kwargs)
             shape = list(self._user_shape)
-            shape += list(n.shape[1:])
-            return n.reshape(*shape) if len(shape) > 0 else n
+            # TODO: what if arr is a lazy-array, whose shape is not explicit yet
+            #  (see the Note here: https://data-apis.org/array-api/2023.12/API_specification/generated/array_api.array.shape.html)
+            shape += list(arr.shape[1:])
+        return self._fill_holes(arr, shape, index)
 
     @flatten_arg
     def latitudes(self, **kwargs):
