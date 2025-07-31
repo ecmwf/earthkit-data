@@ -336,6 +336,27 @@ def test_target_file_geotiff_to_netcdf():
         assert os.path.exists(path)
 
 
+def test_target_file_xarray_to_netcdf():
+    ds_in = from_source("file", earthkit_examples_file("test.grib"))
+    # vals_ref = ds.values[:, :4]
+
+    with temp_file() as path:
+        ds = ds_in.to_xarray(flatten_values=True)
+
+        to_target("file", path, data=ds, encoder="netcdf")
+
+        ds1 = from_source("file", path)
+        ds2 = ds1.to_xarray()
+
+        for name in ["2t", "msl"]:
+            assert name in ds2.data_vars
+
+        for name in ["latitude", "longitude"]:
+            assert name in ds2.coords
+
+        assert "values" in ds2.sizes
+
+
 def test_writers_core():
     # from earthkit.data.targets.file import FileTarget
     # from earthkit.data.targets import Target

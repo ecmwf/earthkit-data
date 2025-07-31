@@ -30,7 +30,7 @@ class IntWrapper(Wrapper):
         return self.data
 
 
-def wrapper(data, *args, **kwargs):
+def wrapper(data, *args, fieldlist=False, **kwargs):
     if isinstance(data, int):
         return IntWrapper(data)
     return None
