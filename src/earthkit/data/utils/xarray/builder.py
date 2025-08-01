@@ -221,6 +221,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
 
             # LOG.debug(f"   {r.user_shape=}")
             field_index = r.field_indexes(key)
+            print(f"_raw_indexing_method: {field_index=}")
             if self.tensor.is_full_field(field_index):
                 field_index = None
 
@@ -348,11 +349,9 @@ class BackendDataBuilder(metaclass=ABCMeta):
     def pre_build_variables(self):
         pass
 
-    def pre_build_variable(self, ds_var, dims, name):
-        tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs = self.prepare_tensor(
-            ds_var, dims, name
-        )
-
+    def pre_build_variable(
+        self, ds_var, name, tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
+    ):
         tensor_dim_keys = [d.key for d in tensor_dims]
 
         # LOG.debug(f"{tensor_dims=} {tensor_coords=} {tensor_coords_component=} {tensor_extra_attrs=}")
@@ -376,7 +375,6 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 d.key, tensor.user_coords[d.key], tensor_coords_component.get(d.key, None), tensor.source
             )
             if k not in self.tensor_coords:
-                # PW: ??? what does self.tensor_coords apart from being used in coords check (disabled for now while building tensor with holes)
                 self.tensor_coords[k] = c
             var_dims.append(k)
         var_dims.extend(tensor.field_dims)
@@ -397,7 +395,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         return var_builder
 
-    def prepare_tensor(self, ds, dims, name):
+    def prepare_tensor(self, ds, dims):
         tensor_dims = []
         tensor_coords = {}
         tensor_coords_component = {}
@@ -422,9 +420,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 #     raise ValueError(f"Dimension {d} has no valid values for variable={name}")
             else:
                 if num > 1 and d.enforce_unique:
-                    raise ValueError(
-                        f"Dimension '{d.name}' of variable '{name}' cannot have multiple values={vals[d.key]}"
-                    )
+                    raise ValueError(f"Dimension '{d.name}' cannot have multiple values={vals[d.key]}")
                 elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
                     tensor_extra_attrs.append(d.key)
                 elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
@@ -458,16 +454,24 @@ class TensorBackendDataBuilder(BackendDataBuilder):
     def pre_build_variables(self):
         """Generate a builder for each variable"""
         builders = {}
+        tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs = self.prepare_tensor(
+            self.ds, self.dims
+        )
 
         if self.profile.variable.is_mono:
             name = self.profile.variable.name
-            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
+            builders[name] = self.pre_build_variable(
+                self.ds, name, tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
+            )
         else:
             # we assume each variable forms a full cube
+            # PW: not in the case of tensor with holes
             key = self.profile.variable.key
             for name in self.profile.variable.variables:
                 ds_var = self.ds.sel(**{key: name})
-                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
+                builders[name] = self.pre_build_variable(
+                    ds_var, name, tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
+                )
 
         return builders
 
@@ -502,16 +506,24 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
         """Generate a builder for each variable"""
         builders = {}
 
+        tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs = self.prepare_tensor(
+            self.ds, self.dims
+        )
+
         if self.profile.variable.is_mono:
             name = self.profile.variable.name
-            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
+            builders[name] = self.pre_build_variable(
+                self.ds, name, tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
+            )
         else:
             groups = self.ds.group(self.profile.variable.key, self.profile.variable.variables)
 
             # we assume each variable forms a full cube
             for name in groups:
                 ds_var = groups[name]
-                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
+                builders[name] = self.pre_build_variable(
+                    ds_var, name, tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
+                )
 
         return builders
 

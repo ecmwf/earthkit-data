@@ -390,31 +390,45 @@ class FieldListTensor(TensorCore):
         self.flatten_values = None
 
     def _fill_holes(self, arr, shape, index):
+        print(f"_fill_holes: {shape=}, {index=}")
         # TODO: check what happens with shape when index=(a, b) - identifies a point, not a subdomain, of the lon-lat.
         # Are the field dimensions squeezed then? Is it possible to have the axis=0 squeezed?
         # If both can happen, then it is not possible to know which axes we have and which axes have been squeezed...
         if len(shape) == 0:
-            # TODO: Is it possible at all? Maybe after squeezing everything... If so, the code below is not OK
-            # because the embedding might still be necessary
+            # TODO: Is it possible at all? Maybe after squeezing everything... If so, the code below would not always
+            #  work, because the embedding might still be necessary
             return arr
 
-        # TODO: Below it is assumed that the axis=0 (user dimensions) cannot be squeezed
-        if len(arr) > 0:
+        # TODO: Check it the following is true: whenever arr is non-empty, its 0-axis (user dimensions) is not squeezed
+        #  even if its length is 1
+        if arr is not None and len(arr) > 0:
             cur_field_shape = arr[0].shape
+            xp = array_namespace(arr)
+            arr_dtype = arr.dtype
+            arr_device = arr.device
         else:
             # fall back to self.field_shape and index
+            # TODO: arr can be None if it was obtained from an empty FieldList.to_array(...)
             # TODO: make sure that:
             #       - self.field_coords dict iterates in the order coherent with self.field_shape,
             #         and that in turn in is coherent with the order of the tuple/list in the param index is given
             #       - the values of self.field_coords are numpy arrays (so that if index=([1,2,5], ...), it works OK - for a list it wouldn't...
+            if index is None:
+                index = [slice(None, None, None)] * len(self.field_coords)
             cur_field_shape = tuple(
                 len(field_coord[idx]) for field_coord, idx in zip(self.field_coords.values(), index)
             )
+            # TODO: what should be the array backend if arr is None or 0-size? (so the resulting tensor has holes only)
+            #  For the moment we assumed it is numpy based and has float64-dtype
+            import earthkit.utils.array.namespace.numpy as xp
+
+            arr_dtype = "f8"
+            arr_device = None
 
         # We want the holes to be handled by the same array backend as arr.
-        # TODO: on the same device? Is numpy < 2.0.0 patched in earthkit to accept "device" kwarg?
-        xp = array_namespace(arr)
-        nan_block = xp.full(shape=cur_field_shape, fill_value=xp.nan, dtype=arr.dtype, device=arr.device)
+        # TODO: On the same device?
+        # TODO: Check if in case numpy < 2.0.0 is a dependency, is it patched in earthkit to accept "device" kwarg?
+        nan_block = xp.full(shape=cur_field_shape, fill_value=xp.nan, dtype=arr_dtype, device=arr_device)
 
         # perform the embedding
         arr_in_blocks = []
@@ -461,7 +475,7 @@ class FieldListTensor(TensorCore):
             shape = self.full_shape
         else:
             # TODO: Shouldn't shape be "updated" according to index?
-            # Or maybe index can refer only to field dimensions?
+            #  Or maybe index can refer only to field dimensions?
             arr = self.source.to_array(index=index, **kwargs)
             shape = list(self._user_shape)
             # TODO: what if arr is a lazy-array, whose shape is not explicit yet
