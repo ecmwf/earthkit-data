@@ -283,7 +283,6 @@ class TensorCore(metaclass=ABCMeta):
         return tuple(v for _, v in dims.items())
 
 
-### PW: derive FieldListSparseTensor class, with some behaviour changed
 class FieldListTensor(TensorCore):
     def __init__(
         self,
@@ -291,8 +290,8 @@ class FieldListTensor(TensorCore):
         user_coords,
         field_coords,
         field_dims,
-        user_coords_to_fl_idx,
         flatten_values,
+        check_if_tensor_is_full=True,
     ):
         # print(f"FieldListTensor user_coords={user_coords}")
         # print(f"FieldListTensor field_coords={field_coords.keys()} {field_dims=}")
@@ -305,29 +304,25 @@ class FieldListTensor(TensorCore):
         self._field_shape = self._dims_shape(field_dims)
         self._field_dims = field_dims
         self._full_shape = self._user_shape + self._field_shape
-        self._user_coords_to_fl_idx = user_coords_to_fl_idx
         self.flatten_values = flatten_values
 
-        # consistency check
-        # PW: dispense the check
-        # from earthkit.data.utils.xarray.check import CubeChecker
+        if check_if_tensor_is_full:
+            # consistency check
+            from earthkit.data.utils.xarray.check import CubeChecker
 
-        # checker = CubeChecker(self)
-        # checker.check(details=True)
+            checker = CubeChecker(self)
+            checker.check(details=True)
 
     @classmethod
-    def from_tensor(cls, owner, source, user_coords, user_coords_to_fl_idx):
+    def from_tensor(cls, owner, source, user_coords):
         return cls(
             source,
             user_coords,
             owner.field_coords,
             owner.field_dims,
-            user_coords_to_fl_idx,
             owner.flatten_values,
         )
 
-    # PW: this method must be implemented differently in FieldListSparseTensor (no or trivial order_by, etc.)
-    # PW: TODO: here must calculate user_coords_to_field_list_idx_map
     @classmethod
     def from_fieldlist(
         cls,
@@ -339,6 +334,7 @@ class FieldListTensor(TensorCore):
         progress_bar=False,
         user_dims_and_coords=None,
         field_dims_and_coords=None,
+        full_tensor_only=True,
     ):
         assert len(ds), f"No data in {ds}"
 
@@ -351,6 +347,12 @@ class FieldListTensor(TensorCore):
                 names.append(a)
             elif isinstance(a, dict):
                 names += list(a.keys())
+
+        # Sort the source
+        if names and sort and full_tensor_only:
+            source = ds.order_by(*args, remapping=remapping)
+        else:
+            source = ds
 
         # Get a mapping of user names to unique values
         # With possible reduce dimensionality if the user uses 'level+param'
@@ -372,10 +374,15 @@ class FieldListTensor(TensorCore):
         else:
             from earthkit.data.utils.xarray.grid import TensorGrid
 
-            field_dims, field_coords, _ = TensorGrid.build(ds[0], flatten_values)
+            field_dims, field_coords, _ = TensorGrid.build(source[0], flatten_values)
 
-        user_coords_to_fl_idx = ds._user_coords_to_fl_idx(names, remapping=remapping)
-        return cls(ds, user_coords, field_coords, field_dims, user_coords_to_fl_idx, flatten_values)
+        if full_tensor_only:
+            return cls(source, user_coords, field_coords, field_dims, flatten_values)
+        else:
+            user_coords_to_fl_idx = source._user_coords_to_fl_idx(names, remapping=remapping)
+            return FieldListSparseTensor(
+                source, user_coords, field_coords, field_dims, flatten_values, user_coords_to_fl_idx
+            )
 
     def clear(self):
         self.source = None
@@ -386,58 +393,7 @@ class FieldListTensor(TensorCore):
         self._field_shape = None
         self._field_dims = None
         self._full_shape = None
-        self._user_coords_to_fl_idx = None
         self.flatten_values = None
-
-    def _fill_holes(self, arr, shape, index):
-        print(f"_fill_holes: {shape=}, {index=}")
-        # TODO: check what happens with shape when index=(a, b) - identifies a point, not a subdomain, of the lon-lat.
-        # Are the field dimensions squeezed then? Is it possible to have the axis=0 squeezed?
-        # If both can happen, then it is not possible to know which axes we have and which axes have been squeezed...
-        if len(shape) == 0:
-            # TODO: Is it possible at all? Maybe after squeezing everything... If so, the code below would not always
-            #  work, because the embedding might still be necessary
-            return arr
-
-        # TODO: Check it the following is true: whenever arr is non-empty, its 0-axis (user dimensions) is not squeezed
-        #  even if its length is 1
-        if arr is not None and len(arr) > 0:
-            cur_field_shape = arr[0].shape
-            xp = array_namespace(arr)
-            arr_dtype = arr.dtype
-            arr_device = arr.device
-        else:
-            # fall back to self.field_shape and index
-            # TODO: arr can be None if it was obtained from an empty FieldList.to_array(...)
-            # TODO: make sure that:
-            #       - self.field_coords dict iterates in the order coherent with self.field_shape,
-            #         and that in turn in is coherent with the order of the tuple/list in the param index is given
-            #       - the values of self.field_coords are numpy arrays (so that if index=([1,2,5], ...), it works OK - for a list it wouldn't...
-            if index is None:
-                index = [slice(None, None, None)] * len(self.field_coords)
-            cur_field_shape = tuple(
-                len(field_coord[idx]) for field_coord, idx in zip(self.field_coords.values(), index)
-            )
-            # TODO: what should be the array backend if arr is None or 0-size? (so the resulting tensor has holes only)
-            #  For the moment we assumed it is numpy based and has float64-dtype
-            import earthkit.utils.array.namespace.numpy as xp
-
-            arr_dtype = "f8"
-            arr_device = None
-
-        # We want the holes to be handled by the same array backend as arr.
-        # TODO: On the same device?
-        # TODO: Check if in case numpy < 2.0.0 is a dependency, is it patched in earthkit to accept "device" kwarg?
-        nan_block = xp.full(shape=cur_field_shape, fill_value=xp.nan, dtype=arr_dtype, device=arr_device)
-
-        # perform the embedding
-        arr_in_blocks = []
-        for coords in itertools.product(*self.user_coords.values()):
-            i = self._user_coords_to_fl_idx.get(coords)
-            block = arr[i] if i is not None else nan_block
-            arr_in_blocks.append(block)
-        arr_filled = xp.stack(arr_in_blocks)
-        return arr_filled.reshape(shape) if len(shape) > 0 else arr
 
     @flatten_arg
     def to_numpy(self, index=None, **kwargs):
@@ -445,20 +401,13 @@ class FieldListTensor(TensorCore):
             if all(i == slice(None, None, None) for i in index):
                 index = None
 
-        # Fill in the holes in the tensor self with NaN's:
-        # do so by embedding appropriately the first axis of nd-array obtained from self.source.to_numpy
-        # into the 1d-axis of the length prod(self._user_shape). The embedding should be derived from
-        # the mapping user_coords -> fl_idx (self._user_coords_to_fl_idx)
         if index is None:
-            arr = self.source.to_numpy(**kwargs)
-            shape = self.full_shape
+            return self.source.to_numpy(**kwargs).reshape(*self.full_shape)
         else:
-            # TODO: Shouldn't shape be "updated" according to index?
-            # Or maybe index can refer only to field dimensions?
-            arr = self.source.to_numpy(index=index, **kwargs)
+            n = self.source.to_numpy(index=index, **kwargs)
             shape = list(self._user_shape)
-            shape += list(arr.shape[1:])
-        return self._fill_holes(arr, shape, index)
+            shape += list(n.shape[1:])
+            return n.reshape(*shape) if len(shape) > 0 else n
 
     @flatten_arg
     def to_array(self, index=None, **kwargs):
@@ -466,22 +415,13 @@ class FieldListTensor(TensorCore):
             if all(i == slice(None, None, None) for i in index):
                 index = None
 
-        # Fill in the holes in the tensor self with NaN's:
-        # do so by embedding appropriately the first axis of nd-array obtained from self.source.to_numpy
-        # into the 1d-axis of the length prod(self._user_shape). The embedding should be derived from
-        # the mapping user_coords -> fl_idx (self._user_coords_to_fl_idx)
         if index is None:
-            arr = self.source.to_array(**kwargs)
-            shape = self.full_shape
+            return self.source.to_array(**kwargs).reshape(*self.full_shape)
         else:
-            # TODO: Shouldn't shape be "updated" according to index?
-            #  Or maybe index can refer only to field dimensions?
-            arr = self.source.to_array(index=index, **kwargs)
+            n = self.source.to_array(index=index, **kwargs)
             shape = list(self._user_shape)
-            # TODO: what if arr is a lazy-array, whose shape is not explicit yet
-            #  (see the Note here: https://data-apis.org/array-api/2023.12/API_specification/generated/array_api.array.shape.html)
-            shape += list(arr.shape[1:])
-        return self._fill_holes(arr, shape, index)
+            shape += list(n.shape[1:])
+            return n.reshape(*shape) if len(shape) > 0 else n
 
     @flatten_arg
     def latitudes(self, **kwargs):
@@ -502,47 +442,37 @@ class FieldListTensor(TensorCore):
                 return False
         return True
 
-    # TODO: must be reimplemented in a new class, e.g. FieldListSparseTensor
     def _subset(self, indexes):
         """Only allow subsetting for the user coordinates.
         Indices for the field coordinates are ignored.
         """
         # Map the slices to a list of indexes per dimension
         assert len(indexes) >= len(self._user_shape)
-        user_icoords = []
+        user_coords = []
         user_indexes = []
 
-        # TODO: do it directly on self.user_coords
         for s, c in zip(indexes, self._user_shape):
             lst = np.array(list(range(c)))[s].tolist()
             if not isinstance(lst, list):
                 lst = [lst]
-            user_icoords.append(lst)
+            user_coords.append(lst)
             user_indexes.append(s)
 
-        # print(f"{user_icoords=} {user_indexes=}")
+        # print(f"{user_coords=} {user_indexes=}")
 
-        assert len(user_icoords) == len(self._user_coords)
+        assert len(user_coords) == len(self._user_coords)
 
         dataset_indexes = []
-        subset_user_coords_to_fl_idx = {}
-        j = 0
-        for x in itertools.product(*user_icoords):
-            user_coord = tuple(
-                user_coords_for_dim[x_coord]
-                for user_coords_for_dim, x_coord in zip(self.user_coords.values(), x)
-            )
-            i = self._user_coords_to_fl_idx.get(user_coord)
-            assert i is None or isinstance(i, int), i
-            if i is not None:
-                dataset_indexes.append(i)
-                subset_user_coords_to_fl_idx[user_coord] = j
-                j += 1
+        user_shape = self._user_shape
+        for x in itertools.product(*user_coords):
+            i = coords_to_index(x, user_shape)
+            assert isinstance(i, int), i
+            dataset_indexes.append(i)
 
         coords = self._subset_coords(user_indexes)
         assert len(coords) == len(self._user_coords)
         ds = self.source[tuple(dataset_indexes)]
-        return self.from_tensor(self, ds, coords, subset_user_coords_to_fl_idx)
+        return self.from_tensor(self, ds, coords)
 
     def make_valid_datetime(self, dims_map, dtype="datetime64[ns]"):
         # TODO: make it more general
@@ -651,3 +581,172 @@ class FieldListTensor(TensorCore):
         self._field_dims = state["field_dims"]
         self._full_shape = state["full_shape"]
         self.flatten_values = state["flatten_values"]
+
+
+class FieldListSparseTensor(FieldListTensor):
+    def __init__(
+        self,
+        source,
+        user_coords,
+        field_coords,
+        field_dims,
+        flatten_values,
+        user_coords_to_fl_idx,
+    ):
+        super().__init__(
+            source, user_coords, field_coords, field_dims, flatten_values, check_if_tensor_is_full=False
+        )
+        self._user_coords_to_fl_idx = user_coords_to_fl_idx
+
+    @classmethod
+    def from_tensor(cls, owner, source, user_coords, user_coords_to_fl_idx):
+        return cls(
+            source,
+            user_coords,
+            owner.field_coords,
+            owner.field_dims,
+            owner.flatten_values,
+            user_coords_to_fl_idx,
+        )
+
+    def clear(self):
+        super().clear()
+        self._user_coords_to_fl_idx = None
+
+    def _fill_holes(self, arr, shape, index):
+        print(f"_fill_holes: {shape=}, {index=}")
+        # TODO: check what happens with shape when index=(a, b) - identifies a point, not a subdomain, of the lon-lat.
+        # Are the field dimensions squeezed then? Is it possible to have the axis=0 squeezed?
+        # If both can happen, then it is not possible to know which axes we have and which axes have been squeezed...
+        if len(shape) == 0:
+            # TODO: Is it possible at all? Maybe after squeezing everything... If so, the code below would not always
+            #  work, because the embedding might still be necessary
+            return arr
+
+        # TODO: Check it the following is true: whenever arr is non-empty, its 0-axis (user dimensions) is not squeezed
+        #  even if its length is 1
+        if arr is not None and len(arr) > 0:
+            cur_field_shape = arr[0].shape
+            xp = array_namespace(arr)
+            arr_dtype = arr.dtype
+            arr_device = arr.device
+        else:
+            # fall back to self.field_shape and index
+            # TODO: arr can be None if it was obtained from an empty FieldList.to_array(...)
+            # TODO: make sure that:
+            #       - self.field_coords dict iterates in the order coherent with self.field_shape,
+            #         and that in turn in is coherent with the order of the tuple/list in the param index is given
+            #       - the values of self.field_coords are numpy arrays (so that if index=([1,2,5], ...), it works OK - for a list it wouldn't...
+            if index is None:
+                index = [slice(None, None, None)] * len(self.field_coords)
+            cur_field_shape = tuple(
+                len(field_coord[idx]) for field_coord, idx in zip(self.field_coords.values(), index)
+            )
+            # TODO: what should be the array backend if arr is None or 0-size? (so the resulting tensor has holes only)
+            #  For the moment we assumed it is numpy based and has float64-dtype
+            import earthkit.utils.array.namespace.numpy as xp
+
+            arr_dtype = "f8"
+            arr_device = None
+
+        # We want the holes to be handled by the same array backend as arr.
+        # TODO: On the same device?
+        # TODO: Check if in case numpy < 2.0.0 is a dependency, is it patched in earthkit to accept "device" kwarg?
+        nan_block = xp.full(shape=cur_field_shape, fill_value=xp.nan, dtype=arr_dtype, device=arr_device)
+
+        # perform the embedding
+        arr_in_blocks = []
+        for coords in itertools.product(*self.user_coords.values()):
+            i = self._user_coords_to_fl_idx.get(coords)
+            block = arr[i] if i is not None else nan_block
+            arr_in_blocks.append(block)
+        arr_filled = xp.stack(arr_in_blocks)
+        return arr_filled.reshape(shape) if len(shape) > 0 else arr
+
+    # TODO: consider code refactoring as there is a substantial code duplication with FieldListSparseTensor.to_numpy
+    @flatten_arg
+    def to_numpy(self, index=None, **kwargs):
+        if index is not None:
+            if all(i == slice(None, None, None) for i in index):
+                index = None
+
+        # Fill in the holes in the tensor self with NaN's:
+        # do so by embedding appropriately the first axis of nd-array obtained from self.source.to_numpy
+        # into the 1d-axis of the length prod(self._user_shape). The embedding should be derived from
+        # the mapping user_coords -> fl_idx (self._user_coords_to_fl_idx)
+        if index is None:
+            arr = self.source.to_numpy(**kwargs)
+            shape = self.full_shape
+        else:
+            # TODO: Shouldn't shape be "updated" according to index?
+            # Or maybe index can refer only to field dimensions?
+            arr = self.source.to_numpy(index=index, **kwargs)
+            shape = list(self._user_shape)
+            shape += list(arr.shape[1:])
+        return self._fill_holes(arr, shape, index)
+
+    # TODO: consider code refactoring as there is a substantial code duplication with FieldListSparseTensor.to_array
+    @flatten_arg
+    def to_array(self, index=None, **kwargs):
+        if index is not None:
+            if all(i == slice(None, None, None) for i in index):
+                index = None
+
+        # Fill in the holes in the tensor self with NaN's:
+        # do so by embedding appropriately the first axis of nd-array obtained from self.source.to_numpy
+        # into the 1d-axis of the length prod(self._user_shape). The embedding should be derived from
+        # the mapping user_coords -> fl_idx (self._user_coords_to_fl_idx)
+        if index is None:
+            arr = self.source.to_array(**kwargs)
+            shape = self.full_shape
+        else:
+            # TODO: Shouldn't shape be "updated" according to index?
+            #  Or maybe index can refer only to field dimensions?
+            arr = self.source.to_array(index=index, **kwargs)
+            shape = list(self._user_shape)
+            # TODO: what if arr is a lazy-array, whose shape is not explicit yet
+            #  (see the Note here: https://data-apis.org/array-api/2023.12/API_specification/generated/array_api.array.shape.html)
+            shape += list(arr.shape[1:])
+        return self._fill_holes(arr, shape, index)
+
+    # TODO: consider code refactoring as there is a substantial code duplication with FieldListSparseTensor._subset
+    def _subset(self, indexes):
+        """Only allow subsetting for the user coordinates.
+        Indices for the field coordinates are ignored.
+        """
+        # Map the slices to a list of indexes per dimension
+        assert len(indexes) >= len(self._user_shape)
+        user_icoords = []
+        user_indexes = []
+
+        # TODO: do it directly on self.user_coords ?
+        for s, c in zip(indexes, self._user_shape):
+            lst = np.array(list(range(c)))[s].tolist()
+            if not isinstance(lst, list):
+                lst = [lst]
+            user_icoords.append(lst)
+            user_indexes.append(s)
+
+        # print(f"{user_icoords=} {user_indexes=}")
+
+        assert len(user_icoords) == len(self._user_coords)
+
+        dataset_indexes = []
+        subset_user_coords_to_fl_idx = {}
+        j = 0
+        for x in itertools.product(*user_icoords):
+            user_coord = tuple(
+                user_coords_for_dim[x_coord]
+                for user_coords_for_dim, x_coord in zip(self.user_coords.values(), x)
+            )
+            i = self._user_coords_to_fl_idx.get(user_coord)
+            assert i is None or isinstance(i, int), i
+            if i is not None:
+                dataset_indexes.append(i)
+                subset_user_coords_to_fl_idx[user_coord] = j
+                j += 1
+
+        coords = self._subset_coords(user_indexes)
+        assert len(coords) == len(self._user_coords)
+        ds = self.source[tuple(dataset_indexes)]
+        return self.from_tensor(self, ds, coords, subset_user_coords_to_fl_idx)

@@ -42,6 +42,7 @@ release_source: false
 direct_backend: false
 strict: false
 errors: raise
+full_tensor_only: true
 
 dim_roles:
   number: number

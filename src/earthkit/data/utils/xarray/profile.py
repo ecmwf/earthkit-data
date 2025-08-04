@@ -275,6 +275,7 @@ class Profile:
         self.direct_backend = kwargs.pop("direct_backend")
         self.strict = kwargs.pop("strict")
         self.errors = kwargs.pop("errors")
+        self.full_tensor_only = kwargs.pop("full_tensor_only")
 
         # values
         self.flatten_values = kwargs.pop("flatten_values")

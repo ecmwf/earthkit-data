@@ -364,6 +364,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             user_dims_and_coords=tensor_coords,
             field_dims_and_coords=(self.grid.dims, self.grid.coords),
             flatten_values=self.flatten_values,
+            full_tensor_only=self.profile.full_tensor_only,
         )
 
         var_dims = []
@@ -585,9 +586,7 @@ class DatasetBuilder:
         LOG.debug(f"{profile.index_keys=}")
 
         # create a new fieldlist for optimised access to unique values
-        # TODO: dispatch to an appropriate class
-        xarray_cls = XArrayInputFieldList if full else XArrayInputFieldList
-        ds_xr = xarray_cls(
+        ds_xr = XArrayInputFieldList(
             ds, keys=profile.index_keys, remapping=remapping, component=profile.add_earthkit_attrs
         )
         # LOG.debug(f"{ds.db=}")
