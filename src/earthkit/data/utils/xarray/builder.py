@@ -221,7 +221,6 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
 
             # LOG.debug(f"   {r.user_shape=}")
             field_index = r.field_indexes(key)
-            print(f"_raw_indexing_method: {field_index=}")
             if self.tensor.is_full_field(field_index):
                 field_index = None
 
