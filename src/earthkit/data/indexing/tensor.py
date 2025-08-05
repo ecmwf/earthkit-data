@@ -614,10 +614,9 @@ class FieldListSparseTensor(FieldListTensor):
         self._user_coords_to_fl_idx = None
 
     def _fill_holes(self, arr, shape, index):
-        print(f"_fill_holes: {shape=}, {index=}")
         # TODO: check what happens with shape when index=(a, b) - identifies a point, not a subdomain, of the lon-lat.
-        # Are the field dimensions squeezed then? Is it possible to have the axis=0 squeezed?
-        # If both can happen, then it is not possible to know which axes we have and which axes have been squeezed...
+        #  Are the field dimensions squeezed then? Is it possible to have the axis=0 squeezed?
+        #  If both can happen, then it is not possible to know which axes we have and which axes have been squeezed...
         if len(shape) == 0:
             # TODO: Is it possible at all? Maybe after squeezing everything... If so, the code below would not always
             #  work, because the embedding might still be necessary

@@ -52,12 +52,12 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         flatten_values=None,
         lazy_load=None,
         release_source=None,
+        full_tensor_only=None,
         strict=None,
         dtype=None,
         array_module=None,
         array_backend=None,
         errors=None,
-        full_tensor_only=None,
     ):
         r"""
         filename_or_obj, str, Path or earthkit object
@@ -303,6 +303,12 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             option is ignored. Having run :obj:`to_xarray` the input data becomes unusable,
             so use this option carefully. The default value of ``release_source`` (None) expands
             to False unless the ``profile`` overwrites it.
+        full_tensor_only: bool, None
+            If True, GRIB fields must form a full tensor (a complete hypercube).
+            If False, a dataset will be created from any GRIB fields and its coordinates
+            will be a union of coordinates of the fields (outer join), allowing for a sparse tensor.
+            Values of the tensor corresponding to missing GRIB fields will be filled with NaN.
+            The default value of ``full_tensor_only`` (None) expands to True unless the ``profile`` overwrites it.
         strict: bool, None
             If True, perform stricter checks on hypercube consistency. Its default value (None) expands
             to False unless the ``profile`` overwrites it.
@@ -311,12 +317,6 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         array_backend: str, array namespace, ArrayBackend, None
             The array backend/namespace to use for array operations. The default value (None) is
             expanded to "numpy".
-        full_tensor_only: bool, None
-            If True, GRIB fields must form a full tensor (a complete hyper-cube).
-            If False, a dataset will be created from any GRIB fields and its coordinates
-            will be a union of coordinates of the fields (outer join), allowing for a sparse tensor.
-            Values of the tensor corresponding to missing GRIB fields will be filled with NaN.
-            The default value of ``full_tensor_only`` (None) expands to True unless the ``profile`` overwrites it.
         """
         fieldlist = self._fieldlist(filename_or_obj, source_type)
 
