@@ -198,7 +198,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
               - "forecast_reference_time": built from the "date" and "time" roles
                 (see ``dim_roles``) as np.datetime64 values
-              - "step": built from the "step" role. When ``decode_time=True`` the values are
+              - "step": built from the "step" role. When ``decode_times=True`` the values are
                 np.timedelta64
             - "valid_time": adds a dimension called "valid_time" as described by the "valid_time"
               role (see ``dim_roles``). Will contain np.datetime64 values.
