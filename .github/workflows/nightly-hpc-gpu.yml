@@ -1,0 +1,21 @@
+name: nightly-hpc-gpu
+
+on:
+  workflow_dispatch:
+
+  # Run at 04:00 UTC every day (on default branch)
+  schedule:
+  - cron: "0 04 * * *"
+
+jobs:
+  test-hpc-gpu:
+    runs-on: [self-hosted, linux, hpc]
+    steps:
+    - uses: ecmwf/reusable-workflows/ci-hpc@v2
+      with:
+        github_user: ${{ secrets.BUILD_PACKAGE_HPC_GITHUB_USER }}
+        github_token: ${{ secrets.GH_REPO_READ_TOKEN }}
+        troika_user: ${{ secrets.HPC_CI_TESTING_SSH_USER }}
+        repository: ecmwf/earthkit-data@${{ github.event.pull_request.head.sha || github.sha }}
+        build_config: .github/ci-hpc-gpu-config.yml
+        python_version: "3.10"
