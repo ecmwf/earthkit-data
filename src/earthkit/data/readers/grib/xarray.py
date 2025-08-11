@@ -320,6 +320,8 @@ class XarrayMixIn:
                 (None) expands to True unless the ``profile`` overwrites it.
             * rename_attrs: dict, None
                 A dictionary of attribute to rename. Default is None.
+            * fill_metadata: dict, None
+                Define fill_metadata values to metadata keys. Default is None.
             * remapping: dict, None
                 Define new metadata keys for indexing. Default is None.
             * lazy_load: bool, None
@@ -343,8 +345,9 @@ class XarrayMixIn:
                 to False unless the ``profile`` overwrites it.
             * dtype: str, numpy.dtype or None
                 Typecode or data-type of the array data.
-            * array_module: module
-                The module to use for array operations. Default is numpy.
+            * array_backend: str, array namespace, ArrayBackend, None
+                The array backend/namespace to use for array operations. The default value (None) is
+                expanded to "numpy".
             * direct_backend: bool, None
                 If True, the backend is used directly bypassing :py:meth:`xarray.open_dataset`
                 and ignoring all non-backend related kwargs. If False, the data is read via

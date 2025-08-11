@@ -369,7 +369,7 @@ def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
     ],
 )
 def test_xr_rename_dims(kwargs, dim_keys):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds = ds_ek.to_xarray(**kwargs)
     num = len(ds)
 
@@ -422,7 +422,7 @@ def test_xr_rename_dims(kwargs, dim_keys):
     ],
 )
 def test_xr_fixed_dims(kwargs, dim_keys):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds = ds_ek.to_xarray(**kwargs)
     num = len(ds)
 
@@ -480,7 +480,7 @@ def test_xr_fixed_dims(kwargs, dim_keys):
     ],
 )
 def test_xr_drop_dims(kwargs, dim_keys):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds = ds_ek.to_xarray(**kwargs)
     num = len(ds)
 

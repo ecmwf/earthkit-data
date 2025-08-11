@@ -401,6 +401,9 @@ class GribEncoder(Encoder):
         kwargs["can_infer_time"] = can_infer_time
 
         if data is not None:
+            from earthkit.data.wrappers import get_wrapper
+
+            data = get_wrapper(data, fieldlist=False)
             return data._encode(
                 self, template=template, use_metadata_from_data=use_metadata_from_data, **kwargs
             )
@@ -444,6 +447,10 @@ class GribEncoder(Encoder):
     def _encode_fieldlist(self, fs, **kwargs):
         for f in fs:
             yield f._encode(self, **kwargs)
+
+    def _encode_xarray(self, data, **kwargs):
+        accessor = data.earthkit
+        return self._encode_fieldlist(accessor._generator(), **kwargs)
 
     def _make_message(
         self, handle, values=None, check_nans=True, metadata=None, missing_value=9999, can_infer_time=False

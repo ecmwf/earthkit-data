@@ -14,7 +14,7 @@ from .file import FileSource
 LOG = logging.getLogger(__name__)
 
 
-REMOTE_SAMPLE_DATA_URL = "https://get.ecmwf.int/repository/earthkit/samples/"
+REMOTE_SAMPLE_DATA_URL = "https://sites.ecmwf.int/repository/earthkit/samples/"
 
 
 class Sample(FileSource):

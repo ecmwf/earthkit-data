@@ -11,7 +11,6 @@ import logging
 from abc import ABCMeta
 from abc import abstractmethod
 
-import numpy
 import xarray
 import xarray.core.indexing as indexing
 
@@ -179,12 +178,9 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         self.dims = dims
         self.shape = shape
         self._var_name = var_name
+        self.dtype = dtype
+        self.xp = xp
 
-        # xp and dtype must be set for xarray
-        self.xp = xp if xp is not None else numpy
-        if dtype is None:
-            dtype = numpy.dtype("float64")
-        self.dtype = xp.dtype(dtype)
         from dask.utils import SerializableLock
 
         self.lock = SerializableLock()
@@ -230,18 +226,18 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
 
             # LOG.debug(f"   {field_index=}")
 
-            result = r.to_numpy(index=field_index, dtype=self.dtype)
+            try:
+                result = r.to_array(index=field_index, array_backend=self.xp, dtype=self.dtype)
+            except Exception as e:
+                LOG.exception("Error in to_array:", e)
+                raise
+
+            # LOG.debug(f"   {result.shape=}"
 
             # ensure axes are squeezed when needed
             singles = [i for i in list(range(len(r.user_shape))) if isinstance(key[i], int)]
             if singles:
                 result = result.squeeze(axis=tuple(singles))
-
-            # LOG.debug(f"   {result.shape=}")
-
-            # Loading as numpy but then converting to the target array module
-            if self.xp and self.xp != numpy:
-                result = self.xp.asarray(result)
 
             return result
 
@@ -253,8 +249,21 @@ class BackendDataBuilder(metaclass=ABCMeta):
         self.dims = dims
 
         self.flatten_values = profile.flatten_values
-        self.dtype = profile.dtype
-        self.array_module = profile.array_module
+
+        # Array backend/namespace
+        array_backend = profile.array_backend
+        if array_backend is None:
+            array_backend = "numpy"
+
+        from earthkit.utils.array import get_backend
+
+        self.array_backend = get_backend(array_backend)
+        assert self.array_backend is not None, f"Unsupported array_backend : {array_backend}"
+
+        dtype = profile.dtype
+        if dtype is None:
+            dtype = "float64"
+        self.dtype = self.array_backend.make_dtype(dtype)
 
         # Note: these coords inside the tensor are called user_coords and
         # the corresponding dims are called user_dims
@@ -470,7 +479,7 @@ class TensorBackendDataBuilder(BackendDataBuilder):
             tensor,
             var_dims,
             tensor.full_shape,
-            self.array_module,
+            self.array_backend.namespace,
             self.dtype,
             name,
         )
@@ -514,7 +523,7 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
             for f in tensor.source:
                 f.keep = False
 
-        return tensor.to_numpy(dtype=self.dtype)
+        return tensor.to_array(dtype=self.dtype, array_backend=self.array_backend)
 
 
 class DatasetBuilder:
