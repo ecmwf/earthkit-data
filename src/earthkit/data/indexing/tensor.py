@@ -244,8 +244,9 @@ class TensorCore(metaclass=ABCMeta):
                 r[k] = self._user_coords[k]
         return r
 
-    # PW: this must be changed in the sparse case (cannot use the function index_to_coords(...))
-    # but this method is used only by CubeChecker.first_diff which is for an error diagnostic only
+    # TODO: this must be changed if it is to be used in the sparse case (tensor with holes) - the function
+    #  index_to_coords(...) does work only in the complete tensor case with fields being sorted.
+    #  However, this method is used only by CubeChecker.first_diff which is in turn for an error diagnostic only.
     @staticmethod
     def _index_to_coords_value(index, tensor):
         coord_idx = index_to_coords(index, tensor._user_shape)
@@ -254,8 +255,6 @@ class TensorCore(metaclass=ABCMeta):
             coords.append(v[coord_idx[k]])
         return coords
 
-    # PW: waive this check in the sparse case?
-    # used only in tests...
     def _check(self):
         if self._full_shape != self._user_shape + self._field_shape:
             raise ValueError(
@@ -678,7 +677,7 @@ class FieldListSparseTensor(FieldListTensor):
             shape = self.full_shape
         else:
             # TODO: Shouldn't shape be "updated" according to index?
-            # Or maybe index can refer only to field dimensions?
+            #  Or maybe index can refer only to field dimensions?
             arr = self.source.to_numpy(index=index, **kwargs)
             shape = list(self._user_shape)
             shape += list(arr.shape[1:])
@@ -708,7 +707,7 @@ class FieldListSparseTensor(FieldListTensor):
             shape += list(arr.shape[1:])
         return self._fill_holes(arr, shape, index)
 
-    # TODO: consider code refactoring as there is a substantial code duplication with FieldListSparseTensor._subset
+    # TODO: consider code refactoring as there is a substantial code duplication with FieldListTensor._subset
     def _subset(self, indexes):
         """Only allow subsetting for the user coordinates.
         Indices for the field coordinates are ignored.
