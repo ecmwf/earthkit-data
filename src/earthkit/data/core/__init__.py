@@ -139,7 +139,7 @@ class Base(metaclass=MetaBase):
             user_coords = tuple(metadata[k] for k in keys)
             assert user_coords not in user_coords_to_fl_idx, (
                 f"Multiple fields in {self} with {dict(zip(keys, user_coords))}: "
-                f"#{user_coords_to_fl_idx[user_coords]} and #{i + 1}"
+                f"#{user_coords_to_fl_idx[user_coords]} and #{i}"
             )
             user_coords_to_fl_idx[user_coords] = i
 

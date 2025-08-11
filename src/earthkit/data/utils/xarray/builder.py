@@ -429,9 +429,11 @@ class BackendDataBuilder(metaclass=ABCMeta):
                     if component_vals and d.key in component_vals:
                         tensor_coords_component[d.key] = component_vals[d.key]
 
+                    # no longer needed, since this method is invoked once for all variables,
+                    # so there is no reference coords to compare to
+                    # TODO: remove dead code resulted from this change
                     # check if the dims/coords are consistent with the tensors of
                     # the previous variables
-                    # PW: if tensors with holes are permitted, don't check!
                     # self.check_tensor_coords(name, d.key, tensor_coords)
 
         # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinates
@@ -647,20 +649,6 @@ class SingleDatasetBuilder(DatasetBuilder):
         )
         r = builder.build()
         return r
-
-        # PW: maybe apply changes here?
-        # grid = self.grid(ds_sorted)
-        # xarray_obj_by_var = {}
-        # for name in self.profile.variables:
-        #     ds_var = ds_sorted.sel(**{self.profile.variable_key: name})
-        #     builder = self.builder(
-        #         ds_var,
-        #         self.profile,
-        #         dims,
-        #         grid=grid,
-        #     )
-        #     xarray_obj_by_var[name] = builder.build()
-        # return xarray_obj_by_var
 
 
 class SplitDatasetBuilder(DatasetBuilder):
