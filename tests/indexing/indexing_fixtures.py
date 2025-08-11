@@ -15,14 +15,13 @@ import shutil
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_file
 from earthkit.data.testing import earthkit_test_data_file
 
 TEST_GRIB_FILES = [
-    earthkit_file(p)
+    earthkit_examples_file(p)
     for p in [
-        "docs/examples/test.grib",
-        "docs/examples/test4.grib",
+        "test.grib",
+        "test4.grib",
     ]
 ]
 

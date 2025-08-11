@@ -2,6 +2,7 @@
 variable_key: param
 drop_variables: []
 rename_variables: {}
+mono_variable: false
 
 # dimensions
 extra_dims: []
@@ -33,7 +34,7 @@ decode_timedelta:
 # values
 flatten_values: false
 dtype: float64
-array_module: numpy
+array_backend: numpy
 
 # other
 lazy_load: true

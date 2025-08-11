@@ -108,10 +108,18 @@ class XarrayMixIn:
             * variable_key: str, None
                 Metadata key to specify the dataset variables. It cannot be
                 defined as a dimension. Default is "param" (in earthkit-data this is the same as "shortName").
+                Only enabled when ``mono_variable`` is False or None.
             * drop_variables: str, or iterable of str, None
-                A variable or list of variables to drop from the dataset. Default is None.
+                A variable or list of variables to drop from the dataset. Default is None. Only used when
+                ``variable_key`` is enabled.
             * rename_variables: dict, None
-                Mapping to rename variables. Default is None.
+                Mapping to rename variables. Default is None. Only used  when
+                ``variable_key`` is enabled.
+            * mono_variable: bool, str, None
+                If True or str, the dataset will contain a single variable called "data" (or the value
+                of the ``mono_variable`` kwarg when it is a str). If False, the dataset will contain
+                one variable for each distinct value of ``variable_key`` metadata key. The default value
+                (None) expands to False unless the ``profile`` overwrites it.
             * extra_dims:  str, or iterable of str, None
                 Define additional dimensions on top of the predefined dimensions. Only enabled when no
                 ``fixed_dims`` is specified. Default is None. It can be a single item or a list. Each
@@ -207,8 +215,8 @@ class XarrayMixIn:
                     }
 
                 ``dims_roles`` behaves differently to the other kwargs in the sense that
-                it does not override but update the default values. So e.g. to change only "ens" in
-                the defaults it is enough to specify: "dim_roles={"ens": "perturbationNumber"}.
+                it does not override but update the default values. So e.g. to change only "number" in
+                the defaults it is enough to specify: "dim_roles={"number": "perturbationNumber"}.
             * dim_name_from_role_name: bool, None
                 If True, the dimension names are formed from the role names. Otherwise the
                 dimension names are formed from the metadata keys specified in ``dim_roles``.
@@ -312,6 +320,8 @@ class XarrayMixIn:
                 (None) expands to True unless the ``profile`` overwrites it.
             * rename_attrs: dict, None
                 A dictionary of attribute to rename. Default is None.
+            * fill_metadata: dict, None
+                Define fill_metadata values to metadata keys. Default is None.
             * remapping: dict, None
                 Define new metadata keys for indexing. Default is None.
             * lazy_load: bool, None
@@ -335,8 +345,9 @@ class XarrayMixIn:
                 to False unless the ``profile`` overwrites it.
             * dtype: str, numpy.dtype or None
                 Typecode or data-type of the array data.
-            * array_module: module
-                The module to use for array operations. Default is numpy.
+            * array_backend: str, array namespace, ArrayBackend, None
+                The array backend/namespace to use for array operations. The default value (None) is
+                expanded to "numpy".
             * direct_backend: bool, None
                 If True, the backend is used directly bypassing :py:meth:`xarray.open_dataset`
                 and ignoring all non-backend related kwargs. If False, the data is read via

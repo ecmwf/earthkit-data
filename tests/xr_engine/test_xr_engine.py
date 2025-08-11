@@ -10,6 +10,7 @@
 #
 
 import os
+import pathlib
 import sys
 
 import numpy as np
@@ -27,7 +28,7 @@ from xr_engine_fixtures import load_grib_data  # noqa: E402
 @pytest.mark.cache
 @pytest.mark.parametrize("engine", ["earthkit", "cfgrib"])
 def test_xr_engine_kwargs_unchanged(engine):
-    ds = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_small.grib"))
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
 
     _kwargs = {"squeeze": True}
     res = ds.to_xarray(engine=engine, xarray_open_dataset_kwargs=_kwargs)
@@ -36,36 +37,32 @@ def test_xr_engine_kwargs_unchanged(engine):
 
 
 @pytest.mark.cache
-@pytest.mark.parametrize(
-    "file",
-    [
-        "pl.grib",
-        # "era5-levels-members",
-        # "fields_with_missing_values",
-        # "lambert_grid",
-        # "reduced_gg",
-        # "regular_gg_sfc",
-        # "regular_gg_pl",
-        # "regular_gg_ml",
-        # "regular_gg_ml_g2",
-        # "regular_ll_sfc",
-        # "regular_ll_msl",
-        # "scanning_mode_64",
-        # "single_gridpoint",
-        # "spherical_harmonics",
-        # "t_analysis_and_fc_0",
-    ],
-)
-def test_xr_engine_basic(file):
-    ds = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", file))
+def test_xr_engine_basic():
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
     res = ds.to_xarray()
+    assert res is not None
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("path_maker", [lambda x: x, lambda x: pathlib.Path(x)])
+def test_xr_engine_open_dataset_path(path_maker):
+
+    ds = from_source("sample", "pl.grib")
+    path = path_maker(ds.path)
+
+    import xarray as xr
+
+    res = xr.open_dataset(
+        path,
+        engine="earthkit",
+    )
     assert res is not None
 
 
 @pytest.mark.cache
 @pytest.mark.parametrize("api", ["earthkit", "xr"])
 def test_xr_engine_detailed_check_1(api):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
 
     if api == "earthkit":
         ds = ds_ek.to_xarray(
@@ -242,7 +239,7 @@ def test_xr_engine_detailed_check_1(api):
 @pytest.mark.cache
 @pytest.mark.parametrize("api", ["earthkit", "xr"])
 def test_xr_engine_detailed_check_2(api):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
 
     if api == "earthkit":
         ds = ds_ek.to_xarray(
@@ -422,7 +419,7 @@ def test_xr_engine_detailed_check_2(api):
 @pytest.mark.parametrize("release_source", [False, True])
 @pytest.mark.parametrize("direct_backend", [False, True])
 def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, direct_backend):
-    filename = "test-data/xr_engine/level/pl.grib"
+    filename = "xr_engine/level/pl.grib"
     ds_ek, ds_ek_ref = load_grib_data(filename, "url", stream=stream)
 
     kwargs = {
@@ -601,7 +598,7 @@ def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, d
 @pytest.mark.parametrize("release_source", [False, True])
 @pytest.mark.parametrize("direct_backend", [False, True])
 def test_xr_engine_detailed_flatten_check_2(stream, lazy_load, release_source, direct_backend):
-    filename = "test-data/xr_engine/level/pl.grib"
+    filename = "xr_engine/level/pl.grib"
     ds_ek, ds_ek_ref = load_grib_data(filename, "url", stream=stream)
 
     kwargs = {
@@ -771,7 +768,7 @@ def test_xr_engine_detailed_flatten_check_2(stream, lazy_load, release_source, d
     ],
 )
 def test_xr_engine_invalid_kwargs(kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
 
     import xarray as xr
 
@@ -785,19 +782,26 @@ def test_xr_engine_invalid_kwargs(kwargs):
 
 
 @pytest.mark.cache
-def test_xr_engine_dtype():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+@pytest.mark.parametrize(
+    "dtype,expected_dtype",
+    [
+        (np.float32, np.float32),
+        ("float32", np.float32),
+        (np.float64, np.float64),
+        ("float64", np.float64),
+    ],
+)
+def test_xr_engine_dtype(dtype, expected_dtype):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
-    ds = ds_ek.to_xarray(dtype=np.float32)
-    assert ds["t"].values.dtype == np.float32
-
-    ds = ds_ek.to_xarray(dtype=np.float64)
-    assert ds["t"].values.dtype == np.float64
+    ds = ds_ek.to_xarray(dtype=dtype)
+    assert ds["t"].data.dtype == expected_dtype
+    assert ds["t"].values.dtype == expected_dtype
 
 
 @pytest.mark.cache
 def test_xr_engine_single_field():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek[0]
 
     ds = ds_ek.to_xarray(
@@ -876,7 +880,7 @@ def test_xr_engine_single_field():
 @pytest.mark.cache
 @pytest.mark.parametrize("add", [False, True])
 def test_xr_engine_add_earthkit_attrs_1(add):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek[0]
 
     ds = ds_ek.to_xarray(
@@ -895,7 +899,7 @@ def test_xr_engine_add_earthkit_attrs_1(add):
 
 @pytest.mark.cache
 def test_xr_engine_add_earthkit_attrs_2():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek[0]
 
     ds = ds_ek.to_xarray(
