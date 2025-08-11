@@ -393,6 +393,20 @@ class FieldListTensor(TensorCore):
             return n.reshape(*shape) if len(shape) > 0 else n
 
     @flatten_arg
+    def to_array(self, index=None, **kwargs):
+        if index is not None:
+            if all(i == slice(None, None, None) for i in index):
+                index = None
+
+        if index is None:
+            return self.source.to_array(**kwargs).reshape(*self.full_shape)
+        else:
+            n = self.source.to_array(index=index, **kwargs)
+            shape = list(self._user_shape)
+            shape += list(n.shape[1:])
+            return n.reshape(*shape) if len(shape) > 0 else n
+
+    @flatten_arg
     def latitudes(self, **kwargs):
         return self.source[0].data("lat", **kwargs)
 

@@ -75,7 +75,7 @@ def compare_coord(ds, name, ref_vals, mode="coord"):
 
     vals = ds.coords[name].values
     if isinstance(ref_vals[0], str):
-        assert vals.tolist() == ref_vals
+        assert vals.tolist() == ref_vals, f"{name=} {vals.tolist()} != {ref_vals}"
     else:
         vals = np.asarray(vals).flatten()
         ref_vals = np.asarray(ref_vals).flatten()
@@ -95,6 +95,7 @@ def compare_dim_order(ds, dims, order_ref_var, check_coord=True):
         return
 
     dim_order = []
+
     for d in ds[order_ref_var].dims:
         if d in dims:
             dim_order.append(d)

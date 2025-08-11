@@ -233,6 +233,30 @@ def write_to_file(mode, path, ds, **kwargs):
         raise ValueError(f"Invalid {mode=}")
 
 
+def check_array(
+    v,
+    shape=None,
+    first=None,
+    last=None,
+    meanv=None,
+    eps=1e-3,
+    array_backend=None,
+):
+    if array_backend is None:
+        from earthkit.utils.array import get_backend
+
+        array_backend = get_backend(v)
+
+    v = array_backend.to_numpy(v)
+
+    import numpy as np
+
+    assert v.shape == shape
+    assert np.isclose(v[0], first, eps)
+    assert np.isclose(v[-1], last, eps)
+    assert np.isclose(v.mean(), meanv, eps)
+
+
 def main(path):
     import sys
 

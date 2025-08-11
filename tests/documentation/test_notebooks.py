@@ -42,6 +42,7 @@ SKIP = [
     "grib_to_xarray.ipynb",
     "grib_to_fdb_target.ipynb",
     "xarray_engine.ipynb",
+    "xarray_cupy.ipynb",
     "netcdf_opendap.ipynb",
 ]
 

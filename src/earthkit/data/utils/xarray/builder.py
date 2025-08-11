@@ -11,7 +11,6 @@ import logging
 from abc import ABCMeta
 from abc import abstractmethod
 
-import numpy
 import xarray
 import xarray.core.indexing as indexing
 
@@ -179,12 +178,9 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
         self.dims = dims
         self.shape = shape
         self._var_name = var_name
+        self.dtype = dtype
+        self.xp = xp
 
-        # xp and dtype must be set for xarray
-        self.xp = xp if xp is not None else numpy
-        if dtype is None:
-            dtype = numpy.dtype("float64")
-        self.dtype = xp.dtype(dtype)
         from dask.utils import SerializableLock
 
         self.lock = SerializableLock()
@@ -230,18 +226,18 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
 
             # LOG.debug(f"   {field_index=}")
 
-            result = r.to_numpy(index=field_index, dtype=self.dtype)
+            try:
+                result = r.to_array(index=field_index, array_backend=self.xp, dtype=self.dtype)
+            except Exception as e:
+                LOG.exception("Error in to_array:", e)
+                raise
+
+            # LOG.debug(f"   {result.shape=}"
 
             # ensure axes are squeezed when needed
             singles = [i for i in list(range(len(r.user_shape))) if isinstance(key[i], int)]
             if singles:
                 result = result.squeeze(axis=tuple(singles))
-
-            # LOG.debug(f"   {result.shape=}")
-
-            # Loading as numpy but then converting to the target array module
-            if self.xp and self.xp != numpy:
-                result = self.xp.asarray(result)
 
             return result
 
@@ -253,8 +249,21 @@ class BackendDataBuilder(metaclass=ABCMeta):
         self.dims = dims
 
         self.flatten_values = profile.flatten_values
-        self.dtype = profile.dtype
-        self.array_module = profile.array_module
+
+        # Array backend/namespace
+        array_backend = profile.array_backend
+        if array_backend is None:
+            array_backend = "numpy"
+
+        from earthkit.utils.array import get_backend
+
+        self.array_backend = get_backend(array_backend)
+        assert self.array_backend is not None, f"Unsupported array_backend : {array_backend}"
+
+        dtype = profile.dtype
+        if dtype is None:
+            dtype = "float64"
+        self.dtype = self.array_backend.make_dtype(dtype)
 
         # Note: these coords inside the tensor are called user_coords and
         # the corresponding dims are called user_dims
@@ -311,7 +320,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         # build variables
         xr_vars = {
-            self.profile.rename_variable(k): v.build(add_earthkit_attrs=self.profile.add_earthkit_attrs)
+            self.profile.variable.rename(k): v.build(add_earthkit_attrs=self.profile.add_earthkit_attrs)
             for k, v in var_builders.items()
         }
 
@@ -448,10 +457,15 @@ class TensorBackendDataBuilder(BackendDataBuilder):
         """Generate a builder for each variable"""
         builders = {}
 
-        # we assume each variable forms a full cube
-        for name in self.profile.variables:
-            ds_var = self.ds.sel(**{self.profile.variable_key: name})
-            builders[name] = self.pre_build_variable(ds_var, self.dims, name)
+        if self.profile.variable.is_mono:
+            name = self.profile.variable.name
+            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
+        else:
+            # we assume each variable forms a full cube
+            key = self.profile.variable.key
+            for name in self.profile.variable.variables:
+                ds_var = self.ds.sel(**{key: name})
+                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
 
         return builders
 
@@ -465,7 +479,7 @@ class TensorBackendDataBuilder(BackendDataBuilder):
             tensor,
             var_dims,
             tensor.full_shape,
-            self.array_module,
+            self.array_backend.namespace,
             self.dtype,
             name,
         )
@@ -485,12 +499,17 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
     def pre_build_variables(self):
         """Generate a builder for each variable"""
         builders = {}
-        groups = self.ds.group(self.profile.variable_key, self.profile.variables)
 
-        # we assume each variable forms a full cube
-        for name in groups:
-            ds_var = groups[name]
-            builders[name] = self.pre_build_variable(ds_var, self.dims, name)
+        if self.profile.variable.is_mono:
+            name = self.profile.variable.name
+            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
+        else:
+            groups = self.ds.group(self.profile.variable.key, self.profile.variable.variables)
+
+            # we assume each variable forms a full cube
+            for name in groups:
+                ds_var = groups[name]
+                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
 
         return builders
 
@@ -504,7 +523,7 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
             for f in tensor.source:
                 f.keep = False
 
-        return tensor.to_numpy(dtype=self.dtype)
+        return tensor.to_array(dtype=self.dtype, array_backend=self.array_backend)
 
 
 class DatasetBuilder:
@@ -656,7 +675,7 @@ class SplitDatasetBuilder(DatasetBuilder):
             dims = profile.dims.to_list()
             split_coords_list.append(dict(split_coords))
             LOG.debug(f"splitting {dims=} type of s_ds={type(ds)} {split_coords=}")
-            split_coords.pop(profile.variable_key, None)
+            split_coords.pop(profile.variable.key, None)
             builder = self.builder(ds, profile, dims, grid=self.grid(ds), fixed_local_attrs=split_coords)
 
             ds._ek_builder = builder

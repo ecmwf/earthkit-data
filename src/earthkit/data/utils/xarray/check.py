@@ -59,7 +59,7 @@ class CubeChecker:
                         if diff.diff_index != -1:
                             name = coord_keys[diff.diff_index]
 
-                    return i, f, t_coords, f_coords, name, diff
+                        return i, f, t_coords, f_coords, name, diff
                 except Exception:
                     pass
 

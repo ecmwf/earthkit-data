@@ -170,7 +170,7 @@ class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
         return BoundingBox(north=self.north, south=self.south, east=self.east, west=self.west)
 
 
-def wrapper(data, *args, **kwargs):
+def wrapper(data, *args, fieldlist=False, **kwargs):
     from earthkit.data.utils import is_module_loaded
 
     if not is_module_loaded("pandas"):

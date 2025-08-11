@@ -56,5 +56,8 @@ class CSVEncoder(Encoder):
     def _encode_fieldlist(self, fieldlist, **kwargs):
         raise NotImplementedError
 
+    def _encode_xarray(self, data, **kwargs):
+        raise NotImplementedError
+
 
 encoder = CSVEncoder

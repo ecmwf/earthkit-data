@@ -26,7 +26,7 @@ class IntWrapper(Wrapper):
         return [self.to_datetime()]
 
 
-def wrapper(data, *args, **kwargs):
+def wrapper(data, *args, fieldlist=False, **kwargs):
     if isinstance(data, int):
         return IntWrapper(data)
     return None

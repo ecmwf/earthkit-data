@@ -70,5 +70,8 @@ class _InternalPassThroughEncoder(Encoder):
     def _encode_fieldlist(self, fieldlist, **kwargs):
         return self._encode(fieldlist, **kwargs)
 
+    def _encode_xarray(self, data, **kwargs):
+        raise NotImplementedError
+
 
 encoder = _InternalPassThroughEncoder
