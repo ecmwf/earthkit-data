@@ -86,7 +86,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
     ],
 )
 def test_xr_incomplete_tensor_holes(kwargs, dim_keys, or_mask_spec, nfields):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
     md = ds_ek.metadata("param", *dim_keys)
     md_df = pd.DataFrame.from_records(md, columns=["param"] + dim_keys)
@@ -159,7 +159,7 @@ def test_xr_incomplete_tensor_holes(kwargs, dim_keys, or_mask_spec, nfields):
 def test_xr_incomplete_tensor_coordinates_trimmed_plus_holes(
     kwargs, dim_keys, or_mask_spec, dropped_coords, nfields
 ):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
     md = ds_ek.metadata("param", *dim_keys)
     md_df = pd.DataFrame.from_records(md, columns=["param"] + dim_keys)
