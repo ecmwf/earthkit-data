@@ -14,6 +14,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_remote_examples_file
 from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import projections
@@ -156,7 +157,7 @@ def test_netcdf_proj_string_non_cf():
 
 
 def test_netcdf_projection_laea():
-    f = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
+    f = from_source("url", earthkit_remote_examples_file("efas.nc"))
     projection = f[0].projection()
     assert isinstance(projection, projections.LambertAzimuthalEqualArea)
     assert projection.parameters == {
@@ -171,7 +172,7 @@ def test_netcdf_projection_laea():
 
 
 def test_netcdf_proj_string_laea():
-    f = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
+    f = from_source("url", earthkit_remote_examples_file("efas.nc"))
     r = f[0].projection()
     assert (
         r.to_proj_string()
@@ -180,7 +181,7 @@ def test_netcdf_proj_string_laea():
 
 
 def test_netcdf_to_points_laea():
-    ds = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
+    ds = from_source("url", earthkit_remote_examples_file("efas.nc"))
 
     assert len(ds) == 3
 
@@ -209,7 +210,7 @@ def test_netcdf_to_points_laea():
 
 
 def test_netcdf_to_latlon_laea():
-    ds = from_source("url", earthkit_remote_test_data_file("examples", "efas.nc"))
+    ds = from_source("url", earthkit_remote_examples_file("efas.nc"))
 
     assert len(ds) == 3
 
@@ -252,7 +253,7 @@ def test_netcdf_to_latlon_laea():
 
 
 def test_netcdf_forecast_reference_time():
-    ds = from_source("url", earthkit_remote_test_data_file("test-data", "fa_ta850.nc"))
+    ds = from_source("url", earthkit_remote_test_data_file("fa_ta850.nc"))
 
     assert len(ds) == 37
     assert ds[0].metadata("valid_datetime") == "2020-01-23T00:00:00"

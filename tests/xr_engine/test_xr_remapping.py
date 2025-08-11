@@ -25,9 +25,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
 
 @pytest.mark.cache
 def test_xr_remapping_1():
-    ds0 = from_source(
-        "url", earthkit_remote_test_data_file("test-data/xr_engine/level/mixed_pl_ml_small.grib")
-    )
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine/level/mixed_pl_ml_small.grib"))
     ds = ds0.to_xarray(variable_key="_k", remapping={"_k": "{param}_{levelist}_{levtype}"})
 
     data_vars = ["t_137_ml", "t_500_pl", "t_700_pl", "t_90_ml", "u_137_ml", "u_500_pl", "u_700_pl", "u_90_ml"]
@@ -75,7 +73,7 @@ def test_xr_remapping_1():
     ],
 )
 def test_xr_remapping_2(kwargs, coords, dims):
-    ds0 = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_small.grib"))
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
     ds = ds0.to_xarray(**kwargs)
 
     data_vars = ["r", "t"]

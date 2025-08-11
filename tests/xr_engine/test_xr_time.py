@@ -151,7 +151,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
     ],
 )
 def test_xr_time_basic(kwargs, dims, step_units):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
     ds = ds_ek.to_xarray(**kwargs)
     compare_dims(ds, dims, order_ref_var="t")
@@ -235,7 +235,7 @@ def test_xr_time_basic(kwargs, dims, step_units):
 def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims, step_units):
     ds_ek = from_source(
         "url",
-        earthkit_remote_test_data_file("test-data/xr_engine/date/jma_seasonal_fc_ref_time_per_member.grib"),
+        earthkit_remote_test_data_file("xr_engine/date/jma_seasonal_fc_ref_time_per_member.grib"),
     )
 
     ds = ds_ek.to_xarray(**kwargs)
@@ -380,7 +380,7 @@ def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims, step_units):
 def test_xr_time_seasonal_monthly_simple(kwargs, dims, step_units):
     ds_ek = from_source(
         "url",
-        earthkit_remote_test_data_file("test-data/xr_engine/date/seasonal_monthly.grib"),
+        earthkit_remote_test_data_file("xr_engine/date/seasonal_monthly.grib"),
     )
 
     ds = ds_ek.to_xarray(**kwargs)
@@ -489,7 +489,7 @@ def test_xr_time_seasonal_monthly_simple(kwargs, dims, step_units):
     ],
 )
 def test_xr_valid_time_coord(kwargs, dims, step_units, coords):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_small.grib")).sel(
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib")).sel(
         date=20240603, time=[0, 1200]
     )
 
@@ -534,9 +534,7 @@ def test_xr_valid_time_coord(kwargs, dims, step_units, coords):
     ],
 )
 def test_xr_time_step_range_1(kwargs, dims, step_units):
-    ds_ek = from_source(
-        "url", earthkit_remote_test_data_file("test-data/xr_engine/date/wgust_step_range.grib1")
-    )
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1"))
 
     ds = ds_ek.to_xarray(**kwargs)
     compare_dims(ds, dims, order_ref_var="10fg6")
@@ -567,9 +565,7 @@ def test_xr_time_step_range_1(kwargs, dims, step_units):
     ],
 )
 def test_xr_time_step_range_2(kwargs, dims, step_units):
-    ds_ek = from_source(
-        "url", earthkit_remote_test_data_file("test-data/xr_engine/date/lsp_step_range.grib2")
-    )
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/lsp_step_range.grib2"))
 
     ds = ds_ek.to_xarray(**kwargs)
     compare_dims(ds, dims, order_ref_var="lsp")

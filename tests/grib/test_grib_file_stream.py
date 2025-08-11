@@ -325,10 +325,10 @@ def test_grib_file_stream_multi_file_memory():
         ("test6.grib", [(0, 150)], [("t", 1000)], False),
         ("test6.grib", [(240, 150)], [("u", 1000)], False),
         ("test6.grib", [(240, 480)], [("u", 1000), ("v", 1000)], False),
-        ("test-data/karl_850.grib", [(0, 1683960)], [("t", 850)], True),
-        ("test-data/karl_850.grib", [(0, 3367920)], [("t", 850), ("r", 850)], True),
+        ("karl_850.grib", [(0, 1683960)], [("t", 850)], True),
+        ("karl_850.grib", [(0, 3367920)], [("t", 850), ("r", 850)], True),
         ("test6.grib", [(240, 240), (720, 240)], [("u", 1000), ("t", 850)], False),
-        ("test-data/karl_850.grib", [(0, 1683960), (3367920, 1683960)], [("t", 850), ("z", 850)], True),
+        ("karl_850.grib", [(0, 1683960), (3367920, 1683960)], [("t", 850), ("z", 850)], True),
     ],
 )
 def test_grib_file_stream_single_file_parts_core(path, parts, expected_meta, remote):

@@ -29,7 +29,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
     ],
 )
 def test_xr_write_1(kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
 
     ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy()
@@ -109,7 +109,7 @@ def test_xr_write_1(kwargs):
     ],
 )
 def test_xr_write_2(kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(date=20240603, time=0, param=["t", "r"], level=[500, 850])
 
     ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy()
@@ -156,7 +156,7 @@ def test_xr_write_2(kwargs):
 
 @pytest.mark.cache
 def test_xr_write_level_and_type():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(date=20240603, time=0, param=["t", "r"], level=[500, 850])
 
     ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy()
@@ -205,7 +205,7 @@ def test_xr_write_level_and_type():
 def test_xr_write_seasonal():
     ds_ek = from_source(
         "url",
-        earthkit_remote_test_data_file("test-data/xr_engine/date/jma_seasonal_fc_ref_time_per_member.grib"),
+        earthkit_remote_test_data_file("xr_engine/date/jma_seasonal_fc_ref_time_per_member.grib"),
     )
     ds_ek = ds_ek.sel(param="2t")
     assert len(ds_ek) == 60
@@ -231,7 +231,7 @@ def test_xr_write_seasonal():
 
 
 def test_xr_write_bits_per_value():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
 
     ref_bpm = ds_ek[0].metadata("bitsPerValue")
@@ -265,7 +265,7 @@ def test_xr_write_bits_per_value():
     ],
 )
 def test_xr_write_to_grib_file_dataarray(method, kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
 
     ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy()
@@ -343,7 +343,7 @@ def test_xr_write_to_grib_file_dataarray(method, kwargs):
     ],
 )
 def test_xr_write_to_grib_file_dataset(method, kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
 
     ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy()
@@ -384,7 +384,7 @@ def test_xr_write_to_grib_file_dataset(method, kwargs):
     ],
 )
 def test_xr_write_to_netcdf_file_dataarray(method, kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t"], level=[500, 850])
 
     ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy().flatten()
@@ -425,7 +425,7 @@ def test_xr_write_to_netcdf_file_dataarray(method, kwargs):
     ],
 )
 def test_xr_write_to_netcdf_file_dataset(method, kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
 
     ref_t_vals = ds_ek.sel(param="t", step=6, level=500).to_numpy().flatten()

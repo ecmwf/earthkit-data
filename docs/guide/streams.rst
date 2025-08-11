@@ -21,7 +21,7 @@ The example below shows how we iterate through a GRIB data stream field by field
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test6.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
     >>> ds = ekd.from_source("url", url, stream=True)
     >>> for f in fields:
     ...     print(f)
@@ -38,7 +38,7 @@ We can also use :meth:`~data.core.fieldlist.FieldList.batched` to iterate in bat
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test6.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
     >>> ds = ekd.from_source("url", url, stream=True)
     >>> for f in ds.batched(2):
     ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
@@ -52,7 +52,7 @@ Another option is to use :meth:`~data.core.fieldlist.FieldList.group_by` to iter
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test6.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
     >>> ds = ekd.from_source("url", url, stream=True)
     >>> for f in ds._group_by("level"):
     ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
@@ -69,7 +69,7 @@ We can load the whole stream into memory by using ``read_all=True`` in :func:`fr
 .. code-block:: python
 
     >>> import earthkit.data as ekd
-    >>> url = "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test6.grib"
+    >>> url = "https://sites.ecmwf.int/repository/earthkit-data/examples/test6.grib"
     >>> ds = ekd.from_source("url", url, stream=True, read_all=True)
     >>> len(ds)
     6
