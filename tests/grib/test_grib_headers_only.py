@@ -154,7 +154,7 @@ def test_grib_metadata_override_headers_only_false_core():
     grid_list(),
 )
 def test_grib_metadata_headers_only_clone_true_grids(file):
-    ds0 = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "grid", file))
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
 
     keys = ["bitsPerValue", "level", "shortName", "gridType", "packingType", "date"]
     md_ref = {k: ds0[0].metadata(k) for k in keys}
@@ -208,7 +208,7 @@ def test_grib_metadata_headers_only_clone_true_grids(file):
     grid_list(),
 )
 def test_grib_metadata_headers_only_clone_false_grids(file):
-    ds0 = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "grid", file))
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
 
     keys = ["bitsPerValue", "level", "shortName", "gridType", "packingType", "date"]
     md_ref = {k: ds0[0].metadata(k) for k in keys}

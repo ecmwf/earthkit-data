@@ -46,10 +46,9 @@ def test_download_example_file_multi(tmpdir):
 
 def test_remote_example_file_path():
     filename = "test.grib"
-    assert (
-        remote_example_file(filename)
-        == "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/" + filename
-    )
+    from earthkit.data.testing import _REMOTE_ROOT_URL
+
+    assert remote_example_file(filename) == os.path.join(_REMOTE_ROOT_URL, "examples", filename)
 
 
 if __name__ == "__main__":

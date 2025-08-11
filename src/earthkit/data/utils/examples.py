@@ -12,21 +12,19 @@ def download_example_file(file_names, remote_dir="examples", force=False):
     import os
     import urllib.request
 
-    from earthkit.data.testing import earthkit_remote_test_data_file
+    from earthkit.data.testing import earthkit_remote_file
 
     if isinstance(file_names, str):
         file_names = [file_names]
 
     for f_name in file_names:
         if force or not os.path.exists(f_name):
-            urllib.request.urlretrieve(
-                earthkit_remote_test_data_file(os.path.join(remote_dir, f_name)), f_name
-            )
+            urllib.request.urlretrieve(earthkit_remote_file(os.path.join(remote_dir, f_name)), f_name)
 
 
 def remote_example_file(file_name, remote_dir="examples"):
     import os
 
-    from earthkit.data.testing import earthkit_remote_test_data_file
+    from earthkit.data.testing import earthkit_remote_file
 
-    return earthkit_remote_test_data_file(os.path.join(remote_dir, file_name))
+    return earthkit_remote_file(os.path.join(remote_dir, file_name))

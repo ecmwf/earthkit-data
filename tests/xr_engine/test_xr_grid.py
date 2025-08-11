@@ -42,7 +42,7 @@ def grid_list(files=None):
     grid_list(),
 )
 def test_xr_engine_grid(file, dims, coords, distinct_ll):
-    ds = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "grid", file))
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
 
     a = ds.to_xarray()
     assert a is not None
@@ -74,9 +74,7 @@ def test_xr_engine_grid(file, dims, coords, distinct_ll):
     [False, True],
 )
 def test_xr_engine_add_geo_coords(add_geo_coords):
-    ds = from_source(
-        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "grid", "reduced_gg_O32.grib1")
-    )
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", "reduced_gg_O32.grib1"))
 
     a = ds.to_xarray(add_geo_coords=add_geo_coords)
 
@@ -92,9 +90,7 @@ def test_xr_engine_add_geo_coords(add_geo_coords):
 
 @pytest.mark.cache
 def test_xr_engine_gridspec():
-    ds = from_source(
-        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "grid", "reduced_gg_O32.grib1")
-    )
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", "reduced_gg_O32.grib1"))
 
     r = ds.to_xarray()
 
