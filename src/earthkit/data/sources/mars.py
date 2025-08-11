@@ -94,7 +94,7 @@ class MarsRetriever(ECMWFApi):
             try:
                 return ecmwfapi.ECMWFService("mars", **kwargs)
             except Exception as e:
-                if ".ecmwfapirc" in str(e) or not self.prompt.has_config_env():
+                if ".ecmwfapirc" in str(e) or not prompt.has_config_env():
                     LOG.warning(e)
                     LOG.exception(f"Could not load ecmwf api (mars) client. {e}")
                     prompt.ask_user_and_save()

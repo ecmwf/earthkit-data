@@ -51,9 +51,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
 )
 def test_xr_engine_chunk_1(field_policy, handle_policy, _kwargs):
     with config.temporary(**field_policy, **handle_policy):
-        ds_in = from_source(
-            "url", earthkit_remote_test_data_file("test-data", "xr_engine", "date", "t2_1_year.grib")
-        )
+        ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"))
 
         ds = ds_in.to_xarray(time_dim_mode="valid_time", **_kwargs)
 
@@ -83,9 +81,7 @@ def test_xr_engine_chunk_2(_kwargs):
     handle_policy = {"grib-handle-policy": "cache", "grib-handle-cache-size": 1}
 
     with config.temporary(**field_policy, **handle_policy):
-        ds_in = from_source(
-            "url", earthkit_remote_test_data_file("test-data", "xr_engine", "date", "t2_1_year.grib")
-        )
+        ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"))
 
         ds = ds_in.to_xarray(time_dim_mode="valid_time", **_kwargs)
 
@@ -113,7 +109,7 @@ def test_xr_engine_chunk_3(_kwargs):
     # in-memory fieldlist
     ds_in = from_source(
         "url",
-        earthkit_remote_test_data_file("test-data", "xr_engine", "date", "t2_1_year.grib"),
+        earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"),
         stream=True,
         read_all=True,
     )

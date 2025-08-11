@@ -38,7 +38,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
     ],
 )
 def test_xr_level_dim(kwargs, dims):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
     ds = ds_ek.to_xarray(**kwargs)
     compare_dims(ds, dims, order_ref_var="t")
@@ -256,7 +256,7 @@ def test_xr_level_dim(kwargs, dims):
     ],
 )
 def test_xr_level_attr(fname, kwargs, dims, levtype):
-    ds_ek = from_source("url", earthkit_remote_test_data_file(f"test-data/xr_engine/level/{fname}"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file(f"xr_engine/level/{fname}"))
 
     ds = ds_ek.to_xarray(**kwargs)
     compare_dims(ds, dims)

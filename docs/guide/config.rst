@@ -105,7 +105,7 @@ Then, set the environment variable ``EARTHKIT_DATA_URL_DOWNLOAD_TIMEOUT``.
 
 .. code-block:: bash
 
-    export EARTHKIT_REGRID_URL_DOWNLOAD_TIMEOUT=5
+    export EARTHKIT_DATA_URL_DOWNLOAD_TIMEOUT=5
 
 .. code-block:: python
 

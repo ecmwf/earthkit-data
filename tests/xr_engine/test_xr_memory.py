@@ -55,7 +55,7 @@ def count_calls(monkeypatch, cls, method):
     ],
 )
 def test_xr_engine_stream_release_source(lazy_load, release_source, expected_result, monkeypatch):
-    filename = "test-data/xr_engine/level/pl_small.grib"
+    filename = "xr_engine/level/pl_small.grib"
     ds_ek, _ = load_grib_data(filename, "url", stream=True)
     ds_ek_ref, _ = load_grib_data(filename, "url", stream=False)
 
@@ -96,7 +96,7 @@ def test_xr_engine_stream_release_source(lazy_load, release_source, expected_res
     ],
 )
 def test_xr_engine_array_field_release_source(lazy_load, release_source, expected_result, monkeypatch):
-    filename = "test-data/xr_engine/level/pl_small.grib"
+    filename = "xr_engine/level/pl_small.grib"
     ds_ek, _ = load_grib_data(filename, "url", stream=False)
     ds_ek = ds_ek.to_fieldlist()
 

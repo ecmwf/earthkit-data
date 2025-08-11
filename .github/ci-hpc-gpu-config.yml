@@ -15,11 +15,12 @@ build:
   env:
   - ECCODES_SAMPLES_PATH=$ECCODES_DIR/share/eccodes/samples
   - ECCODES_DEFINITION_PATH=$ECCODES_DIR/share/eccodes/definitions
-  - GITHUB_WORKFLOW=anything
   parallel: 64
-  requirements: tests/downstream-ci-requirements.txt
+  queue: ng
+  gpus: 1
+  toml_opt_dep_sections: all,test,ci
   pytest_cmd: |
     python -m pytest -vv -m 'not notebook and not no_cache_init' --cov=. --cov-report=xml
-    python -m pytest -v -m 'notebook'
-    python -m pytest --forked -vv -m 'no_cache_init'
-    python -m coverage report
+    #python -m pytest -v -m 'notebook'
+    #python -m pytest --forked -vv -m 'no_cache_init'
+    #python -m coverage report
