@@ -123,13 +123,16 @@ class FileTarget(SimpleTarget):
         if not self._check_overwrite(data):
             return
 
-        f = self._f()
         r = self._encode(data, suffix=self.ext, **kwargs)
         if hasattr(r, "__iter__"):
+            f = self._f()
             for d in r:
                 d.to_file(f)
         else:
-            r.to_file(f)
+            if self.filename and r.prefer_file_path:
+                r.to_file(self.filename)
+            else:
+                r.to_file(self._f())
 
 
 target = FileTarget

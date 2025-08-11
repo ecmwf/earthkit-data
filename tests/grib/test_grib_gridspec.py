@@ -175,10 +175,10 @@ def test_grib_metadata_from_gridspec_invalid(metadata, gridspec, name):
 @pytest.mark.parametrize(
     "input_file",
     [
-        "test-data/grids/reduced_gg/O32_global.grib1",
-        "test-data/grids/reduced_gg/O32_global.grib2",
-        "test-data/grids/healpix/H4_ring.grib2",
-        "test-data/grids/healpix/H4_nested.grib2",
+        "grids/reduced_gg/O32_global.grib1",
+        "grids/reduced_gg/O32_global.grib2",
+        "grids/healpix/H4_ring.grib2",
+        "grids/healpix/H4_nested.grib2",
     ],
 )
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)

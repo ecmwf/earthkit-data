@@ -194,9 +194,9 @@ class Dim:
             return
 
         # sanity check
-        if self.profile.variable_key in self:
+        if self.profile.variable.key in self:
             raise ValueError(
-                (f"Variable key {self.profile.variable_key} cannot be in " f"dimension={self.name}")
+                (f"Variable key {self.profile.variable.key} cannot be in " f"dimension={self.name}")
             )
 
         # print(f"key={self.key} index={ds.index(self.key)}")
@@ -647,15 +647,17 @@ class DimHandler:
             for k, d in self.dims.items():
                 d.check()
 
-            var_keys = ["__var_key_dim__", self.profile.variable_key]
+            var_keys = ["__var_key_dim__"]
+            if self.profile.variable.key:
+                var_keys.append(self.profile.variable.key)
 
             # print(f" -> dims={self.dims}")
             # check for any dimensions related to variable keys. These have to
             # be removed from the list of active dims.
             var_dims = self.deactivate(var_keys, others=True, collect=True)
             if var_dims:
-                if self.profile.variable_key in var_dims:
-                    var_dims.remove(self.profile.variable_key)
+                if self.profile.variable.key in var_dims:
+                    var_dims.remove(self.profile.variable.key)
                 if var_dims:
                     raise ValueError(self.var_dim_found_error_message(var_dims))
 
@@ -706,7 +708,7 @@ class DimHandler:
         if remapping:
             for k in remapping.lists:
                 d = RemappingDim(self, k, remapping.components(k))
-                if k == self.profile.variable_key:
+                if k == self.profile.variable.key:
                     self.var_key_dim = d
                 elif k in keys:
                     remapping_dims[k] = d
@@ -717,8 +719,8 @@ class DimHandler:
     def _init_fixed_dims(self):
         assert self.fixed_dims
 
-        if self.profile.variable_key in self.fixed_dims:
-            raise ValueError((f"Variable key {self.profile.variable_key} cannot be in fixed_dims."))
+        if self.profile.variable.key in self.fixed_dims:
+            raise ValueError((f"Variable key {self.profile.variable.key} cannot be in fixed_dims."))
         if self.extra_dims:
             raise ValueError(f"extra_dims={self.extra_dims} cannot be used with fixed_dims")
         if self.drop_dims:
@@ -760,7 +762,10 @@ class DimHandler:
                     r.append(k)
             return r
 
-        var_keys = [self.profile.variable_key]
+        if self.profile.variable.key:
+            var_keys = [self.profile.variable.key]
+        else:
+            var_keys = []
 
         # non-core dims
         keys = list(self.extra_dims.keys()) + self.ensure_dims
@@ -770,7 +775,8 @@ class DimHandler:
         dims = dict(**remapping_dims)
 
         if not self.var_key_dim:
-            self.var_key_dim = make_dim(self, name=self.profile.variable_key)
+            assert self.profile.variable.key is not None
+            self.var_key_dim = make_dim(self, name=self.profile.variable.key)
 
         # dims at this point can only contain remapping dims
         for k in keys:
@@ -835,7 +841,7 @@ class DimHandler:
         return (
             f'Variable-related keys "{keys}"" cannot be dimensions. Such a key'
             " must be specified as the variable_key. The variable_key can only "
-            f'be set to a single key. Its current value is "{self.profile.variable_key}"'
+            f'be set to a single key. Its current value is "{self.profile.variable.key}"'
         )
 
     def register_remapping(self, remapping, patch=None):

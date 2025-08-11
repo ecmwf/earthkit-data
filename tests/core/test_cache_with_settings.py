@@ -19,6 +19,7 @@ from earthkit.data import settings
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_remote_examples_file
 
 
 def check_cache_files(dir_path, managed=True):
@@ -146,7 +147,7 @@ def test_url_source_no_cache_setting():
     with settings.temporary("cache-policy", "off"):
         ds = from_source(
             "url",
-            "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test.grib",
+            earthkit_remote_examples_file("test.grib"),
         )
         assert len(ds) == 2
 

@@ -16,19 +16,14 @@ import numpy as np
 import pytest
 from earthkit.utils.testing import check_array_type
 
+from earthkit.data.testing import check_array
+
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
 from grib_fixtures import FL_FILE  # noqa: E402
 from grib_fixtures import FL_NUMPY  # noqa: E402
 from grib_fixtures import FL_TYPES  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
-
-
-def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
-    assert v.shape == shape
-    assert np.isclose(v[0], first, eps)
-    assert np.isclose(v[-1], last, eps)
-    assert np.isclose(v.mean(), meanv, eps)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -48,6 +43,7 @@ def test_grib_values_1(fl_type):
         last=227.18560791015625,
         meanv=274.36566743396577,
         eps=eps,
+        array_backend=array_backend,
     )
 
     # field
@@ -55,7 +51,7 @@ def test_grib_values_1(fl_type):
 
     check_array_type(v1, array_backend)
     assert v1.shape == (84,)
-    assert np.allclose(v, v1, eps)
+    assert array_backend.allclose(v, v1, eps)
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
@@ -567,9 +563,10 @@ def test_grib_values_with_missing(fl_type):
 
     assert ns.count_nonzero(ns.isnan(v)) == 38
     mask = array_backend.from_other([12, 14, 15, 24, 25, 26] + list(range(28, 60)))
-    assert np.isclose(v[0], 260.4356, eps)
-    assert np.isclose(v[11], 260.4356, eps)
-    assert np.isclose(v[-1], 227.1856, eps)
+    v1 = array_backend.to_numpy(v)
+    assert np.isclose(v1[0], 260.4356, eps)
+    assert np.isclose(v1[11], 260.4356, eps)
+    assert np.isclose(v1[-1], 227.1856, eps)
     m = v[mask]
     assert len(m) == 38
     assert ns.count_nonzero(ns.isnan(m)) == 38

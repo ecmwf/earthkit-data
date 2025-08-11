@@ -19,10 +19,10 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.readers.netcdf.field import NetCDFField
+from earthkit.data.testing import IN_GITHUB
 from earthkit.data.testing import NO_CDS
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_file
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.testing import write_to_file
 
@@ -36,12 +36,12 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
 
 @pytest.mark.no_eccodes
 def test_netcdf_reader():
-    ds = from_source("file", earthkit_file("docs/examples/test.nc"))
+    ds = from_source("file", earthkit_examples_file("test.nc"))
     # assert str(ds).startswith("NetCDFReader"), r
     assert len(ds) == 2
     assert isinstance(ds[0], NetCDFField)
     assert isinstance(ds[1], NetCDFField)
-    for f in from_source("file", earthkit_file("docs/examples/test.nc")):
+    for f in from_source("file", earthkit_examples_file("test.nc")):
         assert isinstance(f, NetCDFField)
 
 
@@ -202,6 +202,7 @@ def test_netcdf_multi_files():
 
 
 @pytest.mark.no_eccodes
+@pytest.mark.skipif(IN_GITHUB, reason="Some runners crash in Xarray")
 def test_get_fields_missing_standard_name_attr_in_coord_array():
     """test _get_fields() can handle a missing 'standard_name' attr in coordinate data arrays"""
 
@@ -229,7 +230,7 @@ def test_get_fields_missing_standard_name_attr_in_coord_array():
 #     ek_ch4_l2 = from_source(
 #         "url",
 #         earthkit_remote_test_data_file(
-#             "test-data/20210101-C3S-L2_GHG-GHG_PRODUCTS-TANSO2-GOSAT2-SRFP-DAILY-v2.0.0.nc"
+#             "20210101-C3S-L2_GHG-GHG_PRODUCTS-TANSO2-GOSAT2-SRFP-DAILY-v2.0.0.nc"
 #         ),
 #         # Data from this CDS request:
 #         # "cds",

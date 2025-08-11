@@ -24,6 +24,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         variable_key=None,
         drop_variables=None,
         rename_variables=None,
+        mono_variable=None,
         extra_dims=None,
         drop_dims=None,
         ensure_dims=None,
@@ -46,6 +47,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         coord_attrs=None,
         add_earthkit_attrs=None,
         rename_attrs=None,
+        fill_metadata=None,
         remapping=None,
         flatten_values=None,
         lazy_load=None,
@@ -53,6 +55,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         strict=None,
         dtype=None,
         array_module=None,
+        array_backend=None,
         errors=None,
     ):
         r"""
@@ -67,10 +70,18 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         variable_key: str, None
             Metadata key to specify the dataset variables. It cannot be
             defined as a dimension. Default is "param" (in earthkit-data this is the same as "shortName").
+            Only enabled when ``mono_variable`` is False or None.
         drop_variables: str, or iterable of str, None
-            A variable or list of variables to drop from the dataset. Default is None.
+            A variable or list of variables to drop from the dataset. Default is None. Only used when
+            ``variable_key`` is enabled.
         rename_variables: dict, None
-            Mapping to rename variables. Default is None.
+            Mapping to rename variables. Default is None. Only used  when
+            ``variable_key`` is enabled.
+        mono_variable: bool, str, None
+            If True or str, the dataset will contain a single variable called "data" (or the value
+            of the ``mono_variable`` kwarg when it is a str). If False, the dataset will contain
+            one variable for each distinct value of ``variable_key`` metadata key. The default value
+            (None) expands to False unless the ``profile`` overwrites it.
         extra_dims:  str, or iterable of str, None
             Define additional dimensions on top of the predefined dimensions. Only enabled when no
             ``fixed_dims`` is specified. Default is None. It can be a single item or a list. Each
@@ -166,7 +177,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 }
 
             ``dims_roles`` behaves differently to the other kwargs in the sense that
-            it does not override but update the default values. So e.g. to change only "ens" in
+            it does not override but update the default values. So e.g. to change only "number" in
             the defaults it is enough to specify: "dim_roles={"number": "perturbationNumber"}.
         dim_name_from_role_name: bool, None
             If True, the dimension names are formed from the role names. Otherwise the
@@ -271,6 +282,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             (None) expands to True unless the ``profile`` overwrites it.
         rename_attrs: dict, None
             A dictionary of attribute to rename. Default is None.
+        fill_metadata: dict, None
+            Define fill values to metadata keys. Default is None.
         remapping: dict, None
             Define new metadata keys for indexing. Default is None.
         lazy_load: bool, None
@@ -294,8 +307,9 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             to False unless the ``profile`` overwrites it.
         dtype: str, numpy.dtype or None
             Typecode or data-type of the array data.
-        array_module: module
-            The module to use for array operations. Default is numpy.
+        array_backend: str, array namespace, ArrayBackend, None
+            The array backend/namespace to use for array operations. The default value (None) is
+            expanded to "numpy".
         """
         fieldlist = self._fieldlist(filename_or_obj, source_type)
 
@@ -305,10 +319,18 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         else:
             from .builder import SingleDatasetBuilder
 
+            if array_module is not None:
+                import warnings
+
+                warnings.warn("'array_module' is deprecated. Use 'array_backend' instead", DeprecationWarning)
+                if array_backend is None:
+                    array_backend = array_module
+
             _kwargs = dict(
                 variable_key=variable_key,
                 drop_variables=drop_variables,
                 rename_variables=rename_variables,
+                mono_variable=mono_variable,
                 extra_dims=extra_dims,
                 drop_dims=drop_dims,
                 ensure_dims=ensure_dims,
@@ -330,6 +352,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 add_valid_time_coord=add_valid_time_coord,
                 add_geo_coords=add_geo_coords,
                 flatten_values=flatten_values,
+                fill_metadata=fill_metadata,
                 remapping=remapping,
                 decode_times=decode_times,
                 decode_timedelta=decode_timedelta,
@@ -337,7 +360,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 release_source=release_source,
                 strict=strict,
                 dtype=dtype,
-                array_module=array_module,
+                array_backend=array_backend,
                 errors=errors,
             )
 
@@ -363,11 +386,14 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
     @staticmethod
     def _fieldlist(filename_or_obj, source_type):
+        import os
+        import pathlib
+
         from earthkit.data.core import Base
 
         if isinstance(filename_or_obj, Base):
             ds = filename_or_obj
-        elif isinstance(filename_or_obj, str):
+        elif isinstance(filename_or_obj, (str, os.PathLike, pathlib.Path)):
             from earthkit.data import from_source
 
             ds = from_source(source_type, filename_or_obj)
@@ -380,12 +406,42 @@ class XarrayEarthkit:
 
         return FieldArray([f for f in self._to_fields()])
 
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        to_target(target, *args, data=self._obj, **kwargs)
+
     def to_grib(self, filename):
+        import warnings
+
+        warnings.warn(
+            "The `to_grib` is deprecated in 0.15.0 and will be removed in a future version. "
+            "Use `to_target` instead.",
+            DeprecationWarning,
+        )
         from earthkit.data.targets import create_target
 
         with create_target("file", filename) as target:
             for f in self._to_fields():
                 target.write(f)
+
+    def _generator(self):
+        from earthkit.data import FieldList
+
+        class GeneratorFieldList(FieldList):
+            def __init__(self, data):
+                self._data = data
+
+            def mutate(self):
+                return self
+
+            def __iter__(self):
+                return self._data
+
+            def default_encoder(self):
+                return "grib"
+
+        return GeneratorFieldList(self._to_fields())
 
 
 @xarray.register_dataarray_accessor("earthkit")
@@ -439,6 +495,23 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
         return ds.to_netcdf(*args, **kwargs)
 
+    def to_device(self, device, *args, array_backend=None, **kwargs):
+        """Return a **new** DataArray whose data live on *device*."""
+        from earthkit.utils.array import to_device
+
+        moved = to_device(self._obj.data, device, *args, array_backend=array_backend, **kwargs)
+        da = self._obj.copy(deep=False)
+        da.data = moved
+        return da
+
+    @property
+    def grid_spec(self):
+        """Return the grid specification of the DataArray."""
+        try:
+            return self.metadata.gridspec
+        except Exception:
+            return None
+
 
 @xarray.register_dataset_accessor("earthkit")
 class XarrayEarthkitDataSet(XarrayEarthkit):
@@ -470,3 +543,23 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
                 break
 
         return ds.to_netcdf(*args, **kwargs)
+
+    def to_device(self, device, *args, array_backend=None, **kwargs):
+        """Return a new Dataset with every data variable on the specified ``device``."""
+        from earthkit.utils.array import to_device
+
+        ds = self._obj.copy(deep=False)
+        for name, var in ds.data_vars.items():
+            ds[name].data = to_device(var.data, device, *args, array_backend=array_backend, **kwargs)
+        return ds
+
+    @property
+    def grid_spec(self):
+        """Return the grid specification of the DataSet."""
+        try:
+            # return grid spec of the first data variable
+            var = list(self._obj.data_vars.values())[0]
+            return var.earthkit.grid_spec
+
+        except Exception:
+            return None

@@ -64,7 +64,7 @@ def test_netcdf_fieldlist_bounds():
 def test_netcdf_fieldlist_ctime():
     ds = earthkit.data.from_source(
         "url",
-        earthkit_remote_test_data_file("test-data", "zgrid_rhgmet_metop_200701_R_2305_0010.nc"),
+        earthkit_remote_test_data_file("zgrid_rhgmet_metop_200701_R_2305_0010.nc"),
     )
 
     assert len(ds) == 1506

@@ -142,13 +142,8 @@ class SimpleTarget(Target):
             if hasattr(data, "sources"):
                 for d in data.sources:
                     self.write(d, **kwargs)
-            elif hasattr(data, "to_target"):
-                self._write(data, **kwargs)
-            # elif "values" not in kwargs:
-            #     # TODO: this should be reviewed
-            #     self._write(None, values=data, **kwargs)
-            else:
-                raise ValueError("Cannot write data to target")
+
+            self._write(data, **kwargs)
         else:
             self._write(None, **kwargs)
 
