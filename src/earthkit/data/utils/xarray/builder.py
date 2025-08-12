@@ -348,9 +348,9 @@ class BackendDataBuilder(metaclass=ABCMeta):
     def pre_build_variables(self):
         pass
 
-    def pre_build_variable(
-        self, ds_var, name, tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
-    ):
+    def pre_build_variable(self, ds_var, dims, name, tensor_coords, tensor_coords_component):
+        tensor_dims, tensor_extra_attrs = self.prepare_tensor_attrs_and_refine_dims(ds_var, dims, name)
+
         tensor_dim_keys = [d.key for d in tensor_dims]
 
         # LOG.debug(f"{tensor_dims=} {tensor_coords=} {tensor_coords_component=} {tensor_extra_attrs=}")
@@ -360,7 +360,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             *tensor_dim_keys,
             sort=False,
             progress_bar=False,
-            user_dims_and_coords=tensor_coords,
+            user_dims_and_coords={k: c for k, c in tensor_coords.items() if k in tensor_dim_keys},
             field_dims_and_coords=(self.grid.dims, self.grid.coords),
             flatten_values=self.flatten_values,
             full_tensor_only=self.profile.full_tensor_only,
@@ -395,11 +395,9 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         return var_builder
 
-    def prepare_tensor(self, ds, dims):
-        tensor_dims = []
+    def prepare_tensor_coords(self, ds, dims):
         tensor_coords = {}
         tensor_coords_component = {}
-        tensor_extra_attrs = []
 
         # LOG.debug(f"{name=} {dims=}")
 
@@ -418,26 +416,43 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 continue
                 # if d.name not in self.profile.dims.ensure_dims:
                 #     raise ValueError(f"Dimension {d} has no valid values for variable={name}")
-            else:
-                if num > 1 and d.enforce_unique:
-                    raise ValueError(f"Dimension '{d.name}' cannot have multiple values={vals[d.key]}")
-                elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
-                    tensor_extra_attrs.append(d.key)
-                elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
-                    tensor_dims.append(d)
-                    tensor_coords[d.key] = vals[d.key]
-                    if component_vals and d.key in component_vals:
-                        tensor_coords_component[d.key] = component_vals[d.key]
+            if num == 1 and self.profile.dims.squeeze and d.name not in self.profile.dims.ensure_dims:
+                continue
 
-                    # no longer needed, since this method is invoked once for all variables,
-                    # so there is no reference coords to compare to
-                    # TODO: remove dead code resulted from this change
-                    # check if the dims/coords are consistent with the tensors of
-                    # the previous variables
-                    # self.check_tensor_coords(name, d.key, tensor_coords)
+            tensor_coords[d.key] = vals[d.key]
+            if component_vals and d.key in component_vals:
+                tensor_coords_component[d.key] = component_vals[d.key]
+
+                # no longer needed, since this method is invoked once for all variables,
+                # so there is no reference coords to compare to
+                # TODO: remove dead code resulted from this change
+                # check if the dims/coords are consistent with the tensors of
+                # the previous variables
+                # self.check_tensor_coords(name, d.key, tensor_coords)
 
         # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinates
-        return tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
+        return tensor_coords, tensor_coords_component
+
+    def prepare_tensor_attrs_and_refine_dims(self, ds, dims, name):
+        refined_dims = []
+        tensor_extra_attrs = []
+
+        vals, _ = ds.unique_values([d.key for d in dims], component=self.profile.add_earthkit_attrs)
+
+        for d in dims:
+            num = len(vals[d.key])
+            if num == 0:
+                continue
+            if num > 1 and d.enforce_unique:
+                raise ValueError(
+                    f"Dimension '{d.name}' of variable '{name}' cannot have multiple values={vals[d.key]}"
+                )
+            if num == 1 and d.name in self.profile.dims.dims_as_attrs:
+                tensor_extra_attrs.append(d.key)
+            elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
+                refined_dims.append(d)
+
+        return refined_dims, tensor_extra_attrs
 
     def check_tensor_coords(self, var_name, coord_name, tensor_coords):
         from .check import check_coords
@@ -456,14 +471,12 @@ class TensorBackendDataBuilder(BackendDataBuilder):
     def pre_build_variables(self):
         """Generate a builder for each variable"""
         builders = {}
-        tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs = self.prepare_tensor(
-            self.ds, self.dims
-        )
+        tensor_coords, tensor_coords_component = self.prepare_tensor_coords(self.ds, self.dims)
 
         if self.profile.variable.is_mono:
             name = self.profile.variable.name
             builders[name] = self.pre_build_variable(
-                self.ds, name, tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
+                self.ds, self.dims, name, tensor_coords, tensor_coords_component
             )
         else:
             # we assume each variable forms a full cube
@@ -472,7 +485,7 @@ class TensorBackendDataBuilder(BackendDataBuilder):
             for name in self.profile.variable.variables:
                 ds_var = self.ds.sel(**{key: name})
                 builders[name] = self.pre_build_variable(
-                    ds_var, name, tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
+                    ds_var, self.dims, name, tensor_coords, tensor_coords_component
                 )
 
         return builders
@@ -508,14 +521,12 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
         """Generate a builder for each variable"""
         builders = {}
 
-        tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs = self.prepare_tensor(
-            self.ds, self.dims
-        )
+        tensor_coords, tensor_coords_component = self.prepare_tensor_coords(self.ds, self.dims)
 
         if self.profile.variable.is_mono:
             name = self.profile.variable.name
             builders[name] = self.pre_build_variable(
-                self.ds, name, tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
+                self.ds, self.dims, name, tensor_coords, tensor_coords_component
             )
         else:
             groups = self.ds.group(self.profile.variable.key, self.profile.variable.variables)
@@ -524,7 +535,7 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
             for name in groups:
                 ds_var = groups[name]
                 builders[name] = self.pre_build_variable(
-                    ds_var, name, tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
+                    ds_var, self.dims, name, tensor_coords, tensor_coords_component
                 )
 
         return builders
