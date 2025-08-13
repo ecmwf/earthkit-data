@@ -192,7 +192,8 @@ def test_xr_incomplete_tensor_holes2(
             ["date", "time", "step", "level"],
             [
                 {"param": ["t", "r", "u", "v", "z"], "level": [500, 700]},  # masks 80 fields
-                {"param": ["r"], "time": [0], "step": [0]},  # masks 8 fields (+4 already masked above)
+                {"param": ["r"], "level": [300]},  # masks 8 fields
+                {"param": ["r"], "time": [0], "step": [0]},  # masks 6 fields (+6 already masked above)
                 {"param": ["u"], "time": [1200], "level": [1000, 300]},  # masks 8 fields
                 {
                     "param": ["z"],
@@ -212,7 +213,7 @@ def test_xr_incomplete_tensor_holes2(
                 # masks 3 fields (+2 already masked above)
             ],
             {"level": [500, 700]},
-            240 - 102,
+            240 - 108,
         ),
     ],
 )
