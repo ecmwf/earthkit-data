@@ -325,6 +325,9 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             return builder.build()
         else:
             from .builder import SingleDatasetBuilder
+            from .builder import SplitByVarDatasetBuilder
+
+            cls = SplitByVarDatasetBuilder if full_tensor_only is False else SingleDatasetBuilder
 
             if array_module is not None:
                 import warnings
@@ -372,7 +375,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 full_tensor_only=full_tensor_only,
             )
 
-            return SingleDatasetBuilder(fieldlist, profile, from_xr=True, backend_kwargs=_kwargs).build()
+            return cls(fieldlist, profile, from_xr=True, backend_kwargs=_kwargs).build()
 
     @classmethod
     def guess_can_open(cls, filename_or_obj):
