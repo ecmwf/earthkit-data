@@ -348,8 +348,10 @@ class BackendDataBuilder(metaclass=ABCMeta):
     def pre_build_variables(self):
         pass
 
-    def pre_build_variable(self, ds_var, dims, name, tensor_coords, tensor_coords_component):
-        tensor_dims, tensor_extra_attrs = self.prepare_tensor_attrs_and_refine_dims(ds_var, dims, name)
+    def pre_build_variable(self, ds_var, dims, name):
+        tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs = self.prepare_tensor(
+            ds_var, dims, name
+        )
 
         tensor_dim_keys = [d.key for d in tensor_dims]
 
@@ -360,7 +362,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             *tensor_dim_keys,
             sort=False,
             progress_bar=False,
-            user_dims_and_coords={k: c for k, c in tensor_coords.items() if k in tensor_dim_keys},
+            user_dims_and_coords=tensor_coords,
             field_dims_and_coords=(self.grid.dims, self.grid.coords),
             flatten_values=self.flatten_values,
             full_tensor_only=self.profile.full_tensor_only,
@@ -395,9 +397,11 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         return var_builder
 
-    def prepare_tensor_coords(self, ds, dims):
+    def prepare_tensor(self, ds, dims, name):
+        tensor_dims = []
         tensor_coords = {}
         tensor_coords_component = {}
+        tensor_extra_attrs = []
 
         # LOG.debug(f"{name=} {dims=}")
 
@@ -416,43 +420,26 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 continue
                 # if d.name not in self.profile.dims.ensure_dims:
                 #     raise ValueError(f"Dimension {d} has no valid values for variable={name}")
-            if num == 1 and self.profile.dims.squeeze and d.name not in self.profile.dims.ensure_dims:
-                continue
+            else:
+                if num > 1 and d.enforce_unique:
+                    raise ValueError(
+                        f"Dimension '{d.name}' of variable '{name}' cannot have multiple values={vals[d.key]}"
+                    )
+                elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
+                    tensor_extra_attrs.append(d.key)
+                elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
+                    tensor_dims.append(d)
+                    tensor_coords[d.key] = vals[d.key]
+                    if component_vals and d.key in component_vals:
+                        tensor_coords_component[d.key] = component_vals[d.key]
 
-            tensor_coords[d.key] = vals[d.key]
-            if component_vals and d.key in component_vals:
-                tensor_coords_component[d.key] = component_vals[d.key]
-
-                # no longer needed, since this method is invoked once for all variables,
-                # so there is no reference coords to compare to
-                # TODO: remove dead code resulted from this change
-                # check if the dims/coords are consistent with the tensors of
-                # the previous variables
-                # self.check_tensor_coords(name, d.key, tensor_coords)
+                    if self.profile.full_tensor_only:
+                        # check if the dims/coords are consistent with the tensors of
+                        # the previous variables
+                        self.check_tensor_coords(name, d.key, tensor_coords)
 
         # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinates
-        return tensor_coords, tensor_coords_component
-
-    def prepare_tensor_attrs_and_refine_dims(self, ds, dims, name):
-        refined_dims = []
-        tensor_extra_attrs = []
-
-        vals, _ = ds.unique_values([d.key for d in dims], component=self.profile.add_earthkit_attrs)
-
-        for d in dims:
-            num = len(vals[d.key])
-            if num == 0:
-                continue
-            if num > 1 and d.enforce_unique:
-                raise ValueError(
-                    f"Dimension '{d.name}' of variable '{name}' cannot have multiple values={vals[d.key]}"
-                )
-            if num == 1 and d.name in self.profile.dims.dims_as_attrs:
-                tensor_extra_attrs.append(d.key)
-            elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
-                refined_dims.append(d)
-
-        return refined_dims, tensor_extra_attrs
+        return tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
 
     def check_tensor_coords(self, var_name, coord_name, tensor_coords):
         from .check import check_coords
@@ -471,22 +458,16 @@ class TensorBackendDataBuilder(BackendDataBuilder):
     def pre_build_variables(self):
         """Generate a builder for each variable"""
         builders = {}
-        tensor_coords, tensor_coords_component = self.prepare_tensor_coords(self.ds, self.dims)
 
         if self.profile.variable.is_mono:
             name = self.profile.variable.name
-            builders[name] = self.pre_build_variable(
-                self.ds, self.dims, name, tensor_coords, tensor_coords_component
-            )
+            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
         else:
             # we assume each variable forms a full cube
-            # PW: not in the case of tensor with holes
             key = self.profile.variable.key
             for name in self.profile.variable.variables:
                 ds_var = self.ds.sel(**{key: name})
-                builders[name] = self.pre_build_variable(
-                    ds_var, self.dims, name, tensor_coords, tensor_coords_component
-                )
+                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
 
         return builders
 
@@ -521,22 +502,16 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
         """Generate a builder for each variable"""
         builders = {}
 
-        tensor_coords, tensor_coords_component = self.prepare_tensor_coords(self.ds, self.dims)
-
         if self.profile.variable.is_mono:
             name = self.profile.variable.name
-            builders[name] = self.pre_build_variable(
-                self.ds, self.dims, name, tensor_coords, tensor_coords_component
-            )
+            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
         else:
             groups = self.ds.group(self.profile.variable.key, self.profile.variable.variables)
 
             # we assume each variable forms a full cube
             for name in groups:
                 ds_var = groups[name]
-                builders[name] = self.pre_build_variable(
-                    ds_var, self.dims, name, tensor_coords, tensor_coords_component
-                )
+                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
 
         return builders
 
@@ -745,12 +720,15 @@ def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
     profile = profile_kwargs.pop("profile", Profile.DEFAULT_PROFILE_NAME)
     profile = Profile.make(profile, **profile_kwargs)
 
+    if not profile.full_tensor_only:
+        profile.dims.split_dims.append(profile.variable.key)
+
     # the backend builder is directly called bypassing xarray.open_dataset
     if profile.direct_backend:
         if not profile.dims.split_dims:
             return SingleDatasetBuilder(ds, profile).build()
         else:
-            return SplitDatasetBuilder(ds, profile).build()
+            dss, dims = SplitDatasetBuilder(ds, profile).build()
     # xarray.open_dataset is called
     else:
         # LOG.debug(f"from_earthkit {backend_kwargs=} {profile_kwargs=}")
@@ -762,4 +740,27 @@ def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
                 backend_kwargs.pop(k, None)
             return xarray.open_dataset(ds, backend_kwargs=backend_kwargs, **other_kwargs)
         else:
-            return SplitDatasetBuilder(ds, profile, other_kwargs=other_kwargs).build()
+            dss, dims = SplitDatasetBuilder(ds, profile, other_kwargs=other_kwargs).build()
+
+    if profile.full_tensor_only:
+        return dss, dims
+
+    variable_key = profile.variable.key
+    _dims = []
+    _dss_by_dim = {}
+    for ds, dim in zip(dss, dims):
+        _dim = tuple((d, dim[d]) for d in sorted(dim) if d != variable_key)
+        _dss_by_dim.setdefault(_dim, []).append(ds)
+    dims = []
+    dss = []
+    for _dim, _dss in _dss_by_dim.items():
+        dims.append(dict(_dim))
+        for _ds in _dss:
+            print(_ds.attrs)
+        _ds = xarray.merge(_dss)
+        dss.append(_ds)
+
+    if len(dims) == 1 and not dims[0]:
+        return dss[0]
+    else:
+        return dss, dims
