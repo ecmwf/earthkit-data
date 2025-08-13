@@ -10,6 +10,7 @@
 import logging
 from abc import ABCMeta
 from abc import abstractmethod
+from collections import defaultdict
 
 import xarray
 import xarray.core.indexing as indexing
@@ -71,7 +72,7 @@ class VariableBuilder:
         self.tensor = tensor
         self.remapping = remapping
 
-    def build(self, add_earthkit_attrs=True):
+    def build_attrs(self, add_earthkit_attrs=True):
         if add_earthkit_attrs:
             if hasattr(self.tensor.source[0], "handle"):
                 md = self.tensor.source[0].metadata().override()
@@ -82,6 +83,9 @@ class VariableBuilder:
                 self._attrs["_earthkit"] = attrs
 
         self._attrs.update(self.fixed_local_attrs)
+
+    def build(self, add_earthkit_attrs=True):
+        self.build_attrs(add_earthkit_attrs=add_earthkit_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
         return xarray.Variable(self.var_dims, data, attrs=self._attrs)
 
@@ -243,10 +247,12 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
 
 
 class BackendDataBuilder(metaclass=ABCMeta):
-    def __init__(self, ds, profile, dims, grid=None, fixed_local_attrs=None):
+    def __init__(self, ds, profile, dims, grid=None, fixed_local_attrs=None, postpone_building_attrs=False):
         self.ds = ds
         self.profile = profile
         self.dims = dims
+        self.var_builders = None
+        self.postpone_building_attrs = postpone_building_attrs
 
         self.flatten_values = profile.flatten_values
 
@@ -312,16 +318,21 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
     def build(self):
         # we assume each variable forms a full cube
-        var_builders = self.pre_build_variables()
+        self.var_builders = self.pre_build_variables()
 
         # build variable and global attributes
-        xr_attrs = self.profile.attrs.builder.build(self.ds, var_builders, rename=True)
+        if self.postpone_building_attrs:
+            xr_attrs = None
+        else:
+            # TODO: can we simplify the signature of self.profile.attrs.builder.build ?
+            #  the first argument (self.ds) in self.profile.attrs.builder.build does not seem to be used
+            xr_attrs = self.profile.attrs.builder.build(self.ds, self.var_builders, rename=True)
         xr_coords = self.coords()
 
         # build variables
         xr_vars = {
             self.profile.variable.rename(k): v.build(add_earthkit_attrs=self.profile.add_earthkit_attrs)
-            for k, v in var_builders.items()
+            for k, v in self.var_builders.items()
         }
 
         # build dataset
@@ -653,7 +664,9 @@ class SplitDatasetBuilder(DatasetBuilder):
             self.xr_open_dataset_kwargs["backend_kwargs"] = backend_kwargs
 
         if not self.split_dims:
-            raise ValueError("SplitDatasetMaker requires split_dims")
+            # TODO: !!! fix this !!!
+            pass
+            # raise ValueError("SplitDatasetMaker requires split_dims")
 
     def prepare(self, keys):
         from .fieldlist import XArrayInputFieldList
@@ -668,18 +681,26 @@ class SplitDatasetBuilder(DatasetBuilder):
 
         return ds_xr, vals
 
-    def build(self):
+    def build(self, postpone_building_attrs=False):
         from .splitter import Splitter
 
         splitter = Splitter.make(self.split_dims)
         datasets = []
         split_coords_list = []
+        var_builders = []
         for ds, profile, split_coords in splitter.split(self):
             dims = profile.dims.to_list()
             split_coords_list.append(dict(split_coords))
             LOG.debug(f"splitting {dims=} type of s_ds={type(ds)} {split_coords=}")
             split_coords.pop(profile.variable.key, None)
-            builder = self.builder(ds, profile, dims, grid=self.grid(ds), fixed_local_attrs=split_coords)
+            builder = self.builder(
+                ds,
+                profile,
+                dims,
+                grid=self.grid(ds),
+                fixed_local_attrs=split_coords,
+                postpone_building_attrs=postpone_building_attrs,
+            )
 
             ds._ek_builder = builder
             if self.direct_backend:
@@ -689,7 +710,74 @@ class SplitDatasetBuilder(DatasetBuilder):
                 datasets.append(xarray.open_dataset(ds, **self.xr_open_dataset_kwargs))
                 ds._ek_builder = None
 
-        return datasets, split_coords_list
+            if postpone_building_attrs:
+                assert len(builder.var_builders) == 1
+                var_builders.append(builder.var_builders)
+
+        if postpone_building_attrs:
+            return datasets, split_coords_list, var_builders
+        else:
+            return datasets, split_coords_list
+
+
+class SplitByVarDatasetBuilder(SplitDatasetBuilder):
+    def __init__(self, *args, from_xr=False, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        assert not self.profile.full_tensor_only
+
+        if from_xr and self.direct_backend:
+            raise ValueError(
+                "SplitByVarDatasetBuilder does not support direct_backend=True when invoked from xarray"
+            )
+
+        self.split_dims = self.split_dims + [self.profile.variable.key]
+
+    def build(self, postpone_building_attrs=None):
+        datasets, split_coords_list, var_builders = super().build(postpone_building_attrs=True)
+        # datasets is a list of single variable datasets without attributes
+        # var_builders is a list of 1-element dict[str, VariableBuilder] whose key is a variable label
+        variable_key = self.split_dims[-1]
+
+        def list_and_dict():
+            return [], {}
+
+        datasets_and_var_builders_by_split_coords = defaultdict(list_and_dict)
+
+        # group datasets and variable builders by all splitting keys except for the variable key
+        for ds, split_coords, var_builder in zip(datasets, split_coords_list, var_builders):
+            split_coords_immutable = tuple(
+                (d, split_coords[d]) for d in sorted(split_coords) if d != variable_key
+            )
+            _datasets, _var_builders = datasets_and_var_builders_by_split_coords[split_coords_immutable]
+            _datasets.append(ds)
+            _var_builders.update(var_builder)
+
+        # For each set of splitting coordinates (if any), merge all single-variable datasets into one dataset
+        # by using the function xarray.merge.
+        # Moreover, variable and global attributes are assigned to the merged dataset.
+        split_coords_list = []
+        datasets = []
+        for _split_coords, (
+            _datasets_to_merge,
+            _var_builders,
+        ) in datasets_and_var_builders_by_split_coords.items():
+            split_coords_list.append(dict(_split_coords))
+            global_attrs = self.profile.attrs.builder.build(None, _var_builders, rename=True)
+            for v in _var_builders.values():
+                v.build_attrs(add_earthkit_attrs=self.profile.add_earthkit_attrs)
+            var_attrs = {self.profile.variable.rename(k): v.attrs for k, v in _var_builders.items()}
+            merged_dataset = xarray.merge(_datasets_to_merge)
+            for k, _attrs in var_attrs.items():
+                merged_dataset[k].attrs.update(_attrs)
+            merged_dataset.attrs.update(global_attrs)
+            datasets.append(merged_dataset)
+
+        if len(split_coords_list) == 1 and not split_coords_list[0]:
+            # the splitting was by variable key only
+            return datasets[0]
+        else:
+            return datasets, split_coords_list
 
 
 def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
@@ -720,15 +808,15 @@ def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
     profile = profile_kwargs.pop("profile", Profile.DEFAULT_PROFILE_NAME)
     profile = Profile.make(profile, **profile_kwargs)
 
-    if not profile.full_tensor_only:
-        profile.dims.split_dims.append(profile.variable.key)
-
     # the backend builder is directly called bypassing xarray.open_dataset
     if profile.direct_backend:
-        if not profile.dims.split_dims:
-            return SingleDatasetBuilder(ds, profile).build()
+        if profile.full_tensor_only:
+            if not profile.dims.split_dims:
+                return SingleDatasetBuilder(ds, profile).build()
+            else:
+                return SplitDatasetBuilder(ds, profile).build()
         else:
-            dss, dims = SplitDatasetBuilder(ds, profile).build()
+            return SplitByVarDatasetBuilder(ds, profile).build()
     # xarray.open_dataset is called
     else:
         # LOG.debug(f"from_earthkit {backend_kwargs=} {profile_kwargs=}")
@@ -740,27 +828,4 @@ def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
                 backend_kwargs.pop(k, None)
             return xarray.open_dataset(ds, backend_kwargs=backend_kwargs, **other_kwargs)
         else:
-            dss, dims = SplitDatasetBuilder(ds, profile, other_kwargs=other_kwargs).build()
-
-    if profile.full_tensor_only:
-        return dss, dims
-
-    variable_key = profile.variable.key
-    _dims = []
-    _dss_by_dim = {}
-    for ds, dim in zip(dss, dims):
-        _dim = tuple((d, dim[d]) for d in sorted(dim) if d != variable_key)
-        _dss_by_dim.setdefault(_dim, []).append(ds)
-    dims = []
-    dss = []
-    for _dim, _dss in _dss_by_dim.items():
-        dims.append(dict(_dim))
-        for _ds in _dss:
-            print(_ds.attrs)
-        _ds = xarray.merge(_dss)
-        dss.append(_ds)
-
-    if len(dims) == 1 and not dims[0]:
-        return dss[0]
-    else:
-        return dss, dims
+            return SplitDatasetBuilder(ds, profile, other_kwargs=other_kwargs).build()
