@@ -52,7 +52,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         flatten_values=None,
         lazy_load=None,
         release_source=None,
-        full_tensor_only=None,
+        allow_holes=None,
         strict=None,
         dtype=None,
         array_module=None,
@@ -303,12 +303,12 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             option is ignored. Having run :obj:`to_xarray` the input data becomes unusable,
             so use this option carefully. The default value of ``release_source`` (None) expands
             to False unless the ``profile`` overwrites it.
-        full_tensor_only: bool, None
-            If True, GRIB fields must form a full tensor (a complete hypercube).
-            If False, a dataset will be created from any GRIB fields and its coordinates
-            will be a union of coordinates of the fields (outer join), allowing for a sparse tensor.
-            Values of the tensor corresponding to missing GRIB fields will be filled with NaN.
-            The default value of ``full_tensor_only`` (None) expands to True unless the ``profile`` overwrites it.
+        allow_holes: bool, None
+            If False, GRIB fields must form a full hypercube (without holes).
+            If True, a dataset will be created from any GRIB fields and
+            its coordinates will be a union of coordinates of the fields (outer join).
+            Values corresponding to missing GRIB fields will be filled with NaN.
+            The default value of ``allow_holes`` (None) expands to False unless the ``profile`` overwrites it.
         strict: bool, None
             If True, perform stricter checks on hypercube consistency. Its default value (None) expands
             to False unless the ``profile`` overwrites it.
@@ -327,7 +327,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             from .builder import SingleDatasetBuilder
             from .builder import SplitByVarDatasetBuilder
 
-            cls = SplitByVarDatasetBuilder if full_tensor_only is False else SingleDatasetBuilder
+            cls = SplitByVarDatasetBuilder if allow_holes else SingleDatasetBuilder
 
             if array_module is not None:
                 import warnings
@@ -372,7 +372,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 dtype=dtype,
                 array_backend=array_backend,
                 errors=errors,
-                full_tensor_only=full_tensor_only,
+                allow_holes=allow_holes,
             )
 
             return cls(fieldlist, profile, from_xr=True, backend_kwargs=_kwargs).build()

@@ -27,7 +27,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
                 "profile": "mars",
                 "time_dim_mode": "raw",
                 "decode_times": False,
-                "full_tensor_only": False,
+                "allow_holes": True,
             },
             ["date", "time", "step", "level"],
             [
@@ -75,7 +75,7 @@ def test_xr_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, or_mask_spec, n
     ds = ds_ek_masked.to_xarray(**kwargs)
 
     kwargs_with_full_tensor = kwargs.copy()
-    kwargs_with_full_tensor["full_tensor_only"] = True
+    kwargs_with_full_tensor["allow_holes"] = False
 
     for (param, *coords), field, is_masked in zip(md, ds_ek, mask):
         coords_dict = dict(zip(dim_keys, coords))
@@ -99,7 +99,7 @@ def test_xr_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, or_mask_spec, n
                 "time_dim_mode": "raw",
                 "dims_as_attrs": ["step"],
                 "decode_times": False,
-                "full_tensor_only": False,
+                "allow_holes": True,
             },
             ["date", "time", "step", "level"],
             [
@@ -158,7 +158,7 @@ def test_xr_incomplete_tensor_holes2(
     assert ds["t"].attrs["step_timedelta"] == pd.Timedelta(0, "s")
 
     kwargs_with_full_tensor = kwargs.copy()
-    kwargs_with_full_tensor["full_tensor_only"] = True
+    kwargs_with_full_tensor["allow_holes"] = False
 
     for param, expected_dims in expected_dims_by_param.items():
         assert set([d for d in ds[param].dims if d not in ["longitude", "latitude"]]) == set(expected_dims)
@@ -187,7 +187,7 @@ def test_xr_incomplete_tensor_holes2(
                 "profile": "mars",
                 "time_dim_mode": "raw",
                 "decode_times": False,
-                "full_tensor_only": False,
+                "allow_holes": True,
             },
             ["date", "time", "step", "level"],
             [
@@ -245,7 +245,7 @@ def test_xr_incomplete_tensor_coordinates_trimmed_plus_holes(
             assert v not in list(ds[d].values)
 
     kwargs_with_full_tensor = kwargs.copy()
-    kwargs_with_full_tensor["full_tensor_only"] = True
+    kwargs_with_full_tensor["allow_holes"] = False
 
     for (param, *coords), field, is_masked in zip(md, ds_ek, mask):
         coords_dict = dict(zip(dim_keys, coords))

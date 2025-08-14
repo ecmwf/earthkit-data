@@ -333,7 +333,7 @@ class FieldListTensor(TensorCore):
         progress_bar=False,
         user_dims_and_coords=None,
         field_dims_and_coords=None,
-        full_tensor_only=True,
+        allow_holes=False,
     ):
         assert len(ds), f"No data in {ds}"
 
@@ -348,7 +348,7 @@ class FieldListTensor(TensorCore):
                 names += list(a.keys())
 
         # Sort the source
-        if names and sort and full_tensor_only:
+        if names and sort and not allow_holes:
             source = ds.order_by(*args, remapping=remapping)
         else:
             source = ds
@@ -375,7 +375,7 @@ class FieldListTensor(TensorCore):
 
             field_dims, field_coords, _ = TensorGrid.build(source[0], flatten_values)
 
-        if full_tensor_only:
+        if not allow_holes:
             return cls(source, user_coords, field_coords, field_dims, flatten_values)
         else:
             user_coords_to_fl_idx = source._user_coords_to_fl_idx(names, remapping=remapping)

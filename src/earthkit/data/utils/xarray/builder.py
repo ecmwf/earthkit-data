@@ -376,7 +376,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             user_dims_and_coords=tensor_coords,
             field_dims_and_coords=(self.grid.dims, self.grid.coords),
             flatten_values=self.flatten_values,
-            full_tensor_only=self.profile.full_tensor_only,
+            allow_holes=self.profile.allow_holes,
         )
 
         var_dims = []
@@ -444,7 +444,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
                     if component_vals and d.key in component_vals:
                         tensor_coords_component[d.key] = component_vals[d.key]
 
-                    if self.profile.full_tensor_only:
+                    if not self.profile.allow_holes:
                         # check if the dims/coords are consistent with the tensors of
                         # the previous variables
                         self.check_tensor_coords(name, d.key, tensor_coords)
@@ -724,7 +724,7 @@ class SplitByVarDatasetBuilder(SplitDatasetBuilder):
     def __init__(self, *args, from_xr=False, **kwargs):
         super().__init__(*args, **kwargs)
 
-        assert not self.profile.full_tensor_only
+        assert self.profile.allow_holes
 
         if from_xr and self.direct_backend:
             raise ValueError(
@@ -755,7 +755,7 @@ class SplitByVarDatasetBuilder(SplitDatasetBuilder):
 
         # For each set of splitting coordinates (if any), merge all single-variable datasets into one dataset
         # by using the function xarray.merge.
-        # Moreover, variable and global attributes are assigned to the merged dataset.
+        # Moreover, variable attributes and global attributes are built and assigned to the merged dataset.
         split_coords_list = []
         datasets = []
         for _split_coords, (
@@ -763,14 +763,20 @@ class SplitByVarDatasetBuilder(SplitDatasetBuilder):
             _var_builders,
         ) in datasets_and_var_builders_by_split_coords.items():
             split_coords_list.append(dict(_split_coords))
+            # The global attributes are retrieved.
+            # Note a dummy first argument in the function call (this argument does not seem to be used).
             global_attrs = self.profile.attrs.builder.build(None, _var_builders, rename=True)
+            # The variable attributes are built and kept as a state of VariableBuilder objects.
             for v in _var_builders.values():
                 v.build_attrs(add_earthkit_attrs=self.profile.add_earthkit_attrs)
             var_attrs = {self.profile.variable.rename(k): v.attrs for k, v in _var_builders.items()}
+
+            # Merge the single-variable datasets and assign global and variable attributes
             merged_dataset = xarray.merge(_datasets_to_merge)
             for k, _attrs in var_attrs.items():
                 merged_dataset[k].attrs.update(_attrs)
             merged_dataset.attrs.update(global_attrs)
+
             datasets.append(merged_dataset)
 
         if len(split_coords_list) == 1 and not split_coords_list[0]:
@@ -810,7 +816,7 @@ def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
 
     # the backend builder is directly called bypassing xarray.open_dataset
     if profile.direct_backend:
-        if profile.full_tensor_only:
+        if not profile.allow_holes:
             if not profile.dims.split_dims:
                 return SingleDatasetBuilder(ds, profile).build()
             else:

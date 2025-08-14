@@ -340,12 +340,12 @@ class XarrayMixIn:
                 option is ignored. Having run :obj:`to_xarray` the input data becomes unusable,
                 so use this option carefully. The default value of ``release_source`` (None) expands
                 to False unless the ``profile`` overwrites it.
-            * full_tensor_only: bool, None
-                If True, GRIB fields must form a full tensor (a complete hypercube).
-                If False, a dataset will be created from any GRIB fields and its coordinates
-                will be a union of coordinates of the fields (outer join), allowing for a sparse tensor.
-                Values of the tensor corresponding to missing GRIB fields will be filled with NaN.
-                The default value of ``full_tensor_only`` (None) expands to True unless the ``profile`` overwrites it.
+            * allow_holes: bool, None
+                If False, GRIB fields must form a full hypercube (without holes).
+                If True, a dataset will be created from any GRIB fields and
+                its coordinates will be a union of coordinates of the fields (outer join).
+                Values corresponding to missing GRIB fields will be filled with NaN.
+                The default value of ``allow_holes`` (None) expands to False unless the ``profile`` overwrites it.
             * strict: bool, None
                 If True, perform stricter checks on hypercube consistency. Its default value (None) expands
                 to False unless the ``profile`` overwrites it.
