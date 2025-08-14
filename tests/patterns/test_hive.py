@@ -139,7 +139,7 @@ class HiveDiag:
 
 def test_hive_sel_1():
     root = earthkit_test_data_file("pattern/1")
-    pattern = "{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
+    pattern = "{shortName}_{date:date(%Y-%m-%dT-H-%M)}_{step}.grib"
 
     ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True)
 
