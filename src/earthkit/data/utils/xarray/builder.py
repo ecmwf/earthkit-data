@@ -595,8 +595,11 @@ class DatasetBuilder:
 
         # LOG.debug(f"{profile.sort_keys=}")
         # the data is only sorted once
-        # TODO: can we skip sorting? It is heavily used in tests, in order to make an output dataset canonical...
-        ds_xr = ds_xr.order_by(profile.sort_keys)
+        if not self.profile.allow_holes:
+            ds_xr = ds_xr.order_by(profile.sort_keys)
+        else:
+            # TODO: can we really skip sorting?
+            ds_xr = ds_xr.ds
 
         if not profile.lazy_load and profile.release_source:
             ds_xr.make_releasable()
@@ -664,9 +667,12 @@ class SplitDatasetBuilder(DatasetBuilder):
             self.xr_open_dataset_kwargs["backend_kwargs"] = backend_kwargs
 
         if not self.split_dims:
-            # TODO: !!! fix this !!!
-            pass
-            # raise ValueError("SplitDatasetMaker requires split_dims")
+            # TODO: consider a better solution than this patch
+            # if invoked on SplitByVarDatasetBuilder object,
+            # it will have at least `self.profile.variable.key` among split_dims;
+            # see SplitByVarDatasetBuilder.__init__
+            if not isinstance(self, SplitByVarDatasetBuilder):
+                raise ValueError("SplitDatasetMaker requires split_dims")
 
     def prepare(self, keys):
         from .fieldlist import XArrayInputFieldList
@@ -731,13 +737,23 @@ class SplitByVarDatasetBuilder(SplitDatasetBuilder):
                 "SplitByVarDatasetBuilder does not support direct_backend=True when invoked from xarray"
             )
 
-        self.split_dims = self.split_dims + [self.profile.variable.key]
+        # Add variable_key to split_dims, unless it is already there
+        if self.profile.variable.key not in self.split_dims:
+            self.split_dims = self.split_dims + [self.profile.variable.key]
+            self._merge_on_variable_key = True
+        else:
+            self._merge_on_variable_key = False
 
     def build(self, postpone_building_attrs=None):
+        if not self._merge_on_variable_key:
+            # In this case (variable_key was already among split_dims)
+            # `build` method from the superclass applies as is
+            return super().build()
+
         datasets, split_coords_list, var_builders = super().build(postpone_building_attrs=True)
         # datasets is a list of single variable datasets without attributes
         # var_builders is a list of 1-element dict[str, VariableBuilder] whose key is a variable label
-        variable_key = self.split_dims[-1]
+        variable_key = self.profile.variable.key
 
         def list_and_dict():
             return [], {}
@@ -834,4 +850,7 @@ def from_earthkit(ds, backend_kwargs=None, other_kwargs=None):
                 backend_kwargs.pop(k, None)
             return xarray.open_dataset(ds, backend_kwargs=backend_kwargs, **other_kwargs)
         else:
-            return SplitDatasetBuilder(ds, profile, other_kwargs=other_kwargs).build()
+            if not profile.allow_holes:
+                return SplitDatasetBuilder(ds, profile, other_kwargs=other_kwargs).build()
+            else:
+                return SplitByVarDatasetBuilder(ds, profile, other_kwargs=other_kwargs).build()
