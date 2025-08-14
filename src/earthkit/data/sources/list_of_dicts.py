@@ -21,7 +21,7 @@ class FieldlistFromDicts(Source):
         self.d = list_of_dicts
         self._kwargs = kwargs
 
-    def mutate(self):
+    def mutate_ori(self):
         import numpy as np
 
         from earthkit.data.indexing.fieldlist import SimpleFieldList
@@ -34,6 +34,15 @@ class FieldlistFromDicts(Source):
             if isinstance(v, list):
                 v = np.array(v)
             fields.append(ArrayField(v, UserMetadata(f, shape=v.shape)))
+        return SimpleFieldList(fields=fields)
+
+    def mutate(self):
+        from earthkit.data.new_field.fieldlist import SimpleFieldList
+        from earthkit.data.new_field.new_field import Field
+
+        fields = []
+        for f in self.d:
+            fields.append(Field.from_dict(f))
         return SimpleFieldList(fields=fields)
 
 

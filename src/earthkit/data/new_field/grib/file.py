@@ -17,6 +17,23 @@ from .handle import ManagedGribHandle
 from .scan import GribCodesMessagePositionIndex
 
 
+class DataBase:
+    def __init__(self, path, parts=None, positions=None):
+        self.path = path
+        self._file_parts = parts
+        self.__positions = positions
+
+    @property
+    def file_parts(self):
+        return self._file_parts
+
+    @property
+    def positions(self):
+        if self.__positions is None:
+            raise ValueError("Positions not set")
+        return self.__positions
+
+
 class GribFieldListInFile(SimpleFieldList):
     def __init__(
         self,

@@ -73,9 +73,6 @@ LONGITUDE_ACCESSOR = GribCodesLongitudeAccessor()
 class GribCodesHandle(CodesHandle):
     PRODUCT_ID = eccodes.CODES_PRODUCT_GRIB
 
-    # TODO: just a wrapper around the base class implementation to handle the
-    # s,l,d qualifiers. Once these are implemented in the base class this method can
-    # be removed. md5GridSection is also handled!
     def get(self, name, ktype=None, **kwargs):
         if name == "values":
             return self.get_values()
@@ -180,6 +177,9 @@ class GribHandle(metaclass=ABCMeta):
     @abstractmethod
     def release(self):
         pass
+
+    def __contains__(self, key):
+        return self.handle.__contains__(key)
 
     def __getattr__(self, name):
         """Delegate attribute access to the underlying handle."""

@@ -16,14 +16,16 @@ from earthkit.utils.array import array_namespace
 from earthkit.utils.array import array_to_numpy
 from earthkit.utils.array import convert_array
 
+from earthkit.data.core.caching import CACHE
 
-class Data(metaclass=ABCMeta):
+
+class FieldDataCore(metaclass=ABCMeta):
     KEYS = None
 
     @property
     def values(self):
         r"""array-like: Get the values stored in the field as a 1D array."""
-        return Data.flatten(self.get_values())
+        return FieldDataCore.flatten(self.get_values())
 
     @abstractmethod
     def get_values(self, dtype=None):
@@ -103,7 +105,7 @@ class Data(metaclass=ABCMeta):
         """
         if len(v.shape) != 1:
             n = (math.prod(v.shape),)
-            return Data.reshape(v, n)
+            return FieldDataCore.reshape(v, n)
         return v
 
     # TODO: move it to earthkit-utils
@@ -148,14 +150,29 @@ class Data(metaclass=ABCMeta):
         return field_shape
 
 
-class SimpleData(Data):
+class FieldData(FieldDataCore):
     @property
     def values(self):
-        return Data.flatten(self.get_values())
+        return self.flatten(self.get_values())
 
     @abstractmethod
     def get_values(self, dtype=None):
         pass
+
+    def set_values(self, array):
+        """Set the values of the field.
+
+        Parameters
+        ----------
+        array: array-like
+            The values to be set in the field.
+
+        Returns
+        -------
+        FieldData
+            A new instance of FieldData with the updated values.
+        """
+        return ArrayData(array)
 
     # def _required_shape(self, flatten, shape=None):
     #     """Return the required shape of the array."""
@@ -169,27 +186,86 @@ class SimpleData(Data):
     #     return shape == array.shape and (dtype is None or dtype == array.dtype)
 
 
-class NumpyData(Data):
-    """A simple data class that uses NumPy for array operations."""
+class ArrayCache:
+    def __init__(self, array):
+        self.xp = array_namespace(array)
+        self.cache_file = None
 
-    def __init__(self, values):
-        self._values = values
+    def __del__(self):
 
-    def get_values(self, dtype=None):
-        """Get the values stored in the field as an array."""
-        if dtype is not None:
-            return self._values.astype(dtype)
-        return self._values
+        CACHE._decache_file(self.cache_file)
+
+    def id(self):
+        """Return a unique identifier for the data."""
+        import datetime
+        import hashlib
+        from random import randrange
+
+        m = hashlib.sha256()
+        m.update(datetime.datetime.now().isoformat().encode("utf-8"))
+        m.update(str(randrange(10000000)).encode("utf-8"))
+        return m.hexdigest()
+
+    def load(self):
+        assert self.cache_file is not None, "Cache file must be set before loading."
+        return self.xp.load(self.cache_file)
+
+    def save(self, array):
+        def _create(self, path):
+            self.xp.save(path, array)
+
+        if self.cache_file is None:
+            from earthkit.data.core.caching import cache_file
+
+            self.cache_file = cache_file(
+                "array",
+                self.create,
+                {"id": self.id()},
+                extension=".npy",
+            )
+        else:
+            _create(self.cache_file)
 
 
-class ArrayData(Data):
+class ArrayData(FieldData):
     """A simple data class that uses an array-like structure for values."""
 
+    _cache = None
+
     def __init__(self, values):
         self._values = values
 
     def get_values(self, dtype=None):
         """Get the values stored in the field as an array."""
+        self.load()
         if dtype is not None:
             return array_namespace(self._values).astype(dtype)
         return self._values
+
+    def free(self):
+        """Free the resources used by the data."""
+        # TODO: make it thread safe
+        if self._values is not None:
+            if self._cache is None:
+                self._cache = ArrayCache(self._values)
+            self._cache.save(self._values)
+            self._values = None
+
+    def load(self):
+        # TODO: make it thread safe
+        if self._values is None:
+            assert self._cache is not None, "Cache must be set before loading."
+            self._values = self._cache.load()
+
+
+# class NumpyData(ArrayData):
+#     """A simple data class that uses NumPy for array operations."""
+
+#     def __init__(self, values):
+#         self._values = values
+
+#     def get_values(self, dtype=None):
+#         """Get the values stored in the field as an array."""
+#         if dtype is not None:
+#             return self._values.astype(dtype)
+#         return self._values

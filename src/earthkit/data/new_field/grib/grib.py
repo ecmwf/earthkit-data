@@ -8,7 +8,7 @@
 #
 
 
-from ..data import SimpleData
+from ..data import FieldData
 from ..geography import Geography
 from ..labels import Labels
 from ..parameter import Parameter
@@ -19,7 +19,7 @@ def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
-class GribData(SimpleData):
+class GribData(FieldData):
     def __init__(self, handle):
         self.handle = handle
 
@@ -39,6 +39,9 @@ class GribParameter(Parameter):
     @property
     def units(self):
         return self.handle.get("units", None)
+
+    def set_name(self, name):
+        """Set the name of the parameter."""
 
 
 # class GribTime(Time):
@@ -174,5 +177,60 @@ class GribLabels(Labels):
     def __init__(self, handle):
         self.handle = handle
 
+    def __len__(self):
+        return sum(map(lambda i: 1, self.keys()))
+
+    def __contains__(self, key):
+        return False
+        return self.handle.__contains__(key)
+
+    def __iter__(self):
+        return self.keys()
+
+    def keys(self):
+        return self.handle.keys()
+
+    def items(self):
+        return self.handle.items()
+
+    def __getitem__(self, key):
+        return self.get(key, raise_on_missing=True)
+
+    # def __getitem__(self, key):
+    #     if key in self.handle:
+    #         return self.handle.get(key)
+    #     raise KeyError(f"Label '{key}' not found in GribLabels")
+
     def metadata(self, keys=None, default=None):
-        return self.handle.get_labels_metadata(keys=keys, default=default)
+        return self.handle.get(keys=keys, default=default)
+
+    def override(self, *args, headers_only_clone=True, **kwargs):
+        pass
+
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
+        def _key_name(key):
+            if key == "param":
+                key = "shortName"
+            elif key == "_param_id":
+                key = "paramId"
+            return key
+
+        _kwargs = {}
+        if not raise_on_missing:
+            _kwargs["default"] = default
+
+        # allow using the "grib." prefix.
+        if key.startswith("grib."):
+            key = key[5:]
+
+        # key = _key_name(key)
+
+        v = self.handle.get(key, ktype=astype, **_kwargs)
+
+        # special case when  "shortName" is "~".
+        if key == "shortName" and v == "~":
+            v = self.handle.get("paramId", ktype=str, **_kwargs)
+        return v
+
+    def set(self, d):
+        return

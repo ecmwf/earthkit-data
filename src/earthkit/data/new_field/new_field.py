@@ -7,7 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
+from collections import defaultdict
+
 from earthkit.data.core import Base
+from earthkit.data.new_field.data import ArrayData
 
 
 class FieldKeys:
@@ -17,10 +20,10 @@ class FieldKeys:
     # KEYS = {}
 
     def __init__(self):
-        from .data import Data as data
+        from .data import FieldDataCore as data
         from .geography import Geography as geography
         from .parameter import Parameter as parameter
-        from .time import Time as time
+        from .time import FieldTimeBase as time
         from .vertical import Vertical as vertical
 
         self.PARTS = {
@@ -75,6 +78,8 @@ class Field(Base):
         self.vertical = vertical
         self.labels = labels
 
+        self._kwargs = kwargs
+
     @classmethod
     def from_field(
         cls,
@@ -99,6 +104,7 @@ class Field(Base):
     def from_grib(cls, handle, **kwargs):
         from earthkit.data.new_field.grib.grib import GribData
         from earthkit.data.new_field.grib.grib import GribGeography
+        from earthkit.data.new_field.grib.grib import GribLabels
         from earthkit.data.new_field.grib.grib import GribParameter
         from earthkit.data.new_field.grib.grib import GribVertical
         from earthkit.data.new_field.grib.time import GribTime
@@ -108,6 +114,20 @@ class Field(Base):
         time = GribTime(handle)
         geography = GribGeography(handle)
         vertical = GribVertical(handle)
+        labels = GribLabels(handle)
+
+        LS_KEYS = [
+            "centre",
+            "shortName",
+            "typeOfLevel",
+            "level",
+            "dataDate",
+            "dataTime",
+            "stepRange",
+            "dataType",
+            "number",
+            "gridType",
+        ]
 
         return cls(
             data=data,
@@ -115,6 +135,8 @@ class Field(Base):
             time=time,
             geography=geography,
             vertical=vertical,
+            labels=labels,
+            ls_keys=LS_KEYS,
             **kwargs,
         )
 
@@ -142,23 +164,33 @@ class Field(Base):
             **kwargs,
         )
 
-    # @classmethod
-    # def from_dict(cls, **kwargs):
-    #     d = dict(**kwargs)
-    #     data = DictData(d)
-    #     time = DictTime(d)
-    #     parameter = DictParameter(d)
-    #     geography = DictGeography(d)
-    #     vertical = DictVertical(d)
-    #     labels = Labels(d)
-    #     return cls(
-    #         data=data,
-    #         time=time,
-    #         parameter=parameter,
-    #         geography=geography,
-    #         vertical=vertical,
-    #         labels=labels,
-    #     )
+    @classmethod
+    def from_dict(cls, *args, **kwargs):
+        from earthkit.data.new_field.lod.geography import make_geography
+        from earthkit.data.new_field.lod.lod import LodData
+        from earthkit.data.new_field.lod.lod import LodLabels
+        from earthkit.data.new_field.lod.lod import LodParameter
+        from earthkit.data.new_field.lod.lod import LodTime
+        from earthkit.data.new_field.lod.lod import LodVertical
+
+        d = dict(*args, **kwargs)
+        data = LodData(d)
+
+        values_shape = data.values.shape
+
+        time = LodTime(d)
+        parameter = LodParameter(d)
+        geography = make_geography(d, values_shape)
+        vertical = LodVertical(d)
+        labels = LodLabels(d)
+        return cls(
+            data=data,
+            time=time,
+            parameter=parameter,
+            geography=geography,
+            vertical=vertical,
+            labels=labels,
+        )
 
     @property
     def shape(self):
@@ -212,13 +244,41 @@ class Field(Base):
         """
         return self.data.to_array(self.shape, flatten=flatten, dtype=dtype, array_backend=array_backend)
 
-    def set_numpy(self, array):
-        from earthkit.data.new_field.data import NumpyData
+    def set_values(self, array):
+        data = self.data.set_values(array)
+        return Field.from_field(self, data=data)
 
-        return Field.from_field(self, data=NumpyData(array))
+    # def set_numpy(self, array):
+    #     from earthkit.data.new_field.data import NumpyData
 
-    def set_step(self, step):
-        return Field.from_field(self, time=self.time.set_step(step))
+    #     return Field.from_field(self, data=NumpyData(array))
+
+    def set(self, **kwargs):
+        _kwargs = defaultdict(dict)
+        for k, v in kwargs.items():
+            if self.labels and k in self.labels:
+                _kwargs["labels"][k] = v
+            else:
+                part_name, _ = FIELD_KEYS.get(k)
+                if part_name:
+                    _kwargs[part_name][k] = v
+
+        print("_set kwargs:", _kwargs)
+
+        if _kwargs:
+            r = {}
+            for part_name, v in _kwargs.items():
+                part = getattr(self, part_name)
+                s = part.set(**v)
+                r[part_name] = s
+            if r:
+                return Field.from_field(self, **r)
+            else:
+                raise ValueError("No valid keys to set in the field.")
+        return None
+
+    # def set_step(self, step):
+    #     return Field.from_field(self, time=self.time.set_step(step))
 
     def set_labels(self, *args, **kwargs):
         r"""Set a label for the field.
@@ -263,7 +323,16 @@ class Field(Base):
         return encoder._encode_field(self, **kwargs)
 
     def metadata(self, key, default=None):
-        return self._get(key)
+        try:
+            return self._get(key)
+        except KeyError:
+            return default
+
+    def _attributes(self, keys, default=None):
+        result = {}
+        for name in keys:
+            result[name] = self.metadata(name, default=default)
+        return result
 
     def _get(self, key):
         if self.labels and key in self.labels:
@@ -328,3 +397,97 @@ class Field(Base):
                 )
 
         return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
+
+    def to_field(self, array=True):
+        """Return the field itself."""
+        return self
+
+    def load(self):
+        """Load the field data."""
+        data = self.data.load()
+        if data is self.data:
+            return self
+
+        if self.data:
+            self.data.load()
+        if self.time:
+            self.time.load()
+        if self.parameter:
+            self.parameter.load()
+        if self.geography:
+            self.geography.load()
+        if self.vertical:
+            self.vertical.load()
+        if self.labels:
+            self.labels.load()
+
+    def copy(self, *, values=None, flatten=False, dtype=None, array_backend=None):
+        r"""Create a new :class:`ArrayField` by copying the values and metadata.
+
+        Parameters
+        ----------
+        values: array-like or None
+            The values to be stored in the new :class:`Field`. When it is ``None`` the values
+            extracted from the original field by using :obj:`to_array` with ``flatten``, ``dtype``
+            and ``array_backend`` and copied to the new field.
+        flatten: bool
+            Control the shape of the values when they are extracted from the original field.
+            When ``True``, flatten the array, otherwise the field's shape is kept. Only used when
+            ``values`` is not provided.
+        dtype: str, array.dtype or None
+            Control the typecode or data-type of the values when they are extracted from
+            the original field. If :obj:`None`, the default type used by the underlying
+            data accessor is used. For GRIB it is ``float64``. Only used when  ``values``
+            is not provided.
+        array_backend: str, module or None
+            Control the array backend of the values when they are extracted from
+            the original field. If :obj:`None`, the underlying array format
+            of the field is used. Only used when ``values`` is not provided.
+        metadata: :class:`Metadata` or None
+            The metadata to be stored in the new :class:`Field`. When it is :obj:`None`
+            a copy of the metadata of the original field is used.
+
+        Returns
+        -------
+        :class:`ArrayField`
+        """
+        if values is not None:
+            if array_backend is not None:
+                from earthkit.utils.array import convert_array
+
+                values = convert_array(values, target_backend=array_backend)
+
+        else:
+            values = self.data.get_values(
+                flatten=flatten,
+                dtype=dtype,
+            )
+
+        data = ArrayData(values)
+
+        for part in ["time", "parameter", "geography", "vertical", "labels"]:
+            part_obj = getattr(self, part)
+            if hasattr(part_obj, "handle"):
+                part_obj = part_obj.copy()
+            else:
+                part_obj = part_obj.__class__(part_obj)
+
+            setattr(data, part, part_obj)
+
+        return Field(
+            data=data,
+            time=self.time,
+            parameter=self.parameter,
+            geography=self.geography,
+            vertical=self.vertical,
+            labels=self.labels,
+        )
+
+
+def grib_handle(field):
+    for part in ["time", "parameter", "geography", "vertical", "labels"]:
+        part_obj = getattr(field, part)
+        if hasattr(part_obj, "handle"):
+            handle = getattr(part_obj, "handle", None)
+            if handle:
+                return handle

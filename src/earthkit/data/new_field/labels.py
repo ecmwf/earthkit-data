@@ -118,6 +118,34 @@ class Labels(metaclass=ABCMeta):
         """
         pass
 
+    @abstractmethod
+    def set(self, key, value):
+        r"""Set the value for ``key``."""
+        pass
+
 
 class RawLabels(dict, Labels):
     pass
+
+
+# class NewLabels:
+#     def __init__(self, d, other):
+#         self.handle = handle
+
+#     def __len__(self):
+#         return len(self.handle)
+
+#     def __contains__(self, key):
+#         return key in self.handle
+
+#     def __iter__(self):
+#         return iter(self.handle)
+
+#     def keys(self):
+#         return self.handle.keys()
+
+#     def items(self):
+#         return self.handle.items()
+
+#     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
+#         return self.handle.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)

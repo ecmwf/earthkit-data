@@ -51,7 +51,8 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            from ....new_field.new_field import Field
+            from earthkit.data.new_field.new_field import Field
+
             from .handle import MemoryGribHandle
 
             handle = MemoryGribHandle.from_raw_handle(handle)
