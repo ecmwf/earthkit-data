@@ -13,10 +13,10 @@ from functools import cached_property
 from typing import Any
 
 from earthkit.data.core.fieldlist import math
-from earthkit.data.new_field.data import SimpleData
+from earthkit.data.new_field.data import FieldData
 from earthkit.data.new_field.geography import Geography
 from earthkit.data.new_field.parameter import Parameter
-from earthkit.data.new_field.time import Time
+from earthkit.data.new_field.time import FieldTime
 from earthkit.data.new_field.vertical import Vertical
 
 from .coordinates import extract_single_value
@@ -32,7 +32,7 @@ from .coordinates import is_scalar
 LOG = logging.getLogger(__name__)
 
 
-class XArrayData(SimpleData):
+class XArrayData(FieldData):
     def __init__(self, owner, selection: Any) -> None:
         self.owner = owner
         self.selection = selection
@@ -75,53 +75,23 @@ class XArrayParameter(Parameter):
         return self.owner.variable.attrs.get("units", None)
 
 
-class XArrayTime(Time):
+class XArrayTime(FieldTime):
     def __init__(self, owner: Any, selection: Any) -> None:
         self.owner = owner
         self.selection = selection
 
-        for coord_name, coord_value in self.selection.coords.items():
-            if is_scalar(coord_value):
-                # Extract the single value from the scalar dimension
-                # and store it in the metadata
-                coordinate = owner.by_name[coord_name]
-                self._md[coord_name] = coordinate.normalise(extract_single_value(coord_value))
-
     @cached_property
     def spec(self):
         """Return the time specification."""
-        # _md = {}
+        _coords = {}
         for coord_name, coord_value in self.selection.coords.items():
             if is_scalar(coord_value):
                 # Extract the single value from the scalar dimension
                 # and store it in the metadata
                 coordinate = self.owner.by_name[coord_name]
-                self._md[coord_name] = coordinate.normalise(extract_single_value(coord_value))
+                _coords[coord_name] = coordinate.normalise(extract_single_value(coord_value))
 
-        # md = {}
-        # valid_datetime = self.owner.time.fill_time_metadata(self._md, md)
-        # if valid_datetime is not None:
-        #     md["valid_datetime"] = as_datetime(valid_datetime).isoformat()
-
-    @property
-    def base_datetime(self):
-        """Return the valid datetime of the time object."""
-        return self.owner.time.forecast_reference_time(self.selection)
-
-    @property
-    def valid_datetime(self):
-        """Return the valid datetime of the time object."""
-        return self.owner.time.valid_time(self.selection)
-
-    @property
-    def step(self):
-        """Return the forecast period of the time object."""
-        return self.owner.time.step(self.selection)
-
-    @property
-    def range(self):
-        """Return the forecast period of the time object."""
-        pass
+        return self.owner.time.spec(_coords)
 
 
 class XArrayVertical(Vertical):
@@ -182,12 +152,10 @@ class XArrayGeography(Geography):
 
     @property
     def latitudes(self):
-        # Placeholder for actual implementation
         return self.owner.grid.latitudes
 
     @property
     def longitudes(self):
-        # Placeholder for actual implementation
         return self.owner.grid.longitudes
 
     @property

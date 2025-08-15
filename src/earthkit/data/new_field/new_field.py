@@ -16,7 +16,7 @@ GRIB = "grib"
 
 
 class FieldKeys:
-    r"""Keys used to access the field attributes."""
+    r"""Map keys to attributes of Field parts."""
 
     # PARTS = {}
     # KEYS = {}
@@ -87,17 +87,51 @@ class EncoderData:
 
 
 class Field(Base):
+    """A class to represent a field in Earthkit.
+
+    A field in Earthkit is a horizontal slice of the atmosphere/hydrosphere at
+    a given time.
+
+    A Field object is composed of several parts:
+    - data: the data values of the field
+    - time: the time of the field
+    - parameter: the parameter of the field
+    - geography: the geography of the field
+    - vertical: the vertical level of the field
+    - labels: the labels of the field
+
+    Field is not polymorphic, but its parts are. To create a new Field object
+    use the class methods like :meth:`from_grib`, :meth:`from_xarray`, :meth:`from_dict`, etc.
+
+    Parameters
+    ----------
+    data : FieldData
+        The data of the field.
+    time : FieldTime
+        The time of the field.
+    parameter : Parameter
+        The parameter of the field.
+    geography : Geography
+        The geography of the field.
+    vertical : Vertical
+        The vertical level of the field.
+    labels : Labels
+        The labels of the field.
+    **kwargs : dict
+        Other keyword arguments to be passed to the Field constructor.
+        These can include metadata, such as `ls_keys` for GRIB fields.
+
+    """
+
     def __init__(
         self, data=None, time=None, parameter=None, geography=None, vertical=None, labels=None, **kwargs
     ):
-        r"""Initialize a Field object."""
         self.data = data
         self.time = time
         self.parameter = parameter
         self.geography = geography
         self.vertical = vertical
         self.labels = labels
-
         self._kwargs = kwargs
 
     @classmethod
@@ -106,8 +140,24 @@ class Field(Base):
         field,
         **kwargs,
     ):
-        r"""Create a Field object from another Field object."""
+        r"""Create a Field object from another Field object.
 
+        Parameters
+        ----------
+        field : Field
+            The field to copy from.
+        **kwargs : dict
+            Other keyword arguments to be passed to the Field constructor. This can include
+            parts.
+
+        Returns
+        -------
+        Field
+            A new Field object with the data, time, parameter, geography, vertical, and labels
+            copied from the original field. If any part is provided in `kwargs`, it will be
+            used instead of the original part. If a part is not provided in `kwargs`, it
+            will be copied from the original field.
+        """
         kwargs = kwargs.copy()
         _kwargs = {}
 

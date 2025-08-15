@@ -139,7 +139,7 @@ class TimeSpec:
         return cls(base_datetime=base_datetime, step=step, step_range=step_range)
 
     @classmethod
-    def from_base_datetime(cls, base_datetime, step=None, step_range=None):
+    def from_base_datetime_and_step(cls, base_datetime, step=None, step_range=None):
         """Set the base datetime of the time object."""
         base_datetime = to_datetime(base_datetime)
         step = to_timedelta(step) if step is not None else to_timedelta(0)

@@ -8,7 +8,6 @@
 # nor does it submit to any jurisdiction.
 
 
-import datetime
 import logging
 from abc import ABC
 from abc import abstractmethod
@@ -18,6 +17,7 @@ from typing import List
 from typing import Optional
 
 from earthkit.data.utils.dates import to_datetime
+from earthkit.data.utils.dates import to_timedelta
 
 from .coordinates import Coordinate
 from .variable import Variable
@@ -101,17 +101,19 @@ class Time(ABC):
         pass
 
     @abstractmethod
-    def fill_time_metadata(self, coords_values: Dict[str, Any], metadata: Dict[str, Any]) -> None:
-        """Fill metadata with time information.
+    def spec(self, coords_values: Dict[str, Any]):
+        """Return the time specification based on coordinate values.
 
-        Args
-        ----
+        Parameters
+        ----------
         coords_values : Dict[str, Any]
             Coordinate values.
-        metadata : Dict[str, Any]
-            Metadata dictionary.
-        """
 
+        Returns
+        -------
+        TimeSpec
+            The time specification.
+        """
         pass
 
 
@@ -140,6 +142,11 @@ class Constant(Time):
         """
         return None
 
+    def spec(self, coords_values: Dict[str, Any]):
+        from ..time import TimeSpec
+
+        return TimeSpec()
+
 
 class Analysis(Time):
     """Represents an analysis time."""
@@ -153,64 +160,6 @@ class Analysis(Time):
             The time coordinate.
         """
         self.time_coordinate_name = time_coordinate.variable.name
-
-    def forecast_reference_time(self, selection: Optional[Variable] = None) -> Optional[str]:
-        """Return the forecast reference time.
-
-        Returns
-        -------
-        Optional[str]
-            The name of the time coordinate.
-        """
-        return to_datetime(selection[self.time_coordinate_name].values[0])
-
-    def valid_time(self, selection: Optional[Variable] = None) -> Optional[str]:
-        """Return the forecast reference time.
-
-        Returns
-        -------
-        Optional[str]
-            The name of the time coordinate.
-        """
-        return self.forecast_reference_time(selection)
-
-    def step(self, selection: Optional[Variable] = None) -> datetime.timedelta:
-        """Return the step for the analysis time.
-
-        Parameters
-        ----------
-        selection : Optional[Variable]
-            The variable selection.
-
-        Returns
-        -------
-        datetime.timedelta
-            The step duration.
-        """
-        return datetime.timedelta(0)
-
-    def fill_time_metadata(self, coords_values: Dict[str, Any], metadata: Dict[str, Any]) -> Any:
-        """Fill metadata with time information.
-
-        Parameters
-        ----------
-        coords_values : Dict[str, Any]
-            Coordinate values.
-        metadata : Dict[str, Any]
-            Metadata dictionary.
-
-        Returns
-        -------
-        Any
-            The valid datetime.
-        """
-        valid_datetime = coords_values[self.time_coordinate_name]
-
-        metadata["date"] = to_datetime(valid_datetime).strftime("%Y%m%d")
-        metadata["time"] = to_datetime(valid_datetime).strftime("%H%M")
-        metadata["step"] = 0
-
-        return valid_datetime
 
     def select_valid_datetime(self, variable: Variable) -> str:
         """Select the valid datetime for a given variable.
@@ -227,10 +176,11 @@ class Analysis(Time):
         """
         return self.time_coordinate_name
 
-    def spec(self, selection: Optional[Variable] = None):
+    def spec(self, coords_values: Dict[str, Any]):
         from ..time import TimeSpec
 
-        return TimeSpec.from_valid_datetime(self.valid_time(selection))
+        valid_time = to_datetime(coords_values[self.time_coordinate_name])
+        return TimeSpec.from_valid_datetime(valid_time)
 
 
 class ForecastFromValidTimeAndStep(Time):
@@ -257,45 +207,6 @@ class ForecastFromValidTimeAndStep(Time):
         self.step_coordinate_name = step_coordinate.variable.name
         self.date_coordinate_name = date_coordinate.variable.name if date_coordinate else None
 
-    def fill_time_metadata(self, coords_values: Dict[str, Any], metadata: Dict[str, Any]) -> Any:
-        """Fill metadata with time information.
-
-        Returns
-        -------
-        Any
-            The valid datetime.
-
-        Args
-        ----
-        coords_values : Dict[str, Any]
-            Coordinate values.
-        metadata : Dict[str, Any]
-            Metadata dictionary.
-        """
-        valid_datetime = coords_values[self.time_coordinate_name]
-        step = coords_values[self.step_coordinate_name]
-
-        assert isinstance(step, datetime.timedelta)
-        base_datetime = valid_datetime - step
-
-        hours = step.total_seconds() / 3600
-        assert int(hours) == hours
-
-        metadata["date"] = to_datetime(base_datetime).strftime("%Y%m%d")
-        metadata["time"] = to_datetime(base_datetime).strftime("%H%M")
-        metadata["step"] = int(hours)
-
-        # When date is present, it should be compatible with time and step
-
-        if self.date_coordinate_name is not None:
-            # Not sure that this is the correct assumption
-            assert coords_values[self.date_coordinate_name] == base_datetime, (
-                coords_values[self.date_coordinate_name],
-                base_datetime,
-            )
-
-        return valid_datetime
-
     def select_valid_datetime(self, variable: Variable) -> str:
         """Select the valid datetime for a given variable.
 
@@ -311,10 +222,23 @@ class ForecastFromValidTimeAndStep(Time):
         """
         return self.time_coordinate_name
 
-    def spec(self, selection: Optional[Variable] = None):
+    def spec(self, coords_values: Dict[str, Any]):
         from ..time import TimeSpec
 
-        return TimeSpec.from_base_datetime(self.valid_time(selection))
+        valid_datetime = to_datetime(coords_values[self.time_coordinate_name])
+        step = to_timedelta(coords_values[self.step_coordinate_name])
+
+        base_datetime_ref = valid_datetime - step
+        base_datetime = to_datetime(coords_values[self.date_coordinate_name])
+
+        if self.date_coordinate_name is not None:
+            # Not sure that this is the correct assumption
+            assert base_datetime == base_datetime_ref, (
+                base_datetime,
+                base_datetime_ref,
+            )
+
+        return TimeSpec.from_valid_datetime_and_step(valid_datetime, step)
 
 
 class ForecastFromValidTimeAndBaseTime(Time):
@@ -333,35 +257,6 @@ class ForecastFromValidTimeAndBaseTime(Time):
         self.date_coordinate_name = date_coordinate.name
         self.time_coordinate_name = time_coordinate.name
 
-    def fill_time_metadata(self, coords_values: Dict[str, Any], metadata: Dict[str, Any]) -> Any:
-        """Fill metadata with time information.
-
-        Returns
-        -------
-        Any
-            The valid datetime.
-
-        Args
-        ----
-        coords_values : Dict[str, Any]
-            Coordinate values.
-        metadata : Dict[str, Any]
-            Metadata dictionary.
-        """
-        valid_datetime = coords_values[self.time_coordinate_name]
-        base_datetime = coords_values[self.date_coordinate_name]
-
-        step = valid_datetime - base_datetime
-
-        hours = step.total_seconds() / 3600
-        assert int(hours) == hours
-
-        metadata["date"] = to_datetime(base_datetime).strftime("%Y%m%d")
-        metadata["time"] = to_datetime(base_datetime).strftime("%H%M")
-        metadata["step"] = int(hours)
-
-        return valid_datetime
-
     def select_valid_datetime(self, variable: Variable) -> str:
         """Select the valid datetime for a given variable.
 
@@ -376,6 +271,15 @@ class ForecastFromValidTimeAndBaseTime(Time):
             The name of the time coordinate.
         """
         return self.time_coordinate_name
+
+    def spec(self, coords_values: Dict[str, Any]):
+        from ..time import TimeSpec
+
+        valid_datetime = to_datetime(coords_values[self.time_coordinate_name])
+        base_datetime = to_datetime(coords_values[self.date_coordinate_name])
+        step = valid_datetime - base_datetime
+
+        return TimeSpec.from_base_datetime_and_step(valid_datetime, step)
 
 
 class ForecastFromBaseTimeAndDate(Time):
@@ -394,35 +298,6 @@ class ForecastFromBaseTimeAndDate(Time):
         self.date_coordinate_name = date_coordinate.name
         self.step_coordinate_name = step_coordinate.name
 
-    def fill_time_metadata(self, coords_values: Dict[str, Any], metadata: Dict[str, Any]) -> Any:
-        """Fill metadata with time information.
-
-        Returns
-        -------
-        Any
-            The valid datetime.
-
-        Args
-        ----
-        coords_values : Dict[str, Any]
-            Coordinate values.
-        metadata : Dict[str, Any]
-            Metadata dictionary.
-        """
-        date = coords_values[self.date_coordinate_name]
-        step = coords_values[self.step_coordinate_name]
-        assert isinstance(step, datetime.timedelta)
-
-        metadata["date"] = to_datetime(date).strftime("%Y%m%d")
-        metadata["time"] = to_datetime(date).strftime("%H%M")
-
-        hours = step.total_seconds() / 3600
-
-        assert int(hours) == hours
-        metadata["step"] = int(hours)
-
-        return date + step
-
     def select_valid_datetime(self, variable: Variable) -> Optional[str]:
         """Select the valid datetime for a given variable.
 
@@ -438,12 +313,12 @@ class ForecastFromBaseTimeAndDate(Time):
         """
         raise NotImplementedError("ForecastFromBaseTimeAndDate.select_valid_datetime")
 
-    def spec(self, coords_values: Dict[str, Any], selection: Optional[Variable] = None):
+    def spec(self, coords_values: Dict[str, Any]):
         from ..time import TimeSpec
 
         date = coords_values[self.date_coordinate_name]
         step = coords_values[self.step_coordinate_name]
-        assert isinstance(step, datetime.timedelta)
         date = to_datetime(date)
+        step = to_timedelta(step)
 
         return TimeSpec.from_base_datetime_and_step(date, step)
