@@ -185,6 +185,10 @@ class GribHandle(metaclass=ABCMeta):
         """Delegate attribute access to the underlying handle."""
         return getattr(self.handle, name)
 
+    def deflate(self):
+        """Shrink the memory used by the handle."""
+        return DeflatedGribHandle.from_handle(self.handle)
+
 
 class FileGribHandle(GribHandle):
     _handle = None
@@ -241,6 +245,27 @@ class MemoryGribHandle(GribHandle):
 
     def release(self):
         self._handle = None
+
+
+class DeflatedGribHandle(MemoryGribHandle):
+    """A GribHandle that has been shrunk to only contain the headers."""
+
+    def __init__(self, handle, bits_per_value=None):
+        super().__init__(handle)
+        self.bits_per_value = bits_per_value
+
+    @classmethod
+    def from_handle(cls, handle, bits_per_value=None):
+        handle_new = handle.clone(headers_only=True)
+        key = "bitsPerValue"
+        if bits_per_value is None:
+            bits_per_value = handle.get(key, default=None)
+        return cls(handle_new, bits_per_value=bits_per_value)
+
+    def deflate(self):
+        """Deflate the handle to only contain the headers."""
+        # This method is a no-op for ShrunkGribHandle as it is already shrunk.
+        return self
 
 
 class GribHandleManager:

@@ -12,6 +12,8 @@ from collections import defaultdict
 from earthkit.data.core import Base
 from earthkit.data.new_field.data import ArrayData
 
+GRIB = "grib"
+
 
 class FieldKeys:
     r"""Keys used to access the field attributes."""
@@ -64,6 +66,24 @@ class FieldKeys:
 
 
 FIELD_KEYS = FieldKeys()
+
+
+class EncoderData:
+    """A class to hold the encoder data."""
+
+    def __init__(self, data=None, time=None, parameter=None, geography=None, vertical=None, labels=None):
+        self.data = data
+        self.time = time
+        self.parameter = parameter
+        self.geography = geography
+        self.vertical = vertical
+        self.labels = labels
+
+    def encode(field):
+        """Double dispatch to the encoder."""
+        r = {}
+        if hasattr(field, "handle"):
+            r["handle"] = field.handle
 
 
 class Field(Base):
@@ -320,7 +340,14 @@ class Field(Base):
 
     def _encode(self, encoder, **kwargs):
         """Double dispatch to the encoder"""
-        return encoder._encode_field(self, **kwargs)
+
+        r = {}
+        for part in ["data", "time", "parameter", "geography", "vertical", "labels"]:
+            if hasattr(self, part):
+                r.update(self, part).to_dict(**kwargs, encoder=True)
+
+        r.update(kwargs)
+        return encoder._encode_field(self, **r)
 
     def metadata(self, key, default=None):
         try:
@@ -401,6 +428,9 @@ class Field(Base):
     def to_field(self, array=True):
         """Return the field itself."""
         return self
+
+    def to_array_based(self):
+        return deflate(self)
 
     def load(self):
         """Load the field data."""
@@ -491,3 +521,54 @@ def grib_handle(field):
             handle = getattr(part_obj, "handle", None)
             if handle:
                 return handle
+
+    return None
+
+
+def deflate(field):
+    if hasattr(field.data, "handle"):
+        values = field.data.get_values()
+        data = ArrayData(values)
+    else:
+        data = field.data
+
+    print("data:", data)
+
+    parts_with_handle = {}
+    parts_other = {}
+    handles = set()
+    for part in ["time", "parameter", "geography", "vertical", "labels"]:
+        part_obj = getattr(field, part)
+        if hasattr(part_obj, "handle"):
+            handle = getattr(part_obj, "handle", None)
+            parts_with_handle[part] = (handle, part_obj)
+            handles.add(handle)
+        else:
+            parts_other[part] = part_obj
+
+    print("parts_with_handle:", parts_with_handle)
+    print("parts_other:", parts_other)
+    print("handles:", handles)
+
+    _kwargs = {}
+    if len(handles) == 1:
+        handle = handles.pop()
+        handle = handle.deflate()
+        for part, (h, part_obj) in parts_with_handle.items():
+            _kwargs[part] = part_obj.__class__(h)
+
+        if field.data is not data:
+            _kwargs["data"] = data
+
+    print("_kwargs:", _kwargs)
+
+    if handles == 0:
+        if field.data is not data:
+            _kwargs["data"] = data
+    elif len(handles) > 1:
+        raise ValueError("Cannot deflate field with multiple handles")
+
+    if _kwargs:
+        return Field.from_field(field, **_kwargs)
+    else:
+        return field

@@ -227,6 +227,11 @@ class Analysis(Time):
         """
         return self.time_coordinate_name
 
+    def spec(self, selection: Optional[Variable] = None):
+        from ..time import TimeSpec
+
+        return TimeSpec.from_valid_datetime(self.valid_time(selection))
+
 
 class ForecastFromValidTimeAndStep(Time):
     """Represents a forecast time derived from valid time and step."""
@@ -305,6 +310,11 @@ class ForecastFromValidTimeAndStep(Time):
             The name of the time coordinate.
         """
         return self.time_coordinate_name
+
+    def spec(self, selection: Optional[Variable] = None):
+        from ..time import TimeSpec
+
+        return TimeSpec.from_base_datetime(self.valid_time(selection))
 
 
 class ForecastFromValidTimeAndBaseTime(Time):
@@ -427,3 +437,13 @@ class ForecastFromBaseTimeAndDate(Time):
             The name of the time coordinate.
         """
         raise NotImplementedError("ForecastFromBaseTimeAndDate.select_valid_datetime")
+
+    def spec(self, coords_values: Dict[str, Any], selection: Optional[Variable] = None):
+        from ..time import TimeSpec
+
+        date = coords_values[self.date_coordinate_name]
+        step = coords_values[self.step_coordinate_name]
+        assert isinstance(step, datetime.timedelta)
+        date = to_datetime(date)
+
+        return TimeSpec.from_base_datetime_and_step(date, step)

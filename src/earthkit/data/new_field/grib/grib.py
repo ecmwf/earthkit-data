@@ -27,6 +27,15 @@ class GribData(FieldData):
         """Get the values stored in the field as an array."""
         return self.handle.get_values(dtype=dtype)
 
+    def to_dict(self, encoder=False):
+        r = {}
+        if encoder:
+            r["handle"] = self.handle
+        else:
+            r["values"] = self.values
+
+        return r
+
 
 class GribParameter(Parameter):
     def __init__(self, handle):
@@ -42,6 +51,13 @@ class GribParameter(Parameter):
 
     def set_name(self, name):
         """Set the name of the parameter."""
+
+    def to_dict(self, encoder=False):
+        r = {}
+        if encoder:
+            r["handle"] = self.handle
+        else:
+            r["values"] = self.values
 
 
 # class GribTime(Time):

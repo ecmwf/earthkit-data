@@ -36,6 +36,10 @@ class Parameter(metaclass=ABCMeta):
         for key, value in _kwargs.items():
             setattr(self, f"_{key}", value)
 
+    def to_dict(self, **kwargs):
+        """Convert the Parameter object to a dictionary."""
+        return {key: getattr(self, key) for key in self.KEYS}
+
 
 class ParamSpec(Parameter):
     """A specification of a parameter."""
