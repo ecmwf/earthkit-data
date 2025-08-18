@@ -325,9 +325,6 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             return builder.build()
         else:
             from .builder import SingleDatasetBuilder
-            from .builder import SplitByVarDatasetBuilder
-
-            cls = SplitByVarDatasetBuilder if allow_holes else SingleDatasetBuilder
 
             if array_module is not None:
                 import warnings
@@ -375,7 +372,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 allow_holes=allow_holes,
             )
 
-            return cls(fieldlist, profile, from_xr=True, backend_kwargs=_kwargs).build()
+            return SingleDatasetBuilder(fieldlist, profile, from_xr=True, backend_kwargs=_kwargs).build()
 
     @classmethod
     def guess_can_open(cls, filename_or_obj):
