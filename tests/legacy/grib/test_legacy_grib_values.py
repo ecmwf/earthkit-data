@@ -27,7 +27,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_values_1(fl_type):
+def test_legacy_grib_values_1(fl_type):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
     eps = 1e-5
 
@@ -55,7 +55,7 @@ def test_grib_values_1(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_grib_values_18(fl_type):
+def test_legacy_grib_values_18(fl_type):
     f, array_backend = load_grib_data("tuv_pl.grib", fl_type)
     eps = 1e-5
 
@@ -85,7 +85,7 @@ def test_grib_values_18(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_to_numpy_1(fl_type):
+def test_legacy_grib_to_numpy_1(fl_type):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     eps = 1e-5
@@ -115,7 +115,7 @@ def test_grib_to_numpy_1(fl_type):
         (True, {"flatten": False}, (7, 12)),
     ],
 )
-def test_grib_to_numpy_1_shape(fl_type, first, options, expected_shape):
+def test_legacy_grib_to_numpy_1_shape(fl_type, first, options, expected_shape):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     v_ref = f[0].to_numpy().flatten()
@@ -131,7 +131,7 @@ def test_grib_to_numpy_1_shape(fl_type, first, options, expected_shape):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_to_numpy_18(fl_type):
+def test_legacy_grib_to_numpy_18(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     eps = 1e-5
@@ -184,7 +184,7 @@ def test_grib_to_numpy_18(fl_type):
         ({"flatten": False}, (18, 7, 12)),
     ],
 )
-def test_grib_to_numpy_18_shape(fl_type, options, expected_shape):
+def test_legacy_grib_to_numpy_18_shape(fl_type, options, expected_shape):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     eps = 1e-5
@@ -211,7 +211,7 @@ def test_grib_to_numpy_18_shape(fl_type, options, expected_shape):
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_grib_to_numpy_1_dtype(fl_type, dtype):
+def test_legacy_grib_to_numpy_1_dtype(fl_type, dtype):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     v = f[0].to_numpy(dtype=dtype)
@@ -223,7 +223,7 @@ def test_grib_to_numpy_1_dtype(fl_type, dtype):
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_grib_to_numpy_18_dtype(fl_type, dtype):
+def test_legacy_grib_to_numpy_18_dtype(fl_type, dtype):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     v = f[0].to_numpy(dtype=dtype)
@@ -234,7 +234,7 @@ def test_grib_to_numpy_18_dtype(fl_type, dtype):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_to_numpy_1_index(fl_type):
+def test_legacy_grib_to_numpy_1_index(fl_type):
     ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     eps = 1e-5
@@ -271,7 +271,7 @@ def test_grib_to_numpy_1_index(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_to_numpy_18_index(fl_type):
+def test_legacy_grib_to_numpy_18_index(fl_type):
     ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     eps = 1e-5
@@ -348,7 +348,6 @@ def test_grib_to_numpy_18_index(fl_type):
     )
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_FILE)
 # @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize(
@@ -363,7 +362,7 @@ def test_grib_to_numpy_18_index(fl_type):
         # ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
     ],
 )
-def test_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
+def test_legacy_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
     ds, _ = load_grib_data("test.grib", fl_type)
 
     latlon = ds[0].to_latlon(**kwarg)
@@ -401,7 +400,6 @@ def test_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
     assert np.allclose(d[1], latlon["lon"])
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
@@ -415,7 +413,7 @@ def test_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
         ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
     ],
 )
-def test_grib_fieldlist_data(fl_type, kwarg, expected_shape, expected_dtype):
+def test_legacy_grib_fieldlist_data(fl_type, kwarg, expected_shape, expected_dtype):
     ds, _ = load_grib_data("test.grib", fl_type)
 
     latlon = ds.to_latlon(**kwarg)
@@ -454,9 +452,8 @@ def test_grib_fieldlist_data(fl_type, kwarg, expected_shape, expected_dtype):
     assert np.allclose(d[2], latlon["lon"])
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
-def test_grib_fieldlist_data_index(fl_type):
+def test_legacy_grib_fieldlist_data_index(fl_type):
     ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     eps = 1e-5
@@ -553,9 +550,8 @@ def test_grib_fieldlist_data_index(fl_type):
     )
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_values_with_missing(fl_type):
+def test_legacy_grib_values_with_missing(fl_type):
     f, array_backend = load_grib_data("test_single_with_missing.grib", fl_type, folder="data")
 
     v = f[0].values

@@ -18,11 +18,20 @@ class Parameter(metaclass=ABCMeta):
         "units",
     )
 
+    ALIASES = {
+        "param": "name",
+    }
+
     @property
     @abstractmethod
     def name(self):
         """Return the name of the parameter."""
         pass
+
+    @property
+    def param(self):
+        """Return the parameter ID."""
+        return self.name
 
     @property
     @abstractmethod
@@ -32,13 +41,18 @@ class Parameter(metaclass=ABCMeta):
 
     def set(self, **kwargs):
         """Set the name and/or units of the parameter."""
-        _kwargs = {k: v for k, v in kwargs.items() if k in self.KEYS}
-        for key, value in _kwargs.items():
-            setattr(self, f"_{key}", value)
+        for key, value in kwargs.items():
+            key = self._resolve_key(key)
+            if key in self.KEYS:
+                setattr(self, f"_{key}", value)
 
     def to_dict(self, **kwargs):
         """Convert the Parameter object to a dictionary."""
         return {key: getattr(self, key) for key in self.KEYS}
+
+    def _resolve_key(self, key):
+        """Resolve a key to its canonical form."""
+        return self.ALIASES.get(key, key)
 
 
 class ParamSpec(Parameter):

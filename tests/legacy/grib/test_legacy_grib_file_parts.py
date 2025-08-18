@@ -34,12 +34,12 @@ from earthkit.data.testing import earthkit_examples_file
         ([(240, 240), (720, 16)], [("u", 1000)]),  # second part shorter than message
     ],
 )
-def test_grib_single_file_parts(parts, expected_meta):
+def test_legacy_grib_single_file_parts(parts, expected_meta):
     ds = from_source("file", earthkit_examples_file("test6.grib"), parts=parts)
 
     assert len(ds) == len(expected_meta)
     if len(ds) > 0:
-        assert ds.get(("param", "level")) == expected_meta
+        assert ds.metadata(("param", "level")) == expected_meta
 
 
 @pytest.mark.parametrize(
@@ -75,7 +75,7 @@ def test_grib_single_file_parts(parts, expected_meta):
         ),
     ],
 )
-def test_grib_multi_file_parts(parts1, parts2, expected_meta):
+def test_legacy_grib_multi_file_parts(parts1, parts2, expected_meta):
     ds = from_source(
         "file",
         [
@@ -86,7 +86,7 @@ def test_grib_multi_file_parts(parts1, parts2, expected_meta):
 
     assert len(ds) == len(expected_meta)
     if len(ds) > 0:
-        assert ds.get(("param", "level")) == expected_meta
+        assert ds.metadata(("param", "level")) == expected_meta
 
 
 if __name__ == "__main__":

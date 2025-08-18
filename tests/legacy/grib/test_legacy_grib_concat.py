@@ -26,12 +26,12 @@ def _check_save_to_disk(ds, len_ref, meta_ref):
     assert os.path.exists(tmp.path)
     r_tmp = from_source("file", tmp.path)
     assert len(r_tmp) == len_ref
-    assert r_tmp.get("shortName") == meta_ref
+    assert r_tmp.metadata("shortName") == meta_ref
     r_tmp = None
 
 
 @pytest.mark.parametrize("mode", ["oper", "multi"])
-def test_grib_concat_core(mode):
+def test_legacy_grib_concat_core(mode):
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
     ds2 = from_source("file", earthkit_examples_file("test6.grib"))
 
@@ -42,31 +42,31 @@ def test_grib_concat_core(mode):
 
     # check metadata
     assert len(ds) == 8
-    md = ds1.get("param") + ds2.get("param")
-    assert ds.get("param") == md
+    md = ds1.metadata("param") + ds2.metadata("param")
+    assert ds.metadata("param") == md
 
     # check slice
     r = ds[1]
-    assert r.get("param") == "msl"
+    assert r.metadata("param") == "msl"
 
     r = ds[1:3]
     assert len(r) == 2
-    assert r.get("param") == ["msl", "t"]
-    assert r[0].get("param") == "msl"
-    assert r[1].get("param") == "t"
+    assert r.metadata("param") == ["msl", "t"]
+    assert r[0].metadata("param") == "msl"
+    assert r[1].metadata("param") == "t"
 
     # check sel
     r = ds.sel(param="2t")
     assert len(r) == 1
-    assert r.get("param") == ["2t"]
-    assert r[0].get("param") == "2t"
+    assert r.metadata("param") == ["2t"]
+    assert r[0].metadata("param") == "2t"
 
     # check saving to disk
     _check_save_to_disk(ds, 8, md)
 
 
 @pytest.mark.parametrize("mode", ["oper", "multi"])
-def test_grib_concat_3a(mode):
+def test_legacy_grib_concat_3a(mode):
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
     ds2 = from_source("file", earthkit_examples_file("test6.grib"))
     ds3 = from_source("file", earthkit_examples_file("tuv_pl.grib"))
@@ -85,7 +85,7 @@ def test_grib_concat_3a(mode):
 
 
 @pytest.mark.parametrize("mode", ["oper", "multi"])
-def test_grib_concat_3b(mode):
+def test_legacy_grib_concat_3b(mode):
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
     ds2 = from_source("file", earthkit_examples_file("test6.grib"))
     ds3 = from_source("file", earthkit_examples_file("tuv_pl.grib"))
@@ -102,7 +102,7 @@ def test_grib_concat_3b(mode):
 
 
 @pytest.mark.parametrize("mode", ["oper", "multi"])
-def test_grib_concat_mixed(mode):
+def test_legacy_grib_concat_mixed(mode):
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
     ds2 = ds1.to_fieldlist()
     md = ds1.metadata("param") + ds2.metadata("param")
@@ -117,7 +117,7 @@ def test_grib_concat_mixed(mode):
     _check_save_to_disk(ds, 4, md)
 
 
-def test_grib_from_empty_1():
+def test_legacy_grib_concat_from_empty_1():
     ds_e = FieldList()
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds.metadata("param")
@@ -128,7 +128,7 @@ def test_grib_from_empty_1():
     _check_save_to_disk(ds1, 2, md)
 
 
-def test_grib_from_empty_2():
+def test_legacy_grib_concat_from_empty_2():
     ds_e = FieldList()
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds.metadata("param")
@@ -139,7 +139,7 @@ def test_grib_from_empty_2():
     _check_save_to_disk(ds1, 2, md)
 
 
-def test_grib_from_empty_3():
+def test_legacy_grib_concat_from_empty_3():
     ds_e = FieldList()
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
     ds2 = from_source("file", earthkit_examples_file("test6.grib"))
@@ -151,7 +151,7 @@ def test_grib_from_empty_3():
 
 
 # See github issue #588
-def test_grib_concat_large():
+def test_legacy_grib_concat_large():
     ds_e = from_source("empty")
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
 

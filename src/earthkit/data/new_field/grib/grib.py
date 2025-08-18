@@ -11,6 +11,7 @@
 from ..data import FieldData
 from ..geography import Geography
 from ..labels import Labels
+from ..labels import RawLabels
 from ..parameter import Parameter
 from ..vertical import Vertical
 
@@ -43,7 +44,10 @@ class GribParameter(Parameter):
 
     @property
     def name(self):
-        return self.handle.get("shortName", None)
+        v = self.handle.get("shortName", None)
+        if v == "~":
+            v = self.handle.get("paramId", ktype=str, default=None)
+        return v
 
     @property
     def units(self):
@@ -111,13 +115,25 @@ class GribGeography(Geography):
 
     @property
     def latitudes(self):
-        # Placeholder for actual implementation
-        return self.handle.get_latitudes()
+        return self.handle.get_latitudes().reshape(self.shape)
 
     @property
     def longitudes(self):
-        # Placeholder for actual implementation
-        return self.handle.get_longitudes()
+        return self.handle.get_longitudes().reshape(self.shape)
+
+    @property
+    def x(self):
+        grid_type = self.handle.get("gridType", default=None)
+        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+            return self.longitudes
+        raise ValueError("x(): geographical coordinates in original CRS are not available")
+
+    @property
+    def y(self):
+        grid_type = self.handle.get("gridType", default=None)
+        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+            return self.latitudes
+        raise ValueError("y(): geographical coordinates in original CRS are not available")
 
     @property
     def shape(self):
@@ -134,12 +150,29 @@ class GribGeography(Geography):
         -------
         tuple
         """
-        Nj = missing_is_none(self.handle.get("Nj", None))
-        Ni = missing_is_none(self.handle.get("Ni", None))
+        Nj = missing_is_none(self.handle.get("Nj", default=None))
+        Ni = missing_is_none(self.handle.get("Ni", default=None))
         if Ni is None or Nj is None:
             n = self.handle.get("numberOfDataPoints", None)
             return (n,)  # shape must be a tuple
         return (Nj, Ni)
+
+    @property
+    def bounding_box(self):
+        r"""Return the bounding box of the field.
+
+        Returns
+        -------
+        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
+        """
+        from earthkit.data.utils.bbox import BoundingBox
+
+        return BoundingBox(
+            north=self.handle.get("latitudeOfFirstGridPointInDegrees", default=None),
+            south=self.handle.get("latitudeOfLastGridPointInDegrees", default=None),
+            west=self.handle.get("longitudeOfFirstGridPointInDegrees", default=None),
+            east=self.handle.get("longitudeOfLastGridPointInDegrees", default=None),
+        )
 
     @property
     def projection(self):
@@ -175,6 +208,11 @@ class GribGeography(Geography):
 
         return Projection.from_proj_string(self.handle.get("projTargetString", None))
 
+    @property
+    def unique_grid_id(self):
+        r"""Return a unique id of the grid of a field."""
+        return self.handle.get("md5GridSection", default=None)
+
 
 class GribVertical(Vertical):
     def __init__(self, handle):
@@ -189,7 +227,10 @@ class GribVertical(Vertical):
         return self.handle.get("levelType", None)
 
 
-class GribLabels(Labels):
+GribLabels = RawLabels
+
+
+class GribRawLabels(Labels):
     def __init__(self, handle):
         self.handle = handle
 
@@ -197,7 +238,8 @@ class GribLabels(Labels):
         return sum(map(lambda i: 1, self.keys()))
 
     def __contains__(self, key):
-        return False
+        if key.startswith("grib."):
+            key = key[5:]
         return self.handle.__contains__(key)
 
     def __iter__(self):
@@ -250,3 +292,12 @@ class GribLabels(Labels):
 
     def set(self, d):
         return
+
+    def message(self):
+        r"""Return a buffer containing the encoded message.
+
+        Returns
+        -------
+        bytes
+        """
+        return self.handle.get_buffer()

@@ -119,13 +119,16 @@ class Labels(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def set(self, key, value):
+    def set(self, *args, **kwargs):
         r"""Set the value for ``key``."""
         pass
 
 
 class RawLabels(dict, Labels):
-    pass
+    def set(self, *args, **kwargs):
+        d = dict(self)
+        d.update(*args, **kwargs)
+        return RawLabels(d)
 
 
 # class NewLabels:

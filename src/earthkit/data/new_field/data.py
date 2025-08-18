@@ -239,7 +239,7 @@ class ArrayData(FieldData):
         """Get the values stored in the field as an array."""
         self.load()
         if dtype is not None:
-            return array_namespace(self._values).astype(dtype)
+            return array_namespace(self._values).astype(self._values, dtype)
         return self._values
 
     def free(self):

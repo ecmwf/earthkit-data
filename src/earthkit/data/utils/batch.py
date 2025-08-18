@@ -82,7 +82,7 @@ class BasicIter(Iter):
         return self.create(batch)
 
     def _metadata(self, data, keys):
-        return lambda f: f._attributes(keys)
+        return lambda f: f.get_as_dict(keys)
 
 
 class IndexedIter(Iter):
@@ -96,7 +96,7 @@ class IndexedIter(Iter):
         return obj[batch]
 
     def _metadata(self, data, keys):
-        return lambda idx: data[idx]._attributes(keys)
+        return lambda idx: data[idx].get_as_dict(keys)
 
 
 def batched(data, n, mode="iter", create=None):

@@ -35,12 +35,12 @@ from grib_fixtures import load_grib_data  # noqa: E402
         (-5, ["u", 400]),
     ],
 )
-def test_grib_single_index(fl_type, index, expected_meta):
+def test_legacy_grib_single_index(fl_type, index, expected_meta):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
     # f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     r = f[index]
-    assert r.get(["shortName", "level"]) == expected_meta
+    assert r.metadata(["shortName", "level"]) == expected_meta
     v = r.values
     assert v.shape == (84,)
     # eps = 0.001
@@ -48,7 +48,7 @@ def test_grib_single_index(fl_type, index, expected_meta):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_single_index_bad(fl_type):
+def test_legacy_grib_single_index_bad(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
     with pytest.raises(IndexError):
         f[27]
@@ -66,16 +66,16 @@ def test_grib_single_index_bad(fl_type):
         (slice(14, None), [["v", 400], ["t", 300], ["u", 300], ["v", 300]]),
     ],
 )
-def test_grib_slice_single_file(fl_type, indexes, expected_meta):
+def test_legacy_grib_slice_single_file(fl_type, indexes, expected_meta):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
     r = f[indexes]
     assert len(r) == 4
-    assert r.get(["shortName", "level"]) == expected_meta
+    assert r.metadata(["shortName", "level"]) == expected_meta
     v = r.values
     assert v.shape == (4, 84)
     # check the original fieldlist
     assert len(f) == 18
-    assert f.get("shortName") == ["t", "u", "v"] * 6
+    assert f.metadata("shortName") == ["t", "u", "v"] * 6
 
 
 @pytest.mark.parametrize(
@@ -87,19 +87,19 @@ def test_grib_slice_single_file(fl_type, indexes, expected_meta):
         (slice(3, 6), [["z", 500], ["t", 850], ["z", 850]]),
     ],
 )
-def test_grib_slice_multi_file(indexes, expected_meta):
+def test_legacy_grib_slice_multi_file(indexes, expected_meta):
     f = from_source(
         "file",
         [earthkit_examples_file("test.grib"), earthkit_examples_file("test4.grib")],
     )
     r = f[indexes]
     assert len(r) == 3
-    assert r.get(["shortName", "level"]) == expected_meta
+    assert r.metadata(["shortName", "level"]) == expected_meta
     # v = r.values
     # assert v.shape == (3, 84)
     # check the original fieldlist
     assert len(f) == 6
-    assert f.get("shortName") == ["2t", "msl", "t", "z", "t", "z"]
+    assert f.metadata("shortName") == ["2t", "msl", "t", "z", "t", "z"]
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -111,16 +111,16 @@ def test_grib_slice_multi_file(indexes, expected_meta):
         ((1, 16, 5, 9), (1, 3)),
     ],
 )
-def test_grib_array_indexing(fl_type, indexes1, indexes2):
+def test_legacy_grib_array_indexing(fl_type, indexes1, indexes2):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     r = f[indexes1]
     assert len(r) == 4
-    assert r.get("shortName") == ["u", "u", "v", "t"]
+    assert r.metadata("shortName") == ["u", "u", "v", "t"]
 
     r1 = r[indexes2]
     assert len(r1) == 2
-    assert r1.get("shortName") == ["u", "t"]
+    assert r1.metadata("shortName") == ["u", "t"]
 
 
 @pytest.mark.skip(reason="Index range checking disabled")
@@ -133,66 +133,66 @@ def test_grib_array_indexing(fl_type, indexes1, indexes2):
         ((1, 16, 5, 9), (1, 3)),
     ],
 )
-def test_grib_array_indexing_bad(fl_type, indexes):
+def test_legacy_grib_array_indexing_bad(fl_type, indexes):
     f = load_grib_data("tuv_pl.grib", fl_type)
     with pytest.raises(IndexError):
         f[indexes]
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_fieldlist_iterator(fl_type):
+def test_legacy_grib_fieldlist_iterator(fl_type):
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
-    sn = g.get("shortName")
+    sn = g.metadata("shortName")
     assert len(sn) == 18
-    iter_sn = [f.get("shortName") for f in g]
+    iter_sn = [f.metadata("shortName") for f in g]
     assert iter_sn == sn
     # repeated iteration
-    iter_sn = [f.get("shortName") for f in g]
+    iter_sn = [f.metadata("shortName") for f in g]
     assert iter_sn == sn
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_fieldlist_iterator_with_zip(fl_type):
+def test_legacy_grib_fieldlist_iterator_with_zip(fl_type):
     # test something different to the iterator - does not try to
     # 'go off the edge' of the fieldlist, because the length is determined by
     # the list of levels
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
-    ref_levs = g.get("level")
+    ref_levs = g.metadata("level")
     assert len(ref_levs) == 18
     levs1 = []
     levs2 = []
-    for k, f in zip(g.get("level"), g):
+    for k, f in zip(g.metadata("level"), g):
         levs1.append(k)
-        levs2.append(f.get("level"))
+        levs2.append(f.metadata("level"))
     assert levs1 == ref_levs
     assert levs2 == ref_levs
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_fieldlist_iterator_with_zip_multiple(fl_type):
+def test_legacy_grib_fieldlist_iterator_with_zip_multiple(fl_type):
     # same as test_fieldlist_iterator_with_zip() but multiple times
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
-    ref_levs = g.get("level")
+    ref_levs = g.metadata("level")
     assert len(ref_levs) == 18
     for i in range(2):
         levs1 = []
         levs2 = []
-        for k, f in zip(g.get("level"), g):
+        for k, f in zip(g.metadata("level"), g):
             levs1.append(k)
-            levs2.append(f.get("level"))
+            levs2.append(f.metadata("level"))
         assert levs1 == ref_levs, i
         assert levs2 == ref_levs, i
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_fieldlist_reverse_iterator(fl_type):
+def test_legacy_grib_fieldlist_reverse_iterator(fl_type):
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
-    sn = g.get("shortName")
+    sn = g.metadata("shortName")
     sn_reversed = list(reversed(sn))
     assert sn_reversed[0] == "v"
     assert sn_reversed[17] == "t"
     gr = reversed(g)
-    iter_sn = [f.get("shortName") for f in gr]
+    iter_sn = [f.metadata("shortName") for f in gr]
     assert len(iter_sn) == len(sn_reversed)
     assert iter_sn == sn_reversed
     assert iter_sn == ["v", "u", "t"] * 6

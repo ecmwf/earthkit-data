@@ -52,3 +52,36 @@ def metadata_argument(*args, namespace=None, astype=None):
         namespace = []
 
     return (key, namespace, astype, key_arg_type)
+
+
+def metadata_argument_new(*args, astype=None):
+    """Helps parsing the input arguments for the metadata methods"""
+    key = []
+    key_arg_type = None
+    if len(args) == 1 and isinstance(args[0], str):
+        key_arg_type = str
+    elif len(args) >= 1:
+        key_arg_type = tuple
+        for k in args:
+            if isinstance(k, list):
+                key_arg_type = list
+
+    for k in args:
+        if isinstance(k, str):
+            key.append(k)
+        elif isinstance(k, (list, tuple)):
+            key.extend(k)
+        else:
+            raise ValueError(f"metadata: invalid key argument={k}")
+
+    if key:
+        if isinstance(astype, (list, tuple)):
+            if len(astype) != len(key):
+                if len(astype) == 1:
+                    astype = [astype[0]] * len(key)
+                else:
+                    raise ValueError("metadata: astype must have the same number of items as key")
+        elif astype is not None:
+            astype = [astype] * len(key)
+
+    return (key, astype, key_arg_type)

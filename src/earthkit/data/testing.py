@@ -201,6 +201,7 @@ def load_nc_or_xr_source(path, mode):
 
 # Array backends
 ARRAY_BACKENDS = get_array_backend(["numpy", "torch", "cupy", "jax"], raise_on_missing=False)
+NUMPY_BACKEND = get_array_backend("numpy")
 
 
 def make_tgz(target_dir, target_name, paths):
@@ -257,7 +258,8 @@ def check_array(
 
         array_backend = get_backend(v)
 
-    v = array_backend.to_numpy(v)
+    if array_backend is not NUMPY_BACKEND:
+        v = array_backend.to_numpy(v)
 
     import numpy as np
 

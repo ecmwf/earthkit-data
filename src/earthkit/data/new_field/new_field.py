@@ -8,9 +8,12 @@
 #
 
 from collections import defaultdict
+from functools import cache
 
 from earthkit.data.core import Base
 from earthkit.data.new_field.data import ArrayData
+from earthkit.data.utils.metadata.args import metadata_argument
+from earthkit.data.utils.metadata.args import metadata_argument_new
 
 GRIB = "grib"
 
@@ -31,7 +34,7 @@ class FieldKeys:
         self.PARTS = {
             "data": data.KEYS,
             "time": time.KEYS,
-            "parameter": parameter.KEYS,
+            "parameter": parameter.KEYS + tuple(list(parameter.ALIASES.keys())),
             "geography": geography.KEYS,
             "vertical": vertical.KEYS,
         }
@@ -52,6 +55,7 @@ class FieldKeys:
         r"""Check if the key is in the FieldKeys."""
         return key in self.KEYS
 
+    @cache
     def get(self, key):
         if key in self.KEYS:
             if key in self.SINGLE_KEYS:
@@ -124,7 +128,15 @@ class Field(Base):
     """
 
     def __init__(
-        self, data=None, time=None, parameter=None, geography=None, vertical=None, labels=None, **kwargs
+        self,
+        data=None,
+        time=None,
+        parameter=None,
+        geography=None,
+        vertical=None,
+        labels=None,
+        raw=None,
+        **kwargs,
     ):
         self.data = data
         self.time = time
@@ -132,6 +144,7 @@ class Field(Base):
         self.geography = geography
         self.vertical = vertical
         self.labels = labels
+        self.raw = raw
         self._kwargs = kwargs
 
     @classmethod
@@ -176,6 +189,7 @@ class Field(Base):
         from earthkit.data.new_field.grib.grib import GribGeography
         from earthkit.data.new_field.grib.grib import GribLabels
         from earthkit.data.new_field.grib.grib import GribParameter
+        from earthkit.data.new_field.grib.grib import GribRawLabels
         from earthkit.data.new_field.grib.grib import GribVertical
         from earthkit.data.new_field.grib.time import GribTime
 
@@ -184,7 +198,8 @@ class Field(Base):
         time = GribTime(handle)
         geography = GribGeography(handle)
         vertical = GribVertical(handle)
-        labels = GribLabels(handle)
+        labels = GribLabels()
+        raw = GribRawLabels(handle)
 
         LS_KEYS = [
             "centre",
@@ -206,6 +221,7 @@ class Field(Base):
             geography=geography,
             vertical=vertical,
             labels=labels,
+            raw=raw,
             ls_keys=LS_KEYS,
             **kwargs,
         )
@@ -323,6 +339,339 @@ class Field(Base):
 
     #     return Field.from_field(self, data=NumpyData(array))
 
+    def get_single(self, key, default=None, *, astype=None, raise_on_missing=False):
+        r"""Return the value for ``key``.
+
+        Parameters
+        ----------
+        key: str
+            Key
+        default: value
+            Specify the default value for ``key``. Returned when ``key``
+            is not found or its value is a missing value and raise_on_missing is ``False``.
+        astype: type as str, int or float
+            Return/access type for ``key``. When it is supported ``astype`` is passed to the
+            underlying accessor as an option. Otherwise the value is
+            cast to ``astype`` after it is taken from the accessor.
+        raise_on_missing: bool
+            When it is True raises an exception if ``key`` is not found or
+            it has a missing value.
+
+        Returns
+        -------
+        value
+            Returns the ``key`` value. Returns ``default`` if ``key`` is not found
+            or it has a missing value and ``raise_on_missing`` is False.
+
+        Raises
+        ------
+        KeyError
+            If ``raise_on_missing`` is True and ``key`` is not found or it has
+            a missing value.
+
+        """
+        print(f"Field.get({key}, default={default}, astype={astype}, raise_on_missing={raise_on_missing})")
+
+        def _cast(v):
+            if callable(astype):
+                try:
+                    return astype(v)
+                except Exception:
+                    return None
+            return v
+
+        # first try the parts, bar the labels/raw
+        v = None
+        part, name = FIELD_KEYS.get(key)
+        if part:
+            v = getattr(getattr(self, part), name)
+            return _cast(v)
+        # try the labels
+        elif self.labels and key in self.labels:
+            v = self.labels[key]
+            return _cast(v)
+        # try the raw accessor
+        elif self.raw:
+            return self.raw.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        elif raise_on_missing:
+            raise KeyError(f"Key {key} not found in field")
+
+        return default
+
+    def _get_fast_list(self, keys, default=None, astype=None, raise_on_missing=False, output=None):
+        assert isinstance(keys, list)
+
+        if astype is None:
+            r = [
+                self.get_single(
+                    k,
+                    default=default,
+                    raise_on_missing=raise_on_missing,
+                )
+                for k in keys
+            ]
+        else:
+            assert isinstance(astype, (list, tuple))
+            r = [
+                self.get_single(
+                    k,
+                    default=default,
+                    astype=kt,
+                    raise_on_missing=raise_on_missing,
+                )
+                for k, kt in zip(keys, astype)
+            ]
+
+        if output is str:
+            return r[0]
+        elif output is tuple:
+            return tuple(r)
+        else:
+            return r
+
+    def _get_fast_dict(self, keys, default=None, astype=None, raise_on_missing=False):
+        assert isinstance(keys, list)
+        r = {}
+        if astype is None:
+            r = {
+                k: self.get_single(
+                    k,
+                    default=default,
+                    astype=astype,
+                    raise_on_missing=raise_on_missing,
+                )
+                for k in keys
+            }
+        else:
+            r = {
+                k: self.get_single(
+                    k,
+                    default=default,
+                    astype=kt,
+                    raise_on_missing=raise_on_missing,
+                )
+                for k, kt in zip(keys, astype)
+            }
+
+        return r
+
+    def get(self, *keys, default=None, astype=None, raise_on_missing=False):
+        r"""Return the values for the specified keys.
+
+        Parameters
+        ----------
+        keys: str, list or tuple
+            Keys to get the values for.
+        default: value
+            Default value to return when a key is not found or it has a missing value.
+        raise_on_missing: bool
+            When it is True raises an exception if a key is not found or it has a missing value.
+
+        Returns
+        -------
+        dict
+            A dictionary with keys and their values.
+
+        """
+        if not keys:
+            raise ValueError("At least one key must be specified.")
+
+        keys, astype, key_arg_type = metadata_argument_new(*keys, astype=astype)
+        assert isinstance(keys, list)
+        return self._get_fast_list(
+            keys,
+            output=key_arg_type,
+            default=default,
+            astype=astype,
+            raise_on_missing=raise_on_missing,
+        )
+
+    def get_as_dict(
+        self,
+        *keys,
+        default=None,
+        astype=None,
+        raise_on_missing=False,
+    ):
+        if not keys:
+            raise ValueError("At least one key must be specified.")
+
+        keys, astype, _ = metadata_argument_new(*keys, astype=astype)
+        assert isinstance(keys, list)
+
+        return self._get_fast_dict(
+            keys,
+            default=default,
+            astype=astype,
+            raise_on_missing=raise_on_missing,
+        )
+
+    def metadata(self, *keys, astype=None, remapping=None, patches=None, **kwargs):
+        r"""Return metadata values from the field.
+
+        When called without any arguments returns a :obj:`Metadata` object.
+
+        Parameters
+        ----------
+        *keys: tuple
+            Positional arguments specifying metadata keys. Can be empty, in this case all
+            the keys from the specified ``namespace`` will
+            be used. (See examples below).
+        astype: type name, :obj:`list` or :obj:`tuple`
+            Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
+            Otherwise, must have same the number of elements as ``keys``. Only used when
+            ``keys`` is not empty.
+        remapping: dict, optional
+            Creates new metadata keys from existing ones that we can refer to in ``*args`` and
+            ``**kwargs``. E.g. to define a new
+            key "param_level" as the concatenated value of the "param" and "level" keys use::
+
+                remapping={"param_level": "{param}{level}"}
+        **kwargs: dict, optional
+            Other keyword arguments:
+
+            * namespace: :obj:`str`, :obj:`list`, :obj:`tuple`, :obj:`None` or :obj:`all`
+                The namespace to choose the ``keys`` from. When ``keys`` is empty and ``namespace`` is
+                :obj:`all` all the available namespaces will be used. When ``keys`` is non empty
+                ``namespace`` cannot specify multiple values and it cannot be :obj:`all`. When
+                ``namespace`` is None or empty str all the available keys will be used
+                (without a namespace qualifier).
+
+            * default: value, optional
+                Specifies the same default value for all the ``keys`` specified. When ``default`` is
+                **not present** and a key is not found or its value is a missing value
+                :obj:`metadata` will raise KeyError.
+
+        Returns
+        -------
+        single value, :obj:`list`, :obj:`tuple`, :obj:`dict` or :obj:`Metadata`
+            - when called without any arguments returns a :obj:`Metadata` object
+            - when ``keys`` is not empty:
+                - returns single value when ``keys`` is a str
+                - otherwise returns the same type as that of ``keys`` (:obj:`list` or :obj:`tuple`)
+            - when ``keys`` is empty:
+                - when ``namespace`` is None or an empty str returns a :obj:`dict` with all
+                  the available keys and values
+                - when ``namespace`` is :obj:`str` returns a :obj:`dict` with the keys and values
+                  in that namespace
+                - otherwise returns a :obj:`dict` with one item per namespace (dict of dict)
+
+        Raises
+        ------
+        KeyError
+            If no ``default`` is set and a key is not found in the message or it has a missing value.
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+
+        Calling without arguments:
+
+        >>> r = ds[0].metadata()
+        >>> r
+        <earthkit.data.readers.grib.metadata.GribMetadata object at 0x164ace170>
+        >>> r["name"]
+        '2 metre temperature'
+
+        Getting keys with their native type:
+
+        >>> ds[0].metadata("param")
+        '2t'
+        >>> ds[0].metadata("param", "units")
+        ('2t', 'K')
+        >>> ds[0].metadata(("param", "units"))
+        ('2t', 'K')
+        >>> ds[0].metadata(["param", "units"])
+        ['2t', 'K']
+        >>> ds[0].metadata(["param"])
+        ['2t']
+        >>> ds[0].metadata("badkey")
+        KeyError: 'badkey'
+        >>> ds[0].metadata("badkey", default=None)
+        <BLANKLINE>
+
+        Prescribing key types:
+
+        >>> ds[0].metadata("centre", astype=int)
+        98
+        >>> ds[0].metadata(["paramId", "centre"], astype=int)
+        [167, 98]
+        >>> ds[0].metadata(["centre", "centre"], astype=[int, str])
+        [98, 'ecmf']
+
+        Using namespaces:
+
+        >>> ds[0].metadata(namespace="parameter")
+        {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature', 'shortName': '2t'}
+        >>> ds[0].metadata(namespace=["parameter", "vertical"])
+        {'parameter': {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature',
+         'shortName': '2t'},
+         'vertical': {'typeOfLevel': 'surface', 'level': 0}}
+        >>> r = ds[0].metadata(namespace=all)
+        >>> r.keys()
+        dict_keys(['default', 'ls', 'geography', 'mars', 'parameter', 'statistics', 'time', 'vertical'])
+        >>> r = ds[0].metadata(namespace=None)
+        >>> len(r)
+        186
+        >>> r["name"]
+        '2 metre temperature'
+        """
+
+        if remapping is not None or patches is not None:
+            from earthkit.data.core.order import build_remapping
+
+            remapping = build_remapping(remapping, patches)
+            return remapping(self.metadata)(*keys, astype=astype, **kwargs)
+
+        # when called without arguments returns the metadata object
+        if len(keys) == 0 and astype is None and not kwargs:
+            raise NotImplementedError("Field.metadata() without arguments is not implemented. ")
+            # return self._metadata
+
+        namespace = kwargs.pop("namespace", None)
+        key, namespace, astype, key_arg_type = metadata_argument(*keys, namespace=namespace, astype=astype)
+
+        assert isinstance(key, list)
+        assert isinstance(namespace, (list, tuple))
+
+        if key:
+            assert isinstance(astype, (list, tuple))
+            if namespace and namespace[0] != "default":
+                key = [namespace[0] + "." + k for k in key]
+
+            raise_on_missing = "default" not in kwargs
+            default = kwargs.pop("default", None)
+
+            r = [
+                self.get(
+                    k,
+                    default=default,
+                    astype=kt,
+                    raise_on_missing=raise_on_missing,
+                    **kwargs,
+                )
+                for k, kt in zip(key, astype)
+            ]
+
+            if key_arg_type is str:
+                return r[0]
+            elif key_arg_type is tuple:
+                return tuple(r)
+            else:
+                return r
+        elif namespace:
+            if all in namespace:
+                namespace = self._metadata.namespaces()
+
+            r = {ns: self._metadata.as_namespace(ns) for ns in namespace}
+            if len(r) == 1:
+                return r[namespace[0]]
+            else:
+                return r
+        else:
+            return self._metadata.as_namespace(None)
+
     def set(self, **kwargs):
         _kwargs = defaultdict(dict)
         for k, v in kwargs.items():
@@ -332,14 +681,21 @@ class Field(Base):
                 part_name, _ = FIELD_KEYS.get(k)
                 if part_name:
                     _kwargs[part_name][k] = v
+                else:
+                    _kwargs["labels"][k] = v
 
         print("_set kwargs:", _kwargs)
 
         if _kwargs:
             r = {}
             for part_name, v in _kwargs.items():
-                part = getattr(self, part_name)
-                s = part.set(**v)
+                part = getattr(self, part_name, None)
+                if part is None and part_name == "labels":
+                    from earthkit.data.new_field.labels import RawLabels
+
+                    s = RawLabels(**v)
+                else:
+                    s = part.set(**v)
                 r[part_name] = s
             if r:
                 return Field.from_field(self, **r)
@@ -351,7 +707,7 @@ class Field(Base):
     #     return Field.from_field(self, time=self.time.set_step(step))
 
     def set_labels(self, *args, **kwargs):
-        r"""Set a label for the field.
+        r"""Set labels for the field.
 
         Parameters
         ----------
@@ -398,31 +754,6 @@ class Field(Base):
 
         r.update(kwargs)
         return encoder._encode_field(self, **r)
-
-    def metadata(self, key, default=None):
-        try:
-            return self._get(key)
-        except KeyError:
-            return default
-
-    def _attributes(self, keys, default=None):
-        result = {}
-        for name in keys:
-            result[name] = self.metadata(name, default=default)
-        return result
-
-    def _get(self, key):
-        if self.labels and key in self.labels:
-            return self.labels[key]
-        part, name = FIELD_KEYS.get(key)
-        if part:
-            part = getattr(self, part)
-            if key in part.KEYS:
-                return getattr(part, key)
-        elif name:
-            return getattr(self, name)
-        else:
-            raise KeyError(f"Key {key} not found in field")
 
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
@@ -479,8 +810,8 @@ class Field(Base):
         """Return the field itself."""
         return self
 
-    def to_array_based(self):
-        return deflate(self)
+    def to_array_based(self, **kwargs):
+        return deflate(self, **kwargs)
 
     def load(self):
         """Load the field data."""
@@ -575,9 +906,14 @@ def grib_handle(field):
     return None
 
 
-def deflate(field):
+def deflate(field, flatten=False, dtype=None, array_backend=None):
     if hasattr(field.data, "handle"):
-        values = field.data.get_values()
+        values = field.data.to_array(
+            field.shape,  # type: ignore
+            flatten=flatten,
+            dtype=dtype,
+            array_backend=array_backend,
+        )
         data = ArrayData(values)
     else:
         data = field.data
@@ -587,7 +923,7 @@ def deflate(field):
     parts_with_handle = {}
     parts_other = {}
     handles = set()
-    for part in ["time", "parameter", "geography", "vertical", "labels"]:
+    for part in ["time", "parameter", "geography", "vertical", "labels", "raw"]:
         part_obj = getattr(field, part)
         if hasattr(part_obj, "handle"):
             handle = getattr(part_obj, "handle", None)

@@ -7,12 +7,61 @@
 # nor does it submit to any jurisdiction.
 #
 
+from functools import cached_property
+
+from earthkit.utils.array import array_namespace
 
 from earthkit.data.core.index import Index
 from earthkit.data.sources import Source
 
 
 class FieldList(Index):
+    @property
+    def values(self):
+        r"""array-like: Get all the fields' values as a 2D array. It is formed as the array of
+        :obj:`GribField.values <data.readers.grib.codes.GribField.values>` per field.
+
+        See Also
+        --------
+        to_array
+
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> for f in ds:
+        ...     print(f.values.shape)
+        ...
+        (209,)
+        (209,)
+        >>> v = ds.values
+        >>> v.shape
+        (2, 209)
+        >>> v[0][:3]
+        array([262.78027344, 267.44726562, 268.61230469])
+
+        """
+        return self._as_array("values")
+
+    def _as_array(self, accessor, **kwargs):
+        """Use pre-allocated target array to store the field values."""
+
+        def _vals(f):
+            return getattr(f, accessor)(**kwargs) if not is_property else getattr(f, accessor)
+
+        n = len(self)
+        if n > 0:
+            it = iter(self)
+            first = next(it)
+            is_property = not callable(getattr(first, accessor, None))
+            vals = _vals(first)
+            first = None
+            ns = array_namespace(vals)
+            shape = (n, *vals.shape)
+            r = ns.empty(shape, dtype=vals.dtype)
+            r[0] = vals
+            for i, f in enumerate(it, start=1):
+                r[i] = _vals(f)
+            return r
+
     @staticmethod
     def from_fields(fields):
         r"""Create a :class:`SimpleFieldList`.
@@ -88,6 +137,159 @@ class FieldList(Index):
         if len(self) > 0:
             return self[0]._kwargs.get("ls_keys", None)
         return []
+
+    def get(self, *keys, **kwargs):
+        r"""Return the metadata values for each field.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments defining the metadata keys. Passed to
+            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+        **kwargs: dict, optional
+            Keyword arguments passed to
+            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+
+        Returns
+        -------
+        list
+            List with one item per :obj:`GribField <data.readers.grib.codes.GribField>`
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds.metadata("param")
+        ['2t', 'msl']
+        >>> ds.metadata("param", "units")
+        [('2t', 'K'), ('msl', 'Pa')]
+        >>> ds.metadata(["param", "units"])
+        [['2t', 'K'], ['msl', 'Pa']]
+
+        """
+        from earthkit.data.utils.metadata.args import metadata_argument_new
+
+        _kwargs = kwargs.copy()
+        astype = _kwargs.pop("astype", None)
+        keys, astype, key_arg_type = metadata_argument_new(*keys, astype=astype)
+
+        result = []
+        for f in self:
+            result.append(f._get_fast_list(keys, output=key_arg_type, astype=astype, **_kwargs))
+        return result
+
+    def get_as_dict(self, *args, group=False, **kwargs):
+        r"""Return the metadata values for each field.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments defining the metadata keys. Passed to
+            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+        **kwargs: dict, optional
+            Keyword arguments passed to
+            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+
+        Returns
+        -------
+        list
+            List with one item per :obj:`GribField <data.readers.grib.codes.GribField>`
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> ds.metadata("param")
+        ['2t', 'msl']
+        >>> ds.metadata("param", "units")
+        [('2t', 'K'), ('msl', 'Pa')]
+        >>> ds.metadata(["param", "units"])
+        [['2t', 'K'], ['msl', 'Pa']]
+
+        """
+        from earthkit.data.utils.metadata.args import metadata_argument_new
+
+        _kwargs = kwargs.copy()
+        astype = _kwargs.pop("astype", None)
+        keys, astype, _ = metadata_argument_new(*args, astype=astype)
+
+        if group:
+            result = {k: [] for k in keys}
+            vals = []
+            for f in self:
+                vals.append(f._get_fast_list(keys[0], **_kwargs))
+
+            for i, k in enumerate(keys):
+                result[k] = vals[:][i]
+
+            return result
+        else:
+            result = []
+            for f in self:
+                result.append(f._get_fast_dict(keys, astype=astype, **_kwargs))
+            return result
+
+    @property
+    def geography(self):
+        if self._has_shared_geography:
+            return self[0].geography
+        elif len(self) == 0:
+            return None
+        else:
+            raise ValueError("Fields do not have the same grid geometry")
+
+    @property
+    def bounding_box(self):
+        r"""List of :obj:`BoundingBox <data.utils.bbox.BoundingBox>`: Return the bounding box for each field."""
+        return [f.geography.bounding_box for f in self]
+
+    @cached_property
+    def _has_shared_geography(self):
+        if len(self) > 0:
+            grid = self[0].geography.unique_grid_id
+            if grid is not None:
+                return all(f.geography.unique_grid_id == grid for f in self)
+        return False
+
+    def to_fieldlist(self, array_backend=None, **kwargs):
+        r"""Convert to a new :class:`FieldList`.
+
+        Parameters
+        ----------
+        array_backend: str, module, :obj:`ArrayBackend`
+            Specifies the array backend for the generated :class:`FieldList`. The array
+            type must be supported by :class:`ArrayBackend`.
+
+        **kwargs: dict, optional
+            ``kwargs`` are passed to :obj:`to_array` to
+            extract the field values the resulting object will store.
+
+        Returns
+        -------
+        :class:`SimpleFieldList`
+            - a new fieldlist containing :class`ArrayField` fields
+
+        Examples
+        --------
+        The following example will convert a fieldlist read from a file into a
+        :class:`SimpleFieldList` storing single precision field values.
+
+        >>> import numpy as np
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+        >>> ds.path
+        'docs/examples/tuv_pl.grib'
+        >>> r = ds.to_fieldlist(array_backend="numpy", dtype=np.float32)
+        >>> r
+        SimpleFieldList(fields=18)
+        >>> hasattr(r, "path")
+        False
+        >>> r.to_numpy().dtype
+        dtype('float32')
+
+        """
+        # return self.from_fields([f.copy(array_backend=array_backend, **kwargs) for f in self])
+        return self.from_fields([f.to_array_based(array_backend=array_backend, **kwargs) for f in self])
 
 
 class SimpleFieldList(FieldList):

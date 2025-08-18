@@ -1,9 +1,9 @@
 import pytest
 
 SKIP = {
-    "short": ["download", "ftp", "long_test", "ecfs"],
-    "long": ["ftp", "ecfs"],
-    "release": [],
+    "short": ["download", "ftp", "long_test", "ecfs", "migrate"],
+    "long": ["ftp", "ecfs", "migrate"],
+    "release": ["migrate"],
     "documentation": None,
 }
 
