@@ -18,6 +18,7 @@ from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
 from .attrs import AttrList
+from .dim import LevelPerTypeDim
 from .profile import Profile
 
 LOG = logging.getLogger(__name__)
@@ -250,6 +251,13 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         self.flatten_values = profile.flatten_values
 
+        if self.profile.allow_holes:
+            self.raw_global_tensor_coords = {}
+            self.global_tensor_coords_component = {}
+        else:
+            self.raw_global_tensor_coords = None
+            self.global_tensor_coords_component = None
+
         # Array backend/namespace
         array_backend = profile.array_backend
         if array_backend is None:
@@ -311,6 +319,30 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 self.tensor_coords["valid_time"] = Coord.make("valid_time", _vals, dims=_dims)
 
     def build(self):
+        if self.profile.allow_holes:
+            if self.profile.add_valid_time_coord:
+                raise NotImplementedError("add_valid_time_coord=True not yet supported when allow_holes=True")
+
+            global_tensor_dims, self.raw_global_tensor_coords, self.global_tensor_coords_component, _ = (
+                self.prepare_tensor(self.ds, self.dims, "<ALL VARIABLES>")
+            )
+
+            for d in global_tensor_dims:
+                if isinstance(d, LevelPerTypeDim):
+                    raise NotImplementedError(
+                        "level_dim_mode='level_per_type' not yet supported when allow_holes=True"
+                    )
+                # Create coord for each dimension
+                # TODO: This does not work yet: Dimensions like "level_per_type" are templates and will be
+                #  added as multiple concrete dimensions to the dataset
+                k, c = d.as_coord(
+                    d.key,
+                    self.raw_global_tensor_coords[d.key],
+                    self.global_tensor_coords_component.get(d.key, None),
+                    self.ds,
+                )
+                self.tensor_coords[k] = c
+
         # we assume each variable forms a full cube
         var_builders = self.pre_build_variables()
 
@@ -355,6 +387,10 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         tensor_dim_keys = [d.key for d in tensor_dims]
 
+        if self.profile.allow_holes:
+            tensor_coords = {k: v for k, v in self.raw_global_tensor_coords.items() if k in tensor_dim_keys}
+            tensor_coords_component = self.global_tensor_coords_component
+
         # LOG.debug(f"{tensor_dims=} {tensor_coords=} {tensor_coords_component=} {tensor_extra_attrs=}")
         # LOG.debug(f"{tensor_dim_keys=}")
 
@@ -365,6 +401,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             user_dims_and_coords=tensor_coords,
             field_dims_and_coords=(self.grid.dims, self.grid.coords),
             flatten_values=self.flatten_values,
+            allow_holes=self.profile.allow_holes,
         )
 
         var_dims = []
@@ -376,6 +413,10 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 d.key, tensor.user_coords[d.key], tensor_coords_component.get(d.key, None), tensor.source
             )
             if k not in self.tensor_coords:
+                assert not self.profile.allow_holes, (
+                    f"allow_holes=True: the dimension {k} not found among dimensions "
+                    f"of the global tensor: {list(self.tensor_coords)}"
+                )
                 self.tensor_coords[k] = c
             var_dims.append(k)
         var_dims.extend(tensor.field_dims)
@@ -432,9 +473,10 @@ class BackendDataBuilder(metaclass=ABCMeta):
                     if component_vals and d.key in component_vals:
                         tensor_coords_component[d.key] = component_vals[d.key]
 
-                    # check if the dims/coords are consistent with the tensors of
-                    # the previous variables
-                    self.check_tensor_coords(name, d.key, tensor_coords)
+                    if not self.profile.allow_holes:
+                        # check if the dims/coords are consistent with the tensors of
+                        # the previous variables
+                        self.check_tensor_coords(name, d.key, tensor_coords)
 
         # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinates
         return tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
@@ -582,7 +624,8 @@ class DatasetBuilder:
 
         # LOG.debug(f"{profile.sort_keys=}")
         # the data is only sorted once
-        ds_xr = ds_xr.order_by(profile.sort_keys)
+        if not self.profile.allow_holes:
+            ds_xr = ds_xr.order_by(profile.sort_keys)
 
         if not profile.lazy_load and profile.release_source:
             ds_xr.make_releasable()
