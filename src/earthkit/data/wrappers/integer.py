@@ -25,6 +25,10 @@ class IntWrapper(Wrapper):
     def to_datetime_list(self):
         return [self.to_datetime()]
 
+    @property
+    def values(self):
+        return self.data
+
 
 def wrapper(data, *args, fieldlist=False, **kwargs):
     if isinstance(data, int):
