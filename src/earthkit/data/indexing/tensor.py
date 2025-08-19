@@ -748,3 +748,12 @@ class FieldListSparseTensor(FieldListTensor):
         assert len(coords) == len(self._user_coords)
         ds = self.source[tuple(dataset_indexes)]
         return self.from_tensor(self, ds, coords, subset_user_coords_to_fl_idx)
+
+    def __getstate__(self):
+        r = super().__getstate__()
+        r["_user_coords_to_fl_idx"] = self._user_coords_to_fl_idx
+        return r
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self._user_coords_to_fl_idx = state["_user_coords_to_fl_idx"]
