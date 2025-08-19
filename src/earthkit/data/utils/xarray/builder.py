@@ -626,6 +626,11 @@ class DatasetBuilder:
         # the data is only sorted once
         if not self.profile.allow_holes:
             ds_xr = ds_xr.order_by(profile.sort_keys)
+        else:
+            # mimic the behaviour of XArrayInputFieldList.order_by without applying the actual sorting
+            while isinstance(ds_xr.ds, XArrayInputFieldList):
+                ds_xr = ds_xr.ds
+            ds_xr = XArrayInputFieldList(ds_xr.ds, db=ds_xr.db, remapping=remapping)
 
         if not profile.lazy_load and profile.release_source:
             ds_xr.make_releasable()
