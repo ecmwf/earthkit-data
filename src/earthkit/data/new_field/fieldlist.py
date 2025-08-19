@@ -15,6 +15,14 @@ from earthkit.data.core.index import Index
 from earthkit.data.sources import Source
 
 
+def build_remapping(remapping, patches):
+    if remapping is not None or patches is not None:
+        from earthkit.data.core.order import build_remapping
+
+        remapping = build_remapping(remapping, patches)
+    return None
+
+
 class FieldList(Index):
     @property
     def values(self):
@@ -138,7 +146,7 @@ class FieldList(Index):
             return self[0]._kwargs.get("ls_keys", None)
         return []
 
-    def get(self, *keys, **kwargs):
+    def get(self, *keys, remapping=None, patches=None, **kwargs):
         r"""Return the metadata values for each field.
 
         Parameters
@@ -173,12 +181,14 @@ class FieldList(Index):
         astype = _kwargs.pop("astype", None)
         keys, astype, key_arg_type = metadata_argument_new(*keys, astype=astype)
 
-        result = []
-        for f in self:
-            result.append(f._get_fast_list(keys, output=key_arg_type, astype=astype, **_kwargs))
-        return result
+        remapping = build_remapping(remapping, patches)
 
-    def get_as_dict(self, *args, group=False, **kwargs):
+        return [
+            f._get_fast(keys, output=key_arg_type, astype=astype, remapping=remapping, **_kwargs)
+            for f in self
+        ]
+
+    def get_as_dict(self, *args, group=False, remapping=None, patches=None, **kwargs):
         r"""Return the metadata values for each field.
 
         Parameters
@@ -213,11 +223,13 @@ class FieldList(Index):
         astype = _kwargs.pop("astype", None)
         keys, astype, _ = metadata_argument_new(*args, astype=astype)
 
+        remapping = build_remapping(remapping, patches)
+
         if group:
             result = {k: [] for k in keys}
             vals = []
             for f in self:
-                vals.append(f._get_fast_list(keys[0], **_kwargs))
+                vals.append(f._get_fast_list(keys[0], remapping=remapping, **_kwargs))
 
             for i, k in enumerate(keys):
                 result[k] = vals[:][i]
@@ -226,7 +238,7 @@ class FieldList(Index):
         else:
             result = []
             for f in self:
-                result.append(f._get_fast_dict(keys, astype=astype, **_kwargs))
+                result.append(f._get_fast_dict(keys, astype=astype, remapping=remapping, **_kwargs))
             return result
 
     @property
@@ -290,6 +302,11 @@ class FieldList(Index):
         """
         # return self.from_fields([f.copy(array_backend=array_backend, **kwargs) for f in self])
         return self.from_fields([f.to_array_based(array_backend=array_backend, **kwargs) for f in self])
+
+    def normalise_selection(self, **kwargs):
+        from .new_field import Field
+
+        return Field.normalise_selection(**kwargs)
 
 
 class SimpleFieldList(FieldList):

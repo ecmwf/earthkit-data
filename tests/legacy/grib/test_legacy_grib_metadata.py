@@ -55,7 +55,7 @@ def repeat_list_items(items, count):
         (("shortName", "level"), ("2t", 0)),
     ],
 )
-def test_compat_grib_metadata_grib(fl_type, key, expected_value):
+def test_legacy_grib_metadata_grib(fl_type, key, expected_value):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
     sn = f.metadata(key)
     assert sn == [expected_value]
@@ -77,7 +77,7 @@ def test_compat_grib_metadata_grib(fl_type, key, expected_value):
         ("level", int, 0),
     ],
 )
-def test_compat_grib_metadata_astype_1(fl_type, key, astype, expected_value):
+def test_legacy_grib_metadata_astype_1(fl_type, key, astype, expected_value):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
     sn = f.metadata(key, astype=astype)
     assert sn == [expected_value]
@@ -97,7 +97,7 @@ def test_compat_grib_metadata_astype_1(fl_type, key, astype, expected_value):
         ("level:int", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
     ],
 )
-def test_compat_grib_metadata_18(fs_type, key, expected_value):
+def test_legacy_grib_metadata_18(fs_type, key, expected_value):
     # f = load_grib_data("tuv_pl.grib", mode)
     ds, _ = load_grib_data("tuv_pl.grib", fs_type)
     sn = ds.metadata(key)
@@ -122,7 +122,7 @@ def test_compat_grib_metadata_18(fs_type, key, expected_value):
         ),
     ],
 )
-def test_compat_grib_metadata_astype_18(fl_type, key, astype, expected_value):
+def test_legacy_grib_metadata_astype_18(fl_type, key, astype, expected_value):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
     sn = f.metadata(key, astype=astype)
     assert sn == expected_value
@@ -137,7 +137,7 @@ def test_compat_grib_metadata_astype_18(fl_type, key, astype, expected_value):
         ("latitudeOfFirstGridPointInDegrees:float", 90.0),
     ],
 )
-def test_compat_grib_metadata_double_1(fl_type, key, expected_value):
+def test_legacy_grib_metadata_double_1(fl_type, key, expected_value):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
     r = f.metadata(key)
     assert len(r) == 1
@@ -153,7 +153,7 @@ def test_compat_grib_metadata_double_1(fl_type, key, expected_value):
         ("latitudeOfFirstGridPointInDegrees:float"),
     ],
 )
-def test_compat_grib_metadata_double_18(fl_type, key):
+def test_legacy_grib_metadata_double_18(fl_type, key):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     ref = [90.0] * 18
@@ -169,7 +169,7 @@ def test_compat_grib_metadata_double_18(fl_type, key):
         ("latitudeOfFirstGridPointInDegrees", float),
     ],
 )
-def test_compat_grib_metadata_double_astype_18(fl_type, key, astype):
+def test_legacy_grib_metadata_double_astype_18(fl_type, key, astype):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     ref = [90.0] * 18
@@ -179,7 +179,7 @@ def test_compat_grib_metadata_double_astype_18(fl_type, key, astype):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_compat_grib_get_long_array_1(fl_type):
+def test_legacy_grib_get_long_array_1(fl_type):
     f, _ = load_grib_data("rgg_small_subarea_cellarea_ref.grib", fl_type, folder="data")
 
     assert len(f) == 1
@@ -195,7 +195,7 @@ def test_compat_grib_get_long_array_1(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_compat_grib_get_double_array_values_1(fl_type):
+def test_legacy_grib_get_double_array_values_1(fl_type):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     v = f.metadata("values")
@@ -214,7 +214,7 @@ def test_compat_grib_get_double_array_values_1(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_compat_grib_get_double_array_values_18(fl_type):
+def test_legacy_grib_get_double_array_values_18(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
     v = f.metadata("values")
     assert isinstance(v, list)
@@ -244,7 +244,7 @@ def test_compat_grib_get_double_array_values_18(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_compat_grib_get_double_array_1(fl_type):
+def test_legacy_grib_get_double_array_1(fl_type):
     f_in, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
 
     f = f_in[0]
@@ -259,7 +259,7 @@ def test_compat_grib_get_double_array_1(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_compat_grib_get_double_array_18(fl_type):
+def test_legacy_grib_get_double_array_18(fl_type):
     f, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
     v = f.metadata("pv")
     assert isinstance(v, list)
@@ -276,7 +276,7 @@ def test_compat_grib_get_double_array_18(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_compat_grib_metadata_type_qualifier(fl_type):
+def test_legacy_grib_metadata_type_qualifier(fl_type):
     f_in, _ = load_grib_data("tuv_pl.grib", fl_type)
     f = f_in[0:4]
 
@@ -316,7 +316,7 @@ def test_compat_grib_metadata_type_qualifier(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_compat_grib_metadata_astype_core(fl_type):
+def test_legacy_grib_metadata_astype_core(fl_type):
     f_in, _ = load_grib_data("tuv_pl.grib", fl_type)
     f = f_in[0:4]
 
@@ -351,7 +351,7 @@ def test_compat_grib_metadata_astype_core(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_compat_grib_metadata_generic(fl_type):
+def test_legacy_grib_metadata_generic(fl_type):
     f_full, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     f = f_full[0:4]
@@ -380,7 +380,7 @@ def test_compat_grib_metadata_generic(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_compat_grib_metadata_missing_value(fl_type):
+def test_legacy_grib_metadata_missing_value(fl_type):
     f, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
 
     with pytest.raises(KeyError):
@@ -391,7 +391,7 @@ def test_compat_grib_metadata_missing_value(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_compat_grib_metadata_missing_key(fl_type):
+def test_legacy_grib_metadata_missing_key(fl_type):
     f, _ = load_grib_data("test.grib", fl_type)
 
     with pytest.raises(KeyError):
@@ -402,7 +402,7 @@ def test_compat_grib_metadata_missing_key(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_compat_grib_metadata_namespace(fl_type):
+def test_legacy_grib_metadata_namespace(fl_type):
     f, _ = load_grib_data("test6.grib", fl_type)
 
     r = f[0].metadata(namespace="vertical")
@@ -482,7 +482,7 @@ def test_compat_grib_metadata_namespace(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_compat_grib_datetime(fl_type):
+def test_legacy_grib_datetime(fl_type):
     s, _ = load_grib_data("test.grib", fl_type)
 
     ref = {
@@ -512,7 +512,7 @@ def test_compat_grib_datetime(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_compat_grib_valid_datetime(fl_type):
+def test_legacy_grib_valid_datetime(fl_type):
     ds, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
     f = ds[4]
 
@@ -520,7 +520,7 @@ def test_compat_grib_valid_datetime(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_compat_message(fl_type):
+def test_legacy_grib_message(fl_type):
     f, _ = load_grib_data("test.grib", fl_type)
     v = f[0].message()
     assert len(v) == 526
@@ -531,7 +531,7 @@ def test_compat_message(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_compat_grib_tilde_shortname(fl_type):
+def test_legacy_grib_tilde_shortname(fl_type):
     f, _ = load_grib_data("tilde_shortname.grib", fl_type, folder="data")
 
     assert f[0].metadata("shortName") == "106"

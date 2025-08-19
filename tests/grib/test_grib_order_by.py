@@ -24,20 +24,21 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_order_by_single_message(fl_type):
+@pytest.mark.parametrize("param_key", ["name", "shortName"])
+def test_grib_order_by_single_message(fl_type, param_key):
     s, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
-    r = s.order_by("shortName")
+    r = s.order_by(param_key)
     assert len(r) == 1
-    assert r[0].metadata("shortName") == "2t"
+    assert r[0].get(param_key) == "2t"
 
-    r = s.order_by(["shortName"])
+    r = s.order_by([param_key])
     assert len(r) == 1
-    assert r[0].metadata("shortName") == "2t"
+    assert r[0].get(param_key) == "2t"
 
-    r = s.order_by(["shortName", "level"])
+    r = s.order_by([param_key, "level"])
     assert len(r) == 1
-    assert r[0].metadata("shortName") == "2t"
+    assert r[0].get(param_key) == "2t"
 
 
 class _CustomOrder:
@@ -99,7 +100,7 @@ class _CustomOrder:
         ),
     ],
 )
-def test_grib_order_by_single_file_(
+def test_grib_order_by_single_file(
     fl_type,
     params,
     expected_meta,
@@ -110,7 +111,7 @@ def test_grib_order_by_single_file_(
     assert len(g) == len(f)
 
     for k, v in expected_meta.items():
-        assert g.metadata(k) == v
+        assert g.get(k) == v
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -151,7 +152,7 @@ def test_grib_order_by_multi_file(fl_type, params, expected_meta):
     assert len(g) == len(f)
 
     for k, v in expected_meta.items():
-        assert g.metadata(k) == v
+        assert g.get(k) == v
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -162,13 +163,13 @@ def test_grib_order_by_with_sel(fl_type):
     assert len(g) == 3
     r = g.order_by("shortName")
     assert len(r) == len(g)
-    assert r.metadata("shortName") == ["t", "u", "v"]
+    assert r.get("shortName") == ["t", "u", "v"]
 
     g = f.sel(level=500)
     assert len(g) == 3
     r = g.order_by({"shortName": "descending"})
     assert len(r) == len(g)
-    assert r.metadata("shortName") == ["v", "u", "t"]
+    assert r.get("shortName") == ["v", "u", "t"]
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -191,7 +192,7 @@ def test_grib_order_by_valid_datetime(fl_type):
         "2020-12-21T12:00:00",
     ]
 
-    assert g.metadata("valid_datetime") == ref
+    assert g.get("valid_datetime") == ref
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -203,4 +204,4 @@ def test_grib_order_by_remapping(fl_type):
 
     r = ds.order_by(param_level=ordering, remapping={"param_level": "{param}{levelist}"})
 
-    assert r.metadata("param", "level") == ref
+    assert r.get("param", "level") == ref

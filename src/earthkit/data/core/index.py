@@ -90,12 +90,15 @@ class Selection(OrderOrSelection):
             self.actions[k] = InList(v)
 
     def match_element(self, element):
-        metadata = self.remapping(element.metadata)
+
+        # metadata = self.remapping(element.metadata)
+        get = self.remapping(element.get)
         # print("MATCH", [(k, v(metadata(k, default=None)), element) for k, v in self.actions.items()])
         # print("Matching element", element)
         # for k, v in self.actions.items():
-        #     print("  -> ", k, v, metadata(k, default=None))
-        return all(v(metadata(k, default=None)) for k, v in self.actions.items())
+        #     print(f"  -> {k=} {v=}, {get(k, default=None)=}")
+        # return all(v(get(k, default=None)) for k, v in self.actions.items())
+        return all(v(get(k, default=None)) for k, v in self.actions.items())
 
 
 class OrderBase(OrderOrSelection):
@@ -297,6 +300,9 @@ class Index(Source):
         kwargs = normalize_selection(*args, **kwargs)
         if not kwargs:
             return self
+
+        if hasattr(self, "normalise_selection"):
+            kwargs = self.normalise_selection(**kwargs)
 
         selection = Selection(kwargs, remapping=remapping)
         if selection.is_empty:

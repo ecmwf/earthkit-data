@@ -11,6 +11,9 @@ from collections import defaultdict
 from functools import cache
 
 from earthkit.data.core import Base
+from earthkit.data.core.order import Remapping
+from earthkit.data.core.order import build_remapping
+from earthkit.data.decorators import normalize
 from earthkit.data.new_field.data import ArrayData
 from earthkit.data.utils.metadata.args import metadata_argument
 from earthkit.data.utils.metadata.args import metadata_argument_new
@@ -339,7 +342,9 @@ class Field(Base):
 
     #     return Field.from_field(self, data=NumpyData(array))
 
-    def get_single(self, key, default=None, *, astype=None, raise_on_missing=False):
+    def get_single(
+        self, key, default=None, *, astype=None, raise_on_missing=False, remapping=None, patches=None
+    ):
         r"""Return the value for ``key``.
 
         Parameters
@@ -370,7 +375,6 @@ class Field(Base):
             a missing value.
 
         """
-        print(f"Field.get({key}, default={default}, astype={astype}, raise_on_missing={raise_on_missing})")
 
         def _cast(v):
             if callable(astype):
@@ -380,8 +384,15 @@ class Field(Base):
                     return None
             return v
 
-        # first try the parts, bar the labels/raw
+        remapping = build_remapping(remapping, patches, forced_build=False)
+        if remapping:
+            return remapping(self.get_single)(
+                key, default=default, astype=astype, raise_on_missing=raise_on_missing
+            )
+
         v = None
+
+        # first try the parts, bar the labels/raw
         part, name = FIELD_KEYS.get(key)
         if part:
             v = getattr(getattr(self, part), name)
@@ -398,64 +409,45 @@ class Field(Base):
 
         return default
 
-    def _get_fast_list(self, keys, default=None, astype=None, raise_on_missing=False, output=None):
+    def _get_fast(
+        self,
+        keys,
+        default=None,
+        astype=None,
+        raise_on_missing=False,
+        output=None,
+        remapping=None,
+    ):
         assert isinstance(keys, list)
 
-        if astype is None:
-            r = [
-                self.get_single(
-                    k,
-                    default=default,
-                    raise_on_missing=raise_on_missing,
-                )
-                for k in keys
-            ]
+        meth = self.get_single
+        # Remapping must be an object if defined
+        if remapping is not None:
+            assert isinstance(remapping, Remapping)
+            meth = remapping(meth)
+
+        _kwargs = dict(default=default, raise_on_missing=raise_on_missing)
+
+        if output in (list, tuple):
+            if astype is None:
+                r = [meth(k, **_kwargs) for k in keys]
+            else:
+                assert isinstance(astype, (list, tuple))
+                r = [meth(k, astype=kt, **_kwargs) for k, kt in zip(keys, astype)]
+
+            if output is tuple:
+                return tuple(r)
+            else:
+                return r
+        elif output is dict:
+            if astype is None:
+                return {k: meth(k, astype=astype, **_kwargs) for k in keys}
+            else:
+                return {k: meth(k, astype=kt, **_kwargs) for k, kt in zip(keys, astype)}
         else:
-            assert isinstance(astype, (list, tuple))
-            r = [
-                self.get_single(
-                    k,
-                    default=default,
-                    astype=kt,
-                    raise_on_missing=raise_on_missing,
-                )
-                for k, kt in zip(keys, astype)
-            ]
+            return meth(keys[0], astype=astype, **_kwargs)
 
-        if output is str:
-            return r[0]
-        elif output is tuple:
-            return tuple(r)
-        else:
-            return r
-
-    def _get_fast_dict(self, keys, default=None, astype=None, raise_on_missing=False):
-        assert isinstance(keys, list)
-        r = {}
-        if astype is None:
-            r = {
-                k: self.get_single(
-                    k,
-                    default=default,
-                    astype=astype,
-                    raise_on_missing=raise_on_missing,
-                )
-                for k in keys
-            }
-        else:
-            r = {
-                k: self.get_single(
-                    k,
-                    default=default,
-                    astype=kt,
-                    raise_on_missing=raise_on_missing,
-                )
-                for k, kt in zip(keys, astype)
-            }
-
-        return r
-
-    def get(self, *keys, default=None, astype=None, raise_on_missing=False):
+    def get(self, *keys, default=None, astype=None, raise_on_missing=False, remapping=None, patches=None):
         r"""Return the values for the specified keys.
 
         Parameters
@@ -478,20 +470,22 @@ class Field(Base):
 
         keys, astype, key_arg_type = metadata_argument_new(*keys, astype=astype)
         assert isinstance(keys, list)
-        return self._get_fast_list(
+
+        remapping = build_remapping(remapping, patches, forced_build=False)
+
+        r = self._get_fast(
             keys,
-            output=key_arg_type,
             default=default,
             astype=astype,
             raise_on_missing=raise_on_missing,
+            remapping=remapping,
+            output=key_arg_type,
         )
 
+        return r
+
     def get_as_dict(
-        self,
-        *keys,
-        default=None,
-        astype=None,
-        raise_on_missing=False,
+        self, *keys, default=None, astype=None, raise_on_missing=False, remapping=None, patches=None
     ):
         if not keys:
             raise ValueError("At least one key must be specified.")
@@ -499,11 +493,15 @@ class Field(Base):
         keys, astype, _ = metadata_argument_new(*keys, astype=astype)
         assert isinstance(keys, list)
 
-        return self._get_fast_dict(
+        remapping = build_remapping(remapping, patches, forced_build=False)
+
+        return self._get_fast(
             keys,
             default=default,
             astype=astype,
             raise_on_missing=raise_on_missing,
+            remapping=remapping,
+            output=dict,
         )
 
     def metadata(self, *keys, astype=None, remapping=None, patches=None, **kwargs):
@@ -683,8 +681,6 @@ class Field(Base):
                     _kwargs[part_name][k] = v
                 else:
                     _kwargs["labels"][k] = v
-
-        print("_set kwargs:", _kwargs)
 
         if _kwargs:
             r = {}
@@ -894,6 +890,15 @@ class Field(Base):
             labels=self.labels,
         )
 
+    @normalize("valid_datetime", "date")
+    @normalize("base_datetime", "date")
+    @normalize("forecast_reference_time", "date")
+    @normalize("step", "timedelta")
+    @normalize("step_range", "timedelta")
+    @staticmethod
+    def normalise_selection(**kwargs):
+        return kwargs
+
 
 def grib_handle(field):
     for part in ["time", "parameter", "geography", "vertical", "labels"]:
@@ -918,7 +923,7 @@ def deflate(field, flatten=False, dtype=None, array_backend=None):
     else:
         data = field.data
 
-    print("data:", data)
+    # print("data:", data)
 
     parts_with_handle = {}
     parts_other = {}
@@ -932,9 +937,9 @@ def deflate(field, flatten=False, dtype=None, array_backend=None):
         else:
             parts_other[part] = part_obj
 
-    print("parts_with_handle:", parts_with_handle)
-    print("parts_other:", parts_other)
-    print("handles:", handles)
+    # print("parts_with_handle:", parts_with_handle)
+    # print("parts_other:", parts_other)
+    # print("handles:", handles)
 
     _kwargs = {}
     if len(handles) == 1:
@@ -946,7 +951,7 @@ def deflate(field, flatten=False, dtype=None, array_backend=None):
         if field.data is not data:
             _kwargs["data"] = data
 
-    print("_kwargs:", _kwargs)
+    # print("_kwargs:", _kwargs)
 
     if handles == 0:
         if field.data is not data:

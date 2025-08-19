@@ -24,7 +24,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_order_by_single_message(fl_type):
+def test_legacy_grib_order_by_single_message(fl_type):
     s, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     r = s.order_by("shortName")
@@ -99,7 +99,7 @@ class _CustomOrder:
         ),
     ],
 )
-def test_grib_order_by_single_file_(
+def test_legacy_grib_order_by_single_file_(
     fl_type,
     params,
     expected_meta,
@@ -142,7 +142,7 @@ def test_grib_order_by_single_file_(
         ),
     ],
 )
-def test_grib_order_by_multi_file(fl_type, params, expected_meta):
+def test_legacy_grib_order_by_multi_file(fl_type, params, expected_meta):
     f1, _ = load_grib_data("test4.grib", fl_type)
     f2, _ = load_grib_data("test6.grib", fl_type)
     f = from_source("multi", [f1, f2])
@@ -155,7 +155,7 @@ def test_grib_order_by_multi_file(fl_type, params, expected_meta):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_order_by_with_sel(fl_type):
+def test_legacy_grib_order_by_with_sel(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     g = f.sel(level=500)
@@ -172,7 +172,7 @@ def test_grib_order_by_with_sel(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_order_by_valid_datetime(fl_type):
+def test_legacy_grib_order_by_valid_datetime(fl_type):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
     g = f.order_by(valid_datetime="descending")
@@ -195,7 +195,7 @@ def test_grib_order_by_valid_datetime(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_order_by_remapping(fl_type):
+def test_legacy_grib_order_by_remapping(fl_type):
     ds, _ = load_grib_data("test6.grib", fl_type)
 
     ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]

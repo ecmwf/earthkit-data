@@ -172,6 +172,12 @@ def to_timedelta(td):
     raise ValueError(f"Failed to convert td={td} type={type(td)} to timedelta")
 
 
+def to_timedelta_list(td):
+    if not isinstance(td, (list, tuple)):
+        return to_timedelta_list([td])
+    return [to_timedelta(x) for x in td]
+
+
 def numpy_timedelta_to_timedelta(td):
     td = td.astype("timedelta64[s]").astype(int)
     return datetime.timedelta(seconds=int(td))

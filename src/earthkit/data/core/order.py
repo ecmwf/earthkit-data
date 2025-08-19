@@ -135,7 +135,10 @@ class Patch(dict):
         return self.proc.components(name)
 
 
-def build_remapping(mapping, patches=None):
+def build_remapping(mapping, patches=None, forced_build=False):
+    if not forced_build and mapping is None and patches is None:
+        return None
+
     result = _build_remapping(mapping)
     if patches:
         for k, v in patches.items():

@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import os
 import sys
 
@@ -144,7 +145,7 @@ def test_grib_sel_multi_file(fl_type):
     g = f.sel(shortName="t", level=61)
     print(f"{g=}")
     assert len(g) == 1
-    assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [["t", 61, "hybrid"]]
+    assert g.get(["shortName", "level:l", "typeOfLevel"]) == [["t", 61, "hybrid"]]
 
     g1 = f[34]
     d = g.to_numpy() - g1.to_numpy()
@@ -160,22 +161,69 @@ def test_grib_sel_slice_multi_file(fl_type):
 
     g = f.sel(shortName="t", level=slice(56, 62))
     assert len(g) == 2
-    assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [
+    assert g.get(["shortName", "level:l", "typeOfLevel"]) == [
         ["t", 57, "hybrid"],
         ["t", 61, "hybrid"],
     ]
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_sel_date(fl_type):
-    # date and time
+def test_grib_sel_date_time_step_1(fl_type):
+    f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
+
+    g = f.sel(date=20201221, time=1200, endStep=9)
+    assert len(g) == 2
+
+    ref_keys = ["shortName", "date", "time", "endStep"]
+    ref = [
+        ["t", 20201221, 1200, 9],
+        ["z", 20201221, 1200, 9],
+    ]
+
+    assert g.get(ref_keys) == ref
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+def test_grib_sel_date_time_step_2(fl_type):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
     g = f.sel(date=20201221, time=1200, step=9)
-    # g = f.sel(date="20201221", time="12", step="9")
     assert len(g) == 2
 
     ref_keys = ["shortName", "date", "time", "step"]
+    ref = [
+        ["t", 20201221, 1200, datetime.timedelta(hours=9)],
+        ["z", 20201221, 1200, datetime.timedelta(hours=9)],
+    ]
+
+    assert g.get(ref_keys) == ref
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+def test_grib_sel_date_time_step_3(fl_type):
+    f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
+
+    g = f.sel(date=20201221, time=1200, step=datetime.timedelta(hours=9))
+    assert len(g) == 2
+
+    ref_keys = ["shortName", "date", "time", "step"]
+    ref = [
+        ["t", 20201221, 1200, datetime.timedelta(hours=9)],
+        ["z", 20201221, 1200, datetime.timedelta(hours=9)],
+    ]
+
+    assert g.get(ref_keys) == ref
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("dval", ["2020-12-21T21:00:00", datetime.date])
+def test_grib_sel_valid_datetime(fl_type, dval):
+    f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
+
+    g = f.sel(valid_datetime=dval)
+    assert len(g) == 2
+
+    ref_keys = ["shortName", "date", "time", "endStep"]
     ref = [
         ["t", 20201221, 1200, 9],
         ["z", 20201221, 1200, 9],
@@ -185,19 +233,36 @@ def test_grib_sel_date(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_sel_valid_datetime(fl_type):
+@pytest.mark.parametrize(
+    "_kwargs",
+    [
+        {"base_datetime": "2020-12-21T12:00:00"},
+        {"base_datetime": datetime.datetime(2020, 12, 21, 12, 0, 0)},
+        {"forecast_reference_time": "2020-12-21T12:00:00"},
+        {"forecast_reference_time": datetime.datetime(2020, 12, 21, 12, 0, 0)},
+    ],
+)
+def test_grib_sel_base_datetime(fl_type, _kwargs):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
-    g = f.sel(valid_datetime="2020-12-21T21:00:00")
-    assert len(g) == 2
+    g = f.sel(**_kwargs)
+    assert len(g) == 10
 
-    ref_keys = ["shortName", "date", "time", "step"]
+    ref_keys = ["shortName", "date", "time", "endStep"]
     ref = [
+        ["t", 20201221, 1200, 0],
+        ["z", 20201221, 1200, 0],
+        ["t", 20201221, 1200, 3],
+        ["z", 20201221, 1200, 3],
+        ["t", 20201221, 1200, 6],
+        ["z", 20201221, 1200, 6],
         ["t", 20201221, 1200, 9],
         ["z", 20201221, 1200, 9],
+        ["t", 20201221, 1200, 48],
+        ["z", 20201221, 1200, 48],
     ]
 
-    assert g.metadata(ref_keys) == ref
+    assert g.get(ref_keys) == ref
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -206,7 +271,7 @@ def test_grib_isel_single_message(fl_type):
 
     r = s.isel(shortName=0)
     assert len(r) == 1
-    assert r[0].metadata("shortName") == "2t"
+    assert r[0].get("shortName") == "2t"
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -326,7 +391,7 @@ def test_grib_sel_remapping_1(fl_type):
     ds, _ = load_grib_data("test6.grib", fl_type)
     ref = [("t", 850)]
     r = ds.sel(param_level="t850", remapping={"param_level": "{param}{levelist}"})
-    assert r.metadata("param", "level") == ref
+    assert r.get("param", "level") == ref
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -334,7 +399,7 @@ def test_grib_sel_remapping_2(fl_type):
     ds, _ = load_grib_data("test6.grib", fl_type)
     ref = [("u", 1000), ("t", 850)]
     r = ds.sel(param_level=["t850", "u1000"], remapping={"param_level": "{param}{levelist}"})
-    assert r.metadata("param", "level") == ref
+    assert r.get("param", "level") == ref
 
 
 if __name__ == "__main__":
