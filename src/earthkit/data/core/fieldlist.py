@@ -1088,6 +1088,9 @@ class FieldList(Index):
             return getattr(f, accessor)(**kwargs) if not is_property else getattr(f, accessor)
 
         n = len(self)
+        # TODO: cover the case n == 0 (can happen when an empty mask is applied to a field list -
+        #  for example when slicing an xarray tensor so that a part containing holes only is selected);
+        #  currently None is returned in such case, with no info on dtype, array backend (xp), etc.
         if n > 0:
             it = iter(self)
             first = next(it)

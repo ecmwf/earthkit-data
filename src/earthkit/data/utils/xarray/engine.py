@@ -52,6 +52,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         flatten_values=None,
         lazy_load=None,
         release_source=None,
+        allow_holes=None,
         strict=None,
         dtype=None,
         array_module=None,
@@ -197,7 +198,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
               - "forecast_reference_time": built from the "date" and "time" roles
                 (see ``dim_roles``) as np.datetime64 values
-              - "step": built from the "step" role. When ``decode_time=True`` the values are
+              - "step": built from the "step" role. When ``decode_times=True`` the values are
                 np.timedelta64
             - "valid_time": adds a dimension called "valid_time" as described by the "valid_time"
               role (see ``dim_roles``). Will contain np.datetime64 values.
@@ -302,6 +303,12 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             option is ignored. Having run :obj:`to_xarray` the input data becomes unusable,
             so use this option carefully. The default value of ``release_source`` (None) expands
             to False unless the ``profile`` overwrites it.
+        allow_holes: bool, None
+            If False, GRIB fields must form a full hypercube (without holes).
+            If True, a dataset will be created from any GRIB fields and
+            its coordinates will be a union of coordinates of the fields (outer join).
+            Values corresponding to missing GRIB fields will be filled with NaN.
+            The default value of ``allow_holes`` (None) expands to False unless the ``profile`` overwrites it.
         strict: bool, None
             If True, perform stricter checks on hypercube consistency. Its default value (None) expands
             to False unless the ``profile`` overwrites it.
@@ -362,6 +369,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 dtype=dtype,
                 array_backend=array_backend,
                 errors=errors,
+                allow_holes=allow_holes,
             )
 
             return SingleDatasetBuilder(fieldlist, profile, from_xr=True, backend_kwargs=_kwargs).build()
