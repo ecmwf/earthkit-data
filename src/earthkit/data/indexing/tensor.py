@@ -503,7 +503,9 @@ class FieldListTensor(TensorCore):
                 dims_step = [keys[d] for d in dims]
                 # use same dim order as in user_dims
                 dims = [d for d in self.user_dims if d in dims_step]
-                assert len(dims) == len(dims_step), f"Duplicate dims in {dims}"
+                if len(dims) != len(dims_step):
+                    continue
+                assert len(dims) == len(dims_step), f"{dims=} {dims_step=}"
                 other_dims = [d for d in self.user_dims if d not in dims]
 
                 if other_dims:
