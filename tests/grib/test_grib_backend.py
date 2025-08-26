@@ -18,8 +18,8 @@ from earthkit.utils.array import get_backend
 from earthkit.utils.testing import NO_CUPY
 from earthkit.utils.testing import NO_TORCH
 
-from earthkit.data import FieldList
 from earthkit.data import from_source
+from earthkit.data.new_field.fieldlist import FieldList
 from earthkit.data.testing import earthkit_examples_file
 
 

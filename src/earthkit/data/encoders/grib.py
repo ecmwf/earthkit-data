@@ -143,12 +143,29 @@ class GribHandleMaker:
         if template is None:
             template = self.template
         if template is not None:
-            handle = template.handle.clone()
+            if hasattr(template, "handle"):
+                handle = template.handle
+            elif hasattr(template, "grib") and hasattr(template.grib, "handle"):
+                handle = template.grib.handle
+            elif hasattr(template, "raw") and hasattr(template.raw, "handle"):
+                handle = template.raw.handle
+
+        if handle is not None:
+            handle = handle.clone()
+
         return handle
 
     def handle_from_field(self, field):
-        if hasattr(field, "handle"):
-            return field.handle.clone()
+        handle = None
+        if hasattr(field, "grib") and hasattr(field.grib, "handle"):
+            handle = field.grib.handle
+        elif hasattr(field, "raw") and hasattr(field.raw, "handle"):
+            handle = field.raw.handle
+
+        if handle is not None:
+            handle = handle.clone()
+
+        return handle
 
     def handle_from_metadata(self, values, metadata, compulsory):
         from earthkit.data.readers.grib.codes import GribCodesHandle  # Lazy loading of eccodes
@@ -181,6 +198,7 @@ class GribHandleMaker:
 
     def update_metadata_from_template(self, metadata, template, handle):
         # the template can contain extra metadata that is not encoded in the handle
+        return
         bpv = None
         if hasattr(template, "metadata"):
             template_md = template.metadata()
@@ -408,6 +426,38 @@ class GribEncoder(Encoder):
     def _encode_field(self, field, values=None, template=None, metadata=None, **kwargs):
         # check if the field is already encoded in the desired format
 
+        from earthkit.data.new_field.field import GribFieldEncoderInput
+
+        d = GribFieldEncoderInput(field)
+        # if d.enabled:
+        v, md = d.data(altered=True)
+
+        print("_encode md=", md)
+        if template is None:
+            template = field
+
+        if values is None:
+            values = v
+
+        if md:
+            if metadata is None:
+                metadata = md
+            else:
+                md.update(metadata)
+                metadata = md
+
+        # if hasattr(field, "grib"):
+        #     enc = FieldGribEncoder(field)
+        #     md = field.grib.to_encoder(altered=True)
+        #     if template is None:
+        #         template = field
+
+        #     if md:
+        #         if metadata is None:
+        #             metadata = md
+        #         else:
+        #             md.update(metadata)
+
         if values is None and template is None and not metadata:
             return GribEncodedData(field.handle)
 
@@ -471,6 +521,8 @@ class GribEncoder(Encoder):
         #         metadata.pop("generatingProcessIdentifier")
 
         LOG.debug("GribOutput.metadata %s", metadata)
+
+        print("GribOutput.metadata %s", metadata)
 
         single = {}
         multiple = {}

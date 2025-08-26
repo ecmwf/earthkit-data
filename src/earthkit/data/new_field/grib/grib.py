@@ -9,11 +9,13 @@
 
 
 from ..data import FieldData
-from ..geography import Geography
+
+# from ..geography import Geography
 from ..labels import Labels
 from ..labels import RawLabels
-from ..parameter import Parameter
-from ..vertical import Vertical
+
+# from ..parameter import SimpleParameter
+# from ..vertical import Vertical
 
 
 def missing_is_none(x):
@@ -38,30 +40,79 @@ class GribData(FieldData):
         return r
 
 
-class GribParameter(Parameter):
-    def __init__(self, handle):
-        self.handle = handle
+# from ..parameter import ParamSpec
 
-    @property
-    def name(self):
-        v = self.handle.get("shortName", None)
-        if v == "~":
-            v = self.handle.get("paramId", ktype=str, default=None)
-        return v
 
-    @property
-    def units(self):
-        return self.handle.get("units", None)
+# class GribParameter:
+#     def __init__(self, handle):
+#         self.handle = handle
+#         self._spec = None
+#         self._exception = None
 
-    def set_name(self, name):
-        """Set the name of the parameter."""
+#     @property
+#     def spec(self):
+#         if self._spec is None:
+#             try:
+#                 self._spec = ParamSpec.from_grib(self.handle)
 
-    def to_dict(self, encoder=False):
-        r = {}
-        if encoder:
-            r["handle"] = self.handle
-        else:
-            r["values"] = self.values
+#             except Exception as e:
+#                 LOG.error(f"Failed to get parameter spec for {self.handle}: {e}")
+#             self.handle = None
+#         return self._spec
+
+#     def __getattr__(self, name):
+#         if self._exception is not None:
+#             raise self._exception(name)
+#         assert name != "spec"
+#         return getattr(self.spec, name)
+
+
+# # setattr(ParamSpec, "from_grib", classmethod(GribParameter._to_spec))
+
+
+# class GribParameter(SimpleParameter):
+#     def __init__(self, handle):
+#         self.handle = handle
+
+#     @cached_property
+#     def spec(self):
+#         from ..parameter import ParameterSpec
+
+#         return ParameterSpec.from_grib(self.handle)
+
+# @property
+# def name(self):
+#     v = self.handle.get("shortName", None)
+#     if v == "~":
+#         v = self.handle.get("paramId", ktype=str, default=None)
+#     return v
+
+# @property
+# def units(self):
+#     return self.handle.get("units", None)
+
+
+# class GribParameter(SimpleParameter):
+#     def __init__(self, handle):
+#         self.handle = handle
+
+#     @property
+#     def name(self):
+#         v = self.handle.get("shortName", None)
+#         if v == "~":
+#             v = self.handle.get("paramId", ktype=str, default=None)
+#         return v
+
+#     @property
+#     def units(self):
+#         return self.handle.get("units", None)
+
+#     # def to_dict(self, encoder=False):
+#     #     r = {}
+#     #     if encoder:
+#     #         r["handle"] = self.handle
+#     #     else:
+#     #         r["values"] = self.values
 
 
 # class GribTime(Time):
@@ -109,122 +160,130 @@ class GribParameter(Parameter):
 #         return None
 
 
-class GribGeography(Geography):
-    def __init__(self, handle):
-        self.handle = handle
+# class GribGeography(Geography):
+#     def __init__(self, handle):
+#         self.handle = handle
 
-    @property
-    def latitudes(self):
-        return self.handle.get_latitudes().reshape(self.shape)
+#     @property
+#     def latitudes(self):
+#         return self.handle.get_latitudes().reshape(self.shape)
 
-    @property
-    def longitudes(self):
-        return self.handle.get_longitudes().reshape(self.shape)
+#     @property
+#     def longitudes(self):
+#         return self.handle.get_longitudes().reshape(self.shape)
 
-    @property
-    def x(self):
-        grid_type = self.handle.get("gridType", default=None)
-        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            return self.longitudes
-        raise ValueError("x(): geographical coordinates in original CRS are not available")
+#     @property
+#     def distinct_latitudes(self):
+#         return self.handle.get("distinctLatitudes", default=None)
 
-    @property
-    def y(self):
-        grid_type = self.handle.get("gridType", default=None)
-        if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            return self.latitudes
-        raise ValueError("y(): geographical coordinates in original CRS are not available")
+#     @property
+#     def distinct_longitudes(self):
+#         return self.handle.get("distinctLongitudes", default=None)
 
-    @property
-    def shape(self):
-        r"""Get the shape of the field.
+#     @property
+#     def x(self):
+#         grid_type = self.handle.get("gridType", default=None)
+#         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+#             return self.longitudes
+#         raise ValueError("x(): geographical coordinates in original CRS are not available")
 
-        For structured grids the shape is a tuple in the form of (Nj, Ni) where:
+#     @property
+#     def y(self):
+#         grid_type = self.handle.get("gridType", default=None)
+#         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
+#             return self.latitudes
+#         raise ValueError("y(): geographical coordinates in original CRS are not available")
 
-        - ni: the number of gridpoints in i direction (longitude for a regular latitude-longitude grid)
-        - nj: the number of gridpoints in j direction (latitude for a regular latitude-longitude grid)
+#     @property
+#     def shape(self):
+#         r"""Get the shape of the field.
 
-        For other grid types the number of gridpoints is returned as ``(num,)``
+#         For structured grids the shape is a tuple in the form of (Nj, Ni) where:
 
-        Returns
-        -------
-        tuple
-        """
-        Nj = missing_is_none(self.handle.get("Nj", default=None))
-        Ni = missing_is_none(self.handle.get("Ni", default=None))
-        if Ni is None or Nj is None:
-            n = self.handle.get("numberOfDataPoints", None)
-            return (n,)  # shape must be a tuple
-        return (Nj, Ni)
+#         - ni: the number of gridpoints in i direction (longitude for a regular latitude-longitude grid)
+#         - nj: the number of gridpoints in j direction (latitude for a regular latitude-longitude grid)
 
-    @property
-    def bounding_box(self):
-        r"""Return the bounding box of the field.
+#         For other grid types the number of gridpoints is returned as ``(num,)``
 
-        Returns
-        -------
-        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
-        """
-        from earthkit.data.utils.bbox import BoundingBox
+#         Returns
+#         -------
+#         tuple
+#         """
+#         Nj = missing_is_none(self.handle.get("Nj", default=None))
+#         Ni = missing_is_none(self.handle.get("Ni", default=None))
+#         if Ni is None or Nj is None:
+#             n = self.handle.get("numberOfDataPoints", None)
+#             return (n,)  # shape must be a tuple
+#         return (Nj, Ni)
 
-        return BoundingBox(
-            north=self.handle.get("latitudeOfFirstGridPointInDegrees", default=None),
-            south=self.handle.get("latitudeOfLastGridPointInDegrees", default=None),
-            west=self.handle.get("longitudeOfFirstGridPointInDegrees", default=None),
-            east=self.handle.get("longitudeOfLastGridPointInDegrees", default=None),
-        )
+#     @property
+#     def bounding_box(self):
+#         r"""Return the bounding box of the field.
 
-    @property
-    def projection(self):
-        r"""Return information about the projection.
+#         Returns
+#         -------
+#         :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
+#         """
+#         from earthkit.data.utils.bbox import BoundingBox
 
-        Returns
-        -------
-        :obj:`Projection`
+#         return BoundingBox(
+#             north=self.handle.get("latitudeOfFirstGridPointInDegrees", default=None),
+#             south=self.handle.get("latitudeOfLastGridPointInDegrees", default=None),
+#             west=self.handle.get("longitudeOfFirstGridPointInDegrees", default=None),
+#             east=self.handle.get("longitudeOfLastGridPointInDegrees", default=None),
+#         )
 
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> ds.projection()
-        <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
-        Name: unknown
-        Axis Info [cartesian]:
-        - E[east]: Easting (unknown)
-        - N[north]: Northing (unknown)
-        - h[up]: Ellipsoidal height (metre)
-        Area of Use:
-        - undefined
-        Coordinate Operation:
-        - name: unknown
-        - method: Equidistant Cylindrical
-        Datum: Unknown based on WGS 84 ellipsoid
-        - Ellipsoid: WGS 84
-        - Prime Meridian: Greenwich
-        >>> ds.projection().to_proj_string()
-        '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
-        """
-        from earthkit.data.utils.projections import Projection
+#     @property
+#     def projection(self):
+#         r"""Return information about the projection.
 
-        return Projection.from_proj_string(self.handle.get("projTargetString", None))
+#         Returns
+#         -------
+#         :obj:`Projection`
 
-    @property
-    def unique_grid_id(self):
-        r"""Return a unique id of the grid of a field."""
-        return self.handle.get("md5GridSection", default=None)
+#         Examples
+#         --------
+#         >>> import earthkit.data
+#         >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+#         >>> ds.projection()
+#         <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
+#         Name: unknown
+#         Axis Info [cartesian]:
+#         - E[east]: Easting (unknown)
+#         - N[north]: Northing (unknown)
+#         - h[up]: Ellipsoidal height (metre)
+#         Area of Use:
+#         - undefined
+#         Coordinate Operation:
+#         - name: unknown
+#         - method: Equidistant Cylindrical
+#         Datum: Unknown based on WGS 84 ellipsoid
+#         - Ellipsoid: WGS 84
+#         - Prime Meridian: Greenwich
+#         >>> ds.projection().to_proj_string()
+#         '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
+#         """
+#         from earthkit.data.utils.projections import Projection
+
+#         return Projection.from_proj_string(self.handle.get("projTargetString", None))
+
+#     @property
+#     def unique_grid_id(self):
+#         r"""Return a unique id of the grid of a field."""
+#         return self.handle.get("md5GridSection", default=None)
 
 
-class GribVertical(Vertical):
-    def __init__(self, handle):
-        self.handle = handle
+# class GribVertical(Vertical):
+#     def __init__(self, handle):
+#         self.handle = handle
 
-    @property
-    def level(self):
-        return self.handle.get("level", None)
+#     @property
+#     def level(self):
+#         return self.handle.get("level", None)
 
-    @property
-    def level_type(self):
-        return self.handle.get("levelType", None)
+#     @property
+#     def level_type(self):
+#         return self.handle.get("levelType", None)
 
 
 GribLabels = RawLabels

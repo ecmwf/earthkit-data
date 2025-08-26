@@ -51,7 +51,7 @@ def load_forcings_fs(params=None, first_step=6, last_step=72, input_data="grib")
             "cos_local_time",
         ]
 
-    start = sample[0].datetime()["valid_time"]
+    start = sample[0].time.valid_datetime
     step_increment = 6
     dates = []
     for step in range(first_step, last_step + step_increment, step_increment):
@@ -66,9 +66,8 @@ def load_forcings_fs(params=None, first_step=6, last_step=72, input_data="grib")
         )
     elif input_data == "latlon":
         d = {}
-        ll = sample[0].to_latlon()
-        d["latitudes"] = ll["lat"]
-        d["longitudes"] = ll["lon"]
+        d["latitudes"] = sample[0].geography.latitudes
+        d["longitudes"] = sample[0].geography.longitudes
         # d["date"] = sample[0].metadata("date")
         # d["param"] = sample[0].metadata("param")
         ds = from_source(

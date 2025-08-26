@@ -29,7 +29,7 @@ def test_icon_to_xarray(fl_type):
     ds = g.to_xarray(engine="cfgrib")
     assert len(ds.data_vars) == 1
     # Dataset contains 9 levels and 9 grid points per level
-    ref_levs = g.metadata("level")
+    ref_levs = g.get("level")
     assert ds["pres"].sizes["generalVerticalLayer"] == len(ref_levs)
     assert ds["pres"].sizes["values"] == 6
 
@@ -61,16 +61,16 @@ def test_grib_to_pandas(fl_type):
         "lon",
         "value",
         "datetime",
-        "domain",
-        "levtype",
-        "date",
-        "time",
-        "step",
-        "param",
-        "class",
-        "type",
-        "stream",
-        "expver",
+        # "domain",
+        # "levtype",
+        # "date",
+        # "time",
+        # "step",
+        # "param",
+        # "class",
+        # "type",
+        # "stream",
+        # "expver",
     ]
     assert list(df.columns) == cols
     assert np.allclose(df["lat"][0:2], [90, 90])

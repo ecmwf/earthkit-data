@@ -15,12 +15,12 @@ from functools import cached_property
 import numpy as np
 
 from earthkit.data.core.fieldlist import Field
-from earthkit.data.core.fieldlist import FieldList
-from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalize
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
+from earthkit.data.new_field.data import FieldData
+from earthkit.data.new_field.fieldlist import SimpleFieldList
 from earthkit.data.utils.dates import to_datetime
 
 LOG = logging.getLogger(__name__)
@@ -312,64 +312,15 @@ def index_to_coords(index: int, shape):
     return result
 
 
-class ForcingsFieldListCore(FieldList):
-    def __init__(self, source_or_dataset=None, *, request={}, **kwargs):
+class ForcingsData:
+    def __init__(self, source_or_dataset=None, request={}, **kwargs):
+        # self.source_or_dataset = source_or_dataset
         request = dict(**request)
         request.update(kwargs)
-
-        self.request = self._request(**request)
-
-        def find_latlon():
-            lats = None
-            for k in ["latitudes", "latitude"]:
-                if k in self.request:
-                    lats = np.asarray(self.request.pop(k))
-                    break
-
-            lons = None
-            for k in ["longitudes", "longitude"]:
-                if k in self.request:
-                    lons = np.asarray(self.request.pop(k))
-                    break
-
-            return lats, lons
-
-        def find_numbers(source_or_dataset):
-            if "number" in self.request:
-                return self.request["number"]
-
-            assert hasattr(source_or_dataset, "unique_values"), (
-                f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is"
-                " not a proper source or dataset"
-            )
-
-            return source_or_dataset.unique_values("number", patches={"number": {None: 0}}).get("number", 0)
-
-        def find_dates(source_or_dataset):
-            if "date" not in self.request and "time" in self.request:
-                raise ValueError("Cannot specify time without date")
-
-            if "date" in self.request and "time" not in self.request:
-                return self.request["date"]
-
-            if "date" in self.request and "time" in self.request:
-                dates = [
-                    make_datetime(date, time)
-                    for date, time in itertools.product(self.request["date"], self.request["time"])
-                ]
-                assert len(set(dates)) == len(dates), "Duplicates dates in forcings."
-                return dates
-
-            assert "date" not in self.request and "time" not in self.request
-            assert hasattr(source_or_dataset, "unique_values"), (
-                f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is"
-                " not a proper source or dataset"
-            )
-
-            return source_or_dataset.unique_values("valid_datetime")["valid_datetime"]
+        request = self.normalise_request(**request)
 
         if source_or_dataset is None:
-            lats, lons = find_latlon()
+            lats, lons = self.find_latlons(request)
             if lats is None:
                 raise ValueError("latitudes must be specified when no source or dataset provided")
 
@@ -384,66 +335,274 @@ class ForcingsFieldListCore(FieldList):
 
             source_or_dataset = from_source("list-of-dicts", [d])
 
-        self.dates = find_dates(source_or_dataset)
+        self.field = source_or_dataset[0]
 
-        self.params = self.request["param"]
+        self.dates = self.find_dates(source_or_dataset, request)
+
+        self.params = request["param"]
         if not isinstance(self.params, (tuple, list)):
             self.params = [self.params]
 
-        # self.numbers = self.request.get("number", [None])
-        self.numbers = find_numbers(source_or_dataset)
+        self.numbers = self.find_numbers(source_or_dataset, request)
         if not isinstance(self.numbers, (tuple, list)):
             self.numbers = [self.numbers]
 
-        self.maker = ForcingMaker(field=source_or_dataset[0])
-        self.procs = {param: getattr(self.maker, param) for param in self.params}
-        self._len = len(self.dates) * len(self.params) * len(self.numbers)
+        # self.maker = ForcingMaker(field=field)
+        # self.procs = {param: getattr(self.maker, param) for param in self.params}
 
-        super().__init__(**kwargs)
+    @staticmethod
+    def find_latlons(request):
+        lats = None
+        for k in ["latitudes", "latitude"]:
+            if k in request:
+                lats = np.asarray(request.pop(k))
+                break
 
+        lons = None
+        for k in ["longitudes", "longitude"]:
+            if k in request:
+                lons = np.asarray(request.pop(k))
+                break
+
+        return lats, lons
+
+    @staticmethod
+    def find_numbers(source_or_dataset, request):
+        if "number" in request:
+            return request["number"]
+
+        assert hasattr(source_or_dataset, "unique_values"), (
+            f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is"
+            " not a proper source or dataset"
+        )
+
+        return source_or_dataset.unique_values("number", patches={"number": {None: 0}}).get("number", 0)
+
+    @staticmethod
+    def find_dates(source_or_dataset, request):
+        if "date" not in request and "time" in request:
+            raise ValueError("Cannot specify time without date")
+
+        if "date" in request and "time" not in request:
+            return request["date"]
+
+        if "date" in request and "time" in request:
+            dates = [
+                make_datetime(date, time)
+                for date, time in itertools.product(request["date"], request["time"])
+            ]
+            assert len(set(dates)) == len(dates), "Duplicates dates in forcings."
+            return dates
+
+        assert "date" not in request and "time" not in request
+        assert hasattr(source_or_dataset, "unique_values"), (
+            f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is"
+            " not a proper source or dataset"
+        )
+
+        return source_or_dataset.unique_values("valid_datetime")["valid_datetime"]
+
+    @staticmethod
     @normalize("date", "date-list")
     @normalize("time", "int-list")
     @normalize("number", "int-list")
-    def _request(self, **request):
+    def normalise_request(**request):
         return request
 
-    @classmethod
-    def new_mask_index(self, *args, **kwargs):
-        return ForcingsMaskFieldList(*args, **kwargs)
+
+class ForcingsFieldData(FieldData):
+    def __init__(self, proc, date):
+        self.proc = proc
+        self.date = date
+
+    def get_values(self, dtype=None):
+        """Get the values stored in the field as an array."""
+        values = self.proc(self.date)
+        if dtype is not None:
+            values = values.astype(dtype)
+        return values
 
 
-class ForcingsFieldList(ForcingsFieldListCore):
-    def __len__(self):
-        return self._len
+class ForcingsFieldList(SimpleFieldList):
+    def __init__(self, source_or_dataset=None, *, request={}, **kwargs):
+        self.data = ForcingsData(source_or_dataset, request, **kwargs)
 
-    def _getitem(self, n):
-        if isinstance(n, int):
-            if n < 0:
-                n = self._len + n
+        self.maker = ForcingMaker(field=self.data.field)
+        self.procs = {param: getattr(self.maker, param) for param in self.data.params}
+        self._len = len(self.data.dates) * len(self.data.params) * len(self.data.numbers)
 
-            if n >= self._len or n < 0:
-                raise IndexError(n)
+        fields = []
+        for n in range(self._len):
+            field = self._make_one(n)
+            fields.append(field)
 
-            date, param, number = index_to_coords(n, (len(self.dates), len(self.params), len(self.numbers)))
+        super().__init__(fields=fields)
 
-            date = self.dates[date]
-            # assert isinstance(date, datetime.datetime), (date, type(date))
-            param = self.params[param]
-            number = self.numbers[number]
+    def _make_one(self, n):
+        if n < 0:
+            n = self._len + n
 
-            return ForcingField(
-                self.maker,
-                date,
-                param,
-                self.procs[param],
-                number=number,
-            )
+        if n >= self._len or n < 0:
+            raise IndexError(n)
+
+        date, param, number = index_to_coords(
+            n, (len(self.data.dates), len(self.data.params), len(self.data.numbers))
+        )
+
+        date = self.data.dates[date]
+        # assert isinstance(date, datetime.datetime), (date, type(date))
+        param = self.data.params[param]
+        number = self.data.numbers[number]
+
+        return self._make_field(param, date, number)
+
+    def _make_field(self, param, date, number):
+        from earthkit.data.new_field.field import Field
+        from earthkit.data.new_field.labels import RawLabels
+        from earthkit.data.new_field.parameter import Parameter
+        from earthkit.data.new_field.time import TimeSpec
+
+        data = ForcingsFieldData(self.procs[param], date)
+        geography = self.maker.field.geography
+        parameter = Parameter(name=param)
+        time = TimeSpec.from_valid_datetime(date)
+        labels = RawLabels({"number": number})
+        field = Field(data=data, parameter=parameter, geography=geography, time=time, labels=labels)
+        return field
 
 
-class ForcingsMaskFieldList(ForcingsFieldListCore, MaskIndex):
-    def __init__(self, *args, **kwargs):
-        MaskIndex.__init__(self, *args, **kwargs)
-        FieldList._init_from_mask(self, self)
+# class ForcingsFieldListCore(FieldList):
+#     def __init__(self, source_or_dataset=None, *, request={}, **kwargs):
+#         request = dict(**request)
+#         request.update(kwargs)
+
+#         self.request = self._request(**request)
+
+#         def find_latlon():
+#             lats = None
+#             for k in ["latitudes", "latitude"]:
+#                 if k in self.request:
+#                     lats = np.asarray(self.request.pop(k))
+#                     break
+
+#             lons = None
+#             for k in ["longitudes", "longitude"]:
+#                 if k in self.request:
+#                     lons = np.asarray(self.request.pop(k))
+#                     break
+
+#             return lats, lons
+
+#         def find_numbers(source_or_dataset):
+#             if "number" in self.request:
+#                 return self.request["number"]
+
+#             assert hasattr(source_or_dataset, "unique_values"), (
+#                 f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is"
+#                 " not a proper source or dataset"
+#             )
+
+#             return source_or_dataset.unique_values("number", patches={"number": {None: 0}}).get("number", 0)
+
+#         def find_dates(source_or_dataset):
+#             if "date" not in self.request and "time" in self.request:
+#                 raise ValueError("Cannot specify time without date")
+
+#             if "date" in self.request and "time" not in self.request:
+#                 return self.request["date"]
+
+#             if "date" in self.request and "time" in self.request:
+#                 dates = [
+#                     make_datetime(date, time)
+#                     for date, time in itertools.product(self.request["date"], self.request["time"])
+#                 ]
+#                 assert len(set(dates)) == len(dates), "Duplicates dates in forcings."
+#                 return dates
+
+#             assert "date" not in self.request and "time" not in self.request
+#             assert hasattr(source_or_dataset, "unique_values"), (
+#                 f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is"
+#                 " not a proper source or dataset"
+#             )
+
+#             return source_or_dataset.unique_values("valid_datetime")["valid_datetime"]
+
+#         if source_or_dataset is None:
+#             lats, lons = find_latlon()
+#             if lats is None:
+#                 raise ValueError("latitudes must be specified when no source or dataset provided")
+
+#             if lons is None:
+#                 raise ValueError("longitudes must be specified when no source or dataset provided")
+
+#             from earthkit.data import from_source
+
+#             vals = np.ones(lats.shape)
+#             d = {"values": vals, "latitudes": lats, "longitudes": lons}
+#             # d.update(self.request)
+
+#             source_or_dataset = from_source("list-of-dicts", [d])
+
+#         self.dates = find_dates(source_or_dataset)
+
+#         self.params = self.request["param"]
+#         if not isinstance(self.params, (tuple, list)):
+#             self.params = [self.params]
+
+#         # self.numbers = self.request.get("number", [None])
+#         self.numbers = find_numbers(source_or_dataset)
+#         if not isinstance(self.numbers, (tuple, list)):
+#             self.numbers = [self.numbers]
+
+#         self.maker = ForcingMaker(field=source_or_dataset[0])
+#         self.procs = {param: getattr(self.maker, param) for param in self.params}
+#         self._len = len(self.dates) * len(self.params) * len(self.numbers)
+
+#         super().__init__(**kwargs)
+
+#     @normalize("date", "date-list")
+#     @normalize("time", "int-list")
+#     @normalize("number", "int-list")
+#     def _request(self, **request):
+#         return request
+
+#     @classmethod
+#     def new_mask_index(self, *args, **kwargs):
+#         return ForcingsMaskFieldList(*args, **kwargs)
+
+
+# class ForcingsFieldList(ForcingsFieldListCore):
+#     def __len__(self):
+#         return self._len
+
+#     def _getitem(self, n):
+#         if isinstance(n, int):
+#             if n < 0:
+#                 n = self._len + n
+
+#             if n >= self._len or n < 0:
+#                 raise IndexError(n)
+
+#             date, param, number = index_to_coords(n, (len(self.dates), len(self.params), len(self.numbers)))
+
+#             date = self.dates[date]
+#             # assert isinstance(date, datetime.datetime), (date, type(date))
+#             param = self.params[param]
+#             number = self.numbers[number]
+
+#             return ForcingField(
+#                 self.maker,
+#                 date,
+#                 param,
+#                 self.procs[param],
+#                 number=number,
+#             )
+
+
+# class ForcingsMaskFieldList(ForcingsFieldListCore, MaskIndex):
+#     def __init__(self, *args, **kwargs):
+#         MaskIndex.__init__(self, *args, **kwargs)
+#         FieldList._init_from_mask(self, self)
 
 
 source = ForcingsFieldList

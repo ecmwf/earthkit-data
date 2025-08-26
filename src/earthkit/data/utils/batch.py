@@ -79,6 +79,7 @@ class BasicIter(Iter):
     def _from_batch(self, obj, batch):
         if self.create is None:
             self.create = self._create(obj, batch)
+
         return self.create(batch)
 
     def _metadata(self, data, keys):
@@ -87,7 +88,6 @@ class BasicIter(Iter):
 
 class IndexedIter(Iter):
     def _iterator(self, data):
-        print(f"{data=} {len(data)}")
         return iter(range(len(data)))
 
     def _from_batch(self, obj, batch):

@@ -50,7 +50,7 @@ def test_grib_tensor_core():
     # this slice is a tensor (in the cube it is a field)
     r = c[0, 0]
     assert r.source[0].shape == (7, 12)
-    assert r.source[0].metadata(["param", "level"]) == ["t", 300]
+    assert r.source[0].get(["param", "level"]) == ["t", 300]
     assert r.source[0].to_numpy().shape == (7, 12)
     assert np.isclose(r.source[0].to_numpy()[0, 0], 226.6531524658203)
 
@@ -67,7 +67,7 @@ def test_grib_tensor_core():
     ref_meta = (["t", 300], ["t", 400])
 
     for i in range(len(ref_meta)):
-        assert r[0, i].source[0].metadata(["param", "level"]) == ref_meta[i], f"{i=} ref_meta={ref_meta[i]}"
+        assert r[0, i].source[0].get(["param", "level"]) == ref_meta[i], f"{i=} ref_meta={ref_meta[i]}"
 
     # this slice is a cube
     r = c[1:3, 0:2]
@@ -84,7 +84,7 @@ def test_grib_tensor_core():
     for par in range(2):
         for level in range(2):
             assert (
-                r[par, level].source[0].metadata(["param", "level"]) == ref_meta[cnt]
+                r[par, level].source[0].get(["param", "level"]) == ref_meta[cnt]
             ), f"{cnt=} ref_meta={ref_meta[cnt]}"
             cnt += 1
 
@@ -104,7 +104,7 @@ def test_grib_tensor_core():
     for par in range(1):
         for level in range(6):
             assert (
-                r[par, level].source[0].metadata(["param", "level"]) == ref_meta[cnt]
+                r[par, level].source[0].get(["param", "level"]) == ref_meta[cnt]
             ), f"{cnt=} ref_meta={ref_meta[cnt]}"
             cnt += 1
 

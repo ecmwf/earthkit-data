@@ -8,100 +8,119 @@
 #
 
 
-from abc import ABCMeta
-from abc import abstractmethod
+from .spec import Aliases
+from .spec import Spec
+from .spec import normalise_set_kwargs
+from .spec import spec_aliases
 
 
-class Parameter(metaclass=ABCMeta):
+@spec_aliases
+class Parameter(Spec):
+    """A specification of a parameter."""
+
     KEYS = (
         "name",
         "units",
     )
 
-    ALIASES = {
-        "param": "name",
-    }
+    ALIASES = Aliases({"name": ("param")})
 
-    @property
-    @abstractmethod
-    def name(self):
-        """Return the name of the parameter."""
-        pass
-
-    @property
-    def param(self):
-        """Return the parameter ID."""
-        return self.name
-
-    @property
-    @abstractmethod
-    def units(self):
-        """Return the units of the parameter."""
-        pass
-
-    def set(self, **kwargs):
-        """Set the name and/or units of the parameter."""
-        for key, value in kwargs.items():
-            key = self._resolve_key(key)
-            if key in self.KEYS:
-                setattr(self, f"_{key}", value)
-
-    def to_dict(self, **kwargs):
-        """Convert the Parameter object to a dictionary."""
-        return {key: getattr(self, key) for key in self.KEYS}
-
-    def _resolve_key(self, key):
-        """Resolve a key to its canonical form."""
-        return self.ALIASES.get(key, key)
-
-
-class ParamSpec(Parameter):
-    """A specification of a parameter."""
-
-    def __init__(self, name=None, units=None):
+    def __init__(self, name: str = None, units: str = None) -> None:
         self._name = name
         self._units = units
 
     @property
-    def name(self):
+    def name(self) -> str:
+        r"""str: Return the parameter name."""
         return self._name
 
     @property
-    def units(self):
+    def units(self) -> str:
+        r"""str: Return the parameter units."""
         return self._units
 
-    def set_name(self, name):
-        """Set the name of the parameter."""
-        self._name = name
-
-    def set_units(self, units):
-        """Set the units of the parameter."""
-        self._units = units
-
     @classmethod
-    def from_dict(cls, data):
-        """Create a UserTime object from a dictionary."""
-        if not isinstance(data, dict):
+    def from_dict(cls, d: dict) -> "Parameter":
+        """Create a UserTime object from a dictionary.
+
+        Parameters
+        ----------
+        d : dict
+            Dictionary containing parameter data.
+
+        Returns
+        -------
+        ParameterSpec
+            The created Parameter instance.
+        """
+        if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
-        return cls(**data)
+        d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
+        return cls(**d)
 
     @classmethod
-    def from_grib(cls, handle):
-        def _get(key, default=None):
-            return handle.get(key, default)
+    def from_grib(cls, handle) -> "Parameter":
+        """Create a Parameter instance from a GRIB handle.
 
-        v = _get("shortName ", None)
-        if v is None:
-            v = _get("param", None)
-        name = v
+        Parameters
+        ----------
+        handle
+            GRIB handle object.
 
-        units = _get("units", None)
+        Returns
+        -------
+        Parameter
+            The created Parameter instance.
+        """
+        from .grib.parameter import from_grib
 
-        return cls(
-            name=name,
-            units=units,
-        )
+        r = cls(**from_grib(handle))
+        setattr(r, "_handle", handle)
+        return r
 
-    def to_dict(self):
-        """Convert the TimeSpec object to a dictionary."""
+    def _to_grib(self, **kwargs) -> dict:
+        """Convert the object to a GRIB dictionary.
+
+        Parameters
+        ----------
+        **kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        dict
+            GRIB dictionary representation.
+        """
+        from .grib.parameter import to_grib
+
+        return to_grib(self, **kwargs)
+
+    def to_dict(self) -> dict:
+        """Convert the object to a dictionary.
+
+        Returns
+        -------
+        dict
+            Dictionary representation of the object.
+        """
         return {"name": self.name, "units": self.units}
+
+    def set(self, *args, **kwargs) -> "Parameter":
+        """
+        Create a new Parameter instance with updated data.
+
+        Parameters
+        ----------
+        *args
+            Positional arguments.
+        **kwargs
+            Keyword arguments.
+
+        Returns
+        -------
+        Parameter
+            The created Parameter instance.
+        """
+        kwargs = normalise_set_kwargs(self, *args, **kwargs)
+        spec = Parameter(**kwargs)
+        return spec

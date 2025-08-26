@@ -11,7 +11,8 @@ import logging
 
 import eccodes
 
-from earthkit.data.indexing.fieldlist import SimpleFieldList
+# from earthkit.data.indexing.fieldlist import SimpleFieldList
+from earthkit.data.new_field.fieldlist import SimpleFieldList
 from earthkit.data.readers import Reader
 
 LOG = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            from earthkit.data.new_field.new_field import Field
+            from earthkit.data.new_field.field import Field
 
             from .handle import MemoryGribHandle
 
@@ -72,12 +73,15 @@ class GribMemoryReader(Reader):
 
         return group_by(self, *args, create=self.to_fieldlist, sort=False)
 
+    def to_fieldlist(self, fields):
+        return SimpleFieldList.from_fields(fields)
+
     # def to_fieldlist(self, fields):
     #     return GribFieldListInMemory.from_fields(fields)
 
-    def to_fieldlist(self):
-        fields = [f for f in self]
-        return SimpleFieldList.from_fields(fields)
+    # def to_fieldlist(self):
+    #     fields = [f for f in self]
+    #     return SimpleFieldList.from_fields(fields)
 
 
 class GribFileMemoryReader(GribMemoryReader):

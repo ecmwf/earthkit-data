@@ -173,7 +173,7 @@ class Variable:
 
         coords = np.unravel_index(i, self.shape)
         kwargs = {k: v for k, v in zip(self.names, coords)}
-        from earthkit.data.new_field.new_field import Field
+        from earthkit.data.new_field.field import Field
 
         # return XArrayField(self, self.variable.isel(kwargs))
         return Field.from_xarray(self, self.variable.isel(kwargs))

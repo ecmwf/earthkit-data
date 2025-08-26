@@ -10,15 +10,31 @@
 from collections import defaultdict
 from functools import cache
 
+from earthkit.utils.array import array_namespace
+from earthkit.utils.array import convert_array
+from earthkit.utils.array import get_backend
+
 from earthkit.data.core import Base
 from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalize
 from earthkit.data.new_field.data import ArrayData
+from earthkit.data.new_field.fieldlist import SimpleFieldList
 from earthkit.data.utils.metadata.args import metadata_argument
 from earthkit.data.utils.metadata.args import metadata_argument_new
 
 GRIB = "grib"
+
+LS_KEYS = [
+    "name",
+    "level",
+    "level_type",
+    "base_datetime",
+    "step",
+    "valid_datetime",
+    "number",
+    "gridType",
+]
 
 
 class FieldKeys:
@@ -31,16 +47,23 @@ class FieldKeys:
         from .data import FieldDataCore as data
         from .geography import Geography as geography
         from .parameter import Parameter as parameter
-        from .time import FieldTimeBase as time
+        from .time import TimeSpec as time
         from .vertical import Vertical as vertical
 
-        self.PARTS = {
-            "data": data.KEYS,
-            "time": time.KEYS,
-            "parameter": parameter.KEYS + tuple(list(parameter.ALIASES.keys())),
-            "geography": geography.KEYS,
-            "vertical": vertical.KEYS,
+        parts = {
+            "data": data,
+            "time": time,
+            "parameter": parameter,
+            "geography": geography,
+            "vertical": vertical,
         }
+
+        self.PARTS = {}
+        for k, part in parts.items():
+            keys = list(part.KEYS)
+            if hasattr(part, "ALIASES") and part.ALIASES:
+                keys.extend(list(part.ALIASES.keys()))
+            self.PARTS[k] = tuple(keys)
 
         self.KEYS = []
         self.SINGLE_KEYS = {}
@@ -91,6 +114,22 @@ class EncoderData:
         r = {}
         if hasattr(field, "handle"):
             r["handle"] = field.handle
+
+
+class LazyGribField:
+    def __init__(self, handle):
+        self._handle = handle
+        self.__field = None
+
+    @property
+    def _field(self):
+        if self.__field is None:
+            self.__field = Field.from_grib(self._handle)
+            self._handle = None
+        return self.__field
+
+    def __getattr__(self, name):
+        return getattr(self._field, name)
 
 
 class Field(Base):
@@ -148,6 +187,10 @@ class Field(Base):
         self.vertical = vertical
         self.labels = labels
         self.raw = raw
+
+        # if self.raw and hasattr(self.raw, "handle"):
+        #     self.grib = self.raw
+
         self._kwargs = kwargs
 
     @classmethod
@@ -177,45 +220,47 @@ class Field(Base):
         kwargs = kwargs.copy()
         _kwargs = {}
 
-        for name in ["data", "time", "parameter", "geography", "vertical", "labels"]:
+        for name in ["data", "time", "parameter", "geography", "vertical", "labels", "raw"]:
             v = kwargs.pop(name, None)
             if v is not None:
                 _kwargs[name] = v
             else:
                 _kwargs[name] = getattr(field, name)
 
-        return cls(**_kwargs, **kwargs)
+        r = cls(**_kwargs, **kwargs)
+
+        return r
 
     @classmethod
     def from_grib(cls, handle, **kwargs):
+        from earthkit.data.new_field.grib.geography import GribGeography
         from earthkit.data.new_field.grib.grib import GribData
-        from earthkit.data.new_field.grib.grib import GribGeography
         from earthkit.data.new_field.grib.grib import GribLabels
-        from earthkit.data.new_field.grib.grib import GribParameter
         from earthkit.data.new_field.grib.grib import GribRawLabels
-        from earthkit.data.new_field.grib.grib import GribVertical
-        from earthkit.data.new_field.grib.time import GribTime
+        from earthkit.data.new_field.parameter import Parameter
+        from earthkit.data.new_field.time import TimeSpec
+        from earthkit.data.new_field.vertical import Vertical
 
         data = GribData(handle)
-        parameter = GribParameter(handle)
-        time = GribTime(handle)
+        parameter = Parameter.from_grib(handle)
+        time = TimeSpec.from_grib(handle)
         geography = GribGeography(handle)
-        vertical = GribVertical(handle)
+        vertical = Vertical.from_grib(handle)
         labels = GribLabels()
         raw = GribRawLabels(handle)
 
-        LS_KEYS = [
-            "centre",
-            "shortName",
-            "typeOfLevel",
-            "level",
-            "dataDate",
-            "dataTime",
-            "stepRange",
-            "dataType",
-            "number",
-            "gridType",
-        ]
+        # LS_KEYS = [
+        #     "centre",
+        #     "shortName",
+        #     "typeOfLevel",
+        #     "level",
+        #     "dataDate",
+        #     "dataTime",
+        #     "stepRange",
+        #     "dataType",
+        #     "number",
+        #     "gridType",
+        # ]
 
         return cls(
             data=data,
@@ -225,7 +270,7 @@ class Field(Base):
             vertical=vertical,
             labels=labels,
             raw=raw,
-            ls_keys=LS_KEYS,
+            # ls_keys=LS_KEYS,
             **kwargs,
         )
 
@@ -255,20 +300,42 @@ class Field(Base):
 
     @classmethod
     def from_dict(cls, *args, **kwargs):
+        from earthkit.data.new_field.data import Data
+        from earthkit.data.new_field.data import Parameter
         from earthkit.data.new_field.lod.geography import make_geography
         from earthkit.data.new_field.lod.lod import LodData
         from earthkit.data.new_field.lod.lod import LodLabels
-        from earthkit.data.new_field.lod.lod import LodParameter
-        from earthkit.data.new_field.lod.lod import LodTime
         from earthkit.data.new_field.lod.lod import LodVertical
+        from earthkit.data.new_field.spec import remove_spec_keys
+        from earthkit.data.new_field.time import TimeSpec
 
         d = dict(*args, **kwargs)
-        data = LodData(d)
+
+        # data
+        if "data" in d and isinstance(d["data"], Data):
+            data = d.pop("data")
+        else:
+            data = LodData(d)
+
+        remove_spec_keys(data, d)
 
         values_shape = data.values.shape
 
-        time = LodTime(d)
-        parameter = LodParameter(d)
+        # time
+        if "time" in d and isinstance(d["time"], TimeSpec):
+            time = d.pop("time")
+        else:
+            time = TimeSpec.from_dict(d)
+
+        remove_spec_keys(time, d)
+
+        # parameter
+        if "parameter" in d and isinstance(d["parameter"], Parameter):
+            parameter = d.pop("parameter")
+        else:
+            parameter = Parameter.from_dict(d)
+
+        remove_spec_keys(parameter, d)
         geography = make_geography(d, values_shape)
         vertical = LodVertical(d)
         labels = LodLabels(d)
@@ -280,6 +347,11 @@ class Field(Base):
             vertical=vertical,
             labels=labels,
         )
+
+    @property
+    def array_backend(self):
+        r""":obj:`ArrayBackend`: Return the array backend of the field."""
+        return get_backend(self.values)
 
     @property
     def shape(self):
@@ -673,6 +745,9 @@ class Field(Base):
     def set(self, **kwargs):
         _kwargs = defaultdict(dict)
         for k, v in kwargs.items():
+            if callable(v):
+                v = v(self, k, self)
+
             if self.labels and k in self.labels:
                 _kwargs["labels"][k] = v
             else:
@@ -686,6 +761,7 @@ class Field(Base):
             r = {}
             for part_name, v in _kwargs.items():
                 part = getattr(self, part_name, None)
+                print("set() part=", part, "v=", v)
                 if part is None and part_name == "labels":
                     from earthkit.data.new_field.labels import RawLabels
 
@@ -693,6 +769,8 @@ class Field(Base):
                 else:
                     s = part.set(**v)
                 r[part_name] = s
+
+            print("set() result=", r)
             if r:
                 return Field.from_field(self, **r)
             else:
@@ -738,18 +816,27 @@ class Field(Base):
         to_target(target, *args, data=self, **kwargs)
 
     def default_encoder(self):
-        return self._metadata.data_format()
+        if hasattr(self, "raw") and hasattr(self.raw, "handle"):
+            return "grib"
+        return None
 
     def _encode(self, encoder, **kwargs):
         """Double dispatch to the encoder"""
 
-        r = {}
-        for part in ["data", "time", "parameter", "geography", "vertical", "labels"]:
-            if hasattr(self, part):
-                r.update(self, part).to_dict(**kwargs, encoder=True)
+        # r = {}
+        # for part in ["data", "time", "parameter", "geography", "vertical", "labels"]:
+        #     if hasattr(self, part):
+        #         r.update(self, part).to_dict(**kwargs, encoder=True)
 
-        r.update(kwargs)
-        return encoder._encode_field(self, **r)
+        # r.update(kwargs)
+        return encoder._encode_field(self, **kwargs)
+
+    def grib_metadata(self):
+        md = {}
+        for part in ["parameter"]:
+            part = getattr(self, part)
+            md.update(part._to_grib(altered=True))
+        return True
 
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
@@ -808,6 +895,28 @@ class Field(Base):
 
     def to_array_based(self, **kwargs):
         return deflate(self, **kwargs)
+
+    @property
+    def default_ls_keys(self):
+        return LS_KEYS
+
+    def ls(self, *args, **kwargs):
+        r"""Generate a list like summary using a set of metadata keys.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments passed to :obj:`FieldList.ls`.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`FieldList.ls`.
+
+        Returns
+        -------
+        Pandas DataFrame
+            DataFrame with one row.
+
+        """
+        return self.to_fieldlist().ls(*args, **kwargs)
 
     def load(self):
         """Load the field data."""
@@ -898,6 +1007,163 @@ class Field(Base):
     @staticmethod
     def normalise_selection(**kwargs):
         return kwargs
+
+    @staticmethod
+    def to_fieldlist(fields):
+
+        return SimpleFieldList.from_fields(fields)
+
+    @property
+    def grib(self):
+        return self._kwargs.get("grib")
+
+    def _data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None, index=None):
+        r"""Return the values and/or the geographical coordinates for each grid point.
+
+        Parameters
+        ----------
+        keys: :obj:`str`, :obj:`list` or :obj:`tuple`
+            Specifies the type of data to be returned. Any combination of "lat", "lon" and "value"
+            is allowed here.
+        flatten: bool
+            When it is True a flat array per key is returned. Otherwise an array with the field's
+            :obj:`shape` is returned for each key.
+        dtype: str, array.dtype or None
+            Typecode or data-type of the arrays. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is ``float64``.
+        index: array indexing object, optional
+            The index of the values and or the latitudes/longitudes to be extracted. When it
+            is None all the values and/or coordinates are extracted.
+
+        Returns
+        -------
+        array-like
+            An multi-dimensional array containing one array per key is returned
+            (following the order in ``keys``). The underlying array format
+            of the field is used. When ``keys`` is a single value only the
+            array belonging to the key is returned.
+
+        Examples
+        --------
+        - :ref:`/examples/grib_lat_lon_value.ipynb`
+
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+        >>> d = ds[0].data()
+        >>> d.shape
+        (3, 7, 12)
+        >>> d[0, 0, 0]  # first latitude
+        90.0
+        >>> d[1, 0, 0]  # first longitude
+        0.0
+        >>> d[2, 0, 0]  # first value
+        272.56417847
+        >>> d = ds[0].data(keys="lon")
+        >>> d.shape
+        (7, 12)
+        >>> d[0, 0]  # first longitude
+        0.0
+
+        See Also
+        --------
+        to_latlon
+        to_points
+        to_numpy
+        values
+
+        """
+        _keys = dict(
+            lat=self.geography.latitudes,
+            lon=self.geography.longitudes,
+            value=self.values,
+        )
+
+        if isinstance(keys, str):
+            keys = [keys]
+
+        for k in keys:
+            if k not in _keys:
+                raise ValueError(f"data: invalid argument: {k}")
+
+        r = {}
+        for k in keys:
+            # TODO: convert dtype
+            v = _keys[k](dtype=dtype)
+            if v is None:
+                raise ValueError(f"data: {k} not available")
+            v = self._reshape(v, flatten)
+            if index is not None:
+                v = v[index]
+            r[k] = v
+
+        # convert latlon to array format
+        ll = {k: r[k] for k in r if k != "value"}
+        if ll:
+            sample = r.get("value", None)
+            if sample is None:
+                sample = self._values(dtype=dtype)
+            for k, v in zip(ll.keys(), convert_array(list(ll.values()), target_array_sample=sample)):
+                r[k] = v
+
+        r = list(r.values())
+        if len(r) == 1:
+            return r[0]
+        else:
+            return array_namespace(r[0]).stack(r)
+
+    def to_latlon(self, flatten=False, dtype=None, index=None):
+        r"""Return the latitudes/longitudes of all the gridpoints in the field.
+
+        Parameters
+        ----------
+        flatten: bool
+            When it is True 1D arrays are returned. Otherwise arrays with the field's
+            :obj:`shape` are returned.
+        dtype: str, array.dtype or None
+            Typecode or data-type of the arrays. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is
+            ``float64``.
+        index: array indexing object, optional
+            The index of the latitudes/longitudes to be extracted. When it is None
+            all the values are extracted.
+
+        Returns
+        -------
+        dict
+            Dictionary with items "lat" and "lon", containing the arrays of the latitudes and
+            longitudes, respectively. The underlying array format
+            of the field is used.
+
+        See Also
+        --------
+        to_points
+
+        """
+        lon, lat = self._data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
+        return dict(lat=lat, lon=lon)
+
+
+class GribFieldEncoderInput:
+    def __init__(self, field):
+        self.field = field
+
+    @property
+    def handle(self):
+        try:
+            return self.field.raw.handle
+        except Exception:
+            return None
+
+    def data(self, altered=True):
+        values = None
+        md = {}
+        if not hasattr(self.field.data, "handle"):
+            values = self.field.data.values
+
+        for part in ["parameter", "vertical"]:
+            part = getattr(self.field, part)
+            md.update(part._to_grib(altered=True))
+        return values, md
 
 
 def grib_handle(field):

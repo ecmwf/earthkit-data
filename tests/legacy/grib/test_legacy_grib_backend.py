@@ -24,7 +24,7 @@ from earthkit.data.testing import earthkit_examples_file
 
 
 @pytest.mark.parametrize("_kwargs", [{}, {"array_backend": "numpy"}])
-def test_grib_file_numpy_backend(_kwargs):
+def test_legacy_grib_file_numpy_backend(_kwargs):
     ds = from_source("file", earthkit_examples_file("test6.grib"))
     ds = ds.to_fieldlist(**_kwargs)
 
@@ -63,7 +63,7 @@ def test_grib_file_numpy_backend(_kwargs):
 
 
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
-def test_grib_file_pytorch_backend():
+def test_legacy_grib_file_pytorch_backend():
     ds = from_source("file", earthkit_examples_file("test6.grib"))
     ds = ds.to_fieldlist(array_backend="pytorch")
 
@@ -108,7 +108,7 @@ def test_grib_file_pytorch_backend():
 
 
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
-def test_grib_file_cupy_backend():
+def test_legacy_grib_file_cupy_backend():
     ds = from_source("file", earthkit_examples_file("test6.grib"))
     ds = ds.to_fieldlist(array_backend="cupy")
 
@@ -150,7 +150,7 @@ def test_grib_file_cupy_backend():
     assert get_backend(ds1[0].to_array()) == _CUPY
 
 
-def test_grib_array_numpy_backend():
+def test_legacy_grib_array_numpy_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
 
     ds = FieldList.from_array(
@@ -184,7 +184,7 @@ def test_grib_array_numpy_backend():
 
 
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
-def test_grib_array_torch_backend():
+def test_legacy_grib_array_torch_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
 
     import torch
@@ -220,7 +220,7 @@ def test_grib_array_torch_backend():
 
 
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
-def test_grib_array_cupy_backend():
+def test_legacy_grib_array_cupy_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
 
     import cupy as cp

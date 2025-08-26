@@ -274,3 +274,22 @@ def datetime_from_grib(date, time):
         time // 100,
         time % 100,
     )
+
+
+def make_datetime(date, time):
+    if time is None:
+        return date
+    if date.hour or date.minute:
+        raise ValueError(
+            (
+                f"Duplicate information about time time={time},"
+                f"and time={date.hour}:{date.minute} from date={date}"
+            )
+        )
+    assert date.hour == 0, (date, time)
+    assert date.minute == 0, (date, time)
+    assert str(time).isdigit(), (type(time), time)
+    time = int(time)
+    if time > 24:
+        time = time // 100
+    return datetime.datetime(date.year, date.month, date.day, time)

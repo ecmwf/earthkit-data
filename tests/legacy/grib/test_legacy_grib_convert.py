@@ -22,7 +22,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
-def test_icon_to_xarray(fl_type):
+def test_legacy_grib_icon_to_xarray(fl_type):
     # test the conversion to xarray for an icon (unstructured grid) grib file.
     g, _ = load_grib_data("test_icon.grib", fl_type, folder="data")
 
@@ -35,7 +35,7 @@ def test_icon_to_xarray(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
-def test_to_xarray_filter_by_keys(fl_type):
+def test_legacy_grib_to_xarray_filter_by_keys(fl_type):
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
     g = g.sel(param="t", level=500) + g.sel(param="u")
     assert len(g) > 1
@@ -50,7 +50,7 @@ def test_to_xarray_filter_by_keys(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
-def test_grib_to_pandas(fl_type):
+def test_legacy_grib_to_pandas(fl_type):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     # all points

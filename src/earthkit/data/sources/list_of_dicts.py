@@ -37,8 +37,8 @@ class FieldlistFromDicts(Source):
         return SimpleFieldList(fields=fields)
 
     def mutate(self):
+        from earthkit.data.new_field.field import Field
         from earthkit.data.new_field.fieldlist import SimpleFieldList
-        from earthkit.data.new_field.new_field import Field
 
         fields = []
         for f in self.d:

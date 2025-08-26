@@ -15,6 +15,7 @@ import sys
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.utils.dates import to_datetime_list
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -192,6 +193,7 @@ def test_grib_order_by_valid_datetime(fl_type):
         "2020-12-21T12:00:00",
     ]
 
+    ref = to_datetime_list(ref)
     assert g.get("valid_datetime") == ref
 
 

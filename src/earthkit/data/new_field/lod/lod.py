@@ -11,8 +11,6 @@
 from ..data import ArrayData
 from ..labels import RawLabels
 from ..parameter import Parameter
-from ..time import FieldTime
-from ..time import TimeSpec
 from ..vertical import Vertical
 
 
@@ -75,14 +73,14 @@ class LodVertical(Vertical):
         return self._level_type
 
 
-class LodTime(FieldTime):
-    def __init__(self, d):
-        k = {k: v for k, v in d.items() if k in TimeSpec.KEYS}
-        self._spec = TimeSpec.from_dict(k)
+# class LodTime(FieldTime):
+#     def __init__(self, d):
+#         k = {k: v for k, v in d.items() if k in TimeSpec.KEYS}
+#         self._spec = TimeSpec.from_dict(k)
 
-    @property
-    def spec(self):
-        return self._spec
+#     @property
+#     def spec(self):
+#         return self._spec
 
 
 LodLabels = RawLabels

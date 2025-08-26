@@ -50,7 +50,7 @@ def test_grib_file_stream_iter():
     ]
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == ref[i], i
+        assert f.get(("param", "level")) == ref[i], i
         cnt += 1
 
     assert cnt == len(ref)
@@ -81,7 +81,7 @@ def test_grib_file_stream_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("param") == expected_meta[i]
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -105,7 +105,7 @@ def test_grib_file_stream_group_by(group):
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 3
-        assert f.metadata(("param", "level")) == ref[i]
+        assert f.get(("param", "level")) == ref[i]
         assert f.to_fieldlist(array_backend="numpy") is not f
         cnt += 1
 
@@ -129,11 +129,11 @@ def test_grib_file_stream_in_memory():
     ref = ["t", "u", "v", "t", "u", "v"]
 
     # iteration
-    val = [f.metadata(("param")) for f in ds]
+    val = [f.get(("param")) for f in ds]
     assert val == ref, "iteration"
 
     # metadata
-    val = ds.metadata("param")
+    val = ds.get("param")
     assert val == ref, "method"
 
     # data
@@ -203,7 +203,7 @@ def test_grib_file_stream_multi_file_iter():
     ]
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == ref[i], i
+        assert f.get(("param", "level")) == ref[i], i
         cnt += 1
 
     assert cnt == len(ref)
@@ -238,7 +238,7 @@ def test_grib_file_stream_multi_file_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("param") == expected_meta[i]
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -269,11 +269,11 @@ def test_grib_file_stream_multi_file_memory():
         ("z", 850),
     ]
     # iteration
-    val = [f.metadata(("param", "level")) for f in ds]
+    val = [f.get(("param", "level")) for f in ds]
     assert val == md_ref, "iteration"
 
     # metadata
-    val = ds.metadata(("param", "level"))
+    val = ds.get(("param", "level"))
     assert val == md_ref, "method"
 
     # data
@@ -301,17 +301,17 @@ def test_grib_file_stream_multi_file_memory():
     # slicing
     r = ds[0:3]
     assert len(r) == 3
-    val = r.metadata(("param", "level"))
+    val = r.get(("param", "level"))
     assert val == md_ref[0:3]
 
     r = ds[-2:]
     assert len(r) == 2
-    val = r.metadata(("param", "level"))
+    val = r.get(("param", "level"))
     assert val == md_ref[-2:]
 
     r = ds.sel(param="t")
     assert len(r) == 2
-    val = r.metadata(("param", "level"))
+    val = r.get(("param", "level"))
     assert val == [
         ("t", 500),
         ("t", 850),
@@ -352,7 +352,7 @@ def test_grib_file_stream_single_file_parts_core(path, parts, expected_meta, rem
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("param", "level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -384,7 +384,7 @@ def test_grib_file_stream_single_file_parts_as_arg_valid(parts, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("param", "level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -452,7 +452,7 @@ def test_grib_file_stream_multi_file_parts(parts1, parts2, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("param", "level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -481,7 +481,7 @@ def test_grib_file_stream_glob(write_method):
         ]
         cnt = 0
         for i, f in enumerate(ds):
-            assert f.metadata(("param", "level")) == ref[i], i
+            assert f.get(("param", "level")) == ref[i], i
             cnt += 1
 
         assert cnt == len(ref)
@@ -514,7 +514,7 @@ def test_grib_file_stream_single_directory(write_method):
         ]
         cnt = 0
         for i, f in enumerate(ds):
-            assert f.metadata(("param", "level")) == ref[i], i
+            assert f.get(("param", "level")) == ref[i], i
             cnt += 1
 
         assert cnt == len(ref)
@@ -557,7 +557,7 @@ def test_grib_file_stream_multi_directory(write_method):
 
             cnt = 0
             for i, f in enumerate(ds):
-                assert f.metadata(("param", "level")) == ref[i], i
+                assert f.get(("param", "level")) == ref[i], i
                 cnt += 1
 
             assert cnt == len(ref)
@@ -586,7 +586,7 @@ def test_grib_file_stream_single_directory_filter(filter_kwarg, write_method):
 
         cnt = 0
         for i, f in enumerate(ds):
-            assert f.metadata(("param", "level")) == ref[i], i
+            assert f.get(("param", "level")) == ref[i], i
             cnt += 1
 
         assert cnt == len(ref)
@@ -626,7 +626,7 @@ def test_grib_file_stream_multi_directory_filter(filter_kwarg, write_method):
 
             cnt = 0
             for i, f in enumerate(ds):
-                assert f.metadata(("param", "level")) == ref[i], i
+                assert f.get(("param", "level")) == ref[i], i
                 cnt += 1
 
             assert cnt == len(ref)
@@ -680,7 +680,7 @@ def test_grib_file_stream_multi_directory_with_tar(write_method):
 
             cnt = 0
             for i, f in enumerate(ds):
-                assert f.metadata(("param", "level")) == ref[i], i
+                assert f.get(("param", "level")) == ref[i], i
                 cnt += 1
 
             assert cnt == len(ref)

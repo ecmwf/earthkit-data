@@ -30,7 +30,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("fl_type", ["file"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_clone_metadata(fl_type, write_method):
+def test_legacy_grib_clone_metadata(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     def _func1(field, key, original_metadata):
@@ -160,7 +160,7 @@ def test_grib_clone_metadata(fl_type, write_method):
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_clone_values(fl_type, write_method):
+def test_legacy_grib_clone_values(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -249,7 +249,7 @@ def test_grib_clone_values(fl_type, write_method):
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_clone_combined(fl_type, write_method):
+def test_legacy_grib_clone_combined(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -358,7 +358,7 @@ def test_grib_clone_combined(fl_type, write_method):
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_clone_default(fl_type, write_method):
+def test_legacy_grib_clone_default(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -392,7 +392,7 @@ def test_grib_clone_default(fl_type, write_method):
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_clone_with_metadata_object(fl_type, write_method):
+def test_legacy_grib_clone_with_metadata_object(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -426,7 +426,7 @@ def test_grib_clone_with_metadata_object(fl_type, write_method):
 
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_copy_to_field(fl_type, write_method):
+def test_legacy_grib_copy_to_field(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values

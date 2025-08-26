@@ -8,11 +8,12 @@
 #
 
 
-from abc import ABCMeta
 from abc import abstractmethod
 
+from .spec import Spec
 
-class Geography(metaclass=ABCMeta):
+
+class GeographySpec(Spec):
     KEYS = ("latitudes", "longitudes", "projection", "unique_grid_id")
 
     @property
@@ -25,6 +26,18 @@ class Geography(metaclass=ABCMeta):
     @abstractmethod
     def longitudes(self):
         r"""array-like: Return the longitudes."""
+        pass
+
+    @property
+    @abstractmethod
+    def distinct_latitudes(self):
+        r"""Return the distinct latitudes."""
+        pass
+
+    @property
+    @abstractmethod
+    def distinct_longitudes(self):
+        r"""Return the distinct longitudes."""
         pass
 
     @property
@@ -56,3 +69,27 @@ class Geography(metaclass=ABCMeta):
     def unique_grid_id(self):
         r"""str: Return the unique id of the grid."""
         pass
+
+    @classmethod
+    def from_grib(cls, handle):
+        from .grib.geography import GribGeography
+
+        return GribGeography(handle)
+
+    @classmethod
+    def from_dict(cls, data):
+        from .lod.geography import make_geography
+
+        spec = make_geography(data)
+        return spec
+
+    def set(self, *args, **kwargs):
+        kwargs = self.normalise_set_kwargs(*args, **kwargs)
+
+        keys = set(kwargs.keys())
+
+        if keys == {"latitudes", "longitudes"}:
+            spec = self.from_dict(kwargs)
+            return spec
+
+        raise ValueError("Invalid keys for Geography specification")

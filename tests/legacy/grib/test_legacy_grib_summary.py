@@ -21,7 +21,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_describe(fl_type):
+def test_legacy_grib_describe(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # full contents
@@ -146,7 +146,7 @@ def test_grib_describe(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_describe_single_field(fl_type):
+def test_legacy_grib_describe_single_field(fl_type):
     f_in, _ = load_grib_data("tuv_pl.grib", fl_type)
     f = f_in[0]
 
@@ -175,7 +175,7 @@ def test_grib_describe_single_field(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_ls(fl_type):
+def test_legacy_grib_ls(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # default keys
@@ -229,7 +229,7 @@ def test_grib_ls(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_ls_keys(fl_type):
+def test_legacy_grib_ls_keys(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # default keys
@@ -255,7 +255,7 @@ def test_grib_ls_keys(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_ls_namespace(fl_type):
+def test_legacy_grib_ls_namespace(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     df = f.ls(n=2, namespace="vertical")
@@ -276,7 +276,7 @@ def test_grib_ls_namespace(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_ls_invalid_num(fl_type):
+def test_legacy_grib_ls_invalid_num(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     with pytest.raises(ValueError):
@@ -287,14 +287,14 @@ def test_grib_ls_invalid_num(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_ls_invalid_arg(fl_type):
+def test_legacy_grib_ls_invalid_arg(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
     with pytest.raises(TypeError):
         f.ls(invalid=1)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_ls_num(fl_type):
+def test_legacy_grib_ls_num(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # default keys
@@ -341,7 +341,7 @@ def test_grib_ls_num(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_ls_single_field(fl_type):
+def test_legacy_grib_ls_single_field(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # default keys
@@ -387,7 +387,7 @@ def test_grib_ls_single_field(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_head_num(fl_type):
+def test_legacy_grib_head_num(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # default keys
@@ -412,7 +412,7 @@ def test_grib_head_num(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_tail_num(fl_type):
+def test_legacy_grib_tail_num(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     # default keys
@@ -437,7 +437,7 @@ def test_grib_tail_num(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_grib_dump(fl_type):
+def test_legacy_grib_dump(fl_type):
     f, _ = load_grib_data("test6.grib", fl_type)
 
     namespaces = (

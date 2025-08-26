@@ -42,9 +42,14 @@ class Grid:
         return None, None
 
     def to_latlon(self, field_shape=None):
-        ll = self.field.to_latlon(flatten=True)
-        lat = np.atleast_1d(ll["lat"])
-        lon = np.atleast_1d(ll["lon"])
+        # ll = self.field.to_latlon(flatten=True)
+        # lat = np.atleast_1d(ll["lat"])
+        # lon = np.atleast_1d(ll["lon"])
+
+        lat = self.field.geography.latitudes.flatten()
+        lon = self.field.geography.longitudes.flatten()
+        lat = np.atleast_1d(lat)
+        lon = np.atleast_1d(lon)
 
         if field_shape is not None:
             lat = lat.reshape(field_shape)
@@ -68,10 +73,9 @@ class RegularLLGrid(Grid):
 
 class RectifiedLLGrid(Grid):
     def to_distinct_latlon(self, field_shape):
-        geo = self.field.metadata().geography
-        lat = np.atleast_1d(geo.distinct_latitudes())
+        lat = np.atleast_1d(self.field.geography.distinct_latitudes)
         if len(lat) == field_shape[0]:
-            lon = np.atleast_1d(geo.distinct_longitudes())
+            lon = np.atleast_1d(self.field.geography.distinct_longitudes)
             if len(lon) == field_shape[1]:
                 return lat, lon
         return None, None

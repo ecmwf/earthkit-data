@@ -34,7 +34,7 @@ When indexing a tensor always a tensor is returned.
 """
 
 
-def test_grib_tensor_core():
+def test_legacy_grib_tensor_core():
     ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     c = ds.to_tensor("param", "level")
 
@@ -109,7 +109,7 @@ def test_grib_tensor_core():
             cnt += 1
 
 
-# def test_grib_cube_non_hypercube():
+# def test_legacy_grib_cube_non_hypercube():
 #     ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 #     ds += from_source("file", earthkit_test_data_file("ml_data.grib"))[:2]
 #     assert len(ds) == 18 + 2

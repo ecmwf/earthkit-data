@@ -49,6 +49,48 @@ class FieldList(Index):
         """
         return self._as_array("values")
 
+    def to_numpy(self, **kwargs):
+        r"""Return all the fields' values as an ndarray. It is formed as the array of the
+        :obj:`data.core.fieldlist.Field.to_numpy` values per field.
+
+        Parameters
+        ----------
+        **kwargs: dict, optional
+            Keyword arguments passed to :obj:`data.core.fieldlist.Field.to_numpy`
+
+        Returns
+        -------
+        ndarray
+            Array containing the field values.
+
+        See Also
+        --------
+        to_array
+        values
+        """
+        return self._as_array("to_numpy", **kwargs)
+
+    def to_array(self, **kwargs):
+        r"""Return all the fields' values as an array. It is formed as the array of the
+        :obj:`data.core.fieldlist.Field.to_array` values per field.
+
+        Parameters
+        ----------
+        **kwargs: dict, optional
+            Keyword arguments passed to :obj:`data.core.fieldlist.Field.to_array`
+
+        Returns
+        -------
+        array-like
+            Array containing the field values.
+
+        See Also
+        --------
+        values
+        to_numpy
+        """
+        return self._as_array("to_array", **kwargs)
+
     def _as_array(self, accessor, **kwargs):
         """Use pre-allocated target array to store the field values."""
 
@@ -130,20 +172,20 @@ class FieldList(Index):
                 ns = keys.pop("namespace", None)
                 for i in pos_range:
                     f = self[i]
-                    v = f.metadata(namespace=ns)
+                    v = f.get(namespace=ns)
                     if len(keys) > 0:
-                        v.update(f._attributes(keys))
+                        v.update(f._get_fast(keys, output=dict))
                     yield (v)
             else:
                 for i in pos_range:
-                    yield (self[i]._attributes(keys))
+                    yield (self[i]._get_fast(keys, output=dict))
 
         _keys = self._default_ls_keys() if namespace is None else dict(namespace=namespace)
         return ls(_proc, _keys, n=n, keys=keys, extra_keys=extra_keys)
 
     def _default_ls_keys(self):
         if len(self) > 0:
-            return self[0]._kwargs.get("ls_keys", None)
+            return self[0].default_ls_keys
         return []
 
     def get(self, *keys, remapping=None, patches=None, **kwargs):
@@ -304,9 +346,27 @@ class FieldList(Index):
         return self.from_fields([f.to_array_based(array_backend=array_backend, **kwargs) for f in self])
 
     def normalise_selection(self, **kwargs):
-        from .new_field import Field
+        from .field import Field
 
         return Field.normalise_selection(**kwargs)
+
+    def to_tensor(self, *args, **kwargs):
+        from earthkit.data.indexing.tensor import FieldListTensor
+
+        return FieldListTensor.from_fieldlist(self, *args, **kwargs)
+
+    def cube(self, *args, **kwargs):
+        from earthkit.data.indexing.cube import FieldCube
+
+        return FieldCube(self, *args, **kwargs)
+
+    def default_encoder(self):
+        if len(self) > 0:
+            return self[0].default_encoder()
+
+    def _encode(self, encoder, **kwargs):
+        """Double dispatch to the encoder"""
+        return encoder._encode_fieldlist(self, **kwargs)
 
 
 class SimpleFieldList(FieldList):
@@ -331,6 +391,21 @@ class SimpleFieldList(FieldList):
 
     def mutate_source(self):
         return self
+
+    def to_pandas(self, *args, **kwargs):
+        # TODO make it generic
+        if len(self) > 0:
+            if self[0].default_encoder() == "grib":
+                from earthkit.data.readers.grib.pandas import PandasMixIn
+
+                class _C(PandasMixIn, SimpleFieldList):
+                    pass
+
+                return _C(self.fields).to_pandas(*args, **kwargs)
+        else:
+            import pandas as pd
+
+            return pd.DataFrame()
 
     @classmethod
     def new_mask_index(cls, *args, **kwargs):
@@ -361,6 +436,7 @@ class StreamFieldList(FieldList, Source):
         return iter(self._source)
 
     def batched(self, n):
+        print("StreamFieldList.batched", type(self._source))
         return self._source.batched(n)
 
     def group_by(self, *keys, **kwargs):
@@ -375,11 +451,13 @@ class StreamFieldList(FieldList, Source):
     #     fields = [f for f in self]
     #     return FieldList.from_fields(fields).to_xarray(**kwargs)
 
-    # @classmethod
-    # def merge(cls, sources):
-    #     assert all(isinstance(s, StreamFieldList) for s in sources), sources
-    #     assert len(sources) > 1
-    #     return MultiStreamSource.merge(sources)
+    @classmethod
+    def merge(cls, sources):
+        from earthkit.data.sources.stream import MultiStreamSource
+
+        assert all(isinstance(s, StreamFieldList) for s in sources), sources
+        assert len(sources) > 1
+        return MultiStreamSource.merge(sources)
 
     def default_encoder(self):
         return None

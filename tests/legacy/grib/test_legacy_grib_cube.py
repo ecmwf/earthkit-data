@@ -17,7 +17,7 @@ from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 
 
-def test_grib_cube_core():
+def test_legacy_grib_cube_core():
     ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     c = ds.cube("param", "level")
 
@@ -92,7 +92,7 @@ def test_grib_cube_core():
             cnt += 1
 
 
-def test_grib_cubelet():
+def test_legacy_grib_cubelet():
     ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     c = ds.cube("param", "level")
 
@@ -133,7 +133,7 @@ def test_grib_cubelet():
         assert np.isclose(cb.to_numpy()[0, 0], ref[i])
 
 
-def test_grib_cube_non_hypercube():
+def test_legacy_grib_cube_non_hypercube():
     ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     ds += from_source("file", earthkit_test_data_file("ml_data.grib"))[:2]
     assert len(ds) == 18 + 2

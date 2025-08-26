@@ -10,8 +10,8 @@
 from earthkit.data.readers import Reader
 from earthkit.data.utils.parts import Part
 
+from ..field import Field
 from ..fieldlist import SimpleFieldList
-from ..new_field import Field
 from .handle import GribHandleManager
 from .handle import ManagedGribHandle
 from .scan import GribCodesMessagePositionIndex
