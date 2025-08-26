@@ -13,8 +13,13 @@ from abc import abstractmethod
 from .spec import Spec
 
 
-class Geography(Spec):
+class GeographySpec(Spec):
     KEYS = ("latitudes", "longitudes", "projection", "unique_grid_id")
+
+    @property
+    @abstractmethod
+    def shape(self):
+        pass
 
     @property
     @abstractmethod
@@ -54,11 +59,6 @@ class Geography(Spec):
 
     @property
     @abstractmethod
-    def shape(self):
-        pass
-
-    @property
-    @abstractmethod
     def projection(self):
         """Return the projection."""
         pass
@@ -75,17 +75,15 @@ class Geography(Spec):
         r"""str: Return the unique id of the grid."""
         pass
 
-
-class SimpleGeography(Geography):
     @classmethod
     def from_grib(cls, handle):
-        from .grib.geography import GribGeography
+        from ...specs.grib.geography import GribGeography
 
         return GribGeography(handle)
 
     @classmethod
     def from_dict(cls, data):
-        from .dict.geography import make_geography
+        from ...specs.dict.geography import make_geography
 
         spec = make_geography(data)
         return spec

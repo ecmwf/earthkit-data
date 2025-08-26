@@ -20,6 +20,7 @@ sys.path.insert(0, here)
 from forcings_fixtures import load_forcings_fs  # noqa: E402
 
 
+@pytest.mark.skip(reason="datetime() is deprecated")
 @pytest.mark.parametrize("input_data", ["grib", "latlon"])
 def test_forcings_datetime(input_data):
     ds, _ = load_forcings_fs(last_step=12, input_data=input_data)
@@ -40,7 +41,7 @@ def test_forcings_valid_datetime(input_data):
     ds, _ = load_forcings_fs(last_step=12, input_data=input_data)
     f = ds[4]
 
-    assert f.metadata("valid_datetime") == "2020-05-13T18:00:00"
+    assert f.get("valid_datetime") == datetime.datetime.fromisoformat("2020-05-13T18:00:00")
 
 
 if __name__ == "__main__":

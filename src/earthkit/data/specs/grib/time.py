@@ -12,7 +12,6 @@ from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
 
-#
 def from_grib(handle):
     def _get(key, default=None):
         return handle.get(key, default)

@@ -72,11 +72,11 @@ class Parameter(Spec):
         Parameter
             The created Parameter instance.
         """
-        from .grib.parameter import from_grib
+        from ...specs.grib.parameter import from_grib
 
-        spec = cls.from_dict(from_grib(handle))
-        setattr(spec, "_handle", handle)
-        return spec
+        r = cls(**from_grib(handle))
+        setattr(r, "_handle", handle)
+        return r
 
     def _to_grib(self, **kwargs) -> dict:
         """Convert the object to a GRIB dictionary.
@@ -91,7 +91,7 @@ class Parameter(Spec):
         dict
             GRIB dictionary representation.
         """
-        from .grib.parameter import to_grib
+        from ...specs.grib.parameter import to_grib
 
         return to_grib(self, **kwargs)
 

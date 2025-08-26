@@ -11,7 +11,7 @@
 from ...core.spec.data import ArrayData
 from ...core.spec.parameter import Parameter
 from ...core.spec.vertical import Vertical
-from ..labels import RawLabels
+from ...specs.labels import RawLabels
 
 
 def missing_is_none(x):

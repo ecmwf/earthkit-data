@@ -81,5 +81,5 @@ def load_forcings_fs(params=None, first_step=6, last_step=72, input_data="grib")
 
     assert len(ds) == len(dates) * len(params)
 
-    md = [[d.isoformat(), p] for d, p in itertools.product(dates, params)]
+    md = [[d, p] for d, p in itertools.product(dates, params)]
     return ds, md

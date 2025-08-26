@@ -124,31 +124,8 @@ class Labels(metaclass=ABCMeta):
         pass
 
 
-class RawLabels(dict, Labels):
+class SimpleLabels(dict, Labels):
     def set(self, *args, **kwargs):
         d = dict(self)
         d.update(*args, **kwargs)
-        return RawLabels(d)
-
-
-# class NewLabels:
-#     def __init__(self, d, other):
-#         self.handle = handle
-
-#     def __len__(self):
-#         return len(self.handle)
-
-#     def __contains__(self, key):
-#         return key in self.handle
-
-#     def __iter__(self):
-#         return iter(self.handle)
-
-#     def keys(self):
-#         return self.handle.keys()
-
-#     def items(self):
-#         return self.handle.items()
-
-#     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
-#         return self.handle.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        return SimpleLabels(d)

@@ -156,9 +156,8 @@ def test_forcings_from_lat_lon_bad():
 
     params = all_params
 
-    ll = sample[0].to_latlon()
-    lats = ll["lat"]
-    lons = ll["lon"]
+    lats = sample[0].geography.latitudes
+    lons = sample[0].geography.longitudes
 
     with pytest.raises(ValueError):
         from_source(

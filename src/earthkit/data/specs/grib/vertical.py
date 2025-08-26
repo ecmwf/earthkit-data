@@ -7,8 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-from ...core.spec.vertical import LEVEL_TYPES
-from ...core.spec.vertical import Vertical
+from earthkit.data.specs.vertical import LEVEL_TYPES
+from earthkit.data.specs.vertical import Vertical
 
 
 class GribLevelType:

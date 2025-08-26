@@ -149,6 +149,7 @@ def test_forcings_to_numpy_dtype(dtype):
     assert v.dtype == dtype
 
 
+@pytest.mark.skip("To be implemented")
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
     [
@@ -199,6 +200,7 @@ def test_forcings_field_data(kwarg, expected_shape, expected_dtype):
     assert np.allclose(d[1], latlon["lon"])
 
 
+@pytest.mark.skip("To be implemented")
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
     [

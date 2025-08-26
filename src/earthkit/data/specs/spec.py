@@ -63,16 +63,17 @@ def normalise_set_kwargs(spec: "Spec", *args: dict, add_spec_keys: bool = True, 
     dict
         The normalised keyword arguments.
     """
-    _kwargs = kwargs.copy()
+    kwargs = kwargs.copy()
 
     for a in args:
         if a is None:
             continue
         if isinstance(a, dict):
-            _kwargs.update(a)
+            kwargs.update(a)
             continue
         raise ValueError(f"Cannot use arg={a} in set() method. Only dict allowed.")
 
+    _kwargs = {}
     for k, v in kwargs.items():
         k = spec.ALIASES.get(k, k)
         if k in spec.KEYS:
@@ -84,23 +85,6 @@ def normalise_set_kwargs(spec: "Spec", *args: dict, add_spec_keys: bool = True, 
                 _kwargs[k] = getattr(spec, k)
 
     return _kwargs
-
-
-def remove_spec_keys(spec: "Spec", d: dict) -> None:
-    """
-    Remove all spec keys from the given dictionary.
-
-    Parameters
-    ----------
-    spec : Spec
-        The specification object.
-    d : dict
-        The dictionary from which to remove keys.
-    """
-    if spec.ALL_KEYS:
-        for k in d.keys():
-            if k in spec.ALL_KEYS:
-                del d[k]
 
 
 class Aliases(dict):

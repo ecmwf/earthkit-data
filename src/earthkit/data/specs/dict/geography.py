@@ -12,11 +12,9 @@ from math import prod
 
 import numpy as np
 
-# from earthkit.data.core.geography import Geography
+from earthkit.data.specs.geography import SimpleGeography
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
-
-from ...core.spec.geography import Geography
 
 LOG = logging.getLogger(__name__)
 
@@ -134,31 +132,47 @@ def make_geography(metadata, values_shape=None):
             return UserGeography(metadata, shape=shape)
 
 
-class NoGeography(Geography):
+class NoGeography(SimpleGeography):
     def __init__(self, shape):
         self._shape = shape
 
-    def latitudes(self, dtype=None):
+    @property
+    def latitudes(self):
         return None
 
-    def longitudes(self, dtype=None):
+    @property
+    def longitudes(self):
         return None
 
-    def x(self, dtype=None):
+    @property
+    def distinct_latitudes(self):
+        return None
+
+    @property
+    def distinct_longitudes(self):
+        return None
+
+    @property
+    def x(self):
         raise NotImplementedError("x is not implemented for this geography")
 
-    def y(self, dtype=None):
+    @property
+    def y(self):
         raise NotImplementedError("y is not implemented for this geography")
 
+    @property
     def shape(self):
         return self._shape
 
-    def _unique_grid_id(self):
+    @property
+    def unique_grid_id(self):
         return self.shape()
 
+    @property
     def projection(self):
         return None
 
+    @property
     def bounding_box(self):
         return None
 
@@ -179,56 +193,74 @@ class NoGeography(Geography):
         return "none"
 
 
-class UserGeography(Geography):
+class UserGeography(SimpleGeography):
     def __init__(self, metadata, shape=None):
         self.metadata = metadata
         self._shape = shape
 
-    def latitudes(self, dtype=None):
+    @property
+    def latitudes(self):
         v = self.metadata.get("latitudes")
         v = np.asarray(v)
-        if dtype is None:
-            return v
-        else:
-            return v.astype(dtype)
+        return v
+        # if dtype is None:
+        #     return v
+        # else:
+        #     return v.astype(dtype)
 
-    def longitudes(self, dtype=None):
+    @property
+    def longitudes(self):
         v = self.metadata.get("longitudes")
         v = np.asarray(v)
-        if dtype is None:
-            return v
-        else:
-            return v.astype(dtype)
+        return v
+        # if dtype is None:
+        #     return v
+        # else:
+        #     return v.astype(dtype)
 
-    def x(self, dtype=None):
+    @property
+    def distinct_latitudes(self):
+        return None
+
+    @property
+    def distinct_longitudes(self):
+        return None
+
+    @property
+    def x(self):
         raise NotImplementedError("x is not implemented for this geography")
 
-    def y(self, dtype=None):
+    @property
+    def y(self):
         raise NotImplementedError("y is not implemented for this geography")
 
+    @property
     def shape(self):
         if self._shape is not None:
             return self._shape
-        return self.latitudes().shape
+        return self.latitudes.shape
 
-    def _unique_grid_id(self):
+    @property
+    def unique_grid_id(self):
         return self.shape()
 
     def north(self):
-        return np.amax(self.latitudes())
+        return np.amax(self.latitudes)
 
     def south(self):
-        return np.amin(self.latitudes())
+        return np.amin(self.latitudes)
 
     def west(self):
-        return np.amin(self.longitudes())
+        return np.amin(self.longitudes)
 
     def east(self):
-        return np.amax(self.longitudes())
+        return np.amax(self.longitudes)
 
+    @property
     def projection(self):
         return Projection.from_proj_string(self.metadata.get("projTargetString", None))
 
+    @property
     def bounding_box(self):
         return BoundingBox(
             north=self.north(),
@@ -258,7 +290,30 @@ class DistinctLLGeography(UserGeography):
     def __init__(self, metadata):
         super().__init__(metadata)
 
-    def _distinct_latitudes(self):
+    @property
+    def latitudes(self):
+        lat = self.distinct_latitudes
+        n_lon = len(self._distinct_longitudes())
+        v = np.repeat(lat[:, np.newaxis], n_lon, axis=1)
+        return v
+        # if np.dtype is None:
+        #     return v
+        # else:
+        #     return v.astype(np.dtype)
+
+    @property
+    def longitudes(self):
+        lon = self._distinct_longitudes()
+        n_lat = len(self._distinct_latitudes())
+        v = np.repeat(lon[np.newaxis, :], n_lat, axis=0)
+        return v
+        # if dtype is None:
+        #     return v
+        # else:
+        #     return v.astype(dtype)
+
+    @property
+    def distinct_latitudes(self):
         v = self.metadata.get("latitudes", None)
         if v is None:
             v = self.metadata.get("distinctLatitudes", None)
@@ -266,33 +321,14 @@ class DistinctLLGeography(UserGeography):
             raise ValueError("No latitudes found")
         return np.asarray(v)
 
-    def _distinct_longitudes(self):
+    @property
+    def distinct_longitudes(self):
         v = self.metadata.get("longitudes", None)
         if v is None:
             v = self.metadata.get("distinctLongitudes", None)
         if v is None:
             raise ValueError("No longitudes found")
         return np.asarray(v)
-
-    def latitudes(self, dtype=None):
-        lat = self._distinct_latitudes()
-        n_lon = len(self._distinct_longitudes())
-        v = np.repeat(lat[:, np.newaxis], n_lon, axis=1)
-
-        if dtype is None:
-            return v
-        else:
-            return v.astype(dtype)
-
-    def longitudes(self, dtype=None):
-        lon = self._distinct_longitudes()
-        n_lat = len(self._distinct_latitudes())
-        v = np.repeat(lon[np.newaxis, :], n_lat, axis=0)
-
-        if dtype is None:
-            return v
-        else:
-            return v.astype(dtype)
 
     def shape(self):
         Nj = len(self._distinct_latitudes())

@@ -17,9 +17,9 @@ from earthkit.utils.array import get_backend
 from earthkit.data.core import Base
 from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
-from earthkit.data.core.spec.data import ArrayData
 from earthkit.data.decorators import normalize
 from earthkit.data.new_field.fieldlist import SimpleFieldList
+from earthkit.data.specs.data import ArrayData
 from earthkit.data.utils.metadata.args import metadata_argument
 from earthkit.data.utils.metadata.args import metadata_argument_new
 
@@ -44,11 +44,11 @@ class FieldKeys:
     # KEYS = {}
 
     def __init__(self):
-        from ..core.spec.data import FieldDataCore as data
-        from ..core.spec.geography import Geography as geography
-        from ..core.spec.parameter import Parameter as parameter
-        from ..core.spec.time import TimeSpec as time
-        from ..core.spec.vertical import Vertical as vertical
+        from earthkit.data.specs.data import Data as data
+        from earthkit.data.specs.geography import Geography as geography
+        from earthkit.data.specs.parameter import Parameter as parameter
+        from earthkit.data.specs.time import Time as time
+        from earthkit.data.specs.vertical import Vertical as vertical
 
         parts = {
             "data": data,
@@ -188,9 +188,6 @@ class Field(Base):
         self.labels = labels
         self.raw = raw
 
-        # if self.raw and hasattr(self.raw, "handle"):
-        #     self.grib = self.raw
-
         self._kwargs = kwargs
 
     @classmethod
@@ -233,34 +230,21 @@ class Field(Base):
 
     @classmethod
     def from_grib(cls, handle, **kwargs):
-        from earthkit.data.core.spec.parameter import Parameter
-        from earthkit.data.core.spec.time import TimeSpec
-        from earthkit.data.core.spec.vertical import Vertical
-        from earthkit.data.new_field.grib.geography import GribGeography
-        from earthkit.data.new_field.grib.grib import GribData
-        from earthkit.data.new_field.grib.grib import GribLabels
-        from earthkit.data.new_field.grib.grib import GribRawLabels
+        from earthkit.data.specs.data import SimpleData
+        from earthkit.data.specs.geography import SimpleGeography
+        from earthkit.data.specs.grib.labels import GribLabels
+        from earthkit.data.specs.labels import SimpleLabels
+        from earthkit.data.specs.parameter import Parameter
+        from earthkit.data.specs.time import Time
+        from earthkit.data.specs.vertical import Vertical
 
-        data = GribData(handle)
+        data = SimpleData.from_grib(handle)
         parameter = Parameter.from_grib(handle)
-        time = TimeSpec.from_grib(handle)
-        geography = GribGeography(handle)
+        time = Time.from_grib(handle)
+        geography = SimpleGeography.from_grib(handle)
         vertical = Vertical.from_grib(handle)
-        labels = GribLabels()
-        raw = GribRawLabels(handle)
-
-        # LS_KEYS = [
-        #     "centre",
-        #     "shortName",
-        #     "typeOfLevel",
-        #     "level",
-        #     "dataDate",
-        #     "dataTime",
-        #     "stepRange",
-        #     "dataType",
-        #     "number",
-        #     "gridType",
-        # ]
+        labels = SimpleLabels()
+        raw = GribLabels(handle)
 
         return cls(
             data=data,
@@ -270,7 +254,6 @@ class Field(Base):
             vertical=vertical,
             labels=labels,
             raw=raw,
-            # ls_keys=LS_KEYS,
             **kwargs,
         )
 
@@ -299,46 +282,27 @@ class Field(Base):
         )
 
     @classmethod
-    def from_dict(cls, *args, **kwargs):
-        from earthkit.data.core.spec.data import Data
-        from earthkit.data.core.spec.data import Parameter
-        from earthkit.data.core.spec.spec import remove_spec_keys
-        from earthkit.data.core.spec.time import TimeSpec
-        from earthkit.data.new_field.lod.geography import make_geography
-        from earthkit.data.new_field.lod.lod import LodData
-        from earthkit.data.new_field.lod.lod import LodLabels
-        from earthkit.data.new_field.lod.lod import LodVertical
+    def from_dict(cls, d):
+        from earthkit.data.specs.data import SimpleData
+        from earthkit.data.specs.geography import SimpleGeography
+        from earthkit.data.specs.labels import SimpleLabels
+        from earthkit.data.specs.parameter import Parameter
+        from earthkit.data.specs.time import Time
+        from earthkit.data.specs.vertical import Vertical
 
-        d = dict(*args, **kwargs)
+        if not isinstance(d, dict):
+            raise TypeError("d must be a dictionary")
 
-        # data
-        if "data" in d and isinstance(d["data"], Data):
-            data = d.pop("data")
-        else:
-            data = LodData(d)
+        data = SimpleData.from_dict(d)
+        geography = SimpleGeography.from_dict(d)
+        parameter = Parameter.from_dict(d)
+        time = Time.from_dict(d)
+        vertical = Vertical.from_dict(d)
 
-        remove_spec_keys(data, d)
+        rest = {k: v for k, v in d.items() if k not in FIELD_KEYS.KEYS}
 
-        values_shape = data.values.shape
+        labels = SimpleLabels(rest)
 
-        # time
-        if "time" in d and isinstance(d["time"], TimeSpec):
-            time = d.pop("time")
-        else:
-            time = TimeSpec.from_dict(d)
-
-        remove_spec_keys(time, d)
-
-        # parameter
-        if "parameter" in d and isinstance(d["parameter"], Parameter):
-            parameter = d.pop("parameter")
-        else:
-            parameter = Parameter.from_dict(d)
-
-        remove_spec_keys(parameter, d)
-        geography = make_geography(d, values_shape)
-        vertical = LodVertical(d)
-        labels = LodLabels(d)
         return cls(
             data=data,
             time=time,
@@ -763,7 +727,7 @@ class Field(Base):
                 part = getattr(self, part_name, None)
                 print("set() part=", part, "v=", v)
                 if part is None and part_name == "labels":
-                    from earthkit.data.new_field.labels import RawLabels
+                    from earthkit.data.specs.labels import RawLabels
 
                     s = RawLabels(**v)
                 else:
@@ -1085,13 +1049,20 @@ class Field(Base):
             if k not in _keys:
                 raise ValueError(f"data: invalid argument: {k}")
 
+        from earthkit.data.specs.data import SimpleData
+
+        def _reshape(v, flatten):
+            shape = SimpleData.target_shape(v, flatten, self.shape)
+            return SimpleData.reshape(v, shape)
+
         r = {}
         for k in keys:
             # TODO: convert dtype
-            v = _keys[k](dtype=dtype)
+            # v = _keys[k](dtype=dtype)
+            v = _keys[k]
             if v is None:
                 raise ValueError(f"data: {k} not available")
-            v = self._reshape(v, flatten)
+            v = _reshape(v, flatten)
             if index is not None:
                 v = v[index]
             r[k] = v
@@ -1101,7 +1072,7 @@ class Field(Base):
         if ll:
             sample = r.get("value", None)
             if sample is None:
-                sample = self._values(dtype=dtype)
+                sample = self.data.get_values(dtype=dtype)
             for k, v in zip(ll.keys(), convert_array(list(ll.values()), target_array_sample=sample)):
                 r[k] = v
 

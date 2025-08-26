@@ -11,8 +11,8 @@
 from ...core.spec.data import FieldData
 
 # from ..geography import Geography
-from ..labels import Labels
-from ..labels import RawLabels
+from ...specs.labels import Labels
+from ...specs.labels import RawLabels
 
 # from ..parameter import SimpleParameter
 # from ..vertical import Vertical

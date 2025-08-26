@@ -8,14 +8,14 @@
 #
 
 
-from ...core.spec.geography import Geography
+from earthkit.data.specs.geography import SimpleGeography
 
 
 def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
-class GribGeography(Geography):
+class GribGeography(SimpleGeography):
     def __init__(self, handle):
         self.handle = handle
 

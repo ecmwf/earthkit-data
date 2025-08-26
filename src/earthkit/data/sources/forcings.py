@@ -10,50 +10,54 @@
 import datetime
 import itertools
 import logging
-from functools import cached_property
 
 import numpy as np
 
-from earthkit.data.core.fieldlist import Field
-from earthkit.data.core.metadata import RawMetadata
-from earthkit.data.core.spec.data import FieldData
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalize
-from earthkit.data.indexing.fieldlist import ClonedFieldCore
+
+# from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.new_field.fieldlist import SimpleFieldList
+
+# from earthkit.data.core.fieldlist import Field
+# from earthkit.data.core.metadata import RawMetadata
+from earthkit.data.specs.data import SimpleData
 from earthkit.data.utils.dates import to_datetime
+
+# from functools import cached_property
+
 
 LOG = logging.getLogger(__name__)
 
 
-class ForcingMetadata(RawMetadata):
-    LS_KEYS = ["valid_datetime", "param"]
+# class ForcingMetadata(RawMetadata):
+#     LS_KEYS = ["valid_datetime", "param"]
 
-    def __init__(self, d, geography):
-        self._geo = geography
-        super().__init__(d)
+#     def __init__(self, d, geography):
+#         self._geo = geography
+#         super().__init__(d)
 
-    @property
-    def geography(self):
-        return self._geo
+#     @property
+#     def geography(self):
+#         return self._geo
 
-    def datetime(self):
-        return {
-            "base_time": self.base_datetime(),
-            "valid_time": self.valid_datetime(),
-        }
+#     def datetime(self):
+#         return {
+#             "base_time": self.base_datetime(),
+#             "valid_time": self.valid_datetime(),
+#         }
 
-    def base_datetime(self):
-        return None
+#     def base_datetime(self):
+#         return None
 
-    def valid_datetime(self):
-        return datetime.datetime.fromisoformat(self["valid_datetime"])
+#     def valid_datetime(self):
+#         return datetime.datetime.fromisoformat(self["valid_datetime"])
 
-    def step_timedelta(self):
-        return datetime.timedelta()
+#     def step_timedelta(self):
+#         return datetime.timedelta()
 
-    def ls_keys(self):
-        return self.LS_KEYS
+#     def ls_keys(self):
+#         return self.LS_KEYS
 
 
 class ForcingMaker:
@@ -63,8 +67,9 @@ class ForcingMaker:
 
     @cached_method
     def grid_points(self):
-        d = self.field.to_latlon(flatten=True)
-        return d["lat"], d["lon"]
+        # d = self.field.to_latlon(flatten=True)
+        # return d["lat"], d["lon"]
+        return self.field.geography.latitudes.flatten(), self.field.geography.longitudes.flatten()
 
     @cached_method
     def ecef_xyz(self):
@@ -235,45 +240,45 @@ class ForcingMaker:
         return wrapper
 
 
-class ForcingField(Field):
-    def __init__(self, maker, date, param, proc, number=None):
-        self.maker = maker
-        self.date = date
-        self.param = param
-        self.proc = proc
-        self.number = number
-        # self._shape = shape
-        # self._geometry = self.maker.field.metadata().geography
+# class ForcingField(Field):
+#     def __init__(self, maker, date, param, proc, number=None):
+#         self.maker = maker
+#         self.date = date
+#         self.param = param
+#         self.proc = proc
+#         self.number = number
+#         # self._shape = shape
+#         # self._geometry = self.maker.field.metadata().geography
 
-    @cached_property
-    def _metadata(self):
-        d = dict(
-            valid_datetime=self.date if isinstance(self.date, str) else self.date.isoformat(),
-            param=self.param,
-            level=None,
-            levelist=None,
-            number=self.number,
-            levtype=None,
-        )
-        return ForcingMetadata(d, self.maker.field.metadata().geography)
+#     @cached_property
+#     def _metadata(self):
+#         d = dict(
+#             valid_datetime=self.date if isinstance(self.date, str) else self.date.isoformat(),
+#             param=self.param,
+#             level=None,
+#             levelist=None,
+#             number=self.number,
+#             levtype=None,
+#         )
+#         return ForcingMetadata(d, self.maker.field.metadata().geography)
 
-    def _values(self, dtype=None):
-        values = self.proc(self.date)
-        if dtype is not None:
-            values = values.astype(dtype)
-        return values
+#     def _values(self, dtype=None):
+#         values = self.proc(self.date)
+#         if dtype is not None:
+#             values = values.astype(dtype)
+#         return values
 
-    def clone(self, **kwargs):
-        return ClonedForcingField(self, **kwargs)
+#     def clone(self, **kwargs):
+#         return ClonedForcingField(self, **kwargs)
 
-    def __repr__(self):
-        return "ForcingField(%s,%s,%s)" % (self.param, self.date, self.number)
+#     def __repr__(self):
+#         return "ForcingField(%s,%s,%s)" % (self.param, self.date, self.number)
 
 
-class ClonedForcingField(ClonedFieldCore, ForcingField):
-    def __init__(self, field, **kwargs):
-        ClonedFieldCore.__init__(self, field, **kwargs)
-        ForcingField.__init__(self, field.maker, field.date, field.param, field.proc, number=field.number)
+# class ClonedForcingField(ClonedFieldCore, ForcingField):
+#     def __init__(self, field, **kwargs):
+#         ClonedFieldCore.__init__(self, field, **kwargs)
+#         ForcingField.__init__(self, field.maker, field.date, field.param, field.proc, number=field.number)
 
 
 def make_datetime(date, time):
@@ -410,7 +415,7 @@ class ForcingsData:
         return request
 
 
-class ForcingsFieldData(FieldData):
+class ForcingsFieldData(SimpleData):
     def __init__(self, proc, date):
         self.proc = proc
         self.date = date
@@ -457,17 +462,18 @@ class ForcingsFieldList(SimpleFieldList):
         return self._make_field(param, date, number)
 
     def _make_field(self, param, date, number):
-        from earthkit.data.core.spec.parameter import Parameter
-        from earthkit.data.core.spec.time import TimeSpec
         from earthkit.data.new_field.field import Field
-        from earthkit.data.new_field.labels import RawLabels
+        from earthkit.data.specs.labels import SimpleLabels
+        from earthkit.data.specs.parameter import Parameter
+        from earthkit.data.specs.time import Time
 
         data = ForcingsFieldData(self.procs[param], date)
         geography = self.maker.field.geography
         parameter = Parameter(name=param)
-        time = TimeSpec.from_valid_datetime(date)
-        labels = RawLabels({"number": number})
+        time = Time.from_valid_datetime(date)
+        labels = SimpleLabels({"number": number})
         field = Field(data=data, parameter=parameter, geography=geography, time=time, labels=labels)
+
         return field
 
 

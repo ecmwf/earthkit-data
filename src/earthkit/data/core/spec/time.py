@@ -66,8 +66,6 @@ class Time(Spec):
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
 
-        d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
-
         keys = set(list(d.keys()))
 
         if keys == {"valid_datetime"}:
@@ -86,14 +84,11 @@ class Time(Spec):
                 step_range=d.get("step_range", None),
             )
 
-        if not keys:
-            return cls()
-
         raise ValueError(f"Invalid keys in data: {keys}. Expected one of {cls.KEYS}.")
 
     @classmethod
     def from_grib(cls, handle):
-        from .grib.time import from_grib
+        from ...specs.grib.time import from_grib
 
         spec = cls.from_dict(from_grib(handle))
         setattr(spec, "_handle", handle)

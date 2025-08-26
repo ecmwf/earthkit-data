@@ -93,7 +93,7 @@ class Vertical(Spec):
 
         Parameters
         ----------
-        d : dict
+        data : dict
             Dictionary containing vertical coordinate data.
 
         Returns
@@ -102,7 +102,7 @@ class Vertical(Spec):
             The created Vertical instance.
         """
         if not isinstance(d, dict):
-            raise TypeError("d must be a dictionary")
+            raise TypeError("data must be a dictionary")
         d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
         return cls(**d)
 
@@ -120,7 +120,7 @@ class Vertical(Spec):
         Vertical
             The created Vertical instance.
         """
-        from .grib.vertical import from_grib
+        from ...specs.grib.vertical import from_grib
 
         r = cls(**from_grib(handle))
         setattr(r, "_handle", handle)
@@ -139,7 +139,7 @@ class Vertical(Spec):
         dict
             GRIB dictionary representation.
         """
-        from .grib.vertical import to_grib
+        from ...specs.grib.vertical import to_grib
 
         return to_grib(self, altered=altered)
 

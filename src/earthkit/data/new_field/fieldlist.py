@@ -292,6 +292,58 @@ class FieldList(Index):
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
+    def to_latlon(self, index=None, **kwargs):
+        r"""Return the latitudes/longitudes shared by all the fields.
+
+        Parameters
+        ----------
+        index: array indexing object, optional
+            The index of the latitudes/longitudes to be extracted. When it is None
+            all the values are extracted.
+        **kwargs: dict, optional
+            Keyword arguments passed to
+            :meth:`Field.to_latlon() <data.core.fieldlist.Field.to_latlon>`
+
+        Returns
+        -------
+        dict
+            Dictionary with items "lat" and "lon", containing the arrays of the latitudes and
+            longitudes, respectively.
+
+        Raises
+        ------
+        ValueError
+            When not all the fields have the same grid geometry
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+        >>> for f in ds:
+        ...     print(f.shape)
+        ...
+        (11, 19)
+        (11, 19)
+        >>> r = ds.to_latlon()
+        >>> for k, v in r.items():
+        ...     print(f"{k}: shape={v.shape}")
+        ...
+        lat: shape=(11, 19)
+        lon: shape=(11, 19)
+        >>> r["lon"][:2]
+        array([[-27., -23., -19., -15., -11.,  -7.,  -3.,   1.,   5.,   9.,  13.,
+         17.,  21.,  25.,  29.,  33.,  37.,  41.,  45.],
+        [-27., -23., -19., -15., -11.,  -7.,  -3.,   1.,   5.,   9.,  13.,
+         17.,  21.,  25.,  29.,  33.,  37.,  41.,  45.]])
+
+        """
+        if self._has_shared_geography:
+            return self[0].to_latlon(**kwargs)
+        elif len(self) == 0:
+            return dict(lat=None, lon=None)
+        else:
+            raise ValueError("Fields do not have the same grid geometry")
+
     @property
     def bounding_box(self):
         r"""List of :obj:`BoundingBox <data.utils.bbox.BoundingBox>`: Return the bounding box for each field."""

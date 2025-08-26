@@ -7,13 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
-from ..labels import Labels
-from ..labels import RawLabels
-
-GribLabels = RawLabels
+from earthkit.data.specs.labels import SimpleLabels
 
 
-class GribRawLabels(Labels):
+class GribLabels(SimpleLabels):
     def __init__(self, handle):
         self.handle = handle
 

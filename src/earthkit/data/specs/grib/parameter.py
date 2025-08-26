@@ -8,9 +8,6 @@
 #
 
 
-from ...core.spec.parameter import Parameter
-
-
 def from_grib(handle):
     def _get(key, default=None):
         return handle.get(key, default=default)
@@ -31,6 +28,8 @@ def from_grib(handle):
 
 
 def to_grib(spec, altered=True):
+    from earthkit.data.specs.parameter import Parameter
+
     if isinstance(spec, Parameter):
         if altered:
             if hasattr(spec, "_handle"):
