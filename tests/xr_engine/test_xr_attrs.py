@@ -194,3 +194,43 @@ def test_xr_attrs_types(kwargs, coords, dims, attrs):
     print(ds["t"].attrs)
     for k, v in attrs.items():
         assert ds["t"].attrs[k] == v, f"{k}"
+
+
+@pytest.mark.cache
+def test_xr_global_attrs():
+    ds_fl = from_source(
+        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_small.grib")
+    )
+    ds = ds_fl.to_xarray(
+        attrs_mode="fixed",
+        global_attrs=[
+            {"centre_fixed": "_ecmf_"},
+            lambda md: {"centre_callable": md.get("centre")},
+            "centre",
+            "key=centreDescription",
+            {"centre_key": "key=centre"},
+            {"geography_namespace": "namespace=geography"},
+        ],
+    )
+    ref_global_attrs = {
+        "centre_callable": "ecmf",
+        "centre": "ecmf",
+        "centreDescription": "European Centre for Medium-Range Weather Forecasts",
+        "centre_key": "ecmf",
+        "geography_namespace": {
+            "Ni": 36,
+            "Nj": 19,
+            "latitudeOfFirstGridPointInDegrees": 90.0,
+            "longitudeOfFirstGridPointInDegrees": 0.0,
+            "latitudeOfLastGridPointInDegrees": -90.0,
+            "longitudeOfLastGridPointInDegrees": 350.0,
+            "iScansNegatively": 0,
+            "jScansPositively": 0,
+            "jPointsAreConsecutive": 0,
+            "jDirectionIncrementInDegrees": 10.0,
+            "iDirectionIncrementInDegrees": 10.0,
+            "gridType": "regular_ll",
+        },
+        "centre_fixed": "_ecmf_",
+    }
+    assert ds.attrs == ref_global_attrs
