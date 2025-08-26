@@ -8,7 +8,7 @@
 #
 
 
-from ..parameter import Parameter
+from ...core.spec.parameter import Parameter
 
 
 def from_grib(handle):

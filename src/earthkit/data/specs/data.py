@@ -96,7 +96,7 @@ class SimpleData(Data):
         if "data" in d and isinstance(d["data"], Data):
             data = d.pop("data")
         else:
-            from .lod.lod import LodData
+            from ...new_field.lod.lod import LodData
 
             data = LodData(d)
         return data

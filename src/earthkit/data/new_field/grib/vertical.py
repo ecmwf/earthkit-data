@@ -7,8 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-from ..vertical import LEVEL_TYPES
-from ..vertical import Vertical
+from ...core.spec.vertical import LEVEL_TYPES
+from ...core.spec.vertical import Vertical
 
 
 class GribLevelType:

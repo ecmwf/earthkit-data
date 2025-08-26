@@ -104,7 +104,7 @@ def remove_spec_keys(spec: "Spec", d: dict) -> None:
 
 
 class Aliases(dict):
-    def __init__(self, d: dict) -> None:
+    def __init__(self, d: dict = None) -> None:
         """
         Initialise the Aliases dictionary.
 
@@ -114,6 +114,7 @@ class Aliases(dict):
             Dictionary of aliases.
         """
         r = {}
+        d = d or {}
         for k, v in d.items():
             if isinstance(v, str):
                 r[v] = k
@@ -125,7 +126,7 @@ class Aliases(dict):
 
 class Spec(metaclass=ABCMeta):
     KEYS = tuple()
-    ALIASES = Aliases({})
+    ALIASES = Aliases()
     ALL_KEYS = tuple()
 
     @classmethod

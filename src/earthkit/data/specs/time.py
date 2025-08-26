@@ -88,7 +88,7 @@ class Time(Spec):
 
     @classmethod
     def from_grib(cls, handle):
-        from .grib.time import from_grib
+        from ...new_field.grib.time import from_grib
 
         spec = cls.from_dict(from_grib(handle))
         setattr(spec, "_handle", handle)
@@ -151,13 +151,8 @@ class Forecast(Time):
         self._step = step if step is not None else to_timedelta(0)
         self._step_range = step_range if step_range is not None else to_timedelta(0)
 
-    @property
-    def base_datetime(self):
-        """Return the base datetime of the time object."""
-        return self._base_datetime
 
-
-# class HindcastTimeSpec(ForecastTimeSpec):
+# class Hindcast(Forecast):
 #     """A time specification for hindcast data."""
 
 #     def __init__(self, base_datetime=None, step=None, step_range=None, h_datetime=None):

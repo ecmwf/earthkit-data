@@ -13,11 +13,11 @@ from functools import cached_property
 from typing import Any
 
 from earthkit.data.core.fieldlist import math
-from earthkit.data.new_field.data import FieldData
-from earthkit.data.new_field.geography import Geography
-from earthkit.data.new_field.parameter import Parameter
-from earthkit.data.new_field.time import FieldTime
-from earthkit.data.new_field.vertical import Vertical
+from earthkit.data.core.spec.data import FieldData
+from earthkit.data.core.spec.geography import Geography
+from earthkit.data.core.spec.parameter import Parameter
+from earthkit.data.core.spec.time import FieldTime
+from earthkit.data.core.spec.vertical import Vertical
 
 from .coordinates import extract_single_value
 from .coordinates import is_scalar

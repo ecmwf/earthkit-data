@@ -8,7 +8,7 @@
 #
 
 
-from ..geography import Geography
+from ...core.spec.geography import Geography
 
 
 def missing_is_none(x):

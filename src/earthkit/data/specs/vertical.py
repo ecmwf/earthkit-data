@@ -120,7 +120,7 @@ class Vertical(Spec):
         Vertical
             The created Vertical instance.
         """
-        from .grib.vertical import from_grib
+        from ...new_field.grib.vertical import from_grib
 
         r = cls(**from_grib(handle))
         setattr(r, "_handle", handle)
@@ -139,7 +139,7 @@ class Vertical(Spec):
         dict
             GRIB dictionary representation.
         """
-        from .grib.vertical import to_grib
+        from ...new_field.grib.vertical import to_grib
 
         return to_grib(self, altered=altered)
 

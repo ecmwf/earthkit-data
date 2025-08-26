@@ -143,7 +143,7 @@ class Constant(Time):
         return None
 
     def spec(self, coords_values: Dict[str, Any]):
-        from ..time import TimeSpec
+        from ...core.spec.time import TimeSpec
 
         return TimeSpec()
 
@@ -177,7 +177,7 @@ class Analysis(Time):
         return self.time_coordinate_name
 
     def spec(self, coords_values: Dict[str, Any]):
-        from ..time import TimeSpec
+        from ...core.spec.time import TimeSpec
 
         valid_time = to_datetime(coords_values[self.time_coordinate_name])
         return TimeSpec.from_valid_datetime(valid_time)
@@ -223,7 +223,7 @@ class ForecastFromValidTimeAndStep(Time):
         return self.time_coordinate_name
 
     def spec(self, coords_values: Dict[str, Any]):
-        from ..time import TimeSpec
+        from ...core.spec.time import TimeSpec
 
         valid_datetime = to_datetime(coords_values[self.time_coordinate_name])
         step = to_timedelta(coords_values[self.step_coordinate_name])
@@ -273,7 +273,7 @@ class ForecastFromValidTimeAndBaseTime(Time):
         return self.time_coordinate_name
 
     def spec(self, coords_values: Dict[str, Any]):
-        from ..time import TimeSpec
+        from ...core.spec.time import TimeSpec
 
         valid_datetime = to_datetime(coords_values[self.time_coordinate_name])
         base_datetime = to_datetime(coords_values[self.date_coordinate_name])
@@ -314,7 +314,7 @@ class ForecastFromBaseTimeAndDate(Time):
         raise NotImplementedError("ForecastFromBaseTimeAndDate.select_valid_datetime")
 
     def spec(self, coords_values: Dict[str, Any]):
-        from ..time import TimeSpec
+        from ...core.spec.time import TimeSpec
 
         date = coords_values[self.date_coordinate_name]
         step = coords_values[self.step_coordinate_name]

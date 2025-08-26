@@ -8,7 +8,7 @@
 #
 
 
-from ..data import FieldData
+from ...core.spec.data import FieldData
 
 # from ..geography import Geography
 from ..labels import Labels

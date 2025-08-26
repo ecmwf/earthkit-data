@@ -16,7 +16,7 @@ import numpy as np
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
 
-from ..geography import Geography
+from ...core.spec.geography import Geography
 
 LOG = logging.getLogger(__name__)
 

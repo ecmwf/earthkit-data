@@ -8,10 +8,10 @@
 #
 
 
-from ..data import ArrayData
+from ...core.spec.data import ArrayData
+from ...core.spec.parameter import Parameter
+from ...core.spec.vertical import Vertical
 from ..labels import RawLabels
-from ..parameter import Parameter
-from ..vertical import Vertical
 
 
 def missing_is_none(x):

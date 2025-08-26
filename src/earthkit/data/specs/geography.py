@@ -18,6 +18,11 @@ class GeographySpec(Spec):
 
     @property
     @abstractmethod
+    def shape(self):
+        pass
+
+    @property
+    @abstractmethod
     def latitudes(self):
         r"""array-like: Return the latitudes."""
         pass
@@ -72,13 +77,13 @@ class GeographySpec(Spec):
 
     @classmethod
     def from_grib(cls, handle):
-        from .grib.geography import GribGeography
+        from ...new_field.grib.geography import GribGeography
 
         return GribGeography(handle)
 
     @classmethod
     def from_dict(cls, data):
-        from .lod.geography import make_geography
+        from ...new_field.lod.geography import make_geography
 
         spec = make_geography(data)
         return spec

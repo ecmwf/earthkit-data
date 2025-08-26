@@ -17,8 +17,8 @@ from earthkit.utils.array import get_backend
 from earthkit.data.core import Base
 from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
+from earthkit.data.core.spec.data import ArrayData
 from earthkit.data.decorators import normalize
-from earthkit.data.new_field.data import ArrayData
 from earthkit.data.new_field.fieldlist import SimpleFieldList
 from earthkit.data.utils.metadata.args import metadata_argument
 from earthkit.data.utils.metadata.args import metadata_argument_new
@@ -44,11 +44,11 @@ class FieldKeys:
     # KEYS = {}
 
     def __init__(self):
-        from .data import FieldDataCore as data
-        from .geography import Geography as geography
-        from .parameter import Parameter as parameter
-        from .time import TimeSpec as time
-        from .vertical import Vertical as vertical
+        from ..core.spec.data import FieldDataCore as data
+        from ..core.spec.geography import Geography as geography
+        from ..core.spec.parameter import Parameter as parameter
+        from ..core.spec.time import TimeSpec as time
+        from ..core.spec.vertical import Vertical as vertical
 
         parts = {
             "data": data,
@@ -233,13 +233,13 @@ class Field(Base):
 
     @classmethod
     def from_grib(cls, handle, **kwargs):
+        from earthkit.data.core.spec.parameter import Parameter
+        from earthkit.data.core.spec.time import TimeSpec
+        from earthkit.data.core.spec.vertical import Vertical
         from earthkit.data.new_field.grib.geography import GribGeography
         from earthkit.data.new_field.grib.grib import GribData
         from earthkit.data.new_field.grib.grib import GribLabels
         from earthkit.data.new_field.grib.grib import GribRawLabels
-        from earthkit.data.new_field.parameter import Parameter
-        from earthkit.data.new_field.time import TimeSpec
-        from earthkit.data.new_field.vertical import Vertical
 
         data = GribData(handle)
         parameter = Parameter.from_grib(handle)
@@ -300,14 +300,14 @@ class Field(Base):
 
     @classmethod
     def from_dict(cls, *args, **kwargs):
-        from earthkit.data.new_field.data import Data
-        from earthkit.data.new_field.data import Parameter
+        from earthkit.data.core.spec.data import Data
+        from earthkit.data.core.spec.data import Parameter
+        from earthkit.data.core.spec.spec import remove_spec_keys
+        from earthkit.data.core.spec.time import TimeSpec
         from earthkit.data.new_field.lod.geography import make_geography
         from earthkit.data.new_field.lod.lod import LodData
         from earthkit.data.new_field.lod.lod import LodLabels
         from earthkit.data.new_field.lod.lod import LodVertical
-        from earthkit.data.new_field.spec import remove_spec_keys
-        from earthkit.data.new_field.time import TimeSpec
 
         d = dict(*args, **kwargs)
 

@@ -16,10 +16,10 @@ import numpy as np
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.metadata import RawMetadata
+from earthkit.data.core.spec.data import FieldData
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalize
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
-from earthkit.data.new_field.data import FieldData
 from earthkit.data.new_field.fieldlist import SimpleFieldList
 from earthkit.data.utils.dates import to_datetime
 
@@ -457,10 +457,10 @@ class ForcingsFieldList(SimpleFieldList):
         return self._make_field(param, date, number)
 
     def _make_field(self, param, date, number):
+        from earthkit.data.core.spec.parameter import Parameter
+        from earthkit.data.core.spec.time import TimeSpec
         from earthkit.data.new_field.field import Field
         from earthkit.data.new_field.labels import RawLabels
-        from earthkit.data.new_field.parameter import Parameter
-        from earthkit.data.new_field.time import TimeSpec
 
         data = ForcingsFieldData(self.procs[param], date)
         geography = self.maker.field.geography
