@@ -3,6 +3,16 @@ Version 0.16 Updates
 
 
 
+Version 0.16.2
+===============
+
+Changes
+++++++++
+
+- Fixed issue when global attributes were not set correctly when using the Xarray engine (:pr:`787`)
+
+
+
 Version 0.16.1
 ===============
 
