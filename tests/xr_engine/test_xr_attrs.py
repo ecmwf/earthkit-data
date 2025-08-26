@@ -198,9 +198,7 @@ def test_xr_attrs_types(kwargs, coords, dims, attrs):
 
 @pytest.mark.cache
 def test_xr_global_attrs():
-    ds_fl = from_source(
-        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_small.grib")
-    )
+    ds_fl = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
     ds = ds_fl.to_xarray(
         attrs_mode="fixed",
         global_attrs=[
