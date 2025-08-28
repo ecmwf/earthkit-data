@@ -669,7 +669,7 @@ class Pattern:
             if isinstance(p, Constant):
                 t += p.value
             else:
-                t += f"(?P<{p.name}>\S+)"
+                t += rf"(?P<{p.name}>\S+)"
 
         t = rf"^{t}$"
         return re.compile(t)

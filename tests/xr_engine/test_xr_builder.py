@@ -44,7 +44,7 @@ def _pickle(data, representation):
 @pytest.mark.cache
 @pytest.mark.parametrize("representation", ["file", "memory"])
 def test_xr_engine_builder_fieldlist(representation):
-    ds_in = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_small.grib"))
+    ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
 
     from earthkit.data.utils.xarray.fieldlist import XArrayInputFieldList
 

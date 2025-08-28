@@ -41,7 +41,7 @@ def test_bufr_metadata():
 def test_bufr_metadata_uncompressed():
     ds = from_source(
         "url",
-        earthkit_remote_test_data_file("test-data/synop_multi_subset_uncompressed.bufr"),
+        earthkit_remote_test_data_file("synop_multi_subset_uncompressed.bufr"),
     )
     assert len(ds) == 1
     f = ds[0]
@@ -53,7 +53,7 @@ def test_bufr_metadata_uncompressed():
 def test_bufr_metadata_compressed():
     ds = from_source(
         "url",
-        earthkit_remote_test_data_file("test-data/ens_multi_subset_compressed.bufr"),
+        earthkit_remote_test_data_file("ens_multi_subset_compressed.bufr"),
     )
     assert len(ds) == 1
     f = ds[0]
@@ -63,7 +63,7 @@ def test_bufr_metadata_compressed():
 
 
 def test_bufr_metadata_tc_compressed():
-    ds = from_source("url", earthkit_remote_test_data_file("test-data/ens_tropical_cyclon.bufr3"))
+    ds = from_source("url", earthkit_remote_test_data_file("ens_tropical_cyclon.bufr3"))
     assert len(ds) == 1
     f = ds[0]
     assert f.subset_count() == 3

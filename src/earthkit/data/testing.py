@@ -32,7 +32,9 @@ class OfflineError(Exception):
 
 _NETWORK_PATCHER = patch("socket.socket", side_effect=OfflineError)
 
-_REMOTE_TEST_DATA_URL = "https://get.ecmwf.int/repository/test-data/earthkit-data/"
+_REMOTE_ROOT_URL = "https://sites.ecmwf.int/repository/earthkit-data/"
+_REMOTE_TEST_DATA_URL = "https://sites.ecmwf.int/repository/earthkit-data/test-data/"
+_REMOTE_EXAMPLES_URL = "https://sites.ecmwf.int/repository/earthkit-data/examples/"
 
 _ROOT_DIR = top = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 if not os.path.exists(os.path.join(_ROOT_DIR, "tests", "data")):
@@ -57,8 +59,16 @@ def preserve_cwd():
         os.chdir(current_dir)
 
 
+def earthkit_remote_file(*args):
+    return os.path.join(_REMOTE_ROOT_URL, *args)
+
+
 def earthkit_remote_test_data_file(*args):
     return os.path.join(_REMOTE_TEST_DATA_URL, *args)
+
+
+def earthkit_remote_examples_file(*args):
+    return os.path.join(_REMOTE_EXAMPLES_URL, *args)
 
 
 def earthkit_file(*args):

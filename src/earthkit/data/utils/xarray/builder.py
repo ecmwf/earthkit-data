@@ -142,7 +142,7 @@ class VariableBuilder:
                     fixed_attrs[a.name] = a.value()
                 elif callable(a):
                     res.update(a(_metadata()))
-                elif isinstance(a, str):
+                else:
                     res.update(a.get(_metadata()))
 
             res = {k: v for k, v in res.items() if v is not None}

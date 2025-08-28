@@ -281,7 +281,7 @@ url
       >>> import earthkit.data as ekd
       >>> ds = ekd.from_source(
       ...     "url",
-      ...     "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test4.grib",
+      ...     "https://sites.ecmwf.int/repository/earthkit-data/examples/test4.grib",
       ... )
       >>> ds.ls()
         centre shortName    typeOfLevel  level  dataDate  dataTime stepRange dataType  number    gridType
@@ -295,7 +295,7 @@ url
       >>> import earthkit.data as ekd
       >>> ds = ekd.from_source(
       ...     "url",
-      ...     "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test4.grib",
+      ...     "https://sites.ecmwf.int/repository/earthkit-data/examples/test4.grib",
       ...     parts=[(0, 130428), (260856, 130428)],
       ... )
       >>> ds.ls()

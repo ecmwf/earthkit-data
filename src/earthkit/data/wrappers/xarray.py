@@ -88,6 +88,23 @@ class XArrayDataArrayWrapper(Wrapper):
         """
         return self.data.to_netcdf(*args, **kwargs)
 
+    def _encode(self, encoder, **kwargs):
+        """Encode the data using the specified encoder.
+
+        Parameters
+        ----------
+        encoder : Encoder
+            The encoder to use for encoding the data.
+        **kwargs : dict
+            Additional keyword arguments to pass to the encoder.
+
+        Returns
+        -------
+        EncodedData
+            The encoded data.
+        """
+        return encoder._encode_xarray(data=self.data, **kwargs)
+
 
 class XArrayDatasetWrapper(XArrayDataArrayWrapper):
     """Wrapper around an xarray `DataSet`, offering polymorphism and convenience
@@ -131,7 +148,7 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
     #     return self.source.data_vars[variable]
 
 
-def wrapper(data, *args, **kwargs):
+def wrapper(data, *args, fieldlist=True, **kwargs):
     from earthkit.data.utils import is_module_loaded
 
     if not is_module_loaded("xarray"):
@@ -149,6 +166,9 @@ def wrapper(data, *args, **kwargs):
             return XArrayDataArrayWrapper(data, *args, **kwargs)
 
     if ds is not None:
+        if not fieldlist:
+            return XArrayDatasetWrapper(ds, *args, **kwargs)
+
         from earthkit.data.readers.netcdf.fieldlist import XArrayFieldList
 
         fs = XArrayFieldList(ds, **kwargs)

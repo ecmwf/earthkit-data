@@ -12,12 +12,14 @@
 import datetime
 
 from earthkit.data import from_source
+from earthkit.data.testing import earthkit_remote_examples_file
+from earthkit.data.testing import earthkit_remote_test_data_file
 
 
 def test_url_pattern_source_1():
     from_source(
         "url-pattern",
-        "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test.{format}",
+        earthkit_remote_examples_file("test.{format}"),
         {"format": ["nc", "grib"]},
     )
     # source.to_xarray()
@@ -26,7 +28,7 @@ def test_url_pattern_source_1():
 def test_url_pattern_int():
     fs = from_source(
         "url-pattern",
-        "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test{id}.grib",
+        earthkit_remote_examples_file("test{id}.grib"),
         {"id": [4, 6]},
     )
 
@@ -36,8 +38,7 @@ def test_url_pattern_int():
 def test_url_pattern_date():
     fs = from_source(
         "url-pattern",
-        "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/"
-        "test_{my_date:date(%Y-%m-%d)}_{name}.grib",
+        earthkit_remote_test_data_file("test_{my_date:date(%Y-%m-%d)}_{name}.grib"),
         {"my_date": datetime.datetime(2020, 5, 13), "name": ["t2", "msl"]},
     )
 

@@ -18,7 +18,7 @@ from earthkit.data.sources.stream import StreamFieldList
 from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.testing import earthkit_remote_examples_file
 from earthkit.data.testing import write_to_file
 
 
@@ -456,7 +456,7 @@ def test_grib_concat_stream():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     ds1 = from_source("stream", stream1)
     ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True)
-    ds3 = from_source("url", earthkit_remote_test_data_file("examples/test6.grib"), stream=True)
+    ds3 = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True)
 
     ds = ds1 + ds2 + ds3
 
@@ -489,9 +489,7 @@ def test_grib_concat_stream_memory():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     ds1 = from_source("stream", stream1, read_all=True)
     ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True, read_all=True)
-    ds3 = from_source(
-        "url", earthkit_remote_test_data_file("examples/test6.grib"), stream=True, read_all=True
-    )
+    ds3 = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True, read_all=True)
 
     ds = ds1 + ds2 + ds3
 

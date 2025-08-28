@@ -47,7 +47,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         coord_attrs=None,
         add_earthkit_attrs=None,
         rename_attrs=None,
-        fill=None,
+        fill_metadata=None,
         remapping=None,
         flatten_values=None,
         lazy_load=None,
@@ -282,7 +282,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             (None) expands to True unless the ``profile`` overwrites it.
         rename_attrs: dict, None
             A dictionary of attribute to rename. Default is None.
-        fill: dict, None
+        fill_metadata: dict, None
             Define fill values to metadata keys. Default is None.
         remapping: dict, None
             Define new metadata keys for indexing. Default is None.
@@ -352,7 +352,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 add_valid_time_coord=add_valid_time_coord,
                 add_geo_coords=add_geo_coords,
                 flatten_values=flatten_values,
-                fill=fill,
+                fill_metadata=fill_metadata,
                 remapping=remapping,
                 decode_times=decode_times,
                 decode_timedelta=decode_timedelta,
@@ -409,7 +409,7 @@ class XarrayEarthkit:
     def to_target(self, target, *args, **kwargs):
         from earthkit.data.targets import to_target
 
-        to_target(target, *args, data=self._generator(), **kwargs)
+        to_target(target, *args, data=self._obj, **kwargs)
 
     def to_grib(self, filename):
         import warnings
@@ -504,6 +504,14 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         da.data = moved
         return da
 
+    @property
+    def grid_spec(self):
+        """Return the grid specification of the DataArray."""
+        try:
+            return self.metadata.gridspec
+        except Exception:
+            return None
+
 
 @xarray.register_dataset_accessor("earthkit")
 class XarrayEarthkitDataSet(XarrayEarthkit):
@@ -544,3 +552,14 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
         for name, var in ds.data_vars.items():
             ds[name].data = to_device(var.data, device, *args, array_backend=array_backend, **kwargs)
         return ds
+
+    @property
+    def grid_spec(self):
+        """Return the grid specification of the DataSet."""
+        try:
+            # return grid spec of the first data variable
+            var = list(self._obj.data_vars.values())[0]
+            return var.earthkit.grid_spec
+
+        except Exception:
+            return None

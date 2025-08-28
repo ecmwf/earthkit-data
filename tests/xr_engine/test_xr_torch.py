@@ -22,7 +22,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 @pytest.mark.cache
 def test_xr_engine_torch_core():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
     ds = ds_ek.to_xarray(array_backend="torch")
     check_array_type(ds["t"].data, _TORCH)
@@ -31,7 +31,7 @@ def test_xr_engine_torch_core():
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 @pytest.mark.cache
 def test_xr_engine_torch_core_compat():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
     ds = ds_ek.to_xarray(array_module="torch")
     check_array_type(ds["t"].data, _TORCH)
@@ -40,7 +40,7 @@ def test_xr_engine_torch_core_compat():
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 @pytest.mark.cache
 def test_xr_engine_torch_dtype():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
     def _check_dtype(dtype, expected_dtype):
         ds = ds_ek.to_xarray(array_backend="torch", dtype=dtype)
