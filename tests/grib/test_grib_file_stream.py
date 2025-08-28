@@ -235,6 +235,8 @@ def test_grib_file_stream_multi_file_batched(_kwargs, expected_meta):
     with pytest.raises((TypeError, NotImplementedError)):
         len(ds)
 
+    print("Stream type:", type(ds))
+
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])

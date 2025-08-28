@@ -136,43 +136,43 @@ class GRIBReader(GribFieldListInFile, Reader):
     def is_streamable_file(self):
         return True
 
-    # def __getstate__(self):
-    #     from earthkit.data.core.config import CONFIG
+    def __getstate__(self):
+        from earthkit.data.core.config import CONFIG
 
-    #     policy = CONFIG.get("grib-file-serialisation-policy")
-    #     r = {"serialisation_policy": policy, "kwargs": self.source._kwargs}
+        policy = CONFIG.get("grib-file-serialisation-policy")
+        r = {"serialisation_policy": policy, "kwargs": self.source._kwargs}
 
-    #     if policy == "path":
-    #         r["path"] = self.path
-    #         r["positions"] = self._positions
-    #     else:
-    #         r["messages"] = [f.message() for f in self]
+        if policy == "path":
+            r["path"] = self.path
+            r["positions"] = self._positions
+        else:
+            r["messages"] = [f.core.message() for f in self]
 
-    #     return r
+        return r
 
-    # def __setstate__(self, state):
-    #     policy = state["serialisation_policy"]
-    #     if policy == "path":
-    #         from earthkit.data import from_source
+    def __setstate__(self, state):
+        policy = state["serialisation_policy"]
+        if policy == "path":
+            from earthkit.data import from_source
 
-    #         path = state["path"]
-    #         ds = from_source("file", path, **state["kwargs"])
-    #         self.__init__(ds.source, path, positions=state["positions"])
-    #     elif policy == "memory":
-    #         from earthkit.data import from_source
-    #         from earthkit.data.core.caching import cache_file
+            path = state["path"]
+            ds = from_source("file", path, **state["kwargs"])
+            self.__init__(ds.source, path, positions=state["positions"])
+        elif policy == "memory":
+            from earthkit.data import from_source
+            from earthkit.data.core.caching import cache_file
 
-    #         def _create(path, args):
-    #             with open(path, "wb") as f:
-    #                 for message in state["messages"]:
-    #                     f.write(message)
+            def _create(path, args):
+                with open(path, "wb") as f:
+                    for message in state["messages"]:
+                        f.write(message)
 
-    #         path = cache_file(
-    #             "GRIBReader",
-    #             _create,
-    #             [],
-    #         )
-    #         ds = from_source("file", path)
-    #         self.__init__(ds.source, path)
-    #     else:
-    #         raise ValueError(f"Unknown serialisation policy {policy}")
+            path = cache_file(
+                "GRIBReader",
+                _create,
+                [],
+            )
+            ds = from_source("file", path)
+            self.__init__(ds.source, path)
+        else:
+            raise ValueError(f"Unknown serialisation policy {policy}")

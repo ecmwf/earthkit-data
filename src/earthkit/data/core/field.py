@@ -493,6 +493,8 @@ class Field(Base):
             else:
                 return {k: meth(k, astype=kt, **_kwargs) for k, kt in zip(keys, astype)}
         else:
+            if isinstance(astype, (list, tuple)):
+                astype = astype[0]
             return meth(keys[0], astype=astype, **_kwargs)
 
     def get(self, *keys, default=None, astype=None, raise_on_missing=False, remapping=None, patches=None):
