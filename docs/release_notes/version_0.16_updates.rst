@@ -5,7 +5,7 @@ Version 0.16 Updates
 Version 0.16.3
 ===============
 
-Changes
+Fixes
 ++++++++
 
 - Fixed fieldlist serialisation problem when dask cluster is used (:pr:`791`)
@@ -14,7 +14,7 @@ Changes
 Version 0.16.2
 ===============
 
-Changes
+Fixes
 ++++++++
 
 - Fixed issue when global attributes were not set correctly when using the Xarray engine (:pr:`787`)
