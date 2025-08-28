@@ -2,6 +2,14 @@ Version 0.16 Updates
 /////////////////////////
 
 
+Version 0.16.3
+===============
+
+Changes
+++++++++
+
+- Fixed fieldlist serialisation problem when dask cluster is used (:pr:`791`)
+
 
 Version 0.16.2
 ===============
