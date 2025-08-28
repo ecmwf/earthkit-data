@@ -19,7 +19,7 @@ from typing import Union
 import xarray as xr
 import yaml
 
-from earthkit.data.new_field.fieldlist import FieldList
+from earthkit.data.indexing.fieldlist import FieldList
 
 # from .field import EmptyFieldList
 from .flavour import CoordinateGuesser

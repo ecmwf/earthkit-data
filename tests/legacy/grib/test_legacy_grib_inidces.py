@@ -63,7 +63,7 @@ def test_grib_indices_base(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_indices_sel(fl_type):
+def test_legacy_grib_indices_sel(fl_type):
     ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     ref = {
@@ -92,7 +92,7 @@ def test_grib_indices_sel(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_indices_multi(fl_type):
+def test_legacy_grib_indices_multi(fl_type):
     f1, _ = load_grib_data("tuv_pl.grib", fl_type)
     f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
     ds = f1 + f2
@@ -158,7 +158,7 @@ def test_grib_indices_multi(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_indices_multi_sel(fl_type):
+def test_legacy_grib_indices_multi_sel(fl_type):
     f1, _ = load_grib_data("tuv_pl.grib", fl_type)
     f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
     ds = f1 + f2
@@ -183,7 +183,7 @@ def test_grib_indices_multi_sel(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_indices_order_by(fl_type):
+def test_legacy_grib_indices_order_by(fl_type):
     ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     ref = {

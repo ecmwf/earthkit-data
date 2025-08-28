@@ -72,8 +72,6 @@ def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, **kwargs
     if n == 0:
         raise ValueError("n cannot be 0")
 
-    _keys = list(_keys.keys())
-
     return format_ls(metadata_proc(_keys, n))
 
 

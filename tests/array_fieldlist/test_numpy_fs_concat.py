@@ -15,7 +15,7 @@ import sys
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.fieldlist_ori import FieldList
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)

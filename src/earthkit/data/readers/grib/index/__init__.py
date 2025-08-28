@@ -14,7 +14,7 @@ import threading
 from abc import abstractmethod
 from collections import defaultdict
 
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.fieldlist_ori import FieldList
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
 from earthkit.data.decorators import alias_argument

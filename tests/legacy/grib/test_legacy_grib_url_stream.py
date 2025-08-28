@@ -25,7 +25,7 @@ def repeat_list_items(items, count):
     return sum([[x] * count for x in items], [])
 
 
-def test_grib_url_stream_iter():
+def test_legacy_grib_url_stream_iter():
     ds = from_source(
         "url",
         earthkit_remote_examples_file("test6.grib"),
@@ -63,7 +63,7 @@ def test_grib_url_stream_iter():
         ({"n": 4}, [["t", "u", "v", "t"], ["u", "v"]]),
     ],
 )
-def test_grib_url_stream_batched(_kwargs, expected_meta):
+def test_legacy_grib_url_stream_batched(_kwargs, expected_meta):
     ds = from_source(
         "url",
         earthkit_remote_examples_file("test6.grib"),
@@ -87,7 +87,7 @@ def test_grib_url_stream_batched(_kwargs, expected_meta):
 
 
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
-def test_grib_url_stream_group_by(group):
+def test_legacy_grib_url_stream_group_by(group):
     ds = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True)
 
     # no methods are available
@@ -111,7 +111,7 @@ def test_grib_url_stream_group_by(group):
     assert sum([1 for _ in ds]) == 0
 
 
-def test_grib_url_stream_in_memory():
+def test_legacy_grib_url_stream_in_memory():
     ds = from_source(
         "url",
         earthkit_remote_examples_file("test6.grib"),
@@ -151,7 +151,7 @@ def test_grib_url_stream_in_memory():
 
 
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_when_loaded_from_url_stream(write_method):
+def test_legacy_grib_save_when_loaded_from_url_stream(write_method):
     ds = from_source(
         "url",
         earthkit_remote_examples_file("test6.grib"),
@@ -172,7 +172,7 @@ def test_grib_save_when_loaded_from_url_stream(write_method):
 #         {"batch_size": 1},
 #     ],
 # )
-def test_grib_url_stream_multi_urls_iter():
+def test_legacy_grib_url_stream_multi_urls_iter():
     ds = from_source(
         "url",
         [
@@ -217,7 +217,7 @@ def test_grib_url_stream_multi_urls_iter():
         ({"n": 4}, [["2t", "msl", "t", "z"], ["t", "z"]]),
     ],
 )
-def test_grib_url_stream_multi_urls_batched(_kwargs, expected_meta):
+def test_legacy_grib_url_stream_multi_urls_batched(_kwargs, expected_meta):
     ds = from_source(
         "url",
         [
@@ -243,7 +243,7 @@ def test_grib_url_stream_multi_urls_batched(_kwargs, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
-def test_grib_url_stream_multi_urls_memory():
+def test_legacy_grib_url_stream_multi_urls_memory():
     ds = from_source(
         "url",
         [
@@ -330,7 +330,7 @@ def test_grib_url_stream_multi_urls_memory():
         ),
     ],
 )
-def test_grib_url_stream_single_url_parts_core(path, parts, expected_meta):
+def test_legacy_grib_url_stream_single_url_parts_core(path, parts, expected_meta):
     ds = from_source(
         "url",
         earthkit_remote_file(path),
@@ -363,7 +363,7 @@ def test_grib_url_stream_single_url_parts_core(path, parts, expected_meta):
         ),
     ],
 )
-def test_grib_url_stream_single_url_parts_as_arg_valid(parts, expected_meta):
+def test_legacy_grib_url_stream_single_url_parts_as_arg_valid(parts, expected_meta):
     ds = from_source(
         "url",
         [earthkit_remote_examples_file("test6.grib"), parts],
@@ -385,7 +385,7 @@ def test_grib_url_stream_single_url_parts_as_arg_valid(parts, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
-def test_grib_url_stream_single_url_parts_as_arg_invalid():
+def test_legacy_grib_url_stream_single_url_parts_as_arg_invalid():
     with pytest.raises(ValueError):
         from_source(
             "url",
@@ -428,7 +428,7 @@ def test_grib_url_stream_single_url_parts_as_arg_invalid():
         ),
     ],
 )
-def test_grib_url_stream_multi_urls_parts(parts1, parts2, expected_meta):
+def test_legacy_grib_url_stream_multi_urls_parts(parts1, parts2, expected_meta):
     ds = from_source(
         "url",
         [

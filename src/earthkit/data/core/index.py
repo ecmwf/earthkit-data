@@ -9,9 +9,7 @@
 
 import functools
 import logging
-import math
 from abc import abstractmethod
-from collections import defaultdict
 
 import earthkit.data
 from earthkit.data.core.order import build_remapping
@@ -201,6 +199,10 @@ class Index(Source):
         return MaskIndex(*args, **kwargs)
 
     @abstractmethod
+    def _getitem(self, n):
+        pass
+
+    @abstractmethod
     def __len__(self):
         self._not_implemented()
 
@@ -301,8 +303,8 @@ class Index(Source):
         if not kwargs:
             return self
 
-        if hasattr(self, "normalise_selection"):
-            kwargs = self.normalise_selection(**kwargs)
+        if hasattr(self, "normalise_key_values"):
+            kwargs = self.normalise_key_values(**kwargs)
 
         selection = Selection(kwargs, remapping=remapping)
         if selection.is_empty:
@@ -570,8 +572,8 @@ class Index(Source):
 
         return np.array([f.to_numpy(*args, **kwargs) for f in self])
 
-    def full(self, *coords):
-        return FullIndex(self, *coords)
+    # def full(self, *coords):
+    #     return FullIndex(self, *coords)
 
     def batched(self, n):
         """Iterate through the object in batches of ``n``.
@@ -681,64 +683,64 @@ class MultiIndex(Index):
         )
 
 
-class ForwardingIndex(Index):
-    def __init__(self, index):
-        self._index = index
+# class ForwardingIndex(Index):
+#     def __init__(self, index):
+#         self._index = index
 
-    def __len__(self):
-        return len(self._index)
-
-
-class ScaledField:
-    def __init__(self, field, offset, scaling):
-        self.field = field
-        self.offset = offset
-        self.scaling = scaling
-
-    def to_numpy(self, **kwargs):
-        return (self.field.to_numpy(**kwargs) - self.offset) * self.scaling
+#     def __len__(self):
+#         return len(self._index)
 
 
-class ScaledIndex(ForwardingIndex):
-    def __init__(self, index, offset, scaling):
-        super().__init__(index)
-        self.offset = offset
-        self.scaling = scaling
+# class ScaledField:
+#     def __init__(self, field, offset, scaling):
+#         self.field = field
+#         self.offset = offset
+#         self.scaling = scaling
 
-    def __getitem__(self, n):
-        return ScaledField(self.index[n], self.offset, self.scaling)
+#     def to_numpy(self, **kwargs):
+#         return (self.field.to_numpy(**kwargs) - self.offset) * self.scaling
 
 
-class FullIndex(Index):
-    def __init__(self, index, *coords):
-        import numpy as np
+# class ScaledIndex(ForwardingIndex):
+#     def __init__(self, index, offset, scaling):
+#         super().__init__(index)
+#         self.offset = offset
+#         self.scaling = scaling
 
-        self._index = index
+#     def __getitem__(self, n):
+#         return ScaledField(self.index[n], self.offset, self.scaling)
 
-        # Pass1, unique values
-        unique = index.unique_values(*coords)
-        shape = tuple(len(v) for v in unique.values())
 
-        name_to_index = defaultdict(dict)
+# class FullIndex(Index):
+#     def __init__(self, index, *coords):
+#         import numpy as np
 
-        for k, v in unique.items():
-            for i, e in enumerate(v):
-                name_to_index[k][e] = i
+#         self._index = index
 
-        self.size = math.prod(shape)
-        self.shape = shape
-        self.holes = np.full(shape, False)
+#         # Pass1, unique values
+#         unique = index.unique_values(*coords)
+#         shape = tuple(len(v) for v in unique.values())
 
-        for f in index:
-            idx = tuple(name_to_index[k][f.metadata(k, default=None)] for k in coords)
-            self.holes[idx] = True
+#         name_to_index = defaultdict(dict)
 
-        self.holes = self.holes.flatten()
-        print("+++++++++", self.holes.shape, coords, self.shape)
+#         for k, v in unique.items():
+#             for i, e in enumerate(v):
+#                 name_to_index[k][e] = i
 
-    def __len__(self):
-        return self.size
+#         self.size = math.prod(shape)
+#         self.shape = shape
+#         self.holes = np.full(shape, False)
 
-    def _getitem(self, n):
-        assert self.holes[n], f"Attempting to access hole {n}"
-        return self._index[sum(self.holes[:n])]
+#         for f in index:
+#             idx = tuple(name_to_index[k][f.metadata(k, default=None)] for k in coords)
+#             self.holes[idx] = True
+
+#         self.holes = self.holes.flatten()
+#         print("+++++++++", self.holes.shape, coords, self.shape)
+
+#     def __len__(self):
+#         return self.size
+
+#     def _getitem(self, n):
+#         assert self.holes[n], f"Attempting to access hole {n}"
+#         return self._index[sum(self.holes[:n])]

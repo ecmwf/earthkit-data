@@ -36,13 +36,13 @@ def repeat_list_items(items, count):
 #         (dict(batch_size=-1), ValueError),
 #     ],
 # )
-# def test_grib_from_stream_invalid_args(_kwargs, error):
+# def test_legacy_grib_from_stream_invalid_args(_kwargs, error):
 #     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
 #         with pytest.raises(error):
 #             from_source("stream", stream, **_kwargs)
 
 
-def test_grib_from_stream_iter():
+def test_legacy_grib_from_stream_iter():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source("stream", stream)
 
@@ -74,7 +74,7 @@ def test_grib_from_stream_iter():
         ({"n": 4}, [["t", "u", "v", "t"], ["u", "v"]]),
     ],
 )
-def test_grib_from_stream_batched(_kwargs, expected_meta):
+def test_legacy_grib_from_stream_batched(_kwargs, expected_meta):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source("stream", stream)
 
@@ -106,7 +106,7 @@ def test_grib_from_stream_batched(_kwargs, expected_meta):
         ),
     ],
 )
-def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shape):
+def test_legacy_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shape):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source("stream", stream)
 
@@ -134,7 +134,7 @@ def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shap
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
-def test_grib_from_stream_group_by(array_backend, group):
+def test_legacy_grib_from_stream_group_by(array_backend, group):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source("stream", stream)
 
@@ -167,7 +167,7 @@ def test_grib_from_stream_group_by(array_backend, group):
         ({"flatten": True}, (3, 84)),
     ],
 )
-def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_shape):
+def test_legacy_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_shape):
     group = "level"
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source("stream", stream)
@@ -199,7 +199,7 @@ def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_sha
         assert sum([1 for _ in ds]) == 0
 
 
-def test_grib_from_stream_in_memory():
+def test_legacy_grib_from_stream_in_memory():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source(
             "stream",
@@ -272,7 +272,7 @@ def test_grib_from_stream_in_memory():
         ({"flatten": True}, (6, 84)),
     ],
 )
-def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_shape):
+def test_legacy_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_shape):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds_s = from_source("stream", stream, read_all=True)
 
@@ -318,7 +318,7 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
 
 
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_when_loaded_from_stream(write_method):
+def test_legacy_grib_save_when_loaded_from_stream(write_method):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         fs = from_source("stream", stream, read_all=True)
         assert len(fs) == 6
@@ -328,7 +328,7 @@ def test_grib_save_when_loaded_from_stream(write_method):
             assert len(fs) == len(fs_saved)
 
 
-def test_grib_multi_from_stream_iter():
+def test_legacy_grib_multi_from_stream_iter():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     stream2 = open(earthkit_examples_file("test4.grib"), "rb")
     ds = from_source("stream", [stream1, stream2])
@@ -364,7 +364,7 @@ def test_grib_multi_from_stream_iter():
         ({"n": 4}, [["2t", "msl", "t", "z"], ["t", "z"]]),
     ],
 )
-def test_grib_multi_grib_from_stream_batched(_kwargs, expected_meta):
+def test_legacy_grib_multi_grib_from_stream_batched(_kwargs, expected_meta):
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     stream2 = open(earthkit_examples_file("test4.grib"), "rb")
     ds = from_source("stream", [stream1, stream2])
@@ -387,7 +387,7 @@ def test_grib_multi_grib_from_stream_batched(_kwargs, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
-def test_grib_multi_stream_memory():
+def test_legacy_grib_multi_stream_memory():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     stream2 = open(earthkit_examples_file("test4.grib"), "rb")
     ds = from_source("stream", [stream1, stream2], read_all=True)
@@ -452,7 +452,7 @@ def test_grib_multi_stream_memory():
     ]
 
 
-def test_grib_concat_stream():
+def test_legacy_grib_concat_stream():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     ds1 = from_source("stream", stream1)
     ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True)
@@ -485,7 +485,7 @@ def test_grib_concat_stream():
     assert sum([1 for _ in ds]) == 0
 
 
-def test_grib_concat_stream_memory():
+def test_legacy_grib_concat_stream_memory():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     ds1 = from_source("stream", stream1, read_all=True)
     ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True, read_all=True)

@@ -49,7 +49,7 @@ def _pickle(data, representation):
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("representation", ["file", "memory"])
-def test_grib_serialise_metadata(fl_type, representation):
+def test_legacy_grib_serialise_metadata(fl_type, representation):
     ds, _ = load_grib_data("test.grib", fl_type)
     md = ds[0].metadata().override()
 
@@ -61,7 +61,7 @@ def test_grib_serialise_metadata(fl_type, representation):
 
 
 @pytest.mark.parametrize("representation", ["file", "memory"])
-def test_grib_serialise_standalone_metadata(representation):
+def test_legacy_grib_serialise_standalone_metadata(representation):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     md_ref = {
@@ -85,7 +85,7 @@ def test_grib_serialise_standalone_metadata(representation):
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("representation", ["file", "memory"])
-def test_grib_serialise_array_field_memory(fl_type, representation):
+def test_legacy_grib_serialise_array_field_memory(fl_type, representation):
     ds0, _ = load_grib_data("test.grib", fl_type)
     ds = ds0.to_fieldlist()
 
@@ -103,7 +103,7 @@ def test_grib_serialise_array_field_memory(fl_type, representation):
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("representation", ["file", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_serialise_array_fieldlist(fl_type, representation, write_method):
+def test_legacy_grib_serialise_array_fieldlist(fl_type, representation, write_method):
     ds0, _ = load_grib_data("test.grib", fl_type)
     ds = ds0.to_fieldlist()
 
@@ -132,7 +132,7 @@ def test_grib_serialise_array_fieldlist(fl_type, representation, write_method):
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
-def test_grib_serialise_file_fieldlist_core(fl_type):
+def test_legacy_grib_serialise_file_fieldlist_core(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
 
     pickled_f = pickle.dumps(ds)
@@ -150,7 +150,7 @@ def test_grib_serialise_file_fieldlist_core(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
-def test_grib_serialise_file_fieldlist_sel(fl_type):
+def test_legacy_grib_serialise_file_fieldlist_sel(fl_type):
     ds0, _ = load_grib_data("test6.grib", fl_type)
     ds = ds0.sel(param="t")
     assert len(ds) == 2
@@ -170,7 +170,7 @@ def test_grib_serialise_file_fieldlist_sel(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
-def test_grib_serialise_file_fieldlist_concat(fl_type):
+def test_legacy_grib_serialise_file_fieldlist_concat(fl_type):
     ds00, _ = load_grib_data("test.grib", fl_type)
     ds01, _ = load_grib_data("test6.grib", fl_type)
     ds = ds00 + ds01
@@ -188,14 +188,14 @@ def test_grib_serialise_file_fieldlist_concat(fl_type):
         ds2.metadata(k) == ds.metadata(k)
 
 
-def test_grib_serialise_stream_1():
+def test_legacy_grib_serialise_stream_1():
     with open(earthkit_examples_file("test.grib"), "rb") as f:
         ds = from_source("stream", f)
         with pytest.raises(NotImplementedError):
             pickle.dumps(ds)
 
 
-def test_grib_serialise_stream_2():
+def test_legacy_grib_serialise_stream_2():
     with open(earthkit_examples_file("test.grib"), "rb") as f:
         ds = from_source("stream", f, read_all=True)
         pickled_f = pickle.dumps(ds)
@@ -206,7 +206,7 @@ def test_grib_serialise_stream_2():
     assert ds.metadata("shortName") == ["2t", "msl"]
 
 
-def test_grib_serialise_file_parts():
+def test_legacy_grib_serialise_file_parts():
     parts = (240, 150)
 
     ds = from_source("file", earthkit_examples_file("test6.grib"), parts=parts)
@@ -222,7 +222,7 @@ def test_grib_serialise_file_parts():
 @pytest.mark.parametrize("fl_type", FL_FILE)
 @pytest.mark.parametrize("representation", ["file", "memory"])
 @pytest.mark.parametrize("policy", ["path", "memory"])
-def test_grib_serialise_policy(fl_type, representation, policy):
+def test_legacy_grib_serialise_policy(fl_type, representation, policy):
     ds, _ = load_grib_data("test.grib", fl_type)
 
     with config.temporary({"grib-file-serialisation-policy": policy}):

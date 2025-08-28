@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.fieldlist_ori import FieldList
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_examples_file

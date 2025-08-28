@@ -12,8 +12,8 @@ import math
 
 from earthkit.utils.array import array_namespace
 
-from earthkit.data.core.fieldlist import Field
-from earthkit.data.indexing.fieldlist import ClonedFieldCore
+from earthkit.data.core.fieldlist_ori import Field
+from earthkit.data.indexing.fieldlist_ori import ClonedFieldCore
 
 LOG = logging.getLogger(__name__)
 
@@ -157,6 +157,6 @@ def from_array(array, metadata):
         else:
             fields.append(ArrayField(a, metadata[i]))
 
-    from earthkit.data.indexing.fieldlist import SimpleFieldList
+    from earthkit.data.indexing.fieldlist_ori import SimpleFieldList
 
     return SimpleFieldList(fields)

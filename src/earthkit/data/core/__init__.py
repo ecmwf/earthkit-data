@@ -7,6 +7,7 @@
 #
 
 import logging
+from abc import ABCMeta
 from abc import abstractmethod
 from collections import defaultdict
 
@@ -35,6 +36,7 @@ class MetaBase(type):
 
 class Base(metaclass=MetaBase):
     # Convertors
+    @abstractmethod
     def to_numpy(self, **kwargs):
         """Convert into a numpy array"""
         self._not_implemented()
@@ -124,14 +126,6 @@ class Base(metaclass=MetaBase):
         vals = {k: tuple(values.keys()) for k, values in vals.items()}
 
         return vals
-
-    # @abstractmethod
-    # def to_points(self, *args, **kwargs):
-    #     self._not_implemented()
-
-    # @abstractmethod
-    # def to_latlon(self, *args, **kwargs):
-    #     self._not_implemented()
 
     def __add__(self, other):
         self._not_implemented()

@@ -13,11 +13,11 @@ from functools import cached_property
 
 import numpy as np
 
-from earthkit.data.core.fieldlist import Field
+from earthkit.data.core.fieldlist_ori import Field
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.core.metadata import RawMetadata
-from earthkit.data.indexing.fieldlist import ClonedFieldCore
+from earthkit.data.indexing.fieldlist_ori import ClonedFieldCore
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
 

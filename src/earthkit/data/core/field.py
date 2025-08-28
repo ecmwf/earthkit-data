@@ -18,7 +18,7 @@ from earthkit.data.core import Base
 from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalize
-from earthkit.data.new_field.fieldlist import SimpleFieldList
+from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.specs.data import ArrayData
 from earthkit.data.utils.metadata.args import metadata_argument
 from earthkit.data.utils.metadata.args import metadata_argument_new
@@ -326,7 +326,7 @@ class Field(Base):
         """Return the values of the field."""
         return self.data.values
 
-    def to_numpy(self, flatten=False, dtype=None):
+    def to_numpy(self, flatten=False, dtype=None, index=None):
         r"""Return the values stored in the field as an ndarray.
 
         Parameters
@@ -337,6 +337,9 @@ class Field(Base):
         dtype: str, numpy.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
+        index: ndarray indexing object, optional
+            The index of the values and to be extracted. When it
+            is None all the values are extracted
 
         Returns
         -------
@@ -344,9 +347,12 @@ class Field(Base):
             Field values
 
         """
-        return self.data.to_numpy(self.shape, flatten=flatten, dtype=dtype)
+        v = self.data.to_numpy(self.shape, flatten=flatten, dtype=dtype)
+        if index is not None:
+            v = v[index]
+        return v
 
-    def to_array(self, flatten=False, dtype=None, array_backend=None):
+    def to_array(self, flatten=False, dtype=None, array_backend=None, index=None):
         r"""Return the values stored in the field.
 
         Parameters
@@ -360,6 +366,9 @@ class Field(Base):
         array_backend: str, module or None
             The array backend to be used. When it is :obj:`None` the underlying array format
             of the field is used.
+        index: array indexing object, optional
+            The index of the values and to be extracted. When it
+            is None all the values are extracted
 
         Returns
         -------
@@ -367,7 +376,10 @@ class Field(Base):
             Field values.
 
         """
-        return self.data.to_array(self.shape, flatten=flatten, dtype=dtype, array_backend=array_backend)
+        v = self.data.to_array(self.shape, flatten=flatten, dtype=dtype, array_backend=array_backend)
+        if index is not None:
+            v = v[index]
+        return v
 
     def set_values(self, array):
         data = self.data.set_values(array)
@@ -969,13 +981,12 @@ class Field(Base):
     @normalize("step", "timedelta")
     @normalize("step_range", "timedelta")
     @staticmethod
-    def normalise_selection(**kwargs):
+    def normalise_key_values(**kwargs):
+        r"""Normalise the selection input for :meth:`FieldList.sel`."""
         return kwargs
 
-    @staticmethod
-    def to_fieldlist(fields):
-
-        return SimpleFieldList.from_fields(fields)
+    def to_fieldlist(self):
+        return SimpleFieldList.from_fields([self])
 
     @property
     def grib(self):
@@ -1113,6 +1124,63 @@ class Field(Base):
         lon, lat = self._data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
         return dict(lat=lat, lon=lon)
 
+    def bounding_box(self):
+        r"""Return the bounding box of the field.
+
+        Returns
+        -------
+        :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
+        """
+        return self.geography.bounding_box
+
+    def datetime(self):
+        r"""Return the date and time of the field.
+
+        Returns
+        -------
+        dict of datatime.datetime
+            Dict with items "base_time" and "valid_time".
+
+        Examples
+        --------
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
+        >>> ds[4].datetime()
+        {'base_time': datetime.datetime(2020, 12, 21, 12, 0),
+        'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
+
+        """
+        return self._metadata.datetime()
+
+    def to_xarray(self, *args, **kwargs):
+        """Convert the Field into an Xarray Dataset.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments passed to :obj:`FieldList.to_xarray`.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`FieldList.to_xarray`.
+
+        Returns
+        -------
+        Xarray Dataset
+
+        """
+        return self._to_fieldlist().to_xarray(*args, **kwargs)
+
+    def to_pandas(self, *args, **kwargs):
+        pass
+
+    def sel(self, *args, **kwargs):
+        pass
+
+    def isel(self, *args, **kwargs):
+        pass
+
+    def order_by(self, *args, **kwargs):
+        pass
+
 
 class GribFieldEncoderInput:
     def __init__(self, field):
@@ -1149,7 +1217,7 @@ def grib_handle(field):
 
 
 def deflate(field, flatten=False, dtype=None, array_backend=None):
-    if hasattr(field.data, "handle"):
+    if hasattr(field.data, "_handle"):
         values = field.data.to_array(
             field.shape,  # type: ignore
             flatten=flatten,
@@ -1167,8 +1235,8 @@ def deflate(field, flatten=False, dtype=None, array_backend=None):
     handles = set()
     for part in ["time", "parameter", "geography", "vertical", "labels", "raw"]:
         part_obj = getattr(field, part)
-        if hasattr(part_obj, "handle"):
-            handle = getattr(part_obj, "handle", None)
+        if hasattr(part_obj, "_handle"):
+            handle = getattr(part_obj, "_handle", None)
             parts_with_handle[part] = (handle, part_obj)
             handles.add(handle)
         else:
@@ -1183,7 +1251,8 @@ def deflate(field, flatten=False, dtype=None, array_backend=None):
         handle = handles.pop()
         handle = handle.deflate()
         for part, (h, part_obj) in parts_with_handle.items():
-            _kwargs[part] = part_obj.__class__(h)
+            # print("Create part:", part, "class:", part_obj.__class__, "handle:", h)
+            _kwargs[part] = part_obj.__class__.from_grib(h)
 
         if field.data is not data:
             _kwargs["data"] = data

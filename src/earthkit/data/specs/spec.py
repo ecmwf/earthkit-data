@@ -30,10 +30,17 @@ def spec_aliases(cls) -> type:
     if aliases:
         for alias, method in aliases.items():
 
-            def _f(self):
-                return getattr(self, method)
+            def _make(alias, method):
+                def _f(self):
+                    return getattr(self, method)
 
-            setattr(cls, alias, property(fget=_f, doc=f"Return the {alias}. Alias for :obj:`{method}`."))
+                return _f
+
+            setattr(
+                cls,
+                alias,
+                property(fget=_make(alias, method), doc=f"Return the {alias}. Alias for :obj:`{method}`."),
+            )
 
     all_keys = list(cls.KEYS)
     if aliases:

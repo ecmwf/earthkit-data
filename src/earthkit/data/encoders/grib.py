@@ -426,7 +426,7 @@ class GribEncoder(Encoder):
     def _encode_field(self, field, values=None, template=None, metadata=None, **kwargs):
         # check if the field is already encoded in the desired format
 
-        from earthkit.data.new_field.field import GribFieldEncoderInput
+        from earthkit.data.core.field import GribFieldEncoderInput
 
         d = GribFieldEncoderInput(field)
         # if d.enabled:

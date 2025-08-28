@@ -402,7 +402,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
 
 class XarrayEarthkit:
     def to_fieldlist(self):
-        from earthkit.data.indexing.fieldlist import FieldArray
+        from earthkit.data.indexing.fieldlist_ori import FieldArray
 
         return FieldArray([f for f in self._to_fields()])
 

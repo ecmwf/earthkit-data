@@ -18,7 +18,26 @@ LOG = logging.getLogger(__name__)
 
 
 class Wrapper(Base):
-    pass
+    def bounding_box(self):
+        self._not_implemented()
+
+    def datetime(self):
+        self._notimplemented()
+
+    def isel(self, *args, **kwargs):
+        self._not_implemented()
+
+    def metadata(self, *args, **kwargs):
+        self._not_implemented()
+
+    def order_by(self, *args, **kwargs):
+        self._not_implemented()
+
+    def sel(self, *args, **kwargs):
+        self._not_implemented()
+
+    def to_target(self, *args, **kwargs):
+        self._not_implemented()
 
 
 # TODO: Add plugins

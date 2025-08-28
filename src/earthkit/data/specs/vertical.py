@@ -51,6 +51,8 @@ LEVEL_TYPES = {
     ]
 }
 
+UNKNOWN_LEVEL_TYPE = LEVEL_TYPES["unknown"]
+
 
 @spec_aliases
 class Vertical(Spec):
@@ -70,7 +72,7 @@ class Vertical(Spec):
         if isinstance(level_type, LevelType):
             self._level_type = level_type
         else:
-            self._level_type = LEVEL_TYPES.get(level_type, UNKNOWN_LEVEL)
+            self._level_type = LEVEL_TYPES.get(level_type, UNKNOWN_LEVEL_TYPE)
 
     @property
     def level(self) -> Union[int, float]:

@@ -71,7 +71,7 @@ def check_field_write(f, md_ref, shape_ref, values_ref, use_writer=False, **kwar
 
 
 # @pytest.mark.skipif(True, reason="headers_only_clone has to be fixed")
-def test_grib_metadata_override_headers_only_true_core():
+def test_legacy_grib_metadata_override_headers_only_true_core():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     ref_size = ds[0].metadata("totalLength")
 
@@ -125,7 +125,7 @@ def test_grib_metadata_override_headers_only_true_core():
     assert md5["typeOfLevel"] == "surface"
 
 
-def test_grib_metadata_override_headers_only_false_core():
+def test_legacy_grib_metadata_override_headers_only_false_core():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     ref_size = ds[0].metadata("totalLength")
 
@@ -153,7 +153,7 @@ def test_grib_metadata_override_headers_only_false_core():
     # grid_list(files=["regular_ll_single_point.grib1"]),
     grid_list(),
 )
-def test_grib_metadata_headers_only_clone_true_grids(file):
+def test_legacy_grib_metadata_headers_only_clone_true_grids(file):
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
 
     keys = ["bitsPerValue", "level", "shortName", "gridType", "packingType", "date"]
@@ -207,7 +207,7 @@ def test_grib_metadata_headers_only_clone_true_grids(file):
     # grid_list(files=["reduced_gg_N32.grib1"]),
     grid_list(),
 )
-def test_grib_metadata_headers_only_clone_false_grids(file):
+def test_legacy_grib_metadata_headers_only_clone_false_grids(file):
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
 
     keys = ["bitsPerValue", "level", "shortName", "gridType", "packingType", "date"]
@@ -255,7 +255,7 @@ def test_grib_metadata_headers_only_clone_false_grids(file):
     check_field_write(f, md_ref_1, shape_ref, vals_ref, use_writer=True)
 
 
-def test_grib_headers_only_clone_standalone_metadata():
+def test_legacy_grib_headers_only_clone_standalone_metadata():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     md_ref = {

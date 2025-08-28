@@ -18,7 +18,7 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.new_field.fieldlist import FieldList
+from earthkit.data.indexing.fieldlist import FieldList
 from earthkit.data.sources.array_list import ArrayField
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import write_to_file

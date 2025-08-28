@@ -19,7 +19,7 @@ from typing import Tuple
 from numpy.typing import NDArray
 
 from earthkit.data import Field
-from earthkit.data.core.fieldlist import math
+from earthkit.data.core.fieldlist_ori import math
 
 from .coordinates import extract_single_value
 from .coordinates import is_scalar

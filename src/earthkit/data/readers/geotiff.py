@@ -11,8 +11,8 @@ from functools import cached_property
 
 import numpy as np
 
-from earthkit.data.core.fieldlist import Field
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.fieldlist_ori import Field
+from earthkit.data.core.fieldlist_ori import FieldList
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.utils.bbox import BoundingBox

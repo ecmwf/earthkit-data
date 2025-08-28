@@ -24,7 +24,7 @@ class FieldlistFromDicts(Source):
     def mutate_ori(self):
         import numpy as np
 
-        from earthkit.data.indexing.fieldlist import SimpleFieldList
+        from earthkit.data.indexing.simple import SimpleFieldList
 
         from .array_list import ArrayField
 
@@ -37,8 +37,8 @@ class FieldlistFromDicts(Source):
         return SimpleFieldList(fields=fields)
 
     def mutate(self):
-        from earthkit.data.new_field.field import Field
-        from earthkit.data.new_field.fieldlist import SimpleFieldList
+        from earthkit.data.core.field import Field
+        from earthkit.data.indexing.simple import SimpleFieldList
 
         fields = []
         for f in self.d:

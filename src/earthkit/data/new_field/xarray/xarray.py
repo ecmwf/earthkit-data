@@ -12,7 +12,7 @@ import logging
 from functools import cached_property
 from typing import Any
 
-from earthkit.data.core.fieldlist import math
+from earthkit.data.core.fieldlist_ori import math
 from earthkit.data.core.spec.data import FieldData
 from earthkit.data.core.spec.geography import Geography
 from earthkit.data.core.spec.parameter import Parameter

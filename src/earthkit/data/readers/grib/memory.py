@@ -11,8 +11,8 @@ import logging
 
 import eccodes
 
-from earthkit.data.indexing.fieldlist import ClonedFieldCore
-from earthkit.data.indexing.fieldlist import SimpleFieldList
+from earthkit.data.indexing.fieldlist_ori import ClonedFieldCore
+from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.readers import Reader
 from earthkit.data.readers.grib.codes import GribCodesHandle
 from earthkit.data.readers.grib.codes import GribField

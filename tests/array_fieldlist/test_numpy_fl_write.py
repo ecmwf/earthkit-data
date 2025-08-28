@@ -18,7 +18,7 @@ import pytest
 from earthkit.utils.testing import check_array_type
 
 from earthkit.data import from_source
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.fieldlist_ori import FieldList
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import WRITE_TO_FILE_METHODS

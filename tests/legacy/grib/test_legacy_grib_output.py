@@ -52,7 +52,7 @@ def new_grib_coder_compat(*args, **kwargs):
 
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_when_loaded_from_file(fl_type, write_method):
+def test_legacy_grib_save_when_loaded_from_file(fl_type, write_method):
     fs, _ = load_grib_data("test6.grib", fl_type)
     assert len(fs) == 6
     with temp_file() as tmp:
@@ -66,7 +66,7 @@ def test_grib_save_when_loaded_from_file(fl_type, write_method):
     [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
 )
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_bits_per_value_fieldlist(_kwargs, expected_value, write_method):
+def test_legacy_grib_save_bits_per_value_fieldlist(_kwargs, expected_value, write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     with temp_file() as tmp:
@@ -80,7 +80,7 @@ def test_grib_save_bits_per_value_fieldlist(_kwargs, expected_value, write_metho
     [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
 )
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_bits_per_value_single_field(_kwargs, expected_value, write_method):
+def test_legacy_grib_save_bits_per_value_single_field(_kwargs, expected_value, write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     with temp_file() as tmp:
@@ -92,7 +92,7 @@ def test_grib_save_bits_per_value_single_field(_kwargs, expected_value, write_me
 # TODO: if we use missing_value = np.finfo(np.float32).max the test fails
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
 @pytest.mark.parametrize("missing_value", [100000.0, np.finfo(np.float32).max - 1])
-def test_grib_output_missing_value_1(mode, missing_value):
+def test_legacy_grib_output_missing_value_1(mode, missing_value):
     fld = from_source("file", earthkit_examples_file("test.grib"))[0]
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -130,7 +130,7 @@ def test_grib_output_missing_value_1(mode, missing_value):
     reason="ignore_cleanup_errors requires Python 3.10 or later",
 )
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
-def test_grib_output_latlon(mode):
+def test_legacy_grib_output_latlon(mode):
     data = np.random.random((181, 360))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -169,7 +169,7 @@ def test_grib_output_latlon(mode):
     reason="ignore_cleanup_errors requires Python 3.10 or later",
 )
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
-def test_grib_output_o96_sfc(mode):
+def test_legacy_grib_output_o96_sfc(mode):
     data = np.random.random((40320,))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -215,7 +215,7 @@ def test_grib_output_o96_sfc(mode):
     reason="ignore_cleanup_errors requires Python 3.10 or later",
 )
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
-def test_grib_output_o160_sfc(mode):
+def test_legacy_grib_output_o160_sfc(mode):
     data = np.random.random((108160,))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -260,7 +260,7 @@ def test_grib_output_o160_sfc(mode):
     reason="ignore_cleanup_errors requires Python 3.10 or later",
 )
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
-def test_grib_output_n96_sfc(mode):
+def test_legacy_grib_output_n96_sfc(mode):
     data = np.random.random(50662)
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -305,7 +305,7 @@ def test_grib_output_n96_sfc(mode):
     reason="ignore_cleanup_errors requires Python 3.10 or later",
 )
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
-def test_grib_output_mars_labeling(mode):
+def test_legacy_grib_output_mars_labeling(mode):
     data = np.random.random((40320,))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -357,7 +357,7 @@ def test_grib_output_mars_labeling(mode):
 )
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
 @pytest.mark.parametrize("levtype", [{}, {"levtype": "pl"}])
-def test_grib_output_o96_pl(mode, levtype):
+def test_legacy_grib_output_o96_pl(mode, levtype):
     data = np.random.random((40320,))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -401,7 +401,7 @@ def test_grib_output_o96_pl(mode, levtype):
 )
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
 @pytest.mark.parametrize("levtype", [{}, {"levtype": "pl"}])
-def test_grib_output_tp(mode, levtype):
+def test_legacy_grib_output_tp(mode, levtype):
     data = np.random.random((181, 360))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -445,7 +445,7 @@ def test_grib_output_tp(mode, levtype):
 )
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
 @pytest.mark.parametrize("array", [True, False])
-def test_grib_output_field_template(mode, array):
+def test_legacy_grib_output_field_template(mode, array):
     data = np.random.random((7, 12))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -498,7 +498,7 @@ def test_grib_output_field_template(mode, array):
         ("{date}_{time}_{step:03}", {"20180801_1200_000": 6}),
     ],
 )
-def test_grib_output_filename_pattern(mode, pattern, expected_value):
+def test_legacy_grib_output_filename_pattern(mode, pattern, expected_value):
     ds = from_source("file", earthkit_examples_file("test6.grib"))
 
     with temp_directory() as tmp:

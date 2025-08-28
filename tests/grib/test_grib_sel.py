@@ -83,6 +83,7 @@ def test_grib_sel_single_file_2(fl_type):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
     g = f.sel(shortName=["t"], endStep=[3, 6])
+
     assert len(g) == 2
     assert g.get(["shortName", "level:l", "step:l"]) == [
         ["t", 1000, 3],
@@ -216,7 +217,7 @@ def test_grib_sel_date_time_step_3(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("dval", ["2020-12-21T21:00:00", datetime.date])
+@pytest.mark.parametrize("dval", ["2020-12-21T21:00:00", datetime.datetime(2020, 12, 21, 21, 0, 0)])
 def test_grib_sel_valid_datetime(fl_type, dval):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 

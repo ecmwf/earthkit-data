@@ -7,11 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.data.core.field import Field
+from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.readers import Reader
 from earthkit.data.utils.parts import Part
 
-from ..field import Field
-from ..fieldlist import SimpleFieldList
 from .handle import GribHandleManager
 from .handle import ManagedGribHandle
 from .scan import GribCodesMessagePositionIndex
@@ -50,7 +50,6 @@ class GribFieldListInFile(SimpleFieldList):
         self.path = path
         self._file_parts = parts
         self.__positions = positions
-        super().__init__(**kwargs)
 
         from earthkit.data.core.config import CONFIG
 
@@ -64,14 +63,17 @@ class GribFieldListInFile(SimpleFieldList):
 
         self.use_metadata_cache = _get_opt(use_grib_metadata_cache, "use-grib-metadata-cache")
 
-    @property
-    def fields(self):
-        if not self._fields:
+        fields = self._make_fields()
+        super().__init__(fields=fields, **kwargs)
+
+    def _make_fields(self):
+        if True:
+            # if not self._fields:
             r = []
             for n in range(self.number_of_parts()):
                 r.append(self._create_field(n))
-            self._fields = r
-        return self._fields
+            return r
+        # return self._fields
 
     def _create_field(self, n):
         part = self.part(n)

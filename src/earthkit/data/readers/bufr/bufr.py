@@ -233,6 +233,29 @@ class BUFRMessage(Base):
         """
         return self.handle.unpack()
 
+    def get(self, *keys, default=None, astype=None, raise_on_missing=False):
+        r"""Return the values for the specified keys.
+
+        Parameters
+        ----------
+        keys: str, list or tuple
+            Keys to get the values for.
+        default: value
+            Default value to return when a key is not found or it has a missing value.
+        raise_on_missing: bool
+            When it is True raises an exception if a key is not found or it has a missing value.
+
+        Returns
+        -------
+        dict
+            A dictionary with keys and their values.
+
+        """
+        if not keys:
+            raise ValueError("At least one key must be specified.")
+
+        return self.metadata(keys, default=default, astype=astype, raise_on_missing=raise_on_missing)
+
     def metadata(self, *keys, astype=None, **kwargs):
         r"""Returns metadata values from the BUFR message. When the message in packed
         (default state) only the header keys are available. To access the data section keys

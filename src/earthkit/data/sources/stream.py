@@ -11,7 +11,7 @@ import itertools
 import logging
 from functools import cached_property
 
-from earthkit.data.new_field.fieldlist import StreamFieldList
+from earthkit.data.indexing.stream import StreamFieldList
 
 # from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.readers import stream_reader
@@ -184,7 +184,7 @@ class MultiStreamSource(Source):
         return r
 
     def to_xarray(self, **kwargs):
-        from earthkit.data.core.fieldlist import FieldList
+        from earthkit.data.core.fieldlist_ori import FieldList
 
         fields = [f for f in self]
         return FieldList.from_fields(fields).to_xarray(**kwargs)

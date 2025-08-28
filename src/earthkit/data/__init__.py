@@ -23,10 +23,10 @@ from earthkit.data.wrappers import get_wrapper as from_object
 from .arguments.transformers import ALL
 from .core.caching import CACHE as cache
 from .core.config import CONFIG as config
-from .core.fieldlist import Field
-from .core.fieldlist import FieldList
+from .core.fieldlist_ori import Field
+from .core.fieldlist_ori import FieldList
 from .encoders import create_encoder
-from .indexing.fieldlist import SimpleFieldList
+from .indexing.simple import SimpleFieldList
 from .readers.grib.output import new_grib_output
 from .sources import Source
 from .sources import from_source

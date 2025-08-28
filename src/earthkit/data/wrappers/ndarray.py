@@ -27,6 +27,9 @@ class NumpyNDArrayWrapper(Wrapper):
         """
         return self.data
 
+    def to_pandas(self, **kwargs):
+        self._not_implemented()
+
     def to_xarray(self, **kwargs):
         """Return an xarray.DataArray representation of the data.
 

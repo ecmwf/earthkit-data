@@ -21,6 +21,7 @@ from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import write_to_file
 
 
+@pytest.mark.skip(reason="Some runners crash in Xarray")
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_netcdf_fieldlist_save(write_method):
     ds = from_source("file", earthkit_examples_file("test.nc"))
@@ -60,6 +61,7 @@ def test_netcdf_fieldlist_subset_save_2(write_method):
             write_to_file(write_method, tmp, r)
 
 
+@pytest.mark.skip(reason="Some runners crash in Xarray")
 @pytest.mark.skipif(IN_GITHUB, reason="Some runners crash in Xarray")
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_netcdf_fieldlist_multi_subset_save(write_method):

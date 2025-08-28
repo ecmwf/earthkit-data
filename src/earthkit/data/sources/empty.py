@@ -8,7 +8,7 @@
 #
 
 
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.core.fieldlist_ori import FieldList
 
 
 class EmptySource(FieldList):

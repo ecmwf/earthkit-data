@@ -10,7 +10,7 @@
 import logging
 from functools import cached_property
 
-from earthkit.data.core.fieldlist import Field
+from earthkit.data.core.fieldlist_ori import Field
 from earthkit.data.core.metadata import WrappedMetadata
 from earthkit.data.utils.dates import date_to_grib
 from earthkit.data.utils.dates import datetime_from_grib

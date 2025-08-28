@@ -78,7 +78,7 @@ def stream_reader(
 
         r = GribStreamReader(stream, **kwargs)
         if memory:
-            from earthkit.data.new_field.fieldlist import SimpleFieldList
+            from earthkit.data.indexing.simple import SimpleFieldList
 
             fields = [f for f in r]
             r = SimpleFieldList(fields)

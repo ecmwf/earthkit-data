@@ -14,8 +14,8 @@ from functools import cached_property
 import eccodes
 import numpy as np
 
-from earthkit.data.core.fieldlist import Field
-from earthkit.data.indexing.fieldlist import ClonedFieldCore
+from earthkit.data.core.fieldlist_ori import Field
+from earthkit.data.indexing.fieldlist_ori import ClonedFieldCore
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex

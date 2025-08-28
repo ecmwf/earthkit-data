@@ -12,7 +12,7 @@ import logging
 import eccodes
 
 # from earthkit.data.indexing.fieldlist import SimpleFieldList
-from earthkit.data.new_field.fieldlist import SimpleFieldList
+from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.readers import Reader
 
 LOG = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            from earthkit.data.new_field.field import Field
+            from earthkit.data.core.field import Field
 
             from .handle import MemoryGribHandle
 

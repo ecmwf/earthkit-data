@@ -77,7 +77,7 @@ def gridspec_list(grid_types):
     "metadata,ref,name",
     gridspec_list(SUPPORTED_GRID_TYPES),
 )
-def test_grib_gridspec_from_metadata_valid(metadata, ref, name):
+def test_legacy_grib_gridspec_from_metadata_valid(metadata, ref, name):
     if name in [
         "regular_ll/wrf_swh_aegean_ll_jscanpos.grib1",
         "regular_ll/wind_uk_ll_jscanpos_jcons.grib1",
@@ -93,7 +93,7 @@ def test_grib_gridspec_from_metadata_valid(metadata, ref, name):
     "metadata,ref,name",
     gridspec_list(UNSUPPORTED_GRID_TYPES),
 )
-def test_grib_gridspec_from_metadata_invalid_1(metadata, ref, name):
+def test_legacy_grib_gridspec_from_metadata_invalid_1(metadata, ref, name):
     with pytest.raises(ValueError):
         make_gridspec(metadata)
 
@@ -107,12 +107,12 @@ def test_grib_gridspec_from_metadata_invalid_1(metadata, ref, name):
         {"gridType": "polar_stereographic"},
     ],
 )
-def test_grib_gridspec_from_metadata_invalid_2(metadata):
+def test_legacy_grib_gridspec_from_metadata_invalid_2(metadata):
     with pytest.raises(ValueError):
         make_gridspec(metadata)
 
 
-def test_grib_gridspec_from_file():
+def test_legacy_grib_gridspec_from_file():
     ds = from_source(
         "file",
         earthkit_test_data_file(os.path.join("gridspec", "t_75_-60_10_40_5x5.grib1")),
@@ -132,7 +132,7 @@ def test_grib_gridspec_from_file():
 
 
 @pytest.mark.parametrize("metadata,gridspec,name", gridspec_list("regular_ll"))
-def test_grib_metadata_from_gridspec_valid(metadata, gridspec, name):
+def test_legacy_grib_metadata_from_gridspec_valid(metadata, gridspec, name):
     if name in [
         "regular_ll/wrf_swh_aegean_ll_jscanpos.grib1",
         "regular_ll/wind_uk_ll_jscanpos_jcons.grib1",
@@ -158,7 +158,7 @@ def test_grib_metadata_from_gridspec_valid(metadata, gridspec, name):
         ]
     ),
 )
-def test_grib_metadata_from_gridspec_invalid(metadata, gridspec, name):
+def test_legacy_grib_metadata_from_gridspec_invalid(metadata, gridspec, name):
     if name in [
         "regular_ll/wrf_swh_aegean_ll_jscanpos.grib1",
         "regular_ll/wind_uk_ll_jscanpos_jcons.grib1",
@@ -182,7 +182,7 @@ def test_grib_metadata_from_gridspec_invalid(metadata, gridspec, name):
     ],
 )
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_gridspec_to_fieldlist(input_file, write_method):
+def test_legacy_grib_gridspec_to_fieldlist(input_file, write_method):
     import numpy as np
 
     def make_lat_lon(dx):
@@ -273,7 +273,7 @@ def _global_grids():
 # these are all the cases for the earthkit-regrid target grids
 @pytest.mark.parametrize("edition", [1, 2])
 @pytest.mark.parametrize("grid", _global_grids())
-def test_grib_global_ll_gridspec_to_metadata(edition, grid):
+def test_legacy_grib_global_ll_gridspec_to_metadata(edition, grid):
     gs = {"grid": grid["grid"]}
     md, num = GridSpecConverter.to_metadata(gs, edition=edition)
 
