@@ -79,7 +79,7 @@ class DirectoryReader(Reader):
                 merger=self.merger,
                 stream=self.stream,
                 parts=self.parts,
-                **self.source._kwargs,
+                **self._source_kwargs,
             )
 
         return from_source(
@@ -92,7 +92,7 @@ class DirectoryReader(Reader):
                     merger=self.merger,
                     stream=self.stream,
                     parts=self.parts,
-                    **self.source._kwargs,
+                    **self._source_kwargs,
                 )
                 for path in sorted(self._content)
             ],
