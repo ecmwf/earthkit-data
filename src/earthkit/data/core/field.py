@@ -15,6 +15,7 @@ from earthkit.utils.array import convert_array
 from earthkit.utils.array import get_backend
 
 from earthkit.data.core import Base
+from earthkit.data.core.order import Patch
 from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalize
@@ -294,7 +295,7 @@ class Field(Base):
             raise TypeError("d must be a dictionary")
 
         data = SimpleData.from_dict(d)
-        geography = SimpleGeography.from_dict(d)
+        geography = SimpleGeography.from_dict(d, values_shape=data.values.shape)
         parameter = Parameter.from_dict(d)
         time = Time.from_dict(d)
         vertical = Vertical.from_dict(d)
@@ -443,8 +444,13 @@ class Field(Base):
         # first try the parts, bar the labels/raw
         part, name = FIELD_KEYS.get(key)
         if part:
-            v = getattr(getattr(self, part), name)
-            return _cast(v)
+            try:
+                v = getattr(getattr(self, part), name)
+                return _cast(v)
+            except Exception:
+                if raise_on_missing:
+                    raise KeyError(f"Key {key} not found in field")
+                return default
         # try the labels
         elif self.labels and key in self.labels:
             v = self.labels[key]
@@ -465,14 +471,15 @@ class Field(Base):
         raise_on_missing=False,
         output=None,
         remapping=None,
+        joiner=None,
     ):
         assert isinstance(keys, list)
 
         meth = self.get_single
         # Remapping must be an object if defined
         if remapping is not None:
-            assert isinstance(remapping, Remapping)
-            meth = remapping(meth)
+            assert isinstance(remapping, (Remapping, Patch))
+            meth = remapping(meth, joiner=joiner)
 
         _kwargs = dict(default=default, raise_on_missing=raise_on_missing)
 
@@ -796,7 +803,7 @@ class Field(Base):
     def default_encoder(self):
         if hasattr(self, "raw") and hasattr(self.raw, "handle"):
             return "grib"
-        return None
+        return "dict"
 
     def _encode(self, encoder, **kwargs):
         """Double dispatch to the encoder"""
@@ -896,6 +903,18 @@ class Field(Base):
         """
         return self.to_fieldlist().ls(*args, **kwargs)
 
+    def head(self, *args, **kwargs):
+        r"""Generate a head summary of the Field."""
+        return self.ls(*args, **kwargs)
+
+    def tail(self, *args, **kwargs):
+        r"""Generate a tail summary of the Field."""
+        return self.to_fieldlist().tail(*args, **kwargs)
+
+    def describe(self, *args, **kwargs):
+        r"""Generate a summary of the Field."""
+        return self.to_fieldlist().describe(*args, **kwargs)
+
     def load(self):
         """Load the field data."""
         data = self.data.load()
@@ -987,8 +1006,10 @@ class Field(Base):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""
         return kwargs
 
-    def to_fieldlist(self):
-        return SimpleFieldList.from_fields([self])
+    def to_fieldlist(self, fields=None):
+        if fields is None:
+            fields = [self]
+        return SimpleFieldList.from_fields(fields)
 
     @property
     def grib(self):
@@ -1182,6 +1203,33 @@ class Field(Base):
 
     def order_by(self, *args, **kwargs):
         pass
+
+    def __getstate__(self):
+        state = {}
+        print("serialise!!")
+        if hasattr(self, "raw") and self.raw and hasattr(self.raw, "handle"):
+            print("serialise handle")
+            handle = self.raw.handle
+            state["handle"] = handle
+            print(".  -> done")
+        return state
+
+    def __setstate__(self, state):
+        print("deserialise!!")
+        if "handle" in state:
+            handle = state["handle"]
+            print("deserialise handle")
+            f = Field.from_grib(handle)
+            print(".  ->", f)
+            self.__init__(
+                data=f.data,
+                time=f.time,
+                parameter=f.parameter,
+                geography=f.geography,
+                vertical=f.vertical,
+                labels=f.labels,
+                raw=f.raw,
+            )
 
 
 class GribFieldEncoderInput:

@@ -210,6 +210,24 @@ class FileGribHandle(GribHandle):
     def release(self):
         self._handle = None
 
+    def __getstate__(self):
+        # state = super().__getstate__()
+        print("FileGribHandle getstate")
+        state = {}
+        state["path"] = self.path
+        state["offset"] = self.offset
+        state["length"] = self.length
+        # state["use_metadata_cache"] = self._use_metadata_cache
+        return state
+
+    def __setstate__(self, state):
+        print("FileGribHandle setstate")
+        self.path = state["path"]
+        self.offset = state["offset"]
+        self.length = state["length"]
+        # self._use_metadata_cache = state["use_metadata_cache"]
+        # self._handle_manager = None
+
 
 class ManagedGribHandle(FileGribHandle):
     """A GribHandle that is managed by a handle manager."""
@@ -229,6 +247,22 @@ class ManagedGribHandle(FileGribHandle):
     def release(self):
         self.manager.remove(self)
 
+    def __getstate__(self):
+        print("ManagedFileGribHandle Getstate")
+        state = super().__getstate__()
+        state["manager"] = self.manager
+        return state
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self.manager = state["manager"]
+
+        # self.path = state["path"]
+        # self._offset = state["offset"]
+        # self._length = state["length"]
+        # self._use_metadata_cache = state["use_metadata_cache"]
+        # self._handle_manager = None
+
 
 class MemoryGribHandle(GribHandle):
     def __init__(self, handle):
@@ -245,6 +279,12 @@ class MemoryGribHandle(GribHandle):
 
     def release(self):
         self._handle = None
+
+    def __getstate__(self):
+        return {"message": self._handle.get_buffer()}
+
+    def __setstate__(self, state):
+        self.__init__(GribCodesHandle.from_message(state["message"]))
 
 
 class DeflatedGribHandle(MemoryGribHandle):
@@ -339,3 +379,16 @@ class GribHandleManager:
 
         r["handle_create_count"] = self.handle_create_count
         return r
+
+    def __getstate__(self):
+        print("GribHandleManager getstate")
+        state = {}
+        state["policy"] = self.policy
+        state["cache_size"] = self.max_cache_size
+        return state
+
+    def __setstate__(self, state):
+        print("GribHandleManager setstate")
+        policy = state["policy"]
+        max_cache_size = state["cache_size"]
+        self.__init__(policy, max_cache_size)

@@ -76,13 +76,6 @@ class GribMemoryReader(Reader):
     def to_fieldlist(self, fields):
         return SimpleFieldList.from_fields(fields)
 
-    # def to_fieldlist(self, fields):
-    #     return GribFieldListInMemory.from_fields(fields)
-
-    # def to_fieldlist(self):
-    #     fields = [f for f in self]
-    #     return SimpleFieldList.from_fields(fields)
-
 
 class GribFileMemoryReader(GribMemoryReader):
     def __init__(self, path, **kwargs):

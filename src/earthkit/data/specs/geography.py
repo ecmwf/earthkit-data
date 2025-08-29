@@ -10,11 +10,11 @@
 
 from abc import abstractmethod
 
-from .spec import Spec
+from .spec import SimpleSpec
 
 
-class Geography(Spec):
-    KEYS = ("latitudes", "longitudes", "projection", "unique_grid_id")
+class Geography(SimpleSpec):
+    KEYS = ("latitudes", "longitudes", "projection", "unique_grid_id", "shape", "grid_type")
 
     @property
     @abstractmethod
@@ -75,6 +75,18 @@ class Geography(Spec):
         r"""str: Return the unique id of the grid."""
         pass
 
+    @property
+    @abstractmethod
+    def grid_spec(self):
+        r"""Return the grid specification."""
+        pass
+
+    @property
+    @abstractmethod
+    def grid_type(self):
+        r"""Return the grid specification."""
+        pass
+
 
 class SimpleGeography(Geography):
     @classmethod
@@ -84,10 +96,10 @@ class SimpleGeography(Geography):
         return GribGeography(handle)
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data, values_shape=None):
         from .dict.geography import make_geography
 
-        spec = make_geography(data)
+        spec = make_geography(data, values_shape=values_shape)
         return spec
 
     def set(self, *args, **kwargs):
@@ -100,3 +112,7 @@ class SimpleGeography(Geography):
             return spec
 
         raise ValueError("Invalid keys for Geography specification")
+
+    @property
+    def grid_spec(self):
+        return None

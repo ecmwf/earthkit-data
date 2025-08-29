@@ -56,6 +56,8 @@ class GribFieldListInFile(SimpleFieldList):
         def _get_opt(v, name):
             return v if v is not None else CONFIG.get(name)
 
+        # TODO: this code is here because in the deserialisation the handle_manager might have already created
+        # if not hasattr(self, "handle_manager"):
         self.handle_manager = GribHandleManager(
             _get_opt(grib_handle_policy, "grib-handle-policy"),
             _get_opt(grib_handle_cache_size, "grib-handle-cache-size"),
@@ -92,6 +94,14 @@ class GribFieldListInFile(SimpleFieldList):
 
     def number_of_parts(self):
         return len(self._positions)
+
+    def __getstate__(self):
+        r = {}
+        r["handle_manager"] = self.handle_manager
+        return r
+
+    def __setstate__(self, state):
+        self.handle_manager = state["handle_manager"]
 
 
 def _create_grib_fieldlist(path):
@@ -140,24 +150,32 @@ class GRIBReader(GribFieldListInFile, Reader):
         from earthkit.data.core.config import CONFIG
 
         policy = CONFIG.get("grib-file-serialisation-policy")
-        r = {"serialisation_policy": policy, "kwargs": self.source._kwargs}
+        r = {"serialisation_policy": policy, "kwargs": self._source_kwargs}
 
         if policy == "path":
             r["path"] = self.path
             r["positions"] = self._positions
         else:
-            r["messages"] = [f.core.message() for f in self]
+            r["messages"] = [f.raw.message() for f in self]
+
+        # r["handle_manager"] = self.handle_manager
 
         return r
 
     def __setstate__(self, state):
         policy = state["serialisation_policy"]
+        # self.handle_manager = state["handle_manager"]
+
         if policy == "path":
             from earthkit.data import from_source
 
+            print("setstate path=", state["path"])
+
             path = state["path"]
             ds = from_source("file", path, **state["kwargs"])
+            print("HERE1 type", type(ds))
             self.__init__(ds.source, path, positions=state["positions"])
+            print("HERE2")
         elif policy == "memory":
             from earthkit.data import from_source
             from earthkit.data.core.caching import cache_file

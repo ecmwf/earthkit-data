@@ -189,6 +189,7 @@ class NoGeography(SimpleGeography):
     def mars_grid(self):
         raise NotImplementedError("mars_grid is not implemented for this geography")
 
+    @property
     def grid_type(self):
         return "none"
 
@@ -282,6 +283,7 @@ class UserGeography(SimpleGeography):
     def mars_grid(self):
         raise NotImplementedError("mars_grid is not implemented for this geography")
 
+    @property
     def grid_type(self):
         return "_unstructured"
 
@@ -293,7 +295,7 @@ class DistinctLLGeography(UserGeography):
     @property
     def latitudes(self):
         lat = self.distinct_latitudes
-        n_lon = len(self._distinct_longitudes())
+        n_lon = len(self.distinct_longitudes)
         v = np.repeat(lat[:, np.newaxis], n_lon, axis=1)
         return v
         # if np.dtype is None:
@@ -303,8 +305,8 @@ class DistinctLLGeography(UserGeography):
 
     @property
     def longitudes(self):
-        lon = self._distinct_longitudes()
-        n_lat = len(self._distinct_latitudes())
+        lon = self.distinct_longitudes
+        n_lat = len(self.distinct_latitudes)
         v = np.repeat(lon[np.newaxis, :], n_lat, axis=0)
         return v
         # if dtype is None:
@@ -330,11 +332,13 @@ class DistinctLLGeography(UserGeography):
             raise ValueError("No longitudes found")
         return np.asarray(v)
 
+    @property
     def shape(self):
-        Nj = len(self._distinct_latitudes())
-        Ni = len(self._distinct_longitudes())
+        Nj = len(self.distinct_latitudes)
+        Ni = len(self.distinct_longitudes)
         return (Nj, Ni)
 
+    @property
     def grid_type(self):
         return "_distinct_ll"
 
@@ -365,5 +369,6 @@ class RegularDistinctLLGeography(DistinctLLGeography):
     def mars_grid(self):
         return [self.dx(), self.dy()]
 
+    @property
     def grid_type(self):
         return "_regular_ll"

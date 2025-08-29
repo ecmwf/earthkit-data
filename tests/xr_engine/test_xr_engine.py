@@ -95,7 +95,7 @@ def test_xr_engine_detailed_check_1(api):
     coords_ref_full = {
         "date": np.array([20240603, 20240604]),
         "time": np.array([0, 1200]),
-        "step_timedelta": [0, 6],
+        "step": [0, 6],
         "levelist": np.array([300, 400, 500, 700, 850, 1000]),
         "latitude": lats,
         "longitude": lons,
@@ -104,7 +104,7 @@ def test_xr_engine_detailed_check_1(api):
     dims_ref_full = {
         "date": 2,
         "time": 2,
-        "step_timedelta": 2,
+        "step": 2,
         "levelist": 6,
         "latitude": 19,
         "longitude": 36,
@@ -131,9 +131,9 @@ def test_xr_engine_detailed_check_1(api):
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 19, 36)
-    r1 = r["u"].sel(step_timedelta=6, levelist=[1000, 300])
+    r1 = r["u"].sel(step=6, levelist=[1000, 300])
     assert r1.shape == (2, 2, 19, 36)
-    coords_ref["step_timedelta"] = [6]
+    coords_ref["step"] = [6]
     coords_ref["levelist"] = np.array([1000, 300])
     compare_coords(r1, coords_ref)
 
@@ -146,9 +146,9 @@ def test_xr_engine_detailed_check_1(api):
 
     # isel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 19, 36)
-    r1 = r["u"].isel(step_timedelta=1, levelist=[0, -1])
+    r1 = r["u"].isel(step=1, levelist=[0, -1])
     assert r1.shape == (2, 2, 19, 36)
-    coords_ref["step_timedelta"] = [6]
+    coords_ref["step"] = [6]
     coords_ref["levelist"] = np.array([300, 1000])
     compare_coords(r1, coords_ref)
 
@@ -418,6 +418,10 @@ def test_xr_engine_detailed_check_2(api):
 @pytest.mark.parametrize("lazy_load", [False, True])
 @pytest.mark.parametrize("release_source", [False, True])
 @pytest.mark.parametrize("direct_backend", [False, True])
+# @pytest.mark.parametrize("stream", [True])
+# @pytest.mark.parametrize("lazy_load", [False])
+# @pytest.mark.parametrize("release_source", [False])
+# @pytest.mark.parametrize("direct_backend", [True])
 def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, direct_backend):
     filename = "xr_engine/level/pl.grib"
     ds_ek, ds_ek_ref = load_grib_data(filename, "url", stream=stream)
@@ -450,7 +454,7 @@ def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, d
     coords_ref_full = {
         "date": np.array([20240603, 20240604]),
         "time": np.array([0, 1200]),
-        "step_timedelta": np.array([0, 6]),
+        "step": np.array([0, 6]),
         "levelist": np.array([300, 400, 500, 700, 850, 1000]),
         "latitude": lats,
         "longitude": lons,
@@ -459,7 +463,7 @@ def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, d
     dims_ref_full = {
         "date": 2,
         "time": 2,
-        "step_timedelta": 2,
+        "step": 2,
         "levelist": 6,
         "values": 684,
     }
@@ -491,9 +495,9 @@ def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, d
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 684)
-    r1 = r["u"].sel(step_timedelta=6, levelist=[1000, 300])
+    r1 = r["u"].sel(step=6, levelist=[1000, 300])
     assert r1.shape == (2, 2, 684)
-    coords_ref["step_timedelta"] = np.array([6])
+    coords_ref["step"] = np.array([6])
     coords_ref["levelist"] = np.array([1000, 300])
     assert len(r1.coords) == len(coords_ref)
     for k, v in coords_ref.items():
@@ -510,9 +514,9 @@ def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, d
 
     # isel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 684)
-    r1 = r["u"].isel(step_timedelta=1, levelist=[0, -1])
+    r1 = r["u"].isel(step=1, levelist=[0, -1])
     assert r1.shape == (2, 2, 684)
-    coords_ref["step_timedelta"] = np.array([6])
+    coords_ref["step"] = np.array([6])
     coords_ref["levelist"] = np.array([300, 1000])
     assert len(r1.coords) == len(coords_ref)
     for k, v in coords_ref.items():

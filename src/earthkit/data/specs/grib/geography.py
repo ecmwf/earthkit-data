@@ -126,3 +126,15 @@ class GribGeography(SimpleGeography):
     def unique_grid_id(self):
         r"""Return a unique id of the grid of a field."""
         return self.handle.get("md5GridSection", default=None)
+
+    @property
+    def grid_spec(self):
+        from .grid_spec import make_gridspec
+        from .labels import GribLabels
+
+        return make_gridspec(GribLabels(self.handle))
+
+    @property
+    def grid_type(self):
+        r"""Return the grid type."""
+        return self.handle.get("gridType", default=None)

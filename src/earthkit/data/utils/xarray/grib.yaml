@@ -2,9 +2,9 @@ dim_roles:
   number: number
   date: dataDate
   time: dataTime
-  step: step_timedelta
+  step: step
   level: level
-  level_type: typeOfLevel
+  level_type: level_type
 
 variable_key: param
 

@@ -356,7 +356,7 @@ def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
                 "rename_dims": {"levelist": "zz"},
                 "dim_name_from_role_name": False,
             },
-            ["date", "time", "step_timedelta", "zz"],
+            ["date", "time", "step", "zz"],
         ),
         (
             {

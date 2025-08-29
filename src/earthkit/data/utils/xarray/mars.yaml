@@ -2,7 +2,7 @@ dim_roles:
   number: number
   date: date
   time: time
-  step: step_timedelta
+  step: step
   level: levelist
   level_type: levtype
 

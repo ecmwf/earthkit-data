@@ -11,10 +11,10 @@ import datetime
 import logging
 from collections import defaultdict
 
-from earthkit.data.core.fieldlist_ori import FieldList
 from earthkit.data.core.index import Selection
 from earthkit.data.core.index import normalize_selection
 from earthkit.data.core.order import build_remapping
+from earthkit.data.indexing.fieldlist import FieldList
 
 LOG = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ class XArrayInputFieldList(FieldList):
     def group(self, key, values):
         groups = defaultdict(list)
         for f in self.ds:
-            v = str(f.metadata(key, default=None))
+            v = str(f.get(key, default=None))
             if v in values:
                 groups[v].append(f)
 
@@ -202,7 +202,7 @@ class XArrayInputFieldList(FieldList):
                 joiner = None
 
             for f in self.ds:
-                r = f._attributes(keys, remapping=self.remapping, joiner=joiner)
+                r = f._get_fast(keys, remapping=self.remapping, joiner=joiner, output=dict)
                 for k, v in r.items():
                     vals[k][v] = True
 
@@ -284,6 +284,11 @@ class ReleasableField:
             if hasattr(self.field, "_release"):
                 self.field._release()
             self.released = True
+
+    def get(self, *args, **kwargs):
+        if self.released:
+            return None
+        return self.field.get(*args, **kwargs)
 
     def metadata(self, *args, **kwargs):
         if self.released:

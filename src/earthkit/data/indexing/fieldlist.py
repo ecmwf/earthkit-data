@@ -58,6 +58,21 @@ LS_KEYS = [
 ]
 INDEX_KEYS = list(GRIB_KEYS_NAMES)
 
+DESCRIBE_KEYS = [
+    "shortName",
+    "typeOfLevel",
+    "level",
+    "date",
+    "time",
+    "stepRange",
+    "number",
+    "paramId",
+    "marsClass",
+    "marsStream",
+    "marsType",
+    "experimentVersionNumber",
+]
+
 
 def build_remapping(remapping, patches):
     if remapping is not None or patches is not None:
@@ -345,7 +360,7 @@ class FieldList(Index, FieldListCore):
     @cached_property
     def _describe_keys(self):
         if len(self) > 0:
-            return self[0]._metadata.describe_keys()
+            return DESCRIBE_KEYS
         else:
             return []
 
@@ -355,7 +370,7 @@ class FieldList(Index, FieldListCore):
 
         def _proc():
             for f in self:
-                yield (f._attributes(self._describe_keys))
+                yield (f._get_fast(self._describe_keys, output=dict))
 
         return format_describe(_proc(), *args, **kwargs)
 

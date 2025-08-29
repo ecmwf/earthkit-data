@@ -14,7 +14,7 @@ from earthkit.data.utils.dates import to_timedelta
 
 def from_grib(handle):
     def _get(key, default=None):
-        return handle.get(key, default)
+        return handle.get(key, default=default)
 
     def _datetime(date_key, time_key):
         date = _get(date_key, None)
@@ -24,7 +24,13 @@ def from_grib(handle):
                 return datetime_from_grib(date, time)
         return None
 
-    base = _datetime("dataDate", "dataTime")
+    hdate = _get("hdate")
+    if hdate is not None:
+        time = _get("dataTime")
+        base = datetime_from_grib(hdate, time)
+    else:
+        base = _datetime("dataDate", "dataTime")
+
     v = _get("endStep", None)
     if v is None:
         v = _get("step", None)
@@ -40,10 +46,15 @@ def from_grib(handle):
 
     step_range = to_timedelta(end) - to_timedelta(start)
 
+    indexing = _datetime("indexingDate", "indexingTime")
+    reference = _datetime("referenceDate", "referenceTime")
+
     return dict(
         base_datetime=to_datetime(base),
         step=step,
         step_range=step_range,
+        indexing_datetime=indexing,
+        reference_datetime=reference,
     )
 
 

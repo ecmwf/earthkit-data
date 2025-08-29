@@ -70,6 +70,8 @@ class ListDiff:
             return math.isclose(v1, v2, rel_tol=1e-9), ListDiff.VALUE_DIFF
         elif isinstance(v1, str) and isinstance(v2, str):
             return v1 == v2, ListDiff.VALUE_DIFF
+        elif isinstance(v1, datetime.datetime) and isinstance(v2, datetime.datetime):
+            return v1 == v2, ListDiff.VALUE_DIFF
         elif isinstance(v1, datetime.timedelta) and isinstance(v2, datetime.timedelta):
             return v1 == v2, ListDiff.VALUE_DIFF
         elif type(v1) is not type(v2):

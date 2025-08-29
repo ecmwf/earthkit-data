@@ -24,7 +24,6 @@ class StreamFieldList(FieldList, Source):
         return iter(self._source)
 
     def batched(self, n):
-        print("StreamFieldList.batched", type(self._source))
         return self._source.batched(n)
 
     def group_by(self, *keys, **kwargs):
@@ -33,11 +32,11 @@ class StreamFieldList(FieldList, Source):
     def __getstate__(self):
         raise NotImplementedError("StreamFieldList cannot be pickled")
 
-    # def to_xarray(self, **kwargs):
-    #     from earthkit.data.core.fieldlist import FieldList
+    def to_xarray(self, **kwargs):
+        from .fieldlist import FieldList
 
-    #     fields = [f for f in self]
-    #     return FieldList.from_fields(fields).to_xarray(**kwargs)
+        fields = [f for f in self]
+        return FieldList.from_fields(fields).to_xarray(**kwargs)
 
     @classmethod
     def merge(cls, sources):

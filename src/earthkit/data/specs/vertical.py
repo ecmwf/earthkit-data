@@ -10,7 +10,7 @@
 from typing import Union
 
 from .spec import Aliases
-from .spec import Spec
+from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
 from .spec import spec_aliases
 
@@ -55,7 +55,7 @@ UNKNOWN_LEVEL_TYPE = LEVEL_TYPES["unknown"]
 
 
 @spec_aliases
-class Vertical(Spec):
+class Vertical(SimpleSpec):
     """A specification of a vertical level or layer."""
 
     KEYS = (

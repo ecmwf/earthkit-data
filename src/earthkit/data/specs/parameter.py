@@ -9,13 +9,13 @@
 
 
 from .spec import Aliases
-from .spec import Spec
+from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
 from .spec import spec_aliases
 
 
 @spec_aliases
-class Parameter(Spec):
+class Parameter(SimpleSpec):
     """A specification of a parameter."""
 
     KEYS = (

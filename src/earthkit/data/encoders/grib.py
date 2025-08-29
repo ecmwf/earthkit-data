@@ -432,7 +432,6 @@ class GribEncoder(Encoder):
         # if d.enabled:
         v, md = d.data(altered=True)
 
-        print("_encode md=", md)
         if template is None:
             template = field
 
@@ -521,8 +520,6 @@ class GribEncoder(Encoder):
         #         metadata.pop("generatingProcessIdentifier")
 
         LOG.debug("GribOutput.metadata %s", metadata)
-
-        print("GribOutput.metadata %s", metadata)
 
         single = {}
         multiple = {}

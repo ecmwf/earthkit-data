@@ -133,8 +133,8 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
                 "decode_timedelta": False,
                 "dim_name_from_role_name": False,
             },
-            {"date": [20240603, 20240604], "time": [0, 1200], "step_timedelta": [0, 6]},
-            ("step_timedelta", "hours"),
+            {"date": [20240603, 20240604], "time": [0, 1200], "step": [0, 6]},
+            ("step", "hours"),
         ),
         (
             {
@@ -144,7 +144,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
             {
                 "date": [np.datetime64("2024-06-03", "ns"), np.datetime64("2024-06-04", "ns")],
                 "time": [np.timedelta64(0, "s"), np.timedelta64(43200, "s")],
-                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
+                "step": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
             },
             None,
         ),
@@ -184,13 +184,13 @@ def test_xr_time_basic(kwargs, dims, step_units):
         ),
         (
             {
-                "dim_roles": {"forecast_reference_time": "indexing_time", "step": "forecastMonth"},
+                "dim_roles": {"forecast_reference_time": "indexing_datetime", "step": "forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
                 "dim_name_from_role_name": False,
             },
             {
-                "indexing_time": [
+                "indexing_datetime": [
                     np.datetime64("2014-09-01", "ns"),
                     np.datetime64("2014-10-01", "ns"),
                 ],
@@ -216,7 +216,7 @@ def test_xr_time_basic(kwargs, dims, step_units):
         ),
         (
             {
-                "dim_roles": {"forecast_reference_time": "indexing_time", "step": "forecastMonth"},
+                "dim_roles": {"forecast_reference_time": "indexing_datetime", "step": "forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
                 "dim_name_from_role_name": True,
@@ -476,9 +476,9 @@ def test_xr_time_seasonal_monthly_simple(kwargs, dims, step_units):
                     np.datetime64("2024-06-03T00", "ns"),
                     np.datetime64("2024-06-03T12", "ns"),
                 ],
-                "step_timedelta": [0, 6],
+                "step": [0, 6],
             },
-            ("step_timedelta", "hours"),
+            ("step", "hours"),
             {
                 "valid_time": [
                     [np.datetime64("2024-06-03T00", "ns"), np.datetime64("2024-06-03T06", "ns")],

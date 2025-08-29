@@ -15,13 +15,13 @@ from earthkit.utils.array import array_namespace
 from earthkit.utils.array import array_to_numpy
 from earthkit.utils.array import convert_array
 
-from .spec import Spec
+from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
 from .spec import spec_aliases
 
 
 @spec_aliases
-class Data(Spec):
+class Data(SimpleSpec):
     """A specification of a data values."""
 
     KEYS = ("values",)
@@ -312,6 +312,10 @@ class ArrayData(SimpleData):
     _cache = None
 
     def __init__(self, values):
+        if isinstance(values, (list, tuple)):
+            import numpy as np
+
+            values = np.asarray(values)
         self._values = values
 
     def get_values(self, dtype=None):

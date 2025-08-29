@@ -143,7 +143,7 @@ def test_grib_serialise_file_fieldlist_core(fl_type):
 
     keys = ["param", "date", "time", "step", "level", "gridType", "type"]
     for k in keys:
-        ds2.metadata(k) == ds.metadata(k)
+        ds2.get(k) == ds.get(k)
 
     r = ds2.sel(param="2t")
     assert len(r) == 1
@@ -163,7 +163,7 @@ def test_grib_serialise_file_fieldlist_sel(fl_type):
 
     keys = ["param", "date", "time", "step", "level", "gridType", "type"]
     for k in keys:
-        ds2.metadata(k) == ds.metadata(k)
+        ds2.get(k) == ds.get(k)
 
     r = ds2.sel(level=850)
     assert len(r) == 1
@@ -175,6 +175,8 @@ def test_grib_serialise_file_fieldlist_concat(fl_type):
     ds01, _ = load_grib_data("test6.grib", fl_type)
     ds = ds00 + ds01
     assert len(ds) == 8
+
+    print("ds=", type(ds))
 
     pickled_f = pickle.dumps(ds)
     ds2 = pickle.loads(pickled_f)
@@ -203,7 +205,7 @@ def test_grib_serialise_stream_2():
     ds2 = pickle.loads(pickled_f)
 
     assert len(ds2) == 2
-    assert ds.metadata("shortName") == ["2t", "msl"]
+    assert ds.get("shortName") == ["2t", "msl"]
 
 
 def test_grib_serialise_file_parts():
@@ -216,7 +218,7 @@ def test_grib_serialise_file_parts():
     ds2 = pickle.loads(pickled_f)
 
     assert len(ds2) == 1
-    assert ds2[0].metadata(["param", "level"]) == ["u", 1000]
+    assert ds2[0].get(["param", "level"]) == ["u", 1000]
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)

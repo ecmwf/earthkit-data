@@ -83,6 +83,16 @@ class SimpleFieldList(FieldList):
     def mutate_source(self):
         return self
 
+    def __getstate__(self) -> dict:
+        ret = {}
+        print("SimpleFieldList Getstate")
+        ret["_fields"] = self._fields
+        return ret
+
+    def __setstate__(self, state: dict):
+        print("SimpleFieldList Setstate")
+        self._fields = state.pop("_fields")
+
     def to_pandas(self, *args, **kwargs):
         # TODO make it generic
         if len(self) > 0:
@@ -101,7 +111,7 @@ class SimpleFieldList(FieldList):
     def to_xarray(self, *args, **kwargs):
         # TODO make it generic
         if len(self) > 0:
-            if self[0]._metadata.data_format() in ("grib", "dict"):
+            if self[0].default_encoder() in ("grib", "dict"):
                 from earthkit.data.readers.grib.xarray import XarrayMixIn
 
                 class _C(XarrayMixIn, SimpleFieldList):

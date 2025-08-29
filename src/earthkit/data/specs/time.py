@@ -12,7 +12,7 @@ from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
 from .spec import Aliases
-from .spec import Spec
+from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
 from .spec import spec_aliases
 
@@ -20,10 +20,17 @@ ZERO_TIMEDELTA = to_timedelta(0)
 
 
 @spec_aliases
-class Time(Spec):
+class Time(SimpleSpec):
     """A specification for a time object."""
 
-    KEYS = ("base_datetime", "step", "step_range", "valid_datetime")
+    KEYS = (
+        "base_datetime",
+        "step",
+        "step_range",
+        "valid_datetime",
+        "indexing_datetime",
+        "reference_datetime",
+    )
     ALIASES = Aliases({"base_datetime": ("forecast_reference_time",), "step": ("forecast_period",)})
 
     # Do not call this directly, use one of the from_* methods
@@ -33,63 +40,68 @@ class Time(Spec):
     _hcast_datetime = None
     _step = ZERO_TIMEDELTA
     _step_range = ZERO_TIMEDELTA
+    _indexing_datetime = None
+    _reference_datetime = None
 
     @classmethod
-    def from_valid_datetime(cls, valid_datetime):
+    def from_valid_datetime(cls, valid_datetime=None):
         """Set the valid datetime of the time object."""
-        return Analysis(valid_datetime=to_datetime(valid_datetime))
+        return Analysis(valid_datetime=valid_datetime)
 
     @classmethod
-    def from_valid_datetime_and_step(cls, valid_datetime, step, step_range=None):
+    def from_valid_datetime_and_step(
+        cls, valid_datetime=None, step=None, step_range=None, indexing_datetime=None, reference_datetime=None
+    ):
         """Set the valid datetime of the time object."""
         valid_datetime = to_datetime(valid_datetime)
         step = to_timedelta(step)
-        print(f"valid_datetime: {valid_datetime}, step: {step}")
         base_datetime = valid_datetime - step
-        return Forecast(base_datetime=base_datetime, step=step, step_range=step_range)
-
-    @classmethod
-    def from_base_datetime_and_step(cls, base_datetime, step=None, step_range=None):
-        """Set the base datetime of the time object."""
-        base_datetime = to_datetime(base_datetime)
-        step = to_timedelta(step) if step is not None else to_timedelta(0)
-        step_range = to_timedelta(step_range) if step_range is not None else to_timedelta(0)
         return Forecast(
             base_datetime=base_datetime,
             step=step,
             step_range=step_range,
+            indexing_datetime=indexing_datetime,
+            reference_datetime=reference_datetime,
+        )
+
+    @classmethod
+    def from_base_datetime_and_step(
+        cls, base_datetime=None, step=None, step_range=None, indexing_datetime=None, reference_datetime=None
+    ):
+        """Set the base datetime of the time object."""
+        return Forecast(
+            base_datetime=base_datetime,
+            step=step,
+            step_range=step_range,
+            indexing_datetime=indexing_datetime,
+            reference_datetime=reference_datetime,
         )
 
     @classmethod
     def from_dict(cls, d):
-        """Create a UserTime object from a dictionary."""
+        """Create a Time object from a dictionary."""
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
 
-        d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
+        d = normalise_set_kwargs(cls, add_spec_keys=False, remove_nones=True, **d)
 
-        keys = set(list(d.keys()))
+        method_name = METHOD_MAP.get(d.keys())
+        if method_name:
+            method = getattr(cls, method_name)
+            if method_name == VALID_DATETIME_METHOD:
+                return method(d["valid_datetime"])
+            elif method_name == VALID_DATETIME_AND_STEP_METHOD:
+                assert "base_datetime" not in d
+                return method(**d)
+            elif method_name == BASE_DATETIME_METHOD:
+                return method(**d)
+            elif method_name == BASE_DATETIME_AND_STEP_METHOD:
+                return method(**d)
 
-        if keys == {"valid_datetime"}:
-            return cls.from_valid_datetime(d["valid_datetime"])
-        elif keys == {"valid_datetime", "step"}:
-            return cls.from_valid_datetime_and_step(
-                d["valid_datetime"],
-                d["step"],
-            )
-        elif keys == {"base_datetime"}:
-            return cls.from_base_datetime_and_step(d["base_datetime"])
-        elif "base_datetime" in keys and "step" in keys:
-            return cls.from_base_datetime_and_step(
-                d["base_datetime"],
-                step=d.get("step"),
-                step_range=d.get("step_range", None),
-            )
-
-        if not keys:
+        if not d:
             return cls()
 
-        raise ValueError(f"Invalid keys in data: {keys}. Expected one of {cls.KEYS}.")
+        raise ValueError(f"Invalid keys in data: {list(d.keys())}. Expected one of {cls.KEYS}.")
 
     @classmethod
     def from_grib(cls, handle):
@@ -100,7 +112,7 @@ class Time(Spec):
         return spec
 
     def set(self, *args, **kwargs):
-        kwargs = normalise_set_kwargs(self, *args, add_spec_keys=False, **kwargs)
+        kwargs = normalise_set_kwargs(self, *args, add_spec_keys=False, remove_nones=True, **kwargs)
         spec = self.from_dict(kwargs)
         return spec
 
@@ -128,11 +140,22 @@ class Time(Spec):
         """Return the forecast period of the time object."""
         return self._step_range
 
+    @property
+    def indexing_datetime(self):
+        return self._indexing_datetime
+
+    @property
+    def reference_datetime(self):
+        return self._reference_datetime
+
 
 class Analysis(Time):
     """A time specification for analysis data."""
 
-    def __init__(self, valid_datetime, range=None):
+    def __init__(self, valid_datetime=None, range=None):
+        if valid_datetime is None:
+            raise ValueError("valid_datetime cannot be None")
+
         self._base_datetime = to_datetime(valid_datetime)
         self._range = ZERO_TIMEDELTA if range is None else to_timedelta(range)
 
@@ -151,10 +174,21 @@ class Forecast(Time):
     """A time specification for forecast data."""
 
     # Do not call this directly, use one of the from_* methods
-    def __init__(self, base_datetime=None, step=None, step_range=None):
-        self._base_datetime = base_datetime
+    def __init__(
+        self, base_datetime=None, step=None, step_range=None, indexing_datetime=None, reference_datetime=None
+    ):
+        if base_datetime is None:
+            raise ValueError("base_datetime cannot be None")
+
+        self._base_datetime = to_datetime(base_datetime)
         self._step = step if step is not None else to_timedelta(0)
         self._step_range = step_range if step_range is not None else to_timedelta(0)
+
+        if indexing_datetime is not None:
+            self._indexing_datetime = to_datetime(indexing_datetime)
+
+        if reference_datetime is not None:
+            self._reference_datetime = to_datetime(reference_datetime)
 
 
 # class Hindcast(Forecast):
@@ -162,3 +196,35 @@ class Forecast(Time):
 
 #     def __init__(self, base_datetime=None, step=None, step_range=None, h_datetime=None):
 #         super().__init__(base_datetime, step, step_range)
+
+VALID_DATETIME_METHOD = "from_valid_datetime"
+VALID_DATETIME_AND_STEP_METHOD = "from_valid_datetime_and_step"
+BASE_DATETIME_METHOD = "from_base_datetime_and_step"
+BASE_DATETIME_AND_STEP_METHOD = "from_base_datetime_and_step"
+
+METHODS = {
+    ("valid_datetime",): VALID_DATETIME_METHOD,
+    ("valid_datetime", "step"): VALID_DATETIME_AND_STEP_METHOD,
+    ("base_datetime",): BASE_DATETIME_METHOD,
+    ("base_datetime", "step"): BASE_DATETIME_AND_STEP_METHOD,
+}
+
+
+class MethodMap:
+    CORE_KEYS = set(["valid_datetime", "base_datetime", "step"])
+    MAPPING = {}
+
+    def __init__(self, methods):
+        for k, method in methods.items():
+            keys = sorted(list(k))
+            key = tuple(keys)
+            self.MAPPING[key] = method
+
+    @staticmethod
+    def get(keys):
+        keys_s = set(keys)
+        found = tuple(sorted(list(MethodMap.CORE_KEYS.intersection(keys_s))))
+        return MethodMap.MAPPING.get(found, None)
+
+
+METHOD_MAP = MethodMap(METHODS)

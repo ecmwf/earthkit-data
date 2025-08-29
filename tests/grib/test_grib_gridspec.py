@@ -16,10 +16,9 @@ import yaml
 
 from earthkit.data import FieldList
 from earthkit.data import from_source
-from earthkit.data.core.gridspec import GridSpec
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.readers.grib.gridspec import GridSpecConverter
-from earthkit.data.readers.grib.gridspec import make_gridspec
+from earthkit.data.specs.grib.grid_spec import GridSpecConverter
+from earthkit.data.specs.grib.grid_spec import make_gridspec
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.testing import earthkit_test_data_file
@@ -126,9 +125,9 @@ def test_grib_gridspec_from_file():
         "i_scans_negatively": 0,
         "j_scans_positively": 0,
     }
-    gs = ds[0].metadata().gridspec
-    assert isinstance(gs, GridSpec)
-    assert dict(gs) == ref
+    gs = ds[0].geography.grid_spec
+    assert isinstance(gs, dict)
+    assert gs == ref
 
 
 @pytest.mark.parametrize("metadata,gridspec,name", gridspec_list("regular_ll"))

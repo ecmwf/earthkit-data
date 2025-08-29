@@ -50,7 +50,9 @@ def spec_aliases(cls) -> type:
     return cls
 
 
-def normalise_set_kwargs(spec: "Spec", *args: dict, add_spec_keys: bool = True, **kwargs) -> dict:
+def normalise_set_kwargs(
+    spec: "Spec", *args: dict, add_spec_keys: bool = True, remove_nones: bool = False, **kwargs
+) -> dict:
     """
     Normalise and merge keyword arguments for the set method.
 
@@ -90,6 +92,9 @@ def normalise_set_kwargs(spec: "Spec", *args: dict, add_spec_keys: bool = True, 
         for k in spec.KEYS:
             if k not in _kwargs:
                 _kwargs[k] = getattr(spec, k)
+
+    if remove_nones:
+        _kwargs = {k: v for k, v in _kwargs.items() if v is not None}
 
     return _kwargs
 
@@ -157,6 +162,40 @@ class Spec(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False) -> "any":
+        r"""Return the value for ``key``.
+
+        Parameters
+        ----------
+        key: str
+            Key
+        default: value
+            Specify the default value for ``key``. Returned when ``key``
+            is not found or its value is a missing value and raise_on_missing is ``False``.
+        astype: type as str, int or float
+            Return/access type for ``key``. When it is supported ``astype`` is passed to the
+            underlying accessor as an option. Otherwise the value is
+            cast to ``astype`` after it is taken from the accessor.
+        raise_on_missing: bool
+            When it is True raises an exception if ``key`` is not found or
+            it has a missing value.
+
+        Returns
+        -------
+        value
+            Returns the ``key`` value. Returns ``default`` if ``key`` is not found
+            or it has a missing value and ``raise_on_missing`` is False.
+
+        Raises
+        ------
+        KeyError
+            If ``raise_on_missing`` is True and ``key`` is not found or it has
+            a missing value.
+
+        """
+        pass
+
+    @abstractmethod
     def set(self, *args, **kwargs) -> "Spec":
         """
         Create a new Spec instance with updated data.
@@ -174,3 +213,28 @@ class Spec(metaclass=ABCMeta):
             The created Spec instance.
         """
         pass
+
+
+class SimpleSpec(Spec):
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
+        def _cast(v):
+            if callable(astype):
+                try:
+                    return astype(v)
+                except Exception:
+                    return None
+            return v
+
+        if key in self.ALL_KEYS:
+            try:
+                v = getattr(self, key)
+                if astype and v is not None:
+                    v = _cast(v)
+                return v
+            except Exception:
+                pass
+
+        if raise_on_missing:
+            raise KeyError(f"Key {key} not found in Geography specification")
+
+        return default

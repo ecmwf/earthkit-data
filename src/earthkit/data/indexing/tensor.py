@@ -516,10 +516,7 @@ class FieldListTensor(TensorCore):
                     }
 
                     vals = np.array(
-                        [
-                            datetime.datetime.fromisoformat(x)
-                            for x in self.source.sel(**other_coords).metadata("valid_datetime")
-                        ],
+                        [x for x in self.source.sel(**other_coords).get("valid_datetime")],
                         dtype=dtype,
                     )
 
@@ -531,7 +528,7 @@ class FieldListTensor(TensorCore):
                     import numpy as np
 
                     vals = np.array(
-                        [datetime.datetime.fromisoformat(x) for x in self.source.metadata("valid_datetime")],
+                        [x for x in self.source.get("valid_datetime")],
                         dtype=dtype,
                     )
 

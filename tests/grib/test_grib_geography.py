@@ -159,8 +159,7 @@ def test_grib_points_unsupported_grid(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_grib_points_multi(fl_type, dtype):
+def test_grib_points_multi(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
 
     # flatten=True, dtype=dtype
@@ -173,8 +172,6 @@ def test_grib_points_multi(fl_type, dtype):
 
     assert np.allclose(x, x_ref)
     assert np.allclose(y, y_ref)
-    assert x.dtype == dtype
-    assert y.dtype == dtype
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)

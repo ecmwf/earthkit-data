@@ -467,7 +467,7 @@ class ForecastTimeDimMode(DimMode):
 
 class ValidTimeDimMode(DimMode):
     name = "valid_time"
-    default = {"valid_time": "valid_time"}
+    default = {"valid_time": "valid_datetime"}
 
 
 class RawTimeDimMode(DimMode):
