@@ -22,7 +22,8 @@ class XarrayMixIn:
 
         decoder = Covjsonkit().decode(self._json())
         return decoder.to_xarray()
-    
+
+
 class GeojsonMixIn:
     def to_geojson(self, **kwargs):
         try:
