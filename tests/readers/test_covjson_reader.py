@@ -27,6 +27,13 @@ def test_covjson_to_xarray():
     a = ds.to_xarray()
     assert len(a.data_vars) == 1
 
+@pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
+def test_covjson_to_geojson():
+    ds = from_source("file", earthkit_test_data_file("time_series.covjson"))
+    assert ds
+    a = ds.to_geojson()
+    assert len(len(a['features'])) == 9
+
 
 @pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
 def test_covjson_memory():
