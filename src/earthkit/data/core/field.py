@@ -295,7 +295,7 @@ class Field(Base):
             raise TypeError("d must be a dictionary")
 
         data = SimpleData.from_dict(d)
-        geography = SimpleGeography.from_dict(d, values_shape=data.values.shape)
+        geography = SimpleGeography.from_dict(d, values_shape=data.raw_values_shape)
         parameter = Parameter.from_dict(d)
         time = Time.from_dict(d)
         vertical = Vertical.from_dict(d)
@@ -1173,7 +1173,7 @@ class Field(Base):
         'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
 
         """
-        return self._metadata.datetime()
+        return {"base_time": self.time.base_datetime, "valid_time": self.time.valid_datetime}
 
     def to_xarray(self, *args, **kwargs):
         """Convert the Field into an Xarray Dataset.
@@ -1206,21 +1206,21 @@ class Field(Base):
 
     def __getstate__(self):
         state = {}
-        print("serialise!!")
+        # print("serialise!!")
         if hasattr(self, "raw") and self.raw and hasattr(self.raw, "handle"):
-            print("serialise handle")
+            # print("serialise handle")
             handle = self.raw.handle
             state["handle"] = handle
-            print(".  -> done")
+            # print(".  -> done")
         return state
 
     def __setstate__(self, state):
-        print("deserialise!!")
+        # print("deserialise!!")
         if "handle" in state:
             handle = state["handle"]
-            print("deserialise handle")
+            # print("deserialise handle")
             f = Field.from_grib(handle)
-            print(".  ->", f)
+            # print(".  ->", f)
             self.__init__(
                 data=f.data,
                 time=f.time,

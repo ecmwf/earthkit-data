@@ -166,7 +166,7 @@ class NoGeography(SimpleGeography):
 
     @property
     def unique_grid_id(self):
-        return self.shape()
+        return self.shape
 
     @property
     def projection(self):
@@ -243,7 +243,7 @@ class UserGeography(SimpleGeography):
 
     @property
     def unique_grid_id(self):
-        return self.shape()
+        return self.shape
 
     def north(self):
         return np.amax(self.latitudes)

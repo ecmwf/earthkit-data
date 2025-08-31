@@ -26,18 +26,20 @@ def test_lod_metadata_core(lod_ll_flat, mode):
     ds = build_lod_fieldlist(lod_ll_flat, mode)
 
     ref = [500, 850, 500, 850, 850, 600]
-    assert ds.metadata("level") == ref
+    assert ds.get("level") == ref
 
-    assert ds[0].metadata("level") == 500
-    assert ds[0].metadata("levelist") == 500
+    assert ds[0].get("level") == 500
+    assert ds[0].get("levelist") == 500
 
-    assert ds[0].metadata("param") == "t"
-    assert ds[0].metadata("shortName") == "t"
+    assert ds[0].get("param") == "t"
+    # assert ds[0].get("shortName") == "t"
+    assert ds[0].get("name") == "t"
 
     dt_ref = datetime.datetime.fromisoformat("2018-08-01T09:00:00")
-    assert ds[0].metadata("valid_datetime") == "2018-08-01T09:00:00"
-    assert ds[0].metadata().valid_datetime() == dt_ref
-    assert ds[0].datetime() == {"base_time": None, "valid_time": dt_ref}
+    assert ds[0].get("valid_datetime") == dt_ref
+    # assert ds[0].metadata().valid_datetime() == dt_ref
+    # assert ds[0].datetime() == {"base_time": None, "valid_time": dt_ref}
+    assert ds[0].datetime() == {"base_time": dt_ref, "valid_time": dt_ref}
 
 
 @pytest.mark.parametrize("data", ["lod_ll_forecast_1", "lod_ll_forecast_2"])
@@ -47,17 +49,17 @@ def test_lod_metadata_forecast_a(request, data, mode):
 
     valid_ref = datetime.datetime.fromisoformat("2018-08-01T09:00:00")
     base_ref = datetime.datetime.fromisoformat("2018-08-01T03:00:00")
-    assert ds[0].metadata("valid_datetime") == "2018-08-01T09:00:00"
-    assert ds[0].metadata().valid_datetime() == valid_ref
-    assert ds[0].metadata("base_datetime") == "2018-08-01T03:00:00"
-    assert ds[0].metadata().base_datetime() == base_ref
+    assert ds[0].get("valid_datetime") == valid_ref
+    assert ds[0].time.valid_datetime == valid_ref
+    # assert ds[0].metadata().valid_datetime() == valid_ref
+    assert ds[0].get("base_datetime") == base_ref
+    # assert ds[0].metadata().base_datetime() == base_ref
     assert ds[0].datetime() == {"base_time": base_ref, "valid_time": valid_ref}
-    assert ds[0].metadata("step") == 6
-    assert ds[0].metadata("step_timedelta") == datetime.timedelta(hours=6)
-    assert ds[0].metadata().step_timedelta() == datetime.timedelta(hours=6)
-    assert ds[0].metadata("forecast_reference_time") == "2018-08-01T03:00:00"
-
-    assert ds[1].metadata("forecast_reference_time") == "2018-08-01T03:00:00"
+    assert ds[0].get("step") == datetime.timedelta(hours=6)
+    # assert ds[0].metadata().step_timedelta() == datetime.timedelta(hours=6)
+    assert ds[0].time.step == datetime.timedelta(hours=6)
+    assert ds[0].get("forecast_reference_time") == base_ref
+    assert ds[1].get("forecast_reference_time") == base_ref
 
 
 @pytest.mark.parametrize("data", ["lod_ll_forecast_3", "lod_ll_forecast_4"])
@@ -67,14 +69,15 @@ def test_lod_metadata_forecast_b(request, data, mode):
 
     valid_ref = datetime.datetime.fromisoformat("2018-08-01T09:00:00")
     base_ref = datetime.datetime.fromisoformat("2018-08-01T03:00:00")
-    assert ds[0].metadata("valid_datetime") == "2018-08-01T09:00:00"
-    assert ds[0].metadata().valid_datetime() == valid_ref
-    assert ds[0].metadata("base_datetime") == "2018-08-01T03:00:00"
-    assert ds[0].metadata().base_datetime() == base_ref
+    assert ds[0].get("valid_datetime") == valid_ref
+    assert ds[0].time.valid_datetime == valid_ref
+    # assert ds[0].metadata().valid_datetime() == valid_ref
+    assert ds[0].get("base_datetime") == base_ref
+    assert ds[0].time.base_datetime == base_ref
+    # assert ds[0].metadata().base_datetime() == base_ref
     assert ds[0].datetime() == {"base_time": base_ref, "valid_time": valid_ref}
     assert ds[0].metadata("step") == datetime.timedelta(hours=6)
-    assert ds[0].metadata("step_timedelta") == datetime.timedelta(hours=6)
-    assert ds[0].metadata().step_timedelta() == datetime.timedelta(hours=6)
-    assert ds[0].metadata("forecast_reference_time") == "2018-08-01T03:00:00"
-
-    assert ds[1].metadata("forecast_reference_time") == "2018-08-01T03:00:00"
+    # assert ds[0].metadata().step_timedelta() == datetime.timedelta(hours=6)
+    assert ds[0].time.step == datetime.timedelta(hours=6)
+    assert ds[0].get("forecast_reference_time") == base_ref
+    assert ds[1].get("forecast_reference_time") == base_ref

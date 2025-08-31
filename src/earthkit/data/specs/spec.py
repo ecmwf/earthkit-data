@@ -51,7 +51,12 @@ def spec_aliases(cls) -> type:
 
 
 def normalise_set_kwargs(
-    spec: "Spec", *args: dict, add_spec_keys: bool = True, remove_nones: bool = False, **kwargs
+    spec: "Spec",
+    *args: dict,
+    add_spec_keys: bool = True,
+    extra_keys=None,
+    remove_nones: bool = False,
+    **kwargs,
 ) -> dict:
     """
     Normalise and merge keyword arguments for the set method.
@@ -85,7 +90,7 @@ def normalise_set_kwargs(
     _kwargs = {}
     for k, v in kwargs.items():
         k = spec.ALIASES.get(k, k)
-        if k in spec.KEYS:
+        if k in spec.KEYS or (extra_keys and k in extra_keys):
             _kwargs[k] = v
 
     if add_spec_keys:

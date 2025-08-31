@@ -8,6 +8,8 @@
 #
 
 
+import functools
+
 from ...core.spec.data import FieldData
 
 # from ..geography import Geography
@@ -286,6 +288,48 @@ class GribData(FieldData):
 #         return self.handle.get("levelType", None)
 
 
+class MetadataCacheHandler:
+    @staticmethod
+    def make(cache=None):
+        if cache is True:
+            return dict()
+        elif cache is not False and cache is not None:
+            return cache
+
+    @staticmethod
+    def clone_empty(cache):
+        if cache is not None:
+            return cache.__class__()
+
+    @staticmethod
+    def serialise(cache):
+        if cache is not None:
+            return cache.__class__
+
+    @staticmethod
+    def deserialise(state):
+        cache = state
+        if state is not None:
+            return cache()
+
+    @staticmethod
+    def cache_get(func):
+        @functools.wraps(func)
+        def wrapped(self, key, default=None, *, astype=None, raise_on_missing=False):
+            if self._cache is not None:
+                cache_id = (key, default, astype, raise_on_missing)
+                if cache_id in self._cache:
+                    return self._cache[cache_id]
+
+                v = func(self, key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+                self._cache[cache_id] = v
+                return v
+            else:
+                return func(self, key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+
+        return wrapped
+
+
 GribLabels = RawLabels
 
 
@@ -324,6 +368,7 @@ class GribRawLabels(Labels):
     def override(self, *args, headers_only_clone=True, **kwargs):
         pass
 
+    @MetadataCacheHandler.cache_get
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         def _key_name(key):
             if key == "param":

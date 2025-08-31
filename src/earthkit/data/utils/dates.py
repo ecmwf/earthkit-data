@@ -276,6 +276,23 @@ def datetime_from_grib(date, time):
     )
 
 
+def datetime_from_date_and_time(date, time):
+    date = to_datetime(date)
+    if time is None:
+        return date
+
+    if date.hour or date.minute:
+        raise ValueError(
+            (
+                f"Duplicate information about time time={time},"
+                f"and time={date.hour}:{date.minute} from date={date}"
+            )
+        )
+
+    time = to_time(time)
+    return datetime.datetime.combine(date.date(), time)
+
+
 def make_datetime(date, time):
     if time is None:
         return date

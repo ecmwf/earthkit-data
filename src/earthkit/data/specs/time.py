@@ -8,6 +8,7 @@
 #
 
 
+from earthkit.data.utils.dates import datetime_from_date_and_time
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
@@ -33,6 +34,8 @@ class Time(SimpleSpec):
     )
     ALIASES = Aliases({"base_datetime": ("forecast_reference_time",), "step": ("forecast_period",)})
 
+    INPUT_KEYS = ("date", "time", "step")
+
     # Do not call this directly, use one of the from_* methods
 
     _base_datetime = None
@@ -42,6 +45,16 @@ class Time(SimpleSpec):
     _step_range = ZERO_TIMEDELTA
     _indexing_datetime = None
     _reference_datetime = None
+
+    @classmethod
+    def from_date_and_time(self, date=None, time=None):
+        dt = datetime_from_date_and_time(date, time)
+        return Analysis(valid_datetime=dt)
+
+    @classmethod
+    def from_date_and_time_and_step(self, date=None, time=None, step=None):
+        dt = datetime_from_date_and_time(date, time)
+        return self.from_base_datetime_and_step(base_datetime=dt, step=step)
 
     @classmethod
     def from_valid_datetime(cls, valid_datetime=None):
@@ -83,7 +96,9 @@ class Time(SimpleSpec):
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
 
-        d = normalise_set_kwargs(cls, add_spec_keys=False, remove_nones=True, **d)
+        d = normalise_set_kwargs(
+            cls, add_spec_keys=False, remove_nones=True, extra_keys=METHOD_MAP.CORE_KEYS, **d
+        )
 
         method_name = METHOD_MAP.get(d.keys())
         if method_name:
@@ -96,6 +111,10 @@ class Time(SimpleSpec):
             elif method_name == BASE_DATETIME_METHOD:
                 return method(**d)
             elif method_name == BASE_DATETIME_AND_STEP_METHOD:
+                return method(**d)
+            elif method_name == DATE_AND_TIME_METHOD:
+                return method(**d)
+            elif method_name == DATE_AND_TIME_AND_STEP_METHOD:
                 return method(**d)
 
         if not d:
@@ -181,8 +200,8 @@ class Forecast(Time):
             raise ValueError("base_datetime cannot be None")
 
         self._base_datetime = to_datetime(base_datetime)
-        self._step = step if step is not None else to_timedelta(0)
-        self._step_range = step_range if step_range is not None else to_timedelta(0)
+        self._step = to_timedelta(step) if step is not None else to_timedelta(0)
+        self._step_range = to_timedelta(step_range) if step_range is not None else to_timedelta(0)
 
         if indexing_datetime is not None:
             self._indexing_datetime = to_datetime(indexing_datetime)
@@ -201,17 +220,21 @@ VALID_DATETIME_METHOD = "from_valid_datetime"
 VALID_DATETIME_AND_STEP_METHOD = "from_valid_datetime_and_step"
 BASE_DATETIME_METHOD = "from_base_datetime_and_step"
 BASE_DATETIME_AND_STEP_METHOD = "from_base_datetime_and_step"
+DATE_AND_TIME_METHOD = "from_date_and_time"
+DATE_AND_TIME_AND_STEP_METHOD = "from_date_and_time_and_step"
 
 METHODS = {
     ("valid_datetime",): VALID_DATETIME_METHOD,
     ("valid_datetime", "step"): VALID_DATETIME_AND_STEP_METHOD,
     ("base_datetime",): BASE_DATETIME_METHOD,
     ("base_datetime", "step"): BASE_DATETIME_AND_STEP_METHOD,
+    ("date", "time"): DATE_AND_TIME_METHOD,
+    ("date", "time", "step"): DATE_AND_TIME_AND_STEP_METHOD,
 }
 
 
 class MethodMap:
-    CORE_KEYS = set(["valid_datetime", "base_datetime", "step"])
+    CORE_KEYS = set(["valid_datetime", "base_datetime", "step", "date", "time"])
     MAPPING = {}
 
     def __init__(self, methods):

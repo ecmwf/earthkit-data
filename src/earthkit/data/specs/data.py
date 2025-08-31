@@ -339,3 +339,7 @@ class ArrayData(SimpleData):
         if self._values is None:
             assert self._cache is not None, "Cache must be set before loading."
             self._values = self._cache.load()
+
+    @property
+    def raw_values_shape(self):
+        return self._values.shape

@@ -212,7 +212,7 @@ class FileGribHandle(GribHandle):
 
     def __getstate__(self):
         # state = super().__getstate__()
-        print("FileGribHandle getstate")
+        # print("FileGribHandle getstate")
         state = {}
         state["path"] = self.path
         state["offset"] = self.offset
@@ -221,7 +221,7 @@ class FileGribHandle(GribHandle):
         return state
 
     def __setstate__(self, state):
-        print("FileGribHandle setstate")
+        # print("FileGribHandle setstate")
         self.path = state["path"]
         self.offset = state["offset"]
         self.length = state["length"]
@@ -248,7 +248,7 @@ class ManagedGribHandle(FileGribHandle):
         self.manager.remove(self)
 
     def __getstate__(self):
-        print("ManagedFileGribHandle Getstate")
+        # print("ManagedFileGribHandle Getstate")
         state = super().__getstate__()
         state["manager"] = self.manager
         return state
@@ -381,14 +381,14 @@ class GribHandleManager:
         return r
 
     def __getstate__(self):
-        print("GribHandleManager getstate")
+        # print("GribHandleManager getstate")
         state = {}
         state["policy"] = self.policy
         state["cache_size"] = self.max_cache_size
         return state
 
     def __setstate__(self, state):
-        print("GribHandleManager setstate")
+        # print("GribHandleManager setstate")
         policy = state["policy"]
         max_cache_size = state["cache_size"]
         self.__init__(policy, max_cache_size)
