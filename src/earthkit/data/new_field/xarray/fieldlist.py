@@ -179,8 +179,6 @@ class XArrayFieldList(FieldList):
                 )
                 continue
 
-            print("variable:", variable)
-
             v = Variable(
                 ds=ds,
                 variable=variable,

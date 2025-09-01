@@ -25,7 +25,7 @@ class XArrayGeography(SimpleGeography):
 
     @property
     def latitudes(self):
-        return self.owner.grid.latitudes
+        return self.owner.grid.latitudes.reshape(self.shape)
 
     @property
     def longitudes(self):
