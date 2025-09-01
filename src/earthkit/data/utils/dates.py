@@ -29,8 +29,12 @@ def to_datetime(dt):
     if hasattr(dt, "dtype") and np.issubdtype(dt.dtype, np.datetime64):
         return numpy_datetime_to_datetime(dt)
 
+    # this converts cftime.DatetimeJulian to datetime
     if isinstance(dt, np.int64):
         dt = int(dt)
+
+    if hasattr(dt, "isoformat"):
+        return datetime.datetime.fromisoformat(dt.isoformat())
 
     dt = get_wrapper(dt)
 

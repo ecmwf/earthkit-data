@@ -350,8 +350,8 @@ class CoordinateGuesser(ABC):
                 LOG.warning("Could not fine a candidate for 'grid_mapping'")
 
         if grid_mapping is None:
-            if "crs" in self.ds[variable].attrs:
-                grid_mapping = self.ds[variable].attrs["crs"]
+            if "crs" in self.ds[variable.name].attrs:
+                grid_mapping = self.ds[variable.name].attrs["crs"]
                 LOG.warning(f"Using CRS {grid_mapping} from variable '{variable.name}' attributes")
 
         if grid_mapping is None:
