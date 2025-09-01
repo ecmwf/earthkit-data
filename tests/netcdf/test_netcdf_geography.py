@@ -9,6 +9,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+
 import numpy as np
 import pytest
 
@@ -127,7 +129,7 @@ def test_netcdf_to_latlon():
         for i, y in enumerate(v["lat"]):
             assert np.allclose(y, np.ones(19) * (73 - i * 4))
 
-        ref = xr_ds[f.name].sel(latitude=57, longitude=-7).values
+        ref = xr_ds[f.parameter.name].sel(latitude=57, longitude=-7).values
 
         x = 5
         y = 4
@@ -256,8 +258,8 @@ def test_netcdf_forecast_reference_time():
     ds = from_source("url", earthkit_remote_test_data_file("fa_ta850.nc"))
 
     assert len(ds) == 37
-    assert ds[0].metadata("valid_datetime") == "2020-01-23T00:00:00"
-    assert ds[5].metadata("valid_datetime") == "2020-01-23T05:00:00"
+    assert ds[0].get("valid_datetime") == datetime.datetime(2020, 1, 23, 0, 0, 0)
+    assert ds[5].get("valid_datetime") == datetime.datetime(2020, 1, 23, 5, 0, 0)
 
 
 if __name__ == "__main__":

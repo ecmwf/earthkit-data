@@ -56,7 +56,11 @@ class XArrayFieldList(FieldList):
         """Return the length of the XarrayFieldList."""
         return self.total_length
 
-    def __getitem__(self, i: int) -> Any:
+    def _getitem(self, n):
+        if isinstance(n, int):
+            return self._getitem_core(n)
+
+    def _getitem_core(self, i: int) -> Any:
         """Get an item from the XarrayFieldList by index.
 
         Parameters
@@ -254,3 +258,10 @@ class XArrayFieldList(FieldList):
             return EmptyFieldList()
 
         return self.__class__(self.ds, variables)
+
+    @classmethod
+    def new_mask_index(cls, *args, **kwargs):
+        assert len(args) == 2
+        fl = args[0]
+        indices = list(args[1])
+        return cls.from_fields([fl[i] for i in indices])

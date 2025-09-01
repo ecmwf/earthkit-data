@@ -53,8 +53,8 @@ def test_netcdf_concat(mode):
     ds = ds1 + ds2
 
     assert len(ds) == 2
-    md = ds1.metadata("variable") + ds2.metadata("variable")
-    assert ds.metadata("variable") == md
+    md = ds1.get("param") + ds2.get("param")
+    assert ds.get("param") == md
 
     assert ds[0].datetime() == {
         "base_time": datetime.datetime(2021, 3, 1, 12, 0),
@@ -92,7 +92,7 @@ def test_netcdf_read_multiple_files():
     )
 
     assert len(ds) == 2
-    assert ds.metadata("variable") == ["t2m", "t2m"]
+    assert ds.get("param") == ["t2m", "t2m"]
 
     assert ds[0].datetime() == {
         "base_time": datetime.datetime(2021, 3, 1, 12, 0),

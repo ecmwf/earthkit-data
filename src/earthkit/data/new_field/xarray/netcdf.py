@@ -36,10 +36,10 @@ class NetCDFFieldList(XArrayFieldList):
         raise NotImplementedError
         # return NetCDFMultiFieldList(sources)
 
-    @classmethod
-    def new_mask_index(cls, *args, **kwargs):
-        return NotImplementedError
-        # return NetCDFMaskFieldList(*args, **kwargs)
+    # @classmethod
+    # def new_mask_index(cls, *args, **kwargs):
+    #     return NotImplementedError
+    #     # return NetCDFMaskFieldList(*args, **kwargs)
 
     def to_xarray(self, **kwargs):
         # if self.path.startswith("http"):
@@ -70,9 +70,9 @@ class NetCDFFieldListFromFileOrURL(NetCDFFieldList):
 
         return xr.open_dataset(self.path_or_url)
 
-    def _getitem(self, n):
-        if isinstance(n, int):
-            return self.fields[n]
+    # def _getitem(self, n):
+    #     if isinstance(n, int):
+    #         return self.fields[n]
 
     # def __len__(self):
     #     return len(self.fields)

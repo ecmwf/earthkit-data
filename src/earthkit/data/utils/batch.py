@@ -54,7 +54,6 @@ class Iter(metaclass=ABCMeta):
         keys = self._flatten(args)
 
         r = self.data.order_by(*keys) if sort else self.data
-
         from itertools import groupby
 
         it = self._iterator(r)

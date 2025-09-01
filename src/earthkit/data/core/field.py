@@ -1189,6 +1189,69 @@ class Field(Base):
         lon, lat = self._data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
         return dict(lat=lat, lon=lon)
 
+    def to_points(self, flatten=False, dtype=None, index=None):
+        r"""Return the geographical coordinates in the data's original
+        Coordinate Reference System (CRS).
+
+        Parameters
+        ----------
+        flatten: bool
+            When it is True 1D arrays are returned. Otherwise arrays with the field's
+            :obj:`shape` are returned.
+        dtype: str, array.dtype or None
+            Typecode or data-type of the arrays. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is
+            ``float64``.
+        index: array indexing object, optional
+            The index of the coordinates to be extracted. When it is None
+            all the values are extracted.
+
+        Returns
+        -------
+        dict
+            Dictionary with items "x" and "y", containing the arrays of the x and
+            y coordinates, respectively. The underlying array format
+            of the field is used.
+
+        Raises
+        ------
+        ValueError
+            When the coordinates in the data's original CRS are not available.
+
+        See Also
+        --------
+        to_latlon
+
+        """
+        from earthkit.data.specs.data import SimpleData
+
+        def _reshape(v, flatten):
+            shape = SimpleData.target_shape(v, flatten, self.shape)
+            return SimpleData.reshape(v, shape)
+
+        x = self.geography.x
+        y = self.geography.y
+        r = {}
+        if x is not None and y is not None:
+            x = _reshape(x, flatten)
+            y = _reshape(y, flatten)
+            if index is not None:
+                x = x[index]
+                y = y[index]
+            r = dict(x=x, y=y)
+        elif self.geography.projection.CARTOPY_CRS == "PlateCarree":
+            lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
+            return dict(x=lon, y=lat)
+        else:
+            raise ValueError("to_points(): geographical coordinates in original CRS are not available")
+
+        # convert values to array format
+        assert r
+        sample = self._values(dtype=dtype)
+        for k, v in zip(r.keys(), convert_array(list(r.values()), target_array_sample=sample)):
+            r[k] = v
+        return r
+
     def bounding_box(self):
         r"""Return the bounding box of the field.
 

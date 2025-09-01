@@ -9,6 +9,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+
 import numpy as np
 
 import earthkit.data
@@ -34,7 +36,7 @@ def test_netcdf_fieldlist_string_coord():
 
     assert ds
     assert len(ds) == 2
-    assert ds.metadata("level") == ["500", "700"]
+    assert ds.get("level") == ["500", "700"]
 
     x_ref = np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]])
     y_ref = np.array([[4, 5, 6], [4, 5, 6], [4, 5, 6]])
@@ -68,8 +70,8 @@ def test_netcdf_fieldlist_ctime():
     )
 
     assert len(ds) == 1506
-    assert ds[0].metadata("valid_datetime") == "2007-01-16T00:00:00"
-    assert ds[5].metadata("valid_datetime") == "2007-01-16T00:00:00"
+    assert ds[0].get("valid_datetime") == datetime.datetime.fromisoformat("2007-01-16T00:00:00")
+    assert ds[5].get("valid_datetime") == datetime.datetime.fromisoformat("2007-01-16T00:00:00")
 
 
 if __name__ == "__main__":

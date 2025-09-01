@@ -18,6 +18,7 @@ from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("group", ["param"])
 def test_netcdf_group_by(array_backend, group):
@@ -28,15 +29,17 @@ def test_netcdf_group_by(array_backend, group):
         [("u", 1000), ("u", 850)],
         [("v", 1000), ("v", 850)],
     ]
+
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 2
-        assert f.metadata(("param", "level")) == ref[i]
+        assert f.get(("param", "level")) == ref[i]
         cnt += len(f)
 
     assert cnt == len(ds)
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
 def test_netcdf_multi_group_by(array_backend, group):
@@ -53,7 +56,7 @@ def test_netcdf_multi_group_by(array_backend, group):
     ]
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
-        assert f.metadata(("param", "level")) == ref[i]
+        assert f.get(("param", "level")) == ref[i]
         cnt += len(f)
 
     assert cnt == len(ds)
@@ -73,7 +76,7 @@ def test_netcdf_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("param") == expected_meta[i]
         cnt += len(f)
 
     assert cnt == len(ds)

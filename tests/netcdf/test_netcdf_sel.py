@@ -9,6 +9,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+
 import pytest
 
 from earthkit.data.testing import earthkit_examples_file
@@ -19,34 +21,34 @@ from earthkit.data.testing import load_nc_or_xr_source
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
     [
-        (dict(variable="u", level=700), [["u", 700]], []),
+        (dict(param="u", level=700), [["u", 700]], []),
         (
-            dict(variable=["t", "u"], level=[700, 500]),
+            dict(param=["t", "u"], level=[700, 500]),
             [
                 ["t", 700],
                 ["t", 500],
                 ["u", 700],
                 ["u", 500],
             ],
-            ["variable", "level"],
+            ["param", "level"],
         ),
-        (dict(variable="w"), [], []),
+        (dict(param="w"), [], []),
         (dict(INVALIDKEY="w"), [], []),
         (
             dict(
-                variable=["t"],
+                param=["t"],
                 level=[500, 700],
-                valid_datetime="2018-08-01T12:00:00",
+                valid_datetime=datetime.datetime.fromisoformat("2018-08-01T12:00:00"),
             ),
             [
-                ["t", 700, "2018-08-01T12:00:00"],
-                ["t", 500, "2018-08-01T12:00:00"],
+                ["t", 700, datetime.datetime.fromisoformat("2018-08-01T12:00:00")],
+                ["t", 500, datetime.datetime.fromisoformat("2018-08-01T12:00:00")],
             ],
-            ["variable", "level", "valid_datetime"],
+            ["param", "level", "valid_datetime"],
         ),
         (
             dict(
-                variable=["t"],
+                param=["t"],
                 level=[500, 700],
                 date=20180801,
                 time=1200,
@@ -55,7 +57,7 @@ from earthkit.data.testing import load_nc_or_xr_source
                 ["t", 700, 20180801, 1200],
                 ["t", 500, 20180801, 1200],
             ],
-            ["variable", "level", "date", "time"],
+            ["param", "level", "date", "time"],
         ),
     ],
 )
@@ -69,7 +71,7 @@ def test_netcdf_sel_single_file_1(mode, params, expected_meta, metadata_keys):
         if metadata_keys:
             keys = metadata_keys
 
-        assert g.metadata(keys) == expected_meta
+        assert g.get(keys) == expected_meta
     return
 
 
