@@ -128,6 +128,25 @@ class Vertical(SimpleSpec):
         setattr(r, "_handle", handle)
         return r
 
+    @classmethod
+    def from_xarray(cls, owner, selection) -> "Vertical":
+        """Create a Vertical instance from an xarray dataset.
+
+        Parameters
+        ----------
+        handle
+            GRIB handle object.
+
+        Returns
+        -------
+        Vertical
+            The created Vertical instance.
+        """
+        from .xarray.vertical import from_xarray
+
+        r = cls(**from_xarray(owner, selection))
+        return r
+
     def _to_grib(self, altered: bool = True) -> dict:
         """Convert the object to a GRIB dictionary.
 

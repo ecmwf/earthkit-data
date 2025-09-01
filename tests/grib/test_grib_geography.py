@@ -187,7 +187,6 @@ def test_grib_points_multi_non_shared_grid(fl_type):
         f.geography.y
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("index", [0, None])
 def test_grib_to_latlon_single_flatten(fl_type, index):
@@ -243,7 +242,6 @@ def test_grib_to_latlon_single_shape(fl_type, index):
         assert np.allclose(array_backend.to_numpy(y), np.ones(12) * (90 - i * 30))
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_grib_to_latlon_multi(fl_type, dtype):
@@ -261,7 +259,6 @@ def test_grib_to_latlon_multi(fl_type, dtype):
     assert v["lon"].dtype == dtype
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_to_latlon_multi_non_shared_grid(fl_type):
     f1, _ = load_grib_data("test.grib", fl_type)
@@ -272,7 +269,6 @@ def test_grib_to_latlon_multi_non_shared_grid(fl_type):
         f.to_latlon()
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("index", [0, None])
 def test_grib_to_points_single(fl_type, index):
@@ -302,7 +298,6 @@ def test_grib_to_points_single(fl_type, index):
     )
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_to_points_unsupported_grid(fl_type):
     f, _ = load_grib_data("mercator.grib", fl_type, folder="data")
@@ -310,7 +305,6 @@ def test_grib_to_points_unsupported_grid(fl_type):
         f[0].to_points()
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_grib_to_points_multi(fl_type, dtype):
@@ -328,7 +322,6 @@ def test_grib_to_points_multi(fl_type, dtype):
     assert v["y"].dtype == dtype
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_to_points_multi_non_shared_grid(fl_type):
     f1, _ = load_grib_data("test.grib", fl_type)
@@ -346,7 +339,6 @@ def test_grib_bbox_1(fl_type):
     assert bb.as_tuple() == (73, -27, 33, 45)
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_bbox_2(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
@@ -383,7 +375,6 @@ def test_grib_projection_mercator(fl_type):
     assert projection.globe == dict()
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize(
     "path,expected_value",
     [
@@ -406,7 +397,6 @@ def test_grib_resolution(path, expected_value):
         assert np.isclose(ds[0].resolution, expected_value)
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize(
     "path,expected_value",
     [
@@ -435,7 +425,6 @@ def test_grib_mars_area(path, expected_value):
     assert np.allclose(np.asarray(ds[0].mars_area), np.asarray(expected_value))
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize(
     "path,expected_value",
     [
@@ -469,7 +458,6 @@ def test_grib_mars_grid(path, expected_value):
         assert np.allclose(np.asarray(ds[0].mars_grid), np.asarray(expected_value))
 
 
-@pytest.mark.migrate
 @pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")
 def test_grib_grid_points_rotated_ll():
     """The"""
@@ -500,7 +488,6 @@ def test_grib_grid_points_rotated_ll():
     assert np.allclose(res[1], ref[1])
 
 
-@pytest.mark.migrate
 @pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")
 def test_grib_grid_points_rotated_rgg():
     ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_N32_subarea.grib"))

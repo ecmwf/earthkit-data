@@ -85,12 +85,12 @@ class SimpleFieldList(FieldList):
 
     def __getstate__(self) -> dict:
         ret = {}
-        print("SimpleFieldList Getstate")
+        # print("SimpleFieldList Getstate")
         ret["_fields"] = self._fields
         return ret
 
     def __setstate__(self, state: dict):
-        print("SimpleFieldList Setstate")
+        # print("SimpleFieldList Setstate")
         self._fields = state.pop("_fields")
 
     def to_pandas(self, *args, **kwargs):

@@ -21,6 +21,7 @@ from grib_fixtures import FL_NUMPY  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 def test_legacy_grib_icon_to_xarray(fl_type):
     # test the conversion to xarray for an icon (unstructured grid) grib file.
@@ -34,6 +35,7 @@ def test_legacy_grib_icon_to_xarray(fl_type):
     assert ds["pres"].sizes["values"] == 6
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 def test_legacy_grib_to_xarray_filter_by_keys(fl_type):
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -49,6 +51,7 @@ def test_legacy_grib_to_xarray_filter_by_keys(fl_type):
     assert r["t"].sizes["isobaricInhPa"] == 1
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 def test_legacy_grib_to_pandas(fl_type):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")

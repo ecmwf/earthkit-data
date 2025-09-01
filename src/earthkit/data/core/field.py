@@ -10,6 +10,7 @@
 from collections import defaultdict
 from functools import cache
 
+import deprecation
 from earthkit.utils.array import array_namespace
 from earthkit.utils.array import convert_array
 from earthkit.utils.array import get_backend
@@ -261,17 +262,19 @@ class Field(Base):
     @classmethod
     def from_xarray(cls, variable, selection, **kwargs):
         r"""Create a Field object from an XArray field."""
-        from earthkit.data.new_field.xarray.xarray import XArrayData
-        from earthkit.data.new_field.xarray.xarray import XArrayGeography
-        from earthkit.data.new_field.xarray.xarray import XArrayParameter
-        from earthkit.data.new_field.xarray.xarray import XArrayTime
-        from earthkit.data.new_field.xarray.xarray import XArrayVertical
+        from earthkit.data.specs.data import SimpleData
+        from earthkit.data.specs.geography import SimpleGeography
+        from earthkit.data.specs.labels import SimpleLabels
+        from earthkit.data.specs.parameter import Parameter
+        from earthkit.data.specs.time import Time
+        from earthkit.data.specs.vertical import Vertical
 
-        data = XArrayData(variable, selection)
-        parameter = XArrayParameter(variable)
-        time = XArrayTime(variable, selection)
-        geography = XArrayGeography(variable, selection)
-        vertical = XArrayVertical(variable, selection)
+        data = SimpleData.from_xarray(variable, selection)
+        parameter = Parameter.from_xarray(variable, selection)
+        time = Time.from_xarray(variable, selection)
+        geography = SimpleGeography.from_xarray(variable, selection)
+        vertical = Vertical.from_xarray(variable, selection)
+        labels = SimpleLabels()
 
         return cls(
             data=data,
@@ -279,6 +282,7 @@ class Field(Base):
             time=time,
             geography=geography,
             vertical=vertical,
+            labels=labels,
             **kwargs,
         )
 
@@ -456,7 +460,7 @@ class Field(Base):
             v = self.labels[key]
             return _cast(v)
         # try the raw accessor
-        elif self.raw:
+        elif self.raw is not None:
             return self.raw.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
         elif raise_on_missing:
             raise KeyError(f"Key {key} not found in field")
@@ -783,6 +787,44 @@ class Field(Base):
 
         d = dict(*args, **kwargs)
         return Field(self, label=self.label.set(d))
+
+    @deprecation.deprecated(deprecated_in="0.13.0", details="Use to_target() instead")
+    def save(self, filename, append=False, **kwargs):
+        r"""Write the field into a file.
+
+        Parameters
+        ----------
+        filename: str, optional
+            The target file path, if not defined attempts will be made to detect the filename
+        append: bool, optional
+            When it is true append data to the target file. Otherwise
+            the target file be overwritten if already exists. Default is False
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`write`.
+        """
+        metadata = kwargs.pop("metadata", None)
+        if metadata is None:
+            metadata = {}
+            bits_per_value = kwargs.pop("bits_per_value", None)
+            if bits_per_value is not None:
+                metadata = {"bitsPerValue": bits_per_value}
+            # metadata, kwargs = _bits_per_value_to_metadata(**kwargs)
+        self.to_target("file", filename, append=append, metadata=metadata, **kwargs)
+        # the original implementation
+        # flag = "wb" if not append else "ab"
+        # with open(filename, flag) as f:
+        #     self.write(f, **kwargs)
+
+    @deprecation.deprecated(deprecated_in="0.13.0", details="Use to_target() instead")
+    def write(self, f, **kwargs):
+        metadata = kwargs.pop("metadata", None)
+        if metadata is None:
+            metadata = {}
+            bits_per_value = kwargs.pop("bits_per_value", None)
+            if bits_per_value is not None:
+                metadata = {"bitsPerValue": bits_per_value}
+            # metadata, kwargs = _bits_per_value_to_metadata(**kwargs)
+        self.to_target("file", f, metadata=metadata, **kwargs)
 
     def to_target(self, target, *args, **kwargs):
         r"""Write the field into a target object.

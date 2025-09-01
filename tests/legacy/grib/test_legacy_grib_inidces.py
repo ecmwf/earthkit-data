@@ -20,6 +20,7 @@ from grib_fixtures import FL_TYPES  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_indices_base(fl_type):
     ds, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -62,6 +63,7 @@ def test_grib_indices_base(fl_type):
     assert r == ref_full
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_indices_sel(fl_type):
     ds, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -91,6 +93,7 @@ def test_legacy_grib_indices_sel(fl_type):
     assert r == ref
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_indices_multi(fl_type):
     f1, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -157,6 +160,7 @@ def test_legacy_grib_indices_multi(fl_type):
     assert r == ref
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_indices_multi_sel(fl_type):
     f1, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -182,6 +186,7 @@ def test_legacy_grib_indices_multi_sel(fl_type):
     assert r == ref
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_indices_order_by(fl_type):
     ds, _ = load_grib_data("tuv_pl.grib", fl_type)

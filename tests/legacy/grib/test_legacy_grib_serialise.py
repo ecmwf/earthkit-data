@@ -47,6 +47,7 @@ def _pickle(data, representation):
     return data_res
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("representation", ["file", "memory"])
 def test_legacy_grib_serialise_metadata(fl_type, representation):
@@ -60,6 +61,7 @@ def test_legacy_grib_serialise_metadata(fl_type, representation):
         assert md[k] == md2[k]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("representation", ["file", "memory"])
 def test_legacy_grib_serialise_standalone_metadata(representation):
     ds = from_source("file", earthkit_examples_file("test.grib"))
@@ -83,6 +85,7 @@ def test_legacy_grib_serialise_standalone_metadata(representation):
         assert md2[k] == v
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("representation", ["file", "memory"])
 def test_legacy_grib_serialise_array_field_memory(fl_type, representation):
@@ -100,6 +103,7 @@ def test_legacy_grib_serialise_array_field_memory(fl_type, representation):
             assert ds[idx].metadata(k) == f2.metadata(k), f"index={idx}"
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("representation", ["file", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
@@ -131,6 +135,7 @@ def test_legacy_grib_serialise_array_fieldlist(fl_type, representation, write_me
         assert np.allclose(v1 + 1, v_tmp)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", ["file"])
 def test_legacy_grib_serialise_file_fieldlist_core(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
@@ -149,6 +154,7 @@ def test_legacy_grib_serialise_file_fieldlist_core(fl_type):
     assert len(r) == 1
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", ["file"])
 def test_legacy_grib_serialise_file_fieldlist_sel(fl_type):
     ds0, _ = load_grib_data("test6.grib", fl_type)
@@ -169,6 +175,7 @@ def test_legacy_grib_serialise_file_fieldlist_sel(fl_type):
     assert len(r) == 1
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", ["file"])
 def test_legacy_grib_serialise_file_fieldlist_concat(fl_type):
     ds00, _ = load_grib_data("test.grib", fl_type)
@@ -188,6 +195,7 @@ def test_legacy_grib_serialise_file_fieldlist_concat(fl_type):
         ds2.metadata(k) == ds.metadata(k)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_serialise_stream_1():
     with open(earthkit_examples_file("test.grib"), "rb") as f:
         ds = from_source("stream", f)
@@ -195,6 +203,7 @@ def test_legacy_grib_serialise_stream_1():
             pickle.dumps(ds)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_serialise_stream_2():
     with open(earthkit_examples_file("test.grib"), "rb") as f:
         ds = from_source("stream", f, read_all=True)
@@ -206,6 +215,7 @@ def test_legacy_grib_serialise_stream_2():
     assert ds.metadata("shortName") == ["2t", "msl"]
 
 
+@pytest.mark.legacy
 def test_legacy_grib_serialise_file_parts():
     parts = (240, 150)
 
@@ -219,6 +229,7 @@ def test_legacy_grib_serialise_file_parts():
     assert ds2[0].metadata(["param", "level"]) == ["u", 1000]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_FILE)
 @pytest.mark.parametrize("representation", ["file", "memory"])
 @pytest.mark.parametrize("policy", ["path", "memory"])

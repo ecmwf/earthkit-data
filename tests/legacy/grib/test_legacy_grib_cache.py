@@ -61,6 +61,7 @@ def _check_diag(diag, ref):
         assert diag[k] == v, f"{k}={diag[k]} != {v}"
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("handle_cache_size", [1, 5])
 @pytest.mark.parametrize("serialise", [True, False])
 def test_legacy_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metadata_cache):
@@ -145,6 +146,7 @@ def test_legacy_grib_cache_basic_file_patched(handle_cache_size, serialise, patc
         assert ds[0].handle == md._handle
 
 
+@pytest.mark.legacy
 def test_legacy_grib_cache_basic_file_non_patched():
     """This test is the same as test_legacy_grib_cache_basic but without the patch_metadata_cache fixture.
     So metadata cache hits and misses are not counted."""
@@ -217,6 +219,7 @@ def test_legacy_grib_cache_basic_file_non_patched():
         assert ds[0].handle == md._handle
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("serialise", [True, False])
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 def test_legacy_grib_cache_basic_metadata_patched(serialise, fl_type, patch_metadata_cache):
@@ -286,6 +289,7 @@ def test_legacy_grib_cache_basic_metadata_patched(serialise, fl_type, patch_meta
             assert ds[0].handle == md._handle
 
 
+@pytest.mark.legacy
 def test_legacy_grib_cache_options_1(patch_metadata_cache):
     with config.temporary(
         {
@@ -366,6 +370,7 @@ def test_legacy_grib_cache_options_1(patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_cache_options_2(patch_metadata_cache):
     with config.temporary(
         {
@@ -448,6 +453,7 @@ def test_legacy_grib_cache_options_2(patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_cache_options_3(patch_metadata_cache):
     with config.temporary(
         {
@@ -528,6 +534,7 @@ def test_legacy_grib_cache_options_3(patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_cache_options_4(patch_metadata_cache):
     with config.temporary(
         {
@@ -625,6 +632,7 @@ def test_legacy_grib_cache_options_4(patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_cache_options_5(patch_metadata_cache):
     with config.temporary(
         {
@@ -724,6 +732,7 @@ def test_legacy_grib_cache_options_5(patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_cache_options_6(patch_metadata_cache):
     with config.temporary(
         {
@@ -816,6 +825,7 @@ def test_legacy_grib_cache_options_6(patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_cache_file_use_kwargs_1():
     _kwargs = {
         "grib_field_policy": "temporary",
@@ -856,6 +866,7 @@ def test_legacy_grib_cache_file_use_kwargs_2():
         from_source("file", earthkit_examples_file("tuv_pl.grib"), **_kwargs)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 def test_legacy_grib_cache_metadata_use_kwargs_1(fl_type, patch_metadata_cache):
     with config.temporary(
@@ -898,6 +909,7 @@ def test_legacy_grib_cache_metadata_use_kwargs_1(fl_type, patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 def test_legacy_grib_cache_metadata_use_kwargs_2(fl_type, patch_metadata_cache):
     with config.temporary(

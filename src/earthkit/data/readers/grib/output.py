@@ -81,7 +81,9 @@ class GribCoder:
         if template is None:
             handle = self.handle_from_metadata(values, metadata, compulsory)
         else:
-            handle = template.handle.clone()
+            handle = self.handle_from_template(template)
+            handle = handle.clone()
+            # handle = template.handle.clone()
             self.update_metadata_from_template(metadata, template, handle)
 
         self.update_metadata(handle, metadata, compulsory)
@@ -140,6 +142,23 @@ class GribCoder:
 
         if return_bytes:
             return handle.get_message()
+
+        return handle
+
+    def handle_from_template(self, template):
+        handle = None
+        if template is None:
+            template = self.template
+        if template is not None:
+            if hasattr(template, "handle"):
+                handle = template.handle
+            elif hasattr(template, "grib") and hasattr(template.grib, "handle"):
+                handle = template.grib.handle
+            elif hasattr(template, "raw") and hasattr(template.raw, "handle"):
+                handle = template.raw.handle
+
+        if handle is not None:
+            handle = handle.clone()
 
         return handle
 
@@ -335,6 +354,8 @@ class GribCoder:
             return f"reduced_gg_{levtype}_{N}_grib{edition}"
 
     def update_metadata_from_template(self, metadata, template, handle):
+        # TODO: adjust it to the new field implementation
+        return
         # the template can contain extra metadata that is not encoded in the handle
         bpv = None
         if hasattr(template, "metadata"):

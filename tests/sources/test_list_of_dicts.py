@@ -46,7 +46,8 @@ def test_list_of_dicts(lod):
     ref = [("t", 500), ("t", 850), ("u", 500), ("u", 850), ("d", 850), ("d", 600)]
     assert ds.metadata("param", "levelist") == ref
 
-    assert ds[0].metadata("step", default=None) is None
+    # assert ds[0].get("step", default=None) is None
+    assert ds[0].get("step", default=None) == datetime.timedelta(hours=0)
 
     assert ds[0].datetime() == {
         "base_time": datetime.datetime(2018, 8, 1, 12, 0),

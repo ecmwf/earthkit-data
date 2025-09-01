@@ -143,9 +143,7 @@ class Constant(Time):
         return None
 
     def spec(self, coords_values: Dict[str, Any]):
-        from ...core.spec.time import TimeSpec
-
-        return TimeSpec()
+        return {}
 
 
 class Analysis(Time):
@@ -177,10 +175,8 @@ class Analysis(Time):
         return self.time_coordinate_name
 
     def spec(self, coords_values: Dict[str, Any]):
-        from ...core.spec.time import TimeSpec
-
         valid_time = to_datetime(coords_values[self.time_coordinate_name])
-        return TimeSpec.from_valid_datetime(valid_time)
+        return {"valid_datetime": valid_time}
 
 
 class ForecastFromValidTimeAndStep(Time):
@@ -223,8 +219,6 @@ class ForecastFromValidTimeAndStep(Time):
         return self.time_coordinate_name
 
     def spec(self, coords_values: Dict[str, Any]):
-        from ...core.spec.time import TimeSpec
-
         valid_datetime = to_datetime(coords_values[self.time_coordinate_name])
         step = to_timedelta(coords_values[self.step_coordinate_name])
 
@@ -238,7 +232,7 @@ class ForecastFromValidTimeAndStep(Time):
                 base_datetime_ref,
             )
 
-        return TimeSpec.from_valid_datetime_and_step(valid_datetime, step)
+        return {"valid_datetime": valid_datetime, "step": step}
 
 
 class ForecastFromValidTimeAndBaseTime(Time):
@@ -273,13 +267,11 @@ class ForecastFromValidTimeAndBaseTime(Time):
         return self.time_coordinate_name
 
     def spec(self, coords_values: Dict[str, Any]):
-        from ...core.spec.time import TimeSpec
-
         valid_datetime = to_datetime(coords_values[self.time_coordinate_name])
         base_datetime = to_datetime(coords_values[self.date_coordinate_name])
         step = valid_datetime - base_datetime
 
-        return TimeSpec.from_base_datetime_and_step(valid_datetime, step)
+        return {"base_datetime": base_datetime, "step": step}
 
 
 class ForecastFromBaseTimeAndDate(Time):
@@ -314,11 +306,7 @@ class ForecastFromBaseTimeAndDate(Time):
         raise NotImplementedError("ForecastFromBaseTimeAndDate.select_valid_datetime")
 
     def spec(self, coords_values: Dict[str, Any]):
-        from ...core.spec.time import TimeSpec
-
         date = coords_values[self.date_coordinate_name]
         step = coords_values[self.step_coordinate_name]
-        date = to_datetime(date)
-        step = to_timedelta(step)
 
-        return TimeSpec.from_base_datetime_and_step(date, step)
+        return {"base_datetime": date, "step": step}

@@ -23,6 +23,7 @@ from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("_kwargs", [{}, {"array_backend": "numpy"}])
 def test_legacy_grib_file_numpy_backend(_kwargs):
     ds = from_source("file", earthkit_examples_file("test6.grib"))
@@ -62,6 +63,7 @@ def test_legacy_grib_file_numpy_backend(_kwargs):
     assert ds1[0].array_backend == _NUMPY
 
 
+@pytest.mark.legacy
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 def test_legacy_grib_file_pytorch_backend():
     ds = from_source("file", earthkit_examples_file("test6.grib"))
@@ -107,6 +109,7 @@ def test_legacy_grib_file_pytorch_backend():
     assert ds1[0].array_backend == _TORCH
 
 
+@pytest.mark.legacy
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
 def test_legacy_grib_file_cupy_backend():
     ds = from_source("file", earthkit_examples_file("test6.grib"))
@@ -150,6 +153,7 @@ def test_legacy_grib_file_cupy_backend():
     assert get_backend(ds1[0].to_array()) == _CUPY
 
 
+@pytest.mark.legacy
 def test_legacy_grib_array_numpy_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
 
@@ -183,6 +187,7 @@ def test_legacy_grib_array_numpy_backend():
     assert ds.to_numpy().shape == (6, 7, 12)
 
 
+@pytest.mark.legacy
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 def test_legacy_grib_array_torch_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
@@ -219,6 +224,7 @@ def test_legacy_grib_array_torch_backend():
     assert ds.to_numpy().shape == (6, 7, 12)
 
 
+@pytest.mark.legacy
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
 def test_legacy_grib_array_cupy_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))

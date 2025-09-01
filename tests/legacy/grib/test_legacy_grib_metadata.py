@@ -37,6 +37,7 @@ def repeat_list_items(items, count):
     return sum([[x] * count for x in items], [])
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "key,expected_value",
@@ -63,6 +64,7 @@ def test_legacy_grib_metadata_grib(fl_type, key, expected_value):
     assert sn == expected_value
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "key,astype,expected_value",
@@ -85,6 +87,7 @@ def test_legacy_grib_metadata_astype_1(fl_type, key, astype, expected_value):
     assert sn == expected_value
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fs_type", FL_TYPES)
 @pytest.mark.parametrize(
     "key,expected_value",
@@ -104,6 +107,7 @@ def test_legacy_grib_metadata_18(fs_type, key, expected_value):
     assert sn == expected_value
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "key,astype,expected_value",
@@ -128,6 +132,7 @@ def test_legacy_grib_metadata_astype_18(fl_type, key, astype, expected_value):
     assert sn == expected_value
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "key,expected_value",
@@ -144,6 +149,7 @@ def test_legacy_grib_metadata_double_1(fl_type, key, expected_value):
     assert np.isclose(r[0], expected_value)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "key",
@@ -161,6 +167,7 @@ def test_legacy_grib_metadata_double_18(fl_type, key):
     np.testing.assert_allclose(r, ref, 0.001)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "key,astype",
@@ -178,6 +185,7 @@ def test_legacy_grib_metadata_double_astype_18(fl_type, key, astype):
     np.testing.assert_allclose(r, ref, 0.001)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_get_long_array_1(fl_type):
     f, _ = load_grib_data("rgg_small_subarea_cellarea_ref.grib", fl_type, folder="data")
@@ -194,6 +202,7 @@ def test_legacy_grib_get_long_array_1(fl_type):
     assert pl[72] == 312
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_FILE)
 def test_legacy_grib_get_double_array_values_1(fl_type):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
@@ -213,6 +222,7 @@ def test_legacy_grib_get_double_array_values_1(fl_type):
     )
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_FILE)
 def test_legacy_grib_get_double_array_values_18(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -243,6 +253,7 @@ def test_legacy_grib_get_double_array_values_18(fl_type):
     )
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_get_double_array_1(fl_type):
     f_in, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
@@ -258,6 +269,7 @@ def test_legacy_grib_get_double_array_1(fl_type):
     assert np.isclose(v[275], 1.0)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_get_double_array_18(fl_type):
     f, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
@@ -275,6 +287,7 @@ def test_legacy_grib_get_double_array_18(fl_type):
     assert np.isclose(v[17][20], 316.4207458496094, eps)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_metadata_type_qualifier(fl_type):
     f_in, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -315,6 +328,7 @@ def test_legacy_grib_metadata_type_qualifier(fl_type):
     assert all(isinstance(x, float) for x in r)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_metadata_astype_core(fl_type):
     f_in, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -350,6 +364,7 @@ def test_legacy_grib_metadata_astype_core(fl_type):
         f.metadata(["level", "cfVarName", "centre"], astype=(int, None))
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_metadata_generic(fl_type):
     f_full, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -379,6 +394,7 @@ def test_legacy_grib_metadata_generic(fl_type):
     assert lg == [1000, "t"]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_metadata_missing_value(fl_type):
     f, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
@@ -390,6 +406,7 @@ def test_legacy_grib_metadata_missing_value(fl_type):
     assert v is None
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_metadata_missing_key(fl_type):
     f, _ = load_grib_data("test.grib", fl_type)
@@ -401,6 +418,7 @@ def test_legacy_grib_metadata_missing_key(fl_type):
     assert v == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_FILE)
 def test_legacy_grib_metadata_namespace(fl_type):
     f, _ = load_grib_data("test6.grib", fl_type)
@@ -481,6 +499,7 @@ def test_legacy_grib_metadata_namespace(fl_type):
     assert "must be a str when key specified" in str(excinfo.value)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_datetime(fl_type):
     s, _ = load_grib_data("test.grib", fl_type)
@@ -511,6 +530,7 @@ def test_legacy_grib_datetime(fl_type):
     assert s.datetime() == ref
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_valid_datetime(fl_type):
     ds, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
@@ -519,6 +539,7 @@ def test_legacy_grib_valid_datetime(fl_type):
     assert f.metadata("valid_datetime") == "2020-12-21T18:00:00"
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_FILE)
 def test_legacy_grib_message(fl_type):
     f, _ = load_grib_data("test.grib", fl_type)
@@ -530,6 +551,7 @@ def test_legacy_grib_message(fl_type):
     assert v[:4] == b"GRIB"
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_FILE)
 def test_legacy_grib_tilde_shortname(fl_type):
     f, _ = load_grib_data("tilde_shortname.grib", fl_type, folder="data")
@@ -544,7 +566,8 @@ def test_legacy_grib_tilde_shortname(fl_type):
     assert f[0].metadata(namespace="parameter")["shortName"] == "106"
 
 
-def test_compat_grib_gridspec_key():
+@pytest.mark.legacy
+def test_legacy_grib_gridspec_key():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     ds[0].metadata("gridSpec", default=None)  # Should not raise an error

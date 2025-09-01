@@ -29,6 +29,7 @@ def repeat_list_items(items, count):
     return sum([[x] * count for x in items], [])
 
 
+@pytest.mark.legacy
 def test_legacy_grib_file_stream_iter():
     ds = from_source(
         "file",
@@ -59,6 +60,7 @@ def test_legacy_grib_file_stream_iter():
     assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "_kwargs,expected_meta",
     [
@@ -90,6 +92,7 @@ def test_legacy_grib_file_stream_batched(_kwargs, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
 def test_legacy_grib_file_stream_group_by(group):
     ds = from_source("file", earthkit_examples_file("test6.grib"), stream=True)
@@ -115,6 +118,7 @@ def test_legacy_grib_file_stream_group_by(group):
     assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 def test_legacy_grib_file_stream_in_memory():
     ds = from_source(
         "file",
@@ -154,6 +158,7 @@ def test_legacy_grib_file_stream_in_memory():
     assert np.allclose(vals, ref)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_save_when_loaded_from_file_stream(write_method):
     ds = from_source(
@@ -176,6 +181,7 @@ def test_legacy_grib_save_when_loaded_from_file_stream(write_method):
 #         {"batch_size": 1},
 #     ],
 # )
+@pytest.mark.legacy
 def test_legacy_grib_file_stream_multi_file_iter():
     ds = from_source(
         "file",
@@ -212,6 +218,7 @@ def test_legacy_grib_file_stream_multi_file_iter():
     assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "_kwargs,expected_meta",
     [
@@ -247,6 +254,7 @@ def test_legacy_grib_file_stream_multi_file_batched(_kwargs, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 def test_legacy_grib_file_stream_multi_file_memory():
     ds = from_source(
         "file",
@@ -318,6 +326,7 @@ def test_legacy_grib_file_stream_multi_file_memory():
     ]
 
 
+@pytest.mark.legacy
 @pytest.mark.cache
 @pytest.mark.parametrize(
     "path,parts,expected_meta,remote",
@@ -361,6 +370,7 @@ def test_legacy_grib_file_stream_single_file_parts_core(path, parts, expected_me
     assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "parts,expected_meta",
     [
@@ -393,6 +403,7 @@ def test_legacy_grib_file_stream_single_file_parts_as_arg_valid(parts, expected_
     assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 def test_legacy_grib_file_stream_single_file_parts_as_arg_invalid():
     with pytest.raises(ValueError):
         from_source(
@@ -403,6 +414,7 @@ def test_legacy_grib_file_stream_single_file_parts_as_arg_invalid():
         )
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "parts1,parts2,expected_meta",
     [
@@ -461,6 +473,7 @@ def test_legacy_grib_file_stream_multi_file_parts(parts1, parts2, expected_meta)
     assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_file_stream_glob(write_method):
     s1 = from_source("file", earthkit_examples_file("test.grib"))
@@ -490,6 +503,7 @@ def test_legacy_grib_file_stream_glob(write_method):
         assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_file_stream_single_directory(write_method):
     s1 = from_source("file", earthkit_examples_file("test.grib"))
@@ -523,6 +537,7 @@ def test_legacy_grib_file_stream_single_directory(write_method):
         assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_file_stream_multi_directory(write_method):
     s1 = from_source("file", earthkit_examples_file("test.grib"))
@@ -566,6 +581,7 @@ def test_legacy_grib_file_stream_multi_directory(write_method):
             assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("filter_kwarg", [(lambda x: "b.grib" in x), ("*b.grib")])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_file_stream_single_directory_filter(filter_kwarg, write_method):
@@ -595,6 +611,7 @@ def test_legacy_grib_file_stream_single_directory_filter(filter_kwarg, write_met
         assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("filter_kwarg", [(lambda x: "b.grib" in x), ("*b.grib")])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_file_stream_multi_directory_filter(filter_kwarg, write_method):
@@ -635,6 +652,7 @@ def test_legacy_grib_file_stream_multi_directory_filter(filter_kwarg, write_meth
             assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_file_stream_multi_directory_with_tar(write_method):
     s1 = from_source("file", earthkit_examples_file("test.grib"))

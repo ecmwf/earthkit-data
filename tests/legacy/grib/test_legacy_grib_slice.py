@@ -24,6 +24,7 @@ from grib_fixtures import FL_TYPES  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "index,expected_meta",
@@ -47,6 +48,7 @@ def test_legacy_grib_single_index(fl_type, index, expected_meta):
     # assert np.isclose(v[1088], 304.5642, eps)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_single_index_bad(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -54,6 +56,7 @@ def test_legacy_grib_single_index_bad(fl_type):
         f[27]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "indexes,expected_meta",
@@ -78,6 +81,7 @@ def test_legacy_grib_slice_single_file(fl_type, indexes, expected_meta):
     assert f.metadata("shortName") == ["t", "u", "v"] * 6
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "indexes,expected_meta",
     [
@@ -102,6 +106,7 @@ def test_legacy_grib_slice_multi_file(indexes, expected_meta):
     assert f.metadata("shortName") == ["2t", "msl", "t", "z", "t", "z"]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "indexes1,indexes2",
@@ -123,6 +128,7 @@ def test_legacy_grib_array_indexing(fl_type, indexes1, indexes2):
     assert r1.metadata("shortName") == ["u", "t"]
 
 
+@pytest.mark.legacy
 @pytest.mark.skip(reason="Index range checking disabled")
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
@@ -139,6 +145,7 @@ def test_legacy_grib_array_indexing_bad(fl_type, indexes):
         f[indexes]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_fieldlist_iterator(fl_type):
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -151,6 +158,7 @@ def test_legacy_grib_fieldlist_iterator(fl_type):
     assert iter_sn == sn
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_fieldlist_iterator_with_zip(fl_type):
     # test something different to the iterator - does not try to
@@ -168,6 +176,7 @@ def test_legacy_grib_fieldlist_iterator_with_zip(fl_type):
     assert levs2 == ref_levs
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_fieldlist_iterator_with_zip_multiple(fl_type):
     # same as test_fieldlist_iterator_with_zip() but multiple times
@@ -184,6 +193,7 @@ def test_legacy_grib_fieldlist_iterator_with_zip_multiple(fl_type):
         assert levs2 == ref_levs, i
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_fieldlist_reverse_iterator(fl_type):
     g, _ = load_grib_data("tuv_pl.grib", fl_type)

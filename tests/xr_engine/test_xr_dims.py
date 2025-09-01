@@ -114,6 +114,7 @@ def test_xr_dims_input_fieldlist():
     assert ds.index("level_and_type") == ["1000_pl", "850_pl"]
 
 
+@pytest.mark.skip(reason="New field implementation does not allow using time without date")
 @pytest.mark.parametrize(
     "kwargs,var_key,variables,dim_keys",
     [
@@ -152,13 +153,13 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             {"time_dim_mode": "forecast", "dim_name_from_role_name": False},
             "param",
             ["r", "t"],
-            ["forecast_reference_time", "step_timedelta", "levelist", "levtype"],
+            ["forecast_reference_time", "step", "levelist", "levtype"],
         ),
         (
             {"time_dim_mode": "raw", "variable_key": "param_level", "dim_name_from_role_name": False},
             "param_level",
             ["r1000", "r850", "t1000", "t850"],
-            ["date", "time", "step_timedelta", "levtype"],
+            ["date", "time", "step", "levtype"],
         ),
         (
             {
@@ -169,13 +170,13 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             },
             "param_level",
             ["r_1000", "r_850", "t_1000", "t_850"],
-            ["date", "time", "step_timedelta", "levtype"],
+            ["date", "time", "step", "levtype"],
         ),
         (
             {"time_dim_mode": "raw", "variable_key": "shortName", "dim_name_from_role_name": False},
             "shortName",
             ["r", "t"],
-            ["date", "time", "step_timedelta", "levelist", "levtype"],
+            ["date", "time", "step", "levelist", "levtype"],
         ),
         (
             {
@@ -186,7 +187,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             },
             "shortName",
             ["t"],
-            ["date", "time", "step_timedelta", "levelist", "levtype"],
+            ["date", "time", "step", "levelist", "levtype"],
         ),
         (
             {
@@ -200,7 +201,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             [
                 "date",
                 "time",
-                "step_timedelta",
+                "step",
                 "levtype",
             ],
         ),
@@ -211,7 +212,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             {
                 "date": ["20210101", "20210102"],
                 "time": ["12"],
-                "step_timedelta": [datetime.timedelta(hours=0)],
+                "step": [datetime.timedelta(hours=0)],
                 "level_and_type": ["1000pl", "850pl"],
             },
         ),
@@ -223,7 +224,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
                 "class": ["od"],
                 "date": ["20210101", "20210102"],
                 "time": ["12"],
-                "step_timedelta": [datetime.timedelta(hours=0)],
+                "step": [datetime.timedelta(hours=0)],
                 "levelist": [850, 1000],
                 "levtype": ["pl"],
             },
@@ -236,7 +237,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
                 "class": ["od"],
                 "date": ["20210101", "20210102"],
                 "time": ["12"],
-                "step_timedelta": [datetime.timedelta(hours=0)],
+                "step": [datetime.timedelta(hours=0)],
                 "levelist": [850, 1000],
                 "levtype": ["pl"],
             },
@@ -247,10 +248,9 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
             ["r", "t"],
             {
                 "class": ["od"],
-                "step": [0],
                 "date": ["20210101", "20210102"],
                 "time": ["12"],
-                "step_timedelta": [datetime.timedelta(hours=0)],
+                "step": [datetime.timedelta(hours=0)],
                 "levelist": [850, 1000],
                 "levtype": ["pl"],
             },
@@ -258,7 +258,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
         (
             {
                 "time_dim_mode": "raw",
-                "ensure_dims": ["class", "step_timedelta"],
+                "ensure_dims": ["class", "step"],
                 "dim_name_from_role_name": False,
             },
             "param",
@@ -267,7 +267,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
                 "class": ["od"],
                 "date": ["20210101", "20210102"],
                 "time": ["12"],
-                "step_timedelta": [datetime.timedelta(hours=0)],
+                "step": [datetime.timedelta(hours=0)],
                 "levelist": [850, 1000],
                 "levtype": ["pl"],
             },
@@ -285,7 +285,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
                 "class": ["od"],
                 "date": ["20210101", "20210102"],
                 "time": ["12"],
-                "step_timedelta": [datetime.timedelta(hours=0)],
+                "step": [datetime.timedelta(hours=0)],
                 "levelist": [850, 1000],
                 "levtype": ["pl"],
             },
@@ -326,7 +326,7 @@ def test_xr_dims_ds_date_lev(kwargs, var_key, variables, dims):
             {"time_dim_mode": "raw"},
             "param",
             ["2t", "msl", "r", "t"],
-            ["date", "time", "step_timedelta", "levelist", "levtype"],
+            ["date", "time", "step", "levelist", "levtype"],
         ),
         # ({"base_datetime_dim": True}, "param", ["r", "t"], ["levelist", "levtype"]),
         # ({"squeeze": False}, "param", ["r", "t"], ["time", "step", "levelist", "levtype"]),
@@ -465,7 +465,7 @@ def test_xr_fixed_dims(kwargs, dim_keys):
                 "squeeze": False,
                 "dim_name_from_role_name": False,
             },
-            ["date", "time", "step_timedelta", "levelist", "levtype"],
+            ["date", "time", "step", "levelist", "levtype"],
         ),
         (
             {
@@ -475,7 +475,7 @@ def test_xr_fixed_dims(kwargs, dim_keys):
                 "squeeze": False,
                 "dim_name_from_role_name": False,
             },
-            ["date", "time", "step_timedelta", "levelist"],
+            ["date", "time", "step", "levelist"],
         ),
     ],
 )

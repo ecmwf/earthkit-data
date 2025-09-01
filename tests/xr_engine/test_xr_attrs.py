@@ -53,10 +53,10 @@ def _get_attrs_for_key_2(key, metadata):
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
+                "step": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
                 "levelist": [500, 700],
             },
-            {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
+            {"date": 2, "time": 2, "step": 2, "levelist": 2},
             {},
         ),
         (
@@ -72,10 +72,10 @@ def _get_attrs_for_key_2(key, metadata):
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
+                "step": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
                 "levelist": [500, 700],
             },
-            {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
+            {"date": 2, "time": 2, "step": 2, "levelist": 2},
             {"levtype": 2},
         ),
         (
@@ -91,10 +91,10 @@ def _get_attrs_for_key_2(key, metadata):
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
+                "step": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
                 "levelist": [500, 700],
             },
-            {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
+            {"date": 2, "time": 2, "step": 2, "levelist": 2},
             {},
         ),
         (
@@ -110,10 +110,10 @@ def _get_attrs_for_key_2(key, metadata):
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
+                "step": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
                 "levelist": [500, 700],
             },
-            {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
+            {"date": 2, "time": 2, "step": 2, "levelist": 2},
             {"levtype": 2},
         ),
     ],

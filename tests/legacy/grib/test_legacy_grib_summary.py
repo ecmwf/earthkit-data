@@ -20,6 +20,7 @@ from grib_fixtures import FL_TYPES  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_describe(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -145,6 +146,7 @@ def test_legacy_grib_describe(fl_type):
     assert ref[0] == df[0].to_dict()
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_describe_single_field(fl_type):
     f_in, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -174,6 +176,7 @@ def test_legacy_grib_describe_single_field(fl_type):
     assert ref == df.to_dict()
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_ls(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -228,6 +231,7 @@ def test_legacy_grib_ls(fl_type):
     assert ref == df.to_dict()
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_ls_keys(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -254,6 +258,7 @@ def test_legacy_grib_ls_keys(fl_type):
     assert ref == df.to_dict()
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_ls_namespace(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -275,6 +280,7 @@ def test_legacy_grib_ls_namespace(fl_type):
     assert ref == df.to_dict()
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_ls_invalid_num(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -286,6 +292,7 @@ def test_legacy_grib_ls_invalid_num(fl_type):
         f.ls(0)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_ls_invalid_arg(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -293,6 +300,7 @@ def test_legacy_grib_ls_invalid_arg(fl_type):
         f.ls(invalid=1)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_ls_num(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -340,6 +348,7 @@ def test_legacy_grib_ls_num(fl_type):
     assert ref == df.to_dict()
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_ls_single_field(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -386,6 +395,7 @@ def test_legacy_grib_ls_single_field(fl_type):
     assert ref == df.to_dict()
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_head_num(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -411,6 +421,7 @@ def test_legacy_grib_head_num(fl_type):
     assert ref == df.to_dict()
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_tail_num(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -436,6 +447,7 @@ def test_legacy_grib_tail_num(fl_type):
     assert ref == df.to_dict()
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_FILE)
 def test_legacy_grib_dump(fl_type):
     f, _ = load_grib_data("test6.grib", fl_type)

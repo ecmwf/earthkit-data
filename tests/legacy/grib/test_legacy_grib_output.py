@@ -50,6 +50,7 @@ def new_grib_coder_compat(*args, **kwargs):
     return GribEncoder(*args, **kwargs)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_save_when_loaded_from_file(fl_type, write_method):
@@ -61,6 +62,7 @@ def test_legacy_grib_save_when_loaded_from_file(fl_type, write_method):
         assert len(fs) == len(fs_saved)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "_kwargs,expected_value",
     [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
@@ -75,6 +77,7 @@ def test_legacy_grib_save_bits_per_value_fieldlist(_kwargs, expected_value, writ
         assert ds1.metadata("bitsPerValue") == [expected_value] * len(ds)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "_kwargs,expected_value",
     [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
@@ -90,6 +93,7 @@ def test_legacy_grib_save_bits_per_value_single_field(_kwargs, expected_value, w
 
 
 # TODO: if we use missing_value = np.finfo(np.float32).max the test fails
+@pytest.mark.legacy
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
 @pytest.mark.parametrize("missing_value", [100000.0, np.finfo(np.float32).max - 1])
 def test_legacy_grib_output_missing_value_1(mode, missing_value):
@@ -125,6 +129,7 @@ def test_legacy_grib_output_missing_value_1(mode, missing_value):
         assert not np.isnan(values[1])
 
 
+@pytest.mark.legacy
 @pytest.mark.skipif(
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
@@ -164,6 +169,7 @@ def test_legacy_grib_output_latlon(mode):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
+@pytest.mark.legacy
 @pytest.mark.skipif(
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
@@ -210,6 +216,7 @@ def test_legacy_grib_output_o96_sfc(mode):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
+@pytest.mark.legacy
 @pytest.mark.skipif(
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
@@ -255,6 +262,7 @@ def test_legacy_grib_output_o160_sfc(mode):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
+@pytest.mark.legacy
 @pytest.mark.skipif(
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
@@ -300,6 +308,7 @@ def test_legacy_grib_output_n96_sfc(mode):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
+@pytest.mark.legacy
 @pytest.mark.skipif(
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
@@ -351,6 +360,7 @@ def test_legacy_grib_output_mars_labeling(mode):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
+@pytest.mark.legacy
 @pytest.mark.skipif(
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
@@ -395,6 +405,7 @@ def test_legacy_grib_output_o96_pl(mode, levtype):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
+@pytest.mark.legacy
 @pytest.mark.skipif(
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
@@ -439,6 +450,7 @@ def test_legacy_grib_output_tp(mode, levtype):
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
 
+@pytest.mark.legacy
 @pytest.mark.skipif(
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
@@ -488,6 +500,7 @@ def test_legacy_grib_output_field_template(mode, array):
         assert np.allclose(ds[0].to_numpy(), data, rtol=1e-2, atol=1e-2)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
 @pytest.mark.parametrize(
     "pattern,expected_value",

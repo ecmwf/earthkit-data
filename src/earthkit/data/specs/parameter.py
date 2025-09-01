@@ -78,6 +78,12 @@ class Parameter(SimpleSpec):
         setattr(spec, "_handle", handle)
         return spec
 
+    @classmethod
+    def from_xarray(cls, owner, selection) -> "Parameter":
+        from .xarray.parameter import from_xarray
+
+        return cls.from_dict(from_xarray(owner, selection))
+
     def _to_grib(self, **kwargs) -> dict:
         """Convert the object to a GRIB dictionary.
 

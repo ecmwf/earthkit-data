@@ -41,6 +41,10 @@ def _pickle(data, representation):
     return data_res
 
 
+def timedelta_to_hours(x):
+    return x.total_seconds() / 3600
+
+
 @pytest.mark.cache
 @pytest.mark.parametrize("representation", ["file", "memory"])
 def test_xr_engine_builder_fieldlist(representation):
@@ -54,7 +58,7 @@ def test_xr_engine_builder_fieldlist(representation):
     r_p = _pickle(r, representation)
     assert r_p is not r
     assert r_p.ds is not r.ds
-    assert r_p.ds.metadata("time", astype=int) == [
+    assert r_p.ds.get("time", astype=int) == [
         0,
         0,
         0,
@@ -92,36 +96,36 @@ def test_xr_engine_builder_fieldlist(representation):
     r0 = r.sel(param="t", level=500)
     assert not isinstance(r0.ds, XArrayInputFieldList)
     assert len(r0) == 8
-    assert r0.ds.metadata("time", astype=int) == [0, 0, 1200, 1200, 0, 0, 1200, 1200]
+    assert r0.ds.get("time", astype=int) == [0, 0, 1200, 1200, 0, 0, 1200, 1200]
     r0_uw = r0.unwrap()
     assert not isinstance(r0_uw, XArrayInputFieldList)
-    assert r0_uw.metadata("time", astype=int) == [0, 0, 1200, 1200, 0, 0, 1200, 1200]
+    assert r0_uw.get("time", astype=int) == [0, 0, 1200, 1200, 0, 0, 1200, 1200]
     r0_p = _pickle(r0, representation)
     assert r0_p is not r0
     assert r0_p.ds is not r0.ds
-    assert r0_p.ds.metadata("time", astype=int) == [0, 0, 1200, 1200, 0, 0, 1200, 1200]
+    assert r0_p.ds.get("time", astype=int) == [0, 0, 1200, 1200, 0, 0, 1200, 1200]
 
     r1 = r0.order_by("time")
     assert not isinstance(r1.ds, XArrayInputFieldList)
-    assert r1.ds.metadata("time", astype=int) == [0, 0, 0, 0, 1200, 1200, 1200, 1200]
+    assert r1.ds.get("time", astype=int) == [0, 0, 0, 0, 1200, 1200, 1200, 1200]
     r1_uw = r1.unwrap()
     assert not isinstance(r1_uw, XArrayInputFieldList)
-    assert r1_uw.metadata("time", astype=int) == [0, 0, 0, 0, 1200, 1200, 1200, 1200]
+    assert r1_uw.get("time", astype=int) == [0, 0, 0, 0, 1200, 1200, 1200, 1200]
     r1_p = _pickle(r1, representation)
     assert r1_p is not r1
     assert r1_p.ds is not r1.ds
-    assert r1_p.ds.metadata("time", astype=int) == [0, 0, 0, 0, 1200, 1200, 1200, 1200]
+    assert r1_p.ds.get("time", astype=int) == [0, 0, 0, 0, 1200, 1200, 1200, 1200]
 
     r2 = r1.order_by("step")
     assert not isinstance(r2.ds, XArrayInputFieldList)
-    assert r2.ds.metadata("time", astype=int) == [0, 0, 1200, 1200, 0, 0, 1200, 1200]
-    assert r2.ds.metadata("step", astype=int) == [0, 0, 0, 0, 6, 6, 6, 6]
+    assert r2.ds.get("time", astype=int) == [0, 0, 1200, 1200, 0, 0, 1200, 1200]
+    assert r2.ds.get("step", astype=timedelta_to_hours) == [0, 0, 0, 0, 6, 6, 6, 6]
     r2_uw = r2.unwrap()
     assert not isinstance(r2_uw, XArrayInputFieldList)
-    assert r2_uw.metadata("time", astype=int) == [0, 0, 1200, 1200, 0, 0, 1200, 1200]
-    assert r2_uw.metadata("step", astype=int) == [0, 0, 0, 0, 6, 6, 6, 6]
+    assert r2_uw.get("time", astype=int) == [0, 0, 1200, 1200, 0, 0, 1200, 1200]
+    assert r2_uw.get("step", astype=timedelta_to_hours) == [0, 0, 0, 0, 6, 6, 6, 6]
     r2_p = _pickle(r2, representation)
     assert r2_p is not r2
     assert r2_p.ds is not r2.ds
-    assert r2_p.ds.metadata("time", astype=int) == [0, 0, 1200, 1200, 0, 0, 1200, 1200]
-    assert r2_p.ds.metadata("step", astype=int) == [0, 0, 0, 0, 6, 6, 6, 6]
+    assert r2_p.ds.get("time", astype=int) == [0, 0, 1200, 1200, 0, 0, 1200, 1200]
+    assert r2_p.ds.get("step", astype=timedelta_to_hours) == [0, 0, 0, 0, 6, 6, 6, 6]

@@ -15,6 +15,7 @@ from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "parts,expected_meta",
     [
@@ -42,6 +43,7 @@ def test_legacy_grib_single_file_parts(parts, expected_meta):
         assert ds.metadata(("param", "level")) == expected_meta
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "parts1,parts2,expected_meta",
     [

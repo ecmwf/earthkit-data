@@ -70,6 +70,7 @@ def check_field_write(f, md_ref, shape_ref, values_ref, use_writer=False, **kwar
             assert np.allclose(f.values, values_ref, rtol=1e-1)
 
 
+@pytest.mark.legacy
 # @pytest.mark.skipif(True, reason="headers_only_clone has to be fixed")
 def test_legacy_grib_metadata_override_headers_only_true_core():
     ds = from_source("file", earthkit_examples_file("test.grib"))
@@ -125,6 +126,7 @@ def test_legacy_grib_metadata_override_headers_only_true_core():
     assert md5["typeOfLevel"] == "surface"
 
 
+@pytest.mark.legacy
 def test_legacy_grib_metadata_override_headers_only_false_core():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     ref_size = ds[0].metadata("totalLength")
@@ -147,6 +149,7 @@ def test_legacy_grib_metadata_override_headers_only_false_core():
         md2["average"]
 
 
+@pytest.mark.legacy
 @pytest.mark.cache
 @pytest.mark.parametrize(
     "file",
@@ -201,6 +204,7 @@ def test_legacy_grib_metadata_headers_only_clone_true_grids(file):
     check_field_write(f, md_ref_1, shape_ref, vals_ref, use_writer=True)
 
 
+@pytest.mark.legacy
 @pytest.mark.cache
 @pytest.mark.parametrize(
     "file",
@@ -255,6 +259,7 @@ def test_legacy_grib_metadata_headers_only_clone_false_grids(file):
     check_field_write(f, md_ref_1, shape_ref, vals_ref, use_writer=True)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_headers_only_clone_standalone_metadata():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 

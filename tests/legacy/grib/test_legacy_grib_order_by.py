@@ -23,6 +23,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_order_by_single_message(fl_type):
     s, _ = load_grib_data("test_single.grib", fl_type, folder="data")
@@ -53,6 +54,7 @@ class _CustomOrder:
             return -1
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "params,expected_meta",
@@ -113,6 +115,7 @@ def test_legacy_grib_order_by_single_file_(
         assert g.metadata(k) == v
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "params,expected_meta",
@@ -154,6 +157,7 @@ def test_legacy_grib_order_by_multi_file(fl_type, params, expected_meta):
         assert g.metadata(k) == v
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_order_by_with_sel(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -171,6 +175,7 @@ def test_legacy_grib_order_by_with_sel(fl_type):
     assert r.metadata("shortName") == ["v", "u", "t"]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_order_by_valid_datetime(fl_type):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
@@ -194,6 +199,7 @@ def test_legacy_grib_order_by_valid_datetime(fl_type):
     assert g.metadata("valid_datetime") == ref
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_order_by_remapping(fl_type):
     ds, _ = load_grib_data("test6.grib", fl_type)

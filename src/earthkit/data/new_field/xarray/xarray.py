@@ -13,11 +13,11 @@ from functools import cached_property
 from typing import Any
 
 from earthkit.data.core.fieldlist_ori import math
-from earthkit.data.core.spec.data import FieldData
-from earthkit.data.core.spec.geography import Geography
-from earthkit.data.core.spec.parameter import Parameter
-from earthkit.data.core.spec.time import FieldTime
-from earthkit.data.core.spec.vertical import Vertical
+from earthkit.data.specs.data import SimpleData
+from earthkit.data.specs.geography import Geography
+from earthkit.data.specs.parameter import Parameter
+from earthkit.data.specs.time import Time
+from earthkit.data.specs.vertical import Vertical
 
 from .coordinates import extract_single_value
 from .coordinates import is_scalar
@@ -32,7 +32,7 @@ from .coordinates import is_scalar
 LOG = logging.getLogger(__name__)
 
 
-class XArrayData(FieldData):
+class XArrayData(SimpleData):
     def __init__(self, owner, selection: Any) -> None:
         self.owner = owner
         self.selection = selection
@@ -75,7 +75,7 @@ class XArrayParameter(Parameter):
         return self.owner.variable.attrs.get("units", None)
 
 
-class XArrayTime(FieldTime):
+class XArrayTime(Time):
     def __init__(self, owner: Any, selection: Any) -> None:
         self.owner = owner
         self.selection = selection

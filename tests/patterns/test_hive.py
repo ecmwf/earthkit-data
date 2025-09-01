@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import os
 
 import pytest
@@ -151,7 +152,16 @@ def test_hive_sel_1():
     assert diag.sel_count == 0
     assert len(r) == 6
 
-    md_ref = [("t", 1000, 12), ("t", 850, 12), ("t", 700, 12), ("t", 500, 12), ("t", 400, 12), ("t", 300, 12)]
+    step_ref = datetime.timedelta(hours=12)
+
+    md_ref = [
+        ("t", 1000, step_ref),
+        ("t", 850, step_ref),
+        ("t", 700, step_ref),
+        ("t", 500, step_ref),
+        ("t", 400, step_ref),
+        ("t", 300, step_ref),
+    ]
     assert r.metadata("shortName", "level", "step") == md_ref
 
     # using hive partitioning keys + extra keys from GRIB header

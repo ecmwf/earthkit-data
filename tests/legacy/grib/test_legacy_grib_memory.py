@@ -18,6 +18,7 @@ from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.testing import write_to_file
 
 
+@pytest.mark.legacy
 def test_legacy_grib_from_memory():
     with open(earthkit_test_data_file("test_single.grib"), "rb") as f:
         data = f.read()
@@ -28,6 +29,7 @@ def test_legacy_grib_from_memory():
         assert fs[0].metadata("shortName") == "2t"
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_save_when_loaded_from_memory(write_method):
     with open(earthkit_test_data_file("test_single.grib"), "rb") as f:

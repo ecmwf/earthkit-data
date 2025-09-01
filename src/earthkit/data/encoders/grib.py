@@ -197,6 +197,7 @@ class GribHandleMaker:
         return GribCodesHandle.from_sample(sample)
 
     def update_metadata_from_template(self, metadata, template, handle):
+        # TODO: adjust it to the new field implementation
         # the template can contain extra metadata that is not encoded in the handle
         return
         bpv = None

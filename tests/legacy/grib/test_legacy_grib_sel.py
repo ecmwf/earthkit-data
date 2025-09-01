@@ -25,6 +25,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_sel_single_message(fl_type):
     s, _ = load_grib_data("test_single.grib", fl_type, folder="data")
@@ -34,6 +35,7 @@ def test_legacy_grib_sel_single_message(fl_type):
     assert r[0].metadata("shortName") == "2t"
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
@@ -76,6 +78,7 @@ def test_legacy_grib_sel_single_file_1(fl_type, params, expected_meta, metadata_
     return
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_sel_single_file_2(fl_type):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
@@ -97,6 +100,7 @@ def test_legacy_grib_sel_single_file_2(fl_type):
     ]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_sel_single_file_as_dict(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -109,6 +113,7 @@ def test_legacy_grib_sel_single_file_as_dict(fl_type):
     ]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "param_id,level,expected_meta",
@@ -130,6 +135,7 @@ def test_legacy_grib_sel_slice_single_file(fl_type, param_id, level, expected_me
         assert g.metadata(["paramId", "level"]) == expected_meta
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_sel_multi_file(fl_type):
     f1, _ = load_grib_data(
@@ -150,6 +156,7 @@ def test_legacy_grib_sel_multi_file(fl_type):
     assert np.allclose(d, np.zeros(len(d)))
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_sel_slice_multi_file(fl_type):
     f1, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -165,6 +172,7 @@ def test_legacy_grib_sel_slice_multi_file(fl_type):
     ]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_sel_date(fl_type):
     # date and time
@@ -183,6 +191,7 @@ def test_legacy_grib_sel_date(fl_type):
     assert g.metadata(ref_keys) == ref
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_sel_valid_datetime(fl_type):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
@@ -199,6 +208,7 @@ def test_legacy_grib_sel_valid_datetime(fl_type):
     assert g.metadata(ref_keys) == ref
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_isel_single_message(fl_type):
     s, _ = load_grib_data("test_single.grib", fl_type, folder="data")
@@ -208,6 +218,7 @@ def test_legacy_grib_isel_single_message(fl_type):
     assert r[0].metadata("shortName") == "2t"
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
@@ -258,6 +269,7 @@ def test_legacy_grib_isel_single_file(fl_type, params, expected_meta, metadata_k
         assert g.metadata(keys) == expected_meta
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "param_id,level,expected_meta",
@@ -279,6 +291,7 @@ def test_legacy_grib_isel_slice_single_file(fl_type, param_id, level, expected_m
         assert g.metadata(["paramId", "level"]) == expected_meta
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_isel_slice_invalid(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -290,6 +303,7 @@ def test_legacy_grib_isel_slice_invalid(fl_type):
         f.isel(level="a")
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_isel_multi_file(fl_type):
     f1, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -306,6 +320,7 @@ def test_legacy_grib_isel_multi_file(fl_type):
     assert np.allclose(d, np.zeros(len(d)))
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_isel_slice_multi_file(fl_type):
     f1, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -320,6 +335,7 @@ def test_legacy_grib_isel_slice_multi_file(fl_type):
     ]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_sel_remapping_1(fl_type):
     ds, _ = load_grib_data("test6.grib", fl_type)
@@ -328,6 +344,7 @@ def test_legacy_grib_sel_remapping_1(fl_type):
     assert r.metadata("param", "level") == ref
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_legacy_grib_sel_remapping_2(fl_type):
     ds, _ = load_grib_data("test6.grib", fl_type)

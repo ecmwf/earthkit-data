@@ -42,6 +42,7 @@ def repeat_list_items(items, count):
 #             from_source("stream", stream, **_kwargs)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_from_stream_iter():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source("stream", stream)
@@ -66,6 +67,7 @@ def test_legacy_grib_from_stream_iter():
         assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "_kwargs,expected_meta",
     [
@@ -90,6 +92,7 @@ def test_legacy_grib_from_stream_batched(_kwargs, expected_meta):
         assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "convert_kwargs,expected_shape",
     [
@@ -132,6 +135,7 @@ def test_legacy_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expect
         assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
 def test_legacy_grib_from_stream_group_by(array_backend, group):
@@ -157,6 +161,7 @@ def test_legacy_grib_from_stream_group_by(array_backend, group):
         assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "convert_kwargs,expected_shape",
     [
@@ -199,6 +204,7 @@ def test_legacy_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expec
         assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 def test_legacy_grib_from_stream_in_memory():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source(
@@ -264,6 +270,7 @@ def test_legacy_grib_from_stream_in_memory():
         ]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "convert_kwargs,expected_shape",
     [
@@ -317,6 +324,7 @@ def test_legacy_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expe
         assert ds1.to_numpy(**convert_kwargs).shape == expected_shape
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_save_when_loaded_from_stream(write_method):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
@@ -328,6 +336,7 @@ def test_legacy_grib_save_when_loaded_from_stream(write_method):
             assert len(fs) == len(fs_saved)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_multi_from_stream_iter():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     stream2 = open(earthkit_examples_file("test4.grib"), "rb")
@@ -355,6 +364,7 @@ def test_legacy_grib_multi_from_stream_iter():
     assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "_kwargs,expected_meta",
     [
@@ -387,6 +397,7 @@ def test_legacy_grib_multi_grib_from_stream_batched(_kwargs, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 def test_legacy_grib_multi_stream_memory():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     stream2 = open(earthkit_examples_file("test4.grib"), "rb")
@@ -452,6 +463,7 @@ def test_legacy_grib_multi_stream_memory():
     ]
 
 
+@pytest.mark.legacy
 def test_legacy_grib_concat_stream():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     ds1 = from_source("stream", stream1)
@@ -485,6 +497,7 @@ def test_legacy_grib_concat_stream():
     assert sum([1 for _ in ds]) == 0
 
 
+@pytest.mark.legacy
 def test_legacy_grib_concat_stream_memory():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     ds1 = from_source("stream", stream1, read_all=True)

@@ -41,6 +41,7 @@ def _check(ds, group):
     assert cnt == len(ds)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("group", ["param"])
 def test_legacy_grib_simple_fl_1(group):
     ds_in = from_source("file", earthkit_examples_file("test6.grib"))
@@ -52,6 +53,7 @@ def test_legacy_grib_simple_fl_1(group):
     _check(ds, group)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("group", ["param"])
 def test_legacy_grib_simple_fl_2(group):
     ds = from_source("file", earthkit_examples_file("test6.grib"))
@@ -61,6 +63,7 @@ def test_legacy_grib_simple_fl_2(group):
     _check(ds, group)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("group", ["param"])
 def test_legacy_grib_simple_fl_3(group):
     ds_in = from_source("file", earthkit_examples_file("test6.grib"))

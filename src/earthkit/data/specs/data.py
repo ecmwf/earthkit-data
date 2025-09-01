@@ -105,14 +105,11 @@ class SimpleData(Data):
 
         return GribData(handle)
 
-    # def get_values(self, dtype=None):
-    #     """Get the values stored in the field as an array."""
-    #     return self.handle.get_values(dtype=dtype)
+    @classmethod
+    def from_xarray(cls, owner, selection):
+        from .xarray.data import XArrayData
 
-    #     if not isinstance(d, dict):
-    #         raise TypeError("data must be a dictionary")
-    #     d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
-    #     return cls(**d)
+        return XArrayData(owner, selection)
 
     @property
     def values(self):

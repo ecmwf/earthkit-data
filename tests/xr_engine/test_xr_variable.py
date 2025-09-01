@@ -27,8 +27,8 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
 @pytest.mark.parametrize(
     "_kwargs,dims,coords",
     [
-        ({"fixed_dims": ["valid_time", "param"]}, {"valid_time": 732, "param": 1}, {"param": ["2t"]}),
-        ({"fixed_dims": ["param", "valid_time"]}, {"param": 1, "valid_time": 732}, {"param": ["2t"]}),
+        ({"fixed_dims": ["valid_datetime", "param"]}, {"valid_datetime": 732, "param": 1}, {"param": ["2t"]}),
+        ({"fixed_dims": ["param", "valid_datetime"]}, {"param": 1, "valid_datetime": 732}, {"param": ["2t"]}),
     ],
 )
 def test_xr_engine_mono_variable_1(_kwargs, dims, coords):
@@ -36,7 +36,7 @@ def test_xr_engine_mono_variable_1(_kwargs, dims, coords):
 
     ds = ds_in.to_xarray(
         mono_variable=True,
-        chunks={"valid_time": 1},
+        chunks={"valid_datetime": 1},
         add_earthkit_attrs=False,
         **_kwargs,
     )
@@ -54,8 +54,16 @@ def test_xr_engine_mono_variable_1(_kwargs, dims, coords):
 @pytest.mark.parametrize(
     "_kwargs,dims,coords",
     [
-        ({"fixed_dims": ["valid_time", "param"]}, {"valid_time": 732, "param": 2}, {"param": ["2d", "2t"]}),
-        ({"fixed_dims": ["param", "valid_time"]}, {"param": 2, "valid_time": 732}, {"param": ["2d", "2t"]}),
+        (
+            {"fixed_dims": ["valid_datetime", "param"]},
+            {"valid_datetime": 732, "param": 2},
+            {"param": ["2d", "2t"]},
+        ),
+        (
+            {"fixed_dims": ["param", "valid_datetime"]},
+            {"param": 2, "valid_datetime": 732},
+            {"param": ["2d", "2t"]},
+        ),
     ],
 )
 def test_xr_engine_mono_variable_2(_kwargs, dims, coords):

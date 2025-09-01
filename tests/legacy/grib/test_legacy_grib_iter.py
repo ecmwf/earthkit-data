@@ -24,6 +24,7 @@ from grib_fixtures import FL_ARRAYS  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
 @pytest.mark.parametrize("group", ["param"])
 def test_legacy_grib_group_by(fl_type, group):
@@ -46,6 +47,7 @@ def test_legacy_grib_group_by(fl_type, group):
     assert cnt == len(ds)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
 def test_legacy_grib_multi_group_by(fl_type, group):
@@ -64,6 +66,7 @@ def test_legacy_grib_multi_group_by(fl_type, group):
     assert cnt == len(ds)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "_kwargs,expected_meta",
     [
@@ -84,6 +87,7 @@ def test_legacy_grib_batched(_kwargs, expected_meta):
     assert cnt == len(ds)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "_kwargs,expected_meta",
     [

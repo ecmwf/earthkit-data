@@ -30,6 +30,7 @@ def _check_save_to_disk(ds, len_ref, meta_ref):
     r_tmp = None
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("mode", ["oper", "multi"])
 def test_legacy_grib_concat_core(mode):
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
@@ -65,6 +66,7 @@ def test_legacy_grib_concat_core(mode):
     _check_save_to_disk(ds, 8, md)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("mode", ["oper", "multi"])
 def test_legacy_grib_concat_3a(mode):
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
@@ -84,6 +86,7 @@ def test_legacy_grib_concat_3a(mode):
     _check_save_to_disk(ds, 26, md)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("mode", ["oper", "multi"])
 def test_legacy_grib_concat_3b(mode):
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
@@ -101,6 +104,7 @@ def test_legacy_grib_concat_3b(mode):
     _check_save_to_disk(ds, 26, md)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("mode", ["oper", "multi"])
 def test_legacy_grib_concat_mixed(mode):
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
@@ -117,6 +121,7 @@ def test_legacy_grib_concat_mixed(mode):
     _check_save_to_disk(ds, 4, md)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_concat_from_empty_1():
     ds_e = FieldList()
     ds = from_source("file", earthkit_examples_file("test.grib"))
@@ -128,6 +133,7 @@ def test_legacy_grib_concat_from_empty_1():
     _check_save_to_disk(ds1, 2, md)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_concat_from_empty_2():
     ds_e = FieldList()
     ds = from_source("file", earthkit_examples_file("test.grib"))
@@ -139,6 +145,7 @@ def test_legacy_grib_concat_from_empty_2():
     _check_save_to_disk(ds1, 2, md)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_concat_from_empty_3():
     ds_e = FieldList()
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
@@ -151,6 +158,7 @@ def test_legacy_grib_concat_from_empty_3():
 
 
 # See github issue #588
+@pytest.mark.legacy
 def test_legacy_grib_concat_large():
     ds_e = from_source("empty")
     ds1 = from_source("file", earthkit_examples_file("test.grib"))

@@ -73,6 +73,7 @@ def gridspec_list(grid_types):
 #         yield (item["metadata"], item["gridspec"], item["file"])
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "metadata,ref,name",
     gridspec_list(SUPPORTED_GRID_TYPES),
@@ -89,6 +90,7 @@ def test_legacy_grib_gridspec_from_metadata_valid(metadata, ref, name):
     assert dict(gridspec) == ref, name
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "metadata,ref,name",
     gridspec_list(UNSUPPORTED_GRID_TYPES),
@@ -98,6 +100,7 @@ def test_legacy_grib_gridspec_from_metadata_invalid_1(metadata, ref, name):
         make_gridspec(metadata)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "metadata",
     [
@@ -112,6 +115,7 @@ def test_legacy_grib_gridspec_from_metadata_invalid_2(metadata):
         make_gridspec(metadata)
 
 
+@pytest.mark.legacy
 def test_legacy_grib_gridspec_from_file():
     ds = from_source(
         "file",
@@ -131,6 +135,7 @@ def test_legacy_grib_gridspec_from_file():
     assert dict(gs) == ref
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("metadata,gridspec,name", gridspec_list("regular_ll"))
 def test_legacy_grib_metadata_from_gridspec_valid(metadata, gridspec, name):
     if name in [
@@ -146,6 +151,7 @@ def test_legacy_grib_metadata_from_gridspec_valid(metadata, gridspec, name):
     assert md == metadata, name
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "metadata,gridspec,name",
     gridspec_list(
@@ -172,6 +178,7 @@ def test_legacy_grib_metadata_from_gridspec_invalid(metadata, gridspec, name):
         _, _ = GridSpecConverter.to_metadata(gridspec, edition=edition)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "input_file",
     [
@@ -271,6 +278,7 @@ def _global_grids():
 
 
 # these are all the cases for the earthkit-regrid target grids
+@pytest.mark.legacy
 @pytest.mark.parametrize("edition", [1, 2])
 @pytest.mark.parametrize("grid", _global_grids())
 def test_legacy_grib_global_ll_gridspec_to_metadata(edition, grid):

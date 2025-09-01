@@ -130,6 +130,13 @@ class Time(SimpleSpec):
         setattr(spec, "_handle", handle)
         return spec
 
+    @classmethod
+    def from_xarray(cls, owner, selection):
+        from .xarray.time import from_xarray
+
+        spec = cls.from_dict(from_xarray(owner, selection))
+        return spec
+
     def set(self, *args, **kwargs):
         kwargs = normalise_set_kwargs(self, *args, add_spec_keys=False, remove_nones=True, **kwargs)
         spec = self.from_dict(kwargs)

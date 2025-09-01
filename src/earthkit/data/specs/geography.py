@@ -90,17 +90,23 @@ class Geography(SimpleSpec):
 
 class SimpleGeography(Geography):
     @classmethod
+    def from_dict(cls, data, values_shape=None):
+        from .dict.geography import make_geography
+
+        spec = make_geography(data, values_shape=values_shape)
+        return spec
+
+    @classmethod
     def from_grib(cls, handle):
         from .grib.geography import GribGeography
 
         return GribGeography(handle)
 
     @classmethod
-    def from_dict(cls, data, values_shape=None):
-        from .dict.geography import make_geography
+    def from_xarray(cls, owner, selection):
+        from .xarray.geography import XArrayGeography
 
-        spec = make_geography(data, values_shape=values_shape)
-        return spec
+        return XArrayGeography(owner, selection)
 
     def set(self, *args, **kwargs):
         kwargs = self.normalise_set_kwargs(*args, **kwargs)

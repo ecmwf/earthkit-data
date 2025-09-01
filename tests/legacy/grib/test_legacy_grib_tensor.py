@@ -10,6 +10,7 @@
 #
 
 import numpy as np
+import pytest
 
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
@@ -24,7 +25,7 @@ cube                         tensor
 ---------------------------------------------
 extended_user_shape          full_shape
 count()                      -
-chninking                    -
+chunking                    -
 Cubelet                      -
 
 When indexing a cube, if the result is a single matching fields the fieldlist returned,
@@ -34,6 +35,7 @@ When indexing a tensor always a tensor is returned.
 """
 
 
+@pytest.mark.legacy
 def test_legacy_grib_tensor_core():
     ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     c = ds.to_tensor("param", "level")

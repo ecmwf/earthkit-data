@@ -27,6 +27,7 @@ sys.path.insert(0, here)
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
+@pytest.mark.legacy
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("fl_type", ["file"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
@@ -158,6 +159,7 @@ def test_legacy_grib_clone_metadata(fl_type, write_method):
     # assert ds_1.metadata("levelist") == [600, 600]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_clone_values(fl_type, write_method):
@@ -247,6 +249,7 @@ def test_legacy_grib_clone_values(fl_type, write_method):
     # assert ds_1.metadata("levelist") == [600, 600]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_clone_combined(fl_type, write_method):
@@ -356,6 +359,7 @@ def test_legacy_grib_clone_combined(fl_type, write_method):
     # assert ds_1.metadata("levelist") == [600, 600]
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_clone_default(fl_type, write_method):
@@ -390,6 +394,7 @@ def test_legacy_grib_clone_default(fl_type, write_method):
         assert np.allclose(f_saved.values, vals_ori)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_clone_with_metadata_object(fl_type, write_method):
@@ -424,6 +429,7 @@ def test_legacy_grib_clone_with_metadata_object(fl_type, write_method):
         ds_ori[0].clone(metadata=md, param="q")
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_copy_to_field(fl_type, write_method):

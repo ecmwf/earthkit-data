@@ -16,6 +16,7 @@ from earthkit.data.testing import earthkit_remote_examples_file
 
 
 # TODO: the disabled tests require a fix in multiurl
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "parts,expected_meta",
     [
@@ -42,6 +43,7 @@ def test_legacy_grib_single_url_parts(parts, expected_meta):
         assert ds.metadata(("param", "level")) == expected_meta
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "parts,expected_meta",
     [
@@ -63,6 +65,7 @@ def test_legacy_grib_single_url_parts_1(parts, expected_meta):
     assert cnt == len(expected_meta)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "parts1,parts2,expected_meta",
     [

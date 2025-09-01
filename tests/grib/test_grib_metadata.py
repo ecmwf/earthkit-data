@@ -485,7 +485,6 @@ def test_grib_metadata_namespace(fl_type):
     assert "must be a str when key specified" in str(excinfo.value)
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_datetime_1(fl_type):
     s, _ = load_grib_data("test.grib", fl_type)
@@ -497,7 +496,6 @@ def test_grib_datetime_1(fl_type):
     assert s.datetime() == ref
 
 
-@pytest.mark.migrate
 def test_grib_datetime_2():
     s = from_source(
         "dummy-source",

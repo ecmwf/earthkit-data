@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 
 import pytest
 
@@ -26,7 +27,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
             2,
             ["2t", "msl", "r", "t"],
             ["date", "time", "levelist"],
-            [{"step": 0}, {"step": 6}],
+            [{"step": datetime.timedelta(hours=0)}, {"step": datetime.timedelta(hours=6)}],
         ),
         (
             ["level", "pl.grib"],
@@ -39,7 +40,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
             2,
             ["2t", "msl", "r", "t"],
             ["date", "time", "step", "levelist"],
-            [{"step": 0}, {"step": 6}],
+            [{"step": datetime.timedelta(hours=0)}, {"step": datetime.timedelta(hours=6)}],
         ),
         (
             ["cds-reanalysis-era5-single-levels-20230101-low-resol.grib"],
@@ -71,7 +72,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
             2,
             ["2t", "msl", "r", "t"],
             ["date", "time", "level"],
-            [{"step": 0}, {"step": 6}],
+            [{"step": datetime.timedelta(hours=0)}, {"step": datetime.timedelta(hours=6)}],
         ),
         (
             ["level", "pl.grib"],
@@ -84,7 +85,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
             2,
             ["2t", "msl", "r", "t"],
             ["date", "time", "step", "level"],
-            [{"step": 0}, {"step": 6}],
+            [{"step": datetime.timedelta(hours=0)}, {"step": datetime.timedelta(hours=6)}],
         ),
         # ({"base_datetime_dim": True}, "param", ["r", "t"], ["levelist"]),
         # ({"squeeze": False}, "param", ["r", "t"], ["time", "step", "levelist"]),

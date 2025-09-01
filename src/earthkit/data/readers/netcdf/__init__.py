@@ -8,9 +8,10 @@
 #
 
 
+from earthkit.data.new_field.xarray.netcdf import NetCDFFieldListFromFile
+from earthkit.data.new_field.xarray.netcdf import NetCDFFieldListFromURL
+
 from .. import Reader
-from .fieldlist import NetCDFFieldListFromFile
-from .fieldlist import NetCDFFieldListFromURL
 
 
 class NetCDFFieldListReader(NetCDFFieldListFromFile, Reader):
@@ -86,7 +87,7 @@ def _match_magic(magic, deeper_check):
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
         fs = NetCDFFieldListReader(source, path)
-        if fs.has_fields():
+        if len(fs) > 0:
             return fs
         else:
             return NetCDFReader(source, path)
