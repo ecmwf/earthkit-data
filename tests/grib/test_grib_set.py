@@ -143,6 +143,37 @@ def test_grib_set_time_2(fl_type, write_method, _kwargs):
     assert ds_ori[0].get("step_range") == datetime.timedelta(hours=0)
 
 
+@pytest.mark.parametrize("fl_type", ["file"])
+# @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+@pytest.mark.parametrize("write_method", ["target"])
+@pytest.mark.parametrize(
+    "_kwargs",
+    [
+        {
+            "latitudes": np.array([10.0, 20.0, 30.0]),
+            "longitudes": np.array([0.0, 10.0, 20.0]),
+            "values": np.array([1.0, 2.0, 3.0]),
+        },
+    ],
+)
+def test_grib_set_geo(fl_type, write_method, _kwargs):
+    ds_ori, _ = load_grib_data("test4.grib", fl_type)
+
+    f = ds_ori[0].set(**_kwargs)
+    assert np.allclose(f.get("latitudes"), np.array([10.0, 20.0, 30.0]))
+    assert np.allclose(f.get("longitudes"), np.array([0.0, 10.0, 20.0]))
+    assert np.allclose(f.values, np.array([1.0, 2.0, 3.0]))
+    assert f.get("base_datetime") == datetime.datetime(2007, 1, 1, 12)
+    assert f.get("valid_datetime") == datetime.datetime(2007, 1, 1, 12)
+    assert f.get("step") == datetime.timedelta(hours=0)
+    assert f.get("step_range") == datetime.timedelta(hours=0)
+
+    assert ds_ori[0].get("base_datetime") == datetime.datetime(2007, 1, 1, 12)
+    assert ds_ori[0].get("valid_datetime") == datetime.datetime(2007, 1, 1, 12)
+    assert ds_ori[0].get("step") == datetime.timedelta(hours=0)
+    assert ds_ori[0].get("step_range") == datetime.timedelta(hours=0)
+
+
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("fl_type", ["file"])
 # @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)

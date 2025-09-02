@@ -78,6 +78,26 @@ class Time(SimpleSpec):
         )
 
     @classmethod
+    def from_base_datetime_and_valid_datetime(
+        cls,
+        base_datetime=None,
+        valid_datetime=None,
+        step_range=None,
+        indexing_datetime=None,
+        reference_datetime=None,
+    ):
+        valid_datetime = to_datetime(valid_datetime)
+        base_datetime = to_datetime(base_datetime)
+        step = base_datetime - valid_datetime
+        return Forecast(
+            base_datetime=base_datetime,
+            step=step,
+            step_range=step_range,
+            indexing_datetime=indexing_datetime,
+            reference_datetime=reference_datetime,
+        )
+
+    @classmethod
     def from_base_datetime_and_step(
         cls, base_datetime=None, step=None, step_range=None, indexing_datetime=None, reference_datetime=None
     ):
@@ -226,6 +246,7 @@ class Forecast(Time):
 VALID_DATETIME_METHOD = "from_valid_datetime"
 VALID_DATETIME_AND_STEP_METHOD = "from_valid_datetime_and_step"
 BASE_DATETIME_METHOD = "from_base_datetime_and_step"
+BASE_DATETIME_AND_VALID_DATETIME_METHOD = "from_base_datetime_and_valid_datetime"
 BASE_DATETIME_AND_STEP_METHOD = "from_base_datetime_and_step"
 DATE_AND_TIME_METHOD = "from_date_and_time"
 DATE_AND_TIME_AND_STEP_METHOD = "from_date_and_time_and_step"
@@ -234,6 +255,7 @@ METHODS = {
     ("valid_datetime",): VALID_DATETIME_METHOD,
     ("valid_datetime", "step"): VALID_DATETIME_AND_STEP_METHOD,
     ("base_datetime",): BASE_DATETIME_METHOD,
+    ("base_datetime", "valid_datetime"): BASE_DATETIME_AND_VALID_DATETIME_METHOD,
     ("base_datetime", "step"): BASE_DATETIME_AND_STEP_METHOD,
     ("date", "time"): DATE_AND_TIME_METHOD,
     ("date", "time", "step"): DATE_AND_TIME_AND_STEP_METHOD,

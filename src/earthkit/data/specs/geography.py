@@ -11,6 +11,7 @@
 from abc import abstractmethod
 
 from .spec import SimpleSpec
+from .spec import normalise_set_kwargs
 
 
 class Geography(SimpleSpec):
@@ -109,7 +110,7 @@ class SimpleGeography(Geography):
         return XArrayGeography(owner, selection)
 
     def set(self, *args, **kwargs):
-        kwargs = self.normalise_set_kwargs(*args, **kwargs)
+        kwargs = normalise_set_kwargs(self, *args, add_spec_keys=False, **kwargs)
 
         keys = set(kwargs.keys())
 
@@ -117,7 +118,7 @@ class SimpleGeography(Geography):
             spec = self.from_dict(kwargs)
             return spec
 
-        raise ValueError("Invalid keys for Geography specification")
+        raise ValueError(f"Invalid {keys=} for Geography specification")
 
     @property
     def grid_spec(self):
