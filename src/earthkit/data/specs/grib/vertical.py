@@ -7,8 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.specs.vertical import LEVEL_TYPES
-from earthkit.data.specs.vertical import Vertical
+from earthkit.data.specs.vertical import LevelTypes
 
 
 class GribLevelType:
@@ -19,7 +18,7 @@ class GribLevelType:
         assert len(item) == 2
 
         self.key = key
-        self.type = LEVEL_TYPES[item[0]]
+        self.type = item[0]
         self.converter = item[1]
 
     def convert(self, value):
@@ -29,59 +28,71 @@ class GribLevelType:
 
 
 GRIB_LEVEL_TYPES = {
-    "depthBelowLand": "d_bgl",
-    "depthBelowLandLayer": "d_bgl",
-    "generalVerticalLayer": "general",
-    "heightAboveSea": "h_asl",
-    "heightAboveGround": "h_agl",
-    "hybrid": "ml",
-    "isobaricInhPa": "pl",
-    "isobaricInPa": ("pl", lambda x: x / 100.0),
-    "isobaricLayer": ("pl", lambda x: x / 100.0),
-    "meanSea": "mean_sea",
-    "theta": "pt",
-    "potentialVorticity": "pv",
-    "surface": "sfc",
+    "depthBelowLand": LevelTypes.DEPTH_BGL,
+    "depthBelowLandLayer": LevelTypes.DEPTH_BGL_LAYER,
+    "generalVerticalLayer": LevelTypes.GENERAL,
+    "heightAboveSea": LevelTypes.HEIGHT_ASL,
+    "heightAboveGround": LevelTypes.HEIGHT_AGL,
+    "hybrid": LevelTypes.MODEL,
+    "isobaricInhPa": LevelTypes.PRESSURE,
+    "isobaricInPa": (LevelTypes.PRESSURE, lambda x: x / 100.0),
+    "isobaricLayer": (LevelTypes.PRESSURE_LAYER, lambda x: x / 100.0),
+    "meanSea": LevelTypes.MEAN_SEA,
+    "theta": LevelTypes.THETA,
+    "potentialVorticity": LevelTypes.PV,
+    "surface": LevelTypes.SURFACE,
 }
 
 GRIB_LEVEL_TYPES = {k: GribLevelType(k, v) for k, v in GRIB_LEVEL_TYPES.items()}
 
 
-def from_grib(handle):
-    def _get(key, default=None):
-        return handle.get(key, default=default)
+class GribVerticalBuilder:
+    @staticmethod
+    def build(handle):
+        from earthkit.data.specs.vertical import SimpleVertical
 
-    level = _get("level")
-    level_type = _get("typeOfLevel")
+        d = GribVerticalBuilder._build_dict(handle)
+        spec = SimpleVertical.from_dict(d)
+        spec._set_private_data("handle", handle)
+        return spec
 
-    t = GRIB_LEVEL_TYPES.get(level_type)
-    if t is not None:
-        level = t.convert(level)
-        level_type = t.type
+    @staticmethod
+    def _build_dict(handle):
+        def _get(key, default=None):
+            return handle.get(key, default=default)
 
-    return dict(
-        level=level,
-        level_type=level_type,
-    )
+        level = _get("level")
+        level_type = _get("typeOfLevel")
 
+        t = GRIB_LEVEL_TYPES.get(level_type)
+        if t is not None:
+            level = t.convert(level)
+            level_type = t.type
 
-def to_grib(spec, altered=True):
-    if isinstance(spec, Vertical):
-        if altered:
-            if hasattr(spec, "_handle"):
-                return {}
+        return dict(
+            level=level,
+            level_type=level_type,
+        )
 
-        level_type = None
-        for k, v in GRIB_LEVEL_TYPES.items():
-            if v.type.name == spec.level_type:
-                level_type = k
-                break
+    @staticmethod
+    def get_grib_context(spec, context):
+        handle = spec.private_data("handle")
+        if handle is not None:
+            if "handle" not in context:
+                context["handle"] = handle
+        else:
+            level_type = None
+            for k, v in GRIB_LEVEL_TYPES.items():
+                if v.type.name == spec.level_type:
+                    level_type = k
+                    break
 
-        if level_type is None:
-            raise ValueError(f"Unknown level type: {spec.level_type.name}")
+            if level_type is None:
+                raise ValueError(f"Unknown level type: {spec.level_type.name}")
 
-        return {
-            "level": spec.level,
-            "typeOfLevel": level_type,
-        }
-    raise TypeError("Expected a Vertical instance.")
+            r = {
+                "level": spec.level,
+                "typeOfLevel": level_type,
+            }
+
+            context.update(r)

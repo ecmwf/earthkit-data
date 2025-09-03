@@ -91,10 +91,10 @@ class Geography(SimpleSpec):
 
 class SimpleGeography(Geography):
     @classmethod
-    def from_dict(cls, data, values_shape=None):
+    def from_dict(cls, data, shape_hint=None):
         from .dict.geography import make_geography
 
-        spec = make_geography(data, values_shape=values_shape)
+        spec = make_geography(data, shape_hint=shape_hint)
         return spec
 
     @classmethod
@@ -120,6 +120,23 @@ class SimpleGeography(Geography):
 
         raise ValueError(f"Invalid {keys=} for Geography specification")
 
+    def to_dict(self):
+        return {
+            "shape": self.shape,
+            "grid_type": self.grid_type,
+            "bounding_box": self.bounding_box,
+        }
+
     @property
     def grid_spec(self):
         return None
+
+    def get_grib_context(self, context):
+        pass
+
+    def namespace(self, owner, name, result):
+        if name is None or name == "geography" or (isinstance(name, (list, tuple)) and "geography" in name):
+            result["geography"] = self.to_dict()
+
+    def check(self, owner):
+        pass

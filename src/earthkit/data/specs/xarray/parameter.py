@@ -31,7 +31,7 @@ def from_xarray(owner, selection) -> "Parameter":
     """
     name = owner.name
     units = owner.variable.attrs.get("units", None)
-    return {"name": name, "units": units}
+    return {"variable": name, "units": units}
 
 
 # class XArrayParameter(Parameter):

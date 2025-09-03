@@ -129,3 +129,12 @@ class SimpleLabels(dict, Labels):
         d = dict(self)
         d.update(*args, **kwargs)
         return SimpleLabels(d)
+
+    def check(self, owner):
+        pass
+
+    def namespace(self, *args):
+        pass
+
+    def get_grib_context(self, context):
+        pass

@@ -8,6 +8,8 @@
 #
 
 
+from sklearn.naive_bayes import abstractmethod
+
 from .spec import Aliases
 from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
@@ -19,20 +21,43 @@ class Parameter(SimpleSpec):
     """A specification of a parameter."""
 
     KEYS = (
-        "name",
+        "variable",
         "units",
     )
 
-    ALIASES = Aliases({"name": ("param")})
+    ALIASES = Aliases({"variable": ("param")})
 
-    def __init__(self, name: str = None, units: str = None) -> None:
-        self._name = name
+    @property
+    @abstractmethod
+    def variable(self) -> str:
+        r"""str: Return the parameter variable."""
+        pass
+
+    @property
+    @abstractmethod
+    def units(self) -> str:
+        r"""str: Return the parameter units."""
+        pass
+
+
+class SimpleParameter(Parameter):
+    """A specification of a parameter."""
+
+    KEYS = (
+        "variable",
+        "units",
+    )
+
+    ALIASES = Aliases({"variable": ("param")})
+
+    def __init__(self, variable: str = None, units: str = None) -> None:
+        self._variable = variable
         self._units = units
 
     @property
-    def name(self) -> str:
-        r"""str: Return the parameter name."""
-        return self._name
+    def variable(self) -> str:
+        r"""str: Return the parameter variable."""
+        return self._variable
 
     @property
     def units(self) -> str:
@@ -58,48 +83,36 @@ class Parameter(SimpleSpec):
         d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
         return cls(**d)
 
-    @classmethod
-    def from_grib(cls, handle) -> "Parameter":
-        """Create a Parameter instance from a GRIB handle.
+    # @classmethod
+    # def from_grib(cls, handle) -> "Parameter":
+    #     """Create a Parameter instance from a GRIB handle.
 
-        Parameters
-        ----------
-        handle
-            GRIB handle object.
+    #     Parameters
+    #     ----------
+    #     handle
+    #         GRIB handle object.
 
-        Returns
-        -------
-        Parameter
-            The created Parameter instance.
-        """
-        from .grib.parameter import from_grib
+    #     Returns
+    #     -------
+    #     Parameter
+    #         The created Parameter instance.
+    #     """
+    #     from .grib.parameter import from_grib
 
-        spec = cls.from_dict(from_grib(handle))
-        setattr(spec, "_handle", handle)
-        return spec
+    #     spec = cls.from_dict(from_grib(handle))
+    #     setattr(spec, "_handle", handle)
+    #     return spec
 
-    @classmethod
-    def from_xarray(cls, owner, selection) -> "Parameter":
-        from .xarray.parameter import from_xarray
+    # @classmethod
+    # def from_xarray(cls, owner, selection) -> "Parameter":
+    #     from .xarray.parameter import from_xarray
 
-        return cls.from_dict(from_xarray(owner, selection))
+    #     return cls.from_dict(from_xarray(owner, selection))
 
-    def _to_grib(self, **kwargs) -> dict:
-        """Convert the object to a GRIB dictionary.
+    def get_grib_context(self, context) -> dict:
+        from .grib.parameter import get_grib_context
 
-        Parameters
-        ----------
-        **kwargs
-            Additional keyword arguments.
-
-        Returns
-        -------
-        dict
-            GRIB dictionary representation.
-        """
-        from .grib.parameter import to_grib
-
-        return to_grib(self, **kwargs)
+        get_grib_context(self, context)
 
     def to_dict(self) -> dict:
         """Convert the object to a dictionary.
@@ -109,7 +122,7 @@ class Parameter(SimpleSpec):
         dict
             Dictionary representation of the object.
         """
-        return {"name": self.name, "units": self.units}
+        return {"variable": self.variable, "units": self.units}
 
     def set(self, *args, **kwargs) -> "Parameter":
         """
@@ -128,5 +141,12 @@ class Parameter(SimpleSpec):
             The created Parameter instance.
         """
         kwargs = normalise_set_kwargs(self, *args, **kwargs)
-        spec = Parameter(**kwargs)
+        spec = SimpleParameter(**kwargs)
         return spec
+
+    def namespace(self, owner, name, result):
+        if name is None or name == "parameter" or (isinstance(name, (list, tuple)) and "parameter" in name):
+            result["parameter"] = self.to_dict()
+
+    def check(self, owner):
+        pass

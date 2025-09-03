@@ -7,51 +7,171 @@
 # nor does it submit to any jurisdiction.
 #
 
+from abc import abstractmethod
 from typing import Union
 
+from .level_type import LevelTypes
 from .spec import Aliases
 from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
 from .spec import spec_aliases
 
-PRESSURE_LEVEL = ("pl", "hPa", False)
-MODEL_LEVEL = ("ml", "", False)
-THETA_LEVEL = ("pt", "K", False)
-PV_LEVEL = ("pv", "10-9 K m2 kg-1 s-1", False)
-HEIGHT_ASL_LEVEL = ("h_asl", "m", False)
-HEIGHT_AGL_LEVEL = ("h_agl", "m", False)
-SURFACE_LEVEL = ("sfc", "", False)
-DEPTH_BGL_LEVEL = ("d_bgl", "m", False)
-GENERAL_LEVEL = ("general", "", False)
-MEAN_SEA_LEVEL = ("mean_sea", "", False)
-UNKNOWN_LEVEL = ("unknown", "", False)
+# POSITIVE_UP = "up"
+# POSITIVE_DOWN = "down"
 
 
-class LevelType:
-    def __init__(self, name: str, units: str, layer: bool) -> None:
-        self.name = name
-        self.units = units
-        self.layer = layer
+# class LevelType:
+#     def __init__(
+#         self, name: str, standard_name: str, long_name: str, units: str, layer: bool, positive: str
+#     ) -> None:
+#         self.name = name
+#         self.standard_name = standard_name
+#         self.long_name = long_name
+#         self.units = units
+#         self.layer = layer
+#         self.positive = positive
+
+#     def __eq__(self, other):
+#         return self.name == other.name
 
 
-LEVEL_TYPES = {
-    item[0]: LevelType(*item)
-    for item in [
-        PRESSURE_LEVEL,
-        MODEL_LEVEL,
-        THETA_LEVEL,
-        PV_LEVEL,
-        HEIGHT_ASL_LEVEL,
-        HEIGHT_AGL_LEVEL,
-        SURFACE_LEVEL,
-        DEPTH_BGL_LEVEL,
-        GENERAL_LEVEL,
-        MEAN_SEA_LEVEL,
-        UNKNOWN_LEVEL,
-    ]
-}
+# _1 = {
+#         "name": "pl",
+#         "standard_name": "air_pressure",
+#         "long_name": "pressure",
+#         "units": "hPa",
+#         "layer": False,
+#         "positive": POSITIVE_DOWN,
+#     }
 
-UNKNOWN_LEVEL_TYPE = LEVEL_TYPES["unknown"]
+# PRESSURE_LAYER = {
+#     "name": "p_layer",
+#     "standard_name": "air_pressure",
+#     "long_name": "pressure",
+#     "units": "hPa",
+#     "layer": True,
+#     "positive": POSITIVE_DOWN,
+# }
+# MODEL_LEVEL = {
+#     "name": "ml",
+#     "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
+#     "long_name": "hybrid level",
+#     "units": "1",
+#     "layer": False,
+#     "positive": POSITIVE_DOWN,
+# }
+# THETA_LEVEL = {
+#     "name": "pt",
+#     "standard_name": "air_potential temperature",
+#     "long_name": "air_potential temperature",
+#     "units": "K",
+#     "layer": False,
+#     "positive": POSITIVE_UP,
+# }
+# PV_LEVEL = {
+#     "name": "pv",
+#     "standard_name": "ertel_potential vorticity",
+#     "long_name": "potential vorticity",
+#     "units": "10-9 K m2 kg-1 s-1",
+#     "layer": False,
+#     "positive": POSITIVE_DOWN,
+# }
+# HEIGHT_ASL_LEVEL = {
+#     "name": "h_asl",
+#     "standard_name": "height_above_sea_level",
+#     "long_name": "height above mean sea level",
+#     "units": "m",
+#     "layer": False,
+#     "positive": POSITIVE_UP,
+# }
+# HEIGHT_AGL_LEVEL = {
+#     "name": "h_agl",
+#     "standard_name": "height",
+#     "long_name": "height above the surface",
+#     "units": "m",
+#     "layer": False,
+#     "positive": POSITIVE_UP,
+# }
+# SURFACE_LEVEL = {
+#     "name": "sfc",
+#     "standard_name": "surface",
+#     "long_name": "surface",
+#     "units": "",
+#     "layer": False,
+# }
+# DEPTH_BGL_LEVEL = {
+#     "name": "d_bgl",
+#     "standard_name": "depth",
+#     "long_name": "soil depth",
+#     "units": "m",
+#     "layer": False,
+#     "positive": POSITIVE_DOWN,
+# }
+# GENERAL_LEVEL = {
+#     "name": "general",
+#     "standard_name": "general",
+#     "long_name": "general",
+#     "units": "1",
+#     "layer": False,
+#     "positive": POSITIVE_DOWN,
+# }
+# MEAN_SEA_LEVEL = {
+#     "name": "mean_sea",
+#     "standard_name": "mean_sea",
+#     "long_name": "mean sea level",
+#     "units": "",
+#     "layer": False,
+#     "positive": POSITIVE_DOWN,
+# }
+# SNOW_LAYER = {
+#     "name": "snow",
+#     "standard_name": "unknown",
+#     "long_name": "snow layer",
+#     "units": "1",
+#     "layer": False,
+#     "positive": POSITIVE_DOWN,
+# }
+# UNKNOWN_LEVEL = {
+#     "name": "unknown",
+#     "standard_name": "unknown",
+#     "long_name": "unknown",
+#     "units": "",
+#     "layer": False,
+#     "positive": POSITIVE_DOWN,
+# }
+
+
+# class LevelType:
+#     def __init__(
+#         self, name: str, standard_name: str, long_name: str, units: str, layer: bool, positive: str
+#     ) -> None:
+#         self.name = name
+#         self.units = units
+#         self.layer = layer
+#         self.positive = positive
+
+
+# LEVEL_TYPES = {
+#     item[0]: LevelType(*item)
+#     for item in [
+#         PRESSURE_LEVEL,
+#         MODEL_LEVEL,
+#         THETA_LEVEL,
+#         PV_LEVEL,
+#         HEIGHT_ASL_LEVEL,
+#         HEIGHT_AGL_LEVEL,
+#         SURFACE_LEVEL,
+#         DEPTH_BGL_LEVEL,
+#         GENERAL_LEVEL,
+#         MEAN_SEA_LEVEL,
+#         UNKNOWN_LEVEL,
+#     ]
+# }
+
+# UNKNOWN_LEVEL_TYPE = LEVEL_TYPES["unknown"]
+
+# class LevelTypes:
+#     PRESSURE  =
 
 
 @spec_aliases
@@ -66,13 +186,39 @@ class Vertical(SimpleSpec):
 
     ALIASES = Aliases({"level": ("levelist")})
 
+    @property
+    @abstractmethod
+    def level(self) -> Union[int, float]:
+        """Return the level."""
+        pass
+
+    @property
+    @abstractmethod
+    def level_type(self) -> str:
+        """str: Return the level type."""
+        pass
+
+    @property
+    @abstractmethod
+    def level_units(self) -> str:
+        """str: Return the level units."""
+        pass
+
+
+class SimpleVertical(Vertical):
+    """A specification of a vertical level or layer."""
+
+    KEYS = (
+        "level",
+        "level_type",
+        "level_units",
+    )
+
+    ALIASES = Aliases({"level": ("levelist")})
+
     def __init__(self, level: str = None, level_type: str = None) -> None:
         self._level = level
-
-        if isinstance(level_type, LevelType):
-            self._level_type = level_type
-        else:
-            self._level_type = LEVEL_TYPES.get(level_type, UNKNOWN_LEVEL_TYPE)
+        self._level_type = LevelTypes.get(level_type)
 
     @property
     def level(self) -> Union[int, float]:
@@ -108,61 +254,66 @@ class Vertical(SimpleSpec):
         d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
         return cls(**d)
 
-    @classmethod
-    def from_grib(cls, handle) -> "Vertical":
-        """Create a Vertical instance from a GRIB handle.
+    # @classmethod
+    # def from_grib(cls, handle) -> "Vertical":
+    #     """Create a Vertical instance from a GRIB handle.
 
-        Parameters
-        ----------
-        handle
-            GRIB handle object.
+    #     Parameters
+    #     ----------
+    #     handle
+    #         GRIB handle object.
 
-        Returns
-        -------
-        Vertical
-            The created Vertical instance.
-        """
-        from .grib.vertical import from_grib
+    #     Returns
+    #     -------
+    #     Vertical
+    #         The created Vertical instance.
+    #     """
+    #     from .grib.vertical import from_grib
 
-        r = cls(**from_grib(handle))
-        setattr(r, "_handle", handle)
-        return r
+    #     r = cls(**from_grib(handle))
+    #     setattr(r, "_handle", handle)
+    #     return r
 
-    @classmethod
-    def from_xarray(cls, owner, selection) -> "Vertical":
-        """Create a Vertical instance from an xarray dataset.
+    # @classmethod
+    # def from_xarray(cls, owner, selection) -> "Vertical":
+    #     """Create a Vertical instance from an xarray dataset.
 
-        Parameters
-        ----------
-        handle
-            GRIB handle object.
+    #     Parameters
+    #     ----------
+    #     handle
+    #         GRIB handle object.
 
-        Returns
-        -------
-        Vertical
-            The created Vertical instance.
-        """
-        from .xarray.vertical import from_xarray
+    #     Returns
+    #     -------
+    #     Vertical
+    #         The created Vertical instance.
+    #     """
+    #     from .xarray.vertical import from_xarray
 
-        r = cls(**from_xarray(owner, selection))
-        return r
+    #     r = cls(**from_xarray(owner, selection))
+    #     return r
 
-    def _to_grib(self, altered: bool = True) -> dict:
-        """Convert the object to a GRIB dictionary.
+    def get_grib_context(self, context) -> dict:
+        from .grib.vertical import GribVerticalBuilder
 
-        Parameters
-        ----------
-        altered : bool, optional
-            Whether to alter the GRIB dictionary, by default True.
+        GribVerticalBuilder.get_grib_context(self, context)
 
-        Returns
-        -------
-        dict
-            GRIB dictionary representation.
-        """
-        from .grib.vertical import to_grib
+    # def _to_grib(self, altered: bool = True) -> dict:
+    #     """Convert the object to a GRIB dictionary.
 
-        return to_grib(self, altered=altered)
+    #     Parameters
+    #     ----------
+    #     altered : bool, optional
+    #         Whether to alter the GRIB dictionary, by default True.
+
+    #     Returns
+    #     -------
+    #     dict
+    #         GRIB dictionary representation.
+    #     """
+    #     from .grib.vertical import to_grib
+
+    #     return to_grib(self, altered=altered)
 
     def to_dict(self) -> dict:
         """Convert the object to a dictionary.
@@ -192,5 +343,12 @@ class Vertical(SimpleSpec):
         """
         kwargs = normalise_set_kwargs(self, *args, **kwargs)
         kwargs.pop("level_units", None)
-        spec = Vertical(**kwargs)
+        spec = SimpleVertical(**kwargs)
         return spec
+
+    def namespace(self, owner, name, result):
+        if name is None or name == "vertical" or (isinstance(name, (list, tuple)) and "vertical" in name):
+            result["vertical"] = self.to_dict()
+
+    def check(self, owner):
+        pass

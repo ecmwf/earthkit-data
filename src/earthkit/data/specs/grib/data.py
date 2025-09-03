@@ -15,6 +15,17 @@ class GribData(SimpleData):
     def __init__(self, handle):
         self._handle = handle
 
-    def get_values(self, dtype=None):
+    def get_values(self, dtype=None, copy=True, index=None):
         """Get the values stored in the field as an array."""
-        return self._handle.get_values(dtype=dtype)
+
+        v = self._handle.get_values(dtype=dtype)
+        if index is not None:
+            from earthkit.utils.array import array_namespace
+
+            v = v[index]
+        if dtype is not None:
+            v = array_namespace(v).astype(v, dtype, copy=False)
+        return v
+
+    def check(self, owner):
+        pass

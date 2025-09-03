@@ -12,8 +12,8 @@ import math
 from abc import abstractmethod
 
 from earthkit.utils.array import array_namespace
-from earthkit.utils.array import array_to_numpy
-from earthkit.utils.array import convert_array
+
+from earthkit.data.utils.array import flatten
 
 from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
@@ -33,7 +33,7 @@ class Data(SimpleSpec):
         pass
 
     @abstractmethod
-    def get_values(self, dtype=None):
+    def get_values(self, dtype=None, copy=True, index=None):
         r"""array-like: Get the values stored in the field as an array.
 
         Parameters
@@ -43,50 +43,50 @@ class Data(SimpleSpec):
         """
         pass
 
-    @abstractmethod
-    def to_numpy(self, shape, flatten=False, dtype=None):
-        r"""Return the values stored in the field as an ndarray.
+    # @abstractmethod
+    # def to_numpy(self, shape, flatten=False, dtype=None):
+    #     r"""Return the values stored in the field as an ndarray.
 
-        Parameters
-        ----------
-        flatten: bool
-            When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
-            :obj:`shape` is returned.
-        dtype: str, numpy.dtype or None
-            Typecode or data-type of the array. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is ``float64``.
+    #     Parameters
+    #     ----------
+    #     flatten: bool
+    #         When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
+    #         :obj:`shape` is returned.
+    #     dtype: str, numpy.dtype or None
+    #         Typecode or data-type of the array. When it is :obj:`None` the default
+    #         type used by the underlying data accessor is used. For GRIB it is ``float64``.
 
-        Returns
-        -------
-        ndarray
-            Field values
+    #     Returns
+    #     -------
+    #     ndarray
+    #         Field values
 
-        """
-        pass
+    #     """
+    #     pass
 
-    @abstractmethod
-    def to_array(self, shape, flatten=False, dtype=None, array_backend=None):
-        r"""Return the values stored in the field.
+    # @abstractmethod
+    # def to_array(self, shape, flatten=False, dtype=None, array_backend=None):
+    #     r"""Return the values stored in the field.
 
-        Parameters
-        ----------
-        flatten: bool
-            When it is True a flat array is returned. Otherwise an array with the field's
-            :obj:`shape` is returned.
-        dtype: str, array.dtype or None
-            Typecode or data-type of the array. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        array_backend: str, module or None
-            The array backend to be used. When it is :obj:`None` the underlying array format
-            of the field is used.
+    #     Parameters
+    #     ----------
+    #     flatten: bool
+    #         When it is True a flat array is returned. Otherwise an array with the field's
+    #         :obj:`shape` is returned.
+    #     dtype: str, array.dtype or None
+    #         Typecode or data-type of the array. When it is :obj:`None` the default
+    #         type used by the underlying data accessor is used. For GRIB it is ``float64``.
+    #     array_backend: str, module or None
+    #         The array backend to be used. When it is :obj:`None` the underlying array format
+    #         of the field is used.
 
-        Returns
-        -------
-        array-array
-            Field values.
+    #     Returns
+    #     -------
+    #     array-array
+    #         Field values.
 
-        """
-        pass
+    #     """
+    #     pass
 
 
 class SimpleData(Data):
@@ -99,133 +99,133 @@ class SimpleData(Data):
             return ArrayData(d["values"])
         raise ValueError("Invalid arguments")
 
-    @classmethod
-    def from_grib(cls, handle):
-        from .grib.data import GribData
+    # @classmethod
+    # def from_grib(cls, handle):
+    #     from .grib.data import GribData
 
-        return GribData(handle)
+    #     return GribData(handle)
 
-    @classmethod
-    def from_xarray(cls, owner, selection):
-        from .xarray.data import XArrayData
+    # @classmethod
+    # def from_xarray(cls, owner, selection):
+    #     from .xarray.data import XArrayData
 
-        return XArrayData(owner, selection)
+    #     return XArrayData(owner, selection)
 
     @property
     def values(self):
         r"""array-like: Get the values stored in the field as a 1D array."""
-        return self.flatten(self.get_values())
+        return flatten(self.get_values())
 
-    def to_numpy(self, shape, flatten=False, dtype=None):
-        r"""Return the values stored in the field as an ndarray.
+    # def to_numpy(self, shape, flatten=False, dtype=None):
+    #     r"""Return the values stored in the field as an ndarray.
 
-        Parameters
-        ----------
-        flatten: bool
-            When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
-            :obj:`shape` is returned.
-        dtype: str, numpy.dtype or None
-            Typecode or data-type of the array. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is ``float64``.
+    #     Parameters
+    #     ----------
+    #     flatten: bool
+    #         When it is True a flat ndarray is returned. Otherwise an ndarray with the field's
+    #         :obj:`shape` is returned.
+    #     dtype: str, numpy.dtype or None
+    #         Typecode or data-type of the array. When it is :obj:`None` the default
+    #         type used by the underlying data accessor is used. For GRIB it is ``float64``.
 
-        Returns
-        -------
-        ndarray
-            Field values
+    #     Returns
+    #     -------
+    #     ndarray
+    #         Field values
 
-        """
-        v = array_to_numpy(self.get_values(dtype=dtype))
-        shape = self.target_shape(v, flatten, shape)
-        return self.reshape(v, shape)
+    #     """
+    #     v = array_to_numpy(self.get_values(dtype=dtype))
+    #     shape = self.target_shape(v, flatten, shape)
+    #     return self.reshape(v, shape)
 
-    def to_array(self, shape, flatten=False, dtype=None, array_backend=None):
-        r"""Return the values stored in the field.
+    # def to_array(self, shape, flatten=False, dtype=None, array_backend=None):
+    #     r"""Return the values stored in the field.
 
-        Parameters
-        ----------
-        flatten: bool
-            When it is True a flat array is returned. Otherwise an array with the field's
-            :obj:`shape` is returned.
-        dtype: str, array.dtype or None
-            Typecode or data-type of the array. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        array_backend: str, module or None
-            The array backend to be used. When it is :obj:`None` the underlying array format
-            of the field is used.
+    #     Parameters
+    #     ----------
+    #     flatten: bool
+    #         When it is True a flat array is returned. Otherwise an array with the field's
+    #         :obj:`shape` is returned.
+    #     dtype: str, array.dtype or None
+    #         Typecode or data-type of the array. When it is :obj:`None` the default
+    #         type used by the underlying data accessor is used. For GRIB it is ``float64``.
+    #     array_backend: str, module or None
+    #         The array backend to be used. When it is :obj:`None` the underlying array format
+    #         of the field is used.
 
-        Returns
-        -------
-        array-array
-            Field values.
+    #     Returns
+    #     -------
+    #     array-array
+    #         Field values.
 
-        """
-        v = self.get_values(dtype=dtype)
-        if array_backend is not None:
-            v = convert_array(v, target_backend=array_backend)
+    #     """
+    #     v = self.get_values(dtype=dtype)
+    #     if array_backend is not None:
+    #         v = convert_array(v, target_backend=array_backend)
 
-        shape = self.target_shape(v, flatten, shape)
-        return self.reshape(v, shape)
+    #     shape = self.target_shape(v, flatten, shape)
+    #     return self.reshape(v, shape)
 
-    # TODO: move it to earthkit-utils
-    @staticmethod
-    def flatten(v):
-        """Flatten the array without copying the data.
+    # # TODO: move it to earthkit-utils
+    # @staticmethod
+    # def flatten(v):
+    #     """Flatten the array without copying the data.
 
-        Parameters
-        ----------
-        v: array-like
-            The array to be flattened.
+    #     Parameters
+    #     ----------
+    #     v: array-like
+    #         The array to be flattened.
 
-        Returns
-        -------
-        array-like
-            1-D array.
-        """
-        if len(v.shape) != 1:
-            n = (math.prod(v.shape),)
-            return SimpleData.reshape(v, n)
-        return v
+    #     Returns
+    #     -------
+    #     array-like
+    #         1-D array.
+    #     """
+    #     if len(v.shape) != 1:
+    #         n = (math.prod(v.shape),)
+    #         return SimpleData.reshape(v, n)
+    #     return v
 
-    # TODO: move it to earthkit-utils
-    @staticmethod
-    def reshape(v, shape):
-        """Reshape the array to the required shape.
+    # # TODO: move it to earthkit-utils
+    # @staticmethod
+    # def reshape(v, shape):
+    #     """Reshape the array to the required shape.
 
-        Parameters
-        ----------
-        v: array-like
-            The array to be reshaped.
-        shape: tuple
-            The desired shape of the array.
+    #     Parameters
+    #     ----------
+    #     v: array-like
+    #         The array to be reshaped.
+    #     shape: tuple
+    #         The desired shape of the array.
 
-        Returns
-        -------
-        array-like
-            Reshaped array.
-        """
-        if shape != v.shape:
-            v = array_namespace(v).reshape(v, shape)
-        return v
+    #     Returns
+    #     -------
+    #     array-like
+    #         Reshaped array.
+    #     """
+    #     if shape != v.shape:
+    #         v = array_namespace(v).reshape(v, shape)
+    #     return v
 
-    @staticmethod
-    def target_shape(array, flatten, field_shape):
-        """Return the target shape of the array.
+    # @staticmethod
+    # def target_shape(array, flatten, field_shape):
+    #     """Return the target shape of the array.
 
-        Parameters
-        ----------
-        array: array-like
-            The array to be reshaped.
-        flatten: bool
-            If True, return a flat shape.
+    #     Parameters
+    #     ----------
+    #     array: array-like
+    #         The array to be reshaped.
+    #     flatten: bool
+    #         If True, return a flat shape.
 
-        Returns
-        -------
-        tuple
-            The target shape of the array.
-        """
-        if flatten:
-            return (math.prod(array.shape),)
-        return field_shape
+    #     Returns
+    #     -------
+    #     tuple
+    #         The target shape of the array.
+    #     """
+    #     if flatten:
+    #         return (math.prod(array.shape),)
+    #     return field_shape
 
     def set_values(self, array):
         """Set the values of the field.
@@ -259,6 +259,16 @@ class SimpleData(Data):
         if "values" in kwargs:
             return self.set_values(kwargs["values"])
         raise ValueError("Invalid arguments")
+
+    def namespace(self, *args):
+        return None
+
+    def check(self, owner):
+        if self.values.size != math.proc(owner.shape):
+            raise ValueError(f"Data shape mismatch: {self.values.shape} (data) != {owner.shape} (field)")
+
+    def get_grib_context(self, context):
+        pass
 
 
 class ArrayCache:
@@ -315,28 +325,37 @@ class ArrayData(SimpleData):
             values = np.asarray(values)
         self._values = values
 
-    def get_values(self, dtype=None):
+    def get_values(self, dtype=None, copy=True, index=None):
         """Get the values stored in the field as an array."""
-        self.load()
+        # self.load()
+        v = self._values
+        if index is not None:
+            v = v[index]
+        if copy:
+            v = array_namespace(v).asarray(v, copy=True)
         if dtype is not None:
-            return array_namespace(self._values).astype(self._values, dtype)
-        return self._values
+            v = array_namespace(v).astype(v, dtype)
+        return v
 
-    def free(self):
-        """Free the resources used by the data."""
-        # TODO: make it thread safe
-        if self._values is not None:
-            if self._cache is None:
-                self._cache = ArrayCache(self._values)
-            self._cache.save(self._values)
-            self._values = None
+    def check(self, owner):
+        if self._values.size != math.prod(owner.shape):
+            raise ValueError(f"Data shape mismatch: {self._values.shape} (data) != {owner.shape} (field)")
 
-    def load(self):
-        # TODO: make it thread safe
-        if self._values is None:
-            assert self._cache is not None, "Cache must be set before loading."
-            self._values = self._cache.load()
+    # def free(self):
+    #     """Free the resources used by the data."""
+    #     # TODO: make it thread safe
+    #     if self._values is not None:
+    #         if self._cache is None:
+    #             self._cache = ArrayCache(self._values)
+    #         self._cache.save(self._values)
+    #         self._values = None
 
-    @property
-    def raw_values_shape(self):
-        return self._values.shape
+    # def load(self):
+    #     # TODO: make it thread safe
+    #     if self._values is None:
+    #         assert self._cache is not None, "Cache must be set before loading."
+    #         self._values = self._cache.load()
+
+    # @property
+    # def raw_values_shape(self):
+    #     return self._values.shape

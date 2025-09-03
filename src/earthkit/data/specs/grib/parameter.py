@@ -8,34 +8,79 @@
 #
 
 
-def from_grib(handle):
-    def _get(key, default=None):
-        return handle.get(key, default=default)
+class GribParameterBuilder:
+    @staticmethod
+    def build(handle):
+        from earthkit.data.specs.parameter import SimpleParameter
 
-    v = _get("shortName", None)
-    if v == "~":
-        v = handle.get("paramId", ktype=str, default=None)
-    if v is None:
-        v = _get("param", None)
-    name = v
+        d = GribParameterBuilder._build_dict(handle)
+        spec = SimpleParameter.from_dict(d)
+        spec._set_private_data("handle", handle)
+        return spec
 
-    units = _get("units", None)
+    @staticmethod
+    def _build_dict(handle):
+        def _get(key, default=None):
+            return handle.get(key, default=default)
 
-    return dict(
-        name=name,
-        units=units,
-    )
+        v = _get("shortName", None)
+        if v == "~":
+            v = handle.get("paramId", ktype=str, default=None)
+        if v is None:
+            v = _get("param", None)
+        name = v
+
+        units = _get("units", None)
+
+        return dict(
+            variable=name,
+            units=units,
+        )
+
+    @staticmethod
+    def get_grib_context(param, context):
+        handle = param.private_data("handle")
+        if handle is not None:
+            if "handle" not in context:
+                context["handle"] = handle
+        else:
+            r = {
+                "shortName": param.name,
+                # "units": param.units,
+            }
+        context.update(r)
 
 
-def to_grib(spec, altered=True):
-    from earthkit.data.specs.parameter import Parameter
+# def create_from_grib(handle):
+#     def _get(key, default=None):
+#         return handle.get(key, default=default)
 
-    if isinstance(spec, Parameter):
-        if altered:
-            if hasattr(spec, "_handle"):
-                return {}
-        return {
-            "shortName": spec.name,
-            # "units": spec.units,
-        }
-    raise TypeError("Expected a Parameter instance.")
+#     v = _get("shortName", None)
+#     if v == "~":
+#         v = handle.get("paramId", ktype=str, default=None)
+#     if v is None:
+#         v = _get("param", None)
+#     name = v
+
+#     units = _get("units", None)
+
+#     d = dict(
+#         variable=name,
+#         units=units,
+#     )
+
+#     r = SimpleParameter.from_dict(d)
+#     r._set_private_data("handle", handle)
+#     return r
+
+
+# def get_grib_context(spec, context):
+#     if hasattr(spec, "handle"):
+#         if "handle" not in context:
+#             context["handle"] = spec.handle
+#     else:
+#         r = {
+#             "shortName": spec.name,
+#             # "units": spec.units,
+#         }
+#         context.update(r)

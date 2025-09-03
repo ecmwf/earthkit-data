@@ -80,7 +80,9 @@ class GribFieldListInFile(SimpleFieldList):
     def _create_field(self, n):
         part = self.part(n)
         handle = ManagedGribHandle(part.path, part.offset, part.length, self.handle_manager)
-        field = Field.from_grib(handle, cache=self.use_metadata_cache)
+        from earthkit.data.new_field.grib.field import new_grib_field
+
+        field = new_grib_field(handle, cache=self.use_metadata_cache)
         return field
 
     @property

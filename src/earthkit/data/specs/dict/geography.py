@@ -27,11 +27,11 @@ def uniform_resolution(vals):
     return None
 
 
-def make_geography(metadata, values_shape=None):
+def make_geography(metadata, shape_hint=None):
     lat = metadata.get("latitudes", None)
     lon = metadata.get("longitudes", None)
 
-    values_size = prod(values_shape) if values_shape else None
+    expected_size = prod(shape_hint) if shape_hint else None
 
     distinct = False
     if lat is None or lon is None:
@@ -40,9 +40,9 @@ def make_geography(metadata, values_shape=None):
 
         # it is possible to have no geography at all.
         if lat is None and lon is None:
-            return NoGeography(values_shape)
+            return NoGeography(shape_hint)
 
-        if values_shape is None:
+        if shape_hint is None:
             if lat is None:
                 raise ValueError("No latitudes or distinctLatitudes found")
             if lon is None:
@@ -65,11 +65,11 @@ def make_geography(metadata, values_shape=None):
                     raise ValueError(f"distinct latitudes must be 1D array! shape={lat.shape} unsupported")
                 if len(lon.shape) != 1:
                     raise ValueError(f"distinctLongitudes must be 1D array! shape={lon.shape} unsupported")
-                if lat.size * lon.size != values_size:
+                if lat.size * lon.size != expected_size:
                     raise ValueError(
                         (
                             "Distinct latitudes and longitudes do not match number of values. "
-                            f"Expected number=({lat.size * lon.size}), got={values_size}"
+                            f"Expected number=({lat.size * lon.size}), got={expected_size}"
                         )
                     )
                 distinct = True
@@ -80,8 +80,8 @@ def make_geography(metadata, values_shape=None):
     else:
         lat = np.asarray(lat, dtype=float)
         lon = np.asarray(lon, dtype=float)
-        if values_size is not None:
-            if lat.size * lon.size == values_size:
+        if expected_size is not None:
+            if lat.size * lon.size == expected_size:
                 if len(lat.shape) != 1:
                     raise ValueError(
                         f"latitudes must be a 1D array when holding distinct values! shape={lat.shape} unsupported"
@@ -108,13 +108,10 @@ def make_geography(metadata, values_shape=None):
         if lat.shape != lon.shape:
             raise ValueError(f"latitudes and longitudes must have the same shape. {lat.shape} != {lon.shape}")
 
-        if values_shape is not None:
-            if lat.size == values_size:
-                if values_shape is not None:
-                    if lat.shape != values_shape:
-                        shape = lat.shape if lat.ndim > len(values_shape) else values_shape
-                    else:
-                        shape = lat.shape
+        if shape_hint is not None:
+            if lat.size == expected_size:
+                if lat.shape != shape_hint:
+                    shape = lat.shape if lat.ndim > len(shape_hint) else shape_hint
                 else:
                     shape = lat.shape
 
@@ -123,8 +120,8 @@ def make_geography(metadata, values_shape=None):
             else:
                 raise ValueError(
                     (
-                        "latitudes and longitudes do not match number of values. "
-                        f"Expected number=({lat.size * lon.size}), got={values_size}"
+                        "Number of points do not match expected size. "
+                        f"Expected=({expected_size}), got={lat.size}"
                     )
                 )
         else:
