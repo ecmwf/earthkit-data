@@ -301,6 +301,12 @@ class Field(Base):
         result = {}
         for m in self._members:
             m.namespace(self, name, result)
+
+        if name is not None and self._private:
+            for k, v in self._private.items():
+                if hasattr(v, "namespace"):
+                    v.namespace(self, name, result)
+
         return result
 
     @classmethod
@@ -399,6 +405,7 @@ class Field(Base):
         vertical = SimpleVertical.from_dict(d)
         realisation = SimpleRealisation.from_dict(d)
 
+        # the unused items are added to the labels
         rest = {k: v for k, v in d.items() if k not in FIELD_KEYS.KEYS}
         labels = SimpleLabels(rest)
 
@@ -561,7 +568,7 @@ class Field(Base):
             v = self.labels[key]
             return _cast(v)
         # try the raw accessor
-        elif self._private:
+        elif self._private and "." in key:
             part, name = key.split(".", 1)
             if part:
                 part = self._private.get(part, None)
@@ -953,21 +960,6 @@ class Field(Base):
     def _encode(self, encoder, **kwargs):
         """Double dispatch to the encoder"""
 
-        # r = {}
-        # for part in ["data", "time", "parameter", "geography", "vertical", "labels"]:
-        #     if hasattr(self, part):
-        #         r.update(self, part).to_dict(**kwargs, encoder=True)
-
-        # r.update(kwargs)
-        return encoder._encode_field(self, **kwargs)
-
-    # def grib_metadata(self):
-    #     md = {}
-    #     for part in ["parameter"]:
-    #         part = getattr(self, part)
-    #         md.update(part._to_grib(altered=True))
-    #     return True
-
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
 
@@ -999,7 +991,7 @@ class Field(Base):
         """
         from earthkit.data.utils.summary import format_namespace_dump
 
-        d = self.namespace()
+        d = self.namespace(namespace)
 
         order = ["parameter", "time", "vertical", "realisation", "geography"]
 
@@ -1025,25 +1017,25 @@ class Field(Base):
 
         return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
 
-        if namespace is all:
-            namespace = self.namespaces()
-        else:
-            if isinstance(namespace, str):
-                namespace = [namespace]
+        # if namespace is all:
+        #     namespace = self.namespaces()
+        # else:
+        #     if isinstance(namespace, str):
+        #         namespace = [namespace]
 
-        r = []
-        for ns in namespace:
-            v = self.as_namespace(ns)
-            if v:
-                r.append(
-                    {
-                        "title": ns if ns else "default",
-                        "data": v,
-                        "tooltip": f"Keys in the ecCodes {ns} namespace",
-                    }
-                )
+        # r = []
+        # for ns in namespace:
+        #     v = self.as_namespace(ns)
+        #     if v:
+        #         r.append(
+        #             {
+        #                 "title": ns if ns else "default",
+        #                 "data": v,
+        #                 "tooltip": f"Keys in the ecCodes {ns} namespace",
+        #             }
+        #         )
 
-        return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
+        # return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
 
     def to_field(self, array=True):
         """Return the field itself."""
@@ -1513,8 +1505,8 @@ def deflate(field, flatten=False, dtype=None, array_backend=None):
     parts_with_handle = {}
     parts_other = {}
     handles = set()
-    for part in ["time", "parameter", "geography", "vertical", "labels", "raw"]:
-        part_obj = getattr(field, part)
+    for part in ["time", "parameter", "geography", "vertical", "labels"]:
+        part_obj = getattr(field, "_" + part)
         if hasattr(part_obj, "_handle"):
             handle = getattr(part_obj, "_handle", None)
             parts_with_handle[part] = (handle, part_obj)

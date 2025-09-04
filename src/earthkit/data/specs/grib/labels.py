@@ -11,6 +11,16 @@ import functools
 
 from earthkit.data.specs.labels import SimpleLabels
 
+NAMESPACES = [
+    "ls",
+    "geography",
+    "mars",
+    "parameter",
+    "statistics",
+    "time",
+    "vertical",
+]
+
 
 class MetadataCacheHandler:
     @staticmethod
@@ -127,6 +137,19 @@ class GribLabels(SimpleLabels):
         bytes
         """
         return self.handle.get_buffer()
+
+    def namespace(self, owner, name, result):
+        if isinstance(name, str):
+            name = [name]
+        if isinstance(name, (list, tuple)):
+            if name == ["grib"]:
+                for ns in NAMESPACES:
+                    result["grib." + ns] = self.handle.as_namespace(ns)
+
+            else:
+                for ns in name:
+                    if ns.startswith("grib."):
+                        result[ns] = self.handle.as_namespace(ns[5:])
 
 
 # class GribLabels(SimpleLabels):

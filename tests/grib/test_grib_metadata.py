@@ -9,7 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 import os
 import sys
 
@@ -41,21 +40,24 @@ def repeat_list_items(items, count):
 @pytest.mark.parametrize(
     "key,expected_value",
     [
-        ("shortName", "2t"),
-        ("shortName:s", "2t"),
-        ("shortName:str", "2t"),
-        ("centre", "ecmf"),
-        ("centre:l", 98),
+        ("variable", "2t"),
+        ("units", "K"),
         ("level", 0),
-        ("level:l", 0),
-        ("level:int", 0),
-        (["shortName"], ["2t"]),
-        (["shortName", "level"], ["2t", 0]),
-        (("shortName"), "2t"),
-        (("shortName", "level"), ("2t", 0)),
+        ("grib.shortName", "2t"),
+        ("grib.shortName:s", "2t"),
+        ("grib.shortName:str", "2t"),
+        ("grib.centre", "ecmf"),
+        ("grib.centre:l", 98),
+        ("grib.level", 0),
+        ("grib.level:l", 0),
+        ("grib.level:int", 0),
+        (["grib.shortName"], ["2t"]),
+        (["grib.shortName", "level"], ["2t", 0]),
+        (("grib.shortName"), "2t"),
+        (("grib.shortName", "level"), ("2t", 0)),
     ],
 )
-def test_grib_metadata_core(fl_type, key, expected_value):
+def test_grib_get_core(fl_type, key, expected_value):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
     sn = f.get(key)
     assert sn == [expected_value]
@@ -67,17 +69,20 @@ def test_grib_metadata_core(fl_type, key, expected_value):
 @pytest.mark.parametrize(
     "key,astype,expected_value",
     [
-        ("shortName", str, "2t"),
-        ("shortName", None, "2t"),
-        ("centre", None, "ecmf"),
-        ("centre", str, "ecmf"),
-        ("centre", int, 98),
+        ("grib.shortName", str, "2t"),
+        ("grib.shortName", None, "2t"),
+        ("grib.centre", None, "ecmf"),
+        ("grib.centre", str, "ecmf"),
+        ("grib.centre", int, 98),
+        ("grib.level", None, 0),
+        ("grib.level", str, "0"),
+        ("grib.level", int, 0),
         ("level", None, 0),
         ("level", str, "0"),
         ("level", int, 0),
     ],
 )
-def test_grib_metadata_astype_1(fl_type, key, astype, expected_value):
+def test_grib_get_astype_01(fl_type, key, astype, expected_value):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
     sn = f.get(key, astype=astype)
     assert sn == [expected_value]
@@ -89,16 +94,16 @@ def test_grib_metadata_astype_1(fl_type, key, astype, expected_value):
 @pytest.mark.parametrize(
     "key,expected_value",
     [
-        ("shortName", ["t", "u", "v"] * 6),
-        ("shortName:s", ["t", "u", "v"] * 6),
-        ("shortName:str", ["t", "u", "v"] * 6),
+        ("grib.shortName", ["t", "u", "v"] * 6),
+        ("grib.shortName:s", ["t", "u", "v"] * 6),
+        ("grib.shortName:str", ["t", "u", "v"] * 6),
+        ("grib.level", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
+        ("grib.level:l", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
+        ("grib.level:int", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
         ("level", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
-        ("level:l", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
-        ("level:int", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
     ],
 )
-def test_grib_metadata_18(fs_type, key, expected_value):
-    # f = load_grib_data("tuv_pl.grib", mode)
+def test_grib_get_18(fs_type, key, expected_value):
     ds, _ = load_grib_data("tuv_pl.grib", fs_type)
     sn = ds.get(key)
     assert sn == expected_value
@@ -108,8 +113,20 @@ def test_grib_metadata_18(fs_type, key, expected_value):
 @pytest.mark.parametrize(
     "key,astype,expected_value",
     [
-        ("shortName", str, ["t", "u", "v"] * 6),
-        ("shortName", None, ["t", "u", "v"] * 6),
+        ("grib.shortName", str, ["t", "u", "v"] * 6),
+        ("grib.shortName", None, ["t", "u", "v"] * 6),
+        ("variable", str, ["t", "u", "v"] * 6),
+        ("variable", None, ["t", "u", "v"] * 6),
+        (
+            "grib.level",
+            int,
+            repeat_list_items([1000, 850, 700, 500, 400, 300], 3),
+        ),
+        (
+            "grib.level",
+            None,
+            repeat_list_items([1000, 850, 700, 500, 400, 300], 3),
+        ),
         (
             "level",
             int,
@@ -122,7 +139,7 @@ def test_grib_metadata_18(fs_type, key, expected_value):
         ),
     ],
 )
-def test_grib_metadata_astype_18(fl_type, key, astype, expected_value):
+def test_grib_get_astype_18(fl_type, key, astype, expected_value):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
     sn = f.get(key, astype=astype)
     assert sn == expected_value
@@ -132,12 +149,12 @@ def test_grib_metadata_astype_18(fl_type, key, astype, expected_value):
 @pytest.mark.parametrize(
     "key,expected_value",
     [
-        ("latitudeOfFirstGridPointInDegrees", 90.0),
-        ("latitudeOfFirstGridPointInDegrees:d", 90.0),
-        ("latitudeOfFirstGridPointInDegrees:float", 90.0),
+        ("grib.latitudeOfFirstGridPointInDegrees", 90.0),
+        ("grib.latitudeOfFirstGridPointInDegrees:d", 90.0),
+        ("grib.latitudeOfFirstGridPointInDegrees:float", 90.0),
     ],
 )
-def test_grib_metadata_double_1(fl_type, key, expected_value):
+def test_grib_get_double_01(fl_type, key, expected_value):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
     r = f.get(key)
     assert len(r) == 1
@@ -148,12 +165,12 @@ def test_grib_metadata_double_1(fl_type, key, expected_value):
 @pytest.mark.parametrize(
     "key",
     [
-        ("latitudeOfFirstGridPointInDegrees"),
-        ("latitudeOfFirstGridPointInDegrees:d"),
-        ("latitudeOfFirstGridPointInDegrees:float"),
+        ("grib.latitudeOfFirstGridPointInDegrees"),
+        ("grib.latitudeOfFirstGridPointInDegrees:d"),
+        ("grib.latitudeOfFirstGridPointInDegrees:float"),
     ],
 )
-def test_grib_metadata_double_18(fl_type, key):
+def test_grib_get_double_18(fl_type, key):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     ref = [90.0] * 18
@@ -165,11 +182,11 @@ def test_grib_metadata_double_18(fl_type, key):
 @pytest.mark.parametrize(
     "key,astype",
     [
-        ("latitudeOfFirstGridPointInDegrees", None),
-        ("latitudeOfFirstGridPointInDegrees", float),
+        ("grib.latitudeOfFirstGridPointInDegrees", None),
+        ("grib.latitudeOfFirstGridPointInDegrees", float),
     ],
 )
-def test_grib_metadata_double_astype_18(fl_type, key, astype):
+def test_grib_get_double_astype_18(fl_type, key, astype):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     ref = [90.0] * 18
@@ -179,11 +196,11 @@ def test_grib_metadata_double_astype_18(fl_type, key, astype):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_get_long_array_1(fl_type):
+def test_grib_get_long_array_01(fl_type):
     f, _ = load_grib_data("rgg_small_subarea_cellarea_ref.grib", fl_type, folder="data")
 
     assert len(f) == 1
-    pl = f.get("pl")
+    pl = f.get("grib.pl")
     assert len(pl) == 1
     pl = pl[0]
     assert isinstance(pl, np.ndarray)
@@ -195,7 +212,7 @@ def test_grib_get_long_array_1(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_grib_get_double_array_values_1(fl_type):
+def test_grib_get_double_array_values_01(fl_type):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     v = f.get("values")
@@ -244,12 +261,12 @@ def test_grib_get_double_array_values_18(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_get_double_array_1(fl_type):
+def test_grib_get_double_array_01(fl_type):
     f_in, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
 
     f = f_in[0]
     # f is now a field!
-    v = f.get("pv")
+    v = f.get("grib.pv")
     assert isinstance(v, np.ndarray)
     assert len(v) == 276
     assert np.isclose(v[0], 0.0)
@@ -261,7 +278,7 @@ def test_grib_get_double_array_1(fl_type):
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_get_double_array_18(fl_type):
     f, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
-    v = f.get("pv")
+    v = f.get("grib.pv")
     assert isinstance(v, list)
     assert len(v) == 36
     for row in v:
@@ -276,60 +293,60 @@ def test_grib_get_double_array_18(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_metadata_type_qualifier(fl_type):
+def test_grib_get_type_qualifier(fl_type):
     f_in, _ = load_grib_data("tuv_pl.grib", fl_type)
     f = f_in[0:4]
 
     # to str
-    r = f.get("centre:s")
+    r = f.get("grib.centre:s")
     assert r == ["ecmf", "ecmf", "ecmf", "ecmf"]
-    r = f.get("centre:str")
+    r = f.get("grib.centre:str")
     assert r == ["ecmf", "ecmf", "ecmf", "ecmf"]
-    r = f.get("level:s")
+    r = f.get("grib.level:s")
     assert r == ["1000", "1000", "1000", "850"]
-    r = f.get("level:str")
+    r = f.get("grib.level:str")
     assert r == ["1000", "1000", "1000", "850"]
 
     # to int
-    r = f.get("centre:l")
+    r = f.get("grib.centre:l")
     assert r == [98, 98, 98, 98]
-    r = f.get("centre:int")
+    r = f.get("grib.centre:int")
     assert r == [98, 98, 98, 98]
-    r = f.get("level:d")
+    r = f.get("grib.level:d")
     assert r == [1000, 1000, 1000, 850]
-    r = f.get("level:int")
+    r = f.get("grib.level:int")
     assert r == [1000, 1000, 1000, 850]
 
     # to float
-    r = f.get("centre:d")
+    r = f.get("grib.centre:d")
     assert np.allclose(np.array(r), np.array([98.0, 98.0, 98.0, 98.0]))
     assert all(isinstance(x, float) for x in r)
-    r = f.get("centre:float")
+    r = f.get("grib.centre:float")
     assert np.allclose(np.array(r), np.array([98.0, 98.0, 98.0, 98.0]))
     assert all(isinstance(x, float) for x in r)
-    r = f.get("level:d")
+    r = f.get("grib.level:d")
     assert np.allclose(np.array(r), np.array([1000.0, 1000.0, 1000.0, 850.0]))
     assert all(isinstance(x, float) for x in r)
-    r = f.get("level:float")
+    r = f.get("grib.level:float")
     assert np.allclose(np.array(r), np.array([1000.0, 1000.0, 1000.0, 850.0]))
     assert all(isinstance(x, float) for x in r)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_metadata_astype_core(fl_type):
+def test_grib_get_astype_core(fl_type):
     f_in, _ = load_grib_data("tuv_pl.grib", fl_type)
     f = f_in[0:4]
 
     # to str
-    r = f.get("centre", astype=None)
+    r = f.get("grib.centre", astype=None)
     assert r == ["ecmf", "ecmf", "ecmf", "ecmf"]
-    r = f.get("centre", astype=str)
+    r = f.get("grib.centre", astype=str)
     assert r == ["ecmf", "ecmf", "ecmf", "ecmf"]
     r = f.get("level", astype=str)
     assert r == ["1000", "1000", "1000", "850"]
 
     # to int
-    r = f.get("centre", astype=int)
+    r = f.get("grib.centre", astype=int)
     assert r == [98, 98, 98, 98]
     r = f.get("level", astype=int)
     assert r == [1000, 1000, 1000, 850]
@@ -340,58 +357,63 @@ def test_grib_metadata_astype_core(fl_type):
     assert all(isinstance(x, float) for x in r)
 
     # multi
-    r = f.get(["level", "cfVarName"], astype=(int, None))
+    r = f.get(["level", "grib.cfVarName"], astype=(int, None))
     assert r == [[1000, "t"], [1000, "u"], [1000, "v"], [850, "t"]]
-    r = f.get(["level", "cfVarName"], astype=str)
+    r = f.get(["level", "grib.cfVarName"], astype=str)
     assert r == [["1000", "t"], ["1000", "u"], ["1000", "v"], ["850", "t"]]
 
     # non matching astype
     with pytest.raises(ValueError):
-        f.get(["level", "cfVarName", "centre"], astype=(int, None))
+        f.get(["level", "grib.cfVarName", "grib.centre"], astype=(int, None))
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_metadata_generic(fl_type):
+def test_grib_get_generic(fl_type):
     f_full, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     f = f_full[0:4]
 
-    sn = f.get("shortName")
+    sn = f.get("grib.shortName")
     assert sn == ["t", "u", "v", "t"]
-    sn = f.get(["shortName"])
+    sn = f.get(["grib.shortName"])
     assert sn == [["t"], ["u"], ["v"], ["t"]]
-    lg = f.get("level", "cfVarName")
+    sn = f.get("variable")
+    assert sn == ["t", "u", "v", "t"]
+    sn = f.get(["variable"])
+    assert sn == [["t"], ["u"], ["v"], ["t"]]
+
+    lg = f.get("level", "grib.cfVarName")
     assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
-    lg = f.get(["level", "cfVarName"])
+    lg = f.get(["level", "grib.cfVarName"])
     assert lg == [[1000, "t"], [1000, "u"], [1000, "v"], [850, "t"]]
-    lg = f.get("level", "cfVarName")
+    lg = f.get("level", "grib.cfVarName")
     assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
 
     # single fieldlist
     f = f_full
     f = f.sel(param="t", level=1000)
-    lg = f.get(["level", "cfVarName"])
+    lg = f.get(["level", "grib.cfVarName"])
     assert lg == [[1000, "t"]]
 
     # single field
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))[0]
-    lg = f.get(["level", "cfVarName"])
+    lg = f.get(["level", "grib.cfVarName"])
     assert lg == [1000, "t"]
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_metadata_missing_value(fl_type):
+def test_grib_get_missing_value(fl_type):
     f, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
 
     with pytest.raises(KeyError):
-        f[0].get("scaleFactorOfSecondFixedSurface", raise_on_missing=True)
+        f[0].get("grib.scaleFactorOfSecondFixedSurface", raise_on_missing=True)
 
-    v = f[0].metadata("scaleFactorOfSecondFixedSurface", default=None)
+    v = f[0].get("grib.scaleFactorOfSecondFixedSurface", default=None)
     assert v is None
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_metadata_missing_key(fl_type):
+def test_grib_get_missing_key(fl_type):
     f, _ = load_grib_data("test.grib", fl_type)
 
     with pytest.raises(KeyError):
@@ -483,46 +505,6 @@ def test_grib_metadata_namespace(fl_type):
     with pytest.raises(ValueError) as excinfo:
         r = f[0].metadata("level", namespace=["vertical", "time"])
     assert "must be a str when key specified" in str(excinfo.value)
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_datetime_1(fl_type):
-    s, _ = load_grib_data("test.grib", fl_type)
-
-    ref = {
-        "base_time": [datetime.datetime(2020, 5, 13, 12)],
-        "valid_time": [datetime.datetime(2020, 5, 13, 12)],
-    }
-    assert s.datetime() == ref
-
-
-def test_grib_datetime_2():
-    s = from_source(
-        "dummy-source",
-        kind="grib",
-        paramId=[129, 130],
-        date=[19900101, 19900102],
-        level=[1000, 500],
-    )
-    ref = {
-        "base_time": [
-            datetime.datetime(1990, 1, 1, 12, 0),
-            datetime.datetime(1990, 1, 2, 12, 0),
-        ],
-        "valid_time": [
-            datetime.datetime(1990, 1, 1, 12, 0),
-            datetime.datetime(1990, 1, 2, 12, 0),
-        ],
-    }
-    assert s.datetime() == ref
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_valid_datetime(fl_type):
-    ds, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
-    f = ds[4]
-
-    assert f.time.valid_datetime == datetime.datetime(2020, 12, 21, 18, 0)
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)

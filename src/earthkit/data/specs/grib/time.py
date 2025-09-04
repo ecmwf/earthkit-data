@@ -11,6 +11,8 @@ from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
+ZERO_TIMEDELTA = to_timedelta(0)
+
 
 class GribTimeBuilder:
     @staticmethod
@@ -42,27 +44,28 @@ class GribTimeBuilder:
         else:
             base = _datetime("dataDate", "dataTime")
 
-        v = _get("endStep", None)
-        if v is None:
-            v = _get("step", None)
-        step = to_timedelta(v)
+        end = None
+        time_span = ZERO_TIMEDELTA
 
-        end = _get("endStep", None)
+        end = _get("endStep")
         if end is None:
-            return to_timedelta(0)
+            end = _get("step")
 
-        start = _get("startStep", None)
-        if start is None:
-            start = to_timedelta(0)
-
-        time_span = to_timedelta(end) - to_timedelta(start)
+        if end is None:
+            end = ZERO_TIMEDELTA
+        else:
+            end = to_timedelta(end)
+            start = _get("startStep")
+            if start is not None:
+                start = to_timedelta(start)
+                time_span = end - start
 
         indexing = _datetime("indexingDate", "indexingTime")
         reference = _datetime("referenceDate", "referenceTime")
 
         return dict(
             base_datetime=to_datetime(base),
-            step=step,
+            step=end,
             time_span=time_span,
             indexing_datetime=indexing,
             reference_datetime=reference,

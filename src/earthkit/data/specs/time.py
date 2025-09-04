@@ -263,7 +263,6 @@ class SimpleTime(Time):
     @property
     def step(self):
         """Return the forecast period of the time object."""
-        return ZERO_TIMEDELTA
         return self._step
 
     @property
