@@ -20,6 +20,8 @@ from earthkit.data.testing import earthkit_remote_test_data_file
 
 @pytest.mark.long_test
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "field_policy",
     [
@@ -49,11 +51,13 @@ from earthkit.data.testing import earthkit_remote_test_data_file
         {"chunks": -1},
     ],
 )
-def test_xr_engine_chunk_1(field_policy, handle_policy, _kwargs):
+def test_xr_engine_chunk_1(allow_holes, lazy_load, field_policy, handle_policy, _kwargs):
     with config.temporary(**field_policy, **handle_policy):
         ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"))
 
-        ds = ds_in.to_xarray(time_dim_mode="valid_time", **_kwargs)
+        ds = ds_in.to_xarray(
+            time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, **_kwargs
+        )
 
         assert ds is not None
 
@@ -64,6 +68,8 @@ def test_xr_engine_chunk_1(field_policy, handle_policy, _kwargs):
 
 # This test is a copy of the previous one, but only using the default config
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "_kwargs",
     [
@@ -75,7 +81,7 @@ def test_xr_engine_chunk_1(field_policy, handle_policy, _kwargs):
         {"chunks": -1},
     ],
 )
-def test_xr_engine_chunk_2(_kwargs):
+def test_xr_engine_chunk_2(allow_holes, lazy_load, _kwargs):
     # the default settings
     field_policy = {"grib-field-policy": "persistent"}
     handle_policy = {"grib-handle-policy": "cache", "grib-handle-cache-size": 1}
@@ -83,7 +89,9 @@ def test_xr_engine_chunk_2(_kwargs):
     with config.temporary(**field_policy, **handle_policy):
         ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"))
 
-        ds = ds_in.to_xarray(time_dim_mode="valid_time", **_kwargs)
+        ds = ds_in.to_xarray(
+            time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, **_kwargs
+        )
 
         assert ds is not None
 
@@ -93,6 +101,8 @@ def test_xr_engine_chunk_2(_kwargs):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "_kwargs",
     [
@@ -105,7 +115,7 @@ def test_xr_engine_chunk_2(_kwargs):
         {"chunks": -1},
     ],
 )
-def test_xr_engine_chunk_3(_kwargs):
+def test_xr_engine_chunk_3(allow_holes, lazy_load, _kwargs):
     # in-memory fieldlist
     ds_in = from_source(
         "url",
@@ -114,7 +124,7 @@ def test_xr_engine_chunk_3(_kwargs):
         read_all=True,
     )
 
-    ds = ds_in.to_xarray(time_dim_mode="valid_time", **_kwargs)
+    ds = ds_in.to_xarray(time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, **_kwargs)
     assert ds is not None
 
     r = ds["2t"].mean("valid_time").load()

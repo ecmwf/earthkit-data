@@ -125,6 +125,26 @@ class Base(metaclass=MetaBase):
 
         return vals
 
+    def _user_coords_to_fl_idx(self, keys, remapping=None):
+        # this method could be implemented in the class XArrayInputFieldList, but then FieldList.to_tensor wouldn't work
+        if isinstance(keys, str):
+            keys = [keys]
+        if remapping is None:
+            # some subclasses (e.g. XArrayInputFieldList) has remapping as a member
+            remapping = getattr(self, "remapping", None)
+
+        user_coords_to_fl_idx = {}
+        for i, f in enumerate(self):
+            metadata = f._attributes(keys, remapping=remapping)  # , joiner=joiner)
+            user_coords = tuple(metadata[k] for k in keys)
+            assert user_coords not in user_coords_to_fl_idx, (
+                f"Multiple fields in {self} with {dict(zip(keys, user_coords))}: "
+                f"#{user_coords_to_fl_idx[user_coords]} and #{i}"
+            )
+            user_coords_to_fl_idx[user_coords] = i
+
+        return user_coords_to_fl_idx
+
     # @abstractmethod
     # def to_points(self, *args, **kwargs):
     #     self._not_implemented()
