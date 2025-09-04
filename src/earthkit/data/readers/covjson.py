@@ -24,7 +24,18 @@ class XarrayMixIn:
         return decoder.to_xarray()
 
 
-class CovjsonReader(XarrayMixIn, Reader):
+class GeojsonMixIn:
+    def to_geojson(self, **kwargs):
+        try:
+            from covjsonkit.api import Covjsonkit
+        except ImportError:
+            raise ImportError("covjson handling requires 'covjsonkit' to be installed")
+
+        decoder = Covjsonkit().decode(self._json())
+        return decoder.to_geojson()
+
+
+class CovjsonReader(XarrayMixIn, GeojsonMixIn, Reader):
     def __init__(self, source, path):
         super().__init__(source, path)
 

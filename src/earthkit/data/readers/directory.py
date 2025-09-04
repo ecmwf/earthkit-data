@@ -47,6 +47,7 @@ class DirectoryReader(Reader):
     def __init__(self, source, path):
         super().__init__(source, path)
         self._content = []
+        self._source_kwargs = source._kwargs
 
         filter = make_file_filter(self.filter, self.path)
 

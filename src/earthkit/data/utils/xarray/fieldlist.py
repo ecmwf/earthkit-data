@@ -147,7 +147,7 @@ class XArrayInputFieldList(FieldList):
     def group(self, key, values):
         groups = defaultdict(list)
         for f in self.ds:
-            v = str(f.get(key, default=None))
+            v = str(f.get(key, remapping=self.remapping, default=None))
             if v in values:
                 groups[v].append(f)
 

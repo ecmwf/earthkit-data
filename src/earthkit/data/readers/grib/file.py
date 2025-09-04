@@ -35,6 +35,7 @@ class GRIBReader(GribFieldListInOneFile, Reader):
 
         Reader.__init__(self, source, path)
         GribFieldListInOneFile.__init__(self, path, parts=parts, positions=positions, **_kwargs)
+        self._source_kwargs = source._kwargs
 
     def __repr__(self):
         return "GRIBReader(%s)" % (self.path,)
