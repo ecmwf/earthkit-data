@@ -30,14 +30,14 @@ from earthkit.data.utils.metadata.args import metadata_argument_new
 GRIB = "grib"
 
 LS_KEYS = [
-    "name",
-    "level",
-    "level_type",
+    "variable",
+    "valid_datetime",
     "base_datetime",
     "step",
-    "valid_datetime",
+    "level",
+    "level_type",
     "number",
-    "gridType",
+    "grid_type",
 ]
 
 
@@ -1001,15 +1001,25 @@ class Field(Base):
 
         d = self.namespace()
 
+        order = ["parameter", "time", "vertical", "realisation", "geography"]
+
+        d1 = {}
+        for k in order:
+            if k in d:
+                d1[k] = d.pop(k)
+
+        d1.update(d)
+        d = d1
+
         r = []
-        for ns, v in d.items():
+        for ns, v in d1.items():
             # v = self.as_namespace(ns)
             if v:
                 r.append(
                     {
                         "title": ns if ns else "default",
                         "data": v,
-                        "tooltip": f"Keys in the ecCodes {ns} namespace",
+                        "tooltip": f"Keys in the {ns} namespace",
                     }
                 )
 

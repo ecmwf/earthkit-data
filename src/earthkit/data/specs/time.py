@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 from abc import abstractmethod
 
 from earthkit.data.utils.dates import datetime_from_date_and_time
@@ -18,7 +19,7 @@ from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
 from .spec import spec_aliases
 
-ZERO_TIMEDELTA = to_timedelta(0)
+ZERO_TIMEDELTA = datetime.timedelta(hours=6)
 
 
 @spec_aliases
@@ -262,6 +263,7 @@ class SimpleTime(Time):
     @property
     def step(self):
         """Return the forecast period of the time object."""
+        return ZERO_TIMEDELTA
         return self._step
 
     @property
