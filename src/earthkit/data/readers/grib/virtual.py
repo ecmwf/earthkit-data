@@ -116,7 +116,9 @@ class VirtualGribField(Field):
 
         return WrappedMetadata(self.owner.reference._metadata, extra=r)
 
-    def _values(self, dtype=None):
+    def _values(self, dtype=None, context=None):
+        if context is not None:
+            self.owner._group(context)
         return self._field._values(dtype=dtype)
 
     @property
