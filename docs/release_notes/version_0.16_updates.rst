@@ -2,13 +2,23 @@ Version 0.16 Updates
 /////////////////////////
 
 
+Version 0.16.4
+===============
+
+Fixes
+++++++++
+
+- Fixed issue in the Xarray engine when the ``remapping`` option did not work with ``lazy_load=False`` (:pr:`795`)
+- Fixed regression caused by :pr:`791` that made the ``opendap`` source unusable (:pr:`796`)
+
+
 Version 0.16.3
 ===============
 
 Fixes
 ++++++++
 
-- Fixed fieldlist serialisation problem when dask cluster is used (:pr:`791`)
+- Fixed fieldlist serialisation problem when Dask cluster is used (:pr:`791`)
 
 
 Version 0.16.2
