@@ -222,9 +222,9 @@ class SimpleTime(Time):
         }
 
     def get_grib_context(self, context) -> dict:
-        from .grib.time import get_grib_context
+        from .grib.time import GribTimeContextCollector
 
-        get_grib_context(self, context)
+        GribTimeContextCollector(self).collect(context)
 
     # @classmethod
     # def from_grib(cls, handle):

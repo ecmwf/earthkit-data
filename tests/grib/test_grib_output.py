@@ -52,7 +52,7 @@ def new_grib_coder_compat(*args, **kwargs):
 
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_when_loaded_from_file(fl_type, write_method):
+def test_grib_save_when_loaded_from_file_core(fl_type, write_method):
     fs, _ = load_grib_data("test6.grib", fl_type)
     assert len(fs) == 6
     with temp_file() as tmp:
@@ -72,7 +72,7 @@ def test_grib_save_bits_per_value_fieldlist(_kwargs, expected_value, write_metho
     with temp_file() as tmp:
         write_to_file(write_method, tmp, ds, **_kwargs)
         ds1 = from_source("file", tmp)
-        assert ds1.get("bitsPerValue") == [expected_value] * len(ds)
+        assert ds1.get("grib.bitsPerValue") == [expected_value] * len(ds)
 
 
 @pytest.mark.parametrize(
@@ -86,12 +86,14 @@ def test_grib_save_bits_per_value_single_field(_kwargs, expected_value, write_me
     with temp_file() as tmp:
         write_to_file(write_method, tmp, ds[0], **_kwargs)
         ds1 = from_source("file", tmp)
-        assert ds1.get("bitsPerValue") == [expected_value]
+        assert ds1.get("grib.bitsPerValue") == [expected_value]
 
 
 # TODO: if we use missing_value = np.finfo(np.float32).max the test fails
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
 @pytest.mark.parametrize("missing_value", [100000.0, np.finfo(np.float32).max - 1])
+# @pytest.mark.parametrize("mode", ["target"])
+# @pytest.mark.parametrize("missing_value", [100000.0])
 def test_grib_output_missing_value_1(mode, missing_value):
     fld = from_source("file", earthkit_examples_file("test.grib"))[0]
 
@@ -120,7 +122,7 @@ def test_grib_output_missing_value_1(mode, missing_value):
                 missing_value=missing_value,
             )
         ds = earthkit.data.from_source("file", path)
-        assert ds[0].get("bitmapPresent") == 1
+        assert ds[0].get("grib.bitmapPresent") == 1
         assert np.isnan(ds[0].values[0])
         assert not np.isnan(values[1])
 
@@ -153,13 +155,12 @@ def test_grib_output_latlon(mode):
             )
 
         ds = earthkit.data.from_source("file", path)
-        print(ds[0])
 
-        assert ds[0].get("date") == 20010101
-        assert ds[0].get("param") == "2t"
-        assert ds[0].get("levtype") == "sfc"
-        assert ds[0].get("edition") == 2
-        assert ds[0].get("generatingProcessIdentifier") == 255
+        assert ds[0].get("grib.date") == 20010101
+        assert ds[0].get("grib.param") == "2t"
+        assert ds[0].get("grb.levtype") == "sfc"
+        assert ds[0].get("grib.edition") == 2
+        assert ds[0].get("grib.generatingProcessIdentifier") == 255
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -194,14 +195,14 @@ def test_grib_output_o96_sfc(mode):
         ds = earthkit.data.from_source("file", path)
 
         ref = {
-            "date": 20010101,
-            "param": "2t",
-            "levtype": "sfc",
-            "edition": 2,
-            "generatingProcessIdentifier": 255,
-            "gridType": "reduced_gg",
-            "N": 96,
-            "isOctahedral": 1,
+            "grib.date": 20010101,
+            "grib.shortName": "2t",
+            "grib.levtype": "sfc",
+            "grib.edition": 2,
+            "grib.generatingProcessIdentifier": 255,
+            "grib.gridType": "reduced_gg",
+            "grib.N": 96,
+            "grib.isOctahedral": 1,
         }
 
         for k, v in ref.items():
@@ -239,14 +240,14 @@ def test_grib_output_o160_sfc(mode):
         ds = earthkit.data.from_source("file", path)
 
         ref = {
-            "date": 20010101,
-            "param": "2t",
-            "levtype": "sfc",
-            "edition": 2,
-            "generatingProcessIdentifier": 255,
-            "gridType": "reduced_gg",
-            "N": 160,
-            "isOctahedral": 1,
+            "grib.date": 20010101,
+            "grib.shortName": "2t",
+            "grib.levtype": "sfc",
+            "grib.edition": 2,
+            "grib.generatingProcessIdentifier": 255,
+            "grib.gridType": "reduced_gg",
+            "grib.N": 160,
+            "grib.isOctahedral": 1,
         }
 
         for k, v in ref.items():
@@ -284,14 +285,14 @@ def test_grib_output_n96_sfc(mode):
         ds = earthkit.data.from_source("file", path)
 
         ref = {
-            "date": 20010101,
-            "param": "2t",
-            "levtype": "sfc",
-            "edition": 2,
-            "generatingProcessIdentifier": 255,
-            "gridType": "reduced_gg",
-            "N": 96,
-            "isOctahedral": 0,
+            "grib.date": 20010101,
+            "grib.shortName": "2t",
+            "grib.levtype": "sfc",
+            "grib.edition": 2,
+            "grib.generatingProcessIdentifier": 255,
+            "grib.gridType": "reduced_gg",
+            "grib.N": 96,
+            "grib.isOctahedral": 0,
         }
 
         for k, v in ref.items():
@@ -336,17 +337,18 @@ def test_grib_output_mars_labeling(mode):
 
         ds = earthkit.data.from_source("file", path)
 
-        assert ds[0].get("date") == 20010101
-        assert ds[0].get("edition") == 2
+        assert ds[0].get("grib.date") == 20010101
+        assert ds[0].get("grib.edition") == 2
+        assert ds[0].get("grib.step") == 24
         assert ds[0].get("step") == datetime.timedelta(hours=24)
-        assert ds[0].get("expver") == "test"
-        assert ds[0].get("levtype") == "sfc"
-        assert ds[0].get("param") == "msl"
-        assert ds[0].get("type") == "fc"
-        assert ds[0].get("generatingProcessIdentifier") == 255
-        assert ds[0].get("gridType") == "reduced_gg"
-        assert ds[0].get("N") == 96
-        assert ds[0].get("isOctahedral") == 1
+        assert ds[0].get("grib.expver") == "test"
+        assert ds[0].get("grib.levtype") == "sfc"
+        assert ds[0].get("grib.shortName") == "msl"
+        assert ds[0].get("grib.type") == "fc"
+        assert ds[0].get("grib.generatingProcessIdentifier") == 255
+        assert ds[0].get("grib.gridType") == "reduced_gg"
+        assert ds[0].get("grib.N") == 96
+        assert ds[0].get("grib.isOctahedral") == 1
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -382,15 +384,15 @@ def test_grib_output_o96_pl(mode, levtype):
 
         ds = earthkit.data.from_source("file", path)
 
-        assert ds[0].get("date") == 20010101
-        assert ds[0].get("edition") == 2
-        assert ds[0].get("level") == 850
-        assert ds[0].get("levtype") == "pl"
-        assert ds[0].get("param") == "t"
-        assert ds[0].get("generatingProcessIdentifier") == 255
-        assert ds[0].get("gridType") == "reduced_gg"
-        assert ds[0].get("N") == 96
-        assert ds[0].get("isOctahedral") == 1
+        assert ds[0].get("grib.date") == 20010101
+        assert ds[0].get("grib.edition") == 2
+        assert ds[0].get("grib.level") == 850
+        assert ds[0].get("grib.levtype") == "pl"
+        assert ds[0].get("grib.shortName") == "t"
+        assert ds[0].get("grib.generatingProcessIdentifier") == 255
+        assert ds[0].get("grib.gridType") == "reduced_gg"
+        assert ds[0].get("grib.N") == 96
+        assert ds[0].get("grib.isOctahedral") == 1
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -426,15 +428,16 @@ def test_grib_output_tp(mode, levtype):
             )
         ds = earthkit.data.from_source("file", path)
 
-        assert ds[0].get("date") == 20010101
-        assert ds[0].get("param") == "tp"
-        assert ds[0].get("levtype") == "sfc"
-        assert ds[0].get("edition") == 1
+        assert ds[0].get("grib.date") == 20010101
+        assert ds[0].get("grib.shortName") == "tp"
+        assert ds[0].get("grib.levtype") == "sfc"
+        assert ds[0].get("grib.edition") == 1
+        assert ds[0].get("grib.step") == 48
         assert ds[0].get("step") == datetime.timedelta(hours=48)
-        assert ds[0].get("generatingProcessIdentifier") == 255
-        assert ds[0].get("gridType") == "regular_ll"
-        assert ds[0].get("Ni") == 360
-        assert ds[0].get("Nj") == 181
+        assert ds[0].get("grib.generatingProcessIdentifier") == 255
+        assert ds[0].get("grib.gridType") == "regular_ll"
+        assert ds[0].get("grib.Ni") == 360
+        assert ds[0].get("grib.Nj") == 181
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -478,12 +481,12 @@ def test_grib_output_field_template(mode, array):
 
         ds = earthkit.data.from_source("file", path)
 
-        assert ds[0].get("date") == 20010101
-        assert ds[0].get("param") == "pt"
-        assert ds[0].get("levtype") == "pl"
-        assert ds[0].get("edition") == 1
-        assert ds[0].get("generatingProcessIdentifier") == 255
-        assert ds[0].get("bitsPerValue") == 16
+        assert ds[0].get("grib.date") == 20010101
+        assert ds[0].get("grib.shortName") == "pt"
+        assert ds[0].get("grib.levtype") == "pl"
+        assert ds[0].get("grib.edition") == 1
+        assert ds[0].get("grib.generatingProcessIdentifier") == 255
+        assert ds[0].get("grib.bitsPerValue") == 16
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=1e-2, atol=1e-2)
 

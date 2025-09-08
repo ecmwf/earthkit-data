@@ -181,7 +181,7 @@ class LazyGribField:
         return getattr(self._field, name)
 
 
-def add_properties(cls):
+def add_member_properties(cls):
     for key, member in FIELD_KEYS.SINGLE_KEYS.items():
         if getattr(cls, key, None) is None:
 
@@ -201,7 +201,7 @@ def add_properties(cls):
     return cls
 
 
-@add_properties
+@add_member_properties
 class Field(Base):
     """A class to represent a field in Earthkit.
 
@@ -285,14 +285,14 @@ class Field(Base):
         self.data = self.data.Offloader(self.data)
 
     def _get_grib_context(self, context):
-        self.data.get_grib_context(context)
-        self.time.get_grib_context(context)
-        self.parameter.get_grib_context(context)
-        self.geography.get_grib_context(context)
-        self.vertical.get_grib_context(context)
-        self.labels.get_grib_context(context)
-        if self.raw is not None:
-            self.raw.get_grib_context(context)
+        self._data.get_grib_context(context)
+        self._time.get_grib_context(context)
+        self._parameter.get_grib_context(context)
+        self._geography.get_grib_context(context)
+        self._vertical.get_grib_context(context)
+        self._labels.get_grib_context(context)
+        # if self.raw is not None:
+        #     self.raw.get_grib_context(context)
 
     def namespace(self, name=None):
         if name is all or name is True:
@@ -870,7 +870,9 @@ class Field(Base):
                     s = RawLabels(**v)
                 else:
                     s = part.set(**v)
-                r[part_name] = s
+
+                kwarg_name = part_name[1:] if part_name.startswith("_") else part_name
+                r[kwarg_name] = s
 
             print("set() result=", r)
             if r:
@@ -953,12 +955,13 @@ class Field(Base):
         to_target(target, *args, data=self, **kwargs)
 
     def default_encoder(self):
-        if hasattr(self, "raw") and hasattr(self.raw, "handle"):
+        if "grib" in self._private:
             return "grib"
         return "dict"
 
     def _encode(self, encoder, **kwargs):
         """Double dispatch to the encoder"""
+        return encoder._encode_field(self, **kwargs)
 
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
@@ -1017,32 +1020,9 @@ class Field(Base):
 
         return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
 
-        # if namespace is all:
-        #     namespace = self.namespaces()
-        # else:
-        #     if isinstance(namespace, str):
-        #         namespace = [namespace]
-
-        # r = []
-        # for ns in namespace:
-        #     v = self.as_namespace(ns)
-        #     if v:
-        #         r.append(
-        #             {
-        #                 "title": ns if ns else "default",
-        #                 "data": v,
-        #                 "tooltip": f"Keys in the ecCodes {ns} namespace",
-        #             }
-        #         )
-
-        # return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
-
     def to_field(self, array=True):
         """Return the field itself."""
         return self
-
-    def to_array_based(self, **kwargs):
-        return deflate(self, **kwargs)
 
     @property
     def default_ls_keys(self):
@@ -1096,6 +1076,12 @@ class Field(Base):
             self.vertical.load()
         if self.labels:
             self.labels.load()
+
+    def to_array_field(self, array_backend=None, flatten=False, dtype=None):
+        grib = self.get_private_data("grib")
+        if grib is not None:
+            return grib.new_array_field(self, array_backend=array_backend, flatten=flatten, dtype=dtype)
+        return self
 
     def copy(self, *, values=None, flatten=False, dtype=None, array_backend=None):
         r"""Create a new :class:`ArrayField` by copying the values and metadata.
@@ -1454,27 +1440,27 @@ class Field(Base):
             )
 
 
-class GribFieldEncoderInput:
-    def __init__(self, field):
-        self.field = field
+# class GribFieldEncoderInput:
+#     def __init__(self, field):
+#         self.field = field
 
-    @property
-    def handle(self):
-        try:
-            return self.field.raw.handle
-        except Exception:
-            return None
+#     @property
+#     def handle(self):
+#         try:
+#             return self.field.raw.handle
+#         except Exception:
+#             return None
 
-    def data(self, altered=True):
-        values = None
-        md = {}
-        if not hasattr(self.field.data, "handle"):
-            values = self.field.data.values
+#     def data(self, altered=True):
+#         values = None
+#         md = {}
+#         if not hasattr(self.field.data, "handle"):
+#             values = self.field.data.values
 
-        for part in ["parameter", "vertical"]:
-            part = getattr(self.field, part)
-            md.update(part._to_grib(altered=True))
-        return values, md
+#         for part in ["parameter", "vertical"]:
+#             part = getattr(self.field, part)
+#             md.update(part._to_grib(altered=True))
+#         return values, md
 
 
 def grib_handle(field):

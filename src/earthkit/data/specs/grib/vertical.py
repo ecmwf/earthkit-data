@@ -9,6 +9,8 @@
 
 from earthkit.data.specs.vertical import LevelTypes
 
+from .collector import GribContextCollector
+
 
 class GribLevelType:
     def __init__(self, key, item):
@@ -41,6 +43,7 @@ GRIB_LEVEL_TYPES = {
     "theta": LevelTypes.THETA,
     "potentialVorticity": LevelTypes.PV,
     "surface": LevelTypes.SURFACE,
+    "snowLayer": LevelTypes.SNOW,
 }
 
 GRIB_LEVEL_TYPES = {k: GribLevelType(k, v) for k, v in GRIB_LEVEL_TYPES.items()}
@@ -62,6 +65,9 @@ class GribVerticalBuilder:
             return handle.get(key, default=default)
 
         level = _get("level")
+        if level is None:
+            level = _get("topLevel")
+
         level_type = _get("typeOfLevel")
 
         t = GRIB_LEVEL_TYPES.get(level_type)
@@ -74,25 +80,22 @@ class GribVerticalBuilder:
             level_type=level_type,
         )
 
+
+class GribVerticalContextCollector(GribContextCollector):
     @staticmethod
-    def get_grib_context(spec, context):
-        handle = spec.private_data("handle")
-        if handle is not None:
-            if "handle" not in context:
-                context["handle"] = handle
-        else:
-            level_type = None
-            for k, v in GRIB_LEVEL_TYPES.items():
-                if v.type.name == spec.level_type:
-                    level_type = k
-                    break
+    def collect_keys(spec, context):
+        level_type = None
+        for k, v in GRIB_LEVEL_TYPES.items():
+            if v.type.name == spec.level_type:
+                level_type = k
+                break
 
-            if level_type is None:
-                raise ValueError(f"Unknown level type: {spec.level_type.name}")
+        if level_type is None:
+            raise ValueError(f"Unknown level type: {spec.level_type.name}")
 
-            r = {
-                "level": spec.level,
-                "typeOfLevel": level_type,
-            }
+        r = {
+            "level": spec.level,
+            "typeOfLevel": level_type,
+        }
 
-            context.update(r)
+        context.update(r)

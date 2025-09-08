@@ -107,14 +107,12 @@ class GribHandleMaker:
         self.template = template
         self._bbox = {}
 
-    def make(self, field=None, values=None, metadata=None, template=None):
+    def make(self, values=None, metadata=None, template=None):
         """Create a new GribCodesHandle from a template, field or metadata
         May modify existing metadata
 
         Parameters
         ----------
-        field: Field
-            The field to encode
         values: numpy.ndarray
             The values to encode
         metadata: dict
@@ -126,10 +124,10 @@ class GribHandleMaker:
         if handle is not None:
             self.update_metadata_from_template(metadata, template, handle)
 
-        if handle is None and field is not None:
-            handle = self.handle_from_field(field)
-            if handle is not None:
-                self.update_metadata_from_template(metadata, field, handle)
+        # if handle is None and field is not None:
+        #     handle = self.handle_from_field(field)
+        #     if handle is not None:
+        #         self.update_metadata_from_template(metadata, field, handle)
 
         if handle is None:
             if values is None:
@@ -142,25 +140,23 @@ class GribHandleMaker:
         handle = None
         if template is None:
             template = self.template
+
         if template is not None:
-            if hasattr(template, "handle"):
+            from earthkit.data.core.field import Field
+
+            if isinstance(template, Field):
+                return self.handle_from_field(template)
+            elif hasattr(template, "handle"):
                 handle = template.handle
-            elif hasattr(template, "grib") and hasattr(template.grib, "handle"):
-                handle = template.grib.handle
-            elif hasattr(template, "raw") and hasattr(template.raw, "handle"):
-                handle = template.raw.handle
+                if handle is not None:
+                    return handle.clone()
 
-        if handle is not None:
-            handle = handle.clone()
-
-        return handle
+        return None
 
     def handle_from_field(self, field):
-        handle = None
-        if hasattr(field, "grib") and hasattr(field.grib, "handle"):
-            handle = field.grib.handle
-        elif hasattr(field, "raw") and hasattr(field.raw, "handle"):
-            handle = field.raw.handle
+        r = {}
+        field._get_grib_context(r)
+        handle = r.pop("handle", None)
 
         if handle is not None:
             handle = handle.clone()
@@ -427,24 +423,48 @@ class GribEncoder(Encoder):
     def _encode_field(self, field, values=None, template=None, metadata=None, **kwargs):
         # check if the field is already encoded in the desired format
 
-        from earthkit.data.core.field import GribFieldEncoderInput
+        r = {}
+        field._get_grib_context(r)
+        handle = r.pop("handle", None)
+        field_values = r.pop("values", None)
 
-        d = GribFieldEncoderInput(field)
-        # if d.enabled:
-        v, md = d.data(altered=True)
+        # if template is None:
+        #     template = handle
 
-        if template is None:
-            template = field
+        # if values is None:
+        #     values = field_values
 
-        if values is None:
-            values = v
-
-        if md:
+        if r:
             if metadata is None:
-                metadata = md
+                metadata = r
             else:
-                md.update(metadata)
-                metadata = md
+                r.update(metadata)
+                metadata = r
+
+        # print("Collected:", r)
+        # print("Metadata:", metadata)
+        # print("Template:", template)
+        # print("Values:", type(values))
+        # print("field_values:", type(field_values))
+
+        # from earthkit.data.core.field import GribFieldEncoderInput
+
+        # d = GribFieldEncoderInput(field)
+        # # if d.enabled:
+        # v, md = d.data(altered=True)
+
+        # if template is None:
+        #     template = field
+
+        # if values is None:
+        #     values = v
+
+        # if md:
+        #     if metadata is None:
+        #         metadata = md
+        #     else:
+        #         md.update(metadata)
+        #         metadata = md
 
         # if hasattr(field, "grib"):
         #     enc = FieldGribEncoder(field)
@@ -458,13 +478,25 @@ class GribEncoder(Encoder):
         #         else:
         #             md.update(metadata)
 
-        if values is None and template is None and not metadata:
-            return GribEncodedData(field.handle)
+        if field_values is None and values is None and template is None and not metadata:
+            return GribEncodedData(handle)
+
+        # if values is None and template is None and not metadata:
+        #     return GribEncodedData(handle)
+
+        if values is None:
+            values = field_values
 
         if values is None and template:
             values = field.values
 
-        handle = self._get_handle(field=field, values=values, metadata=metadata, template=template)
+        if template is None:
+            template = handle
+
+        # handle = self._get_handle(field=field, values=values, metadata=metadata, template=template)
+        handle = self._get_handle(values=values, metadata=metadata, template=template)
+
+        print("Handle:", handle)
         return self._make_message(handle, values=values, metadata=metadata, **kwargs)
 
     def _encode_fieldlist(self, fs, **kwargs):

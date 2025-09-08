@@ -55,183 +55,50 @@ def test_grib_vertical_2(fl_type):
             "hpa_and_pa.grib",
             [(1, "pl"), (0.1, "pl"), (0.01, "pl")],
         ),
-        # (
-        #     "hl_1000_m_asl.grib2",
-        #     {
-        #         "profile": "grib",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "level",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"level": [100, 1000, 2000, 3000]},
-        #     "heightAboveSea",
-        # ),
-        # (
-        #     "hl_1000_m_agr.grib2",
-        #     {
-        #         "profile": "grib",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "level",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"level": [500, 1000, 2500, 10000]},
-        #     "heightAboveGround",
-        # ),
-        # (
-        #     "pt_320_K.grib1",
-        #     {
-        #         "profile": "grib",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "level",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"level": [320]},
-        #     "theta",
-        # ),
-        # (
-        #     "pv_1500.grib1",
-        #     {
-        #         "profile": "grib",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "level",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"level": [1500]},
-        #     "potentialVorticity",
-        # ),
-        # (
-        #     "soil_7.grib1",
-        #     {
-        #         "profile": "grib",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "level",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"level": [7]},
-        #     "depthBelowLand",
-        # ),
-        # (
-        #     "sol_3.grib2",
-        #     {
-        #         "profile": "grib",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "level",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"level": [3]},
-        #     "snowLayer",
-        # ),
-        # (
-        #     "ml_77.grib2",
-        #     {
-        #         "profile": "grib",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "level",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"level": [77]},
-        #     "hybrid",
-        # ),
-        # (
-        #     "sfc.grib1",
-        #     {
-        #         "profile": "grib",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "level",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"level": [0]},
-        #     "surface",
-        # ),
-        # # (
-        # #     "sfc.grib2",
-        # #     {"profile": "grib", "level_dim_mode": "level", "ensure_dims": "level"},
-        # #     {"level": [0]},
-        # #     "surface",
-        # # ),
-        # (
-        #     "mean_sea_level_reduced_ll.grib1",
-        #     {
-        #         "profile": "grib",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "level",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"level": [0]},
-        #     "meanSea",
-        # ),
-        # (
-        #     "gen_vert_layer.grib",
-        #     {
-        #         "profile": "grib",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "level",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"level": [1]},
-        #     "generalVerticalLayer",
-        # ),
-        # (
-        #     "pl.grib",
-        #     {"profile": "mars", "level_dim_mode": "level", "dim_name_from_role_name": False},
-        #     {"levelist": [300, 400, 500, 700, 850, 1000]},
-        #     "pl",
-        # ),
-        # (
-        #     "pl_80_Pa.grib2",
-        #     {
-        #         "profile": "mars",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "levelist",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"levelist": [0.8]},
-        #     "pl",
-        # ),
-        # (
-        #     "pt_320_K.grib1",
-        #     {
-        #         "profile": "mars",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "levelist",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"levelist": [320]},
-        #     "pt",
-        # ),
-        # (
-        #     "pv_1500.grib1",
-        #     {
-        #         "profile": "mars",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "levelist",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"levelist": [1500]},
-        #     "pv",
-        # ),
-        # (
-        #     "sol_3.grib2",
-        #     {
-        #         "profile": "grib",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "levelist",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"levelist": [3]},
-        #     "sol",
-        # ),
-        # (
-        #     "hpa_and_pa.grib",
-        #     {
-        #         "profile": "mars",
-        #         "level_dim_mode": "level",
-        #         "ensure_dims": "levelist",
-        #         "dim_name_from_role_name": False,
-        #     },
-        #     {"levelist": [0.01, 0.1, 1]},
-        #     "pl",
-        # ),
+        (
+            "hl_1000_m_asl.grib2",
+            [(100, "h_asl"), (1000, "h_asl")],
+        ),
+        (
+            "hl_1000_m_agr.grib2",
+            [(1000, "h_agl"), (500, "h_agl")],
+        ),
+        (
+            "pt_320_K.grib1",
+            (320, "pt"),
+        ),
+        (
+            "pv_1500.grib1",
+            (1500, "pv"),
+        ),
+        (
+            "soil_7.grib1",
+            (7, "d_bgl_layer"),
+        ),
+        (
+            "sol_3.grib2",
+            (3, "snow"),
+        ),
+        (
+            "ml_77.grib2",
+            (77, "ml"),
+        ),
+        (
+            "sfc.grib1",
+            (0, "sfc"),
+        ),
+        (
+            "sfc.grib2",
+            (2, "h_agl"),
+        ),
+        (
+            "mean_sea_level_reduced_ll.grib1",
+            (0, "mean_sea"),
+        ),
+        (
+            "gen_vert_layer.grib",
+            (1, "general"),
+        ),
     ],
 )
 def test_grib_vertical_core(fname, expected_values):

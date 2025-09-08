@@ -18,6 +18,9 @@ LOG = logging.getLogger(__name__)
 
 
 class Wrapper(Base):
+    def mutate(self):
+        return self
+
     def bounding_box(self):
         self._not_implemented()
 

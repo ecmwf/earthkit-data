@@ -69,9 +69,9 @@ class SimpleRealisation(Realisation):
         return {"number": self.number}
 
     def get_grib_context(self, context) -> dict:
-        from .grib.realisation import get_grib_context
+        from .grib.realisation import GribRealisationContextCollector
 
-        get_grib_context(self, context)
+        GribRealisationContextCollector(self).collect(context)
 
     def set(self, *args, **kwargs) -> "SimpleRealisation":
         """

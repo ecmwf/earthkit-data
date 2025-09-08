@@ -11,6 +11,8 @@ from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
+from .collector import GribContextCollector
+
 ZERO_TIMEDELTA = to_timedelta(0)
 
 
@@ -71,8 +73,10 @@ class GribTimeBuilder:
             reference_datetime=reference,
         )
 
+
+class GribTimeContextCollector(GribContextCollector):
     @staticmethod
-    def get_grib_context(time, context) -> dict:
+    def collect_keys(spec, context):
         pass
 
 

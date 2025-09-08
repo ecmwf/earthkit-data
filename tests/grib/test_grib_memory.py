@@ -23,9 +23,9 @@ def test_grib_from_memory():
         data = f.read()
         fs = from_source("memory", data)
         assert len(fs) == 1
-        sn = fs.metadata("param")
+        sn = fs.get("param")
         assert sn == ["2t"]
-        assert fs[0].metadata("shortName") == "2t"
+        assert fs[0].get("grib.shortName") == "2t"
 
 
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)

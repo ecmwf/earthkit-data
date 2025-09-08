@@ -22,11 +22,12 @@ from earthkit.data.decorators import locked
 LOG = logging.getLogger(__name__)
 
 
-class ReaderMeta(type(Base), type(os.PathLike)):
-    pass
+# class ReaderMeta(type(Base), type(os.PathLike)):
+#     pass
 
 
-class Reader(Base, os.PathLike, metaclass=ReaderMeta):
+# class Reader(Base, os.PathLike, metaclass=ReaderMeta):
+class Reader(Base, os.PathLike):
     appendable = False  # Set to True if the data can be appended to and existing file
     binary = True
 

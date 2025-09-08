@@ -149,18 +149,45 @@ class GribCoder:
         handle = None
         if template is None:
             template = self.template
+
         if template is not None:
-            if hasattr(template, "handle"):
+            from earthkit.data.core.field import Field
+
+            if isinstance(template, Field):
+                return self._handle_from_field(template)
+            elif hasattr(template, "handle"):
                 handle = template.handle
-            elif hasattr(template, "grib") and hasattr(template.grib, "handle"):
-                handle = template.grib.handle
-            elif hasattr(template, "raw") and hasattr(template.raw, "handle"):
-                handle = template.raw.handle
+                if handle is not None:
+                    return handle.clone()
+
+        return None
+
+    def _handle_from_field(self, field):
+        r = {}
+        field._get_grib_context(r)
+        handle = r.pop("handle", None)
 
         if handle is not None:
             handle = handle.clone()
 
         return handle
+
+        # handle = None
+        # if template is None:
+        #     template = self.template
+
+        # if template is not None:
+        #     if hasattr(template, "handle"):
+        #         handle = template.handle
+        #     elif hasattr(template, "grib") and hasattr(template.grib, "handle"):
+        #         handle = template.grib.handle
+        #     elif hasattr(template, "raw") and hasattr(template.raw, "handle"):
+        #         handle = template.raw.handle
+
+        # if handle is not None:
+        #     handle = handle.clone()
+
+        # return handle
 
     def update_metadata(self, handle, metadata, compulsory):
         # TODO: revisit that logic

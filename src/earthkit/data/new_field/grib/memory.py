@@ -52,16 +52,11 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            from earthkit.data.core.field import Field
-
+            from .field import new_grib_field
             from .handle import MemoryGribHandle
 
             handle = MemoryGribHandle.from_raw_handle(handle)
-            return Field.from_grib(handle, use_metadata_cache=self._use_metadata_cache)
-            # # We return a GribFieldInMemory that will manage the handle
-            # return GribFieldInMemory(
-            #     GribCodesHandle(handle, None, None), use_metadata_cache=self._use_metadata_cache
-            # )
+            return new_grib_field(handle, cache=self._use_metadata_cache)
 
     def batched(self, n):
         from earthkit.data.utils.batch import batched
@@ -191,48 +186,49 @@ class GribStreamReader(GribMemoryReader):
 #         )
 
 
-# class GribFieldListInMemory(SimpleFieldList):
-#     """Represent a GRIB field list in memory loaded lazily"""
+class GribFieldListInMemory(SimpleFieldList):
+    """Represent a GRIB field list in memory loaded lazily"""
 
-#     def __init__(self, source, reader, *args, **kwargs):
-#         """The reader must support __next__."""
-#         self._reader = reader
-#         self._loaded = False
+    def __init__(self, source, reader, *args, **kwargs):
+        """The reader must support __next__."""
+        self._reader = reader
+        self._loaded = False
 
-#     def __len__(self):
-#         self._load()
-#         return super().__len__()
+    def __len__(self):
+        self._load()
+        return super().__len__()
 
-#     def __getitem__(self, n):
-#         self._load()
-#         return super().__getitem__(n)
+    def __getitem__(self, n):
+        self._load()
+        return super().__getitem__(n)
 
-#     def _load(self):
-#         # TODO: make it thread safe
-#         if not self._loaded:
-#             self.fields = [f for f in self._reader]
-#             self._loaded = True
-#             self._reader = None
+    def _load(self):
+        # TODO: make it thread safe
+        if not self._loaded:
+            self._fields = [f for f in self._reader]
+            self._loaded = True
+            self._reader = None
 
-#     def mutate_source(self):
-#         return self
+    def mutate_source(self):
+        return self
 
-#     @classmethod
-#     def merge(cls, readers):
-#         assert all(isinstance(s, GribFieldListInMemory) for s in readers), readers
-#         assert len(readers) > 1
+    # @classmethod
+    # def merge(cls, readers):
+    #     assert all(isinstance(s, GribFieldListInMemory) for s in readers), readers
+    #     assert len(readers) > 1
 
-#         from itertools import chain
+    #     from itertools import chain
 
-#         return GribFieldListInMemory.from_fields(list(chain(*[f for f in readers])))
+    #     return GribFieldListInMemory.from_fields(list(chain(*[f for f in readers])))
 
-#     def __getstate__(self):
-#         self._load()
-#         r = {"messages": [f.message() for f in self]}
-#         return r
+    def __getstate__(self):
+        self._load()
+        r = {"messages": [f.message() for f in self]}
+        return r
 
-#     def __setstate__(self, state):
-#         fields = [GribFieldInMemory.from_buffer(m) for m in state["messages"]]
-#         self.__init__(None, None)
-#         self.fields = fields
-#         self._loaded = True
+    def __setstate__(self, state):
+        # fields = [GribFieldInMemory.from_buffer(m) for m in state["messages"]]
+        fields = []
+        self.__init__(None, None)
+        self.fields = fields
+        self._loaded = True

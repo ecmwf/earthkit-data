@@ -32,38 +32,6 @@ from grib_fixtures import load_grib_data  # noqa: E402
 @pytest.mark.parametrize("fl_type", ["file"])
 # @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 @pytest.mark.parametrize("write_method", ["target"])
-def test_grib_set_parameter(fl_type, write_method):
-    ds_ori, _ = load_grib_data("test4.grib", fl_type)
-
-    def _func1(field, key, original_metadata):
-        return original_metadata.get(key) + "a"
-
-    def _func2(field, key, original_metadata):
-        return "kg/kg"
-
-    f = ds_ori[0].set(name="q", units="kg/kg")
-    assert f.get("name") == "q"
-    assert f.get("param") == "q"
-    assert f.get("shortName") == "t"
-    assert f.get("units") == "kg/kg"
-
-    f = ds_ori[0].set(param="q", units="kg/kg")
-    assert f.get("name") == "q"
-    assert f.get("param") == "q"
-    assert f.get("shortName") == "t"
-    assert f.get("units") == "kg/kg"
-
-    f = ds_ori[0].set(name=_func1, units=_func2)
-    assert f.get("name") == "ta"
-    assert f.get("param") == "ta"
-    assert f.get("shortName") == "t"
-    assert f.get("units") == "kg/kg"
-
-
-# @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
-@pytest.mark.parametrize("fl_type", ["file"])
-# @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-@pytest.mark.parametrize("write_method", ["target"])
 def test_grib_set_vertical(fl_type, write_method):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 

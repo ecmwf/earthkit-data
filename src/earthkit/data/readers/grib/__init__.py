@@ -8,6 +8,8 @@
 #
 import logging
 
+from earthkit.data.readers.grib.memory import GribMessageMemoryReader
+
 LOG = logging.getLogger(__name__)
 
 
@@ -56,10 +58,20 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
 
 def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
-        from .memory import GribFieldListInMemory
-        from .memory import GribMessageMemoryReader
+        # from .memory import GribFieldListInMemory
+        # from .memory import GribMessageMemoryReader
 
-        return GribFieldListInMemory(source, GribMessageMemoryReader(buffer, **kwargs), **kwargs)
+        from earthkit.data.indexing.simple import LazySimpleFieldList
+        from earthkit.data.new_field.grib.memory import GribMessageMemoryReader
+
+        return LazySimpleFieldList(GribMessageMemoryReader(buffer, **kwargs))
+
+        # return LazySimpleFieldList(source, buffer, **kwargs)
+
+        # from earthkit.data.new_field.grib.memory import GribFieldListInMemory
+        # from earthkit.data.new_field.grib.memory import GribMessageMemoryReader
+
+        # return GribFieldListInMemory(source, GribMessageMemoryReader(buffer, **kwargs), **kwargs)
 
 
 def stream_reader(

@@ -8,6 +8,9 @@
 #
 
 
+from .collector import GribContextCollector
+
+
 class GribRealisationBuilder:
     @staticmethod
     def build(handle):
@@ -31,14 +34,11 @@ class GribRealisationBuilder:
             number=v,
         )
 
+
+class GribRealisationContextCollector(GribContextCollector):
     @staticmethod
-    def get_grib_context(spec, context):
-        handle = spec.private_data("handle")
-        if handle is not None:
-            if "handle" not in context:
-                context["handle"] = handle
-        else:
-            r = {
-                "number": spec.number,
-            }
+    def collect_keys(spec, context):
+        r = {
+            "number": spec.number,
+        }
         context.update(r)

@@ -338,7 +338,7 @@ class ArrayData(SimpleData):
         return v
 
     def check(self, owner):
-        if self._values.size != math.prod(owner.shape):
+        if math.prod(self._values.shape) != math.prod(owner.shape):
             raise ValueError(f"Data shape mismatch: {self._values.shape} (data) != {owner.shape} (field)")
 
     # def free(self):
@@ -359,3 +359,25 @@ class ArrayData(SimpleData):
     # @property
     # def raw_values_shape(self):
     #     return self._values.shape
+
+
+class OffLoader:
+    def __init__(self, field):
+        self.field = field
+
+    def unload(self):
+        self.field = None
+
+    def load(self):
+        if self.field is None:
+            raise ValueError("Field is not loaded.")
+        return self.field
+
+    def __call__(self, data):
+        """Free the resources used by the data."""
+        # TODO: make it thread safe
+        if self._values is not None:
+            if self._cache is None:
+                self._cache = ArrayCache(self._values)
+            self._cache.save(self._values)
+            self._values = None

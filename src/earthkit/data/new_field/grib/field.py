@@ -8,7 +8,10 @@
 #
 
 
-def new_grib_field(handle, cache=False):
+from earthkit.data.specs.data import ArrayData
+
+
+def new_grib_field(handle, data=None, cache=False):
     from earthkit.data.core.field import Field
     from earthkit.data.specs.grib.data import GribData
     from earthkit.data.specs.grib.geography import GribGeography
@@ -19,7 +22,9 @@ def new_grib_field(handle, cache=False):
     from earthkit.data.specs.grib.vertical import GribVerticalBuilder
     from earthkit.data.specs.labels import SimpleLabels
 
-    data = GribData(handle)
+    if data is None:
+        data = GribData(handle)
+
     parameter = GribParameterBuilder.build(handle)
     time = GribTimeBuilder.build(handle)
     geography = GribGeography(handle)
@@ -40,3 +45,13 @@ def new_grib_field(handle, cache=False):
 
     r._set_private_data("grib", grib)
     return r
+
+
+def new_array_grib_field(field, handle, array_backend=None, flatten=False, dtype=None, cache=False):
+    values = field.to_array(array_backend=array_backend, flatten=flatten, dtype=dtype)
+    data = ArrayData(values)
+
+    new_handle = handle.deflate()
+    new_field = new_grib_field(new_handle, data=data, cache=cache)
+
+    return new_field

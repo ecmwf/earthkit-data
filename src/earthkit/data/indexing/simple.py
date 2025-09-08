@@ -7,6 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+from abc import abstractmethod
+from functools import cached_property
 
 from .fieldlist import FieldList
 
@@ -60,18 +62,20 @@ def build_remapping(remapping, patches):
     return None
 
 
-class SimpleFieldList(FieldList):
-    def __init__(self, fields=None):
-        r"""Initialize a FieldList object."""
-        self._fields = fields if fields is not None else []
+class SimpleFieldListCore(FieldList):
+    # def __init__(self, fields=None):
+    #     r"""Initialize a FieldList object."""
+    #     self._fields = fields if fields is not None else []
 
     # @property
     # def fields(self):
     #     """Return the fields in the list."""
     #     return self._fields
 
-    def append(self, field):
-        self._fields.append(field)
+    @property
+    @abstractmethod
+    def _fields(self):
+        pass
 
     def _getitem(self, n):
         if isinstance(n, int):
@@ -140,16 +144,78 @@ class SimpleFieldList(FieldList):
         return cls.from_fields(list(chain(*[f for f in sources])))
 
 
-class LazySimpleFieldList(SimpleFieldList):
-    def __init__(self, maker):
-        self._fields = [None] * maker.size
-        self._maker = maker
+class SimpleFieldList(SimpleFieldListCore):
+    def __init__(self, fields=None):
+        r"""Initialize a FieldList object."""
+        self.__fields = fields if fields is not None else []
 
-    def _getitem(self, n):
-        if isinstance(n, int):
-            r = self._fields[n]
-            if r is None:
-                r = self._maker(n)
-                self._fields[n] = r
-            return r
-        return None
+    # @property
+    # def fields(self):
+    #     """Return the fields in the list."""
+    #     return self._fields
+
+    @property
+    def _fields(self):
+        return self.__fields
+
+    def append(self, field):
+        self.__fields.append(field)
+
+    def __getstate__(self) -> dict:
+        ret = {}
+        # print("SimpleFieldList Getstate")
+        ret["_fields"] = self._fields
+        return ret
+
+    def __setstate__(self, state: dict):
+        # print("SimpleFieldList Setstate")
+        fields = state.pop("_fields")
+        self.__init__(fields)
+
+    # def _getitem(self, n):
+    #     if isinstance(n, int):
+    #         return self._fields[n]
+
+    # def __len__(self):
+    #     return len(self._fields)
+
+
+# class LazySimpleFieldList(SimpleFieldListCore):
+#     def __init__(self, maker):
+#         self._f = [None] * maker.size
+#         self._maker = maker
+
+#     @property
+#     def _fields(self):
+#         return self._f
+
+#     def _getitem(self, n):
+#         if isinstance(n, int):
+#             r = self._fields[n]
+#             if r is None:
+#                 r = self._maker(n)
+#                 self._fields[n] = r
+#             return r
+#         return None
+
+
+class LazySimpleFieldList(SimpleFieldListCore):
+    def __init__(self, reader):
+        self._reader = reader
+
+    @cached_property
+    def _fields(self):
+        fields = [x for x in self._reader]
+        self._reader = None
+        return fields
+
+    def __getstate__(self) -> dict:
+        ret = {}
+        # print("SimpleFieldList Getstate")
+        ret["_fields"] = self._fields
+        return ret
+
+    def __setstate__(self, state: dict):
+        # print("SimpleFieldList Setstate")
+        fields = state.pop("_fields")
+        self.__init__(fields)

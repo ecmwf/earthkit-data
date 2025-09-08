@@ -37,8 +37,8 @@ def test_grib_latlon_single_flatten(fl_type, index):
 
     eps = 1e-5
     g = f[index] if index is not None else f
-    lat = g.geography.latitudes.flatten()
-    lon = g.geography.longitudes.flatten()
+    lat = g.latitudes.flatten()
+    lon = g.longitudes.flatten()
 
     # TODO: make geography array backend aware
     check_array_type(lat, array_backend, dtype="float64")
@@ -66,9 +66,14 @@ def test_grib_latlon_single_flatten(fl_type, index):
 def test_grib_latlon_single_shape(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
 
-    g = f[index] if index is not None else f
-    lat = g.geography.latitudes
-    lon = g.geography.longitudes
+    if index is not None:
+        g = f[index]
+        lat = g.latitudes
+        lon = g.longitudes
+    else:
+        g = f
+        lat = g.geography.latitudes
+        lon = g.geography.longitudes
 
     # TODO: make geography array backend aware
     check_array_type(lon, array_backend, dtype="float64")
@@ -89,10 +94,10 @@ def test_grib_latlon_single_shape(fl_type, index):
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_grib_latlon_multi(fl_type, dtype):
     ds, _ = load_grib_data("test.grib", fl_type)
-
+    f = ds[0]
     # flatten=True, dtype=dtype
-    lat_ref = ds[0].geography.latitudes
-    lon_ref = ds[0].geography.longitudes
+    lat_ref = f.latitudes
+    lon_ref = f.longitudes
 
     # flatten=True, dtype=dtype
     lat = ds.geography.latitudes
@@ -123,10 +128,14 @@ def test_grib_points_single_flatten(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
 
     eps = 1e-5
-    g = f[index] if index is not None else f
-    # TODO: flatten?
-    x = g.geography.x.flatten()
-    y = g.geography.y.flatten()
+    if index is not None:
+        g = f[index]
+        x = g.x.flatten()
+        y = g.y.flatten()
+    else:
+        g = f
+        x = g.geography.x.flatten()
+        y = g.geography.y.flatten()
 
     check_array_type(x, array_backend, dtype="float64")
     check_array_type(y, array_backend, dtype="float64")
@@ -152,19 +161,20 @@ def test_grib_points_single_flatten(fl_type, index):
 def test_grib_points_unsupported_grid(fl_type):
     f, _ = load_grib_data("mercator.grib", fl_type, folder="data")
     with pytest.raises(ValueError):
-        f[0].geography.x
+        f[0].x
 
     with pytest.raises(ValueError):
-        f[0].geography.y
+        f[0].y
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 def test_grib_points_multi(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
+    f = ds[0]
 
     # flatten=True, dtype=dtype
-    x_ref = ds[0].geography.x.flatten()
-    y_ref = ds[0].geography.y.flatten()
+    x_ref = f.x.flatten()
+    y_ref = f.y.flatten()
 
     # flatten=True, dtype=dtype
     x = ds.geography.x.flatten()
@@ -335,7 +345,7 @@ def test_grib_to_points_multi_non_shared_grid(fl_type):
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_bbox_1(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
-    bb = ds[0].geography.bounding_box
+    bb = ds[0].bounding_box
     assert bb.as_tuple() == (73, -27, 33, 45)
 
 
@@ -355,15 +365,17 @@ def test_grib_projection_ll(fl_type, index):
 
     if index is not None:
         g = f[index]
+        proj = g.projection
     else:
         g = f
-    assert isinstance(g.geography.projection, (projections.EquidistantCylindrical, projections.LongLat))
+        proj = g.geography.projection
+    assert isinstance(proj, (projections.EquidistantCylindrical, projections.LongLat))
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_projection_mercator(fl_type):
     f, _ = load_grib_data("mercator.grib", fl_type, folder="data")
-    projection = f[0].geography.projection
+    projection = f[0].projection
     assert isinstance(projection, projections.Mercator)
     assert projection.parameters == {
         "true_scale_latitude": 20,

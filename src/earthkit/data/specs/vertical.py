@@ -294,9 +294,9 @@ class SimpleVertical(Vertical):
     #     return r
 
     def get_grib_context(self, context) -> dict:
-        from .grib.vertical import GribVerticalBuilder
+        from .grib.vertical import GribVerticalContextCollector
 
-        GribVerticalBuilder.get_grib_context(self, context)
+        GribVerticalContextCollector(self).collect(context)
 
     # def _to_grib(self, altered: bool = True) -> dict:
     #     """Convert the object to a GRIB dictionary.

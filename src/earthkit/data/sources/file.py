@@ -30,15 +30,16 @@ class FileSourcePathAndParts(PathAndParts):
     sequence = False
 
 
-class FileSourceMeta(type(Source), type(os.PathLike)):
-    def patch(cls, obj, *args, **kwargs):
-        if "reader" in kwargs:
-            setattr(obj, "reader", kwargs.pop("reader"))
+# class FileSourceMeta(type(Source), type(os.PathLike)):
+#     def patch(cls, obj, *args, **kwargs):
+#         if "reader" in kwargs:
+#             setattr(obj, "reader", kwargs.pop("reader"))
 
-        return super().patch(obj, *args, **kwargs)
+#         return super().patch(obj, *args, **kwargs)
 
 
-class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
+# class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
+class FileSource(Source, os.PathLike):
     _reader_ = None
     content_type = None
 

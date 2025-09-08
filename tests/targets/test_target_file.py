@@ -46,7 +46,7 @@ def test_target_file_grib_core_non_stream(kwargs, direct_call):
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("grib.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
@@ -72,7 +72,7 @@ def test_target_file_grib_core_stream(kwargs, direct_call):
 
         ds1 = from_source("file", path)
         assert len(ds_ref) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("grib.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
@@ -86,7 +86,7 @@ def test_target_file_grib_append():
 
         ds1 = from_source("file", path)
         assert len(ds1) == len(ds) * 2
-        assert ds1.metadata("shortName") == ["2t", "msl"] * 2
+        assert ds1.get("grib.shortName") == ["2t", "msl"] * 2
         assert np.allclose(ds1.values[:2, :4], vals_ref)
         assert np.allclose(ds1.values[2:, :4], vals_ref)
 
@@ -113,7 +113,7 @@ def test_target_file_grib_encoder_from_suffix(suffix):
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("grib.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
@@ -135,8 +135,8 @@ def test_target_file_grib_set_metadata(kwargs):
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2d", "2d"]
-        assert ds1.metadata("bitsPerValue") == [12, 12]
+        assert ds1.get("grib.shortName") == ["2d", "2d"]
+        assert ds1.get("grib.bitsPerValue") == [12, 12]
         assert np.allclose(ds1.values[:, :4], vals_ref, rtol=1e-1)
 
 
@@ -166,7 +166,7 @@ def test_target_file_grib_direct_api_with_path(per_field):
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("grib.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
@@ -203,7 +203,7 @@ def test_target_file_grib_direct_api_with_object(per_field):
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("grib.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
@@ -216,7 +216,7 @@ def test_target_file_grib_save_compat():
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("grib.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
@@ -230,7 +230,7 @@ def test_target_file_grib_write_compat():
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("grib.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
@@ -379,7 +379,7 @@ def test_writers_core():
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("grib.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
     # write("file", ds, file=temp_file())

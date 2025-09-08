@@ -131,7 +131,7 @@ _defs = {
         "standard_name": "unknown",
         "long_name": "snow layer",
         "units": "1",
-        "layer": False,
+        "layer": True,
         "positive": POSITIVE_DOWN,
     },
     "unknown": {
@@ -163,6 +163,7 @@ class LevelTypes:
     DEPTH_BGL_LAYER = LEVEL_TYPES["d_bgl_layer"]
     GENERAL = LEVEL_TYPES["general"]
     MEAN_SEA = LEVEL_TYPES["mean_sea"]
+    SNOW = LEVEL_TYPES["snow"]
     UNKNOWN = LEVEL_TYPES["unknown"]
 
     @staticmethod
