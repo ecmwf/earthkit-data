@@ -48,17 +48,20 @@ class CubeChecker:
         self.tensor = tensor
 
     def first_diff(self, coord_keys):
-        for i, f in enumerate(self.tensor.source):
-            t_coords = self.tensor._index_to_coords_value(i, self.tensor)
-            f_coords = f.metadata(coord_keys)
-            print(f"Checking field[{i}] with coords {t_coords} vs {f_coords}")
-            diff = ListDiff.diff(t_coords, f_coords)
-            if not diff.same:
-                name = ""
-                if diff.diff_index != -1:
-                    name = coord_keys[diff.diff_index]
+        if coord_keys:
+            for i, f in enumerate(self.tensor.source):
+                t_coords = self.tensor._index_to_coords_value(i, self.tensor)
+                f_coords = f.metadata(coord_keys)
+                try:
+                    diff = ListDiff.diff(t_coords, f_coords)
+                    if not diff.same:
+                        name = ""
+                        if diff.diff_index != -1:
+                            name = coord_keys[diff.diff_index]
 
-                return i, f, t_coords, f_coords, name, diff
+                    return i, f, t_coords, f_coords, name, diff
+                except Exception:
+                    pass
 
     def neighbour_field(self, field_num, index):
         f_other = None
@@ -103,9 +106,6 @@ class CubeChecker:
             f"actual number of fields: {cube_num} != {field_num}.\n"
             f"Dimensions: \n {dims}"
         )
-
-        print(text_num)
-        print(coord_keys)
 
         if not details:
             raise ValueError(text_num)

@@ -16,6 +16,7 @@ from earthkit.data import from_source
 from earthkit.data import to_target
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.dates import datetime_to_grib
 
 
 @pytest.mark.cache
@@ -457,3 +458,34 @@ def test_xr_write_to_netcdf_file_dataset(method, kwargs):
 
         assert np.allclose(ref_t_vals + 1.0, r["t"].isel(step=1, level=0).to_numpy().flatten())
         assert np.allclose(ref_r_vals + 1.0, r["r"].isel(step=1, level=0).to_numpy().flatten())
+
+
+@pytest.mark.cache
+def test_xr_write_forecast_per_month():
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib"))
+
+    ds = ds_ek.to_xarray(time_dim_mode="valid_time")
+    r = ds.earthkit.to_fieldlist()
+    assert len(r) == 236
+
+    ref = []
+    start = np.datetime64("1979-01-01T06:00:00", "ns")
+    end = np.datetime64("1979-03-01T00:00:00", "ns")
+    while start <= end:
+        base_date, base_time = datetime_to_grib(start)
+        ref.append([base_date, base_time, 0, "0", 0, 0, base_date, base_time])
+        start += np.timedelta64(6, "h")
+
+    keys = [
+        "dataDate",
+        "dataTime",
+        "step",
+        "stepRange",
+        "startStep",
+        "endStep",
+        "validityDate",
+        "validityTime",
+    ]
+
+    for f, f_ref in zip(r, ref):
+        assert f.metadata(keys) == f_ref, f"Expected: {f_ref}\nGot: {f.metadata(keys)}"
