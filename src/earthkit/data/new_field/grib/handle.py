@@ -11,7 +11,6 @@ import logging
 import threading
 from abc import ABCMeta
 from abc import abstractmethod
-from collections import defaultdict
 
 import eccodes
 import numpy as np
@@ -264,6 +263,12 @@ class ManagedGribHandle(FileGribHandle):
         # self._handle_manager = None
 
 
+class TemporaryGribHandle(FileGribHandle):
+    @property
+    def handle(self):
+        return self._create_handle()
+
+
 class MemoryGribHandle(GribHandle):
     def __init__(self, handle):
         self._handle = handle
@@ -308,87 +313,180 @@ class DeflatedGribHandle(MemoryGribHandle):
         return self
 
 
-class GribHandleManager:
-    # TODO: split into policies
-    def __init__(self, policy, cache_size):
-        self.policy = policy
-        self.max_cache_size = cache_size
-        self.cache = None
-        self.lock = threading.Lock()
+class GribHandleManager(metaclass=ABCMeta):
+    handle_create_count = 0
 
-        if self.policy == "cache":
-            if self.max_cache_size > 0:
-                from lru import LRU
+    def __init__(self, **kwargs):
+        pass
 
-                self.cache = LRU(self.max_cache_size)
-            else:
-                raise ValueError(
-                    'grib_handle_cache_size must be greater than 0 when grib_handle_policy="cache"'
-                )
+    @abstractmethod
+    def create_handle(self, part):
+        pass
 
-        self.handle_create_count = 0
+    @abstractmethod
+    def get_raw(self, field, create):
+        pass
 
-        # check consistency
-        if self.cache is not None:
-            self.policy == "cache"
-        else:
-            self.policy in ["persistent", "temporary"]
-
-    def handle(self, field, create):
-        if self.policy == "cache":
-            key = (field.path, field.offset)
-            with self.lock:
-                if key in self.cache:
-                    return self.cache[key]
-                else:
-                    handle = create()
-                    self._handle_created()
-                    self.cache[key] = handle
-                    return handle
-        elif self.policy == "persistent":
-            if field._handle is None:
-                with self.lock:
-                    if field._handle is None:
-                        field._handle = create()
-                        self._handle_created()
-                    return field._handle
-            return field._handle
-        elif self.policy == "temporary":
-            self._handle_created()
-            return create()
-
+    @abstractmethod
     def remove(self, field):
-        if self.policy == "cache":
-            key = (field.path, field.offset)
-            with self.lock:
-                self.cache.pop(key, None)
+        pass
 
-        elif self.policy == "persistent":
-            with self.lock:
-                field._handle = None
+    @staticmethod
+    def create(name, **kwargs):
+        return MANAGERS[name](**kwargs)
 
     def _handle_created(self):
         self.handle_create_count += 1
 
-    def diag(self):
-        r = defaultdict(int)
-        r["grib_handle_policy"] = self.policy
-        r["grib_handle_cache_size"] = self.max_cache_size
-        if self.cache is not None:
-            r["handle_cache_size"] = len(self.cache)
 
-        r["handle_create_count"] = self.handle_create_count
-        return r
+class CachedGribHandleManager(GribHandleManager):
+    name = "cache"
 
-    def __getstate__(self):
-        # print("GribHandleManager getstate")
-        state = {}
-        state["policy"] = self.policy
-        state["cache_size"] = self.max_cache_size
-        return state
+    def __init__(self, cache_size=None):
+        self.cache_size = cache_size
+        if cache_size is None or self.cache_size <= 0:
+            raise ValueError('grib_handle_cache_size must be greater than 0 when grib_handle_policy="cache"')
 
-    def __setstate__(self, state):
-        # print("GribHandleManager setstate")
-        policy = state["policy"]
-        max_cache_size = state["cache_size"]
-        self.__init__(policy, max_cache_size)
+        from lru import LRU
+
+        self.cache = LRU(self.cache_size)
+        self.lock = threading.Lock()
+
+    def create_handle(self, part):
+        return ManagedGribHandle(part.path, part.offset, part.length, self)
+
+    def get_raw(self, handle, create):
+        key = (handle.path, handle.offset)
+        with self.lock:
+            if key in self.cache:
+                return self.cache[key]
+            else:
+                raw = create()
+                self._handle_created()
+                self.cache[key] = raw
+                return raw
+
+    def remove_raw(self, handle):
+        key = (handle.path, handle.offset)
+        with self.lock:
+            self.cache.pop(key, None)
+
+
+class PersistentGribHandleManager(GribHandleManager):
+    name = "persistent"
+
+    def create_handle(self, part):
+        return FileGribHandle(part.path, part.offset, part.length)
+
+    def get_raw(self, handle, create):
+        pass
+
+    def remove_raw(self, handle):
+        pass
+
+
+class TemporaryGribHandleManager(GribHandleManager):
+    name = "temporary"
+
+    def create_handle(self, part):
+        return ManagedGribHandle(part.path, part.offset, part.length, self)
+
+    def get_raw(self, handle, create):
+        self._handle_created()
+        return create()
+
+    def remove_raw(self, handle):
+        pass
+
+
+MANAGERS = {
+    "cache": CachedGribHandleManager,
+    "persistent": PersistentGribHandleManager,
+    "temporary": TemporaryGribHandleManager,
+}
+
+
+# class GribHandleManager:
+#     # TODO: split into policies
+#     def __init__(self, policy, cache_size):
+#         self.policy = policy
+#         self.max_cache_size = cache_size
+#         self.cache = None
+#         self.lock = threading.Lock()
+
+#         if self.policy == "cache":
+#             if self.max_cache_size > 0:
+#                 from lru import LRU
+
+#                 self.cache = LRU(self.max_cache_size)
+#             else:
+#                 raise ValueError(
+#                     'grib_handle_cache_size must be greater than 0 when grib_handle_policy="cache"'
+#                 )
+
+#         self.handle_create_count = 0
+
+#         # check consistency
+#         if self.cache is not None:
+#             self.policy == "cache"
+#         else:
+#             self.policy in ["persistent", "temporary"]
+
+#     def handle(self, field, create):
+#         if self.policy == "cache":
+#             key = (field.path, field.offset)
+#             with self.lock:
+#                 if key in self.cache:
+#                     return self.cache[key]
+#                 else:
+#                     handle = create()
+#                     self._handle_created()
+#                     self.cache[key] = handle
+#                     return handle
+#         elif self.policy == "persistent":
+#             if field._handle is None:
+#                 with self.lock:
+#                     if field._handle is None:
+#                         field._handle = create()
+#                         self._handle_created()
+#                     return field._handle
+#             return field._handle
+#         elif self.policy == "temporary":
+#             self._handle_created()
+#             return create()
+
+#     def remove(self, field):
+#         if self.policy == "cache":
+#             key = (field.path, field.offset)
+#             with self.lock:
+#                 self.cache.pop(key, None)
+
+#         elif self.policy == "persistent":
+#             with self.lock:
+#                 field._handle = None
+
+#     def _handle_created(self):
+#         self.handle_create_count += 1
+
+#     def diag(self):
+#         r = defaultdict(int)
+#         r["grib_handle_policy"] = self.policy
+#         r["grib_handle_cache_size"] = self.max_cache_size
+#         if self.cache is not None:
+#             r["handle_cache_size"] = len(self.cache)
+
+#         r["handle_create_count"] = self.handle_create_count
+#         return r
+
+#     def __getstate__(self):
+#         # print("GribHandleManager getstate")
+#         state = {}
+#         state["policy"] = self.policy
+#         state["cache_size"] = self.max_cache_size
+#         return state
+
+#     def __setstate__(self, state):
+#         # print("GribHandleManager setstate")
+#         policy = state["policy"]
+#         max_cache_size = state["cache_size"]
+#         self.__init__(policy, max_cache_size)

@@ -7,13 +7,14 @@
 # nor does it submit to any jurisdiction.
 #
 
+from functools import cached_property
+
 from earthkit.data.core.field import Field
-from earthkit.data.indexing.simple import SimpleFieldList
+from earthkit.data.indexing.simple import SimpleFieldListCore
 from earthkit.data.readers import Reader
 from earthkit.data.utils.parts import Part
 
 from .handle import GribHandleManager
-from .handle import ManagedGribHandle
 from .scan import GribCodesMessagePositionIndex
 
 
@@ -34,7 +35,7 @@ class DataBase:
         return self.__positions
 
 
-class GribFieldListInFile(SimpleFieldList):
+class GribFieldListInFile(SimpleFieldListCore):
     def __init__(
         self,
         path,
@@ -58,28 +59,46 @@ class GribFieldListInFile(SimpleFieldList):
 
         # TODO: this code is here because in the deserialisation the handle_manager might have already created
         # if not hasattr(self, "handle_manager"):
-        self.handle_manager = GribHandleManager(
-            _get_opt(grib_handle_policy, "grib-handle-policy"),
-            _get_opt(grib_handle_cache_size, "grib-handle-cache-size"),
-        )
+
+        policy = _get_opt(grib_handle_policy, "grib-handle-policy")
+        cache_size = _get_opt(grib_handle_cache_size, "grib-handle-cache-size")
+        self.handle_manager = GribHandleManager.create(policy, cache_size=cache_size)
 
         self.use_metadata_cache = _get_opt(use_grib_metadata_cache, "use-grib-metadata-cache")
 
-        fields = self._make_fields()
-        super().__init__(fields=fields, **kwargs)
+        # fields = self._make_fields()
+        # super().__init__(fields=fields, **kwargs)
 
-    def _make_fields(self):
-        if True:
-            # if not self._fields:
-            r = []
-            for n in range(self.number_of_parts()):
-                r.append(self._create_field(n))
-            return r
-        # return self._fields
+    @cached_property
+    def _fields(self):
+        fields = [self._create_field(i) for i in range(self.number_of_parts())]
+        return fields
+
+    # def _getitem(self, n):
+    #     if isinstance(n, int):
+    #         if n < 0:
+    #             n += len(self)
+    #         if n >= len(self):
+    #             raise IndexError(f"Index {n} out of range")
+
+    #         field = self.fields[n]
+    #         if field is None:
+    #             field = self.handle_manager.create_field(self.part(n))
+    #             self.fields[n] = field
+    #         return field
+
+    # def _make_field(self):
+    #     if True:
+    #         # if not self._fields:
+    #         r = []
+    #         for n in range(self.number_of_parts()):
+    #             r.append(self._create_field(n))
+    #         return r
+    #     # return self._fields
 
     def _create_field(self, n):
         part = self.part(n)
-        handle = ManagedGribHandle(part.path, part.offset, part.length, self.handle_manager)
+        handle = self.handle_manager.create_handle(part)
         from earthkit.data.new_field.grib.field import new_grib_field
 
         field = new_grib_field(handle, cache=self.use_metadata_cache)
