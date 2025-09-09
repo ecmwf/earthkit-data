@@ -578,9 +578,7 @@ def test_xr_time_step_range_2(kwargs, dims, step_units):
 
 @pytest.mark.cache
 def test_xr_time_forecast_per_month():
-    ds_ek = from_source(
-        "url", earthkit_remote_test_data_file("test-data/xr_engine/date/2_months_6_hourly.grib")
-    )
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib"))
 
     ds = ds_ek.to_xarray(time_dim_mode="valid_time")
 
