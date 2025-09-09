@@ -257,8 +257,6 @@ def test_xr_write_bits_per_value():
     assert r[0].metadata("bitsPerValue") == 8
 
 
-
-
 @pytest.mark.cache
 @pytest.mark.parametrize("method", ["to_grib", "to_target_on_obj", "to_target_func"])
 @pytest.mark.parametrize(
@@ -337,7 +335,6 @@ def test_xr_write_to_grib_file_dataarray(method, kwargs):
         assert r.metadata("valid_datetime") == ref_valid
 
 
-
 @pytest.mark.cache
 @pytest.mark.parametrize("method", ["to_grib", "to_target_on_obj", "to_target_func"])
 @pytest.mark.parametrize(
@@ -379,14 +376,9 @@ def test_xr_write_to_grib_file_dataset(method, kwargs):
         assert sorted(r.metadata("valid_datetime")) == sorted(ds_ek.metadata("valid_datetime"))
 
 
-
-
-
 @pytest.mark.cache
 def test_xr_write_forecast_per_month():
-    ds_ek = from_source(
-        "url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib")
-    )
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib"))
 
     ds = ds_ek.to_xarray(time_dim_mode="valid_time")
     r = ds.earthkit.to_fieldlist()
