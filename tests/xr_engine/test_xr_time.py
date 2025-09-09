@@ -574,3 +574,23 @@ def test_xr_time_step_range_2(kwargs, dims, step_units):
         assert (
             ds[step_units[0]].attrs["units"] == step_units[1]
         ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+
+
+@pytest.mark.cache
+def test_xr_time_forecast_per_month():
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib"))
+
+    ds = ds_ek.to_xarray(time_dim_mode="valid_time")
+
+    ref = []
+    start = np.datetime64("1979-01-01T06:00:00", "ns")
+    end = np.datetime64("1979-03-01T00:00:00", "ns")
+    while start <= end:
+        ref.append(np.datetime64(start))
+        start += np.timedelta64(6, "h")
+
+    dims = {
+        "valid_time": ref,
+    }
+
+    compare_dims(ds, dims, order_ref_var="avg_dis")
