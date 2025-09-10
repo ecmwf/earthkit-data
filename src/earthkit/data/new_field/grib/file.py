@@ -14,7 +14,6 @@ from earthkit.data.indexing.simple import SimpleFieldListCore
 from earthkit.data.readers import Reader
 from earthkit.data.utils.parts import Part
 
-from .handle import GribHandleManager
 from .scan import GribCodesMessagePositionIndex
 
 
@@ -36,6 +35,8 @@ class DataBase:
 
 
 class GribFieldListInFile(SimpleFieldListCore):
+    handle_cache = None
+
     def __init__(
         self,
         path,
@@ -60,9 +61,12 @@ class GribFieldListInFile(SimpleFieldListCore):
         # TODO: this code is here because in the deserialisation the handle_manager might have already created
         # if not hasattr(self, "handle_manager"):
 
-        policy = _get_opt(grib_handle_policy, "grib-handle-policy")
-        cache_size = _get_opt(grib_handle_cache_size, "grib-handle-cache-size")
-        self.handle_manager = GribHandleManager.create(policy, cache_size=cache_size)
+        self.handle_policy = _get_opt(grib_handle_policy, "grib-handle-policy")
+        if self.handle_policy == "cache":
+            from .handle import GribHandleCache
+
+            cache_size = _get_opt(grib_handle_cache_size, "grib-handle-cache-size")
+            self.handle_cache = GribHandleCache(cache_size=cache_size)
 
         self.use_metadata_cache = _get_opt(use_grib_metadata_cache, "use-grib-metadata-cache")
 
@@ -71,8 +75,7 @@ class GribFieldListInFile(SimpleFieldListCore):
 
     @cached_property
     def _fields(self):
-        fields = [self._create_field(i) for i in range(self.number_of_parts())]
-        return fields
+        return [self._create_field(i) for i in range(self.number_of_parts())]
 
     # def _getitem(self, n):
     #     if isinstance(n, int):
@@ -97,21 +100,25 @@ class GribFieldListInFile(SimpleFieldListCore):
     #     # return self._fields
 
     def _create_field(self, n):
-        part = self.part(n)
-        handle = self.handle_manager.create_handle(part)
         from earthkit.data.new_field.grib.field import new_grib_field
 
+        from .handle import FileGribHandle
+
+        part = self.part(n)
+        handle = FileGribHandle.from_part(part, self.handle_policy, self.handle_cache)
         field = new_grib_field(handle, cache=self.use_metadata_cache)
         return field
 
-    @property
+    @cached_property
     def _positions(self):
-        if self.__positions is None:
-            self.__positions = GribCodesMessagePositionIndex(self.path, self._file_parts)
-        return self.__positions
+        return GribCodesMessagePositionIndex(self.path, self._file_parts)
+        # if self.__positions is None:
+        #     self.__positions = GribCodesMessagePositionIndex(self.path, self._file_parts)
+        # return self.__positions
 
     def part(self, n):
-        return Part(self.path, self._positions.offsets[n], self._positions.lengths[n])
+        pos = self._positions
+        return Part(self.path, pos.offsets[n], pos.lengths[n])
 
     def number_of_parts(self):
         return len(self._positions)

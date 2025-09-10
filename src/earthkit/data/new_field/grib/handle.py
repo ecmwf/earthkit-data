@@ -209,6 +209,17 @@ class FileGribHandle(GribHandle):
     def release(self):
         self._handle = None
 
+    @staticmethod
+    def from_part(policy, part, manager=None):
+        if policy == "cache":
+            return ManagedGribHandle.from_part(part.path, part.offset, part.length, manager)
+        elif policy == "temporary":
+            return TemporaryGribHandle.from_part(part.path, part.offset, part.length)
+        elif policy == "persistent":
+            return FileGribHandle.from_part(part.path, part.offset, part.length)
+        else:
+            raise ValueError(f"Unknown policy {policy}")
+
     def __getstate__(self):
         # state = super().__getstate__()
         # print("FileGribHandle getstate")
@@ -268,6 +279,25 @@ class TemporaryGribHandle(FileGribHandle):
     def handle(self):
         return self._create_handle()
 
+    def release(self):
+        pass
+
+    # def __getstate__(self):
+    #     # print("ManagedFileGribHandle Getstate")
+    #     state = super().__getstate__()
+    #     state["manager"] = self.manager
+    #     return state
+
+    # def __setstate__(self, state):
+    #     super().__setstate__(state)
+    #     self.manager = state["manager"]
+
+
+# class TemporaryGribHandle(FileGribHandle):
+#     @property
+#     def handle(self):
+#         return self._create_handle()
+
 
 class MemoryGribHandle(GribHandle):
     def __init__(self, handle):
@@ -311,6 +341,37 @@ class DeflatedGribHandle(MemoryGribHandle):
         """Deflate the handle to only contain the headers."""
         # This method is a no-op for ShrunkGribHandle as it is already shrunk.
         return self
+
+
+class GribHandleCache:
+    def __init__(self, cache_size=None):
+        self.cache_size = cache_size
+        if cache_size is None or self.cache_size <= 0:
+            raise ValueError('grib_handle_cache_size must be greater than 0 when grib_handle_policy="cache"')
+
+        from lru import LRU
+
+        self.cache = LRU(self.cache_size)
+        self.lock = threading.Lock()
+
+    # def create_handle(self, part):
+    #     return ManagedGribHandle(part.path, part.offset, part.length, self)
+
+    def get(self, handle, create):
+        key = (handle.path, handle.offset)
+        with self.lock:
+            if key in self.cache:
+                return self.cache[key]
+            else:
+                raw = create()
+                self._handle_created()
+                self.cache[key] = raw
+                return raw
+
+    def remove(self, handle):
+        key = (handle.path, handle.offset)
+        with self.lock:
+            self.cache.pop(key, None)
 
 
 class GribHandleManager(metaclass=ABCMeta):
