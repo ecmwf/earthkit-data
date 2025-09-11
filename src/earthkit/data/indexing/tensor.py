@@ -612,7 +612,7 @@ class FieldListSparseTensor(FieldListTensor):
         super().clear()
         self._user_coords_to_fl_idx = None
 
-    def _fill_holes(self, arr, field_shape, index):
+    def _fill_holes(self, arr, field_shape):
         # Note: If doing `.sel(dim=coord)` on a corresponding xarray object,
         # where `coord` is an item (not a 1-element list),
         # * `self.user_shape` does not loose the dimension `dim`, even if `dim` is one of user dims
@@ -671,12 +671,12 @@ class FieldListSparseTensor(FieldListTensor):
                 # or the slice contains "holes" only. In such case we must derive the field shape by applying
                 # `index` to field coordinates directly.
                 current_field_shape = tuple(
-                    len(coords[idx])
-                    for coords, idx in zip(self.field_coords.values(), index)
-                    if not isinstance(idx, int)
-                    # `idx` can be either an `int` or a `slice`; if `int`, ignore it!
+                    len(range(n)[_slice])
+                    for n, _slice in zip(self.field_shape, index)
+                    if not isinstance(_slice, int)
+                    # `_slice` can be either an `int` or a `slice`; if `int`, ignore it!
                 )
-        return self._fill_holes(arr, current_field_shape, index)
+        return self._fill_holes(arr, current_field_shape)
 
     @flatten_arg
     def to_numpy(self, index=None, **kwargs):

@@ -259,3 +259,77 @@ def test_xr_incomplete_tensor_coordinates_trimmed_plus_holes(
 
         # check for dimensions (including their order), coordinates and values
         assert da.equals(da2), f"{param=}, {coords_dict=}, NaN expected: {is_masked}"
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("lazy_load", [True, False])
+@pytest.mark.parametrize(
+    "file,variables,sel_dicts,shapes,isnan_by_var_dicts",
+    [
+        (
+            "regular_ll.grib2",
+            ["t", "r"],
+            [
+                {"step": ["0h"]},
+                {"step": "0h", "latitude": [30, 40]},
+                {"step": "0h", "latitude": [30, 40], "longitude": slice(10, 100)},
+                {"step": "0h", "latitude": 30, "longitude": 20},
+                {"step": ["0h"], "latitude": 30, "longitude": 20},
+                {"step": ["0h"], "latitude": 30, "longitude": [20, 40, 0]},
+            ],
+            [(1, 19, 36), (2, 36), (2, 10), (), (1,), (1, 3)],
+            [{"t": True, "r": False}] * 6,
+        ),
+        (
+            "reduced_gg_O32.grib2",
+            ["t", "q"],
+            [
+                {"step": "0h"},
+                {"step": ["0h"], "values": [0, 1000]},
+                {"step": ["0h"], "values": slice(None, 5)},
+            ],
+            [(5248,), (1, 2), (1, 5)],
+            [{"t": True, "q": False}] * 3,
+        ),
+        (
+            "reduced_rotated_gg_subarea_O32.grib1",
+            ["t", "r"],
+            [
+                {"step": ["0h"]},
+                {"step": "0h", "values": 224},
+                {"step": "0h"},
+                {"step": ["0h"], "values": 224},
+            ],
+            [(1, 225), (), (225,), (1,)],
+            [{"t": True, "r": False}] * 4,
+        ),
+        (
+            "healpix_H8_nested.grib2",
+            ["t", "r"],
+            [{"step": "0h"}, {"step": ["0h"], "values": slice(500, 400, -2)}],
+            [(768,), (1, 50)],
+            [{"t": True, "r": False}] * 2,
+        ),
+        (
+            "sh_t32.grib1",
+            ["t", "r"],
+            [{"step": ["0h"]}, {"step": "0h", "values": [1, 2, 10]}],
+            [(1, 1122), (3,)],
+            [{"t": True, "r": False}] * 2,
+        ),
+    ],
+)
+def test_xr_incomplete_tensor_select_hole(lazy_load, file, variables, sel_dicts, shapes, isnan_by_var_dicts):
+    kwargs = dict(squeeze=False, allow_holes=True, lazy_load=lazy_load)
+
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
+
+    ds = ds_ek[1:].to_xarray(**kwargs).squeeze()
+    assert set(ds) == set(variables)
+
+    for sel_dict, shape, isnan_by_var in zip(sel_dicts, shapes, isnan_by_var_dicts):
+        _ds = ds.sel(**sel_dict)
+        for v in _ds:
+            assert _ds[v].shape == shape
+            assert _ds[v].isnull().all() == isnan_by_var[v]
+            assert _ds[v].isnull().any() == isnan_by_var[v]
