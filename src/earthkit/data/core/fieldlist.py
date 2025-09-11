@@ -1088,9 +1088,6 @@ class FieldList(Index):
             return getattr(f, accessor)(**kwargs) if not is_property else getattr(f, accessor)
 
         n = len(self)
-        # TODO: cover the case n == 0 (can happen when an empty mask is applied to a field list -
-        #  for example when slicing an xarray tensor so that a part containing holes only is selected);
-        #  currently None is returned in such case, with no info on dtype, array backend (xp), etc.
         if n > 0:
             it = iter(self)
             first = next(it)
@@ -1104,6 +1101,11 @@ class FieldList(Index):
             for i, f in enumerate(it, start=1):
                 r[i] = _vals(f)
             return r
+        else:
+            # In this case no information about a field shape, dtype, array backend can be derived.
+            # This must be managed by the caller: see e.g.
+            # src/earthkit/data/indexing/tensor.py:FieldListSparseTensor.to_array
+            return None
 
     def to_numpy(self, **kwargs):
         r"""Return all the fields' values as an ndarray. It is formed as the array of the
