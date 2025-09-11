@@ -686,7 +686,6 @@ class FieldListSparseTensor(FieldListTensor):
     def to_array(self, index=None, **kwargs):
         return self._to_array("to_array", index=index, **kwargs)
 
-    # TODO: consider code refactoring as there is a substantial code duplication with FieldListTensor._subset
     def _subset(self, indexes):
         """Only allow subsetting for the user coordinates.
         Indices for the field coordinates are ignored.
