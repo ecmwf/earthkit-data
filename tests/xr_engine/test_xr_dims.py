@@ -346,6 +346,8 @@ def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "kwargs,dim_keys",
     [
@@ -368,9 +370,9 @@ def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
         ),
     ],
 )
-def test_xr_rename_dims(kwargs, dim_keys):
+def test_xr_rename_dims(allow_holes, lazy_load, kwargs, dim_keys):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     num = len(ds)
 
     dim_keys = dim_keys + ["latitude", "longitude"]
@@ -381,6 +383,8 @@ def test_xr_rename_dims(kwargs, dim_keys):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "kwargs,dim_keys",
     [
@@ -421,9 +425,9 @@ def test_xr_rename_dims(kwargs, dim_keys):
         ),
     ],
 )
-def test_xr_fixed_dims(kwargs, dim_keys):
+def test_xr_fixed_dims(allow_holes, lazy_load, kwargs, dim_keys):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     num = len(ds)
 
     dim_keys = dim_keys + ["latitude", "longitude"]
@@ -434,6 +438,8 @@ def test_xr_fixed_dims(kwargs, dim_keys):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "kwargs,dim_keys",
     [
@@ -479,9 +485,9 @@ def test_xr_fixed_dims(kwargs, dim_keys):
         ),
     ],
 )
-def test_xr_drop_dims(kwargs, dim_keys):
+def test_xr_drop_dims(allow_holes, lazy_load, kwargs, dim_keys):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     num = len(ds)
 
     dim_keys = dim_keys + ["latitude", "longitude"]

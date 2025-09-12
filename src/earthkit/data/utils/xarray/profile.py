@@ -275,6 +275,7 @@ class Profile:
         self.direct_backend = kwargs.pop("direct_backend")
         self.strict = kwargs.pop("strict")
         self.errors = kwargs.pop("errors")
+        self.allow_holes = kwargs.pop("allow_holes")
 
         # values
         self.flatten_values = kwargs.pop("flatten_values")
