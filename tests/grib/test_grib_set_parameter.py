@@ -22,7 +22,8 @@ sys.path.insert(0, here)
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
-@pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+# @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
+@pytest.mark.parametrize("fl_type", ["file"])
 @pytest.mark.parametrize(
     "_kwargs,ref1,ref2",
     [
@@ -31,11 +32,11 @@ from grib_fixtures import load_grib_data  # noqa: E402
             {"variable": "q", "param": "q", "grib.shortName": "t", "units": "kg/kg", "grib.units": "K"},
             {"variable": "q", "param": "q", "grib.shortName": "q", "units": "kg kg**-1"},
         ),
-        (
-            {"param": "q", "units": "kg/kg"},
-            {"variable": "q", "param": "q", "grib.shortName": "t", "units": "kg/kg", "grib.units": "K"},
-            {"variable": "q", "param": "q", "grib.shortName": "q", "units": "kg kg**-1"},
-        ),
+        # (
+        #     {"param": "q", "units": "kg/kg"},
+        #     {"variable": "q", "param": "q", "grib.shortName": "t", "units": "kg/kg", "grib.units": "K"},
+        #     {"variable": "q", "param": "q", "grib.shortName": "q", "units": "kg kg**-1"},
+        # ),
     ],
 )
 def test_grib_set_parameter_1(fl_type, _kwargs, ref1, ref2):

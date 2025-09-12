@@ -12,8 +12,10 @@ from abc import abstractmethod
 
 from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
+from .spec import spec_aliases
 
 
+@spec_aliases
 class Geography(SimpleSpec):
     KEYS = ("latitudes", "longitudes", "projection", "unique_grid_id", "shape", "grid_type")
 

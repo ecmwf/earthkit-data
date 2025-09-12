@@ -9,7 +9,6 @@
 
 from functools import cached_property
 
-from earthkit.data.core.field import Field
 from earthkit.data.indexing.simple import SimpleFieldListCore
 from earthkit.data.readers import Reader
 from earthkit.data.utils.parts import Part
@@ -51,7 +50,7 @@ class GribFieldListInFile(SimpleFieldListCore):
 
         self.path = path
         self._file_parts = parts
-        self.__positions = positions
+        # self.__positions = positions
 
         from earthkit.data.core.config import CONFIG
 
@@ -132,15 +131,15 @@ class GribFieldListInFile(SimpleFieldListCore):
         self.handle_manager = state["handle_manager"]
 
 
-def _create_grib_fieldlist(path):
-    return GribFieldListInFile(path)
+# def _create_grib_fieldlist(path):
+#     return GribFieldListInFile(path)
 
 
-def _create_grib_field(path, offset):
-    from earthkit.data.core.new_field.grib.handle import FileGribHandle
+# def _create_grib_field(path, offset):
+#     from earthkit.data.core.new_field.grib.handle import FileGribHandle
 
-    handle = FileGribHandle(path, offset, 0)
-    return Field.from_grib(handle)
+#     handle = FileGribHandle(path, offset, 0)
+#     return Field.from_grib(handle)
 
 
 class GRIBReader(GribFieldListInFile, Reader):

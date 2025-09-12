@@ -8,11 +8,12 @@
 #
 
 
-from abc import ABCMeta
 from abc import abstractmethod
 
+from .spec import Spec
 
-class Labels(metaclass=ABCMeta):
+
+class Labels(Spec):
     @abstractmethod
     def __iter__(self):
         """Return an iterator over the metadata keys."""
@@ -65,39 +66,39 @@ class Labels(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
-    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
-        r"""Return the value for ``key``.
+    # @abstractmethod
+    # def get(self, key, default=None, *, astype=None, raise_on_missing=False):
+    #     r"""Return the value for ``key``.
 
-        Parameters
-        ----------
-        key: str
-            Metadata key
-        default: value
-            Specify the default value for ``key``. Returned when ``key``
-            is not found or its value is a missing value and raise_on_missing is ``False``.
-        astype: type as str, int or float
-            Return/access type for ``key``. When it is supported ``astype`` is passed to the
-            underlying metadata accessor as an option. Otherwise the value is
-            cast to ``astype`` after it is taken from the accessor.
-        raise_on_missing: bool
-            When it is True raises an exception if ``key`` is not found or
-            it has a missing value.
+    #     Parameters
+    #     ----------
+    #     key: str
+    #         Metadata key
+    #     default: value
+    #         Specify the default value for ``key``. Returned when ``key``
+    #         is not found or its value is a missing value and raise_on_missing is ``False``.
+    #     astype: type as str, int or float
+    #         Return/access type for ``key``. When it is supported ``astype`` is passed to the
+    #         underlying metadata accessor as an option. Otherwise the value is
+    #         cast to ``astype`` after it is taken from the accessor.
+    #     raise_on_missing: bool
+    #         When it is True raises an exception if ``key`` is not found or
+    #         it has a missing value.
 
-        Returns
-        -------
-        value
-            Returns the ``key`` value. Returns ``default`` if ``key`` is not found
-            or it has a missing value and ``raise_on_missing`` is False.
+    #     Returns
+    #     -------
+    #     value
+    #         Returns the ``key`` value. Returns ``default`` if ``key`` is not found
+    #         or it has a missing value and ``raise_on_missing`` is False.
 
-        Raises
-        ------
-        KeyError
-            If ``raise_on_missing`` is True and ``key`` is not found or it has
-            a missing value.
+    #     Raises
+    #     ------
+    #     KeyError
+    #         If ``raise_on_missing`` is True and ``key`` is not found or it has
+    #         a missing value.
 
-        """
-        pass
+    #     """
+    #     pass
 
     @abstractmethod
     def override(self, *args, **kwargs):
@@ -118,17 +119,41 @@ class Labels(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
-    def set(self, *args, **kwargs):
-        r"""Set the value for ``key``."""
-        pass
+    # @abstractmethod
+    # def set(self, *args, **kwargs):
+    #     r"""Set the value for ``key``."""
+    #     pass
 
 
 class SimpleLabels(dict, Labels):
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
+        def _cast(v):
+            if callable(astype):
+                try:
+                    return astype(v)
+                except Exception:
+                    return None
+            return v
+
+        if not raise_on_missing:
+            v = super().get(key, default)
+        else:
+            try:
+                v = self[key]
+            except KeyError:
+                raise KeyError(f"Key {key} not found in Labels")
+
+        if v is not None and astype:
+            v = _cast(v)
+        return v
+
     def set(self, *args, **kwargs):
         d = dict(self)
         d.update(*args, **kwargs)
         return SimpleLabels(d)
+
+    def __setitem__(self, key, value):
+        raise TypeError("SimpleLabels object does not support item assignment")
 
     def check(self, owner):
         pass

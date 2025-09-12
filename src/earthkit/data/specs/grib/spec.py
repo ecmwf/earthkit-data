@@ -1,0 +1,27 @@
+# (C) Copyright 2022 ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation
+# nor does it submit to any jurisdiction.
+#
+from functools import cached_property
+
+
+class GribSpec:
+    BUILDER = None
+    COLLECTOR = None
+
+    def __init__(self, handle):
+        self.handle = handle
+
+    @cached_property
+    def spec(self):
+        return self.BUILDER.build(self.handle)
+
+    def get_grib_context(self, context) -> dict:
+        self.COLLECTOR.collect(self, context)
+
+    def __getattr__(self, name):
+        return getattr(self.spec, name)

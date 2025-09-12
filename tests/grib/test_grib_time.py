@@ -32,7 +32,14 @@ def test_grib_datetime_1(fl_type):
         "base_time": [datetime.datetime(2020, 5, 13, 12)],
         "valid_time": [datetime.datetime(2020, 5, 13, 12)],
     }
+
     assert ds.datetime() == ref
+
+    ref = {
+        "base_time": datetime.datetime(2020, 5, 13, 12),
+        "valid_time": datetime.datetime(2020, 5, 13, 12),
+    }
+
     assert ds[0].datetime() == ref
 
 
@@ -75,7 +82,7 @@ def test_grib_time_forecast(fl_type):
 
     assert f.valid_datetime == datetime.datetime(2020, 12, 21, 18, 0)
     assert f.base_datetime == datetime.datetime(2020, 12, 21, 12, 0)
-    assert f.forecast_reference_time == datetime.datetime(2020, 12, 21, 18, 0)
+    assert f.forecast_reference_time == datetime.datetime(2020, 12, 21, 12, 0)
     assert f.step == datetime.timedelta(hours=6)
     assert f.forecast_period == datetime.timedelta(hours=6)
     assert f.time_span == datetime.timedelta(0)
@@ -88,7 +95,7 @@ def test_grib_time_step_range_1():
     f = ds[2]
     assert f.valid_datetime == datetime.datetime(2011, 12, 16, 12, 0)
     assert f.base_datetime == datetime.datetime(2011, 12, 15, 12, 0)
-    assert f.forecast_reference_time == datetime.datetime(2011, 12, 16, 12, 0)
+    assert f.forecast_reference_time == datetime.datetime(2011, 12, 15, 12, 0)
     assert f.step == datetime.timedelta(hours=24)
     assert f.forecast_period == datetime.timedelta(hours=24)
     assert f.time_span == datetime.timedelta(hours=6)

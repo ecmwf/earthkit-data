@@ -16,21 +16,21 @@ def new_grib_field(handle, data=None, cache=False):
     from earthkit.data.specs.grib.data import GribData
     from earthkit.data.specs.grib.geography import GribGeography
     from earthkit.data.specs.grib.labels import GribLabels
-    from earthkit.data.specs.grib.parameter import GribParameterBuilder
-    from earthkit.data.specs.grib.realisation import GribRealisationBuilder
-    from earthkit.data.specs.grib.time import GribTimeBuilder
-    from earthkit.data.specs.grib.vertical import GribVerticalBuilder
+    from earthkit.data.specs.grib.parameter import GribParameter
+    from earthkit.data.specs.grib.realisation import GribRealisation
+    from earthkit.data.specs.grib.time import GribTime
+    from earthkit.data.specs.grib.vertical import GribVertical
     from earthkit.data.specs.labels import SimpleLabels
 
     if data is None:
         data = GribData(handle)
 
-    parameter = GribParameterBuilder.build(handle)
-    time = GribTimeBuilder.build(handle)
+    parameter = GribParameter(handle)
+    time = GribTime(handle)
     geography = GribGeography(handle)
-    vertical = GribVerticalBuilder.build(handle)
+    vertical = GribVertical(handle)
     labels = SimpleLabels()
-    realisation = GribRealisationBuilder.build(handle)
+    realisation = GribRealisation(handle)
     grib = GribLabels(handle)
 
     r = Field(

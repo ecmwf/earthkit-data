@@ -9,6 +9,7 @@
 
 
 from .collector import GribContextCollector
+from .spec import GribSpec
 
 
 class GribRealisationBuilder:
@@ -18,7 +19,7 @@ class GribRealisationBuilder:
 
         d = GribRealisationBuilder._build_dict(handle)
         spec = SimpleRealisation.from_dict(d)
-        spec._set_private_data("handle", handle)
+        # spec._set_private_data("handle", handle)
         return spec
 
     @staticmethod
@@ -42,3 +43,11 @@ class GribRealisationContextCollector(GribContextCollector):
             "number": spec.number,
         }
         context.update(r)
+
+
+COLLECTOR = GribRealisationContextCollector()
+
+
+class GribRealisation(GribSpec):
+    BUILDER = GribRealisationBuilder
+    COLLECTOR = COLLECTOR

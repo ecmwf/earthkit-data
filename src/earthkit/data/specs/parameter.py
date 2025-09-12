@@ -110,9 +110,9 @@ class SimpleParameter(Parameter):
     #     return cls.from_dict(from_xarray(owner, selection))
 
     def get_grib_context(self, context) -> dict:
-        from .grib.parameter import GribParameterContextCollector
+        from .grib.parameter import COLLECTOR
 
-        GribParameterContextCollector(self).collect(context)
+        COLLECTOR.collect(self, context)
 
     def to_dict(self) -> dict:
         """Convert the object to a dictionary.

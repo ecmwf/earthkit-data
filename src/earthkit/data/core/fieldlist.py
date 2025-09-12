@@ -699,3 +699,15 @@ class FieldListCore(Base):
 
         """
         pass
+
+    def _unary_op(self, oper):
+        from earthkit.data.utils.compute import get_method
+
+        method = "loop"
+        return get_method(method).unary_op(oper, self)
+
+    def _binary_op(self, oper, y):
+        from earthkit.data.utils.compute import get_method
+
+        method = "loop"
+        return get_method(method).binary_op(oper, self, y)

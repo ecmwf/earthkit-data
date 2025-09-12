@@ -10,6 +10,7 @@
 from earthkit.data.specs.vertical import LevelTypes
 
 from .collector import GribContextCollector
+from .spec import GribSpec
 
 
 class GribLevelType:
@@ -56,7 +57,7 @@ class GribVerticalBuilder:
 
         d = GribVerticalBuilder._build_dict(handle)
         spec = SimpleVertical.from_dict(d)
-        spec._set_private_data("handle", handle)
+        # spec._set_private_data("handle", handle)
         return spec
 
     @staticmethod
@@ -99,3 +100,11 @@ class GribVerticalContextCollector(GribContextCollector):
         }
 
         context.update(r)
+
+
+COLLECTOR = GribVerticalContextCollector()
+
+
+class GribVertical(GribSpec):
+    BUILDER = GribVerticalBuilder
+    COLLECTOR = COLLECTOR

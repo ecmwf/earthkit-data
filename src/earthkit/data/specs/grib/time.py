@@ -12,6 +12,7 @@ from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
 from .collector import GribContextCollector
+from .spec import GribSpec
 
 ZERO_TIMEDELTA = to_timedelta(0)
 
@@ -23,7 +24,7 @@ class GribTimeBuilder:
 
         d = GribTimeBuilder._build_dict(handle)
         r = SimpleTime.from_dict(d)
-        r._set_private_data("handle", handle)
+        # r._set_private_data("handle", handle)
         return r
 
     @staticmethod
@@ -78,6 +79,14 @@ class GribTimeContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(spec, context):
         pass
+
+
+COLLECTOR = GribTimeContextCollector()
+
+
+class GribTime(GribSpec):
+    BUILDER = GribTimeBuilder
+    COLLECTOR = COLLECTOR
 
 
 # def time_from_handle(handle):

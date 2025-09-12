@@ -8,7 +8,6 @@
 #
 
 from collections import defaultdict
-from functools import cache
 
 import deprecation
 from earthkit.utils.array import array_namespace
@@ -22,8 +21,15 @@ from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalize
 from earthkit.data.indexing.simple import SimpleFieldList
-from earthkit.data.specs.data import ArrayData
+from earthkit.data.specs.data import Data
+from earthkit.data.specs.geography import Geography
+from earthkit.data.specs.labels import Labels
+from earthkit.data.specs.parameter import Parameter
+from earthkit.data.specs.realisation import Realisation
+from earthkit.data.specs.time import Time
+from earthkit.data.specs.vertical import Vertical
 from earthkit.data.utils.array import reshape
+from earthkit.data.utils.compute import wrap_maths
 from earthkit.data.utils.metadata.args import metadata_argument
 from earthkit.data.utils.metadata.args import metadata_argument_new
 
@@ -41,167 +47,44 @@ LS_KEYS = [
 ]
 
 
-class FieldKeys:
-    r"""Map keys to attributes of Field parts."""
-
-    # PARTS = {}
-    # KEYS = {}
-
-    def __init__(self):
-        from earthkit.data.specs.data import Data
-        from earthkit.data.specs.geography import Geography
-        from earthkit.data.specs.parameter import Parameter
-        from earthkit.data.specs.realisation import Realisation
-        from earthkit.data.specs.time import Time
-        from earthkit.data.specs.vertical import Vertical
-
-        _members = {
-            "data": Data,
-            "time": Time,
-            "parameter": Parameter,
-            "geography": Geography,
-            "realisation": Realisation,
-            "vertical": Vertical,
-        }
-
-        members = {}
-        for k, member in _members.items():
-            if member.KEYS:
-                keys = list(member.KEYS)
-                if member.ALIASES:
-                    keys.extend(list(member.ALIASES.keys()))
-                members[k] = tuple(keys)
-
-        self.KEYS = {}
-        self.SINGLE_KEYS = {}
-        for member, keys in members.items():
-            member_attr = "_" + member
-            if keys:
-                for k in keys:
-                    if k in self.KEYS:
-                        raise ValueError(f"Key '{k}' already exists in FieldKeys. ")
-                    self.SINGLE_KEYS[k] = member_attr
-                    self.KEYS[k] = (member_attr, k)
-                    k1 = member + "." + k
-                    if k1 in self.KEYS:
-                        raise ValueError(f"Key '{k1}' already exists in FieldKeys. ")
-                    self.KEYS[k1] = (member_attr, k)
-
-                    # self.KEYS.append(member + "." + k)
-                    # self.KEYS.append(k)
-                    # k1 = member + "." + k
-                    # self.SINGLE_KEYS[k] = (member_attr, k)
-                    # self.SINGLE_KEYS[k1] = (member_attr, k1)
-
-    def __contains__(self, key):
-        r"""Check if the key is in the FieldKeys."""
-        return key in self.KEYS
-
-    @cache
-    def get(self, key):
-        item = self.KEYS.get(key, None)
-        if item:
-            return item
-
-        # if key in self.KEYS:
-        #     if key in self.SINGLE_KEYS:
-        #         part = self.SINGLE_KEYS[key]
-        #         name = key
-        #     else:
-        #         part, name = key.split(".", 1)
-
-        #     print(f"key: {key} -> part: {part}, name: {name}")
-        #     return part, name
-        return None, None
-
-
-FIELD_KEYS = FieldKeys()
-
-
-class EncoderData:
-    """A class to hold the encoder data."""
-
-    def __init__(
-        self,
-        data=None,
-        time=None,
-        parameter=None,
-        geography=None,
-        vertical=None,
-        realisation=None,
-        labels=None,
-    ):
-        self.data = data
-        self.time = time
-        self.parameter = parameter
-        self.geography = geography
-        self.vertical = vertical
-        self.realisation = realisation
-        self.labels = labels
-
-    def encode(field):
-        """Double dispatch to the encoder."""
-        r = {}
-        if hasattr(field, "handle"):
-            r["handle"] = field.handle
-
-
-# def flatten(v):
-#     """Flatten the array without copying the data.
-
-#     Parameters
-#     ----------
-#     v: array-like
-#         The array to be flattened.
-
-#     Returns
-#     -------
-#     array-like
-#         1-D array.
-#     """
-#     if len(v.shape) != 1:
-#         n = (math.prod(v.shape),)
-#         return SimpleData.reshape(v, n)
-#     return v
-
-
-class LazyGribField:
-    def __init__(self, handle):
-        self._handle = handle
-        self.__field = None
-
-    @property
-    def _field(self):
-        if self.__field is None:
-            self.__field = Field.from_grib(self._handle)
-            self._handle = None
-        return self.__field
-
-    def __getattr__(self, name):
-        return getattr(self._field, name)
-
-
 def add_member_properties(cls):
-    for key, member in FIELD_KEYS.SINGLE_KEYS.items():
-        if getattr(cls, key, None) is None:
 
-            def _make(prop, member):
-                def _f(self):
-                    return getattr(getattr(self, f"{member}"), prop)
+    members = {
+        cls._DATA_NAME: Data,
+        cls._TIME_NAME: Time,
+        cls._PARAMETER_NAME: Parameter,
+        cls._GEOGRAPHY_NAME: Geography,
+        cls._REALISATION_NAME: Realisation,
+        cls._VERTICAL_NAME: Vertical,
+        cls._LABELS_NAME: Labels,
+    }
 
-                return _f
+    member_keys = []
+    for member, module in members.items():
+        print(f"member: {member}, module: {module}")
+        for key in module.ALL_KEYS:
+            if getattr(cls, key, None) is None:
 
-            setattr(
-                cls,
-                key,
-                property(fget=_make(key, member), doc=f"Return the {key}."),
-            )
+                def _make(prop, member):
+                    def _f(self):
+                        return getattr(getattr(self, f"_{member}"), prop)
 
-            print(f"Add property: {key} -> {member}")
+                    return _f
+
+                setattr(
+                    cls,
+                    key,
+                    property(fget=_make(key, member), doc=f"Return the {key}."),
+                )
+                member_keys.append(key)
+                print(f"Add property: {key} -> {member}")
+
+    cls._MEMBER_KEYS = set(member_keys)
     return cls
 
 
 @add_member_properties
+@wrap_maths
 class Field(Base):
     """A class to represent a field in Earthkit.
 
@@ -239,6 +122,15 @@ class Field(Base):
 
     """
 
+    _DATA_NAME = "data"
+    _TIME_NAME = "time"
+    _PARAMETER_NAME = "parameter"
+    _GEOGRAPHY_NAME = "geography"
+    _VERTICAL_NAME = "vertical"
+    _REALISATION_NAME = "realisation"
+    _LABELS_NAME = "labels"
+    _MEMBER_KEYS = set()
+
     def __init__(
         self,
         *,
@@ -250,6 +142,7 @@ class Field(Base):
         realisation=None,
         labels=None,
     ):
+
         self._data = data
         self._time = time
         self._parameter = parameter
@@ -259,15 +152,15 @@ class Field(Base):
         self._labels = labels
         self._private = dict()
 
-        self._members = [
-            self._data,
-            self._time,
-            self._parameter,
-            self._geography,
-            self._vertical,
-            self._realisation,
-            # self._labels,
-        ]
+        self._members = {
+            self._DATA_NAME: self._data,
+            self._TIME_NAME: self._time,
+            self._PARAMETER_NAME: self._parameter,
+            self._GEOGRAPHY_NAME: self._geography,
+            self._VERTICAL_NAME: self._vertical,
+            self._REALISATION_NAME: self._realisation,
+            self._LABELS_NAME: self._labels,
+        }
 
         self._check()
 
@@ -278,32 +171,32 @@ class Field(Base):
         return self._private.get(name)
 
     def _check(self):
-        for m in self._members:
+        for m in self._members.values():
             m.check(self)
 
     def free(self):
         self.data = self.data.Offloader(self.data)
 
     def _get_grib_context(self, context):
-        self._data.get_grib_context(context)
-        self._time.get_grib_context(context)
-        self._parameter.get_grib_context(context)
-        self._geography.get_grib_context(context)
-        self._vertical.get_grib_context(context)
-        self._labels.get_grib_context(context)
-        # if self.raw is not None:
-        #     self.raw.get_grib_context(context)
+        grib = self.get_private_data("grib")
+        if grib is not None:
+            context["handle"] = grib.handle
+
+        for m in self._members.values():
+            m.get_grib_context(context)
+
+        print("collected context", context)
 
     def namespace(self, name=None):
         if name is all or name is True:
             name = None
 
         result = {}
-        for m in self._members:
+        for m in self._members.values():
             m.namespace(self, name, result)
 
         if name is not None and self._private:
-            for k, v in self._private.items():
+            for _, v in self._private.items():
                 if hasattr(v, "namespace"):
                     v.namespace(self, name, result)
 
@@ -337,13 +230,13 @@ class Field(Base):
         _kwargs = {}
 
         for name in [
-            "data",
-            "time",
-            "parameter",
-            "geography",
-            "vertical",
-            "realisation",
-            "labels",
+            Field._DATA_NAME,
+            Field._TIME_NAME,
+            Field._PARAMETER_NAME,
+            Field._GEOGRAPHY_NAME,
+            Field._VERTICAL_NAME,
+            Field._REALISATION_NAME,
+            Field._LABELS_NAME,
         ]:
             v = kwargs.pop(name, None)
             if v is not None:
@@ -406,7 +299,7 @@ class Field(Base):
         realisation = SimpleRealisation.from_dict(d)
 
         # the unused items are added to the labels
-        rest = {k: v for k, v in d.items() if k not in FIELD_KEYS.KEYS}
+        rest = {k: v for k, v in d.items() if k not in cls._MEMBER_KEYS}
         labels = SimpleLabels(rest)
 
         return cls(
@@ -429,10 +322,10 @@ class Field(Base):
         r""":obj:`ArrayBackend`: Return the array backend of the field."""
         return get_backend(self.values)
 
-    @property
-    def shape(self):
-        r"""tuple: Return the shape of the field."""
-        return self._geography.shape
+    # @property
+    # def shape(self):
+    #     r"""tuple: Return the shape of the field."""
+    #     return self._geography.shape
 
     @property
     def values(self):
@@ -502,6 +395,17 @@ class Field(Base):
         data = self._data.set_values(array)
         return Field.from_field(self, data=data)
 
+    def _get_member(self, key):
+        if "." in key:
+            member, name = key.split(".", 1)
+            return member, self._members.get(member), name
+        else:
+            for member, d in self._members.items():
+                if key in d.ALL_KEYS:
+                    return member, d, key
+
+        return None, None, None
+
     def get_single(
         self, key, default=None, *, astype=None, raise_on_missing=False, remapping=None, patches=None
     ):
@@ -536,14 +440,6 @@ class Field(Base):
 
         """
 
-        def _cast(v):
-            if callable(astype):
-                try:
-                    return astype(v)
-                except Exception:
-                    return None
-            return v
-
         remapping = build_remapping(remapping, patches, forced_build=False)
         if remapping:
             return remapping(self.get_single)(
@@ -552,30 +448,34 @@ class Field(Base):
 
         v = None
 
-        # first try the parts, bar the labels/raw
-        _, name = FIELD_KEYS.get(key)
-        if name:
-            try:
-                # v = getattr(getattr(self, member), name)
-                v = getattr(self, name)
-                return _cast(v)
-            except Exception:
-                if raise_on_missing:
-                    raise KeyError(f"Key {key} not found in field")
-                return default
-        # try the labels
-        elif key in self.labels:
-            v = self.labels[key]
-            return _cast(v)
-        # try the raw accessor
-        elif self._private and "." in key:
-            part, name = key.split(".", 1)
-            if part:
-                part = self._private.get(part, None)
-                if part:
-                    return part.get(name, default=default, astype=astype, raise_on_missing=raise_on_missing)
-            # return self.raw.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-        elif raise_on_missing:
+        # first try the members
+        member_name, member, key_name = self._get_member(key)
+        if member:
+            return member.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        # next try the labels with the full key
+        elif key in self._labels:
+            return self._labels.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        # try the private members
+        elif self._private:
+            if member_name in self._private:
+                return self._private[member_name].get(
+                    key_name, default=default, astype=astype, raise_on_missing=raise_on_missing
+                )
+            else:
+
+                def _cast(v):
+                    if callable(astype):
+                        try:
+                            return astype(v)
+                        except Exception:
+                            return None
+                    return v
+
+                v = self._private.get(key)
+                if v is not None:
+                    return _cast(v)
+
+        if raise_on_missing:
             raise KeyError(f"Key {key} not found in field")
 
         return default
@@ -845,34 +745,24 @@ class Field(Base):
             return self._metadata.as_namespace(None)
 
     def set(self, **kwargs):
+        # collect keys to set per member
         _kwargs = defaultdict(dict)
         for k, v in kwargs.items():
             if callable(v):
                 v = v(self, k, self)
 
-            if self.labels and k in self.labels:
-                _kwargs["labels"][k] = v
+            member_name, member, key_name = self._get_member(k)
+            if member:
+                _kwargs[member_name][key_name] = v
             else:
-                part_name, _ = FIELD_KEYS.get(k)
-                if part_name:
-                    _kwargs[part_name][k] = v
-                else:
-                    _kwargs["labels"][k] = v
+                _kwargs[self._LABELS_NAME][k] = v
 
         if _kwargs:
             r = {}
-            for part_name, v in _kwargs.items():
-                part = getattr(self, part_name, None)
-                print("set() part=", part, "v=", v)
-                if part is None and part_name == "labels":
-                    from earthkit.data.specs.labels import RawLabels
-
-                    s = RawLabels(**v)
-                else:
-                    s = part.set(**v)
-
-                kwarg_name = part_name[1:] if part_name.startswith("_") else part_name
-                r[kwarg_name] = s
+            for member_name, v in _kwargs.items():
+                member = self._members[member_name]
+                s = member.set(**v)
+                r[member_name] = s
 
             print("set() result=", r)
             if r:
@@ -898,7 +788,7 @@ class Field(Base):
         """
 
         d = dict(*args, **kwargs)
-        return Field(self, label=self._labels.set(d))
+        return Field(self, labels=self._labels.set(d))
 
     @deprecation.deprecated(deprecated_in="0.13.0", details="Use to_target() instead")
     def save(self, filename, append=False, **kwargs):
@@ -1029,7 +919,7 @@ class Field(Base):
         return LS_KEYS
 
     def ls(self, *args, **kwargs):
-        r"""Generate a list like summary using a set of metadata keys.
+        r"""Generate a list-like summary using a set of metadata keys.
 
         Parameters
         ----------
@@ -1083,73 +973,73 @@ class Field(Base):
             return grib.new_array_field(self, array_backend=array_backend, flatten=flatten, dtype=dtype)
         return self
 
-    def copy(self, *, values=None, flatten=False, dtype=None, array_backend=None):
-        r"""Create a new :class:`ArrayField` by copying the values and metadata.
+    # def copy(self, *, values=None, flatten=False, dtype=None, array_backend=None):
+    #     r"""Create a new :class:`ArrayField` by copying the values and metadata.
 
-        Parameters
-        ----------
-        values: array-like or None
-            The values to be stored in the new :class:`Field`. When it is ``None`` the values
-            extracted from the original field by using :obj:`to_array` with ``flatten``, ``dtype``
-            and ``array_backend`` and copied to the new field.
-        flatten: bool
-            Control the shape of the values when they are extracted from the original field.
-            When ``True``, flatten the array, otherwise the field's shape is kept. Only used when
-            ``values`` is not provided.
-        dtype: str, array.dtype or None
-            Control the typecode or data-type of the values when they are extracted from
-            the original field. If :obj:`None`, the default type used by the underlying
-            data accessor is used. For GRIB it is ``float64``. Only used when  ``values``
-            is not provided.
-        array_backend: str, module or None
-            Control the array backend of the values when they are extracted from
-            the original field. If :obj:`None`, the underlying array format
-            of the field is used. Only used when ``values`` is not provided.
-        metadata: :class:`Metadata` or None
-            The metadata to be stored in the new :class:`Field`. When it is :obj:`None`
-            a copy of the metadata of the original field is used.
+    #     Parameters
+    #     ----------
+    #     values: array-like or None
+    #         The values to be stored in the new :class:`Field`. When it is ``None`` the values
+    #         extracted from the original field by using :obj:`to_array` with ``flatten``, ``dtype``
+    #         and ``array_backend`` and copied to the new field.
+    #     flatten: bool
+    #         Control the shape of the values when they are extracted from the original field.
+    #         When ``True``, flatten the array, otherwise the field's shape is kept. Only used when
+    #         ``values`` is not provided.
+    #     dtype: str, array.dtype or None
+    #         Control the typecode or data-type of the values when they are extracted from
+    #         the original field. If :obj:`None`, the default type used by the underlying
+    #         data accessor is used. For GRIB it is ``float64``. Only used when  ``values``
+    #         is not provided.
+    #     array_backend: str, module or None
+    #         Control the array backend of the values when they are extracted from
+    #         the original field. If :obj:`None`, the underlying array format
+    #         of the field is used. Only used when ``values`` is not provided.
+    #     metadata: :class:`Metadata` or None
+    #         The metadata to be stored in the new :class:`Field`. When it is :obj:`None`
+    #         a copy of the metadata of the original field is used.
 
-        Returns
-        -------
-        :class:`ArrayField`
-        """
-        if values is not None:
-            if array_backend is not None:
-                from earthkit.utils.array import convert_array
+    #     Returns
+    #     -------
+    #     :class:`ArrayField`
+    #     """
+    #     if values is not None:
+    #         if array_backend is not None:
+    #             from earthkit.utils.array import convert_array
 
-                values = convert_array(values, target_backend=array_backend)
+    #             values = convert_array(values, target_backend=array_backend)
 
-        else:
-            values = self.data.get_values(
-                flatten=flatten,
-                dtype=dtype,
-            )
+    #     else:
+    #         values = self.data.get_values(
+    #             flatten=flatten,
+    #             dtype=dtype,
+    #         )
 
-        data = ArrayData(values)
+    #     data = ArrayData(values)
 
-        for part in ["time", "parameter", "geography", "vertical", "labels"]:
-            part_obj = getattr(self, part)
-            if hasattr(part_obj, "handle"):
-                part_obj = part_obj.copy()
-            else:
-                part_obj = part_obj.__class__(part_obj)
+    #     for part in ["time", "parameter", "geography", "vertical", "labels"]:
+    #         part_obj = getattr(self, part)
+    #         if hasattr(part_obj, "handle"):
+    #             part_obj = part_obj.copy()
+    #         else:
+    #             part_obj = part_obj.__class__(part_obj)
 
-            setattr(data, part, part_obj)
+    #         setattr(data, part, part_obj)
 
-        return Field(
-            data=data,
-            time=self.time,
-            parameter=self.parameter,
-            geography=self.geography,
-            vertical=self.vertical,
-            labels=self.labels,
-        )
+    #     return Field(
+    #         data=data,
+    #         time=self.time,
+    #         parameter=self.parameter,
+    #         geography=self.geography,
+    #         vertical=self.vertical,
+    #         labels=self.labels,
+    #     )
 
     @normalize("valid_datetime", "date")
     @normalize("base_datetime", "date")
     @normalize("forecast_reference_time", "date")
     @normalize("step", "timedelta")
-    @normalize("step_range", "timedelta")
+    @normalize("time_span", "timedelta")
     @staticmethod
     def normalise_key_values(**kwargs):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""
@@ -1216,8 +1106,8 @@ class Field(Base):
 
         """
         _keys = dict(
-            lat=self.geography.latitudes,
-            lon=self.geography.longitudes,
+            lat=self._geography.latitudes,
+            lon=self._geography.longitudes,
             value=self.values,
         )
 
@@ -1332,8 +1222,8 @@ class Field(Base):
             shape = SimpleData.target_shape(v, flatten, self.shape)
             return SimpleData.reshape(v, shape)
 
-        x = self.geography.x
-        y = self.geography.y
+        x = self._geography.x
+        y = self._geography.y
         r = {}
         if x is not None and y is not None:
             x = _reshape(x, flatten)
@@ -1342,7 +1232,7 @@ class Field(Base):
                 x = x[index]
                 y = y[index]
             r = dict(x=x, y=y)
-        elif self.geography.projection.CARTOPY_CRS == "PlateCarree":
+        elif self._geography.projection.CARTOPY_CRS == "PlateCarree":
             lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
             return dict(x=lon, y=lat)
         else:
@@ -1381,7 +1271,7 @@ class Field(Base):
         'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
 
         """
-        return {"base_time": self.time.base_datetime, "valid_time": self.time.valid_datetime}
+        return {"base_time": self._time.base_datetime, "valid_time": self._time.valid_datetime}
 
     def to_xarray(self, *args, **kwargs):
         """Convert the Field into an Xarray Dataset.
@@ -1411,6 +1301,26 @@ class Field(Base):
 
     def order_by(self, *args, **kwargs):
         pass
+
+    def _unary_op(self, oper):
+        v = oper(self.values)
+        r = self.set_values(v)
+        return r
+
+    def _binary_op(self, oper, y):
+        from earthkit.data.core.fieldlist import FieldList
+        from earthkit.data.wrappers import get_wrapper
+
+        y = get_wrapper(y)
+        if isinstance(y, FieldList):
+            x = FieldList.from_fields([self])
+            return x._binary_op(oper, y)
+
+        vx = self.values
+        vy = y.values
+        v = oper(vx, vy)
+        r = self.set_values(v)
+        return r
 
     def __getstate__(self):
         state = {}
@@ -1463,67 +1373,67 @@ class Field(Base):
 #         return values, md
 
 
-def grib_handle(field):
-    for part in ["time", "parameter", "geography", "vertical", "labels"]:
-        part_obj = getattr(field, part)
-        if hasattr(part_obj, "handle"):
-            handle = getattr(part_obj, "handle", None)
-            if handle:
-                return handle
+# def grib_handle(field):
+#     for part in ["time", "parameter", "geography", "vertical", "labels"]:
+#         part_obj = getattr(field, part)
+#         if hasattr(part_obj, "handle"):
+#             handle = getattr(part_obj, "handle", None)
+#             if handle:
+#                 return handle
 
-    return None
+#     return None
 
 
-def deflate(field, flatten=False, dtype=None, array_backend=None):
-    if hasattr(field.data, "_handle"):
-        values = field.data.to_array(
-            field.shape,  # type: ignore
-            flatten=flatten,
-            dtype=dtype,
-            array_backend=array_backend,
-        )
-        data = ArrayData(values)
-    else:
-        data = field.data
+# def deflate(field, flatten=False, dtype=None, array_backend=None):
+#     if hasattr(field.data, "_handle"):
+#         values = field.data.to_array(
+#             field.shape,  # type: ignore
+#             flatten=flatten,
+#             dtype=dtype,
+#             array_backend=array_backend,
+#         )
+#         data = ArrayData(values)
+#     else:
+#         data = field.data
 
-    # print("data:", data)
+#     # print("data:", data)
 
-    parts_with_handle = {}
-    parts_other = {}
-    handles = set()
-    for part in ["time", "parameter", "geography", "vertical", "labels"]:
-        part_obj = getattr(field, "_" + part)
-        if hasattr(part_obj, "_handle"):
-            handle = getattr(part_obj, "_handle", None)
-            parts_with_handle[part] = (handle, part_obj)
-            handles.add(handle)
-        else:
-            parts_other[part] = part_obj
+#     parts_with_handle = {}
+#     parts_other = {}
+#     handles = set()
+#     for part in ["time", "parameter", "geography", "vertical", "labels"]:
+#         part_obj = getattr(field, "_" + part)
+#         if hasattr(part_obj, "_handle"):
+#             handle = getattr(part_obj, "_handle", None)
+#             parts_with_handle[part] = (handle, part_obj)
+#             handles.add(handle)
+#         else:
+#             parts_other[part] = part_obj
 
-    # print("parts_with_handle:", parts_with_handle)
-    # print("parts_other:", parts_other)
-    # print("handles:", handles)
+#     # print("parts_with_handle:", parts_with_handle)
+#     # print("parts_other:", parts_other)
+#     # print("handles:", handles)
 
-    _kwargs = {}
-    if len(handles) == 1:
-        handle = handles.pop()
-        handle = handle.deflate()
-        for part, (h, part_obj) in parts_with_handle.items():
-            # print("Create part:", part, "class:", part_obj.__class__, "handle:", h)
-            _kwargs[part] = part_obj.__class__.from_grib(h)
+#     _kwargs = {}
+#     if len(handles) == 1:
+#         handle = handles.pop()
+#         handle = handle.deflate()
+#         for part, (h, part_obj) in parts_with_handle.items():
+#             # print("Create part:", part, "class:", part_obj.__class__, "handle:", h)
+#             _kwargs[part] = part_obj.__class__.from_grib(h)
 
-        if field.data is not data:
-            _kwargs["data"] = data
+#         if field.data is not data:
+#             _kwargs["data"] = data
 
-    # print("_kwargs:", _kwargs)
+#     # print("_kwargs:", _kwargs)
 
-    if handles == 0:
-        if field.data is not data:
-            _kwargs["data"] = data
-    elif len(handles) > 1:
-        raise ValueError("Cannot deflate field with multiple handles")
+#     if handles == 0:
+#         if field.data is not data:
+#             _kwargs["data"] = data
+#     elif len(handles) > 1:
+#         raise ValueError("Cannot deflate field with multiple handles")
 
-    if _kwargs:
-        return Field.from_field(field, **_kwargs)
-    else:
-        return field
+#     if _kwargs:
+#         return Field.from_field(field, **_kwargs)
+#     else:
+#         return field

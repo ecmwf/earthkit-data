@@ -8,6 +8,22 @@
 #
 
 from .collector import GribContextCollector
+from .spec import GribSpec
+
+# class GribSpec:
+#     BUILDER = None
+
+#     def __init__(self, handle):
+#         self.handle = handle
+
+#     @cached_property
+#     def spec(self):
+#         if self.spec is None:
+#             self.spec = self.BUILDER.build(self.handle)
+#         return self.spec
+
+#     def __getattr__(self, name):
+#         return getattr(self.spec, name)
 
 
 class GribParameterBuilder:
@@ -48,3 +64,11 @@ class GribParameterContextCollector(GribContextCollector):
             # "units": param.units,
         }
         context.update(r)
+
+
+COLLECTOR = GribParameterContextCollector()
+
+
+class GribParameter(GribSpec):
+    BUILDER = GribParameterBuilder
+    COLLECTOR = GribParameterContextCollector

@@ -207,9 +207,9 @@ class FieldList(Index, FieldListCore):
         base = set()
         valid = set()
         for f in self:
-            if v := f.time.base_datetime:
+            if v := f.base_datetime:
                 base.add(v)
-            if v := f.time.valid_datetime:
+            if v := f.valid_datetime:
                 valid.add(v)
         return {"base_time": sorted(base), "valid_time": sorted(valid)}
 

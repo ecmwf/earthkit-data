@@ -35,7 +35,6 @@ class Time(SimpleSpec):
         "reference_datetime",
     )
     ALIASES = Aliases({"base_datetime": ("forecast_reference_time",), "step": ("forecast_period",)})
-
     INPUT_KEYS = ("date", "time", "step")
 
     @property
@@ -222,9 +221,9 @@ class SimpleTime(Time):
         }
 
     def get_grib_context(self, context) -> dict:
-        from .grib.time import GribTimeContextCollector
+        from .grib.time import COLLECTOR
 
-        GribTimeContextCollector(self).collect(context)
+        COLLECTOR.collect(self, context)
 
     # @classmethod
     # def from_grib(cls, handle):
