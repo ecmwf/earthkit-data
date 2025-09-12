@@ -620,27 +620,27 @@ class FieldListSparseTensor(FieldListTensor):
         if arr is not None and len(arr) > 0:
             xp = array_namespace(arr)
             arr_dtype = arr.dtype
-            arr_device = arr.device
+            # arr_device = arr.device
         else:
             # arr can be None if it was obtained from an empty field_list:FieldList through
             # field_list.to_array(...) method; in such case fall back to self.field_shape and index
             import earthkit.utils.array.namespace.numpy as xp
 
             arr_dtype = "f8"
-            arr_device = None
+            # arr_device = None
 
         # We want the holes to be handled by the same array backend as arr.
         # TODO: Check if in case numpy < 2.0.0 is a dependency, is it patched in earthkit to accept "device" kwarg?
-        nan_block = xp.full(shape=field_shape, fill_value=xp.nan, dtype=arr_dtype, device=arr_device)
+        nan_block = xp.full(shape=field_shape, fill_value=xp.nan, dtype=arr_dtype)  # , device=arr_device)
 
         # perform the embedding
-        arr_filled = xp.empty(shape=self.user_shape + field_shape, dtype=arr_dtype, device=arr_device)
+        arr_filled = xp.empty(shape=self.user_shape + field_shape, dtype=arr_dtype)  # , device=arr_device)
         user_coords = list(self.user_coords.values())
         user_dim_ranges = [range(len(coords)) for coords in user_coords]
         for idx, coords in zip(itertools.product(*user_dim_ranges), itertools.product(*user_coords)):
             i = self._user_coords_to_fl_idx.get(coords)
             block = arr[i] if i is not None else nan_block
-            arr_filled[*idx] = block
+            arr_filled[idx] = block
         return arr_filled
 
     def _to_array(self, method, index=None, **kwargs):
