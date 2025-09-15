@@ -92,7 +92,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
         ),
     ],
 )
-def test_xr_tensor_empty_slices(allow_holes, lazy_load, file, variables, sel_dicts, shapes):
+def test_xr_empty_slices(allow_holes, lazy_load, file, variables, sel_dicts, shapes):
     kwargs = dict(squeeze=False, allow_holes=allow_holes, lazy_load=lazy_load)
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))

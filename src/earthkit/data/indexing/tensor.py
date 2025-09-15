@@ -394,14 +394,7 @@ class FieldListTensor(TensorCore):
         self._full_shape = None
         self.flatten_values = None
 
-    def _prepare_tensor_data(self, method, index=None, **kwargs):
-        if method == "to_array":
-            source_as_array_method = self.source.to_array
-        elif method == "to_numpy":
-            source_as_array_method = self.source.to_numpy
-        else:
-            raise ValueError(f"Invalid method: {method}; expected: 'to_array', 'to_numpy'")
-
+    def _prepare_tensor_data(self, source_as_array_method, index=None, **kwargs):
         if index is not None:
             if all(i == slice(None, None, None) for i in index):
                 index = None
@@ -421,7 +414,7 @@ class FieldListTensor(TensorCore):
                 # Note: When doing `.sel(dim=coord)` on a corresponding xarray object,
                 # where `coord` is an item (not a 1-element list),
                 # * `self.user_shape` does not lose the dimension `dim`, even if `dim` is one of user dims
-                # * `field_shape` does loose the dimension `dim` if `dim` is a field dimension
+                # * `field_shape` does lose the dimension `dim` if `dim` is a field dimension
                 current_field_shape = tuple(
                     len(range(n)[_slice])
                     for n, _slice in zip(self.field_shape, index)
@@ -430,8 +423,8 @@ class FieldListTensor(TensorCore):
                 )
         return arr, current_field_shape
 
-    def _to_array(self, method, index=None, **kwargs):
-        arr, current_field_shape = self._prepare_tensor_data(method, index=index, **kwargs)
+    def _to_array(self, source_as_array_method, index=None, **kwargs):
+        arr, current_field_shape = self._prepare_tensor_data(source_as_array_method, index=index, **kwargs)
         if arr is None:
             import earthkit.utils.array.namespace.numpy as xp
 
@@ -440,11 +433,11 @@ class FieldListTensor(TensorCore):
 
     @flatten_arg
     def to_numpy(self, index=None, **kwargs):
-        return self._to_array("to_numpy", index=index, **kwargs)
+        return self._to_array(self.source.to_numpy, index=index, **kwargs)
 
     @flatten_arg
     def to_array(self, index=None, **kwargs):
-        return self._to_array("to_array", index=index, **kwargs)
+        return self._to_array(self.source.to_array, index=index, **kwargs)
 
     @flatten_arg
     def latitudes(self, **kwargs):
@@ -666,8 +659,8 @@ class FieldListSparseTensor(FieldListTensor):
             arr_filled[idx] = block
         return arr_filled
 
-    def _to_array(self, method, index=None, **kwargs):
-        arr, current_field_shape = self._prepare_tensor_data(method, index=index, **kwargs)
+    def _to_array(self, source_as_array_method, index=None, **kwargs):
+        arr, current_field_shape = self._prepare_tensor_data(source_as_array_method, index=index, **kwargs)
         return self._fill_holes(arr, current_field_shape)
 
     def _subset(self, indexes):
