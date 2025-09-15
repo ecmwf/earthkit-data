@@ -394,33 +394,57 @@ class FieldListTensor(TensorCore):
         self._full_shape = None
         self.flatten_values = None
 
-    @flatten_arg
-    def to_numpy(self, index=None, **kwargs):
+    def _prepare_tensor_data(self, method, index=None, **kwargs):
+        if method == "to_array":
+            source_as_array_method = self.source.to_array
+        elif method == "to_numpy":
+            source_as_array_method = self.source.to_numpy
+        else:
+            raise ValueError(f"Invalid method: {method}; expected: 'to_array', 'to_numpy'")
+
         if index is not None:
             if all(i == slice(None, None, None) for i in index):
                 index = None
 
         if index is None:
-            return self.source.to_numpy(**kwargs).reshape(*self.full_shape)
+            arr = source_as_array_method(**kwargs)
+            current_field_shape = self.field_shape
         else:
-            n = self.source.to_numpy(index=index, **kwargs)
-            shape = list(self._user_shape)
-            shape += list(n.shape[1:])
-            return n.reshape(*shape) if len(shape) > 0 else n
+            arr = source_as_array_method(index=index, **kwargs)
+            if arr is not None:
+                current_field_shape = tuple(arr.shape[1:])
+            else:
+                # `arr is None` when the tensor `self` was sliced in such a manner that either a 0-slice was produced
+                # or the slice contains "holes" only. In such case we must derive the field shape by applying
+                # `index` to field coordinates directly.
+                #
+                # Note: When doing `.sel(dim=coord)` on a corresponding xarray object,
+                # where `coord` is an item (not a 1-element list),
+                # * `self.user_shape` does not lose the dimension `dim`, even if `dim` is one of user dims
+                # * `field_shape` does loose the dimension `dim` if `dim` is a field dimension
+                current_field_shape = tuple(
+                    len(range(n)[_slice])
+                    for n, _slice in zip(self.field_shape, index)
+                    if not isinstance(_slice, int)
+                    # `_slice` can be either an `int` or a `slice`; if `int`, ignore it!
+                )
+        return arr, current_field_shape
+
+    def _to_array(self, method, index=None, **kwargs):
+        arr, current_field_shape = self._prepare_tensor_data(method, index=index, **kwargs)
+        if arr is None:
+            import earthkit.utils.array.namespace.numpy as xp
+
+            arr = xp.empty(shape=0, dtype="f8")
+        return arr.reshape(self.user_shape + current_field_shape)
+
+    @flatten_arg
+    def to_numpy(self, index=None, **kwargs):
+        return self._to_array("to_numpy", index=index, **kwargs)
 
     @flatten_arg
     def to_array(self, index=None, **kwargs):
-        if index is not None:
-            if all(i == slice(None, None, None) for i in index):
-                index = None
-
-        if index is None:
-            return self.source.to_array(**kwargs).reshape(*self.full_shape)
-        else:
-            n = self.source.to_array(index=index, **kwargs)
-            shape = list(self._user_shape)
-            shape += list(n.shape[1:])
-            return n.reshape(*shape) if len(shape) > 0 else n
+        return self._to_array("to_array", index=index, **kwargs)
 
     @flatten_arg
     def latitudes(self, **kwargs):
@@ -613,10 +637,6 @@ class FieldListSparseTensor(FieldListTensor):
         self._user_coords_to_fl_idx = None
 
     def _fill_holes(self, arr, field_shape):
-        # Note: If doing `.sel(dim=coord)` on a corresponding xarray object,
-        # where `coord` is an item (not a 1-element list),
-        # * `self.user_shape` does not loose the dimension `dim`, even if `dim` is one of user dims
-        # * `field_shape` does loose the dimension `dim` if `dim` is a field dimension
         if arr is not None and len(arr) > 0:
             xp = array_namespace(arr)
             arr_dtype = arr.dtype
@@ -633,7 +653,10 @@ class FieldListSparseTensor(FieldListTensor):
         # TODO: Check if in case numpy < 2.0.0 is a dependency, is it patched in earthkit to accept "device" kwarg?
         nan_block = xp.full(shape=field_shape, fill_value=xp.nan, dtype=arr_dtype)  # , device=arr_device)
 
-        # perform the embedding
+        # Fill in the holes in the tensor self with NaN's:
+        # do so by embedding appropriately the first axis of nd-array obtained from self.source.to_array
+        # into the axis=0 of the length prod(self._user_shape). The embedding should be derived from
+        # the mapping user_coords -> fl_idx (self._user_coords_to_fl_idx)
         arr_filled = xp.empty(shape=self.user_shape + field_shape, dtype=arr_dtype)  # , device=arr_device)
         user_coords = list(self.user_coords.values())
         user_dim_ranges = [range(len(coords)) for coords in user_coords]
@@ -644,47 +667,8 @@ class FieldListSparseTensor(FieldListTensor):
         return arr_filled
 
     def _to_array(self, method, index=None, **kwargs):
-        if index is not None:
-            if all(i == slice(None, None, None) for i in index):
-                index = None
-
-        # Fill in the holes in the tensor self with NaN's:
-        # do so by embedding appropriately the first axis of nd-array obtained from self.source.to_array
-        # into the axis=0 of the length prod(self._user_shape). The embedding should be derived from
-        # the mapping user_coords -> fl_idx (self._user_coords_to_fl_idx)
-        if method == "to_array":
-            source_as_array_method = self.source.to_array
-        elif method == "to_numpy":
-            source_as_array_method = self.source.to_numpy
-        else:
-            raise ValueError(f"Invalid method: {method}; expected: 'to_array', 'to_numpy'")
-
-        if index is None:
-            arr = source_as_array_method(**kwargs)
-            current_field_shape = self.field_shape
-        else:
-            arr = source_as_array_method(index=index, **kwargs)
-            if arr is not None:
-                current_field_shape = tuple(arr.shape[1:])
-            else:
-                # `arr is None` when the tensor `self` was sliced in such a manner that either a 0-slice was produced
-                # or the slice contains "holes" only. In such case we must derive the field shape by applying
-                # `index` to field coordinates directly.
-                current_field_shape = tuple(
-                    len(range(n)[_slice])
-                    for n, _slice in zip(self.field_shape, index)
-                    if not isinstance(_slice, int)
-                    # `_slice` can be either an `int` or a `slice`; if `int`, ignore it!
-                )
+        arr, current_field_shape = self._prepare_tensor_data(method, index=index, **kwargs)
         return self._fill_holes(arr, current_field_shape)
-
-    @flatten_arg
-    def to_numpy(self, index=None, **kwargs):
-        return self._to_array("to_numpy", index=index, **kwargs)
-
-    @flatten_arg
-    def to_array(self, index=None, **kwargs):
-        return self._to_array("to_array", index=index, **kwargs)
 
     def _subset(self, indexes):
         """Only allow subsetting for the user coordinates.
