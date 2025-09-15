@@ -394,16 +394,16 @@ class FieldListTensor(TensorCore):
         self._full_shape = None
         self.flatten_values = None
 
-    def _prepare_tensor_data(self, source_as_array_method, index=None, **kwargs):
+    def _prepare_tensor_data(self, source_as_array_method, index=None, array_backend=None, **kwargs):
         if index is not None:
             if all(i == slice(None, None, None) for i in index):
                 index = None
 
         if index is None:
-            arr = source_as_array_method(**kwargs)
+            arr = source_as_array_method(array_backend=array_backend, **kwargs)
             current_field_shape = self.field_shape
         else:
-            arr = source_as_array_method(index=index, **kwargs)
+            arr = source_as_array_method(index=index, array_backend=array_backend, **kwargs)
             if arr is not None:
                 current_field_shape = tuple(arr.shape[1:])
             else:
@@ -421,23 +421,30 @@ class FieldListTensor(TensorCore):
                     if not isinstance(_slice, int)
                     # `_slice` can be either an `int` or a `slice`; if `int`, ignore it!
                 )
+
+        if arr is None:
+            if array_backend is None:
+                array_backend = array_namespace()  # default array namespace
+            arr = array_backend.empty((0,))  # create an array of shape (0, ) with a backend default dtype
+
         return arr, current_field_shape
 
-    def _to_array(self, source_as_array_method, index=None, **kwargs):
-        arr, current_field_shape = self._prepare_tensor_data(source_as_array_method, index=index, **kwargs)
-        if arr is None:
-            import earthkit.utils.array.namespace.numpy as xp
-
-            arr = xp.empty(shape=0, dtype="f8")
-        return arr.reshape(self.user_shape + current_field_shape)
+    def _to_array(self, source_as_array_method, index=None, array_backend=None, **kwargs):
+        arr, current_field_shape = self._prepare_tensor_data(
+            source_as_array_method, index=index, array_backend=array_backend, **kwargs
+        )
+        return array_namespace(arr).reshape(arr, self.user_shape + current_field_shape)
 
     @flatten_arg
     def to_numpy(self, index=None, **kwargs):
-        return self._to_array(self.source.to_numpy, index=index, **kwargs)
+        from earthkit.utils.array import get_backend
+
+        numpy_backend = get_backend("numpy")
+        return self._to_array(self.source.to_numpy, index=index, array_backend=numpy_backend, **kwargs)
 
     @flatten_arg
-    def to_array(self, index=None, **kwargs):
-        return self._to_array(self.source.to_array, index=index, **kwargs)
+    def to_array(self, index=None, array_backend=None, **kwargs):
+        return self._to_array(self.source.to_array, index=index, array_backend=array_backend, **kwargs)
 
     @flatten_arg
     def latitudes(self, **kwargs):
@@ -630,27 +637,16 @@ class FieldListSparseTensor(FieldListTensor):
         self._user_coords_to_fl_idx = None
 
     def _fill_holes(self, arr, field_shape):
-        if arr is not None and len(arr) > 0:
-            xp = array_namespace(arr)
-            arr_dtype = arr.dtype
-            # arr_device = arr.device
-        else:
-            # arr can be None if it was obtained from an empty field_list:FieldList through
-            # field_list.to_array(...) method; in such case fall back to self.field_shape and index
-            import earthkit.utils.array.namespace.numpy as xp
-
-            arr_dtype = "f8"
-            # arr_device = None
-
         # We want the holes to be handled by the same array backend as arr.
         # TODO: Check if in case numpy < 2.0.0 is a dependency, is it patched in earthkit to accept "device" kwarg?
-        nan_block = xp.full(shape=field_shape, fill_value=xp.nan, dtype=arr_dtype)  # , device=arr_device)
+        xp = array_namespace(arr)
+        nan_block = xp.full(field_shape, fill_value=xp.nan, dtype=arr.dtype)  # , device=arr.device)
 
         # Fill in the holes in the tensor self with NaN's:
         # do so by embedding appropriately the first axis of nd-array obtained from self.source.to_array
         # into the axis=0 of the length prod(self._user_shape). The embedding should be derived from
         # the mapping user_coords -> fl_idx (self._user_coords_to_fl_idx)
-        arr_filled = xp.empty(shape=self.user_shape + field_shape, dtype=arr_dtype)  # , device=arr_device)
+        arr_filled = xp.empty(self.user_shape + field_shape, dtype=arr.dtype)  # , device=arr.device)
         user_coords = list(self.user_coords.values())
         user_dim_ranges = [range(len(coords)) for coords in user_coords]
         for idx, coords in zip(itertools.product(*user_dim_ranges), itertools.product(*user_coords)):
@@ -659,8 +655,10 @@ class FieldListSparseTensor(FieldListTensor):
             arr_filled[idx] = block
         return arr_filled
 
-    def _to_array(self, source_as_array_method, index=None, **kwargs):
-        arr, current_field_shape = self._prepare_tensor_data(source_as_array_method, index=index, **kwargs)
+    def _to_array(self, source_as_array_method, index=None, array_backend=None, **kwargs):
+        arr, current_field_shape = self._prepare_tensor_data(
+            source_as_array_method, index=index, array_backend=array_backend, **kwargs
+        )
         return self._fill_holes(arr, current_field_shape)
 
     def _subset(self, indexes):
