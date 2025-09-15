@@ -268,7 +268,9 @@ class SimpleData(Data):
             raise ValueError(f"Data shape mismatch: {self.values.shape} (data) != {owner.shape} (field)")
 
     def get_grib_context(self, context):
-        pass
+        from .grib.data import COLLECTOR
+
+        COLLECTOR.collect_keys(self, context)
 
 
 class ArrayCache:

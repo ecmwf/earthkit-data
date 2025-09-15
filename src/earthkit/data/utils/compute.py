@@ -88,7 +88,7 @@ def wrap_maths(cls):
 
 def apply_ufunc(func, *args):
     from earthkit.data.core.fieldlist import Field
-    from earthkit.data.core.fieldlist import FieldList
+    from earthkit.data.core.fieldlist import FieldListCore
 
     x = [get_wrapper(a) for a in args]
 
@@ -100,7 +100,7 @@ def apply_ufunc(func, *args):
     else:
         num = 0
         for a in x:
-            if isinstance(a, FieldList):
+            if isinstance(a, FieldListCore):
                 n = len(a)
                 if n > num:
                     num = n
@@ -111,7 +111,7 @@ def apply_ufunc(func, *args):
         for a in x:
             if isinstance(a, Field):
                 d = a
-                d = FieldList.from_fields([d])
+                d = FieldListCore.from_fields([d])
                 r = get_method("loop").apply_ufunc(func, d, *x)
                 assert len(r) == 1
                 return r
@@ -136,15 +136,15 @@ class LoopCompute(Compute):
     @staticmethod
     def create_fieldlist(ref, x):
         from earthkit.data.core.fieldlist import Field
-        from earthkit.data.core.fieldlist import FieldList
+        from earthkit.data.core.fieldlist import FieldListCore
 
         x = get_wrapper(x)
 
-        if isinstance(x, FieldList):
+        if isinstance(x, FieldListCore):
             return x
 
         if isinstance(x, Field):
-            return FieldList.from_fields([x])
+            return FieldListCore.from_fields([x])
         elif hasattr(x, "values"):
             # from earthkit.data.sources.array_list import from_array
             # from earthkit.data.utils.metadata.dict import UserMetadata
@@ -155,8 +155,14 @@ class LoopCompute(Compute):
             xp = array_namespace(x_val)
             x_val = xp.asarray(x_val)
 
-            def _make_fieldlist(values):
-                return FieldList.from_fields(Field.from_dict({"values": values}))
+            def _make_fieldlist(values, n=1):
+                if n == 1:
+                    return FieldListCore.from_fields(Field.from_dict({"values": values}))
+                else:
+                    _f = []
+                    for v in values:
+                        _f.append(Field.from_dict({"values": v}))
+                    return FieldListCore.from_fields(_f)
 
             # single value
             if x_val.size == 1:
@@ -169,13 +175,13 @@ class LoopCompute(Compute):
                 if len(x_shape) > 1:
                     x_field_shape = x_shape[1:]
                     if math.prod(ref_field_shape) == math.prod(x_field_shape):
-                        raise
+                        return _make_fieldlist(x_val, n=x_shape[0])
                         # return from_array(x_val, [UserMetadata()] * x_shape[0])
                 elif math.prod(ref_field_shape) == math.prod(x_shape):
-                    raise
+                    return _make_fieldlist(x_val)
                     # return from_array([x_val], [UserMetadata()])
                 elif x_shape[0] == len(ref):
-                    raise
+                    return _make_fieldlist(x_val, n=x_shape[0])
                     # return from_array(x_val, [UserMetadata()] * x_shape[0])
 
             assumed_ref_shape = tuple(len(ref), **ref_field_shape)

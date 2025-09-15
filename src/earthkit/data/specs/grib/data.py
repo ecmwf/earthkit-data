@@ -10,6 +10,20 @@
 
 from earthkit.data.specs.data import SimpleData
 
+from .collector import GribContextCollector
+
+
+class GribDataContextCollector(GribContextCollector):
+    @staticmethod
+    def collect_keys(spec, context):
+        r = {
+            "values": spec.values,
+        }
+        context.update(r)
+
+
+COLLECTOR = GribDataContextCollector()
+
 
 class GribData(SimpleData):
     def __init__(self, handle):
@@ -29,3 +43,6 @@ class GribData(SimpleData):
 
     def check(self, owner):
         pass
+
+    def get_grib_context(self, context):
+        COLLECTOR.collect_keys(self, context)

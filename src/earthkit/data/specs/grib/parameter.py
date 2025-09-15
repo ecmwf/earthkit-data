@@ -71,4 +71,4 @@ COLLECTOR = GribParameterContextCollector()
 
 class GribParameter(GribSpec):
     BUILDER = GribParameterBuilder
-    COLLECTOR = GribParameterContextCollector
+    COLLECTOR = COLLECTOR

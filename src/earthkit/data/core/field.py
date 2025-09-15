@@ -47,8 +47,7 @@ LS_KEYS = [
 ]
 
 
-def add_member_properties(cls):
-
+def member_properties(cls):
     members = {
         cls._DATA_NAME: Data,
         cls._TIME_NAME: Time,
@@ -61,7 +60,7 @@ def add_member_properties(cls):
 
     member_keys = []
     for member, module in members.items():
-        print(f"member: {member}, module: {module}")
+        # print(f"member: {member}, module: {module}")
         for key in module.ALL_KEYS:
             if getattr(cls, key, None) is None:
 
@@ -77,13 +76,13 @@ def add_member_properties(cls):
                     property(fget=_make(key, member), doc=f"Return the {key}."),
                 )
                 member_keys.append(key)
-                print(f"Add property: {key} -> {member}")
+                # print(f"  add property: {key} -> {member}")
 
     cls._MEMBER_KEYS = set(member_keys)
     return cls
 
 
-@add_member_properties
+@member_properties
 @wrap_maths
 class Field(Base):
     """A class to represent a field in Earthkit.
@@ -130,6 +129,7 @@ class Field(Base):
     _REALISATION_NAME = "realisation"
     _LABELS_NAME = "labels"
     _MEMBER_KEYS = set()
+    _DUMP_ORDER = ["parameter", "time", "vertical", "realisation", "geography"]
 
     def __init__(
         self,
@@ -163,44 +163,6 @@ class Field(Base):
         }
 
         self._check()
-
-    def _set_private_data(self, name, data):
-        self._private[name] = data
-
-    def get_private_data(self, name):
-        return self._private.get(name)
-
-    def _check(self):
-        for m in self._members.values():
-            m.check(self)
-
-    def free(self):
-        self.data = self.data.Offloader(self.data)
-
-    def _get_grib_context(self, context):
-        grib = self.get_private_data("grib")
-        if grib is not None:
-            context["handle"] = grib.handle
-
-        for m in self._members.values():
-            m.get_grib_context(context)
-
-        print("collected context", context)
-
-    def namespace(self, name=None):
-        if name is all or name is True:
-            name = None
-
-        result = {}
-        for m in self._members.values():
-            m.namespace(self, name, result)
-
-        if name is not None and self._private:
-            for _, v in self._private.items():
-                if hasattr(v, "namespace"):
-                    v.namespace(self, name, result)
-
-        return result
 
     @classmethod
     def from_field(
@@ -312,20 +274,17 @@ class Field(Base):
             labels=labels,
         )
 
-    @property
-    def labels(self):
-        r""":obj:`Labels`: Return the labels of the field."""
-        return self._labels
+    @classmethod
+    def from_array(cls, array):
+        return cls.from_dict({"values": array})
 
     @property
     def array_backend(self):
         r""":obj:`ArrayBackend`: Return the array backend of the field."""
         return get_backend(self.values)
 
-    # @property
-    # def shape(self):
-    #     r"""tuple: Return the shape of the field."""
-    #     return self._geography.shape
+    def free(self):
+        self.data = self.data.Offloader(self.data)
 
     @property
     def values(self):
@@ -391,11 +350,8 @@ class Field(Base):
         else:
             return reshape(v, self.shape)
 
-    def set_values(self, array):
-        data = self._data.set_values(array)
-        return Field.from_field(self, data=data)
-
     def _get_member(self, key):
+        """Return the member name, member object and key name for the specified key."""
         if "." in key:
             member, name = key.split(".", 1)
             return member, self._members.get(member), name
@@ -764,12 +720,15 @@ class Field(Base):
                 s = member.set(**v)
                 r[member_name] = s
 
-            print("set() result=", r)
             if r:
                 return Field.from_field(self, **r)
             else:
                 raise ValueError("No valid keys to set in the field.")
         return None
+
+    def set_values(self, array):
+        data = self._data.set_values(array)
+        return Field.from_field(self, data=data)
 
     def set_labels(self, *args, **kwargs):
         r"""Set labels for the field.
@@ -853,6 +812,56 @@ class Field(Base):
         """Double dispatch to the encoder"""
         return encoder._encode_field(self, **kwargs)
 
+    def to_field(self, array=True):
+        """Return the field itself."""
+        return self
+
+    def to_array_field(self, array_backend=None, flatten=False, dtype=None):
+        grib = self.get_private_data("grib")
+        if grib is not None:
+            return grib.new_array_field(self, array_backend=array_backend, flatten=flatten, dtype=dtype)
+        return self
+
+    def to_fieldlist(self, fields=None):
+        if fields is None:
+            fields = [self]
+        return SimpleFieldList.from_fields(fields)
+
+    def to_xarray(self, *args, **kwargs):
+        """Convert the Field into an Xarray Dataset.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments passed to :obj:`FieldList.to_xarray`.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`FieldList.to_xarray`.
+
+        Returns
+        -------
+        Xarray Dataset
+
+        """
+        return self.to_fieldlist().to_xarray(*args, **kwargs)
+
+    def to_pandas(self, *args, **kwargs):
+        pass
+
+    def namespace(self, name=None):
+        if name is all or name is True:
+            name = None
+
+        result = {}
+        for m in self._members.values():
+            m.namespace(self, name, result)
+
+        if name is not None and self._private:
+            for _, v in self._private.items():
+                if hasattr(v, "namespace"):
+                    v.namespace(self, name, result)
+
+        return result
+
     def dump(self, namespace=all, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
 
@@ -886,10 +895,8 @@ class Field(Base):
 
         d = self.namespace(namespace)
 
-        order = ["parameter", "time", "vertical", "realisation", "geography"]
-
         d1 = {}
-        for k in order:
+        for k in self._DUMP_ORDER:
             if k in d:
                 d1[k] = d.pop(k)
 
@@ -909,10 +916,6 @@ class Field(Base):
                 )
 
         return format_namespace_dump(r, selected="parameter", details=self.__class__.__name__, **kwargs)
-
-    def to_field(self, array=True):
-        """Return the field itself."""
-        return self
 
     @property
     def default_ls_keys(self):
@@ -948,92 +951,23 @@ class Field(Base):
         r"""Generate a summary of the Field."""
         return self.to_fieldlist().describe(*args, **kwargs)
 
-    def load(self):
-        """Load the field data."""
-        data = self.data.load()
-        if data is self.data:
-            return self
+    def _set_private_data(self, name, data):
+        self._private[name] = data
 
-        if self.data:
-            self.data.load()
-        if self.time:
-            self.time.load()
-        if self.parameter:
-            self.parameter.load()
-        if self.geography:
-            self.geography.load()
-        if self.vertical:
-            self.vertical.load()
-        if self.labels:
-            self.labels.load()
+    def get_private_data(self, name):
+        return self._private.get(name)
 
-    def to_array_field(self, array_backend=None, flatten=False, dtype=None):
+    def _check(self):
+        for m in self._members.values():
+            m.check(self)
+
+    def _get_grib_context(self, context):
         grib = self.get_private_data("grib")
         if grib is not None:
-            return grib.new_array_field(self, array_backend=array_backend, flatten=flatten, dtype=dtype)
-        return self
+            context["handle"] = grib.handle
 
-    # def copy(self, *, values=None, flatten=False, dtype=None, array_backend=None):
-    #     r"""Create a new :class:`ArrayField` by copying the values and metadata.
-
-    #     Parameters
-    #     ----------
-    #     values: array-like or None
-    #         The values to be stored in the new :class:`Field`. When it is ``None`` the values
-    #         extracted from the original field by using :obj:`to_array` with ``flatten``, ``dtype``
-    #         and ``array_backend`` and copied to the new field.
-    #     flatten: bool
-    #         Control the shape of the values when they are extracted from the original field.
-    #         When ``True``, flatten the array, otherwise the field's shape is kept. Only used when
-    #         ``values`` is not provided.
-    #     dtype: str, array.dtype or None
-    #         Control the typecode or data-type of the values when they are extracted from
-    #         the original field. If :obj:`None`, the default type used by the underlying
-    #         data accessor is used. For GRIB it is ``float64``. Only used when  ``values``
-    #         is not provided.
-    #     array_backend: str, module or None
-    #         Control the array backend of the values when they are extracted from
-    #         the original field. If :obj:`None`, the underlying array format
-    #         of the field is used. Only used when ``values`` is not provided.
-    #     metadata: :class:`Metadata` or None
-    #         The metadata to be stored in the new :class:`Field`. When it is :obj:`None`
-    #         a copy of the metadata of the original field is used.
-
-    #     Returns
-    #     -------
-    #     :class:`ArrayField`
-    #     """
-    #     if values is not None:
-    #         if array_backend is not None:
-    #             from earthkit.utils.array import convert_array
-
-    #             values = convert_array(values, target_backend=array_backend)
-
-    #     else:
-    #         values = self.data.get_values(
-    #             flatten=flatten,
-    #             dtype=dtype,
-    #         )
-
-    #     data = ArrayData(values)
-
-    #     for part in ["time", "parameter", "geography", "vertical", "labels"]:
-    #         part_obj = getattr(self, part)
-    #         if hasattr(part_obj, "handle"):
-    #             part_obj = part_obj.copy()
-    #         else:
-    #             part_obj = part_obj.__class__(part_obj)
-
-    #         setattr(data, part, part_obj)
-
-    #     return Field(
-    #         data=data,
-    #         time=self.time,
-    #         parameter=self.parameter,
-    #         geography=self.geography,
-    #         vertical=self.vertical,
-    #         labels=self.labels,
-    #     )
+        for m in self._members.values():
+            m.get_grib_context(context)
 
     @normalize("valid_datetime", "date")
     @normalize("base_datetime", "date")
@@ -1044,11 +978,6 @@ class Field(Base):
     def normalise_key_values(**kwargs):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""
         return kwargs
-
-    def to_fieldlist(self, fields=None):
-        if fields is None:
-            fields = [self]
-        return SimpleFieldList.from_fields(fields)
 
     def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None, index=None):
         r"""Return the values and/or the geographical coordinates for each grid point.
@@ -1273,26 +1202,6 @@ class Field(Base):
         """
         return {"base_time": self._time.base_datetime, "valid_time": self._time.valid_datetime}
 
-    def to_xarray(self, *args, **kwargs):
-        """Convert the Field into an Xarray Dataset.
-
-        Parameters
-        ----------
-        *args: tuple
-            Positional arguments passed to :obj:`FieldList.to_xarray`.
-        **kwargs: dict, optional
-            Other keyword arguments passed to :obj:`FieldList.to_xarray`.
-
-        Returns
-        -------
-        Xarray Dataset
-
-        """
-        return self.to_fieldlist().to_xarray(*args, **kwargs)
-
-    def to_pandas(self, *args, **kwargs):
-        pass
-
     def sel(self, *args, **kwargs):
         pass
 
@@ -1308,12 +1217,12 @@ class Field(Base):
         return r
 
     def _binary_op(self, oper, y):
-        from earthkit.data.core.fieldlist import FieldList
+        from earthkit.data.core.fieldlist import FieldListCore
         from earthkit.data.wrappers import get_wrapper
 
         y = get_wrapper(y)
-        if isinstance(y, FieldList):
-            x = FieldList.from_fields([self])
+        if isinstance(y, FieldListCore):
+            x = FieldListCore.from_fields([self])
             return x._binary_op(oper, y)
 
         vx = self.values
