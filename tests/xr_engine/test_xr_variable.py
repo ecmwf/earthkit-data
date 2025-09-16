@@ -24,6 +24,8 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "_kwargs,dims,coords",
     [
@@ -31,13 +33,15 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ({"fixed_dims": ["param", "valid_time"]}, {"param": 1, "valid_time": 732}, {"param": ["2t"]}),
     ],
 )
-def test_xr_engine_mono_variable_1(_kwargs, dims, coords):
+def test_xr_engine_mono_variable_1(allow_holes, lazy_load, _kwargs, dims, coords):
     ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"))
 
     ds = ds_in.to_xarray(
         mono_variable=True,
         chunks={"valid_time": 1},
         add_earthkit_attrs=False,
+        allow_holes=allow_holes,
+        lazy_load=lazy_load,
         **_kwargs,
     )
 
@@ -51,6 +55,8 @@ def test_xr_engine_mono_variable_1(_kwargs, dims, coords):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "_kwargs,dims,coords",
     [
@@ -58,13 +64,15 @@ def test_xr_engine_mono_variable_1(_kwargs, dims, coords):
         ({"fixed_dims": ["param", "valid_time"]}, {"param": 2, "valid_time": 732}, {"param": ["2d", "2t"]}),
     ],
 )
-def test_xr_engine_mono_variable_2(_kwargs, dims, coords):
+def test_xr_engine_mono_variable_2(allow_holes, lazy_load, _kwargs, dims, coords):
     ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_td2_1_year.grib"))
 
     ds = ds_in.to_xarray(
         mono_variable=True,
         chunks={"valid_time": 1},
         add_earthkit_attrs=False,
+        allow_holes=allow_holes,
+        lazy_load=lazy_load,
         **_kwargs,
     )
 

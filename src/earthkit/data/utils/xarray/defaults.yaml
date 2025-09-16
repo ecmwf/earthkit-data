@@ -42,6 +42,7 @@ release_source: false
 direct_backend: false
 strict: false
 errors: raise
+allow_holes: false
 
 dim_roles:
   number: number

@@ -25,6 +25,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize(
     "kwargs,dims,step_units",
     [
@@ -150,10 +151,10 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
     ],
 )
-def test_xr_time_basic(kwargs, dims, step_units):
+def test_xr_time_basic(allow_holes, kwargs, dims, step_units):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, **kwargs)
     compare_dims(ds, dims, order_ref_var="t")
 
     if step_units is not None:
@@ -163,6 +164,7 @@ def test_xr_time_basic(kwargs, dims, step_units):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize(
     "kwargs,dims,step_units",
     [
@@ -232,13 +234,13 @@ def test_xr_time_basic(kwargs, dims, step_units):
         ),
     ],
 )
-def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims, step_units):
+def test_xr_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims, step_units):
     ds_ek = from_source(
         "url",
         earthkit_remote_test_data_file("xr_engine/date/jma_seasonal_fc_ref_time_per_member.grib"),
     )
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, **kwargs)
     compare_dims(ds, dims, order_ref_var="2t")
 
     if step_units is not None:
@@ -248,6 +250,7 @@ def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims, step_units):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize(
     "kwargs,dims,step_units",
     [
@@ -377,13 +380,13 @@ def test_xr_time_seasonal_monthly_indexing_date(kwargs, dims, step_units):
         ),
     ],
 )
-def test_xr_time_seasonal_monthly_simple(kwargs, dims, step_units):
+def test_xr_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_units):
     ds_ek = from_source(
         "url",
         earthkit_remote_test_data_file("xr_engine/date/seasonal_monthly.grib"),
     )
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, **kwargs)
     compare_dims(ds, dims, order_ref_var="2t")
 
     if step_units is not None:
@@ -393,6 +396,7 @@ def test_xr_time_seasonal_monthly_simple(kwargs, dims, step_units):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize(
     "kwargs,dims,step_units,coords",
     [
@@ -488,12 +492,16 @@ def test_xr_time_seasonal_monthly_simple(kwargs, dims, step_units):
         ),
     ],
 )
-def test_xr_valid_time_coord(kwargs, dims, step_units, coords):
+def test_xr_valid_time_coord(allow_holes, kwargs, dims, step_units, coords):
+    if allow_holes and kwargs["add_valid_time_coord"]:
+        # not yet implemented
+        return
+
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib")).sel(
         date=20240603, time=[0, 1200]
     )
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, **kwargs)
 
     compare_dims(ds, dims, order_ref_var="t")
 
@@ -509,6 +517,8 @@ def test_xr_valid_time_coord(kwargs, dims, step_units, coords):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "kwargs,dims,step_units",
     [
@@ -533,10 +543,10 @@ def test_xr_valid_time_coord(kwargs, dims, step_units, coords):
         ),
     ],
 )
-def test_xr_time_step_range_1(kwargs, dims, step_units):
+def test_xr_time_step_range_1(allow_holes, lazy_load, kwargs, dims, step_units):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1"))
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     compare_dims(ds, dims, order_ref_var="10fg6")
 
     if step_units is not None:
@@ -546,6 +556,8 @@ def test_xr_time_step_range_1(kwargs, dims, step_units):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "kwargs,dims,step_units",
     [
@@ -564,13 +576,35 @@ def test_xr_time_step_range_1(kwargs, dims, step_units):
         ),
     ],
 )
-def test_xr_time_step_range_2(kwargs, dims, step_units):
+def test_xr_time_step_range_2(allow_holes, lazy_load, kwargs, dims, step_units):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/lsp_step_range.grib2"))
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     compare_dims(ds, dims, order_ref_var="lsp")
 
     if step_units is not None:
         assert (
             ds[step_units[0]].attrs["units"] == step_units[1]
         ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_time_forecast_per_month(allow_holes, lazy_load):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib"))
+
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, time_dim_mode="valid_time")
+
+    ref = []
+    start = np.datetime64("1979-01-01T06:00:00", "ns")
+    end = np.datetime64("1979-03-01T00:00:00", "ns")
+    while start <= end:
+        ref.append(np.datetime64(start))
+        start += np.timedelta64(6, "h")
+
+    dims = {
+        "valid_time": ref,
+    }
+
+    compare_dims(ds, dims, order_ref_var="avg_dis")

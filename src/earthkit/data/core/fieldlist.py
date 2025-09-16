@@ -1101,6 +1101,11 @@ class FieldList(Index):
             for i, f in enumerate(it, start=1):
                 r[i] = _vals(f)
             return r
+        else:
+            # In this case no information about a field shape, dtype, array backend can be derived.
+            # This must be managed by the caller: see e.g.
+            # src/earthkit/data/indexing/tensor.py:FieldListSparseTensor.to_array
+            return None
 
     def to_numpy(self, **kwargs):
         r"""Return all the fields' values as an ndarray. It is formed as the array of the
