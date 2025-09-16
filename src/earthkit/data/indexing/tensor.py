@@ -426,9 +426,7 @@ class FieldListTensor(TensorCore):
         if arr is None:
             if array_backend is None:
                 array_backend = array_namespace()  # default array namespace
-            arr = array_backend.empty(
-                (0,), dtype=dtype
-            )  # create an array of shape (0, ) with a backend default dtype
+            arr = array_backend.empty((0,), dtype=dtype)  # create an array of shape (0, )
 
         return arr, current_field_shape
 
