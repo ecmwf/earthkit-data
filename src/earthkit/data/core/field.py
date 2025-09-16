@@ -1233,116 +1233,26 @@ class Field(Base):
 
     def __getstate__(self):
         state = {}
-        # print("serialise!!")
-        if hasattr(self, "raw") and self.raw and hasattr(self.raw, "handle"):
-            # print("serialise handle")
-            handle = self.raw.handle
-            state["handle"] = handle
-            # print(".  -> done")
+        state["data"] = self._data
+        state["geography"] = self._geography
+        state["labels"] = self._labels
+        state["parameter"] = self._parameter
+        state["realisation"] = self._realisation
+        state["time"] = self._time
+        state["vertical"] = self._vertical
+        state["private"] = self._private
         return state
 
     def __setstate__(self, state):
-        # print("deserialise!!")
-        if "handle" in state:
-            handle = state["handle"]
-            # print("deserialise handle")
-            f = Field.from_grib(handle)
-            # print(".  ->", f)
-            self.__init__(
-                data=f.data,
-                time=f.time,
-                parameter=f.parameter,
-                geography=f.geography,
-                vertical=f.vertical,
-                labels=f.labels,
-                raw=f.raw,
-            )
+        self.__init__(
+            data=state["data"],
+            geography=state["geography"],
+            labels=state["labels"],
+            parameter=state["parameter"],
+            realisation=state["realisation"],
+            time=state["time"],
+            vertical=state["vertical"],
+        )
 
-
-# class GribFieldEncoderInput:
-#     def __init__(self, field):
-#         self.field = field
-
-#     @property
-#     def handle(self):
-#         try:
-#             return self.field.raw.handle
-#         except Exception:
-#             return None
-
-#     def data(self, altered=True):
-#         values = None
-#         md = {}
-#         if not hasattr(self.field.data, "handle"):
-#             values = self.field.data.values
-
-#         for part in ["parameter", "vertical"]:
-#             part = getattr(self.field, part)
-#             md.update(part._to_grib(altered=True))
-#         return values, md
-
-
-# def grib_handle(field):
-#     for part in ["time", "parameter", "geography", "vertical", "labels"]:
-#         part_obj = getattr(field, part)
-#         if hasattr(part_obj, "handle"):
-#             handle = getattr(part_obj, "handle", None)
-#             if handle:
-#                 return handle
-
-#     return None
-
-
-# def deflate(field, flatten=False, dtype=None, array_backend=None):
-#     if hasattr(field.data, "_handle"):
-#         values = field.data.to_array(
-#             field.shape,  # type: ignore
-#             flatten=flatten,
-#             dtype=dtype,
-#             array_backend=array_backend,
-#         )
-#         data = ArrayData(values)
-#     else:
-#         data = field.data
-
-#     # print("data:", data)
-
-#     parts_with_handle = {}
-#     parts_other = {}
-#     handles = set()
-#     for part in ["time", "parameter", "geography", "vertical", "labels"]:
-#         part_obj = getattr(field, "_" + part)
-#         if hasattr(part_obj, "_handle"):
-#             handle = getattr(part_obj, "_handle", None)
-#             parts_with_handle[part] = (handle, part_obj)
-#             handles.add(handle)
-#         else:
-#             parts_other[part] = part_obj
-
-#     # print("parts_with_handle:", parts_with_handle)
-#     # print("parts_other:", parts_other)
-#     # print("handles:", handles)
-
-#     _kwargs = {}
-#     if len(handles) == 1:
-#         handle = handles.pop()
-#         handle = handle.deflate()
-#         for part, (h, part_obj) in parts_with_handle.items():
-#             # print("Create part:", part, "class:", part_obj.__class__, "handle:", h)
-#             _kwargs[part] = part_obj.__class__.from_grib(h)
-
-#         if field.data is not data:
-#             _kwargs["data"] = data
-
-#     # print("_kwargs:", _kwargs)
-
-#     if handles == 0:
-#         if field.data is not data:
-#             _kwargs["data"] = data
-#     elif len(handles) > 1:
-#         raise ValueError("Cannot deflate field with multiple handles")
-
-#     if _kwargs:
-#         return Field.from_field(field, **_kwargs)
-#     else:
-#         return field
+        private = state.get("private", {})
+        self._private = private

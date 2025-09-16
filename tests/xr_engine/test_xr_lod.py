@@ -77,10 +77,11 @@ def xr_lod_forecast():
     return ds
 
 
-def test_xr_engine_lod_latlon(xr_lod_latlon):
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_engine_lod_latlon(allow_holes, lazy_load, xr_lod_latlon):
     ds_in = xr_lod_latlon
-
-    ds = ds_in.to_xarray(time_dim_mode="raw")
+    ds = ds_in.to_xarray(time_dim_mode="raw", allow_holes=allow_holes, lazy_load=lazy_load)
 
     assert ds is not None
     assert ds["t"].shape == (2, 3, 2)
@@ -89,9 +90,11 @@ def test_xr_engine_lod_latlon(xr_lod_latlon):
     assert np.allclose(ds["longitude"].values, np.array([20.0, 40.0]))
 
 
-def test_xr_engine_lod_nongeo(xr_lod_nongeo):
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_engine_lod_nongeo(allow_holes, lazy_load, xr_lod_nongeo):
     ds_in = xr_lod_nongeo
-    ds = ds_in.to_xarray(time_dim_mode="raw")
+    ds = ds_in.to_xarray(time_dim_mode="raw", allow_holes=allow_holes, lazy_load=lazy_load)
 
     assert ds is not None
     assert ds["t"].shape == (2, 6)
@@ -107,9 +110,11 @@ def test_xr_engine_lod_nongeo(xr_lod_nongeo):
     assert np.allclose(ds["u"].values, ref)
 
 
-def test_xr_engine_lod_forecast(xr_lod_forecast):
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_engine_lod_forecast(allow_holes, lazy_load, xr_lod_forecast):
     ds_in = xr_lod_forecast
-    ds = ds_in.to_xarray(time_dim_mode="forecast")
+    ds = ds_in.to_xarray(time_dim_mode="forecast", allow_holes=allow_holes, lazy_load=lazy_load)
 
     assert ds is not None
     assert ds["t"].shape == (2, 3, 2)

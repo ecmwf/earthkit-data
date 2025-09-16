@@ -27,12 +27,12 @@ COLLECTOR = GribDataContextCollector()
 
 class GribData(SimpleData):
     def __init__(self, handle):
-        self._handle = handle
+        self.handle = handle
 
     def get_values(self, dtype=None, copy=True, index=None):
         """Get the values stored in the field as an array."""
 
-        v = self._handle.get_values(dtype=dtype)
+        v = self.handle.get_values(dtype=dtype)
         if index is not None:
             v = v[index]
         if dtype is not None:
@@ -46,3 +46,11 @@ class GribData(SimpleData):
 
     def get_grib_context(self, context):
         COLLECTOR.collect_keys(self, context)
+
+    def __getstate__(self):
+        state = {}
+        state["handle"] = self.handle
+        return state
+
+    def __setstate__(self, state):
+        self.__init__(state["handle"])

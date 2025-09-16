@@ -362,6 +362,14 @@ class ArrayData(SimpleData):
     # def raw_values_shape(self):
     #     return self._values.shape
 
+    def __getstate__(self):
+        state = {}
+        state["_values"] = self._values
+        return state
+
+    def __setstate__(self, state):
+        self.__init__(state["_values"])
+
 
 class OffLoader:
     def __init__(self, field):

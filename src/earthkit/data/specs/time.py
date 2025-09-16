@@ -226,14 +226,6 @@ class SimpleTime(Time):
         COLLECTOR.collect(self, context)
 
     # @classmethod
-    # def from_grib(cls, handle):
-    #     from .grib.time import from_grib
-
-    #     spec = cls.from_dict(from_grib(handle))
-    #     setattr(spec, "_handle", handle)
-    #     return spec
-
-    # @classmethod
     # def from_xarray(cls, owner, selection):
     #     from .xarray.time import from_xarray
 
@@ -284,54 +276,27 @@ class SimpleTime(Time):
     def check(self, owner):
         pass
 
+    def __getstate__(self):
+        state = {}
 
-# class Analysis(Time):
-#     """A time specification for analysis data."""
+        state["_base_datetime"] = self._base_datetime
+        state["_hcast_datetime"] = self._hcast_datetime
+        state["_step"] = self._step
+        state["_time_span"] = self._time_span
+        state["_indexing_datetime"] = self._indexing_datetime
+        state["_reference_datetime"] = self._reference_datetime
+        return state
 
-#     def __init__(self, valid_datetime=None, time_span=None):
-#         if valid_datetime is None:
-#             raise ValueError("valid_datetime cannot be None")
+    def __setstate__(self, state):
+        self.__init__(
+            base_datetime=state["_base_datetime"],
+            hcast_datetime=state["_hcast_datetime"],
+            step=state["_step"],
+            time_span=state["_time_span"],
+            indexing_datetime=state["_indexing_datetime"],
+            reference_datetime=state["_reference_datetime"],
+        )
 
-#         self._base_datetime = to_datetime(valid_datetime)
-#         self._time_span = ZERO_TIMEDELTA if time_span is None else to_timedelta(time_span)
-
-#     @classmethod
-#     def from_valid_datetime(cls, valid_datetime, step_range=None):
-#         """Create an AnalysisTimeSpec object from a valid datetime."""
-#         return cls(valid_datetime, step_range=step_range)
-
-#     @property
-#     def valid_datetime(self):
-#         """Return the valid datetime of the time object."""
-#         return self._base_datetime
-
-
-# class Forecast(Time):
-#     """A time specification for forecast data."""
-
-#     # Do not call this directly, use one of the from_* methods
-#     def __init__(
-#         self, base_datetime=None, step=None, step_range=None, indexing_datetime=None, reference_datetime=None
-#     ):
-#         if base_datetime is None:
-#             raise ValueError("base_datetime cannot be None")
-
-#         self._base_datetime = to_datetime(base_datetime)
-#         self._step = to_timedelta(step) if step is not None else to_timedelta(0)
-#         self._step_range = to_timedelta(step_range) if step_range is not None else to_timedelta(0)
-
-#         if indexing_datetime is not None:
-#             self._indexing_datetime = to_datetime(indexing_datetime)
-
-#         if reference_datetime is not None:
-#             self._reference_datetime = to_datetime(reference_datetime)
-
-
-# class Hindcast(Forecast):
-#     """A time specification for hindcast data."""
-
-#     def __init__(self, base_datetime=None, step=None, step_range=None, h_datetime=None):
-#         super().__init__(base_datetime, step, step_range)
 
 VALID_DATETIME_METHOD = "from_valid_datetime"
 VALID_DATETIME_AND_STEP_METHOD = "from_valid_datetime_and_step"

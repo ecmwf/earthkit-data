@@ -231,6 +231,14 @@ class Spec(metaclass=ABCMeta):
     def get_grib_context(self, context):
         pass
 
+    @abstractmethod
+    def __getstate__(self):
+        pass
+
+    @abstractmethod
+    def __setstate__(self, state):
+        pass
+
 
 class SimpleSpec(Spec):
     _private = None

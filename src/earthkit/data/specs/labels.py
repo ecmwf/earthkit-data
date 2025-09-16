@@ -152,8 +152,8 @@ class SimpleLabels(dict, Labels):
         d.update(*args, **kwargs)
         return SimpleLabels(d)
 
-    def __setitem__(self, key, value):
-        raise TypeError("SimpleLabels object does not support item assignment")
+    # def __setitem__(self, key, value):
+    #     raise TypeError("SimpleLabels object does not support item assignment")
 
     def check(self, owner):
         pass

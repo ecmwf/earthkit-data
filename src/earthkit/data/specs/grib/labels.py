@@ -9,8 +9,6 @@
 
 import functools
 
-from earthkit.data.specs.labels import SimpleLabels
-
 NAMESPACES = [
     "ls",
     "geography",
@@ -64,10 +62,13 @@ class MetadataCacheHandler:
         return wrapped
 
 
-class GribLabels(SimpleLabels):
+class GribLabels:
     def __init__(self, handle):
         self.handle = handle
         self._cache = {}
+
+    # def from_dict(self, d):
+    #     raise NotImplementedError()
 
     def __len__(self):
         return sum(map(lambda i: 1, self.keys()))
@@ -155,6 +156,14 @@ class GribLabels(SimpleLabels):
         from earthkit.data.new_field.grib.field import new_array_grib_field
 
         return new_array_grib_field(field, self.handle, array_backend=array_backend, **kwargs)
+
+    def __getstate__(self):
+        state = {}
+        state["handle"] = self.handle
+        return state
+
+    def __setstate__(self, state):
+        self.__init__(state["handle"])
 
 
 # class GribLabels(SimpleLabels):

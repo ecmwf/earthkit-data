@@ -103,3 +103,11 @@ class SimpleRealisation(Realisation):
 
     def check(self, owner):
         pass
+
+    def __getstate__(self):
+        state = {}
+        state["number"] = self._number
+        return state
+
+    def __setstate__(self, state):
+        self.__init__(number=state["number"])

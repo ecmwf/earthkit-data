@@ -25,3 +25,11 @@ class GribSpec:
 
     def __getattr__(self, name):
         return getattr(self.spec, name)
+
+    def __getstate__(self):
+        state = {}
+        state["handle"] = self.handle
+        return state
+
+    def __setstate__(self, state):
+        self.__init__(state["handle"])

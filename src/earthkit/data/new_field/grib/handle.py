@@ -261,12 +261,15 @@ class ManagedGribHandle(FileGribHandle):
         self.manager.remove(self)
 
     def __getstate__(self):
-        # print("ManagedFileGribHandle Getstate")
+        print("ManagedFileGribHandle Getstate")
         state = super().__getstate__()
+        print("1")
         state["manager"] = self.manager
+        print("2")
         return state
 
     def __setstate__(self, state):
+        print("ManagedFileGribHandle Setstate")
         super().__setstate__(state)
         self.manager = state["manager"]
 
@@ -363,6 +366,10 @@ class GribHandleCache:
             if key in self.cache:
                 return self.cache[key]
             else:
+                # print("Creating new handle for", key)
+                # import traceback
+
+                # traceback.print_stack()
                 raw = create()
                 self.cache[key] = raw
                 return raw
@@ -371,6 +378,17 @@ class GribHandleCache:
         key = (handle.path, handle.offset)
         with self.lock:
             self.cache.pop(key, None)
+
+    def __getstate__(self):
+        # print("GribHandleCache getstate")
+        state = {}
+        state["cache_size"] = self.cache_size
+        return state
+
+    def __setstate__(self, state):
+        # print("GribHandleCache setstate")
+        cache_size = state["cache_size"]
+        self.__init__(cache_size)
 
 
 # class GribHandleManager(metaclass=ABCMeta):

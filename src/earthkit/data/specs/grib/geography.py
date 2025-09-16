@@ -138,3 +138,11 @@ class GribGeography(SimpleGeography):
     def grid_type(self):
         r"""Return the grid type."""
         return self.handle.get("gridType", default=None)
+
+    def __getstate__(self):
+        state = {}
+        state["handle"] = self.handle
+        return state
+
+    def __setstate__(self, state):
+        self.__init__(state["handle"])

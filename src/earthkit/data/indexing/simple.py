@@ -163,12 +163,12 @@ class SimpleFieldList(SimpleFieldListCore):
 
     def __getstate__(self) -> dict:
         ret = {}
-        # print("SimpleFieldList Getstate")
+        print("SimpleFieldList Getstate")
         ret["_fields"] = self._fields
         return ret
 
     def __setstate__(self, state: dict):
-        # print("SimpleFieldList Setstate")
+        print("SimpleFieldList Setstate")
         fields = state.pop("_fields")
         self.__init__(fields)
 

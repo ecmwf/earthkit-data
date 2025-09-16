@@ -150,3 +150,16 @@ class SimpleParameter(Parameter):
 
     def check(self, owner):
         pass
+
+    def __getstate__(self):
+        state = {}
+
+        state["_variable"] = self._variable
+        state["_units"] = self._units
+        return state
+
+    def __setstate__(self, state):
+        self.__init__(
+            variable=state["_variable"],
+            units=state["_units"],
+        )

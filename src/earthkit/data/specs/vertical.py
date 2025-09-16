@@ -255,26 +255,6 @@ class SimpleVertical(Vertical):
         return cls(**d)
 
     # @classmethod
-    # def from_grib(cls, handle) -> "Vertical":
-    #     """Create a Vertical instance from a GRIB handle.
-
-    #     Parameters
-    #     ----------
-    #     handle
-    #         GRIB handle object.
-
-    #     Returns
-    #     -------
-    #     Vertical
-    #         The created Vertical instance.
-    #     """
-    #     from .grib.vertical import from_grib
-
-    #     r = cls(**from_grib(handle))
-    #     setattr(r, "_handle", handle)
-    #     return r
-
-    # @classmethod
     # def from_xarray(cls, owner, selection) -> "Vertical":
     #     """Create a Vertical instance from an xarray dataset.
 
@@ -297,23 +277,6 @@ class SimpleVertical(Vertical):
         from .grib.vertical import COLLECTOR
 
         COLLECTOR.collect(self, context)
-
-    # def _to_grib(self, altered: bool = True) -> dict:
-    #     """Convert the object to a GRIB dictionary.
-
-    #     Parameters
-    #     ----------
-    #     altered : bool, optional
-    #         Whether to alter the GRIB dictionary, by default True.
-
-    #     Returns
-    #     -------
-    #     dict
-    #         GRIB dictionary representation.
-    #     """
-    #     from .grib.vertical import to_grib
-
-    #     return to_grib(self, altered=altered)
 
     def to_dict(self) -> dict:
         """Convert the object to a dictionary.
@@ -352,3 +315,15 @@ class SimpleVertical(Vertical):
 
     def check(self, owner):
         pass
+
+    def __getstate__(self):
+        state = {}
+        state["level"] = self._level
+        state["level_type"] = self._level_type.name
+        return state
+
+    def __setstate__(self, state):
+        self.__init__(
+            level=state["level"],
+            level_type=state["level_type"],
+        )
