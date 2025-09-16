@@ -169,7 +169,7 @@ class Field(Base):
         dtype: str, array.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        array_backend: str, module or None
+        array_backend: str, module, :obj:`ArrayBackend` or None
             The array backend to be used. When it is :obj:`None` the underlying array format
             of the field is used.
         index: array indexing object, optional
@@ -822,7 +822,7 @@ class Field(Base):
             the original field. If :obj:`None`, the default type used by the underlying
             data accessor is used. For GRIB it is ``float64``. Only used when  ``values``
             is not provided.
-        array_backend: str, module or None
+        array_backend: str, module, :obj:`ArrayBackend` or None
             Control the array backend of the values when they are extracted from
             the original field. If :obj:`None`, the underlying array format
             of the field is used. Only used when ``values`` is not provided.
@@ -1267,7 +1267,7 @@ class FieldList(Index):
             return array_namespace(r[0]).stack(r)
 
         elif len(self) == 0:
-            return array_namespace(r[0]).array_ns.stack([])
+            return array_namespace().empty((0,), dtype=dtype)  # empty array from a default array namespace
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
@@ -1564,7 +1564,7 @@ class FieldList(Index):
 
         """
         if self._is_shared_grid():
-            return self[0].to_latlon(**kwargs)
+            return self[0].to_latlon(index=index, **kwargs)
         elif len(self) == 0:
             return dict(lat=None, lon=None)
         else:
