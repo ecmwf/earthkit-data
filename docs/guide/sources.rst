@@ -1241,8 +1241,11 @@ gribjump
 .. py:function:: from_source("gribjump", request, *, ranges=None, mask=None, indices=None, fetch_coords_from_fdb=False, fdb_kwargs=None, **kwargs)
   :noindex:
 
-  The ``gribjump`` source enables fast retrieval of subsets of GRIB messages from the `FDB (Fields DataBase)`_ using the `gribjump`_ library.
-  It requires both `pygribjump`_ and `pyfdb`_ to be installed.
+  The ``gribjump`` source enables fast retrieval of GRIB message subsets from the `FDB (Fields DataBase)`_ using the `gribjump <https://github.com/ecmwf/gribjump/>`_ library.
+  Both `pygribjump <https://pypi.org/project/pygribjump/>`_ and `pyfdb`_ must be installed. The `pygribjump`_ package uses `findlibs <https://github.com/ecmwf/findlibs>`_ to locate an installation of the `gribjump`_ library.
+  If the library is not available on your system, you can install it via the `gribjumplib <https://pypi.org/project/gribjumplib/>`_ wheel from PyPI.
+  Installing `gribjumplib` from PyPI will also automatically install `fdb5lib <https://pypi.org/project/fdb5lib/>`_ and other dependencies, which may take priority over any existing installations on your system.
+
   Exactly one of the parameters ``ranges``, ``mask`` or ``indices`` must be specified at a time.
 
   .. warning::
