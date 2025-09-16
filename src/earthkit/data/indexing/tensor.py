@@ -15,6 +15,7 @@ from abc import abstractmethod
 
 import numpy as np
 from earthkit.utils.array import array_namespace
+from earthkit.utils.array import get_backend
 
 from earthkit.data.core.index import Selection
 from earthkit.data.core.index import normalize_selection
@@ -394,16 +395,16 @@ class FieldListTensor(TensorCore):
         self._full_shape = None
         self.flatten_values = None
 
-    def _prepare_tensor_data(self, source_as_array_method, index=None, array_backend=None, **kwargs):
+    def _prepare_tensor_data(self, source_to_array_func, dtype=None, array_backend=None, index=None):
         if index is not None:
             if all(i == slice(None, None, None) for i in index):
                 index = None
 
         if index is None:
-            arr = source_as_array_method(array_backend=array_backend, **kwargs)
+            arr = source_to_array_func()
             current_field_shape = self.field_shape
         else:
-            arr = source_as_array_method(index=index, array_backend=array_backend, **kwargs)
+            arr = source_to_array_func(index=index)
             if arr is not None:
                 current_field_shape = tuple(arr.shape[1:])
             else:
@@ -425,26 +426,30 @@ class FieldListTensor(TensorCore):
         if arr is None:
             if array_backend is None:
                 array_backend = array_namespace()  # default array namespace
-            arr = array_backend.empty((0,))  # create an array of shape (0, ) with a backend default dtype
+            arr = array_backend.empty(
+                (0,), dtype=dtype
+            )  # create an array of shape (0, ) with a backend default dtype
 
         return arr, current_field_shape
 
-    def _to_array(self, source_as_array_method, index=None, array_backend=None, **kwargs):
+    def _to_array(self, source_to_array_func, dtype=None, array_backend=None, index=None):
         arr, current_field_shape = self._prepare_tensor_data(
-            source_as_array_method, index=index, array_backend=array_backend, **kwargs
+            source_to_array_func, dtype=dtype, array_backend=array_backend, index=index
         )
         return array_namespace(arr).reshape(arr, self.user_shape + current_field_shape)
 
     @flatten_arg
-    def to_numpy(self, index=None, **kwargs):
-        from earthkit.utils.array import get_backend
-
+    def to_numpy(self, dtype=None, index=None, **kwargs):
         numpy_backend = get_backend("numpy")
-        return self._to_array(self.source.to_numpy, index=index, array_backend=numpy_backend, **kwargs)
+        source_to_numpy_func = functools.partial(self.source.to_numpy, dtype=dtype, **kwargs)
+        return self._to_array(source_to_numpy_func, dtype=dtype, array_backend=numpy_backend, index=index)
 
     @flatten_arg
-    def to_array(self, index=None, array_backend=None, **kwargs):
-        return self._to_array(self.source.to_array, index=index, array_backend=array_backend, **kwargs)
+    def to_array(self, dtype=None, array_backend=None, index=None, **kwargs):
+        source_to_array_func = functools.partial(
+            self.source.to_array, dtype=dtype, array_backend=array_backend, **kwargs
+        )
+        return self._to_array(source_to_array_func, dtype=dtype, array_backend=array_backend, index=index)
 
     @flatten_arg
     def latitudes(self, **kwargs):
@@ -655,9 +660,9 @@ class FieldListSparseTensor(FieldListTensor):
             arr_filled[idx] = block
         return arr_filled
 
-    def _to_array(self, source_as_array_method, index=None, array_backend=None, **kwargs):
+    def _to_array(self, source_to_array_func, dtype=None, array_backend=None, index=None):
         arr, current_field_shape = self._prepare_tensor_data(
-            source_as_array_method, index=index, array_backend=array_backend, **kwargs
+            source_to_array_func, dtype=dtype, array_backend=array_backend, index=index
         )
         return self._fill_holes(arr, current_field_shape)
 
