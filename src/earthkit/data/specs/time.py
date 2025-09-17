@@ -19,7 +19,7 @@ from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
 from .spec import spec_aliases
 
-ZERO_TIMEDELTA = datetime.timedelta(hours=6)
+ZERO_TIMEDELTA = datetime.timedelta(hours=0)
 
 
 @spec_aliases
@@ -188,6 +188,7 @@ class SimpleTime(Time):
             cls, add_spec_keys=False, remove_nones=True, extra_keys=METHOD_MAP.CORE_KEYS, **d
         )
 
+        print("d =", d)
         method_name = METHOD_MAP.get(d.keys())
         if method_name:
             method = getattr(cls, method_name)
@@ -234,7 +235,20 @@ class SimpleTime(Time):
 
     def set(self, *args, **kwargs):
         kwargs = normalise_set_kwargs(self, *args, add_spec_keys=False, remove_nones=True, **kwargs)
-        spec = self.from_dict(kwargs)
+
+        method_name = UPDATE_METHOD_MAP.get(kwargs.keys())
+        if method_name:
+            method = getattr(self, method_name)
+            if method_name == STEP_UPDATE_METHOD:
+                return method(**kwargs)
+
+        return None
+
+    def _set_step(self, step=None, time_span=None):
+        d = self.to_dict()
+        d.pop("valid_datetime", None)
+        d.update(step=step, time_span=time_span)
+        spec = self.from_dict(d)
         return spec
 
     @property
@@ -334,4 +348,12 @@ class MethodMap:
         return MethodMap.MAPPING.get(found, None)
 
 
+STEP_UPDATE_METHOD = "_set_step"
+
+UPDATE_METHODS = {
+    ("step",): STEP_UPDATE_METHOD,
+}
+
 METHOD_MAP = MethodMap(METHODS)
+
+UPDATE_METHOD_MAP = MethodMap(UPDATE_METHODS)

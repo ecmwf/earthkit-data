@@ -22,10 +22,10 @@ from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalize
 from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.specs.data import Data
+from earthkit.data.specs.ensemble import Ensemble
 from earthkit.data.specs.geography import Geography
 from earthkit.data.specs.labels import Labels
 from earthkit.data.specs.parameter import Parameter
-from earthkit.data.specs.realisation import Realisation
 from earthkit.data.specs.time import Time
 from earthkit.data.specs.vertical import Vertical
 from earthkit.data.utils.array import reshape
@@ -53,7 +53,7 @@ def member_properties(cls):
         cls._TIME_NAME: Time,
         cls._PARAMETER_NAME: Parameter,
         cls._GEOGRAPHY_NAME: Geography,
-        cls._REALISATION_NAME: Realisation,
+        cls._ENSEMBLE_NAME: Ensemble,
         cls._VERTICAL_NAME: Vertical,
         cls._LABELS_NAME: Labels,
     }
@@ -126,10 +126,10 @@ class Field(Base):
     _PARAMETER_NAME = "parameter"
     _GEOGRAPHY_NAME = "geography"
     _VERTICAL_NAME = "vertical"
-    _REALISATION_NAME = "realisation"
+    _ENSEMBLE_NAME = "ensemble"
     _LABELS_NAME = "labels"
     _MEMBER_KEYS = set()
-    _DUMP_ORDER = ["parameter", "time", "vertical", "realisation", "geography"]
+    _DUMP_ORDER = ["parameter", "time", "vertical", "ensemble", "geography"]
 
     def __init__(
         self,
@@ -139,7 +139,7 @@ class Field(Base):
         parameter=None,
         geography=None,
         vertical=None,
-        realisation=None,
+        ensemble=None,
         labels=None,
     ):
 
@@ -148,7 +148,7 @@ class Field(Base):
         self._parameter = parameter
         self._geography = geography
         self._vertical = vertical
-        self._realisation = realisation
+        self._ensemble = ensemble
         self._labels = labels
         self._private = dict()
 
@@ -158,7 +158,7 @@ class Field(Base):
             self._PARAMETER_NAME: self._parameter,
             self._GEOGRAPHY_NAME: self._geography,
             self._VERTICAL_NAME: self._vertical,
-            self._REALISATION_NAME: self._realisation,
+            self._ENSEMBLE_NAME: self._ensemble,
             self._LABELS_NAME: self._labels,
         }
 
@@ -197,7 +197,7 @@ class Field(Base):
             Field._PARAMETER_NAME,
             Field._GEOGRAPHY_NAME,
             Field._VERTICAL_NAME,
-            Field._REALISATION_NAME,
+            Field._ENSEMBLE_NAME,
             Field._LABELS_NAME,
         ]:
             v = kwargs.pop(name, None)
@@ -243,10 +243,10 @@ class Field(Base):
     @classmethod
     def from_dict(cls, d):
         from earthkit.data.specs.data import SimpleData
+        from earthkit.data.specs.ensemble import SimpleEnsemble
         from earthkit.data.specs.geography import SimpleGeography
         from earthkit.data.specs.labels import SimpleLabels
         from earthkit.data.specs.parameter import SimpleParameter
-        from earthkit.data.specs.realisation import SimpleRealisation
         from earthkit.data.specs.time import SimpleTime
         from earthkit.data.specs.vertical import SimpleVertical
 
@@ -258,7 +258,7 @@ class Field(Base):
         parameter = SimpleParameter.from_dict(d)
         time = SimpleTime.from_dict(d)
         vertical = SimpleVertical.from_dict(d)
-        realisation = SimpleRealisation.from_dict(d)
+        ensemble = SimpleEnsemble.from_dict(d)
 
         # the unused items are added to the labels
         rest = {k: v for k, v in d.items() if k not in cls._MEMBER_KEYS}
@@ -270,7 +270,7 @@ class Field(Base):
             parameter=parameter,
             geography=geography,
             vertical=vertical,
-            realisation=realisation,
+            ensemble=ensemble,
             labels=labels,
         )
 
@@ -1237,7 +1237,7 @@ class Field(Base):
         state["geography"] = self._geography
         state["labels"] = self._labels
         state["parameter"] = self._parameter
-        state["realisation"] = self._realisation
+        state["ensemble"] = self._ensemble
         state["time"] = self._time
         state["vertical"] = self._vertical
         state["private"] = self._private
@@ -1249,7 +1249,7 @@ class Field(Base):
             geography=state["geography"],
             labels=state["labels"],
             parameter=state["parameter"],
-            realisation=state["realisation"],
+            ensemble=state["ensemble"],
             time=state["time"],
             vertical=state["vertical"],
         )

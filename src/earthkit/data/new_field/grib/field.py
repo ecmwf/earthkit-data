@@ -14,10 +14,10 @@ from earthkit.data.specs.data import ArrayData
 def new_grib_field(handle, data=None, cache=False):
     from earthkit.data.core.field import Field
     from earthkit.data.specs.grib.data import GribData
+    from earthkit.data.specs.grib.ensemble import GribEnsemble
     from earthkit.data.specs.grib.geography import GribGeography
     from earthkit.data.specs.grib.labels import GribLabels
     from earthkit.data.specs.grib.parameter import GribParameter
-    from earthkit.data.specs.grib.realisation import GribRealisation
     from earthkit.data.specs.grib.time import GribTime
     from earthkit.data.specs.grib.vertical import GribVertical
     from earthkit.data.specs.labels import SimpleLabels
@@ -30,7 +30,7 @@ def new_grib_field(handle, data=None, cache=False):
     geography = GribGeography(handle)
     vertical = GribVertical(handle)
     labels = SimpleLabels()
-    realisation = GribRealisation(handle)
+    ensemble = GribEnsemble(handle)
     grib = GribLabels(handle)
 
     r = Field(
@@ -39,7 +39,7 @@ def new_grib_field(handle, data=None, cache=False):
         time=time,
         geography=geography,
         vertical=vertical,
-        realisation=realisation,
+        ensemble=ensemble,
         labels=labels,
     )
 

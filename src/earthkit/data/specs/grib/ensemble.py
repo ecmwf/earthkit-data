@@ -12,13 +12,13 @@ from .collector import GribContextCollector
 from .spec import GribSpec
 
 
-class GribRealisationBuilder:
+class GribEnsembleBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.specs.realisation import SimpleRealisation
+        from earthkit.data.specs.ensemble import SimpleEnsemble
 
-        d = GribRealisationBuilder._build_dict(handle)
-        spec = SimpleRealisation.from_dict(d)
+        d = GribEnsembleBuilder._build_dict(handle)
+        spec = SimpleEnsemble.from_dict(d)
         # spec._set_private_data("handle", handle)
         return spec
 
@@ -32,22 +32,22 @@ class GribRealisationBuilder:
             v = _get("perturbationNumber")
 
         return dict(
-            number=v,
+            member=v,
         )
 
 
-class GribRealisationContextCollector(GribContextCollector):
+class GribEnsembleContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(spec, context):
         r = {
-            "number": spec.number,
+            "number": spec.member,
         }
         context.update(r)
 
 
-COLLECTOR = GribRealisationContextCollector()
+COLLECTOR = GribEnsembleContextCollector()
 
 
-class GribRealisation(GribSpec):
-    BUILDER = GribRealisationBuilder
+class GribEnsemble(GribSpec):
+    BUILDER = GribEnsembleBuilder
     COLLECTOR = COLLECTOR

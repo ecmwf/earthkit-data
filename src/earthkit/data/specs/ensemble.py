@@ -16,32 +16,32 @@ from .spec import spec_aliases
 
 
 @spec_aliases
-class Realisation(SimpleSpec):
+class Ensemble(SimpleSpec):
     """Realisation specification."""
 
-    KEYS = ("number",)
-    ALIASES = Aliases({"number": ("realisation")})
+    KEYS = ("member",)
+    ALIASES = Aliases({"member": ("realisation", "realization")})
 
     @property
     @abstractmethod
-    def number(self) -> int:
-        r"""int: Return the ensemble number."""
+    def member(self) -> str:
+        r"""int: Return the ensemble member."""
         pass
 
 
-class SimpleRealisation(Realisation):
-    """Realisation specification."""
+class SimpleEnsemble(Ensemble):
+    """Ensemble specification."""
 
-    def __init__(self, *, number=0) -> None:
-        self._number = number
+    def __init__(self, *, member=0) -> None:
+        self._member = member
 
     @property
-    def number(self) -> int:
-        return self._number
+    def member(self) -> str:
+        return self._member
 
     @classmethod
-    def from_dict(cls, d: dict) -> "SimpleRealisation":
-        """Create a Realisation object from a dictionary.
+    def from_dict(cls, d: dict) -> "SimpleEnsemble":
+        """Create a Ensemble object from a dictionary.
 
         Parameters
         ----------
@@ -66,16 +66,16 @@ class SimpleRealisation(Realisation):
         dict
             Dictionary representation of the object.
         """
-        return {"number": self.number}
+        return {"member": self.member}
 
     def get_grib_context(self, context) -> dict:
-        from .grib.realisation import COLLECTOR
+        from .grib.ensemble import COLLECTOR
 
         COLLECTOR.collect(self, context)
 
-    def set(self, *args, **kwargs) -> "SimpleRealisation":
+    def set(self, *args, **kwargs) -> "SimpleEnsemble":
         """
-        Create a new SimpleRealisation instance with updated data.
+        Create a new SimpleEnsemble instance with updated data.
 
         Parameters
         ----------
@@ -90,15 +90,11 @@ class SimpleRealisation(Realisation):
             The created SimpleRealisation instance.
         """
         kwargs = normalise_set_kwargs(self, *args, **kwargs)
-        spec = SimpleRealisation(**kwargs)
+        spec = SimpleEnsemble(**kwargs)
         return spec
 
     def namespace(self, owner, name, result):
-        if (
-            name is None
-            or name == "realisation"
-            or (isinstance(name, (list, tuple)) and "realisation" in name)
-        ):
+        if name is None or name == "ensemble" or (isinstance(name, (list, tuple)) and "ensemble" in name):
             result["realisation"] = self.to_dict()
 
     def check(self, owner):
@@ -106,8 +102,8 @@ class SimpleRealisation(Realisation):
 
     def __getstate__(self):
         state = {}
-        state["number"] = self._number
+        state["member"] = self.member
         return state
 
     def __setstate__(self, state):
-        self.__init__(number=state["number"])
+        self.__init__(member=state["member"])
