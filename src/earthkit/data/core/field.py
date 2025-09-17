@@ -329,7 +329,7 @@ class Field(Base):
         dtype: str, array.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        array_backend: str, module or None
+        array_backend: str, module, array_namespace, :obj:`ArrayBackend` or None
             The array backend to be used. When it is :obj:`None` the underlying array format
             of the field is used.
         index: array indexing object, optional

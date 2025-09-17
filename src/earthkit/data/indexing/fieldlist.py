@@ -11,7 +11,7 @@ from functools import cached_property
 
 import deprecation
 from earthkit.utils.array import array_namespace
-from earthkit.utils.array import convert_array
+from earthkit.utils.array import get_backend
 
 from earthkit.data.core.fieldlist import FieldListCore
 from earthkit.data.core.index import Index
@@ -140,47 +140,55 @@ class FieldList(Index, FieldListCore):
             r[0] = vals
             for i, f in enumerate(it, start=1):
                 r[i] = _vals(f)
-            return r
+        else:
+            # create an empty array using the right namespace and dtype
+
+            # first, resolve the array namespace xp
+            if accessor == "to_numpy":
+                # the namespace should be numpy
+                assert (
+                    "array_backend" not in kwargs
+                ), "Cannot use 'array_backend' keyword when converting a field list to numpy"
+                numpy_backend = get_backend("numpy")
+                xp = numpy_backend.namespace
+            else:
+                array_backend = kwargs.get("array_backend")
+                if array_backend is not None:
+                    xp = array_backend.namespace
+                else:
+                    xp = array_namespace()  # default array namespace
+
+            dtype = kwargs.get("dtype")
+
+            r = xp.empty((0,), dtype=dtype)  # create an array of shape (0, )
+
+        return r
 
     def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None, index=None):
-        _keys = dict(
-            lat=self._metadata.geography.latitudes,
-            lon=self._metadata.geography.longitudes,
-            value=self._values,
-        )
+        if self._is_shared_grid():
+            if isinstance(keys, str):
+                keys = [keys]
 
-        if isinstance(keys, str):
-            keys = [keys]
+            if "lat" in keys or "lon" in keys:
+                latlon = self[0].to_latlon(flatten=flatten, dtype=dtype, index=index)
 
-        for k in keys:
-            if k not in _keys:
-                raise ValueError(f"data: invalid argument: {k}")
-
-        r = {}
-        for k in keys:
-            # TODO: convert dtype
-            v = _keys[k](dtype=dtype)
-            if v is None:
-                raise ValueError(f"data: {k} not available")
-            v = self._reshape(v, flatten)
-            if index is not None:
-                v = v[index]
-            r[k] = v
-
-        # convert latlon to array format
-        ll = {k: r[k] for k in r if k != "value"}
-        if ll:
-            sample = r.get("value", None)
-            if sample is None:
-                sample = self._values(dtype=dtype)
-            for k, v in zip(ll.keys(), convert_array(list(ll.values()), target_array_sample=sample)):
-                r[k] = v
-
-        r = list(r.values())
-        if len(r) == 1:
-            return r[0]
-        else:
+            r = []
+            for k in keys:
+                if k == "lat":
+                    r.append(latlon["lat"])
+                elif k == "lon":
+                    r.append(latlon["lon"])
+                elif k == "value":
+                    r.extend([f.to_array(flatten=flatten, dtype=dtype, index=index) for f in self])
+                else:
+                    raise ValueError(f"data: invalid argument: {k}")
             return array_namespace(r[0]).stack(r)
+
+        elif len(self) == 0:
+            # empty array from a default array namespace
+            return array_namespace().empty((0,), dtype=dtype)
+        else:
+            raise ValueError("Fields do not have the same grid geometry")
 
     def datetime(self):
         r"""Return the unique, sorted list of dates and times in the fieldlist.
@@ -224,7 +232,7 @@ class FieldList(Index, FieldListCore):
 
     def to_latlon(self, index=None, **kwargs):
         if self._has_shared_geography:
-            return self[0].to_latlon(**kwargs)
+            return self[0].to_latlon(index=index, **kwargs)
         elif len(self) == 0:
             return dict(lat=None, lon=None)
         else:

@@ -173,14 +173,14 @@ class VariableBuilder:
 
 
 class TensorBackendArray(xarray.backends.common.BackendArray):
-    def __init__(self, tensor, dims, shape, xp, dtype, var_name):
+    def __init__(self, tensor, dims, shape, array_backend, dtype, var_name):
         super().__init__()
         self.tensor = tensor
         self.dims = dims
         self.shape = shape
         self._var_name = var_name
         self.dtype = dtype
-        self.xp = xp
+        self.array_backend = array_backend
 
         from dask.utils import SerializableLock
 
@@ -228,7 +228,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
             # LOG.debug(f"   {field_index=}")
 
             try:
-                result = r.to_array(index=field_index, array_backend=self.xp, dtype=self.dtype)
+                result = r.to_array(index=field_index, array_backend=self.array_backend, dtype=self.dtype)
             except Exception as e:
                 LOG.exception("Error in to_array:", e)
                 raise
@@ -521,7 +521,7 @@ class TensorBackendDataBuilder(BackendDataBuilder):
             tensor,
             var_dims,
             tensor.full_shape,
-            self.array_backend.namespace,
+            self.array_backend,
             self.dtype,
             name,
         )
