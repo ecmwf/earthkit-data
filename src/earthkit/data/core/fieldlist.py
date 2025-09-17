@@ -169,7 +169,7 @@ class Field(Base):
         dtype: str, array.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        array_backend: str, module or None
+        array_backend: str, module, :obj:`ArrayBackend` or None
             The array backend to be used. When it is :obj:`None` the underlying array format
             of the field is used.
         index: array indexing object, optional
@@ -822,7 +822,7 @@ class Field(Base):
             the original field. If :obj:`None`, the default type used by the underlying
             data accessor is used. For GRIB it is ``float64``. Only used when  ``values``
             is not provided.
-        array_backend: str, module or None
+        array_backend: str, module, :obj:`ArrayBackend` or None
             Control the array backend of the values when they are extracted from
             the original field. If :obj:`None`, the underlying array format
             of the field is used. Only used when ``values`` is not provided.
@@ -1100,12 +1100,29 @@ class FieldList(Index):
             r[0] = vals
             for i, f in enumerate(it, start=1):
                 r[i] = _vals(f)
-            return r
         else:
-            # In this case no information about a field shape, dtype, array backend can be derived.
-            # This must be managed by the caller: see e.g.
-            # src/earthkit/data/indexing/tensor.py:FieldListSparseTensor.to_array
-            return None
+            # create an empty array using the right namespace and dtype
+
+            # first, resolve the array namespace xp
+            if accessor == "to_numpy":
+                # the namespace should be numpy
+                assert (
+                    "array_backend" not in kwargs
+                ), "Cannot use 'array_backend' keyword when converting a field list to numpy"
+                numpy_backend = get_backend("numpy")
+                xp = numpy_backend.namespace
+            else:
+                array_backend = kwargs.get("array_backend")
+                if array_backend is not None:
+                    xp = array_backend.namespace
+                else:
+                    xp = array_namespace()  # default array namespace
+
+            dtype = kwargs.get("dtype")
+
+            r = xp.empty((0,), dtype=dtype)  # create an array of shape (0, )
+
+        return r
 
     def to_numpy(self, **kwargs):
         r"""Return all the fields' values as an ndarray. It is formed as the array of the
@@ -1267,7 +1284,7 @@ class FieldList(Index):
             return array_namespace(r[0]).stack(r)
 
         elif len(self) == 0:
-            return array_namespace(r[0]).array_ns.stack([])
+            return array_namespace().empty((0,), dtype=dtype)  # empty array from a default array namespace
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
@@ -1564,7 +1581,7 @@ class FieldList(Index):
 
         """
         if self._is_shared_grid():
-            return self[0].to_latlon(**kwargs)
+            return self[0].to_latlon(index=index, **kwargs)
         elif len(self) == 0:
             return dict(lat=None, lon=None)
         else:
