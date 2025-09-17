@@ -15,7 +15,6 @@ from abc import abstractmethod
 
 import numpy as np
 from earthkit.utils.array import array_namespace
-from earthkit.utils.array import get_backend
 
 from earthkit.data.core.index import Selection
 from earthkit.data.core.index import normalize_selection
@@ -395,7 +394,7 @@ class FieldListTensor(TensorCore):
         self._full_shape = None
         self.flatten_values = None
 
-    def _prepare_tensor_data(self, source_to_array_func, dtype=None, array_backend=None, index=None):
+    def _prepare_tensor_data(self, source_to_array_func, index=None):
         if index is not None:
             if all(i == slice(None, None, None) for i in index):
                 index = None
@@ -405,12 +404,12 @@ class FieldListTensor(TensorCore):
             current_field_shape = self.field_shape
         else:
             arr = source_to_array_func(index=index)
-            if arr is not None:
+            if len(arr) > 0:
                 current_field_shape = tuple(arr.shape[1:])
             else:
-                # `arr is None` when the tensor `self` was sliced in such a manner that either a 0-slice was produced
-                # or the slice contains "holes" only. In such case we must derive the field shape by applying
-                # `index` to field coordinates directly.
+                # `arr` comes from an empty field list; this happens when the tensor `self` was sliced
+                # in such a manner that either a 0-slice was produced or the slice contains "holes" only.
+                # In such case we must derive the field shape by applying `index` to field coordinates directly.
                 #
                 # Note: When doing `.sel(dim=coord)` on a corresponding xarray object,
                 # where `coord` is an item (not a 1-element list),
@@ -423,33 +422,23 @@ class FieldListTensor(TensorCore):
                     # `_slice` can be either an `int` or a `slice`; if `int`, ignore it!
                 )
 
-        if arr is None:
-            if array_backend is not None:
-                xp = array_backend.namespace
-            else:
-                xp = array_namespace()  # default array namespace
-            arr = xp.empty((0,), dtype=dtype)  # create an array of shape (0, )
-
         return arr, current_field_shape
 
-    def _to_array(self, source_to_array_func, dtype=None, array_backend=None, index=None):
-        arr, current_field_shape = self._prepare_tensor_data(
-            source_to_array_func, dtype=dtype, array_backend=array_backend, index=index
-        )
+    def _to_array(self, source_to_array_func, index=None):
+        arr, current_field_shape = self._prepare_tensor_data(source_to_array_func, index=index)
         return array_namespace(arr).reshape(arr, self.user_shape + current_field_shape)
 
     @flatten_arg
     def to_numpy(self, dtype=None, index=None, **kwargs):
-        numpy_backend = get_backend("numpy")
         source_to_numpy_func = functools.partial(self.source.to_numpy, dtype=dtype, **kwargs)
-        return self._to_array(source_to_numpy_func, dtype=dtype, array_backend=numpy_backend, index=index)
+        return self._to_array(source_to_numpy_func, index=index)
 
     @flatten_arg
     def to_array(self, dtype=None, array_backend=None, index=None, **kwargs):
         source_to_array_func = functools.partial(
             self.source.to_array, dtype=dtype, array_backend=array_backend, **kwargs
         )
-        return self._to_array(source_to_array_func, dtype=dtype, array_backend=array_backend, index=index)
+        return self._to_array(source_to_array_func, index=index)
 
     @flatten_arg
     def latitudes(self, **kwargs):
@@ -660,10 +649,8 @@ class FieldListSparseTensor(FieldListTensor):
             arr_filled[idx] = block
         return arr_filled
 
-    def _to_array(self, source_to_array_func, dtype=None, array_backend=None, index=None):
-        arr, current_field_shape = self._prepare_tensor_data(
-            source_to_array_func, dtype=dtype, array_backend=array_backend, index=index
-        )
+    def _to_array(self, source_to_array_func, index=None):
+        arr, current_field_shape = self._prepare_tensor_data(source_to_array_func, index=index)
         return self._fill_holes(arr, current_field_shape)
 
     def _subset(self, indexes):

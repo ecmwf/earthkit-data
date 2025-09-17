@@ -1100,12 +1100,29 @@ class FieldList(Index):
             r[0] = vals
             for i, f in enumerate(it, start=1):
                 r[i] = _vals(f)
-            return r
         else:
-            # In this case no information about a field shape, dtype, array backend can be derived.
-            # This must be managed by the caller: see e.g.
-            # src/earthkit/data/indexing/tensor.py:FieldListSparseTensor.to_array
-            return None
+            # create an empty array using the right namespace and dtype
+
+            # first, resolve the array namespace xp
+            if accessor == "to_numpy":
+                # the namespace should be numpy
+                assert (
+                    "array_backend" not in kwargs
+                ), "Cannot use 'array_backend' keyword when converting a field list to numpy"
+                numpy_backend = get_backend("numpy")
+                xp = numpy_backend.namespace
+            else:
+                array_backend = kwargs.get("array_backend")
+                if array_backend is not None:
+                    xp = array_backend.namespace
+                else:
+                    xp = array_namespace()  # default array namespace
+
+            dtype = kwargs.get("dtype")
+
+            r = xp.empty((0,), dtype=dtype)  # create an array of shape (0, )
+
+        return r
 
     def to_numpy(self, **kwargs):
         r"""Return all the fields' values as an ndarray. It is formed as the array of the
