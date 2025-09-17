@@ -8,7 +8,7 @@ Version 0.16.5
 Fixes
 ++++++++
 
-- Enabled earthkit-regrid (earthkit-regrid >= 0.4.1 is required) to interpolate GRIB fieldlists on HEALPix nested grids to 0.05x0.05 degree global latitude-longitude grid
+- Enabled earthkit-regrid (earthkit-regrid >= 0.4.1 is required) to interpolate GRIB fieldlists to 0.05x0.05 degree global latitude-longitude grid
 
 
 Version 0.16.4
