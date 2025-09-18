@@ -7,7 +7,7 @@ Version 0.16.6
 Fixes
 ++++++++
 
-- Fixed issue when downloading data in multiple threads crashed when cache policy was set to "off" (:pr:`803`)
+- Fixed issue when downloading data in multiple threads crashed when cache policy was set to "off" (:pr:`807`)
 
 Version 0.16.5
 ===============
