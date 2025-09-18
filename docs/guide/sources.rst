@@ -1256,7 +1256,8 @@ gribjump
 
   Exactly one of the parameters ``ranges``, ``mask`` or ``indices`` must be specified at a time.
 
-  :param request: the fdb request as a dict
+  :param request: the FDB request as a dictionary. GribJump requires strict value formatting
+      (e.g., hdates as "YYYYMMDD", not "YYYY-MM-DD"). Format errors may result in "DataNotFound" errors.
   :type request: dict
   :param ranges: a list of tuples specifying the ranges of 1D grid indices to retrieve in the form
       [(start1, end1), (start2, end2), ...]. Ranges are exclusive, meaning that the end index is not included in the range.
@@ -1278,6 +1279,8 @@ gribjump
       FDB when fetching coordinates and are not used by GribJump for the
       extraction itself.
   :type fdb_kwargs: dict, optional
+
+
 
 
   The following example retrieves a subset from a GRIB message in the FDB using a boolean mask:
