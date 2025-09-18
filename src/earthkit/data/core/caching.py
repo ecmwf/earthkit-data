@@ -27,6 +27,7 @@ import time
 from abc import ABCMeta
 from abc import abstractmethod
 from copy import deepcopy
+from functools import cached_property
 from random import randrange
 
 from earthkit.data.core.config import CONFIG
@@ -664,17 +665,17 @@ class EmptyCachePolicy(CachePolicy):
 class NoCachePolicy(CachePolicy):
     OUTDATED_CHECK_KEYS = ["cache-policy", "temporary-directory-root"]
     _name = "off"
-    _dir = None
 
     def managed(self):
         return False
 
     def directory(self):
-        if self._dir is None:
-            if self._dir is None:
-                root_dir = self._expand_path(self._config.get("temporary-directory-root"))
-                self._dir = temp_directory(dir=root_dir)
         return self._dir.path
+
+    @cached_property
+    def _dir(self):
+        root_dir = self._expand_path(self._config.get("temporary-directory-root"))
+        return temp_directory(dir=root_dir)
 
     def use_message_position_index_cache(self):
         return False
