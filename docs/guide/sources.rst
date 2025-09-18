@@ -1246,8 +1246,6 @@ gribjump
   If the library is not available on your system, you can install it via the `gribjumplib <https://pypi.org/project/gribjumplib/>`_ wheel from PyPI.
   Installing `gribjumplib` from PyPI will also automatically install `fdb5lib <https://pypi.org/project/fdb5lib/>`_ and other dependencies, which may take priority over any existing installations on your system.
 
-  Exactly one of the parameters ``ranges``, ``mask`` or ``indices`` must be specified at a time.
-
   .. warning::
     ⚠️ This source is **experimental** and may change in future versions without
     warning. It performs **no validation** that the specified grid indices,
@@ -1255,6 +1253,8 @@ gribjump
     **Incorrect usage may silently return wrong data points.**
     The provided ranges or masks might correspond to unexpected points on the
     grid.  This source is also currently **not thread-safe**.
+
+  Exactly one of the parameters ``ranges``, ``mask`` or ``indices`` must be specified at a time.
 
   :param dict request: the fdb request as a dict
   :param list ranges: a list of tuples specifying the ranges of 1D grid indices to retrieve in the form
