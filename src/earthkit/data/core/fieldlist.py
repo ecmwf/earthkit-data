@@ -169,7 +169,7 @@ class Field(Base):
         dtype: str, array.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        array_backend: str, module or None
+        array_backend: str, module, :obj:`ArrayBackend` or None
             The array backend to be used. When it is :obj:`None` the underlying array format
             of the field is used.
         index: array indexing object, optional
@@ -822,7 +822,7 @@ class Field(Base):
             the original field. If :obj:`None`, the default type used by the underlying
             data accessor is used. For GRIB it is ``float64``. Only used when  ``values``
             is not provided.
-        array_backend: str, module or None
+        array_backend: str, module, :obj:`ArrayBackend` or None
             Control the array backend of the values when they are extracted from
             the original field. If :obj:`None`, the underlying array format
             of the field is used. Only used when ``values`` is not provided.
@@ -1081,7 +1081,7 @@ class FieldList(Index):
         """
         return self._md_indices.index(key)
 
-    def _as_array(self, accessor, **kwargs):
+    def _as_array(self, accessor, empty_array_backend=None, **kwargs):
         """Use pre-allocated target array to store the field values."""
 
         def _vals(f):
@@ -1100,12 +1100,13 @@ class FieldList(Index):
             r[0] = vals
             for i, f in enumerate(it, start=1):
                 r[i] = _vals(f)
-            return r
         else:
-            # In this case no information about a field shape, dtype, array backend can be derived.
-            # This must be managed by the caller: see e.g.
-            # src/earthkit/data/indexing/tensor.py:FieldListSparseTensor.to_array
-            return None
+            # create an empty array using the right namespace and dtype
+            # TODO: get_backend() should return the default backend for None
+            backend = get_backend(empty_array_backend if empty_array_backend is not None else "numpy")
+            r = backend.namespace.empty((0,), dtype=kwargs.get("dtype"))
+
+        return r
 
     def to_numpy(self, **kwargs):
         r"""Return all the fields' values as an ndarray. It is formed as the array of the
@@ -1126,7 +1127,7 @@ class FieldList(Index):
         to_array
         values
         """
-        return self._as_array("to_numpy", **kwargs)
+        return self._as_array("to_numpy", empty_array_backend="numpy", **kwargs)
 
     def to_array(self, **kwargs):
         r"""Return all the fields' values as an array. It is formed as the array of the
@@ -1147,7 +1148,7 @@ class FieldList(Index):
         values
         to_numpy
         """
-        return self._as_array("to_array", **kwargs)
+        return self._as_array("to_array", empty_array_backend=kwargs.get("array_backend", None), **kwargs)
 
     @property
     def values(self):
@@ -1247,10 +1248,13 @@ class FieldList(Index):
         values
 
         """
-        if self._is_shared_grid():
-            if isinstance(keys, str):
-                keys = [keys]
+        if isinstance(keys, str):
+            keys = [keys]
 
+        if any(k not in ("lat", "lon", "value") for k in keys):
+            raise ValueError(f"data: invalid argument: {keys}")
+
+        if self._is_shared_grid():
             if "lat" in keys or "lon" in keys:
                 latlon = self[0].to_latlon(flatten=flatten, dtype=dtype, index=index)
 
@@ -1262,12 +1266,12 @@ class FieldList(Index):
                     r.append(latlon["lon"])
                 elif k == "value":
                     r.extend([f.to_array(flatten=flatten, dtype=dtype, index=index) for f in self])
-                else:
-                    raise ValueError(f"data: invalid argument: {k}")
             return array_namespace(r[0]).stack(r)
 
         elif len(self) == 0:
-            return array_namespace(r[0]).array_ns.stack([])
+            # empty array from the default array namespace
+            shape = tuple([0] * len(keys))
+            return array_namespace().empty(shape, dtype=dtype)
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
@@ -1564,7 +1568,7 @@ class FieldList(Index):
 
         """
         if self._is_shared_grid():
-            return self[0].to_latlon(**kwargs)
+            return self[0].to_latlon(index=index, **kwargs)
         elif len(self) == 0:
             return dict(lat=None, lon=None)
         else:
