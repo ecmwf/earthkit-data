@@ -1256,20 +1256,28 @@ gribjump
 
   Exactly one of the parameters ``ranges``, ``mask`` or ``indices`` must be specified at a time.
 
-  :param dict request: the fdb request as a dict
-  :param list ranges: a list of tuples specifying the ranges of 1D grid indices to retrieve in the form
-      [(start1, end1), (start2, end2), ...]. Ranges are exclusive, meaning that the end index is not included in the range
-  :param numpy.array mask: a 1D boolean mask specifying which grid points to retrieve
-  :param numpy.array indices: a 1D array of grid indices to retrieve
-  :param bool fetch_coords_from_fdb: if ``True``, loads the first field's metadata from
+  :param request: the fdb request as a dict
+  :type request: dict
+  :param ranges: a list of tuples specifying the ranges of 1D grid indices to retrieve in the form
+      [(start1, end1), (start2, end2), ...]. Ranges are exclusive, meaning that the end index is not included in the range.
+  :type ranges: list[tuple[int, int]], optional
+  :param mask: a 1D boolean mask specifying which grid points to retrieve
+  :type mask: numpy.array, optional
+  :param indices: a 1D array of grid indices to retrieve
+  :type indices: numpy.array, optional
+  :param fetch_coords_from_fdb: if ``True``, loads the first field's metadata from
       the FDB to extract the coordinates at the specified indices. If ``False``, the
       coordinates are not loaded and no separate FDB request is made.
       Default is ``False``. Please note that no validation is performed to
       ensure that all fields in the requests share the same grid.
-  :param dict fdb_kwargs: only used when ``fetch_coords_from_fdb=True``. A dict of
+  :type fetch_coords_from_fdb: bool, optional
+  :param fdb_kwargs: only used when ``fetch_coords_from_fdb=True``. A dict of
       keyword arguments passed to the `pyfdb.FDB` constructor. This allows to
-      specify the FDB configuration, user configuration, etc. If not provided, the
-      default configuration is used.
+      specify the FDB configuration, user configuration, etc. If not provided,
+      the default configuration is used. These arguments are only passed to the
+      FDB when fetching coordinates and are not used by GribJump for the
+      extraction itself.
+  :type fdb_kwargs: dict, optional
 
 
   The following example retrieves a subset from a GRIB message in the FDB using a boolean mask:
