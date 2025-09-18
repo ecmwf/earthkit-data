@@ -1281,8 +1281,6 @@ gribjump
   :type fdb_kwargs: dict, optional
 
 
-
-
   The following example retrieves a subset from a GRIB message in the FDB using a boolean mask:
 
   .. code-block:: python
