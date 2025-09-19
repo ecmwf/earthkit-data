@@ -116,12 +116,12 @@ class FieldList(Index, FieldListCore):
         return self._as_array("values")
 
     def to_numpy(self, **kwargs):
-        return self._as_array("to_numpy", **kwargs)
+        return self._as_array("to_numpy", empty_array_backend="numpy", **kwargs)
 
     def to_array(self, **kwargs):
-        return self._as_array("to_array", **kwargs)
+        return self._as_array("to_array", empty_array_backend=kwargs.get("array_backend", None), **kwargs)
 
-    def _as_array(self, accessor, **kwargs):
+    def _as_array(self, accessor, empty_array_backend=None, **kwargs):
         """Helper to use pre-allocated target array to store the field values."""
 
         def _vals(f):
@@ -142,33 +142,20 @@ class FieldList(Index, FieldListCore):
                 r[i] = _vals(f)
         else:
             # create an empty array using the right namespace and dtype
-
-            # first, resolve the array namespace xp
-            if accessor == "to_numpy":
-                # the namespace should be numpy
-                assert (
-                    "array_backend" not in kwargs
-                ), "Cannot use 'array_backend' keyword when converting a field list to numpy"
-                numpy_backend = get_backend("numpy")
-                xp = numpy_backend.namespace
-            else:
-                array_backend = kwargs.get("array_backend")
-                if array_backend is not None:
-                    xp = array_backend.namespace
-                else:
-                    xp = array_namespace()  # default array namespace
-
-            dtype = kwargs.get("dtype")
-
-            r = xp.empty((0,), dtype=dtype)  # create an array of shape (0, )
+            # TODO: get_backend() should return the default backend for None
+            backend = get_backend(empty_array_backend if empty_array_backend is not None else "numpy")
+            r = backend.namespace.empty((0,), dtype=kwargs.get("dtype"))
 
         return r
 
     def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None, index=None):
-        if self._is_shared_grid():
-            if isinstance(keys, str):
-                keys = [keys]
+        if isinstance(keys, str):
+            keys = [keys]
 
+        if any(k not in ("lat", "lon", "value") for k in keys):
+            raise ValueError(f"data: invalid argument: {keys}")
+
+        if self._is_shared_grid():
             if "lat" in keys or "lon" in keys:
                 latlon = self[0].to_latlon(flatten=flatten, dtype=dtype, index=index)
 
@@ -180,13 +167,12 @@ class FieldList(Index, FieldListCore):
                     r.append(latlon["lon"])
                 elif k == "value":
                     r.extend([f.to_array(flatten=flatten, dtype=dtype, index=index) for f in self])
-                else:
-                    raise ValueError(f"data: invalid argument: {k}")
             return array_namespace(r[0]).stack(r)
 
         elif len(self) == 0:
-            # empty array from a default array namespace
-            return array_namespace().empty((0,), dtype=dtype)
+            # empty array from the default array namespace
+            shape = tuple([0] * len(keys))
+            return array_namespace().empty(shape, dtype=dtype)
         else:
             raise ValueError("Fields do not have the same grid geometry")
 

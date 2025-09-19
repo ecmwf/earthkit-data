@@ -1,6 +1,22 @@
 Version 0.16 Updates
 /////////////////////////
 
+Version 0.16.6
+===============
+
+Fixes
+++++++++
+
+- Fixed issue when downloading data in multiple threads crashed when cache policy was set to "off" (:pr:`807`)
+
+Version 0.16.5
+===============
+
+Fixes
+++++++++
+
+- Enabled earthkit-regrid (earthkit-regrid >= 0.4.2 is required) to interpolate GRIB fieldlists to 0.05x0.05 degree global latitude-longitude grid
+
 
 Version 0.16.5
 ===============

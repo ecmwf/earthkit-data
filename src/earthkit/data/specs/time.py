@@ -221,6 +221,16 @@ class SimpleTime(Time):
             "reference_datetime": self.reference_datetime,
         }
 
+    def _to_dict(self):
+        return {
+            # "valid_datetime": self.valid_datetime,
+            "base_datetime": self.base_datetime,
+            "step": self.step,
+            "time_span": self.time_span,
+            "indexing_datetime": self.indexing_datetime,
+            "reference_datetime": self.reference_datetime,
+        }
+
     def get_grib_context(self, context) -> dict:
         from .grib.time import COLLECTOR
 
@@ -244,10 +254,29 @@ class SimpleTime(Time):
 
         return None
 
-    def _set_step(self, step=None, time_span=None):
-        d = self.to_dict()
-        d.pop("valid_datetime", None)
+    def set_base_datetime(self, base_datetime=None):
+        d = self._to_dict()
+        d.update(base_datetime=base_datetime)
+        spec = self.from_dict(d)
+        return spec
+
+    def set_base_datetime_and_step(self, base_datetime=None, step=None, time_span=None):
+        d = self._to_dict()
+        d.update(base_datetime=base_datetime, step=step, time_span=time_span)
+        spec = self.from_dict(d)
+        return spec
+
+    def set_step(self, step=None, time_span=None):
+        d = self._time_spanto_dict()
+        d.pop("step", None)
         d.update(step=step, time_span=time_span)
+        spec = self.from_dict(d)
+        return spec
+
+    def set_valid_datetime(self, valid_datetime=None, time_span=None):
+        d = self.to_dict()
+        d.pop("base_datetime", None)
+        d.update(valid_datetime=valid_datetime, time_span=time_span)
         spec = self.from_dict(d)
         return spec
 
