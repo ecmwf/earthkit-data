@@ -664,16 +664,21 @@ class EmptyCachePolicy(CachePolicy):
 class NoCachePolicy(CachePolicy):
     OUTDATED_CHECK_KEYS = ["cache-policy", "temporary-directory-root"]
     _name = "off"
-    _dir = None
+
+    def __init__(self):
+        super().__init__()
+        self._dir = None
+        self._lock = threading.Lock()
 
     def managed(self):
         return False
 
     def directory(self):
         if self._dir is None:
-            if self._dir is None:
-                root_dir = self._expand_path(self._config.get("temporary-directory-root"))
-                self._dir = temp_directory(dir=root_dir)
+            with self._lock:
+                if self._dir is None:
+                    root_dir = self._expand_path(self._config.get("temporary-directory-root"))
+                    self._dir = temp_directory(dir=root_dir)
         return self._dir.path
 
     def use_message_position_index_cache(self):
