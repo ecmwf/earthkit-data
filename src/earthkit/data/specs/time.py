@@ -105,33 +105,39 @@ class SimpleTime(Time):
         if reference_datetime is not None:
             self._reference_datetime = to_datetime(reference_datetime)
 
-    @classmethod
-    def from_base_datetime(cls, base_datetime=None):
-        """Set the base datetime of the time object."""
-        return cls(
-            base_datetime=base_datetime,
-        )
+    # @classmethod
+    # def from_base_datetime(cls, base_datetime, time_span=None):
+    #     """Set the base datetime of the time object."""
+    #     return cls(
+    #         base_datetime=base_datetime,
+    #     )
+
+    # @classmethod
+    # def from_date_and_time(cls, date, time=None, time_span=None):
+    #     dt = datetime_from_date_and_time(date, time)
+    #     # return Analysis(valid_datetime=dt)
+    #     return cls(base_datetime=dt)
 
     @classmethod
-    def from_date_and_time(cls, date=None, time=None):
-        dt = datetime_from_date_and_time(date, time)
-        # return Analysis(valid_datetime=dt)
-        return cls(base_datetime=dt)
-
-    @classmethod
-    def from_date_and_time_and_step(cls, date=None, time=None, step=None):
+    def from_date_and_time(cls, *, date=None, time=None, step=None, time_span=None):
         dt = datetime_from_date_and_time(date, time)
         return cls.from_base_datetime_and_step(base_datetime=dt, step=step)
 
-    @classmethod
-    def from_valid_datetime(cls, valid_datetime=None, time_span=None):
-        """Set the valid datetime of the time object."""
-        # return Analysis(valid_datetime=valid_datetime)
-        return cls(base_datetime=valid_datetime, time_span=time_span)
+    # @classmethod
+    # def from_valid_datetime(cls, valid_datetime=None, time_span=None):
+    #     """Set the valid datetime of the time object."""
+    #     # return Analysis(valid_datetime=valid_datetime)
+    #     return cls(base_datetime=valid_datetime, time_span=time_span)
 
     @classmethod
-    def from_valid_datetime_and_step(
-        cls, valid_datetime=None, step=None, time_span=None, indexing_datetime=None, reference_datetime=None
+    def from_valid_datetime(
+        cls,
+        *,
+        valid_datetime=None,
+        step=None,
+        time_span=None,
+        indexing_datetime=None,
+        reference_datetime=None,
     ):
         """Set the valid datetime of the time object."""
         valid_datetime = to_datetime(valid_datetime)
@@ -148,6 +154,7 @@ class SimpleTime(Time):
     @classmethod
     def from_base_datetime_and_valid_datetime(
         cls,
+        *,
         base_datetime=None,
         valid_datetime=None,
         time_span=None,
@@ -166,8 +173,8 @@ class SimpleTime(Time):
         )
 
     @classmethod
-    def from_base_datetime_and_step(
-        cls, base_datetime=None, step=None, time_span=None, indexing_datetime=None, reference_datetime=None
+    def from_base_datetime(
+        cls, *, base_datetime=None, step=None, time_span=None, indexing_datetime=None, reference_datetime=None
     ):
         """Set the base datetime of the time object."""
         return cls(
@@ -185,26 +192,14 @@ class SimpleTime(Time):
             raise TypeError("data must be a dictionary")
 
         d = normalise_set_kwargs(
-            cls, add_spec_keys=False, remove_nones=True, extra_keys=METHOD_MAP.CORE_KEYS, **d
+            cls, add_spec_keys=False, remove_nones=True, extra_keys=CREATE_METHOD_MAP.CORE_KEYS, **d
         )
 
-        print("d =", d)
-        method_name = METHOD_MAP.get(d.keys())
+        method_name, method_kwargs = CREATE_METHOD_MAP.get(d.keys())
         if method_name:
             method = getattr(cls, method_name)
-            if method_name == VALID_DATETIME_METHOD:
-                return method(d["valid_datetime"])
-            elif method_name == VALID_DATETIME_AND_STEP_METHOD:
-                assert "base_datetime" not in d
-                return method(**d)
-            elif method_name == BASE_DATETIME_METHOD:
-                return method(**d)
-            elif method_name == BASE_DATETIME_AND_STEP_METHOD:
-                return method(**d)
-            elif method_name == DATE_AND_TIME_METHOD:
-                return method(**d)
-            elif method_name == DATE_AND_TIME_AND_STEP_METHOD:
-                return method(**d)
+            d = {k: d[k] for k in method_kwargs if k in d}
+            return method(**d)
 
         if not d:
             return cls()
@@ -222,14 +217,9 @@ class SimpleTime(Time):
         }
 
     def _to_dict(self):
-        return {
-            # "valid_datetime": self.valid_datetime,
-            "base_datetime": self.base_datetime,
-            "step": self.step,
-            "time_span": self.time_span,
-            "indexing_datetime": self.indexing_datetime,
-            "reference_datetime": self.reference_datetime,
-        }
+        res = self.to_dict()
+        res.pop("valid_datetime", None)
+        return res
 
     def get_grib_context(self, context) -> dict:
         from .grib.time import COLLECTOR
@@ -244,41 +234,70 @@ class SimpleTime(Time):
     #     return spec
 
     def set(self, *args, **kwargs):
-        kwargs = normalise_set_kwargs(self, *args, add_spec_keys=False, remove_nones=True, **kwargs)
-
-        method_name = UPDATE_METHOD_MAP.get(kwargs.keys())
+        d = normalise_set_kwargs(self, *args, add_spec_keys=False, remove_nones=True, **kwargs)
+        method_name, method_kwargs = UPDATE_METHOD_MAP.get(d.keys())
         if method_name:
             method = getattr(self, method_name)
-            if method_name == STEP_UPDATE_METHOD:
-                return method(**kwargs)
+            d = {k: d[k] for k in method_kwargs if k in d}
+            return method(**d)
 
         return None
 
-    def set_base_datetime(self, base_datetime=None):
+    def _set_generic(
+        self,
+        *,
+        base_datetime=None,
+        step=None,
+        time_span=None,
+        indexing_datetime=None,
+        reference_datetime=None,
+    ):
         d = self._to_dict()
-        d.update(base_datetime=base_datetime)
-        spec = self.from_dict(d)
-        return spec
+        if base_datetime is not None:
+            d["base_datetime"] = to_datetime(base_datetime)
+        if step is not None:
+            d["step"] = to_timedelta(step)
+        if time_span is not None:
+            d["time_span"] = to_timedelta(time_span)
+        if indexing_datetime is not None:
+            d["indexing_datetime"] = to_datetime(indexing_datetime)
+        if reference_datetime is not None:
+            d["reference_datetime"] = to_datetime(reference_datetime)
 
-    def set_base_datetime_and_step(self, base_datetime=None, step=None, time_span=None):
-        d = self._to_dict()
-        d.update(base_datetime=base_datetime, step=step, time_span=time_span)
-        spec = self.from_dict(d)
-        return spec
+        return self.__class__(**d)
 
-    def set_step(self, step=None, time_span=None):
-        d = self._time_spanto_dict()
-        d.pop("step", None)
-        d.update(step=step, time_span=time_span)
-        spec = self.from_dict(d)
-        return spec
+    def _set_valid_datetime(self, *, valid_datetime=None, time_span=None):
+        valid_datetime = to_datetime(valid_datetime)
+        step = valid_datetime - self._base_datetime
+        return self._set_generic(step=step, time_span=time_span)
 
-    def set_valid_datetime(self, valid_datetime=None, time_span=None):
-        d = self.to_dict()
-        d.pop("base_datetime", None)
-        d.update(valid_datetime=valid_datetime, time_span=time_span)
-        spec = self.from_dict(d)
-        return spec
+    def _set_valid_datetime_and_step(self, *, valid_datetime=None, step=None, time_span=None):
+        valid_datetime = to_datetime(valid_datetime)
+        step = to_timedelta(step)
+        base_datetime = valid_datetime - step
+        return self._set_generic(base_datetime=base_datetime, step=step, time_span=time_span)
+
+    def _set_base_datetime_and_valid_datetime(
+        self,
+        *,
+        base_datetime=None,
+        valid_datetime=None,
+        time_span=None,
+    ):
+        base_datetime = to_datetime(base_datetime)
+        valid_datetime = to_datetime(valid_datetime)
+        step = valid_datetime - base_datetime
+        return self._set_generic(base_datetime=base_datetime, step=step, time_span=time_span)
+
+    def _set_base_datetime_valid_datetime_and_step(
+        self, *, base_datetime=None, valid_datetime=None, step=None, time_span=None
+    ):
+        base_datetime = to_datetime(base_datetime)
+        valid_datetime = to_datetime(valid_datetime)
+        step = to_timedelta(step)
+        if valid_datetime - base_datetime != step:
+            raise ValueError(f"Inconsistent step value. {base_datetime=} + {step=} != {valid_datetime=}")
+        return self._set_generic(base_datetime=base_datetime, step=step, time_span=time_span)
 
     @property
     def base_datetime(self):
@@ -321,7 +340,6 @@ class SimpleTime(Time):
 
     def __getstate__(self):
         state = {}
-
         state["_base_datetime"] = self._base_datetime
         state["_hcast_datetime"] = self._hcast_datetime
         state["_step"] = self._step
@@ -341,48 +359,80 @@ class SimpleTime(Time):
         )
 
 
-VALID_DATETIME_METHOD = "from_valid_datetime"
-VALID_DATETIME_AND_STEP_METHOD = "from_valid_datetime_and_step"
-BASE_DATETIME_METHOD = "from_base_datetime_and_step"
-BASE_DATETIME_AND_VALID_DATETIME_METHOD = "from_base_datetime_and_valid_datetime"
-BASE_DATETIME_AND_STEP_METHOD = "from_base_datetime_and_step"
-DATE_AND_TIME_METHOD = "from_date_and_time"
-DATE_AND_TIME_AND_STEP_METHOD = "from_date_and_time_and_step"
-
-METHODS = {
-    ("valid_datetime",): VALID_DATETIME_METHOD,
-    ("valid_datetime", "step"): VALID_DATETIME_AND_STEP_METHOD,
-    ("base_datetime",): BASE_DATETIME_METHOD,
-    ("base_datetime", "valid_datetime"): BASE_DATETIME_AND_VALID_DATETIME_METHOD,
-    ("base_datetime", "step"): BASE_DATETIME_AND_STEP_METHOD,
-    ("date", "time"): DATE_AND_TIME_METHOD,
-    ("date", "time", "step"): DATE_AND_TIME_AND_STEP_METHOD,
-}
-
-
 class MethodMap:
-    CORE_KEYS = set(["valid_datetime", "base_datetime", "step", "date", "time"])
-    MAPPING = {}
+    CORE_KEYS = None
+    EXTRA_KEYS = None
+    METHODS = None
 
-    def __init__(self, methods):
-        for k, method in methods.items():
+    def __init__(self):
+        self.mapping = {}
+        self.method_kwargs = {}
+        for k, method in self.METHODS.items():
             keys = sorted(list(k))
+            if method not in self.method_kwargs:
+                self.method_kwargs[method] = self.get_method_kwargs(method)
+
+            kwargs = self.method_kwargs[method]
+            assert set(keys).issubset(set(kwargs))
+            assert set(keys).issubset(self.CORE_KEYS)
             key = tuple(keys)
-            self.MAPPING[key] = method
+            self.mapping[key] = method
+            self.method_kwargs[method] = kwargs
+
+    def get(self, keys):
+        keys_s = set(keys)
+        found = tuple(sorted(list(self.CORE_KEYS.intersection(keys_s))))
+        found = self.reduce(found)
+        method = self.mapping.get(found, None)
+        return method, self.method_kwargs.get(method)
 
     @staticmethod
-    def get(keys):
-        keys_s = set(keys)
-        found = tuple(sorted(list(MethodMap.CORE_KEYS.intersection(keys_s))))
-        return MethodMap.MAPPING.get(found, None)
+    def get_method_kwargs(method_name):
+        import inspect
+
+        f = getattr(SimpleTime, method_name)
+        r = inspect.signature(f)
+        v = []
+        for p in r.parameters.values():
+            if p.kind == p.KEYWORD_ONLY:
+                v.append(p.name)
+        return v
+
+    def reduce(self, keys):
+        if len(keys) <= 1:
+            return keys
+        return tuple([k for k in keys if k not in self.EXTRA_KEYS])
 
 
-STEP_UPDATE_METHOD = "_set_step"
+class CreateMethodMap(MethodMap):
+    CORE_KEYS = {"valid_datetime", "base_datetime", "step", "date", "time"}
+    EXTRA_KEYS = {"time_span", "indexing_datetime", "reference_datetime"}
+    METHODS = {
+        ("valid_datetime",): "from_valid_datetime",
+        ("valid_datetime", "step"): "from_valid_datetime",
+        ("base_datetime",): "from_base_datetime",
+        ("base_datetime", "valid_datetime"): "from_base_datetime_and_valid_datetime",
+        ("base_datetime", "step"): "from_base_datetime",
+        ("date",): "from_date_and_time",
+        ("date", "time"): "from_date_and_time",
+        ("date", "time", "step"): "from_date_and_time",
+    }
 
-UPDATE_METHODS = {
-    ("step",): STEP_UPDATE_METHOD,
-}
 
-METHOD_MAP = MethodMap(METHODS)
+class UpdateMethodMap(MethodMap):
+    CORE_KEYS = set(["valid_datetime", "base_datetime", "step", "time_span"])
+    EXTRA_KEYS = set(["time_span", "indexing_datetime", "reference_datetime"])
+    METHODS = {
+        ("step",): "_set_generic",
+        ("time_span",): "_set_generic",
+        ("base_datetime",): "_set_generic",
+        ("base_datetime", "step"): "_set_generic",
+        ("valid_datetime",): "_set_valid_datetime",
+        ("valid_datetime", "step"): "_set_valid_datetime_and_step",
+        ("base_datetime", "valid_datetime"): "_set_base_datetime_and_valid_datetime",
+        ("base_datetime", "valid_datetime", "step"): "_set_base_datetime_valid_datetime_and_step",
+    }
 
-UPDATE_METHOD_MAP = MethodMap(UPDATE_METHODS)
+
+CREATE_METHOD_MAP = CreateMethodMap()
+UPDATE_METHOD_MAP = UpdateMethodMap()

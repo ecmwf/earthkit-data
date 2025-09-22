@@ -704,9 +704,6 @@ class Field(Base):
         # collect keys to set per member
         _kwargs = defaultdict(dict)
         for k, v in kwargs.items():
-            if callable(v):
-                v = v(self, k, self)
-
             member_name, member, key_name = self._get_member(k)
             if member:
                 _kwargs[member_name][key_name] = v

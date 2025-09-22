@@ -111,13 +111,13 @@ class SimpleGeography(Geography):
 
         return XArrayGeography(owner, selection)
 
-    def set(self, *args, **kwargs):
+    def set(self, *args, shape_hint=None, **kwargs):
         kwargs = normalise_set_kwargs(self, *args, add_spec_keys=False, **kwargs)
 
         keys = set(kwargs.keys())
 
         if keys == {"latitudes", "longitudes"}:
-            spec = self.from_dict(kwargs)
+            spec = self.from_dict(kwargs, shape_hint=shape_hint)
             return spec
 
         raise ValueError(f"Invalid {keys=} for Geography specification")
@@ -141,4 +141,10 @@ class SimpleGeography(Geography):
             result["geography"] = self.to_dict()
 
     def check(self, owner):
+        pass
+
+    def __getstate__(self):
+        pass
+
+    def __setstate__(self, state):
         pass
