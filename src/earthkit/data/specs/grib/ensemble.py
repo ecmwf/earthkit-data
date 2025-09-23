@@ -40,7 +40,7 @@ class GribEnsembleContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(spec, context):
         r = {
-            "number": spec.member,
+            "perturbationNumber": spec.member,
         }
         context.update(r)
 

@@ -27,43 +27,43 @@ from grib_fixtures import load_grib_data  # noqa: E402
 # @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 @pytest.mark.parametrize("write_method", ["target"])
 @pytest.mark.parametrize(
-    "ref1,ref2",
+    "_kwargs,ref_ori, ref_set,ref_saved",
     [
         (
+            {"member": 3},
             {
-                "level": 320,
-                "level_type": "pt",
-                "grib.levelist": 500,
-                "grib.level": 500,
-                "grib.levtype": "pl",
-                "grib.typeOfLevel": "isobaricInhPa",
+                "member": 1,
+                "grib.number": 1,
+                "grib.level": 850,
             },
             {
-                "level": 320,
-                "level_type": "pt",
-                "grib.levelist": 320,
-                "grib.level": 320,
-                "grib.levtype": "pt",
-                "grib.typeOfLevel": "theta",
+                "member": 3,
+                "grib.number": 1,
+                "grib.level": 850,
+            },
+            {
+                "member": 3,
+                "grib.number": 3,
+                "grib.level": 850,
             },
         ),
     ],
 )
-def test_grib_set_vertical(fl_type, write_method, ref1, ref2):
-    ds_ori, _ = load_grib_data("test4.grib", fl_type)
+def test_grib_set_ensemble(fl_type, write_method, _kwargs, ref_ori, ref_set, ref_saved):
+    ds_ori, _ = load_grib_data("ens_50.grib", fl_type, folder="data")
 
-    f = ds_ori[0].set(**ref1)
+    f = ds_ori[0].set(**_kwargs)
 
-    for k, v in ref1.items():
+    for k, v in ref_set.items():
         assert f.get(k) == v
 
     # the original field is unchanged
-    assert ds_ori[0].get("level") == 500
-    assert ds_ori[0].get("level_type") == "pl"
+    for k, v in ref_ori.items():
+        assert ds_ori[0].get(k) == v
 
     with temp_file() as tmp:
         f.to_target("file", tmp)
         f_saved = from_source("file", tmp)
         assert len(f_saved) == 1
-        for k, v in ref2.items():
+        for k, v in ref_saved.items():
             assert f_saved[0].get(k) == v, f"key {k} expected {v} got {f_saved[0].get(k)}"
