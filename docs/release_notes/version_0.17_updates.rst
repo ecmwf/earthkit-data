@@ -8,7 +8,10 @@ Version 0.17.0
 New features
 ++++++++++++++++++++++++++++++
 
-- Implemented the ``allow_holes`` option in the Xarray engine to allow using GRIB input not forming a complete hypercube (:pr:`734`)
+- Implemented the ``allow_holes`` option in the Xarray engine to allow using GRIB input not forming a complete hypercube (:pr:`734`). See the notebook example:
+
+    - :ref:`/examples/xarray_engine_holes.ipynb`
+
 - Added the experimental :ref:`data-sources-gribjump` source for fast retrievals of GRIB message subsets from the FDB (Fields DataBase) using the :xref:`gribjump` library. See the notebook example:
 
     - :ref:`/examples/gribjump.ipynb`
