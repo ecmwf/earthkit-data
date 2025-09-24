@@ -382,6 +382,8 @@ class GribEncoder(Encoder):
         md.update(self._normalize_kwargs_names(**metadata))
         md.update(self._normalize_kwargs_names(**kwargs))
 
+        print("Metadata before update:", md)
+
         # when the input date a datetime object time can be inferred from it
         can_infer_time = (
             "date" in md
@@ -496,7 +498,6 @@ class GribEncoder(Encoder):
         # handle = self._get_handle(field=field, values=values, metadata=metadata, template=template)
         handle = self._get_handle(values=values, metadata=metadata, template=template)
 
-        print("Handle:", handle)
         return self._make_message(handle, values=values, metadata=metadata, **kwargs)
 
     def _encode_fieldlist(self, fs, **kwargs):
@@ -520,6 +521,14 @@ class GribEncoder(Encoder):
         compulsory = COMPULSORY
 
         self._update_metadata(handle, metadata, compulsory, can_infer_time)
+
+        print("Metadata before setting to handle:", metadata)
+
+        # eccodes keys are order dependent
+        KEY_ORDER = ("edition", "stepType")
+        r = {k: metadata.pop(k) for k in KEY_ORDER if k in metadata}
+        r.update(metadata)
+        metadata = r
 
         if check_nans and values is not None:
             import numpy as np

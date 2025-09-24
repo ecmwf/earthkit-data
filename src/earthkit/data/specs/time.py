@@ -18,6 +18,7 @@ from .spec import Aliases
 from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
 from .spec import spec_aliases
+from .time_span import TimeSpan
 
 ZERO_TIMEDELTA = datetime.timedelta(hours=0)
 
@@ -28,9 +29,9 @@ class Time(SimpleSpec):
 
     KEYS = (
         "base_datetime",
+        "valid_datetime",
         "step",
         "time_span",
-        "valid_datetime",
         "indexing_datetime",
         "reference_datetime",
     )
@@ -83,12 +84,17 @@ class SimpleTime(Time):
     _base_datetime = None
     _hcast_datetime = None
     _step = ZERO_TIMEDELTA
-    _time_span = ZERO_TIMEDELTA
+    _time_span = TimeSpan()
     _indexing_datetime = None
     _reference_datetime = None
 
     def __init__(
-        self, base_datetime=None, step=None, time_span=None, indexing_datetime=None, reference_datetime=None
+        self,
+        base_datetime=None,
+        step=None,
+        time_span=None,
+        indexing_datetime=None,
+        reference_datetime=None,
     ):
         if base_datetime is not None:
             self._base_datetime = to_datetime(base_datetime)
@@ -97,7 +103,7 @@ class SimpleTime(Time):
             self._step = to_timedelta(step)
 
         if time_span is not None:
-            self._time_span = to_timedelta(time_span)
+            self._time_span = TimeSpan.make(time_span)
 
         if indexing_datetime is not None:
             self._indexing_datetime = to_datetime(indexing_datetime)
@@ -105,29 +111,10 @@ class SimpleTime(Time):
         if reference_datetime is not None:
             self._reference_datetime = to_datetime(reference_datetime)
 
-    # @classmethod
-    # def from_base_datetime(cls, base_datetime, time_span=None):
-    #     """Set the base datetime of the time object."""
-    #     return cls(
-    #         base_datetime=base_datetime,
-    #     )
-
-    # @classmethod
-    # def from_date_and_time(cls, date, time=None, time_span=None):
-    #     dt = datetime_from_date_and_time(date, time)
-    #     # return Analysis(valid_datetime=dt)
-    #     return cls(base_datetime=dt)
-
     @classmethod
     def from_date_and_time(cls, *, date=None, time=None, step=None, time_span=None):
         dt = datetime_from_date_and_time(date, time)
         return cls.from_base_datetime_and_step(base_datetime=dt, step=step)
-
-    # @classmethod
-    # def from_valid_datetime(cls, valid_datetime=None, time_span=None):
-    #     """Set the valid datetime of the time object."""
-    #     # return Analysis(valid_datetime=valid_datetime)
-    #     return cls(base_datetime=valid_datetime, time_span=time_span)
 
     @classmethod
     def from_valid_datetime(
@@ -253,16 +240,29 @@ class SimpleTime(Time):
         reference_datetime=None,
     ):
         d = self._to_dict()
-        if base_datetime is not None:
-            d["base_datetime"] = to_datetime(base_datetime)
-        if step is not None:
-            d["step"] = to_timedelta(step)
-        if time_span is not None:
-            d["time_span"] = to_timedelta(time_span)
-        if indexing_datetime is not None:
-            d["indexing_datetime"] = to_datetime(indexing_datetime)
-        if reference_datetime is not None:
-            d["reference_datetime"] = to_datetime(reference_datetime)
+
+        def _add(key, value):
+            if value is not None:
+                d[key] = value
+
+        _add("base_datetime", base_datetime)
+        _add("step", step)
+        _add("time_span", time_span)
+        _add("indexing_datetime", indexing_datetime)
+        _add("reference_datetime", reference_datetime)
+
+        # if base_datetime is not None:
+        #     d["base_datetime"] = to_datetime(base_datetime)
+        # if step is not None:
+        #     d["step"] = to_timedelta(step)
+        # if time_span is not None:
+        #     d["time_span"] = TimeSpan.make(time_span)
+        # if indexing_datetime is not None:
+        #     d["indexing_datetime"] = to_datetime(indexing_datetime)
+        # if reference_datetime is not None:
+        #     d["reference_datetime"] = to_datetime(reference_datetime)
+
+        print("generic", d)
 
         return self.__class__(**d)
 

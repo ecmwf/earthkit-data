@@ -8,6 +8,9 @@
 #
 
 from earthkit.data.utils.dates import datetime_from_grib
+from earthkit.data.utils.dates import datetime_to_grib
+from earthkit.data.utils.dates import step_range_to_grib
+from earthkit.data.utils.dates import step_to_grib
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
@@ -78,7 +81,23 @@ class GribTimeBuilder:
 class GribTimeContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(spec, context):
-        pass
+        r = {}
+
+        date, time = datetime_to_grib(spec.base_datetime)
+        step = step_to_grib(spec.step)
+        r["date"] = date
+        r["time"] = time
+        r["step"] = step
+
+        if spec.time_span.value != ZERO_TIMEDELTA:
+            start = spec.step - spec.time_span.value
+            start = step_to_grib(start)
+            end = step
+            r["stepRange"] = step_range_to_grib(start, end)
+            r["stepType"] = spec.time_span._type.name
+        else:
+            r["stepRange"] = str(step)
+        context.update(r)
 
 
 COLLECTOR = GribTimeContextCollector()
