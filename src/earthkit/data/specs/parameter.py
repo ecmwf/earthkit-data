@@ -43,13 +43,6 @@ class Parameter(SimpleSpec):
 class SimpleParameter(Parameter):
     """A specification of a parameter."""
 
-    KEYS = (
-        "variable",
-        "units",
-    )
-
-    ALIASES = Aliases({"variable": ("param")})
-
     def __init__(self, variable: str = None, units: str = None) -> None:
         self._variable = variable
         self._units = units

@@ -8,8 +8,11 @@
 #
 
 
+from typing import Any
+
 from earthkit.data.new_field.xarray.coordinates import extract_single_value
 from earthkit.data.new_field.xarray.coordinates import is_scalar
+from earthkit.data.specs.time import SimpleTime
 
 
 def from_xarray(owner, selection):
@@ -24,20 +27,20 @@ def from_xarray(owner, selection):
     return owner.time.spec(_coords)
 
 
-# class XArrayTime(Time):
-#     def __init__(self, owner: Any, selection: Any) -> None:
-#         self.owner = owner
-#         self.selection = selection
+class XArrayTime(SimpleTime):
+    def __init__(self, owner: Any, selection: Any) -> None:
+        self.owner = owner
+        self.selection = selection
 
-#     @cached_property
-#     def spec(self):
-#         """Return the time specification."""
-#         _coords = {}
-#         for coord_name, coord_value in self.selection.coords.items():
-#             if is_scalar(coord_value):
-#                 # Extract the single value from the scalar dimension
-#                 # and store it in the metadata
-#                 coordinate = self.owner.by_name[coord_name]
-#                 _coords[coord_name] = coordinate.normalise(extract_single_value(coord_value))
+    # @cached_property
+    # def spec(self):
+    #     """Return the time specification."""
+    #     _coords = {}
+    #     for coord_name, coord_value in self.selection.coords.items():
+    #         if is_scalar(coord_value):
+    #             # Extract the single value from the scalar dimension
+    #             # and store it in the metadata
+    #             coordinate = self.owner.by_name[coord_name]
+    #             _coords[coord_name] = coordinate.normalise(extract_single_value(coord_value))
 
-#         return self.owner.time.spec(_coords)
+    #     return self.owner.time.spec(_coords)

@@ -9,55 +9,27 @@
 
 import logging
 
-from earthkit.data.specs.parameter import Parameter
+from earthkit.data.specs.parameter import SimpleParameter
 
 LOG = logging.getLogger(__name__)
 
 
-def from_xarray(owner, selection) -> "Parameter":
-    """Create a Parameter instance from an xarray dataset.
+class XArrayParameter(SimpleParameter):
+    """A class to represent a parameter in an xarray dataset."""
 
-    Parameters
-    ----------
-    owner : Variable
-        The variable that owns this parameter.
-    selection : XArrayDataArray
-        The xarray data array selection.
+    def __init__(self, owner, selection=None) -> None:
+        """Create a new XArrayParameter object.
 
-    Returns
-    -------
-    Parameter
-        The created Parameter instance.
-    """
-    name = owner.name
-    units = owner.variable.attrs.get("units", None)
-    return {"variable": name, "units": units}
-
-
-# class XArrayParameter(Parameter):
-#     """A class to represent a parameter in an xarray dataset."""
-
-#     def __init__(self, owner: Any, selection=None) -> None:
-#         """Create a new XArrayParameter object.
-
-#         Parameters
-#         ----------
-#         owner : Variable
-#             The variable that owns this field.
-#         selection : XArrayDataArray
-#             A 2D sub-selection of the variable's underlying array.
-#             This is actually a nD object, but the first dimensions are always 1.
-#             The other two dimensions are latitude and longitude.
-#         """
-#         self.owner = owner
-
-#         # Copy the metadata from the owner
-#         # self._md = owner._metadata.copy()
-
-#     @property
-#     def name(self):
-#         return self.owner.name
-
-#     @property
-#     def units(self):
-#         return self.owner.variable.attrs.get("units", None)
+        Parameters
+        ----------
+        owner : Variable
+            The variable that owns this field.
+        selection : XArrayDataArray
+            A 2D sub-selection of the variable's underlying array.
+            This is actually a nD object, but the first dimensions are always 1.
+            The other two dimensions are latitude and longitude.
+        """
+        # self.owner = owner
+        name = owner.name
+        units = owner.variable.attrs.get("units", None)
+        super().__init__(name, units)
