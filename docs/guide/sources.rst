@@ -469,7 +469,7 @@ memory
 .. py:function:: from_source("memory", buffer)
   :noindex:
 
-  The ``memory`` source will read data from a memory buffer. Currently it only works for a ``buffer`` storing a single :ref:`grib` message or CoverageJson data. The result is a FieldList object storing all the data in memory.
+  The ``memory`` source will read data from a memory buffer. Currently it only works for a ``buffer`` storing GRIB data or a single CoverageJson object. The result is a FieldList object storing all the data in memory.
 
   .. code-block:: python
 
@@ -484,7 +484,7 @@ memory
       f = ds[0]
 
 
-  Please note that a buffer can always be read as a :ref:`stream source <data-sources-stream>` using ``io.BytesIO``. The equivalent code to the example above using a stream is:
+  Please note that if the given input can be read as a stream we can also use the :ref:`stream source <data-sources-stream>` to read the ``buffer`` using ``io.BytesIO``. The equivalent code to the example above using a stream is as follows:
 
   .. code-block:: python
 
