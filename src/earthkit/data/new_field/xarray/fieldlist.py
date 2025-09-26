@@ -253,7 +253,7 @@ class XArrayFieldList(FieldList):
             LOG.warning("Variables: %s", sorted([v.name for v in self.variables]))
 
         if not variables:
-            from .field import EmptyFieldList
+            from .field_ori import EmptyFieldList
 
             return EmptyFieldList()
 
