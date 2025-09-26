@@ -60,6 +60,19 @@ def test_grib_serialise_metadata(fl_type, representation):
         assert md[k] == md2[k]
 
 
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+@pytest.mark.parametrize("representation", ["file", "memory"])
+def test_grib_serialise_field(fl_type, representation):
+    ds, _ = load_grib_data("test.grib", fl_type)
+    f = ds[0]
+
+    f2 = _pickle(f, representation)
+
+    keys = ["param", "date", "time", "step", "level", "gridType", "type"]
+    for k in keys:
+        assert f.metadata(k) == f2.metadata(k)
+
+
 @pytest.mark.parametrize("representation", ["file", "memory"])
 def test_grib_serialise_standalone_metadata(representation):
     ds = from_source("file", earthkit_examples_file("test.grib"))

@@ -61,17 +61,31 @@ def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):
         # from .memory import GribFieldListInMemory
         # from .memory import GribMessageMemoryReader
 
-        from earthkit.data.indexing.simple import LazySimpleFieldList
+        import io
+
+        # from earthkit.data.indexing.simple import LazySimpleFieldList
+        from earthkit.data.indexing.simple import SimpleFieldList
         from earthkit.data.new_field.grib.memory import GribMessageMemoryReader
+        from earthkit.data.new_field.grib.memory import GribStreamReader
 
-        return LazySimpleFieldList(GribMessageMemoryReader(buffer, **kwargs))
+        # convert the memory buffer into a stream and use the stream reader. See
+        # https://github.com/ecmwf/earthkit-data/issues/740 for details
+        stream = io.BytesIO(buffer)
+        r = GribStreamReader(stream, **kwargs)
+        fields = [f for f in r]
+        r = SimpleFieldList(fields)
+        return r
 
-        # return LazySimpleFieldList(source, buffer, **kwargs)
 
-        # from earthkit.data.new_field.grib.memory import GribFieldListInMemory
-        # from earthkit.data.new_field.grib.memory import GribMessageMemoryReader
+# The implementation below cannot handle padding between messages
+# return LazySimpleFieldList(GribMessageMemoryReader(buffer, **kwargs))
 
-        # return GribFieldListInMemory(source, GribMessageMemoryReader(buffer, **kwargs), **kwargs)
+# return LazySimpleFieldList(source, buffer, **kwargs)
+
+# from earthkit.data.new_field.grib.memory import GribFieldListInMemory
+# from earthkit.data.new_field.grib.memory import GribMessageMemoryReader
+
+# return GribFieldListInMemory(source, GribMessageMemoryReader(buffer, **kwargs), **kwargs)
 
 
 def stream_reader(

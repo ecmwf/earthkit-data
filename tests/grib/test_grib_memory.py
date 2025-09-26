@@ -14,11 +14,12 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
+from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.testing import write_to_file
 
 
-def test_grib_from_memory():
+def test_grib_from_memory_single():
     with open(earthkit_test_data_file("test_single.grib"), "rb") as f:
         data = f.read()
         fs = from_source("memory", data)
@@ -26,6 +27,28 @@ def test_grib_from_memory():
         sn = fs.get("param")
         assert sn == ["2t"]
         assert fs[0].get("grib.shortName") == "2t"
+
+
+def test_grib_from_memory_multi():
+    with open(earthkit_examples_file("test.grib"), "rb") as f:
+        data = f.read()
+        fs = from_source("memory", data)
+        assert len(fs) == 2
+        sn = fs.metadata("param")
+        assert sn == ["2t", "msl"]
+        assert fs[0].metadata("shortName") == "2t"
+        assert fs[1].metadata("shortName") == "msl"
+
+
+def test_grib_from_memory_padding():
+    with open(earthkit_test_data_file("test_padding.grib"), "rb") as f:
+        data = f.read()
+        fs = from_source("memory", data)
+        assert len(fs) == 2
+        sn = fs.metadata("param")
+        assert sn == ["2t", "msl"]
+        assert fs[0].metadata("shortName") == "2t"
+        assert fs[1].metadata("shortName") == "msl"
 
 
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
