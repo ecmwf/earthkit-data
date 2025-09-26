@@ -99,6 +99,7 @@ class GribMessageMemoryReader(GribMemoryReader):
 
         handle = eccodes.codes_new_from_message(self.buf[self._index :])
 
+        # TODO: allow handling padding between messages
         try:
             handle_length = eccodes.codes_get(handle, "totalLength")
         except Exception:
