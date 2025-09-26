@@ -11,7 +11,6 @@ import logging
 from abc import ABCMeta
 from abc import abstractmethod
 
-import numpy
 import xarray
 import xarray.core.indexing as indexing
 
@@ -19,6 +18,7 @@ from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
 from .attrs import AttrList
+from .dim import LevelPerTypeDim
 from .profile import Profile
 
 LOG = logging.getLogger(__name__)
@@ -143,7 +143,7 @@ class VariableBuilder:
                     fixed_attrs[a.name] = a.value()
                 elif callable(a):
                     res.update(a(_metadata()))
-                elif isinstance(a, str):
+                else:
                     res.update(a.get(_metadata()))
 
             res = {k: v for k, v in res.items() if v is not None}
@@ -173,18 +173,15 @@ class VariableBuilder:
 
 
 class TensorBackendArray(xarray.backends.common.BackendArray):
-    def __init__(self, tensor, dims, shape, xp, dtype, var_name):
+    def __init__(self, tensor, dims, shape, array_backend, dtype, var_name):
         super().__init__()
         self.tensor = tensor
         self.dims = dims
         self.shape = shape
         self._var_name = var_name
+        self.dtype = dtype
+        self.array_backend = array_backend
 
-        # xp and dtype must be set for xarray
-        self.xp = xp if xp is not None else numpy
-        if dtype is None:
-            dtype = numpy.dtype("float64")
-        self.dtype = xp.dtype(dtype)
         from dask.utils import SerializableLock
 
         self.lock = SerializableLock()
@@ -230,18 +227,18 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
 
             # LOG.debug(f"   {field_index=}")
 
-            result = r.to_numpy(index=field_index, dtype=self.dtype)
+            try:
+                result = r.to_array(index=field_index, array_backend=self.array_backend, dtype=self.dtype)
+            except Exception as e:
+                LOG.exception("Error in to_array:", e)
+                raise
+
+            # LOG.debug(f"   {result.shape=}"
 
             # ensure axes are squeezed when needed
             singles = [i for i in list(range(len(r.user_shape))) if isinstance(key[i], int)]
             if singles:
                 result = result.squeeze(axis=tuple(singles))
-
-            # LOG.debug(f"   {result.shape=}")
-
-            # Loading as numpy but then converting to the target array module
-            if self.xp and self.xp != numpy:
-                result = self.xp.asarray(result)
 
             return result
 
@@ -253,8 +250,28 @@ class BackendDataBuilder(metaclass=ABCMeta):
         self.dims = dims
 
         self.flatten_values = profile.flatten_values
-        self.dtype = profile.dtype
-        self.array_module = profile.array_module
+
+        if self.profile.allow_holes:
+            self.raw_global_tensor_coords = {}
+            self.global_tensor_coords_component = {}
+        else:
+            self.raw_global_tensor_coords = None
+            self.global_tensor_coords_component = None
+
+        # Array backend/namespace
+        array_backend = profile.array_backend
+        if array_backend is None:
+            array_backend = "numpy"
+
+        from earthkit.utils.array import get_backend
+
+        self.array_backend = get_backend(array_backend)
+        assert self.array_backend is not None, f"Unsupported array_backend : {array_backend}"
+
+        dtype = profile.dtype
+        if dtype is None:
+            dtype = "float64"
+        self.dtype = self.array_backend.make_dtype(dtype)
 
         # Note: these coords inside the tensor are called user_coords and
         # the corresponding dims are called user_dims
@@ -302,6 +319,30 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 self.tensor_coords["valid_time"] = Coord.make("valid_time", _vals, dims=_dims)
 
     def build(self):
+        if self.profile.allow_holes:
+            if self.profile.add_valid_time_coord:
+                raise NotImplementedError("add_valid_time_coord=True not yet supported when allow_holes=True")
+
+            global_tensor_dims, self.raw_global_tensor_coords, self.global_tensor_coords_component, _ = (
+                self.prepare_tensor(self.ds, self.dims, "<ALL VARIABLES>")
+            )
+
+            for d in global_tensor_dims:
+                if isinstance(d, LevelPerTypeDim):
+                    raise NotImplementedError(
+                        "level_dim_mode='level_per_type' not yet supported when allow_holes=True"
+                    )
+                # Create coord for each dimension
+                # TODO: This does not work yet: Dimensions like "level_per_type" are templates and will be
+                #  added as multiple concrete dimensions to the dataset
+                k, c = d.as_coord(
+                    d.key,
+                    self.raw_global_tensor_coords[d.key],
+                    self.global_tensor_coords_component.get(d.key, None),
+                    self.ds,
+                )
+                self.tensor_coords[k] = c
+
         # we assume each variable forms a full cube
         var_builders = self.pre_build_variables()
 
@@ -346,6 +387,10 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         tensor_dim_keys = [d.key for d in tensor_dims]
 
+        if self.profile.allow_holes:
+            tensor_coords = {k: v for k, v in self.raw_global_tensor_coords.items() if k in tensor_dim_keys}
+            tensor_coords_component = self.global_tensor_coords_component
+
         # LOG.debug(f"{tensor_dims=} {tensor_coords=} {tensor_coords_component=} {tensor_extra_attrs=}")
         # LOG.debug(f"{tensor_dim_keys=}")
 
@@ -356,6 +401,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             user_dims_and_coords=tensor_coords,
             field_dims_and_coords=(self.grid.dims, self.grid.coords),
             flatten_values=self.flatten_values,
+            allow_holes=self.profile.allow_holes,
         )
 
         var_dims = []
@@ -367,6 +413,10 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 d.key, tensor.user_coords[d.key], tensor_coords_component.get(d.key, None), tensor.source
             )
             if k not in self.tensor_coords:
+                assert not self.profile.allow_holes, (
+                    f"allow_holes=True: the dimension {k} not found among dimensions "
+                    f"of the global tensor: {list(self.tensor_coords)}"
+                )
                 self.tensor_coords[k] = c
             var_dims.append(k)
         var_dims.extend(tensor.field_dims)
@@ -423,9 +473,10 @@ class BackendDataBuilder(metaclass=ABCMeta):
                     if component_vals and d.key in component_vals:
                         tensor_coords_component[d.key] = component_vals[d.key]
 
-                    # check if the dims/coords are consistent with the tensors of
-                    # the previous variables
-                    self.check_tensor_coords(name, d.key, tensor_coords)
+                    if not self.profile.allow_holes:
+                        # check if the dims/coords are consistent with the tensors of
+                        # the previous variables
+                        self.check_tensor_coords(name, d.key, tensor_coords)
 
         # TODO:  check if fieldlist forms a full hypercube with respect to the the dims/coordinates
         return tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs
@@ -470,7 +521,7 @@ class TensorBackendDataBuilder(BackendDataBuilder):
             tensor,
             var_dims,
             tensor.full_shape,
-            self.array_module,
+            self.array_backend,
             self.dtype,
             name,
         )
@@ -514,7 +565,7 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
             for f in tensor.source:
                 f.keep = False
 
-        return tensor.to_numpy(dtype=self.dtype)
+        return tensor.to_array(dtype=self.dtype, array_backend=self.array_backend)
 
 
 class DatasetBuilder:
@@ -573,7 +624,13 @@ class DatasetBuilder:
 
         # LOG.debug(f"{profile.sort_keys=}")
         # the data is only sorted once
-        ds_xr = ds_xr.order_by(profile.sort_keys)
+        if not self.profile.allow_holes:
+            ds_xr = ds_xr.order_by(profile.sort_keys)
+        else:
+            # mimic the behaviour of XArrayInputFieldList.order_by without applying the actual sorting
+            while isinstance(ds_xr.ds, XArrayInputFieldList):
+                ds_xr = ds_xr.ds
+            ds_xr = XArrayInputFieldList(ds_xr.ds, db=ds_xr.db, remapping=remapping)
 
         if not profile.lazy_load and profile.release_source:
             ds_xr.make_releasable()

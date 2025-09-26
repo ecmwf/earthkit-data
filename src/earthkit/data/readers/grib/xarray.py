@@ -235,7 +235,7 @@ class XarrayMixIn:
 
                   - "forecast_reference_time": built from the "date" and "time" roles
                     (see ``dim_roles``) as np.datetime64 values
-                  - "step": built from the "step" role. When ``decode_time=True`` the values are
+                  - "step": built from the "step" role. When ``decode_times=True`` the values are
                     np.timedelta64
                 - "valid_time": adds a dimension called "valid_time" as described by the "valid_time"
                   role (see ``dim_roles``). Will contain np.datetime64 values.
@@ -320,8 +320,8 @@ class XarrayMixIn:
                 (None) expands to True unless the ``profile`` overwrites it.
             * rename_attrs: dict, None
                 A dictionary of attribute to rename. Default is None.
-            * fill: dict, None
-                Define fill values to metadata keys. Default is None.
+            * fill_metadata: dict, None
+                Define fill_metadata values to metadata keys. Default is None.
             * remapping: dict, None
                 Define new metadata keys for indexing. Default is None.
             * lazy_load: bool, None
@@ -340,13 +340,20 @@ class XarrayMixIn:
                 option is ignored. Having run :obj:`to_xarray` the input data becomes unusable,
                 so use this option carefully. The default value of ``release_source`` (None) expands
                 to False unless the ``profile`` overwrites it.
+            * allow_holes: bool, None
+                If False, GRIB fields must form a full hypercube (without holes).
+                If True, a dataset will be created from any GRIB fields and
+                its coordinates will be a union of coordinates of the fields (outer join).
+                Values corresponding to missing GRIB fields will be filled with NaN.
+                The default value of ``allow_holes`` (None) expands to False unless the ``profile`` overwrites it.
             * strict: bool, None
                 If True, perform stricter checks on hypercube consistency. Its default value (None) expands
                 to False unless the ``profile`` overwrites it.
             * dtype: str, numpy.dtype or None
                 Typecode or data-type of the array data.
-            * array_module: module
-                The module to use for array operations. Default is numpy.
+            * array_backend: str, array namespace, ArrayBackend, None
+                The array backend/namespace to use for array operations. The default value (None) is
+                expanded to "numpy".
             * direct_backend: bool, None
                 If True, the backend is used directly bypassing :py:meth:`xarray.open_dataset`
                 and ignoring all non-backend related kwargs. If False, the data is read via

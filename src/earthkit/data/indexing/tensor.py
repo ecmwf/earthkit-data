@@ -14,6 +14,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 import numpy as np
+from earthkit.utils.array import array_namespace
 
 from earthkit.data.core.index import Selection
 from earthkit.data.core.index import normalize_selection
@@ -57,9 +58,12 @@ class CubeSelection(Selection):
 class CubeCoords(dict):
     def __repr__(self):
         t = "Coordinates:\n"
-        max_len = max(len(k) for k in self.keys())
-        for k, v in self.items():
-            t += f"  {k:<{max_len+4}}{self._format_item(v)}\n"
+        if len(self):
+            max_len = max(len(k) for k in self.keys())
+            for k, v in self.items():
+                t += f"  {k:<{max_len+4}}{self._format_item(v)}\n"
+        else:
+            t += "  *empty*"
         return t
 
     def _format_item(self, item, n=10):
@@ -240,6 +244,9 @@ class TensorCore(metaclass=ABCMeta):
                 r[k] = self._user_coords[k]
         return r
 
+    # TODO: this must be changed if it is to be used in the sparse case (tensor with holes) - the function
+    #  index_to_coords(...) does work only in the complete tensor case with fields being sorted.
+    #  However, this method is used only by CubeChecker.first_diff which is in turn for an error diagnostic only.
     @staticmethod
     def _index_to_coords_value(index, tensor):
         coord_idx = index_to_coords(index, tensor._user_shape)
@@ -283,6 +290,7 @@ class FieldListTensor(TensorCore):
         field_coords,
         field_dims,
         flatten_values,
+        check_if_tensor_is_full=True,
     ):
         # print(f"FieldListTensor user_coords={user_coords}")
         # print(f"FieldListTensor field_coords={field_coords.keys()} {field_dims=}")
@@ -297,11 +305,12 @@ class FieldListTensor(TensorCore):
         self._full_shape = self._user_shape + self._field_shape
         self.flatten_values = flatten_values
 
-        # consistency check
-        from earthkit.data.utils.xarray.check import CubeChecker
+        if check_if_tensor_is_full:
+            # consistency check
+            from earthkit.data.utils.xarray.check import CubeChecker
 
-        checker = CubeChecker(self)
-        checker.check(details=True)
+            checker = CubeChecker(self)
+            checker.check(details=True)
 
     @classmethod
     def from_tensor(cls, owner, source, user_coords):
@@ -324,6 +333,7 @@ class FieldListTensor(TensorCore):
         progress_bar=False,
         user_dims_and_coords=None,
         field_dims_and_coords=None,
+        allow_holes=False,
     ):
         assert len(ds), f"No data in {ds}"
 
@@ -338,7 +348,7 @@ class FieldListTensor(TensorCore):
                 names += list(a.keys())
 
         # Sort the source
-        if names and sort:
+        if names and sort and not allow_holes:
             source = ds.order_by(*args, remapping=remapping)
         else:
             source = ds
@@ -365,7 +375,13 @@ class FieldListTensor(TensorCore):
 
             field_dims, field_coords, _ = TensorGrid.build(source[0], flatten_values)
 
-        return cls(source, user_coords, field_coords, field_dims, flatten_values)
+        if not allow_holes:
+            return cls(source, user_coords, field_coords, field_dims, flatten_values)
+        else:
+            user_coords_to_fl_idx = source._user_coords_to_fl_idx(names, remapping=remapping)
+            return FieldListSparseTensor(
+                source, user_coords, field_coords, field_dims, flatten_values, user_coords_to_fl_idx
+            )
 
     def clear(self):
         self.source = None
@@ -378,19 +394,51 @@ class FieldListTensor(TensorCore):
         self._full_shape = None
         self.flatten_values = None
 
-    @flatten_arg
-    def to_numpy(self, index=None, **kwargs):
+    def _prepare_tensor_data(self, source_to_array_func, index=None):
         if index is not None:
             if all(i == slice(None, None, None) for i in index):
                 index = None
 
         if index is None:
-            return self.source.to_numpy(**kwargs).reshape(*self.full_shape)
+            arr = source_to_array_func()
+            current_field_shape = self.field_shape
         else:
-            n = self.source.to_numpy(index=index, **kwargs)
-            shape = list(self._user_shape)
-            shape += list(n.shape[1:])
-            return n.reshape(*shape) if len(shape) > 0 else n
+            arr = source_to_array_func(index=index)
+            if len(arr) > 0:
+                current_field_shape = tuple(arr.shape[1:])
+            else:
+                # `arr` comes from an empty field list; this happens when the tensor `self` was sliced
+                # in such a manner that either a 0-slice was produced or the slice contains "holes" only.
+                # In such case we must derive the field shape by applying `index` to field coordinates directly.
+                #
+                # Note: When doing `.sel(dim=coord)` on a corresponding xarray object,
+                # where `coord` is an item (not a 1-element list),
+                # * `self.user_shape` does not lose the dimension `dim`, even if `dim` is one of user dims
+                # * `field_shape` does lose the dimension `dim` if `dim` is a field dimension
+                current_field_shape = tuple(
+                    len(range(n)[_slice])
+                    for n, _slice in zip(self.field_shape, index)
+                    if not isinstance(_slice, int)
+                    # `_slice` can be either an `int` or a `slice`; if `int`, ignore it!
+                )
+
+        return arr, current_field_shape
+
+    def _to_array(self, source_to_array_func, index=None):
+        arr, current_field_shape = self._prepare_tensor_data(source_to_array_func, index=index)
+        return array_namespace(arr).reshape(arr, self.user_shape + current_field_shape)
+
+    @flatten_arg
+    def to_numpy(self, dtype=None, index=None, **kwargs):
+        source_to_numpy_func = functools.partial(self.source.to_numpy, dtype=dtype, **kwargs)
+        return self._to_array(source_to_numpy_func, index=index)
+
+    @flatten_arg
+    def to_array(self, dtype=None, array_backend=None, index=None, **kwargs):
+        source_to_array_func = functools.partial(
+            self.source.to_array, dtype=dtype, array_backend=array_backend, **kwargs
+        )
+        return self._to_array(source_to_array_func, index=index)
 
     @flatten_arg
     def latitudes(self, **kwargs):
@@ -489,7 +537,9 @@ class FieldListTensor(TensorCore):
                 dims_step = [keys[d] for d in dims]
                 # use same dim order as in user_dims
                 dims = [d for d in self.user_dims if d in dims_step]
-                assert len(dims) == len(dims_step), f"Duplicate dims in {dims}"
+                if len(dims) != len(dims_step):
+                    continue
+                assert len(dims) == len(dims_step), f"{dims=} {dims_step=}"
                 other_dims = [d for d in self.user_dims if d not in dims]
 
                 if other_dims:
@@ -548,3 +598,104 @@ class FieldListTensor(TensorCore):
         self._field_dims = state["field_dims"]
         self._full_shape = state["full_shape"]
         self.flatten_values = state["flatten_values"]
+
+
+class FieldListSparseTensor(FieldListTensor):
+    def __init__(
+        self,
+        source,
+        user_coords,
+        field_coords,
+        field_dims,
+        flatten_values,
+        user_coords_to_fl_idx,
+    ):
+        super().__init__(
+            source, user_coords, field_coords, field_dims, flatten_values, check_if_tensor_is_full=False
+        )
+        self._user_coords_to_fl_idx = user_coords_to_fl_idx
+
+    @classmethod
+    def from_tensor(cls, owner, source, user_coords, user_coords_to_fl_idx):
+        return cls(
+            source,
+            user_coords,
+            owner.field_coords,
+            owner.field_dims,
+            owner.flatten_values,
+            user_coords_to_fl_idx,
+        )
+
+    def clear(self):
+        super().clear()
+        self._user_coords_to_fl_idx = None
+
+    def _fill_holes(self, arr, field_shape):
+        # We want the holes to be handled by the same array backend as arr.
+        # TODO: Check if in case numpy < 2.0.0 is a dependency, is it patched in earthkit to accept "device" kwarg?
+        xp = array_namespace(arr)
+        nan_block = xp.full(field_shape, fill_value=xp.nan, dtype=arr.dtype)  # , device=arr.device)
+
+        # Fill in the holes in the tensor self with NaN's:
+        # do so by embedding appropriately the first axis of nd-array obtained from self.source.to_array
+        # into the axis=0 of the length prod(self._user_shape). The embedding should be derived from
+        # the mapping user_coords -> fl_idx (self._user_coords_to_fl_idx)
+        arr_filled = xp.empty(self.user_shape + field_shape, dtype=arr.dtype)  # , device=arr.device)
+        user_coords = list(self.user_coords.values())
+        user_dim_ranges = [range(len(coords)) for coords in user_coords]
+        for idx, coords in zip(itertools.product(*user_dim_ranges), itertools.product(*user_coords)):
+            i = self._user_coords_to_fl_idx.get(coords)
+            block = arr[i] if i is not None else nan_block
+            arr_filled[idx] = block
+        return arr_filled
+
+    def _to_array(self, source_to_array_func, index=None):
+        arr, current_field_shape = self._prepare_tensor_data(source_to_array_func, index=index)
+        return self._fill_holes(arr, current_field_shape)
+
+    def _subset(self, indexes):
+        """Only allow subsetting for the user coordinates.
+        Indices for the field coordinates are ignored.
+        """
+        # Map the slices to a list of indexes per dimension
+        assert len(indexes) >= len(self._user_shape)
+        user_icoords = []
+        user_indexes = []
+
+        for s, c in zip(indexes, self._user_shape):
+            lst = np.array(list(range(c)))[s].tolist()
+            if not isinstance(lst, list):
+                lst = [lst]
+            user_icoords.append(lst)
+            user_indexes.append(s)
+
+        assert len(user_icoords) == len(self._user_coords)
+
+        dataset_indexes = []
+        subset_user_coords_to_fl_idx = {}
+        j = 0
+        for x in itertools.product(*user_icoords):
+            user_coord = tuple(
+                user_coords_for_dim[x_coord]
+                for user_coords_for_dim, x_coord in zip(self.user_coords.values(), x)
+            )
+            i = self._user_coords_to_fl_idx.get(user_coord)
+            assert i is None or isinstance(i, int), i
+            if i is not None:
+                dataset_indexes.append(i)
+                subset_user_coords_to_fl_idx[user_coord] = j
+                j += 1
+
+        coords = self._subset_coords(user_indexes)
+        assert len(coords) == len(self._user_coords)
+        ds = self.source[tuple(dataset_indexes)]
+        return self.from_tensor(self, ds, coords, subset_user_coords_to_fl_idx)
+
+    def __getstate__(self):
+        r = super().__getstate__()
+        r["_user_coords_to_fl_idx"] = self._user_coords_to_fl_idx
+        return r
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self._user_coords_to_fl_idx = state["_user_coords_to_fl_idx"]

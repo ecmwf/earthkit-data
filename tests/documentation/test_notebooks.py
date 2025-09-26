@@ -25,24 +25,26 @@ from earthkit.data.testing import earthkit_file
 EXAMPLES = earthkit_file("docs", "examples")
 
 SKIP = [
-    "fdb.ipynb",
-    "mars.ipynb",
-    "cds.ipynb",
     "ads.ipynb",
-    "wekeo.ipynb",
+    "cds.ipynb",
+    "demo_source_plugin.ipynb",
+    "ecmwf_open_data.ipynb",
+    "fdb.ipynb",
+    "grib_fdb_write.ipynb",
+    "grib_to_fdb_target.ipynb",
+    "grib_to_xarray.ipynb",
+    "gribjump.ipynb",
+    "mars.ipynb",
+    "netcdf_opendap.ipynb",
     "polytope.ipynb",
     "polytope_feature.ipynb",
     "polytope_polygon_coverage.ipynb",
     "polytope_time_series.ipynb",
     "polytope_vertical_profile.ipynb",
-    "grib_fdb_write.ipynb",
-    "demo_source_plugin.ipynb",
-    "ecmwf_open_data.ipynb",
     "shapefile.ipynb",
-    "grib_to_xarray.ipynb",
-    "grib_to_fdb_target.ipynb",
-    "xarray_engine.ipynb",
-    "netcdf_opendap.ipynb",
+    "wekeo.ipynb",
+    "xarray_cupy.ipynb",
+    "xarray_engine_chunks_on_dask_cluster.ipynb",
 ]
 
 if NO_TORCH:

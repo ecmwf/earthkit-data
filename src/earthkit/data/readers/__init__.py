@@ -32,7 +32,6 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
 
     def __init__(self, source, path):
         LOG.debug("Reader for %s is %s", path, self.__class__.__name__)
-
         self._source = weakref.ref(source)
         self.path = path
         self.source_filename = self.source.source_filename

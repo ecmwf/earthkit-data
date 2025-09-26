@@ -32,7 +32,9 @@ class OfflineError(Exception):
 
 _NETWORK_PATCHER = patch("socket.socket", side_effect=OfflineError)
 
-_REMOTE_TEST_DATA_URL = "https://get.ecmwf.int/repository/test-data/earthkit-data/"
+_REMOTE_ROOT_URL = "https://sites.ecmwf.int/repository/earthkit-data/"
+_REMOTE_TEST_DATA_URL = "https://sites.ecmwf.int/repository/earthkit-data/test-data/"
+_REMOTE_EXAMPLES_URL = "https://sites.ecmwf.int/repository/earthkit-data/examples/"
 
 _ROOT_DIR = top = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 if not os.path.exists(os.path.join(_ROOT_DIR, "tests", "data")):
@@ -57,8 +59,16 @@ def preserve_cwd():
         os.chdir(current_dir)
 
 
+def earthkit_remote_file(*args):
+    return os.path.join(_REMOTE_ROOT_URL, *args)
+
+
 def earthkit_remote_test_data_file(*args):
     return os.path.join(_REMOTE_TEST_DATA_URL, *args)
+
+
+def earthkit_remote_examples_file(*args):
+    return os.path.join(_REMOTE_EXAMPLES_URL, *args)
 
 
 def earthkit_file(*args):
@@ -120,7 +130,7 @@ if not NO_PROD_FDB:
     fdb_home = os.environ.get("FDB_HOME", None)
     NO_PROD_FDB = fdb_home is None
 
-
+NO_GRIBJUMP = NO_FDB or not modules_installed("pygribjump")
 NO_POLYTOPE = not os.path.exists(os.path.expanduser("~/.polytopeapirc"))
 NO_COVJSONKIT = not modules_installed("covjsonkit")
 NO_RIOXARRAY = not modules_installed("rioxarray")
@@ -231,6 +241,30 @@ def write_to_file(mode, path, ds, **kwargs):
             ds.write(f, **kwargs)
     else:
         raise ValueError(f"Invalid {mode=}")
+
+
+def check_array(
+    v,
+    shape=None,
+    first=None,
+    last=None,
+    meanv=None,
+    eps=1e-3,
+    array_backend=None,
+):
+    if array_backend is None:
+        from earthkit.utils.array import get_backend
+
+        array_backend = get_backend(v)
+
+    v = array_backend.to_numpy(v)
+
+    import numpy as np
+
+    assert v.shape == shape
+    assert np.isclose(v[0], first, eps)
+    assert np.isclose(v[-1], last, eps)
+    assert np.isclose(v.mean(), meanv, eps)
 
 
 def main(path):

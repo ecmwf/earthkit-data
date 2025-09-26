@@ -20,6 +20,7 @@ from earthkit.data.core.temporary import temp_directory
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_remote_examples_file
 from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.testing import network_off
 from earthkit.data.testing import write_to_file
@@ -38,7 +39,7 @@ def test_url_file_source():
 def test_url_source_1():
     from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test.grib",
+        earthkit_remote_examples_file("test.grib"),
     )
 
 
@@ -47,7 +48,7 @@ def test_url_source_check_out_of_date():
     def load():
         from_source(
             "url",
-            "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test.grib",
+            earthkit_remote_examples_file("test.grib"),
         )
 
     with temp_directory() as tmpdir:
@@ -63,21 +64,21 @@ def test_url_source_check_out_of_date():
 def test_url_source_2():
     from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
+        earthkit_remote_test_data_file("temp.bufr"),
     )
 
 
 def test_url_source_3():
     from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test.nc",
+        earthkit_remote_examples_file("test.nc"),
     )
 
 
 def test_url_source_tar():
     ds = from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/earthkit-data/examples/test_gribs.tar",
+        earthkit_remote_examples_file("test_gribs.tar"),
     )
     assert len(ds) == 6
 
@@ -85,12 +86,12 @@ def test_url_source_tar():
 def test_parts_url():
     ds = from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
+        earthkit_remote_test_data_file("temp.bufr"),
     )
 
     ds = from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
+        earthkit_remote_test_data_file("temp.bufr"),
         parts=((0, 4),),
     )
 
@@ -101,7 +102,7 @@ def test_parts_url():
 
     ds = from_source(
         "url",
-        "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
+        earthkit_remote_test_data_file("temp.bufr"),
         parts=((0, 10), (50, 10), (60, 10)),
     )
 
@@ -117,7 +118,7 @@ def test_parts_as_arg_url_1():
     ds = from_source(
         "url",
         [
-            "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
+            earthkit_remote_test_data_file("temp.bufr"),
             [(0, 4)],
         ],
     )
@@ -132,7 +133,7 @@ def test_parts_as_arg_url_2():
     ds = from_source(
         "url",
         [
-            "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
+            earthkit_remote_test_data_file("temp.bufr"),
             None,
         ],
     )
@@ -148,7 +149,7 @@ def test_multi_url_parts_as_arg_invalid_1():
         from_source(
             "url",
             [
-                "https://get.ecmwf.int/repository/test-data/earthkit-data/test-data/temp.bufr",
+                earthkit_remote_test_data_file("temp.bufr"),
                 [(0, 4)],
             ],
             parts=[(0, 5)],
@@ -162,8 +163,8 @@ def test_multi_url_parts_invalid():
         from_source(
             "url",
             [
-                [earthkit_remote_test_data_file("examples/test6.grib"), parts1],
-                [earthkit_remote_test_data_file("examples/test.grib"), parts2],
+                [earthkit_remote_examples_file("test6.grib"), parts1],
+                [earthkit_remote_examples_file("test.grib"), parts2],
             ],
             parts=[(0, 240)],
         )
@@ -196,7 +197,7 @@ def test_url_part_file_source():
 def test_url_netcdf_source_save(write_method):
     ds = from_source(
         "url",
-        earthkit_remote_test_data_file("examples/test.nc"),
+        earthkit_remote_examples_file("test.nc"),
     )
 
     with temp_file() as tmp:

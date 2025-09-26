@@ -21,6 +21,8 @@ LOG = logging.getLogger(__name__)
 
 
 class Coord:
+    LOOKUP_NAME = None
+
     def __init__(self, name, vals, dims=None, ds=None, component=None):
         self.name = name
         self.vals = vals
@@ -77,6 +79,8 @@ class Coord:
 
     def attrs(self, name, profile):
         attrs = profile.attrs.coord_attrs.get(name, {})
+        if not attrs and self.LOOKUP_NAME:
+            attrs = profile.attrs.coord_attrs.get(self.LOOKUP_NAME, {})
         if profile.add_earthkit_attrs and self.component:
             attrs["_earthkit"] = {"keys": self.component[0], "values": self.component[1]}
         return attrs
@@ -131,6 +135,7 @@ class TimeCoord(Coord):
 
 
 class StepCoord(Coord):
+    LOOKUP_NAME = "step"
     resolution = None
     RESOLUTION_UNITS = {
         datetime.timedelta(hours=1): "hours",

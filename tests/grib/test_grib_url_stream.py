@@ -16,7 +16,8 @@ from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.sources.stream import StreamFieldList
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.testing import earthkit_remote_examples_file
+from earthkit.data.testing import earthkit_remote_file
 from earthkit.data.testing import write_to_file
 
 
@@ -27,7 +28,7 @@ def repeat_list_items(items, count):
 def test_grib_url_stream_iter():
     ds = from_source(
         "url",
-        earthkit_remote_test_data_file("examples/test6.grib"),
+        earthkit_remote_examples_file("test6.grib"),
         stream=True,
     )
 
@@ -65,7 +66,7 @@ def test_grib_url_stream_iter():
 def test_grib_url_stream_batched(_kwargs, expected_meta):
     ds = from_source(
         "url",
-        earthkit_remote_test_data_file("examples/test6.grib"),
+        earthkit_remote_examples_file("test6.grib"),
         stream=True,
     )
 
@@ -87,7 +88,7 @@ def test_grib_url_stream_batched(_kwargs, expected_meta):
 
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
 def test_grib_url_stream_group_by(group):
-    ds = from_source("url", earthkit_remote_test_data_file("examples/test6.grib"), stream=True)
+    ds = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True)
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -113,7 +114,7 @@ def test_grib_url_stream_group_by(group):
 def test_grib_url_stream_in_memory():
     ds = from_source(
         "url",
-        earthkit_remote_test_data_file("examples/test6.grib"),
+        earthkit_remote_examples_file("test6.grib"),
         stream=True,
         read_all=True,
     )
@@ -153,7 +154,7 @@ def test_grib_url_stream_in_memory():
 def test_grib_save_when_loaded_from_url_stream(write_method):
     ds = from_source(
         "url",
-        earthkit_remote_test_data_file("examples/test6.grib"),
+        earthkit_remote_examples_file("test6.grib"),
         stream=True,
         read_all=True,
     )
@@ -175,8 +176,8 @@ def test_grib_url_stream_multi_urls_iter():
     ds = from_source(
         "url",
         [
-            earthkit_remote_test_data_file("examples/test.grib"),
-            earthkit_remote_test_data_file("examples/test4.grib"),
+            earthkit_remote_examples_file("test.grib"),
+            earthkit_remote_examples_file("test4.grib"),
         ],
         stream=True,
     )
@@ -220,8 +221,8 @@ def test_grib_url_stream_multi_urls_batched(_kwargs, expected_meta):
     ds = from_source(
         "url",
         [
-            earthkit_remote_test_data_file("examples/test.grib"),
-            earthkit_remote_test_data_file("examples/test4.grib"),
+            earthkit_remote_examples_file("test.grib"),
+            earthkit_remote_examples_file("test4.grib"),
         ],
         stream=True,
     )
@@ -246,8 +247,8 @@ def test_grib_url_stream_multi_urls_memory():
     ds = from_source(
         "url",
         [
-            earthkit_remote_test_data_file("examples/test.grib"),
-            earthkit_remote_test_data_file("examples/test4.grib"),
+            earthkit_remote_examples_file("test.grib"),
+            earthkit_remote_examples_file("test4.grib"),
         ],
         stream=True,
         read_all=True,
@@ -332,7 +333,7 @@ def test_grib_url_stream_multi_urls_memory():
 def test_grib_url_stream_single_url_parts_core(path, parts, expected_meta):
     ds = from_source(
         "url",
-        earthkit_remote_test_data_file(path),
+        earthkit_remote_file(path),
         parts=parts,
         stream=True,
     )
@@ -365,7 +366,7 @@ def test_grib_url_stream_single_url_parts_core(path, parts, expected_meta):
 def test_grib_url_stream_single_url_parts_as_arg_valid(parts, expected_meta):
     ds = from_source(
         "url",
-        [earthkit_remote_test_data_file("examples/test6.grib"), parts],
+        [earthkit_remote_examples_file("test6.grib"), parts],
         stream=True,
     )
 
@@ -388,7 +389,7 @@ def test_grib_url_stream_single_url_parts_as_arg_invalid():
     with pytest.raises(ValueError):
         from_source(
             "url",
-            [earthkit_remote_test_data_file("examples/test6.grib"), [(0, 150)]],
+            [earthkit_remote_examples_file("test6.grib"), [(0, 150)]],
             parts=[(0, 160)],
             stream=True,
         )
@@ -431,8 +432,8 @@ def test_grib_url_stream_multi_urls_parts(parts1, parts2, expected_meta):
     ds = from_source(
         "url",
         [
-            [earthkit_remote_test_data_file("examples/test6.grib"), parts1],
-            [earthkit_remote_test_data_file("examples/test.grib"), parts2],
+            [earthkit_remote_examples_file("test6.grib"), parts1],
+            [earthkit_remote_examples_file("test.grib"), parts2],
         ],
         stream=True,
     )

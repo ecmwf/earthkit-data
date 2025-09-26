@@ -121,39 +121,6 @@ def test_file_source_odb():
     assert s.path == earthkit_examples_file("test.odb")
 
 
-# def test_user_1():
-#     s = from_source("file", earthkit_file("docs/examples/test.grib"))
-#     home_file = os.path.expanduser("~/.earthkit_data/test.grib")
-#     try:
-#         s.save(home_file)
-#         # Test expand user
-#         s = from_source("file", "~/.earthkit_data/test.grib")
-#         assert len(s) == 2
-#     finally:
-#         try:
-#             os.unlink(home_file)
-#         except OSError:
-#             LOG.exception("unlink(%s)", home_file)
-
-
-# @pytest.mark.skipif(
-#     sys.platform == "win32", reason="Cannot (yet) use expandvars on Windows"
-# )
-# def test_user_2():
-#     s = from_source("file", earthkit_file("docs/examples/test.grib"))
-#     home_file = os.path.expanduser("~/.earthkit_data/test.grib")
-#     try:
-#         s.save(home_file)
-#         # Test expand vars
-#         s = from_source("file", "$HOME/.earthkit_data/test.grib", expand_vars=True)
-#         assert len(s) == 2
-#     finally:
-#         try:
-#             os.unlink(home_file)
-#         except OSError:
-#             LOG.exception("unlink(%s)", home_file)
-
-
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_file_glob(write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))

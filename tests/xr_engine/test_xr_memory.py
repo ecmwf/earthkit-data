@@ -45,6 +45,7 @@ def count_calls(monkeypatch, cls, method):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize(
     "lazy_load,release_source,expected_result",
     [
@@ -54,8 +55,10 @@ def count_calls(monkeypatch, cls, method):
         (True, True, {"call_count": 0}),
     ],
 )
-def test_xr_engine_stream_release_source(lazy_load, release_source, expected_result, monkeypatch):
-    filename = "test-data/xr_engine/level/pl_small.grib"
+def test_xr_engine_stream_release_source(
+    allow_holes, lazy_load, release_source, expected_result, monkeypatch
+):
+    filename = "xr_engine/level/pl_small.grib"
     ds_ek, _ = load_grib_data(filename, "url", stream=True)
     ds_ek_ref, _ = load_grib_data(filename, "url", stream=False)
 
@@ -68,6 +71,7 @@ def test_xr_engine_stream_release_source(lazy_load, release_source, expected_res
     kwargs = {
         "lazy_load": lazy_load,
         "release_source": release_source,
+        "allow_holes": allow_holes,
     }
 
     ds = ds_ek.to_xarray(**kwargs)
@@ -86,6 +90,7 @@ def test_xr_engine_stream_release_source(lazy_load, release_source, expected_res
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize(
     "lazy_load,release_source,expected_result",
     [
@@ -95,8 +100,10 @@ def test_xr_engine_stream_release_source(lazy_load, release_source, expected_res
         (True, True, {"call_count": 0, "param": "t"}),
     ],
 )
-def test_xr_engine_array_field_release_source(lazy_load, release_source, expected_result, monkeypatch):
-    filename = "test-data/xr_engine/level/pl_small.grib"
+def test_xr_engine_array_field_release_source(
+    allow_holes, lazy_load, release_source, expected_result, monkeypatch
+):
+    filename = "xr_engine/level/pl_small.grib"
     ds_ek, _ = load_grib_data(filename, "url", stream=False)
     ds_ek = ds_ek.to_fieldlist()
 
@@ -109,6 +116,7 @@ def test_xr_engine_array_field_release_source(lazy_load, release_source, expecte
     kwargs = {
         "lazy_load": lazy_load,
         "release_source": release_source,
+        "allow_holes": allow_holes,
     }
 
     ds = ds_ek.to_xarray(**kwargs)

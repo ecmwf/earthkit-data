@@ -39,7 +39,7 @@ class NumpyNDArrayWrapper(Wrapper):
         return xr.DataArray(self.data, **kwargs)
 
 
-def wrapper(data, *args, **kwargs):
+def wrapper(data, *args, fieldlist=False, **kwargs):
     import numpy as np
 
     if isinstance(data, np.ndarray):

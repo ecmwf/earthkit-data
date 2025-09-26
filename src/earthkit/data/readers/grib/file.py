@@ -35,6 +35,7 @@ class GRIBReader(GribFieldListInOneFile, Reader):
 
         Reader.__init__(self, source, path)
         GribFieldListInOneFile.__init__(self, path, parts=parts, positions=positions, **_kwargs)
+        self._source_kwargs = source._kwargs
 
     def __repr__(self):
         return "GRIBReader(%s)" % (self.path,)
@@ -50,7 +51,7 @@ class GRIBReader(GribFieldListInOneFile, Reader):
         from earthkit.data.core.config import CONFIG
 
         policy = CONFIG.get("grib-file-serialisation-policy")
-        r = {"serialisation_policy": policy, "kwargs": self.source._kwargs}
+        r = {"serialisation_policy": policy, "kwargs": self._source_kwargs}
 
         if policy == "path":
             r["path"] = self.path

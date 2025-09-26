@@ -36,15 +36,17 @@ def grid_list(files=None):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "file,dims,coords,distinct_ll",
     # grid_list(files=["sh_t32.grib1"]),
     grid_list(),
 )
-def test_xr_engine_grid(file, dims, coords, distinct_ll):
-    ds = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "grid", file))
+def test_xr_engine_grid(allow_holes, lazy_load, file, dims, coords, distinct_ll):
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
 
-    a = ds.to_xarray()
+    a = ds.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load)
     assert a is not None
 
     for k, v in dims.items():
@@ -69,16 +71,16 @@ def test_xr_engine_grid(file, dims, coords, distinct_ll):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "add_geo_coords",
     [False, True],
 )
-def test_xr_engine_add_geo_coords(add_geo_coords):
-    ds = from_source(
-        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "grid", "reduced_gg_O32.grib1")
-    )
+def test_xr_engine_add_geo_coords(allow_holes, lazy_load, add_geo_coords):
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", "reduced_gg_O32.grib1"))
 
-    a = ds.to_xarray(add_geo_coords=add_geo_coords)
+    a = ds.to_xarray(add_geo_coords=add_geo_coords, allow_holes=allow_holes, lazy_load=lazy_load)
 
     assert list(a.sizes.keys())[-1] == "values"
 
@@ -88,3 +90,24 @@ def test_xr_engine_add_geo_coords(add_geo_coords):
     else:
         assert "latitude" not in a.coords
         assert "longitude" not in a.coords
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_engine_gridspec(allow_holes, lazy_load):
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", "reduced_gg_O32.grib1"))
+
+    r = ds.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load)
+
+    gs = r["r"].earthkit.grid_spec
+    assert gs["type"] == "reduced_gg"
+    assert gs["grid"] == "O32"
+
+    gs = r["t"].earthkit.grid_spec
+    assert gs["type"] == "reduced_gg"
+    assert gs["grid"] == "O32"
+
+    gs = r.earthkit.grid_spec
+    assert gs["type"] == "reduced_gg"
+    assert gs["grid"] == "O32"

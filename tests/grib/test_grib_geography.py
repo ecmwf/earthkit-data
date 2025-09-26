@@ -18,6 +18,7 @@ from earthkit.utils.testing import check_array_type
 
 import earthkit.data
 from earthkit.data.testing import NO_GEO
+from earthkit.data.testing import check_array
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import projections
@@ -27,13 +28,6 @@ sys.path.insert(0, here)
 from grib_fixtures import FL_NUMPY  # noqa: E402
 from grib_fixtures import FL_TYPES  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
-
-
-def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
-    assert v.shape == shape
-    assert np.isclose(v[0], first, eps)
-    assert np.isclose(v[-1], last, eps)
-    assert np.isclose(v.mean(), meanv, eps)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -48,7 +42,7 @@ def test_grib_to_latlon_single(fl_type, index):
     check_array_type(v["lon"], array_backend, dtype="float64")
     check_array_type(v["lat"], array_backend, dtype="float64")
     check_array(
-        v["lon"],
+        array_backend.to_numpy(v["lon"]),
         (84,),
         first=0.0,
         last=330.0,
@@ -56,7 +50,7 @@ def test_grib_to_latlon_single(fl_type, index):
         eps=eps,
     )
     check_array(
-        v["lat"],
+        array_backend.to_numpy(v["lat"]),
         (84,),
         first=90,
         last=-90,
@@ -79,12 +73,12 @@ def test_grib_to_latlon_single_shape(fl_type, index):
     # x
     assert v["lon"].shape == (7, 12)
     for x in v["lon"]:
-        assert np.allclose(x, np.linspace(0, 330, 12))
+        assert np.allclose(array_backend.to_numpy(x), np.linspace(0, 330, 12))
 
     # y
     assert v["lat"].shape == (7, 12)
     for i, y in enumerate(v["lat"]):
-        assert np.allclose(y, np.ones(12) * (90 - i * 30))
+        assert np.allclose(array_backend.to_numpy(y), np.ones(12) * (90 - i * 30))
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
@@ -126,7 +120,7 @@ def test_grib_to_points_single(fl_type, index):
     check_array_type(v["x"], array_backend, dtype="float64")
     check_array_type(v["y"], array_backend, dtype="float64")
     check_array(
-        v["x"],
+        array_backend.to_numpy(v["x"]),
         (84,),
         first=0.0,
         last=330.0,
@@ -134,7 +128,7 @@ def test_grib_to_points_single(fl_type, index):
         eps=eps,
     )
     check_array(
-        v["y"],
+        array_backend.to_numpy(v["y"]),
         (84,),
         first=90,
         last=-90,
