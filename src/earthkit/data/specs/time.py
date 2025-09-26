@@ -32,6 +32,8 @@ class Time(SimpleSpec):
         "valid_datetime",
         "step",
         "time_span",
+        "time_span_value",
+        "time_span_method",
         "indexing_datetime",
         "reference_datetime",
     )
@@ -65,6 +67,17 @@ class Time(SimpleSpec):
     @abstractmethod
     def time_span(self):
         """datetime.timedelta: Return the time span of of the time object."""
+        pass
+
+    @property
+    @abstractmethod
+    def time_span_value(self):
+        pass
+
+    @property
+    @abstractmethod
+    def time_span_method(self):
+        """TimeSpanMethod: Return the time span method of the time object."""
         pass
 
     @property
@@ -103,7 +116,7 @@ class SimpleTime(Time):
             self._step = to_timedelta(step)
 
         if time_span is not None:
-            self._time_span = TimeSpan.make(time_span)
+            self._time_span = TimeSpan.build(time_span)
 
         if indexing_datetime is not None:
             self._indexing_datetime = to_datetime(indexing_datetime)
@@ -128,7 +141,7 @@ class SimpleTime(Time):
     ):
         """Set the valid datetime of the time object."""
         valid_datetime = to_datetime(valid_datetime)
-        step = to_timedelta(step)
+        step = to_timedelta(step) if step is not None else ZERO_TIMEDELTA
         base_datetime = valid_datetime - step
         return cls(
             base_datetime=base_datetime,
@@ -150,7 +163,7 @@ class SimpleTime(Time):
     ):
         valid_datetime = to_datetime(valid_datetime)
         base_datetime = to_datetime(base_datetime)
-        step = base_datetime - valid_datetime
+        step = valid_datetime - base_datetime
         return cls(
             base_datetime=base_datetime,
             step=step,
@@ -322,6 +335,14 @@ class SimpleTime(Time):
     def time_span(self):
         """Return the forecast period of the time object."""
         return self._time_span
+
+    @property
+    def time_span_value(self):
+        return self._time_span.value
+
+    @property
+    def time_span_method(self):
+        return self._time_span.method
 
     @property
     def indexing_datetime(self):

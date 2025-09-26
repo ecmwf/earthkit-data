@@ -14,10 +14,21 @@ from earthkit.data.utils.dates import step_to_grib
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
+from ..time_span import TimeSpan
+from ..time_span import TimeSpanMethod
 from .collector import GribContextCollector
 from .spec import GribSpec
 
 ZERO_TIMEDELTA = to_timedelta(0)
+
+_GRIB_TO_METHOD = {
+    "accum": TimeSpanMethod.ACCUMULATED,
+    "avg": TimeSpanMethod.AVERAGE,
+    "instant": TimeSpanMethod.INSTANT,
+    "max": TimeSpanMethod.MAX,
+}
+
+_METHOD_TO_GRIB = {v: k for k, v in _GRIB_TO_METHOD.items()}
 
 
 class GribTimeBuilder:
@@ -69,6 +80,10 @@ class GribTimeBuilder:
         indexing = _datetime("indexingDate", "indexingTime")
         reference = _datetime("referenceDate", "referenceTime")
 
+        time_span_method = _get("stepType", "instant").lower()
+        time_span_method = _GRIB_TO_METHOD.get(time_span_method, TimeSpanMethod.INSTANT)
+        time_span = TimeSpan(time_span, time_span_method)
+
         return dict(
             base_datetime=to_datetime(base),
             step=end,
@@ -94,9 +109,10 @@ class GribTimeContextCollector(GribContextCollector):
             start = step_to_grib(start)
             end = step
             r["stepRange"] = step_range_to_grib(start, end)
-            r["stepType"] = spec.time_span._type.name
         else:
             r["stepRange"] = str(step)
+
+        r["stepType"] = _METHOD_TO_GRIB[spec.time_span.method]
         context.update(r)
 
 
@@ -106,55 +122,3 @@ COLLECTOR = GribTimeContextCollector()
 class GribTime(GribSpec):
     BUILDER = GribTimeBuilder
     COLLECTOR = COLLECTOR
-
-
-# def time_from_handle(handle):
-#     def _get(key, default=None):
-#         return handle.get(key, default=default)
-
-#     def _datetime(date_key, time_key):
-#         date = _get(date_key, None)
-#         if date is not None:
-#             time = _get(time_key, None)
-#             if time is not None:
-#                 return datetime_from_grib(date, time)
-#         return None
-
-#     hdate = _get("hdate")
-#     if hdate is not None:
-#         time = _get("dataTime")
-#         base = datetime_from_grib(hdate, time)
-#     else:
-#         base = _datetime("dataDate", "dataTime")
-
-#     v = _get("endStep", None)
-#     if v is None:
-#         v = _get("step", None)
-#     step = to_timedelta(v)
-
-#     end = _get("endStep", None)
-#     if end is None:
-#         return to_timedelta(0)
-
-#     start = _get("startStep", None)
-#     if start is None:
-#         start = to_timedelta(0)
-
-#     time_span = to_timedelta(end) - to_timedelta(start)
-
-#     indexing = _datetime("indexingDate", "indexingTime")
-#     reference = _datetime("referenceDate", "referenceTime")
-
-#     d = dict(
-#         base_datetime=to_datetime(base),
-#         step=step,
-#         time_span=time_span,
-#         indexing_datetime=indexing,
-#         reference_datetime=reference,
-#     )
-
-#     d.from_dict(d)
-
-
-# def to_grib(spec):
-#     raise NotImplementedError("GRIB encoding not implemented.")

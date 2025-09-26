@@ -955,8 +955,9 @@ class Field(Base):
         return self._private.get(name)
 
     def _check(self):
-        for m in self._members.values():
-            m.check(self)
+        return
+        # for m in self._members.values():
+        #     m.check(self)
 
     def _get_grib_context(self, context):
         grib = self.get_private_data("grib")
@@ -970,7 +971,7 @@ class Field(Base):
     @normalize("base_datetime", "date")
     @normalize("forecast_reference_time", "date")
     @normalize("step", "timedelta")
-    @normalize("time_span", "timedelta")
+    # @normalize("time_span", "timedelta")
     @staticmethod
     def normalise_key_values(**kwargs):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""

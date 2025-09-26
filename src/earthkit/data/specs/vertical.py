@@ -10,7 +10,7 @@
 from abc import abstractmethod
 from typing import Union
 
-from .level_type import LevelTypes
+from .level_type import LevelType
 from .spec import Aliases
 from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
@@ -23,7 +23,10 @@ class Vertical(SimpleSpec):
 
     KEYS = (
         "level",
+        "level_value",
         "level_type",
+        "level_type_name",
+        "level_type_units",
         "level_units",
     )
 
@@ -46,37 +49,47 @@ class Vertical(SimpleSpec):
     def level_units(self) -> str:
         """str: Return the level units."""
         pass
+
+
+class LevelInfo:
+    def __init__(self, value, type):
+        self.value = value
+        self.type = type
+
+    def __repr__(self):
+        return f"LevelInfo({self.value},{self.type.value.units},{self.type.name})"
+
+    def ls(self):
+        return f"{self.value} {self.type.value.units} ({self.type.value.name})"
 
 
 class SimpleVertical(Vertical):
     """A specification of a vertical level or layer."""
 
-    KEYS = (
-        "level",
-        "level_type",
-        "level_units",
-    )
-
-    ALIASES = Aliases({"level": ("levelist")})
-
-    def __init__(self, level: str = None, level_type: str = None) -> None:
+    def __init__(self, level=None, level_type=None) -> None:
         self._level = level
-        self._level_type = LevelTypes.get(level_type)
+        self._level_type = level_type
+        assert level_type in LevelType
 
     @property
     def level(self) -> Union[int, float]:
         """Return the level."""
+        return LevelInfo(self._level, self._level_type)
+
+    @property
+    def level_value(self) -> str:
+        """str: Return the level type."""
         return self._level
 
     @property
     def level_type(self) -> str:
         """str: Return the level type."""
-        return self._level_type.name
+        return self._level_type
 
     @property
     def level_units(self) -> str:
         """str: Return the level units."""
-        return self._level_type.units
+        return self._level_type.value.units
 
     @classmethod
     def from_dict(cls, d: dict) -> "Vertical":
@@ -157,6 +170,7 @@ class SimpleVertical(Vertical):
             result["vertical"] = self.to_dict()
 
     def check(self, owner):
+        print("checking vertical CORE")
         pass
 
     def __getstate__(self):

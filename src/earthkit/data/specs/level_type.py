@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+from enum import Enum
 
 POSITIVE_UP = "up"
 POSITIVE_DOWN = "down"
@@ -14,7 +15,7 @@ POSITIVE_DOWN = "down"
 LEVEL_TYPES = {}
 
 
-class LevelType:
+class LevelTypeItem:
     def __init__(
         self, name: str, standard_name: str, long_name: str, units: str, layer: bool, positive: str
     ) -> None:
@@ -144,36 +145,54 @@ _defs = {
     },
 }
 
-for _, v in _defs.items():
-    t = LevelType(**v)
-    assert t.name not in LEVEL_TYPES, f"Level type {t.name} already defined"
-    LEVEL_TYPES[t.name] = t
+
+class LevelType(Enum):
+    PRESSURE = LevelTypeItem(**_defs["pl"])
+    PRESSURE_LAYER = LevelTypeItem(**_defs["p_layer"])
+    MODEL = LevelTypeItem(**_defs["ml"])
+    THETA = LevelTypeItem(**_defs["pt"])
+    PV = LevelTypeItem(**_defs["pv"])
+    HEIGHT_ASL = LevelTypeItem(**_defs["h_asl"])
+    HEIGHT_AGL = LevelTypeItem(**_defs["h_agl"])
+    SURFACE = LevelTypeItem(**_defs["sfc"])
+    DEPTH_BGL = LevelTypeItem(**_defs["d_bgl"])
+    DEPTH_BGL_LAYER = LevelTypeItem(**_defs["d_bgl_layer"])
+    GENERAL = LevelTypeItem(**_defs["general"])
+    MEAN_SEA = LevelTypeItem(**_defs["mean_sea"])
+    SNOW = LevelTypeItem(**_defs["snow"])
+    UNKNOWN = LevelTypeItem(**_defs["unknown"])
 
 
-class LevelTypes:
-    PRESSURE = LEVEL_TYPES["pl"]
-    PRESSURE_LAYER = LEVEL_TYPES["p_layer"]
-    MODEL = LEVEL_TYPES["ml"]
-    THETA = LEVEL_TYPES["pt"]
-    PV = LEVEL_TYPES["pv"]
-    HEIGHT_ASL = LEVEL_TYPES["h_asl"]
-    HEIGHT_AGL = LEVEL_TYPES["h_agl"]
-    SURFACE = LEVEL_TYPES["sfc"]
-    DEPTH_BGL = LEVEL_TYPES["d_bgl"]
-    DEPTH_BGL_LAYER = LEVEL_TYPES["d_bgl_layer"]
-    GENERAL = LEVEL_TYPES["general"]
-    MEAN_SEA = LEVEL_TYPES["mean_sea"]
-    SNOW = LEVEL_TYPES["snow"]
-    UNKNOWN = LEVEL_TYPES["unknown"]
+# for _, v in _defs.items():
+#     t = LevelType(**v)
+#     assert t.name not in LEVEL_TYPES, f"Level type {t.name} already defined"
+#     LEVEL_TYPES[t.name] = t
 
-    @staticmethod
-    def get(name_or_object, default=UNKNOWN):
-        if isinstance(name_or_object, LevelType):
-            if name_or_object in LEVEL_TYPES.values():
-                return name_or_object
-            else:
-                raise ValueError(f"Unsupported level type: {type(name_or_object)}")
-        return LEVEL_TYPES.get(name_or_object, default)
 
-    def is_level_type(data):
-        return isinstance(data, LevelType)
+# class LevelTypes:
+#     PRESSURE = LEVEL_TYPES["pl"]
+#     PRESSURE_LAYER = LEVEL_TYPES["p_layer"]
+#     MODEL = LEVEL_TYPES["ml"]
+#     THETA = LEVEL_TYPES["pt"]
+#     PV = LEVEL_TYPES["pv"]
+#     HEIGHT_ASL = LEVEL_TYPES["h_asl"]
+#     HEIGHT_AGL = LEVEL_TYPES["h_agl"]
+#     SURFACE = LEVEL_TYPES["sfc"]
+#     DEPTH_BGL = LEVEL_TYPES["d_bgl"]
+#     DEPTH_BGL_LAYER = LEVEL_TYPES["d_bgl_layer"]
+#     GENERAL = LEVEL_TYPES["general"]
+#     MEAN_SEA = LEVEL_TYPES["mean_sea"]
+#     SNOW = LEVEL_TYPES["snow"]
+#     UNKNOWN = LEVEL_TYPES["unknown"]
+
+#     @staticmethod
+#     def get(name_or_object, default=UNKNOWN):
+#         if isinstance(name_or_object, LevelType):
+#             if name_or_object in LEVEL_TYPES.values():
+#                 return name_or_object
+#             else:
+#                 raise ValueError(f"Unsupported level type: {type(name_or_object)}")
+#         return LEVEL_TYPES.get(name_or_object, default)
+
+#     def is_level_type(data):
+#         return isinstance(data, LevelType)

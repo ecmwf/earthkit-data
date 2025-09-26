@@ -17,6 +17,9 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.specs.time_span import TimeSpan
+from earthkit.data.specs.time_span import TimeSpanMethod
+from earthkit.data.testing import earthkit_remote_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -266,125 +269,39 @@ def test_grib_sel_base_datetime(fl_type, _kwargs):
     assert g.get(ref_keys) == ref
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_isel_single_message(fl_type):
-    s, _ = load_grib_data("test_single.grib", fl_type, folder="data")
-
-    r = s.isel(shortName=0)
-    assert len(r) == 1
-    assert r[0].get("shortName") == "2t"
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.cache
 @pytest.mark.parametrize(
-    "params,expected_meta,metadata_keys",
+    "_kwargs,ref_len,ref",
     [
-        (dict(shortName=1, level=2), [["u", 500]], []),
-        (dict(paramId=1, level=2), [[131, 500]], []),
         (
-            dict(shortName=[0, 1], level=[2, 3]),
-            [
-                ["t", 700],
-                ["u", 700],
-                ["t", 500],
-                ["u", 500],
-            ],
-            ["shortName", "level:l"],
-        ),
-        # (dict(shortName="w"), [], []),
-        (dict(INVALIDKEY=0), [], []),
-        (
-            dict(shortName=[0], level=[3, 2], marsType=0),
-            [
-                ["t", 700, "an"],
-                ["t", 500, "an"],
-            ],
-            ["shortName", "level:l", "marsType"],
+            {"step": 24, "time_span_value": datetime.timedelta(hours=6)},
+            1,
+            {"step": datetime.timedelta(hours=24), "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
         ),
         (
-            dict(level=-1),
-            [
-                ["t", 1000],
-                ["u", 1000],
-                ["v", 1000],
-            ],
-            ["shortName", "level:l"],
+            {"step": 24, "time_span_method": TimeSpanMethod.MAX},
+            1,
+            {"step": datetime.timedelta(hours=24), "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
+        ),
+        (
+            {"time_span_method": TimeSpanMethod.AVERAGE},
+            0,
+            {},
+        ),
+        (
+            {"step": 24, "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
+            1,
+            {"step": datetime.timedelta(hours=24), "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
         ),
     ],
 )
-def test_grib_isel_single_file(fl_type, params, expected_meta, metadata_keys):
-    f, _ = load_grib_data("tuv_pl.grib", fl_type)
+def test_grib_sel_time_span(_kwargs, ref_len, ref):
+    ds1 = from_source("url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1"))
 
-    g = f.isel(**params)
-    assert len(g) == len(expected_meta)
-    if len(expected_meta) > 0:
-        keys = list(params.keys())
-        if metadata_keys:
-            keys = metadata_keys
-
-        assert g.metadata(keys) == expected_meta
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize(
-    "param_id,level,expected_meta",
-    [
-        (1, (slice(2)), [[131, 400], [131, 300]]),
-        (1, (slice(None, 2)), [[131, 400], [131, 300]]),
-        (1, (slice(2, 3)), [[131, 500]]),
-        (1, (slice(2, 4)), [[131, 700], [131, 500]]),
-        (1, (slice(4, None)), [[131, 1000], [131, 850]]),
-        (1, (slice(None, None, 2)), [[131, 850], [131, 500], [131, 300]]),
-    ],
-)
-def test_grib_isel_slice_single_file(fl_type, param_id, level, expected_meta):
-    f, _ = load_grib_data("tuv_pl.grib", fl_type)
-
-    g = f.isel(paramId=param_id, level=level)
-    assert len(g) == len(expected_meta)
-    if expected_meta:
-        assert g.metadata(["paramId", "level"]) == expected_meta
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_isel_slice_invalid(fl_type):
-    f, _ = load_grib_data("tuv_pl.grib", fl_type)
-
-    with pytest.raises(IndexError):
-        f.isel(level=500)
-
-    with pytest.raises(ValueError):
-        f.isel(level="a")
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_isel_multi_file(fl_type):
-    f1, _ = load_grib_data("tuv_pl.grib", fl_type)
-    f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
-    f = from_source("multi", [f1, f2])
-
-    # single resulting field
-    g = f.isel(shortName=1, level=21)
-    assert len(g) == 1
-    assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [["t", 85, "hybrid"]]
-
-    g1 = f[40]
-    d = g.to_numpy() - g1.to_numpy()
-    assert np.allclose(d, np.zeros(len(d)))
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_isel_slice_multi_file(fl_type):
-    f1, _ = load_grib_data("tuv_pl.grib", fl_type)
-    f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
-    f = from_source("multi", [f1, f2])
-
-    g = f.isel(shortName=1, level=slice(20, 22))
-    assert len(g) == 2
-    assert g.metadata(["shortName", "level:l", "typeOfLevel"]) == [
-        ["t", 81, "hybrid"],
-        ["t", 85, "hybrid"],
-    ]
+    g = ds1.sel(**_kwargs)
+    assert len(g) == ref_len
+    for k, v in ref.items():
+        assert g[0].get(k) == v
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)

@@ -15,6 +15,8 @@ LOG = logging.getLogger(__name__)
 
 def normalize_selection(*args, **kwargs):
     from earthkit.data.arguments.transformers import ALL
+    from earthkit.data.specs.time_span import TimeSpan
+    from earthkit.data.specs.time_span import TimeSpanMethod
 
     _kwargs = {}
     for a in args:
@@ -33,7 +35,9 @@ def normalize_selection(*args, **kwargs):
             or v is ALL
             or callable(v)
             or isinstance(v, (list, tuple, set, slice))
-            or isinstance(v, (str, int, float, datetime.datetime, datetime.timedelta))
+            or isinstance(
+                v, (str, int, float, datetime.datetime, datetime.timedelta, TimeSpan, TimeSpanMethod)
+            )
         ), f"Unsupported type: {type(v)} for key {k}"
     return _kwargs
 
