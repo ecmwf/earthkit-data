@@ -9,7 +9,6 @@
 
 import copy
 import logging
-from functools import cached_property
 from math import prod
 
 import numpy as np
@@ -17,6 +16,7 @@ import numpy as np
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
 from earthkit.data.core.metadata import MetadataAccessor
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import to_datetime
@@ -469,7 +469,7 @@ class UserMetadata(Metadata):
             if k in self._data:
                 return self._data[k]
 
-    @cached_property
+    @thread_safe_cached_property
     def geography(self):
         return make_geography(self, values_shape=self._shape)
 

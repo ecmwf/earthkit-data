@@ -84,6 +84,7 @@ optional-dependencies.test = [
   "pytest",
   "pytest-cov",
   "pytest-forked",
+  "pytest-reraise",
   "pytest-timeout",
 ]
 optional-dependencies.wekeo = [ "hda>=2.22" ]

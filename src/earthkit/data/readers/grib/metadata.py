@@ -10,13 +10,13 @@
 import logging
 import warnings
 from abc import abstractmethod
-from functools import cached_property
 
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import Metadata
 from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.core.metadata import MetadataCacheHandler
 from earthkit.data.core.metadata import WrappedMetadata
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.database import GRIB_KEYS_NAMES
 from earthkit.data.readers.grib.gridspec import make_gridspec
 from earthkit.data.utils.bbox import BoundingBox
@@ -35,7 +35,7 @@ class GribFieldGeography(Geography):
         self.metadata = metadata
         self.check_rotated_support()
 
-    @cached_property
+    @thread_safe_cached_property
     def spectral(self):
         return self.metadata._handle.get("gridType", "") == "sh"
 
@@ -206,12 +206,12 @@ class GribFieldGeography(Geography):
             self.metadata.get("angleOfRotationInDegrees"),
         )
 
-    @cached_property
+    @thread_safe_cached_property
     def rotated(self):
         grid_type = self.metadata.get("gridType")
         return "rotated" in grid_type
 
-    @cached_property
+    @thread_safe_cached_property
     def rotated_iterator(self):
         return self.metadata.get("iteratorDisableUnrotate") is not None
 
@@ -542,7 +542,7 @@ class GribMetadata(Metadata):
                     r[k] = self.get(k)
         return r
 
-    @cached_property
+    @thread_safe_cached_property
     def geography(self):
         return GribFieldGeography(self)
 

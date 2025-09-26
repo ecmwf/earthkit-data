@@ -323,3 +323,30 @@ def cached_method(method):
         return getattr(self, name)
 
     return wrapped
+
+
+class thread_safe_cached_property:
+    """A thread-safe cached property decorator.
+
+    This was implemented because a the functools.cached_property is not thread-safe
+    from Python 3.12.
+    """
+
+    def __init__(self, method):
+        self.method = method
+        self.name = f"_c_{method.__name__}"
+        self.lock = threading.Lock()
+
+    def __get__(self, instance, owner=None):
+        if instance is None:
+            return self
+
+        if hasattr(instance, self.name):
+            return getattr(instance, self.name)
+
+        with self.lock:
+            if hasattr(instance, self.name):
+                return getattr(instance, self.name)
+            value = self.method(instance)
+            setattr(instance, self.name, value)
+            return value

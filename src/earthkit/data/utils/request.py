@@ -10,7 +10,8 @@
 import logging
 from abc import ABCMeta
 from abc import abstractmethod
-from functools import cached_property
+
+from earthkit.data.decorators import thread_safe_cached_property
 
 LOG = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ class RequestMapper(metaclass=ABCMeta):
     def __init__(self, request, **kwargs):
         self.request = request
 
-    @cached_property
+    @thread_safe_cached_property
     def field_requests(self):
         return self._build()
 

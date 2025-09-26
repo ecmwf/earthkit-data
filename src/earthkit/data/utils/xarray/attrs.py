@@ -12,8 +12,8 @@ import os
 from abc import ABCMeta
 from abc import abstractmethod
 from collections import defaultdict
-from functools import cached_property
 
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
@@ -36,7 +36,7 @@ class CFAttrs:
         else:
             raise ValueError(f"CF attributes file not found! path={path}")
 
-    @cached_property
+    @thread_safe_cached_property
     def attrs(self):
         return self._load()
 
