@@ -1,6 +1,16 @@
 Version 0.16 Updates
 /////////////////////////
 
+
+Version 0.16.7
+===============
+
+Fixes
+++++++++
+
+- Fixed issue when the serialisation of a GRIB field loaded from disk did not work (:pr:`812`)
+
+
 Version 0.16.6
 ===============
 

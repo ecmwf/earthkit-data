@@ -356,7 +356,7 @@ class GribField(Field):
         return ClonedGribField(self, **kwargs)
 
     def __getstate__(self):
-        state = super().__getstate__()
+        state = dict()
         state["path"] = self.path
         state["offset"] = self._offset
         state["length"] = self._length
