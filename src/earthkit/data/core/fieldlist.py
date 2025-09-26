@@ -10,7 +10,6 @@
 import math
 from abc import abstractmethod
 from collections import defaultdict
-from functools import cached_property
 
 import deprecation
 from earthkit.utils.array import array_namespace
@@ -24,6 +23,7 @@ from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import detect_out_filename
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.metadata.args import metadata_argument
 
 
@@ -41,7 +41,7 @@ class FieldListIndices:
         self.fs = field_list
         self.user_indices = dict()
 
-    @cached_property
+    @thread_safe_cached_property
     def default_index_keys(self):
         if len(self.fs) > 0:
             return self.fs[0]._metadata.index_keys()
@@ -57,7 +57,7 @@ class FieldListIndices:
 
         return sorted(list(values))
 
-    @cached_property
+    @thread_safe_cached_property
     def default_indices(self):
         indices = defaultdict(set)
         keys = self.default_index_keys
@@ -1007,7 +1007,7 @@ class FieldList(Index):
         else:
             return False
 
-    @cached_property
+    @thread_safe_cached_property
     def _md_indices(self):
         return FieldListIndices(self)
 
