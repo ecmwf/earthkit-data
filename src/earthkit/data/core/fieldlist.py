@@ -24,6 +24,7 @@ from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import detect_out_filename
+from earthkit.data.utils.compute import wrap_maths
 from earthkit.data.utils.metadata.args import metadata_argument
 
 
@@ -88,9 +89,8 @@ class FieldListIndices:
         return self.user_indices[key]
 
 
+@wrap_maths
 class Field(Base):
-    r"""Represent a Field."""
-
     @property
     def array_backend(self):
         r""":obj:`ArrayBackend`: Return the array backend of the field."""
@@ -931,7 +931,27 @@ class Field(Base):
         shape = self._required_shape(flatten)
         return shape == array.shape and (dtype is None or dtype == array.dtype)
 
+    def _unary_op(self, oper):
+        v = oper(self.values)
+        r = self.clone(values=v)
+        return r
 
+    def _binary_op(self, oper, y):
+        from earthkit.data.wrappers import get_wrapper
+
+        y = get_wrapper(y)
+        if isinstance(y, FieldList):
+            x = FieldList.from_fields([self])
+            return x._binary_op(oper, y)
+
+        vx = self.values
+        vy = y.values
+        v = oper(vx, vy)
+        r = self.clone(values=v)
+        return r
+
+
+@wrap_maths
 class FieldList(Index):
     r"""Represent a list of :obj:`Field` \s."""
 
@@ -1758,6 +1778,18 @@ class FieldList(Index):
         from earthkit.data.utils.diag import metadata_cache_diag
 
         return metadata_cache_diag(self)
+
+    def _unary_op(self, oper):
+        from earthkit.data.utils.compute import get_method
+
+        method = "loop"
+        return get_method(method).unary_op(oper, self)
+
+    def _binary_op(self, oper, y):
+        from earthkit.data.utils.compute import get_method
+
+        method = "loop"
+        return get_method(method).binary_op(oper, self, y)
 
 
 class MaskFieldList(FieldList, MaskIndex):
