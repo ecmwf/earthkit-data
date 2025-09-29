@@ -97,7 +97,7 @@ class Field(Base):
         return get_backend(self._values())
 
     @abstractmethod
-    def _values(self, dtype=None):
+    def _values(self, dtype=None, context=None):
         r"""Return the raw values extracted from the underlying storage format
         of the field.
 
@@ -129,7 +129,7 @@ class Field(Base):
         r"""Metadata: Get the object representing the field's metadata."""
         self._not_implemented()
 
-    def to_numpy(self, flatten=False, dtype=None, index=None):
+    def to_numpy(self, flatten=False, dtype=None, index=None, context=None):
         r"""Return the values stored in the field as an ndarray.
 
         Parameters
@@ -150,7 +150,7 @@ class Field(Base):
             Field values
 
         """
-        v = array_to_numpy(self._values(dtype=dtype))
+        v = array_to_numpy(self._values(dtype=dtype, context=context))
         shape = self._required_shape(flatten)
         if shape != v.shape:
             v = v.reshape(shape)
@@ -158,7 +158,7 @@ class Field(Base):
             v = v[index]
         return v
 
-    def to_array(self, flatten=False, dtype=None, array_backend=None, index=None):
+    def to_array(self, flatten=False, dtype=None, array_backend=None, index=None, context=None):
         r"""Return the values stored in the field.
 
         Parameters
@@ -182,7 +182,7 @@ class Field(Base):
             Field values.
 
         """
-        v = self._values(dtype=dtype)
+        v = self._values(dtype=dtype, context=context)
         if array_backend is not None:
             v = convert_array(v, target_backend=array_backend)
 

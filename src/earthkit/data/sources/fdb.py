@@ -125,7 +125,13 @@ class FDBRequestMapper(RequestMapper):
         fdb = pyfdb.FDB(**self.fdb_kwargs)
         for el in fdb.list(self.request, True, True):
             r.append(el["keys"])
+        # keys = list(r[0].keys()) if r else []
         return r
+
+
+class FDBCube:
+    def __init__(self):
+        pass
 
 
 source = FDBSource

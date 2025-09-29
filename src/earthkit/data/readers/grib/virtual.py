@@ -117,8 +117,9 @@ class VirtualGribField(Field):
         return WrappedMetadata(self.owner.reference._metadata, extra=r)
 
     def _values(self, dtype=None, context=None):
-        if context is not None:
-            self.owner._group(context)
+        print("VirtualGribField._values", dtype, context)
+        # if context is not None:
+        #     self.owner._group(context)
         return self._field._values(dtype=dtype)
 
     @property
@@ -135,6 +136,7 @@ class VirtualGribFieldList(GribFieldList):
         self.retriever = retriever
 
         self._info_cache = {}
+        self._group_cache = None
 
     def __len__(self):
         return len(self.request_mapper)
@@ -173,3 +175,9 @@ class VirtualGribFieldList(GribFieldList):
 
         self._info_cache[param] = r
         return r
+
+    def _group(self, context):
+        request = self.get_request(context)
+        if request is not None:
+            self._group_cache = None
+            self.group_cache = self.retriever.get(request)
