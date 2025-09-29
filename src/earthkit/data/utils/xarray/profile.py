@@ -12,8 +12,8 @@ import os
 import threading
 from abc import ABCMeta
 from abc import abstractmethod
-from functools import cached_property
 
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
@@ -68,7 +68,7 @@ class ProfileConf:
                 else:
                     raise ValueError(f"Profile {name} not found! path={path}")
 
-    @cached_property
+    @thread_safe_cached_property
     def defaults(self):
         here = os.path.dirname(__file__)
         path = os.path.join(here, "defaults.yaml")
@@ -275,6 +275,7 @@ class Profile:
         self.direct_backend = kwargs.pop("direct_backend")
         self.strict = kwargs.pop("strict")
         self.errors = kwargs.pop("errors")
+        self.allow_holes = kwargs.pop("allow_holes")
 
         # values
         self.flatten_values = kwargs.pop("flatten_values")

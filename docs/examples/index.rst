@@ -30,6 +30,7 @@ Data sources
     polytope_feature.ipynb
     s3.ipynb
     wekeo.ipynb
+    gribjump.ipynb
 
 GRIB
 ++++++
@@ -169,6 +170,7 @@ Xarray engine
     xarray_engine_to_grib.ipynb
     xarray_engine_split.ipynb
     xarray_engine_squeeze.ipynb
+    xarray_engine_holes.ipynb
     xarray_engine_chunks.ipynb
     xarray_engine_chunks_on_dask_cluster.ipynb
     xarray_cupy.ipynb

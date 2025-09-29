@@ -119,6 +119,7 @@ xref_links = {
         "ecCodes namespace",
         "https://confluence.ecmwf.int/display/UDOC/What+are+namespaces+-+ecCodes+GRIB+FAQ",
     ),
+    "gribjump": ("GribJump", "https://github.com/ecmwf/gribjump"),
     "pdbufr": ("pdbufr", "https://github.com/ecmwf/pdbufr"),
     "read_bufr": (
         "pdbufr.read_bufr()",

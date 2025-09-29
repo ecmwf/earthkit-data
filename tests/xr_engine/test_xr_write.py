@@ -16,9 +16,12 @@ from earthkit.data import from_source
 from earthkit.data import to_target
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.dates import datetime_to_grib
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -28,7 +31,7 @@ from earthkit.data.testing import earthkit_remote_test_data_file
         {"profile": "mars", "time_dim_mode": "forecast", "decode_times": False, "decode_timedelta": False},
     ],
 )
-def test_xr_write_1(kwargs):
+def test_xr_write_1(allow_holes, lazy_load, kwargs):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
 
@@ -39,7 +42,7 @@ def test_xr_write_1(kwargs):
 
     xr.set_options(keep_attrs=True)
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     ds += 1
 
     # data-array
@@ -101,6 +104,8 @@ def test_xr_write_1(kwargs):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -108,7 +113,7 @@ def test_xr_write_1(kwargs):
         {"profile": "mars", "time_dim_mode": "valid_time", "decode_times": False, "decode_timedelta": False},
     ],
 )
-def test_xr_write_2(kwargs):
+def test_xr_write_2(allow_holes, lazy_load, kwargs):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(date=20240603, time=0, param=["t", "r"], level=[500, 850])
 
@@ -120,7 +125,7 @@ def test_xr_write_2(kwargs):
     xr.set_options(keep_attrs=True)
 
     # NOTE: the basetime and step are lost when using valid_time dim
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     ds += 1
 
     # TODO: currently base_time + step is lost when valid_time dim is used
@@ -155,7 +160,9 @@ def test_xr_write_2(kwargs):
 
 
 @pytest.mark.cache
-def test_xr_write_level_and_type():
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_write_level_and_type(allow_holes, lazy_load):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(date=20240603, time=0, param=["t", "r"], level=[500, 850])
 
@@ -166,7 +173,7 @@ def test_xr_write_level_and_type():
 
     xr.set_options(keep_attrs=True)
 
-    ds = ds_ek.to_xarray(level_dim_mode="level_and_type")
+    ds = ds_ek.to_xarray(level_dim_mode="level_and_type", allow_holes=allow_holes, lazy_load=lazy_load)
     ds += 1
 
     # TODO: currently base_time + step is lost when valid_time dim is used
@@ -202,7 +209,9 @@ def test_xr_write_level_and_type():
 
 
 @pytest.mark.cache
-def test_xr_write_seasonal():
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_write_seasonal(allow_holes, lazy_load):
     ds_ek = from_source(
         "url",
         earthkit_remote_test_data_file("xr_engine/date/jma_seasonal_fc_ref_time_per_member.grib"),
@@ -214,6 +223,8 @@ def test_xr_write_seasonal():
         time_dim_mode="forecast",
         dim_roles={"date": "indexingDate", "time": "indexingTime", "step": "forecastMonth"},
         dim_name_from_role_name=False,
+        allow_holes=allow_holes,
+        lazy_load=lazy_load,
     )
 
     import xarray as xr
@@ -230,7 +241,9 @@ def test_xr_write_seasonal():
     )
 
 
-def test_xr_write_bits_per_value():
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_write_bits_per_value(allow_holes, lazy_load):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
 
@@ -246,7 +259,9 @@ def test_xr_write_bits_per_value():
 
     xr.set_options(keep_attrs=True)
 
-    ds = ds_ek.to_xarray(**{"profile": "mars", "time_dim_mode": "raw"})
+    ds = ds_ek.to_xarray(
+        allow_holes=allow_holes, lazy_load=lazy_load, **{"profile": "mars", "time_dim_mode": "raw"}
+    )
     ds += 1
 
     # data-array
@@ -257,6 +272,8 @@ def test_xr_write_bits_per_value():
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize("method", ["to_grib", "to_target_on_obj", "to_target_func"])
 @pytest.mark.parametrize(
     "kwargs",
@@ -264,7 +281,7 @@ def test_xr_write_bits_per_value():
         {"profile": "mars", "time_dim_mode": "raw"},
     ],
 )
-def test_xr_write_to_grib_file_dataarray(method, kwargs):
+def test_xr_write_to_grib_file_dataarray(allow_holes, lazy_load, method, kwargs):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
 
@@ -274,7 +291,7 @@ def test_xr_write_to_grib_file_dataarray(method, kwargs):
 
     xr.set_options(keep_attrs=True)
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     ds += 1
 
     # data-array
@@ -335,6 +352,8 @@ def test_xr_write_to_grib_file_dataarray(method, kwargs):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize("method", ["to_grib", "to_target_on_obj", "to_target_func"])
 @pytest.mark.parametrize(
     "kwargs",
@@ -342,7 +361,7 @@ def test_xr_write_to_grib_file_dataarray(method, kwargs):
         {"profile": "mars", "time_dim_mode": "raw"},
     ],
 )
-def test_xr_write_to_grib_file_dataset(method, kwargs):
+def test_xr_write_to_grib_file_dataset(allow_holes, lazy_load, method, kwargs):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
 
@@ -353,7 +372,7 @@ def test_xr_write_to_grib_file_dataset(method, kwargs):
 
     xr.set_options(keep_attrs=True)
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     ds += 1
 
     # dataset
@@ -376,6 +395,8 @@ def test_xr_write_to_grib_file_dataset(method, kwargs):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize("method", ["to_netcdf", "to_target_on_obj", "to_target_func"])
 @pytest.mark.parametrize(
     "kwargs",
@@ -383,7 +404,7 @@ def test_xr_write_to_grib_file_dataset(method, kwargs):
         {"profile": "mars", "time_dim_mode": "raw"},
     ],
 )
-def test_xr_write_to_netcdf_file_dataarray(method, kwargs):
+def test_xr_write_to_netcdf_file_dataarray(allow_holes, lazy_load, method, kwargs):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t"], level=[500, 850])
 
@@ -393,7 +414,7 @@ def test_xr_write_to_netcdf_file_dataarray(method, kwargs):
 
     xr.set_options(keep_attrs=True)
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     ds += 1
 
     # data-array
@@ -417,6 +438,8 @@ def test_xr_write_to_netcdf_file_dataarray(method, kwargs):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize("method", ["to_netcdf", "to_target_on_obj", "to_target_func"])
 @pytest.mark.parametrize(
     "kwargs",
@@ -424,7 +447,7 @@ def test_xr_write_to_netcdf_file_dataarray(method, kwargs):
         {"profile": "mars", "time_dim_mode": "raw"},
     ],
 )
-def test_xr_write_to_netcdf_file_dataset(method, kwargs):
+def test_xr_write_to_netcdf_file_dataset(allow_holes, lazy_load, method, kwargs):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek.sel(param=["t", "r"], level=[500, 850])
 
@@ -435,7 +458,7 @@ def test_xr_write_to_netcdf_file_dataset(method, kwargs):
 
     xr.set_options(keep_attrs=True)
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     ds += 1
 
     # dataset
@@ -457,3 +480,34 @@ def test_xr_write_to_netcdf_file_dataset(method, kwargs):
 
         assert np.allclose(ref_t_vals + 1.0, r["t"].isel(step=1, level=0).to_numpy().flatten())
         assert np.allclose(ref_r_vals + 1.0, r["r"].isel(step=1, level=0).to_numpy().flatten())
+
+
+@pytest.mark.cache
+def test_xr_write_forecast_per_month():
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/date/2_months_6_hourly.grib"))
+
+    ds = ds_ek.to_xarray(time_dim_mode="valid_time")
+    r = ds.earthkit.to_fieldlist()
+    assert len(r) == 236
+
+    ref = []
+    start = np.datetime64("1979-01-01T06:00:00", "ns")
+    end = np.datetime64("1979-03-01T00:00:00", "ns")
+    while start <= end:
+        base_date, base_time = datetime_to_grib(start)
+        ref.append([base_date, base_time, 0, "0", 0, 0, base_date, base_time])
+        start += np.timedelta64(6, "h")
+
+    keys = [
+        "dataDate",
+        "dataTime",
+        "step",
+        "stepRange",
+        "startStep",
+        "endStep",
+        "validityDate",
+        "validityTime",
+    ]
+
+    for f, f_ref in zip(r, ref):
+        assert f.metadata(keys) == f_ref, f"Expected: {f_ref}\nGot: {f.metadata(keys)}"

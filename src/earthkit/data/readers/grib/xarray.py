@@ -235,7 +235,7 @@ class XarrayMixIn:
 
                   - "forecast_reference_time": built from the "date" and "time" roles
                     (see ``dim_roles``) as np.datetime64 values
-                  - "step": built from the "step" role. When ``decode_time=True`` the values are
+                  - "step": built from the "step" role. When ``decode_times=True`` the values are
                     np.timedelta64
                 - "valid_time": adds a dimension called "valid_time" as described by the "valid_time"
                   role (see ``dim_roles``). Will contain np.datetime64 values.
@@ -340,6 +340,12 @@ class XarrayMixIn:
                 option is ignored. Having run :obj:`to_xarray` the input data becomes unusable,
                 so use this option carefully. The default value of ``release_source`` (None) expands
                 to False unless the ``profile`` overwrites it.
+            * allow_holes: bool, None
+                If False, GRIB fields must form a full hypercube (without holes).
+                If True, a dataset will be created from any GRIB fields and
+                its coordinates will be a union of coordinates of the fields (outer join).
+                Values corresponding to missing GRIB fields will be filled with NaN.
+                The default value of ``allow_holes`` (None) expands to False unless the ``profile`` overwrites it.
             * strict: bool, None
                 If True, perform stricter checks on hypercube consistency. Its default value (None) expands
                 to False unless the ``profile`` overwrites it.

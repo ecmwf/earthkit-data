@@ -13,7 +13,8 @@
 try:
     import ipywidgets  # noqa F401
     from tqdm.auto import tqdm  # noqa F401
-except ImportError:
+# except ImportError:
+except Exception:
     from tqdm import tqdm  # noqa F401
 
 

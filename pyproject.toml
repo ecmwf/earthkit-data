@@ -47,7 +47,7 @@ dependencies = [
   "xarray>=0.19",
 ]
 optional-dependencies.all = [
-  "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geo,geopandas,mars,odb,polytope,projection,s3,wekeo]",
+  "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geo,geopandas,gribjump,mars,odb,polytope,projection,s3,wekeo]",
 ]
 optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
 optional-dependencies.ci = [ "numpy" ]
@@ -70,6 +70,7 @@ optional-dependencies.fdb = [ "pyfdb>=0.1" ]
 optional-dependencies.geo = [ "earthkit-geo>=0.2" ]
 optional-dependencies.geopandas = [ "geopandas" ]
 optional-dependencies.geotiff = [ "pyproj", "rasterio", "rioxarray" ]
+optional-dependencies.gribjump = [ "pyfdb>=0.1", "pygribjump" ]
 optional-dependencies.mars = [ "ecmwf-api-client>=1.6.1" ]
 optional-dependencies.odb = [ "pyodc" ]
 optional-dependencies.polytope = [ "polytope-client>=0.7.6" ]
@@ -83,6 +84,7 @@ optional-dependencies.test = [
   "pytest",
   "pytest-cov",
   "pytest-forked",
+  "pytest-reraise",
   "pytest-timeout",
 ]
 optional-dependencies.wekeo = [ "hda>=2.22" ]

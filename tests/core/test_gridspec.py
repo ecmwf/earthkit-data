@@ -24,6 +24,7 @@ with open(earthkit_conf_file("gridspec_schema.json"), "r") as f:
 @pytest.mark.parametrize(
     "gridspec",
     [
+        {"grid": [0.05, 0.05]},
         {"grid": [2, 2]},
         {"area": [90, -180, -90, 180]},
         {"area": [90, -180, -90, 180], "grid": [2, 2]},

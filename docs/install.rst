@@ -51,6 +51,7 @@ Alternatively, you can install the following components:
     - covjsonkit: provides access to CoverageJSON data served by the :ref:`data-sources-polytope` source
     - s3: provides access to non-public :ref:`s3 <data-sources-s3>` buckets (new in version *0.11.0*)
     - geotiff: adds GeoTIFF support (new in version *0.11.0*). Please note that this is not included in the ``[all]`` option and has to be invoked separately.
+    - gribjump: provides access to the :ref:`data-sources-gribjump` source
     - zarr: provides access to the :ref:`data-sources-zarr` source (new in version *0.15.0*). Please note that this is not included in the ``[all]`` option and has to be invoked separately.
 
 E.g. to add :ref:`data-sources-mars`  support you can use:
@@ -85,3 +86,9 @@ FDB
 +++++
 
 For FDB (Fields DataBase) access FDB5 must be installed on the system. See the `FDB documentation <https://fields-database.readthedocs.io/en/latest/>`_ for details.
+
+
+GribJump
+++++++++++++
+
+For FDB access with GribJump, both FDB5 and GribJump must be installed on the system. See the `GribJump project <https://github.com/ecmwf/gribjump>`_ for details.

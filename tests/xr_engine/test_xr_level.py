@@ -24,6 +24,8 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "kwargs,dims",
     [
@@ -37,14 +39,16 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
     ],
 )
-def test_xr_level_dim(kwargs, dims):
+def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     compare_dims(ds, dims, order_ref_var="t")
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "fname,kwargs,dims,levtype",
     [
@@ -255,10 +259,10 @@ def test_xr_level_dim(kwargs, dims):
         ),
     ],
 )
-def test_xr_level_attr(fname, kwargs, dims, levtype):
+def test_xr_level_attr(allow_holes, lazy_load, fname, kwargs, dims, levtype):
     ds_ek = from_source("url", earthkit_remote_test_data_file(f"xr_engine/level/{fname}"))
 
-    ds = ds_ek.to_xarray(**kwargs)
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     compare_dims(ds, dims)
 
     level_dim = next(iter(dims))

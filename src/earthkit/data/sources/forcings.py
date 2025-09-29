@@ -10,7 +10,6 @@
 import datetime
 import itertools
 import logging
-from functools import cached_property
 
 import numpy as np
 
@@ -20,6 +19,7 @@ from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalize
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.utils.dates import to_datetime
 
@@ -245,7 +245,7 @@ class ForcingField(Field):
         # self._shape = shape
         # self._geometry = self.maker.field.metadata().geography
 
-    @cached_property
+    @thread_safe_cached_property
     def _metadata(self):
         d = dict(
             valid_datetime=self.date if isinstance(self.date, str) else self.date.isoformat(),
