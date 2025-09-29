@@ -343,7 +343,6 @@ class thread_safe_cached_property:
     """
 
     def __init__(self, method):
-        print("created", method)
         self.method = method
         self.name = f"_c_{method.__name__}"
         self.lock = threading.Lock()
