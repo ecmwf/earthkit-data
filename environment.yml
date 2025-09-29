@@ -44,6 +44,7 @@ dependencies:
 - pytest
 - pytest-cov
 - pytest-forked
+- pytest-reraise
 - pytest-timeout
 - sphinx>=7.2.6
 - pip:
