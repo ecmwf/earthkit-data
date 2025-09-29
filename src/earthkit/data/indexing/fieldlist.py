@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-from functools import cached_property
-
 import deprecation
 from earthkit.utils.array import array_namespace
 from earthkit.utils.array import get_backend
@@ -16,6 +14,7 @@ from earthkit.utils.array import get_backend
 from earthkit.data.core.fieldlist import FieldListCore
 from earthkit.data.core.index import Index
 from earthkit.data.decorators import detect_out_filename
+from earthkit.data.decorators import thread_safe_cached_property
 
 GRIB_KEYS_NAMES = [
     "class",
@@ -243,7 +242,7 @@ class FieldList(Index, FieldListCore):
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
-    @cached_property
+    @thread_safe_cached_property
     def _has_shared_geography(self):
         if len(self) > 0:
             grid = self[0].geography.unique_grid_id
@@ -296,7 +295,7 @@ class FieldList(Index, FieldListCore):
             result.append(s.metadata(*args, **kwargs))
         return result
 
-    @cached_property
+    @thread_safe_cached_property
     def _md_indices(self):
         from .indices import FieldListIndices
 
@@ -351,7 +350,7 @@ class FieldList(Index, FieldListCore):
             raise ValueError("n must be > 0")
         return self.ls(n=-n, **kwargs)
 
-    @cached_property
+    @thread_safe_cached_property
     def _describe_keys(self):
         if len(self) > 0:
             return DESCRIBE_KEYS

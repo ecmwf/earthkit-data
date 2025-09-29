@@ -9,7 +9,6 @@
 
 import logging
 from datetime import timedelta
-from functools import cached_property
 
 import numpy as np
 
@@ -17,6 +16,7 @@ from earthkit.data.core.fieldlist_ori import Field
 from earthkit.data.core.geography import Geography
 from earthkit.data.core.metadata import MetadataAccessor
 from earthkit.data.core.metadata import RawMetadata
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.fieldlist_ori import ClonedFieldCore
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.dates import to_datetime
@@ -153,7 +153,7 @@ class XArrayMetadata(RawMetadata):
             return self
         return None
 
-    @cached_property
+    @thread_safe_cached_property
     def geography(self):
         return XArrayFieldGeography(self, self._field._ds, self._field.variable)
 
@@ -245,7 +245,7 @@ class XArrayField(Field):
             + ")"
         )
 
-    @cached_property
+    @thread_safe_cached_property
     def _metadata(self):
         return XArrayMetadata(self)
 
@@ -277,7 +277,7 @@ class XArrayField(Field):
         else:
             return self._to_numpy().astype(dtype, copy=False)
 
-    @cached_property
+    @thread_safe_cached_property
     def grid_mapping(self):
         def tidy(x):
             if isinstance(x, np.ndarray):
@@ -317,6 +317,6 @@ class NetCDFMetadata(XArrayMetadata):
 
 
 class NetCDFField(XArrayField):
-    @cached_property
+    @thread_safe_cached_property
     def _metadata(self):
         return NetCDFMetadata(self)

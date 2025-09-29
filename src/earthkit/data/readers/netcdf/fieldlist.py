@@ -8,7 +8,6 @@
 #
 
 import logging
-from functools import cached_property
 from itertools import product
 
 import deprecation
@@ -16,6 +15,7 @@ import deprecation
 from earthkit.data.core.fieldlist_ori import FieldList
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
+from earthkit.data.decorators import thread_safe_cached_property
 
 from .coords import LevelCoordinate
 from .coords import OtherCoordinate
@@ -164,7 +164,7 @@ class XArrayFieldListCore(FieldList):
         self._fields = None
         super().__init__(*kwargs)
 
-    # @cached_property
+    # @thread_safe_cached_property
     @property
     def fields(self):
         if self._fields is None:
@@ -245,7 +245,7 @@ class XArrayFieldList(XArrayFieldListCore):
         self._ds = ds
         super().__init__(**kwargs)
 
-    @cached_property
+    @thread_safe_cached_property
     def xr_dataset(self):
         return self._ds
 
@@ -311,7 +311,7 @@ class NetCDFFieldListFromFileOrURL(NetCDFFieldList):
         super().__init__(path_or_url, **kwargs)
         self.path_or_url = path_or_url
 
-    @cached_property
+    @thread_safe_cached_property
     def xr_dataset(self):
         import xarray as xr
 

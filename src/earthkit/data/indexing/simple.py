@@ -8,7 +8,8 @@
 #
 
 from abc import abstractmethod
-from functools import cached_property
+
+from earthkit.data.decorators import thread_safe_cached_property
 
 from .fieldlist import FieldList
 
@@ -203,7 +204,7 @@ class LazySimpleFieldList(SimpleFieldListCore):
     def __init__(self, reader):
         self._reader = reader
 
-    @cached_property
+    @thread_safe_cached_property
     def _fields(self):
         fields = [x for x in self._reader]
         self._reader = None

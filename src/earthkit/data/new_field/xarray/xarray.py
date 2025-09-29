@@ -9,10 +9,10 @@
 
 
 import logging
-from functools import cached_property
 from typing import Any
 
 from earthkit.data.core.fieldlist_ori import math
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.specs.data import SimpleData
 from earthkit.data.specs.geography import Geography
 from earthkit.data.specs.parameter import Parameter
@@ -80,7 +80,7 @@ class XArrayTime(Time):
         self.owner = owner
         self.selection = selection
 
-    @cached_property
+    @thread_safe_cached_property
     def spec(self):
         """Return the time specification."""
         _coords = {}

@@ -9,12 +9,12 @@
 
 import logging
 import os
-from functools import cached_property
 
 import eccodes
 import numpy as np
 
 from earthkit.data.core.fieldlist_ori import Field
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.fieldlist_ori import ClonedFieldCore
 from earthkit.data.readers.grib.metadata import GribFieldMetadata
 from earthkit.data.utils.message import CodesHandle
@@ -307,7 +307,7 @@ class GribField(Field):
             self._offset = int(self.handle.get("offset"))
         return self._offset
 
-    @cached_property
+    @thread_safe_cached_property
     def _metadata(self):
         cache = self._use_metadata_cache
         if cache:

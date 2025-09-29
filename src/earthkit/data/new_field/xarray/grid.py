@@ -11,11 +11,12 @@
 import logging
 from abc import ABC
 from abc import abstractmethod
-from functools import cached_property
 from typing import Any
 from typing import Tuple
 
 import numpy as np
+
+from earthkit.data.decorators import thread_safe_cached_property
 
 LOG = logging.getLogger(__name__)
 
@@ -84,7 +85,7 @@ class XYGrid(Grid):
 class MeshedGrid(LatLonGrid):
     """Grid class for meshed latitude and longitude coordinates."""
 
-    @cached_property
+    @thread_safe_cached_property
     def grid_points(self) -> Tuple[Any, Any]:
         """Get the grid points for the meshed grid."""
 
@@ -129,7 +130,7 @@ class UnstructuredGrid(LatLonGrid):
         assert lon.variable.dims == self.grid_dims, (lon.variable.dims, self.grid_dims)
         assert set(self.variable_dims) == set(self.grid_dims), (self.variable_dims, self.grid_dims)
 
-    @cached_property
+    @thread_safe_cached_property
     def grid_points(self) -> Tuple[Any, Any]:
         """Get the grid points for the unstructured grid."""
         assert 1 <= len(self.variable_dims) <= 2
@@ -194,7 +195,7 @@ class ProjectionGrid(XYGrid):
 class MeshProjectionGrid(ProjectionGrid):
     """Grid class for meshed projected coordinates."""
 
-    @cached_property
+    @thread_safe_cached_property
     def grid_points(self) -> Tuple[Any, Any]:
         """Get the grid points for the mesh projection grid."""
         transformer = self.transformer()
@@ -206,7 +207,7 @@ class MeshProjectionGrid(ProjectionGrid):
 class UnstructuredProjectionGrid(XYGrid):
     """Grid class for unstructured projected coordinates."""
 
-    @cached_property
+    @thread_safe_cached_property
     def grid_points(self) -> Tuple[Any, Any]:
         """Get the grid points for the unstructured projection grid."""
         raise NotImplementedError("UnstructuredProjectionGrid")

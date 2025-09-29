@@ -6,7 +6,8 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-from functools import cached_property
+
+from earthkit.data.decorators import thread_safe_cached_property
 
 
 class GribSpec:
@@ -16,7 +17,7 @@ class GribSpec:
     def __init__(self, handle):
         self.handle = handle
 
-    @cached_property
+    @thread_safe_cached_property
     def spec(self):
         return self.BUILDER.build(self.handle)
 

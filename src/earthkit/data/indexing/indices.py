@@ -8,7 +8,8 @@
 #
 
 from collections import defaultdict
-from functools import cached_property
+
+from earthkit.data.decorators import thread_safe_cached_property
 
 GRIB_KEYS_NAMES = [
     "class",
@@ -57,7 +58,7 @@ class FieldListIndices:
         self.fs = field_list
         self.user_indices = dict()
 
-    @cached_property
+    @thread_safe_cached_property
     def default_index_keys(self):
         return INDEX_KEYS
         # if len(self.fs) > 0:
@@ -74,7 +75,7 @@ class FieldListIndices:
 
         return sorted(list(values))
 
-    @cached_property
+    @thread_safe_cached_property
     def default_indices(self):
         indices = defaultdict(set)
         keys = self.default_index_keys

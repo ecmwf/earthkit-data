@@ -10,7 +10,6 @@
 import itertools
 import logging
 import sys
-from functools import cached_property
 
 try:
     import cdsapi
@@ -21,6 +20,7 @@ import yaml
 
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.decorators import normalize
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils import ensure_iterable
 from earthkit.data.utils.progbar import tqdm
 
@@ -149,7 +149,7 @@ class CdsRetriever(FileSource):
     def _normalize_request(**kwargs):
         return kwargs
 
-    @cached_property
+    @thread_safe_cached_property
     def requests(self):
         requests = []
         for arg in self._args:

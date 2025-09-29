@@ -147,7 +147,7 @@ class GribStreamReader(GribMemoryReader):
 #     def offset(self):
 #         return None
 
-#     # @cached_property
+#     # @thread_safe_cached_property
 #     # def _metadata(self):
 #     #     return GribFieldMetadata(self)
 

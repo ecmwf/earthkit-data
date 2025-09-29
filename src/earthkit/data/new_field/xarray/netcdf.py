@@ -8,7 +8,8 @@
 #
 
 import logging
-from functools import cached_property
+
+from earthkit.data.decorators import thread_safe_cached_property
 
 from .fieldlist import XArrayFieldList
 
@@ -64,7 +65,7 @@ class NetCDFFieldListFromFileOrURL(NetCDFFieldList):
         super().__init__(path_or_url, **kwargs)
         self.path_or_url = path_or_url
 
-    @cached_property
+    @thread_safe_cached_property
     def xr_dataset(self):
         import xarray as xr
 

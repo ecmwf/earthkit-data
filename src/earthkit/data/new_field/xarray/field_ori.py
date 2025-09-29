@@ -10,7 +10,6 @@
 
 import datetime
 import logging
-from functools import cached_property
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -20,6 +19,7 @@ from numpy.typing import NDArray
 
 from earthkit.data import Field
 from earthkit.data.core.fieldlist_ori import math
+from earthkit.data.decorators import thread_safe_cached_property
 
 from .coordinates import extract_single_value
 from .coordinates import is_scalar
@@ -136,7 +136,7 @@ class XArrayField(Field):
 
         return values  # .reshape(self.shape)
 
-    @cached_property
+    @thread_safe_cached_property
     def _metadata(self):
         """Return the metadata of the field."""
         pass

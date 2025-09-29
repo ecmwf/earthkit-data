@@ -24,7 +24,7 @@ from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.specs.data import SimpleData
 from earthkit.data.utils.dates import to_datetime
 
-# from functools import cached_property
+# from earthkit.data.decorators import thread_safe_cached_property
 
 
 LOG = logging.getLogger(__name__)

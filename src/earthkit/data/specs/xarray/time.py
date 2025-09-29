@@ -32,7 +32,7 @@ class XArrayTime(SimpleTime):
         self.owner = owner
         self.selection = selection
 
-    # @cached_property
+    # @thread_safe_cached_property
     # def spec(self):
     #     """Return the time specification."""
     #     _coords = {}

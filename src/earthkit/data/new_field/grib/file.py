@@ -7,8 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from functools import cached_property
-
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.simple import SimpleFieldListCore
 from earthkit.data.readers import Reader
 from earthkit.data.utils.parts import Part
@@ -60,7 +59,7 @@ class GribFieldListInFile(SimpleFieldListCore):
         self.handle_cache_size = _get_opt(grib_handle_cache_size, "grib-handle-cache-size")
         self.use_metadata_cache = _get_opt(use_grib_metadata_cache, "use-grib-metadata-cache")
 
-    @cached_property
+    @thread_safe_cached_property
     def _fields(self):
         handle_cache = None
         if self.handle_policy == "cache":

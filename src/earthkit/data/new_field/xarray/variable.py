@@ -10,7 +10,6 @@
 
 import logging
 import math
-from functools import cached_property
 from typing import Any
 from typing import Dict
 from typing import List
@@ -19,6 +18,8 @@ from typing import Tuple
 
 import numpy as np
 import xarray as xr
+
+from earthkit.data.decorators import thread_safe_cached_property
 
 # from .field import XArrayField
 
@@ -289,7 +290,7 @@ class FilteredVariable:
         self.variable = variable
         self.kwargs = kwargs
 
-    @cached_property
+    @thread_safe_cached_property
     def fields(self):
         """Filter the fields of a variable based on metadata."""
         return [

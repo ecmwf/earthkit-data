@@ -76,7 +76,7 @@ class GribData(FieldData):
 #     def __init__(self, handle):
 #         self.handle = handle
 
-#     @cached_property
+#     @thread_safe_cached_property
 #     def spec(self):
 #         from ..parameter import ParameterSpec
 

@@ -8,10 +8,10 @@
 #
 
 import logging
-from functools import cached_property
 
 from earthkit.data.core.fieldlist_ori import Field
 from earthkit.data.core.metadata import WrappedMetadata
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.dates import date_to_grib
 from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import time_to_grib
@@ -140,7 +140,7 @@ class VirtualGribFieldList(GribFieldList):
     def mutate(self):
         return self
 
-    @cached_property
+    @thread_safe_cached_property
     def reference(self):
         return self.retriever.get(self.request_mapper.request_at(0))[0]
 
