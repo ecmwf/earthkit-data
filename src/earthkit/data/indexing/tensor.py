@@ -399,7 +399,7 @@ class FieldListTensor(TensorCore):
             if all(i == slice(None, None, None) for i in index):
                 index = None
 
-        context = self.user_coords
+        context = self
 
         if index is None:
             arr = source_to_array_func(context=context)
