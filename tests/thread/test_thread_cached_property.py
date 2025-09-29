@@ -23,12 +23,14 @@ class _A:
 
     @thread_safe_cached_property
     def data(self):
+        """Property data"""
         time.sleep(1)
         self.count += 1
         return self.count
 
     @thread_safe_cached_property
     def data_static(self):
+        """Property data_static"""
         time.sleep(1)
         self.count_static += 1
         return self.count_static
@@ -142,3 +144,8 @@ def test_thread_cached_property_4(reraise):
     assert b.count_static == 1
     assert a.data_static == 1
     assert b.data_static == 1
+
+
+def test_thread_cached_property_docstring():
+    _A.data.__doc__ == "Property data"
+    _A.data_static.__doc__ == "Property data_static"
