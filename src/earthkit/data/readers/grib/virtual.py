@@ -8,6 +8,7 @@
 #
 
 import logging
+from collections import defaultdict
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.metadata import WrappedMetadata
@@ -23,8 +24,9 @@ LOG = logging.getLogger(__name__)
 
 
 class VirtualGribField(Field):
-    def __init__(self, owner, request, metadata_alias, reference=None):
+    def __init__(self, owner, request, index, metadata_alias, reference=None):
         self.owner = owner
+        self.index = index
         self.request = request
         self.metadata_alias = metadata_alias
         self.reference = reference
@@ -159,6 +161,7 @@ class VirtualGribFieldList(GribFieldList):
 
             return VirtualGribField(
                 self,
+                n,
                 self.request_mapper.request_at(n),
                 self.request_mapper.metadata_alias,
                 reference=self.reference if n == 0 else None,
@@ -179,7 +182,42 @@ class VirtualGribFieldList(GribFieldList):
         return r
 
     def _group(self, context):
-        request = self.get_request(context)
-        if request is not None:
-            self._group_cache = None
-            self.group_cache = self.retriever.get(request)
+        idx = []
+        r = defaultdict(set)
+        for f in context.source:
+            if hasattr(f, "owner") and f.owner is self:
+                idx.append(f.index)
+                for k, v in f.request.items():
+                    r[k].add(v)
+
+        for k in list(r.keys()):
+            r[k] = sorted(list(r[k]))
+
+        ds = self.retriever.get(r)
+        self.group_cache = ds
+
+
+# class VirtualGribFieldlistInMemory(VirtualGribFieldList):
+#     def __init__(self, request, ds):
+#         super().__init__(request_mapper, retriever)
+#         self.source = source
+
+
+class FDBCube:
+    def __init__(self, tensor):
+        self.field_index = []
+        r = defaultdict(set)
+        for f in tensor.source:
+            if hasattr(f, "owner") and f.owner is self:
+                self.field_index.append(f.index)
+                for k, v in f.request.items():
+                    r[k].add(v)
+
+        for k in list(r.keys()):
+            r[k] = sorted(list(r[k]))
+
+        self.ds = self.retriever.get(r)
+
+    def field(self, n):
+        if n in self.field_index:
+            return self.ds[self.field_index[n]]
