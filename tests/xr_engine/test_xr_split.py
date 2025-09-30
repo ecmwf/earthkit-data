@@ -34,12 +34,12 @@ from earthkit.data.testing import earthkit_remote_test_data_file
             {
                 "time_dim_mode": "raw",
                 "split_dims": ["step"],
-                "ensure_dims": "step",
+                "ensure_dims": "step_timedelta",
                 "dim_name_from_role_name": False,
             },
             2,
             ["2t", "msl", "r", "t"],
-            ["date", "time", "step", "levelist"],
+            ["date", "time", "step_timedelta", "levelist"],
             [{"step": 0}, {"step": 6}],
         ),
         (

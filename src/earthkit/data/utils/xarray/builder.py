@@ -465,9 +465,13 @@ class BackendDataBuilder(metaclass=ABCMeta):
                     raise ValueError(
                         f"Dimension '{d.name}' of variable '{name}' cannot have multiple values={vals[d.key]}"
                     )
-                elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
+                if num == 1 and d.name in self.profile.dims.dims_as_attrs:
                     tensor_extra_attrs.append(d.key)
-                elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
+                if (
+                    d.name in self.profile.dims.ensure_dims
+                    or num > 1
+                    or (not self.profile.dims.squeeze and d.name not in self.profile.dims.dims_as_attrs)
+                ):
                     tensor_dims.append(d)
                     tensor_coords[d.key] = vals[d.key]
                     if component_vals and d.key in component_vals:
