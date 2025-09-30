@@ -238,7 +238,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
         (
             "sol_3.grib2",
             {
-                "profile": "grib",
+                "profile": "mars",
                 "level_dim_mode": "level",
                 "ensure_dims": "levelist",
                 "dim_name_from_role_name": False,
@@ -266,4 +266,4 @@ def test_xr_level_attr(allow_holes, lazy_load, fname, kwargs, dims, levtype):
     compare_dims(ds, dims)
 
     level_dim = next(iter(dims))
-    ds.coords[level_dim].attrs == PROFILE_CONF.defaults["coord_attrs"][level_dim][levtype]
+    assert ds.coords[level_dim].attrs == PROFILE_CONF.defaults["coord_attrs"][level_dim][levtype]
