@@ -46,6 +46,18 @@ class Vertical(SimpleSpec):
 
     @property
     @abstractmethod
+    def level_type_name(self) -> str:
+        """str: Return the level type."""
+        pass
+
+    @property
+    @abstractmethod
+    def level_type_units(self) -> str:
+        """str: Return the level type."""
+        pass
+
+    @property
+    @abstractmethod
     def level_units(self) -> str:
         """str: Return the level units."""
         pass
@@ -66,8 +78,8 @@ class LevelInfo:
 class SimpleVertical(Vertical):
     """A specification of a vertical level or layer."""
 
-    def __init__(self, level=None, level_type=None) -> None:
-        self._level = level
+    def __init__(self, level_value=None, level_type=None) -> None:
+        self._level = level_value
         self._level_type = level_type
         assert level_type in LevelType
 
@@ -85,6 +97,16 @@ class SimpleVertical(Vertical):
     def level_type(self) -> str:
         """str: Return the level type."""
         return self._level_type
+
+    @property
+    def level_type_name(self) -> str:
+        """str: Return the level type."""
+        return self._level_type.value.name
+
+    @property
+    def level_type_units(self) -> str:
+        """str: Return the level type."""
+        return self._level_type.value.units
 
     @property
     def level_units(self) -> str:
@@ -162,6 +184,9 @@ class SimpleVertical(Vertical):
         """
         kwargs = normalise_set_kwargs(self, *args, **kwargs)
         kwargs.pop("level_units", None)
+        kwargs.pop("level", None)
+        kwargs.pop("level_type_name", None)
+        kwargs.pop("level_type_units", None)
         spec = SimpleVertical(**kwargs)
         return spec
 

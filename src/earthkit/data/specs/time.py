@@ -275,7 +275,7 @@ class SimpleTime(Time):
         # if reference_datetime is not None:
         #     d["reference_datetime"] = to_datetime(reference_datetime)
 
-        print("generic", d)
+        # print("generic", d)
 
         return self.__class__(**d)
 

@@ -345,18 +345,34 @@ class thread_safe_cached_property:
     def __init__(self, method):
         self.method = method
         self.name = f"_c_{method.__name__}"
+        # self.name = None
         self.lock = threading.Lock()
+
+    # def __set_name__(self, owner, name):
+    #     if self.name is None:
+    #         self.name = name
+    #     elif name != self.name:
+    #         raise TypeError(
+    #             "Cannot assign the same cached_property to two different names "
+    #             f"({self.name!r} and {name!r})."
+    #         )
 
     def __get__(self, instance, owner=None):
         if instance is None:
             return self
 
-        if hasattr(instance, self.name):
-            return getattr(instance, self.name)
+        if self.name in instance.__dict__:
+            return instance.__dict__[self.name]
+
+        # if hasattr(instance, self.name):
+        #     return getattr(instance, self.name)
 
         with self.lock:
-            if hasattr(instance, self.name):
-                return getattr(instance, self.name)
+            # if hasattr(instance, self.name):
+            #     return getattr(instance, self.name)
+            if self.name in instance.__dict__:
+                return instance.__dict__[self.name]
+
             value = self.method(instance)
             setattr(instance, self.name, value)
             return value

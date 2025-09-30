@@ -123,7 +123,7 @@ class GribVerticalBuilder:
             raise ValueError(f"Cannot convert level {level} of type {level_type}: {e}")
 
         return dict(
-            level=level,
+            level_value=level,
             level_type=level_type,
         )
 
