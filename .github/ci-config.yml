@@ -4,6 +4,7 @@ dependencies: |
   ecmwf/eccodes
   ecmwf/eckit
   ecmwf/odc
+  ecmwf/metkit
   ecmwf/fdb
 dependency_branch: develop
 parallelism_factor: 8

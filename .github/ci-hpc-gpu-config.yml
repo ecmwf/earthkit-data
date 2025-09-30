@@ -7,6 +7,7 @@ build:
   - ecmwf/eccodes@develop
   - ecmwf/eckit@develop
   - ecmwf/odc@develop
+  - ecmwf/metkit@develop
   - ecmwf/fdb@develop
   python_dependencies:
   - ecmwf/eccodes-python@develop
