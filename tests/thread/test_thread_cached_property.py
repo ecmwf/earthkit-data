@@ -36,6 +36,29 @@ class _A:
         return self.count_static
 
 
+class _Wrapped:
+    def __init__(self, count=0):
+        self.count = count
+
+    def compute(self, value):
+        return value + self.count
+
+
+class _Wrapper:
+    def __init__(self, count=0):
+        self.count = count
+
+    @thread_safe_cached_property
+    def _data(self):
+        """Property data"""
+        time.sleep(1)
+        self.count += 1
+        return _Wrapped(self.count)
+
+    def __getattr__(self, name):
+        return getattr(self._data, name)
+
+
 def test_thread_cached_property_1(reraise):
     a = _A()
 
@@ -149,3 +172,52 @@ def test_thread_cached_property_4(reraise):
 def test_thread_cached_property_docstring():
     _A.data.__doc__ == "Property data"
     _A.data_static.__doc__ == "Property data_static"
+
+
+def test_thread_cached_property_wrapped_1(reraise):
+    w = _Wrapper()
+
+    def worker(n):
+        with reraise:
+            assert w.compute(1) == 2, f"Thread {n} failed"
+
+    threads = []
+    nums = list(range(10))
+
+    for n in nums:
+        thread = threading.Thread(target=worker, args=(n,))
+        # print("Starting thread", n, flush=True)
+        thread.start()
+        threads.append(thread)
+
+    for n, thread in zip(nums, threads):
+        # print("Joining thread", n, flush=True)
+        thread.join()
+
+    assert w.compute(1) == 2
+
+
+def test_thread_cached_property_wrapped_2(reraise):
+    w1 = _Wrapper(0)
+    w2 = _Wrapper(1)
+
+    def worker(n):
+        with reraise:
+            assert w1.compute(1) == 2, f"Thread {n} failed"
+            assert w2.compute(1) == 3, f"Thread {n} failed"
+
+    threads = []
+    nums = list(range(10))
+
+    for n in nums:
+        thread = threading.Thread(target=worker, args=(n,))
+        # print("Starting thread", n, flush=True)
+        thread.start()
+        threads.append(thread)
+
+    for n, thread in zip(nums, threads):
+        # print("Joining thread", n, flush=True)
+        thread.join()
+
+    assert w1.compute(1) == 2
+    assert w2.compute(1) == 3
