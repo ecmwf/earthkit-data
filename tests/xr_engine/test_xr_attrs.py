@@ -37,6 +37,8 @@ def _get_attrs_for_key_2(key, metadata):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "kwargs,coords,dims,attrs",
     [
@@ -118,12 +120,10 @@ def _get_attrs_for_key_2(key, metadata):
         ),
     ],
 )
-def test_xr_dims_as_attrs(kwargs, coords, dims, attrs):
-    ds0 = from_source(
-        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_small.grib")
-    )
+def test_xr_dims_as_attrs(allow_holes, lazy_load, kwargs, coords, dims, attrs):
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
 
-    ds = ds0.to_xarray(**kwargs)
+    ds = ds0.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     compare_coords(ds, coords)
     compare_dims(ds, dims, sizes=True)
 
@@ -132,6 +132,7 @@ def test_xr_dims_as_attrs(kwargs, coords, dims, attrs):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "kwargs,coords,dims,attrs",
     [
@@ -186,12 +187,10 @@ def test_xr_dims_as_attrs(kwargs, coords, dims, attrs):
         ),
     ],
 )
-def test_xr_attrs_types(kwargs, coords, dims, attrs):
-    ds0 = from_source(
-        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_small.grib")
-    )
+def test_xr_attrs_types(lazy_load, kwargs, coords, dims, attrs):
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
 
-    ds = ds0.to_xarray(**kwargs)
+    ds = ds0.to_xarray(lazy_load=lazy_load, **kwargs)
     compare_coords(ds, coords)
     compare_dims(ds, dims, sizes=True)
 
@@ -201,10 +200,10 @@ def test_xr_attrs_types(kwargs, coords, dims, attrs):
 
 
 @pytest.mark.cache
-def test_xr_global_attrs():
-    ds_fl = from_source(
-        "url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl_small.grib")
-    )
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_global_attrs(allow_holes, lazy_load):
+    ds_fl = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
     ds = ds_fl.to_xarray(
         attrs_mode="fixed",
         global_attrs=[
@@ -215,6 +214,8 @@ def test_xr_global_attrs():
             {"centre_key": "key=centre"},
             {"geography_namespace": "namespace=geography"},
         ],
+        allow_holes=allow_holes,
+        lazy_load=lazy_load,
     )
     ref_global_attrs = {
         "centre_callable": "ecmf",

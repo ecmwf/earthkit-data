@@ -28,7 +28,7 @@ from xr_engine_fixtures import load_grib_data  # noqa: E402
 @pytest.mark.cache
 @pytest.mark.parametrize("engine", ["earthkit", "cfgrib"])
 def test_xr_engine_kwargs_unchanged(engine):
-    ds = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_small.grib"))
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
 
     _kwargs = {"squeeze": True}
     res = ds.to_xarray(engine=engine, xarray_open_dataset_kwargs=_kwargs)
@@ -38,7 +38,7 @@ def test_xr_engine_kwargs_unchanged(engine):
 
 @pytest.mark.cache
 def test_xr_engine_basic():
-    ds = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
     res = ds.to_xarray()
     assert res is not None
 
@@ -60,9 +60,11 @@ def test_xr_engine_open_dataset_path(path_maker):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize("api", ["earthkit", "xr"])
-def test_xr_engine_detailed_check_1(api):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
+def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
 
     if api == "earthkit":
         ds = ds_ek.to_xarray(
@@ -71,6 +73,8 @@ def test_xr_engine_detailed_check_1(api):
             decode_timedelta=False,
             add_valid_time_coord=False,
             dim_name_from_role_name=False,
+            allow_holes=allow_holes,
+            lazy_load=lazy_load,
         )
     else:
         import xarray as xr
@@ -83,6 +87,8 @@ def test_xr_engine_detailed_check_1(api):
             decode_timedelta=False,
             add_valid_time_coord=False,
             dim_name_from_role_name=False,
+            allow_holes=allow_holes,
+            lazy_load=lazy_load,
         )
 
     assert ds is not None
@@ -112,8 +118,10 @@ def test_xr_engine_detailed_check_1(api):
 
     assert len(ds.dims) == len(dims_ref_full)
     compare_coords(ds, coords_ref_full)
-    assert [v for v in ds.data_vars] == data_vars
-
+    if not allow_holes:
+        assert [v for v in ds.data_vars] == data_vars
+    else:
+        assert set([v for v in ds.data_vars]) == set(data_vars)
     # data variable
     assert ds["u"].shape == (2, 2, 2, 6, 19, 36)
     assert ds["u"].values.shape == (2, 2, 2, 6, 19, 36)
@@ -127,7 +135,10 @@ def test_xr_engine_detailed_check_1(api):
     coords_ref = dict(coords_ref_full)
     coords_ref["date"] = np.array([20240603])
     compare_coords(r, coords_ref)
-    assert [v for v in r.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in r.data_vars] == data_vars
+    else:
+        assert set([v for v in r.data_vars]) == set(data_vars)
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 19, 36)
@@ -142,7 +153,10 @@ def test_xr_engine_detailed_check_1(api):
     coords_ref = dict(coords_ref_full)
     coords_ref["date"] = np.array([20240603])
     compare_coords(r, coords_ref)
-    assert [v for v in r.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in r.data_vars] == data_vars
+    else:
+        assert set([v for v in r.data_vars]) == set(data_vars)
 
     # isel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 19, 36)
@@ -237,9 +251,11 @@ def test_xr_engine_detailed_check_1(api):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize("api", ["earthkit", "xr"])
-def test_xr_engine_detailed_check_2(api):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
+def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
 
     if api == "earthkit":
         ds = ds_ek.to_xarray(
@@ -248,6 +264,8 @@ def test_xr_engine_detailed_check_2(api):
             decode_timedelta=False,
             add_valid_time_coord=False,
             dim_name_from_role_name=True,
+            allow_holes=allow_holes,
+            lazy_load=lazy_load,
         )
     else:
         import xarray as xr
@@ -260,6 +278,8 @@ def test_xr_engine_detailed_check_2(api):
             decode_timedelta=False,
             add_valid_time_coord=False,
             dim_name_from_role_name=True,
+            allow_holes=allow_holes,
+            lazy_load=lazy_load,
         )
 
     assert ds is not None
@@ -289,7 +309,10 @@ def test_xr_engine_detailed_check_2(api):
 
     assert len(ds.dims) == len(dims_ref_full)
     compare_coords(ds, coords_ref_full)
-    assert [v for v in ds.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in ds.data_vars] == data_vars
+    else:
+        assert set([v for v in ds.data_vars]) == set(data_vars)
 
     # data variable
     assert ds["u"].shape == (2, 2, 2, 6, 19, 36)
@@ -304,7 +327,10 @@ def test_xr_engine_detailed_check_2(api):
     coords_ref = dict(coords_ref_full)
     coords_ref["date"] = np.array([20240603])
     compare_coords(r, coords_ref)
-    assert [v for v in r.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in r.data_vars] == data_vars
+    else:
+        assert set([v for v in r.data_vars]) == set(data_vars)
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 19, 36)
@@ -319,7 +345,10 @@ def test_xr_engine_detailed_check_2(api):
     coords_ref = dict(coords_ref_full)
     coords_ref["date"] = np.array([20240603])
     compare_coords(r, coords_ref)
-    assert [v for v in r.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in r.data_vars] == data_vars
+    else:
+        assert set([v for v in r.data_vars]) == set(data_vars)
 
     # isel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 19, 36)
@@ -414,12 +443,13 @@ def test_xr_engine_detailed_check_2(api):
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("stream", [False, True])
 @pytest.mark.parametrize("lazy_load", [False, True])
 @pytest.mark.parametrize("release_source", [False, True])
 @pytest.mark.parametrize("direct_backend", [False, True])
-def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, direct_backend):
-    filename = "test-data/xr_engine/level/pl.grib"
+def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, release_source, direct_backend):
+    filename = "xr_engine/level/pl.grib"
     ds_ek, ds_ek_ref = load_grib_data(filename, "url", stream=stream)
 
     kwargs = {
@@ -434,6 +464,7 @@ def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, d
                 "release_source": release_source,
                 "direct_backend": direct_backend,
                 "dim_name_from_role_name": False,
+                "allow_holes": allow_holes,
             }
         }
     }
@@ -468,7 +499,10 @@ def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, d
     assert len(ds.coords) == len(coords_ref_full)
     for k, v in coords_ref_full.items():
         assert np.allclose(ds.coords[k].values, v)
-    assert [v for v in ds.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in ds.data_vars] == data_vars
+    else:
+        assert set([v for v in ds.data_vars]) == set(data_vars)
 
     # data variable
     assert ds["u"].shape == (2, 2, 2, 6, 684)
@@ -487,7 +521,10 @@ def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, d
     assert len(r.coords) == len(coords_ref)
     for k, v in coords_ref.items():
         assert np.allclose(r.coords[k].values, v)
-    assert [v for v in r.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in r.data_vars] == data_vars
+    else:
+        assert set([v for v in r.data_vars]) == set(data_vars)
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 684)
@@ -506,7 +543,10 @@ def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, d
     assert len(r.coords) == len(coords_ref)
     for k, v in coords_ref.items():
         assert np.allclose(r.coords[k].values, v)
-    assert [v for v in r.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in r.data_vars] == data_vars
+    else:
+        assert set([v for v in r.data_vars]) == set(data_vars)
 
     # isel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 684)
@@ -593,12 +633,13 @@ def test_xr_engine_detailed_flatten_check_1(stream, lazy_load, release_source, d
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("stream", [False, True])
 @pytest.mark.parametrize("lazy_load", [False, True])
 @pytest.mark.parametrize("release_source", [False, True])
 @pytest.mark.parametrize("direct_backend", [False, True])
-def test_xr_engine_detailed_flatten_check_2(stream, lazy_load, release_source, direct_backend):
-    filename = "test-data/xr_engine/level/pl.grib"
+def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, release_source, direct_backend):
+    filename = "xr_engine/level/pl.grib"
     ds_ek, ds_ek_ref = load_grib_data(filename, "url", stream=stream)
 
     kwargs = {
@@ -613,6 +654,7 @@ def test_xr_engine_detailed_flatten_check_2(stream, lazy_load, release_source, d
                 "release_source": release_source,
                 "direct_backend": direct_backend,
                 "dim_name_from_role_name": True,
+                "allow_holes": allow_holes,
             }
         }
     }
@@ -645,7 +687,10 @@ def test_xr_engine_detailed_flatten_check_2(stream, lazy_load, release_source, d
 
     assert len(ds.dims) == len(dims_ref_full)
     compare_coords(ds, coords_ref_full)
-    assert [v for v in ds.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in ds.data_vars] == data_vars
+    else:
+        assert set([v for v in ds.data_vars]) == set(data_vars)
 
     # data variable
     assert ds["u"].shape == (2, 2, 2, 6, 684)
@@ -660,7 +705,10 @@ def test_xr_engine_detailed_flatten_check_2(stream, lazy_load, release_source, d
     coords_ref = dict(coords_ref_full)
     coords_ref["date"] = np.array([20240603])
     compare_coords(r, coords_ref)
-    assert [v for v in r.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in r.data_vars] == data_vars
+    else:
+        assert set([v for v in r.data_vars]) == set(data_vars)
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 684)
@@ -675,7 +723,10 @@ def test_xr_engine_detailed_flatten_check_2(stream, lazy_load, release_source, d
     coords_ref = dict(coords_ref_full)
     coords_ref["date"] = np.array([20240603])
     compare_coords(r, coords_ref)
-    assert [v for v in r.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in r.data_vars] == data_vars
+    else:
+        assert set([v for v in r.data_vars]) == set(data_vars)
 
     # isel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 684)
@@ -768,7 +819,7 @@ def test_xr_engine_detailed_flatten_check_2(stream, lazy_load, release_source, d
     ],
 )
 def test_xr_engine_invalid_kwargs(kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data", "xr_engine", "level", "pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
 
     import xarray as xr
 
@@ -792,7 +843,7 @@ def test_xr_engine_invalid_kwargs(kwargs):
     ],
 )
 def test_xr_engine_dtype(dtype, expected_dtype):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
     ds = ds_ek.to_xarray(dtype=dtype)
     assert ds["t"].data.dtype == expected_dtype
@@ -800,8 +851,10 @@ def test_xr_engine_dtype(dtype, expected_dtype):
 
 
 @pytest.mark.cache
-def test_xr_engine_single_field():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_engine_single_field(allow_holes, lazy_load):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek[0]
 
     ds = ds_ek.to_xarray(
@@ -810,6 +863,8 @@ def test_xr_engine_single_field():
         decode_timedelta=False,
         add_valid_time_coord=False,
         squeeze=True,
+        allow_holes=allow_holes,
+        lazy_load=lazy_load,
     )
 
     vals_ref = ds_ek.to_numpy()
@@ -880,7 +935,7 @@ def test_xr_engine_single_field():
 @pytest.mark.cache
 @pytest.mark.parametrize("add", [False, True])
 def test_xr_engine_add_earthkit_attrs_1(add):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek[0]
 
     ds = ds_ek.to_xarray(
@@ -899,7 +954,7 @@ def test_xr_engine_add_earthkit_attrs_1(add):
 
 @pytest.mark.cache
 def test_xr_engine_add_earthkit_attrs_2():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
     ds_ek = ds_ek[0]
 
     ds = ds_ek.to_xarray(

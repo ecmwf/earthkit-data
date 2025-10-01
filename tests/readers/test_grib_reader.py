@@ -10,18 +10,20 @@
 #
 
 from earthkit.data import from_source
+from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_test_data_file
 
 
 def test_grib_len():
-    f = from_source("file", "tests/data/test_single.grib")
+    f = from_source("file", earthkit_test_data_file("test_single.grib"))
     assert len(f) == 1
 
-    f = from_source("file", "docs/examples/tuv_pl.grib")
+    f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
     assert len(f) == 18
 
 
 def test_grib_create_from_list_of_paths():
-    f = from_source("file", ["docs/examples/tuv_pl.grib", "tests/data/ml_data.grib"])
+    f = from_source("file", [earthkit_examples_file("tuv_pl.grib"), earthkit_test_data_file("ml_data.grib")])
 
     assert len(f) == 54
     assert f[0].metadata("level") == 1000

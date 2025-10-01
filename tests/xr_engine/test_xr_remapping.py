@@ -24,23 +24,29 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
-def test_xr_remapping_1(lazy_load):
-    ds0 = from_source(
-        "url", earthkit_remote_test_data_file("test-data/xr_engine/level/mixed_pl_ml_small.grib")
-    )
+def test_xr_remapping_1(allow_holes, lazy_load):
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine/level/mixed_pl_ml_small.grib"))
     ds = ds0.to_xarray(
-        variable_key="_k", remapping={"_k": "{param}_{levelist}_{levtype}"}, lazy_load=lazy_load
+        variable_key="_k",
+        remapping={"_k": "{param}_{levelist}_{levtype}"},
+        allow_holes=allow_holes,
+        lazy_load=lazy_load,
     )
 
     data_vars = ["t_137_ml", "t_500_pl", "t_700_pl", "t_90_ml", "u_137_ml", "u_500_pl", "u_700_pl", "u_90_ml"]
-    assert [v for v in ds.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in ds.data_vars] == data_vars
+    else:
+        assert set([v for v in ds.data_vars]) == set(data_vars)
 
     dims = {"forecast_reference_time": 4, "step": 2, "latitude": 19, "longitude": 36}
     compare_dims(ds, dims, sizes=True)
 
 
 @pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
     "kwargs,coords,dims",
@@ -78,13 +84,16 @@ def test_xr_remapping_1(lazy_load):
         ),
     ],
 )
-def test_xr_remapping_2(lazy_load, kwargs, coords, dims):
-    ds0 = from_source("url", earthkit_remote_test_data_file("test-data/xr_engine/level/pl_small.grib"))
-    ds = ds0.to_xarray(lazy_load=lazy_load, **kwargs)
+def test_xr_remapping_2(allow_holes, lazy_load, kwargs, coords, dims):
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
+    ds = ds0.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
 
     data_vars = ["r", "t"]
 
-    assert [v for v in ds.data_vars] == data_vars
+    if not allow_holes:
+        assert [v for v in ds.data_vars] == data_vars
+    else:
+        assert set([v for v in ds.data_vars]) == set(data_vars)
 
     # coords = {"_k": ["500_pl", "700_pl"]}
     compare_coords(ds, coords)

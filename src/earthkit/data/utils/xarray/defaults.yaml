@@ -42,6 +42,7 @@ release_source: false
 direct_backend: false
 strict: false
 errors: raise
+allow_holes: false
 
 dim_roles:
   number: number
@@ -70,6 +71,10 @@ coord_attrs:
     standard_name: forecast_reference_time
     long_name: initial time of forecast
   step:
+    # "units": "hours",
+    standard_name: forecast_period
+    long_name: time since forecast_reference_time
+  forecast_period:
     # "units": "hours",
     standard_name: forecast_period
     long_name: time since forecast_reference_time

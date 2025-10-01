@@ -11,11 +11,11 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_file
+from earthkit.data.testing import earthkit_test_data_file
 
 
 def test_geojson():
-    s = from_source("file", earthkit_file("tests/data/NUTS_RG_20M_2021_3035.geojson"))
+    s = from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.geojson"))
     assert s
     for _s in s:
         assert _s is not None
@@ -24,7 +24,7 @@ def test_geojson():
 
 @pytest.mark.with_proj
 def test_geojson_bounding_box():
-    s = from_source("file", earthkit_file("tests/data/NUTS_RG_20M_2021_3035.geojson"))
+    s = from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.geojson"))
     bb = s.bounding_box()
     assert bb
     assert bb.south, bb.north == (-90.0, 90.0)
