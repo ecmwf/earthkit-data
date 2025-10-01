@@ -11,6 +11,7 @@ from collections import defaultdict
 
 from earthkit.data.specs.vertical import LevelType
 
+from ..vertical import SimpleVerticalSpec
 from .collector import GribContextCollector
 from .spec import GribSpec
 
@@ -97,10 +98,9 @@ for k in list(_SPEC_TYPES.keys()):
 class GribVerticalBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.specs.vertical import SimpleVertical
 
         d = GribVerticalBuilder._build_dict(handle)
-        spec = SimpleVertical.from_dict(d)
+        spec = SimpleVerticalSpec.from_dict(d)
         # spec._set_private_data("handle", handle)
         return spec
 
@@ -159,3 +159,12 @@ COLLECTOR = GribVerticalContextCollector()
 class GribVertical(GribSpec):
     BUILDER = GribVerticalBuilder
     COLLECTOR = COLLECTOR
+
+
+# class GribVerticalSpec(SimpleVerticalSpec):
+#     def __init__(self, handle) -> None:
+#         self._handle = handle
+
+#     @thread_safe_cached_property
+#     def data(self):
+#         return self.BUILDER.build(self._handle)
