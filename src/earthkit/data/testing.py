@@ -99,7 +99,7 @@ def modules_installed(*modules):
     for module in modules:
         try:
             import_module(module)
-        except ImportError:
+        except (ImportError, RuntimeError):
             return False
     return True
 

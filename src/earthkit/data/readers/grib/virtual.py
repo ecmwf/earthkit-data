@@ -93,6 +93,8 @@ class VirtualGribField(Field):
         if key in self.metadata_alias and key in self.request:
             return self.request[self.metadata_alias[key]]
 
+        if key == "step_timedelta":
+            return to_timedelta(self.request.get("step", 0))
         if key == "number":
             return 0
         if key == "validityDate":

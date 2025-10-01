@@ -32,7 +32,9 @@ class Vertical(SimpleSpec):
         "positive",
     )
 
-    PREFIX = "vertical_"
+    KEY_PREFIX = "vertical_"
+    PREFIXED_KEYS = all
+    DIRECT_KEYS = ("level", "layer")
     # PREFIXED_KEYS = Aliases(
     # {
     #     "level": ("level_value",),

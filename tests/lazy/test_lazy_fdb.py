@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import os
 
 import numpy as np
@@ -72,6 +73,9 @@ def test_lazy_fdb():
             "%",
             "relative_humidity",
         ]
+
+        assert ds[0].metadata("step_timedelta") == datetime.timedelta(hours=0)
+        assert ds[4].metadata("step_timedelta") == datetime.timedelta(hours=6)
 
         assert not hasattr(ds, "path")
         assert not hasattr(ds[0], "path")
