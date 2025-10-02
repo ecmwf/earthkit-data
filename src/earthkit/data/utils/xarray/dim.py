@@ -776,10 +776,10 @@ class DimHandler:
             var_keys = []
 
         # non-core dims
-        keys = list(self.extra_dims.keys()) + self.ensure_dims
-        keys = _remove_duplicates(keys)
+        extra_dims = dict(zip(self.ensure_dims, self.ensure_dims))
+        extra_dims.update(self.extra_dims)
 
-        remapping_dims = self._init_remapping_dims(keys)
+        remapping_dims = self._init_remapping_dims(extra_dims)
         dims = dict(**remapping_dims)
 
         if not self.var_key_dim:
@@ -787,11 +787,11 @@ class DimHandler:
             self.var_key_dim = make_dim(self, name=self.profile.variable.key)
 
         # dims at this point can only contain remapping dims
-        for k in keys:
+        for name, key in extra_dims.items():
             # note: remapping overrides existing keys
-            if k not in dims and k not in PREDEFINED_DIMS:
+            if name not in dims and name not in PREDEFINED_DIMS:
                 # dimensions which are in PREDEFINED_DIMS will be built below as core_dims
-                dims[k] = make_dim(self, name=k)
+                dims[name] = make_dim(self, name=name, key=key)
 
         dims = {k: v for k, v in dims.items() if k not in self.drop_dims}
         # print(f"dims", dims)
