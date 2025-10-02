@@ -120,10 +120,13 @@ class VariableBuilder:
 
         def _metadata():
             nonlocal first
-            return self.tensor.source[0].metadata() if not first else first
+            if not first:
+                first = self.tensor.source[0].metadata()
+            return first
 
         for a in attrs:
-            if a.name not in self.var_dims and a.name not in res and a.name not in self.fixed_local_attrs:
+            # if a.name not in self.var_dims and a.name not in res and a.name not in self.fixed_local_attrs:
+            if a.name not in res and a.name not in self.fixed_local_attrs:
                 if a.fixed():
                     fixed_attrs[a.name] = a.value()
                 elif callable(a):
