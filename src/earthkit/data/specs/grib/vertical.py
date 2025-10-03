@@ -9,7 +9,7 @@
 
 from collections import defaultdict
 
-from earthkit.data.specs.vertical import LevelType
+from earthkit.data.specs.level_type import LevelTypes
 
 from ..vertical import SimpleVerticalSpec
 from .collector import GribContextCollector
@@ -33,7 +33,7 @@ class GribLevelType:
 
 class PressureHPaGribLevelType(GribLevelType):
     def __init__(self):
-        super().__init__("isobaricInhPa", LevelType.PRESSURE)
+        super().__init__("isobaricInhPa", LevelTypes.PRESSURE)
 
     def match(self, spec):
         if spec.level_type == self.spec_type and spec.level is not None:
@@ -43,7 +43,7 @@ class PressureHPaGribLevelType(GribLevelType):
 
 class PressurePaGribLevelType(GribLevelType):
     def __init__(self):
-        super().__init__("isobaricInPa", LevelType.PRESSURE)
+        super().__init__("isobaricInPa", LevelTypes.PRESSURE)
 
     def level_from_grib(self, value):
         if value is not None:
@@ -64,18 +64,18 @@ class PressurePaGribLevelType(GribLevelType):
 _TYPES = [
     PressureHPaGribLevelType(),
     PressurePaGribLevelType(),
-    GribLevelType("depthBelowLand", LevelType.DEPTH_BGL),
-    GribLevelType("depthBelowLandLayer", LevelType.DEPTH_BGL_LAYER),
-    GribLevelType("generalVerticalLayer", LevelType.GENERAL),
-    GribLevelType("heightAboveSea", LevelType.HEIGHT_ASL),
-    GribLevelType("heightAboveGround", LevelType.HEIGHT_AGL),
-    GribLevelType("hybrid", LevelType.MODEL),
-    GribLevelType("isobaricLayer", LevelType.PRESSURE_LAYER),
-    GribLevelType("meanSea", LevelType.MEAN_SEA),
-    GribLevelType("theta", LevelType.THETA),
-    GribLevelType("potentialVorticity", LevelType.PV),
-    GribLevelType("surface", LevelType.SURFACE),
-    GribLevelType("snowLayer", LevelType.SNOW),
+    GribLevelType("depthBelowLand", LevelTypes.DEPTH_BGL),
+    # GribLevelType("depthBelowLandLayer", LevelTypes.DEPTH_BGL_LAYER),
+    GribLevelType("generalVerticalLayer", LevelTypes.GENERAL),
+    GribLevelType("heightAboveSea", LevelTypes.HEIGHT_ASL),
+    GribLevelType("heightAboveGround", LevelTypes.HEIGHT_AGL),
+    GribLevelType("hybrid", LevelTypes.MODEL),
+    # GribLevelType("isobaricLayer", LevelTypes.PRESSURE_LAYER),
+    GribLevelType("meanSea", LevelTypes.MEAN_SEA),
+    GribLevelType("theta", LevelTypes.THETA),
+    GribLevelType("potentialVorticity", LevelTypes.PV),
+    GribLevelType("surface", LevelTypes.SURFACE),
+    GribLevelType("snowLayer", LevelTypes.SNOW),
 ]
 
 # mapping from GRIB typeOfLevel key to GribLevelType
@@ -123,8 +123,8 @@ class GribVerticalBuilder:
             raise ValueError(f"Cannot convert level {level} of type {level_type}: {e}")
 
         return dict(
-            level_value=level,
-            level_type=level_type,
+            level=level,
+            type=level_type,
         )
 
 

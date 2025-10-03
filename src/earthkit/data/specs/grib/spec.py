@@ -7,7 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
+import logging
+
 from earthkit.data.decorators import thread_safe_cached_property
+
+LOG = logging.getLogger(__name__)
 
 
 class GribSpec:
@@ -16,15 +20,23 @@ class GribSpec:
 
     def __init__(self, handle):
         self.handle = handle
+        self._exception = None
 
     @thread_safe_cached_property
     def spec(self):
-        return self.BUILDER.build(self.handle)
+        try:
+            return self.BUILDER.build(self.handle)
+        except Exception as e:
+            LOG.exception(e)
+            self._exception = e
+            raise
 
     def get_grib_context(self, context) -> dict:
         self.COLLECTOR.collect(self, context)
 
     def __getattr__(self, name):
+        if self._exception is not None:
+            raise self._exception(name)
         return getattr(self.spec, name)
 
     def __getstate__(self):

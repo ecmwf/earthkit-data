@@ -46,6 +46,25 @@ def spec_aliases(cls) -> type:
     if aliases:
         all_keys.extend(list(aliases.keys()))
 
+    # prefix = getattr(cls, "KEY_PREFIX", None)
+    # if prefix:
+    #     for method in all_keys:
+    #         prefix_method = prefix + method
+
+    #         def _make(method):
+    #             def _f(self):
+    #                 return getattr(self, method)
+
+    #             return _f
+
+    #         setattr(
+    #             cls,
+    #             prefix_method,
+    #             property(fget=_make(method), doc=f"Return the {prefix_method}. Alias for :obj:`{method}`."),
+    #         )
+
+    #         all_keys.append(prefix_method)
+
     cls.ALL_KEYS = tuple(set(all_keys))
     return cls
 
@@ -90,11 +109,15 @@ def normalise_set_kwargs(
     _kwargs = {}
     for k, v in kwargs.items():
         k = spec.ALIASES.get(k, k)
-        if k in spec.KEYS or (extra_keys and k in extra_keys):
+        if extra_keys and k in extra_keys:
             _kwargs[k] = v
+        elif k in spec.SET_KEYS:
+            _kwargs[k] = v
+        # else:
+        #     raise ValueError(f"Cannot set {k} in {spec.__class__.__name__}")
 
     if add_spec_keys:
-        for k in spec.KEYS:
+        for k in spec.SET_KEYS:
             if k not in _kwargs:
                 _kwargs[k] = getattr(spec, k)
 

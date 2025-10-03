@@ -12,131 +12,155 @@ from enum import Enum
 POSITIVE_UP = "up"
 POSITIVE_DOWN = "down"
 
-LEVEL_TYPES = {}
 
-
-class LevelTypeItem:
+class LevelType:
     def __init__(
-        self, name: str, standard_name: str, long_name: str, units: str, layer: bool, positive: str
+        self,
+        name: str,
+        abbreviation: str,
+        standard_name: str,
+        long_name: str,
+        units: str,
+        layer: bool,
+        positive: str,
     ) -> None:
         self.name = name
+        self.abbreviation = abbreviation
         self.standard_name = standard_name
         self.long_name = long_name
         self.units = units
         self.layer = layer
         self.positive = positive
+        self.cf = {
+            "standard_name": self.standard_name,
+            "long_name": self.long_name,
+        }
 
     def __eq__(self, other):
-        return self.name == other.name
+        if not isinstance(other, LevelType):
+            return self.name == other.name
+        return False
 
 
 _defs = {
-    "pl": {
-        "name": "pl",
+    "PRESSURE": {
+        "name": "pressure",
+        "abbreviation": "pl",
         "standard_name": "air_pressure",
         "long_name": "pressure",
         "units": "hPa",
         "layer": False,
         "positive": POSITIVE_DOWN,
     },
-    "p_layer": {
-        "name": "p_layer",
-        "standard_name": "air_pressure",
-        "long_name": "pressure",
-        "units": "hPa",
-        "layer": True,
-        "positive": POSITIVE_DOWN,
-    },
-    "ml": {
-        "name": "ml",
+    # "PRESSURE_LAYER": {
+    #     "name": "p_layer",
+    #     "standard_name": "air_pressure",
+    #     "long_name": "pressure",
+    #     "units": "hPa",
+    #     "layer": True,
+    #     "positive": POSITIVE_DOWN,
+    # },
+    "MODEL": {
+        "name": "hybrid",
+        "abbreviation": "ml",
         "standard_name": "atmosphere_hybrid_sigma_pressure_coordinate",
         "long_name": "hybrid level",
         "units": "1",
         "layer": False,
         "positive": POSITIVE_DOWN,
     },
-    "pt": {
-        "name": "pt",
-        "standard_name": "air_potential temperature",
+    "THETA": {
+        "name": "potential_temperature",
+        "abbreviation": "pt",
+        "standard_name": "air_potential_temperature",
         "long_name": "air_potential temperature",
         "units": "K",
         "layer": False,
         "positive": POSITIVE_UP,
     },
-    "pv": {
-        "name": "pv",
-        "standard_name": "ertel_potential vorticity",
+    "PV": {
+        "name": "potential_vorticity",
+        "abbreviation": "pv",
+        "standard_name": "ertel_potential_vorticity",
         "long_name": "potential vorticity",
         "units": "10-9 K m2 kg-1 s-1",
         "layer": False,
         "positive": POSITIVE_DOWN,
     },
-    "h_asl": {
-        "name": "h_asl",
+    "HEIGHT_ASL": {
+        "name": "height_above_sea_level",
+        "abbreviation": "h_asl",
         "standard_name": "height_above_sea_level",
         "long_name": "height above mean sea level",
         "units": "m",
         "layer": False,
         "positive": POSITIVE_UP,
     },
-    "h_agl": {
-        "name": "h_agl",
+    "HEIGHT_AGL": {
+        "name": "height_above_ground_level",
+        "abbreviation": "h_agl",
         "standard_name": "height",
         "long_name": "height above the surface",
         "units": "m",
         "layer": False,
         "positive": POSITIVE_UP,
     },
-    "sfc": {
-        "name": "sfc",
+    "SURFACE": {
+        "name": "surface",
+        "abbreviation": "sfc",
         "standard_name": "surface",
         "long_name": "surface",
         "units": "",
         "layer": False,
         "positive": "",
     },
-    "d_bgl": {
-        "name": "d_bgl",
+    "DEPTH_BGL": {
+        "name": "depth_below_ground_level",
+        "abbreviation": "d_bgl",
         "standard_name": "depth",
         "long_name": "soil depth",
         "units": "m",
         "layer": False,
         "positive": POSITIVE_DOWN,
     },
-    "d_bgl_layer": {
-        "name": "d_bgl_layer",
-        "standard_name": "depth",
-        "long_name": "soil depth",
-        "units": "m",
-        "layer": True,
-        "positive": POSITIVE_DOWN,
-    },
-    "general": {
+    # "DEPTH_BGL_LAYER": {
+    #     "name": "d_bgl_layer",
+    #     "standard_name": "depth",
+    #     "long_name": "soil depth",
+    #     "units": "m",
+    #     "layer": True,
+    #     "positive": POSITIVE_DOWN,
+    # },
+    "GENERAL": {
         "name": "general",
+        "abbreviation": "gen",
         "standard_name": "general",
         "long_name": "general",
         "units": "1",
         "layer": False,
         "positive": POSITIVE_DOWN,
     },
-    "mean_sea": {
+    "MEAN_SEA": {
         "name": "mean_sea",
+        "abbreviation": "mean_sea",
         "standard_name": "mean_sea",
         "long_name": "mean sea level",
         "units": "",
         "layer": False,
         "positive": POSITIVE_DOWN,
     },
-    "snow": {
+    "SNOW": {
         "name": "snow",
+        "abbreviation": "snow",
         "standard_name": "unknown",
         "long_name": "snow layer",
         "units": "1",
         "layer": True,
         "positive": POSITIVE_DOWN,
     },
-    "unknown": {
+    "UNKNOWN": {
         "name": "unknown",
+        "abbreviation": "unknown",
         "standard_name": "unknown",
         "long_name": "unknown",
         "units": "",
@@ -145,54 +169,19 @@ _defs = {
     },
 }
 
+LevelTypes = Enum("LevelTypes", [(k, LevelType(**v)) for k, v in _defs.items()])
 
-class LevelType(Enum):
-    PRESSURE = LevelTypeItem(**_defs["pl"])
-    PRESSURE_LAYER = LevelTypeItem(**_defs["p_layer"])
-    MODEL = LevelTypeItem(**_defs["ml"])
-    THETA = LevelTypeItem(**_defs["pt"])
-    PV = LevelTypeItem(**_defs["pv"])
-    HEIGHT_ASL = LevelTypeItem(**_defs["h_asl"])
-    HEIGHT_AGL = LevelTypeItem(**_defs["h_agl"])
-    SURFACE = LevelTypeItem(**_defs["sfc"])
-    DEPTH_BGL = LevelTypeItem(**_defs["d_bgl"])
-    DEPTH_BGL_LAYER = LevelTypeItem(**_defs["d_bgl_layer"])
-    GENERAL = LevelTypeItem(**_defs["general"])
-    MEAN_SEA = LevelTypeItem(**_defs["mean_sea"])
-    SNOW = LevelTypeItem(**_defs["snow"])
-    UNKNOWN = LevelTypeItem(**_defs["unknown"])
+_LEVEL_TYPES = {t.value.name: t.value for t in LevelTypes}
 
 
-# for _, v in _defs.items():
-#     t = LevelType(**v)
-#     assert t.name not in LEVEL_TYPES, f"Level type {t.name} already defined"
-#     LEVEL_TYPES[t.name] = t
+def get_level_type(item: str, default=LevelTypes.UNKNOWN) -> LevelType:
+    if isinstance(item, LevelTypes):
+        return item.value
+    elif isinstance(item, LevelType):
+        if item.name in _LEVEL_TYPES:
+            return item
+    elif isinstance(item, str):
+        if item in _LEVEL_TYPES:
+            return _LEVEL_TYPES[item]
 
-
-# class LevelTypes:
-#     PRESSURE = LEVEL_TYPES["pl"]
-#     PRESSURE_LAYER = LEVEL_TYPES["p_layer"]
-#     MODEL = LEVEL_TYPES["ml"]
-#     THETA = LEVEL_TYPES["pt"]
-#     PV = LEVEL_TYPES["pv"]
-#     HEIGHT_ASL = LEVEL_TYPES["h_asl"]
-#     HEIGHT_AGL = LEVEL_TYPES["h_agl"]
-#     SURFACE = LEVEL_TYPES["sfc"]
-#     DEPTH_BGL = LEVEL_TYPES["d_bgl"]
-#     DEPTH_BGL_LAYER = LEVEL_TYPES["d_bgl_layer"]
-#     GENERAL = LEVEL_TYPES["general"]
-#     MEAN_SEA = LEVEL_TYPES["mean_sea"]
-#     SNOW = LEVEL_TYPES["snow"]
-#     UNKNOWN = LEVEL_TYPES["unknown"]
-
-#     @staticmethod
-#     def get(name_or_object, default=UNKNOWN):
-#         if isinstance(name_or_object, LevelType):
-#             if name_or_object in LEVEL_TYPES.values():
-#                 return name_or_object
-#             else:
-#                 raise ValueError(f"Unsupported level type: {type(name_or_object)}")
-#         return LEVEL_TYPES.get(name_or_object, default)
-
-#     def is_level_type(data):
-#         return isinstance(data, LevelType)
+    raise ValueError(f"Unsupported level type: {type(item)}")

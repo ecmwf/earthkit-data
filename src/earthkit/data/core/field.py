@@ -27,7 +27,7 @@ from earthkit.data.specs.geography import Geography
 from earthkit.data.specs.labels import Labels
 from earthkit.data.specs.parameter import Parameter
 from earthkit.data.specs.time import Time
-from earthkit.data.specs.vertical import Vertical
+from earthkit.data.specs.vertical import VerticalSpec
 from earthkit.data.utils.array import reshape
 from earthkit.data.utils.compute import wrap_maths
 from earthkit.data.utils.metadata.args import metadata_argument
@@ -48,21 +48,36 @@ LS_KEYS = [
 
 
 def member_properties(cls):
-    members = {
-        cls._DATA_NAME: Data,
-        cls._TIME_NAME: Time,
-        cls._PARAMETER_NAME: Parameter,
-        cls._GEOGRAPHY_NAME: Geography,
-        cls._ENSEMBLE_NAME: Ensemble,
-        cls._VERTICAL_NAME: Vertical,
-        cls._LABELS_NAME: Labels,
-    }
+    # members = {
+    #     cls._DATA_NAME: Data,
+    #     cls._TIME_NAME: Time,
+    #     cls._PARAMETER_NAME: Parameter,
+    #     cls._GEOGRAPHY_NAME: Geography,
+    #     cls._ENSEMBLE_NAME: Ensemble,
+    #     cls._VERTICAL_NAME: Vertical,
+    #     cls._LABELS_NAME: Labels,
+    # }
 
-    member_keys = []
-    for member, module in members.items():
-        # print(f"member: {member}, module: {module}")
+    members = [
+        cls._DATA,
+        cls._TIME,
+        cls._PARAMETER,
+        cls._GEOGRAPHY,
+        cls._ENSEMBLE,
+        cls._VERTICAL,
+        cls._LABELS,
+    ]
+
+    # member_keys = []
+    keys = {}
+    for member in members:
+        # print(f"member: {member['name']}")
+        module = member["module"]
+
         for key in module.ALL_KEYS:
-            if getattr(cls, key, None) is None:
+            # add key as a prefixed property
+            method = member["name"] + "_" + key
+            if getattr(cls, method, None) is None:
 
                 def _make(prop, member):
                     def _f(self):
@@ -72,13 +87,48 @@ def member_properties(cls):
 
                 setattr(
                     cls,
-                    key,
-                    property(fget=_make(key, member), doc=f"Return the {key}."),
+                    method,
+                    property(
+                        fget=_make(key, member["name"]), doc=f"Return the {key} from .{member['name']}."
+                    ),
                 )
-                member_keys.append(key)
-                # print(f"  add property: {key} -> {member}")
 
-    cls._MEMBER_KEYS = set(member_keys)
+                keys[method] = (member["name"], key)
+                # print(f"  add property: {method} -> {member['name']}.{key}")
+
+            # add allow using key with dot notation
+            dot_key = member["name"] + "." + key
+            keys[dot_key] = (member["name"], key)
+
+            # print(f"  add dot key: {dot_key} -> {member['name']}.{key}")
+
+        # some module keys are added as properties without a prefix
+        for key in member.get("direct", ()):
+            if not hasattr(module, key):
+                raise ValueError(f"Direct key {key} not found in module {module}")
+
+            if key in keys:
+                raise ValueError(f"Direct key {key} already defined in/for another member")
+
+            if getattr(cls, key, None) is not None:
+                raise ValueError(f"Direct key {key} already defined in class {cls}")
+
+            def _make(prop, member):
+                def _f(self):
+                    return getattr(getattr(self, f"_{member}"), prop)
+
+                return _f
+
+            setattr(
+                cls,
+                key,
+                property(fget=_make(key, member["name"]), doc=f"Return the {key} from .{member['name']}."),
+            )
+
+            keys[key] = (member["name"], key)
+            # print(f"  add direct property: {key} -> {member['name']}.{key}")
+
+    cls._MEMBER_KEYS = keys
     return cls
 
 
@@ -121,13 +171,13 @@ class Field(Base):
 
     """
 
-    _DATA_NAME = "data"
-    _TIME_NAME = "time"
-    _PARAMETER_NAME = "parameter"
-    _GEOGRAPHY_NAME = "geography"
-    _VERTICAL_NAME = "vertical"
-    _ENSEMBLE_NAME = "ensemble"
-    _LABELS_NAME = "labels"
+    _DATA = {"module": Data, "name": "data", "keys": "values"}
+    _TIME = {"module": Time, "name": "time"}
+    _PARAMETER = {"module": Parameter, "name": "parameter"}
+    _GEOGRAPHY = {"module": Geography, "name": "geography"}
+    _VERTICAL = {"module": VerticalSpec, "name": "vertical", "direct": ("level", "layer")}
+    _ENSEMBLE = {"module": Ensemble, "name": "ensemble"}
+    _LABELS = {"module": Labels, "name": "labels"}
     _MEMBER_KEYS = set()
     _DUMP_ORDER = ["parameter", "time", "vertical", "ensemble", "geography"]
 
@@ -153,13 +203,13 @@ class Field(Base):
         self._private = dict()
 
         self._members = {
-            self._DATA_NAME: self._data,
-            self._TIME_NAME: self._time,
-            self._PARAMETER_NAME: self._parameter,
-            self._GEOGRAPHY_NAME: self._geography,
-            self._VERTICAL_NAME: self._vertical,
-            self._ENSEMBLE_NAME: self._ensemble,
-            self._LABELS_NAME: self._labels,
+            self._DATA["name"]: self._data,
+            self._TIME["name"]: self._time,
+            self._PARAMETER["name"]: self._parameter,
+            self._GEOGRAPHY["name"]: self._geography,
+            self._VERTICAL["name"]: self._vertical,
+            self._ENSEMBLE["name"]: self._ensemble,
+            self._LABELS["name"]: self._labels,
         }
 
         self._check()
@@ -192,13 +242,13 @@ class Field(Base):
         _kwargs = {}
 
         for name in [
-            Field._DATA_NAME,
-            Field._TIME_NAME,
-            Field._PARAMETER_NAME,
-            Field._GEOGRAPHY_NAME,
-            Field._VERTICAL_NAME,
-            Field._ENSEMBLE_NAME,
-            Field._LABELS_NAME,
+            Field._DATA["name"],
+            Field._TIME["name"],
+            Field._PARAMETER["name"],
+            Field._GEOGRAPHY["name"],
+            Field._VERTICAL["name"],
+            Field._ENSEMBLE["name"],
+            Field._LABELS["name"],
         ]:
             v = kwargs.pop(name, None)
             if v is not None:
@@ -273,6 +323,11 @@ class Field(Base):
             ensemble=ensemble,
             labels=labels,
         )
+
+    @property
+    def vertical(self):
+        """tuple: Return the shape of the field data."""
+        return self._vertical._data
 
     @classmethod
     def from_array(cls, array):
@@ -352,15 +407,23 @@ class Field(Base):
 
     def _get_member(self, key):
         """Return the member name, member object and key name for the specified key."""
-        if "." in key:
-            member, name = key.split(".", 1)
-            return member, self._members.get(member), name
-        else:
-            for member, d in self._members.items():
-                if key in d.ALL_KEYS:
-                    return member, d, key
-
+        m = self._MEMBER_KEYS.get(key)
+        if m is not None:
+            return m[0], self._members.get(m[0]), m[1]
+        # if "." in key:
+        #     member, name = key.split(".", 1)
+        #     return member, self._members.get(member), name
         return None, None, None
+
+        # if "." in key:
+        #     member, name = key.split(".", 1)
+        #     return member, self._members.get(member), name
+        # else:
+        #     for member, d in self._members.items():
+        #         if key in d.ALL_KEYS:
+        #             return member, d, key
+
+        # return None, None, None
 
     def get_single(
         self, key, default=None, *, astype=None, raise_on_missing=False, remapping=None, patches=None
@@ -407,7 +470,8 @@ class Field(Base):
         # first try the members
         member_name, member, key_name = self._get_member(key)
         if member:
-            return member.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
+            v = member.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
+            return v
         # next try the labels with the full key
         elif key in self._labels:
             return self._labels.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
