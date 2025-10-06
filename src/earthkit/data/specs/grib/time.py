@@ -34,10 +34,10 @@ _METHOD_TO_GRIB = {v: k for k, v in _GRIB_TO_METHOD.items()}
 class GribTimeBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.specs.time import SimpleTime
+        from earthkit.data.specs.time import SimpleTimeSpec
 
         d = GribTimeBuilder._build_dict(handle)
-        r = SimpleTime.from_dict(d)
+        r = SimpleTimeSpec.from_dict(d)
         # r._set_private_data("handle", handle)
         return r
 

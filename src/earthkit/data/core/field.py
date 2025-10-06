@@ -22,11 +22,11 @@ from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalize
 from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.specs.data import Data
-from earthkit.data.specs.ensemble import Ensemble
+from earthkit.data.specs.ensemble import EnsembleSpec
 from earthkit.data.specs.geography import Geography
 from earthkit.data.specs.labels import Labels
 from earthkit.data.specs.parameter import Parameter
-from earthkit.data.specs.time import Time
+from earthkit.data.specs.time import TimeSpec
 from earthkit.data.specs.vertical import VerticalSpec
 from earthkit.data.utils.array import reshape
 from earthkit.data.utils.compute import wrap_maths
@@ -172,11 +172,11 @@ class Field(Base):
     """
 
     _DATA = {"module": Data, "name": "data", "keys": "values"}
-    _TIME = {"module": Time, "name": "time"}
+    _TIME = {"module": TimeSpec, "name": "time", "direct": ("valid_datetime", "base_datetime", "step")}
     _PARAMETER = {"module": Parameter, "name": "parameter"}
     _GEOGRAPHY = {"module": Geography, "name": "geography"}
     _VERTICAL = {"module": VerticalSpec, "name": "vertical", "direct": ("level", "layer")}
-    _ENSEMBLE = {"module": Ensemble, "name": "ensemble"}
+    _ENSEMBLE = {"module": EnsembleSpec, "name": "ensemble", "direct": ("member",)}
     _LABELS = {"module": Labels, "name": "labels"}
     _MEMBER_KEYS = set()
     _DUMP_ORDER = ["parameter", "time", "vertical", "ensemble", "geography"]
@@ -325,9 +325,19 @@ class Field(Base):
         )
 
     @property
+    def ensemble(self):
+        """Ensemble: Return the ensemble specification of the field."""
+        return self._ensemble.data
+
+    @property
+    def time(self):
+        """Time: Return the time specification of the field."""
+        return self._time.data
+
+    @property
     def vertical(self):
-        """tuple: Return the shape of the field data."""
-        return self._vertical._data
+        """Vertical: Return the vertical specification of the field."""
+        return self._vertical.data
 
     @classmethod
     def from_array(cls, array):
@@ -410,9 +420,9 @@ class Field(Base):
         m = self._MEMBER_KEYS.get(key)
         if m is not None:
             return m[0], self._members.get(m[0]), m[1]
-        # if "." in key:
-        #     member, name = key.split(".", 1)
-        #     return member, self._members.get(member), name
+        if "." in key:
+            member, name = key.split(".", 1)
+            return member, None, name
         return None, None, None
 
         # if "." in key:

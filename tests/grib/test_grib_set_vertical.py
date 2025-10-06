@@ -27,12 +27,18 @@ from grib_fixtures import load_grib_data  # noqa: E402
 # @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 @pytest.mark.parametrize("write_method", ["target"])
 @pytest.mark.parametrize(
-    "ref1,ref2",
+    "_kwargs,ref1,ref2",
     [
         (
             {
                 "level": 320,
-                "level_type": "pt",
+                "vertical_type": "potential_temperature",
+            },
+            {
+                "level": 320,
+                "vertical_type": "potential_temperature",
+                "vertical_units": "K",
+                "vertical_abbreviation": "pt",
                 "grib.levelist": 500,
                 "grib.level": 500,
                 "grib.levtype": "pl",
@@ -40,7 +46,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
             },
             {
                 "level": 320,
-                "level_type": "pt",
+                "vertical_type": "potential_temperature",
                 "grib.levelist": 320,
                 "grib.level": 320,
                 "grib.levtype": "pt",
@@ -49,17 +55,17 @@ from grib_fixtures import load_grib_data  # noqa: E402
         ),
     ],
 )
-def test_grib_set_vertical(fl_type, write_method, ref1, ref2):
+def test_grib_set_vertical(fl_type, write_method, _kwargs, ref1, ref2):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
-    f = ds_ori[0].set(**ref1)
+    f = ds_ori[0].set(**_kwargs)
 
     for k, v in ref1.items():
         assert f.get(k) == v
 
     # the original field is unchanged
     assert ds_ori[0].get("level") == 500
-    assert ds_ori[0].get("level_type") == "pl"
+    assert ds_ori[0].get("vertical_type") == "pressure"
 
     with temp_file() as tmp:
         f.to_target("file", tmp)

@@ -15,32 +15,62 @@ from .spec import normalise_set_kwargs
 from .spec import spec_aliases
 
 
+class Ensemble:
+    def __init__(self, member=None) -> None:
+        if member is None:
+            self._member = "0"
+        elif isinstance(member, int):
+            self._member = str(member)
+        else:
+            self._member = member
+
+    @property
+    def member(self) -> str:
+        """Return the ensemble member."""
+        return self._member
+
+    def __getstate__(self):
+        state = {}
+        state["member"] = self._member
+        return state
+
+    def __setstate__(self, state):
+        self.__init__(member=state["member"])
+
+
 @spec_aliases
-class Ensemble(SimpleSpec):
+class EnsembleSpec(SimpleSpec):
     """Realisation specification."""
 
     KEYS = ("member",)
+    SET_KEYS = ("member",)
     ALIASES = Aliases({"member": ("realisation", "realization")})
 
     @property
     @abstractmethod
     def member(self) -> str:
-        r"""int: Return the ensemble member."""
+        r"""str: Return the ensemble member."""
         pass
 
 
-class SimpleEnsemble(Ensemble):
+class SimpleEnsembleSpec(EnsembleSpec):
     """Ensemble specification."""
 
-    def __init__(self, *, member=0) -> None:
-        self._member = member
+    def __init__(self, data) -> None:
+        assert isinstance(data, Ensemble)
+        self._data = data
+
+    @property
+    def data(self):
+        """Return the level layer."""
+        return self._data
 
     @property
     def member(self) -> str:
-        return self._member
+        return self._data.member
 
     @classmethod
-    def from_dict(cls, d: dict) -> "SimpleEnsemble":
+    def from_dict(cls, d: dict) -> "SimpleEnsembleSpec":
         """Create a Ensemble object from a dictionary.
 
         Parameters
@@ -56,7 +86,8 @@ class SimpleEnsemble(Ensemble):
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
         d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
-        return cls(**d)
+        data = Ensemble(**d)
+        return cls(data)
 
     def to_dict(self) -> dict:
         """Convert the object to a dictionary.
@@ -73,7 +104,7 @@ class SimpleEnsemble(Ensemble):
 
         COLLECTOR.collect(self, context)
 
-    def set(self, *args, **kwargs) -> "SimpleEnsemble":
+    def set(self, *args, **kwargs) -> "SimpleEnsembleSpec":
         """
         Create a new SimpleEnsemble instance with updated data.
 
@@ -90,20 +121,21 @@ class SimpleEnsemble(Ensemble):
             The created SimpleRealisation instance.
         """
         kwargs = normalise_set_kwargs(self, *args, **kwargs)
-        spec = SimpleEnsemble(**kwargs)
+        data = Ensemble(**kwargs)
+        spec = SimpleEnsembleSpec(data)
         return spec
 
     def namespace(self, owner, name, result):
         if name is None or name == "ensemble" or (isinstance(name, (list, tuple)) and "ensemble" in name):
-            result["realisation"] = self.to_dict()
+            result["ensemble"] = self.to_dict()
 
     def check(self, owner):
         pass
 
     def __getstate__(self):
         state = {}
-        state["member"] = self.member
+        state["data"] = self._data
         return state
 
     def __setstate__(self, state):
-        self.__init__(member=state["member"])
+        self.__init__(data=state["data"])

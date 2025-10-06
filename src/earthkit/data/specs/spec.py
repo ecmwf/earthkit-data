@@ -171,24 +171,6 @@ class Spec(metaclass=ABCMeta):
         """
         pass
 
-    # @classmethod
-    # @abstractmethod
-    # def from_grib(cls, handle) -> "Spec":
-    #     """
-    #     Create a Spec instance from a GRIB handle.
-
-    #     Parameters
-    #     ----------
-    #     handle
-    #         GRIB handle object.
-
-    #     Returns
-    #     -------
-    #     Spec
-    #         The created Spec instance.
-    #     """
-    #     pass
-
     @abstractmethod
     def get(self, key, default=None, *, astype=None, raise_on_missing=False) -> "any":
         r"""Return the value for ``key``.
@@ -264,21 +246,21 @@ class Spec(metaclass=ABCMeta):
 
 
 class SimpleSpec(Spec):
-    _private = None
+    # _private = None
 
-    def _set_private_data(self, name, data):
-        if self._private is None:
-            self._private = {}
-        self._private[name] = data
+    # def _set_private_data(self, name, data):
+    #     if self._private is None:
+    #         self._private = {}
+    #     self._private[name] = data
 
-    def get_private_data(self, name, default=None):
-        if self._private is not None:
-            return self._private.get(name, default)
-        return default
+    # def get_private_data(self, name, default=None):
+    #     if self._private is not None:
+    #         return self._private.get(name, default)
+    #     return default
 
-    def _copy_private_data(self, other):
-        if other._private is not None:
-            self._private = other._private.copy()
+    # def _copy_private_data(self, other):
+    #     if other._private is not None:
+    #         self._private = other._private.copy()
 
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         def _cast(v):

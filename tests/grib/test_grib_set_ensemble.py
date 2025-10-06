@@ -32,17 +32,17 @@ from grib_fixtures import load_grib_data  # noqa: E402
         (
             {"member": 3},
             {
-                "member": 1,
+                "member": "1",
                 "grib.number": 1,
                 "grib.level": 850,
             },
             {
-                "member": 3,
+                "member": "3",
                 "grib.number": 1,
                 "grib.level": 850,
             },
             {
-                "member": 3,
+                "member": "3",
                 "grib.number": 3,
                 "grib.level": 850,
             },

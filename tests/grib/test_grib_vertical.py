@@ -30,7 +30,13 @@ def test_grib_vertical_1(fl_type):
     f = ds[0]
 
     assert f.level == 0
-    assert f.level_type == "sfc"
+    assert f.vertical.level == 0
+    assert f.vertical_level == 0
+    assert f.layer is None
+    assert f.vertical.layer is None
+    assert f.vertical_layer is None
+    assert f.vertical.type == "surface"
+    assert f.vertical_type == "surface"
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -39,41 +45,47 @@ def test_grib_vertical_2(fl_type):
     f = ds[0]
 
     assert f.level == 1000
-    assert f.level_type == "pl"
+    assert f.vertical.type == "pressure"
+    assert f.vertical.units == "hPa"
+    assert f.vertical.abbreviation == "pl"
+    assert f.vertical.positive == "down"
+    assert f.vertical_units == "hPa"
+    assert f.vertical_abbreviation == "pl"
+    assert f.vertical_positive == "down"
 
 
 @pytest.mark.cache
 @pytest.mark.parametrize(
     "fname,expected_values",
     [
-        ("pl.grib", (1000, "pl")),
+        ("pl.grib", (1000, "pressure")),
         (
             "pl_80_Pa.grib2",
-            (0.8, "pl"),
+            (0.8, "pressure"),
         ),
         (
             "hpa_and_pa.grib",
-            [(1, "pl"), (0.1, "pl"), (0.01, "pl")],
+            [(1, "pressure"), (0.1, "pressure"), (0.01, "pressure")],
         ),
         (
             "hl_1000_m_asl.grib2",
-            [(100, "h_asl"), (1000, "h_asl")],
+            [(100, "height_above_sea_level"), (1000, "height_above_sea_level")],
         ),
         (
             "hl_1000_m_agr.grib2",
-            [(1000, "h_agl"), (500, "h_agl")],
+            [(1000, "height_above_ground_level"), (500, "height_above_ground_level")],
         ),
         (
             "pt_320_K.grib1",
-            (320, "pt"),
+            (320, "potential_temperature"),
         ),
         (
             "pv_1500.grib1",
-            (1500, "pv"),
+            (1500, "potential_vorticity"),
         ),
         (
             "soil_7.grib1",
-            (7, "d_bgl_layer"),
+            (7, "depth_below_ground_level"),
         ),
         (
             "sol_3.grib2",
@@ -81,15 +93,15 @@ def test_grib_vertical_2(fl_type):
         ),
         (
             "ml_77.grib2",
-            (77, "ml"),
+            (77, "hybrid"),
         ),
         (
             "sfc.grib1",
-            (0, "sfc"),
+            (0, "surface"),
         ),
         (
             "sfc.grib2",
-            (2, "h_agl"),
+            (2, "height_above_ground_level"),
         ),
         (
             "mean_sea_level_reduced_ll.grib1",
@@ -111,4 +123,4 @@ def test_grib_vertical_core(fname, expected_values):
     for i, (level, level_type) in enumerate(ref):
         f = ds[i]
         assert np.isclose(f.level, level)
-        assert f.level_type == level_type
+        assert f.vertical.type == level_type

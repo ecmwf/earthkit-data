@@ -6,7 +6,8 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
-
+from abc import ABCMeta
+from abc import abstractmethod
 from collections import defaultdict
 
 from earthkit.data.specs.level_type import LevelTypes
@@ -16,61 +17,128 @@ from .collector import GribContextCollector
 from .spec import GribSpec
 
 
-class GribLevelType:
-    def __init__(self, key, spec_type):
-        self.key = key
-        self.spec_type = spec_type
-
-    def level_from_grib(self, value):
+class Converter:
+    def from_grib(self, value):
         return value
 
-    def level_to_grib(self, value):
+    def to_grib(self, value):
         return value
 
-    def match(self, spec):
-        return spec.level_type == self.spec_type
 
-
-class PressureHPaGribLevelType(GribLevelType):
-    def __init__(self):
-        super().__init__("isobaricInhPa", LevelTypes.PRESSURE)
-
-    def match(self, spec):
-        if spec.level_type == self.spec_type and spec.level is not None:
-            return int(spec.level) == spec.level
-        return False
-
-
-class PressurePaGribLevelType(GribLevelType):
-    def __init__(self):
-        super().__init__("isobaricInPa", LevelTypes.PRESSURE)
-
-    def level_from_grib(self, value):
+class PressurePaConverter(Converter):
+    def from_grib(self, value):
         if value is not None:
             return value / 100.0
         return value
 
-    def level_to_grib(self, value):
+    def to_grib(self, value):
         if value is not None:
             return value * 100.0
         return value
 
+
+class SpecMatcher:
     def match(self, spec):
-        if spec.level_type == self.spec_type and spec.level is not None:
-            return int(spec.level) != spec.level
-        return False
+        return True
+
+
+class IntSpecMatcher(SpecMatcher):
+    def match(self, spec):
+        return int(spec.level) == spec.level
+
+
+class NonIntSpecMatcher(SpecMatcher):
+    def match(self, spec):
+        return int(spec.level) != spec.level
+
+
+class GribVerticalType(metaclass=ABCMeta):
+    def __init__(self, key, spec_type, converter=Converter(), spec_matcher=SpecMatcher()):
+        self.key = key
+        self.spec_type = spec_type
+        self.spec_matcher = spec_matcher
+        self.converter = converter
+
+    @abstractmethod
+    def from_grib(self, handle):
+        pass
+
+    @abstractmethod
+    def to_grib(self, spec):
+        pass
+
+    @abstractmethod
+    def match(self, spec):
+        pass
+
+
+class GribLevelType(GribVerticalType):
+    def from_grib(self, handle):
+        def _get(key, default=None):
+            return handle.get(key, default=default)
+
+        level = _get("level")
+        if level is None:
+            level = _get("topLevel")
+
+        level = self.converter.from_grib(level)
+        layer = None
+
+        return level, layer, self.spec_type
+
+    def to_grib(self, spec):
+        level = self.converter.to_grib(spec.level)
+
+        return {
+            "level": level,
+            "typeOfLevel": self.key,
+        }
+
+    def match(self, spec):
+        return self.spec_matcher.match(spec)
+
+
+class GribLayerType(GribVerticalType):
+    def from_grib(self, handle):
+        def _get(key, default=None):
+            return handle.get(key, default=default)
+
+        top = _get("topLevel")
+        bottom = _get("bottomLevel")
+
+        top = self.converter.from_grib(top)
+        bottom = self.converter.from_grib(bottom)
+        level = top
+        layer = (top, bottom)
+
+        return level, layer, self.spec_type
+
+    def to_grib(self, spec):
+        layer = self.converter.to_grib(spec.layer)
+        top, bottom = layer
+
+        return {
+            "topLevel": top,
+            "bottomLevel": bottom,
+            "typeOfLevel": self.key,
+        }
+
+    def match(self, spec):
+        return spec.layer is not None and self.spec_matcher.match(spec)
 
 
 _TYPES = [
-    PressureHPaGribLevelType(),
-    PressurePaGribLevelType(),
+    GribLevelType("isobaricInhPa", LevelTypes.PRESSURE, spec_matcher=IntSpecMatcher()),
+    GribLevelType(
+        "isobaricInPa", LevelTypes.PRESSURE, converter=PressurePaConverter(), spec_matcher=NonIntSpecMatcher()
+    ),
     GribLevelType("depthBelowLand", LevelTypes.DEPTH_BGL),
-    # GribLevelType("depthBelowLandLayer", LevelTypes.DEPTH_BGL_LAYER),
+    GribLayerType("depthBelowLandLayer", LevelTypes.DEPTH_BGL),
     GribLevelType("generalVerticalLayer", LevelTypes.GENERAL),
     GribLevelType("heightAboveSea", LevelTypes.HEIGHT_ASL),
     GribLevelType("heightAboveGround", LevelTypes.HEIGHT_AGL),
     GribLevelType("hybrid", LevelTypes.MODEL),
-    # GribLevelType("isobaricLayer", LevelTypes.PRESSURE_LAYER),
+    GribLayerType("isobaricLayer", LevelTypes.PRESSURE),  # hPa
     GribLevelType("meanSea", LevelTypes.MEAN_SEA),
     GribLevelType("theta", LevelTypes.THETA),
     GribLevelType("potentialVorticity", LevelTypes.PV),
@@ -86,7 +154,7 @@ assert len(_GRIB_TYPES) == len(_TYPES), "Duplicate level type keys"
 # mapping from LevelType to GribLevelType
 _SPEC_TYPES = defaultdict(list)
 for k, v in _GRIB_TYPES.items():
-    _SPEC_TYPES[v.spec_type].append(v)
+    _SPEC_TYPES[v.spec_type.value.name].append(v)
 
 for k in list(_SPEC_TYPES.keys()):
     if len(_SPEC_TYPES[k]) == 1:
@@ -98,7 +166,6 @@ for k in list(_SPEC_TYPES.keys()):
 class GribVerticalBuilder:
     @staticmethod
     def build(handle):
-
         d = GribVerticalBuilder._build_dict(handle)
         spec = SimpleVerticalSpec.from_dict(d)
         # spec._set_private_data("handle", handle)
@@ -106,24 +173,15 @@ class GribVerticalBuilder:
 
     @staticmethod
     def _build_dict(handle):
-        def _get(key, default=None):
-            return handle.get(key, default=default)
+        level_type = handle.get("typeOfLevel", None)
+        t = _GRIB_TYPES.get(level_type)
+        if t is None:
+            raise ValueError(f"Unsupported level type: {level_type}")
 
-        level = _get("level")
-        if level is None:
-            level = _get("topLevel")
-
-        level_type = _get("typeOfLevel")
-        try:
-            t = _GRIB_TYPES.get(level_type)
-            if t is not None:
-                level = t.level_from_grib(level)
-                level_type = t.spec_type
-        except Exception as e:
-            raise ValueError(f"Cannot convert level {level} of type {level_type}: {e}")
-
+        level, layer, level_type = t.from_grib(handle)
         return dict(
             level=level,
+            layer=layer,
             type=level_type,
         )
 
@@ -131,7 +189,7 @@ class GribVerticalBuilder:
 class GribVerticalContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(spec, context):
-        grib_level_type = _SPEC_TYPES.get(spec.level_type)
+        grib_level_type = _SPEC_TYPES.get(spec.type)
         if isinstance(grib_level_type, tuple):
             t = grib_level_type
             grib_level_type = None
@@ -141,15 +199,9 @@ class GribVerticalContextCollector(GribContextCollector):
                     break
 
         if grib_level_type is None:
-            raise ValueError(f"Unknown level type: {spec.level_type}")
+            raise ValueError(f"Unknown level type: {spec.type}")
 
-        level = grib_level_type.level_to_grib(spec.level)
-
-        r = {
-            "level": level,
-            "typeOfLevel": grib_level_type.key,
-        }
-
+        r = grib_level_type.to_grib(spec)
         context.update(r)
 
 
@@ -159,12 +211,3 @@ COLLECTOR = GribVerticalContextCollector()
 class GribVertical(GribSpec):
     BUILDER = GribVerticalBuilder
     COLLECTOR = COLLECTOR
-
-
-# class GribVerticalSpec(SimpleVerticalSpec):
-#     def __init__(self, handle) -> None:
-#         self._handle = handle
-
-#     @thread_safe_cached_property
-#     def data(self):
-#         return self.BUILDER.build(self._handle)
