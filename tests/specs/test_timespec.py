@@ -13,75 +13,88 @@ import datetime
 
 import pytest
 
-from earthkit.data.specs.time import SimpleTime
-from earthkit.data.specs.time_span import TimeSpan
-from earthkit.data.specs.time_span import TimeSpanMethod
+from earthkit.data.specs.time import Time
 
 
 @pytest.mark.parametrize(
     "input_d,ref",
     [
         (
-            {"valid_datetime": "2016-09-25"},
+            [
+                {"valid_datetime": "2016-09-25"},
+                {"valid_datetime": "20160925"},
+                {"valid_datetime": datetime.datetime(2016, 9, 25)},
+            ],
             (
                 datetime.datetime(2016, 9, 25),
                 datetime.timedelta(0),
                 datetime.datetime(2016, 9, 25),
-                TimeSpan(),
             ),
         ),
         (
-            {"valid_datetime": "2016-09-25T12", "step": 0},
+            [
+                {"valid_datetime": "2016-09-25T12", "step": 0},
+                {"valid_datetime": "20160925T12", "step": datetime.timedelta(0)},
+            ],
             (
                 datetime.datetime(2016, 9, 25, 12),
                 datetime.timedelta(0),
                 datetime.datetime(2016, 9, 25, 12),
-                TimeSpan(),
             ),
         ),
         (
-            {"valid_datetime": "2016-09-25T12", "step": 6},
+            [
+                {"valid_datetime": "2016-09-25T12", "step": 6},
+                {"valid_datetime": "20160925T12", "step": datetime.timedelta(hours=6)},
+            ],
             (
                 datetime.datetime(2016, 9, 25, 6),
                 datetime.timedelta(hours=6),
                 datetime.datetime(2016, 9, 25, 12),
-                TimeSpan(),
             ),
         ),
         (
-            {"base_datetime": "2016-09-25T12", "step": 6},
+            [
+                {"base_datetime": "2016-09-25T12", "step": 6},
+                {"base_datetime": "20160925T12", "step": datetime.timedelta(hours=6)},
+            ],
             (
                 datetime.datetime(2016, 9, 25, 12),
                 datetime.timedelta(hours=6),
                 datetime.datetime(2016, 9, 25, 18),
-                TimeSpan(),
             ),
         ),
         (
-            {"base_datetime": "2016-09-25T12", "step": "30m"},
+            [
+                {"base_datetime": "2016-09-25T12", "step": "30m"},
+                {"base_datetime": "20160925T12", "step": datetime.timedelta(minutes=30)},
+            ],
             (
                 datetime.datetime(2016, 9, 25, 12),
                 datetime.timedelta(hours=0, minutes=30),
                 datetime.datetime(2016, 9, 25, 12, 30),
-                TimeSpan(),
             ),
         ),
         (
-            {"base_datetime": "2016-09-25T12", "step": "90m"},
+            [
+                {"base_datetime": "2016-09-25T12", "step": "90m"},
+                {"base_datetime": "20160925T12", "step": datetime.timedelta(minutes=90)},
+            ],
             (
                 datetime.datetime(2016, 9, 25, 12),
                 datetime.timedelta(hours=1, minutes=30),
                 datetime.datetime(2016, 9, 25, 13, 30),
-                TimeSpan(),
             ),
         ),
         (
-            {"base_datetime": "2020-09-25T12", "step": 30, "time_span": TimeSpan(6, TimeSpanMethod.AVERAGE)},
+            [
+                {"base_datetime": "2020-09-25T12", "step": 30},
+                {"base_datetime": "2020-09-25T12", "step": datetime.timedelta(hours=30)},
+            ],
             (
                 datetime.datetime(2020, 9, 25, 12),
                 datetime.timedelta(hours=30),
                 datetime.datetime(2020, 9, 26, 18),
-                TimeSpan(6, TimeSpanMethod.AVERAGE),
             ),
         ),
         (
@@ -90,35 +103,219 @@ from earthkit.data.specs.time_span import TimeSpanMethod
                 datetime.datetime(2020, 9, 25, 12),
                 datetime.timedelta(hours=30),
                 datetime.datetime(2020, 9, 26, 18),
-                TimeSpan(),
+            ),
+        ),
+        (
+            [
+                {"date": "2020-09-25", "time": "1200"},
+                {"date": "20200925", "time": "1200"},
+                {"date": datetime.date(2020, 9, 25), "time": datetime.time(12)},
+                {"date": datetime.datetime(2020, 9, 25), "time": datetime.time(12)},
+                {"date": datetime.datetime(2020, 9, 25, 12), "time": datetime.time(12)},
+            ],
+            (
+                datetime.datetime(2020, 9, 25, 12),
+                datetime.timedelta(0),
+                datetime.datetime(2020, 9, 25, 12),
+            ),
+        ),
+        (
+            [
+                {"date": "2020-09-25", "time": "120"},
+                {"date": "20200925", "time": "120"},
+                {"date": datetime.date(2020, 9, 25), "time": datetime.time(1, 20)},
+                {"date": datetime.datetime(2020, 9, 25), "time": datetime.time(1, 20)},
+            ],
+            (
+                datetime.datetime(2020, 9, 25, 1, 20),
+                datetime.timedelta(0),
+                datetime.datetime(2020, 9, 25, 1, 20),
+            ),
+        ),
+        (
+            [
+                {"date": "2020-09-25", "time": "1200", "step": 6},
+                {"date": "2020-09-25", "time": "1200", "step": datetime.timedelta(hours=6)},
+            ],
+            (
+                datetime.datetime(2020, 9, 25, 12),
+                datetime.timedelta(hours=6),
+                datetime.datetime(2020, 9, 25, 18),
             ),
         ),
     ],
 )
-def test_timespec_from_dict(input_d, ref):
-    t = SimpleTime.from_dict(input_d)
+def test_timespec_from_dict_ok(input_d, ref):
 
-    assert t.base_datetime == ref[0]
-    assert t.forecast_reference_time == ref[0]
-    assert t.step == ref[1]
-    assert t.forecast_period == ref[1]
-    assert t.valid_datetime == ref[2]
-    assert t.time_span == ref[3]
-    assert t.time_span_value == ref[3].value
-    assert t.time_span_method == ref[3].method
+    if not isinstance(input_d, list):
+        input_d = [input_d]
+
+    if isinstance(input_d, list):
+        for d in input_d:
+            t = Time.from_dict(d)
+
+            assert t.base_datetime == ref[0]
+            assert t.forecast_reference_time == ref[0]
+            assert t.step == ref[1]
+            assert t.forecast_period == ref[1]
+            assert t.valid_datetime == ref[2]
 
 
-# @pytest.mark.parametrize("fl_type", FL_TYPES)
-# def test_grib_time_forecast(fl_type):
-#     ds, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
-#     f = ds[4]
+@pytest.mark.parametrize(
+    "input_d,error",
+    [
+        (
+            [
+                {"date": "2020-09-25T12", "time": "600"},
+                {"date": datetime.datetime(2020, 9, 25, 12), "time": "600"},
+            ],
+            ValueError,
+        ),
+    ],
+)
+def test_timespec_from_dict_error(input_d, error):
+    if not isinstance(input_d, list):
+        input_d = [input_d]
 
-#     assert f.valid_datetime == datetime.datetime(2020, 12, 21, 18, 0)
-#     assert f.base_datetime == datetime.datetime(2020, 12, 21, 12, 0)
-#     assert f.forecast_reference_time == datetime.datetime(2020, 12, 21, 12, 0)
-#     assert f.step == datetime.timedelta(hours=6)
-#     assert f.forecast_period == datetime.timedelta(hours=6)
-#     assert f.time_span == datetime.timedelta(0)
+    if isinstance(input_d, list):
+        for d in input_d:
+            with pytest.raises(error):
+                Time.from_dict(d)
+
+
+@pytest.mark.parametrize(
+    "input_d,ref",
+    [
+        (
+            {"base_datetime": "2025-08-24T12:00:00", "step": 6},
+            {
+                "base_datetime": datetime.datetime(2025, 8, 24, 12),
+                "valid_datetime": datetime.datetime(2025, 8, 24, 18),
+                "step": datetime.timedelta(hours=6),
+            },
+        ),
+        (
+            {"base_datetime": datetime.datetime(2025, 8, 24, 12), "step": datetime.timedelta(hours=6)},
+            {
+                "base_datetime": datetime.datetime(2025, 8, 24, 12),
+                "valid_datetime": datetime.datetime(2025, 8, 24, 18),
+                "step": datetime.timedelta(hours=6),
+            },
+        ),
+        (
+            {"valid_datetime": "2025-08-24T18:00:00", "step": datetime.timedelta(hours=6)},
+            {
+                "base_datetime": datetime.datetime(2025, 8, 24, 12),
+                "valid_datetime": datetime.datetime(2025, 8, 24, 18),
+                "step": datetime.timedelta(hours=6),
+            },
+        ),
+        (
+            {"valid_datetime": datetime.datetime(2025, 8, 24, 18), "step": datetime.timedelta(hours=6)},
+            {
+                "base_datetime": datetime.datetime(2025, 8, 24, 12),
+                "valid_datetime": datetime.datetime(2025, 8, 24, 18),
+                "step": datetime.timedelta(hours=6),
+            },
+        ),
+        (
+            {"base_datetime": "2025-08-24T12:00:00"},
+            {
+                "base_datetime": datetime.datetime(2025, 8, 24, 12),
+                "valid_datetime": datetime.datetime(2025, 8, 24, 12),
+                "step": datetime.timedelta(hours=0),
+            },
+        ),
+        (
+            {"base_datetime": datetime.datetime(2025, 8, 24, 12)},
+            {
+                "base_datetime": datetime.datetime(2025, 8, 24, 12),
+                "valid_datetime": datetime.datetime(2025, 8, 24, 12),
+                "step": datetime.timedelta(hours=0),
+            },
+        ),
+        (
+            {"valid_datetime": "2025-08-24T12:00:00", "step": 0},
+            {
+                "base_datetime": datetime.datetime(2025, 8, 24, 12),
+                "valid_datetime": datetime.datetime(2025, 8, 24, 12),
+                "step": datetime.timedelta(hours=0),
+            },
+        ),
+        (
+            {"valid_datetime": datetime.datetime(2025, 8, 24, 12), "step": datetime.timedelta(hours=0)},
+            {
+                "base_datetime": datetime.datetime(2025, 8, 24, 12),
+                "valid_datetime": datetime.datetime(2025, 8, 24, 12),
+                "step": datetime.timedelta(hours=0),
+            },
+        ),
+        (
+            {"valid_datetime": "2007-01-03T18:00:00"},
+            {
+                "base_datetime": datetime.datetime(2007, 1, 1, 12),
+                "valid_datetime": datetime.datetime(2007, 1, 3, 18),
+                "step": datetime.timedelta(hours=54),
+            },
+        ),
+        (
+            {"valid_datetime": datetime.datetime(2007, 1, 3, 18)},
+            {
+                "base_datetime": datetime.datetime(2007, 1, 1, 12),
+                "valid_datetime": datetime.datetime(2007, 1, 3, 18),
+                "step": datetime.timedelta(hours=54),
+            },
+        ),
+        (
+            {
+                "valid_datetime": datetime.datetime(2007, 1, 3, 18),
+            },
+            {
+                "base_datetime": datetime.datetime(2007, 1, 1, 12),
+                "valid_datetime": datetime.datetime(2007, 1, 3, 18),
+                "step": datetime.timedelta(hours=54),
+            },
+        ),
+        (
+            {"step": datetime.timedelta(hours=6)},
+            {
+                "base_datetime": datetime.datetime(2007, 1, 1, 12),
+                "valid_datetime": datetime.datetime(2007, 1, 1, 18),
+                "step": datetime.timedelta(hours=6),
+            },
+        ),
+        (
+            {"step": datetime.timedelta(hours=6, minutes=30)},
+            {
+                "base_datetime": datetime.datetime(2007, 1, 1, 12),
+                "valid_datetime": datetime.datetime(2007, 1, 1, 18, 30),
+                "step": datetime.timedelta(hours=6, minutes=30),
+            },
+        ),
+        (
+            {
+                "step": datetime.timedelta(hours=36),
+            },
+            {
+                "base_datetime": datetime.datetime(2007, 1, 1, 12),
+                "valid_datetime": datetime.datetime(2007, 1, 3, 0),
+                "step": datetime.timedelta(hours=36),
+            },
+        ),
+    ],
+)
+def test_timespec_set(input_d, ref):
+
+    t = Time(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(0))
+    t1 = t.set(**input_d)
+
+    for k, v in ref.items():
+        assert getattr(t1, k) == v, f"key {k} expected {v} got {getattr(t, k)}"
+
+    # original object is unchanged
+    assert t.base_datetime == datetime.datetime(2007, 1, 1, 12)
+    assert t.valid_datetime == datetime.datetime(2007, 1, 1, 12)
+    assert t.step == datetime.timedelta(hours=0)
 
 
 # @pytest.mark.cache

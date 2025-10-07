@@ -69,6 +69,62 @@ def spec_aliases(cls) -> type:
     return cls
 
 
+def spec_aliases_1(cls) -> type:
+    """
+    Add alias properties to the class.
+
+    Parameters
+    ----------
+    cls : type
+        The class to which aliases will be added.
+
+    Returns
+    -------
+    type
+        The class with alias properties added.
+    """
+    aliases = getattr(cls, "_ALIASES", None)
+    if aliases:
+        for alias, method in aliases.items():
+
+            def _make(method):
+                def _f(self):
+                    return getattr(self, method)
+
+                return _f
+
+            setattr(
+                cls,
+                alias,
+                property(fget=_make(method), doc=f"Return the {alias}. Alias for :obj:`{method}`."),
+            )
+
+    all_keys = list(cls._KEYS)
+    if aliases:
+        all_keys.extend(list(aliases.keys()))
+
+    # prefix = getattr(cls, "KEY_PREFIX", None)
+    # if prefix:
+    #     for method in all_keys:
+    #         prefix_method = prefix + method
+
+    #         def _make(method):
+    #             def _f(self):
+    #                 return getattr(self, method)
+
+    #             return _f
+
+    #         setattr(
+    #             cls,
+    #             prefix_method,
+    #             property(fget=_make(method), doc=f"Return the {prefix_method}. Alias for :obj:`{method}`."),
+    #         )
+
+    #         all_keys.append(prefix_method)
+
+    return cls
+
+
 def normalise_set_kwargs(
     spec: "Spec",
     *args: dict,

@@ -333,7 +333,7 @@ def datetime_from_date_and_time(date, time):
     if date.hour or date.minute:
         raise ValueError(
             (
-                f"Duplicate information about time time={time},"
+                f"Duplicate information for time: time={time},"
                 f"and time={date.hour}:{date.minute} from date={date}"
             )
         )
