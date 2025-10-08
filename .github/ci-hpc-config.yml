@@ -7,11 +7,14 @@ build:
   - ecmwf/eccodes@develop
   - ecmwf/eckit@develop
   - ecmwf/odc@develop
+  - ecmwf/metkit@develop
+  - ecmwf/fdb@develop
   python_dependencies:
   - ecmwf/eccodes-python@develop
   - ecmwf/cfgrib@master
   - ecmwf/pdbufr@master
   - ecmwf/pyodc@develop
+  - ecmwf/pyfdb@develop
   env:
   - ECCODES_SAMPLES_PATH=$ECCODES_DIR/share/eccodes/samples
   - ECCODES_DEFINITION_PATH=$ECCODES_DIR/share/eccodes/definitions

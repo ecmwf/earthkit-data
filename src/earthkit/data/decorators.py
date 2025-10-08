@@ -351,12 +351,21 @@ class thread_safe_cached_property:
         if instance is None:
             return self
 
-        if hasattr(instance, self.name):
-            return getattr(instance, self.name)
+        # not all objects have __dict__ (e.g. class defines slots)
+        try:
+            cache = instance.__dict__
+        except AttributeError:
+            msg = f"No '__dict__' is available on {type(instance).__name__!r}"
+            raise TypeError(msg) from None
+
+        # avoid using hasattr/getattr as they may be overridden in the instance
+        # and may have side effects (infinite recursion etc.)
+        if self.name in cache:
+            return cache[self.name]
 
         with self.lock:
-            if hasattr(instance, self.name):
-                return getattr(instance, self.name)
+            if self.name in cache:
+                return cache[self.name]
             value = self.method(instance)
-            setattr(instance, self.name, value)
+            cache[self.name] = value
             return value
