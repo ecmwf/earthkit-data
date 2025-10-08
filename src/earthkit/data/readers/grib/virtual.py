@@ -9,6 +9,7 @@
 
 import logging
 from collections import defaultdict
+from threading import Lock
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.core.metadata import WrappedMetadata
@@ -24,7 +25,7 @@ LOG = logging.getLogger(__name__)
 
 
 class VirtualGribField(Field):
-    def __init__(self, owner, request, index, metadata_alias, reference=None):
+    def __init__(self, owner, index, request, metadata_alias, reference=None):
         self.owner = owner
         self.index = index
         self.request = request
@@ -121,26 +122,29 @@ class VirtualGribField(Field):
         return WrappedMetadata(self.owner.reference._metadata, extra=r)
 
     def _values(self, dtype=None, context=None):
-        print("VirtualGribField._values", dtype, context)
+        print("VirtualGribField._values", context)
+        return self.owner._get_grib_field(self, context=context)._values(dtype=dtype)
         # if context is not None:
         #     self.owner._group(context)
-        return self._field._values(dtype=dtype)
+        # return self._field._values(dtype=dtype)
 
-    @property
-    def _field(self):
-        if self.reference:
-            return self.reference
-        else:
-            return self.owner.retriever.get(self.request)[0]
+    # @property
+    # def _field(self):
+    #     if self.reference:
+    #         return self.reference
+    #     else:
+    #         return self.owner.retriever.get(self.request)[0]
 
 
 class VirtualGribFieldList(GribFieldList):
-    def __init__(self, request_mapper, retriever):
+    def __init__(self, request_mapper, retriever, request_grouping=False):
         self.request_mapper = request_mapper
         self.retriever = retriever
+        self.request_grouping = request_grouping
 
         self._info_cache = {}
         self._group_cache = None
+        self._group_lock = Lock()
 
     def __len__(self):
         return len(self.request_mapper)
@@ -181,43 +185,76 @@ class VirtualGribFieldList(GribFieldList):
         self._info_cache[param] = r
         return r
 
-    def _group(self, context):
-        idx = []
-        r = defaultdict(set)
-        for f in context.source:
-            if hasattr(f, "owner") and f.owner is self:
-                idx.append(f.index)
-                for k, v in f.request.items():
-                    r[k].add(v)
+    def _get_grib_field(self, field, context=None):
+        print("HERE", field.index, context, field.request)
+        if field.reference:
+            return self.reference
+        elif self.request_grouping:
+            if context is not None:
+                with self._group_lock:
+                    if field.index in self._group_cache.fields:
+                        return self._group_cache.fields[field.index]
+                    else:
+                        self._group_cache = None
+                        self._group_cache = self._create_group(context)
+                        return self._group_cache.fields[field.index]
 
-        for k in list(r.keys()):
-            r[k] = sorted(list(r[k]))
+        return self.retriever.get(field.request)[0]
 
-        ds = self.retriever.get(r)
-        self.group_cache = ds
-
-
-# class VirtualGribFieldlistInMemory(VirtualGribFieldList):
-#     def __init__(self, request, ds):
-#         super().__init__(request_mapper, retriever)
-#         self.source = source
+    def _create_group(self, context):
+        print("CREATE GROUP")
+        return FDBGroup.from_tensor(context, self)
 
 
-class FDBCube:
-    def __init__(self, tensor):
-        self.field_index = []
+class FDBGroup:
+    def __init__(self, owner, field_index, request):
+        """
+        Parameters
+        ----------
+        owner: FDBFileSource
+            The owner of this group
+        field_index: list of int
+            The list of field indices in the owner's dataset that correspond to this group.
+        request: dict
+            The request defining the group. The request formed as the smallest request
+            that includes all fields in the group. All fields requests in
+            ``field_index`` must match
+
+        """
+        self.owner = owner
+        self.request = request
+
+        # get the GRIB data
+        ds = self.owner.retriever.get(request)
+
+        # create a mapping from the field indices in the group to the downloaded GRIB data
+        request_mapper = owner.request_mapper.clone(request)
+        fields = {}
+        for i, index in enumerate(field_index):
+            print("INDEX", index)
+            field_request = owner.request_mapper.request_at(index)
+            new_index = request_mapper.index_from_request(field_request)
+            print("   NEW INDEX", new_index)
+            fields[index] = ds[new_index]
+        self.fields = fields
+        print("FIELDS", fields)
+
+    @classmethod
+    def from_tensor(cls, tensor, owner):
+        field_index = []
         r = defaultdict(set)
         for f in tensor.source:
-            if hasattr(f, "owner") and f.owner is self:
-                self.field_index.append(f.index)
+            print("FC", type(f))
+            if hasattr(f, "owner") and f.owner is owner:
+                field_index.append(f.index)
                 for k, v in f.request.items():
                     r[k].add(v)
 
         for k in list(r.keys()):
             r[k] = sorted(list(r[k]))
 
-        self.ds = self.retriever.get(r)
+        return cls(owner, field_index, r)
 
-    def field(self, n):
-        if n in self.field_index:
-            return self.ds[self.field_index[n]]
+    # def field(self, n):
+    #     if n in self.field_index:
+    #         return self.ds[self.field_index[n]]
