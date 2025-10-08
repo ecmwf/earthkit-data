@@ -192,12 +192,13 @@ class VirtualGribFieldList(GribFieldList):
         elif self.request_grouping:
             if context is not None:
                 with self._group_lock:
-                    if field.index in self._group_cache.fields:
-                        return self._group_cache.fields[field.index]
-                    else:
-                        self._group_cache = None
-                        self._group_cache = self._create_group(context)
-                        return self._group_cache.fields[field.index]
+                    if self._group_cache is not None:
+                        if field.index in self._group_cache.fields:
+                            return self._group_cache.fields[field.index]
+
+                    self._group_cache = None
+                    self._group_cache = self._create_group(context)
+                    return self._group_cache.fields[field.index]
 
         return self.retriever.get(field.request)[0]
 
