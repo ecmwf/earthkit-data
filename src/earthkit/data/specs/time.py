@@ -34,7 +34,7 @@ def normalise_create_kwargs(cls, *args, remove_nones=True, **kwargs):
         if k in cls._CREATE_KEYS:
             _kwargs[k] = v
         else:
-            raise ValueError(f"Cannot use key={k} to create {cls.__name__}")
+            raise ValueError(f"Cannot use key={k} to create {cls.__class__.__name__}")
 
     if remove_nones:
         _kwargs = {k: v for k, v in _kwargs.items() if v is not None}
@@ -59,7 +59,7 @@ def normalise_set_kwargs(cls, *args, remove_nones=True, **kwargs):
         if k in cls._SET_KEYS:
             _kwargs[k] = v
         else:
-            raise ValueError(f"Cannot use key={k} to create {cls.__name__}")
+            raise ValueError(f"Cannot use key={k} to modify {cls.__class__.__name__}")
 
     if remove_nones:
         _kwargs = {k: v for k, v in _kwargs.items() if v is not None}

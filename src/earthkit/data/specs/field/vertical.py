@@ -7,111 +7,14 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import Optional
-from typing import Union
+# from abc import abstractmethod
+# from typing import Optional
+# from typing import Union
 
-from .level_type import LevelType
-from .level_type import get_level_type
-from .spec import Aliases
-from .spec import normalise_set_kwargs
-
-
-class Vertical:
-    _KEYS = ("level", "layer", "cf", "abbreviation", "units", "positive", "type")
-    _SET_KEYS = ("level", "layer", "type")
-    _ALIASES = Aliases({"level": "levelist"})
-
-    def __init__(
-        self,
-        level: Union[int, float] = None,
-        layer: Optional[tuple[float, float]] = None,
-        type: Optional[Union[LevelType, str]] = None,
-    ) -> None:
-        self._level = level
-        self._layer = layer
-        self._type = get_level_type(type)
-
-    @property
-    def level(self) -> Union[int, float]:
-        """Return the level."""
-        return self._level
-
-    @property
-    def layer(self) -> Optional[tuple[float, float]]:
-        """Return the layer."""
-        return self._layer
-
-    @property
-    def cf(self):
-        """Return the level type."""
-        return self._type.cf
-
-    @property
-    def abbreviation(self):
-        """Return the level type."""
-        return self._type.abbreviation
-
-    @property
-    def units(self):
-        """Return the level type."""
-        return self._type.units
-
-    @property
-    def positive(self):
-        """Return the level type."""
-        return self._type.positive
-
-    @property
-    def type(self):
-        """Return the level type."""
-        return self._type.name
-
-    def __print__(self):
-        return f"{self.level} {self.units} ({self.abbreviation})"
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(level={self.level}, units={self.units}, type={self._type.name})"
-
-    def __getstate__(self):
-        state = {}
-        state["level"] = self._level
-        state["layer"] = self._layer
-        state["type"] = self._type.name
-        return state
-
-    def __setstate__(self, state):
-        self.__init__(level=state["level"], layer=state["layer"], type=state["type"])
-
-    @classmethod
-    def from_dict(cls, d: dict) -> "Vertical":
-        """Create a Vertical object from a dictionary.
-
-        Parameters
-        ----------
-        d : dict
-            Dictionary containing vertical coordinate data.
-
-        Returns
-        -------
-        Vertical
-            The created Vertical instance.
-        """
-        if not isinstance(d, dict):
-            raise TypeError("d must be a dictionary")
-        # print("d=", d)
-        d = normalise_set_kwargs(cls, **d)
-        # print(" ->", d)
-        return cls(**d)
-
-    # def set(self, *args, **kwargs):
-    #     d = normalise_set_kwargs(self, *args, remove_nones=True, **kwargs)
-    #     method, method_kwargs = SET_METHOD_MAP.get(d.keys())
-    #     if method:
-    #         # method = getattr(cls, method_name)
-    #         d = {k: d[k] for k in method_kwargs if k in d}
-    #         return method(self, **d)
-
-    #     return None
+# from .spec import Aliases
+# from .spec import SimpleSpec
+# from .spec import normalise_set_kwargs
+# from .spec import spec_aliases
 
 
 # @spec_aliases

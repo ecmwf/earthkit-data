@@ -57,6 +57,7 @@ from earthkit.data.specs.time import Time
             [
                 {"base_datetime": "2016-09-25T12", "step": 6},
                 {"base_datetime": "20160925T12", "step": datetime.timedelta(hours=6)},
+                {"forecast_reference_time": "2016-09-25T12", "forecast_period": 6},
             ],
             (
                 datetime.datetime(2016, 9, 25, 12),
@@ -183,11 +184,41 @@ def test_timespec_from_dict_error(input_d, error):
                 Time.from_dict(d)
 
 
+def test_timespec_alias_1():
+    t = Time(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(hours=6))
+    assert t.base_datetime == datetime.datetime(2007, 1, 1, 12)
+    assert t.step == datetime.timedelta(hours=6)
+    assert t.valid_datetime == datetime.datetime(2007, 1, 1, 18)
+    assert t.forecast_reference_time == datetime.datetime(2007, 1, 1, 12)
+    assert t.forecast_period == datetime.timedelta(hours=6)
+
+
+def test_timespec_alias_2():
+    t = Time.from_dict(
+        dict(
+            forecast_reference_time=datetime.datetime(2007, 1, 1, 12),
+            forecast_period=datetime.timedelta(hours=6),
+        )
+    )
+    assert t.base_datetime == datetime.datetime(2007, 1, 1, 12)
+    assert t.step == datetime.timedelta(hours=6)
+    assert t.valid_datetime == datetime.datetime(2007, 1, 1, 18)
+    assert t.forecast_reference_time == datetime.datetime(2007, 1, 1, 12)
+    assert t.forecast_period == datetime.timedelta(hours=6)
+
+
 @pytest.mark.parametrize(
     "input_d,ref",
     [
         (
-            {"base_datetime": "2025-08-24T12:00:00", "step": 6},
+            [
+                {"base_datetime": "2025-08-24T12:00:00", "step": 6},
+                {"base_datetime": datetime.datetime(2025, 8, 24, 12), "step": datetime.timedelta(hours=6)},
+                {
+                    "forecast_reference_time": datetime.datetime(2025, 8, 24, 12),
+                    "forecast_period": datetime.timedelta(hours=6),
+                },
+            ],
             {
                 "base_datetime": datetime.datetime(2025, 8, 24, 12),
                 "valid_datetime": datetime.datetime(2025, 8, 24, 18),
@@ -195,7 +226,10 @@ def test_timespec_from_dict_error(input_d, error):
             },
         ),
         (
-            {"base_datetime": datetime.datetime(2025, 8, 24, 12), "step": datetime.timedelta(hours=6)},
+            [
+                {"valid_datetime": "2025-08-24T18:00:00", "step": datetime.timedelta(hours=6)},
+                {"valid_datetime": datetime.datetime(2025, 8, 24, 18), "step": datetime.timedelta(hours=6)},
+            ],
             {
                 "base_datetime": datetime.datetime(2025, 8, 24, 12),
                 "valid_datetime": datetime.datetime(2025, 8, 24, 18),
@@ -203,23 +237,11 @@ def test_timespec_from_dict_error(input_d, error):
             },
         ),
         (
-            {"valid_datetime": "2025-08-24T18:00:00", "step": datetime.timedelta(hours=6)},
-            {
-                "base_datetime": datetime.datetime(2025, 8, 24, 12),
-                "valid_datetime": datetime.datetime(2025, 8, 24, 18),
-                "step": datetime.timedelta(hours=6),
-            },
-        ),
-        (
-            {"valid_datetime": datetime.datetime(2025, 8, 24, 18), "step": datetime.timedelta(hours=6)},
-            {
-                "base_datetime": datetime.datetime(2025, 8, 24, 12),
-                "valid_datetime": datetime.datetime(2025, 8, 24, 18),
-                "step": datetime.timedelta(hours=6),
-            },
-        ),
-        (
-            {"base_datetime": "2025-08-24T12:00:00"},
+            [
+                {"base_datetime": "2025-08-24T12:00:00"},
+                {"base_datetime": datetime.datetime(2025, 8, 24, 12)},
+                {"forecast_reference_time": datetime.datetime(2025, 8, 24, 12)},
+            ],
             {
                 "base_datetime": datetime.datetime(2025, 8, 24, 12),
                 "valid_datetime": datetime.datetime(2025, 8, 24, 12),
@@ -227,7 +249,10 @@ def test_timespec_from_dict_error(input_d, error):
             },
         ),
         (
-            {"base_datetime": datetime.datetime(2025, 8, 24, 12)},
+            [
+                {"valid_datetime": "2025-08-24T12:00:00", "step": 0},
+                {"valid_datetime": datetime.datetime(2025, 8, 24, 12), "step": datetime.timedelta(hours=0)},
+            ],
             {
                 "base_datetime": datetime.datetime(2025, 8, 24, 12),
                 "valid_datetime": datetime.datetime(2025, 8, 24, 12),
@@ -235,41 +260,10 @@ def test_timespec_from_dict_error(input_d, error):
             },
         ),
         (
-            {"valid_datetime": "2025-08-24T12:00:00", "step": 0},
-            {
-                "base_datetime": datetime.datetime(2025, 8, 24, 12),
-                "valid_datetime": datetime.datetime(2025, 8, 24, 12),
-                "step": datetime.timedelta(hours=0),
-            },
-        ),
-        (
-            {"valid_datetime": datetime.datetime(2025, 8, 24, 12), "step": datetime.timedelta(hours=0)},
-            {
-                "base_datetime": datetime.datetime(2025, 8, 24, 12),
-                "valid_datetime": datetime.datetime(2025, 8, 24, 12),
-                "step": datetime.timedelta(hours=0),
-            },
-        ),
-        (
-            {"valid_datetime": "2007-01-03T18:00:00"},
-            {
-                "base_datetime": datetime.datetime(2007, 1, 1, 12),
-                "valid_datetime": datetime.datetime(2007, 1, 3, 18),
-                "step": datetime.timedelta(hours=54),
-            },
-        ),
-        (
-            {"valid_datetime": datetime.datetime(2007, 1, 3, 18)},
-            {
-                "base_datetime": datetime.datetime(2007, 1, 1, 12),
-                "valid_datetime": datetime.datetime(2007, 1, 3, 18),
-                "step": datetime.timedelta(hours=54),
-            },
-        ),
-        (
-            {
-                "valid_datetime": datetime.datetime(2007, 1, 3, 18),
-            },
+            [
+                {"valid_datetime": "2007-01-03T18:00:00"},
+                {"valid_datetime": datetime.datetime(2007, 1, 3, 18)},
+            ],
             {
                 "base_datetime": datetime.datetime(2007, 1, 1, 12),
                 "valid_datetime": datetime.datetime(2007, 1, 3, 18),
@@ -307,80 +301,34 @@ def test_timespec_from_dict_error(input_d, error):
 def test_timespec_set(input_d, ref):
 
     t = Time(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(0))
-    t1 = t.set(**input_d)
 
-    for k, v in ref.items():
-        assert getattr(t1, k) == v, f"key {k} expected {v} got {getattr(t, k)}"
+    if not isinstance(input_d, list):
+        input_d = [input_d]
 
-    # original object is unchanged
-    assert t.base_datetime == datetime.datetime(2007, 1, 1, 12)
-    assert t.valid_datetime == datetime.datetime(2007, 1, 1, 12)
-    assert t.step == datetime.timedelta(hours=0)
+    for d in input_d:
+        t1 = t.set(**d)
 
+        for k, v in ref.items():
+            assert getattr(t1, k) == v, f"key {k} expected {v} got {getattr(t, k)}"
 
-# @pytest.mark.cache
-# def test_grib_time_step_range_1():
-#     ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1"))
-
-#     f = ds[2]
-#     assert f.valid_datetime == datetime.datetime(2011, 12, 16, 12, 0)
-#     assert f.base_datetime == datetime.datetime(2011, 12, 15, 12, 0)
-#     assert f.forecast_reference_time == datetime.datetime(2011, 12, 15, 12, 0)
-#     assert f.step == datetime.timedelta(hours=24)
-#     assert f.forecast_period == datetime.timedelta(hours=24)
-#     assert f.time_span == datetime.timedelta(hours=6)
+        # the original object is unchanged
+        assert t.base_datetime == datetime.datetime(2007, 1, 1, 12)
+        assert t.valid_datetime == datetime.datetime(2007, 1, 1, 12)
+        assert t.step == datetime.timedelta(hours=0)
 
 
-# @pytest.mark.cache
-# def test_grib_time_step_range_2():
-#     ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/lsp_step_range.grib2"))
+@pytest.mark.parametrize(
+    "input_d,error",
+    [
+        ({"date": "2020-09-25T12"}, ValueError),
+        ({"date": "2020-09-25T12", "time": "600"}, ValueError),
+        ({"time": "600"}, ValueError),
+        ({"step_timedelta": datetime.timedelta(hours=6)}, ValueError),
+    ],
+)
+def test_timespec_set_error(input_d, error):
 
-#     f = ds[0]
-#     assert f.valid_datetime == datetime.datetime(2025, 5, 30)
-#     assert f.base_datetime == datetime.datetime(2025, 5, 27)
-#     assert f.step == datetime.timedelta(hours=72)
-#     assert f.time_span == datetime.timedelta(hours=1)
+    t = Time(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(0))
 
-#     f = ds[1]
-#     assert f.valid_datetime == datetime.datetime(2025, 5, 30, 1)
-#     assert f.base_datetime == datetime.datetime(2025, 5, 27)
-#     assert f.step == datetime.timedelta(hours=73)
-#     assert f.time_span == datetime.timedelta(hours=1)
-
-
-# @pytest.mark.cache
-# def test_grib_time_seasonal():
-#     ds = from_source(
-#         "url",
-#         earthkit_remote_test_data_file("xr_engine/date/jma_seasonal_fc_ref_time_per_member.grib"),
-#     )
-
-#     f = ds[0]
-#     assert f.base_datetime == datetime.datetime(2014, 8, 29)
-#     assert f.step == datetime.timedelta(days=33)
-#     assert f.valid_datetime == datetime.datetime(2014, 10, 1)
-#     assert f.time_span == datetime.timedelta(0)
-#     assert f.indexing_datetime == datetime.datetime(2014, 9, 1)
-
-
-# @pytest.mark.cache
-# def test_grib_time_monthly():
-#     ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/seasonal_monthly.grib"))
-
-#     f = ds[0]
-#     assert f.base_datetime == datetime.datetime(1993, 10, 1)
-#     assert f.step == datetime.timedelta(days=31)
-#     assert f.valid_datetime == datetime.datetime(1993, 11, 1)
-#     assert f.time_span == datetime.timedelta(0)
-#     assert f.indexing_datetime is None
-
-
-# @pytest.mark.cache
-# def test_grib_time_step_in_minutes():
-#     ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/step_60m.grib"))
-
-#     f = ds[0]
-#     assert f.base_datetime == datetime.datetime(2024, 1, 15)
-#     assert f.step == datetime.timedelta(0)
-#     assert f.valid_datetime == datetime.datetime(2024, 1, 15)
-#     assert f.time_span == datetime.timedelta(0)
+    with pytest.raises(error):
+        t.set(**input_d)
