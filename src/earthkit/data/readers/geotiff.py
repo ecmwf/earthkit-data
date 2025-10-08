@@ -142,7 +142,7 @@ class GeoTIFFField(Field):
         series.name = self._da.name
         return series
 
-    def _values(self, dtype=None):
+    def _values(self, dtype=None, context=None):
         return self._da.values.astype(dtype)
 
     def write(self, f):

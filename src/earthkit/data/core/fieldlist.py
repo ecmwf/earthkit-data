@@ -150,7 +150,10 @@ class Field(Base):
             Field values
 
         """
-        v = array_to_numpy(self._values(dtype=dtype, context=context))
+        if context is not None:
+            v = array_to_numpy(self._values(dtype=dtype, context=context))
+        else:
+            v = array_to_numpy(self._values(dtype=dtype))
         shape = self._required_shape(flatten)
         if shape != v.shape:
             v = v.reshape(shape)
@@ -182,7 +185,11 @@ class Field(Base):
             Field values.
 
         """
-        v = self._values(dtype=dtype, context=context)
+        if context is not None:
+            v = self._values(dtype=dtype, context=context)
+        else:
+            v = self._values(dtype=dtype)
+
         if array_backend is not None:
             v = convert_array(v, target_backend=array_backend)
 

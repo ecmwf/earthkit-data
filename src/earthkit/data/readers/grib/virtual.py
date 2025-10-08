@@ -88,7 +88,7 @@ class VirtualGribField(Field):
         )
 
     def _one_metadata(self, key, remapping=None, patches=None, **kwargs):
-        # print(f"one_metadata key={key} kwargs={kwargs}")
+        # print(f"one_metadata key={key} kwargs={kwargs} {self.request=}")
         if key in self.extra:
             return self.extra[key]
         if key in self.request:
@@ -122,18 +122,7 @@ class VirtualGribField(Field):
         return WrappedMetadata(self.owner.reference._metadata, extra=r)
 
     def _values(self, dtype=None, context=None):
-        # print("VirtualGribField._values", context)
         return self.owner._get_grib_field(self, context=context)._values(dtype=dtype)
-        # if context is not None:
-        #     self.owner._group(context)
-        # return self._field._values(dtype=dtype)
-
-    # @property
-    # def _field(self):
-    #     if self.reference:
-    #         return self.reference
-    #     else:
-    #         return self.owner.retriever.get(self.request)[0]
 
 
 class VirtualGribFieldList(GribFieldList):
@@ -186,15 +175,25 @@ class VirtualGribFieldList(GribFieldList):
         return r
 
     def _get_grib_field(self, field, context=None):
-        # print("HERE", field.index, context, field.request)
         if field.reference:
             return self.reference
         elif self.request_grouping:
             if context is not None:
-                with self._group_lock:
-                    if self._group_cache is not None:
-                        if field.index in self._group_cache.fields:
-                            return self._group_cache.fields[field.index]
+                from earthkit.data.core.fieldlist import FieldList
+
+                source = None
+                if context is self:
+                    source = self
+                elif hasattr(context, "source"):
+                    source = context.source
+                elif isinstance(context, FieldList):
+                    source = context
+
+                if source is not None:
+                    with self._group_lock:
+                        if self._group_cache is not None:
+                            if field.index in self._group_cache.fields:
+                                return self._group_cache.fields[field.index]
 
                     self._group_cache = None
                     self._group_cache = self._create_group(context)
@@ -203,11 +202,10 @@ class VirtualGribFieldList(GribFieldList):
         return self.retriever.get(field.request)[0]
 
     def _create_group(self, context):
-        print("CREATE GROUP")
-        return FDBGroup.from_tensor(context, self)
+        return VirtualGroup.from_source(context, self)
 
 
-class FDBGroup:
+class VirtualGroup:
     def __init__(self, owner, field_index, request):
         """
         Parameters
@@ -232,20 +230,16 @@ class FDBGroup:
         request_mapper = owner.request_mapper.clone(request)
         fields = {}
         for i, index in enumerate(field_index):
-            # print("INDEX", index)
             field_request = owner.request_mapper.request_at(index)
             new_index = request_mapper.index_from_request(field_request)
-            # print("   NEW INDEX", new_index)
             fields[index] = ds[new_index]
         self.fields = fields
-        print("FIELDS", len(fields))
 
     @classmethod
-    def from_tensor(cls, tensor, owner):
+    def from_source(cls, source, owner):
         field_index = []
         r = defaultdict(set)
-        for f in tensor.source:
-            # print("FC", type(f))
+        for f in source:
             if hasattr(f, "owner") and f.owner is owner:
                 field_index.append(f.index)
                 for k, v in f.request.items():
@@ -255,7 +249,3 @@ class FDBGroup:
             r[k] = sorted(list(r[k]))
 
         return cls(owner, field_index, r)
-
-    # def field(self, n):
-    #     if n in self.field_index:
-    #         return self.ds[self.field_index[n]]

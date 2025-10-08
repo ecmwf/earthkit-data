@@ -297,7 +297,7 @@ class GribField(Field):
     def _create_handle(self):
         return GribCodesReader.from_cache(self.path).at_offset(self.offset)
 
-    def _values(self, dtype=None):
+    def _values(self, dtype=None, context=None):
         return self.handle.get_values(dtype=dtype)
 
     @property

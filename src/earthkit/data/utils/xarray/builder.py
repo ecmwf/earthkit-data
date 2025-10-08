@@ -217,7 +217,6 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
             # LOG.debug(f"   dims={self.dims} key={key} shape={self.shape}")
             # LOG.debug(f"   tensor.user_coords={self.tensor.user_coords}")
 
-            print(f"TensorBackendArray: {key=}", flush=True)
             r = self.tensor[key]
             # LOG.debug(f"   cubelet user_shape={r.user_shape}")
 

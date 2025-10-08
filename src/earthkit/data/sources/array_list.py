@@ -51,7 +51,7 @@ class ArrayField(Field):
     def _array(self):
         return self._array_
 
-    def _values(self, dtype=None):
+    def _values(self, dtype=None, context=None):
         """Native array type"""
         if dtype is None:
             return self._array
