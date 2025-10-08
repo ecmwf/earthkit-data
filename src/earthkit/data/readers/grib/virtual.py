@@ -122,7 +122,7 @@ class VirtualGribField(Field):
         return WrappedMetadata(self.owner.reference._metadata, extra=r)
 
     def _values(self, dtype=None, context=None):
-        print("VirtualGribField._values", context)
+        # print("VirtualGribField._values", context)
         return self.owner._get_grib_field(self, context=context)._values(dtype=dtype)
         # if context is not None:
         #     self.owner._group(context)
@@ -186,7 +186,7 @@ class VirtualGribFieldList(GribFieldList):
         return r
 
     def _get_grib_field(self, field, context=None):
-        print("HERE", field.index, context, field.request)
+        # print("HERE", field.index, context, field.request)
         if field.reference:
             return self.reference
         elif self.request_grouping:
@@ -231,13 +231,13 @@ class FDBGroup:
         request_mapper = owner.request_mapper.clone(request)
         fields = {}
         for i, index in enumerate(field_index):
-            print("INDEX", index)
+            # print("INDEX", index)
             field_request = owner.request_mapper.request_at(index)
             new_index = request_mapper.index_from_request(field_request)
-            print("   NEW INDEX", new_index)
+            # print("   NEW INDEX", new_index)
             fields[index] = ds[new_index]
         self.fields = fields
-        print("FIELDS", fields)
+        print("FIELDS", len(fields))
 
     @classmethod
     def from_tensor(cls, tensor, owner):
