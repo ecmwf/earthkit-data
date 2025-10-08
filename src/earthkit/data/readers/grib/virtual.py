@@ -245,7 +245,7 @@ class FDBGroup:
         field_index = []
         r = defaultdict(set)
         for f in tensor.source:
-            print("FC", type(f))
+            # print("FC", type(f))
             if hasattr(f, "owner") and f.owner is owner:
                 field_index.append(f.index)
                 for k, v in f.request.items():
