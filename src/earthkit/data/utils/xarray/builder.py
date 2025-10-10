@@ -379,9 +379,22 @@ class BackendDataBuilder(metaclass=ABCMeta):
     def build_values(self, *args, **kwargs):
         pass
 
-    @abstractmethod
     def pre_build_variables(self):
-        pass
+        """Generate a builder for each variable"""
+        builders = {}
+
+        if self.profile.variable.is_mono:
+            name = self.profile.variable.name
+            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
+        else:
+            groups = self.ds.group(self.profile.variable.key, self.profile.variable.variables)
+
+            # we assume each variable forms a full cube
+            for name in groups:
+                ds_var = groups[name]
+                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
+
+        return builders
 
     def pre_build_variable(self, ds_var, dims, name):
         tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs = self.prepare_tensor(
@@ -502,22 +515,6 @@ class TensorBackendDataBuilder(BackendDataBuilder):
     stored in memory or on disk.
     """
 
-    def pre_build_variables(self):
-        """Generate a builder for each variable"""
-        builders = {}
-
-        if self.profile.variable.is_mono:
-            name = self.profile.variable.name
-            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
-        else:
-            # we assume each variable forms a full cube
-            key = self.profile.variable.key
-            for name in self.profile.variable.variables:
-                ds_var = self.ds.sel(**{key: name})
-                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
-
-        return builders
-
     def build_values(self, tensor, var_dims, name):
         """Generate the data object stored in the xarray variable"""
         # There is no need for the extra structures in the wrapped source in the
@@ -544,23 +541,6 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
     field's values are copied, the field is immediately released and its memory is freed if the
     field supports this operation. Fields released in this way are not available for further access.
     """
-
-    def pre_build_variables(self):
-        """Generate a builder for each variable"""
-        builders = {}
-
-        if self.profile.variable.is_mono:
-            name = self.profile.variable.name
-            builders[name] = self.pre_build_variable(self.ds, self.dims, name)
-        else:
-            groups = self.ds.group(self.profile.variable.key, self.profile.variable.variables)
-
-            # we assume each variable forms a full cube
-            for name in groups:
-                ds_var = groups[name]
-                builders[name] = self.pre_build_variable(ds_var, self.dims, name)
-
-        return builders
 
     def build_values(self, tensor, var_dims, name):
         """Generate the data object stored in the xarray variable"""
