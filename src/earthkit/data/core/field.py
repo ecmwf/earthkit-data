@@ -26,7 +26,7 @@ from earthkit.data.specs.ensemble import EnsembleSpec
 from earthkit.data.specs.geography import Geography
 from earthkit.data.specs.labels import Labels
 from earthkit.data.specs.parameter import Parameter
-from earthkit.data.specs.time import TimeSpec
+from earthkit.data.specs.time import Time
 from earthkit.data.specs.vertical import VerticalSpec
 from earthkit.data.utils.array import reshape
 from earthkit.data.utils.compute import wrap_maths
@@ -172,7 +172,7 @@ class Field(Base):
     """
 
     _DATA = {"module": Data, "name": "data", "keys": "values"}
-    _TIME = {"module": TimeSpec, "name": "time", "direct": ("valid_datetime", "base_datetime", "step")}
+    _TIME = {"module": Time, "name": "time", "direct": ("valid_datetime", "base_datetime", "step")}
     _PARAMETER = {"module": Parameter, "name": "parameter"}
     _GEOGRAPHY = {"module": Geography, "name": "geography"}
     _VERTICAL = {"module": VerticalSpec, "name": "vertical", "direct": ("level", "layer")}
