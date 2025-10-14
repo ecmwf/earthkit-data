@@ -145,6 +145,7 @@ class XArrayInputFieldList(FieldList):
         self.ds = FieldList.from_fields([ReleasableField(f) for f in self.ds])
 
     def group(self, key, values):
+        values = set(values)
         groups = defaultdict(list)
         for f in self.ds:
             v = str(f.metadata(key, remapping=self.remapping, default=None))
