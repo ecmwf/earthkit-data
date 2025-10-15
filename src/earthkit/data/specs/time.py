@@ -70,24 +70,17 @@ def normalise_set_kwargs(cls, *args, remove_nones=True, **kwargs):
 @spec_aliases_1
 class Time:
     _base_datetime = None
-    _hcast_datetime = None
     _step = ZERO_TIMEDELTA
-    _indexing_datetime = None
-    _reference_datetime = None
 
     _KEYS = (
         "base_datetime",
         "valid_datetime",
         "step",
-        "indexing_datetime",
-        "reference_datetime",
     )
     _CREATE_KEYS = (
         "base_datetime",
         "valid_datetime",
         "step",
-        "indexing_datetime",
-        "reference_datetime",
         "date",
         "time",
     )
@@ -102,20 +95,12 @@ class Time:
         self,
         base_datetime=None,
         step=None,
-        indexing_datetime=None,
-        reference_datetime=None,
     ):
         if base_datetime is not None:
             self._base_datetime = to_datetime(base_datetime)
 
         if step is not None:
             self._step = to_timedelta(step)
-
-        if indexing_datetime is not None:
-            self._indexing_datetime = to_datetime(indexing_datetime)
-
-        if reference_datetime is not None:
-            self._reference_datetime = to_datetime(reference_datetime)
 
     @property
     def base_datetime(self):

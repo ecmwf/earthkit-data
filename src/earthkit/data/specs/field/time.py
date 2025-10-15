@@ -7,17 +7,72 @@
 # nor does it submit to any jurisdiction.
 #
 
-from abc import abstractmethod
 
-from .spec import Aliases
+from ..time import Time
 from .spec import SimpleSpec
-from .spec import spec_aliases
-from .time import Time
-from .time import TimeSetter
+
+# @spec_aliases
+# class TimeField(Time, SimpleSpec):
+#     """A specification for a time object."""
+
+#     KEYS = (
+#         "base_datetime",
+#         "valid_datetime",
+#         "step",
+#         "indexing_datetime",
+#         "reference_datetime",
+#     )
+#     SET_KEYS = (
+#         "base_datetime",
+#         "valid_datetime",
+#         "step",
+#     )
+#     ALIASES = Aliases({"base_datetime": ("forecast_reference_time",), "step": ("forecast_period",)})
+#     CREATE_KEYS = (
+#         "base_datetime",
+#         "valid_datetime",
+#         "step",
+#         "indexing_datetime",
+#         "reference_datetime",
+#         "date",
+#         "time",
+#     )
+
+#     @property
+#     @abstractmethod
+#     def base_datetime(self):
+#         """datetime.datetime: Return the base datetime of the time object."""
+#         pass
+
+#     @property
+#     @abstractmethod
+#     def valid_datetime(self):
+#         """datetime.datetime: Return the valid datetime of the time object."""
+#         pass
+
+#     @property
+#     @abstractmethod
+#     def hcast_datetime(self):
+#         pass
+
+#     @property
+#     @abstractmethod
+#     def step(self):
+#         """datetime.timedelta: Return the forecast period of the time object."""
+#         pass
+
+#     @property
+#     @abstractmethod
+#     def indexing_datetime(self):
+#         pass
+
+#     @property
+#     @abstractmethod
+#     def reference_datetime(self):
+#         pass
 
 
-@spec_aliases
-class TimeField(Time, SimpleSpec):
+class TimeFieldSpec(SimpleSpec):
     """A specification for a time object."""
 
     KEYS = (
@@ -25,65 +80,6 @@ class TimeField(Time, SimpleSpec):
         "valid_datetime",
         "step",
         "indexing_datetime",
-        "reference_datetime",
-    )
-    SET_KEYS = (
-        "base_datetime",
-        "valid_datetime",
-        "step",
-    )
-    ALIASES = Aliases({"base_datetime": ("forecast_reference_time",), "step": ("forecast_period",)})
-    CREATE_KEYS = (
-        "base_datetime",
-        "valid_datetime",
-        "step",
-        "indexing_datetime",
-        "reference_datetime",
-        "date",
-        "time",
-    )
-
-    @property
-    @abstractmethod
-    def base_datetime(self):
-        """datetime.datetime: Return the base datetime of the time object."""
-        pass
-
-    @property
-    @abstractmethod
-    def valid_datetime(self):
-        """datetime.datetime: Return the valid datetime of the time object."""
-        pass
-
-    @property
-    @abstractmethod
-    def hcast_datetime(self):
-        pass
-
-    @property
-    @abstractmethod
-    def step(self):
-        """datetime.timedelta: Return the forecast period of the time object."""
-        pass
-
-    @property
-    @abstractmethod
-    def indexing_datetime(self):
-        pass
-
-    @property
-    @abstractmethod
-    def reference_datetime(self):
-        pass
-
-
-class FieldTimeSpec(SimpleSpec):
-    """A specification for a time object."""
-
-    KEYS = (
-        "base_datetime",
-        "valid_datetime",
-        "step" "indexing_datetime",
         "reference_datetime",
     )
 
@@ -102,33 +98,33 @@ class FieldTimeSpec(SimpleSpec):
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
 
-        data = cls.TimeCreator.from_dict(d)
+        data = Time.from_dict(d)
         return cls(data)
 
-    @classmethod
-    def normalise_create_kwargs(cls, *args, remove_nones=True, **kwargs):
-        kwargs = kwargs.copy()
+    # @classmethod
+    # def normalise_create_kwargs(cls, *args, remove_nones=True, **kwargs):
+    #     kwargs = kwargs.copy()
 
-        for a in args:
-            if a is None:
-                continue
-            if isinstance(a, dict):
-                kwargs.update(a)
-                continue
-            raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
+    #     for a in args:
+    #         if a is None:
+    #             continue
+    #         if isinstance(a, dict):
+    #             kwargs.update(a)
+    #             continue
+    #         raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
 
-        _kwargs = {}
-        for k, v in kwargs.items():
-            k = cls.ALIASES.get(k, k)
-            if k in cls.CREATE_KEYS:
-                _kwargs[k] = v
-            else:
-                raise ValueError(f"Cannot use key={k} to create {cls.__name__}")
+    #     _kwargs = {}
+    #     for k, v in kwargs.items():
+    #         k = cls.ALIASES.get(k, k)
+    #         if k in cls.CREATE_KEYS:
+    #             _kwargs[k] = v
+    #         else:
+    #             raise ValueError(f"Cannot use key={k} to create {cls.__name__}")
 
-        if remove_nones:
-            _kwargs = {k: v for k, v in _kwargs.items() if v is not None}
+    #     if remove_nones:
+    #         _kwargs = {k: v for k, v in _kwargs.items() if v is not None}
 
-        return _kwargs
+    #     return _kwargs
 
     # def to_dict(self):
     #     return {
@@ -158,9 +154,11 @@ class FieldTimeSpec(SimpleSpec):
     #     return spec
 
     def set(self, *args, **kwargs):
-        data = TimeSetter.set(self.data, *args, **kwargs)
-        spec = FieldTimeSpec(data)
-        return spec
+        data = self._data.set(*args, **kwargs)
+        return TimeFieldSpec(data)
+        # data = TimeSetter.set(self.data, *args, **kwargs)
+        # spec = FieldTimeSpec(data)
+        # return spec
 
         # d = normalise_set_kwargs(self, *args, add_spec_keys=False, remove_nones=True, **kwargs)
         # method_name, method_kwargs = UPDATE_METHOD_MAP.get(d.keys())
