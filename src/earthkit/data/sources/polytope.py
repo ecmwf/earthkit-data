@@ -14,10 +14,14 @@ try:
 except ImportError:
     raise ImportError("Polytope access requires 'polytope-client' to be installed")
 
+from earthkit.data.core.thread import SoftThreadPool
+from earthkit.data.utils.progbar import tqdm
+
 from . import Source
-from .multi_url import MultiUrl
+from .file import File
 from .prompt import APIKeyPrompt
 from .url import Url
+from .url import download_to_target
 
 LOG = logging.getLogger(__name__)
 
@@ -88,6 +92,12 @@ class Polytope(Source):
         return f"{self.__class__.__name__}({self.request['dataset']}, {self.request['request']})"
 
     def mutate(self) -> Source:
+        if self.stream:
+            return self._mutate_stream()
+        else:
+            return self._retrieve()
+
+    def _mutate_stream(self) -> Source:
         pointers = self.client.retrieve(
             self.request["dataset"],
             self.request["request"],
@@ -98,14 +108,74 @@ class Polytope(Source):
         urls = [p["location"] for p in pointers]
         LOG.debug(f"{urls=}")
 
-        if self.stream:
-            return Url(
-                urls,
-                stream=True,
-                **self._stream_kwargs,
+        return Url(
+            urls,
+            stream=True,
+            **self._stream_kwargs,
+        )
+
+    def _retrieve(self) -> Source:
+        requests = self.request["request"]
+        if not isinstance(requests, list):
+            requests = [requests]
+
+        dataset = self.request["dataset"]
+
+        def _retrieve_one(dataset, request):
+            """Retrieve a single request and cache the result."""
+
+            def retrieve(target, args):
+                """
+                Caching callback method to retrieve data into target file. Only called if
+                the data is not already cached.
+                """
+                # get the pointer and the url to download
+                pointers = self.client.retrieve(
+                    args[0],
+                    args[1],
+                    pointer=True,
+                    asynchronous=False,
+                )
+
+                url = pointers[0]["location"]
+
+                # download the file and return the associated HTTP header info.
+                # This might contain useful info such as content-type. It will be
+                # stored in the cache database.
+                return download_to_target(url, target)
+
+            # The cache file path/data is constructed by using the request only. We cannot simply base
+            # it on the URL since the URL may change every time we ask for the pointers.
+            return self.cache_file(
+                retrieve,
+                (dataset, request),
             )
+
+        # Download each request in parallel when the config allows it
+        nthreads = min(self.config("number-of-download-threads"), len(requests))
+
+        if nthreads < 2:
+            path = [_retrieve_one(dataset, r) for r in requests]
         else:
-            return MultiUrl(urls, sort_urls=False)
+            with SoftThreadPool(nthreads=nthreads) as pool:
+                futures = [pool.submit(_retrieve_one, dataset, r) for r in requests]
+
+                iterator = (f.result() for f in futures)
+                path = list(tqdm(iterator, leave=True, total=len(requests)))
+
+        # TODO: for simplicity we assume all retrieved files have the same content-type. Revisit if needed.
+        content_type = None
+        if path:
+            from earthkit.data.core.caching import CACHE
+
+            # fetch the content-type from the cache entry
+            data = CACHE._get_entry(path[0])
+            if data:
+                content_type = data.get("owner_data", {}).get("content-type")
+
+        src = File(path)
+        src.content_type = content_type
+        return src
 
 
 source = Polytope
