@@ -42,7 +42,6 @@ def download_and_cache(
     http_headers=None,
     update_if_out_of_date=False,
     fake_headers=None,  # When HEAD is not allowed but you know the size
-    cache_key_data=None,
     **kwargs,
 ):
     # TODO: re-enable this feature
@@ -101,13 +100,10 @@ def download_and_cache(
         downloader.download(target)
         return downloader.cache_data()
 
-    if cache_key_data is None:
-        cache_key_data = dict(url=url, parts=parts)
-
     path = cache_file(
         owner,
         download,
-        cache_key_data,
+        dict(url=url, parts=parts),
         extension=extension,
         force=force,
     )
