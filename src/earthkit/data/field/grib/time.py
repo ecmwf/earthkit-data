@@ -14,8 +14,7 @@ from earthkit.data.utils.dates import step_to_grib
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
-from ..time_span import TimeSpan
-from ..time_span import TimeSpanMethod
+from ..spec.time_span import TimeSpanMethod
 from .collector import GribContextCollector
 from .spec import GribSpec
 
@@ -34,10 +33,10 @@ _METHOD_TO_GRIB = {v: k for k, v in _GRIB_TO_METHOD.items()}
 class GribTimeBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.specs.field.time import TimeFieldSpec
+        from earthkit.data.field.time import TimeFieldMember
 
         d = GribTimeBuilder._build_dict(handle)
-        r = TimeFieldSpec.from_dict(d)
+        r = TimeFieldMember.from_dict(d)
         # r._set_private_data("handle", handle)
         return r
 
@@ -62,7 +61,7 @@ class GribTimeBuilder:
             base = _datetime("dataDate", "dataTime")
 
         end = None
-        time_span = ZERO_TIMEDELTA
+        # time_span = ZERO_TIMEDELTA
 
         end = _get("endStep")
         if end is None:
@@ -72,24 +71,24 @@ class GribTimeBuilder:
             end = ZERO_TIMEDELTA
         else:
             end = to_timedelta(end)
-            start = _get("startStep")
-            if start is not None:
-                start = to_timedelta(start)
-                time_span = end - start
+            # start = _get("startStep")
+            # if start is not None:
+            #     start = to_timedelta(start)
+            #     time_span = end - start
 
-        indexing = _datetime("indexingDate", "indexingTime")
-        reference = _datetime("referenceDate", "referenceTime")
+        # indexing = _datetime("indexingDate", "indexingTime")
+        # reference = _datetime("referenceDate", "referenceTime")
 
-        time_span_method = _get("stepType", "instant").lower()
-        time_span_method = _GRIB_TO_METHOD.get(time_span_method, TimeSpanMethod.INSTANT)
-        time_span = TimeSpan(time_span, time_span_method)
+        # time_span_method = _get("stepType", "instant").lower()
+        # time_span_method = _GRIB_TO_METHOD.get(time_span_method, TimeSpanMethod.INSTANT)
+        # time_span = TimeSpan(time_span, time_span_method)
 
         return dict(
             base_datetime=to_datetime(base),
             step=end,
-            time_span=time_span,
-            indexing_datetime=indexing,
-            reference_datetime=reference,
+            # time_span=time_span,
+            # indexing_datetime=indexing,
+            # reference_datetime=reference,
         )
 
 

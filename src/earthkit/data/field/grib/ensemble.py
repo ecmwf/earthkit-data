@@ -15,10 +15,11 @@ from .spec import GribSpec
 class GribEnsembleBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.specs.ensemble import SimpleEnsembleSpec
+        from earthkit.data.field.ensemble import EnsembleFieldMember
 
         d = GribEnsembleBuilder._build_dict(handle)
-        spec = SimpleEnsembleSpec.from_dict(d)
+        print("GribEnsembleBuilder.build:", d)
+        spec = EnsembleFieldMember.from_dict(d)
         # spec._set_private_data("handle", handle)
         return spec
 

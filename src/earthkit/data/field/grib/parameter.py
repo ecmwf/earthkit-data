@@ -14,11 +14,11 @@ from .spec import GribSpec
 class GribParameterBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.specs.parameter import SimpleParameter
+        from earthkit.data.field.parameter import ParameterFieldMember
 
         d = GribParameterBuilder._build_dict(handle)
-        spec = SimpleParameter.from_dict(d)
-        spec._set_private_data("handle", handle)
+        spec = ParameterFieldMember.from_dict(d)
+        # spec._set_private_data("handle", handle)
         return spec
 
     @staticmethod

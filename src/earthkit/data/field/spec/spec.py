@@ -12,7 +12,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 
-def spec_aliases(cls) -> type:
+def spec_aliases_1(cls) -> type:
     """
     Add alias properties to the class.
 
@@ -69,7 +69,7 @@ def spec_aliases(cls) -> type:
     return cls
 
 
-def spec_aliases_1(cls) -> type:
+def spec_aliases(cls) -> type:
     """
     Add alias properties to the class.
 
@@ -99,9 +99,9 @@ def spec_aliases_1(cls) -> type:
                 property(fget=_make(method), doc=f"Return the {alias}. Alias for :obj:`{method}`."),
             )
 
-    all_keys = list(cls._KEYS)
-    if aliases:
-        all_keys.extend(list(aliases.keys()))
+    # all_keys = list(cls._KEYS)
+    # if aliases:
+    #     all_keys.extend(list(aliases.keys()))
 
     # prefix = getattr(cls, "KEY_PREFIX", None)
     # if prefix:
@@ -183,6 +183,56 @@ def normalise_set_kwargs(
     return _kwargs
 
 
+def normalise_create_kwargs_2(cls, *args, allowed_keys=None, remove_nones=True, **kwargs):
+    kwargs = kwargs.copy()
+
+    for a in args:
+        if a is None:
+            continue
+        if isinstance(a, dict):
+            kwargs.update(a)
+            continue
+        raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
+
+    _kwargs = {}
+    for k, v in kwargs.items():
+        k = cls._ALIASES.get(k, k)
+        if k in allowed_keys:  # cls._CREATE_KEYS:
+            _kwargs[k] = v
+        else:
+            raise ValueError(f"Cannot use key={k} to create {cls.__class__.__name__}")
+
+    if remove_nones:
+        _kwargs = {k: v for k, v in _kwargs.items() if v is not None}
+
+    return _kwargs
+
+
+def normalise_set_kwargs_2(cls, *args, allowed_keys=None, remove_nones=True, **kwargs):
+    kwargs = kwargs.copy()
+
+    for a in args:
+        if a is None:
+            continue
+        if isinstance(a, dict):
+            kwargs.update(a)
+            continue
+        raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
+
+    _kwargs = {}
+    for k, v in kwargs.items():
+        k = cls._ALIASES.get(k, k)
+        if k in allowed_keys:  # cls._SET_KEYS:
+            _kwargs[k] = v
+        else:
+            raise ValueError(f"Cannot use key={k} to modify {cls.__class__.__name__}")
+
+    if remove_nones:
+        _kwargs = {k: v for k, v in _kwargs.items() if v is not None}
+
+    return _kwargs
+
+
 class Aliases(dict):
     def __init__(self, d: dict = None) -> None:
         """
@@ -204,7 +254,7 @@ class Aliases(dict):
         super().__init__(r)
 
 
-class Spec(metaclass=ABCMeta):
+class SpecOld(metaclass=ABCMeta):
     KEYS = tuple()
     ALIASES = Aliases()
     ALL_KEYS = tuple()
@@ -301,7 +351,7 @@ class Spec(metaclass=ABCMeta):
         pass
 
 
-class SimpleSpec(Spec):
+class SimpleSpecOld(SpecOld):
     # _private = None
 
     # def _set_private_data(self, name, data):
@@ -340,3 +390,64 @@ class SimpleSpec(Spec):
             raise KeyError(f"Key {key} not found in specification")
 
         return default
+
+
+class Spec(metaclass=ABCMeta):
+    _ALIASES = Aliases()
+
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, d: dict) -> "Spec":
+        """
+        Create a Spec instance from a dictionary.
+
+        Parameters
+        ----------
+        d : dict
+            Dictionary containing specification data.
+
+        Returns
+        -------
+        Spec
+            The created Spec instance.
+        """
+        pass
+
+    @abstractmethod
+    def to_dict(self) -> dict:
+        """
+        Convert the object to a dictionary.
+
+        Returns
+        -------
+        dict
+            Dictionary representation of the object.
+        """
+        pass
+
+    @abstractmethod
+    def set(self, *args, **kwargs) -> "Spec":
+        """
+        Create a new Spec instance with updated data.
+
+        Parameters
+        ----------
+        *args
+            Positional arguments.
+        **kwargs
+            Keyword arguments.
+
+        Returns
+        -------
+        Spec
+            The created Spec instance.
+        """
+        pass
+
+    @abstractmethod
+    def __getstate__(self):
+        pass
+
+    @abstractmethod
+    def __setstate__(self, state):
+        pass

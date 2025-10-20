@@ -20,14 +20,16 @@ from earthkit.data.core.order import Patch
 from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalize
+from earthkit.data.field.conf import NAMES as MEMBER_NAMES
+from earthkit.data.field.conf import init_member_conf
+from earthkit.data.field.data import Data
+from earthkit.data.field.ensemble import EnsembleFieldMember
+from earthkit.data.field.geography import GeographyFieldMember
+from earthkit.data.field.parameter import ParameterFieldMember
+from earthkit.data.field.spec.labels import SimpleLabels
+from earthkit.data.field.time import TimeFieldMember
+from earthkit.data.field.vertical import VerticalFieldMember
 from earthkit.data.indexing.simple import SimpleFieldList
-from earthkit.data.specs.data import Data
-from earthkit.data.specs.ensemble import EnsembleSpec
-from earthkit.data.specs.geography import Geography
-from earthkit.data.specs.labels import Labels
-from earthkit.data.specs.parameter import Parameter
-from earthkit.data.specs.time import Time
-from earthkit.data.specs.vertical import VerticalSpec
 from earthkit.data.utils.array import reshape
 from earthkit.data.utils.compute import wrap_maths
 from earthkit.data.utils.metadata.args import metadata_argument
@@ -46,93 +48,26 @@ LS_KEYS = [
     "grid_type",
 ]
 
-
-def member_properties(cls):
-    # members = {
-    #     cls._DATA_NAME: Data,
-    #     cls._TIME_NAME: Time,
-    #     cls._PARAMETER_NAME: Parameter,
-    #     cls._GEOGRAPHY_NAME: Geography,
-    #     cls._ENSEMBLE_NAME: Ensemble,
-    #     cls._VERTICAL_NAME: Vertical,
-    #     cls._LABELS_NAME: Labels,
-    # }
-
-    members = [
-        cls._DATA,
-        cls._TIME,
-        cls._PARAMETER,
-        cls._GEOGRAPHY,
-        cls._ENSEMBLE,
-        cls._VERTICAL,
-        cls._LABELS,
-    ]
-
-    # member_keys = []
-    keys = {}
-    for member in members:
-        # print(f"member: {member['name']}")
-        module = member["module"]
-
-        for key in module.ALL_KEYS:
-            # add key as a prefixed property
-            method = member["name"] + "_" + key
-            if getattr(cls, method, None) is None:
-
-                def _make(prop, member):
-                    def _f(self):
-                        return getattr(getattr(self, f"_{member}"), prop)
-
-                    return _f
-
-                setattr(
-                    cls,
-                    method,
-                    property(
-                        fget=_make(key, member["name"]), doc=f"Return the {key} from .{member['name']}."
-                    ),
-                )
-
-                keys[method] = (member["name"], key)
-                # print(f"  add property: {method} -> {member['name']}.{key}")
-
-            # add allow using key with dot notation
-            dot_key = member["name"] + "." + key
-            keys[dot_key] = (member["name"], key)
-
-            # print(f"  add dot key: {dot_key} -> {member['name']}.{key}")
-
-        # some module keys are added as properties without a prefix
-        for key in member.get("direct", ()):
-            if not hasattr(module, key):
-                raise ValueError(f"Direct key {key} not found in module {module}")
-
-            if key in keys:
-                raise ValueError(f"Direct key {key} already defined in/for another member")
-
-            if getattr(cls, key, None) is not None:
-                raise ValueError(f"Direct key {key} already defined in class {cls}")
-
-            def _make(prop, member):
-                def _f(self):
-                    return getattr(getattr(self, f"_{member}"), prop)
-
-                return _f
-
-            setattr(
-                cls,
-                key,
-                property(fget=_make(key, member["name"]), doc=f"Return the {key} from .{member['name']}."),
-            )
-
-            keys[key] = (member["name"], key)
-            # print(f"  add direct property: {key} -> {member['name']}.{key}")
-
-    cls._MEMBER_KEYS = keys
-    return cls
+DUMP_ORDER = [
+    MEMBER_NAMES.parameter,
+    MEMBER_NAMES.time,
+    MEMBER_NAMES.vertical,
+    MEMBER_NAMES.ensemble,
+    MEMBER_NAMES.geography,
+]
 
 
-@member_properties
+@init_member_conf(
+    {
+        "data": {"cls": Data, "direct": "values"},
+        "time": {"cls": TimeFieldMember, "direct": all},
+        "parameter": {"cls": ParameterFieldMember, "direct": ("variable", "units")},
+        "geography": {"cls": GeographyFieldMember, "direct": all},
+        "vertical": {"cls": VerticalFieldMember, "direct": ("level", "layer")},
+        "ensemble": {"cls": EnsembleFieldMember, "direct": ("member",)},
+        "labels": {"cls": SimpleLabels},
+    }
+)
 @wrap_maths
 class Field(Base):
     """A class to represent a field in Earthkit.
@@ -140,7 +75,7 @@ class Field(Base):
     A field in Earthkit is a horizontal slice of the atmosphere/hydrosphere at
     a given time.
 
-    A Field object is composed of several parts:
+    A Field object is composed of several member:
     - data: the data values of the field
     - time: the time of the field
     - parameter: the parameter of the field
@@ -171,16 +106,6 @@ class Field(Base):
 
     """
 
-    _DATA = {"module": Data, "name": "data", "keys": "values"}
-    _TIME = {"module": Time, "name": "time", "direct": ("valid_datetime", "base_datetime", "step")}
-    _PARAMETER = {"module": Parameter, "name": "parameter"}
-    _GEOGRAPHY = {"module": Geography, "name": "geography"}
-    _VERTICAL = {"module": VerticalSpec, "name": "vertical", "direct": ("level", "layer")}
-    _ENSEMBLE = {"module": EnsembleSpec, "name": "ensemble", "direct": ("member",)}
-    _LABELS = {"module": Labels, "name": "labels"}
-    _MEMBER_KEYS = set()
-    _DUMP_ORDER = ["parameter", "time", "vertical", "ensemble", "geography"]
-
     def __init__(
         self,
         *,
@@ -194,24 +119,40 @@ class Field(Base):
     ):
 
         self._data = data
-        self._time = time
-        self._parameter = parameter
-        self._geography = geography
-        self._vertical = vertical
-        self._ensemble = ensemble
         self._labels = labels
-        self._private = dict()
 
         self._members = {
-            self._DATA["name"]: self._data,
-            self._TIME["name"]: self._time,
-            self._PARAMETER["name"]: self._parameter,
-            self._GEOGRAPHY["name"]: self._geography,
-            self._VERTICAL["name"]: self._vertical,
-            self._ENSEMBLE["name"]: self._ensemble,
-            self._LABELS["name"]: self._labels,
+            MEMBER_NAMES.data: data,
+            MEMBER_NAMES.time: time,
+            MEMBER_NAMES.parameter: parameter,
+            MEMBER_NAMES.geography: geography,
+            MEMBER_NAMES.vertical: vertical,
+            MEMBER_NAMES.ensemble: ensemble,
+            MEMBER_NAMES.labels: labels,
         }
 
+        self._private = dict()
+
+        # self._data = data
+        # self._time = time
+        # self._parameter = parameter
+        # self._geography = geography
+        # self._vertical = vertical
+        # self._ensemble = ensemble
+        # self._labels = labels
+        # self._private = dict()
+
+        # self._members = {
+        #     self._DATA["name"]: self._data,
+        #     self._TIME["name"]: self._time,
+        #     self._PARAMETER["name"]: self._parameter,
+        #     # self._GEOGRAPHY["name"]: self._geography,
+        #     self._VERTICAL["name"]: self._vertical,
+        #     self._ENSEMBLE["name"]: self._ensemble,
+        #     # self._LABELS["name"]: self._labels,
+        # }
+
+    def _check(self):
         self._check()
 
     @classmethod
@@ -241,20 +182,24 @@ class Field(Base):
         kwargs = kwargs.copy()
         _kwargs = {}
 
-        for name in [
-            Field._DATA["name"],
-            Field._TIME["name"],
-            Field._PARAMETER["name"],
-            Field._GEOGRAPHY["name"],
-            Field._VERTICAL["name"],
-            Field._ENSEMBLE["name"],
-            Field._LABELS["name"],
-        ]:
+        for name in MEMBER_NAMES:
+
+            # for name in [
+            #     Field._DATA["name"],
+            #     Field._TIME["name"],
+            #     Field._PARAMETER["name"],
+            #     # Field._GEOGRAPHY["name"],
+            #     Field._VERTICAL["name"],
+            #     Field._ENSEMBLE["name"],
+            #     # Field._LABELS["name"],
+            # ]:
             v = kwargs.pop(name, None)
             if v is not None:
                 _kwargs[name] = v
             else:
-                _kwargs[name] = getattr(field, "_" + name)
+                _kwargs[name] = field._members[name]
+
+                # getattr(field, "_" + name)
 
         r = field.__class__(**_kwargs, **kwargs)
 
@@ -327,17 +272,27 @@ class Field(Base):
     @property
     def ensemble(self):
         """Ensemble: Return the ensemble specification of the field."""
-        return self._ensemble.data
+        return self._members[MEMBER_NAMES.ensemble].spec
 
     @property
     def time(self):
         """Time: Return the time specification of the field."""
-        return self._time.data
+        return self._members[MEMBER_NAMES.time].spec
 
     @property
     def vertical(self):
         """Vertical: Return the vertical specification of the field."""
-        return self._vertical.data
+        return self._members[MEMBER_NAMES.vertical].spec
+
+    @property
+    def parameter(self):
+        """Parameter: Return the vertical specification of the field."""
+        return self._members[MEMBER_NAMES.parameter].spec
+
+    @property
+    def geography(self):
+        """Geography: Return the geography specification of the field."""
+        return self._members[MEMBER_NAMES.geography].spec
 
     @classmethod
     def from_array(cls, array):
@@ -349,12 +304,12 @@ class Field(Base):
         return get_backend(self.values)
 
     def free(self):
-        self.data = self.data.Offloader(self.data)
+        self._data = self._data.Offloader(self._data)
 
-    @property
-    def values(self):
-        """array-like: Return the values of the field."""
-        return self._data.values
+    # @property
+    # def values(self):
+    #     """array-like: Return the values of the field."""
+    #     return self._data.values
 
     def to_numpy(self, flatten=False, dtype=None, copy=True, index=None):
         r"""Return the values stored in the field as an ndarray.
@@ -782,7 +737,7 @@ class Field(Base):
             if member:
                 _kwargs[member_name][key_name] = v
             else:
-                _kwargs[self._LABELS_NAME][k] = v
+                _kwargs[self._MEMBER_NAMES.labels][k] = v
 
         if _kwargs:
             r = {}
@@ -797,7 +752,7 @@ class Field(Base):
                 raise ValueError("No valid keys to set in the field.")
         return None
 
-    def set_values(self, array):
+    def _set_values(self, array):
         data = self._data.set_values(array)
         return Field.from_field(self, data=data)
 
@@ -1142,7 +1097,7 @@ class Field(Base):
         if ll:
             sample = r.get("value", None)
             if sample is None:
-                sample = self.data.get_values(dtype=dtype)
+                sample = self._data.get_values(dtype=dtype)
             for k, v in zip(ll.keys(), convert_array(list(ll.values()), target_array_sample=sample)):
                 r[k] = v
 
@@ -1272,7 +1227,8 @@ class Field(Base):
         'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
 
         """
-        return {"base_time": self._time.base_datetime, "valid_time": self._time.valid_datetime}
+        time = self._members[self._MEMBER_NAMES.time]
+        return {"base_time": time.base_datetime, "valid_time": time.valid_datetime}
 
     def sel(self, *args, **kwargs):
         pass
@@ -1285,7 +1241,7 @@ class Field(Base):
 
     def _unary_op(self, oper):
         v = oper(self.values)
-        r = self.set_values(v)
+        r = self._set_values(v)
         return r
 
     def _binary_op(self, oper, y):
@@ -1300,7 +1256,7 @@ class Field(Base):
         vx = self.values
         vy = y.values
         v = oper(vx, vy)
-        r = self.set_values(v)
+        r = self._set_values(v)
         return r
 
     def __getstate__(self):

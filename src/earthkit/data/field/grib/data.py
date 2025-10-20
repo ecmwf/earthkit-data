@@ -8,7 +8,7 @@
 #
 
 
-from earthkit.data.specs.data import SimpleData
+from earthkit.data.field.data import SimpleData
 
 from .collector import GribContextCollector
 

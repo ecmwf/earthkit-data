@@ -126,6 +126,9 @@ class Labels(Spec):
 
 
 class SimpleLabels(dict, Labels):
+    NAME = "labels"
+    ALL_KEYS = []  # All keys are allowed
+
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         def _cast(v):
             if callable(astype):

@@ -10,14 +10,16 @@
 
 from abc import abstractmethod
 
-from .spec import SimpleSpec
+# from .spec import SimpleSpec
+from .spec import Spec
 from .spec import normalise_set_kwargs
 from .spec import spec_aliases
 
 
 @spec_aliases
-class Geography(SimpleSpec):
-    KEYS = ("latitudes", "longitudes", "projection", "unique_grid_id", "shape", "grid_type")
+class Geography(Spec):
+    # _SET_KEYS = ("latitudes", "longitudes")
+    # _SET_KEYS = ("latitudes", "longitudes", "projection", "unique_grid_id", "shape", "grid_type")
 
     @property
     @abstractmethod
@@ -90,61 +92,81 @@ class Geography(SimpleSpec):
         r"""Return the grid specification."""
         pass
 
-
-class SimpleGeography(Geography):
     @classmethod
     def from_dict(cls, data, shape_hint=None):
-        from .dict.geography import make_geography
+        from ..dict.geography import make_geography
 
         spec = make_geography(data, shape_hint=shape_hint)
         return spec
 
-    @classmethod
-    def from_grib(cls, handle):
-        from .grib.geography import GribGeography
-
-        return GribGeography(handle)
-
-    @classmethod
-    def from_xarray(cls, owner, selection):
-        from .xarray.geography import XArrayGeography
-
-        return XArrayGeography(owner, selection)
-
     def set(self, *args, shape_hint=None, **kwargs):
         kwargs = normalise_set_kwargs(self, *args, add_spec_keys=False, **kwargs)
-
         keys = set(kwargs.keys())
 
+        if keys == {"grid_spec"}:
+            spec = self.from_grid_spec(kwargs["grid_spec"])
+            return spec
         if keys == {"latitudes", "longitudes"}:
             spec = self.from_dict(kwargs, shape_hint=shape_hint)
             return spec
 
         raise ValueError(f"Invalid {keys=} for Geography specification")
 
-    def to_dict(self):
-        return {
-            "shape": self.shape,
-            "grid_type": self.grid_type,
-            "bounding_box": self.bounding_box,
-        }
 
-    @property
-    def grid_spec(self):
-        return None
+# class GeographyFieldSpec(FieldSpecAdapter):
+#     @classmethod
+#     def from_dict(cls, data, shape_hint=None):
+#         from .dict.geography import make_geography
 
-    def get_grib_context(self, context):
-        pass
+#         spec = make_geography(data, shape_hint=shape_hint)
+#         return spec
 
-    def namespace(self, owner, name, result):
-        if name is None or name == "geography" or (isinstance(name, (list, tuple)) and "geography" in name):
-            result["geography"] = self.to_dict()
+#     # @classmethod
+#     # def from_grib(cls, handle):
+#     #     from .grib.geography import GribGeography
 
-    def check(self, owner):
-        pass
+#     #     return GribGeography(handle)
 
-    def __getstate__(self):
-        pass
+#     # @classmethod
+#     # def from_xarray(cls, owner, selection):
+#     #     from .xarray.geography import XArrayGeography
 
-    def __setstate__(self, state):
-        pass
+#     #     return XArrayGeography(owner, selection)
+
+#     def set(self, *args, shape_hint=None, **kwargs):
+#         kwargs = normalise_set_kwargs(self, *args, add_spec_keys=False, **kwargs)
+
+#         keys = set(kwargs.keys())
+
+#         if keys == {"latitudes", "longitudes"}:
+#             spec = self.from_dict(kwargs, shape_hint=shape_hint)
+#             return spec
+
+#         raise ValueError(f"Invalid {keys=} for Geography specification")
+
+#     def to_dict(self):
+#         return {
+#             "shape": self.shape,
+#             "grid_type": self.grid_type,
+#             "bounding_box": self.bounding_box,
+#         }
+
+#     @property
+#     def grid_spec(self):
+#         return None
+
+#     def get_grib_context(self, context):
+#         pass
+
+#     def namespace(self, owner, name, result):
+#         if name is None or name == "geography" or (isinstance(name, (list, tuple)) and "geography" in name):
+#             result["geography"] = self.to_dict()
+
+#     def check(self, owner):
+#         pass
+
+#     def __getstate__(self):
+#         pass
+
+#     def __setstate__(self, state):
+#         pass

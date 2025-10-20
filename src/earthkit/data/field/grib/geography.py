@@ -8,7 +8,7 @@
 #
 
 
-from earthkit.data.specs.geography import SimpleGeography
+from earthkit.data.field.spec.geography import SimpleGeography
 
 
 def missing_is_none(x):
