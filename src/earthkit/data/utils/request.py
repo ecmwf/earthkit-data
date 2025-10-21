@@ -49,6 +49,23 @@ class RequestBuilder:
             A single request dictionary or a list/tuple of request dictionaries.
         normaliser : callable, optional
             A function to normalise each request dictionary.
+
+        Attributes
+        ----------
+        raw_requests : list of dict
+            The raw request dictionaries before normalisation and splitting.
+        requests : list of dict
+            The final list of request dictionaries after normalisation and splitting.
+
+        The following logic is applied to build the requests:
+        1. Combine all dictionaries from `args` and `request` into a single list of
+           request dictionaries.
+        2. If `kwargs` are provided, they are merged into each request dictionary. If only kwargs are provided,
+           they form a single request dictionary.
+        3. Each request dictionary is normalised using the `normaliser` function if provided.
+        4. If a request dictionary contains a `split_on` key, the request is split into multiple
+        requests based on the specified keys and their values.
+
         """
         self.owner = owner
         self.normaliser = normaliser or (lambda **r: r)

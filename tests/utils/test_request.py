@@ -14,7 +14,7 @@ import pytest
 from earthkit.data.utils.request import RequestBuilder
 
 
-def normaliser_func(r):
+def normaliser_func(**r):
     return r
 
 
