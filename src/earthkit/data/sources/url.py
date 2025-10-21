@@ -111,6 +111,45 @@ def download_and_cache(
     return path
 
 
+def download_to_target(
+    url,
+    target,
+    *,
+    parts=None,
+    verify=True,
+    chunk_size=1024 * 1024,
+    range_method="auto",
+    http_headers=None,
+    fake_headers=None,  # When HEAD is not allowed but you know the size
+    **kwargs,
+):
+    LOG.debug("URL %s", url)
+
+    downloader = Downloader(
+        url,
+        chunk_size=chunk_size,
+        timeout=CONFIG.get("url-download-timeout"),
+        verify=verify,
+        parts=parts,
+        range_method=range_method,
+        http_headers=http_headers,
+        fake_headers=fake_headers,
+        statistics_gatherer=record_statistics,
+        progress_bar=progress_bar,
+        resume_transfers=True,
+        override_target_file=False,
+        download_file_extension=".download",
+    )
+
+    path = downloader.local_path()
+    if path is not None:
+        return
+
+    downloader.download(target)
+
+    return downloader.cache_data()
+
+
 class UrlSourcePathAndParts(PathAndParts):
     compress = True
 
@@ -228,7 +267,6 @@ class Url(UrlBase):
             self._download()
 
     def mutate(self):
-
         if self.other_source:
             from earthkit.data import from_source
 
