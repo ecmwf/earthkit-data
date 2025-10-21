@@ -9,8 +9,9 @@
 
 import logging
 
-from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.decorators import normalize
+from earthkit.data.utils.request import FileRequestRetriever
+from earthkit.data.utils.request import RequestBuilder
 
 from .file import FileSource
 from .prompt import APIKeyPrompt
@@ -45,41 +46,38 @@ class MARSAPIKeyPrompt(APIKeyPrompt):
 
 
 class ECMWFApi(FileSource):
-    def __init__(self, *args, prompt=True, log="default", **kwargs):
+    def __init__(self, *args, request=None, prompt=True, log="default", **kwargs):
         super().__init__()
 
         self.prompt = prompt
         self.log = log
 
-        request = {}
-        for a in args:
-            request.update(a)
-        request.update(kwargs)
+        request_builder = RequestBuilder(
+            self,
+            *args,
+            request=request,
+            normaliser=self._normalise_request,
+            **kwargs,
+        )
 
-        requests = self.requests(**request)
+        self.request = request_builder.requests
+
+        if len(self.request) == 0:
+            raise ValueError("ECMWFApi: no requests to process")
 
         self.expect_any = False
-        for k, v in requests[0].items():
+        for k, v in self.request[0].items():
             if k.lower() == "expect" and isinstance(v, str) and v.lower() == "any":
                 self.expect_any = True
                 break
 
         self.service()  # Trigger password prompt before threading
 
-        nthreads = min(self.config("number-of-download-threads"), len(requests))
+        # Download each request in parallel when the config allows it
+        retriever = FileRequestRetriever(self, retriever=self._retrieve_one)
+        self.path = retriever.retrieve(self.request)
 
-        if nthreads < 2:
-            self.path = [self._retrieve(r) for r in requests]
-        else:
-            from earthkit.data.utils.progbar import tqdm
-
-            with SoftThreadPool(nthreads=nthreads) as pool:
-                futures = [pool.submit(self._retrieve, r) for r in requests]
-
-                iterator = (f.result() for f in futures)
-                self.path = list(tqdm(iterator, leave=True, total=len(requests)))
-
-    def _retrieve(self, request):
+    def _retrieve_one(self, request, *args):
         def retrieve(target, request):
             self.service().execute(request, target)
 
@@ -91,20 +89,9 @@ class ECMWFApi(FileSource):
     @normalize("param", "variable-list(mars)")
     @normalize("date", "date-list(%Y-%m-%d)")
     @normalize("area", "bounding-box(list)")
-    def requests(self, **kwargs):
+    def _normalise_request(self, **kwargs):
         kwargs.pop("accumulation_period", None)
-        split_on = kwargs.pop("split_on", None)
-        if split_on is None or not isinstance(kwargs.get(split_on), (list, tuple)):
-            return [kwargs]
-
-        result = []
-
-        for v in kwargs[split_on]:
-            r = dict(**kwargs)
-            r[split_on] = v
-            result.append(r)
-
-        return result
+        return kwargs
 
     def to_pandas(self, **kwargs):
         pandas_read_csv_kwargs = dict(
