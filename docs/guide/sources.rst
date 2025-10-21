@@ -633,15 +633,25 @@ multi
 ads
 ---
 
-.. py:function:: from_source("ads", dataset, *args, **kwargs)
+.. py:function:: from_source("ads", dataset, *args, request=None,  **kwargs)
   :noindex:
 
-  The ``ads`` source accesses the `Copernicus Atmosphere Data Store`_ (ADS), using the cdsapi_ package.  In addition to data retrieval, the request has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively. It can
-  also contain the earthkit-data specific :ref:`split_on <split_on>` parameter.
+  The ``ads`` source accesses the `Copernicus Atmosphere Data Store`_ (ADS), using the cdsapi_ package.
 
   :param str dataset: the name of the ADS dataset
-  :param tuple *args: specify the request as a dict
+  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+          a list/tuple of dictionaries
+  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in earthkit-data version 0.18.0*
+  :type request: dict, list/tuple of dicts, None
   :param dict **kwargs: other keyword arguments specifying the request
+
+  .. note::
+
+    .. include:: misc/request_args.rst
+
+
+  The requests can contain GRIB post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction, respectively. They can
+  also contain the earthkit-data specific :ref:`split_on <split_on>` parameter.
 
   .. note::
 
@@ -659,10 +669,12 @@ ads
       ds = ekd.from_source(
           "ads",
           "cams-global-reanalysis-eac4",
-          variable=["particulate_matter_10um", "particulate_matter_1um"],
-          area=[50, -50, 20, 50],  # N,W,S,E
-          date="2012-12-12",
-          time="12:00",
+          request=dict(
+              variable=["particulate_matter_10um", "particulate_matter_1um"],
+              area=[50, -50, 20, 50],  # N,W,S,E
+              date="2012-12-12",
+              time="12:00",
+          ),
       )
 
   Data downloaded from the ADS is stored in the the :ref:`cache <caching>`.
@@ -679,20 +691,29 @@ ads
 cds
 ---
 
-.. py:function:: from_source("cds", dataset, *args, prompt=True, **kwargs)
+.. py:function:: from_source("cds", dataset, *args, request=None, prompt=True, **kwargs)
   :noindex:
 
-  The ``cds`` source accesses the `Copernicus Climate Data Store`_ (CDS), using the cdsapi_ package. In addition to data retrieval, the request has post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction respectively. It can
-  also contain the earthkit-data specific :ref:`split_on <split_on>` parameter.
+  The ``cds`` source accesses the `Copernicus Climate Data Store`_ (CDS), using the cdsapi_ package.
 
   :param str dataset: the name of the CDS dataset
-  :param tuple *args: specify the request as dict. A sequence of dicts can be used to specify multiple requests.
+  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+          a list/tuple of dictionaries
+  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in earthkit-data version 0.18.0*
+  :type request: dict, list/tuple of dicts, None
   :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for cdsapi_ and write them into the default RC file ``~/.cdsapirc``. The prompt only appears when:
 
     - no cdsapi_ RC file exists at the default location ``~/.cdsapirc``
     - no cdsapi_ RC file exists at the location specified via the ``CDSAPI_RC`` environment variable
     - no credentials specified via the ``CDSAPI_URL`` and ``CDSAPI_KEY`` environment variables
   :param dict **kwargs: other keyword arguments specifying the request
+
+  .. note::
+
+    .. include:: misc/request_args.rst
+
+  The requests can contain GRIB post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction, respectively. They can
+  also contain the earthkit-data specific :ref:`split_on <split_on>` parameter.
 
   The following example retrieves ERA5 reanalysis GRIB data for a subarea for 2 surface parameters. The request is specified using ``kwargs``:
 
@@ -703,33 +724,13 @@ cds
       ds = ekd.from_source(
           "cds",
           "reanalysis-era5-single-levels",
-          variable=["2t", "msl"],
-          product_type="reanalysis",
-          area=[50, -10, 40, 10],  # N,W,S,E
-          grid=[2, 2],
-          date="2012-05-10",
+          request=dict(
+              product_type="reanalysis",
+              area=[50, -10, 40, 10],  # N,W,S,E
+              grid=[2, 2],
+              date="2012-05-10",
+          ),
       )
-
-  The same retrieval can be defined by passing the request as a positional argument:
-
-  .. code-block:: python
-
-      import earthkit.data as ekd
-
-      req = dict(
-          variable=["2t", "msl"],
-          product_type="reanalysis",
-          area=[50, -10, 40, 10],  # N,W,S,E
-          grid=[2, 2],
-          date="2012-05-10",
-      )
-
-      ds = ekd.from_source(
-          "cds",
-          "reanalysis-era5-single-levels",
-          req,
-      )
-
 
   Data downloaded from the CDS is stored in the the :ref:`cache <caching>`.
 
@@ -894,20 +895,15 @@ fdb
 mars
 --------------
 
-.. py:function:: from_source("mars", *args, prompt=True, log="default", **kwargs)
+.. py:function:: from_source("mars", *args, request=None, prompt=True, log="default", **kwargs)
   :noindex:
 
-  The ``mars`` source will retrieve data from the ECMWF MARS (Meteorological Archival and Retrieval System) archive. In addition
-  to data retrieval, the request specified as ``*args`` and/or ``**kwargs`` also has GRIB post-processing options such as ``grid`` and ``area`` for regridding and
-  sub-area extraction, respectively.
+  The ``mars`` source retrieves data from the ECMWF `MARS <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_ (Meteorological Archival and Retrieval System) archive.
 
-  To figure out which data you need, or discover relevant data available in MARS, see the publicly accessible `MARS catalog`_ (or this `access restricted catalog <https://apps.ecmwf.int/mars-catalogue/>`_).
-
-  If the ``use-standalone-mars-client-when-available`` :ref:`config option<config>` is True and the MARS client is installed (e.g. at ECMWF) the MARS access is direct. In this case the MARS client command can be specified via the ``MARS_CLIENT_EXECUTABLE`` environment variable. When it is not set the ``"/usr/local/bin/mars"`` path will be used.
-
-  If the standalone MARS client is not available or not enabled the `web API`_ will be used. In order to use the `web API`_ you will need to register and retrieve an access token. For a more extensive documentation about MARS, please refer to the `MARS user documentation`_.
-
-  :param tuple *args: positional arguments specifying the request as a dict
+  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+          a list/tuple of dictionaries
+  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in earthkit-data version 0.18.0*
+  :type request: dict, list/tuple of dicts, None
   :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for `web API`_ and write them into the default RC file ``~/.ecmwfapirc``. The prompt only appears when:
 
     - no `web API`_ RC file exists at the default location ``~/.ecmwfapirc``
@@ -942,6 +938,19 @@ mars
   :type log: str, None, callable, dict
   :param dict **kwargs: other keyword arguments specifying the request
 
+  .. note::
+
+    .. include:: misc/request_args.rst
+
+  The requests can contain GRIB post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction, respectively. They can
+  also contain the earthkit-data specific :ref:`split_on <split_on>` parameter.
+
+  To figure out which data you need, or discover relevant data available in MARS, see the publicly accessible `MARS catalog`_ (or this `access restricted catalog <https://apps.ecmwf.int/mars-catalogue/>`_).
+
+  If the ``use-standalone-mars-client-when-available`` :ref:`config option<config>` is True and the MARS client is installed (e.g. at ECMWF) the MARS access is direct. In this case the MARS client command can be specified via the ``MARS_CLIENT_EXECUTABLE`` environment variable. When it is not set the ``"/usr/local/bin/mars"`` path will be used.
+
+  If the standalone MARS client is not available or not enabled the `web API`_ will be used. In order to use the `web API`_ you will need to register and retrieve an access token. For a more extensive documentation about MARS, please refer to the `MARS user documentation`_.
+
   The following example retrieves analysis GRIB data for a subarea for 2 surface parameters:
 
   .. code-block:: python
@@ -950,7 +959,7 @@ mars
 
       ds = ekd.from_source(
           "mars",
-          {
+          request={
               "param": ["2t", "msl"],
               "levtype": "sfc",
               "area": [50, -50, 20, 50],

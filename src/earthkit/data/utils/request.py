@@ -45,7 +45,7 @@ class RequestBuilder:
             Positional arguments representing request dictionaries. Each item can be dictionary or a list/tuple of dictionaries.
         **kwargs : dict
             Keyword arguments representing request parameters.
-        request : dict or list of dict, optional
+        request :x, optional
             A single request dictionary or a list/tuple of request dictionaries.
         normaliser : callable, optional
             A function to normalise each request dictionary.
