@@ -8,7 +8,7 @@ Version 0.17.0
 New features
 ++++++++++++++++++++++++++++++
 
-- Implemented the ``allow_holes`` option in the Xarray engine to allow using GRIB input not forming a complete hypercube (:pr:`734`). The default is ``allow_holes=False``. See the notebook example:
+- Implemented the ``allow_holes`` option in the Xarray engine to allow using GRIB input not forming a complete hypercube (:pr:`780`). The default is ``allow_holes=False``. See the notebook example:
 
     - :ref:`/examples/xarray_engine_holes.ipynb`
 
