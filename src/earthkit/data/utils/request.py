@@ -45,7 +45,7 @@ class RequestBuilder:
             Positional arguments representing request dictionaries. Each item can be dictionary or a list/tuple of dictionaries.
         **kwargs : dict
             Keyword arguments representing request parameters.
-        request :x, optional
+        request : dict or list/tuple of dict, optional
             A single request dictionary or a list/tuple of request dictionaries.
         normaliser : callable, optional
             A function to normalise each request dictionary.
@@ -78,7 +78,7 @@ class RequestBuilder:
     def _build_request_args(self, *args, request=None, **kwargs):
         r = []
         if request is not None:
-            r.extend(request if isinstance(request, list) else [request])
+            r.extend(request if isinstance(request, (list, tuple)) else [request])
 
         for a in args:
             if not isinstance(a, (list, tuple)):

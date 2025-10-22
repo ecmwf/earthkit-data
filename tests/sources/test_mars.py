@@ -13,6 +13,7 @@ import datetime
 
 import pytest
 
+from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import NO_MARS
@@ -98,17 +99,19 @@ def test_mars_grib_multi(_args, req, _kwargs):
 @pytest.mark.download
 @pytest.mark.skipif(NO_MARS, reason="No access to MARS")
 def test_mars_grib_parallel():
-    req = dict(param="t", levelist=[925, 850, 700, 500], date=YESTERDAY, split_on="levelist")
+    with config.temporary("number-of-download-threads", 4):
 
-    ds = from_source(
-        "mars",
-        request=req,
-    )
-    assert len(ds) == 4
-    assert ds.metadata("param") == ["t"] * 4
-    assert ds.metadata("levelist") == [925, 850, 700, 500]
-    assert not hasattr(ds, "path")
-    assert len(ds._indexes) == 4
+        req = dict(param="t", levelist=[925, 850, 700, 500], date=YESTERDAY, split_on="levelist")
+
+        ds = from_source(
+            "mars",
+            request=req,
+        )
+        assert len(ds) == 4
+        assert ds.metadata("param") == ["t"] * 4
+        assert ds.metadata("levelist") == [925, 850, 700, 500]
+        assert not hasattr(ds, "path")
+        assert len(ds._indexes) == 4
 
 
 @pytest.mark.long_test
