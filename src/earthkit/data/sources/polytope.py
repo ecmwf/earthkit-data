@@ -14,8 +14,7 @@ try:
 except ImportError:
     raise ImportError("Polytope access requires 'polytope-client' to be installed")
 
-from earthkit.data.core.thread import SoftThreadPool
-from earthkit.data.utils.progbar import tqdm
+from earthkit.data.utils.request import RequestBuilder
 
 from . import Source
 from .file import File
@@ -65,7 +64,8 @@ class Polytope(Source):
     def __init__(
         self,
         dataset,
-        request,
+        *args,
+        request=None,
         stream=True,
         **kwargs,
     ) -> None:
@@ -82,14 +82,22 @@ class Polytope(Source):
                 self._stream_kwargs[k] = kwargs.pop(k)
 
         self.stream = stream
+        self.dataset = dataset
 
-        self.request = dict(dataset=dataset, request=request)
+        request_builder = RequestBuilder(self, *args, request=request)
+        self.request = request_builder.requests
 
         # all the kwargs are passed to the client!
         self.client = polytope.api.Client(**kwargs)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.request['dataset']}, {self.request['request']})"
+        r = f"{self.__class__.__name__}({self.dataset}"
+        if len(self.request) == 1:
+            r += f", request={self.request[0]}"
+        else:
+            r += f", request={self.request}"
+        r += ")"
+        return r
 
     def mutate(self) -> Source:
         if self.stream:
@@ -98,9 +106,12 @@ class Polytope(Source):
             return self._retrieve()
 
     def _mutate_stream(self) -> Source:
+        if len(self.request) != 1:
+            raise ValueError("Polytope stream access only supports a single request at the moment")
+
         pointers = self.client.retrieve(
-            self.request["dataset"],
-            self.request["request"],
+            self.dataset,
+            self.request[0],
             pointer=True,
             asynchronous=False,
         )
@@ -115,13 +126,9 @@ class Polytope(Source):
         )
 
     def _retrieve(self) -> Source:
-        requests = self.request["request"]
-        if not isinstance(requests, list):
-            requests = [requests]
+        from earthkit.data.utils.request import FileRequestRetriever
 
-        dataset = self.request["dataset"]
-
-        def _retrieve_one(dataset, request):
+        def _retrieve_one(request, dataset):
             """Retrieve a single request and cache the result."""
 
             def retrieve(target, args):
@@ -152,16 +159,8 @@ class Polytope(Source):
             )
 
         # Download each request in parallel when the config allows it
-        nthreads = min(self.config("number-of-download-threads"), len(requests))
-
-        if nthreads < 2:
-            path = [_retrieve_one(dataset, r) for r in requests]
-        else:
-            with SoftThreadPool(nthreads=nthreads) as pool:
-                futures = [pool.submit(_retrieve_one, dataset, r) for r in requests]
-
-                iterator = (f.result() for f in futures)
-                path = list(tqdm(iterator, leave=True, total=len(requests)))
+        retriever = FileRequestRetriever(self, retriever=_retrieve_one)
+        path = retriever.retrieve(self.request, self.dataset)
 
         # TODO: for simplicity we assume all retrieved files have the same content-type. Revisit if needed.
         content_type = None
