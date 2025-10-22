@@ -32,8 +32,6 @@ else:
         while batch := tuple(itertools.islice(it, n)):
             yield batch
 
-
-class RequestBuilder:
     def __init__(self, owner, *args, request=None, normaliser=None, **kwargs):
         """Build requests from args, request and kwargs.
 
@@ -58,12 +56,13 @@ class RequestBuilder:
             The final list of request dictionaries after normalisation and splitting.
 
         The following logic is applied to build the requests:
-        1. Combine all dictionaries from `args` and `request` into a single list of
+
+        1. Combine all dictionaries found in ``*args`` and ``request`` into a single list of
            request dictionaries.
-        2. If `kwargs` are provided, they are merged into each request dictionary. If only kwargs are provided,
-           they form a single request dictionary.
+        2. If ``**kwargs`` are provided, they are merged into each request dictionary. If only kwargs
+           are provided (no ``request`` or ``*args`` specified), they form a single request dictionary.
         3. Each request dictionary is normalised using the `normaliser` function if provided.
-        4. If a request dictionary contains a `split_on` key, the request is split into multiple
+        4. If a request dictionary contains the `split_on` key, the request is split into multiple
         requests based on the specified keys and their values.
 
         """

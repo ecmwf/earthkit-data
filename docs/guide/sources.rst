@@ -641,7 +641,7 @@ ads
   :param str dataset: the name of the ADS dataset
   :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
-  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in earthkit-data version 0.18.0*
+  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param dict **kwargs: other keyword arguments specifying the request
 
@@ -699,7 +699,7 @@ cds
   :param str dataset: the name of the CDS dataset
   :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
-  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in earthkit-data version 0.18.0*
+  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for cdsapi_ and write them into the default RC file ``~/.cdsapirc``. The prompt only appears when:
 
@@ -759,15 +759,22 @@ ecfs
 ecmwf-open-data
 -------------------
 
-.. py:function:: from_source("ecmwf-open-data", *args, source="ecmwf", model="ifs", **kwargs)
+.. py:function:: from_source("ecmwf-open-data", *args, source="ecmwf", model="ifs", request=None,**kwargs)
   :noindex:
 
   The ``ecmwf-open-data`` source provides access to the `ECMWF open data`_, which is a subset of ECMWF real-time forecast data made available to the public free of charge.  It uses the `ecmwf-opendata <https://github.com/ecmwf/ecmwf-opendata>`_ package.
 
-  :param tuple *args: specify the request as a dict
+  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+          a list/tuple of dictionaries
+  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+  :type request: dict, list/tuple of dicts, None
   :param str source: either the name of the server to contact or a fully qualified URL. Possible values are "ecmwf" to access ECMWF's servers, or "azure" to access data hosted on Microsoft's Azure. Default is "ecmwf".
   :param str model: name of the model that produced the data. Use "ifs" for the physics-driven model and "aifs" for the data-driven model. Please note that "aifs" is currently experimental and only produces a small subset of fields. Default is "ifs".
   :param dict **kwargs: other keyword arguments specifying the request
+
+  .. note::
+
+    .. include:: misc/request_args.rst
 
   Details about the request format can be found `here <https://github.com/ecmwf/ecmwf-opendata>`__.
 
@@ -778,7 +785,8 @@ ecmwf-open-data
       import earthkit.data
 
       ds = earthkit.data.from_source(
-          "ecmwf-open-data", param=["2t", "msl"], levtype="sfc", step=[0, 6, 12]
+          "ecmwf-open-data",
+          requests=dict(param=["2t", "msl"], levtype="sfc", step=[0, 6, 12]),
       )
 
 
@@ -794,14 +802,17 @@ ecmwf-open-data
 fdb
 ---
 
-.. py:function:: from_source("fdb", *args, config=None, userconfig=None, stream=True, read_all=False, lazy=False, **kwargs)
+.. py:function:: from_source("fdb", *args, config=None, userconfig=None, request=None, stream=True, read_all=False, lazy=False, **kwargs)
   :noindex:
 
   The ``fdb`` source accesses the `FDB (Fields DataBase) <https://fields-database.readthedocs.io/en/latest/>`_, which is a domain-specific object store developed at ECMWF for storing, indexing and retrieving GRIB data. earthkit-data uses the `pyfdb <https://pyfdb.readthedocs.io/en/latest>`_ package to retrieve data from FDB.
 
-  :param tuple *args: positional arguments specifying the request as a dict
+  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+          a list/tuple of dictionaries, but current only one request is supported.
   :param dict,str config: the FDB configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 0.11.0*
   :param dict,str userconfig: the FDB user configuration directly passed to ``pyfdb.FDB()``. If not provided, the configuration is either read from the environment or the default configuration is used. *New in version 0.11.0*
+  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests, but current only one request is supported. *New in version 0.18.0*
+  :type request: dict, list/tuple of dicts, None
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
   :param bool read_all: if ``True``, all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :param bool lazy: if ``True``, the data is read in a lazy way. This means the following:
@@ -814,6 +825,10 @@ fdb
 
     When ``lazy=True`` the ``stream`` and ``read_all`` options are ignored. Please note that this is an **experimental** feature. *New in version 0.14.0*
   :param dict **kwargs: other keyword arguments specifying the request
+
+  .. note::
+
+    .. include:: misc/request_args.rst
 
   The following example retrieves analysis :ref:`grib` data for 3 surface parameters as stream.
   By default we will consume one message at a time and ``ds`` can only be used as an iterator:
@@ -834,7 +849,7 @@ fdb
       ...     "param": [151, 167, 168],
       ... }
       >>>
-      >>> ds = ekd.from_source("fdb", request)
+      >>> ds = ekd.from_source("fdb", request=request)
       >>> for f in ds:
       ...     print(f)
       ...
@@ -849,7 +864,7 @@ fdb
 
   .. code-block:: python
 
-      >>> ds = ekd.from_source("fdb", request)
+      >>> ds = ekd.from_source("fdb", request=request)
       >>> for f in ds.batched(2):
       ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
       ...
@@ -863,7 +878,7 @@ fdb
 
   .. code-block:: python
 
-      >>> ds = ekd.from_source("fdb", request)
+      >>> ds = ekd.from_source("fdb", request=request)
       >>> for f in ds.group_by("time"):
       ...     print(f"len={len(f)} {f.metadata(('param', 'level'))}")
       ...
@@ -875,7 +890,7 @@ fdb
   .. code-block:: python
 
       >>> import earthkit.data as ekd
-      >>> ds = ekd.from_source("fdb", request, read_all=True)
+      >>> ds = ekd.from_source("fdb", request=request, read_all=True)
 
       # ds is empty at this point, but calling any method on it will
       # consume the whole stream
@@ -902,7 +917,7 @@ mars
 
   :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
           a list/tuple of dictionaries
-  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in earthkit-data version 0.18.0*
+  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
   :type request: dict, list/tuple of dicts, None
   :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for `web API`_ and write them into the default RC file ``~/.ecmwfapirc``. The prompt only appears when:
 
@@ -938,9 +953,7 @@ mars
   :type log: str, None, callable, dict
   :param dict **kwargs: other keyword arguments specifying the request
 
-  .. note::
-
-    .. include:: misc/request_args.rst
+  .. include:: misc/request_args.rst
 
   The requests can contain GRIB post-processing options such as ``grid`` and ``area`` for regridding and sub-area extraction, respectively. They can
   also contain the earthkit-data specific :ref:`split_on <split_on>` parameter.
@@ -997,20 +1010,28 @@ opendap
 polytope
 --------
 
-.. py:function:: from_source("polytope", collection, *args, address=None, user_email=None, user_key=None, stream=True, read_all=False, **kwargs)
+.. py:function:: from_source("polytope", collection, *args, address=None, user_email=None, user_key=None, request=None, stream=True, read_all=False, **kwargs)
   :noindex:
 
   The ``polytope`` source accesses the `Polytope web services <https://polytope.readthedocs.io/en/latest/>`_ , using the polytope-client_ package.
 
   :param str collection: the name of the polytope collection
-  :param tuple *args: specify the request as a dict
+  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or a list/tuple of dictionaries
   :param str address: specify the address of the polytope service
   :param str user_email: specify the user email credential. Must be used together with ``user_key``. This is an alternative to using the ``POLYTOPE_USER_EMAIL`` environment variable. *New in version 0.7.0*
   :param str user_key: specify the user key credential. Must be used together with ``user_email``. This is an alternative to using the ``POLYTOPE_USER_KEY`` environment variable. *New in version 0.7.0*
+  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+  :type request: dict, list/tuple of dicts, None
   :param bool stream: if ``True``, the data is read as a :ref:`stream <streams>`. Otherwise it is retrieved into a file and stored in the :ref:`cache <caching>`. Stream-based access only works for :ref:`grib` and CoverageJson data. See details about streams :ref:`here <streams>`.
   :param bool read_all: if ``True``, all the data is read into memory from a :ref:`stream <streams>`. Used when ``stream=True``. *New in version 0.8.0*
   :param dict **kwargs: other keyword arguments, these can include options passed to the polytope-client_
 
+  The following logic is applied to build the **requests**:
+
+    1. All individual dictionaries found in ``request`` and ``*args`` are used as separate requests.
+    2.  If a request contains the :ref:`split_on <split_on>` key, the request is split into multiple requests based on the specified keys and their values.
+
+  Please note that the preferred way to specify requests is via the ``request`` parameter, as it improves code readability.
 
   The following example retrieves GRIB data from the "ecmwf-mars" polytope collection:
 
@@ -1032,7 +1053,7 @@ polytope
           "domain": "g",
       }
 
-      ds = ekd.from_source("polytope", "ecmwf-mars", request, stream=False)
+      ds = ekd.from_source("polytope", "ecmwf-mars", request=request, stream=False)
 
   Data downloaded from the polytope service is stored in the :ref:`cache <caching>`.
 
@@ -1155,19 +1176,24 @@ s3
 wekeo
 -----
 
-.. py:function:: from_source("wekeo", dataset, *args, prompt=True, **kwargs)
+.. py:function:: from_source("wekeo", dataset, *args, request=None, prompt=True, **kwargs)
   :noindex:
 
   `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeo`` source provides access to `WEkEO`_ using the WEkEO grammar. The retrieval is based on the hda_ Python API.
 
   :param str dataset: the name of the WEkEO dataset
-  :param tuple *args: specify the request as a dict
+  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+          a list/tuple of dictionaries
+  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in version 0.18.0*
+  :type request: dict, list/tuple of dicts, None
   :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
 
     - no hda_ RC file exists at the default location ``~/.hdarc``
     - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
     - no credentials specified via the ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
   :param dict **kwargs: other keyword arguments specifying the request
+
+  .. include:: misc/request_args.rst
 
   The following example retrieves Normalized Difference Vegetation Index data derived from EO satellite imagery in NetCDF format:
 
@@ -1200,19 +1226,24 @@ wekeo
 wekeocds
 --------
 
-.. py:function:: from_source("wekeocds", dataset, *args, prompt=True, **kwargs)
+.. py:function:: from_source("wekeocds", dataset, *args, request=None, prompt=True, **kwargs)
   :noindex:
 
   `WEkEO`_ is the Copernicus DIAS reference service for environmental data and virtual processing environments. The ``wekeocds`` source provides access to `Copernicus Climate Data Store`_ (CDS) datasets served on `WEkEO`_ using the `cdsapi`_ grammar. The retrieval is based on the hda_ Python API.
 
   :param str dataset: the name of the WEkEO dataset
-  :param tuple *args: specify the request as a dict
+  :param tuple *args: positional arguments representing request dictionaries. Each item can be dictionary or
+          a list/tuple of dictionaries
+  :param request: specify the request as a dictionary. A list/tuple of dicts can be used to specify multiple requests. *New in  version 0.18.0*
+  :type request: dict, list/tuple of dicts, None
   :param bool prompt: if ``True``, it can offer a prompt to specify the credentials for hda_ and write them into the default RC file ``~/.hdarc``. The prompt only appears when:
 
     - no hda_ RC file exists at the default location ``~/.hdarc``
     - no hda_ RC file exists at the location specified via the ``HDA_RC`` environment variable
     - no credentials specified via the ``HDA_USER`` and ``HDA_PASSWORD`` environment variables
   :param dict **kwargs: other keyword arguments specifying the request
+
+  .. include:: misc/request_args.rst
 
   The following example retrieves ERA5 surface data for multiple days in GRIB format:
 
@@ -1223,13 +1254,15 @@ wekeocds
       ds = ekd.from_source(
           "wekeocds",
           "EO:ECMWF:DAT:REANALYSIS_ERA5_SINGLE_LEVELS_MONTHLY_MEANS_MONTHLY_MEANS",
-          variable=["2m_temperature", "mean_sea_level_pressure"],
-          product_type=["monthly_averaged_reanalysis_by_hour_of_day"],
-          year=["2012"],
-          month=["12"],
-          time=["11:00"],
-          data_format="grib",
-          download_format="zip",
+          requewst=dict(
+              variable=["2m_temperature", "mean_sea_level_pressure"],
+              product_type=["monthly_averaged_reanalysis_by_hour_of_day"],
+              year=["2012"],
+              month=["12"],
+              time=["11:00"],
+              data_format="grib",
+              download_format="zip",
+          ),
       )
 
   Data downloaded from WEkEO is stored in the the :ref:`cache <caching>`.
@@ -1248,6 +1281,8 @@ gribjump
 
 .. py:function:: from_source("gribjump", request, *, ranges=None, mask=None, indices=None, fetch_coords_from_fdb=False, fdb_kwargs=None, **kwargs)
   :noindex:
+
+  *New in version 0.17.0*
 
   The ``gribjump`` source enables fast retrieval of GRIB message subsets from the `FDB (Fields DataBase)`_ using the `gribjump <https://github.com/ecmwf/gribjump/>`_ library.
   Both `pygribjump <https://pypi.org/project/pygribjump/>`_ and `pyfdb`_ must be installed. The `pygribjump`_ package uses `findlibs <https://github.com/ecmwf/findlibs>`_ to locate an installation of the `gribjump`_ library.
