@@ -13,6 +13,9 @@ try:
 except ImportError:
     raise ImportError("ECMWF Open Data access requires 'ecmwf-opendata' to be installed")
 
+from earthkit.data.utils.request import FileRequestRetriever
+from earthkit.data.utils.request import RequestBuilder
+
 from .file import FileSource
 
 
@@ -21,24 +24,24 @@ class EODRetriever(FileSource):
     EODRetriever
     """
 
-    def __init__(self, *args, source="ecmwf", model="ifs", **kwargs):
+    def __init__(self, *args, source="ecmwf", model="ifs", request=None, **kwargs):
         super().__init__()
-        if len(args):
-            assert len(args) == 1
-            assert isinstance(args[0], dict)
-            assert not kwargs
-            kwargs = args[0]
 
-        self.source_kwargs = self.request(**kwargs)
+        request_builder = RequestBuilder(self, *args, request=request, **kwargs)
+        self.request = request_builder.requests
+
+        # self.source_kwargs = self.request(**kwargs)
 
         self.client = ecmwf.opendata.Client(source=source, model=model, preserve_request_order=True)
 
-        self.path = self._retrieve(self.source_kwargs)
+        # Download each request in parallel when the config allows it
+        retriever = FileRequestRetriever(self, retriever=self._retrieve_one)
+        self.path = retriever.retrieve(self.request)
 
     def connect_to_mirror(self, mirror):
         return mirror.connection_for_eod(self)
 
-    def _retrieve(self, request):
+    def _retrieve_one(self, request, *args):
         def retrieve(target, request):
             self.client.retrieve(request, target)
 
@@ -46,11 +49,6 @@ class EODRetriever(FileSource):
             retrieve,
             request,
         )
-
-    # @normalize("date", "date-list(%Y-%m-%d)")
-    # @normalize("area", "bounding-box(list)")
-    def request(self, **request):
-        return request
 
 
 source = EODRetriever
