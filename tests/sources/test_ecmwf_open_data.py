@@ -16,7 +16,7 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.testing import NO_EOD
 
-YESTERDAY = (datetime.datetime.utcnow() - datetime.timedelta(days=1)).strftime("%Y%m%d")
+YESTERDAY = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y%m%d")
 
 REQ_1 = dict(
     param="t",

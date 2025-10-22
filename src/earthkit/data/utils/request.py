@@ -32,6 +32,8 @@ else:
         while batch := tuple(itertools.islice(it, n)):
             yield batch
 
+
+class RequestBuilder:
     def __init__(self, owner, *args, request=None, normaliser=None, **kwargs):
         """Build requests from args, request and kwargs.
 

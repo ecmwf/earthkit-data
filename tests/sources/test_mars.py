@@ -9,6 +9,8 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+
 import pytest
 
 from earthkit.data import from_source
@@ -18,6 +20,9 @@ from earthkit.data.testing import NO_MARS_API
 from earthkit.data.testing import NO_MARS_DIRECT
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import write_to_file
+
+YESTERDAY = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y%m%d")
+
 
 REQ_1 = dict(
     param="2t",
@@ -70,6 +75,8 @@ def test_mars_grib_split_on():
     )
     assert len(ds) == 2
     assert ds.metadata("param") == ["2t", "msl"]
+    assert not hasattr(ds, "path")
+    assert len(ds._indexes) == 2
 
 
 @pytest.mark.long_test
@@ -85,6 +92,23 @@ def test_mars_grib_multi(_args, req, _kwargs):
     )
     assert len(ds) == 2
     assert ds.metadata("param") == ["2t", "msl"]
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_MARS, reason="No access to MARS")
+def test_mars_grib_parallel():
+    req = dict(param="t", levelist=[925, 850, 700, 500], date=YESTERDAY, split_on="levelist")
+
+    ds = from_source(
+        "mars",
+        request=req,
+    )
+    assert len(ds) == 4
+    assert ds.metadata("param") == ["t"] * 4
+    assert ds.metadata("levelist") == [925, 850, 700, 500]
+    assert not hasattr(ds, "path")
+    assert len(ds._indexes) == 4
 
 
 @pytest.mark.long_test
