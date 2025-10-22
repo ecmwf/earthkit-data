@@ -111,7 +111,7 @@ def test_fdb_grib_write(monkeypatch, use_kwargs):
         }
 
         if use_kwargs:
-            ds1 = from_source("fdb", request, config=config, stream=False)
+            ds1 = from_source("fdb", request=request, config=config, stream=False)
         else:
             monkeypatch.setenv("FDB5_CONFIG", str(config))
             ds1 = from_source("fdb", request, stream=False)
