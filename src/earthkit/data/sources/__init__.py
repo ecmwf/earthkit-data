@@ -28,7 +28,6 @@ class Source(Base):
     documentation = "-"
     citation = "-"
 
-    _dataset = None
     _parent = None
 
     source_filename = None
@@ -60,25 +59,10 @@ class Source(Base):
 
     def cache_file(self, create, args, **kwargs):
         owner = self.name
-        if self.dataset:
-            owner = self.dataset.name
         if owner is None:
             owner = re.sub(r"(?!^)([A-Z]+)", r"-\1", self.__class__.__name__).lower()
 
         return cache_file(owner, create, args, **kwargs)
-
-    @property
-    def dataset(self):
-        if self._dataset is None:
-            return None
-        return self._dataset()
-
-    @dataset.setter
-    def dataset(self, dataset):
-        self._set_dataset(weakref.ref(dataset))
-
-    def _set_dataset(self, dataset):
-        self._dataset = dataset
 
     @property
     def parent(self):
