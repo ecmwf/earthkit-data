@@ -9,12 +9,14 @@ build:
   - ecmwf/odc@develop
   - ecmwf/metkit@develop
   - ecmwf/fdb@develop
+  - ecmwf/gribjump@develop
   python_dependencies:
   - ecmwf/eccodes-python@develop
   - ecmwf/cfgrib@master
   - ecmwf/pdbufr@master
   - ecmwf/pyodc@develop
   - ecmwf/pyfdb@develop
+  - ecmwf/gribjump@develop
   - ecmwf/earthkit-utils@develop
   env:
   - ECCODES_SAMPLES_PATH=$ECCODES_DIR/share/eccodes/samples
