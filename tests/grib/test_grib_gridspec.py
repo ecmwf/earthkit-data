@@ -17,8 +17,8 @@ import yaml
 from earthkit.data import FieldList
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.specs.grib.grid_spec import GridSpecConverter
-from earthkit.data.specs.grib.grid_spec import make_gridspec
+from earthkit.data.field.grib.grid_spec import GridSpecConverter
+from earthkit.data.field.grib.grid_spec import make_gridspec
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.testing import earthkit_test_data_file

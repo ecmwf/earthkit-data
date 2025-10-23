@@ -37,7 +37,7 @@ class Ensemble:
         return self._member
 
     @classmethod
-    def from_dict(cls, d: dict):
+    def from_dict(cls, d: dict, allow_unused=False) -> "Ensemble":
         """Create a Ensemble object from a dictionary.
 
         Parameters
@@ -51,9 +51,10 @@ class Ensemble:
             The created Realisation instance.
         """
 
-        d = normalise_create_kwargs_2(cls, allowed_keys=cls._SET_KEYS, **d)
-        # print(" ->", d)
-        return cls(**d)
+        d1 = normalise_create_kwargs_2(
+            cls, d, allowed_keys=cls._SET_KEYS, allow_unused=allow_unused, remove_nones=True
+        )
+        return cls(**d1)
 
     def __getstate__(self):
         state = {}

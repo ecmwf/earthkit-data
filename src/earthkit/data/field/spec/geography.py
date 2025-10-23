@@ -19,7 +19,7 @@ from .spec import spec_aliases
 @spec_aliases
 class Geography(Spec):
     # _SET_KEYS = ("latitudes", "longitudes")
-    # _SET_KEYS = ("latitudes", "longitudes", "projection", "unique_grid_id", "shape", "grid_type")
+    _SET_KEYS = ("latitudes", "longitudes", "projection", "unique_grid_id", "shape", "grid_type")
 
     @property
     @abstractmethod
@@ -93,7 +93,7 @@ class Geography(Spec):
         pass
 
     @classmethod
-    def from_dict(cls, data, shape_hint=None):
+    def from_dict(cls, data, allow_unused=False, shape_hint=None):
         from ..dict.geography import make_geography
 
         spec = make_geography(data, shape_hint=shape_hint)
@@ -111,6 +111,15 @@ class Geography(Spec):
             return spec
 
         raise ValueError(f"Invalid {keys=} for Geography specification")
+
+    def to_dict(self):
+        return dict()
+
+    def __getstate__(self):
+        return super().__getstate__()
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
 
 
 # class GeographyFieldSpec(FieldSpecAdapter):

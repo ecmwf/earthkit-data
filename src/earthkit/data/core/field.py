@@ -20,7 +20,8 @@ from earthkit.data.core.order import Patch
 from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalize
-from earthkit.data.field.conf import NAMES as MEMBER_NAMES
+
+# from earthkit.data.field.conf import NAMES as MEMBER_NAMES
 from earthkit.data.field.conf import init_member_conf
 from earthkit.data.field.data import Data
 from earthkit.data.field.ensemble import EnsembleFieldMember
@@ -31,6 +32,7 @@ from earthkit.data.field.time import TimeFieldMember
 from earthkit.data.field.vertical import VerticalFieldMember
 from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.utils.array import reshape
+from earthkit.data.utils.array import target_shape
 from earthkit.data.utils.compute import wrap_maths
 from earthkit.data.utils.metadata.args import metadata_argument
 from earthkit.data.utils.metadata.args import metadata_argument_new
@@ -48,13 +50,13 @@ LS_KEYS = [
     "grid_type",
 ]
 
-DUMP_ORDER = [
-    MEMBER_NAMES.parameter,
-    MEMBER_NAMES.time,
-    MEMBER_NAMES.vertical,
-    MEMBER_NAMES.ensemble,
-    MEMBER_NAMES.geography,
-]
+# DUMP_ORDER = [
+#     MEMBER_NAMES.parameter,
+#     MEMBER_NAMES.time,
+#     MEMBER_NAMES.vertical,
+#     MEMBER_NAMES.ensemble,
+#     MEMBER_NAMES.geography,
+# ]
 
 
 @init_member_conf(
@@ -106,6 +108,10 @@ class Field(Base):
 
     """
 
+    # these will be initialized by the config decorator
+    _MEMBER_NAMES = None
+    _MEMBER_KEYS = None
+
     def __init__(
         self,
         *,
@@ -122,35 +128,16 @@ class Field(Base):
         self._labels = labels
 
         self._members = {
-            MEMBER_NAMES.data: data,
-            MEMBER_NAMES.time: time,
-            MEMBER_NAMES.parameter: parameter,
-            MEMBER_NAMES.geography: geography,
-            MEMBER_NAMES.vertical: vertical,
-            MEMBER_NAMES.ensemble: ensemble,
-            MEMBER_NAMES.labels: labels,
+            Field._MEMBER_NAMES.data: data,
+            Field._MEMBER_NAMES.time: time,
+            Field._MEMBER_NAMES.parameter: parameter,
+            Field._MEMBER_NAMES.geography: geography,
+            Field._MEMBER_NAMES.vertical: vertical,
+            Field._MEMBER_NAMES.ensemble: ensemble,
+            Field._MEMBER_NAMES.labels: labels,
         }
 
         self._private = dict()
-
-        # self._data = data
-        # self._time = time
-        # self._parameter = parameter
-        # self._geography = geography
-        # self._vertical = vertical
-        # self._ensemble = ensemble
-        # self._labels = labels
-        # self._private = dict()
-
-        # self._members = {
-        #     self._DATA["name"]: self._data,
-        #     self._TIME["name"]: self._time,
-        #     self._PARAMETER["name"]: self._parameter,
-        #     # self._GEOGRAPHY["name"]: self._geography,
-        #     self._VERTICAL["name"]: self._vertical,
-        #     self._ENSEMBLE["name"]: self._ensemble,
-        #     # self._LABELS["name"]: self._labels,
-        # }
 
     def _check(self):
         self._check()
@@ -182,24 +169,12 @@ class Field(Base):
         kwargs = kwargs.copy()
         _kwargs = {}
 
-        for name in MEMBER_NAMES:
-
-            # for name in [
-            #     Field._DATA["name"],
-            #     Field._TIME["name"],
-            #     Field._PARAMETER["name"],
-            #     # Field._GEOGRAPHY["name"],
-            #     Field._VERTICAL["name"],
-            #     Field._ENSEMBLE["name"],
-            #     # Field._LABELS["name"],
-            # ]:
+        for name in Field._MEMBER_NAMES:
             v = kwargs.pop(name, None)
             if v is not None:
                 _kwargs[name] = v
             else:
                 _kwargs[name] = field._members[name]
-
-                # getattr(field, "_" + name)
 
         r = field.__class__(**_kwargs, **kwargs)
 
@@ -237,23 +212,25 @@ class Field(Base):
 
     @classmethod
     def from_dict(cls, d):
-        from earthkit.data.specs.data import SimpleData
-        from earthkit.data.specs.ensemble import SimpleEnsemble
-        from earthkit.data.specs.geography import SimpleGeography
-        from earthkit.data.specs.labels import SimpleLabels
-        from earthkit.data.specs.parameter import SimpleParameter
-        from earthkit.data.specs.time import SimpleTime
-        from earthkit.data.specs.vertical import SimpleVertical
+        from earthkit.data.field.data import SimpleData
+
+        # from earthkit.data.field.ensemble import SimpleEnsemble
+        # from earthkit.data.field.geography import SimpleGeography
+        from earthkit.data.field.spec.labels import SimpleLabels
+
+        # from earthkit.data.specs.parameter import SimpleParameter
+        # from earthkit.data.specs.time import SimpleTime
+        # from earthkit.data.specs.vertical import SimpleVertical
 
         if not isinstance(d, dict):
             raise TypeError("d must be a dictionary")
 
-        data = SimpleData.from_dict(d)
-        geography = SimpleGeography.from_dict(d, shape_hint=data.raw_values_shape)
-        parameter = SimpleParameter.from_dict(d)
-        time = SimpleTime.from_dict(d)
-        vertical = SimpleVertical.from_dict(d)
-        ensemble = SimpleEnsemble.from_dict(d)
+        data = SimpleData.from_dict(d, allow_unused=True)
+        geography = GeographyFieldMember.from_dict(d, allow_unused=True, shape_hint=data.values.shape)
+        parameter = ParameterFieldMember.from_dict(d, allow_unused=True)
+        time = TimeFieldMember.from_dict(d, allow_unused=True)
+        vertical = VerticalFieldMember.from_dict(d, allow_unused=True)
+        ensemble = EnsembleFieldMember.from_dict(d, allow_unused=True)
 
         # the unused items are added to the labels
         rest = {k: v for k, v in d.items() if k not in cls._MEMBER_KEYS}
@@ -272,27 +249,27 @@ class Field(Base):
     @property
     def ensemble(self):
         """Ensemble: Return the ensemble specification of the field."""
-        return self._members[MEMBER_NAMES.ensemble].spec
+        return self._members[Field._MEMBER_NAMES.ensemble].spec
 
     @property
     def time(self):
         """Time: Return the time specification of the field."""
-        return self._members[MEMBER_NAMES.time].spec
+        return self._members[Field._MEMBER_NAMES.time].spec
 
     @property
     def vertical(self):
         """Vertical: Return the vertical specification of the field."""
-        return self._members[MEMBER_NAMES.vertical].spec
+        return self._members[Field._MEMBER_NAMES.vertical].spec
 
     @property
     def parameter(self):
         """Parameter: Return the vertical specification of the field."""
-        return self._members[MEMBER_NAMES.parameter].spec
+        return self._members[Field._MEMBER_NAMES.parameter].spec
 
     @property
     def geography(self):
         """Geography: Return the geography specification of the field."""
-        return self._members[MEMBER_NAMES.geography].spec
+        return self._members[Field._MEMBER_NAMES.geography].spec
 
     @classmethod
     def from_array(cls, array):
@@ -362,7 +339,7 @@ class Field(Base):
             Field values.
 
         """
-        v = self._data.get_values(dtype=dtype, copy=copy, index=index)
+        v = self.data.get_values(dtype=dtype, copy=copy, index=index)
         if array_backend is not None:
             v = convert_array(v, target_backend=array_backend)
         if flatten:
@@ -1062,8 +1039,8 @@ class Field(Base):
 
         """
         _keys = dict(
-            lat=self._geography.latitudes,
-            lon=self._geography.longitudes,
+            lat=self.geography.latitudes,
+            lon=self.geography.longitudes,
             value=self.values,
         )
 
@@ -1074,11 +1051,9 @@ class Field(Base):
             if k not in _keys:
                 raise ValueError(f"data: invalid argument: {k}")
 
-        from earthkit.data.specs.data import SimpleData
-
         def _reshape(v, flatten):
-            shape = SimpleData.target_shape(v, flatten, self.shape)
-            return SimpleData.reshape(v, shape)
+            shape = target_shape(v, flatten, self.shape)
+            return reshape(v, shape)
 
         r = {}
         for k in keys:
@@ -1135,7 +1110,7 @@ class Field(Base):
         to_points
 
         """
-        lon, lat = self._data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
+        lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
         return dict(lat=lat, lon=lon)
 
     def to_points(self, flatten=False, dtype=None, index=None):
@@ -1172,14 +1147,13 @@ class Field(Base):
         to_latlon
 
         """
-        from earthkit.data.specs.data import SimpleData
 
         def _reshape(v, flatten):
-            shape = SimpleData.target_shape(v, flatten, self.shape)
-            return SimpleData.reshape(v, shape)
+            shape = target_shape(v, flatten, self.shape)
+            return reshape(v, shape)
 
-        x = self._geography.x
-        y = self._geography.y
+        x = self.geography.x
+        y = self.geography.y
         r = {}
         if x is not None and y is not None:
             x = _reshape(x, flatten)
@@ -1188,7 +1162,7 @@ class Field(Base):
                 x = x[index]
                 y = y[index]
             r = dict(x=x, y=y)
-        elif self._geography.projection.CARTOPY_CRS == "PlateCarree":
+        elif self.geography.projection.CARTOPY_CRS == "PlateCarree":
             lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
             return dict(x=lon, y=lat)
         else:

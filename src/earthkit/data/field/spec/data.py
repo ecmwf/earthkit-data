@@ -13,13 +13,13 @@ from abc import abstractmethod
 
 from earthkit.utils.array import array_namespace
 
+from earthkit.data.field.core import SimpleFieldMember
 from earthkit.data.utils.array import flatten
 
-from .spec import SimpleSpec
 from .spec import normalise_set_kwargs
 
 
-class Data(SimpleSpec):
+class Data(SimpleFieldMember):
     """A specification of a data values."""
 
     ALL_KEYS = ("values",)

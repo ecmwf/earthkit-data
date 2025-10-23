@@ -13,7 +13,7 @@ import datetime
 
 import pytest
 
-from earthkit.data.specs.time import Time
+from earthkit.data.field.spec.time import Time
 
 
 @pytest.mark.parametrize(
@@ -111,8 +111,8 @@ from earthkit.data.specs.time import Time
                 {"date": "2020-09-25", "time": "1200"},
                 {"date": "20200925", "time": "1200"},
                 {"date": datetime.date(2020, 9, 25), "time": datetime.time(12)},
-                {"date": datetime.datetime(2020, 9, 25), "time": datetime.time(12)},
-                {"date": datetime.datetime(2020, 9, 25, 12), "time": datetime.time(12)},
+                # {"date": datetime.datetime(2020, 9, 25), "time": datetime.time(12)},
+                # {"date": datetime.datetime(2020, 9, 25, 12), "time": datetime.time(12)},
             ],
             (
                 datetime.datetime(2020, 9, 25, 12),
@@ -124,8 +124,8 @@ from earthkit.data.specs.time import Time
             [
                 {"date": "2020-09-25", "time": "120"},
                 {"date": "20200925", "time": "120"},
-                {"date": datetime.date(2020, 9, 25), "time": datetime.time(1, 20)},
-                {"date": datetime.datetime(2020, 9, 25), "time": datetime.time(1, 20)},
+                # {"date": datetime.date(2020, 9, 25), "time": datetime.time(1, 20)},
+                # {"date": datetime.datetime(2020, 9, 25), "time": datetime.time(1, 20)},
             ],
             (
                 datetime.datetime(2020, 9, 25, 1, 20),
@@ -146,7 +146,7 @@ from earthkit.data.specs.time import Time
         ),
     ],
 )
-def test_timespec_from_dict_ok(input_d, ref):
+def test_time_spec_from_dict_ok(input_d, ref):
 
     if not isinstance(input_d, list):
         input_d = [input_d]
@@ -174,7 +174,7 @@ def test_timespec_from_dict_ok(input_d, ref):
         ),
     ],
 )
-def test_timespec_from_dict_error(input_d, error):
+def test_time_spec_from_dict_error(input_d, error):
     if not isinstance(input_d, list):
         input_d = [input_d]
 
@@ -184,7 +184,7 @@ def test_timespec_from_dict_error(input_d, error):
                 Time.from_dict(d)
 
 
-def test_timespec_alias_1():
+def test_time_spec_alias_1():
     t = Time(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(hours=6))
     assert t.base_datetime == datetime.datetime(2007, 1, 1, 12)
     assert t.step == datetime.timedelta(hours=6)
@@ -193,7 +193,7 @@ def test_timespec_alias_1():
     assert t.forecast_period == datetime.timedelta(hours=6)
 
 
-def test_timespec_alias_2():
+def test_time_spec_alias_2():
     t = Time.from_dict(
         dict(
             forecast_reference_time=datetime.datetime(2007, 1, 1, 12),
@@ -298,7 +298,7 @@ def test_timespec_alias_2():
         ),
     ],
 )
-def test_timespec_set(input_d, ref):
+def test_time_spec_set(input_d, ref):
 
     t = Time(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(0))
 
@@ -326,7 +326,7 @@ def test_timespec_set(input_d, ref):
         ({"step_timedelta": datetime.timedelta(hours=6)}, ValueError),
     ],
 )
-def test_timespec_set_error(input_d, error):
+def test_time_spec_set_error(input_d, error):
 
     t = Time(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(0))
 

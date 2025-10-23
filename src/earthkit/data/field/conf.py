@@ -9,42 +9,35 @@
 
 from collections import namedtuple
 
-from earthkit.data.field.data import Data
-from earthkit.data.field.ensemble import EnsembleFieldMember
-from earthkit.data.field.geography import GeographyFieldMember
-from earthkit.data.field.parameter import ParameterFieldMember
-from earthkit.data.field.spec.labels import SimpleLabels
-from earthkit.data.field.time import TimeFieldMember
-from earthkit.data.field.vertical import VerticalFieldMember
+# DATA = {"cls": Data, "name": "data", "direct": "values"}
+# TIME = {"cls": TimeFieldMember, "name": "time", "direct": all}
+# PARAMETER = {"cls": ParameterFieldMember, "name": "parameter", "direct": ("variable", "units")}
+# GEOGRAPHY = {"cls": GeographyFieldMember, "name": "geography"}
+# VERTICAL = {"cls": VerticalFieldMember, "name": "vertical", "direct": ("level", "layer")}
+# ENSEMBLE = {"cls": EnsembleFieldMember, "name": "ensemble", "direct": ("member",)}
+# LABELS = {"cls": SimpleLabels, "name": "labels"}
 
-DATA = {"cls": Data, "name": "data", "direct": "values"}
-TIME = {"cls": TimeFieldMember, "name": "time", "direct": all}
-PARAMETER = {"cls": ParameterFieldMember, "name": "parameter", "direct": ("variable", "units")}
-GEOGRAPHY = {"cls": GeographyFieldMember, "name": "geography"}
-VERTICAL = {"cls": VerticalFieldMember, "name": "vertical", "direct": ("level", "layer")}
-ENSEMBLE = {"cls": EnsembleFieldMember, "name": "ensemble", "direct": ("member",)}
-LABELS = {"cls": SimpleLabels, "name": "labels"}
+# MEMBERS = {x["name"]: x for x in [DATA, TIME, PARAMETER, GEOGRAPHY, VERTICAL, ENSEMBLE, LABELS]}
 
-MEMBERS = {x["name"]: x for x in [DATA, TIME, PARAMETER, GEOGRAPHY, VERTICAL, ENSEMBLE, LABELS]}
+# for key, member in MEMBERS.items():
+#     assert key == member["cls"].NAME
 
-for key, member in MEMBERS.items():
-    assert key == member["cls"].NAME
-
-MemberNames = namedtuple("MemberNames", list(MEMBERS.keys()))
-NAMES = MemberNames(**{k: k for k in MEMBERS})
+# MemberNames = namedtuple("MemberNames", list(MEMBERS.keys()))
+# NAMES = MemberNames(**{k: k for k in MEMBERS})
 
 
 def init_member_conf(conf):
 
+    MEMBERS = conf
+
     def decorator(cls):
         keys = {}
-        for member in MEMBERS.values():
-            print(f"member: {member['name']} all keys: {member['cls'].ALL_KEYS}")
+        for member_name, member in MEMBERS.items():
             member_cls = member["cls"]
 
             for key in member_cls.ALL_KEYS:
                 # add key as a prefixed property
-                method = member["name"] + "_" + key
+                method = member_name + "_" + key
                 if getattr(cls, method, None) is None:
 
                     def _make(prop, member):
@@ -56,21 +49,20 @@ def init_member_conf(conf):
                     setattr(
                         cls,
                         method,
-                        property(
-                            fget=_make(key, member["name"]), doc=f"Return the {key} from .{member['name']}."
-                        ),
+                        property(fget=_make(key, member_name), doc=f"Return the {key} from .{member_name}."),
                     )
 
-                    keys[method] = (member["name"], key)
+                    keys[method] = (member_name, key)
                     # print(f"  add property: {method} -> {member['name']}.{key}")
 
                 # add allow using key with dot notation
-                dot_key = member["name"] + "." + key
-                keys[dot_key] = (member["name"], key)
+                dot_key = member_name + "." + key
+                keys[dot_key] = (member_name, key)
 
                 # print(f"  add dot key: {dot_key} -> {member['name']}.{key}")
 
             # some module keys are added as properties without a prefix
+
             direct_keys = member.get("direct", ())
             if direct_keys is all:
                 direct_keys = member_cls.ALL_KEYS
@@ -88,8 +80,6 @@ def init_member_conf(conf):
                     raise ValueError(f"Direct key {key} already defined in class {cls}")
 
                 def _make(prop, member):
-                    print("member=", member, "prop=", prop)
-
                     def _f(self):
                         return getattr(self._members[member], prop)
 
@@ -98,17 +88,26 @@ def init_member_conf(conf):
                 setattr(
                     cls,
                     key,
-                    property(
-                        fget=_make(key, member["name"]), doc=f"Return the {key} from .{member['name']}."
-                    ),
+                    property(fget=_make(key, member_name), doc=f"Return the {key} from .{member_name}."),
                 )
 
-                keys[key] = (member["name"], key)
-                # print(f"  add direct property: {key} -> {member['name']}.{key}")
+                keys[key] = (member_name, key)
+                # print(f"  add direct property: {key} -> {member_name}.{key}")
 
         cls._MEMBER_KEYS = keys
 
-        print(f"MEMBER_KEYS for {cls}: {cls._MEMBER_KEYS}")
+        MemberNames = namedtuple("MemberNames", list(MEMBERS.keys()))
+        setattr(cls, "_MEMBER_NAMES", MemberNames(**{k: k for k in MEMBERS}))
+
+        # print(f"Initialized Field member configuration:")
+        # print(f"_MEMBER_NAMES={cls._MEMBER_NAMES}")
+        # print(f"_MEMBER_KEYS:")
+        # for k, v in cls._MEMBER_KEYS.items():
+        #     print(f" {k} -> {v}")
+
+        MemberNames = namedtuple("MemberNames", list(MEMBERS.keys()))
+        setattr(cls, "MEMBER_NAMES", MemberNames(**{k: k for k in MEMBERS}))
+
         return cls
 
     return decorator

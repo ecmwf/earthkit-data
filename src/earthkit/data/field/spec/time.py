@@ -72,19 +72,21 @@ class Time:
         )
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d, allow_unused=False):
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
 
-        d = normalise_create_kwargs_2(cls, allowed_keys=CREATE_METHOD_MAP.core_keys, remove_nones=True, **d)
+        d1 = normalise_create_kwargs_2(
+            cls, d, allowed_keys=CREATE_METHOD_MAP.core_keys, allow_unused=allow_unused, remove_nones=True
+        )
 
-        method, method_kwargs = CREATE_METHOD_MAP.get(d.keys())
+        method, method_kwargs = CREATE_METHOD_MAP.get(d1.keys())
         if method:
-            d = {k: d[k] for k in method_kwargs if k in d}
-            data = method(**d)
+            d1 = {k: d1[k] for k in method_kwargs if k in d1}
+            data = method(**d1)
             return data
 
-        if not d:
+        if not d1:
             return cls()
 
         raise ValueError(f"Invalid keys in data: {list(d.keys())}. Expected one of {cls._CREATE_KEYS}.")

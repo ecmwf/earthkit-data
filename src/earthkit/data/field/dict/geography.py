@@ -12,7 +12,7 @@ from math import prod
 
 import numpy as np
 
-from earthkit.data.specs.geography import SimpleGeography
+from earthkit.data.field.spec.geography import Geography
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
 
@@ -129,7 +129,7 @@ def make_geography(metadata, shape_hint=None):
             return UserGeography(metadata, shape=shape)
 
 
-class NoGeography(SimpleGeography):
+class NoGeography(Geography):
     def __init__(self, shape):
         self._shape = shape
 
@@ -173,7 +173,7 @@ class NoGeography(SimpleGeography):
     def bounding_box(self):
         return None
 
-    def gridspec(self):
+    def grid_spec(self):
         return None
 
     def resolution(self):
@@ -191,7 +191,7 @@ class NoGeography(SimpleGeography):
         return "none"
 
 
-class UserGeography(SimpleGeography):
+class UserGeography(Geography):
     def __init__(self, metadata, shape=None):
         self.metadata = metadata
         self._shape = shape
@@ -267,7 +267,7 @@ class UserGeography(SimpleGeography):
             east=self.east(),
         )
 
-    def gridspec(self):
+    def grid_spec(self):
         return None
 
     def resolution(self):

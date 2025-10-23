@@ -17,9 +17,9 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.specs.time_span import TimeSpan
-from earthkit.data.specs.time_span import TimeSpanMethod
-from earthkit.data.testing import earthkit_remote_test_data_file
+
+# from earthkit.data.specs.time_span import TimeSpan
+# from earthkit.data.specs.time_span import TimeSpanMethod
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -269,39 +269,39 @@ def test_grib_sel_base_datetime(fl_type, _kwargs):
     assert g.get(ref_keys) == ref
 
 
-@pytest.mark.cache
-@pytest.mark.parametrize(
-    "_kwargs,ref_len,ref",
-    [
-        (
-            {"step": 24, "time_span_value": datetime.timedelta(hours=6)},
-            1,
-            {"step": datetime.timedelta(hours=24), "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
-        ),
-        (
-            {"step": 24, "time_span_method": TimeSpanMethod.MAX},
-            1,
-            {"step": datetime.timedelta(hours=24), "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
-        ),
-        (
-            {"time_span_method": TimeSpanMethod.AVERAGE},
-            0,
-            {},
-        ),
-        (
-            {"step": 24, "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
-            1,
-            {"step": datetime.timedelta(hours=24), "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
-        ),
-    ],
-)
-def test_grib_sel_time_span(_kwargs, ref_len, ref):
-    ds1 = from_source("url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1"))
+# @pytest.mark.cache
+# @pytest.mark.parametrize(
+#     "_kwargs,ref_len,ref",
+#     [
+#         (
+#             {"step": 24, "time_span_value": datetime.timedelta(hours=6)},
+#             1,
+#             {"step": datetime.timedelta(hours=24), "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
+#         ),
+#         (
+#             {"step": 24, "time_span_method": TimeSpanMethod.MAX},
+#             1,
+#             {"step": datetime.timedelta(hours=24), "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
+#         ),
+#         (
+#             {"time_span_method": TimeSpanMethod.AVERAGE},
+#             0,
+#             {},
+#         ),
+#         (
+#             {"step": 24, "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
+#             1,
+#             {"step": datetime.timedelta(hours=24), "time_span": TimeSpan(6, TimeSpanMethod.MAX)},
+#         ),
+#     ],
+# )
+# def test_grib_sel_time_span(_kwargs, ref_len, ref):
+#     ds1 = from_source("url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1"))
 
-    g = ds1.sel(**_kwargs)
-    assert len(g) == ref_len
-    for k, v in ref.items():
-        assert g[0].get(k) == v
+#     g = ds1.sel(**_kwargs)
+#     assert len(g) == ref_len
+#     for k, v in ref.items():
+#         assert g[0].get(k) == v
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)

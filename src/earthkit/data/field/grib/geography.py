@@ -7,15 +7,17 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.data.field.spec.geography import Geography
 
-from earthkit.data.field.spec.geography import SimpleGeography
+from .collector import GribContextCollector
+from .spec import GribSpec
 
 
 def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
-class GribGeography(SimpleGeography):
+class GribGeographySpec(Geography):
     def __init__(self, handle):
         self.handle = handle
 
@@ -139,6 +141,9 @@ class GribGeography(SimpleGeography):
         r"""Return the grid type."""
         return self.handle.get("gridType", default=None)
 
+    def to_dict(self):
+        return dict()
+
     def __getstate__(self):
         state = {}
         state["handle"] = self.handle
@@ -146,3 +151,25 @@ class GribGeography(SimpleGeography):
 
     def __setstate__(self, state):
         self.__init__(state["handle"])
+
+
+class GribGeographyBuilder:
+    @staticmethod
+    def build(handle):
+        from earthkit.data.field.geography import GeographyFieldMember
+
+        return GeographyFieldMember(GribGeographySpec(handle))
+
+
+class GribGeographyContextCollector(GribContextCollector):
+    @staticmethod
+    def collect_keys(spec, context):
+        pass
+
+
+COLLECTOR = GribGeographyContextCollector()
+
+
+class GribGeography(GribSpec):
+    BUILDER = GribGeographyBuilder
+    COLLECTOR = COLLECTOR

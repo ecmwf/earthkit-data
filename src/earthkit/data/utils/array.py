@@ -31,24 +31,24 @@ def flatten(array):
     return array
 
 
-# def target_shape(array, flatten, field_shape):
-#     """Return the target shape of the array.
+def target_shape(array, flatten, field_shape):
+    """Return the target shape of the array.
 
-#     Parameters
-#     ----------
-#     array: array-like
-#         The array to be reshaped.
-#     flatten: bool
-#         If True, return a flat shape.
+    Parameters
+    ----------
+    array: array-like
+        The array to be reshaped.
+    flatten: bool
+        If True, return a flat shape.
 
-#     Returns
-#     -------
-#     tuple
-#         The target shape of the array.
-#     """
-#     if flatten:
-#         return (math.prod(array.shape),)
-#     return field_shape
+    Returns
+    -------
+    tuple
+        The target shape of the array.
+    """
+    if flatten:
+        return (math.prod(array.shape),)
+    return field_shape
 
 
 def reshape(v, shape):

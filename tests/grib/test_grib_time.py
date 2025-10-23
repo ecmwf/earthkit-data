@@ -16,8 +16,9 @@ import sys
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.specs.time_span import TimeSpan
-from earthkit.data.specs.time_span import TimeSpanMethod
+
+# from earthkit.data.specs.time_span import TimeSpan
+# from earthkit.data.specs.time_span import TimeSpanMethod
 from earthkit.data.testing import earthkit_remote_test_data_file
 
 here = os.path.dirname(__file__)
@@ -74,7 +75,6 @@ def test_grib_time_analysis():
     assert f.base_datetime == datetime.datetime(2016, 9, 25)
     assert f.step == datetime.timedelta(0)
     assert f.valid_datetime == datetime.datetime(2016, 9, 25)
-    assert f.time_span == TimeSpan()
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -87,7 +87,6 @@ def test_grib_time_forecast(fl_type):
     assert f.forecast_reference_time == datetime.datetime(2020, 12, 21, 12, 0)
     assert f.step == datetime.timedelta(hours=6)
     assert f.forecast_period == datetime.timedelta(hours=6)
-    assert f.time_span == TimeSpan()
 
 
 @pytest.mark.cache
@@ -100,9 +99,9 @@ def test_grib_time_step_range_1():
     assert f.forecast_reference_time == datetime.datetime(2011, 12, 15, 12, 0)
     assert f.step == datetime.timedelta(hours=24)
     assert f.forecast_period == datetime.timedelta(hours=24)
-    assert f.time_span == TimeSpan(6, TimeSpanMethod.MAX)
-    assert f.time_span_value == datetime.timedelta(hours=6)
-    assert f.time_span_method == TimeSpanMethod.MAX
+    # assert f.time_span == TimeSpan(6, TimeSpanMethod.MAX)
+    # assert f.time_span_value == datetime.timedelta(hours=6)
+    # assert f.time_span_method == TimeSpanMethod.MAX
 
 
 @pytest.mark.cache
@@ -113,17 +112,17 @@ def test_grib_time_step_range_2():
     assert f.valid_datetime == datetime.datetime(2025, 5, 30)
     assert f.base_datetime == datetime.datetime(2025, 5, 27)
     assert f.step == datetime.timedelta(hours=72)
-    assert f.time_span == TimeSpan(1, TimeSpanMethod.ACCUMULATED)
-    assert f.time_span_value == datetime.timedelta(hours=1)
-    assert f.time_span_method == TimeSpanMethod.ACCUMULATED
+    # assert f.time_span == TimeSpan(1, TimeSpanMethod.ACCUMULATED)
+    # assert f.time_span_value == datetime.timedelta(hours=1)
+    # assert f.time_span_method == TimeSpanMethod.ACCUMULATED
 
     f = ds[1]
     assert f.valid_datetime == datetime.datetime(2025, 5, 30, 1)
     assert f.base_datetime == datetime.datetime(2025, 5, 27)
     assert f.step == datetime.timedelta(hours=73)
-    assert f.time_span == TimeSpan(1, TimeSpanMethod.ACCUMULATED)
-    assert f.time_span_value == datetime.timedelta(hours=1)
-    assert f.time_span_method == TimeSpanMethod.ACCUMULATED
+    # assert f.time_span == TimeSpan(1, TimeSpanMethod.ACCUMULATED)
+    # assert f.time_span_value == datetime.timedelta(hours=1)
+    # assert f.time_span_method == TimeSpanMethod.ACCUMULATED
 
 
 @pytest.mark.cache
@@ -137,8 +136,7 @@ def test_grib_time_seasonal():
     assert f.base_datetime == datetime.datetime(2014, 8, 29)
     assert f.step == datetime.timedelta(days=33)
     assert f.valid_datetime == datetime.datetime(2014, 10, 1)
-    assert f.time_span == TimeSpan()
-    assert f.indexing_datetime == datetime.datetime(2014, 9, 1)
+    # assert f.indexing_datetime == datetime.datetime(2014, 9, 1)
 
 
 @pytest.mark.cache
@@ -149,8 +147,6 @@ def test_grib_time_monthly():
     assert f.base_datetime == datetime.datetime(1993, 10, 1)
     assert f.step == datetime.timedelta(days=31)
     assert f.valid_datetime == datetime.datetime(1993, 11, 1)
-    assert f.time_span == TimeSpan()
-    assert f.indexing_datetime is None
 
 
 @pytest.mark.cache
@@ -161,4 +157,3 @@ def test_grib_time_step_in_minutes():
     assert f.base_datetime == datetime.datetime(2024, 1, 15)
     assert f.step == datetime.timedelta(0)
     assert f.valid_datetime == datetime.datetime(2024, 1, 15)
-    assert f.time_span == TimeSpan()

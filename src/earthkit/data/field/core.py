@@ -25,9 +25,9 @@ def wrap_spec_methods(keys=None):
                 all_keys.append(k)
 
         for method_name in all_keys:
-            method = getattr(cls.SPEC_CLS, method_name)
+            # method = getattr(cls.SPEC_CLS, method_name)
 
-            print(f"Adding method {method} from {cls.SPEC_CLS}.{method_name}")
+            # print(f"Adding method {method} from {cls.SPEC_CLS}.{method_name}")
 
             def _make(method):
                 def _f(self):
@@ -39,7 +39,7 @@ def wrap_spec_methods(keys=None):
 
         setattr(cls, "ALL_KEYS", all_keys)
 
-        print(f"ALL_KEYS for {cls}: {cls.ALL_KEYS}")
+        # print(f"ALL_KEYS for {cls}: {cls.ALL_KEYS}")
         return cls
 
     return decorator
@@ -181,9 +181,9 @@ class SpecFieldMember(SimpleFieldMember):
         self._spec = spec
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d, **kwargs):
         """Create a Time object from a dictionary."""
-        data = cls.SPEC_CLS.from_dict(d)
+        data = cls.SPEC_CLS.from_dict(d, **kwargs)
         return cls(data)
 
     @property

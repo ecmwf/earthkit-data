@@ -7,7 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SimpleFieldMember
+from .core import SpecFieldMember
 from .core import wrap_spec_methods
 from .spec.geography import Geography
 
@@ -62,16 +62,28 @@ from .spec.geography import Geography
 #         self.__init__(data=state["data"])
 
 
-@wrap_spec_methods(keys=[])
-class GeographyFieldMember(SimpleFieldMember):
+@wrap_spec_methods(
+    keys=[
+        "latitudes",
+        "longitudes",
+        "shape",
+        "grid_type",
+        "bounding_box",
+        "distinct_latitudes",
+        "distinct_longitudes",
+        "x",
+        "y",
+        "projection",
+        "unique_grid_id",
+    ]
+)
+class GeographyFieldMember(SpecFieldMember):
 
     SPEC_CLS = Geography
     NAME = "geography"
 
     def get_grib_context(self, context) -> dict:
-        from earthkit.data.field.grib.parameter import COLLECTOR
-
-        COLLECTOR.collect(self, context)
+        pass
 
     #
     #

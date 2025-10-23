@@ -48,12 +48,13 @@ class Data(SimpleFieldMember):
 
 class SimpleData(Data):
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d, allow_unused=False):
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
         # d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
         if "values" in d:
-            return ArrayData(d["values"])
+            v = d["values"]
+            return ArrayData(v)
         raise ValueError("Invalid arguments")
 
     @property

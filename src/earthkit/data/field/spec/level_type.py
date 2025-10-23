@@ -37,8 +37,10 @@ class LevelType:
         }
 
     def __eq__(self, other):
-        if not isinstance(other, LevelType):
+        if isinstance(other, LevelType):
             return self.name == other.name
+        if isinstance(other, str):
+            return self.name == other
         return False
 
 

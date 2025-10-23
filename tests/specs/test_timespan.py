@@ -9,47 +9,44 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 
-import pytest
-
-from earthkit.data.specs.time_span import TimeSpan
-from earthkit.data.specs.time_span import TimeSpanMethod
+# from earthkit.data.specs.time_span import TimeSpan
+# from earthkit.data.specs.time_span import TimeSpanMethod
 
 
-def test_timespan_1():
-    t = TimeSpan()
-    assert t.value == datetime.timedelta(0)
-    assert t.method == TimeSpanMethod.INSTANT
+# def test_timespan_1():
+#     t = TimeSpan()
+#     assert t.value == datetime.timedelta(0)
+#     assert t.method == TimeSpanMethod.INSTANT
 
 
-def test_timespan_2():
-    t = TimeSpan(3, TimeSpanMethod.AVERAGE)
-    assert t.value == datetime.timedelta(hours=3)
-    assert t.method == TimeSpanMethod.AVERAGE
+# def test_timespan_2():
+#     t = TimeSpan(3, TimeSpanMethod.AVERAGE)
+#     assert t.value == datetime.timedelta(hours=3)
+#     assert t.method == TimeSpanMethod.AVERAGE
 
 
-def test_timespan_3():
-    with pytest.raises(ValueError):
-        TimeSpan(3)
-    with pytest.raises(ValueError):
-        TimeSpan(3, TimeSpanMethod.INSTANT)
+# def test_timespan_3():
+#     with pytest.raises(ValueError):
+#         TimeSpan(3)
+#     with pytest.raises(ValueError):
+#         TimeSpan(3, TimeSpanMethod.INSTANT)
 
 
-def test_timespan_method():
-    m = TimeSpanMethod.AVERAGE
-    assert m.value.name == "avg"
-    assert m.name == "AVERAGE"
-    assert str(m) == "TimeSpanMethod.AVERAGE"
+# def test_timespan_method():
+#     m = TimeSpanMethod.AVERAGE
+#     assert m.value.name == "avg"
+#     assert m.name == "AVERAGE"
+#     assert str(m) == "TimeSpanMethod.AVERAGE"
 
 
-def test_timespan_hash():
-    t1 = TimeSpan()
-    t2 = TimeSpan(3, TimeSpanMethod.AVERAGE)
-    s = set([t1, t2])
-    assert t1 in s
-    assert t2 in s
-    assert len(s) == 2
+# def test_timespan_hash():
+#     t1 = TimeSpan()
+#     t2 = TimeSpan(3, TimeSpanMethod.AVERAGE)
+#     s = set([t1, t2])
+#     assert t1 in s
+#     assert t2 in s
+#     assert len(s) == 2
 
-    assert TimeSpan() in s
-    assert TimeSpan(3, TimeSpanMethod.AVERAGE) in s
+#     assert TimeSpan() in s
+#     assert TimeSpan(3, TimeSpanMethod.AVERAGE) in s

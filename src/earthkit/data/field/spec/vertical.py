@@ -22,7 +22,7 @@ from .spec import spec_aliases
 class Vertical:
     # _KEYS = ("level", "layer", "cf", "abbreviation", "units", "positive", "type")
     _SET_KEYS = ("level", "layer", "type")
-    _ALIASES = Aliases({"level": "levelist"})
+    _ALIASES = Aliases({"level": "levelist", "type": ("level_type",)})
 
     def __init__(
         self,
@@ -87,7 +87,7 @@ class Vertical:
         self.__init__(level=state["level"], layer=state["layer"], type=state["type"])
 
     @classmethod
-    def from_dict(cls, d: dict) -> "Vertical":
+    def from_dict(cls, d: dict, allow_unused=False) -> "Vertical":
         """Create a Vertical object from a dictionary.
 
         Parameters
@@ -103,9 +103,10 @@ class Vertical:
         if not isinstance(d, dict):
             raise TypeError("d must be a dictionary")
         # print("d=", d)
-        d = normalise_create_kwargs_2(cls, allowed_keys=cls._SET_KEYS, **d)
+        d1 = normalise_create_kwargs_2(cls, d, allowed_keys=cls._SET_KEYS, allow_unused=allow_unused)
+
         # print(" ->", d)
-        return cls(**d)
+        return cls(**d1)
 
     def _check(self):
         if self.layer is not None:

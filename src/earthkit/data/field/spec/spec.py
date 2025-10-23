@@ -183,24 +183,16 @@ def normalise_set_kwargs(
     return _kwargs
 
 
-def normalise_create_kwargs_2(cls, *args, allowed_keys=None, remove_nones=True, **kwargs):
-    kwargs = kwargs.copy()
-
-    for a in args:
-        if a is None:
-            continue
-        if isinstance(a, dict):
-            kwargs.update(a)
-            continue
-        raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
-
+def normalise_create_kwargs_2(cls, data, allowed_keys=None, allow_unused=False, remove_nones=True):
     _kwargs = {}
-    for k, v in kwargs.items():
-        k = cls._ALIASES.get(k, k)
-        if k in allowed_keys:  # cls._CREATE_KEYS:
+    for k_in, v in data.items():
+        k = cls._ALIASES.get(k_in, k_in)
+        if k in allowed_keys:
             _kwargs[k] = v
         else:
-            raise ValueError(f"Cannot use key={k} to create {cls.__class__.__name__}")
+            if allow_unused:
+                continue
+            raise ValueError(f"Cannot use key={k} to create object={cls.__class__.__name__}")
 
     if remove_nones:
         _kwargs = {k: v for k, v in _kwargs.items() if v is not None}

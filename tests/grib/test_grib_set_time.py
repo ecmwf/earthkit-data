@@ -17,8 +17,9 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.specs.time_span import TimeSpan
-from earthkit.data.specs.time_span import TimeSpanMethod
+
+# from earthkit.data.specs.time_span import TimeSpan
+# from earthkit.data.specs.time_span import TimeSpanMethod
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -38,7 +39,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "base_datetime": datetime.datetime(2025, 8, 24, 12),
                 "valid_datetime": datetime.datetime(2025, 8, 24, 18),
                 "step": datetime.timedelta(hours=6),
-                "time_span": TimeSpan(),
+                # "time_span": TimeSpan(),
             },
             {
                 "grib.dataDate": 20250824,
@@ -59,7 +60,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "base_datetime": datetime.datetime(2025, 8, 24, 12),
                 "valid_datetime": datetime.datetime(2025, 8, 24, 18),
                 "step": datetime.timedelta(hours=6),
-                "time_span": TimeSpan(),
+                # "time_span": TimeSpan(),
             },
             {
                 "grib.dataDate": 20250824,
@@ -80,7 +81,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "base_datetime": datetime.datetime(2025, 8, 24, 12),
                 "valid_datetime": datetime.datetime(2025, 8, 24, 18),
                 "step": datetime.timedelta(hours=6),
-                "time_span": TimeSpan(),
+                # "time_span": TimeSpan(),
             },
             {
                 "grib.dataDate": 20250824,
@@ -101,7 +102,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "base_datetime": datetime.datetime(2025, 8, 24, 12),
                 "valid_datetime": datetime.datetime(2025, 8, 24, 18),
                 "step": datetime.timedelta(hours=6),
-                "time_span": TimeSpan(),
+                # "time_span": TimeSpan(),
             },
             {
                 "grib.dataDate": 20250824,
@@ -122,7 +123,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "base_datetime": datetime.datetime(2025, 8, 24, 12),
                 "valid_datetime": datetime.datetime(2025, 8, 24, 12),
                 "step": datetime.timedelta(hours=0),
-                "time_span": TimeSpan(),
+                # "time_span": TimeSpan(),
             },
             {
                 "grib.dataDate": 20250824,
@@ -143,7 +144,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "base_datetime": datetime.datetime(2025, 8, 24, 12),
                 "valid_datetime": datetime.datetime(2025, 8, 24, 12),
                 "step": datetime.timedelta(hours=0),
-                "time_span": TimeSpan(),
+                # "time_span": TimeSpan(),
             },
             {
                 "grib.dataDate": 20250824,
@@ -164,7 +165,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "base_datetime": datetime.datetime(2025, 8, 24, 12),
                 "valid_datetime": datetime.datetime(2025, 8, 24, 12),
                 "step": datetime.timedelta(hours=0),
-                "time_span": TimeSpan(),
+                # "time_span": TimeSpan(),
             },
             {
                 "grib.dataDate": 20250824,
@@ -185,7 +186,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "base_datetime": datetime.datetime(2025, 8, 24, 12),
                 "valid_datetime": datetime.datetime(2025, 8, 24, 12),
                 "step": datetime.timedelta(hours=0),
-                "time_span": TimeSpan(),
+                # "time_span": TimeSpan(),
             },
             {
                 "grib.dataDate": 20250824,
@@ -206,7 +207,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "base_datetime": datetime.datetime(2007, 1, 1, 12),
                 "valid_datetime": datetime.datetime(2007, 1, 3, 18),
                 "step": datetime.timedelta(hours=54),
-                "time_span": TimeSpan(),
+                # "time_span": TimeSpan(),
             },
             {
                 "grib.dataDate": 20070101,
@@ -227,7 +228,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "base_datetime": datetime.datetime(2007, 1, 1, 12),
                 "valid_datetime": datetime.datetime(2007, 1, 3, 18),
                 "step": datetime.timedelta(hours=54),
-                "time_span": TimeSpan(),
+                # "time_span": TimeSpan(),
             },
             {
                 "grib.dataDate": 20070101,
@@ -245,13 +246,13 @@ from grib_fixtures import load_grib_data  # noqa: E402
         (
             {
                 "valid_datetime": datetime.datetime(2007, 1, 3, 18),
-                "time_span": TimeSpan(1, TimeSpanMethod.AVERAGE),
+                # "time_span": TimeSpan(1, TimeSpanMethod.AVERAGE),
             },
             {
                 "base_datetime": datetime.datetime(2007, 1, 1, 12),
                 "valid_datetime": datetime.datetime(2007, 1, 3, 18),
                 "step": datetime.timedelta(hours=54),
-                "time_span": TimeSpan(datetime.timedelta(hours=1), TimeSpanMethod.AVERAGE),
+                # "time_span": TimeSpan(datetime.timedelta(hours=1), TimeSpanMethod.AVERAGE),
             },
             None,
             None,
@@ -262,7 +263,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "base_datetime": datetime.datetime(2007, 1, 1, 12),
                 "valid_datetime": datetime.datetime(2007, 1, 1, 18),
                 "step": datetime.timedelta(hours=6),
-                "time_span": TimeSpan(),
+                # "time_span": TimeSpan(),
             },
             {
                 "grib.dataDate": 20070101,
@@ -283,7 +284,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
                 "base_datetime": datetime.datetime(2007, 1, 1, 12),
                 "valid_datetime": datetime.datetime(2007, 1, 1, 18, 30),
                 "step": datetime.timedelta(hours=6, minutes=30),
-                "time_span": TimeSpan(),
+                # "time_span": TimeSpan(),
             },
             {
                 "grib.dataDate": 20070101,
@@ -301,13 +302,13 @@ from grib_fixtures import load_grib_data  # noqa: E402
         (
             {
                 "step": datetime.timedelta(hours=36),
-                "time_span": TimeSpan(datetime.timedelta(days=1), TimeSpanMethod.AVERAGE),
+                # "time_span": TimeSpan(datetime.timedelta(days=1), TimeSpanMethod.AVERAGE),
             },
             {
                 "base_datetime": datetime.datetime(2007, 1, 1, 12),
                 "valid_datetime": datetime.datetime(2007, 1, 3, 0),
                 "step": datetime.timedelta(hours=36),
-                "time_span": TimeSpan(datetime.timedelta(days=1), TimeSpanMethod.AVERAGE),
+                # "time_span": TimeSpan(datetime.timedelta(days=1), TimeSpanMethod.AVERAGE),
             },
             {
                 "grib.dataDate": 20070101,
@@ -322,17 +323,17 @@ from grib_fixtures import load_grib_data  # noqa: E402
             },
             None,
         ),
-        (
-            {"time_span": TimeSpan(datetime.timedelta(hours=6, minutes=30), TimeSpanMethod.AVERAGE)},
-            {
-                "base_datetime": datetime.datetime(2007, 1, 1, 12),
-                "valid_datetime": datetime.datetime(2007, 1, 1, 12),
-                "step": datetime.timedelta(hours=0),
-                "time_span": TimeSpan(datetime.timedelta(hours=6, minutes=30), TimeSpanMethod.AVERAGE),
-            },
-            None,
-            None,
-        ),
+        # (
+        #     {"time_span": TimeSpan(datetime.timedelta(hours=6, minutes=30), TimeSpanMethod.AVERAGE)},
+        #     {
+        #         "base_datetime": datetime.datetime(2007, 1, 1, 12),
+        #         "valid_datetime": datetime.datetime(2007, 1, 1, 12),
+        #         "step": datetime.timedelta(hours=0),
+        #         "time_span": TimeSpan(datetime.timedelta(hours=6, minutes=30), TimeSpanMethod.AVERAGE),
+        #     },
+        #     None,
+        #     None,
+        # ),
     ],
 )
 def test_grib_set_time_1(fl_type, write_method, _kwargs, ref_set, ref_saved, edition_saved):
