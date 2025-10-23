@@ -214,10 +214,13 @@ def normalise_set_kwargs_2(cls, *args, allowed_keys=None, remove_nones=True, **k
     _kwargs = {}
     for k, v in kwargs.items():
         k = cls._ALIASES.get(k, k)
-        if k in allowed_keys:  # cls._SET_KEYS:
-            _kwargs[k] = v
+        if allowed_keys:
+            if k in allowed_keys:
+                _kwargs[k] = v
+            else:
+                raise ValueError(f"Cannot use key={k} to modify {cls.__class__.__name__}")
         else:
-            raise ValueError(f"Cannot use key={k} to modify {cls.__class__.__name__}")
+            _kwargs[k] = v
 
     if remove_nones:
         _kwargs = {k: v for k, v in _kwargs.items() if v is not None}

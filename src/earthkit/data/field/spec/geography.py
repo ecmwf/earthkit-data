@@ -12,7 +12,7 @@ from abc import abstractmethod
 
 # from .spec import SimpleSpec
 from .spec import Spec
-from .spec import normalise_set_kwargs
+from .spec import normalise_set_kwargs_2
 from .spec import spec_aliases
 
 
@@ -100,7 +100,7 @@ class Geography(Spec):
         return spec
 
     def set(self, *args, shape_hint=None, **kwargs):
-        kwargs = normalise_set_kwargs(self, *args, add_spec_keys=False, **kwargs)
+        kwargs = normalise_set_kwargs_2(self, *args, **kwargs)
         keys = set(kwargs.keys())
 
         if keys == {"grid_spec"}:
