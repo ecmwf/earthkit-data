@@ -306,6 +306,8 @@ class Index(Source):
         if hasattr(self, "normalise_key_values"):
             kwargs = self.normalise_key_values(**kwargs)
 
+        print("SEL", kwargs)
+
         selection = Selection(kwargs, remapping=remapping)
         if selection.is_empty:
             return self

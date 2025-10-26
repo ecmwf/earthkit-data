@@ -153,7 +153,7 @@ class GribLabels:
                         result[ns] = self.handle.as_namespace(ns[5:])
 
     def new_array_field(self, field, array_backend=None, **kwargs):
-        from earthkit.data.new_field.grib.field import new_array_grib_field
+        from earthkit.data.field.grib.create import new_array_grib_field
 
         return new_array_grib_field(field, self.handle, array_backend=array_backend, **kwargs)
 

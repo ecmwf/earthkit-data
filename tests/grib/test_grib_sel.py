@@ -30,7 +30,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("key", ["name", "param", "shortName"])
+@pytest.mark.parametrize("key", ["variable", "param", "grib.shortName"])
 def test_grib_sel_single_message(fl_type, key):
     s, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
@@ -43,27 +43,27 @@ def test_grib_sel_single_message(fl_type, key):
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
     [
-        (dict(shortName="u", level=700), [["u", 700]], []),
-        (dict(paramId=131, level=700), [[131, 700]], []),
+        (dict(variable="u", level=700), [["u", 700]], []),
+        ({"grib.paramId": 131, "level": 700}, [[131, 700]], []),
         (
-            dict(shortName=["t", "u"], level=[700, 500]),
+            dict(variable=["t", "u"], level=[700, 500]),
             [
                 ["t", 700],
                 ["u", 700],
                 ["t", 500],
                 ["u", 500],
             ],
-            ["shortName", "level:l"],
+            ["variable", "level"],
         ),
-        (dict(shortName="w"), [], []),
+        (dict(variable="w"), [], []),
         (dict(INVALIDKEY="w"), [], []),
         (
-            dict(shortName=["t"], level=[500, 700], marsType="an"),
+            {"variable": ["t"], "level": [500, 700], "grib.marsType": "an"},
             [
                 ["t", 700, "an"],
                 ["t", 500, "an"],
             ],
-            ["shortName", "level:l", "marsType"],
+            ["variable", "level", "grib.marsType"],
         ),
     ],
 )
@@ -85,21 +85,21 @@ def test_grib_sel_single_file_1(fl_type, params, expected_meta, metadata_keys):
 def test_grib_sel_single_file_2(fl_type):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
-    g = f.sel(shortName=["t"], endStep=[3, 6])
+    g = f.sel(variable=["t"], step=[3, 6])
 
     assert len(g) == 2
-    assert g.get(["shortName", "level:l", "step:l"]) == [
-        ["t", 1000, 3],
-        ["t", 1000, 6],
+    assert g.get(["variable", "level", "step"]) == [
+        ["t", 1000, datetime.timedelta(hours=3)],
+        ["t", 1000, datetime.timedelta(hours=6)],
     ]
 
     # repeated use
-    g = f.sel(shortName=["t"], endStep=[3, 6])
+    g = f.sel(variable=["t"], step=[3, 6])
     # g = f.sel(shortName=["t"], step=["3", "06"])
     assert len(g) == 2
-    assert g.get(["shortName", "level:l", "endStep:l"]) == [
-        ["t", 1000, 3],
-        ["t", 1000, 6],
+    assert g.get(["variable", "level", "step"]) == [
+        ["t", 1000, datetime.timedelta(hours=3)],
+        ["t", 1000, datetime.timedelta(hours=6)],
     ]
 
 
@@ -107,9 +107,9 @@ def test_grib_sel_single_file_2(fl_type):
 def test_grib_sel_single_file_as_dict(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
-    g = f.sel({"shortName": "t", "level": [500, 700], "mars.type": "an"})
+    g = f.sel({"variable": "t", "level": [500, 700], "grib.mars.type": "an"})
     assert len(g) == 2
-    assert g.get(["shortName", "level:l", "mars.type"]) == [
+    assert g.get(["variable", "level", "grib.mars.type"]) == [
         ["t", 700, "an"],
         ["t", 500, "an"],
     ]
@@ -130,10 +130,10 @@ def test_grib_sel_single_file_as_dict(fl_type):
 def test_grib_sel_slice_single_file(fl_type, param_id, level, expected_meta):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
-    g = f.sel(paramId=param_id, level=level)
+    g = f.sel({"grib.paramId": param_id, "level": level})
     assert len(g) == len(expected_meta)
     if expected_meta:
-        assert g.get(["paramId", "level"]) == expected_meta
+        assert g.get(["grib.paramId", "level"]) == expected_meta
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -146,10 +146,10 @@ def test_grib_sel_multi_file(fl_type):
     f = from_source("multi", [f1, f2])
 
     # single resulting field
-    g = f.sel(shortName="t", level=61)
+    g = f.sel(variable="t", level=61)
     print(f"{g=}")
     assert len(g) == 1
-    assert g.get(["shortName", "level:l", "typeOfLevel"]) == [["t", 61, "hybrid"]]
+    assert g.get(["variable", "level", "grib.typeOfLevel"]) == [["t", 61, "hybrid"]]
 
     g1 = f[34]
     d = g.to_numpy() - g1.to_numpy()
@@ -163,9 +163,9 @@ def test_grib_sel_slice_multi_file(fl_type):
 
     f = from_source("multi", [f1, f2])
 
-    g = f.sel(shortName="t", level=slice(56, 62))
+    g = f.sel(variable="t", level=slice(56, 62))
     assert len(g) == 2
-    assert g.get(["shortName", "level:l", "typeOfLevel"]) == [
+    assert g.get(["variable", "level", "grib.typeOfLevel"]) == [
         ["t", 57, "hybrid"],
         ["t", 61, "hybrid"],
     ]
@@ -175,10 +175,10 @@ def test_grib_sel_slice_multi_file(fl_type):
 def test_grib_sel_date_time_step_1(fl_type):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
-    g = f.sel(date=20201221, time=1200, endStep=9)
+    g = f.sel({"grib.date": 20201221, "grib.time": 1200, "grib.endStep": 9})
     assert len(g) == 2
 
-    ref_keys = ["shortName", "date", "time", "endStep"]
+    ref_keys = ["grib.shortName", "grib.date", "grib.time", "grib.endStep"]
     ref = [
         ["t", 20201221, 1200, 9],
         ["z", 20201221, 1200, 9],
@@ -191,10 +191,10 @@ def test_grib_sel_date_time_step_1(fl_type):
 def test_grib_sel_date_time_step_2(fl_type):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
-    g = f.sel(date=20201221, time=1200, step=9)
+    g = f.sel({"grib.date": 20201221, "grib.time": 1200, "grib.step": 9})
     assert len(g) == 2
 
-    ref_keys = ["shortName", "date", "time", "step"]
+    ref_keys = ["grib.shortName", "grib.date", "grib.time", "step"]
     ref = [
         ["t", 20201221, 1200, datetime.timedelta(hours=9)],
         ["z", 20201221, 1200, datetime.timedelta(hours=9)],
@@ -207,10 +207,10 @@ def test_grib_sel_date_time_step_2(fl_type):
 def test_grib_sel_date_time_step_3(fl_type):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
-    g = f.sel(date=20201221, time=1200, step=datetime.timedelta(hours=9))
+    g = f.sel({"grib.date": 20201221, "grib.time": 1200, "step": datetime.timedelta(hours=9)})
     assert len(g) == 2
 
-    ref_keys = ["shortName", "date", "time", "step"]
+    ref_keys = ["grib.shortName", "grib.date", "grib.time", "step"]
     ref = [
         ["t", 20201221, 1200, datetime.timedelta(hours=9)],
         ["z", 20201221, 1200, datetime.timedelta(hours=9)],
@@ -227,13 +227,19 @@ def test_grib_sel_valid_datetime(fl_type, dval):
     g = f.sel(valid_datetime=dval)
     assert len(g) == 2
 
-    ref_keys = ["shortName", "date", "time", "endStep"]
+    ref_keys = ["variable", "grib.date", "grib.time", "grib.endStep"]
     ref = [
         ["t", 20201221, 1200, 9],
         ["z", 20201221, 1200, 9],
     ]
 
     assert g.metadata(ref_keys) == ref
+
+    ref_keys = ["variable", "base_datetime", "step"]
+    ref = [
+        ["t", datetime.datetime(2020, 12, 21, 12, 0, 0), datetime.timedelta(hours=9)],
+        ["z", datetime.datetime(2020, 12, 21, 12, 0, 0), datetime.timedelta(hours=9)],
+    ]
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -252,7 +258,7 @@ def test_grib_sel_base_datetime(fl_type, _kwargs):
     g = f.sel(**_kwargs)
     assert len(g) == 10
 
-    ref_keys = ["shortName", "date", "time", "endStep"]
+    ref_keys = ["grib.shortName", "grib.date", "grib.time", "grib.endStep"]
     ref = [
         ["t", 20201221, 1200, 0],
         ["z", 20201221, 1200, 0],
@@ -264,6 +270,22 @@ def test_grib_sel_base_datetime(fl_type, _kwargs):
         ["z", 20201221, 1200, 9],
         ["t", 20201221, 1200, 48],
         ["z", 20201221, 1200, 48],
+    ]
+
+    assert g.get(ref_keys) == ref
+
+    ref_keys = ["variable", "base_datetime", "step"]
+    ref = [
+        ["t", datetime.datetime(2020, 12, 21, 12, 0, 0), datetime.timedelta(hours=0)],
+        ["z", datetime.datetime(2020, 12, 21, 12, 0, 0), datetime.timedelta(hours=0)],
+        ["t", datetime.datetime(2020, 12, 21, 12, 0, 0), datetime.timedelta(hours=3)],
+        ["z", datetime.datetime(2020, 12, 21, 12, 0, 0), datetime.timedelta(hours=3)],
+        ["t", datetime.datetime(2020, 12, 21, 12, 0, 0), datetime.timedelta(hours=6)],
+        ["z", datetime.datetime(2020, 12, 21, 12, 0, 0), datetime.timedelta(hours=6)],
+        ["t", datetime.datetime(2020, 12, 21, 12, 0, 0), datetime.timedelta(hours=9)],
+        ["z", datetime.datetime(2020, 12, 21, 12, 0, 0), datetime.timedelta(hours=9)],
+        ["t", datetime.datetime(2020, 12, 21, 12, 0, 0), datetime.timedelta(hours=48)],
+        ["z", datetime.datetime(2020, 12, 21, 12, 0, 0), datetime.timedelta(hours=48)],
     ]
 
     assert g.get(ref_keys) == ref

@@ -33,6 +33,9 @@ def init_member_conf(conf):
     def decorator(cls):
         keys = {}
         for member_name, member in MEMBERS.items():
+            if member is None:
+                continue
+
             member_cls = member["cls"]
 
             for key in member_cls.ALL_KEYS:
@@ -104,9 +107,6 @@ def init_member_conf(conf):
         # print(f"_MEMBER_KEYS:")
         # for k, v in cls._MEMBER_KEYS.items():
         #     print(f" {k} -> {v}")
-
-        MemberNames = namedtuple("MemberNames", list(MEMBERS.keys()))
-        setattr(cls, "MEMBER_NAMES", MemberNames(**{k: k for k in MEMBERS}))
 
         return cls
 

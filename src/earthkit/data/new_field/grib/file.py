@@ -92,7 +92,7 @@ class GribFieldListInFile(SimpleFieldListCore):
     #     # return self._fields
 
     def _create_field(self, n, handle_cache):
-        from earthkit.data.new_field.grib.field import new_grib_field
+        from earthkit.data.field.grib.create import new_grib_field
 
         from .handle import FileGribHandle
 

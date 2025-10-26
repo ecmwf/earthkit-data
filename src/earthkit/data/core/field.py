@@ -63,11 +63,11 @@ LS_KEYS = [
     {
         "data": {"cls": Data, "direct": "values"},
         "time": {"cls": TimeFieldMember, "direct": all},
-        "parameter": {"cls": ParameterFieldMember, "direct": ("variable", "units")},
+        "parameter": {"cls": ParameterFieldMember, "direct": ("variable", "param", "units")},
         "geography": {"cls": GeographyFieldMember, "direct": all},
         "vertical": {"cls": VerticalFieldMember, "direct": ("level", "layer")},
         "ensemble": {"cls": EnsembleFieldMember, "direct": ("member",)},
-        "labels": {"cls": SimpleLabels},
+        "labels": None,
     }
 )
 @wrap_maths
@@ -125,6 +125,9 @@ class Field(Base):
     ):
 
         self._data = data
+
+        if labels is None:
+            labels = SimpleLabels()
         self._labels = labels
 
         self._members = {
@@ -176,6 +179,7 @@ class Field(Base):
             else:
                 _kwargs[name] = field._members[name]
 
+        print("_kwargs =", _kwargs)
         r = field.__class__(**_kwargs, **kwargs)
 
         if field._private:
@@ -339,7 +343,7 @@ class Field(Base):
             Field values.
 
         """
-        v = self.data.get_values(dtype=dtype, copy=copy, index=index)
+        v = self._data.get_values(dtype=dtype, copy=copy, index=index)
         if array_backend is not None:
             v = convert_array(v, target_backend=array_backend)
         if flatten:
