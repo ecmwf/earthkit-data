@@ -139,6 +139,9 @@ class GeoBasedGribFieldGeography(Geography):
     def projection(self):
         from earthkit.data.utils.projections import Projection
 
+        return Projection.from_proj_string(None)
+
+        # TODO: this crashed in eckit so we workaround it for now
         return Projection.from_proj_string(self.metadata.get("projTargetString", None))
 
     def bounding_box(self):
@@ -150,7 +153,7 @@ class GeoBasedGribFieldGeography(Geography):
         )
 
     def gridspec(self):
-        return self.grid_spec
+        return self._grid.grid_spec
 
     def resolution(self):
         return None
