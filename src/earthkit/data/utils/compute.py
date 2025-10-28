@@ -87,7 +87,7 @@ def wrap_maths(cls):
 
 
 def apply_ufunc(func, *args):
-    from earthkit.data.core.fieldlist import Field
+    from earthkit.data.core.field import Field
     from earthkit.data.core.fieldlist import FieldListCore
 
     x = [get_wrapper(a) for a in args]
@@ -135,7 +135,7 @@ class Compute(metaclass=ABCMeta):
 class LoopCompute(Compute):
     @staticmethod
     def create_fieldlist(ref, x):
-        from earthkit.data.core.fieldlist import Field
+        from earthkit.data.core.field import Field
         from earthkit.data.core.fieldlist import FieldListCore
 
         x = get_wrapper(x)
@@ -200,12 +200,12 @@ class LoopCompute(Compute):
 
     @staticmethod
     def binary_op(oper, x, y):
-        from earthkit.data.core.fieldlist import FieldList
+        from earthkit.data.core.fieldlist import FieldListCore
 
-        assert isinstance(x, FieldList)
+        assert isinstance(x, FieldListCore)
 
         y = LoopCompute.create_fieldlist(x, y)
-        assert isinstance(y, FieldList)
+        assert isinstance(y, FieldListCore)
 
         if len(y) == 0:
             raise ValueError("FieldList y must not be empty")
@@ -224,11 +224,11 @@ class LoopCompute(Compute):
             f = f1._binary_op(oper, f2)
             # f.to_disk()
             r.append(f)
-        return FieldList.from_fields(r)
+        return FieldListCore.from_fields(r)
 
     @staticmethod
     def apply_ufunc(func, ref, *args, template=None):
-        from earthkit.data.core.fieldlist import FieldList
+        from earthkit.data.core.fieldlist import FieldListCore
 
         x = [get_wrapper(a) for a in args]
         ds = []
@@ -253,7 +253,7 @@ class LoopCompute(Compute):
             f = f_ref.clone(values=vx)
             # f.to_disk()
             r.append(f)
-        return FieldList.from_fields(r)
+        return FieldListCore.from_fields(r)
 
 
 methods = {"loop": LoopCompute}

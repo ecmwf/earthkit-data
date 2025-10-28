@@ -40,7 +40,7 @@ def test_grib_single_index(fl_type, index, expected_meta):
     # f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
 
     r = f[index]
-    assert r.get(["shortName", "level"]) == expected_meta
+    assert r.get(["variable", "level"]) == expected_meta
     v = r.values
     assert v.shape == (84,)
     # eps = 0.001
@@ -70,12 +70,12 @@ def test_grib_slice_single_file(fl_type, indexes, expected_meta):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
     r = f[indexes]
     assert len(r) == 4
-    assert r.get(["shortName", "level"]) == expected_meta
+    assert r.get(["variable", "level"]) == expected_meta
     v = r.values
     assert v.shape == (4, 84)
     # check the original fieldlist
     assert len(f) == 18
-    assert f.get("shortName") == ["t", "u", "v"] * 6
+    assert f.get("variable") == ["t", "u", "v"] * 6
 
 
 @pytest.mark.parametrize(
@@ -94,12 +94,12 @@ def test_grib_slice_multi_file(indexes, expected_meta):
     )
     r = f[indexes]
     assert len(r) == 3
-    assert r.get(["shortName", "level"]) == expected_meta
+    assert r.get(["variable", "level"]) == expected_meta
     # v = r.values
     # assert v.shape == (3, 84)
     # check the original fieldlist
     assert len(f) == 6
-    assert f.get("shortName") == ["2t", "msl", "t", "z", "t", "z"]
+    assert f.get("variable") == ["2t", "msl", "t", "z", "t", "z"]
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -116,11 +116,11 @@ def test_grib_array_indexing(fl_type, indexes1, indexes2):
 
     r = f[indexes1]
     assert len(r) == 4
-    assert r.get("shortName") == ["u", "u", "v", "t"]
+    assert r.get("variable") == ["u", "u", "v", "t"]
 
     r1 = r[indexes2]
     assert len(r1) == 2
-    assert r1.get("shortName") == ["u", "t"]
+    assert r1.get("variable") == ["u", "t"]
 
 
 @pytest.mark.skip(reason="Index range checking disabled")
@@ -142,12 +142,12 @@ def test_grib_array_indexing_bad(fl_type, indexes):
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_fieldlist_iterator(fl_type):
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
-    sn = g.get("shortName")
+    sn = g.get("variable")
     assert len(sn) == 18
-    iter_sn = [f.get("shortName") for f in g]
+    iter_sn = [f.get("variable") for f in g]
     assert iter_sn == sn
     # repeated iteration
-    iter_sn = [f.get("shortName") for f in g]
+    iter_sn = [f.get("variable") for f in g]
     assert iter_sn == sn
 
 
@@ -187,12 +187,12 @@ def test_grib_fieldlist_iterator_with_zip_multiple(fl_type):
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_fieldlist_reverse_iterator(fl_type):
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
-    sn = g.get("shortName")
+    sn = g.get("variable")
     sn_reversed = list(reversed(sn))
     assert sn_reversed[0] == "v"
     assert sn_reversed[17] == "t"
     gr = reversed(g)
-    iter_sn = [f.get("shortName") for f in gr]
+    iter_sn = [f.get("variable") for f in gr]
     assert len(iter_sn) == len(sn_reversed)
     assert iter_sn == sn_reversed
     assert iter_sn == ["v", "u", "t"] * 6

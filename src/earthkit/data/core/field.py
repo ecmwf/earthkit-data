@@ -315,7 +315,9 @@ class Field(Base):
         """
         v = array_to_numpy(self._data.get_values(dtype=dtype, copy=copy, index=index))
         if flatten:
-            return flatten(v)
+            from earthkit.data.utils.array import flatten as array_flatten
+
+            return array_flatten(v)
         else:
             return reshape(v, self.shape)
 
@@ -347,7 +349,9 @@ class Field(Base):
         if array_backend is not None:
             v = convert_array(v, target_backend=array_backend)
         if flatten:
-            return flatten(v)
+            from earthkit.data.utils.array import flatten as array_flatten
+
+            return array_flatten(v)
         else:
             return reshape(v, self.shape)
 

@@ -137,7 +137,7 @@ class SimpleFieldListCore(FieldList):
 
     @classmethod
     def merge(cls, sources):
-        if not all(isinstance(_, SimpleFieldList) for _ in sources):
+        if not all(isinstance(_, SimpleFieldListCore) for _ in sources):
             raise ValueError("SimpleFieldList can only be merged to another SimpleFieldLists")
 
         from itertools import chain

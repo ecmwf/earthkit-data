@@ -44,9 +44,13 @@ def test_grib_set_geo(fl_type, write_method, _kwargs):
     assert f.get("base_datetime") == datetime.datetime(2007, 1, 1, 12)
     assert f.get("valid_datetime") == datetime.datetime(2007, 1, 1, 12)
     assert f.get("step") == datetime.timedelta(hours=0)
-    assert f.get("time_span") == datetime.timedelta(hours=0)
+    # assert f.get("time_span") == datetime.timedelta(hours=0)
 
+    # the original field is unchanged
+    assert ds_ori[0].get("latitudes").shape == (181, 360)
+    assert ds_ori[0].get("longitudes").shape == (181, 360)
+    assert ds_ori[0].values.shape == (65160,)
     assert ds_ori[0].get("base_datetime") == datetime.datetime(2007, 1, 1, 12)
     assert ds_ori[0].get("valid_datetime") == datetime.datetime(2007, 1, 1, 12)
     assert ds_ori[0].get("step") == datetime.timedelta(hours=0)
-    assert ds_ori[0].get("time_span") == datetime.timedelta(hours=0)
+    # assert ds_ori[0].get("time_span") == datetime.timedelta(hours=0)

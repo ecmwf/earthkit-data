@@ -20,6 +20,12 @@ class StreamFieldList(FieldList, Source):
     def mutate(self):
         return self
 
+    def __len__(self):
+        raise NotImplementedError("StreamFieldList does not support __len__")
+
+    def _getitem(self, item):
+        raise NotImplementedError("StreamFieldList does not support _getitem")
+
     def __iter__(self):
         return iter(self._source)
 

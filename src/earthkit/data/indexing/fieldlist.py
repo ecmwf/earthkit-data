@@ -15,6 +15,7 @@ from earthkit.data.core.fieldlist import FieldListCore
 from earthkit.data.core.index import Index
 from earthkit.data.decorators import detect_out_filename
 from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.data.utils.compute import wrap_maths
 
 GRIB_KEYS_NAMES = [
     "class",
@@ -81,6 +82,7 @@ def build_remapping(remapping, patches):
     return None
 
 
+@wrap_maths
 class FieldList(Index, FieldListCore):
     @staticmethod
     def from_fields(fields):

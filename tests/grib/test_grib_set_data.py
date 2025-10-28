@@ -39,7 +39,7 @@ def test_grib_set_data(fl_type, write_method):
     assert f.get("param") == "t"
     assert f.get("grib.shortName") == "t"
     assert f.get("level") == 500
-    assert f.get("levelist") == 500
+    assert f.get("grib.levelist") == 500
     assert f.get("grib.date", "param") == (20070101, "t")
     assert f.get("param", "grib.date") == ("t", 20070101)
     assert np.allclose(f.values, vals_ori + 1)
@@ -52,7 +52,7 @@ def test_grib_set_data(fl_type, write_method):
         assert f_saved.get("param") == "t"
         assert f_saved.get("grib.shortName") == "t"
         assert f_saved.get("level") == 500
-        assert f_saved.get("levelist") == 500
+        assert f_saved.get("grib.levelist") == 500
         assert np.allclose(f_saved.values, vals_ori + 1)
 
     # ---------------------
@@ -65,7 +65,7 @@ def test_grib_set_data(fl_type, write_method):
     assert f.get("param") == "t"
     assert f.get("grib.shortName") == "t"
     assert f.get("level") == 500
-    assert f.get("levelist") == 500
+    assert f.get("grib.levelist") == 500
     assert f.get("grib.date", "param") == (20070101, "t")
     assert f.get("param", "grib.date") == ("t", 20070101)
     assert np.allclose(f.values, vals_ori + 2)
@@ -85,7 +85,7 @@ def test_grib_set_data(fl_type, write_method):
     assert ds.get("param") == ["t", "z"]
     assert ds.get("grib.shortName") == ["t", "z"]
     assert ds.get("level") == [500, 500]
-    assert ds.get("levelist") == [500, 500]
+    assert ds.get("grib.levelist") == [500, 500]
     assert np.allclose(ds[0].values, vals_ori + 1)
     assert np.allclose(ds[1].values, vals_ori + 2)
 
@@ -96,7 +96,7 @@ def test_grib_set_data(fl_type, write_method):
         assert ds_saved.get("param") == ["t", "z"]
         assert ds_saved.get("grib.shortName") == ["t", "z"]
         assert ds_saved.get("level") == [500, 500]
-        assert ds_saved.get("levelist") == [500, 500]
+        assert ds_saved.get("grib.levelist") == [500, 500]
         assert np.allclose(ds_saved[0].values, vals_ori + 1)
         assert np.allclose(ds_saved[1].values, vals_ori + 2)
 
