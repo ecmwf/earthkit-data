@@ -469,6 +469,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
             handle = next(GribMessageMemoryReader(data)).handle
             bpv = md.get("bitsPerValue", 0)
             res_md = StandAloneGribMetadata(handle)
+
             if bpv is not None and bpv > 0:
                 return WrappedMetadata(res_md, extra={"bitsPerValue": bpv})
             else:
@@ -516,7 +517,9 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     def grid_spec(self):
         """Return the grid specification of the DataArray."""
         try:
-            return self.metadata.gridspec
+            if "ek_grid_spec" in self._obj.attrs:
+                return self._obj.attrs["ek_grid_spec"]
+            return self.metadata.grid_spec
         except Exception:
             return None
 

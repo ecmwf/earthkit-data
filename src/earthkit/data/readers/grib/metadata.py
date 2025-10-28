@@ -50,9 +50,13 @@ GRID_SUPPORT = GridSupport()
 
 class GeoBasedGribFieldGeography(Geography):
     def __init__(self, grid_spec, metadata):
-        from eckit.geo import Grid
+        import json
 
-        self._grid = Grid(grid_spec)
+        from earthkit.geo.grids import Grid
+
+        grid_spec = json.loads(grid_spec)
+
+        self._grid = Grid.from_dict(grid_spec)
         self.grid_spec = grid_spec
         self.metadata = metadata
 
@@ -67,10 +71,8 @@ class GeoBasedGribFieldGeography(Geography):
         -------
         ndarray
         """
-        r = self._grid.to_latlons()[0]
-
+        r = self._grid.to_latlon()["lat"]
         xp = array_namespace(r)
-        r = xp.asarray(r)
         if dtype is not None:
             r = xp.astype(dtype)
         return r
@@ -82,9 +84,8 @@ class GeoBasedGribFieldGeography(Geography):
         -------
         ndarray
         """
-        r = self._grid.to_latlons()[1]
+        r = self._grid.to_latlon()["lon"]
         xp = array_namespace(r)
-        r = xp.asarray(r)
         if dtype is not None:
             r = xp.astype(dtype)
         return r
@@ -153,6 +154,9 @@ class GeoBasedGribFieldGeography(Geography):
         )
 
     def gridspec(self):
+        return self._grid.grid_spec
+
+    def grid_spec(self):
         return self._grid.grid_spec
 
     def resolution(self):
@@ -371,6 +375,9 @@ class GribFieldGeography(Geography):
 
     def gridspec(self):
         return make_gridspec(self.metadata)
+
+    def grid_spec(self):
+        return None
 
     def resolution(self):
         grid_type = self.metadata.get("gridType")
@@ -865,6 +872,10 @@ class GribMetadata(Metadata):
 
     @property
     def gridspec(self):
+        return self.geography.gridspec()
+
+    @property
+    def grid_spec(self):
         return self.geography.gridspec()
 
     def _make_restricted(self, r):
