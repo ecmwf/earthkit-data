@@ -135,6 +135,9 @@ class XArrayInputFieldList(FieldList):
 
         return self.db.index(key, self.unique_values)
 
+    def _getitem(self, n):
+        return self.ds._getitem(n)
+
     def __getitem__(self, n):
         return self.ds[n]
 

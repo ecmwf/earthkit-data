@@ -522,8 +522,6 @@ class GribEncoder(Encoder):
 
         self._update_metadata(handle, metadata, compulsory, can_infer_time)
 
-        print("Metadata before setting to handle:", metadata)
-
         # eccodes keys are order dependent
         KEY_ORDER = ("edition", "stepType")
         r = {k: metadata.pop(k) for k in KEY_ORDER if k in metadata}

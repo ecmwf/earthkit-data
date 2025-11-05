@@ -52,7 +52,7 @@ class Source(Base):
         # Used by multi-source
         return False
 
-    def __add__(self, other):
+    def __and__(self, other):
         from earthkit.data.sources import from_source
 
         return from_source("multi", self, other)

@@ -18,6 +18,7 @@ class VerticalFieldMember(SpecFieldMember):
 
     SPEC_CLS = Vertical
     NAME = "vertical"
+    NAMESPACE_KEYS = ("level", "level_type")
 
     # def __init__(self, data) -> None:
     #     assert isinstance(data, Vertical)
@@ -39,6 +40,12 @@ class VerticalFieldMember(SpecFieldMember):
     #     return VerticalFieldSpec(data)
 
     # def namespace(self, owner, name, result):
+    #     if name is None or name == "vertical" or (isinstance(name, (list, tuple)) and "vertical" in name):
+    #         r = {"level": self.spec.level, "level_type": self.spec.type}
+    #         result[self.NAME] = r
+
+    # def namespace(self, owner, name, result):
+
     #     if name is None or name == "vertical" or (isinstance(name, (list, tuple)) and "vertical" in name):
     #         result["vertical"] = self.to_dict()
 

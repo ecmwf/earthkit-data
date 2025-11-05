@@ -19,6 +19,7 @@ class TimeFieldMember(SpecFieldMember):
 
     SPEC_CLS = Time
     NAME = "time"
+    NAMESPACE_KEYS = ("base_datetime", "valid_datetime", "step")
 
     # def __init__(self, data) -> None:
     #     assert isinstance(data, Time)

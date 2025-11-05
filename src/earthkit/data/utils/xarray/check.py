@@ -51,7 +51,7 @@ class CubeChecker:
         if coord_keys:
             for i, f in enumerate(self.tensor.source):
                 t_coords = self.tensor._index_to_coords_value(i, self.tensor)
-                f_coords = f.metadata(coord_keys)
+                f_coords = f.get(coord_keys)
                 try:
                     diff = ListDiff.diff(t_coords, f_coords)
                     if not diff.same:
@@ -76,19 +76,23 @@ class CubeChecker:
         return f_other, index_other
 
     def namespace_diff(self, f, f_other, namespace):
-        meta = f.metadata(namespace=namespace)
-        meta_other = f_other.metadata(namespace=namespace)
+        meta = f.namespace("grib." + namespace)
+        if meta:
+            meta = meta["grib." + namespace]
+        meta_other = f_other.namespace("grib." + namespace)
+        if meta_other:
+            meta_other = meta_other["grib." + namespace]
         return DictDiff.diff(meta, meta_other)
 
     def meta_diff(self, f, f_other, coords_keys):
-        f_coords = f.metadata(coords_keys)
-        other_coords = f_other.metadata(coords_keys)
+        f_coords = f.get(coords_keys)
+        other_coords = f_other.get(coords_keys)
         meta = {coords_keys[i]: v for i, v in enumerate(f_coords)}
         meta_other = {coords_keys[i]: v for i, v in enumerate(other_coords)}
         return DictDiff.diff(meta, meta_other)
 
     def meta(self, f, coords_keys):
-        f_coords = f.metadata(coords_keys)
+        f_coords = f.get(coords_keys)
         return {coords_keys[i]: v for i, v in enumerate(f_coords)}
 
     def check(self, details=False):
@@ -151,7 +155,7 @@ class CubeChecker:
                 md = {}
                 md["dims"] = self.meta(f, coord_keys)
                 for ns in namespaces:
-                    md["namespace=" + ns] = f.metadata(namespace=ns)
+                    md["namespace=" + ns] = f.namespace("grib." + ns)
 
                 text_meta = f"\nField[{index}] metadata:\n"
                 for k, v in md.items():

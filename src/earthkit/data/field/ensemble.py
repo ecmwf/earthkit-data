@@ -18,6 +18,7 @@ class EnsembleFieldMember(SpecFieldMember):
 
     SPEC_CLS = Ensemble
     NAME = "ensemble"
+    NAMESPACE_KEYS = ("member",)
 
     # def __init__(self, data) -> None:
     #     assert isinstance(data, Ensemble)

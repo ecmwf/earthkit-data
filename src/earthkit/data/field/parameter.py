@@ -18,6 +18,7 @@ class ParameterFieldMember(SpecFieldMember):
 
     SPEC_CLS = Parameter
     NAME = "parameter"
+    NAMESPACE_KEYS = ("variable", "units")
 
     # def __init__(self, data) -> None:
     #     assert isinstance(data, Parameter)

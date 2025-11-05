@@ -710,4 +710,6 @@ class FieldListCore(Base):
         from earthkit.data.utils.compute import get_method
 
         method = "loop"
-        return get_method(method).binary_op(oper, self, y)
+        r = get_method(method).binary_op(oper, self, y)
+        print("FieldListCore._binary_op done:", type(r))
+        return r

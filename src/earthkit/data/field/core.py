@@ -50,6 +50,7 @@ class FieldMember(metaclass=ABCMeta):
     ALIASES = Aliases()
     ALL_KEYS = tuple()
     NAME = None
+    NAMESPACE_KEYS = None
 
     @classmethod
     @abstractmethod
@@ -225,7 +226,11 @@ class SpecFieldMember(SimpleFieldMember):
 
     def namespace(self, owner, name, result):
         if name is None or name == self.NAME or (isinstance(name, (list, tuple)) and self.NAME in name):
-            result[self.NAME] = self.to_dict()
+            if self.NAMESPACE_KEYS:
+                r = {k: getattr(self.spec, k) for k in self.NAMESPACE_KEYS}
+                result[self.NAME] = r
+            else:
+                result[self.NAME] = dict()
 
     def check(self, owner):
         pass

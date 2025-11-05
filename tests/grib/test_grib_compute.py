@@ -31,9 +31,14 @@ class ComputeOperand:
         self.array_backend = array_backend
 
 
-class SingleValueOperand(ComputeOperand):
+class SingleValueIntOperand(ComputeOperand):
     def val(self):
         return 10, 10
+
+
+class SingleValueFloatOperand(ComputeOperand):
+    def val(self):
+        return 10.1, 10.1
 
 
 class ArraySingleValueOperand(ComputeOperand):
@@ -89,7 +94,8 @@ class FieldListUnaryOperand(ComputeOperand):
 
 
 RIGHT_OPERANDS = [
-    SingleValueOperand,
+    SingleValueIntOperand,
+    SingleValueFloatOperand,
     ArraySingleValueOperand,
     ArrayFieldOperand,
     ArrayFieldListOperand,
@@ -99,7 +105,13 @@ RIGHT_OPERANDS = [
 ]
 
 # arrays cannot be left operands
-LEFT_OPERANDS = [SingleValueOperand, FieldOperand, SingleFieldListOperand, FieldListOperand]
+LEFT_OPERANDS = [
+    SingleValueIntOperand,
+    SingleValueFloatOperand,
+    FieldOperand,
+    SingleFieldListOperand,
+    FieldListOperand,
+]
 
 UNARY_OPERANDS = [
     FieldUnaryOperand,
@@ -107,7 +119,7 @@ UNARY_OPERANDS = [
 ]
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_add(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -118,7 +130,7 @@ def test_grib_compute_add(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_sub(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -129,7 +141,7 @@ def test_grib_compute_sub(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_mul(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -140,7 +152,7 @@ def test_grib_compute_mul(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_div(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -151,7 +163,7 @@ def test_grib_compute_div(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_floordiv(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -162,7 +174,7 @@ def test_grib_compute_floordiv(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_mod(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -173,7 +185,7 @@ def test_grib_compute_mod(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_pow(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -184,7 +196,7 @@ def test_grib_compute_pow(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_radd(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -195,7 +207,7 @@ def test_grib_compute_radd(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_rsub(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -206,7 +218,7 @@ def test_grib_compute_rsub(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_rmul(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -217,7 +229,7 @@ def test_grib_compute_rmul(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_rdiv(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -228,7 +240,7 @@ def test_grib_compute_rdiv(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_rfloordiv(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -239,7 +251,7 @@ def test_grib_compute_rfloordiv(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_rmod(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -250,7 +262,7 @@ def test_grib_compute_rmod(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_rpow(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -261,7 +273,7 @@ def test_grib_compute_rpow(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", UNARY_OPERANDS)
 def test_grib_compute_pos(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
@@ -300,7 +312,7 @@ def test_grib_compute_ufunc(fl_type, operand):
     assert array_backend.allclose(res.values, ref, equal_nan=True)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", UNARY_OPERANDS)
 def test_grib_compute_sin(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)

@@ -16,12 +16,12 @@ import numpy as np
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalize
 
-# from earthkit.data.indexing.fieldlist import ClonedFieldCore
-from earthkit.data.indexing.simple import SimpleFieldList
-
 # from earthkit.data.core.fieldlist import Field
 # from earthkit.data.core.metadata import RawMetadata
-from earthkit.data.specs.data import SimpleData
+from earthkit.data.field.spec.data import SimpleData
+
+# from earthkit.data.indexing.fieldlist import ClonedFieldCore
+from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.utils.dates import to_datetime
 
 # from earthkit.data.decorators import thread_safe_cached_property
@@ -349,12 +349,25 @@ class ForcingsFieldData(SimpleData):
         self.proc = proc
         self.date = date
 
-    def get_values(self, dtype=None):
+    def get_values(self, dtype=None, copy=True, index=None):
         """Get the values stored in the field as an array."""
         values = self.proc(self.date)
         if dtype is not None:
             values = values.astype(dtype)
+        if copy:
+            values = values.copy()
+        if index is not None:
+            values = values[index]
         return values
+
+    def spec(self):
+        return self
+
+    def __getstate__(self):
+        pass
+
+    def __setstate__(self, state):
+        pass
 
 
 class ForcingsFieldList(SimpleFieldList):
@@ -390,16 +403,19 @@ class ForcingsFieldList(SimpleFieldList):
 
         return self._make_field(param, date, number)
 
+    # TODO: refactor the field construction
     def _make_field(self, param, date, number):
         from earthkit.data.core.field import Field
-        from earthkit.data.specs.labels import SimpleLabels
-        from earthkit.data.specs.parameter import Parameter
-        from earthkit.data.specs.time import Time
+        from earthkit.data.field.parameter import ParameterFieldMember
+        from earthkit.data.field.spec.labels import SimpleLabels
+        from earthkit.data.field.spec.parameter import Parameter
+        from earthkit.data.field.spec.time import Time
+        from earthkit.data.field.time import TimeFieldMember
 
         data = ForcingsFieldData(self.procs[param], date)
-        geography = self.maker.field.geography
-        parameter = Parameter(name=param)
-        time = Time.from_valid_datetime(date)
+        geography = self.maker.field._members["geography"]
+        parameter = ParameterFieldMember(Parameter.from_dict(dict(variable=param)))
+        time = TimeFieldMember(Time.from_valid_datetime(valid_datetime=date))
         labels = SimpleLabels({"number": number})
         field = Field(data=data, parameter=parameter, geography=geography, time=time, labels=labels)
 

@@ -36,10 +36,6 @@ class VerticalFieldSpec(SimpleSpec):
         data = self._data.set(*args, **kwargs)
         return VerticalFieldSpec(data)
 
-    def namespace(self, owner, name, result):
-        if name is None or name == "vertical" or (isinstance(name, (list, tuple)) and "vertical" in name):
-            result["vertical"] = self.to_dict()
-
     def check(self, owner):
         pass
 

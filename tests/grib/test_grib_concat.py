@@ -26,7 +26,7 @@ def _check_save_to_disk(ds, len_ref, meta_ref):
     assert os.path.exists(tmp.path)
     r_tmp = from_source("file", tmp.path)
     assert len(r_tmp) == len_ref
-    assert r_tmp.get("shortName") == meta_ref
+    assert r_tmp.get("grib.shortName") == meta_ref
     r_tmp = None
 
 
@@ -36,7 +36,7 @@ def test_grib_concat_core(mode):
     ds2 = from_source("file", earthkit_examples_file("test6.grib"))
 
     if mode == "oper":
-        ds = ds1 + ds2
+        ds = ds1 & ds2
     else:
         ds = from_source("multi", ds1, ds2)
 
@@ -73,8 +73,8 @@ def test_grib_concat_3a(mode):
     md = ds1.metadata("param") + ds2.metadata("param") + ds3.metadata("param")
 
     if mode == "oper":
-        ds = ds1 + ds2
-        ds = ds + ds3
+        ds = ds1 & ds2
+        ds = ds & ds3
     else:
         ds = from_source("multi", ds1, ds2)
         ds = from_source("multi", ds, ds3)
@@ -92,7 +92,7 @@ def test_grib_concat_3b(mode):
     md = ds1.metadata("param") + ds2.metadata("param") + ds3.metadata("param")
 
     if mode == "oper":
-        ds = ds1 + ds2 + ds3
+        ds = ds1 & ds2 & ds3
     else:
         ds = from_source("multi", ds1, ds2, ds3)
 
@@ -108,7 +108,7 @@ def test_grib_concat_mixed(mode):
     md = ds1.metadata("param") + ds2.metadata("param")
 
     if mode == "oper":
-        ds = ds1 + ds2
+        ds = ds1 & ds2
     else:
         ds = from_source("multi", ds1, ds2)
 
@@ -122,7 +122,7 @@ def test_grib_from_empty_1():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds.metadata("param")
 
-    ds1 = ds_e + ds
+    ds1 = ds_e & ds
     assert id(ds1) == id(ds)
     assert len(ds1) == 2
     _check_save_to_disk(ds1, 2, md)
@@ -133,7 +133,7 @@ def test_grib_from_empty_2():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds.metadata("param")
 
-    ds1 = ds + ds_e
+    ds1 = ds & ds_e
     assert id(ds1) == id(ds)
     assert len(ds1) == 2
     _check_save_to_disk(ds1, 2, md)
@@ -145,7 +145,7 @@ def test_grib_from_empty_3():
     ds2 = from_source("file", earthkit_examples_file("test6.grib"))
     md = ds1.metadata("param") + ds2.metadata("param")
 
-    ds3 = ds_e + ds1 + ds2
+    ds3 = ds_e & ds1 & ds2
     assert len(ds3) == 8
     _check_save_to_disk(ds3, 8, md)
 

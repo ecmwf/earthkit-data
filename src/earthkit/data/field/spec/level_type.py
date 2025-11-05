@@ -185,5 +185,7 @@ def get_level_type(item: str, default=LevelTypes.UNKNOWN) -> LevelType:
     elif isinstance(item, str):
         if item in _LEVEL_TYPES:
             return _LEVEL_TYPES[item]
+    elif item is None:
+        return default.value
 
     raise ValueError(f"Unsupported level type: {type(item)}")

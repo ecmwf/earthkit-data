@@ -458,7 +458,7 @@ def test_grib_concat_stream():
     ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True)
     ds3 = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True)
 
-    ds = ds1 + ds2 + ds3
+    ds = ds1 & ds2 & ds3
 
     ref = [
         ("2t", 0),
@@ -491,7 +491,7 @@ def test_grib_concat_stream_memory():
     ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True, read_all=True)
     ds3 = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True, read_all=True)
 
-    ds = ds1 + ds2 + ds3
+    ds = ds1 & ds2 & ds3
 
     ref = [
         ("2t", 0),

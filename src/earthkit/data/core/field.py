@@ -859,7 +859,7 @@ class Field(Base):
         pass
 
     def namespace(self, name=None):
-        if name is all or name is True:
+        if name is all or name is True or name == [all]:
             name = None
 
         result = {}
@@ -1227,18 +1227,18 @@ class Field(Base):
         return r
 
     def _binary_op(self, oper, y):
-        from earthkit.data.core.fieldlist import FieldListCore
+        from earthkit.data.indexing.fieldlist import FieldList
         from earthkit.data.wrappers import get_wrapper
 
         y = get_wrapper(y)
-        if isinstance(y, FieldListCore):
-            x = FieldListCore.from_fields([self])
+        if isinstance(y, FieldList):
+            x = FieldList.from_fields([self])
             return x._binary_op(oper, y)
 
         vx = self.values
         vy = y.values
         v = oper(vx, vy)
-        r = self._set_values(v)
+        r = self.set(values=v)
         return r
 
     def __getstate__(self):

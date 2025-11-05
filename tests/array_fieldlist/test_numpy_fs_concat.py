@@ -15,7 +15,7 @@ import sys
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.core.fieldlist_ori import FieldList
+from earthkit.data.indexing.fieldlist import FieldList
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -29,7 +29,7 @@ def test_array_fl_grib_concat_2a(mode):
     ds1, ds2, md = load_array_fl(2)
 
     if mode == "oper":
-        ds = ds1 + ds2
+        ds = ds1 & ds2
     else:
         ds = from_source("multi", ds1, ds2)
 
@@ -51,8 +51,8 @@ def test_array_fl_grib_concat_3a(mode):
     ds1, ds2, ds3, md = load_array_fl(3)
 
     if mode == "oper":
-        ds = ds1 + ds2
-        ds = ds + ds3
+        ds = ds1 & ds2
+        ds = ds & ds3
     else:
         ds = from_source("multi", ds1, ds2)
         ds = from_source("multi", ds, ds3)
@@ -66,7 +66,7 @@ def test_array_fl_grib_concat_3b(mode):
     ds1, ds2, ds3, md = load_array_fl(3)
 
     if mode == "oper":
-        ds = ds1 + ds2 + ds3
+        ds = ds1 & ds2 & ds3
     else:
         ds = from_source("multi", ds1, ds2, ds3)
 
@@ -77,27 +77,27 @@ def test_array_fl_grib_concat_3b(mode):
 def test_array_fl_grib_from_empty_1():
     ds_e = FieldList()
     ds, md = load_array_fl(1)
-    ds1 = ds_e + ds
+    ds1 = ds_e & ds
     assert id(ds1) == id(ds)
     assert len(ds1) == 2
-    assert ds1.metadata("param") == md
+    assert ds1.get("param") == md
     check_save_to_disk(ds1, 2, md)
 
 
 def test_array_fl_grib_from_empty_2():
     ds_e = FieldList()
     ds, md = load_array_fl(1)
-    ds1 = ds + ds_e
+    ds1 = ds & ds_e
     assert id(ds1) == id(ds)
     assert len(ds1) == 2
-    assert ds1.metadata("param") == md
+    assert ds1.get("param") == md
     check_save_to_disk(ds1, 2, md)
 
 
 def test_array_fl_grib_from_empty_3():
     ds_e = FieldList()
     ds1, ds2, md = load_array_fl(2)
-    ds = ds_e + ds1 + ds2
+    ds = ds_e & ds1 & ds2
 
     check_array_fl(ds, [ds1, ds2], md)
     check_save_to_disk(ds, 8, md)
@@ -109,7 +109,7 @@ def test_array_fl_grib_from_empty_4():
     ds += ds1
     assert id(ds) == id(ds1)
     assert len(ds) == 2
-    assert ds.metadata("param") == md
+    assert ds.get("param") == md
     check_save_to_disk(ds, 2, md)
 
 
