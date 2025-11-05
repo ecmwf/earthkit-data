@@ -67,6 +67,7 @@ from .spec.geography import Geography
         "latitudes",
         "longitudes",
         "shape",
+        "grid_spec",
         "grid_type",
         "bounding_box",
         "distinct_latitudes",

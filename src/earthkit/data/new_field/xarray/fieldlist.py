@@ -48,6 +48,8 @@ class XArrayFieldList(FieldList):
         self.variables: List[Variable] = variables.copy()
         self.total_length: int = sum(v.length for v in variables)
 
+        print(f"Created XArrayFieldList with {self.total_length} fields from {len(variables)} variables")
+
     def __repr__(self) -> str:
         """Return a string representation of the XarrayFieldList."""
         return f"XarrayFieldList({self.total_length})"
@@ -58,6 +60,7 @@ class XArrayFieldList(FieldList):
 
     def _getitem(self, n):
         if isinstance(n, int):
+            print(f"Getting item {n} from XArrayFieldList")
             return self._getitem_core(n)
 
     def _getitem_core(self, i: int) -> Any:
@@ -85,6 +88,7 @@ class XArrayFieldList(FieldList):
 
         for v in self.variables:
             if i < v.length:
+                print(f"Selecting field {i} from variable {v.name}")
                 return v[i]
             i -= v.length
 

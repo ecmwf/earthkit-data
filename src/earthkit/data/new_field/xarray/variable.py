@@ -174,10 +174,11 @@ class Variable:
 
         coords = np.unravel_index(i, self.shape)
         kwargs = {k: v for k, v in zip(self.names, coords)}
-        from earthkit.data.core.field import Field
+        from earthkit.data.field.xarray.create import new_xarray_field
 
-        # return XArrayField(self, self.variable.isel(kwargs))
-        return Field.from_xarray(self, self.variable.isel(kwargs))
+        print(f"Creating field {i} from variable {self.name}")
+
+        return new_xarray_field(self, self.variable.isel(kwargs))
 
     def sel(self, missing: Dict[str, Any], **kwargs: Any) -> Optional["Variable"]:
         """Select a subset of the variable based on the given coordinates.

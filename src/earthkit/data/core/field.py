@@ -64,7 +64,7 @@ LS_KEYS = [
         "data": {"cls": Data, "direct": "values"},
         "time": {"cls": TimeFieldMember, "direct": all},
         "parameter": {"cls": ParameterFieldMember, "direct": ("variable", "param", "units")},
-        "geography": {"cls": GeographyFieldMember, "direct": all},
+        "geography": {"cls": GeographyFieldMember, "direct": ("latitudes", "longitudes", "grid_spec")},
         "vertical": {"cls": VerticalFieldMember, "direct": ("level", "layer")},
         "ensemble": {"cls": EnsembleFieldMember, "direct": ("member",)},
         "labels": None,
@@ -291,6 +291,13 @@ class Field(Base):
     # def values(self):
     #     """array-like: Return the values of the field."""
     #     return self._data.values
+
+    @property
+    def shape(self):
+        if self._members[Field._MEMBER_NAMES.geography]:
+            return self._members[Field._MEMBER_NAMES.geography].shape
+        else:
+            return self.values.shape
 
     def to_numpy(self, flatten=False, dtype=None, copy=True, index=None):
         r"""Return the values stored in the field as an ndarray.

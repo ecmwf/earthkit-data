@@ -10,7 +10,7 @@
 import logging
 from typing import Any
 
-from earthkit.data.specs.data import SimpleData
+from earthkit.data.field.data import SimpleData
 
 LOG = logging.getLogger(__name__)
 
@@ -29,3 +29,9 @@ class XArrayData(SimpleData):
         if dtype is not None:
             values = values.astype(dtype, copy=copy)
         return values
+
+    def __getstate__(self):
+        return super().__getstate__()
+
+    def __setstate__(self, state):
+        super().__setstate__(state)

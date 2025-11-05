@@ -9,12 +9,13 @@
 
 import logging
 
-from earthkit.data.specs.parameter import SimpleParameter
+from earthkit.data.field.parameter import ParameterFieldMember
+from earthkit.data.field.spec.parameter import Parameter
 
 LOG = logging.getLogger(__name__)
 
 
-class XArrayParameter(SimpleParameter):
+class XArrayParameter(ParameterFieldMember):
     """A class to represent a parameter in an xarray dataset."""
 
     def __init__(self, owner, selection=None) -> None:
@@ -32,4 +33,5 @@ class XArrayParameter(SimpleParameter):
         # self.owner = owner
         name = owner.name
         units = owner.variable.attrs.get("units", None)
-        super().__init__(name, units)
+        spec = Parameter.from_dict(dict(variable=name, units=units))
+        super().__init__(spec)

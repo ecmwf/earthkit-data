@@ -10,9 +10,10 @@
 
 from typing import Any
 
+from earthkit.data.field.spec.time import Time
+from earthkit.data.field.time import TimeFieldMember
 from earthkit.data.new_field.xarray.coordinates import extract_single_value
 from earthkit.data.new_field.xarray.coordinates import is_scalar
-from earthkit.data.specs.time import SimpleTime
 
 
 def from_xarray(owner, selection):
@@ -27,10 +28,13 @@ def from_xarray(owner, selection):
     return owner.time.spec(_coords)
 
 
-class XArrayTime(SimpleTime):
+class XArrayTime(TimeFieldMember):
     def __init__(self, owner: Any, selection: Any) -> None:
         self.owner = owner
         self.selection = selection
+
+        spec = Time.from_dict(from_xarray(owner, selection))
+        super().__init__(spec)
 
     # @thread_safe_cached_property
     # def spec(self):

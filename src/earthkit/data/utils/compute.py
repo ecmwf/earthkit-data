@@ -15,6 +15,10 @@ from earthkit.utils.array import array_namespace
 
 from earthkit.data.wrappers import get_wrapper
 
+# NOTE: __and__ is used as the concatenation operator for FieldLists.
+# Therefore cannot be overloaded here for compute operations
+
+
 COMP_UNARY = {
     "__neg__": lambda x: -x,
     "__pos__": lambda x: +x,
