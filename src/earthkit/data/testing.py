@@ -262,9 +262,9 @@ def check_array(
     import numpy as np
 
     assert v.shape == shape
-    assert np.isclose(v[0], first, eps)
-    assert np.isclose(v[-1], last, eps)
-    assert np.isclose(v.mean(), meanv, eps)
+    assert np.isclose(v[0], first, eps), f"{v[0]} vs {first}"
+    assert np.isclose(v[-1], last, eps), f"{v[-1]} vs {last}"
+    assert np.isclose(v.mean(), meanv, eps), f"{v.mean()} vs {meanv}"
 
 
 def main(path):

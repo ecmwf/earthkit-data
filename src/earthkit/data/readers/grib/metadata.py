@@ -34,7 +34,7 @@ def missing_is_none(x):
 
 class GridSupport:
     @thread_safe_cached_property
-    def has_eckit(self):
+    def has_grid(self):
         try:
             from eckit.geo import Grid  # noqa: F401
 
@@ -44,19 +44,32 @@ class GridSupport:
 
         return False
 
+    @thread_safe_cached_property
+    def has_ecc_grid_spec(self):
+        import os
+
+        if os.environ.get("ECCODES_ECKIT_GEO") == "1":
+            import eccodes
+
+            try:
+                r = eccodes.codes_get_features(eccodes.CODES_FEATURES_ENABLED)
+                if isinstance(r, str) and "ECKIT_GEO" in r:
+                    return True
+            except Exception as e:
+                LOG.warning(f"Failed to get ecCodes features: {e}")
+                return False
+
+        return False
+
 
 GRID_SUPPORT = GridSupport()
 
 
 class GeoBasedGribFieldGeography(Geography):
     def __init__(self, grid_spec, metadata):
-        import json
+        from eckit.geo import Grid
 
-        from earthkit.geo.grids import Grid
-
-        grid_spec = json.loads(grid_spec)
-
-        self._grid = Grid.from_dict(grid_spec)
+        self._grid = Grid(grid_spec)
         self.grid_spec = grid_spec
         self.metadata = metadata
 
@@ -71,10 +84,16 @@ class GeoBasedGribFieldGeography(Geography):
         -------
         ndarray
         """
-        r = self._grid.to_latlon()["lat"]
+        r = self._grid.to_latlons()
+        import numpy as np
+
+        r = np.asarray(r[0])
         xp = array_namespace(r)
+
+        if dtype is None:
+            dtype = xp.float64
         if dtype is not None:
-            r = xp.astype(dtype)
+            r = xp.astype(r, dtype)
         return r
 
     def longitudes(self, dtype=None):
@@ -84,17 +103,22 @@ class GeoBasedGribFieldGeography(Geography):
         -------
         ndarray
         """
-        r = self._grid.to_latlon()["lon"]
+        r = self._grid.to_latlons()
+        import numpy as np
+
+        r = np.asarray(r[1])
         xp = array_namespace(r)
+        if dtype is None:
+            dtype = xp.float64
         if dtype is not None:
-            r = xp.astype(dtype)
+            r = xp.astype(r, dtype)
         return r
 
     def distinct_latitudes(self, dtype=None):
-        return self.metadata._handle.get("distinctLatitudes", dtype=dtype)
+        return None
 
     def distinct_longitudes(self, dtype=None):
-        return self.metadata._handle.get("distinctLongitudes", dtype=dtype)
+        return None
 
     def x(self, dtype=None):
         r"""Return the x coordinates in the field's original CRS.
@@ -487,6 +511,83 @@ class GribFieldGeography(Geography):
             return self.longitudes(**kwargs)
 
 
+class SpectralGribFieldGeography(Geography):
+    def __init__(self, metadata):
+        self.metadata = metadata
+        self.check_rotated_support()
+
+    @thread_safe_cached_property
+    def spectral(self):
+        return True
+
+    def latitudes(self, dtype=None):
+        return None
+
+    def longitudes(self, dtype=None):
+        return None
+
+    def distinct_latitudes(self, dtype=None):
+        return None
+
+    def distinct_longitudes(self, dtype=None):
+        return None
+
+    def x(self, dtype=None):
+        return None
+
+    def y(self, dtype=None):
+        return None
+
+    def shape(self):
+        n = self.metadata.get("numberOfDataPoints", None)
+        return (n,)  # shape must be a tuple
+
+    def _unique_grid_id(self):
+        return self.metadata.get("md5GridSection", None)
+
+    def projection(self):
+        return None
+
+    def bounding_box(self):
+        return None
+
+    def gridspec(self):
+        return None
+
+    def grid_spec(self):
+        return None
+
+    def resolution(self):
+        return None
+
+    def mars_grid(self):
+        return self.metadata.get("gridName")
+
+    def mars_area(self):
+        return None
+
+    @property
+    def rotation(self):
+        return None
+
+    @thread_safe_cached_property
+    def rotated(self):
+        return False
+
+    @thread_safe_cached_property
+    def rotated_iterator(self):
+        return False
+
+    def check_rotated_support(self):
+        pass
+
+    def latitudes_unrotated(self, **kwargs):
+        return None
+
+    def longitudes_unrotated(self, **kwargs):
+        return None
+
+
 class GribMetadata(Metadata):
     """GRIB metadata.
 
@@ -764,12 +865,18 @@ class GribMetadata(Metadata):
 
     @thread_safe_cached_property
     def geography(self):
-        if GRID_SUPPORT.has_eckit:
-            grid_spec = self.get("gridSpec", None)
-            if grid_spec is not None and grid_spec != "":
-                return GeoBasedGribFieldGeography(grid_spec, self)
+        if self.get("gridType", None) == "sh":
+            return SpectralGribFieldGeography(self)
+        else:
+            if GRID_SUPPORT.has_ecc_grid_spec and GRID_SUPPORT.has_grid:
+                grid_spec = self.get("gridSpec", None)
+                if grid_spec is not None and grid_spec != "":
+                    return GeoBasedGribFieldGeography(grid_spec, self)
+                else:
+                    # no fallback in ecCodes for grids
+                    raise RuntimeError("Cannot get grid_spec from ecCodes handle")
 
-        return GribFieldGeography(self)
+            return GribFieldGeography(self)
 
     def datetime(self):
         return {

@@ -32,7 +32,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("index", [0, None])
-def test_grib_to_latlon_single(fl_type, index):
+def test_grib_to_latlon_single_1(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
 
     eps = 1e-5
