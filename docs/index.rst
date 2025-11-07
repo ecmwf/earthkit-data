@@ -56,7 +56,7 @@ Quick start
    howtos
    guide/index
    api
-   development
+   development/index
 
 .. toctree::
    :maxdepth: 1
