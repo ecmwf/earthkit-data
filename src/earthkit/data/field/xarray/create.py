@@ -12,33 +12,30 @@ def new_xarray_field(variable, selection=None):
     r"""Create a Field object from XArray"""
 
     from earthkit.data.core.field import Field
+    from earthkit.data.field.spec.labels import SimpleLabels
     from earthkit.data.field.xarray.data import XArrayData
-
-    # from earthkit.data.field.xarray.ensemble import GribEnsemble
-    # from earthkit.data.field.xarray.geography import XArrayGeography
-    # from earthkit.data.field.xarray.labels import GribLabels
+    from earthkit.data.field.xarray.ensemble import XArrayEnsemble
+    from earthkit.data.field.xarray.geography import XArrayGeography
     from earthkit.data.field.xarray.parameter import XArrayParameter
     from earthkit.data.field.xarray.time import XArrayTime
-
-    # from earthkit.data.field.xarray.vertical import XArrayVertical
+    from earthkit.data.field.xarray.vertical import XArrayVertical
 
     data = XArrayData(variable, selection)
+    ensemble = XArrayEnsemble(variable, selection)
     parameter = XArrayParameter(variable, selection)
     time = XArrayTime(variable, selection)
-    # geography = XArrayGeography(variable, selection)
-    # vertical = XArrayVertical(variable, selection)
-    # labels = SimpleLabels()
-
-    print("Creating XArray Field")
+    geography = XArrayGeography(variable, selection)
+    vertical = XArrayVertical(variable, selection)
+    labels = SimpleLabels()
 
     r = Field(
         data=data,
         parameter=parameter,
         time=time,
-        # geography=geography,
-        # vertical=vertical,
-        # ensemble=ensemble,
-        # labels=labels,
+        geography=geography,
+        vertical=vertical,
+        ensemble=ensemble,
+        labels=labels,
     )
 
     # r._set_private_data("grib", grib)

@@ -188,4 +188,4 @@ def get_level_type(item: str, default=LevelTypes.UNKNOWN) -> LevelType:
     elif item is None:
         return default.value
 
-    raise ValueError(f"Unsupported level type: {type(item)}")
+    raise ValueError(f"Unsupported level type: {item}")

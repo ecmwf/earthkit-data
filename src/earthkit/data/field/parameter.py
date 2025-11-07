@@ -20,36 +20,11 @@ class ParameterFieldMember(SpecFieldMember):
     NAME = "parameter"
     NAMESPACE_KEYS = ("variable", "units")
 
-    # def __init__(self, data) -> None:
-    #     assert isinstance(data, Parameter)
-    #     self._data = data
-
-    # @classmethod
-    # def from_dict(cls, d):
-    #     """Create a Time object from a dictionary."""
-    #     data = Parameter.from_dict(d)
-    #     return cls(data)
-
     def get_grib_context(self, context) -> dict:
         from earthkit.data.field.grib.parameter import COLLECTOR
 
         COLLECTOR.collect(self, context)
 
-    # def set(self, *args, **kwargs):
-    #     data = self._data.set(*args, **kwargs)
-    #     return ParameterFieldSpec(data)
-
-    # def namespace(self, owner, name, result):
-    #     if name is None or name == "parameter" or (isinstance(name, (list, tuple)) and "parameter" in name):
-    #         result["parameter"] = self.to_dict()
-
-    # def check(self, owner):
-    #     pass
-
-    # def __getstate__(self):
-    #     state = {}
-    #     state["data"] = self._data
-    #     return state
-
-    # def __setstate__(self, state):
-    #     self.__init__(data=state["data"])
+    def set(self, *args, **kwargs):
+        spec = self._spec.set(*args, **kwargs)
+        return ParameterFieldMember(spec)

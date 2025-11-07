@@ -21,36 +21,11 @@ class TimeFieldMember(SpecFieldMember):
     NAME = "time"
     NAMESPACE_KEYS = ("base_datetime", "valid_datetime", "step")
 
-    # def __init__(self, data) -> None:
-    #     assert isinstance(data, Time)
-    #     self._data = data
-
-    # @classmethod
-    # def from_dict(cls, d):
-    #     """Create a Time object from a dictionary."""
-    #     data = Time.from_dict(d)
-    #     return cls(data)
-
     def get_grib_context(self, context) -> dict:
         from earthkit.data.field.grib.time import COLLECTOR
 
         COLLECTOR.collect(self, context)
 
-    # def set(self, *args, **kwargs):
-    #     data = self._data.set(*args, **kwargs)
-    #     return TimeFieldSpec(data)
-
-    # def namespace(self, owner, name, result):
-    #     if name is None or name == "time" or (isinstance(name, (list, tuple)) and "time" in name):
-    #         result["time"] = self.to_dict()
-
-    # def check(self, owner):
-    #     pass
-
-    # def __getstate__(self):
-    #     state = {}
-    #     state["data"] = self._data
-    #     return state
-
-    # def __setstate__(self, state):
-    #     self.__init__(data=state["data"])
+    def set(self, *args, **kwargs):
+        spec = self._spec.set(*args, **kwargs)
+        return TimeFieldMember(spec)

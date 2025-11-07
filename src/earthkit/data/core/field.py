@@ -179,40 +179,12 @@ class Field(Base):
             else:
                 _kwargs[name] = field._members[name]
 
-        print("_kwargs =", _kwargs)
         r = field.__class__(**_kwargs, **kwargs)
 
         if field._private:
             r._private = field._private.copy()
 
         return r
-
-    # @classmethod
-    # def from_xarray(cls, variable, selection, **kwargs):
-    #     r"""Create a Field object from an XArray field."""
-    #     from earthkit.data.specs.data import SimpleData
-    #     from earthkit.data.specs.geography import SimpleGeography
-    #     from earthkit.data.specs.labels import SimpleLabels
-    #     from earthkit.data.specs.parameter import Parameter
-    #     from earthkit.data.specs.time import Time
-    #     from earthkit.data.specs.vertical import Vertical
-
-    #     data = SimpleData.from_xarray(variable, selection)
-    #     parameter = Parameter.from_xarray(variable, selection)
-    #     time = Time.from_xarray(variable, selection)
-    #     geography = SimpleGeography.from_xarray(variable, selection)
-    #     vertical = Vertical.from_xarray(variable, selection)
-    #     labels = SimpleLabels()
-
-    #     return cls(
-    #         data=data,
-    #         parameter=parameter,
-    #         time=time,
-    #         geography=geography,
-    #         vertical=vertical,
-    #         labels=labels,
-    #         **kwargs,
-    #     )
 
     @classmethod
     def from_dict(cls, d):

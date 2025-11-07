@@ -8,6 +8,30 @@
 #
 
 
+from typing import Any
+
+from earthkit.data.field.spec.level_type import LevelTypes
+from earthkit.data.field.spec.vertical import Vertical
+from earthkit.data.field.vertical import VerticalFieldMember
+
+
+class XarrayLevelType:
+    def __init__(self, keys, spec_type):
+        self.keys = keys if isinstance(keys, (list, tuple)) else [keys]
+        self.spec_type = spec_type
+
+
+_TYPES = [
+    XarrayLevelType("pl", LevelTypes.PRESSURE),
+    XarrayLevelType("ml", LevelTypes.MODEL),
+]
+
+_XR_TYPES = dict()
+for t in _TYPES:
+    for k in t.keys if isinstance(t.keys, (list, tuple)) else [t.keys]:
+        _XR_TYPES[k] = t
+
+
 def get_level(coord, selection):
     if coord is None:
         return None
@@ -21,9 +45,12 @@ def get_level(coord, selection):
 
 
 def get_level_type(coord):
-    if coord is None:
-        return None
-    return coord.levtype
+    if coord is not None:
+        t = _XR_TYPES.get(coord.levtype, None)
+        if t is not None:
+            return t.spec_type
+
+    return LevelTypes.UNKNOWN
 
 
 def from_xarray(owner, selection):
@@ -36,49 +63,14 @@ def from_xarray(owner, selection):
 
     level = get_level(coord, selection)
     level_type = get_level_type(coord)
+
     return dict(level=level, level_type=level_type)
 
 
-# class XArrayVertical(Vertical):
-#     """A class to represent a vertical coordinate in an xarray dataset."""
+class XArrayVertical(VerticalFieldMember):
+    def __init__(self, owner: Any, selection: Any) -> None:
+        self.owner = owner
+        self.selection = selection
 
-#     def __init__(self, owner: Any, selection: Any) -> None:
-#         """Create a new XArrayVertical object.
-
-#         Parameters
-#         ----------
-#         owner : Variable
-#             The variable that owns this field.
-#         selection : XArrayDataArray
-#             A 2D sub-selection of the variable's underlying array.
-#             This is actually a nD object, but the first dimensions are always 1.
-#             The other two dimensions are latitude and longitude.
-#         """
-#         from earthkit.data.new_field.xarray.coordinates import LevelCoordinate
-
-#         self.owner = owner
-#         self.selection = selection
-#         self.coord = None
-#         for c in owner.coordinates:
-#             if isinstance(c, LevelCoordinate):
-#                 self.coord = c
-
-#     @property
-#     def level(self) -> str:
-#         """Return the level of the vertical coordinate."""
-#         if self.coord is None:
-#             return None
-#         name = self.coord.name
-
-#         v = self.selection[name].values
-#         if len(v.shape) == 0:
-#             return v.item()
-#         else:
-#             return v[0]
-
-#     @property
-#     def level_type(self) -> str:
-#         """Return the type of the vertical coordinate."""
-#         if self.coord is None:
-#             return None
-#         return self.coord.levtype
+        spec = Vertical.from_dict(from_xarray(owner, selection))
+        super().__init__(spec)

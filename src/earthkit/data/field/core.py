@@ -222,7 +222,11 @@ class SpecFieldMember(SimpleFieldMember):
 
     def set(self, *args, **kwargs):
         data = self._spec.set(*args, **kwargs)
+        print(f"SpecFieldMember.set: data={data}")
         return type(self)(data)
+
+    def _set_spec(self, *args, **kwargs):
+        return self._spec.set(*args, **kwargs)
 
     def namespace(self, owner, name, result):
         if name is None or name == self.NAME or (isinstance(name, (list, tuple)) and self.NAME in name):

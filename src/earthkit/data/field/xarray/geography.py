@@ -8,11 +8,13 @@
 #
 
 import math
+from typing import Any
 
-from earthkit.data.specs.geography import SimpleGeography
+from earthkit.data.field.geography import GeographyFieldMember
+from earthkit.data.field.spec.geography import Geography
 
 
-class XArrayGeography(SimpleGeography):
+class XArrayGeographySpec(Geography):
     def __init__(self, owner, selection):
         self.owner = owner
         self.selection = selection
@@ -78,3 +80,15 @@ class XArrayGeography(SimpleGeography):
     def grid_type(self):
         r"""Return the grid specification."""
         pass
+
+    def __getstate__(self):
+        pass
+
+    def __setstate__(self, state):
+        pass
+
+
+class XArrayGeography(GeographyFieldMember):
+    def __init__(self, owner: Any, selection: Any) -> None:
+        spec = XArrayGeographySpec(owner, selection)
+        super().__init__(spec)

@@ -176,7 +176,7 @@ class Variable:
         kwargs = {k: v for k, v in zip(self.names, coords)}
         from earthkit.data.field.xarray.create import new_xarray_field
 
-        print(f"Creating field {i} from variable {self.name}")
+        LOG.debug(f"Creating field {i} from variable {self.name}")
 
         return new_xarray_field(self, self.variable.isel(kwargs))
 
