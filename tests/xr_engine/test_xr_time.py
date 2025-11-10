@@ -574,6 +574,19 @@ def test_xr_time_step_range_1(allow_holes, lazy_load, kwargs, dims, step_units):
             },
             None,
         ),
+        (
+            {
+                "time_dim_mode": "forecast",
+                "dim_name_from_role_name": True,
+                "dim_roles": {"step": "stepRange"},
+                "ensure_dims": ["date", "step"],
+            },
+            {
+                "date": [np.datetime64("2025-05-27", "ns")],
+                "step": [np.timedelta64(72, "h"), np.timedelta64(73, "h")],
+            },
+            None,
+        ),
     ],
 )
 def test_xr_time_step_range_2(allow_holes, lazy_load, kwargs, dims, step_units):
