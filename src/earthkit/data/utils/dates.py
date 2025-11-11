@@ -29,6 +29,10 @@ def to_datetime(dt):
     if hasattr(dt, "dtype") and np.issubdtype(dt.dtype, np.datetime64):
         return numpy_datetime_to_datetime(dt)
 
+    # TODO: Rethink, this is needed to handle iris caused cfunits date objects
+    if hasattr(dt, "dtype") and dt.dtype == object:
+        return numpy_datetime_to_datetime(dt)
+
     if isinstance(dt, np.int64):
         dt = int(dt)
 
