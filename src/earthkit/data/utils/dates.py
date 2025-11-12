@@ -19,10 +19,27 @@ NUM_STEP_PATTERN = re.compile(r"\d+")
 SUFFIX_STEP_PATTERN = re.compile(r"\d+[a-zA-Z]{1}")
 
 
-def _handle_complex_object_datetime(dt: np.ndarray):
+def _handle_complex_object_datetime(dt: np.ndarray) -> np.ndarray:
+    """Attempt to handle complex object datetime arrays."""
     dt = dt.ravel()
-    if "cftime" in str(type(next(iter(dt)))):
-        return np.array([datetime.datetime.fromisoformat(d.isoformat()) for d in dt], dtype=datetime.datetime)
+    if dt.size == 0:
+        return dt
+
+    first_elem = dt.flat[0]
+
+    # Check if it's a cftime type
+    try:
+        import cftime
+
+        if isinstance(first_elem, cftime.datetime):
+
+            def convert(x):
+                return cftime.date2num(x, "seconds since 1970-01-01 00:00:00", calendar="gregorian")
+
+            return np.array(list(map(convert, dt)), dtype="datetime64[s]")
+    except ImportError:
+        pass
+
     return dt
 
 
@@ -36,7 +53,6 @@ def to_datetime(dt):
     if hasattr(dt, "dtype") and np.issubdtype(dt.dtype, np.datetime64):
         return numpy_datetime_to_datetime(dt)
 
-    # TODO: Rethink, this is needed to handle iris caused cfunits date objects
     if hasattr(dt, "dtype") and dt.dtype == object:
         return numpy_datetime_to_datetime(_handle_complex_object_datetime(dt))
 
