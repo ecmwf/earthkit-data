@@ -40,17 +40,6 @@ class IrisReader(XArrayFieldList, Reader):
         return f"IrisReader({self.path})"
 
 
-def _match_magic(magic, deeper_check):
-    return False
-    if magic is not None:
-        type_id = b""  # TODO: define magic for iris PP files
-        if not deeper_check:
-            return len(magic) >= 5 and magic[:5] == type_id
-        else:
-            return type_id in magic
-    return False
-
-
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
-    if _match_magic(magic, deeper_check) or path.endswith(".pp"):
+    if path.endswith(".pp"):
         return IrisReader(source, path)
