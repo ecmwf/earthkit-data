@@ -48,7 +48,7 @@ GRIB
     grib_metadata_object.ipynb
     grib_modification.ipynb
     numpy_fieldlist.ipynb
-    grib_array_backends.ipynb
+    grib_array_namespace.ipynb
     grib_nearest_gridpoint.ipynb
     grib_time_series.ipynb
     grib_fdb_write.ipynb

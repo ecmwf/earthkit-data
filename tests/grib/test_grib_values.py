@@ -14,9 +14,10 @@ import sys
 
 import numpy as np
 import pytest
-from earthkit.utils.testing import check_array_type
+from earthkit.utils.array import convert as array_convert
 
 from earthkit.data.testing import check_array
+from earthkit.data.testing import check_array_type
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -28,12 +29,12 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_values_1(fl_type):
-    f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
+    f, array_namespace = load_grib_data("test_single.grib", fl_type, folder="data")
     eps = 1e-5
 
     # whole file
     v = f.values
-    check_array_type(v, array_backend, dtype="float64")
+    check_array_type(v, array_namespace, dtype="float64")
     assert v.shape == (1, 84)
     v = v[0].flatten()
     check_array(
@@ -43,25 +44,25 @@ def test_grib_values_1(fl_type):
         last=227.18560791015625,
         meanv=274.36566743396577,
         eps=eps,
-        array_backend=array_backend,
+        array_namespace=array_namespace,
     )
 
     # field
     v1 = f[0].values
 
-    check_array_type(v1, array_backend)
+    check_array_type(v1, array_namespace)
     assert v1.shape == (84,)
-    assert array_backend.allclose(v, v1, eps)
+    assert array_namespace.allclose(v, v1, rtol=eps)
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
 def test_grib_values_18(fl_type):
-    f, array_backend = load_grib_data("tuv_pl.grib", fl_type)
+    f, array_namespace = load_grib_data("tuv_pl.grib", fl_type)
     eps = 1e-5
 
     # whole file
     v = f.values
-    check_array_type(v, array_backend, dtype="float64")
+    check_array_type(v, array_namespace, dtype="float64")
     assert v.shape == (18, 84)
     vf = v[0].flatten()
     check_array(
@@ -348,6 +349,53 @@ def test_grib_to_numpy_18_index(fl_type):
     )
 
 
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+@pytest.mark.parametrize("_kwargs", [{}, {"array_namespace": "numpy"}])
+def test_grib_to_array_1(fl_type, _kwargs):
+    f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    eps = 1e-5
+    v = f.to_array(**_kwargs)
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    v = v[0].flatten()
+    check_array(
+        v,
+        (84,),
+        first=260.43560791015625,
+        last=227.18560791015625,
+        meanv=274.36566743396577,
+        eps=eps,
+    )
+
+
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+@pytest.mark.parametrize(
+    "first,options, expected_shape",
+    [
+        (False, {}, (1, 7, 12)),
+        (False, {"flatten": True}, (1, 84)),
+        (False, {"flatten": False}, (1, 7, 12)),
+        (True, {}, (7, 12)),
+        (True, {"flatten": True}, (84,)),
+        (True, {"flatten": False}, (7, 12)),
+    ],
+)
+def test_grib_to_array_1_shape(fl_type, first, options, expected_shape):
+    f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    v_ref = f[0].to_array().flatten()
+    eps = 1e-5
+
+    data = f[0] if first else f
+    v1 = data.to_array(**options)
+    assert isinstance(v1, np.ndarray)
+    assert v1.dtype == np.float64
+    assert v1.shape == expected_shape
+    v1 = v1.flatten()
+    assert np.allclose(v_ref, v1, eps)
+
+
 @pytest.mark.parametrize("fl_type", FL_FILE)
 # @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize(
@@ -552,24 +600,25 @@ def test_grib_fieldlist_data_index(fl_type):
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_values_with_missing(fl_type):
-    f, array_backend = load_grib_data("test_single_with_missing.grib", fl_type, folder="data")
+    f, array_namespace = load_grib_data("test_single_with_missing.grib", fl_type, folder="data")
 
     v = f[0].values
-    check_array_type(v, array_backend)
+    check_array_type(v, array_namespace)
     assert v.shape == (84,)
     eps = 0.001
 
-    ns = array_backend.namespace
+    xp = array_namespace
 
-    assert ns.count_nonzero(ns.isnan(v)) == 38
-    mask = array_backend.from_other([12, 14, 15, 24, 25, 26] + list(range(28, 60)))
-    v1 = array_backend.to_numpy(v)
+    assert xp.count_nonzero(xp.isnan(v)) == 38
+    mask = array_namespace.asarray([12, 14, 15, 24, 25, 26] + list(range(28, 60)))
+    v1 = array_convert(v, array_namespace="numpy")
+
     assert np.isclose(v1[0], 260.4356, eps)
     assert np.isclose(v1[11], 260.4356, eps)
     assert np.isclose(v1[-1], 227.1856, eps)
     m = v[mask]
     assert len(m) == 38
-    assert ns.count_nonzero(ns.isnan(m)) == 38
+    assert xp.count_nonzero(xp.isnan(m)) == 38
 
 
 if __name__ == "__main__":

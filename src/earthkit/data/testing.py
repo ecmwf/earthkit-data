@@ -15,7 +15,11 @@ from contextlib import contextmanager
 from importlib import import_module
 from unittest.mock import patch
 
-from earthkit.utils.testing import get_array_backend
+from earthkit.utils.array import array_namespace
+from earthkit.utils.array import convert as convert_array
+
+# from earthkit.utils.testing import get_array_backend
+from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.data import from_object
 from earthkit.data import from_source
@@ -200,7 +204,11 @@ def load_nc_or_xr_source(path, mode):
 
 
 # Array backends
-ARRAY_BACKENDS = get_array_backend(["numpy", "torch", "cupy", "jax"], raise_on_missing=False)
+# ARRAY_BACKENDS = get_array_backend(["numpy", "torch", "cupy", "jax"], raise_on_missing=False)
+ARRAY_BACKENDS = []
+for x in NAMESPACE_DEVICES:
+    if x[0]._earthkit_array_namespace_name in ["numpy", "torch"]:
+        ARRAY_BACKENDS.append(x[0])
 
 
 def make_tgz(target_dir, target_name, paths):
@@ -250,21 +258,35 @@ def check_array(
     last=None,
     meanv=None,
     eps=1e-3,
-    array_backend=None,
+    array_namespace=None,
 ):
-    if array_backend is None:
-        from earthkit.utils.array import get_backend
-
-        array_backend = get_backend(v)
-
-    v = array_backend.to_numpy(v)
+    v = convert_array(v, array_namespace="numpy")
 
     import numpy as np
 
     assert v.shape == shape
-    assert np.isclose(v[0], first, eps)
-    assert np.isclose(v[-1], last, eps)
-    assert np.isclose(v.mean(), meanv, eps)
+    assert np.isclose(v[0], first, rtol=eps)
+    assert np.isclose(v[-1], last, rtol=eps)
+    assert np.isclose(v.mean(), meanv, rtol=eps)
+
+
+def match_dtype(array, xp, dtype):
+    dtype = xp.__array_namespace_info__().dtypes().get(dtype, dtype)
+    if dtype is not None:
+        return xp.dtype(array) == dtype
+    return False
+
+
+def check_array_type(array, expected_backend, dtype=None):
+    b1 = array_namespace(array)
+    b2 = array_namespace(expected_backend)
+
+    assert b1 == b2, f"{b1=}, {b2=}"
+
+    expected_dtype = dtype
+    if expected_dtype is not None:
+        assert match_dtype(array, b2, expected_dtype), f"{array.dtype}, {expected_dtype=}"
+        # assert b2.match_dtype(array, expected_dtype), f"{array.dtype}, {expected_dtype=}"
 
 
 def main(path):

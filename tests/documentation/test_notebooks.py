@@ -14,7 +14,7 @@ import re
 import sys
 
 import pytest
-from earthkit.utils.testing import NO_TORCH
+from earthkit.utils.array.testing.testing import NO_TORCH
 
 from earthkit.data.testing import MISSING
 from earthkit.data.testing import earthkit_file
@@ -48,7 +48,7 @@ SKIP = [
 ]
 
 if NO_TORCH:
-    SKIP.append("grib_array_backends.ipynb")
+    SKIP.append("grib_array_namespace.ipynb")
 
 
 def notebooks_list():
