@@ -231,6 +231,23 @@ class CacheManager(threading.Thread):
                     result.append(n)
         return result
 
+    def _get_entry(self, path):
+        self._ensure_in_cache(path)
+
+        with self.connection as db:
+            entry = db.execute("SELECT * FROM cache WHERE path=?", (path,)).fetchone()
+            if entry is None:
+                return None
+            n = dict(entry)
+            for k in ("args", "owner_data"):
+                if k in n and isinstance(n[k], str):
+                    try:
+                        n[k] = json.loads(n[k])
+                    except Exception:
+                        LOG.debug("Cannot decode JSON %s", n[k])
+                        pass
+            return n
+
     def _update_entry(self, path, owner_data=None):
         self._ensure_in_cache(path)
 
@@ -845,6 +862,9 @@ class Cache:
 
     def _register_cache_file(self, *args, **kwargs):
         return self._call_manager(False, "register_cache_file", *args, **kwargs)
+
+    def _get_entry(self, *args, **kwargs):
+        return self._call_manager(False, "get_entry", *args, **kwargs)
 
     def _update_entry(self, *args, **kwargs):
         return self._call_manager(False, "update_entry", *args, **kwargs)

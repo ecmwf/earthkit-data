@@ -15,7 +15,7 @@ import pytest
 
 from earthkit.data.testing import earthkit_file
 
-IGNORE = [
+SKIP = [
     "conf.py",
     "xml2rst.py",
     "actions.py",
@@ -37,7 +37,7 @@ def example_list():
     for root, _, files in os.walk(EXAMPLES):
         for file in files:
             path = os.path.join(root, file)
-            if path.endswith(".py") and file not in IGNORE:
+            if path.endswith(".py") and file not in SKIP:
                 n = len(EXAMPLES) + 1
                 examples.append(path[n:])
 
