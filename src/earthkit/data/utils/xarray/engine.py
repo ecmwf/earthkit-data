@@ -342,12 +342,12 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 import warnings
 
                 warnings.warn(
-                    "'array_module' is deprecated. Use 'array_namespace' instead", DeprecationWarning
+                    "'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning
                 )
                 if array_namespace is None:
-                    array_namespace = array_module
+                    array_namespace = array_backend
                 else:
-                    raise ValueError("Cannot specify both 'array_module' and 'array_namespace' arguments")
+                    raise ValueError("Cannot specify both 'array_backend' and 'array_namespace' arguments")
 
             _kwargs = dict(
                 variable_key=variable_key,
@@ -519,16 +519,16 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
         return ds.to_netcdf(*args, **kwargs)
 
-    def to_device(self, device, *args, array_backend=None, array_namespace=None, **kwargs):
+    def to_device(self, device, *, array_backend=None, array_namespace=None, **kwargs):
         """Return a **new** DataArray whose data live on *device*."""
-        from earthkit.utils.array import to_device
+        from earthkit.utils.array import convert
 
         if array_backend is not None:
             if array_namespace is not None:
                 raise ValueError("Cannot specify both 'array_backend' and 'array_namespace' arguments")
             array_namespace = array_backend
 
-        moved = to_device(self._obj.data, device, *args, array_namespace=array_namespace, **kwargs)
+        moved = convert(self._obj.data, device=device, array_namespace=array_namespace, **kwargs)
         da = self._obj.copy(deep=False)
         da.data = moved
         return da
@@ -573,9 +573,9 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
 
         return ds.to_netcdf(*args, **kwargs)
 
-    def to_device(self, device, *args, array_backend=None, array_namespace=None, **kwargs):
+    def to_device(self, device, *, array_backend=None, array_namespace=None, **kwargs):
         """Return a new Dataset with every data variable on the specified ``device``."""
-        from earthkit.utils.array import to_device
+        from earthkit.utils.array import convert
 
         if array_backend is not None:
             if array_namespace is not None:
@@ -584,7 +584,7 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
 
         ds = self._obj.copy(deep=False)
         for name, var in ds.data_vars.items():
-            ds[name].data = to_device(var.data, device, *args, array_namespace=array_namespace, **kwargs)
+            ds[name].data = convert(var.data, device=device, array_namespace=array_namespace, **kwargs)
         return ds
 
     @property
