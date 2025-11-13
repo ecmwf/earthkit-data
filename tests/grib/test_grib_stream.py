@@ -132,9 +132,11 @@ def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shap
         assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("array_namespace", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
-def test_grib_from_stream_group_by(array_namespace, group):
+def test_grib_from_stream_group_by(array_backend, group):
+    array_namespace, device, dtype = array_backend
+
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source("stream", stream)
 
@@ -149,7 +151,7 @@ def test_grib_from_stream_group_by(array_namespace, group):
         for i, f in enumerate(ds.group_by(group)):
             assert len(f) == 3
             assert f.metadata(("param", "level")) == ref[i]
-            afl = f.to_fieldlist(array_namespace=array_namespace)
+            afl = f.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
             assert afl is not f
             assert len(afl) == 3
 

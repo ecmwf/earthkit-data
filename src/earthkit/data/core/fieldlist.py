@@ -298,8 +298,16 @@ class Field(Base):
             if sample is None:
                 sample = self._values(dtype=dtype)
             target_xp = eku_array_namespace(sample)
+            device = target_xp.device(sample)
+            try:
+                target_dtype = target_xp.xp.dtype(dtype)
+            except Exception:
+                target_dtype = None
+
             for k, v in ll.items():
-                r[k] = convert_array(v, array_namespace=target_xp)
+                r[k] = convert_array(v, array_namespace=target_xp, device=device)
+                if target_dtype is not None:
+                    r[k] = target_xp.astype(r[k], target_dtype, copy=False)
 
         r = list(r.values())
         if len(r) == 1:
@@ -361,8 +369,16 @@ class Field(Base):
         assert r
         sample = self._values(dtype=dtype)
         target_xp = eku_array_namespace(sample)
+        device = target_xp.device(sample)
+        try:
+            target_dtype = target_xp.xp.dtype(dtype)
+        except Exception:
+            target_dtype = None
+
         for k, v in r.items():
-            r[k] = convert_array(v, array_namespace=target_xp)
+            r[k] = convert_array(v, array_namespace=target_xp, device=device)
+            if target_dtype is not None:
+                r[k] = target_xp.astype(r[k], target_dtype, copy=False)
         return r
 
     def to_latlon(self, flatten=False, dtype=None, index=None):
@@ -1138,9 +1154,9 @@ class FieldList(Index):
             is_property = not callable(getattr(first, accessor, None))
             vals = _vals(first)
             first = None
-            ns = eku_array_namespace(vals)
+            xp = eku_array_namespace(vals)
             shape = (n, *vals.shape)
-            r = ns.empty(shape, dtype=vals.dtype)
+            r = xp.empty(shape, dtype=vals.dtype, device=xp.device(vals))
             r[0] = vals
             for i, f in enumerate(it, start=1):
                 r[i] = _vals(f)

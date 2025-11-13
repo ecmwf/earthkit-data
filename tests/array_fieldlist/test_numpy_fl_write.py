@@ -33,12 +33,18 @@ from array_fl_fixtures import load_array_fl  # noqa: E402
 LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize("array_namespace", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_array_fl_grib_write_to_path(array_namespace, write_method):
+def test_array_fl_grib_write_to_path(array_backend, write_method):
+
+    array_namespace, device, dtype = array_backend
 
     ds = from_source("file", earthkit_examples_file("test.grib"))
-    ds = ds.to_fieldlist(array_namespace=array_namespace)
+    ds = ds.to_fieldlist(
+        array_namespace=array_namespace,
+        device=device,
+        dtype=dtype,
+    )
 
     assert ds[0].metadata("shortName") == "2t"
     assert len(ds) == 2
@@ -53,20 +59,21 @@ def test_array_fl_grib_write_to_path(array_namespace, write_method):
         write_to_file(write_method, tmp, r)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
-        r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace)
+        r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
         v_tmp = r_tmp[0].values
         assert array_namespace.allclose(v1, v_tmp)
 
 
-@pytest.mark.parametrize("array_namespace", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("_kwargs", [{}, {"check_nans": True}])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_array_fl_grib_write_missing(array_namespace, _kwargs, write_method):
+def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
 
+    array_namespace, device, dtype = array_backend
     xp = array_namespace
 
     ds = from_source("file", earthkit_examples_file("test.grib"))
-    ds = ds.to_fieldlist(array_namespace=xp)
+    ds = ds.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
 
     assert ds[0].metadata("shortName") == "2t"
 
@@ -91,7 +98,7 @@ def test_array_fl_grib_write_missing(array_namespace, _kwargs, write_method):
         r_tmp = from_source("file", tmp)
         v_tmp = r_tmp[0].values
         assert np.isnan(v_tmp[0])
-        r_tmp = r_tmp.to_fieldlist(array_namespace=xp)
+        r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
         v_tmp = r_tmp[0].values
         assert xp.isnan(v_tmp[0])
         assert not xp.isnan(v_tmp[1])
@@ -191,14 +198,14 @@ def test_array_fl_grib_write_generating_proc_id(write_method):
         assert np.allclose(r_tmp.values[1], v2)
 
 
-@pytest.mark.parametrize("array_namespace", ARRAY_BACKENDS)
+@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "_kwargs,expected_value",
     [({}, None), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, None)],
 )
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_array_fl_grib_write_bits_per_value(array_namespace, _kwargs, expected_value, write_method):
-    ds, _ = load_array_fl(1, array_namespace)
+def test_array_fl_grib_write_bits_per_value(array_backend, _kwargs, expected_value, write_method):
+    ds, _ = load_array_fl(1, array_backend)
 
     if expected_value is None:
         expected_value = ds[0].metadata("bitsPerValue")

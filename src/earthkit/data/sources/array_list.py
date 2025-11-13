@@ -56,7 +56,13 @@ class ArrayField(Field):
         if dtype is None:
             return self._array
         else:
-            return eku_array_namespace(self._array).astype(self._array, dtype, copy=False)
+            xp = eku_array_namespace(self._array)
+            try:
+                dtype = xp.xp.dtype(dtype)
+                return xp.astype(self._array, dtype, copy=False)
+            except Exception:
+                pass
+            return self._array
 
     @property
     def shape(self):
