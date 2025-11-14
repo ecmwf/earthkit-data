@@ -157,6 +157,8 @@ try:
 except Exception:
     pass
 
+NO_IRIS = not (modules_installed("iris") and modules_installed("ncdata"))
+
 
 def MISSING(*modules):
     return not modules_installed(*modules)
