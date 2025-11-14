@@ -306,6 +306,12 @@ class XArrayField(Field):
     def _encode(self, *args, **kwargs):
         raise NotImplementedError
 
+    def valid_datetime(self):
+        return self._metadata.valid_datetime()
+
+    def base_datetime(self):
+        return self._metadata.base_datetime()
+
 
 class ClonedXarrayField(ClonedFieldCore, XArrayField):
     def __init__(self, field, **kwargs):

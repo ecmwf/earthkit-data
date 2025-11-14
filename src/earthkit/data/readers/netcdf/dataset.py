@@ -15,8 +15,8 @@ LOG = logging.getLogger(__name__)
 
 
 GEOGRAPHIC_COORDS = {
-    "x": ["x", "X", "xc", "projection_x_coordinate", "lon", "longitude"],
-    "y": ["y", "Y", "yc", "projection_y_coordinate", "lat", "latitude"],
+    "x": ["x", "X", "xc", "projection_x_coordinate", "lon", "longitude", "grid_longitude"],
+    "y": ["y", "Y", "yc", "projection_y_coordinate", "lat", "latitude", "grid_latitude"],
 }
 
 GEOGRAPHIC_COORDS_LATLON_FIRST = {
