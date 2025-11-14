@@ -14,12 +14,13 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.readers.netcdf.field import XArrayField
 from earthkit.data.testing import NO_IRIS
+from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 
 
 @pytest.mark.skipif(NO_IRIS, reason="Iris or ncdata not installed")
 def test_iris_source():
-    ds = from_source("iris", earthkit_test_data_file("air_temp.pp"))
+    ds = from_source("iris", earthkit_examples_file("air_temp.pp"))
     assert len(ds) == 1
     assert isinstance(ds[0], XArrayField)
     assert ds[0].metadata("standard_name") == "air_temperature"
