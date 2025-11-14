@@ -17,6 +17,7 @@ from earthkit.data.wrappers import get_wrapper
 ECC_SECONDS_FACTORS = {"s": 1, "m": 60, "h": 3600}
 NUM_STEP_PATTERN = re.compile(r"\d+")
 SUFFIX_STEP_PATTERN = re.compile(r"\d+[a-zA-Z]{1}")
+STEP_RANGE_PATTERN = re.compile(r"\d+-\d+")
 
 
 def _handle_complex_object_datetime(dt: np.ndarray) -> np.ndarray:
@@ -183,6 +184,12 @@ def to_timedelta(td):
     if isinstance(td, str):
         if re.fullmatch(NUM_STEP_PATTERN, td):
             return datetime.timedelta(hours=int(td))
+
+        if re.fullmatch(STEP_RANGE_PATTERN, td):
+            _, end_str = td.split("-")
+            end = int(end_str)
+            # TODO: assumes hourly units, can we grab it from stepUnits metadata key?
+            return datetime.timedelta(hours=end)
 
         if re.fullmatch(SUFFIX_STEP_PATTERN, td):
             factor = ECC_SECONDS_FACTORS.get(td[-1], None)
