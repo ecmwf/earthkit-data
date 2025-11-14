@@ -264,6 +264,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             array_namespace = "numpy"
 
         from earthkit.utils.array import array_namespace as eku_array_namespace
+        from earthkit.utils.array.convert import convert_dtype
 
         self.array_namespace = eku_array_namespace(array_namespace)
 
@@ -271,11 +272,9 @@ class BackendDataBuilder(metaclass=ABCMeta):
 
         dtype = profile.dtype
         if dtype is None:
-            dtype = "float64"
-        if isinstance(dtype, str):
-            dtype = self.array_namespace.__array_namespace_info__().dtypes().get(dtype, None)
-        if hasattr(dtype, "type"):
-            dtype = dtype.type
+            dtype = convert_dtype("float64", array_namespace)
+        else:
+            dtype = convert_dtype(dtype, array_namespace)
         self.dtype = dtype
 
         # Note: these coords inside the tensor are called user_coords and

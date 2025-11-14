@@ -15,6 +15,7 @@ from collections import defaultdict
 import deprecation
 from earthkit.utils.array import array_namespace as eku_array_namespace
 from earthkit.utils.array import convert as convert_array
+from earthkit.utils.array.convert import convert_dtype
 
 from earthkit.data.core import Base
 from earthkit.data.core.index import Index
@@ -90,8 +91,8 @@ class FieldListIndices:
 class Field(Base):
     r"""Represent a Field."""
 
-    @deprecation.deprecated(deprecated_in="0.19.0", details="Use array_namespace instead")
     @property
+    @deprecation.deprecated(deprecated_in="0.19.0", details="Use array_namespace instead")
     def array_backend(self):
         r""":obj:`ArrayBackend`: Return the array namespace of the field."""
         return self.array_namespace
@@ -300,10 +301,9 @@ class Field(Base):
                 sample = self._values(dtype=dtype)
             target_xp = eku_array_namespace(sample)
             device = target_xp.device(sample)
-            try:
-                target_dtype = target_xp.xp.dtype(dtype)
-            except Exception:
-                target_dtype = None
+            target_dtype = None
+            if dtype is not None:
+                dtype = convert_dtype(dtype, target_xp)
 
             for k, v in ll.items():
                 r[k] = convert_array(v, array_namespace=target_xp, device=device)
@@ -371,10 +371,9 @@ class Field(Base):
         sample = self._values(dtype=dtype)
         target_xp = eku_array_namespace(sample)
         device = target_xp.device(sample)
-        try:
-            target_dtype = target_xp.xp.dtype(dtype)
-        except Exception:
-            target_dtype = None
+        target_dtype = None
+        if dtype is not None:
+            dtype = convert_dtype(dtype, target_xp)
 
         for k, v in r.items():
             r[k] = convert_array(v, array_namespace=target_xp, device=device)

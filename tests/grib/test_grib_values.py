@@ -15,10 +15,10 @@ import sys
 import numpy as np
 import pytest
 from earthkit.utils.array import convert as array_convert
+from earthkit.utils.array.convert import convert_dtype
 
 from earthkit.data.testing import check_array
 from earthkit.data.testing import check_array_type
-from earthkit.data.testing import to_numpy_dtype
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -102,7 +102,7 @@ def test_grib_to_numpy_1(fl_type):
 
     dtype = np.float64
     if array_backend.dtype is not None:
-        dtype = to_numpy_dtype(array_backend.dtype)
+        dtype = convert_dtype(array_backend.dtype, "numpy")
 
     print(f"dtype: {dtype}")
     eps = 1e-5
@@ -137,7 +137,7 @@ def test_grib_to_numpy_1_shape(fl_type, first, options, expected_shape):
 
     dtype = np.float64
     if array_backend.dtype is not None:
-        dtype = to_numpy_dtype(array_backend.dtype)
+        dtype = dtype = convert_dtype(array_backend.dtype, "numpy")
 
     v_ref = f[0].to_numpy().flatten()
     eps = 1e-5
@@ -157,7 +157,7 @@ def test_grib_to_numpy_18(fl_type):
 
     dtype = np.float64
     if array_backend.dtype is not None:
-        dtype = to_numpy_dtype(array_backend.dtype)
+        dtype = dtype = convert_dtype(array_backend.dtype, "numpy")
 
     eps = 1e-5
 
@@ -214,7 +214,7 @@ def test_grib_to_numpy_18_shape(fl_type, options, expected_shape):
 
     dtype = np.float64
     if array_backend.dtype is not None:
-        dtype = to_numpy_dtype(array_backend.dtype)
+        dtype = dtype = convert_dtype(array_backend.dtype, "numpy")
 
     eps = 1e-5
 
@@ -268,7 +268,7 @@ def test_grib_to_numpy_1_index(fl_type):
 
     dtype = np.float64
     if array_backend.dtype is not None:
-        dtype = to_numpy_dtype(array_backend.dtype)
+        dtype = dtype = convert_dtype(array_backend.dtype, "numpy")
 
     eps = 1e-5
 
@@ -309,7 +309,7 @@ def test_grib_to_numpy_18_index(fl_type):
 
     dtype = np.float64
     if array_backend.dtype is not None:
-        dtype = to_numpy_dtype(array_backend.dtype)
+        dtype = convert_dtype(array_backend.dtype, "numpy")
 
     eps = 1e-5
 

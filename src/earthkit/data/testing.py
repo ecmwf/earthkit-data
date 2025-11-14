@@ -234,7 +234,6 @@ class ArrayBackend:
 
 
 # Array backends
-# ARRAY_BACKENDS = get_array_backend(["numpy", "torch", "cupy", "jax"], raise_on_missing=False)
 ARRAY_BACKENDS = []
 for x in NAMESPACE_DEVICES:
     name = x[0]._earthkit_array_namespace_name
@@ -296,24 +295,10 @@ def check_array(
 ):
     v = convert_array(v, array_namespace="numpy")
 
-    import numpy as np
-
     assert v.shape == shape
     assert np.isclose(v[0], first, rtol=eps)
     assert np.isclose(v[-1], last, rtol=eps)
     assert np.isclose(v.mean(), meanv, rtol=eps)
-
-
-def prepare_array_backend(array_backend):
-    if isinstance(array_backend, tuple):
-        array_namespace, device, dtype = array_backend
-    elif isinstance(array_backend, str):
-        array_namespace = array_backend
-        device = None
-        dtype = None
-    array_namespace = eku_array_namespace(array_namespace)
-    dtype = enforce_dtype(array_namespace, device)
-    return array_namespace, device, dtype
 
 
 def enforce_dtype(array_namespace, device):
@@ -349,21 +334,21 @@ def check_array_type(array, expected_namespace, dtype=None):
         # assert b2.match_dtype(array, expected_dtype), f"{array.dtype}, {expected_dtype=}"
 
 
-# TODO: only tested for numpy an torch (cpu, torch(cpu, mps))
-def to_numpy_dtype(dtype, xp=None):
-    if dtype is None:
-        return np.float64
-    elif isinstance(dtype, str):
-        return np.dtype(dtype)
-    elif xp is not None:
-        for d in xp.__array_namespace_info__().dtypes.items():
-            if d[1] == dtype:
-                return np.dtype(d[0])
+# # TODO: only tested for numpy an torch (cpu, torch(cpu, mps))
+# def to_numpy_dtype(dtype, xp=None):
+#     if dtype is None:
+#         return np.float64
+#     elif isinstance(dtype, str):
+#         return np.dtype(dtype)
+#     elif xp is not None:
+#         for d in xp.__array_namespace_info__().dtypes.items():
+#             if d[1] == dtype:
+#                 return np.dtype(d[0])
 
-    if hasattr(dtype, "type"):
-        dtype = dtype.type
+#     if hasattr(dtype, "type"):
+#         dtype = dtype.type
 
-    return dtype
+#     return dtype
 
 
 def main(path):
