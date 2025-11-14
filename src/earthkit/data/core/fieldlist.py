@@ -809,7 +809,7 @@ class Field(Base):
             If ``metadata`` is a :class:`Metadata` object and ``**kwargs`` is not empty.
 
         """
-        self.not_implemented()
+        self._not_implemented()
 
     def copy(self, *, values=None, flatten=False, dtype=None, array_backend=None, metadata=None):
         r"""Create a new :class:`ArrayField` by copying the values and metadata.
