@@ -90,6 +90,7 @@ class FieldListIndices:
 class Field(Base):
     r"""Represent a Field."""
 
+    @deprecation.deprecated(deprecated_in="0.19.0", details="Use array_namespace instead")
     @property
     def array_backend(self):
         r""":obj:`ArrayBackend`: Return the array namespace of the field."""
