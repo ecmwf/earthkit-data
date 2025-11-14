@@ -1390,7 +1390,7 @@ iris
 
   .. note::
 
-    This source requires the ``iris`` and ``ncdata`` packages to be installed.
+    This source requires the ``scitools-iris`` and ``ncdata`` packages to be installed.
 
   .. tip::
 
