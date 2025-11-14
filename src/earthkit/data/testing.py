@@ -99,7 +99,7 @@ def modules_installed(*modules):
     for module in modules:
         try:
             import_module(module)
-        except (ImportError, RuntimeError):
+        except (ImportError, RuntimeError, SyntaxError):
             return False
     return True
 
@@ -151,6 +151,8 @@ try:
         NO_ZARR = False
 except Exception:
     pass
+
+NO_IRIS = not (modules_installed("iris") and modules_installed("ncdata"))
 
 
 def MISSING(*modules):
