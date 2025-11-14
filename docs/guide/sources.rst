@@ -70,6 +70,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from the `FDB (Fields DataBase)`_ using the `gribjump`_ library
     * - :ref:`data-sources-zarr`
       - load data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store
+    * - :ref:`data-sources-iris`
+      - load data from a file or directory using the `Iris <https://scitools-iris.readthedocs.io/en/latest/>`_ library
 
 ----------------------------------
 
@@ -1370,7 +1372,36 @@ zarr
 
   :param str path: path or URL to the Zarr store
 
+.. _data-sources-iris:
 
+iris
+-----
+
+.. py:function:: from_source("iris", path, iris_open_kwargs=None, iris_save_kwargs=None, xr_load_kwargs=None)
+  :noindex:
+
+  The ``iris`` source accesses data from a file or directory using the `Iris <https://scitools-iris.readthedocs.io/en/latest/>`_ library,
+  and converting to `Xarray <https://xarray.pydata.org/en/stable/>`_ via the `ncdata <https://ncdata.readthedocs.io/en/latest/>`_ package.
+
+  :param str path: path to the file or directory
+  :param dict iris_open_kwargs: keyword arguments passed to the ``iris.load`` method
+  :param dict iris_save_kwargs: keyword arguments passed to the ``iris.save`` method for temporary conversion to NetCDF
+  :param dict xr_load_kwargs: keyword arguments passed to the ``xarray.load`` method for loading the temporary NetCDF file
+
+  .. note::
+
+    This source requires the ``scitools-iris`` and ``ncdata`` packages to be installed.
+
+  .. tip::
+
+    This reader also makes it possible to read data from ``.pp`` files supported by Iris with the
+    :ref:`data-sources-file` source.
+
+    .. code-block:: python
+
+        import earthkit.data as ekd
+
+        ds = ekd.from_source("file", "path/to/file.pp")
 
 
 .. _MARS catalog: https://apps.ecmwf.int/archive-catalogue/
