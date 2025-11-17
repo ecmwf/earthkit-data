@@ -301,8 +301,6 @@ def check_array(
     assert np.isclose(v[-1], last, rtol=eps)
     assert np.isclose(v.mean(), meanv, rtol=eps)
 
-    v = array_backend.to_numpy(v)
-
 
 def enforce_dtype(array_namespace, device):
     array_namespace = eku_array_namespace(array_namespace)
