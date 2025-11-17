@@ -135,7 +135,11 @@ class Geography(metaclass=ABCMeta):
         -------
         :class:`~data.core.gridspec.GridSpec>`
         """
-        return self.gridspec()
+        # NOTE: temporary solution
+        try:
+            return self.gridspec()
+        except NotImplementedError:
+            return None
 
     @abstractmethod
     def resolution(self):
