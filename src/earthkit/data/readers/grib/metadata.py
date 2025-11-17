@@ -178,10 +178,10 @@ class GeoBasedGribFieldGeography(Geography):
         )
 
     def gridspec(self):
-        return self._grid.grid_spec
+        return self._grid.spec
 
     def grid_spec(self):
-        return self._grid.grid_spec
+        return self._grid.spec
 
     def resolution(self):
         return None
