@@ -124,6 +124,16 @@ Shapefile
 
 .. _examples_lod:
 
+UK Met Office PP file
+++++++++++++++++++++++
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    iris_pp.ipynb
+
+
 Dictionary input
 ++++++++++++++++++++++
 

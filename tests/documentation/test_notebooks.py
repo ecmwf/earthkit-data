@@ -34,6 +34,7 @@ SKIP = [
     "grib_to_fdb_target.ipynb",
     "grib_to_xarray.ipynb",
     "gribjump.ipynb",
+    "iris_pp.ipynb",
     "mars.ipynb",
     "netcdf_opendap.ipynb",
     "polytope.ipynb",
