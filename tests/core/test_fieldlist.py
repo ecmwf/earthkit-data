@@ -11,7 +11,7 @@
 
 import numpy as np
 import pytest
-from earthkit.utils.testing import NO_TORCH
+from earthkit.utils.array.testing.testing import NO_TORCH
 
 from earthkit.data import SimpleFieldList
 
@@ -62,6 +62,18 @@ def test_empty_fieldlist_to_array_numpy():
     assert isinstance(v, np.ndarray)
     assert v.shape == (0,)
 
+    v = ds.to_array(array_namespace="numpy")
+    assert isinstance(v, np.ndarray)
+    assert v.shape == (0,)
+
+    v = ds.to_array(array_namespace=None)
+    assert isinstance(v, np.ndarray)
+    assert v.shape == (0,)
+
+
+def test_empty_fieldlist_to_array_numpy_compat1():
+    ds = SimpleFieldList()
+
     v = ds.to_array(array_backend="numpy")
     assert isinstance(v, np.ndarray)
     assert v.shape == (0,)
@@ -73,6 +85,17 @@ def test_empty_fieldlist_to_array_numpy():
 
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 def test_empty_fieldlist_to_array_torch():
+    import torch
+
+    ds = SimpleFieldList()
+
+    v = ds.to_array(array_namespace="torch")
+    assert isinstance(v, torch.Tensor)
+    assert v.shape == (0,)
+
+
+@pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
+def test_empty_fieldlist_to_array_torch_compat():
     import torch
 
     ds = SimpleFieldList()

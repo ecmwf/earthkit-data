@@ -15,13 +15,13 @@ import sys
 
 import numpy as np
 import pytest
-from earthkit.utils.testing import check_array_type
 
 from earthkit.data import from_source
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
+from earthkit.data.testing import check_array_type
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.testing import write_to_file
@@ -37,13 +37,19 @@ LOG = logging.getLogger(__name__)
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_array_fl_grib_write_to_path(array_backend, write_method):
 
+    array_namespace, device, dtype = array_backend
+
     ds = from_source("file", earthkit_examples_file("test.grib"))
-    ds = ds.to_fieldlist(array_backend=array_backend.name)
+    ds = ds.to_fieldlist(
+        array_namespace=array_namespace,
+        device=device,
+        dtype=dtype,
+    )
 
     assert ds[0].metadata("shortName") == "2t"
     assert len(ds) == 2
     v1 = ds[0].values + 1
-    check_array_type(v1, array_backend)
+    check_array_type(v1, array_namespace)
 
     md = ds[0].metadata()
     md1 = md.override(shortName="msl")
@@ -53,9 +59,9 @@ def test_array_fl_grib_write_to_path(array_backend, write_method):
         write_to_file(write_method, tmp, r)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
-        r_tmp = r_tmp.to_fieldlist(array_backend=array_backend.name)
+        r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
         v_tmp = r_tmp[0].values
-        assert array_backend.allclose(v1, v_tmp)
+        assert array_namespace.allclose(v1, v_tmp)
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
@@ -63,28 +69,28 @@ def test_array_fl_grib_write_to_path(array_backend, write_method):
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
 
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    ds = ds.to_fieldlist(array_backend=array_backend.name)
-    # ns = get_array_namespace(array_backend)
+    array_namespace, device, dtype = array_backend
+    xp = array_namespace
 
-    ns = array_backend.compat_namespace
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = ds.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
 
     assert ds[0].metadata("shortName") == "2t"
 
     v = ds[0].values
     v1 = v + 1
-    assert not ns.isnan(v1[0])
-    assert not ns.isnan(v1[1])
-    v1[0] = ns.nan
-    assert ns.isnan(v1[0])
-    assert not ns.isnan(v1[1])
+    assert not xp.isnan(v1[0])
+    assert not xp.isnan(v1[1])
+    v1[0] = xp.nan
+    assert xp.isnan(v1[0])
+    assert not xp.isnan(v1[1])
 
     md = ds[0].metadata()
     md1 = md.override(shortName="msl")
     r = FieldList.from_array(v1, md1)
 
-    assert ns.isnan(r[0].values[0])
-    assert not ns.isnan(r[0].values[1])
+    assert xp.isnan(r[0].values[0])
+    assert not xp.isnan(r[0].values[1])
 
     with temp_file() as tmp:
         write_to_file(write_method, tmp, r, **_kwargs)
@@ -92,10 +98,10 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
         r_tmp = from_source("file", tmp)
         v_tmp = r_tmp[0].values
         assert np.isnan(v_tmp[0])
-        r_tmp = r_tmp.to_fieldlist(array_backend=array_backend.name)
+        r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
         v_tmp = r_tmp[0].values
-        assert ns.isnan(v_tmp[0])
-        assert not ns.isnan(v_tmp[1])
+        assert xp.isnan(v_tmp[0])
+        assert not xp.isnan(v_tmp[1])
 
 
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
@@ -233,7 +239,7 @@ def test_array_fl_grib_single_write_to_path(filename, shape):
         r.save(tmp)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
-        # r_tmp = r_tmp.to_fieldlist(array_backend=array_backend)
+        # r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace)
         assert r_tmp[0].shape == shape
         assert r_tmp[0].metadata("shortName") == "msl"
         v_tmp = r_tmp[0].values

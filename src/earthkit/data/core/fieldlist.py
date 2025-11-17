@@ -8,14 +8,14 @@
 #
 
 import math
+import warnings
 from abc import abstractmethod
 from collections import defaultdict
 
 import deprecation
-from earthkit.utils.array import array_namespace
-from earthkit.utils.array import array_to_numpy
-from earthkit.utils.array import convert_array
-from earthkit.utils.array import get_backend
+from earthkit.utils.array import array_namespace as eku_array_namespace
+from earthkit.utils.array import convert as convert_array
+from earthkit.utils.array.convert import convert_dtype
 
 from earthkit.data.core import Base
 from earthkit.data.core.index import Index
@@ -92,9 +92,15 @@ class Field(Base):
     r"""Represent a Field."""
 
     @property
+    @deprecation.deprecated(deprecated_in="0.19.0", details="Use array_namespace instead")
     def array_backend(self):
-        r""":obj:`ArrayBackend`: Return the array backend of the field."""
-        return get_backend(self._values())
+        r""":obj:`ArrayBackend`: Return the array namespace of the field."""
+        return self.array_namespace
+
+    @property
+    def array_namespace(self):
+        r""":obj:`ArrayBackend`: Return the array namespace of the field."""
+        return eku_array_namespace(self._values())
 
     @abstractmethod
     def _values(self, dtype=None):
@@ -150,7 +156,7 @@ class Field(Base):
             Field values
 
         """
-        v = array_to_numpy(self._values(dtype=dtype))
+        v = convert_array(self._values(dtype=dtype), array_namespace="numpy")
         shape = self._required_shape(flatten)
         if shape != v.shape:
             v = v.reshape(shape)
@@ -158,7 +164,9 @@ class Field(Base):
             v = v[index]
         return v
 
-    def to_array(self, flatten=False, dtype=None, array_backend=None, index=None):
+    def to_array(
+        self, flatten=False, dtype=None, array_backend=None, array_namespace=None, device=None, index=None
+    ):
         r"""Return the values stored in the field.
 
         Parameters
@@ -169,9 +177,16 @@ class Field(Base):
         dtype: str, array.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        array_backend: str, module, :obj:`ArrayBackend` or None
-            The array backend to be used. When it is :obj:`None` the underlying array format
-            of the field is used.
+        array_backend: str, array_namespace or None
+            The array namespace to be used. When it is :obj:`None` the underlying array format
+            of the field is used. **Deprecated since version 0.19.0**. Use ``array_namespace`` instead.
+            In versions before 0.19.0 an :obj:`ArrayBackend` was also accepted here, which is no longer
+            the case.
+        array_namespace: str, array_namespace or None
+            The array namespace to be used. When it is :obj:`None` the underlying array format
+            of the field is used. **New in version 0.19.0**.
+        device: str or None
+            The device where the array will be allocated. When it is :obj:`None` the default device is used.
         index: array indexing object, optional
             The index of the values and to be extracted. When it
             is None all the values are extracted
@@ -182,9 +197,17 @@ class Field(Base):
             Field values.
 
         """
-        v = self._values(dtype=dtype)
         if array_backend is not None:
-            v = convert_array(v, target_backend=array_backend)
+            warnings.warn(
+                "to_array(): 'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning
+            )
+            if array_namespace is not None:
+                raise ValueError("to_array(): only one of array_backend and array_namespace can be specified")
+            array_namespace = array_backend
+
+        v = self._values(dtype=dtype)
+        if array_namespace is not None:
+            v = convert_array(v, array_namespace=array_namespace, device=device)
 
         v = self._reshape(v, flatten)
         if index is not None:
@@ -276,14 +299,22 @@ class Field(Base):
             sample = r.get("value", None)
             if sample is None:
                 sample = self._values(dtype=dtype)
-            for k, v in zip(ll.keys(), convert_array(list(ll.values()), target_array_sample=sample)):
-                r[k] = v
+            target_xp = eku_array_namespace(sample)
+            device = target_xp.device(sample)
+            target_dtype = None
+            if dtype is not None:
+                dtype = convert_dtype(dtype, target_xp)
+
+            for k, v in ll.items():
+                r[k] = convert_array(v, array_namespace=target_xp, device=device)
+                if target_dtype is not None:
+                    r[k] = target_xp.astype(r[k], target_dtype, copy=False)
 
         r = list(r.values())
         if len(r) == 1:
             return r[0]
         else:
-            return array_namespace(r[0]).stack(r)
+            return eku_array_namespace(r[0]).stack(r)
 
     def to_points(self, flatten=False, dtype=None, index=None):
         r"""Return the geographical coordinates in the data's original
@@ -338,8 +369,16 @@ class Field(Base):
         # convert values to array format
         assert r
         sample = self._values(dtype=dtype)
-        for k, v in zip(r.keys(), convert_array(list(r.values()), target_array_sample=sample)):
-            r[k] = v
+        target_xp = eku_array_namespace(sample)
+        device = target_xp.device(sample)
+        target_dtype = None
+        if dtype is not None:
+            dtype = convert_dtype(dtype, target_xp)
+
+        for k, v in r.items():
+            r[k] = convert_array(v, array_namespace=target_xp, device=device)
+            if target_dtype is not None:
+                r[k] = target_xp.astype(r[k], target_dtype, copy=False)
         return r
 
     def to_latlon(self, flatten=False, dtype=None, index=None):
@@ -804,7 +843,17 @@ class Field(Base):
         """
         self._not_implemented()
 
-    def copy(self, *, values=None, flatten=False, dtype=None, array_backend=None, metadata=None):
+    def copy(
+        self,
+        *,
+        values=None,
+        flatten=False,
+        dtype=None,
+        array_backend=None,
+        array_namespace=None,
+        device=None,
+        metadata=None,
+    ):
         r"""Create a new :class:`ArrayField` by copying the values and metadata.
 
         Parameters
@@ -822,10 +871,19 @@ class Field(Base):
             the original field. If :obj:`None`, the default type used by the underlying
             data accessor is used. For GRIB it is ``float64``. Only used when  ``values``
             is not provided.
-        array_backend: str, module, :obj:`ArrayBackend` or None
-            Control the array backend of the values when they are extracted from
+        array_backend: str, array_namespace or None
+            Control the array namespace of the values when they are extracted from
             the original field. If :obj:`None`, the underlying array format
             of the field is used. Only used when ``values`` is not provided.
+            **Deprecated since version 0.19.0**. Use ``array_namespace`` instead.
+            In versions before 0.19.0 an :obj:`ArrayBackend` was also accepted here, which is
+            no longer the case.
+        array_namespace: str, array_namespace or None
+            Control the array namespace of the values when they are extracted from
+            the original field.  When it is :obj:`None` the underlying array format
+            of the field is used. **New in version 0.19.0**.
+        device: str or None
+            The device where the array will be allocated. When it is :obj:`None` the default device is used.
         metadata: :class:`Metadata` or None
             The metadata to be stored in the new :class:`Field`. When it is :obj:`None`
             a copy of the metadata of the original field is used.
@@ -841,6 +899,8 @@ class Field(Base):
                 flatten=flatten,
                 dtype=dtype,
                 array_backend=array_backend,
+                array_namespace=array_namespace,
+                device=device,
             )
 
         if metadata is None:
@@ -910,14 +970,14 @@ class Field(Base):
         if len(v.shape) != 1:
             n = math.prod(v.shape)
             n = (n,)
-            return array_namespace(v).reshape(v, n)
+            return eku_array_namespace(v).reshape(v, n)
         return v
 
     def _reshape(self, v, flatten):
         """Reshape the array to the required shape."""
         shape = self._required_shape(flatten)
         if shape != v.shape:
-            v = array_namespace(v).reshape(v, shape)
+            v = eku_array_namespace(v).reshape(v, shape)
         return v
 
     def _required_shape(self, flatten, shape=None):
@@ -1081,7 +1141,7 @@ class FieldList(Index):
         """
         return self._md_indices.index(key)
 
-    def _as_array(self, accessor, empty_array_backend=None, **kwargs):
+    def _as_array(self, accessor, empty_array_namespace=None, **kwargs):
         """Use pre-allocated target array to store the field values."""
 
         def _vals(f):
@@ -1094,17 +1154,17 @@ class FieldList(Index):
             is_property = not callable(getattr(first, accessor, None))
             vals = _vals(first)
             first = None
-            ns = array_namespace(vals)
+            xp = eku_array_namespace(vals)
             shape = (n, *vals.shape)
-            r = ns.empty(shape, dtype=vals.dtype)
+            r = xp.empty(shape, dtype=vals.dtype, device=xp.device(vals))
             r[0] = vals
             for i, f in enumerate(it, start=1):
                 r[i] = _vals(f)
         else:
             # create an empty array using the right namespace and dtype
             # TODO: get_backend() should return the default backend for None
-            backend = get_backend(empty_array_backend if empty_array_backend is not None else "numpy")
-            r = backend.namespace.empty((0,), dtype=kwargs.get("dtype"))
+            xp = eku_array_namespace(empty_array_namespace if empty_array_namespace is not None else "numpy")
+            r = xp.empty((0,), dtype=kwargs.get("dtype"))
 
         return r
 
@@ -1127,7 +1187,7 @@ class FieldList(Index):
         to_array
         values
         """
-        return self._as_array("to_numpy", empty_array_backend="numpy", **kwargs)
+        return self._as_array("to_numpy", empty_array_namespace="numpy", **kwargs)
 
     def to_array(self, **kwargs):
         r"""Return all the fields' values as an array. It is formed as the array of the
@@ -1148,7 +1208,11 @@ class FieldList(Index):
         values
         to_numpy
         """
-        return self._as_array("to_array", empty_array_backend=kwargs.get("array_backend", None), **kwargs)
+        ns = kwargs.get("array_namespace", None)
+        if ns is None:
+            ns = eku_array_namespace(kwargs.get("array_backend", None))
+
+        return self._as_array("to_array", empty_array_namespace=ns, **kwargs)
 
     @property
     def values(self):
@@ -1266,12 +1330,12 @@ class FieldList(Index):
                     r.append(latlon["lon"])
                 elif k == "value":
                     r.extend([f.to_array(flatten=flatten, dtype=dtype, index=index) for f in self])
-            return array_namespace(r[0]).stack(r)
+            return eku_array_namespace(r[0]).stack(r)
 
         elif len(self) == 0:
             # empty array from the default array namespace
             shape = tuple([0] * len(keys))
-            return array_namespace().empty(shape, dtype=dtype)
+            return eku_array_namespace().empty(shape, dtype=dtype)
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
@@ -1700,15 +1764,21 @@ class FieldList(Index):
 
         return FieldListTensor.from_fieldlist(self, *args, **kwargs)
 
-    def to_fieldlist(self, array_backend=None, **kwargs):
+    def to_fieldlist(self, array_backend=None, array_namespace=None, device=None, **kwargs):
         r"""Convert to a new :class:`FieldList`.
 
         Parameters
         ----------
-        array_backend: str, module, :obj:`ArrayBackend`
-            Specifies the array backend for the generated :class:`FieldList`. The array
-            type must be supported by :class:`ArrayBackend`.
-
+        array_backend: str, array_namespace or None
+            Specify the array namespace for the generated :class:`FieldList`.
+            **Deprecated in version 0.19.0**. Use ``array_namespace`` instead.
+            In versions before 0.19.0 an :obj:`ArrayBackend` was also accepted
+            here, which is no longer the case.
+        array_namespace: str, array_namespace or None
+            The array namespace to be used. **New in version 0.19.0**.
+        device: str or None
+            The device where the array will be allocated. When it is
+            :obj:`None` the default device is used. **New in version 0.19.0**.
         **kwargs: dict, optional
             ``kwargs`` are passed to :obj:`to_array` to
             extract the field values the resulting object will store.
@@ -1728,7 +1798,7 @@ class FieldList(Index):
         >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
         >>> ds.path
         'docs/examples/tuv_pl.grib'
-        >>> r = ds.to_fieldlist(array_backend="numpy", dtype=np.float32)
+        >>> r = ds.to_fieldlist(array_namespace="numpy", dtype=np.float32)
         >>> r
         SimpleFieldList(fields=18)
         >>> hasattr(r, "path")
@@ -1737,7 +1807,12 @@ class FieldList(Index):
         dtype('float32')
 
         """
-        return self.from_fields([f.copy(array_backend=array_backend, **kwargs) for f in self])
+        return self.from_fields(
+            [
+                f.copy(array_backend=array_backend, array_namespace=array_namespace, device=device, **kwargs)
+                for f in self
+            ]
+        )
 
     def cube(self, *args, **kwargs):
         from earthkit.data.indexing.cube import FieldCube
