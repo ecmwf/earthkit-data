@@ -2,6 +2,15 @@ Version 0.18 Updates
 /////////////////////////
 
 
+Version 0.18.1
+===============
+
+Fixes
+++++++++
+
+- Fixed issue when the ``valid_datetime`` was not correctly constructed for GRIB data containing sub-minute steps (:pr:`845`).
+
+
 Version 0.18.0
 ===============
 
