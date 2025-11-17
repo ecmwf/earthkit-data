@@ -621,3 +621,59 @@ def test_xr_time_forecast_per_month(allow_holes, lazy_load):
     }
 
     compare_dims(ds, dims, order_ref_var="avg_dis")
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+@pytest.mark.parametrize(
+    "kwargs,dims,step_units",
+    [
+        (
+            {
+                "time_dim_mode": "raw",
+                "dim_name_from_role_name": True,
+                "ensure_dims": ["date", "time", "step"],
+            },
+            {
+                "date": [np.datetime64("2023-08-20", "ns")],
+                "time": [np.timedelta64(12, "h")],
+                "step": [np.timedelta64(30, "s")],
+            },
+            None,
+        ),
+        (
+            {
+                "time_dim_mode": "forecast",
+                "dim_name_from_role_name": True,
+                "ensure_dims": ["forecast_reference_time", "step"],
+            },
+            {
+                "forecast_reference_time": [np.datetime64("2023-08-20T12:00:00", "ns")],
+                "step": [np.timedelta64(30, "s")],
+            },
+            None,
+        ),
+        (
+            {
+                "time_dim_mode": "valid_time",
+                "dim_name_from_role_name": True,
+                "ensure_dims": ["valid_time"],
+            },
+            {
+                "valid_time": [np.datetime64("2023-08-20T12:00:30", "ns")],
+            },
+            None,
+        ),
+    ],
+)
+def test_xr_time_step_seconds(allow_holes, lazy_load, kwargs, dims, step_units):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("t_30s.grib"))
+
+    ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
+    compare_dims(ds, dims, order_ref_var="t")
+
+    if step_units is not None:
+        assert (
+            ds[step_units[0]].attrs["units"] == step_units[1]
+        ), f"step units mismatch {ds[step_units[0]].attrs['units']} != {step_units[1]}"
