@@ -14,10 +14,11 @@ from earthkit.data import array_api
 
 
 def test_array_api():
-    b = array_api.get_backend("numpy")
-    assert b.name == "numpy"
+    b = array_api.array_namespace("numpy")
+    # assert b.name == "numpy"
+    assert b._earthkit_array_namespace_name == "numpy"
 
     import numpy as np
 
     v = np.ones(10)
-    assert array_api.get_backend(v) is b
+    assert array_api.array_namespace(v) is b
