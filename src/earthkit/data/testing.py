@@ -239,8 +239,8 @@ for x in NAMESPACE_DEVICES:
     name = x[0]._earthkit_array_namespace_name
     device = x[1]
     dtype = None
-    if name in ["numpy", "torch"]:
-        if name == "torch" and device.startswith("mps"):
+    if name in ["numpy", "torch", "cupy", "jax"]:
+        if name == "torch" and device.type == "mps":
             dtype = "float32"
         ARRAY_BACKENDS.append(ArrayBackend(x[0], device, dtype))
 
