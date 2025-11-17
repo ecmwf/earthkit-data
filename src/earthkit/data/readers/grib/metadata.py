@@ -556,6 +556,10 @@ class GribMetadata(Metadata):
         return self._datetime("dataDate", "dataTime")
 
     def valid_datetime(self):
+        try:
+            return self.base_datetime() + self.step_timedelta()
+        except Exception:
+            pass
         return self._datetime("validityDate", "validityTime")
 
     def reference_datetime(self):
