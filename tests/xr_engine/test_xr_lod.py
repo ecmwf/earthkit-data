@@ -64,7 +64,7 @@ def xr_lod_forecast():
         "latitudes": [10.0, 0.0, -10.0],
         "longitudes": [20, 40.0],
         "values": [1, 2, 3, 4, 5, 6],
-        "base_datetime": "2018-08-01T09:00:00Z",
+        "base_datetime": "2018-08-01T09:00:00",
     }
 
     d = [
@@ -201,7 +201,7 @@ def test_xr_engine_lod_forecast(allow_holes, lazy_load, xr_lod_forecast):
 
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
-def test_xr_engine_lod_valid_time_1(allow_holes, lazy_load, xr_lod_latlon):
+def test_xr_engine_lod_valid_time_from_valid_datetime_single(allow_holes, lazy_load, xr_lod_latlon):
     ds_in = xr_lod_latlon
     ds = ds_in.to_xarray(
         time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, squeeze=False
@@ -221,10 +221,12 @@ def test_xr_engine_lod_valid_time_1(allow_holes, lazy_load, xr_lod_latlon):
 
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
-def test_xr_engine_lod_valid_time_2(allow_holes, lazy_load, xr_lod_valid_time):
+def test_xr_engine_lod_valid_time_from_valid_datetime_multi(allow_holes, lazy_load, xr_lod_valid_time):
     ds_in = xr_lod_valid_time
     ds = ds_in.to_xarray(
-        time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, squeeze=False
+        time_dim_mode="valid_time",
+        allow_holes=allow_holes,
+        lazy_load=lazy_load,
     )
 
     dims = {
@@ -243,10 +245,35 @@ def test_xr_engine_lod_valid_time_2(allow_holes, lazy_load, xr_lod_valid_time):
 
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
-def test_xr_engine_lod_valid_time_3(allow_holes, lazy_load, xr_lod_raw_time):
-    ds_in = xr_lod_raw_time
+def test_xr_engine_lod_valid_time_from_forecast(allow_holes, lazy_load, xr_lod_forecast):
+    ds_in = xr_lod_forecast
     ds = ds_in.to_xarray(
         time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, squeeze=False
+    )
+
+    assert ds is not None
+    assert ds["t"].shape == (2, 1, 3, 2)
+    assert ds["u"].shape == (2, 1, 3, 2)
+
+    dims = {
+        "valid_time": [
+            np.datetime64("2018-08-01T09:00:00", "ns"),
+            np.datetime64("2018-08-01T15:00:00", "ns"),
+        ],
+        "level": [500],
+    }
+
+    compare_dims(ds, dims, order_ref_var="t")
+
+
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_engine_lod_valid_time_from_raw_time(allow_holes, lazy_load, xr_lod_raw_time):
+    ds_in = xr_lod_raw_time
+    ds = ds_in.to_xarray(
+        time_dim_mode="valid_time",
+        allow_holes=allow_holes,
+        lazy_load=lazy_load,
     )
 
     dims = {
