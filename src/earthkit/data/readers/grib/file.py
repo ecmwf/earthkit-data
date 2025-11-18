@@ -21,7 +21,6 @@ class GRIBReader(GribFieldListInOneFile, Reader):
     def __init__(self, source, path, parts=None, positions=None):
         _kwargs = {}
         for k in [
-            # "array_backend",
             "grib_field_policy",
             "grib_handle_policy",
             "grib_handle_cache_size",

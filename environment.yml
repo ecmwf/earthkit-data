@@ -60,3 +60,5 @@ dependencies:
 - ipykernel
 - geopandas
 - deprecation
+- ncdata
+- scitools-iris

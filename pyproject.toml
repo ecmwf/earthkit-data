@@ -53,7 +53,7 @@ optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
 optional-dependencies.ci = [ "numpy" ]
 optional-dependencies.covjsonkit = [ "covjsonkit>=0.2.2" ]
 optional-dependencies.dev = [
-  "earthkit-data[all,docs,test]",
+  "earthkit-data[all,docs,test,geotiff,iris]",
 ]
 optional-dependencies.docs = [
   "nbsphinx",
