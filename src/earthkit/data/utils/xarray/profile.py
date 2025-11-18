@@ -280,12 +280,18 @@ class Profile:
         # values
         self.flatten_values = kwargs.pop("flatten_values")
         self.dtype = kwargs.pop("dtype")
-        self.array_backend = kwargs.pop("array_backend")
+        self.array_namespace = kwargs.pop("array_namespace")
 
         if "array_module" in kwargs:
             raise ValueError(
-                "'array_module' is deprecated. Use 'array_backend' instead. "
-                "If you are using 'array_module', please update your code to use 'array_backend'."
+                "'array_module' is deprecated. Use 'array_namespace' instead. "
+                "If you are using 'array_module', please update your code to use 'array_namespace'."
+            )
+
+        if "array_backend" in kwargs:
+            raise ValueError(
+                "'array_backend' is deprecated. Use 'array_namespace' instead. "
+                "If you are using 'array_backend', please update your code to use 'array_namespace'."
             )
 
         # if self.array_backend == "numpy":
@@ -336,17 +342,31 @@ class Profile:
         opt = copy.deepcopy(PROFILE_CONF.defaults)
 
         def _deprec_array_module(data):
-            """Deprecated: use 'array_backend' instead"""
+            """Deprecated: use 'array_namespace' instead"""
             if "array_module" in data:
                 import warnings
 
-                warnings.warn("'array_module' is deprecated. Use 'array_backend' instead", DeprecationWarning)
-
+                warnings.warn(
+                    "'array_module' is deprecated. Use 'array_namespace' instead", DeprecationWarning
+                )
                 array_module = kwargs.pop("array_module")
-                if data.get("array_backend", None) is None:
-                    data["array_backend"] = array_module
+                if data.get("array_namespace", None) is None:
+                    data["array_namespace"] = array_module
+
+        def _deprec_array_backend(data):
+            """Deprecated: use 'array_namespace' instead"""
+            if "array_backend" in data:
+                import warnings
+
+                warnings.warn(
+                    "'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning
+                )
+                array_backend = kwargs.pop("array_backend")
+                if data.get("array_namespace", None) is None:
+                    data["array_namespace"] = array_backend
 
         _deprec_array_module(kwargs)
+        _deprec_array_backend(kwargs)
 
         for d in [conf, kwargs]:
             for k, v in d.items():

@@ -12,6 +12,7 @@ import os
 
 import eccodes
 import numpy as np
+from earthkit.utils.array.convert import convert_dtype
 
 from earthkit.data.core.fieldlist import Field
 from earthkit.data.decorators import thread_safe_cached_property
@@ -48,12 +49,6 @@ class GribCodesFloatArrayAccessor:
         else:
             return v
 
-    @staticmethod
-    def to_numpy_dtype(dtype):
-        from earthkit.utils.array.dtype import to_numpy_dtype
-
-        return to_numpy_dtype(dtype, default=np.float64)
-
 
 class GribCodesValueAccessor(GribCodesFloatArrayAccessor):
     KEY = "values"
@@ -62,7 +57,7 @@ class GribCodesValueAccessor(GribCodesFloatArrayAccessor):
         super().__init__()
 
     def get(self, handle, dtype=None):
-        dtype = self.to_numpy_dtype(dtype)
+        dtype = convert_dtype(dtype, "numpy")
         if dtype is np.float32 and self.HAS_FLOAT_SUPPORT:
             return eccodes.codes_get_array(handle, self.KEY, ktype=dtype)
         else:
@@ -76,7 +71,7 @@ class GribCodesLatitudeAccessor(GribCodesFloatArrayAccessor):
         super().__init__()
 
     def get(self, handle, dtype=None):
-        dtype = self.to_numpy_dtype(dtype)
+        dtype = convert_dtype(dtype, "numpy")
         return super().get(handle, dtype=dtype)
 
 
@@ -87,7 +82,7 @@ class GribCodesLongitudeAccessor(GribCodesFloatArrayAccessor):
         super().__init__()
 
     def get(self, handle, dtype=None):
-        dtype = self.to_numpy_dtype(dtype)
+        dtype = convert_dtype(dtype, "numpy")
         return super().get(handle, dtype=dtype)
 
 
