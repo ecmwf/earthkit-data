@@ -82,6 +82,18 @@ class VariableBuilder:
                 }
                 self._attrs["_earthkit"] = attrs
 
+        try:
+            grid_spec = self.tensor.source[0].metadata().grid_spe
+            if grid_spec is not None:
+                if isinstance(grid_spec, dict):
+                    import json
+
+                    grid_spec = json.dumps(grid_spec)
+                if isinstance(grid_spec, str):
+                    self._attrs["ek_grid_spec"] = grid_spec
+        except Exception:
+            pass
+
         self._attrs.update(self.fixed_local_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
         return xarray.Variable(self.var_dims, data, attrs=self._attrs)
