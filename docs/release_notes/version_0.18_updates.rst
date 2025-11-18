@@ -1,6 +1,15 @@
 Version 0.18 Updates
 /////////////////////////
 
+Version 0.18.2
+===============
+
+Fixes
+++++++++
+
+- Fixed issue when the ``time_dim_mode="valid_time"`` option in :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray` did not work correctly when converted a :ref:`data-sources-lod` FieldList to Xarray (:pr:`850`).
+
+
 
 Version 0.18.1
 ===============

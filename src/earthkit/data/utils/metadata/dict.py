@@ -350,7 +350,7 @@ class UserMetadata(Metadata):
 
     ACCESSORS = {
         "base_datetime": "base_datetime",
-        "valid_datetime": "valid_datetime",
+        "valid_datetime": ["valid_datetime", "valid_time"],
         "step_timedelta": "step_timedelta",
         "param_level": "param_level",
         "_grid_type": "gridType",
