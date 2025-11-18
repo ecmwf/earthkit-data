@@ -316,7 +316,7 @@ class XArrayField(Field):
 class ClonedXarrayField(ClonedFieldCore, XArrayField):
     def __init__(self, field, **kwargs):
         ClonedFieldCore.__init__(self, field, **kwargs)
-        XArrayField.__init__(self, field.ds, field.variable, field.slices, field.non_dim_coords)
+        XArrayField.__init__(self, field._ds, field.variable, field.slices, field.non_dim_coords)
 
 
 class NetCDFMetadata(XArrayMetadata):
