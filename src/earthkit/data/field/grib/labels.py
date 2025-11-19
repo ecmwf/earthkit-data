@@ -152,10 +152,10 @@ class GribLabels:
                     if ns.startswith("grib."):
                         result[ns] = self.handle.as_namespace(ns[5:])
 
-    def new_array_field(self, field, array_backend=None, **kwargs):
+    def new_array_field(self, field, array_namespace=None, **kwargs):
         from earthkit.data.field.grib.create import new_array_grib_field
 
-        return new_array_grib_field(field, self.handle, array_backend=array_backend, **kwargs)
+        return new_array_grib_field(field, self.handle, array_namespace=array_namespace, **kwargs)
 
     def __getstate__(self):
         state = {}

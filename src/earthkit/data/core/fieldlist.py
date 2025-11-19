@@ -599,15 +599,21 @@ class FieldListCore(Base):
         pass
 
     @abstractmethod
-    def to_fieldlist(self, array_backend=None, **kwargs):
+    def to_fieldlist(self, array_backend=None, array_namespace=None, device=None, **kwargs):
         r"""Convert to a new :class:`FieldList`.
 
         Parameters
         ----------
-        array_backend: str, module, :obj:`ArrayBackend`
-            Specifies the array backend for the generated :class:`FieldList`. The array
-            type must be supported by :class:`ArrayBackend`.
-
+        array_backend: str, array_namespace or None
+            Specify the array namespace for the generated :class:`FieldList`.
+            **Deprecated in version 0.19.0**. Use ``array_namespace`` instead.
+            In versions before 0.19.0 an :obj:`ArrayBackend` was also accepted
+            here, which is no longer the case.
+        array_namespace: str, array_namespace or None
+            The array namespace to be used. **New in version 0.19.0**.
+        device: str or None
+            The device where the array will be allocated. When it is
+            :obj:`None` the default device is used. **New in version 0.19.0**.
         **kwargs: dict, optional
             ``kwargs`` are passed to :obj:`to_array` to
             extract the field values the resulting object will store.
@@ -627,7 +633,7 @@ class FieldListCore(Base):
         >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
         >>> ds.path
         'docs/examples/tuv_pl.grib'
-        >>> r = ds.to_fieldlist(array_backend="numpy", dtype=np.float32)
+        >>> r = ds.to_fieldlist(array_namespace="numpy", dtype=np.float32)
         >>> r
         SimpleFieldList(fields=18)
         >>> hasattr(r, "path")

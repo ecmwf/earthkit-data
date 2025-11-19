@@ -106,7 +106,7 @@ def test_grib_file_stream_group_by(group):
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 3
         assert f.get(("param", "level")) == ref[i]
-        assert f.to_fieldlist(array_backend="numpy") is not f
+        assert f.to_fieldlist(array_namespace="numpy") is not f
         cnt += 1
 
     assert cnt == len(ref)

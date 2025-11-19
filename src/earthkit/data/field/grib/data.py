@@ -16,10 +16,10 @@ from .collector import GribContextCollector
 class GribDataContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(spec, context):
-        from earthkit.utils.array import array_to_numpy
+        from earthkit.utils.array import convert
 
         r = {
-            "values": array_to_numpy(spec.values),
+            "values": convert(spec.values, array_namespace="numpy"),
         }
         context.update(r)
 

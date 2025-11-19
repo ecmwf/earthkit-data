@@ -50,6 +50,7 @@ def test_array_fl_grib_single_field(write_method):
         assert r[0].shape == ds[0].shape
         assert r[0].get("param") == "msl"
         _lat, _lon, _v = r[0].data(flatten=True)
+
         assert np.allclose(_lat, lat)
         assert np.allclose(_lon, lon)
         assert np.allclose(_v, v1)
@@ -141,8 +142,34 @@ def test_array_fl_grib_from_to_fieldlist(kwargs):
     md_full = ds.get("param")
     assert len(ds) == 2
 
+    r = ds.to_fieldlist(array_namespace="numpy", **kwargs)
+    check_array_fl_from_to_fieldlist(r, [ds], md_full, **kwargs)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {},
+        {"dtype": np.float32},
+        {"flatten": False},
+        {"flatten": True},
+        {"flatten": True, "dtype": np.float32},
+    ],
+)
+def test_array_fl_grib_from_to_fieldlist_compat1(kwargs):
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+    md_full = ds.metadata("param")
+    assert len(ds) == 2
+
     r = ds.to_fieldlist(array_backend="numpy", **kwargs)
     check_array_fl_from_to_fieldlist(r, [ds], md_full, **kwargs)
+
+
+def test_array_fl_grib_from_to_fieldlist_compat2():
+    ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    with pytest.raises(ValueError):
+        ds.to_fieldlist(array_backend="numpy", array_namespace="numpy")
 
 
 def test_array_fl_grib_from_to_fieldlist_repeat():
@@ -151,11 +178,11 @@ def test_array_fl_grib_from_to_fieldlist_repeat():
     assert len(ds) == 2
 
     kwargs = {}
-    r = ds.to_fieldlist(array_backend="numpy", **kwargs)
+    r = ds.to_fieldlist(array_namespace="numpy", **kwargs)
     check_array_fl_from_to_fieldlist(r, [ds], md_full, **kwargs)
 
     kwargs = {"flatten": True, "dtype": np.float32}
-    r1 = r.to_fieldlist(array_backend="numpy", **kwargs)
+    r1 = r.to_fieldlist(array_namespace="numpy", **kwargs)
     assert r1 is not r
     check_array_fl_from_to_fieldlist(r1, [ds], md_full, **kwargs)
 

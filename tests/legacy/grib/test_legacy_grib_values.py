@@ -14,9 +14,11 @@ import sys
 
 import numpy as np
 import pytest
-from earthkit.utils.testing import check_array_type
+from earthkit.utils.array import convert as array_convert
+from earthkit.utils.array.convert import convert_dtype
 
 from earthkit.data.testing import check_array
+from earthkit.data.testing import check_array_type
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -28,13 +30,19 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_legacy_grib_values_1(fl_type):
+def test_grib_values_1(fl_type):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    xp = array_backend.array_namespace
     eps = 1e-5
+
+    dtype = "float64"
+    if array_backend.dtype is not None:
+        dtype = array_backend.dtype
 
     # whole file
     v = f.values
-    check_array_type(v, array_backend, dtype="float64")
+    check_array_type(v, xp, dtype=dtype)
     assert v.shape == (1, 84)
     v = v[0].flatten()
     check_array(
@@ -44,26 +52,30 @@ def test_legacy_grib_values_1(fl_type):
         last=227.18560791015625,
         meanv=274.36566743396577,
         eps=eps,
-        array_backend=array_backend,
     )
 
     # field
     v1 = f[0].values
 
-    check_array_type(v1, array_backend)
+    check_array_type(v1, xp, dtype=dtype)
     assert v1.shape == (84,)
-    assert array_backend.allclose(v, v1, eps)
+    assert xp.allclose(v, v1, rtol=eps)
 
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_legacy_grib_values_18(fl_type):
+def test_grib_values_18(fl_type):
     f, array_backend = load_grib_data("tuv_pl.grib", fl_type)
+    xp = array_backend.array_namespace
     eps = 1e-5
+
+    dtype = "float64"
+    if array_backend.dtype is not None:
+        dtype = array_backend.dtype
 
     # whole file
     v = f.values
-    check_array_type(v, array_backend, dtype="float64")
+    check_array_type(v, xp, dtype=dtype)
     assert v.shape == (18, 84)
     vf = v[0].flatten()
     check_array(
@@ -88,13 +100,18 @@ def test_legacy_grib_values_18(fl_type):
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_legacy_grib_to_numpy_1(fl_type):
-    f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
+def test_grib_to_numpy_1(fl_type):
+    f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
 
+    dtype = np.float64
+    if array_backend.dtype is not None:
+        dtype = convert_dtype(array_backend.dtype, "numpy")
+
+    print(f"dtype: {dtype}")
     eps = 1e-5
     v = f.to_numpy()
     assert isinstance(v, np.ndarray)
-    assert v.dtype == np.float64
+    assert v.dtype == dtype
     v = v[0].flatten()
     check_array(
         v,
@@ -119,8 +136,12 @@ def test_legacy_grib_to_numpy_1(fl_type):
         (True, {"flatten": False}, (7, 12)),
     ],
 )
-def test_legacy_grib_to_numpy_1_shape(fl_type, first, options, expected_shape):
-    f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
+def test_grib_to_numpy_1_shape(fl_type, first, options, expected_shape):
+    f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    dtype = np.float64
+    if array_backend.dtype is not None:
+        dtype = dtype = convert_dtype(array_backend.dtype, "numpy")
 
     v_ref = f[0].to_numpy().flatten()
     eps = 1e-5
@@ -128,7 +149,7 @@ def test_legacy_grib_to_numpy_1_shape(fl_type, first, options, expected_shape):
     data = f[0] if first else f
     v1 = data.to_numpy(**options)
     assert isinstance(v1, np.ndarray)
-    assert v1.dtype == np.float64
+    assert v1.dtype == dtype
     assert v1.shape == expected_shape
     v1 = v1.flatten()
     assert np.allclose(v_ref, v1, eps)
@@ -136,15 +157,19 @@ def test_legacy_grib_to_numpy_1_shape(fl_type, first, options, expected_shape):
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_legacy_grib_to_numpy_18(fl_type):
-    f, _ = load_grib_data("tuv_pl.grib", fl_type)
+def test_grib_to_numpy_18(fl_type):
+    f, array_backend = load_grib_data("tuv_pl.grib", fl_type)
+
+    dtype = np.float64
+    if array_backend.dtype is not None:
+        dtype = dtype = convert_dtype(array_backend.dtype, "numpy")
 
     eps = 1e-5
 
     # whole file
     v = f.to_numpy(flatten=True)
     assert isinstance(v, np.ndarray)
-    assert v.dtype == np.float64
+    assert v.dtype == dtype
     assert v.shape == (18, 84)
     vf0 = v[0].flatten()
     check_array(
@@ -190,15 +215,19 @@ def test_legacy_grib_to_numpy_18(fl_type):
         ({"flatten": False}, (18, 7, 12)),
     ],
 )
-def test_legacy_grib_to_numpy_18_shape(fl_type, options, expected_shape):
-    f, _ = load_grib_data("tuv_pl.grib", fl_type)
+def test_grib_to_numpy_18_shape(fl_type, options, expected_shape):
+    f, array_backend = load_grib_data("tuv_pl.grib", fl_type)
+
+    dtype = np.float64
+    if array_backend.dtype is not None:
+        dtype = dtype = convert_dtype(array_backend.dtype, "numpy")
 
     eps = 1e-5
 
     # whole file
     v = f.to_numpy()
     assert isinstance(v, np.ndarray)
-    assert v.dtype == np.float64
+    assert v.dtype == dtype
     assert v.shape == (18, 7, 12)
     vf0 = f[0].to_numpy().flatten()
     assert vf0.shape == (84,)
@@ -207,7 +236,7 @@ def test_legacy_grib_to_numpy_18_shape(fl_type, options, expected_shape):
 
     v1 = f.to_numpy(**options)
     assert isinstance(v1, np.ndarray)
-    assert v1.dtype == np.float64
+    assert v1.dtype == dtype
     assert v1.shape == expected_shape
     vr = v1[0].flatten()
     assert np.allclose(vf0, vr, eps)
@@ -218,7 +247,7 @@ def test_legacy_grib_to_numpy_18_shape(fl_type, options, expected_shape):
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_legacy_grib_to_numpy_1_dtype(fl_type, dtype):
+def test_grib_to_numpy_1_dtype(fl_type, dtype):
     f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     v = f[0].to_numpy(dtype=dtype)
@@ -231,7 +260,7 @@ def test_legacy_grib_to_numpy_1_dtype(fl_type, dtype):
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_legacy_grib_to_numpy_18_dtype(fl_type, dtype):
+def test_grib_to_numpy_18_dtype(fl_type, dtype):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     v = f[0].to_numpy(dtype=dtype)
@@ -243,20 +272,24 @@ def test_legacy_grib_to_numpy_18_dtype(fl_type, dtype):
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_legacy_grib_to_numpy_1_index(fl_type):
-    ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
+def test_grib_to_numpy_1_index(fl_type):
+    ds, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    dtype = np.float64
+    if array_backend.dtype is not None:
+        dtype = dtype = convert_dtype(array_backend.dtype, "numpy")
 
     eps = 1e-5
 
     v = ds[0].to_numpy(flatten=True, index=[0, -1])
     assert isinstance(v, np.ndarray)
-    assert v.dtype == np.float64
+    assert v.dtype == dtype
     assert v.shape == (2,)
     assert np.allclose(v, [260.43560791015625, 227.18560791015625])
 
     v = ds[0].to_numpy(flatten=True, index=slice(None, None))
     assert isinstance(v, np.ndarray)
-    assert v.dtype == np.float64
+    assert v.dtype == dtype
     check_array(
         v,
         (84,),
@@ -268,7 +301,7 @@ def test_legacy_grib_to_numpy_1_index(fl_type):
 
     v = ds[0].to_numpy(index=(slice(None, 2), slice(None, 3)))
     assert isinstance(v, np.ndarray)
-    assert v.dtype == np.float64
+    assert v.dtype == dtype
     assert v.shape == (2, 3)
     assert np.allclose(
         v,
@@ -281,14 +314,18 @@ def test_legacy_grib_to_numpy_1_index(fl_type):
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_legacy_grib_to_numpy_18_index(fl_type):
-    ds, _ = load_grib_data("tuv_pl.grib", fl_type)
+def test_grib_to_numpy_18_index(fl_type):
+    ds, array_backend = load_grib_data("tuv_pl.grib", fl_type)
+
+    dtype = np.float64
+    if array_backend.dtype is not None:
+        dtype = convert_dtype(array_backend.dtype, "numpy")
 
     eps = 1e-5
 
     v = ds.to_numpy(flatten=True, index=[0, -1])
     assert isinstance(v, np.ndarray)
-    assert v.dtype == np.float64
+    assert v.dtype == dtype
     assert v.shape == (18, 2)
     vf0 = v[0].flatten()
     assert np.allclose(vf0, [272.5642, 240.56417846679688])
@@ -297,7 +334,7 @@ def test_legacy_grib_to_numpy_18_index(fl_type):
 
     v = ds.to_numpy(flatten=True, index=slice(None, 2))
     assert isinstance(v, np.ndarray)
-    assert v.dtype == np.float64
+    assert v.dtype == dtype
     assert v.shape == (18, 2)
     vf0 = v[0].flatten()
     assert np.allclose(vf0, [272.56417847, 272.56417847])
@@ -306,7 +343,7 @@ def test_legacy_grib_to_numpy_18_index(fl_type):
 
     v = ds.to_numpy(flatten=True, index=slice(None, None))
     assert isinstance(v, np.ndarray)
-    assert v.dtype == np.float64
+    assert v.dtype == dtype
     assert v.shape == (18, 84)
     vf0 = v[0].flatten()
     check_array(
@@ -330,7 +367,7 @@ def test_legacy_grib_to_numpy_18_index(fl_type):
 
     v = ds.to_numpy(index=(slice(None, 2), slice(None, 3)))
     assert isinstance(v, np.ndarray)
-    assert v.dtype == np.float64
+    assert v.dtype == dtype
     assert v.shape == (18, 2, 3)
     vf0 = v[0].flatten()
     assert np.allclose(
@@ -359,6 +396,55 @@ def test_legacy_grib_to_numpy_18_index(fl_type):
 
 
 @pytest.mark.legacy
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+@pytest.mark.parametrize("_kwargs", [{}, {"array_namespace": "numpy"}])
+def test_grib_to_array_1(fl_type, _kwargs):
+    f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    eps = 1e-5
+    v = f.to_array(**_kwargs)
+    assert isinstance(v, np.ndarray)
+    assert v.dtype == np.float64
+    v = v[0].flatten()
+    check_array(
+        v,
+        (84,),
+        first=260.43560791015625,
+        last=227.18560791015625,
+        meanv=274.36566743396577,
+        eps=eps,
+    )
+
+
+@pytest.mark.legacy
+@pytest.mark.parametrize("fl_type", FL_NUMPY)
+@pytest.mark.parametrize(
+    "first,options, expected_shape",
+    [
+        (False, {}, (1, 7, 12)),
+        (False, {"flatten": True}, (1, 84)),
+        (False, {"flatten": False}, (1, 7, 12)),
+        (True, {}, (7, 12)),
+        (True, {"flatten": True}, (84,)),
+        (True, {"flatten": False}, (7, 12)),
+    ],
+)
+def test_grib_to_array_1_shape(fl_type, first, options, expected_shape):
+    f, _ = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    v_ref = f[0].to_array().flatten()
+    eps = 1e-5
+
+    data = f[0] if first else f
+    v1 = data.to_array(**options)
+    assert isinstance(v1, np.ndarray)
+    assert v1.dtype == np.float64
+    assert v1.shape == expected_shape
+    v1 = v1.flatten()
+    assert np.allclose(v_ref, v1, eps)
+
+
+@pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_FILE)
 # @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize(
@@ -373,7 +459,7 @@ def test_legacy_grib_to_numpy_18_index(fl_type):
         # ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
     ],
 )
-def test_legacy_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
+def test_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
     ds, _ = load_grib_data("test.grib", fl_type)
 
     latlon = ds[0].to_latlon(**kwarg)
@@ -425,7 +511,7 @@ def test_legacy_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
         ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
     ],
 )
-def test_legacy_grib_fieldlist_data(fl_type, kwarg, expected_shape, expected_dtype):
+def test_grib_fieldlist_data(fl_type, kwarg, expected_shape, expected_dtype):
     ds, _ = load_grib_data("test.grib", fl_type)
 
     latlon = ds.to_latlon(**kwarg)
@@ -466,7 +552,7 @@ def test_legacy_grib_fieldlist_data(fl_type, kwarg, expected_shape, expected_dty
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
-def test_legacy_grib_fieldlist_data_index(fl_type):
+def test_grib_fieldlist_data_index(fl_type):
     ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     eps = 1e-5
@@ -565,25 +651,27 @@ def test_legacy_grib_fieldlist_data_index(fl_type):
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_legacy_grib_values_with_missing(fl_type):
+def test_grib_values_with_missing(fl_type):
     f, array_backend = load_grib_data("test_single_with_missing.grib", fl_type, folder="data")
 
+    xp = array_backend.array_namespace
+    dtype = array_backend.dtype
+
     v = f[0].values
-    check_array_type(v, array_backend)
+    check_array_type(v, xp, dtype=dtype)
     assert v.shape == (84,)
     eps = 0.001
 
-    ns = array_backend.namespace
+    assert xp.count_nonzero(xp.isnan(v)) == 38
+    mask = xp.asarray([12, 14, 15, 24, 25, 26] + list(range(28, 60)))
+    v1 = array_convert(v, array_namespace="numpy")
 
-    assert ns.count_nonzero(ns.isnan(v)) == 38
-    mask = array_backend.from_other([12, 14, 15, 24, 25, 26] + list(range(28, 60)))
-    v1 = array_backend.to_numpy(v)
     assert np.isclose(v1[0], 260.4356, eps)
     assert np.isclose(v1[11], 260.4356, eps)
     assert np.isclose(v1[-1], 227.1856, eps)
     m = v[mask]
     assert len(m) == 38
-    assert ns.count_nonzero(ns.isnan(m)) == 38
+    assert xp.count_nonzero(xp.isnan(m)) == 38
 
 
 if __name__ == "__main__":

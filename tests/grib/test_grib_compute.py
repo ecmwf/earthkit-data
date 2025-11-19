@@ -26,9 +26,10 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 
 class ComputeOperand:
-    def __init__(self, ds, array_backend=None):
+    def __init__(self, ds, array_namespace=None, device=None):
         self.ds = ds
-        self.array_backend = array_backend
+        self.array_namespace = array_namespace
+        self.device = device
 
 
 class SingleValueIntOperand(ComputeOperand):
@@ -43,7 +44,7 @@ class SingleValueFloatOperand(ComputeOperand):
 
 class ArraySingleValueOperand(ComputeOperand):
     def val(self):
-        xp = self.array_backend.namespace
+        xp = self.array_namespace
         v = xp.asarray([(i + 1) * 10 for i in range(len(self.ds))])
 
         size = self.ds[0].values.size
@@ -58,7 +59,7 @@ class ArraySingleValueOperand(ComputeOperand):
 
 class ArrayFieldOperand(ComputeOperand):
     def val(self):
-        xp = self.array_backend.namespace
+        xp = self.array_namespace
         return self.ds[0].values, xp.asarray([self.ds[0].values for _ in range(len(self.ds))])
 
 
@@ -123,154 +124,170 @@ UNARY_OPERANDS = [
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_add(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    rval, rval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+
+    rval, rval_ref = operand(ds, xp, device).val()
 
     res = ds + rval
     ref = ds.values + rval_ref
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_sub(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    rval, rval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+
+    rval, rval_ref = operand(ds, xp, device).val()
 
     res = ds - rval
     ref = ds.values - rval_ref
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_mul(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    rval, rval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+    rval, rval_ref = operand(ds, xp, device).val()
 
     res = ds * rval
     ref = ds.values * rval_ref
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_div(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    rval, rval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+    rval, rval_ref = operand(ds, xp, device).val()
 
     res = ds / rval
     ref = ds.values / rval_ref
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_floordiv(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    rval, rval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+    rval, rval_ref = operand(ds, xp, device).val()
 
     res = ds // rval
     ref = ds.values // rval_ref
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_mod(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    rval, rval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+    rval, rval_ref = operand(ds, xp, device).val()
 
     res = ds % rval
     ref = ds.values % rval_ref
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", RIGHT_OPERANDS)
 def test_grib_compute_pow(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    rval, rval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+    rval, rval_ref = operand(ds, xp, device).val()
 
     res = ds**rval
     ref = ds.values**rval_ref
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_radd(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    lval, lval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+    lval, lval_ref = operand(ds, xp, device).val()
 
     res = lval + ds
     ref = lval_ref + ds.values
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_rsub(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    lval, lval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+    lval, lval_ref = operand(ds, xp, device).val()
 
     res = lval - ds
     ref = lval_ref - ds.values
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_rmul(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    lval, lval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+    lval, lval_ref = operand(ds, xp, device).val()
 
     res = lval * ds
     ref = lval_ref * ds.values
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_rdiv(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    lval, lval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+    lval, lval_ref = operand(ds, xp, device).val()
 
     res = lval / ds
     ref = lval_ref / ds.values
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_rfloordiv(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    lval, lval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+    lval, lval_ref = operand(ds, xp, device).val()
 
     res = lval // ds
     ref = lval_ref // ds.values
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_rmod(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    lval, lval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+    lval, lval_ref = operand(ds, xp, device).val()
 
     res = lval % ds
     ref = lval_ref % ds.values
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_rpow(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    lval, lval_ref = operand(ds, array_backend).val()
+    xp, device, _ = array_backend
+    lval, lval_ref = operand(ds, xp, device).val()
 
     res = lval**ds
     ref = lval_ref**ds.values
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
@@ -288,18 +305,20 @@ def test_grib_compute_pos(fl_type, operand):
 @pytest.mark.parametrize("operand", UNARY_OPERANDS)
 def test_grib_compute_neg(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    val, val_ref = operand(ds).val()
+    xp, device, _ = array_backend
+    val, val_ref = operand(ds, xp, device).val()
 
     res = -val
     ref = -val_ref
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", UNARY_OPERANDS)
 def test_grib_compute_ufunc(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    val, val_ref = operand(ds).val()
+    xp, device, _ = array_backend
+    val, val_ref = operand(ds, xp, device).val()
 
     def func(x, y):
         return np.sin(x) + y * 2
@@ -309,17 +328,16 @@ def test_grib_compute_ufunc(fl_type, operand):
 
     res = apply_ufunc(func, ds1, ds2)
     ref = func(val_ref, val_ref + 1)
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", UNARY_OPERANDS)
 def test_grib_compute_sin(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
-    val, val_ref = operand(ds).val()
-
-    xp = array_backend.namespace
+    xp, device, _ = array_backend
+    val, val_ref = operand(ds, xp, device).val()
 
     res = val.sin()
     ref = xp.sin(val_ref)
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)

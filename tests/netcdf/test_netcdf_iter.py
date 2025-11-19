@@ -13,23 +13,20 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import ARRAY_BACKENDS
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 
 
 @pytest.mark.migrate
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("group", ["param"])
-def test_netcdf_group_by(array_backend, group):
-    ds = from_source("file", earthkit_test_data_file("test6.nc"), array_backend=array_backend)
+def test_netcdf_group_by(group):
+    ds = from_source("file", earthkit_test_data_file("test6.nc"))
 
     ref = [
         [("t", 1000), ("t", 850)],
         [("u", 1000), ("u", 850)],
         [("v", 1000), ("v", 850)],
     ]
-
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 2
@@ -40,13 +37,11 @@ def test_netcdf_group_by(array_backend, group):
 
 
 @pytest.mark.migrate
-@pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
 def test_netcdf_multi_group_by(array_backend, group):
     ds = from_source(
         "file",
         [earthkit_test_data_file("test4.nc"), earthkit_test_data_file("test6.nc")],
-        array_backend=array_backend,
     )
 
     ref = [

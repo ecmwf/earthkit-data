@@ -57,6 +57,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         dtype=None,
         array_module=None,
         array_backend=None,
+        array_namespace=None,
         errors=None,
     ):
         r"""
@@ -314,8 +315,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             to False unless the ``profile`` overwrites it.
         dtype: str, numpy.dtype or None
             Typecode or data-type of the array data.
-        array_backend: str, array namespace, ArrayBackend, None
-            The array backend/namespace to use for array operations. The default value (None) is
+        array_namespace: str, array namespace, None
+            The array namespace to use for array operations. The default value (None) is
             expanded to "numpy".
         """
         fieldlist = self._fieldlist(filename_or_obj, source_type)
@@ -329,9 +330,24 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             if array_module is not None:
                 import warnings
 
-                warnings.warn("'array_module' is deprecated. Use 'array_backend' instead", DeprecationWarning)
-                if array_backend is None:
-                    array_backend = array_module
+                warnings.warn(
+                    "'array_module' is deprecated. Use 'array_namespace' instead", DeprecationWarning
+                )
+                if array_namespace is None:
+                    array_namespace = array_module
+                else:
+                    raise ValueError("Cannot specify both 'array_module' and 'array_namespace' arguments")
+
+            if array_backend is not None:
+                import warnings
+
+                warnings.warn(
+                    "'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning
+                )
+                if array_namespace is None:
+                    array_namespace = array_backend
+                else:
+                    raise ValueError("Cannot specify both 'array_backend' and 'array_namespace' arguments")
 
             _kwargs = dict(
                 variable_key=variable_key,
@@ -367,7 +383,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 release_source=release_source,
                 strict=strict,
                 dtype=dtype,
-                array_backend=array_backend,
+                array_namespace=array_namespace,
                 errors=errors,
                 allow_holes=allow_holes,
             )
@@ -469,6 +485,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
             handle = next(GribMessageMemoryReader(data)).handle
             bpv = md.get("bitsPerValue", 0)
             res_md = StandAloneGribMetadata(handle)
+
             if bpv is not None and bpv > 0:
                 return WrappedMetadata(res_md, extra={"bitsPerValue": bpv})
             else:
@@ -503,11 +520,16 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
         return ds.to_netcdf(*args, **kwargs)
 
-    def to_device(self, device, *args, array_backend=None, **kwargs):
+    def to_device(self, device, *, array_backend=None, array_namespace=None, **kwargs):
         """Return a **new** DataArray whose data live on *device*."""
-        from earthkit.utils.array import to_device
+        from earthkit.utils.array import convert
 
-        moved = to_device(self._obj.data, device, *args, array_backend=array_backend, **kwargs)
+        if array_backend is not None:
+            if array_namespace is not None:
+                raise ValueError("Cannot specify both 'array_backend' and 'array_namespace' arguments")
+            array_namespace = array_backend
+
+        moved = convert(self._obj.data, device=device, array_namespace=array_namespace, **kwargs)
         da = self._obj.copy(deep=False)
         da.data = moved
         return da
@@ -516,7 +538,9 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     def grid_spec(self):
         """Return the grid specification of the DataArray."""
         try:
-            return self.metadata.gridspec
+            if "ek_grid_spec" in self._obj.attrs:
+                return self._obj.attrs["ek_grid_spec"]
+            return self.metadata.grid_spec
         except Exception:
             return None
 
@@ -552,13 +576,18 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
 
         return ds.to_netcdf(*args, **kwargs)
 
-    def to_device(self, device, *args, array_backend=None, **kwargs):
+    def to_device(self, device, *, array_backend=None, array_namespace=None, **kwargs):
         """Return a new Dataset with every data variable on the specified ``device``."""
-        from earthkit.utils.array import to_device
+        from earthkit.utils.array import convert
+
+        if array_backend is not None:
+            if array_namespace is not None:
+                raise ValueError("Cannot specify both 'array_backend' and 'array_namespace' arguments")
+            array_namespace = array_backend
 
         ds = self._obj.copy(deep=False)
         for name, var in ds.data_vars.items():
-            ds[name].data = to_device(var.data, device, *args, array_backend=array_backend, **kwargs)
+            ds[name].data = convert(var.data, device=device, array_namespace=array_namespace, **kwargs)
         return ds
 
     @property

@@ -14,11 +14,12 @@ import sys
 
 import numpy as np
 import pytest
-from earthkit.utils.testing import check_array_type
+from earthkit.utils.array import convert as array_convert
 
 import earthkit.data
 from earthkit.data.testing import NO_GEO
 from earthkit.data.testing import check_array
+from earthkit.data.testing import check_array_type
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import projections
@@ -33,17 +34,22 @@ from grib_fixtures import load_grib_data  # noqa: E402
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("index", [0, None])
-def test_legacy_grib_to_latlon_single(fl_type, index):
+def test_grib_to_latlon_single_1(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    array_namespace = array_backend.array_namespace
+    dtype = "float64"
+    if array_backend.dtype is not None:
+        dtype = array_backend.dtype
 
     eps = 1e-5
     g = f[index] if index is not None else f
-    v = g.to_latlon(flatten=True)
+    v = g.to_latlon(flatten=True, dtype=dtype)
     assert isinstance(v, dict)
-    check_array_type(v["lon"], array_backend, dtype="float64")
-    check_array_type(v["lat"], array_backend, dtype="float64")
+    check_array_type(v["lon"], array_namespace, dtype=dtype)
+    check_array_type(v["lat"], array_namespace, dtype=dtype)
     check_array(
-        array_backend.to_numpy(v["lon"]),
+        array_convert(v["lon"], array_namespace="numpy"),
         (84,),
         first=0.0,
         last=330.0,
@@ -51,7 +57,7 @@ def test_legacy_grib_to_latlon_single(fl_type, index):
         eps=eps,
     )
     check_array(
-        array_backend.to_numpy(v["lat"]),
+        array_convert(v["lat"], array_namespace="numpy"),
         (84,),
         first=90,
         last=-90,
@@ -63,30 +69,35 @@ def test_legacy_grib_to_latlon_single(fl_type, index):
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("index", [0, None])
-def test_legacy_grib_to_latlon_single_shape(fl_type, index):
+def test_grib_to_latlon_single_shape(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
 
+    array_namespace = array_backend.array_namespace
+    dtype = "float64"
+    if array_backend.dtype is not None:
+        dtype = array_backend.dtype
+
     g = f[index] if index is not None else f
-    v = g.to_latlon()
+    v = g.to_latlon(dtype=dtype)
     assert isinstance(v, dict)
-    check_array_type(v["lon"], array_backend, dtype="float64")
-    check_array_type(v["lat"], array_backend, dtype="float64")
+    check_array_type(v["lon"], array_namespace, dtype=dtype)
+    check_array_type(v["lat"], array_namespace, dtype=dtype)
 
     # x
     assert v["lon"].shape == (7, 12)
     for x in v["lon"]:
-        assert np.allclose(array_backend.to_numpy(x), np.linspace(0, 330, 12))
+        assert np.allclose(array_convert(x, array_namespace="numpy"), np.linspace(0, 330, 12))
 
     # y
     assert v["lat"].shape == (7, 12)
     for i, y in enumerate(v["lat"]):
-        assert np.allclose(array_backend.to_numpy(y), np.ones(12) * (90 - i * 30))
+        assert np.allclose(array_convert(y, array_namespace="numpy"), np.ones(12) * (90 - i * 30))
 
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_legacy_grib_to_latlon_multi(fl_type, dtype):
+def test_grib_to_latlon_multi(fl_type, dtype):
     f, _ = load_grib_data("test.grib", fl_type)
 
     v_ref = f[0].to_latlon(flatten=True, dtype=dtype)
@@ -103,7 +114,7 @@ def test_legacy_grib_to_latlon_multi(fl_type, dtype):
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_legacy_grib_to_latlon_multi_non_shared_grid(fl_type):
+def test_grib_to_latlon_multi_non_shared_grid(fl_type):
     f1, _ = load_grib_data("test.grib", fl_type)
     f2, _ = load_grib_data("test4.grib", fl_type)
     f = f1 + f2
@@ -115,17 +126,22 @@ def test_legacy_grib_to_latlon_multi_non_shared_grid(fl_type):
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("index", [0, None])
-def test_legacy_grib_to_points_single(fl_type, index):
+def test_grib_to_points_single(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    array_namespace = array_backend.array_namespace
+    dtype = "float64"
+    if array_backend.dtype is not None:
+        dtype = array_backend.dtype
 
     eps = 1e-5
     g = f[index] if index is not None else f
-    v = g.to_points(flatten=True)
+    v = g.to_points(flatten=True, dtype=dtype)
     assert isinstance(v, dict)
-    check_array_type(v["x"], array_backend, dtype="float64")
-    check_array_type(v["y"], array_backend, dtype="float64")
+    check_array_type(v["x"], array_namespace, dtype=dtype)
+    check_array_type(v["y"], array_namespace, dtype=dtype)
     check_array(
-        array_backend.to_numpy(v["x"]),
+        array_convert(v["x"], array_namespace="numpy"),
         (84,),
         first=0.0,
         last=330.0,
@@ -133,7 +149,7 @@ def test_legacy_grib_to_points_single(fl_type, index):
         eps=eps,
     )
     check_array(
-        array_backend.to_numpy(v["y"]),
+        array_convert(v["y"], array_namespace="numpy"),
         (84,),
         first=90,
         last=-90,
@@ -144,7 +160,7 @@ def test_legacy_grib_to_points_single(fl_type, index):
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_legacy_grib_to_points_unsupported_grid(fl_type):
+def test_grib_to_points_unsupported_grid(fl_type):
     f, _ = load_grib_data("mercator.grib", fl_type, folder="data")
     with pytest.raises(ValueError):
         f[0].to_points()
@@ -153,7 +169,7 @@ def test_legacy_grib_to_points_unsupported_grid(fl_type):
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_legacy_grib_to_points_multi(fl_type, dtype):
+def test_grib_to_points_multi(fl_type, dtype):
     f, _ = load_grib_data("test.grib", fl_type)
 
     v_ref = f[0].to_points(flatten=True, dtype=dtype)
@@ -170,7 +186,7 @@ def test_legacy_grib_to_points_multi(fl_type, dtype):
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_legacy_grib_to_points_multi_non_shared_grid(fl_type):
+def test_grib_to_points_multi_non_shared_grid(fl_type):
     f1, _ = load_grib_data("test.grib", fl_type)
     f2, _ = load_grib_data("test4.grib", fl_type)
     f = f1 + f2
@@ -192,7 +208,7 @@ def test_bbox(fl_type):
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("index", [0, None])
-def test_legacy_grib_projection_ll(fl_type, index):
+def test_grib_projection_ll(fl_type, index):
     f, _ = load_grib_data("test.grib", fl_type)
 
     if index is not None:
@@ -204,7 +220,7 @@ def test_legacy_grib_projection_ll(fl_type, index):
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_legacy_grib_projection_mercator(fl_type):
+def test_grib_projection_mercator(fl_type):
     f, _ = load_grib_data("mercator.grib", fl_type, folder="data")
     projection = f[0].projection()
     assert isinstance(projection, projections.Mercator)
@@ -230,7 +246,7 @@ def test_legacy_grib_projection_mercator(fl_type):
         (earthkit_test_data_file("ll_10_20.grib"), None),
     ],
 )
-def test_legacy_grib_resolution(path, expected_value):
+def test_grib_resolution(path, expected_value):
     ds = earthkit.data.from_source("file", path)
 
     if isinstance(expected_value, str):
@@ -264,7 +280,7 @@ def test_legacy_grib_resolution(path, expected_value):
         ),
     ],
 )
-def test_legacy_grib_mars_area(path, expected_value):
+def test_grib_mars_area(path, expected_value):
     ds = earthkit.data.from_source("file", path)
 
     assert np.allclose(np.asarray(ds[0].mars_area), np.asarray(expected_value))
@@ -293,7 +309,7 @@ def test_legacy_grib_mars_area(path, expected_value):
         ),
     ],
 )
-def test_legacy_grib_mars_grid(path, expected_value):
+def test_grib_mars_grid(path, expected_value):
     ds = earthkit.data.from_source("file", path)
 
     if isinstance(expected_value, str):
@@ -306,7 +322,7 @@ def test_legacy_grib_mars_grid(path, expected_value):
 
 @pytest.mark.legacy
 @pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")
-def test_legacy_grib_grid_points_rotated_ll():
+def test_grib_grid_points_rotated_ll():
     """The"""
     ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_wind_20x20.grib"))
 
@@ -337,7 +353,7 @@ def test_legacy_grib_grid_points_rotated_ll():
 
 @pytest.mark.legacy
 @pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")
-def test_legacy_grib_grid_points_rotated_rgg():
+def test_grib_grid_points_rotated_rgg():
     ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_N32_subarea.grib"))
 
     # grid points

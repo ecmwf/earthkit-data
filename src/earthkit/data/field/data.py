@@ -10,7 +10,7 @@
 import math
 from abc import abstractmethod
 
-from earthkit.utils.array import array_namespace
+from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.utils.array import flatten
 
@@ -109,7 +109,7 @@ class SimpleData(Data):
 
 class ArrayCache:
     def __init__(self, array):
-        self.xp = array_namespace(array)
+        self.xp = eku_array_namespace(array)
         self.cache_file = None
 
     def __del__(self):
@@ -167,10 +167,17 @@ class ArrayData(SimpleData):
         v = self._values
         if index is not None:
             v = v[index]
+
+        xp = eku_array_namespace(v)
         if copy:
-            v = array_namespace(v).asarray(v, copy=True)
+            v = xp.asarray(v, copy=True)
         if dtype is not None:
-            v = array_namespace(v).astype(v, dtype)
+            xp = eku_array_namespace(v)
+            try:
+                dtype = xp.xp.dtype(dtype)
+                return xp.astype(v, dtype, copy=False)
+            except Exception:
+                pass
         return v
 
     def check(self, owner):

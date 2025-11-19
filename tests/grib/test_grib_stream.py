@@ -120,10 +120,10 @@ def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shap
             convert_kwargs = {}
 
         for i, f in enumerate(ds.batched(2)):
-            df = f.to_fieldlist(array_backend="numpy", **convert_kwargs)
+            df = f.to_fieldlist(array_namespace="numpy", **convert_kwargs)
             assert df.metadata(("param", "level")) == ref[i], i
             assert df.to_numpy(**convert_kwargs).shape == expected_shape, i
-            df1 = df.to_fieldlist(array_backend="numpy", **convert_kwargs)
+            df1 = df.to_fieldlist(array_namespace="numpy", **convert_kwargs)
             assert df1 is not df, i
             assert df1.metadata(("param", "level")) == ref[i], i
             assert df1.to_numpy(**convert_kwargs).shape == expected_shape, i
@@ -135,6 +135,8 @@ def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shap
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
 def test_grib_from_stream_group_by(array_backend, group):
+    array_namespace, device, dtype = array_backend
+
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source("stream", stream)
 
@@ -149,7 +151,7 @@ def test_grib_from_stream_group_by(array_backend, group):
         for i, f in enumerate(ds.group_by(group)):
             assert len(f) == 3
             assert f.metadata(("param", "level")) == ref[i]
-            afl = f.to_fieldlist(array_backend=array_backend.name)
+            afl = f.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
             assert afl is not f
             assert len(afl) == 3
 
@@ -185,11 +187,11 @@ def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_sha
             convert_kwargs = {}
 
         for i, f in enumerate(ds.group_by(group)):
-            df = f.to_fieldlist(array_backend="numpy", **convert_kwargs)
+            df = f.to_fieldlist(array_namespace="numpy", **convert_kwargs)
             assert len(df) == 3
             assert df.metadata(("param", "level")) == ref[i]
             assert df.to_numpy(**convert_kwargs).shape == expected_shape
-            df1 = df.to_fieldlist(array_backend="numpy", **convert_kwargs)
+            df1 = df.to_fieldlist(array_namespace="numpy", **convert_kwargs)
             assert df1 is not df
             assert len(df1) == 3
             assert df1.metadata(("param", "level")) == ref[i]
@@ -276,7 +278,7 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds_s = from_source("stream", stream, read_all=True)
 
-        ds = ds_s.to_fieldlist(array_backend="numpy", **convert_kwargs)
+        ds = ds_s.to_fieldlist(array_namespace="numpy", **convert_kwargs)
 
         assert len(ds) == 6
 
@@ -311,7 +313,7 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
 
         assert np.allclose(vals, ref)
         assert ds.to_numpy(**convert_kwargs).shape == expected_shape
-        ds1 = ds.to_fieldlist(array_backend="numpy", **convert_kwargs)
+        ds1 = ds.to_fieldlist(array_namespace="numpy", **convert_kwargs)
         assert ds1 is not ds
         assert len(ds1) == 6
         assert ds1.to_numpy(**convert_kwargs).shape == expected_shape

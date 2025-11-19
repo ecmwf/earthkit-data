@@ -28,6 +28,18 @@ from .field import XArrayField
 LOG = logging.getLogger(__name__)
 
 
+def get_geo_coords(da):
+    for x, y in zip(GEOGRAPHIC_COORDS["x"], GEOGRAPHIC_COORDS["y"]):
+        if x in da.coords and y in da.coords:
+            dims_x = set(da[x].dims)
+            dims_y = set(da[y].dims)
+            dims = set()
+            if dims_x == dims_y:
+                dims = dims_x
+            return (x, y), dims
+    return tuple(), set()
+
+
 def get_fields_from_ds(
     ds,
     field_type=None,
@@ -59,14 +71,23 @@ def get_fields_from_ds(
 
         v = ds[name]
 
+        geo_coords, geo_coords_dims = get_geo_coords(ds[name])
+
+        has_geo = geo_coords and geo_coords_dims and all([d in v.dims for d in geo_coords_dims])
+
         coordinates = []
 
         # self.log.info('Scanning file: %s var=%s coords=%s', self.path, name, v.coords)
 
         info = [value for value in v.coords if value not in v.dims]
+
         non_dim_coords = {}
         for coord in v.coords:
             if coord not in v.dims:
+                non_dim_coords[coord] = ds[coord].values
+                continue
+
+            if coord in geo_coords_dims:
                 non_dim_coords[coord] = ds[coord].values
                 continue
 
@@ -80,7 +101,7 @@ def get_fields_from_ds(
             coord_name = getattr(c, "name", "")
 
             # LOG.debug(f"{standard_name=} {long_name=} {axis=} {coord_name}")
-            use = False
+            use = has_geo
 
             if (
                 standard_name.lower() in GEOGRAPHIC_COORDS["x"]
@@ -134,19 +155,31 @@ def get_fields_from_ds(
             if not use:
                 coordinates.append(OtherCoordinate(c, coord in info))
 
+        if not (has_lat and has_lon) and has_geo:
+            # handle the case where the lat/lon are variables
+            has_lat = True
+            has_lon = True
+
         if not (has_lat and has_lon):
             # self.log.info("NetCDFReader: skip %s (Not a 2 field)", name)
             continue
 
-        for values in product(*[c.values for c in coordinates]):
-            slices = []
-            for value, coordinate in zip(values, coordinates):
-                slices.append(coordinate.make_slice(value))
-
+        if not coordinates:
             if check_only:
                 return True
 
+            slices = []
             fields.append(field_type(ds, name, slices, non_dim_coords))
+        else:
+            for values in product(*[c.values for c in coordinates]):
+                slices = []
+                for value, coordinate in zip(values, coordinates):
+                    slices.append(coordinate.make_slice(value))
+
+                if check_only:
+                    return True
+
+                fields.append(field_type(ds, name, slices, non_dim_coords))
 
     # if not fields:
     #     raise Exception("NetCDFReader no 2D fields found in %s" % (self.path,))

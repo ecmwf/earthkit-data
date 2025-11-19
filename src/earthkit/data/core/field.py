@@ -7,13 +7,13 @@
 # nor does it submit to any jurisdiction.
 #
 
+import warnings
 from collections import defaultdict
 
 import deprecation
-from earthkit.utils.array import array_namespace
-from earthkit.utils.array import array_to_numpy
-from earthkit.utils.array import convert_array
-from earthkit.utils.array import get_backend
+from earthkit.utils.array import array_namespace as eku_array_namespace
+from earthkit.utils.array import convert as convert_array
+from earthkit.utils.array.convert import convert_dtype
 
 from earthkit.data.core import Base
 from earthkit.data.core.order import Patch
@@ -252,9 +252,15 @@ class Field(Base):
         return cls.from_dict({"values": array})
 
     @property
+    @deprecation.deprecated(deprecated_in="0.19.0", details="Use array_namespace instead")
     def array_backend(self):
-        r""":obj:`ArrayBackend`: Return the array backend of the field."""
-        return get_backend(self.values)
+        r""":obj:`ArrayBackend`: Return the array namespace of the field."""
+        return self.array_namespace
+
+    @property
+    def array_namespace(self):
+        r""":obj:`ArrayBackend`: Return the array namespace of the field."""
+        return eku_array_namespace(self.values)
 
     def free(self):
         self._data = self._data.Offloader(self._data)
@@ -292,7 +298,7 @@ class Field(Base):
             Field values
 
         """
-        v = array_to_numpy(self._data.get_values(dtype=dtype, copy=copy, index=index))
+        v = convert_array(self._values(dtype=dtype), array_namespace="numpy")
         if flatten:
             from earthkit.data.utils.array import flatten as array_flatten
 
@@ -300,7 +306,16 @@ class Field(Base):
         else:
             return reshape(v, self.shape)
 
-    def to_array(self, flatten=False, dtype=None, copy=True, index=None, array_backend=None):
+    def to_array(
+        self,
+        flatten=False,
+        dtype=None,
+        copy=True,
+        array_backend=None,
+        array_namespace=None,
+        device=None,
+        index=None,
+    ):
         r"""Return the values stored in the field.
 
         Parameters
@@ -311,22 +326,37 @@ class Field(Base):
         dtype: str, array.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        array_backend: str, module, array_namespace, :obj:`ArrayBackend` or None
-            The array backend to be used. When it is :obj:`None` the underlying array format
-            of the field is used.
+        array_backend: str, array_namespace or None
+            The array namespace to be used. When it is :obj:`None` the underlying array format
+            of the field is used. **Deprecated since version 0.19.0**. Use ``array_namespace`` instead.
+            In versions before 0.19.0 an :obj:`ArrayBackend` was also accepted here, which is no longer
+            the case.
+        array_namespace: str, array_namespace or None
+            The array namespace to be used. When it is :obj:`None` the underlying array format
+            of the field is used. **New in version 0.19.0**.
+        device: str or None
+            The device where the array will be allocated. When it is :obj:`None` the default device is used.
         index: array indexing object, optional
             The index of the values and to be extracted. When it
             is None all the values are extracted
 
         Returns
         -------
-        array-like
+        array-array
             Field values.
 
         """
-        v = self._data.get_values(dtype=dtype, copy=copy, index=index)
         if array_backend is not None:
-            v = convert_array(v, target_backend=array_backend)
+            warnings.warn(
+                "to_array(): 'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning
+            )
+            if array_namespace is not None:
+                raise ValueError("to_array(): only one of array_backend and array_namespace can be specified")
+            array_namespace = array_backend
+
+        v = self._data.get_values(dtype=dtype, copy=copy, index=index)
+        if array_namespace is not None:
+            v = convert_array(v, array_namespace=array_namespace, device=device)
         if flatten:
             from earthkit.data.utils.array import flatten as array_flatten
 
@@ -806,10 +836,12 @@ class Field(Base):
         """Return the field itself."""
         return self
 
-    def to_array_field(self, array_backend=None, flatten=False, dtype=None):
+    def to_array_field(self, array_namespace=None, device=None, flatten=False, dtype=None):
         grib = self.get_private_data("grib")
         if grib is not None:
-            return grib.new_array_field(self, array_backend=array_backend, flatten=flatten, dtype=dtype)
+            return grib.new_array_field(
+                self, array_namespace=array_namespace, device=device, flatten=flatten, dtype=dtype
+            )
         return self
 
     def to_fieldlist(self, fields=None):
@@ -1060,14 +1092,22 @@ class Field(Base):
             sample = r.get("value", None)
             if sample is None:
                 sample = self._data.get_values(dtype=dtype)
-            for k, v in zip(ll.keys(), convert_array(list(ll.values()), target_array_sample=sample)):
-                r[k] = v
+            target_xp = eku_array_namespace(sample)
+            device = target_xp.device(sample)
+            target_dtype = None
+            if dtype is not None:
+                target_dtype = convert_dtype(dtype, target_xp)
+
+            for k, v in ll.items():
+                r[k] = convert_array(v, array_namespace=target_xp, device=device)
+                if target_dtype is not None:
+                    r[k] = target_xp.astype(r[k], target_dtype, copy=False)
 
         r = list(r.values())
         if len(r) == 1:
             return r[0]
         else:
-            return array_namespace(r[0]).stack(r)
+            return eku_array_namespace(r[0]).stack(r)
 
     def to_latlon(self, flatten=False, dtype=None, index=None):
         r"""Return the latitudes/longitudes of all the gridpoints in the field.

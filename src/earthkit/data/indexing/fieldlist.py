@@ -7,9 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
+import warnings
+
 import deprecation
-from earthkit.utils.array import array_namespace
-from earthkit.utils.array import get_backend
+from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.core.fieldlist import FieldListCore
 from earthkit.data.core.index import Index
@@ -119,12 +120,16 @@ class FieldList(Index, FieldListCore):
         return self._as_array("values")
 
     def to_numpy(self, **kwargs):
-        return self._as_array("to_numpy", empty_array_backend="numpy", **kwargs)
+        return self._as_array("to_numpy", empty_array_namespace="numpy", **kwargs)
 
     def to_array(self, **kwargs):
-        return self._as_array("to_array", empty_array_backend=kwargs.get("array_backend", None), **kwargs)
+        ns = kwargs.get("array_namespace", None)
+        if ns is None:
+            ns = eku_array_namespace(kwargs.get("array_backend", None))
 
-    def _as_array(self, accessor, empty_array_backend=None, **kwargs):
+        return self._as_array("to_array", empty_array_namespace=ns, **kwargs)
+
+    def _as_array(self, accessor, empty_array_namespace=None, **kwargs):
         """Helper to use pre-allocated target array to store the field values."""
 
         def _vals(f):
@@ -137,17 +142,16 @@ class FieldList(Index, FieldListCore):
             is_property = not callable(getattr(first, accessor, None))
             vals = _vals(first)
             first = None
-            ns = array_namespace(vals)
+            xp = eku_array_namespace(vals)
             shape = (n, *vals.shape)
-            r = ns.empty(shape, dtype=vals.dtype)
+            r = xp.empty(shape, dtype=vals.dtype, device=xp.device(vals))
             r[0] = vals
             for i, f in enumerate(it, start=1):
                 r[i] = _vals(f)
         else:
             # create an empty array using the right namespace and dtype
-            # TODO: get_backend() should return the default backend for None
-            backend = get_backend(empty_array_backend if empty_array_backend is not None else "numpy")
-            r = backend.namespace.empty((0,), dtype=kwargs.get("dtype"))
+            xp = eku_array_namespace(empty_array_namespace if empty_array_namespace is not None else "numpy")
+            r = xp.empty((0,), dtype=kwargs.get("dtype"))
 
         return r
 
@@ -170,12 +174,12 @@ class FieldList(Index, FieldListCore):
                     r.append(latlon["lon"])
                 elif k == "value":
                     r.extend([f.to_array(flatten=flatten, dtype=dtype, index=index) for f in self])
-            return array_namespace(r[0]).stack(r)
+            return eku_array_namespace(r[0]).stack(r)
 
         elif len(self) == 0:
             # empty array from the default array namespace
             shape = tuple([0] * len(keys))
-            return array_namespace().empty(shape, dtype=dtype)
+            return eku_array_namespace().empty(shape, dtype=dtype)
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
@@ -371,9 +375,19 @@ class FieldList(Index, FieldListCore):
 
         return format_describe(_proc(), *args, **kwargs)
 
-    def to_fieldlist(self, array_backend=None, **kwargs):
-        # return self.from_fields([f.copy(array_backend=array_backend, **kwargs) for f in self])
-        return self.from_fields([f.to_array_field(array_backend=array_backend, **kwargs) for f in self])
+    def to_fieldlist(self, array_backend=None, array_namespace=None, device=None, **kwargs):
+        if array_backend is not None:
+            warnings.warn(
+                "to_fieldlist(): 'array_backend' is deprecated. Use 'array_namespace' instead",
+                DeprecationWarning,
+            )
+            if array_namespace is not None:
+                raise ValueError("to_array(): only one of array_backend and array_namespace can be specified")
+            array_namespace = array_backend
+
+        return self.from_fields(
+            [f.to_array_field(array_namespace=array_namespace, device=device, **kwargs) for f in self]
+        )
 
     def to_tensor(self, *args, **kwargs):
         from earthkit.data.indexing.tensor import FieldListTensor

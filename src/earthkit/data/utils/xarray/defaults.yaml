@@ -34,7 +34,7 @@ decode_timedelta:
 # values
 flatten_values: false
 dtype: float64
-array_backend: numpy
+array_namespace: numpy
 
 # other
 lazy_load: true

@@ -351,9 +351,14 @@ class XarrayMixIn:
                 to False unless the ``profile`` overwrites it.
             * dtype: str, numpy.dtype or None
                 Typecode or data-type of the array data.
-            * array_backend: str, array namespace, ArrayBackend, None
-                The array backend/namespace to use for array operations. The default value (None) is
-                expanded to "numpy".
+            * array_backend: str, array namespace, None
+                The array namespace to use for array operations. The default value (None) is
+                expanded to "numpy". **Deprecated since version 0.19.0**. Please use
+                ``array_namespace`` instead. In versions before 0.19.0 an :obj:`ArrayBackend` was also
+                accepted here, which is no longer the case.
+            * array_namespace: str, array namespace,None
+                The array namespace to use for array operations. The default value (None) is
+                expanded to "numpy". ** New in version 0.19.0**.
             * direct_backend: bool, None
                 If True, the backend is used directly bypassing :py:meth:`xarray.open_dataset`
                 and ignoring all non-backend related kwargs. If False, the data is read via

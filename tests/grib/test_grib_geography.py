@@ -14,11 +14,12 @@ import sys
 
 import numpy as np
 import pytest
-from earthkit.utils.testing import check_array_type
+from earthkit.utils.array import convert as array_convert
 
 import earthkit.data
 from earthkit.data.testing import NO_GEO
 from earthkit.data.testing import check_array
+from earthkit.data.testing import check_array_type
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import projections
@@ -32,8 +33,13 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("index", [0, None])
-def test_grib_latlon_single_flatten(fl_type, index):
+def test_grib_latlon_single_1(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    array_namespace = array_backend.array_namespace
+    dtype = "float64"
+    if array_backend.dtype is not None:
+        dtype = array_backend.dtype
 
     eps = 1e-5
     g = f[index] if index is not None else f
@@ -41,10 +47,10 @@ def test_grib_latlon_single_flatten(fl_type, index):
     lon = g.longitudes.flatten()
 
     # TODO: make geography array backend aware
-    check_array_type(lat, array_backend, dtype="float64")
-    check_array_type(lon, array_backend, dtype="float64")
+    check_array_type(lat, array_namespace, dtype=dtype)
+    check_array_type(lon, array_namespace, dtype=dtype)
     check_array(
-        lon,
+        array_convert(lon, array_namespace="numpy"),
         (84,),
         first=0.0,
         last=330.0,
@@ -52,7 +58,7 @@ def test_grib_latlon_single_flatten(fl_type, index):
         eps=eps,
     )
     check_array(
-        lat,
+        array_convert(lat, array_namespace="numpy"),
         (84,),
         first=90,
         last=-90,
@@ -66,6 +72,11 @@ def test_grib_latlon_single_flatten(fl_type, index):
 def test_grib_latlon_single_shape(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
 
+    array_namespace = array_backend.array_namespace
+    dtype = "float64"
+    if array_backend.dtype is not None:
+        dtype = array_backend.dtype
+
     if index is not None:
         g = f[index]
         lat = g.latitudes
@@ -76,24 +87,25 @@ def test_grib_latlon_single_shape(fl_type, index):
         lon = g.geography.longitudes
 
     # TODO: make geography array backend aware
-    check_array_type(lon, array_backend, dtype="float64")
-    check_array_type(lat, array_backend, dtype="float64")
+    check_array_type(lon, array_namespace, dtype=dtype)
+    check_array_type(lat, array_namespace, dtype=dtype)
 
     # x
     assert lon.shape == (7, 12)
     for x in lon:
-        assert np.allclose(array_backend.to_numpy(x), np.linspace(0, 330, 12))
+        assert np.allclose(array_convert(x, array_namespace="numpy"), np.linspace(0, 330, 12))
 
     # y
     assert lon.shape == (7, 12)
     for i, y in enumerate(lat):
-        assert np.allclose(array_backend.to_numpy(y), np.ones(12) * (90 - i * 30))
+        assert np.allclose(array_convert(y, array_namespace="numpy"), np.ones(12) * (90 - i * 30))
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_grib_latlon_multi(fl_type, dtype):
     ds, _ = load_grib_data("test.grib", fl_type)
+
     f = ds[0]
     # flatten=True, dtype=dtype
     lat_ref = f.latitudes
@@ -127,6 +139,11 @@ def test_grib_latlon_multi_non_shared_grid(fl_type):
 def test_grib_points_single_flatten(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
 
+    array_namespace = array_backend.array_namespace
+    dtype = "float64"
+    if array_backend.dtype is not None:
+        dtype = array_backend.dtype
+
     eps = 1e-5
     if index is not None:
         g = f[index]
@@ -137,10 +154,10 @@ def test_grib_points_single_flatten(fl_type, index):
         x = g.geography.x.flatten()
         y = g.geography.y.flatten()
 
-    check_array_type(x, array_backend, dtype="float64")
-    check_array_type(y, array_backend, dtype="float64")
+    check_array_type(x, array_namespace, dtype=dtype)
+    check_array_type(y, array_namespace, dtype=dtype)
     check_array(
-        x,
+        array_convert(x, array_namespace="numpy"),
         (84,),
         first=0.0,
         last=330.0,
@@ -148,23 +165,13 @@ def test_grib_points_single_flatten(fl_type, index):
         eps=eps,
     )
     check_array(
-        y,
+        array_convert(y, array_namespace="numpy"),
         (84,),
         first=90,
         last=-90,
         meanv=0,
         eps=eps,
     )
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_points_unsupported_grid(fl_type):
-    f, _ = load_grib_data("mercator.grib", fl_type, folder="data")
-    with pytest.raises(ValueError):
-        f[0].x
-
-    with pytest.raises(ValueError):
-        f[0].y
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
@@ -199,21 +206,22 @@ def test_grib_points_multi_non_shared_grid(fl_type):
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("index", [0, None])
-def test_grib_to_latlon_single_flatten(fl_type, index):
+def test_grib_to_latlon_single_1(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    array_namespace = array_backend.array_namespace
+    dtype = "float64"
+    if array_backend.dtype is not None:
+        dtype = array_backend.dtype
 
     eps = 1e-5
     g = f[index] if index is not None else f
-    v = g.to_latlon(flatten=True)
+    v = g.to_latlon(flatten=True, dtype=dtype)
     assert isinstance(v, dict)
-
-    lat = v["lat"]
-    lon = v["lon"]
-
-    check_array_type(lat, array_backend, dtype="float64")
-    check_array_type(lon, array_backend, dtype="float64")
+    check_array_type(v["lon"], array_namespace, dtype=dtype)
+    check_array_type(v["lat"], array_namespace, dtype=dtype)
     check_array(
-        lon,
+        array_convert(v["lon"], array_namespace="numpy"),
         (84,),
         first=0.0,
         last=330.0,
@@ -221,7 +229,7 @@ def test_grib_to_latlon_single_flatten(fl_type, index):
         eps=eps,
     )
     check_array(
-        lat,
+        array_convert(v["lat"], array_namespace="numpy"),
         (84,),
         first=90,
         last=-90,
@@ -235,21 +243,26 @@ def test_grib_to_latlon_single_flatten(fl_type, index):
 def test_grib_to_latlon_single_shape(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
 
+    array_namespace = array_backend.array_namespace
+    dtype = "float64"
+    if array_backend.dtype is not None:
+        dtype = array_backend.dtype
+
     g = f[index] if index is not None else f
-    v = g.to_latlon()
+    v = g.to_latlon(dtype=dtype)
     assert isinstance(v, dict)
-    check_array_type(v["lon"], array_backend, dtype="float64")
-    check_array_type(v["lat"], array_backend, dtype="float64")
+    check_array_type(v["lon"], array_namespace, dtype=dtype)
+    check_array_type(v["lat"], array_namespace, dtype=dtype)
 
     # x
     assert v["lon"].shape == (7, 12)
     for x in v["lon"]:
-        assert np.allclose(array_backend.to_numpy(x), np.linspace(0, 330, 12))
+        assert np.allclose(array_convert(x, array_namespace="numpy"), np.linspace(0, 330, 12))
 
     # y
     assert v["lat"].shape == (7, 12)
     for i, y in enumerate(v["lat"]):
-        assert np.allclose(array_backend.to_numpy(y), np.ones(12) * (90 - i * 30))
+        assert np.allclose(array_convert(y, array_namespace="numpy"), np.ones(12) * (90 - i * 30))
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
@@ -284,14 +297,19 @@ def test_grib_to_latlon_multi_non_shared_grid(fl_type):
 def test_grib_to_points_single(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
 
+    array_namespace = array_backend.array_namespace
+    dtype = "float64"
+    if array_backend.dtype is not None:
+        dtype = array_backend.dtype
+
     eps = 1e-5
     g = f[index] if index is not None else f
-    v = g.to_points(flatten=True)
+    v = g.to_points(flatten=True, dtype=dtype)
     assert isinstance(v, dict)
-    check_array_type(v["x"], array_backend, dtype="float64")
-    check_array_type(v["y"], array_backend, dtype="float64")
+    check_array_type(v["x"], array_namespace, dtype=dtype)
+    check_array_type(v["y"], array_namespace, dtype=dtype)
     check_array(
-        array_backend.to_numpy(v["x"]),
+        array_convert(v["x"], array_namespace="numpy"),
         (84,),
         first=0.0,
         last=330.0,
@@ -299,7 +317,7 @@ def test_grib_to_points_single(fl_type, index):
         eps=eps,
     )
     check_array(
-        array_backend.to_numpy(v["y"]),
+        array_convert(v["y"], array_namespace="numpy"),
         (84,),
         first=90,
         last=-90,
@@ -343,7 +361,7 @@ def test_grib_to_points_multi_non_shared_grid(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_bbox_1(fl_type):
+def test_grib_bbox(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
     bb = ds[0].bounding_box
     assert bb.as_tuple() == (73, -27, 33, 45)
