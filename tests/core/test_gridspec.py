@@ -52,9 +52,9 @@ with open(earthkit_conf_file("gridspec_schema.json"), "r") as f:
             "ny": 44,
             "orientation": 0.0,
         },
-        {"grid": "H8", "ordering": "ring"},
-        {"type": "healpix", "grid": "H8", "ordering": "ring"},
-        {"type": "healpix", "grid": "H8", "ordering": "nested"},
+        {"grid": "H8", "order": "ring"},
+        {"type": "healpix", "grid": "H8", "order": "ring"},
+        {"type": "healpix", "grid": "H8", "order": "nested"},
     ],
 )
 def test_gridspec_schema_valid(gridspec):
@@ -81,9 +81,9 @@ def test_gridspec_schema_valid(gridspec):
         {"type": "reduced_gg", "grid": "48"},
         {"type": "reduced_gg", "grid": "F048"},
         {"type": "reduced_gg", "grid": "N"},
-        {"grid": "H8", "ordering": "a"},
-        {"type": "healpix", "ordering": "ring"},
-        {"type": "healpix", "grid": 4, "ordering": "ring"},
+        {"grid": "H8", "order": "a"},
+        {"type": "healpix", "order": "ring"},
+        {"type": "healpix", "grid": 4, "order": "ring"},
     ],
 )
 def test_gridspec_schema_invalid(gridspec):
