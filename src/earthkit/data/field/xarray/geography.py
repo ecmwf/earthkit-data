@@ -31,7 +31,7 @@ class XArrayGeographySpec(Geography):
 
     @property
     def longitudes(self):
-        return self.owner.grid.longitudes
+        return self.owner.grid.longitudes.reshape(self.shape)
 
     @property
     def distinct_latitudes(self):
@@ -63,8 +63,7 @@ class XArrayGeographySpec(Geography):
 
     @property
     def bounding_box(self):
-        """:obj:`BoundingBox <data.utils.bbox.BoundingBox>`: Return the bounding box."""
-        pass
+        return self.owner.grid.bbox
 
     @property
     def unique_grid_id(self):

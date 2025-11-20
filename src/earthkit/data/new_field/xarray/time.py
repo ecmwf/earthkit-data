@@ -222,10 +222,9 @@ class ForecastFromValidTimeAndStep(Time):
         valid_datetime = to_datetime(coords_values[self.time_coordinate_name])
         step = to_timedelta(coords_values[self.step_coordinate_name])
 
-        base_datetime_ref = valid_datetime - step
-        base_datetime = to_datetime(coords_values[self.date_coordinate_name])
-
-        if self.date_coordinate_name is not None:
+        if self.date_coordinate_name is not None and self.date_coordinate_name in coords_values:
+            base_datetime_ref = valid_datetime - step
+            base_datetime = to_datetime(coords_values[self.date_coordinate_name])
             # Not sure that this is the correct assumption
             assert base_datetime == base_datetime_ref, (
                 base_datetime,

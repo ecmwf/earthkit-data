@@ -17,6 +17,7 @@ from typing import Tuple
 import numpy as np
 
 from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.data.utils.bbox import BoundingBox
 
 LOG = logging.getLogger(__name__)
 
@@ -42,6 +43,20 @@ class Grid(ABC):
     def grid_points(self) -> Tuple[Any, Any]:
         """Get the grid points."""
         pass
+
+    # Properly implement it for all grid types
+    @thread_safe_cached_property
+    def bbox(self):
+        lat, lon = self.grid_points
+        lat = lat.flatten()
+        lon = lon.flatten()
+
+        north = np.amax(lat)
+        west = np.amin(lon)
+        south = np.amin(lat)
+        east = np.amax(lon)
+
+        return BoundingBox(north=north, south=south, east=east, west=west)
 
 
 class LatLonGrid(Grid):

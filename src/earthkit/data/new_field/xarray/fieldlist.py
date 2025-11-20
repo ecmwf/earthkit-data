@@ -1,12 +1,11 @@
-# (C) Copyright 2024 Anemoi contributors.
+# (C) Copyright 2022 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
-#
 # In applying this licence, ECMWF does not waive the privileges and immunities
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
-
+#
 
 import json
 import logging
@@ -196,7 +195,7 @@ class XArrayFieldList(FieldList):
 
         return cls(ds, variables)
 
-    def sel(self, **kwargs: Any) -> FieldList:
+    def sel(self, *args, **kwargs: Any) -> FieldList:
         """Select fields from the XarrayFieldList based on criteria.
 
         Parameters
@@ -220,6 +219,14 @@ class XArrayFieldList(FieldList):
             verify at the same `valid_datetime`, with different base `date` and `time` and a different `step`.
             So we get an extra chance to filter the fields by the metadata.
         """
+        from earthkit.data.core.select import normalize_selection
+
+        kwargs = normalize_selection(*args, **kwargs)
+        if not kwargs:
+            return self
+
+        if hasattr(self, "normalise_key_values"):
+            kwargs = self.normalise_key_values(**kwargs)
 
         variables: List[Variable] = []
         count: int = 0
@@ -257,11 +264,12 @@ class XArrayFieldList(FieldList):
             LOG.warning("Variables: %s", sorted([v.name for v in self.variables]))
 
         if not variables:
-            from .field_ori import EmptyFieldList
+            from earthkit.data.indexing.empty import EmptyFieldList
 
             return EmptyFieldList()
 
-        return self.__class__(self.ds, variables)
+        # return self.__class__(self.ds, variables)
+        return XArrayFieldList(self.ds, variables)
 
     @classmethod
     def new_mask_index(cls, *args, **kwargs):

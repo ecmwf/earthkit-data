@@ -9,7 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 
 import numpy as np
 import pytest
@@ -17,7 +16,6 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_remote_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import projections
 
@@ -95,7 +93,7 @@ def test_netcdf_to_points_2():
         for i, y in enumerate(v["y"]):
             assert np.allclose(y, np.ones(19) * (73 - i * 4))
 
-        ref = xr_ds[f.name].sel(latitude=57, longitude=-7).values
+        ref = xr_ds[f.variable].sel(latitude=57, longitude=-7).values
 
         x = 5
         y = 4
@@ -129,7 +127,7 @@ def test_netcdf_to_latlon():
         for i, y in enumerate(v["lat"]):
             assert np.allclose(y, np.ones(19) * (73 - i * 4))
 
-        ref = xr_ds[f.parameter.name].sel(latitude=57, longitude=-7).values
+        ref = xr_ds[f.variable].sel(latitude=57, longitude=-7).values
 
         x = 5
         y = 4
@@ -252,14 +250,6 @@ def test_netcdf_to_latlon_laea():
         )
         for i, x in enumerate(pos):
             assert np.isclose(v["lat"][x], ref[i]), f"{i=}, {x=}"
-
-
-def test_netcdf_forecast_reference_time():
-    ds = from_source("url", earthkit_remote_test_data_file("fa_ta850.nc"))
-
-    assert len(ds) == 37
-    assert ds[0].get("valid_datetime") == datetime.datetime(2020, 1, 23, 0, 0, 0)
-    assert ds[5].get("valid_datetime") == datetime.datetime(2020, 1, 23, 5, 0, 0)
 
 
 if __name__ == "__main__":

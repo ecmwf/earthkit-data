@@ -9,10 +9,13 @@
 # nor does it submit to any jurisdiction.
 #
 
+import pytest
+
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import load_nc_or_xr_source
 
 
+@pytest.mark.migrate
 def test_netcdf_clone():
     """Test that a NetCDF field can cloned."""
     ds = load_nc_or_xr_source(earthkit_examples_file("test.nc"), "nc")

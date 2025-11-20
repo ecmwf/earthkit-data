@@ -9,67 +9,66 @@
 # nor does it submit to any jurisdiction.
 #
 
-import pytest
 
-from earthkit.data import ArrayField
-from earthkit.data import SimpleFieldList
-from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-
-
-def _check(ds, group):
-    assert len(ds) == 6
-
-    ref = [("t", 1000), ("u", 1000), ("v", 1000), ("t", 850), ("u", 850), ("v", 850)]
-
-    assert ds.metadata(("param", "level")) == ref
-
-    ref = [
-        [("t", 1000), ("t", 850)],
-        [("u", 1000), ("u", 850)],  #
-        [("v", 1000), ("v", 850)],
-    ]
-    cnt = 0
-    for i, f in enumerate(ds.group_by(group)):
-        assert len(f) == 2
-        assert f.metadata(("param", "level")) == ref[i]
-        afl = f.to_fieldlist()
-        assert afl is not f
-        assert len(afl) == 2
-        cnt += len(f)
-
-    assert cnt == len(ds)
+# from earthkit.data import ArrayField
+# from earthkit.data import SimpleFieldList
+# from earthkit.data import from_source
+# from earthkit.data.testing import earthkit_examples_file
 
 
-@pytest.mark.legacy
-@pytest.mark.parametrize("group", ["param"])
-def test_legacy_grib_simple_fl_1(group):
-    ds_in = from_source("file", earthkit_examples_file("test6.grib"))
+# def _check(ds, group):
+#     assert len(ds) == 6
 
-    ds = SimpleFieldList()
-    for f in ds_in:
-        ds.append(f)
+#     ref = [("t", 1000), ("u", 1000), ("v", 1000), ("t", 850), ("u", 850), ("v", 850)]
 
-    _check(ds, group)
+#     assert ds.metadata(("param", "level")) == ref
+
+#     ref = [
+#         [("t", 1000), ("t", 850)],
+#         [("u", 1000), ("u", 850)],  #
+#         [("v", 1000), ("v", 850)],
+#     ]
+#     cnt = 0
+#     for i, f in enumerate(ds.group_by(group)):
+#         assert len(f) == 2
+#         assert f.metadata(("param", "level")) == ref[i]
+#         afl = f.to_fieldlist()
+#         assert afl is not f
+#         assert len(afl) == 2
+#         cnt += len(f)
+
+#     assert cnt == len(ds)
 
 
-@pytest.mark.legacy
-@pytest.mark.parametrize("group", ["param"])
-def test_legacy_grib_simple_fl_2(group):
-    ds = from_source("file", earthkit_examples_file("test6.grib"))
+# @pytest.mark.legacy
+# @pytest.mark.parametrize("group", ["param"])
+# def test_legacy_grib_simple_fl_1(group):
+#     ds_in = from_source("file", earthkit_examples_file("test6.grib"))
 
-    ds = SimpleFieldList([f for f in ds])
+#     ds = SimpleFieldList()
+#     for f in ds_in:
+#         ds.append(f)
 
-    _check(ds, group)
+#     _check(ds, group)
 
 
-@pytest.mark.legacy
-@pytest.mark.parametrize("group", ["param"])
-def test_legacy_grib_simple_fl_3(group):
-    ds_in = from_source("file", earthkit_examples_file("test6.grib"))
+# @pytest.mark.legacy
+# @pytest.mark.parametrize("group", ["param"])
+# def test_legacy_grib_simple_fl_2(group):
+#     ds = from_source("file", earthkit_examples_file("test6.grib"))
 
-    ds = SimpleFieldList()
-    for f in ds_in:
-        ds.append(ArrayField(f.to_numpy(), f.metadata()))
+#     ds = SimpleFieldList([f for f in ds])
 
-    _check(ds, group)
+#     _check(ds, group)
+
+
+# @pytest.mark.legacy
+# @pytest.mark.parametrize("group", ["param"])
+# def test_legacy_grib_simple_fl_3(group):
+#     ds_in = from_source("file", earthkit_examples_file("test6.grib"))
+
+#     ds = SimpleFieldList()
+#     for f in ds_in:
+#         ds.append(ArrayField(f.to_numpy(), f.metadata()))
+
+#     _check(ds, group)

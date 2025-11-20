@@ -83,10 +83,9 @@ def test_grib_sel_single_file_1(fl_type, params, expected_meta, metadata_keys):
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_sel_single_file_2(fl_type):
-    f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
+    ds, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
-    g = f.sel(variable=["t"], step=[3, 6])
-
+    g = ds.sel(variable=["t"], step=[3, 6])
     assert len(g) == 2
     assert g.get(["variable", "level", "step"]) == [
         ["t", 1000, datetime.timedelta(hours=3)],
@@ -94,8 +93,8 @@ def test_grib_sel_single_file_2(fl_type):
     ]
 
     # repeated use
-    g = f.sel(variable=["t"], step=[3, 6])
-    # g = f.sel(shortName=["t"], step=["3", "06"])
+    g = ds.sel(variable=["t"], step=[3, 6])
+    # g = ds.sel(shortName=["t"], step=["3", "06"])
     assert len(g) == 2
     assert g.get(["variable", "level", "step"]) == [
         ["t", 1000, datetime.timedelta(hours=3)],
@@ -105,9 +104,9 @@ def test_grib_sel_single_file_2(fl_type):
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_sel_single_file_as_dict(fl_type):
-    f, _ = load_grib_data("tuv_pl.grib", fl_type)
+    ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
-    g = f.sel({"variable": "t", "level": [500, 700], "grib.mars.type": "an"})
+    g = ds.sel({"variable": "t", "level": [500, 700], "grib.mars.type": "an"})
     assert len(g) == 2
     assert g.get(["variable", "level", "grib.mars.type"]) == [
         ["t", 700, "an"],

@@ -14,7 +14,18 @@ import datetime
 import pytest
 
 from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.testing import load_nc_or_xr_source
+
+
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+@pytest.mark.parametrize("key", ["variable", "param"])
+def test_netcdf_sel_single_message(mode, key):
+    ds = load_nc_or_xr_source(earthkit_test_data_file("test_single.nc"), mode)
+
+    r = ds.sel(**{key: "t2m"})
+    assert len(r) == 1
+    assert r[0].get(key) == "t2m"
 
 
 @pytest.mark.parametrize("mode", ["nc", "xr"])
@@ -50,21 +61,20 @@ from earthkit.data.testing import load_nc_or_xr_source
             dict(
                 param=["t"],
                 level=[500, 700],
-                date=20180801,
-                time=1200,
+                valid_datetime="2018-08-01T12:00:00",
             ),
             [
-                ["t", 700, 20180801, 1200],
-                ["t", 500, 20180801, 1200],
+                ["t", 700, datetime.datetime(2018, 8, 1, 12, 0)],
+                ["t", 500, datetime.datetime(2018, 8, 1, 12, 0)],
             ],
-            ["param", "level", "date", "time"],
+            ["param", "level", "valid_datetime"],
         ),
     ],
 )
 def test_netcdf_sel_single_file_1(mode, params, expected_meta, metadata_keys):
-    f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
+    ds = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
 
-    g = f.sel(**params)
+    g = ds.sel(**params)
     assert len(g) == len(expected_meta)
     if len(expected_meta) > 0:
         keys = list(params.keys())
@@ -73,6 +83,41 @@ def test_netcdf_sel_single_file_1(mode, params, expected_meta, metadata_keys):
 
         assert g.get(keys) == expected_meta
     return
+
+
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_sel_single_file_as_dict(mode):
+    ds = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
+
+    g = ds.sel({"variable": "t", "level": [500, 700]})
+    assert len(g) == 2
+    assert g.get(["variable", "level"]) == [
+        ["t", 700],
+        ["t", 500],
+    ]
+
+
+# TODO: allow using slice in sel for netcdf/xarray
+@pytest.mark.migrate
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+@pytest.mark.parametrize(
+    "variable,level,expected_meta",
+    [
+        ("t", (slice(600, 700)), [["t", 700]]),
+        ("t", (slice(650, 750)), [["t", 700]]),
+        ("t", (slice(1000, None)), [["t", 1000]]),
+        ("t", (slice(None, 300)), [["t", 300]]),
+        ("t", (slice(500, 700)), [["t", 700], ["t", 500]]),
+        ("t", (slice(510, 520)), []),
+    ],
+)
+def test_netcdf_sel_slice_single_file(mode, variable, level, expected_meta):
+    ds = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
+
+    g = ds.sel({"variable": variable, "level": level})
+    assert len(g) == len(expected_meta)
+    if expected_meta:
+        assert g.get(["variable", "level"]) == expected_meta
 
 
 if __name__ == "__main__":

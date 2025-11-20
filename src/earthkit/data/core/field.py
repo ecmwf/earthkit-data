@@ -298,7 +298,8 @@ class Field(Base):
             Field values
 
         """
-        v = convert_array(self._values(dtype=dtype), array_namespace="numpy")
+        v = self._data.get_values(dtype=dtype, copy=copy, index=index)
+        v = convert_array(v, array_namespace="numpy")
         if flatten:
             from earthkit.data.utils.array import flatten as array_flatten
 

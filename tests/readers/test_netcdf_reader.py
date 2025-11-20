@@ -16,9 +16,9 @@ import tempfile
 import numpy as np
 import pytest
 
+from earthkit.data import Field
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.readers.netcdf.field import NetCDFField
 from earthkit.data.testing import IN_GITHUB
 from earthkit.data.testing import NO_CDS
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
@@ -39,10 +39,10 @@ def test_netcdf_reader():
     ds = from_source("file", earthkit_examples_file("test.nc"))
     # assert str(ds).startswith("NetCDFReader"), r
     assert len(ds) == 2
-    assert isinstance(ds[0], NetCDFField)
-    assert isinstance(ds[1], NetCDFField)
+    assert isinstance(ds[0], Field)
+    assert isinstance(ds[1], Field)
     for f in from_source("file", earthkit_examples_file("test.nc")):
-        assert isinstance(f, NetCDFField)
+        assert isinstance(f, Field)
 
 
 @pytest.mark.parametrize("attribute", ["coordinates", "bounds", "grid_mapping"])

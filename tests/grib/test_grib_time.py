@@ -46,7 +46,7 @@ def test_grib_datetime_1(fl_type):
     assert ds[0].datetime() == ref
 
 
-def test_grib_fieldlist_datetime_2():
+def test_grib_datetime_2():
     ds = from_source(
         "dummy-source",
         kind="grib",
@@ -157,3 +157,20 @@ def test_grib_time_step_in_minutes():
     assert f.base_datetime == datetime.datetime(2024, 1, 15)
     assert f.step == datetime.timedelta(0)
     assert f.valid_datetime == datetime.datetime(2024, 1, 15)
+
+
+@pytest.mark.cache
+def test_legacy_grib_step_in_seconds():
+    ds = from_source("url", earthkit_remote_test_data_file("t_30s.grib"))
+    f = ds[0]
+
+    # ref = {
+    #     "base_time": [datetime.datetime(2023, 8, 20, 12)],
+    #     "valid_time": [datetime.datetime(2023, 8, 20, 12, 0, 30)],
+    # }
+    # assert ds.datetime() == ref
+
+    assert f.base_datetime == datetime.datetime(2023, 8, 20, 12, 0, 0)
+    assert f.valid_datetime == datetime.datetime(2023, 8, 20, 12, 0, 30)
+    assert f.step == datetime.timedelta(seconds=30)
+    assert f.get("grib.step") == "30s"

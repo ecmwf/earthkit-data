@@ -14,6 +14,7 @@ from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import load_nc_or_xr_source
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize("mode", ["nc", "xr"])
 def test_netcdf_ls(mode):
     f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)

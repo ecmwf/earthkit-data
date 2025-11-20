@@ -11,7 +11,7 @@
 
 import pytest
 
-from earthkit.data import ArrayField
+# from earthkit.data import ArrayField
 from earthkit.data import SimpleFieldList
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
@@ -61,12 +61,13 @@ def test_grib_simple_fl_2(group):
     _check(ds, group)
 
 
-@pytest.mark.parametrize("group", ["param"])
-def test_grib_simple_fl_3(group):
-    ds_in = from_source("file", earthkit_examples_file("test6.grib"))
+# @pytest.mark.migrate
+# @pytest.mark.parametrize("group", ["param"])
+# def test_grib_simple_fl_3(group):
+#     ds_in = from_source("file", earthkit_examples_file("test6.grib"))
 
-    ds = SimpleFieldList()
-    for f in ds_in:
-        ds.append(ArrayField(f.to_numpy(), f.metadata()))
+#     ds = SimpleFieldList()
+#     for f in ds_in:
+#         ds.append(ArrayField(f.to_numpy(), f.metadata()))
 
-    _check(ds, group)
+#     _check(ds, group)
