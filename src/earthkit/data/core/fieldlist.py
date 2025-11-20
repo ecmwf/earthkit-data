@@ -21,6 +21,7 @@ from earthkit.data.core import Base
 from earthkit.data.core.index import Index
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
+from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import detect_out_filename
 from earthkit.data.decorators import thread_safe_cached_property
@@ -598,8 +599,6 @@ class Field(Base):
         """
 
         if remapping is not None or patches is not None:
-            from earthkit.data.core.order import build_remapping
-
             remapping = build_remapping(remapping, patches)
             return remapping(self.metadata)(*keys, astype=astype, **kwargs)
 
