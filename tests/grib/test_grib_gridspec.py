@@ -220,7 +220,13 @@ def test_grib_gridspec_to_fieldlist(input_file, write_method):
         latitudeOfLastGridPointInDegrees=-90.0,
         longitudeOfFirstGridPointInDegrees=0.0,
         longitudeOfLastGridPointInDegrees=355.0,
+        numberOfGridPoints=72 * 37,
     )
+
+    from earthkit.data.utils.message import ECC_FEATURES
+
+    if ECC_FEATURES.headers_only_geo_repack_needed():
+        ref.pop("numberOfGridPoints", None)
 
     lat_ref, lon_ref = make_lat_lon(5)
 
@@ -254,6 +260,9 @@ def test_grib_gridspec_to_fieldlist(input_file, write_method):
 
         v_tmp = r_tmp[0].values
         assert np.allclose(v_tmp, v.flatten(), atol=1e-3)
+
+        # numberOfGridPoints does not have to exist in the written file
+        ref.pop("numberOfGridPoints", None)
         res = {k: r_tmp[0].metadata(k) for k in ref.keys()}
         assert res == ref
 

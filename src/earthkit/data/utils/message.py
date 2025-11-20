@@ -58,6 +58,11 @@ class EccodesFeatures:
     def has_Ni_Nj_in_geo_namespace(self):
         return self._version >= (2, 37, 0)
 
+    def headers_only_geo_repack_needed(self):
+        """In eccodes versions < 2.44.0, when cloning with headers_only=True,
+        changing the grid geography requires repacking to create a consistent handle."""
+        return self._version < (2, 44, 0)
+
     @property
     def versions(self):
         return f"ecCodes: {self._version} eccodes-python: {self._py_version}"

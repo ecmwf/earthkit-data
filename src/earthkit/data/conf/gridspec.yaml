@@ -41,6 +41,7 @@ grib_key_map:
   M: M
   orderingConvention: order
   Nside: n_side
+  numberOfGridPoints: number_of_grid_points
 definitions:
   _1: &area
     area:

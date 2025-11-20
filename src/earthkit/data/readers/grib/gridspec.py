@@ -489,6 +489,11 @@ class LatLonGridSpecConverter(GridSpecConverter):
         d["first_lon"] = west
         d["last_lon"] = east
 
+        from earthkit.data.utils.message import ECC_FEATURES
+
+        if not ECC_FEATURES.headers_only_geo_repack_needed():
+            d["number_of_grid_points"] = nx * ny
+
         self.grid_size = nx * ny
 
         return d

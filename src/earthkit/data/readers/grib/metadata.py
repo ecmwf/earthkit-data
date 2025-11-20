@@ -812,11 +812,14 @@ class GribMetadata(Metadata):
 
         # we need to set the values to the new size otherwise the clone generated
         # with headers_only=True will be inconsistent
-        if new_value_size is not None and new_value_size > 0:
-            import numpy as np
+        from earthkit.data.utils.message import ECC_FEATURES
 
-            vals = np.zeros(new_value_size)
-            handle.set_values(vals)
+        if ECC_FEATURES.headers_only_geo_repack_needed():
+            if new_value_size is not None and new_value_size > 0:
+                import numpy as np
+
+                vals = np.zeros(new_value_size)
+                handle.set_values(vals)
 
         # ensure that the cache settings are the same
         r = StandAloneGribMetadata(
