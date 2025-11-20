@@ -89,3 +89,87 @@ def test_lazy_fdb():
         assert m["r"].values.shape == (4, 2, 19, 36)
         assert np.allclose(m["r"].values.flatten()[85:87], [47.66908598, 53.43959379])
         assert np.allclose(m["t"].values.flatten()[85:87], [253.22625732, 252.78778076])
+
+
+@pytest.mark.skipif(NO_FDB, reason="No access to FDB")
+@pytest.mark.cache
+def test_lazy_fdb_group_1():
+    with temp_directory() as tmpdir:
+        ds, config = make_fdb(os.path.join(tmpdir, "_fdb"))
+
+        ds_ref = from_source("fdb", TEST_GRIB_REQUEST, config=config, stream=True, read_all=True)
+
+        ds = from_source(
+            "fdb", TEST_GRIB_REQUEST, config=config, stream=False, lazy=True, lazy_request_grouping=True
+        )
+        assert ds._group_cache is None
+        assert len(ds) == 32
+        assert ds[0].shape == (19, 36)
+        assert ds[1].shape == (19, 36)
+        assert ds._group_cache is None
+
+        v = ds.to_numpy(context=ds)
+        assert v.shape == (32, 19, 36)
+        assert np.allclose(v, ds_ref.to_numpy())
+        assert len(ds._group_cache.fields) == 32
+        assert list(ds._group_cache.fields.keys()) == list(range(32))
+
+
+@pytest.mark.skipif(NO_FDB, reason="No access to FDB")
+@pytest.mark.cache
+def test_lazy_fdb_group_2():
+    with temp_directory() as tmpdir:
+        ds, config = make_fdb(os.path.join(tmpdir, "_fdb"))
+
+        ds_ref = from_source("fdb", TEST_GRIB_REQUEST, config=config, stream=True, read_all=True).sel(
+            param="t"
+        )
+
+        ds = from_source(
+            "fdb", TEST_GRIB_REQUEST, config=config, stream=False, lazy=True, lazy_request_grouping=True
+        )
+        assert ds._group_cache is None
+        assert len(ds) == 32
+        assert ds[0].shape == (19, 36)
+        assert ds[1].shape == (19, 36)
+        assert ds._group_cache is None
+
+        # case 1
+        ds1 = ds.sel(param="t")
+        assert len(ds1) == 16
+        assert ds1[0].shape == (19, 36)
+        assert ds1[1].shape == (19, 36)
+        assert ds._group_cache is None
+
+        v = ds1.to_numpy(context=ds1)
+        assert v.shape == (16, 19, 36)
+        assert np.allclose(v, ds_ref.to_numpy())
+        assert np.allclose(v, ds.to_numpy()[np.array([i for i in range(0, 32, 2)])])
+        assert len(ds._group_cache.fields) == 16
+        assert list(ds._group_cache.fields.keys()) == [i for i in range(0, 32, 2)]
+
+        # case 2
+        ds2 = ds[0:4]
+        assert len(ds2) == 4
+        assert ds2[0].shape == (19, 36)
+        assert ds2[1].shape == (19, 36)
+        assert ds._group_cache is not None
+
+        v = ds2.to_numpy(context=ds2)
+        assert v.shape == (4, 19, 36)
+        assert np.allclose(v, ds.to_numpy()[np.array([0, 1, 2, 3])])
+        assert len(ds._group_cache.fields) == 4
+        assert list(ds._group_cache.fields.keys()) == [0, 1, 2, 3]
+
+        # case 3 - still using the same group as case 2
+        ds3 = ds[0:2]
+        assert len(ds3) == 2
+        assert ds3[0].shape == (19, 36)
+        assert ds3[1].shape == (19, 36)
+        assert ds._group_cache is not None
+
+        v = ds3.to_numpy(context=ds3)
+        assert v.shape == (2, 19, 36)
+        assert np.allclose(v, ds.to_numpy()[np.array([0, 1])])
+        assert len(ds._group_cache.fields) == 4
+        assert list(ds._group_cache.fields.keys()) == [0, 1, 2, 3]

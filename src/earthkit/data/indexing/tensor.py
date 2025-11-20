@@ -399,11 +399,13 @@ class FieldListTensor(TensorCore):
             if all(i == slice(None, None, None) for i in index):
                 index = None
 
+        context = self
+
         if index is None:
-            arr = source_to_array_func()
+            arr = source_to_array_func(context=context)
             current_field_shape = self.field_shape
         else:
-            arr = source_to_array_func(index=index)
+            arr = source_to_array_func(index=index, context=context)
             if len(arr) > 0:
                 current_field_shape = tuple(arr.shape[1:])
             else:

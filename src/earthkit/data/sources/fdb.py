@@ -27,7 +27,17 @@ LOG = logging.getLogger(__name__)
 
 
 class FDBSource(Source):
-    def __init__(self, *args, request=None, stream=True, config=None, userconfig=None, lazy=False, **kwargs):
+    def __init__(
+        self,
+        *args,
+        request=None,
+        stream=True,
+        config=None,
+        userconfig=None,
+        lazy=False,
+        lazy_request_grouping=False,
+        **kwargs,
+    ):
         super().__init__()
 
         for k in ["group_by", "batch_size"]:
@@ -35,6 +45,7 @@ class FDBSource(Source):
                 raise ValueError(f"Invalid argument '{k}' for FDBSource. Deprecated since 0.8.0.")
 
         self.lazy = lazy
+        self.lazy_request_grouping = lazy_request_grouping
         self._fdb_kwargs = {}
         if config is not None:
             self._fdb_kwargs["config"] = config
@@ -85,7 +96,7 @@ class FDBSource(Source):
             retriever = FDBRetriever(self._fdb_kwargs)
             from earthkit.data.readers.grib.virtual import VirtualGribFieldList
 
-            return VirtualGribFieldList(mapper, retriever)
+            return VirtualGribFieldList(mapper, retriever, request_grouping=self.lazy_request_grouping)
 
 
 class FDBFileSource(FileSource):
@@ -112,6 +123,7 @@ class FDBRetriever:
     def get(self, request):
         from . import from_source
 
+        print("FDBRetriever.get", request)
         return from_source("fdb", request, stream=True, read_all=True, **self.fdb_kwargs)
 
 
@@ -132,7 +144,11 @@ class FDBRequestMapper(RequestMapper):
         fdb = pyfdb.FDB(**self.fdb_kwargs)
         for el in fdb.list(self.request, True, True):
             r.append(el["keys"])
+        # keys = list(r[0].keys()) if r else []
         return r
+
+    def clone(self, request):
+        return FDBRequestMapper(request, fdb_kwargs=self.fdb_kwargs)
 
 
 source = FDBSource
