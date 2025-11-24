@@ -65,7 +65,10 @@ LS_KEYS = [
         "data": {"cls": Data, "direct": "values"},
         "time": {"cls": TimeFieldMember, "direct": all},
         "parameter": {"cls": ParameterFieldMember, "direct": ("variable", "param", "units")},
-        "geography": {"cls": GeographyFieldMember, "direct": ("latitudes", "longitudes", "grid_spec")},
+        "geography": {
+            "cls": GeographyFieldMember,
+            "direct": ("latitudes", "longitudes", "grid_spec", "x", "y", "bounding_box"),
+        },
         "vertical": {"cls": VerticalFieldMember, "direct": ("level", "layer")},
         "ensemble": {"cls": EnsembleFieldMember, "direct": ("member",)},
         "labels": None,
@@ -184,7 +187,9 @@ class Field(Base):
 
         if field._private:
             r._private = field._private.copy()
-
+            for v in r._private.values():
+                if hasattr(v, "sync"):
+                    v.sync(r)
         return r
 
     @classmethod
@@ -742,6 +747,28 @@ class Field(Base):
                 s = member.set(**v)
                 r[member_name] = s
 
+            # if "grib" in self._private:
+            #     grib = self._private["grib"]
+            #     handle_ref = grib.handle
+            #     new_handle = None
+            #     print("Check grib handle_ref ", handle_ref)
+            #     for member_name in r:
+            #         member = r[member_name]
+            #         print("Check member ", member_name)
+            #         if hasattr(member, "handle"):
+            #             print("Member has handle ", member.handle)
+            #             if member.handle != grib.handle:
+            #                 print("Updating grib handle form member ", member_name)
+            #                 new_handle = member.handle
+            #                 break
+
+            #     if new_handle and handle_ref != new_handle
+            #         for k, v in r.items():
+            #             if hasattr(v, "handle"):
+            #                 if v.handle != new_handle:
+            #                     print("Updating member handle to ", v)
+            #                     v.handle = grib.handle
+
             if r:
                 return Field.from_field(self, **r)
             else:
@@ -1199,9 +1226,22 @@ class Field(Base):
 
         # convert values to array format
         assert r
-        sample = self._values(dtype=dtype)
-        for k, v in zip(r.keys(), convert_array(list(r.values()), target_array_sample=sample)):
-            r[k] = v
+        # sample = self._data.get_values(dtype=dtype)
+        # for k, v in zip(r.keys(), convert_array(list(r.values()), target_array_sample=sample)):
+        #     r[k] = v
+        # return r
+
+        sample = self._data.get_values(dtype=dtype)
+        target_xp = eku_array_namespace(sample)
+        device = target_xp.device(sample)
+        target_dtype = None
+        if dtype is not None:
+            target_dtype = convert_dtype(dtype, target_xp)
+
+        for k, v in r.items():
+            r[k] = convert_array(v, array_namespace=target_xp, device=device)
+            if target_dtype is not None:
+                r[k] = target_xp.astype(r[k], target_dtype, copy=False)
         return r
 
     # def bounding_box(self):
@@ -1264,26 +1304,22 @@ class Field(Base):
 
     def __getstate__(self):
         state = {}
-        state["data"] = self._data
-        state["geography"] = self._geography
-        state["labels"] = self._labels
-        state["parameter"] = self._parameter
-        state["ensemble"] = self._ensemble
-        state["time"] = self._time
-        state["vertical"] = self._vertical
+        # state["data"] = self._data
+        # state["geography"] = self._geography
+        # state["labels"] = self._labels
+        # state["parameter"] = self._parameter
+        # state["ensemble"] = self._ensemble
+        # state["time"] = self._time
+        # state["vertical"] = self._vertical
+        state["members"] = self._members
         state["private"] = self._private
         return state
 
     def __setstate__(self, state):
-        self.__init__(
-            data=state["data"],
-            geography=state["geography"],
-            labels=state["labels"],
-            parameter=state["parameter"],
-            ensemble=state["ensemble"],
-            time=state["time"],
-            vertical=state["vertical"],
-        )
+
+        members = state.get("members", {})
+
+        self.__init__(**members)
 
         private = state.get("private", {})
         self._private = private

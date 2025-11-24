@@ -16,6 +16,7 @@ import sys
 import numpy as np
 import pytest
 
+from earthkit.data import FieldList
 from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
@@ -47,6 +48,7 @@ def _pickle(data, representation):
     return data_res
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("representation", ["file", "memory"])
 def test_grib_serialise_metadata(fl_type, representation):
@@ -68,11 +70,24 @@ def test_grib_serialise_field(fl_type, representation):
 
     f2 = _pickle(f, representation)
 
-    keys = ["param", "date", "time", "step", "level", "gridType", "type"]
+    keys = [
+        "variable",
+        "valid_datetime",
+        "base_datetime",
+        "step",
+        "level",
+        "grib.date",
+        "grib.time",
+        "grib.step",
+        "grib.level",
+        "grib.gridType",
+        "grib.type",
+    ]
     for k in keys:
-        assert f.metadata(k) == f2.metadata(k)
+        assert f.get(k) == f2.get(k)
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize("representation", ["file", "memory"])
 def test_grib_serialise_standalone_metadata(representation):
     ds = from_source("file", earthkit_examples_file("test.grib"))
@@ -108,9 +123,21 @@ def test_grib_serialise_array_field_memory(fl_type, representation):
         assert np.allclose(ds[idx].values, f2.values), f"index={idx}"
         assert np.allclose(ds[idx].to_numpy(), f2.to_numpy()), f"index={idx}"
 
-        keys = ["param", "date", "time", "step", "level", "gridType", "type"]
+        keys = [
+            "variable",
+            "valid_datetime",
+            "base_datetime",
+            "step",
+            "level",
+            "grib.date",
+            "grib.time",
+            "grib.step",
+            "grib.level",
+            "grib.gridType",
+            "grib.type",
+        ]
         for k in keys:
-            assert ds[idx].metadata(k) == f2.metadata(k), f"index={idx}"
+            assert ds[idx].get(k) == f2.get(k), f"index={idx}"
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
@@ -125,23 +152,35 @@ def test_grib_serialise_array_fieldlist(fl_type, representation, write_method):
     assert len(ds) == len(ds2)
     assert np.allclose(ds.values, ds2.values)
 
-    keys = ["param", "date", "time", "step", "level", "gridType", "type"]
+    keys = [
+        "variable",
+        "valid_datetime",
+        "base_datetime",
+        "step",
+        "level",
+        "grib.date",
+        "grib.time",
+        "grib.step",
+        "grib.level",
+        "grib.gridType",
+        "grib.type",
+    ]
     for k in keys:
-        ds2.metadata(k) == ds.metadata(k)
+        assert ds2.get(k) == ds.get(k)
 
     r = ds2.sel(param="2t")
     assert len(r) == 1
 
-    ds2[0]._array_ += 1
-    v1 = ds[0]._array
+    r1 = FieldList.from_fields([ds2[0].set(values=ds2[0].values + 1), ds2[1]])
+    assert np.allclose(r1[0].to_numpy(), ds2[0].to_numpy() + 1)
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds2)
+        write_to_file(write_method, tmp, r1)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
-        assert len(ds2) == len(r_tmp)
+        assert len(r1) == len(r_tmp)
         v_tmp = r_tmp[0].to_numpy()
-        assert np.allclose(v1 + 1, v_tmp)
+        assert np.allclose(r1[0].to_numpy(), v_tmp)
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
@@ -154,7 +193,19 @@ def test_grib_serialise_file_fieldlist_core(fl_type):
     assert len(ds) == len(ds2)
     assert np.allclose(ds.values, ds2.values)
 
-    keys = ["param", "date", "time", "step", "level", "gridType", "type"]
+    keys = [
+        "variable",
+        "valid_datetime",
+        "base_datetime",
+        "step",
+        "level",
+        "grib.date",
+        "grib.time",
+        "grib.step",
+        "grib.level",
+        "grib.gridType",
+        "grib.type",
+    ]
     for k in keys:
         ds2.get(k) == ds.get(k)
 
@@ -174,7 +225,19 @@ def test_grib_serialise_file_fieldlist_sel(fl_type):
     assert len(ds2) == 2
     assert np.allclose(ds.values, ds2.values)
 
-    keys = ["param", "date", "time", "step", "level", "gridType", "type"]
+    keys = [
+        "variable",
+        "valid_datetime",
+        "base_datetime",
+        "step",
+        "level",
+        "grib.date",
+        "grib.time",
+        "grib.step",
+        "grib.level",
+        "grib.gridType",
+        "grib.type",
+    ]
     for k in keys:
         ds2.get(k) == ds.get(k)
 
@@ -186,7 +249,7 @@ def test_grib_serialise_file_fieldlist_sel(fl_type):
 def test_grib_serialise_file_fieldlist_concat(fl_type):
     ds00, _ = load_grib_data("test.grib", fl_type)
     ds01, _ = load_grib_data("test6.grib", fl_type)
-    ds = ds00 + ds01
+    ds = ds00 & ds01
     assert len(ds) == 8
 
     print("ds=", type(ds))
@@ -198,9 +261,21 @@ def test_grib_serialise_file_fieldlist_concat(fl_type):
     assert np.allclose(ds[:2].values, ds2[:2].values)
     assert np.allclose(ds[2:].values, ds2[2:].values)
 
-    keys = ["param", "date", "time", "step", "level", "gridType", "type"]
+    keys = [
+        "variable",
+        "valid_datetime",
+        "base_datetime",
+        "step",
+        "level",
+        "grib.date",
+        "grib.time",
+        "grib.step",
+        "grib.level",
+        "grib.gridType",
+        "grib.type",
+    ]
     for k in keys:
-        ds2.metadata(k) == ds.metadata(k)
+        ds2.get(k) == ds.get(k)
 
 
 def test_grib_serialise_stream_1():
@@ -218,7 +293,8 @@ def test_grib_serialise_stream_2():
     ds2 = pickle.loads(pickled_f)
 
     assert len(ds2) == 2
-    assert ds.get("shortName") == ["2t", "msl"]
+    assert ds.get("variable") == ["2t", "msl"]
+    assert ds.get("grib.shortName") == ["2t", "msl"]
 
 
 def test_grib_serialise_file_parts():
@@ -231,7 +307,7 @@ def test_grib_serialise_file_parts():
     ds2 = pickle.loads(pickled_f)
 
     assert len(ds2) == 1
-    assert ds2[0].get(["param", "level"]) == ["u", 1000]
+    assert ds2[0].get(["variable", "level"]) == ["u", 1000]
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)

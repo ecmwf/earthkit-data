@@ -162,6 +162,19 @@ class GribLabels:
 
         return new_array_grib_field(field, self.handle, array_namespace=array_namespace, **kwargs)
 
+    def sync(self, owner):
+        handle_new = None
+        for k, v in owner._members.items():
+            if hasattr(v, "handle") and v.handle is not self.handle:
+                handle_new = v.handle
+                break
+
+        if handle_new:
+            self.handle = handle_new
+            for k, v in owner._members.items():
+                if hasattr(v, "handle") and hasattr(v, "from_handle") and v.handle is not self.handle:
+                    owner._members[k] = v.from_handle(handle_new)
+
     def __getstate__(self):
         state = {}
         state["handle"] = self.handle

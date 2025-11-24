@@ -8,6 +8,7 @@
 #
 
 from earthkit.data.field.spec.geography import Geography
+from earthkit.data.field.spec.spec import normalise_set_kwargs_2
 
 from .collector import GribContextCollector
 from .spec import GribSpec
@@ -144,6 +145,30 @@ class GribGeographySpec(Geography):
     def to_dict(self):
         return dict()
 
+    # @classmethod
+    # def from_grid_spec(cls, spec, grid_spec):
+    #     from earthkit.data.readers.grib.gridspec import GridSpecConverter
+
+    #     # edition = d.get("edition", self["edition"])
+    #     edition = spec.handle.get("edition", 2)
+    #     md, new_value_size = GridSpecConverter.to_metadata(grid_spec, edition=edition)
+
+    #     print("FROM GRID SPEC MD:", md)
+    #     print("FROM GRID SPEC new_value_size:", new_value_size)
+
+    #     handle = spec.handle.clone(headers_only=False)
+    #     handle.set_multiple(md)
+
+    #     # we need to set the values to the new size otherwise the clone generated
+    #     # with headers_only=True will be inconsistent
+    #     if new_value_size is not None and new_value_size > 0:
+    #         import numpy as np
+
+    #         vals = np.zeros(new_value_size)
+    #         handle.set_values(vals)
+
+    #     return cls(handle)
+
     def __getstate__(self):
         state = {}
         state["handle"] = self.handle
@@ -173,3 +198,34 @@ COLLECTOR = GribGeographyContextCollector()
 class GribGeography(GribSpec):
     BUILDER = GribGeographyBuilder
     COLLECTOR = COLLECTOR
+
+    def set(self, *args, shape_hint=None, **kwargs):
+        kwargs = normalise_set_kwargs_2(self.spec, *args, **kwargs)
+        keys = set(kwargs.keys())
+
+        if keys == {"grid_spec"}:
+            handle = self._handle_from_grid_spec(self, kwargs["grid_spec"])
+            return GribGeography(handle)
+        else:
+            return self._member.set(*args, shape_hint=shape_hint, **kwargs)
+
+    def _handle_from_grid_spec(cls, spec, grid_spec):
+        from earthkit.data.new_field.grib.handle import MemoryGribHandle
+        from earthkit.data.readers.grib.gridspec import GridSpecConverter
+
+        # edition = d.get("edition", self["edition"])
+        edition = spec.handle.get("edition", 2)
+        md, new_value_size = GridSpecConverter.to_metadata(grid_spec, edition=edition)
+
+        handle = spec.handle.clone(headers_only=False)
+        handle.set_multiple(md)
+
+        # we need to set the values to the new size otherwise the clone generated
+        # with headers_only=True will be inconsistent
+        if new_value_size is not None and new_value_size > 0:
+            import numpy as np
+
+            vals = np.zeros(new_value_size)
+            handle.set_values(vals)
+
+        return MemoryGribHandle(handle)

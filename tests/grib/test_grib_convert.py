@@ -37,7 +37,7 @@ def test_icon_to_xarray(fl_type):
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 def test_to_xarray_filter_by_keys(fl_type):
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
-    g = g.sel(param="t", level=500) + g.sel(param="u")
+    g = g.sel(param="t", level=500) & g.sel(param="u")
     assert len(g) > 1
 
     # see github #250

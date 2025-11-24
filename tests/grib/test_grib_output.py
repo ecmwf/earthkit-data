@@ -156,9 +156,10 @@ def test_grib_output_latlon(mode):
 
         ds = earthkit.data.from_source("file", path)
 
+        assert ds[0].get("variable") == "2t"
         assert ds[0].get("grib.date") == 20010101
-        assert ds[0].get("grib.param") == "2t"
-        assert ds[0].get("grb.levtype") == "sfc"
+        assert ds[0].get("grib.shortName") == "2t"
+        assert ds[0].get("grib.levtype") == "sfc"
         assert ds[0].get("grib.edition") == 2
         assert ds[0].get("grib.generatingProcessIdentifier") == 255
 
@@ -456,7 +457,7 @@ def test_grib_output_field_template(mode, array):
         if array:
             ds = ds.to_fieldlist()
 
-        assert ds[0].metadata("bitsPerValue") == 4
+        assert ds[0].get("grib.bitsPerValue") == 4
 
         path = os.path.join(tmp, "a.grib")
 
@@ -495,10 +496,13 @@ def test_grib_output_field_template(mode, array):
 @pytest.mark.parametrize(
     "pattern,expected_value",
     [
-        ("{shortName}", {"t": 2, "u": 2, "v": 2}),
-        ("{shortName}_{level}", {"t_1000": 1, "t_850": 1, "u_1000": 1, "u_850": 1, "v_1000": 1, "v_850": 1}),
-        ("{date}_{time}_{step}", {"20180801_1200_0": 6}),
-        ("{date}_{time}_{step:03}", {"20180801_1200_000": 6}),
+        ("{grib.shortName}", {"t": 2, "u": 2, "v": 2}),
+        (
+            "{grib.shortName}_{grib.level}",
+            {"t_1000": 1, "t_850": 1, "u_1000": 1, "u_850": 1, "v_1000": 1, "v_850": 1},
+        ),
+        ("{grib.date}_{grib.time}_{grib.step}", {"20180801_1200_0": 6}),
+        ("{grib.date}_{grib.time}_{grib.step:03}", {"20180801_1200_000": 6}),
     ],
 )
 def test_grib_output_filename_pattern(mode, pattern, expected_value):

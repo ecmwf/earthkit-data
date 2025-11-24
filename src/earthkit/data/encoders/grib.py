@@ -124,6 +124,7 @@ class GribHandleMaker:
         template: GribCoder
             A template to use for encoding
         """
+
         handle = self.handle_from_template(template)
         if handle is not None:
             self.update_metadata_from_template(metadata, template, handle)

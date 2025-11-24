@@ -47,15 +47,16 @@ def test_grib_set_detailed(fl_type, write_method):
 
     f = ds_ori[0].set(
         param="q",
-        levelist=600,
+        level=600,
         my_shape=(181, 360),
         my_name="t_500",
     )
 
+    assert f.get("variable") == "q"
     assert f.get("param") == "q"
     assert f.get("grib.shortName") == "t"
     assert f.get("level") == 600
-    assert f.get("levelist") == 600
+    assert f.get("grib.levelist") == 500
     assert f.get("grib.date", "param") == (20070101, "q")
     assert f.get("param", "grib.date") == ("q", 20070101)
     assert f.get("my_shape") == (181, 360)
@@ -85,13 +86,14 @@ def test_grib_set_detailed(fl_type, write_method):
 
         write_to_file(write_method, tmp, f)
         f_saved = from_source("file", tmp)[0]
+        assert f_saved.get("variable") == "q"
         assert f_saved.get("param") == "q"
         assert f_saved.get("grib.shortName") == "q"
         assert f_saved.get("level") == 600
-        assert f_saved.get("levelist") == 600
         assert f_saved.get("grib.level") == 600
         assert f_saved.get("grib.levelist") == 600
-        assert f_saved.get("level_type") == "pl"
+        assert f_saved.get("vertical_type") == "pressure"
+        assert f_saved.get("vertical.type") == "pressure"
         assert f_saved.get("grib.typeOfLevel") == "isobaricInhPa"
 
     # ---------------------
@@ -100,17 +102,16 @@ def test_grib_set_detailed(fl_type, write_method):
 
     f = ds_ori[0].set(
         param="q",
-        levelist=600,
+        level=600,
         my_shape=(181, 360),
         my_name="t_500",
     )
 
-    f = f.set(param="pt", levelist=800)
+    f = f.set(param="pt", level=800)
 
     assert f.get("param") == "pt"
     assert f.get("grib.shortName") == "t"
     assert f.get("level") == 800
-    assert f.get("levelist") == 800
     assert f.get("grib.level") == 500
     assert f.get("grib.levelist") == 500
 
@@ -129,7 +130,7 @@ def test_grib_set_detailed(fl_type, write_method):
     for i in range(2):
         f = ds_ori[i].set(
             param="q",
-            levelist=600,
+            level=600,
         )
         fields.append(f)
 
@@ -138,7 +139,7 @@ def test_grib_set_detailed(fl_type, write_method):
     assert ds.get("param") == ["q", "q"]
     assert ds.get("grib.shortName") == ["t", "z"]
     assert ds.get("level") == [600, 600]
-    assert ds.get("levelist") == [600, 600]
+    assert ds.get("grib.levelist") == [500, 500]
 
     # write back to grib
     with temp_file() as tmp:
@@ -147,7 +148,7 @@ def test_grib_set_detailed(fl_type, write_method):
         assert ds_saved.get("param") == ["q", "q"]
         assert ds_saved.get("grib.shortName") == ["q", "q"]
         assert ds_saved.get("level") == [600, 600]
-        assert ds_saved.get("levelist") == [600, 600]
+        assert ds_saved.get("grib.levelist") == [600, 600]
 
     # TODO: implement the following
     # serialise
@@ -157,7 +158,7 @@ def test_grib_set_detailed(fl_type, write_method):
     # assert ds_1.metadata("param") == ["q", "q"]
     # assert ds_1.metadata("shortName") == ["q", "q"]
     # assert ds_1.metadata("level") == [600, 600]
-    # assert ds_1.metadata("levelist") == [600, 600]
+    # assert ds_1.metadata("levelist") == [600, 600]x
 
 
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
@@ -176,13 +177,13 @@ def test_grib_set_combined(fl_type, write_method):
     f = ds_ori[0].set(
         values=vals_ori + 1,
         param="q",
-        levelist=600,
+        level=600,
     )
 
     assert f.get("param") == "q"
     assert f.get("grib.shortName") == "t"
     assert f.get("level") == 600
-    assert f.get("levelist") == 600
+    assert f.get("grib.levelist") == 500
     assert f.get("grib.date", "param") == (20070101, "q")
     assert f.get("param", "grib.date") == ("q", 20070101)
     assert np.allclose(f.values, vals_ori + 1)
@@ -196,7 +197,7 @@ def test_grib_set_combined(fl_type, write_method):
         assert f_saved.get("param") == "q"
         assert f_saved.get("grib.shortName") == "q"
         assert f_saved.get("level") == 600
-        assert f_saved.get("levelist") == 600
+        assert f_saved.get("grib.levelist") == 600
         assert np.allclose(f_saved.values, vals_ori + 1)
 
     # ---------------------
@@ -206,14 +207,14 @@ def test_grib_set_combined(fl_type, write_method):
     f = ds_ori[0].set(
         values=vals_ori + 1,
         param="q",
-        levelist=600,
+        level=600,
     )
-    f = f.set(values=vals_ori + 2, param="pt", levelist=800)
+    f = f.set(values=vals_ori + 2, param="pt", level=800)
 
     assert f.get("param") == "pt"
     assert f.get("grib.shortName") == "t"
     assert f.get("level") == 800
-    assert f.get("levelist") == 800
+    assert f.get("grib.levelist") == 500
     assert f.get("grib.date", "param") == (20070101, "pt")
     assert f.get("param", "grib.date") == ("pt", 20070101)
     assert np.allclose(f.values, vals_ori + 2)
@@ -228,7 +229,7 @@ def test_grib_set_combined(fl_type, write_method):
         f = ds_ori[i].set(
             values=vals_ori + i + 1,
             param="q",
-            levelist=600,
+            level=600,
         )
         fields.append(f)
 
@@ -237,7 +238,7 @@ def test_grib_set_combined(fl_type, write_method):
     assert ds.get("param") == ["q", "q"]
     assert ds.get("grib.shortName") == ["t", "z"]
     assert ds.get("level") == [600, 600]
-    assert ds.get("levelist") == [600, 600]
+    assert ds.get("grib.levelist") == [500, 500]
     assert np.allclose(ds[0].values, vals_ori + 1)
     assert np.allclose(ds[1].values, vals_ori + 2)
 
@@ -248,7 +249,7 @@ def test_grib_set_combined(fl_type, write_method):
         assert ds_saved.get("param") == ["q", "q"]
         assert ds_saved.get("grib.shortName") == ["q", "q"]
         assert ds_saved.get("level") == [600, 600]
-        assert ds_saved.get("levelist") == [600, 600]
+        assert ds_saved.get("grib.levelist") == [600, 600]
         assert np.allclose(ds_saved[0].values, vals_ori + 1)
         assert np.allclose(ds_saved[1].values, vals_ori + 2)
 

@@ -104,7 +104,7 @@ class Geography(Spec):
         keys = set(kwargs.keys())
 
         if keys == {"grid_spec"}:
-            spec = self.from_grid_spec(kwargs["grid_spec"])
+            spec = self.from_grid_spec(self, kwargs["grid_spec"])
             return spec
         if keys == {"latitudes", "longitudes"}:
             spec = self.from_dict(kwargs, shape_hint=shape_hint)

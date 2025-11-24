@@ -22,8 +22,12 @@ class GribSpec:
         self.handle = handle
         self._exception = None
 
+    @classmethod
+    def from_handle(cls, handle):
+        return cls(handle)
+
     @thread_safe_cached_property
-    def spec(self):
+    def _member(self):
         try:
             return self.BUILDER.build(self.handle)
         except Exception as e:
@@ -31,13 +35,17 @@ class GribSpec:
             self._exception = e
             raise
 
+    # @property
+    # def spec(self):
+    #     return self._member.spec
+
     def get_grib_context(self, context) -> dict:
         self.COLLECTOR.collect(self, context)
 
     def __getattr__(self, name):
         if self._exception is not None:
             raise self._exception(name)
-        return getattr(self.spec, name)
+        return getattr(self._member, name)
 
     def __getstate__(self):
         state = {}

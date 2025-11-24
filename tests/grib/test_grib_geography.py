@@ -370,7 +370,7 @@ def test_grib_bbox(fl_type):
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_bbox_2(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
-    bb = ds.bounding_box
+    bb = ds.bounding_box()
     assert len(bb) == 2
     for b in bb:
         assert b.as_tuple() == (73, -27, 33, 45)
