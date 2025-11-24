@@ -155,6 +155,7 @@ def test_grib_file_cupy_backend():
     assert eku_array_namespace(ds1[0].to_array()) == _CUPY
 
 
+@pytest.mark.migrate
 def test_grib_array_numpy_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
 
@@ -188,6 +189,7 @@ def test_grib_array_numpy_backend():
     assert ds.to_numpy().shape == (6, 7, 12)
 
 
+@pytest.mark.migrate
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 def test_grib_array_torch_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
@@ -224,6 +226,7 @@ def test_grib_array_torch_backend():
     assert ds.to_numpy().shape == (6, 7, 12)
 
 
+@pytest.mark.migrate
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
 def test_grib_array_cupy_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))

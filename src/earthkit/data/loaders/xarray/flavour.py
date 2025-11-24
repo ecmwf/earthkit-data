@@ -767,6 +767,9 @@ class DefaultCoordinateGuesser(CoordinateGuesser):
         if attributes.name == "vertical" and attributes.units == "hPa":
             return LevelCoordinate(c, "pl")
 
+        if attributes.name == "surface":
+            return LevelCoordinate(c, "sfc")
+
         return None
 
     def _is_number(self, c: xr.DataArray, attributes: CoordinateAttributes) -> Optional[EnsembleCoordinate]:

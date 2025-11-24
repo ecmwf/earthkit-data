@@ -24,9 +24,9 @@ def test_grib_from_memory_single():
         data = f.read()
         fs = from_source("memory", data)
         assert len(fs) == 1
-        sn = fs.get("param")
+        sn = fs.get("variable")
         assert sn == ["2t"]
-        assert fs[0].get("grib.shortName") == "2t"
+        assert fs[0].get("variable") == "2t"
 
 
 def test_grib_from_memory_multi():
@@ -34,10 +34,10 @@ def test_grib_from_memory_multi():
         data = f.read()
         fs = from_source("memory", data)
         assert len(fs) == 2
-        sn = fs.metadata("param")
+        sn = fs.get("variable")
         assert sn == ["2t", "msl"]
-        assert fs[0].metadata("shortName") == "2t"
-        assert fs[1].metadata("shortName") == "msl"
+        assert fs[0].get("variable") == "2t"
+        assert fs[1].get("variable") == "msl"
 
 
 def test_grib_from_memory_padding():
@@ -45,10 +45,10 @@ def test_grib_from_memory_padding():
         data = f.read()
         fs = from_source("memory", data)
         assert len(fs) == 2
-        sn = fs.metadata("param")
+        sn = fs.get("variable")
         assert sn == ["2t", "msl"]
-        assert fs[0].metadata("shortName") == "2t"
-        assert fs[1].metadata("shortName") == "msl"
+        assert fs[0].get("variable") == "2t"
+        assert fs[1].get("variable") == "msl"
 
 
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)

@@ -20,6 +20,7 @@ from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize(
     "params",
     [
@@ -34,12 +35,14 @@ def test_raw_metadata_create(params):
     assert md["perturbationNumber"] == 5
 
 
+@pytest.mark.migrate
 def test_raw_metadata_create_with_kwarg():
     md = RawMetadata(shortName="2t", perturbationNumber=5)
     assert md["shortName"] == "2t"
     assert md["perturbationNumber"] == 5
 
 
+@pytest.mark.migrate
 def test_raw_metadata_get():
     md = RawMetadata({"shortName": "2t", "perturbationNumber": 5})
 
@@ -64,6 +67,7 @@ def test_raw_metadata_get():
         md.get("centre", "shortName", "step")
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize(
     "params",
     [
@@ -88,6 +92,7 @@ def test_raw_metadata_override(params):
     assert md2["centre"] == "ecmf"
 
 
+@pytest.mark.migrate
 def test_raw_metadata_override_with_kwarg():
     md = RawMetadata({"shortName": "2t", "perturbationNumber": 5})
     assert md["shortName"] == "2t"
@@ -104,6 +109,7 @@ def test_raw_metadata_override_with_kwarg():
     assert md2["centre"] == "ecmf"
 
 
+@pytest.mark.migrate
 def test_grib_metadata_create():
     f = from_source("file", earthkit_examples_file("test.grib"))
 
@@ -123,6 +129,7 @@ def test_grib_metadata_create():
         StandAloneGribMetadata(raw_md)
 
 
+@pytest.mark.migrate
 def test_grib_metadata_get():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds[0].metadata()
@@ -167,6 +174,7 @@ def test_grib_metadata_get():
         md.get("centre", "shortName", "step")
 
 
+@pytest.mark.migrate
 def test_grib_grib_metadata_valid_datetime():
     ds = from_source("file", earthkit_test_data_file("t_time_series.grib"))
     md = ds[4].metadata()
@@ -174,6 +182,7 @@ def test_grib_grib_metadata_valid_datetime():
     assert md["valid_datetime"] == "2020-12-21T18:00:00"
 
 
+@pytest.mark.migrate
 def test_grib_metadata_override():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds[0].metadata()
@@ -211,6 +220,7 @@ def test_grib_metadata_override():
     assert md3._handle._handle is not None
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize(
     "params",
     [
@@ -233,6 +243,7 @@ def test_grib_metadata_override_1(params):
     assert md2["shortName"] == "2d"
 
 
+@pytest.mark.migrate
 def test_grib_metadata_override_with_kwarg():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds[0].metadata()
@@ -247,6 +258,7 @@ def test_grib_metadata_override_with_kwarg():
     assert md2["shortName"] == "2d"
 
 
+@pytest.mark.migrate
 def test_grib_metadata_override_invalid():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds[0].metadata()
@@ -262,6 +274,7 @@ def test_grib_metadata_override_invalid():
     assert "EncodingError" in e.typename
 
 
+@pytest.mark.migrate
 def test_grib_metadata_wrapped_core():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds[0].metadata()
@@ -358,6 +371,7 @@ def test_grib_metadata_wrapped_core():
         break
 
 
+@pytest.mark.migrate
 def test_grib_metadata_wrapped_callable():
     ds = from_source("file", earthkit_examples_file("test4.grib"))
     md = ds[0].metadata()

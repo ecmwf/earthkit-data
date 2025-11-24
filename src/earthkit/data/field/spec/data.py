@@ -32,7 +32,7 @@ class Data(SimpleFieldMember):
         pass
 
     @abstractmethod
-    def get_values(self, dtype=None, copy=True, index=None):
+    def get_values(self, dtype=None, copy=True):
         r"""array-like: Get the values stored in the field as an array.
 
         Parameters
@@ -158,12 +158,10 @@ class ArrayData(SimpleData):
             values = np.asarray(values)
         self._values = values
 
-    def get_values(self, dtype=None, copy=True, index=None):
+    def get_values(self, dtype=None, copy=True):
         """Get the values stored in the field as an array."""
         # self.load()
         v = self._values
-        if index is not None:
-            v = v[index]
         if copy:
             v = array_namespace(v).asarray(v, copy=True)
         if dtype is not None:

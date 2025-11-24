@@ -47,10 +47,10 @@ class Merger_obj:
 
 
 @pytest.mark.parametrize("mode", ["nc", "xr"])
-def test_netcdf_concat(mode):
+def test_netcdf_concat_core(mode):
     ds1 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_1.nc"), mode)
     ds2 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_2.nc"), mode)
-    ds = ds1 + ds2
+    ds = ds1 & ds2
 
     assert len(ds) == 2
     md = ds1.get("param") + ds2.get("param")
@@ -74,6 +74,15 @@ def test_netcdf_concat(mode):
             datetime.datetime(2021, 3, 2, 12, 0),
         ],
     }
+
+
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_concat_to_xarray(mode):
+    ds1 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_1.nc"), mode)
+    ds2 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_2.nc"), mode)
+    ds = ds1 & ds2
+
+    assert len(ds) == 2
 
     import xarray as xr
 
@@ -155,7 +164,7 @@ def test_netdcf_merge_custom(custom_merger):
     assert target2.identical(merged)
 
 
-def test_netcdf_merge_var():
+def test_netcdf_merge_var_1():
     s1 = from_source(
         "dummy-source",
         kind="netcdf",
@@ -174,6 +183,7 @@ def test_netcdf_merge_var():
 
     target = xr.merge([ds1, ds2])
     ds = from_source("multi", [s1, s2])
+
     ds.graph()
     merged = ds.to_xarray()
 
@@ -208,6 +218,7 @@ def _merge_var_different_coords(kind1, kind2):
     assert target.identical(merged)
 
 
+@pytest.mark.migrate
 def test_netcdf_merge_var_different_coords():
     _merge_var_different_coords("netcdf", "netcdf")
 

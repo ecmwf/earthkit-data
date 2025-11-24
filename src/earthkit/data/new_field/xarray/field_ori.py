@@ -21,8 +21,8 @@ from earthkit.data import Field
 from earthkit.data.core.fieldlist_ori import math
 from earthkit.data.decorators import thread_safe_cached_property
 
-from .coordinates import extract_single_value
-from .coordinates import is_scalar
+from ...readers.xarray.coordinates import extract_single_value
+from ...readers.xarray.coordinates import is_scalar
 
 # from .metadata import XArrayMetadata
 

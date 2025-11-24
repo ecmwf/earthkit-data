@@ -24,6 +24,7 @@ class XarrayLevelType:
 _TYPES = [
     XarrayLevelType("pl", LevelTypes.PRESSURE),
     XarrayLevelType("ml", LevelTypes.MODEL),
+    XarrayLevelType("sfc", LevelTypes.SURFACE),
 ]
 
 _XR_TYPES = dict()
@@ -54,7 +55,7 @@ def get_level_type(coord):
 
 
 def from_xarray(owner, selection):
-    from earthkit.data.new_field.xarray.coordinates import LevelCoordinate
+    from earthkit.data.loaders.xarray.coordinates import LevelCoordinate
 
     coord = None
     for c in owner.coordinates:

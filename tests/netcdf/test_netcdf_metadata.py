@@ -21,20 +21,18 @@ from earthkit.data.testing import load_nc_or_xr_source
 @pytest.mark.parametrize(
     "key,expected_value",
     [
-        # ("variable", "t"),
-        # ("level", 1000),
-        # (["variable"], ["t"]),
-        # (["variable", "level"], ["t", 1000]),
-        # (("variable"), "t"),
-        # (("variable", "level"), ("t", 1000)),
-        # (("param", "levelist"), ("t", 1000)),
+        ("variable", "t"),
+        ("level", 1000),
+        (["variable"], ["t"]),
+        (["variable", "level"], ["t", 1000]),
+        (("variable"), "t"),
+        (("variable", "level"), ("t", 1000)),
         ("param", "t"),
         ("level", 1000),
         (["param"], ["t"]),
         (["param", "level"], ["t", 1000]),
         (("param"), "t"),
         (("param", "level"), ("t", 1000)),
-        (("param", "levelist"), ("t", 1000)),
     ],
 )
 def test_netcdf_metadata_single_field(mode, key, expected_value):

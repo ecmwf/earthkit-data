@@ -14,6 +14,8 @@ from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.core.fieldlist import FieldListCore
 from earthkit.data.core.index import Index
+from earthkit.data.core.index import MaskIndex
+from earthkit.data.core.index import MultiIndex
 from earthkit.data.decorators import detect_out_filename
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.compute import wrap_maths
@@ -162,7 +164,7 @@ class FieldList(Index, FieldListCore):
         if any(k not in ("lat", "lon", "value") for k in keys):
             raise ValueError(f"data: invalid argument: {keys}")
 
-        if self._is_shared_grid():
+        if self._has_shared_geography:
             if "lat" in keys or "lon" in keys:
                 latlon = self[0].to_latlon(flatten=flatten, dtype=dtype, index=index)
 
@@ -218,6 +220,24 @@ class FieldList(Index, FieldListCore):
     def geography(self):
         if self._has_shared_geography:
             return self[0].geography
+        elif len(self) == 0:
+            return None
+        else:
+            raise ValueError("Fields do not have the same grid geometry")
+
+    @property
+    def latitudes(self):
+        if self._has_shared_geography:
+            return self[0].latitudes
+        elif len(self) == 0:
+            return None
+        else:
+            raise ValueError("Fields do not have the same grid geometry")
+
+    @property
+    def longitudes(self):
+        if self._has_shared_geography:
+            return self[0].longitudes
         elif len(self) == 0:
             return None
         else:
@@ -510,3 +530,22 @@ class FieldList(Index, FieldListCore):
         vals = {k: tuple(values.keys()) for k, values in vals.items()}
 
         return vals
+
+    @classmethod
+    def new_mask_index(self, *args, **kwargs):
+        return MaskFieldList(*args, **kwargs)
+
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(_, FieldList) for _ in sources)
+        return MultiFieldList(sources)
+
+
+class MaskFieldList(FieldList, MaskIndex):
+    def __init__(self, *args, **kwargs):
+        MaskIndex.__init__(self, *args, **kwargs)
+
+
+class MultiFieldList(FieldList, MultiIndex):
+    def __init__(self, *args, **kwargs):
+        MultiIndex.__init__(self, *args, **kwargs)

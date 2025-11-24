@@ -169,7 +169,7 @@ def wrapper(data, *args, fieldlist=True, **kwargs):
         if not fieldlist:
             return XArrayDatasetWrapper(ds, *args, **kwargs)
 
-        from earthkit.data.new_field.xarray.fieldlist import XArrayFieldList
+        from earthkit.data.loaders.xarray.fieldlist import XArrayFieldList
 
         fl = XArrayFieldList.from_xarray(ds, **kwargs)
         if len(fl) > 0:

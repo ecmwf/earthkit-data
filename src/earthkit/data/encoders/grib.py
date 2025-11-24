@@ -40,14 +40,18 @@ class GribEncodedData(EncodedData):
 
     def metadata(self, key=None):
         if key:
-            return self.to_field().metadata(key, default=None)
+            return self.to_field().get(key, default=None)
         else:
             raise NotImplementedError
 
     def to_field(self):
-        from earthkit.data.readers.grib.memory import GribFieldInMemory
+        # from earthkit.data.readers.grib.memory import GribFieldInMemory
 
-        return GribFieldInMemory.from_buffer(self.to_bytes())
+        # return GribFieldInMemory.from_buffer(self.to_bytes())
+
+        from earthkit.data.field.grib.create import new_grib_field_from_buffer
+
+        return new_grib_field_from_buffer(self.to_bytes())
 
 
 class Combined:
@@ -381,8 +385,6 @@ class GribEncoder(Encoder):
         md = self._normalize_kwargs_names(**self.metadata)
         md.update(self._normalize_kwargs_names(**metadata))
         md.update(self._normalize_kwargs_names(**kwargs))
-
-        print("Metadata before update:", md)
 
         # when the input date a datetime object time can be inferred from it
         can_infer_time = (

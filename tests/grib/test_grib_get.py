@@ -510,10 +510,10 @@ def test_grib_metadata_namespace(fl_type):
 @pytest.mark.parametrize("fl_type", FL_FILE)
 def test_grib_message(fl_type):
     f, _ = load_grib_data("test.grib", fl_type)
-    v = f[0].raw.message()
+    v = f[0].get("grib.message")
     assert len(v) == 526
     assert v[:4] == b"GRIB"
-    v = f[1].raw.message()
+    v = f[1].get("grib.message")
     assert len(v) == 526
     assert v[:4] == b"GRIB"
 
@@ -525,17 +525,17 @@ def test_grib_tilde_shortname(fl_type):
     f, _ = load_grib_data("tilde_shortname.grib", fl_type, folder="data")
 
     # parameter object keys
-    assert f[0].get("name") == "106"
-    assert f[0].get("param") == "106"
+    assert f[0].get("variable") == "106"
+    assert f[0].get("variable") == "106"
 
     # raw GRIB keys
-    assert f[0].get("shortName") == "106"
-    assert f[0].get("shortName", astype=int) == 0
-    assert f[0].get("paramId") == 106
-    assert f[0].get("paramId", astype=int) == 106
+    assert f[0].get("grib.shortName") == "106"
+    assert f[0].get("grib.shortName", astype=int) == 0
+    assert f[0].get("grib.paramId") == 106
+    assert f[0].get("grib.paramId", astype=int) == 106
     assert f[0].get("grib.param") == "106.128"
     assert f[0].get("grib.mars.param") == "106.128"
-    assert f[0].get("mars.param") == "106.128"
+    assert f[0].get("grib.mars.param") == "106.128"
 
     # TODO: decide on the expected behaviour here
     assert f[0].get("grib.parameter.shortName") == "~"

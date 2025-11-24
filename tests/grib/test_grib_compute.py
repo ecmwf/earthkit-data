@@ -294,11 +294,12 @@ def test_grib_compute_rpow(fl_type, operand):
 @pytest.mark.parametrize("operand", UNARY_OPERANDS)
 def test_grib_compute_pos(fl_type, operand):
     ds, array_backend = load_grib_data("test.grib", fl_type)
+    xp, _, _ = array_backend
     val, val_ref = operand(ds).val()
 
     res = +val
     ref = val_ref
-    assert array_backend.allclose(res.values, ref, equal_nan=True)
+    assert xp.allclose(res.values, ref, equal_nan=True)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)

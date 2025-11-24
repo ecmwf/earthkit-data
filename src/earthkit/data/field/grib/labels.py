@@ -19,6 +19,8 @@ NAMESPACES = [
     "vertical",
 ]
 
+CUSTOM_KEYS = "message"
+
 
 class MetadataCacheHandler:
     @staticmethod
@@ -76,7 +78,7 @@ class GribLabels:
     def __contains__(self, key):
         if key.startswith("grib."):
             key = key[5:]
-        return self.handle.__contains__(key)
+        return key in CUSTOM_KEYS or self.handle.__contains__(key)
 
     def __iter__(self):
         return self.keys()
@@ -117,6 +119,9 @@ class GribLabels:
         # allow using the "grib." prefix.
         if key.startswith("grib."):
             key = key[5:]
+
+        if key == "message":
+            return self.message()
 
         # key = _key_name(key)
 

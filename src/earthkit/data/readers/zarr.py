@@ -10,7 +10,7 @@
 import os
 
 from . import Reader
-from .netcdf.fieldlist import XArrayFieldList
+from .netcdf.ori.fieldlist import XArrayFieldList
 
 
 class ZarrReader(XArrayFieldList, Reader):

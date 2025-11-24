@@ -12,8 +12,8 @@ from typing import Any
 
 from earthkit.data.field.spec.time import Time
 from earthkit.data.field.time import TimeFieldMember
-from earthkit.data.new_field.xarray.coordinates import extract_single_value
-from earthkit.data.new_field.xarray.coordinates import is_scalar
+from earthkit.data.loaders.xarray.coordinates import extract_single_value
+from earthkit.data.loaders.xarray.coordinates import is_scalar
 
 
 def from_xarray(owner, selection):

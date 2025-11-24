@@ -87,4 +87,5 @@ class GeographyFieldMember(SpecFieldMember):
         pass
 
     def set(self, *args, **kwargs):
-        raise NotImplementedError("GeographyFieldMember.set is not implemented yet.")
+        spec = self._spec.set(*args, **kwargs)
+        return GeographyFieldMember(spec)

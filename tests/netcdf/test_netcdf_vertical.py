@@ -19,6 +19,8 @@ def test_netcdf_vertical_1():
     ds = from_source("file", earthkit_test_data_file("test_single.nc"))
     f = ds[0]
 
+    print(f._members["vertical"])
+
     assert f.level == 0
     assert f.vertical.level == 0
     assert f.vertical_level == 0

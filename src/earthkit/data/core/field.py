@@ -31,7 +31,8 @@ from earthkit.data.field.spec.labels import SimpleLabels
 from earthkit.data.field.time import TimeFieldMember
 from earthkit.data.field.vertical import VerticalFieldMember
 from earthkit.data.indexing.simple import SimpleFieldList
-from earthkit.data.utils.array import reshape
+from earthkit.data.utils.array import flatten as array_flatten
+from earthkit.data.utils.array import reshape as array_reshape
 from earthkit.data.utils.array import target_shape
 from earthkit.data.utils.compute import wrap_maths
 from earthkit.data.utils.metadata.args import metadata_argument
@@ -298,14 +299,14 @@ class Field(Base):
             Field values
 
         """
-        v = self._data.get_values(dtype=dtype, copy=copy, index=index)
+        v = self._data.get_values(dtype=dtype, copy=copy)
         v = convert_array(v, array_namespace="numpy")
-        if flatten:
-            from earthkit.data.utils.array import flatten as array_flatten
+        v = array_flatten(v) if flatten else array_reshape(v, self.shape)
 
-            return array_flatten(v)
-        else:
-            return reshape(v, self.shape)
+        if index is not None:
+            v = v[index]
+
+        return v
 
     def to_array(
         self,
@@ -355,15 +356,15 @@ class Field(Base):
                 raise ValueError("to_array(): only one of array_backend and array_namespace can be specified")
             array_namespace = array_backend
 
-        v = self._data.get_values(dtype=dtype, copy=copy, index=index)
+        v = self._data.get_values(dtype=dtype, copy=copy)
         if array_namespace is not None:
             v = convert_array(v, array_namespace=array_namespace, device=device)
-        if flatten:
-            from earthkit.data.utils.array import flatten as array_flatten
 
-            return array_flatten(v)
-        else:
-            return reshape(v, self.shape)
+        v = array_flatten(v) if flatten else array_reshape(v, self.shape)
+        if index is not None:
+            v = v[index]
+
+        return v
 
     def _get_member(self, key):
         """Return the member name, member object and key name for the specified key."""
@@ -1073,7 +1074,7 @@ class Field(Base):
 
         def _reshape(v, flatten):
             shape = target_shape(v, flatten, self.shape)
-            return reshape(v, shape)
+            return array_reshape(v, shape)
 
         r = {}
         for k in keys:
@@ -1178,7 +1179,7 @@ class Field(Base):
 
         def _reshape(v, flatten):
             shape = target_shape(v, flatten, self.shape)
-            return reshape(v, shape)
+            return array_reshape(v, shape)
 
         x = self.geography.x
         y = self.geography.y

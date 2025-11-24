@@ -35,8 +35,6 @@ class GribData(SimpleData):
         """Get the values stored in the field as an array."""
 
         v = self.handle.get_values(dtype=dtype)
-        if index is not None:
-            v = v[index]
         if dtype is not None:
             from earthkit.utils.array import array_namespace
 

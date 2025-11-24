@@ -20,12 +20,10 @@ class XArrayData(SimpleData):
         self.owner = owner
         self.selection = selection
 
-    def get_values(self, dtype=None, copy=True, index=None):
+    def get_values(self, dtype=None, copy=True):
         """Get the values stored in the field as an array."""
 
         values = self.selection.values
-        if index is not None:
-            values = values[index]
         if dtype is not None:
             values = values.astype(dtype, copy=copy)
         return values

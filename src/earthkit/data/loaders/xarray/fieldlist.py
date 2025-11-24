@@ -19,6 +19,7 @@ import xarray as xr
 import yaml
 
 from earthkit.data.indexing.fieldlist import FieldList
+from earthkit.data.indexing.fieldlist import MultiFieldList
 
 # from .field import EmptyFieldList
 from .flavour import CoordinateGuesser
@@ -165,7 +166,6 @@ class XArrayFieldList(FieldList):
             coordinates: List[Any] = []
 
             for coord in variable.coords:
-
                 c = guess.guess(ds[coord], coord)
                 assert c, f"Could not guess coordinate for {coord}"
                 if coord not in variable.dims:
@@ -271,9 +271,67 @@ class XArrayFieldList(FieldList):
         # return self.__class__(self.ds, variables)
         return XArrayFieldList(self.ds, variables)
 
+    def to_xarray(self, **kwargs) -> xr.Dataset:
+        return self.ds
+
+    # @classmethod
+    # def new_mask_index(cls, *args, **kwargs):
+    #     return XArrayMaskedFieldList(*args, **kwargs)
+    #     # fl = args[0]
+    #     # indices = list(args[1])
+    #     # return cls.from_fields([fl[i] for i in indices])
+
     @classmethod
-    def new_mask_index(cls, *args, **kwargs):
-        assert len(args) == 2
-        fl = args[0]
-        indices = list(args[1])
-        return cls.from_fields([fl[i] for i in indices])
+    def merge(cls, sources):
+        if all(isinstance(_, XArrayFieldList) for _ in sources):
+            return XArrayMultiFieldList(sources)
+        else:
+            if all(isinstance(_, FieldList) for _ in sources):
+                from earthkit.data.indexing.fieldlist import MultiFieldList
+
+                # assert all(isinstance(_, NetCDFFieldList) for _ in sources)
+                return MultiFieldList(sources)
+        raise ValueError("Cannot merge different FieldList types")
+
+    @classmethod
+    def to_xarray_multi_from_paths(cls, paths, **kwargs):
+        import xarray as xr
+
+        options = dict()
+        options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+        if not options:
+            options = dict(**kwargs)
+
+        return xr.open_mfdataset(
+            paths,
+            **options,
+        )
+
+
+# class XArrayMaskFieldList(XArrayFieldList, MaskIndex):
+#     def __init__(self, *args, **kwargs):
+#         MaskIndex.__init__(self, *args, **kwargs)
+#         FieldList._init_from_mask(self, self)
+
+
+# class XArrayMaskFieldList(XArrayFieldList, MaskIndex):
+#     def __init__(self, *args, **kwargs):
+#         MaskIndex.__init__(self, *args, **kwargs)
+
+
+class XArrayMultiFieldList(MultiFieldList):
+    # def __init__(self, *args, **kwargs):
+    #     MultiIndex.__init__(self, *args, **kwargs)
+
+    def to_xarray(self, **kwargs):
+        import xarray as xr
+
+        return xr.merge([x.ds for x in self._indexes], **kwargs)
+
+
+# @classmethod
+# def new_mask_index(cls, *args, **kwargs):
+#     assert len(args) == 2
+#     fl = args[0]
+#     indices = list(args[1])
+#     return cls.from_fields([fl[i] for i in indices])
