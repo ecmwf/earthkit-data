@@ -373,7 +373,7 @@ class Field(Base):
         device = target_xp.device(sample)
         target_dtype = None
         if dtype is not None:
-            dtype = convert_dtype(dtype, target_xp)
+            target_dtype = convert_dtype(dtype, target_xp)
 
         for k, v in r.items():
             r[k] = convert_array(v, array_namespace=target_xp, device=device)
