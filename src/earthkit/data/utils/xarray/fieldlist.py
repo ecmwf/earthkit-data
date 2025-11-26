@@ -157,7 +157,7 @@ class XArrayInputFieldList(FieldList):
                 continue
             db = None
             # db = self.db   # TODO: PW: would be nice but it does not work...
-            mask_index = self.ds.new_mask_index(self.ds, v)
+            mask_index = self.ds[v]
             groups[k] = XArrayInputFieldList(mask_index, db=db, remapping=self.remapping)
 
         return groups
