@@ -1,6 +1,17 @@
 Version 0.18 Updates
 /////////////////////////
 
+
+
+Version 0.18.3
+===============
+
+Fixes
+++++++++
+
+- Fixed issue when using the :ref:`data-sources-fdb` source with the ``lazy=True`` option resulted in string values instead of int for the following metadata keys: "level", "levelist", "date", "time", "step" (:pr:`858`).
+
+
 Version 0.18.2
 ===============
 
