@@ -116,6 +116,14 @@ class FDBRetriever:
 
 
 class FDBRequestMapper(RequestMapper):
+    _CONVERT_MAP = {
+        "date": int,
+        "time": int,
+        "step": int,
+        "levelist": int,
+        "level": int,
+    }
+
     def __init__(self, request, fdb_kwargs=None, **kwargs):
         super().__init__(request, **kwargs)
         self.fdb_kwargs = fdb_kwargs or {}
@@ -131,8 +139,18 @@ class FDBRequestMapper(RequestMapper):
         r = []
         fdb = pyfdb.FDB(**self.fdb_kwargs)
         for el in fdb.list(self.request, True, True):
-            r.append(el["keys"])
+            data = el["keys"]
+            r.append(self._convert(data))
         return r
+
+    @staticmethod
+    def _convert(data):
+        for k in data:
+            c = FDBRequestMapper._CONVERT_MAP.get(k, None)
+            if c:
+                data[k] = c(data[k])
+
+        return data
 
 
 source = FDBSource
