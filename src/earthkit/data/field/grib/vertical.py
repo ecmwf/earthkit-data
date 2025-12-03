@@ -14,7 +14,7 @@ from earthkit.data.field.spec.level_type import LevelTypes
 from earthkit.data.field.vertical import VerticalFieldMember
 
 from .collector import GribContextCollector
-from .spec import GribSpec
+from .core import GribFieldMember
 
 
 class Converter:
@@ -208,6 +208,6 @@ class GribVerticalContextCollector(GribContextCollector):
 COLLECTOR = GribVerticalContextCollector()
 
 
-class GribVertical(GribSpec):
+class GribVertical(GribFieldMember):
     BUILDER = GribVerticalBuilder
     COLLECTOR = COLLECTOR

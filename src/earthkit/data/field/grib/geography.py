@@ -11,7 +11,7 @@ from earthkit.data.field.spec.geography import Geography
 from earthkit.data.field.spec.spec import normalise_set_kwargs_2
 
 from .collector import GribContextCollector
-from .spec import GribSpec
+from .core import GribFieldMember
 
 
 def missing_is_none(x):
@@ -195,7 +195,7 @@ class GribGeographyContextCollector(GribContextCollector):
 COLLECTOR = GribGeographyContextCollector()
 
 
-class GribGeography(GribSpec):
+class GribGeography(GribFieldMember):
     BUILDER = GribGeographyBuilder
     COLLECTOR = COLLECTOR
 

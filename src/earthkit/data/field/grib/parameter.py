@@ -8,7 +8,7 @@
 #
 
 from .collector import GribContextCollector
-from .spec import GribSpec
+from .core import GribFieldMember
 
 
 class GribParameterBuilder:
@@ -54,6 +54,6 @@ class GribParameterContextCollector(GribContextCollector):
 COLLECTOR = GribParameterContextCollector()
 
 
-class GribParameter(GribSpec):
+class GribParameter(GribFieldMember):
     BUILDER = GribParameterBuilder
     COLLECTOR = COLLECTOR

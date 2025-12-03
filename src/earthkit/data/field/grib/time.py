@@ -15,7 +15,7 @@ from earthkit.data.utils.dates import to_timedelta
 
 from ..spec.time_span import TimeSpanMethod
 from .collector import GribContextCollector
-from .spec import GribSpec
+from .core import GribFieldMember
 
 ZERO_TIMEDELTA = to_timedelta(0)
 
@@ -117,6 +117,6 @@ class GribTimeContextCollector(GribContextCollector):
 COLLECTOR = GribTimeContextCollector()
 
 
-class GribTime(GribSpec):
+class GribTime(GribFieldMember):
     BUILDER = GribTimeBuilder
     COLLECTOR = COLLECTOR

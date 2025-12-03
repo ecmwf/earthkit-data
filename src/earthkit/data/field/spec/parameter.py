@@ -13,17 +13,6 @@ from .spec import normalise_create_kwargs_2
 from .spec import normalise_set_kwargs_2
 from .spec import spec_aliases
 
-# from .spec import SimpleSpec
-# from .spec import normalise_set_kwargs
-# from .spec import spec_aliases
-
-# from abc import abstractmethod
-
-
-# from .spec import SimpleSpec
-# from .spec import normalise_set_kwargs
-# from .spec import spec_aliases
-
 
 @spec_aliases
 class Parameter:

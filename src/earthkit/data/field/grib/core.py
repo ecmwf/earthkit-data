@@ -14,7 +14,7 @@ from earthkit.data.decorators import thread_safe_cached_property
 LOG = logging.getLogger(__name__)
 
 
-class GribSpec:
+class GribFieldMember:
     BUILDER = None
     COLLECTOR = None
 

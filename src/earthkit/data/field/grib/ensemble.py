@@ -9,7 +9,7 @@
 
 
 from .collector import GribContextCollector
-from .spec import GribSpec
+from .core import GribFieldMember
 
 
 class GribEnsembleBuilder:
@@ -49,6 +49,6 @@ class GribEnsembleContextCollector(GribContextCollector):
 COLLECTOR = GribEnsembleContextCollector()
 
 
-class GribEnsemble(GribSpec):
+class GribEnsemble(GribFieldMember):
     BUILDER = GribEnsembleBuilder
     COLLECTOR = COLLECTOR
