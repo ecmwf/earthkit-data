@@ -269,7 +269,7 @@ def string_distance(s, t):
 
 def did_you_mean(word, vocabulary):
     if not vocabulary:
-        raise ValueError(f"No vocabulary specified for search of {word!r}.")
+        raise ValueError(f"No vocabulary specified to use to search for {word!r}.")
     distance, best = min((string_distance(word, w), w) for w in vocabulary)  # noqa F841
     # if distance < min(len(word), len(best)):
     return best
