@@ -13,20 +13,10 @@ from earthkit.data.utils.dates import step_to_grib
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
-from ..spec.time_span import TimeSpanMethod
 from .collector import GribContextCollector
 from .core import GribFieldMember
 
 ZERO_TIMEDELTA = to_timedelta(0)
-
-_GRIB_TO_METHOD = {
-    "accum": TimeSpanMethod.ACCUMULATED,
-    "avg": TimeSpanMethod.AVERAGE,
-    "instant": TimeSpanMethod.INSTANT,
-    "max": TimeSpanMethod.MAX,
-}
-
-_METHOD_TO_GRIB = {v: k for k, v in _GRIB_TO_METHOD.items()}
 
 
 class GribTimeBuilder:

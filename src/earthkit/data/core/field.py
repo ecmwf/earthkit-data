@@ -27,6 +27,7 @@ from earthkit.data.field.data import Data
 from earthkit.data.field.ensemble import EnsembleFieldMember
 from earthkit.data.field.geography import GeographyFieldMember
 from earthkit.data.field.parameter import ParameterFieldMember
+from earthkit.data.field.proc import ProcFieldMember
 from earthkit.data.field.spec.labels import SimpleLabels
 from earthkit.data.field.time import TimeFieldMember
 from earthkit.data.field.vertical import VerticalFieldMember
@@ -71,6 +72,7 @@ LS_KEYS = [
         },
         "vertical": {"cls": VerticalFieldMember, "direct": ("level", "layer")},
         "ensemble": {"cls": EnsembleFieldMember, "direct": ("member",)},
+        "proc": {"cls": ProcFieldMember},
         "labels": None,
     }
 )
@@ -125,6 +127,7 @@ class Field(Base):
         geography=None,
         vertical=None,
         ensemble=None,
+        proc=None,
         labels=None,
     ):
 
@@ -141,6 +144,7 @@ class Field(Base):
             Field._MEMBER_NAMES.geography: geography,
             Field._MEMBER_NAMES.vertical: vertical,
             Field._MEMBER_NAMES.ensemble: ensemble,
+            Field._MEMBER_NAMES.proc: proc,
             Field._MEMBER_NAMES.labels: labels,
         }
 
@@ -252,6 +256,11 @@ class Field(Base):
     def geography(self):
         """Geography: Return the geography specification of the field."""
         return self._members[Field._MEMBER_NAMES.geography].spec
+
+    @property
+    def proc(self):
+        """Proc: Return the proc specification of the field."""
+        return self._members[Field._MEMBER_NAMES.proc].spec
 
     @classmethod
     def from_array(cls, array):
