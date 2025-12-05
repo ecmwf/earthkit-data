@@ -480,7 +480,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 # if d.name not in self.profile.dims.ensure_dims:
                 #     raise ValueError(f"Dimension {d} has no valid values for variable={name}")
             else:
-                if num > 1 and d.enforce_unique:
+                if num > 1 and d.enforce_unique and name != "<ALL VARIABLES>":
                     raise ValueError(
                         f"Dimension '{d.name}' of variable '{name}' cannot have multiple values={vals[d.key]}"
                     )

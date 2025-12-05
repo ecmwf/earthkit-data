@@ -321,7 +321,7 @@ class LevelTypeDim(Dim):
 
 
 class LevelPerTypeDim(Dim):
-    name = "_level_per_type"
+    name = "<level_per_type>"
     drop = get_keys(LEVEL_KEYS + LEVEL_TYPE_KEYS, drop=name)
 
     def __init__(self, owner, level_key, level_type_key, *args, **kwargs):
