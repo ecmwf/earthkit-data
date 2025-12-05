@@ -63,7 +63,7 @@ The possible roles are as follows:
 
 By default, the dimension names are the same as the role names. To use the associated metadata keys instead use the ``dim_name_from_role_name=False`` option.
 
-the metadata keys. However, this can be controlled with the ``dim_name_from_role_name`` option. If set to ``False``, the dimension names will be the same as the dimension roles. This is useful when you want to use the dimension roles in your code, as they are more descriptive than the metadata keys.
+the metadata keys. However, this can be controlled with the ``dim_name_from_role_name`` option. If set to ``True``, the dimension names will be the same as the dimension roles. This is useful when you want to use the dimension roles in your code, as they are more descriptive than the metadata keys.
 
 .. note::
 

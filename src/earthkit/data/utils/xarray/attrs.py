@@ -89,7 +89,7 @@ class KeyAttr(Attr):
         return {self.name: metadata.get(self.key, default=None)}
 
     def __repr__(self) -> str:
-        return f"KeyAttr({self.name})"
+        return f"KeyAttr({self.name}, key={self.key})"
 
 
 class NamespaceAttr(Attr):
