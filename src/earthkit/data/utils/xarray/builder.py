@@ -81,7 +81,7 @@ class VariableBuilder:
                 self._attrs["_earthkit"] = attrs
 
         try:
-            grid_spec = self.tensor.source[0].metadata().grid_spe
+            grid_spec = self.tensor.source[0].metadata().grid_spec
             if grid_spec is not None:
                 if isinstance(grid_spec, dict):
                     import json
@@ -481,15 +481,19 @@ class BackendDataBuilder(metaclass=ABCMeta):
                         f"Dimension '{d.name}' of variable '{name}' cannot have multiple values={vals[d.key]}"
                     )
                 if num == 1 and d.name in self.profile.dims.dims_as_attrs:
+                    attr_val = vals[d.key][0]
                     if component_vals is not None:
                         components_val_for_d = component_vals.get(d.key, None)
                     else:
                         components_val_for_d = None
-                    k, c = d.as_coord(d.key, vals[d.key], components_val_for_d, ds)
-                    attr_key = (
-                        d.name if k == d.key else k
-                    )  # mimics the behaviour of DimHandler.rename_dataset_dims
-                    attr_val = c.vals
+
+                    # the below is just to get the right `k`; if `d` is not an instance of `LevelPerTypeDim`,
+                    # this is simply `d.key`; otherwise,
+                    k, _ = d.as_coord(d.key, vals[d.key], components_val_for_d, ds)
+
+                    # mimics the behaviour of DimHandler.rename_dataset_dims
+                    attr_key = d.name if k == d.key else k
+
                     tensor_extra_attrs[attr_key] = attr_val
                 if (
                     d.name in self.profile.dims.ensure_dims
