@@ -17,7 +17,8 @@ Refactored array backends
 
 .. note::
 
-    The array backend implementation in :xref:`earthkit-utils` has been refactored. With this ``earthkit-data`` now requires at least :xref:`earthkit-utils` version ``0.2.0`` (:pr:`842`).
+    The array backend implementation in :xref:`earthkit-utils` has been refactored. The minimum required version of :xref:`earthkit-utils` is now ``0.2.0`` (:pr:`842`).
+
 
 The API for the array backends has been slightly modified to accommodate new features and improvements in :xref:`earthkit-utils`:
 
@@ -44,3 +45,9 @@ Fixes
 ++++++++
 
 - Fixed cloning of Xarray fields (:pr:`841`).
+
+
+Installation
+++++++++++++++++++++++++++++++
+
+- The minimum required version of Python is now 3.10
