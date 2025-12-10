@@ -889,23 +889,6 @@ class DimHandler:
         r = {d.coord.name: d.coord.make_var(self.profile) for d in self.dims.values() if d.coord is not None}
         return r
 
-    def as_coord(self, tensor):
-        # TODO: Consider removing this method since it is not used anywhere.
-        r = {}
-
-        def _get(k):
-            for d in self.dims.values():
-                if k == d.key:
-                    return d
-
-        for k, v in tensor.user_coords.items():
-            d = _get(k)
-            if d is not None:
-                name, coord = d.as_coord(k, v, None, tensor.source)
-                r[name] = coord
-
-        return r
-
     def to_list(self):
         return list(self.dims.values())
 
