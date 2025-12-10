@@ -111,6 +111,10 @@ xref_links = {
         "earthkit-regrid",
         "https://earthkit-regrid.readthedocs.io/en/latest/",
     ),
+    "earthkit-utils": (
+        "earthkit-utils",
+        "https://github.com/ecmwf/earthkit-utils",
+    ),
     "eccodes": (
         "ecCodes",
         "https://confluence.ecmwf.int/display/ECC/ecCodes+Home",
