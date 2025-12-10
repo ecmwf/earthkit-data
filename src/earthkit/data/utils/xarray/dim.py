@@ -890,6 +890,7 @@ class DimHandler:
         return r
 
     def as_coord(self, tensor):
+        # TODO: Consider removing this method since it is not used anywhere.
         r = {}
 
         def _get(k):
@@ -898,9 +899,9 @@ class DimHandler:
                     return d
 
         for k, v in tensor.user_coords.items():
-            for d in self.dims.values():
-                d = _get(k)
-                name, coord = d.as_coord(k, v, tensor.source)
+            d = _get(k)
+            if d is not None:
+                name, coord = d.as_coord(k, v, None, tensor.source)
                 r[name] = coord
 
         return r
