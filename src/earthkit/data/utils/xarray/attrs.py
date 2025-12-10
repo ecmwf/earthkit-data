@@ -285,8 +285,9 @@ class UniqueAttrBuilder(AttrsBuilder):
                 attrs[k].update(ensure_iterable(v))
 
         global_attrs = defaultdict(list)
+        variable_attrs_names = set(attr.name for attr in self.attrs.variable_attrs)
         for k, v in attrs.items():
-            if len(v) == 1 and k not in self.attrs.variable_attrs:
+            if len(v) == 1 and k not in variable_attrs_names:
                 global_attrs[k] = list(v)[0]
 
         # Some attrs cannot be global according to the CF convention.
