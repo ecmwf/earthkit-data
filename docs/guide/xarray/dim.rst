@@ -12,13 +12,13 @@ One of the most important aspect of the :ref:`xr_engine` is how it generates dim
 Predefined dimensions and dimension roles
 -------------------------------------------
 
-By default, a list of predefined dimensions are generated. Their order is fixed:
+By default, the following predefined dimensions are generated, in the following order:
 
 - ensemble forecast member dimension
 - temporal dimensions (controlled by ``time_dim_mode``)
 - vertical dimensions (controlled by ``level_dim_mode``)
 
-The predefined dimensions are based on the ``dim_roles``, which is a mapping between the "roles" and the metadata keys associated with the roles.
+The predefined dimensions are based on the ``dim_roles``, which is a mapping between the "roles" and the metadata keys.
 The possible roles are as follows:
 
 .. list-table:: Default dimension roles
@@ -63,8 +63,6 @@ The possible roles are as follows:
 
 By default, the dimension names are the same as the role names. To use the associated metadata keys instead use the ``dim_name_from_role_name=False`` option.
 
-the metadata keys. However, this can be controlled with the ``dim_name_from_role_name`` option. If set to ``True``, the dimension names will be the same as the dimension roles. This is useful when you want to use the dimension roles in your code, as they are more descriptive than the metadata keys.
-
 .. note::
 
     For GRIB data, "step_timedelta" is a generated metadata key (by earthkit-data), which is the representation of the value of the "endStep" key as a `datetime.timedelta`.
@@ -73,15 +71,53 @@ the metadata keys. However, this can be controlled with the ``dim_name_from_role
 Dimension modes
 ----------------------
 
-The ``time_dim_mode`` and ``level_dim_mode`` options control how the temporal and vertical dimensions are generated in the Xarray dataset using ``dim_roles``. See the following notebooks for examples of how these modes work:
+The ensemble forecast member dimension is a single dimension named "number" by default, unless ``dim_roles`` defines it differently and ``dim_name_from_role_name=False``.
 
-``time_dim_mode``:
+The case of temporal and vertical dimensions is more involved. Both type of dimensions can be generated in multiple ways, and can be represented
+by multiple individual dimensions in an Xarray dataset.
+The ``time_dim_mode`` and ``level_dim_mode`` options control what temporal and vertical dimensions are generated in the Xarray dataset,
+while ``dim_roles`` (together with ``dim_name_from_role_name``) control their names and the way their coordinates are formed.
 
+
+.. list-table:: Temporal dimensions modes
+   :header-rows: 1
+
+   * - ``time_dim_mode``
+     - Dimensions
+   * - "forecast" (default)
+     - "forecast_reference_time", "step"
+   * - "valid_time"
+     - "valid_time"
+   * - "raw"
+     - "date", "time", "step"
+
+
+See the following examples:
 - :ref:`/examples/xr_engine_temporal.ipynb`
 - :ref:`/examples/xr_engine_seasonal.ipynb`
 
 
-``level_dim_mode``:
+.. list-table:: Vertical dimensions modes
+   :header-rows: 1
+
+   * - ``level_dim_mode``
+     - Dimensions
+     - Remarks
+   * - "level" (default)
+     - "level", "level_type"
+     -
+   * - "level_per_type"
+     - "<level_per_type>"
+     - This is a template dimension which in the Xarray dataset is materialised under the name being the value
+       of the metadata key referred by ``dim_roles["level_type"]`` (e.g. "surface", "meanSea", "isobaricInhPa", "hybrid", etc.).
+       The coordinates are formed from the metadata key referred by ``dim_roles["level"]``
+   * - "level_and_type"
+     - "level_and_type"
+     - The coordinates are formed by concatenating the values of the metadata keys ``dim_roles["level"]``
+       and ``dim_roles["level_type"]`` (e.g. "0surface", "850isobaricInhPa", "137hybrid")
+
+
+See the following example:
 - :ref:`/examples/xr_engine_level.ipynb`
 
 
@@ -95,7 +131,41 @@ See the following notebooks for examples of how this works:
 - :ref:`/examples/xr_engine_squeeze.ipynb`
 
 
+
+Turning a size-1 dimension to an attribute
+---------------------------------------------
+
+Discuss ``dims_as_attrs`` option and its interplay with ``ensure_dims``.
+
+
 Extra dimensions
 ----------------------
 
 The ``extra_dims`` option allows to add extra dimensions to the Xarray dataset on top of the predefined ones.
+
+
+
+Remapping keys and template dimensions
+----------------------------------------
+
+TODO: Explain that remapping keys and the template dimension "<level_per_type>" can be used in ``ensure_dims``, ``dims_as_attrs`` and ``extra_dims``
+(and maybe ``drop_dims``; but, does it make sense?)
+
+
+
+Fixed dimensions
+---------------------
+
+TODO: Check how it works and its interplay with ``extra_dims``, ``squeeze``, ``ensure_dims``, ``dims_as_attrs``, ``drop_dims``, ``rename_dims``.
+
+
+Renaming dimensions
+------------------------
+
+Here explain how ``rename_dims`` works. In particular discuss the case when ``level_dim_mode="level_per_type"`` and we want to rename, say, "surface" dimension.
+
+
+Dropping dimensions
+------------------------
+
+Can one use the template dimension "<level_per_type>"? Or, say, "surface"?
