@@ -93,8 +93,8 @@ while ``dim_roles`` (together with ``dim_name_from_role_name``) control their na
 
 
 See the following examples:
-- :ref:`/examples/xr_engine_temporal.ipynb`
-- :ref:`/examples/xr_engine_seasonal.ipynb`
+- :ref:`/examples/xarray_engine_temporal.ipynb`
+- :ref:`/examples/xarray_engine_seasonal.ipynb`
 
 
 .. list-table:: Vertical dimensions modes
@@ -105,7 +105,7 @@ See the following examples:
      - Remarks
    * - "level" (default)
      - "level", "level_type"
-     -
+     - The "level_type"`dimension usually has size 1, so it is removed (squeezed) by default.
    * - "level_per_type"
      - "<level_per_type>"
      - This is a template dimension which in the Xarray dataset is materialised under the name being the value
@@ -114,28 +114,42 @@ See the following examples:
    * - "level_and_type"
      - "level_and_type"
      - The coordinates are formed by concatenating the values of the metadata keys ``dim_roles["level"]``
-       and ``dim_roles["level_type"]`` (e.g. "0surface", "850isobaricInhPa", "137hybrid")
+       and ``dim_roles["level_type"]`` (e.g. "850isobaricInhPa", "137hybrid", "0surface")
 
 
 See the following example:
-- :ref:`/examples/xr_engine_level.ipynb`
+- :ref:`/examples/xarray_engine_level.ipynb`
 
 
 Squeezing/ensuring dimensions
 ----------------------------------
 
-By default, the dimensions are squeezed. This means that if a dimension has only one value, it is removed from the dataset. This can be controlled with the ``squeeze`` option. Alternatively, the ``ensure_dims`` option can be used to ensure that certain dimensions are always present in the dataset, even if they have only one value. This is useful when you want to keep the dimensions for consistency or for further processing.
+By default, the dimensions are squeezed. This means that if a dimension has only one value, it is removed from the dataset.
+This can be controlled with the ``squeeze`` option.
+Alternatively, the ``ensure_dims`` option can be used to ensure that certain dimensions are always present in the dataset,
+even if they have only one value. This is useful when you want to keep the dimensions for consistency or for further processing.
 
-See the following notebooks for examples of how this works:
+See the following notebook for examples of how this works:
 
-- :ref:`/examples/xr_engine_squeeze.ipynb`
-
+- :ref:`/examples/xarray_engine_squeeze.ipynb`
 
 
 Turning a size-1 dimension to an attribute
 ---------------------------------------------
 
-Discuss ``dims_as_attrs`` option and its interplay with ``ensure_dims``.
+Alternatively to squeezing, a size-1 dimension can be also converted into a variable attribute using the ``dims_as_attrs`` option.
+This can be useful when for example dealing with single-level variables defined on different levels (e.g. ``"heightAboveGround": 2``, ``"meanSea": 0``, etc.).
+Similarly to ``squeeze=True``, it allows to avoid a problem of incompatible coordinates of a size-1 dimension,
+
+to preserve the information on coordinates and at the same time avoid a problem of incompatibility of coordinates
+across variables which would otherwise prevent from creating an Xarray Dataset.
+
+Note that it is possible to combine this option with ``ensure_dims`` to have a size-1 dimension *preserved* and
+*converted* into a variable attribute.
+
+See the following notebook for details:
+
+- :ref:`/examples/xarray_engine_dims_as_attrs.ipynb`
 
 
 Extra dimensions
