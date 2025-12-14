@@ -482,14 +482,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
                     )
                 if num == 1 and d.name in self.profile.dims.dims_as_attrs:
                     attr_val = vals[d.key][0]
-                    if component_vals is not None:
-                        components_val_for_d = component_vals.get(d.key, None)
-                    else:
-                        components_val_for_d = None
-
-                    # the below is just to get the right `k`; if `d` is not an instance of `LevelPerTypeDim`,
-                    # this is simply `d.key`; otherwise,
-                    k, _ = d.as_coord(d.key, vals[d.key], components_val_for_d, ds)
+                    k = d.dim_name(d.key, ds)
 
                     # mimics the behaviour of DimHandler.rename_dataset_dims
                     attr_key = d.name if k == d.key else k

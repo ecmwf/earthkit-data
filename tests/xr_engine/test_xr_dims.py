@@ -1029,3 +1029,193 @@ def test_xr_dims_as_attrs(
     for v in var_attrs:
         assert ds[v].attrs == var_attrs[v]
     assert ds.attrs == global_attrs
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("lazy_load", [True, False])
+@pytest.mark.parametrize(
+    "path,sel,idx,kwargs,coords,dims,var_attrs,global_attrs",
+    [
+        (
+            "level/aifs-sfc.grib",
+            None,
+            None,
+            {
+                "profile": None,
+                "level_dim_mode": "level",
+                "dims_as_attrs": ["level", "level_type"],
+                "add_earthkit_attrs": False,
+            },
+            {
+                "forecast_reference_time": [
+                    pd.Timestamp("2025-12-12 00:00:00"),
+                    pd.Timestamp("2025-12-12 06:00:00"),
+                ],
+                "step": [pd.Timedelta("0 days 00:00:00"), pd.Timedelta("0 days 06:00:00")],
+            },
+            {"forecast_reference_time": 2, "step": 2},
+            {
+                "10u": {"level": 10, "level_type": "heightAboveGround"},
+                "2t": {"level": 2, "level_type": "heightAboveGround"},
+                "msl": {"level": 0, "level_type": "meanSea"},
+                "tcw": {"level": 0, "level_type": "entireAtmosphere"},
+                "tp": {"level": 0, "level_type": "surface"},
+            },
+            {},
+        ),
+        (
+            "level/aifs-pl_sfc.grib",
+            None,
+            None,
+            {
+                "profile": None,
+                "level_dim_mode": "level",
+                "dims_as_attrs": ["level", "level_type"],
+                "add_earthkit_attrs": False,
+            },
+            {
+                "forecast_reference_time": [
+                    pd.Timestamp("2025-12-12 00:00:00"),
+                    pd.Timestamp("2025-12-12 06:00:00"),
+                ],
+                "step": [pd.Timedelta("0 days 00:00:00"), pd.Timedelta("0 days 06:00:00")],
+                "level": [500, 850, 1000],
+            },
+            {"forecast_reference_time": 2, "step": 2, "level": 3},
+            {
+                "10u": {"level": 10, "level_type": "heightAboveGround"},
+                "2t": {"level": 2, "level_type": "heightAboveGround"},
+                "msl": {"level": 0, "level_type": "meanSea"},
+                "tcw": {"level": 0, "level_type": "entireAtmosphere"},
+                "tp": {"level": 0, "level_type": "surface"},
+                "z": {"level_type": "isobaricInhPa"},
+            },
+            {},
+        ),
+        (
+            "level/aifs-sfc.grib",
+            None,
+            None,
+            {
+                "profile": None,
+                "level_dim_mode": "level_and_type",
+                "dims_as_attrs": ["level_and_type"],
+                "add_earthkit_attrs": False,
+            },
+            {
+                "forecast_reference_time": [
+                    pd.Timestamp("2025-12-12 00:00:00"),
+                    pd.Timestamp("2025-12-12 06:00:00"),
+                ],
+                "step": [pd.Timedelta("0 days 00:00:00"), pd.Timedelta("0 days 06:00:00")],
+            },
+            {"forecast_reference_time": 2, "step": 2},
+            {
+                "10u": {"level_and_type": "10heightAboveGround"},
+                "2t": {"level_and_type": "2heightAboveGround"},
+                "msl": {"level_and_type": "0meanSea"},
+                "tcw": {"level_and_type": "0entireAtmosphere"},
+                "tp": {"level_and_type": "0surface"},
+            },
+            {},
+        ),
+        (
+            "level/aifs-pl_sfc.grib",
+            None,
+            None,
+            {
+                "profile": None,
+                "level_dim_mode": "level_and_type",
+                "dims_as_attrs": ["level_and_type"],
+                "add_earthkit_attrs": False,
+            },
+            {
+                "forecast_reference_time": [
+                    pd.Timestamp("2025-12-12 00:00:00"),
+                    pd.Timestamp("2025-12-12 06:00:00"),
+                ],
+                "step": [pd.Timedelta("0 days 00:00:00"), pd.Timedelta("0 days 06:00:00")],
+                "level_and_type": ["1000isobaricInhPa", "500isobaricInhPa", "850isobaricInhPa"],
+            },
+            {"forecast_reference_time": 2, "step": 2, "level_and_type": 3},
+            {
+                "10u": {"level_and_type": "10heightAboveGround"},
+                "2t": {"level_and_type": "2heightAboveGround"},
+                "msl": {"level_and_type": "0meanSea"},
+                "tcw": {"level_and_type": "0entireAtmosphere"},
+                "tp": {"level_and_type": "0surface"},
+                "z": {},
+            },
+            {},
+        ),
+        (
+            "level/aifs-sfc.grib",
+            None,
+            None,
+            {
+                "profile": None,
+                "level_dim_mode": "level_per_type",
+                "dims_as_attrs": ["<level_per_type>"],
+                "add_earthkit_attrs": False,
+            },
+            {
+                "forecast_reference_time": [
+                    pd.Timestamp("2025-12-12 00:00:00"),
+                    pd.Timestamp("2025-12-12 06:00:00"),
+                ],
+                "step": [pd.Timedelta("0 days 00:00:00"), pd.Timedelta("0 days 06:00:00")],
+            },
+            {"forecast_reference_time": 2, "step": 2},
+            {
+                "10u": {"heightAboveGround": 10},
+                "2t": {"heightAboveGround": 2},
+                "msl": {"meanSea": 0},
+                "tcw": {"entireAtmosphere": 0},
+                "tp": {"surface": 0},
+            },
+            {},
+        ),
+        (
+            "level/aifs-pl_sfc.grib",
+            None,
+            None,
+            {
+                "profile": None,
+                "level_dim_mode": "level_per_type",
+                "dims_as_attrs": ["<level_per_type>"],
+                "add_earthkit_attrs": False,
+            },
+            {
+                "forecast_reference_time": [
+                    pd.Timestamp("2025-12-12 00:00:00"),
+                    pd.Timestamp("2025-12-12 06:00:00"),
+                ],
+                "step": [pd.Timedelta("0 days 00:00:00"), pd.Timedelta("0 days 06:00:00")],
+                "isobaricInhPa": [500, 850, 1000],
+            },
+            {"forecast_reference_time": 2, "step": 2, "isobaricInhPa": 3},
+            {
+                "10u": {"heightAboveGround": 10},
+                "2t": {"heightAboveGround": 2},
+                "msl": {"meanSea": 0},
+                "tcw": {"entireAtmosphere": 0},
+                "tp": {"surface": 0},
+                "z": {},
+            },
+            {},
+        ),
+    ],
+)
+def test_xr_dims_as_attrs2(lazy_load, path, sel, idx, kwargs, coords, dims, var_attrs, global_attrs):
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", path))
+    if sel:
+        ds0 = ds0.sel(**sel)
+    if idx:
+        ds0 = ds0[idx]
+    ds = ds0.to_xarray(lazy_load=lazy_load, **kwargs)
+    compare_coords(ds, coords)
+    compare_dims(ds, dims, sizes=True)
+
+    for v in var_attrs:
+        assert ds[v].attrs == var_attrs[v]
+    assert ds.attrs == global_attrs
