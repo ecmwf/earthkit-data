@@ -389,6 +389,7 @@ class SimpleSpecOld(SpecOld):
 
 class Spec(metaclass=ABCMeta):
     _ALIASES = Aliases()
+    SET_KEYS = tuple()
 
     @classmethod
     @abstractmethod

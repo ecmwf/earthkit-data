@@ -10,7 +10,7 @@
 import math
 from typing import Any
 
-from earthkit.data.field.geography import GeographyFieldMember
+from earthkit.data.field.geography import GeographyFieldPart
 from earthkit.data.field.spec.geography import Geography
 
 
@@ -87,7 +87,7 @@ class XArrayGeographySpec(Geography):
         pass
 
 
-class XArrayGeography(GeographyFieldMember):
+class XArrayGeography(GeographyFieldPart):
     def __init__(self, owner: Any, selection: Any) -> None:
         spec = XArrayGeographySpec(owner, selection)
         super().__init__(spec)

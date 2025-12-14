@@ -7,14 +7,14 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SpecFieldMember
+from .core import SpecFieldPart
 from .core import wrap_spec_methods
 from .spec.ensemble import Ensemble
 
 
 @wrap_spec_methods(keys=["member"])
-class EnsembleFieldMember(SpecFieldMember):
-    """A specification of an ensemble field."""
+class EnsembleFieldPart(SpecFieldPart):
+    """Ensemble part of a field."""
 
     SPEC_CLS = Ensemble
     NAME = "ensemble"
@@ -24,7 +24,3 @@ class EnsembleFieldMember(SpecFieldMember):
         from earthkit.data.field.grib.ensemble import COLLECTOR
 
         COLLECTOR.collect(self, context)
-
-    def set(self, *args, **kwargs):
-        spec = self._spec.set(*args, **kwargs)
-        return EnsembleFieldMember(spec)

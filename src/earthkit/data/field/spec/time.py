@@ -52,6 +52,16 @@ class Time:
         """Return the forecast period of the time object."""
         return self._step
 
+    @property
+    def base_date(self):
+        """Return the base date of the time object."""
+        return self._base_datetime.date()
+
+    @property
+    def base_time(self):
+        """Return the base time of the time object."""
+        return self._base_datetime.time()
+
     def to_dict(self):
         return {
             "valid_datetime": self.valid_datetime,
@@ -90,6 +100,11 @@ class Time:
             return cls()
 
         raise ValueError(f"Invalid keys in data: {list(d.keys())}. Expected one of {cls._CREATE_KEYS}.")
+
+    @classmethod
+    def from_base_date_and_time(cls, *, base_date=None, base_time=None, step=None):
+        dt = datetime_from_date_and_time(base_date, base_time)
+        return cls.from_base_datetime(base_datetime=dt, step=step)
 
     @classmethod
     def from_date_and_time(cls, *, date=None, time=None, step=None):
@@ -206,6 +221,25 @@ class Time:
             raise ValueError(f"Inconsistent step value. {base_datetime=} + {step=} != {valid_datetime=}")
         return self._set_generic(base_datetime=base_datetime, step=step)
 
+    # def _set_date(self, *, date):
+    #     time = self.base_datetime.time()
+    #     dt = datetime_from_date_and_time(date, time)
+    #     return self._set_generic(base_datetime=dt)
+
+    # def _set_date_and_time(self, *, date, time=None):
+    #     if time is None:
+    #         time = self.base_datetime.time()
+    #     dt = datetime_from_date_and_time(date, time)
+    #     return self._set_generic(base_datetime=dt)
+
+    def _set_base_date_and_time(self, *, base_date, base_time=None, step=None):
+        if base_time is None:
+            base_time = self.base_datetime.time()
+        if step is None:
+            step = self.step
+        dt = datetime_from_date_and_time(base_date, base_time)
+        return self._set_generic(base_datetime=dt, step=step)
+
 
 class MethodMap:
     def __init__(self, core_keys, extra_keys, methods):
@@ -260,7 +294,7 @@ class MethodMap:
 
 
 CREATE_METHOD_MAP = MethodMap(
-    core_keys={"valid_datetime", "base_datetime", "step", "date", "time"},
+    core_keys={"valid_datetime", "base_datetime", "step", "base_date", "base_time", "date", "time"},
     extra_keys=set(),
     methods={
         ("valid_datetime",): Time.from_valid_datetime,
@@ -268,6 +302,9 @@ CREATE_METHOD_MAP = MethodMap(
         ("base_datetime",): Time.from_base_datetime,
         ("base_datetime", "valid_datetime"): Time.from_base_datetime_and_valid_datetime,
         ("base_datetime", "step"): Time.from_base_datetime,
+        ("base_date",): Time.from_base_date_and_time,
+        ("base_date", "base_time"): Time.from_base_date_and_time,
+        ("base_date", "base_time", "step"): Time.from_base_date_and_time,
         ("date",): Time.from_date_and_time,
         ("date", "time"): Time.from_date_and_time,
         ("date", "time", "step"): Time.from_date_and_time,
@@ -276,7 +313,7 @@ CREATE_METHOD_MAP = MethodMap(
 
 
 SET_METHOD_MAP = MethodMap(
-    core_keys={"valid_datetime", "base_datetime", "step"},
+    core_keys={"valid_datetime", "base_datetime", "step", "base_date", "base_time"},
     extra_keys=set(),
     methods={
         ("step",): Time._set_generic,
@@ -290,5 +327,8 @@ SET_METHOD_MAP = MethodMap(
             "valid_datetime",
             "step",
         ): Time._set_base_datetime_valid_datetime_and_step,
+        ("base_date",): Time._set_base_date_and_time,
+        ("base_date", "base_time"): Time._set_base_date_and_time,
+        ("base_date", "base_time", "step"): Time._set_base_date_and_time,
     },
 )

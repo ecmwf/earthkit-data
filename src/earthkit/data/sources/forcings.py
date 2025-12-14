@@ -18,7 +18,7 @@ from earthkit.data.decorators import normalize
 
 # from earthkit.data.core.fieldlist import Field
 # from earthkit.data.core.metadata import RawMetadata
-from earthkit.data.field.spec.data import SimpleData
+from earthkit.data.field.data import DataFieldPart
 
 # from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.indexing.simple import SimpleFieldList
@@ -344,7 +344,7 @@ class ForcingsData:
         return request
 
 
-class ForcingsFieldData(SimpleData):
+class ForcingsFieldData(DataFieldPart):
     def __init__(self, proc, date):
         self.proc = proc
         self.date = date
@@ -401,21 +401,19 @@ class ForcingsFieldList(SimpleFieldList):
 
         return self._make_field(param, date, number)
 
-    # TODO: refactor the field construction
     def _make_field(self, param, date, number):
         from earthkit.data.core.field import Field
-        from earthkit.data.field.parameter import ParameterFieldMember
-        from earthkit.data.field.spec.labels import SimpleLabels
-        from earthkit.data.field.spec.parameter import Parameter
-        from earthkit.data.field.spec.time import Time
-        from earthkit.data.field.time import TimeFieldMember
 
         data = ForcingsFieldData(self.procs[param], date)
-        geography = self.maker.field._members["geography"]
-        parameter = ParameterFieldMember(Parameter.from_dict(dict(variable=param)))
-        time = TimeFieldMember(Time.from_valid_datetime(valid_datetime=date))
-        labels = SimpleLabels({"number": number})
-        field = Field(data=data, parameter=parameter, geography=geography, time=time, labels=labels)
+        geography = self.maker.field._geography
+
+        field = Field.from_mixed(
+            data=data,
+            parameter=dict(variable=param),
+            geography=geography,
+            time=dict(valid_datetime=date),
+            labels={"number": number},
+        )
 
         return field
 

@@ -13,7 +13,7 @@ from earthkit.data.field.spec.time_span import TimeMethods
 from earthkit.data.utils.dates import to_timedelta
 
 from .collector import GribContextCollector
-from .core import GribFieldMember
+from .core import GribFieldPart
 
 _GRIB_TO_METHOD = {
     "accum": TimeMethods.ACCUMULATED,
@@ -28,12 +28,10 @@ _METHOD_TO_GRIB = {v: k for k, v in _GRIB_TO_METHOD.items()}
 class GribProcBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.field.proc import ProcFieldMember
+        from earthkit.data.field.proc import ProcFieldPart
 
         d = GribProcBuilder._build_dict(handle)
-        print("GribProcBuilder.build:", d)
-        spec = ProcFieldMember.from_dict(d)
-        # spec._set_private_data("handle", handle)
+        spec = ProcFieldPart.from_dict(d)
         return spec
 
     @staticmethod
@@ -70,15 +68,23 @@ class GribProcBuilder:
 class GribProcContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(spec, context):
-        r = {
-            "perturbationNumber": spec.member,
-        }
-        context.update(r)
+        from earthkit.data.field.proc import TimeProcItem
+
+        time_item = None
+        for item in spec.items:
+            if isinstance(item, TimeProcItem):
+                time_item = item
+                break
+        if time_item is not None:
+            method = _METHOD_TO_GRIB.get(time_item.method, "instant")
+            context["stepType"] = method
+            if time_item.method != TimeMethods.INSTANT:
+                context["stepRange"] = time_item.value
 
 
 COLLECTOR = GribProcContextCollector()
 
 
-class GribProc(GribFieldMember):
+class GribProc(GribFieldPart):
     BUILDER = GribProcBuilder
     COLLECTOR = COLLECTOR

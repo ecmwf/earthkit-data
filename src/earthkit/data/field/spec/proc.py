@@ -14,6 +14,7 @@ from earthkit.data.utils.dates import to_timedelta
 
 from .spec import spec_aliases
 from .time_span import TimeMethods
+from .time_span import get_time_method
 
 
 class ProcItem(metaclass=ABCMeta):
@@ -29,7 +30,7 @@ class TimeProcItem(ProcItem):
         except Exception as e:
             raise ValueError(f"Invalid time span value: {value}") from e
 
-        self.method = method
+        self.method = get_time_method(method)
         # if not isinstance(self.method, TimeSpanMethod):
         #     raise ValueError(f"Invalid time span method: {method}")
         # self._check()
@@ -43,7 +44,7 @@ class TimeProcItem(ProcItem):
     #     return self._method
 
     def __repr__(self):
-        return f"TimeProcItem({self.value}, {self.method.value.name})"
+        return f"TimeProcItem({self.value}, {self.method.name})"
 
     @classmethod
     def from_dict(cls, d: dict):
@@ -52,7 +53,14 @@ class TimeProcItem(ProcItem):
 
         return cls(value=value, method=method)
 
-    # @staticmethod
+    def set(self, *, value=None, method=None):
+        if value is None:
+            value = self.value
+        if method is None:
+            method = self.method
+        return TimeProcItem(value=value, method=method)
+
+    # taticmethod
     # def build(data):
     #     if isinstance(data, TimeSpan):
     #         return data
@@ -79,6 +87,7 @@ class Proc:
     """A specification of a parameter."""
 
     _SET_KEYS = tuple()
+    _ALIASES = {}
 
     def __init__(self, items) -> None:
         self.items = items
@@ -89,6 +98,22 @@ class Proc:
         for item in self.items:
             if isinstance(item, TimeProcItem):
                 return item
+        return None
+
+    @property
+    def time_value(self) -> str:
+        r"""str: Return the parameter variable."""
+        time = self.time
+        if time is not None:
+            return time.value
+        return None
+
+    @property
+    def time_method(self) -> str:
+        r"""str: Return the parameter variable."""
+        time = self.time
+        if time is not None:
+            return time.method
         return None
 
     @classmethod
@@ -115,6 +140,19 @@ class Proc:
                 raise ValueError(f"Unknown Proc item: {k}")
 
         return cls(r)
+
+    def set(self, *args, **kwargs):
+        pass
+        # d = normalise_set_kwargs_2(self, *args, allowed_keys=self._SET_KEYS, remove_nones=False, **kwargs)
+
+        # current = {
+        #     "level": self._level,
+        #     "layer": self._layer,
+        #     "type": self._type,
+        # }
+
+        # current.update(d)
+        # return self.from_dict(current)
 
 
 _MAKERS = {

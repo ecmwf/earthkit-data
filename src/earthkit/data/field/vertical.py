@@ -7,24 +7,20 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SpecFieldMember
+from .core import SpecFieldPart
 from .core import wrap_spec_methods
 from .spec.vertical import Vertical
 
 
 @wrap_spec_methods(keys=["level", "layer", "cf", "abbreviation", "units", "positive", "type"])
-class VerticalFieldMember(SpecFieldMember):
-    """A specification of a vertical level or layer."""
+class VerticalFieldPart(SpecFieldPart):
+    """Vertical part of a field."""
 
     SPEC_CLS = Vertical
     NAME = "vertical"
-    NAMESPACE_KEYS = ("level", "level_type")
+    NAMESPACE_KEYS = ("level", "level_type", "units")
 
     def get_grib_context(self, context) -> dict:
         from earthkit.data.field.grib.vertical import COLLECTOR
 
         COLLECTOR.collect(self, context)
-
-    def set(self, *args, **kwargs):
-        spec = self._spec.set(*args, **kwargs)
-        return VerticalFieldMember(spec)

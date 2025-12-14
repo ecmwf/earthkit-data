@@ -10,10 +10,10 @@
 
 from abc import abstractmethod
 
-from .core import FieldMember
+from .core import FieldPart
 
 
-class Labels(FieldMember):
+class Labels(FieldPart):
     NAME = "labels"
 
     @abstractmethod

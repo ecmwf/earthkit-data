@@ -21,6 +21,7 @@ from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
 from earthkit.data.utils.message import CodesReader
 from earthkit.data.utils.metadata.args import metadata_argument
+from earthkit.data.utils.metadata.args import metadata_argument_new
 from earthkit.data.utils.parts import Part
 from earthkit.data.utils.summary import make_bufr_html_tree
 
@@ -233,6 +234,51 @@ class BUFRMessage(Base):
         """
         return self.handle.unpack()
 
+    def get_single(self, key, default=None, *, astype=None, raise_on_missing=False):
+        try:
+            return self.handle.get(key, ktype=astype)
+        except Exception:
+            pass
+
+        if raise_on_missing:
+            raise KeyError(f"Key {key} not found in handle")
+
+        return default
+
+    def _get_fast(
+        self,
+        keys,
+        default=None,
+        astype=None,
+        raise_on_missing=False,
+        output=None,
+    ):
+        assert isinstance(keys, list)
+
+        meth = self.get_single
+        _kwargs = dict(default=default, raise_on_missing=raise_on_missing)
+
+        if output in (list, tuple):
+            if astype is None:
+                r = [meth(k, **_kwargs) for k in keys]
+            else:
+                assert isinstance(astype, (list, tuple))
+                r = [meth(k, astype=kt, **_kwargs) for k, kt in zip(keys, astype)]
+
+            if output is tuple:
+                return tuple(r)
+            else:
+                return r
+        elif output is dict:
+            if astype is None:
+                return {k: meth(k, astype=astype, **_kwargs) for k in keys}
+            else:
+                return {k: meth(k, astype=kt, **_kwargs) for k, kt in zip(keys, astype)}
+        else:
+            if isinstance(astype, (list, tuple)):
+                astype = astype[0]
+            return meth(keys[0], astype=astype, **_kwargs)
+
     def get(self, *keys, default=None, astype=None, raise_on_missing=False):
         r"""Return the values for the specified keys.
 
@@ -254,7 +300,18 @@ class BUFRMessage(Base):
         if not keys:
             raise ValueError("At least one key must be specified.")
 
-        return self.metadata(keys, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        keys, astype, key_arg_type = metadata_argument_new(*keys, astype=astype)
+        assert isinstance(keys, list)
+
+        r = self._get_fast(
+            keys,
+            default=default,
+            astype=astype,
+            raise_on_missing=raise_on_missing,
+            output=key_arg_type,
+        )
+
+        return r
 
     def metadata(self, *keys, astype=None, **kwargs):
         r"""Returns metadata values from the BUFR message. When the message in packed

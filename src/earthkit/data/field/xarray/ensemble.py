@@ -9,7 +9,7 @@
 
 from typing import Any
 
-from earthkit.data.field.ensemble import EnsembleFieldMember
+from earthkit.data.field.ensemble import EnsembleFieldPart
 from earthkit.data.field.spec.ensemble import Ensemble
 
 
@@ -37,7 +37,7 @@ def from_xarray(owner, selection):
     return dict(member=member)
 
 
-class XArrayEnsemble(EnsembleFieldMember):
+class XArrayEnsemble(EnsembleFieldPart):
     def __init__(self, owner: Any, selection: Any) -> None:
         self.owner = owner
         self.selection = selection

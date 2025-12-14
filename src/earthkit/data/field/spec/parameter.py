@@ -60,11 +60,12 @@ class Parameter:
 
     def __getstate__(self):
         state = {}
-        state["member"] = self._member
+        state["variable"] = self._variable
+        state["units"] = self._units
         return state
 
     def __setstate__(self, state):
-        self.__init__(member=state["member"])
+        self.__init__(variable=state["variable"], units=state["units"])
 
     def set(self, *args, **kwargs):
         d = normalise_set_kwargs_2(self, *args, allowed_keys=self._SET_KEYS, remove_nones=False, **kwargs)

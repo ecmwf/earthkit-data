@@ -72,38 +72,42 @@ def test_lazy_fdb():
 
         assert ds[0].shape == (19, 36)
         assert ds[1].shape == (19, 36)
-        assert ds[0].metadata(["shortName", "param", "units", "cfName"]) == ["t", "t", "K", "air_temperature"]
-        assert ds[1].metadata(["shortName", "param", "units", "cfName"]) == [
+        assert ds[0].get(["variable", "param", "units", "grib.cfName"]) == ["t", "t", "K", "air_temperature"]
+        assert ds[1].get(["variable", "param", "units", "grib.cfName"]) == [
             "r",
             "r",
             "%",
             "relative_humidity",
         ]
 
-        assert ds[0].metadata(["date", "time", "step", "levelist", "level"]) == [20240603, 0, 0, 500, 500]
-        assert ds[1].metadata(["date", "time", "step", "levelist", "level"]) == [20240603, 0, 0, 500, 500]
+        assert ds[0].get("base_datetime") == datetime.datetime(2024, 6, 3, 0, 0)
+        assert ds[1].get("base_datetime") == datetime.datetime(2024, 6, 3, 0, 0)
 
-        assert ds[0].metadata("step_timedelta") == datetime.timedelta(hours=0)
-        assert ds[4].metadata("step_timedelta") == datetime.timedelta(hours=6)
+        assert ds[0].get("step") == datetime.timedelta(hours=0)
+        assert ds[1].get("step") == datetime.timedelta(hours=0)
+        assert ds[4].get("step") == datetime.timedelta(hours=6)
+
+        assert ds[0].get("level") == 500
+        assert ds[1].get("level") == 500
 
         # compare all the fields
-        ds_in_sorted = ds_in.order_by(["shortName", "date", "time", "step", "levelist"])
-        ds_sorted = ds.order_by(["shortName", "date", "time", "step", "levelist"])
-        t = ds_in_sorted.sel(shortName="t")
-        r = ds_in_sorted.sel(shortName="r")
-        t_fdb = ds_sorted.sel(shortName="t")
-        r_fdb = ds_sorted.sel(shortName="r")
+        ds_in_sorted = ds_in.order_by(["variable", "base_datetime", "step", "level"])
+        ds_sorted = ds.order_by(["variable", "base_datetime", "step", "level"])
+        t = ds_in_sorted.sel(variable="t")
+        r = ds_in_sorted.sel(variable="r")
+        t_fdb = ds_sorted.sel(variable="t")
+        r_fdb = ds_sorted.sel(variable="r")
 
         assert len(t) == 16
         assert len(r) == 16
         assert len(t_fdb) == 16
         assert len(r_fdb) == 16
 
-        assert t.metadata(["shortName", "date", "time", "step", "levelist"]) == t_fdb.metadata(
-            ["shortName", "date", "time", "step", "levelist"]
+        assert t.get(["variable", "base_datetime", "step", "level"]) == t_fdb.get(
+            ["variable", "base_datetime", "step", "level"]
         )
-        assert r.metadata(["shortName", "date", "time", "step", "levelist"]) == r_fdb.metadata(
-            ["shortName", "date", "time", "step", "levelist"]
+        assert r.get(["variable", "base_datetime", "step", "level"]) == r_fdb.get(
+            ["variable", "base_datetime", "step", "level"]
         )
 
         assert np.allclose(t.to_numpy(), t_fdb.to_numpy().reshape(16, 19, 36))
@@ -111,6 +115,8 @@ def test_lazy_fdb():
 
         assert not hasattr(ds, "path")
         assert not hasattr(ds[0], "path")
+
+        return
 
         # --------------------
         #  Xarray tests

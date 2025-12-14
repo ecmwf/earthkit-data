@@ -14,7 +14,7 @@ from earthkit.data.decorators import thread_safe_cached_property
 LOG = logging.getLogger(__name__)
 
 
-class GribFieldMember:
+class GribFieldPart:
     BUILDER = None
     COLLECTOR = None
 
@@ -27,7 +27,7 @@ class GribFieldMember:
         return cls(handle)
 
     @thread_safe_cached_property
-    def _member(self):
+    def _part(self):
         try:
             return self.BUILDER.build(self.handle)
         except Exception as e:
@@ -37,7 +37,7 @@ class GribFieldMember:
 
     # @property
     # def spec(self):
-    #     return self._member.spec
+    #     return self._part.spec
 
     def get_grib_context(self, context) -> dict:
         self.COLLECTOR.collect(self, context)
@@ -45,7 +45,7 @@ class GribFieldMember:
     def __getattr__(self, name):
         if self._exception is not None:
             raise self._exception(name)
-        return getattr(self._member, name)
+        return getattr(self._part, name)
 
     def __getstate__(self):
         state = {}

@@ -20,17 +20,15 @@ from earthkit.data.core.order import Patch
 from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalize
-
-# from earthkit.data.field.conf import NAMES as MEMBER_NAMES
-from earthkit.data.field.conf import init_member_conf
-from earthkit.data.field.data import Data
-from earthkit.data.field.ensemble import EnsembleFieldMember
-from earthkit.data.field.geography import GeographyFieldMember
-from earthkit.data.field.parameter import ParameterFieldMember
-from earthkit.data.field.proc import ProcFieldMember
+from earthkit.data.field.conf import init_part_conf
+from earthkit.data.field.data import DataFieldPart
+from earthkit.data.field.ensemble import EnsembleFieldPart
+from earthkit.data.field.geography import GeographyFieldPart
+from earthkit.data.field.parameter import ParameterFieldPart
+from earthkit.data.field.proc import ProcFieldPart
 from earthkit.data.field.spec.labels import SimpleLabels
-from earthkit.data.field.time import TimeFieldMember
-from earthkit.data.field.vertical import VerticalFieldMember
+from earthkit.data.field.time import TimeFieldPart
+from earthkit.data.field.vertical import VerticalFieldPart
 from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.utils.array import flatten as array_flatten
 from earthkit.data.utils.array import reshape as array_reshape
@@ -52,28 +50,38 @@ LS_KEYS = [
     "grid_type",
 ]
 
-# DUMP_ORDER = [
-#     MEMBER_NAMES.parameter,
-#     MEMBER_NAMES.time,
-#     MEMBER_NAMES.vertical,
-#     MEMBER_NAMES.ensemble,
-#     MEMBER_NAMES.geography,
-# ]
+
+# Define field part names. These are also namespace names.
+DATA = "data"
+TIME = "time"
+PARAMETER = "parameter"
+GEOGRAPHY = "geography"
+VERTICAL = "vertical"
+ENSEMBLE = "ensemble"
+PROC = "proc"
+LABELS = "labels"
+
+DUMP_ORDER = [
+    PARAMETER,
+    TIME,
+    VERTICAL,
+    ENSEMBLE,
+    GEOGRAPHY,
+]
 
 
-@init_member_conf(
+@init_part_conf(
     {
-        "data": {"cls": Data, "direct": "values"},
-        "time": {"cls": TimeFieldMember, "direct": all},
-        "parameter": {"cls": ParameterFieldMember, "direct": ("variable", "param", "units")},
-        "geography": {
-            "cls": GeographyFieldMember,
+        DATA: {"direct": "values"},
+        TIME: {"direct": all},
+        PARAMETER: {"direct": ("variable", "param", "units")},
+        GEOGRAPHY: {
             "direct": ("latitudes", "longitudes", "grid_spec", "x", "y", "bounding_box"),
         },
-        "vertical": {"cls": VerticalFieldMember, "direct": ("level", "layer")},
-        "ensemble": {"cls": EnsembleFieldMember, "direct": ("member",)},
-        "proc": {"cls": ProcFieldMember},
-        "labels": None,
+        VERTICAL: {"direct": ("level", "layer")},
+        ENSEMBLE: {"direct": ("member",)},
+        PROC: {},
+        LABELS: None,
     }
 )
 @wrap_maths
@@ -83,7 +91,7 @@ class Field(Base):
     A field in Earthkit is a horizontal slice of the atmosphere/hydrosphere at
     a given time.
 
-    A Field object is composed of several member:
+    A Field object is composed of several parts:
     - data: the data values of the field
     - time: the time of the field
     - parameter: the parameter of the field
@@ -114,9 +122,30 @@ class Field(Base):
 
     """
 
-    # these will be initialized by the config decorator
-    _MEMBER_NAMES = None
-    _MEMBER_KEYS = None
+    _PART_NAMES = (
+        DATA,
+        TIME,
+        PARAMETER,
+        GEOGRAPHY,
+        VERTICAL,
+        ENSEMBLE,
+        PROC,
+        LABELS,
+    )
+
+    _DEFAULT_PART_CLS = {
+        DATA: DataFieldPart,
+        TIME: TimeFieldPart,
+        PARAMETER: ParameterFieldPart,
+        GEOGRAPHY: GeographyFieldPart,
+        VERTICAL: VerticalFieldPart,
+        ENSEMBLE: EnsembleFieldPart,
+        PROC: ProcFieldPart,
+        LABELS: SimpleLabels,
+    }
+
+    # this will be initialized by the config decorator
+    _PART_KEYS = None
 
     def __init__(
         self,
@@ -132,26 +161,29 @@ class Field(Base):
     ):
 
         self._data = data
+        self._time = time
+        self._parameter = parameter
+        self._geography = geography
+        self._vertical = vertical
+        self._ensemble = ensemble
+        self._proc = proc
 
         if labels is None:
             labels = SimpleLabels()
         self._labels = labels
 
-        self._members = {
-            Field._MEMBER_NAMES.data: data,
-            Field._MEMBER_NAMES.time: time,
-            Field._MEMBER_NAMES.parameter: parameter,
-            Field._MEMBER_NAMES.geography: geography,
-            Field._MEMBER_NAMES.vertical: vertical,
-            Field._MEMBER_NAMES.ensemble: ensemble,
-            Field._MEMBER_NAMES.proc: proc,
-            Field._MEMBER_NAMES.labels: labels,
+        self._parts = {
+            DATA: data,
+            TIME: time,
+            PARAMETER: parameter,
+            GEOGRAPHY: geography,
+            VERTICAL: vertical,
+            ENSEMBLE: ensemble,
+            PROC: proc,
+            LABELS: labels,
         }
 
         self._private = dict()
-
-    def _check(self):
-        self._check()
 
     @classmethod
     def from_field(
@@ -180,12 +212,12 @@ class Field(Base):
         kwargs = kwargs.copy()
         _kwargs = {}
 
-        for name in Field._MEMBER_NAMES:
+        for name in Field._PART_NAMES:
             v = kwargs.pop(name, None)
             if v is not None:
                 _kwargs[name] = v
             else:
-                _kwargs[name] = field._members[name]
+                _kwargs[name] = field._parts[name]
 
         r = field.__class__(**_kwargs, **kwargs)
 
@@ -198,28 +230,20 @@ class Field(Base):
 
     @classmethod
     def from_dict(cls, d):
-        from earthkit.data.field.data import SimpleData
-
-        # from earthkit.data.field.ensemble import SimpleEnsemble
-        # from earthkit.data.field.geography import SimpleGeography
-        from earthkit.data.field.spec.labels import SimpleLabels
-
-        # from earthkit.data.specs.parameter import SimpleParameter
-        # from earthkit.data.specs.time import SimpleTime
-        # from earthkit.data.specs.vertical import SimpleVertical
-
         if not isinstance(d, dict):
             raise TypeError("d must be a dictionary")
 
-        data = SimpleData.from_dict(d, allow_unused=True)
-        geography = GeographyFieldMember.from_dict(d, allow_unused=True, shape_hint=data.values.shape)
-        parameter = ParameterFieldMember.from_dict(d, allow_unused=True)
-        time = TimeFieldMember.from_dict(d, allow_unused=True)
-        vertical = VerticalFieldMember.from_dict(d, allow_unused=True)
-        ensemble = EnsembleFieldMember.from_dict(d, allow_unused=True)
+        data = DataFieldPart.from_dict(d, allow_unused=True)
+        geography = GeographyFieldPart.from_dict(
+            d, allow_unused=True, shape_hint=data.get_values(copy=False).shape
+        )
+        parameter = ParameterFieldPart.from_dict(d, allow_unused=True)
+        time = TimeFieldPart.from_dict(d, allow_unused=True)
+        vertical = VerticalFieldPart.from_dict(d, allow_unused=True)
+        ensemble = EnsembleFieldPart.from_dict(d, allow_unused=True)
 
         # the unused items are added to the labels
-        rest = {k: v for k, v in d.items() if k not in cls._MEMBER_KEYS}
+        rest = {k: v for k, v in d.items() if k not in cls._PART_KEYS}
         labels = SimpleLabels(rest)
 
         return cls(
@@ -232,35 +256,73 @@ class Field(Base):
             labels=labels,
         )
 
+    @classmethod
+    def from_mixed(cls, **kwargs):
+        from earthkit.data.field.core import FieldPart
+
+        kwargs = kwargs.copy()
+        _kwargs = {}
+
+        geo = None
+        if GEOGRAPHY in kwargs and isinstance(kwargs[GEOGRAPHY], dict):
+            geo = kwargs.get(GEOGRAPHY, None)
+
+        for name in Field._PART_NAMES:
+            v = kwargs.pop(name, None)
+            if v is not None:
+                # TODO: find a better way to handle FieldPart-like objects. E.g. GRIB parts
+                # are only a wrapper around a FieldPart object
+                if isinstance(v, FieldPart) or hasattr(v, "get_grib_context"):
+                    _kwargs[name] = v
+                elif isinstance(v, dict):
+                    _kwargs[name] = cls._DEFAULT_PART_CLS[name].from_dict(v, allow_unused=True)
+                # we assume it is a spec
+                else:
+                    v = cls._DEFAULT_PART_CLS[name].from_spec(v)
+                    _kwargs[name] = v
+
+        if geo:
+            if "data" in _kwargs and _kwargs["data"] is not None:
+                data = _kwargs["data"]
+                shape_hint = data.values.shape
+                _kwargs[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_dict(
+                    geo, allow_unused=True, shape_hint=shape_hint
+                )
+            else:
+                _kwargs[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_dict(geo, allow_unused=True)
+
+        r = cls(**_kwargs, **kwargs)
+        return r
+
     @property
     def ensemble(self):
         """Ensemble: Return the ensemble specification of the field."""
-        return self._members[Field._MEMBER_NAMES.ensemble].spec
+        return self._ensemble.spec
 
     @property
     def time(self):
         """Time: Return the time specification of the field."""
-        return self._members[Field._MEMBER_NAMES.time].spec
+        return self._time.spec
 
     @property
     def vertical(self):
         """Vertical: Return the vertical specification of the field."""
-        return self._members[Field._MEMBER_NAMES.vertical].spec
+        return self._vertical.spec
 
     @property
     def parameter(self):
         """Parameter: Return the vertical specification of the field."""
-        return self._members[Field._MEMBER_NAMES.parameter].spec
+        return self._parameter.spec
 
     @property
     def geography(self):
         """Geography: Return the geography specification of the field."""
-        return self._members[Field._MEMBER_NAMES.geography].spec
+        return self._geography.spec
 
     @property
     def proc(self):
         """Proc: Return the proc specification of the field."""
-        return self._members[Field._MEMBER_NAMES.proc].spec
+        return self._proc.spec
 
     @classmethod
     def from_array(cls, array):
@@ -287,8 +349,8 @@ class Field(Base):
 
     @property
     def shape(self):
-        if self._members[Field._MEMBER_NAMES.geography]:
-            return self._members[Field._MEMBER_NAMES.geography].shape
+        if self._geography:
+            return self._geography.shape
         else:
             return self.values.shape
 
@@ -380,23 +442,23 @@ class Field(Base):
 
         return v
 
-    def _get_member(self, key):
-        """Return the member name, member object and key name for the specified key."""
-        m = self._MEMBER_KEYS.get(key)
+    def _get_part(self, key):
+        """Return the part name, part object and key name for the specified key."""
+        m = self._PART_KEYS.get(key)
         if m is not None:
-            return m[0], self._members.get(m[0]), m[1]
+            return m[0], self._parts.get(m[0]), m[1]
         if "." in key:
-            member, name = key.split(".", 1)
-            return member, None, name
+            part, name = key.split(".", 1)
+            return part, None, name
         return None, None, None
 
         # if "." in key:
-        #     member, name = key.split(".", 1)
-        #     return member, self._members.get(member), name
+        #     part, name = key.split(".", 1)
+        #     return part, self._parts.get(part), name
         # else:
-        #     for member, d in self._members.items():
+        #     for part, d in self._parts.items():
         #         if key in d.ALL_KEYS:
-        #             return member, d, key
+        #             return part, d, key
 
         # return None, None, None
 
@@ -442,18 +504,18 @@ class Field(Base):
 
         v = None
 
-        # first try the members
-        member_name, member, key_name = self._get_member(key)
-        if member:
-            v = member.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        # first try the parts
+        part_name, part, key_name = self._get_part(key)
+        if part:
+            v = part.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
             return v
         # next try the labels with the full key
         elif key in self._labels:
             return self._labels.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-        # try the private members
+        # try the private parts
         elif self._private:
-            if member_name in self._private:
-                return self._private[member_name].get(
+            if part_name in self._private:
+                return self._private[part_name].get(
                     key_name, default=default, astype=astype, raise_on_missing=raise_on_missing
                 )
             else:
@@ -740,43 +802,21 @@ class Field(Base):
             return self._metadata.as_namespace(None)
 
     def set(self, **kwargs):
-        # collect keys to set per member
+        # collect keys to set per part
         _kwargs = defaultdict(dict)
         for k, v in kwargs.items():
-            member_name, member, key_name = self._get_member(k)
-            if member:
-                _kwargs[member_name][key_name] = v
+            part_name, part, key_name = self._get_part(k)
+            if part:
+                _kwargs[part_name][key_name] = v
             else:
-                _kwargs[self._MEMBER_NAMES.labels][k] = v
+                _kwargs[LABELS][k] = v
 
         if _kwargs:
             r = {}
-            for member_name, v in _kwargs.items():
-                member = self._members[member_name]
-                s = member.set(**v)
-                r[member_name] = s
-
-            # if "grib" in self._private:
-            #     grib = self._private["grib"]
-            #     handle_ref = grib.handle
-            #     new_handle = None
-            #     print("Check grib handle_ref ", handle_ref)
-            #     for member_name in r:
-            #         member = r[member_name]
-            #         print("Check member ", member_name)
-            #         if hasattr(member, "handle"):
-            #             print("Member has handle ", member.handle)
-            #             if member.handle != grib.handle:
-            #                 print("Updating grib handle form member ", member_name)
-            #                 new_handle = member.handle
-            #                 break
-
-            #     if new_handle and handle_ref != new_handle
-            #         for k, v in r.items():
-            #             if hasattr(v, "handle"):
-            #                 if v.handle != new_handle:
-            #                     print("Updating member handle to ", v)
-            #                     v.handle = grib.handle
+            for part_name, v in _kwargs.items():
+                part = self._parts[part_name]
+                s = part.set(**v)
+                r[part_name] = s
 
             if r:
                 return Field.from_field(self, **r)
@@ -912,7 +952,7 @@ class Field(Base):
             name = None
 
         result = {}
-        for m in self._members.values():
+        for m in self._parts.values():
             m.namespace(self, name, result)
 
         if name is not None and self._private:
@@ -956,7 +996,7 @@ class Field(Base):
         d = self.namespace(namespace)
 
         d1 = {}
-        for k in self._DUMP_ORDER:
+        for k in DUMP_ORDER:
             if k in d:
                 d1[k] = d.pop(k)
 
@@ -1019,7 +1059,7 @@ class Field(Base):
 
     def _check(self):
         return
-        # for m in self._members.values():
+        # for m in self._parts.values():
         #     m.check(self)
 
     def _get_grib_context(self, context):
@@ -1027,14 +1067,13 @@ class Field(Base):
         if grib is not None:
             context["handle"] = grib.handle
 
-        for m in self._members.values():
+        for m in self._parts.values():
             m.get_grib_context(context)
 
     @normalize("valid_datetime", "date")
     @normalize("base_datetime", "date")
     @normalize("forecast_reference_time", "date")
     @normalize("step", "timedelta")
-    # @normalize("time_span", "timedelta")
     @staticmethod
     def normalise_key_values(**kwargs):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""
@@ -1279,7 +1318,7 @@ class Field(Base):
         'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
 
         """
-        time = self._members[self._MEMBER_NAMES.time]
+        time = self._parts[TIME]
         return {"base_time": time.base_datetime, "valid_time": time.valid_datetime}
 
     def sel(self, *args, **kwargs):
@@ -1320,15 +1359,15 @@ class Field(Base):
         # state["ensemble"] = self._ensemble
         # state["time"] = self._time
         # state["vertical"] = self._vertical
-        state["members"] = self._members
+        state["parts"] = self._parts
         state["private"] = self._private
         return state
 
     def __setstate__(self, state):
 
-        members = state.get("members", {})
+        parts = state.get("parts", {})
 
-        self.__init__(**members)
+        self.__init__(**parts)
 
         private = state.get("private", {})
         self._private = private

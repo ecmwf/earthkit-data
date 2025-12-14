@@ -11,7 +11,7 @@ from earthkit.data.field.spec.geography import Geography
 from earthkit.data.field.spec.spec import normalise_set_kwargs_2
 
 from .collector import GribContextCollector
-from .core import GribFieldMember
+from .core import GribFieldPart
 
 
 def missing_is_none(x):
@@ -181,9 +181,9 @@ class GribGeographySpec(Geography):
 class GribGeographyBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.field.geography import GeographyFieldMember
+        from earthkit.data.field.geography import GeographyFieldPart
 
-        return GeographyFieldMember(GribGeographySpec(handle))
+        return GeographyFieldPart(GribGeographySpec(handle))
 
 
 class GribGeographyContextCollector(GribContextCollector):
@@ -195,7 +195,7 @@ class GribGeographyContextCollector(GribContextCollector):
 COLLECTOR = GribGeographyContextCollector()
 
 
-class GribGeography(GribFieldMember):
+class GribGeography(GribFieldPart):
     BUILDER = GribGeographyBuilder
     COLLECTOR = COLLECTOR
 
@@ -207,7 +207,7 @@ class GribGeography(GribFieldMember):
             handle = self._handle_from_grid_spec(self, kwargs["grid_spec"])
             return GribGeography(handle)
         else:
-            return self._member.set(*args, shape_hint=shape_hint, **kwargs)
+            return self._part.set(*args, shape_hint=shape_hint, **kwargs)
 
     def _handle_from_grid_spec(cls, spec, grid_spec):
         from earthkit.data.new_field.grib.handle import MemoryGribHandle

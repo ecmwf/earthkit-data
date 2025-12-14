@@ -55,7 +55,7 @@ def test_bufr_to_pandas_filters():
 
 
 def test_bufr_to_pandas_multi():
-    ds = from_source("file", earthkit_examples_file("temp_10.bufr")) + from_source(
+    ds = from_source("file", earthkit_examples_file("temp_10.bufr")) & from_source(
         "file", earthkit_examples_file("synop_10.bufr")
     )
 

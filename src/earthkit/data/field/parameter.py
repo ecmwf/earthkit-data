@@ -7,14 +7,14 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SpecFieldMember
+from .core import SpecFieldPart
 from .core import wrap_spec_methods
 from .spec.parameter import Parameter
 
 
 @wrap_spec_methods(keys=["variable", "units"])
-class ParameterFieldMember(SpecFieldMember):
-    """A specification of a vertical level or layer."""
+class ParameterFieldPart(SpecFieldPart):
+    """Parameter part of a field."""
 
     SPEC_CLS = Parameter
     NAME = "parameter"
@@ -24,7 +24,3 @@ class ParameterFieldMember(SpecFieldMember):
         from earthkit.data.field.grib.parameter import COLLECTOR
 
         COLLECTOR.collect(self, context)
-
-    def set(self, *args, **kwargs):
-        spec = self._spec.set(*args, **kwargs)
-        return ParameterFieldMember(spec)

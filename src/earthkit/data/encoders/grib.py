@@ -13,6 +13,7 @@ from functools import lru_cache
 
 from earthkit.data.decorators import normalize
 from earthkit.data.decorators import normalize_grib_keys
+from earthkit.data.utils.dates import step_range_to_grib
 from earthkit.data.utils.humanize import list_to_human
 
 from . import EncodedData
@@ -440,6 +441,7 @@ class GribEncoder(Encoder):
         #     values = field_values
 
         if r:
+            self._update_metadata_from_field(field, r)
             if metadata is None:
                 metadata = r
             else:
@@ -590,9 +592,30 @@ class GribEncoder(Encoder):
 
         return GribEncodedData(handle)
 
+    def _update_metadata_from_field(self, field, metadata):
+        if "stepRange" in metadata:
+            step_range = metadata["stepRange"]
+            if isinstance(step_range, datetime.timedelta):
+                step = field.step
+                start = step - step_range
+                end = step
+                metadata["stepRange"] = step_range_to_grib(start, end)
+
     def _update_metadata(self, handle, metadata, compulsory, can_infer_time):
         # TODO: revisit that logic
         combined = Combined(handle, metadata)
+
+        if "stepRange" in metadata:
+            step_range = metadata["stepRange"]
+            if isinstance(step_range, datetime.timedelta):
+                start_step, end_step = step_range.split("-")
+                metadata["startStep"] = int(start_step)
+                metadata["endStep"] = int(end_step)
+                del metadata["stepRange"]
+            else:
+                metadata["startStep"] = int(step_range)
+                metadata["endStep"] = int(step_range)
+                del metadata["stepRange"]
 
         if "step" in metadata or "endStep" in metadata:
             if combined["type"] == "an":

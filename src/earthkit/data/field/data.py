@@ -14,11 +14,19 @@ from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.utils.array import flatten
 
-from .core import SimpleFieldMember
+from .core import SimpleFieldPart
 
 
-class Data(SimpleFieldMember):
-    """A specification of a data values."""
+class BaseDataFieldPart(SimpleFieldPart):
+    """Base class for the data part of a field.
+
+    This class defines the interface for accessing and manipulating the data values
+    associated with a field. It provides methods to retrieve the data as an array,
+    set new values, and check for consistency with the field's shape.
+
+    It is an abstract class and should be subclassed to provide concrete implementations
+    for specific data storage mechanisms.
+    """
 
     ALL_KEYS = ("values",)
     SET_KEYS = ("values",)
@@ -26,6 +34,7 @@ class Data(SimpleFieldMember):
 
     @property
     def spec(self):
+        """This field part has no spec."""
         return None
 
     @property
@@ -42,13 +51,22 @@ class Data(SimpleFieldMember):
         ----------
         dtype: data-type, optional
             The desired data type of the array. If not specified, the default data type is used.
+        copy: bool, optional
+            If True, a copy of the array is returned. If False, a view is returned if possible. Default is True.
         """
         pass
 
 
-class SimpleData(Data):
+class DataFieldPart(BaseDataFieldPart):
+    """Simple data class that provides basic implementation for the data part of a field.
+
+    SimpleData has to be subclassed to provide concrete implementation
+    for :py:meth:`get_values`.
+    """
+
     @classmethod
-    def from_dict(cls, d, allow_unused=False):
+    def from_dict(cls, d, allow_unused=False) -> "DataFieldPart":
+        """Create a DataFieldPart object from a dictionary."""
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
         # d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
@@ -60,7 +78,7 @@ class SimpleData(Data):
     @property
     def values(self):
         r"""array-like: Get the values stored in the field as a 1D array."""
-        return flatten(self.get_values())
+        return flatten(self.get_values(copy=False))
 
     def set_values(self, array):
         """Set the values of the field.
@@ -95,13 +113,16 @@ class SimpleData(Data):
         raise ValueError("Invalid arguments")
 
     def namespace(self, *args):
+        """This field part has no namespace."""
         return None
 
     def check(self, owner):
+        """Check that the data is consistent with the field's shape."""
         if self.values.size != math.prod(owner.shape):
             raise ValueError(f"Data shape mismatch: {self.values.shape} (data) != {owner.shape} (field)")
 
     def get_grib_context(self, context):
+        """Get the GRIB context for the data part of the field."""
         from earthkit.data.field.grib.data import COLLECTOR
 
         COLLECTOR.collect_keys(self, context)
@@ -149,8 +170,8 @@ class ArrayCache:
             _create(self.cache_file)
 
 
-class ArrayData(SimpleData):
-    """A simple data class that uses an array-like structure for values."""
+class ArrayData(DataFieldPart):
+    """Data part of a field that stores values in an array."""
 
     _cache = None
 
@@ -162,7 +183,6 @@ class ArrayData(SimpleData):
         self._values = values
 
     def get_values(self, dtype=None, copy=True):
-        """Get the values stored in the field as an array."""
         # self.load()
         v = self._values
         xp = eku_array_namespace(v)
@@ -176,10 +196,6 @@ class ArrayData(SimpleData):
             except Exception:
                 pass
         return v
-
-    def check(self, owner):
-        if math.prod(self._values.shape) != math.prod(owner.shape):
-            raise ValueError(f"Data shape mismatch: {self._values.shape} (data) != {owner.shape} (field)")
 
     # def free(self):
     #     """Free the resources used by the data."""

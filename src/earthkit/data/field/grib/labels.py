@@ -123,6 +123,9 @@ class GribLabels:
         if key == "message":
             return self.message()
 
+        if key == "handle":
+            return self.handle
+
         # key = _key_name(key)
 
         v = self.handle.get(key, ktype=astype, **_kwargs)
@@ -164,16 +167,16 @@ class GribLabels:
 
     def sync(self, owner):
         handle_new = None
-        for k, v in owner._members.items():
+        for k, v in owner._parts.items():
             if hasattr(v, "handle") and v.handle is not self.handle:
                 handle_new = v.handle
                 break
 
         if handle_new:
             self.handle = handle_new
-            for k, v in owner._members.items():
+            for k, v in owner._parts.items():
                 if hasattr(v, "handle") and hasattr(v, "from_handle") and v.handle is not self.handle:
-                    owner._members[k] = v.from_handle(handle_new)
+                    owner._parts[k] = v.from_handle(handle_new)
 
     def __getstate__(self):
         state = {}

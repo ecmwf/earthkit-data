@@ -33,7 +33,7 @@ def test_lod_metadata_core(lod_ll_flat, mode):
 
     assert ds[0].get("param") == "t"
     # assert ds[0].get("shortName") == "t"
-    assert ds[0].get("name") == "t"
+    assert ds[0].get("variable") == "t"
 
     dt_ref = datetime.datetime.fromisoformat("2018-08-01T09:00:00")
     assert ds[0].get("valid_datetime") == dt_ref

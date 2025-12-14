@@ -8,14 +8,14 @@
 #
 
 
-from .core import SpecFieldMember
+from .core import SpecFieldPart
 from .core import wrap_spec_methods
 from .spec.time import Time
 
 
-@wrap_spec_methods(keys=["base_datetime", "valid_datetime", "step"])
-class TimeFieldMember(SpecFieldMember):
-    """A specification for a time object."""
+@wrap_spec_methods(keys=["base_datetime", "valid_datetime", "step", "base_date", "base_time"])
+class TimeFieldPart(SpecFieldPart):
+    """Time part of a field."""
 
     SPEC_CLS = Time
     NAME = "time"
@@ -25,7 +25,3 @@ class TimeFieldMember(SpecFieldMember):
         from earthkit.data.field.grib.time import COLLECTOR
 
         COLLECTOR.collect(self, context)
-
-    def set(self, *args, **kwargs):
-        spec = self._spec.set(*args, **kwargs)
-        return TimeFieldMember(spec)

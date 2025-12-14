@@ -12,7 +12,7 @@ from typing import Any
 
 from earthkit.data.field.spec.level_type import LevelTypes
 from earthkit.data.field.spec.vertical import Vertical
-from earthkit.data.field.vertical import VerticalFieldMember
+from earthkit.data.field.vertical import VerticalFieldPart
 
 
 class XarrayLevelType:
@@ -68,7 +68,7 @@ def from_xarray(owner, selection):
     return dict(level=level, level_type=level_type)
 
 
-class XArrayVertical(VerticalFieldMember):
+class XArrayVertical(VerticalFieldPart):
     def __init__(self, owner: Any, selection: Any) -> None:
         self.owner = owner
         self.selection = selection

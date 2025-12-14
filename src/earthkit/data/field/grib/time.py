@@ -14,7 +14,7 @@ from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
 from .collector import GribContextCollector
-from .core import GribFieldMember
+from .core import GribFieldPart
 
 ZERO_TIMEDELTA = to_timedelta(0)
 
@@ -22,10 +22,10 @@ ZERO_TIMEDELTA = to_timedelta(0)
 class GribTimeBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.field.time import TimeFieldMember
+        from earthkit.data.field.time import TimeFieldPart
 
         d = GribTimeBuilder._build_dict(handle)
-        r = TimeFieldMember.from_dict(d)
+        r = TimeFieldPart.from_dict(d)
         # r._set_private_data("handle", handle)
         return r
 
@@ -107,6 +107,6 @@ class GribTimeContextCollector(GribContextCollector):
 COLLECTOR = GribTimeContextCollector()
 
 
-class GribTime(GribFieldMember):
+class GribTime(GribFieldPart):
     BUILDER = GribTimeBuilder
     COLLECTOR = COLLECTOR

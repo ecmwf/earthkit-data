@@ -10,6 +10,7 @@
 
 from abc import ABCMeta
 from abc import abstractmethod
+from typing import Any
 
 from earthkit.data.field.spec.spec import Aliases
 
@@ -45,7 +46,31 @@ def wrap_spec_methods(keys=None):
     return decorator
 
 
-class FieldMember(metaclass=ABCMeta):
+class FieldPart(metaclass=ABCMeta):
+    """Abstract base class for Field parts.
+
+    A FieldPart represents a component of a Field, such as time, vertical level, or
+    processing information. It stores a specification object, the "spec",
+    and provides methods to access and manipulate the specification data.
+
+    It is meant to be used internally by the Field class and its members.
+
+    Attributes
+    ----------
+    KEYS : tuple
+        A tuple of keys from the "spec" that can be accessed as properties on the FieldPart.
+    ALIASES : Aliases
+        An Aliases object that maps alternative key names to their canonical names.
+    ALL_KEYS : tuple
+        A tuple of all keys, including aliases, that can be accessed from the FieldPart.
+    NAME : str
+        The name of the FieldPart to be used as an identifier in the Field. It is also the
+        name of the corresponding namespace in the Field.
+    NAMESPACE_KEYS : tuple
+        A tuple of keys that should be included in the namespace represented by the FieldPart.
+
+    """
+
     KEYS = tuple()
     ALIASES = Aliases()
     ALL_KEYS = tuple()
@@ -54,9 +79,9 @@ class FieldMember(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def from_dict(cls, d: dict) -> "FieldMember":
+    def from_dict(cls, d: dict) -> "FieldPart":
         """
-        Create a FieldMember instance from a dictionary.
+        Create a FieldPart instance from a dictionary.
 
         Parameters
         ----------
@@ -72,7 +97,8 @@ class FieldMember(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def spec(self):
+    def spec(self) -> "FieldPart":
+        """Return the spec of the FieldPart."""
         pass
 
     @abstractmethod
@@ -110,9 +136,9 @@ class FieldMember(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def set(self, *args, **kwargs) -> "FieldMember":
+    def set(self, *args, **kwargs) -> "FieldPart":
         """
-        Create a new FieldMember instance with updated data.
+        Create a new FieldPart instance with updated data.
 
         Parameters
         ----------
@@ -123,33 +149,40 @@ class FieldMember(metaclass=ABCMeta):
 
         Returns
         -------
-        Spec
-            The created Spec instance.
+        FieldPart
+            The created FieldPart instance.
         """
         pass
 
     @abstractmethod
     def namespace(self, *args):
+        """Populate the namespace dictionary for this FieldPart."""
         pass
 
     @abstractmethod
     def check(self, owner):
+        """Check the FieldPart for consistency with the owner Field."""
         pass
 
     @abstractmethod
     def get_grib_context(self, context):
+        """Populate the GRIB context dictionary for this FieldPart."""
         pass
 
     @abstractmethod
     def __getstate__(self):
+        """Return the state for pickling."""
         pass
 
     @abstractmethod
     def __setstate__(self, state):
+        """Set the state from pickling."""
         pass
 
 
-class SimpleFieldMember(FieldMember):
+class SimpleFieldPart(FieldPart):
+    """A FieldPart providing basic implementations for the :obj:`get` method."""
+
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         def _cast(v):
             if callable(astype):
@@ -174,61 +207,57 @@ class SimpleFieldMember(FieldMember):
         return default
 
 
-class SpecFieldMember(SimpleFieldMember):
+class SpecFieldPart(SimpleFieldPart):
+    """A FieldPart that wraps a specification object.
+
+    Parameters
+    ----------
+    spec : SPEC_CLS
+
+    Attributes
+    ----------
+    spec : SPEC_CLS
+        The type of the specification object wrapped by the FieldPart. To be
+        defined in subclasses.
+
+    Notes
+    -----
+    This class is still abstract and cannot be instantiated directly. Subclasses
+    must define the SPEC_CLS attribute to specify the type of the specification
+    object they wrap. They also need to implement the :obj:`get_grib_context` method.
+
+    """
+
     SPEC_CLS = None
 
-    def __init__(self, spec) -> None:
-        assert isinstance(spec, self.SPEC_CLS)
+    def __init__(self, spec: Any) -> None:
+        assert isinstance(spec, self.SPEC_CLS), type(spec)
         self._spec = spec
 
     @classmethod
-    def from_dict(cls, d, **kwargs):
-        """Create a Time object from a dictionary."""
+    def from_dict(cls, d: dict, **kwargs) -> "SpecFieldPart":
+        """Create a SpecFieldPart object from a dictionary."""
         data = cls.SPEC_CLS.from_dict(d, **kwargs)
         return cls(data)
 
+    @classmethod
+    def from_spec(cls, spec: Any) -> "SpecFieldPart":
+        """Create a SpecFieldPart object from a specification object."""
+        return cls(spec)
+
     @property
-    def spec(self):
-        """Return the level layer."""
+    def spec(self) -> Any:
+        """Return the specification object."""
         return self._spec
 
-    # def get_grib_context(self, context) -> dict:
-    #     from earthkit.data.specs.grib.parameter import COLLECTOR
-
-    #     COLLECTOR.collect(self, context)
-
-    # def get(self, key, default=None, *, astype=None, raise_on_missing=False):
-    #     def _cast(v):
-    #         if callable(astype):
-    #             try:
-    #                 return astype(v)
-    #             except Exception:
-    #                 return None
-    #         return v
-
-    #     if key in self.ALL_KEYS:
-    #         try:
-    #             v = getattr(self, key)
-    #             if astype and v is not None:
-    #                 v = _cast(v)
-    #             return v
-    #         except Exception:
-    #             pass
-
-    #     if raise_on_missing:
-    #         raise KeyError(f"Key {key} not found in specification")
-
-    #     return default
-
-    def set(self, *args, **kwargs):
+    def set(self, *args, **kwargs) -> "SpecFieldPart":
+        """Create a new SpecFieldPart instance with updated specification data."""
         data = self._spec.set(*args, **kwargs)
-        print(f"SpecFieldMember.set: data={data}")
-        return type(self)(data)
+        return self.from_spec(data)
+        # return type(self)(data)
 
-    def _set_spec(self, *args, **kwargs):
-        return self._spec.set(*args, **kwargs)
-
-    def namespace(self, owner, name, result):
+    def namespace(self, owner: Any, name: str, result: dict) -> None:
+        """Populate the namespace dictionary for this SpecFieldPart."""
         if name is None or name == self.NAME or (isinstance(name, (list, tuple)) and self.NAME in name):
             if self.NAMESPACE_KEYS:
                 r = {k: getattr(self.spec, k) for k in self.NAMESPACE_KEYS}
@@ -236,13 +265,14 @@ class SpecFieldMember(SimpleFieldMember):
             else:
                 result[self.NAME] = dict()
 
-    def check(self, owner):
+    def check(self, owner: Any) -> None:
+        """Default check implementation."""
         pass
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict:
         state = {}
         state["spec"] = self._spec
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         self.__init__(spec=state["spec"])

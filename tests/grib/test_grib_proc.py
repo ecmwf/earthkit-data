@@ -34,92 +34,47 @@ def test_grib_proc_analysis():
     assert isinstance(f.proc.items, list)
     t = f.proc.time
     assert t.value == datetime.timedelta(0)
-    # assert t.method == TimeMethods.ACCUMULATED
-    # assert t.method == "instant"
+    assert t.method == "instant"
 
 
-# @pytest.mark.cache
-# def test_grib_proc_step_range_1():
-#     ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1"))
+@pytest.mark.cache
+def test_grib_proc_step_range_1():
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1"))
 
-#     f = ds[2]
-#     assert f.valid_datetime == datetime.datetime(2011, 12, 16, 12, 0)
-#     assert f.base_datetime == datetime.datetime(2011, 12, 15, 12, 0)
-#     assert f.forecast_reference_time == datetime.datetime(2011, 12, 15, 12, 0)
-#     assert f.step == datetime.timedelta(hours=24)
-#     assert f.forecast_period == datetime.timedelta(hours=24)
-#     # assert f.time_span == TimeSpan(6, TimeSpanMethod.MAX)
-#     # assert f.time_span_value == datetime.timedelta(hours=6)
-#     # assert f.time_span_method == TimeSpanMethod.MAX
+    f = ds[2]
+    assert f.valid_datetime == datetime.datetime(2011, 12, 16, 12, 0)
+    assert f.base_datetime == datetime.datetime(2011, 12, 15, 12, 0)
+    assert f.forecast_reference_time == datetime.datetime(2011, 12, 15, 12, 0)
+    assert f.step == datetime.timedelta(hours=24)
+    assert f.forecast_period == datetime.timedelta(hours=24)
 
+    t = f.proc.time
+    assert t.value == datetime.timedelta(hours=6)
+    assert t.method == "max"
 
-# @pytest.mark.cache
-# def test_grib_proc_step_range_2():
-#     ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/lsp_step_range.grib2"))
-
-#     f = ds[0]
-#     assert f.valid_datetime == datetime.datetime(2025, 5, 30)
-#     assert f.base_datetime == datetime.datetime(2025, 5, 27)
-#     assert f.step == datetime.timedelta(hours=72)
-#     # assert f.time_span == TimeSpan(1, TimeSpanMethod.ACCUMULATED)
-#     # assert f.time_span_value == datetime.timedelta(hours=1)
-#     # assert f.time_span_method == TimeSpanMethod.ACCUMULATED
-
-#     f = ds[1]
-#     assert f.valid_datetime == datetime.datetime(2025, 5, 30, 1)
-#     assert f.base_datetime == datetime.datetime(2025, 5, 27)
-#     assert f.step == datetime.timedelta(hours=73)
-#     # assert f.time_span == TimeSpan(1, TimeSpanMethod.ACCUMULATED)
-#     # assert f.time_span_value == datetime.timedelta(hours=1)
-#     # assert f.time_span_method == TimeSpanMethod.ACCUMULATED
+    t = f.proc.items[0]
+    assert t.value == datetime.timedelta(hours=6)
+    assert t.method == "max"
 
 
-# @pytest.mark.cache
-# def test_grib_proc_seasonal():
-#     ds = from_source(
-#         "url",
-#         earthkit_remote_test_data_file("xr_engine/date/jma_seasonal_fc_ref_time_per_member.grib"),
-#     )
+@pytest.mark.cache
+def test_grib_proc_step_range_2():
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/lsp_step_range.grib2"))
 
-#     f = ds[0]
-#     assert f.base_datetime == datetime.datetime(2014, 8, 29)
-#     assert f.step == datetime.timedelta(days=33)
-#     assert f.valid_datetime == datetime.datetime(2014, 10, 1)
-#     # assert f.indexing_datetime == datetime.datetime(2014, 9, 1)
+    f = ds[0]
+    assert f.valid_datetime == datetime.datetime(2025, 5, 30)
+    assert f.base_datetime == datetime.datetime(2025, 5, 27)
+    assert f.step == datetime.timedelta(hours=72)
 
+    t = f.proc.time
+    assert t.value == datetime.timedelta(hours=1)
+    assert t.method == "accum"
 
-# # @pytest.mark.cache
-# # def test_grib_proc_monthly():
-# #     ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/seasonal_monthly.grib"))
+    f = ds[1]
+    assert f.valid_datetime == datetime.datetime(2025, 5, 30, 1)
+    assert f.base_datetime == datetime.datetime(2025, 5, 27)
+    assert f.step == datetime.timedelta(hours=73)
 
-# #     f = ds[0]
-# #     assert f.base_datetime == datetime.datetime(1993, 10, 1)
-# #     assert f.step == datetime.timedelta(days=31)
-# #     assert f.valid_datetime == datetime.datetime(1993, 11, 1)
-
-
-# # @pytest.mark.cache
-# # def test_grib_time_step_in_minutes():
-# #     ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/step_60m.grib"))
-
-# #     f = ds[0]
-# #     assert f.base_datetime == datetime.datetime(2024, 1, 15)
-# #     assert f.step == datetime.timedelta(0)
-# #     assert f.valid_datetime == datetime.datetime(2024, 1, 15)
-
-
-# @pytest.mark.cache
-# def test_legacy_grib_step_in_seconds():
-#     ds = from_source("url", earthkit_remote_test_data_file("t_30s.grib"))
-#     f = ds[0]
-
-#     # ref = {
-#     #     "base_time": [datetime.datetime(2023, 8, 20, 12)],
-#     #     "valid_time": [datetime.datetime(2023, 8, 20, 12, 0, 30)],
-#     # }
-#     # assert ds.datetime() == ref
-
-#     assert f.base_datetime == datetime.datetime(2023, 8, 20, 12, 0, 0)
-#     assert f.valid_datetime == datetime.datetime(2023, 8, 20, 12, 0, 30)
-#     assert f.step == datetime.timedelta(seconds=30)
-#     assert f.get("grib.step") == "30s"
+    t = f.proc.time
+    assert t.value == datetime.timedelta(hours=1)
+    assert t.method == "accum"

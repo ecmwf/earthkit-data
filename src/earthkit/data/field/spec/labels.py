@@ -129,6 +129,10 @@ class SimpleLabels(dict, Labels):
     NAME = "labels"
     ALL_KEYS = []  # All keys are allowed
 
+    @classmethod
+    def from_dict(cls, d: dict, allow_unused=False) -> "SimpleLabels":
+        return cls(d)
+
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         def _cast(v):
             if callable(astype):

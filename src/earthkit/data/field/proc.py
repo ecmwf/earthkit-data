@@ -7,12 +7,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SpecFieldMember
+from .core import SpecFieldPart
+from .core import wrap_spec_methods
 from .spec.proc import Proc
 
 
-# @wrap_spec_methods(keys=["level", "layer", "cf", "abbreviation", "units", "positive", "type"])
-class ProcFieldMember(SpecFieldMember):
+@wrap_spec_methods(keys=["time", "time_value", "time_method", "items"])
+class ProcFieldPart(SpecFieldPart):
     """A specification of a vertical level or layer."""
 
     SPEC_CLS = Proc
@@ -26,4 +27,4 @@ class ProcFieldMember(SpecFieldMember):
 
     def set(self, *args, **kwargs):
         spec = self._spec.set(*args, **kwargs)
-        return ProcFieldMember(spec)
+        return ProcFieldPart(spec)
