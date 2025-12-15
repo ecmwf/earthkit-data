@@ -38,8 +38,9 @@ New features
 Changes
 ++++++++++++++++++++++++++++++
 
-- Added support to convert GRIB "stepRange" values to timedelta (:pr:`837`)
+- Added support to convert GRIB "stepRange" values to timedelta (:pr:`837`).
 - Use the "order" key instead of "ordering" in gridspecs generated for HEALPix grids (:pr:`853`).
+- :py:func:`earthkit.data.utils.humanize.did_you_mean` now raises a ``ValueError`` if no vocabulary is provided (:pr:`855`).
 
 Fixes
 ++++++++

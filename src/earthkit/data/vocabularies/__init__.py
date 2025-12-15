@@ -78,13 +78,17 @@ class Vocabulary:
                 if name == self.name:
                     return w
 
-        correction = did_you_mean(
-            word,
-            itertools.chain(
-                self.words,
-                self.aliases.keys(),
-            ),
-        )
+        try:
+            correction = did_you_mean(
+                word,
+                itertools.chain(
+                    self.words,
+                    self.aliases.keys(),
+                ),
+            )
+        except ValueError:
+            correction = None
+
         if correction is not None:
             LOG.debug(
                 "This warning can be safely ignored: Cannot find '%s' in %s vocabulary, did you mean '%s'?",
