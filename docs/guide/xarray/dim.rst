@@ -3,7 +3,7 @@
 Dimensions
 ==================
 
-One of the most important aspect of the :ref:`xr_engine` is how it generates dimensions in the Xarray dataset with :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray`.
+One of the most important aspect of the :ref:`Xarray engine <xr_engine>` is how it generates dimensions in the Xarray dataset with :py:meth:`~data.readers.grib.index.GribFieldList.to_xarray`.
 
 .. _xr_dim_roles:
 .. _xr_predefined_dims:
@@ -140,9 +140,7 @@ Turning a size-1 dimension to an attribute
 Alternatively to squeezing, a size-1 dimension can be also converted into a variable attribute using the ``dims_as_attrs`` option.
 This can be useful when for example dealing with single-level variables defined on different levels (e.g. ``"heightAboveGround": 2``, ``"meanSea": 0``, etc.).
 Similarly to ``squeeze=True``, it allows to avoid a problem of incompatible coordinates of a size-1 dimension,
-
-to preserve the information on coordinates and at the same time avoid a problem of incompatibility of coordinates
-across variables which would otherwise prevent from creating an Xarray Dataset.
+but in addition, it preserves the information on coordinates.
 
 Note that it is possible to combine this option with ``ensure_dims`` to have a size-1 dimension *preserved* and
 *converted* into a variable attribute.
