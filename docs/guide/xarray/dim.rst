@@ -28,55 +28,55 @@ The possible roles are as follows:
      - Description
      - Key (profile: :ref:`mars <xr_profile_mars>`)
      - Key (profile: :ref:`grib <xr_profile_grib>`)
-   * - "number"
+   * - ``"number"``
      - metadata key interpreted as ensemble forecast members
-     - "number"
-     - "number"
-   * - "date"
-     - metadata key interpreted as date part of the "forecast_reference_time"
-     - "date"
-     - "date"
-   * - "time"
-     - metadata key interpreted as time part of the "forecast_reference_time"
-     - "time"
-     - "time"
-   * - "step"
+     - ``"number"``
+     - ``"number"``
+   * - ``"date"``
+     - metadata key interpreted as date part of the ``"forecast_reference_time"``
+     - ``"date"``
+     - ``"date"``
+   * - ``"time"``
+     - metadata key interpreted as time part of the ``"forecast_reference_time"``
+     - ``"time"``
+     - ``"time"``
+   * - ``"step"``
      - metadata key interpreted as forecast step
-     - "step_timedelta"
-     - "step_timedelta"
-   * - "forecast_reference_time"
-     - if not specified or None or empty the forecast reference time is built using the "date" and "time" roles
-     - None
-     - None
-   * - "valid_time"
-     - if not specified or None or empty the valid time is built using the "validityDate" and "validityTime" metadata keys
-     - None
-     - None
-   * - "level"
+     - ``"step_timedelta"``
+     - ``"step_timedelta"``
+   * - ``"forecast_reference_time"``
+     - if not specified or ``None`` or empty the forecast reference time is built using the ``"date"`` and ``"time"`` roles
+     - ``None``
+     - ``None``
+   * - ``"valid_time"``
+     - if not specified or ``None`` or empty the valid time is built using the ``"validityDate"`` and ``"validityTime"`` metadata keys
+     - ``None``
+     - ``None``
+   * - ``"level"``
      - metadata key interpreted as level
-     - "levelist"
-     - "level"
-   * - "level_type"
+     - ``"levelist"``
+     - ``"level"``
+   * - ``"level_type"``
      - metadata key interpreted as level type
-     - "levtype"
-     - "typeOfLevel"
+     - ``"levtype"``
+     - ``"typeOfLevel"``
 
 By default, the dimension names are the same as the role names. To use the associated metadata keys instead use the ``dim_name_from_role_name=False`` option.
 
 .. note::
 
-    For GRIB data, "step_timedelta" is a generated metadata key (by earthkit-data), which is the representation of the value of the "endStep" key as a `datetime.timedelta`.
+    For GRIB data, ``"step_timedelta"`` is a generated metadata key (by earthkit-data), which is the representation of the value of the ``"endStep"`` key as a ``datetime.timedelta``.
 
 
 Dimension modes
 ----------------------
 
-The ensemble forecast member dimension is a single dimension named "number" by default, unless ``dim_roles`` defines it differently and ``dim_name_from_role_name=False``.
+The ensemble forecast member dimension is a single dimension named ``"number"`` by default, unless ``dim_roles`` defines it differently or ``dim_name_from_role_name=False``.
 
 The case of temporal and vertical dimensions is more involved. Both type of dimensions can be generated in multiple ways, and can be represented
 by multiple individual dimensions in an Xarray dataset.
 The ``time_dim_mode`` and ``level_dim_mode`` options control what temporal and vertical dimensions are generated in the Xarray dataset,
-while ``dim_roles`` (together with ``dim_name_from_role_name``) control their names and the way their coordinates are formed.
+while ``dim_roles`` (together with ``dim_name_from_role_name``) controls their names and the way their coordinates are formed.
 
 
 .. list-table:: Temporal dimensions modes
@@ -84,16 +84,18 @@ while ``dim_roles`` (together with ``dim_name_from_role_name``) control their na
 
    * - ``time_dim_mode``
      - Dimensions
-   * - "forecast" (default)
-     - "forecast_reference_time", "step"
-   * - "valid_time"
-     - "valid_time"
-   * - "raw"
-     - "date", "time", "step"
+   * - ``"forecast"`` (default)
+     - ``"forecast_reference_time"``, ``"step"``
+   * - ``"valid_time"``
+     - ``"valid_time"``
+   * - ``"raw"``
+     - ``"date"``, ``"time"``, ``"step"``
 
 
-See the following examples:
+The following examples demonstrate the temporal dimensions modes:
+
 - :ref:`/examples/xarray_engine_temporal.ipynb`
+
 - :ref:`/examples/xarray_engine_seasonal.ipynb`
 
 
@@ -103,22 +105,26 @@ See the following examples:
    * - ``level_dim_mode``
      - Dimensions
      - Remarks
-   * - "level" (default)
-     - "level", "level_type"
-     - The "level_type"`dimension usually has size 1, so it is removed (squeezed) by default.
-   * - "level_per_type"
-     - "<level_per_type>"
+   * - ``"level"`` (default)
+     - ``"level"``, ``"level_type"``
+     - The ``"level_type"`` dimension usually has size 1, so it is removed (squeezed) by default.
+   * - ``"level_per_type"``
+     - ``"<level_per_type>"``
      - This is a template dimension which in the Xarray dataset is materialised under the name being the value
-       of the metadata key referred by ``dim_roles["level_type"]`` (e.g. "surface", "meanSea", "isobaricInhPa", "hybrid", etc.).
+       of the metadata key referred by ``dim_roles["level_type"]`` (e.g. ``"surface"``, ``"meanSea"``, ``"isobaricInhPa"``, ``"hybrid"``, etc.).
        The coordinates are formed from the metadata key referred by ``dim_roles["level"]``
-   * - "level_and_type"
-     - "level_and_type"
+   * - ``"level_and_type"``
+     - ``"level_and_type"``
      - The coordinates are formed by concatenating the values of the metadata keys ``dim_roles["level"]``
-       and ``dim_roles["level_type"]`` (e.g. "850isobaricInhPa", "137hybrid", "0surface")
+       and ``dim_roles["level_type"]`` (e.g. ``"850isobaricInhPa"``, ``"137hybrid"``, ``"0surface"``)
 
 
-See the following example:
+The following example demonstrates the vertical dimensions modes:
+
 - :ref:`/examples/xarray_engine_level.ipynb`
+
+
+.. _xr_squeeze_and_ensure_dims:
 
 
 Squeezing/ensuring dimensions
@@ -134,18 +140,28 @@ See the following notebook for examples of how this works:
 - :ref:`/examples/xarray_engine_squeeze.ipynb`
 
 
-Turning a size-1 dimension to an attribute
+.. _xr_dims_as_attrs:
+
+
+Size-1 dimensions as variable attributes
 ---------------------------------------------
 
-Alternatively to squeezing, a size-1 dimension can be also converted into a variable attribute using the ``dims_as_attrs`` option.
-This can be useful when for example dealing with single-level variables defined on different levels (e.g. ``"heightAboveGround": 2``, ``"meanSea": 0``, etc.).
-Similarly to ``squeeze=True``, it allows to avoid a problem of incompatible coordinates of a size-1 dimension,
-but in addition, it preserves the information on coordinates.
+As an alternative to squeezing, a size-1 dimension can be converted into
+a variable attribute using the ``dims_as_attrs`` option. This is
+particularly useful when working with single-level variables defined on
+different vertical levels (for example, ``"heightAboveGround": 2`` or
+``"meanSea": 0``).
 
-Note that it is possible to combine this option with ``ensure_dims`` to have a size-1 dimension *preserved* and
-*converted* into a variable attribute.
+Like ``squeeze=True``, this approach avoids issues caused by incompatible
+coordinates on size-1 dimensions. In addition, it preserves the
+associated coordinate information by storing it as a variable
+attribute.
 
-See the following notebook for details:
+The ``dims_as_attrs`` option can also be combined with ``ensure_dims``,
+allowing a size-1 dimension to be both preserved as a dimension and
+exposed as a variable attribute.
+
+For a detailed discussion and examples, see the following notebook:
 
 - :ref:`/examples/xarray_engine_dims_as_attrs.ipynb`
 
@@ -153,8 +169,18 @@ See the following notebook for details:
 Extra dimensions
 ----------------------
 
-The ``extra_dims`` option allows to add extra dimensions to the Xarray dataset on top of the predefined ones.
+The ``extra_dims`` option allows additional dimensions to be introduced
+into the resulting Xarray dataset, beyond :ref:`the predefined dimensions <xr_predefined_dims>`.
 
+Each entry in ``extra_dims`` refers to a metadata key whose values are
+used as the coordinates of a newly created dimension.
+
+Extra dimensions are handled in the same way as predefined dimensions: if an extra dimension has size 1, it can be
+:ref:`squeezed or ensured <xr_squeeze_and_ensure_dims>`, or :ref:`converted into a variable attribute <xr_dims_as_attrs>`.
+
+For a detailed discussion and examples, see the following notebook:
+
+- :ref:`/examples/xarray_engine_extra_dims.ipynb`
 
 
 Remapping keys and template dimensions

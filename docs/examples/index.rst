@@ -181,6 +181,7 @@ Xarray engine
     xarray_engine_split.ipynb
     xarray_engine_squeeze.ipynb
     xarray_engine_dims_as_attrs.ipynb
+    xarray_engine_extra_dims.ipynb
     xarray_engine_holes.ipynb
     xarray_engine_chunks.ipynb
     xarray_engine_chunks_on_dask_cluster.ipynb
