@@ -107,16 +107,20 @@ The following examples demonstrate the temporal dimensions modes:
      - Remarks
    * - ``"level"`` (default)
      - ``"level"``, ``"level_type"``
-     - The ``"level_type"`` dimension usually has size 1, so it is removed (squeezed) by default.
+     - The ``"level_type"`` dimension usually has size 1, so it is squeezed by default.
    * - ``"level_per_type"``
      - ``"<level_per_type>"``
-     - This is a template dimension which in the Xarray dataset is materialised under the name being the value
-       of the metadata key referred by ``dim_roles["level_type"]`` (e.g. ``"surface"``, ``"meanSea"``, ``"isobaricInhPa"``, ``"hybrid"``, etc.).
-       The coordinates are formed from the metadata key referred by ``dim_roles["level"]``
+     - Uses a template dimension that is materialised in the Xarray dataset
+       under the name given by the value of the metadata key referenced by
+       ``dim_roles["level_type"]`` (for example ``"surface"``,
+       ``"meanSea"``, ``"isobaricInhPa"``, ``"hybrid"``).
    * - ``"level_and_type"``
      - ``"level_and_type"``
-     - The coordinates are formed by concatenating the values of the metadata keys ``dim_roles["level"]``
-       and ``dim_roles["level_type"]`` (e.g. ``"850isobaricInhPa"``, ``"137hybrid"``, ``"0surface"``)
+     - Creates a single dimension whose coordinates are formed by
+       concatenating the values of the metadata keys
+       ``dim_roles["level"]`` and ``dim_roles["level_type"]``
+       (for example ``"850isobaricInhPa"``, ``"137hybrid"``,
+       ``"0surface"``).
 
 
 The following example demonstrates the vertical dimensions modes:
