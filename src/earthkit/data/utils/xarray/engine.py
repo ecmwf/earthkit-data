@@ -84,10 +84,10 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             of the ``mono_variable`` kwarg when it is a str). If False, the dataset will contain
             one variable for each distinct value of ``variable_key`` metadata key. The default value
             (None) expands to False unless the ``profile`` overwrites it.
-        extra_dims: str, dict, tuple, or iterable of thereof, None
+        extra_dims: str, or list of str, dict or tuple, or None
             Define additional dimensions on top of the predefined dimensions. Only enabled when no
-            ``fixed_dims`` is specified. Default is None. It can be a single item or a list. Each
-            item is either a metadata key, or a dict/tuple defining mapping between the dimension
+            ``fixed_dims`` is specified. Default is None. It can be a single metadata key or a list. If a list,
+            each item is either a metadata key, or a dict/tuple defining mapping between the dimension
             name and the metadata key. The whole option can be a dict. E.g.
 
             .. code-block:: python
