@@ -183,27 +183,19 @@ For a detailed discussion and examples, see the following notebook:
 - :ref:`/examples/xarray_engine_extra_dims.ipynb`
 
 
-Remapping keys and template dimensions
-----------------------------------------
+Remapping
+-------------
 
-TODO: Explain that remapping keys and the template dimension "<level_per_type>" can be used in ``ensure_dims``, ``dims_as_attrs`` and ``extra_dims``
-(and maybe ``drop_dims``; but, does it make sense?)
+The ``remapping`` option allows virtual metadata keys to be defined by combining existing metadata keys.
+These virtual keys can then be used in the same way as native metadata keys throughout the Xarray engine configuration.
 
+In particular, a virtual metadata key can be used:
 
+- as a dimension, by including it in ``extra_dims`` or ``ensure_dims``; once defined as a dimension,
+  it can also be referenced in ``dims_as_attrs`` like any other dimension;
 
-Fixed dimensions
----------------------
+- as a custom variable name, by specifying it in the ``variable_key`` option.
 
-TODO: Check how it works and its interplay with ``extra_dims``, ``squeeze``, ``ensure_dims``, ``dims_as_attrs``, ``drop_dims``, ``rename_dims``.
+For a detailed discussion and examples, see the following notebook:
 
-
-Renaming dimensions
-------------------------
-
-Here explain how ``rename_dims`` works. In particular discuss the case when ``level_dim_mode="level_per_type"`` and we want to rename, say, "surface" dimension.
-
-
-Dropping dimensions
-------------------------
-
-Can one use the template dimension "<level_per_type>"? Or, say, "surface"?
+- :ref:`/examples/xarray_engine_remapping.ipynb`
