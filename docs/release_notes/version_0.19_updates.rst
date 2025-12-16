@@ -38,6 +38,28 @@ New features
 Changes
 ++++++++++++++++++++++++++++++
 
+- Xarray/NetCDF data on an unstructured grid is now parsed into a fieldlist. For example, NetCDF data with the following structure::
+
+        Dimensions: ... point=200
+        Coordinates:
+        * point    (point) int64 0 1 2 3 4 ... 196 197 198 199
+        * latitudes  (point) float32 34.5 34.6 ... 36.7 36.8
+        * longitudes  (point) float32 -120.0 -119.9 ...
+        Data variables:
+        * temperature  (point) float32 ...
+        * humidity  (point) float32 ...
+
+  is now parsed into a fieldlist with two fields:
+
+  .. code-block:: Python
+
+      >>> import earthkit.data as ekd
+      >>> ds = ekd.from_source("file", "data.nc")
+      >>> len(ds)
+      2
+
+  Previously, this data would have been parsed into an XarrayDatasetWrapper.
+
 - Added support to convert GRIB "stepRange" values to timedelta (:pr:`837`).
 - Use the "order" key instead of "ordering" in gridspecs generated for HEALPix grids (:pr:`853`).
 - :py:func:`earthkit.data.utils.humanize.did_you_mean` now raises a ``ValueError`` if no vocabulary is provided (:pr:`855`).
