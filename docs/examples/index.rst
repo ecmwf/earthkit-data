@@ -131,7 +131,7 @@ UK Met Office PP file
     :maxdepth: 1
     :glob:
 
-    iris_pp.ipynb
+    ukmo_pp.ipynb
 
 
 Dictionary input
