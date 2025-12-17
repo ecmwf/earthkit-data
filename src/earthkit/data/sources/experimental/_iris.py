@@ -7,14 +7,15 @@
 # nor does it submit to any jurisdiction.
 #
 
-from ..readers.iris import IrisReader
-from . import Source
+from earthkit.data.readers.pp import IrisReader
+from earthkit.data.sources import Source
 
 
 class IrisSource(Source):
 
     def __init__(self, path, **kwargs):
         super().__init__(**kwargs)
+
         self._reader = IrisReader(self, path, **kwargs)
 
     def mutate(self):
