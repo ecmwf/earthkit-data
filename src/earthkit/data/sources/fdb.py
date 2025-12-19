@@ -18,6 +18,7 @@ except ImportError:
 
 from earthkit.data.sources.file import FileSource
 from earthkit.data.sources.stream import StreamSource
+from earthkit.data.utils.request import RequestBuilder
 from earthkit.data.utils.request import RequestMapper
 
 from . import Source
@@ -26,7 +27,7 @@ LOG = logging.getLogger(__name__)
 
 
 class FDBSource(Source):
-    def __init__(self, *args, stream=True, config=None, userconfig=None, lazy=False, **kwargs):
+    def __init__(self, *args, request=None, stream=True, config=None, userconfig=None, lazy=False, **kwargs):
         super().__init__()
 
         for k in ["group_by", "batch_size"]:
@@ -47,10 +48,16 @@ class FDBSource(Source):
 
         self.stream = stream
 
-        self.request = {}
-        for a in args:
-            self.request.update(a)
-        self.request.update(kwargs)
+        request_builder = RequestBuilder(self, *args, request=request, **kwargs)
+        self.request = request_builder.requests
+
+        if len(self.request) == 0:
+            raise ValueError("FDBSource: no requests to process")
+
+        if len(self.request) > 1:
+            raise ValueError("FDBSource: multiple requests are not supported")
+
+        self.request = self.request[0]
 
         if not (config or userconfig):
             self._check_env()
@@ -109,6 +116,14 @@ class FDBRetriever:
 
 
 class FDBRequestMapper(RequestMapper):
+    _CONVERT_MAP = {
+        "date": int,
+        "time": int,
+        "step": int,
+        "levelist": int,
+        "level": int,
+    }
+
     def __init__(self, request, fdb_kwargs=None, **kwargs):
         super().__init__(request, **kwargs)
         self.fdb_kwargs = fdb_kwargs or {}
@@ -124,8 +139,18 @@ class FDBRequestMapper(RequestMapper):
         r = []
         fdb = pyfdb.FDB(**self.fdb_kwargs)
         for el in fdb.list(self.request, True, True):
-            r.append(el["keys"])
+            data = el["keys"]
+            r.append(self._convert(data))
         return r
+
+    @staticmethod
+    def _convert(data):
+        for k in data:
+            c = FDBRequestMapper._CONVERT_MAP.get(k, None)
+            if c:
+                data[k] = c(data[k])
+
+        return data
 
 
 source = FDBSource

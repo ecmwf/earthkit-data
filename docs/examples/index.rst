@@ -48,7 +48,7 @@ GRIB
     grib_metadata_object.ipynb
     grib_modification.ipynb
     numpy_fieldlist.ipynb
-    grib_array_backends.ipynb
+    grib_array_namespace.ipynb
     grib_nearest_gridpoint.ipynb
     grib_time_series.ipynb
     grib_fdb_write.ipynb
@@ -124,6 +124,16 @@ Shapefile
 
 .. _examples_lod:
 
+UK Met Office PP file
+++++++++++++++++++++++
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    ukmo_pp.ipynb
+
+
 Dictionary input
 ++++++++++++++++++++++
 
@@ -170,6 +180,9 @@ Xarray engine
     xarray_engine_to_grib.ipynb
     xarray_engine_split.ipynb
     xarray_engine_squeeze.ipynb
+    xarray_engine_dims_as_attrs.ipynb
+    xarray_engine_extra_dims.ipynb
+    xarray_engine_remapping.ipynb
     xarray_engine_holes.ipynb
     xarray_engine_chunks.ipynb
     xarray_engine_chunks_on_dask_cluster.ipynb

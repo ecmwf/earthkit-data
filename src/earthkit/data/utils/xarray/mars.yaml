@@ -11,11 +11,6 @@ variable_key: param
 attrs_mode: unique
 
 attrs:
-- param
-- cfName
-- name
-- paramId
-- units
 - class
 - stream
 - levtype
@@ -43,6 +38,7 @@ attrs:
 - levelist
 
 variable_attrs:
+- param
 - cfName
 - name
 - paramId

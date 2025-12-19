@@ -9,8 +9,11 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+
 import pytest
 
+from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import NO_MARS
@@ -18,6 +21,27 @@ from earthkit.data.testing import NO_MARS_API
 from earthkit.data.testing import NO_MARS_DIRECT
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import write_to_file
+
+YESTERDAY = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y%m%d")
+
+
+REQ_1 = dict(
+    param="2t",
+    levtype="sfc",
+    area=[50, -50, 20, 50],
+    grid=[2, 2],
+    date="2023-05-10",
+    split_on="param",
+)
+
+REQ_2 = dict(
+    param="msl",
+    levtype="sfc",
+    area=[50, -50, 20, 50],
+    grid=[2, 2],
+    date="2023-05-10",
+    split_on="param",
+)
 
 
 @pytest.mark.long_test
@@ -40,8 +64,8 @@ def test_mars_grib_1_prompt(prompt):
 @pytest.mark.long_test
 @pytest.mark.download
 @pytest.mark.skipif(NO_MARS, reason="No access to MARS")
-def test_mars_grib_2():
-    s = from_source(
+def test_mars_grib_split_on():
+    ds = from_source(
         "mars",
         param=["2t", "msl"],
         levtype="sfc",
@@ -50,7 +74,44 @@ def test_mars_grib_2():
         date="2023-05-10",
         split_on="param",
     )
-    assert len(s) == 2
+    assert len(ds) == 2
+    assert ds.metadata("param") == ["2t", "msl"]
+    assert not hasattr(ds, "path")
+    assert len(ds._indexes) == 2
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.parametrize("_args,req,_kwargs", [((REQ_1, REQ_2), None, {}), ((), [REQ_1, REQ_2], {})])
+@pytest.mark.skipif(NO_MARS, reason="No access to MARS")
+def test_mars_grib_multi(_args, req, _kwargs):
+    ds = from_source(
+        "mars",
+        *_args,
+        request=req,
+        **_kwargs,
+    )
+    assert len(ds) == 2
+    assert ds.metadata("param") == ["2t", "msl"]
+
+
+@pytest.mark.long_test
+@pytest.mark.download
+@pytest.mark.skipif(NO_MARS, reason="No access to MARS")
+def test_mars_grib_parallel():
+    with config.temporary("number-of-download-threads", 4):
+
+        req = dict(param="t", levelist=[925, 850, 700, 500], date=YESTERDAY, split_on="levelist")
+
+        ds = from_source(
+            "mars",
+            request=req,
+        )
+        assert len(ds) == 4
+        assert ds.metadata("param") == ["t"] * 4
+        assert ds.metadata("levelist") == [925, 850, 700, 500]
+        assert not hasattr(ds, "path")
+        assert len(ds._indexes) == 4
 
 
 @pytest.mark.long_test

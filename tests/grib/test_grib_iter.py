@@ -27,7 +27,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
 @pytest.mark.parametrize("group", ["param"])
 def test_grib_group_by(fl_type, group):
-    ds, array_backend = load_grib_data("test6.grib", fl_type)
+    ds, array_namespace = load_grib_data("test6.grib", fl_type)
 
     ref = [
         [("t", 1000), ("t", 850)],
@@ -38,7 +38,7 @@ def test_grib_group_by(fl_type, group):
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 2
         assert f.metadata(("param", "level")) == ref[i]
-        afl = f.to_fieldlist(array_backend=array_backend.name)
+        afl = f.to_fieldlist(array_namespace=array_namespace)
         assert afl is not f
         assert len(afl) == 2
         cnt += len(f)

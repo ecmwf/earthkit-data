@@ -5,6 +5,7 @@ Xarray engine
    :maxdepth: 1
 
    overview
+   dim
    profile
    mars_profile
    grib_profile

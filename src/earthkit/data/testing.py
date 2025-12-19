@@ -15,7 +15,12 @@ from contextlib import contextmanager
 from importlib import import_module
 from unittest.mock import patch
 
-from earthkit.utils.testing import get_array_backend
+import numpy as np
+from earthkit.utils.array import array_namespace as eku_array_namespace
+from earthkit.utils.array import convert as convert_array
+
+# from earthkit.utils.testing import get_array_backend
+from earthkit.utils.array.testing import NAMESPACE_DEVICES
 
 from earthkit.data import from_object
 from earthkit.data import from_source
@@ -99,7 +104,7 @@ def modules_installed(*modules):
     for module in modules:
         try:
             import_module(module)
-        except ImportError:
+        except (ImportError, RuntimeError, SyntaxError):
             return False
     return True
 
@@ -152,6 +157,8 @@ try:
 except Exception:
     pass
 
+NO_IRIS = not (modules_installed("iris") and modules_installed("ncdata"))
+
 
 def MISSING(*modules):
     return not modules_installed(*modules)
@@ -199,8 +206,43 @@ def load_nc_or_xr_source(path, mode):
         return from_object(xarray.open_dataset(path))
 
 
+class ArrayBackend:
+    def __init__(self, array_namespace, device=None, dtype=None):
+        self._d = (eku_array_namespace(array_namespace), device, dtype)
+
+    @property
+    def array_namespace(self):
+        return self._d[0]
+
+    @property
+    def device(self):
+        return self._d[1]
+
+    @property
+    def dtype(self):
+        return self._d[2]
+
+    def __len__(self):
+        return len(self._d)
+
+    def __getitem__(self, index):
+        return self._d[index]
+
+    @property
+    def name(self):
+        return self.array_namespace._earthkit_array_namespace_name
+
+
 # Array backends
-ARRAY_BACKENDS = get_array_backend(["numpy", "torch", "cupy", "jax"], raise_on_missing=False)
+ARRAY_BACKENDS = []
+for x in NAMESPACE_DEVICES:
+    name = x[0]._earthkit_array_namespace_name
+    device = x[1]
+    dtype = None
+    if name in ["numpy", "torch", "cupy", "jax"]:
+        if name == "torch" and device.type == "mps":
+            dtype = "float32"
+        ARRAY_BACKENDS.append(ArrayBackend(x[0], device, dtype))
 
 
 def make_tgz(target_dir, target_name, paths):
@@ -252,19 +294,62 @@ def check_array(
     eps=1e-3,
     array_backend=None,
 ):
-    if array_backend is None:
-        from earthkit.utils.array import get_backend
-
-        array_backend = get_backend(v)
-
-    v = array_backend.to_numpy(v)
-
-    import numpy as np
+    v = convert_array(v, array_namespace="numpy")
 
     assert v.shape == shape
-    assert np.isclose(v[0], first, eps)
-    assert np.isclose(v[-1], last, eps)
-    assert np.isclose(v.mean(), meanv, eps)
+    assert np.isclose(v[0], first, rtol=eps)
+    assert np.isclose(v[-1], last, rtol=eps)
+    assert np.isclose(v.mean(), meanv, rtol=eps)
+
+
+def enforce_dtype(array_namespace, device):
+    array_namespace = eku_array_namespace(array_namespace)
+    if (
+        array_namespace._earthkit_array_namespace_name == "torch"
+        and isinstance(device, str)
+        and device.startswith("mps")
+    ):
+        return "float32"
+    return None
+
+
+def match_dtype(array, xp, dtype):
+    dtype = xp.__array_namespace_info__().dtypes().get(dtype, dtype)
+    if dtype is not None:
+        return xp.dtype(array) == dtype
+    return False
+
+
+def check_array_type(array, expected_namespace, dtype=None):
+    xp1 = eku_array_namespace(array)
+    xp2 = eku_array_namespace(expected_namespace)
+
+    if xp2 is None:
+        raise ValueError(f"Invalid expected_namespace={expected_namespace}")
+
+    assert xp1 == xp2, f"{xp1=}, {xp2=}"
+
+    expected_dtype = dtype
+    if expected_dtype is not None:
+        assert match_dtype(array, xp2, expected_dtype), f"{array.dtype}, {expected_dtype=}"
+        # assert b2.match_dtype(array, expected_dtype), f"{array.dtype}, {expected_dtype=}"
+
+
+# # TODO: only tested for numpy an torch (cpu, torch(cpu, mps))
+# def to_numpy_dtype(dtype, xp=None):
+#     if dtype is None:
+#         return np.float64
+#     elif isinstance(dtype, str):
+#         return np.dtype(dtype)
+#     elif xp is not None:
+#         for d in xp.__array_namespace_info__().dtypes.items():
+#             if d[1] == dtype:
+#                 return np.dtype(d[0])
+
+#     if hasattr(dtype, "type"):
+#         dtype = dtype.type
+
+#     return dtype
 
 
 def main(path):

@@ -217,7 +217,11 @@ class Dim:
     def deactivate_drop_list(self):
         self.owner.deactivate([self.name, self.key] + self.drop, ignore_dim=self)
 
+    def dim_name(self, key, source):
+        return key
+
     def as_coord(self, key, values, component, source):
+        key = self.dim_name(key, source)
         if key not in self.coords:
             from .coord import Coord
 
@@ -330,17 +334,11 @@ class LevelPerTypeDim(Dim):
         self.level_type_key = level_type_key
         super().__init__(owner, *args, **kwargs)
 
-    def as_coord(self, key, values, component, source):
+    def dim_name(self, key, source):
         lev_type = source[0].metadata(self.level_type_key)
         if not lev_type:
             raise ValueError(f"{self.level_type_key} not found in metadata")
-
-        if lev_type not in self.coords:
-            from .coord import Coord
-
-            coord = Coord.make(lev_type, list(values), ds=source)
-            self.coords[lev_type] = coord
-        return lev_type, self.coords[lev_type]
+        return lev_type
 
 
 class LevelAndTypeDim(Dim):
@@ -887,22 +885,6 @@ class DimHandler:
 
     def make_coords(self):
         r = {d.coord.name: d.coord.make_var(self.profile) for d in self.dims.values() if d.coord is not None}
-        return r
-
-    def as_coord(self, tensor):
-        r = {}
-
-        def _get(k):
-            for d in self.dims.values():
-                if k == d.key:
-                    return d
-
-        for k, v in tensor.user_coords.items():
-            for d in self.dims.values():
-                d = _get(k)
-                name, coord = d.as_coord(k, v, tensor.source)
-                r[name] = coord
-
         return r
 
     def to_list(self):

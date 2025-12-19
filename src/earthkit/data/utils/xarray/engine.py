@@ -57,6 +57,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         dtype=None,
         array_module=None,
         array_backend=None,
+        array_namespace=None,
         errors=None,
     ):
         r"""
@@ -83,10 +84,10 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             of the ``mono_variable`` kwarg when it is a str). If False, the dataset will contain
             one variable for each distinct value of ``variable_key`` metadata key. The default value
             (None) expands to False unless the ``profile`` overwrites it.
-        extra_dims:  str, or iterable of str, None
+        extra_dims: str, or list of str, dict or tuple, or None
             Define additional dimensions on top of the predefined dimensions. Only enabled when no
-            ``fixed_dims`` is specified. Default is None. It can be a single item or a list. Each
-            item is either a metadata key, or a dict/tuple defining mapping between the dimension
+            ``fixed_dims`` is specified. Default is None. It can be a single metadata key or a list. If a list,
+            each item is either a metadata key, or a dict/tuple defining mapping between the dimension
             name and the metadata key. The whole option can be a dict. E.g.
 
             .. code-block:: python
@@ -114,8 +115,15 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             Single or multiple dimensions to be ignored. Default is None.
             Default is None.
         ensure_dims: str, or iterable of str, None
-            Dimension or dimensions that should be kept even when ``squeeze=True`` and their size
-            is only 1. Default is None.
+            Every item may be one of the following:
+            - **A dimension name**
+              A dimension that must always be preserved in the output, even when
+              ``squeeze=True`` and its size is 1, or when it appears in ``dims_as_attrs``.
+            - **A metadata key**
+              A key whose value defines an additional, non-squeezable dimension.
+              When a metadata key is listed here, it does *not* need to be repeated
+              in ``extra_dims``.
+            Default is None.
         fixed_dims: str, or iterable of str, None
             Define all the dimensions to be generated. When used no other dimensions will be created.
             Might be incompatible with other settings. Default is None. It can be a single item or a list.
@@ -181,15 +189,19 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             it does not override but update the default values. So e.g. to change only "number" in
             the defaults it is enough to specify: "dim_roles={"number": "perturbationNumber"}.
         dim_name_from_role_name: bool, None
-            If True, the dimension names are formed from the role names. Otherwise the
+            If True, the dimension names are formed from the role names. Otherwise, the
             dimension names are formed from the metadata keys specified in ``dim_roles``.
             Its default value (None) expands to True unless the ``profile`` overwrites it.
-            Only used when no `fixed_dims`` are specified. *New in version 0.15.0*.
+            Only used when no ``fixed_dims`` are specified. *New in version 0.15.0*.
         rename_dims: dict, None
             Mapping to rename dimensions. Default is None.
         dims_as_attrs: str, or iterable of str, None
-            Dimension or list of dimensions which should be turned to variable
-            attributes if they have only one value for the given variable. Default is None.
+            A dimension name or a list of dimension names that should be converted
+            into variable attributes when they have only a single value for the
+            corresponding variable.
+            Note that such size-1 dimensions are still preserved if they are
+            explicitly listed in ``ensure_dims``.
+            The default is ``None``.
         time_dim_mode: str, None
             Define how predefined temporal dimensions are formed. The default is "forecast".
             The possible values are as follows:
@@ -204,13 +216,25 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
               role (see ``dim_roles``). Will contain np.datetime64 values.
             - "raw": the "date", "time" and "step" roles are turned into 3 separate dimensions
         level_dim_mode: str, None
-            Define how predefined vertical dimensions are formed. The default is "level".
-            The possible values are:
+            Controls how predefined vertical dimensions are constructed.
+            The default is ``"level"``.
+            Valid values are:
 
-            - "level": adds a single dimension according to the "level" role (see ``dim_roles``)
-            - "level_per_type": adds a separate dimensions for each level type based on the
-              "level" and "level_type" roles.
-            - "level_and_type": Use a single dimension for combined level and type of level.
+            - ``"level"``
+              Creates two separate dimensions, ``"level"`` and ``"level_type"``,
+              as defined by the corresponding roles in ``dim_roles``.
+
+            - ``"level_per_type"``
+              Uses a template dimension ``"<level_per_type>"`` that is expanded
+              into one or more vertical dimensions.
+              The dimension name is taken from the metadata key with the role
+              ``"level_type"`` (e.g. ``"isobaricInhPa"``), and the coordinate
+              values come from the metadata key with the role ``"level"``
+              (e.g. ``[500, 700, 850, 1000]``).
+
+            - ``"level_and_type"``
+              Produces a single combined dimension, ``"level_and_type"``,
+              in which the level value and the level type are merged.
         squeeze: bool, None
             Remove dimensions which have only one valid value. Not applies to dimensions in
             ``ensure_dims``. Its default value (None) expands
@@ -249,7 +273,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             - "fixed": Use the attributes defined in ``variable_attrs`` as variables
               attributes and ``global_attrs`` as global attributes.
             - "unique": Use all the attributes defined in ``attrs``, ``variable_attrs``
-              and ``global_attrs``. When an attribute has unique value for a dataset
+              and ``global_attrs``. When an attribute from ``attrs`` has unique value for a dataset
               it will be a global attribute, otherwise it will be a variable attribute.
               However, this logic is only applied if a unique variable attribute can be
               a global attribute according to the CF conventions Appendix A. (e.g. "units" cannot
@@ -286,7 +310,9 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         fill_metadata: dict, None
             Define fill values to metadata keys. Default is None.
         remapping: dict, None
-            Define new metadata keys for indexing. Default is None.
+            Define new metadata keys for indexing. Any key provided in ``remapping`` may be referenced
+            when specifying options such as ``variable_key``, ``extra_dims``, ``ensure_dims``, and others.
+            Default is None.
         lazy_load: bool, None
             If True, the resulting Dataset will load data lazily from the
             underlying data source. If False, a DataSet holding all the data in memory
@@ -314,8 +340,8 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             to False unless the ``profile`` overwrites it.
         dtype: str, numpy.dtype or None
             Typecode or data-type of the array data.
-        array_backend: str, array namespace, ArrayBackend, None
-            The array backend/namespace to use for array operations. The default value (None) is
+        array_namespace: str, array namespace, None
+            The array namespace to use for array operations. The default value (None) is
             expanded to "numpy".
         """
         fieldlist = self._fieldlist(filename_or_obj, source_type)
@@ -329,9 +355,24 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
             if array_module is not None:
                 import warnings
 
-                warnings.warn("'array_module' is deprecated. Use 'array_backend' instead", DeprecationWarning)
-                if array_backend is None:
-                    array_backend = array_module
+                warnings.warn(
+                    "'array_module' is deprecated. Use 'array_namespace' instead", DeprecationWarning
+                )
+                if array_namespace is None:
+                    array_namespace = array_module
+                else:
+                    raise ValueError("Cannot specify both 'array_module' and 'array_namespace' arguments")
+
+            if array_backend is not None:
+                import warnings
+
+                warnings.warn(
+                    "'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning
+                )
+                if array_namespace is None:
+                    array_namespace = array_backend
+                else:
+                    raise ValueError("Cannot specify both 'array_backend' and 'array_namespace' arguments")
 
             _kwargs = dict(
                 variable_key=variable_key,
@@ -367,7 +408,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
                 release_source=release_source,
                 strict=strict,
                 dtype=dtype,
-                array_backend=array_backend,
+                array_namespace=array_namespace,
                 errors=errors,
                 allow_holes=allow_holes,
             )
@@ -469,6 +510,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
             handle = next(GribMessageMemoryReader(data)).handle
             bpv = md.get("bitsPerValue", 0)
             res_md = StandAloneGribMetadata(handle)
+
             if bpv is not None and bpv > 0:
                 return WrappedMetadata(res_md, extra={"bitsPerValue": bpv})
             else:
@@ -503,11 +545,16 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
 
         return ds.to_netcdf(*args, **kwargs)
 
-    def to_device(self, device, *args, array_backend=None, **kwargs):
+    def to_device(self, device, *, array_backend=None, array_namespace=None, **kwargs):
         """Return a **new** DataArray whose data live on *device*."""
-        from earthkit.utils.array import to_device
+        from earthkit.utils.array import convert
 
-        moved = to_device(self._obj.data, device, *args, array_backend=array_backend, **kwargs)
+        if array_backend is not None:
+            if array_namespace is not None:
+                raise ValueError("Cannot specify both 'array_backend' and 'array_namespace' arguments")
+            array_namespace = array_backend
+
+        moved = convert(self._obj.data, device=device, array_namespace=array_namespace, **kwargs)
         da = self._obj.copy(deep=False)
         da.data = moved
         return da
@@ -516,7 +563,9 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     def grid_spec(self):
         """Return the grid specification of the DataArray."""
         try:
-            return self.metadata.gridspec
+            if "ek_grid_spec" in self._obj.attrs:
+                return self._obj.attrs["ek_grid_spec"]
+            return self.metadata.grid_spec
         except Exception:
             return None
 
@@ -552,13 +601,18 @@ class XarrayEarthkitDataSet(XarrayEarthkit):
 
         return ds.to_netcdf(*args, **kwargs)
 
-    def to_device(self, device, *args, array_backend=None, **kwargs):
+    def to_device(self, device, *, array_backend=None, array_namespace=None, **kwargs):
         """Return a new Dataset with every data variable on the specified ``device``."""
-        from earthkit.utils.array import to_device
+        from earthkit.utils.array import convert
+
+        if array_backend is not None:
+            if array_namespace is not None:
+                raise ValueError("Cannot specify both 'array_backend' and 'array_namespace' arguments")
+            array_namespace = array_backend
 
         ds = self._obj.copy(deep=False)
         for name, var in ds.data_vars.items():
-            ds[name].data = to_device(var.data, device, *args, array_backend=array_backend, **kwargs)
+            ds[name].data = convert(var.data, device=device, array_namespace=array_namespace, **kwargs)
         return ds
 
     @property

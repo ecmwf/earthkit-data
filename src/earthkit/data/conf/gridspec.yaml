@@ -39,7 +39,7 @@ grib_key_map:
   J: J
   K: K
   M: M
-  orderingConvention: ordering
+  orderingConvention: order
   Nside: n_side
 definitions:
   _1: &area
@@ -167,4 +167,4 @@ types:
     - type
     - grid:
       - H
-    - ordering
+    - order
