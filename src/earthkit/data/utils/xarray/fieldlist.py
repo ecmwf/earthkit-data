@@ -156,7 +156,7 @@ class XArrayInputFieldList(FieldList):
             if not v:
                 continue
             db = None
-            # db = self.db   # TODO: PW: would be nice but it does not work...
+            # db = self.db   # TODO: would be nice but it does not work...
             mask_index = self.ds[v]
             groups[k] = XArrayInputFieldList(mask_index, db=db, remapping=self.remapping)
 
