@@ -2,6 +2,14 @@ Version 0.18 Updates
 /////////////////////////
 
 
+Version 0.18.4
+===============
+
+Dependencies
++++++++++++++++
+
+- Disabled using ``netcdf4=1.7.4`` in the dependencies since it did not provide wheels for python 3.12 and 3.13 (:pr:`869`). See: https://github.com/Unidata/netcdf4-python/issues/1461
+
 
 Version 0.18.3
 ===============
