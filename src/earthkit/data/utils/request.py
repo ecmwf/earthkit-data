@@ -162,5 +162,11 @@ class RequestMapper(metaclass=ABCMeta):
     def request_at(self, index):
         return self.field_requests[index]
 
+    def index_from_request(self, request):
+        for i, r in enumerate(self.field_requests):
+            if r == request:
+                return i
+        return -1
+
     def __len__(self):
         return len(self.field_requests)
