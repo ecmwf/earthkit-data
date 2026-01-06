@@ -10,6 +10,7 @@
 #
 import pytest
 
+from earthkit.data import from_object
 from earthkit.data import from_source
 from earthkit.data.testing import NO_COVJSONKIT
 from earthkit.data.testing import earthkit_test_data_file
@@ -21,11 +22,29 @@ def test_covjson():
 
 
 @pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
-def test_covjson_to_xarray():
+def test_covjson_to_xarray_time_series():
     ds = from_source("file", earthkit_test_data_file("time_series.covjson"))
     assert ds
     a = ds.to_xarray()
     assert len(a.data_vars) == 1
+
+    ds1 = from_object(a)
+    assert ds1
+    assert len(ds1) == 9
+    assert ds1.metadata("variable") == ["2t"] * 9
+
+
+@pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
+def test_covjson_to_xarray_points():
+    ds = from_source("file", earthkit_test_data_file("points.covjson"))
+    assert ds
+    a = ds.to_xarray()
+    assert len(a.data_vars) == 2
+
+    ds1 = from_object(a)
+    assert ds1
+    assert len(ds1) == 2
+    assert ds1.metadata("variable") == ["10u", "2t"]
 
 
 @pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")

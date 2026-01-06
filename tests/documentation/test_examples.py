@@ -27,6 +27,8 @@ SKIP = [
     "skip_api_rules.py",
     "deprec_settings.py",
     "migrated_settings.py",
+    "deprec_array_backend_kwarg.py",
+    "migrated_array_namespace_kwarg.py",
 ]
 
 EXAMPLES = earthkit_file("docs")
