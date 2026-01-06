@@ -155,7 +155,7 @@ def test_xr_incomplete_tensor_holes2(
     assert len(ds_ek_masked) == nfields
 
     ds = ds_ek_masked.to_xarray(**kwargs)
-    assert ds["t"].attrs["step_timedelta"] == pd.Timedelta(0, "s")
+    assert ds["t"].attrs["step"] == pd.Timedelta(0, "s")
 
     kwargs_with_full_tensor = kwargs.copy()
     kwargs_with_full_tensor["allow_holes"] = False

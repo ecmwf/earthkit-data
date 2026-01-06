@@ -873,14 +873,14 @@ def test_xr_engine_single_field(allow_holes, lazy_load):
     lons = np.linspace(0, 350, 36)
 
     var_attrs_ref = {
+        "param": "t",
         "standard_name": "air_temperature",
         "long_name": "Temperature",
+        "paramId": 130,
         "units": "K",
     }
 
     global_attrs_ref = {
-        "param": "t",
-        "paramId": 130,
         "class": "od",
         "stream": "oper",
         "levtype": "pl",
