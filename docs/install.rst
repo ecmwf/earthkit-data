@@ -46,7 +46,7 @@ Alternatively, you can install the following components:
     - geotiff: adds GeoTIFF support (new in version *0.11.0*). Please note that this is not included in the ``[all]`` option and has to be invoked separately.
     - geopandas: adds GeoJSON/GeoPandas support
     - gribjump: provides access to the :ref:`data-sources-gribjump` source
-    - iris: provides access to the :ref:`data-sources-iris` source  (new in version *0.19.0*). Please note that this is not included in the ``[all]`` option and has to be invoked separately.
+    - iris: provides access to UK Met Office PP files (new in version *0.19.0*).
     - mars: provides access to the :ref:`data-sources-mars` source
     - odb: provides full support for the :ref:`odb` data type
     - projection: adds projection support

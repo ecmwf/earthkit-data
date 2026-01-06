@@ -11,35 +11,41 @@ from . import Reader
 from .netcdf.ori.fieldlist import XArrayFieldList
 
 
-class IrisReader(XArrayFieldList, Reader):
-
+class PPReader(XArrayFieldList, Reader):
     def __init__(self, source, path, **kwargs):
         Reader.__init__(self, source, path)
-        XArrayFieldList.__init__(self, self._open_iris(**kwargs))
+        XArrayFieldList.__init__(self, self._open_pp(**kwargs))
 
     def mutate_source(self):
         return self
 
     def to_xarray(self, **kwargs):
-        return self._open_iris(**kwargs)
+        return self._open_pp(**kwargs)
 
-    def _open_iris(
+    def _open_pp(
         self,
         *,
         iris_open_kwargs: dict | None = None,
         iris_save_kwargs: dict | None = None,
         xr_load_kwargs: dict | None = None,
     ):
-        import iris
-        from ncdata.iris_xarray import cubes_to_xarray
+        try:
+            import iris
+        except ImportError:
+            raise ImportError("PP file handling requires 'iris' to be installed")
+
+        try:
+            from ncdata.iris_xarray import cubes_to_xarray
+        except ImportError:
+            raise ImportError("PP file handling requires 'ncdata' to be installed")
 
         cubelist = iris.load(self.path, **iris_open_kwargs or {})
         return cubes_to_xarray(cubelist, iris_save_kwargs=iris_save_kwargs, xr_load_kwargs=xr_load_kwargs)
 
     def __repr__(self):
-        return f"IrisReader({self.path})"
+        return f"PPReader({self.path})"
 
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if path.endswith(".pp"):
-        return IrisReader(source, path)
+        return PPReader(source, path)

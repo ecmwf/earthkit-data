@@ -120,10 +120,10 @@ class XarrayMixIn:
                 of the ``mono_variable`` kwarg when it is a str). If False, the dataset will contain
                 one variable for each distinct value of ``variable_key`` metadata key. The default value
                 (None) expands to False unless the ``profile`` overwrites it.
-            * extra_dims:  str, or iterable of str, None
+            * extra_dims: str, or list of str, dict or tuple, or None
                 Define additional dimensions on top of the predefined dimensions. Only enabled when no
-                ``fixed_dims`` is specified. Default is None. It can be a single item or a list. Each
-                item is either a metadata key, or a dict/tuple defining mapping between the dimension
+                ``fixed_dims`` is specified. Default is None. It can be a single metadata key or a list. If a list,
+                each item is either a metadata key, or a dict/tuple defining mapping between the dimension
                 name and the metadata key. The whole option can be a dict. E.g.
 
                 .. code-block:: python
@@ -151,8 +151,15 @@ class XarrayMixIn:
                 Single or multiple dimensions to be ignored. Default is None.
                 Default is None.
             * ensure_dims: str, or iterable of str, None
-                Dimension or dimensions that should be kept even when ``squeeze=True`` and their size
-                is only 1. Default is None.
+                Every item may be one of the following:
+                - **A dimension name**
+                  A dimension that must always be preserved in the output, even when
+                  ``squeeze=True`` and its size is 1, or when it appears in ``dims_as_attrs``.
+                - **A metadata key**
+                  A key whose value defines an additional, non-squeezable dimension.
+                  When a metadata key is listed here, it does *not* need to be repeated
+                  in ``extra_dims``.
+                Default is None.
             * fixed_dims: str, or iterable of str, None
                 Define all the dimensions to be generated. When used no other dimensions will be created.
                 Might be incompatible with other settings. Default is None. It can be a single item or a list.
@@ -218,15 +225,19 @@ class XarrayMixIn:
                 it does not override but update the default values. So e.g. to change only "number" in
                 the defaults it is enough to specify: "dim_roles={"number": "perturbationNumber"}.
             * dim_name_from_role_name: bool, None
-                If True, the dimension names are formed from the role names. Otherwise the
+                If True, the dimension names are formed from the role names. Otherwise, the
                 dimension names are formed from the metadata keys specified in ``dim_roles``.
                 Its default value (None) expands to True unless the ``profile`` overwrites it.
-                Only used when no `fixed_dims`` are specified. *New in version 0.15.0*.
+                Only used when no ``fixed_dims`` are specified. *New in version 0.15.0*.
             * rename_dims: dict, None
                 Mapping to rename dimensions. Default is None.
             * dims_as_attrs: str, or iterable of str, None
-                Dimension or list of dimensions which should be turned to variable
-                attributes if they have only one value for the given variable. Default is None.
+                A dimension name or a list of dimension names that should be converted
+                into variable attributes when they have only a single value for the
+                corresponding variable.
+                Note that such size-1 dimensions are still preserved if they are
+                explicitly listed in ``ensure_dims``.
+                The default is ``None``.
             * time_dim_mode: str, None
                 Define how predefined temporal dimensions are formed. The default is "forecast".
                 The possible values are as follows:
@@ -241,13 +252,22 @@ class XarrayMixIn:
                   role (see ``dim_roles``). Will contain np.datetime64 values.
                 - "raw": the "date", "time" and "step" roles are turned into 3 separate dimensions
             * level_dim_mode: str, None
-                Define how predefined vertical dimensions are formed. The default is "level".
-                The possible values are:
-
-                - "level": adds a single dimension according to the "level" role (see ``dim_roles``)
-                - "level_per_type": adds a separate dimensions for each level type based on the
-                  "level" and "level_type" roles.
-                - "level_and_type": Use a single dimension for combined level and type of level.
+                Controls how predefined vertical dimensions are constructed.
+                The default is ``"level"``.
+                Valid values are:
+                - ``"level"``
+                  Creates two separate dimensions, ``"level"`` and ``"level_type"``,
+                  as defined by the corresponding roles in ``dim_roles``.
+                - ``"level_per_type"``
+                  Uses a template dimension ``"<level_per_type>"`` that is expanded
+                  into one or more vertical dimensions.
+                  The dimension name is taken from the metadata key with the role
+                  ``"level_type"`` (e.g. ``"isobaricInhPa"``), and the coordinate
+                  values come from the metadata key with the role ``"level"``
+                  (e.g. ``[500, 700, 850, 1000]``).
+                - ``"level_and_type"``
+                  Produces a single combined dimension, ``"level_and_type"``,
+                  in which the level value and the level type are merged.
             * squeeze: bool, None
                 Remove dimensions which have only one valid value. Not applies to dimensions in
                 ``ensure_dims``. Its default value (None) expands
@@ -286,7 +306,7 @@ class XarrayMixIn:
                 - "fixed": Use the attributes defined in ``variable_attrs`` as variables
                   attributes and ``global_attrs`` as global attributes.
                 - "unique": Use all the attributes defined in ``attrs``, ``variable_attrs``
-                  and ``global_attrs``.  When an attribute has unique value for a dataset
+                  and ``global_attrs``.  When an attribute from ``attrs`` has unique value for a dataset
                   it will be a global attribute, otherwise it will be a variable attribute.
                   However, this logic is only applied if a unique variable attribute can be
                   a global attribute according to the CF conventions Appendix A. (e.g. "units" cannot
@@ -323,7 +343,9 @@ class XarrayMixIn:
             * fill_metadata: dict, None
                 Define fill_metadata values to metadata keys. Default is None.
             * remapping: dict, None
-                Define new metadata keys for indexing. Default is None.
+                Define new metadata keys for indexing. Any key provided in ``remapping`` may be referenced
+                when specifying options such as ``variable_key``, ``extra_dims``, ``ensure_dims``, and others.
+                Default is None.
             * lazy_load: bool, None
                 If True, the resulting Dataset will load data lazily from the
                 underlying data source. If False, a Dataset holding all the data in memory

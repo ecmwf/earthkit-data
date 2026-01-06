@@ -17,7 +17,6 @@ import xarray.core.indexing as indexing
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
-from .attrs import AttrList
 from .dim import LevelPerTypeDim
 from .profile import Profile
 
@@ -38,7 +37,7 @@ class VariableBuilder:
         data_maker,
         tensor,
         remapping,
-        local_attr_keys=None,
+        dims_as_attrs_map=None,
         fixed_local_attrs=None,
     ):
         """
@@ -56,9 +55,8 @@ class VariableBuilder:
             The tensor object that contains the data.
         remapping: Remapping
             The remapping object that contains the remapping information.
-        local_attr_keys: list, optional
-            A list of metadata keys that are used to collect local attributes. These attributes
-            are not taken into account by the attribute policies.
+        dims_as_attrs_map: dict, optional
+            A dictionary dim->coord whose keys are size-1 dimensions to be turned into the variable attributes.
         fixed_local_attrs: dict, optional
             A dictionary of fixed local attributes that are added to the variable. These attributes
             are not taken into account by the attribute policies.
@@ -67,7 +65,7 @@ class VariableBuilder:
         self.var_dims = var_dims
         self.data_maker = data_maker
         self._attrs = {}
-        self.local_keys = ensure_iterable(local_attr_keys)
+        self.dims_as_attrs_map = dims_as_attrs_map or {}
         self.fixed_local_attrs = ensure_dict(fixed_local_attrs)
         self.tensor = tensor
         self.remapping = remapping
@@ -83,7 +81,7 @@ class VariableBuilder:
                 self._attrs["_earthkit"] = attrs
 
         try:
-            grid_spec = self.tensor.source[0].metadata().grid_spe
+            grid_spec = self.tensor.source[0].metadata().grid_spec
             if grid_spec is not None:
                 if isinstance(grid_spec, dict):
                     import json
@@ -110,8 +108,6 @@ class VariableBuilder:
         collect: list, optional
             A list of attributes that are collected but not added to the variable attributes.
         """
-        attrs = attrs + AttrList(self.local_keys)
-
         res = {}
         keys_strict = []
         fixed_attrs = {}
@@ -120,10 +116,12 @@ class VariableBuilder:
 
         def _metadata():
             nonlocal first
-            return self.tensor.source[0] if not first else first
+            if not first:
+                first = self.tensor.source[0].metadata()
+            return first
 
         for a in attrs:
-            if a.name not in self.var_dims and a.name not in res and a.name not in self.fixed_local_attrs:
+            if a.name not in res and a.name not in self.fixed_local_attrs:
                 if a.fixed():
                     fixed_attrs[a.name] = a.value()
                 elif callable(a):
@@ -144,6 +142,7 @@ class VariableBuilder:
 
         self._attrs = res
         self._attrs.update(fixed_attrs)
+        self._attrs.update(self.dims_as_attrs_map)
 
         # extra attributes to be collected but not added to the variable
         collected_attrs = {}
@@ -162,11 +161,11 @@ class VariableBuilder:
             collected_attrs = res
             collected_attrs.update(fixed_attrs)
 
-        return {k: v for k, v in self._attrs.items() if k not in self.local_keys}, collected_attrs
+        return {k: v for k, v in self._attrs.items() if k not in self.dims_as_attrs_map}, collected_attrs
 
     def adjust_attrs(self, drop_keys=None, rename=None):
         drop_keys = ensure_iterable(drop_keys)
-        drop_keys = [k for k in drop_keys if k not in self.local_keys]
+        drop_keys = [k for k in drop_keys if k not in self.dims_as_attrs_map]
         r = {}
         for k, v in self._attrs.items():
             if k not in drop_keys:
@@ -397,7 +396,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
         pass
 
     def pre_build_variable(self, ds_var, dims, name):
-        tensor_dims, tensor_coords, tensor_coords_component, tensor_extra_attrs = self.prepare_tensor(
+        tensor_dims, tensor_coords, tensor_coords_component, dims_as_attrs_map = self.prepare_tensor(
             ds_var, dims, name
         )
 
@@ -407,7 +406,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             tensor_coords = {k: v for k, v in self.raw_global_tensor_coords.items() if k in tensor_dim_keys}
             tensor_coords_component = self.global_tensor_coords_component
 
-        # LOG.debug(f"{tensor_dims=} {tensor_coords=} {tensor_coords_component=} {tensor_extra_attrs=}")
+        # LOG.debug(f"{tensor_dims=} {tensor_coords=} {tensor_coords_component=} {dims_as_attrs_map=}")
         # LOG.debug(f"{tensor_dim_keys=}")
 
         tensor = ds_var.to_tensor(
@@ -447,7 +446,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             data_maker,
             tensor,
             remapping,
-            local_attr_keys=tensor_extra_attrs,
+            dims_as_attrs_map=dims_as_attrs_map,
             fixed_local_attrs=self.fixed_local_attrs,
         )
 
@@ -457,7 +456,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
         tensor_dims = []
         tensor_coords = {}
         tensor_coords_component = {}
-        tensor_extra_attrs = []
+        tensor_extra_attrs = {}
 
         # LOG.debug(f"{name=} {dims=}")
 
@@ -477,13 +476,23 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 # if d.name not in self.profile.dims.ensure_dims:
                 #     raise ValueError(f"Dimension {d} has no valid values for variable={name}")
             else:
-                if num > 1 and d.enforce_unique:
+                if num > 1 and d.enforce_unique and name != "<ALL VARIABLES>":
                     raise ValueError(
                         f"Dimension '{d.name}' of variable '{name}' cannot have multiple values={vals[d.key]}"
                     )
-                elif num == 1 and d.name in self.profile.dims.dims_as_attrs:
-                    tensor_extra_attrs.append(d.key)
-                elif num > 1 or not self.profile.dims.squeeze or d.name in self.profile.dims.ensure_dims:
+                if num == 1 and d.name in self.profile.dims.dims_as_attrs:
+                    attr_val = vals[d.key][0]
+                    k = d.dim_name(d.key, ds)
+
+                    # mimics the behaviour of DimHandler.rename_dataset_dims
+                    attr_key = d.name if k == d.key else k
+
+                    tensor_extra_attrs[attr_key] = attr_val
+                if (
+                    d.name in self.profile.dims.ensure_dims
+                    or num > 1
+                    or (not self.profile.dims.squeeze and d.name not in self.profile.dims.dims_as_attrs)
+                ):
                     tensor_dims.append(d)
                     tensor_coords[d.key] = vals[d.key]
                     if component_vals and d.key in component_vals:

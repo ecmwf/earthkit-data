@@ -38,7 +38,7 @@ dependencies = [
   "lru-dict",
   "markdown",
   "multiurl>=0.3.3",
-  "netcdf4",
+  "netcdf4!=1.7.4",        # Skip 1.7.4 due to wheel issues, https://github.com/Unidata/netcdf4-python/issues/1461
   "pandas",
   "pdbufr>=0.11",
   "pyyaml",
@@ -46,7 +46,7 @@ dependencies = [
   "xarray>=0.19",
 ]
 optional-dependencies.all = [
-  "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geo,geopandas,gribjump,mars,odb,polytope,projection,s3,wekeo]",
+  "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geo,geopandas,gribjump,iris,mars,odb,polytope,projection,s3,wekeo]",
 ]
 optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
 optional-dependencies.ci = [ "numpy" ]
@@ -70,7 +70,7 @@ optional-dependencies.geo = [ "earthkit-geo>=0.2" ]
 optional-dependencies.geopandas = [ "geopandas" ]
 optional-dependencies.geotiff = [ "pyproj", "rasterio", "rioxarray" ]
 optional-dependencies.gribjump = [ "pyfdb>=0.1", "pygribjump" ]
-optional-dependencies.iris = [ "ncdata", "scitools-iris" ]
+optional-dependencies.iris = [ "ncdata>=0.3.2", "scitools-iris" ]
 optional-dependencies.mars = [ "ecmwf-api-client>=1.6.1" ]
 optional-dependencies.odb = [ "pyodc" ]
 optional-dependencies.polytope = [ "polytope-client>=0.7.6" ]

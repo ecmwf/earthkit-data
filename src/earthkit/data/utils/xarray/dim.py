@@ -57,14 +57,14 @@ BASE_DATETIME_KEYS = [
 DATETIME_KEYS = BASE_DATETIME_KEYS + VALID_DATETIME_KEYS
 
 KEYS = (
-    ENS_KEYS
-    + LEVEL_KEYS
-    + LEVEL_TYPE_KEYS
-    + DATE_KEYS
-    + TIME_KEYS
-    + STEP_KEYS
-    + VALID_DATETIME_KEYS
-    + BASE_DATETIME_KEYS
+    ENS_KEYS,
+    LEVEL_KEYS,
+    LEVEL_TYPE_KEYS,
+    DATE_KEYS,
+    TIME_KEYS,
+    STEP_KEYS,
+    VALID_DATETIME_KEYS,
+    BASE_DATETIME_KEYS,
 )
 
 
@@ -79,9 +79,9 @@ def get_keys(keys, drop=None):
 def find_alias(key, drop=None):
     keys = KEYS
     r = []
-    for k in keys:
-        if key in k:
-            r.extend(k)
+    for alias_keys in keys:
+        if key in alias_keys:
+            r.extend(alias_keys)
 
     if drop:
         drop = ensure_iterable(drop)
@@ -90,7 +90,7 @@ def find_alias(key, drop=None):
 
 
 def make_dim(owner, *args, name=None, key=None, **kwargs):
-    predef_key = key or name
+    predef_key = name or key
 
     if predef_key in PREDEFINED_DIMS:
         return PREDEFINED_DIMS[predef_key](owner, *args, name=name, key=key, **kwargs)
@@ -217,7 +217,11 @@ class Dim:
     def deactivate_drop_list(self):
         self.owner.deactivate([self.name, self.key] + self.drop, ignore_dim=self)
 
+    def dim_name(self, key, source):
+        return key
+
     def as_coord(self, key, values, component, source):
+        key = self.dim_name(key, source)
         if key not in self.coords:
             from .coord import Coord
 
@@ -251,8 +255,8 @@ class TimeDim(Dim):
 
 
 class StepDim(Dim):
-    name = "step"
-    drop = get_keys(STEP_KEYS + VALID_DATETIME_KEYS, drop=["step_timedelta"])
+    alias = ["step", "step_timedelta"]
+    drop = get_keys(STEP_KEYS + VALID_DATETIME_KEYS)  # , drop=["step_timedelta"])
 
 
 class ValidTimeDim(Dim):
@@ -321,7 +325,7 @@ class LevelTypeDim(Dim):
 
 
 class LevelPerTypeDim(Dim):
-    name = "_level_per_type"
+    name = "<level_per_type>"
     drop = get_keys(LEVEL_KEYS + LEVEL_TYPE_KEYS, drop=name)
 
     def __init__(self, owner, level_key, level_type_key, *args, **kwargs):
@@ -330,17 +334,11 @@ class LevelPerTypeDim(Dim):
         self.level_type_key = level_type_key
         super().__init__(owner, *args, **kwargs)
 
-    def as_coord(self, key, values, component, source):
+    def dim_name(self, key, source):
         lev_type = source[0].metadata(self.level_type_key)
         if not lev_type:
             raise ValueError(f"{self.level_type_key} not found in metadata")
-
-        if lev_type not in self.coords:
-            from .coord import Coord
-
-            coord = Coord.make(lev_type, list(values), ds=source)
-            self.coords[lev_type] = coord
-        return lev_type, self.coords[lev_type]
+        return lev_type
 
 
 class LevelAndTypeDim(Dim):
@@ -431,12 +429,7 @@ class ForecastTimeDimMode(DimMode):
 
     def build(self, profile, owner, active=True):
         ref_time_key, ref_time_name = owner.dim_roles.role("forecast_reference_time", raise_error=False)
-
-        if ref_time_key == "forecast_reference_time":
-            ref_time_dim = ForecastRefTimeDim(owner, name=ref_time_name, active=active)
-        elif ref_time_key:
-            ref_time_dim = make_dim(owner, name=ref_time_name, key=ref_time_key, active=active)
-        else:
+        if ref_time_key is None:
             date, _ = owner.dim_roles.role("date")
             time, _ = owner.dim_roles.role("time")
             built_in = date in self.DATES and time in self.TIMES
@@ -444,10 +437,13 @@ class ForecastTimeDimMode(DimMode):
                 ref_time_dim = ForecastRefTimeDim(owner, name=ref_time_name, active=active)
             else:
                 ref_time_dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
+        else:
+            ref_time_dim = make_dim(owner, name=ref_time_name, key=ref_time_key, active=active)
 
         step_key, step_name = owner.dim_roles.role("step")
         step_dim = make_dim(owner, name=step_name, key=step_key, active=active)
 
+        # TODO: the next two lines seem to have no effect!
         self.register_ref_time_key(ref_time_dim.key)
         self.register_step_key(step_dim.key)
 
@@ -493,7 +489,7 @@ class LevelDimMode(DimMode):
         key, name = owner.dim_roles.role("level_type")
         level_type_dim = LevelTypeDim(owner, name=name, key=key, **kwargs)
 
-        return {level_dim.key: level_dim, level_type_dim.key: level_type_dim}
+        return {level_dim.name: level_dim, level_type_dim.name: level_type_dim}
 
 
 class LevelAndTypeDimMode(DimMode):
@@ -504,7 +500,8 @@ class LevelAndTypeDimMode(DimMode):
 
         level_key, _ = owner.dim_roles.role("level")
         level_type_key, _ = owner.dim_roles.role("level_type")
-        return {self.name: self.dim(owner, level_key, level_type_key, **kwargs)}
+        dim = self.dim(owner, level_key, level_type_key, **kwargs)
+        return {dim.name: dim}
 
 
 class LevelPerTypeDimMode(LevelAndTypeDimMode):
@@ -529,7 +526,8 @@ class NumberDimBuilder(DimBuilder):
 
     def __init__(self, profile, owner):
         key, name = owner.dim_roles.role("number")
-        self.used = {self.name: NumberDim(owner, name=name, key=key)}
+        dim = NumberDim(owner, name=name, key=key)
+        self.used = {dim.name: dim}
 
 
 class TimeDimBuilder(DimBuilder):
@@ -540,11 +538,15 @@ class TimeDimBuilder(DimBuilder):
         if mode is None:
             raise ValueError(f"Unknown time_dim_mode={owner.time_dim_mode}")
 
-        mode = mode()
-        self.used = mode.build(profile, owner)
-        self.ignored = {
-            k: v().build(profile, owner, active=False) for k, v in TIME_DIM_MODES.items() if v != mode
-        }
+        mode_instance = mode()
+        self.used = mode_instance.build(profile, owner)
+        self.ignored = {}
+        for _, other_mode in TIME_DIM_MODES.items():
+            if other_mode != mode:
+                _ignored = other_mode().build(profile, owner, active=False)
+                for name in self.used:
+                    _ignored.pop(name, None)
+                self.ignored.update(_ignored)
 
 
 class LevelDimBuilder(DimBuilder):
@@ -555,11 +557,15 @@ class LevelDimBuilder(DimBuilder):
         if mode is None:
             raise ValueError(f"Unknown level_dim_mode={owner.level_dim_mode}")
 
-        mode = mode()
-        self.used = mode.build(profile, owner)
-        self.ignored = {
-            k: v().build(profile, owner, active=False) for k, v in LEVEL_DIM_MODES.items() if v != mode
-        }
+        mode_instance = mode()
+        self.used = mode_instance.build(profile, owner)
+        self.ignored = {}
+        for _, other_mode in LEVEL_DIM_MODES.items():
+            if other_mode != mode:
+                _ignored = other_mode().build(profile, owner, active=False)
+                for name in self.used:
+                    _ignored.pop(name, None)
+                self.ignored.update(_ignored)
 
 
 DIM_BUILDERS = {v.name: v for v in [NumberDimBuilder, TimeDimBuilder, LevelDimBuilder]}
@@ -720,7 +726,7 @@ class DimHandler:
         assert self.fixed_dims
 
         if self.profile.variable.key in self.fixed_dims:
-            raise ValueError((f"Variable key {self.profile.variable.key} cannot be in fixed_dims."))
+            raise ValueError(f"Variable key {self.profile.variable.key} cannot be in fixed_dims.")
         if self.extra_dims:
             raise ValueError(f"extra_dims={self.extra_dims} cannot be used with fixed_dims")
         if self.drop_dims:
@@ -768,10 +774,10 @@ class DimHandler:
             var_keys = []
 
         # non-core dims
-        keys = list(self.extra_dims.keys()) + self.ensure_dims
-        keys = _remove_duplicates(keys)
+        extra_dims = dict(zip(self.ensure_dims, self.ensure_dims))
+        extra_dims.update(self.extra_dims)
 
-        remapping_dims = self._init_remapping_dims(keys)
+        remapping_dims = self._init_remapping_dims(extra_dims)
         dims = dict(**remapping_dims)
 
         if not self.var_key_dim:
@@ -779,10 +785,11 @@ class DimHandler:
             self.var_key_dim = make_dim(self, name=self.profile.variable.key)
 
         # dims at this point can only contain remapping dims
-        for k in keys:
+        for name, key in extra_dims.items():
             # note: remapping overrides existing keys
-            if k not in dims:
-                dims[k] = make_dim(self, name=k)
+            if name not in dims and name not in PREDEFINED_DIMS:
+                # dimensions which are in PREDEFINED_DIMS will be built below as core_dims
+                dims[name] = make_dim(self, name=name, key=key)
 
         dims = {k: v for k, v in dims.items() if k not in self.drop_dims}
         # print(f"dims", dims)
@@ -802,12 +809,12 @@ class DimHandler:
         self.core_dim_order = []
         for k, v in DIM_BUILDERS.items():
             builder = v(self.profile, self)
-            used, ignored = builder.dims()
+            used, _ignored = builder.dims()
             for k, v in used.items():
                 core_dims[k] = v
                 self.core_dim_order.append(k)
 
-            ignored.update(ignored)
+            ignored.update(_ignored)
 
         for k in list(ignored.keys()):
             if k in remapping_dims:
@@ -880,22 +887,6 @@ class DimHandler:
         r = {d.coord.name: d.coord.make_var(self.profile) for d in self.dims.values() if d.coord is not None}
         return r
 
-    def as_coord(self, tensor):
-        r = {}
-
-        def _get(k):
-            for d in self.dims.values():
-                if k == d.key:
-                    return d
-
-        for k, v in tensor.user_coords.items():
-            for d in self.dims.values():
-                d = _get(k)
-                name, coord = d.as_coord(k, v, tensor.source)
-                r[name] = coord
-
-        return r
-
     def to_list(self):
         return list(self.dims.values())
 
@@ -935,7 +926,10 @@ for i, d in enumerate(
         TimeDim,
         StepDim,
         ValidTimeDim,
+        IndexingTimeDim,
+        ReferenceTimeDim,
         LevelDim,
+        LevelTypeDim,
         LevelPerTypeDim,
         LevelAndTypeDim,
     ]

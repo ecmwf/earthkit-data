@@ -579,10 +579,10 @@ def test_xr_engine_time_step_range_1(allow_holes, lazy_load, kwargs, dims, step_
                 "time_dim_mode": "forecast",
                 "dim_name_from_role_name": True,
                 "dim_roles": {"step": "stepRange"},
-                "ensure_dims": ["date", "step"],
+                "ensure_dims": ["forecast_reference_time", "step"],
             },
             {
-                "date": [np.datetime64("2025-05-27", "ns")],
+                "forecast_reference_time": [np.datetime64("2025-05-27", "ns")],
                 "step": [np.timedelta64(72, "h"), np.timedelta64(73, "h")],
             },
             None,

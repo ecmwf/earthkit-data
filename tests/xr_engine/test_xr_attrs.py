@@ -13,6 +13,7 @@ import datetime
 import os
 import sys
 
+import pandas as pd
 import pytest
 
 from earthkit.data import from_source
@@ -129,6 +130,231 @@ def test_xr_dims_as_attrs(allow_holes, lazy_load, kwargs, coords, dims, attrs):
 
     for k, v in attrs.items():
         ds["t"].attrs[k] == v
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+@pytest.mark.parametrize(
+    "idx,kwargs,coords,dims,var_attrs,global_attrs",
+    [
+        (
+            [14, 15],
+            {
+                "profile": "grib",
+                "time_dim_mode": "raw",
+                "level_dim_mode": "level",
+                "dim_name_from_role_name": True,
+                "squeeze": False,
+                "dims_as_attrs": ["number", "date"],
+                "variable_attrs": ["typeOfLevel", "units"],
+                "global_attrs": ["edition"],
+                "attrs_mode": "fixed",
+                "add_earthkit_attrs": False,
+            },
+            {
+                "time": [pd.Timedelta("12h")],
+                "step": [pd.Timedelta("6h")],
+                "level": [500],
+                "level_type": ["isobaricInhPa"],
+            },
+            {"time": 1, "step": 1, "level": 1, "level_type": 1},
+            {
+                "r": {"typeOfLevel": "isobaricInhPa", "units": "%", "number": 0, "date": 20240603},
+                "t": {"typeOfLevel": "isobaricInhPa", "units": "K", "number": 0, "date": 20240603},
+            },
+            {"edition": 1},
+        ),
+        (
+            [14],
+            {
+                "profile": "grib",
+                "time_dim_mode": "raw",
+                "level_dim_mode": "level",
+                "dim_name_from_role_name": True,
+                "squeeze": False,
+                "dims_as_attrs": ["number", "date"],
+                "variable_attrs": ["Nj"],
+                "attrs": ["cfVarName", "units", "edition"],
+                "global_attrs": ["gridType"],
+                "attrs_mode": "unique",
+                "add_earthkit_attrs": False,
+            },
+            {
+                "time": [pd.Timedelta("12h")],
+                "step": [pd.Timedelta("6h")],
+                "level": [500],
+                "level_type": ["isobaricInhPa"],
+            },
+            {"time": 1, "step": 1, "level": 1, "level_type": 1},
+            {"t": {"units": "K", "Nj": 19, "number": 0, "date": 20240603}},
+            {"cfVarName": "t", "edition": 1, "gridType": "regular_ll"},
+        ),
+        (
+            [12, 14],
+            {
+                "profile": "grib",
+                "time_dim_mode": "raw",
+                "level_dim_mode": "level",
+                "dim_name_from_role_name": True,
+                "squeeze": False,
+                "dims_as_attrs": ["number", "date"],
+                "variable_attrs": ["Nj"],
+                "attrs": ["cfVarName", "units", "edition"],
+                "global_attrs": ["gridType"],
+                "attrs_mode": "unique",
+                "rename_attrs": {
+                    "cfVarName": "cf_var_name",
+                    "gridType": "grid_type",
+                    "number": "realisation",
+                    "date": "DATE",
+                },
+                "add_earthkit_attrs": False,
+            },
+            {
+                "time": [pd.Timedelta("12h")],
+                "step": [pd.Timedelta("6h")],
+                "level": [500, 700],
+                "level_type": ["isobaricInhPa"],
+            },
+            {"time": 1, "step": 1, "level": 2, "level_type": 1},
+            {"t": {"units": "K", "Nj": 19, "realisation": 0, "DATE": 20240603}},
+            {"cf_var_name": "t", "edition": 1, "grid_type": "regular_ll"},
+        ),
+        (
+            [14],
+            {
+                "profile": "grib",
+                "time_dim_mode": "forecast",
+                "level_dim_mode": "level_and_type",
+                "dim_name_from_role_name": True,
+                "squeeze": False,
+                "dims_as_attrs": ["forecast_reference_time", "level_and_type"],
+                "variable_attrs": ["units"],
+                "global_attrs": ["gridType"],
+                "add_earthkit_attrs": False,
+            },
+            {
+                "number": [0],
+                "step": [pd.Timedelta("6h")],
+            },
+            {"number": 1, "step": 1},
+            {
+                "t": {
+                    "units": "K",
+                    "forecast_reference_time": "2024-06-03T12:00:00",
+                    "level_and_type": "500isobaricInhPa",
+                }
+            },
+            {"gridType": "regular_ll"},
+        ),
+    ],
+)
+def test_xr_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, dims, var_attrs, global_attrs):
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
+
+    ds = ds0[idx].to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
+    compare_coords(ds, coords)
+    compare_dims(ds, dims, sizes=True)
+
+    for v in var_attrs:
+        assert ds[v].attrs == var_attrs[v]
+    assert ds.attrs == global_attrs
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("lazy_load", [True, False])
+@pytest.mark.parametrize(
+    "allow_holes,idx,kwargs,coords,dims,var_attrs,global_attrs",
+    [
+        (
+            True,
+            [12, 14, 15],
+            {
+                "profile": "grib",
+                "time_dim_mode": "raw",
+                "level_dim_mode": "level",
+                "dim_name_from_role_name": True,
+                "squeeze": False,
+                "dims_as_attrs": ["number", "date", "level", "level_type"],
+                "variable_attrs": ["Nj"],
+                "attrs": ["cfVarName", "units", "edition"],
+                "global_attrs": ["gridType"],
+                "attrs_mode": "unique",
+                "rename_attrs": {
+                    "cfVarName": "cf_var_name",
+                    "gridType": "grid_type",
+                    "number": "realisation",
+                    "date": "DATE",
+                },
+                "add_earthkit_attrs": False,
+            },
+            {
+                "time": [pd.Timedelta("12h")],
+                "step": [pd.Timedelta("6h")],
+                "level": [500, 700],
+            },
+            {"time": 1, "step": 1},
+            {
+                "r": {
+                    "cf_var_name": "r",
+                    "units": "%",
+                    "Nj": 19,
+                    "realisation": 0,
+                    "DATE": 20240603,
+                    "level": 500,
+                    "level_type": "isobaricInhPa",
+                },
+                "t": {
+                    "cf_var_name": "t",
+                    "units": "K",
+                    "Nj": 19,
+                    "realisation": 0,
+                    "DATE": 20240603,
+                    "level_type": "isobaricInhPa",
+                },
+            },
+            {"edition": 1, "grid_type": "regular_ll"},
+        ),
+        (
+            False,
+            slice(0, 16, 4),
+            {
+                "profile": "grib",
+                "time_dim_mode": "forecast",
+                "level_dim_mode": "level_per_type",
+                "dim_name_from_role_name": True,
+                "squeeze": False,
+                "dims_as_attrs": ["forecast_reference_time", "<level_per_type>"],
+                "variable_attrs": ["units"],
+                "global_attrs": ["gridType"],
+                "add_earthkit_attrs": False,
+                "rename_attrs": {"isobaricInhPa": "pl"},
+            },
+            {
+                "number": [0],
+                "forecast_reference_time": [
+                    pd.Timestamp("2024-06-03 00:00:00"),
+                    pd.Timestamp("2024-06-03 12:00:00"),
+                ],
+                "step": [pd.Timedelta("0h"), pd.Timedelta("6h")],
+            },
+            {"number": 1, "forecast_reference_time": 2, "step": 2},
+            {"t": {"units": "K", "pl": 700}},
+            {"gridType": "regular_ll"},
+        ),
+    ],
+)
+def test_xr_dims_as_attrs_3(lazy_load, allow_holes, idx, kwargs, coords, dims, var_attrs, global_attrs):
+    ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
+
+    ds = ds0[idx].to_xarray(lazy_load=lazy_load, allow_holes=allow_holes, **kwargs)
+    compare_coords(ds, coords)
+    compare_dims(ds, dims, sizes=True)
+
+    for v in var_attrs:
+        assert ds[v].attrs == var_attrs[v]
+    assert ds.attrs == global_attrs
 
 
 @pytest.mark.cache
