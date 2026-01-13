@@ -288,6 +288,9 @@ class XarrayMixIn:
                 as int with the units attached to the coordinate as the "units" attribute.
                 If None (default), assume the same value of ``decode_times`` unless the ``profile``
                 overwrites it.
+            * aux_coords: dict, None
+                Mapping from an auxiliary coordinate label metadata keys to a tuple:
+                (metadata key, the dataset dimension(s)). The default value is None.
             * add_geo_coords: bool, None
                 Add geographic coordinates to the dataset when field values are represented by
                 a single "values" dimension. Its default value (None) expands
@@ -344,8 +347,8 @@ class XarrayMixIn:
                 Define fill_metadata values to metadata keys. Default is None.
             * remapping: dict, None
                 Define new metadata keys for indexing. Any key provided in ``remapping`` may be referenced
-                when specifying options such as ``variable_key``, ``extra_dims``, ``ensure_dims``, and others.
-                Default is None.
+                when specifying options such as ``variable_key``, ``extra_dims``, ``ensure_dims``, ``aux_coords``
+                and others. Default is None.
             * lazy_load: bool, None
                 If True, the resulting Dataset will load data lazily from the
                 underlying data source. If False, a Dataset holding all the data in memory

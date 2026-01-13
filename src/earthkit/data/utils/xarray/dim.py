@@ -883,6 +883,7 @@ class DimHandler:
     def active_dim_keys(self):
         return [d.key for d in self.dims.values() if d.active]
 
+    # TODO: dead code to be removed?
     def make_coords(self):
         r = {d.coord.name: d.coord.make_var(self.profile) for d in self.dims.values() if d.coord is not None}
         return r
