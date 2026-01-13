@@ -356,6 +356,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             dim_keys = tuple(coords)
             vals = {}
             for f in self.ds:
+                # TODO: perf: pull this internal loop outside the loop over self.profile.aux_coords
                 metadata = f._attributes(dim_keys, remapping=remapping)
                 f_coords = tuple(metadata[k] for k in dim_keys)
                 try:
