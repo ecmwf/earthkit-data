@@ -242,6 +242,12 @@ class ExtractionRequestCollection(UserList):
             ranges = mask_to_ranges(mask)
             mask = None
 
+        if indices is not None:
+            # We do the same small optimization for indices. Optimally, we
+            # would do similar optimizations in pygribjump and remove this.
+            ranges = [(i, i + 1) for i in indices]
+            indices = None
+
         extraction_requests = [build_extraction_request(req, ranges, mask, indices) for req in mars_requests]
         return cls(extraction_requests)
 
@@ -286,7 +292,11 @@ class FieldExtractList(SimpleFieldList):
         # These attributes are set lazily after loading the data.
         self._loaded = False
         self._grid_indices = None
+
+        # Cached reference metadata for coordinates
         self._reference_metadata: Optional[GribMetadata] = None
+        self._latitudes: Optional[np.ndarray] = None
+        self._longitudes: Optional[np.ndarray] = None
 
         super().__init__(fields=None)
 
@@ -334,10 +344,10 @@ class FieldExtractList(SimpleFieldList):
 
     def _load_reference_metadata(self):
         """Loads the reference metadata from the FDB retriever if available."""
-        if self._fdb_retriever is None:
-            return None
         if self._reference_metadata is not None:
             return self._reference_metadata
+        if self._fdb_retriever is None:
+            return None
 
         fields = self._fdb_retriever.get(self._requests[0].request)
         metadatas = fields.metadata()
@@ -355,9 +365,13 @@ class FieldExtractList(SimpleFieldList):
         if (reference_metadata := self._load_reference_metadata()) is None:
             return metadata
 
-        reference_geography = reference_metadata.geography
-        grid_latitudes = reference_geography.latitudes()[indices]
-        grid_longitudes = reference_geography.longitudes()[indices]
+        if self._latitudes is None or self._longitudes is None:
+            self._latitudes = reference_metadata.geography.latitudes()
+            self._longitudes = reference_metadata.geography.longitudes()
+
+        grid_latitudes = self._latitudes[indices]
+        grid_longitudes = self._longitudes[indices]
+
         metadata = metadata.override(
             {
                 "latitudes": grid_latitudes,
