@@ -242,6 +242,12 @@ class ExtractionRequestCollection(UserList):
             ranges = mask_to_ranges(mask)
             mask = None
 
+        if indices is not None:
+            # We do the same small optimization for indices. Optimally, we
+            # would do similar optimizations in pygribjump and remove this.
+            ranges = [(i, i + 1) for i in indices]
+            indices = None
+
         extraction_requests = [build_extraction_request(req, ranges, mask, indices) for req in mars_requests]
         return cls(extraction_requests)
 
