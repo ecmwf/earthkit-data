@@ -192,7 +192,6 @@ def ds_expected_with_coords():
             "levelist": "1000",
             "levtype": "pl",
             "stream": "oper",
-            "param": "129",
             "time": "1200",
             "type": "fc",
             "Conventions": "CF-1.8",
