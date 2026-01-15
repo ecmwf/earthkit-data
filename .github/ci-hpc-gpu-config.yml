@@ -16,7 +16,6 @@ build:
   - ecmwf/pdbufr@master
   - ecmwf/pyodc@develop
   - ecmwf/pyfdb@develop
-  - ecmwf/gribjump@develop
   - ecmwf/earthkit-utils@develop
   env:
   - ECCODES_SAMPLES_PATH=$ECCODES_DIR/share/eccodes/samples
