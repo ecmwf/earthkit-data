@@ -1,6 +1,7 @@
 build:
   modules:
   - ninja
+  - aec
   dependencies:
   - ecmwf/ecbuild@develop
   - MathisRosenhauer/libaec@refs/tags/v1.1.3
