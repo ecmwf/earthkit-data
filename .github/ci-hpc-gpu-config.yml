@@ -1,6 +1,7 @@
 build:
   modules:
   - ninja
+  - aec
   dependencies:
   - ecmwf/ecbuild@develop
   - MathisRosenhauer/libaec@refs/tags/v1.1.3
@@ -9,6 +10,7 @@ build:
   - ecmwf/odc@develop
   - ecmwf/metkit@develop
   - ecmwf/fdb@develop
+  - ecmwf/gribjump@develop
   python_dependencies:
   - ecmwf/eccodes-python@develop
   - ecmwf/cfgrib@master
