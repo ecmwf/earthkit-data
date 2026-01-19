@@ -148,17 +148,20 @@ class XArrayInputFieldList(FieldList):
         self.ds = FieldList.from_fields([ReleasableField(f) for f in self.ds])
 
     def group(self, key, values):
+        values = set(values)
         groups = defaultdict(list)
-        for f in self.ds:
+        for i, f in enumerate(self.ds):
             v = str(f.get(key, remapping=self.remapping, default=None))
             if v in values:
-                groups[v].append(f)
+                groups[v].append(i)
 
         for k, v in groups.items():
             if not v:
                 continue
             db = None
-            groups[k] = XArrayInputFieldList(FieldList.from_fields(v), db=db, remapping=self.remapping)
+            # db = self.db   # TODO: would be nice but it does not work...
+            mask_index = self.ds[v]
+            groups[k] = XArrayInputFieldList(mask_index, db=db, remapping=self.remapping)
 
         return groups
 
