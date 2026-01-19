@@ -15,17 +15,9 @@ import numpy as np
 
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalize
-
-# from earthkit.data.core.fieldlist import Field
-# from earthkit.data.core.metadata import RawMetadata
 from earthkit.data.field.data import DataFieldPart
-
-# from earthkit.data.indexing.fieldlist import ClonedFieldCore
 from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.utils.dates import to_datetime
-
-# from earthkit.data.decorators import thread_safe_cached_property
-
 
 LOG = logging.getLogger(__name__)
 
@@ -405,12 +397,12 @@ class ForcingsFieldList(SimpleFieldList):
         from earthkit.data.core.field import Field
 
         data = ForcingsFieldData(self.procs[param], date)
-        geography = self.maker.field._geography
 
-        field = Field.from_mixed(
+        # this will reuse geography from the maker.field
+        field = Field.from_field(
+            self.maker.field,
             data=data,
             parameter=dict(variable=param),
-            geography=geography,
             time=dict(valid_datetime=date),
             labels={"number": number},
         )

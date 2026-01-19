@@ -9,11 +9,13 @@
 
 import math
 from abc import abstractmethod
+from typing import Any
 
 from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.utils.array import flatten
 
+from .core import FieldPartWrapper
 from .core import SimpleFieldPart
 
 
@@ -60,7 +62,7 @@ class BaseDataFieldPart(SimpleFieldPart):
 class DataFieldPart(BaseDataFieldPart):
     """Simple data class that provides basic implementation for the data part of a field.
 
-    SimpleData has to be subclassed to provide concrete implementation
+    DataFieldPart has to be subclassed to provide concrete implementation
     for :py:meth:`get_values`.
     """
 
@@ -74,6 +76,33 @@ class DataFieldPart(BaseDataFieldPart):
             v = d["values"]
             return ArrayData(v)
         raise ValueError("Invalid arguments")
+
+    @classmethod
+    def from_any(cls, data: Any, **dict_kwargs) -> "DataFieldPart":
+        """Create a DataFieldPart object from any input.
+
+        Parameters
+        ----------
+        data: Any
+            The input data from which to create the DataFieldPart instance.
+        dict_kwargs: dict, optional
+            Additional keyword arguments to be passed when creating the instance from
+            a dictionary.
+
+        Returns
+        -------
+        DataFieldPart
+            An instance of DataFieldPart. If the input is already an instance
+            of DataFieldPart, it is returned as is. Otherwise, it is assumed to be a
+            specification object and a new DataFieldPart instance is created from it.
+        """
+        if isinstance(data, (cls, FieldPartWrapper)):
+            return data
+        elif isinstance(data, dict):
+            dict_kwargs = dict_kwargs or {}
+            return cls.from_dict(data, **dict_kwargs)
+
+        raise TypeError(f"Cannot create {cls.__name__} from {type(data)}")
 
     @property
     def values(self):

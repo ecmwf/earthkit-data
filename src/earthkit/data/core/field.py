@@ -24,9 +24,9 @@ from earthkit.data.field.conf import init_part_conf
 from earthkit.data.field.data import DataFieldPart
 from earthkit.data.field.ensemble import EnsembleFieldPart
 from earthkit.data.field.geography import GeographyFieldPart
+from earthkit.data.field.labels import SimpleLabels
 from earthkit.data.field.parameter import ParameterFieldPart
 from earthkit.data.field.proc import ProcFieldPart
-from earthkit.data.field.spec.labels import SimpleLabels
 from earthkit.data.field.time import TimeFieldPart
 from earthkit.data.field.vertical import VerticalFieldPart
 from earthkit.data.indexing.simple import SimpleFieldList
@@ -97,24 +97,32 @@ class Field(Base):
     - parameter: the parameter of the field
     - geography: the geography of the field
     - vertical: the vertical level of the field
+    - ensemble: the ensemble specification of the field
+    - proc: the processing specification of the field
     - labels: the labels of the field
 
-    Field is not polymorphic, but its parts are. To create a new Field object
-    use the class methods like :meth:`from_grib`, :meth:`from_xarray`, :meth:`from_dict`, etc.
+    Field is not polymorphic, but its parts are.
+
+    To create a new Field object use the factory methods such as :meth:`from_dict`
+    or :meth:`from_parts`.
 
     Parameters
     ----------
-    data : FieldData
+    data : DataFieldPart
         The data of the field.
-    time : FieldTime
+    time : TimeFieldPart
         The time of the field.
-    parameter : Parameter
+    parameter : ParameterFieldPart
         The parameter of the field.
     geography : Geography
         The geography of the field.
-    vertical : Vertical
+    vertical : VerticalFieldPart
         The vertical level of the field.
-    labels : Labels
+    ensemble : EnsembleFieldPart
+        The ensemble specification of the field.
+    proc : ProcFieldPart
+        The processing specification of the field.
+    labels : SimpleLabels
         The labels of the field.
     **kwargs : dict
         Other keyword arguments to be passed to the Field constructor.
@@ -144,7 +152,7 @@ class Field(Base):
         LABELS: SimpleLabels,
     }
 
-    # this will be initialized by the config decorator
+    # this will be initialized by the init_part_conf decorator
     _PART_KEYS = None
 
     def __init__(
@@ -160,17 +168,8 @@ class Field(Base):
         labels=None,
     ):
 
-        self._data = data
-        self._time = time
-        self._parameter = parameter
-        self._geography = geography
-        self._vertical = vertical
-        self._ensemble = ensemble
-        self._proc = proc
-
         if labels is None:
             labels = SimpleLabels()
-        self._labels = labels
 
         self._parts = {
             DATA: data,
@@ -189,7 +188,14 @@ class Field(Base):
     def from_field(
         cls,
         field,
-        **kwargs,
+        data=None,
+        time=None,
+        parameter=None,
+        geography=None,
+        vertical=None,
+        ensemble=None,
+        proc=None,
+        labels=None,
     ):
         r"""Create a Field object from another Field object.
 
@@ -197,30 +203,58 @@ class Field(Base):
         ----------
         field : Field
             The field to copy from.
-        **kwargs : dict
-            Other keyword arguments to be passed to the Field constructor. This can include
-            parts.
+        data : DataFieldPart, dict or None
+            The data of the field. When specified it is used instead of the data in
+            the ``field``.
+        time : Time, TimeFieldPart, dict or None
+            The time of the field. When specified it is used instead of the time
+            part in the ``field``.
+        parameter : Parameter, ParameterFieldPart, dict or None
+            The parameter of the field. When specified it is used instead of the
+            parameter part in the ``field``.
+        geography : Geography, GeographyFieldPart, dict or None
+            The geography of the field. When specified it is used instead of the geography
+            part in the ``field``.
+        vertical : Vertical, VerticalFieldPart, dict or None
+            The vertical level of the field. When specified it is used instead of the
+            vertical part in the ``field``.
+        ensemble : Ensemble, EnsembleFieldPart, dict or None
+            The ensemble specification of the field. When specified it is used instead of
+            the ensemble part in the ``field``.
+        proc :  Proc, ProcFieldPart, dict or None
+            The processing specification of the field. When specified it is used instead of
+            the processing part in the ``field``.
+        labels : SimpleLabels, dict or None
+            The labels of the field. When specified it is used instead of the labels
+            in the ``field``.
 
         Returns
         -------
         Field
-            A new Field object with the data, time, parameter, geography, vertical, and labels
-            copied from the original field. If any part is provided in `kwargs`, it will be
-            used instead of the original part. If a part is not provided in `kwargs`, it
-            will be copied from the original field.
+            A new Field object with the parts copied from the original field
+            or specified in the keyword arguments.
         """
-        kwargs = kwargs.copy()
-        _kwargs = {}
+        _kwargs = {
+            DATA: data,
+            TIME: time,
+            PARAMETER: parameter,
+            GEOGRAPHY: geography,
+            VERTICAL: vertical,
+            ENSEMBLE: ensemble,
+            PROC: proc,
+            LABELS: labels,
+        }
 
         for name in Field._PART_NAMES:
-            v = kwargs.pop(name, None)
+            v = _kwargs[name]
             if v is not None:
-                _kwargs[name] = v
+                _kwargs[name] = Field._DEFAULT_PART_CLS[name].from_any(v)
             else:
                 _kwargs[name] = field._parts[name]
 
-        r = field.__class__(**_kwargs, **kwargs)
+        r = field.__class__(**_kwargs)
 
+        # copy private data and initialize
         if field._private:
             r._private = field._private.copy()
             for v in r._private.values():
@@ -230,99 +264,141 @@ class Field(Base):
 
     @classmethod
     def from_dict(cls, d):
+        r"""Create a Field object from a dictionary.
+
+        Parameters
+        ----------
+        d : dict
+            The dictionary to create the Field from. Keys not used by any part
+            are added to the labels.
+
+        Returns
+        -------
+        Field
+            A new Field object created from the dictionary.
+        """
         if not isinstance(d, dict):
             raise TypeError("d must be a dictionary")
 
-        data = DataFieldPart.from_dict(d, allow_unused=True)
-        geography = GeographyFieldPart.from_dict(
-            d, allow_unused=True, shape_hint=data.get_values(copy=False).shape
-        )
-        parameter = ParameterFieldPart.from_dict(d, allow_unused=True)
-        time = TimeFieldPart.from_dict(d, allow_unused=True)
-        vertical = VerticalFieldPart.from_dict(d, allow_unused=True)
-        ensemble = EnsembleFieldPart.from_dict(d, allow_unused=True)
+        parts = {}
 
-        # the unused items are added to the labels
+        # TODO: add support for proc part
+        for name in [DATA, TIME, PARAMETER, VERTICAL, ENSEMBLE]:
+            part = cls._DEFAULT_PART_CLS[name].from_dict(d, allow_unused=True)
+            parts[name] = part
+
+        shape_hint = None
+        if parts.get(DATA):
+            shape_hint = parts[DATA].get_values(copy=False).shape
+
+        parts[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_dict(
+            d, allow_unused=True, shape_hint=shape_hint
+        )
+
+        # the unused items are added as labels
         rest = {k: v for k, v in d.items() if k not in cls._PART_KEYS}
         labels = SimpleLabels(rest)
 
-        return cls(
-            data=data,
-            time=time,
-            parameter=parameter,
-            geography=geography,
-            vertical=vertical,
-            ensemble=ensemble,
-            labels=labels,
-        )
+        return cls(**parts, labels=labels)
 
     @classmethod
-    def from_mixed(cls, **kwargs):
-        from earthkit.data.field.core import FieldPart
+    def from_parts(
+        cls,
+        data=None,
+        time=None,
+        parameter=None,
+        geography=None,
+        vertical=None,
+        ensemble=None,
+        proc=None,
+        labels=None,
+    ):
+        r"""Create a Field object from parts.
 
-        kwargs = kwargs.copy()
-        _kwargs = {}
+        Parameters
+        ----------
+        data : DataFieldPart, dict
+            The data of the field.
+        time : Time, TimeFieldPart, dict
+            The time of the field.
+        parameter : Parameter, ParameterFieldPart, dict
+            parameter part in the ``field``.
+        geography : Geography, GeographyFieldPart, dict or None
+            The geography of the field.
+        vertical : Vertical, VerticalFieldPart, dict or None
+            The vertical level of the field.
+        ensemble : Ensemble, EnsembleFieldPart, dict or None
+            The ensemble specification of the field.
+        proc :  Proc, ProcFieldPart, dict or None
+            The processing specification of the field.
+        labels : SimpleLabels, dict or None
+            The labels of the field.
 
-        geo = None
-        if GEOGRAPHY in kwargs and isinstance(kwargs[GEOGRAPHY], dict):
-            geo = kwargs.get(GEOGRAPHY, None)
+        Returns
+        -------
+        Field
+            A new Field object with the parts copied from the original field
+            or specified in the keyword arguments.
+        """
+        _kwargs = {
+            DATA: data,
+            TIME: time,
+            PARAMETER: parameter,
+            VERTICAL: vertical,
+            ENSEMBLE: ensemble,
+            PROC: proc,
+            LABELS: labels,
+        }
 
-        for name in Field._PART_NAMES:
-            v = kwargs.pop(name, None)
+        parts = {}
+
+        for name, v in _kwargs.items():
             if v is not None:
-                # TODO: find a better way to handle FieldPart-like objects. E.g. GRIB parts
-                # are only a wrapper around a FieldPart object
-                if isinstance(v, FieldPart) or hasattr(v, "get_grib_context"):
-                    _kwargs[name] = v
-                elif isinstance(v, dict):
-                    _kwargs[name] = cls._DEFAULT_PART_CLS[name].from_dict(v, allow_unused=True)
-                # we assume it is a spec
-                else:
-                    v = cls._DEFAULT_PART_CLS[name].from_spec(v)
-                    _kwargs[name] = v
+                part = cls._DEFAULT_PART_CLS[name].from_any(v, dict_kwargs={"allow_unused": True})
+                parts[name] = part
 
-        if geo:
-            if "data" in _kwargs and _kwargs["data"] is not None:
-                data = _kwargs["data"]
+        if isinstance(geography, dict):
+            shape_hint = None
+            if "data" in parts:
+                data = parts["data"]
                 shape_hint = data.values.shape
-                _kwargs[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_dict(
-                    geo, allow_unused=True, shape_hint=shape_hint
-                )
-            else:
-                _kwargs[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_dict(geo, allow_unused=True)
+            parts[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_dict(
+                allow_unused=True, shape_hint=shape_hint
+            )
+        elif geography is not None:
+            parts[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_any(geography)
 
-        r = cls(**_kwargs, **kwargs)
-        return r
+        return cls(**parts)
 
     @property
     def ensemble(self):
         """Ensemble: Return the ensemble specification of the field."""
-        return self._ensemble.spec
+        return self._parts[ENSEMBLE].spec
 
     @property
     def time(self):
         """Time: Return the time specification of the field."""
-        return self._time.spec
+        return self._parts[TIME].spec
 
     @property
     def vertical(self):
         """Vertical: Return the vertical specification of the field."""
-        return self._vertical.spec
+        return self._parts[VERTICAL].spec
 
     @property
     def parameter(self):
         """Parameter: Return the vertical specification of the field."""
-        return self._parameter.spec
+        return self._parts[PARAMETER].spec
 
     @property
     def geography(self):
         """Geography: Return the geography specification of the field."""
-        return self._geography.spec
+        return self._parts[GEOGRAPHY].spec
 
     @property
     def proc(self):
         """Proc: Return the proc specification of the field."""
-        return self._proc.spec
+        return self._parts[PROC].spec
 
     @classmethod
     def from_array(cls, array):
@@ -340,17 +416,17 @@ class Field(Base):
         return eku_array_namespace(self.values)
 
     def free(self):
-        self._data = self._data.Offloader(self._data)
+        self._parts[DATA] = self._parts[DATA].Offloader(self._parts[DATA])
 
     # @property
     # def values(self):
     #     """array-like: Return the values of the field."""
-    #     return self._data.values
+    #     return self._parts[DATA].values
 
     @property
     def shape(self):
-        if self._geography:
-            return self._geography.shape
+        if self._parts.get(GEOGRAPHY):
+            return self._parts[GEOGRAPHY].shape
         else:
             return self.values.shape
 
@@ -375,7 +451,7 @@ class Field(Base):
             Field values
 
         """
-        v = self._data.get_values(dtype=dtype, copy=copy)
+        v = self._parts[DATA].get_values(dtype=dtype, copy=copy)
         v = convert_array(v, array_namespace="numpy")
         v = array_flatten(v) if flatten else array_reshape(v, self.shape)
 
@@ -432,7 +508,7 @@ class Field(Base):
                 raise ValueError("to_array(): only one of array_backend and array_namespace can be specified")
             array_namespace = array_backend
 
-        v = self._data.get_values(dtype=dtype, copy=copy)
+        v = self._parts[DATA].get_values(dtype=dtype, copy=copy)
         if array_namespace is not None:
             v = convert_array(v, array_namespace=array_namespace, device=device)
 
@@ -510,8 +586,10 @@ class Field(Base):
             v = part.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
             return v
         # next try the labels with the full key
-        elif key in self._labels:
-            return self._labels.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        elif key in self._parts[LABELS]:
+            return self._parts[LABELS].get(
+                key, default=default, astype=astype, raise_on_missing=raise_on_missing
+            )
         # try the private parts
         elif self._private:
             if part_name in self._private:
@@ -825,7 +903,7 @@ class Field(Base):
         return None
 
     def _set_values(self, array):
-        data = self._data.set_values(array)
+        data = self._parts[DATA].set_values(array)
         return Field.from_field(self, data=data)
 
     def set_labels(self, *args, **kwargs):
@@ -845,7 +923,7 @@ class Field(Base):
         """
 
         d = dict(*args, **kwargs)
-        return Field(self, labels=self._labels.set(d))
+        return Field(self, labels=self._parts[LABELS].set(d))
 
     @deprecation.deprecated(deprecated_in="0.13.0", details="Use to_target() instead")
     def save(self, filename, append=False, **kwargs):
@@ -1168,7 +1246,7 @@ class Field(Base):
         if ll:
             sample = r.get("value", None)
             if sample is None:
-                sample = self._data.get_values(dtype=dtype)
+                sample = self._parts[DATA].get_values(dtype=dtype)
             target_xp = eku_array_namespace(sample)
             device = target_xp.device(sample)
             target_dtype = None
@@ -1274,12 +1352,12 @@ class Field(Base):
 
         # convert values to array format
         assert r
-        # sample = self._data.get_values(dtype=dtype)
+        # sample = self._parts[DATA].get_values(dtype=dtype)
         # for k, v in zip(r.keys(), convert_array(list(r.values()), target_array_sample=sample)):
         #     r[k] = v
         # return r
 
-        sample = self._data.get_values(dtype=dtype)
+        sample = self._parts[DATA].get_values(dtype=dtype)
         target_xp = eku_array_namespace(sample)
         device = target_xp.device(sample)
         target_dtype = None
@@ -1352,13 +1430,6 @@ class Field(Base):
 
     def __getstate__(self):
         state = {}
-        # state["data"] = self._data
-        # state["geography"] = self._geography
-        # state["labels"] = self._labels
-        # state["parameter"] = self._parameter
-        # state["ensemble"] = self._ensemble
-        # state["time"] = self._time
-        # state["vertical"] = self._vertical
         state["parts"] = self._parts
         state["private"] = self._private
         return state

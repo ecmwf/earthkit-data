@@ -9,6 +9,7 @@
 
 
 from abc import abstractmethod
+from typing import Any
 
 from .core import FieldPart
 
@@ -108,6 +109,33 @@ class SimpleLabels(dict, Labels):
         if not isinstance(d, dict):
             raise TypeError("labels must be a dictionary")
         return cls(d)
+
+    @classmethod
+    def from_any(cls, data: Any, dict_kwargs=None) -> "Labels":
+        """Create a SimpleLabels object from any input.
+
+        Parameters
+        ----------
+        data: Any
+            The input data from which to create the SimpleLabels instance.
+        dict_kwargs: dict, optional
+            Additional keyword arguments to be passed when creating the instance from
+            a dictionary.
+
+        Returns
+        -------
+        SimpleLabels
+            An instance of SimpleLabels. If the input is already an instance
+            of SimpleLabels, it is returned as is. Otherwise, it is assumed to be a
+            specification object and a new SimpleLabels instance is created from it.
+        """
+        if isinstance(data, cls):
+            return data
+        elif isinstance(data, dict):
+            dict_kwargs = dict_kwargs or {}
+            return cls.from_dict(data, **dict_kwargs)
+
+        raise TypeError(f"Cannot create {cls.__name__} from {type(data)}")
 
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         def _cast(v):

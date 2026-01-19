@@ -95,6 +95,24 @@ class FieldPart(metaclass=ABCMeta):
         """
         pass
 
+    @classmethod
+    @abstractmethod
+    def from_any(cls, **kwargs) -> "FieldPart":
+        """
+        Create a FieldPart instance from any allowed input types.
+
+        Parameters
+        ----------
+        kwargs : dict
+            Keyword arguments containing specification data.
+
+        Returns
+        -------
+        Spec
+            The created Spec instance.
+        """
+        pass
+
     @property
     @abstractmethod
     def spec(self) -> "FieldPart":
@@ -180,6 +198,20 @@ class FieldPart(metaclass=ABCMeta):
         pass
 
 
+class FieldPartWrapper(metaclass=ABCMeta):
+    _exception = None
+
+    @property
+    @abstractmethod
+    def _part(self):
+        pass
+
+    def __getattr__(self, name):
+        if self._exception is not None:
+            raise self._exception(name)
+        return getattr(self._part, name)
+
+
 class SimpleFieldPart(FieldPart):
     """A FieldPart providing basic implementations for the :obj:`get` method."""
 
@@ -212,11 +244,11 @@ class SpecFieldPart(SimpleFieldPart):
 
     Parameters
     ----------
-    spec : SPEC_CLS
+    spec : Spec
 
     Attributes
     ----------
-    spec : SPEC_CLS
+    spec : Spec
         The type of the specification object wrapped by the FieldPart. To be
         defined in subclasses.
 
@@ -245,9 +277,38 @@ class SpecFieldPart(SimpleFieldPart):
         """Create a SpecFieldPart object from a specification object."""
         return cls(spec)
 
+    @classmethod
+    def from_any(cls, data: Any, dict_kwargs=None) -> "SpecFieldPart":
+        """Create a SpecFieldPart object from any input.
+
+        Parameters
+        ----------
+        data: Any
+            The input data from which to create the SpecFieldPart instance.
+        dict_kwargs: dict, optional
+            Additional keyword arguments to be passed when creating the instance from
+            a dictionary.
+
+        Returns
+        -------
+        SpecFieldPart
+            An instance of SpecFieldPart. If the input is already an instance
+            of SpecFieldPart, it is returned as is. Otherwise, it is assumed to be a
+            specification object and a new SpecFieldPart instance is created from it.
+        """
+        if isinstance(data, (cls, FieldPartWrapper)):
+            return data
+        elif isinstance(data, dict):
+            dict_kwargs = dict_kwargs or {}
+            return cls.from_dict(data, **dict_kwargs)
+        elif isinstance(data, cls.SPEC_CLS):
+            return cls.from_spec(data)
+
+        raise TypeError(f"Cannot create {cls.__name__} from {type(data)}")
+
     @property
     def spec(self) -> Any:
-        """Return the specification object."""
+        """Return the specification objeßct."""
         return self._spec
 
     def set(self, *args, **kwargs) -> "SpecFieldPart":

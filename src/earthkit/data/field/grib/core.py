@@ -7,20 +7,21 @@
 # nor does it submit to any jurisdiction.
 #
 
+
 import logging
 
 from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.data.field.core import FieldPartWrapper
 
 LOG = logging.getLogger(__name__)
 
 
-class GribFieldPart:
+class GribFieldPart(FieldPartWrapper):
     BUILDER = None
     COLLECTOR = None
 
     def __init__(self, handle):
         self.handle = handle
-        self._exception = None
 
     @classmethod
     def from_handle(cls, handle):
@@ -35,17 +36,8 @@ class GribFieldPart:
             self._exception = e
             raise
 
-    # @property
-    # def spec(self):
-    #     return self._part.spec
-
     def get_grib_context(self, context) -> dict:
         self.COLLECTOR.collect(self, context)
-
-    def __getattr__(self, name):
-        if self._exception is not None:
-            raise self._exception(name)
-        return getattr(self._part, name)
 
     def __getstate__(self):
         state = {}
