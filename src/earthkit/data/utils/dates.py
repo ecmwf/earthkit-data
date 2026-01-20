@@ -55,7 +55,11 @@ def to_datetime(dt):
         return numpy_datetime_to_datetime(dt)
 
     if hasattr(dt, "dtype") and dt.dtype == object:
-        return numpy_datetime_to_datetime(_handle_complex_object_datetime(dt))
+        # TODO: clarify what to do with object arrays
+        dt = _handle_complex_object_datetime(dt)
+        if dt.ndim > 0:
+            dt = dt[0]
+        return numpy_datetime_to_datetime(dt)
 
     if isinstance(dt, np.int64):
         dt = int(dt)
