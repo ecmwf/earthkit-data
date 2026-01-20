@@ -257,7 +257,7 @@ class ForcingField(Field):
         )
         return ForcingMetadata(d, self.maker.field.metadata().geography)
 
-    def _values(self, dtype=None):
+    def _values(self, dtype=None, context=None):
         values = self.proc(self.date)
         if dtype is not None:
             values = values.astype(dtype)

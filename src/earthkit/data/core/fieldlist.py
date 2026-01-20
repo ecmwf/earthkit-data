@@ -104,7 +104,7 @@ class Field(Base):
         return eku_array_namespace(self._values())
 
     @abstractmethod
-    def _values(self, dtype=None):
+    def _values(self, dtype=None, context=None):
         r"""Return the raw values extracted from the underlying storage format
         of the field.
 
@@ -136,7 +136,7 @@ class Field(Base):
         r"""Metadata: Get the object representing the field's metadata."""
         self._not_implemented()
 
-    def to_numpy(self, flatten=False, dtype=None, index=None):
+    def to_numpy(self, flatten=False, dtype=None, index=None, context=None):
         r"""Return the values stored in the field as an ndarray.
 
         Parameters
@@ -157,7 +157,11 @@ class Field(Base):
             Field values
 
         """
-        v = convert_array(self._values(dtype=dtype), array_namespace="numpy")
+        if context is not None:
+            v = self._values(dtype=dtype, context=context)
+        else:
+            v = self._values(dtype=dtype)
+        v = convert_array(v, array_namespace="numpy")
         shape = self._required_shape(flatten)
         if shape != v.shape:
             v = v.reshape(shape)
@@ -166,7 +170,14 @@ class Field(Base):
         return v
 
     def to_array(
-        self, flatten=False, dtype=None, array_backend=None, array_namespace=None, device=None, index=None
+        self,
+        flatten=False,
+        dtype=None,
+        array_backend=None,
+        array_namespace=None,
+        device=None,
+        index=None,
+        context=None,
     ):
         r"""Return the values stored in the field.
 
@@ -206,7 +217,11 @@ class Field(Base):
                 raise ValueError("to_array(): only one of array_backend and array_namespace can be specified")
             array_namespace = array_backend
 
-        v = self._values(dtype=dtype)
+        if context is not None:
+            v = self._values(dtype=dtype, context=context)
+        else:
+            v = self._values(dtype=dtype)
+
         if array_namespace is not None:
             v = convert_array(v, array_namespace=array_namespace, device=device)
 
