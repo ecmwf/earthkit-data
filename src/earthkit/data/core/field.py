@@ -287,6 +287,7 @@ class Field(Base):
             part = cls._DEFAULT_PART_CLS[name].from_dict(d, allow_unused=True)
             parts[name] = part
 
+        # geography may need shape hint from data so handled separately
         shape_hint = None
         if parts.get(DATA):
             shape_hint = parts[DATA].get_values(copy=False).shape
