@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data.core.order import build_remapping
-from earthkit.data.utils.xarray.fieldlist import CollectorJoiner
+from earthkit.data.xr_engine.fieldlist import CollectorJoiner
 
 data = {"type": "cf", "number": 0, "name": "t2m"}
 

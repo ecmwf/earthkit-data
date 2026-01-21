@@ -307,7 +307,7 @@ class FieldListTensor(TensorCore):
 
         if check_if_tensor_is_full:
             # consistency check
-            from earthkit.data.utils.xarray.check import CubeChecker
+            from earthkit.data.xr_engine.check import CubeChecker
 
             checker = CubeChecker(self)
             checker.check(details=True)
@@ -371,7 +371,7 @@ class FieldListTensor(TensorCore):
         if field_dims_and_coords is not None:
             field_dims, field_coords = field_dims_and_coords
         else:
-            from earthkit.data.utils.xarray.grid import TensorGrid
+            from earthkit.data.xr_engine.grid import TensorGrid
 
             field_dims, field_coords, _ = TensorGrid.build(source[0], flatten_values)
 

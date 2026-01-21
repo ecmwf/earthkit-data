@@ -94,7 +94,7 @@ urls.Homepage = "https://github.com/ecmwf/earthkit-data/"
 urls.Issues = "https://github.com/ecmwf/earthkit-data.issues"
 urls.Repository = "https://github.com/ecmwf/earthkit-data/"
 
-entry-points."xarray.backends".earthkit = "earthkit.data.utils.xarray.engine:EarthkitBackendEntrypoint"
+entry-points."xarray.backends".earthkit = "earthkit.data.xr_engine.engine:EarthkitBackendEntrypoint"
 
 [tool.setuptools.packages.find]
 include = [ "earthkit.data" ]
