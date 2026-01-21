@@ -44,21 +44,26 @@ def make_unique(x, full=False):
     return format_list(r, full=full)
 
 
-def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, **kwargs):
+def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, namespace=None, **kwargs):
     # do_print = kwargs.pop("print", False)
 
     if kwargs:
         raise TypeError(f"ls: unsupported arguments={kwargs}")
 
-    _keys = {}
-    if isinstance(default_keys, (list, tuple)):
-        default_keys = {k: k for k in default_keys}
+    if isinstance(namespace, str):
+        namespace = [namespace]
 
-    _keys = dict(default_keys) if keys is None else keys
-    if isinstance(_keys, (list, tuple)):
-        _keys = {k: k for k in keys}
-    elif isinstance(_keys, str):
-        _keys = {keys: keys}
+    _keys = {}
+
+    if not namespace:
+        if isinstance(default_keys, (list, tuple)):
+            default_keys = {k: k for k in default_keys}
+
+        _keys = dict(default_keys) if keys is None else keys
+        if isinstance(_keys, (list, tuple)):
+            _keys = {k: k for k in keys}
+        elif isinstance(_keys, str):
+            _keys = {keys: keys}
 
     if extra_keys is not None:
         if isinstance(extra_keys, (list, tuple)):
@@ -69,16 +74,24 @@ def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, **kwargs
         elif isinstance(extra_keys, dict):
             _keys.update(extra_keys)
 
+    if "namespace" in _keys:
+        raise ValueError("ls: 'namespace' is a reserved key")
+
     if n == 0:
         raise ValueError("n cannot be 0")
 
-    return format_ls(metadata_proc(_keys, n))
+    _keys_lst = list(_keys.keys())
+
+    return format_ls(metadata_proc(_keys_lst, n, namespace=namespace), column_names=_keys)
 
 
-def format_ls(attributes):
+def format_ls(attributes, column_names=None):
     import pandas as pd
 
     df = pd.DataFrame.from_records(attributes)
+
+    if df is not None and column_names is not None:
+        df = df.rename(columns=column_names)
     return df
 
 

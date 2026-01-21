@@ -343,9 +343,9 @@ class FieldList(Index, FieldListCore):
     def ls(self, n=None, keys=None, extra_keys=None, namespace=None):
         from earthkit.data.utils.summary import ls
 
-        def _proc(keys, n):
-            if isinstance(keys, dict):
-                keys = list(keys.keys())
+        def _proc(keys: list, n: int, namespace=None):
+            # if isinstance(keys, dict):
+            #     keys = list(keys.keys())
 
             num = len(self)
             pos = slice(0, num)
@@ -353,20 +353,35 @@ class FieldList(Index, FieldListCore):
                 pos = slice(0, min(num, n)) if n > 0 else slice(num - min(num, -n), num)
             pos_range = range(pos.start, pos.stop)
 
-            if "namespace" in keys:
-                ns = keys.pop("namespace", None)
+            if namespace is not None:
                 for i in pos_range:
                     f = self[i]
-                    v = f.get(namespace=ns)
-                    if len(keys) > 0:
+                    v = {}
+                    for ns_val in f.namespace(namespace).values():
+                        v.update(ns_val)
+                    if keys:
                         v.update(f._get_fast(keys, output=dict))
                     yield (v)
             else:
                 for i in pos_range:
                     yield (self[i]._get_fast(keys, output=dict))
 
-        _keys = self._default_ls_keys() if namespace is None else dict(namespace=namespace)
-        return ls(_proc, _keys, n=n, keys=keys, extra_keys=extra_keys)
+            # if "namespace" in keys:
+            #     ns = keys.pop("namespace", None)
+            #     keys = list(keys.keys())
+            #     for i in pos_range:
+            #         f = self[i]dump
+            #         v = f.get(namespace=ns)
+            #         if len(keys) > 0:
+            #             v.update(f._get_fast(keys, output=dict))
+            #         yield (v)
+            # else:
+            #     keys = list(keys.keys())
+            #     for i in pos_range:
+            #         yield (self[i]._get_fast(keys, output=dict))
+
+        # _keys = self._default_ls_keys() if namespace is None else namespace
+        return ls(_proc, self._default_ls_keys(), n=n, keys=keys, extra_keys=extra_keys, namespace=namespace)
 
     def head(self, n=5, **kwargs):
         if n <= 0:

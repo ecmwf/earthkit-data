@@ -45,8 +45,8 @@ LS_KEYS = [
     "base_datetime",
     "step",
     "level",
-    "level_type",
-    "number",
+    "vertical_type",
+    "member",
     "grid_type",
 ]
 
@@ -76,7 +76,7 @@ DUMP_ORDER = [
         TIME: {"direct": all},
         PARAMETER: {"direct": ("variable", "param", "units")},
         GEOGRAPHY: {
-            "direct": ("latitudes", "longitudes", "grid_spec", "x", "y", "bounding_box"),
+            "direct": ("latitudes", "longitudes", "grid_spec", "x", "y", "bounding_box", "grid_type"),
         },
         VERTICAL: {"direct": ("level", "layer")},
         ENSEMBLE: {"direct": ("member",)},
@@ -92,6 +92,7 @@ class Field(Base):
     a given time.
 
     A Field object is composed of several parts:
+
     - data: the data values of the field
     - time: the time of the field
     - parameter: the parameter of the field
@@ -114,7 +115,7 @@ class Field(Base):
         The time of the field.
     parameter : ParameterFieldPart
         The parameter of the field.
-    geography : Geography
+    geography : GeographyFieldPart
         The geography of the field.
     vertical : VerticalFieldPart
         The vertical level of the field.
@@ -1026,18 +1027,53 @@ class Field(Base):
     def to_pandas(self, *args, **kwargs):
         pass
 
-    def namespace(self, name=None):
-        if name is all or name is True or name == [all]:
+    def namespace(self, name="all", *, simplify=True):
+        r"""Return the namespaces as a dict.
+
+        Parameters
+        ----------
+        name: :obj:`str`, :obj:`list`, :obj:`tuple` or :obj:`all`
+            The namespaces to return. If `name` is :obj:`all`, None or empty str
+            all the namespaces will be used.
+
+        Returns
+        -------
+        dict
+            Each namespace is represented as a dict. When ``simplify`` is True and
+            ``name`` is a str and only one namespace is available the returned dict
+            contains the keys and values of that namespace. Otherwise the returned
+            dict contains one item per namespace.
+
+        Examples
+        --------
+        :ref:`/examples/grib_metadata.ipynb`
+
+        See Also
+        --------
+        dump
+
+        """
+        if name is None or name == "":
+            raise ValueError("namespace(): name cannot be None or empty str. Use 'all' instead.")
+
+        if name in ["all", all, ["all"], [all]]:
             name = None
 
         result = {}
         for m in self._parts.values():
             m.namespace(self, name, result)
 
-        if name is not None and self._private:
+        if (
+            name is not None
+            and not (isinstance(name, (list, tuple)) and len(name) == len(result))
+            and self._private
+        ):
             for _, v in self._private.items():
                 if hasattr(v, "namespace"):
                     v.namespace(self, name, result)
+
+        if simplify and isinstance(name, str) and len(result) == 1 and name in result:
+            return result[name]
 
         return result
 
@@ -1069,10 +1105,14 @@ class Field(Base):
         --------
         :ref:`/examples/grib_metadata.ipynb`
 
+        See Also
+        --------
+        namespace
+
         """
         from earthkit.data.utils.summary import format_namespace_dump
 
-        d = self.namespace(namespace)
+        d = self.namespace(namespace, simplify=False)
 
         d1 = {}
         for k in DUMP_ORDER:

@@ -18,7 +18,6 @@ class GribEnsembleBuilder:
         from earthkit.data.field.ensemble import EnsembleFieldPart
 
         d = GribEnsembleBuilder._build_dict(handle)
-        print("GribEnsembleBuilder.build:", d)
         spec = EnsembleFieldPart.from_dict(d)
         # spec._set_private_data("handle", handle)
         return spec
