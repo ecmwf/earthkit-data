@@ -538,8 +538,10 @@ class GribEncoder(Encoder):
         if metadata.get("type") in ("pf", "cf"):
             metadata.setdefault("typeOfGeneratingProcess", 4)
 
+        # TODO: revisit the logic behind using levelist and level
         if "levelist" in metadata:
-            metadata.setdefault("levtype", "pl")
+            if "typeOfLevel" not in metadata:
+                metadata.setdefault("levtype", "pl")
 
         if "param" in metadata:
             param = metadata.pop("param")

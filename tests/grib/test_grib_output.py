@@ -168,6 +168,53 @@ def test_grib_output_latlon(mode):
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
 )
+@pytest.mark.parametrize("mode", ["compat", "target"])
+def test_grib_output_pa_level(mode):
+    data = np.random.random((181, 360))
+
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        path = os.path.join(tmp, "a.grib")
+
+        if mode == "ori":
+            f = earthkit.data.new_grib_output(path, date=20010101)
+            f.write(data, param="t", level=85555, typeOfLevel="isobaricInPa")
+            f.close()
+        elif mode == "compat":
+            f = new_grib_output_compat(path, metadata=dict(date=20010101, generatingProcessIdentifier=255))
+            f.write(values=data, param="t", level=85555, typeOfLevel="isobaricInPa")
+            f.close()
+        elif mode == "target":
+            to_target(
+                "file",
+                path,
+                metadata=dict(
+                    date=20010101,
+                    generatingProcessIdentifier=255,
+                    param="t",
+                    level=85555,
+                    typeOfLevel="isobaricInPa",
+                ),
+                values=data,
+            )
+
+        ds = earthkit.data.from_source("file", path)
+        print(ds[0])
+
+        assert ds[0].metadata("date") == 20010101
+        assert ds[0].metadata("param") == "t"
+        assert ds[0].metadata("levtype") == "pl"
+        # assert ds[0].metadata("level") == 85000
+        # assert ds[0].metadata("typeOfLevel") == "isobaricInPa"
+        assert ds[0].metadata("edition") == 2
+        assert ds[0].metadata("generatingProcessIdentifier") == 255
+
+        assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="ignore_cleanup_errors requires Python 3.10 or later",
+)
 @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
 def test_grib_output_o96_sfc(mode):
     data = np.random.random((40320,))
