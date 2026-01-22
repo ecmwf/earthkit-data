@@ -30,18 +30,18 @@ from .pandas import PandasMixIn
 
 BUFR_LS_KEYS = {
     "edition": "edition",
-    "type": "dataCategory",
-    "subtype": "dataSubCategory",
-    "c": "bufrHeaderCentre",
-    "mv": "masterTablesVersionNumber",
-    "lv": "localTablesVersionNumber",
-    "subsets": "numberOfSubsets",
-    "compr": "compressedData",
+    "dataCategory": "type",
+    "dataSubCategory": "subtype",
+    "bufrHeaderCentre": "c",
+    "masterTablesVersionNumber": "mv",
+    "localTablesVersionNumber": "lv",
+    "numberOfSubsets": "subsets",
+    "compressedData": "compr",
     "typicalDate": "typicalDate",
     "typicalTime": "typicalTime",
     "ident": "ident",
-    "lat": "localLatitude",
-    "lon": "localLongitude",
+    "localLatitude": "lat",
+    "localLongitude": "lon",
 }
 
 
@@ -468,8 +468,9 @@ class BUFRListMixIn(PandasMixIn):
             listed. ``None`` means all the messages, ``n > 0`` means messages from the front, while
             ``n < 0`` means messages from the back of the list.
         keys: list of str, dict, None
-            Metadata keys. To specify a column title for each key in the output use a dict. If
-            ``keys`` is None the following dict will be used to define the titles and the keys::
+            Metadata keys. To specify a column title for each key in the output use a dict with keys as
+            the metadata keys and values as the column titles. If ``keys`` is None the following dict
+            will be used to define the titles and the keys::
 
                 {
                     "edition": "edition",
@@ -503,7 +504,7 @@ class BUFRListMixIn(PandasMixIn):
         """
         from earthkit.data.utils.summary import ls
 
-        def _proc(keys, n):
+        def _proc(keys: list, n: int, **kwargs):
             count_start = 0
             if n is None:
                 count_end = len(self)
@@ -516,7 +517,7 @@ class BUFRListMixIn(PandasMixIn):
 
             for count, msg in enumerate(self):
                 if count_start <= count < count_end:
-                    yield ({k: msg._header(k1) for k, k1 in keys.items()})
+                    yield ({k: msg._header(k) for k in keys})
                 elif count >= count_end:
                     break
 

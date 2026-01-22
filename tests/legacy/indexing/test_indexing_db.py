@@ -21,6 +21,7 @@ sys.path.insert(0, here)
 from indexing_fixtures import get_tmp_fixture  # noqa: E402
 
 
+@pytest.mark.legacy
 @pytest.mark.cache
 def test_indexing_db_file():
     _, path = get_tmp_fixture("file")
@@ -29,6 +30,7 @@ def test_indexing_db_file():
     assert ds.db.count() == 18
 
 
+@pytest.mark.legacy
 @pytest.mark.cache
 def test_indexing_db_file_multi():
     _, path = get_tmp_fixture("multi")
@@ -41,6 +43,7 @@ def test_indexing_db_file_multi():
         assert d.db.count() == counts[i]
 
 
+@pytest.mark.legacy
 @pytest.mark.cache
 def test_indexing_db_directory():
     _, path = get_tmp_fixture("directory")
