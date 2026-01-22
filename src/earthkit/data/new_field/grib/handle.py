@@ -117,7 +117,7 @@ class GribCodesHandle(CodesHandle):
         eccodes.codes_set_long(self._handle, "shapeOfTheEarth", save)
         return result
 
-    def as_namespace(self, namespace, param="shortName"):
+    def as_namespace(self, namespace, param="shortName", prefix=""):
         r = {}
         ignore = {
             "distinctLatitudes",
@@ -129,9 +129,12 @@ class GribCodesHandle(CodesHandle):
             "values",
             "bitmap",
         }
+        if prefix is None:
+            prefix = ""
+
         for key in self.keys(namespace=namespace):
             if key not in ignore:
-                r[key] = self.get(param if key == "param" else key)
+                r[prefix + key] = self.get(param if key == "param" else key)
         return r
 
     # TODO: once missing value handling is implemented in the base class this method

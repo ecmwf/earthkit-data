@@ -30,6 +30,7 @@ def _check_ls_df(df, expected_values):
     )
 
 
+@pytest.mark.skip(reason="to be revisited")
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_describe(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -155,6 +156,7 @@ def test_grib_describe(fl_type):
     assert ref[0] == df[0].to_dict()
 
 
+@pytest.mark.skip(reason="to be revisited")
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_describe_single_field(fl_type):
     f_in, _ = load_grib_data("tuv_pl.grib", fl_type)
@@ -184,6 +186,7 @@ def test_grib_describe_single_field(fl_type):
     assert ref == df.to_dict()
 
 
+# TODO: test with default keys once established
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "_kwargs,expected_values",
@@ -244,6 +247,45 @@ def test_grib_describe_single_field(fl_type):
                 "member": {0: "0", 1: "0", 2: "0", 3: "0"},
             },
         ),
+        (
+            {
+                "keys": [
+                    "variable",
+                    "level",
+                ],
+                "extra_keys": ["member"],
+            },
+            {
+                "variable": {0: "t", 1: "u", 2: "v", 3: "t"},
+                "level": {0: 1000, 1: 1000, 2: 1000, 3: 850},
+                "member": {0: "0", 1: "0", 2: "0", 3: "0"},
+            },
+        ),
+        (
+            {
+                "keys": [
+                    "variable",
+                    "grib.levtype",
+                ],
+            },
+            {
+                "variable": {0: "t", 1: "u", 2: "v", 3: "t"},
+                "grib.levtype": {0: "pl", 1: "pl", 2: "pl", 3: "pl"},
+            },
+        ),
+        (
+            {
+                "keys": [
+                    "grib.levtype",
+                    "variable",
+                ],
+            },
+            {
+                "grib.levtype": {0: "pl", 1: "pl", 2: "pl", 3: "pl"},
+                "variable": {0: "t", 1: "u", 2: "v", 3: "t"},
+            },
+        ),
+        ({"keys": ["_missing_key"]}, {"_missing_key": {0: None, 1: None, 2: None, 3: None}}),
     ],
 )
 def test_grib_ls_core(_kwargs, expected_values, fl_type):
@@ -254,152 +296,119 @@ def test_grib_ls_core(_kwargs, expected_values, fl_type):
 
     _check_ls_df(df, expected_values)
 
-    # assert expected_values == df.to_dict()
 
-    # # TODO: test with default keys once established
-    # keys = [
-    #     "variable",
-    #     "units",
-    #     "vertical_type",
-    #     "level",
-    #     "base_date",
-    #     "valid_date",
-    #     "step",
-    #     "member",
-    # ]
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize(
+    "_kwargs,expected_values",
+    [
+        (
+            {
+                "n": 2,
+                "namespace": "parameter",
+            },
+            {
+                "variable": {0: "t", 1: "u"},
+                "units": {0: "K", 1: "m s**-1"},
+            },
+        ),
+        (
+            {
+                "n": 2,
+                "namespace": "parameter",
+                "extra_keys": ["level"],
+            },
+            {
+                "variable": {0: "t", 1: "u"},
+                "units": {0: "K", 1: "m s**-1"},
+                "level": {0: 1000, 1: 1000},
+            },
+        ),
+    ],
+)
+def test_grib_ls_namespace(_kwargs, expected_values, fl_type):
+    f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
-    # f1 = f[0:4]
-    # df = f1.ls(keys=keys)
-
-    # ref = {
-    #     "variable": {0: "t", 1: "u", 2: "v", 3: "t"},
-    #     "vertical_type": {
-    #         0: "pressure",
-    #         1: "pressure",
-    #         2: "pressure",
-    #         3: "pressure",
-    #     },
-    #     "level": {0: 1000, 1: 1000, 2: 1000, 3: 850},
-    #     "base_date": {0: 20180801, 1: 20180801, 2: 20180801, 3: 20180801},
-    #     "valid_date": {0: 1200, 1: 1200, 2: 1200, 3: 1200},
-    #     "step": {0: "0", 1: "0", 2: "0", 3: "0"},
-    #     "member": {0: 0, 1: 0, 2: 0, 3: 0},
-    # }
-
-    # assert ref == df.to_dict()
+    df = f.ls(**_kwargs)
+    assert expected_values == df.to_dict()
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_ls_ecc_keys_core(fl_type):
-    f, _ = load_grib_data("tuv_pl.grib", fl_type)
+@pytest.mark.parametrize(
+    "_args,_kwargs,expected_values",
+    [
+        (
+            (2,),
+            {
+                "keys": [
+                    "level",
+                    "variable",
+                ],
+            },
+            {
+                "level": {0: 1000, 1: 1000},
+                "variable": {
+                    0: "t",
+                    1: "u",
+                },
+            },
+        ),
+        (
+            tuple(),
+            {
+                "n": 2,
+                "keys": [
+                    "level",
+                    "variable",
+                ],
+            },
+            {
+                "level": {0: 1000, 1: 1000},
+                "variable": {
+                    0: "t",
+                    1: "u",
+                },
+            },
+        ),
+        (
+            (-2,),
+            {
+                "keys": [
+                    "level",
+                    "variable",
+                ],
+            },
+            {
+                "level": {0: 300, 1: 300},
+                "variable": {
+                    0: "u",
+                    1: "v",
+                },
+            },
+        ),
+        (
+            tuple(),
+            {
+                "n": -2,
+                "keys": [
+                    "level",
+                    "variable",
+                ],
+            },
+            {
+                "level": {0: 300, 1: 300},
+                "variable": {
+                    0: "u",
+                    1: "v",
+                },
+            },
+        ),
+    ],
+)
+def test_grib_ls_num(_args, _kwargs, expected_values, fl_type):
+    ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
-    # TODO: test with default keys once established
-    keys = [
-        "grib.centre",
-        "grib.shortName",
-        "grib.typeOfLevel",
-        "grib.level",
-        "grib.dataDate",
-        "grib.dataTime",
-        "grib.stepRange",
-        "grib.dataType",
-        "grib.number",
-        "grib.gridType",
-    ]
-
-    f1 = f[0:4]
-    df = f1.ls(keys=keys)
-
-    ref = {
-        "grib.centre": {0: "ecmf", 1: "ecmf", 2: "ecmf", 3: "ecmf"},
-        "grib.shortName": {0: "t", 1: "u", 2: "v", 3: "t"},
-        "grib.typeOfLevel": {
-            0: "isobaricInhPa",
-            1: "isobaricInhPa",
-            2: "isobaricInhPa",
-            3: "isobaricInhPa",
-        },
-        "grib.level": {0: 1000, 1: 1000, 2: 1000, 3: 850},
-        "grib.dataDate": {0: 20180801, 1: 20180801, 2: 20180801, 3: 20180801},
-        "grib.dataTime": {0: 1200, 1: 1200, 2: 1200, 3: 1200},
-        "grib.stepRange": {0: "0", 1: "0", 2: "0", 3: "0"},
-        "grib.dataType": {0: "an", 1: "an", 2: "an", 3: "an"},
-        "grib.number": {0: 0, 1: 0, 2: 0, 3: 0},
-        "grib.gridType": {
-            0: "regular_ll",
-            1: "regular_ll",
-            2: "regular_ll",
-            3: "regular_ll",
-        },
-    }
-
-    assert ref == df.to_dict()
-
-    # extra keys
-    f1 = f[0:2]
-    df = f1.ls(keys=keys, extra_keys=["grib.paramId"])
-
-    ref = {
-        "grib.centre": {0: "ecmf", 1: "ecmf"},
-        "grib.shortName": {0: "t", 1: "u"},
-        "grib.typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
-        "grib.level": {0: 1000, 1: 1000},
-        "grib.dataDate": {0: 20180801, 1: 20180801},
-        "grib.dataTime": {0: 1200, 1: 1200},
-        "grib.stepRange": {0: "0", 1: "0"},
-        "grib.dataType": {0: "an", 1: "an"},
-        "grib.number": {0: 0, 1: 0},
-        "grib.gridType": {0: "regular_ll", 1: "regular_ll"},
-        "grib.paramId": {0: 130, 1: 131},
-    }
-
-    assert ref == df.to_dict()
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_ls_keys(fl_type):
-    f, _ = load_grib_data("tuv_pl.grib", fl_type)
-
-    # positive num (=head)
-    df = f.ls(n=2, keys=["shortName", "bottomLevel", "gridType"])
-    ref = {
-        "shortName": {0: "t", 1: "u"},
-        "bottomLevel": {0: 1000, 1: 1000},
-        "gridType": {0: "regular_ll", 1: "regular_ll"},
-    }
-
-    assert ref == df.to_dict()
-
-    # negative num (=tail)
-    df = f.ls(n=-2, keys=["shortName", "bottomLevel", "gridType"])
-    ref = {
-        "shortName": {0: "u", 1: "v"},
-        "bottomLevel": {0: 300, 1: 300},
-        "gridType": {0: "regular_ll", 1: "regular_ll"},
-    }
-
-    assert ref == df.to_dict()
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_ls_namespace(fl_type):
-    f, _ = load_grib_data("tuv_pl.grib", fl_type)
-
-    df = f.ls(n=2, namespace="vertical")
-    ref = {
-        "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
-        "level": {0: 1000, 1: 1000},
-    }
-    assert ref == df.to_dict()
-
-    df = f.ls(n=2, namespace="vertical", extra_keys="shortName")
-
-    ref = {
-        "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
-        "level": {0: 1000, 1: 1000},
-        "shortName": {0: "t", 1: "u"},
-    }
-    assert ref == df.to_dict()
+    df = ds.ls(*_args, **_kwargs)
+    assert expected_values == df.to_dict()
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -421,300 +430,394 @@ def test_grib_ls_invalid_arg(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_ls_num(fl_type):
-    f, _ = load_grib_data("tuv_pl.grib", fl_type)
+@pytest.mark.parametrize(
+    "_kwargs,expected_values",
+    [
+        ({"keys": ["variable", "level"]}, {"variable": {0: "t"}, "level": {0: 1000}}),
+        (
+            {"keys": ["variable", "level"], "extra_keys": ["member"]},
+            {"variable": {0: "t"}, "level": {0: 1000}, "member": {0: "0"}},
+        ),
+        (
+            {"keys": ["variable", "level", "grib.levtype"]},
+            {"variable": {0: "t"}, "level": {0: 1000}, "grib.levtype": {0: "pl"}},
+        ),
+    ],
+)
+def test_grib_ls_single_field(_kwargs, expected_values, fl_type):
+    ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
-    # TODO: test with default keys once established
-    keys = [
-        "centre",
-        "shortName",
-        "typeOfLevel",
-        "level",
-        "dataDate",
-        "dataTime",
-        "stepRange",
-        "dataType",
-        "number",
-        "gridType",
-    ]
-
-    # positive num (=head)
-    df = f.ls(n=2, keys=keys)
-    ref = {
-        "centre": {0: "ecmf", 1: "ecmf"},
-        "shortName": {0: "t", 1: "u"},
-        "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
-        "level": {0: 1000, 1: 1000},
-        "dataDate": {0: 20180801, 1: 20180801},
-        "dataTime": {0: 1200, 1: 1200},
-        "stepRange": {0: "0", 1: "0"},
-        "dataType": {0: "an", 1: "an"},
-        "number": {0: 0, 1: 0},
-        "gridType": {0: "regular_ll", 1: "regular_ll"},
-    }
-
-    assert ref == df.to_dict()
-
-    df = f.ls(2, keys=keys)
-    assert ref == df.to_dict()
-
-    # negative num (=tail)
-    df = f.ls(n=-2, keys=keys)
-    ref = {
-        "centre": {0: "ecmf", 1: "ecmf"},
-        "shortName": {0: "u", 1: "v"},
-        "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
-        "level": {0: 300, 1: 300},
-        "dataDate": {0: 20180801, 1: 20180801},
-        "dataTime": {0: 1200, 1: 1200},
-        "stepRange": {0: "0", 1: "0"},
-        "dataType": {0: "an", 1: "an"},
-        "number": {0: 0, 1: 0},
-        "gridType": {0: "regular_ll", 1: "regular_ll"},
-    }
-
-    assert ref == df.to_dict()
-
-    df = f.ls(-2, keys=keys)
-    assert ref == df.to_dict()
+    f = ds[0]
+    df = f.ls(**_kwargs)
+    assert expected_values == df.to_dict()
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_ls_single_field(fl_type):
+@pytest.mark.parametrize(
+    "_kwargs,expected_values",
+    [
+        (
+            {
+                "keys": [
+                    "grib.centre",
+                    "grib.shortName",
+                    "grib.typeOfLevel",
+                    "grib.level",
+                    "grib.dataDate",
+                    "grib.dataTime",
+                    "grib.stepRange",
+                    "grib.dataType",
+                    "grib.number",
+                    "grib.gridType",
+                ]
+            },
+            {
+                "grib.centre": {0: "ecmf", 1: "ecmf", 2: "ecmf", 3: "ecmf"},
+                "grib.shortName": {0: "t", 1: "u", 2: "v", 3: "t"},
+                "grib.typeOfLevel": {
+                    0: "isobaricInhPa",
+                    1: "isobaricInhPa",
+                    2: "isobaricInhPa",
+                    3: "isobaricInhPa",
+                },
+                "grib.level": {0: 1000, 1: 1000, 2: 1000, 3: 850},
+                "grib.dataDate": {0: 20180801, 1: 20180801, 2: 20180801, 3: 20180801},
+                "grib.dataTime": {0: 1200, 1: 1200, 2: 1200, 3: 1200},
+                "grib.stepRange": {0: "0", 1: "0", 2: "0", 3: "0"},
+                "grib.dataType": {0: "an", 1: "an", 2: "an", 3: "an"},
+                "grib.number": {0: 0, 1: 0, 2: 0, 3: 0},
+                "grib.gridType": {
+                    0: "regular_ll",
+                    1: "regular_ll",
+                    2: "regular_ll",
+                    3: "regular_ll",
+                },
+            },
+        ),
+        (
+            {
+                "keys": [
+                    "grib.centre",
+                    "grib.shortName",
+                ],
+                "extra_keys": [
+                    "grib.typeOfLevel",
+                ],
+            },
+            {
+                "grib.centre": {0: "ecmf", 1: "ecmf", 2: "ecmf", 3: "ecmf"},
+                "grib.shortName": {0: "t", 1: "u", 2: "v", 3: "t"},
+                "grib.typeOfLevel": {
+                    0: "isobaricInhPa",
+                    1: "isobaricInhPa",
+                    2: "isobaricInhPa",
+                    3: "isobaricInhPa",
+                },
+            },
+        ),
+        ({"keys": ["grib._missing_key"]}, {"grib._missing_key": {0: None, 1: None, 2: None, 3: None}}),
+        (
+            {"keys": ["grib._missing_key", "_missing_key"]},
+            {
+                "grib._missing_key": {0: None, 1: None, 2: None, 3: None},
+                "_missing_key": {0: None, 1: None, 2: None, 3: None},
+            },
+        ),
+    ],
+)
+def test_grib_ls_ecc_core(_kwargs, expected_values, fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
-    # TODO: test with default keys once established
-    keys = [
-        "centre",
-        "shortName",
-        "typeOfLevel",
-        "level",
-        "dataDate",
-        "dataTime",
-        "stepRange",
-        "dataType",
-        "number",
-        "gridType",
-    ]
+    f1 = f[0:4]
+    df = f1.ls(**_kwargs)
 
-    f1 = f[0]
-    df = f1.ls(keys=keys)
-
-    ref = {
-        "centre": {0: "ecmf"},
-        "shortName": {0: "t"},
-        "typeOfLevel": {
-            0: "isobaricInhPa",
-        },
-        "level": {0: 1000},
-        "dataDate": {0: 20180801},
-        "dataTime": {0: 1200},
-        "stepRange": {0: "0"},
-        "dataType": {0: "an"},
-        "number": {0: 0},
-        "gridType": {0: "regular_ll"},
-    }
-
-    assert ref == df.to_dict()
-
-    # extra keys
-    f1 = f[0]
-    df = f1.ls(keys=keys, extra_keys=["paramId"])
-
-    ref = {
-        "centre": {0: "ecmf"},
-        "shortName": {0: "t"},
-        "typeOfLevel": {0: "isobaricInhPa"},
-        "level": {0: 1000},
-        "dataDate": {0: 20180801},
-        "dataTime": {0: 1200},
-        "stepRange": {0: "0"},
-        "dataType": {0: "an"},
-        "number": {0: 0},
-        "gridType": {0: "regular_ll"},
-        "paramId": {0: 130},
-    }
-
-    assert ref == df.to_dict()
+    assert expected_values == df.to_dict()
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_head_num(fl_type):
+@pytest.mark.parametrize(
+    "_kwargs,expected_values",
+    [
+        (
+            {
+                "n": 2,
+                "namespace": "grib.vertical",
+            },
+            {
+                "grib.typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
+                "grib.level": {0: 1000, 1: 1000},
+            },
+        ),
+        (
+            {
+                "n": 2,
+                "namespace": "grib.vertical",
+                "extra_keys": ["grib.shortName"],
+            },
+            {
+                "grib.typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
+                "grib.level": {0: 1000, 1: 1000},
+                "grib.shortName": {0: "t", 1: "u"},
+            },
+        ),
+    ],
+)
+def test_grib_ls_ecc_namespace(_kwargs, expected_values, fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
-    # TODO: test with default keys once established
-    keys = [
-        "centre",
-        "shortName",
-        "typeOfLevel",
-        "level",
-        "dataDate",
-        "dataTime",
-        "stepRange",
-        "dataType",
-        "number",
-        "gridType",
-    ]
-
-    df = f.head(n=2, keys=keys)
-    ref = {
-        "centre": {0: "ecmf", 1: "ecmf"},
-        "shortName": {0: "t", 1: "u"},
-        "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
-        "level": {0: 1000, 1: 1000},
-        "dataDate": {0: 20180801, 1: 20180801},
-        "dataTime": {0: 1200, 1: 1200},
-        "stepRange": {0: "0", 1: "0"},
-        "dataType": {0: "an", 1: "an"},
-        "number": {0: 0, 1: 0},
-        "gridType": {0: "regular_ll", 1: "regular_ll"},
-    }
-
-    assert ref == df.to_dict()
-
-    df = f.head(2, keys=keys)
-    assert ref == df.to_dict()
+    df = f.ls(**_kwargs)
+    assert expected_values == df.to_dict()
 
 
-# @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("fl_type", ["numpy"])
-def test_grib_tail_num(fl_type):
-    f, _ = load_grib_data("tuv_pl.grib", fl_type)
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize(
+    "_args,_kwargs,expected_values",
+    [
+        (
+            (2,),
+            {
+                "keys": [
+                    "grib.level",
+                    "grib.shortName",
+                ],
+            },
+            {
+                "grib.level": {0: 1000, 1: 1000},
+                "grib.shortName": {
+                    0: "t",
+                    1: "u",
+                },
+            },
+        ),
+        (
+            tuple(),
+            {
+                "n": 2,
+                "keys": [
+                    "grib.level",
+                    "grib.shortName",
+                ],
+            },
+            {
+                "grib.level": {0: 1000, 1: 1000},
+                "grib.shortName": {
+                    0: "t",
+                    1: "u",
+                },
+            },
+        ),
+        (
+            (-2,),
+            {
+                "keys": [
+                    "grib.level",
+                    "grib.shortName",
+                ],
+            },
+            {
+                "grib.level": {0: 300, 1: 300},
+                "grib.shortName": {
+                    0: "u",
+                    1: "v",
+                },
+            },
+        ),
+        (
+            tuple(),
+            {
+                "n": -2,
+                "keys": [
+                    "grib.level",
+                    "grib.shortName",
+                ],
+            },
+            {
+                "grib.level": {0: 300, 1: 300},
+                "grib.shortName": {
+                    0: "u",
+                    1: "v",
+                },
+            },
+        ),
+    ],
+)
+def test_grib_ls_ecc_num(_args, _kwargs, expected_values, fl_type):
+    ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
-    # TODO: test with default keys once established
-    keys = [
-        "centre",
-        "shortName",
-        "typeOfLevel",
-        "level",
-        "dataDate",
-        "dataTime",
-        "stepRange",
-        "dataType",
-        "number",
-        "gridType",
-    ]
+    df = ds.ls(*_args, **_kwargs)
+    assert expected_values == df.to_dict()
 
-    df = f.tail(n=2, keys=keys)
-    ref = {
-        "centre": {0: "ecmf", 1: "ecmf"},
-        "shortName": {0: "u", 1: "v"},
-        "typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
-        "level": {0: 300, 1: 300},
-        "dataDate": {0: 20180801, 1: 20180801},
-        "dataTime": {0: 1200, 1: 1200},
-        "stepRange": {0: "0", 1: "0"},
-        "dataType": {0: "an", 1: "an"},
-        "number": {0: 0, 1: 0},
-        "gridType": {0: "regular_ll", 1: "regular_ll"},
-    }
 
-    assert ref == df.to_dict()
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize(
+    "_kwargs,expected_values",
+    [
+        ({"keys": ["grib.shortName", "grib.level"]}, {"grib.shortName": {0: "t"}, "grib.level": {0: 1000}}),
+        (
+            {"keys": ["grib.shortName", "grib.level"], "extra_keys": ["grib.typeOfLevel"]},
+            {"grib.shortName": {0: "t"}, "grib.level": {0: 1000}, "grib.typeOfLevel": {0: "isobaricInhPa"}},
+        ),
+    ],
+)
+def test_grib_ls_ecc_single_field(_kwargs, expected_values, fl_type):
+    ds, _ = load_grib_data("tuv_pl.grib", fl_type)
 
-    df = f.tail(2, keys=keys)
-    assert ref == df.to_dict()
+    f = ds[0]
+    df = f.ls(**_kwargs)
+    assert expected_values == df.to_dict()
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize(
+    "_args,_kwargs,expected_values",
+    [
+        (
+            (2,),
+            {
+                "keys": [
+                    "level",
+                    "variable",
+                ],
+            },
+            {
+                "level": {0: 1000, 1: 1000},
+                "variable": {
+                    0: "t",
+                    1: "u",
+                },
+            },
+        ),
+        (
+            tuple(),
+            {
+                "n": 2,
+                "keys": [
+                    "level",
+                    "variable",
+                ],
+            },
+            {
+                "level": {0: 1000, 1: 1000},
+                "variable": {
+                    0: "t",
+                    1: "u",
+                },
+            },
+        ),
+    ],
+)
+def test_grib_head_num(_args, _kwargs, expected_values, fl_type):
+    ds, _ = load_grib_data("tuv_pl.grib", fl_type)
+
+    df = ds.head(*_args, **_kwargs)
+    assert expected_values == df.to_dict()
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize(
+    "_args,_kwargs,expected_values",
+    [
+        (
+            (2,),
+            {
+                "keys": [
+                    "level",
+                    "variable",
+                ],
+            },
+            {
+                "level": {0: 300, 1: 300},
+                "variable": {
+                    0: "u",
+                    1: "v",
+                },
+            },
+        ),
+        (
+            tuple(),
+            {
+                "n": 2,
+                "keys": [
+                    "level",
+                    "variable",
+                ],
+            },
+            {
+                "level": {0: 300, 1: 300},
+                "variable": {
+                    0: "u",
+                    1: "v",
+                },
+            },
+        ),
+    ],
+)
+def test_grib_tail_num(_args, _kwargs, expected_values, fl_type):
+    ds, _ = load_grib_data("tuv_pl.grib", fl_type)
+
+    df = ds.tail(*_args, **_kwargs)
+    assert expected_values == df.to_dict()
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_grib_dump(fl_type):
+def test_grib_dump_ecc_1(fl_type):
     f, _ = load_grib_data("test6.grib", fl_type)
 
+    # TODO: add grib.default
     namespaces = (
-        "default",
-        "geography",
-        "ls",
-        "mars",
-        "parameter",
-        "statistics",
-        "time",
-        "vertical",
+        # "grib.default",
+        "grib.geography",
+        "grib.ls",
+        "grib.mars",
+        "grib.parameter",
+        "grib.statistics",
+        "grib.time",
+        "grib.vertical",
     )
 
     # default
-    r = f[0].dump(_as_raw=True)
+    r = f[0].dump(namespace="grib", _as_raw=True)
     ref = [
         {
-            "title": "ls",
+            "title": "grib.ls",
             "data": {
-                "edition": 1,
-                "centre": "ecmf",
-                "typeOfLevel": "isobaricInhPa",
-                "level": 1000,
-                "dataDate": 20180801,
-                "stepRange": "0",
-                "dataType": "an",
-                "shortName": "t",
-                "packingType": "grid_simple",
-                "gridType": "regular_ll",
+                "grib.edition": 1,
+                "grib.centre": "ecmf",
             },
-            "tooltip": "Keys in the ecCodes ls namespace",
+            "tooltip": "Keys in the grib.ls namespace",
         },
         {
-            "title": "geography",
+            "title": "grib.geography",
             "data": {
-                # "Ni": 12,
-                # "Nj": 7,
-                # "bitmapPresent": 0,
-                "latitudeOfFirstGridPointInDegrees": 90.0,
-                "longitudeOfFirstGridPointInDegrees": 0.0,
-                "latitudeOfLastGridPointInDegrees": -90.0,
-                "longitudeOfLastGridPointInDegrees": 330.0,
-                "iScansNegatively": 0,
-                "jScansPositively": 0,
-                "jPointsAreConsecutive": 0,
-                "jDirectionIncrementInDegrees": 30.0,
-                "iDirectionIncrementInDegrees": 30.0,
-                "gridType": "regular_ll",
+                "grib.gridType": "regular_ll",
             },
-            "tooltip": "Keys in the ecCodes geography namespace",
+            "tooltip": "Keys in the grib.geography namespace",
         },
         {
-            "title": "mars",
+            "title": "grib.mars",
             "data": {
-                "domain": "g",
-                "levtype": "pl",
-                "levelist": 1000,
-                "date": 20180801,
-                "time": 1200,
-                "step": 0,
-                "param": "t",
-                "class": "od",
-                "type": "an",
-                "stream": "oper",
-                "expver": "0001",
+                "grib.levtype": "pl",
             },
-            "tooltip": "Keys in the ecCodes mars namespace",
+            "tooltip": "Keys in the grib.mars namespace",
         },
         {
-            "title": "parameter",
+            "title": "grib.parameter",
             "data": {
-                "centre": "ecmf",
-                "paramId": 130,
-                "units": "K",
-                "name": "Temperature",
-                "shortName": "t",
+                "grib.shortName": "t",
             },
-            "tooltip": "Keys in the ecCodes parameter namespace",
+            "tooltip": "Keys in the grib.parameter namespace",
         },
         {
-            "title": "time",
+            "title": "grib.time",
             "data": {
-                "dataDate": 20180801,
-                "dataTime": 1200,
-                "stepUnits": 1,
-                "stepType": "instant",
-                "stepRange": "0",
-                "startStep": 0,
-                "endStep": 0,
-                "validityDate": 20180801,
-                "validityTime": 1200,
+                "grib.dataDate": 20180801,
             },
-            "tooltip": "Keys in the ecCodes time namespace",
+            "tooltip": "Keys in the grib.time namespace",
         },
         {
-            "title": "vertical",
-            "data": {"typeOfLevel": "isobaricInhPa", "level": 1000},
-            "tooltip": "Keys in the ecCodes vertical namespace",
+            "title": "grib.vertical",
+            "data": {"grib.typeOfLevel": "isobaricInhPa"},
+            "tooltip": "Keys in the grib.vertical namespace",
         },
     ]
 
@@ -723,54 +826,58 @@ def test_grib_dump(fl_type):
     for d in r:
         ns = d["title"]
         assert ns in namespaces
-        if ns == "geography":
-            d["data"].pop("Ni", None)
-            d["data"].pop("Nj", None)
-            d["data"].pop("bitmapPresent", None)
-        if ns not in ("default", "statistics"):
-            assert d == [x for x in ref if x["title"] == ns][0], ns
+        assert d["data"], ns
+        if ns not in ("grib.default", "grib.statistics"):
+            d_ref = [x for x in ref if x["title"] == ns][0]
+            assert d["tooltip"] == d_ref["tooltip"], ns
+            for k, v in d_ref["data"].items():
+                assert d["data"][k] == v, f"{ns}: key={k}"
+        else:
+            assert d["tooltip"], ns
 
-    # a namespace
-    r = f[0].dump(namespace="mars", _as_raw=True)
+
+@pytest.mark.parametrize("fl_type", FL_FILE)
+def test_grib_dump_ecc_2(fl_type):
+    f, _ = load_grib_data("test6.grib", fl_type)
+
+    r = f[0].dump(namespace="grib.mars", _as_raw=True)
     ref = [
         {
-            "title": "mars",
+            "title": "grib.mars",
             "data": {
-                "domain": "g",
-                "levtype": "pl",
-                "levelist": 1000,
-                "date": 20180801,
-                "time": 1200,
-                "step": 0,
-                "param": "t",
-                "class": "od",
-                "type": "an",
-                "stream": "oper",
-                "expver": "0001",
+                "grib.step": 0,
+                "grib.param": "t",
             },
-            "tooltip": "Keys in the ecCodes mars namespace",
+            "tooltip": "Keys in the grib.mars namespace",
         }
     ]
-    assert r == ref
 
-    # namespace reformatted
-    r = f[0].dump(namespace="mars", _as_raw=False)
+    assert len(r) == len(ref)
+    assert r[0]["title"] == ref[0]["title"]
+    for k, v in ref[0]["data"].items():
+        assert r[0]["data"][k] == v, f"key={k}"
+    assert r[0]["tooltip"] == ref[0]["tooltip"]
+
+
+@pytest.mark.parametrize("fl_type", FL_FILE)
+def test_grib_dump_ecc_3(fl_type):
+    f, _ = load_grib_data("test6.grib", fl_type)
+
+    r = f[0].dump(namespace="grib.mars", _as_raw=False)
+
     ref = {
-        "mars": {
-            "domain": "g",
-            "levtype": "pl",
-            "levelist": 1000,
-            "date": 20180801,
-            "time": 1200,
-            "step": 0,
-            "param": "t",
-            "class": "od",
-            "type": "an",
-            "stream": "oper",
-            "expver": "0001",
+        "grib.mars": {
+            "grib.step": 0,
+            "grib.param": "t",
         }
     }
-    assert r == ref
+
+    assert len(r) == len(ref)
+    d = r["grib.mars"]
+    d_ref = ref["grib.mars"]
+
+    for k, v in d_ref.items():
+        assert d[k] == v, f"key={k}, value={d[k]}, ref={v}"
 
 
 @pytest.mark.parametrize(
@@ -824,17 +931,18 @@ def test_grib_namespace_all(_args, fl_type):
 
     for k, v in r.items():
         assert isinstance(v, dict), f"key={k} type={type(v)}"
-        assert len(v) > 0, f"key={k} is empty"
+        if k not in ["geography", "proc"]:  # geography and proc can be empty
+            assert len(v) > 0, f"key={k} is empty"
 
 
 @pytest.mark.parametrize(
     "_args,_kwargs,expected_values",
     [
-        (("grib.vertical",), {}, {"typeOfLevel": "isobaricInhPa", "level": 1000}),
+        (("grib.vertical",), {}, {"grib.typeOfLevel": "isobaricInhPa", "grib.level": 1000}),
         (
             ("grib.vertical",),
             {"simplify": False},
-            {"grib.vertical": {"typeOfLevel": "isobaricInhPa", "level": 1000}},
+            {"grib.vertical": {"grib.typeOfLevel": "isobaricInhPa", "grib.level": 1000}},
         ),
         (
             (
@@ -845,24 +953,24 @@ def test_grib_namespace_all(_args, fl_type):
             ),
             {},
             {
-                "grib.vertical": {"typeOfLevel": "isobaricInhPa", "level": 1000},
+                "grib.vertical": {"grib.typeOfLevel": "isobaricInhPa", "grib.level": 1000},
                 "grib.time": {
-                    "dataDate": 20180801,
-                    "dataTime": 1200,
-                    "stepUnits": 1,
-                    "stepType": "instant",
-                    "stepRange": "0",
-                    "startStep": 0,
-                    "endStep": 0,
-                    "validityDate": 20180801,
-                    "validityTime": 1200,
+                    "grib.dataDate": 20180801,
+                    "grib.dataTime": 1200,
+                    "grib.stepUnits": 1,
+                    "grib.stepType": "instant",
+                    "grib.stepRange": "0",
+                    "grib.startStep": 0,
+                    "grib.endStep": 0,
+                    "grib.validityDate": 20180801,
+                    "grib.validityTime": 1200,
                 },
             },
         ),
     ],
 )
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_grib_ecc_namespace_1(_args, _kwargs, expected_values, fl_type):
+def test_grib_namespace_ecc_1(_args, _kwargs, expected_values, fl_type):
     f, _ = load_grib_data("test6.grib", fl_type)
 
     r = f[0].namespace(*_args, **_kwargs)

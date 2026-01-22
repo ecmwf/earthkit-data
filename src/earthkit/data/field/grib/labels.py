@@ -65,6 +65,10 @@ class MetadataCacheHandler:
 
 
 class GribLabels:
+
+    NAME = "grib"
+    KEY_PREFIX = "grib."
+
     def __init__(self, handle):
         self.handle = handle
         self._cache = {}
@@ -76,8 +80,8 @@ class GribLabels:
         return sum(map(lambda i: 1, self.keys()))
 
     def __contains__(self, key):
-        if key.startswith("grib."):
-            key = key[5:]
+        if key.startswith(self.KEY_PREFIX):
+            key = key[len(self.KEY_PREFIX) :]
         return key in CUSTOM_KEYS or self.handle.__contains__(key)
 
     def __iter__(self):
@@ -117,8 +121,8 @@ class GribLabels:
             _kwargs["default"] = default
 
         # allow using the "grib." prefix.
-        if key.startswith("grib."):
-            key = key[5:]
+        if key.startswith(self.KEY_PREFIX):
+            key = key[len(self.KEY_PREFIX) :]
 
         if key == "message":
             return self.message()
@@ -151,14 +155,16 @@ class GribLabels:
         if isinstance(name, str):
             name = [name]
         if isinstance(name, (list, tuple)):
-            if name == ["grib"]:
+            if name == [self.NAME]:
                 for ns in NAMESPACES:
-                    result["grib." + ns] = self.handle.as_namespace(ns)
+                    result[self.KEY_PREFIX + ns] = self.handle.as_namespace(ns, prefix=self.KEY_PREFIX)
 
             else:
                 for ns in name:
-                    if ns.startswith("grib."):
-                        result[ns] = self.handle.as_namespace(ns[5:])
+                    if ns.startswith(self.KEY_PREFIX):
+                        result[ns] = self.handle.as_namespace(
+                            ns[len(self.KEY_PREFIX) :], prefix=self.KEY_PREFIX
+                        )
 
     def new_array_field(self, field, array_namespace=None, **kwargs):
         from earthkit.data.field.grib.create import new_array_grib_field

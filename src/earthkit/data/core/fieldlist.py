@@ -493,18 +493,18 @@ class FieldListCore(Base):
         ----------
         n: int, None
             The number of :obj:`Field`\ s to be
-            listed. None means all the messages, ``n > 0`` means fields from the front, while
+            listed. None means all the fields, ``n > 0`` means fields from the front, while
             ``n < 0`` means fields from the back of the fieldlist.
         keys: list of str, dict, None
-            Metadata keys. If it is None the following default set of keys will be used:  "centre",
-            "shortName", "typeOfLevel", "level", "dataDate", "dataTime", "stepRange", "dataType",
-            "number", "gridType". To specify a column title for each key in the output use a dict.
+            Metadata keys used when ``namespace`` is None. If ``keys`` is None the following default
+            set of keys will be used:  "centre", "shortName", "typeOfLevel", "level", "dataDate",
+            "dataTime", "stepRange", "dataType", "number", "gridType". To specify a column title for each
+            key in the output use a dict.
         extra_keys: list of str, dict, None
-            List of additional keys to ``keys``. To specify a column title for each key in the output
+            List of additional keys. To specify a column title for each key in the output
             use a dict.
-        namespace: str, None
-            The namespace to choose the ``keys`` from. When it is set ``keys`` and
-            ``extra_keys`` are omitted.
+        namespace: str, list of str, None
+            The namespace(s) to choose the ``keys`` from. When it is set ``keys`` are omitted.
 
         Returns
         -------

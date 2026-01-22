@@ -547,6 +547,7 @@ def test_legacy_grib_valid_datetime(fl_type):
     assert f.metadata("valid_datetime") == "2020-12-21T18:00:00"
 
 
+@pytest.mark.legacy
 @pytest.mark.cache
 def test_legacy_grib_datetime_seconds():
     ds = from_source("url", earthkit_remote_test_data_file("t_30s.grib"))
