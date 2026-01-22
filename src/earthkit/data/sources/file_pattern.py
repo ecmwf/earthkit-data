@@ -44,7 +44,7 @@ class HiveFilePattern(Source):
             out = EmptySource()
             for f in self.scanner.scan(**kwargs):
                 ds = from_source("file", f)
-                out += ds.sel(**rest)
+                out = out.append(ds.sel(**rest))
                 if _hive_diag:
                     _hive_diag.file(1)
                     _hive_diag.sel(1)

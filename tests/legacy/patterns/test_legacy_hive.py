@@ -21,7 +21,7 @@ from earthkit.data.utils.patterns import HivePattern
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fx", ["hive_fs_1", "hive_fs_2", "hive_fs_3", "hive_fs_4", "hive_fs_5"])
-def test_hive_full_scan(request, fx):
+def test_legacy_hive_full_scan(request, fx):
     pattern, files, _ = request.getfixturevalue(fx)
 
     p = HivePattern(pattern, {})
@@ -32,7 +32,7 @@ def test_hive_full_scan(request, fx):
 
 @pytest.mark.legacy
 @pytest.mark.parametrize("fx", ["hive_fs_5"])
-def test_hive_full_scan_with_fixed(request, fx):
+def test_legacy_hive_full_scan_with_fixed(request, fx):
     pattern, files, values = request.getfixturevalue(fx)
 
     v = {
@@ -45,6 +45,7 @@ def test_hive_full_scan_with_fixed(request, fx):
     assert sorted(files) == sorted(res_files)
 
 
+@pytest.mark.legacy
 @pytest.mark.parametrize(
     "fx,filters,expected_files",
     [
@@ -110,7 +111,7 @@ def test_hive_full_scan_with_fixed(request, fx):
         ),
     ],
 )
-def test_hive_filter(request, fx, filters, expected_files):
+def test_legacy_hive_filter(request, fx, filters, expected_files):
     pattern, _, _ = request.getfixturevalue(fx)
 
     # files = _build_fs(md, fs_pattern, date_format)
@@ -141,7 +142,7 @@ class HiveDiag:
 
 
 @pytest.mark.legacy
-def test_hive_sel_1():
+def test_legacy_hive_sel_1():
     root = earthkit_test_data_file("pattern/1")
     pattern = "{shortName}_{date:date(%Y-%m-%dT-H-%M)}_{step}.grib"
 
@@ -175,7 +176,8 @@ def test_hive_sel_1():
     assert len(r) == 6
 
 
-def test_hive_sel_2():
+@pytest.mark.legacy
+def test_legacy_hive_sel_2():
     root = earthkit_test_data_file("pattern/invalid")
     pattern = "_{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
 
@@ -186,7 +188,7 @@ def test_hive_sel_2():
 
 
 @pytest.mark.legacy
-def test_hive_init_1():
+def test_legacy_hive_init_1():
     pattern = "{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
     p = HivePattern(pattern)
 
@@ -205,7 +207,7 @@ def test_hive_init_1():
 
 
 @pytest.mark.legacy
-def test_hive_init_2():
+def test_legacy_hive_init_2():
     pattern = "root_d/{year}/fc/t_{level}b_/a{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
     p = HivePattern(pattern)
 
@@ -248,7 +250,8 @@ def test_hive_init_2():
     assert m is None
 
 
-def test_hive_init_3():
+@pytest.mark.legacy
+def test_legacy_hive_init_3():
     pattern = "root_d/{year}/fc/t_{level}b_/a{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
     p = HivePattern(pattern, {"year": [2023, 2024], "level": "500", "shortName": "t"})
 

@@ -25,5 +25,11 @@ class EmptySource(FieldList):
     def mutate_source(self):
         return self
 
+    def mutate(self):
+        return self
+
+    def append(self, other):
+        return other
+
 
 source = EmptySource
