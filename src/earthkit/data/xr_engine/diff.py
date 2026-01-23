@@ -23,12 +23,27 @@ class DictDiffInfo:
 
 class DictDiff:
     @staticmethod
+    def _flatten_dict(d, parent_key="", sep="."):
+        flat = {}
+        for key, value in d.items():
+            new_key = f"{parent_key}{sep}{key}" if parent_key else key
+            if isinstance(value, dict) and len(value) > 0:
+                flat.update(DictDiff._flatten_dict(value, parent_key=new_key, sep=sep))
+            else:
+                flat[new_key] = value
+
+        return flat
+
+    @staticmethod
     def diff(vals1, vals2):
         if not isinstance(vals1, dict):
             raise ValueError(f"Unsupported type for vals1: {type(vals1)}. Expecting dict")
 
         if not isinstance(vals2, dict):
             raise ValueError(f"Unsupported type for vals2: {type(vals2)}. Expecting dict")
+
+        vals1 = DictDiff._flatten_dict(vals1)
+        vals2 = DictDiff._flatten_dict(vals2)
 
         diff_dict = {}
         if len(vals1) != len(vals2):
