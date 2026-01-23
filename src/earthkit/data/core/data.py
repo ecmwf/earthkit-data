@@ -21,7 +21,8 @@ class Data:
             r += "- listable (use ls() to list contents)"
 
         if True:
-            r += "Converted to:"
+            r += "\n\nCan be converted to: \n"
+            r += "  - fieldlist"
 
         return r
 
