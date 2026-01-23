@@ -143,6 +143,10 @@ def from_source(name: str, *args, lazily=False, **kwargs) -> Source:
     while src is not prev:
         prev = src
         src = src.mutate()
+
+    from earthkit.data.core.data import Data
+
+    return Data(src)
     return src
 
 
