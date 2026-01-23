@@ -496,7 +496,7 @@ class XarrayMixIn:
         backend_kwargs = xarray_open_dataset_kwargs.pop("backend_kwargs", None)
         other_kwargs = xarray_open_dataset_kwargs
 
-        from earthkit.data.utils.xarray.builder import from_earthkit
+        from earthkit.data.xr_engine.builder import from_earthkit
 
         return from_earthkit(self, backend_kwargs=backend_kwargs, other_kwargs=other_kwargs)
 

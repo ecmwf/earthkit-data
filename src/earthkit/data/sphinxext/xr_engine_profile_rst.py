@@ -13,7 +13,7 @@ from pprint import pformat
 
 import yaml
 
-from earthkit.data.utils.xarray.profile import Profile
+from earthkit.data.xr_engine.profile import Profile
 
 
 def format_table_cell(v, indent=13):

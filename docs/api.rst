@@ -64,7 +64,7 @@ Targets
 
 Xarray engine
 --------------
-- :py:class:`~data.utils.xarray.engine.EarthkitBackendEntrypoint`
+- :py:class:`~data.xr_engine.engine.EarthkitBackendEntrypoint`
 
 Other
 --------

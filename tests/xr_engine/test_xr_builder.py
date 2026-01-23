@@ -50,7 +50,7 @@ def timedelta_to_hours(x):
 def test_xr_engine_builder_fieldlist(representation):
     ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
 
-    from earthkit.data.utils.xarray.fieldlist import XArrayInputFieldList
+    from earthkit.data.xr_engine.fieldlist import XArrayInputFieldList
 
     r = XArrayInputFieldList(ds_in)
     assert not isinstance(r.ds, XArrayInputFieldList)

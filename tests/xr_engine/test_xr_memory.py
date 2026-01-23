@@ -62,7 +62,7 @@ def test_xr_engine_stream_release_source(
     ds_ek, _ = load_grib_data(filename, "url", stream=True)
     ds_ek_ref, _ = load_grib_data(filename, "url", stream=False)
 
-    from earthkit.data.utils.xarray.fieldlist import ReleasableField
+    from earthkit.data.xr_engine.fieldlist import ReleasableField
 
     calls_cnt = count_calls(monkeypatch, ReleasableField, ReleasableField._release)
 
@@ -107,7 +107,7 @@ def test_xr_engine_array_field_release_source(
     ds_ek, _ = load_grib_data(filename, "url", stream=False)
     ds_ek = ds_ek.to_fieldlist()
 
-    from earthkit.data.utils.xarray.fieldlist import ReleasableField
+    from earthkit.data.xr_engine.fieldlist import ReleasableField
 
     calls_cnt = count_calls(monkeypatch, ReleasableField, ReleasableField._release)
 
