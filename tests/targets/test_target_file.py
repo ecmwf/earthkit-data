@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.core.field import Field
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.encoders.grib import GribEncoder
@@ -318,9 +319,7 @@ def test_target_file_geotiff():
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        from earthkit.data.readers.geotiff import GeoTIFFField
-
-        assert isinstance(ds[0], GeoTIFFField)
+        assert isinstance(ds[0], Field)
 
 
 @pytest.mark.xfail(reason="Not implemented")

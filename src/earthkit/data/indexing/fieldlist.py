@@ -264,7 +264,7 @@ class FieldList(Index, FieldListCore):
 
     def projection(self):
         if self._has_shared_geography:
-            return self[0].projection()
+            return self[0].geography.projection
         elif len(self) == 0:
             return None
         else:
