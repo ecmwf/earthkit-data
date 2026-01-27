@@ -118,15 +118,21 @@ def transform_inputs_decorator(
                         except Exception:
                             continue
                         break
-                print("Before convert_units:", kwargs[key]['tasmin'].mean().values)
-                print("Before convert_units:", kwargs[key]['tasmin'].attrs.get('units', None))
+                try:
+                    print("Before convert_units:", kwargs[key]['tasmin'].mean().values)
+                    print("Before convert_units:", kwargs[key]['tasmin'].attrs.get('units', None))
+                except Exception:
+                    pass
                 # Ensure units
                 if ensure_units:
                     kwargs[key] = convert_units(
                         kwargs[key], target_units=ensure_units
                     )
-                    print("After convert_units:", kwargs[key]['tasmin'].mean().values)
-                    print("After convert_units:", kwargs[key]['tasmin'].attrs.get('units', None))
+                    try:
+                        print("After convert_units:", kwargs[key]['tasmin'].mean().values)
+                        print("After convert_units:", kwargs[key]['tasmin'].attrs.get('units', None))
+                    except Exception:
+                        pass
             
             # Expand Wrapper objects
             for k, v in list(kwargs.items()):
