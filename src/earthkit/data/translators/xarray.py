@@ -22,6 +22,13 @@ class XArrayDataArrayTranslator(Translator):
         import xarray as xr
 
         if isinstance(self.data, xr.Dataset):
+            # TODO: consider a warning under a strict=False mode?
+            if len(self.data.data_vars) > 1:
+                raise ValueError(
+                    "xarray.Dataset contains more than one data variable, cannot convert to DataArray"
+                )
+            elif len(self.data.data_vars) == 0:
+                raise ValueError("xarray.Dataset contains no data variables, cannot convert to DataArray")
             first_data_var = list(self.data.data_vars)[0]
             return self.data[first_data_var]
 
