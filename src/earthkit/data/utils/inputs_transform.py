@@ -109,7 +109,6 @@ def transform_inputs_decorator(
             
             # Transform args/kwargs
             for key in convert_kwargs:
-                print(key)
                 value = kwargs[key]
                 types_allowed = _ensure_iterable(mapping[key])
                 if type(value) not in types_allowed:
@@ -119,13 +118,15 @@ def transform_inputs_decorator(
                         except Exception:
                             continue
                         break
-                print("After transform:", type(kwargs[key]))
+                print("Before convert_units:", kwargs[key]['tasmin'].mean().values)
+                print("Before convert_units:", kwargs[key]['tasmin'].attrs.get('units', None))
                 # Ensure units
                 if ensure_units:
-                    convert_units(
+                    kwargs[key] = convert_units(
                         kwargs[key], target_units=ensure_units
                     )
-                print("After convert_units:", type(kwargs[key]))
+                    print("After convert_units:", kwargs[key]['tasmin'].mean().values)
+                    print("After convert_units:", kwargs[key]['tasmin'].attrs.get('units', None))
             
             # Expand Wrapper objects
             for k, v in list(kwargs.items()):

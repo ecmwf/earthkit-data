@@ -163,6 +163,8 @@ class XArrayDataArrayWrapper(Wrapper):
         # TODO: Update in place?
         self.data.values = convert(self.data.values, source_units, target_units)
         self.data.attrs["units"] = target_units
+        
+        return self.data
 
 
 
@@ -201,6 +203,7 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
             var_wrapper.convert_units(*args, **kwargs)
             self.data[var] = var_wrapper.data
 
+        return self.data
 
     # def component(self, component):
     #     """
