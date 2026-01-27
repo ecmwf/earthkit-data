@@ -85,14 +85,12 @@ def transform_inputs_decorator(
             # Store positional arg names for extraction later
             arg_names = []
             for arg, name in zip(args, signature.parameters):
-                print(arg, name)
                 arg_names.append(name)
                 kwargs[name] = arg
 
 
             # # Split args into multiple
             # if len(args) < len(expected_args):
-            
             
             convert_kwargs = [k for k in kwargs if k in mapping]
 
@@ -111,6 +109,7 @@ def transform_inputs_decorator(
             
             # Transform args/kwargs
             for key in convert_kwargs:
+                print(key)
                 value = kwargs[key]
                 types_allowed = _ensure_iterable(mapping[key])
                 if type(value) not in types_allowed:
@@ -120,9 +119,13 @@ def transform_inputs_decorator(
                         except Exception:
                             continue
                         break
+                print("After transform:", type(kwargs[key]))
                 # Ensure units
                 if ensure_units:
-                    kwargs[key] = convert_units(kwargs[key], target_units = ensure_units)
+                    convert_units(
+                        kwargs[key], target_units=ensure_units
+                    )
+                print("After convert_units:", type(kwargs[key]))
             
             # Expand Wrapper objects
             for k, v in list(kwargs.items()):

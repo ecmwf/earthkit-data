@@ -161,7 +161,7 @@ class XArrayDataArrayWrapper(Wrapper):
         
         from earthkit.utils.units import convert
         # TODO: Update in place?
-        self.data = convert(self.data.values, source_units, target_units)
+        self.data.values = convert(self.data.values, source_units, target_units)
         self.data.attrs["units"] = target_units
 
 
@@ -198,7 +198,7 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
         """
         for var in self.data.data_vars:
             var_wrapper = XArrayDataArrayWrapper(self.data[var])
-            var_wrapper.convert_unitss(*args, **kwargs)
+            var_wrapper.convert_units(*args, **kwargs)
             self.data[var] = var_wrapper.data
 
 
@@ -227,7 +227,7 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
     #     return self.source.data_vars[variable]
 
 
-def wrapper(data, *args, fieldlist=True, **kwargs):
+def wrapper(data, *args, fieldlist=False, **kwargs):
     from earthkit.data.utils import is_module_loaded
 
     if not is_module_loaded("xarray"):

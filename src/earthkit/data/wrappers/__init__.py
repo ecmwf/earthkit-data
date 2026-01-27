@@ -14,6 +14,8 @@ from importlib import import_module
 from earthkit.data.core import Base
 from earthkit.data.decorators import locked
 
+from earthkit.data.core.fieldlist import FieldList
+
 LOG = logging.getLogger(__name__)
 
 
@@ -48,10 +50,9 @@ def get_wrapper(data, *args, **kwargs):
     """
     if isinstance(data, Base):
         return data
-
     for name, h in _wrappers().items():
         wrapper = h(data, *args, **kwargs)
-        if wrapper is not None:
+        if wrapper is not None: # and not hasattr(wrapper, "fields"):
             return wrapper.mutate()
     else:
         fullname = ".".join([data.__class__.__module__, data.__class__.__qualname__])
@@ -59,9 +60,19 @@ def get_wrapper(data, *args, **kwargs):
         return data
 
 
-def convert_units(*args, **kwargs):
+def convert_units(
+        *args,
+        source_units: str | None = None, target_units: str | None = None,
+        units_mapping: dict[str, str] | None = None,
+        **kwargs,
+    ):
     """Executing wrapper for the get_translator class method"""
-    return get_wrapper(*args, **kwargs).convert_units(*args, **kwargs)
+    wrapper = get_wrapper(*args, **kwargs)
+    return wrapper.convert_units(
+        source_units=source_units,
+        target_units=target_units,
+        units_mapping=units_mapping,
+    )
 
 
 # def from_object(obj: object, *args, **kwargs) -> Base:
