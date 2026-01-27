@@ -38,27 +38,27 @@ class NumpyNDArrayWrapper(Wrapper):
 
         return xr.DataArray(self.data, **kwargs)
     
-    def convert_units(self, source_unit: str | None = None, target_unit: str | None = None):
+    def convert_units(self, source_units: str | None = None, target_units: str | None = None):
         """Convert the units of the data.
         Parameters
         ----------
-        source_unit : str
+        source_units : str
             The source unit.
-        target_unit : str
+        target_units : str
             The target unit.
 
         Returns:
             nummpy.ndarray with converted units.
         """
         
-        if source_unit is None or target_unit is None:
+        if source_units is None or target_units is None:
             raise ValueError(
-                "source_unit and target_unit must be provided for unit conversion of numpy.ndarray."
+                "source_units and target_units must be provided for unit conversion of numpy.ndarray."
             )
         
         from earhtkit.utils.units import convert
         
-        return convert(self.data, source_unit, target_unit)
+        return convert(self.data, source_units, target_units)
         
 
 

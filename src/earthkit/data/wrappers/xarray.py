@@ -106,16 +106,16 @@ class XArrayDataArrayWrapper(Wrapper):
     
     def convert_units(
         self,
-        source_unit: str | None = None,
-        target_unit: str | dict[str, str] | None = None,
+        source_units: str | None = None,
+        target_units: str | dict[str, str] | None = None,
         units_mapping: dict[str, str] | None = None
     ):
         """Convert the units of the data.
         Parameters
         ----------
-        source_unit : str
+        source_units : str
             The source unit.
-        target_unit : str | dict[str, str]
+        target_units : str | dict[str, str]
             The target units, or a mapping of variables names to target units.
         units_mapping : dict[str, str]
             A mapping of source units to target units.
@@ -124,45 +124,45 @@ class XArrayDataArrayWrapper(Wrapper):
             xarray.DataArray with converted units.
         """
 
-        if target_unit is None and units_mapping is None:
+        if target_units is None and units_mapping is None:
             LOG.warning(
-                "target_unit or units_mapping must be provided for unit conversion for xarray.DataArray."
+                "target_units or units_mapping must be provided for unit conversion for xarray.DataArray."
                 "Not converting units."
             )
             return
         
-        if source_unit is None:
+        if source_units is None:
             # Try to get from attributes
-            source_unit = self.data.attrs.get("units", None)
-            if source_unit is None:
+            source_units = self.data.attrs.get("units", None)
+            if source_units is None:
                 raise ValueError(
-                    "source_unit must be provided for unit conversion if not present in data attributes."
+                    "source_units must be provided for unit conversion if not present in data attributes."
                 )
         
-        if target_unit is None:
-            target_unit = units_mapping.get(source_unit, None)
-        elif isinstance(target_unit, dict):
+        if target_units is None:
+            target_units = units_mapping.get(source_units, None)
+        elif isinstance(target_units, dict):
             # Get variable name
             var_name = self.data.name
             if var_name is None:
                 LOG.warning(
-                    "DataArray has no name; cannot use target_unit as a mapping. "
-                    "Provide target_unit as a string."
+                    "DataArray has no name; cannot use target_units as a mapping. "
+                    "Provide target_units as a string."
                 )
                 return
-            target_unit = target_unit.get(var_name, None)
+            target_units = target_units.get(var_name, None)
         
-        if target_unit is None:
+        if target_units is None:
             LOG.warning(
-                "Could not determine target_unit for unit conversion for xarray.DataArray."
+                "Could not determine target_units for unit conversion for xarray.DataArray."
                 "Not converting units."
             )
             return
         
         from earthkit.utils.units import convert
         # TODO: Update in place?
-        self.data = convert(self.data.values, source_unit, target_unit)
-        self.data.attrs["units"] = target_unit
+        self.data = convert(self.data.values, source_units, target_units)
+        self.data.attrs["units"] = target_units
 
 
 
@@ -187,9 +187,9 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
         """Convert the units of the data.
         Parameters
         ----------
-        source_unit : str
+        source_units : str
             The source unit.
-        target_unit : str | dict[str, str]
+        target_units : str | dict[str, str]
             The target units, or a mapping of variables names to target units.
         units_mapping : dict[str, str]
             A mapping of source units to target units.
@@ -198,7 +198,7 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
         """
         for var in self.data.data_vars:
             var_wrapper = XArrayDataArrayWrapper(self.data[var])
-            var_wrapper.convert_units(*args, **kwargs)
+            var_wrapper.convert_unitss(*args, **kwargs)
             self.data[var] = var_wrapper.data
 
 

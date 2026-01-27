@@ -14,7 +14,7 @@ import typing as T
 from functools import wraps
 
 from earthkit.data import transform
-from earthkit.data.wrappers import Wrapper
+from earthkit.data.wrappers import Wrapper, convert_units
 
 LOG = logging.getLogger(__name__)
 
@@ -90,8 +90,8 @@ def transform_inputs_decorator(
                 kwargs[name] = arg
 
 
-            # Split args into multiple
-            if len(args) < len(expected_args):
+            # # Split args into multiple
+            # if len(args) < len(expected_args):
             
             
             convert_kwargs = [k for k in kwargs if k in mapping]
@@ -120,18 +120,9 @@ def transform_inputs_decorator(
                         except Exception:
                             continue
                         break
-            
-            # Ensure units
-            if ensure_units:
-                for key, target_unit in ensure_units.items():
-                    if key in kwargs:
-                        value = kwargs[key]
-                        if isinstance(value, Wrapper):
-                            print('Convert units called')
-                            # try:
-                            #     kwargs[key] = value.convert_units(target_unit)
-                            # except Exception:
-                            #     pass
+                # Ensure units
+                if ensure_units:
+                    kwargs[key] = convert_units(kwargs[key], target_units = ensure_units)
             
             # Expand Wrapper objects
             for k, v in list(kwargs.items()):
