@@ -47,6 +47,8 @@ def _ensure_tuple(input_item):
 def transform_inputs_decorator(
     kwarg_types: T.Dict[str, T.Any] = {},
     convert_types: T.Union[None, T.Tuple[T.Any], T.Dict[str, T.Tuple[T.Any]]] = None,
+    ensure_units: T.Union[None, T.Dict[str, str]] = None,
+    provenance: bool = False,
 ) -> T.Callable:
     """Transform the inputs to a function to match the requirements.
 
@@ -59,6 +61,12 @@ def transform_inputs_decorator(
         Data types to try to convert, in cases where the function is flexible and can handle multiple
         types which are not specified by the type-setting. For example, numpy functions can often handle
         numpy, pandas and xarray data objects. If a dict, applies per-argument.
+    ensure_units : Dict[str, str]
+        Ensure that the given arguments have the specified units. If the argument is a Wrapper object,
+        the convert_units method will be called with the target unit.
+    provenance : bool
+        Whether to add provenance information to the output data. The end user should be able to set this
+        option.
 
     Returns
     -------
@@ -77,8 +85,15 @@ def transform_inputs_decorator(
             # Store positional arg names for extraction later
             arg_names = []
             for arg, name in zip(args, signature.parameters):
+                print(arg, name)
                 arg_names.append(name)
                 kwargs[name] = arg
+
+
+            # Split args into multiple
+            if len(args) < len(expected_args):
+            
+            
             convert_kwargs = [k for k in kwargs if k in mapping]
 
             # Filter for convert_types
@@ -92,6 +107,8 @@ def transform_inputs_decorator(
                     if isinstance(kwargs[k], _ensure_tuple(_convert_types.get(k, ())))
                 ]
 
+            # Split single input into many
+            
             # Transform args/kwargs
             for key in convert_kwargs:
                 value = kwargs[key]
@@ -103,7 +120,19 @@ def transform_inputs_decorator(
                         except Exception:
                             continue
                         break
-
+            
+            # Ensure units
+            if ensure_units:
+                for key, target_unit in ensure_units.items():
+                    if key in kwargs:
+                        value = kwargs[key]
+                        if isinstance(value, Wrapper):
+                            print('Convert units called')
+                            # try:
+                            #     kwargs[key] = value.convert_units(target_unit)
+                            # except Exception:
+                            #     pass
+            
             # Expand Wrapper objects
             for k, v in list(kwargs.items()):
                 if isinstance(v, Wrapper):
@@ -114,7 +143,13 @@ def transform_inputs_decorator(
 
             # Extract positional args again
             args = [kwargs.pop(name) for name in arg_names]
-            return function(*args, **kwargs)
+            result = function(*args, **kwargs)
+            
+            # Add provenance here
+            if provenance:
+                pass
+            
+            return result
 
         @wraps(function)
         def wrapper(*args, _auto_inputs_transform=True, **kwargs):

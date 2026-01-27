@@ -6,13 +6,12 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 
-
-# from emohawk.metadata import AXES, COMPONENTS
+import logging
 
 # from earthkit.data.readers import netcdf
 from earthkit.data.wrappers import Wrapper
 
-
+LOG = logging.getLogger(__name__)
 class XArrayDataArrayWrapper(Wrapper):
     """Wrapper around an xarray `DataArray`, offering polymorphism and
     convenience methods.
@@ -104,6 +103,67 @@ class XArrayDataArrayWrapper(Wrapper):
             The encoded data.
         """
         return encoder._encode_xarray(data=self.data, **kwargs)
+    
+    def convert_units(
+        self,
+        source_unit: str | None = None,
+        target_unit: str | dict[str, str] | None = None,
+        units_mapping: dict[str, str] | None = None
+    ):
+        """Convert the units of the data.
+        Parameters
+        ----------
+        source_unit : str
+            The source unit.
+        target_unit : str | dict[str, str]
+            The target units, or a mapping of variables names to target units.
+        units_mapping : dict[str, str]
+            A mapping of source units to target units.
+
+        Returns:
+            xarray.DataArray with converted units.
+        """
+
+        if target_unit is None and units_mapping is None:
+            LOG.warning(
+                "target_unit or units_mapping must be provided for unit conversion for xarray.DataArray."
+                "Not converting units."
+            )
+            return
+        
+        if source_unit is None:
+            # Try to get from attributes
+            source_unit = self.data.attrs.get("units", None)
+            if source_unit is None:
+                raise ValueError(
+                    "source_unit must be provided for unit conversion if not present in data attributes."
+                )
+        
+        if target_unit is None:
+            target_unit = units_mapping.get(source_unit, None)
+        elif isinstance(target_unit, dict):
+            # Get variable name
+            var_name = self.data.name
+            if var_name is None:
+                LOG.warning(
+                    "DataArray has no name; cannot use target_unit as a mapping. "
+                    "Provide target_unit as a string."
+                )
+                return
+            target_unit = target_unit.get(var_name, None)
+        
+        if target_unit is None:
+            LOG.warning(
+                "Could not determine target_unit for unit conversion for xarray.DataArray."
+                "Not converting units."
+            )
+            return
+        
+        from earthkit.utils.units import convert
+        # TODO: Update in place?
+        self.data = convert(self.data.values, source_unit, target_unit)
+        self.data.attrs["units"] = target_unit
+
 
 
 class XArrayDatasetWrapper(XArrayDataArrayWrapper):
@@ -122,6 +182,25 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
         if flatten:
             arr = arr.flatten()
         return arr
+    
+    def convert_units(self, *args, **kwargs):
+        """Convert the units of the data.
+        Parameters
+        ----------
+        source_unit : str
+            The source unit.
+        target_unit : str | dict[str, str]
+            The target units, or a mapping of variables names to target units.
+        units_mapping : dict[str, str]
+            A mapping of source units to target units.
+        Returns:
+            xarray.DataSet with converted units.
+        """
+        for var in self.data.data_vars:
+            var_wrapper = XArrayDataArrayWrapper(self.data[var])
+            var_wrapper.convert_units(*args, **kwargs)
+            self.data[var] = var_wrapper.data
+
 
     # def component(self, component):
     #     """

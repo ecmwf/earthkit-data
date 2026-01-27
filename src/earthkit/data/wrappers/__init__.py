@@ -59,6 +59,11 @@ def get_wrapper(data, *args, **kwargs):
         return data
 
 
+def convert_units(*args, **kwargs):
+    """Executing wrapper for the get_translator class method"""
+    return get_wrapper(*args, **kwargs).convert_units(*args, **kwargs)
+
+
 # def from_object(obj: object, *args, **kwargs) -> Base:
 #     """
 #     Open an object as an earthkit-data object.
