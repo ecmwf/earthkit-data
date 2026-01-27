@@ -7,18 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-import warnings
 
-import deprecation
-from earthkit.utils.array import array_namespace as eku_array_namespace
-
-from earthkit.data.core.fieldlist import FieldListCore
-from earthkit.data.core.index import Index
-from earthkit.data.core.index import MaskIndex
-from earthkit.data.core.index import MultiIndex
-from earthkit.data.decorators import detect_out_filename
-from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.utils.compute import wrap_maths
+from earthkit.data.indexing.simple import SimpleFieldListCore
 
 GRIB_KEYS_NAMES = [
     "class",
@@ -77,16 +67,15 @@ DESCRIBE_KEYS = [
 ]
 
 
-def build_remapping(remapping, patches):
-    if remapping is not None or patches is not None:
-        from earthkit.data.core.order import build_remapping
+class FieldList(SimpleFieldListCore):
+    def __init__(self):
+        r"""Initialize a FieldList object."""
+        self.__fields = []
 
-        remapping = build_remapping(remapping, patches)
-    return None
+    @property
+    def _fields(self):
+        return self.__fields
 
-
-@wrap_maths
-class FieldList(Index, FieldListCore):
     @staticmethod
     def from_fields(fields):
         r"""Create a :class:`SimpleFieldList`.
@@ -103,446 +92,165 @@ class FieldList(Index, FieldListCore):
         """
         from earthkit.data.indexing.simple import SimpleFieldList
 
-        if not isinstance(fields, (list, tuple)):
-            fields = [fields]
-        return SimpleFieldList([f for f in fields])
+        return SimpleFieldList.from_fields(fields)
 
     @staticmethod
     def from_numpy(array, metadata):
-        return FieldList.from_array(array, metadata)
+        raise NotImplementedError("SimpleFieldList.from_numpy is not implemented")
 
     @staticmethod
     def from_array(array, metadata):
-        from earthkit.data.sources.array_list import from_array
-
-        return from_array(array, metadata)
-
-    @property
-    def values(self):
-        return self._as_array("values")
-
-    def to_numpy(self, **kwargs):
-        return self._as_array("to_numpy", empty_array_namespace="numpy", **kwargs)
-
-    def to_array(self, **kwargs):
-        ns = kwargs.get("array_namespace", None)
-        if ns is None:
-            ns = eku_array_namespace(kwargs.get("array_backend", None))
-
-        return self._as_array("to_array", empty_array_namespace=ns, **kwargs)
-
-    def _as_array(self, accessor, empty_array_namespace=None, **kwargs):
-        """Helper to use pre-allocated target array to store the field values."""
-
-        def _vals(f):
-            return getattr(f, accessor)(**kwargs) if not is_property else getattr(f, accessor)
-
-        n = len(self)
-        if n > 0:
-            it = iter(self)
-            first = next(it)
-            is_property = not callable(getattr(first, accessor, None))
-            vals = _vals(first)
-            first = None
-            xp = eku_array_namespace(vals)
-            shape = (n, *vals.shape)
-            r = xp.empty(shape, dtype=vals.dtype, device=xp.device(vals))
-            r[0] = vals
-            for i, f in enumerate(it, start=1):
-                r[i] = _vals(f)
-        else:
-            # create an empty array using the right namespace and dtype
-            xp = eku_array_namespace(empty_array_namespace if empty_array_namespace is not None else "numpy")
-            r = xp.empty((0,), dtype=kwargs.get("dtype"))
-
-        return r
-
-    def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None, index=None):
-        if isinstance(keys, str):
-            keys = [keys]
-
-        if any(k not in ("lat", "lon", "value") for k in keys):
-            raise ValueError(f"data: invalid argument: {keys}")
-
-        if self._has_shared_geography:
-            if "lat" in keys or "lon" in keys:
-                latlon = self[0].to_latlon(flatten=flatten, dtype=dtype, index=index)
-
-            r = []
-            for k in keys:
-                if k == "lat":
-                    r.append(latlon["lat"])
-                elif k == "lon":
-                    r.append(latlon["lon"])
-                elif k == "value":
-                    r.extend([f.to_array(flatten=flatten, dtype=dtype, index=index) for f in self])
-            return eku_array_namespace(r[0]).stack(r)
-
-        elif len(self) == 0:
-            # empty array from the default array namespace
-            shape = tuple([0] * len(keys))
-            return eku_array_namespace().empty(shape, dtype=dtype)
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
-
-    def datetime(self):
-        r"""Return the unique, sorted list of dates and times in the fieldlist.
-
-        Returns
-        -------
-        dict of datatime.datetime
-            Dict with items "base_time" and "valid_time".
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
-        >>> ds.datetime()
-        {'base_time': [datetime.datetime(2020, 12, 21, 12, 0)],
-        'valid_time': [
-            datetime.datetime(2020, 12, 21, 12, 0),
-            datetime.datetime(2020, 12, 21, 15, 0),
-            datetime.datetime(2020, 12, 21, 18, 0),
-            datetime.datetime(2020, 12, 21, 21, 0),
-            datetime.datetime(2020, 12, 23, 12, 0)]}
-
-        """
-        base = set()
-        valid = set()
-        for f in self:
-            if v := f.base_datetime:
-                base.add(v)
-            if v := f.valid_datetime:
-                valid.add(v)
-        return {"base_time": sorted(base), "valid_time": sorted(valid)}
-
-    @property
-    def geography(self):
-        if self._has_shared_geography:
-            return self[0].geography
-        elif len(self) == 0:
-            return None
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
-
-    @property
-    def latitudes(self):
-        if self._has_shared_geography:
-            return self[0].latitudes
-        elif len(self) == 0:
-            return None
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
-
-    @property
-    def longitudes(self):
-        if self._has_shared_geography:
-            return self[0].longitudes
-        elif len(self) == 0:
-            return None
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
-
-    def to_latlon(self, index=None, **kwargs):
-        if self._has_shared_geography:
-            return self[0].to_latlon(index=index, **kwargs)
-        elif len(self) == 0:
-            return dict(lat=None, lon=None)
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
-
-    def to_points(self, **kwargs):
-        if self._has_shared_geography:
-            return self[0].to_points(**kwargs)
-        elif len(self) == 0:
-            return dict(x=None, y=None)
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
-
-    def bounding_box(self):
-        return [f.geography.bounding_box for f in self]
-
-    def projection(self):
-        if self._has_shared_geography:
-            return self[0].geography.projection
-        elif len(self) == 0:
-            return None
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
-
-    @thread_safe_cached_property
-    def _has_shared_geography(self):
-        if len(self) > 0:
-            grid = self[0].geography.unique_grid_id
-            if grid is not None:
-                return all(f.geography.unique_grid_id == grid for f in self)
-        return False
-
-    def get(self, *keys, remapping=None, patches=None, **kwargs):
-        from earthkit.data.utils.metadata.args import metadata_argument_new
-
-        _kwargs = kwargs.copy()
-        astype = _kwargs.pop("astype", None)
-        keys, astype, key_arg_type = metadata_argument_new(*keys, astype=astype)
-
-        remapping = build_remapping(remapping, patches)
-
-        return [
-            f._get_fast(keys, output=key_arg_type, astype=astype, remapping=remapping, **_kwargs)
-            for f in self
-        ]
-
-    def get_as_dict(self, *args, group=False, remapping=None, patches=None, **kwargs):
-        from earthkit.data.utils.metadata.args import metadata_argument_new
-
-        _kwargs = kwargs.copy()
-        astype = _kwargs.pop("astype", None)
-        keys, astype, _ = metadata_argument_new(*args, astype=astype)
-
-        remapping = build_remapping(remapping, patches)
-
-        if group:
-            result = {k: [] for k in keys}
-            vals = []
-            for f in self:
-                vals.append(f._get_fast_list(keys[0], remapping=remapping, **_kwargs))
-
-            for i, k in enumerate(keys):
-                result[k] = vals[:][i]
-
-            return result
-        else:
-            result = []
-            for f in self:
-                result.append(f._get_fast_dict(keys, astype=astype, remapping=remapping, **_kwargs))
-            return result
-
-    def metadata(self, *args, **kwargs):
-        result = []
-        for s in self:
-            result.append(s.metadata(*args, **kwargs))
-        return result
-
-    @thread_safe_cached_property
-    def _md_indices(self):
-        from .indices import FieldListIndices
-
-        return FieldListIndices(self)
-
-    def indices(self, squeeze=False):
-        return self._md_indices.indices(squeeze=squeeze)
-
-    def index(self, key):
-        return self._md_indices.index(key)
-
-    def _default_ls_keys(self):
-        if len(self) > 0:
-            return self[0].default_ls_keys
-        return []
-
-    def ls(self, n=None, keys=None, extra_keys=None, namespace=None):
-        from earthkit.data.utils.summary import ls
-
-        def _proc(keys: list, n: int, namespace=None):
-            num = len(self)
-            pos = slice(0, num)
-            if n is not None:
-                pos = slice(0, min(num, n)) if n > 0 else slice(num - min(num, -n), num)
-            pos_range = range(pos.start, pos.stop)
-
-            if namespace is not None:
-                for i in pos_range:
-                    f = self[i]
-                    v = {}
-                    for ns_val in f.namespace(namespace).values():
-                        v.update(ns_val)
-                    if keys:
-                        v.update(f._get_fast(keys, output=dict))
-                    yield (v)
-            else:
-                for i in pos_range:
-                    yield (self[i]._get_fast(keys, output=dict))
-
-        return ls(_proc, self._default_ls_keys(), n=n, keys=keys, extra_keys=extra_keys, namespace=namespace)
-
-    def head(self, n=5, **kwargs):
-        if n <= 0:
-            raise ValueError("head: n must be > 0")
-        return self.ls(n=n, **kwargs)
-
-    def tail(self, n=5, **kwargs):
-        if n <= 0:
-            raise ValueError("n must be > 0")
-        return self.ls(n=-n, **kwargs)
-
-    @thread_safe_cached_property
-    def _describe_keys(self):
-        if len(self) > 0:
-            return DESCRIBE_KEYS
-        else:
-            return []
-
-    def describe(self, *args, **kwargs):
-        r"""Generate a summary of the fieldlist."""
-        from earthkit.data.utils.summary import format_describe
-
-        def _proc():
-            for f in self:
-                yield (f._get_fast(self._describe_keys, output=dict))
-
-        return format_describe(_proc(), *args, **kwargs)
-
-    def to_fieldlist(self, array_backend=None, array_namespace=None, device=None, **kwargs):
-        if array_backend is not None:
-            warnings.warn(
-                "to_fieldlist(): 'array_backend' is deprecated. Use 'array_namespace' instead",
-                DeprecationWarning,
-            )
-            if array_namespace is not None:
-                raise ValueError("to_array(): only one of array_backend and array_namespace can be specified")
-            array_namespace = array_backend
-
-        return self.from_fields(
-            [f.to_array_field(array_namespace=array_namespace, device=device, **kwargs) for f in self]
-        )
-
-    def to_tensor(self, *args, **kwargs):
-        from earthkit.data.indexing.tensor import FieldListTensor
-
-        return FieldListTensor.from_fieldlist(self, *args, **kwargs)
-
-    def cube(self, *args, **kwargs):
-        from earthkit.data.indexing.cube import FieldCube
-
-        return FieldCube(self, *args, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    @detect_out_filename
-    def save(self, filename, append=False, **kwargs):
-        r"""Write all the fields into a file.
-
-        Parameters
-        ----------
-        filename: str, optional
-            The target file path, if not defined attempts will be made to detect the filename
-        append: bool, optional
-            When it is true append data to the target file. Otherwise
-            the target file be overwritten if already exists. Default is False
-        **kwargs: dict, optional
-            Other keyword arguments passed to :obj:`write`.
-
-        See Also
-        --------
-        :obj:`write`
-
-        """
-        metadata = {}
-        bits_per_value = kwargs.pop("bits_per_value", None)
-        if bits_per_value is not None:
-            metadata = {"bitsPerValue": bits_per_value}
-
-        self.to_target("file", filename, append=append, metadata=metadata, **kwargs)
-
-        # original code
-        # flag = "wb" if not append else "ab"
-        # with open(filename, flag) as f:
-        #     self.write(f, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def write(self, f, **kwargs):
-        r"""Write all the fields to a file object.
-
-        Parameters
-        ----------
-        f: file object
-            The target file object.
-        **kwargs: dict, optional
-            Other keyword arguments passed to the underlying field implementation.
-
-        See Also
-        --------
-        :obj:`write`
-
-        """
-        metadata = {}
-        bits_per_value = kwargs.pop("bits_per_value", None)
-        if bits_per_value is not None:
-            metadata = {"bitsPerValue": bits_per_value}
-
-        self.to_target("file", f, metadata=metadata, **kwargs)
-
-        # original code
-        # for s in self:
-        #     s.write(f, **kwargs)
-
-    def default_encoder(self):
-        if len(self) > 0:
-            return self[0].default_encoder()
-
-    def _encode(self, encoder, **kwargs):
-        """Double dispatch to the encoder"""
-        return encoder._encode_fieldlist(self, **kwargs)
-
-    # def _normalise_sel_input(self, **kwargs):
-    #     from .field import Field
-
-    #     return Field._normalise_sel_input(**kwargs)
-
-    @staticmethod
-    def normalise_key_values(**kwargs):
-        from ..core.field import Field
-
-        return Field.normalise_key_values(**kwargs)
-
-    def unique_values(self, *coords, remapping=None, patches=None, progress_bar=False):
-        """Given a list of metadata attributes, such as date, param, levels,
-        returns the list of unique values for each attributes
-        """
-        from collections import defaultdict
-
-        from earthkit.data.core.order import build_remapping
-
-        assert len(coords)
-        assert all(isinstance(k, str) for k in coords), coords
-
-        remapping = build_remapping(remapping, patches)
-        iterable = self
-
-        if progress_bar:
-            from earthkit.data.utils.progbar import progress_bar
-
-            if progress_bar:
-                iterable = progress_bar(
-                    iterable=self,
-                    desc=f"Finding coords in dataset for {coords}",
-                )
-
-        vals = defaultdict(dict)
-        for f in iterable:
-            get = remapping(f.get)
-            for k in coords:
-                v = get(k, default=None)
-                vals[k][v] = True
-
-        vals = {k: tuple(values.keys()) for k, values in vals.items()}
-
-        return vals
-
-    @classmethod
-    def new_mask_index(self, *args, **kwargs):
-        return MaskFieldList(*args, **kwargs)
+        raise NotImplementedError("SimpleFieldList.from_array is not implemented")
 
     @classmethod
     def merge(cls, sources):
-        assert all(isinstance(_, FieldList) for _ in sources)
-        return MultiFieldList(sources)
+        raise ValueError("Cannot merge empty FieldLists")
+
+    def ignore(self):
+        # Used by multi-source
+        return True
+
+    def __and__(self, other):
+        return other
+
+    def append(self, other):
+        from earthkit.data.indexing.simple import SimpleFieldList
+
+        return SimpleFieldList([other])
+
+    @classmethod
+    def new_mask_index(cls, *args, **kwargs):
+        assert len(args) == 2
+        fs = args[0]
+        indices = list(args[1])
+        return cls.from_fields([fs._fields[i] for i in indices])
 
 
-class MaskFieldList(FieldList, MaskIndex):
-    def __init__(self, *args, **kwargs):
-        MaskIndex.__init__(self, *args, **kwargs)
+# class FieldList(FieldListCore):
+#     @staticmethod
+#     def from_fields(fields):
+#         r"""Create a :class:`SimpleFieldList`.
 
+#         Parameters
+#         ----------
+#         fields: iterable
+#             Iterable of :obj:`Field` objects.
 
-class MultiFieldList(FieldList, MultiIndex):
-    def __init__(self, *args, **kwargs):
-        MultiIndex.__init__(self, *args, **kwargs)
+#         Returns
+#         -------
+#         :class:`SimpleFieldList`
+
+#         """
+#         from earthkit.data.indexing.simple import SimpleFieldList
+
+#         return SimpleFieldList.from_fields(fields)
+
+#     @staticmethod
+#     def from_numpy(array, metadata):
+#         raise NotImplementedError("FieldList.from_numpy is not implemented")
+
+#     @staticmethod
+#     def from_array(array, metadata):
+#         raise NotImplementedError("FieldList.from_array is not implemented")
+
+#     def __len__(self):
+#         return 0
+
+#     def __getitem__(self, n):
+#         raise IndexError("Empty FieldList has no elements")
+
+#     @property
+#     def values(self):
+#         raise ValueError("Empty FieldList has no values")
+
+#     def to_numpy(self, **kwargs):
+#         raise ValueError("Empty FieldList has no values")
+
+#     def to_array(self, **kwargs):
+#         raise ValueError("Empty FieldList has no values")
+
+#     def data(
+#         self,
+#         keys=("lat", "lon", "value"),
+#         flatten=False,
+#         dtype=None,
+#         index=None,
+#     ):
+#         raise ValueError("Empty FieldList has no values")
+
+#     def datetime(self):
+#         raise ValueError("Empty FieldList has no values")
+
+#     @property
+#     def geography(self):
+#         raise ValueError("Empty FieldList has no values")
+
+#     def to_latlon(self, index=None, **kwargs):
+#         raise ValueError("EmptyFieldList has no values")
+
+#     def to_points(self, **kwargs):
+#         raise ValueError("EmptyFieldList has no values")
+
+#     def bounding_box(self):
+#         pass
+
+#     def projection(self):
+#         pass
+
+#     def get(self, *keys, remapping=None, patches=None, **kwargs):
+#         return []
+
+#     def get_as_dict(self, *args, group=False, remapping=None, patches=None, **kwargs):
+#         return []
+
+#     def metadata(self, *args, **kwargs):
+#         return []
+
+#     def indices(self, squeeze=False):
+#         return {}
+
+#     def index(self, key):
+#         return []
+
+#     def ls(self, n=None, keys=None, extra_keys=None, namespace=None):
+#         return []
+
+#     def head(self, n=5, **kwargs):
+#         return []
+
+#     def tail(self, n=5, **kwargs):
+#         return []
+
+#     def describe(self, *args, **kwargs):
+#         return []
+
+#     def to_fieldlist(self, array_backend=None, array_namespace=None, device=None, **kwargs):
+#         return self
+
+#     def to_tensor(self, *args, **kwargs):
+#         pass
+
+#     def cube(self, *args, **kwargs):
+#         pass
+
+#     def default_encoder(self):
+#         pass
+
+#     def _encode(self, encoder, **kwargs):
+#         """Double dispatch to the encoder"""
+#         pass
+
+#     def normalise_key_values(self, **kwargs):
+#         pass
+
+#     @classmethod
+#     def merge(cls, sources):
+#         raise ValueError("Cannot merge empty FieldLists")
+
+#     def __and__(self, other):
+#         return other
+
+#     def append(self, other):
+#         from earthkit.data.indexing.simple import SimpleFieldList
+
+#         return SimpleFieldList([other])

@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from earthkit.data import concat
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.testing import load_nc_or_xr_source
@@ -50,7 +51,7 @@ class Merger_obj:
 def test_netcdf_concat_core(mode):
     ds1 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_1.nc"), mode)
     ds2 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_2.nc"), mode)
-    ds = ds1 & ds2
+    ds = concat(ds1, ds2)
 
     assert len(ds) == 2
     md = ds1.get("param") + ds2.get("param")
@@ -80,7 +81,7 @@ def test_netcdf_concat_core(mode):
 def test_netcdf_concat_to_xarray(mode):
     ds1 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_1.nc"), mode)
     ds2 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_2.nc"), mode)
-    ds = ds1 & ds2
+    ds = concat(ds1, ds2)
 
     assert len(ds) == 2
 

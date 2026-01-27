@@ -15,6 +15,8 @@ import sys
 import numpy as np
 import pytest
 
+from earthkit.data import concat
+
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
 from grib_fixtures import FL_NUMPY  # noqa: E402
@@ -37,7 +39,7 @@ def test_icon_to_xarray(fl_type):
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 def test_to_xarray_filter_by_keys(fl_type):
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
-    g = g.sel(param="t", level=500) & g.sel(param="u")
+    g = concat(g.sel(param="t", level=500), g.sel(param="u"))
     assert len(g) > 1
 
     # see github #250

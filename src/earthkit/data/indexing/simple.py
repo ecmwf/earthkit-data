@@ -11,7 +11,7 @@ from abc import abstractmethod
 
 from earthkit.data.decorators import thread_safe_cached_property
 
-from .fieldlist import FieldList
+from .indexed import IndexedFieldList
 
 GRIB_KEYS_NAMES = [
     "class",
@@ -63,7 +63,8 @@ def build_remapping(remapping, patches):
     return None
 
 
-class SimpleFieldListCore(FieldList):
+class SimpleFieldListCore(IndexedFieldList):
+
     # def __init__(self, fields=None):
     #     r"""Initialize a FieldList object."""
     #     self._fields = fields if fields is not None else []
@@ -150,10 +151,38 @@ class SimpleFieldList(SimpleFieldListCore):
         r"""Initialize a FieldList object."""
         self.__fields = fields if fields is not None else []
 
+    @staticmethod
+    def from_fields(fields):
+        r"""Create a :class:`SimpleFieldList`.
+
+        Parameters
+        ----------
+        fields: iterable
+            Iterable of :obj:`Field` objects.
+
+        Returns
+        -------
+        :class:`SimpleFieldList`
+
+        """
+        from earthkit.data.indexing.simple import SimpleFieldList
+
+        if not isinstance(fields, (list, tuple)):
+            fields = [fields]
+        return SimpleFieldList([f for f in fields])
+
+    @staticmethod
+    def from_numpy(array, metadata):
+        raise NotImplementedError("SimpleFieldList.from_numpy is not implemented")
+
+    @staticmethod
+    def from_array(array, metadata):
+        raise NotImplementedError("SimpleFieldList.from_array is not implemented")
+
     # @property
     # def fields(self):
     #     """Return the fields in the list."""
-    #     return self._fields
+    #      return self._fields
 
     @property
     def _fields(self):
@@ -203,6 +232,9 @@ class SimpleFieldList(SimpleFieldListCore):
 class LazySimpleFieldList(SimpleFieldListCore):
     def __init__(self, reader):
         self._reader = reader
+
+    def from_fields(cls, fields):
+        raise NotImplementedError("LazySimpleFieldList does not implement from_fields")
 
     @thread_safe_cached_property
     def _fields(self):

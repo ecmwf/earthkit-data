@@ -36,6 +36,7 @@ from .sources import from_source_lazily
 # from .sources.array_list import ArrayField
 from .targets import create_target
 from .targets import to_target
+from .utils.concat import concat
 from .utils.examples import download_example_file
 from .utils.examples import remote_example_file
 
@@ -46,6 +47,7 @@ __all__ = [
     "array_api",
     # "ArrayField",
     "cache",
+    "concat",
     "create_encoder",
     "create_target",
     "download_example_file",

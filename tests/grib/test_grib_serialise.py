@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 
 from earthkit.data import FieldList
+from earthkit.data import concat
 from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
@@ -249,7 +250,7 @@ def test_grib_serialise_file_fieldlist_sel(fl_type):
 def test_grib_serialise_file_fieldlist_concat(fl_type):
     ds00, _ = load_grib_data("test.grib", fl_type)
     ds01, _ = load_grib_data("test6.grib", fl_type)
-    ds = ds00 & ds01
+    ds = concat(ds00, ds01)
     assert len(ds) == 8
 
     print("ds=", type(ds))

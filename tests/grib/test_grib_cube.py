@@ -12,6 +12,7 @@
 import numpy as np
 import pytest
 
+from earthkit.data import concat
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
@@ -131,7 +132,7 @@ def test_grib_cubelet():
 
 def test_grib_cube_non_hypercube():
     ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-    ds += from_source("file", earthkit_test_data_file("ml_data.grib"))[:2]
+    ds = concat(ds, from_source("file", earthkit_test_data_file("ml_data.grib"))[:2])
     assert len(ds) == 18 + 2
 
     with pytest.raises(ValueError):

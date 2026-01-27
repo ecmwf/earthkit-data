@@ -8,7 +8,7 @@
 #
 
 
-from earthkit.data.core.fieldlist_ori import FieldList
+from earthkit.data.indexing.fieldlist import FieldList
 
 
 class EmptySource(FieldList):
@@ -16,7 +16,10 @@ class EmptySource(FieldList):
         # Used by multi-source
         return True
 
-    def __getitem__(self, key):
+    # def __getitem__(self, key):
+    #     raise IndexError("Empty source")
+
+    def _getitem(self, n):
         raise IndexError("Empty source")
 
     def __len__(self):

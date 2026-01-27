@@ -18,8 +18,8 @@ from typing import Union
 import xarray as xr
 import yaml
 
-from earthkit.data.indexing.fieldlist import FieldList
-from earthkit.data.indexing.fieldlist import MultiFieldList
+from earthkit.data.indexing.indexed import IndexedFieldList
+from earthkit.data.indexing.indexed import MultiFieldList
 
 # from .field import EmptyFieldList
 from .flavour import CoordinateGuesser
@@ -31,7 +31,7 @@ from .variable import Variable
 LOG = logging.getLogger(__name__)
 
 
-class XArrayFieldList(FieldList):
+class XArrayFieldList(IndexedFieldList):
     """A class to represent a list of fields from an xarray Dataset."""
 
     def __init__(self, ds: xr.Dataset, variables: List[Variable]) -> None:
@@ -49,6 +49,30 @@ class XArrayFieldList(FieldList):
         self.total_length: int = sum(v.length for v in variables)
 
         # LOG.debug(f"Created XArrayFieldList with {self.total_length} fields from {len(variables)} variables")
+
+    @staticmethod
+    def from_fields(fields):
+        r"""Create a :class:`SimpleFieldList`.
+
+        Parameters
+        ----------
+        fields: iterable
+            Iterable of :obj:`Field` objects.
+
+        Returns
+        -------
+        :class:`SimpleFieldList`
+
+        """
+        raise NotImplementedError("XarrayFieldList.from_fields is not implemented")
+
+    @staticmethod
+    def from_numpy(array, metadata):
+        raise NotImplementedError("SimpleFieldList.from_numpy is not implemented")
+
+    @staticmethod
+    def from_array(array, metadata):
+        raise NotImplementedError("SimpleFieldList.from_array is not implemented")
 
     def __repr__(self) -> str:
         """Return a string representation of the XarrayFieldList."""
@@ -195,7 +219,7 @@ class XArrayFieldList(FieldList):
 
         return cls(ds, variables)
 
-    def sel(self, *args, **kwargs: Any) -> FieldList:
+    def sel(self, *args, **kwargs: Any) -> IndexedFieldList:
         """Select fields from the XarrayFieldList based on criteria.
 
         Parameters
@@ -286,7 +310,7 @@ class XArrayFieldList(FieldList):
         if all(isinstance(_, XArrayFieldList) for _ in sources):
             return XArrayMultiFieldList(sources)
         else:
-            if all(isinstance(_, FieldList) for _ in sources):
+            if all(isinstance(_, IndexedFieldList) for _ in sources):
                 from earthkit.data.indexing.fieldlist import MultiFieldList
 
                 # assert all(isinstance(_, NetCDFFieldList) for _ in sources)

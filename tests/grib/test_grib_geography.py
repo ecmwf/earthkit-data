@@ -17,6 +17,7 @@ import pytest
 from earthkit.utils.array import convert as array_convert
 
 import earthkit.data
+from earthkit.data import concat
 from earthkit.data.testing import NO_GEO
 from earthkit.data.testing import check_array
 from earthkit.data.testing import check_array_type
@@ -125,7 +126,7 @@ def test_grib_latlon_multi(fl_type, dtype):
 def test_grib_latlon_multi_non_shared_grid(fl_type):
     f1, _ = load_grib_data("test.grib", fl_type)
     f2, _ = load_grib_data("test4.grib", fl_type)
-    f = f1 & f2
+    f = concat(f1, f2)
 
     with pytest.raises(ValueError):
         f.geography.latitudes
@@ -195,7 +196,7 @@ def test_grib_points_multi(fl_type):
 def test_grib_points_multi_non_shared_grid(fl_type):
     f1, _ = load_grib_data("test.grib", fl_type)
     f2, _ = load_grib_data("test4.grib", fl_type)
-    f = f1 & f2
+    f = concat(f1, f2)
 
     with pytest.raises(ValueError):
         f.geography.x
@@ -286,7 +287,7 @@ def test_grib_to_latlon_multi(fl_type, dtype):
 def test_grib_to_latlon_multi_non_shared_grid(fl_type):
     f1, _ = load_grib_data("test.grib", fl_type)
     f2, _ = load_grib_data("test4.grib", fl_type)
-    f = f1 & f2
+    f = concat(f1, f2)
 
     with pytest.raises(ValueError):
         f.to_latlon()
@@ -354,7 +355,7 @@ def test_grib_to_points_multi(fl_type, dtype):
 def test_grib_to_points_multi_non_shared_grid(fl_type):
     f1, _ = load_grib_data("test.grib", fl_type)
     f2, _ = load_grib_data("test4.grib", fl_type)
-    f = f1 & f2
+    f = concat(f1, f2)
 
     with pytest.raises(ValueError):
         f.to_points()
