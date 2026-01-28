@@ -19,8 +19,12 @@ LOG = logging.getLogger(__name__)
 
 
 class Wrapper(Base):
-    pass
-
+    def to_string(self):
+        return f"{self.data}"
+    
+    def to_integer(self):
+        return int(self.data)
+    
 
 # TODO: Add plugins
 def _helpers(function_name, lookup, here=os.path.dirname(__file__), package=__name__):
@@ -67,6 +71,8 @@ def convert_units(
     **kwargs,
 ):
     """Executing wrapper for the get_translator class method"""
+    kwargs.setdefault("fieldlist", False)
+    kwargs.setdefault("try_dataset", False)
     wrapper = get_wrapper(*args, **kwargs)
     return wrapper.convert_units(
         source_units=source_units,

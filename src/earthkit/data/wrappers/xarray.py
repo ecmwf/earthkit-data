@@ -232,7 +232,7 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
     #     return self.source.data_vars[variable]
 
 
-def wrapper(data, *args, fieldlist=False, **kwargs):
+def wrapper(data, *args, fieldlist=False, try_dataset=True, **kwargs):
     from earthkit.data.utils import is_module_loaded
 
     if not is_module_loaded("xarray"):
@@ -244,6 +244,8 @@ def wrapper(data, *args, fieldlist=False, **kwargs):
     if isinstance(data, xr.Dataset):
         ds = data
     elif isinstance(data, xr.DataArray):
+        if not try_dataset:
+            return XArrayDataArrayWrapper(data, *args, **kwargs)
         try:
             ds = data.to_dataset()
         except ValueError:
