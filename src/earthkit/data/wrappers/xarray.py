@@ -135,9 +135,10 @@ class XArrayDataArrayWrapper(Wrapper):
             # Try to get from attributes
             source_units = self.data.attrs.get("units", None)
             if source_units is None:
-                raise ValueError(
+                LOG.warning(
                     "source_units must be provided for unit conversion if not present in data attributes."
                 )
+                return
         
         if target_units is None:
             target_units = units_mapping.get(source_units, None)
@@ -161,7 +162,7 @@ class XArrayDataArrayWrapper(Wrapper):
         
         from earthkit.utils.units import convert
         # TODO: Update in place?
-        self.data.values = convert(self.data.values, source_units, target_units)
+        self.data = convert(self.data, source_units, target_units)
         self.data.attrs["units"] = target_units
         
         return self.data
