@@ -8,7 +8,7 @@ Version 0.18.5
 Dependencies
 +++++++++++++++
 
-- Reverts the changes in 0.18.4 since the problems with the ``netcdf4=1.7.4`` wheels has been fixed.
+- Reverts the changes in 0.18.4 since the problems with the ``netcdf4=1.7.4`` wheels have been fixed (:pr:`885`)
 
 
 
