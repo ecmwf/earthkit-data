@@ -25,23 +25,23 @@ def init_part_conf(conf):
 
             for key in part_cls.ALL_KEYS:
                 # add key as a prefixed property
-                method = part_name + "_" + key
-                if getattr(cls, method, None) is None:
+                # method = part_name + "_" + key
+                # if getattr(cls, method, None) is None:
 
-                    def _make(prop, part):
-                        def _f(self):
-                            return getattr(self._parts[part], prop)
+                #     def _make(prop, part):
+                #         def _f(self):
+                #             return getattr(self._parts[part], prop)
 
-                        return _f
+                #         return _f
 
-                    setattr(
-                        cls,
-                        method,
-                        property(fget=_make(key, part_name), doc=f"Return the {key} from .{part_name}."),
-                    )
+                #     setattr(
+                #         cls,
+                #         method,
+                #         property(fget=_make(key, part_name), doc=f"Return the {key} from .{part_name}."),
+                #     )
 
-                    keys[method] = (part_name, key)
-                    # print(f"  add property: {method} -> {part['name']}.{key}")
+                #     keys[method] = (part_name, key)
+                #     # print(f"  add property: {method} -> {part['name']}.{key}")
 
                 # add allow using key with dot notation
                 dot_key = part_name + "." + key
@@ -49,37 +49,37 @@ def init_part_conf(conf):
 
                 # print(f"  add dot key: {dot_key} -> {part['name']}.{key}")
 
-            # some module keys are added as properties without a prefix
+                # some module keys are added as properties without a prefix
 
-            direct_keys = part.get("direct", ())
-            if direct_keys is all:
-                direct_keys = part_cls.ALL_KEYS
-            if isinstance(direct_keys, str):
-                direct_keys = (direct_keys,)
+                # direct_keys = part.get("direct", ())
+                # if direct_keys is all:
+                #     direct_keys = part_cls.ALL_KEYS
+                # if isinstance(direct_keys, str):
+                #     direct_keys = (direct_keys,)
 
-            for key in direct_keys:
-                if not hasattr(part_cls, key):
-                    raise ValueError(f"Direct key {key} not found in module {part_cls}")
+                # for key in direct_keys:
+                #     if not hasattr(part_cls, key):
+                #         raise ValueError(f"Direct key {key} not found in module {part_cls}")
 
-                if key in keys:
-                    raise ValueError(f"Direct key {key} already defined in/for another part")
+                #     if key in keys:
+                #         raise ValueError(f"Direct key {key} already defined in/for another part")
 
-                if getattr(cls, key, None) is not None:
-                    raise ValueError(f"Direct key {key} already defined in class {cls}")
+                #     if getattr(cls, key, None) is not None:
+                #         raise ValueError(f"Direct key {key} already defined in class {cls}")
 
-                def _make(prop, part):
-                    def _f(self):
-                        return getattr(self._parts[part], prop)
+                #     def _make(prop, part):
+                #         def _f(self):
+                #             return getattr(self._parts[part], prop)
 
-                    return _f
+                #         return _f
 
-                setattr(
-                    cls,
-                    key,
-                    property(fget=_make(key, part_name), doc=f"Return the {key} from .{part_name}."),
-                )
+                #     setattr(
+                #         cls,
+                #         key,
+                #         property(fget=_make(key, part_name), doc=f"Return the {key} from .{part_name}."),
+                #     )
 
-                keys[key] = (part_name, key)
+                # keys[key] = (part_name, key)
                 # print(f"  add direct property: {key} -> {part_name}.{key}")
 
         cls._PART_KEYS = keys

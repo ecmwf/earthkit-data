@@ -20,7 +20,6 @@ from earthkit.data.core.order import Patch
 from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalize
-from earthkit.data.field.conf import init_part_conf
 from earthkit.data.field.data import DataFieldPart
 from earthkit.data.field.ensemble import EnsembleFieldPart
 from earthkit.data.field.geography import GeographyFieldPart
@@ -70,20 +69,20 @@ DUMP_ORDER = [
 ]
 
 
-@init_part_conf(
-    {
-        DATA: {"direct": "values"},
-        TIME: {"direct": all},
-        PARAMETER: {"direct": ("variable", "param", "units")},
-        GEOGRAPHY: {
-            "direct": ("latitudes", "longitudes", "grid_spec", "x", "y", "bounding_box", "grid_type"),
-        },
-        VERTICAL: {"direct": ("level", "layer")},
-        ENSEMBLE: {"direct": ("member",)},
-        PROC: {},
-        LABELS: None,
-    }
-)
+# @init_part_conf(
+#     {
+#         DATA: {"direct": "values"},
+#         TIME: {"direct": all},
+#         PARAMETER: {"direct": ("variable", "param", "units")},
+#         GEOGRAPHY: {
+#             "direct": ("latitudes", "longitudes", "grid_spec", "x", "y", "bounding_box", "grid_type"),
+#         },
+#         VERTICAL: {"direct": ("level", "layer")},
+#         ENSEMBLE: {"direct": ("member",)},
+#         PROC: {},
+#         LABELS: None,
+#     }
+# )
 @wrap_maths
 class Field(Base):
     """A class to represent a field in Earthkit.
@@ -154,7 +153,7 @@ class Field(Base):
     }
 
     # this will be initialized by the init_part_conf decorator
-    _PART_KEYS = None
+    # _PART_KEYS = None
 
     def __init__(
         self,
@@ -522,7 +521,8 @@ class Field(Base):
 
     def _get_part(self, key):
         """Return the part name, part object and key name for the specified key."""
-        m = self._PART_KEYS.get(key)
+        # m = self._PART_KEYS.get(key)
+        m = None
         if m is not None:
             return m[0], self._parts.get(m[0]), m[1]
         if "." in key:
@@ -540,7 +540,7 @@ class Field(Base):
 
         # return None, None, None
 
-    def get_single(
+    def _get_single(
         self, key, default=None, *, astype=None, raise_on_missing=False, remapping=None, patches=None
     ):
         r"""Return the value for ``key``.
@@ -629,7 +629,7 @@ class Field(Base):
     ):
         assert isinstance(keys, list)
 
-        meth = self.get_single
+        meth = self._get_single
         # Remapping must be an object if defined
         if remapping is not None:
             assert isinstance(remapping, (Remapping, Patch))
@@ -658,7 +658,16 @@ class Field(Base):
                 astype = astype[0]
             return meth(keys[0], astype=astype, **_kwargs)
 
-    def get(self, *keys, default=None, astype=None, raise_on_missing=False, remapping=None, patches=None):
+    def get(
+        self,
+        *keys,
+        default=None,
+        astype=None,
+        raise_on_missing=False,
+        output=None,
+        remapping=None,
+        patches=None,
+    ):
         r"""Return the values for the specified keys.
 
         Parameters
@@ -682,6 +691,9 @@ class Field(Base):
         keys, astype, key_arg_type = metadata_argument_new(*keys, astype=astype)
         assert isinstance(keys, list)
 
+        if output is dict:
+            key_arg_type = output
+
         remapping = build_remapping(remapping, patches, forced_build=False)
 
         r = self._get_fast(
@@ -695,25 +707,25 @@ class Field(Base):
 
         return r
 
-    def get_as_dict(
-        self, *keys, default=None, astype=None, raise_on_missing=False, remapping=None, patches=None
-    ):
-        if not keys:
-            raise ValueError("At least one key must be specified.")
+    # def get_as_dict(
+    #     self, *keys, default=None, astype=None, raise_on_missing=False, remapping=None, patches=None
+    # ):
+    #     if not keys:
+    #         raise ValueError("At least one key must be specified.")
 
-        keys, astype, _ = metadata_argument_new(*keys, astype=astype)
-        assert isinstance(keys, list)
+    #     keys, astype, _ = metadata_argument_new(*keys, astype=astype)
+    #     assert isinstance(keys, list)
 
-        remapping = build_remapping(remapping, patches, forced_build=False)
+    #     remapping = build_remapping(remapping, patches, forced_build=False)
 
-        return self._get_fast(
-            keys,
-            default=default,
-            astype=astype,
-            raise_on_missing=raise_on_missing,
-            remapping=remapping,
-            output=dict,
-        )
+    #     return self._get_fast(
+    #         keys,
+    #         default=default,
+    #         astype=astype,
+    #         raise_on_missing=raise_on_missing,
+    #         remapping=remapping,
+    #         output=dict,
+    #     )
 
     def metadata(self, *keys, astype=None, remapping=None, patches=None, **kwargs):
         r"""Return metadata values from the field.

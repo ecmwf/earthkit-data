@@ -14,6 +14,14 @@ from .spec import normalise_set_kwargs_2
 from .spec import spec_aliases
 
 
+def mark_get_key(func):
+    def wrapper(self, *args, **kwargs):
+        return func(self, *args, **kwargs)
+
+    wrapper._is_get_key = True
+    return wrapper
+
+
 @spec_aliases
 class Parameter:
     """A specification of a parameter."""
@@ -29,12 +37,10 @@ class Parameter:
         self._variable = variable
         self._units = units
 
-    @property
     def variable(self) -> str:
         r"""str: Return the parameter variable."""
         return self._variable
 
-    @property
     def units(self) -> str:
         r"""str: Return the parameter units."""
         return self._units

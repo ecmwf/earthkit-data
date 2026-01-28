@@ -226,7 +226,7 @@ class SimpleFieldPart(FieldPart):
 
         if key in self.ALL_KEYS:
             try:
-                v = getattr(self, key)
+                v = getattr(self, key)()
                 if astype and v is not None:
                     v = _cast(v)
                 return v

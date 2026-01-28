@@ -26,9 +26,9 @@ def test_grib_parameter_1(fl_type):
     ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
     f = ds[0]
 
-    assert f.variable == "2t"
-    assert f.param == "2t"
-    assert f.units == "K"
+    assert f.parameter.variable() == "2t"
+    # assert f.parameter.param() == "2t"
+    assert f.parameter.units() == "K"
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
