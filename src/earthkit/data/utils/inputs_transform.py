@@ -14,7 +14,8 @@ import typing as T
 from functools import wraps
 
 from earthkit.data import transform
-from earthkit.data.wrappers import Wrapper, convert_units
+from earthkit.data.wrappers import Wrapper
+from earthkit.data.wrappers import convert_units
 
 LOG = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ def metadata_handler(
     def decorator(function: T.Callable) -> T.Callable:
         @wraps(function)
         def wrapper(*args, **kwargs):
-            
+
             signature = inspect.signature(function)
 
             # Store positional arg names for extraction later
@@ -76,30 +77,18 @@ def metadata_handler(
                 arg_names.append(name)
                 kwargs[name] = arg
 
-            try:
-                print("Before convert_units:", kwargs[key]['tasmin'].mean().values)
-                print("Before convert_units:", kwargs[key]['tasmin'].attrs.get('units', None))
-            except Exception:
-                pass
             # Ensure units
             if ensure_units is not None:
                 for key in ensure_units:
-                    kwargs[key] = convert_units(
-                        kwargs[key], target_units=ensure_units[key]
-                    )
-                try:
-                    print("After convert_units:", kwargs[key]['tasmin'].mean().values)
-                    print("After convert_units:", kwargs[key]['tasmin'].attrs.get('units', None))
-                except Exception:
-                    pass
-                
+                    kwargs[key] = convert_units(kwargs[key], target_units=ensure_units[key])
+
             args = [kwargs.pop(name) for name in arg_names]
             result = function(*args, **kwargs)
-            
+
             # Add provenance here
             if provenance:
                 pass
-            
+
             return result
 
         return wrapper
@@ -145,7 +134,7 @@ def format_handler(
 
             # # Split args into multiple
             # if len(args) < len(expected_args):
-            
+
             convert_kwargs = [k for k in kwargs if k in mapping]
 
             # Filter for convert_types
@@ -170,7 +159,7 @@ def format_handler(
                         except Exception:
                             continue
                         break
-            
+
             # TODO: Check if this is still needed
             # Expand Wrapper objects
             for k, v in list(kwargs.items()):

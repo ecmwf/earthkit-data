@@ -12,6 +12,8 @@ import logging
 from earthkit.data.wrappers import Wrapper
 
 LOG = logging.getLogger(__name__)
+
+
 class XArrayDataArrayWrapper(Wrapper):
     """Wrapper around an xarray `DataArray`, offering polymorphism and
     convenience methods.
@@ -103,7 +105,7 @@ class XArrayDataArrayWrapper(Wrapper):
             The encoded data.
         """
         return encoder._encode_xarray(data=self.data, **kwargs)
-    
+
     def convert_units(
         self,
         source_units: str | None = None,
@@ -139,7 +141,7 @@ class XArrayDataArrayWrapper(Wrapper):
                     "source_units must be provided for unit conversion if not present in data attributes."
                 )
                 return
-        
+
         if target_units is None:
             target_units = units_mapping.get(source_units, None)
 
@@ -154,15 +156,14 @@ class XArrayDataArrayWrapper(Wrapper):
                 "Not converting units."
             )
             return
-        
+
         from earthkit.utils.units import convert
 
         output = self.data.copy()
         output.values = convert(output.values, source_units, target_units)
         output.attrs["units"] = target_units
-        
-        return output
 
+        return output
 
 
 class XArrayDatasetWrapper(XArrayDataArrayWrapper):
@@ -181,7 +182,7 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
         if flatten:
             arr = arr.flatten()
         return arr
-    
+
     def convert_units(self, *args, **kwargs):
         """Convert the units of the data.
         Parameters
@@ -196,7 +197,7 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
             xarray.DataSet with converted units.
         """
         import xarray as xr
-        
+
         output = xr.Dataset()
         for var in self.data.data_vars:
             var_wrapper = XArrayDataArrayWrapper(self.data[var])
