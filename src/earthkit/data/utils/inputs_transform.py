@@ -44,11 +44,72 @@ def _ensure_tuple(input_item):
     return input_item
 
 
-def transform_inputs_decorator(
-    kwarg_types: T.Dict[str, T.Any] = {},
-    convert_types: T.Union[None, T.Tuple[T.Any], T.Dict[str, T.Tuple[T.Any]]] = None,
+def metadata_handler(
     ensure_units: T.Union[None, T.Dict[str, str]] = None,
     provenance: bool = False,
+):
+    """Decorator to ensure units on function arguments.
+
+    Parameters
+    ----------
+    ensure_units : Dict[str, str]
+        Ensure that the given arguments have the specified units, provided as {arg_name: target_units}.
+    provenance : bool
+        Whether to add provenance information to the output data. The end user should be able to set this
+        option.
+
+    Returns
+    -------
+    Callable
+        Wrapped function.
+    """
+
+    def decorator(function: T.Callable) -> T.Callable:
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+            
+            signature = inspect.signature(function)
+
+            # Store positional arg names for extraction later
+            arg_names = []
+            for arg, name in zip(args, signature.parameters):
+                arg_names.append(name)
+                kwargs[name] = arg
+
+            try:
+                print("Before convert_units:", kwargs[key]['tasmin'].mean().values)
+                print("Before convert_units:", kwargs[key]['tasmin'].attrs.get('units', None))
+            except Exception:
+                pass
+            # Ensure units
+            if ensure_units is not None:
+                for key in ensure_units:
+                    kwargs[key] = convert_units(
+                        kwargs[key], target_units=ensure_units[key]
+                    )
+                try:
+                    print("After convert_units:", kwargs[key]['tasmin'].mean().values)
+                    print("After convert_units:", kwargs[key]['tasmin'].attrs.get('units', None))
+                except Exception:
+                    pass
+                
+            args = [kwargs.pop(name) for name in arg_names]
+            result = function(*args, **kwargs)
+            
+            # Add provenance here
+            if provenance:
+                pass
+            
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+def format_handler(
+    kwarg_types: T.Dict[str, T.Any] = {},
+    convert_types: T.Union[None, T.Tuple[T.Any], T.Dict[str, T.Tuple[T.Any]]] = None,
 ) -> T.Callable:
     """Transform the inputs to a function to match the requirements.
 
@@ -61,12 +122,6 @@ def transform_inputs_decorator(
         Data types to try to convert, in cases where the function is flexible and can handle multiple
         types which are not specified by the type-setting. For example, numpy functions can often handle
         numpy, pandas and xarray data objects. If a dict, applies per-argument.
-    ensure_units : Dict[str, str]
-        Ensure that the given arguments have the specified units. If the argument is a Wrapper object,
-        the convert_units method will be called with the target unit.
-    provenance : bool
-        Whether to add provenance information to the output data. The end user should be able to set this
-        option.
 
     Returns
     -------
@@ -88,7 +143,6 @@ def transform_inputs_decorator(
                 arg_names.append(name)
                 kwargs[name] = arg
 
-
             # # Split args into multiple
             # if len(args) < len(expected_args):
             
@@ -105,8 +159,6 @@ def transform_inputs_decorator(
                     if isinstance(kwargs[k], _ensure_tuple(_convert_types.get(k, ())))
                 ]
 
-            # Split single input into many
-            
             # Transform args/kwargs
             for key in convert_kwargs:
                 value = kwargs[key]
@@ -118,22 +170,8 @@ def transform_inputs_decorator(
                         except Exception:
                             continue
                         break
-                try:
-                    print("Before convert_units:", kwargs[key]['tasmin'].mean().values)
-                    print("Before convert_units:", kwargs[key]['tasmin'].attrs.get('units', None))
-                except Exception:
-                    pass
-                # Ensure units
-                if ensure_units:
-                    kwargs[key] = convert_units(
-                        kwargs[key], target_units=ensure_units
-                    )
-                    try:
-                        print("After convert_units:", kwargs[key]['tasmin'].mean().values)
-                        print("After convert_units:", kwargs[key]['tasmin'].attrs.get('units', None))
-                    except Exception:
-                        pass
             
+            # TODO: Check if this is still needed
             # Expand Wrapper objects
             for k, v in list(kwargs.items()):
                 if isinstance(v, Wrapper):
@@ -144,13 +182,7 @@ def transform_inputs_decorator(
 
             # Extract positional args again
             args = [kwargs.pop(name) for name in arg_names]
-            result = function(*args, **kwargs)
-            
-            # Add provenance here
-            if provenance:
-                pass
-            
-            return result
+            return function(*args, **kwargs)
 
         @wraps(function)
         def wrapper(*args, _auto_inputs_transform=True, **kwargs):
@@ -163,7 +195,7 @@ def transform_inputs_decorator(
     return decorator
 
 
-def signature_mapping(signature, kwarg_types):
+def signature_mapping(signature: inspect.Signature, kwarg_types: dict[str, str]):
     """Map args and kwargs to object types.
 
     Uses hierarchical selection method:

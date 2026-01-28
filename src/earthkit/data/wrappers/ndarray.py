@@ -9,6 +9,9 @@
 
 from earthkit.data.wrappers import Wrapper
 
+import logging
+
+LOG = logging.getLogger(__name__)
 
 class NumpyNDArrayWrapper(Wrapper):
     """Wrapper around an numpy `ndarray`, offering polymorphism and
@@ -38,7 +41,12 @@ class NumpyNDArrayWrapper(Wrapper):
 
         return xr.DataArray(self.data, **kwargs)
     
-    def convert_units(self, source_units: str | None = None, target_units: str | None = None):
+    def convert_units(
+        self,
+        source_units: str | None = None,
+        target_units: str | None = None,
+        **kwargs,
+    ):
         """Convert the units of the data.
         Parameters
         ----------
@@ -54,6 +62,11 @@ class NumpyNDArrayWrapper(Wrapper):
         if source_units is None or target_units is None:
             raise ValueError(
                 "source_units and target_units must be provided for unit conversion of numpy.ndarray."
+            )
+        
+        if len(kwargs) > 0:
+            LOG.debug(
+                f"Ignoring unexpected keyword arguments: {list(kwargs.keys())}",
             )
         
         from earhtkit.utils.units import convert

@@ -73,11 +73,3 @@ def convert_units(
         target_units=target_units,
         units_mapping=units_mapping,
     )
-
-
-# def from_object(obj: object, *args, **kwargs) -> Base:
-#     """
-#     Open an object as an earthkit-data object.
-#     object type must have a wrapper, otherwise input object is returned.
-#     """
-#     return get_wrapper(obj, *args, **kwargs)

@@ -108,7 +108,7 @@ class XArrayDataArrayWrapper(Wrapper):
         self,
         source_units: str | None = None,
         target_units: str | dict[str, str] | None = None,
-        units_mapping: dict[str, str] | None = None
+        units_mapping: dict[str, str] | None = None,
     ):
         """Convert the units of the data.
         Parameters
@@ -130,7 +130,7 @@ class XArrayDataArrayWrapper(Wrapper):
                 "Not converting units."
             )
             return
-        
+
         if source_units is None:
             # Try to get from attributes
             source_units = self.data.attrs.get("units", None)
@@ -142,17 +142,12 @@ class XArrayDataArrayWrapper(Wrapper):
         
         if target_units is None:
             target_units = units_mapping.get(source_units, None)
+
         elif isinstance(target_units, dict):
             # Get variable name
             var_name = self.data.name
-            if var_name is None:
-                LOG.warning(
-                    "DataArray has no name; cannot use target_units as a mapping. "
-                    "Provide target_units as a string."
-                )
-                return
             target_units = target_units.get(var_name, None)
-        
+
         if target_units is None:
             LOG.warning(
                 "Could not determine target_units for unit conversion for xarray.DataArray."
@@ -161,11 +156,12 @@ class XArrayDataArrayWrapper(Wrapper):
             return
         
         from earthkit.utils.units import convert
-        # TODO: Update in place?
-        self.data = convert(self.data, source_units, target_units)
-        self.data.attrs["units"] = target_units
+
+        output = self.data.copy()
+        output.values = convert(output.values, source_units, target_units)
+        output.attrs["units"] = target_units
         
-        return self.data
+        return output
 
 
 
@@ -199,12 +195,16 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
         Returns:
             xarray.DataSet with converted units.
         """
+        import xarray as xr
+        
+        output = xr.Dataset()
         for var in self.data.data_vars:
             var_wrapper = XArrayDataArrayWrapper(self.data[var])
             var_wrapper.convert_units(*args, **kwargs)
-            self.data[var] = var_wrapper.data
+            output[var] = var_wrapper.data
+        output.attrs = self.data.attrs
 
-        return self.data
+        return output
 
     # def component(self, component):
     #     """
