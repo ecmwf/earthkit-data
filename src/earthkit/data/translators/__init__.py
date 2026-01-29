@@ -29,7 +29,6 @@ def get_translator(source, cls, *args, **kwargs):
     """Get the appropriate translator for the source based on the target cls."""
     if not isinstance(source, Base):
         source = data.from_object(source)
-
     for name, h in _translators().items():
         translator = h(source, cls, *args, **kwargs)
         if translator is not None:
@@ -40,4 +39,7 @@ def get_translator(source, cls, *args, **kwargs):
 
 def transform(*args, **kwargs):
     """Executing wrapper for the get_translator class method"""
-    return get_translator(*args, **kwargs)()
+    translator = get_translator(*args, **kwargs)
+    transformed = translator()
+
+    return transformed

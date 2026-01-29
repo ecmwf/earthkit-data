@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 
 import logging
+import typing as T
 
 # from earthkit.data.readers import netcdf
 from earthkit.data.wrappers import Wrapper
@@ -111,6 +112,7 @@ class XArrayDataArrayWrapper(Wrapper):
         source_units: str | None = None,
         target_units: str | dict[str, str] | None = None,
         units_mapping: dict[str, str] | None = None,
+        provenance_metadata: dict[str, T.Any] | None = None,
     ):
         """Convert the units of the data.
         Parameters
@@ -162,6 +164,12 @@ class XArrayDataArrayWrapper(Wrapper):
         output = self.data.copy()
         output.values = convert(output.values, source_units, target_units)
         output.attrs["units"] = target_units
+        if provenance_metadata is not None and source_units != target_units:
+            provenance_metadata.update(
+                {
+                    "unit_conversion": f"Converted units from {source_units} to {target_units}",
+                }
+            )
 
         return output
 
@@ -226,7 +234,7 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
             arr = arr.flatten()
         return arr
 
-    def convert_units(self, *args, **kwargs):
+    def convert_units(self, *args, provenance_metadata: dict[str, T.Any] | None = None, **kwargs):
         """Convert the units of the data.
         Parameters
         ----------
@@ -236,6 +244,8 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
             The target units, or a mapping of variables names to target units.
         units_mapping : dict[str, str]
             A mapping of source units to target units.
+        provenance_metadata : dict[str, Any] | None
+            Dictionary to store provenance metadata.
         Returns:
             xarray.DataSet with converted units.
         """
@@ -244,7 +254,11 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
         output = xr.Dataset()
         for var in self.data.data_vars:
             var_wrapper = XArrayDataArrayWrapper(self.data[var])
+            if provenance_metadata is not None:
+                var_provenance = {}
             var_wrapper.convert_units(*args, **kwargs)
+            if provenance_metadata is not None:
+                provenance_metadata[var] = var_provenance
             output[var] = var_wrapper.data
         output.attrs = self.data.attrs
 
@@ -279,12 +293,13 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
     #                 )
 
 
-def wrapper(data, *args, fieldlist=False, try_dataset=True, **kwargs):
+def wrapper(data, *args, fieldlist=True, try_dataset=True, **kwargs):
     from earthkit.data.utils import is_module_loaded
 
+    print(1)
     if not is_module_loaded("xarray"):
         return None
-
+    print(2)
     import xarray as xr
 
     ds = None
@@ -297,7 +312,7 @@ def wrapper(data, *args, fieldlist=False, try_dataset=True, **kwargs):
             ds = data.to_dataset()
         except ValueError:
             return XArrayDataArrayWrapper(data, *args, **kwargs)
-
+    print(3)
     if ds is not None:
         if not fieldlist:
             return XArrayDatasetWrapper(ds, *args, **kwargs)

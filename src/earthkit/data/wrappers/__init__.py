@@ -54,60 +54,15 @@ def get_wrapper(data, *args, **kwargs):
     """
     if isinstance(data, Base):
         return data
+
     for name, h in _wrappers().items():
         wrapper = h(data, *args, **kwargs)
-        if wrapper is not None:  # and not hasattr(wrapper, "fields"):
+        if wrapper is not None:
             return wrapper.mutate()
     else:
         fullname = ".".join([data.__class__.__module__, data.__class__.__qualname__])
         LOG.warning(f"Cannot find a wrapper for class: {fullname}, returning unwrapped object")
         return data
-
-
-# def convert_units(
-#     data: T.Any,
-#     *args,
-#     source_units: str | None = None,
-#     target_units: str | None = None,
-#     units_mapping: dict[str, str] | None = None,
-#     provenance_metadata: dict[str, str | dict[str, str]] | None = None,
-#     **kwargs,
-# ):
-#     """Executing wrapper for the get_translator class method"""
-#     kwargs.setdefault("fieldlist", False)
-#     kwargs.setdefault("try_dataset", False)
-#     wrapper = get_wrapper(data, *args, **kwargs)
-#     if not hasattr(wrapper, "convert_units"):
-#         LOG.warning(
-#             f"Wrapper for type {type(data)} does not support unit conversion, returning original data"
-#         )
-#         return data
-#     converted_data = wrapper.convert_units(
-#         source_units=source_units,
-#         target_units=target_units,
-#         units_mapping=units_mapping,
-#     )
-#     if isinstance(data, Base):
-#         return get_wrapper(converted_data)
-#     return converted_data
-
-
-# def update_metadata(
-#     data: T.Any,
-#     metadata_model: str | dict[str, T.Any] | None = None,
-#     provenance_metadata: dict[str, str | dict[str, str]] | None = None,
-# ) -> T.Any:
-#     """Update the metadata of the data object with the given provenance metadata."""
-#     wrapper = get_wrapper(data, fieldlist=False, try_dataset=False)
-#     if not hasattr(wrapper, "update_metadata"):
-#         LOG.warning(
-#             f"Wrapper for type {type(data)} does not support metadata update, returning original data"
-#         )
-#         return data
-#     updated_data = wrapper.update_metadata(metadata_model=metadata_model, provenance_metadata=provenance_metadata)
-#     if isinstance(data, Base):
-#         return get_wrapper(updated_data)
-#     return updated_data
 
 
 def call_wrapper_method(
@@ -117,7 +72,7 @@ def call_wrapper_method(
     wrapper_kwargs=None,
     **method_kwargs,
 ) -> T.Any:
-    """Call a method on the wrapper of the data object."""
+    """Check if a wrapper has a method and call it on the wrapper of the data object."""
     if wrapper_kwargs is None:
         wrapper_kwargs = {}
     wrapper_kwargs.setdefault("fieldlist", False)

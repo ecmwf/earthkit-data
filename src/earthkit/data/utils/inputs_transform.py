@@ -58,7 +58,6 @@ def _ensure_tuple(input_item):
 
 def create_provenance_metadata(
     function: T.Callable,
-    extra_provenance_metadata: dict[str, str | dict[str, str]] | None = None,
     *args,
     **kwargs,
 ):
@@ -93,8 +92,6 @@ def create_provenance_metadata(
         "function": getattr(function, "__name__", None),
         "parameters": dict(bound_args.arguments),
     }
-    if extra_provenance_metadata is not None:
-        provenance_metadata.update(extra_provenance_metadata)
 
     return provenance_metadata
 
@@ -103,6 +100,7 @@ def metadata_handler(
     output_metadata: dict[str, str] | None = None,
     provenance: bool = False,
     provenance_generator: T.Callable = create_provenance_metadata,
+    extra_provenance_metadata: dict[str, str | dict[str, str]] | None = None,
     parameter_metadata_model: str | dict[str, T.Any] | None = DEFAULT_PARAMETER_METADATA_MODEL,
     parameter_mapping: dict[str, str] | None = None,
     ensure_units: T.Union[None, T.Dict[str, str]] = None,
@@ -180,26 +178,23 @@ def metadata_handler(
                 kwargs[key] = call_wrapper_method(
                     kwargs[key],
                     "convert_units",
-                    method_kwargs=dict(
-                        target_units=ensure_units[key],
-                        source_units=source_units.get(key) if source_units else None,
-                        provenance_metadata=provenance_metadata,
-                    ),
+                    target_units=ensure_units[key],
+                    source_units=source_units.get(key) if source_units else None,
+                    provenance_metadata=provenance_metadata,
                 )
 
             for key in kwargs.keys() & parameter_metadata_model.keys():
                 kwargs[key] = call_wrapper_method(
                     kwargs[key],
                     "validate_parameter_metadata",
-                    method_kwargs=dict(
-                        metadata_model=parameter_metadata_model[key],
-                    ),
+                    metadata_model=parameter_metadata_model[key],
                 )
 
             args = [kwargs.pop(name) for name in arg_names]
             result = function(*args, **kwargs)
 
             provenance_metadata.update(provenance_generator(function, *args, **kwargs))
+            provenance_metadata.update(extra_provenance_metadata or {})
 
             if not provenance:
                 # Clear provenance metadata if not requested
@@ -211,7 +206,8 @@ def metadata_handler(
             result = call_wrapper_method(
                 result,
                 "update_metadata",
-                method_kwargs=dict(provenance_metadata=provenance_metadata, **output_metadata),
+                provenance_metadata=provenance_metadata,
+                **output_metadata,
             )
 
             return result
