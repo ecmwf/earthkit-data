@@ -166,12 +166,47 @@ class XArrayDataArrayWrapper(Wrapper):
         return output
 
     def update_metadata(self, *args, **kwargs):
+        """Update the metadata of the DataArray.
+
+        Parameters
+        ----------
+        *args : dict
+            Positional arguments can be dictionaries, which are used to update
+            the metadata.
+        **kwargs : dict
+            Keyword arguments can be used to update the metadata.
+
+        Returns
+        -------
+        xarray.DataArray
+            The data with updated metadata.
+
+        """
         output = self.data.copy()
         for arg in args:
             if isinstance(arg, dict):
                 output.attrs.update(arg)
         output.attrs.update(kwargs)
         return output
+
+    # def validate_parameter_metadata(self, metadata_model: dict[str, dict] | None = None, **kwargs):
+    #     """Validate and update the parameter metadata of the data according to the given metadata model.
+
+    #     Parameters
+    #     ----------
+    #     metadata_model : dict[str, dict]
+    #         The metadata model to use for validation and updating.
+
+    #     """
+    #     if metadata_model is None:
+    #         return
+
+    #     attrs = self.data.attrs
+    #     for key, expected in metadata_model.items():
+    #         if value := attrs.get(key, None) not in expected:
+    #             LOG.warning(
+    #                 f"Metadata key '{key}' has value '{value}', expected '{expected}'."
+    #             )
 
 
 class XArrayDatasetWrapper(XArrayDataArrayWrapper):
@@ -215,29 +250,37 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
 
         return output
 
-    # def component(self, component):
-    #     """
-    #     Get the data representing a specific vector component.
+    def update_metadata(self, *args, **kwargs):
+        """Update the metadata of the data according to the given metadata model."""
+        return
+
+    # def validate_parameter_metadata(self, metadata_model: dict[str, str | dict[str, str]] | None = None, **kwargs):
+    #     """Validate and update the parameter metadata of the data according to the given metadata model.
 
     #     Parameters
     #     ----------
-    #     component : str
-    #         The vector component to extract from the data. Accepts values of
-    #         `u` or `v` (case-insensitive).
+    #     metadata_model : dict[str, str | dict[str, str]] | None
+    #         The metadata model to use for validation and updating. If None, no validation is performed.
 
     #     Returns
     #     -------
-    #     xarray.core.dataarray.DataArray
-    #         An xarray `DataArray` containing the data representing the given
-    #         component.
+    #     xarray.DataArray
+    #         The data with validated and updated parameter metadata.
     #     """
-    #     candidates = COMPONENTS.get(component, [])
-    #     for variable in candidates:
-    #         if variable in self.source.data_vars:
-    #             break
-    #     else:
-    #         raise ValueError(f"No variable found with direction '{component}'")
-    #     return self.source.data_vars[variable]
+    #     if metadata_model is None:
+    #         # LOG.warning(
+    #         #     "metadata_model must be provided for parameter metadata validation for xarray.DataArray."
+    #         #     "Not validating metadata."
+    #         # )
+    #         return
+
+    #     for var in set(self.data.data_vars) & metadata_model.keys():
+    #         attrs = self.data[var].attrs
+    #         for key, expected in metadata_model[var].items():
+    #             if value := attrs.get(key, None) not in expected:
+    #                 LOG.warning(
+    #                     f"Variable '{var}': metadata key '{key}' has value '{value}', expected '{expected}'."
+    #                 )
 
 
 def wrapper(data, *args, fieldlist=False, try_dataset=True, **kwargs):
