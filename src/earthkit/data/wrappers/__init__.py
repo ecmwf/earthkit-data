@@ -9,6 +9,7 @@
 
 import logging
 import os
+import typing as T
 from importlib import import_module
 
 from earthkit.data.core import Base
@@ -21,10 +22,10 @@ LOG = logging.getLogger(__name__)
 class Wrapper(Base):
     def to_string(self):
         return f"{self.data}"
-    
+
     def to_integer(self):
         return int(self.data)
-    
+
 
 # TODO: Add plugins
 def _helpers(function_name, lookup, here=os.path.dirname(__file__), package=__name__):
@@ -79,3 +80,15 @@ def convert_units(
         target_units=target_units,
         units_mapping=units_mapping,
     )
+
+
+def update_metadata(
+    data: T.Any,
+    metadata_model: str | dict[str, T.Any] | None = None,
+    provenance_metadata: dict[str, str | dict[str, str]] | None = None,
+) -> T.Any:
+    # TODO: implement metadata update in wrappers
+    return data
+    """Update the metadata of the data object with the given provenance metadata."""
+    wrapper = get_wrapper(data, fieldlist=False, try_dataset=False)
+    return wrapper.update_metadata(metadata_model, provenance_metadata)

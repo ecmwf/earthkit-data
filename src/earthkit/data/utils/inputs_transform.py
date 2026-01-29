@@ -16,6 +16,7 @@ from functools import wraps
 from earthkit.data import transform
 from earthkit.data.wrappers import Wrapper
 from earthkit.data.wrappers import convert_units
+from earthkit.data.wrappers import update_metadata
 
 LOG = logging.getLogger(__name__)
 
@@ -45,9 +46,54 @@ def _ensure_tuple(input_item):
     return input_item
 
 
+def create_provenance_metadata(
+    function: T.Callable,
+    extra_provenance_metadata: dict[str, str | dict[str, str]] | None = None,
+    *args,
+    **kwargs,
+):
+    """Create provenance metadata for a function call.
+
+    Parameters
+    ----------
+    function : Callable
+        The function for which to create provenance metadata.
+    extra_provenance_metadata : Dict[str, str or Dict[str, str]]
+        Additional provenance metadata to include. This can be used to add
+        information that is not automatically captured by this function.
+        It will supercede any provenance metadata created automatically.
+    *args : Any
+        Positional arguments passed to the function.
+    **kwargs : Any
+        Keyword arguments passed to the function.
+
+    Returns
+    -------
+    Dict
+        A dictionary containing provenance metadata.
+    """
+    provenance_metadata = {}
+
+    signature = inspect.signature(function)
+    bound_args = signature.bind_partial(*args, **kwargs)
+    bound_args.apply_defaults()
+
+    provenance_metadata["call_info"] = {
+        "module": getattr(function, "__module__", None),
+        "function": getattr(function, "__name__", None),
+        "parameters": dict(bound_args.arguments),
+    }
+    if extra_provenance_metadata is not None:
+        provenance_metadata.update(extra_provenance_metadata)
+
+    return provenance_metadata
+
+
 def metadata_handler(
     ensure_units: T.Union[None, T.Dict[str, str]] = None,
     provenance: bool = False,
+    provenance_generator: T.Callable = create_provenance_metadata,
+    metadata_model: str | dict[str, T.Any] | None = None,
 ):
     """Decorator to ensure units on function arguments.
 
@@ -58,6 +104,9 @@ def metadata_handler(
     provenance : bool
         Whether to add provenance information to the output data. The end user should be able to set this
         option.
+    provenance_generator : Callable
+        Function to generate provenance metadata, default is `create_provenance_metadata`. Any replacement
+        function should have the same signature, taking (function, args, kwargs) as input.
 
     Returns
     -------
@@ -66,8 +115,12 @@ def metadata_handler(
     """
 
     def decorator(function: T.Callable) -> T.Callable:
-        @wraps(function)
-        def wrapper(*args, **kwargs):
+        def _wrapper(
+            *args,
+            provenance: bool = provenance,
+            metadata_model: str | dict[str, T.Any] | None = metadata_model,
+            **kwargs,
+        ):
 
             signature = inspect.signature(function)
 
@@ -76,20 +129,29 @@ def metadata_handler(
             for arg, name in zip(args, signature.parameters):
                 arg_names.append(name)
                 kwargs[name] = arg
-
+            provenance_metadata = {}
             # Ensure units
             if ensure_units is not None:
-                for key in ensure_units:
-                    kwargs[key] = convert_units(kwargs[key], target_units=ensure_units[key])
+                for key in kwargs.keys() & ensure_units.keys():
+                    kwargs[key] = convert_units(
+                        kwargs[key],
+                        target_units=ensure_units[key],
+                    )
 
             args = [kwargs.pop(name) for name in arg_names]
             result = function(*args, **kwargs)
 
-            # Add provenance here
-            if provenance:
-                pass
+            provenance_metadata.update(provenance_generator(function, *args, **kwargs))
+
+            result = update_metadata(result, provenance_metadata, model=metadata_model)
 
             return result
+
+        @wraps(function)
+        def wrapper(*args, _auto_metadata_handler=True, **kwargs):
+            if not _auto_metadata_handler:
+                return function(*args, **kwargs)
+            return _wrapper(*args, **kwargs)
 
         return wrapper
 
