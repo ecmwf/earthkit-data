@@ -296,10 +296,9 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
 def wrapper(data, *args, fieldlist=True, try_dataset=True, **kwargs):
     from earthkit.data.utils import is_module_loaded
 
-    print(1)
     if not is_module_loaded("xarray"):
         return None
-    print(2)
+
     import xarray as xr
 
     ds = None
@@ -312,7 +311,7 @@ def wrapper(data, *args, fieldlist=True, try_dataset=True, **kwargs):
             ds = data.to_dataset()
         except ValueError:
             return XArrayDataArrayWrapper(data, *args, **kwargs)
-    print(3)
+
     if ds is not None:
         if not fieldlist:
             return XArrayDatasetWrapper(ds, *args, **kwargs)
