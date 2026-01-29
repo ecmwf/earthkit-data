@@ -87,8 +87,11 @@ def update_metadata(
     metadata_model: str | dict[str, T.Any] | None = None,
     provenance_metadata: dict[str, str | dict[str, str]] | None = None,
 ) -> T.Any:
-    # TODO: implement metadata update in wrappers
-    return data
     """Update the metadata of the data object with the given provenance metadata."""
     wrapper = get_wrapper(data, fieldlist=False, try_dataset=False)
-    return wrapper.update_metadata(metadata_model, provenance_metadata)
+    if not hasattr(wrapper, "update_metadata"):
+        LOG.warning(
+            f"Wrapper for type {type(data)} does not support metadata update, returning original data"
+        )
+        return data
+    return wrapper.update_metadata(metadata_model=metadata_model, provenance_metadata=provenance_metadata)

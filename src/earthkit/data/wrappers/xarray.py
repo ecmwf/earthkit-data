@@ -165,6 +165,14 @@ class XArrayDataArrayWrapper(Wrapper):
 
         return output
 
+    def update_metadata(self, *args, **kwargs):
+        output = self.data.copy()
+        for arg in args:
+            if isinstance(arg, dict):
+                output.attrs.update(arg)
+        output.attrs.update(kwargs)
+        return output
+
 
 class XArrayDatasetWrapper(XArrayDataArrayWrapper):
     """Wrapper around an xarray `DataSet`, offering polymorphism and convenience

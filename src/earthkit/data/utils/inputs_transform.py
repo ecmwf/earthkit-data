@@ -119,6 +119,7 @@ def metadata_handler(
             *args,
             provenance: bool = provenance,
             metadata_model: str | dict[str, T.Any] | None = metadata_model,
+            source_units: T.Dict[str, str] | None = None,
             **kwargs,
         ):
 
@@ -136,6 +137,7 @@ def metadata_handler(
                     kwargs[key] = convert_units(
                         kwargs[key],
                         target_units=ensure_units[key],
+                        source_units=source_units.get(key) if source_units else None,
                     )
 
             args = [kwargs.pop(name) for name in arg_names]
@@ -143,7 +145,9 @@ def metadata_handler(
 
             provenance_metadata.update(provenance_generator(function, *args, **kwargs))
 
-            result = update_metadata(result, provenance_metadata, model=metadata_model)
+            result = update_metadata(
+                result, metadata_model=metadata_model, provenance_metadata=provenance_metadata
+            )
 
             return result
 
