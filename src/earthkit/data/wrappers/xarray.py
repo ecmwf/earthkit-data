@@ -250,10 +250,6 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
 
         return output
 
-    def update_metadata(self, *args, **kwargs):
-        """Update the metadata of the data according to the given metadata model."""
-        return
-
     # def validate_parameter_metadata(self, metadata_model: dict[str, str | dict[str, str]] | None = None, **kwargs):
     #     """Validate and update the parameter metadata of the data according to the given metadata model.
 

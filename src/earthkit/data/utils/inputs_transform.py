@@ -100,7 +100,7 @@ def create_provenance_metadata(
 
 
 def metadata_handler(
-    output_param: str | None = None,
+    output_metadata: dict[str, str] | None = None,
     provenance: bool = False,
     provenance_generator: T.Callable = create_provenance_metadata,
     parameter_metadata_model: str | dict[str, T.Any] | None = DEFAULT_PARAMETER_METADATA_MODEL,
@@ -136,7 +136,7 @@ def metadata_handler(
     def decorator(function: T.Callable) -> T.Callable:
         def _wrapper(
             *args,
-            output_param: str | None = output_param,
+            output_metadata: dict[str, str] | None = output_metadata,
             provenance: bool = provenance,
             parameter_metadata_model: str | dict[str, T.Any] | None = parameter_metadata_model,
             source_units: T.Dict[str, str] | None = None,
@@ -205,13 +205,13 @@ def metadata_handler(
                 # Clear provenance metadata if not requested
                 provenance_metadata = {}
 
+            if output_metadata is None:
+                output_metadata = {}
+
             result = call_wrapper_method(
                 result,
                 "update_metadata",
-                method_kwargs=dict(
-                    parameter_metadata=parameter_metadata_model.get(output_param, None),
-                    provenance_metadata=provenance_metadata,
-                ),
+                method_kwargs=dict(provenance_metadata=provenance_metadata, **output_metadata),
             )
 
             return result
