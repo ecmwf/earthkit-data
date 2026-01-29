@@ -164,6 +164,7 @@ class XArrayDataArrayWrapper(Wrapper):
         output = self.data.copy()
         output.values = convert(output.values, source_units, target_units)
         output.attrs["units"] = target_units
+        # TODO: better units equivalanence check using pint
         if provenance_metadata is not None and source_units != target_units:
             provenance_metadata.update(
                 {
@@ -255,9 +256,9 @@ class XArrayDatasetWrapper(XArrayDataArrayWrapper):
         for var in self.data.data_vars:
             var_wrapper = XArrayDataArrayWrapper(self.data[var])
             if provenance_metadata is not None:
-                var_provenance = {}
+                var_provenance: dict[str, T.Any] = {}
             var_wrapper.convert_units(*args, **kwargs)
-            if provenance_metadata is not None:
+            if provenance_metadata is not None and var_provenance:
                 provenance_metadata[var] = var_provenance
             output[var] = var_wrapper.data
         output.attrs = self.data.attrs

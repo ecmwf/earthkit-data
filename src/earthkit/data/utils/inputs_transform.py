@@ -67,7 +67,7 @@ def create_provenance_metadata(
     ----------
     function : Callable
         The function for which to create provenance metadata.
-    extra_provenance_metadata : Dict[str, str or Dict[str, str]]
+    extra_provenance : Dict[str, str or Dict[str, str]]
         Additional provenance metadata to include. This can be used to add
         information that is not automatically captured by this function.
         It will supercede any provenance metadata created automatically.
@@ -86,11 +86,14 @@ def create_provenance_metadata(
     signature = inspect.signature(function)
     bound_args = signature.bind_partial(*args, **kwargs)
     bound_args.apply_defaults()
+    parameters = {
+        k: type(v) for k, v in dict(bound_args.arguments).items()
+    }
 
     provenance_metadata["call_info"] = {
         "module": getattr(function, "__module__", None),
         "function": getattr(function, "__name__", None),
-        "parameters": dict(bound_args.arguments),
+        "parameters": parameters,
     }
 
     return provenance_metadata
@@ -98,9 +101,8 @@ def create_provenance_metadata(
 
 def metadata_handler(
     output_metadata: dict[str, str] | None = None,
-    provenance: bool = False,
-    provenance_generator: T.Callable = create_provenance_metadata,
-    extra_provenance_metadata: dict[str, str | dict[str, str]] | None = None,
+    provenance: bool | T.Callable = False,
+    extra_provenance: dict[str, str | dict[str, str]] | None = None,
     parameter_metadata_model: str | dict[str, T.Any] | None = DEFAULT_PARAMETER_METADATA_MODEL,
     parameter_mapping: dict[str, str] | None = None,
     ensure_units: T.Union[None, T.Dict[str, str]] = None,
@@ -111,12 +113,10 @@ def metadata_handler(
     ----------
     ensure_units : Dict[str, str]
         Ensure that the given arguments have the specified units, provided as {arg_name: target_units}.
-    provenance : bool
+    provenance : bool | Callable
         Whether to add provenance information to the output data. The end user should be able to set this
-        option.
-    provenance_generator : Callable
-        Function to generate provenance metadata, default is `create_provenance_metadata`. Any replacement
-        function should have the same signature, taking (function, args, kwargs) as input.
+        option. If a callable is provided, it will be used to generate the provenance metadata. The
+        function should have the signature: func(function: Callable, args: list, kwargs: dict).
     parameter_metadata_model : str or Dict[str, Any]
         Metadata model to use for validating and updating parameter metadata. If a string is provided,
         it should correspond to a key in the `PARAMETER_METADATA_MODELS` dictionary. If a dictionary is
@@ -135,7 +135,7 @@ def metadata_handler(
         def _wrapper(
             *args,
             output_metadata: dict[str, str] | None = output_metadata,
-            provenance: bool = provenance,
+            provenance: bool | T.Callable = provenance,
             parameter_metadata_model: str | dict[str, T.Any] | None = parameter_metadata_model,
             source_units: T.Dict[str, str] | None = None,
             ensure_units: T.Union[None, T.Dict[str, str]] = ensure_units,
@@ -174,6 +174,7 @@ def metadata_handler(
                     k: v["units"] for k, v in (parameter_metadata_model or {}).items() if "units" in v
                 }
 
+            print(0, provenance_metadata)
             for key in kwargs.keys() & ensure_units.keys():
                 kwargs[key] = call_wrapper_method(
                     kwargs[key],
@@ -182,6 +183,7 @@ def metadata_handler(
                     source_units=source_units.get(key) if source_units else None,
                     provenance_metadata=provenance_metadata,
                 )
+            print(1, provenance_metadata)
 
             for key in kwargs.keys() & parameter_metadata_model.keys():
                 kwargs[key] = call_wrapper_method(
@@ -193,8 +195,15 @@ def metadata_handler(
             args = [kwargs.pop(name) for name in arg_names]
             result = function(*args, **kwargs)
 
-            provenance_metadata.update(provenance_generator(function, *args, **kwargs))
-            provenance_metadata.update(extra_provenance_metadata or {})
+            if provenance is True:
+                provenance_generator = create_provenance_metadata
+            elif callable(provenance):
+                provenance_generator = provenance
+            else:
+                provenance_generator = None
+            if provenance_generator is not None:
+                provenance_metadata.update(provenance_generator(function, *args, **kwargs))
+            provenance_metadata.update(extra_provenance or {})
 
             if not provenance:
                 # Clear provenance metadata if not requested
@@ -206,7 +215,7 @@ def metadata_handler(
             result = call_wrapper_method(
                 result,
                 "update_metadata",
-                provenance_metadata=provenance_metadata,
+                earthkit_metadata=provenance_metadata,
                 **output_metadata,
             )
 
