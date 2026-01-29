@@ -12,7 +12,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 from typing import Any
 
-from earthkit.data.field.spec.spec import Aliases
+# from earthkit.data.field.spec.spec import Aliases
 
 
 def wrap_spec_methods(keys=None):
@@ -72,7 +72,7 @@ class FieldPart(metaclass=ABCMeta):
     """
 
     KEYS = tuple()
-    ALIASES = Aliases()
+    # ALIASES = Aliases()
     ALL_KEYS = tuple()
     NAME = None
     NAMESPACE_KEYS = None

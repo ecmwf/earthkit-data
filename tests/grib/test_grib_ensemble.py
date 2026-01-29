@@ -26,6 +26,4 @@ def test_grib_ensemble_1(fl_type):
     ds, _ = load_grib_data("ens_50.grib", fl_type, folder="data")
     f = ds[0]
 
-    assert f.ensemble.member == "1"
-    assert f.ensemble_member == "1"
-    assert f.member == "1"
+    assert f.ensemble.member() == "1"

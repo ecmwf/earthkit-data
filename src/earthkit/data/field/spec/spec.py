@@ -12,178 +12,224 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 
-def spec_aliases_1(cls) -> type:
-    """
-    Add alias properties to the class.
+def mark_key(*args):
+    get_key = "get" in args
+    set_key = "set" in args
 
-    Parameters
-    ----------
-    cls : type
-        The class to which aliases will be added.
+    def wrapper(func):
+        if get_key:
+            func._is_get_key = get_key
+        if set_key:
+            func._is_set_key = set_key
+        return func
 
-    Returns
-    -------
-    type
-        The class with alias properties added.
-    """
-    aliases = getattr(cls, "ALIASES", None)
-    if aliases:
-        for alias, method in aliases.items():
+    return wrapper
 
-            def _make(method):
-                def _f(self):
-                    return getattr(self, method)
 
-                return _f
+def mark_alias(name):
+    def wrapper(func):
+        func._alias = name
+        return func
 
-            setattr(
-                cls,
-                alias,
-                property(fget=_make(method), doc=f"Return the {alias}. Alias for :obj:`{method}`."),
-            )
+    return wrapper
 
-    all_keys = list(cls.KEYS)
-    if aliases:
-        all_keys.extend(list(aliases.keys()))
 
-    # prefix = getattr(cls, "KEY_PREFIX", None)
-    # if prefix:
-    #     for method in all_keys:
-    #         prefix_method = prefix + method
+def spec_keys(cls):
+    _GET_KEYS = []
+    _SET_KEYS = []
+    _ALIASES = {}
+    for k in dir(cls):
+        if not k.startswith("_"):
+            f = getattr(cls, k)
+            if callable(f):
+                if hasattr(f, "_is_get_key"):
+                    print(f"{k} is function")
+                    _GET_KEYS.append(k)
+                if hasattr(f, "_is_set_key"):
+                    print(f"{k} is function")
+                    _SET_KEYS.append(k)
+                if hasattr(f, "_alias"):
+                    print(f"{k} is alias")
+                    _ALIASES[k] = f._alias
 
-    #         def _make(method):
-    #             def _f(self):
-    #                 return getattr(self, method)
-
-    #             return _f
-
-    #         setattr(
-    #             cls,
-    #             prefix_method,
-    #             property(fget=_make(method), doc=f"Return the {prefix_method}. Alias for :obj:`{method}`."),
-    #         )
-
-    #         all_keys.append(prefix_method)
-
-    cls.ALL_KEYS = tuple(set(all_keys))
+    cls._GET_KEYS = _GET_KEYS
+    cls._SET_KEYS = _SET_KEYS
+    cls._ALIASES = _ALIASES
     return cls
 
 
-def spec_aliases(cls) -> type:
-    """
-    Add alias properties to the class.
+# def spec_aliases_1(cls) -> type:
+#     """
+#     Add alias properties to the class.
 
-    Parameters
-    ----------
-    cls : type
-        The class to which aliases will be added.
+#     Parameters
+#     ----------
+#     cls : type
+#         The class to which aliases will be added.
 
-    Returns
-    -------
-    type
-        The class with alias properties added.
-    """
-    aliases = getattr(cls, "_ALIASES", None)
-    if aliases:
-        for alias, method in aliases.items():
+#     Returns
+#     -------
+#     type
+#         The class with alias properties added.
+#     """
+#     aliases = getattr(cls, "ALIASES", None)
+#     if aliases:
+#         for alias, method in aliases.items():
 
-            def _make(method):
-                def _f(self):
-                    return getattr(self, method)
+#             def _make(method):
+#                 def _f(self):
+#                     return getattr(self, method)
 
-                return _f
+#                 return _f
 
-            setattr(
-                cls,
-                alias,
-                property(fget=_make(method), doc=f"Return the {alias}. Alias for :obj:`{method}`."),
-            )
+#             setattr(
+#                 cls,
+#                 alias,
+#                 property(fget=_make(method), doc=f"Return the {alias}. Alias for :obj:`{method}`."),
+#             )
 
-    # all_keys = list(cls._KEYS)
-    # if aliases:
-    #     all_keys.extend(list(aliases.keys()))
+#     all_keys = list(cls.KEYS)
+#     if aliases:
+#         all_keys.extend(list(aliases.keys()))
 
-    # prefix = getattr(cls, "KEY_PREFIX", None)
-    # if prefix:
-    #     for method in all_keys:
-    #         prefix_method = prefix + method
+#     # prefix = getattr(cls, "KEY_PREFIX", None)
+#     # if prefix:
+#     #     for method in all_keys:
+#     #         prefix_method = prefix + method
 
-    #         def _make(method):
-    #             def _f(self):
-    #                 return getattr(self, method)
+#     #         def _make(method):
+#     #             def _f(self):
+#     #                 return getattr(self, method)
 
-    #             return _f
+#     #             return _f
 
-    #         setattr(
-    #             cls,
-    #             prefix_method,
-    #             property(fget=_make(method), doc=f"Return the {prefix_method}. Alias for :obj:`{method}`."),
-    #         )
+#     #         setattr(
+#     #             cls,
+#     #             prefix_method,
+#     #             property(fget=_make(method), doc=f"Return the {prefix_method}. Alias for :obj:`{method}`."),
+#     #         )
 
-    #         all_keys.append(prefix_method)
+#     #         all_keys.append(prefix_method)
 
-    return cls
-
-
-def normalise_set_kwargs(
-    spec: "Spec",
-    *args: dict,
-    add_spec_keys: bool = True,
-    extra_keys=None,
-    remove_nones: bool = False,
-    **kwargs,
-) -> dict:
-    """
-    Normalise and merge keyword arguments for the set method.
-
-    Parameters
-    ----------
-    spec : Spec
-        The specification object.
-    *args : dict
-        Additional dictionaries to merge.
-    add_spec_keys : bool, optional
-        Whether to add missing spec keys, by default True.
-    **kwargs
-        Additional keyword arguments.
-
-    Returns
-    -------
-    dict
-        The normalised keyword arguments.
-    """
-    kwargs = kwargs.copy()
-
-    for a in args:
-        if a is None:
-            continue
-        if isinstance(a, dict):
-            kwargs.update(a)
-            continue
-        raise ValueError(f"Cannot use arg={a} in set() method. Only dict allowed.")
-
-    _kwargs = {}
-    for k, v in kwargs.items():
-        k = spec.ALIASES.get(k, k)
-        if extra_keys and k in extra_keys:
-            _kwargs[k] = v
-        elif k in spec.SET_KEYS:
-            _kwargs[k] = v
-        # else:
-        #     raise ValueError(f"Cannot set {k} in {spec.__class__.__name__}")
-
-    if add_spec_keys:
-        for k in spec.SET_KEYS:
-            if k not in _kwargs:
-                _kwargs[k] = getattr(spec, k)
-
-    if remove_nones:
-        _kwargs = {k: v for k, v in _kwargs.items() if v is not None}
-
-    return _kwargs
+#     cls.ALL_KEYS = tuple(set(all_keys))
+#     return cls
 
 
-def normalise_create_kwargs_2(cls, data, allowed_keys=None, allow_unused=False, remove_nones=True):
+# def spec_aliases(cls) -> type:
+#     """
+#     Add alias properties to the class.
+
+#     Parameters
+#     ----------
+#     cls : type
+#         The class to which aliases will be added.
+
+#     Returns
+#     -------
+#     type
+#         The class with alias properties added.
+#     """
+#     aliases = getattr(cls, "_ALIASES", None)
+#     if aliases:
+#         for alias, method in aliases.items():
+
+#             def _make(method):
+#                 def _f(self):
+#                     return getattr(self, method)
+
+#                 return _f
+
+#             setattr(
+#                 cls,
+#                 alias,
+#                 property(fget=_make(method), doc=f"Return the {alias}. Alias for :obj:`{method}`."),
+#             )
+
+#     # all_keys = list(cls._KEYS)
+#     # if aliases:
+#     #     all_keys.extend(list(aliases.keys()))
+
+#     # prefix = getattr(cls, "KEY_PREFIX", None)
+#     # if prefix:
+#     #     for method in all_keys:
+#     #         prefix_method = prefix + method
+
+#     #         def _make(method):
+#     #             def _f(self):
+#     #                 return getattr(self, method)
+
+#     #             return _f
+
+#     #         setattr(
+#     #             cls,
+#     #             prefix_method,
+#     #             property(fget=_make(method), doc=f"Return the {prefix_method}. Alias for :obj:`{method}`."),
+#     #         )
+
+#     #         all_keys.append(prefix_method)
+
+#     return cls
+
+
+# def normalise_set_kwargs(
+#     spec: "Spec",
+#     *args: dict,
+#     add_spec_keys: bool = True,
+#     extra_keys=None,
+#     remove_nones: bool = False,
+#     **kwargs,
+# ) -> dict:
+#     """
+#     Normalise and merge keyword arguments for the set method.
+
+#     Parameters
+#     ----------
+#     spec : Spec
+#         The specification object.
+#     *args : dict
+#         Additional dictionaries to merge.
+#     add_spec_keys : bool, optional
+#         Whether to add missing spec keys, by default True.
+#     **kwargs
+#         Additional keyword arguments.
+
+#     Returns
+#     -------
+#     dict
+#         The normalised keyword arguments.
+#     """
+#     kwargs = kwargs.copy()
+
+#     for a in args:
+#         if a is None:
+#             continue
+#         if isinstance(a, dict):
+#             kwargs.update(a)
+#             continue
+#         raise ValueError(f"Cannot use arg={a} in set() method. Only dict allowed.")
+
+#     _kwargs = {}
+#     for k, v in kwargs.items():
+#         k = spec.ALIASES.get(k, k)
+#         if extra_keys and k in extra_keys:
+#             _kwargs[k] = v
+#         elif k in spec.SET_KEYS:
+#             _kwargs[k] = v
+#         # else:
+#         #     raise ValueError(f"Cannot set {k} in {spec.__class__.__name__}")
+
+#     if add_spec_keys:
+#         for k in spec.SET_KEYS:
+#             if k not in _kwargs:
+#                 _kwargs[k] = getattr(spec, k)
+
+#     if remove_nones:
+#         _kwargs = {k: v for k, v in _kwargs.items() if v is not None}
+
+#     return _kwargs
+
+
+def normalise_create_kwargs(cls, data, allowed_keys=None, allow_unused=False, remove_nones=True):
     _kwargs = {}
     for k_in, v in data.items():
         k = cls._ALIASES.get(k_in, k_in)
@@ -200,7 +246,7 @@ def normalise_create_kwargs_2(cls, data, allowed_keys=None, allow_unused=False, 
     return _kwargs
 
 
-def normalise_set_kwargs_2(cls, *args, allowed_keys=None, remove_nones=True, **kwargs):
+def normalise_set_kwargs(cls, *args, allowed_keys=None, remove_nones=True, **kwargs):
     kwargs = kwargs.copy()
 
     for a in args:
@@ -228,167 +274,167 @@ def normalise_set_kwargs_2(cls, *args, allowed_keys=None, remove_nones=True, **k
     return _kwargs
 
 
-class Aliases(dict):
-    def __init__(self, d: dict = None) -> None:
-        """
-        Initialise the Aliases dictionary.
+# class Aliases(dict):
+#     def __init__(self, d: dict = None) -> None:
+#         """
+#         Initialise the Aliases dictionary.
 
-        Parameters
-        ----------
-        d : dict
-            Dictionary of aliases.
-        """
-        r = {}
-        d = d or {}
-        for k, v in d.items():
-            if isinstance(v, str):
-                r[v] = k
-            else:
-                for x in v:
-                    r[x] = k
-        super().__init__(r)
-
-
-class SpecOld(metaclass=ABCMeta):
-    KEYS = tuple()
-    ALIASES = Aliases()
-    ALL_KEYS = tuple()
-
-    @classmethod
-    @abstractmethod
-    def from_dict(cls, d: dict) -> "Spec":
-        """
-        Create a Spec instance from a dictionary.
-
-        Parameters
-        ----------
-        d : dict
-            Dictionary containing specification data.
-
-        Returns
-        -------
-        Spec
-            The created Spec instance.
-        """
-        pass
-
-    @abstractmethod
-    def get(self, key, default=None, *, astype=None, raise_on_missing=False) -> "any":
-        r"""Return the value for ``key``.
-
-        Parameters
-        ----------
-        key: str
-            Key
-        default: value
-            Specify the default value for ``key``. Returned when ``key``
-            is not found or its value is a missing value and raise_on_missing is ``False``.
-        astype: type as str, int or float
-            Return/access type for ``key``. When it is supported ``astype`` is passed to the
-            underlying accessor as an option. Otherwise the value is
-            cast to ``astype`` after it is taken from the accessor.
-        raise_on_missing: bool
-            When it is True raises an exception if ``key`` is not found or
-            it has a missing value.
-
-        Returns
-        -------
-        value
-            Returns the ``key`` value. Returns ``default`` if ``key`` is not found
-            or it has a missing value and ``raise_on_missing`` is False.
-
-        Raises
-        ------
-        KeyError
-            If ``raise_on_missing`` is True and ``key`` is not found or it has
-            a missing value.
-
-        """
-        pass
-
-    @abstractmethod
-    def set(self, *args, **kwargs) -> "Spec":
-        """
-        Create a new Spec instance with updated data.
-
-        Parameters
-        ----------
-        *args
-            Positional arguments.
-        **kwargs
-            Keyword arguments.
-
-        Returns
-        -------
-        Spec
-            The created Spec instance.
-        """
-        pass
-
-    @abstractmethod
-    def namespace(self, *args):
-        pass
-
-    @abstractmethod
-    def check(self, owner):
-        pass
-
-    @abstractmethod
-    def get_grib_context(self, context):
-        pass
-
-    @abstractmethod
-    def __getstate__(self):
-        pass
-
-    @abstractmethod
-    def __setstate__(self, state):
-        pass
+#         Parameters
+#         ----------
+#         d : dict
+#             Dictionary of aliases.
+#         """
+#         r = {}
+#         d = d or {}
+#         for k, v in d.items():
+#             if isinstance(v, str):
+#                 r[v] = k
+#             else:
+#                 for x in v:
+#                     r[x] = k
+#         super().__init__(r)
 
 
-class SimpleSpecOld(SpecOld):
-    # _private = None
+# class SpecOld(metaclass=ABCMeta):
+#     KEYS = tuple()
+#     ALIASES = Aliases()
+#     ALL_KEYS = tuple()
 
-    # def _set_private_data(self, name, data):
-    #     if self._private is None:
-    #         self._private = {}
-    #     self._private[name] = data
+#     @classmethod
+#     @abstractmethod
+#     def from_dict(cls, d: dict) -> "Spec":
+#         """
+#         Create a Spec instance from a dictionary.
 
-    # def get_private_data(self, name, default=None):
-    #     if self._private is not None:
-    #         return self._private.get(name, default)
-    #     return default
+#         Parameters
+#         ----------
+#         d : dict
+#             Dictionary containing specification data.
 
-    # def _copy_private_data(self, other):
-    #     if other._private is not None:
-    #         self._private = other._private.copy()
+#         Returns
+#         -------
+#         Spec
+#             The created Spec instance.
+#         """
+#         pass
 
-    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
-        def _cast(v):
-            if callable(astype):
-                try:
-                    return astype(v)
-                except Exception:
-                    return None
-            return v
+#     @abstractmethod
+#     def get(self, key, default=None, *, astype=None, raise_on_missing=False) -> "any":
+#         r"""Return the value for ``key``.
 
-        if key in self.ALL_KEYS:
-            try:
-                v = getattr(self, key)
-                if astype and v is not None:
-                    v = _cast(v)
-                return v
-            except Exception:
-                pass
+#         Parameters
+#         ----------
+#         key: str
+#             Key
+#         default: value
+#             Specify the default value for ``key``. Returned when ``key``
+#             is not found or its value is a missing value and raise_on_missing is ``False``.
+#         astype: type as str, int or float
+#             Return/access type for ``key``. When it is supported ``astype`` is passed to the
+#             underlying accessor as an option. Otherwise the value is
+#             cast to ``astype`` after it is taken from the accessor.
+#         raise_on_missing: bool
+#             When it is True raises an exception if ``key`` is not found or
+#             it has a missing value.
 
-        if raise_on_missing:
-            raise KeyError(f"Key {key} not found in specification")
+#         Returns
+#         -------
+#         value
+#             Returns the ``key`` value. Returns ``default`` if ``key`` is not found
+#             or it has a missing value and ``raise_on_missing`` is False.
 
-        return default
+#         Raises
+#         ------
+#         KeyError
+#             If ``raise_on_missing`` is True and ``key`` is not found or it has
+#             a missing value.
+
+#         """
+#         pass
+
+#     @abstractmethod
+#     def set(self, *args, **kwargs) -> "Spec":
+#         """
+#         Create a new Spec instance with updated data.
+
+#         Parameters
+#         ----------
+#         *args
+#             Positional arguments.
+#         **kwargs
+#             Keyword arguments.
+
+#         Returns
+#         -------
+#         Spec
+#             The created Spec instance.
+#         """
+#         pass
+
+#     @abstractmethod
+#     def namespace(self, *args):
+#         pass
+
+#     @abstractmethod
+#     def check(self, owner):
+#         pass
+
+#     @abstractmethod
+#     def get_grib_context(self, context):
+#         pass
+
+#     @abstractmethod
+#     def __getstate__(self):
+#         pass
+
+#     @abstractmethod
+#     def __setstate__(self, state):
+#         pass
+
+
+# class SimpleSpecOld(SpecOld):
+#     # _private = None
+
+#     # def _set_private_data(self, name, data):
+#     #     if self._private is None:
+#     #         self._private = {}
+#     #     self._private[name] = data
+
+#     # def get_private_data(self, name, default=None):
+#     #     if self._private is not None:
+#     #         return self._private.get(name, default)
+#     #     return default
+
+#     # def _copy_private_data(self, other):
+#     #     if other._private is not None:
+#     #         self._private = other._private.copy()
+
+#     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
+#         def _cast(v):
+#             if callable(astype):
+#                 try:
+#                     return astype(v)
+#                 except Exception:
+#                     return None
+#             return v
+
+#         if key in self.ALL_KEYS:
+#             try:
+#                 v = getattr(self, key)
+#                 if astype and v is not None:
+#                     v = _cast(v)
+#                 return v
+#             except Exception:
+#                 pass
+
+#         if raise_on_missing:
+#             raise KeyError(f"Key {key} not found in specification")
+
+#         return default
 
 
 class Spec(metaclass=ABCMeta):
-    _ALIASES = Aliases()
+    # _ALIASES = Aliases()
     SET_KEYS = tuple()
 
     @classmethod

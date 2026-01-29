@@ -8,17 +8,15 @@
 #
 
 
-from .spec import Aliases
-from .spec import normalise_create_kwargs_2
-from .spec import normalise_set_kwargs_2
-from .spec import spec_aliases
+from .spec import mark_alias
+from .spec import mark_key
+from .spec import normalise_create_kwargs
+from .spec import normalise_set_kwargs
+from .spec import spec_keys
 
 
-@spec_aliases
+@spec_keys
 class Ensemble:
-    _SET_KEYS = ("member",)
-    _ALIASES = Aliases({"member": ("realisation", "realization")})
-
     def __init__(self, member=None) -> None:
         if member is None:
             self._member = "0"
@@ -27,10 +25,20 @@ class Ensemble:
         else:
             self._member = member
 
-    @property
+    @mark_key("get", "set")
     def member(self) -> str:
         """Return the ensemble member."""
         return self._member
+
+    @mark_alias("member")
+    def realization(self) -> str:
+        """Return the ensemble member (alias of `member`)."""
+        return self.member()
+
+    @mark_alias("member")
+    def realisation(self) -> str:
+        """Return the ensemble member (alias of `member`)."""
+        return self.member()
 
     @classmethod
     def from_dict(cls, d: dict, allow_unused=False) -> "Ensemble":
@@ -47,8 +55,8 @@ class Ensemble:
             The created Ensemble instance.
         """
 
-        d1 = normalise_create_kwargs_2(
-            cls, d, allowed_keys=cls._SET_KEYS, allow_unused=allow_unused, remove_nones=True
+        d1 = normalise_create_kwargs(
+            cls, d, allowed_keys=("member",), allow_unused=allow_unused, remove_nones=True
         )
         return cls(**d1)
 
@@ -61,7 +69,7 @@ class Ensemble:
         self.__init__(member=state["member"])
 
     def set(self, *args, **kwargs):
-        d = normalise_set_kwargs_2(self, *args, allowed_keys=self._SET_KEYS, remove_nones=False, **kwargs)
+        d = normalise_set_kwargs(self, *args, allowed_keys=self._SET_KEYS, remove_nones=False, **kwargs)
 
         if d:
             return self.from_dict(d)

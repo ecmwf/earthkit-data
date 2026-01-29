@@ -12,18 +12,14 @@ from typing import Union
 
 from .level_type import LevelType
 from .level_type import get_level_type
-from .spec import Aliases
-from .spec import normalise_create_kwargs_2
-from .spec import normalise_set_kwargs_2
-from .spec import spec_aliases
+from .spec import mark_key
+from .spec import normalise_create_kwargs
+from .spec import normalise_set_kwargs
+from .spec import spec_keys
 
 
-@spec_aliases
+@spec_keys
 class Vertical:
-    # _KEYS = ("level", "layer", "cf", "abbreviation", "units", "positive", "type")
-    _SET_KEYS = ("level", "layer", "type")
-    _ALIASES = Aliases({"level": "levelist", "type": ("level_type",)})
-
     def __init__(
         self,
         level: Union[int, float] = None,
@@ -35,37 +31,37 @@ class Vertical:
         self._type = get_level_type(type)
         self._check()
 
-    @property
+    @mark_key("get", "set")
     def level(self) -> Union[int, float]:
         """Return the level."""
         return self._level
 
-    @property
+    @mark_key("get", "set")
     def layer(self) -> Optional[tuple[float, float]]:
         """Return the layer."""
         return self._layer
 
-    @property
+    @mark_key("get")
     def cf(self):
         """Return the level type."""
         return self._type.cf
 
-    @property
+    @mark_key("get")
     def abbreviation(self):
         """Return the level type."""
         return self._type.abbreviation
 
-    @property
+    @mark_key("get")
     def units(self):
         """Return the level type."""
         return self._type.units
 
-    @property
+    @mark_key("get")
     def positive(self):
         """Return the level type."""
         return self._type.positive
 
-    @property
+    @mark_key("get", "set")
     def type(self):
         """Return the level type."""
         return self._type.name
@@ -74,7 +70,9 @@ class Vertical:
         return f"{self.level} {self.units} ({self.abbreviation})"
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(level={self.level}, units={self.units}, type={self._type.name})"
+        return (
+            f"{self.__class__.__name__}(level={self.level}, units={self.units}, level_type={self._type.name})"
+        )
 
     def __getstate__(self):
         state = {}
@@ -103,23 +101,23 @@ class Vertical:
         if not isinstance(d, dict):
             raise TypeError("d must be a dictionary")
         # print("d=", d)
-        d1 = normalise_create_kwargs_2(cls, d, allowed_keys=cls._SET_KEYS, allow_unused=allow_unused)
+        d1 = normalise_create_kwargs(cls, d, allowed_keys=cls._SET_KEYS, allow_unused=allow_unused)
 
         # print(" ->", d)
         return cls(**d1)
 
     def _check(self):
-        if self.layer is not None:
-            if len(self.layer) != 2:
+        if self.layer() is not None:
+            if len(self.layer()) != 2:
                 raise ValueError("Layer must be a tuple of two values or None")
 
     def set(self, *args, **kwargs):
-        d = normalise_set_kwargs_2(self, *args, allowed_keys=self._SET_KEYS, remove_nones=False, **kwargs)
+        d = normalise_set_kwargs(self, *args, allowed_keys=self._SET_KEYS, remove_nones=False, **kwargs)
 
         current = {
             "level": self._level,
             "layer": self._layer,
-            "type": self._type,
+            "type": self._type.name,
         }
 
         current.update(d)

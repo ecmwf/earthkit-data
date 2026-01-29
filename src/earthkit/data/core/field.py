@@ -427,7 +427,7 @@ class Field(Base):
     @property
     def shape(self):
         if self._parts.get(GEOGRAPHY):
-            return self._parts[GEOGRAPHY].shape
+            return self._parts[GEOGRAPHY].shape()
         else:
             return self.values.shape
 
@@ -527,6 +527,8 @@ class Field(Base):
             return m[0], self._parts.get(m[0]), m[1]
         if "." in key:
             part, name = key.split(".", 1)
+            if part in self._parts:
+                return part, self._parts.get(part), name
             return part, None, name
         return None, None, None
 
@@ -582,8 +584,9 @@ class Field(Base):
 
         v = None
 
-        # first try the parts
+        # first try the part
         part_name, part, key_name = self._get_part(key)
+        print("PART_NAME", part_name, part, key_name, key)
         if part:
             v = part.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
             return v

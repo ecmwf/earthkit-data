@@ -12,7 +12,8 @@ from abc import ABCMeta
 
 from earthkit.data.utils.dates import to_timedelta
 
-from .spec import spec_aliases
+from .spec import mark_key
+from .spec import spec_keys
 from .time_span import TimeMethods
 from .time_span import get_time_method
 
@@ -82,7 +83,7 @@ class TimeProcItem(ProcItem):
     #     return hash((self._value, self._method))
 
 
-@spec_aliases
+@spec_keys
 class Proc:
     """A specification of a parameter."""
 
@@ -92,7 +93,7 @@ class Proc:
     def __init__(self, items) -> None:
         self.items = items
 
-    @property
+    @mark_key("get")
     def time(self) -> str:
         r"""str: Return the parameter variable."""
         for item in self.items:
@@ -100,7 +101,7 @@ class Proc:
                 return item
         return None
 
-    @property
+    @mark_key("get")
     def time_value(self) -> str:
         r"""str: Return the parameter variable."""
         time = self.time
@@ -108,7 +109,7 @@ class Proc:
             return time.value
         return None
 
-    @property
+    @mark_key("get")
     def time_method(self) -> str:
         r"""str: Return the parameter variable."""
         time = self.time

@@ -40,9 +40,9 @@ def repeat_list_items(items, count):
 @pytest.mark.parametrize(
     "key,expected_value",
     [
-        ("variable", "2t"),
-        ("units", "K"),
-        ("level", 0),
+        ("parameter.variable", "2t"),
+        ("parameter.units", "K"),
+        ("vertical.level", 0),
         ("grib.shortName", "2t"),
         ("grib.shortName:s", "2t"),
         ("grib.shortName:str", "2t"),
@@ -52,9 +52,9 @@ def repeat_list_items(items, count):
         ("grib.level:l", 0),
         ("grib.level:int", 0),
         (["grib.shortName"], ["2t"]),
-        (["grib.shortName", "level"], ["2t", 0]),
+        (["grib.shortName", "vertical.level"], ["2t", 0]),
         (("grib.shortName"), "2t"),
-        (("grib.shortName", "level"), ("2t", 0)),
+        (("grib.shortName", "vertical.level"), ("2t", 0)),
     ],
 )
 def test_grib_get_core(fl_type, key, expected_value):
@@ -77,9 +77,9 @@ def test_grib_get_core(fl_type, key, expected_value):
         ("grib.level", None, 0),
         ("grib.level", str, "0"),
         ("grib.level", int, 0),
-        ("level", None, 0),
-        ("level", str, "0"),
-        ("level", int, 0),
+        ("vertical.level", None, 0),
+        ("vertical.level", str, "0"),
+        ("vertical.level", int, 0),
     ],
 )
 def test_grib_get_astype_01(fl_type, key, astype, expected_value):
@@ -100,7 +100,7 @@ def test_grib_get_astype_01(fl_type, key, astype, expected_value):
         ("grib.level", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
         ("grib.level:l", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
         ("grib.level:int", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
-        ("level", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
+        ("vertical.level", repeat_list_items([1000, 850, 700, 500, 400, 300], 3)),
     ],
 )
 def test_grib_get_18(fs_type, key, expected_value):
@@ -115,8 +115,8 @@ def test_grib_get_18(fs_type, key, expected_value):
     [
         ("grib.shortName", str, ["t", "u", "v"] * 6),
         ("grib.shortName", None, ["t", "u", "v"] * 6),
-        ("variable", str, ["t", "u", "v"] * 6),
-        ("variable", None, ["t", "u", "v"] * 6),
+        ("parameter.variable", str, ["t", "u", "v"] * 6),
+        ("parameter.variable", None, ["t", "u", "v"] * 6),
         (
             "grib.level",
             int,
@@ -128,12 +128,12 @@ def test_grib_get_18(fs_type, key, expected_value):
             repeat_list_items([1000, 850, 700, 500, 400, 300], 3),
         ),
         (
-            "level",
+            "vertical.level",
             int,
             repeat_list_items([1000, 850, 700, 500, 400, 300], 3),
         ),
         (
-            "level",
+            "vertical.level",
             None,
             repeat_list_items([1000, 850, 700, 500, 400, 300], 3),
         ),
@@ -342,29 +342,29 @@ def test_grib_get_astype_core(fl_type):
     assert r == ["ecmf", "ecmf", "ecmf", "ecmf"]
     r = f.get("grib.centre", astype=str)
     assert r == ["ecmf", "ecmf", "ecmf", "ecmf"]
-    r = f.get("level", astype=str)
+    r = f.get("vertical.level", astype=str)
     assert r == ["1000", "1000", "1000", "850"]
 
     # to int
     r = f.get("grib.centre", astype=int)
     assert r == [98, 98, 98, 98]
-    r = f.get("level", astype=int)
+    r = f.get("vertical.level", astype=int)
     assert r == [1000, 1000, 1000, 850]
 
     # to float
-    r = f.get("level", astype=float)
+    r = f.get("vertical.level", astype=float)
     assert np.allclose(np.array(r), np.array([1000.0, 1000.0, 1000.0, 850.0]))
     assert all(isinstance(x, float) for x in r)
 
     # multi
-    r = f.get(["level", "grib.cfVarName"], astype=(int, None))
+    r = f.get(["vertical.level", "grib.cfVarName"], astype=(int, None))
     assert r == [[1000, "t"], [1000, "u"], [1000, "v"], [850, "t"]]
-    r = f.get(["level", "grib.cfVarName"], astype=str)
+    r = f.get(["vertical.level", "grib.cfVarName"], astype=str)
     assert r == [["1000", "t"], ["1000", "u"], ["1000", "v"], ["850", "t"]]
 
     # non matching astype
     with pytest.raises(ValueError):
-        f.get(["level", "grib.cfVarName", "grib.centre"], astype=(int, None))
+        f.get(["vertical.level", "grib.cfVarName", "grib.centre"], astype=(int, None))
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -377,27 +377,27 @@ def test_grib_get_generic(fl_type):
     assert sn == ["t", "u", "v", "t"]
     sn = f.get(["grib.shortName"])
     assert sn == [["t"], ["u"], ["v"], ["t"]]
-    sn = f.get("variable")
+    sn = f.get("parameter.variable")
     assert sn == ["t", "u", "v", "t"]
-    sn = f.get(["variable"])
+    sn = f.get(["parameter.variable"])
     assert sn == [["t"], ["u"], ["v"], ["t"]]
 
-    lg = f.get("level", "grib.cfVarName")
+    lg = f.get("vertical.level", "grib.cfVarName")
     assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
-    lg = f.get(["level", "grib.cfVarName"])
+    lg = f.get(["vertical.level", "grib.cfVarName"])
     assert lg == [[1000, "t"], [1000, "u"], [1000, "v"], [850, "t"]]
-    lg = f.get("level", "grib.cfVarName")
+    lg = f.get("vertical.level", "grib.cfVarName")
     assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
 
     # single fieldlist
     f = f_full
-    f = f.sel(param="t", level=1000)
-    lg = f.get(["level", "grib.cfVarName"])
+    f = f.sel({"parameter.variable": "t", "vertical.level": 1000})
+    lg = f.get(["vertical.level", "grib.cfVarName"])
     assert lg == [[1000, "t"]]
 
     # single field
     f = from_source("file", earthkit_examples_file("tuv_pl.grib"))[0]
-    lg = f.get(["level", "grib.cfVarName"])
+    lg = f.get(["vertical.level", "grib.cfVarName"])
     assert lg == [1000, "t"]
 
 
@@ -432,7 +432,7 @@ def test_grib_metadata_namespace(fl_type):
     f, _ = load_grib_data("test6.grib", fl_type)
 
     r = f[0].metadata(namespace="vertical")
-    ref = {"level": 1000, "typeOfLevel": "isobaricInhPa"}
+    ref = {"vertical.level": 1000, "vertical.typeOfLevel": "isobaricInhPa"}
     assert r == ref
 
     r = f[0].metadata(namespace=["vertical", "time"])
@@ -525,8 +525,8 @@ def test_grib_tilde_shortname(fl_type):
     f, _ = load_grib_data("tilde_shortname.grib", fl_type, folder="data")
 
     # parameter object keys
-    assert f[0].get("variable") == "106"
-    assert f[0].get("variable") == "106"
+    assert f[0].get("parameter.variable") == "106"
+    assert f[0].get("parameter.variable") == "106"
 
     # raw GRIB keys
     assert f[0].get("grib.shortName") == "106"

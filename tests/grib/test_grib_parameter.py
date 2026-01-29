@@ -27,7 +27,7 @@ def test_grib_parameter_1(fl_type):
     f = ds[0]
 
     assert f.parameter.variable() == "2t"
-    # assert f.parameter.param() == "2t"
+    assert f.parameter.param() == "2t"
     assert f.parameter.units() == "K"
 
 
@@ -38,6 +38,6 @@ def test_grib_parameter_tilde_shortname(fl_type):
     ds, _ = load_grib_data("tilde_shortname.grib", fl_type, folder="data")
     f = ds[0]
 
-    assert f.variable == "106"
-    assert f.param == "106"
-    assert f.units == "~"
+    assert f.parameter.variable() == "106"
+    assert f.parameter.param() == "106"
+    assert f.parameter.units() == "~"

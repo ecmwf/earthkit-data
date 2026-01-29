@@ -8,46 +8,39 @@
 #
 
 
-from .spec import Aliases
-from .spec import normalise_create_kwargs_2
-from .spec import normalise_set_kwargs_2
-from .spec import spec_aliases
+from .spec import mark_alias
+from .spec import mark_key
+from .spec import normalise_create_kwargs
+from .spec import normalise_set_kwargs
+from .spec import spec_keys
 
 
-def mark_get_key(func):
-    def wrapper(self, *args, **kwargs):
-        return func(self, *args, **kwargs)
-
-    wrapper._is_get_key = True
-    return wrapper
-
-
-@spec_aliases
+@spec_keys
 class Parameter:
     """A specification of a parameter."""
-
-    _SET_KEYS = (
-        "variable",
-        "units",
-    )
-
-    _ALIASES = Aliases({"variable": ("param")})
 
     def __init__(self, variable: str = None, units: str = None) -> None:
         self._variable = variable
         self._units = units
 
+    @mark_key("get", "set")
     def variable(self) -> str:
         r"""str: Return the parameter variable."""
         return self._variable
 
+    @mark_key("get", "set")
     def units(self) -> str:
         r"""str: Return the parameter units."""
         return self._units
 
+    @mark_alias("variable")
+    def param(self) -> str:
+        r"""str: Return the parameter variable (alias of `variable`)."""
+        return self.variable()
+
     @classmethod
     def from_dict(cls, d: dict, allow_unused=False) -> "Parameter":
-        """Create a Ensemble object from a dictionary.
+        """Create a Parameter object from a dictionary.
 
         Parameters
         ----------
@@ -56,11 +49,11 @@ class Parameter:
 
         Returns
         -------
-        Realisation
-            The created Realisation instance.
+        Parameter
+            The created Parameter instance.
         """
 
-        d1 = normalise_create_kwargs_2(cls, d, allowed_keys=cls._SET_KEYS, allow_unused=allow_unused)
+        d1 = normalise_create_kwargs(cls, d, allowed_keys=("variable", "units"), allow_unused=allow_unused)
         # print(" ->", d)
         return cls(**d1)
 
@@ -74,7 +67,7 @@ class Parameter:
         self.__init__(variable=state["variable"], units=state["units"])
 
     def set(self, *args, **kwargs):
-        d = normalise_set_kwargs_2(self, *args, allowed_keys=self._SET_KEYS, remove_nones=False, **kwargs)
+        d = normalise_set_kwargs(self, *args, allowed_keys=self._SET_KEYS, remove_nones=False, **kwargs)
 
         current = {
             "variable": self._variable,

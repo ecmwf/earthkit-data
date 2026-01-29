@@ -8,7 +8,7 @@
 #
 
 from earthkit.data.field.spec.geography import Geography
-from earthkit.data.field.spec.spec import normalise_set_kwargs_2
+from earthkit.data.field.spec.spec import normalise_set_kwargs
 
 from .collector import GribContextCollector
 from .core import GribFieldPart
@@ -22,37 +22,30 @@ class GribGeographySpec(Geography):
     def __init__(self, handle):
         self.handle = handle
 
-    @property
     def latitudes(self):
         return self.handle.get_latitudes().reshape(self.shape)
 
-    @property
     def longitudes(self):
         return self.handle.get_longitudes().reshape(self.shape)
 
-    @property
     def distinct_latitudes(self):
         return self.handle.get("distinctLatitudes", default=None)
 
-    @property
     def distinct_longitudes(self):
         return self.handle.get("distinctLongitudes", default=None)
 
-    @property
     def x(self):
         grid_type = self.handle.get("gridType", default=None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
             return self.longitudes
         raise ValueError("x(): geographical coordinates in original CRS are not available")
 
-    @property
     def y(self):
         grid_type = self.handle.get("gridType", default=None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
             return self.latitudes
         raise ValueError("y(): geographical coordinates in original CRS are not available")
 
-    @property
     def shape(self):
         r"""Get the shape of the field.
 
@@ -74,7 +67,6 @@ class GribGeographySpec(Geography):
             return (n,)  # shape must be a tuple
         return (Nj, Ni)
 
-    @property
     def bounding_box(self):
         r"""Return the bounding box of the field.
 
@@ -91,7 +83,6 @@ class GribGeographySpec(Geography):
             east=self.handle.get("longitudeOfLastGridPointInDegrees", default=None),
         )
 
-    @property
     def projection(self):
         r"""Return information about the projection.
 
@@ -125,19 +116,16 @@ class GribGeographySpec(Geography):
 
         return Projection.from_proj_string(self.handle.get("projTargetString", None))
 
-    @property
     def unique_grid_id(self):
         r"""Return a unique id of the grid of a field."""
         return self.handle.get("md5GridSection", default=None)
 
-    @property
     def grid_spec(self):
         from .grid_spec import make_gridspec
         from .labels import GribLabels
 
         return make_gridspec(GribLabels(self.handle))
 
-    @property
     def grid_type(self):
         r"""Return the grid type."""
         return self.handle.get("gridType", default=None)
@@ -200,7 +188,7 @@ class GribGeography(GribFieldPart):
     COLLECTOR = COLLECTOR
 
     def set(self, *args, shape_hint=None, **kwargs):
-        kwargs = normalise_set_kwargs_2(self.spec, *args, **kwargs)
+        kwargs = normalise_set_kwargs(self.spec, *args, **kwargs)
         keys = set(kwargs.keys())
 
         if keys == {"grid_spec"}:

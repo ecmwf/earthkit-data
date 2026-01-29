@@ -13,18 +13,17 @@ from earthkit.data.utils.dates import datetime_from_date_and_time
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
-from .spec import Aliases
-from .spec import normalise_create_kwargs_2
-from .spec import normalise_set_kwargs_2
-from .spec import spec_aliases
+from .spec import mark_alias
+from .spec import mark_key
+from .spec import normalise_create_kwargs
+from .spec import normalise_set_kwargs
+from .spec import spec_keys
 
 
-@spec_aliases
+@spec_keys
 class Time:
     _base_datetime = None
     _step = ZERO_TIMEDELTA
-
-    _ALIASES = Aliases({"base_datetime": ("forecast_reference_time",), "step": ("forecast_period",)})
 
     def __init__(
         self,
@@ -37,30 +36,40 @@ class Time:
         if step is not None:
             self._step = to_timedelta(step)
 
-    @property
+    @mark_key("get", "set")
     def base_datetime(self):
         """Return the base datetime of the time object."""
         return self._base_datetime
 
-    @property
+    @mark_key("get", "set")
     def valid_datetime(self):
         """Return the valid datetime of the time object."""
         return self._base_datetime + self._step
 
-    @property
+    @mark_key("get", "set")
     def step(self):
         """Return the forecast period of the time object."""
         return self._step
 
-    @property
+    @mark_key("get")
     def base_date(self):
         """Return the base date of the time object."""
         return self._base_datetime.date()
 
-    @property
+    @mark_key("get")
     def base_time(self):
         """Return the base time of the time object."""
         return self._base_datetime.time()
+
+    @mark_alias("base_datetime")
+    def forecast_reference_time(self):
+        """Return the forecast reference time (alias of `base_datetime`)."""
+        return self.base_datetime()
+
+    @mark_alias("step")
+    def forecast_period(self):
+        """Return the forecast period (alias of `step`)."""
+        return self.step()
 
     def to_dict(self):
         return {
@@ -86,7 +95,7 @@ class Time:
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
 
-        d1 = normalise_create_kwargs_2(
+        d1 = normalise_create_kwargs(
             cls, d, allowed_keys=CREATE_METHOD_MAP.core_keys, allow_unused=allow_unused, remove_nones=True
         )
 
@@ -156,7 +165,7 @@ class Time:
         )
 
     def set(self, *args, **kwargs):
-        d = normalise_set_kwargs_2(
+        d = normalise_set_kwargs(
             self, *args, allowed_keys=SET_METHOD_MAP.core_keys, remove_nones=True, **kwargs
         )
         method, method_kwargs = SET_METHOD_MAP.get(d.keys())
