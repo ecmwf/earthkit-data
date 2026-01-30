@@ -10,6 +10,7 @@
 
 from abc import ABCMeta
 from abc import abstractmethod
+from functools import wraps
 
 
 def mark_key(*args):
@@ -28,8 +29,13 @@ def mark_key(*args):
 
 def mark_alias(name):
     def wrapper(func):
-        func._alias = name
-        return func
+        @wraps(func)
+        def inner(self, *args, **kwargs):
+            other = getattr(self, name)
+            return other(*args, **kwargs)
+
+        inner._alias = name
+        return inner
 
     return wrapper
 

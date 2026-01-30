@@ -15,11 +15,11 @@ from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.utils.array import flatten
 
+from .core import FieldPart
 from .core import FieldPartWrapper
-from .core import SimpleFieldPart
 
 
-class BaseDataFieldPart(SimpleFieldPart):
+class BaseDataFieldPart(FieldPart):
     """Base class for the data part of a field.
 
     This class defines the interface for accessing and manipulating the data values
@@ -57,6 +57,19 @@ class BaseDataFieldPart(SimpleFieldPart):
             If True, a copy of the array is returned. If False, a view is returned if possible. Default is True.
         """
         pass
+
+    def __contain__(self, name):
+        """Check if the key is in the specification."""
+        return name in self.ALL_KEYS
+
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
+        if key == "values":
+            return self.get_values(dtype=astype, copy=True)
+
+        if raise_on_missing:
+            raise KeyError(f"Key {key} not found in specification")
+
+        return default
 
 
 class DataFieldPart(BaseDataFieldPart):

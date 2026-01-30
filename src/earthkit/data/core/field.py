@@ -584,12 +584,11 @@ class Field(Base):
 
         v = None
 
-        # first try the part
+        # first try the parts
         part_name, part, key_name = self._get_part(key)
         print("PART_NAME", part_name, part, key_name, key)
         if part:
-            v = part.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
-            return v
+            return part.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
         # next try the labels with the full key
         elif key in self._parts[LABELS]:
             return self._parts[LABELS].get(

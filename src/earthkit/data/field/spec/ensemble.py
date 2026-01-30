@@ -33,12 +33,12 @@ class Ensemble:
     @mark_alias("member")
     def realization(self) -> str:
         """Return the ensemble member (alias of `member`)."""
-        return self.member()
+        pass
 
     @mark_alias("member")
     def realisation(self) -> str:
         """Return the ensemble member (alias of `member`)."""
-        return self.member()
+        pass
 
     @classmethod
     def from_dict(cls, d: dict, allow_unused=False) -> "Ensemble":

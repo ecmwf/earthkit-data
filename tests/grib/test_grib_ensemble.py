@@ -27,3 +27,5 @@ def test_grib_ensemble_1(fl_type):
     f = ds[0]
 
     assert f.ensemble.member() == "1"
+    assert f.ensemble.realization() == "1"
+    assert f.ensemble.realisation() == "1"

@@ -188,6 +188,11 @@ class FieldPart(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def __contain__(self, key):
+        """Check if the key is in the FieldPart."""
+        pass
+
+    @abstractmethod
     def __getstate__(self):
         """Return the state for pickling."""
         pass
@@ -212,34 +217,7 @@ class FieldPartWrapper(metaclass=ABCMeta):
         return getattr(self._part, name)
 
 
-class SimpleFieldPart(FieldPart):
-    """A FieldPart providing basic implementations for the :obj:`get` method."""
-
-    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
-        def _cast(v):
-            if callable(astype):
-                try:
-                    return astype(v)
-                except Exception:
-                    return None
-            return v
-
-        if key in self.ALL_KEYS:
-            try:
-                v = getattr(self, key)()
-                if astype and v is not None:
-                    v = _cast(v)
-                return v
-            except Exception:
-                pass
-
-        if raise_on_missing:
-            raise KeyError(f"Key {key} not found in specification")
-
-        return default
-
-
-class SpecFieldPart(SimpleFieldPart):
+class SpecFieldPart(FieldPart):
     """A FieldPart that wraps a specification object.
 
     Parameters
@@ -310,6 +288,24 @@ class SpecFieldPart(SimpleFieldPart):
     def spec(self) -> Any:
         """Return the specification objeßct."""
         return self._spec
+
+    def __contain__(self, name):
+        """Check if the key is in the specification."""
+        return name in self._spec._GET_KEYS
+
+    def get(self, key, default=None, *, astype=None, raise_on_missing=False):
+        if key in self:
+            v = getattr(self._spec, key)()
+            if astype and v is not None and callable(astype):
+                try:
+                    return astype(v)
+                except Exception:
+                    return None
+
+        if raise_on_missing:
+            raise KeyError(f"Key {key} not found in specification")
+
+        return default
 
     def set(self, *args, **kwargs) -> "SpecFieldPart":
         """Create a new SpecFieldPart instance with updated specification data."""
