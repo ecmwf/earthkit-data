@@ -8,11 +8,10 @@
 #
 
 from .core import SpecFieldPart
-from .core import wrap_spec_methods
 from .spec.vertical import Vertical
 
 
-@wrap_spec_methods(keys=["level", "layer", "cf", "abbreviation", "units", "positive", "type"])
+# @wrap_spec_methods(keys=["level", "layer", "cf", "abbreviation", "units", "positive", "type"])
 class VerticalFieldPart(SpecFieldPart):
     """Vertical part of a field."""
 

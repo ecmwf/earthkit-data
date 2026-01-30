@@ -58,13 +58,15 @@ class BaseDataFieldPart(FieldPart):
         """
         pass
 
-    def __contain__(self, name):
+    def __contains__(self, name):
         """Check if the key is in the specification."""
         return name in self.ALL_KEYS
 
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         if key == "values":
-            return self.get_values(dtype=astype, copy=True)
+            if astype:
+                return flatten(self.get_values(dtype=astype, copy=True))
+            return self.values
 
         if raise_on_missing:
             raise KeyError(f"Key {key} not found in specification")

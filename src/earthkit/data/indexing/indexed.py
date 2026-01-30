@@ -275,44 +275,51 @@ class IndexedFieldList(Index, FieldListCore):
                 return all(f.geography.unique_grid_id == grid for f in self)
         return False
 
-    def get(self, *keys, remapping=None, patches=None, **kwargs):
+    def get(
+        self,
+        *keys,
+        default=None,
+        astype=None,
+        raise_on_missing=False,
+        output=None,
+        group_by_key=False,
+        remapping=None,
+        patches=None,
+    ):
         from earthkit.data.utils.metadata.args import metadata_argument_new
 
-        _kwargs = kwargs.copy()
-        astype = _kwargs.pop("astype", None)
+        # _kwargs = kwargs.copy()
+        # astype = _kwargs.pop("astype", None)
         keys, astype, key_arg_type = metadata_argument_new(*keys, astype=astype)
 
-        remapping = build_remapping(remapping, patches)
-
-        return [
-            f._get_fast(keys, output=key_arg_type, astype=astype, remapping=remapping, **_kwargs)
-            for f in self
-        ]
-
-    def get_as_dict(self, *args, group=False, remapping=None, patches=None, **kwargs):
-        from earthkit.data.utils.metadata.args import metadata_argument_new
-
-        _kwargs = kwargs.copy()
-        astype = _kwargs.pop("astype", None)
-        keys, astype, _ = metadata_argument_new(*args, astype=astype)
+        assert isinstance(keys, (list, tuple))
 
         remapping = build_remapping(remapping, patches)
 
-        if group:
-            result = {k: [] for k in keys}
-            vals = []
-            for f in self:
-                vals.append(f._get_fast_list(keys[0], remapping=remapping, **_kwargs))
+        _kwargs = {
+            "default": default,
+            "raise_on_missing": raise_on_missing,
+            "remapping": remapping,
+            # "patches": patches,
+            "astype": astype,
+        }
 
-            for i, k in enumerate(keys):
-                result[k] = vals[:][i]
+        if output is None:
+            if not group_by_key:
+                return [f._get_fast(keys, output=key_arg_type, **_kwargs) for f in self]
+            else:
+                vals = [f._get_fast(keys, output=key_arg_type, **_kwargs) for f in self]
+                return [[x[i] for x in vals] for i in range(len(keys))]
 
-            return result
-        else:
-            result = []
-            for f in self:
-                result.append(f._get_fast_dict(keys, astype=astype, remapping=remapping, **_kwargs))
-            return result
+        elif output is dict or output == "dict":
+            if not group_by_key:
+                return [f._get_fast(keys, output=dict, **_kwargs) for f in self]
+            else:
+                result = {k: [] for k in keys}
+                vals = [f._get_fast(keys, output=list, **_kwargs) for f in self]
+                for i, k in enumerate(keys):
+                    result[k] = [x[i] for x in vals]
+                return result
 
     def metadata(self, *args, **kwargs):
         result = []

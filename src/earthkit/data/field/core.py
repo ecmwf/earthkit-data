@@ -188,7 +188,7 @@ class FieldPart(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def __contain__(self, key):
+    def __contains__(self, key):
         """Check if the key is in the FieldPart."""
         pass
 
@@ -286,10 +286,10 @@ class SpecFieldPart(FieldPart):
 
     @property
     def spec(self) -> Any:
-        """Return the specification objeßct."""
+        """Return the specification object."""
         return self._spec
 
-    def __contain__(self, name):
+    def __contains__(self, name):
         """Check if the key is in the specification."""
         return name in self._spec._GET_KEYS
 
@@ -301,6 +301,7 @@ class SpecFieldPart(FieldPart):
                     return astype(v)
                 except Exception:
                     return None
+            return v
 
         if raise_on_missing:
             raise KeyError(f"Key {key} not found in specification")

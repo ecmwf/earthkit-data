@@ -549,6 +549,61 @@ def test_grib_gridspec_key():
     ds[0].get("gridSpec", default=None)  # Should not raise an error
 
 
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize(
+    "_kwargs,key,expected_value",
+    [
+        (
+            {"output": None, "group_by_key": False},
+            "parameter.variable",
+            ["2t", "msl"],
+        ),
+        (
+            {"output": None, "group_by_key": False},
+            ["parameter.variable", "vertical.level"],
+            [["2t", 0], ["msl", 0]],
+        ),
+        # (
+        #     {"output": None, "group_by_key": True},
+        #     "parameter.variable",
+        #     ["2t", "msl"],
+        # ),
+        (
+            {"output": None, "group_by_key": True},
+            ["parameter.variable", "vertical.level"],
+            [["2t", "msl"], [0, 0]],
+        ),
+        # (
+        #     {"output": dict, "group_by_key": False},
+        #     "parameter.variable",
+        #     [{"parameter.variable": "2t"}, {"parameter.variable": "msl"}],
+        # ),
+        # (
+        #     {"group_by_key": False},
+        #     ["parameter.variable", "vertical.level"],
+        #     [
+        #         {"parameter.variable": "2t", "vertical.level": 0},
+        #         {"parameter.variable": "msl", "vertical.level": 0},
+        #     ],
+        # ),
+        # (
+        #     {"output": dict, "group_by_key": True},
+        #     "parameter.variable",
+        #     {"parameter.variable": ["2t", "msl"]},
+        # ),
+        # (
+        #     {"output": dict, "group_by_key": True},
+        #     ["parameter.variable", "vertical.level"],
+        #     {"parameter.variable": ["2t", "msl"], "vertical.level": [0, 0]},
+        # ),
+    ],
+)
+def test_grib_get_fieldlist(fl_type, _kwargs, key, expected_value):
+    ds, _ = load_grib_data("test.grib", fl_type)
+    res = ds.get(key, **_kwargs)
+    assert res == expected_value
+
+
 if __name__ == "__main__":
     from earthkit.data.testing import main
 

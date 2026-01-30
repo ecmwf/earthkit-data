@@ -349,37 +349,37 @@ class FieldListCore(Base):
         """
         pass
 
-    @abstractmethod
-    def get_as_dict(self, *args, group=False, remapping=None, patches=None, **kwargs):
-        r"""Return the metadata values for each field.
+    # @abstractmethod
+    # def get_as_dict(self, *args, group=False, remapping=None, patches=None, **kwargs):
+    #     r"""Return the metadata values for each field.
 
-        Parameters
-        ----------
-        *args: tuple
-            Positional arguments defining the metadata keys. Passed to
-            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
-        **kwargs: dict, optional
-            Keyword arguments passed to
-            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+    #     Parameters
+    #     ----------
+    #     *args: tuple
+    #         Positional arguments defining the metadata keys. Passed to
+    #         :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+    #     **kwargs: dict, optional
+    #         Keyword arguments passed to
+    #         :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
 
-        Returns
-        -------
-        list
-            List with one item per :obj:`GribField <data.readers.grib.codes.GribField>`
+    #     Returns
+    #     -------
+    #     list
+    #         List with one item per :obj:`GribField <data.readers.grib.codes.GribField>`
 
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> ds.metadata("param")
-        ['2t', 'msl']
-        >>> ds.metadata("param", "units")
-        [('2t', 'K'), ('msl', 'Pa')]
-        >>> ds.metadata(["param", "units"])
-        [['2t', 'K'], ['msl', 'Pa']]
+    #     Examples
+    #     --------
+    #     >>> import earthkit.data
+    #     >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+    #     >>> ds.metadata("param")
+    #     ['2t', 'msl']
+    #     >>> ds.metadata("param", "units")
+    #     [('2t', 'K'), ('msl', 'Pa')]
+    #     >>> ds.metadata(["param", "units"])
+    #     [['2t', 'K'], ['msl', 'Pa']]
 
-        """
-        pass
+    #     """
+    #     pass
 
     @abstractmethod
     def metadata(self, *args, **kwargs):

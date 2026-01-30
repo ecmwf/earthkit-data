@@ -530,6 +530,8 @@ class Field(Base):
             if part in self._parts:
                 return part, self._parts.get(part), name
             return part, None, name
+        elif key in self._parts[DATA]:
+            return DATA, self._parts.get(DATA), key
         return None, None, None
 
         # if "." in key:

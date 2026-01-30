@@ -8,11 +8,10 @@
 #
 
 from .core import SpecFieldPart
-from .core import wrap_spec_methods
 from .spec.parameter import Parameter
 
 
-@wrap_spec_methods(keys=["variable", "units"])
+# @wrap_spec_methods(keys=["variable", "units"])
 class ParameterFieldPart(SpecFieldPart):
     """Parameter part of a field."""
 
