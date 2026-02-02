@@ -15,7 +15,7 @@ from functools import wraps
 
 from earthkit.data import transform
 from earthkit.data.wrappers import Wrapper
-from earthkit.data.wrappers import call_wrapper_method
+# from earthkit.data.wrappers import call_wrapper_method
 
 LOG = logging.getLogger(__name__)
 
@@ -131,6 +131,7 @@ def format_handler(
 
             # Extract positional args again
             args = [kwargs.pop(name) for name in arg_names]
+            print("ek-data", args, kwargs)
             return function(*args, **kwargs)
 
         @wraps(function)

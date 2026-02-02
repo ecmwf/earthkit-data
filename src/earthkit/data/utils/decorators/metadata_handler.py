@@ -167,7 +167,6 @@ def metadata_handler(
                     k: v["units"] for k, v in (parameter_metadata_model or {}).items() if "units" in v
                 }
 
-            print(0, provenance_metadata)
             for key in kwargs.keys() & ensure_units.keys():
                 kwargs[key] = call_wrapper_method(
                     kwargs[key],
@@ -176,7 +175,6 @@ def metadata_handler(
                     source_units=source_units.get(key) if source_units else None,
                     provenance_metadata=provenance_metadata,
                 )
-            print(1, provenance_metadata)
 
             for key in kwargs.keys() & parameter_metadata_model.keys():
                 kwargs[key] = call_wrapper_method(

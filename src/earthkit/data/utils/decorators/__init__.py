@@ -9,4 +9,7 @@
 from .format_handler import format_handler
 from .metadata_handler import metadata_handler
 
-__all__ = ["format_handler", "metadata_handler"]
+__all__ = [
+    "format_handler",
+    "metadata_handler"
+]
