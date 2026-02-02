@@ -277,12 +277,11 @@ class IndexedFieldList(Index, FieldListCore):
 
     def get(
         self,
-        *keys,
+        keys,
         default=None,
         astype=None,
         raise_on_missing=False,
-        output=None,
-        group_by_key=False,
+        output="item_per_field",
         remapping=None,
         patches=None,
     ):
@@ -290,9 +289,9 @@ class IndexedFieldList(Index, FieldListCore):
 
         # _kwargs = kwargs.copy()
         # astype = _kwargs.pop("astype", None)
-        keys, astype, key_arg_type = metadata_argument_new(*keys, astype=astype)
+        keys, astype, default, keys_arg_type = metadata_argument_new(keys, astype=astype, default=default)
 
-        assert isinstance(keys, (list, tuple))
+        # assert isinstance(keys, (list, tuple))
 
         remapping = build_remapping(remapping, patches)
 
@@ -304,22 +303,31 @@ class IndexedFieldList(Index, FieldListCore):
             "astype": astype,
         }
 
-        if output is None:
-            if not group_by_key:
-                return [f._get_fast(keys, output=key_arg_type, **_kwargs) for f in self]
-            else:
-                vals = [f._get_fast(keys, output=key_arg_type, **_kwargs) for f in self]
+        if output == "item_per_field":
+            return [f._get_fast(keys, output=keys_arg_type, **_kwargs) for f in self]
+        elif output == "item_per_key":
+            vals = [f._get_fast(keys, output=keys_arg_type, **_kwargs) for f in self]
+            if keys_arg_type in (list, tuple):
                 return [[x[i] for x in vals] for i in range(len(keys))]
-
-        elif output is dict or output == "dict":
-            if not group_by_key:
-                return [f._get_fast(keys, output=dict, **_kwargs) for f in self]
             else:
+                assert isinstance(keys, str)
+                return vals
+        elif output == "dict_per_field":
+            return [f._get_fast(keys, output=dict, **_kwargs) for f in self]
+        elif output == "dict_per_key":
+            vals = [f._get_fast(keys, output=keys_arg_type, **_kwargs) for f in self]
+            if keys_arg_type in (list, tuple):
                 result = {k: [] for k in keys}
-                vals = [f._get_fast(keys, output=list, **_kwargs) for f in self]
                 for i, k in enumerate(keys):
                     result[k] = [x[i] for x in vals]
-                return result
+            else:
+                assert isinstance(keys, str)
+                result = {keys: vals}
+            return result
+        else:
+            raise ValueError(
+                f"get: invalid output={output}. Must be one of 'item_per_field', 'item_per_key', 'dict_per_field', 'dict_per_key'"
+            )
 
     def metadata(self, *args, **kwargs):
         result = []

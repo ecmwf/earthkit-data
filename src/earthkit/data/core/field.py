@@ -552,29 +552,27 @@ class Field(Base):
         Parameters
         ----------
         key: str
-            Key
+            Specify the metadata key to extract.
         default: value
             Specify the default value for ``key``. Returned when ``key``
-            is not found or its value is a missing value and raise_on_missing is ``False``.
+            is not found and raise_on_missing is ``False``.
         astype: type as str, int or float
-            Return/access type for ``key``. When it is supported ``astype`` is passed to the
+            Return type for ``key``. When it is supported ``astype`` is passed to the
             underlying accessor as an option. Otherwise the value is
             cast to ``astype`` after it is taken from the accessor.
         raise_on_missing: bool
-            When it is True raises an exception if ``key`` is not found or
-            it has a missing value.
+            When True, raises KeyError if ``key`` is not found.
 
         Returns
         -------
         value
             Returns the ``key`` value. Returns ``default`` if ``key`` is not found
-            or it has a missing value and ``raise_on_missing`` is False.
+            and ``raise_on_missing`` is False.
 
         Raises
         ------
         KeyError
-            If ``raise_on_missing`` is True and ``key`` is not found or it has
-            a missing value.
+            If ``raise_on_missing`` is True and ``key`` is not found.
 
         """
 
@@ -588,7 +586,7 @@ class Field(Base):
 
         # first try the parts
         part_name, part, key_name = self._get_part(key)
-        print("PART_NAME", part_name, part, key_name, key)
+
         if part:
             return part.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
         # next try the labels with the full key
@@ -631,41 +629,77 @@ class Field(Base):
         remapping=None,
         joiner=None,
     ):
-        assert isinstance(keys, list)
+        r"""Fast implementation of :meth:`get` for internal use.
 
+        Parameters
+        ----------
+        keys: str, list or tuple
+            Specify the metadata keys to extract. Can be a single key (str) or multiple
+            keys as a list/tuple of str.
+        default: Any, None
+            Specify the default value(s) for ``keys``. Returned when the given key
+            is not found and ``raise_on_missing`` is False. When ``default`` is a single
+            value, it is used for all the keys. Otherwise it must be a list/tuple of the
+            same length as ``keys``.
+        astype: type as str, int or float
+            Return type for ``keys``.  When ``astype`` is a single type, it is used for
+            all the keys. Otherwise it must be a list/tuple of the same length as ``keys``.
+        raise_on_missing: bool
+            When True, raises KeyError if any of ``keys`` is not found.
+        output: type, None
+            The output type. Can be:
+
+            - None: when ``keys`` is a str returns a single value, when ``keys`` is a list/tuple
+                returns a list/tuple of values
+            - list/tuple: returns a list/tuple of values. In this case ``keys`` must be a list/tuple.
+            - dict: returns a dictionary with keys and their values.
+        raise_on_missing: bool
+            When True, raises KeyError if any of ``keys`` is not found.
+
+        Returns
+        -------
+        single value, list, tuple or dict
+            The values for the specified ``keys``:
+
+            - when ``keys`` is a str returns a single value
+            - when ``keys`` is a list/tuple returns a list/tuple of values when ``output``
+              is None, list or tuple
+            - when ``output`` is dict returns dictionary with keys and their values
+
+
+        Notes
+        -----
+        This method assumes that the arguments have been normalized e.g. by using
+        :func:`metadata_argument_new`. No checks are performed on the arguments to
+        ensure that they are valid and consistent.
+        """
         meth = self._get_single
         # Remapping must be an object if defined
         if remapping is not None:
             assert isinstance(remapping, (Remapping, Patch))
             meth = remapping(meth, joiner=joiner)
 
-        _kwargs = dict(default=default, raise_on_missing=raise_on_missing)
-
-        if output in (list, tuple):
-            if astype is None:
-                r = [meth(k, **_kwargs) for k in keys]
+        if isinstance(keys, str):
+            r = meth(keys, default=default, astype=astype, raise_on_missing=raise_on_missing)
+            return r if output is not dict else {keys: r}
+        elif isinstance(keys, (list, tuple)):
+            if output is not dict:
+                r = [
+                    meth(k, astype=kt, default=d, raise_on_missing=raise_on_missing)
+                    for k, kt, d in zip(keys, astype, default)
+                ]
+                return r if output is list else tuple(r)
             else:
-                assert isinstance(astype, (list, tuple))
-                r = [meth(k, astype=kt, **_kwargs) for k, kt in zip(keys, astype)]
-
-            if output is tuple:
-                return tuple(r)
-            else:
-                return r
-        elif output is dict:
-            if astype is None:
-                return {k: meth(k, astype=astype, **_kwargs) for k in keys}
-            else:
-                return {k: meth(k, astype=kt, **_kwargs) for k, kt in zip(keys, astype)}
-        else:
-            if isinstance(astype, (list, tuple)):
-                astype = astype[0]
-            return meth(keys[0], astype=astype, **_kwargs)
+                return {
+                    k: meth(k, astype=kt, default=d, raise_on_missing=raise_on_missing)
+                    for k, kt, d in zip(keys, astype, default)
+                }
 
     def get(
         self,
-        *keys,
+        keys,
         default=None,
+        *,
         astype=None,
         raise_on_missing=False,
         output=None,
@@ -677,26 +711,56 @@ class Field(Base):
         Parameters
         ----------
         keys: str, list or tuple
-            Keys to get the values for.
-        default: value
-            Default value to return when a key is not found or it has a missing value.
+            Specify the metadata keys to extract. Can be a single key (str) or multiple
+            keys as a list/tuple of str.
+        default: Any, None
+            Specify the default value(s) for ``keys``. Returned when the given key
+            is not found and ``raise_on_missing`` is False. When ``default`` is a single
+            value, it is used for all the keys. Otherwise it must be a list/tuple of the
+            same length as ``keys``.
+        astype: type as str, int or float
+            Return type for ``keys``.  When ``astype`` is a single type, it is used for
+            all the keys. Otherwise it must be a list/tuple of the same length as ``keys``.
         raise_on_missing: bool
-            When it is True raises an exception if a key is not found or it has a missing value.
+            When True, raises KeyError if any of ``keys`` is not found.
+        output: type, None
+            When None (default) returns the same type as that of ``keys``:
+
+            - when ``keys`` is a str returns a single value
+            - when ``keys`` is a list/tuple returns a list of values
+
+            When ``output`` is dict, returns a dictionary with keys and their values.
+            Other types are not supported.
 
         Returns
         -------
-        dict
-            A dictionary with keys and their values.
+        single value, list, tuple or dict
+            The values for the specified ``keys``:
+
+            - when ``keys`` is a str returns a single value
+            - when ``keys`` is a list/tuple returns a list/tuple of values
+            - when ``output`` is dict returns dictionary with keys and their values.
+
+        Raises
+        ------
+        KeyError
+            If ``raise_on_missing`` is True and any of ``keys`` is not found.
 
         """
         if not keys:
             raise ValueError("At least one key must be specified.")
 
-        keys, astype, key_arg_type = metadata_argument_new(*keys, astype=astype)
-        assert isinstance(keys, list)
+        keys, astype, default, keys_arg_type = metadata_argument_new(
+            keys,
+            default=default,
+            astype=astype,
+        )
 
-        if output is dict:
-            key_arg_type = output
+        if output is None:
+            if keys_arg_type is not str:
+                output = keys_arg_type
+        elif output is not dict:
+            raise ValueError("output must be None or dict")
 
         remapping = build_remapping(remapping, patches, forced_build=False)
 
@@ -706,30 +770,10 @@ class Field(Base):
             astype=astype,
             raise_on_missing=raise_on_missing,
             remapping=remapping,
-            output=key_arg_type,
+            output=output,
         )
 
         return r
-
-    # def get_as_dict(
-    #     self, *keys, default=None, astype=None, raise_on_missing=False, remapping=None, patches=None
-    # ):
-    #     if not keys:
-    #         raise ValueError("At least one key must be specified.")
-
-    #     keys, astype, _ = metadata_argument_new(*keys, astype=astype)
-    #     assert isinstance(keys, list)
-
-    #     remapping = build_remapping(remapping, patches, forced_build=False)
-
-    #     return self._get_fast(
-    #         keys,
-    #         default=default,
-    #         astype=astype,
-    #         raise_on_missing=raise_on_missing,
-    #         remapping=remapping,
-    #         output=dict,
-    #     )
 
     def metadata(self, *keys, astype=None, remapping=None, patches=None, **kwargs):
         r"""Return metadata values from the field.

@@ -318,32 +318,76 @@ class FieldListCore(Base):
         pass
 
     @abstractmethod
-    def get(self, *keys, remapping=None, patches=None, **kwargs):
+    def get(
+        self,
+        keys,
+        default=None,
+        astype=None,
+        raise_on_missing=False,
+        output="item_per_field",
+        remapping=None,
+        patches=None,
+    ):
         r"""Return the metadata values for each field.
 
         Parameters
         ----------
-        *args: tuple
-            Positional arguments defining the metadata keys. Passed to
-            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
-        **kwargs: dict, optional
-            Keyword arguments passed to
-            :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
+        keys: str, list, tuple
+            Specify the metadata keys to extract. Can be a single key (str) or multiple
+            keys as a list/tuple of str.
+        default: Any, None
+            Specify the default value(s) for ``keys``. Returned when the given key
+            is not found and ``raise_on_missing`` is False. When ``default`` is a single
+            value, it is used for all the keys. Otherwise it must be a list/tuple of the
+            same length as ``keys``.
+        astype: type as str, int or float
+            Return type for ``keys``.  When ``astype`` is a single type, it is used for
+            all the keys. Otherwise it must be a list/tuple of the same length as ``keys``.
+        raise_on_missing: bool
+            When True, raises KeyError if any of ``keys`` is not found.
+        output: str, default=item_per_field
+            Specify the output structure. Possible values are:
+
+            - item_per_field: returns a list with one item per field. If a single key is
+                given the item is the value for that key. If a list
+                of keys are given the item is a list of values for those keys. Similarly,
+                when ``keys`` is a tuple each item is a tuple of values.
+            - item_per_key: returns a list with one item per key containing the list of values
+                from all the fields
+            - dict_per_field: returns a list of dictionaries with one dictionary per field with
+                key-value pairs for the requested keys.
+            - dict_per_key: returns a dictionary for each key containing the list of
+                values from all the fields.
+
+        remapping: dict, None
+            A remapping dictionary passed to
+            :obj:`GribField.get() <data.readers.grib.codes.GribField.get>`
+            when getting the metadata values.
+        patches: dict, None
+            A dictionary of patches passed to
+            :obj:`GribField.get() <data.readers.grib.codes.GribField.get>`
+            when getting the metadata values.
 
         Returns
         -------
-        list
-            List with one item per :obj:`GribField <data.readers.grib.codes.GribField>`
+        list, tuple, dict, Any
+            The returned value depends on the ``output`` parameter. See above.
+
+        Raises
+        ------
+        KeyError
+            If ``raise_on_missing`` is True and any of ``keys`` is not found.
+
 
         Examples
         --------
         >>> import earthkit.data
         >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> ds.metadata("param")
+        >>> ds.get("parameter.variable")
         ['2t', 'msl']
-        >>> ds.metadata("param", "units")
+        >>> ds.get(["parameter.variable", "parameter.units"])
         [('2t', 'K'), ('msl', 'Pa')]
-        >>> ds.metadata(["param", "units"])
+        >>> ds.get(("parameter.variable", "parameter.units"))
         [['2t', 'K'], ['msl', 'Pa']]
 
         """

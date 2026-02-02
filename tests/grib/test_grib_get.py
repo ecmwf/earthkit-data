@@ -382,12 +382,10 @@ def test_grib_get_generic(fl_type):
     sn = f.get(["parameter.variable"])
     assert sn == [["t"], ["u"], ["v"], ["t"]]
 
-    lg = f.get("vertical.level", "grib.cfVarName")
+    lg = f.get(("vertical.level", "grib.cfVarName"))
     assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
     lg = f.get(["vertical.level", "grib.cfVarName"])
     assert lg == [[1000, "t"], [1000, "u"], [1000, "v"], [850, "t"]]
-    lg = f.get("vertical.level", "grib.cfVarName")
-    assert lg == [(1000, "t"), (1000, "u"), (1000, "v"), (850, "t")]
 
     # single fieldlist
     f = f_full
@@ -413,17 +411,56 @@ def test_grib_get_missing_value(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_get_missing_key(fl_type):
+@pytest.mark.parametrize(
+    "key,_kwargs,expected_value, error",
+    [
+        ("_badkey_", {"raise_on_missing": True}, None, KeyError),
+        ("__badkey__", {"default": 0, "raise_on_missing": False}, 0, None),
+        ("__badkey__", {"default": 0}, 0, None),
+        (["_badkey_", "_badkey_1_"], {"default": 1, "raise_on_missing": False}, [1, 1], None),
+        (["_badkey_", "_badkey_1_"], {"default": [1, 0], "raise_on_missing": False}, [1, 0], None),
+    ],
+)
+def test_grib_get_missing_key_field(fl_type, key, _kwargs, expected_value, error):
     f, _ = load_grib_data("test.grib", fl_type)
 
-    with pytest.raises(KeyError):
-        f[0].get("_badkey_", raise_on_missing=True)
+    if error:
+        with pytest.raises(error):
+            f[0].get(key, **_kwargs)
+    else:
+        v = f[0].get(key, **_kwargs)
+        assert v == expected_value
 
-    v = f[0].get("__badkey__", default=0, raise_on_missing=False)
-    assert v == 0
 
-    v = f[0].get("__badkey__", default=0)
-    assert v == 0
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize(
+    "key,_kwargs,expected_value, error",
+    [
+        ("_badkey_", {"raise_on_missing": True}, None, KeyError),
+        ("__badkey__", {"default": 0, "raise_on_missing": False}, [0, 0], None),
+        ("__badkey__", {"default": 0}, [0, 0], None),
+        (["_badkey_", "_badkey_1_"], {"default": 1, "raise_on_missing": False}, [[1, 1], [1, 1]], None),
+        (["_badkey_", "_badkey_1_"], {"default": [1, 0], "raise_on_missing": False}, [[1, 0], [1, 0]], None),
+    ],
+)
+def test_grib_get_missing_key_fl(fl_type, key, _kwargs, expected_value, error):
+    f, _ = load_grib_data("test.grib", fl_type)
+
+    if error:
+        with pytest.raises(error):
+            f.get(key, **_kwargs)
+    else:
+        v = f.get(key, **_kwargs)
+        assert v == expected_value
+
+    # with pytest.raises(KeyError):
+    #     f[0].get("_badkey_", raise_on_missing=True)
+
+    # v = f[0].get("__badkey__", default=0, raise_on_missing=False)
+    # assert v == 0
+
+    # v = f[0].get("__badkey__", default=0)
+    # assert v == 0
 
 
 @pytest.mark.migrate
@@ -508,7 +545,7 @@ def test_grib_metadata_namespace(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_grib_message(fl_type):
+def test_grib_get_message(fl_type):
     f, _ = load_grib_data("test.grib", fl_type)
     v = f[0].get("grib.message")
     assert len(v) == 526
@@ -519,7 +556,7 @@ def test_grib_message(fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
-def test_grib_tilde_shortname(fl_type):
+def test_grib_get_tilde_shortname(fl_type):
     # the shortName is ~ in the grib file
     # but the parameter is 106
     f, _ = load_grib_data("tilde_shortname.grib", fl_type, folder="data")
@@ -543,7 +580,7 @@ def test_grib_tilde_shortname(fl_type):
     # assert f[0].get("grib.parameter.shortName"] == "106"
 
 
-def test_grib_gridspec_key():
+def test_grib_get_gridspec_key():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     ds[0].get("gridSpec", default=None)  # Should not raise an error
@@ -554,54 +591,77 @@ def test_grib_gridspec_key():
     "_kwargs,key,expected_value",
     [
         (
-            {"output": None, "group_by_key": False},
+            {"output": "item_per_field"},
             "parameter.variable",
             ["2t", "msl"],
         ),
         (
-            {"output": None, "group_by_key": False},
+            {"output": "item_per_field"},
             ["parameter.variable", "vertical.level"],
             [["2t", 0], ["msl", 0]],
         ),
-        # (
-        #     {"output": None, "group_by_key": True},
-        #     "parameter.variable",
-        #     ["2t", "msl"],
-        # ),
         (
-            {"output": None, "group_by_key": True},
+            {"output": "item_per_field"},
+            ("parameter.variable", "vertical.level"),
+            [("2t", 0), ("msl", 0)],
+        ),
+        (
+            {"output": "item_per_key"},
+            "parameter.variable",
+            ["2t", "msl"],
+        ),
+        (
+            {"output": "item_per_key"},
             ["parameter.variable", "vertical.level"],
             [["2t", "msl"], [0, 0]],
         ),
-        # (
-        #     {"output": dict, "group_by_key": False},
-        #     "parameter.variable",
-        #     [{"parameter.variable": "2t"}, {"parameter.variable": "msl"}],
-        # ),
-        # (
-        #     {"group_by_key": False},
-        #     ["parameter.variable", "vertical.level"],
-        #     [
-        #         {"parameter.variable": "2t", "vertical.level": 0},
-        #         {"parameter.variable": "msl", "vertical.level": 0},
-        #     ],
-        # ),
-        # (
-        #     {"output": dict, "group_by_key": True},
-        #     "parameter.variable",
-        #     {"parameter.variable": ["2t", "msl"]},
-        # ),
-        # (
-        #     {"output": dict, "group_by_key": True},
-        #     ["parameter.variable", "vertical.level"],
-        #     {"parameter.variable": ["2t", "msl"], "vertical.level": [0, 0]},
-        # ),
+        (
+            {"output": "item_per_key"},
+            ("parameter.variable", "vertical.level"),
+            [["2t", "msl"], [0, 0]],
+        ),
+        (
+            {"output": "dict_per_field"},
+            "parameter.variable",
+            [{"parameter.variable": "2t"}, {"parameter.variable": "msl"}],
+        ),
+        (
+            {"output": "dict_per_field"},
+            ["parameter.variable", "vertical.level"],
+            [
+                {"parameter.variable": "2t", "vertical.level": 0},
+                {"parameter.variable": "msl", "vertical.level": 0},
+            ],
+        ),
+        (
+            {"output": "dict_per_field"},
+            ("parameter.variable", "vertical.level"),
+            [
+                {"parameter.variable": "2t", "vertical.level": 0},
+                {"parameter.variable": "msl", "vertical.level": 0},
+            ],
+        ),
+        (
+            {"output": "dict_per_key"},
+            "parameter.variable",
+            {"parameter.variable": ["2t", "msl"]},
+        ),
+        (
+            {"output": "dict_per_key"},
+            ["parameter.variable", "vertical.level"],
+            {"parameter.variable": ["2t", "msl"], "vertical.level": [0, 0]},
+        ),
+        (
+            {"output": "dict_per_key"},
+            ("parameter.variable", "vertical.level"),
+            {"parameter.variable": ["2t", "msl"], "vertical.level": [0, 0]},
+        ),
     ],
 )
-def test_grib_get_fieldlist(fl_type, _kwargs, key, expected_value):
+def test_grib_get_core_fl(fl_type, _kwargs, key, expected_value):
     ds, _ = load_grib_data("test.grib", fl_type)
     res = ds.get(key, **_kwargs)
-    assert res == expected_value
+    assert res == expected_value, f"fl_type={fl_type}, _kwargs={_kwargs}, key={key}"
 
 
 if __name__ == "__main__":
