@@ -131,9 +131,9 @@ class ClonedFieldCore:
         else:
             self.__metadata = field._metadata
 
-    def _values(self, dtype=None):
+    def _values(self, dtype=None, context=None):
         if self.__values is None:
-            return self._field._values(dtype=dtype)
+            return self._field._values(dtype=dtype, context=context)
         else:
             if dtype is None:
                 return self.__values

@@ -272,7 +272,7 @@ class XArrayField(Field):
         values = self._ds[self.variable].isel(dimensions).values
         return values
 
-    def _values(self, dtype=None):
+    def _values(self, dtype=None, context=None):
         if dtype is None:
             return self._to_numpy()
         else:
