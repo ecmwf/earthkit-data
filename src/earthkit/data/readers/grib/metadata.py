@@ -70,7 +70,6 @@ class GeoBasedGribFieldGeography(Geography):
         from eckit.geo import Grid
 
         self._grid = Grid(grid_spec)
-        self.grid_spec = grid_spec
         self.metadata = metadata
 
     @thread_safe_cached_property
