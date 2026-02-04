@@ -329,11 +329,16 @@ class IndexedFieldList(Index, FieldListCore):
                 f"get: invalid output={output}. Must be one of 'item_per_field', 'item_per_key', 'dict_per_field', 'dict_per_key'"
             )
 
-    def metadata(self, *args, **kwargs):
-        result = []
-        for s in self:
-            result.append(s.metadata(*args, **kwargs))
-        return result
+    def metadata(self, keys, **kwargs):
+        if isinstance(keys, str):
+            keys = "metadata." + keys
+        else:
+            is_tuple = isinstance(keys, tuple)
+            keys = ["metadata." + x for x in keys]
+            if is_tuple:
+                keys = tuple(keys)
+
+        return self.get(keys, **kwargs)
 
     @thread_safe_cached_property
     def _md_indices(self):

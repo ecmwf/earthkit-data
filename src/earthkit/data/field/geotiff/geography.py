@@ -11,7 +11,7 @@
 import numpy as np
 
 from earthkit.data.field.geography import GeographyFieldPart
-from earthkit.data.field.spec.geography import Geography
+from earthkit.data.field.part.geography import Geography
 from earthkit.data.utils.bbox import BoundingBox
 
 

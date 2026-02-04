@@ -9,11 +9,11 @@
 
 
 from earthkit.data.field.grib.time import ZERO_TIMEDELTA
-from earthkit.data.field.spec.time_span import TimeMethods
+from earthkit.data.field.part.time_span import TimeMethods
 from earthkit.data.utils.dates import to_timedelta
 
 from .collector import GribContextCollector
-from .core import GribFieldPart
+from .core import GribFieldPartHandler
 
 _GRIB_TO_METHOD = {
     "accum": TimeMethods.ACCUMULATED,
@@ -85,6 +85,6 @@ class GribProcContextCollector(GribContextCollector):
 COLLECTOR = GribProcContextCollector()
 
 
-class GribProc(GribFieldPart):
+class GribProc(GribFieldPartHandler):
     BUILDER = GribProcBuilder
     COLLECTOR = COLLECTOR

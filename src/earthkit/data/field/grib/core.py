@@ -11,12 +11,12 @@
 import logging
 
 from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.field.core import FieldPartWrapper
+from earthkit.data.field.core import LazyFieldPartHandler
 
 LOG = logging.getLogger(__name__)
 
 
-class GribFieldPart(FieldPartWrapper):
+class GribFieldPartHandler(LazyFieldPartHandler):
     BUILDER = None
     COLLECTOR = None
 
@@ -28,7 +28,7 @@ class GribFieldPart(FieldPartWrapper):
         return cls(handle)
 
     @thread_safe_cached_property
-    def _part(self):
+    def _handler(self):
         try:
             return self.BUILDER.build(self.handle)
         except Exception as e:

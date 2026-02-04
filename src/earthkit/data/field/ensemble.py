@@ -7,16 +7,16 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SpecFieldPart
-from .core import wrap_spec_methods
-from .spec.ensemble import Ensemble
+from .core import SimpleFieldPartHandler
+from .part.ensemble import BaseEnsemble
+from .part.ensemble import create_ensemble
 
 
-@wrap_spec_methods(keys=["member"])
-class EnsembleFieldPart(SpecFieldPart):
-    """Ensemble part of a field."""
+class EnsembleFieldPartHandler(SimpleFieldPartHandler):
+    """Ensemble part handler of a field."""
 
-    SPEC_CLS = Ensemble
+    PART_CLS = BaseEnsemble
+    PART_MAKER = create_ensemble
     NAME = "ensemble"
     NAMESPACE_KEYS = ("member",)
 

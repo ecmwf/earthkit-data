@@ -23,17 +23,56 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
-    "_kwargs",
+    "_kwargs,error",
     [
-        ({"my_label": 2}),
-        ({"my_label_1": 2, "my_label_2": "2"}),
+        ({"labels.my_label": 2}, None),
+        ({"labels.my_label_1": 2, "labels.my_label_2": "2"}, None),
+        ({"labels.": 2}, KeyError),
+        ({"labels": 2}, KeyError),
+        ({"my_label": 2}, KeyError),
     ],
 )
-def test_grib_field_labels(fl_type, _kwargs):
+def test_grib_field_labels_core(fl_type, _kwargs, error):
     ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
     f = ds[0]
-    f1 = f.set(**_kwargs)
+
+    if error:
+        with pytest.raises(error):
+            f1 = f.set(**_kwargs)
+        return
+    else:
+        f1 = f.set(**_kwargs)
 
     for k, v in _kwargs.items():
         sn = f1.get(k)
         assert sn == v
+
+
+@pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize(
+    "_kwargs1,_kwargs2,expected_vales",
+    [
+        (
+            {"labels.my_label": 2},
+            {"labels.other_label": 3},
+            {"labels.my_label": 2, "labels.other_label": 3},
+        ),
+        (
+            {"labels.my_label": 2},
+            {"labels.my_label": 3},
+            {"labels.my_label": 3},
+        ),
+    ],
+)
+def test_grib_field_labels_1(fl_type, _kwargs1, _kwargs2, expected_vales):
+    ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
+    f = ds[0]
+
+    f1 = f.set(**_kwargs1)
+    f2 = f1.set(**_kwargs2)
+
+    for k, v in expected_vales.items():
+        r = f2.get(k)
+        assert r == v, f"key={k}, value={r}, expected={v}"
+
+    assert len(f2.labels) == len(expected_vales)

@@ -16,7 +16,7 @@ from earthkit.utils.array import array_namespace as eku_array_namespace
 from earthkit.data.utils.array import flatten
 
 from .core import FieldPart
-from .core import FieldPartWrapper
+from .core import LazyFieldPartHandler
 
 
 class BaseDataFieldPart(FieldPart):
@@ -111,7 +111,7 @@ class DataFieldPart(BaseDataFieldPart):
             of DataFieldPart, it is returned as is. Otherwise, it is assumed to be a
             specification object and a new DataFieldPart instance is created from it.
         """
-        if isinstance(data, (cls, FieldPartWrapper)):
+        if isinstance(data, (cls, LazyFieldPartHandler)):
             return data
         elif isinstance(data, dict):
             dict_kwargs = dict_kwargs or {}

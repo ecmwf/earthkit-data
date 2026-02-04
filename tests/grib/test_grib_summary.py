@@ -766,58 +766,58 @@ def test_grib_dump_ecc_1(fl_type):
     # TODO: add grib.default
     namespaces = (
         # "grib.default",
-        "grib.geography",
-        "grib.ls",
-        "grib.mars",
-        "grib.parameter",
-        "grib.statistics",
-        "grib.time",
-        "grib.vertical",
+        "geography",
+        "ls",
+        "mars",
+        "parameter",
+        "statistics",
+        "time",
+        "vertical",
     )
 
     # default
-    r = f[0].dump(namespace="grib", _as_raw=True)
+    r = f[0].dump(part="metadata", _as_raw=True)
     ref = [
         {
-            "title": "grib.ls",
+            "title": "ls",
             "data": {
-                "grib.edition": 1,
-                "grib.centre": "ecmf",
+                "edition": 1,
+                "centre": "ecmf",
             },
-            "tooltip": "Keys in the grib.ls namespace",
+            "tooltip": "Keys in the ls namespace",
         },
         {
-            "title": "grib.geography",
+            "title": "geography",
             "data": {
-                "grib.gridType": "regular_ll",
+                "gridType": "regular_ll",
             },
-            "tooltip": "Keys in the grib.geography namespace",
+            "tooltip": "Keys in the geography namespace",
         },
         {
-            "title": "grib.mars",
+            "title": "mars",
             "data": {
-                "grib.levtype": "pl",
+                "levtype": "pl",
             },
-            "tooltip": "Keys in the grib.mars namespace",
+            "tooltip": "Keys in the mars namespace",
         },
         {
-            "title": "grib.parameter",
+            "title": "parameter",
             "data": {
-                "grib.shortName": "t",
+                "shortName": "t",
             },
-            "tooltip": "Keys in the grib.parameter namespace",
+            "tooltip": "Keys in the parameter namespace",
         },
         {
-            "title": "grib.time",
+            "title": "time",
             "data": {
-                "grib.dataDate": 20180801,
+                "dataDate": 20180801,
             },
-            "tooltip": "Keys in the grib.time namespace",
+            "tooltip": "Keys in the time namespace",
         },
         {
-            "title": "grib.vertical",
-            "data": {"grib.typeOfLevel": "isobaricInhPa"},
-            "tooltip": "Keys in the grib.vertical namespace",
+            "title": "vertical",
+            "data": {"typeOfLevel": "isobaricInhPa"},
+            "tooltip": "Keys in the vertical namespace",
         },
     ]
 
@@ -827,7 +827,7 @@ def test_grib_dump_ecc_1(fl_type):
         ns = d["title"]
         assert ns in namespaces
         assert d["data"], ns
-        if ns not in ("grib.default", "grib.statistics"):
+        if ns not in ("default", "statistics"):
             d_ref = [x for x in ref if x["title"] == ns][0]
             assert d["tooltip"] == d_ref["tooltip"], ns
             for k, v in d_ref["data"].items():
@@ -840,15 +840,15 @@ def test_grib_dump_ecc_1(fl_type):
 def test_grib_dump_ecc_2(fl_type):
     f, _ = load_grib_data("test6.grib", fl_type)
 
-    r = f[0].dump(namespace="grib.mars", _as_raw=True)
+    r = f[0].dump(part="metadata", filter="mars", _as_raw=True)
     ref = [
         {
-            "title": "grib.mars",
+            "title": "mars",
             "data": {
-                "grib.step": 0,
-                "grib.param": "t",
+                "step": 0,
+                "param": "t",
             },
-            "tooltip": "Keys in the grib.mars namespace",
+            "tooltip": "Keys in the mars namespace",
         }
     ]
 
@@ -863,18 +863,18 @@ def test_grib_dump_ecc_2(fl_type):
 def test_grib_dump_ecc_3(fl_type):
     f, _ = load_grib_data("test6.grib", fl_type)
 
-    r = f[0].dump(namespace="grib.mars", _as_raw=False)
+    r = f[0].dump(part="metadata", filter="mars", _as_raw=False)
 
     ref = {
-        "grib.mars": {
-            "grib.step": 0,
-            "grib.param": "t",
+        "mars": {
+            "step": 0,
+            "param": "t",
         }
     }
 
     assert len(r) == len(ref)
-    d = r["grib.mars"]
-    d_ref = ref["grib.mars"]
+    d = r["mars"]
+    d_ref = ref["mars"]
 
     for k, v in d_ref.items():
         assert d[k] == v, f"key={k}, value={d[k]}, ref={v}"

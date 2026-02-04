@@ -7,31 +7,30 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SpecFieldPart
-from .core import wrap_spec_methods
-from .spec.geography import Geography
+from .core import SimpleFieldPartHandler
+from .part.geography import BaseGeography
 
 
-@wrap_spec_methods(
-    keys=[
-        "latitudes",
-        "longitudes",
-        "shape",
-        "grid_spec",
-        "grid_type",
-        "bounding_box",
-        "distinct_latitudes",
-        "distinct_longitudes",
-        "x",
-        "y",
-        "projection",
-        "unique_grid_id",
-    ]
-)
-class GeographyFieldPart(SpecFieldPart):
+# @wrap_spec_methods(
+#     keys=[
+#         "latitudes",
+#         "longitudes",
+#         "shape",
+#         "grid_spec",
+#         "grid_type",
+#         "bounding_box",
+#         "distinct_latitudes",
+#         "distinct_longitudes",
+#         "x",
+#         "y",
+#         "projection",
+#         "unique_grid_id",
+#     ]
+# )
+class GeographyFieldPartHandler(SimpleFieldPartHandler):
     """Geography part of a field."""
 
-    SPEC_CLS = Geography
+    PART_CLS = BaseGeography
     NAME = "geography"
 
     def get_grib_context(self, context) -> dict:

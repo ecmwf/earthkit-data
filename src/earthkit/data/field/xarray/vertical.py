@@ -10,8 +10,8 @@
 
 from typing import Any
 
-from earthkit.data.field.spec.level_type import LevelTypes
-from earthkit.data.field.spec.vertical import Vertical
+from earthkit.data.field.part.level_type import LevelTypes
+from earthkit.data.field.part.vertical import Vertical
 from earthkit.data.field.vertical import VerticalFieldPart
 
 

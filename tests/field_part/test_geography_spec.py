@@ -12,7 +12,7 @@
 import numpy as np
 import pytest
 
-from earthkit.data.field.spec.geography import Geography
+from earthkit.data.field.part.geography import Geography
 
 
 @pytest.mark.parametrize(

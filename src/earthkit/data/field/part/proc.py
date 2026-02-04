@@ -9,11 +9,13 @@
 
 import datetime
 from abc import ABCMeta
+from abc import abstractmethod
 
 from earthkit.data.utils.dates import to_timedelta
 
-from .spec import mark_key
-from .spec import spec_keys
+from .part import SimpleFieldPart
+from .part import mark_key
+from .part import part_keys
 from .time_span import TimeMethods
 from .time_span import get_time_method
 
@@ -83,8 +85,100 @@ class TimeProcItem(ProcItem):
     #     return hash((self._value, self._method))
 
 
-@spec_keys
-class Proc:
+@part_keys
+class BaseProc(SimpleFieldPart):
+    """A specification of a parameter."""
+
+    @mark_key("get")
+    @abstractmethod
+    def time(self) -> TimeProcItem:
+        r"""TimeProcItem: Return the time processing item."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def time_value(self) -> str:
+        r"""str: Return the time processing value."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def time_method(self) -> str:
+        r"""str: Return the time processing method."""
+        pass
+
+
+class Proc(BaseProc):
+    """A specification of processing."""
+
+    def __init__(self, items) -> None:
+        self.items = items
+
+    @mark_key("get")
+    def time(self) -> TimeProcItem:
+        r"""str: Return the parameter variable."""
+        for item in self.items:
+            if isinstance(item, TimeProcItem):
+                return item
+        return None
+
+    @mark_key("get")
+    def time_value(self) -> str:
+        r"""str: Return the parameter variable."""
+        time = self.time
+        if time is not None:
+            return time.value
+        return None
+
+    @mark_key("get")
+    def time_method(self) -> str:
+        r"""str: Return the parameter variable."""
+        time = self.time
+        if time is not None:
+            return time.method
+        return None
+
+    @classmethod
+    def from_dict(cls, d: dict, allow_unused=False):
+        """Create a Ensemble object from a dictionary.
+
+        Parameters
+        ----------
+        d : dict
+            Dictionary containing parameter data.
+
+        Returns
+        -------
+        Realisation
+            The created Realisation instance.
+        """
+
+        r = []
+        for k, v in d.items():
+            maker = _MAKERS.get(k, None)
+            if maker is not None:
+                r.append(maker.from_dict(v))
+            else:
+                raise ValueError(f"Unknown Proc item: {k}")
+
+        return cls(r)
+
+    def set(self, *args, **kwargs):
+        pass
+        # d = normalise_set_kwargs_2(self, *args, allowed_keys=self._SET_KEYS, remove_nones=False, **kwargs)
+
+        # current = {
+        #     "level": self._level,
+        #     "layer": self._layer,
+        #     "type": self._type,
+        # }
+
+        # current.update(d)
+        # return self.from_dict(current)
+
+
+@part_keys
+class ProcOri:
     """A specification of a parameter."""
 
     _SET_KEYS = tuple()

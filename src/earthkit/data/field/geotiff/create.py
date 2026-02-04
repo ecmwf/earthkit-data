@@ -15,7 +15,7 @@ def new_geotiff_field(band, da):
     from earthkit.data.field.geotiff.data import GeoTIFFData
     from earthkit.data.field.geotiff.geography import GeoTIFFGeography
     from earthkit.data.field.parameter import ParameterFieldPart
-    from earthkit.data.field.spec.labels import SimpleLabels
+    from earthkit.data.field.part.labels import SimpleLabels
 
     data = GeoTIFFData(da)
     parameter = ParameterFieldPart.from_dict({"variable": da.name})

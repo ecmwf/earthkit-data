@@ -10,7 +10,7 @@
 
 from typing import Any
 
-from earthkit.data.field.spec.time import Time
+from earthkit.data.field.part.time import Time
 from earthkit.data.field.time import TimeFieldPart
 from earthkit.data.loaders.xarray.coordinates import extract_single_value
 from earthkit.data.loaders.xarray.coordinates import is_scalar

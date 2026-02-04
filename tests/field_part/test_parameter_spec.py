@@ -11,14 +11,14 @@
 
 import pytest
 
-from earthkit.data.field.spec.parameter import Parameter
+from earthkit.data.field.part.parameter import Parameter
 
 
-def test_parameter_spec_alias_1():
+def test_parameter_part_alias_1():
     r = Parameter(variable="t", units="K")
-    assert r.variable == "t"
-    assert r.param == "t"
-    assert r.units == "K"
+    assert r.variable() == "t"
+    assert r.param() == "t"
+    assert r.units() == "K"
 
 
 @pytest.mark.parametrize(
@@ -30,7 +30,7 @@ def test_parameter_spec_alias_1():
         ),
     ],
 )
-def test_parameter_spec_from_dict_ok(input_d, ref):
+def test_parameter_part_from_dict_ok(input_d, ref):
 
     if not isinstance(input_d, list):
         input_d = [input_d]
@@ -39,9 +39,9 @@ def test_parameter_spec_from_dict_ok(input_d, ref):
         for d in input_d:
             r = Parameter.from_dict(d)
 
-            assert r.variable == ref[0]
-            assert r.param == ref[0]
-            assert r.units == ref[1]
+            assert r.variable() == ref[0]
+            assert r.param() == ref[0]
+            assert r.units() == ref[1]
 
 
 @pytest.mark.parametrize(
@@ -66,7 +66,7 @@ def test_parameter_spec_from_dict_ok(input_d, ref):
         ),
     ],
 )
-def test_parameter_spec_set(input_d, ref):
+def test_parameter_part_set(input_d, ref):
 
     r = Parameter(variable="p", units="Pa")
 
@@ -77,8 +77,9 @@ def test_parameter_spec_set(input_d, ref):
         r1 = r.set(**d)
 
         for k, v in ref.items():
-            assert getattr(r1, k) == v, f"key {k} expected {v} got {getattr(r1, k)}"
+            rv = getattr(r1, k)()
+            assert rv == v, f"key {k} expected {v} got {rv}"
 
         # the original object is unchanged
-        assert r.variable == "p"
-        assert r.units == "Pa"
+        assert r.variable() == "p"
+        assert r.units() == "Pa"

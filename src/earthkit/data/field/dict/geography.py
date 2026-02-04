@@ -12,7 +12,7 @@ from math import prod
 
 import numpy as np
 
-from earthkit.data.field.spec.geography import Geography
+from earthkit.data.field.part.geography import Geography
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
 

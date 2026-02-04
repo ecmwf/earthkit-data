@@ -13,7 +13,7 @@ import datetime
 
 import pytest
 
-from earthkit.data.field.spec.time import Time
+from earthkit.data.field.part.time import Time
 
 
 @pytest.mark.parametrize(

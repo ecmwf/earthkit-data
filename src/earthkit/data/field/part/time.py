@@ -7,21 +7,206 @@
 # nor does it submit to any jurisdiction.
 #
 
+from abc import abstractmethod
 
 from earthkit.data.core.constants import ZERO_TIMEDELTA
 from earthkit.data.utils.dates import datetime_from_date_and_time
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
-from .spec import mark_alias
-from .spec import mark_key
-from .spec import normalise_create_kwargs
-from .spec import normalise_set_kwargs
-from .spec import spec_keys
+from .part import SimpleFieldPart
+from .part import mark_alias
+from .part import mark_key
+from .part import normalise_create_kwargs
+from .part import normalise_set_kwargs
+from .part import part_keys
 
 
-@spec_keys
-class Time:
+@part_keys
+class BaseTime(SimpleFieldPart):
+    @mark_key("get")
+    @abstractmethod
+    def base_datetime(self):
+        """Return the base datetime of the time object."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def valid_datetime(self):
+        """Return the valid datetime of the time object."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def step(self):
+        """Return the forecast period of the time object."""
+        pass
+
+    @mark_alias("base_datetime")
+    def forecast_reference_time(self):
+        """Return the forecast reference time (alias of `base_datetime`)."""
+        pass
+
+    @mark_alias("step")
+    def forecast_period(self):
+        """Return the forecast period (alias of `step`)."""
+        pass
+
+    @abstractmethod
+    @abstractmethod
+    def forecast_month(self):
+        """Return the forecast month."""
+        pass
+
+
+class ForecastTime(BaseTime):
+    _base_datetime = None
+    _step = ZERO_TIMEDELTA
+
+    def __init__(
+        self,
+        base_datetime=None,
+        step=None,
+    ):
+        if base_datetime is not None:
+            self._base_datetime = to_datetime(base_datetime)
+
+        if step is not None:
+            self._step = to_timedelta(step)
+
+    def base_datetime(self):
+        """Return the base datetime of the time object."""
+        return self._base_datetime
+
+    def valid_datetime(self):
+        """Return the valid datetime of the time object."""
+        return self._base_datetime + self._step
+
+    def step(self):
+        """Return the forecast period of the time object."""
+        return self._step
+
+    def forecast_month(self):
+        """Return the forecast month."""
+        return None
+
+    def to_dict(self):
+        return {
+            "valid_datetime": self.valid_datetime,
+            "base_datetime": self.base_datetime,
+            "step": self.step,
+        }
+
+    @classmethod
+    def from_base_datetime(
+        cls,
+        *,
+        base_datetime=None,
+        step=None,
+    ):
+        """Set the base datetime of the time object."""
+        return cls(
+            base_datetime=base_datetime,
+            step=step,
+        )
+
+    @classmethod
+    def from_base_date_and_time(cls, *, base_date=None, base_time=None, step=None):
+        dt = datetime_from_date_and_time(base_date, base_time)
+        return cls.from_base_datetime(base_datetime=dt, step=step)
+
+    # @classmethod
+    # def from_date_and_time(cls, *, date=None, time=None, step=None):
+    #     dt = datetime_from_date_and_time(date, time)
+    #     return cls.from_base_datetime(base_datetime=dt, step=step)
+
+    @classmethod
+    def from_valid_datetime(
+        cls,
+        *,
+        valid_datetime=None,
+        step=None,
+    ):
+        """Set the valid datetime of the time object."""
+        valid_datetime = to_datetime(valid_datetime)
+        step = to_timedelta(step) if step is not None else ZERO_TIMEDELTA
+        base_datetime = valid_datetime - step
+        return cls(
+            base_datetime=base_datetime,
+            step=step,
+        )
+
+    @classmethod
+    def from_base_datetime_and_valid_datetime(
+        cls,
+        *,
+        base_datetime=None,
+        valid_datetime=None,
+    ):
+        valid_datetime = to_datetime(valid_datetime)
+        base_datetime = to_datetime(base_datetime)
+        step = valid_datetime - base_datetime
+        return cls(
+            base_datetime=base_datetime,
+            step=step,
+        )
+
+    @classmethod
+    def from_dict(cls, d, allow_unused=False):
+        if not isinstance(d, dict):
+            raise TypeError("data must be a dictionary")
+
+        KEYS = {
+            "valid_datetime",
+            "base_datetime",
+            "step",
+            "base_date",
+            "base_time",
+            "valid_datetime",
+        }
+
+        d1 = normalise_create_kwargs(cls, d, allowed_keys=KEYS, allow_unused=allow_unused, remove_nones=True)
+
+        keys_s = set(d1.keys())
+        found = tuple(sorted(list(KEYS.intersection(keys_s))))
+        # found = self.reduce(found)
+        METHODS = {
+            ("valid_datetime",): cls.from_valid_datetime,
+            ("valid_datetime", "step"): cls.from_valid_datetime,
+            ("base_datetime",): cls.from_base_datetime,
+            ("base_datetime", "valid_datetime"): cls.from_base_datetime_and_valid_datetime,
+            ("base_datetime", "step"): cls.from_base_datetime,
+            ("base_date",): cls.from_base_date_and_time,
+            ("base_date", "base_time"): cls.from_base_date_and_time,
+            ("base_date", "base_time", "step"): cls.from_base_date_and_time,
+        }
+
+        method, _ = METHODS.get(found)
+        if method:
+            d1 = {k: d1[k] for k in found}
+            data = method(**d1)
+            return data
+
+        if not d1:
+            return cls()
+
+        # raise ValueError(f"Invalid keys in data: {list(d.keys())}. Expected one of {cls._CREATE_KEYS}.")
+
+    def __getstate__(self):
+        state = {}
+        state["base_datetime"] = self._base_datetime
+        state["step"] = self._step
+        return state
+
+    def __setstate__(self, state):
+        self.__init__(
+            base_datetime=state["base_datetime"],
+            step=state["step"],
+        )
+
+
+@part_keys
+class TimeOri(SimpleFieldPart):
     _base_datetime = None
     _step = ZERO_TIMEDELTA
 
@@ -192,7 +377,7 @@ class Time:
         _add("base_datetime", base_datetime)
         _add("step", step)
 
-        return Time(**d)
+        return TimeOri(**d)
 
     def _set_valid_datetime(self, *, valid_datetime=None):
         valid_datetime = to_datetime(valid_datetime)
@@ -250,6 +435,18 @@ class Time:
         return self._set_generic(base_datetime=dt, step=step)
 
 
+# class AnalysisTime(Time):
+#     pass
+
+
+# class ForecastTime(Time):
+#     pass
+
+
+# class MonthlyForecastTime(Time):
+#     pass
+
+
 class MethodMap:
     def __init__(self, core_keys, extra_keys, methods):
         self.core_keys = core_keys
@@ -259,7 +456,7 @@ class MethodMap:
         assert self.core_keys
         assert isinstance(self.core_keys, set)
         assert isinstance(self.extra_keys, set)
-        assert self.methods
+        # assert self.methods
         assert isinstance(self.methods, dict)
 
         self.mapping = {}
@@ -306,17 +503,17 @@ CREATE_METHOD_MAP = MethodMap(
     core_keys={"valid_datetime", "base_datetime", "step", "base_date", "base_time", "date", "time"},
     extra_keys=set(),
     methods={
-        ("valid_datetime",): Time.from_valid_datetime,
-        ("valid_datetime", "step"): Time.from_valid_datetime,
-        ("base_datetime",): Time.from_base_datetime,
-        ("base_datetime", "valid_datetime"): Time.from_base_datetime_and_valid_datetime,
-        ("base_datetime", "step"): Time.from_base_datetime,
-        ("base_date",): Time.from_base_date_and_time,
-        ("base_date", "base_time"): Time.from_base_date_and_time,
-        ("base_date", "base_time", "step"): Time.from_base_date_and_time,
-        ("date",): Time.from_date_and_time,
-        ("date", "time"): Time.from_date_and_time,
-        ("date", "time", "step"): Time.from_date_and_time,
+        # ("valid_datetime",): Time.from_valid_datetime,
+        # ("valid_datetime", "step"): Time.from_valid_datetime,
+        # ("base_datetime",): Time.from_base_datetime,
+        # ("base_datetime", "valid_datetime"): Time.from_base_datetime_and_valid_datetime,
+        # ("base_datetime", "step"): Time.from_base_datetime,
+        # ("base_date",): Time.from_base_date_and_time,
+        # ("base_date", "base_time"): Time.from_base_date_and_time,
+        # ("base_date", "base_time", "step"): Time.from_base_date_and_time,
+        # ("date",): Time.from_date_and_time,
+        # ("date", "time"): Time.from_date_and_time,
+        # ("date", "time", "step"): Time.from_date_and_time,
     },
 )
 
@@ -325,19 +522,19 @@ SET_METHOD_MAP = MethodMap(
     core_keys={"valid_datetime", "base_datetime", "step", "base_date", "base_time"},
     extra_keys=set(),
     methods={
-        ("step",): Time._set_generic,
-        ("base_datetime",): Time._set_generic,
-        ("base_datetime", "step"): Time._set_generic,
-        ("valid_datetime",): Time._set_valid_datetime,
-        ("valid_datetime", "step"): Time._set_valid_datetime_and_step,
-        ("base_datetime", "valid_datetime"): Time._set_base_datetime_and_valid_datetime,
-        (
-            "base_datetime",
-            "valid_datetime",
-            "step",
-        ): Time._set_base_datetime_valid_datetime_and_step,
-        ("base_date",): Time._set_base_date_and_time,
-        ("base_date", "base_time"): Time._set_base_date_and_time,
-        ("base_date", "base_time", "step"): Time._set_base_date_and_time,
+        # ("step",): Time._set_generic,
+        # ("base_datetime",): Time._set_generic,
+        # ("base_datetime", "step"): Time._set_generic,
+        # ("valid_datetime",): Time._set_valid_datetime,
+        # ("valid_datetime", "step"): Time._set_valid_datetime_and_step,
+        # ("base_datetime", "valid_datetime"): Time._set_base_datetime_and_valid_datetime,
+        # (
+        #     "base_datetime",
+        #     "valid_datetime",
+        #     "step",
+        # ): Time._set_base_datetime_valid_datetime_and_step,
+        # ("base_date",): Time._set_base_date_and_time,
+        # ("base_date", "base_time"): Time._set_base_date_and_time,
+        # ("base_date", "base_time", "step"): Time._set_base_date_and_time,
     },
 )

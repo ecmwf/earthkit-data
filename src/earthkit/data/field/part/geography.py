@@ -10,14 +10,108 @@
 
 from abc import abstractmethod
 
-from .spec import Spec
-from .spec import mark_key
-from .spec import normalise_set_kwargs
-from .spec import spec_keys
+from .part import SimpleFieldPart
+from .part import mark_key
+from .part import normalise_set_kwargs
+from .part import part_keys
 
 
-@spec_keys
-class Geography(Spec):
+@part_keys
+class BaseGeography(SimpleFieldPart):
+    @mark_key("get")
+    @abstractmethod
+    def latitudes(self):
+        r"""array-like: Return the latitudes."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def longitudes(self):
+        r"""array-like: Return the longitudes."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def distinct_latitudes(self):
+        r"""Return the distinct latitudes."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def distinct_longitudes(self):
+        r"""Return the distinct longitudes."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def x(self):
+        r"""array-like: Return the x coordinates in the original CRS."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def y(self):
+        r"""array-like: Return the y coordinates in the original CRS."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def shape(self):
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def projection(self):
+        """Return the projection."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def bounding_box(self):
+        """:obj:`BoundingBox <data.utils.bbox.BoundingBox>`: Return the bounding box."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def unique_grid_id(self):
+        r"""str: Return the unique id of the grid."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def grid_spec(self):
+        r"""Return the grid specification."""
+        pass
+
+    @mark_key("get")
+    @abstractmethod
+    def grid_type(self):
+        r"""Return the grid specification."""
+        pass
+
+    @classmethod
+    def from_dict(cls, data, allow_unused=False, shape_hint=None):
+        from ..dict.geography import make_geography
+
+        spec = make_geography(data, shape_hint=shape_hint)
+        return spec
+
+    def set(self, *args, shape_hint=None, **kwargs):
+        kwargs = normalise_set_kwargs(self, *args, **kwargs)
+        keys = set(kwargs.keys())
+
+        if keys == {"grid_spec"}:
+            spec = self.from_grid_spec(self, kwargs["grid_spec"])
+            return spec
+        if keys == {"latitudes", "longitudes"}:
+            spec = self.from_dict(kwargs, shape_hint=shape_hint)
+            return spec
+
+        raise ValueError(f"Invalid {keys=} for Geography specification")
+
+
+@part_keys
+class GeographyOri(SimpleFieldPart):
     # _SET_KEYS = ("latitudes", "longitudes")
     _SET_KEYS = ("latitudes", "longitudes", "projection", "unique_grid_id", "shape", "grid_type")
 

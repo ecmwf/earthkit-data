@@ -7,15 +7,15 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SpecFieldPart
-from .spec.vertical import Vertical
+from .core import SimpleFieldPartHandler
+from .part.vertical import BaseVertical
 
 
 # @wrap_spec_methods(keys=["level", "layer", "cf", "abbreviation", "units", "positive", "type"])
-class VerticalFieldPart(SpecFieldPart):
+class VerticalFieldPartHandler(SimpleFieldPartHandler):
     """Vertical part of a field."""
 
-    SPEC_CLS = Vertical
+    PART_CLS = BaseVertical
     NAME = "vertical"
     NAMESPACE_KEYS = ("level", "level_type", "units")
 

@@ -9,18 +9,19 @@
 
 
 from .collector import GribContextCollector
-from .core import GribFieldPart
+from .core import GribFieldPartHandler
 
 
 class GribEnsembleBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.field.ensemble import EnsembleFieldPart
+        from earthkit.data.field.ensemble import EnsembleFieldPartHandler
+        from earthkit.data.field.part.ensemble import Ensemble
 
         d = GribEnsembleBuilder._build_dict(handle)
-        spec = EnsembleFieldPart.from_dict(d)
-        # spec._set_private_data("handle", handle)
-        return spec
+        part = Ensemble.from_dict(d)
+        handler = EnsembleFieldPartHandler.from_part(part)
+        return handler
 
     @staticmethod
     def _build_dict(handle):
@@ -48,6 +49,6 @@ class GribEnsembleContextCollector(GribContextCollector):
 COLLECTOR = GribEnsembleContextCollector()
 
 
-class GribEnsemble(GribFieldPart):
+class GribEnsemble(GribFieldPartHandler):
     BUILDER = GribEnsembleBuilder
     COLLECTOR = COLLECTOR

@@ -7,18 +7,18 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.field.spec.geography import Geography
-from earthkit.data.field.spec.spec import normalise_set_kwargs
+from earthkit.data.field.part.geography import BaseGeography
+from earthkit.data.field.part.part import normalise_set_kwargs
 
 from .collector import GribContextCollector
-from .core import GribFieldPart
+from .core import GribFieldPartHandler
 
 
 def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
-class GribGeographySpec(Geography):
+class GribGeographySpec(BaseGeography):
     def __init__(self, handle):
         self.handle = handle
 
@@ -122,7 +122,7 @@ class GribGeographySpec(Geography):
 
     def grid_spec(self):
         from .grid_spec import make_gridspec
-        from .labels import GribLabels
+        from .metadata import GribLabels
 
         return make_gridspec(GribLabels(self.handle))
 
@@ -183,7 +183,7 @@ class GribGeographyContextCollector(GribContextCollector):
 COLLECTOR = GribGeographyContextCollector()
 
 
-class GribGeography(GribFieldPart):
+class GribGeography(GribFieldPartHandler):
     BUILDER = GribGeographyBuilder
     COLLECTOR = COLLECTOR
 

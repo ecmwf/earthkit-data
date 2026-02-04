@@ -19,7 +19,7 @@ NAMESPACES = [
     "vertical",
 ]
 
-CUSTOM_KEYS = "message"
+CUSTOM_KEYS = {"message", "handle"}
 
 
 class MetadataCacheHandler:
@@ -64,34 +64,36 @@ class MetadataCacheHandler:
         return wrapped
 
 
-class GribLabels:
+class GribMetadata:
 
     NAME = "grib"
     KEY_PREFIX = "grib."
 
     def __init__(self, handle):
-        self.handle = handle
+        self._handle = handle
         self._cache = {}
 
     # def from_dict(self, d):
     #     raise NotImplementedError()
 
+    @property
+    def handle(self):
+        return self._handle
+
     def __len__(self):
         return sum(map(lambda i: 1, self.keys()))
 
     def __contains__(self, key):
-        if key.startswith(self.KEY_PREFIX):
-            key = key[len(self.KEY_PREFIX) :]
-        return key in CUSTOM_KEYS or self.handle.__contains__(key)
+        return key in CUSTOM_KEYS or self._handle.__contains__(key)
 
     def __iter__(self):
         return self.keys()
 
     def keys(self):
-        return self.handle.keys()
+        return self._handle.keys()
 
     def items(self):
-        return self.handle.items()
+        return self._handle.items()
 
     def __getitem__(self, key):
         return self.get(key, raise_on_missing=True)
@@ -101,8 +103,11 @@ class GribLabels:
     #         return self.handle.get(key)
     #     raise KeyError(f"Label '{key}' not found in GribLabels")
 
-    def metadata(self, keys=None, default=None):
-        return self.handle.get(keys=keys, default=default)
+    # def metadata(self, keys=None, default=None):
+    #     return self.handle.get(keys=keys, default=default)
+
+    def metadata(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
 
     def override(self, *args, headers_only_clone=True, **kwargs):
         pass
@@ -120,27 +125,23 @@ class GribLabels:
         if not raise_on_missing:
             _kwargs["default"] = default
 
-        # allow using the "grib." prefix.
-        if key.startswith(self.KEY_PREFIX):
-            key = key[len(self.KEY_PREFIX) :]
-
         if key == "message":
             return self.message()
 
         if key == "handle":
-            return self.handle
+            return self._handle
 
         # key = _key_name(key)
 
-        v = self.handle.get(key, ktype=astype, **_kwargs)
+        v = self._handle.get(key, ktype=astype, **_kwargs)
 
         # special case when  "shortName" is "~".
         if key == "shortName" and v == "~":
-            v = self.handle.get("paramId", ktype=str, **_kwargs)
+            v = self._handle.get("paramId", ktype=str, **_kwargs)
         return v
 
     def set(self, d):
-        return
+        raise NotImplementedError("GribMetadata.set is not implemented")
 
     def message(self):
         r"""Return a buffer containing the encoded message.
@@ -154,32 +155,27 @@ class GribLabels:
     def namespace(self, owner, name, result):
         if isinstance(name, str):
             name = [name]
-        if isinstance(name, (list, tuple)):
-            if name == [self.NAME]:
-                for ns in NAMESPACES:
-                    result[self.KEY_PREFIX + ns] = self.handle.as_namespace(ns, prefix=self.KEY_PREFIX)
+        elif name is None or name == [None]:
+            name = NAMESPACES
 
-            else:
-                for ns in name:
-                    if ns.startswith(self.KEY_PREFIX):
-                        result[ns] = self.handle.as_namespace(
-                            ns[len(self.KEY_PREFIX) :], prefix=self.KEY_PREFIX
-                        )
+        if isinstance(name, (list, tuple)):
+            for ns in name:
+                result[ns] = self.handle.as_namespace(ns)
 
     def new_array_field(self, field, array_namespace=None, **kwargs):
         from earthkit.data.field.grib.create import new_array_grib_field
 
-        return new_array_grib_field(field, self.handle, array_namespace=array_namespace, **kwargs)
+        return new_array_grib_field(field, self._handle, array_namespace=array_namespace, **kwargs)
 
     def sync(self, owner):
         handle_new = None
         for k, v in owner._parts.items():
-            if hasattr(v, "handle") and v.handle is not self.handle:
-                handle_new = v.handle
+            if hasattr(v, "handle") and v.handle is not self._handle:
+                handle_new = v._handle
                 break
 
         if handle_new:
-            self.handle = handle_new
+            self._handle = handle_new
             for k, v in owner._parts.items():
                 if hasattr(v, "handle") and hasattr(v, "from_handle") and v.handle is not self.handle:
                     owner._parts[k] = v.from_handle(handle_new)

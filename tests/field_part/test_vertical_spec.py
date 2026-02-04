@@ -11,8 +11,8 @@
 
 import pytest
 
-from earthkit.data.field.spec.level_type import get_level_type
-from earthkit.data.field.spec.vertical import Vertical
+from earthkit.data.field.part.level_type import get_level_type
+from earthkit.data.field.part.vertical import Vertical
 
 
 def test_vertical_spec_alias_1():

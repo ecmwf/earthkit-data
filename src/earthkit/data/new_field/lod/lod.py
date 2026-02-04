@@ -8,9 +8,9 @@
 #
 
 
-from ...core.spec.data import ArrayData
-from ...core.spec.parameter import Parameter
-from ...core.spec.vertical import Vertical
+from ...core.part.data import ArrayData
+from ...core.part.parameter import Parameter
+from ...core.part.vertical import Vertical
 from ...specs.labels import RawLabels
 
 

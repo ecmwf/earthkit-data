@@ -8,16 +8,14 @@
 #
 
 
-from .core import SpecFieldPart
-from .core import wrap_spec_methods
-from .spec.time import Time
+from .core import SimpleFieldPartHandler
+from .part.time import BaseTime
 
 
-@wrap_spec_methods(keys=["base_datetime", "valid_datetime", "step", "base_date", "base_time"])
-class TimeFieldPart(SpecFieldPart):
+class TimeFieldPartHandler(SimpleFieldPartHandler):
     """Time part of a field."""
 
-    SPEC_CLS = Time
+    PART_CLS = BaseTime
     NAME = "time"
     NAMESPACE_KEYS = ("base_datetime", "valid_datetime", "step")
 

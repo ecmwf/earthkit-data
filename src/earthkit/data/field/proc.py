@@ -7,16 +7,14 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SpecFieldPart
-from .core import wrap_spec_methods
-from .spec.proc import Proc
+from .core import SimpleFieldPartHandler
+from .part.proc import BaseProc
 
 
-@wrap_spec_methods(keys=["time", "time_value", "time_method", "items"])
-class ProcFieldPart(SpecFieldPart):
+class ProcFieldPartHandler(SimpleFieldPartHandler):
     """A specification of a vertical level or layer."""
 
-    SPEC_CLS = Proc
+    PART_CLS = BaseProc
     NAME = "proc"
     NAMESPACE_KEYS = tuple()
 
@@ -27,4 +25,4 @@ class ProcFieldPart(SpecFieldPart):
 
     def set(self, *args, **kwargs):
         spec = self._spec.set(*args, **kwargs)
-        return ProcFieldPart(spec)
+        return ProcFieldPartHandler(spec)

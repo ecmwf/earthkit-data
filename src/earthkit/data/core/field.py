@@ -21,13 +21,13 @@ from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalize
 from earthkit.data.field.data import DataFieldPart
-from earthkit.data.field.ensemble import EnsembleFieldPart
-from earthkit.data.field.geography import GeographyFieldPart
+from earthkit.data.field.ensemble import EnsembleFieldPartHandler
+from earthkit.data.field.geography import GeographyFieldPartHandler
 from earthkit.data.field.labels import SimpleLabels
-from earthkit.data.field.parameter import ParameterFieldPart
-from earthkit.data.field.proc import ProcFieldPart
-from earthkit.data.field.time import TimeFieldPart
-from earthkit.data.field.vertical import VerticalFieldPart
+from earthkit.data.field.parameter import ParameterFieldPartHandler
+from earthkit.data.field.proc import ProcFieldPartHandler
+from earthkit.data.field.time import TimeFieldPartHandler
+from earthkit.data.field.vertical import VerticalFieldPartHandler
 from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.utils.array import flatten as array_flatten
 from earthkit.data.utils.array import reshape as array_reshape
@@ -59,6 +59,7 @@ VERTICAL = "vertical"
 ENSEMBLE = "ensemble"
 PROC = "proc"
 LABELS = "labels"
+METADATA = "metadata"
 
 DUMP_ORDER = [
     PARAMETER,
@@ -118,7 +119,7 @@ class Field(Base):
         The geography of the field.
     vertical : VerticalFieldPart
         The vertical level of the field.
-    ensemble : EnsembleFieldPart
+    ensemble : EnsembleFieldPartHandler
         The ensemble specification of the field.
     proc : ProcFieldPart
         The processing specification of the field.
@@ -143,12 +144,12 @@ class Field(Base):
 
     _DEFAULT_PART_CLS = {
         DATA: DataFieldPart,
-        TIME: TimeFieldPart,
-        PARAMETER: ParameterFieldPart,
-        GEOGRAPHY: GeographyFieldPart,
-        VERTICAL: VerticalFieldPart,
-        ENSEMBLE: EnsembleFieldPart,
-        PROC: ProcFieldPart,
+        TIME: TimeFieldPartHandler,
+        PARAMETER: ParameterFieldPartHandler,
+        GEOGRAPHY: GeographyFieldPartHandler,
+        VERTICAL: VerticalFieldPartHandler,
+        ENSEMBLE: EnsembleFieldPartHandler,
+        PROC: ProcFieldPartHandler,
         LABELS: SimpleLabels,
     }
 
@@ -374,32 +375,37 @@ class Field(Base):
     @property
     def ensemble(self):
         """Ensemble: Return the ensemble specification of the field."""
-        return self._parts[ENSEMBLE].spec
+        return self._parts[ENSEMBLE].part
 
     @property
     def time(self):
         """Time: Return the time specification of the field."""
-        return self._parts[TIME].spec
+        return self._parts[TIME].part
 
     @property
     def vertical(self):
         """Vertical: Return the vertical specification of the field."""
-        return self._parts[VERTICAL].spec
+        return self._parts[VERTICAL].part
 
     @property
     def parameter(self):
         """Parameter: Return the vertical specification of the field."""
-        return self._parts[PARAMETER].spec
+        return self._parts[PARAMETER].part
 
     @property
     def geography(self):
         """Geography: Return the geography specification of the field."""
-        return self._parts[GEOGRAPHY].spec
+        return self._parts[GEOGRAPHY].part
 
     @property
     def proc(self):
         """Proc: Return the proc specification of the field."""
-        return self._parts[PROC].spec
+        return self._parts[PROC].part
+
+    @property
+    def labels(self):
+        """SimpleLabels: Return the labels of the field."""
+        return self._parts[LABELS]
 
     @classmethod
     def from_array(cls, array):
@@ -522,6 +528,7 @@ class Field(Base):
     def _get_part(self, key):
         """Return the part name, part object and key name for the specified key."""
         # m = self._PART_KEYS.get(key)
+
         m = None
         if m is not None:
             return m[0], self._parts.get(m[0]), m[1]
@@ -575,44 +582,43 @@ class Field(Base):
             If ``raise_on_missing`` is True and ``key`` is not found.
 
         """
-
         remapping = build_remapping(remapping, patches, forced_build=False)
         if remapping:
             return remapping(self.get_single)(
                 key, default=default, astype=astype, raise_on_missing=raise_on_missing
             )
 
-        v = None
-
-        # first try the parts
         part_name, part, key_name = self._get_part(key)
 
         if part:
             return part.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
-        # next try the labels with the full key
-        elif key in self._parts[LABELS]:
-            return self._parts[LABELS].get(
-                key, default=default, astype=astype, raise_on_missing=raise_on_missing
-            )
-        # try the private parts
-        elif self._private:
-            if part_name in self._private:
-                return self._private[part_name].get(
-                    key_name, default=default, astype=astype, raise_on_missing=raise_on_missing
-                )
-            else:
 
-                def _cast(v):
-                    if callable(astype):
-                        try:
-                            return astype(v)
-                        except Exception:
-                            return None
-                    return v
+        if not part_name:
+            from earthkit.data.core.config import CONFIG
 
-                v = self._private.get(key)
-                if v is not None:
-                    return _cast(v)
+            if CONFIG.get("search_all_field_parts", True):
+                part_name = METADATA
+
+        if part_name == METADATA:
+            for _, private_part in self._private.items():
+                if hasattr(private_part, "metadata"):
+                    return private_part.metadata(
+                        key_name, default=default, astype=astype, raise_on_missing=raise_on_missing
+                    )
+                else:
+
+                    def _cast(v):
+                        if callable(astype):
+                            try:
+                                return astype(v)
+                            except Exception:
+                                return None
+                        return v
+
+                    # TODO: review this
+                    v = self.private_part.get(key)
+                    if v is not None:
+                        return _cast(v)
 
         if raise_on_missing:
             raise KeyError(f"Key {key} not found in field")
@@ -775,7 +781,37 @@ class Field(Base):
 
         return r
 
-    def metadata(self, *keys, astype=None, remapping=None, patches=None, **kwargs):
+    def metadata(
+        self,
+        keys,
+        default=None,
+        *,
+        astype=None,
+        raise_on_missing=False,
+        output=None,
+        remapping=None,
+        patches=None,
+    ):
+
+        if isinstance(keys, str):
+            keys = "metadata." + keys
+        else:
+            is_tuple = isinstance(keys, tuple)
+            keys = ["metadata." + x for x in keys]
+            if is_tuple:
+                keys = tuple(keys)
+
+        return self.get(
+            keys,
+            default=default,
+            astype=astype,
+            raise_on_missing=raise_on_missing,
+            output=output,
+            remapping=remapping,
+            patches=patches,
+        )
+
+    def metadata_ori(self, *keys, astype=None, remapping=None, patches=None, **kwargs):
         r"""Return metadata values from the field.
 
         When called without any arguments returns a :obj:`Metadata` object.
@@ -946,10 +982,15 @@ class Field(Base):
         _kwargs = defaultdict(dict)
         for k, v in kwargs.items():
             part_name, part, key_name = self._get_part(k)
-            if part:
-                _kwargs[part_name][key_name] = v
+            if part is not None:
+                if key_name is not None and key_name != "":
+                    _kwargs[part_name][key_name] = v
+                else:
+                    raise KeyError(f"Key {k} cannot be set on the field.")
             else:
-                _kwargs[LABELS][k] = v
+                raise KeyError(f"Key {k} cannot be set on the field.")
+            # else:
+            #     _kwargs[LABELS][k] = v
 
         if _kwargs:
             r = {}
@@ -967,25 +1008,6 @@ class Field(Base):
     def _set_values(self, array):
         data = self._parts[DATA].set_values(array)
         return Field.from_field(self, data=data)
-
-    def set_labels(self, *args, **kwargs):
-        r"""Set labels for the field.
-
-        Parameters
-        ----------
-        *args: tuple
-            Positional arguments to be passed to the label setter.
-        **kwargs: dict
-            Keyword arguments to be passed to the label setter.
-
-        Returns
-        -------
-        Field
-            A new Field object with the updated label.
-        """
-
-        d = dict(*args, **kwargs)
-        return Field(self, labels=self._parts[LABELS].set(d))
 
     @deprecation.deprecated(deprecated_in="0.13.0", details="Use to_target() instead")
     def save(self, filename, append=False, **kwargs):
@@ -1087,7 +1109,7 @@ class Field(Base):
     def to_pandas(self, *args, **kwargs):
         pass
 
-    def namespace(self, name="all", *, simplify=True):
+    def _namespace(self, name="all", *, namespace=None, simplify=True):
         r"""Return the namespaces as a dict.
 
         Parameters
@@ -1123,21 +1145,28 @@ class Field(Base):
         for m in self._parts.values():
             m.namespace(self, name, result)
 
-        if (
-            name is not None
-            and not (isinstance(name, (list, tuple)) and len(name) == len(result))
-            and self._private
-        ):
-            for _, v in self._private.items():
-                if hasattr(v, "namespace"):
-                    v.namespace(self, name, result)
+        if name == "metadata" and self._private:
+            md = self._private.get("metadata")
+
+            print("dump md:", md)
+            if md and hasattr(md, "namespace"):
+                md.namespace(self, namespace, result)
+
+        # if (
+        #     name is not None
+        #     and not (isinstance(name, (list, tuple)) and len(name) == len(result))
+        #     and self._private
+        # ):
+        #     for _, v in self._private.items():
+        #         if hasattr(v, "namespace"):
+        #             v.namespace(self, name, result)
 
         if simplify and isinstance(name, str) and len(result) == 1 and name in result:
             return result[name]
 
         return result
 
-    def dump(self, namespace=all, **kwargs):
+    def dump(self, part=all, filter=None, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
 
         In a Jupyter notebook it is represented as a tabbed interface.
@@ -1172,7 +1201,7 @@ class Field(Base):
         """
         from earthkit.data.utils.summary import format_namespace_dump
 
-        d = self.namespace(namespace, simplify=False)
+        d = self._namespace(part, namespace=filter, simplify=False)
 
         d1 = {}
         for k in DUMP_ORDER:

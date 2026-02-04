@@ -10,7 +10,7 @@
 
 from abc import abstractmethod
 
-from .spec import Spec
+from .part import Spec
 
 
 class Labels(Spec):

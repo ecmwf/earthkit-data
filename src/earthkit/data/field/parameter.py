@@ -7,15 +7,16 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SpecFieldPart
-from .spec.parameter import Parameter
+from .core import SimpleFieldPartHandler
+from .part.parameter import BaseParameter
+from .part.parameter import create_parameter
 
 
-# @wrap_spec_methods(keys=["variable", "units"])
-class ParameterFieldPart(SpecFieldPart):
+class ParameterFieldPartHandler(SimpleFieldPartHandler):
     """Parameter part of a field."""
 
-    SPEC_CLS = Parameter
+    PART_CLS = BaseParameter
+    PART_MAKER = create_parameter
     NAME = "parameter"
     NAMESPACE_KEYS = ("variable", "units")
 

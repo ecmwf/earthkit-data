@@ -10,11 +10,11 @@ from abc import ABCMeta
 from abc import abstractmethod
 from collections import defaultdict
 
-from earthkit.data.field.spec.level_type import LevelTypes
-from earthkit.data.field.vertical import VerticalFieldPart
+from earthkit.data.field.part.level_type import LevelTypes
+from earthkit.data.field.vertical import VerticalFieldPartHandler
 
 from .collector import GribContextCollector
-from .core import GribFieldPart
+from .core import GribFieldPartHandler
 
 
 class Converter:
@@ -167,7 +167,7 @@ class GribVerticalBuilder:
     @staticmethod
     def build(handle):
         d = GribVerticalBuilder._build_dict(handle)
-        spec = VerticalFieldPart.from_dict(d)
+        spec = VerticalFieldPartHandler.from_dict(d)
         # spec._set_private_data("handle", handle)
         return spec
 
@@ -208,6 +208,6 @@ class GribVerticalContextCollector(GribContextCollector):
 COLLECTOR = GribVerticalContextCollector()
 
 
-class GribVertical(GribFieldPart):
+class GribVertical(GribFieldPartHandler):
     BUILDER = GribVerticalBuilder
     COLLECTOR = COLLECTOR

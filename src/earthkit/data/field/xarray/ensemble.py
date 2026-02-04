@@ -10,7 +10,7 @@
 from typing import Any
 
 from earthkit.data.field.ensemble import EnsembleFieldPart
-from earthkit.data.field.spec.ensemble import Ensemble
+from earthkit.data.field.part.ensemble import Ensemble
 
 
 def get_member(coord, selection):

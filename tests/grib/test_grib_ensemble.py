@@ -13,15 +13,16 @@ import os
 import sys
 
 import pytest
+from grib_fixtures import FL_TYPES  # noqa: E402
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
 
-from grib_fixtures import FL_TYPES  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
+# @pytest.mark.parametrize("fl_type", ["file"])
 def test_grib_ensemble_1(fl_type):
     ds, _ = load_grib_data("ens_50.grib", fl_type, folder="data")
     f = ds[0]

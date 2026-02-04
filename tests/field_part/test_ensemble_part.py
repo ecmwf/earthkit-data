@@ -11,14 +11,14 @@
 
 import pytest
 
-from earthkit.data.field.spec.ensemble import Ensemble
+from earthkit.data.field.part.ensemble import Ensemble
 
 
-def test_ensemble_spec_alias_1():
+def test_ensemble_part_alias_1():
     r = Ensemble(member=1)
-    assert r.member == "1"
-    assert r.realisation == "1"
-    assert r.realization == "1"
+    assert r.member() == "1"
+    assert r.realisation() == "1"
+    assert r.realization() == "1"
 
 
 @pytest.mark.parametrize(
@@ -33,11 +33,11 @@ def test_ensemble_spec_alias_1():
                 {"realisation": "5"},
                 {"realization": "5"},
             ],
-            ("5"),
+            ("5",),
         ),
     ],
 )
-def test_ensemble_spec_from_dict_ok(input_d, ref):
+def test_ensemble_part_from_dict_ok(input_d, ref):
 
     if not isinstance(input_d, list):
         input_d = [input_d]
@@ -46,9 +46,9 @@ def test_ensemble_spec_from_dict_ok(input_d, ref):
         for d in input_d:
             r = Ensemble.from_dict(d)
 
-            assert r.member == ref[0]
-            assert r.realisation == ref[0]
-            assert r.realization == ref[0]
+            assert r.member() == ref[0]
+            assert r.realisation() == ref[0]
+            assert r.realization() == ref[0]
 
 
 @pytest.mark.parametrize(
@@ -83,7 +83,7 @@ def test_ensemble_spec_from_dict_ok(input_d, ref):
         ),
     ],
 )
-def test_ensemble_spec_set(input_d, ref):
+def test_ensemble_part_set(input_d, ref):
 
     r = Ensemble(member=5)
 
@@ -94,7 +94,8 @@ def test_ensemble_spec_set(input_d, ref):
         r1 = r.set(**d)
 
         for k, v in ref.items():
-            assert getattr(r1, k) == v, f"key {k} expected {v} got {getattr(r1, k)}"
+            rv = getattr(r1, k)()
+            assert rv == v, f"key {k} expected {v} got {rv}"
 
         # the original object is unchanged
-        assert r.member == "5"
+        assert r.member() == "5"

@@ -11,8 +11,11 @@
 from abc import ABCMeta
 from abc import abstractmethod
 from typing import Any
+from typing import TypeAlias
 
-# from earthkit.data.field.spec.spec import Aliases
+# from earthkit.data.field.part.spec import Aliases
+
+FieldPart: TypeAlias = Any
 
 
 def wrap_spec_methods(keys=None):
@@ -46,8 +49,8 @@ def wrap_spec_methods(keys=None):
     return decorator
 
 
-class FieldPart(metaclass=ABCMeta):
-    """Abstract base class for Field parts.
+class FieldPartHandler(metaclass=ABCMeta):
+    """Abstract base class for Field part handlers.
 
     A FieldPart represents a component of a Field, such as time, vertical level, or
     processing information. It stores a specification object, the "spec",
@@ -66,20 +69,18 @@ class FieldPart(metaclass=ABCMeta):
     NAME : str
         The name of the FieldPart to be used as an identifier in the Field. It is also the
         name of the corresponding namespace in the Field.
-    NAMESPACE_KEYS : tuple
+    DUMP_KEYS : tuple
         A tuple of keys that should be included in the namespace represented by the FieldPart.
 
     """
 
     KEYS = tuple()
-    # ALIASES = Aliases()
-    ALL_KEYS = tuple()
     NAME = None
-    NAMESPACE_KEYS = None
+    DUMP_KEYS = None
 
     @classmethod
     @abstractmethod
-    def from_dict(cls, d: dict) -> "FieldPart":
+    def from_dict(cls, d: dict) -> "FieldPartHandler":
         """
         Create a FieldPart instance from a dictionary.
 
@@ -90,16 +91,16 @@ class FieldPart(metaclass=ABCMeta):
 
         Returns
         -------
-        Spec
-            The created Spec instance.
+        FieldPartHandler
+            The created FieldPartHandler instance.
         """
         pass
 
     @classmethod
     @abstractmethod
-    def from_any(cls, **kwargs) -> "FieldPart":
+    def from_any(cls, **kwargs) -> "FieldPartHandler":
         """
-        Create a FieldPart instance from any allowed input types.
+        Create a FieldPartHandler instance from any allowed input types.
 
         Parameters
         ----------
@@ -108,15 +109,15 @@ class FieldPart(metaclass=ABCMeta):
 
         Returns
         -------
-        Spec
-            The created Spec instance.
+        FieldPartHandler
+            The created FieldPartHandler instance.
         """
         pass
 
     @property
     @abstractmethod
-    def spec(self) -> "FieldPart":
-        """Return the spec of the FieldPart."""
+    def part(self) -> "FieldPart":
+        """Return the FieldPart."""
         pass
 
     @abstractmethod
@@ -154,7 +155,7 @@ class FieldPart(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def set(self, *args, **kwargs) -> "FieldPart":
+    def set(self, *args, **kwargs) -> "FieldPartHandler":
         """
         Create a new FieldPart instance with updated data.
 
@@ -203,30 +204,30 @@ class FieldPart(metaclass=ABCMeta):
         pass
 
 
-class FieldPartWrapper(metaclass=ABCMeta):
+class LazyFieldPartHandler(metaclass=ABCMeta):
     _exception = None
 
     @property
     @abstractmethod
-    def _part(self):
+    def _handler(self):
         pass
 
     def __getattr__(self, name):
         if self._exception is not None:
             raise self._exception(name)
-        return getattr(self._part, name)
+        return getattr(self._handler, name)
 
 
-class SpecFieldPart(FieldPart):
+class SimpleFieldPartHandler(FieldPartHandler):
     """A FieldPart that wraps a specification object.
 
     Parameters
     ----------
-    spec : Spec
+    part : Part
 
     Attributes
     ----------
-    spec : Spec
+    part : Part
         The type of the specification object wrapped by the FieldPart. To be
         defined in subclasses.
 
@@ -238,80 +239,82 @@ class SpecFieldPart(FieldPart):
 
     """
 
-    SPEC_CLS = None
+    PART_CLS = None
+    PART_MAKER = None
 
-    def __init__(self, spec: Any) -> None:
-        assert isinstance(spec, self.SPEC_CLS), type(spec)
-        self._spec = spec
-
-    @classmethod
-    def from_dict(cls, d: dict, **kwargs) -> "SpecFieldPart":
-        """Create a SpecFieldPart object from a dictionary."""
-        data = cls.SPEC_CLS.from_dict(d, **kwargs)
-        return cls(data)
+    def __init__(self, part: Any) -> None:
+        assert isinstance(part, self.PART_CLS), type(part)
+        self._part = part
 
     @classmethod
-    def from_spec(cls, spec: Any) -> "SpecFieldPart":
-        """Create a SpecFieldPart object from a specification object."""
-        return cls(spec)
+    def from_dict(cls, d: dict, **kwargs) -> "SimpleFieldPartHandler":
+        """Create a SimpleFieldPart object from a dictionary."""
+        part = cls.PART_MAKER(d, **kwargs)
+        return cls(part)
 
     @classmethod
-    def from_any(cls, data: Any, dict_kwargs=None) -> "SpecFieldPart":
-        """Create a SpecFieldPart object from any input.
+    def from_part(cls, part: Any) -> "SimpleFieldPartHandler":
+        """Create a SimpleFieldPart object from a part object."""
+        return cls(part)
+
+    @classmethod
+    def from_any(cls, data: Any, dict_kwargs=None) -> "SimpleFieldPartHandler":
+        """Create a SimpleFieldPart object from any input.
 
         Parameters
         ----------
         data: Any
-            The input data from which to create the SpecFieldPart instance.
+            The input data from which to create the SimpleFieldPart instance.
         dict_kwargs: dict, optional
             Additional keyword arguments to be passed when creating the instance from
             a dictionary.
 
         Returns
         -------
-        SpecFieldPart
-            An instance of SpecFieldPart. If the input is already an instance
-            of SpecFieldPart, it is returned as is. Otherwise, it is assumed to be a
-            specification object and a new SpecFieldPart instance is created from it.
+        SimpleFieldPartHandler
+            An instance of SimpleFieldPartHandler. If the input is already an instance
+            of SimpleFieldPartHandler, it is returned as is. Otherwise, it is assumed to be a
+            part object and a new SimpleFieldPartHandler instance is created from it.
         """
-        if isinstance(data, (cls, FieldPartWrapper)):
+        if isinstance(data, (cls, LazyFieldPartHandler)):
             return data
         elif isinstance(data, dict):
             dict_kwargs = dict_kwargs or {}
             return cls.from_dict(data, **dict_kwargs)
-        elif isinstance(data, cls.SPEC_CLS):
-            return cls.from_spec(data)
+        elif isinstance(data, cls.PART_CLS):
+            return cls.from_part(data)
 
         raise TypeError(f"Cannot create {cls.__name__} from {type(data)}")
 
     @property
-    def spec(self) -> Any:
-        """Return the specification object."""
-        return self._spec
+    def part(self) -> Any:
+        """Return the part object."""
+        return self._part
 
     def __contains__(self, name):
-        """Check if the key is in the specification."""
-        return name in self._spec._GET_KEYS
+        """Check if the key is in the part."""
+        return name in self._part
 
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
-        if key in self:
-            v = getattr(self._spec, key)()
-            if astype and v is not None and callable(astype):
-                try:
-                    return astype(v)
-                except Exception:
-                    return None
-            return v
+        return self._part.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        # if key in self:
+        #     v = getattr(self._part, key)()
+        #     if astype and v is not None and callable(astype):
+        #         try:
+        #             return astype(v)
+        #         except Exception:
+        #             return None
+        #     return v
 
-        if raise_on_missing:
-            raise KeyError(f"Key {key} not found in specification")
+        # if raise_on_missing:
+        #     raise KeyError(f"Key {key} not found in specification")
 
-        return default
+        # return default
 
-    def set(self, *args, **kwargs) -> "SpecFieldPart":
-        """Create a new SpecFieldPart instance with updated specification data."""
-        data = self._spec.set(*args, **kwargs)
-        return self.from_spec(data)
+    def set(self, *args, **kwargs) -> "SimpleFieldPartHandler":
+        """Create a new SimpleFieldPartHandler instance with updated part data."""
+        part = self._part.set(*args, **kwargs)
+        return self.from_part(part)
         # return type(self)(data)
 
     def namespace(self, owner: Any, name: str, result: dict) -> None:
@@ -329,8 +332,8 @@ class SpecFieldPart(FieldPart):
 
     def __getstate__(self) -> dict:
         state = {}
-        state["spec"] = self._spec
+        state["part"] = self._part
         return state
 
     def __setstate__(self, state) -> None:
-        self.__init__(spec=state["spec"])
+        self.__init__(part=state["part"])
