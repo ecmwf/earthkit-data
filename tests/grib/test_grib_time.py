@@ -173,4 +173,4 @@ def test_grib_time_step_in_seconds():
     assert f.time.base_datetime() == datetime.datetime(2023, 8, 20, 12, 0, 0)
     assert f.time.valid_datetime() == datetime.datetime(2023, 8, 20, 12, 0, 30)
     assert f.time.step() == datetime.timedelta(seconds=30)
-    assert f.get("grib.step") == "30s"
+    assert f.get("metadata.step") == "30s"

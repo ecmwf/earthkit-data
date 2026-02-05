@@ -282,24 +282,39 @@ class Field(Base):
             raise TypeError("d must be a dictionary")
 
         parts = {}
+        d = d.copy()
 
         # TODO: add support for proc part
-        for name in [DATA, TIME, PARAMETER, VERTICAL, ENSEMBLE]:
-            part = cls._DEFAULT_PART_CLS[name].from_dict(d, allow_unused=True)
-            parts[name] = part
+
+        shape_hint = None
+
+        if "values" in d:
+            values = d.pop("values")
+            parts[DATA] = cls._DEFAULT_PART_CLS[DATA].from_dict({"values": values})
+            shape_hint = parts[DATA].get_values(copy=False).shape
+
+        for name in [TIME, PARAMETER, VERTICAL, ENSEMBLE, GEOGRAPHY]:
+            d_part = {}
+            for k in list(d.keys()):
+                if k.startswith(name + "."):
+                    d_part[k.split(".", 1)[1]] = d.pop(k)
+
+            # geography may need shape hint from data so handled separately
+            if name == GEOGRAPHY:
+                parts[name] = cls._DEFAULT_PART_CLS[name].from_dict(d_part, shape_hint=shape_hint)
+            else:
+                parts[name] = cls._DEFAULT_PART_CLS[name].from_dict(d_part)
 
         # geography may need shape hint from data so handled separately
         shape_hint = None
         if parts.get(DATA):
             shape_hint = parts[DATA].get_values(copy=False).shape
 
-        parts[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_dict(
-            d, allow_unused=True, shape_hint=shape_hint
-        )
+        # d_part = {k.split(".")[1]: v for k, v in d.items() if k.startswith(GEOGRAPHY + ".")}
+        # parts[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_dict(d, shape_hint=shape_hint)
 
         # the unused items are added as labels
-        rest = {k: v for k, v in d.items() if k not in cls._PART_KEYS}
-        labels = SimpleLabels(rest)
+        labels = SimpleLabels(d)
 
         return cls(**parts, labels=labels)
 
@@ -425,15 +440,15 @@ class Field(Base):
     def free(self):
         self._parts[DATA] = self._parts[DATA].Offloader(self._parts[DATA])
 
-    # @property
-    # def values(self):
-    #     """array-like: Return the values of the field."""
-    #     return self._parts[DATA].values
+    @property
+    def values(self):
+        """array-like: Return the values of the field."""
+        return self._parts[DATA].values
 
     @property
     def shape(self):
         if self._parts.get(GEOGRAPHY):
-            return self._parts[GEOGRAPHY].shape()
+            return self._parts[GEOGRAPHY].part.shape()
         else:
             return self.values.shape
 
@@ -1148,7 +1163,6 @@ class Field(Base):
         if name == "metadata" and self._private:
             md = self._private.get("metadata")
 
-            print("dump md:", md)
             if md and hasattr(md, "namespace"):
                 md.namespace(self, namespace, result)
 
@@ -1343,8 +1357,8 @@ class Field(Base):
 
         """
         _keys = dict(
-            lat=self.geography.latitudes,
-            lon=self.geography.longitudes,
+            lat=self.geography.latitudes(),
+            lon=self.geography.longitudes(),
             value=self.values,
         )
 
@@ -1464,8 +1478,8 @@ class Field(Base):
             shape = target_shape(v, flatten, self.shape)
             return array_reshape(v, shape)
 
-        x = self.geography.x
-        y = self.geography.y
+        x = self.geography.x()
+        y = self.geography.y()
         r = {}
         if x is not None and y is not None:
             x = _reshape(x, flatten)
@@ -1474,7 +1488,7 @@ class Field(Base):
                 x = x[index]
                 y = y[index]
             r = dict(x=x, y=y)
-        elif self.geography.projection.CARTOPY_CRS == "PlateCarree":
+        elif self.geography.projection().CARTOPY_CRS == "PlateCarree":
             lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
             return dict(x=lon, y=lat)
         else:
@@ -1526,8 +1540,8 @@ class Field(Base):
         'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
 
         """
-        time = self._parts[TIME]
-        return {"base_time": time.base_datetime, "valid_time": time.valid_datetime}
+        time = self._parts[TIME].part
+        return {"base_time": time.base_datetime(), "valid_time": time.valid_datetime()}
 
     def sel(self, *args, **kwargs):
         pass

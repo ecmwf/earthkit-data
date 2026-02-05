@@ -9,13 +9,14 @@
 
 from .core import SimpleFieldPartHandler
 from .part.vertical import BaseVertical
+from .part.vertical import create_vertical
 
 
-# @wrap_spec_methods(keys=["level", "layer", "cf", "abbreviation", "units", "positive", "type"])
 class VerticalFieldPartHandler(SimpleFieldPartHandler):
-    """Vertical part of a field."""
+    """Vertical part handler of a field."""
 
     PART_CLS = BaseVertical
+    PART_MAKER = create_vertical
     NAME = "vertical"
     NAMESPACE_KEYS = ("level", "level_type", "units")
 

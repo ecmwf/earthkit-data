@@ -13,7 +13,8 @@ import datetime
 
 import pytest
 
-from earthkit.data.field.part.time import Time
+from earthkit.data.field.part.time import ForecastTime
+from earthkit.data.field.part.time import create_time
 
 
 @pytest.mark.parametrize(
@@ -153,7 +154,7 @@ def test_time_spec_from_dict_ok(input_d, ref):
 
     if isinstance(input_d, list):
         for d in input_d:
-            t = Time.from_dict(d)
+            t = create_time(d)
 
             assert t.base_datetime == ref[0]
             assert t.forecast_reference_time == ref[0]
@@ -181,11 +182,11 @@ def test_time_spec_from_dict_error(input_d, error):
     if isinstance(input_d, list):
         for d in input_d:
             with pytest.raises(error):
-                Time.from_dict(d)
+                create_time(d)
 
 
 def test_time_spec_alias_1():
-    t = Time(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(hours=6))
+    t = ForecastTime(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(hours=6))
     assert t.base_datetime == datetime.datetime(2007, 1, 1, 12)
     assert t.step == datetime.timedelta(hours=6)
     assert t.valid_datetime == datetime.datetime(2007, 1, 1, 18)
@@ -194,7 +195,7 @@ def test_time_spec_alias_1():
 
 
 def test_time_spec_alias_2():
-    t = Time.from_dict(
+    t = create_time(
         dict(
             forecast_reference_time=datetime.datetime(2007, 1, 1, 12),
             forecast_period=datetime.timedelta(hours=6),
@@ -300,7 +301,7 @@ def test_time_spec_alias_2():
 )
 def test_time_spec_set(input_d, ref):
 
-    t = Time(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(0))
+    t = ForecastTime(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(0))
 
     if not isinstance(input_d, list):
         input_d = [input_d]
@@ -328,7 +329,7 @@ def test_time_spec_set(input_d, ref):
 )
 def test_time_spec_set_error(input_d, error):
 
-    t = Time(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(0))
+    t = ForecastTime(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(0))
 
     with pytest.raises(error):
         t.set(**input_d)

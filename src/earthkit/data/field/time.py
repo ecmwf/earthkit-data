@@ -10,12 +10,14 @@
 
 from .core import SimpleFieldPartHandler
 from .part.time import BaseTime
+from .part.time import create_time
 
 
 class TimeFieldPartHandler(SimpleFieldPartHandler):
     """Time part of a field."""
 
     PART_CLS = BaseTime
+    PART_MAKER = create_time
     NAME = "time"
     NAMESPACE_KEYS = ("base_datetime", "valid_datetime", "step")
 

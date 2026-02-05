@@ -114,7 +114,7 @@ class IndexedFieldList(Index, FieldListCore):
     def from_array(array, metadata):
         raise NotImplementedError("IndexedFieldList.from_array is not implemented")
 
-    # @property
+    @property
     def values(self):
         return self._as_array("values")
 
@@ -207,9 +207,9 @@ class IndexedFieldList(Index, FieldListCore):
         base = set()
         valid = set()
         for f in self:
-            if v := f.base_datetime:
+            if v := f.time.base_datetime():
                 base.add(v)
-            if v := f.valid_datetime:
+            if v := f.time.valid_datetime():
                 valid.add(v)
         return {"base_time": sorted(base), "valid_time": sorted(valid)}
 
@@ -225,7 +225,7 @@ class IndexedFieldList(Index, FieldListCore):
     @property
     def latitudes(self):
         if self._has_shared_geography:
-            return self[0].latitudes
+            return self[0].geography.latitudes()
         elif len(self) == 0:
             return None
         else:
@@ -234,7 +234,7 @@ class IndexedFieldList(Index, FieldListCore):
     @property
     def longitudes(self):
         if self._has_shared_geography:
-            return self[0].longitudes
+            return self[0].geography.longitudes()
         elif len(self) == 0:
             return None
         else:
@@ -257,7 +257,7 @@ class IndexedFieldList(Index, FieldListCore):
             raise ValueError("Fields do not have the same grid geometry")
 
     def bounding_box(self):
-        return [f.geography.bounding_box for f in self]
+        return [f.geography.bounding_box() for f in self]
 
     def projection(self):
         if self._has_shared_geography:
@@ -270,9 +270,9 @@ class IndexedFieldList(Index, FieldListCore):
     @thread_safe_cached_property
     def _has_shared_geography(self):
         if len(self) > 0:
-            grid = self[0].geography.unique_grid_id
+            grid = self[0].geography.unique_grid_id()
             if grid is not None:
-                return all(f.geography.unique_grid_id == grid for f in self)
+                return all(f.geography.unique_grid_id() == grid for f in self)
         return False
 
     def get(

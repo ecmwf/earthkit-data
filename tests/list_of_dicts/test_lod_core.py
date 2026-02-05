@@ -29,8 +29,7 @@ def test_lod_core(lod, mode, request):
 
     assert len(ds) == 6
     ref = [("t", 500), ("t", 850), ("u", 500), ("u", 850), ("d", 850), ("d", 600)]
-    assert ds.get("param", "levelist") == ref
-    assert ds.get("variable", "level") == ref
+    assert ds.get(("parameter.variable", "vertical.level")) == ref
 
     assert ds[0].shape == (3, 2)
 
@@ -60,8 +59,7 @@ def test_lod_ll(lod_distinct_ll, mode):
 
     assert len(ds) == 6
     ref = [("t", 500), ("t", 850), ("u", 500), ("u", 850), ("d", 850), ("d", 600)]
-    assert ds.get("param", "levelist") == ref
-    assert ds.get("variable", "level") == ref
+    assert ds.get(("parameter.variable", "vertical.level")) == ref
 
     assert ds[0].shape == (3, 2)
 
@@ -89,8 +87,8 @@ def test_lod_ll(lod_distinct_ll, mode):
 
     # assert ds[0].resolution is None
 
-    assert ds[0].base_datetime == datetime.datetime(2018, 8, 1, 9, 0)
-    assert ds[0].valid_datetime == datetime.datetime(2018, 8, 1, 9, 0)
+    assert ds[0].time.base_datetime() == datetime.datetime(2018, 8, 1, 9, 0)
+    assert ds[0].time.valid_datetime() == datetime.datetime(2018, 8, 1, 9, 0)
 
     assert ds[0].datetime() == {
         "base_time": datetime.datetime(2018, 8, 1, 9, 0),

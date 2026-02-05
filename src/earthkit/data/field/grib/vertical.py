@@ -11,7 +11,6 @@ from abc import abstractmethod
 from collections import defaultdict
 
 from earthkit.data.field.part.level_type import LevelTypes
-from earthkit.data.field.vertical import VerticalFieldPartHandler
 
 from .collector import GribContextCollector
 from .core import GribFieldPartHandler
@@ -166,10 +165,13 @@ for k in list(_SPEC_TYPES.keys()):
 class GribVerticalBuilder:
     @staticmethod
     def build(handle):
+        from earthkit.data.field.part.vertical import Vertical
+        from earthkit.data.field.vertical import VerticalFieldPartHandler
+
         d = GribVerticalBuilder._build_dict(handle)
-        spec = VerticalFieldPartHandler.from_dict(d)
-        # spec._set_private_data("handle", handle)
-        return spec
+        part = Vertical.from_dict(d)
+        handler = VerticalFieldPartHandler.from_part(part)
+        return handler
 
     @staticmethod
     def _build_dict(handle):

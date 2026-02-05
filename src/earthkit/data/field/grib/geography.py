@@ -18,15 +18,15 @@ def missing_is_none(x):
     return None if x == 2147483647 else x
 
 
-class GribGeographySpec(BaseGeography):
+class GribGeography(BaseGeography):
     def __init__(self, handle):
         self.handle = handle
 
     def latitudes(self):
-        return self.handle.get_latitudes().reshape(self.shape)
+        return self.handle.get_latitudes().reshape(self.shape())
 
     def longitudes(self):
-        return self.handle.get_longitudes().reshape(self.shape)
+        return self.handle.get_longitudes().reshape(self.shape())
 
     def distinct_latitudes(self):
         return self.handle.get("distinctLatitudes", default=None)
@@ -37,13 +37,13 @@ class GribGeographySpec(BaseGeography):
     def x(self):
         grid_type = self.handle.get("gridType", default=None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            return self.longitudes
+            return self.longitudes()
         raise ValueError("x(): geographical coordinates in original CRS are not available")
 
     def y(self):
         grid_type = self.handle.get("gridType", default=None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            return self.latitudes
+            return self.latitudes()
         raise ValueError("y(): geographical coordinates in original CRS are not available")
 
     def shape(self):
@@ -130,6 +130,10 @@ class GribGeographySpec(BaseGeography):
         r"""Return the grid type."""
         return self.handle.get("gridType", default=None)
 
+    @classmethod
+    def from_dict(*args, **kwargs):
+        raise NotImplementedError("GribGeography cannot be created from a dictionary")
+
     def to_dict(self):
         return dict()
 
@@ -169,9 +173,9 @@ class GribGeographySpec(BaseGeography):
 class GribGeographyBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.field.geography import GeographyFieldPart
+        from earthkit.data.field.geography import GeographyFieldPartHandler
 
-        return GeographyFieldPart(GribGeographySpec(handle))
+        return GeographyFieldPartHandler.from_part(GribGeography(handle))
 
 
 class GribGeographyContextCollector(GribContextCollector):
@@ -183,7 +187,7 @@ class GribGeographyContextCollector(GribContextCollector):
 COLLECTOR = GribGeographyContextCollector()
 
 
-class GribGeography(GribFieldPartHandler):
+class GribGeographyHandler(GribFieldPartHandler):
     BUILDER = GribGeographyBuilder
     COLLECTOR = COLLECTOR
 

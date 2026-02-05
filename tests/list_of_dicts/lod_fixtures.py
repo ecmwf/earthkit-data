@@ -15,12 +15,12 @@ import pytest
 
 def _build_list(prototype):
     return [
-        {"param": "t", "levelist": 500, **prototype},
-        {"param": "t", "levelist": 850, **prototype},
-        {"param": "u", "levelist": 500, **prototype},
-        {"param": "u", "levelist": 850, **prototype},
-        {"param": "d", "levelist": 850, **prototype},
-        {"param": "d", "levelist": 600, **prototype},
+        {"parameter.variable": "t", "vertical.level": 500, **prototype},
+        {"parameter.variable": "t", "vertical.level": 850, **prototype},
+        {"parameter.variable": "u", "vertical.level": 500, **prototype},
+        {"parameter.variable": "u", "vertical.level": 850, **prototype},
+        {"parameter.variable": "d", "vertical.level": 850, **prototype},
+        {"parameter.variable": "d", "vertical.level": 600, **prototype},
     ]
 
 
@@ -32,10 +32,10 @@ def lod_input_data(request):
 @pytest.fixture
 def lod_distinct_ll_list_values():
     prototype = {
-        "latitudes": [-10.0, 0.0, 10.0],
-        "longitudes": [20, 40.0],
+        "geography.latitudes": [-10.0, 0.0, 10.0],
+        "geography.longitudes": [20, 40.0],
         "values": [1, 2, 3, 4, 5, 6],
-        "valid_datetime": "2018-08-01T09:00:00",
+        "time.valid_datetime": "2018-08-01T09:00:00",
     }
     return _build_list(prototype)
 
@@ -43,10 +43,10 @@ def lod_distinct_ll_list_values():
 @pytest.fixture
 def lod_distinct_ll():
     prototype = {
-        "latitudes": np.array([-10.0, 0.0, 10.0]),
-        "longitudes": np.array([20, 40.0]),
+        "geography.latitudes": np.array([-10.0, 0.0, 10.0]),
+        "geography.longitudes": np.array([20, 40.0]),
         "values": np.array([1, 2, 3, 4, 5, 6]),
-        "valid_datetime": "2018-08-01T09:00:00",
+        "time.valid_datetime": "2018-08-01T09:00:00",
     }
     return _build_list(prototype)
 
@@ -54,10 +54,10 @@ def lod_distinct_ll():
 @pytest.fixture
 def lod_ll_flat():
     prototype = {
-        "latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
-        "longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
+        "geography.latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
+        "geography.longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
         "values": np.array([1, 2, 3, 4, 5, 6]),
-        "valid_datetime": "2018-08-01T09:00:00",
+        "time.valid_datetime": "2018-08-01T09:00:00",
     }
     return _build_list(prototype)
 
@@ -65,10 +65,10 @@ def lod_ll_flat():
 @pytest.fixture
 def lod_ll_flat_invalid():
     prototype = {
-        "latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
-        "longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
+        "geography.latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
+        "geography.longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
         "values": np.array([1, 2, 3, 4, 5]),
-        "valid_datetime": "2018-08-01T09:00:00",
+        "time.valid_datetime": "2018-08-01T09:00:00",
     }
     return _build_list(prototype)
 
@@ -76,10 +76,10 @@ def lod_ll_flat_invalid():
 @pytest.fixture
 def lod_ll_flat_10x10():
     prototype = {
-        "latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
-        "longitudes": np.array([20.0, 30.0, 20.0, 30.0, 20.0, 30.0]),
+        "geography.latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
+        "geography.longitudes": np.array([20.0, 30.0, 20.0, 30.0, 20.0, 30.0]),
         "values": np.array([1, 2, 3, 4, 5, 6]),
-        "valid_datetime": "2018-08-01T09:00:00",
+        "time.valid_datetime": "2018-08-01T09:00:00",
     }
     return _build_list(prototype)
 
@@ -87,10 +87,10 @@ def lod_ll_flat_10x10():
 @pytest.fixture
 def lod_ll_2D_all():
     prototype = {
-        "latitudes": np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]]),
-        "longitudes": np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]]),
+        "geography.latitudes": np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]]),
+        "geography.longitudes": np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]]),
         "values": np.array([[1, 2], [3, 4], [5, 6]]),
-        "valid_datetime": "2018-08-01T09:00:00",
+        "time.valid_datetime": "2018-08-01T09:00:00",
     }
     return _build_list(prototype)
 
@@ -98,10 +98,10 @@ def lod_ll_2D_all():
 @pytest.fixture
 def lod_ll_2D_ll():
     prototype = {
-        "latitudes": np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]]),
-        "longitudes": np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]]),
+        "geography.latitudes": np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]]),
+        "geography.longitudes": np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]]),
         "values": np.array([1, 2, 3, 4, 5, 6]),
-        "valid_datetime": "2018-08-01T09:00:00",
+        "time.valid_datetime": "2018-08-01T09:00:00",
     }
     return _build_list(prototype)
 
@@ -109,10 +109,10 @@ def lod_ll_2D_ll():
 @pytest.fixture
 def lod_ll_2D_values():
     prototype = {
-        "latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
-        "longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
+        "geography.latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
+        "geography.longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
         "values": np.array([[1, 2], [3, 4], [5, 6]]),
-        "valid_datetime": "2018-08-01T09:00:00",
+        "time.valid_datetime": "2018-08-01T09:00:00",
     }
     return _build_list(prototype)
 
@@ -120,11 +120,11 @@ def lod_ll_2D_values():
 @pytest.fixture
 def lod_ll_forecast_1():
     prototype = {
-        "latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
-        "longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
+        "geography.latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
+        "geography.longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
         "values": np.array([1, 2, 3, 4, 5, 6]),
-        "base_datetime": "2018-08-01T03:00:00",
-        "step": 6,
+        "time.base_datetime": "2018-08-01T03:00:00",
+        "time.step": 6,
     }
     return _build_list(prototype)
 
@@ -132,11 +132,11 @@ def lod_ll_forecast_1():
 @pytest.fixture
 def lod_ll_forecast_2():
     prototype = {
-        "latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
-        "longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
+        "geography.latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
+        "geography.longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
         "values": np.array([1, 2, 3, 4, 5, 6]),
-        "valid_datetime": "2018-08-01T09:00:00",
-        "step": 6,
+        "time.valid_datetime": "2018-08-01T09:00:00",
+        "time.step": 6,
     }
     return _build_list(prototype)
 
@@ -144,11 +144,11 @@ def lod_ll_forecast_2():
 @pytest.fixture
 def lod_ll_forecast_3():
     prototype = {
-        "latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
-        "longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
+        "geography.latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
+        "geography.longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
         "values": np.array([1, 2, 3, 4, 5, 6]),
-        "forecast_reference_time": "2018-08-01T03:00:00",
-        "step": datetime.timedelta(hours=6),
+        "time.forecast_reference_time": "2018-08-01T03:00:00",
+        "time.step": datetime.timedelta(hours=6),
     }
     return _build_list(prototype)
 
@@ -156,12 +156,12 @@ def lod_ll_forecast_3():
 @pytest.fixture
 def lod_ll_forecast_4():
     prototype = {
-        "latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
-        "longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
+        "geography.latitudes": np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0]),
+        "geography.longitudes": np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0]),
         "values": np.array([1, 2, 3, 4, 5, 6]),
-        "date": 20180801,
-        "time": 300,
-        "step": datetime.timedelta(hours=6),
+        "time.base_date": 20180801,
+        "time.base_time": 300,
+        "time.step": datetime.timedelta(hours=6),
     }
     return _build_list(prototype)
 
@@ -170,7 +170,7 @@ def lod_ll_forecast_4():
 def lod_no_latlon():
     prototype = {
         "values": np.array([1, 2, 3, 4, 5, 6]),
-        "valid_datetime": "2018-08-01T09:00:00",
+        "time.valid_datetime": "2018-08-01T09:00:00",
     }
     return _build_list(prototype)
 

@@ -9,28 +9,14 @@
 
 from .core import SimpleFieldPartHandler
 from .part.geography import BaseGeography
+from .part.geography import create_geography_from_dict
 
 
-# @wrap_spec_methods(
-#     keys=[
-#         "latitudes",
-#         "longitudes",
-#         "shape",
-#         "grid_spec",
-#         "grid_type",
-#         "bounding_box",
-#         "distinct_latitudes",
-#         "distinct_longitudes",
-#         "x",
-#         "y",
-#         "projection",
-#         "unique_grid_id",
-#     ]
-# )
 class GeographyFieldPartHandler(SimpleFieldPartHandler):
     """Geography part of a field."""
 
     PART_CLS = BaseGeography
+    PART_MAKER = create_geography_from_dict
     NAME = "geography"
 
     def get_grib_context(self, context) -> dict:

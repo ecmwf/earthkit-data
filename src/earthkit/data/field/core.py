@@ -243,7 +243,7 @@ class SimpleFieldPartHandler(FieldPartHandler):
     PART_MAKER = None
 
     def __init__(self, part: Any) -> None:
-        assert isinstance(part, self.PART_CLS), type(part)
+        assert isinstance(part, self.PART_CLS), f"type(part)={type(part)}, expected {self.PART_CLS}"
         self._part = part
 
     @classmethod

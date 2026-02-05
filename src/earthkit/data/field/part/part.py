@@ -56,8 +56,9 @@ def part_keys(cls):
                     print(f"{k} is function")
                     _SET_KEYS.append(k)
                 if hasattr(f, "_alias"):
-                    print(f"{k} is alias")
+                    print(f"{k} is alias to {f._alias}")
                     _ALIASES[k] = f._alias
+                    _GET_KEYS.append(k)
 
     # cls._GET_KEYS = _GET_KEYS
     # cls._SET_KEYS = _SET_KEYS
@@ -264,12 +265,16 @@ class SimpleFieldPart(FieldPart):
         return self._get_single(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
 
     @classmethod
-    def normalise_create_kwargs(cls, data, allowed_keys=None):
+    def normalise_create_kwargs(cls, data, allowed_keys=None, remove_nones=False):
         _kwargs = {}
         for k_in, v in data.items():
             k = cls._ALIASES.get(k_in, k_in)
             if k in allowed_keys:
+                if remove_nones and v is None:
+                    continue
                 _kwargs[k] = v
+            else:
+                raise ValueError(f"Cannot use key={k} to create object={cls}")
         return _kwargs
 
     @classmethod
@@ -291,7 +296,7 @@ class SimpleFieldPart(FieldPart):
                 if k in allowed_keys:
                     _kwargs[k] = v
                 else:
-                    raise ValueError(f"Cannot use key={k} to modify {cls.__class__.__name__}")
+                    raise ValueError(f"Cannot use key={k} to modify {cls}")
             else:
                 _kwargs[k] = v
 

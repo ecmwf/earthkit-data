@@ -44,8 +44,8 @@ def test_grib_latlon_single_1(fl_type, index):
 
     eps = 1e-5
     g = f[index] if index is not None else f
-    lat = g.latitudes.flatten()
-    lon = g.longitudes.flatten()
+    lat = g.geography.latitudes().flatten()
+    lon = g.geography.longitudes().flatten()
 
     # TODO: make geography array backend aware
     check_array_type(lat, array_namespace, dtype=dtype)
@@ -80,12 +80,12 @@ def test_grib_latlon_single_shape(fl_type, index):
 
     if index is not None:
         g = f[index]
-        lat = g.latitudes
-        lon = g.longitudes
+        lat = g.geography.latitudes()
+        lon = g.geography.longitudes()
     else:
         g = f
-        lat = g.geography.latitudes
-        lon = g.geography.longitudes
+        lat = g.geography.latitudes()
+        lon = g.geography.longitudes()
 
     # TODO: make geography array backend aware
     check_array_type(lon, array_namespace, dtype=dtype)
@@ -109,12 +109,12 @@ def test_grib_latlon_multi(fl_type, dtype):
 
     f = ds[0]
     # flatten=True, dtype=dtype
-    lat_ref = f.latitudes
-    lon_ref = f.longitudes
+    lat_ref = f.geography.latitudes()
+    lon_ref = f.geography.longitudes()
 
     # flatten=True, dtype=dtype
-    lat = ds.geography.latitudes
-    lon = ds.geography.longitudes
+    lat = ds.geography.latitudes()
+    lon = ds.geography.longitudes()
 
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
@@ -129,10 +129,10 @@ def test_grib_latlon_multi_non_shared_grid(fl_type):
     f = concat(f1, f2)
 
     with pytest.raises(ValueError):
-        f.geography.latitudes
+        f.geography.latitudes()
 
     with pytest.raises(ValueError):
-        f.geography.longitudes
+        f.geography.longitudes()
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -148,12 +148,12 @@ def test_grib_points_single_flatten(fl_type, index):
     eps = 1e-5
     if index is not None:
         g = f[index]
-        x = g.x.flatten()
-        y = g.y.flatten()
+        x = g.geography.x().flatten()
+        y = g.geography.y().flatten()
     else:
         g = f
-        x = g.geography.x.flatten()
-        y = g.geography.y.flatten()
+        x = g.geography.x().flatten()
+        y = g.geography.y().flatten()
 
     check_array_type(x, array_namespace, dtype=dtype)
     check_array_type(y, array_namespace, dtype=dtype)
@@ -181,12 +181,12 @@ def test_grib_points_multi(fl_type):
     f = ds[0]
 
     # flatten=True, dtype=dtype
-    x_ref = f.x.flatten()
-    y_ref = f.y.flatten()
+    x_ref = f.geography.x().flatten()
+    y_ref = f.geography.y().flatten()
 
     # flatten=True, dtype=dtype
-    x = ds.geography.x.flatten()
-    y = ds.geography.y.flatten()
+    x = ds.geography.x().flatten()
+    y = ds.geography.y().flatten()
 
     assert np.allclose(x, x_ref)
     assert np.allclose(y, y_ref)
@@ -199,10 +199,10 @@ def test_grib_points_multi_non_shared_grid(fl_type):
     f = concat(f1, f2)
 
     with pytest.raises(ValueError):
-        f.geography.x
+        f.geography.x()
 
     with pytest.raises(ValueError):
-        f.geography.y
+        f.geography.y()
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -364,14 +364,14 @@ def test_grib_to_points_multi_non_shared_grid(fl_type):
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_bbox(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
-    bb = ds[0].bounding_box
+    bb = ds[0].geography.bounding_box()
     assert bb.as_tuple() == (73, -27, 33, 45)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_bbox_2(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
-    bb = ds.bounding_box()
+    bb = ds.geography.bounding_box()
     assert len(bb) == 2
     for b in bb:
         assert b.as_tuple() == (73, -27, 33, 45)
@@ -384,17 +384,17 @@ def test_grib_projection_ll(fl_type, index):
 
     if index is not None:
         g = f[index]
-        proj = g.projection
+        proj = g.geography.projection()
     else:
         g = f
-        proj = g.geography.projection
+        proj = g.geography.projection()
     assert isinstance(proj, (projections.EquidistantCylindrical, projections.LongLat))
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_projection_mercator(fl_type):
     f, _ = load_grib_data("mercator.grib", fl_type, folder="data")
-    projection = f[0].projection
+    projection = f[0].geography.projection()
     assert isinstance(projection, projections.Mercator)
     assert projection.parameters == {
         "true_scale_latitude": 20,
@@ -421,11 +421,11 @@ def test_grib_resolution(path, expected_value):
     ds = earthkit.data.from_source("file", path)
 
     if isinstance(expected_value, str):
-        assert ds[0].resolution == expected_value
+        assert ds[0].geography.resolution() == expected_value
     elif expected_value is None:
-        assert ds[0].resolution is None
+        assert ds[0].geography.resolution() is None
     else:
-        assert np.isclose(ds[0].resolution, expected_value)
+        assert np.isclose(ds[0].geography.resolution(), expected_value)
 
 
 @pytest.mark.parametrize(
@@ -453,7 +453,7 @@ def test_grib_resolution(path, expected_value):
 def test_grib_mars_area(path, expected_value):
     ds = earthkit.data.from_source("file", path)
 
-    assert np.allclose(np.asarray(ds[0].mars_area), np.asarray(expected_value))
+    assert np.allclose(np.asarray(ds[0].geography.mars_area()), np.asarray(expected_value))
 
 
 @pytest.mark.parametrize(
@@ -482,11 +482,11 @@ def test_grib_mars_grid(path, expected_value):
     ds = earthkit.data.from_source("file", path)
 
     if isinstance(expected_value, str):
-        assert ds[0].mars_grid == expected_value
+        assert ds[0].geography.mars_grid() == expected_value
     elif expected_value == [None, None]:
-        assert ds[0].mars_grid == expected_value
+        assert ds[0].geography.mars_grid() == expected_value
     else:
-        assert np.allclose(np.asarray(ds[0].mars_grid), np.asarray(expected_value))
+        assert np.allclose(np.asarray(ds[0].geography.mars_grid()), np.asarray(expected_value))
 
 
 @pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")
@@ -495,7 +495,7 @@ def test_grib_grid_points_rotated_ll():
     ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_wind_20x20.grib"))
 
     # grid points
-    res = ds[0].grid_points()
+    res = ds[0].geography.grid_points()
     ref1 = np.array([30.0, 29.351052, 27.504876, 24.734374]), np.array(
         [140.0, 136.09296, 132.770576, 130.469424]
     )
@@ -512,9 +512,8 @@ def test_grib_grid_points_rotated_ll():
     # unrotated grid points
     ds1 = earthkit.data.from_source("file", earthkit_test_data_file("wind_20x20.grib"))
 
-    res = ds[0].grid_points_unrotated()
-    ref = ds1[0].grid_points()
-
+    res = ds[0].geography.grid_points_unrotated()
+    ref = ds1[0].geography.grid_points_unrotated()
     assert np.allclose(res[0], ref[0])
     assert np.allclose(res[1], ref[1])
 
@@ -542,7 +541,7 @@ def test_grib_grid_points_rotated_rgg():
     assert np.allclose(res[1][-4:], ref2[1])
 
     # unrotated grid points
-    res = ds[0].grid_points_unrotated()
+    res = ds[0].geography.grid_points_unrotated()
 
     # front
     ref1 = np.array([26.510768, 26.51076943, 26.5107701, 26.51076846]), np.array(

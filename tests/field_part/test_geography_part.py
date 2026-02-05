@@ -12,7 +12,7 @@
 import numpy as np
 import pytest
 
-from earthkit.data.field.part.geography import Geography
+from earthkit.data.field.part.geography import SimpleGeography
 
 
 @pytest.mark.parametrize(
@@ -117,7 +117,7 @@ from earthkit.data.field.part.geography import Geography
         ),
     ],
 )
-def test_geography_spec_from_dict_ok(input_d, ref):
+def test_geography_part_from_dict_ok(input_d, ref):
 
     if not isinstance(input_d, list):
         input_d = [input_d]
@@ -125,11 +125,11 @@ def test_geography_spec_from_dict_ok(input_d, ref):
     if isinstance(input_d, list):
         for d in input_d:
             shape_hint = d.pop("shape_hint", None)
-            r = Geography.from_dict(d, shape_hint=shape_hint)
+            r = SimpleGeography.from_dict(d, shape_hint=shape_hint)
 
-            assert r.shape == ref[2]
-            assert np.allclose(r.latitudes, ref[0])
-            assert np.allclose(r.longitudes, ref[1])
+            assert r.shape() == ref[2]
+            assert np.allclose(r.latitudes(), ref[0])
+            assert np.allclose(r.longitudes(), ref[1])
 
 
 @pytest.mark.parametrize(
@@ -150,12 +150,12 @@ def test_geography_spec_from_dict_ok(input_d, ref):
         ),
     ],
 )
-def test_geography_spec_set(input_d, ref):
+def test_geography_part_set(input_d, ref):
 
     lat_orig = np.array([-10.0, 0.0, 10.0])
     lon_orig = np.array([20.0, 40.0, 60.0])
 
-    r = Geography.from_dict(
+    r = SimpleGeography.from_dict(
         {
             "latitudes": np.array(lat_orig, copy=True),
             "longitudes": np.array(lon_orig, copy=True),
@@ -170,11 +170,13 @@ def test_geography_spec_set(input_d, ref):
 
         for k, v in ref.items():
             if k in ("latitudes", "longitudes"):
-                assert np.allclose(getattr(r1, k), v), f"key {k} expected {v} got {getattr(r1, k)}"
+                rv = getattr(r1, k)()
+                assert np.allclose(rv, v), f"key {k} expected {v} got {rv}"
             else:
-                assert getattr(r1, k) == v, f"key {k} expected {v} got {getattr(r1, k)}"
+                rv = getattr(r1, k)()
+                assert rv == v, f"key {k} expected {v} got {rv}"
 
         # the original object is unchanged
-        assert np.allclose(r.latitudes, lat_orig)
-        assert np.allclose(r.longitudes, lon_orig)
-        assert r.shape == (3,)
+        assert np.allclose(r.latitudes(), lat_orig)
+        assert np.allclose(r.longitudes(), lon_orig)
+        assert r.shape() == (3,)

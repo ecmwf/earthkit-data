@@ -15,7 +15,7 @@ def new_grib_field(handle, data=None, cache=False):
     from earthkit.data.core.field import Field
     from earthkit.data.field.grib.data import GribData
     from earthkit.data.field.grib.ensemble import GribEnsemble
-    from earthkit.data.field.grib.geography import GribGeography
+    from earthkit.data.field.grib.geography import GribGeographyHandler
     from earthkit.data.field.grib.metadata import GribMetadata
     from earthkit.data.field.grib.parameter import GribParameter
     from earthkit.data.field.grib.proc import GribProc
@@ -36,7 +36,7 @@ def new_grib_field(handle, data=None, cache=False):
     # grib = GribLabels(handle)
 
     time = GribTime(handle)
-    geography = GribGeography(handle)
+    geography = GribGeographyHandler(handle)
     vertical = GribVertical(handle)
     ensemble = GribEnsemble(handle)
     proc = GribProc(handle)

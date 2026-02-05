@@ -12,7 +12,7 @@ from math import prod
 
 import numpy as np
 
-from earthkit.data.field.part.geography import Geography
+from earthkit.data.field.part.geography import BaseGeography
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
 
@@ -27,7 +27,7 @@ def uniform_resolution(vals):
     return None
 
 
-def make_geography(metadata, shape_hint=None):
+def create_geography(metadata, shape_hint=None):
     lat = metadata.get("latitudes", None)
     lon = metadata.get("longitudes", None)
 
@@ -129,7 +129,7 @@ def make_geography(metadata, shape_hint=None):
             return UserGeography(metadata, shape=shape)
 
 
-class NoGeography(Geography):
+class NoGeography(BaseGeography):
     def __init__(self, shape):
         self._shape = shape
 
@@ -191,7 +191,7 @@ class NoGeography(Geography):
         return "none"
 
 
-class UserGeography(Geography):
+class UserGeography(BaseGeography):
     def __init__(self, metadata, shape=None):
         self.metadata = metadata
         self._shape = shape

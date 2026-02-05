@@ -28,7 +28,7 @@ from forcings_fixtures import all_params  # noqa: E402
 def test_forcings_source_1():
     sample = from_source("file", earthkit_examples_file("test.grib"))
 
-    start = sample[0].time.valid_datetime
+    start = sample[0].time.valid_datetime()
     first_step = 6
     last_step = 240
     step_increment = 6
@@ -51,14 +51,14 @@ def test_forcings_source_1():
     ref = [(d, p) for d, p in itertools.product(dates, params)]
     assert len(ds) == len(ref)
     for f, r in zip(ds, ref):
-        assert f.get("valid_datetime") == r[0]
-        assert f.get("param") == r[1]
+        assert f.get("time.valid_datetime") == r[0]
+        assert f.get("parameter.variable") == r[1]
 
 
 def test_forcings_source_2():
     sample = from_source("file", earthkit_examples_file("test.grib"))
 
-    start = sample[0].time.valid_datetime
+    start = sample[0].time.valid_datetime()
     start = datetime.datetime(start.year, start.month, start.day)
     first_step = 1
     last_step = 10
@@ -84,8 +84,8 @@ def test_forcings_source_2():
     ref = [(d, p) for d, p in itertools.product(ds.data.dates, params)]
     assert len(ds) == len(ref)
     for f, r in zip(ds, ref):
-        assert f.get("valid_datetime") == r[0]
-        assert f.get("param") == r[1]
+        assert f.get("time.valid_datetime") == r[0]
+        assert f.get("parameter.variable") == r[1]
 
 
 def test_forcings_source_3():
@@ -113,8 +113,8 @@ def test_forcings_source_3():
     ref = [(d, p) for d, p in itertools.product(dates, params)]
     assert len(ds) == len(ref)
     for f, r in zip(ds, ref):
-        assert f.get("valid_datetime") == r[0]
-        assert f.get("param") == r[1]
+        assert f.get("time.valid_datetime") == r[0]
+        assert f.get("parameter.variable") == r[1]
 
 
 @pytest.mark.parametrize("lat_key,lon_key", [("latitudes", "longitudes"), ("latitude", "longitude")])
@@ -135,8 +135,8 @@ def test_forcings_from_lat_lon_core(lat_key, lon_key, filename):
     params = all_params
 
     d = {}
-    d[lat_key] = sample[0].geography.latitudes
-    d[lon_key] = sample[0].geography.longitudes
+    d[lat_key] = sample[0].geography.latitudes()
+    d[lon_key] = sample[0].geography.longitudes()
 
     ds = from_source("forcings", **d, date=dates, param=params)
 
@@ -146,8 +146,8 @@ def test_forcings_from_lat_lon_core(lat_key, lon_key, filename):
     ref = [(d, p) for d, p in itertools.product(dates, params)]
     assert len(ds) == len(ref)
     for f, r in zip(ds, ref):
-        assert f.get("valid_datetime") == r[0]
-        assert f.get("param") == r[1]
+        assert f.get("time.valid_datetime") == r[0]
+        assert f.get("parameter.variable") == r[1]
         assert f.to_numpy().shape == sample[0].shape
 
 
@@ -156,9 +156,8 @@ def test_forcings_from_lat_lon_bad():
 
     params = all_params
 
-    lats = sample[0].geography.latitudes
-    lons = sample[0].geography.longitudes
-
+    lats = sample[0].geography.latitudes()
+    lons = sample[0].geography.longitudes()
     with pytest.raises(ValueError):
         from_source(
             "forcings",

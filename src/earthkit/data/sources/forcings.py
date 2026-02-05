@@ -31,7 +31,7 @@ class ForcingMaker:
     def grid_points(self):
         # d = self.field.to_latlon(flatten=True)
         # return d["lat"], d["lon"]
-        return self.field.geography.latitudes.flatten(), self.field.geography.longitudes.flatten()
+        return self.field.geography.latitudes().flatten(), self.field.geography.longitudes().flatten()
 
     @cached_method
     def ecef_xyz(self):
@@ -256,9 +256,8 @@ class ForcingsData:
             from earthkit.data import from_source
 
             vals = np.ones(lats.shape)
-            d = {"values": vals, "latitudes": lats, "longitudes": lons}
+            d = {"values": vals, "geography.latitudes": lats, "geography.longitudes": lons}
             # d.update(self.request)
-
             source_or_dataset = from_source("list-of-dicts", [d])
 
         self.field = source_or_dataset[0]
@@ -403,7 +402,7 @@ class ForcingsFieldList(SimpleFieldList):
             self.maker.field,
             data=data,
             parameter=dict(variable=param),
-            time=dict(valid_datetime=date),
+            time=dict(base_datetime=date),
             labels={"number": number},
         )
 

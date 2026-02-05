@@ -15,11 +15,10 @@ from earthkit.data.field.part.level_type import get_level_type
 from earthkit.data.field.part.vertical import Vertical
 
 
-def test_vertical_spec_alias_1():
+def test_vertical_part_alias_1():
     r = Vertical(level=1000, type="pressure")
-    assert r.level == 1000
-    assert r.type == "pressure"
-    assert r.level_type == "pressure"
+    assert r.level() == 1000
+    assert r.type() == "pressure"
 
 
 @pytest.mark.parametrize(
@@ -35,13 +34,13 @@ def test_vertical_spec_alias_1():
         (
             {
                 "level": 1000,
-                "level_type": "pressure",
+                "type": "pressure",
             },
             (1000, "pressure"),
         ),
     ],
 )
-def test_vertical_spec_from_dict_ok(input_d, ref):
+def test_vertical_part_from_dict_ok(input_d, ref):
 
     if not isinstance(input_d, list):
         input_d = [input_d]
@@ -50,11 +49,11 @@ def test_vertical_spec_from_dict_ok(input_d, ref):
         for d in input_d:
             r = Vertical.from_dict(d)
 
-            assert r.level == ref[0]
-            assert r.level_type == "pressure"
+            assert r.level() == ref[0]
+            assert r.type() == "pressure"
 
 
-def test_vertical_spec_type():
+def test_vertical_part_type():
     r = Vertical(level=1000, type="pressure")
 
     t = r._type
@@ -65,13 +64,12 @@ def test_vertical_spec_type():
     assert t.positive == "down"
     assert t.cf == {"standard_name": "air_pressure", "long_name": "pressure"}
 
-    assert r.level == 1000
-    assert r.type == "pressure"
-    assert r.level_type == "pressure"
-    assert r.abbreviation == "pl"
-    assert r.units == "hPa"
-    assert r.positive == "down"
-    assert r.cf == {"standard_name": "air_pressure", "long_name": "pressure"}
+    assert r.level() == 1000
+    assert r.type() == "pressure"
+    assert r.abbreviation() == "pl"
+    assert r.units() == "hPa"
+    assert r.positive() == "down"
+    assert r.cf() == {"standard_name": "air_pressure", "long_name": "pressure"}
 
     p_type = get_level_type("pressure")
     assert p_type == t
@@ -87,7 +85,6 @@ def test_vertical_spec_type():
                     "level": 500,
                 },
                 {"level": 500, "type": "pressure"},
-                {"level": 500, "level_type": "pressure"},
             ],
             {
                 "level": 500,
@@ -98,13 +95,12 @@ def test_vertical_spec_type():
         (
             [
                 {"level": 320, "type": "potential_temperature"},
-                {"level": 320, "level_type": "potential_temperature"},
             ],
             {"level": 320, "type": "potential_temperature"},
         ),
     ],
 )
-def test_vertical_spec_set(input_d, ref):
+def test_vertical_part_set(input_d, ref):
 
     r = Vertical(level=1000, type="pressure")
 
@@ -115,8 +111,9 @@ def test_vertical_spec_set(input_d, ref):
         r1 = r.set(**d)
 
         for k, v in ref.items():
-            assert getattr(r1, k) == v, f"key {k} expected {v} got {getattr(r1, k)}"
+            rv = getattr(r1, k)()
+            assert rv == v, f"key {k} expected {v} got {rv}"
 
         # the original object is unchanged
-        assert r.level == 1000
-        assert r.type == "pressure"
+        assert r.level() == 1000
+        assert r.type() == "pressure"
