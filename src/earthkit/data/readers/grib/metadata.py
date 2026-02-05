@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import json
 import logging
 import warnings
 from abc import abstractmethod
@@ -70,6 +71,7 @@ class GeoBasedGribFieldGeography(Geography):
         from eckit.geo import Grid
 
         self._grid = Grid(grid_spec)
+        self._grid_spec = grid_spec
         self.metadata = metadata
 
     @thread_safe_cached_property
@@ -177,10 +179,16 @@ class GeoBasedGribFieldGeography(Geography):
         )
 
     def gridspec(self):
-        return self._grid.spec
+        # TODO: call Grid.spec once it is available in eckit
+        if isinstance(self._grid_spec, str):
+            return json.loads(self._grid_spec)
+        return self._grid_spec
 
     def grid_spec(self):
-        return self._grid.spec
+        # TODO: call Grid.spec once it is available in eckit
+        if isinstance(self._grid_spec, str):
+            return json.loads(self._grid_spec)
+        return self._grid_spec
 
     def resolution(self):
         return None
@@ -872,8 +880,8 @@ class GribMetadata(Metadata):
                 if grid_spec is not None and grid_spec != "":
                     return GeoBasedGribFieldGeography(grid_spec, self)
                 else:
-                    # no fallback in ecCodes for grids
-                    raise RuntimeError("Cannot get grid_spec from ecCodes handle")
+                    # fallback to non-eckit based geo support in ecCodes
+                    return GribFieldGeography(self)
 
             return GribFieldGeography(self)
 
