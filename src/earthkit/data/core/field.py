@@ -70,20 +70,6 @@ DUMP_ORDER = [
 ]
 
 
-# @init_part_conf(
-#     {
-#         DATA: {"direct": "values"},
-#         TIME: {"direct": all},
-#         PARAMETER: {"direct": ("variable", "param", "units")},
-#         GEOGRAPHY: {
-#             "direct": ("latitudes", "longitudes", "grid_spec", "x", "y", "bounding_box", "grid_type"),
-#         },
-#         VERTICAL: {"direct": ("level", "layer")},
-#         ENSEMBLE: {"direct": ("member",)},
-#         PROC: {},
-#         LABELS: None,
-#     }
-# )
 @wrap_maths
 class Field(Base):
     """A class to represent a field in Earthkit.
@@ -992,8 +978,19 @@ class Field(Base):
         else:
             return self._metadata.as_namespace(None)
 
-    def set(self, **kwargs):
+    def set(self, *args, **kwargs):
         # collect keys to set per part
+
+        kwargs = kwargs.copy()
+
+        for a in args:
+            if a is None:
+                continue
+            if isinstance(a, dict):
+                kwargs.update(a)
+                continue
+            raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
+
         _kwargs = defaultdict(dict)
         for k, v in kwargs.items():
             part_name, part, key_name = self._get_part(k)
@@ -1292,10 +1289,10 @@ class Field(Base):
         for m in self._parts.values():
             m.get_grib_context(context)
 
-    @normalize("valid_datetime", "date")
-    @normalize("base_datetime", "date")
-    @normalize("forecast_reference_time", "date")
-    @normalize("step", "timedelta")
+    @normalize("time.valid_datetime", "date")
+    @normalize("time.base_datetime", "date")
+    @normalize("time.forecast_reference_time", "date")
+    @normalize("time.step", "timedelta")
     @staticmethod
     def normalise_key_values(**kwargs):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""

@@ -39,7 +39,7 @@ def test_grib_single_url_parts(parts, expected_meta):
 
     assert len(ds) == len(expected_meta)
     if len(ds) > 0:
-        assert ds.get(("param", "level")) == expected_meta
+        assert ds.get(("parameter.variable", "vertical.level")) == expected_meta
 
 
 @pytest.mark.parametrize(
@@ -57,7 +57,7 @@ def test_grib_single_url_parts_1(parts, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.get(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -101,7 +101,7 @@ def test_grib_multi_url_parts(parts1, parts2, expected_meta):
     )
 
     assert len(ds) == len(expected_meta)
-    assert ds.get(("param", "level")) == expected_meta
+    assert ds.get(("parameter.variable", "vertical.level")) == expected_meta
 
 
 if __name__ == "__main__":

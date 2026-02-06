@@ -39,7 +39,7 @@ def test_grib_single_file_parts(parts, expected_meta):
 
     assert len(ds) == len(expected_meta)
     if len(ds) > 0:
-        assert ds.get(("param", "level")) == expected_meta
+        assert ds.get(("parameter.variable", "vertical.level")) == expected_meta
 
 
 @pytest.mark.parametrize(
@@ -86,7 +86,7 @@ def test_grib_multi_file_parts(parts1, parts2, expected_meta):
 
     assert len(ds) == len(expected_meta)
     if len(ds) > 0:
-        assert ds.get(("param", "level")) == expected_meta
+        assert ds.get(("parameter.variable", "vertical.level")) == expected_meta
 
 
 if __name__ == "__main__":

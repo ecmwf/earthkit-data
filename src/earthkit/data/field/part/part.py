@@ -50,13 +50,13 @@ def part_keys(cls):
             f = getattr(cls, k)
             if callable(f):
                 if hasattr(f, "_is_get_key"):
-                    print(f"{k} is function")
+                    # print(f"{k} is function")
                     _GET_KEYS.append(k)
                 if hasattr(f, "_is_set_key"):
-                    print(f"{k} is function")
+                    # print(f"{k} is function")
                     _SET_KEYS.append(k)
                 if hasattr(f, "_alias"):
-                    print(f"{k} is alias to {f._alias}")
+                    # print(f"{k} is alias to {f._alias}")
                     _ALIASES[k] = f._alias
                     _GET_KEYS.append(k)
 

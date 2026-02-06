@@ -147,9 +147,9 @@ class ForecastTime(BaseTime):
 
     def to_dict(self):
         return {
-            "valid_datetime": self.valid_datetime,
-            "base_datetime": self.base_datetime,
-            "step": self.step,
+            "valid_datetime": self.valid_datetime(),
+            "base_datetime": self.base_datetime(),
+            "step": self.step(),
         }
 
     @classmethod
@@ -292,11 +292,11 @@ class ForecastTime(BaseTime):
         _add("base_datetime", base_datetime)
         _add("step", step)
 
-        return TimeOri(**d)
+        return ForecastTime(**d)
 
     def _set_valid_datetime(self, *, valid_datetime=None):
         valid_datetime = to_datetime(valid_datetime)
-        step = valid_datetime - self.base_datetime
+        step = valid_datetime - self.base_datetime()
         return self._set_generic(step=step)
 
     def _set_valid_datetime_and_step(self, *, valid_datetime=None, step=None):

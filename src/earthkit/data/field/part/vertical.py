@@ -129,9 +129,7 @@ class Vertical(BaseVertical):
         return f"{self.level} {self.units} ({self.abbreviation})"
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__}(level={self.level}, units={self.units}, level_type={self._type.name})"
-        )
+        return f"{self.__class__.__name__}(level={self.level()}, units={self.units()}, level_type={self._type.name})"
 
     @classmethod
     def from_dict(cls, d: dict, allow_unused=False) -> "Vertical":

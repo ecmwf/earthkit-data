@@ -36,12 +36,12 @@ def test_grib_set_data(fl_type, write_method):
 
     f = ds_ori[0].set(values=vals_ori + 1)
 
-    assert f.get("param") == "t"
-    assert f.get("grib.shortName") == "t"
-    assert f.get("level") == 500
-    assert f.get("grib.levelist") == 500
-    assert f.get("grib.date", "param") == (20070101, "t")
-    assert f.get("param", "grib.date") == ("t", 20070101)
+    assert f.get("parameter.variable") == "t"
+    assert f.get("metadata.shortName") == "t"
+    assert f.get("vertical.level") == 500
+    assert f.get("metadata.levelist") == 500
+    assert f.get("metadata.date", "parameter.variable") == (20070101, "t")
+    assert f.get("parameter.variable", "metadata.date") == ("t", 20070101)
     assert np.allclose(f.values, vals_ori + 1)
     assert np.allclose(ds_ori[0].values, vals_ori)
 
@@ -49,10 +49,10 @@ def test_grib_set_data(fl_type, write_method):
     with temp_file() as tmp:
         write_to_file(write_method, tmp, f)
         f_saved = from_source("file", tmp)[0]
-        assert f_saved.get("param") == "t"
-        assert f_saved.get("grib.shortName") == "t"
-        assert f_saved.get("level") == 500
-        assert f_saved.get("grib.levelist") == 500
+        assert f_saved.get("parameter.variable") == "t"
+        assert f_saved.get("metadata.shortName") == "t"
+        assert f_saved.get("vertical.level") == 500
+        assert f_saved.get("metadata.levelist") == 500
         assert np.allclose(f_saved.values, vals_ori + 1)
 
     # ---------------------
@@ -62,12 +62,12 @@ def test_grib_set_data(fl_type, write_method):
     f = ds_ori[0].set(values=vals_ori + 1)
     f = f.set(values=vals_ori + 2)
 
-    assert f.get("param") == "t"
-    assert f.get("grib.shortName") == "t"
-    assert f.get("level") == 500
-    assert f.get("grib.levelist") == 500
-    assert f.get("grib.date", "param") == (20070101, "t")
-    assert f.get("param", "grib.date") == ("t", 20070101)
+    assert f.get("parameter.variable") == "t"
+    assert f.get("metadata.shortName") == "t"
+    assert f.get("vertical.level") == 500
+    assert f.get("metadata.levelist") == 500
+    assert f.get("metadata.date", "parameter.variable") == (20070101, "t")
+    assert f.get("parameter.variable", "metadata.date") == ("t", 20070101)
     assert np.allclose(f.values, vals_ori + 2)
     assert np.allclose(ds_ori[0].values, vals_ori)
 
@@ -82,10 +82,10 @@ def test_grib_set_data(fl_type, write_method):
 
     ds = FieldList.from_fields(fields)
 
-    assert ds.get("param") == ["t", "z"]
-    assert ds.get("grib.shortName") == ["t", "z"]
-    assert ds.get("level") == [500, 500]
-    assert ds.get("grib.levelist") == [500, 500]
+    assert ds.get("parameter.variable") == ["t", "z"]
+    assert ds.get("metadata.shortName") == ["t", "z"]
+    assert ds.get("vertical.level") == [500, 500]
+    assert ds.get("metadata.levelist") == [500, 500]
     assert np.allclose(ds[0].values, vals_ori + 1)
     assert np.allclose(ds[1].values, vals_ori + 2)
 
@@ -93,10 +93,10 @@ def test_grib_set_data(fl_type, write_method):
     with temp_file() as tmp:
         write_to_file(write_method, tmp, ds)
         ds_saved = from_source("file", tmp)
-        assert ds_saved.get("param") == ["t", "z"]
-        assert ds_saved.get("grib.shortName") == ["t", "z"]
-        assert ds_saved.get("level") == [500, 500]
-        assert ds_saved.get("grib.levelist") == [500, 500]
+        assert ds_saved.get("parameter.variable") == ["t", "z"]
+        assert ds_saved.get("metadata.shortName") == ["t", "z"]
+        assert ds_saved.get("vertical.level") == [500, 500]
+        assert ds_saved.get("metadata.levelist") == [500, 500]
         assert np.allclose(ds_saved[0].values, vals_ori + 1)
         assert np.allclose(ds_saved[1].values, vals_ori + 2)
 

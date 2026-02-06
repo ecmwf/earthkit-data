@@ -111,11 +111,11 @@ class OrderBase(OrderOrSelection):
     def compare_elements(self, a, b):
         assert callable(self.remapping), (type(self.remapping), self.remapping)
         if self.remapping:
-            a_metadata = self.remapping(a.metadata)
-            b_metadata = self.remapping(b.metadata)
+            a_metadata = self.remapping(a.get)
+            b_metadata = self.remapping(b.get)
         else:
-            a_metadata = a.metadata
-            b_metadata = b.metadata
+            a_metadata = a.get
+            b_metadata = b.get
 
         for k, v in self.actions.items():
             n = v(a_metadata(k, default=None), b_metadata(k, default=None))

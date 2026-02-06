@@ -25,7 +25,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 # @pytest.mark.skipif(("GITHUB_WORKFLOW" in os.environ) or True, reason="Not yet ready")
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("param_key", ["variable", "param", "grib.shortName"])
+@pytest.mark.parametrize("param_key", ["parameter.variable", "metadata.shortName"])
 def test_grib_order_by_single_message(fl_type, param_key):
     s, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
@@ -37,7 +37,7 @@ def test_grib_order_by_single_message(fl_type, param_key):
     assert len(r) == 1
     assert r[0].get(param_key) == "2t"
 
-    r = s.order_by([param_key, "level"])
+    r = s.order_by([param_key, "vertical.level"])
     assert len(r) == 1
     assert r[0].get(param_key) == "2t"
 
@@ -59,45 +59,45 @@ class _CustomOrder:
 @pytest.mark.parametrize(
     "params,expected_meta",
     [
-        ("variable", dict(variable=["t", "t", "u", "u", "v", "v"])),
-        (["variable"], dict(variable=["t", "t", "u", "u", "v", "v"])),
+        ("parameter.variable", {"parameter.variable": ["t", "t", "u", "u", "v", "v"]}),
+        (["parameter.variable"], {"parameter.variable": ["t", "t", "u", "u", "v", "v"]}),
         (
-            ["variable", "level"],
-            dict(
-                variable=["t", "t", "u", "u", "v", "v"],
-                level=[850, 1000, 850, 1000, 850, 1000],
-            ),
+            ["parameter.variable", "vertical.level"],
+            {
+                "parameter.variable": ["t", "t", "u", "u", "v", "v"],
+                "vertical.level": [850, 1000, 850, 1000, 850, 1000],
+            },
         ),
-        (dict(variable="ascending"), dict(variable=["t", "t", "u", "u", "v", "v"])),
-        (dict(variable="descending"), dict(variable=["v", "v", "u", "u", "t", "t"])),
+        ({"parameter.variable": "ascending"}, {"parameter.variable": ["t", "t", "u", "u", "v", "v"]}),
+        ({"parameter.variable": "descending"}, {"parameter.variable": ["v", "v", "u", "u", "t", "t"]}),
         (
-            dict(variable="ascending", level="ascending"),
-            dict(
-                variable=["t", "t", "u", "u", "v", "v"],
-                level=[850, 1000, 850, 1000, 850, 1000],
-            ),
-        ),
-        (
-            dict(variable="ascending", level="descending"),
-            dict(
-                variable=["t", "t", "u", "u", "v", "v"],
-                level=[1000, 850, 1000, 850, 1000, 850],
-            ),
+            {"parameter.variable": "ascending", "vertical.level": "ascending"},
+            {
+                "parameter.variable": ["t", "t", "u", "u", "v", "v"],
+                "vertical.level": [850, 1000, 850, 1000, 850, 1000],
+            },
         ),
         (
-            dict(variable=_CustomOrder()),
-            dict(variable=["u", "u", "v", "v", "t", "t"]),
+            {"parameter.variable": "ascending", "vertical.level": "descending"},
+            {
+                "parameter.variable": ["t", "t", "u", "u", "v", "v"],
+                "vertical.level": [1000, 850, 1000, 850, 1000, 850],
+            },
         ),
         (
-            dict(variable=["u", "v", "t"]),
-            dict(variable=["u", "u", "v", "v", "t", "t"]),
+            {"parameter.variable": _CustomOrder()},
+            {"parameter.variable": ["u", "u", "v", "v", "t", "t"]},
         ),
         (
-            dict(variable=["u", "v", "t"], level=[1000, 850]),
-            dict(
-                variable=["u", "u", "v", "v", "t", "t"],
-                level=[1000, 850, 1000, 850, 1000, 850],
-            ),
+            {"parameter.variable": ["u", "v", "t"]},
+            {"parameter.variable": ["u", "u", "v", "v", "t", "t"]},
+        ),
+        (
+            {"parameter.variable": ["u", "v", "t"], "vertical.level": [1000, 850]},
+            {
+                "parameter.variable": ["u", "u", "v", "v", "t", "t"],
+                "vertical.level": [1000, 850, 1000, 850, 1000, 850],
+            },
         ),
     ],
 )
@@ -120,27 +120,27 @@ def test_grib_order_by_single_file(
     "params,expected_meta",
     [
         (
-            "variable",
-            dict(variable=["t", "t", "t", "t", "u", "u", "v", "v", "z", "z"]),
+            "parameter.variable",
+            {"parameter.variable": ["t", "t", "t", "t", "u", "u", "v", "v", "z", "z"]},
         ),
         (
-            ["variable"],
-            dict(variable=["t", "t", "t", "t", "u", "u", "v", "v", "z", "z"]),
+            ["parameter.variable"],
+            {"parameter.variable": ["t", "t", "t", "t", "u", "u", "v", "v", "z", "z"]},
         ),
         (
-            ["variable", "level"],
-            dict(
-                variable=["t", "t", "t", "t", "u", "u", "v", "v", "z", "z"],
-                level=[500, 850, 850, 1000, 850, 1000, 850, 1000, 500, 850],
-            ),
+            ["parameter.variable", "vertical.level"],
+            {
+                "parameter.variable": ["t", "t", "t", "t", "u", "u", "v", "v", "z", "z"],
+                "vertical.level": [500, 850, 850, 1000, 850, 1000, 850, 1000, 500, 850],
+            },
         ),
         (
-            dict(variable="ascending"),
-            dict(variable=["t", "t", "t", "t", "u", "u", "v", "v", "z", "z"]),
+            {"parameter.variable": "ascending"},
+            {"parameter.variable": ["t", "t", "t", "t", "u", "u", "v", "v", "z", "z"]},
         ),
         (
-            dict(variable="descending"),
-            dict(variable=["z", "z", "v", "v", "u", "u", "t", "t", "t", "t"]),
+            {"parameter.variable": "descending"},
+            {"parameter.variable": ["z", "z", "v", "v", "u", "u", "t", "t", "t", "t"]},
         ),
     ],
 )
@@ -160,24 +160,24 @@ def test_grib_order_by_multi_file(fl_type, params, expected_meta):
 def test_grib_order_by_with_sel(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
-    g = f.sel(level=500)
+    g = f.sel({"vertical.level": 500})
     assert len(g) == 3
-    r = g.order_by("variable")
+    r = g.order_by("parameter.variable")
     assert len(r) == len(g)
-    assert r.get("variable") == ["t", "u", "v"]
+    assert r.get("parameter.variable") == ["t", "u", "v"]
 
-    g = f.sel(level=500)
+    g = f.sel({"vertical.level": 500})
     assert len(g) == 3
-    r = g.order_by({"variable": "descending"})
+    r = g.order_by({"parameter.variable": "descending"})
     assert len(r) == len(g)
-    assert r.get("variable") == ["v", "u", "t"]
+    assert r.get("parameter.variable") == ["v", "u", "t"]
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_order_by_valid_datetime(fl_type):
     f, _ = load_grib_data("t_time_series.grib", fl_type, folder="data")
 
-    g = f.order_by(valid_datetime="descending")
+    g = f.order_by({"time.valid_datetime": "descending"})
     assert len(g) == 10
 
     ref = [
@@ -194,7 +194,7 @@ def test_grib_order_by_valid_datetime(fl_type):
     ]
 
     ref = to_datetime_list(ref)
-    assert g.get("valid_datetime") == ref
+    assert g.get("time.valid_datetime") == ref
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -204,6 +204,6 @@ def test_grib_order_by_remapping(fl_type):
     ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
     ref = [("t", 850), ("t", 1000), ("u", 1000), ("v", 850), ("v", 1000), ("u", 850)]
 
-    r = ds.order_by(param_level=ordering, remapping={"param_level": "{param}{level}"})
+    r = ds.order_by({"param_level": ordering}, remapping={"param_level": "{param}{level}"})
 
-    assert r.get("param", "level") == ref
+    assert r.get("parameter.variable", "vertical.level") == ref

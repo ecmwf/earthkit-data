@@ -41,7 +41,7 @@ def test_forcings_valid_datetime(input_data):
     ds, _ = load_forcings_fs(last_step=12, input_data=input_data)
     f = ds[4]
 
-    assert f.get("valid_datetime") == datetime.datetime.fromisoformat("2020-05-13T18:00:00")
+    assert f.get("valid.datetime") == datetime.datetime.fromisoformat("2020-05-13T18:00:00")
 
 
 if __name__ == "__main__":

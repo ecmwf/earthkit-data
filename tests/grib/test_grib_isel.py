@@ -29,45 +29,45 @@ from grib_fixtures import load_grib_data  # noqa: E402
 def test_grib_isel_single_message(fl_type):
     ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
-    r = ds.isel(variable=0)
+    r = ds.isel({"parameter.variable": 0})
     assert len(r) == 1
-    assert r[0].get("variable") == "2t"
+    assert r[0].get("parameter.variable") == "2t"
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
     [
-        (dict(variable=1, level=2), [["u", 500]], []),
-        ({"grib.paramId": 1, "level": 2}, [[131, 500]], []),
+        ({"parameter.variable": 1, "vertical.level": 2}, [["u", 500]], []),
+        ({"metadata.paramId": 1, "vertical.level": 2}, [[131, 500]], []),
         (
-            dict(variable=[0, 1], level=[2, 3]),
+            {"parameter.variable": [0, 1], "vertical.level": [2, 3]},
             [
                 ["t", 700],
                 ["u", 700],
                 ["t", 500],
                 ["u", 500],
             ],
-            ["variable", "level"],
+            ["parameter.variable", "vertical.level"],
         ),
         # (dict(shortName="w"), [], []),
         (dict(INVALIDKEY=0), [], []),
         (
-            {"variable": [0], "level": [3, 2], "grib.marsType": 0},
+            {"parameter.variable": [0], "vertical.level": [3, 2], "metadata.marsType": 0},
             [
                 ["t", 700, "an"],
                 ["t", 500, "an"],
             ],
-            ["variable", "level", "grib.marsType"],
+            ["parameter.variable", "vertical.level", "metadata.marsType"],
         ),
         (
-            dict(level=-1),
+            {"vertical.level": -1},
             [
                 ["t", 1000],
                 ["u", 1000],
                 ["v", 1000],
             ],
-            ["variable", "level"],
+            ["parameter.variable", "vertical.level"],
         ),
     ],
 )
@@ -81,7 +81,7 @@ def test_grib_isel_single_file(fl_type, params, expected_meta, metadata_keys):
         if metadata_keys:
             keys = metadata_keys
 
-        assert g.metadata(keys) == expected_meta
+        assert g.get(keys) == expected_meta
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -99,10 +99,10 @@ def test_grib_isel_single_file(fl_type, params, expected_meta, metadata_keys):
 def test_grib_isel_slice_single_file(fl_type, param_id, level, expected_meta):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
-    g = f.isel({"grib.paramId": param_id, "level": level})
+    g = f.isel({"metadata.paramId": param_id, "vertical.level": level})
     assert len(g) == len(expected_meta)
     if expected_meta:
-        assert g.metadata(["grib.paramId", "level"]) == expected_meta
+        assert g.get(["metadata.paramId", "vertical.level"]) == expected_meta
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -123,9 +123,9 @@ def test_grib_isel_multi_file(fl_type):
     f = from_source("multi", [f1, f2])
 
     # single resulting field
-    g = f.isel(variable=1, level=21)
+    g = f.isel({"parameter.variable": 1, "vertical.level": 21})
     assert len(g) == 1
-    assert g.metadata(["variable", "level", "grib.typeOfLevel"]) == [["t", 85, "hybrid"]]
+    assert g.get(["parameter.variable", "vertical.level", "metadata.marsType"]) == [["t", 85, "hybrid"]]
 
     g1 = f[40]
     d = g.to_numpy() - g1.to_numpy()
@@ -138,9 +138,9 @@ def test_grib_isel_slice_multi_file(fl_type):
     f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
     f = from_source("multi", [f1, f2])
 
-    g = f.isel(variable=1, level=slice(20, 22))
+    g = f.isel({"parameter.variable": 1, "vertical.level": slice(20, 22)})
     assert len(g) == 2
-    assert g.metadata(["variable", "level", "grib.typeOfLevel"]) == [
+    assert g.get(["parameter.variable", "vertical.level", "metadata.marsType"]) == [
         ["t", 81, "hybrid"],
         ["t", 85, "hybrid"],
     ]
@@ -151,7 +151,7 @@ def test_grib_sel_remapping_1(fl_type):
     ds, _ = load_grib_data("test6.grib", fl_type)
     ref = [("t", 850)]
     r = ds.sel(param_level="t850", remapping={"param_level": "{param}{level}"})
-    assert r.get("param", "level") == ref
+    assert r.get("parameter.variable", "vertical.level") == ref
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -159,7 +159,7 @@ def test_grib_sel_remapping_2(fl_type):
     ds, _ = load_grib_data("test6.grib", fl_type)
     ref = [("u", 1000), ("t", 850)]
     r = ds.sel(param_level=["t850", "u1000"], remapping={"param_level": "{param}{level}"})
-    assert r.get("param", "level") == ref
+    assert r.get("parameter.variable", "vertical.level") == ref
 
 
 if __name__ == "__main__":

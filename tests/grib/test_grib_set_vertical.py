@@ -31,26 +31,26 @@ from grib_fixtures import load_grib_data  # noqa: E402
     [
         (
             {
-                "level": 320,
-                "vertical_type": "potential_temperature",
+                "vertical.level": 320,
+                "vertical.type": "potential_temperature",
             },
             {
-                "level": 320,
-                "vertical_type": "potential_temperature",
-                "vertical_units": "K",
-                "vertical_abbreviation": "pt",
-                "grib.levelist": 500,
-                "grib.level": 500,
-                "grib.levtype": "pl",
-                "grib.typeOfLevel": "isobaricInhPa",
+                "vertical.level": 320,
+                "vertical.type": "potential_temperature",
+                "vertical.units": "K",
+                "vertical.abbreviation": "pt",
+                "metadata.levelist": 500,
+                "metadata.level": 500,
+                "metadata.levtype": "pl",
+                "metadata.typeOfLevel": "isobaricInhPa",
             },
             {
-                "level": 320,
-                "vertical_type": "potential_temperature",
-                "grib.levelist": 320,
-                "grib.level": 320,
-                "grib.levtype": "pt",
-                "grib.typeOfLevel": "theta",
+                "vertical.level": 320,
+                "vertical.type": "potential_temperature",
+                "metadata.levelist": 320,
+                "metadata.level": 320,
+                "metadata.levtype": "pt",
+                "metadata.typeOfLevel": "theta",
             },
         ),
     ],
@@ -64,8 +64,8 @@ def test_grib_set_vertical(fl_type, write_method, _kwargs, ref1, ref2):
         assert f.get(k) == v
 
     # the original field is unchanged
-    assert ds_ori[0].get("level") == 500
-    assert ds_ori[0].get("vertical_type") == "pressure"
+    assert ds_ori[0].get("vertical.level") == 500
+    assert ds_ori[0].get("vertical.type") == "pressure"
 
     with temp_file() as tmp:
         f.to_target("file", tmp)

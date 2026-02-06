@@ -46,7 +46,7 @@ def test_grib_url_stream_iter():
     ]
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == ref[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
         cnt += 1
 
     assert cnt == len(ref)
@@ -77,7 +77,7 @@ def test_grib_url_stream_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("parameter.variable") == expected_meta[i]
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -86,7 +86,7 @@ def test_grib_url_stream_batched(_kwargs, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
+@pytest.mark.parametrize("group", ["vertical.level", ["vertical.level", "metadata.gridType"]])
 def test_grib_url_stream_group_by(group):
     ds = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True)
 
@@ -101,7 +101,7 @@ def test_grib_url_stream_group_by(group):
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 3
-        assert f.metadata(("param", "level")) == ref[i]
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i]
         assert f.to_fieldlist(array_namespace="numpy") is not f
         cnt += 1
 
@@ -125,11 +125,11 @@ def test_grib_url_stream_in_memory():
     ref = ["t", "u", "v", "t", "u", "v"]
 
     # iteration
-    val = [f.metadata(("param")) for f in ds]
+    val = [f.get(("parameter.variable")) for f in ds]
     assert val == ref, "iteration"
 
     # metadata
-    val = ds.metadata("param")
+    val = ds.get("parameter.variable")
     assert val == ref, "method"
 
     # data
@@ -199,7 +199,7 @@ def test_grib_url_stream_multi_urls_iter():
     ]
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == ref[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
         cnt += 1
 
     assert cnt == len(ref)
@@ -234,7 +234,7 @@ def test_grib_url_stream_multi_urls_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("parameter.variable") == expected_meta[i]
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -265,11 +265,11 @@ def test_grib_url_stream_multi_urls_memory():
         ("z", 850),
     ]
     # iteration
-    val = [f.metadata(("param", "level")) for f in ds]
+    val = [f.get(("parameter.variable", "vertical.level")) for f in ds]
     assert val == md_ref, "iteration"
 
     # metadata
-    val = ds.metadata(("param", "level"))
+    val = ds.get(("parameter.variable", "vertical.level"))
     assert val == md_ref, "method"
 
     # data
@@ -297,17 +297,17 @@ def test_grib_url_stream_multi_urls_memory():
     # slicing
     r = ds[0:3]
     assert len(r) == 3
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == md_ref[0:3]
 
     r = ds[-2:]
     assert len(r) == 2
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == md_ref[-2:]
 
-    r = ds.sel(param="t")
+    r = ds.sel({"parameter.variable": "t"})
     assert len(r) == 2
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == [
         ("t", 500),
         ("t", 850),
@@ -344,7 +344,7 @@ def test_grib_url_stream_single_url_parts_core(path, parts, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -376,7 +376,7 @@ def test_grib_url_stream_single_url_parts_as_arg_valid(parts, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -444,7 +444,7 @@ def test_grib_url_stream_multi_urls_parts(parts1, parts2, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)

@@ -61,9 +61,8 @@ def test_grib_set_parameter_2(
 ):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
-    f = ds_ori[0].set(variable="ta", units="kg/kg")
-    assert f.get("variable") == "ta"
-    assert f.get("param") == "ta"
-    assert f.get("grib.shortName") == "t"
+    f = ds_ori[0].set({"variable": "ta", "units": "kg/kg"})
+    assert f.get("parameter.variable") == "ta"
+    assert f.get("metadata.shortName") == "t"
     assert f.get("units") == "kg/kg"
-    assert f.get("grib.units") == "K"
+    assert f.get("metadata.units") == "K"
