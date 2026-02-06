@@ -1076,8 +1076,10 @@ class Field(Base):
         to_target(target, *args, data=self, **kwargs)
 
     def default_encoder(self):
-        if "grib" in self._private:
-            return "grib"
+        # TODO: improve this to support more formats and to be more robust
+        if self._private and "metadata" in self._private:
+            if hasattr(self._private["metadata"], "NAME") and self._private["metadata"].NAME == "grib":
+                return "grib"
         return "dict"
 
     def _encode(self, encoder, **kwargs):
