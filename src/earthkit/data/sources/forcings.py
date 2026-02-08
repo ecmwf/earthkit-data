@@ -180,7 +180,7 @@ class ForcingMaker:
         return self.cos_solar_zenith_angle(date)
 
     def toa_incident_solar_radiation(self, date):
-        from earthkit.meteo.solar import toa_incident_solar_radiation
+        from earthkit.data.utils.meteo import toa_incident_solar_radiation
 
         date = to_datetime(date)
         result = toa_incident_solar_radiation(
@@ -193,7 +193,7 @@ class ForcingMaker:
         return result.flatten()
 
     def cos_solar_zenith_angle(self, date):
-        from earthkit.meteo.solar import cos_solar_zenith_angle
+        from earthkit.data.utils.meteo import cos_solar_zenith_angle
 
         date = to_datetime(date)
         result = cos_solar_zenith_angle(
