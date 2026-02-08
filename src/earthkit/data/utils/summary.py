@@ -44,18 +44,18 @@ def make_unique(x, full=False):
     return format_list(r, full=full)
 
 
-def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, namespace=None, **kwargs):
+def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, part=None, **kwargs):
     # do_print = kwargs.pop("print", False)
 
     if kwargs:
         raise TypeError(f"ls: unsupported arguments={kwargs}")
 
-    if isinstance(namespace, str):
-        namespace = [namespace]
+    if isinstance(part, str):
+        part = [part]
 
     _keys = {}
 
-    if not namespace:
+    if not part:
         if isinstance(default_keys, (list, tuple)):
             default_keys = {k: k for k in default_keys}
 
@@ -74,15 +74,15 @@ def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, namespac
         elif isinstance(extra_keys, dict):
             _keys.update(extra_keys)
 
-    if "namespace" in _keys:
-        raise ValueError("ls: 'namespace' is a reserved key")
+    if "part" in _keys:
+        raise ValueError("ls: 'part' is a reserved key")
 
     if n == 0:
         raise ValueError("n cannot be 0")
 
     _keys_lst = list(_keys.keys())
 
-    return format_ls(metadata_proc(_keys_lst, n, namespace=namespace), column_names=_keys)
+    return format_ls(metadata_proc(_keys_lst, n, part=part), column_names=_keys)
 
 
 def format_ls(attributes, column_names=None):

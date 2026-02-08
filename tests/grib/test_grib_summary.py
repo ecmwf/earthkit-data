@@ -194,95 +194,95 @@ def test_grib_describe_single_field(fl_type):
         (
             {
                 "keys": [
-                    "variable",
-                    "vertical_type",
-                    "level",
-                    "base_datetime",
-                    "valid_datetime",
-                    "step",
-                    "member",
+                    "parameter.variable",
+                    "vertical.type",
+                    "vertical.level",
+                    "time.base_datetime",
+                    "time.valid_datetime",
+                    "time.step",
+                    "ensemble.member",
                 ]
             },
             {
-                "variable": {0: "t", 1: "u", 2: "v", 3: "t"},
-                "vertical_type": {
+                "parameter.variable": {0: "t", 1: "u", 2: "v", 3: "t"},
+                "vertical.type": {
                     0: "pressure",
                     1: "pressure",
                     2: "pressure",
                     3: "pressure",
                 },
-                "level": {0: 1000, 1: 1000, 2: 1000, 3: 850},
-                "base_datetime": {
+                "vertical.level": {0: 1000, 1: 1000, 2: 1000, 3: 850},
+                "time.base_datetime": {
                     0: datetime.datetime(2018, 8, 1, 12),
                     1: datetime.datetime(2018, 8, 1, 12),
                     2: datetime.datetime(2018, 8, 1, 12),
                     3: datetime.datetime(2018, 8, 1, 12),
                 },
-                "valid_datetime": {
+                "time.valid_datetime": {
                     0: datetime.datetime(2018, 8, 1, 12),
                     1: datetime.datetime(2018, 8, 1, 12),
                     2: datetime.datetime(2018, 8, 1, 12),
                     3: datetime.datetime(2018, 8, 1, 12),
                 },
-                "step": {
+                "time.step": {
                     0: datetime.timedelta(0),
                     1: datetime.timedelta(0),
                     2: datetime.timedelta(0),
                     3: datetime.timedelta(0),
                 },
-                "member": {0: "0", 1: "0", 2: "0", 3: "0"},
+                "ensemble.member": {0: "0", 1: "0", 2: "0", 3: "0"},
             },
         ),
         (
             {
                 "keys": [
-                    "variable",
-                    "level",
+                    "parameter.variable",
+                    "vertical.level",
                 ],
-                "extra_keys": ["member"],
+                "extra_keys": ["ensemble.member"],
             },
             {
-                "variable": {0: "t", 1: "u", 2: "v", 3: "t"},
-                "level": {0: 1000, 1: 1000, 2: 1000, 3: 850},
-                "member": {0: "0", 1: "0", 2: "0", 3: "0"},
+                "parameter.variable": {0: "t", 1: "u", 2: "v", 3: "t"},
+                "vertical.level": {0: 1000, 1: 1000, 2: 1000, 3: 850},
+                "ensemble.member": {0: "0", 1: "0", 2: "0", 3: "0"},
             },
         ),
         (
             {
                 "keys": [
-                    "variable",
-                    "level",
+                    "parameter.variable",
+                    "vertical.level",
                 ],
-                "extra_keys": ["member"],
+                "extra_keys": ["ensemble.member"],
             },
             {
-                "variable": {0: "t", 1: "u", 2: "v", 3: "t"},
-                "level": {0: 1000, 1: 1000, 2: 1000, 3: 850},
-                "member": {0: "0", 1: "0", 2: "0", 3: "0"},
+                "parameter.variable": {0: "t", 1: "u", 2: "v", 3: "t"},
+                "vertical.level": {0: 1000, 1: 1000, 2: 1000, 3: 850},
+                "ensemble.member": {0: "0", 1: "0", 2: "0", 3: "0"},
             },
         ),
         (
             {
                 "keys": [
-                    "variable",
-                    "grib.levtype",
+                    "parameter.variable",
+                    "metadata.levtype",
                 ],
             },
             {
-                "variable": {0: "t", 1: "u", 2: "v", 3: "t"},
-                "grib.levtype": {0: "pl", 1: "pl", 2: "pl", 3: "pl"},
+                "parameter.variable": {0: "t", 1: "u", 2: "v", 3: "t"},
+                "metadata.levtype": {0: "pl", 1: "pl", 2: "pl", 3: "pl"},
             },
         ),
         (
             {
                 "keys": [
-                    "grib.levtype",
-                    "variable",
+                    "metadata.levtype",
+                    "parameter.variable",
                 ],
             },
             {
-                "grib.levtype": {0: "pl", 1: "pl", 2: "pl", 3: "pl"},
-                "variable": {0: "t", 1: "u", 2: "v", 3: "t"},
+                "metadata.levtype": {0: "pl", 1: "pl", 2: "pl", 3: "pl"},
+                "parameter.variable": {0: "t", 1: "u", 2: "v", 3: "t"},
             },
         ),
         ({"keys": ["_missing_key"]}, {"_missing_key": {0: None, 1: None, 2: None, 3: None}}),

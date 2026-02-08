@@ -288,7 +288,7 @@ def test_file_multi_directory_with_tar(write_method):
                 ("v", 850),
             ]
 
-            assert ds.metadata(("param", "level")) == ref
+            assert ds.get(("parameter.variable", "vertical.level")) == ref
 
 
 def test_file_grib_tar_with_single_file():

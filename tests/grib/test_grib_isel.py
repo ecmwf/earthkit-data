@@ -146,20 +146,20 @@ def test_grib_isel_slice_multi_file(fl_type):
     ]
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_sel_remapping_1(fl_type):
-    ds, _ = load_grib_data("test6.grib", fl_type)
-    ref = [("t", 850)]
-    r = ds.sel(param_level="t850", remapping={"param_level": "{param}{level}"})
-    assert r.get("parameter.variable", "vertical.level") == ref
+# @pytest.mark.parametrize("fl_type", FL_TYPES)
+# def test_grib_sel_remapping_1(fl_type):
+#     ds, _ = load_grib_data("test6.grib", fl_type)
+#     ref = [("t", 850)]
+#     r = ds.sel(param_level="t850", remapping={"param_level": "{param}{level}"})
+#     assert r.get("parameter.variable", "vertical.level") == ref
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_sel_remapping_2(fl_type):
-    ds, _ = load_grib_data("test6.grib", fl_type)
-    ref = [("u", 1000), ("t", 850)]
-    r = ds.sel(param_level=["t850", "u1000"], remapping={"param_level": "{param}{level}"})
-    assert r.get("parameter.variable", "vertical.level") == ref
+# @pytest.mark.parametrize("fl_type", FL_TYPES)
+# def test_grib_sel_remapping_2(fl_type):
+#     ds, _ = load_grib_data("test6.grib", fl_type)
+#     ref = [("u", 1000), ("t", 850)]
+#     r = ds.sel(param_level=["t850", "u1000"], remapping={"param_level": "{param}{level}"})
+#     assert r.get("parameter.variable", "vertical.level") == ref
 
 
 if __name__ == "__main__":

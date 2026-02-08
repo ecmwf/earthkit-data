@@ -528,33 +528,14 @@ class Field(Base):
 
     def _get_part(self, key):
         """Return the part name, part object and key name for the specified key."""
-        # m = self._PART_KEYS.get(key)
-
-        m = None
-        if m is not None:
-            return m[0], self._parts.get(m[0]), m[1]
         if "." in key:
-            part, name = key.split(".", 1)
-            if part in self._parts:
-                return part, self._parts.get(part), name
-            return part, None, name
+            part_name, name = key.split(".", 1)
+            return part_name, self._parts.get(part_name), name
         elif key in self._parts[DATA]:
-            return DATA, self._parts.get(DATA), key
-        return None, None, None
+            return DATA, self._parts[DATA], key
+        return None, None, key
 
-        # if "." in key:
-        #     part, name = key.split(".", 1)
-        #     return part, self._parts.get(part), name
-        # else:
-        #     for part, d in self._parts.items():
-        #         if key in d.ALL_KEYS:
-        #             return part, d, key
-
-        # return None, None, None
-
-    def _get_single(
-        self, key, default=None, *, astype=None, raise_on_missing=False, remapping=None, patches=None
-    ):
+    def _get_single(self, key, default=None, *, astype=None, raise_on_missing=False):
         r"""Return the value for ``key``.
 
         Parameters
@@ -583,26 +564,28 @@ class Field(Base):
             If ``raise_on_missing`` is True and ``key`` is not found.
 
         """
-        remapping = build_remapping(remapping, patches, forced_build=False)
-        if remapping:
-            return remapping(self.get_single)(
-                key, default=default, astype=astype, raise_on_missing=raise_on_missing
-            )
+        prefix, part, key_name = self._get_part(key)
 
-        part_name, part, key_name = self._get_part(key)
-
+        # first try to get the value from the part handler if it is found
         if part:
             return part.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
 
-        if not part_name:
+        # handle keys like "mars.param" where "mars" is not a part but a
+        # namespace in the GRIB metadata
+        if prefix and prefix != METADATA:
+            key_name = prefix + "." + key_name
+            prefix = METADATA
+
+        if not prefix:
             from earthkit.data.core.config import CONFIG
 
-            if CONFIG.get("search_all_field_parts", True):
-                part_name = METADATA
+            if CONFIG.get("search-all-field-parts", True):
+                prefix = METADATA
 
-        if part_name == METADATA:
+        if prefix == METADATA:
             for _, private_part in self._private.items():
                 if hasattr(private_part, "metadata"):
+                    print(f"Calling metadata on private_part with key_name={key_name}")
                     return private_part.metadata(
                         key_name, default=default, astype=astype, raise_on_missing=raise_on_missing
                     )
@@ -634,7 +617,6 @@ class Field(Base):
         raise_on_missing=False,
         output=None,
         remapping=None,
-        joiner=None,
     ):
         r"""Fast implementation of :meth:`get` for internal use.
 
@@ -684,7 +666,7 @@ class Field(Base):
         # Remapping must be an object if defined
         if remapping is not None:
             assert isinstance(remapping, (Remapping, Patch))
-            meth = remapping(meth, joiner=joiner)
+            meth = remapping(meth)
 
         if isinstance(keys, str):
             r = meth(keys, default=default, astype=astype, raise_on_missing=raise_on_missing)
@@ -769,7 +751,8 @@ class Field(Base):
         elif output is not dict:
             raise ValueError("output must be None or dict")
 
-        remapping = build_remapping(remapping, patches, forced_build=False)
+        if remapping or patches:
+            remapping = build_remapping(remapping, patches, forced_build=False)
 
         r = self._get_fast(
             keys,
@@ -794,11 +777,11 @@ class Field(Base):
         patches=None,
     ):
 
-        if isinstance(keys, str):
+        if isinstance(keys, str) and not keys.startswith("metadata."):
             keys = "metadata." + keys
         else:
             is_tuple = isinstance(keys, tuple)
-            keys = ["metadata." + x for x in keys]
+            keys = ["metadata." + x for x in keys if not x.startswith("metadata.")]
             if is_tuple:
                 keys = tuple(keys)
 
@@ -1123,20 +1106,20 @@ class Field(Base):
     def to_pandas(self, *args, **kwargs):
         pass
 
-    def _namespace(self, name="all", *, namespace=None, simplify=True):
-        r"""Return the namespaces as a dict.
+    def _dump_part(self, part="all", *, filter=None, simplify=True):
+        r"""Return the parts as a dict.
 
         Parameters
         ----------
-        name: :obj:`str`, :obj:`list`, :obj:`tuple` or :obj:`all`
-            The namespaces to return. If `name` is :obj:`all`, None or empty str
-            all the namespaces will be used.
+        part: :obj:`str`, :obj:`list`, :obj:`tuple` or :obj:`all`
+            The part to return. If `part` is :obj:`all`, None or empty str
+            all the parts will be used.
 
         Returns
         -------
         dict
             Each namespace is represented as a dict. When ``simplify`` is True and
-            ``name`` is a str and only one namespace is available the returned dict
+            ``part`` is a str and only one namespace is available the returned dict
             contains the keys and values of that namespace. Otherwise the returned
             dict contains one item per namespace.
 
@@ -1149,21 +1132,21 @@ class Field(Base):
         dump
 
         """
-        if name is None or name == "":
-            raise ValueError("namespace(): name cannot be None or empty str. Use 'all' instead.")
+        if part is None or part == "":
+            raise ValueError("_dump_part(): part cannot be None or empty str. Use 'all' instead.")
 
-        if name in ["all", all, ["all"], [all]]:
-            name = None
+        if part in ["all", all, ["all"], [all]]:
+            part = None
 
         result = {}
         for m in self._parts.values():
-            m.namespace(self, name, result)
+            m.namespace(self, part, result)
 
-        if name == "metadata" and self._private:
+        if part == "metadata" and self._private:
             md = self._private.get("metadata")
 
             if md and hasattr(md, "namespace"):
-                md.namespace(self, namespace, result)
+                md.namespace(self, part, result)
 
         # if (
         #     name is not None
@@ -1174,8 +1157,8 @@ class Field(Base):
         #         if hasattr(v, "namespace"):
         #             v.namespace(self, name, result)
 
-        if simplify and isinstance(name, str) and len(result) == 1 and name in result:
-            return result[name]
+        if simplify and isinstance(part, str) and len(result) == 1 and part in result:
+            return result[part]
 
         return result
 
@@ -1214,7 +1197,7 @@ class Field(Base):
         """
         from earthkit.data.utils.summary import format_namespace_dump
 
-        d = self._namespace(part, namespace=filter, simplify=False)
+        d = self._dump_part(part, filter=filter, simplify=False)
 
         d1 = {}
         for k in DUMP_ORDER:
@@ -1295,6 +1278,12 @@ class Field(Base):
     @normalize("time.base_datetime", "date")
     @normalize("time.forecast_reference_time", "date")
     @normalize("time.step", "timedelta")
+    @normalize("base_datetime", "date")
+    @normalize("valid_datetime", "date")
+    @normalize("step_timedelta", "timedelta")
+    @normalize("metadata.base_datetime", "date")
+    @normalize("metadata.valid_datetime", "date")
+    @normalize("metadata.step_timedelta", "timedelta")
     @staticmethod
     def normalise_key_values(**kwargs):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""

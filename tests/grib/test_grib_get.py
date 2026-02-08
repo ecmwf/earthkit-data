@@ -61,7 +61,39 @@ def repeat_list_items(items, count):
         (("metadata.shortName", "vertical.level"), ("2t", 0)),
     ],
 )
-def test_grib_get_core(fl_type, key, expected_value):
+def test_grib_get_core_1(fl_type, key, expected_value):
+    ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
+
+    res = ds.get(key)
+    assert res == [expected_value]
+
+    res = ds[0].get(key)
+    assert res == expected_value
+
+
+@pytest.mark.search_all_parts
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize(
+    "key,expected_value",
+    [
+        ("shortName", "2t"),
+        ("metadata.shortName", "2t"),
+        ("metadata.shortName:s", "2t"),
+        ("metadata.shortName:str", "2t"),
+        ("centre", "ecmf"),
+        ("metadata.centre", "ecmf"),
+        ("metadata.centre:l", 98),
+        ("level", 0),
+        ("metadata.level", 0),
+        ("metadata.level:l", 0),
+        ("metadata.level:int", 0),
+        (["metadata.shortName"], ["2t"]),
+        (["metadata.shortName", "level"], ["2t", 0]),
+        (("metadata.shortName"), "2t"),
+        (("metadata.shortName", "level"), ("2t", 0)),
+    ],
+)
+def test_grib_get_core_2(fl_type, key, expected_value):
     ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
     res = ds.get(key)

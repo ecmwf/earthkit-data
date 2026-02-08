@@ -329,16 +329,21 @@ def test_grib_sel_base_datetime(fl_type, _kwargs):
 def test_grib_sel_remapping_1(fl_type):
     ds, _ = load_grib_data("test6.grib", fl_type)
     ref = [("t", 850)]
-    r = ds.sel({"param_level": "t850", "remapping": {"param_level": "{param}{levelist}"}})
-    assert r.get("parameter.variable", "vertical.level") == ref
+    r = ds.sel({"param_level": "t850", "remapping": {"param_level": "{parameter.variable}{vertical.level}"}})
+    assert r.get(("parameter.variable", "vertical.level")) == ref
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_sel_remapping_2(fl_type):
     ds, _ = load_grib_data("test6.grib", fl_type)
     ref = [("u", 1000), ("t", 850)]
-    r = ds.sel({"param_level": ["t850", "u1000"], "remapping": {"param_level": "{param}{levelist}"}})
-    assert r.get("parameter.variable", "vertical.level") == ref
+    r = ds.sel(
+        {
+            "param_level": ["t850", "u1000"],
+            "remapping": {"param_level": "{parameter.variable}{vertical.level}"},
+        }
+    )
+    assert r.get(("parameter.variable", "vertical.level")) == ref
 
 
 if __name__ == "__main__":

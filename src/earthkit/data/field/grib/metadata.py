@@ -9,6 +9,9 @@
 
 import functools
 
+from earthkit.data.utils.dates import datetime_from_grib
+from earthkit.data.utils.dates import to_timedelta
+
 NAMESPACES = [
     "ls",
     "geography",
@@ -121,17 +124,26 @@ class GribMetadata:
                 key = "paramId"
             return key
 
+        key = _key_name(key)
+
         _kwargs = {}
         if not raise_on_missing:
             _kwargs["default"] = default
 
-        if key == "message":
+        if key == "step_timedelta":
+            return self.step_timedelta()
+        if key == "valid_datetime":
+            return self.valid_datetime()
+        elif key == "base_datetime":
+            return self.base_datetime()
+        elif key == "reference_datetime":
+            return self.reference_datetime()
+        elif key == "indexing_datetime":
+            return self.indexing_datetime()
+        elif key == "message":
             return self.message()
-
-        if key == "handle":
+        elif key == "handle":
             return self._handle
-
-        # key = _key_name(key)
 
         v = self._handle.get(key, ktype=astype, **_kwargs)
 
@@ -142,6 +154,36 @@ class GribMetadata:
 
     def set(self, d):
         raise NotImplementedError("GribMetadata.set is not implemented")
+
+    def _datetime(self, date_key, time_key):
+        date = self.get(date_key, None)
+        if date is not None:
+            time = self.get(time_key, None)
+            if time is not None:
+                return datetime_from_grib(date, time)
+        return None
+
+    def base_datetime(self):
+        return self._datetime("dataDate", "dataTime")
+
+    def valid_datetime(self):
+        try:
+            return self.base_datetime() + self.step_timedelta()
+        except Exception:
+            pass
+        return self._datetime("validityDate", "validityTime")
+
+    def reference_datetime(self):
+        return self._datetime("referenceDate", "referenceTime")
+
+    def indexing_datetime(self):
+        return self._datetime("indexingDate", "indexingTime")
+
+    def step_timedelta(self):
+        v = self.get("endStep", None)
+        if v is None:
+            v = self.get("step", None)
+        return to_timedelta(v)
 
     def message(self):
         r"""Return a buffer containing the encoded message.

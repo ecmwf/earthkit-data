@@ -204,6 +204,8 @@ def test_grib_order_by_remapping(fl_type):
     ordering = ["t850", "t1000", "u1000", "v850", "v1000", "u850"]
     ref = [("t", 850), ("t", 1000), ("u", 1000), ("v", 850), ("v", 1000), ("u", 850)]
 
-    r = ds.order_by({"param_level": ordering}, remapping={"param_level": "{param}{level}"})
+    r = ds.order_by(
+        {"param_level": ordering}, remapping={"param_level": "{parameter.variable}{vertical.level}"}
+    )
 
-    assert r.get("parameter.variable", "vertical.level") == ref
+    assert r.get(("parameter.variable", "vertical.level")) == ref

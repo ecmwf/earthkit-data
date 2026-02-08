@@ -88,15 +88,16 @@ class Selection(OrderOrSelection):
             self.actions[k] = InList(v)
 
     def match_element(self, element):
-
         # metadata = self.remapping(element.metadata)
-        get = self.remapping(element.get)
+        # get = self.remapping(element.get)
         # print("MATCH", [(k, v(metadata(k, default=None)), element) for k, v in self.actions.items()])
         # print("Matching element", element)
         # for k, v in self.actions.items():
         #     print(f"  -> {k=} {v=}, {get(k, default=None)=}")
         # return all(v(get(k, default=None)) for k, v in self.actions.items())
-        return all(v(get(k, default=None)) for k, v in self.actions.items())
+        return all(
+            v(element._get_fast(k, default=None, remapping=self.remapping)) for k, v in self.actions.items()
+        )
 
 
 class OrderBase(OrderOrSelection):
@@ -110,18 +111,30 @@ class OrderBase(OrderOrSelection):
 
     def compare_elements(self, a, b):
         assert callable(self.remapping), (type(self.remapping), self.remapping)
-        if self.remapping:
-            a_metadata = self.remapping(a.get)
-            b_metadata = self.remapping(b.get)
-        else:
-            a_metadata = a.get
-            b_metadata = b.get
+        a_metadata = a._get_fast
+        b_metadata = b._get_fast
 
         for k, v in self.actions.items():
-            n = v(a_metadata(k, default=None), b_metadata(k, default=None))
+            n = v(
+                a_metadata(k, default=None, remapping=self.remapping),
+                b_metadata(k, default=None, remapping=self.remapping),
+            )
             if n != 0:
                 return n
         return 0
+
+        # if self.remapping:
+        #     a_metadata = self.remapping(a.get)
+        #     b_metadata = self.remapping(b.get)
+        # else:
+        #     a_metadata = a.get
+        #     b_metadata = b.get
+
+        # for k, v in self.actions.items():
+        #     n = v(a_metadata(k, default=None), b_metadata(k, default=None))
+        #     if n != 0:
+        #         return n
+        # return 0
 
 
 class Order(OrderBase):
@@ -299,9 +312,15 @@ class Index(Source):
         GribField(u,1000,20180801,1200,0,0)
         GribField(t,850,20180801,1200,0,0)
         """
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs, remapping_kwarg = normalize_selection(*args, **kwargs)
         if not kwargs:
             return self
+
+        if remapping_kwarg and remapping:
+            raise ValueError("Cannot specify remapping both as a positional argument and a keyword argument")
+
+        if remapping_kwarg:
+            remapping = remapping_kwarg
 
         if hasattr(self, "normalise_key_values"):
             kwargs = self.normalise_key_values(**kwargs)

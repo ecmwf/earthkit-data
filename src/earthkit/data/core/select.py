@@ -31,6 +31,8 @@ def normalize_selection(*args, **kwargs):
 
     _kwargs.update(kwargs)
 
+    remapping = _kwargs.pop("remapping", None)
+
     for k, v in _kwargs.items():
         assert (
             v is None
@@ -42,7 +44,7 @@ def normalize_selection(*args, **kwargs):
                 (str, int, float, datetime.datetime, datetime.timedelta, LevelType),
             )
         ), f"Unsupported type: {type(v)} for key {k}"
-    return _kwargs
+    return _kwargs, remapping
 
 
 def selection_from_index(coord_accessor, kwargs):

@@ -24,7 +24,7 @@ class Remapping(dict):
                 v = re.split(r"\{([^}]*)\}", v)
             self.lists[k] = v
 
-    def __call__(self, func, joiner=None):
+    def __call__(self, func):
         if not self:
             return func
 
@@ -44,10 +44,7 @@ class Remapping(dict):
             def patch(patch, value):
                 return patch(value)
 
-        if joiner is None:
-            joiner = CustomJoiner()
-        else:
-            joiner = joiner(func)
+        joiner = CustomJoiner()
 
         def wrapped(name, **kwargs):
             return self.substitute(name, joiner, **kwargs)
@@ -72,15 +69,11 @@ class Remapping(dict):
             return joiner.join(lst)
         return joiner.format_name(name, **kwargs)
 
-    def components(self, name):
-        if name in self.lists:
-            if not callable(self.lists[name]):
-                lst = []
-                for i, bit in enumerate(self.lists[name]):
-                    if i % 2 == 1:
-                        lst.append(bit)
-                return lst
-        return []
+    def exec(self, func, key, **kwargs):
+        if key not in self.lists:
+            return func(key, **kwargs)
+        else:
+            return self.substitute(key, func, **kwargs)
 
     def as_dict(self):
         return dict(self)
@@ -113,16 +106,13 @@ class Patch(dict):
         # For JSON, we simply forward to the remapping
         super().__init__(proc.as_dict())
 
-    def __call__(self, func, joiner=None):
-        next = self.proc(func, joiner=joiner)
+    def __call__(self, func):
+        next = self.proc(func)
 
         def wrapped(name, **kwargs):
             result = next(name, **kwargs)
             if name == self.name:
-                if joiner is not None:
-                    result = joiner.patch(self.patch, result)
-                else:
-                    result = self.patch(result)
+                result = self.patch(result)
             return result
 
         return wrapped
@@ -131,8 +121,8 @@ class Patch(dict):
     def as_dict(self):
         return dict(self)
 
-    def components(self, name):
-        return self.proc.components(name)
+    # def components(self, name):
+    #     return self.proc.components(name)
 
 
 def build_remapping(mapping, patches=None, forced_build=True):
