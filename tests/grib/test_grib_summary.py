@@ -304,28 +304,28 @@ def test_grib_ls_core(_kwargs, expected_values, fl_type):
         (
             {
                 "n": 2,
-                "namespace": "parameter",
+                "part": "parameter",
             },
             {
-                "variable": {0: "t", 1: "u"},
-                "units": {0: "K", 1: "m s**-1"},
+                "parameter.variable": {0: "t", 1: "u"},
+                "parameter.units": {0: "K", 1: "m s**-1"},
             },
         ),
         (
             {
                 "n": 2,
-                "namespace": "parameter",
-                "extra_keys": ["level"],
+                "part": "parameter",
+                "extra_keys": ["vertical.level"],
             },
             {
-                "variable": {0: "t", 1: "u"},
-                "units": {0: "K", 1: "m s**-1"},
-                "level": {0: 1000, 1: 1000},
+                "parameter.variable": {0: "t", 1: "u"},
+                "parameter.units": {0: "K", 1: "m s**-1"},
+                "vertical.level": {0: 1000, 1: 1000},
             },
         ),
     ],
 )
-def test_grib_ls_namespace(_kwargs, expected_values, fl_type):
+def test_grib_ls_part(_kwargs, expected_values, fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     df = f.ls(**_kwargs)
@@ -340,13 +340,13 @@ def test_grib_ls_namespace(_kwargs, expected_values, fl_type):
             (2,),
             {
                 "keys": [
-                    "level",
-                    "variable",
+                    "vertical.level",
+                    "parameter.variable",
                 ],
             },
             {
-                "level": {0: 1000, 1: 1000},
-                "variable": {
+                "vertical.level": {0: 1000, 1: 1000},
+                "parameter.variable": {
                     0: "t",
                     1: "u",
                 },
@@ -357,13 +357,13 @@ def test_grib_ls_namespace(_kwargs, expected_values, fl_type):
             {
                 "n": 2,
                 "keys": [
-                    "level",
-                    "variable",
+                    "vertical.level",
+                    "parameter.variable",
                 ],
             },
             {
-                "level": {0: 1000, 1: 1000},
-                "variable": {
+                "vertical.level": {0: 1000, 1: 1000},
+                "parameter.variable": {
                     0: "t",
                     1: "u",
                 },
@@ -373,13 +373,13 @@ def test_grib_ls_namespace(_kwargs, expected_values, fl_type):
             (-2,),
             {
                 "keys": [
-                    "level",
-                    "variable",
+                    "vertical.level",
+                    "parameter.variable",
                 ],
             },
             {
-                "level": {0: 300, 1: 300},
-                "variable": {
+                "vertical.level": {0: 300, 1: 300},
+                "parameter.variable": {
                     0: "u",
                     1: "v",
                 },
@@ -390,13 +390,13 @@ def test_grib_ls_namespace(_kwargs, expected_values, fl_type):
             {
                 "n": -2,
                 "keys": [
-                    "level",
-                    "variable",
+                    "vertical.level",
+                    "parameter.variable",
                 ],
             },
             {
-                "level": {0: 300, 1: 300},
-                "variable": {
+                "vertical.level": {0: 300, 1: 300},
+                "parameter.variable": {
                     0: "u",
                     1: "v",
                 },
@@ -433,14 +433,17 @@ def test_grib_ls_invalid_arg(fl_type):
 @pytest.mark.parametrize(
     "_kwargs,expected_values",
     [
-        ({"keys": ["variable", "level"]}, {"variable": {0: "t"}, "level": {0: 1000}}),
         (
-            {"keys": ["variable", "level"], "extra_keys": ["member"]},
-            {"variable": {0: "t"}, "level": {0: 1000}, "member": {0: "0"}},
+            {"keys": ["parameter.variable", "vertical.level"]},
+            {"parameter.variable": {0: "t"}, "vertical.level": {0: 1000}},
         ),
         (
-            {"keys": ["variable", "level", "grib.levtype"]},
-            {"variable": {0: "t"}, "level": {0: 1000}, "grib.levtype": {0: "pl"}},
+            {"keys": ["parameter.variable", "vertical.level"], "extra_keys": ["ensemble.member"]},
+            {"parameter.variable": {0: "t"}, "vertical.level": {0: 1000}, "ensemble.member": {0: "0"}},
+        ),
+        (
+            {"keys": ["parameter.variable", "vertical.level", "metadata.levtype"]},
+            {"parameter.variable": {0: "t"}, "vertical.level": {0: 1000}, "metadata.levtype": {0: "pl"}},
         ),
     ],
 )
@@ -459,34 +462,34 @@ def test_grib_ls_single_field(_kwargs, expected_values, fl_type):
         (
             {
                 "keys": [
-                    "grib.centre",
-                    "grib.shortName",
-                    "grib.typeOfLevel",
-                    "grib.level",
-                    "grib.dataDate",
-                    "grib.dataTime",
-                    "grib.stepRange",
-                    "grib.dataType",
-                    "grib.number",
-                    "grib.gridType",
+                    "metadata.centre",
+                    "metadata.shortName",
+                    "metadata.typeOfLevel",
+                    "metadata.level",
+                    "metadata.dataDate",
+                    "metadata.dataTime",
+                    "metadata.stepRange",
+                    "metadata.dataType",
+                    "metadata.number",
+                    "metadata.gridType",
                 ]
             },
             {
-                "grib.centre": {0: "ecmf", 1: "ecmf", 2: "ecmf", 3: "ecmf"},
-                "grib.shortName": {0: "t", 1: "u", 2: "v", 3: "t"},
-                "grib.typeOfLevel": {
+                "metadata.centre": {0: "ecmf", 1: "ecmf", 2: "ecmf", 3: "ecmf"},
+                "metadata.shortName": {0: "t", 1: "u", 2: "v", 3: "t"},
+                "metadata.typeOfLevel": {
                     0: "isobaricInhPa",
                     1: "isobaricInhPa",
                     2: "isobaricInhPa",
                     3: "isobaricInhPa",
                 },
-                "grib.level": {0: 1000, 1: 1000, 2: 1000, 3: 850},
-                "grib.dataDate": {0: 20180801, 1: 20180801, 2: 20180801, 3: 20180801},
-                "grib.dataTime": {0: 1200, 1: 1200, 2: 1200, 3: 1200},
-                "grib.stepRange": {0: "0", 1: "0", 2: "0", 3: "0"},
-                "grib.dataType": {0: "an", 1: "an", 2: "an", 3: "an"},
-                "grib.number": {0: 0, 1: 0, 2: 0, 3: 0},
-                "grib.gridType": {
+                "metadata.level": {0: 1000, 1: 1000, 2: 1000, 3: 850},
+                "metadata.dataDate": {0: 20180801, 1: 20180801, 2: 20180801, 3: 20180801},
+                "metadata.dataTime": {0: 1200, 1: 1200, 2: 1200, 3: 1200},
+                "metadata.stepRange": {0: "0", 1: "0", 2: "0", 3: "0"},
+                "metadata.dataType": {0: "an", 1: "an", 2: "an", 3: "an"},
+                "metadata.number": {0: 0, 1: 0, 2: 0, 3: 0},
+                "metadata.gridType": {
                     0: "regular_ll",
                     1: "regular_ll",
                     2: "regular_ll",
@@ -497,17 +500,17 @@ def test_grib_ls_single_field(_kwargs, expected_values, fl_type):
         (
             {
                 "keys": [
-                    "grib.centre",
-                    "grib.shortName",
+                    "metadata.centre",
+                    "metadata.shortName",
                 ],
                 "extra_keys": [
-                    "grib.typeOfLevel",
+                    "metadata.typeOfLevel",
                 ],
             },
             {
-                "grib.centre": {0: "ecmf", 1: "ecmf", 2: "ecmf", 3: "ecmf"},
-                "grib.shortName": {0: "t", 1: "u", 2: "v", 3: "t"},
-                "grib.typeOfLevel": {
+                "metadata.centre": {0: "ecmf", 1: "ecmf", 2: "ecmf", 3: "ecmf"},
+                "metadata.shortName": {0: "t", 1: "u", 2: "v", 3: "t"},
+                "metadata.typeOfLevel": {
                     0: "isobaricInhPa",
                     1: "isobaricInhPa",
                     2: "isobaricInhPa",
@@ -515,11 +518,14 @@ def test_grib_ls_single_field(_kwargs, expected_values, fl_type):
                 },
             },
         ),
-        ({"keys": ["grib._missing_key"]}, {"grib._missing_key": {0: None, 1: None, 2: None, 3: None}}),
         (
-            {"keys": ["grib._missing_key", "_missing_key"]},
+            {"keys": ["metadata._missing_key"]},
+            {"metadata._missing_key": {0: None, 1: None, 2: None, 3: None}},
+        ),
+        (
+            {"keys": ["metadata._missing_key", "_missing_key"]},
             {
-                "grib._missing_key": {0: None, 1: None, 2: None, 3: None},
+                "metadata._missing_key": {0: None, 1: None, 2: None, 3: None},
                 "_missing_key": {0: None, 1: None, 2: None, 3: None},
             },
         ),
@@ -541,23 +547,25 @@ def test_grib_ls_ecc_core(_kwargs, expected_values, fl_type):
         (
             {
                 "n": 2,
-                "namespace": "grib.vertical",
+                "part": "metadata",
+                "filter": "vertical",
             },
             {
-                "grib.typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
-                "grib.level": {0: 1000, 1: 1000},
+                "metadata.typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
+                "metadata.level": {0: 1000, 1: 1000},
             },
         ),
         (
             {
                 "n": 2,
-                "namespace": "grib.vertical",
-                "extra_keys": ["grib.shortName"],
+                "part": "metadata",
+                "filter": "vertical",
+                "extra_keys": ["metadata.shortName"],
             },
             {
-                "grib.typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
-                "grib.level": {0: 1000, 1: 1000},
-                "grib.shortName": {0: "t", 1: "u"},
+                "metadata.typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
+                "metadata.level": {0: 1000, 1: 1000},
+                "metadata.shortName": {0: "t", 1: "u"},
             },
         ),
     ],

@@ -9,11 +9,12 @@
 
 
 from abc import abstractmethod
+from typing import Any
 
-from .part import Spec
+from .part import Part
 
 
-class Labels(Spec):
+class Labels(Part):
     @abstractmethod
     def __iter__(self):
         """Return an iterator over the metadata keys."""
@@ -165,8 +166,15 @@ class SimpleLabels(dict, Labels):
     def check(self, owner):
         pass
 
-    def namespace(self, *args):
-        pass
+    def namespace(self, owner: Any, name: str, result: dict, prefix_keys=False) -> None:
+        """Populate the namespace dictionary for this SpecFieldPart."""
+
+        def _prefix(key):
+            return f"{self.NAME}.{key}" if prefix_keys else key
+
+        if name is None or name == self.NAME or (isinstance(name, (list, tuple)) and self.NAME in name):
+            r = {_prefix(k): v for k, v in self.items()}
+            result[self.NAME] = r
 
     def get_grib_context(self, context):
         pass

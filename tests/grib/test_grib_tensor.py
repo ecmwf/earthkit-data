@@ -27,7 +27,7 @@ count()                      -
 chninking                    -
 Cubelet                      -
 
-When indexing a cube, if the result is a single matching fields the fieldlist returned,
+When indexing a cube, if the result is a single matching field the fieldlist returned,
 otherwise a cube is returned.
 
 When indexing a tensor always a tensor is returned.
@@ -36,21 +36,21 @@ When indexing a tensor always a tensor is returned.
 
 def test_grib_tensor_core():
     ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-    c = ds.to_tensor("param", "level")
+    c = ds.to_tensor("parameter.variable", "vertical.level")
 
     assert c.user_shape == (3, 6)
     assert c.field_shape == (7, 12)
     assert c.full_shape == (3, 6, 7, 12)
     assert len(c.source) == 18
     assert c.user_coords == {
-        "param": ("t", "u", "v"),
-        "level": (300, 400, 500, 700, 850, 1000),
+        "parameter.variable": ("t", "u", "v"),
+        "vertical.level": (300, 400, 500, 700, 850, 1000),
     }
 
     # this slice is a tensor (in the cube it is a field)
     r = c[0, 0]
     assert r.source[0].shape == (7, 12)
-    assert r.source[0].get(["param", "level"]) == ["t", 300]
+    assert r.source[0].get(["parameter.variable", "vertical.level"]) == ["t", 300]
     assert r.source[0].to_numpy().shape == (7, 12)
     assert np.isclose(r.source[0].to_numpy()[0, 0], 226.6531524658203)
 
@@ -59,7 +59,7 @@ def test_grib_tensor_core():
     assert r.user_shape == (1, 2)
     assert r.field_shape == (7, 12)
     assert r.full_shape == (1, 2, 7, 12)
-    assert r.user_coords == {"param": ("t",), "level": (300, 400)}
+    assert r.user_coords == {"parameter.variable": ("t",), "vertical.level": (300, 400)}
     assert len(r.source) == 2
     assert r.to_numpy().shape == (1, 2, 7, 12)
     assert np.isclose(r.to_numpy()[0, 0, 0, 0], 226.6531524658203)
@@ -67,14 +67,16 @@ def test_grib_tensor_core():
     ref_meta = (["t", 300], ["t", 400])
 
     for i in range(len(ref_meta)):
-        assert r[0, i].source[0].get(["param", "level"]) == ref_meta[i], f"{i=} ref_meta={ref_meta[i]}"
+        assert (
+            r[0, i].source[0].get(["parameter.variable", "vertical.level"]) == ref_meta[i]
+        ), f"{i=} ref_meta={ref_meta[i]}"
 
     # this slice is a cube
     r = c[1:3, 0:2]
     assert r.user_shape == (2, 2)
     assert r.field_shape == (7, 12)
     assert r.full_shape == (2, 2, 7, 12)
-    assert r.user_coords == {"param": ("u", "v"), "level": (300, 400)}
+    assert r.user_coords == {"parameter.variable": ("u", "v"), "vertical.level": (300, 400)}
     assert len(r.source) == 4
     assert r.to_numpy().shape == (2, 2, 7, 12)
     assert np.isclose(r.to_numpy()[0, 0, 0, 0], 10.455490112304688)
@@ -84,7 +86,7 @@ def test_grib_tensor_core():
     for par in range(2):
         for level in range(2):
             assert (
-                r[par, level].source[0].get(["param", "level"]) == ref_meta[cnt]
+                r[par, level].source[0].get(["parameter.variable", "vertical.level"]) == ref_meta[cnt]
             ), f"{cnt=} ref_meta={ref_meta[cnt]}"
             cnt += 1
 
@@ -93,7 +95,7 @@ def test_grib_tensor_core():
     assert r.user_shape == (1, 6)
     assert r.field_shape == (7, 12)
     assert r.full_shape == (1, 6, 7, 12)
-    assert r.user_coords == {"param": ("u",), "level": (300, 400, 500, 700, 850, 1000)}
+    assert r.user_coords == {"parameter.variable": ("u",), "vertical.level": (300, 400, 500, 700, 850, 1000)}
     assert len(r.source) == 6
     assert r.to_numpy().shape == (1, 6, 7, 12)
     assert np.isclose(r.to_numpy()[0, 0, 0, 0], 10.455490112304688)
@@ -104,7 +106,7 @@ def test_grib_tensor_core():
     for par in range(1):
         for level in range(6):
             assert (
-                r[par, level].source[0].get(["param", "level"]) == ref_meta[cnt]
+                r[par, level].source[0].get(["parameter.variable", "vertical.level"]) == ref_meta[cnt]
             ), f"{cnt=} ref_meta={ref_meta[cnt]}"
             cnt += 1
 

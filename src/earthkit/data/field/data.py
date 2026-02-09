@@ -156,7 +156,7 @@ class DataFieldPart(BaseDataFieldPart):
             return self.set_values(values)
         raise ValueError("Invalid arguments")
 
-    def namespace(self, *args):
+    def namespace(self, *args, **kwargs):
         """This field part has no namespace."""
         return None
 

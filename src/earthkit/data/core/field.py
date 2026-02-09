@@ -39,14 +39,14 @@ from earthkit.data.utils.metadata.args import metadata_argument_new
 GRIB = "grib"
 
 LS_KEYS = [
-    "variable",
-    "valid_datetime",
-    "base_datetime",
-    "step",
-    "level",
-    "vertical_type",
-    "member",
-    "grid_type",
+    "parameter.variable",
+    "time.valid_datetime",
+    "time.base_datetime",
+    "time.step",
+    "vertical.level",
+    "vertical.type",
+    "ensemble.member",
+    "geography.grid_type",
 ]
 
 
@@ -1106,7 +1106,7 @@ class Field(Base):
     def to_pandas(self, *args, **kwargs):
         pass
 
-    def _dump_part(self, part="all", *, filter=None, simplify=True):
+    def _dump_part(self, part="all", *, filter=None, prefix_keys=False, simplify=True):
         r"""Return the parts as a dict.
 
         Parameters
@@ -1140,13 +1140,13 @@ class Field(Base):
 
         result = {}
         for m in self._parts.values():
-            m.namespace(self, part, result)
+            m.namespace(self, part, result, prefix_keys=prefix_keys)
 
         if part == "metadata" and self._private:
             md = self._private.get("metadata")
 
             if md and hasattr(md, "namespace"):
-                md.namespace(self, part, result)
+                md.namespace(self, part, result, ns=filter, prefix_keys=prefix_keys)
 
         # if (
         #     name is not None

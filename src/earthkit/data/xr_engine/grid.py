@@ -23,7 +23,7 @@ class Grid:
     @staticmethod
     def make(field):
         # NOTE: underscore grid types are coming from UserMetadata
-        grid_type = field.get("grid_type", default=None)
+        grid_type = field.geography.grid_type()
 
         if grid_type in ["regular_ll", "_regular_ll"]:
             return RegularLLGrid(field)
@@ -46,8 +46,8 @@ class Grid:
         # lat = np.atleast_1d(ll["lat"])
         # lon = np.atleast_1d(ll["lon"])
 
-        lat = self.field.geography.latitudes.flatten()
-        lon = self.field.geography.longitudes.flatten()
+        lat = self.field.geography.latitudes().flatten()
+        lon = self.field.geography.longitudes().flatten()
         lat = np.atleast_1d(lat)
         lon = np.atleast_1d(lon)
 
@@ -73,9 +73,9 @@ class RegularLLGrid(Grid):
 
 class RectifiedLLGrid(Grid):
     def to_distinct_latlon(self, field_shape):
-        lat = np.atleast_1d(self.field.geography.distinct_latitudes)
+        lat = np.atleast_1d(self.field.geography.distinct_latitudes())
         if len(lat) == field_shape[0]:
-            lon = np.atleast_1d(self.field.geography.distinct_longitudes)
+            lon = np.atleast_1d(self.field.geography.distinct_longitudes())
             if len(lon) == field_shape[1]:
                 return lat, lon
         return None, None

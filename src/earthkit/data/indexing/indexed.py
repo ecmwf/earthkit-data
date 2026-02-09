@@ -377,7 +377,7 @@ class IndexedFieldList(Index, FieldListCore):
                 for i in pos_range:
                     f = self[i]
                     v = {}
-                    for ns_val in f._dump(part).values():
+                    for ns_val in f._dump_part(part, prefix_keys=True).values():
                         v.update(ns_val)
                     if keys:
                         v.update(f._get_fast(keys, default=default, astype=astype, output=dict))

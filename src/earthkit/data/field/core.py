@@ -174,7 +174,7 @@ class FieldPartHandler(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def namespace(self, *args):
+    def namespace(self, *args, **kwargs) -> None:
         """Populate the namespace dictionary for this FieldPart."""
         pass
 
@@ -317,11 +317,15 @@ class SimpleFieldPartHandler(FieldPartHandler):
         return self.from_part(part)
         # return type(self)(data)
 
-    def namespace(self, owner: Any, name: str, result: dict) -> None:
+    def namespace(self, owner: Any, name: str, result: dict, prefix_keys=False) -> None:
         """Populate the namespace dictionary for this SpecFieldPart."""
+
+        def _prefix(key):
+            return f"{self.NAME}.{key}" if prefix_keys else key
+
         if name is None or name == self.NAME or (isinstance(name, (list, tuple)) and self.NAME in name):
             if self.NAMESPACE_KEYS:
-                r = {k: getattr(self.spec, k) for k in self.NAMESPACE_KEYS}
+                r = {_prefix(k): getattr(self.part, k)() for k in self.NAMESPACE_KEYS}
                 result[self.NAME] = r
             else:
                 result[self.NAME] = dict()

@@ -163,6 +163,9 @@ class Proc(BaseProc):
 
         return cls(r)
 
+    def to_dict(self):
+        return dict()
+
     def set(self, *args, **kwargs):
         pass
         # d = normalise_set_kwargs_2(self, *args, allowed_keys=self._SET_KEYS, remove_nones=False, **kwargs)
@@ -175,6 +178,12 @@ class Proc(BaseProc):
 
         # current.update(d)
         # return self.from_dict(current)
+
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, state):
+        pass
 
 
 @part_keys

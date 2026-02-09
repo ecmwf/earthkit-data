@@ -28,11 +28,13 @@ _METHOD_TO_GRIB = {v: k for k, v in _GRIB_TO_METHOD.items()}
 class GribProcBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.field.proc import ProcFieldPart
+        from earthkit.data.field.part.proc import Proc
+        from earthkit.data.field.proc import ProcFieldPartHandler
 
         d = GribProcBuilder._build_dict(handle)
-        spec = ProcFieldPart.from_dict(d)
-        return spec
+        part = Proc.from_dict(d)
+        handler = ProcFieldPartHandler.from_part(part)
+        return handler
 
     @staticmethod
     def _build_dict(handle):

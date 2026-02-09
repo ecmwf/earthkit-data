@@ -194,7 +194,7 @@ class GribMetadata:
         """
         return self.handle.get_buffer()
 
-    def namespace(self, owner, name, result):
+    def namespace(self, owner, name, result, ns=None, prefix_keys=False):
         if isinstance(name, str):
             name = [name]
         elif name is None or name == [None]:
@@ -202,7 +202,10 @@ class GribMetadata:
 
         if isinstance(name, (list, tuple)):
             for ns in name:
-                result[ns] = self.handle.as_namespace(ns)
+                r = self.handle.as_namespace(ns)
+                if prefix_keys:
+                    r = {f"{self.KEY_PREFIX}{k}": v for k, v in r.items()}
+                result[self.NAME] = r
 
     def new_array_field(self, field, array_namespace=None, **kwargs):
         from earthkit.data.field.grib.create import new_array_grib_field
