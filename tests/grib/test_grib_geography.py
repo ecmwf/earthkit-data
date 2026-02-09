@@ -406,6 +406,59 @@ def test_grib_projection_mercator(fl_type):
     assert projection.globe == dict()
 
 
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize(
+    "filename,expected_shape, expected_lat, expected_lon",
+    [
+        (
+            "mercator.grib",
+            (
+                225,
+                339,
+            ),
+            [16.9775, 16.9775, 16.9775, 16.9775],
+            [291.9722, 291.9841626, 291.9961252, 292.0080878],
+        ),
+        (
+            "rgg_small_subarea_cellarea_ref.grib",
+            (340,),
+            [89.87647835, 89.80635732, 89.73614327, 89.66589394],
+            [45.0, 38.57142857, 45.0, 40.0],
+        ),
+        (
+            "rotated_N32_subarea.grib",
+            (225,),
+            [85.489232, 84.81188, 83.171928, 81.086144],
+            [140.0, 110.950144, 92.460416, 82.07156],
+        ),
+        (
+            "rotated_wind_20x20.grib",
+            (9, 18),
+            [30.0, 29.351052, 27.504876, 24.734374],
+            [140.0, 136.09296, 132.770576, 130.469424],
+        ),
+        (
+            "ll_10_20.grib",
+            (
+                9,
+                36,
+            ),
+            [80.0, 80.0, 80.0, 80.0],
+            [0.0, 10.0, 20.0, 30.0],
+        ),
+    ],
+)
+def test_grib_latlon_various_grids(fl_type, filename, expected_shape, expected_lat, expected_lon):
+    ds, _ = load_grib_data(filename, fl_type, folder="data")
+    ll = ds[0].to_latlon = ds[0].to_latlon()
+    lat = ll["lat"]
+    lon = ll["lon"]
+    assert lat.shape == expected_shape
+    assert lon.shape == expected_shape
+    assert np.allclose(lat.flatten()[:4], expected_lat)
+    assert np.allclose(lon.flatten()[:4], expected_lon)
+
+
 @pytest.mark.parametrize(
     "path,expected_value",
     [
