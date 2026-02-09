@@ -18,7 +18,6 @@ import pytest
 from earthkit.data import FieldList
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.sources.array_list import ArrayField
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import write_to_file
 
@@ -433,6 +432,8 @@ def test_legacy_grib_clone_with_metadata_object(fl_type, write_method):
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 def test_legacy_grib_copy_to_field(fl_type, write_method):
+    from earthkit.data.sources.array_list import ArrayField
+
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values

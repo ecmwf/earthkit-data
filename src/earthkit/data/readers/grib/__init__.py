@@ -8,8 +8,6 @@
 #
 import logging
 
-from earthkit.data.readers.grib.memory import GribMessageMemoryReader
-
 LOG = logging.getLogger(__name__)
 
 

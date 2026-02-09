@@ -14,7 +14,6 @@ import os
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.core.fieldlist_ori import FieldList
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import earthkit_examples_file
 
@@ -107,6 +106,7 @@ def test_legacy_grib_concat_3b(mode):
 @pytest.mark.legacy
 @pytest.mark.parametrize("mode", ["oper", "multi"])
 def test_legacy_grib_concat_mixed(mode):
+
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
     ds2 = ds1.to_fieldlist()
     md = ds1.metadata("param") + ds2.metadata("param")
@@ -123,6 +123,8 @@ def test_legacy_grib_concat_mixed(mode):
 
 @pytest.mark.legacy
 def test_legacy_grib_concat_from_empty_1():
+    from earthkit.data.core.fieldlist_ori import FieldList
+
     ds_e = FieldList()
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds.metadata("param")
@@ -135,6 +137,8 @@ def test_legacy_grib_concat_from_empty_1():
 
 @pytest.mark.legacy
 def test_legacy_grib_concat_from_empty_2():
+    from earthkit.data.core.fieldlist_ori import FieldList
+
     ds_e = FieldList()
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds.metadata("param")
@@ -147,6 +151,8 @@ def test_legacy_grib_concat_from_empty_2():
 
 @pytest.mark.legacy
 def test_legacy_grib_concat_from_empty_3():
+    from earthkit.data.core.fieldlist_ori import FieldList
+
     ds_e = FieldList()
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
     ds2 = from_source("file", earthkit_examples_file("test6.grib"))

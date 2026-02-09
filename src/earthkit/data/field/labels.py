@@ -169,7 +169,7 @@ class SimpleLabels(dict, Labels):
     def check(self, owner):
         pass
 
-    def namespace(self, owner: Any, name: str, result: dict, prefix_keys=False) -> None:
+    def dump(self, owner: Any, name: str, result: dict, prefix_keys=False) -> None:
         """Populate the namespace dictionary for this SpecFieldPart."""
 
         def _prefix(key):

@@ -574,7 +574,7 @@ def test_grib_ls_ecc_namespace(_kwargs, expected_values, fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     df = f.ls(**_kwargs)
-    assert expected_values == df.to_dict()
+    assert df.to_dict() == expected_values
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -585,13 +585,13 @@ def test_grib_ls_ecc_namespace(_kwargs, expected_values, fl_type):
             (2,),
             {
                 "keys": [
-                    "grib.level",
-                    "grib.shortName",
+                    "metadata.level",
+                    "metadata.shortName",
                 ],
             },
             {
-                "grib.level": {0: 1000, 1: 1000},
-                "grib.shortName": {
+                "metadata.level": {0: 1000, 1: 1000},
+                "metadata.shortName": {
                     0: "t",
                     1: "u",
                 },
@@ -602,13 +602,13 @@ def test_grib_ls_ecc_namespace(_kwargs, expected_values, fl_type):
             {
                 "n": 2,
                 "keys": [
-                    "grib.level",
-                    "grib.shortName",
+                    "metadata.level",
+                    "metadata.shortName",
                 ],
             },
             {
-                "grib.level": {0: 1000, 1: 1000},
-                "grib.shortName": {
+                "metadata.level": {0: 1000, 1: 1000},
+                "metadata.shortName": {
                     0: "t",
                     1: "u",
                 },
@@ -618,13 +618,13 @@ def test_grib_ls_ecc_namespace(_kwargs, expected_values, fl_type):
             (-2,),
             {
                 "keys": [
-                    "grib.level",
-                    "grib.shortName",
+                    "metadata.level",
+                    "metadata.shortName",
                 ],
             },
             {
-                "grib.level": {0: 300, 1: 300},
-                "grib.shortName": {
+                "metadata.level": {0: 300, 1: 300},
+                "metadata.shortName": {
                     0: "u",
                     1: "v",
                 },
@@ -635,13 +635,13 @@ def test_grib_ls_ecc_namespace(_kwargs, expected_values, fl_type):
             {
                 "n": -2,
                 "keys": [
-                    "grib.level",
-                    "grib.shortName",
+                    "metadata.level",
+                    "metadata.shortName",
                 ],
             },
             {
-                "grib.level": {0: 300, 1: 300},
-                "grib.shortName": {
+                "metadata.level": {0: 300, 1: 300},
+                "metadata.shortName": {
                     0: "u",
                     1: "v",
                 },
@@ -660,10 +660,17 @@ def test_grib_ls_ecc_num(_args, _kwargs, expected_values, fl_type):
 @pytest.mark.parametrize(
     "_kwargs,expected_values",
     [
-        ({"keys": ["grib.shortName", "grib.level"]}, {"grib.shortName": {0: "t"}, "grib.level": {0: 1000}}),
         (
-            {"keys": ["grib.shortName", "grib.level"], "extra_keys": ["grib.typeOfLevel"]},
-            {"grib.shortName": {0: "t"}, "grib.level": {0: 1000}, "grib.typeOfLevel": {0: "isobaricInhPa"}},
+            {"keys": ["metadata.shortName", "metadata.level"]},
+            {"metadata.shortName": {0: "t"}, "metadata.level": {0: 1000}},
+        ),
+        (
+            {"keys": ["metadata.shortName", "metadata.level"], "extra_keys": ["metadata.typeOfLevel"]},
+            {
+                "metadata.shortName": {0: "t"},
+                "metadata.level": {0: 1000},
+                "metadata.typeOfLevel": {0: "isobaricInhPa"},
+            },
         ),
     ],
 )
@@ -683,13 +690,13 @@ def test_grib_ls_ecc_single_field(_kwargs, expected_values, fl_type):
             (2,),
             {
                 "keys": [
-                    "level",
-                    "variable",
+                    "vertical.level",
+                    "parameter.variable",
                 ],
             },
             {
-                "level": {0: 1000, 1: 1000},
-                "variable": {
+                "vertical.level": {0: 1000, 1: 1000},
+                "parameter.variable": {
                     0: "t",
                     1: "u",
                 },
@@ -700,13 +707,13 @@ def test_grib_ls_ecc_single_field(_kwargs, expected_values, fl_type):
             {
                 "n": 2,
                 "keys": [
-                    "level",
-                    "variable",
+                    "vertical.level",
+                    "parameter.variable",
                 ],
             },
             {
-                "level": {0: 1000, 1: 1000},
-                "variable": {
+                "vertical.level": {0: 1000, 1: 1000},
+                "parameter.variable": {
                     0: "t",
                     1: "u",
                 },
@@ -729,13 +736,13 @@ def test_grib_head_num(_args, _kwargs, expected_values, fl_type):
             (2,),
             {
                 "keys": [
-                    "level",
-                    "variable",
+                    "vertical.level",
+                    "parameter.variable",
                 ],
             },
             {
-                "level": {0: 300, 1: 300},
-                "variable": {
+                "vertical.level": {0: 300, 1: 300},
+                "parameter.variable": {
                     0: "u",
                     1: "v",
                 },
@@ -746,13 +753,13 @@ def test_grib_head_num(_args, _kwargs, expected_values, fl_type):
             {
                 "n": 2,
                 "keys": [
-                    "level",
-                    "variable",
+                    "vertical.level",
+                    "parameter.variable",
                 ],
             },
             {
-                "level": {0: 300, 1: 300},
-                "variable": {
+                "vertical.level": {0: 300, 1: 300},
+                "parameter.variable": {
                     0: "u",
                     1: "v",
                 },
@@ -768,12 +775,61 @@ def test_grib_tail_num(_args, _kwargs, expected_values, fl_type):
 
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
+def test_grib_dump_1(fl_type):
+    f, _ = load_grib_data("test6.grib", fl_type)
+
+    parts = (
+        "parameter",
+        "time",
+        "vertical",
+    )
+
+    # default
+    r = f[0].dump(part=parts, _as_raw=True)
+    ref = [
+        {
+            "title": "parameter",
+            "data": {
+                "variable": "t",
+                "units": "K",
+            },
+            "tooltip": "Keys in the parameter namespace",
+        },
+        {
+            "title": "time",
+            "data": {
+                "base_datetime": datetime.datetime(2018, 8, 1, 12),
+                "valid_datetime": datetime.datetime(2018, 8, 1, 12),
+                "step": datetime.timedelta(0),
+            },
+            "tooltip": "Keys in the time namespace",
+        },
+        {
+            "title": "vertical",
+            "data": {
+                "level": 1000,
+                "type": "pressure",
+            },
+            "tooltip": "Keys in the vertical namespace",
+        },
+    ]
+
+    assert len(r) == len(parts)
+    assert isinstance(r, list)
+    for d in r:
+        part = d["title"]
+        assert part in parts
+        d_ref = [x for x in ref if x["title"] == part][0]
+        assert d["tooltip"] == d_ref["tooltip"], part
+        for k, v in d_ref["data"].items():
+            assert d["data"][k] == v, f"{part}: key={k}"
+
+
+@pytest.mark.parametrize("fl_type", FL_FILE)
 def test_grib_dump_ecc_1(fl_type):
     f, _ = load_grib_data("test6.grib", fl_type)
 
-    # TODO: add grib.default
     namespaces = (
-        # "grib.default",
         "geography",
         "ls",
         "mars",

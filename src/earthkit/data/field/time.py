@@ -19,7 +19,6 @@ class TimeFieldPartHandler(SimpleFieldPartHandler):
     PART_CLS = BaseTime
     PART_MAKER = create_time
     NAME = "time"
-    NAMESPACE_KEYS = ("base_datetime", "valid_datetime", "step")
 
     def get_grib_context(self, context) -> dict:
         from earthkit.data.field.grib.time import COLLECTOR

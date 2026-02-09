@@ -44,7 +44,7 @@ def make_unique(x, full=False):
     return format_list(r, full=full)
 
 
-def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, part=None, **kwargs):
+def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, part=None, filter=None, **kwargs):
     # do_print = kwargs.pop("print", False)
 
     if kwargs:
@@ -82,7 +82,7 @@ def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, part=Non
 
     _keys_lst = list(_keys.keys())
 
-    return format_ls(metadata_proc(_keys_lst, n, part=part), column_names=_keys)
+    return format_ls(metadata_proc(_keys_lst, n, part=part, filter=filter), column_names=_keys)
 
 
 def format_ls(attributes, column_names=None):

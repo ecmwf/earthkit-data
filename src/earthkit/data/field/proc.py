@@ -16,7 +16,6 @@ class ProcFieldPartHandler(SimpleFieldPartHandler):
 
     PART_CLS = BaseProc
     NAME = "proc"
-    NAMESPACE_KEYS = tuple()
 
     def get_grib_context(self, context) -> dict:
         from earthkit.data.field.grib.proc import COLLECTOR

@@ -14,10 +14,7 @@ import eccodes
 import numpy as np
 from earthkit.utils.array.convert import convert_dtype
 
-from earthkit.data.core.fieldlist_ori import Field
-from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.indexing.fieldlist_ori import ClonedFieldCore
-from earthkit.data.readers.grib.metadata import GribFieldMetadata
+# from earthkit.data.core.fieldlist_ori import Field
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
 from earthkit.data.utils.message import CodesReader
@@ -251,130 +248,130 @@ class GribCodesReader(CodesReader):
     HANDLE_TYPE = GribCodesHandle
 
 
-class GribField(Field):
-    r"""Represent a GRIB message in a GRIB file.
+# class GribField(Field):
+#     r"""Represent a GRIB message in a GRIB file.
 
-    Parameters
-    ----------
-    path: str
-        Path to the GRIB file
-    offset: number
-        File offset of the message (in bytes)
-    length: number
-        Size of the message (in bytes)
-    """
+#     Parameters
+#     ----------
+#     path: str
+#         Path to the GRIB file
+#     offset: number
+#         File offset of the message (in bytes)
+#     length: number
+#         Size of the message (in bytes)
+#     """
 
-    _handle = None
+#     _handle = None
 
-    def __init__(self, path, offset, length, handle_manager=None, use_metadata_cache=False):
-        super().__init__()
-        self.path = path
-        self._offset = offset
-        self._length = length
-        self._handle_manager = handle_manager
-        self._use_metadata_cache = use_metadata_cache
+#     def __init__(self, path, offset, length, handle_manager=None, use_metadata_cache=False):
+#         super().__init__()
+#         self.path = path
+#         self._offset = offset
+#         self._length = length
+#         self._handle_manager = handle_manager
+#         self._use_metadata_cache = use_metadata_cache
 
-    @property
-    def handle(self):
-        r""":class:`CodesHandle`: Get an object providing access to the low level GRIB message structure."""
-        if self._handle_manager is not None:
-            handle = self._handle_manager.handle(self, self._create_handle)
-            if handle is None:
-                raise RuntimeError(f"Could not get a handle for offset={self.offset} in {self.path}")
-            return handle
+#     @property
+#     def handle(self):
+#         r""":class:`CodesHandle`: Get an object providing access to the low level GRIB message structure."""
+#         if self._handle_manager is not None:
+#             handle = self._handle_manager.handle(self, self._create_handle)
+#             if handle is None:
+#                 raise RuntimeError(f"Could not get a handle for offset={self.offset} in {self.path}")
+#             return handle
 
-        # create a new handle and keep it in the field
-        if self._handle is None:
-            assert self._offset is not None
-            self._handle = self._create_handle()
-        return self._handle
+#         # create a new handle and keep it in the field
+#         if self._handle is None:
+#             assert self._offset is not None
+#             self._handle = self._create_handle()
+#         return self._handle
 
-    def _create_handle(self):
-        return GribCodesReader.from_cache(self.path).at_offset(self.offset)
+#     def _create_handle(self):
+#         return GribCodesReader.from_cache(self.path).at_offset(self.offset)
 
-    def _values(self, dtype=None):
-        return self.handle.get_values(dtype=dtype)
+#     def _values(self, dtype=None):
+#         return self.handle.get_values(dtype=dtype)
 
-    @property
-    def offset(self):
-        r"""number: Gets the offset (in bytes) of the GRIB field within the GRIB file."""
-        if self._offset is None:
-            self._offset = int(self.handle.get("offset"))
-        return self._offset
+#     @property
+#     def offset(self):
+#         r"""number: Gets the offset (in bytes) of the GRIB field within the GRIB file."""
+#         if self._offset is None:
+#             self._offset = int(self.handle.get("offset"))
+#         return self._offset
 
-    @thread_safe_cached_property
-    def _metadata(self):
-        cache = self._use_metadata_cache
-        if cache:
-            cache = self._make_metadata_cache()
-        return GribFieldMetadata(self, cache=cache)
+#     @thread_safe_cached_property
+#     def _metadata(self):
+#         cache = self._use_metadata_cache
+#         if cache:
+#             cache = self._make_metadata_cache()
+#         return GribFieldMetadata(self, cache=cache)
 
-    def _make_metadata_cache(self):
-        return dict()
+#     def _make_metadata_cache(self):
+#         return dict()
 
-    def __repr__(self):
-        return "GribField(%s,%s,%s,%s,%s,%s)" % (
-            self._metadata.get("shortName", None),
-            self._metadata.get("levelist", None),
-            self._metadata.get("date", None),
-            self._metadata.get("time", None),
-            self._metadata.get("step", None),
-            self._metadata.get("number", None),
-        )
+#     def __repr__(self):
+#         return "GribField(%s,%s,%s,%s,%s,%s)" % (
+#             self._metadata.get("shortName", None),
+#             self._metadata.get("levelist", None),
+#             self._metadata.get("date", None),
+#             self._metadata.get("time", None),
+#             self._metadata.get("step", None),
+#             self._metadata.get("number", None),
+#         )
 
-    # def write(self, f, **kwargs):
-    #     r"""Write the message to a file object.
+#     # def write(self, f, **kwargs):
+#     #     r"""Write the message to a file object.
 
-    #     Parameters
-    #     ----------
-    #     f: file object
-    #         The target file object.
-    #     bits_per_value: int or None
-    #         Set the ``bitsPerValue`` GRIB key in the generated GRIB message. When
-    #         None the ``bitsPerValue`` stored in the metadata will be used.
-    #     """
-    #     self.handle.write(f)
-    #     # from earthkit.data.writers import write
+#     #     Parameters
+#     #     ----------
+#     #     f: file object
+#     #         The target file object.
+#     #     bits_per_value: int or None
+#     #         Set the ``bitsPerValue`` GRIB key in the generated GRIB message. When
+#     #         None the ``bitsPerValue`` stored in the metadata will be used.
+#     #     """
+#     #     self.handle.write(f)
+#     #     # from earthkit.data.writers import write
 
-    #     # write(f, self, **kwargs)
+#     #     # write(f, self, **kwargs)
 
-    def message(self):
-        r"""Return a buffer containing the encoded message.
+#     def message(self):
+#         r"""Return a buffer containing the encoded message.
 
-        Returns
-        -------
-        bytes
-        """
-        return self.handle.get_buffer()
+#         Returns
+#         -------
+#         bytes
+#         """
+#         return self.handle.get_buffer()
 
-    def clone(self, **kwargs):
-        return ClonedGribField(self, **kwargs)
+#     def clone(self, **kwargs):
+#         return ClonedGribField(self, **kwargs)
 
-    def __getstate__(self):
-        state = dict()
-        state["path"] = self.path
-        state["offset"] = self._offset
-        state["length"] = self._length
-        state["use_metadata_cache"] = self._use_metadata_cache
-        return state
+#     def __getstate__(self):
+#         state = dict()
+#         state["path"] = self.path
+#         state["offset"] = self._offset
+#         state["length"] = self._length
+#         state["use_metadata_cache"] = self._use_metadata_cache
+#         return state
 
-    def __setstate__(self, state):
-        self.path = state["path"]
-        self._offset = state["offset"]
-        self._length = state["length"]
-        self._use_metadata_cache = state["use_metadata_cache"]
-        self._handle_manager = None
+#     def __setstate__(self, state):
+#         self.path = state["path"]
+#         self._offset = state["offset"]
+#         self._length = state["length"]
+#         self._use_metadata_cache = state["use_metadata_cache"]
+#         self._handle_manager = None
 
 
-class ClonedGribField(ClonedFieldCore, GribField):
-    def __init__(self, field, **kwargs):
-        ClonedFieldCore.__init__(self, field, **kwargs)
-        self._handle = field._handle
-        GribField.__init__(
-            self,
-            field.path,
-            field._offset,
-            field._length,
-            handle_manager=field._handle_manager,
-            use_metadata_cache=field._use_metadata_cache,
-        )
+# class ClonedGribField(ClonedFieldCore, GribField):
+#     def __init__(self, field, **kwargs):
+#         ClonedFieldCore.__init__(self, field, **kwargs)
+#         self._handle = field._handle
+#         GribField.__init__(
+#             self,
+#             field.path,
+#             field._offset,
+#             field._length,
+#             handle_manager=field._handle_manager,
+#             use_metadata_cache=field._use_metadata_cache,
+#         )

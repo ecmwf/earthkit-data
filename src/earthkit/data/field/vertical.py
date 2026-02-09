@@ -18,7 +18,6 @@ class VerticalFieldPartHandler(SimpleFieldPartHandler):
     PART_CLS = BaseVertical
     PART_MAKER = create_vertical
     NAME = "vertical"
-    NAMESPACE_KEYS = ("level", "level_type", "units")
 
     def get_grib_context(self, context) -> dict:
         from earthkit.data.field.grib.vertical import COLLECTOR

@@ -70,7 +70,7 @@ class MetadataCacheHandler:
 class GribMetadata:
 
     NAME = "grib"
-    KEY_PREFIX = "grib."
+    KEY_PREFIX = "metadata."
 
     def __init__(self, handle):
         self._handle = handle
@@ -194,7 +194,7 @@ class GribMetadata:
         """
         return self.handle.get_buffer()
 
-    def namespace(self, owner, name, result, ns=None, prefix_keys=False):
+    def namespace(self, owner, name, result, prefix_keys=False):
         if isinstance(name, str):
             name = [name]
         elif name is None or name == [None]:
@@ -205,7 +205,7 @@ class GribMetadata:
                 r = self.handle.as_namespace(ns)
                 if prefix_keys:
                     r = {f"{self.KEY_PREFIX}{k}": v for k, v in r.items()}
-                result[self.NAME] = r
+                result[ns] = r
 
     def new_array_field(self, field, array_namespace=None, **kwargs):
         from earthkit.data.field.grib.create import new_array_grib_field

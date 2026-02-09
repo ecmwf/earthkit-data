@@ -585,7 +585,6 @@ class Field(Base):
         if prefix == METADATA:
             for _, private_part in self._private.items():
                 if hasattr(private_part, "metadata"):
-                    print(f"Calling metadata on private_part with key_name={key_name}")
                     return private_part.metadata(
                         key_name, default=default, astype=astype, raise_on_missing=raise_on_missing
                     )
@@ -1140,22 +1139,16 @@ class Field(Base):
 
         result = {}
         for m in self._parts.values():
-            m.namespace(self, part, result, prefix_keys=prefix_keys)
+            m.dump(self, part, result, prefix_keys=prefix_keys)
+
+        if part and not isinstance(part, str):
+            if "metadata" in part:
+                part = "metadata"
 
         if part == "metadata" and self._private:
             md = self._private.get("metadata")
-
             if md and hasattr(md, "namespace"):
-                md.namespace(self, part, result, ns=filter, prefix_keys=prefix_keys)
-
-        # if (
-        #     name is not None
-        #     and not (isinstance(name, (list, tuple)) and len(name) == len(result))
-        #     and self._private
-        # ):
-        #     for _, v in self._private.items():
-        #         if hasattr(v, "namespace"):
-        #             v.namespace(self, name, result)
+                md.namespace(self, filter, result, prefix_keys=prefix_keys)
 
         if simplify and isinstance(part, str) and len(result) == 1 and part in result:
             return result[part]

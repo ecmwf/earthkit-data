@@ -18,7 +18,6 @@ class ParameterFieldPartHandler(SimpleFieldPartHandler):
     PART_CLS = BaseParameter
     PART_MAKER = create_parameter
     NAME = "parameter"
-    NAMESPACE_KEYS = ("variable", "units")
 
     def get_grib_context(self, context) -> dict:
         from earthkit.data.field.grib.parameter import COLLECTOR

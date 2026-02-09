@@ -18,7 +18,6 @@ class EnsembleFieldPartHandler(SimpleFieldPartHandler):
     PART_CLS = BaseEnsemble
     PART_MAKER = create_ensemble
     NAME = "ensemble"
-    NAMESPACE_KEYS = ("member",)
 
     def get_grib_context(self, context) -> dict:
         from earthkit.data.field.grib.ensemble import COLLECTOR
