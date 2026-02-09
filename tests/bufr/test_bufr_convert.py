@@ -12,6 +12,7 @@
 import pandas as pd
 import pytest
 
+from earthkit.data import concat
 from earthkit.data import from_source
 from earthkit.data.testing import earthkit_examples_file
 
@@ -55,8 +56,9 @@ def test_bufr_to_pandas_filters():
 
 
 def test_bufr_to_pandas_multi():
-    ds = from_source("file", earthkit_examples_file("temp_10.bufr")) & from_source(
-        "file", earthkit_examples_file("synop_10.bufr")
+    ds = concat(
+        from_source("file", earthkit_examples_file("temp_10.bufr")),
+        from_source("file", earthkit_examples_file("synop_10.bufr")),
     )
 
     res = ds.to_pandas(

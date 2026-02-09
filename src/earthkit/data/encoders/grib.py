@@ -343,6 +343,14 @@ class GribEncoder(Encoder):
     def _normalize_kwargs_names(self, **kwargs):
         return kwargs
 
+    def _normalize_metadata_key_names(self, md):
+        def _convert(name):
+            if name.startswith("metadata."):
+                return name[9:]
+            return name
+
+        return {_convert(k): v for k, v in md.items()}
+
     def _get_handle(self, **kwargs):
         return GribHandleMaker(template=self.template).make(**kwargs)
 
@@ -387,6 +395,8 @@ class GribEncoder(Encoder):
         md = self._normalize_kwargs_names(**self.metadata)
         md.update(self._normalize_kwargs_names(**metadata))
         md.update(self._normalize_kwargs_names(**kwargs))
+
+        md = self._normalize_metadata_key_names(md)
 
         # when the input date a datetime object time can be inferred from it
         can_infer_time = (

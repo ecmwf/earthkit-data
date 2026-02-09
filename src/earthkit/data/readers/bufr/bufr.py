@@ -234,7 +234,7 @@ class BUFRMessage(Base):
         """
         return self.handle.unpack()
 
-    def get_single(self, key, default=None, *, astype=None, raise_on_missing=False):
+    def _get_single(self, key, default=None, *, astype=None, raise_on_missing=False):
         try:
             return self.handle.get(key, ktype=astype)
         except Exception:
@@ -252,34 +252,27 @@ class BUFRMessage(Base):
         astype=None,
         raise_on_missing=False,
         output=None,
+        remapping=None,
     ):
-        assert isinstance(keys, list)
+        meth = self._get_single
 
-        meth = self.get_single
-        _kwargs = dict(default=default, raise_on_missing=raise_on_missing)
-
-        if output in (list, tuple):
-            if astype is None:
-                r = [meth(k, **_kwargs) for k in keys]
+        if isinstance(keys, str):
+            r = meth(keys, default=default, astype=astype, raise_on_missing=raise_on_missing)
+            return r if output is not dict else {keys: r}
+        elif isinstance(keys, (list, tuple)):
+            if output is not dict:
+                r = [
+                    meth(k, astype=kt, default=d, raise_on_missing=raise_on_missing)
+                    for k, kt, d in zip(keys, astype, default)
+                ]
+                return r if output is list else tuple(r)
             else:
-                assert isinstance(astype, (list, tuple))
-                r = [meth(k, astype=kt, **_kwargs) for k, kt in zip(keys, astype)]
+                return {
+                    k: meth(k, astype=kt, default=d, raise_on_missing=raise_on_missing)
+                    for k, kt, d in zip(keys, astype, default)
+                }
 
-            if output is tuple:
-                return tuple(r)
-            else:
-                return r
-        elif output is dict:
-            if astype is None:
-                return {k: meth(k, astype=astype, **_kwargs) for k in keys}
-            else:
-                return {k: meth(k, astype=kt, **_kwargs) for k, kt in zip(keys, astype)}
-        else:
-            if isinstance(astype, (list, tuple)):
-                astype = astype[0]
-            return meth(keys[0], astype=astype, **_kwargs)
-
-    def get(self, *keys, default=None, astype=None, raise_on_missing=False):
+    def get(self, keys, default=None, astype=None, raise_on_missing=False, remapping=None):
         r"""Return the values for the specified keys.
 
         Parameters
@@ -300,15 +293,28 @@ class BUFRMessage(Base):
         if not keys:
             raise ValueError("At least one key must be specified.")
 
-        keys, astype, key_arg_type = metadata_argument_new(*keys, astype=astype)
-        assert isinstance(keys, list)
+        keys, astype, default, keys_arg_type = metadata_argument_new(keys, astype=astype, default=default)
+
+        _kwargs = {
+            "default": default,
+            "raise_on_missing": raise_on_missing,
+            # "patches": patches,
+            "astype": astype,
+        }
+
+        output = None
+        if output is None:
+            if keys_arg_type is not str:
+                output = keys_arg_type
+        elif output is not dict:
+            raise ValueError("output must be None or dict")
 
         r = self._get_fast(
             keys,
             default=default,
             astype=astype,
             raise_on_missing=raise_on_missing,
-            output=key_arg_type,
+            output=output,
         )
 
         return r
@@ -590,6 +596,75 @@ class BUFRListMixIn(PandasMixIn):
         if n <= 0:
             raise ValueError("n must be > 0")
         return self.ls(n=-n, **kwargs)
+
+    def get(self, keys, default=None, astype=None, raise_on_missing=False, output="item_per_field"):
+        r"""Return the values for the specified keys for each message in the list.
+
+        Parameters
+        ----------
+        keys: str, list or tuple
+            Keys to get the values for. Only ecCodes BUFR keys can be used here. It can contain a single
+            str or a list or tuple. Can be empty, in this case all the keys will be used.
+        default: value
+            Default value to return when a key is not found or it has a missing value. When ``default`` is
+            **not present** and a key is not found or its value is a missing value :obj:`get` will raise KeyError.
+        astype: type name, :obj:`list` or :obj:`tuple`
+            Return types for ``keys``. A single value is accepted and applied to all the ``keys``. Otherwise,
+            must have same the number of elements as ``keys``. Only used when ``keys`` is not empty.
+        raise_on_missing: bool
+            When it is True raises an exception if a key is not found in any of the messages in the list or it has a missing value.
+
+        Returns
+        -------
+        list
+            List with one item per :obj:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>`\ s in the list. Each item contains the values for the specified keys for the corresponding message.
+
+        """
+        from earthkit.data.utils.metadata.args import metadata_argument_new
+
+        # _kwargs = kwargs.copy()
+        # astype = _kwargs.pop("astype", None)
+        keys, astype, default, keys_arg_type = metadata_argument_new(keys, astype=astype, default=default)
+
+        # assert isinstance(keys, (list, tuple))
+
+        _kwargs = {
+            "default": default,
+            "raise_on_missing": raise_on_missing,
+            # "patches": patches,
+            "astype": astype,
+        }
+
+        if output == "item_per_field":
+            return [f._get_fast(keys, output=keys_arg_type, **_kwargs) for f in self]
+        elif output == "item_per_key":
+            vals = [f._get_fast(keys, output=keys_arg_type, **_kwargs) for f in self]
+            if keys_arg_type in (list, tuple):
+                return [[x[i] for x in vals] for i in range(len(keys))]
+            else:
+                assert isinstance(keys, str)
+                return vals
+        elif output == "dict_per_field":
+            return [f._get_fast(keys, output=dict, **_kwargs) for f in self]
+        elif output == "dict_per_key":
+            vals = [f._get_fast(keys, output=keys_arg_type, **_kwargs) for f in self]
+            if keys_arg_type in (list, tuple):
+                result = {k: [] for k in keys}
+                for i, k in enumerate(keys):
+                    result[k] = [x[i] for x in vals]
+            else:
+                assert isinstance(keys, str)
+                result = {keys: vals}
+            return result
+        else:
+            raise ValueError(
+                f"get: invalid output={output}. Must be one of 'item_per_field', 'item_per_key', 'dict_per_field', 'dict_per_key'"
+            )
+
+        # result = []
+        # for s in self:
+        #     result.append(s.get(keys, default=default, astype=astype, raise_on_missing=raise_on_missing))
+        # return result
 
     def metadata(self, *args, **kwargs):
         r"""Returns the metadata values for each message.

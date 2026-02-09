@@ -122,10 +122,10 @@ def test_target_file_grib_encoder_from_suffix(suffix):
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"metadata": {"shortName": "2d", "bitsPerValue": 12}},
-        {"encoder": "grib", "metadata": {"shortName": "2d", "bitsPerValue": 12}},
-        {"encoder": GribEncoder(), "metadata": {"shortName": "2d", "bitsPerValue": 12}},
-        {"encoder": GribEncoder(metadata={"shortName": "2d", "bitsPerValue": 12})},
+        {"metadata": {"metadata.shortName": "2d", "metadata.bitsPerValue": 12}},
+        {"encoder": "grib", "metadata": {"metadata.shortName": "2d", "metadata.bitsPerValue": 12}},
+        {"encoder": GribEncoder(), "metadata": {"metadata.shortName": "2d", "metadata.bitsPerValue": 12}},
+        {"encoder": GribEncoder(metadata={"metadata.shortName": "2d", "metadata.bitsPerValue": 12})},
     ],
 )
 def test_target_file_grib_set_metadata(kwargs):
@@ -137,8 +137,8 @@ def test_target_file_grib_set_metadata(kwargs):
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.get("grib.shortName") == ["2d", "2d"]
-        assert ds1.get("grib.bitsPerValue") == [12, 12]
+        assert ds1.get("metadata.shortName") == ["2d", "2d"]
+        assert ds1.get("metadata.bitsPerValue") == [12, 12]
         assert np.allclose(ds1.values[:, :4], vals_ref, rtol=1e-1)
 
 
