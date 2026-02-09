@@ -28,7 +28,7 @@ class ZarrEncodedData(EncodedData):
     def to_xarray(self):
         return self.ds
 
-    def metadata(self, key):
+    def get(self, key, default=None):
         raise NotImplementedError
 
 

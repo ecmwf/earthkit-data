@@ -25,7 +25,7 @@ class CSVEncodedData(EncodedData):
     def to_file(self, f, **kwargs):
         self.df.to_csv(f, **kwargs)
 
-    def metadata(self, key):
+    def get(self, key, default=None):
         raise NotImplementedError
 
 

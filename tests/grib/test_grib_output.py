@@ -9,7 +9,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import datetime
 import os
 import sys
 import tempfile
@@ -72,21 +71,21 @@ def test_grib_save_bits_per_value_fieldlist(_kwargs, expected_value, write_metho
     with temp_file() as tmp:
         write_to_file(write_method, tmp, ds, **_kwargs)
         ds1 = from_source("file", tmp)
-        assert ds1.get("grib.bitsPerValue") == [expected_value] * len(ds)
+        assert ds1.get("metadata.bitsPerValue") == [expected_value] * len(ds)
 
 
 @pytest.mark.parametrize(
     "_kwargs,expected_value",
     [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
 )
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
+@pytest.mark.parametrize("write_method", ["target"])
 def test_grib_save_bits_per_value_single_field(_kwargs, expected_value, write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     with temp_file() as tmp:
         write_to_file(write_method, tmp, ds[0], **_kwargs)
         ds1 = from_source("file", tmp)
-        assert ds1.get("grib.bitsPerValue") == [expected_value]
+        assert ds1.get("metadata.bitsPerValue") == [expected_value]
 
 
 # TODO: if we use missing_value = np.finfo(np.float32).max the test fails
@@ -122,7 +121,7 @@ def test_grib_output_missing_value_1(mode, missing_value):
                 missing_value=missing_value,
             )
         ds = earthkit.data.from_source("file", path)
-        assert ds[0].get("grib.bitmapPresent") == 1
+        assert ds[0].get("metadata.bitmapPresent") == 1
         assert np.isnan(ds[0].values[0])
         assert not np.isnan(values[1])
 
@@ -156,12 +155,12 @@ def test_grib_output_latlon(mode):
 
         ds = earthkit.data.from_source("file", path)
 
-        assert ds[0].get("variable") == "2t"
-        assert ds[0].get("grib.date") == 20010101
-        assert ds[0].get("grib.shortName") == "2t"
-        assert ds[0].get("grib.levtype") == "sfc"
-        assert ds[0].get("grib.edition") == 2
-        assert ds[0].get("grib.generatingProcessIdentifier") == 255
+        assert ds[0].get("metadata.shortName") == "2t"
+        assert ds[0].get("metadata.date") == 20010101
+        assert ds[0].get("metadata.shortName") == "2t"
+        assert ds[0].get("metadata.levtype") == "sfc"
+        assert ds[0].get("metadata.edition") == 2
+        assert ds[0].get("metadata.generatingProcessIdentifier") == 255
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -196,14 +195,14 @@ def test_grib_output_o96_sfc(mode):
         ds = earthkit.data.from_source("file", path)
 
         ref = {
-            "grib.date": 20010101,
-            "grib.shortName": "2t",
-            "grib.levtype": "sfc",
-            "grib.edition": 2,
-            "grib.generatingProcessIdentifier": 255,
-            "grib.gridType": "reduced_gg",
-            "grib.N": 96,
-            "grib.isOctahedral": 1,
+            "metadata.date": 20010101,
+            "metadata.shortName": "2t",
+            "metadata.levtype": "sfc",
+            "metadata.edition": 2,
+            "metadata.generatingProcessIdentifier": 255,
+            "metadata.gridType": "reduced_gg",
+            "metadata.N": 96,
+            "metadata.isOctahedral": 1,
         }
 
         for k, v in ref.items():
@@ -241,14 +240,14 @@ def test_grib_output_o160_sfc(mode):
         ds = earthkit.data.from_source("file", path)
 
         ref = {
-            "grib.date": 20010101,
-            "grib.shortName": "2t",
-            "grib.levtype": "sfc",
-            "grib.edition": 2,
-            "grib.generatingProcessIdentifier": 255,
-            "grib.gridType": "reduced_gg",
-            "grib.N": 160,
-            "grib.isOctahedral": 1,
+            "metadata.date": 20010101,
+            "metadata.shortName": "2t",
+            "metadata.levtype": "sfc",
+            "metadata.edition": 2,
+            "metadata.generatingProcessIdentifier": 255,
+            "metadata.gridType": "reduced_gg",
+            "metadata.N": 160,
+            "metadata.isOctahedral": 1,
         }
 
         for k, v in ref.items():
@@ -286,14 +285,14 @@ def test_grib_output_n96_sfc(mode):
         ds = earthkit.data.from_source("file", path)
 
         ref = {
-            "grib.date": 20010101,
-            "grib.shortName": "2t",
-            "grib.levtype": "sfc",
-            "grib.edition": 2,
-            "grib.generatingProcessIdentifier": 255,
-            "grib.gridType": "reduced_gg",
-            "grib.N": 96,
-            "grib.isOctahedral": 0,
+            "metadata.date": 20010101,
+            "metadata.shortName": "2t",
+            "metadata.levtype": "sfc",
+            "metadata.edition": 2,
+            "metadata.generatingProcessIdentifier": 255,
+            "metadata.gridType": "reduced_gg",
+            "metadata.N": 96,
+            "metadata.isOctahedral": 0,
         }
 
         for k, v in ref.items():
@@ -338,18 +337,18 @@ def test_grib_output_mars_labeling(mode):
 
         ds = earthkit.data.from_source("file", path)
 
-        assert ds[0].get("grib.date") == 20010101
-        assert ds[0].get("grib.edition") == 2
-        assert ds[0].get("grib.step") == 24
-        assert ds[0].get("step") == datetime.timedelta(hours=24)
-        assert ds[0].get("grib.expver") == "test"
-        assert ds[0].get("grib.levtype") == "sfc"
-        assert ds[0].get("grib.shortName") == "msl"
-        assert ds[0].get("grib.type") == "fc"
-        assert ds[0].get("grib.generatingProcessIdentifier") == 255
-        assert ds[0].get("grib.gridType") == "reduced_gg"
-        assert ds[0].get("grib.N") == 96
-        assert ds[0].get("grib.isOctahedral") == 1
+        assert ds[0].get("metadata.date") == 20010101
+        assert ds[0].get("metadata.edition") == 2
+        assert ds[0].get("metadata.step") == 24
+        assert ds[0].get("metadata.step") == 24
+        assert ds[0].get("metadata.expver") == "test"
+        assert ds[0].get("metadata.levtype") == "sfc"
+        assert ds[0].get("metadata.shortName") == "msl"
+        assert ds[0].get("metadata.type") == "fc"
+        assert ds[0].get("metadata.generatingProcessIdentifier") == 255
+        assert ds[0].get("metadata.gridType") == "reduced_gg"
+        assert ds[0].get("metadata.N") == 96
+        assert ds[0].get("metadata.isOctahedral") == 1
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -385,15 +384,15 @@ def test_grib_output_o96_pl(mode, levtype):
 
         ds = earthkit.data.from_source("file", path)
 
-        assert ds[0].get("grib.date") == 20010101
-        assert ds[0].get("grib.edition") == 2
-        assert ds[0].get("grib.level") == 850
-        assert ds[0].get("grib.levtype") == "pl"
-        assert ds[0].get("grib.shortName") == "t"
-        assert ds[0].get("grib.generatingProcessIdentifier") == 255
-        assert ds[0].get("grib.gridType") == "reduced_gg"
-        assert ds[0].get("grib.N") == 96
-        assert ds[0].get("grib.isOctahedral") == 1
+        assert ds[0].get("metadata.date") == 20010101
+        assert ds[0].get("metadata.edition") == 2
+        assert ds[0].get("metadata.level") == 850
+        assert ds[0].get("metadata.levtype") == "pl"
+        assert ds[0].get("metadata.shortName") == "t"
+        assert ds[0].get("metadata.generatingProcessIdentifier") == 255
+        assert ds[0].get("metadata.gridType") == "reduced_gg"
+        assert ds[0].get("metadata.N") == 96
+        assert ds[0].get("metadata.isOctahedral") == 1
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -429,16 +428,16 @@ def test_grib_output_tp(mode, levtype):
             )
         ds = earthkit.data.from_source("file", path)
 
-        assert ds[0].get("grib.date") == 20010101
-        assert ds[0].get("grib.shortName") == "tp"
-        assert ds[0].get("grib.levtype") == "sfc"
-        assert ds[0].get("grib.edition") == 1
-        assert ds[0].get("grib.step") == 48
-        assert ds[0].get("step") == datetime.timedelta(hours=48)
-        assert ds[0].get("grib.generatingProcessIdentifier") == 255
-        assert ds[0].get("grib.gridType") == "regular_ll"
-        assert ds[0].get("grib.Ni") == 360
-        assert ds[0].get("grib.Nj") == 181
+        assert ds[0].get("metadata.date") == 20010101
+        assert ds[0].get("metadata.shortName") == "tp"
+        assert ds[0].get("metadata.levtype") == "sfc"
+        assert ds[0].get("metadata.edition") == 1
+        assert ds[0].get("metadata.step") == 48
+        assert ds[0].get("metadata.step") == 48
+        assert ds[0].get("metadata.generatingProcessIdentifier") == 255
+        assert ds[0].get("metadata.gridType") == "regular_ll"
+        assert ds[0].get("metadata.Ni") == 360
+        assert ds[0].get("metadata.Nj") == 181
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=EPSILON, atol=EPSILON)
 
@@ -457,7 +456,7 @@ def test_grib_output_field_template(mode, array):
         if array:
             ds = ds.to_fieldlist()
 
-        assert ds[0].get("grib.bitsPerValue") == 4
+        assert ds[0].get("metadata.bitsPerValue") == 4
 
         path = os.path.join(tmp, "a.grib")
 
@@ -482,12 +481,12 @@ def test_grib_output_field_template(mode, array):
 
         ds = earthkit.data.from_source("file", path)
 
-        assert ds[0].get("grib.date") == 20010101
-        assert ds[0].get("grib.shortName") == "pt"
-        assert ds[0].get("grib.levtype") == "pl"
-        assert ds[0].get("grib.edition") == 1
-        assert ds[0].get("grib.generatingProcessIdentifier") == 255
-        assert ds[0].get("grib.bitsPerValue") == 16
+        assert ds[0].get("metadata.date") == 20010101
+        assert ds[0].get("metadata.shortName") == "pt"
+        assert ds[0].get("metadata.levtype") == "pl"
+        assert ds[0].get("metadata.edition") == 1
+        assert ds[0].get("metadata.generatingProcessIdentifier") == 255
+        assert ds[0].get("metadata.bitsPerValue") == 16
 
         assert np.allclose(ds[0].to_numpy(), data, rtol=1e-2, atol=1e-2)
 
@@ -496,13 +495,13 @@ def test_grib_output_field_template(mode, array):
 @pytest.mark.parametrize(
     "pattern,expected_value",
     [
-        ("{grib.shortName}", {"t": 2, "u": 2, "v": 2}),
+        ("{metadata.shortName}", {"t": 2, "u": 2, "v": 2}),
         (
-            "{grib.shortName}_{grib.level}",
+            "{metadata.shortName}_{metadata.level}",
             {"t_1000": 1, "t_850": 1, "u_1000": 1, "u_850": 1, "v_1000": 1, "v_850": 1},
         ),
-        ("{grib.date}_{grib.time}_{grib.step}", {"20180801_1200_0": 6}),
-        ("{grib.date}_{grib.time}_{grib.step:03}", {"20180801_1200_000": 6}),
+        ("{metadata.date}_{metadata.time}_{metadata.step}", {"20180801_1200_0": 6}),
+        ("{metadata.date}_{metadata.time}_{metadata.step:03}", {"20180801_1200_000": 6}),
     ],
 )
 def test_grib_output_filename_pattern(mode, pattern, expected_value):

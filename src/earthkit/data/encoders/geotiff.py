@@ -36,7 +36,7 @@ class GeoTIFFEncodedData(EncodedData):
         options.update(kwargs)
         self.ds.rio.to_raster(dst, **options)
 
-    def metadata(self, key):
+    def get(self, key, default=None):
         raise NotImplementedError
 
 

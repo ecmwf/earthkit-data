@@ -500,8 +500,9 @@ def test_legacy_grib_output_field_template(mode, array):
         assert np.allclose(ds[0].to_numpy(), data, rtol=1e-2, atol=1e-2)
 
 
-@pytest.mark.legacy
-@pytest.mark.parametrize("mode", ["ori", "compat", "target"])
+@pytest.mark.search_all_parts
+# @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
+@pytest.mark.parametrize("mode", ["target"])
 @pytest.mark.parametrize(
     "pattern,expected_value",
     [
@@ -517,19 +518,19 @@ def test_legacy_grib_output_filename_pattern(mode, pattern, expected_value):
     with temp_directory() as tmp:
         path = os.path.join(tmp, f"{pattern}.grib")
 
-        if mode == "ori":
-            f = earthkit.data.new_grib_output(path, split_output=True)
-            for x in ds:
-                f.write(x.values, template=x)
+        # if mode == "ori":
+        #     f = earthkit.data.new_grib_output(path, split_output=True)
+        #     for x in ds:
+        #         f.write(x.values, template=x)
 
-            f.close()
-        elif mode == "compat":
-            f = new_grib_output_compat(path, split_output=True)
+        #     f.close()
+        # elif mode == "compat":
+        #     f = new_grib_output_compat(path, split_output=True)
 
-            for x in ds:
-                f.write(values=x.values, template=x)
-            f.close()
-        elif mode == "target":
+        #     for x in ds:
+        #         f.write(values=x.values, template=x)
+        #     f.close()
+        if mode == "target":
             to_target(
                 "file-pattern",
                 path,

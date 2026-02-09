@@ -33,7 +33,7 @@ class _InternalPassThroughEncodedData(EncodedData):
                     break
                 f.write(chunk)
 
-    def metadata(self, key):
+    def get(self, key, default=None):
         raise NotImplementedError
 
 

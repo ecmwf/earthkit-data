@@ -83,7 +83,12 @@ class FilePatternTarget(SimpleTarget):
     def _f(self, data):
         self._raise_if_closed()
 
-        keys = [data.metadata(k.split(":")[0]) for k in self.split_output]
+        def _convert(v):
+            if v is None:
+                return "None"
+            return str(v)
+
+        keys = [_convert(data.get(k.split(":")[0])) for k in self.split_output]
         path = self.filename.format(*keys)
 
         if path not in self._files:

@@ -39,9 +39,9 @@ class GribEncodedData(EncodedData):
     def to_file(self, f):
         self.handle.write(f)
 
-    def metadata(self, key=None):
+    def get(self, key, default=None):
         if key:
-            return self.to_field().get(key, default=None)
+            return self.to_field().get(key, default=default)
         else:
             raise NotImplementedError
 

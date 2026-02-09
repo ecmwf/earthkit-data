@@ -59,7 +59,7 @@ class EncodedData(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def metadata(self, key=None):
+    def get(self, key, default=None):
         pass
 
 
