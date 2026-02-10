@@ -624,14 +624,11 @@ class Field(Base):
         keys: str, list or tuple
             Specify the metadata keys to extract. Can be a single key (str) or multiple
             keys as a list/tuple of str.
-        default: Any, None
+        default: Any, None, or a list/tuple thereof
             Specify the default value(s) for ``keys``. Returned when the given key
-            is not found and ``raise_on_missing`` is False. When ``default`` is a single
-            value, it is used for all the keys. Otherwise it must be a list/tuple of the
-            same length as ``keys``.
-        astype: type as str, int or float
-            Return type for ``keys``.  When ``astype`` is a single type, it is used for
-            all the keys. Otherwise it must be a list/tuple of the same length as ``keys``.
+            is not found and ``raise_on_missing`` is False. Must have the same "structure" as ``keys``.
+        astype: type as str, int or float, or a list/tuple thereof
+            Return type for ``keys``. Must have the same "structure" as ``keys``.
         raise_on_missing: bool
             When True, raises KeyError if any of ``keys`` is not found.
         output: type, None

@@ -19,7 +19,8 @@ from earthkit.data.indexing.fieldlist import FieldList
 LOG = logging.getLogger(__name__)
 
 
-class CollectorJoiner:
+class _CollectorJoiner:
+    # PW: TODO: dead code due to `component` removal
     def __init__(self, func):
         self.func = func
 
@@ -47,10 +48,9 @@ class IndexSelection(Selection):
 
 
 class IndexDB:
-    def __init__(self, index, component):
-        # print(f"IndexDB: {index=}, {component=}")
+    def __init__(self, index):
+        # print(f"IndexDB: {index=}")
         self._index = index if index is not None else dict()
-        self._component = component if component is not None else dict()
 
     def index(self, key, maker=None):
         # LOG.debug(f"index(): {key=} {self._index=}")
@@ -62,44 +62,31 @@ class IndexDB:
                 raise KeyError(f"Could not find index for {key=}")
         return self._index[key]
 
-    def component(self, key):
-        if key not in self._component:
-            raise KeyError(f"Could not find component for {key=}")
-        return self._component[key]
-
-    def collect(self, keys, component=False):
+    def collect(self, keys):
         remaining_keys = list(keys)
         indices = dict()
-        components = dict()
         for k in keys:
             if k in self._index:
                 indices[k] = self._index[k]
                 remaining_keys.remove(k)
-                if component and k in self._component:
-                    components[k] = self._component[k]
-        return remaining_keys, indices, components
+        return remaining_keys, indices
 
     def filter(self, *args, **kwargs):
         kwargs = normalize_selection(*args, **kwargs)
 
         index = dict()
-        component = dict()
 
         for k in self._index:
             if k in kwargs:
                 selection = IndexSelection(dict(k=kwargs[k]))
                 idx = list(i for i, element in enumerate(self._index[k]) if selection.match_element(element))
                 index[k] = [self._index[k][i] for i in idx]
-                if k in self._component:
-                    component[k] = component[k][0], [self._component[k][1][i] for i in idx]
             else:
                 index[k] = self._index[k]
-                if k in self._component:
-                    component[k] = self._component[k]
-        return IndexDB(index, component)
+        return IndexDB(index)
 
     def __repr__(self) -> str:
-        return f"IndexDB(_index={self._index}, component={self._component})"
+        return f"IndexDB(_index={self._index})"
 
 
 class XArrayInputFieldList(FieldList):
@@ -109,7 +96,7 @@ class XArrayInputFieldList(FieldList):
     Only for internal use for building Xarray datasets.
     """
 
-    def __init__(self, fieldlist, keys=None, db=None, remapping=None, scan_only=False, component=True):
+    def __init__(self, fieldlist, keys=None, db=None, remapping=None, scan_only=False):
         super().__init__()
         self.ds = fieldlist
 
@@ -117,22 +104,18 @@ class XArrayInputFieldList(FieldList):
         if self.remapping is not None:
             self.remapping = build_remapping(remapping)
 
-        self.db = IndexDB(None, None)
+        self.db = IndexDB(None)
         if db is not None:
             self.db = db
         elif keys:
-            self.db = IndexDB(*self.unique_values(keys, component=component))
+            # PW: DEBUG
+            print(f"{keys=}", flush=True)
+            print(f"{self.unique_values(keys)=}", flush=True)
+            self.db = IndexDB(self.unique_values(keys))
 
         assert self.db
 
-    def index(self, key, component=False):
-        # print(f"called {key=}")
-        if component:
-            if self.remapping and key in self.remapping:
-                return self.db.component(key)
-            else:
-                return None
-
+    def index(self, key):
         return self.db.index(key, self.unique_values)
 
     def _getitem(self, n):
@@ -193,22 +176,18 @@ class XArrayInputFieldList(FieldList):
             )
             return ds
 
-    def unique_values(self, names, component=False):
+    def unique_values(self, names):
         if isinstance(names, str):
             names = [names]
 
-        keys, indices, components = self.db.collect(names, component=component)
+        keys, indices = self.db.collect(names)
 
         if keys:
+            astype = [None] * len(keys)
+            default = [None] * len(keys)
             vals = defaultdict(dict)
-            if component:
-                components = dict()
-                joiner = CollectorJoiner
-            else:
-                joiner = None
-
             for f in self.ds:
-                r = f._get_fast(keys, remapping=self.remapping, joiner=joiner, output=dict)
+                r = f._get_fast(keys, default=default, astype=astype, remapping=self.remapping, output=dict)
                 for k, v in r.items():
                     vals[k][v] = True
 
@@ -221,24 +200,10 @@ class XArrayInputFieldList(FieldList):
                 else:
                     vals[k] = sorted(v, key=str)
 
-            if component and self.remapping:
-                for k, v in vals.items():
-                    if k in self.remapping:
-                        indices[k] = [x[0] for x in v]
-                        components[k] = self.remapping.components(k), [x[1] for x in v]
-                        assert len(indices[k]) == len(
-                            components[k][1]
-                        ), f"{len(indices[k])} != {len(components[k])} {indices[k]=} {components[k]=}"
-                    else:
-                        indices[k] = v
-            else:
-                for k, v in vals.items():
-                    indices[k] = v
+            for k, v in vals.items():
+                indices[k] = v
 
-        if component:
-            return indices, components
-        else:
-            return indices, None
+        return indices
 
     def unwrap(self):
         ds = self.ds
