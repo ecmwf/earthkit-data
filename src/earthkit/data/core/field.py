@@ -671,6 +671,12 @@ class Field(Base):
             r = meth(keys, default=default, astype=astype, raise_on_missing=raise_on_missing)
             return r if output is not dict else {keys: r}
         elif isinstance(keys, (list, tuple)):
+            # if necessary, "broadcast" astype and default
+            if not isinstance(astype, (list, tuple)):
+                astype = [astype] * len(keys)
+            if not isinstance(default, (list, tuple)):
+                default = [default] * len(keys)
+
             if output is not dict:
                 r = [
                     meth(k, astype=kt, default=d, raise_on_missing=raise_on_missing)

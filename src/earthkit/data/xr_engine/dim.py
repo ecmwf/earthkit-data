@@ -54,6 +54,10 @@ BASE_DATETIME_KEYS = [
     "indexing_time",
     "indexing_datetime",
 ]
+BASE_DATETIME_KEYS = [
+    "time.forecast_reference_time",
+    "time.base_datetime",
+]
 DATETIME_KEYS = BASE_DATETIME_KEYS + VALID_DATETIME_KEYS
 
 KEYS = (
@@ -220,12 +224,12 @@ class Dim:
     def dim_name(self, key, source):
         return key
 
-    def as_coord(self, key, values, component, source):
+    def as_coord(self, key, values, source):
         key = self.dim_name(key, source)
         if key not in self.coords:
             from .coord import Coord
 
-            self.coords[key] = Coord.make(key, values, ds=source, component=component)
+            self.coords[key] = Coord.make(key, values, ds=source)
         return key, self.coords[key]
 
     def remapping_keys(self):
@@ -266,8 +270,8 @@ class ValidTimeDim(Dim):
 
 class ForecastRefTimeDim(Dim):
     name = "forecast_reference_time"
-    drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="forecast_reference_time")
-    alias = ["base_datetime"]
+    drop = get_keys(DATETIME_KEYS, drop="time.forecast_reference_time")
+    alias = ["time.base_datetime"]
 
 
 class IndexingTimeDim(Dim):
@@ -429,14 +433,11 @@ class ForecastTimeDimMode(DimMode):
 
     def build(self, profile, owner, active=True):
         ref_time_key, ref_time_name = owner.dim_roles.role("forecast_reference_time", raise_error=False)
+        print(f"{ref_time_key=}, {ref_time_name=}", flush=True)  ###PW
+        # PW: TODO: this is not quite OK yet...
         if ref_time_key is None:
-            date, _ = owner.dim_roles.role("date")
-            time, _ = owner.dim_roles.role("time")
-            built_in = date in self.DATES and time in self.TIMES
-            if built_in:
-                ref_time_dim = ForecastRefTimeDim(owner, name=ref_time_name, active=active)
-            else:
-                ref_time_dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
+            ref_time_key = "time.forecast_reference_time"
+            ref_time_dim = ForecastRefTimeDim(owner, name=ref_time_name, active=active)
         else:
             ref_time_dim = make_dim(owner, name=ref_time_name, key=ref_time_key, active=active)
 
@@ -463,7 +464,7 @@ class ForecastTimeDimMode(DimMode):
 
 class ValidTimeDimMode(DimMode):
     name = "valid_time"
-    default = {"valid_time": "valid_datetime"}
+    default = {"valid_time": "time.valid_datetime"}
 
 
 class RawTimeDimMode(DimMode):
@@ -509,7 +510,7 @@ class LevelPerTypeDimMode(LevelAndTypeDimMode):
     dim = LevelPerTypeDim
 
 
-TIME_DIM_MODES = {v.name: v for v in [ForecastTimeDimMode, ValidTimeDimMode, RawTimeDimMode]}
+TIME_DIM_MODES = {v.name: v for v in [ForecastTimeDimMode, ValidTimeDimMode]}  # , RawTimeDimMode]}
 LEVEL_DIM_MODES = {v.name: v for v in [LevelDimMode, LevelPerTypeDimMode, LevelAndTypeDimMode]}
 
 
