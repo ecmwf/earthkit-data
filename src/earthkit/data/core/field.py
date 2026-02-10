@@ -627,7 +627,7 @@ class Field(Base):
         default: Any, None, or a list/tuple thereof
             Specify the default value(s) for ``keys``. Returned when the given key
             is not found and ``raise_on_missing`` is False. Must have the same "structure" as ``keys``.
-        astype: type as str, int or float, or a list of thereof
+        astype: type as str, int or float, or a list/tuple thereof
             Return type for ``keys``. Must have the same "structure" as ``keys``.
         raise_on_missing: bool
             When True, raises KeyError if any of ``keys`` is not found.
