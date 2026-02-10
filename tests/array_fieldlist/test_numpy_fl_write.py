@@ -16,6 +16,7 @@ import sys
 import numpy as np
 import pytest
 
+from earthkit.data import create_target
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.indexing.fieldlist import FieldList
@@ -46,13 +47,13 @@ def test_array_fl_grib_write_to_path(array_backend, write_method):
         dtype=dtype,
     )
 
-    assert ds[0].get("param") == "2t"
-    assert ds[0].get("grib.shortName") == "2t"
+    assert ds[0].get("parameter.variable") == "2t"
+    assert ds[0].get("metadata.shortName") == "2t"
     assert len(ds) == 2
     v1 = ds[0].values + 1
     check_array_type(v1, array_namespace)
 
-    r = ds[0].set(values=v1, param="msl")
+    r = ds[0].set({"values": v1, "parameter.variable": "msl"})
 
     with temp_file() as tmp:
         write_to_file(write_method, tmp, r)
@@ -74,7 +75,7 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))
     ds = ds.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
 
-    assert ds[0].metadata("grib.shortName") == "2t"
+    assert ds[0].get("metadata.shortName") == "2t"
 
     v = ds[0].values
     v1 = v + 1
@@ -87,7 +88,7 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
     # md = ds[0].metadata()
     # md1 = md.override(shortName="msl")
     # r = FieldList.from_array(v1, md1)
-    r = ds[0].set(values=v1, param="msl")
+    r = ds[0].set({"values": v1, "parameter.variable": "msl"})
     r = FieldList.from_fields([r])
 
     assert xp.isnan(r[0].values[0])
@@ -109,7 +110,7 @@ def test_array_fl_grib_write_missing(array_backend, _kwargs, write_method):
 def test_array_fl_grib_write_check_nans_bad(write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
-    assert ds[0].get("grib.shortName") == "2t"
+    assert ds[0].get("metadata.shortName") == "2t"
 
     v = ds[0].values
     v1 = v + 1
@@ -122,7 +123,7 @@ def test_array_fl_grib_write_check_nans_bad(write_method):
     # md = ds[0].metadata()
     # md1 = md.override(shortName="msl")
     # r = FieldList.from_numpy(v1, md1)
-    r = ds[0].set(values=v1, param="msl")
+    r = ds[0].set({"values": v1, "parameter.variable": "msl"})
     r = FieldList.from_fields([r])
 
     assert np.isnan(r[0].values[0])
@@ -135,70 +136,62 @@ def test_array_fl_grib_write_check_nans_bad(write_method):
             write_to_file(write_method, tmp, r, check_nans=False)
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_array_fl_grib_write_append(write_method):
+def test_array_fl_grib_write_append():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
-    assert ds[0].get("grib.shortName") == "2t"
+    assert ds[0].get("metadata.shortName") == "2t"
 
     v = ds[0].values
     v1 = v + 1
     v2 = v + 2
 
-    # md = ds[0].metadata()
-    # md1 = md.override(shortName="msl")
-    # md2 = md.override(shortName="2d")
-
-    # r1 = FieldList.from_numpy(v1, md1)
-    # r2 = FieldList.from_numpy(v2, md2)
-
-    r1 = ds[0].set(values=v1, param="msl")
+    r1 = ds[0].set({"values": v1, "parameter.variable": "msl"})
     r1 = FieldList.from_fields([r1])
 
-    r2 = ds[0].set(values=v2, param="2d")
+    r2 = ds[0].set({"values": v2, "parameter.variable": "2d"})
     r2 = FieldList.from_fields([r2])
 
     # save to disk
     tmp = temp_file()
-    write_to_file(write_method, tmp.path, r1)
+    r1.to_target("file", tmp.path)
     assert os.path.exists(tmp.path)
     r_tmp = from_source("file", tmp.path)
     assert len(r_tmp) == 1
-    assert r_tmp.get("grib.shortName") == ["msl"]
+    assert r_tmp.get("metadata.shortName") == ["msl"]
     r_tmp = None
 
     # append
-    write_to_file(write_method, tmp.path, r2, append=True)
+    r2.to_target("file", tmp.path, append=True)
     assert os.path.exists(tmp.path)
     r_tmp = from_source("file", tmp.path)
     assert len(r_tmp) == 2
-    assert r_tmp.get("grib.shortName") == ["msl", "2d"]
+    assert r_tmp.get("metadata.shortName") == ["msl", "2d"]
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_array_fl_grib_write_generating_proc_id(write_method):
+def test_array_fl_grib_write_generating_proc_id():
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
-    assert ds[0].get("grib.shortName") == "2t"
+    assert ds[0].get("metadata.shortName") == "2t"
 
     v = ds[0].values
     v1 = v + 1
     v2 = v + 2
 
-    md = ds[0].metadata()
-    md1 = md.override(shortName="msl", generatingProcessIdentifier=255)
-    md2 = md.override(shortName="2d")
-
-    r1 = FieldList.from_numpy([v1, v2], [md1, md2])
+    f1 = ds[0].set({"values": v1, "parameter.variable": "msl"})
+    f2 = ds[0].set({"values": v2, "parameter.variable": "2d"})
+    r1 = FieldList.from_fields([f1, f2])
 
     # save to disk
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, r1)
+        with create_target("file", tmp) as t:
+            t.write(r1[0], metadata={"generatingProcessIdentifier": 255})
+            t.write(r1[1])
+
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
         assert len(r_tmp) == 2
-        assert r_tmp.get("grib.shortName") == ["msl", "2d"]
-        assert r_tmp.get("grib.generatingProcessIdentifier") == [
+        assert r_tmp.get("metadata.shortName") == ["msl", "2d"]
+        assert r_tmp.get("metadata.generatingProcessIdentifier") == [
             255,
             150,
         ]
@@ -207,6 +200,7 @@ def test_array_fl_grib_write_generating_proc_id(write_method):
         assert np.allclose(r_tmp.values[1], v2)
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
 @pytest.mark.parametrize(
     "_kwargs,expected_value",
@@ -217,12 +211,12 @@ def test_array_fl_grib_write_bits_per_value(array_backend, _kwargs, expected_val
     ds, _ = load_array_fl(1, array_backend)
 
     if expected_value is None:
-        expected_value = ds[0].get("grib.bitsPerValue")
+        expected_value = ds[0].get("metadata.bitsPerValue")
 
     with temp_file() as tmp:
         write_to_file(write_method, tmp, ds, **_kwargs)
         ds1 = from_source("file", tmp)
-        assert ds1.get("grib.bitsPerValue") == [expected_value] * len(ds)
+        assert ds1.get("metadata.bitsPerValue") == [expected_value] * len(ds)
 
 
 @pytest.mark.parametrize(
@@ -239,11 +233,7 @@ def test_array_fl_grib_single_write_to_path(filename, shape):
     assert len(ds) >= 1
     v1 = ds[0].values + 1
 
-    # md = ds[0].metadata()
-    # md1 = md.override(shortName="msl")
-    # r = FieldList.from_array(v1, md1)
-
-    r = ds[0].set(values=v1, param="msl")
+    r = ds[0].set({"values": v1, "parameter.variable": "msl"})
     r = FieldList.from_fields([r])
 
     assert r[0].shape == shape
@@ -254,11 +244,12 @@ def test_array_fl_grib_single_write_to_path(filename, shape):
         r_tmp = from_source("file", tmp)
         # r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace)
         assert r_tmp[0].shape == shape
-        assert r_tmp[0].get("grib.shortName") == "msl"
+        assert r_tmp[0].get("metadata.shortName") == "msl"
         v_tmp = r_tmp[0].values
         assert np.allclose(v1, v_tmp)
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize(
     "filename,shape",
     [
@@ -274,16 +265,17 @@ def test_array_fl_grib_single_write_to_path(filename, shape):
 def test_array_fl_grib_single_write_bits_per_value(filename, shape, _kwargs, expected_value):
     ds0 = from_source("file", filename)
 
-    ds = ds0.from_fields([ds0[0].copy()])
+    # ds = ds0.from_fields([ds0[0].copy()])
+    ds = ds0.to_fieldlist()
     assert ds[0].shape == shape
 
     if expected_value is None:
-        expected_value = ds[0].get("grib.bitsPerValue")
+        expected_value = ds[0].get("metadata.bitsPerValue")
 
     with temp_file() as tmp:
         ds.to_target("file", tmp, **_kwargs)
         ds1 = from_source("file", tmp)
-        assert ds1.get("grib.bitsPerValue") == [expected_value] * len(ds)
+        assert ds1.get("metadata.bitsPerValue") == [expected_value] * len(ds)
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ def load_array_fl(num, array_namespace=None):
     for fname in files:
         ds = from_source("file", earthkit_examples_file(fname))
         ds_in.append(ds.to_fieldlist(array_namespace=array_namespace))
-        md += ds_in[-1].get("param")
+        md += ds_in[-1].get("parameter.variable")
 
     ds = []
     for x in ds_in:
@@ -43,7 +43,7 @@ def load_array_fl(num, array_namespace=None):
 def load_array_fl_file(fname, array_namespace=None):
     ds_in = from_source("file", earthkit_examples_file(fname))
     ds_in = ds_in.to_fieldlist(array_namespace=array_namespace)
-    md = ds_in.get("param")
+    md = ds_in.get("parameter.variable")
 
     # ds = FieldList.from_array(ds_in.values, [m.override(edition=1) for m in ds_in.metadata()])
     ds = FieldList.from_fields([x.set(values=x.values) for x in ds_in])
@@ -57,7 +57,7 @@ def check_array_fl(ds, ds_input, md_full, array_namespace=None):
     xp = eku_array_namespace(array_namespace)
 
     assert len(ds) == len(md_full)
-    assert ds.get("param") == md_full
+    assert ds.get("parameter.variable") == md_full
     assert xp.allclose(ds[0].values, ds_input[0][0].values)
 
     # # values metadata
@@ -67,37 +67,37 @@ def check_array_fl(ds, ds_input, md_full, array_namespace=None):
 
     # check slice
     r = ds[1]
-    assert r.get("param") == "msl"
+    assert r.get("parameter.variable") == "msl"
 
     if len(ds_input) > 1:
         r = ds[1:3]
         assert len(r) == 2
-        assert r.get("param") == ["msl", "t"]
-        assert r[0].get("param") == "msl"
-        assert r[1].get("param") == "t"
+        assert r.get("parameter.variable") == ["msl", "t"], f"{r.get('parameter.variable ')} != ['msl', 't']"
+        assert r[0].get("parameter.variable") == "msl", f"{r[0].get('parameter.variable ')} != 'msl'"
+        assert r[1].get("parameter.variable") == "t", f"{r[1].get('parameter.variable ')} != 't'"
         assert xp.allclose(r[0].values, ds_input[0][1].values)
         assert xp.allclose(r[1].values, ds_input[1][0].values)
 
         # check sel
-        r = ds.sel(param="msl")
+        r = ds.sel({"parameter.variable": "msl"})
         assert len(r) == 1
-        assert r.get("grib.shortName") == ["msl"]
-        assert r[0].get("param") == "msl"
+        assert r.get("metadata.shortName") == ["msl"]
+        assert r[0].get("parameter.variable") == "msl"
         assert xp.allclose(r[0].values, ds_input[0][1].values)
 
     if len(ds_input) == 3:
         r = ds[1:13:4]
         assert len(r) == 3
-        assert r.get("param") == ["msl", "t", "u"]
-        assert r[0].get("param") == "msl"
-        assert r[1].get("param") == "t"
-        assert r[2].get("param") == "u"
+        assert r.get("parameter.variable") == ["msl", "t", "u"]
+        assert r[0].get("parameter.variable") == "msl"
+        assert r[1].get("parameter.variable") == "t"
+        assert r[2].get("parameter.variable") == "u"
 
 
 def check_array_fl_from_to_fieldlist(ds, ds_input, md_full, array_namespace=None, flatten=False, dtype=None):
     assert len(ds_input) in [1, 2, 3]
     assert len(ds) == len(md_full)
-    assert ds.metadata("param") == md_full
+    assert ds.metadata("parameter.variable") == md_full
 
     xp = eku_array_namespace(array_namespace)
 
@@ -108,31 +108,31 @@ def check_array_fl_from_to_fieldlist(ds, ds_input, md_full, array_namespace=None
 
     # check slice
     r = ds[1]
-    assert r.get("param") == "msl"
+    assert r.get("parameter.variable") == "msl"
 
     if len(ds_input) > 1:
         r = ds[1:3]
         assert len(r) == 2
-        assert r.get("param") == ["msl", "t"]
-        assert r[0].get("param") == "msl"
-        assert r[1].get("param") == "t"
+        assert r.get("parameter.variable") == ["msl", "t"]
+        assert r[0].get("parameter.variable") == "msl"
+        assert r[1].get("parameter.variable") == "t"
         assert xp.allclose(r[0].to_array(**np_kwargs), ds_input[0][1].to_array(**np_kwargs))
         assert xp.allclose(r[1].to_array(**np_kwargs), ds_input[1][0].to_array(**np_kwargs))
 
         # check sel
-        r = ds.sel(shortName="msl")
+        r = ds.sel({"parameter.variable": "msl"})
         assert len(r) == 1
-        assert r.get("grib.shortName") == ["msl"]
-        assert r[0].get("param") == "msl"
+        assert r.get("parameter.variable") == ["msl"]
+        assert r[0].get("parameter.variable") == "msl"
         assert xp.allclose(r[0].to_array(**np_kwargs), ds_input[0][1].to_array(**np_kwargs))
 
     if len(ds_input) == 3:
         r = ds[1:13:4]
         assert len(r) == 3
-        assert r.get("param") == ["msl", "t", "u"]
-        assert r[0].get("param") == "msl"
-        assert r[1].get("param") == "t"
-        assert r[2].get("param") == "u"
+        assert r.get("parameter.variable") == ["msl", "t", "u"]
+        assert r[0].get("parameter.variable") == "msl"
+        assert r[1].get("parameter.variable") == "t"
+        assert r[2].get("parameter.variable") == "u"
 
 
 def check_save_to_disk(ds, len_ref, meta_ref):
@@ -141,5 +141,5 @@ def check_save_to_disk(ds, len_ref, meta_ref):
     assert os.path.exists(tmp.path)
     r_tmp = from_source("file", tmp.path)
     assert len(r_tmp) == len_ref
-    assert r_tmp.get("grib.shortName") == meta_ref
+    assert r_tmp.get("metadata.shortName") == meta_ref
     r_tmp = None

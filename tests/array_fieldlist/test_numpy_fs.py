@@ -32,7 +32,7 @@ from array_fl_fixtures import check_array_fl_from_to_fieldlist  # noqa: E402
 def test_array_fl_grib_single_field(write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
-    assert ds[0].get("grib.shortName") == "2t"
+    assert ds[0].get("metadata.shortName") == "2t"
 
     lat, lon, v = ds[0].data(flatten=True)
     v1 = v + 1
@@ -41,14 +41,14 @@ def test_array_fl_grib_single_field(write_method):
     # md1 = md.override(shortName="msl")
     # r = FieldList.from_numpy(v1, md1)
 
-    r = ds[0].set(values=v1, param="msl")
+    r = ds[0].set({"values": v1, "parameter.variable": "msl"})
     r = FieldList.from_fields([r])
 
     def _check_field(r):
         assert len(r) == 1
         assert np.allclose(r[0].values, v1)
         assert r[0].shape == ds[0].shape
-        assert r[0].get("param") == "msl"
+        assert r[0].get("parameter.variable") == "msl"
         _lat, _lon, _v = r[0].data(flatten=True)
 
         assert np.allclose(_lat, lat)
@@ -69,7 +69,7 @@ def test_array_fl_grib_single_field(write_method):
 def test_array_fl_grib_multi_field(write_method):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
-    assert ds[0].get("grib.shortName") == "2t"
+    assert ds[0].get("metadata.shortName") == "2t"
 
     v = ds.values
     v1 = v + 1
@@ -77,7 +77,7 @@ def test_array_fl_grib_multi_field(write_method):
     # md1 = [f.metadata().override(shortName="2d") for f in ds]
     # r = FieldList.from_numpy(v1, md1)
 
-    r = [f.set(values=v1[i], param="2d") for i, f in enumerate(ds)]
+    r = [f.set({"values": v1[i], "parameter.variable": "2d"}) for i, f in enumerate(ds)]
     r = FieldList.from_fields(r)
 
     assert len(r) == 2
@@ -86,7 +86,7 @@ def test_array_fl_grib_multi_field(write_method):
         assert f.shape == ds[i].shape
         # assert f.get("grib.shortName") == "2d", f"shortName {i}"
         # assert f.get("grib.name") == "2 metre dewpoint temperature", f"name {i}"
-        assert f.get("param") == "2d", f"param {i}"
+        assert f.get("parameter.variable") == "2d", f"parameter.variable {i}"
 
     # save to disk
     tmp = temp_file()
@@ -99,12 +99,12 @@ def test_array_fl_grib_multi_field(write_method):
         assert f.shape == ds[i].shape
         # assert f.get("grib.shortName") == "2d", f"shortName {i}"
         # assert f.get("grib.name") == "2 metre dewpoint temperature", f"name {i}"
-        assert f.get("param") == "2d", f"param {i}"
+        assert f.get("parameter.variable") == "2d", f"parameter.variable {i}"
 
 
 def test_array_fl_grib_from_list_of_arrays():
     ds = from_source("file", earthkit_examples_file("test.grib"))
-    md_full = ds.get("param")
+    md_full = ds.get("parameter.variable")
     assert len(ds) == 2
 
     v = [ds[0].values, ds[1].values]
@@ -158,7 +158,7 @@ def test_array_fl_grib_from_to_fieldlist(kwargs):
 )
 def test_array_fl_grib_from_to_fieldlist_compat1(kwargs):
     ds = from_source("file", earthkit_examples_file("test.grib"))
-    md_full = ds.metadata("param")
+    md_full = ds.metadata("paramerter.variable")
     assert len(ds) == 2
 
     r = ds.to_fieldlist(array_backend="numpy", **kwargs)
@@ -174,7 +174,7 @@ def test_array_fl_grib_from_to_fieldlist_compat2():
 
 def test_array_fl_grib_from_to_fieldlist_repeat():
     ds = from_source("file", earthkit_examples_file("test.grib"))
-    md_full = ds.get("param")
+    md_full = ds.get("parameter.variable")
     assert len(ds) == 2
 
     kwargs = {}
