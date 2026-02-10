@@ -19,27 +19,17 @@ def test_netcdf_vertical_1():
     ds = from_source("file", earthkit_test_data_file("test_single.nc"))
     f = ds[0]
 
-    print(f._members["vertical"])
-
-    assert f.level == 0
-    assert f.vertical.level == 0
-    assert f.vertical_level == 0
-    assert f.layer is None
-    assert f.vertical.layer is None
-    assert f.vertical_layer is None
-    assert f.vertical.type == "surface"
-    assert f.vertical_type == "surface"
+    assert f.vertical.level() == 0
+    assert f.vertical.layer() is None
+    assert f.vertical.type() == "surface"
 
 
 def test_netcdf_vertical_2():
     ds = from_source("file", earthkit_examples_file("tuv_pl.nc"))
     f = ds[0]
 
-    assert f.level == 1000
-    assert f.vertical.type == "pressure"
-    assert f.vertical.units == "hPa"
-    assert f.vertical.abbreviation == "pl"
-    assert f.vertical.positive == "down"
-    assert f.vertical_units == "hPa"
-    assert f.vertical_abbreviation == "pl"
-    assert f.vertical_positive == "down"
+    assert f.vertical.level() == 1000
+    assert f.vertical.type() == "pressure"
+    assert f.vertical.units() == "hPa"
+    assert f.vertical.abbreviation() == "pl"
+    assert f.vertical.positive() == "down"

@@ -10,11 +10,11 @@
 import math
 from typing import Any
 
-from earthkit.data.field.geography import GeographyFieldPart
-from earthkit.data.field.part.geography import Geography
+from earthkit.data.field.component.geography import BaseGeography
+from earthkit.data.field.geography import GeographyFieldComponentHandler
 
 
-class XArrayGeographySpec(Geography):
+class XArrayGeography(BaseGeography):
     def __init__(self, owner, selection):
         self.owner = owner
         self.selection = selection
@@ -25,60 +25,55 @@ class XArrayGeographySpec(Geography):
             # print(self.selection)
             raise ValueError("Invalid shape for selection")
 
-    @property
     def latitudes(self):
         return self.owner.grid.latitudes.reshape(self.shape)
 
-    @property
     def longitudes(self):
         return self.owner.grid.longitudes.reshape(self.shape)
 
-    @property
     def distinct_latitudes(self):
         r"""Return the distinct latitudes."""
         pass
 
-    @property
     def distinct_longitudes(self):
         r"""Return the distinct longitudes."""
         pass
 
-    @property
     def x(self):
         r"""array-like: Return the x coordinates in the original CRS."""
         pass
 
-    @property
     def y(self):
         r"""array-like: Return the y coordinates in the original CRS."""
         pass
 
-    @property
     def shape(self):
         return self._shape
 
-    @property
     def projection(self):
         pass
 
-    @property
     def bounding_box(self):
         return self.owner.grid.bbox
 
-    @property
     def unique_grid_id(self):
         r"""str: Return the unique id of the grid."""
         pass
 
-    @property
     def grid_spec(self):
         r"""Return the grid specification."""
         pass
 
-    @property
     def grid_type(self):
         r"""Return the grid specification."""
         pass
+
+    @classmethod
+    def from_dict(d):
+        raise NotImplementedError("XArrayGeography.form_dict() is not implemented")
+
+    def to_dict(self):
+        return dict()
 
     def __getstate__(self):
         pass
@@ -87,7 +82,7 @@ class XArrayGeographySpec(Geography):
         pass
 
 
-class XArrayGeography(GeographyFieldPart):
+class XArrayGeographyHandler(GeographyFieldComponentHandler):
     def __init__(self, owner: Any, selection: Any) -> None:
-        spec = XArrayGeographySpec(owner, selection)
-        super().__init__(spec)
+        part = XArrayGeography(owner, selection)
+        super().__init__(part)

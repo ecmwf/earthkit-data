@@ -9,14 +9,14 @@
 
 from abc import abstractmethod
 
-from .part import SimpleFieldPart
-from .part import mark_alias
-from .part import mark_key
-from .part import part_keys
+from .component import SimpleFieldComponent
+from .component import component_keys
+from .component import mark_alias
+from .component import mark_key
 
 
-@part_keys
-class BaseEnsemble(SimpleFieldPart):
+@component_keys
+class BaseEnsemble(SimpleFieldComponent):
     @mark_key("get")
     @abstractmethod
     def member(self) -> str:

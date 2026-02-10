@@ -11,15 +11,15 @@ from abc import abstractmethod
 from typing import Optional
 from typing import Union
 
+from .component import SimpleFieldComponent
+from .component import component_keys
+from .component import mark_key
 from .level_type import LevelType
 from .level_type import get_level_type
-from .part import SimpleFieldPart
-from .part import mark_key
-from .part import part_keys
 
 
-@part_keys
-class BaseVertical(SimpleFieldPart):
+@component_keys
+class BaseVertical(SimpleFieldComponent):
     @mark_key("get")
     @abstractmethod
     def level(self) -> Union[int, float]:

@@ -40,8 +40,8 @@ def test_grib_set_data(fl_type, write_method):
     assert f.get("metadata.shortName") == "t"
     assert f.get("vertical.level") == 500
     assert f.get("metadata.levelist") == 500
-    assert f.get("metadata.date", "parameter.variable") == (20070101, "t")
-    assert f.get("parameter.variable", "metadata.date") == ("t", 20070101)
+    assert f.get(("metadata.date", "parameter.variable")) == (20070101, "t")
+    assert f.get(("parameter.variable", "metadata.date")) == ("t", 20070101)
     assert np.allclose(f.values, vals_ori + 1)
     assert np.allclose(ds_ori[0].values, vals_ori)
 
@@ -66,8 +66,8 @@ def test_grib_set_data(fl_type, write_method):
     assert f.get("metadata.shortName") == "t"
     assert f.get("vertical.level") == 500
     assert f.get("metadata.levelist") == 500
-    assert f.get("metadata.date", "parameter.variable") == (20070101, "t")
-    assert f.get("parameter.variable", "metadata.date") == ("t", 20070101)
+    assert f.get(("metadata.date", "parameter.variable")) == (20070101, "t")
+    assert f.get(("parameter.variable", "metadata.date")) == ("t", 20070101)
     assert np.allclose(f.values, vals_ori + 2)
     assert np.allclose(ds_ori[0].values, vals_ori)
 

@@ -10,8 +10,8 @@
 
 import numpy as np
 
-from earthkit.data.field.geography import GeographyFieldPart
-from earthkit.data.field.part.geography import Geography
+from earthkit.data.field.component.geography import Geography
+from earthkit.data.field.geography import GeographyFieldComponent
 from earthkit.data.utils.bbox import BoundingBox
 
 
@@ -107,7 +107,7 @@ class GeoTIFFGeographySpec(Geography):
         pass
 
 
-class GeoTIFFGeography(GeographyFieldPart):
+class GeoTIFFGeography(GeographyFieldComponent):
     def __init__(self, ds) -> None:
         spec = GeoTIFFGeographySpec(ds)
         super().__init__(spec)

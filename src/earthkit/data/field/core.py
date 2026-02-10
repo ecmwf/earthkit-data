@@ -13,9 +13,9 @@ from abc import abstractmethod
 from typing import Any
 from typing import TypeAlias
 
-# from earthkit.data.field.part.spec import Aliases
+# from earthkit.data.field.component.spec import Aliases
 
-FieldPart: TypeAlias = Any
+FieldComponent: TypeAlias = Any
 
 
 def wrap_spec_methods(keys=None):
@@ -49,10 +49,10 @@ def wrap_spec_methods(keys=None):
     return decorator
 
 
-class FieldPartHandler(metaclass=ABCMeta):
-    """Abstract base class for Field part handlers.
+class FieldComponentHandler(metaclass=ABCMeta):
+    """Abstract base class for Field component handlers.
 
-    A FieldPart represents a component of a Field, such as time, vertical level, or
+    A FieldComponent represents a component of a Field, such as time, vertical level, or
     processing information. It stores a specification object, the "spec",
     and provides methods to access and manipulate the specification data.
 
@@ -61,16 +61,16 @@ class FieldPartHandler(metaclass=ABCMeta):
     Attributes
     ----------
     KEYS : tuple
-        A tuple of keys from the "spec" that can be accessed as properties on the FieldPart.
+        A tuple of keys from the "spec" that can be accessed as properties on the FieldComponent.
     ALIASES : Aliases
         An Aliases object that maps alternative key names to their canonical names.
     ALL_KEYS : tuple
-        A tuple of all keys, including aliases, that can be accessed from the FieldPart.
+        A tuple of all keys, including aliases, that can be accessed from the FieldComponent.
     NAME : str
-        The name of the FieldPart to be used as an identifier in the Field. It is also the
+        The name of the FieldComponent to be used as an identifier in the Field. It is also the
         name of the corresponding namespace in the Field.
     DUMP_KEYS : tuple
-        A tuple of keys that should be included in the namespace represented by the FieldPart.
+        A tuple of keys that should be included in the namespace represented by the FieldComponent.
 
     """
 
@@ -79,9 +79,9 @@ class FieldPartHandler(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def from_dict(cls, d: dict) -> "FieldPartHandler":
+    def from_dict(cls, d: dict) -> "FieldComponentHandler":
         """
-        Create a FieldPart instance from a dictionary.
+        Create a FieldComponent instance from a dictionary.
 
         Parameters
         ----------
@@ -90,16 +90,16 @@ class FieldPartHandler(metaclass=ABCMeta):
 
         Returns
         -------
-        FieldPartHandler
-            The created FieldPartHandler instance.
+        FieldComponentHandler
+            The created FieldComponentHandler instance.
         """
         pass
 
     @classmethod
     @abstractmethod
-    def from_any(cls, **kwargs) -> "FieldPartHandler":
+    def from_any(cls, **kwargs) -> "FieldComponentHandler":
         """
-        Create a FieldPartHandler instance from any allowed input types.
+        Create a FieldComponentHandler instance from any allowed input types.
 
         Parameters
         ----------
@@ -108,15 +108,15 @@ class FieldPartHandler(metaclass=ABCMeta):
 
         Returns
         -------
-        FieldPartHandler
-            The created FieldPartHandler instance.
+        FieldComponentHandler
+            The created FieldComponentHandler instance.
         """
         pass
 
     @property
     @abstractmethod
-    def part(self) -> "FieldPart":
-        """Return the FieldPart."""
+    def component(self) -> "FieldComponent":
+        """Return the FieldComponent."""
         pass
 
     @abstractmethod
@@ -154,9 +154,9 @@ class FieldPartHandler(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def set(self, *args, **kwargs) -> "FieldPartHandler":
+    def set(self, *args, **kwargs) -> "FieldComponentHandler":
         """
-        Create a new FieldPart instance with updated data.
+        Create a new FieldComponent instance with updated data.
 
         Parameters
         ----------
@@ -167,29 +167,29 @@ class FieldPartHandler(metaclass=ABCMeta):
 
         Returns
         -------
-        FieldPart
-            The created FieldPart instance.
+        FieldComponent
+            The created FieldComponent instance.
         """
         pass
 
     @abstractmethod
     def dump(self, *args, **kwargs) -> None:
-        """Populate the namespace dictionary for this FieldPart."""
+        """Populate the namespace dictionary for this FieldComponent."""
         pass
 
     @abstractmethod
     def check(self, owner):
-        """Check the FieldPart for consistency with the owner Field."""
+        """Check the FieldComponent for consistency with the owner Field."""
         pass
 
     @abstractmethod
     def get_grib_context(self, context):
-        """Populate the GRIB context dictionary for this FieldPart."""
+        """Populate the GRIB context dictionary for this FieldComponent."""
         pass
 
     @abstractmethod
     def __contains__(self, key):
-        """Check if the key is in the FieldPart."""
+        """Check if the key is in the FieldComponent."""
         pass
 
     @abstractmethod
@@ -203,7 +203,7 @@ class FieldPartHandler(metaclass=ABCMeta):
         pass
 
 
-class LazyFieldPartHandler(metaclass=ABCMeta):
+class LazyFieldComponentHandler(metaclass=ABCMeta):
     _exception = None
 
     @property
@@ -217,17 +217,17 @@ class LazyFieldPartHandler(metaclass=ABCMeta):
         return getattr(self._handler, name)
 
 
-class SimpleFieldPartHandler(FieldPartHandler):
-    """A FieldPart that wraps a specification object.
+class SimpleFieldComponentHandler(FieldComponentHandler):
+    """A FieldComponent that wraps a specification object.
 
     Parameters
     ----------
-    part : Part
+    component : Component
 
     Attributes
     ----------
-    part : Part
-        The type of the specification object wrapped by the FieldPart. To be
+    component : Component
+        The type of the specification object wrapped by the FieldComponent. To be
         defined in subclasses.
 
     Notes
@@ -241,63 +241,65 @@ class SimpleFieldPartHandler(FieldPartHandler):
     PART_CLS = None
     PART_MAKER = None
 
-    def __init__(self, part: Any) -> None:
-        assert isinstance(part, self.PART_CLS), f"type(part)={type(part)}, expected {self.PART_CLS}"
-        self._part = part
+    def __init__(self, component: Any) -> None:
+        assert isinstance(
+            component, self.PART_CLS
+        ), f"type(component)={type(component)}, expected {self.PART_CLS}"
+        self._component = component
 
     @classmethod
-    def from_dict(cls, d: dict, **kwargs) -> "SimpleFieldPartHandler":
-        """Create a SimpleFieldPart object from a dictionary."""
-        part = cls.PART_MAKER(d, **kwargs)
-        return cls(part)
+    def from_dict(cls, d: dict, **kwargs) -> "SimpleFieldComponentHandler":
+        """Create a SimpleFieldComponent object from a dictionary."""
+        component = cls.PART_MAKER(d, **kwargs)
+        return cls(component)
 
     @classmethod
-    def from_part(cls, part: Any) -> "SimpleFieldPartHandler":
-        """Create a SimpleFieldPart object from a part object."""
-        return cls(part)
+    def from_component(cls, component: Any) -> "SimpleFieldComponentHandler":
+        """Create a SimpleFieldComponent object from a component object."""
+        return cls(component)
 
     @classmethod
-    def from_any(cls, data: Any, dict_kwargs=None) -> "SimpleFieldPartHandler":
-        """Create a SimpleFieldPart object from any input.
+    def from_any(cls, data: Any, dict_kwargs=None) -> "SimpleFieldComponentHandler":
+        """Create a SimpleFieldComponent object from any input.
 
         Parameters
         ----------
         data: Any
-            The input data from which to create the SimpleFieldPart instance.
+            The input data from which to create the SimpleFieldComponent instance.
         dict_kwargs: dict, optional
             Additional keyword arguments to be passed when creating the instance from
             a dictionary.
 
         Returns
         -------
-        SimpleFieldPartHandler
-            An instance of SimpleFieldPartHandler. If the input is already an instance
-            of SimpleFieldPartHandler, it is returned as is. Otherwise, it is assumed to be a
-            part object and a new SimpleFieldPartHandler instance is created from it.
+        SimpleFieldComponentHandler
+            An instance of SimpleFieldComponentHandler. If the input is already an instance
+            of SimpleFieldComponentHandler, it is returned as is. Otherwise, it is assumed to be a
+            component object and a new SimpleFieldComponentHandler instance is created from it.
         """
-        if isinstance(data, (cls, LazyFieldPartHandler)):
+        if isinstance(data, (cls, LazyFieldComponentHandler)):
             return data
         elif isinstance(data, dict):
             dict_kwargs = dict_kwargs or {}
             return cls.from_dict(data, **dict_kwargs)
         elif isinstance(data, cls.PART_CLS):
-            return cls.from_part(data)
+            return cls.from_component(data)
 
         raise TypeError(f"Cannot create {cls.__name__} from {type(data)}")
 
     @property
-    def part(self) -> Any:
-        """Return the part object."""
-        return self._part
+    def component(self) -> Any:
+        """Return the component object."""
+        return self._component
 
     def __contains__(self, name):
-        """Check if the key is in the part."""
-        return name in self._part
+        """Check if the key is in the component."""
+        return name in self._component
 
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
-        return self._part.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        return self._component.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
         # if key in self:
-        #     v = getattr(self._part, key)()
+        #     v = getattr(self._component, key)()
         #     if astype and v is not None and callable(astype):
         #         try:
         #             return astype(v)
@@ -310,20 +312,20 @@ class SimpleFieldPartHandler(FieldPartHandler):
 
         # return default
 
-    def set(self, *args, **kwargs) -> "SimpleFieldPartHandler":
-        """Create a new SimpleFieldPartHandler instance with updated part data."""
-        part = self._part.set(*args, **kwargs)
-        return self.from_part(part)
+    def set(self, *args, **kwargs) -> "SimpleFieldComponentHandler":
+        """Create a new SimpleFieldComponentHandler instance with updated component data."""
+        component = self._component.set(*args, **kwargs)
+        return self.from_component(component)
         # return type(self)(data)
 
     def dump(self, owner: Any, name: str, result: dict, prefix_keys=False) -> None:
-        """Populate the namespace dictionary for this SpecFieldPart."""
+        """Populate the namespace dictionary for this SpecFieldComponent."""
 
         def _prefix(key):
             return f"{self.NAME}.{key}" if prefix_keys else key
 
         if name is None or name == self.NAME or (isinstance(name, (list, tuple)) and self.NAME in name):
-            r = {_prefix(k): v for k, v in self.part.to_dict().items()}
+            r = {_prefix(k): v for k, v in self.component.to_dict().items()}
             result[self.NAME] = r
 
     def check(self, owner: Any) -> None:
@@ -332,8 +334,8 @@ class SimpleFieldPartHandler(FieldPartHandler):
 
     def __getstate__(self) -> dict:
         state = {}
-        state["part"] = self._part
+        state["component"] = self._component
         return state
 
     def __setstate__(self, state) -> None:
-        self.__init__(part=state["part"])
+        self.__init__(component=state["component"])

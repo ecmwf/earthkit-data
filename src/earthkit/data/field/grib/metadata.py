@@ -214,16 +214,16 @@ class GribMetadata:
 
     def sync(self, owner):
         handle_new = None
-        for k, v in owner._parts.items():
+        for k, v in owner._components.items():
             if hasattr(v, "handle") and v.handle is not self._handle:
                 handle_new = v._handle
                 break
 
         if handle_new:
             self._handle = handle_new
-            for k, v in owner._parts.items():
+            for k, v in owner._components.items():
                 if hasattr(v, "handle") and hasattr(v, "from_handle") and v.handle is not self.handle:
-                    owner._parts[k] = v.from_handle(handle_new)
+                    owner._components[k] = v.from_handle(handle_new)
 
     def __getstate__(self):
         state = {}

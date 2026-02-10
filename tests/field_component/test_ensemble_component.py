@@ -11,10 +11,10 @@
 
 import pytest
 
-from earthkit.data.field.part.ensemble import Ensemble
+from earthkit.data.field.component.ensemble import Ensemble
 
 
-def test_ensemble_part_alias_1():
+def test_ensemble_component_alias_1():
     r = Ensemble(member=1)
     assert r.member() == "1"
     assert r.realisation() == "1"
@@ -37,7 +37,7 @@ def test_ensemble_part_alias_1():
         ),
     ],
 )
-def test_ensemble_part_from_dict_ok(input_d, ref):
+def test_ensemble_component_from_dict_ok(input_d, ref):
 
     if not isinstance(input_d, list):
         input_d = [input_d]
@@ -83,7 +83,7 @@ def test_ensemble_part_from_dict_ok(input_d, ref):
         ),
     ],
 )
-def test_ensemble_part_set(input_d, ref):
+def test_ensemble_component_set(input_d, ref):
 
     r = Ensemble(member=5)
 

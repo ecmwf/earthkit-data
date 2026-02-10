@@ -13,9 +13,9 @@ from abc import abstractmethod
 
 from earthkit.data.utils.dates import to_timedelta
 
-from .part import SimpleFieldPart
-from .part import mark_key
-from .part import part_keys
+from .component import SimpleFieldComponent
+from .component import component_keys
+from .component import mark_key
 from .time_span import TimeMethods
 from .time_span import get_time_method
 
@@ -85,8 +85,8 @@ class TimeProcItem(ProcItem):
     #     return hash((self._value, self._method))
 
 
-@part_keys
-class BaseProc(SimpleFieldPart):
+@component_keys
+class BaseProc(SimpleFieldComponent):
     """A specification of a parameter."""
 
     @mark_key("get")
@@ -186,7 +186,7 @@ class Proc(BaseProc):
         pass
 
 
-@part_keys
+@component_keys
 class ProcOri:
     """A specification of a parameter."""
 

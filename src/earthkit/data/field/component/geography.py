@@ -16,9 +16,9 @@ import numpy as np
 from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.utils.projections import Projection
 
-from .part import SimpleFieldPart
-from .part import mark_key
-from .part import part_keys
+from .component import SimpleFieldComponent
+from .component import component_keys
+from .component import mark_key
 
 
 def uniform_resolution(vals):
@@ -149,8 +149,8 @@ def create_geography_from_dict(d, shape_hint=None):
     )
 
 
-@part_keys
-class BaseGeography(SimpleFieldPart):
+@component_keys
+class BaseGeography(SimpleFieldComponent):
     @mark_key("get")
     @abstractmethod
     def latitudes(self):

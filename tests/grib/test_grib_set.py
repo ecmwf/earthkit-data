@@ -48,8 +48,8 @@ def test_grib_set_detailed(fl_type, write_method):
         {
             "parameter.variable": "q",
             "vertical.level": 600,
-            "my_shape": (181, 360),
-            "my_name": "t_500",
+            "labels.my_shape": (181, 360),
+            "labels.my_name": "t_500",
         }
     )
 
@@ -57,10 +57,10 @@ def test_grib_set_detailed(fl_type, write_method):
     assert f.get("metadata.shortName") == "t"
     assert f.get("vertical.level") == 600
     assert f.get("metadata.levelist") == 500
-    assert f.get("metadata.date", "parameter.variable") == (20070101, "q")
-    assert f.get("parameter.variable", "metadata.date") == ("q", 20070101)
-    assert f.get("my_shape") == (181, 360)
-    assert f.get("my_name") == "t_500"
+    assert f.get(("metadata.date", "parameter.variable")) == (20070101, "q")
+    assert f.get(("parameter.variable", "metadata.date")) == ("q", 20070101)
+    assert f.get("labels.my_shape") == (181, 360)
+    assert f.get("labels.my_name") == "t_500"
 
     # TODO: apply wrapped metadata to namespaces
     # assert f.get(namespace="mars") == {
@@ -106,8 +106,8 @@ def test_grib_set_detailed(fl_type, write_method):
         {
             "parameter.variable": "q",
             "vertical.level": 600,
-            "my_shape": (181, 360),
-            "my_name": "t_500",
+            "labels.my_shape": (181, 360),
+            "labels.my_name": "t_500",
         }
     )
 
@@ -125,10 +125,10 @@ def test_grib_set_detailed(fl_type, write_method):
     assert f.get("metadata.levelist") == 500
     # TODO: this should be 800
     # assert f.metadata("levelist") == 700
-    assert f.get("metadata.date", "parameter.variable") == (20070101, "pt")
-    assert f.get("parameter.variable", "metadata.date") == ("pt", 20070101)
+    assert f.get(("metadata.date", "parameter.variable")) == (20070101, "pt")
+    assert f.get(("parameter.variable", "metadata.date")) == ("pt", 20070101)
     # assert np.allclose(np.array(f.metadata("mars_area")), np.array([90.0, 0.0, -90.0, 359.0]))
-    assert f.get("my_name") == "t_500"
+    assert f.get("labels.my_name") == "t_500"
 
     # ---------------
     # fieldlist
@@ -196,8 +196,8 @@ def test_grib_set_combined(fl_type, write_method):
     assert f.get("metadata.shortName") == "t"
     assert f.get("vertical.level") == 600
     assert f.get("metadata.levelist") == 500
-    assert f.get("metadata.date", "parameter.variable") == (20070101, "q")
-    assert f.get("parameter.variable", "metadata.date") == ("q", 20070101)
+    assert f.get(("metadata.date", "parameter.variable")) == (20070101, "q")
+    assert f.get(("parameter.variable", "metadata.date")) == ("q", 20070101)
     assert np.allclose(f.values, vals_ori + 1)
     assert np.allclose(ds_ori[0].values, vals_ori)
 
@@ -235,8 +235,8 @@ def test_grib_set_combined(fl_type, write_method):
     assert f.get("metadata.shortName") == "t"
     assert f.get("vertical.level") == 800
     assert f.get("metadata.levelist") == 500
-    assert f.get("metadata.date", "parameter.variable") == (20070101, "pt")
-    assert f.get("parameter.variable", "metadata.date") == ("pt", 20070101)
+    assert f.get(("metadata.date", "parameter.variable")) == (20070101, "pt")
+    assert f.get(("parameter.variable", "metadata.date")) == ("pt", 20070101)
     assert np.allclose(f.values, vals_ori + 2)
     assert np.allclose(ds_ori[0].values, vals_ori)
 

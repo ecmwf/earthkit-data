@@ -28,8 +28,8 @@ from grib_fixtures import load_grib_data  # noqa: E402
     "_kwargs",
     [
         {
-            "latitudes": np.array([10.0, 20.0, 30.0]),
-            "longitudes": np.array([0.0, 10.0, 20.0]),
+            "geography.latitudes": np.array([10.0, 20.0, 30.0]),
+            "geography.longitudes": np.array([0.0, 10.0, 20.0]),
             "values": np.array([1.0, 2.0, 3.0]),
         },
     ],

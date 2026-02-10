@@ -8,18 +8,18 @@
 #
 
 from .collector import GribContextCollector
-from .core import GribFieldPartHandler
+from .core import GribFieldComponentHandler
 
 
 class GribParameterBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.field.parameter import ParameterFieldPartHandler
-        from earthkit.data.field.part.parameter import Parameter
+        from earthkit.data.field.component.parameter import Parameter
+        from earthkit.data.field.parameter import ParameterFieldComponentHandler
 
         d = GribParameterBuilder._build_dict(handle)
-        part = Parameter.from_dict(d)
-        handler = ParameterFieldPartHandler.from_part(part)
+        component = Parameter.from_dict(d)
+        handler = ParameterFieldComponentHandler.from_component(component)
         return handler
 
     @staticmethod
@@ -44,9 +44,10 @@ class GribParameterBuilder:
 
 class GribParameterContextCollector(GribContextCollector):
     @staticmethod
-    def collect_keys(spec, context):
+    def collect_keys(handler, context):
+        component = handler.component
         r = {
-            "shortName": spec.variable,
+            "shortName": component.variable(),
             # "units": param.units,
         }
         context.update(r)
@@ -55,6 +56,6 @@ class GribParameterContextCollector(GribContextCollector):
 COLLECTOR = GribParameterContextCollector()
 
 
-class GribParameter(GribFieldPartHandler):
+class GribParameter(GribFieldComponentHandler):
     BUILDER = GribParameterBuilder
     COLLECTOR = COLLECTOR

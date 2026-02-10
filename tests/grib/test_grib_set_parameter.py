@@ -28,9 +28,20 @@ from grib_fixtures import load_grib_data  # noqa: E402
     "_kwargs,ref1,ref2",
     [
         (
-            {"variable": "q", "units": "kg/kg"},
-            {"variable": "q", "param": "q", "grib.shortName": "t", "units": "kg/kg", "grib.units": "K"},
-            {"variable": "q", "param": "q", "grib.shortName": "q", "units": "kg kg**-1"},
+            {"parameter.variable": "q", "parameter.units": "kg/kg"},
+            {
+                "parameter.variable": "q",
+                "metadata.param": "t",
+                "metadata.shortName": "t",
+                "parameter.units": "kg/kg",
+                "metadata.units": "K",
+            },
+            {
+                "parameter.variable": "q",
+                "metadata.param": "q",
+                "metadata.shortName": "q",
+                "metadata.units": "kg kg**-1",
+            },
         ),
         # (
         #     {"param": "q", "units": "kg/kg"},
@@ -61,8 +72,8 @@ def test_grib_set_parameter_2(
 ):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
-    f = ds_ori[0].set({"variable": "ta", "units": "kg/kg"})
+    f = ds_ori[0].set({"parameter.variable": "ta", "parameter.units": "kg/kg"})
     assert f.get("parameter.variable") == "ta"
     assert f.get("metadata.shortName") == "t"
-    assert f.get("units") == "kg/kg"
+    assert f.get("parameter.units") == "kg/kg"
     assert f.get("metadata.units") == "K"

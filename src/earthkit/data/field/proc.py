@@ -7,11 +7,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SimpleFieldPartHandler
-from .part.proc import BaseProc
+from .component.proc import BaseProc
+from .core import SimpleFieldComponentHandler
 
 
-class ProcFieldPartHandler(SimpleFieldPartHandler):
+class ProcFieldComponentHandler(SimpleFieldComponentHandler):
     """A specification of a vertical level or layer."""
 
     PART_CLS = BaseProc
@@ -24,4 +24,4 @@ class ProcFieldPartHandler(SimpleFieldPartHandler):
 
     def set(self, *args, **kwargs):
         spec = self._spec.set(*args, **kwargs)
-        return ProcFieldPartHandler(spec)
+        return ProcFieldComponentHandler(spec)

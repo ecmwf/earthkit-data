@@ -144,7 +144,7 @@ class S3Resource:
         self.region = region
         self.bucket = bucket
         self.key = key
-        self.parts = parts
+        self.components = parts
         self.credentials = credentials
 
     @property
@@ -161,7 +161,7 @@ class S3Resource:
             return f"{self.endpoint}"
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(url={self.url}, part={self.part})"
+        return f"{self.__class__.__name__}(url={self.url}, part={self.component})"
 
 
 class S3Source(FileSource):
@@ -203,11 +203,11 @@ class S3Source(FileSource):
 
     def mutate(self):
         url_spec = []
-        has_parts = any(r.parts is not None for r in self.resources)
+        has_parts = any(r.components is not None for r in self.resources)
         for r in self.resources:
             spec = {"url": r.url}
             if has_parts:
-                spec["parts"] = r.parts
+                spec["parts"] = r.components
             if not self.anon:
                 auth = S3Authenticator(r.region, credentials=r.credentials)
                 spec["auth"] = auth

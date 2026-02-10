@@ -10,10 +10,10 @@ from abc import ABCMeta
 from abc import abstractmethod
 from collections import defaultdict
 
-from earthkit.data.field.part.level_type import LevelTypes
+from earthkit.data.field.component.level_type import LevelTypes
 
 from .collector import GribContextCollector
-from .core import GribFieldPartHandler
+from .core import GribFieldComponentHandler
 
 
 class Converter:
@@ -36,26 +36,26 @@ class PressurePaConverter(Converter):
         return value
 
 
-class SpecMatcher:
-    def match(self, spec):
+class ComponentMatcher:
+    def match(self, component):
         return True
 
 
-class IntSpecMatcher(SpecMatcher):
-    def match(self, spec):
-        return int(spec.level) == spec.level
+class IntComponentMatcher(ComponentMatcher):
+    def match(self, component):
+        return int(component.level()) == component.level()
 
 
-class NonIntSpecMatcher(SpecMatcher):
-    def match(self, spec):
-        return int(spec.level) != spec.level
+class NonIntComponentMatcher(ComponentMatcher):
+    def match(self, component):
+        return int(component.level()) != component.level()
 
 
 class GribVerticalType(metaclass=ABCMeta):
-    def __init__(self, key, spec_type, converter=Converter(), spec_matcher=SpecMatcher()):
+    def __init__(self, key, component_type, converter=Converter(), component_matcher=ComponentMatcher()):
         self.key = key
-        self.spec_type = spec_type
-        self.spec_matcher = spec_matcher
+        self.component_type = component_type
+        self.component_matcher = component_matcher
         self.converter = converter
 
     @abstractmethod
@@ -63,11 +63,11 @@ class GribVerticalType(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def to_grib(self, spec):
+    def to_grib(self, component):
         pass
 
     @abstractmethod
-    def match(self, spec):
+    def match(self, component):
         pass
 
 
@@ -83,18 +83,18 @@ class GribLevelType(GribVerticalType):
         level = self.converter.from_grib(level)
         layer = None
 
-        return level, layer, self.spec_type
+        return level, layer, self.component_type
 
-    def to_grib(self, spec):
-        level = self.converter.to_grib(spec.level)
+    def to_grib(self, component):
+        level = self.converter.to_grib(component.level())
 
         return {
             "level": level,
             "typeOfLevel": self.key,
         }
 
-    def match(self, spec):
-        return self.spec_matcher.match(spec)
+    def match(self, component):
+        return self.component_matcher.match(component)
 
 
 class GribLayerType(GribVerticalType):
@@ -110,10 +110,10 @@ class GribLayerType(GribVerticalType):
         level = top
         layer = (top, bottom)
 
-        return level, layer, self.spec_type
+        return level, layer, self.component_type
 
-    def to_grib(self, spec):
-        layer = self.converter.to_grib(spec.layer)
+    def to_grib(self, component):
+        layer = self.converter.to_grib(component.layer())
         top, bottom = layer
 
         return {
@@ -122,14 +122,17 @@ class GribLayerType(GribVerticalType):
             "typeOfLevel": self.key,
         }
 
-    def match(self, spec):
-        return spec.layer is not None and self.spec_matcher.match(spec)
+    def match(self, component):
+        return component.layer is not None and self.component_matcher.match(component)
 
 
 _TYPES = [
-    GribLevelType("isobaricInhPa", LevelTypes.PRESSURE, spec_matcher=IntSpecMatcher()),
+    GribLevelType("isobaricInhPa", LevelTypes.PRESSURE, component_matcher=IntComponentMatcher()),
     GribLevelType(
-        "isobaricInPa", LevelTypes.PRESSURE, converter=PressurePaConverter(), spec_matcher=NonIntSpecMatcher()
+        "isobaricInPa",
+        LevelTypes.PRESSURE,
+        converter=PressurePaConverter(),
+        component_matcher=NonIntComponentMatcher(),
     ),
     GribLevelType("depthBelowLand", LevelTypes.DEPTH_BGL),
     GribLayerType("depthBelowLandLayer", LevelTypes.DEPTH_BGL),
@@ -151,26 +154,26 @@ _GRIB_TYPES = {t.key: t for t in _TYPES}
 assert len(_GRIB_TYPES) == len(_TYPES), "Duplicate level type keys"
 
 # mapping from LevelType to GribLevelType
-_SPEC_TYPES = defaultdict(list)
+_COMPONENT_TYPES = defaultdict(list)
 for k, v in _GRIB_TYPES.items():
-    _SPEC_TYPES[v.spec_type.value.name].append(v)
+    _COMPONENT_TYPES[v.component_type.value.name].append(v)
 
-for k in list(_SPEC_TYPES.keys()):
-    if len(_SPEC_TYPES[k]) == 1:
-        _SPEC_TYPES[k] = _SPEC_TYPES[k][0]
+for k in list(_COMPONENT_TYPES.keys()):
+    if len(_COMPONENT_TYPES[k]) == 1:
+        _COMPONENT_TYPES[k] = _COMPONENT_TYPES[k][0]
     else:
-        _SPEC_TYPES[k] = tuple(_SPEC_TYPES[k])
+        _COMPONENT_TYPES[k] = tuple(_COMPONENT_TYPES[k])
 
 
 class GribVerticalBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.field.part.vertical import Vertical
-        from earthkit.data.field.vertical import VerticalFieldPartHandler
+        from earthkit.data.field.component.vertical import Vertical
+        from earthkit.data.field.vertical import VerticalFieldComponentHandler
 
         d = GribVerticalBuilder._build_dict(handle)
-        part = Vertical.from_dict(d)
-        handler = VerticalFieldPartHandler.from_part(part)
+        component = Vertical.from_dict(d)
+        handler = VerticalFieldComponentHandler.from_component(component)
         return handler
 
     @staticmethod
@@ -190,26 +193,27 @@ class GribVerticalBuilder:
 
 class GribVerticalContextCollector(GribContextCollector):
     @staticmethod
-    def collect_keys(spec, context):
-        grib_level_type = _SPEC_TYPES.get(spec.type)
+    def collect_keys(handler, context):
+        component = handler.component
+        grib_level_type = _COMPONENT_TYPES.get(component.type())
         if isinstance(grib_level_type, tuple):
             t = grib_level_type
             grib_level_type = None
             for x in t:
-                if x.match(spec):
+                if x.match(component):
                     grib_level_type = x
                     break
 
         if grib_level_type is None:
-            raise ValueError(f"Unknown level type: {spec.type}")
+            raise ValueError(f"Unknown level type: {component.type()}")
 
-        r = grib_level_type.to_grib(spec)
+        r = grib_level_type.to_grib(component)
         context.update(r)
 
 
 COLLECTOR = GribVerticalContextCollector()
 
 
-class GribVertical(GribFieldPartHandler):
+class GribVertical(GribFieldComponentHandler):
     BUILDER = GribVerticalBuilder
     COLLECTOR = COLLECTOR

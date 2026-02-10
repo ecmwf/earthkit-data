@@ -9,14 +9,14 @@
 
 from abc import abstractmethod
 
-from .part import SimpleFieldPart
-from .part import mark_alias
-from .part import mark_key
-from .part import part_keys
+from .component import SimpleFieldComponent
+from .component import component_keys
+from .component import mark_alias
+from .component import mark_key
 
 
-@part_keys
-class BaseParameter(SimpleFieldPart):
+@component_keys
+class BaseParameter(SimpleFieldComponent):
     """A specification of a parameter."""
 
     @mark_key("get")

@@ -12,19 +12,19 @@ def new_xarray_field(variable, selection=None):
     r"""Create a Field object from XArray"""
 
     from earthkit.data.core.field import Field
-    from earthkit.data.field.part.labels import SimpleLabels
+    from earthkit.data.field.labels import SimpleLabels
     from earthkit.data.field.xarray.data import XArrayData
     from earthkit.data.field.xarray.ensemble import XArrayEnsemble
-    from earthkit.data.field.xarray.geography import XArrayGeography
+    from earthkit.data.field.xarray.geography import XArrayGeographyHandler
     from earthkit.data.field.xarray.parameter import XArrayParameter
-    from earthkit.data.field.xarray.time import XArrayTime
+    from earthkit.data.field.xarray.time import XArrayTimeHandler
     from earthkit.data.field.xarray.vertical import XArrayVertical
 
     data = XArrayData(variable, selection)
     ensemble = XArrayEnsemble(variable, selection)
     parameter = XArrayParameter(variable, selection)
-    time = XArrayTime(variable, selection)
-    geography = XArrayGeography(variable, selection)
+    time = XArrayTimeHandler(variable, selection)
+    geography = XArrayGeographyHandler(variable, selection)
     vertical = XArrayVertical(variable, selection)
     labels = SimpleLabels()
 

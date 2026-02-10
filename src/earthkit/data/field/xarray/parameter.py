@@ -9,13 +9,13 @@
 
 import logging
 
-from earthkit.data.field.parameter import ParameterFieldPart
-from earthkit.data.field.part.parameter import Parameter
+from earthkit.data.field.component.parameter import Parameter
+from earthkit.data.field.parameter import ParameterFieldComponentHandler
 
 LOG = logging.getLogger(__name__)
 
 
-class XArrayParameter(ParameterFieldPart):
+class XArrayParameter(ParameterFieldComponentHandler):
     """A class to represent a parameter in an xarray dataset."""
 
     def __init__(self, owner, selection=None) -> None:

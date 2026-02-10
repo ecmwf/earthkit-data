@@ -78,7 +78,7 @@ class GribFieldListInFile(SimpleFieldListCore):
 
     #         field = self.fields[n]
     #         if field is None:
-    #             field = self.handle_manager.create_field(self.part(n))
+    #             field = self.handle_manager.create_field(self.component(n))
     #             self.fields[n] = field
     #         return field
 

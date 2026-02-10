@@ -13,8 +13,8 @@ import datetime
 
 import pytest
 
-from earthkit.data.field.part.time import ForecastTime
-from earthkit.data.field.part.time import create_time
+from earthkit.data.field.component.time import ForecastTime
+from earthkit.data.field.component.time import create_time
 
 
 @pytest.mark.parametrize(
@@ -147,7 +147,7 @@ from earthkit.data.field.part.time import create_time
         ),
     ],
 )
-def test_time_part_from_dict_ok(input_d, ref):
+def test_time_component_from_dict_ok(input_d, ref):
 
     if not isinstance(input_d, list):
         input_d = [input_d]
@@ -175,7 +175,7 @@ def test_time_part_from_dict_ok(input_d, ref):
         ),
     ],
 )
-def test_time_part_from_dict_error(input_d, error):
+def test_time_component_from_dict_error(input_d, error):
     if not isinstance(input_d, list):
         input_d = [input_d]
 
@@ -185,7 +185,7 @@ def test_time_part_from_dict_error(input_d, error):
                 create_time(d)
 
 
-def test_time_part_alias_1():
+def test_time_component_alias_1():
     t = ForecastTime(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(hours=6))
     assert t.base_datetime == datetime.datetime(2007, 1, 1, 12)
     assert t.step == datetime.timedelta(hours=6)
@@ -194,7 +194,7 @@ def test_time_part_alias_1():
     assert t.forecast_period == datetime.timedelta(hours=6)
 
 
-def test_time_part_alias_2():
+def test_time_component_alias_2():
     t = create_time(
         dict(
             forecast_reference_time=datetime.datetime(2007, 1, 1, 12),
@@ -299,7 +299,7 @@ def test_time_part_alias_2():
         ),
     ],
 )
-def test_time_part_set(input_d, ref):
+def test_time_component_set(input_d, ref):
 
     t = ForecastTime(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(0))
 
@@ -327,7 +327,7 @@ def test_time_part_set(input_d, ref):
         ({"step_timedelta": datetime.timedelta(hours=6)}, ValueError),
     ],
 )
-def test_time_part_set_error(input_d, error):
+def test_time_component_set_error(input_d, error):
 
     t = ForecastTime(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(0))
 

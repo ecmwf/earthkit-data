@@ -7,13 +7,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SimpleFieldPartHandler
-from .part.parameter import BaseParameter
-from .part.parameter import create_parameter
+from .component.parameter import BaseParameter
+from .component.parameter import create_parameter
+from .core import SimpleFieldComponentHandler
 
 
-class ParameterFieldPartHandler(SimpleFieldPartHandler):
-    """Parameter part of a field."""
+class ParameterFieldComponentHandler(SimpleFieldComponentHandler):
+    """Parameter component of a field."""
 
     PART_CLS = BaseParameter
     PART_MAKER = create_parameter

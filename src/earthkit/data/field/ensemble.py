@@ -7,13 +7,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SimpleFieldPartHandler
-from .part.ensemble import BaseEnsemble
-from .part.ensemble import create_ensemble
+from .component.ensemble import BaseEnsemble
+from .component.ensemble import create_ensemble
+from .core import SimpleFieldComponentHandler
 
 
-class EnsembleFieldPartHandler(SimpleFieldPartHandler):
-    """Ensemble part handler of a field."""
+class EnsembleFieldComponentHandler(SimpleFieldComponentHandler):
+    """Ensemble component handler of a field."""
 
     PART_CLS = BaseEnsemble
     PART_MAKER = create_ensemble

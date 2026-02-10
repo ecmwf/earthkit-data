@@ -11,11 +11,11 @@
 
 import pytest
 
-from earthkit.data.field.part.level_type import get_level_type
-from earthkit.data.field.part.vertical import Vertical
+from earthkit.data.field.component.level_type import get_level_type
+from earthkit.data.field.component.vertical import Vertical
 
 
-def test_vertical_part_alias_1():
+def test_vertical_component_alias_1():
     r = Vertical(level=1000, type="pressure")
     assert r.level() == 1000
     assert r.type() == "pressure"
@@ -40,7 +40,7 @@ def test_vertical_part_alias_1():
         ),
     ],
 )
-def test_vertical_part_from_dict_ok(input_d, ref):
+def test_vertical_component_from_dict_ok(input_d, ref):
 
     if not isinstance(input_d, list):
         input_d = [input_d]
@@ -53,7 +53,7 @@ def test_vertical_part_from_dict_ok(input_d, ref):
             assert r.type() == "pressure"
 
 
-def test_vertical_part_type():
+def test_vertical_component_type():
     r = Vertical(level=1000, type="pressure")
 
     t = r._type
@@ -100,7 +100,7 @@ def test_vertical_part_type():
         ),
     ],
 )
-def test_vertical_part_set(input_d, ref):
+def test_vertical_component_set(input_d, ref):
 
     r = Vertical(level=1000, type="pressure")
 

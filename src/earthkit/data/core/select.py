@@ -15,10 +15,10 @@ LOG = logging.getLogger(__name__)
 
 def normalize_selection(*args, **kwargs):
     from earthkit.data.arguments.transformers import ALL
-    from earthkit.data.field.part.level_type import LevelType
+    from earthkit.data.field.component.level_type import LevelType
 
-    # from earthkit.data.field.part.time_span import TimeSpan
-    # from earthkit.data.field.part.time_span import TimeSpanMethod
+    # from earthkit.data.field.component.time_span import TimeSpan
+    # from earthkit.data.field.component.time_span import TimeSpanMethod
 
     _kwargs = {}
     for a in args:

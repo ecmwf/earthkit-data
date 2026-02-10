@@ -10,9 +10,9 @@
 
 from typing import Any
 
-from earthkit.data.field.part.level_type import LevelTypes
-from earthkit.data.field.part.vertical import Vertical
-from earthkit.data.field.vertical import VerticalFieldPart
+from earthkit.data.field.component.level_type import LevelTypes
+from earthkit.data.field.component.vertical import create_vertical
+from earthkit.data.field.vertical import VerticalFieldComponentHandler
 
 
 class XarrayLevelType:
@@ -65,13 +65,13 @@ def from_xarray(owner, selection):
     level = get_level(coord, selection)
     level_type = get_level_type(coord)
 
-    return dict(level=level, level_type=level_type)
+    return dict(level=level, type=level_type)
 
 
-class XArrayVertical(VerticalFieldPart):
+class XArrayVertical(VerticalFieldComponentHandler):
     def __init__(self, owner: Any, selection: Any) -> None:
         self.owner = owner
         self.selection = selection
 
-        spec = Vertical.from_dict(from_xarray(owner, selection))
-        super().__init__(spec)
+        component = create_vertical(from_xarray(owner, selection))
+        super().__init__(component)

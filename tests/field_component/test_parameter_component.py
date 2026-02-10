@@ -11,10 +11,10 @@
 
 import pytest
 
-from earthkit.data.field.part.parameter import Parameter
+from earthkit.data.field.component.parameter import Parameter
 
 
-def test_parameter_part_alias_1():
+def test_parameter_component_alias_1():
     r = Parameter(variable="t", units="K")
     assert r.variable() == "t"
     assert r.param() == "t"
@@ -30,7 +30,7 @@ def test_parameter_part_alias_1():
         ),
     ],
 )
-def test_parameter_part_from_dict_ok(input_d, ref):
+def test_parameter_component_from_dict_ok(input_d, ref):
 
     if not isinstance(input_d, list):
         input_d = [input_d]
@@ -66,7 +66,7 @@ def test_parameter_part_from_dict_ok(input_d, ref):
         ),
     ],
 )
-def test_parameter_part_set(input_d, ref):
+def test_parameter_component_set(input_d, ref):
 
     r = Parameter(variable="p", units="Pa")
 

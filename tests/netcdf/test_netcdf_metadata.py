@@ -21,18 +21,16 @@ from earthkit.data.testing import load_nc_or_xr_source
 @pytest.mark.parametrize(
     "key,expected_value",
     [
-        ("variable", "t"),
-        ("level", 1000),
-        (["variable"], ["t"]),
-        (["variable", "level"], ["t", 1000]),
-        (("variable"), "t"),
-        (("variable", "level"), ("t", 1000)),
-        ("param", "t"),
-        ("level", 1000),
-        (["param"], ["t"]),
-        (["param", "level"], ["t", 1000]),
-        (("param"), "t"),
-        (("param", "level"), ("t", 1000)),
+        ("parameter.variable", "t"),
+        ("vertical.level", 1000),
+        (["parameter.variable"], ["t"]),
+        (["parameter.variable", "vertical.level"], ["t", 1000]),
+        (("parameter.variable"), "t"),
+        (("parameter.variable", "vertical.level"), ("t", 1000)),
+        ("vertical.level", 1000),
+        (["parameter.variable", "vertical.level"], ["t", 1000]),
+        (("parameter.variable"), "t"),
+        (("parameter.variable", "vertical.level"), ("t", 1000)),
     ],
 )
 def test_netcdf_metadata_single_field(mode, key, expected_value):
@@ -83,8 +81,8 @@ def test_netcdf_metadata_single_field(mode, key, expected_value):
 def test_netcdf_valid_datetime(mode):
     ds = load_nc_or_xr_source(earthkit_examples_file("test.nc"), mode)
     ref = datetime.datetime(2020, 5, 13, 12)
-    assert ds[0].get("valid_datetime") == ref
-    assert ds[0].time.valid_datetime == ref
+    assert ds[0].get("time.valid_datetime") == ref
+    assert ds[0].time.valid_datetime() == ref
 
 
 if __name__ == "__main__":

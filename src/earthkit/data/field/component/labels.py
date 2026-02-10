@@ -11,10 +11,10 @@
 from abc import abstractmethod
 from typing import Any
 
-from .part import Part
+from .component import Component
 
 
-class Labels(Part):
+class Labels(Component):
     @abstractmethod
     def __iter__(self):
         """Return an iterator over the metadata keys."""
@@ -167,7 +167,7 @@ class SimpleLabels(dict, Labels):
         pass
 
     def namespace(self, owner: Any, name: str, result: dict, prefix_keys=False) -> None:
-        """Populate the namespace dictionary for this SpecFieldPart."""
+        """Populate the namespace dictionary for this SpecFieldComponent."""
 
         def _prefix(key):
             return f"{self.NAME}.{key}" if prefix_keys else key

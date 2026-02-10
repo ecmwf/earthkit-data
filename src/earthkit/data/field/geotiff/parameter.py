@@ -9,13 +9,13 @@
 
 import logging
 
-from earthkit.data.field.parameter import ParameterFieldPart
-from earthkit.data.field.part.parameter import Parameter
+from earthkit.data.field.component.parameter import Parameter
+from earthkit.data.field.parameter import ParameterFieldComponent
 
 LOG = logging.getLogger(__name__)
 
 
-class GeoTIFFParameter(ParameterFieldPart):
+class GeoTIFFParameter(ParameterFieldComponent):
     """A class to represent a parameter in a GeoTIFF dataset."""
 
     def __init__(self, owner, selection=None) -> None:

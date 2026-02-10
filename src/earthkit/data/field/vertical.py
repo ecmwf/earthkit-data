@@ -7,13 +7,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SimpleFieldPartHandler
-from .part.vertical import BaseVertical
-from .part.vertical import create_vertical
+from .component.vertical import BaseVertical
+from .component.vertical import create_vertical
+from .core import SimpleFieldComponentHandler
 
 
-class VerticalFieldPartHandler(SimpleFieldPartHandler):
-    """Vertical part handler of a field."""
+class VerticalFieldComponentHandler(SimpleFieldComponentHandler):
+    """Vertical component handler of a field."""
 
     PART_CLS = BaseVertical
     PART_MAKER = create_vertical

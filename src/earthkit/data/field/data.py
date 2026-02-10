@@ -15,12 +15,12 @@ from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.utils.array import flatten
 
-from .core import FieldPart
-from .core import LazyFieldPartHandler
+from .core import FieldComponent
+from .core import LazyFieldComponentHandler
 
 
-class BaseDataFieldPart(FieldPart):
-    """Base class for the data part of a field.
+class BaseDataFieldComponent(FieldComponent):
+    """Base class for the data component of a field.
 
     This class defines the interface for accessing and manipulating the data values
     associated with a field. It provides methods to retrieve the data as an array,
@@ -36,7 +36,7 @@ class BaseDataFieldPart(FieldPart):
 
     @property
     def spec(self):
-        """This field part has no spec."""
+        """This field component has no spec."""
         return None
 
     @property
@@ -74,16 +74,16 @@ class BaseDataFieldPart(FieldPart):
         return default
 
 
-class DataFieldPart(BaseDataFieldPart):
-    """Simple data class that provides basic implementation for the data part of a field.
+class DataFieldComponent(BaseDataFieldComponent):
+    """Simple data class that provides basic implementation for the data component of a field.
 
-    DataFieldPart has to be subclassed to provide concrete implementation
+    DataFieldComponent has to be subclassed to provide concrete implementation
     for :py:meth:`get_values`.
     """
 
     @classmethod
-    def from_dict(cls, d, allow_unused=False) -> "DataFieldPart":
-        """Create a DataFieldPart object from a dictionary."""
+    def from_dict(cls, d, allow_unused=False) -> "DataFieldComponent":
+        """Create a DataFieldComponent object from a dictionary."""
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
         # d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
@@ -93,25 +93,25 @@ class DataFieldPart(BaseDataFieldPart):
         raise ValueError("Invalid arguments")
 
     @classmethod
-    def from_any(cls, data: Any, **dict_kwargs) -> "DataFieldPart":
-        """Create a DataFieldPart object from any input.
+    def from_any(cls, data: Any, **dict_kwargs) -> "DataFieldComponent":
+        """Create a DataFieldComponent object from any input.
 
         Parameters
         ----------
         data: Any
-            The input data from which to create the DataFieldPart instance.
+            The input data from which to create the DataFieldComponent instance.
         dict_kwargs: dict, optional
             Additional keyword arguments to be passed when creating the instance from
             a dictionary.
 
         Returns
         -------
-        DataFieldPart
-            An instance of DataFieldPart. If the input is already an instance
-            of DataFieldPart, it is returned as is. Otherwise, it is assumed to be a
-            specification object and a new DataFieldPart instance is created from it.
+        DataFieldComponent
+            An instance of DataFieldComponent. If the input is already an instance
+            of DataFieldComponent, it is returned as is. Otherwise, it is assumed to be a
+            specification object and a new DataFieldComponent instance is created from it.
         """
-        if isinstance(data, (cls, LazyFieldPartHandler)):
+        if isinstance(data, (cls, LazyFieldComponentHandler)):
             return data
         elif isinstance(data, dict):
             dict_kwargs = dict_kwargs or {}
@@ -157,7 +157,7 @@ class DataFieldPart(BaseDataFieldPart):
         raise ValueError("Invalid arguments")
 
     def dump(self, *args, **kwargs):
-        """This field part has no dump."""
+        """This field component has no dump."""
         return None
 
     def check(self, owner):
@@ -166,7 +166,7 @@ class DataFieldPart(BaseDataFieldPart):
             raise ValueError(f"Data shape mismatch: {self.values.shape} (data) != {owner.shape} (field)")
 
     def get_grib_context(self, context):
-        """Get the GRIB context for the data part of the field."""
+        """Get the GRIB context for the data component of the field."""
         from earthkit.data.field.grib.data import COLLECTOR
 
         COLLECTOR.collect_keys(self, context)
@@ -214,8 +214,8 @@ class ArrayCache:
             _create(self.cache_file)
 
 
-class ArrayData(DataFieldPart):
-    """Data part of a field that stores values in an array."""
+class ArrayData(DataFieldComponent):
+    """Data component of a field that stores values in an array."""
 
     _cache = None
 

@@ -345,7 +345,7 @@ class GridSpecConverter(metaclass=ABCMeta):
     def add_rotation(self):
         return dict()
         # d = {}
-        # rotation = self.part.get("rotation", None)
+        # rotation = self.component.get("rotation", None)
         # if rotation is not None:
 
         #     if not isinstance(rotation, list) or len(rotation) != 2:
@@ -374,7 +374,7 @@ class GridSpecConverter(metaclass=ABCMeta):
         return 1 if (v == 1 or v is True) else 0
 
     def get(self, key, default=None, transform=None):
-        v = self.part.get(key, default)
+        v = self.component.get(key, default)
         if v is not None and callable(transform):
             return transform(v)
         return v
@@ -402,7 +402,7 @@ class LatLonGridSpecConverter(GridSpecConverter):
             return json.load(f)
 
     def _parse_ew(self, dx, west, east):
-        nx = self.part.get("nx", None)
+        nx = self.component.get("nx", None)
         west = self.normalise_lon(west, 0)
         east = self.normalise_lon(east, 0)
         global_ew = False
@@ -438,7 +438,7 @@ class LatLonGridSpecConverter(GridSpecConverter):
         return nx, west, east
 
     def _parse_ns(self, dy, north, south):
-        ny = self.part.get("ny", None)
+        ny = self.component.get("ny", None)
         if ny is None:
             d_lat = abs(north - south)
             ny = int(d_lat / dy) + 1
@@ -452,9 +452,9 @@ class LatLonGridSpecConverter(GridSpecConverter):
 
     def add_grid(self):
         d = {}
-        dx, dy = self.part.get("grid", [1, 1])
+        dx, dy = self.component.get("grid", [1, 1])
 
-        area = self.part.get("area", None)
+        area = self.component.get("area", None)
         if isinstance(area, list) and len(area) == 4:
             north, west, south, east = area
             nx, west, east = self._parse_ew(dx, west, east)
@@ -501,7 +501,7 @@ class RegularGaussianGridSpecConverter(GridSpecConverter):
     SPEC_GRID_TYPE = "regular_gg"
 
     def add_grid(self):
-        grid = self.part.get("grid", None)
+        grid = self.component.get("grid", None)
         if not RegularGaussianGridSpecConverter.type_match(grid):
             raise ValueError(f"Invalid {grid=}")
         if isinstance(grid, str):
@@ -535,8 +535,8 @@ class ReducedGaussianGridSpecConverter(GridSpecConverter):
     SPEC_GRID_TYPE = "reduced_gg"
 
     def add_grid(self):
-        grid = self.part.get("grid", None)
-        octahedral = self.part.get("octahedral", 0)
+        grid = self.component.get("grid", None)
+        octahedral = self.component.get("octahedral", 0)
         if not isinstance(grid, str) or not REDUCED_GG_PATTERN.match(grid):
             raise ValueError(f"Invalid {grid=}")
         try:

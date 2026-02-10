@@ -500,7 +500,7 @@ def test_legacy_grib_output_field_template(mode, array):
         assert np.allclose(ds[0].to_numpy(), data, rtol=1e-2, atol=1e-2)
 
 
-@pytest.mark.search_all_parts
+@pytest.mark.legacy
 # @pytest.mark.parametrize("mode", ["ori", "compat", "target"])
 @pytest.mark.parametrize("mode", ["target"])
 @pytest.mark.parametrize(

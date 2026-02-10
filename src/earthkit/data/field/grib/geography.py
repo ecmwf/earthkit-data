@@ -7,11 +7,12 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.field.part.geography import BaseGeography
-from earthkit.data.field.part.part import normalise_set_kwargs
+from earthkit.data.field.component.component import normalise_set_kwargs
+from earthkit.data.field.component.geography import BaseGeography
+from earthkit.data.field.component.geography import create_geography_from_dict
 
 from .collector import GribContextCollector
-from .core import GribFieldPartHandler
+from .core import GribFieldComponentHandler
 
 
 def missing_is_none(x):
@@ -173,33 +174,34 @@ class GribGeography(BaseGeography):
 class GribGeographyBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.field.geography import GeographyFieldPartHandler
+        from earthkit.data.field.geography import GeographyFieldComponentHandler
 
-        return GeographyFieldPartHandler.from_part(GribGeography(handle))
+        return GeographyFieldComponentHandler.from_component(GribGeography(handle))
 
 
 class GribGeographyContextCollector(GribContextCollector):
     @staticmethod
-    def collect_keys(spec, context):
+    def collect_keys(handler, context):
         pass
 
 
 COLLECTOR = GribGeographyContextCollector()
 
 
-class GribGeographyHandler(GribFieldPartHandler):
+class GribGeographyHandler(GribFieldComponentHandler):
     BUILDER = GribGeographyBuilder
     COLLECTOR = COLLECTOR
 
     def set(self, *args, shape_hint=None, **kwargs):
-        kwargs = normalise_set_kwargs(self.spec, *args, **kwargs)
+        kwargs = normalise_set_kwargs(self.component, *args, **kwargs)
         keys = set(kwargs.keys())
 
         if keys == {"grid_spec"}:
             handle = self._handle_from_grid_spec(self, kwargs["grid_spec"])
             return GribGeography(handle)
         else:
-            return self._part.set(*args, shape_hint=shape_hint, **kwargs)
+            return create_geography_from_dict(kwargs, shape_hint=shape_hint)
+            # return self._component.set(*args, shape_hint=shape_hint, **kwargs)
 
     def _handle_from_grid_spec(cls, spec, grid_spec):
         from earthkit.data.new_field.grib.handle import MemoryGribHandle

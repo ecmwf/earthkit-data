@@ -436,7 +436,7 @@ class GribHandleCache:
 #         self.handle_create_count = 0
 
 #     def create_handle(self, part):
-#         return ManagedGribHandle(part.path, part.offset, part.length, self)
+#         return ManagedGribHandle(component.path, component.offset, component.length, self)
 
 #     def get_raw(self, handle, create):
 #         key = (handle.path, handle.offset)
@@ -454,7 +454,7 @@ class GribHandleCache:
 #         with self.lock:
 #             self.cache.pop(key, None)
 
-#     def _handle_created(self):
+#     def _handle_created(self):ß
 #         self.handle_create_count += 1
 
 
@@ -462,7 +462,7 @@ class GribHandleCache:
 #     name = "persistent"
 
 #     def create_handle(self, part):
-#         return FileGribHandle(part.path, part.offset, part.length)
+#         return FileGribHandle(component.path, component.offset, component.length)
 
 #     def get_raw(self, handle, create):
 #         pass
@@ -475,7 +475,7 @@ class GribHandleCache:
 #     name = "temporary"
 
 #     def create_handle(self, part):
-#         return ManagedGribHandle(part.path, part.offset, part.length, self)
+#         return ManagedGribHandle(component.path, component.offset, component.length, self)
 
 #     def get_raw(self, handle, create):
 #         self._handle_created()

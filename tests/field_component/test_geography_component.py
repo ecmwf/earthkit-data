@@ -12,7 +12,7 @@
 import numpy as np
 import pytest
 
-from earthkit.data.field.part.geography import SimpleGeography
+from earthkit.data.field.component.geography import SimpleGeography
 
 
 @pytest.mark.parametrize(
@@ -117,7 +117,7 @@ from earthkit.data.field.part.geography import SimpleGeography
         ),
     ],
 )
-def test_geography_part_from_dict_ok(input_d, ref):
+def test_geography_component_from_dict_ok(input_d, ref):
 
     if not isinstance(input_d, list):
         input_d = [input_d]
@@ -150,7 +150,7 @@ def test_geography_part_from_dict_ok(input_d, ref):
         ),
     ],
 )
-def test_geography_part_set(input_d, ref):
+def test_geography_component_set(input_d, ref):
 
     lat_orig = np.array([-10.0, 0.0, 10.0])
     lon_orig = np.array([20.0, 40.0, 60.0])

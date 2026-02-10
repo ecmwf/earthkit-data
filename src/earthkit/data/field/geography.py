@@ -7,13 +7,13 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .core import SimpleFieldPartHandler
-from .part.geography import BaseGeography
-from .part.geography import create_geography_from_dict
+from .component.geography import BaseGeography
+from .component.geography import create_geography_from_dict
+from .core import SimpleFieldComponentHandler
 
 
-class GeographyFieldPartHandler(SimpleFieldPartHandler):
-    """Geography part of a field."""
+class GeographyFieldComponentHandler(SimpleFieldComponentHandler):
+    """Geography component of a field."""
 
     PART_CLS = BaseGeography
     PART_MAKER = create_geography_from_dict

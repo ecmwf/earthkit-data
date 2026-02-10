@@ -40,7 +40,7 @@ def mark_alias(name):
     return wrapper
 
 
-def part_keys(cls):
+def component_keys(cls):
     _GET_KEYS = []
     _SET_KEYS = []
     _ALIASES = {}
@@ -112,12 +112,12 @@ def normalise_set_kwargs(cls, *args, allowed_keys=None, remove_nones=True, **kwa
     return _kwargs
 
 
-class FieldPart(metaclass=ABCMeta):
+class FieldComponent(metaclass=ABCMeta):
     @classmethod
     @abstractmethod
-    def from_dict(cls, d: dict) -> "FieldPart":
+    def from_dict(cls, d: dict) -> "FieldComponent":
         """
-        Create a FieldPart instance from a dictionary.
+        Create a FieldComponent instance from a dictionary.
 
         Parameters
         ----------
@@ -126,8 +126,8 @@ class FieldPart(metaclass=ABCMeta):
 
         Returns
         -------
-        FieldPart
-            The created FieldPart instance.
+        FieldComponent
+            The created FieldComponent instance.
         """
         pass
 
@@ -145,12 +145,12 @@ class FieldPart(metaclass=ABCMeta):
 
     @abstractmethod
     def keys(self) -> tuple | set:
-        """Return the available keys in the part."""
+        """Return the available keys in the component."""
         pass
 
     @abstractmethod
     def aliases(self) -> dict:
-        """Return the aliases in the part."""
+        """Return the aliases in the component."""
         pass
 
     @abstractmethod
@@ -194,9 +194,9 @@ class FieldPart(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def set(self, *args, **kwargs) -> "FieldPart":
+    def set(self, *args, **kwargs) -> "FieldComponent":
         """
-        Create a new FieldPart instance with updated data.
+        Create a new FieldComponent instance with updated data.
 
         Parameters
         ----------
@@ -230,20 +230,20 @@ class FieldPart(metaclass=ABCMeta):
         pass
 
 
-class SimpleFieldPart(FieldPart):
+class SimpleFieldComponent(FieldComponent):
     _KEYS = tuple()
     _ALIASES = dict()
 
     def __contains__(self, name):
-        """Check if the key is in the part."""
+        """Check if the key is in the component."""
         return name in self._KEYS
 
     def keys(self):
-        """Return the available keys in the part."""
+        """Return the available keys in the component."""
         return self._KEYS
 
     def aliases(self):
-        """Return the aliases in the part."""
+        """Return the aliases in the component."""
         return self._ALIASES
 
     def _get_single(self, key, default=None, astype=None, raise_on_missing=False):
@@ -257,7 +257,7 @@ class SimpleFieldPart(FieldPart):
             return v
 
         if raise_on_missing:
-            raise KeyError(f"Key {key} not found in FieldPart")
+            raise KeyError(f"Key {key} not found in FieldComponent")
 
         return default
 

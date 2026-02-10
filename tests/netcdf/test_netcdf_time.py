@@ -72,21 +72,21 @@ def test_netcdf_time_analysis():
     ds = from_source("url", earthkit_examples_file("test.nc"))
 
     f = ds[0]
-    assert f.base_datetime == datetime.datetime(2020, 5, 13, 12, 0, 0)
-    assert f.forecast_reference_time == datetime.datetime(2020, 5, 13, 12, 0, 0)
-    assert f.step == datetime.timedelta(0)
-    assert f.valid_datetime == datetime.datetime(2020, 5, 13, 12, 0, 0)
+    assert f.time.base_datetime() == datetime.datetime(2020, 5, 13, 12, 0, 0)
+    assert f.time.forecast_reference_time() == datetime.datetime(2020, 5, 13, 12, 0, 0)
+    assert f.time.step() == datetime.timedelta(0)
+    assert f.time.valid_datetime() == datetime.datetime(2020, 5, 13, 12, 0, 0)
 
 
 def test_netcdf_valid_time_and_lead_time():
     ds = from_source("url", earthkit_remote_test_data_file("fa_ta850.nc"))
 
-    assert ds[0].base_datetime == datetime.datetime(2020, 1, 23, 0, 0, 0)
-    assert ds[0].forecast_reference_time == datetime.datetime(2020, 1, 23, 0, 0, 0)
-    assert ds[0].valid_datetime == datetime.datetime(2020, 1, 23, 0, 0, 0)
-    assert ds[0].step == datetime.timedelta(0)
+    assert ds[0].time.base_datetime() == datetime.datetime(2020, 1, 23, 0, 0, 0)
+    assert ds[0].time.forecast_reference_time() == datetime.datetime(2020, 1, 23, 0, 0, 0)
+    assert ds[0].time.valid_datetime() == datetime.datetime(2020, 1, 23, 0, 0, 0)
+    assert ds[0].time.step() == datetime.timedelta(0)
 
-    assert ds[0].base_datetime == datetime.datetime(2020, 1, 23, 0, 0, 0)
-    assert ds[0].forecast_reference_time == datetime.datetime(2020, 1, 23, 0, 0, 0)
-    assert ds[5].valid_datetime == datetime.datetime(2020, 1, 23, 5, 0, 0)
-    assert ds[5].step == datetime.timedelta(hours=5)
+    assert ds[0].time.base_datetime() == datetime.datetime(2020, 1, 23, 0, 0, 0)
+    assert ds[0].time.forecast_reference_time() == datetime.datetime(2020, 1, 23, 0, 0, 0)
+    assert ds[5].time.valid_datetime() == datetime.datetime(2020, 1, 23, 5, 0, 0)
+    assert ds[5].time.step() == datetime.timedelta(hours=5)

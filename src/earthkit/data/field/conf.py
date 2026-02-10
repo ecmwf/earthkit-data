@@ -51,7 +51,7 @@ def init_part_conf(conf):
 
                 # some module keys are added as properties without a prefix
 
-                # direct_keys = part.get("direct", ())
+                # direct_keys = component.get("direct", ())
                 # if direct_keys is all:
                 #     direct_keys = part_cls.ALL_KEYS
                 # if isinstance(direct_keys, str):

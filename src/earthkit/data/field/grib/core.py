@@ -11,12 +11,12 @@
 import logging
 
 from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.field.core import LazyFieldPartHandler
+from earthkit.data.field.core import LazyFieldComponentHandler
 
 LOG = logging.getLogger(__name__)
 
 
-class GribFieldPartHandler(LazyFieldPartHandler):
+class GribFieldComponentHandler(LazyFieldComponentHandler):
     BUILDER = None
     COLLECTOR = None
 

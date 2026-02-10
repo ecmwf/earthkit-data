@@ -11,10 +11,10 @@
 from abc import abstractmethod
 from typing import Any
 
-from .core import FieldPart
+from .core import FieldComponent
 
 
-class Labels(FieldPart):
+class Labels(FieldComponent):
     NAME = "labels"
 
     @abstractmethod
@@ -170,7 +170,7 @@ class SimpleLabels(dict, Labels):
         pass
 
     def dump(self, owner: Any, name: str, result: dict, prefix_keys=False) -> None:
-        """Populate the namespace dictionary for this SpecFieldPart."""
+        """Populate the namespace dictionary for this SpecFieldComponent."""
 
         def _prefix(key):
             return f"{self.NAME}.{key}" if prefix_keys else key

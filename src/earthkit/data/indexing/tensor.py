@@ -430,12 +430,12 @@ class FieldListTensor(TensorCore):
 
     @flatten_arg
     def to_numpy(self, dtype=None, index=None, **kwargs):
-        source_to_numpy_func = functools.partial(self.source.to_numpy, dtype=dtype, **kwargs)
+        source_to_numpy_func = functools.componential(self.source.to_numpy, dtype=dtype, **kwargs)
         return self._to_array(source_to_numpy_func, index=index)
 
     @flatten_arg
     def to_array(self, dtype=None, array_namespace=None, device=None, index=None, **kwargs):
-        source_to_array_func = functools.partial(
+        source_to_array_func = functools.componential(
             self.source.to_array, dtype=dtype, array_namespace=array_namespace, device=device, **kwargs
         )
         return self._to_array(source_to_array_func, index=index)

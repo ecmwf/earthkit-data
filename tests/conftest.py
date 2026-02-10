@@ -66,7 +66,6 @@ def pytest_runtest_setup(item):
         pytest.skip("test is skipped because marked as no_cache_init but --forked is not used")
 
     need_cache = "cache" in marks_in_items
-    search_all_parts = "search_all_parts" in marks_in_items
 
     # settings
     from earthkit.data import config
@@ -84,7 +83,5 @@ def pytest_runtest_setup(item):
     elif need_cache:
         config.reset()
         config.set("cache-policy", "user")
-        config.set("search-all-field-parts", search_all_parts)
     else:
         config.reset()
-        config.set("search-all-field-parts", search_all_parts)

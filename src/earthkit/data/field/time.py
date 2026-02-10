@@ -8,13 +8,13 @@
 #
 
 
-from .core import SimpleFieldPartHandler
-from .part.time import BaseTime
-from .part.time import create_time
+from .component.time import BaseTime
+from .component.time import create_time
+from .core import SimpleFieldComponentHandler
 
 
-class TimeFieldPartHandler(SimpleFieldPartHandler):
-    """Time part of a field."""
+class TimeFieldComponentHandler(SimpleFieldComponentHandler):
+    """Time component of a field."""
 
     PART_CLS = BaseTime
     PART_MAKER = create_time

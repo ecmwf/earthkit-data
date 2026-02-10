@@ -30,21 +30,21 @@ from grib_fixtures import load_grib_data  # noqa: E402
     "_kwargs,ref_ori, ref_set,ref_saved",
     [
         (
-            {"member": 3},
+            {"ensemble.member": 3},
             {
-                "member": "1",
-                "grib.number": 1,
-                "grib.level": 850,
+                "ensemble.member": "1",
+                "metadata.number": 1,
+                "metadata.level": 850,
             },
             {
-                "member": "3",
-                "grib.number": 1,
-                "grib.level": 850,
+                "ensemble.member": "3",
+                "metadata.number": 1,
+                "metadata.level": 850,
             },
             {
-                "member": "3",
-                "grib.number": 3,
-                "grib.level": 850,
+                "ensemble.member": "3",
+                "metadata.number": 3,
+                "metadata.level": 850,
             },
         ),
     ],

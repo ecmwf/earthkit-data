@@ -251,10 +251,6 @@ CONFIG_AND_HELP = {
         """GRIB file serialisation policy for fieldlists with data on disk. {validator}""",
         validator=ListValidator(["path", "memory"]),
     ),
-    "search-all-field-parts": _(
-        False,
-        """Search all field parts when accessing keys.""",
-    ),
 }
 
 

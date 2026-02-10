@@ -14,16 +14,16 @@ from earthkit.data.utils.dates import datetime_from_date_and_time
 from earthkit.data.utils.dates import to_datetime
 from earthkit.data.utils.dates import to_timedelta
 
-from .part import SimpleFieldPart
-from .part import mark_alias
-from .part import mark_key
-from .part import normalise_create_kwargs
-from .part import normalise_set_kwargs
-from .part import part_keys
+from .component import SimpleFieldComponent
+from .component import component_keys
+from .component import mark_alias
+from .component import mark_key
+from .component import normalise_create_kwargs
+from .component import normalise_set_kwargs
 
 
-@part_keys
-class BaseTime(SimpleFieldPart):
+@component_keys
+class BaseTime(SimpleFieldComponent):
     @mark_key("get")
     @abstractmethod
     def base_datetime(self):
@@ -557,8 +557,8 @@ class MonthlyForecastTime(BaseTime):
         )
 
 
-@part_keys
-class TimeOri(SimpleFieldPart):
+@component_keys
+class TimeOri(SimpleFieldComponent):
     _base_datetime = None
     _step = ZERO_TIMEDELTA
 

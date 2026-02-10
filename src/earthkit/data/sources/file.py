@@ -73,7 +73,7 @@ class FileSource(Source, os.PathLike):
                     "multi",
                     [
                         from_source("file", p, parts=part, filter=self.filter, **self._kwargs)
-                        for p, part in zip(self.path, self.parts)
+                        for p, part in zip(self.path, self.components)
                     ],
                     filter=self.filter,
                     merger=self.merger,
@@ -113,7 +113,7 @@ class FileSource(Source, os.PathLike):
                 self,
                 self.path,
                 content_type=self.content_type,
-                # parts=self.parts,
+                # parts=self.components,
             )
         return self._reader_
 
@@ -229,7 +229,7 @@ class FileSource(Source, os.PathLike):
 
     @property
     def parts(self):
-        return self._path_and_parts.parts
+        return self._path_and_parts.components
 
     def batched(self, *args):
         return self._reader.batched(*args)
@@ -258,7 +258,7 @@ class StreamFileSource(FileSource):
                     "multi",
                     [
                         from_source("file", p, parts=part, filter=self.filter, stream=True, **self._kwargs)
-                        for p, part in zip(self.path, self.parts)
+                        for p, part in zip(self.path, self.components)
                     ],
                     filter=self.filter,
                     merger=self.merger,
@@ -277,7 +277,7 @@ class StreamFileSource(FileSource):
                 from .stream import make_stream_source_from_other
 
                 return make_stream_source_from_other(
-                    [SingleStreamFileSource(source.path, self.parts)], **self._kwargs
+                    [SingleStreamFileSource(source.path, self.components)], **self._kwargs
                 )
             else:
                 return source
@@ -297,17 +297,17 @@ class StreamFileSource(FileSource):
 class SingleStreamFileSource:
     def __init__(self, path, parts):
         self.path = path
-        self.parts = parts
+        self.components = parts
 
     def to_stream(self):
-        if not self.parts:
+        if not self.components:
             f = open(self.path, "rb")
             return f
         else:
             from earthkit.data.utils.stream import FilePartStreamReader
             from earthkit.data.utils.stream import RequestIterStreamer
 
-            stream = FilePartStreamReader(self.path, self.parts)
+            stream = FilePartStreamReader(self.path, self.components)
             return RequestIterStreamer(iter(stream))
 
 
