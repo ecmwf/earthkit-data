@@ -45,7 +45,7 @@ def test_file_source_grib_save(write_method):
         with preserve_cwd():
             os.chdir(tmpdir)
             write_to_file(write_method, f_tmp, ds)
-            ds.save()
+            ds.to_target("file")
             assert os.path.isfile("test.grib")
 
 
@@ -68,7 +68,7 @@ def test_file_source_grib_no_overwrite(write_method):
                 UserWarning,
                 match="Earthkit refusing to overwrite",
             ):
-                ds1.save()
+                ds1.to_target("file")
 
 
 def test_file_source_netcdf():
@@ -87,7 +87,7 @@ def test_file_source_netcdf_save(write_method):
         # Check file can be saved in current dir with detected filename:
         with preserve_cwd():
             os.chdir(tmpdir)
-            ds.save()
+            ds.to_target("file")
             assert os.path.isfile("test.nc")
 
 
@@ -110,7 +110,7 @@ def test_file_source_netcdf_no_overwrite(write_method):
                 UserWarning,
                 match="Earthkit refusing to overwrite",
             ):
-                ds1.save()
+                ds1.to_target()
 
 
 def test_file_source_odb():

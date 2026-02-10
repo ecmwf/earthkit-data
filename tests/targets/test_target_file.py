@@ -209,33 +209,6 @@ def test_target_file_grib_direct_api_with_object(per_field):
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
-def test_target_file_grib_save_compat():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    vals_ref = ds.values[:, :4]
-
-    with temp_file() as path:
-        ds.save(path)
-
-        ds1 = from_source("file", path)
-        assert len(ds) == len(ds1)
-        assert ds1.get("metadata.shortName") == ["2t", "msl"]
-        assert np.allclose(ds1.values[:, :4], vals_ref)
-
-
-def test_target_file_grib_write_compat():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    vals_ref = ds.values[:, :4]
-
-    with temp_file() as path:
-        with open(path, "wb") as f:
-            ds.write(f)
-
-        ds1 = from_source("file", path)
-        assert len(ds) == len(ds1)
-        assert ds1.get("metadata.shortName") == ["2t", "msl"]
-        assert np.allclose(ds1.values[:, :4], vals_ref)
-
-
 def test_target_file_bufr():
     ds = from_source("file", earthkit_examples_file("temp_10.bufr"))
     with temp_file() as path:

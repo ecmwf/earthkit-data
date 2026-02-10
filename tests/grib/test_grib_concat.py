@@ -27,7 +27,7 @@ def _check_save_to_disk(ds, len_ref, meta_ref):
     assert os.path.exists(tmp.path)
     r_tmp = from_source("file", tmp.path)
     assert len(r_tmp) == len_ref
-    assert r_tmp.get("grib.shortName") == meta_ref
+    assert r_tmp.get("metadata.shortName") == meta_ref
     r_tmp = None
 
 

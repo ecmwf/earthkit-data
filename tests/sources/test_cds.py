@@ -202,7 +202,7 @@ def test_cds_grib_save(write_method):
         # Check file can be saved in current dir with detected filename:
         with preserve_cwd():
             os.chdir(tmpdir)
-            s.save()
+            s.to_target("file")
             assert os.path.isfile(os.path.basename(s.source_filename))
 
 
@@ -319,7 +319,7 @@ def test_cds_netcdf_save():
         # Check file can be saved in current dir with detected filename:
         with preserve_cwd():
             os.chdir(tmpdir)
-            s.save()
+            s.to_target("file")
             assert os.path.isfile(os.path.basename(s.source_filename))
 
 

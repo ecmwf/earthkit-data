@@ -49,7 +49,7 @@ def check_field_write(f, md_ref, shape_ref, values_ref, use_writer=False, **kwar
             fp.write(f.values)
             fp.close()
         else:
-            f.save(tmp, **kwargs)
+            f.to_target("file", tmp, **kwargs)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
         assert len(r_tmp) == 1

@@ -75,31 +75,6 @@ class Reader(Base, os.PathLike):
     def cache_file(self, *args, **kwargs):
         return self.source.cache_file(*args, **kwargs)
 
-    @detect_out_filename
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def save(self, path, **kwargs):
-        self.to_target("file", path, **kwargs)
-
-        # original code
-        # mode = "wb" if self.binary else "w"
-        # with open(path, mode) as f:
-        #     self.write(f, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def write(self, f, **kwargs):
-        self.to_target("file", f, **kwargs)
-
-        # original code
-        # if not self.appendable:
-        #     assert f.tell() == 0
-        # mode = "rb" if self.binary else "r"
-        # with open(self.path, mode) as g:
-        #     while True:
-        #         chunk = g.read(1024 * 1024)
-        #         if not chunk:
-        #             break
-        #         f.write(chunk)
-
     def to_target(self, target, *args, **kwargs):
         from earthkit.data.targets import to_target
 

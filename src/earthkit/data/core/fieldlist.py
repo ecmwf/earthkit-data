@@ -9,8 +9,6 @@
 
 from abc import abstractmethod
 
-import deprecation
-
 from earthkit.data.core import Base
 
 
@@ -707,47 +705,6 @@ class FieldListCore(Base):
 
     @abstractmethod
     def normalise_key_values(self, **kwargs):
-        pass
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def save(self, filename, append=False, **kwargs):
-        r"""Write all the fields into a file.
-
-        Parameters
-        ----------
-        filename: str, optional
-            The target file path, if not defined attempts will be made to detect the filename
-        append: bool, optional
-            When it is true append data to the target file. Otherwise
-            the target file be overwritten if already exists. Default is False
-        **kwargs: dict, optional
-            Other keyword arguments passed to :obj:`write`.
-
-        See Also
-        --------
-        :obj:`write`
-        :meth:`GribFieldList.save() <data.readers.grib.index.GribFieldList.save>`
-        :meth:`SimpleFieldList.save() <data.indexing.fieldlist.SimpleFieldList.save>`
-
-        """
-        pass
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def write(self, f, **kwargs):
-        r"""Write all the fields to a file object.
-
-        Parameters
-        ----------
-        f: file object
-            The target file object.
-        **kwargs: dict, optional
-            Other keyword arguments passed to the underlying field implementation.
-
-        See Also
-        --------
-        read
-
-        """
         pass
 
     def _unary_op(self, oper):

@@ -9,14 +9,12 @@
 
 import warnings
 
-import deprecation
 from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.core.fieldlist import FieldListCore
 from earthkit.data.core.index import Index
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
-from earthkit.data.decorators import detect_out_filename
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.compute import wrap_maths
 
@@ -441,65 +439,6 @@ class IndexedFieldList(Index, FieldListCore):
         from earthkit.data.indexing.cube import FieldCube
 
         return FieldCube(self, *args, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    @detect_out_filename
-    def save(self, filename, append=False, **kwargs):
-        r"""Write all the fields into a file.
-
-        Parameters
-        ----------
-        filename: str, optional
-            The target file path, if not defined attempts will be made to detect the filename
-        append: bool, optional
-            When it is true append data to the target file. Otherwise
-            the target file be overwritten if already exists. Default is False
-        **kwargs: dict, optional
-            Other keyword arguments passed to :obj:`write`.
-
-        See Also
-        --------
-        :obj:`write`
-
-        """
-        metadata = {}
-        bits_per_value = kwargs.pop("bits_per_value", None)
-        if bits_per_value is not None:
-            metadata = {"bitsPerValue": bits_per_value}
-
-        self.to_target("file", filename, append=append, metadata=metadata, **kwargs)
-
-        # original code
-        # flag = "wb" if not append else "ab"
-        # with open(filename, flag) as f:
-        #     self.write(f, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def write(self, f, **kwargs):
-        r"""Write all the fields to a file object.
-
-        Parameters
-        ----------
-        f: file object
-            The target file object.
-        **kwargs: dict, optional
-            Other keyword arguments passed to the underlying field implementation.
-
-        See Also
-        --------
-        :obj:`write`
-
-        """
-        metadata = {}
-        bits_per_value = kwargs.pop("bits_per_value", None)
-        if bits_per_value is not None:
-            metadata = {"bitsPerValue": bits_per_value}
-
-        self.to_target("file", f, metadata=metadata, **kwargs)
-
-        # original code
-        # for s in self:
-        #     s.write(f, **kwargs)
 
     def default_encoder(self):
         if len(self) > 0:

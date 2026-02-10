@@ -12,11 +12,8 @@ import glob
 import logging
 import os
 
-import deprecation
-
 from earthkit.data import from_source
 from earthkit.data.core.caching import CACHE
-from earthkit.data.decorators import detect_out_filename
 from earthkit.data.readers import reader
 from earthkit.data.utils.parts import PathAndParts
 
@@ -73,7 +70,7 @@ class FileSource(Source, os.PathLike):
                     "multi",
                     [
                         from_source("file", p, parts=part, filter=self.filter, **self._kwargs)
-                        for p, part in zip(self.path, self.components)
+                        for p, part in zip(self.path, self.parts)
                     ],
                     filter=self.filter,
                     merger=self.merger,
@@ -113,7 +110,7 @@ class FileSource(Source, os.PathLike):
                 self,
                 self.path,
                 content_type=self.content_type,
-                # parts=self.components,
+                # parts=self.parts,
             )
         return self._reader_
 
@@ -148,17 +145,6 @@ class FileSource(Source, os.PathLike):
     @property
     def values(self):
         return self._reader.values
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    @detect_out_filename
-    def save(self, path, **kwargs):
-        return self.to_target("file", path, **kwargs)
-        # return self._reader.save(path, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def write(self, f, **kwargs):
-        return self.to_target("file", f, **kwargs)
-        # return self._reader.write(f, **kwargs)
 
     def to_target(self, *args, **kwargs):
         self._reader.to_target(*args, **kwargs)
@@ -229,7 +215,7 @@ class FileSource(Source, os.PathLike):
 
     @property
     def parts(self):
-        return self._path_and_parts.components
+        return self._path_and_parts.parts
 
     def batched(self, *args):
         return self._reader.batched(*args)
@@ -258,7 +244,7 @@ class StreamFileSource(FileSource):
                     "multi",
                     [
                         from_source("file", p, parts=part, filter=self.filter, stream=True, **self._kwargs)
-                        for p, part in zip(self.path, self.components)
+                        for p, part in zip(self.path, self.parts)
                     ],
                     filter=self.filter,
                     merger=self.merger,
@@ -277,7 +263,7 @@ class StreamFileSource(FileSource):
                 from .stream import make_stream_source_from_other
 
                 return make_stream_source_from_other(
-                    [SingleStreamFileSource(source.path, self.components)], **self._kwargs
+                    [SingleStreamFileSource(source.path, self.parts)], **self._kwargs
                 )
             else:
                 return source
@@ -297,17 +283,17 @@ class StreamFileSource(FileSource):
 class SingleStreamFileSource:
     def __init__(self, path, parts):
         self.path = path
-        self.components = parts
+        self.parts = parts
 
     def to_stream(self):
-        if not self.components:
+        if not self.parts:
             f = open(self.path, "rb")
             return f
         else:
             from earthkit.data.utils.stream import FilePartStreamReader
             from earthkit.data.utils.stream import RequestIterStreamer
 
-            stream = FilePartStreamReader(self.path, self.components)
+            stream = FilePartStreamReader(self.path, self.parts)
             return RequestIterStreamer(iter(stream))
 
 

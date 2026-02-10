@@ -991,44 +991,6 @@ class Field(Base):
         data = self._components[DATA].set_values(array)
         return Field.from_field(self, data=data)
 
-    @deprecation.deprecated(deprecated_in="0.13.0", details="Use to_target() instead")
-    def save(self, filename, append=False, **kwargs):
-        r"""Write the field into a file.
-
-        Parameters
-        ----------
-        filename: str, optional
-            The target file path, if not defined attempts will be made to detect the filename
-        append: bool, optional
-            When it is true append data to the target file. Otherwise
-            the target file be overwritten if already exists. Default is False
-        **kwargs: dict, optional
-            Other keyword arguments passed to :obj:`write`.
-        """
-        metadata = kwargs.pop("metadata", None)
-        if metadata is None:
-            metadata = {}
-            bits_per_value = kwargs.pop("bits_per_value", None)
-            if bits_per_value is not None:
-                metadata = {"bitsPerValue": bits_per_value}
-            # metadata, kwargs = _bits_per_value_to_metadata(**kwargs)
-        self.to_target("file", filename, append=append, metadata=metadata, **kwargs)
-        # the original implementation
-        # flag = "wb" if not append else "ab"
-        # with open(filename, flag) as f:
-        #     self.write(f, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", details="Use to_target() instead")
-    def write(self, f, **kwargs):
-        metadata = kwargs.pop("metadata", None)
-        if metadata is None:
-            metadata = {}
-            bits_per_value = kwargs.pop("bits_per_value", None)
-            if bits_per_value is not None:
-                metadata = {"bitsPerValue": bits_per_value}
-            # metadata, kwargs = _bits_per_value_to_metadata(**kwargs)
-        self.to_target("file", f, metadata=metadata, **kwargs)
-
     def to_target(self, target, *args, **kwargs):
         r"""Write the field into a target object.
 

@@ -10,8 +10,6 @@
 import logging
 from itertools import product
 
-import deprecation
-
 from earthkit.data.core.fieldlist_ori import FieldList
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
@@ -388,14 +386,6 @@ class NetCDFMaskFieldList(NetCDFFieldList, MaskIndex):
 
     # TODO: Implement this, but discussion required
     def to_xarray(self, *args, **kwargs):
-        self._not_implemented()
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def write(self, *args, **kwargs):
-        self._not_implemented()
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def save(self, *args, **kwargs):
         self._not_implemented()
 
 

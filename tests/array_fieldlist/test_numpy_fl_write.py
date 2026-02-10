@@ -249,7 +249,7 @@ def test_array_fl_grib_single_write_to_path(filename, shape):
     assert r[0].shape == shape
 
     with temp_file() as tmp:
-        r.save(tmp)
+        r.to_target("file", tmp)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
         # r_tmp = r_tmp.to_fieldlist(array_namespace=array_namespace)
@@ -281,7 +281,7 @@ def test_array_fl_grib_single_write_bits_per_value(filename, shape, _kwargs, exp
         expected_value = ds[0].get("grib.bitsPerValue")
 
     with temp_file() as tmp:
-        ds.save(tmp, **_kwargs)
+        ds.to_target("file", tmp, **_kwargs)
         ds1 = from_source("file", tmp)
         assert ds1.get("grib.bitsPerValue") == [expected_value] * len(ds)
 

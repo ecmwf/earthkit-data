@@ -283,7 +283,7 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
 
         assert len(ds) == 6
 
-        ref = ["t", "u", "v", "t", "u", "v"]
+        ref = [("t", 1000), ("u", 1000), ("v", 1000), ("t", 850), ("u", 850), ("v", 850)]
 
         # iteration
         val = [f.get(("parameter.variable", "vertical.level")) for f in ds]
