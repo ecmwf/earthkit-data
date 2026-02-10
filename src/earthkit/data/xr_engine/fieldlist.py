@@ -183,9 +183,11 @@ class XArrayInputFieldList(FieldList):
         keys, indices = self.db.collect(names)
 
         if keys:
+            astype = [None] * len(keys)
+            default = [None] * len(keys)
             vals = defaultdict(dict)
             for f in self.ds:
-                r = f._get_fast(keys, remapping=self.remapping, output=dict)
+                r = f._get_fast(keys, default=default, astype=astype, remapping=self.remapping, output=dict)
                 for k, v in r.items():
                     vals[k][v] = True
 

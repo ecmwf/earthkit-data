@@ -413,6 +413,7 @@ class IndexedFieldList(Index, FieldListCore):
 
         def _proc():
             for f in self:
+                # PW: TODO: `default` and `astype` kwargs of `f._get_fast()` might need to be aligned with `keys`
                 yield (f._get_fast(self._describe_keys, output=dict))
 
         return format_describe(_proc(), *args, **kwargs)
