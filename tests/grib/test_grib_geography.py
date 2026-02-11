@@ -217,12 +217,12 @@ def test_grib_to_latlon_single_1(fl_type, index):
 
     eps = 1e-5
     g = f[index] if index is not None else f
-    v = g.to_latlon(flatten=True, dtype=dtype)
-    assert isinstance(v, dict)
-    check_array_type(v["lon"], array_namespace, dtype=dtype)
-    check_array_type(v["lat"], array_namespace, dtype=dtype)
+    lat, lon = g.geography.to_latlon(flatten=True, dtype=dtype)
+    assert isinstance(lat, array_namespace.ndarray)
+    check_array_type(lat, array_namespace, dtype=dtype)
+    check_array_type(lon, array_namespace, dtype=dtype)
     check_array(
-        array_convert(v["lon"], array_namespace="numpy"),
+        array_convert(lon, array_namespace="numpy"),
         (84,),
         first=0.0,
         last=330.0,
@@ -230,7 +230,7 @@ def test_grib_to_latlon_single_1(fl_type, index):
         eps=eps,
     )
     check_array(
-        array_convert(v["lat"], array_namespace="numpy"),
+        array_convert(lat, array_namespace="numpy"),
         (84,),
         first=90,
         last=-90,

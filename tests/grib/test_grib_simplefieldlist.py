@@ -59,15 +59,3 @@ def test_grib_simple_fl_2(group):
     ds = SimpleFieldList([f for f in ds])
 
     _check(ds, group)
-
-
-# @pytest.mark.migrate
-# @pytest.mark.parametrize("group", ["param"])
-# def test_grib_simple_fl_3(group):
-#     ds_in = from_source("file", earthkit_examples_file("test6.grib"))
-
-#     ds = SimpleFieldList()
-#     for f in ds_in:
-#         ds.append(ArrayField(f.to_numpy(), f.metadata()))
-
-#     _check(ds, group)

@@ -155,14 +155,16 @@ def test_grib_file_cupy_backend():
     assert eku_array_namespace(ds1[0].to_array()) == _CUPY
 
 
-@pytest.mark.migrate
 def test_grib_array_numpy_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
 
-    ds = FieldList.from_array(
-        s.values,
-        [m for m in s.metadata()],
-    )
+    # ds = FieldList.from_array(
+    #     s.values,
+    #     [m for m in s.metadata()],
+    # )
+
+    ds = s.to_fieldlist(array_namespace="numpy")
+
     assert len(ds) == 6
     with pytest.raises(AttributeError):
         ds.path

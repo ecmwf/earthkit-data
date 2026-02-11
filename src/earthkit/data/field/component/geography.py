@@ -251,6 +251,50 @@ class BaseGeography(SimpleFieldComponent):
     def __setstate__(self, state):
         super().__setstate__(state)
 
+    def to_latlon(self, flatten=False, dtype=None):
+        r"""Return the latitudes/longitudes of all the gridpoints in the field.
+
+        Parameters
+        ----------
+        flatten: bool
+            When it is True 1D arrays are returned. Otherwise arrays with the field's
+            :obj:`shape` are returned.
+        dtype: str, array.dtype or None
+            Typecode or data-type of the arrays. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is
+            ``float64``.
+
+
+        Returns
+        -------
+        array-like, array-like
+            Tuple of latitudes and longitudes.
+
+        See Also
+        --------
+        to_points
+
+        """
+        lat = self.latitudes()
+        lon = self.longitudes()
+        if flatten:
+            from earthkit.data.utils.array import flatten
+
+            lat = flatten(lat)
+            lon = flatten(lon)
+
+        if dtype is not None:
+            from earthkit.utils.array import array_namespace
+            from earthkit.utils.array.convert import convert_dtype
+
+            target_xp = array_namespace(lat)
+            target_dtype = convert_dtype(dtype, target_xp)
+            if target_dtype is not None:
+                lat = target_xp.astype(lat, target_dtype, copy=False)
+                lon = target_xp.astype(lon, target_dtype, copy=False)
+
+        return lat, lon
+
 
 class NoGeography(BaseGeography):
     def __init__(self, shape):

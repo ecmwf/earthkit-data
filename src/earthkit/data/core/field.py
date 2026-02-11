@@ -1105,7 +1105,7 @@ class Field(Base):
 
         return result
 
-    def dump(self, component=all, filter=None, **kwargs):
+    def dump(self, component=all, filter=None, output=None, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
 
         In a Jupyter notebook it is represented as a tabbed interface.
@@ -1141,6 +1141,9 @@ class Field(Base):
         from earthkit.data.utils.summary import format_namespace_dump
 
         d = self._dump_component(component, filter=filter, simplify=False)
+
+        if output is dict:
+            return d
 
         d1 = {}
         for k in DUMP_ORDER:
@@ -1339,36 +1342,36 @@ class Field(Base):
         else:
             return eku_array_namespace(r[0]).stack(r)
 
-    def to_latlon(self, flatten=False, dtype=None, index=None):
-        r"""Return the latitudes/longitudes of all the gridpoints in the field.
+    # def to_latlon(self, flatten=False, dtype=None, index=None):
+    #     r"""Return the latitudes/longitudes of all the gridpoints in the field.
 
-        Parameters
-        ----------
-        flatten: bool
-            When it is True 1D arrays are returned. Otherwise arrays with the field's
-            :obj:`shape` are returned.
-        dtype: str, array.dtype or None
-            Typecode or data-type of the arrays. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is
-            ``float64``.
-        index: array indexing object, optional
-            The index of the latitudes/longitudes to be extracted. When it is None
-            all the values are extracted.
+    #     Parameters
+    #     ----------
+    #     flatten: bool
+    #         When it is True 1D arrays are returned. Otherwise arrays with the field's
+    #         :obj:`shape` are returned.
+    #     dtype: str, array.dtype or None
+    #         Typecode or data-type of the arrays. When it is :obj:`None` the default
+    #         type used by the underlying data accessor is used. For GRIB it is
+    #         ``float64``.
+    #     index: array indexing object, optional
+    #         The index of the latitudes/longitudes to be extracted. When it is None
+    #         all the values are extracted.
 
-        Returns
-        -------
-        dict
-            Dictionary with items "lat" and "lon", containing the arrays of the latitudes and
-            longitudes, respectively. The underlying array format
-            of the field is used.
+    #     Returns
+    #     -------
+    #     dict
+    #         Dictionary with items "lat" and "lon", containing the arrays of the latitudes and
+    #         longitudes, respectively. The underlying array format
+    #         of the field is used.
 
-        See Also
-        --------
-        to_points
+    #     See Also
+    #     --------
+    #     to_points
 
-        """
-        lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
-        return dict(lat=lat, lon=lon)
+    #     """
+    #     lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
+    #     return dict(lat=lat, lon=lon)
 
     def to_points(self, flatten=False, dtype=None, index=None):
         r"""Return the geographical coordinates in the data's original
@@ -1453,26 +1456,6 @@ class Field(Base):
     #     :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
     #     """
     #     return self.geography.bounding_box
-
-    def datetime(self):
-        r"""Return the date and time of the field.
-
-        Returns
-        -------
-        dict of datatime.datetime
-            Dict with items "base_time" and "valid_time".
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
-        >>> ds[4].datetime()
-        {'base_time': datetime.datetime(2020, 12, 21, 12, 0),
-        'valid_time': datetime.datetime(2020, 12, 21, 18, 0)}
-
-        """
-        time = self._components[TIME].component
-        return {"base_time": time.base_datetime(), "valid_time": time.valid_datetime()}
 
     def sel(self, *args, **kwargs):
         pass
