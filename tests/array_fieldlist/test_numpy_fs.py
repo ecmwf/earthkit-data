@@ -146,32 +146,6 @@ def test_array_fl_grib_from_to_fieldlist(kwargs):
     check_array_fl_from_to_fieldlist(r, [ds], md_full, **kwargs)
 
 
-@pytest.mark.parametrize(
-    "kwargs",
-    [
-        {},
-        {"dtype": np.float32},
-        {"flatten": False},
-        {"flatten": True},
-        {"flatten": True, "dtype": np.float32},
-    ],
-)
-def test_array_fl_grib_from_to_fieldlist_compat1(kwargs):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    md_full = ds.metadata("paramerter.variable")
-    assert len(ds) == 2
-
-    r = ds.to_fieldlist(array_backend="numpy", **kwargs)
-    check_array_fl_from_to_fieldlist(r, [ds], md_full, **kwargs)
-
-
-def test_array_fl_grib_from_to_fieldlist_compat2():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-
-    with pytest.raises(ValueError):
-        ds.to_fieldlist(array_backend="numpy", array_namespace="numpy")
-
-
 def test_array_fl_grib_from_to_fieldlist_repeat():
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md_full = ds.get("parameter.variable")

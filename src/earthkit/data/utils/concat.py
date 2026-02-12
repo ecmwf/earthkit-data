@@ -18,6 +18,15 @@ def concat(*args):
 
     # TODO: make it more flexible
     # currently we assume all arguments are sources
+    from earthkit.data import Field
+
+    data = []
+    for arg in args:
+        if isinstance(arg, Field):
+            data.append(arg.to_fieldlist())
+        else:
+            data.append(arg)
+
     from earthkit.data.sources import from_source
 
-    return from_source("multi", *args)
+    return from_source("multi", *data)

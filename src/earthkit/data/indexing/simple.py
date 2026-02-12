@@ -138,6 +138,10 @@ class SimpleFieldListCore(IndexedFieldList):
 
     @classmethod
     def merge(cls, sources):
+        for s in sources:
+            if not isinstance(s, SimpleFieldListCore):
+                raise ValueError("SimpleFieldList can only be merged to another SimpleFieldLists")
+
         if not all(isinstance(_, SimpleFieldListCore) for _ in sources):
             raise ValueError("SimpleFieldList can only be merged to another SimpleFieldLists")
 
@@ -188,17 +192,12 @@ class SimpleFieldList(SimpleFieldListCore):
     def _fields(self):
         return self.__fields
 
-    def append(self, field):
-        self.__fields.append(field)
-
     def __getstate__(self) -> dict:
         ret = {}
-        print("SimpleFieldList Getstate")
         ret["_fields"] = self._fields
         return ret
 
     def __setstate__(self, state: dict):
-        print("SimpleFieldList Setstate")
         fields = state.pop("_fields")
         self.__init__(fields)
 

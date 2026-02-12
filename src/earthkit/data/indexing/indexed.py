@@ -7,7 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-import warnings
 
 from earthkit.utils.array import array_namespace as eku_array_namespace
 
@@ -377,16 +376,7 @@ class IndexedFieldList(Index, FieldListCore):
 
         return format_describe(_proc(), *args, **kwargs)
 
-    def to_fieldlist(self, array_backend=None, array_namespace=None, device=None, **kwargs):
-        if array_backend is not None:
-            warnings.warn(
-                "to_fieldlist(): 'array_backend' is deprecated. Use 'array_namespace' instead",
-                DeprecationWarning,
-            )
-            if array_namespace is not None:
-                raise ValueError("to_array(): only one of array_backend and array_namespace can be specified")
-            array_namespace = array_backend
-
+    def to_fieldlist(self, array_namespace=None, device=None, **kwargs):
         return self.from_fields(
             [f.to_array_field(array_namespace=array_namespace, device=device, **kwargs) for f in self]
         )

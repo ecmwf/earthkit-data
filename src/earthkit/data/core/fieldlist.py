@@ -565,16 +565,11 @@ class FieldListCore(Base):
         pass
 
     @abstractmethod
-    def to_fieldlist(self, array_backend=None, array_namespace=None, device=None, **kwargs):
+    def to_fieldlist(self, array_namespace=None, device=None, **kwargs):
         r"""Convert to a new :class:`FieldList`.
 
         Parameters
         ----------
-        array_backend: str, array_namespace or None
-            Specify the array namespace for the generated :class:`FieldList`.
-            **Deprecated in version 0.19.0**. Use ``array_namespace`` instead.
-            In versions before 0.19.0 an :obj:`ArrayBackend` was also accepted
-            here, which is no longer the case.
         array_namespace: str, array_namespace or None
             The array namespace to be used. **New in version 0.19.0**.
         device: str or None

@@ -293,7 +293,6 @@ def check_array(
     last=None,
     meanv=None,
     eps=1e-3,
-    array_backend=None,
 ):
     v = convert_array(v, array_namespace="numpy")
 

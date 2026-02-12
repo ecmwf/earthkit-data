@@ -198,7 +198,7 @@ class GRIBReader(GribFieldListInFile, Reader):
             state["path"] = self.path
             state["positions"] = self._positions
         else:
-            state["messages"] = [f.get_private_data("grib").message() for f in self]
+            state["messages"] = [f.message() for f in self]
 
         return state
 

@@ -287,7 +287,7 @@ class SimpleFieldComponentHandler(FieldComponentHandler):
         elif isinstance(data, dict):
             dict_kwargs = dict_kwargs or {}
             return cls.from_dict(data, **dict_kwargs)
-        elif isinstance(data, cls.PART_CLS):
+        elif isinstance(data, cls.COMPONENT_CLS):
             return cls.from_component(data)
 
         raise TypeError(f"Cannot create {cls.__name__} from {type(data)}")

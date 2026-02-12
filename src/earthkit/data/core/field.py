@@ -7,10 +7,8 @@
 # nor does it submit to any jurisdiction.
 #
 
-import warnings
 from collections import defaultdict
 
-import deprecation
 from earthkit.utils.array import array_namespace as eku_array_namespace
 from earthkit.utils.array import convert as convert_array
 from earthkit.utils.array.convert import convert_dtype
@@ -434,19 +432,13 @@ class Field(Base):
         """SimpleLabels: Return the labels of the field."""
         return self._components[LABELS]
 
-    @classmethod
-    def from_array(cls, array):
-        return cls.from_dict({"values": array})
-
-    @property
-    @deprecation.deprecated(deprecated_in="0.19.0", details="Use array_namespace instead")
-    def array_backend(self):
-        r""":obj:`ArrayBackend`: Return the array namespace of the field."""
-        return self.array_namespace
+    # @classmethod
+    # def from_array(cls, array):
+    #     return cls.from_dict({"values": array})
 
     @property
     def array_namespace(self):
-        r""":obj:`ArrayBackend`: Return the array namespace of the field."""
+        r""":obj:`ArrayNamespace`: Return the array namespace of the field."""
         return eku_array_namespace(self.values)
 
     def free(self):
@@ -500,7 +492,6 @@ class Field(Base):
         flatten=False,
         dtype=None,
         copy=True,
-        array_backend=None,
         array_namespace=None,
         device=None,
         index=None,
@@ -515,11 +506,6 @@ class Field(Base):
         dtype: str, array.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        array_backend: str, array_namespace or None
-            The array namespace to be used. When it is :obj:`None` the underlying array format
-            of the field is used. **Deprecated since version 0.19.0**. Use ``array_namespace`` instead.
-            In versions before 0.19.0 an :obj:`ArrayBackend` was also accepted here, which is no longer
-            the case.
         array_namespace: str, array_namespace or None
             The array namespace to be used. When it is :obj:`None` the underlying array format
             of the field is used. **New in version 0.19.0**.
@@ -535,14 +521,6 @@ class Field(Base):
             Field values.
 
         """
-        if array_backend is not None:
-            warnings.warn(
-                "to_array(): 'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning
-            )
-            if array_namespace is not None:
-                raise ValueError("to_array(): only one of array_backend and array_namespace can be specified")
-            array_namespace = array_backend
-
         v = self._components[DATA].get_values(dtype=dtype, copy=copy)
         if array_namespace is not None:
             v = convert_array(v, array_namespace=array_namespace, device=device)
@@ -885,10 +863,10 @@ class Field(Base):
 
     def default_encoder(self):
         # TODO: improve this to support more formats and to be more robust
-        if self._private and "metadata" in self._private:
-            if hasattr(self._private["metadata"], "NAME") and self._private["metadata"].NAME == "grib":
-                return "grib"
-        return "dict"
+        if self._get_grib():
+            return "grib"
+        else:
+            return "dict"
 
     def _encode(self, encoder, **kwargs):
         """Double dispatch to the encoder"""
@@ -899,7 +877,7 @@ class Field(Base):
         return self
 
     def to_array_field(self, array_namespace=None, device=None, flatten=False, dtype=None):
-        grib = self.get_private_data("grib")
+        grib = self._get_grib()
         if grib is not None:
             return grib.new_array_field(
                 self, array_namespace=array_namespace, device=device, flatten=flatten, dtype=dtype
@@ -1079,11 +1057,33 @@ class Field(Base):
         r"""Generate a summary of the Field."""
         return self.to_fieldlist().describe(*args, **kwargs)
 
+    def message(self):
+        r"""Return a buffer containing the encoded message for Fields generated from a message based format (e.g. GRIB).
+
+        Returns
+        -------
+        bytes
+        """
+        grib = self._get_grib()
+        if grib is not None:
+            return grib.message()
+        return None
+
     def _set_private_data(self, name, data):
         self._private[name] = data
 
-    def get_private_data(self, name):
+    def _get_private_data(self, name):
         return self._private.get(name)
+
+    def _get_grib(self):
+        if (
+            self._private
+            and "metadata" in self._private
+            and getattr(self._private["metadata"], "NAME", None) == GRIB
+        ):
+            return self._private["metadata"]
+
+        return None
 
     def _check(self):
         return
@@ -1091,7 +1091,7 @@ class Field(Base):
         #     m.check(self)
 
     def _get_grib_context(self, context):
-        grib = self.get_private_data("grib")
+        grib = self._get_grib()
         if grib is not None:
             context["handle"] = grib.handle
 
@@ -1256,10 +1256,7 @@ class Field(Base):
         return state
 
     def __setstate__(self, state):
-
         components = state.get("components", {})
-
         self.__init__(**components)
-
         private = state.get("private", {})
         self._private = private

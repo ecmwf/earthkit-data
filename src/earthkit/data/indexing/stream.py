@@ -9,12 +9,12 @@
 
 from earthkit.data.sources import Source
 
-from .fieldlist import FieldList
+from .indexed import IndexedFieldList
 
 
-class StreamFieldList(FieldList, Source):
+class StreamFieldList(IndexedFieldList, Source):
     def __init__(self, source, **kwargs):
-        FieldList.__init__(self, **kwargs)
+        IndexedFieldList.__init__(self, **kwargs)
         self._source = source
 
     def mutate(self):
