@@ -15,7 +15,7 @@ import numpy as np
 
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalize
-from earthkit.data.field.data import FieldData
+from earthkit.data.field.data import DataFieldComponentHandler
 from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.utils.dates import to_datetime
 
@@ -335,7 +335,7 @@ class ForcingsData:
         return request
 
 
-class ForcingsFieldData(FieldData):
+class ForcingsFieldData(DataFieldComponentHandler):
     def __init__(self, proc, date):
         self.proc = proc
         self.date = date

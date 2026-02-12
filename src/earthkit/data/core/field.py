@@ -75,7 +75,7 @@ class ComponentMaker:
 
     @thread_safe_cached_property
     def _default_cls(self):
-        from earthkit.data.field.data import FieldData
+        from earthkit.data.field.data import DataFieldComponentHandler
         from earthkit.data.field.ensemble import EnsembleFieldComponentHandler
         from earthkit.data.field.geography import GeographyFieldComponentHandler
         from earthkit.data.field.labels import SimpleLabels
@@ -85,7 +85,7 @@ class ComponentMaker:
         from earthkit.data.field.vertical import VerticalFieldComponentHandler
 
         return {
-            DATA: FieldData,
+            DATA: DataFieldComponentHandler,
             TIME: TimeFieldComponentHandler,
             PARAMETER: ParameterFieldComponentHandler,
             GEOGRAPHY: GeographyFieldComponentHandler,

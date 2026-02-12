@@ -25,17 +25,16 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
 @pytest.fixture
 def xr_lod_latlon():
     prototype = {
-        "latitudes": [10.0, 0.0, -10.0],
-        "longitudes": [20, 40.0],
+        "geography": {"latitudes": [10.0, 0.0, -10.0], "longitudes": [20, 40.0]},
         "values": [1, 2, 3, 4, 5, 6],
-        "valid_datetime": "2018-08-01T09:00:00",
+        "time": {"valid_datetime": "2018-08-01T09:00:00"},
     }
 
     d = [
-        {"param": "t", "level": 500, **prototype},
-        {"param": "t", "level": 850, **prototype},
-        {"param": "u", "level": 500, **prototype},
-        {"param": "u", "level": 850, **prototype},
+        {"parameter": {"variable": "t"}, "vertical": {"level": 500}, **prototype},
+        {"parameter": {"variable": "t"}, "vertical": {"level": 850}, **prototype},
+        {"parameter": {"variable": "u"}, "vertical": {"level": 500}, **prototype},
+        {"parameter": {"variable": "u"}, "vertical": {"level": 850}, **prototype},
     ]
     ds = from_source("list-of-dicts", d)
     return ds
@@ -45,14 +44,14 @@ def xr_lod_latlon():
 def xr_lod_nongeo():
     prototype = {
         "values": [1, 2, 3, 4, 5, 6],
-        "valid_datetime": "2018-08-01T09:00:00Z",
+        "time": {"valid_datetime": "2018-08-01T09:00:00Z"},
     }
 
     d = [
-        {"param": "t", "level": 500, **prototype},
-        {"param": "t", "level": 850, **prototype},
-        {"param": "u", "level": 500, **prototype},
-        {"param": "u", "level": 850, **prototype},
+        {"parameter": {"variable": "t"}, "vertical": {"level": 500}, **prototype},
+        {"parameter": {"variable": "t"}, "vertical": {"level": 850}, **prototype},
+        {"parameter": {"variable": "u"}, "vertical": {"level": 500}, **prototype},
+        {"parameter": {"variable": "u"}, "vertical": {"level": 850}, **prototype},
     ]
     ds = from_source("list-of-dicts", d)
     return ds
@@ -61,17 +60,35 @@ def xr_lod_nongeo():
 @pytest.fixture
 def xr_lod_forecast():
     prototype = {
-        "latitudes": [10.0, 0.0, -10.0],
-        "longitudes": [20, 40.0],
+        "geography": {"latitudes": [10.0, 0.0, -10.0], "longitudes": [20, 40.0]},
         "values": [1, 2, 3, 4, 5, 6],
-        "base_datetime": "2018-08-01T09:00:00",
     }
 
     d = [
-        {"param": "t", "level": 500, "step": 0, **prototype},
-        {"param": "t", "level": 500, "step": 6, **prototype},
-        {"param": "u", "level": 500, "step": 0, **prototype},
-        {"param": "u", "level": 500, "step": 6, **prototype},
+        {
+            "parameter": {"variable": "t"},
+            "vertical": {"level": 500},
+            "time": {"base_datetime": "2018-08-01T09:00:00", "step": 0},
+            **prototype,
+        },
+        {
+            "parameter": {"variable": "t"},
+            "vertical": {"level": 500},
+            "time": {"base_datetime": "2018-08-01T09:00:00", "step": 6},
+            **prototype,
+        },
+        {
+            "parameter": {"variable": "u"},
+            "vertical": {"level": 500},
+            "time": {"base_datetime": "2018-08-01T09:00:00", "step": 0},
+            **prototype,
+        },
+        {
+            "parameter": {"variable": "u"},
+            "vertical": {"level": 500},
+            "time": {"base_datetime": "2018-08-01T09:00:00", "step": 6},
+            **prototype,
+        },
     ]
     ds = from_source("list-of-dicts", d)
     return ds
@@ -80,26 +97,25 @@ def xr_lod_forecast():
 @pytest.fixture
 def xr_lod_valid_time():
     prototype = {
-        "latitudes": [10.0, 0.0, -10.0],
-        "longitudes": [20, 40.0],
+        "geography": {"latitudes": [10.0, 0.0, -10.0], "longitudes": [20, 40.0]},
         "values": [1, 2, 3, 4, 5, 6],
     }
 
     d = [
         {
-            "param": "t",
-            "valid_datetime": "2018-08-01T09:00:00",
+            "parameter": {"variable": "t"},
+            "time": {"valid_datetime": "2018-08-01T09:00:00"},
             **prototype,
         },
         {
-            "param": "t",
-            "valid_datetime": "2018-08-01T15:00:00",
+            "parameter": {"variable": "t"},
+            "time": {"valid_datetime": "2018-08-01T15:00:00"},
             **prototype,
         },
-        {"param": "u", "valid_datetime": "2018-08-01T09:00:00", **prototype},
+        {"parameter": {"variable": "u"}, "time": {"valid_datetime": "2018-08-01T09:00:00"}, **prototype},
         {
-            "param": "u",
-            "valid_datetime": "2018-08-01T15:00:00",
+            "parameter": {"variable": "u"},
+            "time": {"valid_datetime": "2018-08-01T15:00:00"},
             **prototype,
         },
     ]
@@ -110,38 +126,29 @@ def xr_lod_valid_time():
 @pytest.fixture
 def xr_lod_raw_time():
     prototype = {
-        "latitudes": [10.0, 0.0, -10.0],
-        "longitudes": [20, 40.0],
+        "geography": {"latitudes": [10.0, 0.0, -10.0], "longitudes": [20, 40.0]},
         "values": [1, 2, 3, 4, 5, 6],
     }
 
     d = [
         {
-            "param": "t",
-            "date": "20180801",
-            "time": 900,
-            "step": 0,
+            "parameter": {"variable": "t"},
+            "time": {"base_date": "20180801", "base_time": 900, "step": 0},
             **prototype,
         },
         {
-            "param": "t",
-            "date": "20180801",
-            "time": 900,
-            "step": 6,
+            "parameter": {"variable": "t"},
+            "time": {"base_date": "20180801", "base_time": 900, "step": 6},
             **prototype,
         },
         {
-            "param": "u",
-            "date": "20180801",
-            "time": 900,
-            "step": 0,
+            "parameter": {"variable": "u"},
+            "time": {"base_date": "20180801", "base_time": 900, "step": 0},
             **prototype,
         },
         {
-            "param": "u",
-            "date": "20180801",
-            "time": 900,
-            "step": 6,
+            "parameter": {"variable": "u"},
+            "time": {"base_date": "20180801", "base_time": 900, "step": 6},
             **prototype,
         },
     ]

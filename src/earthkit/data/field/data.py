@@ -20,7 +20,7 @@ from .core import LazyFieldComponentHandler
 
 
 class BaseDataFieldComponentHandler(FieldComponentHandler):
-    """Base class for the data component of a field.
+    """Base class for the data component handler of a field.
 
     This class defines the interface for accessing and manipulating the data values
     associated with a field. It provides methods to retrieve the data as an array,
@@ -36,7 +36,8 @@ class BaseDataFieldComponentHandler(FieldComponentHandler):
 
     @property
     def component(self):
-        return None
+        """This component handler behaves like a component"""
+        return self
 
     @property
     @abstractmethod
@@ -73,27 +74,27 @@ class BaseDataFieldComponentHandler(FieldComponentHandler):
         return default
 
 
-class FieldData(BaseDataFieldComponentHandler):
-    """Simple data class that provides basic implementation for the data component of a field.
+class DataFieldComponentHandler(BaseDataFieldComponentHandler):
+    """Data component handler for Field that provides implementation
+    for some of the base class methods.
 
-    DataFieldComponent has to be subclassed to provide concrete implementation
-    for :py:meth:`get_values`.
+    It is still an abstract class, subclasses must implement :py:meth:`get_values`.
     """
 
     @classmethod
-    def from_dict(cls, d) -> "FieldData":
-        """Create a DataFieldComponent object from a dictionary."""
+    def from_dict(cls, d) -> "DataFieldComponentHandler":
+        """Create DataFieldComponentHandler from a dictionary."""
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
         # d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
         if "values" in d:
             v = d["values"]
-            return ArrayFieldData(v)
+            return ArrayDataFieldComponentHandler(v)
         raise ValueError("Invalid arguments")
 
     @classmethod
-    def from_any(cls, data: Any, **dict_kwargs) -> "FieldData":
-        """Create a DataFieldComponent object from any input.
+    def from_any(cls, data: Any, **dict_kwargs) -> "DataFieldComponentHandler":
+        """Create a DataFieldComponentHandler object from any input.
 
         Parameters
         ----------
@@ -136,7 +137,7 @@ class FieldData(BaseDataFieldComponentHandler):
         FieldData
             A new instance of FieldData with the updated values.
         """
-        return ArrayFieldData(array)
+        return ArrayDataFieldComponentHandler(array)
 
     def set(self, values=None, **kwargs):
         """Set metadata fields for the field.
@@ -171,7 +172,7 @@ class FieldData(BaseDataFieldComponentHandler):
         COLLECTOR.collect_keys(self, context)
 
     @classmethod
-    def create_empty(cls) -> "FieldData":
+    def create_empty(cls) -> "DataFieldComponentHandler":
         return EMPTY_DATA_HANDLER
 
 
@@ -217,9 +218,13 @@ class ArrayCache:
             _create(self.cache_file)
 
 
-class EmptyFieldData(FieldData):
+class EmptyDataFieldComponentHandler(BaseDataFieldComponentHandler):
     @classmethod
-    def from_dict(cls, d) -> "FieldData":
+    def from_dict(cls, d) -> "BaseDataFieldComponentHandler":
+        return cls()
+
+    @classmethod
+    def from_any(cls, data: Any, **dict_kwargs) -> "BaseDataFieldComponentHandler":
         return cls()
 
     def to_dict(self):
@@ -235,6 +240,12 @@ class EmptyFieldData(FieldData):
     def get_values(self, dtype=None, copy=True):
         return None
 
+    def dump(self, *args, **kwargs):
+        return None
+
+    def check(self, owner):
+        pass
+
     def get_grib_context(self, context):
         pass
 
@@ -245,10 +256,10 @@ class EmptyFieldData(FieldData):
         pass
 
 
-EMPTY_DATA_HANDLER = EmptyFieldData()
+EMPTY_DATA_HANDLER = EmptyDataFieldComponentHandler()
 
 
-class ArrayFieldData(FieldData):
+class ArrayDataFieldComponentHandler(DataFieldComponentHandler):
     """Data component of a field that stores values in an array."""
 
     _cache = None

@@ -10,12 +10,12 @@
 import logging
 from typing import Any
 
-from earthkit.data.field.data import FieldData
+from earthkit.data.field.data import DataFieldComponentHandler
 
 LOG = logging.getLogger(__name__)
 
 
-class XArrayData(FieldData):
+class XArrayData(DataFieldComponentHandler):
     def __init__(self, owner, selection: Any) -> None:
         self.owner = owner
         self.selection = selection

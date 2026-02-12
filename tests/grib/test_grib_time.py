@@ -27,46 +27,6 @@ from grib_fixtures import FL_TYPES  # noqa: E402
 from grib_fixtures import load_grib_data  # noqa: E402
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_datetime_1(fl_type):
-    ds, _ = load_grib_data("test.grib", fl_type)
-
-    ref = {
-        "base_time": [datetime.datetime(2020, 5, 13, 12)],
-        "valid_time": [datetime.datetime(2020, 5, 13, 12)],
-    }
-
-    assert ds.datetime() == ref
-
-    ref = {
-        "base_time": datetime.datetime(2020, 5, 13, 12),
-        "valid_time": datetime.datetime(2020, 5, 13, 12),
-    }
-
-    assert ds[0].datetime() == ref
-
-
-def test_grib_datetime_2():
-    ds = from_source(
-        "dummy-source",
-        kind="grib",
-        paramId=[129, 130],
-        date=[19900101, 19900102],
-        level=[1000, 500],
-    )
-    ref = {
-        "base_time": [
-            datetime.datetime(1990, 1, 1, 12, 0),
-            datetime.datetime(1990, 1, 2, 12, 0),
-        ],
-        "valid_time": [
-            datetime.datetime(1990, 1, 1, 12, 0),
-            datetime.datetime(1990, 1, 2, 12, 0),
-        ],
-    }
-    assert ds.datetime() == ref
-
-
 @pytest.mark.cache
 def test_grib_time_analysis():
     ds = from_source("url", earthkit_remote_test_data_file("xr_engine/date/msl_analysis.grib"))

@@ -8,7 +8,7 @@
 #
 
 
-from earthkit.data.field.data import FieldData
+from earthkit.data.field.data import DataFieldComponentHandler
 
 from .collector import GribContextCollector
 
@@ -27,7 +27,7 @@ class GribDataContextCollector(GribContextCollector):
 COLLECTOR = GribDataContextCollector()
 
 
-class GribData(FieldData):
+class GribData(DataFieldComponentHandler):
     def __init__(self, handle):
         self.handle = handle
 
