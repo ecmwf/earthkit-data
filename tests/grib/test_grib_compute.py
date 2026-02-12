@@ -206,6 +206,9 @@ def test_grib_compute_pow(fl_type, operand):
     assert xp.allclose(res.values, ref, equal_nan=True)
 
 
+FieldOperand,
+
+
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("operand", LEFT_OPERANDS)
 def test_grib_compute_radd(fl_type, operand):
@@ -215,6 +218,7 @@ def test_grib_compute_radd(fl_type, operand):
 
     res = lval + ds
     ref = lval_ref + ds.values
+
     assert xp.allclose(res.values, ref, equal_nan=True)
 
 
