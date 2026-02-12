@@ -9,12 +9,12 @@
 
 import logging
 
-from earthkit.data.field.data import DataFieldComponent
+from earthkit.data.field.data import FieldData
 
 LOG = logging.getLogger(__name__)
 
 
-class GeoTIFFData(DataFieldComponent):
+class GeoTIFFData(FieldData):
     def __init__(self, ds) -> None:
         self.ds = ds
 

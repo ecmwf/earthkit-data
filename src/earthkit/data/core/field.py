@@ -20,20 +20,11 @@ from earthkit.data.core.order import Patch
 from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalize
-from earthkit.data.field.data import DataFieldComponent
-from earthkit.data.field.ensemble import EnsembleFieldComponentHandler
-from earthkit.data.field.geography import GeographyFieldComponentHandler
-from earthkit.data.field.labels import SimpleLabels
-from earthkit.data.field.parameter import ParameterFieldComponentHandler
-from earthkit.data.field.proc import ProcFieldComponentHandler
-from earthkit.data.field.time import TimeFieldComponentHandler
-from earthkit.data.field.vertical import VerticalFieldComponentHandler
-from earthkit.data.indexing.simple import SimpleFieldList
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.array import flatten as array_flatten
 from earthkit.data.utils.array import reshape as array_reshape
 from earthkit.data.utils.array import target_shape
 from earthkit.data.utils.compute import wrap_maths
-from earthkit.data.utils.metadata.args import metadata_argument
 from earthkit.data.utils.metadata.args import metadata_argument_new
 
 GRIB = "grib"
@@ -68,6 +59,53 @@ DUMP_ORDER = [
     ENSEMBLE,
     GEOGRAPHY,
 ]
+
+
+class ComponentMaker:
+    """A factory class to delay import of component classes."""
+
+    def from_dict(self, name, *args, **kwargs):
+        return self.default_cls(name).from_dict(*args, **kwargs)
+
+    def from_any(self, name, *args, **kwargs):
+        return self.default_cls(name).from_any(*args, **kwargs)
+
+    def default_cls(self, name):
+        return self._default_cls.get(name)
+
+    @thread_safe_cached_property
+    def _default_cls(self):
+        from earthkit.data.field.data import FieldData
+        from earthkit.data.field.ensemble import EnsembleFieldComponentHandler
+        from earthkit.data.field.geography import GeographyFieldComponentHandler
+        from earthkit.data.field.labels import SimpleLabels
+        from earthkit.data.field.parameter import ParameterFieldComponentHandler
+        from earthkit.data.field.proc import ProcFieldComponentHandler
+        from earthkit.data.field.time import TimeFieldComponentHandler
+        from earthkit.data.field.vertical import VerticalFieldComponentHandler
+
+        return {
+            DATA: FieldData,
+            TIME: TimeFieldComponentHandler,
+            PARAMETER: ParameterFieldComponentHandler,
+            GEOGRAPHY: GeographyFieldComponentHandler,
+            VERTICAL: VerticalFieldComponentHandler,
+            ENSEMBLE: EnsembleFieldComponentHandler,
+            PROC: ProcFieldComponentHandler,
+            LABELS: SimpleLabels,
+        }
+
+    def empty_object(self, name):
+        cls = self.default_cls(name)
+        if cls is None:
+            raise ValueError(f"Unknown component name: {name}")
+
+        if name == LABELS:
+            return cls()
+        return cls.create_empty()
+
+
+COMPONENT_MAKER = ComponentMaker()
 
 
 @wrap_maths
@@ -117,7 +155,7 @@ class Field(Base):
 
     """
 
-    _PART_NAMES = (
+    _COMPONENT_NAMES = (
         DATA,
         TIME,
         PARAMETER,
@@ -127,20 +165,6 @@ class Field(Base):
         PROC,
         LABELS,
     )
-
-    _DEFAULT_PART_CLS = {
-        DATA: DataFieldComponent,
-        TIME: TimeFieldComponentHandler,
-        PARAMETER: ParameterFieldComponentHandler,
-        GEOGRAPHY: GeographyFieldComponentHandler,
-        VERTICAL: VerticalFieldComponentHandler,
-        ENSEMBLE: EnsembleFieldComponentHandler,
-        PROC: ProcFieldComponentHandler,
-        LABELS: SimpleLabels,
-    }
-
-    # this will be initialized by the init_component_conf decorator
-    # _PART_KEYS = None
 
     def __init__(
         self,
@@ -154,19 +178,20 @@ class Field(Base):
         proc=None,
         labels=None,
     ):
-
-        if labels is None:
-            labels = SimpleLabels()
+        def _ensure(name, value):
+            if value is None:
+                return COMPONENT_MAKER.empty_object(name)
+            return value
 
         self._components = {
-            DATA: data,
-            TIME: time,
-            PARAMETER: parameter,
-            GEOGRAPHY: geography,
-            VERTICAL: vertical,
-            ENSEMBLE: ensemble,
-            PROC: proc,
-            LABELS: labels,
+            DATA: _ensure(DATA, data),
+            TIME: _ensure(TIME, time),
+            PARAMETER: _ensure(PARAMETER, parameter),
+            GEOGRAPHY: _ensure(GEOGRAPHY, geography),
+            VERTICAL: _ensure(VERTICAL, vertical),
+            ENSEMBLE: _ensure(ENSEMBLE, ensemble),
+            PROC: _ensure(PROC, proc),
+            LABELS: _ensure(LABELS, labels),
         }
 
         self._private = dict()
@@ -232,10 +257,10 @@ class Field(Base):
             LABELS: labels,
         }
 
-        for name in Field._PART_NAMES:
+        for name in Field._COMPONENT_NAMES:
             v = _kwargs[name]
             if v is not None:
-                _kwargs[name] = Field._DEFAULT_PART_CLS[name].from_any(v)
+                _kwargs[name] = COMPONENT_MAKER.default_cls(name).from_any(v)
             else:
                 _kwargs[name] = field._components[name]
 
@@ -267,47 +292,49 @@ class Field(Base):
         if not isinstance(d, dict):
             raise TypeError("d must be a dictionary")
 
-        components = {}
-        d = d.copy()
+        return cls.from_components(**d)
 
-        # TODO: add support for proc component
+        # components = {}
+        # d = d.copy()
 
-        shape_hint = None
+        # # TODO: add support for proc component
 
-        if "values" in d:
-            values = d.pop("values")
-            components[DATA] = cls._DEFAULT_PART_CLS[DATA].from_dict({"values": values})
-            shape_hint = components[DATA].get_values(copy=False).shape
+        # shape_hint = None
 
-        for name in [TIME, PARAMETER, VERTICAL, ENSEMBLE, GEOGRAPHY]:
-            d_component = {}
-            for k in list(d.keys()):
-                if k.startswith(name + "."):
-                    d_component[k.split(".", 1)[1]] = d.pop(k)
+        # if "values" in d:
+        #     values = d.pop("values")
+        #     components[DATA] = cls._DEFAULT_PART_CLS[DATA].from_dict({"values": values})
+        #     shape_hint = components[DATA].get_values(copy=False).shape
 
-            # geography may need shape hint from data so handled separately
-            if name == GEOGRAPHY:
-                components[name] = cls._DEFAULT_PART_CLS[name].from_dict(d_component, shape_hint=shape_hint)
-            else:
-                components[name] = cls._DEFAULT_PART_CLS[name].from_dict(d_component)
+        # for name in [TIME, PARAMETER, VERTICAL, ENSEMBLE, GEOGRAPHY]:
+        #     d_component = {}
+        #     for k in list(d.keys()):
+        #         if k.startswith(name + "."):
+        #             d_component[k.split(".", 1)[1]] = d.pop(k)
 
-        # geography may need shape hint from data so handled separately
-        shape_hint = None
-        if components.get(DATA):
-            shape_hint = components[DATA].get_values(copy=False).shape
+        #     # geography may need shape hint from data so handled separately
+        #     if name == GEOGRAPHY:
+        #         components[name] = cls._DEFAULT_PART_CLS[name].from_dict(d_component, shape_hint=shape_hint)
+        #     else:
+        #         components[name] = cls._DEFAULT_PART_CLS[name].from_dict(d_component)
 
-        # d_component = {k.split(".")[1]: v for k, v in d.items() if k.startswith(GEOGRAPHY + ".")}
-        # components[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_dict(d, shape_hint=shape_hint)
+        # # geography may need shape hint from data so handled separately
+        # shape_hint = None
+        # if components.get(DATA):
+        #     shape_hint = components[DATA].get_values(copy=False).shape
 
-        # the unused items are added as labels
-        labels = SimpleLabels(d)
+        # # d_component = {k.split(".")[1]: v for k, v in d.items() if k.startswith(GEOGRAPHY + ".")}
+        # # components[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_dict(d, shape_hint=shape_hint)
 
-        return cls(**components, labels=labels)
+        # # the unused items are added as labels
+        # labels = SimpleLabels(d)
+
+        # return cls(**components, labels=labels)
 
     @classmethod
     def from_components(
         cls,
-        data=None,
+        values=None,
         time=None,
         parameter=None,
         geography=None,
@@ -344,7 +371,6 @@ class Field(Base):
             or specified in the keyword arguments.
         """
         _kwargs = {
-            DATA: data,
             TIME: time,
             PARAMETER: parameter,
             VERTICAL: vertical,
@@ -355,22 +381,22 @@ class Field(Base):
 
         components = {}
 
+        shape_hint = None
+        if values is not None:
+            components[DATA] = COMPONENT_MAKER.default_cls(DATA).from_dict({"values": values})
+            shape_hint = components[DATA].get_values(copy=False).shape
+
         for name, v in _kwargs.items():
             if v is not None:
-                component = cls._DEFAULT_PART_CLS[name].from_any(v, dict_kwargs={"allow_unused": True})
+                component = COMPONENT_MAKER.default_cls(name).from_any(v)
                 components[name] = component
 
         if isinstance(geography, dict):
-            shape_hint = None
-            if "data" in components:
-                data = components["data"]
-                shape_hint = data.values.shape
-            components[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_dict(
-                allow_unused=True, shape_hint=shape_hint
+            components[GEOGRAPHY] = COMPONENT_MAKER.default_cls(GEOGRAPHY).from_dict(
+                geography, shape_hint=shape_hint
             )
         elif geography is not None:
-            components[GEOGRAPHY] = cls._DEFAULT_PART_CLS[GEOGRAPHY].from_any(geography)
-
+            components[GEOGRAPHY] = COMPONENT_MAKER.default_cls(GEOGRAPHY).from_any(geography)
         return cls(**components)
 
     @property
@@ -433,8 +459,9 @@ class Field(Base):
 
     @property
     def shape(self):
-        if self._components.get(GEOGRAPHY):
-            return self._components[GEOGRAPHY].component.shape()
+        v = self.geography.shape()
+        if v is not None:
+            return v
         else:
             return self.values.shape
 
@@ -782,177 +809,26 @@ class Field(Base):
             patches=patches,
         )
 
-    def metadata_ori(self, *keys, astype=None, remapping=None, patches=None, **kwargs):
-        r"""Return metadata values from the field.
-
-        When called without any arguments returns a :obj:`Metadata` object.
+    def set(self, *args, **kwargs):
+        """Return a new Field with the specified metadata keys set to the given values.
 
         Parameters
         ----------
-        *keys: tuple
-            Positional arguments specifying metadata keys. Can be empty, in this case all
-            the keys from the specified ``namespace`` will
-            be used. (See examples below).
-        astype: type name, :obj:`list` or :obj:`tuple`
-            Return types for ``keys``. A single value is accepted and applied to all the ``keys``.
-            Otherwise, must have same the number of elements as ``keys``. Only used when
-            ``keys`` is not empty.
-        remapping: dict, optional
-            Creates new metadata keys from existing ones that we can refer to in ``*args`` and
-            ``**kwargs``. E.g. to define a new
-            key "param_level" as the concatenated value of the "param" and "level" keys use::
-
-                remapping={"param_level": "{param}{level}"}
+        *args: tuple
+            Positional arguments used to specify the metadata keys and values to set. Each
+            argument can be a dict with keys and values to set. When multiple dicts are given
+            they are merged together with the latter dicts taking precedence over the former ones.
         **kwargs: dict, optional
-            Other keyword arguments:
-
-            * namespace: :obj:`str`, :obj:`list`, :obj:`tuple`, :obj:`None` or :obj:`all`
-                The namespace to choose the ``keys`` from. When ``keys`` is empty and ``namespace`` is
-                :obj:`all` all the available namespaces will be used. When ``keys`` is non empty
-                ``namespace`` cannot specify multiple values and it cannot be :obj:`all`. When
-                ``namespace`` is None or empty str all the available keys will be used
-                (without a namespace qualifier).
-
-            * default: value, optional
-                Specifies the same default value for all the ``keys`` specified. When ``default`` is
-                **not present** and a key is not found or its value is a missing value
-                :obj:`metadata` will raise KeyError.
+            Keyword arguments used to specify the metadata keys and values to set. They take
+            precedence over the positional arguments.
 
         Returns
         -------
-        single value, :obj:`list`, :obj:`tuple`, :obj:`dict` or :obj:`Metadata`
-            - when called without any arguments returns a :obj:`Metadata` object
-            - when ``keys`` is not empty:
-                - returns single value when ``keys`` is a str
-                - otherwise returns the same type as that of ``keys`` (:obj:`list` or :obj:`tuple`)
-            - when ``keys`` is empty:
-                - when ``namespace`` is None or an empty str returns a :obj:`dict` with all
-                  the available keys and values
-                - when ``namespace`` is :obj:`str` returns a :obj:`dict` with the keys and values
-                  in that namespace
-                - otherwise returns a :obj:`dict` with one item per namespace (dict of dict)
+        Field
+            A new Field object with the specified metadata keys set to the given values.
 
-        Raises
-        ------
-        KeyError
-            If no ``default`` is set and a key is not found in the message or it has a missing value.
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-
-        Calling without arguments:
-
-        >>> r = ds[0].metadata()
-        >>> r
-        <earthkit.data.readers.grib.metadata.GribMetadata object at 0x164ace170>
-        >>> r["name"]
-        '2 metre temperature'
-
-        Getting keys with their native type:
-
-        >>> ds[0].metadata("param")
-        '2t'
-        >>> ds[0].metadata("param", "units")
-        ('2t', 'K')
-        >>> ds[0].metadata(("param", "units"))
-        ('2t', 'K')
-        >>> ds[0].metadata(["param", "units"])
-        ['2t', 'K']
-        >>> ds[0].metadata(["param"])
-        ['2t']
-        >>> ds[0].metadata("badkey")
-        KeyError: 'badkey'
-        >>> ds[0].metadata("badkey", default=None)
-        <BLANKLINE>
-
-        Prescribing key types:
-
-        >>> ds[0].metadata("centre", astype=int)
-        98
-        >>> ds[0].metadata(["paramId", "centre"], astype=int)
-        [167, 98]
-        >>> ds[0].metadata(["centre", "centre"], astype=[int, str])
-        [98, 'ecmf']
-
-        Using namespaces:
-
-        >>> ds[0].metadata(namespace="parameter")
-        {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature', 'shortName': '2t'}
-        >>> ds[0].metadata(namespace=["parameter", "vertical"])
-        {'parameter': {'centre': 'ecmf', 'paramId': 167, 'units': 'K', 'name': '2 metre temperature',
-         'shortName': '2t'},
-         'vertical': {'typeOfLevel': 'surface', 'level': 0}}
-        >>> r = ds[0].metadata(namespace=all)
-        >>> r.keys()
-        dict_keys(['default', 'ls', 'geography', 'mars', 'parameter', 'statistics', 'time', 'vertical'])
-        >>> r = ds[0].metadata(namespace=None)
-        >>> len(r)
-        186
-        >>> r["name"]
-        '2 metre temperature'
         """
-
-        if remapping is not None or patches is not None:
-            from earthkit.data.core.order import build_remapping
-
-            remapping = build_remapping(remapping, patches)
-            return remapping(self.metadata)(*keys, astype=astype, **kwargs)
-
-        # when called without arguments returns the metadata object
-        if len(keys) == 0 and astype is None and not kwargs:
-            raise NotImplementedError("Field.metadata() without arguments is not implemented. ")
-            # return self._metadata
-
-        namespace = kwargs.pop("namespace", None)
-        key, namespace, astype, key_arg_type = metadata_argument(*keys, namespace=namespace, astype=astype)
-
-        assert isinstance(key, list)
-        assert isinstance(namespace, (list, tuple))
-
-        if key:
-            assert isinstance(astype, (list, tuple))
-            if namespace and namespace[0] != "default":
-                key = [namespace[0] + "." + k for k in key]
-
-            raise_on_missing = "default" not in kwargs
-            default = kwargs.pop("default", None)
-
-            r = [
-                self.get(
-                    k,
-                    default=default,
-                    astype=kt,
-                    raise_on_missing=raise_on_missing,
-                    **kwargs,
-                )
-                for k, kt in zip(key, astype)
-            ]
-
-            if key_arg_type is str:
-                return r[0]
-            elif key_arg_type is tuple:
-                return tuple(r)
-            else:
-                return r
-        elif namespace:
-            if all in namespace:
-                namespace = self._metadata.namespaces()
-
-            r = {ns: self._metadata.as_namespace(ns) for ns in namespace}
-            if len(r) == 1:
-                return r[namespace[0]]
-            else:
-                return r
-        else:
-            return self._metadata.as_namespace(None)
-
-    def set(self, *args, **kwargs):
-        # collect keys to set per component
-
         kwargs = kwargs.copy()
-
         for a in args:
             if a is None:
                 continue
@@ -1031,6 +907,8 @@ class Field(Base):
         return self
 
     def to_fieldlist(self, fields=None):
+        from earthkit.data.indexing.simple import SimpleFieldList
+
         if fields is None:
             fields = [self]
         return SimpleFieldList.from_fields(fields)
@@ -1284,8 +1162,7 @@ class Field(Base):
 
         See Also
         --------
-        to_latlon
-        to_points
+        geography
         to_numpy
         values
 
@@ -1341,121 +1218,6 @@ class Field(Base):
             return r[0]
         else:
             return eku_array_namespace(r[0]).stack(r)
-
-    # def to_latlon(self, flatten=False, dtype=None, index=None):
-    #     r"""Return the latitudes/longitudes of all the gridpoints in the field.
-
-    #     Parameters
-    #     ----------
-    #     flatten: bool
-    #         When it is True 1D arrays are returned. Otherwise arrays with the field's
-    #         :obj:`shape` are returned.
-    #     dtype: str, array.dtype or None
-    #         Typecode or data-type of the arrays. When it is :obj:`None` the default
-    #         type used by the underlying data accessor is used. For GRIB it is
-    #         ``float64``.
-    #     index: array indexing object, optional
-    #         The index of the latitudes/longitudes to be extracted. When it is None
-    #         all the values are extracted.
-
-    #     Returns
-    #     -------
-    #     dict
-    #         Dictionary with items "lat" and "lon", containing the arrays of the latitudes and
-    #         longitudes, respectively. The underlying array format
-    #         of the field is used.
-
-    #     See Also
-    #     --------
-    #     to_points
-
-    #     """
-    #     lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
-    #     return dict(lat=lat, lon=lon)
-
-    def to_points(self, flatten=False, dtype=None, index=None):
-        r"""Return the geographical coordinates in the data's original
-        Coordinate Reference System (CRS).
-
-        Parameters
-        ----------
-        flatten: bool
-            When it is True 1D arrays are returned. Otherwise arrays with the field's
-            :obj:`shape` are returned.
-        dtype: str, array.dtype or None
-            Typecode or data-type of the arrays. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is
-            ``float64``.
-        index: array indexing object, optional
-            The index of the coordinates to be extracted. When it is None
-            all the values are extracted.
-
-        Returns
-        -------
-        dict
-            Dictionary with items "x" and "y", containing the arrays of the x and
-            y coordinates, respectively. The underlying array format
-            of the field is used.
-
-        Raises
-        ------
-        ValueError
-            When the coordinates in the data's original CRS are not available.
-
-        See Also
-        --------
-        to_latlon
-
-        """
-
-        def _reshape(v, flatten):
-            shape = target_shape(v, flatten, self.shape)
-            return array_reshape(v, shape)
-
-        x = self.geography.x()
-        y = self.geography.y()
-        r = {}
-        if x is not None and y is not None:
-            x = _reshape(x, flatten)
-            y = _reshape(y, flatten)
-            if index is not None:
-                x = x[index]
-                y = y[index]
-            r = dict(x=x, y=y)
-        elif self.geography.projection().CARTOPY_CRS == "PlateCarree":
-            lon, lat = self.data(("lon", "lat"), flatten=flatten, dtype=dtype, index=index)
-            return dict(x=lon, y=lat)
-        else:
-            raise ValueError("to_points(): geographical coordinates in original CRS are not available")
-
-        # convert values to array format
-        assert r
-        # sample = self._components[DATA].get_values(dtype=dtype)
-        # for k, v in zip(r.keys(), convert_array(list(r.values()), target_array_sample=sample)):
-        #     r[k] = v
-        # return r
-
-        sample = self._components[DATA].get_values(dtype=dtype)
-        target_xp = eku_array_namespace(sample)
-        device = target_xp.device(sample)
-        target_dtype = None
-        if dtype is not None:
-            target_dtype = convert_dtype(dtype, target_xp)
-
-        for k, v in r.items():
-            r[k] = convert_array(v, array_namespace=target_xp, device=device)
-            if target_dtype is not None:
-                r[k] = target_xp.astype(r[k], target_dtype, copy=False)
-        return r
-
-    # def bounding_box(self):
-    #     r"""Return the bounding box of the field.
-
-    #     Returns
-    #     -------
-    #     :obj:`BoundingBox <data.utils.bbox.BoundingBox>`
-    #     """
-    #     return self.geography.bounding_box
 
     def sel(self, *args, **kwargs):
         pass

@@ -217,7 +217,7 @@ def test_grib_to_latlon_single_1(fl_type, index):
 
     eps = 1e-5
     g = f[index] if index is not None else f
-    lat, lon = g.geography.to_latlon(flatten=True, dtype=dtype)
+    lat, lon = g.geography.latlon(flatten=True, dtype=dtype)
     assert isinstance(lat, array_namespace.ndarray)
     check_array_type(lat, array_namespace, dtype=dtype)
     check_array_type(lon, array_namespace, dtype=dtype)
@@ -250,19 +250,18 @@ def test_grib_to_latlon_single_shape(fl_type, index):
         dtype = array_backend.dtype
 
     g = f[index] if index is not None else f
-    v = g.to_latlon(dtype=dtype)
-    assert isinstance(v, dict)
-    check_array_type(v["lon"], array_namespace, dtype=dtype)
-    check_array_type(v["lat"], array_namespace, dtype=dtype)
+    lat, lon = g.geography.latlon(dtype=dtype)
+    check_array_type(lat, array_namespace, dtype=dtype)
+    check_array_type(lon, array_namespace, dtype=dtype)
 
     # x
-    assert v["lon"].shape == (7, 12)
-    for x in v["lon"]:
+    assert lon.shape == (7, 12)
+    for x in lon:
         assert np.allclose(array_convert(x, array_namespace="numpy"), np.linspace(0, 330, 12))
 
     # y
-    assert v["lat"].shape == (7, 12)
-    for i, y in enumerate(v["lat"]):
+    assert lat.shape == (7, 12)
+    for i, y in enumerate(lat):
         assert np.allclose(array_convert(y, array_namespace="numpy"), np.ones(12) * (90 - i * 30))
 
 
@@ -271,16 +270,13 @@ def test_grib_to_latlon_single_shape(fl_type, index):
 def test_grib_to_latlon_multi(fl_type, dtype):
     f, _ = load_grib_data("test.grib", fl_type)
 
-    v_ref = f[0].to_latlon(flatten=True, dtype=dtype)
-    v = f.to_latlon(flatten=True, dtype=dtype)
-    assert isinstance(v, dict)
-    assert v.keys() == v_ref.keys()
+    lat_ref, lon_ref = f[0].geography.latlon(flatten=True, dtype=dtype)
+    lat, lon = f.geography.latlon(flatten=True, dtype=dtype)
 
-    assert isinstance(v, dict)
-    assert np.allclose(v["lat"], v_ref["lat"])
-    assert np.allclose(v["lon"], v_ref["lon"])
-    assert v["lat"].dtype == dtype
-    assert v["lon"].dtype == dtype
+    assert np.allclose(lat, lat_ref)
+    assert np.allclose(lon, lon_ref)
+    assert lon.dtype == dtype
+    assert lat.dtype == dtype
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -290,7 +286,7 @@ def test_grib_to_latlon_multi_non_shared_grid(fl_type):
     f = concat(f1, f2)
 
     with pytest.raises(ValueError):
-        f.to_latlon()
+        f.geography.latlon()
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -305,12 +301,12 @@ def test_grib_to_points_single(fl_type, index):
 
     eps = 1e-5
     g = f[index] if index is not None else f
-    v = g.to_points(flatten=True, dtype=dtype)
-    assert isinstance(v, dict)
-    check_array_type(v["x"], array_namespace, dtype=dtype)
-    check_array_type(v["y"], array_namespace, dtype=dtype)
+    x, y = g.geography.points(flatten=True, dtype=dtype)
+
+    check_array_type(x, array_namespace, dtype=dtype)
+    check_array_type(y, array_namespace, dtype=dtype)
     check_array(
-        array_convert(v["x"], array_namespace="numpy"),
+        array_convert(x, array_namespace="numpy"),
         (84,),
         first=0.0,
         last=330.0,
@@ -318,7 +314,7 @@ def test_grib_to_points_single(fl_type, index):
         eps=eps,
     )
     check_array(
-        array_convert(v["y"], array_namespace="numpy"),
+        array_convert(y, array_namespace="numpy"),
         (84,),
         first=90,
         last=-90,
@@ -339,16 +335,13 @@ def test_grib_to_points_unsupported_grid(fl_type):
 def test_grib_to_points_multi(fl_type, dtype):
     f, _ = load_grib_data("test.grib", fl_type)
 
-    v_ref = f[0].to_points(flatten=True, dtype=dtype)
-    v = f.to_points(flatten=True, dtype=dtype)
-    assert isinstance(v, dict)
-    assert v.keys() == v_ref.keys()
+    x_ref, y_ref = f[0].geography.points(flatten=True, dtype=dtype)
+    x, y = f.geography.points(flatten=True, dtype=dtype)
 
-    assert isinstance(v, dict)
-    assert np.allclose(v["x"], v_ref["x"])
-    assert np.allclose(v["y"], v_ref["y"])
-    assert v["x"].dtype == dtype
-    assert v["y"].dtype == dtype
+    assert np.allclose(x, x_ref)
+    assert np.allclose(y, y_ref)
+    assert x.dtype == dtype
+    assert y.dtype == dtype
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -450,9 +443,7 @@ def test_grib_projection_mercator(fl_type):
 )
 def test_grib_latlon_various_grids(fl_type, filename, expected_shape, expected_lat, expected_lon):
     ds, _ = load_grib_data(filename, fl_type, folder="data")
-    ll = ds[0].to_latlon = ds[0].to_latlon()
-    lat = ll["lat"]
-    lon = ll["lon"]
+    lat, lon = ds[0].geography.latlon()
     assert lat.shape == expected_shape
     assert lon.shape == expected_shape
     assert np.allclose(lat.flatten()[:4], expected_lat)

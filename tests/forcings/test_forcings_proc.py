@@ -67,8 +67,12 @@ def test_forcings_proc(input_data):
 def test_forcings_proc_latlon(input_data, param, coord):
     ds, _ = load_forcings_fs(params=all_params, last_step=12, input_data=input_data)
 
-    latlon = ds[0].to_latlon(flatten=True)
-    coord = latlon[coord]
+    latlon = ds[0].geography.latlon(flatten=True)
+    if coord == "lat":
+        coord = latlon[0]
+    elif coord == "lon":
+        coord = latlon[1]
+
     date = "2020-05-13T18:00:00"
 
     f = ds.sel({"parameter.variable": param, "time.valid_datetime": date})

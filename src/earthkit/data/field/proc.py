@@ -8,13 +8,14 @@
 #
 
 from .component.proc import BaseProc
+from .component.proc import EmptyProc
 from .core import SimpleFieldComponentHandler
 
 
 class ProcFieldComponentHandler(SimpleFieldComponentHandler):
     """A specification of a vertical level or layer."""
 
-    PART_CLS = BaseProc
+    COMPONENT_CLS = BaseProc
     NAME = "proc"
 
     def get_grib_context(self, context) -> dict:
@@ -25,3 +26,10 @@ class ProcFieldComponentHandler(SimpleFieldComponentHandler):
     def set(self, *args, **kwargs):
         spec = self._spec.set(*args, **kwargs)
         return ProcFieldComponentHandler(spec)
+
+    @classmethod
+    def create_empty(cls) -> "ProcFieldComponentHandler":
+        return EMPTY_PROC_HANDLER
+
+
+EMPTY_PROC_HANDLER = ProcFieldComponentHandler(EmptyProc())

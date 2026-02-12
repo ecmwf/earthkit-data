@@ -81,7 +81,7 @@ def test_forcings_source_2():
     num = len(params) * len(dates) * 4
     assert len(ds) == num
 
-    ref = [(d, p) for d, p in itertools.product(ds.data.dates, params)]
+    ref = [(d, p) for d, p in itertools.product(ds._data.dates, params)]
     assert len(ds) == len(ref)
     for f, r in zip(ds, ref):
         assert f.get("time.valid_datetime") == r[0]
@@ -104,6 +104,7 @@ def test_forcings_source_3():
     ds = from_source(
         "forcings",
         sample,
+        date=dates,
         param=params,
     )
 

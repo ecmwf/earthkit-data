@@ -6,7 +6,9 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+import logging
 
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.field.component.component import normalise_set_kwargs
 from earthkit.data.field.component.geography import BaseGeography
 from earthkit.data.field.component.geography import create_geography_from_dict
@@ -14,37 +16,79 @@ from earthkit.data.field.component.geography import create_geography_from_dict
 from .collector import GribContextCollector
 from .core import GribFieldComponentHandler
 
+LOG = logging.getLogger(__name__)
+
 
 def missing_is_none(x):
     return None if x == 2147483647 else x
+
+
+class EckitGridSupport:
+    """Support for eckit-based grid handling in ecCodes.
+
+    This class checks for the availability of eckit and its grid support, as well as the
+    ecCodes features related to eckit grid support. It is only evaluated once and cached
+    for future use.
+    """
+
+    @thread_safe_cached_property
+    def has_grid(self):
+        try:
+            from eckit.geo import Grid  # noqa: F401
+
+            return True
+        except ImportError:
+            pass
+
+        return False
+
+    @thread_safe_cached_property
+    def has_ecc_grid_spec(self):
+        import os
+
+        if os.environ.get("ECCODES_ECKIT_GEO") == "1":
+            import eccodes
+
+            try:
+                r = eccodes.codes_get_features(eccodes.CODES_FEATURES_ENABLED)
+                if isinstance(r, str) and "ECKIT_GEO" in r:
+                    return True
+            except Exception as e:
+                LOG.warning(f"Failed to get ecCodes features: {e}")
+                return False
+
+        return False
+
+
+_ECKIT_GRID_SUPPORT = EckitGridSupport()
 
 
 class GribGeography(BaseGeography):
     def __init__(self, handle):
         self.handle = handle
 
-    def latitudes(self):
-        return self.handle.get_latitudes().reshape(self.shape())
+    def latitudes(self, dtype=None):
+        return self.handle.get_latitudes(dtype=dtype).reshape(self.shape())
 
-    def longitudes(self):
-        return self.handle.get_longitudes().reshape(self.shape())
+    def longitudes(self, dtype=None):
+        return self.handle.get_longitudes(dtype=dtype).reshape(self.shape())
 
-    def distinct_latitudes(self):
+    def distinct_latitudes(self, dtype=None):
         return self.handle.get("distinctLatitudes", default=None)
 
-    def distinct_longitudes(self):
+    def distinct_longitudes(self, dtype=None):
         return self.handle.get("distinctLongitudes", default=None)
 
-    def x(self):
+    def x(self, dtype=None):
         grid_type = self.handle.get("gridType", default=None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            return self.longitudes()
+            return self.longitudes(dtype=dtype)
         raise ValueError("x(): geographical coordinates in original CRS are not available")
 
-    def y(self):
+    def y(self, dtype=None):
         grid_type = self.handle.get("gridType", default=None)
         if grid_type in ["regular_ll", "reduced_gg", "regular_gg"]:
-            return self.latitudes()
+            return self.latitudes(dtype=dtype)
         raise ValueError("y(): geographical coordinates in original CRS are not available")
 
     def shape(self):
@@ -121,11 +165,22 @@ class GribGeography(BaseGeography):
         r"""Return a unique id of the grid of a field."""
         return self.handle.get("md5GridSection", default=None)
 
+    def grid(self):
+        r"""Return the grid information as a dictionary."""
+        return None
+
     def grid_spec(self):
         from .grid_spec import make_gridspec
         from .metadata import GribLabels
 
         return make_gridspec(GribLabels(self.handle))
+
+    def area(self):
+        north = self.handle.get("latitudeOfFirstGridPointInDegrees")
+        south = self.handle.get("latitudeOfLastGridPointInDegrees")
+        west = self.handle.get("longitudeOfFirstGridPointInDegrees")
+        east = self.handle.get("longitudeOfLastGridPointInDegrees")
+        return [north, west, south, east]
 
     def grid_type(self):
         r"""Return the grid type."""
@@ -176,7 +231,27 @@ class GribGeographyBuilder:
     def build(handle):
         from earthkit.data.field.geography import GeographyFieldComponentHandler
 
-        return GeographyFieldComponentHandler.from_component(GribGeography(handle))
+        # Spectral data is handled differently right now
+        if handle.get("gridType", None) == "sh":
+            from earthkit.data.field.component.geography import SpectralGeography
+
+            component = SpectralGeography(handle)
+        # Gridded data
+        else:
+            if _ECKIT_GRID_SUPPORT.has_ecc_grid_spec and _ECKIT_GRID_SUPPORT.has_grid:
+                from earthkit.data.field.component.geography import GridsSpecBasedGeography
+
+                # Try to get the gridspec from the handle
+                grid_spec = handle.get("gridSpec", None)
+                if grid_spec is not None and grid_spec != "":
+                    component = GridsSpecBasedGeography(grid_spec)
+                else:
+                    # fallback to non-eckit based geo support in ecCodes
+                    component = GribGeography(handle)
+            else:
+                component = GribGeography(handle)
+
+        return GeographyFieldComponentHandler.from_component(component)
 
 
 class GribGeographyContextCollector(GribContextCollector):

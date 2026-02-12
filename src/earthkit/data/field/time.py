@@ -9,6 +9,7 @@
 
 
 from .component.time import BaseTime
+from .component.time import EmptyTime
 from .component.time import create_time
 from .core import SimpleFieldComponentHandler
 
@@ -16,11 +17,18 @@ from .core import SimpleFieldComponentHandler
 class TimeFieldComponentHandler(SimpleFieldComponentHandler):
     """Time component of a field."""
 
-    PART_CLS = BaseTime
-    PART_MAKER = create_time
+    COMPONENT_CLS = BaseTime
+    COMPONENT_MAKER = create_time
     NAME = "time"
 
     def get_grib_context(self, context) -> dict:
         from earthkit.data.field.grib.time import COLLECTOR
 
         COLLECTOR.collect(self, context)
+
+    @classmethod
+    def create_empty(cls) -> "TimeFieldComponentHandler":
+        return EMPTY_TIME_HANDLER
+
+
+EMPTY_TIME_HANDLER = TimeFieldComponentHandler(EmptyTime())

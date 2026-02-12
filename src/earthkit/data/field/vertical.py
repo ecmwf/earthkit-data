@@ -8,6 +8,7 @@
 #
 
 from .component.vertical import BaseVertical
+from .component.vertical import EmptyVertical
 from .component.vertical import create_vertical
 from .core import SimpleFieldComponentHandler
 
@@ -15,11 +16,18 @@ from .core import SimpleFieldComponentHandler
 class VerticalFieldComponentHandler(SimpleFieldComponentHandler):
     """Vertical component handler of a field."""
 
-    PART_CLS = BaseVertical
-    PART_MAKER = create_vertical
+    COMPONENT_CLS = BaseVertical
+    COMPONENT_MAKER = create_vertical
     NAME = "vertical"
 
     def get_grib_context(self, context) -> dict:
         from earthkit.data.field.grib.vertical import COLLECTOR
 
         COLLECTOR.collect(self, context)
+
+    @classmethod
+    def create_empty(cls) -> "VerticalFieldComponentHandler":
+        return EMPTY_VERTICAL_HANDLER
+
+
+EMPTY_VERTICAL_HANDLER = VerticalFieldComponentHandler(EmptyVertical())

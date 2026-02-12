@@ -15,7 +15,7 @@ from earthkit.data.utils.dates import to_timedelta
 
 from .component import SimpleFieldComponent
 from .component import component_keys
-from .component import mark_key
+from .component import mark_get_key
 from .time_span import TimeMethods
 from .time_span import get_time_method
 
@@ -89,22 +89,49 @@ class TimeProcItem(ProcItem):
 class BaseProc(SimpleFieldComponent):
     """A specification of a parameter."""
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def time(self) -> TimeProcItem:
         r"""TimeProcItem: Return the time processing item."""
         pass
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def time_value(self) -> str:
         r"""str: Return the time processing value."""
         pass
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def time_method(self) -> str:
         r"""str: Return the time processing method."""
+        pass
+
+
+class EmptyProc(BaseProc):
+    def time(self) -> TimeProcItem:
+        return None
+
+    def time_value(self) -> str:
+        return None
+
+    def time_method(self) -> str:
+        return None
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls()
+
+    def to_dict(self):
+        return dict()
+
+    def set(self, *args, **kwargs):
+        raise ValueError("Cannot set values on EmptyProc")
+
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, state):
         pass
 
 
@@ -114,7 +141,7 @@ class Proc(BaseProc):
     def __init__(self, items) -> None:
         self.items = items
 
-    @mark_key("get")
+    @mark_get_key
     def time(self) -> TimeProcItem:
         r"""str: Return the parameter variable."""
         for item in self.items:
@@ -122,7 +149,7 @@ class Proc(BaseProc):
                 return item
         return None
 
-    @mark_key("get")
+    @mark_get_key
     def time_value(self) -> str:
         r"""str: Return the parameter variable."""
         time = self.time
@@ -130,7 +157,7 @@ class Proc(BaseProc):
             return time.value
         return None
 
-    @mark_key("get")
+    @mark_get_key
     def time_method(self) -> str:
         r"""str: Return the parameter variable."""
         time = self.time
@@ -196,7 +223,7 @@ class ProcOri:
     def __init__(self, items) -> None:
         self.items = items
 
-    @mark_key("get")
+    @mark_get_key
     def time(self) -> str:
         r"""str: Return the parameter variable."""
         for item in self.items:
@@ -204,7 +231,7 @@ class ProcOri:
                 return item
         return None
 
-    @mark_key("get")
+    @mark_get_key
     def time_value(self) -> str:
         r"""str: Return the parameter variable."""
         time = self.time
@@ -212,7 +239,7 @@ class ProcOri:
             return time.value
         return None
 
-    @mark_key("get")
+    @mark_get_key
     def time_method(self) -> str:
         r"""str: Return the parameter variable."""
         time = self.time

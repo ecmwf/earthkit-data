@@ -12,12 +12,12 @@ from abc import abstractmethod
 from .component import SimpleFieldComponent
 from .component import component_keys
 from .component import mark_alias
-from .component import mark_key
+from .component import mark_get_key
 
 
 @component_keys
 class BaseEnsemble(SimpleFieldComponent):
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def member(self) -> str:
         """Return the ensemble member."""
@@ -53,6 +53,30 @@ def create_ensemble(d: dict) -> "BaseEnsemble":
     cls = Ensemble
     d1 = cls.normalise_create_kwargs(d, allowed_keys=("member",))
     return cls(**d1)
+
+
+class EmptyEnsemble(BaseEnsemble):
+    def member(self) -> str:
+        """Return the ensemble member."""
+        return None
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        if d:
+            return cls()
+        return cls()
+
+    def to_dict(self):
+        return {"member": None}
+
+    def set(self, *args, **kwargs):
+        raise ValueError("Cannot set values on EmptyEnsemble")
+
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, state):
+        self.__init__()
 
 
 class Ensemble(BaseEnsemble):
@@ -102,3 +126,6 @@ class Ensemble(BaseEnsemble):
 
     def __setstate__(self, state):
         self.__init__(member=state["member"])
+
+
+EMPTY_ENSEMBLE = Ensemble()

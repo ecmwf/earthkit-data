@@ -149,7 +149,6 @@ def test_forcings_to_numpy_dtype(dtype):
     assert v.dtype == dtype
 
 
-@pytest.mark.skip("To be implemented")
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
     [
@@ -165,7 +164,7 @@ def test_forcings_to_numpy_dtype(dtype):
 def test_forcings_field_data(kwarg, expected_shape, expected_dtype):
     ds, _ = load_forcings_fs(params=["longitude"], last_step=12)
 
-    latlon = ds[0].to_latlon(**kwarg)
+    lat, lon = ds[0].geography.latlon(**kwarg)
     v = ds[0].to_numpy(**kwarg)
 
     d = ds[0].data(**kwarg)
@@ -173,19 +172,19 @@ def test_forcings_field_data(kwarg, expected_shape, expected_dtype):
     assert d.dtype == expected_dtype
     assert len(d) == 3
     assert d[0].shape == expected_shape
-    assert np.allclose(d[0], latlon["lat"])
-    assert np.allclose(d[1], latlon["lon"])
+    assert np.allclose(d[0], lat)
+    assert np.allclose(d[1], lon)
     assert np.allclose(d[2], v)
 
     d = ds[0].data(keys="lat", **kwarg)
     assert d.shape == expected_shape
     assert d.dtype == expected_dtype
-    assert np.allclose(d, latlon["lat"])
+    assert np.allclose(d, lat)
 
     d = ds[0].data(keys="lon", **kwarg)
     assert d.shape == expected_shape
     assert d.dtype == expected_dtype
-    assert np.allclose(d, latlon["lon"])
+    assert np.allclose(d, lon)
 
     d = ds[0].data(keys="value", **kwarg)
     assert d.shape == expected_shape
@@ -197,10 +196,9 @@ def test_forcings_field_data(kwarg, expected_shape, expected_dtype):
     assert d.dtype == expected_dtype
     assert len(d) == 2
     assert np.allclose(d[0], v)
-    assert np.allclose(d[1], latlon["lon"])
+    assert np.allclose(d[1], lon)
 
 
-@pytest.mark.skip("To be implemented")
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
     [
@@ -217,27 +215,27 @@ def test_forcings_fieldlist_data(kwarg, expected_shape, expected_dtype):
     ds, _ = load_forcings_fs(params=["longitude"], last_step=12)
     num = 2
 
-    latlon = ds.to_latlon(**kwarg)
+    lat, lon = ds.geography.latlon(**kwarg)
     v = ds.to_numpy(**kwarg)
 
     d = ds.data(**kwarg)
     assert isinstance(d, np.ndarray)
     assert d.shape == tuple([num + 2, *expected_shape])
     assert d.dtype == expected_dtype
-    assert np.allclose(d[0], latlon["lat"])
-    assert np.allclose(d[1], latlon["lon"])
+    assert np.allclose(d[0], lat)
+    assert np.allclose(d[1], lon)
     assert np.allclose(d[2], v[0])
     assert np.allclose(d[3], v[1])
 
     d = ds.data(keys="lat", **kwarg)
     assert d.shape == tuple([1, *expected_shape])
     assert d.dtype == expected_dtype
-    assert np.allclose(d[0], latlon["lat"])
+    assert np.allclose(d[0], lat)
 
     d = ds.data(keys="lon", **kwarg)
     assert d.shape == tuple([1, *expected_shape])
     assert d.dtype == expected_dtype
-    assert np.allclose(d[0], latlon["lon"])
+    assert np.allclose(d[0], lon)
 
     d = ds.data(keys="value", **kwarg)
     assert d.shape == tuple([num, *expected_shape])
@@ -250,7 +248,7 @@ def test_forcings_fieldlist_data(kwarg, expected_shape, expected_dtype):
     assert d.dtype == expected_dtype
     assert np.allclose(d[0], v[0])
     assert np.allclose(d[1], v[1])
-    assert np.allclose(d[2], latlon["lon"])
+    assert np.allclose(d[2], lon)
 
 
 if __name__ == "__main__":

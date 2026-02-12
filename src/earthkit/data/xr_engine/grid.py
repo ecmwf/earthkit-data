@@ -25,9 +25,9 @@ class Grid:
         # NOTE: underscore grid types are coming from UserMetadata
         grid_type = field.geography.grid_type()
 
-        if grid_type in ["regular_ll", "_regular_ll"]:
+        if grid_type in ["regular_ll", "_regular_ll", "regular-ll"]:
             return RegularLLGrid(field)
-        elif grid_type in ["regular_gg", "mercator", "_rectified_ll"]:
+        elif grid_type in ["regular_gg", "regular-gg", "mercator", "_rectified_ll"]:
             return RectifiedLLGrid(field)
         elif grid_type in ["sh"]:
             return SpectralGrid(field)
@@ -38,16 +38,17 @@ class Grid:
         else:
             return Grid(field)
 
-    def to_distinct_latlon(self, field_shape):
+    def distinct_latlon(self, field_shape):
         return None, None
 
-    def to_latlon(self, field_shape=None):
-        # ll = self.field.to_latlon(flatten=True)
+    def latlon(self, field_shape=None):
+        # ll = self.field.latlon(flatten=True)
         # lat = np.atleast_1d(ll["lat"])
         # lon = np.atleast_1d(ll["lon"])
 
         lat = self.field.geography.latitudes().flatten()
         lon = self.field.geography.longitudes().flatten()
+
         lat = np.atleast_1d(lat)
         lon = np.atleast_1d(lon)
 
@@ -64,7 +65,7 @@ class RegularLLGrid(Grid):
     def to_distinct_latlon(self, field_shape):
         assert len(field_shape) == 2
         assert field_shape == self.field.shape
-        lat, lon = self.to_latlon()
+        lat, lon = self.latlon()
         _, nx = field_shape
         lat = lat[::nx]
         lon = lon[:nx]
@@ -82,7 +83,7 @@ class RectifiedLLGrid(Grid):
 
 
 class SpectralGrid(Grid):
-    def to_latlon(self, field_shape=None):
+    def latlon(self, field_shape=None):
         return None, None
 
     def is_spectral(self):
@@ -90,7 +91,7 @@ class SpectralGrid(Grid):
 
 
 class NonGrid(Grid):
-    def to_latlon(self, field_shape=None):
+    def latlon(self, field_shape=None):
         return None, None
 
     def is_spectral(self):
@@ -125,7 +126,7 @@ class TensorGrid:
             if len(field_shape) == 1:
                 dims["values"] = field_shape[0]
                 try:
-                    lat, lon = grid.to_latlon()
+                    lat, lon = grid.latlon()
                     if lat is not None and lon is not None:
                         coords["latitude"] = lat
                         coords["longitude"] = lon
@@ -156,7 +157,7 @@ class TensorGrid:
                     pass
 
                 if not coords or not dims:
-                    lat, lon = grid.to_latlon(field_shape)
+                    lat, lon = grid.latlon(field_shape)
                     if lat is not None and lon is not None:
                         coords["latitude"] = lat
                         coords["longitude"] = lon

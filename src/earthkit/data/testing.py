@@ -297,7 +297,7 @@ def check_array(
 ):
     v = convert_array(v, array_namespace="numpy")
 
-    assert v.shape == shape
+    assert v.shape == shape, f"{v.shape} != {shape}"
     assert np.isclose(v[0], first, rtol=eps)
     assert np.isclose(v[-1], last, rtol=eps)
     assert np.isclose(v.mean(), meanv, rtol=eps)

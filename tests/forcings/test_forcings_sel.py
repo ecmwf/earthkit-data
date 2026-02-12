@@ -25,17 +25,17 @@ from forcings_fixtures import load_forcings_fs  # noqa: E402
     "params,expected_meta",
     [
         (
-            dict(param="sin_longitude", valid_datetime="2020-05-13T18:00:00"),
+            {"parameter.variable": "sin_longitude", "time.valid_datetime": "2020-05-13T18:00:00"},
             [["sin_longitude", datetime.datetime.fromisoformat("2020-05-13T18:00:00")]],
         ),
         (
-            dict(
-                param=["sin_longitude", "local_time"],
-                valid_datetime=[
+            {
+                "parameter.variable": ["sin_longitude", "local_time"],
+                "time.valid_datetime": [
                     datetime.datetime.fromisoformat("2020-05-14T06:00:00"),
                     datetime.datetime.fromisoformat("2020-05-13T18:00:00"),
                 ],
-            ),
+            },
             [
                 ["sin_longitude", datetime.datetime.fromisoformat("2020-05-13T18:00:00")],
                 ["local_time", datetime.datetime.fromisoformat("2020-05-13T18:00:00")],
@@ -64,13 +64,13 @@ def test_forcings_sel_single_file_as_dict(input_data):
 
     g = ds.sel(
         {
-            "param": "sin_longitude",
-            "valid_datetime": ["2020-05-14T06:00:00", "2020-05-13T18:00:00"],
+            "parameter.variable": "sin_longitude",
+            "time.valid_datetime": ["2020-05-14T06:00:00", "2020-05-13T18:00:00"],
         }
     )
 
     assert len(g) == 2
-    assert g.get(["param", "valid_datetime"]) == [
+    assert g.get(["parameter.variable", "time.valid_datetime"]) == [
         ["sin_longitude", datetime.datetime.fromisoformat("2020-05-13T18:00:00")],
         ["sin_longitude", datetime.datetime.fromisoformat("2020-05-14T06:00:00")],
     ]

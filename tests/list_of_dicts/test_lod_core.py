@@ -36,9 +36,7 @@ def test_lod_core(lod, mode, request):
     lat_ref = np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]])
     lon_ref = np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]])
 
-    ll = ds[0].to_latlon()
-    lat = ll["lat"]
-    lon = ll["lon"]
+    lat, lon = ds[0].geography.latlon()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -66,9 +64,7 @@ def test_lod_ll(lod_distinct_ll, mode):
     lat_ref = np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]])
     lon_ref = np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]])
 
-    ll = ds[0].to_latlon()
-    lat = ll["lat"]
-    lon = ll["lon"]
+    lat, lon = ds[0].geography.latlon()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -89,11 +85,6 @@ def test_lod_ll(lod_distinct_ll, mode):
 
     assert ds[0].time.base_datetime() == datetime.datetime(2018, 8, 1, 9, 0)
     assert ds[0].time.valid_datetime() == datetime.datetime(2018, 8, 1, 9, 0)
-
-    assert ds[0].datetime() == {
-        "base_time": datetime.datetime(2018, 8, 1, 9, 0),
-        "valid_time": datetime.datetime(2018, 8, 1, 9, 0),
-    }
 
 
 if __name__ == "__main__":

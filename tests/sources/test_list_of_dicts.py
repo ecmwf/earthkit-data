@@ -49,10 +49,8 @@ def test_list_of_dicts(lod):
     # assert ds[0].get("step", default=None) is None
     assert ds[0].get("step", default=None) == datetime.timedelta(hours=0)
 
-    assert ds[0].datetime() == {
-        "base_time": datetime.datetime(2018, 8, 1, 12, 0),
-        "valid_time": datetime.datetime(2018, 8, 1, 12, 0),
-    }
+    assert ds[0].time.base_datetime() == datetime.datetime(2018, 8, 1, 12, 0)
+    assert ds[0].time.valid_datetime() == datetime.datetime(2018, 8, 1, 12, 0)
 
 
 if __name__ == "__main__":

@@ -13,50 +13,50 @@ from typing import Union
 
 from .component import SimpleFieldComponent
 from .component import component_keys
-from .component import mark_key
+from .component import mark_get_key
 from .level_type import LevelType
 from .level_type import get_level_type
 
 
 @component_keys
 class BaseVertical(SimpleFieldComponent):
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def level(self) -> Union[int, float]:
         """Return the level."""
         pass
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def layer(self) -> Optional[tuple[float, float]]:
         """Return the layer."""
         pass
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def cf(self):
         """Return the level type."""
         pass
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def abbreviation(self):
         """Return the level type."""
         pass
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def units(self):
         """Return the level type."""
         pass
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def positive(self):
         """Return the level type."""
         pass
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def type(self):
         """Return the level type."""
@@ -82,6 +82,68 @@ def create_vertical(d: dict) -> "BaseVertical":
     cls = Vertical
     d1 = cls.normalise_create_kwargs(d, allowed_keys=("level", "layer", "type"))
     return cls(**d1)
+
+
+class EmptyVertical(BaseVertical):
+    def __init__(self):
+        self._type = get_level_type(None)
+
+    def level(self) -> Union[int, float]:
+        """Return the level."""
+        return None
+
+    def layer(self) -> Optional[tuple[float, float]]:
+        """Return the layer."""
+        return None
+
+    def cf(self):
+        """Return the level type."""
+        return None
+
+    def abbreviation(self):
+        """Return the level type."""
+        return None
+
+    def units(self):
+        """Return the level type."""
+        return None
+
+    def positive(self):
+        """Return the level type."""
+        return None
+
+    def type(self):
+        """Return the level type."""
+        return self._type.name
+
+    def from_dict(cls, d: dict) -> "EmptyVertical":
+        """Create a NoVertical object from a dictionary.
+
+        Parameters
+        ----------
+        d : dict
+            Dictionary containing parameter data.
+
+        Returns
+        -------
+        EmptyVertical
+            The created EmptyVertical instance.
+        """
+        if d:
+            return create_vertical(d)
+        return cls()
+
+    def to_dict(self):
+        return {}
+
+    def set(self, *args, **kwargs):
+        raise ValueError("Cannot set values on EmptyVertical")
+
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, state):
+        self.__init__()
 
 
 class Vertical(BaseVertical):

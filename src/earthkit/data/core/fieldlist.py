@@ -166,154 +166,78 @@ class FieldListCore(Base):
 
         See Also
         --------
-        to_latlon
-        to_points
+        geography
         to_numpy
         values
 
         """
         pass
 
-    @abstractmethod
-    def datetime(self):
-        r"""Return the unique, sorted list of dates and times in the fieldlist.
+    # @abstractmethod
+    # def datetime(self):
+    #     r"""Return the unique, sorted list of dates and times in the fieldlist.
 
-        Returns
-        -------
-        dict of datatime.datetime
-            Dict with items "base_time" and "valid_time".
+    #     Returns
+    #     -------
+    #     dict of datatime.datetime
+    #         Dict with items "base_time" and "valid_time".
 
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
-        >>> ds.datetime()
-        {'base_time': [datetime.datetime(2020, 12, 21, 12, 0)],
-        'valid_time': [
-            datetime.datetime(2020, 12, 21, 12, 0),
-            datetime.datetime(2020, 12, 21, 15, 0),
-            datetime.datetime(2020, 12, 21, 18, 0),
-            datetime.datetime(2020, 12, 21, 21, 0),
-            datetime.datetime(2020, 12, 23, 12, 0)]}
+    #     Examples
+    #     --------
+    #     >>> import earthkit.data
+    #     >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
+    #     >>> ds.datetime()
+    #     {'base_time': [datetime.datetime(2020, 12, 21, 12, 0)],
+    #     'valid_time': [
+    #         datetime.datetime(2020, 12, 21, 12, 0),
+    #         datetime.datetime(2020, 12, 21, 15, 0),
+    #         datetime.datetime(2020, 12, 21, 18, 0),
+    #         datetime.datetime(2020, 12, 21, 21, 0),
+    #         datetime.datetime(2020, 12, 23, 12, 0)]}
 
-        """
+    #     """
 
     @property
     @abstractmethod
     def geography(self):
         pass
 
-    @abstractmethod
-    def to_latlon(self, index=None, **kwargs):
-        r"""Return the latitudes/longitudes shared by all the fields.
+    # @abstractmethod
+    # def projection(self):
+    #     r"""Return the projection information shared by all the fields.
 
-        Parameters
-        ----------
-        index: array indexing object, optional
-            The index of the latitudes/longitudes to be extracted. When it is None
-            all the values are extracted.
-        **kwargs: dict, optional
-            Keyword arguments passed to
-            :meth:`Field.to_latlon() <data.core.fieldlist.Field.to_latlon>`
+    #     Returns
+    #     -------
+    #     :obj:`Projection`
 
-        Returns
-        -------
-        dict
-            Dictionary with items "lat" and "lon", containing the arrays of the latitudes and
-            longitudes, respectively.
+    #     Raises
+    #     ------
+    #     ValueError
+    #         When not all the fields have the same grid geometry
 
-        Raises
-        ------
-        ValueError
-            When not all the fields have the same grid geometry
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> for f in ds:
-        ...     print(f.shape)
-        ...
-        (11, 19)
-        (11, 19)
-        >>> r = ds.to_latlon()
-        >>> for k, v in r.items():
-        ...     print(f"{k}: shape={v.shape}")
-        ...
-        lat: shape=(11, 19)
-        lon: shape=(11, 19)
-        >>> r["lon"][:2]
-        array([[-27., -23., -19., -15., -11.,  -7.,  -3.,   1.,   5.,   9.,  13.,
-         17.,  21.,  25.,  29.,  33.,  37.,  41.,  45.],
-        [-27., -23., -19., -15., -11.,  -7.,  -3.,   1.,   5.,   9.,  13.,
-         17.,  21.,  25.,  29.,  33.,  37.,  41.,  45.]])
-
-        """
-
-    @abstractmethod
-    def to_points(self, **kwargs):
-        r"""Return the geographical coordinates shared by all the fields in
-        the data's original Coordinate Reference System (CRS).
-
-        Parameters
-        ----------
-        **kwargs: dict, optional
-            Keyword arguments passed to
-            :obj:`Field.to_points() <data.core.fieldlist.Field.to_points>`
-
-        Returns
-        -------
-        dict
-            Dictionary with items "x" and "y", containing the arrays of the x and
-            y coordinates, respectively.
-
-        Raises
-        ------
-        ValueError
-            When not all the fields have the same grid geometry.
-        """
-        pass
-
-    @abstractmethod
-    def bounding_box(self):
-        pass
-
-    @abstractmethod
-    def projection(self):
-        r"""Return the projection information shared by all the fields.
-
-        Returns
-        -------
-        :obj:`Projection`
-
-        Raises
-        ------
-        ValueError
-            When not all the fields have the same grid geometry
-
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-        >>> ds.projection()
-        <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
-        Name: unknown
-        Axis Info [cartesian]:
-        - E[east]: Easting (unknown)
-        - N[north]: Northing (unknown)
-        - h[up]: Ellipsoidal height (metre)
-        Area of Use:
-        - undefined
-        Coordinate Operation:
-        - name: unknown
-        - method: Equidistant Cylindrical
-        Datum: Unknown based on WGS 84 ellipsoid
-        - Ellipsoid: WGS 84
-        - Prime Meridian: Greenwich
-        >>> ds.projection().to_proj_string()
-        '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
-        """
-        pass
+    #     Examples
+    #     --------
+    #     >>> import earthkit.data
+    #     >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
+    #     >>> ds.projection()
+    #     <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
+    #     Name: unknown
+    #     Axis Info [cartesian]:
+    #     - E[east]: Easting (unknown)
+    #     - N[north]: Northing (unknown)
+    #     - h[up]: Ellipsoidal height (metre)
+    #     Area of Use:
+    #     - undefined
+    #     Coordinate Operation:
+    #     - name: unknown
+    #     - method: Equidistant Cylindrical
+    #     Datum: Unknown based on WGS 84 ellipsoid
+    #     - Ellipsoid: WGS 84
+    #     - Prime Meridian: Greenwich
+    #     >>> ds.projection().to_proj_string()
+    #     '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
+    #     """
+    #     pass
 
     @abstractmethod
     def get(
@@ -718,5 +642,4 @@ class FieldListCore(Base):
 
         method = "loop"
         r = get_method(method).binary_op(oper, self, y)
-        print("FieldListCore._binary_op done:", type(r))
         return r

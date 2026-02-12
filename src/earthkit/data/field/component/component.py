@@ -13,18 +13,9 @@ from abc import abstractmethod
 from functools import wraps
 
 
-def mark_key(*args):
-    get_key = "get" in args
-    set_key = "set" in args
-
-    def wrapper(func):
-        if get_key:
-            func._is_get_key = get_key
-        if set_key:
-            func._is_set_key = set_key
-        return func
-
-    return wrapper
+def mark_get_key(func):
+    func._is_get_key = True
+    return func
 
 
 def mark_alias(name):

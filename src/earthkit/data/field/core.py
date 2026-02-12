@@ -81,7 +81,7 @@ class FieldComponentHandler(metaclass=ABCMeta):
     @abstractmethod
     def from_dict(cls, d: dict) -> "FieldComponentHandler":
         """
-        Create a FieldComponent instance from a dictionary.
+        Create a FieldComponentHandler instance from a dictionary.
 
         Parameters
         ----------
@@ -112,6 +112,11 @@ class FieldComponentHandler(metaclass=ABCMeta):
             The created FieldComponentHandler instance.
         """
         pass
+
+    # @classmethod
+    # @abstractmethod
+    # def create_empty(cls) -> "FieldComponentHandler":
+    #     pass
 
     @property
     @abstractmethod
@@ -238,19 +243,19 @@ class SimpleFieldComponentHandler(FieldComponentHandler):
 
     """
 
-    PART_CLS = None
-    PART_MAKER = None
+    COMPONENT_CLS = None
+    COMPONENT_MAKER = None
 
     def __init__(self, component: Any) -> None:
         assert isinstance(
-            component, self.PART_CLS
-        ), f"type(component)={type(component)}, expected {self.PART_CLS}"
+            component, self.COMPONENT_CLS
+        ), f"type(component)={type(component)}, expected {self.COMPONENT_CLS}"
         self._component = component
 
     @classmethod
     def from_dict(cls, d: dict, **kwargs) -> "SimpleFieldComponentHandler":
         """Create a SimpleFieldComponent object from a dictionary."""
-        component = cls.PART_MAKER(d, **kwargs)
+        component = cls.COMPONENT_MAKER(d, **kwargs)
         return cls(component)
 
     @classmethod
@@ -286,6 +291,10 @@ class SimpleFieldComponentHandler(FieldComponentHandler):
             return cls.from_component(data)
 
         raise TypeError(f"Cannot create {cls.__name__} from {type(data)}")
+
+    @classmethod
+    def create_empty(cls) -> "SimpleFieldComponentHandler":
+        raise NotImplementedError(f"{cls.__name__}.create_empty is not implemented")
 
     @property
     def component(self) -> Any:

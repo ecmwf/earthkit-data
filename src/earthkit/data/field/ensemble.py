@@ -8,6 +8,7 @@
 #
 
 from .component.ensemble import BaseEnsemble
+from .component.ensemble import EmptyEnsemble
 from .component.ensemble import create_ensemble
 from .core import SimpleFieldComponentHandler
 
@@ -15,11 +16,18 @@ from .core import SimpleFieldComponentHandler
 class EnsembleFieldComponentHandler(SimpleFieldComponentHandler):
     """Ensemble component handler of a field."""
 
-    PART_CLS = BaseEnsemble
-    PART_MAKER = create_ensemble
+    COMPONENT_CLS = BaseEnsemble
+    COMPONENT_MAKER = create_ensemble
     NAME = "ensemble"
 
     def get_grib_context(self, context) -> dict:
         from earthkit.data.field.grib.ensemble import COLLECTOR
 
         COLLECTOR.collect(self, context)
+
+    @classmethod
+    def create_empty(cls) -> "EnsembleFieldComponentHandler":
+        return EMPTY_ENSEMBLE_HANDLER
+
+
+EMPTY_ENSEMBLE_HANDLER = EnsembleFieldComponentHandler(EmptyEnsemble())

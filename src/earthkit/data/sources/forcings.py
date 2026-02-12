@@ -15,7 +15,7 @@ import numpy as np
 
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalize
-from earthkit.data.field.data import DataFieldPart
+from earthkit.data.field.data import FieldData
 from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.utils.dates import to_datetime
 
@@ -256,7 +256,7 @@ class ForcingsData:
             from earthkit.data import from_source
 
             vals = np.ones(lats.shape)
-            d = {"values": vals, "geography.latitudes": lats, "geography.longitudes": lons}
+            d = {"values": vals, "geography": {"latitudes": lats, "longitudes": lons}}
             # d.update(self.request)
             source_or_dataset = from_source("list-of-dicts", [d])
 
@@ -335,7 +335,7 @@ class ForcingsData:
         return request
 
 
-class ForcingsFieldData(DataFieldPart):
+class ForcingsFieldData(FieldData):
     def __init__(self, proc, date):
         self.proc = proc
         self.date = date
@@ -349,9 +349,6 @@ class ForcingsFieldData(DataFieldPart):
             values = values.copy()
         return values
 
-    def spec(self):
-        return self
-
     def __getstate__(self):
         pass
 
@@ -361,12 +358,11 @@ class ForcingsFieldData(DataFieldPart):
 
 class ForcingsFieldList(SimpleFieldList):
     def __init__(self, source_or_dataset=None, *, request={}, **kwargs):
-        self.data = ForcingsData(source_or_dataset, request, **kwargs)
+        self._data = ForcingsData(source_or_dataset, request, **kwargs)
 
-        self.maker = ForcingMaker(field=self.data.field)
-        self.procs = {param: getattr(self.maker, param) for param in self.data.params}
-        self._len = len(self.data.dates) * len(self.data.params) * len(self.data.numbers)
-
+        self.maker = ForcingMaker(field=self._data.field)
+        self.procs = {param: getattr(self.maker, param) for param in self._data.params}
+        self._len = len(self._data.dates) * len(self._data.params) * len(self._data.numbers)
         fields = []
         for n in range(self._len):
             field = self._make_one(n)
@@ -382,13 +378,13 @@ class ForcingsFieldList(SimpleFieldList):
             raise IndexError(n)
 
         date, param, number = index_to_coords(
-            n, (len(self.data.dates), len(self.data.params), len(self.data.numbers))
+            n, (len(self._data.dates), len(self._data.params), len(self._data.numbers))
         )
 
-        date = self.data.dates[date]
+        date = self._data.dates[date]
         # assert isinstance(date, datetime.datetime), (date, type(date))
-        param = self.data.params[param]
-        number = self.data.numbers[number]
+        param = self._data.params[param]
+        number = self._data.numbers[number]
 
         return self._make_field(param, date, number)
 
@@ -403,7 +399,7 @@ class ForcingsFieldList(SimpleFieldList):
             data=data,
             parameter=dict(variable=param),
             time=dict(base_datetime=date),
-            labels={"number": number},
+            ensemble={"member": number},
         )
 
         return field

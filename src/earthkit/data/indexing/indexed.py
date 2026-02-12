@@ -161,14 +161,17 @@ class IndexedFieldList(Index, FieldListCore):
 
         if self._has_shared_geography:
             if "lat" in keys or "lon" in keys:
-                latlon = self[0].to_latlon(flatten=flatten, dtype=dtype, index=index)
+                lat, lon = self[0].geography.latlon(flatten=flatten, dtype=dtype)
+                if index is not None:
+                    lat = lat[index]
+                    lon = lon[index]
 
             r = []
             for k in keys:
                 if k == "lat":
-                    r.append(latlon["lat"])
+                    r.append(lat)
                 elif k == "lon":
-                    r.append(latlon["lon"])
+                    r.append(lon)
                 elif k == "value":
                     r.extend([f.to_array(flatten=flatten, dtype=dtype, index=index) for f in self])
             return eku_array_namespace(r[0]).stack(r)
@@ -180,36 +183,36 @@ class IndexedFieldList(Index, FieldListCore):
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
-    def datetime(self):
-        r"""Return the unique, sorted list of dates and times in the fieldlist.
+    # def datetime(self):
+    #     r"""Return the unique, sorted list of dates and times in the fieldlist.
 
-        Returns
-        -------
-        dict of datatime.datetime
-            Dict with items "base_time" and "valid_time".
+    #     Returns
+    #     -------
+    #     dict of datatime.datetime
+    #         Dict with items "base_time" and "valid_time".
 
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
-        >>> ds.datetime()
-        {'base_time': [datetime.datetime(2020, 12, 21, 12, 0)],
-        'valid_time': [
-            datetime.datetime(2020, 12, 21, 12, 0),
-            datetime.datetime(2020, 12, 21, 15, 0),
-            datetime.datetime(2020, 12, 21, 18, 0),
-            datetime.datetime(2020, 12, 21, 21, 0),
-            datetime.datetime(2020, 12, 23, 12, 0)]}
+    #     Examples
+    #     --------
+    #     >>> import earthkit.data
+    #     >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
+    #     >>> ds.datetime()
+    #     {'base_time': [datetime.datetime(2020, 12, 21, 12, 0)],
+    #     'valid_time': [
+    #         datetime.datetime(2020, 12, 21, 12, 0),
+    #         datetime.datetime(2020, 12, 21, 15, 0),
+    #         datetime.datetime(2020, 12, 21, 18, 0),
+    #         datetime.datetime(2020, 12, 21, 21, 0),
+    #         datetime.datetime(2020, 12, 23, 12, 0)]}
 
-        """
-        base = set()
-        valid = set()
-        for f in self:
-            if v := f.time.base_datetime():
-                base.add(v)
-            if v := f.time.valid_datetime():
-                valid.add(v)
-        return {"base_time": sorted(base), "valid_time": sorted(valid)}
+    #     """
+    #     base = set()
+    #     valid = set()
+    #     for f in self:
+    #         if v := f.time.base_datetime():
+    #             base.add(v)
+    #         if v := f.time.valid_datetime():
+    #             valid.add(v)
+    #     return {"base_time": sorted(base), "valid_time": sorted(valid)}
 
     @property
     def geography(self):
@@ -220,50 +223,8 @@ class IndexedFieldList(Index, FieldListCore):
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
-    @property
-    def latitudes(self):
-        if self._has_shared_geography:
-            return self[0].geography.latitudes()
-        elif len(self) == 0:
-            return None
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
-
-    @property
-    def longitudes(self):
-        if self._has_shared_geography:
-            return self[0].geography.longitudes()
-        elif len(self) == 0:
-            return None
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
-
-    def to_latlon(self, index=None, **kwargs):
-        if self._has_shared_geography:
-            return self[0].to_latlon(index=index, **kwargs)
-        elif len(self) == 0:
-            return dict(lat=None, lon=None)
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
-
-    def to_points(self, **kwargs):
-        if self._has_shared_geography:
-            return self[0].to_points(**kwargs)
-        elif len(self) == 0:
-            return dict(x=None, y=None)
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
-
-    def bounding_box(self):
-        return [f.geography.bounding_box() for f in self]
-
-    def projection(self):
-        if self._has_shared_geography:
-            return self[0].geography.projection
-        elif len(self) == 0:
-            return None
-        else:
-            raise ValueError("Fields do not have the same grid geometry")
+    # def bounding_box(self):
+    #     return [f.geography.bounding_box() for f in self]
 
     @thread_safe_cached_property
     def _has_shared_geography(self):

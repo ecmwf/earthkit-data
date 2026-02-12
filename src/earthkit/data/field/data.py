@@ -15,11 +15,11 @@ from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.utils.array import flatten
 
-from .core import FieldComponent
+from .core import FieldComponentHandler
 from .core import LazyFieldComponentHandler
 
 
-class BaseDataFieldComponent(FieldComponent):
+class BaseDataFieldComponentHandler(FieldComponentHandler):
     """Base class for the data component of a field.
 
     This class defines the interface for accessing and manipulating the data values
@@ -30,13 +30,12 @@ class BaseDataFieldComponent(FieldComponent):
     for specific data storage mechanisms.
     """
 
-    ALL_KEYS = ("values",)
-    SET_KEYS = ("values",)
+    # ALL_KEYS = ("values",)
+    # SET_KEYS = ("values",)
     NAME = "data"
 
     @property
-    def spec(self):
-        """This field component has no spec."""
+    def component(self):
         return None
 
     @property
@@ -60,7 +59,7 @@ class BaseDataFieldComponent(FieldComponent):
 
     def __contains__(self, name):
         """Check if the key is in the specification."""
-        return name in self.ALL_KEYS
+        return name == "values"
 
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         if key == "values":
@@ -74,7 +73,7 @@ class BaseDataFieldComponent(FieldComponent):
         return default
 
 
-class DataFieldComponent(BaseDataFieldComponent):
+class FieldData(BaseDataFieldComponentHandler):
     """Simple data class that provides basic implementation for the data component of a field.
 
     DataFieldComponent has to be subclassed to provide concrete implementation
@@ -82,18 +81,18 @@ class DataFieldComponent(BaseDataFieldComponent):
     """
 
     @classmethod
-    def from_dict(cls, d, allow_unused=False) -> "DataFieldComponent":
+    def from_dict(cls, d) -> "FieldData":
         """Create a DataFieldComponent object from a dictionary."""
         if not isinstance(d, dict):
             raise TypeError("data must be a dictionary")
         # d = normalise_set_kwargs(cls, add_spec_keys=False, **d)
         if "values" in d:
             v = d["values"]
-            return ArrayData(v)
+            return ArrayFieldData(v)
         raise ValueError("Invalid arguments")
 
     @classmethod
-    def from_any(cls, data: Any, **dict_kwargs) -> "DataFieldComponent":
+    def from_any(cls, data: Any, **dict_kwargs) -> "FieldData":
         """Create a DataFieldComponent object from any input.
 
         Parameters
@@ -137,7 +136,7 @@ class DataFieldComponent(BaseDataFieldComponent):
         FieldData
             A new instance of FieldData with the updated values.
         """
-        return ArrayData(array)
+        return ArrayFieldData(array)
 
     def set(self, values=None, **kwargs):
         """Set metadata fields for the field.
@@ -170,6 +169,10 @@ class DataFieldComponent(BaseDataFieldComponent):
         from earthkit.data.field.grib.data import COLLECTOR
 
         COLLECTOR.collect_keys(self, context)
+
+    @classmethod
+    def create_empty(cls) -> "FieldData":
+        return EMPTY_DATA_HANDLER
 
 
 class ArrayCache:
@@ -214,7 +217,38 @@ class ArrayCache:
             _create(self.cache_file)
 
 
-class ArrayData(DataFieldComponent):
+class EmptyFieldData(FieldData):
+    @classmethod
+    def from_dict(cls, d) -> "FieldData":
+        return cls()
+
+    def to_dict(self):
+        return dict()
+
+    def set(self, *args, **kwargs):
+        raise
+
+    @property
+    def values(self):
+        return None
+
+    def get_values(self, dtype=None, copy=True):
+        return None
+
+    def get_grib_context(self, context):
+        pass
+
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, state):
+        pass
+
+
+EMPTY_DATA_HANDLER = EmptyFieldData()
+
+
+class ArrayFieldData(FieldData):
     """Data component of a field that stores values in an array."""
 
     _cache = None

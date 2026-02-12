@@ -8,6 +8,7 @@
 #
 
 from .component.parameter import BaseParameter
+from .component.parameter import EmptyParameter
 from .component.parameter import create_parameter
 from .core import SimpleFieldComponentHandler
 
@@ -15,11 +16,18 @@ from .core import SimpleFieldComponentHandler
 class ParameterFieldComponentHandler(SimpleFieldComponentHandler):
     """Parameter component of a field."""
 
-    PART_CLS = BaseParameter
-    PART_MAKER = create_parameter
+    COMPONENT_CLS = BaseParameter
+    COMPONENT_MAKER = create_parameter
     NAME = "parameter"
 
     def get_grib_context(self, context) -> dict:
         from earthkit.data.field.grib.parameter import COLLECTOR
 
         COLLECTOR.collect(self, context)
+
+    @classmethod
+    def create_empty(cls) -> "ParameterFieldComponentHandler":
+        return EMPTY_PARAMETER_HANDLER
+
+
+EMPTY_PARAMETER_HANDLER = ParameterFieldComponentHandler(EmptyParameter())

@@ -17,26 +17,26 @@ from earthkit.data.utils.dates import to_timedelta
 from .component import SimpleFieldComponent
 from .component import component_keys
 from .component import mark_alias
-from .component import mark_key
+from .component import mark_get_key
 from .component import normalise_create_kwargs
 from .component import normalise_set_kwargs
 
 
 @component_keys
 class BaseTime(SimpleFieldComponent):
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def base_datetime(self):
         """Return the base datetime of the time object."""
         pass
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def valid_datetime(self):
         """Return the valid datetime of the time object."""
         pass
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def step(self):
         """Return the forecast period of the time object."""
@@ -84,18 +84,18 @@ def create_time(d: dict) -> "BaseTime":
     return cls.from_dict(d)
 
 
-class NoTime(BaseTime):
+class EmptyTime(BaseTime):
     def base_datetime(self):
-        pass
+        return None
 
     def valid_datetime(self):
-        pass
+        return None
 
     def step(self):
-        pass
+        return None
 
     def forecast_month(self):
-        pass
+        return None
 
     @classmethod
     def from_dict(cls, d):
@@ -104,8 +104,8 @@ class NoTime(BaseTime):
     def to_dict(self):
         return {}
 
-    def __set__(self, *args, **kwargs):
-        raise ValueError("Cannot set time on NoTime instance")
+    def set(self, *args, **kwargs):
+        raise ValueError("Cannot set values on NoTime")
 
     def __getstate__(self):
         return {}
@@ -573,27 +573,27 @@ class TimeOri(SimpleFieldComponent):
         if step is not None:
             self._step = to_timedelta(step)
 
-    @mark_key("get", "set")
+    @mark_get_key
     def base_datetime(self):
         """Return the base datetime of the time object."""
         return self._base_datetime
 
-    @mark_key("get", "set")
+    @mark_get_key
     def valid_datetime(self):
         """Return the valid datetime of the time object."""
         return self._base_datetime + self._step
 
-    @mark_key("get", "set")
+    @mark_get_key
     def step(self):
         """Return the forecast period of the time object."""
         return self._step
 
-    @mark_key("get")
+    @mark_get_key
     def base_date(self):
         """Return the base date of the time object."""
         return self._base_datetime.date()
 
-    @mark_key("get")
+    @mark_get_key
     def base_time(self):
         """Return the base time of the time object."""
         return self._base_datetime.time()

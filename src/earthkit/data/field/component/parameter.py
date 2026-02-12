@@ -12,20 +12,20 @@ from abc import abstractmethod
 from .component import SimpleFieldComponent
 from .component import component_keys
 from .component import mark_alias
-from .component import mark_key
+from .component import mark_get_key
 
 
 @component_keys
 class BaseParameter(SimpleFieldComponent):
     """A specification of a parameter."""
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def variable(self) -> str:
         r"""str: Return the parameter variable."""
         pass
 
-    @mark_key("get")
+    @mark_get_key
     @abstractmethod
     def units(self) -> str:
         r"""str: Return the parameter units."""
@@ -55,6 +55,34 @@ def create_parameter(d: dict) -> "BaseParameter":
     cls = Parameter
     d1 = cls.normalise_create_kwargs(d, allowed_keys=("variable", "units"))
     return cls(**d1)
+
+
+class EmptyParameter(BaseParameter):
+    def variable(self) -> str:
+        r"""str: Return the parameter variable."""
+        return None
+
+    def units(self) -> str:
+        r"""str: Return the parameter units."""
+        return None
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "BaseParameter":
+        if d:
+            return create_parameter(d)
+        return cls()
+
+    def to_dict(self):
+        return {"variable": None, "units": None}
+
+    def set(self, *args, **kwargs):
+        raise ValueError("Cannot set values on MissingParameter")
+
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, state):
+        self.__init__()
 
 
 class Parameter(BaseParameter):

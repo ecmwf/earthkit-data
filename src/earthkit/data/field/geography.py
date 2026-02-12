@@ -8,6 +8,7 @@
 #
 
 from .component.geography import BaseGeography
+from .component.geography import EmptyGeography
 from .component.geography import create_geography_from_dict
 from .core import SimpleFieldComponentHandler
 
@@ -15,9 +16,16 @@ from .core import SimpleFieldComponentHandler
 class GeographyFieldComponentHandler(SimpleFieldComponentHandler):
     """Geography component of a field."""
 
-    PART_CLS = BaseGeography
-    PART_MAKER = create_geography_from_dict
+    COMPONENT_CLS = BaseGeography
+    COMPONENT_MAKER = create_geography_from_dict
     NAME = "geography"
 
     def get_grib_context(self, context) -> dict:
         pass
+
+    @classmethod
+    def create_empty(cls) -> "GeographyFieldComponentHandler":
+        return EMPTY_GEOGRAPHY_HANDLER
+
+
+EMPTY_GEOGRAPHY_HANDLER = GeographyFieldComponentHandler(EmptyGeography())
