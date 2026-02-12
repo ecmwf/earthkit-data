@@ -46,6 +46,8 @@ allow_holes: false
 
 dim_roles:
   number: ensemble.member
+  date: metadata.date
+  time: metadata.time
   step: time.step
   forecast_reference_time: time.forecast_reference_time
   valid_time: time.valid_datetime
@@ -82,7 +84,6 @@ coord_attrs:
     standard_name: time
     long_name: valid_time
   level:
-    key: typeOfLevel
     depthBelowLand:
       units: m
       positive: down
@@ -150,9 +151,6 @@ coord_attrs:
       positive: up
       long_name: air_potential_temperature
       standard_name: air_potential_temperature
-
-  levelist:
-    key: levtype
     ml:
       units: 1
       positive: down

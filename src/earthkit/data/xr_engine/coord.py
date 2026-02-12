@@ -53,11 +53,10 @@ class Coord:
 
         # LOG.debug(f"{self.name=}" + str(self.convert(profile)))
 
-        name = self.name
         return xarray.Variable(
             self.dims,
             self.convert(profile),
-            self.attrs(name, profile),
+            self.attrs(profile),
         )
 
     def convert(self, profile):
@@ -66,8 +65,8 @@ class Coord:
     def encoding(self, profile):
         return {}
 
-    def attrs(self, name, profile):
-        attrs = profile.attrs.coord_attrs.get(name, {})
+    def attrs(self, profile):
+        attrs = profile.attrs.coord_attrs.get(self.name, {})
         if not attrs and self.LOOKUP_NAME:
             attrs = profile.attrs.coord_attrs.get(self.LOOKUP_NAME, {})
         # PW: TODO: need to replace this somehow?
@@ -95,8 +94,8 @@ class DateTimeCoord(Coord):
     def convert(self, profile):
         return Coord._to_datetime_list(self.vals)
 
-    def attrs(self, name, profile):
-        attrs = profile.attrs.coord_attrs.get(name, {})
+    def attrs(self, profile):
+        attrs = profile.attrs.coord_attrs.get(self.name, {})
         # PW: TODO: need to replace this somehow?
         # if self.component:
         #     attrs["_earthkit"] = {"keys": self.component[0]}
@@ -159,8 +158,8 @@ class StepCoord(Coord):
             return ({"dtype": "timedelta64[s]"},)
         return {}
 
-    def attrs(self, name, profile):
-        attrs = super().attrs(name, profile)
+    def attrs(self, profile):
+        attrs = super().attrs(profile)
         if self.resolution:
             if self.resolution in self.RESOLUTION_UNITS:
                 attrs["units"] = self.RESOLUTION_UNITS[self.resolution]
@@ -170,30 +169,29 @@ class StepCoord(Coord):
 
 
 class MonthCoord(Coord):
-    def attrs(self, name, profile):
-        attrs = super().attrs(name, profile)
+    def attrs(self, profile):
+        attrs = super().attrs(profile)
         attrs["units"] = "months"
         return attrs
 
 
 class LevelCoord(Coord):
     def __init__(self, name, vals, dims=None, ds=None, **kwargs):
-        self.level_type = {}
+        self._vertical_type = None
+        self._cf = None
         if ds is not None:
-            for k in ["levtype", "typeOfLevel"]:
-                v = ds[0].metadata(k, default=None)
-                if v is not None:
-                    self.level_type[k] = v
+            self._cf = ds[0].vertical.cf()
+            self._vertical_type = ds[0].vertical.type()
 
         super().__init__(name, vals, dims, **kwargs)
 
-    def attrs(self, name, profile):
+    def attrs(self, profile):
         attrs = profile.attrs
-        conf = attrs.coord_attrs.get(name, {})
+        conf = attrs.coord_attrs.get(self.name, {})
+        res = {}
         if conf:
-            key = conf["key"]
-            if key in self.level_type:
-                level_type = self.level_type[key]
-                return conf.get(level_type, {})
-        return {}
+            res = conf.get(self._vertical_type, {})
+        if not res:
+            res = self._cf
+        return res
         # raise ValueError(f"Cannot determine level type for coordinate {name}")
