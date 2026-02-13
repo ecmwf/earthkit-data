@@ -70,11 +70,14 @@ assert len(_MARS_TYPES) == len(_TYPES), "Duplicate level type keys"
 
 class MarsVerticalBuilder:
     @staticmethod
-    def build(request):
+    def build(request, build_empty=False):
         from earthkit.data.field.component.vertical import Vertical
         from earthkit.data.field.vertical import VerticalFieldComponentHandler
 
         d = MarsVerticalBuilder._build_dict(request)
+        if not d and not build_empty:
+            return None
+
         component = Vertical.from_dict(d)
         handler = VerticalFieldComponentHandler.from_component(component)
         return handler
@@ -90,5 +93,5 @@ class MarsVerticalBuilder:
         return dict(
             level=level,
             layer=layer,
-            type=level_type,
+            level_type=level_type,
         )

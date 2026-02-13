@@ -12,11 +12,14 @@ from earthkit.data.utils.dates import datetime_from_grib
 
 class MarsTimeBuilder:
     @staticmethod
-    def build(request):
+    def build(request, build_empty=False):
         from earthkit.data.field.component.time import create_time
         from earthkit.data.field.time import TimeFieldComponentHandler
 
         d = MarsTimeBuilder._build_dict(request)
+        if not d and not build_empty:
+            return None
+
         component = create_time(d)
         handler = TimeFieldComponentHandler.from_component(component)
         return handler

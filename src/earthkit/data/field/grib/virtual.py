@@ -11,7 +11,7 @@ import logging
 
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.field.data import DataFieldComponentHandler
-from earthkit.data.indexing.fieldlist import FieldList
+from earthkit.data.indexing.indexed import IndexedFieldList
 
 LOG = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class VirtualData(DataFieldComponentHandler):
     def get_values(self, **kwargs):
         """Get the values stored in the field as an array."""
 
-        return self._field._data.get_values(**kwargs)
+        return self._field._components["data"].get_values(**kwargs)
 
     @property
     def _field(self):
@@ -40,35 +40,21 @@ class VirtualData(DataFieldComponentHandler):
         self.__init__(state["owner"], state["request"])
 
 
-def normalise_request(request):
-    r = request.copy()
-
-    if "date" in r:
-        r["base_date"] = r.pop("date")
-    if "time" in r:
-        r["base_time"] = r.pop("time")
-
-    level = r.get("levelist")
-    if level is not None:
-        r["level"] = level
-
-    return r
-
-
 def make_virtual_grib_field(owner, request):
-    r = normalise_request(request)
+    r = request.copy()
     param = r.pop("param", None)
     if param is not None:
         reference = owner._get_reference(param)
         data = VirtualData(owner, request)
-        f = reference.set(**r)
-        f._data = data
+        from earthkit.data.field.mars.create import new_mars_field
+
+        f = new_mars_field(r, data=data, reference_field=reference)
         return f
 
     raise KeyError("Request must contain 'param' key")
 
 
-class VirtualGribFieldList(FieldList):
+class VirtualGribFieldList(IndexedFieldList):
     def __init__(self, request_mapper, retriever):
         self.request_mapper = request_mapper
         self.retriever = retriever
@@ -106,7 +92,8 @@ class VirtualGribFieldList(FieldList):
             r = self.reference
             # r = self.reference.get_as_dict(["variable", "units", "grib.cfName"])
         else:
-            handle = self.reference.get("grib.handle")
+            # TODO: refactor to avoid using the grib handle directly here
+            handle = self.reference._get_grib().handle
             handle = handle.clone(headers_only=True)
             handle.set("paramId", param)
             r = handle

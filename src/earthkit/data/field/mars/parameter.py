@@ -7,16 +7,21 @@
 # nor does it submit to any jurisdiction.
 #
 
-_UNITS = {"t": "K"}
+from earthkit.data.vocabularies.aliases import unalias
+
+_UNITS = {"t": "K", "r": "%"}
 
 
 class MarsParameterBuilder:
     @staticmethod
-    def build(request):
+    def build(request, build_empty=False):
         from earthkit.data.field.component.parameter import Parameter
         from earthkit.data.field.parameter import ParameterFieldComponentHandler
 
         d = MarsParameterBuilder._build_dict(request)
+        if not d and not build_empty:
+            return None
+
         component = Parameter.from_dict(d)
         handler = ParameterFieldComponentHandler.from_component(component)
         return handler
@@ -24,6 +29,12 @@ class MarsParameterBuilder:
     @staticmethod
     def _build_dict(request):
         param = request.get("param", None)
+
+        if param is None:
+            return dict()
+
+        param = unalias("grib-paramid", param)
+
         units = _UNITS.get(param, None)
 
         return dict(

@@ -12,23 +12,15 @@ def new_mars_field(request, data=None, values=None, geography=None, reference_fi
     r"""Create a Field object from XArray"""
 
     from earthkit.data.core.field import Field
-    from earthkit.data.field.data import ArrayFieldDataComponentHandler
+    from earthkit.data.field.data import ArrayDataFieldComponentHandler
     from earthkit.data.field.labels import SimpleLabels
     from earthkit.data.field.mars.ensemble import MarsEnsembleBuilder
-
-    # from earthkit.data.field.mars.geography import MarsGeographyBuilder
     from earthkit.data.field.mars.parameter import MarsParameterBuilder
     from earthkit.data.field.mars.time import MarsTimeBuilder
     from earthkit.data.field.mars.vertical import MarsVerticalBuilder
 
     if values is not None:
-        data = ArrayFieldDataComponentHandler(values)
-    else:
-        data = None
-
-    if geography is None:
-        pass
-        # geography = MarsGeographyBuilder.build(request)
+        data = ArrayDataFieldComponentHandler(values)
 
     ensemble = MarsEnsembleBuilder.build(request)
     parameter = MarsParameterBuilder.build(request)
@@ -36,7 +28,7 @@ def new_mars_field(request, data=None, values=None, geography=None, reference_fi
     vertical = MarsVerticalBuilder.build(request)
     labels = SimpleLabels({"mars": request})
 
-    r = Field(
+    _kwargs = dict(
         data=data,
         parameter=parameter,
         time=time,
@@ -45,6 +37,11 @@ def new_mars_field(request, data=None, values=None, geography=None, reference_fi
         ensemble=ensemble,
         labels=labels,
     )
+
+    if reference_field is not None:
+        r = Field.from_field(reference_field, **_kwargs)
+    else:
+        r = Field(**_kwargs)
 
     # r._set_private_data("grib", grib)
     return r

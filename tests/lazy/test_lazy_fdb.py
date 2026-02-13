@@ -72,31 +72,38 @@ def test_lazy_fdb():
 
         assert ds[0].shape == (19, 36)
         assert ds[1].shape == (19, 36)
-        assert ds[0].get(["variable", "param", "units", "grib.cfName"]) == ["t", "t", "K", "air_temperature"]
-        assert ds[1].get(["variable", "param", "units", "grib.cfName"]) == [
+        assert ds[0].get(["parameter.variable", "metadata.param", "parameter.units", "metadata.cfName"]) == [
+            "t",
+            "t",
+            "K",
+            "air_temperature",
+        ]
+        assert ds[1].get(["parameter.variable", "metadata.param", "parameter.units", "metadata.cfName"]) == [
             "r",
             "r",
             "%",
             "relative_humidity",
         ]
 
-        assert ds[0].get("base_datetime") == datetime.datetime(2024, 6, 3, 0, 0)
-        assert ds[1].get("base_datetime") == datetime.datetime(2024, 6, 3, 0, 0)
+        assert ds[0].get("time.base_datetime") == datetime.datetime(2024, 6, 3, 0, 0)
+        assert ds[1].get("time.base_datetime") == datetime.datetime(2024, 6, 3, 0, 0)
 
-        assert ds[0].get("step") == datetime.timedelta(hours=0)
-        assert ds[1].get("step") == datetime.timedelta(hours=0)
-        assert ds[4].get("step") == datetime.timedelta(hours=6)
+        assert ds[0].get("time.step") == datetime.timedelta(hours=0)
+        assert ds[1].get("time.step") == datetime.timedelta(hours=0)
+        assert ds[4].get("time.step") == datetime.timedelta(hours=6)
 
-        assert ds[0].get("level") == 500
-        assert ds[1].get("level") == 500
+        assert ds[0].get("vertical.level") == 500
+        assert ds[1].get("vertical.level") == 500
 
         # compare all the fields
-        ds_in_sorted = ds_in.order_by(["variable", "base_datetime", "step", "level"])
-        ds_sorted = ds.order_by(["variable", "base_datetime", "step", "level"])
-        t = ds_in_sorted.sel(variable="t")
-        r = ds_in_sorted.sel(variable="r")
-        t_fdb = ds_sorted.sel(variable="t")
-        r_fdb = ds_sorted.sel(variable="r")
+        ds_in_sorted = ds_in.order_by(
+            ["parameter.variable", "time.base_datetime", "time.step", "vertical.level"]
+        )
+        ds_sorted = ds.order_by(["parameter.variable", "time.base_datetime", "time.step", "vertical.level"])
+        t = ds_in_sorted.sel({"parameter.variable": "t"})
+        r = ds_in_sorted.sel({"parameter.variable": "r"})
+        t_fdb = ds_sorted.sel({"parameter.variable": "t"})
+        r_fdb = ds_sorted.sel({"parameter.variable": "r"})
 
         assert len(t) == 16
         assert len(r) == 16
