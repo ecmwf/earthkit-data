@@ -11,7 +11,6 @@ import logging
 
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
-from earthkit.data.utils.dates import datetime_from_grib
 
 LOG = logging.getLogger(__name__)
 
@@ -39,12 +38,16 @@ COMPOUND_KEYS = {v.name: v for v in [ParamLevelKey]}
 
 ENS_KEYS = ["number", "perturbationNumber", "realization"]
 LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels"]
+LEVEL_KEYS = ["vertical.level", "vertical.layer"]
 LEVEL_TYPE_KEYS = ["typeOfLevel", "levtype"]
+LEVEL_TYPE_KEYS = ["vertical.type", "vertical.abbreviation"]
 DATE_KEYS = ["date", "andate", "validityDate", "dataDate", "hdate", "referenceDate", "indexingDate"]
 TIME_KEYS = ["time", "antime", "validityTime", "dataTime", "referenceTime", "indexingTime"]
 STEP_KEYS = ["step_timedelta", "step", "endStep", "stepRange", "forecastMonth", "fcmonth"]
+STEP_KEYS = ["time.step"]
 MONTH_KEYS = ["forecastMonth", "fcmonth"]
 VALID_DATETIME_KEYS = ["valid_time", "valid_datetime"]
+VALID_DATETIME_KEYS = ["time.valid_datetime"]
 BASE_DATETIME_KEYS = [
     "forecast_reference_time",
     "base_time",
@@ -284,41 +287,6 @@ class ReferenceTimeDim(Dim):
     drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="reference_time")
 
 
-class CustomForecastRefDim(Dim):
-    @staticmethod
-    def _datetime(val):
-        if not val:
-            return None
-        else:
-            try:
-                date, time = val.split("_")
-                return datetime_from_grib(int(date), int(time)).isoformat()
-            except Exception:
-                return val
-
-    def __init__(self, owner, keys, *args, active=True, **kwargs):
-        if isinstance(keys, str):
-            self.key = keys
-        elif isinstance(keys, list) and len(keys) == 2:
-            date = keys[0]
-            time = keys[1]
-            self.key = self._name(date, time)
-            self.drop = [date, time]
-            if active:
-                owner.register_remapping(
-                    {self.key: "{" + date + "}_{" + time + "}"},
-                    patch={self.key: CustomForecastRefDim._datetime},
-                )
-        else:
-            raise ValueError(f"Invalid keys={keys}")
-        super().__init__(owner, *args, active=active, **kwargs)
-
-    def _name(self, date, time):
-        if date.endswith("Date") and time.endswith("Time") and date[:-4] == time[:-4]:
-            return date[:-4] + "_time"
-        return f"{date}_{time}"
-
-
 class LevelDim(Dim):
     alias = get_keys(LEVEL_KEYS)
 
@@ -339,7 +307,7 @@ class LevelPerTypeDim(Dim):
         super().__init__(owner, *args, **kwargs)
 
     def dim_name(self, key, source):
-        lev_type = source[0].metadata(self.level_type_key)
+        lev_type = source[0].get(self.level_type_key)
         if not lev_type:
             raise ValueError(f"{self.level_type_key} not found in metadata")
         return lev_type
@@ -428,8 +396,6 @@ class DimMode:
 
 class ForecastTimeDimMode(DimMode):
     name = "forecast"
-    DATES = ["date", "dataDate"]
-    TIMES = ["time", "dataTime"]
 
     def build(self, profile, owner, active=True):
         ref_time_key, ref_time_name = owner.dim_roles.role("forecast_reference_time", raise_error=False)
@@ -510,7 +476,7 @@ class LevelPerTypeDimMode(LevelAndTypeDimMode):
     dim = LevelPerTypeDim
 
 
-TIME_DIM_MODES = {v.name: v for v in [ForecastTimeDimMode, ValidTimeDimMode]}  # , RawTimeDimMode]}
+TIME_DIM_MODES = {v.name: v for v in [ForecastTimeDimMode, ValidTimeDimMode, RawTimeDimMode]}
 LEVEL_DIM_MODES = {v.name: v for v in [LevelDimMode, LevelPerTypeDimMode, LevelAndTypeDimMode]}
 
 
