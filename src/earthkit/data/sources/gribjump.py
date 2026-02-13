@@ -342,6 +342,22 @@ class FieldExtractList(SimpleFieldList):
         self._loaded = True
         self._grid_indices = indices
 
+    def _normalise_request(request):
+        r = request.copy()
+
+        _convert = {"date": "time.base_date", "time": "base_time", "vertical.level": "level"}
+
+        if "date" in r:
+            r["base_date"] = r.pop("date")
+        if "time" in r:
+            r["base_time"] = r.pop("time")
+
+        level = r.get("levelist")
+        if level is not None:
+            r["level"] = level
+
+        return r
+
     def _load_reference_metadata(self):
         """Loads the reference metadata from the FDB retriever if available."""
         if self._reference_metadata is not None:

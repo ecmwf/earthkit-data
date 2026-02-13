@@ -10,13 +10,13 @@
 import logging
 
 from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.field.data import DataFieldPart
+from earthkit.data.field.data import DataFieldComponentHandler
 from earthkit.data.indexing.fieldlist import FieldList
 
 LOG = logging.getLogger(__name__)
 
 
-class VirtualData(DataFieldPart):
+class VirtualData(DataFieldComponentHandler):
     def __init__(self, owner, request):
         self.owner = owner
         self.request = request
