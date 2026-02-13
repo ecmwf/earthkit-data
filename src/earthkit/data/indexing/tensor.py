@@ -387,7 +387,7 @@ class FieldListTensor(TensorCore):
         if not allow_holes:
             return cls(source, user_coords, field_coords, field_dims, flatten_values)
         else:
-            user_coords_to_fl_idx = source._user_coords_to_fl_idx(names, remapping=remapping)
+            user_coords_to_fl_idx = source._get_user_coords_to_fl_idx(names, remapping=remapping)
             return FieldListSparseTensor(
                 source, user_coords, field_coords, field_dims, flatten_values, user_coords_to_fl_idx
             )

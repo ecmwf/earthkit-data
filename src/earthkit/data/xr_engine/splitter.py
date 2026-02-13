@@ -18,7 +18,7 @@ LOG = logging.getLogger(__name__)
 class Splitter(metaclass=ABCMeta):
     @staticmethod
     def grids(ds):
-        v, _ = ds.unique_values(["md5GridSection"])
+        v = ds.unique_values(["md5GridSection"])
         return v["md5GridSection"]
 
     @abstractmethod

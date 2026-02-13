@@ -224,11 +224,11 @@ class Dim:
     def deactivate_drop_list(self):
         self.owner.deactivate([self.name, self.key] + self.drop, ignore_dim=self)
 
-    def dim_name(self, key, source):
-        return key
+    def dim_name(self, source):
+        return self.key
 
-    def as_coord(self, key, values, source):
-        key = self.dim_name(key, source)
+    def as_coord(self, values, source):
+        key = self.dim_name(source)
         if key not in self.coords:
             from .coord import Coord
 
@@ -306,7 +306,7 @@ class LevelPerTypeDim(Dim):
         self.level_type_key = level_type_key
         super().__init__(owner, *args, **kwargs)
 
-    def dim_name(self, key, source):
+    def dim_name(self, source):
         lev_type = source[0].get(self.level_type_key)
         if not lev_type:
             raise ValueError(f"{self.level_type_key} not found in metadata")
@@ -870,8 +870,18 @@ class DimHandler:
         # first rename the dimensions where the name and key are different
         mapping = {}
         for d in self.dims.values():
-            if d.key in dataset.dims and d.name != d.key:
-                mapping[d.key] = d.name
+            if d.key in dataset.dims:
+                if d.name == d.key and not isinstance(d, RemappingDim):
+                    # strip a prefix "<component>.", if any
+                    _d_name_components = d.name.split(".")
+                    if len(_d_name_components) > 1:
+                        d_name = ".".join(_d_name_components[1:])
+                    else:
+                        d_name = d.name
+                else:
+                    d_name = d.name
+                if d_name != d.key:
+                    mapping[d.key] = d_name
         if mapping:
             dataset = dataset.rename(mapping)
 

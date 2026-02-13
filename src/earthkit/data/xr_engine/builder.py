@@ -72,15 +72,20 @@ class VariableBuilder:
 
     def build(self, add_earthkit_attrs=True):
         if add_earthkit_attrs:
-            if hasattr(self.tensor.source[0], "handle"):
-                md = self.tensor.source[0].metadata().override()
-                attrs = {
-                    "message": md._handle.get_buffer(),
-                    "bitsPerValue": md.get("bitsPerValue", 0),
-                }
-                self._attrs["_earthkit"] = attrs
+            f = self.tensor.source[0]
+            try:
+                # PW: TODO: fix it!
+                md = f.get_private_data("grib").message()
+            except Exception:
+                md = ""
+            attrs = {
+                "message": md,
+                "bitsPerValue": f.get("metadata.bitsPerValue", 0),
+            }
+            self._attrs["_earthkit"] = attrs
 
         try:
+            # PW: TODO
             grid_spec = self.tensor.source[0].metadata().grid_spec
             if grid_spec is not None:
                 if isinstance(grid_spec, dict):
@@ -112,32 +117,32 @@ class VariableBuilder:
         keys_strict = []
         fixed_attrs = {}
 
-        first = None
+        first_field = None
 
-        def _metadata():
-            nonlocal first
-            if not first:
-                first = self.tensor.source[0].metadata()
-            return first
+        def _get_first_field():
+            nonlocal first_field
+            if not first_field:
+                first_field = self.tensor.source[0]
+            return first_field
 
         for a in attrs:
             if a.name not in res and a.name not in self.fixed_local_attrs:
                 if a.fixed():
                     fixed_attrs[a.name] = a.value()
                 elif callable(a):
-                    res.update(a(_metadata()))
+                    res.update(a(_get_first_field()))
                 else:
                     if strict:
                         keys_strict.append(a.name)
                     else:
-                        res.update(a.get(_metadata()))
+                        res.update(a.get(_get_first_field()))
 
         res = {k: v for k, v in res.items() if v is not None}
 
         # TODO: do we need a strict mode here? The extra cost has to be justified
         if keys_strict:
             assert strict
-            v, _ = self.tensor.source.unique_values(keys_strict)
+            v = self.tensor.source.unique_values(keys_strict)
             res.update(v)
 
         self._attrs = res
@@ -153,9 +158,9 @@ class VariableBuilder:
                 if a.fixed():
                     fixed_attrs[a.name] = a.value()
                 elif callable(a):
-                    res.update(a(_metadata()))
+                    res.update(a(_get_first_field()))
                 else:
-                    res.update(a.get(_metadata()))
+                    res.update(a.get(_get_first_field()))
 
             res = {k: v for k, v in res.items() if v is not None}
             collected_attrs = res
@@ -349,7 +354,6 @@ class BackendDataBuilder(metaclass=ABCMeta):
                 # TODO: This does not work yet: Dimensions like "level_per_type" are templates and will be
                 #  added as multiple concrete dimensions to the dataset
                 k, c = d.as_coord(
-                    d.key,
                     self.raw_global_tensor_coords[d.key],
                     self.ds,
                 )
@@ -431,7 +435,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
             # Create coord for each dimension
             # Dimensions like "level_per_type" are templates and will be
             # added as multiple concrete dimensions to the dataset
-            k, c = d.as_coord(d.key, tensor.user_coords[d.key], tensor.source)
+            k, c = d.as_coord(tensor.user_coords[d.key], tensor.source)
             if k not in self.tensor_coords:
                 assert not self.profile.allow_holes, (
                     f"allow_holes=True: the dimension {k} not found among dimensions "
@@ -484,7 +488,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
                     )
                 if num == 1 and d.name in self.profile.dims.dims_as_attrs:
                     attr_val = vals[d.key][0]
-                    k = d.dim_name(d.key, ds)
+                    k = d.dim_name(ds)
 
                     # mimics the behaviour of DimHandler.rename_dataset_dims
                     attr_key = d.name if k == d.key else k
@@ -704,7 +708,7 @@ class SplitDatasetBuilder(DatasetBuilder):
         # LOG.debug(f"split_dims={self.split_dims}")
         ds_xr = XArrayInputFieldList(self.ds, keys=self.profile.index_keys, remapping=remapping)
 
-        vals, _ = ds_xr.unique_values(keys)
+        vals = ds_xr.unique_values(keys)
         LOG.debug(f"{keys=}, {vals=}")
 
         return ds_xr, vals

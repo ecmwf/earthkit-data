@@ -211,6 +211,30 @@ class XArrayInputFieldList(FieldList):
             ds = ds.ds
         return ds
 
+    # PW: TODO: consider if this method shouldn't be put elsewhere
+    def _get_user_coords_to_fl_idx(self, keys, remapping=None):
+        # this method could be implemented in the class XArrayInputFieldList, but then FieldList.to_tensor wouldn't work
+        # PW: actually, now it is...
+        if isinstance(keys, str):
+            keys = [keys]
+        if remapping is None:
+            # some subclasses (e.g. XArrayInputFieldList) has remapping as a member
+            remapping = getattr(self, "remapping", None)
+
+        user_coords_to_fl_idx = {}
+        for i, f in enumerate(self):
+            metadata = f.get(
+                keys, remapping=remapping
+            )  # PW: to be checked (can raise_on_missing? can use _get_fast?)
+            user_coords = tuple(metadata)
+            assert user_coords not in user_coords_to_fl_idx, (
+                f"Multiple fields in {self} with {dict(zip(keys, user_coords))}: "
+                f"#{user_coords_to_fl_idx[user_coords]} and #{i}"
+            )
+            user_coords_to_fl_idx[user_coords] = i
+
+        return user_coords_to_fl_idx
+
     def __getstate__(self):
         """As a simplification, only serialise the unwrapped fieldlist.
         We can assume that when there is a need for serialisation the wrapper
