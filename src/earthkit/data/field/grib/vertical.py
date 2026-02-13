@@ -187,7 +187,7 @@ class GribVerticalBuilder:
         return dict(
             level=level,
             layer=layer,
-            type=level_type,
+            level_type=level_type,
         )
 
 
@@ -195,7 +195,7 @@ class GribVerticalContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(handler, context):
         component = handler.component
-        grib_level_type = _COMPONENT_TYPES.get(component.type())
+        grib_level_type = _COMPONENT_TYPES.get(component.level_type())
         if isinstance(grib_level_type, tuple):
             t = grib_level_type
             grib_level_type = None
@@ -205,7 +205,7 @@ class GribVerticalContextCollector(GribContextCollector):
                     break
 
         if grib_level_type is None:
-            raise ValueError(f"Unknown level type: {component.type()}")
+            raise ValueError(f"Unknown level type: {component.level_type()}")
 
         r = grib_level_type.to_grib(component)
         context.update(r)

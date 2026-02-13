@@ -32,11 +32,11 @@ from grib_fixtures import load_grib_data  # noqa: E402
         (
             {
                 "vertical.level": 320,
-                "vertical.type": "potential_temperature",
+                "vertical.level_type": "potential_temperature",
             },
             {
                 "vertical.level": 320,
-                "vertical.type": "potential_temperature",
+                "vertical.level_type": "potential_temperature",
                 "vertical.units": "K",
                 "vertical.abbreviation": "pt",
                 "metadata.levelist": 500,
@@ -46,7 +46,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
             },
             {
                 "vertical.level": 320,
-                "vertical.type": "potential_temperature",
+                "vertical.level_type": "potential_temperature",
                 "metadata.levelist": 320,
                 "metadata.level": 320,
                 "metadata.levtype": "pt",
@@ -65,7 +65,7 @@ def test_grib_set_vertical(fl_type, write_method, _kwargs, ref1, ref2):
 
     # the original field is unchanged
     assert ds_ori[0].get("vertical.level") == 500
-    assert ds_ori[0].get("vertical.type") == "pressure"
+    assert ds_ori[0].get("vertical.level_type") == "pressure"
 
     with temp_file() as tmp:
         f.to_target("file", tmp)

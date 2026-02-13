@@ -65,7 +65,7 @@ def from_xarray(owner, selection):
     level = get_level(coord, selection)
     level_type = get_level_type(coord)
 
-    return dict(level=level, type=level_type)
+    return dict(level=level, level_type=level_type)
 
 
 class XArrayVertical(VerticalFieldComponentHandler):

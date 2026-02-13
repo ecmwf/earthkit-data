@@ -31,7 +31,7 @@ def test_grib_vertical_1(fl_type):
 
     assert f.vertical.level() == 0
     assert f.vertical.layer() is None
-    assert f.vertical.type() == "surface"
+    assert f.vertical.level_type() == "surface"
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -40,7 +40,7 @@ def test_grib_vertical_2(fl_type):
     f = ds[0]
 
     assert f.vertical.level() == 1000
-    assert f.vertical.type() == "pressure"
+    assert f.vertical.level_type() == "pressure"
     assert f.vertical.units() == "hPa"
     assert f.vertical.abbreviation() == "pl"
     assert f.vertical.positive() == "down"
@@ -115,4 +115,4 @@ def test_grib_vertical_core(fname, expected_values):
     for i, (level, level_type) in enumerate(ref):
         f = ds[i]
         assert np.isclose(f.vertical.level(), level)
-        assert f.vertical.type() == level_type
+        assert f.vertical.level_type() == level_type

@@ -16,9 +16,9 @@ from earthkit.data.field.component.vertical import Vertical
 
 
 def test_vertical_component_alias_1():
-    r = Vertical(level=1000, type="pressure")
+    r = Vertical(level=1000, level_type="pressure")
     assert r.level() == 1000
-    assert r.type() == "pressure"
+    assert r.level_type() == "pressure"
 
 
 @pytest.mark.parametrize(
@@ -27,14 +27,14 @@ def test_vertical_component_alias_1():
         (
             {
                 "level": 1000,
-                "type": "pressure",
+                "level_type": "pressure",
             },
             (1000, "pressure"),
         ),
         (
             {
                 "level": 1000,
-                "type": "pressure",
+                "level_type": "pressure",
             },
             (1000, "pressure"),
         ),
@@ -50,11 +50,11 @@ def test_vertical_component_from_dict_ok(input_d, ref):
             r = Vertical.from_dict(d)
 
             assert r.level() == ref[0]
-            assert r.type() == "pressure"
+            assert r.level_type() == "pressure"
 
 
 def test_vertical_component_type():
-    r = Vertical(level=1000, type="pressure")
+    r = Vertical(level=1000, level_type="pressure")
 
     t = r._type
     assert t == "pressure"
@@ -65,7 +65,7 @@ def test_vertical_component_type():
     assert t.cf == {"standard_name": "air_pressure", "long_name": "pressure"}
 
     assert r.level() == 1000
-    assert r.type() == "pressure"
+    assert r.level_type() == "pressure"
     assert r.abbreviation() == "pl"
     assert r.units() == "hPa"
     assert r.positive() == "down"
@@ -84,25 +84,25 @@ def test_vertical_component_type():
                 {
                     "level": 500,
                 },
-                {"level": 500, "type": "pressure"},
+                {"level": 500, "level_type": "pressure"},
             ],
             {
                 "level": 500,
                 "layer": None,
-                "type": "pressure",
+                "level_type": "pressure",
             },
         ),
         (
             [
-                {"level": 320, "type": "potential_temperature"},
+                {"level": 320, "level_type": "potential_temperature"},
             ],
-            {"level": 320, "type": "potential_temperature"},
+            {"level": 320, "level_type": "potential_temperature"},
         ),
     ],
 )
 def test_vertical_component_set(input_d, ref):
 
-    r = Vertical(level=1000, type="pressure")
+    r = Vertical(level=1000, level_type="pressure")
 
     if not isinstance(input_d, list):
         input_d = [input_d]
@@ -116,4 +116,4 @@ def test_vertical_component_set(input_d, ref):
 
         # the original object is unchanged
         assert r.level() == 1000
-        assert r.type() == "pressure"
+        assert r.level_type() == "pressure"

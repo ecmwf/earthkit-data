@@ -58,7 +58,7 @@ class BaseVertical(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
-    def type(self):
+    def level_type(self):
         """Return the level type."""
         pass
 
@@ -80,7 +80,7 @@ def create_vertical(d: dict) -> "BaseVertical":
         raise TypeError(f"Cannot create Vertical from {type(d)}, expected dict")
 
     cls = Vertical
-    d1 = cls.normalise_create_kwargs(d, allowed_keys=("level", "layer", "type"))
+    d1 = cls.normalise_create_kwargs(d, allowed_keys=("level", "layer", "level_type"))
     return cls(**d1)
 
 
@@ -112,7 +112,7 @@ class EmptyVertical(BaseVertical):
         """Return the level type."""
         return None
 
-    def type(self):
+    def level_type(self):
         """Return the level type."""
         return self._type.name
 
@@ -151,12 +151,12 @@ class Vertical(BaseVertical):
         self,
         level: Union[int, float] = None,
         layer: Optional[tuple[float, float]] = None,
-        type: Optional[Union[LevelType, str]] = None,
+        level_type: Optional[Union[LevelType, str]] = None,
     ) -> None:
 
         self._level = level
         self._layer = layer
-        self._type = get_level_type(type)
+        self._type = get_level_type(level_type)
         self._check()
 
     def level(self) -> Union[int, float]:
@@ -183,7 +183,7 @@ class Vertical(BaseVertical):
         """Return the level type."""
         return self._type.positive
 
-    def type(self):
+    def level_type(self):
         """Return the level type."""
         return self._type.name
 
@@ -213,7 +213,7 @@ class Vertical(BaseVertical):
         return {
             "level": self._level,
             "layer": self._layer,
-            "type": self._type.name,
+            "level_type": self._type.name,
         }
 
     def __getstate__(self):
@@ -224,7 +224,7 @@ class Vertical(BaseVertical):
         return state
 
     def __setstate__(self, state):
-        self.__init__(level=state["level"], layer=state["layer"], type=state["type"])
+        self.__init__(level=state["level"], layer=state["layer"], level_type=state["level_type"])
 
     def _check(self):
         if self.layer() is not None:
@@ -232,12 +232,12 @@ class Vertical(BaseVertical):
                 raise ValueError("Layer must be a tuple of two values or None")
 
     def set(self, *args, **kwargs):
-        d = self.normalise_set_kwargs(*args, allowed_keys=("level", "layer", "type"), **kwargs)
+        d = self.normalise_set_kwargs(*args, allowed_keys=("level", "layer", "level_type"), **kwargs)
 
         current = {
             "level": self._level,
             "layer": self._layer,
-            "type": self._type.name,
+            "level_type": self._type.name,
         }
 
         current.update(d)

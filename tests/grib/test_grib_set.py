@@ -94,8 +94,7 @@ def test_grib_set_detailed(fl_type, write_method):
         assert f_saved.get("vertical.level") == 600
         assert f_saved.get("metadata.level") == 600
         assert f_saved.get("metadata.levelist") == 600
-        assert f_saved.get("vertical.type") == "pressure"
-        assert f_saved.get("vertical.type") == "pressure"
+        assert f_saved.get("vertical.level_type") == "pressure"
         assert f_saved.get("metadata.typeOfLevel") == "isobaricInhPa"
 
     # ---------------------
