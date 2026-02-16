@@ -52,27 +52,25 @@ def selection_from_index(coord_accessor, kwargs):
         return {}
 
     _kwargs = {}
+    keys = list(kwargs.keys())
+    coord_vals = coord_accessor(keys, sort=True, drop_none=True, squeeze=False, cache=True)
     for k, v in kwargs.items():
+        vals = coord_vals.get(k, tuple())
         try:
             # the coords do not contain None
-            coord_vals = coord_accessor(k)
-
-            if len(coord_vals) == 0:
+            if len(vals) == 0:
                 return {}
             elif isinstance(v, slice):
-                _kwargs[k] = coord_vals[v]
+                _kwargs[k] = vals[v]
             elif isinstance(v, (list, tuple, set)):
-                _kwargs[k] = [coord_vals[i] for i in v]
+                _kwargs[k] = [vals[i] for i in v]
             elif isinstance(v, int):
-                _kwargs[k] = coord_vals[v]
+                _kwargs[k] = vals[v]
             else:
                 raise ValueError(f"Invalid value index={v}. Type={type(v)} not supported")
 
         except IndexError as e:
             raise IndexError(
-                (
-                    f"Invalid index={v}. Index for key={k} must be in the range of"
-                    f"(0, {len(coord_accessor(k))}) {e}"
-                )
+                (f"Invalid index={v}. Index for key={k} must be in the range of" f"(0, {len(vals)}) {e}")
             )
     return _kwargs

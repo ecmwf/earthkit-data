@@ -17,62 +17,6 @@ from earthkit.data.core.index import MultiIndex
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.compute import wrap_maths
 
-GRIB_KEYS_NAMES = [
-    "class",
-    "stream",
-    "levtype",
-    "type",
-    "expver",
-    "date",
-    "hdate",
-    "andate",
-    "time",
-    "antime",
-    "reference",
-    "anoffset",
-    "verify",
-    "fcmonth",
-    "fcperiod",
-    "leadtime",
-    "opttime",
-    "origin",
-    "domain",
-    "method",
-    "diagnostic",
-    "iteration",
-    "number",
-    "quantile",
-    "levelist",
-    "param",
-]
-
-LS_KEYS = [
-    "name",
-    "level",
-    "level_type",
-    "base_datetime",
-    "step",
-    "valid_datetime",
-    "number",
-    "gridType",
-]
-INDEX_KEYS = list(GRIB_KEYS_NAMES)
-
-DESCRIBE_KEYS = [
-    "shortName",
-    "typeOfLevel",
-    "level",
-    "date",
-    "time",
-    "stepRange",
-    "number",
-    "paramId",
-    "marsClass",
-    "marsStream",
-    "marsType",
-    "experimentVersionNumber",
-]
-
 
 def build_remapping(remapping, patches):
     if remapping is not None or patches is not None:
@@ -102,14 +46,14 @@ class IndexedFieldList(Index, FieldListCore):
 
         return SimpleFieldList.from_fields(fields)
 
-    @staticmethod
-    def from_numpy(array, metadata):
-        raise NotImplementedError("IndexedFieldList.from_numpy is not implemented")
-        # return FieldList.from_array(array, metadata)
+    # @staticmethod
+    # def from_numpy(array, metadata):
+    #     raise NotImplementedError("IndexedFieldList.from_numpy is not implemented")
+    #     # return FieldList.from_array(array, metadata)
 
-    @staticmethod
-    def from_array(array, metadata):
-        raise NotImplementedError("IndexedFieldList.from_array is not implemented")
+    # @staticmethod
+    # def from_array(array, metadata):
+    #     raise NotImplementedError("IndexedFieldList.from_array is not implemented")
 
     @property
     def values(self):
@@ -120,9 +64,6 @@ class IndexedFieldList(Index, FieldListCore):
 
     def to_array(self, **kwargs):
         ns = kwargs.get("array_namespace", None)
-        if ns is None:
-            ns = eku_array_namespace(kwargs.get("array_backend", None))
-
         return self._as_array("to_array", empty_array_namespace=ns, **kwargs)
 
     def _as_array(self, accessor, empty_array_namespace=None, **kwargs):
@@ -182,37 +123,6 @@ class IndexedFieldList(Index, FieldListCore):
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
-    # def datetime(self):
-    #     r"""Return the unique, sorted list of dates and times in the fieldlist.
-
-    #     Returns
-    #     -------
-    #     dict of datatime.datetime
-    #         Dict with items "base_time" and "valid_time".
-
-    #     Examples
-    #     --------
-    #     >>> import earthkit.data
-    #     >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
-    #     >>> ds.datetime()
-    #     {'base_time': [datetime.datetime(2020, 12, 21, 12, 0)],
-    #     'valid_time': [
-    #         datetime.datetime(2020, 12, 21, 12, 0),
-    #         datetime.datetime(2020, 12, 21, 15, 0),
-    #         datetime.datetime(2020, 12, 21, 18, 0),
-    #         datetime.datetime(2020, 12, 21, 21, 0),
-    #         datetime.datetime(2020, 12, 23, 12, 0)]}
-
-    #     """
-    #     base = set()
-    #     valid = set()
-    #     for f in self:
-    #         if v := f.time.base_datetime():
-    #             base.add(v)
-    #         if v := f.time.valid_datetime():
-    #             valid.add(v)
-    #     return {"base_time": sorted(base), "valid_time": sorted(valid)}
-
     @property
     def geography(self):
         if self._has_shared_geography:
@@ -221,9 +131,6 @@ class IndexedFieldList(Index, FieldListCore):
             return None
         else:
             raise ValueError("Fields do not have the same grid geometry")
-
-    # def bounding_box(self):
-    #     return [f.geography.bounding_box() for f in self]
 
     @thread_safe_cached_property
     def _has_shared_geography(self):
@@ -298,17 +205,17 @@ class IndexedFieldList(Index, FieldListCore):
 
         return self.get(keys, **kwargs)
 
-    @thread_safe_cached_property
-    def _md_indices(self):
-        from .indices import FieldListIndices
+    # @thread_safe_cached_property
+    # def _md_indices(self):
+    #     from .indices import FieldListIndices
 
-        return FieldListIndices(self)
+    #     return FieldListIndices(self)
 
-    def indices(self, squeeze=False):
-        return self._md_indices.indices(squeeze=squeeze)
+    # def indices(self, squeeze=False):
+    #     return self._md_indices.indices(squeeze=squeeze)
 
-    def index(self, key):
-        return self._md_indices.index(key)
+    # def index(self, key):
+    #     return self._md_indices.index(key)
 
     def _default_ls_keys(self):
         if len(self) > 0:
@@ -360,10 +267,11 @@ class IndexedFieldList(Index, FieldListCore):
 
     @thread_safe_cached_property
     def _describe_keys(self):
-        if len(self) > 0:
-            return DESCRIBE_KEYS
-        else:
-            return []
+        # if len(self) > 0:
+        #     return DESCRIBE_KEYS
+        # else:
+        #     return []
+        return []
 
     def describe(self, *args, **kwargs):
         r"""Generate a summary of the fieldlist."""
@@ -410,39 +318,39 @@ class IndexedFieldList(Index, FieldListCore):
 
         return Field.normalise_key_values(**kwargs)
 
-    def unique_values(self, *coords, remapping=None, patches=None, progress_bar=False):
-        """Given a list of metadata attributes, such as date, param, levels,
-        returns the list of unique values for each attributes
-        """
-        from collections import defaultdict
+    # def unique_values(self, *coords, remapping=None, patches=None, progress_bar=False):
+    #     """Given a list of metadata attributes, such as date, param, levels,
+    #     returns the list of unique values for each attributes
+    #     """
+    #     from collections import defaultdict
 
-        from earthkit.data.core.order import build_remapping
+    #     from earthkit.data.core.order import build_remapping
 
-        assert len(coords)
-        assert all(isinstance(k, str) for k in coords), coords
+    #     assert len(coords)
+    #     assert all(isinstance(k, str) for k in coords), coords
 
-        remapping = build_remapping(remapping, patches)
-        iterable = self
+    #     remapping = build_remapping(remapping, patches)
+    #     iterable = self
 
-        if progress_bar:
-            from earthkit.data.utils.progbar import progress_bar
+    #     if progress_bar:
+    #         from earthkit.data.utils.progbar import progress_bar
 
-            if progress_bar:
-                iterable = progress_bar(
-                    iterable=self,
-                    desc=f"Finding coords in dataset for {coords}",
-                )
+    #         if progress_bar:
+    #             iterable = progress_bar(
+    #                 iterable=self,
+    #                 desc=f"Finding coords in dataset for {coords}",
+    #             )
 
-        vals = defaultdict(dict)
-        for f in iterable:
-            get = remapping(f.get)
-            for k in coords:
-                v = get(k, default=None)
-                vals[k][v] = True
+    #     vals = defaultdict(dict)
+    #     for f in iterable:
+    #         get = remapping(f.get)
+    #         for k in coords:
+    #             v = get(k, default=None)
+    #             vals[k][v] = True
 
-        vals = {k: tuple(values.keys()) for k, values in vals.items()}
+    #     vals = {k: tuple(values.keys()) for k, values in vals.items()}
 
-        return vals
+    #     return vals
 
     @classmethod
     def new_mask_index(self, *args, **kwargs):

@@ -88,7 +88,15 @@ class FieldCube:
 
         # Get a mapping of user names to unique values
         # With possible reduce dimensionality if the user use 'level+param'
-        self.user_coords = self.source.unique_values(*names, remapping=remapping, patches=patches)
+        self.user_coords = self.source.unique(
+            names,
+            sort=False,
+            drop_none=False,
+            squeeze=False,
+            remapping=remapping,
+            patches=patches,
+            cache=False,
+        )
 
         self.user_shape = tuple(len(v) for k, v in self.user_coords.items())
 
@@ -98,7 +106,7 @@ class FieldCube:
                 details.append(f"{key=} ({len(v)}) {v}")
             assert not isinstance(self.source, str), f"Not expecting a str here ({self.source})"
             for i, f in enumerate(self.source):
-                details.append(f"{i}={f} {f.metadata('number', default=None)}")
+                details.append(f"{i}={f} {f.get('ensemble.member', default=None)}")
                 if i > 30:
                     details.append("...")
                     break

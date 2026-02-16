@@ -97,7 +97,7 @@ def check_array_fl(ds, ds_input, md_full, array_namespace=None):
 def check_array_fl_from_to_fieldlist(ds, ds_input, md_full, array_namespace=None, flatten=False, dtype=None):
     assert len(ds_input) in [1, 2, 3]
     assert len(ds) == len(md_full)
-    assert ds.metadata("parameter.variable") == md_full
+    assert ds.get("parameter.variable") == md_full
 
     xp = eku_array_namespace(array_namespace)
 

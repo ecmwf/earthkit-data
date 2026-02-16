@@ -16,7 +16,9 @@ from earthkit.data.core.order import build_remapping
 from earthkit.data.core.order import normalize_order_by
 from earthkit.data.core.select import normalize_selection
 from earthkit.data.core.select import selection_from_index
+from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.sources import Source
+from earthkit.data.utils.unique import UniqueValuesCollector
 
 LOG = logging.getLogger(__name__)
 
@@ -417,11 +419,11 @@ class Index(Source):
         GribField(v,500,20180801,1200,0,0)
 
         """
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs, _ = normalize_selection(*args, **kwargs)
         if not kwargs:
             return self
 
-        kwargs = selection_from_index(self.index, kwargs)
+        kwargs = selection_from_index(self.unique, kwargs)
 
         if not kwargs:
             return self.new_mask_index(self, [])
@@ -429,7 +431,7 @@ class Index(Source):
         return self.sel(**kwargs)
 
     def order_by(self, *args, remapping=None, patches=None, **kwargs):
-        """Changes the order of the elements in a fieldlist-like object.
+        """Change the order of the elements in a fieldlist-like object.
 
         Parameters
         ----------
@@ -541,6 +543,69 @@ class Index(Source):
         indices = list(range(len(self)))
         indices = sorted(indices, key=functools.cmp_to_key(cmp))
         return self.new_mask_index(self, indices)
+
+    @thread_safe_cached_property
+    def _cached_unique_collector(self):
+        return UniqueValuesCollector(cache=True)
+
+    def unique(
+        self,
+        *args,
+        sort=False,
+        drop_none=True,
+        squeeze=False,
+        remapping=None,
+        patches=None,
+        progress_bar=False,
+        cache=True,
+    ):
+        """Given a list of metadata attributes, such as date, param, levels,
+        returns the list of unique values for each attributes.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the metadata keys to collect unique values for.
+        sort: bool, optional
+            Whether to sort the collected unique values. Default is False.
+        drop_none: bool, optional
+            Whether to drop None values from the collected unique values. Default is True.
+        squeeze: bool, optional
+            Whether to return a single value instead of a list if there is only one unique value for a key. Default is False.
+        remapping: dict, optional
+            A dictionary for remapping keys or values during collection. Default is None.
+        patches: dict, optional
+            A dictionary for patching key values during collection. Default is None.
+        progress_bar: bool, optional
+            Whether to display a progress bar during collection. Default is False.
+        cache: bool, optional
+            Whether to use a cached collector. Default is False.
+        """
+
+        keys = []
+        for arg in args:
+            if isinstance(arg, str):
+                keys.append(arg)
+            elif isinstance(arg, (list, tuple)):
+                keys.extend(arg)
+            else:
+                raise ValueError(f"Invalid argument: {arg} ({type(arg)})")
+
+        if cache:
+            collector = self._cached_unique_collector
+        else:
+            collector = UniqueValuesCollector()
+
+        return collector.collect(
+            self,
+            keys=keys,
+            sort=sort,
+            drop_none=drop_none,
+            squeeze=squeeze,
+            remapping=remapping,
+            patches=patches,
+            progress_bar=progress_bar,
+        )
 
     def __getitem__(self, n):
         if isinstance(n, slice):

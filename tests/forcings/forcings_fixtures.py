@@ -79,7 +79,9 @@ def load_forcings_fs(params=None, first_step=6, last_step=72, input_data="grib")
     else:
         raise ValueError(f"Unknown input_data: {input_data}")
 
-    assert len(ds) == len(dates) * len(params)
+    assert len(ds) == len(dates) * len(
+        params
+    ), f"Expected {len(dates) * len(params)} but got {len(ds)}, len(dates)={len(dates)}, len(params)={len(params)}"
 
     md = [[d, p] for d, p in itertools.product(dates, params)]
     return ds, md

@@ -296,12 +296,20 @@ class ForcingsData:
         if "number" in request:
             return request["number"]
 
-        assert hasattr(source_or_dataset, "unique_values"), (
-            f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is"
-            " not a proper source or dataset"
+        assert hasattr(source_or_dataset, "unique"), (
+            f"{source_or_dataset} (type '{type(source_or_dataset).__name__}')",
+            " must have the unique method",
         )
 
-        return source_or_dataset.unique_values("number", patches={"number": {None: 0}}).get("number", 0)
+        r = source_or_dataset.unique(
+            "ensemble.member", squeeze=False, drop_none=True, patches={"ensemble.member": {None: 0}}
+        )
+
+        r = r.get("member", (0,))
+        if not r:
+            r = (0,)
+
+        return r
 
     @staticmethod
     def find_dates(source_or_dataset, request):
@@ -320,12 +328,13 @@ class ForcingsData:
             return dates
 
         assert "date" not in request and "time" not in request
-        assert hasattr(source_or_dataset, "unique_values"), (
-            f"{source_or_dataset} (type '{type(source_or_dataset).__name__}') is"
-            " not a proper source or dataset"
+        assert hasattr(source_or_dataset, "unique"), (
+            f"{source_or_dataset} (type '{type(source_or_dataset).__name__}')",
+            " must have the unique method",
         )
 
-        return source_or_dataset.unique_values("valid_datetime")["valid_datetime"]
+        r = source_or_dataset.unique("time.valid_datetime", squeeze=False)["valid_datetime"]
+        return r
 
     @staticmethod
     @normalize("date", "date-list")

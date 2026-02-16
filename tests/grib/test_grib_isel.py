@@ -110,10 +110,10 @@ def test_grib_isel_slice_invalid(fl_type):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
 
     with pytest.raises(IndexError):
-        f.isel(level=500)
+        f.isel({"vertical.level": 500})
 
     with pytest.raises(ValueError):
-        f.isel(level="a")
+        f.isel({"vertical.level": "a"})
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -125,7 +125,7 @@ def test_grib_isel_multi_file(fl_type):
     # single resulting field
     g = f.isel({"parameter.variable": 1, "vertical.level": 21})
     assert len(g) == 1
-    assert g.get(["parameter.variable", "vertical.level", "metadata.marsType"]) == [["t", 85, "hybrid"]]
+    assert g.get(["parameter.variable", "vertical.level", "metadata.marsType"]) == [["t", 85, "fc"]]
 
     g1 = f[40]
     d = g.to_numpy() - g1.to_numpy()
@@ -141,8 +141,8 @@ def test_grib_isel_slice_multi_file(fl_type):
     g = f.isel({"parameter.variable": 1, "vertical.level": slice(20, 22)})
     assert len(g) == 2
     assert g.get(["parameter.variable", "vertical.level", "metadata.marsType"]) == [
-        ["t", 81, "hybrid"],
-        ["t", 85, "hybrid"],
+        ["t", 81, "fc"],
+        ["t", 85, "fc"],
     ]
 
 

@@ -26,29 +26,29 @@ class FieldListCore(Base):
     def from_fields(fields):
         pass
 
-    @staticmethod
-    @abstractmethod
-    def from_numpy(array, metadata):
-        pass
+    # @staticmethod
+    # @abstractmethod
+    # def from_numpy(array, metadata):
+    #     pass
 
-    @staticmethod
-    @abstractmethod
-    def from_array(array, metadata):
-        r"""Create an :class:`SimpleFieldList`.
+    # @staticmethod
+    # @abstractmethod
+    # def from_array(array, metadata):
+    #     r"""Create an :class:`SimpleFieldList`.
 
-        Parameters
-        ----------
-        array: array-like, list
-            The fields' values. When it is a list it must contain one array per field.
-        metadata: list, :class:`Metadata`
-            The fields' metadata. Must contain one :class:`Metadata` object per field. Or
-            it can be a single :class:`Metadata` object when all the fields have the same metadata.
+    #     Parameters
+    #     ----------
+    #     array: array-like, list
+    #         The fields' values. When it is a list it must contain one array per field.
+    #     metadata: list, :class:`Metadata`
+    #         The fields' metadata. Must contain one :class:`Metadata` object per field. Or
+    #         it can be a single :class:`Metadata` object when all the fields have the same metadata.
 
-        In the generated :class:`SimpleFieldList`, each field is represented by an array
-        storing the field values and a :class:`MetaData` object holding
-        the field metadata. The shape and dtype of the array is controlled by the ``kwargs``.
-        """
-        pass
+    #     In the generated :class:`SimpleFieldList`, each field is represented by an array
+    #     storing the field values and a :class:`MetaData` object holding
+    #     the field metadata. The shape and dtype of the array is controlled by the ``kwargs``.
+    #     """
+    #     pass
 
     @property
     @abstractmethod
@@ -379,77 +379,77 @@ class FieldListCore(Base):
         """
         pass
 
-    @abstractmethod
-    def indices(self, squeeze=False):
-        r"""Return the unique, sorted values for a set of metadata keys (see below)
-        from all the fields. Individual keys can be also queried by :obj:`index`.
+    # @abstractmethod
+    # def indices(self, squeeze=False):
+    #     r"""Return the unique, sorted values for a set of metadata keys (see below)
+    #     from all the fields. Individual keys can be also queried by :obj:`index`.
 
-        Parameters
-        ----------
-        squeeze : False
-            When True only returns the metadata keys that have more than one values.
+    #     Parameters
+    #     ----------
+    #     squeeze : False
+    #         When True only returns the metadata keys that have more than one values.
 
-        Returns
-        -------
-        dict
-            Unique, sorted metadata values from all the
-            :obj:`Field`\ s.
+    #     Returns
+    #     -------
+    #     dict
+    #         Unique, sorted metadata values from all the
+    #         :obj:`Field`\ s.
 
-        See Also
-        --------
-        index
+    #     See Also
+    #     --------
+    #     index
 
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
-        >>> ds.indices()
-        {'class': ['od'], 'stream': ['oper'], 'levtype': ['pl'], 'type': ['an'],
-        'expver': ['0001'], 'date': [20180801], 'time': [1200], 'domain': ['g'],
-        'number': [0], 'levelist': [300, 400, 500, 700, 850, 1000],
-        'param': ['t', 'u', 'v']}
-        >>> ds.indices(squeeze=True)
-        {'levelist': [300, 400, 500, 700, 850, 1000], 'param': ['t', 'u', 'v']}
-        >>> ds.index("level")
-        [300, 400, 500, 700, 850, 1000]
+    #     Examples
+    #     --------
+    #     >>> import earthkit.data
+    #     >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+    #     >>> ds.indices()
+    #     {'class': ['od'], 'stream': ['oper'], 'levtype': ['pl'], 'type': ['an'],
+    #     'expver': ['0001'], 'date': [20180801], 'time': [1200], 'domain': ['g'],
+    #     'number': [0], 'levelist': [300, 400, 500, 700, 850, 1000],
+    #     'param': ['t', 'u', 'v']}
+    #     >>> ds.indices(squeeze=True)
+    #     {'levelist': [300, 400, 500, 700, 850, 1000], 'param': ['t', 'u', 'v']}
+    #     >>> ds.index("level")
+    #     [300, 400, 500, 700, 850, 1000]
 
-        By default :obj:`indices` uses the keys from the
-        "mars" :xref:`eccodes_namespace`. Keys with no valid values are not included. Keys
-        that :obj:`index` is called with are automatically added to the original set of keys
-        used in :obj:`indices`.
+    #     By default :obj:`indices` uses the keys from the
+    #     "mars" :xref:`eccodes_namespace`. Keys with no valid values are not included. Keys
+    #     that :obj:`index` is called with are automatically added to the original set of keys
+    #     used in :obj:`indices`.
 
-        """
-        pass
+    #     """
+    #     pass
 
-    @abstractmethod
-    def index(self, key):
-        r"""Return the unique, sorted values of the specified metadata ``key`` from all the fields.
-        ``key`` will be automatically added to the keys returned by :obj:`indices`.
+    # @abstractmethod
+    # def index(self, key):
+    #     r"""Return the unique, sorted values of the specified metadata ``key`` from all the fields.
+    #     ``key`` will be automatically added to the keys returned by :obj:`indices`.
 
-        Parameters
-        ----------
-        key : str
-            Metadata key.
+    #     Parameters
+    #     ----------
+    #     key : str
+    #         Metadata key.
 
-        Returns
-        -------
-        list
-            Unique, sorted values of ``key`` from all the
-            :obj:`Field`\ s.
+    #     Returns
+    #     -------
+    #     list
+    #         Unique, sorted values of ``key`` from all the
+    #         :obj:`Field`\ s.
 
-        See Also
-        --------
-        index
+    #     See Also
+    #     --------
+    #     index
 
-        Examples
-        --------
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
-        >>> ds.index("level")
-        [300, 400, 500, 700, 850, 1000]
+    #     Examples
+    #     --------
+    #     >>> import earthkit.data
+    #     >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
+    #     >>> ds.index("level")
+    #     [300, 400, 500, 700, 850, 1000]
 
-        """
-        return self._md_indices.index(key)
+    #     """
+    #     return self._md_indices.index(key)
 
     @abstractmethod
     def ls(self, n=None, keys=None, extra_keys=None, namespace=None):
@@ -562,6 +562,40 @@ class FieldListCore(Base):
     @abstractmethod
     def describe(self, *args, **kwargs):
         r"""Generate a summary of the fieldlist."""
+        pass
+
+    def unique(
+        self,
+        *args,
+        sort=False,
+        drop_none=True,
+        squeeze=False,
+        remapping=None,
+        patches=None,
+        cache=True,
+        progress_bar=False,
+    ):
+        """Return the unique values for a given set of metadata keys.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments specifying the metadata keys to collect unique values for.
+        sort: bool, optional
+            Whether to sort the collected unique values. Default is False.
+        drop_none: bool, optional
+            Whether to drop None values from the collected unique values. Default is True.
+        squeeze: bool, optional
+            When True only returns the metadata keys that have more than one values. Default is False.
+        remapping: dict, optional
+            A dictionary for remapping keys or values during collection. Default is None.
+        patches: dict, optional
+            A dictionary for patching key values during collection. Default is None.
+        cache: bool, optional
+            Whether to use an a cache attached to the fieldlist for previously collected unique values. Default is True.
+        progress_bar: bool, optional
+            Whether to display a progress bar during collection. Default is False.
+        """
         pass
 
     @abstractmethod

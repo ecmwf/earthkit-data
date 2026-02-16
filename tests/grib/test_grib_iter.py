@@ -25,7 +25,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
-@pytest.mark.parametrize("group", ["param"])
+@pytest.mark.parametrize("group", ["parameter.variable"])
 def test_grib_iter_group_by(fl_type, group):
     ds, array_namespace = load_grib_data("test6.grib", fl_type)
 
@@ -37,7 +37,7 @@ def test_grib_iter_group_by(fl_type, group):
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 2
-        assert f.get(("param", "level")) == ref[i]
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i]
         afl = f.to_fieldlist(array_namespace=array_namespace)
         assert afl is not f
         assert len(afl) == 2
@@ -47,7 +47,7 @@ def test_grib_iter_group_by(fl_type, group):
 
 
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
-@pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
+@pytest.mark.parametrize("group", ["vertical.level", ["vertical.level", "gridType"]])
 def test_grib_iter_multi_group_by(fl_type, group):
     ds, _ = load_grib_data(["test4.grib", "test6.grib"], fl_type)
 
@@ -58,7 +58,7 @@ def test_grib_iter_multi_group_by(fl_type, group):
     ]
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
-        assert f.get(("param", "level")) == ref[i]
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i]
         cnt += len(f)
 
     assert cnt == len(ds)
@@ -78,7 +78,7 @@ def test_grib_iter_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.get("param") == expected_meta[i]
+        f.get("parameter.variable") == expected_meta[i]
         cnt += len(f)
 
     assert cnt == len(ds)
