@@ -94,7 +94,7 @@ def test_fdb_grib_write(monkeypatch, use_kwargs):
 
         fdb = pyfdb.FDB(config=config)
         for f in ds:
-            fdb.archive(f.get("grib.message"))
+            fdb.archive(f.message())
         fdb.flush()
 
         request = {
@@ -117,7 +117,7 @@ def test_fdb_grib_write(monkeypatch, use_kwargs):
             ds1 = from_source("fdb", request, stream=False)
 
         assert len(ds1) == 2
-        assert ds1.get("variable") == ["2t", "msl"]
+        assert ds1.get("parameter.variable") == ["2t", "msl"]
 
 
 if __name__ == "__main__":

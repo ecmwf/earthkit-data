@@ -199,35 +199,48 @@ class GribHandleMaker:
         return GribCodesHandle.from_sample(sample)
 
     def update_metadata_from_template(self, metadata, template, handle):
-        # TODO: adjust it to the new field implementation
-        # the template can contain extra metadata that is not encoded in the handle
+
         return
+        # the template can contain extra metadata that is not encoded in the handle
+        if "bitsPerValue" in metadata:
+            return
+
         bpv = None
-        if hasattr(template, "metadata"):
-            template_md = template.metadata()
-            from earthkit.data.core.metadata import WrappedMetadata
+        if hasattr(template, "_get_grib"):
+            template_md = template._get_grib()
+            bpv = template_md.get_extra_key("bitsPerValue", default=None)
+            if bpv is not None:
+                metadata["bitsPerValue"] = bpv
+            else:
+                bpv = template_md.get("bitsPerValue", default=None)
 
-            if isinstance(template_md, WrappedMetadata):
-                for k in template_md.extra.keys():
-                    if k != "bitsPerValue" and k not in metadata:
-                        metadata[k] = template_md.get(k)
+        # if bpv is None:
 
-            if "bitsPerValue" not in metadata:
-                bpv = template.metadata("bitsPerValue", default=None)
+        # if hasattr(template, "metadata"):
+        #     template_md = template.metadata()
+        #     from earthkit.data.core.metadata import WrappedMetadata
 
-        # Either the handle has valid bitsPerValue or has to be extracted
-        # from the template and added to the metadata to be encoded
-        if "bitsPerValue" not in metadata:
-            if bpv is None:
-                try:
-                    bpv = template.handle.get("bitsPerValue", None)
-                except Exception:
-                    bpv = None
+        #     if isinstance(template_md, WrappedMetadata):
+        #         for k in template_md.extra.keys():
+        #             if k != "bitsPerValue" and k not in metadata:
+        #                 metadata[k] = template_md.get(k)
 
-            if bpv is not None and bpv > 0:
-                bpv_h = handle.get("bitsPerValue", None)
-                if bpv != bpv_h:
-                    metadata["bitsPerValue"] = bpv
+        #     if "bitsPerValue" not in metadata:
+        #         bpv = template.metadata("bitsPerValue", default=None)
+
+        # # Either the handle has valid bitsPerValue or has to be extracted
+        # # from the template and added to the metadata to be encoded
+        # if "bitsPerValue" not in metadata:
+        #     if bpv is None:
+        #         try:
+        #             bpv = template.handle.get("bitsPerValue", None)
+        #         except Exception:
+        #             bpv = None
+
+        #     if bpv is not None and bpv > 0:
+        #         bpv_h = handle.get("bitsPerValue", None)
+        #         if bpv != bpv_h:
+        #             metadata["bitsPerValue"] = bpv
 
     def _ll_field(self, values, metadata):
         Nj, Ni = values.shape
@@ -444,12 +457,6 @@ class GribEncoder(Encoder):
         handle = r.pop("handle", None)
         field_values = r.pop("values", None)
 
-        # if template is None:
-        #     template = handle
-
-        # if values is None:
-        #     values = field_values
-
         if r:
             self._update_metadata_from_field(field, r)
             if metadata is None:
@@ -458,48 +465,21 @@ class GribEncoder(Encoder):
                 r.update(metadata)
                 metadata = r
 
-        # print("Collected:", r)
-        # print("Metadata:", metadata)
-        # print("Template:", template)
-        # print("Values:", type(values))
-        # print("field_values:", type(field_values))
-
-        # from earthkit.data.core.field import GribFieldEncoderInput
-
-        # d = GribFieldEncoderInput(field)
-        # # if d.enabled:
-        # v, md = d.data(altered=True)
-
-        # if template is None:
-        #     template = field
-
-        # if values is None:
-        #     values = v
-
-        # if md:
-        #     if metadata is None:
-        #         metadata = md
-        #     else:
-        #         md.update(metadata)
-        #         metadata = md
-
-        # if hasattr(field, "grib"):
-        #     enc = FieldGribEncoder(field)
-        #     md = field.grib.to_encoder(altered=True)
-        #     if template is None:
-        #         template = field
-
-        #     if md:
-        #         if metadata is None:
-        #             metadata = md
-        #         else:
-        #             md.update(metadata)
-
         if field_values is None and values is None and template is None and not metadata:
             return GribEncodedData(handle)
 
-        # if values is None and template is None and not metadata:
-        #     return GribEncodedData(handle)
+        # set bitspervalue
+        if "bitsPerValue" not in metadata:
+            bpv = None
+            field_md = field._get_grib()
+            # If the Field grib metadata has an extra key "bitsPerValue", use it since it indicates that
+            # the handle was deflated and the original bitsPerValue is not available from it.
+            if field_md is not None:
+                bpv = field_md.get_extra_key("bitsPerValue", default=None)
+                if bpv is not None:
+                    metadata["bitsPerValue"] = bpv
+                else:
+                    bpv = field_md.get("bitsPerValue", default=None)
 
         if values is None:
             values = field_values
@@ -510,7 +490,6 @@ class GribEncoder(Encoder):
         if template is None:
             template = handle
 
-        # handle = self._get_handle(field=field, values=values, metadata=metadata, template=template)
         handle = self._get_handle(values=values, metadata=metadata, template=template)
 
         return self._make_message(handle, values=values, metadata=metadata, **kwargs)

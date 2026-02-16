@@ -16,9 +16,7 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.testing import NO_CDS
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import preserve_cwd
-from earthkit.data.testing import write_to_file
 
 CDS_TIMEOUT = pytest.CDS_TIMEOUT
 
@@ -173,8 +171,7 @@ def test_cds_grib_multi_var_date(date, expected_date):
 @pytest.mark.download
 @pytest.mark.skipif(NO_CDS, reason="No access to CDS")
 @pytest.mark.timeout(CDS_TIMEOUT)
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_cds_grib_save(write_method):
+def test_cds_grib_save():
     s = from_source(
         "cds",
         "reanalysis-era5-single-levels",
@@ -186,7 +183,7 @@ def test_cds_grib_save(write_method):
     )
     with temp_directory() as tmpdir:
         # Check file save to assigned filename
-        write_to_file(write_method, os.path.join(tmpdir, "test.grib"), s)
+        s.to_target("file", os.path.join(tmpdir, "test.grib"))
         assert os.path.isfile(os.path.join(tmpdir, "test.grib"))
 
     s = from_source(

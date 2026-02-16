@@ -22,9 +22,7 @@ from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import write_to_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -49,20 +47,6 @@ def _pickle(data, representation):
     return data_res
 
 
-@pytest.mark.migrate
-@pytest.mark.parametrize("fl_type", FL_NUMPY)
-@pytest.mark.parametrize("representation", ["file", "memory"])
-def test_grib_serialise_metadata(fl_type, representation):
-    ds, _ = load_grib_data("test.grib", fl_type)
-    md = ds[0].metadata().override()
-
-    md2 = _pickle(md, representation)
-
-    keys = ["param", "date", "time", "step", "level", "gridType", "type"]
-    for k in keys:
-        assert md[k] == md2[k]
-
-
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("representation", ["file", "memory"])
 def test_grib_serialise_field(fl_type, representation):
@@ -72,17 +56,17 @@ def test_grib_serialise_field(fl_type, representation):
     f2 = _pickle(f, representation)
 
     keys = [
-        "variable",
-        "valid_datetime",
-        "base_datetime",
-        "step",
-        "level",
-        "grib.date",
-        "grib.time",
-        "grib.step",
-        "grib.level",
-        "grib.gridType",
-        "grib.type",
+        "parameter.variable",
+        "time.valid_datetime",
+        "time.base_datetime",
+        "time.step",
+        "vertical.level",
+        "metadata.date",
+        "metadata.time",
+        "metadata.step",
+        "metadata.level",
+        "metadata.gridType",
+        "metadata.type",
     ]
     for k in keys:
         assert f.get(k) == f2.get(k)
@@ -94,13 +78,13 @@ def test_grib_serialise_standalone_metadata(representation):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     md_ref = {
-        "param": "2t",
-        "date": 20200513,
-        "time": 1200,
-        "step": 0,
-        "level": 0,
-        "gridType": "regular_ll",
-        "type": "an",
+        "metadata.param": "2t",
+        "metadata.date": 20200513,
+        "metadata.time": 1200,
+        "metadata.step": 0,
+        "metadata.level": 0,
+        "metadata.gridType": "regular_ll",
+        "metadata.type": "an",
     }
 
     md = StandAloneGribMetadata(ds[0].handle)
@@ -125,17 +109,17 @@ def test_grib_serialise_array_field_memory(fl_type, representation):
         assert np.allclose(ds[idx].to_numpy(), f2.to_numpy()), f"index={idx}"
 
         keys = [
-            "variable",
-            "valid_datetime",
-            "base_datetime",
-            "step",
-            "level",
-            "grib.date",
-            "grib.time",
-            "grib.step",
-            "grib.level",
-            "grib.gridType",
-            "grib.type",
+            "parameter.variable",
+            "time.valid_datetime",
+            "time.base_datetime",
+            "time.step",
+            "vertical.level",
+            "metadata.date",
+            "metadata.time",
+            "metadata.step",
+            "metadata.level",
+            "metadata.gridType",
+            "metadata.type",
         ]
         for k in keys:
             assert ds[idx].get(k) == f2.get(k), f"index={idx}"
@@ -143,8 +127,7 @@ def test_grib_serialise_array_field_memory(fl_type, representation):
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize("representation", ["file", "memory"])
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_serialise_array_fieldlist(fl_type, representation, write_method):
+def test_grib_serialise_array_fieldlist(fl_type, representation):
     ds0, _ = load_grib_data("test.grib", fl_type)
     ds = ds0.to_fieldlist()
 
@@ -154,29 +137,29 @@ def test_grib_serialise_array_fieldlist(fl_type, representation, write_method):
     assert np.allclose(ds.values, ds2.values)
 
     keys = [
-        "variable",
-        "valid_datetime",
-        "base_datetime",
-        "step",
-        "level",
-        "grib.date",
-        "grib.time",
-        "grib.step",
-        "grib.level",
-        "grib.gridType",
-        "grib.type",
+        "parameter.variable",
+        "time.valid_datetime",
+        "time.base_datetime",
+        "time.step",
+        "vertical.level",
+        "metadata.date",
+        "metadata.time",
+        "metadata.step",
+        "metadata.level",
+        "metadata.gridType",
+        "metadata.type",
     ]
     for k in keys:
         assert ds2.get(k) == ds.get(k)
 
-    r = ds2.sel(param="2t")
+    r = ds2.sel({"parameter.variable": "2t"})
     assert len(r) == 1
 
     r1 = FieldList.from_fields([ds2[0].set(values=ds2[0].values + 1), ds2[1]])
     assert np.allclose(r1[0].to_numpy(), ds2[0].to_numpy() + 1)
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, r1)
+        r1.to_target("file", tmp)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
         assert len(r1) == len(r_tmp)
@@ -195,29 +178,29 @@ def test_grib_serialise_file_fieldlist_core(fl_type):
     assert np.allclose(ds.values, ds2.values)
 
     keys = [
-        "variable",
-        "valid_datetime",
-        "base_datetime",
-        "step",
-        "level",
-        "grib.date",
-        "grib.time",
-        "grib.step",
-        "grib.level",
-        "grib.gridType",
-        "grib.type",
+        "parameter.variable",
+        "time.valid_datetime",
+        "time.base_datetime",
+        "time.step",
+        "vertical.level",
+        "metadata.date",
+        "metadata.time",
+        "metadata.step",
+        "metadata.level",
+        "metadata.gridType",
+        "metadata.type",
     ]
     for k in keys:
-        ds2.get(k) == ds.get(k)
+        assert ds2.get(k) == ds.get(k)
 
-    r = ds2.sel(param="2t")
+    r = ds2.sel({"parameter.variable": "2t"})
     assert len(r) == 1
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
 def test_grib_serialise_file_fieldlist_sel(fl_type):
     ds0, _ = load_grib_data("test6.grib", fl_type)
-    ds = ds0.sel(param="t")
+    ds = ds0.sel({"parameter.variable": "t"})
     assert len(ds) == 2
 
     pickled_f = pickle.dumps(ds)
@@ -227,22 +210,22 @@ def test_grib_serialise_file_fieldlist_sel(fl_type):
     assert np.allclose(ds.values, ds2.values)
 
     keys = [
-        "variable",
-        "valid_datetime",
-        "base_datetime",
-        "step",
-        "level",
-        "grib.date",
-        "grib.time",
-        "grib.step",
-        "grib.level",
-        "grib.gridType",
-        "grib.type",
+        "parameter.variable",
+        "time.valid_datetime",
+        "time.base_datetime",
+        "time.step",
+        "vertical.level",
+        "metadata.date",
+        "metadata.time",
+        "metadata.step",
+        "metadata.level",
+        "metadata.gridType",
+        "metadata.type",
     ]
     for k in keys:
         ds2.get(k) == ds.get(k)
 
-    r = ds2.sel(level=850)
+    r = ds2.sel({"vertical.level": 850})
     assert len(r) == 1
 
 
@@ -276,7 +259,7 @@ def test_grib_serialise_file_fieldlist_concat(fl_type):
         "metadata.type",
     ]
     for k in keys:
-        ds2.get(k) == ds.get(k)
+        assert ds2.get(k) == ds.get(k)
 
 
 def test_grib_serialise_stream_1():

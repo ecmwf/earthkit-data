@@ -72,9 +72,10 @@ class GribMetadata:
     NAME = "grib"
     KEY_PREFIX = "metadata."
 
-    def __init__(self, handle):
+    def __init__(self, handle, extra_keys=None):
         self._handle = handle
         self._cache = {}
+        self.extra_keys = extra_keys or None
 
     # def from_dict(self, d):
     #     raise NotImplementedError()
@@ -216,14 +217,18 @@ class GribMetadata:
         handle_new = None
         for k, v in owner._components.items():
             if hasattr(v, "handle") and v.handle is not self._handle:
-                handle_new = v._handle
-                break
+                handle_new = v.handle
 
         if handle_new:
             self._handle = handle_new
             for k, v in owner._components.items():
                 if hasattr(v, "handle") and hasattr(v, "from_handle") and v.handle is not self.handle:
                     owner._components[k] = v.from_handle(handle_new)
+
+    def get_extra_key(self, key, default=None):
+        if self.extra_keys is not None:
+            return self.extra_keys.get(key, default)
+        return default
 
     def __getstate__(self):
         state = {}

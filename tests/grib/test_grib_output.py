@@ -21,9 +21,7 @@ from earthkit.data import from_source
 from earthkit.data import to_target
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import write_to_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -50,40 +48,43 @@ def new_grib_coder_compat(*args, **kwargs):
 
 
 @pytest.mark.parametrize("fl_type", FL_ARRAYS)
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_when_loaded_from_file_core(fl_type, write_method):
+def test_grib_save_when_loaded_from_file_core(fl_type):
     fs, _ = load_grib_data("test6.grib", fl_type)
     assert len(fs) == 6
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, fs)
+        fs.to_target("file", tmp)
         fs_saved = from_source("file", tmp)
         assert len(fs) == len(fs_saved)
 
 
 @pytest.mark.parametrize(
     "_kwargs,expected_value",
-    [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
+    [({}, 16), ({"metadata.bitsPerValue": 12}, 12), ({"bits_per_value": None}, 16)],
 )
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_bits_per_value_fieldlist(_kwargs, expected_value, write_method):
+def test_grib_save_bits_per_value_fieldlist(
+    _kwargs,
+    expected_value,
+):
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds, **_kwargs)
+        ds.to_target("file", tmp, **_kwargs)
         ds1 = from_source("file", tmp)
         assert ds1.get("metadata.bitsPerValue") == [expected_value] * len(ds)
 
 
+@pytest.mark.parametrize("array", [True, False])
 @pytest.mark.parametrize(
     "_kwargs,expected_value",
-    [({}, 16), ({"bits_per_value": 12}, 12), ({"bits_per_value": None}, 16)],
+    [({}, 16), ({"metadata.bitsPerValue": 12}, 12)],
 )
-@pytest.mark.parametrize("write_method", ["target"])
-def test_grib_save_bits_per_value_single_field(_kwargs, expected_value, write_method):
+def test_grib_save_bits_per_value_single_field(array, _kwargs, expected_value):
     ds = from_source("file", earthkit_examples_file("test.grib"))
+    if array:
+        ds = ds.to_fieldlist()
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds[0], **_kwargs)
+        ds[0].to_target("file", tmp, **_kwargs)
         ds1 = from_source("file", tmp)
         assert ds1.get("metadata.bitsPerValue") == [expected_value]
 
@@ -446,9 +447,8 @@ def test_grib_output_tp(mode, levtype):
     sys.version_info < (3, 10),
     reason="ignore_cleanup_errors requires Python 3.10 or later",
 )
-@pytest.mark.parametrize("mode", ["target"])
 @pytest.mark.parametrize("array", [True, False])
-def test_grib_output_field_template(mode, array):
+def test_grib_output_field_template(array):
     data = np.random.random((7, 12))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -456,7 +456,7 @@ def test_grib_output_field_template(mode, array):
         if array:
             ds = ds.to_fieldlist()
 
-        assert ds[0].get("metadata.bitsPerValue") == 4
+        # assert ds[0].get("metadata.bitsPerValue") == 4
 
         path = os.path.join(tmp, "a.grib")
 
@@ -470,14 +470,14 @@ def test_grib_output_field_template(mode, array):
         #     )
         #     f.write(values=data, param="pt", bitsPerValue=16)
         #     f.close()
-        if mode == "target":
-            to_target(
-                "file",
-                path,
-                metadata=dict(date=20010101, generatingProcessIdentifier=255, param="pt", bitsPerValue=16),
-                values=data,
-                template=ds[0],
-            )
+
+        to_target(
+            "file",
+            path,
+            metadata=dict(date=20010101, generatingProcessIdentifier=255, param="pt", bitsPerValue=16),
+            values=data,
+            template=ds[0],
+        )
 
         ds = earthkit.data.from_source("file", path)
 

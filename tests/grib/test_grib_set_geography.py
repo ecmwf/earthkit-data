@@ -22,7 +22,6 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 
 @pytest.mark.parametrize("fl_type", ["file"])
-# @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
 @pytest.mark.parametrize("write_method", ["target"])
 @pytest.mark.parametrize(
     "_kwargs",

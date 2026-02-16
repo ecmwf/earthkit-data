@@ -170,10 +170,12 @@ class GribGeography(BaseGeography):
         return None
 
     def grid_spec(self):
+        # Use the legacy earthkit-data grid_spec builder. If this class is used, it means that the eckit-based
+        # grid_spec builder is not available, so we need to fallback to the legacy one.
         from .grid_spec import make_gridspec
-        from .metadata import GribLabels
+        from .metadata import GribMetadata
 
-        return make_gridspec(GribLabels(self.handle))
+        return make_gridspec(GribMetadata(self.handle))
 
     def area(self):
         north = self.handle.get("latitudeOfFirstGridPointInDegrees")
@@ -273,20 +275,19 @@ class GribGeographyHandler(GribFieldComponentHandler):
 
         if keys == {"grid_spec"}:
             handle = self._handle_from_grid_spec(self, kwargs["grid_spec"])
-            return GribGeography(handle)
+            return GribGeographyHandler(handle)
         else:
             return create_geography_from_dict(kwargs, shape_hint=shape_hint)
-            # return self._component.set(*args, shape_hint=shape_hint, **kwargs)
 
-    def _handle_from_grid_spec(cls, spec, grid_spec):
+    def _handle_from_grid_spec(cls, handler, grid_spec):
         from earthkit.data.new_field.grib.handle import MemoryGribHandle
         from earthkit.data.readers.grib.gridspec import GridSpecConverter
 
         # edition = d.get("edition", self["edition"])
-        edition = spec.handle.get("edition", 2)
+        edition = handler.handle.get("edition", 2)
         md, new_value_size = GridSpecConverter.to_metadata(grid_spec, edition=edition)
 
-        handle = spec.handle.clone(headers_only=False)
+        handle = handler.handle.clone(headers_only=False)
         handle.set_multiple(md)
 
         # we need to set the values to the new size otherwise the clone generated

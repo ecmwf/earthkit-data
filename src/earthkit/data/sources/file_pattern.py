@@ -34,7 +34,7 @@ class HiveFilePattern(Source):
     ) -> Union[EmptySource, MultiSource]:
         from earthkit.data.core.index import normalize_selection
 
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs, _ = normalize_selection(*args, **kwargs)
 
         rest = {k: v for k, v in kwargs.items() if k not in self.scanner.params}
         for k in rest:

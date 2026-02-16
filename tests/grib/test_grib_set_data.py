@@ -18,7 +18,6 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.indexing.fieldlist import FieldList
-from earthkit.data.testing import write_to_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -27,9 +26,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 
 # @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 @pytest.mark.parametrize("fl_type", ["file"])
-# @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-@pytest.mark.parametrize("write_method", ["target"])
-def test_grib_set_data(fl_type, write_method):
+def test_grib_set_data(fl_type):
     ds_ori, _ = load_grib_data("test4.grib", fl_type)
 
     vals_ori = ds_ori[0].values
@@ -47,7 +44,7 @@ def test_grib_set_data(fl_type, write_method):
 
     # write back to grib
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, f)
+        f.to_target("file", tmp)
         f_saved = from_source("file", tmp)[0]
         assert f_saved.get("parameter.variable") == "t"
         assert f_saved.get("metadata.shortName") == "t"
@@ -91,7 +88,7 @@ def test_grib_set_data(fl_type, write_method):
 
     # write back to grib
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
+        ds.to_target("file", tmp)
         ds_saved = from_source("file", tmp)
         assert ds_saved.get("parameter.variable") == ["t", "z"]
         assert ds_saved.get("metadata.shortName") == ["t", "z"]

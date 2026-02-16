@@ -34,62 +34,70 @@ def repeat_list_items(items, count):
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
-    "key,expected_value",
+    "key,expected_value,error",
     [
-        ("shortName", "2t"),
-        ("units", "K"),
-        ("level", 0),
-        ("level:l", 0),
-        ("level:int", 0),
-        ("shortName:s", "2t"),
-        ("shortName:str", "2t"),
-        ("centre", "ecmf"),
-        ("centre:l", 98),
-        (["shortName"], ["2t"]),
-        (["shortName", "level"], ["2t", 0]),
-        (("shortName"), "2t"),
-        (("shortName", "level"), ("2t", 0)),
-        ("time.base_datetime", None),  # time part of field
-        ("vertical.level", 0),  # vertical GRIB namespace! not the vertical part of field
-        ("time.dataDate", 20170427),  # time GRIB namespace
-        ("mars.date", 20170427),  # mars GRIB namespace
+        ("shortName", "2t", None),
+        ("units", "K", None),
+        ("level", 0, None),
+        ("level:l", 0, None),
+        ("level:int", 0, None),
+        ("shortName:s", "2t", None),
+        ("shortName:str", "2t", None),
+        ("centre", "ecmf", None),
+        ("centre:l", 98, None),
+        (["shortName"], ["2t"], None),
+        (["shortName", "level"], ["2t", 0], None),
+        (("shortName"), "2t", None),
+        (("shortName", "level"), ("2t", 0), None),
+        ("time.base_datetime", None, KeyError),  # time part of field
+        ("vertical.level", 0, None),  # vertical GRIB namespace! not the vertical component of field
+        ("time.dataDate", 20170427, None),  # time GRIB namespace
+        ("mars.date", 20170427, None),  # mars GRIB namespace
     ],
 )
-def test_grib_metadata_core_field(fl_type, key, expected_value):
+def test_grib_metadata_core_field(fl_type, key, expected_value, error):
     ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
-    res = ds[0].metadata(key)
-    assert res == expected_value, f"{key=}"
+    if error:
+        with pytest.raises(error):
+            ds[0].metadata(key)
+    else:
+        res = ds[0].metadata(key)
+        assert res == expected_value, f"{key=}"
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
-    "key,expected_value",
+    "key,expected_value,error",
     [
-        ("shortName", ["2t"]),
-        ("units", ["K"]),
-        ("level", [0]),
-        ("level:l", [0]),
-        ("level:int", [0]),
-        ("shortName:s", ["2t"]),
-        ("shortName:str", ["2t"]),
-        ("centre", ["ecmf"]),
-        ("centre:l", [98]),
-        (["shortName"], [["2t"]]),
-        (["shortName", "level"], [["2t", 0]]),
-        (("shortName"), ["2t"]),
-        (("shortName", "level"), [("2t", 0)]),
-        ("time.base_datetime", [None]),  # time part of field
-        ("vertical.level", [0]),  # vertical GRIB namespace! not the vertical part of field
-        ("time.dataDate", [20170427]),  # time GRIB namespace
-        ("mars.date", [20170427]),  # mars GRIB namespace
+        ("shortName", ["2t"], None),
+        ("units", ["K"], None),
+        ("level", [0], None),
+        ("level:l", [0], None),
+        ("level:int", [0], None),
+        ("shortName:s", ["2t"], None),
+        ("shortName:str", ["2t"], None),
+        ("centre", ["ecmf"], None),
+        ("centre:l", [98], None),
+        (["shortName"], [["2t"]], None),
+        (["shortName", "level"], [["2t", 0]], None),
+        (("shortName"), ["2t"], None),
+        (("shortName", "level"), [("2t", 0)], None),
+        ("time.base_datetime", [None], KeyError),  # time component of field
+        ("vertical.level", [0], None),  # vertical GRIB namespace! not the vertical component of field
+        ("time.dataDate", [20170427], None),  # time GRIB namespace
+        ("mars.date", [20170427], None),  # mars GRIB namespace
     ],
 )
-def test_grib_metadata_core_fl(fl_type, key, expected_value):
+def test_grib_metadata_core_fl(fl_type, key, expected_value, error):
     ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
 
-    res = ds.get(key)
-    assert res == expected_value, f"{key=}"
+    if error:
+        with pytest.raises(error):
+            ds.metadata(key)
+    else:
+        res = ds.metadata(key)
+        assert res == expected_value, f"{key=}"
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -121,23 +129,20 @@ def test_grib_metadata_core_via_get(fl_type, key, expected_value):
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize(
-    "key,_kwargs,expected_value, error",
+    "keys",
     [
-        ("time.reference_date", {"raise_on_missing": True}, None, KeyError),
-        ("time.reference_date", {"default": 0, "raise_on_missing": False}, 0, None),
-        ("_badkey_", {"raise_on_missing": True}, None, KeyError),
-        ("__badkey__", {"default": 0, "raise_on_missing": False}, 0, None),
-        ("__badkey__", {"default": 0}, 0, None),
-        (["_badkey_", "_badkey_1_"], {"default": 1, "raise_on_missing": False}, [1, 1], None),
-        (["_badkey_", "_badkey_1_"], {"default": [1, 0], "raise_on_missing": False}, [1, 0], None),
+        "_badkey_",
+        ["_badkey_"],
+        ("_badkey_", "_badkey_1_"),
+        ["shortName", "_badkey_"],
+        ["_badkey_", "shortName"],
     ],
 )
-def test_grib_metadata_missing_key_field(fl_type, key, _kwargs, expected_value, error):
-    f, _ = load_grib_data("test.grib", fl_type)
+def test_grib_metadata_missing_key(fl_type, keys):
+    ds, _ = load_grib_data("test.grib", fl_type)
 
-    if error:
-        with pytest.raises(error):
-            f[0].metadata(key, **_kwargs)
-    else:
-        v = f[0].metadata(key, **_kwargs)
-        assert v == expected_value
+    with pytest.raises(KeyError):
+        ds[0].metadata(keys)
+
+    with pytest.raises(KeyError):
+        ds.metadata(keys)

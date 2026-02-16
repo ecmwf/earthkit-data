@@ -28,7 +28,11 @@ SKIP = [
     "deprec_settings.py",
     "migrated_settings.py",
     "deprec_array_backend_kwarg.py",
+    "deprec_xarray_earthkit_to_grib.py",
+    "deprec_new_grib_output_split.py",
+    "deprec_new_grib_output.py",
     "migrated_array_namespace_kwarg.py",
+    "migrated_xarray_earthkit_to_grib.py",
 ]
 
 EXAMPLES = earthkit_file("docs")

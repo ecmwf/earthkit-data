@@ -391,7 +391,7 @@ def test_gribjump_selection(seed_fdb):
     source = from_source("gribjump", request, indices=indices)
 
     arr_orig = source.to_numpy()
-    arr_subset = source.sel(step=6).to_numpy()
+    arr_subset = source.sel({"time.step": 6}).to_numpy()
 
     assert arr_subset.shape == (1, 7)
     assert np.allclose(arr_orig[[1]], arr_subset)

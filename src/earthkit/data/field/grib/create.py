@@ -11,7 +11,7 @@
 from earthkit.data.field.data import ArrayDataFieldComponentHandler
 
 
-def new_grib_field(handle, data=None, cache=False):
+def new_grib_field(handle, data=None, cache=False, extra_keys=None):
     from earthkit.data.core.field import Field
     from earthkit.data.field.grib.data import GribData
     from earthkit.data.field.grib.ensemble import GribEnsemble
@@ -41,7 +41,7 @@ def new_grib_field(handle, data=None, cache=False):
     ensemble = GribEnsemble(handle)
     proc = GribProc(handle)
     parameter = GribParameter(handle)
-    grib = GribMetadata(handle)
+    grib = GribMetadata(handle, extra_keys=extra_keys)
 
     r = Field(
         data=data,
@@ -65,7 +65,16 @@ def new_array_grib_field(
     data = ArrayDataFieldComponentHandler(values)
 
     new_handle = handle.deflate()
-    new_field = new_grib_field(new_handle, data=data, cache=cache)
+
+    def _add(key, default=None):
+        v = handle.get(key, default=default)
+        if v is not None:
+            extra_keys[key] = v
+
+    extra_keys = {}
+    _add("bitsPerValue")
+
+    new_field = new_grib_field(new_handle, data=data, cache=cache, extra_keys=extra_keys)
 
     return new_field
 

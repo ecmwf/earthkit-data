@@ -360,7 +360,16 @@ class FieldListTensor(TensorCore):
                 user_coords = CubeCoords(user_dims_and_coords)
             else:
                 user_coords = CubeCoords(
-                    ds.unique_values(*names, remapping=remapping, progress_bar=progress_bar)
+                    # ds.unique_values(*names, remapping=remapping, progress_bar=progress_bar)
+                    ds.unique(
+                        *names,
+                        sort=False,
+                        drop_none=True,
+                        squeeze=False,
+                        cache=False,
+                        remapping=remapping,
+                        progress_bar=progress_bar,
+                    )
                 )
                 for k, v in user_coords.items():
                     user_coords[k] = tuple(sorted(v))
@@ -430,12 +439,12 @@ class FieldListTensor(TensorCore):
 
     @flatten_arg
     def to_numpy(self, dtype=None, index=None, **kwargs):
-        source_to_numpy_func = functools.componential(self.source.to_numpy, dtype=dtype, **kwargs)
+        source_to_numpy_func = functools.partial(self.source.to_numpy, dtype=dtype, **kwargs)
         return self._to_array(source_to_numpy_func, index=index)
 
     @flatten_arg
     def to_array(self, dtype=None, array_namespace=None, device=None, index=None, **kwargs):
-        source_to_array_func = functools.componential(
+        source_to_array_func = functools.partial(
             self.source.to_array, dtype=dtype, array_namespace=array_namespace, device=device, **kwargs
         )
         return self._to_array(source_to_array_func, index=index)

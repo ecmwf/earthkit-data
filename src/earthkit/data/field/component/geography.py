@@ -440,7 +440,10 @@ class BaseGeography(SimpleFieldComponent):
         """
         x = self.x(dtype=dtype)
         y = self.y(dtype=dtype)
+
         if x is not None and y is not None:
+            x = _array_convert(x, flatten=flatten, dtype=dtype)
+            y = _array_convert(y, flatten=flatten, dtype=dtype)
             return x, y
 
         try:

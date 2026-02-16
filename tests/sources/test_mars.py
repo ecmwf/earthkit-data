@@ -19,8 +19,6 @@ from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import NO_MARS
 from earthkit.data.testing import NO_MARS_API
 from earthkit.data.testing import NO_MARS_DIRECT
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import write_to_file
 
 YESTERDAY = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y%m%d")
 
@@ -230,8 +228,7 @@ def test_mars_grib_log_4():
 
 @pytest.mark.long_test
 @pytest.mark.download
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_mars_grib_save(write_method):
+def test_mars_grib_save():
     ds = from_source(
         "mars",
         param="2t",
@@ -242,7 +239,7 @@ def test_mars_grib_save(write_method):
     assert len(ds) == 1
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
+        ds.to_target("file", tmp)
 
         ds1 = from_source("file", tmp)
         assert len(ds1) == 1

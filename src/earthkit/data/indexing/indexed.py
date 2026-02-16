@@ -203,7 +203,7 @@ class IndexedFieldList(Index, FieldListCore):
             if is_tuple:
                 keys = tuple(keys)
 
-        return self.get(keys, **kwargs)
+        return self.get(keys, raise_on_missing=True, **kwargs)
 
     # @thread_safe_cached_property
     # def _md_indices(self):

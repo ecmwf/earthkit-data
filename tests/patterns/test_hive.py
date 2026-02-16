@@ -162,11 +162,18 @@ def test_hive_sel_core_1():
         ("t", 400, step_ref),
         ("t", 300, step_ref),
     ]
-    assert r.get("variable", "level", "step") == md_ref
+    assert r.get(("parameter.variable", "vertical.level", "time.step")) == md_ref
 
     # using hive partitioning keys + extra keys from GRIB header
     diag.reset()
-    r = ds.sel(variable="t", step=12, vertical_type="pressure", _hive_diag=diag)
+    r = ds.sel(
+        {
+            "variable": "t",
+            "step": 12,
+            "vertical.level_type": "pressure",
+        },
+        _hive_diag=diag,
+    )
     assert diag.file_count == 1
     assert diag.sel_count == 1
     assert len(r) == 6
@@ -206,11 +213,18 @@ def test_hive_sel_grib_1():
         ("t", 400, step_ref),
         ("t", 300, step_ref),
     ]
-    assert r.get("grib.shortName", "grib.level", "step") == md_ref
+    assert r.get(("metadata.shortName", "metadata.level", "time.step")) == md_ref
 
     # using hive partitioning keys + extra keys from GRIB header
     diag.reset()
-    r = ds.sel(shortName="t", step=12, vertical_type="pressure", _hive_diag=diag)
+    r = ds.sel(
+        {
+            "shortName": "t",
+            "step": 12,
+            "vertical.level_type": "pressure",
+        },
+        _hive_diag=diag,
+    )
     assert diag.file_count == 1
     assert diag.sel_count == 1
     assert len(r) == 6

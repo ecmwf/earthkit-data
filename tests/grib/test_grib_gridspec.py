@@ -21,7 +21,6 @@ from earthkit.data.field.grib.grid_spec import GridSpecConverter
 from earthkit.data.field.grib.grid_spec import make_gridspec
 from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.testing import write_to_file
 
 SUPPORTED_GRID_TYPES = [
     "sh",
@@ -124,8 +123,8 @@ def test_grib_gridspec_from_file():
         "i_scans_negatively": 0,
         "j_scans_positively": 0,
     }
-    gs = ds[0].geography.grid_spec
-    assert isinstance(gs, dict)
+    gs = ds[0].geography.grid_spec()
+    assert isinstance(gs, dict), type(gs)
     assert gs == ref
 
 
@@ -179,9 +178,7 @@ def test_grib_metadata_from_gridspec_invalid(metadata, gridspec, name):
         # "grids/healpix/H4_nested.grib2",
     ],
 )
-# @pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-@pytest.mark.parametrize("write_method", ["target"])
-def test_grib_gridspec_to_fieldlist(input_file, write_method):
+def test_grib_gridspec_to_fieldlist(input_file):
     import numpy as np
 
     def make_lat_lon(dx):
@@ -199,7 +196,7 @@ def test_grib_gridspec_to_fieldlist(input_file, write_method):
     gs = {"grid": [5, 5]}
     v = np.random.rand(37, 72)
 
-    ds = FieldList.from_fields([x.set(values=v.flatten(), grid_spec=gs) for x in ds_in])
+    ds = FieldList.from_fields([x.set({"values": v.flatten(), "geography.grid_spec": gs}) for x in ds_in])
 
     # md = ds_in[0].metadata().override(gridspec=gs)
     # ds = FieldList.from_numpy(v.flatten(), md)
@@ -224,14 +221,12 @@ def test_grib_gridspec_to_fieldlist(input_file, write_method):
         longitudeOfLastGridPointInDegrees=355.0,
     )
 
-    ref = {"grib." + k: v for k, v in ref_base.items()}
+    ref = {"metadata." + k: v for k, v in ref_base.items()}
 
     lat_ref, lon_ref = make_lat_lon(5)
 
     # check latlon
-    latlon = ds[0].to_latlon()
-    lat = latlon["lat"]
-    lon = latlon["lon"]
+    lat, lon = ds[0].geography.latlon()
     assert np.allclose(lat.flatten(), lat_ref.flatten())
     assert np.allclose(lon.flatten(), lon_ref.flatten())
     assert ds[0].shape == (37, 72)
@@ -244,7 +239,7 @@ def test_grib_gridspec_to_fieldlist(input_file, write_method):
 
     # save
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
+        ds.to_target("file", tmp)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
 
@@ -253,9 +248,7 @@ def test_grib_gridspec_to_fieldlist(input_file, write_method):
         assert np.allclose(v_tmp, v.flatten(), atol=1e-3)
 
         # latlon
-        latlon = r_tmp[0].to_latlon()
-        lat = latlon["lat"]
-        lon = latlon["lon"]
+        lat, lon = r_tmp[0].geography.latlon()
         assert np.allclose(lat.flatten(), lat_ref.flatten())
         assert np.allclose(lon.flatten(), lon_ref.flatten())
 

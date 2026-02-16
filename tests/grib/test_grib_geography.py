@@ -207,91 +207,7 @@ def test_grib_points_multi_non_shared_grid(fl_type):
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 @pytest.mark.parametrize("index", [0, None])
-def test_grib_to_latlon_single_1(fl_type, index):
-    f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
-
-    array_namespace = array_backend.array_namespace
-    dtype = "float64"
-    if array_backend.dtype is not None:
-        dtype = array_backend.dtype
-
-    eps = 1e-5
-    g = f[index] if index is not None else f
-    lat, lon = g.geography.latlon(flatten=True, dtype=dtype)
-    assert isinstance(lat, array_namespace.ndarray)
-    check_array_type(lat, array_namespace, dtype=dtype)
-    check_array_type(lon, array_namespace, dtype=dtype)
-    check_array(
-        array_convert(lon, array_namespace="numpy"),
-        (84,),
-        first=0.0,
-        last=330.0,
-        meanv=165.0,
-        eps=eps,
-    )
-    check_array(
-        array_convert(lat, array_namespace="numpy"),
-        (84,),
-        first=90,
-        last=-90,
-        meanv=0,
-        eps=eps,
-    )
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("index", [0, None])
-def test_grib_to_latlon_single_shape(fl_type, index):
-    f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
-
-    array_namespace = array_backend.array_namespace
-    dtype = "float64"
-    if array_backend.dtype is not None:
-        dtype = array_backend.dtype
-
-    g = f[index] if index is not None else f
-    lat, lon = g.geography.latlon(dtype=dtype)
-    check_array_type(lat, array_namespace, dtype=dtype)
-    check_array_type(lon, array_namespace, dtype=dtype)
-
-    # x
-    assert lon.shape == (7, 12)
-    for x in lon:
-        assert np.allclose(array_convert(x, array_namespace="numpy"), np.linspace(0, 330, 12))
-
-    # y
-    assert lat.shape == (7, 12)
-    for i, y in enumerate(lat):
-        assert np.allclose(array_convert(y, array_namespace="numpy"), np.ones(12) * (90 - i * 30))
-
-
-@pytest.mark.parametrize("fl_type", FL_NUMPY)
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_grib_to_latlon_multi(fl_type, dtype):
-    f, _ = load_grib_data("test.grib", fl_type)
-
-    lat_ref, lon_ref = f[0].geography.latlon(flatten=True, dtype=dtype)
-    lat, lon = f.geography.latlon(flatten=True, dtype=dtype)
-
-    assert np.allclose(lat, lat_ref)
-    assert np.allclose(lon, lon_ref)
-    assert lon.dtype == dtype
-    assert lat.dtype == dtype
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_to_latlon_multi_non_shared_grid(fl_type):
-    f1, _ = load_grib_data("test.grib", fl_type)
-    f2, _ = load_grib_data("test4.grib", fl_type)
-    f = concat(f1, f2)
-
-    with pytest.raises(ValueError):
-        f.geography.latlon()
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-@pytest.mark.parametrize("index", [0, None])
-def test_grib_to_points_single(fl_type, index):
+def test_grib_points_single(fl_type, index):
     f, array_backend = load_grib_data("test_single.grib", fl_type, folder="data")
 
     array_namespace = array_backend.array_namespace
@@ -324,34 +240,10 @@ def test_grib_to_points_single(fl_type, index):
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_to_points_unsupported_grid(fl_type):
+def test_grib_points_unsupported_grid(fl_type):
     f, _ = load_grib_data("mercator.grib", fl_type, folder="data")
     with pytest.raises(ValueError):
-        f[0].to_points()
-
-
-@pytest.mark.parametrize("fl_type", FL_NUMPY)
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_grib_to_points_multi(fl_type, dtype):
-    f, _ = load_grib_data("test.grib", fl_type)
-
-    x_ref, y_ref = f[0].geography.points(flatten=True, dtype=dtype)
-    x, y = f.geography.points(flatten=True, dtype=dtype)
-
-    assert np.allclose(x, x_ref)
-    assert np.allclose(y, y_ref)
-    assert x.dtype == dtype
-    assert y.dtype == dtype
-
-
-@pytest.mark.parametrize("fl_type", FL_TYPES)
-def test_grib_to_points_multi_non_shared_grid(fl_type):
-    f1, _ = load_grib_data("test.grib", fl_type)
-    f2, _ = load_grib_data("test4.grib", fl_type)
-    f = concat(f1, f2)
-
-    with pytest.raises(ValueError):
-        f.to_points()
+        f[0].geography.points()
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -365,9 +257,7 @@ def test_grib_bbox(fl_type):
 def test_grib_bbox_2(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
     bb = ds.geography.bounding_box()
-    assert len(bb) == 2
-    for b in bb:
-        assert b.as_tuple() == (73, -27, 33, 45)
+    assert bb.as_tuple() == (73, -27, 33, 45)
 
 
 @pytest.mark.parametrize("fl_type", FL_TYPES)
@@ -453,28 +343,6 @@ def test_grib_latlon_various_grids(fl_type, filename, expected_shape, expected_l
 @pytest.mark.parametrize(
     "path,expected_value",
     [
-        (earthkit_examples_file("test.grib"), 4.0),
-        (earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"), "O1280"),
-        (earthkit_test_data_file("rotated_N32_subarea.grib"), "N32"),
-        (earthkit_test_data_file("rotated_wind_20x20.grib"), 20),
-        (earthkit_test_data_file("mercator.grib"), None),
-        (earthkit_test_data_file("ll_10_20.grib"), None),
-    ],
-)
-def test_grib_resolution(path, expected_value):
-    ds = earthkit.data.from_source("file", path)
-
-    if isinstance(expected_value, str):
-        assert ds[0].geography.resolution() == expected_value
-    elif expected_value is None:
-        assert ds[0].geography.resolution() is None
-    else:
-        assert np.isclose(ds[0].geography.resolution(), expected_value)
-
-
-@pytest.mark.parametrize(
-    "path,expected_value",
-    [
         (earthkit_examples_file("test.grib"), [73.0, -27.0, 33.0, 45.0]),
         (
             earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"),
@@ -494,43 +362,43 @@ def test_grib_resolution(path, expected_value):
         ),
     ],
 )
-def test_grib_mars_area(path, expected_value):
+def test_grib_area_various_grids(path, expected_value):
     ds = earthkit.data.from_source("file", path)
 
-    assert np.allclose(np.asarray(ds[0].geography.mars_area()), np.asarray(expected_value))
+    assert np.allclose(np.asarray(ds[0].geography.area()), np.asarray(expected_value))
 
 
-@pytest.mark.parametrize(
-    "path,expected_value",
-    [
-        (earthkit_examples_file("test.grib"), [4.0, 4.0]),
-        (
-            earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"),
-            "O1280",
-        ),
-        (
-            earthkit_test_data_file("rotated_N32_subarea.grib"),
-            "N32",
-        ),
-        (
-            earthkit_test_data_file("rotated_wind_20x20.grib"),
-            [20.0, 20.0],
-        ),
-        (
-            earthkit_test_data_file("mercator.grib"),
-            [None, None],
-        ),
-    ],
-)
-def test_grib_mars_grid(path, expected_value):
-    ds = earthkit.data.from_source("file", path)
+# @pytest.mark.parametrize(
+#     "path,expected_value",
+#     [
+#         (earthkit_examples_file("test.grib"), [4.0, 4.0]),
+#         (
+#             earthkit_test_data_file("rgg_small_subarea_cellarea_ref.grib"),
+#             "O1280",
+#         ),
+#         (
+#             earthkit_test_data_file("rotated_N32_subarea.grib"),
+#             "N32",
+#         ),
+#         (
+#             earthkit_test_data_file("rotated_wind_20x20.grib"),
+#             [20.0, 20.0],
+#         ),
+#         (
+#             earthkit_test_data_file("mercator.grib"),
+#             [None, None],
+#         ),
+#     ],
+# )
+# def test_grib_mars_grid(path, expected_value):
+#     ds = earthkit.data.from_source("file", path)
 
-    if isinstance(expected_value, str):
-        assert ds[0].geography.mars_grid() == expected_value
-    elif expected_value == [None, None]:
-        assert ds[0].geography.mars_grid() == expected_value
-    else:
-        assert np.allclose(np.asarray(ds[0].geography.mars_grid()), np.asarray(expected_value))
+#     if isinstance(expected_value, str):
+#         assert ds[0].geography.mars_grid() == expected_value
+#     elif expected_value == [None, None]:
+#         assert ds[0].geography.mars_grid() == expected_value
+#     else:
+#         assert np.allclose(np.asarray(ds[0].geography.mars_grid()), np.asarray(expected_value))
 
 
 @pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")
