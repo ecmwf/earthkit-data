@@ -2,7 +2,7 @@
 Version 0.19 Updates
 /////////////////////////
 
-Version 0.18.0
+Version 0.19.0
 ===============
 
 Deprecations
@@ -33,7 +33,7 @@ New features
 - Added support for reading UK Met Office PP binary files (:pr:`838`). See the notebook example:
 
     - :ref:`/examples/ukmo_pp.ipynb`
-
+- Added the ``copy()`` method to CodesHandle (:pr:`882`).
 
 Changes
 ++++++++++++++++++++++++++++++
@@ -68,6 +68,7 @@ Fixes
 ++++++++
 
 - Fixed cloning of Xarray fields (:pr:`841`).
+- Addresses the issue #882 by overriding eccodes.Message.copy to use CodesHandle.clone in
 
 
 Installation
