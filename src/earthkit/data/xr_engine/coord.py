@@ -177,11 +177,11 @@ class MonthCoord(Coord):
 
 class LevelCoord(Coord):
     def __init__(self, name, vals, dims=None, ds=None, **kwargs):
-        self._vertical_type = None
+        self._level_type = None
         self._cf = None
         if ds is not None:
             self._cf = ds[0].vertical.cf()
-            self._vertical_type = ds[0].vertical.type()
+            self._level_type = ds[0].vertical.level_type()
 
         super().__init__(name, vals, dims, **kwargs)
 
@@ -190,7 +190,7 @@ class LevelCoord(Coord):
         conf = attrs.coord_attrs.get(self.name, {})
         res = {}
         if conf:
-            res = conf.get(self._vertical_type, {})
+            res = conf.get(self._level_type, {})
         if not res:
             res = self._cf
         return res

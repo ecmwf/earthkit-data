@@ -40,7 +40,7 @@ ENS_KEYS = ["number", "perturbationNumber", "realization"]
 LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels"]
 LEVEL_KEYS = ["vertical.level", "vertical.layer"]
 LEVEL_TYPE_KEYS = ["typeOfLevel", "levtype"]
-LEVEL_TYPE_KEYS = ["vertical.type", "vertical.abbreviation"]
+LEVEL_TYPE_KEYS = ["vertical.level_type", "vertical.abbreviation"]
 DATE_KEYS = ["date", "andate", "validityDate", "dataDate", "hdate", "referenceDate", "indexingDate"]
 TIME_KEYS = ["time", "antime", "validityTime", "dataTime", "referenceTime", "indexingTime"]
 STEP_KEYS = ["step_timedelta", "step", "endStep", "stepRange", "forecastMonth", "fcmonth"]
@@ -873,9 +873,9 @@ class DimHandler:
             if d.key in dataset.dims:
                 if d.name == d.key and not isinstance(d, RemappingDim):
                     # strip a prefix "<component>.", if any
-                    _d_name_components = d.name.split(".")
-                    if len(_d_name_components) > 1:
-                        d_name = ".".join(_d_name_components[1:])
+                    _d_name_parts = d.name.split(".")
+                    if len(_d_name_parts) > 1:
+                        d_name = ".".join(_d_name_parts[1:])
                     else:
                         d_name = d.name
                 else:

@@ -1,10 +1,10 @@
 dim_roles:
-  number: ensemble.member
+  number: metadata.number
   date: metadata.date
   time: metadata.time
-  step: time.step
-  level: vertical.level
-  level_type: vertical.type
+  step: metadata.step
+  level: metadata.level
+  level_type: metadata.typeOfLevel
 
 variable_key: parameter.variable
 
@@ -14,7 +14,7 @@ variable_attrs:
 - metadata.cfName
 - metadata.name
 - parameter.units
-- vertical.level
+- metadata.typeOfLevel
 
 global_attrs:
 - Conventions: CF-1.8

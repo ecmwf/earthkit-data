@@ -62,9 +62,7 @@ def test_xr_engine_grid(allow_holes, lazy_load, file, dims, coords, distinct_ll)
         if distinct_ll:
             lat, lon = ds[0].metadata(("distinctLatitudes", "distinctLongitudes"))
         else:
-            ll = ds[0].geography.latlon()
-            lat = ll["lat"]
-            lon = ll["lon"]
+            lat, lon = ds[0].geography.latlon()
 
         assert np.allclose(a.latitude.values, lat)
         assert np.allclose(a.longitude.values, lon)

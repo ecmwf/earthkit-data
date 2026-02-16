@@ -48,11 +48,11 @@ dim_roles:
   number: ensemble.member
   date: metadata.date
   time: metadata.time
-  step: time.step
+  step: metadata.step
   forecast_reference_time: time.forecast_reference_time
   valid_time: time.valid_datetime
-  level: vertical.level
-  level_type: vertical.type
+  level: metadata.level
+  level_type: metadata.typeOfLevel
 
 dim_name_from_role_name: true
 

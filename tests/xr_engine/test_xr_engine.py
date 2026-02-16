@@ -475,9 +475,7 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
     assert ds is not None
 
     # dataset
-    ll = ds_ek_ref[0].geography.latlon(flatten=True)
-    lats = ll["lat"]
-    lons = ll["lon"]
+    lats, lons = ds_ek_ref[0].geography.latlon(flatten=True)
     data_vars = ["r", "t", "u", "v", "z"]
 
     coords_ref_full = {
@@ -657,9 +655,7 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
     assert ds is not None
 
     # dataset
-    ll = ds_ek_ref[0].geography.latlon(flatten=True)
-    lats = ll["lat"]
-    lons = ll["lon"]
+    lats, lons = ds_ek_ref[0].geography.latlon(flatten=True)
     data_vars = ["r", "t", "u", "v", "z"]
 
     coords_ref_full = {

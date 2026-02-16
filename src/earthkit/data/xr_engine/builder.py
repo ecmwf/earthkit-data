@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import logging
 from abc import ABCMeta
 from abc import abstractmethod
@@ -178,6 +179,8 @@ class VariableBuilder:
                     r[k] = v[0]
                 else:
                     r[k] = v
+                if isinstance(r[k], datetime.datetime):
+                    r[k] = r[k].strftime("%Y-%m-%dT%H:%M:%S")
         self._attrs = r
         # self._attrs = {k: v[0] for k, v in self._attrs.items() if k not in drop_keys and len(v) == 1}
         if callable(rename):

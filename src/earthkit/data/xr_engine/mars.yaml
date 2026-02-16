@@ -1,10 +1,10 @@
 dim_roles:
-  number: ensemble.member
+  number: metadata.number
   date: metadata.date
   time: metadata.time
-  step: time.step
+  step: metadata.step
   level: metadata.levelist
-  level_type: vertical.abbreviation
+  level_type: metadata.levtype
 
 variable_key: parameter.variable
 
