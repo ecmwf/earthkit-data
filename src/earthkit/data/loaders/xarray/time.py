@@ -46,10 +46,6 @@ class Time(ABC):
         step_coordinate = [c for c in coordinates if c.is_step]
         date_coordinate = [c for c in coordinates if c.is_date]
 
-        print("time_coordinate:", time_coordinate)
-        print("step_coordinate:", step_coordinate)
-        print("date_coordinate:", date_coordinate)
-
         if len(date_coordinate) == 0 and len(time_coordinate) == 1 and len(step_coordinate) == 1:
             return ForecastFromValidTimeAndStep(time_coordinate[0], step_coordinate[0])
 
@@ -225,10 +221,6 @@ class ForecastFromValidTimeAndStep(Time):
     def spec(self, coords_values: Dict[str, Any]):
         valid_datetime = to_datetime(coords_values[self.time_coordinate_name])
         step = to_timedelta(coords_values[self.step_coordinate_name])
-
-        print("time_coordinate_name:", self.time_coordinate_name)
-        print("step_coordinate_name:", self.step_coordinate_name)
-        print("date_coordinate_name:", self.date_coordinate_name)
 
         if self.date_coordinate_name is not None and self.date_coordinate_name in coords_values:
             base_datetime_ref = valid_datetime - step

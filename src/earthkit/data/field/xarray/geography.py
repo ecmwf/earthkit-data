@@ -25,25 +25,25 @@ class XArrayGeography(BaseGeography):
             # print(self.selection)
             raise ValueError("Invalid shape for selection")
 
-    def latitudes(self):
-        return self.owner.grid.latitudes.reshape(self.shape)
+    def latitudes(self, dtype=None):
+        return self.owner.grid.latitudes.reshape(self.shape())
 
-    def longitudes(self):
-        return self.owner.grid.longitudes.reshape(self.shape)
+    def longitudes(self, dtype=None):
+        return self.owner.grid.longitudes.reshape(self.shape())
 
-    def distinct_latitudes(self):
+    def distinct_latitudes(self, dtype=None):
         r"""Return the distinct latitudes."""
         pass
 
-    def distinct_longitudes(self):
+    def distinct_longitudes(self, dtype=None):
         r"""Return the distinct longitudes."""
         pass
 
-    def x(self):
+    def x(self, dtype=None):
         r"""array-like: Return the x coordinates in the original CRS."""
         pass
 
-    def y(self):
+    def y(self, dtype=None):
         r"""array-like: Return the y coordinates in the original CRS."""
         pass
 
@@ -66,6 +66,14 @@ class XArrayGeography(BaseGeography):
 
     def grid_type(self):
         r"""Return the grid specification."""
+        pass
+
+    def area(self):
+        r"""Return the area of the grid."""
+        pass
+
+    def grid(self):
+        r"""Return the area of the grid."""
         pass
 
     @classmethod

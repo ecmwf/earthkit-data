@@ -31,19 +31,18 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
     "dtype,expected_dtype",
     [(None, np.float64), (np.float32, np.float32), (np.float64, np.float64)],
 )
-def test_netcdf_to_points_1(dtype, expected_dtype):
+def test_netcdf_points_1(dtype, expected_dtype):
     ds = from_source("file", earthkit_test_data_file("test_single.nc"))
 
     eps = 1e-5
 
-    v = ds[0].to_points(flatten=True, dtype=dtype)
-    assert isinstance(v, dict)
-    assert isinstance(v["x"], np.ndarray)
-    assert isinstance(v["y"], np.ndarray)
-    assert v["x"].dtype == expected_dtype
-    assert v["y"].dtype == expected_dtype
+    x, y = ds[0].geography.points(flatten=True, dtype=dtype)
+    assert isinstance(x, np.ndarray)
+    assert isinstance(y, np.ndarray)
+    assert x.dtype == expected_dtype
+    assert y.dtype == expected_dtype
     check_array(
-        v["x"],
+        x,
         (84,),
         first=0.0,
         last=330.0,
@@ -51,7 +50,7 @@ def test_netcdf_to_points_1(dtype, expected_dtype):
         eps=eps,
     )
     check_array(
-        v["y"],
+        y,
         (84,),
         first=90,
         last=-90,
@@ -60,15 +59,14 @@ def test_netcdf_to_points_1(dtype, expected_dtype):
     )
 
     # fieldlist
-    v = ds.to_points(flatten=True, dtype=dtype)
-    assert isinstance(v, dict)
-    assert isinstance(v["x"], np.ndarray)
-    assert isinstance(v["y"], np.ndarray)
-    assert v["x"].dtype == expected_dtype
-    assert v["y"].dtype == expected_dtype
+    x, y = ds.geography.points(flatten=True, dtype=dtype)
+    assert isinstance(x, np.ndarray)
+    assert isinstance(y, np.ndarray)
+    assert x.dtype == expected_dtype
+    assert y.dtype == expected_dtype
 
 
-def test_netcdf_to_points_2():
+def test_netcdf_points_2():
     ds = from_source("file", earthkit_examples_file("test.nc"))
 
     assert len(ds) == 2
@@ -78,31 +76,32 @@ def test_netcdf_to_points_2():
     xr_ds = xr.open_dataset(earthkit_examples_file("test.nc"))
 
     for f in ds:
-        v = f.to_points()
-        assert isinstance(v, dict)
+        x, y = f.geography.points()
+        assert isinstance(x, np.ndarray)
+        assert isinstance(y, np.ndarray)
 
         # x
-        assert isinstance(v["x"], np.ndarray)
-        assert v["x"].shape == (11, 19)
-        for x in v["x"]:
-            assert np.allclose(x, np.arange(-27, 45 + 4, 4))
+        assert isinstance(x, np.ndarray)
+        assert x.shape == (11, 19)
+        for xi in x:
+            assert np.allclose(xi, np.arange(-27, 45 + 4, 4))
 
         # y
-        assert isinstance(v["y"], np.ndarray)
-        assert v["y"].shape == (11, 19)
-        for i, y in enumerate(v["y"]):
-            assert np.allclose(y, np.ones(19) * (73 - i * 4))
+        assert isinstance(y, np.ndarray)
+        assert y.shape == (11, 19)
+        for i, yi in enumerate(y):
+            assert np.allclose(yi, np.ones(19) * (73 - i * 4))
 
-        ref = xr_ds[f.variable].sel(latitude=57, longitude=-7).values
+        ref = xr_ds[f.get("parameter.variable")].sel(latitude=57, longitude=-7).values
 
-        x = 5
-        y = 4
-        assert np.isclose(f.to_numpy()[y, x], ref)
-        assert np.isclose(v["x"][y, x], -7)
-        assert np.isclose(v["y"][y, x], 57)
+        x_idx = 5
+        y_idx = 4
+        assert np.isclose(f.to_numpy()[y_idx, x_idx], ref)
+        assert np.isclose(x[y_idx, x_idx], -7)
+        assert np.isclose(y[y_idx, x_idx], 57)
 
 
-def test_netcdf_to_latlon():
+def test_netcdf_latlon():
     ds = from_source("file", earthkit_examples_file("test.nc"))
 
     assert len(ds) == 2
@@ -112,48 +111,45 @@ def test_netcdf_to_latlon():
     xr_ds = xr.open_dataset(earthkit_examples_file("test.nc"))
 
     for f in ds:
-        v = f.to_latlon()
-        assert isinstance(v, dict)
+        lat, lon = f.geography.latlon()
 
         # lon
-        assert isinstance(v["lon"], np.ndarray)
-        assert v["lon"].shape == (11, 19)
-        for x in v["lon"]:
+        assert isinstance(lon, np.ndarray)
+        assert lon.shape == (11, 19)
+        for x in lon:
             assert np.allclose(x, np.arange(-27, 45 + 4, 4))
 
         # lat
-        assert isinstance(v["lat"], np.ndarray)
-        assert v["lat"].shape == (11, 19)
-        for i, y in enumerate(v["lat"]):
+        assert isinstance(lat, np.ndarray)
+        assert lat.shape == (11, 19)
+        for i, y in enumerate(lat):
             assert np.allclose(y, np.ones(19) * (73 - i * 4))
 
-        ref = xr_ds[f.variable].sel(latitude=57, longitude=-7).values
+        ref = xr_ds[f.get("parameter.variable")].sel(latitude=57, longitude=-7).values
 
-        x = 5
-        y = 4
-        assert np.isclose(f.to_numpy()[y, x], ref)
-        assert np.isclose(v["lon"][y, x], -7)
-        assert np.isclose(v["lat"][y, x], 57)
+        x_idx = 5
+        y_idx = 4
+        assert np.isclose(f.to_numpy()[y_idx, x_idx], ref)
+        assert np.isclose(lon[y_idx, x_idx], -7)
+        assert np.isclose(lat[y_idx, x_idx], 57)
 
 
 def test_netcdf_bbox():
     ds = from_source("file", earthkit_examples_file("test.nc"))
-    bb = ds.bounding_box()
-    assert len(bb) == 2
-    for b in bb:
-        assert b.as_tuple() == (73, -27, 33, 45)
+    bb = ds.geography.bounding_box()
+    assert bb.as_tuple() == (73, -27, 33, 45)
 
 
-def test_netcdf_mars_area():
+def test_netcdf_area():
     ds = from_source("file", earthkit_examples_file("test.nc"))
     ref = [73, -27, 33, 45]
-    assert np.allclose(np.asarray(ds[0].mars_area), np.asarray(ref))
+    assert np.allclose(np.asarray(ds[0].geography.area()), np.asarray(ref))
 
 
 def test_netcdf_proj_string_non_cf():
     f = from_source("file", earthkit_examples_file("test.nc"))
     with pytest.raises(AttributeError):
-        f[0].projection()
+        f[0].geography.projection()
 
 
 def test_netcdf_projection_laea():
@@ -173,7 +169,7 @@ def test_netcdf_projection_laea():
 
 def test_netcdf_proj_string_laea():
     f = from_source("url", earthkit_remote_examples_file("efas.nc"))
-    r = f[0].projection()
+    r = f[0].geography.projection()
     assert (
         r.to_proj_string()
         == "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
@@ -209,7 +205,8 @@ def test_netcdf_to_points_laea():
             assert np.isclose(v["y"][x], ref[i]), f"{i=}, {x=}"
 
 
-def test_netcdf_to_latlon_laea():
+@pytest.mark.cache
+def test_netcdf_latlon_laea():
     ds = from_source("url", earthkit_remote_examples_file("efas.nc"))
 
     assert len(ds) == 3
@@ -218,12 +215,11 @@ def test_netcdf_to_latlon_laea():
 
     # we must check multiple fields
     for idx in range(2):
-        v = ds[idx].to_latlon()
-        assert isinstance(v, dict)
+        lat, lon = ds[idx].geography.latlon()
 
         # lon
-        assert isinstance(v["lon"], np.ndarray)
-        assert v["lon"].shape == (950, 1000)
+        assert isinstance(lon, np.ndarray)
+        assert lon.shape == (950, 1000)
 
         ref = np.array(
             [
@@ -234,11 +230,11 @@ def test_netcdf_to_latlon_laea():
             ]
         )
         for i, x in enumerate(pos):
-            assert np.isclose(v["lon"][x], ref[i]), f"{i=}, {x=}"
+            assert np.isclose(lon[x], ref[i]), f"{i=}, {x=}"
 
         # lat
-        assert isinstance(v["lat"], np.ndarray)
-        assert v["lat"].shape == (950, 1000)
+        assert isinstance(lat, np.ndarray)
+        assert lat.shape == (950, 1000)
 
         ref = np.array(
             [
@@ -249,7 +245,7 @@ def test_netcdf_to_latlon_laea():
             ]
         )
         for i, x in enumerate(pos):
-            assert np.isclose(v["lat"][x], ref[i]), f"{i=}, {x=}"
+            assert np.isclose(lat[x], ref[i]), f"{i=}, {x=}"
 
 
 @pytest.mark.parametrize("lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude")])
