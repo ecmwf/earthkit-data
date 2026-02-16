@@ -82,6 +82,18 @@ class VariableBuilder:
                 }
                 self._attrs["_earthkit"] = attrs
 
+        try:
+            grid_spec = self.tensor.source[0].metadata().grid_spe
+            if grid_spec is not None:
+                if isinstance(grid_spec, dict):
+                    import json
+
+                    grid_spec = json.dumps(grid_spec)
+                if isinstance(grid_spec, str):
+                    self._attrs["ek_grid_spec"] = grid_spec
+        except Exception:
+            pass
+
         self._attrs.update(self.fixed_local_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
         return xarray.Variable(self.var_dims, data, attrs=self._attrs)
@@ -173,14 +185,14 @@ class VariableBuilder:
 
 
 class TensorBackendArray(xarray.backends.common.BackendArray):
-    def __init__(self, tensor, dims, shape, array_backend, dtype, var_name):
+    def __init__(self, tensor, dims, shape, array_namespace, dtype, var_name):
         super().__init__()
         self.tensor = tensor
         self.dims = dims
         self.shape = shape
         self._var_name = var_name
         self.dtype = dtype
-        self.array_backend = array_backend
+        self.array_namespace = array_namespace
 
         from dask.utils import SerializableLock
 
@@ -228,7 +240,7 @@ class TensorBackendArray(xarray.backends.common.BackendArray):
             # LOG.debug(f"   {field_index=}")
 
             try:
-                result = r.to_array(index=field_index, array_backend=self.array_backend, dtype=self.dtype)
+                result = r.to_array(index=field_index, array_namespace=self.array_namespace, dtype=self.dtype)
             except Exception as e:
                 LOG.exception("Error in to_array:", e)
                 raise
@@ -259,19 +271,23 @@ class BackendDataBuilder(metaclass=ABCMeta):
             self.global_tensor_coords_component = None
 
         # Array backend/namespace
-        array_backend = profile.array_backend
-        if array_backend is None:
-            array_backend = "numpy"
+        array_namespace = profile.array_namespace
+        if array_namespace is None:
+            array_namespace = "numpy"
 
-        from earthkit.utils.array import get_backend
+        from earthkit.utils.array import array_namespace as eku_array_namespace
+        from earthkit.utils.array.convert import convert_dtype
 
-        self.array_backend = get_backend(array_backend)
-        assert self.array_backend is not None, f"Unsupported array_backend : {array_backend}"
+        self.array_namespace = eku_array_namespace(array_namespace)
+
+        assert self.array_namespace is not None, f"Unsupported array_namespace : {array_namespace}"
 
         dtype = profile.dtype
         if dtype is None:
-            dtype = "float64"
-        self.dtype = self.array_backend.make_dtype(dtype)
+            dtype = convert_dtype("float64", array_namespace)
+        else:
+            dtype = convert_dtype(dtype, array_namespace)
+        self.dtype = dtype
 
         # Note: these coords inside the tensor are called user_coords and
         # the corresponding dims are called user_dims
@@ -521,7 +537,7 @@ class TensorBackendDataBuilder(BackendDataBuilder):
             tensor,
             var_dims,
             tensor.full_shape,
-            self.array_backend,
+            self.array_namespace,
             self.dtype,
             name,
         )
@@ -565,7 +581,7 @@ class MemoryBackendDataBuilder(BackendDataBuilder):
             for f in tensor.source:
                 f.keep = False
 
-        return tensor.to_array(dtype=self.dtype, array_backend=self.array_backend)
+        return tensor.to_array(dtype=self.dtype, array_namespace=self.array_namespace)
 
 
 class DatasetBuilder:

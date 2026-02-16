@@ -9,14 +9,13 @@ license = { text = "Apache License Version 2.0" }
 authors = [
   { name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int" },
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: Apache Software License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -29,8 +28,8 @@ dependencies = [
   "cfgrib>=0.9.10.1",
   "dask",
   "deprecation",
-  "earthkit-meteo>=0.0.1",
-  "earthkit-utils>=0.1.1",
+  "earthkit-meteo>=0.6",
+  "earthkit-utils>=0.2",
   "eccodes>=1.7",
   "entrypoints",
   "filelock",
@@ -47,13 +46,13 @@ dependencies = [
   "xarray>=0.19",
 ]
 optional-dependencies.all = [
-  "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geo,geopandas,gribjump,mars,odb,polytope,projection,s3,wekeo]",
+  "earthkit-data[cds,covjsonkit,ecmwf-opendata,fdb,geo,geopandas,gribjump,iris,mars,odb,polytope,projection,s3,wekeo]",
 ]
 optional-dependencies.cds = [ "cdsapi>=0.7.2" ]
 optional-dependencies.ci = [ "numpy" ]
 optional-dependencies.covjsonkit = [ "covjsonkit>=0.2.2" ]
 optional-dependencies.dev = [
-  "earthkit-data[all,docs,test]",
+  "earthkit-data[all,docs,test,geotiff,iris]",
 ]
 optional-dependencies.docs = [
   "nbsphinx",
@@ -71,6 +70,7 @@ optional-dependencies.geo = [ "earthkit-geo>=0.2" ]
 optional-dependencies.geopandas = [ "geopandas" ]
 optional-dependencies.geotiff = [ "pyproj", "rasterio", "rioxarray" ]
 optional-dependencies.gribjump = [ "pyfdb>=0.1", "pygribjump" ]
+optional-dependencies.iris = [ "ncdata>=0.3.2", "scitools-iris" ]
 optional-dependencies.mars = [ "ecmwf-api-client>=1.6.1" ]
 optional-dependencies.odb = [ "pyodc" ]
 optional-dependencies.polytope = [ "polytope-client>=0.7.6" ]

@@ -54,6 +54,8 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve `ECMWF open data <https://www.ecmwf.int/en/forecasts/datasets/open-data>`_
     * - :ref:`data-sources-fdb`
       - retrieve data from the `Fields DataBase <https://fields-database.readthedocs.io/en/latest/>`_ (FDB)
+    * - :ref:`data-sources-gribjump`
+      - retrieve data from the `FDB (Fields DataBase)`_ using the `gribjump`_ library
     * - :ref:`data-sources-mars`
       - retrieve data from the ECMWF `MARS archive <https://confluence.ecmwf.int/display/UDOC/MARS+user+documentation>`_
     * - :ref:`data-sources-opendap`
@@ -66,8 +68,6 @@ We can get data from a given source by using :func:`from_source`:
       - retrieve data from `WEkEO`_ using the WEkEO grammar
     * - :ref:`data-sources-wekeocds`
       - retrieve `CDS <https://cds.climate.copernicus.eu/>`_ data stored on `WEkEO`_ using the `cdsapi`_ grammar
-    * - :ref:`data-sources-gribjump`
-      - retrieve data from the `FDB (Fields DataBase)`_ using the `gribjump`_ library
     * - :ref:`data-sources-zarr`
       - load data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store
 
@@ -905,6 +905,88 @@ fdb
       - :ref:`/examples/grib_fdb_write.ipynb`
 
 
+
+.. _data-sources-gribjump:
+
+gribjump
+--------
+
+.. py:function:: from_source("gribjump", request, *, ranges=None, mask=None, indices=None, fetch_coords_from_fdb=False, fdb_kwargs=None, **kwargs)
+  :noindex:
+
+  *New in version 0.17.0*
+
+  The ``gribjump`` source enables fast retrieval of GRIB message subsets from the `FDB (Fields DataBase)`_ using the `gribjump <https://github.com/ecmwf/gribjump/>`_ library.
+  Both `pygribjump <https://pypi.org/project/pygribjump/>`_ and `pyfdb`_ must be installed. The `pygribjump`_ package uses `findlibs <https://github.com/ecmwf/findlibs>`_ to locate an installation of the `gribjump`_ library.
+  If the library is not available on your system, you can install it via the `gribjumplib <https://pypi.org/project/gribjumplib/>`_ wheel from PyPI.
+  Installing `gribjumplib` from PyPI will also automatically install `fdb5lib <https://pypi.org/project/fdb5lib/>`_ and other dependencies, which may take priority over any existing installations on your system.
+
+  .. warning::
+    ⚠️ This source is **experimental** and may change in future versions without
+    warning. It performs **no validation** that the specified grid indices,
+    masks, or ranges correspond to the fields' actual underlying grids.
+    **Incorrect usage may silently return wrong data points.**
+    The provided ranges or masks might correspond to unexpected points on the
+    grid.  This source is also currently **not thread-safe**.
+
+  Exactly one of the parameters ``ranges``, ``mask`` or ``indices`` must be specified at a time.
+
+  :param request: the FDB request as a dictionary. GribJump requires strict value formatting
+      (e.g., hdates as "YYYYMMDD", not "YYYY-MM-DD"). Format errors may result in "DataNotFound" errors.
+  :type request: dict
+  :param ranges: a list of tuples specifying the ranges of 1D grid indices to retrieve in the form
+      [(start1, end1), (start2, end2), ...]. Ranges are exclusive, meaning that the end index is not included in the range.
+  :type ranges: list[tuple[int, int]], optional
+  :param mask: a 1D boolean mask specifying which grid points to retrieve
+  :type mask: numpy.array, optional
+  :param indices: a 1D array of grid indices to retrieve
+  :type indices: numpy.array, optional
+  :param fetch_coords_from_fdb: if ``True``, loads the first field's metadata from
+      the FDB to extract the coordinates at the specified indices. If ``False``, the
+      coordinates are not loaded and no separate FDB request is made.
+      Default is ``False``. Please note that no validation is performed to
+      ensure that all fields in the requests share the same grid.
+  :type fetch_coords_from_fdb: bool, optional
+  :param fdb_kwargs: only used when ``fetch_coords_from_fdb=True``. A dict of
+      keyword arguments passed to the `pyfdb.FDB` constructor. This allows to
+      specify the FDB configuration, user configuration, etc. If not provided,
+      the default configuration is used. These arguments are only passed to the
+      FDB when fetching coordinates and are not used by GribJump for the
+      extraction itself.
+  :type fdb_kwargs: dict, optional
+
+
+  The following example retrieves a subset from a GRIB message in the FDB using a boolean mask:
+
+  .. code-block:: python
+
+      import earthkit.data as ekd
+      import numpy as np
+
+      request = {
+          "class": "od",
+          "type": "fc",
+          "stream": "oper",
+          "expver": "0001",
+          "repres": "gg",
+          "levtype": "sfc",
+          "param": "2t",
+          "date": "20250703",
+          "time": 0,
+          "step": list(range(0, 24, 6)),
+          "domain": "g",
+      }
+
+      ranges = [(0, 10), (20, 30)]
+
+      source = ekd.from_source("gribjump", request, ranges=ranges)
+      ds = source.to_xarray()
+
+  Further examples:
+
+      - :ref:`/examples/gribjump.ipynb`
+
+
 .. _data-sources-mars:
 
 mars
@@ -1274,87 +1356,6 @@ wekeocds
       - :ref:`/examples/wekeo.ipynb`
 
 
-.. _data-sources-gribjump:
-
-gribjump
---------
-
-.. py:function:: from_source("gribjump", request, *, ranges=None, mask=None, indices=None, fetch_coords_from_fdb=False, fdb_kwargs=None, **kwargs)
-  :noindex:
-
-  *New in version 0.17.0*
-
-  The ``gribjump`` source enables fast retrieval of GRIB message subsets from the `FDB (Fields DataBase)`_ using the `gribjump <https://github.com/ecmwf/gribjump/>`_ library.
-  Both `pygribjump <https://pypi.org/project/pygribjump/>`_ and `pyfdb`_ must be installed. The `pygribjump`_ package uses `findlibs <https://github.com/ecmwf/findlibs>`_ to locate an installation of the `gribjump`_ library.
-  If the library is not available on your system, you can install it via the `gribjumplib <https://pypi.org/project/gribjumplib/>`_ wheel from PyPI.
-  Installing `gribjumplib` from PyPI will also automatically install `fdb5lib <https://pypi.org/project/fdb5lib/>`_ and other dependencies, which may take priority over any existing installations on your system.
-
-  .. warning::
-    ⚠️ This source is **experimental** and may change in future versions without
-    warning. It performs **no validation** that the specified grid indices,
-    masks, or ranges correspond to the fields' actual underlying grids.
-    **Incorrect usage may silently return wrong data points.**
-    The provided ranges or masks might correspond to unexpected points on the
-    grid.  This source is also currently **not thread-safe**.
-
-  Exactly one of the parameters ``ranges``, ``mask`` or ``indices`` must be specified at a time.
-
-  :param request: the FDB request as a dictionary. GribJump requires strict value formatting
-      (e.g., hdates as "YYYYMMDD", not "YYYY-MM-DD"). Format errors may result in "DataNotFound" errors.
-  :type request: dict
-  :param ranges: a list of tuples specifying the ranges of 1D grid indices to retrieve in the form
-      [(start1, end1), (start2, end2), ...]. Ranges are exclusive, meaning that the end index is not included in the range.
-  :type ranges: list[tuple[int, int]], optional
-  :param mask: a 1D boolean mask specifying which grid points to retrieve
-  :type mask: numpy.array, optional
-  :param indices: a 1D array of grid indices to retrieve
-  :type indices: numpy.array, optional
-  :param fetch_coords_from_fdb: if ``True``, loads the first field's metadata from
-      the FDB to extract the coordinates at the specified indices. If ``False``, the
-      coordinates are not loaded and no separate FDB request is made.
-      Default is ``False``. Please note that no validation is performed to
-      ensure that all fields in the requests share the same grid.
-  :type fetch_coords_from_fdb: bool, optional
-  :param fdb_kwargs: only used when ``fetch_coords_from_fdb=True``. A dict of
-      keyword arguments passed to the `pyfdb.FDB` constructor. This allows to
-      specify the FDB configuration, user configuration, etc. If not provided,
-      the default configuration is used. These arguments are only passed to the
-      FDB when fetching coordinates and are not used by GribJump for the
-      extraction itself.
-  :type fdb_kwargs: dict, optional
-
-
-  The following example retrieves a subset from a GRIB message in the FDB using a boolean mask:
-
-  .. code-block:: python
-
-      import earthkit.data as ekd
-      import numpy as np
-
-      request = {
-          "class": "od",
-          "type": "fc",
-          "stream": "oper",
-          "expver": "0001",
-          "repres": "gg",
-          "levtype": "sfc",
-          "param": "2t",
-          "date": "20250703",
-          "time": 0,
-          "step": list(range(0, 24, 6)),
-          "domain": "g",
-      }
-
-      ranges = [(0, 10), (20, 30)]
-
-      source = ekd.from_source("gribjump", request, ranges=ranges)
-      ds = source.to_xarray()
-
-  Further examples:
-
-      - :ref:`/examples/gribjump.ipynb`
-
-
 
 .. _data-sources-zarr:
 
@@ -1369,7 +1370,6 @@ zarr
   The ``zarr`` source accesses data from a `Zarr <https://zarr.readthedocs.io/en/stable/>`_ store. Internally the data is loaded via the :py:meth:`xarray.open_zarr` method,  so only Zarr data supported by Xarray can be accessed. Requires ``zarr >= 3`` version.
 
   :param str path: path or URL to the Zarr store
-
 
 
 

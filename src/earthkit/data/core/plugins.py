@@ -144,7 +144,10 @@ def find_plugin(directories: Union[str, List[str]], name: str, loader, refreshed
     if module is not None:
         return module
 
-    correction = did_you_mean(name, candidates)
+    try:
+        correction = did_you_mean(name, candidates)
+    except ValueError:
+        correction = None
 
     if correction is not None:
         LOG.warning(

@@ -14,7 +14,7 @@ import re
 import sys
 
 import pytest
-from earthkit.utils.testing import NO_TORCH
+from earthkit.utils.array.testing.testing import NO_TORCH
 
 from earthkit.data.testing import MISSING
 from earthkit.data.testing import earthkit_file
@@ -42,13 +42,14 @@ SKIP = [
     "polytope_time_series.ipynb",
     "polytope_vertical_profile.ipynb",
     "shapefile.ipynb",
+    "ukmo_pp.ipynb",
     "wekeo.ipynb",
     "xarray_cupy.ipynb",
     "xarray_engine_chunks_on_dask_cluster.ipynb",
 ]
 
 if NO_TORCH:
-    SKIP.append("grib_array_backends.ipynb")
+    SKIP.append("grib_array_namespace.ipynb")
 
 
 def notebooks_list():

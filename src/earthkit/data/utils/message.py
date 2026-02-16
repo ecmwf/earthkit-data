@@ -227,6 +227,9 @@ class CodesHandle(eccodes.Message):
     def get_long(self, name):
         return self.get(name, ktype=int)
 
+    def copy(self):
+        return self.clone()
+
     @check_clone_kwargs
     def clone(self, **kwargs):
         return self._from_raw_handle(eccodes.codes_clone(self._handle, **kwargs))
