@@ -68,7 +68,7 @@ Fixes
 ++++++++
 
 - Fixed cloning of Xarray fields (:pr:`841`).
-- Addresses the issue #882 by overriding eccodes.Message.copy to use CodesHandle.clone in
+
 
 
 Installation
