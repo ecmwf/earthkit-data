@@ -10,6 +10,8 @@
 import datetime
 import logging
 
+import numpy as np
+
 from .dim import DATE_KEYS
 from .dim import DATETIME_KEYS
 from .dim import LEVEL_KEYS
@@ -133,6 +135,12 @@ class StepCoord(Coord):
     }
 
     def convert(self, profile):
+        if len(self.vals) == 0:
+            return self.vals
+        x = self.vals[0]
+        if isinstance(x, datetime.timedelta) or hasattr(x, "dtype") and np.issubdtype(x, np.timedelta64):
+            return self.vals
+
         from earthkit.data.utils.dates import to_timedelta
 
         vals = [to_timedelta(x) for x in self.vals]

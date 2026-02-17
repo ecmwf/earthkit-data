@@ -31,6 +31,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
     [
         (
             {
+                "profile": None,
                 "time_dim_mode": "raw",
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -41,6 +42,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "raw",
                 "dim_name_from_role_name": True,
             },
@@ -53,6 +55,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "forecast",
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -71,6 +74,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "forecast",
                 "dim_name_from_role_name": True,
             },
@@ -87,6 +91,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "valid_time",
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -108,6 +113,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "valid_time",
                 "decode_times": True,
                 "decode_timedelta": True,
@@ -129,6 +135,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "raw",
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -139,6 +146,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "raw",
                 "dim_name_from_role_name": False,
             },
@@ -296,10 +304,9 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "raw",
                 "dim_roles": {"step": "forecastMonth"},
-                "decode_times": False,
-                "decode_timedelta": False,
                 "ensure_dims": ["number", "date", "time", "forecastMonth"],
                 "dim_name_from_role_name": False,
             },
@@ -360,8 +367,8 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
             {
                 "time_dim_mode": "raw",
                 "dim_roles": {"step": "forecastMonth"},
-                "decode_times": False,
-                "decode_timedelta": False,
+                "decode_times": True,
+                "decode_timedelta": True,
                 "ensure_dims": ["number", "date", "time", "step"],
                 "dim_name_from_role_name": True,
             },
@@ -402,6 +409,7 @@ def test_xr_engine_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_
     [
         (
             {
+                "profile": None,
                 "time_dim_mode": "forecast",
                 "add_valid_time_coord": True,
                 "decode_times": False,
@@ -469,6 +477,7 @@ def test_xr_engine_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "forecast",
                 "add_valid_time_coord": True,
                 "decode_times": False,
