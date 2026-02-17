@@ -13,6 +13,7 @@ import datetime
 import os
 import sys
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -56,7 +57,7 @@ def _get_attrs_for_key_2(key, metadata):
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
+                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
                 "levelist": [500, 700],
             },
             {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
@@ -75,11 +76,11 @@ def _get_attrs_for_key_2(key, metadata):
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
+                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
                 "levelist": [500, 700],
             },
             {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
-            {"levtype": 2},
+            {"levtype": "pl"},
         ),
         (
             {
@@ -94,7 +95,7 @@ def _get_attrs_for_key_2(key, metadata):
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
+                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
                 "levelist": [500, 700],
             },
             {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
@@ -113,11 +114,11 @@ def _get_attrs_for_key_2(key, metadata):
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
+                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
                 "levelist": [500, 700],
             },
             {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
-            {"levtype": 2},
+            {"levtype": "pl"},
         ),
     ],
 )
@@ -129,7 +130,7 @@ def test_xr_dims_as_attrs(allow_holes, lazy_load, kwargs, coords, dims, attrs):
     compare_dims(ds, dims, sizes=True)
 
     for k, v in attrs.items():
-        ds["t"].attrs[k] == v
+        assert ds["t"].attrs[k] == v
 
 
 @pytest.mark.cache
@@ -388,7 +389,7 @@ def test_xr_dims_as_attrs_3(lazy_load, allow_holes, idx, kwargs, coords, dims, v
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
+                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
                 "levelist": [500, 700],
             },
             {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},

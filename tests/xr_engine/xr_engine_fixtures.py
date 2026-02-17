@@ -87,7 +87,7 @@ def compare_coord(ds, name, ref_vals, mode="coord"):
                 assert vals[i] == ref_vals[i], f"{name=} {vals[i]} != {ref_vals[i]}"
         # other arrays
         else:
-            assert np.allclose(ds.coords[name].values, vals), f"{name=} {ds.coords[name].values} != {vals}"
+            assert np.allclose(vals, ref_vals), f"{name=} {vals} != {ref_vals}"
 
 
 def compare_dim_order(ds, dims, order_ref_var, check_coord=True):
