@@ -35,9 +35,12 @@ from .coordinates import YCoordinate
 from .coordinates import is_scalar
 from .grid import Grid
 from .grid import MeshedGrid
+from .grid import MeshedXYGrid
 from .grid import MeshProjectionGrid
 from .grid import UnstructuredGrid
 from .grid import UnstructuredProjectionGrid
+from .grid import UnstructuredXYGrid
+from .grid import XarrayGrid
 
 # CoordinateAttributes = namedtuple("CoordinateAttributes", ["axis", "name", "long_name", "standard_name", "units"])
 
@@ -199,14 +202,19 @@ class CoordinateGuesser(ABC):
         lat = [c for c in coordinates if c.is_lat]
         lon = [c for c in coordinates if c.is_lon]
 
+        latlon_grid = None
         if len(lat) == 1 and len(lon) == 1:
-            return self._lat_lon_provided(lat, lon, variable)
+            latlon_grid = self._lat_lon_provided(lat, lon, variable)
 
         x = [c for c in coordinates if c.is_x]
         y = [c for c in coordinates if c.is_y]
 
+        xy_grid = None
         if len(x) == 1 and len(y) == 1:
-            return self._x_y_provided(x, y, variable)
+            xy_grid = self._x_y_provided(x, y, variable, strict=latlon_grid is None)
+
+        if latlon_grid is not None or xy_grid is not None:
+            return XarrayGrid(latlon_grid=latlon_grid, xy_grid=xy_grid)
 
         raise NotImplementedError(f"Cannot establish grid {coordinates}")
 
@@ -283,7 +291,7 @@ class CoordinateGuesser(ABC):
 
         return grid
 
-    def _x_y_provided(self, x: Any, y: Any, variable: Any) -> Any:
+    def _x_y_provided(self, x: Any, y: Any, variable: Any, strict: bool = False) -> Any:
         """Determines the grid type when x and y coordinates are provided.
 
         Parameters
@@ -367,13 +375,22 @@ class CoordinateGuesser(ABC):
                 grid = UnstructuredProjectionGrid(x, y, grid_mapping)
             else:
                 grid = MeshProjectionGrid(x, y, grid_mapping)
+        else:
+            if unstructured:
+                grid = UnstructuredXYGrid(x, y, dim_vars)
+            else:
+                grid = MeshedXYGrid(x, y, dim_vars)
 
         if grid is not None:
             self._grid_cache[(x.name, y.name, dim_vars)] = grid
             return grid
 
         LOG.error("Could not fine a candidate for 'grid_mapping'")
-        raise NotImplementedError(f"Unstructured grid {x.name} {y.name}")
+
+        if strict:
+            raise NotImplementedError(f"Unstructured grid {x.name} {y.name}")
+        else:
+            return None
 
     @abstractmethod
     def _is_longitude(
@@ -582,6 +599,9 @@ class DefaultCoordinateGuesser(CoordinateGuesser):
         if attributes.name == "longitude":  # WeatherBench
             return LongitudeCoordinate(c)
 
+        if attributes.name in ("lon", "grid_longitude"):
+            return LongitudeCoordinate(c)
+
         return None
 
     def _is_latitude(self, c: xr.DataArray, attributes: CoordinateAttributes) -> Optional[LatitudeCoordinate]:
@@ -609,6 +629,9 @@ class DefaultCoordinateGuesser(CoordinateGuesser):
             return LatitudeCoordinate(c)
 
         if attributes.name == "latitude":  # WeatherBench
+            return LatitudeCoordinate(c)
+
+        if attributes.name in ("lat", "grid_latitude"):
             return LatitudeCoordinate(c)
 
         return None

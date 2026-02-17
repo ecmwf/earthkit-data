@@ -21,7 +21,7 @@ def test_netcdf_vertical_1():
 
     assert f.vertical.level() == 0
     assert f.vertical.layer() is None
-    assert f.vertical.type() == "surface"
+    assert f.vertical.level_type() == "surface"
 
 
 def test_netcdf_vertical_2():
@@ -29,7 +29,7 @@ def test_netcdf_vertical_2():
     f = ds[0]
 
     assert f.vertical.level() == 1000
-    assert f.vertical.type() == "pressure"
+    assert f.vertical.level_type() == "pressure"
     assert f.vertical.units() == "hPa"
     assert f.vertical.abbreviation() == "pl"
     assert f.vertical.positive() == "down"

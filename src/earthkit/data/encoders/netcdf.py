@@ -38,7 +38,7 @@ class NetCDFEncodedData(EncodedData):
         else:
             self.ds.to_netcdf(file)
 
-    def metadata(self, key):
+    def get(self, key, default=None):
         raise NotImplementedError
 
 

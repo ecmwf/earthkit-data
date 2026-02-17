@@ -191,6 +191,7 @@ def test_url_part_file_source():
         assert f.read() == b"GRIB7777GRIB7777"
 
 
+@pytest.mark.download
 def test_url_netcdf_source_save():
     ds = from_source(
         "url",

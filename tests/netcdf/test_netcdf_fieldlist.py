@@ -40,8 +40,9 @@ def test_netcdf_fieldlist_string_coord():
 
     x_ref = np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]])
     y_ref = np.array([[4, 5, 6], [4, 5, 6], [4, 5, 6]])
-    assert np.allclose(ds[0].to_points()["x"], x_ref)
-    assert np.allclose(ds[0].to_points()["y"], y_ref)
+    x, y = ds[0].geography.points()
+    assert np.allclose(x, x_ref)
+    assert np.allclose(y, y_ref)
 
 
 def test_netcdf_fieldlist_bounds():

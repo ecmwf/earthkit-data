@@ -55,7 +55,8 @@ def test_dummy_netcdf_reader_2(attribute):
     assert "lat" in ds.dims
     assert len(s) == 1
     # s.to_datetime_list()
-    s.bounding_box()
+    bb = s.geography.bounding_box()
+    assert bb.as_tuple() == (1, 0, 0, 1)
 
 
 def test_dummy_netcdf():
@@ -145,24 +146,14 @@ def test_netcdf_multi_sources():
         print(s)
 
     assert len(s3) == 2
-    assert s3[0].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 1, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 1, 12, 0),
-    }
-    assert s3[1].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 2, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 2, 12, 0),
-    }
-    assert s3.datetime() == {
-        "base_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-        "valid_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-    }
+
+    assert s3[0].get("time.base_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert s3[0].get("time.valid_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert s3[0].get("time.step") == datetime.timedelta(0)
+    assert s3[1].get("time.base_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert s3[1].get("time.valid_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert s3[1].get("time.step") == datetime.timedelta(0)
+
     s3.to_xarray()
 
 
@@ -177,24 +168,13 @@ def test_netcdf_multi_files():
     )
 
     assert len(ds) == 2
-    assert ds[0].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 1, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 1, 12, 0),
-    }
-    assert ds[1].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 2, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 2, 12, 0),
-    }
-    assert ds.datetime() == {
-        "base_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-        "valid_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-    }
+
+    assert ds[0].get("time.base_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert ds[0].get("time.valid_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert ds[0].get("time.step") == datetime.timedelta(0)
+    assert ds[1].get("time.base_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert ds[1].get("time.valid_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert ds[1].get("time.step") == datetime.timedelta(0)
 
     ds.to_xarray()
 

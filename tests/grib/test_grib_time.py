@@ -124,12 +124,6 @@ def test_grib_time_step_in_seconds():
     ds = from_source("url", earthkit_remote_test_data_file("t_30s.grib"))
     f = ds[0]
 
-    # ref = {
-    #     "base_time": [datetime.datetime(2023, 8, 20, 12)],
-    #     "valid_time": [datetime.datetime(2023, 8, 20, 12, 0, 30)],
-    # }
-    # assert ds.datetime() == ref
-
     assert f.time.base_datetime() == datetime.datetime(2023, 8, 20, 12, 0, 0)
     assert f.time.valid_datetime() == datetime.datetime(2023, 8, 20, 12, 0, 30)
     assert f.time.step() == datetime.timedelta(seconds=30)

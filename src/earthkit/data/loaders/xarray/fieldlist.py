@@ -66,13 +66,13 @@ class XArrayFieldList(IndexedFieldList):
         """
         raise NotImplementedError("XarrayFieldList.from_fields is not implemented")
 
-    @staticmethod
-    def from_numpy(array, metadata):
-        raise NotImplementedError("SimpleFieldList.from_numpy is not implemented")
+    # @staticmethod
+    # def from_numpy(array, metadata):
+    #     raise NotImplementedError("SimpleFieldList.from_numpy is not implemented")
 
-    @staticmethod
-    def from_array(array, metadata):
-        raise NotImplementedError("SimpleFieldList.from_array is not implemented")
+    # @staticmethod
+    # def from_array(array, metadata):
+    #     raise NotImplementedError("SimpleFieldList.from_array is not implemented")
 
     def __repr__(self) -> str:
         """Return a string representation of the XarrayFieldList."""
@@ -243,9 +243,13 @@ class XArrayFieldList(IndexedFieldList):
             verify at the same `valid_datetime`, with different base `date` and `time` and a different `step`.
             So we get an extra chance to filter the fields by the metadata.
         """
+
+        if len(self) < 1000:
+            return super().sel(*args, **kwargs)
+
         from earthkit.data.core.select import normalize_selection
 
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs, _ = normalize_selection(*args, **kwargs)
         if not kwargs:
             return self
 
@@ -264,6 +268,8 @@ class XArrayFieldList(IndexedFieldList):
             match, rest = v.match(**kwargs)
 
             if match:
+
+                print("Match: rest=", rest)
                 count += 1
                 missing: Dict[str, Any] = {}
 
@@ -330,6 +336,9 @@ class XArrayFieldList(IndexedFieldList):
             paths,
             **options,
         )
+
+    def default_encoder(self, **kwargs):
+        return "netcdf"
 
 
 # class XArrayMaskFieldList(XArrayFieldList, MaskIndex):

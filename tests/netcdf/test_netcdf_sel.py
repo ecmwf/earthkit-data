@@ -19,7 +19,7 @@ from earthkit.data.testing import load_nc_or_xr_source
 
 
 @pytest.mark.parametrize("mode", ["nc", "xr"])
-@pytest.mark.parametrize("key", ["variable", "param"])
+@pytest.mark.parametrize("key", ["parameter.variable"])
 def test_netcdf_sel_single_message(mode, key):
     ds = load_nc_or_xr_source(earthkit_test_data_file("test_single.nc"), mode)
 
@@ -32,42 +32,42 @@ def test_netcdf_sel_single_message(mode, key):
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
     [
-        (dict(param="u", level=700), [["u", 700]], []),
+        ({"parameter.variable": "u", "vertical.level": 700}, [["u", 700]], []),
         (
-            dict(param=["t", "u"], level=[700, 500]),
+            {"parameter.variable": ["t", "u"], "vertical.level": [700, 500]},
             [
                 ["t", 700],
                 ["t", 500],
                 ["u", 700],
                 ["u", 500],
             ],
-            ["param", "level"],
+            ["parameter.variable", "vertical.level"],
         ),
-        (dict(param="w"), [], []),
-        (dict(INVALIDKEY="w"), [], []),
+        ({"parameter.variable": "w"}, [], []),
+        ({"INVALIDKEY": "w"}, [], []),
         (
-            dict(
-                param=["t"],
-                level=[500, 700],
-                valid_datetime=datetime.datetime.fromisoformat("2018-08-01T12:00:00"),
-            ),
+            {
+                "parameter.variable": ["t"],
+                "vertical.level": [500, 700],
+                "time.valid_datetime": datetime.datetime.fromisoformat("2018-08-01T12:00:00"),
+            },
             [
                 ["t", 700, datetime.datetime.fromisoformat("2018-08-01T12:00:00")],
                 ["t", 500, datetime.datetime.fromisoformat("2018-08-01T12:00:00")],
             ],
-            ["param", "level", "valid_datetime"],
+            ["parameter.variable", "vertical.level", "time.valid_datetime"],
         ),
         (
-            dict(
-                param=["t"],
-                level=[500, 700],
-                valid_datetime="2018-08-01T12:00:00",
-            ),
+            {
+                "parameter.variable": ["t"],
+                "vertical.level": [500, 700],
+                "time.valid_datetime": "2018-08-01T12:00:00",
+            },
             [
                 ["t", 700, datetime.datetime(2018, 8, 1, 12, 0)],
                 ["t", 500, datetime.datetime(2018, 8, 1, 12, 0)],
             ],
-            ["param", "level", "valid_datetime"],
+            ["parameter.variable", "vertical.level", "time.valid_datetime"],
         ),
     ],
 )
@@ -89,9 +89,9 @@ def test_netcdf_sel_single_file_1(mode, params, expected_meta, metadata_keys):
 def test_netcdf_sel_single_file_as_dict(mode):
     ds = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
 
-    g = ds.sel({"variable": "t", "level": [500, 700]})
+    g = ds.sel({"parameter.variable": "t", "vertical.level": [500, 700]})
     assert len(g) == 2
-    assert g.get(["variable", "level"]) == [
+    assert g.get(["parameter.variable", "vertical.level"]) == [
         ["t", 700],
         ["t", 500],
     ]
@@ -114,10 +114,10 @@ def test_netcdf_sel_single_file_as_dict(mode):
 def test_netcdf_sel_slice_single_file(mode, variable, level, expected_meta):
     ds = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
 
-    g = ds.sel({"variable": variable, "level": level})
+    g = ds.sel({"paremeter.variable": variable, "vertical.level": level})
     assert len(g) == len(expected_meta)
     if expected_meta:
-        assert g.get(["variable", "level"]) == expected_meta
+        assert g.get(["parameter.variable", "vertical.level"]) == expected_meta
 
 
 if __name__ == "__main__":

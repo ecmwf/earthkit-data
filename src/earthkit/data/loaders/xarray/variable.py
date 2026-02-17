@@ -109,33 +109,33 @@ class Variable:
         """
         return self.length
 
-    @property
-    def grid_mapping(self) -> Optional[Dict[str, Any]]:
-        """Return the grid mapping of the variable."""
-        grid_mapping = self.variable.attrs.get("grid_mapping", None)
-        if grid_mapping is None:
-            return None
-        return self.ds[grid_mapping].attrs
+    # @property
+    # def grid_mapping(self) -> Optional[Dict[str, Any]]:
+    #     """Return the grid mapping of the variable."""
+    #     grid_mapping = self.variable.attrs.get("grid_mapping", None)
+    #     if grid_mapping is None:
+    #         return None
+    #     return self.ds[grid_mapping].attrs
 
-    def grid_points(self) -> Any:
-        """Return the grid points of the variable.
+    # def grid_points(self) -> Any:
+    #     """Return the grid points of the variable.
 
-        Returns
-        -------
-        Any
-            The grid points of the variable.
-        """
-        return self.grid.grid_points
+    #     Returns
+    #     -------
+    #     Any
+    #         The grid points of the variable.
+    #     """
+    #     return self.grid.grid_points
 
-    @property
-    def latitudes(self) -> Any:
-        """Return the latitudes of the variable."""
-        return self.grid.latitudes
+    # @property
+    # def latitudes(self) -> Any:
+    #     """Return the latitudes of the variable."""
+    #     return self.grid.latitudes
 
-    @property
-    def longitudes(self) -> Any:
-        """Return the longitudes of the variable."""
-        return self.grid.longitudes
+    # @property
+    # def longitudes(self) -> Any:
+    #     """Return the longitudes of the variable."""
+    #     return self.grid.longitudes
 
     def __repr__(self) -> str:
         """Return a string representation of the variable.
@@ -202,7 +202,7 @@ class Variable:
 
         user_provided_k = k
 
-        if k == "valid_datetime":
+        if k == "time.valid_datetime":
             # Ask the Time object to select the valid datetime
             k = self.time.select_valid_datetime(self)
             if k is None:
@@ -253,18 +253,31 @@ class Variable:
         Tuple[bool, Optional[Dict[str, Any]]]
             A tuple containing a boolean indicating if the match was successful and the remaining metadata.
         """
-        if "param" in kwargs:
-            assert "variable" not in kwargs
-            kwargs["variable"] = kwargs.pop("param")
+        name = None
+        if "parameter.variable" in kwargs:
+            name = kwargs.pop("parameter.variable")
 
-        if "variable" in kwargs:
-            name = kwargs.pop("variable")
+        if name is not None:
             if not isinstance(name, (list, tuple)):
                 name = [name]
             if self.variable.name not in name:
                 return False, None
             return True, kwargs
+
         return True, kwargs
+
+        # if "param" in kwargs:
+        #     assert "variable" not in kwargs
+        #     kwargs["variable"] = kwargs.pop("param")
+
+        # if "variable" in kwargs:
+        #     name = kwargs.pop("variable")
+        #     if not isinstance(name, (list, tuple)):
+        #         name = [name]
+        #     if self.variable.name not in name:
+        #         return False, None
+        #     return True, kwargs
+        # return True, kwargs
 
 
 class FilteredVariable:
@@ -297,7 +310,7 @@ class FilteredVariable:
         return [
             field
             for field in self.variable
-            if all(field.metadata(k, default=None) == v for k, v in self.kwargs.items())
+            if all(field.get(k, default=None) == v for k, v in self.kwargs.items())
         ]
 
     @property

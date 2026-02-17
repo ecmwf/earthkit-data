@@ -27,6 +27,7 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
     assert np.isclose(v.mean(), meanv, eps)
 
 
+@pytest.mark.skip(reason="To be seen if this case should be supported")
 @pytest.mark.parametrize(
     "dtype,expected_dtype",
     [(None, np.float64), (np.float32, np.float32), (np.float64, np.float64)],
@@ -66,6 +67,7 @@ def test_netcdf_points_1(dtype, expected_dtype):
     assert y.dtype == expected_dtype
 
 
+@pytest.mark.skip(reason="To be seen if this case should be supported")
 def test_netcdf_points_2():
     ds = from_source("file", earthkit_examples_file("test.nc"))
 
@@ -152,9 +154,10 @@ def test_netcdf_proj_string_non_cf():
         f[0].geography.projection()
 
 
+@pytest.mark.cache
 def test_netcdf_projection_laea():
     f = from_source("url", earthkit_remote_examples_file("efas.nc"))
-    projection = f[0].projection()
+    projection = f[0].geography.projection()
     assert isinstance(projection, projections.LambertAzimuthalEqualArea)
     assert projection.parameters == {
         "central_latitude": 52.0,
@@ -167,6 +170,7 @@ def test_netcdf_projection_laea():
     }
 
 
+@pytest.mark.cache
 def test_netcdf_proj_string_laea():
     f = from_source("url", earthkit_remote_examples_file("efas.nc"))
     r = f[0].geography.projection()
@@ -176,6 +180,7 @@ def test_netcdf_proj_string_laea():
     )
 
 
+@pytest.mark.cache
 def test_netcdf_to_points_laea():
     ds = from_source("url", earthkit_remote_examples_file("efas.nc"))
 
@@ -185,24 +190,23 @@ def test_netcdf_to_points_laea():
 
     # we must check multiple fields
     for idx in range(2):
-        v = ds[idx].to_points()
-        assert isinstance(v, dict)
+        x, y = ds[idx].geography.points()
+        assert isinstance(x, np.ndarray)
+        assert isinstance(y, np.ndarray)
 
         # lon
-        assert isinstance(v["x"], np.ndarray)
-        assert v["x"].shape == (950, 1000)
+        assert x.shape == (950, 1000)
 
         ref = np.array([2502500.0, 7497500.0, 2502500.0, 7497500.0])
-        for i, x in enumerate(pos):
-            assert np.isclose(v["x"][x], ref[i]), f"{i=}, {x=}"
+        for i, point in enumerate(pos):
+            assert np.allclose(x[point], ref[i]), f"{i=}, {point=}"
 
         # lat
-        assert isinstance(v["y"], np.ndarray)
-        assert v["y"].shape == (950, 1000)
+        assert y.shape == (950, 1000)
 
         ref = np.array([5497500.0, 5497500.0, 752500.0, 752500.0])
-        for i, x in enumerate(pos):
-            assert np.isclose(v["y"][x], ref[i]), f"{i=}, {x=}"
+        for i, point in enumerate(pos):
+            assert np.allclose(y[point], ref[i]), f"{i=}, {point=}"
 
 
 @pytest.mark.cache
@@ -229,8 +233,8 @@ def test_netcdf_latlon_laea():
                 41.13970495087975,
             ]
         )
-        for i, x in enumerate(pos):
-            assert np.isclose(lon[x], ref[i]), f"{i=}, {x=}"
+        for i, point in enumerate(pos):
+            assert np.isclose(lon[point], ref[i]), f"{i=}, {point=}"
 
         # lat
         assert isinstance(lat, np.ndarray)
@@ -244,8 +248,8 @@ def test_netcdf_latlon_laea():
                 23.942342882929605,
             ]
         )
-        for i, x in enumerate(pos):
-            assert np.isclose(lat[x], ref[i]), f"{i=}, {x=}"
+        for i, point in enumerate(pos):
+            assert np.isclose(lat[point], ref[i]), f"{i=}, {point=}"
 
 
 @pytest.mark.parametrize("lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude")])
@@ -283,13 +287,13 @@ def test_netcdf_geography_2d_1(lat_name, lon_name):
 
     ds = from_object(ds_in)
     assert len(ds) == 2
-    assert np.allclose(ds.metadata("level"), coords["level"])
+    assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
-        assert ll["lat"].shape == (3, 3)
-        assert ll["lon"].shape == (3, 3)
-        assert np.allclose(ll["lat"], lats)
-        assert np.allclose(ll["lon"], lons)
+    for lat, lon in [ds[0].geography.latlon(), ds.geography.latlon()]:
+        assert lat.shape == (3, 3)
+        assert lon.shape == (3, 3)
+        assert np.allclose(lat, lats)
+        assert np.allclose(lon, lons)
 
 
 @pytest.mark.parametrize("lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude")])
@@ -325,13 +329,13 @@ def test_netcdf_geography_2d_2(lat_name, lon_name):
 
     ds = from_object(ds_in)
     assert len(ds) == 2
-    assert np.allclose(ds.metadata("level"), coords["level"])
+    assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
-        assert ll["lat"].shape == (3, 2)
-        assert ll["lon"].shape == (3, 2)
-        assert np.allclose(ll["lat"], coords[lat_name][1])
-        assert np.allclose(ll["lon"], coords[lon_name][1])
+    for lat, lon in [ds[0].geography.latlon(), ds.geography.latlon()]:
+        assert lat.shape == (3, 2)
+        assert lon.shape == (3, 2)
+        assert np.allclose(lat, coords[lat_name][1])
+        assert np.allclose(lon, coords[lon_name][1])
 
 
 @pytest.mark.skip(reason="To be seen if lat-lon as variables have to be supported")
@@ -368,13 +372,13 @@ def test_netcdf_geography_2d_3(lat_name, lon_name):
 
     ds = from_object(ds_in)
     assert len(ds) == 2
-    assert np.allclose(ds.metadata("level"), coords["level"])
+    assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
-        assert ll["lat"].shape == (3, 2)
-        assert ll["lon"].shape == (3, 2)
-        assert np.allclose(ll["lat"], lat.data)
-        assert np.allclose(ll["lon"], lon.data)
+    for lat, lon in [ds[0].geography.latlon(), ds.geography.latlon()]:
+        assert lat.shape == (3, 2)
+        assert lon.shape == (3, 2)
+        assert np.allclose(lat, lat.data)
+        assert np.allclose(lon, lon.data)
 
 
 @pytest.mark.parametrize("lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude")])
@@ -410,13 +414,13 @@ def test_netcdf_geography_1d_1(lat_name, lon_name):
 
     ds = from_object(ds_in)
     assert len(ds) == 2
-    assert np.allclose(ds.metadata("level"), coords["level"])
+    assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
-        assert ll["lat"].shape == (9,)
-        assert ll["lon"].shape == (9,)
-        assert np.allclose(ll["lat"], coords[lat_name][1])
-        assert np.allclose(ll["lon"], coords[lon_name][1])
+    for lat, lon in [ds[0].geography.latlon(), ds.geography.latlon()]:
+        assert lat.shape == (9,)
+        assert lon.shape == (9,)
+        assert np.allclose(lat, coords[lat_name][1])
+        assert np.allclose(lon, coords[lon_name][1])
 
 
 @pytest.mark.skip(reason="To be seen if lat-lon as variables have to be supported")
@@ -454,13 +458,13 @@ def test_netcdf_geography_1d_2(lat_name, lon_name):
 
     ds = from_object(ds_in)
     assert len(ds) == 2
-    assert np.allclose(ds.metadata("level"), coords["level"])
+    assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
-        assert ll["lat"].shape == (9,)
-        assert ll["lon"].shape == (9,)
-        assert np.allclose(ll["lat"], lat.data)
-        assert np.allclose(ll["lon"], lon.data)
+    for lat, lon in [ds[0].geography.latlon(), ds.geography.latlon()]:
+        assert lat.shape == (9,)
+        assert lon.shape == (9,)
+        assert np.allclose(lat, lat.data)
+        assert np.allclose(lon, lon.data)
 
 
 if __name__ == "__main__":

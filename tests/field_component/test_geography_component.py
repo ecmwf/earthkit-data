@@ -12,7 +12,7 @@
 import numpy as np
 import pytest
 
-from earthkit.data.field.component.geography import SimpleGeography
+from earthkit.data.field.component.geography import LatLonGeography
 
 
 @pytest.mark.parametrize(
@@ -125,7 +125,7 @@ def test_geography_component_from_dict_ok(input_d, ref):
     if isinstance(input_d, list):
         for d in input_d:
             shape_hint = d.pop("shape_hint", None)
-            r = SimpleGeography.from_dict(d, shape_hint=shape_hint)
+            r = LatLonGeography.from_dict(d, shape_hint=shape_hint)
 
             assert r.shape() == ref[2]
             assert np.allclose(r.latitudes(), ref[0])
@@ -155,7 +155,7 @@ def test_geography_component_set(input_d, ref):
     lat_orig = np.array([-10.0, 0.0, 10.0])
     lon_orig = np.array([20.0, 40.0, 60.0])
 
-    r = SimpleGeography.from_dict(
+    r = LatLonGeography.from_dict(
         {
             "latitudes": np.array(lat_orig, copy=True),
             "longitudes": np.array(lon_orig, copy=True),

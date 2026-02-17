@@ -104,15 +104,15 @@ def create_geography_from_array(
     assert lat is not None and lon is not None
 
     if distinct:
-        dx = uniform_resolution(lon)
-        dy = uniform_resolution(lat)
-
-        if dx is not None and dy is not None:
-            # metadata["DxInDegrees"] = dx
-            # metadata["DyInDegrees"] = dy
-            return RegularDistinctLLGeography(lat, lon, proj_str)
-        else:
-            return DistinctLLGeography(lat, lon, proj_str=proj_str)
+        # dx = uniform_resolution(lon)
+        # dy = uniform_resolution(lat)
+        return MeshedLatLonGeography(lat, lon, proj_str=proj_str)
+        # if dx is not None and dy is not None:
+        #     # metadata["DxInDegrees"] = dx
+        #     # metadata["DyInDegrees"] = dy
+        #     return RegularDistinctLLGeography(lat, lon, proj_str)
+        # else:
+        #     return DistinctLLGeography(lat, lon, proj_str=proj_str)
     else:
         if lat.shape != lon.shape:
             raise ValueError(f"latitudes and longitudes must have the same shape. {lat.shape} != {lon.shape}")
@@ -124,7 +124,7 @@ def create_geography_from_array(
                 else:
                     shape = lat.shape
 
-                return SimpleGeography(lat, lon, proj_str=proj_str, shape=shape)
+                return LatLonGeography(lat, lon, proj_str=proj_str, shape=shape)
 
             else:
                 raise ValueError(
@@ -135,7 +135,7 @@ def create_geography_from_array(
                 )
         else:
             shape = lat.shape
-            return SimpleGeography(lat, lon, proj_str=proj_str, shape=shape)
+            return LatLonGeography(lat, lon, proj_str=proj_str, shape=shape)
 
 
 def create_geography_from_dict(d, shape_hint=None):
@@ -530,7 +530,7 @@ class SpectralGeography(BaseGeography):
     pass
 
 
-class SimpleGeography(BaseGeography):
+class LatLonGeography(BaseGeography):
     def __init__(self, latitudes, longitudes, proj_str=None, shape=None):
         self._lat = latitudes
         self._lon = longitudes
@@ -606,7 +606,7 @@ class SimpleGeography(BaseGeography):
         return create_geography_from_dict(data, shape_hint=shape_hint)
 
 
-class DistinctLLGeography(SimpleGeography):
+class MeshedLatLonGeography(LatLonGeography):
     def __init__(self, latitudes, longitudes, proj_str=None):
         super().__init__(None, None, proj_str=proj_str)
         self._distinct_lat = latitudes
@@ -639,30 +639,30 @@ class DistinctLLGeography(SimpleGeography):
         return "_distinct_ll"
 
 
-class RegularDistinctLLGeography(DistinctLLGeography):
-    def __init__(self, latitudes, longitudes, proj_str=None, dx=None, dy=None):
-        super().__init__(latitudes, longitudes, proj_str=proj_str)
-        self._dx = dx
-        self._dy = dy
+# class RegularDistinctLLGeography(DistinctLLGeography):
+#     def __init__(self, latitudes, longitudes, proj_str=None, dx=None, dy=None):
+#         super().__init__(latitudes, longitudes, proj_str=proj_str)
+#         self._dx = dx
+#         self._dy = dy
 
-    def dx(self, dtype=None):
-        x = self._dx
-        if x is None:
-            lon = self.distinct_longitudes(dtype=dtype)
-            x = lon[1] - lon[0]
-        x = abs(round(x * 1_000_000) / 1_000_000)
-        return x
+#     def dx(self, dtype=None):
+#         x = self._dx
+#         if x is None:
+#             lon = self.distinct_longitudes(dtype=dtype)
+#             x = lon[1] - lon[0]
+#         x = abs(round(x * 1_000_000) / 1_000_000)
+#         return x
 
-    def dy(self, dtype=None):
-        y = self._dy
-        if y is None:
-            lat = self.distinct_latitudes(dtype=dtype)
-            y = lat[0] - lat[1]
-        y = abs(round(y * 1_000_000) / 1_000_000)
-        return y
+#     def dy(self, dtype=None):
+#         y = self._dy
+#         if y is None:
+#             lat = self.distinct_latitudes(dtype=dtype)
+#             y = lat[0] - lat[1]
+#         y = abs(round(y * 1_000_000) / 1_000_000)
+#         return y
 
-    def grid_type(self):
-        return "_regular_ll"
+#     def grid_type(self):
+#         return "_regular_ll"
 
 
 class GridsSpecBasedGeography(BaseGeography):

@@ -54,27 +54,15 @@ def test_netcdf_concat_core(mode):
     ds = concat(ds1, ds2)
 
     assert len(ds) == 2
-    md = ds1.get("param") + ds2.get("param")
-    assert ds.get("param") == md
+    md = ds1.get("parameter.variable") + ds2.get("parameter.variable")
+    assert ds.get("parameter.variable") == md
 
-    assert ds[0].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 1, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 1, 12, 0),
-    }
-    assert ds[1].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 2, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 2, 12, 0),
-    }
-    assert ds.datetime() == {
-        "base_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-        "valid_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-    }
+    assert ds[0].get("time.base_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert ds[0].get("time.valid_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert ds[0].get("time.step") == datetime.timedelta(0)
+    assert ds[1].get("time.base_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert ds[1].get("time.valid_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert ds[1].get("time.step") == datetime.timedelta(0)
 
 
 @pytest.mark.parametrize("mode", ["nc", "xr"])
@@ -102,26 +90,15 @@ def test_netcdf_read_multiple_files():
     )
 
     assert len(ds) == 2
-    assert ds.get("param") == ["t2m", "t2m"]
+    assert ds.get("parameter.variable") == ["t2m", "t2m"]
 
-    assert ds[0].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 1, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 1, 12, 0),
-    }
-    assert ds[1].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 2, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 2, 12, 0),
-    }
-    assert ds.datetime() == {
-        "base_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-        "valid_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-    }
+    assert ds[0].get("time.base_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert ds[0].get("time.valid_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert ds[0].get("time.step") == datetime.timedelta(0)
+
+    assert ds[1].get("time.base_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert ds[1].get("time.valid_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert ds[1].get("time.step") == datetime.timedelta(0)
 
     import xarray as xr
 

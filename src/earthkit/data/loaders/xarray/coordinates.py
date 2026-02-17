@@ -390,6 +390,16 @@ class EnsembleCoordinate(Coordinate):
         return value
 
 
+class PositionCoordinate(Coordinate):
+    """Coordinate class for position."""
+
+    is_grid = True
+    is_lat = True
+
+    is_dim = False
+    mars_names = ("position",)
+
+
 class LongitudeCoordinate(Coordinate):
     """Coordinate class for longitude."""
 
