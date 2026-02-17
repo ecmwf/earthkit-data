@@ -1,5 +1,5 @@
 # variables
-variable_key: parameter.variable
+variable_key: metadata.param
 drop_variables: []
 rename_variables: {}
 mono_variable: false
@@ -45,7 +45,7 @@ errors: raise
 allow_holes: false
 
 dim_roles:
-  number: ensemble.member
+  number: metadata.number
   date: metadata.date
   time: metadata.time
   step: metadata.step

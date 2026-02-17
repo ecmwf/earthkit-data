@@ -491,10 +491,9 @@ class BackendDataBuilder(metaclass=ABCMeta):
                     )
                 if num == 1 and d.name in self.profile.dims.dims_as_attrs:
                     attr_val = vals[d.key][0]
-                    k = d.dim_name(ds)
-
+                    k = d.dim_key(ds)
                     # mimics the behaviour of DimHandler.rename_dataset_dims
-                    attr_key = d.name if k == d.key else k
+                    attr_key = d.get_simple_name() if k == d.key else k
 
                     tensor_extra_attrs[attr_key] = attr_val
                 if (

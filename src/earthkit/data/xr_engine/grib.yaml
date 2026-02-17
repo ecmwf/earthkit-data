@@ -2,11 +2,11 @@ dim_roles:
   number: metadata.number
   date: metadata.date
   time: metadata.time
-  step: metadata.step
+  step: metadata.step_timedelta
   level: metadata.level
   level_type: metadata.typeOfLevel
 
-variable_key: parameter.variable
+variable_key: metadata.param
 
 attrs_mode: fixed
 

@@ -224,11 +224,11 @@ class Dim:
     def deactivate_drop_list(self):
         self.owner.deactivate([self.name, self.key] + self.drop, ignore_dim=self)
 
-    def dim_name(self, source):
+    def dim_key(self, source):
         return self.key
 
     def as_coord(self, values, source):
-        key = self.dim_name(source)
+        key = self.dim_key(source)
         if key not in self.coords:
             from .coord import Coord
 
@@ -237,6 +237,19 @@ class Dim:
 
     def remapping_keys(self):
         return []
+
+    def get_simple_name(self):
+        # Name without an eventual prefix "<component>."
+        if self.name == self.key:
+            # strip a prefix "<component>.", if any
+            _d_name_parts = self.name.split(".")
+            if len(_d_name_parts) > 1:
+                d_name = ".".join(_d_name_parts[1:])
+            else:
+                d_name = self.name
+        else:
+            d_name = self.name
+        return d_name
 
     def __repr__(self):
         return f"{self.__class__.__name__}(name={self.name}, key={self.key})"
@@ -306,7 +319,7 @@ class LevelPerTypeDim(Dim):
         self.level_type_key = level_type_key
         super().__init__(owner, *args, **kwargs)
 
-    def dim_name(self, source):
+    def dim_key(self, source):
         lev_type = source[0].get(self.level_type_key)
         if not lev_type:
             raise ValueError(f"{self.level_type_key} not found in metadata")
@@ -345,6 +358,10 @@ class RemappingDim(Dim):
 
     def remapping_keys(self):
         return self.keys
+
+    def get_simple_name(self):
+        # Name without an eventual prefix "<component>."
+        return self.name
 
 
 class CompoundKeyDim(RemappingDim):
@@ -871,15 +888,7 @@ class DimHandler:
         mapping = {}
         for d in self.dims.values():
             if d.key in dataset.dims:
-                if d.name == d.key and not isinstance(d, RemappingDim):
-                    # strip a prefix "<component>.", if any
-                    _d_name_parts = d.name.split(".")
-                    if len(_d_name_parts) > 1:
-                        d_name = ".".join(_d_name_parts[1:])
-                    else:
-                        d_name = d.name
-                else:
-                    d_name = d.name
+                d_name = d.get_simple_name()
                 if d_name != d.key:
                     mapping[d.key] = d_name
         if mapping:

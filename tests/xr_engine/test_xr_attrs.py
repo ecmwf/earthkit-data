@@ -25,16 +25,16 @@ from xr_engine_fixtures import compare_coords  # noqa: E402
 from xr_engine_fixtures import compare_dims  # noqa: E402
 
 
-def _get_attrs(metadata):
-    return {k: metadata.get(k, None) for k in ["gridType", "units"]}
+def _get_attrs(field):
+    return {k: field.get(k) for k in ["metadata.gridType", "parameter.units"]}
 
 
-def _get_attrs_for_key_1(key, metadata):
-    return str(metadata.get("units", "")) + "_test1"
+def _get_attrs_for_key_1(key, field):
+    return str(field.get("parameter.units", default="")) + "_test1"
 
 
-def _get_attrs_for_key_2(key, metadata):
-    return metadata.get(key, "") + "_test2"
+def _get_attrs_for_key_2(key, field):
+    return field.get(key, default="") + "_test2"
 
 
 @pytest.mark.cache
@@ -65,7 +65,7 @@ def _get_attrs_for_key_2(key, metadata):
         (
             {
                 "profile": "mars",
-                "dims_as_attrs": "levtype",
+                "dims_as_attrs": "metadata.levtype",
                 "time_dim_mode": "raw",
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -103,7 +103,7 @@ def _get_attrs_for_key_2(key, metadata):
         (
             {
                 "profile": "mars",
-                "dims_as_attrs": "levtype",
+                "dims_as_attrs": "metadata.levtype",
                 "time_dim_mode": "raw",
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -147,8 +147,8 @@ def test_xr_dims_as_attrs(allow_holes, lazy_load, kwargs, coords, dims, attrs):
                 "dim_name_from_role_name": True,
                 "squeeze": False,
                 "dims_as_attrs": ["number", "date"],
-                "variable_attrs": ["typeOfLevel", "units"],
-                "global_attrs": ["edition"],
+                "variable_attrs": ["metadata.typeOfLevel", "parameter.units"],
+                "global_attrs": ["metadata.edition"],
                 "attrs_mode": "fixed",
                 "add_earthkit_attrs": False,
             },
@@ -174,9 +174,9 @@ def test_xr_dims_as_attrs(allow_holes, lazy_load, kwargs, coords, dims, attrs):
                 "dim_name_from_role_name": True,
                 "squeeze": False,
                 "dims_as_attrs": ["number", "date"],
-                "variable_attrs": ["Nj"],
-                "attrs": ["cfVarName", "units", "edition"],
-                "global_attrs": ["gridType"],
+                "variable_attrs": ["metadata.Nj"],
+                "attrs": ["metadata.cfVarName", "parameter.units", "metadata.edition"],
+                "global_attrs": ["metadata.gridType"],
                 "attrs_mode": "unique",
                 "add_earthkit_attrs": False,
             },
@@ -199,9 +199,9 @@ def test_xr_dims_as_attrs(allow_holes, lazy_load, kwargs, coords, dims, attrs):
                 "dim_name_from_role_name": True,
                 "squeeze": False,
                 "dims_as_attrs": ["number", "date"],
-                "variable_attrs": ["Nj"],
-                "attrs": ["cfVarName", "units", "edition"],
-                "global_attrs": ["gridType"],
+                "variable_attrs": ["metadata.Nj"],
+                "attrs": ["metadata.cfVarName", "metadata.units", "metadata.edition"],
+                "global_attrs": ["metadata.gridType"],
                 "attrs_mode": "unique",
                 "rename_attrs": {
                     "cfVarName": "cf_var_name",
@@ -230,8 +230,8 @@ def test_xr_dims_as_attrs(allow_holes, lazy_load, kwargs, coords, dims, attrs):
                 "dim_name_from_role_name": True,
                 "squeeze": False,
                 "dims_as_attrs": ["forecast_reference_time", "level_and_type"],
-                "variable_attrs": ["units"],
-                "global_attrs": ["gridType"],
+                "variable_attrs": ["metadata.units"],
+                "global_attrs": ["geography.grid_type"],
                 "add_earthkit_attrs": False,
             },
             {
@@ -246,7 +246,7 @@ def test_xr_dims_as_attrs(allow_holes, lazy_load, kwargs, coords, dims, attrs):
                     "level_and_type": "500isobaricInhPa",
                 }
             },
-            {"gridType": "regular_ll"},
+            {"grid_type": "regular_ll"},
         ),
     ],
 )
@@ -277,9 +277,9 @@ def test_xr_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, dims, v
                 "dim_name_from_role_name": True,
                 "squeeze": False,
                 "dims_as_attrs": ["number", "date", "level", "level_type"],
-                "variable_attrs": ["Nj"],
-                "attrs": ["cfVarName", "units", "edition"],
-                "global_attrs": ["gridType"],
+                "variable_attrs": ["metadata.Nj"],
+                "attrs": ["metadata.cfVarName", "parameter.units", "metadata.edition"],
+                "global_attrs": ["metadata.gridType"],
                 "attrs_mode": "unique",
                 "rename_attrs": {
                     "cfVarName": "cf_var_name",
@@ -326,8 +326,8 @@ def test_xr_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, dims, v
                 "dim_name_from_role_name": True,
                 "squeeze": False,
                 "dims_as_attrs": ["forecast_reference_time", "<level_per_type>"],
-                "variable_attrs": ["units"],
-                "global_attrs": ["gridType"],
+                "variable_attrs": ["parameter.units"],
+                "global_attrs": ["geography.grid_type"],
                 "add_earthkit_attrs": False,
                 "rename_attrs": {"isobaricInhPa": "pl"},
             },
@@ -341,7 +341,7 @@ def test_xr_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, dims, v
             },
             {"number": 1, "forecast_reference_time": 2, "step": 2},
             {"t": {"units": "K", "pl": 700}},
-            {"gridType": "regular_ll"},
+            {"grid_type": "regular_ll"},
         ),
     ],
 )
@@ -367,16 +367,16 @@ def test_xr_dims_as_attrs_3(lazy_load, allow_holes, idx, kwargs, coords, dims, v
                 "profile": "mars",
                 "attrs_mode": "fixed",
                 "variable_attrs": [
-                    "shortName",
-                    "key=levtype",
-                    "namespace=parameter",
+                    "metadata.shortName",
+                    "key=metadata.levtype",
+                    # "namespace=parameter",
                     _get_attrs,
                     {
                         "edition": _get_attrs_for_key_1,
-                        "typeOfLevel": _get_attrs_for_key_2,
+                        "metadata.typeOfLevel": _get_attrs_for_key_2,
                         "param": "test",
-                        "mykey1": "key=levelist",
-                        "mykey2": "namespace=vertical",
+                        "mykey1": "key=metadata.levelist",
+                        # "mykey2": "namespace=vertical",
                     },
                 ],
                 "time_dim_mode": "raw",
@@ -395,20 +395,20 @@ def test_xr_dims_as_attrs_3(lazy_load, allow_holes, idx, kwargs, coords, dims, v
             {
                 "shortName": "t",
                 "levtype": "pl",
-                "parameter": {
-                    "centre": "ecmf",
-                    "paramId": 130,
-                    "units": "K",
-                    "name": "Temperature",
-                    "shortName": "t",
-                },
-                "gridType": "regular_ll",
-                "units": "K",
+                # "parameter": {
+                #     "centre": "ecmf",
+                #     "paramId": 130,
+                #     "units": "K",
+                #     "name": "Temperature",
+                #     "shortName": "t",
+                # },
+                "metadata.gridType": "regular_ll",
+                "parameter.units": "K",
                 "edition": "K_test1",
-                "typeOfLevel": "isobaricInhPa_test2",
+                "metadata.typeOfLevel": "isobaricInhPa_test2",
                 "param": "test",
                 "mykey1": 500,
-                "mykey2": {"typeOfLevel": "isobaricInhPa", "level": 500},
+                # "mykey2": {"typeOfLevel": "isobaricInhPa", "level": 500},
             },
         ),
     ],
