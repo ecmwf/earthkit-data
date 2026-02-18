@@ -189,6 +189,7 @@ def lod_no_latlon():
 
 
 def build_lod_fieldlist(lod, mode):
+    from earthkit.data import concat
     from earthkit.data import from_source
 
     # from earthkit.data.sources.array_list import ArrayField
@@ -200,5 +201,5 @@ def build_lod_fieldlist(lod, mode):
     elif mode == "loop":
         ds = SimpleFieldList()
         for f in lod:
-            ds.append(Field.from_dict(f))
+            ds = concat(ds, Field.from_dict(f))
         return ds
