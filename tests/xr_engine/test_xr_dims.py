@@ -361,7 +361,7 @@ def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
                 "rename_dims": {"levelist": "zz"},
                 "dim_name_from_role_name": False,
             },
-            ["date", "time", "step", "zz"],
+            ["date", "time", "step_timedelta", "zz"],
         ),
         (
             {
@@ -483,7 +483,7 @@ def test_xr_fixed_dims(allow_holes, lazy_load, kwargs, dim_keys):
                 "squeeze": False,
                 "dim_name_from_role_name": False,
             },
-            ["date", "time", "step", "levelist", "levtype"],
+            ["date", "time", "step_timedelta", "levelist", "levtype"],
         ),
         (
             {
@@ -493,7 +493,7 @@ def test_xr_fixed_dims(allow_holes, lazy_load, kwargs, dim_keys):
                 "squeeze": False,
                 "dim_name_from_role_name": False,
             },
-            ["date", "time", "step", "levelist"],
+            ["date", "time", "step_timedelta", "levelist"],
         ),
     ],
 )

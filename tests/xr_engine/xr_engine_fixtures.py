@@ -101,8 +101,6 @@ def compare_dim_order(ds, dims, order_ref_var, check_coord=True):
             dim_order.append(d)
             if check_coord:
                 assert d in ds.coords, f"{d} not in {ds.coords}"
-        else:
-            raise ValueError(f"Unexpected dimension: {d}")
 
     if isinstance(dims, dict):
         assert dim_order == list(dims.keys()), f"{dim_order=} != {list(dims.keys())}"

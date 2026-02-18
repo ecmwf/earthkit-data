@@ -36,19 +36,54 @@ class ParamLevelKey(CompoundKey):
 COMPOUND_KEYS = {v.name: v for v in [ParamLevelKey]}
 
 
-ENS_KEYS = ["number", "perturbationNumber", "realization"]
-LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels"]
-LEVEL_KEYS = ["vertical.level", "vertical.layer"]
-LEVEL_TYPE_KEYS = ["typeOfLevel", "levtype"]
-LEVEL_TYPE_KEYS = ["vertical.level_type", "vertical.abbreviation"]
-DATE_KEYS = ["date", "andate", "validityDate", "dataDate", "hdate", "referenceDate", "indexingDate"]
-TIME_KEYS = ["time", "antime", "validityTime", "dataTime", "referenceTime", "indexingTime"]
-STEP_KEYS = ["step_timedelta", "step", "endStep", "stepRange", "forecastMonth", "fcmonth"]
-STEP_KEYS = ["time.step"]
-MONTH_KEYS = ["forecastMonth", "fcmonth"]
-VALID_DATETIME_KEYS = ["valid_time", "valid_datetime"]
-VALID_DATETIME_KEYS = ["time.valid_datetime"]
-BASE_DATETIME_KEYS = [
+def _get_component_keys(component, keys):
+    return [f"{component}.{k}" for k in keys]
+
+
+def _get_metadata_keys(keys):
+    return _get_component_keys("metadata", keys)
+
+
+_GRIB_ENS_KEYS = ["number", "perturbationNumber", "realization"]
+_ENS_KEYS = ["member", "realisation", "realization"]
+ENS_KEYS = ["number"] + _get_component_keys("ensemble", _ENS_KEYS) + _get_metadata_keys(_GRIB_ENS_KEYS)
+
+_GRIB_LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels"]
+_VERTICAL_LEVEL_KEYS = ["level", "layer"]
+LEVEL_KEYS = (
+    ["level"] + _get_component_keys("vertical", _VERTICAL_LEVEL_KEYS) + _get_metadata_keys(_GRIB_LEVEL_KEYS)
+)
+
+_GRIB_LEVEL_TYPE_KEYS = ["typeOfLevel", "levtype"]
+_VERTICAL_LEVEL_TYPE_KEYS = ["level_type", "abbreviation"]
+LEVEL_TYPE_KEYS = (
+    ["level_type"]
+    + _get_component_keys("vertical", _VERTICAL_LEVEL_TYPE_KEYS)
+    + _get_metadata_keys(_GRIB_LEVEL_TYPE_KEYS)
+)
+
+_GRIB_DATE_KEYS = ["date", "andate", "validityDate", "dataDate", "hdate", "referenceDate", "indexingDate"]
+DATE_KEYS = ["date"] + _get_metadata_keys(_GRIB_DATE_KEYS)
+
+_GRIB_TIME_KEYS = ["time", "antime", "validityTime", "dataTime", "referenceTime", "indexingTime"]
+TIME_KEYS = ["time"] + _get_metadata_keys(_GRIB_TIME_KEYS)
+
+_GRIB_STEP_KEYS = ["step_timedelta", "step", "endStep", "stepRange"]
+_STEP_KEYS = ["step", "forecast_period"]
+STEP_KEYS = ["step"] + _get_component_keys("time", _STEP_KEYS) + _get_metadata_keys(_GRIB_STEP_KEYS)
+
+_GRIB_MONTH_KEYS = ["forecastMonth", "fcmonth"]
+MONTH_KEYS = _get_metadata_keys(_GRIB_MONTH_KEYS)
+
+_GRIB_VALID_DATETIME_KEYS = ["valid_time", "valid_datetime"]
+_VALID_DATETIME_KEYS = ["time.valid_datetime"]
+VALID_DATETIME_KEYS = (
+    ["valid_time"]
+    + _get_component_keys("time", _VALID_DATETIME_KEYS)
+    + _get_metadata_keys(_GRIB_VALID_DATETIME_KEYS)
+)
+
+_GRIB_BASE_DATETIME_KEYS = [
     "forecast_reference_time",
     "base_time",
     "base_datetime",
@@ -57,10 +92,13 @@ BASE_DATETIME_KEYS = [
     "indexing_time",
     "indexing_datetime",
 ]
-BASE_DATETIME_KEYS = [
-    "time.forecast_reference_time",
-    "time.base_datetime",
-]
+_BASE_DATETIME_KEYS = ["forecast_reference_time", "base_datetime"]
+BASE_DATETIME_KEYS = (
+    ["forecast_reference_time"]
+    + _get_component_keys("time", _BASE_DATETIME_KEYS)
+    + _get_metadata_keys(_GRIB_BASE_DATETIME_KEYS)
+)
+
 DATETIME_KEYS = BASE_DATETIME_KEYS + VALID_DATETIME_KEYS
 
 KEYS = (
@@ -70,6 +108,7 @@ KEYS = (
     DATE_KEYS,
     TIME_KEYS,
     STEP_KEYS,
+    MONTH_KEYS,
     VALID_DATETIME_KEYS,
     BASE_DATETIME_KEYS,
 )

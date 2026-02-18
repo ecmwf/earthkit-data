@@ -18,8 +18,9 @@ LOG = logging.getLogger(__name__)
 class Splitter(metaclass=ABCMeta):
     @staticmethod
     def grids(ds):
-        v = ds.unique_values(["md5GridSection"])
-        return v["md5GridSection"]
+        # PW: TODO: probably need to use another key: geography.???
+        v = ds.unique_values(["metadata.md5GridSection"])
+        return v["metadata.md5GridSection"]
 
     @abstractmethod
     def split(self, ds, profile):

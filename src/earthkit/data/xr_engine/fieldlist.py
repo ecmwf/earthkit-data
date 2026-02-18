@@ -223,9 +223,11 @@ class XArrayInputFieldList(FieldList):
 
         user_coords_to_fl_idx = {}
         for i, f in enumerate(self):
-            metadata = f.get(
-                keys, remapping=remapping
-            )  # PW: to be checked (can raise_on_missing? can use _get_fast?)
+            _default = [None] * len(keys)
+            _astype = [None] * len(keys)
+            metadata = f._get_fast(
+                keys, default=_default, astype=_astype, remapping=remapping
+            )  # PW: TODO: can raise_on_missing?
             user_coords = tuple(metadata)
             assert user_coords not in user_coords_to_fl_idx, (
                 f"Multiple fields in {self} with {dict(zip(keys, user_coords))}: "
