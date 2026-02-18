@@ -101,7 +101,7 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
     coords_ref_full = {
         "date": np.array([20240603, 20240604]),
         "time": np.array([0, 1200]),
-        "step_timedelta": [0, 6],
+        "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
         "levelist": np.array([300, 400, 500, 700, 850, 1000]),
         "latitude": lats,
         "longitude": lons,
@@ -142,9 +142,9 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 19, 36)
-    r1 = r["u"].sel(step_timedelta=6, levelist=[1000, 300])
+    r1 = r["u"].sel(step_timedelta="6h", levelist=[1000, 300])
     assert r1.shape == (2, 2, 19, 36)
-    coords_ref["step_timedelta"] = [6]
+    coords_ref["step_timedelta"] = [np.timedelta64(6, "h")]
     coords_ref["levelist"] = np.array([1000, 300])
     compare_coords(r1, coords_ref)
 
@@ -162,7 +162,7 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
     assert r["u"].shape == (2, 2, 6, 19, 36)
     r1 = r["u"].isel(step_timedelta=1, levelist=[0, -1])
     assert r1.shape == (2, 2, 19, 36)
-    coords_ref["step_timedelta"] = [6]
+    coords_ref["step_timedelta"] = [np.timedelta64(6, "h")]
     coords_ref["levelist"] = np.array([300, 1000])
     compare_coords(r1, coords_ref)
 
@@ -259,6 +259,7 @@ def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
 
     if api == "earthkit":
         ds = ds_ek.to_xarray(
+            profile=None,
             time_dim_mode="raw",
             decode_times=False,
             decode_timedelta=False,
@@ -273,6 +274,7 @@ def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
         ds = xr.open_dataset(
             ds_ek.path,
             engine="earthkit",
+            profile=None,
             time_dim_mode="raw",
             decode_times=False,
             decode_timedelta=False,
@@ -481,7 +483,7 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
     coords_ref_full = {
         "date": np.array([20240603, 20240604]),
         "time": np.array([0, 1200]),
-        "step_timedelta": np.array([0, 6]),
+        "step_timedelta": np.array([np.timedelta64(0, "h"), np.timedelta64(6, "h")]),
         "levelist": np.array([300, 400, 500, 700, 850, 1000]),
         "latitude": lats,
         "longitude": lons,
@@ -497,8 +499,7 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
 
     assert len(ds.dims) == len(dims_ref_full)
     assert len(ds.coords) == len(coords_ref_full)
-    for k, v in coords_ref_full.items():
-        assert np.allclose(ds.coords[k].values, v)
+    compare_coords(ds, coords_ref_full)
     if not allow_holes:
         assert [v for v in ds.data_vars] == data_vars
     else:
@@ -511,16 +512,14 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
     assert ds["u"].to_numpy().shape == (2, 2, 2, 6, 684)
     r = ds["u"]
     assert len(r.coords) == len(coords_ref_full)
-    for k, v in coords_ref_full.items():
-        assert np.allclose(r.coords[k].values, v)
+    compare_coords(r, coords_ref_full)
 
     # sel() on dataset
     r = ds.sel(date=20240603, time=[0, 1200])
     coords_ref = dict(coords_ref_full)
     coords_ref["date"] = np.array([20240603])
     assert len(r.coords) == len(coords_ref)
-    for k, v in coords_ref.items():
-        assert np.allclose(r.coords[k].values, v)
+    compare_coords(r, coords_ref)
     if not allow_holes:
         assert [v for v in r.data_vars] == data_vars
     else:
@@ -528,21 +527,19 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 684)
-    r1 = r["u"].sel(step_timedelta=6, levelist=[1000, 300])
+    r1 = r["u"].sel(step_timedelta="6h", levelist=[1000, 300])
     assert r1.shape == (2, 2, 684)
-    coords_ref["step_timedelta"] = np.array([6])
+    coords_ref["step_timedelta"] = np.array([np.timedelta64(6, "h")])
     coords_ref["levelist"] = np.array([1000, 300])
     assert len(r1.coords) == len(coords_ref)
-    for k, v in coords_ref.items():
-        assert np.allclose(r1.coords[k].values, v)
+    compare_coords(r1, coords_ref)
 
     # isel() on dataset
     r = ds.isel(date=0, time=[0, 1])
     coords_ref = dict(coords_ref_full)
     coords_ref["date"] = np.array([20240603])
     assert len(r.coords) == len(coords_ref)
-    for k, v in coords_ref.items():
-        assert np.allclose(r.coords[k].values, v)
+    compare_coords(r, coords_ref)
     if not allow_holes:
         assert [v for v in r.data_vars] == data_vars
     else:
@@ -552,11 +549,10 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
     assert r["u"].shape == (2, 2, 6, 684)
     r1 = r["u"].isel(step_timedelta=1, levelist=[0, -1])
     assert r1.shape == (2, 2, 684)
-    coords_ref["step_timedelta"] = np.array([6])
+    coords_ref["step_timedelta"] = np.array([np.timedelta64(6, "h")])
     coords_ref["levelist"] = np.array([300, 1000])
     assert len(r1.coords) == len(coords_ref)
-    for k, v in coords_ref.items():
-        assert np.allclose(r1.coords[k].values, v)
+    compare_coords(r1, coords_ref)
 
     # slicing of data variable
     da = ds["u"]
@@ -570,8 +566,7 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
     assert len(r.dims) == len(dims_ref)
     coords_ref = dict(coords_ref_full)
     coords_ref["time"] = np.array([0])
-    for k, v in coords_ref.items():
-        assert np.allclose(r.coords[k].values, v)
+    compare_coords(r, coords_ref)
 
     r = da[:, 0, :, 3:5]
     assert r.shape == (2, 2, 2, 684)
@@ -583,8 +578,7 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
     coords_ref = dict(coords_ref_full)
     coords_ref["time"] = np.array([0])
     coords_ref["levelist"] = np.array([700, 850])
-    for k, v in coords_ref.items():
-        assert np.allclose(r.coords[k].values, v)
+    compare_coords(r, coords_ref)
 
     r = da.loc[:, 0, :, [700, 850]]
     assert r.shape == (2, 2, 2, 684)
@@ -596,8 +590,7 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
     coords_ref = dict(coords_ref_full)
     coords_ref["time"] = np.array([0])
     coords_ref["levelist"] = np.array([700, 850])
-    for k, v in coords_ref.items():
-        assert np.allclose(r.coords[k].values, v)
+    compare_coords(r, coords_ref)
 
     # level=500, lat=0, lon=0
     da = ds["t"]
@@ -645,6 +638,7 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
     kwargs = {
         "xarray_open_dataset_kwargs": {
             "backend_kwargs": {
+                "profile": None,
                 "time_dim_mode": "raw",
                 "decode_times": False,
                 "decode_timedelta": False,
