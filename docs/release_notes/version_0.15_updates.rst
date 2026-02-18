@@ -1,6 +1,13 @@
 Version 0.15 Updates
 /////////////////////////
 
+Version 0.15.2
+===============
+
+Ensure compatibility between earthkit components by restricting the following dependencies:
+
+- ``earthkit-utils<0.2``
+- ``earthkit-meteo<0.6``
 
 Version 0.15.1
 ===============
