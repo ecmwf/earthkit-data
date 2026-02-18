@@ -28,11 +28,11 @@ dependencies:
   - pyfdb>=0.1.0
   - ecmwf-opendata>=0.3.3
   - polytope-client>=0.7.4
-  - earthkit-meteo>=0.0.1
+  - earthkit-meteo<0.6.0
   - git+https://github.com/ecmwf/earthkit-data-demo-source
   - covjsonkit>=0.2.0
   - earthkit-geo>=0.2.0
-  - earthkit-utils>=0.1.1
+  - earthkit-utils<0.2.0
 - tqdm>=4.63.0
 - lru-dict
 - markdown
