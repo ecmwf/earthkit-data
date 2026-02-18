@@ -1,6 +1,17 @@
 Version 0.14 Updates
 /////////////////////////
 
+Version 0.14.5
+===============
+
+Dependency updates
++++++++++++++++++++++
+
+Ensure compatibility by restricting the following earthkit dependencies:
+
+- ``earthkit-utils<0.2``
+- ``earthkit-meteo<0.6``
+
 
 Version 0.14.4
 ===============
