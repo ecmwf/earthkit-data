@@ -450,7 +450,7 @@ def test_grib_to_array_1_shape(fl_type, first, options, expected_shape):
 def test_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
     ds, _ = load_grib_data("test.grib", fl_type)
 
-    lat, lon = ds[0].geography.latlon(**kwarg)
+    lat, lon = ds[0].geography.latlons(**kwarg)
     v = ds[0].to_numpy(**kwarg)
 
     d = ds[0].data(**kwarg)
@@ -502,7 +502,7 @@ def test_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
 def test_grib_fieldlist_data(fl_type, kwarg, expected_shape, expected_dtype):
     ds, _ = load_grib_data("test.grib", fl_type)
 
-    lat, lon = ds.geography.latlon(**kwarg)
+    lat, lon = ds.geography.latlons(**kwarg)
     v = ds.to_numpy(**kwarg)
 
     d = ds.data(**kwarg)
@@ -544,7 +544,7 @@ def test_grib_fieldlist_data_index(fl_type):
 
     eps = 1e-5
 
-    lat, lon = ds.geography.latlon(flatten=True)
+    lat, lon = ds.geography.latlons(flatten=True)
 
     index = [0, -1]
     v = ds.data(flatten=True, index=index)
@@ -602,7 +602,7 @@ def test_grib_fieldlist_data_index(fl_type):
     assert isinstance(v, np.ndarray)
     assert v.dtype == np.float64
     assert v.shape == (2 + 18, 2, 3)
-    lat, lon = ds.geography.latlon()
+    lat, lon = ds.geography.latlons()
     assert np.allclose(v[0], lat[index])
     assert np.allclose(v[1], lon[index])
 

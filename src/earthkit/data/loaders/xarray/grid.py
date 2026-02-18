@@ -30,23 +30,23 @@ class XarrayGrid:
         self.xy_grid = xy_grid
 
     @property
-    def latlon(self):
+    def latlons(self):
         if self.latlon_grid is not None:
-            return self.latlon_grid.latlon
+            return self.latlon_grid.latlons
         else:
-            return self.xy_grid.xy
+            return self.xy_grid.latlons
 
     @property
-    def xy(self):
+    def xys(self):
         if self.xy_grid is not None:
-            return self.xy_grid.xy
+            return self.xy_grid.xys
         else:
             raise NotImplementedError("XarrayGrid: xy grid not available")
 
     # Properly implement it for all grid types
     @thread_safe_cached_property
     def bbox(self):
-        lat, lon = self.latlon
+        lat, lon = self.latlons
         lat = lat.flatten()
         lon = lon.flatten()
 
@@ -74,13 +74,13 @@ class Grid(ABC):
 
     @property
     @abstractmethod
-    def latlon(self) -> Tuple[Any, Any]:
+    def latlons(self) -> Tuple[Any, Any]:
         """Get the grid points."""
         pass
 
     @property
     @abstractmethod
-    def xy(self) -> Tuple[Any, Any]:
+    def xys(self) -> Tuple[Any, Any]:
         """Get the grid points."""
         pass
 
@@ -106,7 +106,7 @@ class LatLonGrid(Grid):
         self.variable_dims = variable_dims
 
     @property
-    def xy(self) -> Tuple[Any, Any]:
+    def xys(self) -> Tuple[Any, Any]:
         """Get the x and y points for the lat-lon grid."""
         raise NotImplementedError("LatLonGrid: xy grid not available")
 
@@ -132,7 +132,7 @@ class MeshedGrid(LatLonGrid):
     """Grid class for meshed latitude and longitude coordinates."""
 
     @thread_safe_cached_property
-    def latlon(self) -> Tuple[Any, Any]:
+    def latlons(self) -> Tuple[Any, Any]:
         """Get the grid points for the meshed grid."""
 
         if self.variable_dims == (self.lon.variable.name, self.lat.variable.name):
@@ -177,7 +177,7 @@ class UnstructuredGrid(LatLonGrid):
         assert set(self.variable_dims) == set(self.grid_dims), (self.variable_dims, self.grid_dims)
 
     @thread_safe_cached_property
-    def latlon(self) -> Tuple[Any, Any]:
+    def latlons(self) -> Tuple[Any, Any]:
         """Get the grid points for the unstructured grid."""
         assert 1 <= len(self.variable_dims) <= 2
 
@@ -218,7 +218,7 @@ class RawXYGrid(XYGrid):
         self.variable_dims = variable_dims
 
     @property
-    def latlon(self) -> Tuple[Any, Any]:
+    def latlons(self) -> Tuple[Any, Any]:
         """Get the lat and lon points for the raw xy grid."""
         raise NotImplementedError("RawXYGrid: latlon not available")
 
@@ -227,7 +227,7 @@ class MeshedXYGrid(RawXYGrid):
     """Grid class for meshed x and y coordinates."""
 
     @thread_safe_cached_property
-    def xy(self) -> Tuple[Any, Any]:
+    def xys(self) -> Tuple[Any, Any]:
         """Get the grid points for the meshed grid."""
 
         if self.variable_dims == (self.x.variable.name, self.y.variable.name):
@@ -272,7 +272,7 @@ class UnstructuredXYGrid(RawXYGrid):
         assert set(self.variable_dims) == set(self.grid_dims), (self.variable_dims, self.grid_dims)
 
     @thread_safe_cached_property
-    def xy(self) -> Tuple[Any, Any]:
+    def xys(self) -> Tuple[Any, Any]:
         """Get the grid points for the unstructured grid."""
         assert 1 <= len(self.variable_dims) <= 2
 
@@ -337,7 +337,7 @@ class MeshProjectionGrid(ProjectionGrid):
     """Grid class for meshed projected coordinates."""
 
     @thread_safe_cached_property
-    def latlon(self) -> Tuple[Any, Any]:
+    def latlons(self) -> Tuple[Any, Any]:
         """Get the grid points for the mesh projection grid."""
         transformer = self.transformer()
         xv, yv = np.meshgrid(self.x.variable.values, self.y.variable.values)  # , indexing="ij")
@@ -345,7 +345,7 @@ class MeshProjectionGrid(ProjectionGrid):
         return lat.flatten(), lon.flatten()
 
     @thread_safe_cached_property
-    def xy(self) -> Tuple[Any, Any]:
+    def xys(self) -> Tuple[Any, Any]:
         """Get the x and y points for the mesh projection grid."""
         xv, yv = np.meshgrid(self.x.variable.values, self.y.variable.values)  # , indexing="ij")
         return xv.flatten(), yv.flatten()
@@ -355,11 +355,11 @@ class UnstructuredProjectionGrid(XYGrid):
     """Grid class for unstructured projected coordinates."""
 
     @thread_safe_cached_property
-    def latlon(self) -> Tuple[Any, Any]:
+    def latlons(self) -> Tuple[Any, Any]:
         """Get the grid points for the unstructured projection grid."""
         raise NotImplementedError("UnstructuredProjectionGrid")
 
     @thread_safe_cached_property
-    def xy(self) -> Tuple[Any, Any]:
+    def xys(self) -> Tuple[Any, Any]:
         """Get the x and y points for the mesh projection grid."""
         raise NotImplementedError("UnstructuredProjectionGrid")

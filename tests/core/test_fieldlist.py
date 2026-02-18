@@ -51,7 +51,7 @@ def test_empty_fieldlist_data_numpy():
 def test_empty_fieldlist_to_latlon_numpy():
     ds = SimpleFieldList()
 
-    lat, lon = ds.geography.latlon()
+    lat, lon = ds.geography.latlons()
     assert lat is None
     assert lon is None
 

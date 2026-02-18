@@ -226,7 +226,7 @@ def test_grib_gridspec_to_fieldlist(input_file):
     lat_ref, lon_ref = make_lat_lon(5)
 
     # check latlon
-    lat, lon = ds[0].geography.latlon()
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat.flatten(), lat_ref.flatten())
     assert np.allclose(lon.flatten(), lon_ref.flatten())
     assert ds[0].shape == (37, 72)
@@ -248,7 +248,7 @@ def test_grib_gridspec_to_fieldlist(input_file):
         assert np.allclose(v_tmp, v.flatten(), atol=1e-3)
 
         # latlon
-        lat, lon = r_tmp[0].geography.latlon()
+        lat, lon = r_tmp[0].geography.latlons()
         assert np.allclose(lat.flatten(), lat_ref.flatten())
         assert np.allclose(lon.flatten(), lon_ref.flatten())
 

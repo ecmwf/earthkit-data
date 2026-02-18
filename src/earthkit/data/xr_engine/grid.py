@@ -41,8 +41,8 @@ class Grid:
     def distinct_latlon(self, field_shape):
         return None, None
 
-    def latlon(self, field_shape=None):
-        # ll = self.field.latlon(flatten=True)
+    def latlons(self, field_shape=None):
+        # ll = self.field.geography.latlons(flatten=True)
         # lat = np.atleast_1d(ll["lat"])
         # lon = np.atleast_1d(ll["lon"])
 
@@ -65,7 +65,7 @@ class RegularLLGrid(Grid):
     def to_distinct_latlon(self, field_shape):
         assert len(field_shape) == 2
         assert field_shape == self.field.shape
-        lat, lon = self.latlon()
+        lat, lon = self.latlons()
         _, nx = field_shape
         lat = lat[::nx]
         lon = lon[:nx]
@@ -83,7 +83,7 @@ class RectifiedLLGrid(Grid):
 
 
 class SpectralGrid(Grid):
-    def latlon(self, field_shape=None):
+    def latlons(self, field_shape=None):
         return None, None
 
     def is_spectral(self):
@@ -91,7 +91,7 @@ class SpectralGrid(Grid):
 
 
 class NonGrid(Grid):
-    def latlon(self, field_shape=None):
+    def latlons(self, field_shape=None):
         return None, None
 
     def is_spectral(self):
@@ -126,7 +126,7 @@ class TensorGrid:
             if len(field_shape) == 1:
                 dims["values"] = field_shape[0]
                 try:
-                    lat, lon = grid.latlon()
+                    lat, lon = grid.latlons()
                     if lat is not None and lon is not None:
                         coords["latitude"] = lat
                         coords["longitude"] = lon
@@ -157,7 +157,7 @@ class TensorGrid:
                     pass
 
                 if not coords or not dims:
-                    lat, lon = grid.latlon(field_shape)
+                    lat, lon = grid.latlons(field_shape)
                     if lat is not None and lon is not None:
                         coords["latitude"] = lat
                         coords["longitude"] = lon

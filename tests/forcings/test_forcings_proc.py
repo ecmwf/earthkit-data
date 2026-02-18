@@ -67,7 +67,7 @@ def test_forcings_proc(input_data):
 def test_forcings_proc_latlon(input_data, param, coord):
     ds, _ = load_forcings_fs(params=all_params, last_step=12, input_data=input_data)
 
-    latlon = ds[0].geography.latlon(flatten=True)
+    latlon = ds[0].geography.latlons(flatten=True)
     if coord == "lat":
         coord = latlon[0]
     elif coord == "lon":

@@ -384,7 +384,7 @@ class BaseGeography(SimpleFieldComponent):
 
         raise ValueError(f"Invalid {keys=} for Geography specification")
 
-    def latlon(self, flatten=False, dtype=None):
+    def latlons(self, flatten=False, dtype=None):
         r"""Return the latitudes/longitudes of all the gridpoints in the field.
 
         Parameters
@@ -415,7 +415,7 @@ class BaseGeography(SimpleFieldComponent):
 
         return lat, lon
 
-    def xy(self, flatten=False, dtype=None):
+    def xys(self, flatten=False, dtype=None):
         r"""Return the x/y coordinates of all the points.
 
         Parameters
@@ -448,14 +448,14 @@ class BaseGeography(SimpleFieldComponent):
 
         try:
             if self.projection().CARTOPY_CRS == "PlateCarree":
-                return self.latlon(flatten=flatten, dtype=dtype)
+                return self.latlons(flatten=flatten, dtype=dtype)
         except Exception:
             pass
 
-        raise ValueError("xy(): geographical coordinates in original CRS are not available")
+        raise ValueError("xys(): geographical coordinates in original CRS are not available")
 
     def points(self, flatten=False, dtype=None):
-        return self.xy(flatten=flatten, dtype=dtype)
+        return self.xys(flatten=flatten, dtype=dtype)
 
     def __getstate__(self):
         return super().__getstate__()

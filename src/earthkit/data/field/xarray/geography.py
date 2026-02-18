@@ -44,11 +44,11 @@ class XArrayGeography(BaseGeography):
             raise ValueError("Invalid shape for selection")
 
     def latitudes(self, dtype=None):
-        lat, _ = self.owner.grid.latlon
+        lat, _ = self.owner.grid.latlons
         return lat.reshape(self.shape())
 
     def longitudes(self, dtype=None):
-        _, lon = self.owner.grid.latlon
+        _, lon = self.owner.grid.latlons
         return lon.reshape(self.shape())
 
     def distinct_latitudes(self, dtype=None):
@@ -61,12 +61,12 @@ class XArrayGeography(BaseGeography):
 
     def x(self, dtype=None):
         r"""array-like: Return the x coordinates in the original CRS."""
-        x, _ = self.owner.grid.xy
+        x, _ = self.owner.grid.xys
         return x.reshape(self.shape())
 
     def y(self, dtype=None):
         r"""array-like: Return the y coordinates in the original CRS."""
-        _, y = self.owner.grid.xy
+        _, y = self.owner.grid.xys
         return y.reshape(self.shape())
 
     def shape(self):
@@ -102,8 +102,8 @@ class XArrayGeography(BaseGeography):
     def from_dict(d):
         raise NotImplementedError("XArrayGeography.form_dict() is not implemented")
 
-    def latlon(self, flatten=False, dtype=None):
-        lat, lon = self.owner.grid.latlon
+    def latlons(self, flatten=False, dtype=None):
+        lat, lon = self.owner.grid.latlons
         lat = lat.reshape(self.shape())
         lon = lon.reshape(self.shape())
         lat = _array_convert(lat, flatten=flatten, dtype=dtype)
@@ -130,42 +130,6 @@ class XArrayGeography(BaseGeography):
 
     def __setstate__(self, state):
         pass
-
-
-# class MeshedXarrayLatLonGeography(XArrayGeography):
-#     def __init__(self, owner, selection):
-#         super().__init__(owner, selection)
-
-#     def _latlon(self, dtype=None, flatten=False):
-#         """Get the grid points for the meshed grid."""
-
-#         if self.variable_dims == (self.lon.variable.name, self.lat.variable.name):
-#             lat, lon = np.meshgrid(
-#                 self.lat.variable.values,
-#                 self.lon.variable.values,
-#             )
-#         elif self.variable_dims == (self.lat.variable.name, self.lon.variable.name):
-#             lon, lat = np.meshgrid(
-#                 self.lon.variable.values,
-#                 self.lat.variable.values,
-#             )
-
-#         else:
-#             raise NotImplementedError(
-#                 f"MeshedGrid.grid_points: unrecognized variable_dims {self.variable_dims}"
-#             )
-
-#         return lat.flatten(), lon.flatten()
-
-
-# lat = self.latitudes(dtype=dtype)
-#         lon = self.longitudes(dtype=dtype)
-
-#         if flatten:
-#             lat = lat.flatten()
-#             lon = lon.flatten()
-
-#         return lat, lon
 
 
 class XArrayGeographyHandler(GeographyFieldComponentHandler):

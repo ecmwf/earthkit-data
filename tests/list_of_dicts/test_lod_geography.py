@@ -31,7 +31,7 @@ def test_lod_geo_distinct_ll(lod_distinct_ll, mode):
     lat_ref = np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]])
     lon_ref = np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]])
 
-    lat, lon = ds[0].geography.latlon()
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -50,7 +50,7 @@ def test_lod_geo_distinct_ll(lod_distinct_ll, mode):
 
     # assert ds[0].resolution is None
 
-    lat, lon = ds.geography.latlon()
+    lat, lon = ds.geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -65,7 +65,7 @@ def test_lod_geo_ll_flat(lod_ll_flat, mode):
     lat_ref = np.array([-10.0, -10.0, 0.0, 0.0, 10.0, 10.0])
     lon_ref = np.array([20.0, 40.0, 20.0, 40.0, 20.0, 40.0])
 
-    lat, lon = ds[0].geography.latlon()
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -83,7 +83,7 @@ def test_lod_geo_ll_flat(lod_ll_flat, mode):
 
     # assert ds[0].resolution is None
 
-    lat, lon = ds[0].geography.latlon()
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -99,7 +99,7 @@ def test_lod_geo_ll_2D(request, data, mode):
     lat_ref = np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]])
     lon_ref = np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]])
 
-    lat, lon = ds[0].geography.latlon()
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -118,7 +118,7 @@ def test_lod_geo_ll_2D(request, data, mode):
 
     # assert ds[0].resolution is None
 
-    lat, lon = ds[0].geography.latlon()
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -154,9 +154,9 @@ def test_lod_no_latlon(
     assert ds.values.shape == (6, 6)
 
     # with pytest.raises(ValueError):
-    #     ds[0].geography.latlon()
+    #     ds[0].geography.latlons()
 
-    assert ds[0].geography.latlon() == (None, None)
+    assert ds[0].geography.latlons() == (None, None)
 
 
 if __name__ == "__main__":

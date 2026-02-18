@@ -349,7 +349,7 @@ class FieldExtractList(SimpleFieldListCore):
         return field
 
     @thread_safe_cached_property
-    def _latlon(self) -> Optional[Tuple[np.ndarray, np.ndarray]]:
+    def _latlons(self) -> Optional[Tuple[np.ndarray, np.ndarray]]:
         """Load the latitude and longitude coordinates from the
         reference field if available."""
         reference_field = self._reference_field
@@ -367,7 +367,7 @@ class FieldExtractList(SimpleFieldListCore):
         if self._reference_field is None:
             return None
 
-        lat, lon = self._latlon
+        lat, lon = self._latlons
 
         grid_latitudes = lat[indices]
         grid_longitudes = lon[indices]

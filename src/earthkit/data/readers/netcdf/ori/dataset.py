@@ -57,7 +57,7 @@ class Coverage:
         else:
             return points["x"], points["y"]
 
-    def to_xy(self, **kwargs):
+    def to_xys(self, **kwargs):
         raise NotImplementedError
 
     def keys(self):

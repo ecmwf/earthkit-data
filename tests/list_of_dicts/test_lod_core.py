@@ -36,7 +36,7 @@ def test_lod_core(lod, mode, request):
     lat_ref = np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]])
     lon_ref = np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]])
 
-    lat, lon = ds[0].geography.latlon()
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -64,7 +64,7 @@ def test_lod_ll(lod_distinct_ll, mode):
     lat_ref = np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]])
     lon_ref = np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]])
 
-    lat, lon = ds[0].geography.latlon()
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 

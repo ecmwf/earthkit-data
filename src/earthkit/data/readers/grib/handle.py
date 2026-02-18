@@ -255,7 +255,7 @@ class ManagedGribHandle(FileGribHandle):
         try:
             handle = self.manager.get(self, self._create_handle)
         except Exception as e:
-            print("Error occurred while getting handle:", e)
+            LOG.warning("Error occurred while getting handle:", e)
         if handle is None:
             raise RuntimeError(f"Could not get a handle for offset={self.offset} in {self.path}")
         return handle
@@ -264,15 +264,11 @@ class ManagedGribHandle(FileGribHandle):
         self.manager.remove(self)
 
     def __getstate__(self):
-        print("ManagedFileGribHandle Getstate")
         state = super().__getstate__()
-        print("1")
         state["manager"] = self.manager
-        print("2")
         return state
 
     def __setstate__(self, state):
-        print("ManagedFileGribHandle Setstate")
         super().__setstate__(state)
         self.manager = state["manager"]
 

@@ -29,9 +29,7 @@ class ForcingMaker:
 
     @cached_method
     def grid_points(self):
-        # d = self.field.to_latlon(flatten=True)
-        # return d["lat"], d["lon"]
-        return self.field.geography.latitudes().flatten(), self.field.geography.longitudes().flatten()
+        return self.field.geography.latlons(flatten=True)
 
     @cached_method
     def ecef_xyz(self):

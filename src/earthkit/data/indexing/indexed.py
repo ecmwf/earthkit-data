@@ -101,7 +101,7 @@ class IndexedFieldList(Index, FieldListCore):
 
         if self._has_shared_geography:
             if "lat" in keys or "lon" in keys:
-                lat, lon = self[0].geography.latlon(flatten=flatten, dtype=dtype)
+                lat, lon = self[0].geography.latlons(flatten=flatten, dtype=dtype)
                 if index is not None:
                     lat = lat[index]
                     lon = lon[index]

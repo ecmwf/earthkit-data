@@ -113,7 +113,7 @@ def test_netcdf_latlon():
     xr_ds = xr.open_dataset(earthkit_examples_file("test.nc"))
 
     for f in ds:
-        lat, lon = f.geography.latlon()
+        lat, lon = f.geography.latlons()
 
         # lon
         assert isinstance(lon, np.ndarray)
@@ -219,7 +219,7 @@ def test_netcdf_latlon_laea():
 
     # we must check multiple fields
     for idx in range(2):
-        lat, lon = ds[idx].geography.latlon()
+        lat, lon = ds[idx].geography.latlons()
 
         # lon
         assert isinstance(lon, np.ndarray)
@@ -289,7 +289,7 @@ def test_netcdf_geography_2d_1(lat_name, lon_name):
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for lat, lon in [ds[0].geography.latlon(), ds.geography.latlon()]:
+    for lat, lon in [ds[0].geography.latlons(), ds.geography.latlons()]:
         assert lat.shape == (3, 3)
         assert lon.shape == (3, 3)
         assert np.allclose(lat, lats)
@@ -331,7 +331,7 @@ def test_netcdf_geography_2d_2(lat_name, lon_name):
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for lat, lon in [ds[0].geography.latlon(), ds.geography.latlon()]:
+    for lat, lon in [ds[0].geography.latlons(), ds.geography.latlons()]:
         assert lat.shape == (3, 2)
         assert lon.shape == (3, 2)
         assert np.allclose(lat, coords[lat_name][1])
@@ -374,7 +374,7 @@ def test_netcdf_geography_2d_3(lat_name, lon_name):
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for lat, lon in [ds[0].geography.latlon(), ds.geography.latlon()]:
+    for lat, lon in [ds[0].geography.latlons(), ds.geography.latlons()]:
         assert lat.shape == (3, 2)
         assert lon.shape == (3, 2)
         assert np.allclose(lat, lat.data)
@@ -416,7 +416,7 @@ def test_netcdf_geography_1d_1(lat_name, lon_name):
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for lat, lon in [ds[0].geography.latlon(), ds.geography.latlon()]:
+    for lat, lon in [ds[0].geography.latlons(), ds.geography.latlons()]:
         assert lat.shape == (9,)
         assert lon.shape == (9,)
         assert np.allclose(lat, coords[lat_name][1])
@@ -460,7 +460,7 @@ def test_netcdf_geography_1d_2(lat_name, lon_name):
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for lat, lon in [ds[0].geography.latlon(), ds.geography.latlon()]:
+    for lat, lon in [ds[0].geography.latlons(), ds.geography.latlons()]:
         assert lat.shape == (9,)
         assert lon.shape == (9,)
         assert np.allclose(lat, lat.data)

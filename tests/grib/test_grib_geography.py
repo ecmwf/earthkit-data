@@ -333,7 +333,7 @@ def test_grib_projection_mercator(fl_type):
 )
 def test_grib_latlon_various_grids(fl_type, filename, expected_shape, expected_lat, expected_lon):
     ds, _ = load_grib_data(filename, fl_type, folder="data")
-    lat, lon = ds[0].geography.latlon()
+    lat, lon = ds[0].geography.latlons()
     assert lat.shape == expected_shape
     assert lon.shape == expected_shape
     assert np.allclose(lat.flatten()[:4], expected_lat)

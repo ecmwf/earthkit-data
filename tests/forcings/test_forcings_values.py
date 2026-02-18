@@ -164,7 +164,7 @@ def test_forcings_to_numpy_dtype(dtype):
 def test_forcings_field_data(kwarg, expected_shape, expected_dtype):
     ds, _ = load_forcings_fs(params=["longitude"], last_step=12)
 
-    lat, lon = ds[0].geography.latlon(**kwarg)
+    lat, lon = ds[0].geography.latlons(**kwarg)
     v = ds[0].to_numpy(**kwarg)
 
     d = ds[0].data(**kwarg)
@@ -215,7 +215,7 @@ def test_forcings_fieldlist_data(kwarg, expected_shape, expected_dtype):
     ds, _ = load_forcings_fs(params=["longitude"], last_step=12)
     num = 2
 
-    lat, lon = ds.geography.latlon(**kwarg)
+    lat, lon = ds.geography.latlons(**kwarg)
     v = ds.to_numpy(**kwarg)
 
     d = ds.data(**kwarg)
