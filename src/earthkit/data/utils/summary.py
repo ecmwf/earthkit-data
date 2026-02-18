@@ -44,18 +44,20 @@ def make_unique(x, full=False):
     return format_list(r, full=full)
 
 
-def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, part=None, filter=None, **kwargs):
+def ls(
+    metadata_proc, default_keys, n=None, keys=None, extra_keys=None, component=None, filter=None, **kwargs
+):
     # do_print = kwargs.pop("print", False)
 
     if kwargs:
         raise TypeError(f"ls: unsupported arguments={kwargs}")
 
-    if isinstance(part, str):
-        part = [part]
+    if isinstance(component, str):
+        component = [component]
 
     _keys = {}
 
-    if not part:
+    if not component:
         if isinstance(default_keys, (list, tuple)):
             default_keys = {k: k for k in default_keys}
 
@@ -82,7 +84,7 @@ def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, part=Non
 
     _keys_lst = list(_keys.keys())
 
-    return format_ls(metadata_proc(_keys_lst, n, part=part, filter=filter), column_names=_keys)
+    return format_ls(metadata_proc(_keys_lst, n, component=component, filter=filter), column_names=_keys)
 
 
 def format_ls(attributes, column_names=None):

@@ -222,10 +222,10 @@ class IndexedFieldList(Index, FieldListCore):
             return self[0].default_ls_keys
         return []
 
-    def ls(self, n=None, keys=None, extra_keys=None, part=None, filter=None):
+    def ls(self, n=None, keys=None, extra_keys=None, component=None, filter=None):
         from earthkit.data.utils.summary import ls as summary_ls
 
-        def _proc(keys: list, n: int, part=None, filter=None):
+        def _proc(keys: list, n: int, component=None, filter=None):
             num = len(self)
             pos = slice(0, num)
             if n is not None:
@@ -238,11 +238,11 @@ class IndexedFieldList(Index, FieldListCore):
                 default = [None] * len(keys)
                 astype = [None] * len(keys)
 
-            if part is not None:
+            if component is not None:
                 for i in pos_range:
                     f = self[i]
                     v = {}
-                    for ns_val in f._dump_part(part, prefix_keys=True, filter=filter).values():
+                    for ns_val in f._dump_component(component, prefix_keys=True, filter=filter).values():
                         v.update(ns_val)
                     if keys:
                         v.update(f._get_fast(keys, default=default, astype=astype, output=dict))
@@ -252,7 +252,13 @@ class IndexedFieldList(Index, FieldListCore):
                     yield (self[i]._get_fast(keys, default=default, astype=astype, output=dict))
 
         return summary_ls(
-            _proc, self._default_ls_keys(), n=n, keys=keys, extra_keys=extra_keys, part=part, filter=filter
+            _proc,
+            self._default_ls_keys(),
+            n=n,
+            keys=keys,
+            extra_keys=extra_keys,
+            component=component,
+            filter=filter,
         )
 
     def head(self, n=5, **kwargs):
