@@ -109,11 +109,9 @@ from earthkit.data.field.component.time import create_time
         ),
         (
             [
-                {"date": "2020-09-25", "time": "1200"},
-                {"date": "20200925", "time": "1200"},
-                {"date": datetime.date(2020, 9, 25), "time": datetime.time(12)},
-                # {"date": datetime.datetime(2020, 9, 25), "time": datetime.time(12)},
-                # {"date": datetime.datetime(2020, 9, 25, 12), "time": datetime.time(12)},
+                {"base_date": "2020-09-25", "base_time": "1200"},
+                {"base_date": "20200925", "base_time": "1200"},
+                {"base_date": datetime.date(2020, 9, 25), "base_time": datetime.time(12)},
             ],
             (
                 datetime.datetime(2020, 9, 25, 12),
@@ -123,10 +121,8 @@ from earthkit.data.field.component.time import create_time
         ),
         (
             [
-                {"date": "2020-09-25", "time": "120"},
-                {"date": "20200925", "time": "120"},
-                # {"date": datetime.date(2020, 9, 25), "time": datetime.time(1, 20)},
-                # {"date": datetime.datetime(2020, 9, 25), "time": datetime.time(1, 20)},
+                {"base_date": "2020-09-25", "base_time": "120"},
+                {"base_date": "20200925", "base_time": "120"},
             ],
             (
                 datetime.datetime(2020, 9, 25, 1, 20),
@@ -136,8 +132,8 @@ from earthkit.data.field.component.time import create_time
         ),
         (
             [
-                {"date": "2020-09-25", "time": "1200", "step": 6},
-                {"date": "2020-09-25", "time": "1200", "step": datetime.timedelta(hours=6)},
+                {"base_date": "2020-09-25", "base_time": "1200", "step": 6},
+                {"base_date": "2020-09-25", "base_time": "1200", "step": datetime.timedelta(hours=6)},
             ],
             (
                 datetime.datetime(2020, 9, 25, 12),
@@ -156,11 +152,11 @@ def test_time_component_from_dict_ok(input_d, ref):
         for d in input_d:
             t = create_time(d)
 
-            assert t.base_datetime == ref[0]
-            assert t.forecast_reference_time == ref[0]
-            assert t.step == ref[1]
-            assert t.forecast_period == ref[1]
-            assert t.valid_datetime == ref[2]
+            assert t.base_datetime() == ref[0]
+            assert t.forecast_reference_time() == ref[0]
+            assert t.step() == ref[1]
+            assert t.forecast_period() == ref[1]
+            assert t.valid_datetime() == ref[2]
 
 
 @pytest.mark.parametrize(
@@ -187,11 +183,11 @@ def test_time_component_from_dict_error(input_d, error):
 
 def test_time_component_alias_1():
     t = ForecastTime(base_datetime=datetime.datetime(2007, 1, 1, 12), step=datetime.timedelta(hours=6))
-    assert t.base_datetime == datetime.datetime(2007, 1, 1, 12)
-    assert t.step == datetime.timedelta(hours=6)
-    assert t.valid_datetime == datetime.datetime(2007, 1, 1, 18)
-    assert t.forecast_reference_time == datetime.datetime(2007, 1, 1, 12)
-    assert t.forecast_period == datetime.timedelta(hours=6)
+    assert t.base_datetime() == datetime.datetime(2007, 1, 1, 12)
+    assert t.step() == datetime.timedelta(hours=6)
+    assert t.valid_datetime() == datetime.datetime(2007, 1, 1, 18)
+    assert t.forecast_reference_time() == datetime.datetime(2007, 1, 1, 12)
+    assert t.forecast_period() == datetime.timedelta(hours=6)
 
 
 def test_time_component_alias_2():
@@ -201,11 +197,11 @@ def test_time_component_alias_2():
             forecast_period=datetime.timedelta(hours=6),
         )
     )
-    assert t.base_datetime == datetime.datetime(2007, 1, 1, 12)
-    assert t.step == datetime.timedelta(hours=6)
-    assert t.valid_datetime == datetime.datetime(2007, 1, 1, 18)
-    assert t.forecast_reference_time == datetime.datetime(2007, 1, 1, 12)
-    assert t.forecast_period == datetime.timedelta(hours=6)
+    assert t.base_datetime() == datetime.datetime(2007, 1, 1, 12)
+    assert t.step() == datetime.timedelta(hours=6)
+    assert t.valid_datetime() == datetime.datetime(2007, 1, 1, 18)
+    assert t.forecast_reference_time() == datetime.datetime(2007, 1, 1, 12)
+    assert t.forecast_period() == datetime.timedelta(hours=6)
 
 
 @pytest.mark.parametrize(
@@ -310,12 +306,12 @@ def test_time_component_set(input_d, ref):
         t1 = t.set(**d)
 
         for k, v in ref.items():
-            assert getattr(t1, k) == v, f"key {k} expected {v} got {getattr(t, k)}"
+            assert getattr(t1, k)() == v, f"key {k} expected {v} got {getattr(t, k)()}"
 
         # the original object is unchanged
-        assert t.base_datetime == datetime.datetime(2007, 1, 1, 12)
-        assert t.valid_datetime == datetime.datetime(2007, 1, 1, 12)
-        assert t.step == datetime.timedelta(hours=0)
+        assert t.base_datetime() == datetime.datetime(2007, 1, 1, 12)
+        assert t.valid_datetime() == datetime.datetime(2007, 1, 1, 12)
+        assert t.step() == datetime.timedelta(hours=0)
 
 
 @pytest.mark.parametrize(

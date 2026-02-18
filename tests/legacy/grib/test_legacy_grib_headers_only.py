@@ -17,10 +17,6 @@ import yaml
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.readers.grib.metadata import RestrictedGribMetadata
-from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
-from earthkit.data.readers.grib.metadata import WrappedMetadata
-from earthkit.data.readers.grib.output import new_grib_output
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.testing import earthkit_test_data_file
@@ -43,6 +39,8 @@ def grid_list(files=None, skip=None):
 
 
 def check_field_write(f, md_ref, shape_ref, values_ref, use_writer=False, **kwargs):
+    from earthkit.data.readers.grib.legacy.output import new_grib_output
+
     with temp_file() as tmp:
         if use_writer:
             fp = new_grib_output(tmp, template=f, **kwargs)
@@ -73,6 +71,9 @@ def check_field_write(f, md_ref, shape_ref, values_ref, use_writer=False, **kwar
 @pytest.mark.legacy
 # @pytest.mark.skipif(True, reason="headers_only_clone has to be fixed")
 def test_legacy_grib_metadata_override_headers_only_true_core():
+    from earthkit.data.readers.grib.legacy.metadata import RestrictedGribMetadata
+    from earthkit.data.readers.grib.legacy.metadata import WrappedMetadata
+
     ds = from_source("file", earthkit_examples_file("test.grib"))
     ref_size = ds[0].metadata("totalLength")
 
@@ -128,6 +129,10 @@ def test_legacy_grib_metadata_override_headers_only_true_core():
 
 @pytest.mark.legacy
 def test_legacy_grib_metadata_override_headers_only_false_core():
+    from earthkit.data.readers.grib.legacy.metadata import RestrictedGribMetadata
+    from earthkit.data.readers.grib.legacy.metadata import StandAloneGribMetadata
+    from earthkit.data.readers.grib.legacy.metadata import WrappedMetadata
+
     ds = from_source("file", earthkit_examples_file("test.grib"))
     ref_size = ds[0].metadata("totalLength")
 
@@ -157,6 +162,8 @@ def test_legacy_grib_metadata_override_headers_only_false_core():
     grid_list(),
 )
 def test_legacy_grib_metadata_headers_only_clone_true_grids(file):
+    from earthkit.data.readers.grib.legacy.metadata import RestrictedGribMetadata
+
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
 
     keys = ["bitsPerValue", "level", "shortName", "gridType", "packingType", "date"]
@@ -212,6 +219,8 @@ def test_legacy_grib_metadata_headers_only_clone_true_grids(file):
     grid_list(),
 )
 def test_legacy_grib_metadata_headers_only_clone_false_grids(file):
+    from earthkit.data.readers.grib.legacy.metadata import RestrictedGribMetadata
+
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
 
     keys = ["bitsPerValue", "level", "shortName", "gridType", "packingType", "date"]
@@ -261,6 +270,8 @@ def test_legacy_grib_metadata_headers_only_clone_false_grids(file):
 
 @pytest.mark.legacy
 def test_legacy_grib_headers_only_clone_standalone_metadata():
+    from earthkit.data.readers.grib.legacy.metadata import StandAloneGribMetadata
+
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     md_ref = {

@@ -28,7 +28,7 @@ class ItemWrapperForCfGrib:
             return None
         if n == "values":
             return self.item.values
-        return self.item.get(n, raise_on_missing=True)
+        return self.item.get(f"metadata.{n}", raise_on_missing=True)
 
 
 class IndexWrapperForCfGrib:

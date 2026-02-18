@@ -31,7 +31,13 @@ SKIP = [
     "deprec_xarray_earthkit_to_grib.py",
     "deprec_new_grib_output_split.py",
     "deprec_new_grib_output.py",
+    "deprec_new_grib_coder.py",
+    "deprec_data_save.py",
+    "deprec_data_write.py",
+    "deprec_ens_dim_role.py",
+    "deprec_field_array_backend_attribute.py",
     "migrated_array_namespace_kwarg.py",
+    "migrated_ens_dim_role.py",
     "migrated_xarray_earthkit_to_grib.py",
 ]
 

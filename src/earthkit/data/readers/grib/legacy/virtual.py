@@ -17,7 +17,7 @@ from earthkit.data.utils.dates import datetime_from_grib
 from earthkit.data.utils.dates import time_to_grib
 from earthkit.data.utils.dates import to_timedelta
 
-from .index import GribFieldList
+from ..index import GribFieldList
 
 LOG = logging.getLogger(__name__)
 

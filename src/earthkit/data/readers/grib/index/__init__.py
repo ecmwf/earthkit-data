@@ -23,7 +23,7 @@ from earthkit.data.indexing.database import FILEPARTS_KEY_NAMES
 from earthkit.data.indexing.database import MORE_KEY_NAMES
 from earthkit.data.indexing.database import MORE_KEY_NAMES_WITH_UNDERSCORE
 from earthkit.data.indexing.database import STATISTICS_KEY_NAMES
-from earthkit.data.readers.grib.codes import GribField
+from earthkit.data.readers.grib.legacy.codes import GribField
 from earthkit.data.readers.grib.pandas import PandasMixIn
 from earthkit.data.readers.grib.xarray import XarrayMixIn
 from earthkit.data.utils.availability import Availability
