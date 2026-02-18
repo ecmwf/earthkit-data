@@ -259,4 +259,7 @@ def bounding_box(obj, check=True):
 
     obj = get_wrapper(obj)
 
-    return bounding_box(obj.bounding_box())
+    if hasattr(obj, "geography"):
+        return bounding_box(obj.geography.bounding_box())
+    else:
+        return bounding_box(obj.bounding_box())
