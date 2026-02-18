@@ -455,7 +455,7 @@ class ForecastTimeDimMode(DimMode):
 
     def build(self, profile, owner, active=True):
         ref_time_key, ref_time_name = owner.dim_roles.role("forecast_reference_time", raise_error=False)
-        print(f"{ref_time_key=}, {ref_time_name=}", flush=True)  ###PW
+        # print(f"{ref_time_key=}, {ref_time_name=}", flush=True)  ###PW
         # PW: TODO: this is not quite OK yet...
         if ref_time_key is None:
             ref_time_key = "time.forecast_reference_time"

@@ -109,8 +109,8 @@ class XArrayInputFieldList(FieldList):
             self.db = db
         elif keys:
             # PW: DEBUG
-            print(f"{keys=}", flush=True)
-            print(f"{self.unique_values(keys)=}", flush=True)
+            # print(f"{keys=}", flush=True)
+            # print(f"{self.unique_values(keys)=}", flush=True)
             self.db = IndexDB(self.unique_values(keys))
 
         assert self.db
@@ -213,8 +213,6 @@ class XArrayInputFieldList(FieldList):
 
     # PW: TODO: consider if this method shouldn't be put elsewhere
     def _get_user_coords_to_fl_idx(self, keys, remapping=None):
-        # this method could be implemented in the class XArrayInputFieldList, but then FieldList.to_tensor wouldn't work
-        # PW: actually, now it is...
         if isinstance(keys, str):
             keys = [keys]
         if remapping is None:
