@@ -1,6 +1,17 @@
 Version 0.18 Updates
 /////////////////////////
 
+Version 0.18.6
+===============
+
+Dependency updates
++++++++++++++++++++++
+
+Ensure compatibility between earthkit components by restricting the following dependencies:
+
+- ``earthkit-utils<0.2``
+- ``earthkit-meteo<0.6``
+
 
 Version 0.18.5
 ===============
@@ -9,7 +20,6 @@ Dependencies
 +++++++++++++++
 
 - Reverts the changes in 0.18.4 since the problems with the ``netcdf4=1.7.4`` wheels have been fixed (:pr:`885`)
-
 
 
 Version 0.18.4
