@@ -31,6 +31,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
     [
         (
             {
+                "profile": None,
                 "time_dim_mode": "raw",
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -41,6 +42,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "raw",
                 "dim_name_from_role_name": True,
             },
@@ -53,6 +55,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "forecast",
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -71,6 +74,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "forecast",
                 "dim_name_from_role_name": True,
             },
@@ -87,6 +91,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "valid_time",
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -108,6 +113,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "valid_time",
                 "decode_times": True,
                 "decode_timedelta": True,
@@ -129,23 +135,25 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "raw",
                 "decode_times": False,
                 "decode_timedelta": False,
                 "dim_name_from_role_name": False,
             },
-            {"date": [20240603, 20240604], "time": [0, 1200], "step_timedelta": [0, 6]},
-            ("step_timedelta", "hours"),
+            {"date": [20240603, 20240604], "time": [0, 1200], "step": [0, 6]},
+            ("step", "hours"),
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "raw",
                 "dim_name_from_role_name": False,
             },
             {
                 "date": [np.datetime64("2024-06-03", "ns"), np.datetime64("2024-06-04", "ns")],
                 "time": [np.timedelta64(0, "s"), np.timedelta64(43200, "s")],
-                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
+                "step": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
             },
             None,
         ),
@@ -296,10 +304,9 @@ def test_xr_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims, step_
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "raw",
                 "dim_roles": {"step": "forecastMonth"},
-                "decode_times": False,
-                "decode_timedelta": False,
                 "ensure_dims": ["number", "date", "time", "forecastMonth"],
                 "dim_name_from_role_name": False,
             },
@@ -360,8 +367,8 @@ def test_xr_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims, step_
             {
                 "time_dim_mode": "raw",
                 "dim_roles": {"step": "forecastMonth"},
-                "decode_times": False,
-                "decode_timedelta": False,
+                "decode_times": True,
+                "decode_timedelta": True,
                 "ensure_dims": ["number", "date", "time", "step"],
                 "dim_name_from_role_name": True,
             },
@@ -402,6 +409,7 @@ def test_xr_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_units):
     [
         (
             {
+                "profile": None,
                 "time_dim_mode": "forecast",
                 "add_valid_time_coord": True,
                 "decode_times": False,
@@ -469,6 +477,7 @@ def test_xr_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_units):
         ),
         (
             {
+                "profile": None,
                 "time_dim_mode": "forecast",
                 "add_valid_time_coord": True,
                 "decode_times": False,
@@ -480,9 +489,9 @@ def test_xr_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_units):
                     np.datetime64("2024-06-03T00", "ns"),
                     np.datetime64("2024-06-03T12", "ns"),
                 ],
-                "step_timedelta": [0, 6],
+                "step": [0, 6],
             },
-            ("step_timedelta", "hours"),
+            ("step", "hours"),
             {
                 "valid_time": [
                     [np.datetime64("2024-06-03T00", "ns"), np.datetime64("2024-06-03T06", "ns")],
