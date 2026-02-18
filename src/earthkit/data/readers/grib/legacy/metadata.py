@@ -665,7 +665,7 @@ class GribMetadata(Metadata):
         to avoid cyclic import
         """
         if GribMetadata.__handle_type is None:
-            from earthkit.data.readers.grib.codes import GribCodesHandle
+            from earthkit.data.readers.grib.legacy.codes import GribCodesHandle
 
             GribMetadata.__handle_type = GribCodesHandle
         return GribMetadata.__handle_type
@@ -1066,7 +1066,7 @@ class StandAloneGribMetadata(GribMetadata):
         return ret
 
     def __setstate__(self, state: dict):
-        from earthkit.data.readers.grib.memory import GribMessageMemoryReader
+        from earthkit.data.readers.grib.legacy.memory import GribMessageMemoryReader
 
         self._cache = MetadataCacheHandler.deserialise(state.pop("_cache"))
         self.__handle = next(GribMessageMemoryReader(state.pop("_handle"))).handle

@@ -13,6 +13,8 @@ import datetime
 import os
 import sys
 
+import pytest
+
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
 from array_fl_fixtures import load_array_fl  # noqa: E402
@@ -33,27 +35,8 @@ def test_array_fl_field_repr():
 def test_array_fl_values_metadata_basic():
     ds, _ = load_array_fl(1)
 
-    # values metadata
-    # keys = [
-    #     "min",
-    #     "max",
-    #     "avg",
-    #     "ds",
-    #     "skew",
-    #     "kurt",
-    #     "isConstant",
-    #     "const",
-    #     "bitmapPresent",
-    #     "numberOfMissing",
-    #     "values",
-    # ]
-    # for k in keys:
-    #     assert ds[0].metadata(k, default=None) is None, k
-    #     with pytest.raises(KeyError):
-    #         ds[0].metadata(k)
-
     # bits per value must be kept from the original GRIB data
-    assert ds[0].get("metadata.bitsPerValue") == 16
+    assert ds[0]._get_grib().get_extra_key("bitsPerValue") == 16
 
 
 def test_array_fl_values_metadata_internal():
@@ -68,6 +51,7 @@ def test_array_fl_values_metadata_internal():
         assert ds[0].get(k) == v, k
 
 
+@pytest.mark.migrate
 def test_array_fl_metadata_keys():
     ds, _ = load_array_fl(1)
 

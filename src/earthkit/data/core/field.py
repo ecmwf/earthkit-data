@@ -1168,9 +1168,9 @@ class Field(Base):
 
         """
         _keys = dict(
-            lat=self.geography.latitudes(),
-            lon=self.geography.longitudes(),
-            value=self.values,
+            lat=self.geography.latitudes,
+            lon=self.geography.longitudes,
+            value=self.to_numpy,
         )
 
         if isinstance(keys, str):
@@ -1187,8 +1187,8 @@ class Field(Base):
         r = {}
         for k in keys:
             # TODO: convert dtype
-            # v = _keys[k](dtype=dtype)
-            v = _keys[k]
+            v = _keys[k](dtype=dtype)
+            # v = _keys[k]
             if v is None:
                 raise ValueError(f"data: {k} not available")
             v = _reshape(v, flatten)

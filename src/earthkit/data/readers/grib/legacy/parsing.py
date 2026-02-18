@@ -66,7 +66,7 @@ def _index_grib_file(
 ):
     import eccodes
 
-    from earthkit.data.readers.grib.codes import GribCodesHandle
+    from earthkit.data.readers.grib.legacy.codes import GribCodesHandle
 
     post_process_mars = []
     if with_valid_date:
@@ -230,7 +230,7 @@ class GribIndexingPathParserIterator(PathParserIterator):
             #
             # We would need either to refactor the grib reader.
 
-            from earthkit.data.readers.grib.parsing import _index_grib_file
+            from earthkit.data.readers.grib.legacy.parsing import _index_grib_file
 
             for field in _index_grib_file(path, with_statistics=self.with_statistics):
                 field["_path"] = _path

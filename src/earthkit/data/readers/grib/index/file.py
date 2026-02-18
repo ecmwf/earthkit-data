@@ -11,8 +11,8 @@
 import logging
 import os
 
-from earthkit.data.readers.grib.codes import GribCodesMessagePositionIndex
 from earthkit.data.readers.grib.index import GribFieldListInFiles
+from earthkit.data.readers.grib.legacy.codes import GribCodesMessagePositionIndex
 from earthkit.data.utils.parts import Part
 
 LOG = logging.getLogger(__name__)

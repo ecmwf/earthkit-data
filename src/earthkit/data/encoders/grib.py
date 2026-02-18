@@ -170,7 +170,7 @@ class GribHandleMaker:
         return handle
 
     def handle_from_metadata(self, values, metadata, compulsory):
-        from earthkit.data.readers.grib.codes import GribCodesHandle  # Lazy loading of eccodes
+        from earthkit.data.readers.grib.legacy.codes import GribCodesHandle  # Lazy loading of eccodes
 
         if len(values.shape) == 1:
             sample = self._gg_field(values, metadata)

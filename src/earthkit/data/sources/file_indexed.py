@@ -10,7 +10,7 @@ import logging
 import os
 
 from earthkit.data.readers.grib.index.sql import FieldListInFilesWithSqlIndex
-from earthkit.data.readers.grib.parsing import GribIndexingPathParserIterator
+from earthkit.data.readers.grib.legacy.parsing import GribIndexingPathParserIterator
 from earthkit.data.sources.indexed import IndexedSource
 
 LOG = logging.getLogger(__name__)

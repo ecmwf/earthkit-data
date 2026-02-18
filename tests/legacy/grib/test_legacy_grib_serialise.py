@@ -19,7 +19,6 @@ import pytest
 from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
 from earthkit.data.testing import WRITE_TO_FILE_METHODS
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import write_to_file
@@ -64,6 +63,8 @@ def test_legacy_grib_serialise_metadata(fl_type, representation):
 @pytest.mark.legacy
 @pytest.mark.parametrize("representation", ["file", "memory"])
 def test_legacy_grib_serialise_standalone_metadata(representation):
+    from earthkit.data.readers.grib.legacy.metadata import StandAloneGribMetadata
+
     ds = from_source("file", earthkit_examples_file("test.grib"))
 
     md_ref = {

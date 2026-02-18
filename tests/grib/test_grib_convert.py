@@ -31,7 +31,7 @@ def test_icon_to_xarray(fl_type):
     ds = g.to_xarray(engine="cfgrib")
     assert len(ds.data_vars) == 1
     # Dataset contains 9 levels and 9 grid points per level
-    ref_levs = g.get("level")
+    ref_levs = g.get("vertical.level")
     assert ds["pres"].sizes["generalVerticalLayer"] == len(ref_levs)
     assert ds["pres"].sizes["values"] == 6
 
@@ -39,7 +39,7 @@ def test_icon_to_xarray(fl_type):
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 def test_to_xarray_filter_by_keys(fl_type):
     g, _ = load_grib_data("tuv_pl.grib", fl_type)
-    g = concat(g.sel(param="t", level=500), g.sel(param="u"))
+    g = concat(g.sel({"parameter.variable": "t", "vertical.level": 500}), g.sel({"parameter.variable": "u"}))
     assert len(g) > 1
 
     # see github #250

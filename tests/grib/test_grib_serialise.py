@@ -21,7 +21,6 @@ from earthkit.data import concat
 from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
 from earthkit.data.testing import earthkit_examples_file
 
 here = os.path.dirname(__file__)
@@ -70,30 +69,6 @@ def test_grib_serialise_field(fl_type, representation):
     ]
     for k in keys:
         assert f.get(k) == f2.get(k)
-
-
-@pytest.mark.migrate
-@pytest.mark.parametrize("representation", ["file", "memory"])
-def test_grib_serialise_standalone_metadata(representation):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-
-    md_ref = {
-        "metadata.param": "2t",
-        "metadata.date": 20200513,
-        "metadata.time": 1200,
-        "metadata.step": 0,
-        "metadata.level": 0,
-        "metadata.gridType": "regular_ll",
-        "metadata.type": "an",
-    }
-
-    md = StandAloneGribMetadata(ds[0].handle)
-    for k, v in md_ref.items():
-        assert md[k] == v
-
-    md2 = _pickle(md, representation)
-    for k, v in md_ref.items():
-        assert md2[k] == v
 
 
 @pytest.mark.parametrize("fl_type", FL_NUMPY)

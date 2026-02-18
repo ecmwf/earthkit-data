@@ -14,8 +14,6 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.metadata import RawMetadata
-from earthkit.data.readers.grib.metadata import GribFieldMetadata
-from earthkit.data.readers.grib.metadata import StandAloneGribMetadata
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 
@@ -111,6 +109,9 @@ def test_raw_metadata_override_with_kwarg():
 
 @pytest.mark.migrate
 def test_grib_metadata_create():
+    from earthkit.data.readers.grib.legacy.metadata import GribFieldMetadata
+    from earthkit.data.readers.grib.legacy.metadata import StandAloneGribMetadata
+
     f = from_source("file", earthkit_examples_file("test.grib"))
 
     f0 = f[0]
@@ -276,6 +277,8 @@ def test_grib_metadata_override_invalid():
 
 @pytest.mark.migrate
 def test_grib_metadata_wrapped_core():
+    from earthkit.data.readers.grib.legacy.metadata import StandAloneGribMetadata
+
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds[0].metadata()
     md_num = len(md)
@@ -373,6 +376,8 @@ def test_grib_metadata_wrapped_core():
 
 @pytest.mark.migrate
 def test_grib_metadata_wrapped_callable():
+    from earthkit.data.readers.grib.legacy.metadata import StandAloneGribMetadata
+
     ds = from_source("file", earthkit_examples_file("test4.grib"))
     md = ds[0].metadata()
     assert md["perturbationNumber"] == 0

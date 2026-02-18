@@ -280,8 +280,8 @@ class GribGeographyHandler(GribFieldComponentHandler):
             return create_geography_from_dict(kwargs, shape_hint=shape_hint)
 
     def _handle_from_grid_spec(cls, handler, grid_spec):
-        from earthkit.data.new_field.grib.handle import MemoryGribHandle
         from earthkit.data.readers.grib.gridspec import GridSpecConverter
+        from earthkit.data.readers.grib.handle import MemoryGribHandle
 
         # edition = d.get("edition", self["edition"])
         edition = handler.handle.get("edition", 2)
