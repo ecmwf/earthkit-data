@@ -475,9 +475,7 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
     assert ds is not None
 
     # dataset
-    ll = ds_ek_ref[0].geography.latlon(flatten=True)
-    lats = ll["lat"]
-    lons = ll["lon"]
+    lats, lons = ds_ek_ref[0].geography.latlon(flatten=True)
     data_vars = ["r", "t", "u", "v", "z"]
 
     coords_ref_full = {
@@ -615,7 +613,9 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
         ]
     )
 
-    v_ek = ds_ek_ref.sel(param="t", time=0, levelist=500).to_numpy(flatten=True)
+    v_ek = ds_ek_ref.sel({"parameter.variable": "t", "metadata.time": 0, "vertical.level": 500}).to_numpy(
+        flatten=True
+    )
     assert np.allclose(r.values.flatten(), v_ek[:, [9 * 36, 10 * 36, 11 * 36]].flatten())
     assert np.allclose(r.values, vals_ref)
 
@@ -657,9 +657,7 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
     assert ds is not None
 
     # dataset
-    ll = ds_ek_ref[0].geography.latlon(flatten=True)
-    lats = ll["lat"]
-    lons = ll["lon"]
+    lats, lons = ds_ek_ref[0].geography.latlon(flatten=True)
     data_vars = ["r", "t", "u", "v", "z"]
 
     coords_ref_full = {
@@ -791,7 +789,9 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
         ]
     )
 
-    v_ek = ds_ek_ref.sel(param="t", time=0, levelist=500).to_numpy(flatten=True)
+    v_ek = ds_ek_ref.sel({"parameter.variable": "t", "metadata.time": 0, "metadata.levelist": 500}).to_numpy(
+        flatten=True
+    )
     assert np.allclose(r.values.flatten(), v_ek[:, [9 * 36, 10 * 36, 11 * 36]].flatten())
     assert np.allclose(r.values, vals_ref)
 

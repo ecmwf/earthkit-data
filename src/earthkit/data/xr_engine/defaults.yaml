@@ -1,5 +1,5 @@
 # variables
-variable_key: parameter.variable
+variable_key: metadata.param
 drop_variables: []
 rename_variables: {}
 mono_variable: false
@@ -45,12 +45,14 @@ errors: raise
 allow_holes: false
 
 dim_roles:
-  number: ensemble.member
-  step: time.step
+  number: metadata.number
+  date: metadata.date
+  time: metadata.time
+  step: metadata.step
   forecast_reference_time: time.forecast_reference_time
   valid_time: time.valid_datetime
-  level: vertical.level
-  level_type: vertical.type
+  level: metadata.level
+  level_type: metadata.typeOfLevel
 
 dim_name_from_role_name: true
 
@@ -82,7 +84,6 @@ coord_attrs:
     standard_name: time
     long_name: valid_time
   level:
-    key: typeOfLevel
     depthBelowLand:
       units: m
       positive: down
@@ -150,9 +151,6 @@ coord_attrs:
       positive: up
       long_name: air_potential_temperature
       standard_name: air_potential_temperature
-
-  levelist:
-    key: levtype
     ml:
       units: 1
       positive: down

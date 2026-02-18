@@ -361,7 +361,7 @@ def test_xr_dims_ds_sfc_and_pl(kwargs, var_key, variables, dim_keys):
                 "rename_dims": {"levelist": "zz"},
                 "dim_name_from_role_name": False,
             },
-            ["date", "time", "step", "zz"],
+            ["date", "time", "step_timedelta", "zz"],
         ),
         (
             {
@@ -394,35 +394,44 @@ def test_xr_rename_dims(allow_holes, lazy_load, kwargs, dim_keys):
         (
             {
                 "profile": "mars",
-                "fixed_dims": ["date", "time", "step", "level"],
+                "fixed_dims": ["metadata.date", "metadata.time", "metadata.step", "metadata.level"],
             },
             ["date", "time", "step", "level"],
         ),
         (
             {
                 "profile": "mars",
-                "fixed_dims": ["level", "date", "time", "step"],
+                "fixed_dims": ["metadata.level", "metadata.date", "metadata.time", "metadata.step"],
             },
             ["level", "date", "time", "step"],
         ),
         (
             {
                 "profile": "mars",
-                "fixed_dims": [{"my_date": "date"}, ("my_time", "time"), "step", "level"],
+                "fixed_dims": [
+                    {"my_date": "metadata.date"},
+                    ("my_time", "metadata.time"),
+                    "metadata.step",
+                    "metadata.level",
+                ],
             },
             ["my_date", "my_time", "step", "level"],
         ),
         (
             {
                 "profile": "mars",
-                "fixed_dims": ["forecast_reference_time", "endStep", "level"],
+                "fixed_dims": ["time.forecast_reference_time", "metadata.endStep", "metadata.level"],
             },
             ["forecast_reference_time", "endStep", "level"],
         ),
         (
             {
                 "profile": "mars",
-                "fixed_dims": ["forecast_reference_time", ("step", "endStep"), "level"],
+                "fixed_dims": [
+                    "time.forecast_reference_time",
+                    ("step", "metadata.endStep"),
+                    "metadata.level",
+                ],
             },
             ["forecast_reference_time", "step", "level"],
         ),
@@ -469,22 +478,22 @@ def test_xr_fixed_dims(allow_holes, lazy_load, kwargs, dim_keys):
         (
             {
                 "profile": "mars",
-                "drop_dims": "number",
+                "drop_dims": "metadata.number",
                 "time_dim_mode": "raw",
                 "squeeze": False,
                 "dim_name_from_role_name": False,
             },
-            ["date", "time", "step", "levelist", "levtype"],
+            ["date", "time", "step_timedelta", "levelist", "levtype"],
         ),
         (
             {
                 "profile": "mars",
-                "drop_dims": ["levtype", "number"],
+                "drop_dims": ["metadata.levtype", "metadata.number"],
                 "time_dim_mode": "raw",
                 "squeeze": False,
                 "dim_name_from_role_name": False,
             },
-            ["date", "time", "step", "levelist"],
+            ["date", "time", "step_timedelta", "levelist"],
         ),
     ],
 )
@@ -508,7 +517,12 @@ def test_xr_drop_dims(allow_holes, lazy_load, kwargs, dim_keys):
     [
         (
             "level/pl_small.grib",
-            {"shortName": "t", "dataDate": 20240603, "dataTime": 1200, "level": 500},
+            {
+                "metadata.shortName": "t",
+                "metadata.dataDate": 20240603,
+                "metadata.dataTime": 1200,
+                "metadata.level": 500,
+            },
             {
                 "profile": "grib",
                 "time_dim_mode": "forecast",
@@ -541,12 +555,17 @@ def test_xr_drop_dims(allow_holes, lazy_load, kwargs, dim_keys):
         ),
         (
             "level/pl_small.grib",
-            {"shortName": "t", "dataDate": 20240603, "dataTime": 1200, "level": 500},
+            {
+                "metadata.shortName": "t",
+                "metadata.dataDate": 20240603,
+                "metadata.dataTime": 1200,
+                "metadata.level": 500,
+            },
             {
                 "profile": "grib",
                 "time_dim_mode": "forecast",
-                "remapping": {"my_level": "{level}__{typeOfLevel}"},
-                "ensure_dims": ["my_level", "expver"],
+                "remapping": {"my_level": "{metadata.level}__{metadata.typeOfLevel}"},
+                "ensure_dims": ["my_level", "metadata.expver"],
                 "dims_as_attrs": ["forecast_reference_time", "number"],
                 "add_earthkit_attrs": False,
             },
@@ -594,7 +613,7 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
             None,
             {
                 "profile": "grib",
-                "extra_dims": [{"exp_version": "expver"}],
+                "extra_dims": [{"exp_version": "metadata.expver"}],
                 "squeeze": False,
                 "add_earthkit_attrs": False,
             },
@@ -640,7 +659,7 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
             None,
             {
                 "profile": "grib",
-                "extra_dims": [{"exp_version": "expver"}],
+                "extra_dims": [{"exp_version": "metadata.expver"}],
                 "squeeze": True,
                 "ensure_dims": ["exp_version"],
                 "add_earthkit_attrs": False,
@@ -678,7 +697,7 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
             None,
             {
                 "profile": "grib",
-                "remapping": {"my_ver": "GRIB{edition}_ver{expver}"},
+                "remapping": {"my_ver": "GRIB{metadata.edition}_ver{metadata.expver}"},
                 "extra_dims": ["my_ver"],
                 "squeeze": True,
                 "ensure_dims": ["my_ver"],
@@ -718,10 +737,10 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
             {
                 "profile": "grib",
                 "time_dim_mode": "valid_time",
-                "extra_dims": "quantile",
+                "extra_dims": "metadata.quantile",
                 "drop_dims": "number",
                 "dims_as_attrs": ["level", "level_type", "valid_time"],
-                "variable_attrs": "units",
+                "variable_attrs": "parameter.units",
                 "add_earthkit_attrs": False,
             },
             {
@@ -756,7 +775,7 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
             {
                 "profile": "grib",
                 "time_dim_mode": "valid_time",
-                "extra_dims": ["directionNumber", "frequencyNumber"],
+                "extra_dims": ["metadata.directionNumber", "metadata.frequencyNumber"],
                 "squeeze": False,
                 "add_earthkit_attrs": False,
             },
@@ -808,7 +827,12 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
     [
         (
             "level/pl_sfc.grib1",
-            {"dataDate": 20240603, "dataTime": 0, "step": 0, "level": [0, 850]},
+            {
+                "metadata.dataDate": 20240603,
+                "metadata.dataTime": 0,
+                "metadata.step": 0,
+                "metadata.level": [0, 850],
+            },
             {
                 "profile": "grib",
                 "time_dim_mode": "forecast",
@@ -838,8 +862,8 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
                 "dim_name_from_role_name": True,
                 "squeeze": False,
                 "dims_as_attrs": ["<level_per_type>"],
-                "variable_attrs": ["units"],
-                "global_attrs": ["gridType"],
+                "variable_attrs": ["parameter.units"],
+                "global_attrs": ["metadata.gridType"],
                 "add_earthkit_attrs": False,
             },
             {
@@ -867,7 +891,12 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
         ),
         (
             "level/pl_sfc.grib1",
-            {"dataDate": 20240603, "dataTime": 0, "step": 0, "level": [0, 850]},
+            {
+                "metadata.dataDate": 20240603,
+                "metadata.dataTime": 0,
+                "metadata.step": 0,
+                "metadata.level": [0, 850],
+            },
             {
                 "profile": "grib",
                 "time_dim_mode": "forecast",
@@ -895,7 +924,12 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
         ),
         (
             "level/pl_sfc.grib1",
-            {"dataDate": 20240603, "dataTime": 0, "step": 0, "level": [0, 850]},
+            {
+                "metadata.dataDate": 20240603,
+                "metadata.dataTime": 0,
+                "metadata.step": 0,
+                "metadata.level": [0, 850],
+            },
             {
                 "profile": "grib",
                 "time_dim_mode": "forecast",
@@ -949,11 +983,17 @@ def test_xr_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims, var_a
     [
         (
             "level/pl_small.grib",
-            {"shortName": ["t", "r"], "dataDate": 20240603, "dataTime": 1200, "step": 0, "level": [500, 700]},
+            {
+                "metadata.shortName": ["t", "r"],
+                "metadata.dataDate": 20240603,
+                "metadata.dataTime": 1200,
+                "metadata.step": 0,
+                "metadata.level": [500, 700],
+            },
             [0, 3],  # gets t @ 700hPa and r @ 500hPa
             {
                 "profile": "grib",
-                "ensure_dims": ["expver"],
+                "ensure_dims": ["metadata.expver"],
                 "dims_as_attrs": ["level"],
                 "add_earthkit_attrs": False,
             },
@@ -981,13 +1021,19 @@ def test_xr_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims, var_a
         ),
         (
             "level/pl_small.grib",
-            {"shortName": ["t", "r"], "dataDate": 20240603, "dataTime": 1200, "step": 0, "level": [500, 700]},
+            {
+                "metadata.shortName": ["t", "r"],
+                "metadata.dataDate": 20240603,
+                "metadata.dataTime": 1200,
+                "metadata.step": 0,
+                "metadata.level": [500, 700],
+            },
             [0, 3],  # gets t @ 700hPa and r @ 500hPa
             {
                 "profile": "grib",
-                "remapping": {"my_level": "{level}__{typeOfLevel}"},
+                "remapping": {"my_level": "{metadata.level}__{metadata.typeOfLevel}"},
                 "extra_dims": ["my_level"],
-                "ensure_dims": ["expver"],
+                "ensure_dims": ["metadata.expver"],
                 "dims_as_attrs": ["my_level"],
                 "add_earthkit_attrs": False,
             },

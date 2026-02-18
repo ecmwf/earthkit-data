@@ -11,7 +11,6 @@ import logging
 
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
-from earthkit.data.utils.dates import datetime_from_grib
 
 LOG = logging.getLogger(__name__)
 
@@ -37,15 +36,54 @@ class ParamLevelKey(CompoundKey):
 COMPOUND_KEYS = {v.name: v for v in [ParamLevelKey]}
 
 
-ENS_KEYS = ["number", "perturbationNumber", "realization"]
-LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels"]
-LEVEL_TYPE_KEYS = ["typeOfLevel", "levtype"]
-DATE_KEYS = ["date", "andate", "validityDate", "dataDate", "hdate", "referenceDate", "indexingDate"]
-TIME_KEYS = ["time", "antime", "validityTime", "dataTime", "referenceTime", "indexingTime"]
-STEP_KEYS = ["step_timedelta", "step", "endStep", "stepRange", "forecastMonth", "fcmonth"]
-MONTH_KEYS = ["forecastMonth", "fcmonth"]
-VALID_DATETIME_KEYS = ["valid_time", "valid_datetime"]
-BASE_DATETIME_KEYS = [
+def _get_component_keys(component, keys):
+    return [f"{component}.{k}" for k in keys]
+
+
+def _get_metadata_keys(keys):
+    return _get_component_keys("metadata", keys)
+
+
+_GRIB_ENS_KEYS = ["number", "perturbationNumber", "realization"]
+_ENS_KEYS = ["member", "realisation", "realization"]
+ENS_KEYS = ["number"] + _get_component_keys("ensemble", _ENS_KEYS) + _get_metadata_keys(_GRIB_ENS_KEYS)
+
+_GRIB_LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels"]
+_VERTICAL_LEVEL_KEYS = ["level", "layer"]
+LEVEL_KEYS = (
+    ["level"] + _get_component_keys("vertical", _VERTICAL_LEVEL_KEYS) + _get_metadata_keys(_GRIB_LEVEL_KEYS)
+)
+
+_GRIB_LEVEL_TYPE_KEYS = ["typeOfLevel", "levtype"]
+_VERTICAL_LEVEL_TYPE_KEYS = ["level_type", "abbreviation"]
+LEVEL_TYPE_KEYS = (
+    ["level_type"]
+    + _get_component_keys("vertical", _VERTICAL_LEVEL_TYPE_KEYS)
+    + _get_metadata_keys(_GRIB_LEVEL_TYPE_KEYS)
+)
+
+_GRIB_DATE_KEYS = ["date", "andate", "validityDate", "dataDate", "hdate", "referenceDate", "indexingDate"]
+DATE_KEYS = ["date"] + _get_metadata_keys(_GRIB_DATE_KEYS)
+
+_GRIB_TIME_KEYS = ["time", "antime", "validityTime", "dataTime", "referenceTime", "indexingTime"]
+TIME_KEYS = ["time"] + _get_metadata_keys(_GRIB_TIME_KEYS)
+
+_GRIB_STEP_KEYS = ["step_timedelta", "step", "endStep", "stepRange"]
+_STEP_KEYS = ["step", "forecast_period"]
+STEP_KEYS = ["step"] + _get_component_keys("time", _STEP_KEYS) + _get_metadata_keys(_GRIB_STEP_KEYS)
+
+_GRIB_MONTH_KEYS = ["forecastMonth", "fcmonth"]
+MONTH_KEYS = _get_metadata_keys(_GRIB_MONTH_KEYS)
+
+_GRIB_VALID_DATETIME_KEYS = ["valid_time", "valid_datetime"]
+_VALID_DATETIME_KEYS = ["time.valid_datetime"]
+VALID_DATETIME_KEYS = (
+    ["valid_time"]
+    + _get_component_keys("time", _VALID_DATETIME_KEYS)
+    + _get_metadata_keys(_GRIB_VALID_DATETIME_KEYS)
+)
+
+_GRIB_BASE_DATETIME_KEYS = [
     "forecast_reference_time",
     "base_time",
     "base_datetime",
@@ -54,10 +92,13 @@ BASE_DATETIME_KEYS = [
     "indexing_time",
     "indexing_datetime",
 ]
-BASE_DATETIME_KEYS = [
-    "time.forecast_reference_time",
-    "time.base_datetime",
-]
+_BASE_DATETIME_KEYS = ["forecast_reference_time", "base_datetime"]
+BASE_DATETIME_KEYS = (
+    ["forecast_reference_time"]
+    + _get_component_keys("time", _BASE_DATETIME_KEYS)
+    + _get_metadata_keys(_GRIB_BASE_DATETIME_KEYS)
+)
+
 DATETIME_KEYS = BASE_DATETIME_KEYS + VALID_DATETIME_KEYS
 
 KEYS = (
@@ -67,6 +108,7 @@ KEYS = (
     DATE_KEYS,
     TIME_KEYS,
     STEP_KEYS,
+    MONTH_KEYS,
     VALID_DATETIME_KEYS,
     BASE_DATETIME_KEYS,
 )
@@ -221,11 +263,11 @@ class Dim:
     def deactivate_drop_list(self):
         self.owner.deactivate([self.name, self.key] + self.drop, ignore_dim=self)
 
-    def dim_name(self, key, source):
-        return key
+    def dim_key(self, source):
+        return self.key
 
-    def as_coord(self, key, values, source):
-        key = self.dim_name(key, source)
+    def as_coord(self, values, source):
+        key = self.dim_key(source)
         if key not in self.coords:
             from .coord import Coord
 
@@ -234,6 +276,19 @@ class Dim:
 
     def remapping_keys(self):
         return []
+
+    def get_simple_name(self):
+        # Name without an eventual prefix "<component>."
+        if self.name == self.key:
+            # strip a prefix "<component>.", if any
+            _d_name_parts = self.name.split(".")
+            if len(_d_name_parts) > 1:
+                d_name = ".".join(_d_name_parts[1:])
+            else:
+                d_name = self.name
+        else:
+            d_name = self.name
+        return d_name
 
     def __repr__(self):
         return f"{self.__class__.__name__}(name={self.name}, key={self.key})"
@@ -284,41 +339,6 @@ class ReferenceTimeDim(Dim):
     drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="reference_time")
 
 
-class CustomForecastRefDim(Dim):
-    @staticmethod
-    def _datetime(val):
-        if not val:
-            return None
-        else:
-            try:
-                date, time = val.split("_")
-                return datetime_from_grib(int(date), int(time)).isoformat()
-            except Exception:
-                return val
-
-    def __init__(self, owner, keys, *args, active=True, **kwargs):
-        if isinstance(keys, str):
-            self.key = keys
-        elif isinstance(keys, list) and len(keys) == 2:
-            date = keys[0]
-            time = keys[1]
-            self.key = self._name(date, time)
-            self.drop = [date, time]
-            if active:
-                owner.register_remapping(
-                    {self.key: "{" + date + "}_{" + time + "}"},
-                    patch={self.key: CustomForecastRefDim._datetime},
-                )
-        else:
-            raise ValueError(f"Invalid keys={keys}")
-        super().__init__(owner, *args, active=active, **kwargs)
-
-    def _name(self, date, time):
-        if date.endswith("Date") and time.endswith("Time") and date[:-4] == time[:-4]:
-            return date[:-4] + "_time"
-        return f"{date}_{time}"
-
-
 class LevelDim(Dim):
     alias = get_keys(LEVEL_KEYS)
 
@@ -338,8 +358,8 @@ class LevelPerTypeDim(Dim):
         self.level_type_key = level_type_key
         super().__init__(owner, *args, **kwargs)
 
-    def dim_name(self, key, source):
-        lev_type = source[0].metadata(self.level_type_key)
+    def dim_key(self, source):
+        lev_type = source[0].get(self.level_type_key)
         if not lev_type:
             raise ValueError(f"{self.level_type_key} not found in metadata")
         return lev_type
@@ -377,6 +397,10 @@ class RemappingDim(Dim):
 
     def remapping_keys(self):
         return self.keys
+
+    def get_simple_name(self):
+        # Name without an eventual prefix "<component>."
+        return self.name
 
 
 class CompoundKeyDim(RemappingDim):
@@ -428,12 +452,10 @@ class DimMode:
 
 class ForecastTimeDimMode(DimMode):
     name = "forecast"
-    DATES = ["date", "dataDate"]
-    TIMES = ["time", "dataTime"]
 
     def build(self, profile, owner, active=True):
         ref_time_key, ref_time_name = owner.dim_roles.role("forecast_reference_time", raise_error=False)
-        print(f"{ref_time_key=}, {ref_time_name=}", flush=True)  ###PW
+        # print(f"{ref_time_key=}, {ref_time_name=}", flush=True)  ###PW
         # PW: TODO: this is not quite OK yet...
         if ref_time_key is None:
             ref_time_key = "time.forecast_reference_time"
@@ -510,7 +532,7 @@ class LevelPerTypeDimMode(LevelAndTypeDimMode):
     dim = LevelPerTypeDim
 
 
-TIME_DIM_MODES = {v.name: v for v in [ForecastTimeDimMode, ValidTimeDimMode]}  # , RawTimeDimMode]}
+TIME_DIM_MODES = {v.name: v for v in [ForecastTimeDimMode, ValidTimeDimMode, RawTimeDimMode]}
 LEVEL_DIM_MODES = {v.name: v for v in [LevelDimMode, LevelPerTypeDimMode, LevelAndTypeDimMode]}
 
 
@@ -904,8 +926,10 @@ class DimHandler:
         # first rename the dimensions where the name and key are different
         mapping = {}
         for d in self.dims.values():
-            if d.key in dataset.dims and d.name != d.key:
-                mapping[d.key] = d.name
+            if d.key in dataset.dims:
+                d_name = d.get_simple_name()
+                if d_name != d.key:
+                    mapping[d.key] = d_name
         if mapping:
             dataset = dataset.rename(mapping)
 

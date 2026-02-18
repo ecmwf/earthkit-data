@@ -59,7 +59,11 @@ class Attr:
         The name of the attribute.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, remove_prefix=False):
+        if remove_prefix:
+            name_parts = name.split(".")
+            if len(name_parts) > 1:
+                name = ".".join(name_parts[1:])
         self.name = name
 
     def value(self):
@@ -82,11 +86,11 @@ class KeyAttr(Attr):
     """
 
     def __init__(self, name, key=None):
-        super().__init__(name)
+        super().__init__(name, remove_prefix=key is None)
         self.key = key if key is not None else name
 
-    def get(self, metadata):
-        return {self.name: metadata.get(self.key, default=None)}
+    def get(self, field):
+        return {self.name: field.get(self.key, default=None)}
 
     def __repr__(self) -> str:
         return f"KeyAttr({self.name}, key={self.key})"
@@ -102,11 +106,14 @@ class NamespaceAttr(Attr):
     """
 
     def __init__(self, name, ns=None):
-        super().__init__(name)
+        super().__init__(name, remove_prefix=ns is None)
         self.ns = ns if ns is not None else name
 
-    def get(self, metadata):
-        return {self.name: metadata.as_namespace(self.ns)}
+    def get(self, field):
+        # PW: TODO
+        # print(f"{self=}, {field=}", flush=True)
+        raise NotImplementedError
+        return {self.name: field.as_namespace(self.ns)}
 
     def __repr__(self) -> str:
         return f"NamespaceAttr({self.name}, ns={self.ns})"
@@ -155,11 +162,11 @@ class CallableAttr(Attr):
         super().__init__(name)
         self.func = func
 
-    def __call__(self, metadata):
+    def __call__(self, field):
         if self.name is None:
-            return self.func(metadata)
+            return self.func(field)
         else:
-            res = self.func(self.name, metadata)
+            res = self.func(self.name, field)
             return {self.name: res}
 
     def __repr__(self) -> str:
@@ -188,17 +195,15 @@ class AttrList(list):
             if val.startswith("namespace="):
                 ns = val[len("namespace=") :]
                 if name is None:
-                    name = ns
+                    name, ns = ns, None
                 return NamespaceAttr(name, ns=ns)
             elif val.startswith("key="):
                 key = val[len("key=") :]
                 if name is None:
-                    name = key
+                    name, key = key, None
                 return KeyAttr(name, key=key)
             elif name is None:
-                name = val
-                key = val
-                return KeyAttr(val, key=key)
+                return KeyAttr(val)
             else:
                 return FixedAttr(name, val)
         elif callable(val):

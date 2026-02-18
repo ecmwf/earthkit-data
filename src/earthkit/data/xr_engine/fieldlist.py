@@ -109,8 +109,8 @@ class XArrayInputFieldList(FieldList):
             self.db = db
         elif keys:
             # PW: DEBUG
-            print(f"{keys=}", flush=True)
-            print(f"{self.unique_values(keys)=}", flush=True)
+            # print(f"{keys=}", flush=True)
+            # print(f"{self.unique_values(keys)=}", flush=True)
             self.db = IndexDB(self.unique_values(keys))
 
         assert self.db
@@ -210,6 +210,30 @@ class XArrayInputFieldList(FieldList):
         while isinstance(ds, XArrayInputFieldList):
             ds = ds.ds
         return ds
+
+    # PW: TODO: consider if this method shouldn't be put elsewhere
+    def _get_user_coords_to_fl_idx(self, keys, remapping=None):
+        if isinstance(keys, str):
+            keys = [keys]
+        if remapping is None:
+            # some subclasses (e.g. XArrayInputFieldList) has remapping as a member
+            remapping = getattr(self, "remapping", None)
+
+        user_coords_to_fl_idx = {}
+        for i, f in enumerate(self):
+            _default = [None] * len(keys)
+            _astype = [None] * len(keys)
+            metadata = f._get_fast(
+                keys, default=_default, astype=_astype, remapping=remapping
+            )  # PW: TODO: can raise_on_missing?
+            user_coords = tuple(metadata)
+            assert user_coords not in user_coords_to_fl_idx, (
+                f"Multiple fields in {self} with {dict(zip(keys, user_coords))}: "
+                f"#{user_coords_to_fl_idx[user_coords]} and #{i}"
+            )
+            user_coords_to_fl_idx[user_coords] = i
+
+        return user_coords_to_fl_idx
 
     def __getstate__(self):
         """As a simplification, only serialise the unwrapped fieldlist.

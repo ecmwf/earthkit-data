@@ -1,20 +1,20 @@
 dim_roles:
-  number: number
-  date: dataDate
-  time: dataTime
-  step: step
-  level: level
-  level_type: level_type
+  number: metadata.number
+  date: metadata.date
+  time: metadata.time
+  step: metadata.step_timedelta
+  level: metadata.level
+  level_type: metadata.typeOfLevel
 
-variable_key: param
+variable_key: metadata.param
 
 attrs_mode: fixed
 
 variable_attrs:
-- cfName
-- name
-- units
-- typeOfLevel
+- metadata.cfName
+- metadata.name
+- parameter.units
+- metadata.typeOfLevel
 
 global_attrs:
 - Conventions: CF-1.8
