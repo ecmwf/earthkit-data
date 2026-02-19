@@ -645,7 +645,7 @@ class DatasetBuilder:
         return ds_xr, profile
 
     def grid(self, ds):
-        grids = ds.index("md5GridSection")
+        grids = ds.index("metadata.md5GridSection")
 
         if not grids:
             grid = "_custom_" + str(id(ds))
