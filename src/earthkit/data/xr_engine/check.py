@@ -76,8 +76,8 @@ class CubeChecker:
         return f_other, index_other
 
     def namespace_diff(self, f, f_other):
-        meta = f.namespace()
-        meta_other = f_other.namespace()
+        meta = f._dump_component()
+        meta_other = f_other._dump_component()
         return DictDiff.diff(meta, meta_other)
 
     def meta_diff(self, f, f_other, coords_keys):
@@ -147,7 +147,7 @@ class CubeChecker:
                         text_ns += f"{k}:\n {v}\n"
 
                 md = {"coordinates": self.meta(f, coord_keys)}
-                md.update(f.namespace())
+                md.update(f._dump_component())
 
                 text_meta = f"\nField[{index}] metadata:\n"
                 for k, v in md.items():

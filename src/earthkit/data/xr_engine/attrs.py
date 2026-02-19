@@ -107,13 +107,23 @@ class NamespaceAttr(Attr):
 
     def __init__(self, name, ns=None):
         super().__init__(name, remove_prefix=ns is None)
-        self.ns = ns if ns is not None else name
+        if ns is None:
+            ns = name
+
+        if ns.startswith("metadata."):
+            self.ns = "metadata"
+            self.filter = ns.removeprefix("metadata.")
+        else:
+            self.ns = ns
+            self.filter = None
 
     def get(self, field):
-        # PW: TODO
-        # print(f"{self=}, {field=}", flush=True)
-        raise NotImplementedError
-        return {self.name: field.as_namespace(self.ns)}
+        namespace_attr = field._dump_component(self.ns, filter=self.filter)
+        if self.filter is not None:
+            # namespace_attr is of the form `{self.filter: actual_namespace_attr_dict}`
+            # so need to extract the `actual_namespace_attr_dict`
+            namespace_attr = namespace_attr[self.filter]
+        return {self.name: namespace_attr}
 
     def __repr__(self) -> str:
         return f"NamespaceAttr({self.name}, ns={self.ns})"
