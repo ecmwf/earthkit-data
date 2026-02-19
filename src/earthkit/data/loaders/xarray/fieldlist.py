@@ -206,11 +206,27 @@ class XArrayFieldList(IndexedFieldList):
                 )
                 continue
 
+            grid = guess.grid(coordinates, variable)
+
+            def _check() -> None:
+                from .coordinates import UnsupportedCoordinate
+
+                g = [c for c in coordinates if c.is_grid]
+
+                for i, c in enumerate(coordinates):
+                    if c.is_dim and isinstance(c, UnsupportedCoordinate):
+                        for cx in g:
+                            if c.name in cx.variable.sizes:
+                                c.is_grid = True
+                                break
+
+            _check()
+
             v = Variable(
                 ds=ds,
                 variable=variable,
                 coordinates=coordinates,
-                grid=guess.grid(coordinates, variable),
+                grid=grid,
                 time=Time.from_coordinates(coordinates),
                 metadata={},
             )

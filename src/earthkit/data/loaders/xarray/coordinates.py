@@ -394,10 +394,9 @@ class PositionCoordinate(Coordinate):
     """Coordinate class for position."""
 
     is_grid = True
-    is_lat = True
+    is_lat = False
 
-    is_dim = False
-    mars_names = ("position",)
+    mars_names = tuple()
 
 
 class LongitudeCoordinate(Coordinate):

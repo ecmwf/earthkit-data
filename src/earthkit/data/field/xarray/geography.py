@@ -112,7 +112,7 @@ class XArrayGeography(BaseGeography):
         return lat, lon
 
     def points(self, flatten=False, dtype=None):
-        x, y = self.owner.grid.xy
+        x, y = self.owner.grid.xys
         if x is not None and y is not None:
             x = x.reshape(self.shape())
             y = y.reshape(self.shape())

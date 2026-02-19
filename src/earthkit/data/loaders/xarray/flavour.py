@@ -287,8 +287,6 @@ class CoordinateGuesser(ABC):
 
         grid: Grid = UnstructuredGrid(lat, lon, dim_vars) if unstructured else MeshedGrid(lat, lon, dim_vars)
 
-        print("here", grid)
-
         self._grid_cache[(lat.name, lon.name, dim_vars)] = grid
 
         return grid

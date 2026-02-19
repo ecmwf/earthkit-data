@@ -64,6 +64,9 @@ class Time(ABC):
         if len(date_coordinate) == 1 and len(time_coordinate) == 1 and len(step_coordinate) == 1:
             return ForecastFromValidTimeAndStep(time_coordinate[0], step_coordinate[0], date_coordinate[0])
 
+        if len(date_coordinate) == 1 and len(time_coordinate) == 0 and len(step_coordinate) == 0:
+            return ForecastFromBaseTime(date_coordinate[0])
+
         LOG.error("")
         LOG.error(f"{len(date_coordinate)} date_coordinate")
         for c in date_coordinate:
@@ -311,3 +314,39 @@ class ForecastFromBaseTimeAndDate(Time):
         step = coords_values[self.step_coordinate_name]
 
         return {"base_datetime": date, "step": step}
+
+
+class ForecastFromBaseTime(Time):
+    """Represents a forecast time derived from base time and date."""
+
+    def __init__(self, date_coordinate: Coordinate) -> None:
+        """Initialize ForecastFromBaseTimeAndDate with date and step coordinates.
+
+        Args
+        ----
+        date_coordinate : Coordinate
+            The date coordinate.
+        step_coordinate : Coordinate
+            The step coordinate.
+        """
+        self.date_coordinate_name = date_coordinate.name
+
+    def select_valid_datetime(self, variable: Variable) -> Optional[str]:
+        """Select the valid datetime for a given variable.
+
+        Parameters
+        ----------
+        variable : Variable
+            The variable to select the datetime for.
+
+        Returns
+        -------
+        Optional[str]
+            The name of the time coordinate.
+        """
+        return self.time_coordinate_name
+
+    def spec(self, coords_values: Dict[str, Any]):
+        date = coords_values[self.date_coordinate_name]
+
+        return {"base_datetime": date}
