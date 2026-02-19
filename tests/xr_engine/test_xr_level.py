@@ -199,7 +199,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
         (
             "pl.grib",
             {"profile": "mars", "level_dim_mode": "level", "dim_name_from_role_name": False},
-            {"metadata.levelist": [300, 400, 500, 700, 850, 1000]},
+            {"levelist": [300, 400, 500, 700, 850, 1000]},
             "pl",
         ),
         (

@@ -36,7 +36,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
-                "dim_roles": {"number": "perturbationNumber"},
+                "dim_roles": {"number": "metadata.perturbationNumber"},
                 "dim_name_from_role_name": True,
             },
             {
@@ -45,7 +45,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
-                "dim_roles": {"ens": "perturbationNumber"},
+                "dim_roles": {"ens": "metadata.perturbationNumber"},
                 "dim_name_from_role_name": True,
             },
             {
@@ -54,7 +54,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
-                "dim_roles": {"number": "perturbationNumber"},
+                "dim_roles": {"number": "metadata.perturbationNumber"},
                 "dim_name_from_role_name": False,
             },
             {
@@ -73,13 +73,34 @@ def test_xr_number_dim(allow_holes, lazy_load, kwargs, dims):
 @pytest.mark.cache
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
-def test_xr_number_dim_missing(allow_holes, lazy_load):
+def test_xr_number_dim_missing_1(allow_holes, lazy_load):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_td2_1_year.grib"))
 
     ds = ds_ek[10].to_xarray(
         time_dim_mode="valid_time",
         ensure_dims="number",
-        fill_metadata={"number": 10},
+        fill_metadata={"metadata.number": 10},
+        allow_holes=allow_holes,
+        lazy_load=lazy_load,
+    )
+    assert ds is not None
+
+    dims = {"number": [10]}
+    compare_dims(ds, dims, order_ref_var="2t")
+
+
+@pytest.mark.cache
+@pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("lazy_load", [True, False])
+def test_xr_number_dim_missing_2(allow_holes, lazy_load):
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_td2_1_year.grib"))
+
+    ds = ds_ek[10].to_xarray(
+        time_dim_mode="valid_time",
+        dim_roles={"number": "ensemble.number"},
+        ensure_dims="ensemble.number",
+        fill_metadata={"ensemble.number": 10},
+        dim_name_from_role_name=False,
         allow_holes=allow_holes,
         lazy_load=lazy_load,
     )
