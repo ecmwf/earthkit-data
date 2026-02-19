@@ -63,7 +63,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "grib",
                 "level_dim_mode": "level",
-                "ensure_dims": "level",
+                "ensure_dims": "metadata.level",
                 "dim_name_from_role_name": False,
             },
             {"level": [80]},
@@ -74,7 +74,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "mars",
                 "level_dim_mode": "level",
-                "ensure_dims": "levelist",
+                "ensure_dims": "metadata.levelist",
                 "dim_name_from_role_name": False,
             },
             {"levelist": [0.01, 0.1, 1]},
@@ -85,7 +85,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "grib",
                 "level_dim_mode": "level",
-                "ensure_dims": "level",
+                "ensure_dims": "metadata.level",
                 "dim_name_from_role_name": False,
             },
             {"level": [100, 1000, 2000, 3000]},
@@ -96,7 +96,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "grib",
                 "level_dim_mode": "level",
-                "ensure_dims": "level",
+                "ensure_dims": "metadata.level",
                 "dim_name_from_role_name": False,
             },
             {"level": [500, 1000, 2500, 10000]},
@@ -107,7 +107,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "grib",
                 "level_dim_mode": "level",
-                "ensure_dims": "level",
+                "ensure_dims": "metadata.level",
                 "dim_name_from_role_name": False,
             },
             {"level": [320]},
@@ -118,7 +118,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "grib",
                 "level_dim_mode": "level",
-                "ensure_dims": "level",
+                "ensure_dims": "metadata.level",
                 "dim_name_from_role_name": False,
             },
             {"level": [1500]},
@@ -129,7 +129,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "grib",
                 "level_dim_mode": "level",
-                "ensure_dims": "level",
+                "ensure_dims": "metadata.level",
                 "dim_name_from_role_name": False,
             },
             {"level": [7]},
@@ -140,7 +140,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "grib",
                 "level_dim_mode": "level",
-                "ensure_dims": "level",
+                "ensure_dims": "metadata.level",
                 "dim_name_from_role_name": False,
             },
             {"level": [3]},
@@ -151,7 +151,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "grib",
                 "level_dim_mode": "level",
-                "ensure_dims": "level",
+                "ensure_dims": "metadata.level",
                 "dim_name_from_role_name": False,
             },
             {"level": [77]},
@@ -162,7 +162,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "grib",
                 "level_dim_mode": "level",
-                "ensure_dims": "level",
+                "ensure_dims": "metadata.level",
                 "dim_name_from_role_name": False,
             },
             {"level": [0]},
@@ -179,7 +179,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "grib",
                 "level_dim_mode": "level",
-                "ensure_dims": "level",
+                "ensure_dims": "metadata.level",
                 "dim_name_from_role_name": False,
             },
             {"level": [0]},
@@ -190,7 +190,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "grib",
                 "level_dim_mode": "level",
-                "ensure_dims": "level",
+                "ensure_dims": "metadata.level",
                 "dim_name_from_role_name": False,
             },
             {"level": [1]},
@@ -199,7 +199,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
         (
             "pl.grib",
             {"profile": "mars", "level_dim_mode": "level", "dim_name_from_role_name": False},
-            {"levelist": [300, 400, 500, 700, 850, 1000]},
+            {"metadata.levelist": [300, 400, 500, 700, 850, 1000]},
             "pl",
         ),
         (
@@ -207,7 +207,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "mars",
                 "level_dim_mode": "level",
-                "ensure_dims": "levelist",
+                "ensure_dims": "metadata.levelist",
                 "dim_name_from_role_name": False,
             },
             {"levelist": [0.8]},
@@ -218,7 +218,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "mars",
                 "level_dim_mode": "level",
-                "ensure_dims": "levelist",
+                "ensure_dims": "metadata.levelist",
                 "dim_name_from_role_name": False,
             },
             {"levelist": [320]},
@@ -229,7 +229,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "mars",
                 "level_dim_mode": "level",
-                "ensure_dims": "levelist",
+                "ensure_dims": "metadata.levelist",
                 "dim_name_from_role_name": False,
             },
             {"levelist": [1500]},
@@ -240,7 +240,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "mars",
                 "level_dim_mode": "level",
-                "ensure_dims": "levelist",
+                "ensure_dims": "metadata.levelist",
                 "dim_name_from_role_name": False,
             },
             {"levelist": [3]},
@@ -251,7 +251,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
             {
                 "profile": "mars",
                 "level_dim_mode": "level",
-                "ensure_dims": "levelist",
+                "ensure_dims": "metadata.levelist",
                 "dim_name_from_role_name": False,
             },
             {"levelist": [0.01, 0.1, 1]},

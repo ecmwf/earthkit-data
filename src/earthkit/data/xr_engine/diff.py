@@ -27,7 +27,7 @@ class DictDiff:
         flat = {}
         for key, value in d.items():
             new_key = f"{parent_key}{sep}{key}" if parent_key else key
-            if isinstance(value, dict) and len(value) > 0:
+            if isinstance(value, dict):
                 flat.update(DictDiff._flatten_dict(value, parent_key=new_key, sep=sep))
             else:
                 flat[new_key] = value
@@ -89,6 +89,8 @@ class ListDiff:
             return v1 == v2, ListDiff.VALUE_DIFF
         elif isinstance(v1, datetime.timedelta) and isinstance(v2, datetime.timedelta):
             return v1 == v2, ListDiff.VALUE_DIFF
+        elif v1 is None and v2 is None:
+            return True, ListDiff.VALUE_DIFF
         elif type(v1) is not type(v2):
             return False, ListDiff.TYPE_DIFF
         else:

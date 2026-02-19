@@ -178,7 +178,12 @@ def test_xr_engine_time_basic(allow_holes, kwargs, dims, step_units):
     [
         (
             {
-                "dim_roles": {"date": "indexingDate", "time": "indexingTime", "step": "forecastMonth"},
+                "dim_roles": {
+                    "forecast_reference_time": None,
+                    "date": "metadata.indexingDate",
+                    "time": "metadata.indexingTime",
+                    "step": "metadata.forecastMonth",
+                },
                 "decode_times": False,
                 "decode_timedelta": False,
                 "dim_name_from_role_name": False,
@@ -433,7 +438,7 @@ def test_xr_engine_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_
         ),
         (
             {
-                "fixed_dims": ["level", "forecast_reference_time", "step"],
+                "fixed_dims": ["metadata.level", "time.forecast_reference_time", "metadata.step"],
                 "add_valid_time_coord": True,
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -455,7 +460,7 @@ def test_xr_engine_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_
         ),
         (
             {
-                "fixed_dims": ["level", "step", "forecast_reference_time"],
+                "fixed_dims": ["vertical.level", "metadata.step", "time.forecast_reference_time"],
                 "add_valid_time_coord": True,
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -506,9 +511,8 @@ def test_xr_engine_valid_time_coord(allow_holes, kwargs, dims, step_units, coord
         # not yet implemented
         return
 
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib")).sel(
-        date=20240603, time=[0, 1200]
-    )
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
+    ds_ek = ds_ek.sel({"metadata.date": 20240603, "metadata.time": [0, 1200]})
 
     ds = ds_ek.to_xarray(allow_holes=allow_holes, **kwargs)
 
