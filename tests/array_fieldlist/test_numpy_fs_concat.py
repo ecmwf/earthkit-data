@@ -15,8 +15,8 @@ import sys
 import pytest
 
 from earthkit.data import concat
+from earthkit.data import create_fieldlist
 from earthkit.data import from_source
-from earthkit.data.indexing.fieldlist import FieldList
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -76,7 +76,7 @@ def test_array_fl_grib_concat_3b(mode):
 
 
 def test_array_fl_grib_from_empty_1():
-    ds_e = FieldList()
+    ds_e = create_fieldlist()
     ds, md = load_array_fl(1)
     ds1 = concat(ds_e, ds)
     assert id(ds1) == id(ds)
@@ -86,7 +86,7 @@ def test_array_fl_grib_from_empty_1():
 
 
 def test_array_fl_grib_from_empty_2():
-    ds_e = FieldList()
+    ds_e = create_fieldlist()
     ds, md = load_array_fl(1)
     ds1 = concat(ds, ds_e)
     assert id(ds1) == id(ds)
@@ -96,7 +96,7 @@ def test_array_fl_grib_from_empty_2():
 
 
 def test_array_fl_grib_from_empty_3():
-    ds_e = FieldList()
+    ds_e = create_fieldlist()
     ds1, ds2, md = load_array_fl(2)
     ds = concat(ds_e, ds1, ds2)
 

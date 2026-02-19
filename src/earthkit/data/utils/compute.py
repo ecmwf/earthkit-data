@@ -92,8 +92,7 @@ def wrap_maths(cls):
 
 def apply_ufunc(func, *args):
     from earthkit.data.core.field import Field
-    from earthkit.data.core.fieldlist import FieldListCore
-    from earthkit.data.indexing.fieldlist import FieldList
+    from earthkit.data.core.fieldlist import FieldList
 
     x = [get_wrapper(a) for a in args]
 
@@ -105,7 +104,7 @@ def apply_ufunc(func, *args):
     else:
         num = 0
         for a in x:
-            if isinstance(a, FieldListCore):
+            if isinstance(a, FieldList):
                 n = len(a)
                 if n > num:
                     num = n
@@ -141,12 +140,11 @@ class LoopCompute(Compute):
     @staticmethod
     def create_fieldlist(ref, x):
         from earthkit.data.core.field import Field
-        from earthkit.data.core.fieldlist import FieldListCore
-        from earthkit.data.indexing.fieldlist import FieldList
+        from earthkit.data.core.fieldlist import FieldList
 
         x = get_wrapper(x)
 
-        if isinstance(x, FieldListCore):
+        if isinstance(x, FieldList):
             return x
 
         if isinstance(x, Field):
@@ -206,13 +204,12 @@ class LoopCompute(Compute):
 
     @staticmethod
     def binary_op(oper, x, y):
-        from earthkit.data.core.fieldlist import FieldListCore
-        from earthkit.data.indexing.fieldlist import FieldList
+        from earthkit.data.core.fieldlist import FieldList
 
-        assert isinstance(x, FieldListCore), f"Expected FieldListCore for x, got {type(x)}"
+        assert isinstance(x, FieldList), f"Expected FieldList for x, got {type(x)}"
 
         y = LoopCompute.create_fieldlist(x, y)
-        assert isinstance(y, FieldListCore), f"Expected FieldListCore for y, got {type(y)}"
+        assert isinstance(y, FieldList), f"Expected FieldList for y, got {type(y)}"
 
         if len(y) == 0:
             raise ValueError("FieldList y must not be empty")
@@ -236,7 +233,7 @@ class LoopCompute(Compute):
 
     @staticmethod
     def apply_ufunc(func, ref, *args, template=None):
-        from earthkit.data.indexing.fieldlist import FieldList
+        from earthkit.data.indexing.fieldlist_tmp import FieldList
 
         x = [get_wrapper(a) for a in args]
         ds = []

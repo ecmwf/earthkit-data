@@ -24,8 +24,9 @@ from .arguments.transformers import ALL
 from .core.caching import CACHE as cache
 from .core.config import CONFIG as config
 from .core.field import Field
+from .core.fieldlist import FieldList
+from .core.fieldlist import create_fieldlist
 from .encoders import create_encoder
-from .indexing.fieldlist import FieldList
 from .indexing.simple import SimpleFieldList
 
 # from .readers.grib.output import new_grib_output
@@ -49,6 +50,7 @@ __all__ = [
     "cache",
     "concat",
     "create_encoder",
+    "create_fieldlist",
     "create_target",
     "download_example_file",
     "Field",

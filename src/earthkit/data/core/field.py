@@ -1234,12 +1234,12 @@ class Field(Base):
         return r
 
     def _binary_op(self, oper, y):
-        from earthkit.data.core.fieldlist import FieldListCore
+        from earthkit.data.core.fieldlist import FieldList
         from earthkit.data.indexing.indexed import IndexedFieldList
         from earthkit.data.wrappers import get_wrapper
 
         y = get_wrapper(y)
-        if isinstance(y, FieldListCore):
+        if isinstance(y, FieldList):
             x = IndexedFieldList.from_fields([self])
             return x._binary_op(oper, y)
 

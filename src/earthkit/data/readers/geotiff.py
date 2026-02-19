@@ -8,7 +8,7 @@
 #
 
 
-from earthkit.data.indexing.fieldlist import FieldList
+from earthkit.data import SimpleFieldList
 
 from . import Reader
 
@@ -44,7 +44,7 @@ from . import Reader
 #         self._not_implemented()
 
 
-class GeoTIFFFieldList(FieldList):
+class GeoTIFFFieldList(SimpleFieldList):
     """A list of GeoTIFF bands"""
 
     # FIELD_TYPE = GeoTIFFField

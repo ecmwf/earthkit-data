@@ -14,9 +14,9 @@ import os
 import pytest
 
 from earthkit.data import concat
+from earthkit.data import create_fieldlist
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.indexing.fieldlist import FieldList
 from earthkit.data.testing import earthkit_examples_file
 
 
@@ -118,7 +118,7 @@ def test_grib_concat_mixed(mode):
 
 
 def test_grib_from_empty_1():
-    ds_e = FieldList()
+    ds_e = create_fieldlist()
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds.get("parameter.variable")
 
@@ -129,7 +129,7 @@ def test_grib_from_empty_1():
 
 
 def test_grib_from_empty_2():
-    ds_e = FieldList()
+    ds_e = create_fieldlist()
     ds = from_source("file", earthkit_examples_file("test.grib"))
     md = ds.get("parameter.variable")
 
@@ -140,7 +140,7 @@ def test_grib_from_empty_2():
 
 
 def test_grib_from_empty_3():
-    ds_e = FieldList()
+    ds_e = create_fieldlist()
     ds1 = from_source("file", earthkit_examples_file("test.grib"))
     ds2 = from_source("file", earthkit_examples_file("test6.grib"))
     md = ds1.metadata("param") + ds2.metadata("param")

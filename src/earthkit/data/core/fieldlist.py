@@ -12,7 +12,17 @@ from abc import abstractmethod
 from earthkit.data.core import Base
 
 
-class FieldListCore(Base):
+def create_fieldlist(*fields):
+    from earthkit.data.indexing.empty import EmptyFieldList
+    from earthkit.data.indexing.simple import SimpleFieldList
+
+    if len(fields) == 0:
+        return EmptyFieldList()
+    else:
+        return SimpleFieldList.from_fields(fields)
+
+
+class FieldList(Base):
     @abstractmethod
     def __getitem__(self, index):
         pass
@@ -22,33 +32,10 @@ class FieldListCore(Base):
         pass
 
     @staticmethod
-    @abstractmethod
     def from_fields(fields):
-        pass
+        from earthkit.data.indexing.simple import SimpleFieldList
 
-    # @staticmethod
-    # @abstractmethod
-    # def from_numpy(array, metadata):
-    #     pass
-
-    # @staticmethod
-    # @abstractmethod
-    # def from_array(array, metadata):
-    #     r"""Create an :class:`SimpleFieldList`.
-
-    #     Parameters
-    #     ----------
-    #     array: array-like, list
-    #         The fields' values. When it is a list it must contain one array per field.
-    #     metadata: list, :class:`Metadata`
-    #         The fields' metadata. Must contain one :class:`Metadata` object per field. Or
-    #         it can be a single :class:`Metadata` object when all the fields have the same metadata.
-
-    #     In the generated :class:`SimpleFieldList`, each field is represented by an array
-    #     storing the field values and a :class:`MetaData` object holding
-    #     the field metadata. The shape and dtype of the array is controlled by the ``kwargs``.
-    #     """
-    #     pass
+        return SimpleFieldList.from_fields(fields)
 
     @property
     @abstractmethod
@@ -173,71 +160,10 @@ class FieldListCore(Base):
         """
         pass
 
-    # @abstractmethod
-    # def datetime(self):
-    #     r"""Return the unique, sorted list of dates and times in the fieldlist.
-
-    #     Returns
-    #     -------
-    #     dict of datatime.datetime
-    #         Dict with items "base_time" and "valid_time".
-
-    #     Examples
-    #     --------
-    #     >>> import earthkit.data
-    #     >>> ds = earthkit.data.from_source("file", "tests/data/t_time_series.grib")
-    #     >>> ds.datetime()
-    #     {'base_time': [datetime.datetime(2020, 12, 21, 12, 0)],
-    #     'valid_time': [
-    #         datetime.datetime(2020, 12, 21, 12, 0),
-    #         datetime.datetime(2020, 12, 21, 15, 0),
-    #         datetime.datetime(2020, 12, 21, 18, 0),
-    #         datetime.datetime(2020, 12, 21, 21, 0),
-    #         datetime.datetime(2020, 12, 23, 12, 0)]}
-
-    #     """
-
     @property
     @abstractmethod
     def geography(self):
         pass
-
-    # @abstractmethod
-    # def projection(self):
-    #     r"""Return the projection information shared by all the fields.
-
-    #     Returns
-    #     -------
-    #     :obj:`Projection`
-
-    #     Raises
-    #     ------
-    #     ValueError
-    #         When not all the fields have the same grid geometry
-
-    #     Examples
-    #     --------
-    #     >>> import earthkit.data
-    #     >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-    #     >>> ds.projection()
-    #     <Projected CRS: +proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to ...>
-    #     Name: unknown
-    #     Axis Info [cartesian]:
-    #     - E[east]: Easting (unknown)
-    #     - N[north]: Northing (unknown)
-    #     - h[up]: Ellipsoidal height (metre)
-    #     Area of Use:
-    #     - undefined
-    #     Coordinate Operation:
-    #     - name: unknown
-    #     - method: Equidistant Cylindrical
-    #     Datum: Unknown based on WGS 84 ellipsoid
-    #     - Ellipsoid: WGS 84
-    #     - Prime Meridian: Greenwich
-    #     >>> ds.projection().to_proj_string()
-    #     '+proj=eqc +ellps=WGS84 +a=6378137.0 +lon_0=0.0 +to_meter=111319.4907932736 +no_defs +type=crs'
-    #     """
-    #     pass
 
     @abstractmethod
     def get(
@@ -315,38 +241,6 @@ class FieldListCore(Base):
         """
         pass
 
-    # @abstractmethod
-    # def get_as_dict(self, *args, group=False, remapping=None, patches=None, **kwargs):
-    #     r"""Return the metadata values for each field.
-
-    #     Parameters
-    #     ----------
-    #     *args: tuple
-    #         Positional arguments defining the metadata keys. Passed to
-    #         :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
-    #     **kwargs: dict, optional
-    #         Keyword arguments passed to
-    #         :obj:`GribField.metadata() <data.readers.grib.codes.GribField.metadata>`
-
-    #     Returns
-    #     -------
-    #     list
-    #         List with one item per :obj:`GribField <data.readers.grib.codes.GribField>`
-
-    #     Examples
-    #     --------
-    #     >>> import earthkit.data
-    #     >>> ds = earthkit.data.from_source("file", "docs/examples/test.grib")
-    #     >>> ds.metadata("param")
-    #     ['2t', 'msl']
-    #     >>> ds.metadata("param", "units")
-    #     [('2t', 'K'), ('msl', 'Pa')]
-    #     >>> ds.metadata(["param", "units"])
-    #     [['2t', 'K'], ['msl', 'Pa']]
-
-    #     """
-    #     pass
-
     @abstractmethod
     def metadata(self, *args, **kwargs):
         r"""Return the metadata values for each field.
@@ -378,78 +272,6 @@ class FieldListCore(Base):
 
         """
         pass
-
-    # @abstractmethod
-    # def indices(self, squeeze=False):
-    #     r"""Return the unique, sorted values for a set of metadata keys (see below)
-    #     from all the fields. Individual keys can be also queried by :obj:`index`.
-
-    #     Parameters
-    #     ----------
-    #     squeeze : False
-    #         When True only returns the metadata keys that have more than one values.
-
-    #     Returns
-    #     -------
-    #     dict
-    #         Unique, sorted metadata values from all the
-    #         :obj:`Field`\ s.
-
-    #     See Also
-    #     --------
-    #     index
-
-    #     Examples
-    #     --------
-    #     >>> import earthkit.data
-    #     >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
-    #     >>> ds.indices()
-    #     {'class': ['od'], 'stream': ['oper'], 'levtype': ['pl'], 'type': ['an'],
-    #     'expver': ['0001'], 'date': [20180801], 'time': [1200], 'domain': ['g'],
-    #     'number': [0], 'levelist': [300, 400, 500, 700, 850, 1000],
-    #     'param': ['t', 'u', 'v']}
-    #     >>> ds.indices(squeeze=True)
-    #     {'levelist': [300, 400, 500, 700, 850, 1000], 'param': ['t', 'u', 'v']}
-    #     >>> ds.index("level")
-    #     [300, 400, 500, 700, 850, 1000]
-
-    #     By default :obj:`indices` uses the keys from the
-    #     "mars" :xref:`eccodes_namespace`. Keys with no valid values are not included. Keys
-    #     that :obj:`index` is called with are automatically added to the original set of keys
-    #     used in :obj:`indices`.
-
-    #     """
-    #     pass
-
-    # @abstractmethod
-    # def index(self, key):
-    #     r"""Return the unique, sorted values of the specified metadata ``key`` from all the fields.
-    #     ``key`` will be automatically added to the keys returned by :obj:`indices`.
-
-    #     Parameters
-    #     ----------
-    #     key : str
-    #         Metadata key.
-
-    #     Returns
-    #     -------
-    #     list
-    #         Unique, sorted values of ``key`` from all the
-    #         :obj:`Field`\ s.
-
-    #     See Also
-    #     --------
-    #     index
-
-    #     Examples
-    #     --------
-    #     >>> import earthkit.data
-    #     >>> ds = earthkit.data.from_source("file", "docs/examples/tuv_pl.grib")
-    #     >>> ds.index("level")
-    #     [300, 400, 500, 700, 850, 1000]
-
-    #     """
-    #     return self._md_indices.index(key)
 
     @abstractmethod
     def ls(self, n=None, keys=None, extra_keys=None, namespace=None):

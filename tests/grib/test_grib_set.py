@@ -15,9 +15,9 @@ import sys
 import numpy as np
 import pytest
 
+from earthkit.data import FieldList
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.indexing.fieldlist import FieldList
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)

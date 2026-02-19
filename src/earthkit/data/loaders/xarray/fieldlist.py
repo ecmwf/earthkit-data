@@ -317,7 +317,7 @@ class XArrayFieldList(IndexedFieldList):
             return XArrayMultiFieldList(sources)
         else:
             if all(isinstance(_, IndexedFieldList) for _ in sources):
-                from earthkit.data.indexing.fieldlist import MultiFieldList
+                from earthkit.data.indexing.indexed import MultiFieldList
 
                 # assert all(isinstance(_, NetCDFFieldList) for _ in sources)
                 return MultiFieldList(sources)

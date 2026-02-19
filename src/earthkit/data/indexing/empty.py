@@ -7,36 +7,54 @@
 # nor does it submit to any jurisdiction.
 #
 
-from typing import Any
+
+from earthkit.data.indexing.simple import SimpleFieldListCore
 
 
-class EmptyFieldList:
-    """A class to represent an empty list of fields."""
+class EmptyFieldList(SimpleFieldListCore):
+    def __init__(self):
+        r"""Initialize a FieldList object."""
+        self.__fields = []
 
-    def __len__(self) -> int:
-        """Return the length of the field list."""
-        return 0
+    @property
+    def _fields(self):
+        return self.__fields
 
-    def __getitem__(self, i: int) -> Any:
-        """Raise an IndexError when trying to access an item.
+    @staticmethod
+    def from_fields(fields):
+        r"""Create a :class:`SimpleFieldList`.
+
+        Parameters
+        ----------
+        fields: iterable
+            Iterable of :obj:`Field` objects.
 
         Returns
         -------
-        Any
-            This method does not return anything as it raises an IndexError.
+        :class:`SimpleFieldList`
 
-        Raises
-        ------
-        IndexError
-            Always raised to indicate that the list is empty.
-
-        Args
-        ----
-        i : int
-            Index of the item to access.
         """
-        raise IndexError(i)
+        from earthkit.data.indexing.simple import SimpleFieldList
 
-    def __repr__(self) -> str:
-        """Return a string representation of the EmptyFieldList."""
-        return "EmptyFieldList()"
+        return SimpleFieldList.from_fields(fields)
+
+    @classmethod
+    def merge(cls, sources):
+        sources = [s for s in sources if not s.ignore()]
+        if len(sources) > 1:
+            return sources[0].merge(sources[1:])
+        elif len(sources) == 1:
+            return sources[0]
+        raise ValueError("No sources to merge")
+
+    def ignore(self):
+        # Used by multi-source
+        return True
+
+    @classmethod
+    def new_mask_index(cls, *args, **kwargs):
+        raise ValueError("Cannot create a mask index from an empty FieldList")
+        # assert len(args) == 2
+        # fs = args[0]
+        # indices = list(args[1])
+        # return cls.from_fields([fs._fields[i] for i in indices])

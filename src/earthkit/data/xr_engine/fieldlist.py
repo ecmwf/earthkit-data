@@ -11,10 +11,10 @@ import datetime
 import logging
 from collections import defaultdict
 
+from earthkit.data import FieldList
 from earthkit.data.core.index import Selection
 from earthkit.data.core.index import normalize_selection
 from earthkit.data.core.order import build_remapping
-from earthkit.data.indexing.fieldlist import FieldList
 
 LOG = logging.getLogger(__name__)
 

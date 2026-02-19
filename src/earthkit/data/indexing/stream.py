@@ -39,10 +39,10 @@ class StreamFieldList(IndexedFieldList, Source):
         raise NotImplementedError("StreamFieldList cannot be pickled")
 
     def to_xarray(self, **kwargs):
-        from .fieldlist import FieldList
+        from .simple import SimpleFieldList
 
         fields = [f for f in self]
-        return FieldList.from_fields(fields).to_xarray(**kwargs)
+        return SimpleFieldList.from_fields(fields).to_xarray(**kwargs)
 
     @classmethod
     def merge(cls, sources):

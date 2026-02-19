@@ -14,18 +14,31 @@ import pytest
 from earthkit.utils.array.testing.testing import NO_TORCH
 
 from earthkit.data import SimpleFieldList
+from earthkit.data import create_fieldlist
 
 
-def test_empty_fieldlist_values_numpy():
-    ds = SimpleFieldList()
+def _create_empty_fieldlist(mode):
+
+    if mode == "method":
+        return create_fieldlist()
+    elif mode == "object":
+        return SimpleFieldList()
+    else:
+        raise ValueError(f"Unknown mode: {mode}")
+
+
+@pytest.mark.parametrize("mode", ["method", "object"])
+def test_empty_fieldlist_values_numpy(mode):
+    ds = _create_empty_fieldlist(mode)
 
     v = ds.values
     assert isinstance(v, np.ndarray)
     assert v.shape == (0,)
 
 
-def test_empty_fieldlist_data_numpy():
-    ds = SimpleFieldList()
+@pytest.mark.parametrize("mode", ["method", "object"])
+def test_empty_fieldlist_data_numpy(mode):
+    ds = _create_empty_fieldlist(mode)
 
     v = ds.data()
     assert isinstance(v, np.ndarray)
@@ -48,16 +61,20 @@ def test_empty_fieldlist_data_numpy():
     assert v.shape == (0, 0)
 
 
-def test_empty_fieldlist_to_latlon_numpy():
-    ds = SimpleFieldList()
+@pytest.mark.parametrize("mode", ["method", "object"])
+def test_empty_fieldlist_to_latlon_numpy(mode):
+    ds = _create_empty_fieldlist(mode)
 
-    lat, lon = ds.geography.latlons()
-    assert lat is None
-    assert lon is None
+    with pytest.raises(ValueError):
+        ds.geography
+
+    with pytest.raises(ValueError):
+        ds.geography.latlons()
 
 
-def test_empty_fieldlist_to_array_numpy():
-    ds = SimpleFieldList()
+@pytest.mark.parametrize("mode", ["method", "object"])
+def test_empty_fieldlist_to_array_numpy(mode):
+    ds = _create_empty_fieldlist(mode)
 
     v = ds.to_array()
     assert isinstance(v, np.ndarray)
@@ -73,10 +90,11 @@ def test_empty_fieldlist_to_array_numpy():
 
 
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
-def test_empty_fieldlist_to_array_torch():
+@pytest.mark.parametrize("mode", ["method", "object"])
+def test_empty_fieldlist_to_array_torch(mode):
     import torch
 
-    ds = SimpleFieldList()
+    ds = _create_empty_fieldlist(mode)
 
     v = ds.to_array(array_namespace="torch")
     assert isinstance(v, torch.Tensor)

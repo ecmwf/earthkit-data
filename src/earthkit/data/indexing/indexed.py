@@ -10,7 +10,7 @@
 
 from earthkit.utils.array import array_namespace as eku_array_namespace
 
-from earthkit.data.core.fieldlist import FieldListCore
+from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.index import Index
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
@@ -27,7 +27,7 @@ def build_remapping(remapping, patches):
 
 
 @wrap_maths
-class IndexedFieldList(Index, FieldListCore):
+class IndexedFieldList(Index, FieldList):
     @staticmethod
     def from_fields(fields):
         r"""Create a :class:`SimpleFieldList`.
@@ -128,7 +128,7 @@ class IndexedFieldList(Index, FieldListCore):
         if self._has_shared_geography:
             return self[0].geography
         elif len(self) == 0:
-            return None
+            raise ValueError("Cannot determine geography of an empty FieldList")
         else:
             raise ValueError("Fields do not have the same grid geometry")
 
