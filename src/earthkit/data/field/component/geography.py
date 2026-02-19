@@ -526,7 +526,7 @@ class EmptyGeography(BaseGeography):
         self._shape = state["shape"]
 
 
-class SpectralGeography(BaseGeography):
+class SpectralGeography(EmptyGeography):
     pass
 
 

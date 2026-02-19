@@ -11,10 +11,11 @@ import datetime
 import logging
 from collections import defaultdict
 
-from earthkit.data import FieldList
 from earthkit.data.core.index import Selection
 from earthkit.data.core.index import normalize_selection
 from earthkit.data.core.order import build_remapping
+from earthkit.data.field import SimpleFieldList
+from earthkit.data.indexing.indexed import IndexedFieldList
 
 LOG = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ LOG = logging.getLogger(__name__)
 class _CollectorJoiner:
     # PW: TODO: dead code due to `component` removal
     def __init__(self, func):
-        self.func = func
+        pass
 
     def format_name(self, x, **kwargs):
         return self.func(x, **kwargs)
@@ -89,7 +90,7 @@ class IndexDB:
         return f"IndexDB(_index={self._index})"
 
 
-class XArrayInputFieldList(FieldList):
+class XArrayInputFieldList(IndexedFieldList):
     """
     A wrapper around a fieldlist that stores unique values.
 
@@ -128,7 +129,7 @@ class XArrayInputFieldList(FieldList):
         return len(self.ds)
 
     def make_releasable(self):
-        self.ds = FieldList.from_fields([ReleasableField(f) for f in self.ds])
+        self.ds = SimpleFieldList.from_fields([ReleasableField(f) for f in self.ds])
 
     def group(self, key, values):
         values = set(values)

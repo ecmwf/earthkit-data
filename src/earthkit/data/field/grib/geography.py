@@ -237,7 +237,8 @@ class GribGeographyBuilder:
         if handle.get("gridType", None) == "sh":
             from earthkit.data.field.component.geography import SpectralGeography
 
-            component = SpectralGeography(handle)
+            shape = (handle.get("numberOfDataPoints", None),)
+            component = SpectralGeography(shape=shape)
         # Gridded data
         else:
             if _ECKIT_GRID_SUPPORT.has_ecc_grid_spec and _ECKIT_GRID_SUPPORT.has_grid:
