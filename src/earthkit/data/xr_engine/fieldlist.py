@@ -14,8 +14,8 @@ from collections import defaultdict
 from earthkit.data.core.index import Selection
 from earthkit.data.core.index import normalize_selection
 from earthkit.data.core.order import build_remapping
-from earthkit.data.field import SimpleFieldList
 from earthkit.data.indexing.indexed import IndexedFieldList
+from earthkit.data.indexing.simple import SimpleFieldList
 
 LOG = logging.getLogger(__name__)
 
