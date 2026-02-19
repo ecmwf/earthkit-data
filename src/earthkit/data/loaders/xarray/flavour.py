@@ -287,6 +287,8 @@ class CoordinateGuesser(ABC):
 
         grid: Grid = UnstructuredGrid(lat, lon, dim_vars) if unstructured else MeshedGrid(lat, lon, dim_vars)
 
+        print("here", grid)
+
         self._grid_cache[(lat.name, lon.name, dim_vars)] = grid
 
         return grid
@@ -778,7 +780,7 @@ class DefaultCoordinateGuesser(CoordinateGuesser):
         if attributes.standard_name == "air_pressure" and attributes.units == "hPa":
             return LevelCoordinate(c, "pl")
 
-        if attributes.name == "level":
+        if attributes.name in ("level", "levelist"):
             return LevelCoordinate(c, "pl")
 
         if attributes.name == "vertical" and attributes.units == "hPa":

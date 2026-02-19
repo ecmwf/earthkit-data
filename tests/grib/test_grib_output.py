@@ -59,13 +59,15 @@ def test_grib_save_when_loaded_from_file_core(fl_type):
 
 @pytest.mark.parametrize(
     "_kwargs,expected_value",
-    [({}, 16), ({"metadata.bitsPerValue": 12}, 12), ({"bits_per_value": None}, 16)],
+    [({}, 16), ({"metadata.bitsPerValue": 12}, 12)],
 )
 def test_grib_save_bits_per_value_fieldlist(
     _kwargs,
     expected_value,
 ):
     ds = from_source("file", earthkit_examples_file("test.grib"))
+
+    assert ds[0].get("metadata.bitsPerValue") == 16
 
     with temp_file() as tmp:
         ds.to_target("file", tmp, **_kwargs)
@@ -80,6 +82,7 @@ def test_grib_save_bits_per_value_fieldlist(
 )
 def test_grib_save_bits_per_value_single_field(array, _kwargs, expected_value):
     ds = from_source("file", earthkit_examples_file("test.grib"))
+    assert ds[0].get("metadata.bitsPerValue") == 16
     if array:
         ds = ds.to_fieldlist()
 

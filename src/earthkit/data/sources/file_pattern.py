@@ -13,6 +13,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+from earthkit.data import concat
 from earthkit.data.sources import Source
 from earthkit.data.sources import from_source
 from earthkit.data.sources.empty import EmptySource
@@ -44,7 +45,7 @@ class HiveFilePattern(Source):
             out = EmptySource()
             for f in self.scanner.scan(**kwargs):
                 ds = from_source("file", f)
-                out = out.append(ds.sel(**rest))
+                out = concat(out, ds.sel(**rest))
                 if _hive_diag:
                     _hive_diag.file(1)
                     _hive_diag.sel(1)

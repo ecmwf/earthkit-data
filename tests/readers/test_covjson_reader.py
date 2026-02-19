@@ -31,7 +31,7 @@ def test_covjson_to_xarray_time_series():
     ds1 = from_object(a)
     assert ds1
     assert len(ds1) == 9
-    assert ds1.metadata("variable") == ["2t"] * 9
+    assert ds1.get("parameter.variable") == ["2t"] * 9
 
 
 @pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")
@@ -44,7 +44,7 @@ def test_covjson_to_xarray_points():
     ds1 = from_object(a)
     assert ds1
     assert len(ds1) == 2
-    assert ds1.metadata("variable") == ["10u", "2t"]
+    assert ds1.get("parameter.variable") == ["10u", "2t"]
 
 
 @pytest.mark.skipif(NO_COVJSONKIT, reason="no covjsonkit available")

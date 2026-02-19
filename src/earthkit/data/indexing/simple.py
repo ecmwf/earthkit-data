@@ -13,47 +13,6 @@ from earthkit.data.decorators import thread_safe_cached_property
 
 from .indexed import IndexedFieldList
 
-GRIB_KEYS_NAMES = [
-    "class",
-    "stream",
-    "levtype",
-    "type",
-    "expver",
-    "date",
-    "hdate",
-    "andate",
-    "time",
-    "antime",
-    "reference",
-    "anoffset",
-    "verify",
-    "fcmonth",
-    "fcperiod",
-    "leadtime",
-    "opttime",
-    "origin",
-    "domain",
-    "method",
-    "diagnostic",
-    "iteration",
-    "number",
-    "quantile",
-    "levelist",
-    "param",
-]
-
-LS_KEYS = [
-    "name",
-    "level",
-    "level_type",
-    "base_datetime",
-    "step",
-    "valid_datetime",
-    "number",
-    "gridType",
-]
-INDEX_KEYS = list(GRIB_KEYS_NAMES)
-
 
 def build_remapping(remapping, patches):
     if remapping is not None or patches is not None:

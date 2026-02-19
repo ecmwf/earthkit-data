@@ -11,8 +11,6 @@ import math
 from abc import ABCMeta
 from abc import abstractmethod
 
-from earthkit.utils.array import array_namespace
-
 from earthkit.data.wrappers import get_wrapper
 
 # NOTE: __and__ is used as the concatenation operator for FieldLists.
@@ -22,26 +20,6 @@ from earthkit.data.wrappers import get_wrapper
 COMP_UNARY = {
     "__neg__": lambda x: -x,
     "__pos__": lambda x: +x,
-    "asin": lambda x: array_namespace(x).asin(x),
-    "acos": lambda x: array_namespace(x).acos(x),
-    "atan": lambda x: array_namespace(x).atan(x),
-    "arcsin": lambda x: array_namespace(x).asin(x),
-    "arccos": lambda x: array_namespace(x).acos(x),
-    "arctan": lambda x: array_namespace(x).atan(x),
-    "cos": lambda x: array_namespace(x).cos(x),
-    "cosh": lambda x: array_namespace(x).cosh(x),
-    "exp": lambda x: array_namespace(x).exp(x),
-    "floor": lambda x: array_namespace(x).floor(x),
-    "log": lambda x: array_namespace(x).log(x),
-    "log10": lambda x: array_namespace(x).log10(x),
-    "round": lambda x: array_namespace(x).round(x),
-    "sign": lambda x: array_namespace(x).sign(x),
-    "sin": lambda x: array_namespace(x).sin(x),
-    "sinh": lambda x: array_namespace(x).sinh(x),
-    "tan": lambda x: array_namespace(x).tan(x),
-    "tanh": lambda x: array_namespace(x).tanh(x),
-    "sqrt": lambda x: array_namespace(x).sqrt(x),
-    "trunc": lambda x: array_namespace(x).trunc(x),
 }
 
 COMP_BINARY = {
@@ -233,7 +211,7 @@ class LoopCompute(Compute):
 
     @staticmethod
     def apply_ufunc(func, ref, *args, template=None):
-        from earthkit.data.indexing.fieldlist_tmp import FieldList
+        from earthkit.data.indexing.simple import SimpleFieldList
 
         x = [get_wrapper(a) for a in args]
         ds = []
@@ -258,7 +236,7 @@ class LoopCompute(Compute):
             f = f_ref.set(values=vx)
             # f.to_disk()
             r.append(f)
-        return FieldList.from_fields(r)
+        return SimpleFieldList.from_fields(r)
 
 
 methods = {"loop": LoopCompute}

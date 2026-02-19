@@ -58,3 +58,9 @@ class EmptyFieldList(SimpleFieldListCore):
         # fs = args[0]
         # indices = list(args[1])
         # return cls.from_fields([fs._fields[i] for i in indices])
+
+    def mutate_source(self):
+        return self
+
+    def mutate(self):
+        return self

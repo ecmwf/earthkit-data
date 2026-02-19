@@ -8,6 +8,4 @@
 #
 import datetime
 
-DATETIME = "valid_datetime"
-GRIDSPEC = "grid_spec"
 ZERO_TIMEDELTA = datetime.timedelta(hours=0)

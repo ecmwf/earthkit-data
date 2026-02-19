@@ -334,15 +334,3 @@ def test_grib_compute_ufunc(fl_type, operand):
     res = apply_ufunc(func, ds1, ds2)
     ref = func(val_ref, val_ref + 1)
     assert xp.allclose(res.values, ref, equal_nan=True)
-
-
-@pytest.mark.parametrize("fl_type", FL_NUMPY)
-@pytest.mark.parametrize("operand", UNARY_OPERANDS)
-def test_grib_compute_sin(fl_type, operand):
-    ds, array_backend = load_grib_data("test.grib", fl_type)
-    xp, device, _ = array_backend
-    val, val_ref = operand(ds, xp, device).val()
-
-    res = val.sin()
-    ref = xp.sin(val_ref)
-    assert xp.allclose(res.values, ref, equal_nan=True)

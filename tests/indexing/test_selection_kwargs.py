@@ -21,46 +21,51 @@ to_kwargs = normalize_selection
 
 
 def test_selection_1():
-    ref = dict(date=[1, 2, 3], time=None, param="abc", number=3.0, lst=["xyz"])
+    vals = dict(date=[1, 2, 3], time=None, param="abc", number=3.0, lst=["xyz"])
 
-    assert to_kwargs(ref) == ref
+    assert to_kwargs(vals) == (vals, None)
 
 
 def test_selection_with_all():
-    ref = dict(date=all, time=7, step=[6])
+    vals = dict(date=all, time=7, step=[6])
+    ref = (vals, None)
 
-    assert to_kwargs(ref) == ref
+    assert to_kwargs(vals) == ref
     assert to_kwargs(date=all, time=7, step=[6]) == ref
     assert to_kwargs(date=cml.ALL, time=7, step=[6]) == ref
 
 
 def test_selection_with_date_1():
-    ref = dict(date="2008-07-19", step=5)
+    vals = dict(date="2008-07-19", step=5)
+    ref = (vals, None)
 
-    assert to_kwargs(ref) == ref
+    assert to_kwargs(vals) == ref
     assert to_kwargs(date="2008-07-19", step=5) == ref
     # assert to_kwargs(date=datetime.datetime(2008,7,19), step=5) == ref
 
 
 def test_selection_with_date_3():
-    ref = dict(date=datetime.datetime(2008, 7, 19), step=5)
+    vals = dict(date=datetime.datetime(2008, 7, 19), step=5)
+    ref = (vals, None)
 
-    assert to_kwargs(ref) == ref
+    assert to_kwargs(vals) == ref
 
 
 def test_selection_with_date_4():
-    ref = dict(
+    vals = dict(
         date=[datetime.datetime(2008, 7, 19), datetime.datetime(2008, 7, 20)],
         step=5,
     )
+    ref = (vals, None)
 
-    assert to_kwargs(ref) == ref
+    assert to_kwargs(vals) == ref
 
 
 def test_selection_with_none():
-    ref = dict(param="p", time=None)
+    vals = dict(param="p", time=None)
+    ref = (vals, None)
 
-    assert to_kwargs(ref) == ref
+    assert to_kwargs(vals) == ref
     assert to_kwargs(param="p", time=None) == ref
 
 
