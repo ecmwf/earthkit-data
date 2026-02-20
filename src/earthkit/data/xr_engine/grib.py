@@ -88,40 +88,22 @@ def update_metadata(metadata, compulsory, step_len=0):
         metadata["typeOfLevel"] = levtype_remap[v]
 
 
-def coord_to_component(coord):
-    if "_earthkit" in coord.attrs:
-        keys = coord.attrs["_earthkit"].get("keys", [])
-        values = coord.attrs["_earthkit"].get("values", [])
-
-        # for datetime composite coords only the keys are added as an attribute
-        if not values and len(coord) == 2:
-            values = [datetime_to_grib(to_datetime(x)) for x in coord.values]
-
-        if len(coord) == len(values):
-            r = [[a, *b] for a, b in zip(coord.values, values)]
-            return r, keys
-        else:
-            raise ValueError(f"Cannot extract components for coordinate {coord.name}")
-    return None
-
-
-def data_array_to_fields(da, metadata=None):
-    from earthkit.data.sources.array_list import ArrayField
+def data_array_to_fields(da, reference_field=None):
 
     dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon", "latitude", "longitude"]]
     coords = {k: v for k, v in da.coords.items() if k in dims}
-    components = {}
+    # components = {}
     for k in coords:
-        c = coord_to_component(coords[k])
-        if c:
-            coords[k] = c[0]
-            components[k] = c[1]
-        else:
-            coords[k] = coords[k].values
+        # c = coord_to_component(coords[k])
+        # if c:
+        #     coords[k] = c[0]
+        #     components[k] = c[1]
+        # else:
+        coords[k] = coords[k].values
 
     # extract metadata template from dataarray
-    if hasattr(da, "earthkit"):
-        template_metadata = da.earthkit.metadata
+    if reference_field is None and hasattr(da, "earthkit"):
+        reference_field = da.earthkit._reference_field
     else:
         raise ValueError("Earthkit attribute not found in DataArray. Required for conversion to FieldList!")
 
@@ -133,10 +115,10 @@ def data_array_to_fields(da, metadata=None):
         compulsory_metadata["stepRange"] = 0
     else:
         try:
-            step_range = template_metadata.get("stepRange", None)
+            step_range = reference_field.get("metadata.stepRange", None)
             if isinstance(step_range, str) and "-" in step_range:
-                step_len = to_timedelta(template_metadata.get("endStep", 0)) - to_timedelta(
-                    template_metadata.get("startStep", 0)
+                step_len = to_timedelta(reference_field.get("metadata.endStep", 0)) - to_timedelta(
+                    reference_field.get("metadata.startStep", 0)
                 )
         except TypeError as e:
             print(f"Error calculating step length: {e}")
@@ -146,20 +128,20 @@ def data_array_to_fields(da, metadata=None):
 
         # field
         local_coords = dict(zip(dims, values))
-        for k in components:
-            local_coords[k] = local_coords[k][0]
+        # for k in components:
+        #     local_coords[k] = local_coords[k][0]
 
         # print("local_coords", local_coords)
         xa_field = da.sel(**local_coords)
 
         # metadata
         grib_metadata = dict(zip(dims, values))
-        for k in components:
-            # print(f"{k=}")
-            # print(grib_metadata[k])
-            grib_metadata.update(dict(zip(components[k], grib_metadata[k][1:])))
-            # print(f"-> {grib_metadata=}")
-            del grib_metadata[k]
+        # for k in components:
+        #     # print(f"{k=}")
+        #     # print(grib_metadata[k])
+        #     grib_metadata.update(dict(zip(components[k], grib_metadata[k][1:])))
+        #     # print(f"-> {grib_metadata=}")
+        #     del grib_metadata[k]
 
         for k in compulsory_metadata:
             if k not in grib_metadata:
@@ -167,5 +149,16 @@ def data_array_to_fields(da, metadata=None):
 
         update_metadata(grib_metadata, [], step_len=step_len)
 
-        metadata = template_metadata.override(grib_metadata)
-        yield ArrayField(xa_field.values, metadata)
+        from earthkit.data.encoders.grib import GribEncoder
+
+        encoder = GribEncoder()
+
+        field = encoder.encode(
+            data=reference_field,
+            values=xa_field.values,
+            metadata=grib_metadata,
+        )
+
+        return field
+        # metadata = template_metadata.override(grib_metadata)
+        # yield ArrayField(xa_field.values, metadata)

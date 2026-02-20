@@ -499,29 +499,44 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         self._obj = xarray_obj
 
     @property
-    def metadata(self):
-        md = self._obj.attrs.get("_earthkit", dict())
-        if "message" in md:
-            data = md["message"]
-            from earthkit.data.readers.grib.legacy.memory import GribMessageMemoryReader
-            from earthkit.data.readers.grib.legacy.metadata import StandAloneGribMetadata
-            from earthkit.data.readers.grib.legacy.metadata import WrappedMetadata
-
-            handle = next(GribMessageMemoryReader(data)).handle
-            bpv = md.get("bitsPerValue", 0)
-            res_md = StandAloneGribMetadata(handle)
-
-            if bpv is not None and bpv > 0:
-                return WrappedMetadata(res_md, extra={"bitsPerValue": bpv})
-            else:
-                return res_md
-
-        raise ValueError(
-            (
-                "Could not generate earthkit metadata from xarray object."
-                "Attribute '_earthkit' is missing or contains incorrect data."
+    def _reference_field(self):
+        if "_earthkit" not in self._obj.attrs:
+            raise ValueError(
+                "The xarray object does not contain the '_earthkit' attribute. Cannot determine the reference field."
             )
-        )
+
+        md = self._obj.attrs.get("_earthkit")
+
+        if not isinstance(md, dict):
+            raise ValueError(
+                f"The '_earthkit' attribute must be a dictionary containing the metadata of the reference field. Found: {type(md)}"
+            )
+
+        if "message" not in md:
+            raise ValueError(
+                "The '_earthkit' attribute must contain the 'message' key with the metadata of the reference field."
+            )
+
+        message = md.get("message")
+
+        if not message:
+            raise ValueError(
+                "The 'message' key in the '_earthkit' attribute must contain the metadata of the reference field."
+            )
+
+        try:
+            if message:
+                from earthkit.data.field.grib.create import new_grib_field_from_buffer
+
+                return new_grib_field_from_buffer(message)
+        except Exception as e:
+            raise ValueError(
+                (
+                    "Could not generate earthkit reference field from xarray object."
+                    "Attribute '_earthkit' contains incorrect data."
+                    f"Error: {str(e)}"
+                )
+            ) from e
 
     def _remove_earthkit_attrs(self):
         """Create a copy of the dataarray and remove earthkit attributes."""
@@ -534,7 +549,7 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     def _to_fields(self):
         from .grib import data_array_to_fields
 
-        for f in data_array_to_fields(self._obj, metadata=self.metadata):
+        for f in data_array_to_fields(self._obj, reference_field=self._reference_field):
             yield f
 
     def to_netcdf(self, *args, **kwargs):
@@ -564,9 +579,15 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
         """Return the grid specification of the DataArray."""
         try:
             if "ek_grid_spec" in self._obj.attrs:
-                return self._obj.attrs["ek_grid_spec"]
-            return self.metadata.grid_spec
-        except Exception:
+                v = self._obj.attrs["ek_grid_spec"]
+                if isinstance(v, str):
+                    import json
+
+                    return json.loads(v)
+                return v
+            return self._reference_field.geography.grid_spec()
+        except Exception as e:
+            print(e)
             return None
 
 

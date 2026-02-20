@@ -72,31 +72,36 @@ class VariableBuilder:
         self.remapping = remapping
 
     def build(self, add_earthkit_attrs=True):
-        if add_earthkit_attrs:
-            f = self.tensor.source[0]
-            try:
-                # PW: TODO: fix it!
-                md = f.get_private_data("grib").message()
-            except Exception:
-                md = ""
-            attrs = {
-                "message": md,
-                "bitsPerValue": f.get("metadata.bitsPerValue", 0),
-            }
-            self._attrs["_earthkit"] = attrs
-
+        grid_spec = None
         try:
-            # PW: TODO
-            grid_spec = self.tensor.source[0].metadata().grid_spec
+            grid_spec = self.tensor.source[0].geography.grid_spec()
             if grid_spec is not None:
                 if isinstance(grid_spec, dict):
                     import json
 
                     grid_spec = json.dumps(grid_spec)
-                if isinstance(grid_spec, str):
-                    self._attrs["ek_grid_spec"] = grid_spec
         except Exception:
-            pass
+            grid_spec = None
+
+        if add_earthkit_attrs:
+            f = self.tensor.source[0]
+            try:
+                md = f.message()
+            except Exception:
+                md = ""
+
+            attrs = {
+                "message": md,
+                "bitsPerValue": f.get("metadata.bitsPerValue", 0),
+            }
+
+            if grid_spec is not None:
+                attrs["grid_spec"] = grid_spec
+
+            self._attrs["_earthkit"] = attrs
+
+        if grid_spec is not None:
+            self._attrs["ek_grid_spec"] = grid_spec
 
         self._attrs.update(self.fixed_local_attrs)
         data = self.data_maker(self.tensor, self.var_dims, self.name)
