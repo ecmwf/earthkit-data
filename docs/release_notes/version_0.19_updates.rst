@@ -10,7 +10,7 @@ Version 0.19.1
 Fixes
 ++++++++
 
-- Fixed a bug in the CDS source when could load not cached data when no network connection was available (:pr:`906`).
+- Fixed a bug in the CDS source when could load not cached data when no network connection was available (:pr:`907`).
 
 
 Version 0.19.0
