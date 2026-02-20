@@ -332,6 +332,7 @@ class Field(Base):
     @classmethod
     def from_components(
         cls,
+        data=None,
         values=None,
         time=None,
         parameter=None,
@@ -382,6 +383,9 @@ class Field(Base):
         shape_hint = None
         if values is not None:
             components[DATA] = COMPONENT_MAKER.default_cls(DATA).from_dict({"values": values})
+            shape_hint = components[DATA].get_values(copy=False).shape
+        elif data is not None:
+            components[DATA] = COMPONENT_MAKER.default_cls(DATA).from_any(data)
             shape_hint = components[DATA].get_values(copy=False).shape
 
         for name, v in _kwargs.items():

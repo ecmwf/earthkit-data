@@ -10,12 +10,11 @@
 
 import numpy as np
 
-from earthkit.data.field.component.geography import Geography
-from earthkit.data.field.geography import GeographyFieldComponent
+from earthkit.data.field.component.geography import BaseGeography
 from earthkit.data.utils.bbox import BoundingBox
 
 
-class GeoTIFFGeographySpec(Geography):
+class GeoTIFFGeography(BaseGeography):
     def __init__(self, ds):
         self._ds = ds
         self.x_dim = ds.rio.x_dim
@@ -36,65 +35,63 @@ class GeoTIFFGeographySpec(Geography):
         y = self._ds.coords[self.y_dim].values
         return np.meshgrid(x, y)
 
-    @property
-    def latitudes(self):
+    def latitudes(self, dtype=None):
         return self._latlon_coords()[0]
 
-    @property
-    def longitudes(self):
+    def longitudes(self, dtype=None):
         return self._latlon_coords()[1]
 
-    @property
-    def distinct_latitudes(self):
+    def distinct_latitudes(self, dtype=None):
         r"""Return the distinct latitudes."""
         pass
 
-    @property
-    def distinct_longitudes(self):
+    def distinct_longitudes(self, dtype=None):
         r"""Return the distinct longitudes."""
         pass
 
-    @property
-    def x(self):
+    def x(self, dtype=None):
         r"""array-like: Return the x coordinates in the original CRS."""
         return self._xy_coords()[0]
 
-    @property
-    def y(self):
+    def y(self, dtype=None):
         r"""array-like: Return the y coordinates in the original CRS."""
         return self._xy_coords()[1]
 
-    @property
     def shape(self):
         return self._ds.rio.height, self._ds.rio.width
 
-    @property
     def projection(self):
         from earthkit.data.utils.projections import Projection
 
-        return Projection.from_cf_grid_mapping(**self._grid_mapping)
+        return Projection.from_cf_grid_mapping(**self._grid_mapping())
 
-    @property
     def bounding_box(self):
         left, bottom, right, top = self._ds.rio.transform_bounds("EPSG:4326")
         return BoundingBox(north=top, west=left, south=bottom, east=right)
 
-    @property
     def unique_grid_id(self):
         r"""str: Return the unique id of the grid."""
-        return (*self.shape, self._ds.rio.crs.to_wkt())
+        return (*self.shape(), self._ds.rio.crs.to_wkt())
 
-    @property
     def grid_spec(self):
         r"""Return the grid specification."""
         pass
 
-    @property
     def grid_type(self):
         r"""Return the grid specification."""
         pass
 
-    @property
+    def grid(self):
+        r"""Return the grid object."""
+        pass
+
+    def area(self):
+        pass
+
+    @classmethod
+    def from_dict(d):
+        raise NotImplementedError("XArrayGeography.form_dict() is not implemented")
+
     def _grid_mapping(self):
         if self._ds.rio.grid_mapping == "spatial_ref":
             return self._ds.coords["spatial_ref"].attrs
@@ -105,9 +102,3 @@ class GeoTIFFGeographySpec(Geography):
 
     def __setstate__(self, state):
         pass
-
-
-class GeoTIFFGeography(GeographyFieldComponent):
-    def __init__(self, ds) -> None:
-        spec = GeoTIFFGeographySpec(ds)
-        super().__init__(spec)

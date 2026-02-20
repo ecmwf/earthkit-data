@@ -11,10 +11,10 @@
 from abc import abstractmethod
 from typing import Any
 
-from .component import Component
+from .component import FieldComponent
 
 
-class Labels(Component):
+class Labels(FieldComponent):
     @abstractmethod
     def __iter__(self):
         """Return an iterator over the metadata keys."""

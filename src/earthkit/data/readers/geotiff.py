@@ -8,7 +8,8 @@
 #
 
 
-from earthkit.data import SimpleFieldList
+from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.data.indexing.simple import SimpleFieldListCore
 
 from . import Reader
 
@@ -44,10 +45,8 @@ from . import Reader
 #         self._not_implemented()
 
 
-class GeoTIFFFieldList(SimpleFieldList):
+class GeoTIFFFieldList(SimpleFieldListCore):
     """A list of GeoTIFF bands"""
-
-    # FIELD_TYPE = GeoTIFFField
 
     DEFAULT_XARRAY_KWARGS = {
         # Splitting bands into individual variables preserves band-specific metadata.
@@ -59,12 +58,10 @@ class GeoTIFFFieldList(SimpleFieldList):
     }
 
     def __init__(self, path, **kwargs):
-        self._fields = None
         self.path = path
         self._ds = self.rioxarray_read()
         # Shared geography instance for all fields/bands
         # self._geo = GeoTIFFGeography(self._ds)
-        super().__init__(**kwargs)
 
     def rioxarray_read(self, **kwargs):
         try:
@@ -87,20 +84,19 @@ class GeoTIFFFieldList(SimpleFieldList):
         series = [field.to_pandas() for field in self]
         return pd.concat(series, keys=[s.name for s in series])
 
-    def __len__(self):
-        return len(self._ds.data_vars)
+    # def __len__(self):
+    #     return len(self._ds.data_vars)
 
-    def _getitem(self, n):
-        if isinstance(n, int):
-            return self.fields[n]
+    # def _getitem(self, n):
+    #     if isinstance(n, int):
+    #         return self.fields[n]
 
-    @property
-    def fields(self):
-        if self._fields is None:
-            self._fields = self._get_fields(self._ds)
-        return self._fields
+    @thread_safe_cached_property
+    def _fields(self):
+        return self._get_fields(self._ds)
 
     def _get_fields(self, ds, names=None):
+        """Must be called from _fields property to ensure thread safety of caching."""
         fields = []
         from earthkit.data.field.geotiff.create import new_geotiff_field
 

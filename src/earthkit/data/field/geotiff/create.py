@@ -13,16 +13,16 @@ def new_geotiff_field(band, da):
 
     from earthkit.data.core.field import Field
     from earthkit.data.field.component.labels import SimpleLabels
+    from earthkit.data.field.component.parameter import Parameter
     from earthkit.data.field.geotiff.data import GeoTIFFData
     from earthkit.data.field.geotiff.geography import GeoTIFFGeography
-    from earthkit.data.field.parameter import ParameterFieldPart
 
     data = GeoTIFFData(da)
-    parameter = ParameterFieldPart.from_dict({"variable": da.name})
+    parameter = Parameter.from_dict({"variable": da.name})
     geography = GeoTIFFGeography(da)
     labels = SimpleLabels(band=band, **da.attrs)
 
-    r = Field(
+    r = Field.from_components(
         data=data,
         parameter=parameter,
         time=None,

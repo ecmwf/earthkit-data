@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import numpy as np
 import pytest
 
 from earthkit.data import from_source
@@ -28,11 +29,16 @@ def test_geotiff_reader_with_multiband(fname):
     assert len(s) == 3
     assert isinstance(s[0], Field)
     assert isinstance(s[1], Field)
-    assert s[0].get("band") == 1
-    assert s[1].get("band") == 2
-    assert s[2].get("band") == 3
-    assert isinstance(s.projection(), TransverseMercator)
+    assert s[0].get("parameter.variable") == "band_1"
+    assert s[1].get("parameter.variable") == "band_2"
+    assert s[2].get("parameter.variable") == "band_3"
+    # assert s[0].get("band") == 1
+    # assert s[1].get("band") == 2
+    # assert s[2].get("band") == 3
+    assert isinstance(s.geography.projection(), TransverseMercator)
     assert s[0].shape == (294, 315)
+    assert np.allclose(s[0].geography.latitudes()[0, 0:2], np.array([7.12620136, 7.12692213]))
+    assert np.allclose(s[0].geography.longitudes()[0, 0:2], np.array([50.82441594, 50.82442752]))
 
 
 @pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
