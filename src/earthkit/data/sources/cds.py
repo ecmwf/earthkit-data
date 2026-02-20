@@ -101,8 +101,6 @@ class CdsRetriever(FileSource):
         )
         self.request = request_builder.requests
 
-        self.client()  # Trigger password prompt before threading
-
         # Download each request in parallel when the config allows it
         retriever = FileRequestRetriever(self, retriever=self._retrieve_one)
         self.path = retriever.retrieve(self.request, self.dataset)
