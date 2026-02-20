@@ -73,9 +73,9 @@ def test_mars_grib_split_on():
         split_on="param",
     )
     assert len(ds) == 2
-    assert ds.metadata("param") == ["2t", "msl"]
+    assert ds.get("parameter.variable") == ["2t", "msl"]
     assert not hasattr(ds, "path")
-    assert len(ds._indexes) == 2
+    assert ds[0]._get_grib().handle.path != ds[1]._get_grib().handle.path
 
 
 @pytest.mark.long_test
@@ -90,7 +90,7 @@ def test_mars_grib_multi(_args, req, _kwargs):
         **_kwargs,
     )
     assert len(ds) == 2
-    assert ds.metadata("param") == ["2t", "msl"]
+    assert ds.get("parameter.variable") == ["2t", "msl"]
 
 
 @pytest.mark.long_test
@@ -106,10 +106,13 @@ def test_mars_grib_parallel():
             request=req,
         )
         assert len(ds) == 4
-        assert ds.metadata("param") == ["t"] * 4
-        assert ds.metadata("levelist") == [925, 850, 700, 500]
+        assert ds.get("parameter.variable") == ["t"] * 4
+        assert ds.get("vertical.level") == [925, 850, 700, 500]
         assert not hasattr(ds, "path")
-        assert len(ds._indexes) == 4
+        paths = set()
+        for f in ds:
+            paths.add(f._get_grib().handle.path)
+        assert len(paths) == len(ds)
 
 
 @pytest.mark.long_test
