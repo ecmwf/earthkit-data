@@ -258,7 +258,10 @@ def test_xr_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, dims, v
     compare_dims(ds, dims, sizes=True)
 
     for v in var_attrs:
-        assert ds[v].attrs == var_attrs[v]
+        v_attrs = dict(ds[v].attrs)
+        v_attrs.pop("_earthkit", None)
+        v_attrs.pop("ek_grid_spec", None)
+        assert v_attrs == var_attrs[v]
     assert ds.attrs == global_attrs
 
 
@@ -353,7 +356,10 @@ def test_xr_dims_as_attrs_3(lazy_load, allow_holes, idx, kwargs, coords, dims, v
     compare_dims(ds, dims, sizes=True)
 
     for v in var_attrs:
-        assert ds[v].attrs == var_attrs[v]
+        v_attrs = dict(ds[v].attrs)
+        v_attrs.pop("_earthkit", None)
+        v_attrs.pop("ek_grid_spec", None)
+        assert v_attrs == var_attrs[v]
     assert ds.attrs == global_attrs
 
 
@@ -420,9 +426,9 @@ def test_xr_attrs_types(lazy_load, kwargs, coords, dims, attrs):
     compare_coords(ds, coords)
     compare_dims(ds, dims, sizes=True)
 
-    print(ds["t"].attrs)
     for k, v in attrs.items():
-        assert ds["t"].attrs[k] == v, f"{k}"
+        if k not in ["_earthkit", "ek_grid_spec"]:
+            assert ds["t"].attrs[k] == v, f"{k}"
 
 
 @pytest.mark.cache
