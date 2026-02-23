@@ -30,7 +30,7 @@ def test_xr_remapping_1(allow_holes, lazy_load):
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine/level/mixed_pl_ml_small.grib"))
     ds = ds0.to_xarray(
         variable_key="_k",
-        remapping={"_k": "{param}_{levelist}_{levtype}"},
+        remapping={"_k": "{metadata.param}_{metadata.levelist}_{metadata.levtype}"},
         allow_holes=allow_holes,
         lazy_load=lazy_load,
     )
@@ -55,7 +55,7 @@ def test_xr_remapping_1(allow_holes, lazy_load):
             dict(
                 dim_roles={"level": "_k"},
                 level_dim_mode="level",
-                remapping={"_k": "{levelist}_{levtype}"},
+                remapping={"_k": "{metadata.levelist}_{metadata.levtype}"},
                 dim_name_from_role_name=False,
             ),
             {"_k": ["500_pl", "700_pl"]},
@@ -65,7 +65,7 @@ def test_xr_remapping_1(allow_holes, lazy_load):
             dict(
                 dim_roles={"level": "_k"},
                 level_dim_mode="level",
-                remapping={"_k": "{levelist}_{levtype}"},
+                remapping={"_k": "{metadata.levelist}_{metadata.levtype}"},
                 dim_name_from_role_name=True,
             ),
             {"level": ["500_pl", "700_pl"]},
@@ -75,7 +75,7 @@ def test_xr_remapping_1(allow_holes, lazy_load):
             dict(
                 dim_roles={"level": "_k"},
                 level_dim_mode="level",
-                remapping={"_k": "{levelist}_{levtype}"},
+                remapping={"_k": "{metadata.levelist}_{metadata.levtype}"},
                 rename_dims={"level": "_k"},
                 dim_name_from_role_name=True,
             ),

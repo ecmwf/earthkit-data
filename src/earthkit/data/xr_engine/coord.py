@@ -177,21 +177,30 @@ class MonthCoord(Coord):
 
 class LevelCoord(Coord):
     def __init__(self, name, vals, dims=None, ds=None, **kwargs):
-        self._level_type = None
+        self._level_type = {}
         self._cf = None
         if ds is not None:
             self._cf = ds[0].vertical.cf()
-            self._level_type = ds[0].vertical.level_type()
+            for k in ["vertical.level_type", "metadata.typeOfLevel", "metadata.levtype"]:
+                v = ds[0]._get_fast(k)
+                if v is not None:
+                    self._level_type[k] = v
 
         super().__init__(name, vals, dims, **kwargs)
 
     def attrs(self, profile):
         attrs = profile.attrs
         conf = attrs.coord_attrs.get(self.name, {})
-        res = {}
+        _attrs = {}
         if conf:
-            res = conf.get(self._level_type, {})
-        if not res:
-            res = self._cf
-        return res
+            keys = conf["keys"]
+            for key in keys:
+                level_type = self._level_type.get(key)
+                if level_type is None:
+                    continue
+                _attrs = conf.get(level_type)
+                if _attrs is not None:
+                    return _attrs
+        _attrs = self._cf
+        return _attrs
         # raise ValueError(f"Cannot determine level type for coordinate {name}")

@@ -84,7 +84,16 @@ def test_xr_engine_stream_release_source(
         next(iter(ds_ek))
 
     assert np.allclose(
-        ds_ek_ref.sel(param="t").order_by(["date", "time", "step", "levelist"]).to_numpy(),
+        ds_ek_ref.sel({"metadata.param": "t"})
+        .order_by(["metadata.date", "metadata.time", "metadata.step", "metadata.levelist"])
+        .to_numpy(),
+        ds["t"].values.reshape((16, 19, 36)),
+    )
+
+    assert np.allclose(
+        ds_ek_ref.sel({"parameter.variable": "t"})
+        .order_by(["metadata.date", "metadata.time", "time.step", "vertical.level"])
+        .to_numpy(),
         ds["t"].values.reshape((16, 19, 36)),
     )
 
@@ -126,11 +135,19 @@ def test_xr_engine_array_field_release_source(
 
     if not lazy_load and release_source:
         with pytest.raises(AttributeError):
-            ds_ek[0].metadata("param")
+            ds_ek[0].get("metadata.param")
     else:
         assert np.allclose(
-            ds_ek.sel(param="t").order_by(["date", "time", "step", "levelist"]).to_numpy(),
+            ds_ek.sel({"metadata.param": "t"})
+            .order_by(["metadata.date", "metadata.time", "metadata.step", "metadata.levelist"])
+            .to_numpy(),
             ds["t"].values.reshape((16, 19, 36)),
         )
-
-        assert ds_ek[0].metadata("param") == expected_result["param"]
+        assert np.allclose(
+            ds_ek.sel({"parameter.variable": "t"})
+            .order_by(["metadata.date", "metadata.time", "metadata.step_timedelta", "vertical.level"])
+            .to_numpy(),
+            ds["t"].values.reshape((16, 19, 36)),
+        )
+        assert ds_ek[0].get("metadata.param") == expected_result["param"]
+        assert ds_ek[0].get("parameter.variable") == expected_result["param"]

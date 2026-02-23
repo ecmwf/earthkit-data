@@ -75,8 +75,8 @@ STEP_KEYS = ["step"] + _get_component_keys("time", _STEP_KEYS) + _get_metadata_k
 _GRIB_MONTH_KEYS = ["forecastMonth", "fcmonth"]
 MONTH_KEYS = _get_metadata_keys(_GRIB_MONTH_KEYS)
 
-_GRIB_VALID_DATETIME_KEYS = ["valid_time", "valid_datetime"]
-_VALID_DATETIME_KEYS = ["time.valid_datetime"]
+_GRIB_VALID_DATETIME_KEYS = ["valid_datetime"]
+_VALID_DATETIME_KEYS = ["valid_datetime"]
 VALID_DATETIME_KEYS = (
     ["valid_time"]
     + _get_component_keys("time", _VALID_DATETIME_KEYS)
@@ -84,17 +84,15 @@ VALID_DATETIME_KEYS = (
 )
 
 _GRIB_BASE_DATETIME_KEYS = [
-    "forecast_reference_time",
-    "base_time",
     "base_datetime",
-    "reference_time",
-    "reference_datetime",
-    "indexing_time",
+    "indexingDate",
+    "indexingTime",
     "indexing_datetime",
+    "indexing_time",
 ]
 _BASE_DATETIME_KEYS = ["forecast_reference_time", "base_datetime"]
 BASE_DATETIME_KEYS = (
-    ["forecast_reference_time"]
+    ["forecast_reference_time", "indexing_time"]
     + _get_component_keys("time", _BASE_DATETIME_KEYS)
     + _get_metadata_keys(_GRIB_BASE_DATETIME_KEYS)
 )

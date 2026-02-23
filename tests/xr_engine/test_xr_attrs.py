@@ -258,7 +258,10 @@ def test_xr_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, dims, v
     compare_dims(ds, dims, sizes=True)
 
     for v in var_attrs:
-        assert ds[v].attrs == var_attrs[v]
+        v_attrs = dict(ds[v].attrs)
+        v_attrs.pop("_earthkit", None)
+        v_attrs.pop("ek_grid_spec", None)
+        assert v_attrs == var_attrs[v]
     assert ds.attrs == global_attrs
 
 
@@ -353,7 +356,10 @@ def test_xr_dims_as_attrs_3(lazy_load, allow_holes, idx, kwargs, coords, dims, v
     compare_dims(ds, dims, sizes=True)
 
     for v in var_attrs:
-        assert ds[v].attrs == var_attrs[v]
+        v_attrs = dict(ds[v].attrs)
+        v_attrs.pop("_earthkit", None)
+        v_attrs.pop("ek_grid_spec", None)
+        assert v_attrs == var_attrs[v]
     assert ds.attrs == global_attrs
 
 
@@ -369,14 +375,14 @@ def test_xr_dims_as_attrs_3(lazy_load, allow_holes, idx, kwargs, coords, dims, v
                 "variable_attrs": [
                     "metadata.shortName",
                     "key=metadata.levtype",
-                    # "namespace=parameter",
+                    "namespace=metadata.parameter",
                     _get_attrs,
                     {
                         "edition": _get_attrs_for_key_1,
                         "metadata.typeOfLevel": _get_attrs_for_key_2,
                         "param": "test",
                         "mykey1": "key=metadata.levelist",
-                        # "mykey2": "namespace=vertical",
+                        "mykey2": "namespace=metadata.vertical",
                     },
                 ],
                 "time_dim_mode": "raw",
@@ -395,20 +401,20 @@ def test_xr_dims_as_attrs_3(lazy_load, allow_holes, idx, kwargs, coords, dims, v
             {
                 "shortName": "t",
                 "levtype": "pl",
-                # "parameter": {
-                #     "centre": "ecmf",
-                #     "paramId": 130,
-                #     "units": "K",
-                #     "name": "Temperature",
-                #     "shortName": "t",
-                # },
+                "parameter": {
+                    "centre": "ecmf",
+                    "paramId": 130,
+                    "units": "K",
+                    "name": "Temperature",
+                    "shortName": "t",
+                },
                 "metadata.gridType": "regular_ll",
                 "parameter.units": "K",
                 "edition": "K_test1",
                 "metadata.typeOfLevel": "isobaricInhPa_test2",
                 "param": "test",
                 "mykey1": 500,
-                # "mykey2": {"typeOfLevel": "isobaricInhPa", "level": 500},
+                "mykey2": {"typeOfLevel": "isobaricInhPa", "level": 500},
             },
         ),
     ],
@@ -420,9 +426,9 @@ def test_xr_attrs_types(lazy_load, kwargs, coords, dims, attrs):
     compare_coords(ds, coords)
     compare_dims(ds, dims, sizes=True)
 
-    print(ds["t"].attrs)
     for k, v in attrs.items():
-        assert ds["t"].attrs[k] == v, f"{k}"
+        if k not in ["_earthkit", "ek_grid_spec"]:
+            assert ds["t"].attrs[k] == v, f"{k}"
 
 
 @pytest.mark.cache
@@ -434,11 +440,11 @@ def test_xr_global_attrs(allow_holes, lazy_load):
         attrs_mode="fixed",
         global_attrs=[
             {"centre_fixed": "_ecmf_"},
-            lambda md: {"centre_callable": md.get("centre")},
-            "centre",
-            "key=centreDescription",
-            {"centre_key": "key=centre"},
-            {"geography_namespace": "namespace=geography"},
+            lambda field: {"centre_callable": field.get("metadata.centre")},
+            "metadata.centre",
+            "key=metadata.centreDescription",
+            {"centre_key": "key=metadata.centre"},
+            {"geography_namespace": "namespace=metadata.geography"},
         ],
         allow_holes=allow_holes,
         lazy_load=lazy_load,

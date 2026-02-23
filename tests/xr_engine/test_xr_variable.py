@@ -29,8 +29,16 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
 @pytest.mark.parametrize(
     "_kwargs,dims,coords",
     [
-        ({"fixed_dims": ["valid_datetime", "param"]}, {"valid_datetime": 732, "param": 1}, {"param": ["2t"]}),
-        ({"fixed_dims": ["param", "valid_datetime"]}, {"param": 1, "valid_datetime": 732}, {"param": ["2t"]}),
+        (
+            {"fixed_dims": ["metadata.valid_datetime", "metadata.param"]},
+            {"valid_datetime": 732, "param": 1},
+            {"param": ["2t"]},
+        ),
+        (
+            {"fixed_dims": ["metadata.param", "metadata.valid_datetime"]},
+            {"param": 1, "valid_datetime": 732},
+            {"param": ["2t"]},
+        ),
     ],
 )
 def test_xr_engine_mono_variable_1(allow_holes, lazy_load, _kwargs, dims, coords):
@@ -61,12 +69,12 @@ def test_xr_engine_mono_variable_1(allow_holes, lazy_load, _kwargs, dims, coords
     "_kwargs,dims,coords",
     [
         (
-            {"fixed_dims": ["valid_datetime", "param"]},
-            {"valid_datetime": 732, "param": 2},
-            {"param": ["2d", "2t"]},
+            {"fixed_dims": ["time.valid_datetime", "parameter.variable"]},
+            {"valid_datetime": 732, "variable": 2},
+            {"variable": ["2d", "2t"]},
         ),
         (
-            {"fixed_dims": ["param", "valid_datetime"]},
+            {"fixed_dims": ["metadata.param", "time.valid_datetime"]},
             {"param": 2, "valid_datetime": 732},
             {"param": ["2d", "2t"]},
         ),
