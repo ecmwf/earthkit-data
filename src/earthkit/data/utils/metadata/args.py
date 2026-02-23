@@ -82,3 +82,6 @@ def metadata_argument_new(keys, astype=None, default=None):
             default = [default] * len(keys)
 
         return (keys, astype, default, key_arg_type)
+
+    else:
+        return None, None, None, None

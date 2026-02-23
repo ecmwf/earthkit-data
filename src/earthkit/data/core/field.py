@@ -645,11 +645,15 @@ class Field(Base):
 
     def _get_component(self, key):
         """Return the component name, component object and key name for the specified key."""
+        # if key.endswith(".*"):
+        #     component_name = key[:-2]
+        #     if component_name in self._components:
+        #         return component_name, self._components.get(component_name), None, False
         if "." in key:
             component_name, name = key.split(".", 1)
             return component_name, self._components.get(component_name), name
-        elif key in self._components:
-            return key, self._components[key], None
+        # elif key in self._components:
+        #     return key, self._components[key], None
         elif key in self._components[DATA]:
             return DATA, self._components[DATA], key
         return None, None, key
@@ -683,26 +687,13 @@ class Field(Base):
             If ``raise_on_missing`` is True and ``key`` is not found.
 
         """
-        prefix, component, key_name = self._get_component(key)
+        component_name, component, key_name = self._get_component(key)
 
         # print(f"_get_single: key={key}, prefix={prefix}, component={component}, key_name={key_name}")
 
-        # first try to get the value from the component handler if it is found
         if component:
-            if key_name is None:
-                return component.component.to_dict()
-            else:
-                return component.get(
-                    key_name, default=default, astype=astype, raise_on_missing=raise_on_missing
-                )
-
-        # handle keys like "mars.param" where "mars" is not a component but a
-        # namespace in the GRIB metadata
-        if prefix and prefix != METADATA:
-            key_name = prefix + "." + key_name
-            prefix = METADATA
-
-        if prefix == METADATA:
+            return component.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
+        elif component_name == METADATA:
             for _, private_component in self._private.items():
                 if hasattr(private_component, "metadata"):
                     return private_component.metadata(
@@ -723,14 +714,58 @@ class Field(Base):
                     if v is not None:
                         return _cast(v)
 
+        # # handle keys like "mars.param" where "mars" is not a component but a
+        # # namespace in the GRIB metadata
+        # if prefix and prefix != METADATA:
+        #     key_name = prefix + "." + key_name
+        #     prefix = METADATA
+
+        # if prefix == METADATA:
+        #     for _, private_component in self._private.items():
+        #         if hasattr(private_component, "metadata"):
+        #             return private_component.metadata(
+        #                 key_name, default=default, astype=astype, raise_on_missing=raise_on_missing
+        #             )
+        #         else:
+
+        #             def _cast(v):
+        #                 if callable(astype):
+        #                     try:
+        #                         return astype(v)
+        #                     except Exception:
+        #                         return None
+        #                 return v
+
+        #             # TODO: review this
+        #             v = self.private_component.get(key)
+        #             if v is not None:
+        #                 return _cast(v)
+
         if raise_on_missing:
             raise KeyError(f"Key {key} not found in field")
 
         return default
 
+    def _get_single_collection(self, key, raise_on_missing=False):
+        component_name = key
+        component = self._components.get(key)
+
+        if component:
+            return component.component.to_dict()
+        else:
+            prefix, _, sub_name = component_name.rpartition(".")
+            if prefix == METADATA:
+                for _, private_component in self._private.items():
+                    if hasattr(private_component, "as_namespace"):
+                        return private_component.as_namespace(sub_name)
+
+        if raise_on_missing:
+            raise KeyError(f"Key {key} not found in field")
+
     def _get_fast(
         self,
-        keys,
+        keys=None,
+        collections=None,
         default=None,
         astype=None,
         raise_on_missing=False,
@@ -787,23 +822,61 @@ class Field(Base):
             assert isinstance(remapping, (Remapping, Patch))
             meth = remapping(meth)
 
+        result = None
+        multi = keys and collections
+
         if isinstance(keys, str):
             result = meth(keys, default=default, astype=astype, raise_on_missing=raise_on_missing)
             if output is dict:
                 result = {keys: result}
+            elif multi:
+                result = [keys]
         elif isinstance(keys, (list, tuple)):
             if output is not dict:
                 result = [
                     meth(k, astype=kt, default=d, raise_on_missing=raise_on_missing)
                     for k, kt, d in zip(keys, astype, default)
                 ]
-                if output is tuple:
-                    result = tuple(result)
+            #     if output is tuple:
+            #         result = tuple(result)
             else:
                 result = {
                     k: meth(k, astype=kt, default=d, raise_on_missing=raise_on_missing)
                     for k, kt, d in zip(keys, astype, default)
                 }
+
+        if collections:
+            if isinstance(collections, str):
+                r = self._get_single_collection(collections, raise_on_missing=raise_on_missing)
+                if output is dict:
+                    if result is not None:
+                        result[collections] = r
+                    else:
+                        result = {collections: r}
+                elif result is not None:
+                    result.append(r)
+                else:
+                    result = r
+            elif isinstance(collections, (list, tuple)):
+                if output is not dict:
+                    r = [
+                        self._get_single_collection(k, raise_on_missing=raise_on_missing) for k in collections
+                    ]
+                    # if output is tuple:
+                    #     result = tuple(result)
+                    if result is not None:
+                        result.extend(r)
+                    else:
+                        result = r
+                else:
+                    r = {
+                        k: self._get_single_collection(k, raise_on_missing=raise_on_missing)
+                        for k in collections
+                    }
+                    if result is not None:
+                        result.update(r)
+                    else:
+                        result = r
 
         if output is dict and flatten_dict:
             r = {}
@@ -815,15 +888,19 @@ class Field(Base):
                     r[k] = v
             result = r
 
+        if output is tuple:
+            result = tuple(result)
+
         return result
 
     def get(
         self,
-        keys,
+        keys=None,
         default=None,
         *,
         astype=None,
         raise_on_missing=False,
+        collections=None,
         output="auto",
         flatten_dict=False,
         remapping=None,
@@ -882,14 +959,22 @@ class Field(Base):
             If ``raise_on_missing`` is True and any of ``keys`` is not found.
 
         """
-        if not keys:
-            raise ValueError("At least one key must be specified.")
+        if not keys and not collections:
+            raise ValueError("At least one key or collection must be specified.")
 
         keys, astype, default, keys_arg_type = metadata_argument_new(
             keys,
             default=default,
             astype=astype,
         )
+
+        # if collections:
+        #     if isinstance(collections, str):
+        #         keys = [keys]
+        #     elif isinstance(keys, tuple):
+        #         keys = list(keys)
+        #     for collection in collections:
+        #         keys.append(collection + ".*")
 
         if output == "auto":
             if keys_arg_type is not str:
@@ -908,6 +993,7 @@ class Field(Base):
 
         return self._get_fast(
             keys,
+            collections,
             default=default,
             astype=astype,
             raise_on_missing=raise_on_missing,

@@ -127,8 +127,8 @@ class GribMetadata:
 
         key = _key_name(key)
 
-        if key in NAMESPACES:
-            return self.handle.as_namespace(key)
+        # if key in NAMESPACES:
+        #     return self.handle.as_namespace(key)
 
         _kwargs = {}
         if not raise_on_missing:
@@ -197,6 +197,9 @@ class GribMetadata:
         bytes
         """
         return self.handle.get_buffer()
+
+    def as_namespace(self, namespace):
+        return self.handle.as_namespace(namespace)
 
     def namespace(self, owner, name, result, prefix_keys=False):
         if isinstance(name, str):

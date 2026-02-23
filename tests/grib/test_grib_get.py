@@ -505,11 +505,11 @@ def test_grib_get_dict_field_1(fl_type, _kwargs, key, expected_value):
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
 @pytest.mark.parametrize(
-    "_kwargs,key,expected_value",
+    "_args,_kwargs,expected_value",
     [
         (
-            {"output": dict},
-            "time",
+            tuple(),
+            {"collections": "time", "output": dict},
             {
                 "time": {
                     "base_datetime": datetime.datetime(2020, 5, 13, 12, 0),
@@ -519,8 +519,8 @@ def test_grib_get_dict_field_1(fl_type, _kwargs, key, expected_value):
             },
         ),
         (
-            {"output": dict, "flatten_dict": True},
-            "time",
+            tuple(),
+            {"collections": "time", "output": dict, "flatten_dict": True},
             {
                 "time.base_datetime": datetime.datetime(2020, 5, 13, 12, 0),
                 "time.step": datetime.timedelta(0),
@@ -528,53 +528,48 @@ def test_grib_get_dict_field_1(fl_type, _kwargs, key, expected_value):
             },
         ),
         (
-            {"output": dict},
-            ["time", "vertical.level"],
+            ("vertical.level",),
+            {"collections": ["time"], "output": dict},
             {
+                "vertical.level": 0,
                 "time": {
                     "base_datetime": datetime.datetime(2020, 5, 13, 12, 0),
                     "step": datetime.timedelta(0),
                     "valid_datetime": datetime.datetime(2020, 5, 13, 12, 0),
                 },
-                "vertical.level": 0,
             },
         ),
         (
-            {"output": dict, "flatten_dict": True},
-            ["time", "vertical.level"],
+            ("vertical.level",),
+            {"collections": "time", "output": dict, "flatten_dict": True},
             {
+                "vertical.level": 0,
                 "time.base_datetime": datetime.datetime(2020, 5, 13, 12, 0),
                 "time.step": datetime.timedelta(0),
                 "time.valid_datetime": datetime.datetime(2020, 5, 13, 12, 0),
-                "vertical.level": 0,
             },
         ),
     ],
 )
-def test_grib_get_dict_field_components(fl_type, _kwargs, key, expected_value):
+def test_grib_get_dict_field_components(fl_type, _args, _kwargs, expected_value):
     ds, _ = load_grib_data("test.grib", fl_type)
     f = ds[0]
 
-    assert f.get(key, **_kwargs) == expected_value
+    assert f.get(*_args, **_kwargs) == expected_value
 
 
 @pytest.mark.parametrize(
     "_args,_kwargs,expected_values",
     [
-        (("vertical",), {}, {"level": 1000, "level_type": "pressure"}),
+        (tuple(), {"collections": "vertical"}, {"level": 1000, "level_type": "pressure"}),
         (
-            ("vertical",),
-            {"output": dict},
+            tuple(),
+            {"collections": "vertical", "output": dict},
             {"vertical": {"level": 1000, "level_type": "pressure"}},
         ),
         (
-            (
-                [
-                    "vertical",
-                    "time",
-                ],
-            ),
-            {"output": dict},
+            tuple(),
+            {"collections": ["vertical", "time"], "output": dict},
             {
                 "vertical": {
                     "level": 1000,
@@ -610,11 +605,11 @@ def test_grib_get_field_components_1(_args, _kwargs, expected_values, fl_type):
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
 @pytest.mark.parametrize(
-    "_kwargs,key,expected_value",
+    "_args,_kwargs,expected_value",
     [
         (
-            {"output": dict},
-            "metadata.time",
+            tuple(),
+            {"collections": "metadata.time", "output": dict},
             {
                 "metadata.time": {
                     "dataDate": 20200513,
@@ -624,15 +619,15 @@ def test_grib_get_field_components_1(_args, _kwargs, expected_values, fl_type):
             },
         ),
         (
-            {"output": dict},
-            ["metadata.time", "vertical.level", "metadata.mars"],
+            ("vertical.level",),
+            {"collections": ["metadata.time", "metadata.mars"], "output": dict},
             {
+                "vertical.level": 0,
                 "metadata.time": {
                     "dataDate": 20200513,
                     "dataTime": 1200,
                     "endStep": 0,
                 },
-                "vertical.level": 0,
                 "metadata.mars": {
                     "date": 20200513,
                     "time": 1200,
@@ -642,11 +637,11 @@ def test_grib_get_field_components_1(_args, _kwargs, expected_values, fl_type):
         ),
     ],
 )
-def test_grib_get_dict_field_metadata(fl_type, _kwargs, key, expected_value):
+def test_grib_get_dict_field_metadata_1(fl_type, _args, _kwargs, expected_value):
     ds, _ = load_grib_data("test.grib", fl_type)
     f = ds[0]
 
-    res = f.get(key, **_kwargs)
+    res = f.get(*_args, **_kwargs)
     for k, v in expected_value.items():
         assert k in res
         res_v = res[k]
@@ -660,11 +655,11 @@ def test_grib_get_dict_field_metadata(fl_type, _kwargs, key, expected_value):
 
 @pytest.mark.parametrize("fl_type", FL_FILE)
 @pytest.mark.parametrize(
-    "_kwargs,key,expected_value",
+    "_args,_kwargs,expected_value",
     [
         (
-            {"output": dict, "flatten_dict": True},
-            "metadata.time",
+            tuple(),
+            {"collections": "metadata.time", "output": dict, "flatten_dict": True},
             {
                 "metadata.time.dataDate": 20200513,
                 "metadata.time.dataTime": 1200,
@@ -672,13 +667,13 @@ def test_grib_get_dict_field_metadata(fl_type, _kwargs, key, expected_value):
             },
         ),
         (
-            {"output": dict, "flatten_dict": True},
-            ["metadata.time", "vertical.level", "metadata.mars"],
+            ("vertical.level",),
+            {"collections": ["metadata.time", "metadata.mars"], "output": dict, "flatten_dict": True},
             {
+                "vertical.level": 0,
                 "metadata.time.dataDate": 20200513,
                 "metadata.time.dataTime": 1200,
                 "metadata.time.endStep": 0,
-                "vertical.level": 0,
                 "metadata.mars.date": 20200513,
                 "metadata.mars.time": 1200,
                 "metadata.mars.class": "od",
@@ -686,11 +681,11 @@ def test_grib_get_dict_field_metadata(fl_type, _kwargs, key, expected_value):
         ),
     ],
 )
-def test_grib_get_dict_field_metadata_flatten(fl_type, _kwargs, key, expected_value):
+def test_grib_get_dict_field_metadata_flatten(fl_type, _args, _kwargs, expected_value):
     ds, _ = load_grib_data("test.grib", fl_type)
     f = ds[0]
 
-    res = f.get(key, **_kwargs)
+    res = f.get(*_args, **_kwargs)
 
     for k, v in expected_value.items():
         assert res[k] == v
