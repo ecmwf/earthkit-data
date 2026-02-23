@@ -502,8 +502,9 @@ class FieldListTensor(TensorCore):
 
     def make_valid_datetime(self, dims_map, dtype="datetime64[ns]"):
         # TODO: make it more general
+        # PW: TODO: make it more general - it could allow to use it when allow_holes=True
 
-        for k in ["valid_datetime", "valid_time"]:
+        for k in ["valid_time", "time.valid_datetime", "metadata.valid_time", "metadata.valid_datetime"]:
             if k in self.user_coords:
                 import datetime
 
@@ -512,10 +513,24 @@ class FieldListTensor(TensorCore):
         # in the tensor the dims.coords are GRIB keys
         # dims_map is a mapping from dim names to GRIB keys
         DIM_ROLES = {
-            "forecast_reference_time": ("forecast_reference_time", "base_datetime"),
-            "step": ("step_timedelta", "step", "ensStep", "stepRange"),
-            "date": ("date", "dataDate"),
-            "time": ("time", "dataTime"),
+            "forecast_reference_time": (
+                "forecast_reference_time",
+                "time.forecast_reference_time",
+                "time.base_datetime",
+                "metadata.base_datetime",
+                "metadata.indexing_datetime",
+                "metadata.indexing_time",
+            ),
+            "step": (
+                "step",
+                "time.step",
+                "metadata.step_timedelta",
+                "metadata.step",
+                "metadata.endStep",
+                "metadata.stepRange",
+            ),
+            "date": ("date", "metadata.dataDate"),
+            "time": ("time", "metadata.dataTime"),
         }
 
         # map dim roles to keys available in the tensor
@@ -561,7 +576,7 @@ class FieldListTensor(TensorCore):
                     }
 
                     vals = np.array(
-                        [x for x in self.source.sel(**other_coords).get("valid_datetime")],
+                        [x for x in self.source.sel(**other_coords).get("time.valid_datetime")],
                         dtype=dtype,
                     )
 
@@ -573,7 +588,7 @@ class FieldListTensor(TensorCore):
                     import numpy as np
 
                     vals = np.array(
-                        [x for x in self.source.get("valid_datetime")],
+                        [x for x in self.source.get("time.valid_datetime")],
                         dtype=dtype,
                     )
 

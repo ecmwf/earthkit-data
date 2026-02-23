@@ -58,7 +58,7 @@ class IndexDB:
         if key not in self._index:
             # # LOG.debug(f"Key={key} not found in IndexDB")
             if maker is not None:
-                self._index[key] = maker(key)[0][key]
+                self._index[key] = maker(key)[key]
             else:
                 raise KeyError(f"Could not find index for {key=}")
         return self._index[key]

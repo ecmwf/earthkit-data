@@ -33,7 +33,7 @@ LS_KEYS = [
     "time.base_datetime",
     "time.step",
     "vertical.level",
-    "vertical.type",
+    "vertical.level_type",
     "ensemble.member",
     "geography.grid_type",
 ]

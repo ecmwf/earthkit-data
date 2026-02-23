@@ -20,34 +20,39 @@ from earthkit.data.testing import earthkit_remote_test_data_file
 @pytest.mark.cache
 @pytest.mark.parametrize("lazy_load", [False, True])
 @pytest.mark.parametrize(
-    "kwargs,dim_keys,or_mask_spec,nfields",
+    "kwargs,dim_keys,dims,or_mask_spec,nfields",
     [
         (
             {
                 "profile": "mars",
                 "time_dim_mode": "raw",
-                "dim_roles": {"step": "step"},
+                "dim_roles": {"step": "metadata.step"},
                 "decode_times": False,
                 "allow_holes": True,
             },
+            ["metadata.date", "metadata.time", "metadata.step", "metadata.level"],
             ["date", "time", "step", "level"],
             [
-                {"param": ["r"], "time": [0], "step": [0]},  # masks 12 fields
-                {"param": ["u"], "time": [1200], "level": [1000, 300]},  # masks 8 fields
+                {"metadata.param": ["r"], "metadata.time": [0], "metadata.step": [0]},  # masks 12 fields
                 {
-                    "param": ["z"],
-                    "time": [1200],
-                    "level": [850, 700, 500, 400, 300],
-                    "date": [20240604],
-                    "step": [6],
+                    "metadata.param": ["u"],
+                    "metadata.time": [1200],
+                    "metadata.level": [1000, 300],
+                },  # masks 8 fields
+                {
+                    "metadata.param": ["z"],
+                    "metadata.time": [1200],
+                    "metadata.level": [850, 700, 500, 400, 300],
+                    "metadata.date": [20240604],
+                    "metadata.step": [6],
                 },
                 # masks 5 fields
                 {
-                    "param": ["z"],
-                    "time": [1200],
-                    "level": [1000, 700, 500, 400, 300],
-                    "date": [20240603],
-                    "step": [0],
+                    "metadata.param": ["z"],
+                    "metadata.time": [1200],
+                    "metadata.level": [1000, 700, 500, 400, 300],
+                    "metadata.date": [20240603],
+                    "metadata.step": [0],
                 },
                 # masks 5 fields
             ],
@@ -55,13 +60,13 @@ from earthkit.data.testing import earthkit_remote_test_data_file
         ),
     ],
 )
-def test_xr_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, or_mask_spec, nfields):
+def test_xr_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, dims, or_mask_spec, nfields):
     kwargs["lazy_load"] = lazy_load
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
-    md = ds_ek.metadata("param", *dim_keys)
-    md_df = pd.DataFrame.from_records(md, columns=["param"] + dim_keys)
+    md = ds_ek.get(["metadata.param"] + dim_keys)
+    md_df = pd.DataFrame.from_records(md, columns=["metadata.param"] + dim_keys)
     mask = pd.Series(False, index=md_df.index)
     for mask_spec in or_mask_spec:
         _mask = pd.Series(True, index=md_df.index)
@@ -79,7 +84,7 @@ def test_xr_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, or_mask_spec, n
     kwargs_with_full_tensor["allow_holes"] = False
 
     for (param, *coords), field, is_masked in zip(md, ds_ek, mask):
-        coords_dict = dict(zip(dim_keys, coords))
+        coords_dict = dict(zip(dims, coords))
         da = ds[param].sel(coords_dict, drop=True)
         da2 = field.to_xarray(**kwargs_with_full_tensor)[param]
         if is_masked:
@@ -92,36 +97,41 @@ def test_xr_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, or_mask_spec, n
 @pytest.mark.cache
 @pytest.mark.parametrize("lazy_load", [False, True])
 @pytest.mark.parametrize(
-    "kwargs,dim_keys,or_mask_spec,expected_dims_by_param,nfields",
+    "kwargs,dim_keys,dims,or_mask_spec,expected_dims_by_param,nfields",
     [
         (
             {
                 "profile": "mars",
                 "time_dim_mode": "raw",
-                "dim_roles": {"step": "step"},
+                "dim_roles": {"step": "metadata.step"},
                 "dims_as_attrs": ["step"],
                 "decode_times": False,
                 "allow_holes": True,
             },
+            ["metadata.date", "metadata.time", "metadata.step", "metadata.level"],
             ["date", "time", "step", "level"],
             [
-                {"param": ["t"], "step": [6]},  # masks 24 fields
-                {"param": ["r"], "time": [0], "step": [0]},  # masks 12 fields
-                {"param": ["u"], "time": [1200], "level": [1000, 300]},  # masks 8 fields
+                {"metadata.param": ["t"], "metadata.step": [6]},  # masks 24 fields
+                {"metadata.param": ["r"], "metadata.time": [0], "metadata.step": [0]},  # masks 12 fields
                 {
-                    "param": ["z"],
-                    "time": [1200],
-                    "level": [850, 700, 500, 400, 300],
-                    "date": [20240604],
-                    "step": [6],
+                    "metadata.param": ["u"],
+                    "metadata.time": [1200],
+                    "metadata.level": [1000, 300],
+                },  # masks 8 fields
+                {
+                    "metadata.param": ["z"],
+                    "metadata.time": [1200],
+                    "metadata.level": [850, 700, 500, 400, 300],
+                    "metadata.date": [20240604],
+                    "metadata.step": [6],
                 },
                 # masks 5 fields
                 {
-                    "param": ["z"],
-                    "time": [1200],
-                    "level": [1000, 700, 500, 400, 300],
-                    "date": [20240603],
-                    "step": [0],
+                    "metadata.param": ["z"],
+                    "metadata.time": [1200],
+                    "metadata.level": [1000, 700, 500, 400, 300],
+                    "metadata.date": [20240603],
+                    "metadata.step": [0],
                 },
                 # masks 5 fields
             ],
@@ -136,15 +146,15 @@ def test_xr_incomplete_tensor_holes(lazy_load, kwargs, dim_keys, or_mask_spec, n
         ),
     ],
 )
-def test_xr_incomplete_tensor_holes2(
-    lazy_load, kwargs, dim_keys, or_mask_spec, expected_dims_by_param, nfields
+def test_xr_incomplete_tensor_holes_2(
+    lazy_load, kwargs, dim_keys, dims, or_mask_spec, expected_dims_by_param, nfields
 ):
     kwargs["lazy_load"] = lazy_load
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
-    md = ds_ek.metadata("param", *dim_keys)
-    md_df = pd.DataFrame.from_records(md, columns=["param"] + dim_keys)
+    md = ds_ek.get(["metadata.param"] + dim_keys)
+    md_df = pd.DataFrame.from_records(md, columns=["metadata.param"] + dim_keys)
     mask = pd.Series(False, index=md_df.index)
     for mask_spec in or_mask_spec:
         _mask = pd.Series(True, index=md_df.index)
@@ -166,7 +176,7 @@ def test_xr_incomplete_tensor_holes2(
         assert set([d for d in ds[param].dims if d not in ["longitude", "latitude"]]) == set(expected_dims)
 
     for (param, *coords), field, is_masked in zip(md, ds_ek, mask):
-        coords_dict = dict(zip(dim_keys, coords))
+        coords_dict = dict(zip(dims, coords))
         if param == "t" and coords_dict["step"] != 0:
             continue
         restricted_coords_dict = {k: c for k, c in coords_dict.items() if k in ds[param].dims}
@@ -182,36 +192,48 @@ def test_xr_incomplete_tensor_holes2(
 @pytest.mark.cache
 @pytest.mark.parametrize("lazy_load", [False, True])
 @pytest.mark.parametrize(
-    "kwargs,dim_keys,or_mask_spec,dropped_coords,nfields",
+    "kwargs,dim_keys,dims,or_mask_spec,dropped_coords,nfields",
     [
         (
             {
                 "profile": "mars",
                 "time_dim_mode": "raw",
-                "dim_roles": {"step": "step"},
+                "dim_roles": {"step": "metadata.step"},
                 "decode_times": False,
                 "allow_holes": True,
             },
+            ["metadata.date", "metadata.time", "metadata.step", "metadata.level"],
             ["date", "time", "step", "level"],
             [
-                {"param": ["t", "r", "u", "v", "z"], "level": [500, 700]},  # masks 80 fields
-                {"param": ["r"], "level": [300]},  # masks 8 fields
-                {"param": ["r"], "time": [0], "step": [0]},  # masks 6 fields (+6 already masked above)
-                {"param": ["u"], "time": [1200], "level": [1000, 300]},  # masks 8 fields
                 {
-                    "param": ["z"],
-                    "time": [1200],
-                    "level": [850, 700, 500, 400, 300],
-                    "date": [20240604],
-                    "step": [6],
+                    "metadata.param": ["t", "r", "u", "v", "z"],
+                    "metadata.level": [500, 700],
+                },  # masks 80 fields
+                {"metadata.param": ["r"], "metadata.level": [300]},  # masks 8 fields
+                {
+                    "metadata.param": ["r"],
+                    "metadata.time": [0],
+                    "metadata.step": [0],
+                },  # masks 6 fields (+6 already masked above)
+                {
+                    "metadata.param": ["u"],
+                    "metadata.time": [1200],
+                    "metadata.level": [1000, 300],
+                },  # masks 8 fields
+                {
+                    "metadata.param": ["z"],
+                    "metadata.time": [1200],
+                    "metadata.level": [850, 700, 500, 400, 300],
+                    "metadata.date": [20240604],
+                    "metadata.step": [6],
                 },
                 # masks 3 fields (+2 already masked above)
                 {
-                    "param": ["z"],
-                    "time": [1200],
-                    "level": [1000, 700, 500, 400, 300],
-                    "date": [20240603],
-                    "step": [0],
+                    "metadata.param": ["z"],
+                    "metadata.time": [1200],
+                    "metadata.level": [1000, 700, 500, 400, 300],
+                    "metadata.date": [20240603],
+                    "metadata.step": [0],
                 },
                 # masks 3 fields (+2 already masked above)
             ],
@@ -221,14 +243,14 @@ def test_xr_incomplete_tensor_holes2(
     ],
 )
 def test_xr_incomplete_tensor_coordinates_trimmed_plus_holes(
-    lazy_load, kwargs, dim_keys, or_mask_spec, dropped_coords, nfields
+    lazy_load, kwargs, dim_keys, dims, or_mask_spec, dropped_coords, nfields
 ):
     kwargs["lazy_load"] = lazy_load
 
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
-    md = ds_ek.metadata("param", *dim_keys)
-    md_df = pd.DataFrame.from_records(md, columns=["param"] + dim_keys)
+    md = ds_ek.get(["metadata.param"] + dim_keys)
+    md_df = pd.DataFrame.from_records(md, columns=["metadata.param"] + dim_keys)
     mask = pd.Series(False, index=md_df.index)
     for mask_spec in or_mask_spec:
         _mask = pd.Series(True, index=md_df.index)
@@ -251,7 +273,7 @@ def test_xr_incomplete_tensor_coordinates_trimmed_plus_holes(
     kwargs_with_full_tensor["allow_holes"] = False
 
     for (param, *coords), field, is_masked in zip(md, ds_ek, mask):
-        coords_dict = dict(zip(dim_keys, coords))
+        coords_dict = dict(zip(dims, coords))
         # if the coords were dropped, skip
         if all(coords_dict[d] in vs for d, vs in dropped_coords.items()):
             continue
