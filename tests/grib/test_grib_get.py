@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import os
 import sys
 
@@ -469,6 +470,232 @@ def test_grib_get_missing_key_fl(fl_type, key, _kwargs, expected_value, error):
     # assert v == 0
 
 
+@pytest.mark.parametrize("fl_type", FL_FILE)
+@pytest.mark.parametrize(
+    "_kwargs,key,expected_value",
+    [
+        (
+            {"output": dict},
+            "parameter.variable",
+            {"parameter.variable": "2t"},
+        ),
+        (
+            {"output": dict},
+            ["parameter.variable", "vertical.level"],
+            {"parameter.variable": "2t", "vertical.level": 0},
+        ),
+        (
+            {"output": dict},
+            ("parameter.variable", "vertical.level"),
+            {"parameter.variable": "2t", "vertical.level": 0},
+        ),
+        (
+            {"output": dict, "flatten_dict": True},
+            ("parameter.variable", "vertical.level"),
+            {"parameter.variable": "2t", "vertical.level": 0},
+        ),
+    ],
+)
+def test_grib_get_dict_field_1(fl_type, _kwargs, key, expected_value):
+    ds, _ = load_grib_data("test.grib", fl_type)
+    f = ds[0]
+
+    assert f.get(key, **_kwargs) == expected_value
+
+
+@pytest.mark.parametrize("fl_type", FL_FILE)
+@pytest.mark.parametrize(
+    "_kwargs,key,expected_value",
+    [
+        (
+            {"output": dict},
+            "time",
+            {
+                "time": {
+                    "base_datetime": datetime.datetime(2020, 5, 13, 12, 0),
+                    "step": datetime.timedelta(0),
+                    "valid_datetime": datetime.datetime(2020, 5, 13, 12, 0),
+                }
+            },
+        ),
+        (
+            {"output": dict, "flatten_dict": True},
+            "time",
+            {
+                "time.base_datetime": datetime.datetime(2020, 5, 13, 12, 0),
+                "time.step": datetime.timedelta(0),
+                "time.valid_datetime": datetime.datetime(2020, 5, 13, 12, 0),
+            },
+        ),
+        (
+            {"output": dict},
+            ["time", "vertical.level"],
+            {
+                "time": {
+                    "base_datetime": datetime.datetime(2020, 5, 13, 12, 0),
+                    "step": datetime.timedelta(0),
+                    "valid_datetime": datetime.datetime(2020, 5, 13, 12, 0),
+                },
+                "vertical.level": 0,
+            },
+        ),
+        (
+            {"output": dict, "flatten_dict": True},
+            ["time", "vertical.level"],
+            {
+                "time.base_datetime": datetime.datetime(2020, 5, 13, 12, 0),
+                "time.step": datetime.timedelta(0),
+                "time.valid_datetime": datetime.datetime(2020, 5, 13, 12, 0),
+                "vertical.level": 0,
+            },
+        ),
+    ],
+)
+def test_grib_get_dict_field_components(fl_type, _kwargs, key, expected_value):
+    ds, _ = load_grib_data("test.grib", fl_type)
+    f = ds[0]
+
+    assert f.get(key, **_kwargs) == expected_value
+
+
+@pytest.mark.parametrize(
+    "_args,_kwargs,expected_values",
+    [
+        (("vertical",), {}, {"level": 1000, "level_type": "pressure"}),
+        (
+            ("vertical",),
+            {"output": dict},
+            {"vertical": {"level": 1000, "level_type": "pressure"}},
+        ),
+        (
+            (
+                [
+                    "vertical",
+                    "time",
+                ],
+            ),
+            {"output": dict},
+            {
+                "vertical": {
+                    "level": 1000,
+                    "level_type": "pressure",
+                },
+                "time": {
+                    "base_datetime": datetime.datetime(2018, 8, 1, 12, 0),
+                    "step": datetime.timedelta(0),
+                    "valid_datetime": datetime.datetime(2018, 8, 1, 12, 0),
+                },
+            },
+        ),
+    ],
+)
+@pytest.mark.parametrize("fl_type", FL_FILE)
+def test_grib_get_field_components_1(_args, _kwargs, expected_values, fl_type):
+    f, _ = load_grib_data("test6.grib", fl_type)
+
+    # r = f[0].get(*_args, **_kwargs)
+    # assert r == expected_values
+
+    res = f[0].get(*_args, **_kwargs)
+    for k, v in expected_values.items():
+        assert k in res
+        res_v = res[k]
+        if isinstance(v, dict):
+            assert isinstance(res_v, dict)
+            for _k, _v in v.items():
+                assert res_v[_k] == _v
+        else:
+            assert res_v == v
+
+
+@pytest.mark.parametrize("fl_type", FL_FILE)
+@pytest.mark.parametrize(
+    "_kwargs,key,expected_value",
+    [
+        (
+            {"output": dict},
+            "metadata.time",
+            {
+                "metadata.time": {
+                    "dataDate": 20200513,
+                    "dataTime": 1200,
+                    "endStep": 0,
+                }
+            },
+        ),
+        (
+            {"output": dict},
+            ["metadata.time", "vertical.level", "metadata.mars"],
+            {
+                "metadata.time": {
+                    "dataDate": 20200513,
+                    "dataTime": 1200,
+                    "endStep": 0,
+                },
+                "vertical.level": 0,
+                "metadata.mars": {
+                    "date": 20200513,
+                    "time": 1200,
+                    "class": "od",
+                },
+            },
+        ),
+    ],
+)
+def test_grib_get_dict_field_metadata(fl_type, _kwargs, key, expected_value):
+    ds, _ = load_grib_data("test.grib", fl_type)
+    f = ds[0]
+
+    res = f.get(key, **_kwargs)
+    for k, v in expected_value.items():
+        assert k in res
+        res_v = res[k]
+        if isinstance(v, dict):
+            assert isinstance(res_v, dict)
+            for _k, _v in v.items():
+                assert res_v[_k] == _v
+        else:
+            assert res_v == v
+
+
+@pytest.mark.parametrize("fl_type", FL_FILE)
+@pytest.mark.parametrize(
+    "_kwargs,key,expected_value",
+    [
+        (
+            {"output": dict, "flatten_dict": True},
+            "metadata.time",
+            {
+                "metadata.time.dataDate": 20200513,
+                "metadata.time.dataTime": 1200,
+                "metadata.time.endStep": 0,
+            },
+        ),
+        (
+            {"output": dict, "flatten_dict": True},
+            ["metadata.time", "vertical.level", "metadata.mars"],
+            {
+                "metadata.time.dataDate": 20200513,
+                "metadata.time.dataTime": 1200,
+                "metadata.time.endStep": 0,
+                "vertical.level": 0,
+                "metadata.mars.date": 20200513,
+                "metadata.mars.time": 1200,
+                "metadata.mars.class": "od",
+            },
+        ),
+    ],
+)
+def test_grib_get_dict_field_metadata_flatten(fl_type, _kwargs, key, expected_value):
+    ds, _ = load_grib_data("test.grib", fl_type)
+    f = ds[0]
+
+    res = f.get(key, **_kwargs)
+
+    for k, v in expected_value.items():
+        assert res[k] == v
+
+
 @pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_FILE)
 def test_grib_metadata_namespace(fl_type):
@@ -596,42 +823,42 @@ def test_grib_get_gridspec_key():
     "_kwargs,key,expected_value",
     [
         (
-            {"output": "item_per_field"},
+            {"output": "auto"},
             "parameter.variable",
             ["2t", "msl"],
         ),
         (
-            {"output": "item_per_field"},
+            {"output": "auto"},
             ["parameter.variable", "vertical.level"],
             [["2t", 0], ["msl", 0]],
         ),
         (
-            {"output": "item_per_field"},
+            {"output": "auto"},
             ("parameter.variable", "vertical.level"),
             [("2t", 0), ("msl", 0)],
         ),
         (
-            {"output": "item_per_key"},
+            {"output": "auto"},
             "parameter.variable",
             ["2t", "msl"],
         ),
         (
-            {"output": "item_per_key"},
+            {"output": "auto", "group_by_key": True},
             ["parameter.variable", "vertical.level"],
             [["2t", "msl"], [0, 0]],
         ),
         (
-            {"output": "item_per_key"},
+            {"output": "auto", "group_by_key": True},
             ("parameter.variable", "vertical.level"),
             [["2t", "msl"], [0, 0]],
         ),
         (
-            {"output": "dict_per_field"},
+            {"output": dict},
             "parameter.variable",
             [{"parameter.variable": "2t"}, {"parameter.variable": "msl"}],
         ),
         (
-            {"output": "dict_per_field"},
+            {"output": dict},
             ["parameter.variable", "vertical.level"],
             [
                 {"parameter.variable": "2t", "vertical.level": 0},
@@ -639,7 +866,7 @@ def test_grib_get_gridspec_key():
             ],
         ),
         (
-            {"output": "dict_per_field"},
+            {"output": dict},
             ("parameter.variable", "vertical.level"),
             [
                 {"parameter.variable": "2t", "vertical.level": 0},
@@ -647,17 +874,17 @@ def test_grib_get_gridspec_key():
             ],
         ),
         (
-            {"output": "dict_per_key"},
+            {"output": dict, "group_by_key": True},
             "parameter.variable",
             {"parameter.variable": ["2t", "msl"]},
         ),
         (
-            {"output": "dict_per_key"},
+            {"output": dict, "group_by_key": True},
             ["parameter.variable", "vertical.level"],
             {"parameter.variable": ["2t", "msl"], "vertical.level": [0, 0]},
         ),
         (
-            {"output": "dict_per_key"},
+            {"output": dict, "group_by_key": True},
             ("parameter.variable", "vertical.level"),
             {"parameter.variable": ["2t", "msl"], "vertical.level": [0, 0]},
         ),

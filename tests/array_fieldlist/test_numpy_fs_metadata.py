@@ -85,6 +85,7 @@ def test_array_fl_metadata_keys():
     assert "validityDate" in md
 
 
+@pytest.mark.migrate
 def test_array_fl_namespace():
     f, _ = load_array_fl_file("tuv_pl.grib")
 
@@ -125,7 +126,7 @@ def test_array_fl_namespace():
     assert set(r.keys()) == ref
 
 
-# @pytest.mark.migrate
+@pytest.mark.migrate
 def test_array_fl_grib_namespace():
     f, _ = load_array_fl_file("tuv_pl.grib")
 

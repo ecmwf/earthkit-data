@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+from collections import defaultdict
 
 from earthkit.utils.array import array_namespace as eku_array_namespace
 
@@ -146,17 +147,27 @@ class IndexedFieldList(Index, FieldList):
         default=None,
         astype=None,
         raise_on_missing=False,
-        output="item_per_field",
+        output="auto",
+        group_by_key=False,
+        flatten_dict=False,
         remapping=None,
         patches=None,
     ):
         from earthkit.data.utils.metadata.args import metadata_argument_new
 
-        # _kwargs = kwargs.copy()
-        # astype = _kwargs.pop("astype", None)
         keys, astype, default, keys_arg_type = metadata_argument_new(keys, astype=astype, default=default)
 
-        # assert isinstance(keys, (list, tuple))
+        if output == "auto":
+            if keys_arg_type is not None:
+                output = keys_arg_type
+        elif output in [list, "list"]:
+            output = list
+        elif output in [tuple, "tuple"]:
+            output = tuple
+        elif output in [dict, "dict"]:
+            output = dict
+        else:
+            raise ValueError(f"Invalid output: {output}")
 
         remapping = build_remapping(remapping, patches)
 
@@ -164,35 +175,24 @@ class IndexedFieldList(Index, FieldList):
             "default": default,
             "raise_on_missing": raise_on_missing,
             "remapping": remapping,
+            "flatten_dict": flatten_dict,
             # "patches": patches,
             "astype": astype,
         }
 
-        if output == "item_per_field":
-            return [f._get_fast(keys, output=keys_arg_type, **_kwargs) for f in self]
-        elif output == "item_per_key":
-            vals = [f._get_fast(keys, output=keys_arg_type, **_kwargs) for f in self]
-            if keys_arg_type in (list, tuple):
-                return [[x[i] for x in vals] for i in range(len(keys))]
-            else:
-                assert isinstance(keys, str)
-                return vals
-        elif output == "dict_per_field":
-            return [f._get_fast(keys, output=dict, **_kwargs) for f in self]
-        elif output == "dict_per_key":
-            vals = [f._get_fast(keys, output=keys_arg_type, **_kwargs) for f in self]
-            if keys_arg_type in (list, tuple):
-                result = {k: [] for k in keys}
-                for i, k in enumerate(keys):
-                    result[k] = [x[i] for x in vals]
-            else:
-                assert isinstance(keys, str)
-                result = {keys: vals}
-            return result
+        if not group_by_key or output == "auto":
+            return [f._get_fast(keys, output=output, **_kwargs) for f in self]
         else:
-            raise ValueError(
-                f"get: invalid output={output}. Must be one of 'item_per_field', 'item_per_key', 'dict_per_field', 'dict_per_key'"
-            )
+            if output is dict:
+                result = defaultdict(list)
+                for f in self:
+                    r = f._get_fast(keys, output=dict, **_kwargs)
+                    for k, v in r.items():
+                        result[k].append(v)
+                return dict(result)
+            else:
+                vals = [f._get_fast(keys, output=list, **_kwargs) for f in self]
+                return [[x[i] for x in vals] for i in range(len(keys))]
 
     def metadata(self, keys, **kwargs):
         if isinstance(keys, str):
@@ -222,12 +222,13 @@ class IndexedFieldList(Index, FieldList):
             return self[0].default_ls_keys
         return []
 
-    def ls(self, n=None, keys=None, extra_keys=None, component=None, filter=None):
+    def ls(self, n=None, keys=None, extra_keys=None):
         from earthkit.data.utils.summary import ls as summary_ls
 
-        def _proc(keys: list, n: int, component=None, filter=None):
+        def _proc(keys: list, n: int):
             num = len(self)
             pos = slice(0, num)
+
             if n is not None:
                 pos = slice(0, min(num, n)) if n > 0 else slice(num - min(num, -n), num)
             pos_range = range(pos.start, pos.stop)
@@ -238,28 +239,28 @@ class IndexedFieldList(Index, FieldList):
                 default = [None] * len(keys)
                 astype = [None] * len(keys)
 
-            if component is not None:
-                for i in pos_range:
-                    f = self[i]
-                    v = {}
-                    for ns_val in f._dump_component(component, prefix_keys=True, filter=filter).values():
-                        v.update(ns_val)
-                    if keys:
-                        v.update(f._get_fast(keys, default=default, astype=astype, output=dict))
-                    yield (v)
-            else:
-                for i in pos_range:
-                    yield (self[i]._get_fast(keys, default=default, astype=astype, output=dict))
+            for i in pos_range:
+                yield (
+                    self[i]._get_fast(keys, default=default, astype=astype, output=dict, flatten_dict=True)
+                )
 
-        return summary_ls(
-            _proc,
-            self._default_ls_keys(),
-            n=n,
-            keys=keys,
-            extra_keys=extra_keys,
-            component=component,
-            filter=filter,
-        )
+            # if component is not None:
+            #     for i in pos_range:
+            #         f = self[i]
+            #         v = {}
+            #         for ns_val in f._dump_component(component, prefix_keys=True, filter=filter).values():
+            #             v.update(ns_val)
+            #         if keys:
+            #             v.update(f._get_fast(keys, default=default, astype=astype, output=dict))
+            #         yield (v)
+            # else:
+            #     for i in pos_range:
+            #         yield (self[i]._get_fast(keys, default=default, astype=astype, output=dict))
+
+        if keys is None:
+            keys = self._default_ls_keys()
+
+        return summary_ls(_proc, keys, extra_keys=extra_keys, n=n)
 
     def head(self, n=5, **kwargs):
         if n <= 0:

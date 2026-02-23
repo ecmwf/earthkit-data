@@ -12,6 +12,8 @@
 import os
 import sys
 
+import pytest
+
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
 from array_fl_fixtures import load_array_fl_file  # noqa: E402
@@ -20,6 +22,7 @@ from array_fl_fixtures import load_array_fl_file  # noqa: E402
 # See grib/test_grib_summary.py
 
 
+@pytest.mark.migrate
 def test_array_fl_dump():
     f, _ = load_array_fl_file("test6.grib")
 

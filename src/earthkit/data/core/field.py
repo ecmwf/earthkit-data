@@ -33,13 +33,13 @@ LS_KEYS = [
     "time.base_datetime",
     "time.step",
     "vertical.level",
-    "vertical.type",
+    "vertical.level_type",
     "ensemble.member",
     "geography.grid_type",
 ]
 
 
-# Define field component names. These are also namespace names.
+# Define field component names
 DATA = "data"
 TIME = "time"
 PARAMETER = "parameter"
@@ -50,16 +50,17 @@ PROC = "proc"
 LABELS = "labels"
 METADATA = "metadata"
 
-DUMP_ORDER = [
+DESCRIBE_ORDER = [
     PARAMETER,
     TIME,
     VERTICAL,
     ENSEMBLE,
     GEOGRAPHY,
+    PROC,
 ]
 
 
-class ComponentMaker:
+class _ComponentMaker:
     """A factory class to delay import of component classes."""
 
     def from_dict(self, name, *args, **kwargs):
@@ -103,7 +104,7 @@ class ComponentMaker:
         return cls.create_empty()
 
 
-COMPONENT_MAKER = ComponentMaker()
+_COMPONENT_MAKER = _ComponentMaker()
 
 
 @wrap_maths
@@ -178,7 +179,7 @@ class Field(Base):
     ):
         def _ensure(name, value):
             if value is None:
-                return COMPONENT_MAKER.empty_object(name)
+                return _COMPONENT_MAKER.empty_object(name)
             return value
 
         self._components = {
@@ -258,7 +259,7 @@ class Field(Base):
         for name in Field._COMPONENT_NAMES:
             v = _kwargs[name]
             if v is not None:
-                _kwargs[name] = COMPONENT_MAKER.default_cls(name).from_any(v)
+                _kwargs[name] = _COMPONENT_MAKER.default_cls(name).from_any(v)
             else:
                 _kwargs[name] = field._components[name]
 
@@ -382,63 +383,59 @@ class Field(Base):
 
         shape_hint = None
         if values is not None:
-            components[DATA] = COMPONENT_MAKER.default_cls(DATA).from_dict({"values": values})
+            components[DATA] = _COMPONENT_MAKER.default_cls(DATA).from_dict({"values": values})
             shape_hint = components[DATA].get_values(copy=False).shape
         elif data is not None:
-            components[DATA] = COMPONENT_MAKER.default_cls(DATA).from_any(data)
+            components[DATA] = _COMPONENT_MAKER.default_cls(DATA).from_any(data)
             shape_hint = components[DATA].get_values(copy=False).shape
 
         for name, v in _kwargs.items():
             if v is not None:
-                component = COMPONENT_MAKER.default_cls(name).from_any(v)
+                component = _COMPONENT_MAKER.default_cls(name).from_any(v)
                 components[name] = component
 
         if isinstance(geography, dict):
-            components[GEOGRAPHY] = COMPONENT_MAKER.default_cls(GEOGRAPHY).from_dict(
+            components[GEOGRAPHY] = _COMPONENT_MAKER.default_cls(GEOGRAPHY).from_dict(
                 geography, shape_hint=shape_hint
             )
         elif geography is not None:
-            components[GEOGRAPHY] = COMPONENT_MAKER.default_cls(GEOGRAPHY).from_any(geography)
+            components[GEOGRAPHY] = _COMPONENT_MAKER.default_cls(GEOGRAPHY).from_any(geography)
         return cls(**components)
 
     @property
     def ensemble(self):
-        """Ensemble: Return the ensemble specification of the field."""
+        """Ensemble: Return the ensemble component of the field."""
         return self._components[ENSEMBLE].component
 
     @property
     def time(self):
-        """Time: Return the time specification of the field."""
+        """Time: Return the time component of the field."""
         return self._components[TIME].component
 
     @property
     def vertical(self):
-        """Vertical: Return the vertical specification of the field."""
+        """Vertical: Return the vertical component of the field."""
         return self._components[VERTICAL].component
 
     @property
     def parameter(self):
-        """Parameter: Return the vertical specification of the field."""
+        """Parameter: Return the parameter component of the field."""
         return self._components[PARAMETER].component
 
     @property
     def geography(self):
-        """Geography: Return the geography specification of the field."""
+        """Geography: Return the geography component of the field."""
         return self._components[GEOGRAPHY].component
 
     @property
     def proc(self):
-        """Proc: Return the proc specification of the field."""
+        """Proc: Return the proc component of the field."""
         return self._components[PROC].component
 
     @property
     def labels(self):
         """SimpleLabels: Return the labels of the field."""
         return self._components[LABELS]
-
-    # @classmethod
-    # def from_array(cls, array):
-    #     return cls.from_dict({"values": array})
 
     @property
     def array_namespace(self):
@@ -455,6 +452,7 @@ class Field(Base):
 
     @property
     def shape(self):
+        """tuple: Return the shape of the field."""
         v = self.geography.shape()
         if v is not None:
             return v
@@ -472,6 +470,8 @@ class Field(Base):
         dtype: str, numpy.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
+        copy: bool
+            When it is True a copy of the data is returned. Otherwise a view is returned where possible.
         index: ndarray indexing object, optional
             The index of the values and to be extracted. When it
             is None all the values are extracted
@@ -510,6 +510,8 @@ class Field(Base):
         dtype: str, array.dtype or None
             Typecode or data-type of the array. When it is :obj:`None` the default
             type used by the underlying data accessor is used. For GRIB it is ``float64``.
+        copy: bool
+            When it is True a copy of the data is returned. Otherwise a view is returned where possible.
         array_namespace: str, array_namespace or None
             The array namespace to be used. When it is :obj:`None` the underlying array format
             of the field is used. **New in version 0.19.0**.
@@ -517,7 +519,7 @@ class Field(Base):
             The device where the array will be allocated. When it is :obj:`None` the default device is used.
         index: array indexing object, optional
             The index of the values and to be extracted. When it
-            is None all the values are extracted
+            is None all the values are extracted.
 
         Returns
         -------
@@ -535,17 +537,125 @@ class Field(Base):
 
         return v
 
+    def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None, index=None):
+        r"""Return the values and/or the geographical coordinates for each grid point.
+
+        Parameters
+        ----------
+        keys: :obj:`str`, :obj:`list` or :obj:`tuple`
+            Specifies the type of data to be returned. Any combination of "lat", "lon" and "value"
+            is allowed here.
+        flatten: bool
+            When it is True a flat array per key is returned. Otherwise an array with the field's
+            :obj:`shape` is returned for each key.
+        dtype: str, array.dtype or None
+            Typecode or data-type of the arrays. When it is :obj:`None` the default
+            type used by the underlying data accessor is used. For GRIB it is ``float64``.
+        index: array indexing object, optional
+            The index of the values and or the latitudes/longitudes to be extracted. When it
+            is None all the values and/or coordinates are extracted.
+
+        Returns
+        -------
+        array-like
+            An multi-dimensional array containing one array per key is returned
+            (following the order in ``keys``). The underlying array format
+            of the field is used. When ``keys`` is a single value only the
+            array belonging to the key is returned.
+
+        Examples
+        --------
+        - :ref:`/examples/grib_lat_lon_value.ipynb`
+
+        >>> import earthkit.data
+        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
+        >>> d = ds[0].data()
+        >>> d.shape
+        (3, 7, 12)
+        >>> d[0, 0, 0]  # first latitude
+        90.0
+        >>> d[1, 0, 0]  # first longitude
+        0.0
+        >>> d[2, 0, 0]  # first value
+        272.56417847
+        >>> d = ds[0].data(keys="lon")
+        >>> d.shape
+        (7, 12)
+        >>> d[0, 0]  # first longitude
+        0.0
+
+        See Also
+        --------
+        geography
+        to_numpy
+        values
+
+        """
+        _keys = dict(
+            lat=self.geography.latitudes,
+            lon=self.geography.longitudes,
+            value=self.to_numpy,
+        )
+
+        if isinstance(keys, str):
+            keys = [keys]
+
+        for k in keys:
+            if k not in _keys:
+                raise ValueError(f"data: invalid argument: {k}")
+
+        def _reshape(v, flatten):
+            shape = target_shape(v, flatten, self.shape)
+            return array_reshape(v, shape)
+
+        r = {}
+        for k in keys:
+            # TODO: convert dtype
+            v = _keys[k](dtype=dtype)
+            # v = _keys[k]
+            if v is None:
+                raise ValueError(f"data: {k} not available")
+            v = _reshape(v, flatten)
+            if index is not None:
+                v = v[index]
+            r[k] = v
+
+        # convert latlon to array format
+        ll = {k: r[k] for k in r if k != "value"}
+        if ll:
+            sample = r.get("value", None)
+            if sample is None:
+                sample = self._components[DATA].get_values(dtype=dtype)
+            target_xp = eku_array_namespace(sample)
+            device = target_xp.device(sample)
+            target_dtype = None
+            if dtype is not None:
+                target_dtype = convert_dtype(dtype, target_xp)
+
+            for k, v in ll.items():
+                r[k] = convert_array(v, array_namespace=target_xp, device=device)
+                if target_dtype is not None:
+                    r[k] = target_xp.astype(r[k], target_dtype, copy=False)
+
+        r = list(r.values())
+        if len(r) == 1:
+            return r[0]
+        else:
+            return eku_array_namespace(r[0]).stack(r)
+
     def _get_component(self, key):
         """Return the component name, component object and key name for the specified key."""
         if "." in key:
             component_name, name = key.split(".", 1)
             return component_name, self._components.get(component_name), name
+        elif key in self._components:
+            return key, self._components[key], None
         elif key in self._components[DATA]:
             return DATA, self._components[DATA], key
         return None, None, key
 
     def _get_single(self, key, default=None, *, astype=None, raise_on_missing=False):
-        r"""Return the value for ``key``.
+        r"""Return the value for the key.
 
         Parameters
         ----------
@@ -575,9 +685,16 @@ class Field(Base):
         """
         prefix, component, key_name = self._get_component(key)
 
+        # print(f"_get_single: key={key}, prefix={prefix}, component={component}, key_name={key_name}")
+
         # first try to get the value from the component handler if it is found
         if component:
-            return component.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
+            if key_name is None:
+                return component.component.to_dict()
+            else:
+                return component.get(
+                    key_name, default=default, astype=astype, raise_on_missing=raise_on_missing
+                )
 
         # handle keys like "mars.param" where "mars" is not a component but a
         # namespace in the GRIB metadata
@@ -618,9 +735,12 @@ class Field(Base):
         astype=None,
         raise_on_missing=False,
         output=None,
+        flatten_dict=False,
         remapping=None,
     ):
-        r"""Fast implementation of :meth:`get` for internal use.
+        r"""Fast(er) implementation of :meth:`get` for internal use. This method assumes that the
+        arguments have been normalized e.g. by using :func:`metadata_argument_new`. No checks
+        are performed on the arguments to ensure that they are valid and consistent.
 
         Parameters
         ----------
@@ -668,20 +788,34 @@ class Field(Base):
             meth = remapping(meth)
 
         if isinstance(keys, str):
-            r = meth(keys, default=default, astype=astype, raise_on_missing=raise_on_missing)
-            return r if output is not dict else {keys: r}
+            result = meth(keys, default=default, astype=astype, raise_on_missing=raise_on_missing)
+            if output is dict:
+                result = {keys: result}
         elif isinstance(keys, (list, tuple)):
             if output is not dict:
-                r = [
+                result = [
                     meth(k, astype=kt, default=d, raise_on_missing=raise_on_missing)
                     for k, kt, d in zip(keys, astype, default)
                 ]
-                return r if output is list else tuple(r)
+                if output is tuple:
+                    result = tuple(result)
             else:
-                return {
+                result = {
                     k: meth(k, astype=kt, default=d, raise_on_missing=raise_on_missing)
                     for k, kt, d in zip(keys, astype, default)
                 }
+
+        if output is dict and flatten_dict:
+            r = {}
+            for k, v in result.items():
+                if isinstance(v, dict):
+                    for _k, _v in v.items():
+                        r[k + "." + _k] = _v
+                else:
+                    r[k] = v
+            result = r
+
+        return result
 
     def get(
         self,
@@ -690,7 +824,8 @@ class Field(Base):
         *,
         astype=None,
         raise_on_missing=False,
-        output=None,
+        output="auto",
+        flatten_dict=False,
         remapping=None,
         patches=None,
     ):
@@ -699,8 +834,10 @@ class Field(Base):
         Parameters
         ----------
         keys: str, list or tuple
-            Specify the metadata keys to extract. Can be a single key (str) or multiple
-            keys as a list/tuple of str.
+            Specify the key(s) to extract. Can be a single key (str) or multiple
+            keys as a list/tuple of str. Keys are assumed to be of the form
+            "component.key". For example, "time.valid_datetime" or "parameter.name". It is also allowed to specify just the component name like "time" or "parameter". In this case the corresponding component's ``to_dict()`` method is called and its result is returned. For other keys, the method looks for them in
+            the private components (if any) and returns the value from the first private component that contains it.
         default: Any, None
             Specify the default value(s) for ``keys``. Returned when the given key
             is not found and ``raise_on_missing`` is False. When ``default`` is a single
@@ -709,25 +846,35 @@ class Field(Base):
         astype: type as str, int or float
             Return type for ``keys``.  When ``astype`` is a single type, it is used for
             all the keys. Otherwise it must be a list/tuple of the same length as ``keys``.
+            It is only applied to keys returning a single value.
         raise_on_missing: bool
             When True, raises KeyError if any of ``keys`` is not found.
-        output: type, None
-            When None (default) returns the same type as that of ``keys``:
+        output: type, str
+            Specify the output type. Can be:
 
-            - when ``keys`` is a str returns a single value
-            - when ``keys`` is a list/tuple returns a list of values
-
-            When ``output`` is dict, returns a dictionary with keys and their values.
+            - "auto" (default):
+                - when ``keys`` is a str returns a single value
+                - when ``keys`` is a list/tuple returns a list/tuple of values
+            - list or "list": returns a list of values.
+            - tuple or "tuple": returns a tuple of values.
+            - dict or "dict": returns a dictionary with keys and their values.
             Other types are not supported.
+        flatten_dict: bool
+            When True and ``output`` is dict, if any of the values in the returned dict
+            is itself a dict, it is flattened to depth 1 by concatenating the keys with a dot. For example, if the returned dict is ``{"a": {"x": 1, "y": 2}, "b": 3}``, it becomes ``{"a.x": 1, "a.y": 2, "b": 3}``. This option is ignored when ``output`` is not dict.
+        remapping: dict, optional
+            Create new metadata keys from existing ones. E.g. to define a new
+            key "param_level" as the concatenated value of the "parameter.variable" and "vertical.level" keys use::
+
+                remapping={"param_level": "{parameter.variable}{vertical.level}"}
+
+        patches: dict, optional
+            A dictionary of patches to be applied to the returned values.
 
         Returns
         -------
         single value, list, tuple or dict
-            The values for the specified ``keys``:
-
-            - when ``keys`` is a str returns a single value
-            - when ``keys`` is a list/tuple returns a list/tuple of values
-            - when ``output`` is dict returns dictionary with keys and their values.
+            The values for the specified ``keys``. The structure of the returned value(s) depends on the ``output`` and ``flatten_dict`` parameters.
 
         Raises
         ------
@@ -744,32 +891,37 @@ class Field(Base):
             astype=astype,
         )
 
-        if output is None:
+        if output == "auto":
             if keys_arg_type is not str:
                 output = keys_arg_type
-        elif output is not dict:
-            raise ValueError("output must be None or dict")
+        elif output in [list, "list"]:
+            output = list
+        elif output in [tuple, "tuple"]:
+            output = tuple
+        elif output in [dict, "dict"]:
+            output = dict
+        else:
+            raise ValueError(f"Invalid output: {output}")
 
         if remapping or patches:
             remapping = build_remapping(remapping, patches, forced_build=False)
 
-        r = self._get_fast(
+        return self._get_fast(
             keys,
             default=default,
             astype=astype,
             raise_on_missing=raise_on_missing,
             remapping=remapping,
             output=output,
+            flatten_dict=flatten_dict,
         )
-
-        return r
 
     def metadata(
         self,
         keys,
         *,
         astype=None,
-        output=None,
+        output="auto",
         remapping=None,
         patches=None,
     ):
@@ -910,12 +1062,12 @@ class Field(Base):
         Xarray Dataset
 
         """
-        return self.to_fieldlist().to_xarray(*args, **kwargs)
+        return self._dispatch_to_fieldlist_method("to_xarray", *args, **kwargs)
 
     def to_pandas(self, *args, **kwargs):
-        pass
+        return self._dispatch_to_fieldlist_method("to_pandas", *args, **kwargs)
 
-    def _dump_component(self, component="all", *, filter=None, prefix_keys=False, simplify=True):
+    def _dump_component(self, component="all", *, filter=None, prefix_keys=False, unwrap_single=True):
         r"""Return the components as a dict.
 
         Parameters
@@ -960,25 +1112,25 @@ class Field(Base):
             if md and hasattr(md, "namespace"):
                 md.namespace(self, filter, result, prefix_keys=prefix_keys)
 
-        if simplify and isinstance(component, str) and len(result) == 1 and component in result:
+        if unwrap_single and isinstance(component, str) and len(result) == 1 and component in result:
             return result[component]
 
         return result
 
-    def dump(self, component=all, filter=None, output=None, **kwargs):
+    def describe(self, component=all, filter=None, **kwargs):
         r"""Generate dump with all the metadata keys belonging to ``namespace``.
 
         In a Jupyter notebook it is represented as a tabbed interface.
 
         Parameters
         ----------
-        namespace: :obj:`str`, :obj:`list`, :obj:`tuple`, :obj:`None` or :obj:`all`
-            The namespace to dump. The following `namespace` values
+        component: :obj:`str`, :obj:`list`, :obj:`tuple`, :obj:`None` or :obj:`all`
+            The component(s) to include. The following values
             have a special meaning:
 
-            - :obj:`all`: all the available namespaces will be used.
+            - :obj:`all`: all the available components will be used.
             - None or empty str: all the available keys will be used
-                (without a namespace qualifier)
+                (without a component qualifier)
 
         **kwargs: dict, optional
             Other keyword arguments used for testing only
@@ -1000,13 +1152,10 @@ class Field(Base):
         """
         from earthkit.data.utils.summary import format_namespace_dump
 
-        d = self._dump_component(component, filter=filter, simplify=False)
-
-        if output is dict:
-            return d
+        d = self._dump_component(component, filter=filter, unwrap_single=False)
 
         d1 = {}
-        for k in DUMP_ORDER:
+        for k in DESCRIBE_ORDER:
             if k in d:
                 d1[k] = d.pop(k)
 
@@ -1047,19 +1196,15 @@ class Field(Base):
             DataFrame with one row.
 
         """
-        return self.to_fieldlist().ls(*args, **kwargs)
+        return self._dispatch_to_fieldlist_method("ls", *args, **kwargs)
 
     def head(self, *args, **kwargs):
         r"""Generate a head summary of the Field."""
-        return self.to_fieldlist().head(*args, **kwargs)
+        return self._dispatch_to_fieldlist_method("head", *args, **kwargs)
 
     def tail(self, *args, **kwargs):
         r"""Generate a tail summary of the Field."""
-        return self.to_fieldlist().tail(*args, **kwargs)
-
-    def describe(self, *args, **kwargs):
-        r"""Generate a summary of the Field."""
-        return self.to_fieldlist().describe(*args, **kwargs)
+        return self._dispatch_to_fieldlist_method("tail", *args, **kwargs)
 
     def message(self):
         r"""Return a buffer containing the encoded message for Fields generated from a message based format (e.g. GRIB).
@@ -1072,6 +1217,10 @@ class Field(Base):
         if grib is not None:
             return grib.message()
         return None
+
+    def _dispatch_to_fieldlist_method(self, method_name, *args, **kwargs):
+        method = getattr(self.to_fieldlist(), method_name)
+        return method(*args, **kwargs)
 
     def _set_private_data(self, name, data):
         self._private[name] = data
@@ -1117,112 +1266,6 @@ class Field(Base):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""
         return kwargs
 
-    def data(self, keys=("lat", "lon", "value"), flatten=False, dtype=None, index=None):
-        r"""Return the values and/or the geographical coordinates for each grid point.
-
-        Parameters
-        ----------
-        keys: :obj:`str`, :obj:`list` or :obj:`tuple`
-            Specifies the type of data to be returned. Any combination of "lat", "lon" and "value"
-            is allowed here.
-        flatten: bool
-            When it is True a flat array per key is returned. Otherwise an array with the field's
-            :obj:`shape` is returned for each key.
-        dtype: str, array.dtype or None
-            Typecode or data-type of the arrays. When it is :obj:`None` the default
-            type used by the underlying data accessor is used. For GRIB it is ``float64``.
-        index: array indexing object, optional
-            The index of the values and or the latitudes/longitudes to be extracted. When it
-            is None all the values and/or coordinates are extracted.
-
-        Returns
-        -------
-        array-like
-            An multi-dimensional array containing one array per key is returned
-            (following the order in ``keys``). The underlying array format
-            of the field is used. When ``keys`` is a single value only the
-            array belonging to the key is returned.
-
-        Examples
-        --------
-        - :ref:`/examples/grib_lat_lon_value.ipynb`
-
-        >>> import earthkit.data
-        >>> ds = earthkit.data.from_source("file", "docs/examples/test6.grib")
-        >>> d = ds[0].data()
-        >>> d.shape
-        (3, 7, 12)
-        >>> d[0, 0, 0]  # first latitude
-        90.0
-        >>> d[1, 0, 0]  # first longitude
-        0.0
-        >>> d[2, 0, 0]  # first value
-        272.56417847
-        >>> d = ds[0].data(keys="lon")
-        >>> d.shape
-        (7, 12)
-        >>> d[0, 0]  # first longitude
-        0.0
-
-        See Also
-        --------
-        geography
-        to_numpy
-        values
-
-        """
-        _keys = dict(
-            lat=self.geography.latitudes,
-            lon=self.geography.longitudes,
-            value=self.to_numpy,
-        )
-
-        if isinstance(keys, str):
-            keys = [keys]
-
-        for k in keys:
-            if k not in _keys:
-                raise ValueError(f"data: invalid argument: {k}")
-
-        def _reshape(v, flatten):
-            shape = target_shape(v, flatten, self.shape)
-            return array_reshape(v, shape)
-
-        r = {}
-        for k in keys:
-            # TODO: convert dtype
-            v = _keys[k](dtype=dtype)
-            # v = _keys[k]
-            if v is None:
-                raise ValueError(f"data: {k} not available")
-            v = _reshape(v, flatten)
-            if index is not None:
-                v = v[index]
-            r[k] = v
-
-        # convert latlon to array format
-        ll = {k: r[k] for k in r if k != "value"}
-        if ll:
-            sample = r.get("value", None)
-            if sample is None:
-                sample = self._components[DATA].get_values(dtype=dtype)
-            target_xp = eku_array_namespace(sample)
-            device = target_xp.device(sample)
-            target_dtype = None
-            if dtype is not None:
-                target_dtype = convert_dtype(dtype, target_xp)
-
-            for k, v in ll.items():
-                r[k] = convert_array(v, array_namespace=target_xp, device=device)
-                if target_dtype is not None:
-                    r[k] = target_xp.astype(r[k], target_dtype, copy=False)
-
-        r = list(r.values())
-        if len(r) == 1:
-            return r[0]
-        else:
-            return eku_array_namespace(r[0]).stack(r)
-
     def sel(self, *args, **kwargs):
         pass
 
@@ -1252,6 +1295,15 @@ class Field(Base):
         v = oper(vx, vy)
         r = self.set(values=v)
         return r
+
+    def __repr__(self):
+        r = []
+        for k in LS_KEYS:
+            r.append(f"{self.get(k, default=None)}")
+        return f"Field({', '.join(r)})"
+
+    def _repr_html_(self):
+        return self.describe()._repr_html_()
 
     def __getstate__(self):
         state = {}

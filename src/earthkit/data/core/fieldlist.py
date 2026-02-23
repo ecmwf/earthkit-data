@@ -23,6 +23,11 @@ def create_fieldlist(fields=None):
 
 
 class FieldList(Base):
+    """Abstract base class for a FieldList.
+
+
+    A FieldList is a collection of Fields. It provides methods to access the field values and metadata."""
+
     @abstractmethod
     def __getitem__(self, index):
         pass
@@ -33,6 +38,7 @@ class FieldList(Base):
 
     @staticmethod
     def from_fields(fields):
+        """Create a FieldList from a list of Fields."""
         from earthkit.data.indexing.simple import SimpleFieldList
 
         return SimpleFieldList.from_fields(fields)
@@ -41,7 +47,7 @@ class FieldList(Base):
     @abstractmethod
     def values(self):
         """array-like: Get all the fields' values as a 2D array. It is formed as the array of
-        :obj:`GribField.values <data.readers.grib.codes.GribField.values>` per field.
+        :obj:`Field.values <data.core.field.Field.values>` per field.
 
         See Also
         --------
@@ -66,12 +72,12 @@ class FieldList(Base):
     @abstractmethod
     def to_array(self, **kwargs):
         r"""Return all the fields' values as an array. It is formed as the array of the
-        :obj:`data.core.fieldlist.Field.to_array` values per field.
+        :obj:`data.core.field.Field.to_array` values per field.
 
         Parameters
         ----------
         **kwargs: dict, optional
-            Keyword arguments passed to :obj:`data.core.fieldlist.Field.to_array`
+            Keyword arguments passed to :obj:`data.core.field.Field.to_array`
 
         Returns
         -------
@@ -172,17 +178,21 @@ class FieldList(Base):
         default=None,
         astype=None,
         raise_on_missing=False,
-        output="item_per_field",
+        output="auto",
+        group_by_key=False,
+        flatten_dict=False,
         remapping=None,
         patches=None,
     ):
-        r"""Return the metadata values for each field.
+        r"""Return values for the specified keys from all the fields.
 
         Parameters
         ----------
         keys: str, list, tuple
-            Specify the metadata keys to extract. Can be a single key (str) or multiple
-            keys as a list/tuple of str.
+            Specify the field metadata keys to extract. Can be a single key (str) or multiple
+            keys as a list/tuple of str. Keys are assumed to be of the form
+            "component.key". For example, "time.valid_datetime" or "parameter.name". It is also allowed to specify just the component name like "time" or "parameter". In this case the corresponding component's ``to_dict()`` method is called and its result is returned. For other keys, the method looks for them in
+            the private components of the fields (if any) and returns the value from the first private component that contains it.
         default: Any, None
             Specify the default value(s) for ``keys``. Returned when the given key
             is not found and ``raise_on_missing`` is False. When ``default`` is a single
@@ -193,33 +203,37 @@ class FieldList(Base):
             all the keys. Otherwise it must be a list/tuple of the same length as ``keys``.
         raise_on_missing: bool
             When True, raises KeyError if any of ``keys`` is not found.
-        output: str, default=item_per_field
-            Specify the output structure. Possible values are:
+        output: type, str
+            Specify the output structure type in conjunction with ``group_by_key``.  When ``group_by`` is False (default) the output is a list with one item per field and ``output`` has the following effect on the items:
 
-            - item_per_field: returns a list with one item per field. If a single key is
-                given the item is the value for that key. If a list
-                of keys are given the item is a list of values for those keys. Similarly,
-                when ``keys`` is a tuple each item is a tuple of values.
-            - item_per_key: returns a list with one item per key containing the list of values
-                from all the fields
-            - dict_per_field: returns a list of dictionaries with one dictionary per field with
-                key-value pairs for the requested keys.
-            - dict_per_key: returns a dictionary for each key containing the list of
-                values from all the fields.
+            - "auto" (default):
+                - when ``keys`` is a str returns a single value per field
+                - when ``keys`` is a list/tuple returns a list/tuple of values per field
+            - list or "list": returns a list of values per field.
+            - tuple or "tuple": returns a tuple of values per field.
+            - dict or "dict": returns a dictionary with keys and their values per field.
 
-        remapping: dict, None
-            A remapping dictionary passed to
-            :obj:`GribField.get() <data.readers.grib.codes.GribField.get>`
-            when getting the metadata values.
-        patches: dict, None
-            A dictionary of patches passed to
-            :obj:`GribField.get() <data.readers.grib.codes.GribField.get>`
-            when getting the metadata values.
+            When ``group_by_key`` is True the output is grouped by key as follows and return an object with one item per key. The item contains the list of values for that key from all the fields. When ``output`` is dict a dict is returned otherwise list.
+
+        group_by_key: bool
+            When True the output is grouped by key as described in ``output``.
+        flatten_dict: bool
+            When True and ``output`` is dict, for each field if any of the values in the returned dict
+            is itself a dict, it is flattened to depth 1 by concatenating the keys with a dot. For example, if the returned dict is ``{"a": {"x": 1, "y": 2}, "b": 3}``, it becomes ``{"a.x": 1, "a.y": 2, "b": 3}``. This option is ignored when ``output`` is not dict.
+        remapping: dict, optional
+            Create new metadata keys from existing ones. E.g. to define a new
+            key "param_level" as the concatenated value of the "parameter.variable" and "vertical.level" keys use::
+
+                remapping={"param_level": "{parameter.variable}{vertical.level}"}
+
+        patches: dict, optional
+            A dictionary of patches to be applied to the returned values.
+
 
         Returns
         -------
-        list, tuple, dict, Any
-            The returned value depends on the ``output`` parameter. See above.
+        list, dict
+            The returned value depends on the ``output`` and ``group_by_key`` parameters. See above.
 
         Raises
         ------
