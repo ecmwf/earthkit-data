@@ -65,6 +65,18 @@ class Units(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def __hash__(self):
+        pass
+
+    @abstractmethod
+    def __getstate__(self):
+        pass
+
+    @abstractmethod
+    def __setstate__(self, state):
+        pass
+
+    @abstractmethod
     def to_pint(self):
         pass
 
@@ -99,8 +111,17 @@ class UndefinedUnits(Units):
         other = Units.from_any(other)
         return str(other) == self._units
 
+    def __hash__(self):
+        return hash(str(self))
+
     def to_pint(self):
         return None
+
+    def __getstate__(self):
+        return {"units": self._units}
+
+    def __setstate__(self, state):
+        self._units = state["units"]
 
 
 class PintUnits(Units):
@@ -122,8 +143,21 @@ class PintUnits(Units):
 
         return str(self) == str(other)
 
+    def __hash__(self):
+        return hash(str(self))
+
     def to_pint(self):
         return self._units
 
+    @staticmethod
+    def _to_pint(self, units):
+        return ureg(units).units
+
     def __getattr__(self, name):
         return getattr(self._units, name)
+
+    def __getstate__(self):
+        return {"units": str(self)}
+
+    def __setstate__(self, state):
+        self._units = PintUnits._to_pint(self, state["units"])
