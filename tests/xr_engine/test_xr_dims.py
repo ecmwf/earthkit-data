@@ -1058,14 +1058,14 @@ def test_xr_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims, var_a
                 "r": {
                     "standard_name": "relative_humidity",
                     "long_name": "Relative humidity",
-                    "units": "%",
+                    "units": "percent",
                     "typeOfLevel": "isobaricInhPa",
                     "my_level": "500__isobaricInhPa",
                 },
                 "t": {
                     "standard_name": "air_temperature",
                     "long_name": "Temperature",
-                    "units": "K",
+                    "units": "kelvin",
                     "typeOfLevel": "isobaricInhPa",
                     "my_level": "700__isobaricInhPa",
                 },

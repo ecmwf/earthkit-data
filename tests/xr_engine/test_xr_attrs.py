@@ -160,8 +160,8 @@ def test_xr_dims_as_attrs(allow_holes, lazy_load, kwargs, coords, dims, attrs):
             },
             {"time": 1, "step": 1, "level": 1, "level_type": 1},
             {
-                "r": {"typeOfLevel": "isobaricInhPa", "units": "%", "number": 0, "date": 20240603},
-                "t": {"typeOfLevel": "isobaricInhPa", "units": "K", "number": 0, "date": 20240603},
+                "r": {"typeOfLevel": "isobaricInhPa", "units": "percent", "number": 0, "date": 20240603},
+                "t": {"typeOfLevel": "isobaricInhPa", "units": "kelvin", "number": 0, "date": 20240603},
             },
             {"edition": 1},
         ),
@@ -187,7 +187,7 @@ def test_xr_dims_as_attrs(allow_holes, lazy_load, kwargs, coords, dims, attrs):
                 "level_type": ["isobaricInhPa"],
             },
             {"time": 1, "step": 1, "level": 1, "level_type": 1},
-            {"t": {"units": "K", "Nj": 19, "number": 0, "date": 20240603}},
+            {"t": {"units": "kelvin", "Nj": 19, "number": 0, "date": 20240603}},
             {"cfVarName": "t", "edition": 1, "gridType": "regular_ll"},
         ),
         (
@@ -301,7 +301,7 @@ def test_xr_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, dims, v
             {
                 "r": {
                     "cf_var_name": "r",
-                    "units": "%",
+                    "units": "percent",
                     "Nj": 19,
                     "realisation": 0,
                     "DATE": 20240603,
@@ -310,7 +310,7 @@ def test_xr_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, dims, v
                 },
                 "t": {
                     "cf_var_name": "t",
-                    "units": "K",
+                    "units": "kelvin",
                     "Nj": 19,
                     "realisation": 0,
                     "DATE": 20240603,
@@ -343,7 +343,7 @@ def test_xr_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, dims, v
                 "step": [pd.Timedelta("0h"), pd.Timedelta("6h")],
             },
             {"number": 1, "forecast_reference_time": 2, "step": 2},
-            {"t": {"units": "K", "pl": 700}},
+            {"t": {"units": "kelvin", "pl": 700}},
             {"grid_type": "regular_ll"},
         ),
     ],
