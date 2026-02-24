@@ -12,8 +12,8 @@ def new_mars_field(request, data=None, values=None, geography=None, reference_fi
     r"""Create a Field object from XArray"""
 
     from earthkit.data.core.field import Field
-    from earthkit.data.field.data import ArrayDataFieldComponentHandler
-    from earthkit.data.field.labels import SimpleLabels
+    from earthkit.data.field.handler.data import ArrayDataFieldComponentHandler
+    from earthkit.data.field.handler.labels import SimpleLabels
     from earthkit.data.field.mars.ensemble import MarsEnsembleBuilder
     from earthkit.data.field.mars.parameter import MarsParameterBuilder
     from earthkit.data.field.mars.time import MarsTimeBuilder

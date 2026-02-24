@@ -10,7 +10,7 @@
 import logging
 
 from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.field.data import DataFieldComponentHandler
+from earthkit.data.field.handler.data import DataFieldComponentHandler
 from earthkit.data.indexing.indexed import IndexedFieldList
 
 LOG = logging.getLogger(__name__)

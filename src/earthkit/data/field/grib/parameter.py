@@ -15,7 +15,7 @@ class GribParameterBuilder:
     @staticmethod
     def build(handle):
         from earthkit.data.field.component.parameter import Parameter
-        from earthkit.data.field.parameter import ParameterFieldComponentHandler
+        from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
 
         d = GribParameterBuilder._build_dict(handle)
         component = Parameter.from_dict(d)

@@ -16,7 +16,7 @@ class MarsParameterBuilder:
     @staticmethod
     def build(request, build_empty=False):
         from earthkit.data.field.component.parameter import Parameter
-        from earthkit.data.field.parameter import ParameterFieldComponentHandler
+        from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
 
         d = MarsParameterBuilder._build_dict(request)
         if not d and not build_empty:

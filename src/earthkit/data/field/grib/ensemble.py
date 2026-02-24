@@ -16,7 +16,7 @@ class GribEnsembleBuilder:
     @staticmethod
     def build(handle):
         from earthkit.data.field.component.ensemble import Ensemble
-        from earthkit.data.field.ensemble import EnsembleFieldComponentHandler
+        from earthkit.data.field.handler.ensemble import EnsembleFieldComponentHandler
 
         d = GribEnsembleBuilder._build_dict(handle)
         component = Ensemble.from_dict(d)

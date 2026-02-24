@@ -12,7 +12,7 @@ class MarsEnsembleBuilder:
     @staticmethod
     def build(request, build_empty=False):
         from earthkit.data.field.component.ensemble import Ensemble
-        from earthkit.data.field.ensemble import EnsembleFieldComponentHandler
+        from earthkit.data.field.handler.ensemble import EnsembleFieldComponentHandler
 
         d = MarsEnsembleBuilder._build_dict(request)
         if not d and not build_empty:

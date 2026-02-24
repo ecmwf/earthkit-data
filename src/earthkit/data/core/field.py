@@ -19,11 +19,11 @@ from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalise
 from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.data.utils.args import metadata_argument_new
 from earthkit.data.utils.array import flatten as array_flatten
 from earthkit.data.utils.array import reshape as array_reshape
 from earthkit.data.utils.array import target_shape
 from earthkit.data.utils.compute import wrap_maths
-from earthkit.data.utils.metadata.args import metadata_argument_new
 
 GRIB = "grib"
 
@@ -74,14 +74,14 @@ class _ComponentMaker:
 
     @thread_safe_cached_property
     def _default_cls(self):
-        from earthkit.data.field.data import DataFieldComponentHandler
-        from earthkit.data.field.ensemble import EnsembleFieldComponentHandler
-        from earthkit.data.field.geography import GeographyFieldComponentHandler
-        from earthkit.data.field.labels import SimpleLabels
-        from earthkit.data.field.parameter import ParameterFieldComponentHandler
-        from earthkit.data.field.proc import ProcFieldComponentHandler
-        from earthkit.data.field.time import TimeFieldComponentHandler
-        from earthkit.data.field.vertical import VerticalFieldComponentHandler
+        from earthkit.data.field.handler.data import DataFieldComponentHandler
+        from earthkit.data.field.handler.ensemble import EnsembleFieldComponentHandler
+        from earthkit.data.field.handler.geography import GeographyFieldComponentHandler
+        from earthkit.data.field.handler.labels import SimpleLabels
+        from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
+        from earthkit.data.field.handler.proc import ProcFieldComponentHandler
+        from earthkit.data.field.handler.time import TimeFieldComponentHandler
+        from earthkit.data.field.handler.vertical import VerticalFieldComponentHandler
 
         return {
             DATA: DataFieldComponentHandler,

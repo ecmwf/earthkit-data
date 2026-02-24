@@ -26,8 +26,8 @@ from ...readers.xarray.coordinates import is_scalar
 
 # from .metadata import XArrayMetadata
 
-# from earthkit.data.new_field.parameter import Parameter
-# from earthkit.data.new_field.parameter import Time
+# from earthkit.data.new_field.handler.parameter import Parameter
+# from earthkit.data.new_field.handler.parameter import Time
 
 LOG = logging.getLogger(__name__)
 

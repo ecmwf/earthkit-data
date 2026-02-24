@@ -14,7 +14,7 @@ class MarsTimeBuilder:
     @staticmethod
     def build(request, build_empty=False):
         from earthkit.data.field.component.time import create_time
-        from earthkit.data.field.time import TimeFieldComponentHandler
+        from earthkit.data.field.handler.time import TimeFieldComponentHandler
 
         d = MarsTimeBuilder._build_dict(request)
         if not d and not build_empty:

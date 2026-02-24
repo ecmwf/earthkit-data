@@ -231,7 +231,7 @@ class GribGeography(BaseGeography):
 class GribGeographyBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.field.geography import GeographyFieldComponentHandler
+        from earthkit.data.field.handler.geography import GeographyFieldComponentHandler
 
         # Spectral data is handled differently right now
         if handle.get("gridType", None) == "sh":

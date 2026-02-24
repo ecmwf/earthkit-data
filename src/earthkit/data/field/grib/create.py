@@ -8,7 +8,7 @@
 #
 
 
-from earthkit.data.field.data import ArrayDataFieldComponentHandler
+from earthkit.data.field.handler.data import ArrayDataFieldComponentHandler
 
 
 def new_grib_field(handle, data=None, cache=False, extra_keys=None):

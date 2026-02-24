@@ -11,7 +11,7 @@ import math
 from typing import Any
 
 from earthkit.data.field.component.geography import BaseGeography
-from earthkit.data.field.geography import GeographyFieldComponentHandler
+from earthkit.data.field.handler.geography import GeographyFieldComponentHandler
 
 
 def _array_convert(v, flatten=False, dtype=None):

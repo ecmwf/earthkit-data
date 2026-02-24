@@ -7,9 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .component.ensemble import BaseEnsemble
-from .component.ensemble import EmptyEnsemble
-from .component.ensemble import create_ensemble
+from earthkit.data.field.component.ensemble import BaseEnsemble
+from earthkit.data.field.component.ensemble import EmptyEnsemble
+from earthkit.data.field.component.ensemble import create_ensemble
+
 from .core import SimpleFieldComponentHandler
 
 

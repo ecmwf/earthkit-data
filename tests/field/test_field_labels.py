@@ -11,7 +11,7 @@
 
 import pytest
 
-from earthkit.data.field.labels import SimpleLabels
+from earthkit.data.field.handler.labels import SimpleLabels
 
 
 @pytest.mark.parametrize(

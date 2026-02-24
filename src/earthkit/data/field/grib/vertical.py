@@ -170,7 +170,7 @@ class GribVerticalBuilder:
     @staticmethod
     def build(handle):
         from earthkit.data.field.component.vertical import Vertical
-        from earthkit.data.field.vertical import VerticalFieldComponentHandler
+        from earthkit.data.field.handler.vertical import VerticalFieldComponentHandler
 
         d = GribVerticalBuilder._build_dict(handle)
         component = Vertical.from_dict(d)

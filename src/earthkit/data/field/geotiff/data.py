@@ -9,7 +9,7 @@
 
 import logging
 
-from earthkit.data.field.data import DataFieldComponentHandler
+from earthkit.data.field.handler.data import DataFieldComponentHandler
 
 LOG = logging.getLogger(__name__)
 

@@ -7,8 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .component.proc import BaseProc
-from .component.proc import EmptyProc
+from earthkit.data.field.component.proc import BaseProc
+from earthkit.data.field.component.proc import EmptyProc
+
 from .core import SimpleFieldComponentHandler
 
 

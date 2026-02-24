@@ -12,7 +12,7 @@ from typing import Any
 
 from earthkit.data.field.component.level_type import LevelTypes
 from earthkit.data.field.component.vertical import create_vertical
-from earthkit.data.field.vertical import VerticalFieldComponentHandler
+from earthkit.data.field.handler.vertical import VerticalFieldComponentHandler
 
 
 class XarrayLevelType:

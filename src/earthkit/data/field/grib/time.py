@@ -22,7 +22,7 @@ ZERO_TIMEDELTA = to_timedelta(0)
 class GribTimeBuilder:
     @staticmethod
     def build(handle):
-        from earthkit.data.field.time import TimeFieldComponentHandler
+        from earthkit.data.field.handler.time import TimeFieldComponentHandler
 
         d = GribTimeBuilder._build_dict(handle)
         r = TimeFieldComponentHandler.from_dict(d)

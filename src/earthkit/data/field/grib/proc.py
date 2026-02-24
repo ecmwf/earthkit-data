@@ -29,7 +29,7 @@ class GribProcBuilder:
     @staticmethod
     def build(handle):
         from earthkit.data.field.component.proc import Proc
-        from earthkit.data.field.proc import ProcFieldComponentHandler
+        from earthkit.data.field.handler.proc import ProcFieldComponentHandler
 
         d = GribProcBuilder._build_dict(handle)
         component = Proc.from_dict(d)
@@ -70,7 +70,7 @@ class GribProcBuilder:
 class GribProcContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(handler, context):
-        from earthkit.data.field.proc import TimeProcItem
+        from earthkit.data.field.handler.proc import TimeProcItem
 
         component = handler.component
 

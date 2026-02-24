@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import os
 import sys
 
@@ -440,9 +441,9 @@ def test_xr_engine_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_
                     np.datetime64("2024-06-03T00", "ns"),
                     np.datetime64("2024-06-03T12", "ns"),
                 ],
-                "step": [0, 6],
+                "step": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
             },
-            ("step", "hours"),
+            None,
             {
                 "valid_time": [
                     [np.datetime64("2024-06-03T00", "ns"), np.datetime64("2024-06-03T06", "ns")],
@@ -508,9 +509,9 @@ def test_xr_engine_time_seasonal_monthly_simple(allow_holes, kwargs, dims, step_
                     np.datetime64("2024-06-03T00", "ns"),
                     np.datetime64("2024-06-03T12", "ns"),
                 ],
-                "step": [0, 6],
+                "step": [datetime.timedelta(hours=0), datetime.timedelta(hours=6)],
             },
-            ("step", "hours"),
+            None,
             {
                 "valid_time": [
                     [np.datetime64("2024-06-03T00", "ns"), np.datetime64("2024-06-03T06", "ns")],
@@ -603,9 +604,10 @@ def test_xr_engine_time_step_range_1(allow_holes, lazy_load, kwargs, dims, step_
         ),
         (
             {
+                "profile": "mars",
                 "time_dim_mode": "forecast",
                 "dim_name_from_role_name": True,
-                "dim_roles": {"step": "stepRange"},
+                "dim_roles": {"step": "metadata.stepRange"},
                 "ensure_dims": ["forecast_reference_time", "step"],
             },
             {

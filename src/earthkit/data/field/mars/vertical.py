@@ -72,7 +72,7 @@ class MarsVerticalBuilder:
     @staticmethod
     def build(request, build_empty=False):
         from earthkit.data.field.component.vertical import Vertical
-        from earthkit.data.field.vertical import VerticalFieldComponentHandler
+        from earthkit.data.field.handler.vertical import VerticalFieldComponentHandler
 
         d = MarsVerticalBuilder._build_dict(request)
         if not d and not build_empty:

@@ -549,7 +549,7 @@ def test_xr_drop_dims(allow_holes, lazy_load, kwargs, dim_keys):
                 "t": {
                     "standard_name": "air_temperature",
                     "long_name": "Temperature",
-                    "units": "K",
+                    "units": "kelvin",
                     "typeOfLevel": "isobaricInhPa",
                     "realisation": 0,
                     "level_and_type": "500isobaricInhPa",
@@ -583,7 +583,7 @@ def test_xr_drop_dims(allow_holes, lazy_load, kwargs, dim_keys):
                 "t": {
                     "standard_name": "air_temperature",
                     "long_name": "Temperature",
-                    "units": "K",
+                    "units": "kelvin",
                     "typeOfLevel": "isobaricInhPa",
                     "number": 0,
                     "forecast_reference_time": "2024-06-03T12:00:00",
@@ -649,13 +649,13 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
                 "r": {
                     "standard_name": "relative_humidity",
                     "long_name": "Relative humidity",
-                    "units": "%",
+                    "units": "percent",
                     "typeOfLevel": "isobaricInhPa",
                 },
                 "t": {
                     "standard_name": "air_temperature",
                     "long_name": "Temperature",
-                    "units": "K",
+                    "units": "kelvin",
                     "typeOfLevel": "isobaricInhPa",
                 },
             },
@@ -687,13 +687,13 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
                 "r": {
                     "standard_name": "relative_humidity",
                     "long_name": "Relative humidity",
-                    "units": "%",
+                    "units": "percent",
                     "typeOfLevel": "isobaricInhPa",
                 },
                 "t": {
                     "standard_name": "air_temperature",
                     "long_name": "Temperature",
-                    "units": "K",
+                    "units": "kelvin",
                     "typeOfLevel": "isobaricInhPa",
                 },
             },
@@ -726,13 +726,13 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
                 "r": {
                     "standard_name": "relative_humidity",
                     "long_name": "Relative humidity",
-                    "units": "%",
+                    "units": "percent",
                     "typeOfLevel": "isobaricInhPa",
                 },
                 "t": {
                     "standard_name": "air_temperature",
                     "long_name": "Temperature",
-                    "units": "K",
+                    "units": "kelvin",
                     "typeOfLevel": "isobaricInhPa",
                 },
             },
@@ -773,7 +773,14 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
                 ],
             },
             {"quantile": 18},
-            {"2tp": {"units": "%", "valid_time": "2025-12-16T00:00:00", "level": 0, "level_type": "surface"}},
+            {
+                "2tp": {
+                    "units": "percent",
+                    "valid_time": "2025-12-16T00:00:00",
+                    "level": 0,
+                    "level_type": "surface",
+                }
+            },
             {"Conventions": "CF-1.8", "institution": "ECMWF"},
         ),
         (
@@ -806,7 +813,7 @@ def test_xr_ensure_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims,
                 "2dfd": {
                     "standard_name": "unknown",
                     "long_name": "2D wave spectra (single)",
-                    "units": "m**2 s radian**-1",
+                    "units": "meter ** 2 * second / radian",
                     "typeOfLevel": "meanSea",
                 }
             },
@@ -889,13 +896,13 @@ def test_xr_extra_dims(allow_holes, lazy_load, path, sel, kwargs, coords, dims, 
             },
             {"number": 1, "forecast_reference_time": 4, "step": 2, "isobaricInhPa": 6},
             {
-                "2t": {"units": "K", "surface": 0},
-                "msl": {"units": "Pa", "surface": 0},
-                "r": {"units": "%"},
-                "t": {"units": "K"},
-                "u": {"units": "m s**-1"},
-                "v": {"units": "m s**-1"},
-                "z": {"units": "m**2 s**-2"},
+                "2t": {"units": "kelvin", "surface": 0},
+                "msl": {"units": "pascal", "surface": 0},
+                "r": {"units": "percent"},
+                "t": {"units": "kelvin"},
+                "u": {"units": "meter / second"},
+                "v": {"units": "meter / second"},
+                "z": {"units": "meter ** 2 / second ** 2"},
             },
             {"gridType": "regular_ll"},
         ),
@@ -984,7 +991,7 @@ def test_xr_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims, var_a
         v_attrs = dict(ds[v].attrs)
         v_attrs.pop("_earthkit", None)
         v_attrs.pop("ek_grid_spec", None)
-        assert v_attrs == var_attrs[v]
+        assert v_attrs == var_attrs[v], f"Variable {v} attributes do not match expected values"
     assert ds.attrs == global_attrs
 
 
@@ -1018,14 +1025,14 @@ def test_xr_level_per_type_dim(lazy_load, path, sel, kwargs, coords, dims, var_a
                 "r": {
                     "standard_name": "relative_humidity",
                     "long_name": "Relative humidity",
-                    "units": "%",
+                    "units": "percent",
                     "typeOfLevel": "isobaricInhPa",
                     "level": 500,
                 },
                 "t": {
                     "standard_name": "air_temperature",
                     "long_name": "Temperature",
-                    "units": "K",
+                    "units": "kelvin",
                     "typeOfLevel": "isobaricInhPa",
                     "level": 700,
                 },

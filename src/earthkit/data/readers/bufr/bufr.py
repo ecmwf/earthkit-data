@@ -17,11 +17,11 @@ from earthkit.data.core import Base
 from earthkit.data.core.index import Index
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
+from earthkit.data.utils.args import metadata_argument
+from earthkit.data.utils.args import metadata_argument_new
 from earthkit.data.utils.message import CodesHandle
 from earthkit.data.utils.message import CodesMessagePositionIndex
 from earthkit.data.utils.message import CodesReader
-from earthkit.data.utils.metadata.args import metadata_argument
-from earthkit.data.utils.metadata.args import metadata_argument_new
 from earthkit.data.utils.parts import Part
 from earthkit.data.utils.summary import make_bufr_html_tree
 
@@ -620,7 +620,7 @@ class BUFRListMixIn(PandasMixIn):
             List with one item per :obj:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>`\ s in the list. Each item contains the values for the specified keys for the corresponding message.
 
         """
-        from earthkit.data.utils.metadata.args import metadata_argument_new
+        from earthkit.data.utils.args import metadata_argument_new
 
         # _kwargs = kwargs.copy()
         # astype = _kwargs.pop("astype", None)

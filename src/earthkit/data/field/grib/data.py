@@ -8,7 +8,7 @@
 #
 
 
-from earthkit.data.field.data import DataFieldComponentHandler
+from earthkit.data.field.handler.data import DataFieldComponentHandler
 
 from .collector import GribContextCollector
 

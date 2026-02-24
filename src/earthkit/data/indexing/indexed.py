@@ -153,7 +153,7 @@ class IndexedFieldList(Index, FieldList):
         remapping=None,
         patches=None,
     ):
-        from earthkit.data.utils.metadata.args import metadata_argument_new
+        from earthkit.data.utils.args import metadata_argument_new
 
         keys, astype, default, keys_arg_type = metadata_argument_new(keys, astype=astype, default=default)
 

@@ -12,7 +12,7 @@ def new_xarray_field(variable, selection=None):
     r"""Create a Field object from XArray"""
 
     from earthkit.data.core.field import Field
-    from earthkit.data.field.labels import SimpleLabels
+    from earthkit.data.field.handler.labels import SimpleLabels
     from earthkit.data.field.xarray.data import XArrayData
     from earthkit.data.field.xarray.ensemble import XArrayEnsemble
     from earthkit.data.field.xarray.geography import XArrayGeographyHandler

@@ -7,9 +7,10 @@
 # nor does it submit to any jurisdiction.
 #
 
-from .component.parameter import BaseParameter
-from .component.parameter import EmptyParameter
-from .component.parameter import create_parameter
+from earthkit.data.field.component.parameter import BaseParameter
+from earthkit.data.field.component.parameter import EmptyParameter
+from earthkit.data.field.component.parameter import create_parameter
+
 from .core import SimpleFieldComponentHandler
 
 

@@ -10,7 +10,7 @@
 import logging
 
 from earthkit.data.field.component.parameter import Parameter
-from earthkit.data.field.parameter import ParameterFieldComponentHandler
+from earthkit.data.field.handler.parameter import ParameterFieldComponentHandler
 
 LOG = logging.getLogger(__name__)
 

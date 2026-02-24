@@ -25,14 +25,8 @@ import numpy as np
 from earthkit.data.core.field import Field
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.simple import SimpleFieldListCore
-
-# from earthkit.data.readers.grib.metadata import GribMetadata
 from earthkit.data.sources import Source
-
-# from earthkit.data.sources.array_list import ArrayField
 from earthkit.data.sources.fdb import FDBRetriever
-
-# from earthkit.data.utils.metadata.dict import UserMetadata
 
 
 def split_mars_requests(request: dict[str, Any]) -> list[dict[str, Any]]:

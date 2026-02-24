@@ -15,7 +15,7 @@ import numpy as np
 
 from earthkit.data.decorators import cached_method
 from earthkit.data.decorators import normalise
-from earthkit.data.field.data import DataFieldComponentHandler
+from earthkit.data.field.handler.data import DataFieldComponentHandler
 from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.utils.dates import to_datetime
 
