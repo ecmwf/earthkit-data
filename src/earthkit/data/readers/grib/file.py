@@ -188,7 +188,6 @@ class GRIBReader(GribFieldListInFile, Reader):
         return True
 
     def __getstate__(self):
-        print("GribReader Getstate")
         from earthkit.data.core.config import CONFIG
 
         policy = CONFIG.get("grib-file-serialisation-policy")
@@ -203,7 +202,6 @@ class GRIBReader(GribFieldListInFile, Reader):
         return state
 
     def __setstate__(self, state):
-        print("GribReader Setstate")
         policy = state["serialisation_policy"]
 
         if policy == "path":

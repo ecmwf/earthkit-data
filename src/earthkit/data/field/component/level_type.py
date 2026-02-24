@@ -169,6 +169,15 @@ _defs = {
         "layer": False,
         "positive": POSITIVE_DOWN,
     },
+    "ENTIRE_ATMOSPHERE": {
+        "name": "entire_atmosphere",
+        "abbreviation": "entire_atmosphere",
+        "standard_name": "entire_atmosphere",
+        "long_name": "entire atmosphere",
+        "units": "",
+        "layer": False,
+        "positive": "",
+    },
 }
 
 LevelTypes = Enum("LevelTypes", [(k, LevelType(**v)) for k, v in _defs.items()])

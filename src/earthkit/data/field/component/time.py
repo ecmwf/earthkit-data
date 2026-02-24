@@ -32,6 +32,18 @@ class BaseTime(SimpleFieldComponent):
 
     @mark_get_key
     @abstractmethod
+    def base_date(self):
+        """Return the base datetime of the time object."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def base_time(self):
+        """Return the base datetime of the time object."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
     def valid_datetime(self):
         """Return the valid datetime of the time object."""
         pass
@@ -88,6 +100,12 @@ class EmptyTime(BaseTime):
     def base_datetime(self):
         return None
 
+    def base_date(self):
+        return None
+
+    def base_time(self):
+        return None
+
     def valid_datetime(self):
         return None
 
@@ -132,6 +150,14 @@ class ForecastTime(BaseTime):
     def base_datetime(self):
         """Return the base datetime of the time object."""
         return self._base_datetime
+
+    def base_date(self):
+        """Return the base datetime of the time object."""
+        return self._base_datetime.date()
+
+    def base_time(self):
+        """Return the base datetime of the time object."""
+        return self._base_datetime.time()
 
     def valid_datetime(self):
         """Return the valid datetime of the time object."""

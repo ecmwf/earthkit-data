@@ -87,6 +87,10 @@ class ListDiff:
             return v1 == v2, ListDiff.VALUE_DIFF
         elif isinstance(v1, datetime.datetime) and isinstance(v2, datetime.datetime):
             return v1 == v2, ListDiff.VALUE_DIFF
+        elif isinstance(v1, datetime.date) and isinstance(v2, datetime.date):
+            return v1 == v2, ListDiff.VALUE_DIFF
+        elif isinstance(v1, datetime.time) and isinstance(v2, datetime.time):
+            return v1 == v2, ListDiff.VALUE_DIFF
         elif isinstance(v1, datetime.timedelta) and isinstance(v2, datetime.timedelta):
             return v1 == v2, ListDiff.VALUE_DIFF
         elif v1 is None and v2 is None:

@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import os
 import pathlib
 import sys
@@ -68,6 +69,7 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
 
     if api == "earthkit":
         ds = ds_ek.to_xarray(
+            profile="mars",
             time_dim_mode="raw",
             decode_times=False,
             decode_timedelta=False,
@@ -81,6 +83,7 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
 
         ds = xr.open_dataset(
             ds_ek.path,
+            profile="mars",
             engine="earthkit",
             time_dim_mode="raw",
             decode_times=False,
@@ -292,9 +295,9 @@ def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
     data_vars = ["r", "t", "u", "v", "z"]
 
     coords_ref_full = {
-        "date": np.array([20240603, 20240604]),
-        "time": np.array([0, 1200]),
-        "step": [0, 6],
+        "date": np.array([datetime.date(2024, 6, 3), datetime.date(2024, 6, 4)]),
+        "time": np.array([datetime.time(0, 0), datetime.time(12, 0)]),
+        "step": np.array([datetime.timedelta(hours=0), datetime.timedelta(hours=6)]),
         "level": np.array([300, 400, 500, 700, 850, 1000]),
         "latitude": lats,
         "longitude": lons,
@@ -325,9 +328,9 @@ def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
     compare_coords(r, coords_ref_full)
 
     # sel() on dataset
-    r = ds.sel(date=20240603, time=[0, 1200])
+    r = ds.sel(date=datetime.date(2024, 6, 3), time=[datetime.time(0, 0), datetime.time(12, 0)])
     coords_ref = dict(coords_ref_full)
-    coords_ref["date"] = np.array([20240603])
+    coords_ref["date"] = np.array([datetime.date(2024, 6, 3)])
     compare_coords(r, coords_ref)
     if not allow_holes:
         assert [v for v in r.data_vars] == data_vars
@@ -336,16 +339,16 @@ def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 19, 36)
-    r1 = r["u"].sel(step=6, level=[1000, 300])
+    r1 = r["u"].sel(step=datetime.timedelta(hours=6), level=[1000, 300])
     assert r1.shape == (2, 2, 19, 36)
-    coords_ref["step"] = [6]
+    coords_ref["step"] = [datetime.timedelta(hours=6)]
     coords_ref["level"] = np.array([1000, 300])
     compare_coords(r1, coords_ref)
 
     # isel() on dataset
     r = ds.isel(date=0, time=[0, 1])
     coords_ref = dict(coords_ref_full)
-    coords_ref["date"] = np.array([20240603])
+    coords_ref["date"] = np.array([datetime.date(2024, 6, 3)])
     compare_coords(r, coords_ref)
     if not allow_holes:
         assert [v for v in r.data_vars] == data_vars
@@ -356,7 +359,7 @@ def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
     assert r["u"].shape == (2, 2, 6, 19, 36)
     r1 = r["u"].isel(step=1, level=[0, -1])
     assert r1.shape == (2, 2, 19, 36)
-    coords_ref["step"] = [6]
+    coords_ref["step"] = [datetime.timedelta(hours=6)]
     coords_ref["level"] = np.array([300, 1000])
     compare_coords(r1, coords_ref)
 
@@ -371,7 +374,7 @@ def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
     dims_ref.pop("time")
     assert len(r.dims) == len(dims_ref)
     coords_ref = dict(coords_ref_full)
-    coords_ref["time"] = np.array([0])
+    coords_ref["time"] = np.array([datetime.time(0, 0)])
     compare_coords(r, coords_ref)
 
     r = da[:, 0, :, 3:5]
@@ -382,11 +385,11 @@ def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
     dims_ref.pop("time")
     assert len(r.dims) == len(dims_ref)
     coords_ref = dict(coords_ref_full)
-    coords_ref["time"] = np.array([0])
+    coords_ref["time"] = np.array([datetime.time(0, 0)])
     coords_ref["level"] = np.array([700, 850])
     compare_coords(r, coords_ref)
 
-    r = da.loc[:, 0, :, [700, 850]]
+    r = da.loc[:, datetime.time(0, 0), :, [700, 850]]
     assert r.shape == (2, 2, 2, 19, 36)
     assert r.values.shape == (2, 2, 2, 19, 36)
     assert r.to_numpy().shape == (2, 2, 2, 19, 36)
@@ -394,7 +397,7 @@ def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
     dims_ref.pop("time")
     assert len(r.dims) == len(dims_ref)
     coords_ref = dict(coords_ref_full)
-    coords_ref["time"] = np.array([0])
+    coords_ref["time"] = np.array([datetime.time(0, 0)])
     coords_ref["level"] = np.array([700, 850])
     compare_coords(r, coords_ref)
 
@@ -438,7 +441,7 @@ def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
     )
     assert np.allclose(r.values, vals_ref)
 
-    r = da.loc[:, 0, :, 500, 0, 0]
+    r = da.loc[:, datetime.time(0, 0), :, 500, 0, 0]
     assert r.shape == (2, 2)
     vals_ref = np.array([[269.00918579, 268.78610229], [268.57771301, 268.08932495]])
     assert np.allclose(r.values, vals_ref)
@@ -661,9 +664,9 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
     data_vars = ["r", "t", "u", "v", "z"]
 
     coords_ref_full = {
-        "date": np.array([20240603, 20240604]),
-        "time": np.array([0, 1200]),
-        "step": np.array([0, 6]),
+        "date": np.array([datetime.date(2024, 6, 3), datetime.date(2024, 6, 4)]),
+        "time": np.array([datetime.time(0, 0), datetime.time(12, 0)]),
+        "step": np.array([datetime.timedelta(hours=0), datetime.timedelta(hours=6)]),
         "level": np.array([300, 400, 500, 700, 850, 1000]),
         "latitude": lats,
         "longitude": lons,
@@ -693,9 +696,9 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
     compare_coords(r, coords_ref_full)
 
     # sel() on dataset
-    r = ds.sel(date=20240603, time=[0, 1200])
+    r = ds.sel(date=datetime.date(2024, 6, 3), time=[datetime.time(0, 0), datetime.time(12, 0)])
     coords_ref = dict(coords_ref_full)
-    coords_ref["date"] = np.array([20240603])
+    coords_ref["date"] = np.array([datetime.date(2024, 6, 3)])
     compare_coords(r, coords_ref)
     if not allow_holes:
         assert [v for v in r.data_vars] == data_vars
@@ -704,16 +707,16 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 684)
-    r1 = r["u"].sel(step=6, level=[1000, 300])
+    r1 = r["u"].sel(step=datetime.timedelta(hours=6), level=[1000, 300])
     assert r1.shape == (2, 2, 684)
-    coords_ref["step"] = np.array([6])
+    coords_ref["step"] = np.array([datetime.timedelta(hours=6)])
     coords_ref["level"] = np.array([1000, 300])
     compare_coords(r1, coords_ref)
 
     # isel() on dataset
     r = ds.isel(date=0, time=[0, 1])
     coords_ref = dict(coords_ref_full)
-    coords_ref["date"] = np.array([20240603])
+    coords_ref["date"] = np.array([datetime.date(2024, 6, 3)])
     compare_coords(r, coords_ref)
     if not allow_holes:
         assert [v for v in r.data_vars] == data_vars
@@ -724,7 +727,7 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
     assert r["u"].shape == (2, 2, 6, 684)
     r1 = r["u"].isel(step=1, level=[0, -1])
     assert r1.shape == (2, 2, 684)
-    coords_ref["step"] = np.array([6])
+    coords_ref["step"] = np.array([datetime.timedelta(hours=6)])
     coords_ref["level"] = np.array([300, 1000])
     compare_coords(r1, coords_ref)
 
@@ -739,7 +742,7 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
     dims_ref.pop("time")
     assert len(r.dims) == len(dims_ref)
     coords_ref = dict(coords_ref_full)
-    coords_ref["time"] = np.array([0])
+    coords_ref["time"] = np.array([datetime.time(0, 0)])
     compare_coords(r, coords_ref)
 
     r = da[:, 0, :, 3:5]
@@ -750,11 +753,11 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
     dims_ref.pop("time")
     assert len(r.dims) == len(dims_ref)
     coords_ref = dict(coords_ref_full)
-    coords_ref["time"] = np.array([0])
+    coords_ref["time"] = np.array([datetime.time(0, 0)])
     coords_ref["level"] = np.array([700, 850])
     compare_coords(r, coords_ref)
 
-    r = da.loc[:, 0, :, [700, 850]]
+    r = da.loc[:, datetime.time(0, 0), :, [700, 850]]
     assert r.shape == (2, 2, 2, 684)
     assert r.values.shape == (2, 2, 2, 684)
     assert r.to_numpy().shape == (2, 2, 2, 684)
@@ -762,7 +765,7 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
     dims_ref.pop("time")
     assert len(r.dims) == len(dims_ref)
     coords_ref = dict(coords_ref_full)
-    coords_ref["time"] = np.array([0])
+    coords_ref["time"] = np.array([datetime.time(0, 0)])
     coords_ref["level"] = np.array([700, 850])
     compare_coords(r, coords_ref)
 
@@ -795,7 +798,7 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
     assert np.allclose(r.values.flatten(), v_ek[:, [9 * 36, 10 * 36, 11 * 36]].flatten())
     assert np.allclose(r.values, vals_ref)
 
-    r = da.loc[:, 0, :, 500, 9 * 36 + 0]
+    r = da.loc[:, datetime.time(0, 0), :, 500, 9 * 36 + 0]
     assert r.shape == (2, 2)
     vals_ref = np.array([[269.00918579, 268.78610229], [268.57771301, 268.08932495]])
     assert np.allclose(r.values, vals_ref)
@@ -871,7 +874,7 @@ def test_xr_engine_single_field(allow_holes, lazy_load):
         "standard_name": "air_temperature",
         "long_name": "Temperature",
         "paramId": 130,
-        "units": "K",
+        "units": "kelvin",
     }
 
     global_attrs_ref = {

@@ -136,6 +136,7 @@ _TYPES = [
     ),
     GribLevelType("depthBelowLand", LevelTypes.DEPTH_BGL),
     GribLayerType("depthBelowLandLayer", LevelTypes.DEPTH_BGL),
+    GribLevelType("entireAtmosphere", LevelTypes.ENTIRE_ATMOSPHERE),
     GribLevelType("generalVerticalLayer", LevelTypes.GENERAL),
     GribLevelType("heightAboveSea", LevelTypes.HEIGHT_ASL),
     GribLevelType("heightAboveGround", LevelTypes.HEIGHT_AGL),

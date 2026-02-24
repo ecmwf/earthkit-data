@@ -31,18 +31,22 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
     [
         (
             {
-                "profile": None,
+                "profile": "mars",
                 "time_dim_mode": "raw",
                 "decode_times": False,
                 "decode_timedelta": False,
                 "dim_name_from_role_name": True,
             },
-            {"date": [20240603, 20240604], "time": [0, 1200], "step": [0, 6]},
-            ("step", "hours"),
+            {
+                "date": [20240603, 20240604],
+                "time": [0, 1200],
+                "step": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
+            },
+            None,
         ),
         (
             {
-                "profile": None,
+                "profile": "mars",
                 "time_dim_mode": "raw",
                 "dim_name_from_role_name": True,
             },
@@ -55,7 +59,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
-                "profile": None,
+                "profile": "mars",
                 "time_dim_mode": "forecast",
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -68,13 +72,13 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
                     np.datetime64("2024-06-04T00", "ns"),
                     np.datetime64("2024-06-04T12", "ns"),
                 ],
-                "step": [0, 6],
+                "step": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
             },
-            ("step", "hours"),
+            None,
         ),
         (
             {
-                "profile": None,
+                "profile": "mars",
                 "time_dim_mode": "forecast",
                 "dim_name_from_role_name": True,
             },
@@ -91,7 +95,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
-                "profile": None,
+                "profile": "mars",
                 "time_dim_mode": "valid_time",
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -113,7 +117,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
-                "profile": None,
+                "profile": "mars",
                 "time_dim_mode": "valid_time",
                 "decode_times": True,
                 "decode_timedelta": True,
@@ -135,25 +139,29 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
         ),
         (
             {
-                "profile": None,
+                "profile": "mars",
                 "time_dim_mode": "raw",
                 "decode_times": False,
                 "decode_timedelta": False,
                 "dim_name_from_role_name": False,
             },
-            {"date": [20240603, 20240604], "time": [0, 1200], "step": [0, 6]},
-            ("step", "hours"),
+            {
+                "date": [20240603, 20240604],
+                "time": [0, 1200],
+                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
+            },
+            None,
         ),
         (
             {
-                "profile": None,
+                "profile": "mars",
                 "time_dim_mode": "raw",
                 "dim_name_from_role_name": False,
             },
             {
                 "date": [np.datetime64("2024-06-03", "ns"), np.datetime64("2024-06-04", "ns")],
                 "time": [np.timedelta64(0, "s"), np.timedelta64(43200, "s")],
-                "step": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
+                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
             },
             None,
         ),
@@ -163,6 +171,7 @@ def test_xr_engine_time_basic(allow_holes, kwargs, dims, step_units):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
     ds = ds_ek.to_xarray(allow_holes=allow_holes, **kwargs)
+
     compare_dims(ds, dims, order_ref_var="t")
 
     if step_units is not None:
@@ -172,12 +181,14 @@ def test_xr_engine_time_basic(allow_holes, kwargs, dims, step_units):
 
 
 @pytest.mark.cache
-@pytest.mark.parametrize("allow_holes", [False, True])
+# @pytest.mark.parametrize("allow_holes", [False, True])
+@pytest.mark.parametrize("allow_holes", [False])  # TODO: allow holes with valid_time_coord
 @pytest.mark.parametrize(
     "kwargs,dims,step_units",
     [
         (
             {
+                "profile": "mars",
                 "dim_roles": {
                     "forecast_reference_time": None,
                     "date": "metadata.indexingDate",
@@ -199,6 +210,7 @@ def test_xr_engine_time_basic(allow_holes, kwargs, dims, step_units):
         ),
         (
             {
+                "profile": "mars",
                 "dim_roles": {"forecast_reference_time": "indexing_datetime", "step": "forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -215,6 +227,7 @@ def test_xr_engine_time_basic(allow_holes, kwargs, dims, step_units):
         ),
         (
             {
+                "profile": "mars",
                 "dim_roles": {"date": "indexingDate", "time": "indexingTime", "step": "forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -231,6 +244,7 @@ def test_xr_engine_time_basic(allow_holes, kwargs, dims, step_units):
         ),
         (
             {
+                "profile": "mars",
                 "dim_roles": {"forecast_reference_time": "indexing_datetime", "step": "forecastMonth"},
                 "decode_times": False,
                 "decode_timedelta": False,

@@ -471,8 +471,6 @@ class Profile:
         attributes: dict
             Index keys which has a single (valid) value
         """
-        # print("index_keys", self.index_keys)
-        # print("dim_keys", self.dim_keys)
         self.variable.update(ds)
         self.dims.update(ds)
         self.variable.check(self)
