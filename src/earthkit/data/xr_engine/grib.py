@@ -104,7 +104,8 @@ def data_array_to_fields(da, reference_field=None):
     # extract metadata template from dataarray
     if reference_field is None and hasattr(da, "earthkit"):
         reference_field = da.earthkit._reference_field
-    else:
+
+    if reference_field is None:
         raise ValueError("Earthkit attribute not found in DataArray. Required for conversion to FieldList!")
 
     # special treatment to set step related GRIB keys
@@ -159,6 +160,6 @@ def data_array_to_fields(da, reference_field=None):
             metadata=grib_metadata,
         )
 
-        return field
+        yield field.to_field()
         # metadata = template_metadata.override(grib_metadata)
         # yield ArrayField(xa_field.values, metadata)

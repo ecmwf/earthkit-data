@@ -1,5 +1,5 @@
 # variables
-variable_key: metadata.param
+variable_key: parameter.variable
 drop_variables: []
 rename_variables: {}
 mono_variable: false
@@ -45,14 +45,14 @@ errors: raise
 allow_holes: false
 
 dim_roles:
-  number: metadata.number
-  date: metadata.date
-  time: metadata.time
-  step: metadata.step
+  number: ensemble.member
+  date: time.base_date
+  time: time.base_time
+  step: time.step
   forecast_reference_time: time.forecast_reference_time
   valid_time: time.valid_datetime
-  level: metadata.level
-  level_type: metadata.typeOfLevel
+  level: vertical.level
+  level_type: vertical.level_type
 
 dim_name_from_role_name: true
 

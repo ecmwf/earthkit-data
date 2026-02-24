@@ -92,6 +92,7 @@ def _attributes(ds):
     return {k: v[0] for k, v in ds.indices().items() if len(v) == 1}
 
 
+@pytest.mark.migrate
 def test_xr_dims_input_fieldlist():
     prof = Profile.make("mars")
     ds = load_wrapped_fieldlist(DS_DATE_LEV, prof)
@@ -117,6 +118,7 @@ def test_xr_dims_input_fieldlist():
     assert ds.index("level_and_type") == ["1000_pl", "850_pl"]
 
 
+@pytest.mark.migrate
 @pytest.mark.skip(reason="New field implementation does not allow using time without date")
 @pytest.mark.parametrize(
     "kwargs,var_key,variables,dim_keys",
@@ -149,6 +151,7 @@ def test_xr_dims_ds_lev(kwargs, var_key, variables, dim_keys):
     assert prof.dim_keys == dim_keys
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize(
     "kwargs,var_key,variables,dims",
     [
@@ -322,6 +325,7 @@ def test_xr_dims_ds_date_lev(kwargs, var_key, variables, dims):
         raise ValueError(f"Unsupported dims: {dims}")
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize(
     "kwargs,var_key,variables,dim_keys",
     [

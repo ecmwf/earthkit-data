@@ -160,7 +160,7 @@ def xr_lod_raw_time():
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_lod_latlon(allow_holes, lazy_load, xr_lod_latlon):
     ds_in = xr_lod_latlon
-    ds = ds_in.to_xarray(time_dim_mode="raw", allow_holes=allow_holes, lazy_load=lazy_load)
+    ds = ds_in.to_xarray(profile=None, time_dim_mode="raw", allow_holes=allow_holes, lazy_load=lazy_load)
 
     assert ds is not None
     assert ds["t"].shape == (2, 3, 2)
@@ -173,7 +173,7 @@ def test_xr_engine_lod_latlon(allow_holes, lazy_load, xr_lod_latlon):
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_lod_nongeo(allow_holes, lazy_load, xr_lod_nongeo):
     ds_in = xr_lod_nongeo
-    ds = ds_in.to_xarray(time_dim_mode="raw", allow_holes=allow_holes, lazy_load=lazy_load)
+    ds = ds_in.to_xarray(profile=None, time_dim_mode="raw", allow_holes=allow_holes, lazy_load=lazy_load)
 
     assert ds is not None
     assert ds["t"].shape == (2, 6)
@@ -193,7 +193,7 @@ def test_xr_engine_lod_nongeo(allow_holes, lazy_load, xr_lod_nongeo):
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_lod_forecast(allow_holes, lazy_load, xr_lod_forecast):
     ds_in = xr_lod_forecast
-    ds = ds_in.to_xarray(time_dim_mode="forecast", allow_holes=allow_holes, lazy_load=lazy_load)
+    ds = ds_in.to_xarray(profile=None, time_dim_mode="forecast", allow_holes=allow_holes, lazy_load=lazy_load)
 
     assert ds is not None
     assert ds["t"].shape == (2, 3, 2)
@@ -211,7 +211,7 @@ def test_xr_engine_lod_forecast(allow_holes, lazy_load, xr_lod_forecast):
 def test_xr_engine_lod_valid_time_from_valid_datetime_single(allow_holes, lazy_load, xr_lod_latlon):
     ds_in = xr_lod_latlon
     ds = ds_in.to_xarray(
-        time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, squeeze=False
+        profile=None, time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, squeeze=False
     )
 
     dims = {
@@ -220,8 +220,8 @@ def test_xr_engine_lod_valid_time_from_valid_datetime_single(allow_holes, lazy_l
     }
 
     assert ds is not None
-    assert ds["t"].shape == (1, 2, 3, 2)
-    assert ds["u"].shape == (1, 2, 3, 2)
+    assert ds["t"].shape == (1, 2, 1, 3, 2)
+    assert ds["u"].shape == (1, 2, 1, 3, 2)
 
     compare_dims(ds, dims, order_ref_var="t")
 
@@ -231,6 +231,7 @@ def test_xr_engine_lod_valid_time_from_valid_datetime_single(allow_holes, lazy_l
 def test_xr_engine_lod_valid_time_from_valid_datetime_multi(allow_holes, lazy_load, xr_lod_valid_time):
     ds_in = xr_lod_valid_time
     ds = ds_in.to_xarray(
+        profile=None,
         time_dim_mode="valid_time",
         allow_holes=allow_holes,
         lazy_load=lazy_load,
@@ -255,12 +256,12 @@ def test_xr_engine_lod_valid_time_from_valid_datetime_multi(allow_holes, lazy_lo
 def test_xr_engine_lod_valid_time_from_forecast(allow_holes, lazy_load, xr_lod_forecast):
     ds_in = xr_lod_forecast
     ds = ds_in.to_xarray(
-        time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, squeeze=False
+        profile=None, time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, squeeze=False
     )
 
     assert ds is not None
-    assert ds["t"].shape == (2, 1, 3, 2)
-    assert ds["u"].shape == (2, 1, 3, 2)
+    assert ds["t"].shape == (2, 1, 1, 3, 2)
+    assert ds["u"].shape == (2, 1, 1, 3, 2)
 
     dims = {
         "valid_time": [
@@ -278,6 +279,7 @@ def test_xr_engine_lod_valid_time_from_forecast(allow_holes, lazy_load, xr_lod_f
 def test_xr_engine_lod_valid_time_from_raw_time(allow_holes, lazy_load, xr_lod_raw_time):
     ds_in = xr_lod_raw_time
     ds = ds_in.to_xarray(
+        profile=None,
         time_dim_mode="valid_time",
         allow_holes=allow_holes,
         lazy_load=lazy_load,

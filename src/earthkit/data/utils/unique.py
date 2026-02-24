@@ -84,6 +84,7 @@ class UniqueValuesCollector:
         sort=False,
         drop_none=True,
         squeeze=False,
+        unwrap_single=False,
         remapping=None,
         patches=None,
         progress_bar=False,
@@ -139,7 +140,7 @@ class UniqueValuesCollector:
             keys = tuple(keys)
 
         if self._cache is not None:
-            return self._collect_with_cache(
+            result = self._collect_with_cache(
                 iterable,
                 keys,
                 self._cache,
@@ -149,7 +150,7 @@ class UniqueValuesCollector:
                 remapping=remapping,
             )
         else:
-            return self._collect(
+            result = self._collect(
                 iterable,
                 keys,
                 sort=sort,
@@ -157,6 +158,11 @@ class UniqueValuesCollector:
                 squeeze=squeeze,
                 remapping=remapping,
             )
+
+        if len(keys) == 1 and unwrap_single:
+            return result.popitem()[1]
+        else:
+            return result
 
     def _post_proc(self, vals, sort=True, drop_none=True, squeeze=False):
         if drop_none:

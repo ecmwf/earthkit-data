@@ -25,7 +25,7 @@ class Grid:
         # NOTE: underscore grid types are coming from UserMetadata
         grid_type = field.geography.grid_type()
 
-        if grid_type in ["regular_ll", "_regular_ll", "regular-ll"]:
+        if grid_type in ["regular_ll", "_regular_ll", "regular-ll", "_distinct_ll"]:
             return RegularLLGrid(field)
         elif grid_type in ["regular_gg", "regular-gg", "mercator", "_rectified_ll"]:
             return RectifiedLLGrid(field)

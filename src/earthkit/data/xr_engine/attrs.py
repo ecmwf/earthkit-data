@@ -14,6 +14,7 @@ from abc import abstractmethod
 from collections import defaultdict
 
 from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.data.field.component.units import Units
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
@@ -90,7 +91,10 @@ class KeyAttr(Attr):
         self.key = key if key is not None else name
 
     def get(self, field):
-        return {self.name: field.get(self.key, default=None)}
+        value = field.get(self.key, default=None)
+        if isinstance(value, Units):
+            value = str(value)
+        return {self.name: value}
 
     def __repr__(self) -> str:
         return f"KeyAttr({self.name}, key={self.key})"
