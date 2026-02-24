@@ -12,9 +12,9 @@
 
 import pytest
 
-from earthkit.data.core.order import normalize_order_by
+from earthkit.data.core.order import normalise_order_by
 
-to_kwargs = normalize_order_by
+to_kwargs = normalise_order_by
 
 
 def test_order_1():

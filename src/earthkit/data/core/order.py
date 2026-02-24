@@ -146,7 +146,7 @@ def build_remapping(mapping, patches=None, forced_build=True):
     return result
 
 
-def normalize_order_by(*args, **kwargs):
+def normalise_order_by(*args, **kwargs):
     _kwargs = {}
     for a in args:
         if a is None:
@@ -159,7 +159,7 @@ def normalize_order_by(*args, **kwargs):
             continue
         if isinstance(a, (list, tuple)):
             if not all(isinstance(k, str) for k in a):
-                _kwargs.update(normalize_order_by(*a))
+                _kwargs.update(normalise_order_by(*a))
             else:
                 for k in a:
                     _kwargs[k] = "ascending"

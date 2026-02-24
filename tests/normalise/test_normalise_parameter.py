@@ -9,11 +9,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalise
 
 
 def test_param_convention_mars_1():
-    @normalize("parameter", "variable-list", convention="mars")
+    @normalise("parameter", "variable-list", convention="mars")
     def values_mars(parameter):
         return parameter
 
@@ -25,7 +25,7 @@ def test_param_convention_mars_1():
 
 
 def test_param_convention_mars_2():
-    @normalize("parameter", "variable-list(mars)")
+    @normalise("parameter", "variable-list(mars)")
     def values_mars(parameter):
         return parameter
 
@@ -37,7 +37,7 @@ def test_param_convention_mars_2():
 
 
 def test_param_convention_cf_list():
-    @normalize("parameter", "variable-list(cf)")
+    @normalise("parameter", "variable-list(cf)")
     def values_cf(parameter):
         return parameter
 
@@ -47,7 +47,7 @@ def test_param_convention_cf_list():
 
 
 def test_param_convention_cf():
-    @normalize("parameter", "variable(cf)")
+    @normalise("parameter", "variable(cf)")
     def values_cf(parameter):
         return parameter
 

@@ -223,7 +223,7 @@ class XarrayMixIn:
 
                 ``dims_roles`` behaves differently to the other kwargs in the sense that
                 it does not override but update the default values. So e.g. to change only "number" in
-                the defaults it is enough to specify: "dim_roles={"number": "perturbationNumber"}.
+                the default it is enough to specify: "dim_roles={"number": "perturbationNumber"}.
             * dim_name_from_role_name: bool, None
                 If True, the dimension names are formed from the role names. Otherwise, the
                 dimension names are formed from the metadata keys specified in ``dim_roles``.

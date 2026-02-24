@@ -13,7 +13,7 @@ import datetime
 
 import pytest
 
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalise
 
 
 def f(d):
@@ -38,7 +38,7 @@ def f(d):
         (("6", "12"), (datetime.timedelta(hours=6), datetime.timedelta(hours=12))),
     ],
 )
-def test_normalize_timedelta(values, expected):
-    timedelta_formatted = normalize("d", "timedelta")(f)
+def test_normalise_timedelta(values, expected):
+    timedelta_formatted = normalise("d", "timedelta")(f)
 
     assert timedelta_formatted(values) == expected

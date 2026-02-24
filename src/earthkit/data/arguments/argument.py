@@ -32,27 +32,27 @@ class Argument:
         self.name = name
         self.availability = None
         self._type = None
-        self._normalize = {}
+        self._normalise = {}
         self.format = None
         self.aliases = None
 
     @property
-    def normalize(self):
-        return self._normalize
+    def normalise(self):
+        return self._normalise
 
-    @normalize.setter
-    def normalize(self, value):
+    @normalise.setter
+    def normalise(self, value):
         self.format = value.pop("format", None)
         self.aliases = value.pop("aliases", None)
-        self._normalize = value
+        self._normalise = value
 
     @property
     def cmltype(self):
         if self._type is None:
             if self.availability:
-                if self._normalize.get("values") is None:
-                    self._normalize["values"] = self.availability
-            self._type = infer_type(**self.normalize)
+                if self._normalise.get("values") is None:
+                    self._normalise["values"] = self.availability
+            self._type = infer_type(**self.normalise)
         return self._type
 
     def add_alias_transformers(self, pipeline):

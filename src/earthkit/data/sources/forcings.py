@@ -14,7 +14,7 @@ import logging
 import numpy as np
 
 from earthkit.data.decorators import cached_method
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalise
 from earthkit.data.field.data import DataFieldComponentHandler
 from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.utils.dates import to_datetime
@@ -335,9 +335,9 @@ class ForcingsData:
         return r
 
     @staticmethod
-    @normalize("date", "date-list")
-    @normalize("time", "int-list")
-    @normalize("number", "int-list")
+    @normalise("date", "date-list")
+    @normalise("time", "int-list")
+    @normalise("number", "int-list")
     def normalise_request(**request):
         return request
 

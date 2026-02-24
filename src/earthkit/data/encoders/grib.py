@@ -11,8 +11,8 @@ import datetime
 import logging
 from functools import lru_cache
 
-from earthkit.data.decorators import normalize
-from earthkit.data.decorators import normalize_grib_keys
+from earthkit.data.decorators import normalise
+from earthkit.data.decorators import normalise_grib_keys
 from earthkit.data.utils.dates import step_range_to_grib
 from earthkit.data.utils.humanize import list_to_human
 
@@ -351,12 +351,12 @@ class GribEncoder(Encoder):
         super().__init__(**kwargs)
         self._bbox = {}
 
-    @normalize_grib_keys
-    @normalize("date", "date")
-    def _normalize_kwargs_names(self, **kwargs):
+    @normalise_grib_keys
+    @normalise("date", "date")
+    def _normalise_kwargs_names(self, **kwargs):
         return kwargs
 
-    def _normalize_metadata_key_names(self, md):
+    def _normalise_metadata_key_names(self, md):
         def _convert(name):
             if name.startswith("metadata."):
                 return name[9:]
@@ -405,11 +405,11 @@ class GribEncoder(Encoder):
             raise ValueError("Cannot provide data, values and template together")
 
         metadata = metadata if metadata is not None else {}
-        md = self._normalize_kwargs_names(**self.metadata)
-        md.update(self._normalize_kwargs_names(**metadata))
-        md.update(self._normalize_kwargs_names(**kwargs))
+        md = self._normalise_kwargs_names(**self.metadata)
+        md.update(self._normalise_kwargs_names(**metadata))
+        md.update(self._normalise_kwargs_names(**kwargs))
 
-        md = self._normalize_metadata_key_names(md)
+        md = self._normalise_metadata_key_names(md)
 
         # when the input date a datetime object time can be inferred from it
         can_infer_time = (
@@ -610,7 +610,7 @@ class GribEncoder(Encoder):
             if combined["type"] == "an":
                 metadata["type"] = "fc"
 
-        if "time" in metadata:  # TODO, use a normalizer
+        if "time" in metadata:  # TODO, use a normaliser
             try:
                 time = int(metadata["time"])
                 if time < 100:

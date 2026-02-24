@@ -13,7 +13,7 @@ import logging
 LOG = logging.getLogger(__name__)
 
 
-def normalize_selection(*args, **kwargs):
+def normalise_selection(*args, **kwargs):
     from earthkit.data.arguments.transformers import ALL
     from earthkit.data.field.component.level_type import LevelType
 

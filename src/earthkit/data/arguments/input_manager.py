@@ -40,10 +40,10 @@ class InputManager:
             self.arguments[name].availability = values
         self.availabilities.append(decorator.availability)
 
-    def register_normalize(self, decorator):
+    def register_normalise(self, decorator):
         if decorator.name not in self.arguments:
             self.arguments[decorator.name] = Argument(decorator.name)
-        self.arguments[decorator.name].normalize = decorator.kwargs
+        self.arguments[decorator.name].normalise = decorator.kwargs
 
     def register_alias_argument(self, decorator):
         self.alias_arguments.append(decorator)
@@ -136,8 +136,8 @@ class InputManager:
                 return a
         return None
 
-    def consolidate_defaults(self, defaults):
-        for k, default in defaults.items():
+    def consolidate_default(self, default):
+        for k, default in default.items():
             a = self.get_argument(k)
             if a:
                 a.set_default(default)
@@ -150,7 +150,7 @@ class InputManager:
         args_kwargs.kwargs = self.apply_to_kwargs_before_default(args_kwargs.kwargs)
 
         args_kwargs.add_default_values_and_kwargs()
-        self.consolidate_defaults(args_kwargs.defaults)
+        self.consolidate_default(args_kwargs.default)
 
         LOG.debug(f"Applying decorator stack to: {args} {kwargs}")
         args_kwargs.kwargs = self.apply_to_kwargs(args_kwargs.kwargs)

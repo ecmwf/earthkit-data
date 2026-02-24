@@ -47,7 +47,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
         ),
     ],
 )
-def test_grib_set_ensemble(fl_type, write_method, _kwargs, ref_ori, ref_set, ref_saved):
+def test_grib_set_ensemble(fl_type, _kwargs, ref_ori, ref_set, ref_saved):
     ds_ori, _ = load_grib_data("ens_50.grib", fl_type, folder="data")
 
     f = ds_ori[0].set(**_kwargs)

@@ -415,7 +415,7 @@ def _infer_type(**kwargs):
             **kwargs,
         )
 
-    # normalize("name", ["a", "b", "c"]) and similar
+    # normalise("name", ["a", "b", "c"]) and similar
     if isinstance(values, (list, tuple)):  # and type is None:
         if type not in (None, "enum", "enum-list"):
             LOG.warning(f"Type ignored with enums, values={values}, type={type} and multiple={multiple}")

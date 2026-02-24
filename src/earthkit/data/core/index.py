@@ -13,8 +13,8 @@ from abc import abstractmethod
 
 import earthkit.data
 from earthkit.data.core.order import build_remapping
-from earthkit.data.core.order import normalize_order_by
-from earthkit.data.core.select import normalize_selection
+from earthkit.data.core.order import normalise_order_by
+from earthkit.data.core.select import normalise_selection
 from earthkit.data.core.select import selection_from_index
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.sources import Source
@@ -315,7 +315,7 @@ class Index(Source):
         GribField(u,1000,20180801,1200,0,0)
         GribField(t,850,20180801,1200,0,0)
         """
-        kwargs, remapping_kwarg = normalize_selection(*args, **kwargs)
+        kwargs, remapping_kwarg = normalise_selection(*args, **kwargs)
         if not kwargs:
             return self
 
@@ -420,7 +420,7 @@ class Index(Source):
         GribField(v,500,20180801,1200,0,0)
 
         """
-        kwargs, _ = normalize_selection(*args, **kwargs)
+        kwargs, _ = normalise_selection(*args, **kwargs)
         if not kwargs:
             return self
 
@@ -526,7 +526,7 @@ class Index(Source):
         GribField(v,1000,20180801,1200,0,0)
         GribField(u,850,20180801,1200,0,0)
         """
-        kwargs = normalize_order_by(*args, **kwargs)
+        kwargs = normalise_order_by(*args, **kwargs)
 
         remapping = build_remapping(remapping, patches)
 

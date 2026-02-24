@@ -12,7 +12,7 @@ import logging
 from collections import defaultdict
 
 from earthkit.data.core.index import Selection
-from earthkit.data.core.index import normalize_selection
+from earthkit.data.core.index import normalise_selection
 from earthkit.data.core.order import build_remapping
 from earthkit.data.indexing.indexed import IndexedFieldList
 from earthkit.data.indexing.simple import SimpleFieldList
@@ -73,7 +73,7 @@ class IndexDB:
         return remaining_keys, indices
 
     def filter(self, *args, **kwargs):
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs = normalise_selection(*args, **kwargs)
 
         index = dict()
 

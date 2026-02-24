@@ -7,12 +7,12 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalise
 
 
-@normalize("time.base_datetime", "date(%Y.%m.%d %H:%M)")
-@normalize("time.valid_datetime", "date(%Y.%m.%d %H:%M)")
-@normalize("time.valid_datetime", "date(%Y.%m.%d %H:%M)")
+@normalise("time.base_datetime", "date(%Y.%m.%d %H:%M)")
+@normalise("time.valid_datetime", "date(%Y.%m.%d %H:%M)")
+@normalise("time.valid_datetime", "date(%Y.%m.%d %H:%M)")
 def format_metadata(v):
     if v is not None:
         try:
@@ -58,7 +58,7 @@ def make_unique(x, full=False):
     return format_list(r, full=full)
 
 
-def ls(metadata_proc, keys, n=None, extra_keys=None, **kwargs):
+def ls(metadata_proc, n=None, keys=None, extra_keys=None, collections=None, **kwargs):
     if kwargs:
         raise TypeError(f"ls: unsupported arguments={kwargs}")
 
@@ -88,9 +88,21 @@ def ls(metadata_proc, keys, n=None, extra_keys=None, **kwargs):
         elif isinstance(extra_keys, dict):
             _keys.update(extra_keys)
 
-    _keys_lst = list(_keys.keys())
+    # _collections = {}
 
-    return format_ls(metadata_proc(_keys_lst, n), column_names=_keys)
+    # if collections is not None:
+    #     if isinstance(collections, (list, tuple)):
+    #         _collections.update({k: k for k in collections})
+    #     elif isinstance(collections, str):
+    #         _collections.update({collections: collections})
+    #     elif isinstance(collections, dict):
+    #         _collections.update(collections)
+
+    _keys_lst = list(_keys.keys())
+    if not _keys_lst:
+        _keys_lst = None
+
+    return format_ls(metadata_proc(n, keys=_keys_lst, collections=collections), column_names=_keys)
 
     # if isinstance(component, str):
     #     component = [component]

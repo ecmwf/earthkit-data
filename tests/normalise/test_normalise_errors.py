@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data.decorators import availability
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalise
 
 
 def name_no_default(name):
@@ -20,11 +20,11 @@ def name_no_default(name):
 
 
 @pytest.mark.skip("Not implemented yet")
-def test_enum_2_normalizers():
+def test_enum_2_normalisers():
     g = name_no_default
-    g = normalize("a", [1, 2])(g)
-    g = normalize("a", [3, 4])(g)
-    with pytest.raises(ValueError, "Duplicate normalize decorators"):
+    g = normalise("a", [1, 2])(g)
+    g = normalise("a", [3, 4])(g)
+    with pytest.raises(ValueError, "Duplicate normalise decorators"):
         g(a=1)
 
 
@@ -35,32 +35,32 @@ C3 = [
 
 
 @pytest.mark.skip("Not implemented yet")
-def test_enum_inconsistent_availablity_normalizers():
+def test_enum_inconsistent_availablity_normalisers():
     g = name_no_default
-    g = normalize("name", type=int)(g)
+    g = normalise("name", type=int)(g)
     g = availability(C3)(g)
     g(name="50")
     with pytest.raises(
         ValueError,
-        match="Inconsistent types for availability and normalize for argument 'a'.",
+        match="Inconsistent types for availability and normalise for argument 'a'.",
     ):
         g(name="50")
 
 
 def test_enum_no_type():
-    g = normalize("name", multiple=True)(name_no_default)
+    g = normalise("name", multiple=True)(name_no_default)
     assert g(["a", "b"]) == ["a", "b"]
     assert g("a") == ["a"]
 
 
 # def test_enum_cannot_find_type_2():
-#     g = normalize("name", type="zzz")(name_no_default)
+#     g = normalise("name", type="zzz")(name_no_default)
 #     with pytest.raises(ValueError, match="Cannot infer type .*"):
 #         g(["a", "b"])
 #
 #
 # def test_enum_cannot_find_type_3():
-#     g = normalize("name", type="zzz", multiple=True)(name_no_default)
+#     g = normalise("name", type="zzz", multiple=True)(name_no_default)
 #     with pytest.raises(ValueError, match="Cannot infer type .*"):
 #         g(["a", "b"])
 

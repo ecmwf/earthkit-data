@@ -17,7 +17,7 @@ from earthkit.data.core import Base
 from earthkit.data.core.order import Patch
 from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalise
 from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.array import flatten as array_flatten
 from earthkit.data.utils.array import reshape as array_reshape
@@ -644,16 +644,9 @@ class Field(Base):
             return eku_array_namespace(r[0]).stack(r)
 
     def _get_component(self, key):
-        """Return the component name, component object and key name for the specified key."""
-        # if key.endswith(".*"):
-        #     component_name = key[:-2]
-        #     if component_name in self._components:
-        #         return component_name, self._components.get(component_name), None, False
         if "." in key:
             component_name, name = key.split(".", 1)
             return component_name, self._components.get(component_name), name
-        # elif key in self._components:
-        #     return key, self._components[key], None
         elif key in self._components[DATA]:
             return DATA, self._components[DATA], key
         return None, None, key
@@ -689,8 +682,6 @@ class Field(Base):
         """
         component_name, component, key_name = self._get_component(key)
 
-        # print(f"_get_single: key={key}, prefix={prefix}, component={component}, key_name={key_name}")
-
         if component:
             return component.get(key_name, default=default, astype=astype, raise_on_missing=raise_on_missing)
         elif component_name == METADATA:
@@ -713,33 +704,6 @@ class Field(Base):
                     v = self.private_component.get(key)
                     if v is not None:
                         return _cast(v)
-
-        # # handle keys like "mars.param" where "mars" is not a component but a
-        # # namespace in the GRIB metadata
-        # if prefix and prefix != METADATA:
-        #     key_name = prefix + "." + key_name
-        #     prefix = METADATA
-
-        # if prefix == METADATA:
-        #     for _, private_component in self._private.items():
-        #         if hasattr(private_component, "metadata"):
-        #             return private_component.metadata(
-        #                 key_name, default=default, astype=astype, raise_on_missing=raise_on_missing
-        #             )
-        #         else:
-
-        #             def _cast(v):
-        #                 if callable(astype):
-        #                     try:
-        #                         return astype(v)
-        #                     except Exception:
-        #                         return None
-        #                 return v
-
-        #             # TODO: review this
-        #             v = self.private_component.get(key)
-        #             if v is not None:
-        #                 return _cast(v)
 
         if raise_on_missing:
             raise KeyError(f"Key {key} not found in field")
@@ -774,7 +738,7 @@ class Field(Base):
         remapping=None,
     ):
         r"""Fast(er) implementation of :meth:`get` for internal use. This method assumes that the
-        arguments have been normalized e.g. by using :func:`metadata_argument_new`. No checks
+        arguments have been normalised e.g. by using :func:`metadata_argument_new`. No checks
         are performed on the arguments to ensure that they are valid and consistent.
 
         Parameters
@@ -812,7 +776,7 @@ class Field(Base):
 
         Notes
         -----
-        This method assumes that the arguments have been normalized e.g. by using
+        This method assumes that the arguments have been normalised e.g. by using
         :func:`metadata_argument_new`. No checks are performed on the arguments to
         ensure that they are valid and consistent.
         """
@@ -1337,16 +1301,16 @@ class Field(Base):
         for m in self._components.values():
             m.get_grib_context(context)
 
-    @normalize("time.valid_datetime", "date")
-    @normalize("time.base_datetime", "date")
-    @normalize("time.forecast_reference_time", "date")
-    @normalize("time.step", "timedelta")
-    @normalize("base_datetime", "date")
-    @normalize("valid_datetime", "date")
-    @normalize("step_timedelta", "timedelta")
-    @normalize("metadata.base_datetime", "date")
-    @normalize("metadata.valid_datetime", "date")
-    @normalize("metadata.step_timedelta", "timedelta")
+    @normalise("time.valid_datetime", "date")
+    @normalise("time.base_datetime", "date")
+    @normalise("time.forecast_reference_time", "date")
+    @normalise("time.step", "timedelta")
+    @normalise("base_datetime", "date")
+    @normalise("valid_datetime", "date")
+    @normalise("step_timedelta", "timedelta")
+    @normalise("metadata.base_datetime", "date")
+    @normalise("metadata.valid_datetime", "date")
+    @normalise("metadata.step_timedelta", "timedelta")
     @staticmethod
     def normalise_key_values(**kwargs):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""

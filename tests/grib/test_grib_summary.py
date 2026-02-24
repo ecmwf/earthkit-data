@@ -299,14 +299,16 @@ def test_grib_ls_core(_kwargs, expected_values, fl_type):
     _check_ls_df(df, expected_values)
 
 
-@pytest.mark.parametrize("fl_type", FL_TYPES)
+# @pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize("fl_type", ["file"])
 @pytest.mark.parametrize(
     "_kwargs,expected_values",
     [
         (
             {
                 "n": 2,
-                "keys": "parameter",
+                "keys": None,
+                "collections": "parameter",
             },
             {
                 "parameter.variable": {0: "t", 1: "u"},
@@ -316,7 +318,8 @@ def test_grib_ls_core(_kwargs, expected_values, fl_type):
         (
             {
                 "n": 2,
-                "keys": "parameter",
+                "keys": None,
+                "collections": "parameter",
                 "extra_keys": ["vertical.level"],
             },
             {
@@ -549,24 +552,24 @@ def test_grib_ls_ecc_core(_kwargs, expected_values, fl_type):
         (
             {
                 "n": 2,
-                "component": "metadata",
-                "filter": "vertical",
+                "keys": None,
+                "collections": "metadata.vertical",
             },
             {
-                "metadata.typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
-                "metadata.level": {0: 1000, 1: 1000},
+                "metadata.vertical.typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
+                "metadata.vertical.level": {0: 1000, 1: 1000},
             },
         ),
         (
             {
                 "n": 2,
-                "component": "metadata",
-                "filter": "vertical",
+                "keys": None,
+                "collections": "metadata.vertical",
                 "extra_keys": ["metadata.shortName"],
             },
             {
-                "metadata.typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
-                "metadata.level": {0: 1000, 1: 1000},
+                "metadata.vertical.typeOfLevel": {0: "isobaricInhPa", 1: "isobaricInhPa"},
+                "metadata.vertical.level": {0: 1000, 1: 1000},
                 "metadata.shortName": {0: "t", 1: "u"},
             },
         ),

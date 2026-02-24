@@ -13,6 +13,7 @@ from .component import SimpleFieldComponent
 from .component import component_keys
 from .component import mark_alias
 from .component import mark_get_key
+from .units import Units
 
 
 @component_keys
@@ -88,7 +89,7 @@ class EmptyParameter(BaseParameter):
 class Parameter(BaseParameter):
     def __init__(self, variable: str = None, units: str = None) -> None:
         self._variable = variable
-        self._units = units
+        self._units = Units.from_any(units)
 
     def variable(self) -> str:
         r"""str: Return the parameter variable."""
@@ -115,12 +116,12 @@ class Parameter(BaseParameter):
         return create_parameter(d)
 
     def to_dict(self):
-        return {"variable": self._variable, "units": self._units}
+        return {"variable": self._variable, "units": str(self._units)}
 
     def __getstate__(self):
         state = {}
         state["variable"] = self._variable
-        state["units"] = self._units
+        state["units"] = str(self._units)
         return state
 
     def __setstate__(self, state):

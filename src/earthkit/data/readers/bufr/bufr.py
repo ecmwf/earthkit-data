@@ -272,7 +272,7 @@ class BUFRMessage(Base):
                     for k, kt, d in zip(keys, astype, default)
                 }
 
-    def get(self, keys, default=None, astype=None, raise_on_missing=False, remapping=None):
+    def get(self, keys=None, default=None, *, astype=None, raise_on_missing=False, remapping=None):
         r"""Return the values for the specified keys.
 
         Parameters
@@ -597,7 +597,7 @@ class BUFRListMixIn(PandasMixIn):
             raise ValueError("n must be > 0")
         return self.ls(n=-n, **kwargs)
 
-    def get(self, keys, default=None, astype=None, raise_on_missing=False, output="item_per_field"):
+    def get(self, keys=None, default=None, *, astype=None, raise_on_missing=False, output="item_per_field"):
         r"""Return the values for the specified keys for each message in the list.
 
         Parameters

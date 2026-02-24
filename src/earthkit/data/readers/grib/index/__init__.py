@@ -175,7 +175,7 @@ class GribFieldList(PandasMixIn, XarrayMixIn, FieldList):
     @alias_argument("param", ["variable", "parameter"])
     @alias_argument("number", ["realization", "realisation"])
     @alias_argument("class", "klass")
-    def _normalize_kwargs_names(self, **kwargs):
+    def _normalise_kwargs_names(self, **kwargs):
         return kwargs
 
     @detect_out_filename

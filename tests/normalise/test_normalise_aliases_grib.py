@@ -11,7 +11,7 @@
 
 import pytest
 
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalise
 from earthkit.data.vocabularies.aliases import unalias
 
 
@@ -25,7 +25,7 @@ def func_x(x):
 
 
 def test_aliases_grib_paramid_mutiple_false():
-    aliases_grib_paramid = normalize(
+    aliases_grib_paramid = normalise(
         "x",
         type=str,
         aliases="grib-paramid",
@@ -51,7 +51,7 @@ def test_aliases_grib_paramid_mutiple_false():
 
 
 def test_aliases_grib_paramid_mutiple_true():
-    aliases_grib_paramid = normalize(
+    aliases_grib_paramid = normalise(
         "x",
         type=str,
         aliases="grib-paramid",
@@ -76,7 +76,7 @@ def test_aliases_grib_paramid_mutiple_true():
 
 
 def test_aliases_grib_paramid_mutiple_none():
-    aliases_grib_paramid = normalize(
+    aliases_grib_paramid = normalise(
         "x",
         type=str,
         aliases="grib-paramid",

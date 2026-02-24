@@ -14,7 +14,7 @@ try:
 except ImportError:
     raise ImportError("WEkEO access requires 'hda' to be installed")
 
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalise
 from earthkit.data.utils.request import FileRequestRetriever
 from earthkit.data.utils.request import RequestBuilder
 
@@ -84,8 +84,8 @@ class WekeoCdsRetriever(FileSource):
             extension=EXTENSIONS.get(request.get("format"), ".cache"),
         )
 
-    @normalize("date", "date-list(%Y-%m-%d)")
-    @normalize("area", "bounding-box(list)")
+    @normalise("date", "date-list(%Y-%m-%d)")
+    @normalise("area", "bounding-box(list)")
     def _normalise_request(self, **kwargs):
         return kwargs
 

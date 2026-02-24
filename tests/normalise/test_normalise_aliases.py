@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data.decorators import alias_argument
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalise
 
 
 def func_x(x):
@@ -103,7 +103,7 @@ def test_alias_argument_3():
 @pytest.mark.parametrize("typ", [str, int, float])
 def test_aliases_grib_paramid_mutiple_false(typ):
     _131 = typ(131)
-    aliases_grib_paramid = normalize(
+    aliases_grib_paramid = normalise(
         "x",
         type=typ,
         aliases={"u": typ(131), "v": typ(132)},
@@ -130,7 +130,7 @@ def test_aliases_grib_paramid_mutiple_false(typ):
 
 @pytest.mark.parametrize("typ,_131,_132", [(str, "131", "132"), (int, 131, 132), (float, 131.0, 132.0)])
 def test_aliases_grib_paramid_mutiple_true(typ, _131, _132):
-    aliases_grib_paramid = normalize(
+    aliases_grib_paramid = normalise(
         "x",
         type=typ,
         aliases={"u": typ(131), "v": typ(132)},
@@ -156,7 +156,7 @@ def test_aliases_grib_paramid_mutiple_true(typ, _131, _132):
 
 @pytest.mark.parametrize("typ,_131,_132", [(str, "131", "132"), (int, 131, 132), (float, 131.0, 132.0)])
 def test_aliases_mutiple_none(typ, _131, _132):
-    aliases_func = normalize(
+    aliases_func = normalise(
         "x",
         type=typ,
         aliases={"u": _131, "v": _132},
@@ -180,7 +180,7 @@ def test_aliases_mutiple_none(typ, _131, _132):
 
 
 def test_aliases():
-    @normalize("x", aliases={"one": 1})
+    @normalise("x", aliases={"one": 1})
     def f(x):
         return x
 

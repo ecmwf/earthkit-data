@@ -53,7 +53,7 @@ class ProfileConf:
 
     def _load(self, name):
         with self._lock:
-            if name not in self._conf and name != "defaults":
+            if name not in self._conf and name != "default":
                 here = os.path.dirname(__file__)
                 path = os.path.join(here, f"{name}.yaml")
                 if os.path.exists(path):
@@ -69,9 +69,9 @@ class ProfileConf:
                     raise ValueError(f"Profile {name} not found! path={path}")
 
     @thread_safe_cached_property
-    def defaults(self):
+    def default(self):
         here = os.path.dirname(__file__)
-        path = os.path.join(here, "defaults.yaml")
+        path = os.path.join(here, "default.yaml")
         if os.path.exists(path):
             import yaml
 
@@ -79,10 +79,10 @@ class ProfileConf:
                 with open(path, "r") as f:
                     return yaml.safe_load(f)
             except Exception as e:
-                LOG.exception(f"Failed read profile defaults file {path}. {e}")
+                LOG.exception(f"Failed read profile default file {path}. {e}")
                 raise
         else:
-            raise ValueError(f"Profile defaults not found! path={path}")
+            raise ValueError(f"Profile default not found! path={path}")
 
 
 PROFILE_CONF = ProfileConf()
@@ -203,7 +203,7 @@ class Profile:
 
         patches = dict()
 
-        # defaults
+        # default
         fill_md = kwargs.pop("fill_metadata", None)
         if fill_md:
             if not isinstance(fill_md, dict):
@@ -339,7 +339,7 @@ class Profile:
         import copy
 
         kwargs = copy.deepcopy(kwargs)
-        opt = copy.deepcopy(PROFILE_CONF.defaults)
+        opt = copy.deepcopy(PROFILE_CONF.default)
 
         def _deprec_array_module(data):
             """Deprecated: use 'array_namespace' instead"""
@@ -370,8 +370,8 @@ class Profile:
 
         for d in [conf, kwargs]:
             for k, v in d.items():
-                if k in PROFILE_CONF.defaults and v is not None:
-                    if isinstance(PROFILE_CONF.defaults[k], dict):
+                if k in PROFILE_CONF.default and v is not None:
+                    if isinstance(PROFILE_CONF.default[k], dict):
                         if not isinstance(v, dict):
                             raise ValueError(f"Expected dict for key {k} in profile {name}")
                         if "__overwrite__" in v:
@@ -379,24 +379,24 @@ class Profile:
                             opt[k] = v
                         else:
                             opt[k].update(v)
-                    elif isinstance(PROFILE_CONF.defaults[k], list):
+                    elif isinstance(PROFILE_CONF.default[k], list):
                         opt[k] = ensure_iterable(v)
                     else:
                         opt[k] = v
-                elif k not in PROFILE_CONF.defaults:
+                elif k not in PROFILE_CONF.default:
                     if k in cls.USER_ONLY_OPTIONS:
                         opt[k] = v
                     else:
                         raise ValueError(f"Unknown key {k} in profile {name}")
 
         def _check_type(k, v, t):
-            if isinstance(PROFILE_CONF.defaults[k], t):
+            if isinstance(PROFILE_CONF.default[k], t):
                 if not isinstance(v, t):
                     raise ValueError(f"Expected {t.__name__} for key {k} in profile {name}")
                 return True
 
         for k, v in opt.items():
-            if k in PROFILE_CONF.defaults:
+            if k in PROFILE_CONF.default:
                 any(_check_type(k, v, t) for t in [dict, list, bool])
 
         if opt["decode_timedelta"] is None:
@@ -414,11 +414,11 @@ class Profile:
         else:
             conf = PROFILE_CONF.get(name)
 
-        opt = copy.deepcopy(PROFILE_CONF.defaults)
+        opt = copy.deepcopy(PROFILE_CONF.default)
 
         for k, v in conf.items():
-            if k in PROFILE_CONF.defaults and v is not None:
-                if isinstance(PROFILE_CONF.defaults[k], dict):
+            if k in PROFILE_CONF.default and v is not None:
+                if isinstance(PROFILE_CONF.default[k], dict):
                     if not isinstance(v, dict):
                         raise ValueError(f"Expected dict for key {k} in profile {name}")
                     if "__overwrite__" in v:
@@ -426,11 +426,11 @@ class Profile:
                         opt[k] = v
                     else:
                         opt[k].update(v)
-                elif isinstance(PROFILE_CONF.defaults[k], list):
+                elif isinstance(PROFILE_CONF.default[k], list):
                     opt[k] = ensure_iterable(v)
                 else:
                     opt[k] = v
-            elif k not in PROFILE_CONF.defaults:
+            elif k not in PROFILE_CONF.default:
                 if k in cls.USER_ONLY_OPTIONS:
                     opt[k] = v
                 else:

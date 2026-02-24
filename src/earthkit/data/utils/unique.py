@@ -44,7 +44,7 @@ class UniqueValuesCache:
         return remaining_keys, indices
 
     # def filter(self, *args, **kwargs):
-    #     kwargs = normalize_selection(*args, **kwargs)
+    #     kwargs = normalise_selection(*args, **kwargs)
 
     #     index = dict()
 

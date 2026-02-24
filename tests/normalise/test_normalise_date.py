@@ -14,7 +14,7 @@ import datetime
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalise
 from earthkit.data.testing import earthkit_examples_file
 
 
@@ -23,9 +23,9 @@ def f(d):
 
 
 @pytest.mark.xfail
-def test_normalize_dates_from_source():
-    dates_3 = normalize("d", "date")(f)
-    dates_list_3 = normalize("d", "date", multiple=True)(f)
+def test_normalise_dates_from_source():
+    dates_3 = normalise("d", "date")(f)
+    dates_list_3 = normalise("d", "date", multiple=True)(f)
 
     source = from_source("file", earthkit_examples_file("test.grib"))
     assert dates_3(source[0]) == datetime.datetime(2020, 5, 13, 12, 0)
@@ -39,21 +39,21 @@ def test_normalize_dates_from_source():
         assert dates_list_3(source[0]) == [datetime.datetime(2020, 5, 13, 12, 0)]
 
 
-def test_normalize_dates_formatted_1():
-    date_formatted = normalize("d", "date", format="%Y.%m.%d")(f)
+def test_normalise_dates_formatted_1():
+    date_formatted = normalise("d", "date", format="%Y.%m.%d")(f)
 
     assert date_formatted("20200513") == "2020.05.13"
 
 
 @pytest.mark.skip(reason="Not implemented yet.")
-def test_normalize_enum_dates_formatted():
-    date_formatted = normalize("d", values=["20010512", "20020512"], type="date", format="%Y.%m.%d")(f)
+def test_normalise_enum_dates_formatted():
+    date_formatted = normalise("d", values=["20010512", "20020512"], type="date", format="%Y.%m.%d")(f)
 
     assert date_formatted("20200513") == "2020.05.13"
 
 
-def test_normalize_dates_formatted():
-    date_formatted = normalize("d", "date-list(%Y.%m.%d)")(f)
+def test_normalise_dates_formatted():
+    date_formatted = normalise("d", "date-list(%Y.%m.%d)")(f)
 
     assert date_formatted(["20200513", "20200514"]) == ["2020.05.13", "2020.05.14"]
     assert date_formatted("20200513") == ["2020.05.13"]
@@ -61,11 +61,11 @@ def test_normalize_dates_formatted():
     assert date_formatted([datetime.datetime(2020, 5, 13, 23, 59)]) == ["2020.05.13"]
 
 
-def test_normalize_dates_multiple():
-    date_1 = normalize("d", "date-list(%Y.%m.%d)")(f)
-    date_2 = normalize("d", "date(%Y.%m.%d)", multiple=True)(f)
-    date_3 = normalize("d", "date(%Y.%m.%d)", multiple=False)(f)
-    date_4 = normalize("d", "date-list(%Y.%m.%d)", multiple=False)(f)
+def test_normalise_dates_multiple():
+    date_1 = normalise("d", "date-list(%Y.%m.%d)")(f)
+    date_2 = normalise("d", "date(%Y.%m.%d)", multiple=True)(f)
+    date_3 = normalise("d", "date(%Y.%m.%d)", multiple=False)(f)
+    date_4 = normalise("d", "date-list(%Y.%m.%d)", multiple=False)(f)
 
     assert date_1("20200511") == ["2020.05.11"]
     assert date_2("20200512") == ["2020.05.12"]
@@ -172,13 +172,13 @@ def test_normalize_dates_multiple():
         ),
     ],
 )
-def test_normalize_date_list(date, expected):
-    n = normalize("d", "date-list(%Y.%m.%d)")(f)
+def test_normalise_date_list(date, expected):
+    n = normalise("d", "date-list(%Y.%m.%d)")(f)
     assert n(date) == expected
 
 
 @pytest.mark.xfail
-def test_normalize_dates_formatted_from_pandas():
+def test_normalise_dates_formatted_from_pandas():
     import pandas as pd
 
     df1 = pd.DataFrame(
@@ -195,14 +195,14 @@ def test_normalize_dates_formatted_from_pandas():
         columns=["date"],
     )
 
-    @normalize("date", "date-list(%Y-%m-%d)")
+    @normalise("date", "date-list(%Y-%m-%d)")
     def f(date):
         return date
 
     print(f(df1))
     print(f(df2))
 
-    @normalize("date", "date(%Y-%m-%d)")
+    @normalise("date", "date(%Y-%m-%d)")
     def f(date):
         return date
 
@@ -212,8 +212,8 @@ def test_normalize_dates_formatted_from_pandas():
 
 
 @pytest.mark.skip("Not implemented (yet?).")
-def test_normalize_dates_formatted_from_object():
-    date_formatted = normalize("d", "date", format="%Y.%m.%d")(f)
+def test_normalise_dates_formatted_from_object():
+    date_formatted = normalise("d", "date", format="%Y.%m.%d")(f)
 
     class CustomDateObject:
         def __init__(self, dates):
@@ -232,8 +232,8 @@ def test_normalize_dates_formatted_from_object():
     assert date_formatted(obj) == "2020.05.13"
 
 
-def test_normalize_date_none_1():
-    @normalize(
+def test_normalise_date_none_1():
+    @normalise(
         "name",
         "date(%Y%m%d)",
     )
@@ -244,8 +244,8 @@ def test_normalize_date_none_1():
     assert date_default_none() is None
 
 
-def test_normalize_date_list_none_1():
-    @normalize(
+def test_normalise_date_list_none_1():
+    @normalise(
         "name",
         "date-list(%Y%m%d)",
     )
@@ -256,8 +256,8 @@ def test_normalize_date_list_none_1():
     assert date_default_none() is None
 
 
-def test_normalize_date_default_1():
-    @normalize(
+def test_normalise_date_default_1():
+    @normalise(
         "name",
         "date",
     )

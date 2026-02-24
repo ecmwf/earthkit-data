@@ -15,8 +15,8 @@ from io import IOBase
 
 import deprecation
 
-from earthkit.data.decorators import normalize
-from earthkit.data.decorators import normalize_grib_keys
+from earthkit.data.decorators import normalise
+from earthkit.data.decorators import normalise_grib_keys
 from earthkit.data.utils.humanize import list_to_human
 
 LOG = logging.getLogger(__name__)
@@ -51,9 +51,9 @@ class GribCoder:
         self._bbox = {}
         self.kwargs = kwargs
 
-    @normalize_grib_keys
-    @normalize("date", "date")
-    def _normalize_kwargs_names(self, **kwargs):
+    @normalise_grib_keys
+    @normalise("date", "date")
+    def _normalise_kwargs_names(self, **kwargs):
         return kwargs
 
     def encode(
@@ -67,9 +67,9 @@ class GribCoder:
         **kwargs,
     ):
         # Make a copy as we may modify it
-        md = self._normalize_kwargs_names(**self.kwargs)
-        md.update(self._normalize_kwargs_names(**metadata))
-        md.update(self._normalize_kwargs_names(**kwargs))
+        md = self._normalise_kwargs_names(**self.kwargs)
+        md.update(self._normalise_kwargs_names(**metadata))
+        md.update(self._normalise_kwargs_names(**kwargs))
 
         metadata = md
 
@@ -197,7 +197,7 @@ class GribCoder:
             if combined["type"] == "an":
                 metadata["type"] = "fc"
 
-        if "time" in metadata:  # TODO, use a normalizer
+        if "time" in metadata:  # TODO, use a normaliser
             try:
                 time = int(metadata["time"])
                 if time < 100:

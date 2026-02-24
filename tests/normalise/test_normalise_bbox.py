@@ -9,33 +9,33 @@
 # nor does it submit to any jurisdiction.
 #
 from earthkit.data import from_source
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalise
 from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.utils.bbox import BoundingBox
 
 
-@normalize("area", "bounding-box")
+@normalise("area", "bounding-box")
 def bbox_list(ignore, area):
     return area
 
 
-@normalize("area", "bounding-box(tuple)")
+@normalise("area", "bounding-box(tuple)")
 def bbox_tuple(area, ignore=None):
     return area
 
 
-@normalize("area", "bounding-box(list)")
+@normalise("area", "bounding-box(list)")
 def bbox_bbox(area):
     return area
 
 
-@normalize("area", "bounding-box(dict)")
+@normalise("area", "bounding-box(dict)")
 def bbox_dict(area):
     return area
 
 
-@normalize("area", "bounding-box")
-def bbox_defaults(area=None):
+@normalise("area", "bounding-box")
+def bbox_default(area=None):
     return area
 
 
@@ -53,7 +53,7 @@ def test_bbox():
 
     assert bbox_dict(area) == dict(north=30, west=2, south=3, east=4)
 
-    assert bbox_defaults(area) == bbox
+    assert bbox_default(area) == bbox
 
     source = from_source("file", earthkit_examples_file("test.grib"))
     assert bbox_tuple(source[0]) == (73.0, -27.0, 33.0, 45.0)

@@ -319,9 +319,9 @@ class Config:
     _auto_save_config = True
     _notify_enabled = True
 
-    def __init__(self, config_yaml: str, defaults: dict, callbacks=[]):
-        self._defaults = defaults
-        self._config = dict(**defaults)
+    def __init__(self, config_yaml: str, default: dict, callbacks=[]):
+        self._default = default
+        self._config = dict(**default)
         self._callbacks = [c for c in callbacks]
         self._config_yaml = config_yaml
         self._pytest = None
@@ -715,7 +715,7 @@ def _init_config(config_yaml):
 
     except Exception:
         LOG.error(
-            "Cannot load earthkit-data config (%s), reverting to defaults",
+            "Cannot load earthkit-data config (%s), reverting to default",
             config_yaml,
             exc_info=True,
         )

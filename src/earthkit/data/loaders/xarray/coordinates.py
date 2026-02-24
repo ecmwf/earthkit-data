@@ -252,12 +252,12 @@ class Coordinate:
         Parameters
         ----------
         value : Any
-            The value to normalize.
+            The value to normalise.
 
         Returns
         -------
         Any
-            The normalized value.
+            The normalised value.
         """
         # Subclasses to format values that will be added to the field metadata
         return value
@@ -353,12 +353,12 @@ class LevelCoordinate(Coordinate):
         Parameters
         ----------
         value : Any
-            The value to normalize.
+            The value to normalise.
 
         Returns
         -------
         Any
-            The normalized value.
+            The normalised value.
         """
         # Some netcdf have pressue levels in float
         if int(value) == value:
@@ -378,12 +378,12 @@ class EnsembleCoordinate(Coordinate):
         Parameters
         ----------
         value : Any
-            The value to normalize.
+            The value to normalise.
 
         Returns
         -------
         Any
-            The normalized value.
+            The normalised value.
         """
         if int(value) == value:
             return int(value)

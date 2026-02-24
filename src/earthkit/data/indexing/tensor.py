@@ -17,7 +17,7 @@ import numpy as np
 from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.core.index import Selection
-from earthkit.data.core.index import normalize_selection
+from earthkit.data.core.index import normalise_selection
 
 LOG = logging.getLogger(__name__)
 
@@ -176,7 +176,7 @@ class TensorCore(metaclass=ABCMeta):
         return self._subset(indexes)
 
     def sel(self, *args, remapping=None, **kwargs):
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs = normalise_selection(*args, **kwargs)
 
         r = {}
         for k, v in kwargs.items():
@@ -204,7 +204,7 @@ class TensorCore(metaclass=ABCMeta):
     def isel(self, *args, remapping=None, **kwargs):
         # print("isel", args, kwargs)
         # print("isel", self.coords)
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs = normalise_selection(*args, **kwargs)
 
         indexes = []
         for k, v in self.user_coords.items():

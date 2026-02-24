@@ -123,7 +123,7 @@ OPTIONS = {
 }
 
 
-def normalize_grib_keys(f):
+def normalise_grib_keys(f):
     f = alias_argument("levelist", ["level", "levellist"])(f)
     f = alias_argument("levtype", ["leveltype"])(f)
     f = alias_argument("param", ["variable", "parameter"])(f)
@@ -132,22 +132,22 @@ def normalize_grib_keys(f):
     return f
 
 
-def _normalize_time_as_tuple(time, type):
+def _normalise_time_as_tuple(time, type):
     if isinstance(time, str):
         time = (time,)
-    return tuple(_normalize_time(t, type) for t in time)
+    return tuple(_normalise_time(t, type) for t in time)
 
 
-def _normalize_time(time, type):
+def _normalise_time(time, type):
     assert type in (int, str), type
 
     if time is None or time == all:
         return time
 
     if isinstance(time, list):
-        return [_normalize_time(t, type) for t in time]
+        return [_normalise_time(t, type) for t in time]
     if isinstance(time, tuple):
-        return tuple([_normalize_time(t, type) for t in time])
+        return tuple([_normalise_time(t, type) for t in time])
 
     try:
         time = int(time)
@@ -166,16 +166,16 @@ def _normalize_time(time, type):
     return time
 
 
-def _normalize_expver(expver):
+def _normalise_expver(expver):
     if isinstance(expver, str):
         return expver
     assert isinstance(expver, int)
     return f"{expver:04}"
 
 
-def _normalize_expver_as_tuple(expver):
+def _normalise_expver_as_tuple(expver):
     if isinstance(expver, (int, str)):
-        expver = _normalize_expver(expver)
+        expver = _normalise_expver(expver)
         expver = (expver,)
     lst = []
     for x in expver:
@@ -185,23 +185,23 @@ def _normalize_expver_as_tuple(expver):
     return tuple(lst)
 
 
-def normalize_grib_key_values(kwargs, accept_none=True, as_tuple=False):
+def normalise_grib_key_values(kwargs, accept_none=True, as_tuple=False):
     def f(**kwargs):
         return kwargs
 
-    f = normalize_grib_keys(f)
-    f = normalize("param", "variable-list(mars)")(f)
-    f = normalize("date", "date-list(%Y%m%d)")(f)
-    f = normalize("area", "bounding-box(list)")(f)
-    f = normalize("levelist", "int-list")(f)
+    f = normalise_grib_keys(f)
+    f = normalise("param", "variable-list(mars)")(f)
+    f = normalise("date", "date-list(%Y%m%d)")(f)
+    f = normalise("area", "bounding-box(list)")(f)
+    f = normalise("levelist", "int-list")(f)
     kwargs = f(**kwargs)
 
     if "time" in kwargs:
-        kwargs["time"] = {False: _normalize_time, True: _normalize_time_as_tuple}[as_tuple](
+        kwargs["time"] = {False: _normalise_time, True: _normalise_time_as_tuple}[as_tuple](
             kwargs["time"], int
         )
     if "expver" in kwargs:
-        kwargs["expver"] = {False: _normalize_expver, True: _normalize_expver_as_tuple}[as_tuple](
+        kwargs["expver"] = {False: _normalise_expver, True: _normalise_expver_as_tuple}[as_tuple](
             kwargs["expver"]
         )
 
@@ -233,7 +233,7 @@ class alias_argument(Decorator):
                 raise ValueError(
                     (
                         "Error: alias_argument is expecting a list or str."
-                        f" You may be looking for: @normalize(aliases={kwargs})"
+                        f" You may be looking for: @normalise(aliases={kwargs})"
                     )
                 )
             raise ValueError(f"Wrong alias list for '{k}':{v}")
@@ -255,7 +255,7 @@ class alias_argument(Decorator):
         manager.register_alias_argument(self)
 
 
-class normalize(Decorator):
+class normalise(Decorator):
     def __init__(
         self,
         name,
@@ -295,7 +295,7 @@ class normalize(Decorator):
         self.kwargs = kwargs
 
     def register(self, manager):
-        manager.register_normalize(self)
+        manager.register_normalise(self)
 
 
 class availability(Decorator):

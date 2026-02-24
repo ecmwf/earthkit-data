@@ -17,7 +17,7 @@ except ImportError:
 
 import yaml
 
-from earthkit.data.decorators import normalize
+from earthkit.data.decorators import normalise
 from earthkit.data.utils.request import FileRequestRetriever
 from earthkit.data.utils.request import RequestBuilder
 
@@ -121,7 +121,7 @@ class CdsRetriever(FileSource):
         return return_object
 
     @staticmethod
-    @normalize("area", "bounding-box(list)")
+    @normalise("area", "bounding-box(list)")
     def _normalise_request(**kwargs):
         return kwargs
 

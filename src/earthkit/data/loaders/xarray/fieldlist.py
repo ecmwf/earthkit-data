@@ -263,9 +263,9 @@ class XArrayFieldList(IndexedFieldList):
         if len(self) < 1000:
             return super().sel(*args, **kwargs)
 
-        from earthkit.data.core.select import normalize_selection
+        from earthkit.data.core.select import normalise_selection
 
-        kwargs, _ = normalize_selection(*args, **kwargs)
+        kwargs, _ = normalise_selection(*args, **kwargs)
         if not kwargs:
             return self
 
