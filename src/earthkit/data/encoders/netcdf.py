@@ -75,7 +75,7 @@ class NetCDFEncoder(Encoder):
         _kwargs = kwargs.copy()
         if data is not None:
             # TODO: find better way to check if the earthkit engine is used
-            if hasattr(data, "to_xarray_earthkit"):
+            if hasattr(data, "default_encoder") and data.default_encoder() != "netcdf":
                 earthkit_to_xarray_kwargs = _kwargs.pop("earthkit_to_xarray_kwargs", {})
                 earthkit_to_xarray_kwargs["add_earthkit_attrs"] = False
                 _kwargs = earthkit_to_xarray_kwargs
