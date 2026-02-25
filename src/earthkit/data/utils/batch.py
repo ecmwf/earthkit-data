@@ -87,7 +87,7 @@ class BasicIter(Iter):
 
 class IndexedIter(Iter):
     def _iterator(self, data):
-        print(f"{data=} {len(data)}")
+        # print(f"{data=} {len(data)}")
         return iter(range(len(data)))
 
     def _from_batch(self, obj, batch):
