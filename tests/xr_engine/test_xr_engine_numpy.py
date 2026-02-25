@@ -10,69 +10,65 @@
 #
 
 
+import numpy as np
 import pytest
-
-# from earthkit.utils.array import _TORCH
 from earthkit.utils.array import array_namespace as eku_array_namespace
-from earthkit.utils.array.testing.testing import NO_TORCH
 
 from earthkit.data import from_source
 from earthkit.data.testing import check_array_type
 from earthkit.data.testing import earthkit_remote_test_data_file
 
-_TORCH = None
-if not NO_TORCH:
-    _TORCH = eku_array_namespace("torch")
+_NUMPY = eku_array_namespace("numpy")
 
 
-@pytest.mark.skip(reason="Tests to be fixed later")
-@pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 @pytest.mark.cache
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
-def test_xr_engine_torch_core_1(allow_holes, lazy_load):
+def test_xr_engine_numpy_core_1(allow_holes, lazy_load):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
-    ds = ds_ek.to_xarray(array_backend="torch", allow_holes=allow_holes, lazy_load=lazy_load)
-    check_array_type(ds["t"].data, _TORCH)
+    ds = ds_ek.to_xarray(
+        profile="mars", array_namespace="numpy", allow_holes=allow_holes, lazy_load=lazy_load
+    )
+    check_array_type(ds["t"].data, _NUMPY)
 
 
-@pytest.mark.skip(reason="Tests to be fixed later")
-@pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 @pytest.mark.cache
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
-def test_xr_engine_torch_core_compat(allow_holes, lazy_load):
+@pytest.mark.parametrize("_kwargs", [{"array_backend": "numpy"}, {"array_module": "numpy"}])
+def test_xr_engine_numpy_core_compat(allow_holes, lazy_load, _kwargs):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
-    ds = ds_ek.to_xarray(array_module="torch", allow_holes=allow_holes, lazy_load=lazy_load)
-    check_array_type(ds["t"].data, _TORCH)
+    ds = ds_ek.to_xarray(profile="mars", allow_holes=allow_holes, lazy_load=lazy_load, **_kwargs)
+
+    check_array_type(ds["t"].data, _NUMPY)
 
 
-@pytest.mark.skip(reason="Tests to be fixed later")
-@pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 @pytest.mark.cache
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
-def test_xr_engine_torch_dtype(allow_holes, lazy_load):
+def test_xr_engine_numpy_dtype(allow_holes, lazy_load):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
     def _check_dtype(dtype, expected_dtype):
-        ds = ds_ek.to_xarray(array_backend="torch", dtype=dtype, allow_holes=allow_holes, lazy_load=lazy_load)
-        assert ds["t"].data.dtype == expected_dtype
+        ds = ds_ek.to_xarray(
+            profile="mars", array_namespace="numpy", dtype=dtype, allow_holes=allow_holes, lazy_load=lazy_load
+        )
+        ds["t"].data.dtype == expected_dtype
 
-    dtype = _TORCH.float32
-    expected_dtype = _TORCH.float32
+    dtype = np.float32
+    expected_dtype = np.float32
     _check_dtype(dtype, expected_dtype)
 
     dtype = "float32"
-    expected_dtype = _TORCH.float32
+    expected_dtype = np.float32
     _check_dtype(dtype, expected_dtype)
 
-    dtype = _TORCH.float64
-    expected_dtype = _TORCH.float64
+    dtype = np.float64
+    expected_dtype = np.float64
     _check_dtype(dtype, expected_dtype)
 
     dtype = "float64"
-    expected_dtype = _TORCH.float64
+    expected_dtype = np.float64
     _check_dtype(dtype, expected_dtype)

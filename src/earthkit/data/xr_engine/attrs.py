@@ -24,7 +24,7 @@ LOG = logging.getLogger(__name__)
 class CFAttrs:
     def _load(self):
         here = os.path.dirname(__file__)
-        path = os.path.join(here, "cf_attrs.yaml")
+        path = os.path.join(here, "conf", "cf_attrs.yaml")
         if os.path.exists(path):
             import yaml
 

@@ -45,6 +45,7 @@ def test_xr_engine_mono_variable_1(allow_holes, lazy_load, _kwargs, dims, coords
     ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"))
 
     ds = ds_in.to_xarray(
+        profile="mars",
         mono_variable=True,
         chunks={"valid_datetime": 1},
         add_earthkit_attrs=False,
@@ -84,6 +85,7 @@ def test_xr_engine_mono_variable_2(allow_holes, lazy_load, _kwargs, dims, coords
     ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_td2_1_year.grib"))
 
     ds = ds_in.to_xarray(
+        profile="mars",
         mono_variable=True,
         chunks={"valid_time": 1},
         add_earthkit_attrs=False,

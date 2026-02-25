@@ -155,11 +155,11 @@ from earthkit.data.testing import earthkit_remote_test_data_file
         # ({"squeeze": False}, "param", ["r", "t"], ["time", "step", "levelist"]),
     ],
 )
-def test_xr_split(allow_holes, url_suffix, kwargs, num, variables, dim_keys, split_values):
+def test_xr_engine_split(allow_holes, url_suffix, kwargs, num, variables, dim_keys, split_values):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", *url_suffix))
 
     dim_keys = dim_keys + ["latitude", "longitude"]
-    ds_lst, split_coords_lst = ds_ek.to_xarray(allow_holes=allow_holes, **kwargs)
+    ds_lst, split_coords_lst = ds_ek.to_xarray(profile="mars", allow_holes=allow_holes, **kwargs)
     assert len(ds_lst) == num
     assert len(split_coords_lst) == len(split_values)
 

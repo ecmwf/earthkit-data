@@ -2,7 +2,9 @@ dim_roles:
   number: metadata.number
   date: metadata.date
   time: metadata.time
-  step: metadata.step_timedelta
+  step: time.step
+  forecast_reference_time: time.forecast_reference_time
+  valid_time: time.valid_time
   level: metadata.levelist
   level_type: metadata.levtype
 

@@ -26,13 +26,20 @@ from xr_engine_fixtures import compare_coords  # noqa: E402
 from xr_engine_fixtures import load_grib_data  # noqa: E402
 
 
-@pytest.mark.cache
-@pytest.mark.parametrize("engine", ["earthkit", "cfgrib"])
-def test_xr_engine_kwargs_unchanged(engine):
+def test_xr_engine_kwargs_unchanged_earthkit():
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
+
+    _kwargs = {"profile": "mars", "squeeze": True}
+    res = ds.to_xarray(engine="earthkit", xarray_open_dataset_kwargs=_kwargs)
+    assert res is not None
+    assert _kwargs == {"profile": "mars", "squeeze": True}
+
+
+def test_xr_engine_kwargs_unchanged_cfgrib():
     ds = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
 
     _kwargs = {"squeeze": True}
-    res = ds.to_xarray(engine=engine, xarray_open_dataset_kwargs=_kwargs)
+    res = ds.to_xarray(engine="cfgrib", xarray_open_dataset_kwargs=_kwargs)
     assert res is not None
     assert _kwargs == {"squeeze": True}
 
@@ -40,7 +47,7 @@ def test_xr_engine_kwargs_unchanged(engine):
 @pytest.mark.cache
 def test_xr_engine_basic():
     ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
-    res = ds.to_xarray()
+    res = ds.to_xarray(profile="mars")
     assert res is not None
 
 
@@ -53,10 +60,7 @@ def test_xr_engine_open_dataset_path(path_maker):
 
     import xarray as xr
 
-    res = xr.open_dataset(
-        path,
-        engine="earthkit",
-    )
+    res = xr.open_dataset(path, engine="earthkit", profile="mars")
     assert res is not None
 
 
@@ -104,7 +108,7 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
     coords_ref_full = {
         "date": np.array([20240603, 20240604]),
         "time": np.array([0, 1200]),
-        "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
+        "step": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
         "levelist": np.array([300, 400, 500, 700, 850, 1000]),
         "latitude": lats,
         "longitude": lons,
@@ -113,7 +117,7 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
     dims_ref_full = {
         "date": 2,
         "time": 2,
-        "step_timedelta": 2,
+        "step": 2,
         "levelist": 6,
         "latitude": 19,
         "longitude": 36,
@@ -145,9 +149,9 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 19, 36)
-    r1 = r["u"].sel(step_timedelta="6h", levelist=[1000, 300])
+    r1 = r["u"].sel(step="6h", levelist=[1000, 300])
     assert r1.shape == (2, 2, 19, 36)
-    coords_ref["step_timedelta"] = [np.timedelta64(6, "h")]
+    coords_ref["step"] = [np.timedelta64(6, "h")]
     coords_ref["levelist"] = np.array([1000, 300])
     compare_coords(r1, coords_ref)
 
@@ -163,9 +167,9 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
 
     # isel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 19, 36)
-    r1 = r["u"].isel(step_timedelta=1, levelist=[0, -1])
+    r1 = r["u"].isel(step=1, levelist=[0, -1])
     assert r1.shape == (2, 2, 19, 36)
-    coords_ref["step_timedelta"] = [np.timedelta64(6, "h")]
+    coords_ref["step"] = [np.timedelta64(6, "h")]
     coords_ref["levelist"] = np.array([300, 1000])
     compare_coords(r1, coords_ref)
 
@@ -460,6 +464,7 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
     kwargs = {
         "xarray_open_dataset_kwargs": {
             "backend_kwargs": {
+                "profile": "mars",
                 "time_dim_mode": "raw",
                 "decode_times": False,
                 "decode_timedelta": False,
@@ -484,7 +489,7 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
     coords_ref_full = {
         "date": np.array([20240603, 20240604]),
         "time": np.array([0, 1200]),
-        "step_timedelta": np.array([np.timedelta64(0, "h"), np.timedelta64(6, "h")]),
+        "step": np.array([np.timedelta64(0, "h"), np.timedelta64(6, "h")]),
         "levelist": np.array([300, 400, 500, 700, 850, 1000]),
         "latitude": lats,
         "longitude": lons,
@@ -493,7 +498,7 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
     dims_ref_full = {
         "date": 2,
         "time": 2,
-        "step_timedelta": 2,
+        "step": 2,
         "levelist": 6,
         "values": 684,
     }
@@ -528,9 +533,9 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
 
     # sel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 684)
-    r1 = r["u"].sel(step_timedelta="6h", levelist=[1000, 300])
+    r1 = r["u"].sel(step="6h", levelist=[1000, 300])
     assert r1.shape == (2, 2, 684)
-    coords_ref["step_timedelta"] = np.array([np.timedelta64(6, "h")])
+    coords_ref["step"] = np.array([np.timedelta64(6, "h")])
     coords_ref["levelist"] = np.array([1000, 300])
     assert len(r1.coords) == len(coords_ref)
     compare_coords(r1, coords_ref)
@@ -548,9 +553,9 @@ def test_xr_engine_detailed_flatten_check_1(allow_holes, stream, lazy_load, rele
 
     # isel() on data variable of filtered dataset
     assert r["u"].shape == (2, 2, 6, 684)
-    r1 = r["u"].isel(step_timedelta=1, levelist=[0, -1])
+    r1 = r["u"].isel(step=1, levelist=[0, -1])
     assert r1.shape == (2, 2, 684)
-    coords_ref["step_timedelta"] = np.array([np.timedelta64(6, "h")])
+    coords_ref["step"] = np.array([np.timedelta64(6, "h")])
     coords_ref["levelist"] = np.array([300, 1000])
     assert len(r1.coords) == len(coords_ref)
     compare_coords(r1, coords_ref)
@@ -842,7 +847,7 @@ def test_xr_engine_invalid_kwargs(kwargs):
 def test_xr_engine_dtype(dtype, expected_dtype):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
 
-    ds = ds_ek.to_xarray(dtype=dtype)
+    ds = ds_ek.to_xarray(profile="mars", dtype=dtype)
     assert ds["t"].data.dtype == expected_dtype
     assert ds["t"].values.dtype == expected_dtype
 
@@ -855,6 +860,7 @@ def test_xr_engine_single_field(allow_holes, lazy_load):
     ds_ek = ds_ek[0]
 
     ds = ds_ek.to_xarray(
+        profile="mars",
         time_dim_mode="raw",
         decode_times=False,
         decode_timedelta=False,
@@ -936,6 +942,7 @@ def test_xr_engine_add_earthkit_attrs_1(add):
     ds_ek = ds_ek[0]
 
     ds = ds_ek.to_xarray(
+        profile="mars",
         time_dim_mode="raw",
         decode_times=False,
         decode_timedelta=False,
@@ -955,6 +962,7 @@ def test_xr_engine_add_earthkit_attrs_2():
     ds_ek = ds_ek[0]
 
     ds = ds_ek.to_xarray(
+        profile="mars",
         add_earthkit_attrs=False,
     )
 

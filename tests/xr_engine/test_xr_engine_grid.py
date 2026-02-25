@@ -46,7 +46,7 @@ def grid_list(files=None):
 def test_xr_engine_grid(allow_holes, lazy_load, file, dims, coords, distinct_ll):
     ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
 
-    a = ds.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load)
+    a = ds.to_xarray(profile="mars", allow_holes=allow_holes, lazy_load=lazy_load)
     assert a is not None
 
     for k, v in dims.items():
@@ -78,7 +78,9 @@ def test_xr_engine_grid(allow_holes, lazy_load, file, dims, coords, distinct_ll)
 def test_xr_engine_add_geo_coords(allow_holes, lazy_load, add_geo_coords):
     ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", "reduced_gg_O32.grib1"))
 
-    a = ds.to_xarray(add_geo_coords=add_geo_coords, allow_holes=allow_holes, lazy_load=lazy_load)
+    a = ds.to_xarray(
+        profile="mars", add_geo_coords=add_geo_coords, allow_holes=allow_holes, lazy_load=lazy_load
+    )
 
     assert list(a.sizes.keys())[-1] == "values"
 
@@ -96,7 +98,7 @@ def test_xr_engine_add_geo_coords(allow_holes, lazy_load, add_geo_coords):
 def test_xr_engine_gridspec(allow_holes, lazy_load):
     ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", "reduced_gg_O32.grib1"))
 
-    r = ds.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load)
+    r = ds.to_xarray(profile="mars", allow_holes=allow_holes, lazy_load=lazy_load)
 
     gs = r["r"].earthkit.grid_spec
     assert gs["type"] == "reduced_gg"

@@ -76,14 +76,6 @@ class FileSource(Source, os.PathLike):
                     merger=self.merger,
                 )
 
-        # here we must have a file or a directory
-        if self._kwargs.get("indexing", False):
-            from earthkit.data.sources.file_indexed import FileIndexedSource
-
-            kw = dict(self._kwargs)
-            kw.pop("indexing", None)
-            return FileIndexedSource(self.path, filter=filter, merger=self.merger, **kw)
-
         # Give a chance to directories and zip files
         # to return a multi-source
         source = self._reader.mutate_source()

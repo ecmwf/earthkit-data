@@ -26,9 +26,10 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
 @pytest.mark.cache
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
-def test_xr_remapping_1(allow_holes, lazy_load):
+def test_xr_engine_remapping_1(allow_holes, lazy_load):
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine/level/mixed_pl_ml_small.grib"))
     ds = ds0.to_xarray(
+        profile="mars",
         variable_key="_k",
         remapping={"_k": "{metadata.param}_{metadata.levelist}_{metadata.levtype}"},
         allow_holes=allow_holes,
@@ -59,7 +60,7 @@ def test_xr_remapping_1(allow_holes, lazy_load):
                 dim_name_from_role_name=False,
             ),
             {"_k": ["500_pl", "700_pl"]},
-            {"forecast_reference_time": 4, "step_timedelta": 2, "_k": 2, "latitude": 19, "longitude": 36},
+            {"forecast_reference_time": 4, "step": 2, "_k": 2, "latitude": 19, "longitude": 36},
         ),
         (
             dict(
@@ -84,9 +85,9 @@ def test_xr_remapping_1(allow_holes, lazy_load):
         ),
     ],
 )
-def test_xr_remapping_2(allow_holes, lazy_load, kwargs, coords, dims):
+def test_xr_engine_remapping_2(allow_holes, lazy_load, kwargs, coords, dims):
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
-    ds = ds0.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
+    ds = ds0.to_xarray(profile="mars", allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
 
     data_vars = ["r", "t"]
 

@@ -259,7 +259,7 @@ def test_xr_level_dim(allow_holes, lazy_load, kwargs, dims):
         ),
     ],
 )
-def test_xr_level_attr(allow_holes, lazy_load, fname, kwargs, dims, levtype):
+def test_xr_engine_level_attr(allow_holes, lazy_load, fname, kwargs, dims, levtype):
     ds_ek = from_source("url", earthkit_remote_test_data_file(f"xr_engine/level/{fname}"))
 
     ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)

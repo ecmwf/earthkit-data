@@ -56,10 +56,10 @@ def _get_attrs_for_key_2(key, field):
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
+                "step": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
                 "levelist": [500, 700],
             },
-            {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
+            {"date": 2, "time": 2, "step": 2, "levelist": 2},
             {},
         ),
         (
@@ -75,10 +75,10 @@ def _get_attrs_for_key_2(key, field):
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
+                "step": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
                 "levelist": [500, 700],
             },
-            {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
+            {"date": 2, "time": 2, "step": 2, "levelist": 2},
             {"levtype": "pl"},
         ),
         (
@@ -94,10 +94,10 @@ def _get_attrs_for_key_2(key, field):
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
+                "step": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
                 "levelist": [500, 700],
             },
-            {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
+            {"date": 2, "time": 2, "step": 2, "levelist": 2},
             {},
         ),
         (
@@ -113,15 +113,15 @@ def _get_attrs_for_key_2(key, field):
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
+                "step": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
                 "levelist": [500, 700],
             },
-            {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
+            {"date": 2, "time": 2, "step": 2, "levelist": 2},
             {"levtype": "pl"},
         ),
     ],
 )
-def test_xr_dims_as_attrs(allow_holes, lazy_load, kwargs, coords, dims, attrs):
+def test_xr_engine_dims_as_attrs_1(allow_holes, lazy_load, kwargs, coords, dims, attrs):
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
 
     ds = ds0.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
@@ -250,7 +250,9 @@ def test_xr_dims_as_attrs(allow_holes, lazy_load, kwargs, coords, dims, attrs):
         ),
     ],
 )
-def test_xr_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, dims, var_attrs, global_attrs):
+def test_xr_engine_dims_as_attrs_2(
+    allow_holes, lazy_load, idx, kwargs, coords, dims, var_attrs, global_attrs
+):
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
 
     ds = ds0[idx].to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
@@ -348,7 +350,9 @@ def test_xr_dims_as_attrs_2(allow_holes, lazy_load, idx, kwargs, coords, dims, v
         ),
     ],
 )
-def test_xr_dims_as_attrs_3(lazy_load, allow_holes, idx, kwargs, coords, dims, var_attrs, global_attrs):
+def test_xr_engine_dims_as_attrs_3(
+    lazy_load, allow_holes, idx, kwargs, coords, dims, var_attrs, global_attrs
+):
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
 
     ds = ds0[idx].to_xarray(lazy_load=lazy_load, allow_holes=allow_holes, **kwargs)
@@ -394,10 +398,10 @@ def test_xr_dims_as_attrs_3(lazy_load, allow_holes, idx, kwargs, coords, dims, v
             {
                 "date": [20240603, 20240604],
                 "time": [0, 1200],
-                "step_timedelta": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
+                "step": [np.timedelta64(0, "h"), np.timedelta64(6, "h")],
                 "levelist": [500, 700],
             },
-            {"date": 2, "time": 2, "step_timedelta": 2, "levelist": 2},
+            {"date": 2, "time": 2, "step": 2, "levelist": 2},
             {
                 "shortName": "t",
                 "levtype": "pl",
@@ -419,7 +423,7 @@ def test_xr_dims_as_attrs_3(lazy_load, allow_holes, idx, kwargs, coords, dims, v
         ),
     ],
 )
-def test_xr_attrs_types(lazy_load, kwargs, coords, dims, attrs):
+def test_xr_engine_attrs_types(lazy_load, kwargs, coords, dims, attrs):
     ds0 = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
 
     ds = ds0.to_xarray(lazy_load=lazy_load, **kwargs)
@@ -434,9 +438,10 @@ def test_xr_attrs_types(lazy_load, kwargs, coords, dims, attrs):
 @pytest.mark.cache
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
-def test_xr_global_attrs(allow_holes, lazy_load):
+def test_xr_engine_global_attrs(allow_holes, lazy_load):
     ds_fl = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl_small.grib"))
     ds = ds_fl.to_xarray(
+        profile="mars",
         attrs_mode="fixed",
         global_attrs=[
             {"centre_fixed": "_ecmf_"},

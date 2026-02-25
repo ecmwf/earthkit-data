@@ -69,6 +69,7 @@ def test_xr_engine_stream_release_source(
     assert calls_cnt.get() == 0
 
     kwargs = {
+        "profile": "mars",
         "lazy_load": lazy_load,
         "release_source": release_source,
         "allow_holes": allow_holes,
@@ -123,6 +124,7 @@ def test_xr_engine_array_field_release_source(
     assert calls_cnt.get() == 0
 
     kwargs = {
+        "profile": "mars",
         "lazy_load": lazy_load,
         "release_source": release_source,
         "allow_holes": allow_holes,

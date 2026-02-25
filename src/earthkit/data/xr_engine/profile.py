@@ -55,7 +55,7 @@ class ProfileConf:
         with self._lock:
             if name not in self._conf and name != "defaults":
                 here = os.path.dirname(__file__)
-                path = os.path.join(here, f"{name}.yaml")
+                path = os.path.join(here, "profiles", f"{name}.yaml")
                 if os.path.exists(path):
                     import yaml
 
@@ -71,7 +71,7 @@ class ProfileConf:
     @thread_safe_cached_property
     def defaults(self):
         here = os.path.dirname(__file__)
-        path = os.path.join(here, "defaults.yaml")
+        path = os.path.join(here, "profiles", "defaults.yaml")
         if os.path.exists(path):
             import yaml
 
@@ -187,7 +187,7 @@ class MonoVariable(ProfileVariable):
 
 class Profile:
     USER_ONLY_OPTIONS = ["remapping", "patches", "fill_metadata"]
-    DEFAULT_PROFILE_NAME = "mars"
+    DEFAULT_PROFILE_NAME = "earthkit"
 
     def __init__(
         self,

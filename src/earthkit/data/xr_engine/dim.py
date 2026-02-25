@@ -11,6 +11,7 @@ import logging
 
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
+from earthkit.data.utils.dates import datetime_from_date_and_time
 
 LOG = logging.getLogger(__name__)
 
@@ -63,17 +64,22 @@ LEVEL_TYPE_KEYS = (
 )
 
 _GRIB_DATE_KEYS = ["date", "andate", "validityDate", "dataDate", "hdate", "referenceDate", "indexingDate"]
-DATE_KEYS = ["date"] + _get_metadata_keys(_GRIB_DATE_KEYS)
+_DATE_KEYS = ["base_date"]
+DATE_KEYS = ["date"] + _get_component_keys("time", _DATE_KEYS) + _get_metadata_keys(_GRIB_DATE_KEYS)
 
 _GRIB_TIME_KEYS = ["time", "antime", "validityTime", "dataTime", "referenceTime", "indexingTime"]
-TIME_KEYS = ["time"] + _get_metadata_keys(_GRIB_TIME_KEYS)
+_TIME_KEYS = ["base_time"]
+TIME_KEYS = ["time"] + _get_component_keys("time", _TIME_KEYS) + _get_metadata_keys(_GRIB_TIME_KEYS)
 
 _GRIB_STEP_KEYS = ["step_timedelta", "step", "endStep", "stepRange"]
 _STEP_KEYS = ["step", "forecast_period"]
 STEP_KEYS = ["step"] + _get_component_keys("time", _STEP_KEYS) + _get_metadata_keys(_GRIB_STEP_KEYS)
 
 _GRIB_MONTH_KEYS = ["forecastMonth", "fcmonth"]
-MONTH_KEYS = _get_metadata_keys(_GRIB_MONTH_KEYS)
+_MONTH_KEYS = ["forecast_month"]
+MONTH_KEYS = (
+    ["forecast_month"] + _get_component_keys("time", _MONTH_KEYS) + _get_metadata_keys(_GRIB_MONTH_KEYS)
+)
 
 _GRIB_VALID_DATETIME_KEYS = ["valid_datetime"]
 _VALID_DATETIME_KEYS = ["valid_datetime"]
@@ -337,6 +343,42 @@ class ReferenceTimeDim(Dim):
     drop = get_keys(DATE_KEYS + TIME_KEYS + DATETIME_KEYS, drop="reference_time")
 
 
+class CustomForecastRefDim(Dim):
+    @staticmethod
+    def _datetime(val):
+        if not val:
+            return None
+        else:
+            try:
+                date, time = val.split("_")
+                r = datetime_from_date_and_time(date, time)
+                return r
+            except Exception:
+                return val
+
+    def __init__(self, owner, keys, *args, active=True, **kwargs):
+        if isinstance(keys, str):
+            self.key = keys
+        elif isinstance(keys, list) and len(keys) == 2:
+            date = keys[0]
+            time = keys[1]
+            self.key = self._name(date, time)
+            self.drop = [date, time]
+            if active:
+                owner.register_remapping(
+                    {self.key: "{" + date + "}_{" + time + "}"},
+                    patch={self.key: CustomForecastRefDim._datetime},
+                )
+        else:
+            raise ValueError(f"Invalid keys={keys}")
+        super().__init__(owner, *args, active=active, **kwargs)
+
+    def _name(self, date, time):
+        if date.endswith("Date") and time.endswith("Time") and date[:-4] == time[:-4]:
+            return date[:-4] + "_time"
+        return f"{date}_{time}"
+
+
 class LevelDim(Dim):
     alias = get_keys(LEVEL_KEYS)
 
@@ -430,7 +472,13 @@ class DimRole:
 
     def role(self, name, default=None, raise_error=True):
         if name in self.d:
-            return self.d[name], name if self.name_as_key else self.d[name]
+            if self.name_as_key:
+                return self.d[name], name
+            else:
+                if isinstance(self.d[name], str):
+                    return self.d[name], self.d[name]
+                else:
+                    return self.d[name], name
         if default is not None:
             return default
         if raise_error:
@@ -454,12 +502,21 @@ class ForecastTimeDimMode(DimMode):
     def build(self, profile, owner, active=True):
         ref_time_key, ref_time_name = owner.dim_roles.role("forecast_reference_time", raise_error=False)
         # print(f"{ref_time_key=}, {ref_time_name=}", flush=True)  ###PW
-        # PW: TODO: this is not quite OK yet...
+        # TODO: decide if we allow this fallback when forecast_reference_time is None
         if ref_time_key is None:
-            ref_time_key = "time.forecast_reference_time"
-            ref_time_dim = ForecastRefTimeDim(owner, name=ref_time_name, active=active)
-        else:
+            date, _ = owner.dim_roles.role("date")
+            time, _ = owner.dim_roles.role("time")
+            ref_time_dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
+        elif isinstance(ref_time_key, dict):
+            date = ref_time_key.get("date", None)
+            time = ref_time_key.get("time", None)
+            ref_time_dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
+        elif isinstance(ref_time_key, str):
             ref_time_dim = make_dim(owner, name=ref_time_name, key=ref_time_key, active=active)
+        else:
+            raise ValueError(
+                f"Invalid forecast_reference_time key={ref_time_key} in dim_roles. Must be a string or a dict with 'date' and 'time' keys."
+            )
 
         step_key, step_name = owner.dim_roles.role("step")
         step_dim = make_dim(owner, name=step_name, key=step_key, active=active)
@@ -492,9 +549,42 @@ class RawTimeDimMode(DimMode):
 
     def build(self, profile, owner, active=True):
         dims = {}
-        for k in ["date", "time", "step"]:
-            key, name = owner.dim_roles.role(k)
-            dims[name] = key
+
+        date_key, date_name = owner.dim_roles.role("date")
+        dims[date_name] = date_key
+        time_key, time_name = owner.dim_roles.role("time")
+        dims[time_name] = time_key
+        step_key, step_name = owner.dim_roles.role("step")
+        dims[step_name] = step_key
+
+        # for k in ["date", "time", "step"]:
+        #     key, name = owner.dim_roles.role(k)
+        #     dims[name] = key
+
+        no_date = dims[date_name] is None
+        no_time = dims[time_name] is None
+
+        if no_date and no_time:
+            v = owner.dim_roles.role("forecast_reference_time")
+            if not isinstance(v, str):
+                raise ValueError(
+                    "forecast_reference_time must be a single string specified when date is not specified for time_dim_mode=raw"
+                )
+
+            if v in ["time.forecast_reference_time", "time.base_datetime"]:
+                dims[date_name] = "time.base_date"
+                dims[time_name] = "time.base_time"
+            else:
+                raise ValueError(
+                    "When the date or time role is unspecified time_dim_mode=raw is only supported when forecast_reference_time is"
+                    "time.forecast_reference_time or time.base_datetime."
+                )
+
+        elif no_date or no_time:
+            raise ValueError(
+                "Either forecast_reference_time or both date and time must be specified for time_dim_mode=raw"
+            )
+
         return super().build(profile, owner, active=active, dims=dims)
 
 

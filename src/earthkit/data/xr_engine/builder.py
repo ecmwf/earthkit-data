@@ -503,6 +503,7 @@ class BackendDataBuilder(metaclass=ABCMeta):
                     tensor_extra_attrs[attr_key] = attr_val
                 if (
                     d.name in self.profile.dims.ensure_dims
+                    or d.get_simple_name() in self.profile.dims.ensure_dims
                     or num > 1
                     or (not self.profile.dims.squeeze and d.name not in self.profile.dims.dims_as_attrs)
                 ):
