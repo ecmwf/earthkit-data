@@ -9,7 +9,7 @@
 
 from abc import abstractmethod
 
-from earthkit.data.core import IndexBase
+from earthkit.data.core import Base
 
 
 def create_fieldlist(fields=None):
@@ -22,7 +22,7 @@ def create_fieldlist(fields=None):
         return SimpleFieldList.from_fields(fields)
 
 
-class FieldList(IndexBase):
+class FieldList(Base):
     """Base class for a FieldList.
 
     A FieldList is a collection of Fields. It provides methods to access the field values and metadata."""
