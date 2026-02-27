@@ -247,14 +247,12 @@ def test_netcdf_non_fieldlist():
         assert ds_saved.to_xarray().identical(res)
 
 
+# NOTE: XarrayFieldlist is not lazy now, and it is implemented in a completely
+# different way, so this test is not relevant anymore.
 @pytest.mark.no_eccodes
 def test_netcdf_lazy_fieldlist_scan():
     ds = from_source("file", earthkit_examples_file("test.nc"))
-    # assert ds._reader._fields is None
-    assert ds._fields is None
     assert len(ds) == 2
-    # assert len(ds._reader._fields) == 2
-    assert len(ds._fields) == 2
 
 
 if __name__ == "__main__":

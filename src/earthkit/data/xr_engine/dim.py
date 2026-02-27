@@ -47,7 +47,7 @@ def _get_metadata_keys(keys):
 
 _GRIB_ENS_KEYS = ["number", "perturbationNumber", "realization"]
 _ENS_KEYS = ["member", "realisation", "realization"]
-ENS_KEYS = ["number"] + _get_component_keys("ensemble", _ENS_KEYS) + _get_metadata_keys(_GRIB_ENS_KEYS)
+ENS_KEYS = ["member"] + _get_component_keys("ensemble", _ENS_KEYS) + _get_metadata_keys(_GRIB_ENS_KEYS)
 
 _GRIB_LEVEL_KEYS = ["level", "levelist", "topLevel", "bottomLevel", "levels"]
 _VERTICAL_LEVEL_KEYS = ["level", "layer"]
@@ -298,7 +298,7 @@ class Dim:
         return f"{self.__class__.__name__}(name={self.name}, key={self.key})"
 
 
-class NumberDim(Dim):
+class MemberDim(Dim):
     alias = get_keys(ENS_KEYS)
 
 
@@ -356,13 +356,15 @@ class CustomForecastRefDim(Dim):
             except Exception:
                 return val
 
-    def __init__(self, owner, keys, *args, active=True, **kwargs):
+    def __init__(self, owner, keys, *args, active=True, name=None, **kwargs):
         if isinstance(keys, str):
             self.key = keys
         elif isinstance(keys, list) and len(keys) == 2:
             date = keys[0]
             time = keys[1]
             self.key = self._name(date, time)
+            if name is None:
+                name = self.key
             self.drop = [date, time]
             if active:
                 owner.register_remapping(
@@ -371,7 +373,7 @@ class CustomForecastRefDim(Dim):
                 )
         else:
             raise ValueError(f"Invalid keys={keys}")
-        super().__init__(owner, *args, active=active, **kwargs)
+        super().__init__(owner, *args, active=active, name=name, **kwargs)
 
     def _name(self, date, time):
         if date.endswith("Date") and time.endswith("Time") and date[:-4] == time[:-4]:
@@ -454,17 +456,11 @@ class OtherDim(Dim):
 
 
 class DimRole:
-    NAMES = ("number", "date", "time", "step", "level", "level_type", "forecast_reference_time", "valid_time")
+    NAMES = ("member", "date", "time", "step", "level", "level_type", "forecast_reference_time", "valid_time")
 
     def __init__(self, d, name_as_key=True):
         self.d = d
         self.name_as_key = name_as_key
-
-        if "ens" in d:
-            import warnings
-
-            warnings.warn("'ens' key in dim_roles is deprecated. Use 'number' instead", DeprecationWarning)
-            self.d["number"] = self.d.pop("ens")
 
         for k in d:
             if k not in self.NAMES:
@@ -478,7 +474,7 @@ class DimRole:
                 if isinstance(self.d[name], str):
                     return self.d[name], self.d[name]
                 else:
-                    return self.d[name], name
+                    return self.d[name], None
         if default is not None:
             return default
         if raise_error:
@@ -511,11 +507,19 @@ class ForecastTimeDimMode(DimMode):
             date = ref_time_key.get("date", None)
             time = ref_time_key.get("time", None)
             ref_time_dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
+        elif isinstance(ref_time_key, (tuple, list)):
+            if len(ref_time_key) != 2:
+                raise ValueError(
+                    f"Invalid forecast_reference_time key={ref_time_key} in dim_roles. When it is a list or tuple it must have exactly two elements representing date and time keys."
+                )
+            date = ref_time_key[0]
+            time = ref_time_key[1]
+            ref_time_dim = CustomForecastRefDim(owner, [date, time], name=ref_time_name, active=active)
         elif isinstance(ref_time_key, str):
             ref_time_dim = make_dim(owner, name=ref_time_name, key=ref_time_key, active=active)
         else:
             raise ValueError(
-                f"Invalid forecast_reference_time key={ref_time_key} in dim_roles. Must be a string or a dict with 'date' and 'time' keys."
+                f"Invalid forecast_reference_time key={ref_time_key} in dim_roles. Must be a string, a dict with 'date' and 'time' or a list/tuple with two elements representing date and time keys."
             )
 
         step_key, step_name = owner.dim_roles.role("step")
@@ -557,10 +561,6 @@ class RawTimeDimMode(DimMode):
         step_key, step_name = owner.dim_roles.role("step")
         dims[step_name] = step_key
 
-        # for k in ["date", "time", "step"]:
-        #     key, name = owner.dim_roles.role(k)
-        #     dims[name] = key
-
         no_date = dims[date_name] is None
         no_time = dims[time_name] is None
 
@@ -568,7 +568,8 @@ class RawTimeDimMode(DimMode):
             v = owner.dim_roles.role("forecast_reference_time")
             if not isinstance(v, str):
                 raise ValueError(
-                    "forecast_reference_time must be a single string specified when date is not specified for time_dim_mode=raw"
+                    "Dimension roles: forecast_reference_time must be a single string when date and time"
+                    " roles are not specified for time_dim_mode=raw"
                 )
 
             if v in ["time.forecast_reference_time", "time.base_datetime"]:
@@ -576,13 +577,15 @@ class RawTimeDimMode(DimMode):
                 dims[time_name] = "time.base_time"
             else:
                 raise ValueError(
-                    "When the date or time role is unspecified time_dim_mode=raw is only supported when forecast_reference_time is"
-                    "time.forecast_reference_time or time.base_datetime."
+                    "Dimension roles: when the date or time role is unspecified time_dim_mode=raw is only"
+                    " supported when forecast_reference_time is"
+                    " time.forecast_reference_time or time.base_datetime."
                 )
 
         elif no_date or no_time:
             raise ValueError(
-                "Either forecast_reference_time or both date and time must be specified for time_dim_mode=raw"
+                "Dimension roles: either forecast_reference_time or both date and time must be specified"
+                " for time_dim_mode=raw"
             )
 
         return super().build(profile, owner, active=active, dims=dims)
@@ -632,12 +635,13 @@ class DimBuilder:
         return self.used, self.ignored
 
 
-class NumberDimBuilder(DimBuilder):
-    name = "number"
+class MemberDimBuilder(DimBuilder):
+    name = "member"
 
     def __init__(self, profile, owner):
-        key, name = owner.dim_roles.role("number")
-        dim = NumberDim(owner, name=name, key=key)
+        key, name = owner.dim_roles.role("member")
+
+        dim = MemberDim(owner, name=name, key=key)
         self.used = {dim.name: dim}
 
 
@@ -679,7 +683,7 @@ class LevelDimBuilder(DimBuilder):
                 self.ignored.update(_ignored)
 
 
-DIM_BUILDERS = {v.name: v for v in [NumberDimBuilder, TimeDimBuilder, LevelDimBuilder]}
+DIM_BUILDERS = {v.name: v for v in [MemberDimBuilder, TimeDimBuilder, LevelDimBuilder]}
 
 
 def ensure_dim_map(d):
@@ -1033,7 +1037,7 @@ class DimHandler:
 PREDEFINED_DIMS = {}
 for i, d in enumerate(
     [
-        NumberDim,
+        MemberDim,
         ForecastRefTimeDim,
         DateDim,
         TimeDim,

@@ -312,10 +312,6 @@ class IndexedFieldList(Index, FieldList):
 
         return FieldCube(self, *args, **kwargs)
 
-    def default_encoder(self):
-        if len(self) > 0:
-            return self[0].default_encoder()
-
     def _encode(self, encoder, **kwargs):
         """Double dispatch to the encoder"""
         return encoder._encode_fieldlist(self, **kwargs)

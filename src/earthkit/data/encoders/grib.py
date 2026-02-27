@@ -50,9 +50,9 @@ class GribEncodedData(EncodedData):
 
         # return GribFieldInMemory.from_buffer(self.to_bytes())
 
-        from earthkit.data.field.grib.create import new_grib_field_from_buffer
+        from earthkit.data.field.grib.create import create_grib_field_from_buffer
 
-        return new_grib_field_from_buffer(self.to_bytes())
+        return create_grib_field_from_buffer(self.to_bytes())
 
 
 class Combined:
@@ -170,7 +170,7 @@ class GribHandleMaker:
         return handle
 
     def handle_from_metadata(self, values, metadata, compulsory):
-        from earthkit.data.readers.grib.legacy.codes import GribCodesHandle  # Lazy loading of eccodes
+        from earthkit.data.readers.grib.handle import GribCodesHandle  # Lazy loading of eccodes
 
         if len(values.shape) == 1:
             sample = self._gg_field(values, metadata)

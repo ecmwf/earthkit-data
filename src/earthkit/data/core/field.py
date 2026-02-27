@@ -1072,7 +1072,7 @@ class Field(Base):
         if self._get_grib():
             return "grib"
         else:
-            return "dict"
+            return None
 
     def _encode(self, encoder, **kwargs):
         """Double dispatch to the encoder"""

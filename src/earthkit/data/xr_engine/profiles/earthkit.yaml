@@ -1,5 +1,5 @@
 dim_roles:
-  number: ensemble.member
+  member: ensemble.member
   date: time.base_date
   time: time.base_time
   step: time.step

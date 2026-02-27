@@ -86,7 +86,7 @@ class Units(metaclass=ABCMeta):
             units = _prepare_str(units)
             try:
                 return PintUnits(ureg(units).units)
-            except (pint.errors.UndefinedUnitError, AssertionError):
+            except (pint.errors.UndefinedUnitError, AssertionError, AttributeError):
                 return UndefinedUnits(units)
         elif isinstance(units, pint.Unit):
             return PintUnits(units)

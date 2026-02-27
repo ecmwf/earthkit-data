@@ -276,9 +276,9 @@ def test_target_file_grib_to_geotiff():
 
         ds1 = from_source("file", path)
         assert len(ds1) == len(ds)
-        from earthkit.data.readers.geotiff import GeoTIFFField
+        from earthkit.data import Field
 
-        assert isinstance(ds1[0], GeoTIFFField)
+        assert isinstance(ds1[0], Field)
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 

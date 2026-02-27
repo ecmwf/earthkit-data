@@ -432,19 +432,18 @@ def test_grib_to_array_1_shape(fl_type, first, options, expected_shape):
     assert np.allclose(v_ref, v1, eps)
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_FILE)
 # @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
     [
         ({}, (11, 19), np.float64),
-        # ({"flatten": True}, (209,), np.float64),
-        # ({"flatten": True, "dtype": np.float32}, (209,), np.float32),
-        # ({"flatten": True, "dtype": np.float64}, (209,), np.float64),
-        # ({"flatten": False}, (11, 19), np.float64),
-        # ({"flatten": False, "dtype": np.float32}, (11, 19), np.float32),
-        # ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
+        ({"flatten": True}, (209,), np.float64),
+        ({"flatten": True, "dtype": np.float32}, (209,), np.float32),
+        ({"flatten": True, "dtype": np.float64}, (209,), np.float64),
+        ({"flatten": False}, (11, 19), np.float64),
+        ({"flatten": False, "dtype": np.float32}, (11, 19), np.float32),
+        ({"flatten": False, "dtype": np.float64}, (11, 19), np.float64),
     ],
 )
 def test_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
@@ -485,7 +484,6 @@ def test_grib_field_data(fl_type, kwarg, expected_shape, expected_dtype):
     assert np.allclose(d[1], lon)
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_NUMPY)
 @pytest.mark.parametrize(
     "kwarg,expected_shape,expected_dtype",
@@ -632,7 +630,6 @@ def test_grib_fieldlist_data_index(fl_type):
     )
 
 
-@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_values_with_missing(fl_type):
     f, array_backend = load_grib_data("test_single_with_missing.grib", fl_type, folder="data")

@@ -319,10 +319,10 @@ class FieldExtractList(SimpleFieldListCore):
             arr = result.values_flat
             shape = arr.shape
 
-            from earthkit.data.field.mars.create import new_mars_field
+            from earthkit.data.field.mars.create import create_mars_field
 
             geography = self._build_geography(indices, shape=shape)
-            field = new_mars_field(request.request, values=arr, geography=geography)
+            field = create_mars_field(request.request, values=arr, geography=geography)
             fields.append(field)
 
         return fields, indices

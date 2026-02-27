@@ -100,11 +100,10 @@ class XarrayMixIn:
             When ``engine="earthkit"`` the following engine specific kwargs are supported:
 
             * profile: str, dict or None
-                Provide custom default values for most of the kwargs. Currently, the "mars" and "grid"
-                built-in profiles are available, otherwise an explicit dict can be used. None is equivalent
-                to an empty dict. When a kwarg is specified it will update
-                a default value if it is a dict otherwise it will overwrite it. See: :ref:`xr_profile` for
-                more information.
+                Provide custom default values for most of the kwargs. The default profile is "earthkit".
+                An explicit dict can be used. None is equivalent to an empty dict. When a kwarg is specified it
+                will update the corresponding profile value if it is a dict otherwise it will overwrite it. See:
+                :ref:`xr_profile` for more information.
             * variable_key: str, None
                 Metadata key to specify the dataset variables. It cannot be
                 defined as a dimension. Default is "param" (in earthkit-data this is the same as "shortName").
@@ -195,14 +194,18 @@ class XarrayMixIn:
                 ``dim_roles`` is a mapping between the "roles" and the metadata keys representing the roles.
                 The possible roles are as follows:
 
-                - "number": metadata key interpreted as ensemble forecast members
-                - "date": metadata key interpreted as date part of the "forecast_reference_time"
-                - "time": metadata key interpreted as time part of the "forecast_reference_time"
+                - "member": metadata key interpreted as ensemble forecast members
+                - "date": metadata key interpreted as base date. Used when ``time_dim_mode`` is "raw". When None,
+                  it is generated from the date part of ``forecast_reference_time``.
+                - "time": metadata key interpreted as base  time. Used when ``time_dim_mode`` is "raw". When None,
+                  it is generated from the time part of ``forecast_reference_time``.
                 - "step": metadata key interpreted as forecast step
-                - "forecast_reference_time": if not specified or None or empty the forecast reference
-                  time is built using the "date" and "time" roles
-                - "valid_time": if not specified or None or empty the valid time is built using the
-                  "validityDate" and "validityTime" metadata keys
+                - "forecast_reference_time": metadata key interpreted as forecast reference time. Can be a single metadata key,
+                  or a list/tuple of two metadata keys representing the date and time parts of the forecast reference time.
+                  Alternatively, it can be a dict with "date" and "time" keys specifying the corresponding metadata keys. Used
+                  when ``time_dim_mode`` is "forecast".
+                - "valid_time": metadata key interpreted as valid time. Used when ``time_dim_mode`` is "valid_time" or
+                  ``add_valid_time_coord`` is True.
                 - "level": metadata key interpreted as level
                 - "level_type": metadata key interpreted as level type
 
@@ -211,19 +214,19 @@ class XarrayMixIn:
                 .. code-block:: python
 
                     {
-                        "number": "number",
-                        "date": "dataDate",
-                        "time": "dataTime",
-                        "step": "step",
-                        "forecast_reference_time": None,
-                        "valid_date": None,
-                        "level": "level",
-                        "level_type": "typeOfLevel",
+                        "member": "ensemble.member",
+                        "date": "time.base_date",
+                        "time": "time.base_time",
+                        "step": "time.step",
+                        "forecast_reference_time": "time.forecast_reference_time",
+                        "valid_time": "time.valid_datetime",
+                        "level": "vertical.level",
+                        "level_type": "vertical.level_type",
                     }
 
                 ``dims_roles`` behaves differently to the other kwargs in the sense that
-                it does not override but update the default values. So e.g. to change only "number" in
-                the default it is enough to specify: "dim_roles={"number": "perturbationNumber"}.
+                it does not override but update the default values. So e.g. to change only "member" in
+                the default it is enough to specify: "dim_roles={"member": "perturbationNumber"}.
             * dim_name_from_role_name: bool, None
                 If True, the dimension names are formed from the role names. Otherwise, the
                 dimension names are formed from the metadata keys specified in ``dim_roles``.

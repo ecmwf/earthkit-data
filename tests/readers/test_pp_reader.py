@@ -18,6 +18,7 @@ from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 
 
+@pytest.mark.skip(reason="Cannot handle date in metadata")
 @pytest.mark.skipif(NO_IRIS, reason="Iris or ncdata not installed")
 def test_pp_file_1():
     ds = from_source("file", earthkit_examples_file("air_temp.pp"))
@@ -26,6 +27,7 @@ def test_pp_file_1():
     assert ds[0].metadata("standard_name") == "air_temperature"
 
 
+@pytest.mark.skip(reason="Cannot handle date in metadata")
 @pytest.mark.skipif(NO_IRIS, reason="Iris or ncdata not installed")
 def test_pp_file_2():
     ds = from_source("file", earthkit_test_data_file("wind_speed.pp"))

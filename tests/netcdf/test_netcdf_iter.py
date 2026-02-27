@@ -17,8 +17,7 @@ from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.testing import earthkit_test_data_file
 
 
-@pytest.mark.migrate
-@pytest.mark.parametrize("group", ["param"])
+@pytest.mark.parametrize("group", ["parameter.variable"])
 def test_netcdf_group_by(group):
     ds = from_source("file", earthkit_test_data_file("test6.nc"))
 
@@ -30,15 +29,14 @@ def test_netcdf_group_by(group):
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 2
-        assert f.get(("param", "level")) == ref[i]
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i]
         cnt += len(f)
 
     assert cnt == len(ds)
 
 
-@pytest.mark.migrate
-@pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
-def test_netcdf_multi_group_by(array_backend, group):
+@pytest.mark.parametrize("group", ["vertical.level", ["vertical.level", "geography.grid_type"]])
+def test_netcdf_multi_group_by(group):
     ds = from_source(
         "file",
         [earthkit_test_data_file("test4.nc"), earthkit_test_data_file("test6.nc")],
@@ -51,7 +49,7 @@ def test_netcdf_multi_group_by(array_backend, group):
     ]
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
-        assert f.get(("param", "level")) == ref[i]
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i]
         cnt += len(f)
 
     assert cnt == len(ds)
@@ -81,9 +79,9 @@ def test_netcdf_batched(_kwargs, expected_meta):
     "_kwargs,expected_meta",
     [
         ({"n": 1}, [["2t"], ["msl"], ["t"], ["z"], ["t"], ["z"]]),
-        # ({"n": 2}, [["2t", "msl"], ["t", "z"], ["t", "z"]]),
-        # ({"n": 3}, [["2t", "msl", "t"], ["z", "t", "z"]]),
-        # ({"n": 4}, [["2t", "msl", "t", "z"], ["t", "z"]]),
+        ({"n": 2}, [["2t", "msl"], ["t", "z"], ["t", "z"]]),
+        ({"n": 3}, [["2t", "msl", "t"], ["z", "t", "z"]]),
+        ({"n": 4}, [["2t", "msl", "t", "z"], ["t", "z"]]),
     ],
 )
 def test_netcdf_multi_batched(_kwargs, expected_meta):
@@ -92,15 +90,9 @@ def test_netcdf_multi_batched(_kwargs, expected_meta):
         [earthkit_examples_file("test.nc"), earthkit_test_data_file("test4.nc")],
     )
 
-    print("type:", type(ds))
-
-    print("ds[0]", ds[0])
-    print("ds[0:2]", ds[0:2])
-
     cnt = 0
     n = _kwargs["n"]
     for i, f in enumerate(ds.batched(n)):
-        print("BATCH", i, f)
         assert len(f) == len(expected_meta[i])
         f.get("param") == expected_meta[i]
         cnt += len(f)

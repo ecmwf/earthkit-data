@@ -150,8 +150,7 @@ def test_netcdf_area():
 
 def test_netcdf_proj_string_non_cf():
     f = from_source("file", earthkit_examples_file("test.nc"))
-    with pytest.raises(AttributeError):
-        f[0].geography.projection()
+    assert f[0].geography.projection() is None
 
 
 @pytest.mark.cache

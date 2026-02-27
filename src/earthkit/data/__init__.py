@@ -15,8 +15,6 @@ except ImportError:  # pragma: no cover
     # Local copy or not installed with setuptools
     __version__ = "999"
 
-from earthkit.utils import array as array_api
-
 from earthkit.data.translators import transform
 from earthkit.data.wrappers import get_wrapper as from_object
 
@@ -45,8 +43,6 @@ settings = config
 
 __all__ = [
     "ALL",
-    "array_api",
-    # "ArrayField",
     "cache",
     "concat",
     "create_encoder",
@@ -59,7 +55,6 @@ __all__ = [
     "from_source_lazily",
     "from_object",
     "transform",
-    # "new_grib_output",
     "remote_example_file",
     "config",
     "settings",

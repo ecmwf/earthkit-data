@@ -501,7 +501,7 @@ class BUFRListMixIn(PandasMixIn):
         Returns
         -------
         Pandas DataFrame
-            DataFrame with one row per :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`.
+            DataFrame with one row per :obj:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>`.
 
         Examples
         --------
@@ -690,25 +690,250 @@ class BUFRListMixIn(PandasMixIn):
         return result
 
 
-class BUFRList(BUFRListMixIn, Index):
-    r"""Represents a list of
+class BUFRList(PandasMixIn, Index):
+    r"""Represent a list of
     :obj:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>`\ s.
     """
 
     def __init__(self, *args, **kwargs):
         Index.__init__(self, *args, **kwargs)
 
-    @classmethod
-    def new_mask_index(self, *args, **kwargs):
-        return MaskBUFRList(*args, **kwargs)
+    # @classmethod
+    # def new_mask_index(self, *args, **kwargs):
+    #     return MaskBUFRList(*args, **kwargs)
 
-    @classmethod
-    def merge(cls, sources):
-        assert all(isinstance(_, BUFRList) for _ in sources)
-        return MultiBUFRList(sources)
+    # @classmethod
+    # def merge(cls, sources):
+    #     assert all(isinstance(_, BUFRList) for _ in sources)
+    #     return MultiBUFRList(sources)
+
+    def get(self, keys=None, default=None, *, astype=None, raise_on_missing=False, output="item_per_field"):
+        r"""Return the values for the specified keys for each message in the list.
+
+        Parameters
+        ----------
+        keys: str, list or tuple
+            Keys to get the values for. Only ecCodes BUFR keys can be used here. It can contain a single
+            str or a list or tuple. Can be empty, in this case all the keys will be used.
+        default: value
+            Default value to return when a key is not found or it has a missing value. When ``default`` is
+            **not present** and a key is not found or its value is a missing value :obj:`get` will raise KeyError.
+        astype: type name, :obj:`list` or :obj:`tuple`
+            Return types for ``keys``. A single value is accepted and applied to all the ``keys``. Otherwise,
+            must have same the number of elements as ``keys``. Only used when ``keys`` is not empty.
+        raise_on_missing: bool
+            When it is True raises an exception if a key is not found in any of the messages in the list or it has a missing value.
+
+        Returns
+        -------
+        list
+            List with one item per :obj:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>`\ s in the list. Each item contains the values for the specified keys for the corresponding message.
+
+        """
+        from earthkit.data.utils.args import metadata_argument_new
+
+        # _kwargs = kwargs.copy()
+        # astype = _kwargs.pop("astype", None)
+        keys, astype, default, keys_arg_type = metadata_argument_new(keys, astype=astype, default=default)
+
+        # assert isinstance(keys, (list, tuple))
+
+        _kwargs = {
+            "default": default,
+            "raise_on_missing": raise_on_missing,
+            # "patches": patches,
+            "astype": astype,
+        }
+
+        if output == "item_per_field":
+            return [f._get_fast(keys, output=keys_arg_type, **_kwargs) for f in self]
+        elif output == "item_per_key":
+            vals = [f._get_fast(keys, output=keys_arg_type, **_kwargs) for f in self]
+            if keys_arg_type in (list, tuple):
+                return [[x[i] for x in vals] for i in range(len(keys))]
+            else:
+                assert isinstance(keys, str)
+                return vals
+        elif output == "dict_per_field":
+            return [f._get_fast(keys, output=dict, **_kwargs) for f in self]
+        elif output == "dict_per_key":
+            vals = [f._get_fast(keys, output=keys_arg_type, **_kwargs) for f in self]
+            if keys_arg_type in (list, tuple):
+                result = {k: [] for k in keys}
+                for i, k in enumerate(keys):
+                    result[k] = [x[i] for x in vals]
+            else:
+                assert isinstance(keys, str)
+                result = {keys: vals}
+            return result
+        else:
+            raise ValueError(
+                f"get: invalid output={output}. Must be one of 'item_per_field', 'item_per_key', 'dict_per_field', 'dict_per_key'"
+            )
+
+        # result = []
+        # for s in self:
+        #     result.append(s.get(keys, default=default, astype=astype, raise_on_missing=raise_on_missing))
+        # return result
+
+    def metadata(self, *args, **kwargs):
+        r"""Returns the metadata values for each message.
+
+        Parameters
+        ----------
+        *args: tuple
+            Positional arguments defining the metadata keys. Passed to
+            :obj:`BUFRMessage.metadata() <data.readers.bufr.bufr.BUFRMessage.metadata>`
+        **kwargs: dict, optional
+            Keyword arguments passed to
+            :obj:`BUFRMessage.metadata() <data.readers.bufr.bufr.BUFRMessage.metadata>`
+
+        Returns
+        -------
+        list
+            List with one item per :obj:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage.metadata>`
+
+        """
+        result = []
+        for s in self:
+            result.append(s.metadata(*args, **kwargs))
+        return result
+
+    def ls(self, *args, **kwargs):
+        r"""Generates a list like summary of the BUFR message list using a set of metadata keys.
+
+        Parameters
+        ----------
+        n: int, None
+            The number of :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`\ s to be
+            listed. ``None`` means all the messages, ``n > 0`` means messages from the front, while
+            ``n < 0`` means messages from the back of the list.
+        keys: list of str, dict, None
+            Metadata keys. To specify a column title for each key in the output use a dict with keys as
+            the metadata keys and values as the column titles. If ``keys`` is None the following dict
+            will be used to define the titles and the keys::
+
+                {
+                    "edition": "edition",
+                    "type": "dataCategory",
+                    "subtype": "dataSubCategory",
+                    "c": "bufrHeaderCentre",
+                    "mv": "masterTablesVersionNumber",
+                    "lv": "localTablesVersionNumber",
+                    "subsets": "numberOfSubsets",
+                    "compr": "compressedData",
+                    "typicalDate": "typicalDate",
+                    "typicalTime": "typicalTime",
+                    "ident": "ident",
+                    "lat": "localLatitude",
+                    "lon": "localLongitude",
+                }
+
+        extra_keys: list of str, dict, None
+            List of additional keys to ``keys``. To specify a column title for each key in the output
+            use a dict.
+
+        Returns
+        -------
+        Pandas DataFrame
+            DataFrame with one row per :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`.
+
+        Examples
+        --------
+        :ref:`/examples/bufr_temp.ipynb`
+
+        """
+        from earthkit.data.utils.summary import ls
+
+        def _proc(keys: list, n: int, **kwargs):
+            count_start = 0
+            if n is None:
+                count_end = len(self)
+            elif n > 0:
+                count_end = n
+            else:
+                num = len(self)
+                count_start = max(0, num + n)
+                count_end = num
+
+            for count, msg in enumerate(self):
+                if count_start <= count < count_end:
+                    yield ({k: msg._header(k) for k in keys})
+                elif count >= count_end:
+                    break
+
+        return ls(_proc, BUFR_LS_KEYS, *args, **kwargs)
+
+    def head(self, n=5, **kwargs):
+        r"""Generates a list like summary of the first ``n``
+        :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`\ s using a set of metadata keys.
+        Same as calling :obj:`ls` with ``n``.
+
+        Parameters
+        ----------
+        n: int, None
+            The number of messages (``n`` > 0) to be printed from the front.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`ls`.
+
+        Returns
+        -------
+        Pandas DataFrame
+            See  :obj:`ls`.
+
+        Notes
+        -----
+        The following calls are equivalent:
+
+            .. code-block:: python
+
+                ds.head()
+                ds.head(5)
+                ds.head(n=5)
+                ds.ls(5)
+                ds.ls(n=5)
+
+        """
+        if n <= 0:
+            raise ValueError("head: n must be > 0")
+        return self.ls(n=n, **kwargs)
+
+    def tail(self, n=5, **kwargs):
+        r"""Generates a list like summary of the last ``n``
+        :obj:`BUFRMEssage <data.readers.bufr.bufr.BUFRMessage>`\ s using a set of metadata keys.
+        Same as calling :obj:`ls` with ``-n``.
+
+        Parameters
+        ----------
+        n: int, None
+            The number of messages (``n`` > 0)  to be printed from the back.
+        **kwargs: dict, optional
+            Other keyword arguments passed to :obj:`ls`.
+
+        Returns
+        -------
+        Pandas DataFrame
+            See  :obj:`ls`.
+
+        Notes
+        -----
+        The following calls are equivalent:
+
+            .. code-block:: python
+
+                ds.tail()
+                ds.tail(5)
+                ds.tail(n=5)
+                ds.ls(-5)
+                ds.ls(n=-5)
+
+        """
+        if n <= 0:
+            raise ValueError("n must be > 0")
+        return self.ls(n=-n, **kwargs)
 
     def sel(self, *args, **kwargs):
-        """Uses header metadata values to select only certain messages from a BUFRList object.
+        """Use header metadata values to select only certain messages from a BUFRList object.
 
         Parameters
         ----------
@@ -772,6 +997,15 @@ class BUFRList(BUFRListMixIn, Index):
         """
         kwargs.pop("remapping", None)
         return super().order_by(*args, remapping=None, **kwargs)
+
+    @classmethod
+    def new_mask_index(self, *args, **kwargs):
+        return MaskBUFRList(*args, **kwargs)
+
+    @classmethod
+    def merge(cls, sources):
+        assert all(isinstance(_, BUFRList) for _ in sources)
+        return MultiBUFRList(sources)
 
 
 class MaskBUFRList(BUFRList, MaskIndex):

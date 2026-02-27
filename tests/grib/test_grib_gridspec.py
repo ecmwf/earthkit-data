@@ -17,8 +17,8 @@ import yaml
 from earthkit.data import FieldList
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.field.grib.grid_spec import GridSpecConverter
-from earthkit.data.field.grib.grid_spec import make_gridspec
+from earthkit.data.field.grib.legacy_grid_spec import LegacyGridSpecConverter
+from earthkit.data.field.grib.legacy_grid_spec import make_legacy_gridspec
 from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.testing import earthkit_test_data_file
 
@@ -82,7 +82,7 @@ def test_grib_gridspec_from_metadata_valid(metadata, ref, name):
     ]:
         pytest.skip()
 
-    gridspec = make_gridspec(metadata)
+    gridspec = make_legacy_gridspec(metadata)
     assert dict(gridspec) == ref, name
 
 
@@ -92,7 +92,7 @@ def test_grib_gridspec_from_metadata_valid(metadata, ref, name):
 )
 def test_grib_gridspec_from_metadata_invalid_1(metadata, ref, name):
     with pytest.raises(ValueError):
-        make_gridspec(metadata)
+        make_legacy_gridspec(metadata)
 
 
 @pytest.mark.parametrize(
@@ -106,7 +106,7 @@ def test_grib_gridspec_from_metadata_invalid_1(metadata, ref, name):
 )
 def test_grib_gridspec_from_metadata_invalid_2(metadata):
     with pytest.raises(ValueError):
-        make_gridspec(metadata)
+        make_legacy_gridspec(metadata)
 
 
 def test_grib_gridspec_from_file():
@@ -139,7 +139,7 @@ def test_grib_metadata_from_gridspec_valid(metadata, gridspec, name):
 
     edition = int(name[-1])
     assert edition in [1, 2]
-    md, _ = GridSpecConverter.to_metadata(gridspec, edition=edition)
+    md, _ = LegacyGridSpecConverter.to_metadata(gridspec, edition=edition)
     assert md == metadata, name
 
 
@@ -166,7 +166,7 @@ def test_grib_metadata_from_gridspec_invalid(metadata, gridspec, name):
     edition = int(name[-1])
     assert edition in [1, 2]
     with pytest.raises(ValueError):
-        _, _ = GridSpecConverter.to_metadata(gridspec, edition=edition)
+        _, _ = LegacyGridSpecConverter.to_metadata(gridspec, edition=edition)
 
 
 @pytest.mark.parametrize(
@@ -275,7 +275,7 @@ def _global_grids():
 @pytest.mark.parametrize("grid", _global_grids())
 def test_grib_global_ll_gridspec_to_metadata(edition, grid):
     gs = {"grid": grid["grid"]}
-    md, num = GridSpecConverter.to_metadata(gs, edition=edition)
+    md, num = LegacyGridSpecConverter.to_metadata(gs, edition=edition)
 
     ref = dict(
         Ni=grid["shape"][1],

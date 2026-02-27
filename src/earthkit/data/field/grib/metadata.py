@@ -236,6 +236,11 @@ class GribMetadata:
             return self.extra_keys.get(key, default)
         return default
 
+    def _release(self):
+        # Used by the Xarray engine
+        self._handle = None
+        self._cache = {}
+
     def __getstate__(self):
         state = {}
         state["handle"] = self.handle

@@ -18,8 +18,8 @@ from typing import Union
 import xarray as xr
 import yaml
 
+from earthkit.data.core.index import MultiIndex
 from earthkit.data.indexing.indexed import IndexedFieldList
-from earthkit.data.indexing.indexed import MultiFieldList
 
 # from .field import EmptyFieldList
 from .flavour import CoordinateGuesser
@@ -368,14 +368,20 @@ class XArrayFieldList(IndexedFieldList):
 #         MaskIndex.__init__(self, *args, **kwargs)
 
 
-class XArrayMultiFieldList(MultiFieldList):
-    # def __init__(self, *args, **kwargs):
-    #     MultiIndex.__init__(self, *args, **kwargs)
+class XArrayMultiFieldList(IndexedFieldList, MultiIndex):
+    def __init__(self, *args, **kwargs):
+        MultiIndex.__init__(self, *args, **kwargs)
+
+    # def __len__(self):
+    #     return MultiIndex.__len__(self)
 
     def to_xarray(self, **kwargs):
         import xarray as xr
 
         return xr.merge([x.ds for x in self._indexes], **kwargs)
+
+    def default_encoder(self, **kwargs):
+        return "netcdf"
 
 
 # @classmethod

@@ -11,7 +11,7 @@
 from earthkit.data.field.handler.data import ArrayDataFieldComponentHandler
 
 
-def new_grib_field(handle, data=None, cache=False, extra_keys=None):
+def create_grib_field(handle, data=None, cache=False, extra_keys=None):
     from earthkit.data.core.field import Field
     from earthkit.data.field.grib.data import GribData
     from earthkit.data.field.grib.ensemble import GribEnsemble
@@ -74,15 +74,15 @@ def new_array_grib_field(
     extra_keys = {}
     _add("bitsPerValue")
 
-    new_field = new_grib_field(new_handle, data=data, cache=cache, extra_keys=extra_keys)
+    new_field = create_grib_field(new_handle, data=data, cache=cache, extra_keys=extra_keys)
 
     return new_field
 
 
-def new_grib_field_from_buffer(buf):
+def create_grib_field_from_buffer(buf):
     import eccodes
 
     from earthkit.data.readers.grib.handle import MemoryGribHandle
 
     handle = eccodes.codes_new_from_message(buf)
-    return new_grib_field(MemoryGribHandle.from_raw_handle(handle), cache=False)
+    return create_grib_field(MemoryGribHandle.from_raw_handle(handle), cache=False)

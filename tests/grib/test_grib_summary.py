@@ -312,7 +312,7 @@ def test_grib_ls_core(_kwargs, expected_values, fl_type):
             },
             {
                 "parameter.variable": {0: "t", 1: "u"},
-                "parameter.units": {0: "K", 1: "m s**-1"},
+                "parameter.units": {0: "kelvin", 1: "meter / second"},
             },
         ),
         (
@@ -324,7 +324,7 @@ def test_grib_ls_core(_kwargs, expected_values, fl_type):
             },
             {
                 "parameter.variable": {0: "t", 1: "u"},
-                "parameter.units": {0: "K", 1: "m s**-1"},
+                "parameter.units": {0: "kelvin", 1: "meter / second"},
                 "vertical.level": {0: 1000, 1: 1000},
             },
         ),
@@ -796,7 +796,7 @@ def test_grib_describe_field_1(fl_type):
             "title": "parameter",
             "data": {
                 "variable": "t",
-                "units": "K",
+                "units": "kelvin",
             },
             "tooltip": "Keys in the parameter namespace",
         },

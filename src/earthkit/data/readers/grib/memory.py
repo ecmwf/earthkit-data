@@ -11,7 +11,6 @@ import logging
 
 import eccodes
 
-# from earthkit.data.indexing.fieldlist import SimpleFieldList
 from earthkit.data.indexing.simple import SimpleFieldList
 from earthkit.data.readers import Reader
 
@@ -52,12 +51,12 @@ class GribMemoryReader(Reader):
 
     def _message_from_handle(self, handle):
         if handle is not None:
-            from earthkit.data.field.grib.create import new_grib_field
+            from earthkit.data.field.grib.create import create_grib_field
 
             from .handle import MemoryGribHandle
 
             handle = MemoryGribHandle.from_raw_handle(handle)
-            return new_grib_field(handle, cache=self._use_metadata_cache)
+            return create_grib_field(handle, cache=self._use_metadata_cache)
 
     def batched(self, n):
         from earthkit.data.utils.batch import batched
@@ -131,60 +130,6 @@ class GribStreamReader(GribMemoryReader):
 
     def mutate_source(self):
         return self
-
-
-# class GribFieldInMemory(GribField):
-#     """Represents a GRIB message in memory"""
-
-#     def __init__(self, handle, use_metadata_cache=False):
-#         super().__init__(None, None, None, use_metadata_cache=use_metadata_cache)
-#         self._handle = handle
-
-#     @GribField.handle.getter
-#     def handle(self):
-#         return self._handle
-
-#     @GribField.handle.getter
-#     def offset(self):
-#         return None
-
-#     # @thread_safe_cached_property
-#     # def _metadata(self):
-#     #     return GribFieldMetadata(self)
-
-#     @staticmethod
-#     def to_fieldlist(fields):
-#         return GribFieldListInMemory.from_fields(fields)
-
-#     @staticmethod
-#     def from_buffer(buf):
-#         handle = eccodes.codes_new_from_message(buf)
-#         return GribFieldInMemory(
-#             GribCodesHandle(handle, None, None), use_metadata_cache=get_use_grib_metadata_cache()
-#         )
-
-#     def _release(self):
-#         self._handle = None
-
-#     def clone(self, **kwargs):
-#         return ClonedGribFieldInMemory(self, **kwargs)
-
-#     def __getstate__(self):
-#         return {"message": self.message()}
-
-#     def __setstate__(self, state):
-#         self.__init__(GribCodesHandle.from_message(state["message"]))
-
-
-# class ClonedGribFieldInMemory(ClonedFieldCore, GribFieldInMemory):
-#     def __init__(self, field, **kwargs):
-#         ClonedFieldCore.__init__(self, field, **kwargs)
-#         self._handle = field._handle
-#         GribFieldInMemory.__init__(
-#             self,
-#             field._handle,
-#             use_metadata_cache=field._use_metadata_cache,
-#         )
 
 
 class GribFieldListInMemory(SimpleFieldList):

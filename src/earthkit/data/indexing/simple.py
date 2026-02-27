@@ -76,7 +76,8 @@ class SimpleFieldListCore(IndexedFieldList):
     def to_xarray(self, *args, **kwargs):
         # TODO make it generic
         if len(self) > 0:
-            if self[0].default_encoder() in ("grib", "dict"):
+            encoder = self[0].default_encoder()
+            if encoder == "grib" or encoder is None:
                 from earthkit.data.readers.grib.xarray import XarrayMixIn
 
                 class _C(XarrayMixIn, SimpleFieldList):
@@ -87,6 +88,10 @@ class SimpleFieldListCore(IndexedFieldList):
             import xarray as xr
 
             return xr.Dataset()
+
+    def default_encoder(self):
+        if len(self) > 0:
+            return self[0].default_encoder()
 
     @classmethod
     def new_mask_index(cls, *args, **kwargs):

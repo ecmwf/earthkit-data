@@ -13,6 +13,7 @@ import os
 
 import pytest
 
+from earthkit.data import concat
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.testing import IN_GITHUB
@@ -42,7 +43,7 @@ def test_netcdf_fieldlist_subset_save_1():
     r = ds[1]
 
     with temp_file() as tmp:
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(ValueError):
             r.to_target("file", tmp)
 
 
@@ -52,17 +53,17 @@ def test_netcdf_fieldlist_subset_save_2():
     r = ds[1:4]
 
     with temp_file() as tmp:
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(ValueError):
             r.to_target("file", tmp)
 
 
 @pytest.mark.skip(reason="Some runners crash in Xarray")
 @pytest.mark.skipif(IN_GITHUB, reason="Some runners crash in Xarray")
-def test_netcdf_fieldlist_multi_subset_save():
+def test_netcdf_fieldlist_multi_subset_save_1():
     ds1 = from_source("file", earthkit_examples_file("test.nc"))
     ds2 = from_source("file", earthkit_examples_file("tuv_pl.nc"))
 
-    ds = ds1 + ds2
+    ds = concat(ds1, ds2)
     assert len(ds) == 20
 
     with temp_file() as tmp:
@@ -77,9 +78,9 @@ def test_netcdf_fieldlist_multi_subset_save_bad():
     ds1 = from_source("file", earthkit_examples_file("test.nc"))
     ds2 = from_source("file", earthkit_examples_file("tuv_pl.nc"))
 
-    ds = ds1 + ds2[1:5]
+    ds = concat(ds1, ds2[1:5])
     assert len(ds) == 6
 
     with temp_file() as tmp:
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(AttributeError):
             ds.to_target("file", tmp)

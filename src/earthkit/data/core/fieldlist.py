@@ -9,7 +9,7 @@
 
 from abc import abstractmethod
 
-from earthkit.data.core import Base
+from earthkit.data.core import IndexBase
 
 
 def create_fieldlist(fields=None):
@@ -22,9 +22,8 @@ def create_fieldlist(fields=None):
         return SimpleFieldList.from_fields(fields)
 
 
-class FieldList(Base):
-    """Abstract base class for a FieldList.
-
+class FieldList(IndexBase):
+    """Base class for a FieldList.
 
     A FieldList is a collection of Fields. It provides methods to access the field values and metadata."""
 
@@ -32,9 +31,9 @@ class FieldList(Base):
     def __getitem__(self, index):
         pass
 
-    @abstractmethod
-    def __len__(self):
-        pass
+    # @abstractmethod
+    # def __len__(self):
+    #     pass
 
     @staticmethod
     def from_fields(fields):
@@ -171,7 +170,6 @@ class FieldList(Base):
     def geography(self):
         pass
 
-    @abstractmethod
     def get(
         self,
         keys,
@@ -253,7 +251,7 @@ class FieldList(Base):
         [['2t', 'K'], ['msl', 'Pa']]
 
         """
-        pass
+        super.get()
 
     @abstractmethod
     def metadata(self, *args, **kwargs):
@@ -400,39 +398,39 @@ class FieldList(Base):
         r"""Generate a summary of the fieldlist."""
         pass
 
-    def unique(
-        self,
-        *args,
-        sort=False,
-        drop_none=True,
-        squeeze=False,
-        remapping=None,
-        patches=None,
-        cache=True,
-        progress_bar=False,
-    ):
-        """Return the unique values for a given set of metadata keys.
+    # def unique(
+    #     self,
+    #     *args,
+    #     sort=False,
+    #     drop_none=True,
+    #     squeeze=False,
+    #     remapping=None,
+    #     patches=None,
+    #     cache=True,
+    #     progress_bar=False,
+    # ):
+    #     """Return the unique values for a given set of metadata keys.
 
-        Parameters
-        ----------
-        *args: tuple
-            Positional arguments specifying the metadata keys to collect unique values for.
-        sort: bool, optional
-            Whether to sort the collected unique values. Default is False.
-        drop_none: bool, optional
-            Whether to drop None values from the collected unique values. Default is True.
-        squeeze: bool, optional
-            When True only returns the metadata keys that have more than one values. Default is False.
-        remapping: dict, optional
-            A dictionary for remapping keys or values during collection. Default is None.
-        patches: dict, optional
-            A dictionary for patching key values during collection. Default is None.
-        cache: bool, optional
-            Whether to use an a cache attached to the fieldlist for previously collected unique values. Default is True.
-        progress_bar: bool, optional
-            Whether to display a progress bar during collection. Default is False.
-        """
-        pass
+    #     Parameters
+    #     ----------
+    #     *args: tuple
+    #         Positional arguments specifying the metadata keys to collect unique values for.
+    #     sort: bool, optional
+    #         Whether to sort the collected unique values. Default is False.
+    #     drop_none: bool, optional
+    #         Whether to drop None values from the collected unique values. Default is True.
+    #     squeeze: bool, optional
+    #         When True only returns the metadata keys that have more than one values. Default is False.
+    #     remapping: dict, optional
+    #         A dictionary for remapping keys or values during collection. Default is None.
+    #     patches: dict, optional
+    #         A dictionary for patching key values during collection. Default is None.
+    #     cache: bool, optional
+    #         Whether to use an a cache attached to the fieldlist for previously collected unique values. Default is True.
+    #     progress_bar: bool, optional
+    #         Whether to display a progress bar during collection. Default is False.
+    #     """
+    #     pass
 
     @abstractmethod
     def to_fieldlist(self, array_namespace=None, device=None, **kwargs):
@@ -490,10 +488,6 @@ class FieldList(Base):
     @abstractmethod
     def _encode(self, encoder, **kwargs):
         """Double dispatch to the encoder"""
-        pass
-
-    @abstractmethod
-    def normalise_key_values(self, **kwargs):
         pass
 
     def _unary_op(self, oper):

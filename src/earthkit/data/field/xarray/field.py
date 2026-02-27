@@ -8,7 +8,7 @@
 #
 
 
-def new_xarray_field(handle, variable, selection=None):
+def create_xarray_field(handle, variable, selection=None):
     r"""Create a Field object from XArray"""
     pass
     # from earthkit.data.specs.geography import SimpleGeography
@@ -77,6 +77,6 @@ def new_xarray_field(handle, variable, selection=None):
 #     data = ArrayData(values)
 
 #     new_handle = handle.deflate()
-#     new_field = new_grib_field(new_handle, data=data, cache=cache)
+#     new_field = create_grib_field(new_handle, data=data, cache=cache)
 
 #     return new_field

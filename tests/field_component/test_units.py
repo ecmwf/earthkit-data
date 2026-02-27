@@ -11,7 +11,7 @@
 
 import pytest
 
-from earthkit.data.field.component.units import Units
+from earthkit.data.utils.units import Units
 
 
 @pytest.mark.parametrize(

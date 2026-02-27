@@ -97,8 +97,6 @@ def test_netcdf_sel_single_file_as_dict(mode):
     ]
 
 
-# TODO: allow using slice in sel for netcdf/xarray
-@pytest.mark.migrate
 @pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize(
     "variable,level,expected_meta",
@@ -114,7 +112,7 @@ def test_netcdf_sel_single_file_as_dict(mode):
 def test_netcdf_sel_slice_single_file(mode, variable, level, expected_meta):
     ds = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
 
-    g = ds.sel({"paremeter.variable": variable, "vertical.level": level})
+    g = ds.sel({"parameter.variable": variable, "vertical.level": level})
     assert len(g) == len(expected_meta)
     if expected_meta:
         assert g.get(["parameter.variable", "vertical.level"]) == expected_meta

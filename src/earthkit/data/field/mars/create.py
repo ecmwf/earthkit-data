@@ -8,7 +8,7 @@
 #
 
 
-def new_mars_field(request, data=None, values=None, geography=None, reference_field=None):
+def create_mars_field(request, data=None, values=None, geography=None, reference_field=None):
     r"""Create a Field object from XArray"""
 
     from earthkit.data.core.field import Field

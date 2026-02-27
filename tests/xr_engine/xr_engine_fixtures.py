@@ -152,12 +152,12 @@ def load_grib_data(filename, source, stream=False, folder="example"):
 
     if source == "file":
         ds = from_source("file", path)
+        ds_ref = from_source("file", path)
     elif source == "url":
         ds = from_source("url", path)
+        ds_ref = from_source("url", path)
     else:
         raise ValueError("Invalid source={source}")
-
-    ds_ref = ds
 
     if stream:
         f = open(ds.path, "rb")

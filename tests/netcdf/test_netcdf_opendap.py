@@ -22,7 +22,7 @@ def test_netcdf_opendap():
     ds = from_source("opendap", url)
 
     assert len(ds) == 494
-    assert ds[0:2].get("variable") == ["sst", "sst"]
+    assert ds[0:2].get("parameter.variable") == ["sst", "sst"]
     v = ds[0].values
     assert v.shape == (64800,)
     assert np.isclose(v.mean(), 11.8082780)

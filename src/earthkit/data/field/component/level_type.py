@@ -9,6 +9,8 @@
 
 from enum import Enum
 
+from earthkit.data.utils.units import Units
+
 POSITIVE_UP = "up"
 POSITIVE_DOWN = "down"
 
@@ -28,7 +30,7 @@ class LevelType:
         self.abbreviation = abbreviation
         self.standard_name = standard_name
         self.long_name = long_name
-        self.units = units
+        self.units = Units.from_any(units)
         self.layer = layer
         self.positive = positive
         self.cf = {
@@ -85,7 +87,7 @@ _defs = {
         "abbreviation": "pv",
         "standard_name": "ertel_potential_vorticity",
         "long_name": "potential vorticity",
-        "units": "10-9 K m2 kg-1 s-1",
+        "units": "10E-9 K m2 kg-1 s-1",
         "layer": False,
         "positive": POSITIVE_DOWN,
     },

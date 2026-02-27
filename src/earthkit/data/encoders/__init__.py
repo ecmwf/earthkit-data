@@ -244,4 +244,4 @@ def make_encoder(data, encoder=None, suffix=None, metadata=None, **kwargs):
 
     assert encoder is None
 
-    raise ValueError("No data or encoder")
+    raise ValueError("Cannot determine encoder type")

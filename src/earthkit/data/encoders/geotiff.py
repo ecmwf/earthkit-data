@@ -56,7 +56,7 @@ class GeoTIFFEncoder(Encoder):
     def _encode(self, data, **kwargs):
         ds = data.to_xarray()
         if ds.rio.crs is None:
-            crs = data.projection().to_cartopy_crs()
+            crs = data.geography.projection().to_cartopy_crs()
             ds.rio.write_crs(crs, inplace=True)
         for var in ds.data_vars:
             if "_earthkit" in ds[var].attrs:

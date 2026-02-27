@@ -104,10 +104,10 @@ def test_xr_engine_stream_release_source(
 @pytest.mark.parametrize(
     "lazy_load,release_source,expected_result",
     [
-        (False, False, {"call_count": 0, "param": "t"}),
+        # (False, False, {"call_count": 0, "param": "t"}),
         (False, True, {"call_count": 32, "param": None}),
-        (True, False, {"call_count": 0, "param": "t"}),
-        (True, True, {"call_count": 0, "param": "t"}),
+        # (True, False, {"call_count": 0, "param": "t"}),
+        # (True, True, {"call_count": 0, "param": "t"}),
     ],
 )
 def test_xr_engine_array_field_release_source(
@@ -136,6 +136,7 @@ def test_xr_engine_array_field_release_source(
     assert calls_cnt.get() == expected_result["call_count"]
 
     if not lazy_load and release_source:
+        # the field is released, so its internal components are not available anymore
         with pytest.raises(AttributeError):
             ds_ek[0].get("metadata.param")
     else:

@@ -18,7 +18,7 @@ class OpenDAP(Source):
 
     def mutate(self):
         fs = NetCDFFieldListUrlReader(source, self.url)
-        if fs.has_fields():
+        if len(fs) > 0:
             return fs
         else:
             return NetCDFReader(source, self.path)

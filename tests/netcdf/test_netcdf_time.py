@@ -70,6 +70,7 @@ def test_netcdf_time_analysis():
 
 
 @pytest.mark.download
+@pytest.mark.cache
 def test_netcdf_valid_time_and_lead_time():
     ds = from_source("url", earthkit_remote_test_data_file("fa_ta850.nc"))
 

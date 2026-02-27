@@ -42,29 +42,16 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
         from .file import GRIBReader
 
-        # from .file import GRIBReader
-
         parts = source.parts if hasattr(source, "parts") else None
         return GRIBReader(source, path, parts=parts)
-
-        # from earthkit.data.readers.grib.file import GRIBReader
-        # # from .file import GRIBReader
-
-        # parts = source.parts if hasattr(source, "parts") else None
-        # return GRIBReader(source, path, parts=parts)
 
 
 def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
-        # from .memory import GribFieldListInMemory
-        # from .memory import GribMessageMemoryReader
-
         import io
 
-        # from earthkit.data.indexing.simple import LazySimpleFieldList
         from earthkit.data.indexing.simple import SimpleFieldList
 
-        from .memory import GribMessageMemoryReader
         from .memory import GribStreamReader
 
         # convert the memory buffer into a stream and use the stream reader. See
@@ -74,17 +61,6 @@ def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):
         fields = [f for f in r]
         r = SimpleFieldList(fields)
         return r
-
-
-# The implementation below cannot handle padding between messages
-# return LazySimpleFieldList(GribMessageMemoryReader(buffer, **kwargs))
-
-# return LazySimpleFieldList(source, buffer, **kwargs)
-
-# from earthkit.data.new_field.grib.memory import GribFieldListInMemory
-# from earthkit.data.new_field.grib.memory import GribMessageMemoryReader
-
-# return GribFieldListInMemory(source, GribMessageMemoryReader(buffer, **kwargs), **kwargs)
 
 
 def stream_reader(
@@ -98,7 +74,6 @@ def stream_reader(
     **kwargs,
 ):
     if _is_default(magic, content_type) or _match_magic(magic, deeper_check):
-        # from earthkit.data.core.new_field.grib.memory import GribFieldListInMemory
         from .memory import GribStreamReader
 
         r = GribStreamReader(stream, **kwargs)
@@ -108,11 +83,3 @@ def stream_reader(
             fields = [f for f in r]
             r = SimpleFieldList(fields)
         return r
-
-        # from .memory import GribFieldListInMemory
-        # from .memory import GribStreamReader
-
-        # r = GribStreamReader(stream, **kwargs)
-        # if memory:
-        #     r = GribFieldListInMemory(source, r, **kwargs)
-        # return r

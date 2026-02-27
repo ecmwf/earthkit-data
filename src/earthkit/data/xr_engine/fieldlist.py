@@ -20,29 +20,6 @@ from earthkit.data.indexing.simple import SimpleFieldList
 LOG = logging.getLogger(__name__)
 
 
-class _CollectorJoiner:
-    # PW: TODO: dead code due to `component` removal
-    def __init__(self, func):
-        pass
-
-    def format_name(self, x, **kwargs):
-        return self.func(x, **kwargs)
-
-    def format_string(self, x):
-        return str(x)
-
-    def join(self, args):
-        remapped = "".join(str(x) for x in args)
-        components = tuple([str(x) for x in args[1::2]])
-        return (remapped, components)
-
-    @staticmethod
-    def patch(patch, value):
-        if isinstance(value, tuple) and len(value) == 2:
-            return patch(value[0]), value[1]
-        return patch(value)
-
-
 class IndexSelection(Selection):
     def match_element(self, element):
         return all(v(element) for k, v in self.actions.items())
@@ -277,8 +254,11 @@ class ReleasableField:
 
     def _release(self):
         if not self.released:
-            if hasattr(self.field, "_release"):
-                self.field._release()
+            # TODO: review this
+            self.field._components = {}
+            g = self.field._get_grib()
+            if g is not None:
+                g._release()
             self.released = True
 
     def get(self, *args, **kwargs):

@@ -95,6 +95,7 @@ class Coordinate:
     is_member = False
     is_x = False
     is_y = False
+    is_point = False
 
     def __init__(self, variable: xr.DataArray) -> None:
         """Initialize the coordinate.
@@ -224,15 +225,11 @@ class Coordinate:
             values = [values]
 
         # Assume the array is sorted
-
         index = np.searchsorted(values, value)
-        index = index[index < len(values)]
-
-        if np.all(values[index] == value):
+        if np.all(index < len(values)) and np.all(values[index] == value):
             return index
 
         # If not found, we need to check if the value is in the array
-
         index = np.where(np.isin(values, value))[0]
 
         # We could also return incomplete matches
@@ -360,7 +357,7 @@ class LevelCoordinate(Coordinate):
         Any
             The normalised value.
         """
-        # Some netcdf have pressue levels in float
+        # Some netcdf have pressure levels in float
         if int(value) == value:
             return int(value)
         return value
@@ -390,13 +387,11 @@ class EnsembleCoordinate(Coordinate):
         return value
 
 
-class PositionCoordinate(Coordinate):
-    """Coordinate class for position."""
+class PointCoordinate(Coordinate):
+    """Coordinate class for point data."""
 
-    is_grid = True
-    is_lat = False
-
-    mars_names = tuple()
+    is_point = True
+    mars_names = ("point",)
 
 
 class LongitudeCoordinate(Coordinate):

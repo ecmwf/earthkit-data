@@ -67,6 +67,12 @@ class Time(ABC):
         if len(date_coordinate) == 1 and len(time_coordinate) == 0 and len(step_coordinate) == 0:
             return ForecastFromBaseTime(date_coordinate[0])
 
+        if len(date_coordinate) == 0 and len(time_coordinate) == 2 and len(step_coordinate) == 1:
+            if time_coordinate[0].is_dim and not time_coordinate[1].is_dim:
+                return ForecastFromValidTimeAndStep(time_coordinate[1], step_coordinate[0])
+            if time_coordinate[1].is_dim and not time_coordinate[0].is_dim:
+                return ForecastFromValidTimeAndStep(time_coordinate[0], step_coordinate[0])
+
         LOG.error("")
         LOG.error(f"{len(date_coordinate)} date_coordinate")
         for c in date_coordinate:

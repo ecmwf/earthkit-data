@@ -92,13 +92,13 @@ class GribFieldListInFile(SimpleFieldListCore):
     #     # return self._fields
 
     def _create_field(self, n, handle_cache):
-        from earthkit.data.field.grib.create import new_grib_field
+        from earthkit.data.field.grib.create import create_grib_field
 
         from .handle import FileGribHandle
 
         part = self.part(n)
         handle = FileGribHandle.from_part(part, self.handle_policy, handle_cache)
-        field = new_grib_field(handle, cache=self.use_metadata_cache)
+        field = create_grib_field(handle, cache=self.use_metadata_cache)
         return field
 
     @property

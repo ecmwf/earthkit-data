@@ -191,9 +191,30 @@ def test_xr_engine_time_basic(allow_holes, kwargs, dims, step_units):
             {
                 "profile": "mars",
                 "dim_roles": {
-                    "forecast_reference_time": None,
-                    "date": "metadata.indexingDate",
-                    "time": "metadata.indexingTime",
+                    "forecast_reference_time": {
+                        "date": "metadata.indexingDate",
+                        "time": "metadata.indexingTime",
+                    },
+                    "step": "metadata.forecastMonth",
+                },
+                "decode_times": False,
+                "decode_timedelta": False,
+                "dim_name_from_role_name": False,
+            },
+            {
+                "indexing_time": [
+                    np.datetime64("2014-09-01", "ns"),
+                    np.datetime64("2014-10-01", "ns"),
+                ],
+                "forecastMonth": [1, 2, 3],
+            },
+            ("forecastMonth", "months"),
+        ),
+        (
+            {
+                "profile": "mars",
+                "dim_roles": {
+                    "forecast_reference_time": ("metadata.indexingDate", "metadata.indexingTime"),
                     "step": "metadata.forecastMonth",
                 },
                 "decode_times": False,
@@ -280,6 +301,7 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
     )
 
     ds = ds_ek.to_xarray(allow_holes=allow_holes, **kwargs)
+
     compare_dims(ds, dims, order_ref_var="2t")
 
     if step_units is not None:
@@ -371,7 +393,7 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
                 "dim_name_from_role_name": True,
             },
             {
-                "number": [0, 1, 2],
+                "member": [0, 1, 2],
                 "forecast_reference_time": [
                     np.datetime64("1993-10-01", "ns"),
                     np.datetime64("1994-10-01", "ns"),
@@ -392,7 +414,7 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
                 "dim_name_from_role_name": True,
             },
             {
-                "number": [0, 1, 2],
+                "member": [0, 1, 2],
                 "forecast_reference_time": [
                     np.datetime64("1993-10-01", "ns"),
                     np.datetime64("1994-10-01", "ns"),
@@ -410,11 +432,11 @@ def test_xr_engine_time_seasonal_monthly_indexing_date(allow_holes, kwargs, dims
                 "dim_roles": {"step": "metadata.forecastMonth"},
                 "decode_times": True,
                 "decode_timedelta": True,
-                "ensure_dims": ["number", "date", "time", "step"],
+                "ensure_dims": ["member", "date", "time", "step"],
                 "dim_name_from_role_name": True,
             },
             {
-                "number": [0, 1, 2],
+                "member": [0, 1, 2],
                 "date": [
                     np.datetime64("1993-10-01", "ns"),
                     np.datetime64("1994-10-01", "ns"),

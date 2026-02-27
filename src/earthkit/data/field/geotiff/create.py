@@ -8,7 +8,7 @@
 #
 
 
-def new_geotiff_field(band, da):
+def create_geotiff_field(band, da):
     r"""Create a Field object from GeoTIFF Xarray dataarray"""
 
     from earthkit.data.core.field import Field

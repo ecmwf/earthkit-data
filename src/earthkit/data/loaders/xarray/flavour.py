@@ -26,6 +26,7 @@ from .coordinates import EnsembleCoordinate
 from .coordinates import LatitudeCoordinate
 from .coordinates import LevelCoordinate
 from .coordinates import LongitudeCoordinate
+from .coordinates import PointCoordinate
 from .coordinates import ScalarCoordinate
 from .coordinates import StepCoordinate
 from .coordinates import TimeCoordinate
@@ -137,6 +138,10 @@ class CoordinateGuesser(ABC):
         )
 
         d: Optional[Coordinate] = None
+
+        d = self._is_point(coordinate, attributes)
+        if d is not None:
+            return d
 
         d = self._is_longitude(coordinate, attributes)
         if d is not None:
@@ -317,9 +322,6 @@ class CoordinateGuesser(ABC):
             return self._grid_cache[(x.name, y.name, dim_vars)]
 
         grid_mapping = variable.attrs.get("grid_mapping", None)
-        if grid_mapping is not None:
-            print(f"grid_mapping: {grid_mapping}")
-            print(self.ds[grid_mapping])
 
         if grid_mapping is None:
             LOG.warning(f"No 'grid_mapping' attribute provided for '{variable.name}'")
@@ -368,13 +370,14 @@ class CoordinateGuesser(ABC):
 
         grid: Optional[Grid] = None
         if grid_mapping is not None:
-
-            grid_mapping = dict(self.ds[grid_mapping].attrs)
-
-            if unstructured:
-                grid = UnstructuredProjectionGrid(x, y, grid_mapping)
+            if grid_mapping in self.ds.variables:
+                grid_mapping = dict(self.ds[grid_mapping].attrs)
+                if unstructured:
+                    grid = UnstructuredProjectionGrid(x, y, grid_mapping)
+                else:
+                    grid = MeshProjectionGrid(x, y, grid_mapping)
             else:
-                grid = MeshProjectionGrid(x, y, grid_mapping)
+                LOG.warning(f"Grid mapping variable '{grid_mapping}' not found in dataset")
         else:
             if unstructured:
                 grid = UnstructuredXYGrid(x, y, dim_vars)
@@ -391,6 +394,10 @@ class CoordinateGuesser(ABC):
             raise NotImplementedError(f"Unstructured grid {x.name} {y.name}")
         else:
             return None
+
+    @abstractmethod
+    def _is_point(self, c: xr.DataArray, attributes: CoordinateAttributes) -> PointCoordinate | None:
+        pass
 
     @abstractmethod
     def _is_longitude(
@@ -569,6 +576,15 @@ class DefaultCoordinateGuesser(CoordinateGuesser):
             The dataset to guess coordinates from.
         """
         super().__init__(ds)
+
+    def _is_point(self, c: xr.DataArray, attributes: CoordinateAttributes) -> PointCoordinate | None:
+        if attributes.standard_name in ["location", "cell", "id", "station", "poi", "point"]:
+            return PointCoordinate(c)
+
+        if attributes.name in ["location", "cell", "id", "station", "poi", "point"]:  # WeatherBench
+            return PointCoordinate(c)
+
+        return None
 
     def _is_longitude(
         self, c: xr.DataArray, attributes: CoordinateAttributes
@@ -772,10 +788,16 @@ class DefaultCoordinateGuesser(CoordinateGuesser):
         if attributes.standard_name == "atmosphere_hybrid_sigma_pressure_coordinate":
             return LevelCoordinate(c, "ml")
 
+        if attributes.standard_name == "model_level_number":
+            return LevelCoordinate(c, "ml")
+
         if attributes.long_name == "height" and attributes.units == "m":
             return LevelCoordinate(c, "height")
 
         if attributes.standard_name == "air_pressure" and attributes.units == "hPa":
+            return LevelCoordinate(c, "pl")
+
+        if attributes.long_name == "pressure" and attributes.units in ["hPa", "Pa"]:
             return LevelCoordinate(c, "pl")
 
         if attributes.name in ("level", "levelist"):
@@ -1071,5 +1093,25 @@ class FlavourCoordinateGuesser(CoordinateGuesser):
         """
         if self._match(c, "number", attributes):
             return EnsembleCoordinate(c)
+
+        return None
+
+    def _is_point(self, c: xr.DataArray, attributes: CoordinateAttributes) -> PointCoordinate | None:
+        """Checks if the coordinate is a point coordinate using the flavour rules.
+
+        Parameters
+        ----------
+        c : xr.DataArray
+            The coordinate to check.
+        attributes : CoordinateAttributes
+            The attributes of the coordinate.
+
+        Returns
+        -------
+        Optional[PointCoordinate]
+            The StepCoorPointCoordinateinate if matched, else None.
+        """
+        if self._match(c, "point", attributes):
+            return PointCoordinate(c)
 
         return None

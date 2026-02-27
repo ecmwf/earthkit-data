@@ -10,6 +10,7 @@
 import functools
 import logging
 from abc import abstractmethod
+from collections import defaultdict
 
 import earthkit.data
 from earthkit.data.core.order import build_remapping
@@ -209,6 +210,56 @@ class Order(OrderBase):
         return actions
 
 
+class IndexBase(Source):
+    @abstractmethod
+    def __len__(self):
+        pass
+
+    @abstractmethod
+    def __getitem__(self, n):
+        pass
+
+    @abstractmethod
+    def ls(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def head(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def tail(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def get(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def unique(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def sel(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def isel(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def order_by(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def batched(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def groupby(self, *args, **kwargs):
+        pass
+
+
 class Index(Source):
     @classmethod
     def new_mask_index(self, *args, **kwargs):
@@ -220,7 +271,7 @@ class Index(Source):
 
     @abstractmethod
     def __len__(self):
-        self._not_implemented()
+        pass
 
     def sel(self, *args, remapping=None, **kwargs):
         """Uses metadata values to select a subset of the elements from a fieldlist-like object.
@@ -610,6 +661,61 @@ class Index(Source):
             progress_bar=progress_bar,
         )
 
+    def get(
+        self,
+        keys,
+        default=None,
+        astype=None,
+        raise_on_missing=False,
+        output="auto",
+        group_by_key=False,
+        flatten_dict=False,
+        remapping=None,
+        patches=None,
+        **kwargs,
+    ):
+        from earthkit.data.utils.args import metadata_argument_new
+
+        keys, astype, default, keys_arg_type = metadata_argument_new(keys, astype=astype, default=default)
+
+        if output == "auto":
+            if keys_arg_type is not None:
+                output = keys_arg_type
+        elif output in [list, "list"]:
+            output = list
+        elif output in [tuple, "tuple"]:
+            output = tuple
+        elif output in [dict, "dict"]:
+            output = dict
+        else:
+            raise ValueError(f"Invalid output: {output}")
+
+        remapping = build_remapping(remapping, patches)
+
+        _kwargs = {
+            "default": default,
+            "raise_on_missing": raise_on_missing,
+            "remapping": remapping,
+            "flatten_dict": flatten_dict,
+            # "patches": patches,
+            "astype": astype,
+            **kwargs,
+        }
+
+        if not group_by_key or output == "auto":
+            return [f._get_fast(keys, output=output, **_kwargs) for f in self]
+        else:
+            if output is dict:
+                result = defaultdict(list)
+                for f in self:
+                    r = f._get_fast(keys, output=dict, **_kwargs)
+                    for k, v in r.items():
+                        result[k].append(v)
+                return dict(result)
+            else:
+                vals = [f._get_fast(keys, output=list, **_kwargs) for f in self]
+                return [[x[i] for x in vals] for i in range(len(keys))]
+
     def __getitem__(self, n):
         if isinstance(n, slice):
             return self._from_slice(n)
@@ -648,6 +754,10 @@ class Index(Source):
 
     def from_dict(self, dic):
         return self.sel(dic)
+
+    @abstractmethod
+    def normalise_key_values(self, **kwargs):
+        pass
 
     @classmethod
     def merge(cls, sources):
@@ -769,65 +879,9 @@ class MultiIndex(Index):
             ",".join(repr(i) for i in self._indexes),
         )
 
-
-# class ForwardingIndex(Index):
-#     def __init__(self, index):
-#         self._index = index
-
-#     def __len__(self):
-#         return len(self._index)
-
-
-# class ScaledField:
-#     def __init__(self, field, offset, scaling):
-#         self.field = field
-#         self.offset = offset
-#         self.scaling = scaling
-
-#     def to_numpy(self, **kwargs):
-#         return (self.field.to_numpy(**kwargs) - self.offset) * self.scaling
-
-
-# class ScaledIndex(ForwardingIndex):
-#     def __init__(self, index, offset, scaling):
-#         super().__init__(index)
-#         self.offset = offset
-#         self.scaling = scaling
-
-#     def __getitem__(self, n):
-#         return ScaledField(self.index[n], self.offset, self.scaling)
-
-
-# class FullIndex(Index):
-#     def __init__(self, index, *coords):
-#         import numpy as np
-
-#         self._index = index
-
-#         # Pass1, unique values
-#         unique = index.unique_values(*coords)
-#         shape = tuple(len(v) for v in unique.values())
-
-#         name_to_index = defaultdict(dict)
-
-#         for k, v in unique.items():
-#             for i, e in enumerate(v):
-#                 name_to_index[k][e] = i
-
-#         self.size = math.prod(shape)
-#         self.shape = shape
-#         self.holes = np.full(shape, False)
-
-#         for f in index:
-#             idx = tuple(name_to_index[k][f.metadata(k, default=None)] for k in coords)
-#             self.holes[idx] = True
-
-#         self.holes = self.holes.flatten()
-#         print("+++++++++", self.holes.shape, coords, self.shape)
-
-#     def __len__(self):
-#         return self.size
-
-#     def _getitem(self, n):
-#         assert self.holes[n], f"Attempting to access hole {n}"
-#         return self._index[sum(self.holes[:n])]
+    def default_encoder(self):
+        for i in self._indexes:
+            encoder = i.default_encoder()
+            if encoder is not None:
+                return encoder
+        return None

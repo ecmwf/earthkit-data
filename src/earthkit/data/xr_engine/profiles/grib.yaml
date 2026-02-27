@@ -1,5 +1,5 @@
 dim_roles:
-  number: metadata.number
+  member: metadata.number
   date: metadata.date
   time: metadata.time
   step: time.step

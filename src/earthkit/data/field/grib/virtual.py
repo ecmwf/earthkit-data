@@ -46,9 +46,9 @@ def make_virtual_grib_field(owner, request):
     if param is not None:
         reference = owner._get_reference(param)
         data = VirtualData(owner, request)
-        from earthkit.data.field.mars.create import new_mars_field
+        from earthkit.data.field.mars.create import create_mars_field
 
-        f = new_mars_field(r, data=data, reference_field=reference)
+        f = create_mars_field(r, data=data, reference_field=reference)
         return f
 
     raise KeyError("Request must contain 'param' key")
@@ -97,9 +97,9 @@ class VirtualGribFieldList(IndexedFieldList):
             handle = handle.clone(headers_only=True)
             handle.set("paramId", param)
             r = handle
-            from earthkit.data.field.grib.create import new_grib_field
+            from earthkit.data.field.grib.create import create_grib_field
 
-            r = new_grib_field(handle)
+            r = create_grib_field(handle)
 
         self._reference_cache[param] = r
         return r

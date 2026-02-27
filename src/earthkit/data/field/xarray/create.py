@@ -8,7 +8,7 @@
 #
 
 
-def new_xarray_field(variable, selection=None):
+def create_xarray_field(variable, selection=None):
     r"""Create a Field object from XArray"""
 
     from earthkit.data.core.field import Field

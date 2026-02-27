@@ -98,7 +98,7 @@ class GeoTIFFFieldList(SimpleFieldListCore):
     def _get_fields(self, ds, names=None):
         """Must be called from _fields property to ensure thread safety of caching."""
         fields = []
-        from earthkit.data.field.geotiff.create import new_geotiff_field
+        from earthkit.data.field.geotiff.create import create_geotiff_field
 
         # Follow GDAL convention and count GeoTIFF bands from 1
         for band, (name, da) in enumerate(ds.data_vars.items(), start=1):
@@ -106,7 +106,7 @@ class GeoTIFFFieldList(SimpleFieldListCore):
             if "long_name" in da.attrs:
                 da = da.rename(da.attrs["long_name"])
 
-            f = new_geotiff_field(band, da)
+            f = create_geotiff_field(band, da)
             fields.append(f)
             # fields.append(self.FIELD_TYPE(da, band, geography=self._geo))
         return fields

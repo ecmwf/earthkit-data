@@ -31,16 +31,19 @@ REGULAR_GG_PATTERN = re.compile(r"[OoNn]\d+")
 REDUCED_GG_PATTERN = re.compile(r"[Ff]\d+|\d+")
 
 
-def make_gridspec(metadata):
-    maker = GridSpecMaker(metadata)
-    return dict(**maker.make())
+class LegacyGridSpec(dict):
+    pass
 
 
-class GridSpecConf:
+def make_legacy_gridspec(metadata):
+    maker = LegacyGridSpecMaker(metadata)
+    return LegacyGridSpec(maker.make())
+
+
+class LegacyGridSpecConf:
     def __init__(self):
         self._config = None
         self._grid_types = None
-        self._schema = None
 
     def _load(self):
         if self._config is None:
@@ -48,9 +51,6 @@ class GridSpecConf:
 
             from earthkit.data.utils.paths import earthkit_conf_file
 
-            # # schema
-            # with open(earthkit_conf_file("gridspec_schema.json"), "r") as f:
-            #     self._schema = json.load(f)
             # gridspec config
             with open(earthkit_conf_file("gridspec.yaml"), "r") as f:
                 self._config = yaml.safe_load(f)
@@ -99,18 +99,11 @@ class GridSpecConf:
                 r[grib_key] = v
         return r
 
-    def validate(self, gridspec):
-        pass
-        # self._load()
-        # from jsonschema import validate
 
-        # validate(instance=gridspec, schema=self._schema)
+CONF = LegacyGridSpecConf()
 
 
-CONF = GridSpecConf()
-
-
-class GridSpecMaker(dict):
+class LegacyGridSpecMaker(dict):
     POSITIVE_SCAN_DIR = 1
     NEGATIVE_SCAN_DIR = -1
 
@@ -153,7 +146,7 @@ class GridSpecMaker(dict):
             for k in self.conf["rotation_keys"]:
                 d.pop(k, None)
 
-        CONF.validate(d)
+        # CONF.validate(d)
         return d
 
     def _add_key_to_spec(self, item, d):
@@ -225,7 +218,7 @@ class GridSpecMaker(dict):
         return f"H{self['n_side']}"
 
 
-class GridSpecConverter(metaclass=ABCMeta):
+class LegacyGridSpecConverter(metaclass=ABCMeta):
     SPEC_GRID_TYPE = None
 
     def __init__(self, spec, spec_type, edition):
@@ -239,15 +232,13 @@ class GridSpecConverter(metaclass=ABCMeta):
         # the order might matter
         d = self.add_grid_type()
         d.update(self.add_grid())
-        d.update(self.add_rotation())
+        # d.update(self.add_rotation())
         d.update(self.add_scanning())
         d = CONF.remap_keys_to_grib(d)
         return d
 
     @staticmethod
     def to_metadata(spec, edition=2):
-        CONF.validate(spec)
-
         if "rotation" in spec:
             raise ValueError(
                 (
@@ -256,12 +247,12 @@ class GridSpecConverter(metaclass=ABCMeta):
                 )
             )
 
-        spec_type, maker = GridSpecConverter.infer_spec_type(spec)
+        spec_type, maker = LegacyGridSpecConverter.infer_spec_type(spec)
 
         # create converter and generate metadata
         # maker = gridspec_converters.get(spec_type, None)
         if maker is None:
-            raise ValueError(f"GridSpecConverter: unsupported gridspec type={spec_type}")
+            raise ValueError(f"LegacyGridSpecConverter: unsupported gridspec type={spec_type}")
         else:
             converter = maker(spec, spec_type, edition)
             return converter.run(), converter.grid_size
@@ -271,70 +262,20 @@ class GridSpecConverter(metaclass=ABCMeta):
         spec_type = spec.get("type", None)
         if spec_type is None:
             if "grid" not in spec:
-                raise ValueError(f"GridSpecConverter: unsupported gridspec={spec}")
+                raise ValueError(f"LegacyGridSpecConverter: unsupported gridspec={spec}")
             grid = spec["grid"]
             for k, gs in gridspec_converters.items():
                 if gs.type_match(grid):
                     return k, gs
 
         if spec_type is None:
-            raise ValueError(f"GridSpecConverter: could not determine type of gridspec={spec}")
+            raise ValueError(f"LegacyGridSpecConverter: could not determine type of gridspec={spec}")
 
         return spec_type, gridspec_converters.get(spec_type, None)
-
-    # @staticmethod
-    # def infer_spec_type(spec):
-    #     spec_type = spec.get("type", None)
-    #     # when no type specified the grid must be regular_ll or gaussian
-    #     if spec_type is None:
-    #         grid = spec["grid"]
-    #         # regular_ll: the grid is in the form of [dx, dy]
-    #         if isinstance(grid, list) and len(grid) == 2:
-    #             spec_type = "regular_ll"
-    #         # gaussian: the grid=N as a str or int
-    #         elif isinstance(grid, (str, int)):
-    #             spec_type = GridSpecConverter.infer_gaussian_type(grid)
-
-    #     if spec_type is None:
-    #         raise ValueError(f"Could not determine type of gridspec={spec}")
-
-    #     return spec_type
-
-    # @staticmethod
-    # def infer_gaussian_type(grid):
-    #     """Determine gridspec type for Gaussian grids"""
-    #     grid_type = ""
-    #     if isinstance(grid, str) and len(grid) > 0:
-    #         try:
-    #             if grid[0] == "F":
-    #                 grid_type = "regular_gg"
-    #             elif grid[0] in ["N", "O"]:
-    #                 grid_type = "reduced_gg"
-    #             else:
-    #                 grid_type = "regular_gg"
-    #                 _ = int(grid)
-    #         except Exception:
-    #             raise ValueError(f"Invalid Gaussian grid description str={grid}")
-    #     elif isinstance(grid, int):
-    #         grid_type = "regular_gg"
-    #     else:
-    #         raise ValueError(f"Invalid Gaussian grid description={grid}")
-
-    #     return grid_type
 
     def add_grid_type(self):
         d = {}
         d["grid_type"] = self.conf["grid_type"]
-
-        # rotation = self.add_rotation()
-        # if rotation:
-        #     rotated_type = self.conf.get("rotated_type", None)
-        #     if rotated_type is None:
-        #         raise ValueError(
-        #             f"GridSpecConverter: rotation is not supported for gridspec type={self.spec_type}"
-        #         )
-        #     d["grid_type"] = rotated_type
-        #     d.update(rotation)
 
         return d
 
@@ -344,16 +285,21 @@ class GridSpecConverter(metaclass=ABCMeta):
 
     def add_rotation(self):
         return dict()
-        # d = {}
-        # rotation = self.spec.get("rotation", default=None)
-        # if rotation is not None:
 
-        #     if not isinstance(rotation, list) or len(rotation) != 2:
-        #         raise ValueError(f"Invalid rotation in grid spec={rotation}")
-        #     d["lat_south_pole"] = rotation[0]
-        #     d["lon_south_pole"] = rotation[1]
-        #     d["angle_of_rotation"] = self.get("angle_of_rotation")
-        # return d
+    def check_scanning(self):
+        keys_ref = {
+            "j_points_consecutive": 0,
+            "i_scans_negatively": 0,
+            "j_scans_positively": 0,
+        }
+
+        keys = keys_ref.copy()
+        r = {}
+        for k, v in keys.items():
+            r = self.get(k, default=v, transform=self.to_zero_one)
+        if r != keys_ref:
+            df = {k: r[k] for k in keys_ref.keys() if r[k] != keys_ref[k]}
+            ValueError(f"LegacyGridSpecConverter: invalid scanning mode(s) in data: {df}")
 
     def add_scanning(self):
         d = {}
@@ -388,7 +334,7 @@ class GridSpecConverter(metaclass=ABCMeta):
         return lon
 
 
-class LatLonGridSpecConverter(GridSpecConverter):
+class LatLonGridSpecConverter(LegacyGridSpecConverter):
     SPEC_GRID_TYPE = "regular_ll"
 
     @staticmethod
@@ -497,7 +443,7 @@ class LatLonGridSpecConverter(GridSpecConverter):
         return False
 
 
-class RegularGaussianGridSpecConverter(GridSpecConverter):
+class RegularGaussianGridSpecConverter(LegacyGridSpecConverter):
     SPEC_GRID_TYPE = "regular_gg"
 
     def add_grid(self):
@@ -531,7 +477,7 @@ class RegularGaussianGridSpecConverter(GridSpecConverter):
         return False
 
 
-class ReducedGaussianGridSpecConverter(GridSpecConverter):
+class ReducedGaussianGridSpecConverter(LegacyGridSpecConverter):
     SPEC_GRID_TYPE = "reduced_gg"
 
     def add_grid(self):

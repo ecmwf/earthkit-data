@@ -9,11 +9,12 @@
 
 from abc import abstractmethod
 
+from earthkit.data.utils.units import Units
+
 from .component import SimpleFieldComponent
 from .component import component_keys
 from .component import mark_alias
 from .component import mark_get_key
-from .units import Units
 
 
 @component_keys
