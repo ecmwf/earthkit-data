@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import yaml
 
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -32,7 +32,7 @@ def _build_proc_ref(input_data):
     d = {}
     for p in all_params:
         # print(f"p={p}")
-        f = ds.sel(param=p, valid_datetime="2020-05-13T18:00:00")
+        f = ds.sel({"parameter.variable": p, "time.valid_datetime": "2020-05-13T18:00:00"})
         v = f[0].values
         d[p] = {
             "first": float(v[0]),
@@ -53,7 +53,7 @@ def test_forcings_proc(input_data):
     ds, _ = load_forcings_fs(params=all_params, last_step=12, input_data=input_data)
 
     for p in all_params:
-        f = ds.sel(param=p, valid_datetime="2020-05-13T18:00:00")
+        f = ds.sel({"parameter.variable": p, "time.valid_datetime": "2020-05-13T18:00:00"})
         assert len(f) == 1
         v = f[0].values
         r = ref[p]
@@ -67,24 +67,28 @@ def test_forcings_proc(input_data):
 def test_forcings_proc_latlon(input_data, param, coord):
     ds, _ = load_forcings_fs(params=all_params, last_step=12, input_data=input_data)
 
-    latlon = ds[0].to_latlon(flatten=True)
-    coord = latlon[coord]
+    latlon = ds[0].geography.latlons(flatten=True)
+    if coord == "lat":
+        coord = latlon[0]
+    elif coord == "lon":
+        coord = latlon[1]
+
     date = "2020-05-13T18:00:00"
 
-    f = ds.sel(param=param, valid_datetime=date)
+    f = ds.sel({"parameter.variable": param, "time.valid_datetime": date})
     assert len(f) == 1
     assert np.allclose(f[0].values, coord)
 
-    f = ds.sel(param="cos_" + param, valid_datetime=date)
+    f = ds.sel({"parameter.variable": "cos_" + param, "time.valid_datetime": date})
     assert len(f) == 1
     assert np.allclose(f[0].values, np.cos(np.deg2rad(coord)))
 
-    f = ds.sel(param="sin_" + param, valid_datetime=date)
+    f = ds.sel({"parameter.variable": "sin_" + param, "time.valid_datetime": date})
     assert len(f) == 1
     assert np.allclose(f[0].values, np.sin(np.deg2rad(coord)))
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

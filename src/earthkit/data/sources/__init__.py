@@ -52,11 +52,6 @@ class Source(Base):
         # Used by multi-source
         return False
 
-    def __add__(self, other):
-        from earthkit.data.sources import from_source
-
-        return from_source("multi", self, other)
-
     def cache_file(self, create, args, **kwargs):
         owner = self.name
         if owner is None:
@@ -88,7 +83,7 @@ class Source(Base):
 
         to_target(target, *args, data=self, **kwargs)
 
-    def default_encoder(self):
+    def _default_encoder(self):
         return None
 
 

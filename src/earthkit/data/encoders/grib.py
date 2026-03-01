@@ -11,8 +11,9 @@ import datetime
 import logging
 from functools import lru_cache
 
-from earthkit.data.decorators import normalize
-from earthkit.data.decorators import normalize_grib_keys
+from earthkit.data.decorators import normalise
+from earthkit.data.decorators import normalise_grib_keys
+from earthkit.data.utils.dates import step_range_to_grib
 from earthkit.data.utils.humanize import list_to_human
 
 from . import EncodedData
@@ -38,16 +39,20 @@ class GribEncodedData(EncodedData):
     def to_file(self, f):
         self.handle.write(f)
 
-    def metadata(self, key=None):
+    def get(self, key, default=None):
         if key:
-            return self.to_field().metadata(key, default=None)
+            return self.to_field().get(key, default=default)
         else:
             raise NotImplementedError
 
     def to_field(self):
-        from earthkit.data.readers.grib.memory import GribFieldInMemory
+        # from earthkit.data.readers.grib.memory import GribFieldInMemory
 
-        return GribFieldInMemory.from_buffer(self.to_bytes())
+        # return GribFieldInMemory.from_buffer(self.to_bytes())
+
+        from earthkit.data.field.grib.create import create_grib_field_from_buffer
+
+        return create_grib_field_from_buffer(self.to_bytes())
 
 
 class Combined:
@@ -107,14 +112,12 @@ class GribHandleMaker:
         self.template = template
         self._bbox = {}
 
-    def make(self, field=None, values=None, metadata=None, template=None):
+    def make(self, values=None, metadata=None, template=None):
         """Create a new GribCodesHandle from a template, field or metadata
         May modify existing metadata
 
         Parameters
         ----------
-        field: Field
-            The field to encode
         values: numpy.ndarray
             The values to encode
         metadata: dict
@@ -122,14 +125,15 @@ class GribHandleMaker:
         template: GribCoder
             A template to use for encoding
         """
+
         handle = self.handle_from_template(template)
         if handle is not None:
             self.update_metadata_from_template(metadata, template, handle)
 
-        if handle is None and field is not None:
-            handle = self.handle_from_field(field)
-            if handle is not None:
-                self.update_metadata_from_template(metadata, field, handle)
+        # if handle is None and field is not None:
+        #     handle = self.handle_from_field(field)
+        #     if handle is not None:
+        #         self.update_metadata_from_template(metadata, field, handle)
 
         if handle is None:
             if values is None:
@@ -142,16 +146,31 @@ class GribHandleMaker:
         handle = None
         if template is None:
             template = self.template
+
         if template is not None:
-            handle = template.handle.clone()
-        return handle
+            from earthkit.data.core.field import Field
+
+            if isinstance(template, Field):
+                return self.handle_from_field(template)
+            elif hasattr(template, "handle"):
+                handle = template.handle
+                if handle is not None:
+                    return handle.clone()
+
+        return None
 
     def handle_from_field(self, field):
-        if hasattr(field, "handle"):
-            return field.handle.clone()
+        r = {}
+        field._get_grib_context(r)
+        handle = r.pop("handle", None)
+
+        if handle is not None:
+            handle = handle.clone()
+
+        return handle
 
     def handle_from_metadata(self, values, metadata, compulsory):
-        from earthkit.data.readers.grib.codes import GribCodesHandle  # Lazy loading of eccodes
+        from earthkit.data.readers.grib.handle import GribCodesHandle  # Lazy loading of eccodes
 
         if len(values.shape) == 1:
             sample = self._gg_field(values, metadata)
@@ -180,33 +199,48 @@ class GribHandleMaker:
         return GribCodesHandle.from_sample(sample)
 
     def update_metadata_from_template(self, metadata, template, handle):
+
+        return
         # the template can contain extra metadata that is not encoded in the handle
+        if "bitsPerValue" in metadata:
+            return
+
         bpv = None
-        if hasattr(template, "metadata"):
-            template_md = template.metadata()
-            from earthkit.data.core.metadata import WrappedMetadata
+        if hasattr(template, "_get_grib"):
+            template_md = template._get_grib()
+            bpv = template_md.get_extra_key("bitsPerValue", default=None)
+            if bpv is not None:
+                metadata["bitsPerValue"] = bpv
+            else:
+                bpv = template_md.get("bitsPerValue", default=None)
 
-            if isinstance(template_md, WrappedMetadata):
-                for k in template_md.extra.keys():
-                    if k != "bitsPerValue" and k not in metadata:
-                        metadata[k] = template_md.get(k)
+        # if bpv is None:
 
-            if "bitsPerValue" not in metadata:
-                bpv = template.metadata("bitsPerValue", default=None)
+        # if hasattr(template, "metadata"):
+        #     template_md = template.metadata()
+        #     from earthkit.data.core.metadata import WrappedMetadata
 
-        # Either the handle has valid bitsPerValue or has to be extracted
-        # from the template and added to the metadata to be encoded
-        if "bitsPerValue" not in metadata:
-            if bpv is None:
-                try:
-                    bpv = template.handle.get("bitsPerValue", None)
-                except Exception:
-                    bpv = None
+        #     if isinstance(template_md, WrappedMetadata):
+        #         for k in template_md.extra.keys():
+        #             if k != "bitsPerValue" and k not in metadata:
+        #                 metadata[k] = template_md.get(k)
 
-            if bpv is not None and bpv > 0:
-                bpv_h = handle.get("bitsPerValue", None)
-                if bpv != bpv_h:
-                    metadata["bitsPerValue"] = bpv
+        #     if "bitsPerValue" not in metadata:
+        #         bpv = template.metadata("bitsPerValue", default=None)
+
+        # # Either the handle has valid bitsPerValue or has to be extracted
+        # # from the template and added to the metadata to be encoded
+        # if "bitsPerValue" not in metadata:
+        #     if bpv is None:
+        #         try:
+        #             bpv = template.handle.get("bitsPerValue", None)
+        #         except Exception:
+        #             bpv = None
+
+        #     if bpv is not None and bpv > 0:
+        #         bpv_h = handle.get("bitsPerValue", None)
+        #         if bpv != bpv_h:
+        #             metadata["bitsPerValue"] = bpv
 
     def _ll_field(self, values, metadata):
         Nj, Ni = values.shape
@@ -317,10 +351,18 @@ class GribEncoder(Encoder):
         super().__init__(**kwargs)
         self._bbox = {}
 
-    @normalize_grib_keys
-    @normalize("date", "date")
-    def _normalize_kwargs_names(self, **kwargs):
+    @normalise_grib_keys
+    @normalise("date", "date")
+    def _normalise_kwargs_names(self, **kwargs):
         return kwargs
+
+    def _normalise_metadata_key_names(self, md):
+        def _convert(name):
+            if name.startswith("metadata."):
+                return name[9:]
+            return name
+
+        return {_convert(k): v for k, v in md.items()}
 
     def _get_handle(self, **kwargs):
         return GribHandleMaker(template=self.template).make(**kwargs)
@@ -363,9 +405,11 @@ class GribEncoder(Encoder):
             raise ValueError("Cannot provide data, values and template together")
 
         metadata = metadata if metadata is not None else {}
-        md = self._normalize_kwargs_names(**self.metadata)
-        md.update(self._normalize_kwargs_names(**metadata))
-        md.update(self._normalize_kwargs_names(**kwargs))
+        md = self._normalise_kwargs_names(**self.metadata)
+        md.update(self._normalise_kwargs_names(**metadata))
+        md.update(self._normalise_kwargs_names(**kwargs))
+
+        md = self._normalise_metadata_key_names(md)
 
         # when the input date a datetime object time can be inferred from it
         can_infer_time = (
@@ -408,13 +452,46 @@ class GribEncoder(Encoder):
     def _encode_field(self, field, values=None, template=None, metadata=None, **kwargs):
         # check if the field is already encoded in the desired format
 
-        if values is None and template is None and not metadata:
-            return GribEncodedData(field.handle)
+        r = {}
+        field._get_grib_context(r)
+        handle = r.pop("handle", None)
+        field_values = r.pop("values", None)
+
+        if r:
+            self._update_metadata_from_field(field, r)
+            if metadata is None:
+                metadata = r
+            else:
+                r.update(metadata)
+                metadata = r
+
+        if field_values is None and values is None and template is None and not metadata:
+            return GribEncodedData(handle)
+
+        # set bitspervalue
+        if "bitsPerValue" not in metadata:
+            bpv = None
+            field_md = field._get_grib()
+            # If the Field grib metadata has an extra key "bitsPerValue", use it since it indicates that
+            # the handle was deflated and the original bitsPerValue is not available from it.
+            if field_md is not None:
+                bpv = field_md.get_extra_key("bitsPerValue", default=None)
+                if bpv is not None:
+                    metadata["bitsPerValue"] = bpv
+                else:
+                    bpv = field_md.get("bitsPerValue", default=None)
+
+        if values is None:
+            values = field_values
 
         if values is None and template:
             values = field.values
 
-        handle = self._get_handle(field=field, values=values, metadata=metadata, template=template)
+        if template is None:
+            template = handle
+
+        handle = self._get_handle(values=values, metadata=metadata, template=template)
+
         return self._make_message(handle, values=values, metadata=metadata, **kwargs)
 
     def _encode_fieldlist(self, fs, **kwargs):
@@ -438,6 +515,12 @@ class GribEncoder(Encoder):
         compulsory = COMPULSORY
 
         self._update_metadata(handle, metadata, compulsory, can_infer_time)
+
+        # eccodes keys are order dependent
+        KEY_ORDER = ("edition", "stepType")
+        r = {k: metadata.pop(k) for k in KEY_ORDER if k in metadata}
+        r.update(metadata)
+        metadata = r
 
         if check_nans and values is not None:
             import numpy as np
@@ -498,15 +581,36 @@ class GribEncoder(Encoder):
 
         return GribEncodedData(handle)
 
+    def _update_metadata_from_field(self, field, metadata):
+        if "stepRange" in metadata:
+            step_range = metadata["stepRange"]
+            if isinstance(step_range, datetime.timedelta):
+                step = field.step
+                start = step - step_range
+                end = step
+                metadata["stepRange"] = step_range_to_grib(start, end)
+
     def _update_metadata(self, handle, metadata, compulsory, can_infer_time):
         # TODO: revisit that logic
         combined = Combined(handle, metadata)
+
+        if "stepRange" in metadata:
+            step_range = metadata["stepRange"]
+            if isinstance(step_range, datetime.timedelta):
+                start_step, end_step = step_range.split("-")
+                metadata["startStep"] = int(start_step)
+                metadata["endStep"] = int(end_step)
+                del metadata["stepRange"]
+            else:
+                metadata["startStep"] = int(step_range)
+                metadata["endStep"] = int(step_range)
+                del metadata["stepRange"]
 
         if "step" in metadata or "endStep" in metadata:
             if combined["type"] == "an":
                 metadata["type"] = "fc"
 
-        if "time" in metadata:  # TODO, use a normalizer
+        if "time" in metadata:  # TODO, use a normaliser
             try:
                 time = int(metadata["time"])
                 if time < 100:

@@ -7,14 +7,19 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
+
 from . import Reader
-from .netcdf.fieldlist import XArrayFieldList
 
 
 class PPReader(XArrayFieldList, Reader):
     def __init__(self, source, path, **kwargs):
         Reader.__init__(self, source, path)
-        XArrayFieldList.__init__(self, self._open_pp(**kwargs))
+        ds = self._open_pp(**kwargs)
+
+        fl = XArrayFieldList.from_xarray(ds)
+        super().__init__(fl.ds, fl.variables)
+        # XArrayFieldList.__init__(self, self._open_pp(**kwargs))
 
     def mutate_source(self):
         return self

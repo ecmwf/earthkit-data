@@ -147,8 +147,8 @@ def _skip_api_items(app, what, name, obj, skip, options):
         "data.sources.numpy_list",
         "data.utils",
         "data.utils.bbox",
-        "data.utils.xarray",
-        "data.utils.xarray.engine",
+        "data.xr_engine",
+        "data.xr_engine.engine",
     ]:
         skip = True
     elif what == "package" and name not in [
@@ -167,8 +167,8 @@ def _skip_api_items(app, what, name, obj, skip, options):
         "data.sources.numpy_list",
         "data.utils",
         "data.utils.bbox",
-        "data.utils.xarray",
-        "data.utils.xarray.engine",
+        "data.xr_engine",
+        "data.xr_engine.engine",
     ]:
         skip = True
     elif what == "class" and name not in [
@@ -191,7 +191,7 @@ def _skip_api_items(app, what, name, obj, skip, options):
         "data.sources.array_list.ArrayField",
         "data.sources.array_list.ArrayFieldList",
         "data.utils.bbox.BoundingBox",
-        "data.utils.xarray.engine.EarthkitBackendEntrypoint",
+        "data.xr_engine.engine.EarthkitBackendEntrypoint",
     ]:
         skip = True
     elif what == "method":

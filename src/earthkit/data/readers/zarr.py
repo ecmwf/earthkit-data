@@ -9,15 +9,17 @@
 
 import os
 
+from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
+
 from . import Reader
-from .netcdf.fieldlist import XArrayFieldList
 
 
 class ZarrReader(XArrayFieldList, Reader):
 
     def __init__(self, source, path, **kwargs):
         Reader.__init__(self, source, path, **kwargs)
-        XArrayFieldList.__init__(self, self._open_zarr(**kwargs))
+        fl = XArrayFieldList.from_xarray(self._open_zarr(**kwargs))
+        super().__init__(fl.ds, fl.variables)
 
     def mutate_source(self):
         return self

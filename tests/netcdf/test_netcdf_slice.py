@@ -13,8 +13,8 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import load_nc_or_xr_source
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import load_nc_or_xr_source
 
 
 @pytest.mark.parametrize("mode", ["nc", "xr"])
@@ -32,7 +32,7 @@ def test_netcdf_single_index(mode, index, expected_meta):
     f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
 
     r = f[index]
-    assert r.metadata(["variable", "level"]) == expected_meta
+    assert r.get(["parameter.variable", "vertical.level"]) == expected_meta
     v = r.values
     assert v.shape == (84,)
     # eps = 0.001
@@ -61,12 +61,12 @@ def test_netcdf_slice_single_file(mode, indexes, expected_meta):
     f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
     r = f[indexes]
     assert len(r) == 4
-    assert r.metadata(["variable", "level"]) == expected_meta
+    assert r.get(["parameter.variable", "vertical.level"]) == expected_meta
     v = r.values
     assert v.shape == (4, 84)
     # check the original fieldlist
     assert len(f) == 18
-    assert f.metadata("variable") == ["t"] * 6 + ["u"] * 6 + ["v"] * 6
+    assert f.get("parameter.variable") == ["t"] * 6 + ["u"] * 6 + ["v"] * 6
 
 
 @pytest.mark.xfail
@@ -86,12 +86,12 @@ def test_netcdf_slice_multi_file(indexes, expected_meta):
     )
     r = f[indexes]
     assert len(r) == 3
-    assert r.metadata(["variable", "level"]) == expected_meta
+    assert r.get(["parameter.variable", "vertical.level"]) == expected_meta
     # v = r.values
     # assert v.shape == (3, 84)
     # check the original fieldlist
     assert len(f) == 2 + 18
-    assert f.metadata("shortName") == ["2t", "msl", "t", "z", "t", "z"]
+    assert f.get("param") == ["2t", "msl", "t", "z", "t", "z"]
 
 
 @pytest.mark.parametrize("mode", ["nc", "xr"])
@@ -108,11 +108,11 @@ def test_netcdf_array_indexing(mode, indexes1, indexes2):
 
     r = f[indexes1]
     assert len(r) == 4
-    assert r.metadata("variable") == ["t", "v", "t", "u"]
+    assert r.get("parameter.variable") == ["t", "v", "t", "u"]
 
     r1 = r[indexes2]
     assert len(r1) == 2
-    assert r1.metadata("variable") == ["v", "u"]
+    assert r1.get("parameter.variable") == ["v", "u"]
 
 
 @pytest.mark.skip(reason="Index range checking disabled")
@@ -134,12 +134,12 @@ def test_netcdf_array_indexing_bad(mode, indexes):
 @pytest.mark.parametrize("mode", ["nc", "xr"])
 def test_netcdf_fieldlist_iterator(mode):
     g = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
-    sn = g.metadata("variable")
+    sn = g.get("parameter.variable")
     assert len(sn) == 18
-    iter_sn = [f.metadata("variable") for f in g]
+    iter_sn = [f.get("parameter.variable") for f in g]
     assert iter_sn == sn
     # repeated iteration
-    iter_sn = [f.metadata("variable") for f in g]
+    iter_sn = [f.get("parameter.variable") for f in g]
     assert iter_sn == sn
 
 
@@ -148,13 +148,13 @@ def test_netcdf_fieldlist_iterator_with_zip():
     # 'go off the edge' of the fieldlist, because the length is determined by
     # the list of levels
     g = from_source("file", earthkit_examples_file("tuv_pl.nc"))
-    ref_levs = g.metadata("level")
+    ref_levs = g.get("vertical.level")
     assert len(ref_levs) == 18
     levs1 = []
     levs2 = []
-    for k, f in zip(g.metadata("level"), g):
+    for k, f in zip(g.get("vertical.level"), g):
         levs1.append(k)
-        levs2.append(f.metadata("level"))
+        levs2.append(f.get("vertical.level"))
     assert levs1 == ref_levs
     assert levs2 == ref_levs
 
@@ -162,14 +162,14 @@ def test_netcdf_fieldlist_iterator_with_zip():
 def test_netcdf_fieldlist_iterator_with_zip_multiple():
     # same as test_fieldlist_iterator_with_zip() but multiple times
     g = from_source("file", earthkit_examples_file("tuv_pl.nc"))
-    ref_levs = g.metadata("level")
+    ref_levs = g.get("vertical.level")
     assert len(ref_levs) == 18
     for i in range(2):
         levs1 = []
         levs2 = []
-        for k, f in zip(g.metadata("level"), g):
+        for k, f in zip(g.get("vertical.level"), g):
             levs1.append(k)
-            levs2.append(f.metadata("level"))
+            levs2.append(f.get("vertical.level"))
         assert levs1 == ref_levs, i
         assert levs2 == ref_levs, i
 
@@ -177,18 +177,18 @@ def test_netcdf_fieldlist_iterator_with_zip_multiple():
 @pytest.mark.parametrize("mode", ["nc", "xr"])
 def test_netcdf_fieldlist_reverse_iterator(mode):
     g = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
-    sn = g.metadata("variable")
+    sn = g.get("parameter.variable")
     sn_reversed = list(reversed(sn))
     assert sn_reversed[0] == "v"
     assert sn_reversed[17] == "t"
     gr = reversed(g)
-    iter_sn = [f.metadata("variable") for f in gr]
+    iter_sn = [f.get("parameter.variable") for f in gr]
     assert len(iter_sn) == len(sn_reversed)
     assert iter_sn == sn_reversed
     assert iter_sn == ["v"] * 6 + ["u"] * 6 + ["t"] * 6
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

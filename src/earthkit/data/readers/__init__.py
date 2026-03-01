@@ -22,11 +22,12 @@ from earthkit.data.decorators import locked
 LOG = logging.getLogger(__name__)
 
 
-class ReaderMeta(type(Base), type(os.PathLike)):
-    pass
+# class ReaderMeta(type(Base), type(os.PathLike)):
+#     pass
 
 
-class Reader(Base, os.PathLike, metaclass=ReaderMeta):
+# class Reader(Base, os.PathLike, metaclass=ReaderMeta):
+class Reader(Base, os.PathLike):
     appendable = False  # Set to True if the data can be appended to and existing file
     binary = True
 
@@ -74,31 +75,6 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
     def cache_file(self, *args, **kwargs):
         return self.source.cache_file(*args, **kwargs)
 
-    @detect_out_filename
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def save(self, path, **kwargs):
-        self.to_target("file", path, **kwargs)
-
-        # original code
-        # mode = "wb" if self.binary else "w"
-        # with open(path, mode) as f:
-        #     self.write(f, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def write(self, f, **kwargs):
-        self.to_target("file", f, **kwargs)
-
-        # original code
-        # if not self.appendable:
-        #     assert f.tell() == 0
-        # mode = "rb" if self.binary else "r"
-        # with open(self.path, mode) as g:
-        #     while True:
-        #         chunk = g.read(1024 * 1024)
-        #         if not chunk:
-        #             break
-        #         f.write(chunk)
-
     def to_target(self, target, *args, **kwargs):
         from earthkit.data.targets import to_target
 
@@ -107,18 +83,18 @@ class Reader(Base, os.PathLike, metaclass=ReaderMeta):
     def _encode(self, encoder, **kwargs):
         return encoder._encode(self, **kwargs)
 
-    def default_encoder(self):
+    def _default_encoder(self):
         return "internal-pass-through"
 
     def __fspath__(self):
         return self.path
 
-    def index_content(self):
-        LOG.warning(f"index-content(): Ignoring {self.path}")
-        return []
+    # def index_content(self):
+    #     LOG.warning(f"index-content(): Ignoring {self.path}")
+    #     return []
 
-    def ranges(self):
-        self.source._kw
+    # def ranges(self):
+    #     self.source._kw
 
 
 _READERS = {}

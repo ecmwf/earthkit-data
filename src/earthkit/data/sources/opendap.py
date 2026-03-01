@@ -7,8 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.readers.netcdf import NetCDFFieldListUrlReader
+# from earthkit.data.readers.netcdf import NetCDFFieldListUrlReader
 from earthkit.data.readers.netcdf import NetCDFReader
+from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
 from earthkit.data.sources import Source
 
 
@@ -17,11 +18,20 @@ class OpenDAP(Source):
         self.url = url
 
     def mutate(self):
-        fs = NetCDFFieldListUrlReader(source, self.url)
-        if fs.has_fields():
-            return fs
+        import xarray as xr
+
+        ds = xr.open_dataset(self.url, decode_timedelta=True)
+        fl = XArrayFieldList.from_xarray(ds)
+        if len(fl) > 0:
+            return fl
         else:
-            return NetCDFReader(source, self.path)
+            return NetCDFReader(OpenDAP, self.url)
+
+        # fs = NetCDFFieldListUrlReader(source, self.url)
+        # if len(fs) > 0:
+        #     return fs
+        # else:
+        #     return NetCDFReader(source, self.path)
 
 
 source = OpenDAP

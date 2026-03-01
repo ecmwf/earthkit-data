@@ -17,7 +17,7 @@ import numpy as np
 from earthkit.utils.array import array_namespace as eku_array_namespace
 
 from earthkit.data.core.index import Selection
-from earthkit.data.core.index import normalize_selection
+from earthkit.data.core.index import normalise_selection
 
 LOG = logging.getLogger(__name__)
 
@@ -176,7 +176,7 @@ class TensorCore(metaclass=ABCMeta):
         return self._subset(indexes)
 
     def sel(self, *args, remapping=None, **kwargs):
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs = normalise_selection(*args, **kwargs)
 
         r = {}
         for k, v in kwargs.items():
@@ -204,7 +204,7 @@ class TensorCore(metaclass=ABCMeta):
     def isel(self, *args, remapping=None, **kwargs):
         # print("isel", args, kwargs)
         # print("isel", self.coords)
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs = normalise_selection(*args, **kwargs)
 
         indexes = []
         for k, v in self.user_coords.items():
@@ -307,7 +307,7 @@ class FieldListTensor(TensorCore):
 
         if check_if_tensor_is_full:
             # consistency check
-            from earthkit.data.utils.xarray.check import CubeChecker
+            from earthkit.data.xr_engine.check import CubeChecker
 
             checker = CubeChecker(self)
             checker.check(details=True)
@@ -360,7 +360,16 @@ class FieldListTensor(TensorCore):
                 user_coords = CubeCoords(user_dims_and_coords)
             else:
                 user_coords = CubeCoords(
-                    ds.unique_values(*names, remapping=remapping, progress_bar=progress_bar)
+                    # ds.unique_values(*names, remapping=remapping, progress_bar=progress_bar)
+                    ds.unique(
+                        *names,
+                        sort=False,
+                        drop_none=True,
+                        squeeze=False,
+                        cache=False,
+                        remapping=remapping,
+                        progress_bar=progress_bar,
+                    )
                 )
                 for k, v in user_coords.items():
                     user_coords[k] = tuple(sorted(v))
@@ -371,14 +380,14 @@ class FieldListTensor(TensorCore):
         if field_dims_and_coords is not None:
             field_dims, field_coords = field_dims_and_coords
         else:
-            from earthkit.data.utils.xarray.grid import TensorGrid
+            from earthkit.data.xr_engine.grid import TensorGrid
 
             field_dims, field_coords, _ = TensorGrid.build(source[0], flatten_values)
 
         if not allow_holes:
             return cls(source, user_coords, field_coords, field_dims, flatten_values)
         else:
-            user_coords_to_fl_idx = source._user_coords_to_fl_idx(names, remapping=remapping)
+            user_coords_to_fl_idx = source._get_user_coords_to_fl_idx(names, remapping=remapping)
             return FieldListSparseTensor(
                 source, user_coords, field_coords, field_dims, flatten_values, user_coords_to_fl_idx
             )
@@ -493,8 +502,9 @@ class FieldListTensor(TensorCore):
 
     def make_valid_datetime(self, dims_map, dtype="datetime64[ns]"):
         # TODO: make it more general
+        # PW: TODO: make it more general - it could allow to use it when allow_holes=True
 
-        for k in ["valid_datetime", "valid_time"]:
+        for k in ["valid_time", "time.valid_datetime", "metadata.valid_time", "metadata.valid_datetime"]:
             if k in self.user_coords:
                 import datetime
 
@@ -503,10 +513,24 @@ class FieldListTensor(TensorCore):
         # in the tensor the dims.coords are GRIB keys
         # dims_map is a mapping from dim names to GRIB keys
         DIM_ROLES = {
-            "forecast_reference_time": ("forecast_reference_time", "base_datetime"),
-            "step": ("step_timedelta", "step", "ensStep", "stepRange"),
-            "date": ("date", "dataDate"),
-            "time": ("time", "dataTime"),
+            "forecast_reference_time": (
+                "forecast_reference_time",
+                "time.forecast_reference_time",
+                "time.base_datetime",
+                "metadata.base_datetime",
+                "metadata.indexing_datetime",
+                "metadata.indexing_time",
+            ),
+            "step": (
+                "step",
+                "time.step",
+                "metadata.step_timedelta",
+                "metadata.step",
+                "metadata.endStep",
+                "metadata.stepRange",
+            ),
+            "date": ("date", "metadata.dataDate"),
+            "time": ("time", "metadata.dataTime"),
         }
 
         # map dim roles to keys available in the tensor
@@ -552,10 +576,7 @@ class FieldListTensor(TensorCore):
                     }
 
                     vals = np.array(
-                        [
-                            datetime.datetime.fromisoformat(x)
-                            for x in self.source.sel(**other_coords).metadata("valid_datetime")
-                        ],
+                        [x for x in self.source.sel(**other_coords).get("time.valid_datetime")],
                         dtype=dtype,
                     )
 
@@ -567,7 +588,7 @@ class FieldListTensor(TensorCore):
                     import numpy as np
 
                     vals = np.array(
-                        [datetime.datetime.fromisoformat(x) for x in self.source.metadata("valid_datetime")],
+                        [x for x in self.source.get("time.valid_datetime")],
                         dtype=dtype,
                     )
 

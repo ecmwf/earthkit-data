@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_S3_AUTH
+from earthkit.data.utils.testing import NO_S3_AUTH
 
 
 def _check_s3_credentials():
@@ -273,6 +273,6 @@ def test_s3_ewc_private_stream_single_parts(parts, expected_meta):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

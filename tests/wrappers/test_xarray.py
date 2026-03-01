@@ -13,7 +13,7 @@ import pytest
 
 from earthkit.data import from_object
 from earthkit.data import wrappers
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 from earthkit.data.wrappers import xarray as xr_wrapper
 
 
@@ -41,14 +41,14 @@ def test_dataarray_wrapper():
     assert isinstance(_wrapper, xr_wrapper.XArrayDataArrayWrapper)
 
 
+# NOTE: XarrayFieldlist is not lazy now, and it is implemented in a completely
+# different way, so this test is not relevant anymore.
 @pytest.mark.no_eccodes
 def test_xarray_lazy_fieldlist_scan():
     import xarray as xr
 
     ds = from_object(xr.open_dataset(earthkit_examples_file("test.nc")))
-    assert ds._fields is None
     assert len(ds) == 2
-    assert len(ds._fields) == 2
 
 
 @pytest.mark.no_eccodes

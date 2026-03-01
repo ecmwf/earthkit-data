@@ -10,33 +10,55 @@
 
 from .. import Reader
 from .fieldlist import NetCDFFieldListFromFile
-from .fieldlist import NetCDFFieldListFromURL
+
+# class NetCDFFieldListFromFile(NetCDFFieldList, Reader):
+#     def __init__(self, source, path):
+#         Reader.__init__(self, source, path)
+#         super().__init__(path)
+
+#     def __repr__(self):
+#         return f"NetCDFFieldListFromFile({self.path})"
+
+#     # def write(self, f, **kwargs):
+#     #     import shutil
+
+#     #     with open(self.path, "rb") as s:
+#     #         shutil.copyfileobj(s, f, 1024 * 1024)
 
 
-class NetCDFFieldListReader(NetCDFFieldListFromFile, Reader):
-    def __init__(self, source, path):
-        Reader.__init__(self, source, path)
-        NetCDFFieldListFromFile.__init__(self, path)
+# class NetCDFFieldListFromURL(NetCDFFieldList):
+#     def __init__(self, url):
+#         self.url = url
+#         super().__init__(url)
 
-    def __repr__(self):
-        return "NetCDFFieldListReader(%s)" % (self.path,)
-
-    def mutate_source(self):
-        # A NetCDFReader is a source itself
-        return self
+#     def __repr__(self):
+#         return f"NetCDFFieldListFromURL({self.url})"
 
 
-class NetCDFFieldListUrlReader(NetCDFFieldListFromURL, Reader):
-    def __init__(self, source, url):
-        Reader.__init__(self, source, url)
-        NetCDFFieldListFromURL.__init__(self, url)
+# class NetCDFFieldListReader(NetCDFFieldListFromFile, Reader):
+#     def __init__(self, source, path):
+#         Reader.__init__(self, source, path)
+#         NetCDFFieldListFromFile.__init__(self, path)
 
-    def __repr__(self):
-        return "NetCDFFieldListUrlReader(%s)" % (self.path,)
+#     def __repr__(self):
+#         return f"NetCDFFieldListReader({self.path})"
 
-    # def mutate_source(self):
-    #     # A NetCDFReader is a source itself
-    #     return self
+#     def mutate_source(self):
+#         # A NetCDFReader is a source itself
+#         return self
+
+
+# class NetCDFFieldListUrlReader(NetCDFFieldListFromURL, Reader):
+#     def __init__(self, source, url):
+#         Reader.__init__(self, source, url)
+#         NetCDFFieldListFromURL.__init__(self, url)
+
+#     def __repr__(self):
+#         return "NetCDFFieldListUrlReader(%s)" % (self.path,)
+
+#     # def mutate_source(self):
+#     #     # A NetCDFReader is a source itself
+#     #     return self
 
 
 class NetCDFReader(Reader):
@@ -85,8 +107,9 @@ def _match_magic(magic, deeper_check):
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
-        fs = NetCDFFieldListReader(source, path)
-        if fs.has_fields():
+        fs = NetCDFFieldListFromFile(source, path)
+        print("NetCDF reader matched for %s" % path, fs)
+        if len(fs) > 0:
             return fs
         else:
             return NetCDFReader(source, path)

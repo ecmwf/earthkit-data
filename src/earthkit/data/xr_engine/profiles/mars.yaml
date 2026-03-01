@@ -1,0 +1,51 @@
+dim_roles:
+  member: metadata.number
+  date: metadata.date
+  time: metadata.time
+  step: time.step
+  forecast_reference_time: time.forecast_reference_time
+  valid_time: time.valid_time
+  level: metadata.levelist
+  level_type: metadata.levtype
+
+variable_key: metadata.param
+
+attrs_mode: unique
+
+attrs:
+- metadata.class
+- metadata.stream
+- metadata.levtype
+- metadata.type
+- metadata.expver
+- metadata.date
+- metadata.hdate
+- metadata.andate
+- metadata.time
+- metadata.antime
+- metadata.reference
+- metadata.anoffset
+- metadata.verify
+- metadata.fcmonth
+- metadata.fcperiod
+- metadata.leadtime
+- metadata.opttime
+- metadata.origin
+- metadata.domain
+- metadata.method
+- metadata.diagnostic
+- metadata.iteration
+- metadata.number
+- metadata.quantile
+- metadata.levelist
+
+variable_attrs:
+- metadata.param
+- metadata.cfName
+- metadata.name
+- metadata.paramId
+- parameter.units
+
+global_attrs:
+- Conventions: CF-1.8
+- institution: ECMWF

@@ -14,7 +14,7 @@ import sys
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_POLYTOPE
+from earthkit.data.utils.testing import NO_POLYTOPE
 
 
 def test_no_polytope_client(monkeypatch):

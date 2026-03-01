@@ -8,22 +8,8 @@
 #
 
 
-from earthkit.data.core.fieldlist import FieldList
+from earthkit.data.indexing.empty import EmptyFieldList
 
-
-class EmptySource(FieldList):
-    def ignore(self):
-        # Used by multi-source
-        return True
-
-    def __getitem__(self, key):
-        raise IndexError("Empty source")
-
-    def __len__(self):
-        return 0
-
-    def mutate_source(self):
-        return self
-
+EmptySource = EmptyFieldList
 
 source = EmptySource

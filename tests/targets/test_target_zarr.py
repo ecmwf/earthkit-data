@@ -17,7 +17,7 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.targets import to_target
-from earthkit.data.testing import NO_ZARR
+from earthkit.data.utils.testing import NO_ZARR
 
 
 @pytest.mark.skipif(NO_ZARR, reason="Zarr not installed")

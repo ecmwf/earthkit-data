@@ -29,12 +29,15 @@ class PandasMixIn:
         if latitude is not None or longitude is not None:
             filter = select_point
 
-        columns = ("lat", "lon", "value")
         frames = []
         for s in self:
-            df = pd.DataFrame.from_dict(filter(dict(zip(columns, s.data(columns, flatten=True)))))
-            df["datetime"] = s.datetime()["valid_time"]
-            for k, v in s.metadata(namespace="mars").items():
-                df[k] = v
+            lat, lon = s.geography.latlons(flatten=True)
+            d = {
+                "lat": lat,
+                "lon": lon,
+                "value": s.values.flatten(),
+            }
+            df = pd.DataFrame.from_dict(filter(d))
+            df["datetime"] = s.time.valid_datetime()
             frames.append(df)
         return pd.concat(frames)

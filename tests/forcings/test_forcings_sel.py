@@ -9,7 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
-
+import datetime
 import os
 import sys
 
@@ -25,19 +25,22 @@ from forcings_fixtures import load_forcings_fs  # noqa: E402
     "params,expected_meta",
     [
         (
-            dict(param="sin_longitude", valid_datetime="2020-05-13T18:00:00"),
-            [["sin_longitude", "2020-05-13T18:00:00"]],
+            {"parameter.variable": "sin_longitude", "time.valid_datetime": "2020-05-13T18:00:00"},
+            [["sin_longitude", datetime.datetime.fromisoformat("2020-05-13T18:00:00")]],
         ),
         (
-            dict(
-                param=["sin_longitude", "local_time"],
-                valid_datetime=["2020-05-14T06:00:00", "2020-05-13T18:00:00"],
-            ),
+            {
+                "parameter.variable": ["sin_longitude", "local_time"],
+                "time.valid_datetime": [
+                    datetime.datetime.fromisoformat("2020-05-14T06:00:00"),
+                    datetime.datetime.fromisoformat("2020-05-13T18:00:00"),
+                ],
+            },
             [
-                ["sin_longitude", "2020-05-13T18:00:00"],
-                ["local_time", "2020-05-13T18:00:00"],
-                ["sin_longitude", "2020-05-14T06:00:00"],
-                ["local_time", "2020-05-14T06:00:00"],
+                ["sin_longitude", datetime.datetime.fromisoformat("2020-05-13T18:00:00")],
+                ["local_time", datetime.datetime.fromisoformat("2020-05-13T18:00:00")],
+                ["sin_longitude", datetime.datetime.fromisoformat("2020-05-14T06:00:00")],
+                ["local_time", datetime.datetime.fromisoformat("2020-05-14T06:00:00")],
             ],
         ),
         (dict(param="invalidval"), []),
@@ -51,7 +54,7 @@ def test_forcings_sel_single_file_1(input_data, params, expected_meta):
     assert len(g) == len(expected_meta)
     if len(expected_meta) > 0:
         keys = list(params.keys())
-        assert g.metadata(keys) == expected_meta
+        assert g.get(keys) == expected_meta
     return
 
 
@@ -61,19 +64,19 @@ def test_forcings_sel_single_file_as_dict(input_data):
 
     g = ds.sel(
         {
-            "param": "sin_longitude",
-            "valid_datetime": ["2020-05-14T06:00:00", "2020-05-13T18:00:00"],
+            "parameter.variable": "sin_longitude",
+            "time.valid_datetime": ["2020-05-14T06:00:00", "2020-05-13T18:00:00"],
         }
     )
 
     assert len(g) == 2
-    assert g.metadata(["param", "valid_datetime"]) == [
-        ["sin_longitude", "2020-05-13T18:00:00"],
-        ["sin_longitude", "2020-05-14T06:00:00"],
+    assert g.get(["parameter.variable", "time.valid_datetime"]) == [
+        ["sin_longitude", datetime.datetime.fromisoformat("2020-05-13T18:00:00")],
+        ["sin_longitude", datetime.datetime.fromisoformat("2020-05-14T06:00:00")],
     ]
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

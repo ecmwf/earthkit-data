@@ -17,8 +17,8 @@ import sys
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -28,7 +28,7 @@ from forcings_fixtures import all_params  # noqa: E402
 def test_forcings_source_1():
     sample = from_source("file", earthkit_examples_file("test.grib"))
 
-    start = sample[0].datetime()["valid_time"]
+    start = sample[0].time.valid_datetime()
     first_step = 6
     last_step = 240
     step_increment = 6
@@ -51,14 +51,14 @@ def test_forcings_source_1():
     ref = [(d, p) for d, p in itertools.product(dates, params)]
     assert len(ds) == len(ref)
     for f, r in zip(ds, ref):
-        assert f.metadata("valid_datetime") == r[0].isoformat()
-        assert f.metadata("param") == r[1]
+        assert f.get("time.valid_datetime") == r[0]
+        assert f.get("parameter.variable") == r[1]
 
 
-def test_forcings_2():
+def test_forcings_source_2():
     sample = from_source("file", earthkit_examples_file("test.grib"))
 
-    start = sample[0].datetime()["valid_time"]
+    start = sample[0].time.valid_datetime()
     start = datetime.datetime(start.year, start.month, start.day)
     first_step = 1
     last_step = 10
@@ -81,14 +81,14 @@ def test_forcings_2():
     num = len(params) * len(dates) * 4
     assert len(ds) == num
 
-    ref = [(d, p) for d, p in itertools.product(ds.dates, params)]
+    ref = [(d, p) for d, p in itertools.product(ds._data.dates, params)]
     assert len(ds) == len(ref)
     for f, r in zip(ds, ref):
-        assert f.metadata("valid_datetime") == r[0].isoformat()
-        assert f.metadata("param") == r[1]
+        assert f.get("time.valid_datetime") == r[0]
+        assert f.get("parameter.variable") == r[1]
 
 
-def test_forcings_3():
+def test_forcings_source_3():
     sample = from_source("file", earthkit_test_data_file("t_time_series.grib"))
 
     dates = [
@@ -104,6 +104,7 @@ def test_forcings_3():
     ds = from_source(
         "forcings",
         sample,
+        date=dates,
         param=params,
     )
 
@@ -113,8 +114,8 @@ def test_forcings_3():
     ref = [(d, p) for d, p in itertools.product(dates, params)]
     assert len(ds) == len(ref)
     for f, r in zip(ds, ref):
-        assert f.metadata("valid_datetime") == r[0].isoformat()
-        assert f.metadata("param") == r[1]
+        assert f.get("time.valid_datetime") == r[0]
+        assert f.get("parameter.variable") == r[1]
 
 
 @pytest.mark.parametrize("lat_key,lon_key", [("latitudes", "longitudes"), ("latitude", "longitude")])
@@ -134,13 +135,9 @@ def test_forcings_from_lat_lon_core(lat_key, lon_key, filename):
 
     params = all_params
 
-    ll = sample[0].to_latlon()  # flatten=True is important here
-    lats = ll["lat"]
-    lons = ll["lon"]
-
     d = {}
-    d[lat_key] = lats
-    d[lon_key] = lons
+    d[lat_key] = sample[0].geography.latitudes()
+    d[lon_key] = sample[0].geography.longitudes()
 
     ds = from_source("forcings", **d, date=dates, param=params)
 
@@ -150,9 +147,9 @@ def test_forcings_from_lat_lon_core(lat_key, lon_key, filename):
     ref = [(d, p) for d, p in itertools.product(dates, params)]
     assert len(ds) == len(ref)
     for f, r in zip(ds, ref):
-        assert f.metadata("valid_datetime") == r[0].isoformat()
-        assert f.metadata("param") == r[1]
-        assert f.to_numpy().shape == lats.shape
+        assert f.get("time.valid_datetime") == r[0]
+        assert f.get("parameter.variable") == r[1]
+        assert f.to_numpy().shape == sample[0].shape
 
 
 def test_forcings_from_lat_lon_bad():
@@ -160,10 +157,8 @@ def test_forcings_from_lat_lon_bad():
 
     params = all_params
 
-    ll = sample[0].to_latlon()
-    lats = ll["lat"]
-    lons = ll["lon"]
-
+    lats = sample[0].geography.latitudes()
+    lons = sample[0].geography.longitudes()
     with pytest.raises(ValueError):
         from_source(
             "forcings",
@@ -191,6 +186,6 @@ def test_forcings_from_lat_lon_bad():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

@@ -54,7 +54,6 @@ class Iter(metaclass=ABCMeta):
         keys = self._flatten(args)
 
         r = self.data.order_by(*keys) if sort else self.data
-
         from itertools import groupby
 
         it = self._iterator(r)
@@ -79,15 +78,15 @@ class BasicIter(Iter):
     def _from_batch(self, obj, batch):
         if self.create is None:
             self.create = self._create(obj, batch)
+
         return self.create(batch)
 
     def _metadata(self, data, keys):
-        return lambda f: f._attributes(keys)
+        return lambda f: f.get(keys, output=dict)
 
 
 class IndexedIter(Iter):
     def _iterator(self, data):
-        print(f"{data=} {len(data)}")
         return iter(range(len(data)))
 
     def _from_batch(self, obj, batch):
@@ -96,7 +95,7 @@ class IndexedIter(Iter):
         return obj[batch]
 
     def _metadata(self, data, keys):
-        return lambda idx: data[idx]._attributes(keys)
+        return lambda idx: data[idx].get(keys, output=dict)
 
 
 def batched(data, n, mode="iter", create=None):

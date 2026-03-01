@@ -10,14 +10,15 @@
 #
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_examples_file
+from earthkit.data.utils.concat import concat
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_remote_examples_file
 
 
 def test_bufr_concat():
     ds1 = from_source("file", earthkit_examples_file("temp_10.bufr"))
     ds2 = from_source("url", earthkit_remote_examples_file("synop_10.bufr"))
-    ds = ds1 + ds2
+    ds = concat(ds1, ds2)
 
     assert len(ds) == 20
     md = [x._header("dataCategory") for x in ds1] + [x._header("dataCategory") for x in ds2]
@@ -25,6 +26,6 @@ def test_bufr_concat():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

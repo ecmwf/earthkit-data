@@ -12,7 +12,7 @@
 import numpy as np
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 def test_odb_to_pandas():
@@ -32,6 +32,6 @@ def test_odb_to_pandas():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

@@ -14,7 +14,7 @@ import pytest
 from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 @pytest.mark.parametrize(
@@ -67,6 +67,6 @@ def test_reader_padding_bytes(file_path, expected_type, expected_len):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

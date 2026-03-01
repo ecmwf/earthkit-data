@@ -11,10 +11,10 @@
 
 
 from earthkit.data import from_source
-from earthkit.data.testing import ARRAY_BACKENDS
-from earthkit.data.testing import ArrayBackend
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import ARRAY_BACKENDS
+from earthkit.data.utils.testing import ArrayBackend
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 def load_array_fieldlist(path, array_namespace=None, device=None, dtype=None, **kwargs):

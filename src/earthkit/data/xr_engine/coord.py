@@ -1,0 +1,206 @@
+# (C) Copyright 2020 ECMWF.
+#
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+# In applying this licence, ECMWF does not waive the privileges and immunities
+# granted to it by virtue of its status as an intergovernmental organisation
+# nor does it submit to any jurisdiction.
+#
+
+import datetime
+import logging
+
+import numpy as np
+
+from .dim import DATE_KEYS
+from .dim import DATETIME_KEYS
+from .dim import LEVEL_KEYS
+from .dim import MONTH_KEYS
+from .dim import STEP_KEYS
+from .dim import TIME_KEYS
+
+LOG = logging.getLogger(__name__)
+
+
+class Coord:
+    LOOKUP_NAME = None
+
+    def __init__(self, name, vals, dims=None, ds=None):
+        self.name = name
+        self.vals = vals
+        self.dims = dims
+        if not self.dims:
+            self.dims = (self.name,)
+
+    @staticmethod
+    def make(name, *args, **kwargs):
+        if name in DATETIME_KEYS:
+            return DateTimeCoord(name, *args, **kwargs)
+        elif name in DATE_KEYS:
+            return DateCoord(name, *args, **kwargs)
+        elif name in TIME_KEYS:
+            return TimeCoord(name, *args, **kwargs)
+        elif name in MONTH_KEYS:
+            return MonthCoord(name, *args, **kwargs)
+        elif name in STEP_KEYS:
+            return StepCoord(name, *args, **kwargs)
+        elif name in LEVEL_KEYS:
+            return LevelCoord(name, *args, **kwargs)
+        return Coord(name, *args, **kwargs)
+
+    def to_xr_var(self, profile):
+        import xarray
+
+        # LOG.debug(f"{self.name=}" + str(self.convert(profile)))
+
+        return xarray.Variable(
+            self.dims,
+            self.convert(profile),
+            self.attrs(profile),
+        )
+
+    def convert(self, profile):
+        return self.vals
+
+    def encoding(self, profile):
+        return {}
+
+    def attrs(self, profile):
+        attrs = profile.attrs.coord_attrs.get(self.name, {})
+        if not attrs and self.LOOKUP_NAME:
+            attrs = profile.attrs.coord_attrs.get(self.LOOKUP_NAME, {})
+        # PW: TODO: need to replace this somehow?
+        # if profile.add_earthkit_attrs and self.component:
+        #     attrs["_earthkit"] = {"keys": self.component[0], "values": self.component[1]}
+        return attrs
+
+    @staticmethod
+    def _to_datetime_list(vals):
+        import numpy as np
+
+        from earthkit.data.utils.dates import to_datetime_list
+
+        # datetime64 arrays are already in the required format
+        if isinstance(vals, np.ndarray):
+            if not np.issubdtype(vals.dtype, np.datetime64):
+                return to_datetime_list(vals.tolist())
+        else:
+            return to_datetime_list(vals)
+
+        return vals
+
+
+class DateTimeCoord(Coord):
+    def convert(self, profile):
+        return Coord._to_datetime_list(self.vals)
+
+    def attrs(self, profile):
+        attrs = profile.attrs.coord_attrs.get(self.name, {})
+        # PW: TODO: need to replace this somehow?
+        # if self.component:
+        #     attrs["_earthkit"] = {"keys": self.component[0]}
+        return attrs
+
+
+class DateCoord(Coord):
+    def convert(self, profile):
+        if profile.decode_times:
+            return Coord._to_datetime_list(self.vals)
+        return super().convert(profile)
+
+
+class TimeCoord(Coord):
+    def convert(self, profile):
+        if profile.decode_timedelta:
+            from earthkit.data.utils.dates import to_time
+            from earthkit.data.utils.dates import to_timedelta
+
+            return [to_timedelta(to_time(x)) for x in self.vals]
+        return super().convert(profile)
+
+    def encoding(self, profile):
+        if profile.decode_timedelta:
+            return ({"dtype": "timedelta64[s]"},)
+        return {}
+
+
+class StepCoord(Coord):
+    LOOKUP_NAME = "step"
+    resolution = None
+    RESOLUTION_UNITS = {
+        datetime.timedelta(hours=1): "hours",
+        datetime.timedelta(minutes=1): "minutes",
+        datetime.timedelta(seconds=1): "seconds",
+    }
+
+    def convert(self, profile):
+        if len(self.vals) == 0:
+            return self.vals
+        x = self.vals[0]
+        if isinstance(x, datetime.timedelta) or hasattr(x, "dtype") and np.issubdtype(x, np.timedelta64):
+            return self.vals
+
+        from earthkit.data.utils.dates import to_timedelta
+
+        vals = [to_timedelta(x) for x in self.vals]
+
+        if profile.decode_timedelta:
+            return vals
+        else:
+            from earthkit.data.utils.dates import timedeltas_to_int
+
+            vals, self.resolution = timedeltas_to_int(vals)
+
+        return vals
+
+    def encoding(self, profile):
+        if profile.decode_timedelta:
+            return ({"dtype": "timedelta64[s]"},)
+        return {}
+
+    def attrs(self, profile):
+        attrs = super().attrs(profile)
+        if self.resolution:
+            if self.resolution in self.RESOLUTION_UNITS:
+                attrs["units"] = self.RESOLUTION_UNITS[self.resolution]
+            else:
+                raise ValueError(f"Unsupported step resolution {self.resolution}")
+        return attrs
+
+
+class MonthCoord(Coord):
+    def attrs(self, profile):
+        attrs = super().attrs(profile)
+        attrs["units"] = "months"
+        return attrs
+
+
+class LevelCoord(Coord):
+    def __init__(self, name, vals, dims=None, ds=None, **kwargs):
+        self._level_type = {}
+        self._cf = None
+        if ds is not None:
+            self._cf = ds[0].vertical.cf()
+            for k in ["vertical.level_type", "metadata.typeOfLevel", "metadata.levtype"]:
+                v = ds[0]._get_fast(k)
+                if v is not None:
+                    self._level_type[k] = v
+
+        super().__init__(name, vals, dims, **kwargs)
+
+    def attrs(self, profile):
+        attrs = profile.attrs
+        conf = attrs.coord_attrs.get(self.name, {})
+        _attrs = {}
+        if conf:
+            keys = conf["keys"]
+            for key in keys:
+                level_type = self._level_type.get(key)
+                if level_type is None:
+                    continue
+                _attrs = conf.get(level_type)
+                if _attrs is not None:
+                    return _attrs
+        _attrs = self._cf
+        return _attrs
+        # raise ValueError(f"Cannot determine level type for coordinate {name}")

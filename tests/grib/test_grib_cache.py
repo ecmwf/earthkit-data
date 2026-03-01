@@ -17,8 +17,8 @@ import pytest
 
 from earthkit.data import config
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.utils.diag import field_cache_diag
+from earthkit.data.utils.testing import earthkit_examples_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -64,6 +64,7 @@ def _check_diag(diag, ref):
         assert diag[k] == v, f"{k}={diag[k]} != {v}"
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize("handle_cache_size", [1, 5])
 @pytest.mark.parametrize("serialise", [True, False])
 def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metadata_cache):
@@ -148,6 +149,7 @@ def test_grib_cache_basic_file_patched(handle_cache_size, serialise, patch_metad
         assert ds[0].handle == md._handle
 
 
+@pytest.mark.migrate
 def test_grib_cache_basic_file_non_patched():
     """This test is the same as test_grib_cache_basic but without the patch_metadata_cache fixture.
     So metadata cache hits and misses are not counted."""
@@ -220,6 +222,7 @@ def test_grib_cache_basic_file_non_patched():
         assert ds[0].handle == md._handle
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize("serialise", [True, False])
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 def test_grib_cache_basic_metadata_patched(serialise, fl_type, patch_metadata_cache):
@@ -289,6 +292,7 @@ def test_grib_cache_basic_metadata_patched(serialise, fl_type, patch_metadata_ca
             assert ds[0].handle == md._handle
 
 
+@pytest.mark.migrate
 def test_grib_cache_options_1(patch_metadata_cache):
     with config.temporary(
         {
@@ -381,6 +385,7 @@ def test_grib_cache_options_1(patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.migrate
 def test_grib_cache_options_2(patch_metadata_cache):
     with config.temporary(
         {
@@ -475,6 +480,7 @@ def test_grib_cache_options_2(patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.migrate
 def test_grib_cache_options_3(patch_metadata_cache):
     with config.temporary(
         {
@@ -567,6 +573,7 @@ def test_grib_cache_options_3(patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.migrate
 def test_grib_cache_options_4(patch_metadata_cache):
     with config.temporary(
         {
@@ -664,6 +671,7 @@ def test_grib_cache_options_4(patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.migrate
 def test_grib_cache_options_5(patch_metadata_cache):
     with config.temporary(
         {
@@ -763,6 +771,7 @@ def test_grib_cache_options_5(patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.migrate
 def test_grib_cache_options_6(patch_metadata_cache):
     with config.temporary(
         {
@@ -855,6 +864,7 @@ def test_grib_cache_options_6(patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.migrate
 def test_grib_cache_file_use_kwargs_1():
     _kwargs = {
         "grib_field_policy": "temporary",
@@ -883,6 +893,7 @@ def test_grib_cache_file_use_kwargs_1():
     _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.migrate
 def test_grib_cache_file_use_kwargs_2():
     _kwargs = {
         "grib-field-policy": "temporary",
@@ -895,6 +906,7 @@ def test_grib_cache_file_use_kwargs_2():
         from_source("file", earthkit_examples_file("tuv_pl.grib"), **_kwargs)
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 def test_grib_cache_metadata_use_kwargs_1(fl_type, patch_metadata_cache):
     with config.temporary(
@@ -937,6 +949,7 @@ def test_grib_cache_metadata_use_kwargs_1(fl_type, patch_metadata_cache):
         _check_diag(ds._cache_diag(), ref)
 
 
+@pytest.mark.migrate
 @pytest.mark.parametrize("fl_type", ["file", "array", "memory"])
 def test_grib_cache_metadata_use_kwargs_2(fl_type, patch_metadata_cache):
     with config.temporary(

@@ -15,14 +15,15 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.core.field import Field
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.encoders.grib import GribEncoder
 from earthkit.data.targets import to_target
 from earthkit.data.targets.file import FileTarget
-from earthkit.data.testing import NO_RIOXARRAY
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import NO_RIOXARRAY
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 @pytest.mark.parametrize(
@@ -46,7 +47,8 @@ def test_target_file_grib_core_non_stream(kwargs, direct_call):
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("parameter.variable") == ["2t", "msl"]
+        assert ds1.get("metadata.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
@@ -72,7 +74,7 @@ def test_target_file_grib_core_stream(kwargs, direct_call):
 
         ds1 = from_source("file", path)
         assert len(ds_ref) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("metadata.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
@@ -86,7 +88,7 @@ def test_target_file_grib_append():
 
         ds1 = from_source("file", path)
         assert len(ds1) == len(ds) * 2
-        assert ds1.metadata("shortName") == ["2t", "msl"] * 2
+        assert ds1.get("metadata.shortName") == ["2t", "msl"] * 2
         assert np.allclose(ds1.values[:2, :4], vals_ref)
         assert np.allclose(ds1.values[2:, :4], vals_ref)
 
@@ -113,17 +115,17 @@ def test_target_file_grib_encoder_from_suffix(suffix):
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("metadata.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
 @pytest.mark.parametrize(
     "kwargs",
     [
-        {"metadata": {"shortName": "2d", "bitsPerValue": 12}},
-        {"encoder": "grib", "metadata": {"shortName": "2d", "bitsPerValue": 12}},
-        {"encoder": GribEncoder(), "metadata": {"shortName": "2d", "bitsPerValue": 12}},
-        {"encoder": GribEncoder(metadata={"shortName": "2d", "bitsPerValue": 12})},
+        {"metadata": {"metadata.shortName": "2d", "metadata.bitsPerValue": 12}},
+        {"encoder": "grib", "metadata": {"metadata.shortName": "2d", "metadata.bitsPerValue": 12}},
+        {"encoder": GribEncoder(), "metadata": {"metadata.shortName": "2d", "metadata.bitsPerValue": 12}},
+        {"encoder": GribEncoder(metadata={"metadata.shortName": "2d", "metadata.bitsPerValue": 12})},
     ],
 )
 def test_target_file_grib_set_metadata(kwargs):
@@ -135,8 +137,8 @@ def test_target_file_grib_set_metadata(kwargs):
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2d", "2d"]
-        assert ds1.metadata("bitsPerValue") == [12, 12]
+        assert ds1.get("metadata.shortName") == ["2d", "2d"]
+        assert ds1.get("metadata.bitsPerValue") == [12, 12]
         assert np.allclose(ds1.values[:, :4], vals_ref, rtol=1e-1)
 
 
@@ -166,7 +168,7 @@ def test_target_file_grib_direct_api_with_path(per_field):
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("metadata.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
@@ -203,34 +205,7 @@ def test_target_file_grib_direct_api_with_object(per_field):
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
-        assert np.allclose(ds1.values[:, :4], vals_ref)
-
-
-def test_target_file_grib_save_compat():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    vals_ref = ds.values[:, :4]
-
-    with temp_file() as path:
-        ds.save(path)
-
-        ds1 = from_source("file", path)
-        assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
-        assert np.allclose(ds1.values[:, :4], vals_ref)
-
-
-def test_target_file_grib_write_compat():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
-    vals_ref = ds.values[:, :4]
-
-    with temp_file() as path:
-        with open(path, "wb") as f:
-            ds.write(f)
-
-        ds1 = from_source("file", path)
-        assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("metadata.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
@@ -243,8 +218,8 @@ def test_target_file_bufr():
         assert ds1[0].subset_count() == 1
         assert ds1[0].is_compressed() is False
         assert ds1[0].is_uncompressed() is False
-        assert ds1[0].metadata("dataCategory") == 2
-        assert ds1.metadata("dataCategory") == [2] * 10
+        assert ds1[0].get("dataCategory") == 2
+        assert ds1.get("dataCategory") == [2] * 10
 
 
 def test_target_file_odb():
@@ -265,7 +240,7 @@ def test_target_file_grib_to_netcdf_1():
 
         ds1 = from_source("file", path)
         assert len(ds1) == len(ds)
-        assert ds1.metadata("param") == ["2t", "msl"]
+        assert ds1.get("parameter.variable") == ["2t", "msl"]
 
         ds2 = ds1.to_xarray()
         assert "values" not in ds2.sizes
@@ -301,9 +276,9 @@ def test_target_file_grib_to_geotiff():
 
         ds1 = from_source("file", path)
         assert len(ds1) == len(ds)
-        from earthkit.data.readers.geotiff import GeoTIFFField
+        from earthkit.data import Field
 
-        assert isinstance(ds1[0], GeoTIFFField)
+        assert isinstance(ds1[0], Field)
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
 
@@ -318,9 +293,7 @@ def test_target_file_geotiff():
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        from earthkit.data.readers.geotiff import GeoTIFFField
-
-        assert isinstance(ds[0], GeoTIFFField)
+        assert isinstance(ds[0], Field)
 
 
 @pytest.mark.xfail(reason="Not implemented")
@@ -379,7 +352,7 @@ def test_writers_core():
 
         ds1 = from_source("file", path)
         assert len(ds) == len(ds1)
-        assert ds1.metadata("shortName") == ["2t", "msl"]
+        assert ds1.get("metadata.shortName") == ["2t", "msl"]
         assert np.allclose(ds1.values[:, :4], vals_ref)
 
     # write("file", ds, file=temp_file())

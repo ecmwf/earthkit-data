@@ -8,14 +8,17 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+import datetime
 
 import numpy as np
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
-from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.utils.xarray.fieldlist import XArrayInputFieldList
+from earthkit.data.utils.dates import to_datetime
+from earthkit.data.utils.dates import to_timedelta
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.xr_engine.fieldlist import XArrayInputFieldList
 
 
 def load_fieldlist(d):
@@ -81,8 +84,30 @@ def compare_coord(ds, name, ref_vals, mode="coord"):
         ref_vals = np.asarray(ref_vals).flatten()
 
         assert vals.shape == ref_vals.shape, f"{name=} {vals.shape} != {ref_vals.shape}"
+
         # datetime/timedelta 64
-        if np.issubdtype(vals.dtype, np.datetime64) or np.issubdtype(vals.dtype, np.timedelta64):
+        def _normalise_date(vals):
+            if type(vals[0]) is datetime.date:
+                vals = np.asarray([to_datetime(v) for v in vals])
+            elif type(vals[0]) is datetime.time:
+                vals = np.asarray([to_timedelta(v) for v in vals])
+            elif np.issubdtype(vals.dtype, np.datetime64):
+                vals = np.asarray([to_datetime(v) for v in vals])
+            elif np.issubdtype(vals.dtype, np.timedelta64):
+                vals = np.asarray([to_timedelta(v) for v in vals])
+            return vals
+
+        vals = _normalise_date(vals)
+        ref_vals = _normalise_date(ref_vals)
+
+        if (
+            np.issubdtype(vals.dtype, np.datetime64)
+            or np.issubdtype(vals.dtype, np.timedelta64)
+            or type(vals[0]) is datetime.datetime
+            or type(vals[0]) is datetime.timedelta
+            or type(vals[0]) is datetime.date
+            or type(vals[0]) is datetime.time
+        ):
             for i in range(len(ref_vals)):
                 assert vals[i] == ref_vals[i], f"{name=} {vals[i]} != {ref_vals[i]}"
         # other arrays
@@ -127,12 +152,12 @@ def load_grib_data(filename, source, stream=False, folder="example"):
 
     if source == "file":
         ds = from_source("file", path)
+        ds_ref = from_source("file", path)
     elif source == "url":
         ds = from_source("url", path)
+        ds_ref = from_source("url", path)
     else:
         raise ValueError("Invalid source={source}")
-
-    ds_ref = ds
 
     if stream:
         f = open(ds.path, "rb")

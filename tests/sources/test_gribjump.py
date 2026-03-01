@@ -19,8 +19,8 @@ import yaml
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.core.temporary import temp_env
-from earthkit.data.testing import NO_GRIBJUMP
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import NO_GRIBJUMP
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 @pytest.fixture
@@ -391,7 +391,7 @@ def test_gribjump_selection(seed_fdb):
     source = from_source("gribjump", request, indices=indices)
 
     arr_orig = source.to_numpy()
-    arr_subset = source.sel(step=6).to_numpy()
+    arr_subset = source.sel({"time.step": 6}).to_numpy()
 
     assert arr_subset.shape == (1, 7)
     assert np.allclose(arr_orig[[1]], arr_subset)
@@ -517,6 +517,6 @@ def test_gribjump_with_invalid_mask(seed_fdb):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

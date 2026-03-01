@@ -13,7 +13,7 @@ import datetime
 import itertools
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 all_params = [
     "latitude",
@@ -51,7 +51,7 @@ def load_forcings_fs(params=None, first_step=6, last_step=72, input_data="grib")
             "cos_local_time",
         ]
 
-    start = sample[0].datetime()["valid_time"]
+    start = sample[0].time.valid_datetime()
     step_increment = 6
     dates = []
     for step in range(first_step, last_step + step_increment, step_increment):
@@ -66,9 +66,8 @@ def load_forcings_fs(params=None, first_step=6, last_step=72, input_data="grib")
         )
     elif input_data == "latlon":
         d = {}
-        ll = sample[0].to_latlon()
-        d["latitudes"] = ll["lat"]
-        d["longitudes"] = ll["lon"]
+        d["latitudes"] = sample[0].geography.latitudes()
+        d["longitudes"] = sample[0].geography.longitudes()
         # d["date"] = sample[0].metadata("date")
         # d["param"] = sample[0].metadata("param")
         ds = from_source(
@@ -80,7 +79,9 @@ def load_forcings_fs(params=None, first_step=6, last_step=72, input_data="grib")
     else:
         raise ValueError(f"Unknown input_data: {input_data}")
 
-    assert len(ds) == len(dates) * len(params)
+    assert len(ds) == len(dates) * len(
+        params
+    ), f"Expected {len(dates) * len(params)} but got {len(ds)}, len(dates)={len(dates)}, len(params)={len(params)}"
 
-    md = [[d.isoformat(), p] for d, p in itertools.product(dates, params)]
+    md = [[d, p] for d, p in itertools.product(dates, params)]
     return ds, md

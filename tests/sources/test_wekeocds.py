@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_HDA
+from earthkit.data.utils.testing import NO_HDA
 
 CDS_TIMEOUT = pytest.CDS_TIMEOUT
 
@@ -97,6 +97,6 @@ def test_wekeo_netcdf():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

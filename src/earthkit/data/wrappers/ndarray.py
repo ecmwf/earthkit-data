@@ -18,6 +18,10 @@ class NumpyNDArrayWrapper(Wrapper):
     def __init__(self, data):
         self.data = data
 
+    @property
+    def values(self):
+        return self.data
+
     def to_numpy(self):
         """Return a numpy `ndarray` representation of the data.
 
@@ -26,6 +30,9 @@ class NumpyNDArrayWrapper(Wrapper):
         numpy.ndarray
         """
         return self.data
+
+    def to_pandas(self, **kwargs):
+        self._not_implemented()
 
     def to_xarray(self, **kwargs):
         """Return an xarray.DataArray representation of the data.

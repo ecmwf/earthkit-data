@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_ECFS
+from earthkit.data.utils.testing import NO_ECFS
 
 
 @pytest.mark.long_test
@@ -28,6 +28,6 @@ def test_ecfs_download():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

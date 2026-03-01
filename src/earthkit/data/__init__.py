@@ -15,25 +15,27 @@ except ImportError:  # pragma: no cover
     # Local copy or not installed with setuptools
     __version__ = "999"
 
-from earthkit.utils import array as array_api
-
 from earthkit.data.translators import transform
 from earthkit.data.wrappers import get_wrapper as from_object
 
 from .arguments.transformers import ALL
 from .core.caching import CACHE as cache
 from .core.config import CONFIG as config
-from .core.fieldlist import Field
+from .core.field import Field
 from .core.fieldlist import FieldList
+from .core.fieldlist import create_fieldlist
 from .encoders import create_encoder
-from .indexing.fieldlist import SimpleFieldList
-from .readers.grib.output import new_grib_output
+from .indexing.simple import SimpleFieldList
+
+# from .readers.grib.output import new_grib_output
 from .sources import Source
 from .sources import from_source
 from .sources import from_source_lazily
-from .sources.array_list import ArrayField
+
+# from .sources.array_list import ArrayField
 from .targets import create_target
 from .targets import to_target
+from .utils.concat import concat
 from .utils.examples import download_example_file
 from .utils.examples import remote_example_file
 
@@ -41,10 +43,10 @@ settings = config
 
 __all__ = [
     "ALL",
-    "array_api",
-    "ArrayField",
     "cache",
+    "concat",
     "create_encoder",
+    "create_fieldlist",
     "create_target",
     "download_example_file",
     "Field",
@@ -53,7 +55,6 @@ __all__ = [
     "from_source_lazily",
     "from_object",
     "transform",
-    "new_grib_output",
     "remote_example_file",
     "config",
     "settings",

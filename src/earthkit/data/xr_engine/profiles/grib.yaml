@@ -1,0 +1,23 @@
+dim_roles:
+  member: metadata.number
+  date: metadata.date
+  time: metadata.time
+  step: time.step
+  forecast_reference_time: time.forecast_reference_time
+  valid_time: time.valid_time
+  level: metadata.level
+  level_type: metadata.typeOfLevel
+
+variable_key: metadata.param
+
+attrs_mode: fixed
+
+variable_attrs:
+- metadata.cfName
+- metadata.name
+- parameter.units
+- metadata.typeOfLevel
+
+global_attrs:
+- Conventions: CF-1.8
+- institution: ECMWF

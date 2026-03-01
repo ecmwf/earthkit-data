@@ -9,14 +9,11 @@
 # nor does it submit to any jurisdiction.
 #
 
-import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.testing import write_to_file
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 def test_grib_from_memory_single():
@@ -24,9 +21,9 @@ def test_grib_from_memory_single():
         data = f.read()
         fs = from_source("memory", data)
         assert len(fs) == 1
-        sn = fs.metadata("param")
+        sn = fs.get("parameter.variable")
         assert sn == ["2t"]
-        assert fs[0].metadata("shortName") == "2t"
+        assert fs[0].get("parameter.variable") == "2t"
 
 
 def test_grib_from_memory_multi():
@@ -34,10 +31,10 @@ def test_grib_from_memory_multi():
         data = f.read()
         fs = from_source("memory", data)
         assert len(fs) == 2
-        sn = fs.metadata("param")
+        sn = fs.get("parameter.variable")
         assert sn == ["2t", "msl"]
-        assert fs[0].metadata("shortName") == "2t"
-        assert fs[1].metadata("shortName") == "msl"
+        assert fs[0].get("parameter.variable") == "2t"
+        assert fs[1].get("parameter.variable") == "msl"
 
 
 def test_grib_from_memory_padding():
@@ -45,24 +42,23 @@ def test_grib_from_memory_padding():
         data = f.read()
         fs = from_source("memory", data)
         assert len(fs) == 2
-        sn = fs.metadata("param")
+        sn = fs.get("parameter.variable")
         assert sn == ["2t", "msl"]
-        assert fs[0].metadata("shortName") == "2t"
-        assert fs[1].metadata("shortName") == "msl"
+        assert fs[0].get("parameter.variable") == "2t"
+        assert fs[1].get("parameter.variable") == "msl"
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_when_loaded_from_memory(write_method):
+def test_grib_save_when_loaded_from_memory():
     with open(earthkit_test_data_file("test_single.grib"), "rb") as f:
         data = f.read()
         fs = from_source("memory", data)
         with temp_file() as tmp:
-            write_to_file(write_method, tmp, fs)
+            fs.to_target("file", tmp)
             fs_saved = from_source("file", tmp)
             assert len(fs) == len(fs_saved)
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

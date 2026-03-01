@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
 @pytest.mark.long_test
@@ -56,7 +56,7 @@ def test_netcdf_to_xarray_args():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     # test_datetime()
     main(__file__)

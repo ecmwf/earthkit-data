@@ -18,11 +18,9 @@ from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.sources.stream import StreamFieldList
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
-from earthkit.data.testing import make_tgz
-from earthkit.data.testing import write_to_file
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import make_tgz
 
 
 def repeat_list_items(items, count):
@@ -50,7 +48,7 @@ def test_grib_file_stream_iter():
     ]
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == ref[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
         cnt += 1
 
     assert cnt == len(ref)
@@ -81,7 +79,7 @@ def test_grib_file_stream_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("parameter.variable") == expected_meta[i]
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -90,7 +88,7 @@ def test_grib_file_stream_batched(_kwargs, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
+@pytest.mark.parametrize("group", ["vertical.level", ["vertical.level", "metadata.gridType"]])
 def test_grib_file_stream_group_by(group):
     ds = from_source("file", earthkit_examples_file("test6.grib"), stream=True)
 
@@ -105,7 +103,7 @@ def test_grib_file_stream_group_by(group):
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 3
-        assert f.metadata(("param", "level")) == ref[i]
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i]
         assert f.to_fieldlist(array_namespace="numpy") is not f
         cnt += 1
 
@@ -129,11 +127,11 @@ def test_grib_file_stream_in_memory():
     ref = ["t", "u", "v", "t", "u", "v"]
 
     # iteration
-    val = [f.metadata(("param")) for f in ds]
+    val = [f.get(("parameter.variable")) for f in ds]
     assert val == ref, "iteration"
 
     # metadata
-    val = ds.metadata("param")
+    val = ds.get("parameter.variable")
     assert val == ref, "method"
 
     # data
@@ -154,8 +152,7 @@ def test_grib_file_stream_in_memory():
     assert np.allclose(vals, ref)
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_when_loaded_from_file_stream(write_method):
+def test_grib_save_when_loaded_from_file_stream():
     ds = from_source(
         "file",
         earthkit_examples_file("test6.grib"),
@@ -164,7 +161,7 @@ def test_grib_save_when_loaded_from_file_stream(write_method):
     )
     assert len(ds) == 6
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
+        ds.to_target("file", tmp)
         ds_saved = from_source("file", tmp)
         assert len(ds) == len(ds_saved)
 
@@ -203,7 +200,7 @@ def test_grib_file_stream_multi_file_iter():
     ]
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == ref[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
         cnt += 1
 
     assert cnt == len(ref)
@@ -238,7 +235,7 @@ def test_grib_file_stream_multi_file_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get("parameter.variable") == expected_meta[i]
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -269,11 +266,11 @@ def test_grib_file_stream_multi_file_memory():
         ("z", 850),
     ]
     # iteration
-    val = [f.metadata(("param", "level")) for f in ds]
+    val = [f.get(("parameter.variable", "vertical.level")) for f in ds]
     assert val == md_ref, "iteration"
 
     # metadata
-    val = ds.metadata(("param", "level"))
+    val = ds.get(("parameter.variable", "vertical.level"))
     assert val == md_ref, "method"
 
     # data
@@ -301,17 +298,17 @@ def test_grib_file_stream_multi_file_memory():
     # slicing
     r = ds[0:3]
     assert len(r) == 3
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == md_ref[0:3]
 
     r = ds[-2:]
     assert len(r) == 2
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == md_ref[-2:]
 
-    r = ds.sel(param="t")
+    r = ds.sel({"parameter.variable": "t"})
     assert len(r) == 2
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == [
         ("t", 500),
         ("t", 850),
@@ -352,7 +349,7 @@ def test_grib_file_stream_single_file_parts_core(path, parts, expected_meta, rem
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -384,7 +381,7 @@ def test_grib_file_stream_single_file_parts_as_arg_valid(parts, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -452,7 +449,7 @@ def test_grib_file_stream_multi_file_parts(parts1, parts2, expected_meta):
 
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == expected_meta[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == expected_meta[i], i
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -461,13 +458,12 @@ def test_grib_file_stream_multi_file_parts(parts1, parts2, expected_meta):
     assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_file_stream_glob(write_method):
+def test_grib_file_stream_glob():
     s1 = from_source("file", earthkit_examples_file("test.grib"))
     s2 = from_source("file", earthkit_examples_file("test4.grib"))
     with temp_directory() as tmpdir:
-        write_to_file(write_method, os.path.join(tmpdir, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir, "b.grib"))
 
         ds = from_source("file", os.path.join(tmpdir, "*a.grib"), stream=True)
 
@@ -481,7 +477,7 @@ def test_grib_file_stream_glob(write_method):
         ]
         cnt = 0
         for i, f in enumerate(ds):
-            assert f.metadata(("param", "level")) == ref[i], i
+            assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
             cnt += 1
 
         assert cnt == len(ref)
@@ -490,13 +486,12 @@ def test_grib_file_stream_glob(write_method):
         assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_file_stream_single_directory(write_method):
+def test_grib_file_stream_single_directory():
     s1 = from_source("file", earthkit_examples_file("test.grib"))
     s2 = from_source("file", earthkit_examples_file("test4.grib"))
     with temp_directory() as tmpdir:
-        write_to_file(write_method, os.path.join(tmpdir, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir, "b.grib"))
 
         ds = from_source("file", tmpdir, stream=True)
 
@@ -514,7 +509,7 @@ def test_grib_file_stream_single_directory(write_method):
         ]
         cnt = 0
         for i, f in enumerate(ds):
-            assert f.metadata(("param", "level")) == ref[i], i
+            assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
             cnt += 1
 
         assert cnt == len(ref)
@@ -523,19 +518,17 @@ def test_grib_file_stream_single_directory(write_method):
         assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_file_stream_multi_directory(write_method):
+def test_grib_file_stream_multi_directory():
     s1 = from_source("file", earthkit_examples_file("test.grib"))
     s2 = from_source("file", earthkit_examples_file("test4.grib"))
     s3 = from_source("file", earthkit_examples_file("test6.grib"))
     with temp_directory() as tmpdir1:
-        write_to_file(write_method, os.path.join(tmpdir1, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir1, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir1, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
 
         with temp_directory() as tmpdir2:
-            write_to_file(write_method, os.path.join(tmpdir2, "a.grib"), s1)
-            write_to_file(write_method, os.path.join(tmpdir2, "b.grib"), s3)
-
+            s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
+            s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
             ds = from_source("file", [tmpdir1, tmpdir2], stream=True)
 
             ref = [
@@ -557,7 +550,7 @@ def test_grib_file_stream_multi_directory(write_method):
 
             cnt = 0
             for i, f in enumerate(ds):
-                assert f.metadata(("param", "level")) == ref[i], i
+                assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
                 cnt += 1
 
             assert cnt == len(ref)
@@ -567,13 +560,12 @@ def test_grib_file_stream_multi_directory(write_method):
 
 
 @pytest.mark.parametrize("filter_kwarg", [(lambda x: "b.grib" in x), ("*b.grib")])
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_file_stream_single_directory_filter(filter_kwarg, write_method):
+def test_grib_file_stream_single_directory_filter(filter_kwarg):
     s1 = from_source("file", earthkit_examples_file("test.grib"))
     s2 = from_source("file", earthkit_examples_file("test4.grib"))
     with temp_directory() as tmpdir:
-        write_to_file(write_method, os.path.join(tmpdir, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir, "b.grib"))
 
         ds = from_source("file", tmpdir, filter=filter_kwarg, stream=True)
 
@@ -586,7 +578,7 @@ def test_grib_file_stream_single_directory_filter(filter_kwarg, write_method):
 
         cnt = 0
         for i, f in enumerate(ds):
-            assert f.metadata(("param", "level")) == ref[i], i
+            assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
             cnt += 1
 
         assert cnt == len(ref)
@@ -596,18 +588,17 @@ def test_grib_file_stream_single_directory_filter(filter_kwarg, write_method):
 
 
 @pytest.mark.parametrize("filter_kwarg", [(lambda x: "b.grib" in x), ("*b.grib")])
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_file_stream_multi_directory_filter(filter_kwarg, write_method):
+def test_grib_file_stream_multi_directory_filter(filter_kwarg):
     s1 = from_source("file", earthkit_examples_file("test.grib"))
     s2 = from_source("file", earthkit_examples_file("test4.grib"))
     s3 = from_source("file", earthkit_examples_file("test6.grib"))
     with temp_directory() as tmpdir1:
-        write_to_file(write_method, os.path.join(tmpdir1, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir1, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir1, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
 
         with temp_directory() as tmpdir2:
-            write_to_file(write_method, os.path.join(tmpdir2, "a.grib"), s1)
-            write_to_file(write_method, os.path.join(tmpdir2, "b.grib"), s3)
+            s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
+            s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
 
             ds = from_source("file", [tmpdir1, tmpdir2], filter=filter_kwarg, stream=True)
 
@@ -626,7 +617,7 @@ def test_grib_file_stream_multi_directory_filter(filter_kwarg, write_method):
 
             cnt = 0
             for i, f in enumerate(ds):
-                assert f.metadata(("param", "level")) == ref[i], i
+                assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
                 cnt += 1
 
             assert cnt == len(ref)
@@ -635,18 +626,17 @@ def test_grib_file_stream_multi_directory_filter(filter_kwarg, write_method):
             assert sum([1 for _ in ds]) == 0
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_file_stream_multi_directory_with_tar(write_method):
+def test_grib_file_stream_multi_directory_with_tar():
     s1 = from_source("file", earthkit_examples_file("test.grib"))
     s2 = from_source("file", earthkit_examples_file("test4.grib"))
     s3 = from_source("file", earthkit_examples_file("test6.grib"))
     with temp_directory() as tmpdir1:
-        write_to_file(write_method, os.path.join(tmpdir1, "a.grib"), s1)
-        write_to_file(write_method, os.path.join(tmpdir1, "b.grib"), s2)
+        s1.to_target("file", os.path.join(tmpdir1, "a.grib"))
+        s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
 
         with temp_directory() as tmpdir2:
-            write_to_file(write_method, os.path.join(tmpdir2, "a.grib"), s1)
-            write_to_file(write_method, os.path.join(tmpdir2, "b.grib"), s3)
+            s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
+            s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
 
             paths = [os.path.join(tmpdir2, f) for f in ["a.grib", "b.grib"]]
             make_tgz(tmpdir2, "test.tar.gz", paths)
@@ -680,7 +670,7 @@ def test_grib_file_stream_multi_directory_with_tar(write_method):
 
             cnt = 0
             for i, f in enumerate(ds):
-                assert f.metadata(("param", "level")) == ref[i], i
+                assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
                 cnt += 1
 
             assert cnt == len(ref)
@@ -690,6 +680,6 @@ def test_grib_file_stream_multi_directory_with_tar(write_method):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

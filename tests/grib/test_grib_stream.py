@@ -12,14 +12,13 @@
 import numpy as np
 import pytest
 
+from earthkit.data import concat
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.sources.stream import StreamFieldList
-from earthkit.data.testing import ARRAY_BACKENDS
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_examples_file
-from earthkit.data.testing import write_to_file
+from earthkit.data.utils.testing import ARRAY_BACKENDS
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_remote_examples_file
 
 
 def repeat_list_items(items, count):
@@ -60,7 +59,7 @@ def test_grib_from_stream_iter():
         ]
 
         for i, f in enumerate(ds):
-            assert f.metadata(("param", "level")) == ref[i], i
+            assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
 
         # stream consumed, no data is available
         assert sum([1 for _ in ds]) == 0
@@ -84,7 +83,7 @@ def test_grib_from_stream_batched(_kwargs, expected_meta):
 
         for i, f in enumerate(ds.batched(_kwargs["n"])):
             assert len(f) == len(expected_meta[i])
-            f.metadata("param") == expected_meta[i]
+            f.get("parameter.variable") == expected_meta[i]
 
         # stream consumed, no data is available
         assert sum([1 for _ in ds]) == 0
@@ -121,11 +120,11 @@ def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shap
 
         for i, f in enumerate(ds.batched(2)):
             df = f.to_fieldlist(array_namespace="numpy", **convert_kwargs)
-            assert df.metadata(("param", "level")) == ref[i], i
+            assert df.get(("parameter.variable", "vertical.level")) == ref[i], i
             assert df.to_numpy(**convert_kwargs).shape == expected_shape, i
             df1 = df.to_fieldlist(array_namespace="numpy", **convert_kwargs)
             assert df1 is not df, i
-            assert df1.metadata(("param", "level")) == ref[i], i
+            assert df1.get(("parameter.variable", "vertical.level")) == ref[i], i
             assert df1.to_numpy(**convert_kwargs).shape == expected_shape, i
 
         # stream consumed, no data is available
@@ -133,7 +132,7 @@ def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shap
 
 
 @pytest.mark.parametrize("array_backend", ARRAY_BACKENDS)
-@pytest.mark.parametrize("group", ["level", ["level", "gridType"]])
+@pytest.mark.parametrize("group", ["vertical.level", ["vertical.level", "metadata.gridType"]])
 def test_grib_from_stream_group_by(array_backend, group):
     array_namespace, device, dtype = array_backend
 
@@ -150,7 +149,7 @@ def test_grib_from_stream_group_by(array_backend, group):
         ]
         for i, f in enumerate(ds.group_by(group)):
             assert len(f) == 3
-            assert f.metadata(("param", "level")) == ref[i]
+            assert f.get(("parameter.variable", "vertical.level")) == ref[i]
             afl = f.to_fieldlist(array_namespace=array_namespace, device=device, dtype=dtype)
             assert afl is not f
             assert len(afl) == 3
@@ -170,7 +169,7 @@ def test_grib_from_stream_group_by(array_backend, group):
     ],
 )
 def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_shape):
-    group = "level"
+    group = "vertical.level"
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         ds = from_source("stream", stream)
 
@@ -189,12 +188,12 @@ def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_sha
         for i, f in enumerate(ds.group_by(group)):
             df = f.to_fieldlist(array_namespace="numpy", **convert_kwargs)
             assert len(df) == 3
-            assert df.metadata(("param", "level")) == ref[i]
+            assert df.get(("parameter.variable", "vertical.level")) == ref[i]
             assert df.to_numpy(**convert_kwargs).shape == expected_shape
             df1 = df.to_fieldlist(array_namespace="numpy", **convert_kwargs)
             assert df1 is not df
             assert len(df1) == 3
-            assert df1.metadata(("param", "level")) == ref[i]
+            assert df1.get(("parameter.variable", "vertical.level")) == ref[i]
             assert df1.to_numpy(**convert_kwargs).shape == expected_shape
 
         # stream consumed, no data is available
@@ -222,11 +221,11 @@ def test_grib_from_stream_in_memory():
         ]
 
         # iteration
-        val = [f.metadata(("param", "level")) for f in ds]
+        val = [f.get(("parameter.variable", "vertical.level")) for f in ds]
         assert val == md_ref, "iteration"
 
         # metadata
-        val = ds.metadata(("param", "level"))
+        val = ds.get(("parameter.variable", "vertical.level"))
         assert val == md_ref, "method"
 
         # data
@@ -249,17 +248,17 @@ def test_grib_from_stream_in_memory():
         # slicing
         r = ds[0:3]
         assert len(r) == 3
-        val = r.metadata(("param", "level"))
+        val = r.get(("parameter.variable", "vertical.level"))
         assert val == md_ref[0:3]
 
         r = ds[-2:]
         assert len(r) == 2
-        val = r.metadata(("param", "level"))
+        val = r.get(("parameter.variable", "vertical.level"))
         assert val == md_ref[-2:]
 
-        r = ds.sel(param="t")
+        r = ds.sel({"parameter.variable": "t"})
         assert len(r) == 2
-        val = r.metadata(("param", "level"))
+        val = r.get(("parameter.variable", "vertical.level"))
         assert val == [
             ("t", 1000),
             ("t", 850),
@@ -282,14 +281,14 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
 
         assert len(ds) == 6
 
-        ref = ["t", "u", "v", "t", "u", "v"]
+        ref = [("t", 1000), ("u", 1000), ("v", 1000), ("t", 850), ("u", 850), ("v", 850)]
 
         # iteration
-        val = [f.metadata("param") for f in ds]
+        val = [f.get(("parameter.variable", "vertical.level")) for f in ds]
         assert val == ref, "iteration"
 
         # metadata
-        val = ds.metadata("param")
+        val = ds.get(("parameter.variable", "vertical.level"))
         assert val == ref, "method"
 
         # data
@@ -319,13 +318,12 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
         assert ds1.to_numpy(**convert_kwargs).shape == expected_shape
 
 
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_save_when_loaded_from_stream(write_method):
+def test_grib_save_when_loaded_from_stream():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
         fs = from_source("stream", stream, read_all=True)
         assert len(fs) == 6
         with temp_file() as tmp:
-            write_to_file(write_method, tmp, fs)
+            fs.to_target("file", tmp)
             fs_saved = from_source("file", tmp)
             assert len(fs) == len(fs_saved)
 
@@ -351,7 +349,7 @@ def test_grib_multi_from_stream_iter():
     ]
 
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == ref[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
 
     # stream consumed, no data is available
     assert sum([1 for _ in ds]) == 0
@@ -380,7 +378,7 @@ def test_grib_multi_grib_from_stream_batched(_kwargs, expected_meta):
     cnt = 0
     for i, f in enumerate(ds.batched(_kwargs["n"])):
         assert len(f) == len(expected_meta[i])
-        f.metadata("param") == expected_meta[i]
+        f.get(("parameter.variable", "vertical.level")) == expected_meta[i]
         cnt += 1
 
     assert cnt == len(expected_meta)
@@ -405,11 +403,11 @@ def test_grib_multi_stream_memory():
         ("z", 850),
     ]
     # iteration
-    val = [f.metadata(("param", "level")) for f in ds]
+    val = [f.get(("parameter.variable", "vertical.level")) for f in ds]
     assert val == md_ref, "iteration"
 
     # metadata
-    val = ds.metadata(("param", "level"))
+    val = ds.get(("parameter.variable", "vertical.level"))
     assert val == md_ref, "method"
 
     # data
@@ -437,17 +435,17 @@ def test_grib_multi_stream_memory():
     # slicing
     r = ds[0:3]
     assert len(r) == 3
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == md_ref[0:3]
 
     r = ds[-2:]
     assert len(r) == 2
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == md_ref[-2:]
 
-    r = ds.sel(param="t")
+    r = ds.sel({"parameter.variable": "t"})
     assert len(r) == 2
-    val = r.metadata(("param", "level"))
+    val = r.get(("parameter.variable", "vertical.level"))
     assert val == [
         ("t", 500),
         ("t", 850),
@@ -460,7 +458,7 @@ def test_grib_concat_stream():
     ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True)
     ds3 = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True)
 
-    ds = ds1 + ds2 + ds3
+    ds = concat(ds1, ds2, ds3)
 
     ref = [
         ("2t", 0),
@@ -478,7 +476,7 @@ def test_grib_concat_stream():
     ]
     cnt = 0
     for i, f in enumerate(ds):
-        assert f.metadata(("param", "level")) == ref[i], i
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i], i
         cnt += 1
 
     assert cnt == len(ref)
@@ -493,7 +491,7 @@ def test_grib_concat_stream_memory():
     ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True, read_all=True)
     ds3 = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True, read_all=True)
 
-    ds = ds1 + ds2 + ds3
+    ds = concat(ds1, ds2, ds3)
 
     ref = [
         ("2t", 0),
@@ -511,14 +509,14 @@ def test_grib_concat_stream_memory():
     ]
 
     assert len(ds) == len(ref)
-    assert ds.metadata(("param", "level")) == ref
+    assert ds.get(("parameter.variable", "vertical.level")) == ref
 
     # repeat the test to check that data is still in memory
     assert len(ds) == len(ref)
-    assert ds.metadata(("param", "level")) == ref
+    assert ds.get(("parameter.variable", "vertical.level")) == ref
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

@@ -12,9 +12,9 @@
 
 import pytest
 
-from earthkit.data.core.order import normalize_order_by
+from earthkit.data.core.order import normalise_order_by
 
-to_kwargs = normalize_order_by
+to_kwargs = normalise_order_by
 
 
 def test_order_1():
@@ -57,6 +57,6 @@ def test_order_must_fail():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

@@ -13,6 +13,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+from earthkit.data import concat
 from earthkit.data.sources import Source
 from earthkit.data.sources import from_source
 from earthkit.data.sources.empty import EmptySource
@@ -32,9 +33,9 @@ class HiveFilePattern(Source):
         _hive_diag: Optional[TypingAny] = None,
         **kwargs: TypingAny,
     ) -> Union[EmptySource, MultiSource]:
-        from earthkit.data.core.index import normalize_selection
+        from earthkit.data.core.index import normalise_selection
 
-        kwargs = normalize_selection(*args, **kwargs)
+        kwargs, _ = normalise_selection(*args, **kwargs)
 
         rest = {k: v for k, v in kwargs.items() if k not in self.scanner.params}
         for k in rest:
@@ -44,7 +45,7 @@ class HiveFilePattern(Source):
             out = EmptySource()
             for f in self.scanner.scan(**kwargs):
                 ds = from_source("file", f)
-                out += ds.sel(**rest)
+                out = concat(out, ds.sel(**rest))
                 if _hive_diag:
                     _hive_diag.file(1)
                     _hive_diag.sel(1)

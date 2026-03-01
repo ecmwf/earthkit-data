@@ -11,17 +11,17 @@
 
 import pytest
 
+from earthkit.data import Field
 from earthkit.data import from_source
-from earthkit.data.readers.netcdf.field import XArrayField
-from earthkit.data.testing import NO_ZARR
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import NO_ZARR
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 @pytest.mark.skipif(NO_ZARR, reason="Zarr not installed")
 def test_zarr_source():
     ds = from_source("zarr", earthkit_test_data_file("test_zarr/"))
     assert len(ds) == 4
-    assert isinstance(ds[0], XArrayField)
-    assert isinstance(ds[1], XArrayField)
-    assert isinstance(ds[2], XArrayField)
-    assert isinstance(ds[3], XArrayField)
+    assert isinstance(ds[0], Field)
+    assert isinstance(ds[1], Field)
+    assert isinstance(ds[2], Field)
+    assert isinstance(ds[3], Field)

@@ -11,11 +11,11 @@
 
 import pytest
 
+from earthkit.data import Field
 from earthkit.data import from_source
-from earthkit.data.readers.netcdf.field import XArrayField
-from earthkit.data.testing import NO_IRIS
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import NO_IRIS
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 @pytest.mark.skip("Disabled at the moment")
@@ -23,7 +23,7 @@ from earthkit.data.testing import earthkit_test_data_file
 def test_iris_source():
     ds = from_source("iris", earthkit_examples_file("air_temp.pp"))
     assert len(ds) == 1
-    assert isinstance(ds[0], XArrayField)
+    assert isinstance(ds[0], Field)
     assert ds[0].metadata("standard_name") == "air_temperature"
 
 
@@ -32,7 +32,7 @@ def test_iris_source():
 def test_iris_source_wind():
     ds = from_source("iris", earthkit_test_data_file("wind_speed.pp"))
     assert len(ds) == 2
-    assert isinstance(ds[0], XArrayField)
-    assert isinstance(ds[1], XArrayField)
+    assert isinstance(ds[0], Field)
+    assert isinstance(ds[1], Field)
     assert ds[0].metadata("standard_name") == "x_wind"
     assert ds[1].metadata("standard_name") == "y_wind"

@@ -1,7 +1,7 @@
 name: earthkit-data
 channels:
 - conda-forge
-- nodefaults
+- nodefault
 dependencies:
 - eccodes=>2.35.0
 - python-eccodes>=1.7.0

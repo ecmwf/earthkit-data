@@ -17,10 +17,10 @@ from earthkit.utils.array.testing.testing import NO_TORCH
 
 from earthkit.data import FieldList
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
-@pytest.mark.parametrize("_kwargs", [{}, {"array_backend": "numpy"}, {"array_namespace": "numpy"}])
+@pytest.mark.parametrize("_kwargs", [{}, {"array_namespace": "numpy"}])
 def test_grib_file_numpy_backend(_kwargs):
     _NUMPY = eku_array_namespace("numpy")
 
@@ -30,7 +30,6 @@ def test_grib_file_numpy_backend(_kwargs):
     assert getattr(ds, "path", None) is None
     assert len(ds) == 6
 
-    assert ds[0].array_backend == _NUMPY
     assert ds[0].array_namespace == _NUMPY
     assert isinstance(ds[0].values, np.ndarray)
     assert ds[0].values.shape == (84,)
@@ -59,7 +58,7 @@ def test_grib_file_numpy_backend(_kwargs):
     assert len(ds1) == len(ds)
     assert getattr(ds1, "path", None) is None
     assert eku_array_namespace(ds1[0].to_array()) == _NUMPY
-    assert ds1[0].array_backend == _NUMPY
+    assert ds1[0].array_namespace == _NUMPY
 
 
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
@@ -73,7 +72,6 @@ def test_grib_file_pytorch_backend():
 
     import torch
 
-    assert ds[0].array_backend == _TORCH
     assert ds[0].array_namespace == _TORCH
     assert torch.is_tensor(ds[0].values)
     assert ds[0].values.shape == (84,)
@@ -106,7 +104,6 @@ def test_grib_file_pytorch_backend():
     assert len(ds1) == len(ds)
     assert getattr(ds1, "path", None) is None
     assert eku_array_namespace(ds1[0].to_array()) == _TORCH
-    assert ds1[0].array_backend == _TORCH
     assert ds1[0].array_namespace == _TORCH
 
 
@@ -158,10 +155,13 @@ def test_grib_file_cupy_backend():
 def test_grib_array_numpy_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
 
-    ds = FieldList.from_array(
-        s.values,
-        [m for m in s.metadata()],
-    )
+    # ds = FieldList.from_array(
+    #     s.values,
+    #     [m for m in s.metadata()],
+    # )
+
+    ds = s.to_fieldlist(array_namespace="numpy")
+
     assert len(ds) == 6
     with pytest.raises(AttributeError):
         ds.path
@@ -188,6 +188,7 @@ def test_grib_array_numpy_backend():
     assert ds.to_numpy().shape == (6, 7, 12)
 
 
+@pytest.mark.migrate
 @pytest.mark.skipif(NO_TORCH, reason="No pytorch installed")
 def test_grib_array_torch_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
@@ -224,6 +225,7 @@ def test_grib_array_torch_backend():
     assert ds.to_numpy().shape == (6, 7, 12)
 
 
+@pytest.mark.migrate
 @pytest.mark.skipif(NO_CUPY, reason="No cupy installed")
 def test_grib_array_cupy_backend():
     s = from_source("file", earthkit_examples_file("test6.grib"))
@@ -265,6 +267,6 @@ def test_grib_array_cupy_backend():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

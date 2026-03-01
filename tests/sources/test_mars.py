@@ -16,11 +16,9 @@ import pytest
 from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import NO_MARS
-from earthkit.data.testing import NO_MARS_API
-from earthkit.data.testing import NO_MARS_DIRECT
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import write_to_file
+from earthkit.data.utils.testing import NO_MARS
+from earthkit.data.utils.testing import NO_MARS_API
+from earthkit.data.utils.testing import NO_MARS_DIRECT
 
 YESTERDAY = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y%m%d")
 
@@ -75,9 +73,9 @@ def test_mars_grib_split_on():
         split_on="param",
     )
     assert len(ds) == 2
-    assert ds.metadata("param") == ["2t", "msl"]
+    assert ds.get("parameter.variable") == ["2t", "msl"]
     assert not hasattr(ds, "path")
-    assert len(ds._indexes) == 2
+    assert ds[0]._get_grib().handle.path != ds[1]._get_grib().handle.path
 
 
 @pytest.mark.long_test
@@ -92,7 +90,7 @@ def test_mars_grib_multi(_args, req, _kwargs):
         **_kwargs,
     )
     assert len(ds) == 2
-    assert ds.metadata("param") == ["2t", "msl"]
+    assert ds.get("parameter.variable") == ["2t", "msl"]
 
 
 @pytest.mark.long_test
@@ -108,10 +106,13 @@ def test_mars_grib_parallel():
             request=req,
         )
         assert len(ds) == 4
-        assert ds.metadata("param") == ["t"] * 4
-        assert ds.metadata("levelist") == [925, 850, 700, 500]
+        assert ds.get("parameter.variable") == ["t"] * 4
+        assert ds.get("vertical.level") == [925, 850, 700, 500]
         assert not hasattr(ds, "path")
-        assert len(ds._indexes) == 4
+        paths = set()
+        for f in ds:
+            paths.add(f._get_grib().handle.path)
+        assert len(paths) == len(ds)
 
 
 @pytest.mark.long_test
@@ -230,8 +231,7 @@ def test_mars_grib_log_4():
 
 @pytest.mark.long_test
 @pytest.mark.download
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_mars_grib_save(write_method):
+def test_mars_grib_save():
     ds = from_source(
         "mars",
         param="2t",
@@ -242,13 +242,13 @@ def test_mars_grib_save(write_method):
     assert len(ds) == 1
 
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
+        ds.to_target("file", tmp)
 
         ds1 = from_source("file", tmp)
         assert len(ds1) == 1
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

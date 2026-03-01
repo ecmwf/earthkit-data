@@ -15,6 +15,8 @@ LOG = logging.getLogger(__name__)
 
 
 class FDBTarget(SimpleTarget):
+    _name = "fdb"
+
     def __init__(self, fdb=None, config=None, userconfig=None, **kwargs):
         super().__init__(**kwargs)
         self._fdb = fdb

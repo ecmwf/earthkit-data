@@ -7,6 +7,20 @@
 # nor does it submit to any jurisdiction.
 #
 
+from earthkit.data.decorators import normalise
+
+
+@normalise("time.base_datetime", "date(%Y.%m.%d %H:%M)")
+@normalise("time.valid_datetime", "date(%Y.%m.%d %H:%M)")
+@normalise("time.valid_datetime", "date(%Y.%m.%d %H:%M)")
+def format_metadata(v):
+    if v is not None:
+        try:
+            return f"{v[:4]}-{v[4:6]}-{v[6:]}"
+        except Exception:
+            pass
+    return v
+
 
 def drop_unwanted_series(df, key=None, axis=1):
     if df is None:
@@ -44,21 +58,26 @@ def make_unique(x, full=False):
     return format_list(r, full=full)
 
 
-def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, **kwargs):
-    # do_print = kwargs.pop("print", False)
-
+def ls(metadata_proc, n=None, keys=None, extra_keys=None, collections=None, **kwargs):
     if kwargs:
         raise TypeError(f"ls: unsupported arguments={kwargs}")
 
-    _keys = {}
-    if isinstance(default_keys, (list, tuple)):
-        default_keys = {k: k for k in default_keys}
+    if n is not None and not isinstance(n, int):
+        raise ValueError(f"n={n} must be None or an int")
 
-    _keys = dict(default_keys) if keys is None else keys
-    if isinstance(_keys, (list, tuple)):
+    if n == 0:
+        raise ValueError("n cannot be 0")
+
+    _keys = {}
+
+    if isinstance(keys, (list, tuple)):
         _keys = {k: k for k in keys}
-    elif isinstance(_keys, str):
+    elif isinstance(keys, str):
         _keys = {keys: keys}
+    elif isinstance(keys, dict):
+        _keys = dict(keys)
+    else:
+        _keys = {}
 
     if extra_keys is not None:
         if isinstance(extra_keys, (list, tuple)):
@@ -69,16 +88,64 @@ def ls(metadata_proc, default_keys, n=None, keys=None, extra_keys=None, **kwargs
         elif isinstance(extra_keys, dict):
             _keys.update(extra_keys)
 
-    if n == 0:
-        raise ValueError("n cannot be 0")
+    # _collections = {}
 
-    return format_ls(metadata_proc(_keys, n))
+    # if collections is not None:
+    #     if isinstance(collections, (list, tuple)):
+    #         _collections.update({k: k for k in collections})
+    #     elif isinstance(collections, str):
+    #         _collections.update({collections: collections})
+    #     elif isinstance(collections, dict):
+    #         _collections.update(collections)
+
+    _keys_lst = list(_keys.keys())
+    if not _keys_lst:
+        _keys_lst = None
+
+    return format_ls(metadata_proc(n, keys=_keys_lst, collections=collections), column_names=_keys)
+
+    # if isinstance(component, str):
+    #     component = [component]
+
+    # _keys = {}
+
+    # if not component:
+    #     if isinstance(default_keys, (list, tuple)):
+    #         default_keys = {k: k for k in default_keys}
+
+    #     _keys = dict(default_keys) if keys is None else keys
+    #     if isinstance(_keys, (list, tuple)):
+    #         _keys = {k: k for k in keys}
+    #     elif isinstance(_keys, str):
+    #         _keys = {keys: keys}
+
+    # if extra_keys is not None:
+    #     if isinstance(extra_keys, (list, tuple)):
+    #         if len(extra_keys) > 0:
+    #             _keys.update({k: k for k in extra_keys})
+    #     elif isinstance(extra_keys, str):
+    #         _keys.update({extra_keys: extra_keys})
+    #     elif isinstance(extra_keys, dict):
+    #         _keys.update(extra_keys)
+
+    # # if "part" in _keys:
+    # #     raise ValueError("ls: 'part' is a reserved key")
+
+    # if n == 0:
+    #     raise ValueError("n cannot be 0")
+
+    # _keys_lst = list(_keys.keys())
+
+    # return format_ls(metadata_proc(_keys_lst, n), column_names=_keys)
 
 
-def format_ls(attributes):
+def format_ls(attributes, column_names=None):
     import pandas as pd
 
     df = pd.DataFrame.from_records(attributes)
+
+    if df is not None and column_names is not None:
+        df = df.rename(columns=column_names)
     return df
 
 
@@ -153,6 +220,8 @@ class NamespaceDump(dict):
 
 def format_namespace_dump(data, selected=None, details=None, **kwargs):
     raw = kwargs.pop("_as_raw", False)
+    if kwargs:
+        raise TypeError(f"format_namespace_dump: unsupported arguments={kwargs}")
 
     if not raw:
         return NamespaceDump(data, selected=selected, details=details)

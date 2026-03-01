@@ -10,7 +10,7 @@
 from earthkit.data.wrappers import get_wrapper
 
 
-def _normalize(lon, minimum):
+def _normalise(lon, minimum):
     while lon < minimum:
         lon += 360
 
@@ -41,12 +41,12 @@ class BoundingBox:
         self.south = max(float(south), -90.0)
 
         self.is_periodic_west_east = (east - west) == 360
-        self.west = _normalize(float(west), -180)  # Or 0?
+        self.west = _normalise(float(west), -180)  # Or 0?
 
         if self.is_periodic_west_east:
             self.east = self.west + 360
         else:
-            self.east = _normalize(float(east), self.west)
+            self.east = _normalise(float(east), self.west)
 
         if self.north < self.south and check:
             raise ValueError(f"Invalid bounding box, north={self.north} < south={self.south}")
@@ -259,4 +259,7 @@ def bounding_box(obj, check=True):
 
     obj = get_wrapper(obj)
 
-    return bounding_box(obj.bounding_box())
+    if hasattr(obj, "geography"):
+        return bounding_box(obj.geography.bounding_box())
+    else:
+        return bounding_box(obj.bounding_box())

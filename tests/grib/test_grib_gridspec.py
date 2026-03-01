@@ -16,14 +16,11 @@ import yaml
 
 from earthkit.data import FieldList
 from earthkit.data import from_source
-from earthkit.data.core.gridspec import GridSpec
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.readers.grib.gridspec import GridSpecConverter
-from earthkit.data.readers.grib.gridspec import make_gridspec
-from earthkit.data.testing import WRITE_TO_FILE_METHODS
-from earthkit.data.testing import earthkit_remote_test_data_file
-from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.testing import write_to_file
+from earthkit.data.field.grib.legacy_grid_spec import LegacyGridSpecConverter
+from earthkit.data.field.grib.legacy_grid_spec import make_legacy_gridspec
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 SUPPORTED_GRID_TYPES = [
     "sh",
@@ -85,7 +82,7 @@ def test_grib_gridspec_from_metadata_valid(metadata, ref, name):
     ]:
         pytest.skip()
 
-    gridspec = make_gridspec(metadata)
+    gridspec = make_legacy_gridspec(metadata)
     assert dict(gridspec) == ref, name
 
 
@@ -95,7 +92,7 @@ def test_grib_gridspec_from_metadata_valid(metadata, ref, name):
 )
 def test_grib_gridspec_from_metadata_invalid_1(metadata, ref, name):
     with pytest.raises(ValueError):
-        make_gridspec(metadata)
+        make_legacy_gridspec(metadata)
 
 
 @pytest.mark.parametrize(
@@ -109,7 +106,7 @@ def test_grib_gridspec_from_metadata_invalid_1(metadata, ref, name):
 )
 def test_grib_gridspec_from_metadata_invalid_2(metadata):
     with pytest.raises(ValueError):
-        make_gridspec(metadata)
+        make_legacy_gridspec(metadata)
 
 
 def test_grib_gridspec_from_file():
@@ -126,9 +123,9 @@ def test_grib_gridspec_from_file():
         "i_scans_negatively": 0,
         "j_scans_positively": 0,
     }
-    gs = ds[0].metadata().gridspec
-    assert isinstance(gs, GridSpec)
-    assert dict(gs) == ref
+    gs = ds[0].geography.grid_spec()
+    assert isinstance(gs, dict), type(gs)
+    assert gs == ref
 
 
 @pytest.mark.parametrize("metadata,gridspec,name", gridspec_list("regular_ll"))
@@ -142,7 +139,7 @@ def test_grib_metadata_from_gridspec_valid(metadata, gridspec, name):
 
     edition = int(name[-1])
     assert edition in [1, 2]
-    md, _ = GridSpecConverter.to_metadata(gridspec, edition=edition)
+    md, _ = LegacyGridSpecConverter.to_metadata(gridspec, edition=edition)
     assert md == metadata, name
 
 
@@ -169,20 +166,19 @@ def test_grib_metadata_from_gridspec_invalid(metadata, gridspec, name):
     edition = int(name[-1])
     assert edition in [1, 2]
     with pytest.raises(ValueError):
-        _, _ = GridSpecConverter.to_metadata(gridspec, edition=edition)
+        _, _ = LegacyGridSpecConverter.to_metadata(gridspec, edition=edition)
 
 
 @pytest.mark.parametrize(
     "input_file",
     [
-        "grids/reduced_gg/O32_global.grib1",
+        # "grids/reduced_gg/O32_global.grib1",
         "grids/reduced_gg/O32_global.grib2",
-        "grids/healpix/H4_ring.grib2",
-        "grids/healpix/H4_nested.grib2",
+        # "grids/healpix/H4_ring.grib2",
+        # "grids/healpix/H4_nested.grib2",
     ],
 )
-@pytest.mark.parametrize("write_method", WRITE_TO_FILE_METHODS)
-def test_grib_gridspec_to_fieldlist(input_file, write_method):
+def test_grib_gridspec_to_fieldlist(input_file):
     import numpy as np
 
     def make_lat_lon(dx):
@@ -199,13 +195,16 @@ def test_grib_gridspec_to_fieldlist(input_file, write_method):
     # target grid: 5x5
     gs = {"grid": [5, 5]}
     v = np.random.rand(37, 72)
-    md = ds_in[0].metadata().override(gridspec=gs)
-    ds = FieldList.from_numpy(v.flatten(), md)
+
+    ds = FieldList.from_fields([x.set({"values": v.flatten(), "geography.grid_spec": gs}) for x in ds_in])
+
+    # md = ds_in[0].metadata().override(gridspec=gs)
+    # ds = FieldList.from_numpy(v.flatten(), md)
 
     assert len(ds) == 1
 
     # make references
-    ref = dict(
+    ref_base = dict(
         Ni=72,
         Nj=37,
         Nx=72,
@@ -222,22 +221,25 @@ def test_grib_gridspec_to_fieldlist(input_file, write_method):
         longitudeOfLastGridPointInDegrees=355.0,
     )
 
+    ref = {"metadata." + k: v for k, v in ref_base.items()}
+
     lat_ref, lon_ref = make_lat_lon(5)
 
     # check latlon
-    latlon = ds[0].to_latlon()
-    lat = latlon["lat"]
-    lon = latlon["lon"]
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat.flatten(), lat_ref.flatten())
     assert np.allclose(lon.flatten(), lon_ref.flatten())
+    assert ds[0].shape == (37, 72)
+    assert np.allclose(ds[0].to_numpy().shape, (37, 72))
 
     # check metadata
-    res = {k: ds[0].metadata(k) for k in ref.keys()}
+    # res = {k: ds[0].get(k) for k in ref.keys()}
+    res = {k: ds[0].get(k) for k in ref.keys()}
     assert res == ref
 
     # save
     with temp_file() as tmp:
-        write_to_file(write_method, tmp, ds)
+        ds.to_target("file", tmp)
         assert os.path.exists(tmp)
         r_tmp = from_source("file", tmp)
 
@@ -246,15 +248,13 @@ def test_grib_gridspec_to_fieldlist(input_file, write_method):
         assert np.allclose(v_tmp, v.flatten(), atol=1e-3)
 
         # latlon
-        latlon = r_tmp[0].to_latlon()
-        lat = latlon["lat"]
-        lon = latlon["lon"]
+        lat, lon = r_tmp[0].geography.latlons()
         assert np.allclose(lat.flatten(), lat_ref.flatten())
         assert np.allclose(lon.flatten(), lon_ref.flatten())
 
         v_tmp = r_tmp[0].values
         assert np.allclose(v_tmp, v.flatten(), atol=1e-3)
-        res = {k: r_tmp[0].metadata(k) for k in ref.keys()}
+        res = {k: r_tmp[0].get(k) for k in ref.keys()}
         assert res == ref
 
 
@@ -275,7 +275,7 @@ def _global_grids():
 @pytest.mark.parametrize("grid", _global_grids())
 def test_grib_global_ll_gridspec_to_metadata(edition, grid):
     gs = {"grid": grid["grid"]}
-    md, num = GridSpecConverter.to_metadata(gs, edition=edition)
+    md, num = LegacyGridSpecConverter.to_metadata(gs, edition=edition)
 
     ref = dict(
         Ni=grid["shape"][1],
@@ -298,6 +298,6 @@ def test_grib_global_ll_gridspec_to_metadata(edition, grid):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

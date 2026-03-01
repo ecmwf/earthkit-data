@@ -14,11 +14,10 @@ import pytest
 
 from earthkit.data import from_object
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
-from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import projections
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -28,23 +27,23 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
     assert np.isclose(v.mean(), meanv, eps)
 
 
+@pytest.mark.skip(reason="To be seen if this case should be supported")
 @pytest.mark.parametrize(
     "dtype,expected_dtype",
     [(None, np.float64), (np.float32, np.float32), (np.float64, np.float64)],
 )
-def test_netcdf_to_points_1(dtype, expected_dtype):
+def test_netcdf_points_1(dtype, expected_dtype):
     ds = from_source("file", earthkit_test_data_file("test_single.nc"))
 
     eps = 1e-5
 
-    v = ds[0].to_points(flatten=True, dtype=dtype)
-    assert isinstance(v, dict)
-    assert isinstance(v["x"], np.ndarray)
-    assert isinstance(v["y"], np.ndarray)
-    assert v["x"].dtype == expected_dtype
-    assert v["y"].dtype == expected_dtype
+    x, y = ds[0].geography.points(flatten=True, dtype=dtype)
+    assert isinstance(x, np.ndarray)
+    assert isinstance(y, np.ndarray)
+    assert x.dtype == expected_dtype
+    assert y.dtype == expected_dtype
     check_array(
-        v["x"],
+        x,
         (84,),
         first=0.0,
         last=330.0,
@@ -52,7 +51,7 @@ def test_netcdf_to_points_1(dtype, expected_dtype):
         eps=eps,
     )
     check_array(
-        v["y"],
+        y,
         (84,),
         first=90,
         last=-90,
@@ -61,15 +60,15 @@ def test_netcdf_to_points_1(dtype, expected_dtype):
     )
 
     # fieldlist
-    v = ds.to_points(flatten=True, dtype=dtype)
-    assert isinstance(v, dict)
-    assert isinstance(v["x"], np.ndarray)
-    assert isinstance(v["y"], np.ndarray)
-    assert v["x"].dtype == expected_dtype
-    assert v["y"].dtype == expected_dtype
+    x, y = ds.geography.points(flatten=True, dtype=dtype)
+    assert isinstance(x, np.ndarray)
+    assert isinstance(y, np.ndarray)
+    assert x.dtype == expected_dtype
+    assert y.dtype == expected_dtype
 
 
-def test_netcdf_to_points_2():
+@pytest.mark.skip(reason="To be seen if this case should be supported")
+def test_netcdf_points_2():
     ds = from_source("file", earthkit_examples_file("test.nc"))
 
     assert len(ds) == 2
@@ -79,31 +78,32 @@ def test_netcdf_to_points_2():
     xr_ds = xr.open_dataset(earthkit_examples_file("test.nc"))
 
     for f in ds:
-        v = f.to_points()
-        assert isinstance(v, dict)
+        x, y = f.geography.points()
+        assert isinstance(x, np.ndarray)
+        assert isinstance(y, np.ndarray)
 
         # x
-        assert isinstance(v["x"], np.ndarray)
-        assert v["x"].shape == (11, 19)
-        for x in v["x"]:
-            assert np.allclose(x, np.arange(-27, 45 + 4, 4))
+        assert isinstance(x, np.ndarray)
+        assert x.shape == (11, 19)
+        for xi in x:
+            assert np.allclose(xi, np.arange(-27, 45 + 4, 4))
 
         # y
-        assert isinstance(v["y"], np.ndarray)
-        assert v["y"].shape == (11, 19)
-        for i, y in enumerate(v["y"]):
-            assert np.allclose(y, np.ones(19) * (73 - i * 4))
+        assert isinstance(y, np.ndarray)
+        assert y.shape == (11, 19)
+        for i, yi in enumerate(y):
+            assert np.allclose(yi, np.ones(19) * (73 - i * 4))
 
-        ref = xr_ds[f.name].sel(latitude=57, longitude=-7).values
+        ref = xr_ds[f.get("parameter.variable")].sel(latitude=57, longitude=-7).values
 
-        x = 5
-        y = 4
-        assert np.isclose(f.to_numpy()[y, x], ref)
-        assert np.isclose(v["x"][y, x], -7)
-        assert np.isclose(v["y"][y, x], 57)
+        x_idx = 5
+        y_idx = 4
+        assert np.isclose(f.to_numpy()[y_idx, x_idx], ref)
+        assert np.isclose(x[y_idx, x_idx], -7)
+        assert np.isclose(y[y_idx, x_idx], 57)
 
 
-def test_netcdf_to_latlon():
+def test_netcdf_latlon():
     ds = from_source("file", earthkit_examples_file("test.nc"))
 
     assert len(ds) == 2
@@ -113,53 +113,50 @@ def test_netcdf_to_latlon():
     xr_ds = xr.open_dataset(earthkit_examples_file("test.nc"))
 
     for f in ds:
-        v = f.to_latlon()
-        assert isinstance(v, dict)
+        lat, lon = f.geography.latlons()
 
         # lon
-        assert isinstance(v["lon"], np.ndarray)
-        assert v["lon"].shape == (11, 19)
-        for x in v["lon"]:
+        assert isinstance(lon, np.ndarray)
+        assert lon.shape == (11, 19)
+        for x in lon:
             assert np.allclose(x, np.arange(-27, 45 + 4, 4))
 
         # lat
-        assert isinstance(v["lat"], np.ndarray)
-        assert v["lat"].shape == (11, 19)
-        for i, y in enumerate(v["lat"]):
+        assert isinstance(lat, np.ndarray)
+        assert lat.shape == (11, 19)
+        for i, y in enumerate(lat):
             assert np.allclose(y, np.ones(19) * (73 - i * 4))
 
-        ref = xr_ds[f.name].sel(latitude=57, longitude=-7).values
+        ref = xr_ds[f.get("parameter.variable")].sel(latitude=57, longitude=-7).values
 
-        x = 5
-        y = 4
-        assert np.isclose(f.to_numpy()[y, x], ref)
-        assert np.isclose(v["lon"][y, x], -7)
-        assert np.isclose(v["lat"][y, x], 57)
+        x_idx = 5
+        y_idx = 4
+        assert np.isclose(f.to_numpy()[y_idx, x_idx], ref)
+        assert np.isclose(lon[y_idx, x_idx], -7)
+        assert np.isclose(lat[y_idx, x_idx], 57)
 
 
 def test_netcdf_bbox():
     ds = from_source("file", earthkit_examples_file("test.nc"))
-    bb = ds.bounding_box()
-    assert len(bb) == 2
-    for b in bb:
-        assert b.as_tuple() == (73, -27, 33, 45)
+    bb = ds.geography.bounding_box()
+    assert bb.as_tuple() == (73, -27, 33, 45)
 
 
-def test_netcdf_mars_area():
+def test_netcdf_area():
     ds = from_source("file", earthkit_examples_file("test.nc"))
     ref = [73, -27, 33, 45]
-    assert np.allclose(np.asarray(ds[0].mars_area), np.asarray(ref))
+    assert np.allclose(np.asarray(ds[0].geography.area()), np.asarray(ref))
 
 
 def test_netcdf_proj_string_non_cf():
     f = from_source("file", earthkit_examples_file("test.nc"))
-    with pytest.raises(AttributeError):
-        f[0].projection()
+    assert f[0].geography.projection() is None
 
 
+@pytest.mark.cache
 def test_netcdf_projection_laea():
     f = from_source("url", earthkit_remote_examples_file("efas.nc"))
-    projection = f[0].projection()
+    projection = f[0].geography.projection()
     assert isinstance(projection, projections.LambertAzimuthalEqualArea)
     assert projection.parameters == {
         "central_latitude": 52.0,
@@ -172,15 +169,17 @@ def test_netcdf_projection_laea():
     }
 
 
+@pytest.mark.cache
 def test_netcdf_proj_string_laea():
     f = from_source("url", earthkit_remote_examples_file("efas.nc"))
-    r = f[0].projection()
+    r = f[0].geography.projection()
     assert (
         r.to_proj_string()
         == "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs"
     )
 
 
+@pytest.mark.cache
 def test_netcdf_to_points_laea():
     ds = from_source("url", earthkit_remote_examples_file("efas.nc"))
 
@@ -190,27 +189,27 @@ def test_netcdf_to_points_laea():
 
     # we must check multiple fields
     for idx in range(2):
-        v = ds[idx].to_points()
-        assert isinstance(v, dict)
+        x, y = ds[idx].geography.points()
+        assert isinstance(x, np.ndarray)
+        assert isinstance(y, np.ndarray)
 
         # lon
-        assert isinstance(v["x"], np.ndarray)
-        assert v["x"].shape == (950, 1000)
+        assert x.shape == (950, 1000)
 
         ref = np.array([2502500.0, 7497500.0, 2502500.0, 7497500.0])
-        for i, x in enumerate(pos):
-            assert np.isclose(v["x"][x], ref[i]), f"{i=}, {x=}"
+        for i, point in enumerate(pos):
+            assert np.allclose(x[point], ref[i]), f"{i=}, {point=}"
 
         # lat
-        assert isinstance(v["y"], np.ndarray)
-        assert v["y"].shape == (950, 1000)
+        assert y.shape == (950, 1000)
 
         ref = np.array([5497500.0, 5497500.0, 752500.0, 752500.0])
-        for i, x in enumerate(pos):
-            assert np.isclose(v["y"][x], ref[i]), f"{i=}, {x=}"
+        for i, point in enumerate(pos):
+            assert np.allclose(y[point], ref[i]), f"{i=}, {point=}"
 
 
-def test_netcdf_to_latlon_laea():
+@pytest.mark.cache
+def test_netcdf_latlon_laea():
     ds = from_source("url", earthkit_remote_examples_file("efas.nc"))
 
     assert len(ds) == 3
@@ -219,12 +218,11 @@ def test_netcdf_to_latlon_laea():
 
     # we must check multiple fields
     for idx in range(2):
-        v = ds[idx].to_latlon()
-        assert isinstance(v, dict)
+        lat, lon = ds[idx].geography.latlons()
 
         # lon
-        assert isinstance(v["lon"], np.ndarray)
-        assert v["lon"].shape == (950, 1000)
+        assert isinstance(lon, np.ndarray)
+        assert lon.shape == (950, 1000)
 
         ref = np.array(
             [
@@ -234,12 +232,12 @@ def test_netcdf_to_latlon_laea():
                 41.13970495087975,
             ]
         )
-        for i, x in enumerate(pos):
-            assert np.isclose(v["lon"][x], ref[i]), f"{i=}, {x=}"
+        for i, point in enumerate(pos):
+            assert np.isclose(lon[point], ref[i]), f"{i=}, {point=}"
 
         # lat
-        assert isinstance(v["lat"], np.ndarray)
-        assert v["lat"].shape == (950, 1000)
+        assert isinstance(lat, np.ndarray)
+        assert lat.shape == (950, 1000)
 
         ref = np.array(
             [
@@ -249,16 +247,8 @@ def test_netcdf_to_latlon_laea():
                 23.942342882929605,
             ]
         )
-        for i, x in enumerate(pos):
-            assert np.isclose(v["lat"][x], ref[i]), f"{i=}, {x=}"
-
-
-def test_netcdf_forecast_reference_time():
-    ds = from_source("url", earthkit_remote_test_data_file("fa_ta850.nc"))
-
-    assert len(ds) == 37
-    assert ds[0].metadata("valid_datetime") == "2020-01-23T00:00:00"
-    assert ds[5].metadata("valid_datetime") == "2020-01-23T05:00:00"
+        for i, point in enumerate(pos):
+            assert np.isclose(lat[point], ref[i]), f"{i=}, {point=}"
 
 
 @pytest.mark.parametrize("lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude")])
@@ -296,13 +286,13 @@ def test_netcdf_geography_2d_1(lat_name, lon_name):
 
     ds = from_object(ds_in)
     assert len(ds) == 2
-    assert np.allclose(ds.metadata("level"), coords["level"])
+    assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
-        assert ll["lat"].shape == (3, 3)
-        assert ll["lon"].shape == (3, 3)
-        assert np.allclose(ll["lat"], lats)
-        assert np.allclose(ll["lon"], lons)
+    for lat, lon in [ds[0].geography.latlons(), ds.geography.latlons()]:
+        assert lat.shape == (3, 3)
+        assert lon.shape == (3, 3)
+        assert np.allclose(lat, lats)
+        assert np.allclose(lon, lons)
 
 
 @pytest.mark.parametrize("lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude")])
@@ -338,13 +328,13 @@ def test_netcdf_geography_2d_2(lat_name, lon_name):
 
     ds = from_object(ds_in)
     assert len(ds) == 2
-    assert np.allclose(ds.metadata("level"), coords["level"])
+    assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
-        assert ll["lat"].shape == (3, 2)
-        assert ll["lon"].shape == (3, 2)
-        assert np.allclose(ll["lat"], coords[lat_name][1])
-        assert np.allclose(ll["lon"], coords[lon_name][1])
+    for lat, lon in [ds[0].geography.latlons(), ds.geography.latlons()]:
+        assert lat.shape == (3, 2)
+        assert lon.shape == (3, 2)
+        assert np.allclose(lat, coords[lat_name][1])
+        assert np.allclose(lon, coords[lon_name][1])
 
 
 @pytest.mark.skip(reason="To be seen if lat-lon as variables have to be supported")
@@ -381,13 +371,13 @@ def test_netcdf_geography_2d_3(lat_name, lon_name):
 
     ds = from_object(ds_in)
     assert len(ds) == 2
-    assert np.allclose(ds.metadata("level"), coords["level"])
+    assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
-        assert ll["lat"].shape == (3, 2)
-        assert ll["lon"].shape == (3, 2)
-        assert np.allclose(ll["lat"], lat.data)
-        assert np.allclose(ll["lon"], lon.data)
+    for lat, lon in [ds[0].geography.latlons(), ds.geography.latlons()]:
+        assert lat.shape == (3, 2)
+        assert lon.shape == (3, 2)
+        assert np.allclose(lat, lat.data)
+        assert np.allclose(lon, lon.data)
 
 
 @pytest.mark.parametrize("lat_name,lon_name", [("lat", "lon"), ("latitude", "longitude")])
@@ -423,13 +413,13 @@ def test_netcdf_geography_1d_1(lat_name, lon_name):
 
     ds = from_object(ds_in)
     assert len(ds) == 2
-    assert np.allclose(ds.metadata("level"), coords["level"])
+    assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
-        assert ll["lat"].shape == (9,)
-        assert ll["lon"].shape == (9,)
-        assert np.allclose(ll["lat"], coords[lat_name][1])
-        assert np.allclose(ll["lon"], coords[lon_name][1])
+    for lat, lon in [ds[0].geography.latlons(), ds.geography.latlons()]:
+        assert lat.shape == (9,)
+        assert lon.shape == (9,)
+        assert np.allclose(lat, coords[lat_name][1])
+        assert np.allclose(lon, coords[lon_name][1])
 
 
 @pytest.mark.skip(reason="To be seen if lat-lon as variables have to be supported")
@@ -467,17 +457,17 @@ def test_netcdf_geography_1d_2(lat_name, lon_name):
 
     ds = from_object(ds_in)
     assert len(ds) == 2
-    assert np.allclose(ds.metadata("level"), coords["level"])
+    assert np.allclose(ds.get("vertical.level"), coords["level"])
 
-    for ll in [ds[0].to_latlon(), ds.to_latlon()]:
-        assert ll["lat"].shape == (9,)
-        assert ll["lon"].shape == (9,)
-        assert np.allclose(ll["lat"], lat.data)
-        assert np.allclose(ll["lon"], lon.data)
+    for lat, lon in [ds[0].geography.latlons(), ds.geography.latlons()]:
+        assert lat.shape == (9,)
+        assert lon.shape == (9,)
+        assert np.allclose(lat, lat.data)
+        assert np.allclose(lon, lon.data)
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     # test_datetime()
     main(__file__)

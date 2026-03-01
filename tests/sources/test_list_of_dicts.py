@@ -19,23 +19,21 @@ from earthkit.data import from_source
 @pytest.fixture
 def lod():
     prototype = {
-        "gridType": "regular_ll",
-        "Nx": 2,
-        "Ny": 3,
-        "distinctLatitudes": [-10.0, 0.0, 10.0],
-        "distinctLongitudes": [0.0, 10.0],
-        "_param_id": 167,
+        # "gridType": "regular_ll",
+        # "Nx": 2,
+        # "Ny": 3,
+        "geography": {"latitudes": [-10.0, 0.0, 10.0], "longitudes": [0.0, 10.0]},
+        # "_param_id": 167,
         "values": [[1, 2], [3, 4], [5, 6]],
-        "date": "20180801",
-        "time": "1200",
+        "time": {"base_date": "20180801", "base_time": "1200"},
     }
     return [
-        {"param": "t", "levelist": 500, **prototype},
-        {"param": "t", "levelist": 850, **prototype},
-        {"param": "u", "levelist": 500, **prototype},
-        {"param": "u", "levelist": 850, **prototype},
-        {"param": "d", "levelist": 850, **prototype},
-        {"param": "d", "levelist": 600, **prototype},
+        {"parameter": {"variable": "t"}, "vertical": {"level": 500}, **prototype},
+        {"parameter": {"variable": "t"}, "vertical": {"level": 850}, **prototype},
+        {"parameter": {"variable": "u"}, "vertical": {"level": 500}, **prototype},
+        {"parameter": {"variable": "u"}, "vertical": {"level": 850}, **prototype},
+        {"parameter": {"variable": "d"}, "vertical": {"level": 850}, **prototype},
+        {"parameter": {"variable": "d"}, "vertical": {"level": 600}, **prototype},
     ]
 
 
@@ -44,17 +42,16 @@ def test_list_of_dicts(lod):
 
     assert len(ds) == 6
     ref = [("t", 500), ("t", 850), ("u", 500), ("u", 850), ("d", 850), ("d", 600)]
-    assert ds.metadata("param", "levelist") == ref
+    assert ds.get(("parameter.variable", "vertical.level")) == ref
 
-    assert ds[0].metadata("step", default=None) is None
+    # assert ds[0].get("step", default=None) is None
+    assert ds[0].get("time.step", default=None) == datetime.timedelta(hours=0)
 
-    assert ds[0].datetime() == {
-        "base_time": datetime.datetime(2018, 8, 1, 12, 0),
-        "valid_time": datetime.datetime(2018, 8, 1, 12, 0),
-    }
+    assert ds[0].time.base_datetime() == datetime.datetime(2018, 8, 1, 12, 0)
+    assert ds[0].time.valid_datetime() == datetime.datetime(2018, 8, 1, 12, 0)
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

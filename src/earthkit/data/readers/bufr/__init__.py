@@ -23,7 +23,7 @@ def _match_magic(magic, deeper_check):
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
-        from .bufr import BUFRReader
+        from .message_list import BUFRReader
 
         parts = source.parts if hasattr(source, "parts") else None
         return BUFRReader(source, path, parts=parts)

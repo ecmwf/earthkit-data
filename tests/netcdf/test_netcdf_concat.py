@@ -15,9 +15,10 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from earthkit.data import concat
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.testing import load_nc_or_xr_source
+from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import load_nc_or_xr_source
 
 # These functionalities are variations around
 # http://xarray.pydata.org/en/stable/user-guide/combining.html#combining-multi
@@ -47,33 +48,30 @@ class Merger_obj:
 
 
 @pytest.mark.parametrize("mode", ["nc", "xr"])
-def test_netcdf_concat(mode):
+def test_netcdf_concat_core(mode):
     ds1 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_1.nc"), mode)
     ds2 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_2.nc"), mode)
-    ds = ds1 + ds2
+    ds = concat(ds1, ds2)
 
     assert len(ds) == 2
-    md = ds1.metadata("variable") + ds2.metadata("variable")
-    assert ds.metadata("variable") == md
+    md = ds1.get("parameter.variable") + ds2.get("parameter.variable")
+    assert ds.get("parameter.variable") == md
 
-    assert ds[0].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 1, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 1, 12, 0),
-    }
-    assert ds[1].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 2, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 2, 12, 0),
-    }
-    assert ds.datetime() == {
-        "base_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-        "valid_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-    }
+    assert ds[0].get("time.base_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert ds[0].get("time.valid_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert ds[0].get("time.step") == datetime.timedelta(0)
+    assert ds[1].get("time.base_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert ds[1].get("time.valid_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert ds[1].get("time.step") == datetime.timedelta(0)
+
+
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_concat_to_xarray(mode):
+    ds1 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_1.nc"), mode)
+    ds2 = load_nc_or_xr_source(earthkit_test_data_file("era5_2t_2.nc"), mode)
+    ds = concat(ds1, ds2)
+
+    assert len(ds) == 2
 
     import xarray as xr
 
@@ -92,26 +90,15 @@ def test_netcdf_read_multiple_files():
     )
 
     assert len(ds) == 2
-    assert ds.metadata("variable") == ["t2m", "t2m"]
+    assert ds.get("parameter.variable") == ["t2m", "t2m"]
 
-    assert ds[0].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 1, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 1, 12, 0),
-    }
-    assert ds[1].datetime() == {
-        "base_time": datetime.datetime(2021, 3, 2, 12, 0),
-        "valid_time": datetime.datetime(2021, 3, 2, 12, 0),
-    }
-    assert ds.datetime() == {
-        "base_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-        "valid_time": [
-            datetime.datetime(2021, 3, 1, 12, 0),
-            datetime.datetime(2021, 3, 2, 12, 0),
-        ],
-    }
+    assert ds[0].get("time.base_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert ds[0].get("time.valid_datetime") == datetime.datetime(2021, 3, 1, 12, 0)
+    assert ds[0].get("time.step") == datetime.timedelta(0)
+
+    assert ds[1].get("time.base_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert ds[1].get("time.valid_datetime") == datetime.datetime(2021, 3, 2, 12, 0)
+    assert ds[1].get("time.step") == datetime.timedelta(0)
 
     import xarray as xr
 
@@ -155,7 +142,7 @@ def test_netdcf_merge_custom(custom_merger):
     assert target2.identical(merged)
 
 
-def test_netcdf_merge_var():
+def test_netcdf_merge_var_1():
     s1 = from_source(
         "dummy-source",
         kind="netcdf",
@@ -174,6 +161,7 @@ def test_netcdf_merge_var():
 
     target = xr.merge([ds1, ds2])
     ds = from_source("multi", [s1, s2])
+
     ds.graph()
     merged = ds.to_xarray()
 
@@ -208,6 +196,7 @@ def _merge_var_different_coords(kind1, kind2):
     assert target.identical(merged)
 
 
+@pytest.mark.migrate
 def test_netcdf_merge_var_different_coords():
     _merge_var_different_coords("netcdf", "netcdf")
 
@@ -387,6 +376,6 @@ def test_netcdf_merge_concat_var():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

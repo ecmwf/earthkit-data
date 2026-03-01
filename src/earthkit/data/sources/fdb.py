@@ -83,7 +83,7 @@ class FDBSource(Source):
         else:
             mapper = FDBRequestMapper(self.request, fdb_kwargs=self._fdb_kwargs)
             retriever = FDBRetriever(self._fdb_kwargs)
-            from earthkit.data.readers.grib.virtual import VirtualGribFieldList
+            from earthkit.data.field.grib.virtual import VirtualGribFieldList
 
             return VirtualGribFieldList(mapper, retriever)
 

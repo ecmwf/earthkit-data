@@ -64,6 +64,9 @@ def to_datetime(dt):
     if isinstance(dt, np.int64):
         dt = int(dt)
 
+    if hasattr(dt, "isoformat"):
+        return datetime.datetime.fromisoformat(dt.isoformat())
+
     dt = get_wrapper(dt)
 
     return to_datetime(dt.to_datetime())
@@ -210,6 +213,12 @@ def to_timedelta(td):
     raise ValueError(f"Failed to convert td={td} type={type(td)} to timedelta")
 
 
+def to_timedelta_list(td):
+    if not isinstance(td, (list, tuple)):
+        return to_timedelta_list([td])
+    return [to_timedelta(x) for x in td]
+
+
 def numpy_timedelta_to_timedelta(td):
     td = td.astype("timedelta64[s]").astype(int)
     return datetime.timedelta(seconds=int(td))
@@ -272,20 +281,65 @@ def step_to_grib(step):
     step = to_timedelta(step)
 
     if isinstance(step, datetime.timedelta):
+        return _timedelta_to_grib(step)
+        # hours, minutes, seconds = (
+        #     int(step.total_seconds() // 3600),
+        #     int(step.seconds // 60 % 60),
+        #     int(step.seconds % 60),
+        # )
+        # if seconds == 0:
+        #     if minutes == 0:
+        #         return hours
+        #     else:
+        #         return f"{hours*60}{minutes}m"
+        # else:
+        #     return f"{int(step.total_seconds())}s"
+
+    raise ValueError(f"Cannot convert step={step} of type={type(step)} to grib metadata")
+
+
+def _timedelta_to_grib(step, units=None):
+    if isinstance(step, datetime.timedelta):
         hours, minutes, seconds = (
             int(step.total_seconds() // 3600),
             int(step.seconds // 60 % 60),
             int(step.seconds % 60),
         )
-        if seconds == 0:
-            if minutes == 0:
-                return hours
+        if units is None:
+            if seconds == 0:
+                if minutes == 0:
+                    return hours
+                else:
+                    return f"{hours*60+minutes}m"
             else:
-                return f"{hours*60}{minutes}m"
-        else:
-            return f"{int(step.total_seconds())}s"
+                return f"{int(step.total_seconds())}s"
+        elif units == "minutes":
+            return f"{hours*60+minutes}m"
+        elif units == "hours":
+            return hours
 
     raise ValueError(f"Cannot convert step={step} of type={type(step)} to grib metadata")
+
+
+def step_range_to_grib(start, end):
+    start = to_timedelta(start)
+    end = to_timedelta(end)
+
+    # sub-hourly
+    if start.total_seconds() % 3600 != 0 or end.total_seconds() % 3600 != 0:
+        # TODO: handle seconds
+        start = _timedelta_to_grib(start, units="minutes")
+        end = _timedelta_to_grib(end, units="minutes")
+    # hourly or more
+    else:
+        start = _timedelta_to_grib(start, units="hours")
+        end = _timedelta_to_grib(end, units="hours")
+        start = step_to_grib(start)
+        end = step_to_grib(end)
+
+    if start == end:
+        return start
+    return f"{start}-{end}"
 
 
 def datetime_to_grib(dt):
@@ -306,3 +360,39 @@ def datetime_from_grib(date, time):
         time // 100,
         time % 100,
     )
+
+
+def datetime_from_date_and_time(date, time):
+    date = to_datetime(date)
+    if time is None:
+        return date
+
+    if date.hour or date.minute:
+        raise ValueError(
+            (
+                f"Duplicate information for time: time={time},"
+                f"and time={date.hour}:{date.minute} from date={date}"
+            )
+        )
+
+    time = to_time(time)
+    return datetime.datetime.combine(date.date(), time)
+
+
+def make_datetime(date, time):
+    if time is None:
+        return date
+    if date.hour or date.minute:
+        raise ValueError(
+            (
+                f"Duplicate information about time time={time},"
+                f"and time={date.hour}:{date.minute} from date={date}"
+            )
+        )
+    assert date.hour == 0, (date, time)
+    assert date.minute == 0, (date, time)
+    assert str(time).isdigit(), (type(time), time)
+    time = int(time)
+    if time > 24:
+        time = time // 100
+    return datetime.datetime(date.year, date.month, date.day, time)

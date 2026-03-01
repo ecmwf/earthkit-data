@@ -11,10 +11,11 @@
 
 import pytest
 
-from earthkit.data import ArrayField
+# from earthkit.data import ArrayField
 from earthkit.data import SimpleFieldList
+from earthkit.data import concat
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 def _check(ds, group):
@@ -22,7 +23,7 @@ def _check(ds, group):
 
     ref = [("t", 1000), ("u", 1000), ("v", 1000), ("t", 850), ("u", 850), ("v", 850)]
 
-    assert ds.metadata(("param", "level")) == ref
+    assert ds.get(("parameter.variable", "vertical.level")) == ref
 
     ref = [
         [("t", 1000), ("t", 850)],
@@ -32,7 +33,7 @@ def _check(ds, group):
     cnt = 0
     for i, f in enumerate(ds.group_by(group)):
         assert len(f) == 2
-        assert f.metadata(("param", "level")) == ref[i]
+        assert f.get(("parameter.variable", "vertical.level")) == ref[i]
         afl = f.to_fieldlist()
         assert afl is not f
         assert len(afl) == 2
@@ -41,32 +42,21 @@ def _check(ds, group):
     assert cnt == len(ds)
 
 
-@pytest.mark.parametrize("group", ["param"])
+@pytest.mark.parametrize("group", ["parameter.variable"])
 def test_grib_simple_fl_1(group):
     ds_in = from_source("file", earthkit_examples_file("test6.grib"))
 
     ds = SimpleFieldList()
     for f in ds_in:
-        ds.append(f)
+        ds = concat(ds, f)
 
     _check(ds, group)
 
 
-@pytest.mark.parametrize("group", ["param"])
+@pytest.mark.parametrize("group", ["parameter.variable"])
 def test_grib_simple_fl_2(group):
     ds = from_source("file", earthkit_examples_file("test6.grib"))
 
     ds = SimpleFieldList([f for f in ds])
-
-    _check(ds, group)
-
-
-@pytest.mark.parametrize("group", ["param"])
-def test_grib_simple_fl_3(group):
-    ds_in = from_source("file", earthkit_examples_file("test6.grib"))
-
-    ds = SimpleFieldList()
-    for f in ds_in:
-        ds.append(ArrayField(f.to_numpy(), f.metadata()))
 
     _check(ds, group)

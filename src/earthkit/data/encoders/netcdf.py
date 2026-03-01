@@ -38,7 +38,7 @@ class NetCDFEncodedData(EncodedData):
         else:
             self.ds.to_netcdf(file)
 
-    def metadata(self, key):
+    def get(self, key, default=None):
         raise NotImplementedError
 
 
@@ -75,7 +75,7 @@ class NetCDFEncoder(Encoder):
         _kwargs = kwargs.copy()
         if data is not None:
             # TODO: find better way to check if the earthkit engine is used
-            if hasattr(data, "to_xarray_earthkit"):
+            if hasattr(data, "_default_encoder") and data._default_encoder() != "netcdf":
                 earthkit_to_xarray_kwargs = _kwargs.pop("earthkit_to_xarray_kwargs", {})
                 earthkit_to_xarray_kwargs["add_earthkit_attrs"] = False
                 _kwargs = earthkit_to_xarray_kwargs

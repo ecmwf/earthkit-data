@@ -15,6 +15,8 @@ LOG = logging.getLogger(__name__)
 
 
 class ZarrTarget(SimpleTarget):
+    _name = "zarr"
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._zarr_kwargs = kwargs

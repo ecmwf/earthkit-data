@@ -9,13 +9,14 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
 import os
 
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils.patterns import HivePattern
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 @pytest.mark.parametrize("fx", ["hive_fs_1", "hive_fs_2", "hive_fs_3", "hive_fs_4", "hive_fs_5"])
@@ -137,7 +138,58 @@ class HiveDiag:
         self.sel_count = 0
 
 
-def test_hive_sel_1():
+def test_hive_sel_core_1():
+    root = earthkit_test_data_file("pattern/1")
+    pattern = "{variable}_{base_date:date(%Y-%m-%dT-H-%M)}_{step}.grib"
+
+    ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True)
+
+    # assert ds.root == path
+    diag = HiveDiag()
+    # using hive partitioning keys
+    r = ds.sel(variable="t", step=12, _hive_diag=diag)
+    assert diag.file_count == 1
+    assert diag.sel_count == 0
+    assert len(r) == 6
+
+    step_ref = datetime.timedelta(hours=12)
+
+    md_ref = [
+        ("t", 1000, step_ref),
+        ("t", 850, step_ref),
+        ("t", 700, step_ref),
+        ("t", 500, step_ref),
+        ("t", 400, step_ref),
+        ("t", 300, step_ref),
+    ]
+    assert r.get(("parameter.variable", "vertical.level", "time.step")) == md_ref
+
+    # using hive partitioning keys + extra keys from GRIB header
+    diag.reset()
+    r = ds.sel(
+        {
+            "variable": "t",
+            "step": 12,
+            "vertical.level_type": "pressure",
+        },
+        _hive_diag=diag,
+    )
+    assert diag.file_count == 1
+    assert diag.sel_count == 1
+    assert len(r) == 6
+
+
+def test_hive_sel_core_2():
+    root = earthkit_test_data_file("pattern/invalid")
+    pattern = "_{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
+
+    ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True)
+
+    r = ds.sel(variable="t", step=12)
+    assert len(r) == 0
+
+
+def test_hive_sel_grib_1():
     root = earthkit_test_data_file("pattern/1")
     pattern = "{shortName}_{date:date(%Y-%m-%dT-H-%M)}_{step}.grib"
 
@@ -151,18 +203,34 @@ def test_hive_sel_1():
     assert diag.sel_count == 0
     assert len(r) == 6
 
-    md_ref = [("t", 1000, 12), ("t", 850, 12), ("t", 700, 12), ("t", 500, 12), ("t", 400, 12), ("t", 300, 12)]
-    assert r.metadata("shortName", "level", "step") == md_ref
+    step_ref = datetime.timedelta(hours=12)
+
+    md_ref = [
+        ("t", 1000, step_ref),
+        ("t", 850, step_ref),
+        ("t", 700, step_ref),
+        ("t", 500, step_ref),
+        ("t", 400, step_ref),
+        ("t", 300, step_ref),
+    ]
+    assert r.get(("metadata.shortName", "metadata.level", "time.step")) == md_ref
 
     # using hive partitioning keys + extra keys from GRIB header
     diag.reset()
-    r = ds.sel(shortName="t", step=12, levtype="pl", _hive_diag=diag)
+    r = ds.sel(
+        {
+            "shortName": "t",
+            "step": 12,
+            "vertical.level_type": "pressure",
+        },
+        _hive_diag=diag,
+    )
     assert diag.file_count == 1
     assert diag.sel_count == 1
     assert len(r) == 6
 
 
-def test_hive_sel_2():
+def test_hive_sel_grib_2():
     root = earthkit_test_data_file("pattern/invalid")
     pattern = "_{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
 
@@ -277,3 +345,9 @@ def test_hive_init_3():
 
     m = p.parts[3].match("at2023-01-21_345.grib")
     assert m is None
+
+    # TODO: this should not match. The sub-pattern in the date pattern
+    # is not respected!!!
+    m = p.parts[3].match("at_2023-21_345.grib")
+    assert m is not None
+    assert m.groupdict() == {"date": "2023-21", "step": "345"}

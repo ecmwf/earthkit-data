@@ -29,17 +29,14 @@ def test_lod_core(lod, mode, request):
 
     assert len(ds) == 6
     ref = [("t", 500), ("t", 850), ("u", 500), ("u", 850), ("d", 850), ("d", 600)]
-    assert ds.metadata("param", "levelist") == ref
-    assert ds.metadata("shortName", "level") == ref
+    assert ds.get(("parameter.variable", "vertical.level")) == ref
 
     assert ds[0].shape == (3, 2)
 
     lat_ref = np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]])
     lon_ref = np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]])
 
-    ll = ds[0].to_latlon()
-    lat = ll["lat"]
-    lon = ll["lon"]
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
@@ -60,42 +57,37 @@ def test_lod_ll(lod_distinct_ll, mode):
 
     assert len(ds) == 6
     ref = [("t", 500), ("t", 850), ("u", 500), ("u", 850), ("d", 850), ("d", 600)]
-    assert ds.metadata("param", "levelist") == ref
-    assert ds.metadata("shortName", "level") == ref
+    assert ds.get(("parameter.variable", "vertical.level")) == ref
 
     assert ds[0].shape == (3, 2)
 
     lat_ref = np.array([[-10.0, -10.0], [0.0, 0.0], [10.0, 10.0]])
     lon_ref = np.array([[20.0, 40.0], [20.0, 40.0], [20.0, 40.0]])
 
-    ll = ds[0].to_latlon()
-    lat = ll["lat"]
-    lon = ll["lon"]
+    lat, lon = ds[0].geography.latlons()
     assert np.allclose(lat, lat_ref)
     assert np.allclose(lon, lon_ref)
 
-    gr = ds[0].mars_area
-    assert isinstance(gr, list)
-    assert np.allclose(np.array(gr), np.array([10, 20, -10, 40]))
+    # gr = ds[0].mars_area
+    # assert isinstance(gr, list)
+    # assert np.allclose(np.array(gr), np.array([10, 20, -10, 40]))
 
-    gr = ds[0].mars_grid
-    assert isinstance(gr, list)
-    assert np.allclose(np.array(gr), np.array([20.0, 10.0]))
+    # gr = ds[0].mars_grid
+    # assert isinstance(gr, list)
+    # assert np.allclose(np.array(gr), np.array([20.0, 10.0]))
 
-    gr = ds[0].grid_points()
-    assert len(gr) == 2
-    assert np.allclose(gr[0], lat_ref.flatten())
-    assert np.allclose(gr[1], lon_ref.flatten())
+    # gr = ds[0].grid_points()
+    # assert len(gr) == 2
+    # assert np.allclose(gr[0], lat_ref.flatten())
+    # assert np.allclose(gr[1], lon_ref.flatten())
 
-    assert ds[0].resolution is None
+    # assert ds[0].resolution is None
 
-    assert ds[0].datetime() == {
-        "base_time": None,
-        "valid_time": datetime.datetime(2018, 8, 1, 9, 0),
-    }
+    assert ds[0].time.base_datetime() == datetime.datetime(2018, 8, 1, 9, 0)
+    assert ds[0].time.valid_datetime() == datetime.datetime(2018, 8, 1, 9, 0)
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

@@ -9,10 +9,12 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+
 import numpy as np
 
 import earthkit.data
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
 def test_netcdf_fieldlist_string_coord():
@@ -34,12 +36,13 @@ def test_netcdf_fieldlist_string_coord():
 
     assert ds
     assert len(ds) == 2
-    assert ds.metadata("level") == ["500", "700"]
+    assert ds.get("vertical.level") == ["500", "700"]
 
     x_ref = np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]])
     y_ref = np.array([[4, 5, 6], [4, 5, 6], [4, 5, 6]])
-    assert np.allclose(ds[0].to_points()["x"], x_ref)
-    assert np.allclose(ds[0].to_points()["y"], y_ref)
+    x, y = ds[0].geography.points()
+    assert np.allclose(x, x_ref)
+    assert np.allclose(y, y_ref)
 
 
 def test_netcdf_fieldlist_bounds():
@@ -68,11 +71,11 @@ def test_netcdf_fieldlist_ctime():
     )
 
     assert len(ds) == 1506
-    assert ds[0].metadata("valid_datetime") == "2007-01-16T00:00:00"
-    assert ds[5].metadata("valid_datetime") == "2007-01-16T00:00:00"
+    assert ds[0].get("time.valid_datetime") == datetime.datetime.fromisoformat("2007-01-16T00:00:00")
+    assert ds[5].get("time.valid_datetime") == datetime.datetime.fromisoformat("2007-01-16T00:00:00")
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

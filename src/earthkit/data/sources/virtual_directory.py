@@ -190,7 +190,7 @@ class VirtualFieldListInFilesWithSqlIndex(FieldListInFilesWithSqlIndex):
         return value
 
     def to_xarray(self, *args, **kwargs):
-        self.pbar = progress_bar(desc="to xarray()", total=len(self))
+        self.pbar = progress_bar(desc="to_xarray()", total=len(self))
         ds = super().to_xarray(*args, **kwargs)
         self.pbar = None
         return ds

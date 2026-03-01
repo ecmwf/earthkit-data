@@ -7,156 +7,18 @@
 #
 
 import logging
+from abc import ABCMeta
 from abc import abstractmethod
 from collections import defaultdict
 
 LOG = logging.getLogger(__name__)
 
-PRIVATE_ATTRIBUTES = {"observer": lambda: None}
+# PRIVATE_ATTRIBUTES = {"observer": lambda: None}
 
 
-class MetaBase(type):
-    def __call__(cls, *args, **kwargs):
-        obj = cls.__new__(cls, *args, **kwargs)
-        args, kwargs = cls.patch(obj, *args, **kwargs)
-        obj.__init__(*args, **kwargs)
-        return obj
+class Base(metaclass=ABCMeta):
+    pass
 
-    def patch(cls, obj, *args, **kwargs):
-        private_attributes = {}
-        private_attributes.update(PRIVATE_ATTRIBUTES)
-        private_attributes.update(kwargs.pop("_PRIVATE_ATTRIBUTES", {}))
-
-        for k, v in private_attributes.items():
-            setattr(obj, k, kwargs.pop(k, v))
-
-        return args, kwargs
-
-
-class Base(metaclass=MetaBase):
-    # Convertors
-    def to_numpy(self, **kwargs):
-        """Convert into a numpy array"""
-        self._not_implemented()
-
-    @abstractmethod
-    def to_xarray(self, **kwargs):
-        """Convert into an xarray dataset"""
-        self._not_implemented()
-
-    @abstractmethod
-    def to_pandas(self, **kwargs):
-        """Convert into a pandas dataframe"""
-        self._not_implemented()
-
-    # Change class
-    def mutate(self):
-        return self
-
-    @classmethod
-    def merge(cls, *args, **kwargs):
-        """Merge the object with other ones."""
-        return None
-
-    @abstractmethod
-    def metadata(self, *args, **kwargs):
-        """Return metadata."""
-        self._not_implemented()
-
-    # I/O
-    @abstractmethod
-    def to_target(self, *args, **kwargs):
-        """Write data into the specified target."""
-        self._not_implemented()
-
-    @abstractmethod
-    def datetime(self):
-        """Return datetime."""
-        self._not_implemented()
-
-    @abstractmethod
-    def bounding_box(self):
-        """Return the bounding box."""
-        self._not_implemented()
-
-    @abstractmethod
-    def sel(self, *args, **kwargs):
-        """Filter the object based on metadata."""
-        self._not_implemented()
-
-    @abstractmethod
-    def isel(self, *args, **kwargs):
-        self._not_implemented()
-
-    @abstractmethod
-    def order_by(self, *args, **kwargs):
-        """Reorder the elements of the object."""
-        self._not_implemented()
-
-    def unique_values(self, *coords, remapping=None, patches=None, progress_bar=False):
-        """Given a list of metadata attributes, such as date, param, levels,
-        returns the list of unique values for each attributes
-        """
-        from earthkit.data.core.order import build_remapping
-
-        assert len(coords)
-        assert all(isinstance(k, str) for k in coords), coords
-
-        remapping = build_remapping(remapping, patches)
-        iterable = self
-
-        if progress_bar:
-            from earthkit.data.utils.progbar import progress_bar
-
-            if progress_bar:
-                iterable = progress_bar(
-                    iterable=self,
-                    desc=f"Finding coords in dataset for {coords}",
-                )
-
-        vals = defaultdict(dict)
-        for f in iterable:
-            metadata = remapping(f.metadata)
-            for k in coords:
-                v = metadata(k, default=None)
-                vals[k][v] = True
-
-        vals = {k: tuple(values.keys()) for k, values in vals.items()}
-
-        return vals
-
-    def _user_coords_to_fl_idx(self, keys, remapping=None):
-        # this method could be implemented in the class XArrayInputFieldList, but then FieldList.to_tensor wouldn't work
-        if isinstance(keys, str):
-            keys = [keys]
-        if remapping is None:
-            # some subclasses (e.g. XArrayInputFieldList) has remapping as a member
-            remapping = getattr(self, "remapping", None)
-
-        user_coords_to_fl_idx = {}
-        for i, f in enumerate(self):
-            metadata = f._attributes(keys, remapping=remapping)  # , joiner=joiner)
-            user_coords = tuple(metadata[k] for k in keys)
-            assert user_coords not in user_coords_to_fl_idx, (
-                f"Multiple fields in {self} with {dict(zip(keys, user_coords))}: "
-                f"#{user_coords_to_fl_idx[user_coords]} and #{i}"
-            )
-            user_coords_to_fl_idx[user_coords] = i
-
-        return user_coords_to_fl_idx
-
-    # @abstractmethod
-    # def to_points(self, *args, **kwargs):
-    #     self._not_implemented()
-
-    # @abstractmethod
-    # def to_latlon(self, *args, **kwargs):
-    #     self._not_implemented()
-
-    def __add__(self, other):
-        self._not_implemented()
-
-    #
     def _not_implemented(self):
         import inspect
 
@@ -169,10 +31,144 @@ class Base(metaclass=MetaBase):
             extra = f" on {self.path}"
         raise NotImplementedError(f"{module}.{name}.{func}(){extra}")
 
-    def batched(self, *args):
-        """Return iterator for batches of data"""
-        self._not_implemented()
+    # @abstractmethod
+    # def to_target(self, *args, **kwargs):
+    #     """Write data into the specified target."""
+    #     pass
 
-    def group_by(self, *args):
-        """Return iterator for batches of data grouped by metadata keys"""
-        self._not_implemented()
+
+# class MetaBase(type):
+#     def __call__(cls, *args, **kwargs):
+#         obj = cls.__new__(cls, *args, **kwargs)
+#         args, kwargs = cls.patch(obj, *args, **kwargs)
+#         obj.__init__(*args, **kwargs)
+#         return obj
+
+#     def patch(cls, obj, *args, **kwargs):
+#         private_attributes = {}
+#         private_attributes.update(PRIVATE_ATTRIBUTES)
+#         private_attributes.update(kwargs.pop("_PRIVATE_ATTRIBUTES", {}))
+
+#         for k, v in private_attributes.items():
+#             setattr(obj, k, kwargs.pop(k, v))
+
+#         return args, kwargs
+
+
+# class Base(metaclass=MetaBase):
+#     # Convertors
+#     @abstractmethod
+#     def to_numpy(self, **kwargs):
+#         """Convert into a numpy array"""
+#         self._not_implemented()
+
+#     @abstractmethod
+#     def to_xarray(self, **kwargs):
+#         """Convert into an xarray dataset"""
+#         self._not_implemented()
+
+#     @abstractmethod
+#     def to_pandas(self, **kwargs):
+#         """Convert into a pandas dataframe"""
+#         self._not_implemented()
+
+#     # Change class
+#     def mutate(self):
+#         return self
+
+#     @classmethod
+#     def merge(cls, *args, **kwargs):
+#         """Merge the object with other ones."""
+#         return None
+
+#     @abstractmethod
+#     def metadata(self, *args, **kwargs):
+#         """Return metadata."""
+#         self._not_implemented()
+
+#     # I/O
+#     @abstractmethod
+#     def to_target(self, *args, **kwargs):
+#         """Write data into the specified target."""
+#         self._not_implemented()
+
+#     @abstractmethod
+#     def datetime(self):
+#         """Return datetime."""
+#         self._not_implemented()
+
+#     @abstractmethod
+#     def bounding_box(self):
+#         """Return the bounding box."""
+#         self._not_implemented()
+
+#     @abstractmethod
+#     def sel(self, *args, **kwargs):
+#         """Filter the object based on metadata."""
+#         self._not_implemented()
+
+#     @abstractmethod
+#     def isel(self, *args, **kwargs):
+#         self._not_implemented()
+
+#     @abstractmethod
+#     def order_by(self, *args, **kwargs):
+#         """Reorder the elements of the object."""
+#         self._not_implemented()
+
+#     def unique_values(self, *coords, remapping=None, patch=None, progress_bar=False):
+#         """Given a list of metadata attributes, such as date, param, levels,
+#         returns the list of unique values for each attributes
+#         """
+#         from earthkit.data.core.order import build_remapping
+
+#         assert len(coords)
+#         assert all(isinstance(k, str) for k in coords), coords
+
+#         remapping = build_remapping(remapping, patch)
+#         iterable = self
+
+#         if progress_bar:
+#             from earthkit.data.utils.progbar import progress_bar
+
+#             if progress_bar:
+#                 iterable = progress_bar(
+#                     iterable=self,
+#                     desc=f"Finding coords in dataset for {coords}",
+#                 )
+
+#         vals = defaultdict(dict)
+#         for f in iterable:
+#             metadata = remapping(f.metadata)
+#             for k in coords:
+#                 v = metadata(k, default=None)
+#                 vals[k][v] = True
+
+#         vals = {k: tuple(values.keys()) for k, values in vals.items()}
+
+#         return vals
+
+
+#     def __add__(self, other):
+#         self._not_implemented()
+
+#     #
+#     def _not_implemented(self):
+#         import inspect
+
+#         func = inspect.stack()[1][3]
+#         module = self.__class__.__module__
+#         name = self.__class__.__name__
+
+#         extra = ""
+#         if hasattr(self, "path"):
+#             extra = f" on {self.path}"
+#         raise NotImplementedError(f"{module}.{name}.{func}(){extra}")
+
+#     def batched(self, *args):
+#         """Return iterator for batches of data"""
+#         self._not_implemented()
+
+#     def group_by(self, *args):
+#         """Return iterator for batches of data grouped by metadata keys"""
+#         self._not_implemented()

@@ -13,7 +13,7 @@ import os
 
 import pytest
 
-from earthkit.data.testing import earthkit_file
+from earthkit.data.utils.testing import earthkit_file
 
 SKIP = [
     "conf.py",
@@ -28,7 +28,17 @@ SKIP = [
     "deprec_settings.py",
     "migrated_settings.py",
     "deprec_array_backend_kwarg.py",
+    "deprec_xarray_earthkit_to_grib.py",
+    "deprec_new_grib_output_split.py",
+    "deprec_new_grib_output.py",
+    "deprec_new_grib_coder.py",
+    "deprec_data_save.py",
+    "deprec_data_write.py",
+    "deprec_ens_dim_role.py",
+    "deprec_field_array_backend_attribute.py",
     "migrated_array_namespace_kwarg.py",
+    "migrated_ens_dim_role.py",
+    "migrated_xarray_earthkit_to_grib.py",
 ]
 
 EXAMPLES = earthkit_file("docs")
@@ -67,6 +77,6 @@ def test_example(tmpdir, path):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

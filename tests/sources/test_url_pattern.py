@@ -12,8 +12,8 @@
 import datetime
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_remote_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
 def test_url_pattern_source_1():
@@ -46,6 +46,6 @@ def test_url_pattern_date():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

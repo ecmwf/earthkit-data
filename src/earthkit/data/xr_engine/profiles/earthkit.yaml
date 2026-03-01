@@ -1,0 +1,23 @@
+dim_roles:
+  member: ensemble.member
+  date: time.base_date
+  time: time.base_time
+  step: time.step
+  forecast_reference_time: time.forecast_reference_time
+  valid_time: time.valid_datetime
+  level: vertical.level
+  level_type: vertical.level_type
+
+variable_key: parameter.variable
+
+attrs_mode: fixed
+
+variable_attrs:
+- metadata.cfName
+- metadata.name
+- parameter.units
+- vertical.level_type
+
+global_attrs:
+- Conventions: CF-1.8
+- institution: ECMWF

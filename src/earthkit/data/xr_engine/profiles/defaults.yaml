@@ -1,0 +1,203 @@
+# variables
+variable_key: parameter.variable
+drop_variables: []
+rename_variables: {}
+mono_variable: false
+
+# dimensions
+extra_dims: []
+drop_dims: []
+ensure_dims: []
+fixed_dims: []
+split_dims: []
+rename_dims: {}
+dims_as_attrs: []
+time_dim_mode: forecast
+level_dim_mode: level
+squeeze: true
+
+# attributes
+attrs_mode: "fixed"
+attrs: []
+variable_attrs: []
+global_attrs: []
+add_earthkit_attrs: true
+rename_attrs:
+  cfName: standard_name
+  name: long_name
+
+add_valid_time_coord: false
+add_geo_coords: true
+decode_times: true
+decode_timedelta:
+
+# values
+flatten_values: false
+dtype: float64
+array_namespace: numpy
+
+# other
+lazy_load: true
+release_source: false
+direct_backend: false
+strict: false
+errors: raise
+allow_holes: false
+
+dim_roles:
+  member: ensemble.member
+  date: time.base_date
+  time: time.base_time
+  step: time.step
+  forecast_reference_time: time.forecast_reference_time
+  valid_time: time.valid_datetime
+  level: vertical.level
+  level_type: vertical.level_type
+
+dim_name_from_role_name: true
+
+coord_attrs:
+  latitude:
+    units: degrees_north
+    standard_name: latitude
+    long_name: latitude
+  longitude:
+    units: degrees_east
+    standard_name: longitude
+    long_name: longitude
+  forecast_reference_time:
+    # "units": "seconds since 1970-01-01T00:00:00",
+    # "calendar": "proleptic_gregorian",
+    standard_name: forecast_reference_time
+    long_name: initial time of forecast
+  step:
+    # "units": "hours",
+    standard_name: forecast_period
+    long_name: time since forecast_reference_time
+  forecast_period:
+    # "units": "hours",
+    standard_name: forecast_period
+    long_name: time since forecast_reference_time
+  valid_time:
+    # "units": "seconds since 1970-01-01T00:00:00",
+    # "calendar": "proleptic_gregorian",
+    standard_name: time
+    long_name: valid_time
+  metadata.level: &_level
+    keys:
+    - level_type
+    - vertical.level_type
+    - metadata.typeOfLevel
+    depthBelowLand:
+      units: m
+      positive: down
+      long_name: soil depth
+      standard_name: depth
+    depthBelowLandLayer:
+      units: m
+      positive: down
+      long_name: soil depth
+      standard_name: depth
+    generalVerticalLayer:
+      units: 1
+      long_name: general vertical layer
+      standard_name: unknown
+    heightAboveGround:
+      units: m
+      positive: up
+      long_name: height above the surface
+      standard_name: height
+    heightAboveSea:
+      units: m
+      positive: up
+      long_name: height above mean sea level
+      standard_name: height_above_mean_sea_level
+    hybrid:
+      units: 1
+      positive: down
+      long_name: hybrid level
+      standard_name: atmosphere_hybrid_sigma_pressure_coordinate
+    isobaricInhPa:
+      units: hPa
+      positive: down
+      stored_direction: decreasing
+      standard_name: air_pressure
+      long_name: pressure
+    isobaricInPa:
+      units: Pa
+      positive: down
+      stored_direction: decreasing
+      standard_name: air_pressure
+      long_name: pressure
+    isobaricLayer:
+      units: Pa
+      positive: down
+      stored_direction: decreasing
+      standard_name: air_pressure
+      long_name: pressure
+    meanSea:
+      long_name: mean sea level
+      standard_name: height
+    potentialVorticity:
+      units: 10-9 K m2 kg-1 s-1
+      long_name: potential vorticity
+      standard_name: ertel_potential_vorticity
+    snowLayer:
+      units: 1
+      positive: down
+      long_name: snow layer
+      standard_name: unknown
+    surface:
+      long_name: surface
+      standard_name: surface
+    theta:
+      units: K
+      positive: up
+      long_name: air_potential_temperature
+      standard_name: air_potential_temperature
+  _metadata.levelist: &_levelist
+    ml:
+      units: 1
+      positive: down
+      stored_direction: decreasing
+      standard_name: air_pressure
+      long_name: pressure
+    pl:
+      units: hPa
+      positive: down
+      stored_direction: decreasing
+      standard_name: air_pressure
+      long_name: pressure
+    pt:
+      units: K
+      positive: up
+      long_name: potential temperature
+      standard_name: height
+    pv:
+      units: 1O-9 K m2 kg-1 s-1
+      positive: up
+      long_name: potential vorticity
+      standard_name: height
+    sfc:
+      long_name: surface
+      standard_name: surface
+    sol:
+      units: 1
+      long_name: snow layer
+      standard_name: unknown
+  metadata.levelist:
+    <<: *_levelist
+    keys:
+    - level_type
+    - vertical.level_type
+    - metadata.levtype
+  levelist:
+    <<: *_levelist
+    keys:
+    - level_type
+    - vertical.level_type
+    - metadata.levtype
+  vertical.level:
+    <<: [*_level, *_levelist]
+  level:
+    <<: [*_level, *_levelist]

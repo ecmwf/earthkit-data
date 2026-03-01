@@ -39,6 +39,8 @@ class FileTarget(SimpleTarget):
     ValueError: If the file name is not specified and cannot be constructed.
     """
 
+    _name = "file"
+
     def __init__(self, file=None, *, append=False, **kwargs):
         super().__init__(**kwargs)
 
@@ -56,7 +58,7 @@ class FileTarget(SimpleTarget):
                 _, self.ext = os.path.splitext(self.filename)
 
             if self.filename is None:
-                self.filename = self._guess_filename(*kwargs)
+                self.filename = self._guess_filename(**kwargs)
 
             if not self.filename:
                 raise ValueError("Please provide an output filename")
@@ -95,12 +97,12 @@ class FileTarget(SimpleTarget):
             self._tmp_fileobj = open(self.filename, flag)
         return self._tmp_fileobj
 
-    def _guess_filename(self, data=None):
+    def _guess_filename(self, data=None, **kwargs):
         """Try to guess filename from data when not provided"""
         if data is not None:
             for attr in ["source_filename", "path"]:
-                if hasattr(self, attr) and getattr(self, attr) is not None:
-                    return [os.path.basename(getattr(self, attr))]
+                if hasattr(data, attr) and getattr(data, attr) is not None:
+                    return os.path.basename(getattr(data, attr))
 
     def _check_overwrite(self, data):
         """Ensure we do not overwrite file that is being read"""

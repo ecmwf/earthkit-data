@@ -12,11 +12,8 @@ import glob
 import logging
 import os
 
-import deprecation
-
 from earthkit.data import from_source
 from earthkit.data.core.caching import CACHE
-from earthkit.data.decorators import detect_out_filename
 from earthkit.data.readers import reader
 from earthkit.data.utils.parts import PathAndParts
 
@@ -30,15 +27,16 @@ class FileSourcePathAndParts(PathAndParts):
     sequence = False
 
 
-class FileSourceMeta(type(Source), type(os.PathLike)):
-    def patch(cls, obj, *args, **kwargs):
-        if "reader" in kwargs:
-            setattr(obj, "reader", kwargs.pop("reader"))
+# class FileSourceMeta(type(Source), type(os.PathLike)):
+#     def patch(cls, obj, *args, **kwargs):
+#         if "reader" in kwargs:
+#             setattr(obj, "reader", kwargs.pop("reader"))
 
-        return super().patch(obj, *args, **kwargs)
+#         return super().patch(obj, *args, **kwargs)
 
 
-class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
+# class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
+class FileSource(Source, os.PathLike):
     _reader_ = None
     content_type = None
 
@@ -77,14 +75,6 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
                     filter=self.filter,
                     merger=self.merger,
                 )
-
-        # here we must have a file or a directory
-        if self._kwargs.get("indexing", False):
-            from earthkit.data.sources.file_indexed import FileIndexedSource
-
-            kw = dict(self._kwargs)
-            kw.pop("indexing", None)
-            return FileIndexedSource(self.path, filter=filter, merger=self.merger, **kw)
 
         # Give a chance to directories and zip files
         # to return a multi-source
@@ -147,17 +137,6 @@ class FileSource(Source, os.PathLike, metaclass=FileSourceMeta):
     @property
     def values(self):
         return self._reader.values
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    @detect_out_filename
-    def save(self, path, **kwargs):
-        return self.to_target("file", path, **kwargs)
-        # return self._reader.save(path, **kwargs)
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def write(self, f, **kwargs):
-        return self.to_target("file", f, **kwargs)
-        # return self._reader.write(f, **kwargs)
 
     def to_target(self, *args, **kwargs):
         self._reader.to_target(*args, **kwargs)

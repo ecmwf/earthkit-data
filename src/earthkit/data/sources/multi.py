@@ -10,8 +10,6 @@
 import itertools
 import logging
 
-import deprecation
-
 from earthkit.data.core.thread import SoftThreadPool
 from earthkit.data.mergers import make_merger
 from earthkit.data.mergers import merge_by_class
@@ -72,7 +70,16 @@ class MultiSource(Source):
         return self.sources[i][n]
 
     def sel(self, *args, **kwargs):
-        raise NotImplementedError
+        self._not_implemented()
+
+    def isel(self, *args, **kwargs):
+        self._not_implemented()
+
+    def order_by(self, *args, **kwargs):
+        self._not_implemented()
+
+    def metadata(self, *args, **kwargs):
+        self._not_implemented()
 
     def __len__(self):
         return sum(self._length(i) for i, _ in enumerate(self.sources))
@@ -85,15 +92,6 @@ class MultiSource(Source):
     def __repr__(self) -> str:
         string = ",".join(repr(s) for s in self.sources)
         return f"{self.__class__.__name__}({string})"
-
-    @deprecation.deprecated(deprecated_in="0.13.0", removed_in=None, details="Use to_target() instead")
-    def save(self, path, **kwargs):
-        self.to_target("file", path, **kwargs)
-
-        # original code
-        # with open(path, "wb") as f:
-        #     for s in self.sources:
-        #         s.write(f, **kwargs)
 
     def to_target(self, target, *args, **kwargs):
         from earthkit.data.targets import to_target

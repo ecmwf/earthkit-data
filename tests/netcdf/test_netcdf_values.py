@@ -12,8 +12,8 @@
 import numpy as np
 import pytest
 
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import load_nc_or_xr_source
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import load_nc_or_xr_source
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -228,6 +228,6 @@ def test_netcdf_to_numpy_upper_dtype(mode, dtype):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

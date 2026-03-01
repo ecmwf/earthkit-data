@@ -161,7 +161,7 @@ class S3Resource:
             return f"{self.endpoint}"
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(url={self.url}, part={self.part})"
+        return f"{self.__class__.__name__}(url={self.url}, part={self.parts})"
 
 
 class S3Source(FileSource):

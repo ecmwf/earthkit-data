@@ -9,71 +9,116 @@
 # nor does it submit to any jurisdiction.
 #
 
+import datetime
+
 import pytest
 
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import load_nc_or_xr_source
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import load_nc_or_xr_source
+
+
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+@pytest.mark.parametrize("key", ["parameter.variable"])
+def test_netcdf_sel_single_message(mode, key):
+    ds = load_nc_or_xr_source(earthkit_test_data_file("test_single.nc"), mode)
+
+    r = ds.sel(**{key: "t2m"})
+    assert len(r) == 1
+    assert r[0].get(key) == "t2m"
 
 
 @pytest.mark.parametrize("mode", ["nc", "xr"])
 @pytest.mark.parametrize(
     "params,expected_meta,metadata_keys",
     [
-        (dict(variable="u", level=700), [["u", 700]], []),
+        ({"parameter.variable": "u", "vertical.level": 700}, [["u", 700]], []),
         (
-            dict(variable=["t", "u"], level=[700, 500]),
+            {"parameter.variable": ["t", "u"], "vertical.level": [700, 500]},
             [
                 ["t", 700],
                 ["t", 500],
                 ["u", 700],
                 ["u", 500],
             ],
-            ["variable", "level"],
+            ["parameter.variable", "vertical.level"],
         ),
-        (dict(variable="w"), [], []),
-        (dict(INVALIDKEY="w"), [], []),
+        ({"parameter.variable": "w"}, [], []),
+        ({"INVALIDKEY": "w"}, [], []),
         (
-            dict(
-                variable=["t"],
-                level=[500, 700],
-                valid_datetime="2018-08-01T12:00:00",
-            ),
+            {
+                "parameter.variable": ["t"],
+                "vertical.level": [500, 700],
+                "time.valid_datetime": datetime.datetime.fromisoformat("2018-08-01T12:00:00"),
+            },
             [
-                ["t", 700, "2018-08-01T12:00:00"],
-                ["t", 500, "2018-08-01T12:00:00"],
+                ["t", 700, datetime.datetime.fromisoformat("2018-08-01T12:00:00")],
+                ["t", 500, datetime.datetime.fromisoformat("2018-08-01T12:00:00")],
             ],
-            ["variable", "level", "valid_datetime"],
+            ["parameter.variable", "vertical.level", "time.valid_datetime"],
         ),
         (
-            dict(
-                variable=["t"],
-                level=[500, 700],
-                date=20180801,
-                time=1200,
-            ),
+            {
+                "parameter.variable": ["t"],
+                "vertical.level": [500, 700],
+                "time.valid_datetime": "2018-08-01T12:00:00",
+            },
             [
-                ["t", 700, 20180801, 1200],
-                ["t", 500, 20180801, 1200],
+                ["t", 700, datetime.datetime(2018, 8, 1, 12, 0)],
+                ["t", 500, datetime.datetime(2018, 8, 1, 12, 0)],
             ],
-            ["variable", "level", "date", "time"],
+            ["parameter.variable", "vertical.level", "time.valid_datetime"],
         ),
     ],
 )
 def test_netcdf_sel_single_file_1(mode, params, expected_meta, metadata_keys):
-    f = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
+    ds = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
 
-    g = f.sel(**params)
+    g = ds.sel(**params)
     assert len(g) == len(expected_meta)
     if len(expected_meta) > 0:
         keys = list(params.keys())
         if metadata_keys:
             keys = metadata_keys
 
-        assert g.metadata(keys) == expected_meta
+        assert g.get(keys) == expected_meta
     return
 
 
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+def test_netcdf_sel_single_file_as_dict(mode):
+    ds = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
+
+    g = ds.sel({"parameter.variable": "t", "vertical.level": [500, 700]})
+    assert len(g) == 2
+    assert g.get(["parameter.variable", "vertical.level"]) == [
+        ["t", 700],
+        ["t", 500],
+    ]
+
+
+@pytest.mark.parametrize("mode", ["nc", "xr"])
+@pytest.mark.parametrize(
+    "variable,level,expected_meta",
+    [
+        ("t", (slice(600, 700)), [["t", 700]]),
+        ("t", (slice(650, 750)), [["t", 700]]),
+        ("t", (slice(1000, None)), [["t", 1000]]),
+        ("t", (slice(None, 300)), [["t", 300]]),
+        ("t", (slice(500, 700)), [["t", 700], ["t", 500]]),
+        ("t", (slice(510, 520)), []),
+    ],
+)
+def test_netcdf_sel_slice_single_file(mode, variable, level, expected_meta):
+    ds = load_nc_or_xr_source(earthkit_examples_file("tuv_pl.nc"), mode)
+
+    g = ds.sel({"parameter.variable": variable, "vertical.level": level})
+    assert len(g) == len(expected_meta)
+    if expected_meta:
+        assert g.get(["parameter.variable", "vertical.level"]) == expected_meta
+
+
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()
