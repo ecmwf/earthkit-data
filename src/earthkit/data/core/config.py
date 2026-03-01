@@ -220,12 +220,12 @@ CONFIG_AND_HELP = {
         getter="_as_int",
         validator=IntervalValidator(Interval(8, 4096)),
     ),
-    "grib-field-policy": _(
-        "persistent",
-        """GRIB field management policy for fieldlists with data on disk.  {validator}
-        See :doc:`/guide/misc/grib_memory` for more information.""",
-        validator=ListValidator(["persistent", "temporary"]),
-    ),
+    # "grib-field-policy": _(
+    #     "persistent",
+    #     """GRIB field management policy for fieldlists with data on disk.  {validator}
+    #     See :doc:`/guide/misc/grib_memory` for more information.""",
+    #     validator=ListValidator(["persistent", "temporary"]),
+    # ),
     "grib-handle-policy": _(
         "cache",
         """GRIB handle management policy for fieldlists with data on disk.  {validator}

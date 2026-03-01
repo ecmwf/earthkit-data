@@ -41,7 +41,7 @@ def create_grib_field(handle, data=None, cache=False, extra_keys=None):
     ensemble = GribEnsemble(handle)
     proc = GribProc(handle)
     parameter = GribParameter(handle)
-    grib = GribMetadata(handle, extra_keys=extra_keys)
+    grib = GribMetadata(handle, extra_keys=extra_keys, cache=cache)
 
     r = Field(
         data=data,

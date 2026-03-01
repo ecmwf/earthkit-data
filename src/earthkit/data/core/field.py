@@ -442,8 +442,8 @@ class Field(Base):
         r""":obj:`ArrayNamespace`: Return the array namespace of the field."""
         return eku_array_namespace(self.values)
 
-    def free(self):
-        self._components[DATA] = self._components[DATA].Offloader(self._components[DATA])
+    # def free(self):
+    #     self._components[DATA] = self._components[DATA].Offloader(self._components[DATA])
 
     @property
     def values(self):
@@ -1082,6 +1082,7 @@ class Field(Base):
         """Return the field itself."""
         return self
 
+    # TODO: review this method since it is GRIB specific and may not be applicable to other formats
     def to_array_field(self, array_namespace=None, device=None, flatten=False, dtype=None):
         grib = self._get_grib()
         if grib is not None:
@@ -1090,6 +1091,7 @@ class Field(Base):
             )
         return self
 
+    # TODO: review this method. Not clear if it needs arguments. Consider a static method instead.
     def to_fieldlist(self, fields=None):
         from earthkit.data.indexing.simple import SimpleFieldList
 

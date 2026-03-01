@@ -44,7 +44,6 @@ class GribFieldListInFile(SimpleFieldListBase):
         grib_handle_policy=None,
         grib_handle_cache_size=None,
         use_grib_metadata_cache=None,
-        **kwargs,
     ):
         assert isinstance(path, str), path
         self.path = path
@@ -70,28 +69,6 @@ class GribFieldListInFile(SimpleFieldListBase):
 
         return [self._create_field(i, handle_cache) for i in range(self.number_of_parts())]
 
-    # def _getitem(self, n):
-    #     if isinstance(n, int):
-    #         if n < 0:
-    #             n += len(self)
-    #         if n >= len(self):
-    #             raise IndexError(f"Index {n} out of range")
-
-    #         field = self.fields[n]
-    #         if field is None:
-    #             field = self.handle_manager.create_field(self.component(n))
-    #             self.fields[n] = field
-    #         return field
-
-    # def _make_field(self):
-    #     if True:
-    #         # if not self._fields:
-    #         r = []
-    #         for n in range(self.number_of_parts()):
-    #             r.append(self._create_field(n))
-    #         return r
-    #     # return self._fields
-
     def _create_field(self, n, handle_cache):
         from earthkit.data.field.grib.create import create_grib_field
 
@@ -104,7 +81,7 @@ class GribFieldListInFile(SimpleFieldListBase):
 
     @property
     def _positions(self):
-        # TODO: thread safe?
+        # TODO: thread safety
         if self.__positions is None:
             self.__positions = GribCodesMessagePositionIndex(self.path, self._file_parts)
         return self.__positions
@@ -117,7 +94,6 @@ class GribFieldListInFile(SimpleFieldListBase):
         return len(self._positions)
 
     def __getstate__(self):
-        print("GribFieldListInFile Getstate")
         from earthkit.data.core.config import CONFIG
 
         policy = CONFIG.get("grib-file-serialisation-policy")
@@ -131,12 +107,10 @@ class GribFieldListInFile(SimpleFieldListBase):
             state["use_metadata_cache"] = self.use_metadata_cache
         else:
             raise ValueError(f"Policy {policy} not supported for GribFieldListInFile")
-            # r["messages"] = [f.get_private_data("grib").message() for f in self]
 
         return state
 
     def __setstate__(self, state):
-        print("GribFieldListInFile Setstate")
         policy = state["serialisation_policy"]
 
         if policy == "path":
@@ -156,6 +130,25 @@ class GribFieldListInFile(SimpleFieldListBase):
             raise ValueError(f"Policy {policy} not supported for GribFieldListInFile")
         else:
             raise ValueError(f"Unknown serialisation policy {policy}")
+
+    def _diag(self):
+        """For diagnostics purposes, returns a dict with information about the handle and metadata cache."""
+        from collections import defaultdict
+
+        r = defaultdict(int)
+        r["grib_handle_policy"] = self.handle_policy
+
+        handle = self._fields[0]._get_grib().handle
+        if hasattr(handle, "manager"):
+            manager = handle.manager
+            if manager is not None:
+                r.update(manager._diag())
+
+        if self.use_metadata_cache:
+            from earthkit.data.utils.diag import metadata_cache_diag
+
+            r.update(metadata_cache_diag(self._fields))
+        return r
 
 
 class GRIBReader(GribFieldListInFile, Reader):
