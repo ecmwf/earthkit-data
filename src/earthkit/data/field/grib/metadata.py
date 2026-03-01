@@ -29,9 +29,14 @@ class MetadataCacheHandler:
     @staticmethod
     def make(cache=None):
         if cache is True:
-            return dict()
+            return MetadataCacheHandler.make_default_cache()
         elif cache is not False and cache is not None:
             return cache
+
+    @staticmethod
+    def make_default_cache():
+        """Used for testing and debugging. Test can patch this method to return a custom cache implementation."""
+        return dict()
 
     @staticmethod
     def clone_empty(cache):
@@ -68,13 +73,12 @@ class MetadataCacheHandler:
 
 
 class GribMetadata:
-
     NAME = "grib"
     KEY_PREFIX = "metadata."
 
-    def __init__(self, handle, extra_keys=None):
+    def __init__(self, handle, extra_keys=None, cache=None):
         self._handle = handle
-        self._cache = {}
+        self._cache = MetadataCacheHandler.make(cache)
         self.extra_keys = extra_keys or None
 
     # def from_dict(self, d):

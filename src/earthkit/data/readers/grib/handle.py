@@ -358,6 +358,7 @@ class GribHandleCache:
 
         self.cache = LRU(self.cache_size)
         self.lock = threading.Lock()
+        self._handle_create_count = 0
 
     def get(self, handle, create):
         key = (handle.path, handle.offset)
@@ -371,12 +372,16 @@ class GribHandleCache:
                 # traceback.print_stack()
                 raw = create()
                 self.cache[key] = raw
+                self._handle_created()
                 return raw
 
     def remove(self, handle):
         key = (handle.path, handle.offset)
         with self.lock:
             self.cache.pop(key, None)
+
+    def _handle_created(self):
+        self._handle_create_count += 1
 
     def __getstate__(self):
         # print("GribHandleCache getstate")
@@ -388,6 +393,18 @@ class GribHandleCache:
         # print("GribHandleCache setstate")
         cache_size = state["cache_size"]
         self.__init__(cache_size)
+
+    def _diag(self):
+        """Return diagnostic information about the cache."""
+        from collections import defaultdict
+
+        r = defaultdict(int)
+        r["grib_handle_cache_size"] = self.cache_size
+        if self.cache is not None:
+            r["handle_cache_size"] = len(self.cache)
+
+        r["handle_create_count"] = self._handle_create_count
+        return r
 
 
 # class GribHandleManager(metaclass=ABCMeta):

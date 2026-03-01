@@ -149,7 +149,7 @@ def collect_field_metadata_cache_diag(field, r):
 def field_cache_diag(field):
     r = defaultdict(int)
     try:
-        md_cache = field.metadata()._cache
+        md_cache = field._get_grib()._cache
         r["metadata_cache_size"] += len(md_cache)
         r["metadata_cache_hits"] += md_cache.hits
         r["metadata_cache_misses"] += md_cache.misses
