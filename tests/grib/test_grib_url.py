@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import earthkit_remote_examples_file
 
 
 # TODO: the disabled tests require a fix in multiurl
@@ -105,6 +105,6 @@ def test_grib_multi_url_parts(parts1, parts2, expected_meta):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

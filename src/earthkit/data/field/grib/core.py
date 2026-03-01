@@ -10,7 +10,8 @@
 
 import logging
 
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
+
 from earthkit.data.field.handler.core import LazyFieldComponentHandler
 
 LOG = logging.getLogger(__name__)

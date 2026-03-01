@@ -476,7 +476,7 @@ class XarrayEarthkit:
             def __iter__(self):
                 return self._data
 
-            def default_encoder(self):
+            def _default_encoder(self):
                 return "grib"
 
         return GeneratorFieldList(self._to_fields())

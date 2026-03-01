@@ -14,7 +14,7 @@ import datetime
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_EOD
+from earthkit.data.utils.testing import NO_EOD
 
 YESTERDAY = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y%m%d")
 
@@ -100,6 +100,6 @@ def test_eod_model(model):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

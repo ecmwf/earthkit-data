@@ -21,11 +21,11 @@ from earthkit.data import from_source
 from earthkit.data import transform
 from earthkit.data import translators
 from earthkit.data import wrappers
-from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.translators import ndarray as ndtranslator
 from earthkit.data.translators import pandas as pdtranslator
 from earthkit.data.translators import string as strtranslator
 from earthkit.data.translators import xarray as xrtranslator
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 LOG = logging.getLogger(__name__)
 

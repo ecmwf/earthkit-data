@@ -8,10 +8,10 @@
 #
 
 
-from earthkit.data.indexing.simple import SimpleFieldListCore
+from earthkit.data.indexing.simple import SimpleFieldListBase
 
 
-class EmptyFieldList(SimpleFieldListCore):
+class EmptyFieldList(SimpleFieldListBase):
     def __init__(self):
         r"""Initialize a FieldList object."""
         self.__fields = []

@@ -9,30 +9,14 @@
 
 from abc import abstractmethod
 
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
 
-from .indexed import IndexedFieldList
+from earthkit.data.core.field import Field
 
-
-def build_remapping(remapping, patches):
-    if remapping is not None or patches is not None:
-        from earthkit.data.core.order import build_remapping
-
-        remapping = build_remapping(remapping, patches)
-    return None
+from .indexed import IndexFieldListBase
 
 
-class SimpleFieldListCore(IndexedFieldList):
-
-    # def __init__(self, fields=None):
-    #     r"""Initialize a FieldList object."""
-    #     self._fields = fields if fields is not None else []
-
-    # @property
-    # def fields(self):
-    #     """Return the fields in the list."""
-    #     return self._fields
-
+class SimpleFieldListBase(IndexFieldListBase):
     @property
     @abstractmethod
     def _fields(self):
@@ -61,7 +45,7 @@ class SimpleFieldListCore(IndexedFieldList):
     def to_pandas(self, *args, **kwargs):
         # TODO make it generic
         if len(self) > 0:
-            if self[0].default_encoder() == "grib":
+            if self[0]._default_encoder() == "grib":
                 from earthkit.data.readers.grib.pandas import PandasMixIn
 
                 class _C(PandasMixIn, SimpleFieldList):
@@ -76,7 +60,7 @@ class SimpleFieldListCore(IndexedFieldList):
     def to_xarray(self, *args, **kwargs):
         # TODO make it generic
         if len(self) > 0:
-            encoder = self[0].default_encoder()
+            encoder = self[0]._default_encoder()
             if encoder == "grib" or encoder is None:
                 from earthkit.data.readers.grib.xarray import XarrayMixIn
 
@@ -89,9 +73,9 @@ class SimpleFieldListCore(IndexedFieldList):
 
             return xr.Dataset()
 
-    def default_encoder(self):
+    def _default_encoder(self):
         if len(self) > 0:
-            return self[0].default_encoder()
+            return self[0]._default_encoder()
 
     @classmethod
     def new_mask_index(cls, *args, **kwargs):
@@ -103,10 +87,10 @@ class SimpleFieldListCore(IndexedFieldList):
     @classmethod
     def merge(cls, sources):
         for s in sources:
-            if not isinstance(s, SimpleFieldListCore):
+            if not isinstance(s, SimpleFieldListBase):
                 raise ValueError("SimpleFieldList can only be merged to another SimpleFieldLists")
 
-        if not all(isinstance(_, SimpleFieldListCore) for _ in sources):
+        if not all(isinstance(_, SimpleFieldListBase) for _ in sources):
             raise ValueError("SimpleFieldList can only be merged to another SimpleFieldLists")
 
         from itertools import chain
@@ -114,43 +98,13 @@ class SimpleFieldListCore(IndexedFieldList):
         return cls.from_fields(list(chain(*[f for f in sources])))
 
 
-class SimpleFieldList(SimpleFieldListCore):
+class SimpleFieldList(SimpleFieldListBase):
     def __init__(self, fields=None):
         r"""Initialize a FieldList object."""
-        self.__fields = fields if fields is not None else []
-
-    @staticmethod
-    def from_fields(fields):
-        r"""Create a :class:`SimpleFieldList`.
-
-        Parameters
-        ----------
-        fields: iterable
-            Iterable of :obj:`Field` objects.
-
-        Returns
-        -------
-        :class:`SimpleFieldList`
-
-        """
-        from earthkit.data.indexing.simple import SimpleFieldList
-
-        if not isinstance(fields, (list, tuple)):
+        if isinstance(fields, Field):
             fields = [fields]
-        return SimpleFieldList([f for f in fields])
 
-    @staticmethod
-    def from_numpy(array, metadata):
-        raise NotImplementedError("SimpleFieldList.from_numpy is not implemented")
-
-    @staticmethod
-    def from_array(array, metadata):
-        raise NotImplementedError("SimpleFieldList.from_array is not implemented")
-
-    # @property
-    # def fields(self):
-    #     """Return the fields in the list."""
-    #      return self._fields
+        self.__fields = fields if fields is not None else []
 
     @property
     def _fields(self):
@@ -164,13 +118,6 @@ class SimpleFieldList(SimpleFieldListCore):
     def __setstate__(self, state: dict):
         fields = state.pop("_fields")
         self.__init__(fields)
-
-    # def _getitem(self, n):
-    #     if isinstance(n, int):
-    #         return self._fields[n]
-
-    # def __len__(self):
-    #     return len(self._fields)
 
 
 # class LazySimpleFieldList(SimpleFieldListCore):
@@ -192,12 +139,9 @@ class SimpleFieldList(SimpleFieldListCore):
 #         return None
 
 
-class LazySimpleFieldList(SimpleFieldListCore):
+class LazySimpleFieldList(SimpleFieldListBase):
     def __init__(self, reader):
         self._reader = reader
-
-    def from_fields(cls, fields):
-        raise NotImplementedError("LazySimpleFieldList does not implement from_fields")
 
     @thread_safe_cached_property
     def _fields(self):

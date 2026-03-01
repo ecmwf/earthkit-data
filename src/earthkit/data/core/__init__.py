@@ -31,6 +31,11 @@ class Base(metaclass=ABCMeta):
             extra = f" on {self.path}"
         raise NotImplementedError(f"{module}.{name}.{func}(){extra}")
 
+    # @abstractmethod
+    # def to_target(self, *args, **kwargs):
+    #     """Write data into the specified target."""
+    #     pass
+
 
 # class MetaBase(type):
 #     def __call__(cls, *args, **kwargs):
@@ -111,7 +116,7 @@ class Base(metaclass=ABCMeta):
 #         """Reorder the elements of the object."""
 #         self._not_implemented()
 
-#     def unique_values(self, *coords, remapping=None, patches=None, progress_bar=False):
+#     def unique_values(self, *coords, remapping=None, patch=None, progress_bar=False):
 #         """Given a list of metadata attributes, such as date, param, levels,
 #         returns the list of unique values for each attributes
 #         """
@@ -120,7 +125,7 @@ class Base(metaclass=ABCMeta):
 #         assert len(coords)
 #         assert all(isinstance(k, str) for k in coords), coords
 
-#         remapping = build_remapping(remapping, patches)
+#         remapping = build_remapping(remapping, patch)
 #         iterable = self
 
 #         if progress_bar:

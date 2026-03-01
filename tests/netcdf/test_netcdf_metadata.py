@@ -13,8 +13,8 @@ import datetime
 
 import pytest
 
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import load_nc_or_xr_source
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import load_nc_or_xr_source
 
 
 @pytest.mark.parametrize("mode", ["nc", "xr"])
@@ -86,6 +86,6 @@ def test_netcdf_valid_datetime(mode):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

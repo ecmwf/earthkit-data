@@ -13,40 +13,7 @@ from abc import abstractmethod
 from typing import Any
 from typing import TypeAlias
 
-# from earthkit.data.field.component.spec import Aliases
-
 FieldComponent: TypeAlias = Any
-
-
-def wrap_spec_methods(keys=None):
-    if keys is None:
-        keys = []
-
-    def decorator(cls):
-        all_keys = list(keys)
-        for k, v in cls.SPEC_CLS._ALIASES.items():
-            if v in keys:
-                all_keys.append(k)
-
-        for method_name in all_keys:
-            # method = getattr(cls.SPEC_CLS, method_name)
-
-            # print(f"Adding method {method} from {cls.SPEC_CLS}.{method_name}")
-
-            def _make(method):
-                def _f(self):
-                    return getattr(self._spec, method)
-
-                return _f
-
-            setattr(cls, method_name, property(fget=_make(method_name)))
-
-        setattr(cls, "ALL_KEYS", all_keys)
-
-        # print(f"ALL_KEYS for {cls}: {cls.ALL_KEYS}")
-        return cls
-
-    return decorator
 
 
 class FieldComponentHandler(metaclass=ABCMeta):
@@ -307,25 +274,11 @@ class SimpleFieldComponentHandler(FieldComponentHandler):
 
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         return self._component.get(key, default=default, astype=astype, raise_on_missing=raise_on_missing)
-        # if key in self:
-        #     v = getattr(self._component, key)()
-        #     if astype and v is not None and callable(astype):
-        #         try:
-        #             return astype(v)
-        #         except Exception:
-        #             return None
-        #     return v
-
-        # if raise_on_missing:
-        #     raise KeyError(f"Key {key} not found in specification")
-
-        # return default
 
     def set(self, *args, **kwargs) -> "SimpleFieldComponentHandler":
         """Create a new SimpleFieldComponentHandler instance with updated component data."""
         component = self._component.set(*args, **kwargs)
         return self.from_component(component)
-        # return type(self)(data)
 
     def dump(self, owner: Any, name: str, result: dict, prefix_keys=False) -> None:
         """Populate the namespace dictionary for this SpecFieldComponent."""

@@ -17,8 +17,8 @@ import pytest
 
 from earthkit.data import config
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.utils.diag import field_cache_diag
+from earthkit.data.utils.testing import earthkit_examples_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)

@@ -22,7 +22,9 @@ class GeographyFieldComponentHandler(SimpleFieldComponentHandler):
     NAME = "geography"
 
     def get_grib_context(self, context) -> dict:
-        pass
+        from earthkit.data.field.grib.geography import COLLECTOR
+
+        COLLECTOR.collect(self, context)
 
     @classmethod
     def create_empty(cls) -> "GeographyFieldComponentHandler":

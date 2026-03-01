@@ -9,9 +9,10 @@
 
 import logging
 
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
+
 from earthkit.data.field.handler.data import DataFieldComponentHandler
-from earthkit.data.indexing.indexed import IndexedFieldList
+from earthkit.data.indexing.indexed import IndexFieldListBase
 
 LOG = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ def make_virtual_grib_field(owner, request):
     raise KeyError("Request must contain 'param' key")
 
 
-class VirtualGribFieldList(IndexedFieldList):
+class VirtualGribFieldList(IndexFieldListBase):
     def __init__(self, request_mapper, retriever):
         self.request_mapper = request_mapper
         self.retriever = retriever

@@ -15,8 +15,8 @@ import pytest
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.sources.stream import StreamFieldList
-from earthkit.data.testing import earthkit_remote_examples_file
-from earthkit.data.testing import earthkit_remote_file
+from earthkit.data.utils.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import earthkit_remote_file
 
 
 def repeat_list_items(items, count):
@@ -451,6 +451,6 @@ def test_grib_url_stream_multi_urls_parts(parts1, parts2, expected_meta):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

@@ -18,8 +18,8 @@ from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.caching import cache_file
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_remote_examples_file
 
 
 def check_cache_files(dir_path, managed=True):
@@ -369,6 +369,6 @@ def test_cache_force():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

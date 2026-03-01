@@ -36,9 +36,12 @@ class GribParameterBuilder:
 
         units = _get("units", None)
 
+        chem_name = _get("chemShortName", None)
+
         return dict(
             variable=name,
             units=units,
+            chem_variable=chem_name,
         )
 
 

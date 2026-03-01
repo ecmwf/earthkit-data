@@ -19,7 +19,7 @@ import xarray as xr
 import yaml
 
 from earthkit.data.core.index import MultiIndex
-from earthkit.data.indexing.indexed import IndexedFieldList
+from earthkit.data.indexing.indexed import IndexFieldListBase
 
 # from .field import EmptyFieldList
 from .flavour import CoordinateGuesser
@@ -31,7 +31,7 @@ from .variable import Variable
 LOG = logging.getLogger(__name__)
 
 
-class XArrayFieldList(IndexedFieldList):
+class XArrayFieldList(IndexFieldListBase):
     """A class to represent a list of fields from an xarray Dataset."""
 
     def __init__(self, ds: xr.Dataset, variables: List[Variable]) -> None:
@@ -235,7 +235,7 @@ class XArrayFieldList(IndexedFieldList):
 
         return cls(ds, variables)
 
-    def sel(self, *args, **kwargs: Any) -> IndexedFieldList:
+    def sel(self, *args, **kwargs: Any) -> IndexFieldListBase:
         """Select fields from the XarrayFieldList based on criteria.
 
         Parameters
@@ -332,28 +332,28 @@ class XArrayFieldList(IndexedFieldList):
         if all(isinstance(_, XArrayFieldList) for _ in sources):
             return XArrayMultiFieldList(sources)
         else:
-            if all(isinstance(_, IndexedFieldList) for _ in sources):
+            if all(isinstance(_, IndexFieldListBase) for _ in sources):
                 from earthkit.data.indexing.indexed import MultiFieldList
 
                 # assert all(isinstance(_, NetCDFFieldList) for _ in sources)
                 return MultiFieldList(sources)
         raise ValueError("Cannot merge different FieldList types")
 
-    @classmethod
-    def to_xarray_multi_from_paths(cls, paths, **kwargs):
-        import xarray as xr
+    # @classmethod
+    # def to_xarray_multi_from_paths(cls, paths, **kwargs):
+    #     import xarray as xr
 
-        options = dict()
-        options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
-        if not options:
-            options = dict(**kwargs)
+    #     options = dict()
+    #     options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+    #     if not options:
+    #         options = dict(**kwargs)
 
-        return xr.open_mfdataset(
-            paths,
-            **options,
-        )
+    #     return xr.open_mfdataset(
+    #         paths,
+    #         **options,
+    #     )
 
-    def default_encoder(self, **kwargs):
+    def _default_encoder(self, **kwargs):
         return "netcdf"
 
 
@@ -368,7 +368,7 @@ class XArrayFieldList(IndexedFieldList):
 #         MaskIndex.__init__(self, *args, **kwargs)
 
 
-class XArrayMultiFieldList(IndexedFieldList, MultiIndex):
+class XArrayMultiFieldList(IndexFieldListBase, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
 
@@ -380,7 +380,7 @@ class XArrayMultiFieldList(IndexedFieldList, MultiIndex):
 
         return xr.merge([x.ds for x in self._indexes], **kwargs)
 
-    def default_encoder(self, **kwargs):
+    def _default_encoder(self, **kwargs):
         return "netcdf"
 
 

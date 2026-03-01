@@ -49,7 +49,7 @@ class FieldCube:
         ds,
         *args,
         remapping=None,
-        patches=None,
+        patch=None,
         flatten_values=False,
     ):
         assert len(ds), f"No data in {ds}"
@@ -77,7 +77,7 @@ class FieldCube:
         # print(ds[1])
         # print(ds[2])
         # print(ds[3])
-        self.source = ds.order_by(*args, remapping=remapping, patches=patches)
+        self.source = ds.order_by(*args, remapping=remapping, patch=patch)
 
         del ds
         # print("after")
@@ -94,7 +94,7 @@ class FieldCube:
             drop_none=False,
             squeeze=False,
             remapping=remapping,
-            patches=patches,
+            patch=patch,
             cache=False,
         )
 

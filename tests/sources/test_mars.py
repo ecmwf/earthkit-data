@@ -16,9 +16,9 @@ import pytest
 from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import NO_MARS
-from earthkit.data.testing import NO_MARS_API
-from earthkit.data.testing import NO_MARS_DIRECT
+from earthkit.data.utils.testing import NO_MARS
+from earthkit.data.utils.testing import NO_MARS_API
+from earthkit.data.utils.testing import NO_MARS_DIRECT
 
 YESTERDAY = (datetime.datetime.now() - datetime.timedelta(days=1)).strftime("%Y%m%d")
 
@@ -249,6 +249,6 @@ def test_mars_grib_save():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

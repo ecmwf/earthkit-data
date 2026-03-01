@@ -13,7 +13,7 @@ import datetime
 import itertools
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 all_params = [
     "latitude",

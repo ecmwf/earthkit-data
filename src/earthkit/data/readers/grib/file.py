@@ -7,8 +7,9 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.indexing.simple import SimpleFieldListCore
+from earthkit.utils.decorators import thread_safe_cached_property
+
+from earthkit.data.indexing.simple import SimpleFieldListBase
 from earthkit.data.readers import Reader
 from earthkit.data.utils.parts import Part
 
@@ -32,7 +33,7 @@ class PositionDataBase:
         return self.__positions
 
 
-class GribFieldListInFile(SimpleFieldListCore):
+class GribFieldListInFile(SimpleFieldListBase):
     handle_cache = None
 
     def __init__(

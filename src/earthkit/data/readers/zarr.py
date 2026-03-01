@@ -9,7 +9,7 @@
 
 import os
 
-from earthkit.data.loaders.xarray.fieldlist import XArrayFieldList
+from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
 
 from . import Reader
 

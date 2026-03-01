@@ -9,6 +9,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+
 import pytest
 
 from earthkit.data.field.handler.labels import SimpleLabels
@@ -98,3 +99,35 @@ def test_field_labels_set(_kwargs, ref):
     assert id(d) == ori_id
     assert d == dict(a="1", b="2")
     assert labels == dict(a="1", b="2")
+
+
+@pytest.mark.parametrize(
+    "_args, ref", [(("a",), dict(b="2", c="3")), (("c",), dict(a="1", b="2")), (("a", "c"), dict(b="2"))]
+)
+def test_field_labels_remove_ok(_args, ref):
+    d = dict(a="1", b="2", c="3")
+    ori_id = id(d)
+    labels = SimpleLabels(d)
+
+    r = labels.remove(*_args)
+    assert r == ref
+
+    # original unchanged
+    assert id(d) == ori_id
+    assert d == dict(a="1", b="2", c="3")
+    assert labels == dict(a="1", b="2", c="3")
+
+
+@pytest.mark.parametrize("_args", [("d",), ("a", "d")])
+def test_field_labels_remove_bad(_args):
+    d = dict(a="1", b="2", c="3")
+    ori_id = id(d)
+    labels = SimpleLabels(d)
+
+    with pytest.raises(KeyError):
+        labels.remove(*_args)
+
+    # original unchanged
+    assert id(d) == ori_id
+    assert d == dict(a="1", b="2", c="3")
+    assert labels == dict(a="1", b="2", c="3")

@@ -55,7 +55,7 @@ def get_level_type(coord):
 
 
 def from_xarray(owner, selection):
-    from earthkit.data.loaders.xarray.coordinates import LevelCoordinate
+    from earthkit.data.readers.xarray.coordinates import LevelCoordinate
 
     coord = None
     for c in owner.coordinates:

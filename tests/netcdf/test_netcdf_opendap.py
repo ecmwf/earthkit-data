@@ -13,6 +13,8 @@ import numpy as np
 import pytest
 
 from earthkit.data import from_source
+from earthkit.data.core.field import Field
+from earthkit.data.core.temporary import temp_file
 
 
 @pytest.mark.long_test
@@ -35,8 +37,16 @@ def test_netcdf_opendap():
     assert list(x["sst"].dims) == ["time", "lat", "lon"]
     assert x["sst"].shape == (494, 180, 360)
 
+    with temp_file() as path:
+        ds.to_target("file", path)
+
+        ds1 = from_source("file", path)
+        assert len(ds1) == 494
+        assert isinstance(ds1[0], Field)
+        assert ds1[0:2].get("parameter.variable") == ["sst", "sst"]
+
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

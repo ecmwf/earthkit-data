@@ -13,10 +13,11 @@ from abc import ABCMeta
 from abc import abstractmethod
 from collections import defaultdict
 
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
+from earthkit.utils.units import Units
+
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
-from earthkit.data.utils.units import Units
 
 LOG = logging.getLogger(__name__)
 

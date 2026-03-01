@@ -9,12 +9,12 @@
 
 from earthkit.data.sources import Source
 
-from .indexed import IndexedFieldList
+from .indexed import IndexFieldListBase
 
 
-class StreamFieldList(IndexedFieldList, Source):
+class StreamFieldList(IndexFieldListBase, Source):
     def __init__(self, source, **kwargs):
-        IndexedFieldList.__init__(self, **kwargs)
+        IndexFieldListBase.__init__(self, **kwargs)
         self._source = source
 
     def mutate(self):
@@ -52,5 +52,5 @@ class StreamFieldList(IndexedFieldList, Source):
         assert len(sources) > 1
         return MultiStreamSource.merge(sources)
 
-    def default_encoder(self):
+    def _default_encoder(self):
         return None

@@ -300,7 +300,7 @@ class ForcingsData:
         )
 
         r = source_or_dataset.unique(
-            "ensemble.member", squeeze=False, drop_none=True, patches={"ensemble.member": {None: 0}}
+            "ensemble.member", squeeze=False, drop_none=True, patch={"ensemble.member": {None: 0}}
         )
 
         r = r.get("member", (0,))

@@ -12,7 +12,7 @@
 import numpy as np
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 """
 Ideally FieldCube and FieldListTensor should be the same object, however, at the
@@ -117,10 +117,10 @@ def test_grib_tensor_core():
 #     assert len(ds) == 18 + 2
 
 #     with pytest.raises(ValueError):
-#         ds.cube("param", "level")
+#         ds.to_cube("param", "level")
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

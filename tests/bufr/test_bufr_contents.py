@@ -10,8 +10,8 @@
 
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
 def test_bufr_iteration():
@@ -73,11 +73,8 @@ def test_bufr_metadata_tc_compressed():
     for k in f:
         assert k
 
-    for k, v in f.metadata().items():
-        assert k
-
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

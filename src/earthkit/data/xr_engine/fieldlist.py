@@ -14,7 +14,7 @@ from collections import defaultdict
 from earthkit.data.core.index import Selection
 from earthkit.data.core.index import normalise_selection
 from earthkit.data.core.order import build_remapping
-from earthkit.data.indexing.indexed import IndexedFieldList
+from earthkit.data.indexing.indexed import IndexFieldListBase
 from earthkit.data.indexing.simple import SimpleFieldList
 
 LOG = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ class IndexDB:
         return f"IndexDB(_index={self._index})"
 
 
-class XArrayInputFieldList(IndexedFieldList):
+class XArrayInputFieldList(IndexFieldListBase):
     """
     A wrapper around a fieldlist that stores unique values.
 
@@ -128,7 +128,7 @@ class XArrayInputFieldList(IndexedFieldList):
 
     def sel(self, *args, **kwargs):
         assert "remapping" not in kwargs
-        assert "patches" not in kwargs
+        assert "patch" not in kwargs
         ds = self.ds.sel(*args, remapping=self.remapping, **kwargs)
         db = None
         # if not args and self.db and all(k in self.db for k in kwargs):
@@ -140,7 +140,7 @@ class XArrayInputFieldList(IndexedFieldList):
             kwargs.pop("remapping", None)
 
         assert "remapping" not in kwargs
-        assert "patches" not in kwargs
+        assert "patch" not in kwargs
 
         if isinstance(self.ds, XArrayInputFieldList):
             ds = self.ds.order_by(*args, **kwargs)

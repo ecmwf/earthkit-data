@@ -16,7 +16,7 @@ import pytest
 from earthkit.utils.array.testing.testing import NO_TORCH
 from pytest_notebook.nb_regression import NBRegressionFixture
 
-from earthkit.data.testing import earthkit_file
+from earthkit.data.utils.testing import earthkit_file
 
 fixture = NBRegressionFixture(exec_timeout=30)
 fixture.diff_color_words = False
@@ -108,6 +108,6 @@ def test_notebook(path):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

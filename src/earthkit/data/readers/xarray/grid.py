@@ -15,8 +15,8 @@ from typing import Any
 from typing import Tuple
 
 import numpy as np
+from earthkit.utils.decorators import thread_safe_cached_property
 
-from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.bbox import BoundingBox
 
 LOG = logging.getLogger(__name__)

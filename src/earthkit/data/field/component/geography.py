@@ -13,20 +13,14 @@ from math import prod
 
 import numpy as np
 
+from earthkit.data.utils.array import adjust_array
 from earthkit.data.utils.bbox import BoundingBox
+from earthkit.data.utils.grid import ECKIT_GRID_SUPPORT
 from earthkit.data.utils.projections import Projection
 
 from .component import SimpleFieldComponent
 from .component import component_keys
 from .component import mark_get_key
-
-
-def uniform_resolution(vals):
-    if len(vals) > 1:
-        delta = np.diff(vals)
-        if np.allclose(delta, delta[0]):
-            return delta[0]
-    return None
 
 
 def create_geography_from_array(
@@ -104,15 +98,7 @@ def create_geography_from_array(
     assert lat is not None and lon is not None
 
     if distinct:
-        # dx = uniform_resolution(lon)
-        # dy = uniform_resolution(lat)
         return MeshedLatLonGeography(lat, lon, proj_str=proj_str)
-        # if dx is not None and dy is not None:
-        #     # metadata["DxInDegrees"] = dx
-        #     # metadata["DyInDegrees"] = dy
-        #     return RegularDistinctLLGeography(lat, lon, proj_str)
-        # else:
-        #     return DistinctLLGeography(lat, lon, proj_str=proj_str)
     else:
         if lat.shape != lon.shape:
             raise ValueError(f"latitudes and longitudes must have the same shape. {lat.shape} != {lon.shape}")
@@ -139,6 +125,33 @@ def create_geography_from_array(
 
 
 def create_geography_from_dict(d, shape_hint=None):
+    if not isinstance(d, dict):
+        raise TypeError("data must be a dictionary")
+
+    if "grid_spec" in d:
+        if len(d) > 1:
+            raise ValueError(
+                "When 'grid_spec' is provided no other keys should be present to create a geography"
+            )
+
+        if ECKIT_GRID_SUPPORT.has_grid:
+            return GridsSpecBasedGeography(d["grid_spec"])
+        else:
+            raise ValueError(
+                "Cannot create geography from 'grid_spec' since eckit-geo grid support is not available"
+            )
+
+    elif "grid" in d:
+        if len(d) > 1:
+            raise ValueError("When 'grid' is provided no other keys should be present to create a geography")
+
+        if ECKIT_GRID_SUPPORT.has_grid:
+            return GridsSpecBasedGeography(d["grid"])
+        else:
+            raise ValueError(
+                "Cannot create geography from 'grid' since eckit-geo grid support is not available"
+            )
+
     return create_geography_from_array(
         latitudes=d.get("latitudes", None),
         longitudes=d.get("longitudes", None),
@@ -147,24 +160,6 @@ def create_geography_from_dict(d, shape_hint=None):
         proj_str=d.get("projTargetString", None),
         shape_hint=shape_hint,
     )
-
-
-def _array_convert(v, flatten=False, dtype=None):
-    if flatten:
-        from earthkit.data.utils.array import flatten
-
-        v = flatten(v)
-
-    if dtype is not None:
-        from earthkit.utils.array import array_namespace
-        from earthkit.utils.array.convert import convert_dtype
-
-        target_xp = array_namespace(v)
-        target_dtype = convert_dtype(dtype, target_xp)
-        if target_dtype is not None:
-            v = target_xp.astype(v, target_dtype, copy=False)
-
-    return v
 
 
 @component_keys
@@ -410,8 +405,8 @@ class BaseGeography(SimpleFieldComponent):
         """
         lat = self.latitudes()
         lon = self.longitudes()
-        lat = _array_convert(lat, flatten=flatten, dtype=dtype)
-        lon = _array_convert(lon, flatten=flatten, dtype=dtype)
+        lat = adjust_array(lat, flatten=flatten, dtype=dtype)
+        lon = adjust_array(lon, flatten=flatten, dtype=dtype)
 
         return lat, lon
 
@@ -442,8 +437,8 @@ class BaseGeography(SimpleFieldComponent):
         y = self.y(dtype=dtype)
 
         if x is not None and y is not None:
-            x = _array_convert(x, flatten=flatten, dtype=dtype)
-            y = _array_convert(y, flatten=flatten, dtype=dtype)
+            x = adjust_array(x, flatten=flatten, dtype=dtype)
+            y = adjust_array(y, flatten=flatten, dtype=dtype)
             return x, y
 
         try:
@@ -639,42 +634,16 @@ class MeshedLatLonGeography(LatLonGeography):
         return "_distinct_ll"
 
 
-# class RegularDistinctLLGeography(DistinctLLGeography):
-#     def __init__(self, latitudes, longitudes, proj_str=None, dx=None, dy=None):
-#         super().__init__(latitudes, longitudes, proj_str=proj_str)
-#         self._dx = dx
-#         self._dy = dy
-
-#     def dx(self, dtype=None):
-#         x = self._dx
-#         if x is None:
-#             lon = self.distinct_longitudes(dtype=dtype)
-#             x = lon[1] - lon[0]
-#         x = abs(round(x * 1_000_000) / 1_000_000)
-#         return x
-
-#     def dy(self, dtype=None):
-#         y = self._dy
-#         if y is None:
-#             lat = self.distinct_latitudes(dtype=dtype)
-#             y = lat[0] - lat[1]
-#         y = abs(round(y * 1_000_000) / 1_000_000)
-#         return y
-
-#     def grid_type(self):
-#         return "_regular_ll"
-
-
 class GridsSpecBasedGeography(BaseGeography):
-    def __init__(self, grid_spec):
+    def __init__(self, grid_or_grid_spec):
         from eckit.geo import Grid
 
-        self._grid = Grid(grid_spec)
-        self._grid_spec_in = grid_spec
-
-    # @thread_safe_cached_property
-    # def spectral(self):
-    #     return False
+        if isinstance(grid_or_grid_spec, Grid):
+            self._grid = grid_or_grid_spec
+            self._grid_spec_in = None
+        else:
+            self._grid = Grid(grid_or_grid_spec)
+            self._grid_spec_in = grid_or_grid_spec
 
     def latitudes(self, dtype=None):
         r"""Return the latitudes of the field.
@@ -686,11 +655,11 @@ class GridsSpecBasedGeography(BaseGeography):
         v, _ = self._grid.to_latlons()
         import numpy as np
 
-        v = np.asarray(v)
+        v = np.asarray(v).reshape(self.shape())
 
         if dtype is None:
             dtype = np.float64
-        v = _array_convert(v, dtype=dtype)
+        v = adjust_array(v, dtype=dtype)
 
         return v
 
@@ -704,11 +673,11 @@ class GridsSpecBasedGeography(BaseGeography):
         _, v = self._grid.to_latlons()
         import numpy as np
 
-        v = np.asarray(v)
+        v = np.asarray(v).reshape(self.shape())
 
         if dtype is None:
             dtype = np.float64
-        v = _array_convert(v, dtype=dtype)
+        v = adjust_array(v, dtype=dtype)
 
         return v
 
@@ -783,6 +752,13 @@ class GridsSpecBasedGeography(BaseGeography):
 
     def grid(self):
         return self._grid
+
+    def grid_type(self):
+        return self._grid.type
+
+    @classmethod
+    def from_dict(cls, data, shape_hint=None):
+        return create_geography_from_dict(data, shape_hint=shape_hint)
 
     # @property
     # def rotation(self):

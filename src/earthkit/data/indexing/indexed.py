@@ -10,51 +10,35 @@
 from collections import defaultdict
 
 from earthkit.utils.array import array_namespace as eku_array_namespace
+from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.core.fieldlist import FieldList
 from earthkit.data.core.index import Index
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.data.core.order import build_remapping
 from earthkit.data.utils.compute import wrap_maths
 
 
-def build_remapping(remapping, patches):
-    if remapping is not None or patches is not None:
-        from earthkit.data.core.order import build_remapping
-
-        remapping = build_remapping(remapping, patches)
-    return None
-
-
 @wrap_maths
-class IndexedFieldList(Index, FieldList):
-    @staticmethod
-    def from_fields(fields):
-        r"""Create a :class:`SimpleFieldList`.
-
-        Parameters
-        ----------
-        fields: iterable
-            Iterable of :obj:`Field` objects.
-
-        Returns
-        -------
-        :class:`SimpleFieldList`
-
-        """
-        from earthkit.data.indexing.simple import SimpleFieldList
-
-        return SimpleFieldList.from_fields(fields)
-
+class IndexFieldListBase(Index, FieldList):
     # @staticmethod
-    # def from_numpy(array, metadata):
-    #     raise NotImplementedError("IndexedFieldList.from_numpy is not implemented")
-    #     # return FieldList.from_array(array, metadata)
+    # def from_fields(fields):
+    #     r"""Create a :class:`SimpleFieldList`.
 
-    # @staticmethod
-    # def from_array(array, metadata):
-    #     raise NotImplementedError("IndexedFieldList.from_array is not implemented")
+    #     Parameters
+    #     ----------
+    #     fields: iterable
+    #         Iterable of :obj:`Field` objects.
+
+    #     Returns
+    #     -------
+    #     :class:`SimpleFieldList`
+
+    #     """
+    #     from earthkit.data.indexing.simple import SimpleFieldList
+
+    #     return SimpleFieldList.from_fields(fields)
 
     @property
     def values(self):
@@ -151,7 +135,7 @@ class IndexedFieldList(Index, FieldList):
         group_by_key=False,
         flatten_dict=False,
         remapping=None,
-        patches=None,
+        patch=None,
     ):
         from earthkit.data.utils.args import metadata_argument_new
 
@@ -169,14 +153,14 @@ class IndexedFieldList(Index, FieldList):
         else:
             raise ValueError(f"Invalid output: {output}")
 
-        remapping = build_remapping(remapping, patches)
+        remapping = build_remapping(remapping, patch, forced_build=False)
 
         _kwargs = {
             "default": default,
             "raise_on_missing": raise_on_missing,
             "remapping": remapping,
             "flatten_dict": flatten_dict,
-            # "patches": patches,
+            # "patch": patch,
             "astype": astype,
         }
 
@@ -204,18 +188,6 @@ class IndexedFieldList(Index, FieldList):
                 keys = tuple(keys)
 
         return self.get(keys, raise_on_missing=True, **kwargs)
-
-    # @thread_safe_cached_property
-    # def _md_indices(self):
-    #     from .indices import FieldListIndices
-
-    #     return FieldListIndices(self)
-
-    # def indices(self, squeeze=False):
-    #     return self._md_indices.indices(squeeze=squeeze)
-
-    # def index(self, key):
-    #     return self._md_indices.index(key)
 
     def _default_ls_keys(self):
         if len(self) > 0:
@@ -307,7 +279,7 @@ class IndexedFieldList(Index, FieldList):
 
         return FieldListTensor.from_fieldlist(self, *args, **kwargs)
 
-    def cube(self, *args, **kwargs):
+    def to_cube(self, *args, **kwargs):
         from earthkit.data.indexing.cube import FieldCube
 
         return FieldCube(self, *args, **kwargs)
@@ -322,12 +294,12 @@ class IndexedFieldList(Index, FieldList):
     #     return Field._normalise_sel_input(**kwargs)
 
     @staticmethod
-    def normalise_key_values(**kwargs):
+    def _normalise_key_values(**kwargs):
         from ..core.field import Field
 
-        return Field.normalise_key_values(**kwargs)
+        return Field._normalise_key_values(**kwargs)
 
-    # def unique_values(self, *coords, remapping=None, patches=None, progress_bar=False):
+    # def unique_values(self, *coords, remapping=None, patch=None, progress_bar=False):
     #     """Given a list of metadata attributes, such as date, param, levels,
     #     returns the list of unique values for each attributes
     #     """
@@ -338,7 +310,7 @@ class IndexedFieldList(Index, FieldList):
     #     assert len(coords)
     #     assert all(isinstance(k, str) for k in coords), coords
 
-    #     remapping = build_remapping(remapping, patches)
+    #     remapping = build_remapping(remapping, patch)
     #     iterable = self
 
     #     if progress_bar:
@@ -361,21 +333,34 @@ class IndexedFieldList(Index, FieldList):
 
     #     return vals
 
+    def _unary_op(self, oper):
+        from earthkit.data.utils.compute import get_method
+
+        method = "loop"
+        return get_method(method).unary_op(oper, self)
+
+    def _binary_op(self, oper, y):
+        from earthkit.data.utils.compute import get_method
+
+        method = "loop"
+        r = get_method(method).binary_op(oper, self, y)
+        return r
+
     @classmethod
-    def new_mask_index(self, *args, **kwargs):
+    def new_mask_index(cls, *args, **kwargs):
         return MaskFieldList(*args, **kwargs)
 
     @classmethod
     def merge(cls, sources):
-        assert all(isinstance(_, IndexedFieldList) for _ in sources)
+        assert all(isinstance(_, IndexFieldListBase) for _ in sources)
         return MultiFieldList(sources)
 
 
-class MaskFieldList(IndexedFieldList, MaskIndex):
+class MaskFieldList(IndexFieldListBase, MaskIndex):
     def __init__(self, *args, **kwargs):
         MaskIndex.__init__(self, *args, **kwargs)
 
 
-class MultiFieldList(IndexedFieldList, MultiIndex):
+class MultiFieldList(IndexFieldListBase, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)

@@ -83,18 +83,18 @@ class Reader(Base, os.PathLike):
     def _encode(self, encoder, **kwargs):
         return encoder._encode(self, **kwargs)
 
-    def default_encoder(self):
+    def _default_encoder(self):
         return "internal-pass-through"
 
     def __fspath__(self):
         return self.path
 
-    def index_content(self):
-        LOG.warning(f"index-content(): Ignoring {self.path}")
-        return []
+    # def index_content(self):
+    #     LOG.warning(f"index-content(): Ignoring {self.path}")
+    #     return []
 
-    def ranges(self):
-        self.source._kw
+    # def ranges(self):
+    #     self.source._kw
 
 
 _READERS = {}

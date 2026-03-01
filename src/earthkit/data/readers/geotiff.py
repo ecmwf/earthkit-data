@@ -8,8 +8,9 @@
 #
 
 
-from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.indexing.simple import SimpleFieldListCore
+from earthkit.utils.decorators import thread_safe_cached_property
+
+from earthkit.data.indexing.simple import SimpleFieldListBase
 
 from . import Reader
 
@@ -45,7 +46,7 @@ from . import Reader
 #         self._not_implemented()
 
 
-class GeoTIFFFieldList(SimpleFieldListCore):
+class GeoTIFFFieldList(SimpleFieldListBase):
     """A list of GeoTIFF bands"""
 
     DEFAULT_XARRAY_KWARGS = {
@@ -126,8 +127,8 @@ class GeoTIFFReader(GeoTIFFFieldList, Reader):
     def mutate_source(self):
         return self
 
-    def default_encoder(self):
-        return Reader.default_encoder(self)
+    def _default_encoder(self):
+        return Reader._default_encoder(self)
 
 
 def _match_magic(magic):

@@ -141,11 +141,30 @@ NO_COVJSONKIT = not modules_installed("covjsonkit")
 NO_RIOXARRAY = not modules_installed("rioxarray")
 
 NO_S3_AUTH = not modules_installed("aws_requests_auth")
-NO_GEO = not modules_installed("earthkit-data")
+NO_GEO = not modules_installed("earthkit-geo")
 try:
     NO_ECFS = not os.path.exists(shutil.which("ecp"))
 except Exception:
     NO_ECFS = True
+
+
+try:
+    from earthkit.data.field.grib.geography import ECKIT_GRID_SUPPORT
+
+    NO_ECKIT_GRID = not ECKIT_GRID_SUPPORT.has_grid
+except Exception as e:
+    print(f"Error checking for eckit-geo grid support: {e}")
+    NO_ECKIT_GRID = True
+
+
+try:
+    from earthkit.data.field.grib.geography import ECKIT_GRID_SUPPORT
+
+    NO_ECCODES_GRID = not ECKIT_GRID_SUPPORT.has_ecc_grid_spec
+
+except Exception as e:
+    print(f"Error checking for eckit-geo grid support in ecCodes: {e}")
+    NO_ECCODES_GRID = True
 
 
 NO_ZARR = True

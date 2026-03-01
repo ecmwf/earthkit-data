@@ -423,6 +423,6 @@ def test_datetime_to_grib(d, expected_value, error):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

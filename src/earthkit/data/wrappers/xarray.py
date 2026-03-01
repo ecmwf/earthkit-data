@@ -7,8 +7,6 @@
 # nor does it submit to any jurisdiction.
 
 
-# from emohawk.metadata import AXES, COMPONENTS
-
 # from earthkit.data.readers import netcdf
 from earthkit.data.wrappers import Wrapper
 
@@ -169,7 +167,7 @@ def wrapper(data, *args, fieldlist=True, **kwargs):
         if not fieldlist:
             return XArrayDatasetWrapper(ds, *args, **kwargs)
 
-        from earthkit.data.loaders.xarray.fieldlist import XArrayFieldList
+        from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
 
         fl = XArrayFieldList.from_xarray(ds, **kwargs)
         if len(fl) > 0:

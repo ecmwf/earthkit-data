@@ -9,8 +9,9 @@
 
 import logging
 
-from earthkit.data.decorators import thread_safe_cached_property
-from earthkit.data.loaders.xarray.fieldlist import XArrayFieldList
+from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
+
+from .. import Reader
 
 LOG = logging.getLogger(__name__)
 
@@ -21,7 +22,6 @@ class NetCDFFieldList(XArrayFieldList):
         import xarray as xr
 
         ds = xr.open_dataset(self.path, decode_timedelta=True)
-
         ds = XArrayFieldList.from_xarray(ds)
         super().__init__(ds.ds, ds.variables)
 
@@ -41,10 +41,24 @@ class NetCDFFieldList(XArrayFieldList):
         #     return xr.open_dataset(self.path, **kwargs)
         return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
 
-    def xr_dataset(self):
+    @classmethod
+    def to_xarray_multi_from_paths(cls, paths, **kwargs):
         import xarray as xr
 
-        return xr.open_dataset(self.path_or_url)
+        options = dict()
+        options.update(kwargs.get("xarray_open_mfdataset_kwargs", {}))
+        if not options:
+            options = dict(**kwargs)
+
+        return xr.open_mfdataset(
+            paths,
+            **options,
+        )
+
+    # def xr_dataset(self):
+    #     import xarray as xr
+
+    #     return xr.open_dataset(self.path_or_url)
 
     # def save(self, *args, **kwargs):xw
     #     return self.to_netcdf(*args, **kwargs)
@@ -53,43 +67,71 @@ class NetCDFFieldList(XArrayFieldList):
     #     return self.to_netcdf(*args, **kwargs)
 
 
-class NetCDFFieldListFromFileOrURL(NetCDFFieldList):
-    def __init__(self, path_or_url, **kwargs):
-        assert isinstance(path_or_url, str), path_or_url
-        super().__init__(path_or_url, **kwargs)
-        self.path_or_url = path_or_url
+# class NetCDFFieldListFromFileOrURL(NetCDFFieldList):
+#     def __init__(self, path_or_url, **kwargs):
+#         assert isinstance(path_or_url, str), path_or_url
+#         super().__init__(path_or_url, **kwargs)
+#         self.path_or_url = path_or_url
 
-    @thread_safe_cached_property
-    def xr_dataset(self):
-        import xarray as xr
+#     # @thread_safe_cached_property
+#     # def xr_dataset(self):
+#     #     import xarray as xr
 
-        return xr.open_dataset(self.path_or_url)
+#     #     return xr.open_dataset(self.path_or_url)
 
-    # def _getitem(self, n):
-    #     if isinstance(n, int):
-    #         return self.fields[n]
+#     # def _getitem(self, n):
+#     #     if isinstance(n, int):
+#     #         return self.fields[n]
 
-    # def __len__(self):
-    #     return len(self.fields)
+#     # def __len__(self):
+#     #     return len(self.fields)
 
 
-class NetCDFFieldListFromFile(NetCDFFieldListFromFileOrURL):
-    def __init__(self, path):
+# class NetCDFFieldListFromFile(NetCDFFieldList):
+#     def __init__(self, path):
+#         super().__init__(path)
+
+#     def __repr__(self):
+#         return "NetCDFFieldListFromFile(%s)" % (self.path_or_url,)
+
+#     # def write(self, f, **kwargs):
+#     #     import shutil
+
+#     #     with open(self.path, "rb") as s:
+#     #         shutil.copyfileobj(s, f, 1024 * 1024)
+
+
+# class NetCDFFieldListFromURL(NetCDFFieldList):
+#     def __init__(self, url):
+#         super().__init__(url)
+
+#     def __repr__(self):
+#         return "NetCDFFieldListFromURL(%s)" % (self.path_or_url,)
+
+
+class NetCDFFieldListFromFile(NetCDFFieldList, Reader):
+    def __init__(self, source, path):
+        Reader.__init__(self, source, path)
         super().__init__(path)
 
     def __repr__(self):
-        return "NetCDFFieldListFromFile(%s)" % (self.path_or_url,)
+        return f"NetCDFFieldListFromFile({self.path})"
 
-    def write(self, f, **kwargs):
-        import shutil
+    def mutate_source(self):
+        # A NetCDFReader is a source itself
+        return self
 
-        with open(self.path, "rb") as s:
-            shutil.copyfileobj(s, f, 1024 * 1024)
+    # def write(self, f, **kwargs):
+    #     import shutil
+
+    #     with open(self.path, "rb") as s:
+    #         shutil.copyfileobj(s, f, 1024 * 1024)
 
 
-class NetCDFFieldListFromURL(NetCDFFieldListFromFileOrURL):
+class NetCDFFieldListFromURL(NetCDFFieldList):
     def __init__(self, url):
+        self.url = url
         super().__init__(url)
 
     def __repr__(self):
-        return "NetCDFFieldListFromURL(%s)" % (self.path_or_url,)
+        return f"NetCDFFieldListFromURL({self.url})"

@@ -15,8 +15,8 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import NO_CDS
-from earthkit.data.testing import preserve_cwd
+from earthkit.data.utils.testing import NO_CDS
+from earthkit.data.utils.testing import preserve_cwd
 
 CDS_TIMEOUT = pytest.CDS_TIMEOUT
 
@@ -468,6 +468,6 @@ def test_cds_netcdf_to_pandas_xarray():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

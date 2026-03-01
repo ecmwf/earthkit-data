@@ -11,11 +11,16 @@
 from abc import abstractmethod
 from typing import Any
 
-from .core import FieldComponent
+from .core import FieldComponentHandler
 
 
-class Labels(FieldComponent):
+class Labels(FieldComponentHandler):
     NAME = "labels"
+
+    @property
+    def component(self):
+        """This component handler behaves like a component"""
+        return self
 
     @abstractmethod
     def __iter__(self):
@@ -70,30 +75,13 @@ class Labels(FieldComponent):
         pass
 
     @abstractmethod
-    def override(self, *args, **kwargs):
-        r"""Change the metadata values and return a new object.
-
-        :obj:`override` accepts another :obj:`Metadata` or a dict or
-        an iterable of key/value pairs (as tuples or other iterables of length two).
-        If keyword arguments are specified, the metadata is then updated with those
-        key/value pairs.
-
-        Examples
-        --------
-        >>> other = RawMetadata({"key1": 1, "key2": 2})
-        >>> m1 = m.override(other)
-        >>> m1 = m.override({"key1": 1, "key2": 2})
-        >>> m1 = m.override([("key1", 1), ("key2", 2)])
-        >>> m1 = m.override(key1=1, key2=2)
-        """
+    def remove(self, *args):
         pass
 
 
 class SimpleLabels(dict, Labels):
-    ALL_KEYS = []  # All keys are allowed
-
     @classmethod
-    def from_dict(cls, d: dict, allow_unused=False) -> "SimpleLabels":
+    def from_dict(cls, d: dict) -> "SimpleLabels":
         """Create a SimpleLabels object from a dictionary.
 
         Parameters
@@ -163,21 +151,33 @@ class SimpleLabels(dict, Labels):
         d.update(*args, **kwargs)
         return SimpleLabels(d)
 
-    # def __setitem__(self, key, value):
-    #     raise TypeError("SimpleLabels object does not support item assignment")
+    def remove(self, *args):
+        d = dict(self)
+        for k in args:
+            d.pop(k)
+        return SimpleLabels(d)
+
+    def pop(self, key, default=None):
+        raise TypeError("SimpleLabels object does not support pop operation")
+
+    def __setitem__(self, key, value):
+        raise TypeError("SimpleLabels object does not support item assignment")
 
     def check(self, owner):
         pass
 
-    def dump(self, owner: Any, name: str, result: dict, prefix_keys=False) -> None:
-        """Populate the namespace dictionary for this SpecFieldComponent."""
+    def to_dict(self):
+        return dict(self)
 
-        def _prefix(key):
-            return f"{self.NAME}.{key}" if prefix_keys else key
+    # def dump(self, owner: Any, name: str, result: dict, prefix_keys=False) -> None:
+    #     """Populate the namespace dictionary for this SpecFieldComponent."""
 
-        if name is None or name == self.NAME or (isinstance(name, (list, tuple)) and self.NAME in name):
-            r = {_prefix(k): v for k, v in self.items()}
-            result[self.NAME] = r
+    #     def _prefix(key):
+    #         return f"{self.NAME}.{key}" if prefix_keys else key
+
+    #     if name is None or name == self.NAME or (isinstance(name, (list, tuple)) and self.NAME in name):
+    #         r = {_prefix(k): v for k, v in self.items()}
+    #         result[self.NAME] = r
 
     def get_grib_context(self, context):
         pass

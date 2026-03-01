@@ -33,6 +33,8 @@ class FilePatternTarget(SimpleTarget):
         Additional keyword arguments passed to the parent class
     """
 
+    _name = "file-pattern"
+
     def __init__(self, path, *, append=False, **kwargs):
         super().__init__(**kwargs)
 

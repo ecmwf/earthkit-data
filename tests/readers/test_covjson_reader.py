@@ -12,8 +12,8 @@ import pytest
 
 from earthkit.data import from_object
 from earthkit.data import from_source
-from earthkit.data.testing import NO_COVJSONKIT
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import NO_COVJSONKIT
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 def test_covjson():
@@ -97,6 +97,6 @@ def test_covjson_stream_memory():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

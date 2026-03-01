@@ -21,9 +21,9 @@ from typing import Optional
 from typing import Tuple
 
 import numpy as np
+from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.core.field import Field
-from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.indexing.simple import SimpleFieldListCore
 from earthkit.data.sources import Source
 from earthkit.data.sources.fdb import FDBRetriever

@@ -12,7 +12,7 @@ import math
 from earthkit.utils.array import array_namespace
 
 
-def flatten(array):
+def flatten_array(array):
     """Flatten the array without copying the data.
 
     Parameters
@@ -27,7 +27,7 @@ def flatten(array):
     """
     if len(array.shape) != 1:
         n = (math.prod(array.shape),)
-        return reshape(array, n)
+        return reshape_array(array, n)
     return array
 
 
@@ -51,7 +51,7 @@ def target_shape(array, flatten, field_shape):
     return field_shape
 
 
-def reshape(v, shape):
+def reshape_array(v, shape):
     """Reshape the array to the required shape.
 
     Parameters
@@ -68,4 +68,19 @@ def reshape(v, shape):
     """
     if shape != v.shape:
         v = array_namespace(v).reshape(v, shape)
+    return v
+
+
+def adjust_array(v, flatten=False, dtype=None):
+    if flatten:
+        v = flatten_array(v)
+
+    if dtype is not None:
+        from earthkit.utils.array.convert import convert_dtype
+
+        target_xp = array_namespace(v)
+        target_dtype = convert_dtype(dtype, target_xp)
+        if target_dtype is not None:
+            v = target_xp.astype(v, target_dtype, copy=False)
+
     return v

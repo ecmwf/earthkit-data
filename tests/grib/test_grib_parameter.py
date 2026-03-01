@@ -41,3 +41,14 @@ def test_grib_parameter_tilde_shortname(fl_type):
     assert f.parameter.variable() == "106"
     assert f.parameter.param() == "106"
     assert f.parameter.units() == "~"
+
+
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+def test_grib_parameter_chem(fl_type):
+    ds, _ = load_grib_data("chem_ll.grib2", fl_type, folder="data")
+    f = ds[0]
+
+    assert f.parameter.variable() == "tcvimd"
+    assert f.parameter.param() == "tcvimd"
+    assert f.parameter.chem_variable() == "CO"
+    assert f.parameter.units() == "kg m**-2"

@@ -46,12 +46,12 @@ def test_download_example_file_multi(tmpdir):
 
 def test_remote_example_file_path():
     filename = "test.grib"
-    from earthkit.data.testing import _REMOTE_ROOT_URL
+    from earthkit.data.utils.testing import _REMOTE_ROOT_URL
 
     assert remote_example_file(filename) == os.path.join(_REMOTE_ROOT_URL, "examples", filename)
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

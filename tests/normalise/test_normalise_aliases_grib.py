@@ -105,6 +105,6 @@ if __name__ == "__main__":
     # logging.basicConfig(level=logging.WARNING)
     # test_aliases_grib_paramid_mutiple_true()
     # test_aliases_grib_paramid_mutiple_none()
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

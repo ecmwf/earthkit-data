@@ -15,8 +15,8 @@ import os
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils.patterns import HivePattern
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 @pytest.mark.parametrize("fx", ["hive_fs_1", "hive_fs_2", "hive_fs_3", "hive_fs_4", "hive_fs_5"])

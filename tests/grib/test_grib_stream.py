@@ -16,9 +16,9 @@ from earthkit.data import concat
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.sources.stream import StreamFieldList
-from earthkit.data.testing import ARRAY_BACKENDS
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import ARRAY_BACKENDS
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_remote_examples_file
 
 
 def repeat_list_items(items, count):
@@ -517,6 +517,6 @@ def test_grib_concat_stream_memory():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

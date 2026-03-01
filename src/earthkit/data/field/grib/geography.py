@@ -8,10 +8,10 @@
 #
 import logging
 
-from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.field.component.component import normalise_set_kwargs
 from earthkit.data.field.component.geography import BaseGeography
 from earthkit.data.field.component.geography import create_geography_from_dict
+from earthkit.data.utils.grid import ECKIT_GRID_SUPPORT
 
 from .collector import GribContextCollector
 from .core import GribFieldComponentHandler
@@ -21,46 +21,6 @@ LOG = logging.getLogger(__name__)
 
 def missing_is_none(x):
     return None if x == 2147483647 else x
-
-
-class EckitGridSupport:
-    """Support for eckit-based grid handling in ecCodes.
-
-    This class checks for the availability of eckit and its grid support, as well as the
-    ecCodes features related to eckit grid support. It is only evaluated once and cached
-    for future use.
-    """
-
-    @thread_safe_cached_property
-    def has_grid(self):
-        try:
-            from eckit.geo import Grid  # noqa: F401
-
-            return True
-        except ImportError:
-            pass
-
-        return False
-
-    @thread_safe_cached_property
-    def has_ecc_grid_spec(self):
-        import os
-
-        if os.environ.get("ECCODES_ECKIT_GEO") == "1":
-            import eccodes
-
-            try:
-                r = eccodes.codes_get_features(eccodes.CODES_FEATURES_ENABLED)
-                if isinstance(r, str) and "ECKIT_GEO" in r:
-                    return True
-            except Exception as e:
-                LOG.warning(f"Failed to get ecCodes features: {e}")
-                return False
-
-        return False
-
-
-_ECKIT_GRID_SUPPORT = EckitGridSupport()
 
 
 class GribGeography(BaseGeography):
@@ -195,30 +155,6 @@ class GribGeography(BaseGeography):
     def to_dict(self):
         return dict()
 
-    # @classmethod
-    # def from_grid_spec(cls, spec, grid_spec):
-    #     from earthkit.data.readers.grib.gridspec import GridSpecConverter
-
-    #     # edition = d.get("edition", self["edition"])
-    #     edition = spec.handle.get("edition", 2)
-    #     md, new_value_size = GridSpecConverter.to_metadata(grid_spec, edition=edition)
-
-    #     print("FROM GRID SPEC MD:", md)
-    #     print("FROM GRID SPEC new_value_size:", new_value_size)
-
-    #     handle = spec.handle.clone(headers_only=False)
-    #     handle.set_multiple(md)
-
-    #     # we need to set the values to the new size otherwise the clone generated
-    #     # with headers_only=True will be inconsistent
-    #     if new_value_size is not None and new_value_size > 0:
-    #         import numpy as np
-
-    #         vals = np.zeros(new_value_size)
-    #         handle.set_values(vals)
-
-    #     return cls(handle)
-
     def __getstate__(self):
         state = {}
         state["handle"] = self.handle
@@ -241,7 +177,7 @@ class GribGeographyBuilder:
             component = SpectralGeography(shape=shape)
         # Gridded data
         else:
-            if _ECKIT_GRID_SUPPORT.has_ecc_grid_spec and _ECKIT_GRID_SUPPORT.has_grid:
+            if ECKIT_GRID_SUPPORT.has_ecc_grid_spec and ECKIT_GRID_SUPPORT.has_grid:
                 from earthkit.data.field.component.geography import GridsSpecBasedGeography
 
                 # Try to get the gridspec from the handle
@@ -260,7 +196,22 @@ class GribGeographyBuilder:
 class GribGeographyContextCollector(GribContextCollector):
     @staticmethod
     def collect_keys(handler, context):
-        pass
+        component = handler.component
+        if component.grid() is not None and component.grid_spec():
+            grid_spec = component.grid_spec()
+            if isinstance(grid_spec, dict):
+                import json
+
+                grid_spec = json.dumps(grid_spec)
+
+            r = {
+                "gridSpec": grid_spec,
+            }
+            context.update(r)
+        else:
+            raise ValueError(
+                "GribGeographyContextCollector: cannot collect context for a geography without a valid grid_spec"
+            )
 
 
 COLLECTOR = GribGeographyContextCollector()
@@ -275,10 +226,12 @@ class GribGeographyHandler(GribFieldComponentHandler):
         keys = set(kwargs.keys())
 
         if keys == {"grid_spec"}:
-            handle = self._handle_from_grid_spec(self, kwargs["grid_spec"])
-            return GribGeographyHandler(handle)
-        else:
-            return create_geography_from_dict(kwargs, shape_hint=shape_hint)
+            if not ECKIT_GRID_SUPPORT.has_ecc_grid_spec or not ECKIT_GRID_SUPPORT.has_grid:
+
+                handle = self._handle_from_grid_spec(self, kwargs["grid_spec"])
+                return GribGeographyHandler(handle)
+
+        return create_geography_from_dict(kwargs, shape_hint=shape_hint)
 
     def _handle_from_grid_spec(cls, handler, grid_spec):
         from earthkit.data.readers.grib.handle import MemoryGribHandle

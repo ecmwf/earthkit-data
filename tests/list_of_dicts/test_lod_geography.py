@@ -160,6 +160,6 @@ def test_lod_no_latlon(
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

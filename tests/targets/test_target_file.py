@@ -21,9 +21,9 @@ from earthkit.data.core.temporary import temp_file
 from earthkit.data.encoders.grib import GribEncoder
 from earthkit.data.targets import to_target
 from earthkit.data.targets.file import FileTarget
-from earthkit.data.testing import NO_RIOXARRAY
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import NO_RIOXARRAY
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 @pytest.mark.parametrize(

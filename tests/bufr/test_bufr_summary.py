@@ -11,8 +11,8 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
 def test_bufr_ls_invalid_num():
@@ -127,16 +127,16 @@ def test_bufr_tail_num():
     assert ref == df.to_dict()
 
 
-def test_bufr_dump():
+def test_bufr_describe():
     ds = from_source("file", earthkit_examples_file("temp_10.bufr"))
-    r = ds[0].dump()
+    r = ds[0].describe()
     assert isinstance(r, dict)
     assert "header" in r
     assert "data" in r
 
 
 @pytest.mark.parametrize("_kwargs,expected_val", [({"subset": 1}, 1), ({}, 1), ({"subset": 2}, 2)])
-def test_bufr_dump_uncompressed(_kwargs, expected_val):
+def test_bufr_describe_uncompressed(_kwargs, expected_val):
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("synop_multi_subset_uncompressed.bufr"),
@@ -144,7 +144,7 @@ def test_bufr_dump_uncompressed(_kwargs, expected_val):
     n = ds[0].subset_count()
     assert n == 12
 
-    r = ds[0].dump(**_kwargs)
+    r = ds[0].describe(**_kwargs)
     assert isinstance(r, dict)
     assert "header" in r
     assert "data" in r
@@ -152,7 +152,7 @@ def test_bufr_dump_uncompressed(_kwargs, expected_val):
 
 
 @pytest.mark.parametrize("_kwargs", [{"subset": 0}, {"subset": None}])
-def test_bufr_dump_uncompressed_full(_kwargs):
+def test_bufr_describe_uncompressed_full(_kwargs):
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("synop_multi_subset_uncompressed.bufr"),
@@ -161,7 +161,7 @@ def test_bufr_dump_uncompressed_full(_kwargs):
     n = ds[0].subset_count()
     assert n == 12
 
-    r = ds[0].dump(**_kwargs)
+    r = ds[0].describe(**_kwargs)
     assert isinstance(r, dict)
     assert "header" in r
     assert "data" in r
@@ -180,7 +180,7 @@ def test_bufr_dump_uncompressed_full(_kwargs):
         ({"subset": 2}, "1 (51 items)"),
     ],
 )
-def test_bufr_dump_compressed(_kwargs, expected_val):
+def test_bufr_describe_compressed(_kwargs, expected_val):
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("ens_multi_subset_compressed.bufr"),
@@ -188,7 +188,7 @@ def test_bufr_dump_compressed(_kwargs, expected_val):
     n = ds[0].subset_count()
     assert n == 51
 
-    r = ds[0].dump(**_kwargs)
+    r = ds[0].describe(**_kwargs)
     assert isinstance(r, dict)
     assert "header" in r
     assert "data" in r
@@ -196,6 +196,6 @@ def test_bufr_dump_compressed(_kwargs, expected_val):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

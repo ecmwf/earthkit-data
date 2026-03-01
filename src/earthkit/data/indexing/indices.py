@@ -9,7 +9,7 @@
 
 from collections import defaultdict
 
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
 
 GRIB_KEYS_NAMES = [
     "class",

@@ -26,7 +26,7 @@ def get_member(coord, selection):
 
 
 def from_xarray(owner, selection):
-    from earthkit.data.loaders.xarray.coordinates import EnsembleCoordinate
+    from earthkit.data.readers.xarray.coordinates import EnsembleCoordinate
 
     coord = None
     for c in owner.coordinates:

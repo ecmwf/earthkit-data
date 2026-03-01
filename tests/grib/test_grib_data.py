@@ -17,8 +17,8 @@ import pytest
 from earthkit.utils.array import convert as array_convert
 from earthkit.utils.array.convert import convert_dtype
 
-from earthkit.data.testing import check_array
-from earthkit.data.testing import check_array_type
+from earthkit.data.utils.testing import check_array
+from earthkit.data.utils.testing import check_array_type
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -655,6 +655,6 @@ def test_grib_values_with_missing(fl_type):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

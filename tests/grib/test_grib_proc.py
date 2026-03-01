@@ -16,7 +16,7 @@ import sys
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)

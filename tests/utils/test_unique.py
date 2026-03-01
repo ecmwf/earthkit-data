@@ -13,7 +13,7 @@ import datetime
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 from earthkit.data.utils.unique import UniqueValuesCollector
 
 

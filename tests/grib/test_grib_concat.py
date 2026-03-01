@@ -17,7 +17,7 @@ from earthkit.data import concat
 from earthkit.data import create_fieldlist
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 def _check_save_to_disk(ds, len_ref, meta_ref):
@@ -163,6 +163,6 @@ def test_grib_concat_large():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

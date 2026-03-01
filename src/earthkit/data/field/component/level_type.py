@@ -9,7 +9,7 @@
 
 from enum import Enum
 
-from earthkit.data.utils.units import Units
+from earthkit.utils.units import Units
 
 POSITIVE_UP = "up"
 POSITIVE_DOWN = "down"

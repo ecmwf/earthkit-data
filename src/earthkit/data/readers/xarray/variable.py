@@ -18,8 +18,7 @@ from typing import Tuple
 
 import numpy as np
 import xarray as xr
-
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
 
 # from .field import XArrayField
 

@@ -39,6 +39,8 @@ class FileTarget(SimpleTarget):
     ValueError: If the file name is not specified and cannot be constructed.
     """
 
+    _name = "file"
+
     def __init__(self, file=None, *, append=False, **kwargs):
         super().__init__(**kwargs)
 

@@ -13,7 +13,8 @@ import threading
 from abc import ABCMeta
 from abc import abstractmethod
 
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
+
 from earthkit.data.utils import ensure_dict
 from earthkit.data.utils import ensure_iterable
 
@@ -26,19 +27,19 @@ IGNORE_ATTRS = ["md5GridSection"]
 
 
 class RemappingBuilder:
-    def __init__(self, remappings, patches=None):
+    def __init__(self, remappings, patch=None):
         self.remappings = dict(**ensure_dict(remappings))
-        self.patches = dict(**ensure_dict(patches))
+        self.patch = dict(**ensure_dict(patch))
 
     def build(self):
         from earthkit.data.core.order import build_remapping
 
-        return build_remapping(self.remappings, patches=self.patches)
+        return build_remapping(self.remappings, patch=self.patch)
 
-    def add(self, remapping, patches=None):
+    def add(self, remapping, patch=None):
         self.remappings.update(remapping)
-        if patches is not None:
-            self.patches.update(patches)
+        if patch is not None:
+            self.patch.update(patch)
 
 
 class ProfileConf:
@@ -186,7 +187,7 @@ class MonoVariable(ProfileVariable):
 
 
 class Profile:
-    USER_ONLY_OPTIONS = ["remapping", "patches", "fill_metadata"]
+    USER_ONLY_OPTIONS = ["remapping", "patch", "fill_metadata"]
     DEFAULT_PROFILE_NAME = "earthkit"
 
     def __init__(
@@ -201,7 +202,7 @@ class Profile:
         self.name = name
         self.index_keys = []
 
-        patches = dict()
+        patch = dict()
 
         # default
         fill_md = kwargs.pop("fill_metadata", None)
@@ -210,11 +211,11 @@ class Profile:
                 raise ValueError("fill_metadata must be a dict!")
             for k, v in fill_md.items():
                 if isinstance(v, (str, int, float, bool)):
-                    patches[k] = lambda x: x if x is not None else v
+                    patch[k] = lambda x: x if x is not None else v
                 elif isinstance(v, dict) or callable(v):
-                    patches[k] = v
+                    patch[k] = v
 
-        self.remapping = RemappingBuilder(kwargs.pop("remapping", None), patches)
+        self.remapping = RemappingBuilder(kwargs.pop("remapping", None), patch)
 
         # variables
         mono_variable = kwargs.pop("mono_variable")

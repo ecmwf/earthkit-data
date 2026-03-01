@@ -77,6 +77,6 @@ def test_forcings_sel_single_file_as_dict(input_data):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

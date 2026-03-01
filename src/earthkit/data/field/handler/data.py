@@ -13,7 +13,7 @@ from typing import Any
 
 from earthkit.utils.array import array_namespace as eku_array_namespace
 
-from earthkit.data.utils.array import flatten
+from earthkit.data.utils.array import flatten_array
 
 from .core import FieldComponentHandler
 from .core import LazyFieldComponentHandler
@@ -65,7 +65,7 @@ class BaseDataFieldComponentHandler(FieldComponentHandler):
     def get(self, key, default=None, *, astype=None, raise_on_missing=False):
         if key == "values":
             if astype:
-                return flatten(self.get_values(dtype=astype, copy=True))
+                return flatten_array(self.get_values(dtype=astype, copy=True))
             return self.values
 
         if raise_on_missing:
@@ -122,7 +122,7 @@ class DataFieldComponentHandler(BaseDataFieldComponentHandler):
     @property
     def values(self):
         r"""array-like: Get the values stored in the field as a 1D array."""
-        return flatten(self.get_values(copy=False))
+        return flatten_array(self.get_values(copy=False))
 
     def set_values(self, array):
         """Set the values of the field.

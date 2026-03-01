@@ -11,11 +11,11 @@ import datetime
 from collections import defaultdict
 
 
-def build_remapping(remapping, patches):
-    if remapping is not None or patches is not None:
+def build_remapping(remapping, patch):
+    if remapping is not None or patch is not None:
         from earthkit.data.core.order import build_remapping
 
-        remapping = build_remapping(remapping, patches)
+        remapping = build_remapping(remapping, patch)
     return None
 
 
@@ -86,7 +86,7 @@ class UniqueValuesCollector:
         squeeze=False,
         unwrap_single=False,
         remapping=None,
-        patches=None,
+        patch=None,
         progress_bar=False,
     ):
         r"""Collect unique values for the given keys from data.
@@ -108,7 +108,7 @@ class UniqueValuesCollector:
             Whether to return a single value instead of a list if there is only one unique value for
         remapping: dict, optional
             A dictionary for remapping keys or values during collection. Default is None.
-        patches: dict, optional
+        patch: dict, optional
             A dictionary for patching key values during collection. Default is None.
         progress_bar: bool, optional
             Whether to display a progress bar during collection. Default is False.
@@ -130,8 +130,8 @@ class UniqueValuesCollector:
                 desc=f"Finding values for {keys=}",
             )
 
-        if remapping or patches:
-            remapping = build_remapping(remapping, patches)
+        if remapping or patch:
+            remapping = build_remapping(remapping, patch)
 
         if isinstance(keys, str):
             keys = tuple([keys])

@@ -37,6 +37,8 @@ class Target(metaclass=ABCMeta):
     a file, a database, a remote server, etc.
     """
 
+    _name = None
+
     def __init__(self, encoder=None, template=None, metadata=None, **kwargs):
         self._encoder = encoder
         self._template = template
@@ -170,6 +172,10 @@ class SimpleTarget(Target):
 
         if encoder is None:
             encoder = self._encoder
+
+        # no_encoder_kwargs = (
+        #     (not encoder or isinstance(encoder, str)) and not template and not kwargs and not self._metadata
+        # )
 
         encoder = make_encoder(data, encoder, suffix=suffix, metadata=self._metadata)
 

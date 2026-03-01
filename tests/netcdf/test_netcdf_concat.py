@@ -17,8 +17,8 @@ import xarray as xr
 
 from earthkit.data import concat
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_test_data_file
-from earthkit.data.testing import load_nc_or_xr_source
+from earthkit.data.utils.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import load_nc_or_xr_source
 
 # These functionalities are variations around
 # http://xarray.pydata.org/en/stable/user-guide/combining.html#combining-multi
@@ -376,6 +376,6 @@ def test_netcdf_merge_concat_var():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

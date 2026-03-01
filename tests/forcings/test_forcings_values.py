@@ -252,6 +252,6 @@ def test_forcings_fieldlist_data(kwarg, expected_shape, expected_dtype):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

@@ -83,7 +83,7 @@ class Source(Base):
 
         to_target(target, *args, data=self, **kwargs)
 
-    def default_encoder(self):
+    def _default_encoder(self):
         return None
 
 

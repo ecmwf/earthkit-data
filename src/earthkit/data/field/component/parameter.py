@@ -9,7 +9,7 @@
 
 from abc import abstractmethod
 
-from earthkit.data.utils.units import Units
+from earthkit.utils.units import Units
 
 from .component import SimpleFieldComponent
 from .component import component_keys
@@ -31,6 +31,12 @@ class BaseParameter(SimpleFieldComponent):
     @abstractmethod
     def units(self) -> str:
         r"""str: Return the parameter units."""
+        pass
+
+    @mark_get_key
+    @abstractmethod
+    def chem_variable(self) -> str:
+        r"""str: Return the parameter chemical variable."""
         pass
 
     @mark_alias("variable")
@@ -55,7 +61,7 @@ def create_parameter(d: dict) -> "BaseParameter":
         raise TypeError(f"Cannot create Parameter from {type(d)}, expected dict")
 
     cls = Parameter
-    d1 = cls.normalise_create_kwargs(d, allowed_keys=("variable", "units"))
+    d1 = cls.normalise_create_kwargs(d, allowed_keys=("variable", "units", "chem_variable"))
     return cls(**d1)
 
 
@@ -66,6 +72,10 @@ class EmptyParameter(BaseParameter):
 
     def units(self) -> str:
         r"""str: Return the parameter units."""
+        return None
+
+    def chem_variable(self) -> str:
+        r"""str: Return the parameter chemical variable."""
         return None
 
     @classmethod
@@ -88,9 +98,13 @@ class EmptyParameter(BaseParameter):
 
 
 class Parameter(BaseParameter):
-    def __init__(self, variable: str = None, units: str = None) -> None:
+    _chem_variable = None
+
+    def __init__(self, variable: str = None, units: str = None, chem_variable: str = None) -> None:
         self._variable = variable
         self._units = Units.from_any(units)
+        if chem_variable is not None:
+            self._chem_variable = chem_variable
 
     def variable(self) -> str:
         r"""str: Return the parameter variable."""
@@ -99,6 +113,10 @@ class Parameter(BaseParameter):
     def units(self) -> str:
         r"""str: Return the parameter units."""
         return self._units
+
+    def chem_variable(self) -> str:
+        r"""str: Return the parameter chemical variable."""
+        return self._chem_variable
 
     @classmethod
     def from_dict(cls, d: dict) -> "Parameter":
@@ -123,17 +141,19 @@ class Parameter(BaseParameter):
         state = {}
         state["variable"] = self._variable
         state["units"] = str(self._units)
+        state["chem_variable"] = self._chem_variable
         return state
 
     def __setstate__(self, state):
-        self.__init__(variable=state["variable"], units=state["units"])
+        self.__init__(variable=state["variable"], units=state["units"], chem_id=state["chem_variable"])
 
     def set(self, *args, **kwargs):
-        d = self.normalise_set_kwargs(*args, allowed_keys=("variable", "units"), **kwargs)
+        d = self.normalise_set_kwargs(*args, allowed_keys=("variable", "units", "chem_variable"), **kwargs)
 
         current = {
             "variable": self._variable,
             "units": self._units,
+            "chem_variable": self._chem_variable,
         }
 
         current.update(d)

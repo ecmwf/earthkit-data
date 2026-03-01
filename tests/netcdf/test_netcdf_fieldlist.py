@@ -14,7 +14,7 @@ import datetime
 import numpy as np
 
 import earthkit.data
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
 def test_netcdf_fieldlist_string_coord():
@@ -76,6 +76,6 @@ def test_netcdf_fieldlist_ctime():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

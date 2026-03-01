@@ -10,8 +10,8 @@
 #
 from earthkit.data import from_source
 from earthkit.data.decorators import normalise
-from earthkit.data.testing import earthkit_examples_file
 from earthkit.data.utils.bbox import BoundingBox
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 @normalise("area", "bounding-box")
@@ -63,6 +63,6 @@ def test_bbox():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

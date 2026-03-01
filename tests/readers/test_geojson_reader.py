@@ -11,7 +11,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 def test_geojson():
@@ -39,6 +39,6 @@ def test_geojson_bounding_box():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

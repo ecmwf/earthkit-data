@@ -13,7 +13,7 @@ import pytest
 
 from earthkit.data import from_object
 from earthkit.data import wrappers
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 from earthkit.data.wrappers import xarray as xr_wrapper
 
 

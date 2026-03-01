@@ -18,9 +18,9 @@ from earthkit.data import create_encoder
 from earthkit.data import from_source
 from earthkit.data import to_target
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import earthkit_remote_test_data_file
 from earthkit.data.utils.dates import datetime_to_grib
 from earthkit.data.utils.dates import to_datetime
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
 @pytest.mark.cache

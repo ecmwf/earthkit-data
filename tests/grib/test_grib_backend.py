@@ -17,7 +17,7 @@ from earthkit.utils.array.testing.testing import NO_TORCH
 
 from earthkit.data import FieldList
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_examples_file
 
 
 @pytest.mark.parametrize("_kwargs", [{}, {"array_namespace": "numpy"}])
@@ -267,6 +267,6 @@ def test_grib_array_cupy_backend():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

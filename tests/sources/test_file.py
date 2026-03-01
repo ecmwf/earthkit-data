@@ -17,10 +17,10 @@ import pytest
 
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import make_tgz
-from earthkit.data.testing import make_zip
-from earthkit.data.testing import preserve_cwd
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import make_tgz
+from earthkit.data.utils.testing import make_zip
+from earthkit.data.utils.testing import preserve_cwd
 
 LOG = logging.getLogger(__name__)
 
@@ -349,6 +349,6 @@ def test_file_netcdf_zip_with_single_file_2():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

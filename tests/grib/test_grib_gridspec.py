@@ -19,8 +19,8 @@ from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_file
 from earthkit.data.field.grib.legacy_grid_spec import LegacyGridSpecConverter
 from earthkit.data.field.grib.legacy_grid_spec import make_legacy_gridspec
-from earthkit.data.testing import earthkit_remote_test_data_file
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 SUPPORTED_GRID_TYPES = [
     "sh",
@@ -298,6 +298,6 @@ def test_grib_global_ll_gridspec_to_metadata(edition, grid):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

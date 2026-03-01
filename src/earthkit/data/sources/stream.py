@@ -10,7 +10,8 @@
 import itertools
 import logging
 
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
+
 from earthkit.data.indexing.stream import StreamFieldList
 
 # from earthkit.data.core.fieldlist import FieldList
@@ -235,7 +236,7 @@ class MultiStreamSource(Source):
 #         assert len(sources) > 1
 #         return MultiStreamSource.merge(sources)
 
-#     def default_encoder(self):
+#     def _default_encoder(self):
 #         return None
 
 

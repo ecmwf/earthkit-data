@@ -88,6 +88,6 @@ def test_lod_ll(lod_distinct_ll, mode):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

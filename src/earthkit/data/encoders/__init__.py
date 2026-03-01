@@ -230,9 +230,9 @@ def make_encoder(data, encoder=None, suffix=None, metadata=None, **kwargs):
         if suffix is not None:
             encoder = _suffix_to_encoder(suffix)
         if encoder is None:
-            if hasattr(data, "default_encoder"):
-                # print("data.default_encoder", data.default_encoder())
-                encoder = data.default_encoder()
+            if hasattr(data, "_default_encoder"):
+                # print("data._default_encoder", data._default_encoder())
+                encoder = data._default_encoder()
 
     if isinstance(encoder, str):
         encoder = create_encoder(encoder, metadata=metadata, **kwargs)

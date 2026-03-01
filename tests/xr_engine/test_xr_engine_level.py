@@ -15,7 +15,7 @@ import sys
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
 from earthkit.data.xr_engine.profile import PROFILE_CONF
 
 here = os.path.dirname(__file__)

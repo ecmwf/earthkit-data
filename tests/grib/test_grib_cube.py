@@ -14,13 +14,13 @@ import pytest
 
 from earthkit.data import concat
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_test_data_file
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 def test_grib_cube_core():
     ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-    c = ds.cube("parameter.variable", "vertical.level")
+    c = ds.to_cube("parameter.variable", "vertical.level")
 
     assert c.user_shape == (3, 6)
     assert c.field_shape == (7, 12)
@@ -97,7 +97,7 @@ def test_grib_cube_core():
 
 def test_grib_cubelet():
     ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
-    c = ds.cube("parameter.variable", "vertical.level")
+    c = ds.to_cube("parameter.variable", "vertical.level")
 
     reading_chunks = None
     assert c.count(reading_chunks) == 18
@@ -142,10 +142,10 @@ def test_grib_cube_non_hypercube():
     assert len(ds) == 18 + 2
 
     with pytest.raises(ValueError):
-        ds.cube("parameter.variable", "vertical.level")
+        ds.to_cube("parameter.variable", "vertical.level")
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

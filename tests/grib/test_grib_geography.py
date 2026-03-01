@@ -18,12 +18,13 @@ from earthkit.utils.array import convert as array_convert
 
 import earthkit.data
 from earthkit.data import concat
-from earthkit.data.testing import NO_GEO
-from earthkit.data.testing import check_array
-from earthkit.data.testing import check_array_type
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import projections
+from earthkit.data.utils.testing import NO_ECCODES_GRID
+from earthkit.data.utils.testing import NO_GEO
+from earthkit.data.utils.testing import check_array
+from earthkit.data.utils.testing import check_array_type
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 here = os.path.dirname(__file__)
 sys.path.insert(0, here)
@@ -249,6 +250,7 @@ def test_grib_points_unsupported_grid(fl_type):
 @pytest.mark.parametrize("fl_type", FL_TYPES)
 def test_grib_bbox(fl_type):
     ds, _ = load_grib_data("test.grib", fl_type)
+    print(ds[0].geography.grid_spec())
     bb = ds[0].geography.bounding_box()
     assert bb.as_tuple() == (73, -27, 33, 45)
 
@@ -338,6 +340,39 @@ def test_grib_latlon_various_grids(fl_type, filename, expected_shape, expected_l
     assert lon.shape == expected_shape
     assert np.allclose(lat.flatten()[:4], expected_lat)
     assert np.allclose(lon.flatten()[:4], expected_lon)
+
+
+@pytest.mark.skipif(NO_ECCODES_GRID, reason="No eckit-geo support in eccodes")
+@pytest.mark.parametrize("fl_type", FL_TYPES)
+@pytest.mark.parametrize(
+    "filename,shape,grid_spec,area,grid_type",
+    [
+        (
+            "ll_10_20.grib",
+            (
+                9,
+                36,
+            ),
+            {"grid": "regular_ll"},
+            (90.0, 0.0, -90.0, 360.0),
+            "regular-ll",
+        ),
+    ],
+)
+def test_grib_eckit_grid_object(fl_type, filename, shape, grid_spec, area, grid_type):
+    ds, _ = load_grib_data(filename, fl_type, folder="data")
+    grid = ds[0].geography.grid()
+    assert grid
+    assert grid.shape == shape
+    assert grid.bounding_box() == area
+
+    # TODO: this does not work in eckit-geo Grid
+    # grid.type == grid_type
+    assert ds[0].geography.shape() == shape
+    assert ds[0].geography.area() == area
+    lat, lon = ds[0].geography.latlons()
+    assert lat.shape == shape
+    assert lon.shape == shape
 
 
 @pytest.mark.parametrize(
@@ -472,6 +507,6 @@ def test_grib_grid_points_rotated_rgg():
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main()

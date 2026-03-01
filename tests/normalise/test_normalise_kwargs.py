@@ -90,6 +90,6 @@ assert out == ("A", "B", 7, 8), out
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

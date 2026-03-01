@@ -12,7 +12,7 @@
 import pytest
 
 from earthkit.data import from_source
-from earthkit.data.testing import NO_HDA
+from earthkit.data.utils.testing import NO_HDA
 
 REQ_1 = {
     "dataset_id": "EO:CLMS:DAT:CLMS_GLOBAL_BA_300M_V3_MONTHLY_NETCDF",
@@ -83,6 +83,6 @@ def test_wekeo_download_multi(_args, req, _kwargs):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     main(__file__)

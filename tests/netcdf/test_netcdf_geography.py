@@ -14,10 +14,10 @@ import pytest
 
 from earthkit.data import from_object
 from earthkit.data import from_source
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_examples_file
-from earthkit.data.testing import earthkit_test_data_file
 from earthkit.data.utils import projections
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
@@ -467,7 +467,7 @@ def test_netcdf_geography_1d_2(lat_name, lon_name):
 
 
 if __name__ == "__main__":
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     # test_datetime()
     main(__file__)

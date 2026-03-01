@@ -18,10 +18,10 @@ from earthkit.data import config
 from earthkit.data import from_source
 from earthkit.data.core.temporary import temp_directory
 from earthkit.data.core.temporary import temp_file
-from earthkit.data.testing import earthkit_examples_file
-from earthkit.data.testing import earthkit_remote_examples_file
-from earthkit.data.testing import earthkit_remote_test_data_file
-from earthkit.data.testing import network_off
+from earthkit.data.utils.testing import earthkit_examples_file
+from earthkit.data.utils.testing import earthkit_remote_examples_file
+from earthkit.data.utils.testing import earthkit_remote_test_data_file
+from earthkit.data.utils.testing import network_off
 
 
 @pytest.mark.skipif(  # TODO: fix
@@ -208,7 +208,7 @@ def test_url_netcdf_source_save():
 if __name__ == "__main__":
     import logging
 
-    from earthkit.data.testing import main
+    from earthkit.data.utils.testing import main
 
     logging.basicConfig(level=logging.DEBUG)
     main(__file__)

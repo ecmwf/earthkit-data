@@ -19,7 +19,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from earthkit.data.decorators import thread_safe_cached_property
+from earthkit.utils.decorators import thread_safe_cached_property
 
 from .dates import to_datetime
 from .dates import to_timedelta

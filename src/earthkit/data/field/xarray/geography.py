@@ -12,24 +12,7 @@ from typing import Any
 
 from earthkit.data.field.component.geography import BaseGeography
 from earthkit.data.field.handler.geography import GeographyFieldComponentHandler
-
-
-def _array_convert(v, flatten=False, dtype=None):
-    if flatten:
-        from earthkit.data.utils.array import flatten
-
-        v = flatten(v)
-
-    if dtype is not None:
-        from earthkit.utils.array import array_namespace
-        from earthkit.utils.array.convert import convert_dtype
-
-        target_xp = array_namespace(v)
-        target_dtype = convert_dtype(dtype, target_xp)
-        if target_dtype is not None:
-            v = target_xp.astype(v, target_dtype, copy=False)
-
-    return v
+from earthkit.data.utils.array import adjust_array
 
 
 class XArrayGeography(BaseGeography):
@@ -106,8 +89,8 @@ class XArrayGeography(BaseGeography):
         lat, lon = self.owner.grid.latlons
         lat = lat.reshape(self.shape())
         lon = lon.reshape(self.shape())
-        lat = _array_convert(lat, flatten=flatten, dtype=dtype)
-        lon = _array_convert(lon, flatten=flatten, dtype=dtype)
+        lat = adjust_array(lat, flatten=flatten, dtype=dtype)
+        lon = adjust_array(lon, flatten=flatten, dtype=dtype)
 
         return lat, lon
 
@@ -116,8 +99,8 @@ class XArrayGeography(BaseGeography):
         if x is not None and y is not None:
             x = x.reshape(self.shape())
             y = y.reshape(self.shape())
-            x = _array_convert(x, flatten=flatten, dtype=dtype)
-            y = _array_convert(y, flatten=flatten, dtype=dtype)
+            x = adjust_array(x, flatten=flatten, dtype=dtype)
+            y = adjust_array(y, flatten=flatten, dtype=dtype)
             return x, y
         else:
             raise ValueError("XArrayGeography: points not available")

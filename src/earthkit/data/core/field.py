@@ -12,16 +12,16 @@ from collections import defaultdict
 from earthkit.utils.array import array_namespace as eku_array_namespace
 from earthkit.utils.array import convert as convert_array
 from earthkit.utils.array.convert import convert_dtype
+from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.core import Base
 from earthkit.data.core.order import Patch
 from earthkit.data.core.order import Remapping
 from earthkit.data.core.order import build_remapping
 from earthkit.data.decorators import normalise
-from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.utils.args import metadata_argument_new
-from earthkit.data.utils.array import flatten as array_flatten
-from earthkit.data.utils.array import reshape as array_reshape
+from earthkit.data.utils.array import flatten_array
+from earthkit.data.utils.array import reshape_array
 from earthkit.data.utils.array import target_shape
 from earthkit.data.utils.compute import wrap_maths
 
@@ -484,7 +484,7 @@ class Field(Base):
         """
         v = self._components[DATA].get_values(dtype=dtype, copy=copy)
         v = convert_array(v, array_namespace="numpy")
-        v = array_flatten(v) if flatten else array_reshape(v, self.shape)
+        v = flatten_array(v) if flatten else reshape_array(v, self.shape)
 
         if index is not None:
             v = v[index]
@@ -531,7 +531,7 @@ class Field(Base):
         if array_namespace is not None:
             v = convert_array(v, array_namespace=array_namespace, device=device)
 
-        v = array_flatten(v) if flatten else array_reshape(v, self.shape)
+        v = flatten_array(v) if flatten else reshape_array(v, self.shape)
         if index is not None:
             v = v[index]
 
@@ -606,7 +606,7 @@ class Field(Base):
 
         def _reshape(v, flatten):
             shape = target_shape(v, flatten, self.shape)
-            return array_reshape(v, shape)
+            return reshape_array(v, shape)
 
         r = {}
         for k in keys:
@@ -651,7 +651,7 @@ class Field(Base):
             return DATA, self._components[DATA], key
         return None, None, key
 
-    def _get_single(self, key, default=None, *, astype=None, raise_on_missing=False):
+    def _get_single(self, key, default=None, astype=None, raise_on_missing=False):
         r"""Return the value for the key.
 
         Parameters
@@ -868,7 +868,7 @@ class Field(Base):
         output="auto",
         flatten_dict=False,
         remapping=None,
-        patches=None,
+        patch=None,
     ):
         r"""Return the values for the specified keys.
 
@@ -909,8 +909,8 @@ class Field(Base):
 
                 remapping={"param_level": "{parameter.variable}{vertical.level}"}
 
-        patches: dict, optional
-            A dictionary of patches to be applied to the returned values.
+        patch: dict, optional
+            A dictionary of patch to be applied to the returned values.
 
         Returns
         -------
@@ -952,8 +952,8 @@ class Field(Base):
         else:
             raise ValueError(f"Invalid output: {output}")
 
-        if remapping or patches:
-            remapping = build_remapping(remapping, patches, forced_build=False)
+        if remapping or patch:
+            remapping = build_remapping(remapping, patch, forced_build=False)
 
         return self._get_fast(
             keys,
@@ -973,7 +973,7 @@ class Field(Base):
         astype=None,
         output="auto",
         remapping=None,
-        patches=None,
+        patch=None,
     ):
 
         if isinstance(keys, str) and not keys.startswith("metadata."):
@@ -990,7 +990,7 @@ class Field(Base):
             raise_on_missing=True,
             output=output,
             remapping=remapping,
-            patches=patches,
+            patch=patch,
         )
 
     def set(self, *args, **kwargs):
@@ -1067,7 +1067,7 @@ class Field(Base):
 
         to_target(target, *args, data=self, **kwargs)
 
-    def default_encoder(self):
+    def _default_encoder(self):
         # TODO: improve this to support more formats and to be more robust
         if self._get_grib():
             return "grib"
@@ -1312,7 +1312,7 @@ class Field(Base):
     @normalise("metadata.valid_datetime", "date")
     @normalise("metadata.step_timedelta", "timedelta")
     @staticmethod
-    def normalise_key_values(**kwargs):
+    def _normalise_key_values(**kwargs):
         r"""Normalise the selection input for :meth:`FieldList.sel`."""
         return kwargs
 
@@ -1332,12 +1332,12 @@ class Field(Base):
 
     def _binary_op(self, oper, y):
         from earthkit.data.core.fieldlist import FieldList
-        from earthkit.data.indexing.indexed import IndexedFieldList
+        from earthkit.data.indexing.indexed import IndexFieldListBase
         from earthkit.data.wrappers import get_wrapper
 
         y = get_wrapper(y)
         if isinstance(y, FieldList):
-            x = IndexedFieldList.from_fields([self])
+            x = IndexFieldListBase.from_fields([self])
             return x._binary_op(oper, y)
 
         vx = self.values

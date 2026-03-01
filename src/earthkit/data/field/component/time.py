@@ -64,7 +64,7 @@ class BaseTime(SimpleFieldComponent):
         """Return the forecast period (alias of `step`)."""
         pass
 
-    @abstractmethod
+    @mark_get_key
     @abstractmethod
     def forecast_month(self):
         """Return the forecast month."""

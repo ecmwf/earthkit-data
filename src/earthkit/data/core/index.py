@@ -10,14 +10,14 @@
 import functools
 import logging
 from abc import abstractmethod
-from collections import defaultdict
+
+from earthkit.utils.decorators import thread_safe_cached_property
 
 import earthkit.data
 from earthkit.data.core.order import build_remapping
 from earthkit.data.core.order import normalise_order_by
 from earthkit.data.core.select import normalise_selection
 from earthkit.data.core.select import selection_from_index
-from earthkit.data.decorators import thread_safe_cached_property
 from earthkit.data.sources import Source
 from earthkit.data.utils.unique import UniqueValuesCollector
 
@@ -92,6 +92,10 @@ class Selection(OrderOrSelection):
             self.actions[k] = InList(v)
 
     def match_element(self, element):
+        get = element._get_single
+        if self.remapping:
+            get = self.remapping(get)
+        return all(v(get(k, default=None)) for k, v in self.actions.items())
         # metadata = self.remapping(element.metadata)
         # get = self.remapping(element.get)
         # print("MATCH", [(k, v(metadata(k, default=None)), element) for k, v in self.actions.items()])
@@ -99,9 +103,9 @@ class Selection(OrderOrSelection):
         # for k, v in self.actions.items():
         #     print(f"  -> {k=} {v=}, {get(k, default=None)=}")
         # return all(v(get(k, default=None)) for k, v in self.actions.items())
-        return all(
-            v(element._get_fast(k, default=None, remapping=self.remapping)) for k, v in self.actions.items()
-        )
+        # return all(
+        #     v(element._get_fast(k, default=None, remapping=self.remapping)) for k, v in self.actions.items()
+        # )
 
 
 class OrderBase(OrderOrSelection):
@@ -115,13 +119,17 @@ class OrderBase(OrderOrSelection):
 
     def compare_elements(self, a, b):
         assert callable(self.remapping), (type(self.remapping), self.remapping)
-        a_metadata = a._get_fast
-        b_metadata = b._get_fast
+        a_get = a._get_single
+        b_get = b._get_single
+
+        if self.remapping:
+            a_get = self.remapping(a_get)
+            b_get = self.remapping(b_get)
 
         for k, v in self.actions.items():
             n = v(
-                a_metadata(k, default=None, remapping=self.remapping),
-                b_metadata(k, default=None, remapping=self.remapping),
+                a_get(k, default=None),
+                b_get(k, default=None),
             )
             if n != 0:
                 return n
@@ -210,67 +218,114 @@ class Order(OrderBase):
         return actions
 
 
-class IndexBase(Source):
-    @abstractmethod
-    def __len__(self):
-        pass
+# class IndexBase(Source):
+#     @abstractmethod
+#     def __len__(self):
+#         pass
 
-    @abstractmethod
-    def __getitem__(self, n):
-        pass
+#     @abstractmethod
+#     def __getitem__(self, n):
+#         pass
 
-    @abstractmethod
-    def ls(self, *args, **kwargs):
-        pass
+#     @abstractmethod
+#     def ls(self, *args, **kwargs):
+#         pass
 
-    @abstractmethod
-    def head(self, *args, **kwargs):
-        pass
+#     @abstractmethod
+#     def head(self, *args, **kwargs):
+#         pass
 
-    @abstractmethod
-    def tail(self, *args, **kwargs):
-        pass
+#     @abstractmethod
+#     def tail(self, *args, **kwargs):
+#         pass
 
-    @abstractmethod
-    def get(self, *args, **kwargs):
-        pass
+#     @abstractmethod
+#     def get(self, *args, **kwargs):
+#         pass
 
-    @abstractmethod
-    def unique(self, *args, **kwargs):
-        pass
+#     @abstractmethod
+#     def unique(self, *args, **kwargs):
+#         pass
 
-    @abstractmethod
-    def sel(self, *args, **kwargs):
-        pass
+#     @abstractmethod
+#     def sel(self, *args, **kwargs):
+#         pass
 
-    @abstractmethod
-    def isel(self, *args, **kwargs):
-        pass
+#     @abstractmethod
+#     def isel(self, *args, **kwargs):
+#         pass
 
-    @abstractmethod
-    def order_by(self, *args, **kwargs):
-        pass
+#     @abstractmethod
+#     def order_by(self, *args, **kwargs):
+#         pass
 
-    @abstractmethod
-    def batched(self, *args, **kwargs):
-        pass
+#     @abstractmethod
+#     def batched(self, *args, **kwargs):
+#         pass
 
-    @abstractmethod
-    def groupby(self, *args, **kwargs):
-        pass
+#     @abstractmethod
+#     def group_by(self, *args, **kwargs):
+#         pass
 
 
 class Index(Source):
     @classmethod
-    def new_mask_index(self, *args, **kwargs):
+    def _new_mask_index(self, *args, **kwargs):
         return MaskIndex(*args, **kwargs)
+
+    @abstractmethod
+    def __len__(self):
+        pass
+
+    def __getitem__(self, n):
+        if isinstance(n, slice):
+            return self._from_slice(n)
+        if isinstance(n, (tuple, list)):
+            return self._from_sequence(n)
+        if isinstance(n, dict):
+            return self._from_dict(n)
+        else:
+            import numpy as np
+
+            if isinstance(n, np.ndarray):
+                return self._from_ndarray(n)
+
+        return self._getitem(n)
+
+    def _from_slice(self, s):
+        indices = range(len(self))[s]
+        return self.new_mask_index(self, indices)
+
+    def _from_mask(self, lst):
+        indices = [i for i, x in enumerate(lst) if x]
+        return self.new_mask_index(self, indices)
+
+    def _from_sequence(self, s):
+        return self.new_mask_index(self, s)
+
+    def _from_ndarray(self, a):
+        return self._from_sequence(a.tolist())
+        # import numpy as np
+
+        # # will raise IndexError if an index is out of bounds
+        # n = len(self)
+        # indices = np.arange(0, n if n > 0 else 0)
+        # indices = indices[a].tolist()
+        # return self.new_mask_index(self, indices)
+
+    # def from_dict(self, dic):
+    #     return self.sel(dic)
 
     @abstractmethod
     def _getitem(self, n):
         pass
 
+    # @abstractmethod
+    # def _get_single(self, key, default=None, **kwargs):
+    #     pass
+
     @abstractmethod
-    def __len__(self):
+    def _normalise_key_values(self, **kwargs):
         pass
 
     def sel(self, *args, remapping=None, **kwargs):
@@ -376,8 +431,7 @@ class Index(Source):
         if remapping_kwarg:
             remapping = remapping_kwarg
 
-        if hasattr(self, "normalise_key_values"):
-            kwargs = self.normalise_key_values(**kwargs)
+        kwargs = self._normalise_key_values(**kwargs)
 
         selection = Selection(kwargs, remapping=remapping)
         if selection.is_empty:
@@ -482,7 +536,7 @@ class Index(Source):
 
         return self.sel(**kwargs)
 
-    def order_by(self, *args, remapping=None, patches=None, **kwargs):
+    def order_by(self, *args, remapping=None, patch=None, **kwargs):
         """Change the order of the elements in a fieldlist-like object.
 
         Parameters
@@ -579,7 +633,7 @@ class Index(Source):
         """
         kwargs = normalise_order_by(*args, **kwargs)
 
-        remapping = build_remapping(remapping, patches)
+        remapping = build_remapping(remapping, patch)
 
         if not kwargs:
             return self
@@ -608,7 +662,7 @@ class Index(Source):
         squeeze=False,
         unwrap_single=False,
         remapping=None,
-        patches=None,
+        patch=None,
         progress_bar=False,
         cache=True,
     ):
@@ -627,7 +681,7 @@ class Index(Source):
             Whether to return a single value instead of a list if there is only one unique value for a key. Default is False.
         remapping: dict, optional
             A dictionary for remapping keys or values during collection. Default is None.
-        patches: dict, optional
+        patch: dict, optional
             A dictionary for patching key values during collection. Default is None.
         progress_bar: bool, optional
             Whether to display a progress bar during collection. Default is False.
@@ -657,107 +711,9 @@ class Index(Source):
             squeeze=squeeze,
             unwrap_single=unwrap_single,
             remapping=remapping,
-            patches=patches,
+            patch=patch,
             progress_bar=progress_bar,
         )
-
-    def get(
-        self,
-        keys,
-        default=None,
-        astype=None,
-        raise_on_missing=False,
-        output="auto",
-        group_by_key=False,
-        flatten_dict=False,
-        remapping=None,
-        patches=None,
-        **kwargs,
-    ):
-        from earthkit.data.utils.args import metadata_argument_new
-
-        keys, astype, default, keys_arg_type = metadata_argument_new(keys, astype=astype, default=default)
-
-        if output == "auto":
-            if keys_arg_type is not None:
-                output = keys_arg_type
-        elif output in [list, "list"]:
-            output = list
-        elif output in [tuple, "tuple"]:
-            output = tuple
-        elif output in [dict, "dict"]:
-            output = dict
-        else:
-            raise ValueError(f"Invalid output: {output}")
-
-        remapping = build_remapping(remapping, patches)
-
-        _kwargs = {
-            "default": default,
-            "raise_on_missing": raise_on_missing,
-            "remapping": remapping,
-            "flatten_dict": flatten_dict,
-            # "patches": patches,
-            "astype": astype,
-            **kwargs,
-        }
-
-        if not group_by_key or output == "auto":
-            return [f._get_fast(keys, output=output, **_kwargs) for f in self]
-        else:
-            if output is dict:
-                result = defaultdict(list)
-                for f in self:
-                    r = f._get_fast(keys, output=dict, **_kwargs)
-                    for k, v in r.items():
-                        result[k].append(v)
-                return dict(result)
-            else:
-                vals = [f._get_fast(keys, output=list, **_kwargs) for f in self]
-                return [[x[i] for x in vals] for i in range(len(keys))]
-
-    def __getitem__(self, n):
-        if isinstance(n, slice):
-            return self._from_slice(n)
-        if isinstance(n, (tuple, list)):
-            return self._from_sequence(n)
-        if isinstance(n, dict):
-            return self._from_dict(n)
-        else:
-            import numpy as np
-
-            if isinstance(n, np.ndarray):
-                return self._from_ndarray(n)
-
-        return self._getitem(n)
-
-    def _from_slice(self, s):
-        indices = range(len(self))[s]
-        return self.new_mask_index(self, indices)
-
-    def _from_mask(self, lst):
-        indices = [i for i, x in enumerate(lst) if x]
-        return self.new_mask_index(self, indices)
-
-    def _from_sequence(self, s):
-        return self.new_mask_index(self, s)
-
-    def _from_ndarray(self, a):
-        return self._from_sequence(a.tolist())
-        # import numpy as np
-
-        # # will raise IndexError if an index is out of bounds
-        # n = len(self)
-        # indices = np.arange(0, n if n > 0 else 0)
-        # indices = indices[a].tolist()
-        # return self.new_mask_index(self, indices)
-
-    def from_dict(self, dic):
-        return self.sel(dic)
-
-    @abstractmethod
-    def normalise_key_values(self, **kwargs):
-        pass
 
     @classmethod
     def merge(cls, sources):
@@ -879,9 +835,9 @@ class MultiIndex(Index):
             ",".join(repr(i) for i in self._indexes),
         )
 
-    def default_encoder(self):
+    def _default_encoder(self):
         for i in self._indexes:
-            encoder = i.default_encoder()
+            encoder = i._default_encoder()
             if encoder is not None:
                 return encoder
         return None
