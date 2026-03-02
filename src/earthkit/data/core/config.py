@@ -189,7 +189,7 @@ CONFIG_AND_HELP = {
         none_ok=True,
     ),
     "maximum-cache-disk-usage": _(
-        "95%",
+        "98%",
         """Disk usage threshold after which earthkit-data expires older cached
         entries (% of the full disk capacity). Can be set to None.
         See :ref:`caching` for more information.""",

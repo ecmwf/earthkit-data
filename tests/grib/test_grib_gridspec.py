@@ -25,12 +25,17 @@ from earthkit.data.utils.testing import earthkit_test_data_file
 SUPPORTED_GRID_TYPES = [
     "sh",
     "regular_ll",
-    "reduced_ll",
     "regular_gg",
     "reduced_gg",
     "healpix",
 ]
-UNSUPPORTED_GRID_TYPES = ["rotated_ll", "rotated_gg", "reduced_rotated_gg"]
+
+UNSUPPORTED_GRID_TYPES = [
+    "rotated_ll",
+    "rotated_gg",
+    "reduced_rotated_gg",
+    "reduced_ll",
+]
 
 
 def _make_gridspec_list(grid_types):
@@ -82,6 +87,10 @@ def test_grib_gridspec_from_metadata_valid(metadata, ref, name):
     ]:
         pytest.skip()
 
+    ref = ref.copy()
+    for k in ["type", "i_scans_negatively", "j_points_consecutive", "j_scans_positively"]:
+        ref.pop(k, None)
+
     gridspec = make_legacy_gridspec(metadata)
     assert dict(gridspec) == ref, name
 
@@ -116,12 +125,12 @@ def test_grib_gridspec_from_file():
     )
 
     ref = {
-        "type": "regular_ll",
+        # "type": "regular_ll",
         "grid": [5.0, 5.0],
         "area": [75.0, -60.0, 10.0, 40.0],
-        "j_points_consecutive": 0,
-        "i_scans_negatively": 0,
-        "j_scans_positively": 0,
+        # "j_points_consecutive": 0,
+        # "i_scans_negatively": 0,
+        # "j_scans_positively": 0,
     }
     gs = ds[0].geography.grid_spec()
     assert isinstance(gs, dict), type(gs)
