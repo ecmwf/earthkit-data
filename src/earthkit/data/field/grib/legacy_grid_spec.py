@@ -146,6 +146,27 @@ class LegacyGridSpecMaker(dict):
             for k in self.conf["rotation_keys"]:
                 d.pop(k, None)
 
+            # only canonical scanning mode is supported
+        for k in list(d.keys()):
+            if k == "j_points_consecutive":
+                if d[k] != 0:
+                    return dict()
+                else:
+                    d.pop(k)
+            if k == "i_scans_negatively":
+                if d[k] != 0:
+                    return dict()
+                else:
+                    d.pop(k)
+            if k == "j_scans_positively":
+                if d[k] != 0:
+                    return dict()
+                else:
+                    d.pop(k)
+
+            if k == "type":
+                d.pop(k, None)
+
         # CONF.validate(d)
         return d
 
