@@ -22,6 +22,10 @@ from earthkit.data.field.grib.legacy_grid_spec import make_legacy_gridspec
 from earthkit.data.utils.testing import earthkit_remote_test_data_file
 from earthkit.data.utils.testing import earthkit_test_data_file
 
+# TODO: all the se tests are for the legacy gridspec. We should add tests for the
+# new one from eckit.geo as well, and then remove the legacy one.
+
+
 SUPPORTED_GRID_TYPES = [
     "sh",
     "regular_ll",
@@ -88,6 +92,7 @@ def test_grib_gridspec_from_metadata_valid(metadata, ref, name):
         pytest.skip()
 
     ref = ref.copy()
+
     for k in ["type", "i_scans_negatively", "j_points_consecutive", "j_scans_positively"]:
         ref.pop(k, None)
 

@@ -110,6 +110,8 @@ class LegacyGridSpecMaker(dict):
     def __init__(self, metadata):
         self.conf = CONF.config
 
+        self._global = metadata.get("global", 0) == 1
+
         # remap metadata keys and get values
         d = {}
         for k, v in self.conf["grib_key_map"].items():
@@ -146,7 +148,10 @@ class LegacyGridSpecMaker(dict):
             for k in self.conf["rotation_keys"]:
                 d.pop(k, None)
 
-            # only canonical scanning mode is supported
+        if d.get("type", None) == "reduced_gg" and self._global:
+            d.pop("area", None)
+
+        # only canonical scanning mode is supported
         for k in list(d.keys()):
             if k == "j_points_consecutive":
                 if d[k] != 0:
