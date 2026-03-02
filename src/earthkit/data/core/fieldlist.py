@@ -830,22 +830,3 @@ class FieldList(Source):
     @abstractmethod
     def _binary_op(self, oper, y):
         pass
-
-    # @abstractmethod
-    # def __getstate__(self) -> dict:
-    #     """Return the state of the object for pickling."""
-    #     pass
-
-    # @abstractmethod
-    # def __setstate__(self, state: dict):
-    #     """Set the state of the object during unpickling."""
-    #     pass
-
-    # @abstractmethod
-    # def mutate(self):
-    #     pass
-
-    # @classmethod
-    # @abstractmethod
-    # def merge(cls, other, **kwargs):
-    #     pass
