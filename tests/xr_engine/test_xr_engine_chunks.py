@@ -23,13 +23,6 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize(
-    "field_policy",
-    [
-        {"grib-field-policy": "persistent"},
-        {"grib-field-policy": "temporary"},
-    ],
-)
-@pytest.mark.parametrize(
     "handle_policy",
     [
         {"grib-handle-policy": "persistent"},
@@ -51,8 +44,8 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
         {"chunks": -1},
     ],
 )
-def test_xr_engine_chunk_1(allow_holes, lazy_load, field_policy, handle_policy, _kwargs):
-    with config.temporary(**field_policy, **handle_policy):
+def test_xr_engine_chunk_1(allow_holes, lazy_load, handle_policy, _kwargs):
+    with config.temporary(**handle_policy):
         ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"))
 
         ds = ds_in.to_xarray(
@@ -87,10 +80,9 @@ def test_xr_engine_chunk_1(allow_holes, lazy_load, field_policy, handle_policy, 
 )
 def test_xr_engine_chunk_2(allow_holes, lazy_load, _kwargs):
     # the default settings
-    field_policy = {"grib-field-policy": "persistent"}
     handle_policy = {"grib-handle-policy": "cache", "grib-handle-cache-size": 1}
 
-    with config.temporary(**field_policy, **handle_policy):
+    with config.temporary(**handle_policy):
         ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"))
 
         ds = ds_in.to_xarray(

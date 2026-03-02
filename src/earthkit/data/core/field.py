@@ -1022,29 +1022,37 @@ class Field(Base):
             raise ValueError(f"Cannot use arg={a}. Only dict allowed.")
 
         _kwargs = defaultdict(dict)
+        _components = dict()
         for k, v in kwargs.items():
-            component_name, component, key_name = self._get_component(k)
-            if component is not None:
-                if key_name is not None and key_name != "":
-                    _kwargs[component_name][key_name] = v
+            if k in self._components:
+                _components[k] = v
+            else:
+                component_name, component, key_name = self._get_component(k)
+                if component is not None:
+                    if key_name is not None and key_name != "":
+                        _kwargs[component_name][key_name] = v
+                    else:
+                        raise KeyError(f"Key {k} cannot be set on the field.")
                 else:
                     raise KeyError(f"Key {k} cannot be set on the field.")
-            else:
-                raise KeyError(f"Key {k} cannot be set on the field.")
-            # else:
-            #     _kwargs[LABELS][k] = v
+
+        for k in _components:
+            if k in _kwargs:
+                raise KeyError(
+                    f"Keys {_kwargs.keys()} cannot be set on the field because component={k} is also specified."
+                )
 
         if _kwargs:
-            r = {}
             for component_name, v in _kwargs.items():
                 component = self._components[component_name]
                 s = component.set(**v)
-                r[component_name] = s
+                _components[component_name] = s
 
-            if r:
-                return Field.from_field(self, **r)
-            else:
-                raise ValueError("No valid keys to set in the field.")
+        if _components:
+            return Field.from_field(self, **_components)
+        elif kwargs:
+            raise ValueError("No valid keys to set in the field.")
+
         return None
 
     def _set_values(self, array):

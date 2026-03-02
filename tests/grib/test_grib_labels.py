@@ -28,7 +28,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
         ({"labels.my_label": 2}, None),
         ({"labels.my_label_1": 2, "labels.my_label_2": "2"}, None),
         ({"labels.": 2}, KeyError),
-        ({"labels": 2}, KeyError),
+        # ({"labels": 2}, KeyError),
         ({"my_label": 2}, KeyError),
     ],
 )
@@ -70,6 +70,33 @@ def test_grib_field_labels_1(fl_type, _kwargs1, _kwargs2, expected_vales):
 
     f1 = f.set(**_kwargs1)
     f2 = f1.set(**_kwargs2)
+
+    for k, v in expected_vales.items():
+        r = f2.get(k)
+        assert r == v, f"key={k}, value={r}, expected={v}"
+
+    assert len(f2.labels) == len(expected_vales)
+
+
+@pytest.mark.parametrize("fl_type", ["file"])
+@pytest.mark.parametrize(
+    "_kwargs1,_remove_args,expected_vales",
+    [
+        (
+            {"labels.a": 1, "labels.b": 2},
+            (["a"],),
+            {"labels.b": 2},
+        ),
+    ],
+)
+def test_grib_field_labels_remove(fl_type, _kwargs1, _remove_args, expected_vales):
+    ds, _ = load_grib_data("test_single.grib", fl_type, folder="data")
+    f = ds[0]
+
+    f1 = f.set(**_kwargs1)
+
+    new_labels = f1.labels.remove(*_remove_args)
+    f2 = f1.set(labels=new_labels)
 
     for k, v in expected_vales.items():
         r = f2.get(k)

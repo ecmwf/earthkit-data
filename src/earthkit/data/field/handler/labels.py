@@ -153,7 +153,15 @@ class SimpleLabels(dict, Labels):
 
     def remove(self, *args):
         d = dict(self)
-        for k in args:
+        _args = []
+        for a in args:
+            if isinstance(a, str):
+                _args.append(a)
+            elif isinstance(a, (list, tuple)):
+                _args.extend(a)
+            else:
+                raise KeyError(f"Invalid argument {a} of type {type(a)}. Expected str or list/tuple of str.")
+        for k in _args:
             d.pop(k)
         return SimpleLabels(d)
 
