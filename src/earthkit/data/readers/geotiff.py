@@ -10,7 +10,9 @@
 
 from earthkit.utils.decorators import thread_safe_cached_property
 
+from earthkit.data.core.data import Data
 from earthkit.data.indexing.simple import SimpleFieldListBase
+from earthkit.data.sources import Source
 
 from . import Reader
 
@@ -116,10 +118,34 @@ class GeoTIFFFieldList(SimpleFieldListBase):
         self._not_implemented()
 
 
-class GeoTIFFReader(GeoTIFFFieldList, Reader):
+# class GeoTIFFReader(GeoTIFFFieldList, Reader):
+#     def __init__(self, source, path):
+#         Reader.__init__(self, source, path)
+#         GeoTIFFFieldList.__init__(self, path)
+
+#     def __repr__(self):
+#         return f"GeoTIFFReader({self.path})"
+
+#     def mutate_source(self):
+#         return self
+
+#     def _default_encoder(self):
+#         return Reader._default_encoder(self)
+
+
+class GeoTIFFReader(Source, Reader):
+    DEFAULT_XARRAY_KWARGS = {
+        # Splitting bands into individual variables preserves band-specific metadata.
+        "band_as_variable": True,
+        # Mask and scale values by default to match xarray's default behaviour.
+        # Note: masked values are set to NaN, so all values are returned as floats.
+        "mask_and_scale": True,
+        "decode_times": True,
+    }
+
     def __init__(self, source, path):
         Reader.__init__(self, source, path)
-        GeoTIFFFieldList.__init__(self, path)
+        # GeoTIFFFieldList.__init__(self, path)
 
     def __repr__(self):
         return f"GeoTIFFReader({self.path})"
@@ -127,8 +153,67 @@ class GeoTIFFReader(GeoTIFFFieldList, Reader):
     def mutate_source(self):
         return self
 
+    def rioxarray_read(self, **kwargs):
+        try:
+            import rioxarray
+        except ImportError:
+            raise ImportError("geotiff handling requires 'rioxarray' to be installed")
+
+        options = dict(**self.DEFAULT_XARRAY_KWARGS)
+        # Read options from dedicated kwarg if exists, otherwise use all kwargs
+        options.update(kwargs.get("rioxarray_open_rasterio_kwargs", kwargs))
+
+        return rioxarray.open_rasterio(self.path, **options)
+
+    def to_xarray(self, **kwargs):
+        return self.rioxarray_read(**kwargs)
+
+    def to_fieldlist(self, *args, **kwargs):
+        return GeoTIFFFieldList(self.path, **kwargs)
+
+    def _to_data_object(self):
+        return GeoTIFFData(self)
+
+    def mutate(self):
+        return self
+
     def _default_encoder(self):
         return Reader._default_encoder(self)
+
+
+class GeoTIFFData(Data):
+    _TYPE_NAME = "GeoTIFF"
+
+    def __init__(self, reader):
+        self._reader = reader
+
+    @property
+    def available_types(self):
+        return ["xarray", "pandas", "fieldlist"]
+
+    def describe(self):
+        return f"GeoTIFF data from {self._reader.path}"
+
+    def to_fieldlist(self, *args, **kwargs):
+        return self._reader.to_fieldlist(*args, **kwargs)
+
+    def to_pandas(self, **kwargs):
+        return self._reader.to_pandas(**kwargs)
+
+    def to_xarray(self, **kwargs):
+        return self._reader.to_xarray(**kwargs)
+
+    def to_geopandas(self, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_bufr_list(self, *args, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_numpy(self, *args, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_array(self, *args, **kwargs):
+        self._conversion_not_implemented()
 
 
 def _match_magic(magic):

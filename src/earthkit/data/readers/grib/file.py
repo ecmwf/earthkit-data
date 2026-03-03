@@ -11,6 +11,7 @@ from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.indexing.simple import SimpleFieldListBase
 from earthkit.data.readers import Reader
+from earthkit.data.sources import Source
 from earthkit.data.utils.parts import Part
 
 from .scan import GribCodesMessagePositionIndex
@@ -181,6 +182,11 @@ class GRIBReader(GribFieldListInFile, Reader):
     def is_streamable_file(self):
         return True
 
+    def _to_data_object(self):
+        from .data import GribData
+
+        return GribData(self)
+
     def __getstate__(self):
         from earthkit.data.core.config import CONFIG
 
@@ -222,3 +228,63 @@ class GRIBReader(GribFieldListInFile, Reader):
             self.__init__(ds.source, path)
         else:
             raise ValueError(f"Unknown serialisation policy {policy}")
+
+
+class GRIBReader1(Source, Reader):
+    def __init__(self, source, path, parts=None, positions=None):
+        self._ori_source = source
+        self._kwargs = {"parts": parts, "positions": positions}
+        Reader.__init__(self, source, path)
+
+    def to_fieldlist(self, *args, **kwargs):
+        return GribFieldListInFile(self.path, **self._kwargs, **kwargs)
+
+    def to_xarray(self, *args, **kwargs):
+        return self.to_fieldlist().to_xarray(*args, **kwargs)
+
+    def mutate_source(self):
+        # A GRIBReader is a source itself
+        return self
+
+    def mutate(self):
+        return self
+
+    def is_streamable_file(self):
+        return True
+
+    def _to_data_object(self):
+        from .data import GribData
+
+        return GribData(self)
+
+    @classmethod
+    def merge(cls, sources):
+
+        assert all(isinstance(s, GRIBReader1) for s in sources)
+        return MultiGRIBReader1(sources)
+
+
+class MultiGRIBReader1(GRIBReader1):
+    def __init__(self, sources):
+        self.sources = sources
+
+    def to_fieldlist(self):
+        fs = [s.to_fieldlist() for s in self.sources]
+        from earthkit.data.mergers import merge_by_class
+
+        merged = merge_by_class(fs)
+        if merged is not None:
+            return merged.mutate()
+
+        raise NotImplementedError("Conversion of MultiGRIBReader1 to fieldlist is not implemented")
+
+    def to_xarray(self, *args, **kwargs):
+        pass
+
+    def __repr__(self):
+        return "MultiGRIBReader1(%s)" % (self.sources,)
+
+    def _to_data_object(self):
+        from earthkit.data.core.data import MultiData
+
+        return MultiData(self)

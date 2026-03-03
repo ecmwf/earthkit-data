@@ -11,50 +11,55 @@
 from earthkit.data.wrappers import Wrapper
 
 
-class XArrayDataArrayWrapper(Wrapper):
-    """Wrapper around an xarray `DataArray`, offering polymorphism and
-    convenience methods.
-    """
+class XarrayData(Wrapper):
+    def __init__(self, data, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._data = data
 
-    def __init__(self, data):
-        self.data = data
+    @property
+    def available_types(self):
+        return ["xarray", "pandas", "fieldlist", "numpy", "array"]
 
-    # def axis(self, axis):
-    #     """
-    #     Get the data along a specific coordinate axis.
+    def describe():
+        pass
 
-    #     Parameters
-    #     ----------
-    #     axis : str
-    #         The coordinate axis along which to extract data. Accepts values of
-    #         `x`, `y`, `z` (vertical level) or `t` (time) (case-insensitive).
+    def to_fieldlist(self, *args, **kwargs):
+        from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
 
-    #     Returns
-    #     -------
-    #     xarray.core.dataarray.DataArray
-    #         An xarray `DataArray` containing the data along the given
-    #         coordinate axis.
-    #     """
-    #     for coord in self.source.coords:
-    #         if self.source.coords[coord].attrs.get("axis", "").lower() == axis:
-    #             break
-    #     else:
-    #         candidates = AXES.get(axis, [])
-    #         for coord in candidates:
-    #             if coord in self.source.coords:
-    #                 break
-    #         else:
-    #             raise ValueError(f"No coordinate found with axis '{axis}'")
-    #     return self.source.coords[coord]
+        fl = XArrayFieldList.from_xarray(self._data, **kwargs)
+        if len(fl) == 0:
+            raise ValueError("No fields found in xarray dataset")
+        return fl
 
     def to_xarray(self, *args, **kwargs):
-        """Return an xarray representation of the data.
+        return self._data
+
+    def to_pandas(self, *args, **kwargs):
+        """Return a pandas `dataframe` representation of the data.
 
         Returns
         -------
-        xarray.core.dataarray.DataArray
+        pandas.core.frame.DataFrame
         """
-        return self.data
+        return self._data.to_dataframe(*args, **kwargs)
+
+    def to_geopandas(self, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_bufr_list(self, *args, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_geojson(self, **kwargs):
+        return self._conversion_not_implemented()
+
+    # def to_netcdf(self, *args, **kwargs):
+    #     """Save the data to a netCDF file.
+
+    #     Parameters
+    #     ----------
+    #     See `xarray.DataArray.to_netcdf`.
+    #     """
+    #     return self._data.to_netcdf(*args, **kwargs)
 
     def to_numpy(self, flatten=False):
         """Return a numpy `ndarray` representation of the data.
@@ -68,85 +73,146 @@ class XArrayDataArrayWrapper(Wrapper):
             arr = arr.flatten()
         return arr
 
-    def to_pandas(self, *args, **kwargs):
-        """Return a pandas `dataframe` representation of the data.
-
-        Returns
-        -------
-        pandas.core.frame.DataFrame
-        """
-        return self.data.to_dataframe(*args, **kwargs)
-
-    def to_netcdf(self, *args, **kwargs):
-        """Save the data to a netCDF file.
-
-        Parameters
-        ----------
-        See `xarray.DataArray.to_netcdf`.
-        """
-        return self.data.to_netcdf(*args, **kwargs)
-
-    def _encode(self, encoder, **kwargs):
-        """Encode the data using the specified encoder.
-
-        Parameters
-        ----------
-        encoder : Encoder
-            The encoder to use for encoding the data.
-        **kwargs : dict
-            Additional keyword arguments to pass to the encoder.
-
-        Returns
-        -------
-        EncodedData
-            The encoded data.
-        """
-        return encoder._encode_xarray(data=self.data, **kwargs)
+    def to_array(self, *args, **kwargs):
+        return self._conversion_not_implemented()
 
 
-class XArrayDatasetWrapper(XArrayDataArrayWrapper):
-    """Wrapper around an xarray `DataSet`, offering polymorphism and convenience
-    methods.
-    """
+# class XArrayDataArrayWrapper(Wrapper):
+#     """Wrapper around an xarray `DataArray`, offering polymorphism and
+#     convenience methods.
+#     """
 
-    def to_numpy(self, flatten=False):
-        """Return a numpy `ndarray` representation of the data.
+#     def __init__(self, data):
+#         self.data = data
 
-        Returns
-        -------
-        numpy.ndarray
-        """
-        arr = self.data.to_array().to_numpy()
-        if flatten:
-            arr = arr.flatten()
-        return arr
+#     # def axis(self, axis):
+#     #     """
+#     #     Get the data along a specific coordinate axis.
 
-    # def component(self, component):
-    #     """
-    #     Get the data representing a specific vector component.
+#     #     Parameters
+#     #     ----------
+#     #     axis : str
+#     #         The coordinate axis along which to extract data. Accepts values of
+#     #         `x`, `y`, `z` (vertical level) or `t` (time) (case-insensitive).
 
-    #     Parameters
-    #     ----------
-    #     component : str
-    #         The vector component to extract from the data. Accepts values of
-    #         `u` or `v` (case-insensitive).
+#     #     Returns
+#     #     -------
+#     #     xarray.core.dataarray.DataArray
+#     #         An xarray `DataArray` containing the data along the given
+#     #         coordinate axis.
+#     #     """
+#     #     for coord in self.source.coords:
+#     #         if self.source.coords[coord].attrs.get("axis", "").lower() == axis:
+#     #             break
+#     #     else:
+#     #         candidates = AXES.get(axis, [])
+#     #         for coord in candidates:
+#     #             if coord in self.source.coords:
+#     #                 break
+#     #         else:
+#     #             raise ValueError(f"No coordinate found with axis '{axis}'")
+#     #     return self.source.coords[coord]
 
-    #     Returns
-    #     -------
-    #     xarray.core.dataarray.DataArray
-    #         An xarray `DataArray` containing the data representing the given
-    #         component.
-    #     """
-    #     candidates = COMPONENTS.get(component, [])
-    #     for variable in candidates:
-    #         if variable in self.source.data_vars:
-    #             break
-    #     else:
-    #         raise ValueError(f"No variable found with direction '{component}'")
-    #     return self.source.data_vars[variable]
+#     def to_xarray(self, *args, **kwargs):
+#         """Return an xarray representation of the data.
+
+#         Returns
+#         -------
+#         xarray.core.dataarray.DataArray
+#         """
+#         return self.data
+
+#     def to_numpy(self, flatten=False):
+#         """Return a numpy `ndarray` representation of the data.
+
+#         Returns
+#         -------
+#         numpy.ndarray
+#         """
+#         arr = self.data.to_numpy()
+#         if flatten:
+#             arr = arr.flatten()
+#         return arr
+
+#     def to_pandas(self, *args, **kwargs):
+#         """Return a pandas `dataframe` representation of the data.
+
+#         Returns
+#         -------
+#         pandas.core.frame.DataFrame
+#         """
+#         return self.data.to_dataframe(*args, **kwargs)
+
+#     def to_netcdf(self, *args, **kwargs):
+#         """Save the data to a netCDF file.
+
+#         Parameters
+#         ----------
+#         See `xarray.DataArray.to_netcdf`.
+#         """
+#         return self.data.to_netcdf(*args, **kwargs)
+
+#     def _encode(self, encoder, **kwargs):
+#         """Encode the data using the specified encoder.
+
+#         Parameters
+#         ----------
+#         encoder : Encoder
+#             The encoder to use for encoding the data.
+#         **kwargs : dict
+#             Additional keyword arguments to pass to the encoder.
+
+#         Returns
+#         -------
+#         EncodedData
+#             The encoded data.
+#         """
+#         return encoder._encode_xarray(data=self.data, **kwargs)
 
 
-def wrapper(data, *args, fieldlist=True, **kwargs):
+# class XArrayDatasetWrapper(XArrayDataArrayWrapper):
+#     """Wrapper around an xarray `DataSet`, offering polymorphism and convenience
+#     methods.
+#     """
+
+#     def to_numpy(self, flatten=False):
+#         """Return a numpy `ndarray` representation of the data.
+
+#         Returns
+#         -------
+#         numpy.ndarray
+#         """
+#         arr = self.data.to_array().to_numpy()
+#         if flatten:
+#             arr = arr.flatten()
+#         return arr
+
+#     # def component(self, component):
+#     #     """
+#     #     Get the data representing a specific vector component.
+
+#     #     Parameters
+#     #     ----------
+#     #     component : str
+#     #         The vector component to extract from the data. Accepts values of
+#     #         `u` or `v` (case-insensitive).
+
+#     #     Returns
+#     #     -------
+#     #     xarray.core.dataarray.DataArray
+#     #         An xarray `DataArray` containing the data representing the given
+#     #         component.
+#     #     """
+#     #     candidates = COMPONENTS.get(component, [])
+#     #     for variable in candidates:
+#     #         if variable in self.source.data_vars:
+#     #             break
+#     #     else:
+#     #         raise ValueError(f"No variable found with direction '{component}'")
+#     #     return self.source.data_vars[variable]
+
+
+def wrapper(data, *args, **kwargs):
     from earthkit.data.utils import is_module_loaded
 
     if not is_module_loaded("xarray"):
@@ -154,25 +220,29 @@ def wrapper(data, *args, fieldlist=True, **kwargs):
 
     import xarray as xr
 
-    ds = None
-    if isinstance(data, xr.Dataset):
-        ds = data
-    elif isinstance(data, xr.DataArray):
-        try:
-            ds = data.to_dataset()
-        except ValueError:
-            return XArrayDataArrayWrapper(data, *args, **kwargs)
-
-    if ds is not None:
-        if not fieldlist:
-            return XArrayDatasetWrapper(ds, *args, **kwargs)
-
-        from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
-
-        fl = XArrayFieldList.from_xarray(ds, **kwargs)
-        if len(fl) > 0:
-            return fl
-        else:
-            return XArrayDatasetWrapper(ds, *args, **kwargs)
-
+    if isinstance(data, (xr.Dataset, xr.DataArray)):
+        return XarrayData(data, *args, **kwargs)
     return None
+
+    # ds = None
+    # if isinstance(data, xr.Dataset):
+    #     ds = data
+    # elif isinstance(data, xr.DataArray):
+    #     try:
+    #         ds = data.to_dataset()
+    #     except ValueError:
+    #         return XArrayDataArrayWrapper(data, *args, **kwargs)
+
+    # if ds is not None:
+    #     if not fieldlist:
+    #         return XArrayDatasetWrapper(ds, *args, **kwargs)
+
+    #     from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
+
+    #     fl = XArrayFieldList.from_xarray(ds, **kwargs)
+    #     if len(fl) > 0:
+    #         return fl
+    #     else:
+    #         return XArrayDatasetWrapper(ds, *args, **kwargs)
+
+    # return None

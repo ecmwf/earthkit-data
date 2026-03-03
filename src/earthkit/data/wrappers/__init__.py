@@ -12,35 +12,40 @@ import os
 from importlib import import_module
 
 from earthkit.data.core import Base
+from earthkit.data.core.data import Data
 from earthkit.data.decorators import locked
 
 LOG = logging.getLogger(__name__)
 
 
-class Wrapper(Base):
-    def mutate(self):
-        return self
+# class Wrapper(Base):
+#     def mutate(self):
+#         return self
 
-    def bounding_box(self):
-        self._not_implemented()
+#     def bounding_box(self):
+#         self._not_implemented()
 
-    def datetime(self):
-        self._notimplemented()
+#     def datetime(self):
+#         self._notimplemented()
 
-    def isel(self, *args, **kwargs):
-        self._not_implemented()
+#     def isel(self, *args, **kwargs):
+#         self._not_implemented()
 
-    def metadata(self, *args, **kwargs):
-        self._not_implemented()
+#     def metadata(self, *args, **kwargs):
+#         self._not_implemented()
 
-    def order_by(self, *args, **kwargs):
-        self._not_implemented()
+#     def order_by(self, *args, **kwargs):
+#         self._not_implemented()
 
-    def sel(self, *args, **kwargs):
-        self._not_implemented()
+#     def sel(self, *args, **kwargs):
+#         self._not_implemented()
 
-    def to_target(self, *args, **kwargs):
-        self._not_implemented()
+#     def to_target(self, *args, **kwargs):
+#         self._not_implemented()
+
+
+class Wrapper(Data):
+    pass
 
 
 # TODO: Add plugins
@@ -64,6 +69,22 @@ def _wrappers():
     return _helpers("wrapper", _WRAPPERS)
 
 
+# def get_wrapper(data, *args, **kwargs):
+#     w = _get_wrapper(data, *args, **kwargs)
+#     if w is not None:
+#         return "_to_data_object":
+#         return src._to_data_object()
+#     if hasattr(src, "_reader") and hasattr(src._reader, "_to_data_object"):
+#         print("src=", src)
+#         # print("-> reader.source=", src._reader.source)
+#         data = src._reader._to_data_object()
+
+#         return data
+
+
+#         return D
+
+
 def get_wrapper(data, *args, **kwargs):
     """Returns the input object with the appropriate earthkit-data wrapper.
     i.e. so that an xarray object can be handled as an earkit-data object.
@@ -74,7 +95,8 @@ def get_wrapper(data, *args, **kwargs):
     for name, h in _wrappers().items():
         wrapper = h(data, *args, **kwargs)
         if wrapper is not None:
-            return wrapper.mutate()
+            # return wrapper.mutate()
+            return wrapper
     else:
         fullname = ".".join([data.__class__.__module__, data.__class__.__qualname__])
         LOG.warning(f"Cannot find a wrapper for class: {fullname}, returning unwrapped object")

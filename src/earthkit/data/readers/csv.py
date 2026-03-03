@@ -14,6 +14,8 @@ import mimetypes
 import os
 import zipfile
 
+from earthkit.data.core.data import Data
+
 from . import Reader
 
 LOG = logging.getLogger(__name__)
@@ -191,6 +193,41 @@ class CSVReader(Reader):
 
         """
         return self.to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs).to_xarray(**kwargs)
+
+
+class CSVData(Data):
+    _TYPE_NAME = "CSV"
+
+    def __init__(self, reader):
+        self._reader = reader
+
+    @property
+    def available_types(self):
+        return ["pandas", "xarray"]
+
+    def describe(self):
+        return f"CSV data from {self._reader.path}"
+
+    def to_fieldlist(self, *args, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_pandas(self, **kwargs):
+        return self._reader.to_pandas(**kwargs)
+
+    def to_xarray(self, **kwargs):
+        return self._reader.to_xarray(**kwargs)
+
+    def to_geopandas(self, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_bufr_list(self, *args, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_numpy(self, *args, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_array(self, *args, **kwargs):
+        self._conversion_not_implemented()
 
 
 def reader(source, path, *, magic=None, deeper_check=False, fwf=False, **kwargs):

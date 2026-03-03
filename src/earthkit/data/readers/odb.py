@@ -9,6 +9,8 @@
 
 import logging
 
+from earthkit.data.core.data import Data
+
 from . import Reader
 
 LOG = logging.getLogger(__name__)
@@ -27,6 +29,44 @@ class ODBReader(Reader):
 
         odc_read_odb_kwargs = kwargs.get("odc_read_odb_kwargs", {})
         return odc.read_odb(self.path, single=True, **odc_read_odb_kwargs)
+
+    def _to_data_object(self):
+        return ODBData(self)
+
+
+class ODBData(Data):
+    _TYPE_NAME = "ODB"
+
+    def __init__(self, reader):
+        self._reader = reader
+
+    @property
+    def available_types(self):
+        return ["pandas"]
+
+    def describe(self):
+        return f"ODB data from {self._reader.path}"
+
+    def to_fieldlist(self, *args, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_pandas(self, **kwargs):
+        return self._reader.to_pandas(**kwargs)
+
+    def to_xarray(self, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_geopandas(self, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_bufr_list(self, *args, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_numpy(self, *args, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_array(self, *args, **kwargs):
+        self._conversion_not_implemented()
 
 
 def _match_magic(magic, deeper_check):

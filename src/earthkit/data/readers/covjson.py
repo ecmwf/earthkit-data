@@ -10,6 +10,7 @@
 import mimetypes
 import pathlib
 
+from earthkit.data.core.data import Data
 from earthkit.data.readers import Reader
 
 
@@ -56,6 +57,9 @@ class CovjsonReader(XarrayMixIn, GeojsonMixIn, Reader):
     def is_streamable_file(self):
         return True
 
+    def _to_data_object(self):
+        return CovjsonData(self)
+
 
 class CovjsonStreamReader(Reader):
     def __init__(self, stream):
@@ -80,6 +84,12 @@ class CovjsonStreamReader(Reader):
         # A Covjson is a source itself
         return self
 
+    def _to_data_object(self):
+        return CovjsonData(self)
+
+    def is_stream(self):
+        return True
+
 
 class CovjsonMemoryReader(Reader):
     def __init__(self, buf):
@@ -98,6 +108,9 @@ class CovjsonMemoryReader(Reader):
         d = stream.read()
         return CovjsonMemoryReader(d)
 
+    def _to_data_object(self):
+        return CovjsonData(self)
+
 
 class CovjsonInMemory(XarrayMixIn, Reader):
     def __init__(self, data):
@@ -112,6 +125,47 @@ class CovjsonInMemory(XarrayMixIn, Reader):
 
     def _json(self):
         return self.data
+
+    def _to_data_object(self):
+        return CovjsonData(self)
+
+
+class CovjsonData(Data):
+    _TYPE_NAME = "Covjson"
+
+    def __init__(self, reader):
+        self._reader = reader
+
+    @property
+    def available_types(self):
+        return ["xarray", "geojson"]
+
+    def describe(self):
+        return f"Covjson data from {self._reader.path}"
+
+    def to_fieldlist(self, *args, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_pandas(self, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_xarray(self, **kwargs):
+        return self._reader.to_xarray(**kwargs)
+
+    def to_geojson(self, **kwargs):
+        return self._reader.to_geojson(**kwargs)
+
+    def to_geopandas(self, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_bufr_list(self, *args, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_numpy(self, *args, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_array(self, *args, **kwargs):
+        self._conversion_not_implemented()
 
 
 def _match_content_type(content_type):

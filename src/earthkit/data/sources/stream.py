@@ -264,12 +264,16 @@ class Stream:
 def make_stream_source_from_other(source, **kwargs):
     stream_kwargs, kwargs = parse_stream_kwargs(**kwargs)
 
+    print("Creating stream source for", source)
+
     if not isinstance(source, (list, tuple)):
         source = [source]
 
     for i, s in enumerate(source):
         stream = Stream(maker=s.to_stream)
         source[i] = StreamSource(stream, **stream_kwargs, **kwargs)
+
+    print("Created stream sources:", source)
 
     if len(source) == 1:
         return source[0]

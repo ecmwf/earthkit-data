@@ -8,7 +8,10 @@
 #
 
 
+from earthkit.data.sources import Source
+
 from .. import Reader
+from .data import NetCDFData
 from .fieldlist import NetCDFFieldListFromFile
 
 # class NetCDFFieldListFromFile(NetCDFFieldList, Reader):
@@ -61,12 +64,17 @@ from .fieldlist import NetCDFFieldListFromFile
 #     #     return self
 
 
-class NetCDFReader(Reader):
+class NetCDFReader(Source, Reader):
     def __init__(self, source, path):
+        self._ori_source = source
         Reader.__init__(self, source, path)
 
     def __repr__(self):
         return "NetCDFReader(%s)" % (self.path,)
+
+    def to_fieldlist(self):
+        """Convert into a field list"""
+        return NetCDFFieldListFromFile(self._ori_source, self.path)
 
     def to_numpy(self, flatten=False):
         arr = self.to_xarray().to_array().to_numpy()
@@ -81,7 +89,7 @@ class NetCDFReader(Reader):
         return type(self).to_xarray_multi_from_paths([self.path], **kwargs)
 
     @classmethod
-    def to_xarray_multi_from_paths(cls, paths, **kwargs):
+    def to_xarray_multi_from_paths(cls, paths, *args, **kwargs):
         import xarray as xr
 
         if not isinstance(paths, list):
@@ -97,6 +105,50 @@ class NetCDFReader(Reader):
             **options,
         )
 
+    def _to_data_object(self):
+        from .data import NetCDFData
+
+        return NetCDFData(self, self._ori_source)
+
+    def mutate(self):
+        return self
+
+    def mutate_source(self):
+        return self
+
+    @classmethod
+    def merge(cls, sources):
+        from earthkit.data.mergers import merge_by_class
+
+        assert all(isinstance(s, NetCDFReader) for s in sources)
+        return MultiNetCDFReader(sources)
+
+
+class MultiNetCDFReader(NetCDFReader):
+    def __init__(self, sources):
+        self.sources = sources
+
+    def to_fieldlist(self):
+        fs = [s.to_fieldlist() for s in self.sources]
+        from earthkit.data.mergers import merge_by_class
+
+        merged = merge_by_class(fs)
+        if merged is not None:
+            return merged.mutate()
+
+        raise NotImplementedError("Conversion of MultiNetCDFReader to fieldlist is not implemented")
+
+    def to_xarray(self, *args, **kwargs):
+        return MultiNetCDFReader.to_xarray_multi_from_paths([s.path for s in self.sources], *args, **kwargs)
+
+    def __repr__(self):
+        return "MultiNetCDFReader(%s)" % (self.sources,)
+
+    def _to_data_object(self):
+        from earthkit.data.core.data import MultiData
+
+        return MultiData(self)
+
 
 def _match_magic(magic, deeper_check):
     if magic is not None:
@@ -107,6 +159,8 @@ def _match_magic(magic, deeper_check):
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
+        return NetCDFReader(source, path)
+
         fs = NetCDFFieldListFromFile(source, path)
         print("NetCDF reader matched for %s" % path, fs)
         if len(fs) > 0:

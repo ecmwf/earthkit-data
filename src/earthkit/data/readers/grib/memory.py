@@ -131,6 +131,11 @@ class GribStreamReader(GribMemoryReader):
     def mutate_source(self):
         return self
 
+    def _to_data_object(self):
+        from .data import GribData
+
+        return GribData(self)
+
 
 class GribFieldListInMemory(SimpleFieldList):
     """Represent a GRIB field list in memory loaded lazily"""

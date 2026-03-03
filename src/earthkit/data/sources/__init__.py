@@ -133,11 +133,44 @@ def from_source(name: str, *args, lazily=False, **kwargs) -> Source:
     if lazily:
         return from_source_lazily(name, *args, **kwargs)
 
+    src = _from_source(name, *args, **kwargs)
+
+    # prev = None
+    # src = get_source(name, *args, **kwargs)
+    # while src is not prev:
+    #     prev = src
+    #     src = src.mutate()
+
+    # from earthkit.data.core.data import Data
+    from .multi import MultiSource
+
+    if isinstance(src, MultiSource):
+        from earthkit.data.core.data import MultiData
+
+        return MultiData(src)
+
+    if hasattr(src, "_to_data_object"):
+        return src._to_data_object()
+    if hasattr(src, "_reader") and hasattr(src._reader, "_to_data_object"):
+        print("src=", src)
+        # print("-> reader.source=", src._reader.source)
+        data = src._reader._to_data_object()
+
+        return data
+    raise ValueError(f"Source {src} cannot be converted into a data object")
+
+
+def _from_source(name: str, *args, lazily=False, **kwargs) -> Source:
+    if lazily:
+        return from_source_lazily(name, *args, **kwargs)
+
     prev = None
     src = get_source(name, *args, **kwargs)
     while src is not prev:
         prev = src
         src = src.mutate()
+
+    print("_from_source: src=", src)
     return src
 
 

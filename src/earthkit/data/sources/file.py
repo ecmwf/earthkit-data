@@ -18,6 +18,7 @@ from earthkit.data.readers import reader
 from earthkit.data.utils.parts import PathAndParts
 
 from . import Source
+from . import _from_source
 
 LOG = logging.getLogger(__name__)
 
@@ -66,10 +67,10 @@ class FileSource(Source, os.PathLike):
             if len(self.path) == 1:
                 self.path = self.path[0]
             else:
-                return from_source(
+                return _from_source(
                     "multi",
                     [
-                        from_source("file", p, parts=part, filter=self.filter, **self._kwargs)
+                        _from_source("file", p, parts=part, filter=self.filter, **self._kwargs)
                         for p, part in zip(self.path, self.parts)
                     ],
                     filter=self.filter,
@@ -228,6 +229,7 @@ class StreamFileSource(FileSource):
 
     def mutate(self):
         assert self.stream
+        print("Creating stream source for", self._path_and_parts)
         if isinstance(self.path, (list, tuple)):
             if len(self.path) == 1:
                 self.path = self.path[0]
@@ -235,7 +237,7 @@ class StreamFileSource(FileSource):
                 return from_source(
                     "multi",
                     [
-                        from_source("file", p, parts=part, filter=self.filter, stream=True, **self._kwargs)
+                        _from_source("file", p, parts=part, filter=self.filter, stream=True, **self._kwargs)
                         for p, part in zip(self.path, self.parts)
                     ],
                     filter=self.filter,
@@ -249,6 +251,7 @@ class StreamFileSource(FileSource):
         # Give a chance to directories and zip files
         # to return a multi-source
         source = self._reader.mutate_source()
+        print("StreamFileSource: source after mutate_source=", self._reader)
         if source not in (None, self):
             if hasattr(source, "is_streamable_file") and source.is_streamable_file():
                 # when we reach this stage the source must be a file that can be streamed
