@@ -194,6 +194,9 @@ class CSVReader(Reader):
         """
         return self.to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs).to_xarray(**kwargs)
 
+    def _to_data_object(self):
+        return CSVData(self)
+
 
 class CSVData(Data):
     _TYPE_NAME = "CSV"

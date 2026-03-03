@@ -8,169 +8,301 @@
 
 import logging
 
-import numpy as np
-
-from earthkit.data.utils.bbox import BoundingBox
 from earthkit.data.wrappers import Wrapper
 
 logger = logging.getLogger(__name__)
 
 
-class PandasSeriesWrapper(Wrapper):
-    """Wrapper around a `pandas.DataFrame`, offering polymorphism and
-    convenience methods.
-    """
+class PandasSeriesData(Wrapper):
+    _TYPE_NAME = "pandas.Series"
 
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, data, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._data = data
 
-    def __iter__(self):
-        return iter(self.data)
+    @property
+    def available_types(self):
+        return ["pandas", "xarray"]
 
-    def __getitem__(self, i):
-        return self.data.columns[i]
+    def describe():
+        pass
 
-    def __len__(self):
-        return len(self.data)
+    def to_fieldlist(self, *args, **kwargs):
+        return self._conversion_not_implemented()
 
-    def to_pandas(self):
-        """
-        Return a `pandas.Series` representation of the data.
+    def to_xarray(self, *args, **kwargs):
+        return self._data.to_xarray(**kwargs)
 
-        Returns
-        -------
-        pandas.Series
-        """
-        return self.data
-
-    def to_numpy(self, **kwargs):
-        """
-        Return a `numpy.array` representation of the data.
+    def to_pandas(self, *args, **kwargs):
+        """Return a pandas `dataframe` representation of the data.
 
         Returns
         -------
-        numpy.array
+        pandas.core.frame.DataFrame
         """
-        return self.data.to_numpy(**kwargs)
+        return self._data.to_dataframe(*args, **kwargs)
 
-    def to_xarray(self, **kwargs):
-        """
-        Return a `xarray.DataArray` representation of the data.
+    def to_geopandas(self, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_bufr_list(self, *args, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_geojson(self, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_numpy(self, flatten=False):
+        return self._conversion_not_implemented()
+
+    def to_array(self, *args, **kwargs):
+        return self._conversion_not_implemented()
+
+
+class PandasDataFrameData(Wrapper):
+    _TYPE_NAME = "pandas.DataFrame"
+
+    def __init__(self, data, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._data = data
+
+    @property
+    def available_types(self):
+        return ["pandas", "xarray"]
+
+    def describe():
+        pass
+
+    def to_fieldlist(self, *args, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_xarray(self, *args, **kwargs):
+        return self._data.to_xarray(**kwargs)
+
+    def to_pandas(self, *args, **kwargs):
+        """Return a pandas `dataframe` representation of the data.
 
         Returns
         -------
-        numpy.array
+        pandas.core.frame.DataFrame
         """
-        return self.data.to_xarray(**kwargs)
+        return self._data.to_dataframe(*args, **kwargs)
 
-    def to_netcdf(self, *args, **kwargs):
-        """
-        Write the pandas object to a netCDF file
+    def to_geopandas(self, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_bufr_list(self, *args, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_geojson(self, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_numpy(self, flatten=False):
+        return self._conversion_not_implemented()
+
+    def to_array(self, *args, **kwargs):
+        return self._conversion_not_implemented()
+
+
+class GeoPandasDataFrameData(Wrapper):
+    _TYPE_NAME = "geopandas.GeoDataFrame"
+
+    def __init__(self, data, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._data = data
+
+    @property
+    def available_types(self):
+        return ["geopandas", "pandas", "xarray"]
+
+    def describe():
+        pass
+
+    def to_fieldlist(self, *args, **kwargs):
+        return self._conversion_not_implemented()
+
+    def to_xarray(self, *args, **kwargs):
+        return self._data.to_xarray(**kwargs)
+
+    def to_pandas(self, *args, **kwargs):
+        """Return a pandas `dataframe` representation of the data.
 
         Returns
         -------
-        numpy.array
+        pandas.core.frame.DataFrame
         """
-        return self.data.to_xarray().to_netcdf(*args, **kwargs)
+        return self._data
 
-    def to_json(self, *args, **kwargs):
-        """
-        Write the pandas object to a netCDF file
+    def to_geopandas(self, **kwargs):
+        return self._data
 
-        Returns
-        -------
-        numpy.array
-        """
-        kwargs.setdefault("indent", 2)
-        return self.data.to_json(*args, **kwargs)
+    def to_bufr_list(self, *args, **kwargs):
+        return self._conversion_not_implemented()
 
-    def describe(self):
-        """
-        A pandas is tabular, therefore return itself
+    def to_geojson(self, **kwargs):
+        return self._conversion_not_implemented()
 
-        Returns
-        -------
-        numpy.array
-        """
-        return self.data
+    def to_numpy(self, flatten=False):
+        return self._conversion_not_implemented()
+
+    def to_array(self, *args, **kwargs):
+        return self._conversion_not_implemented()
 
 
-class PandasDataFrameWrapper(PandasSeriesWrapper):
-    """Wrapper around a `pandas.DataFrame`, offering polymorphism and
-    convenience methods.
-    """
+# class PandasSeriesWrapper(Wrapper):
+#     """Wrapper around a `pandas.DataFrame`, offering polymorphism and
+#     convenience methods.
+#     """
 
-    def to_pandas(self):
-        """Return a `pandas.DataFrame` representation of the data.
+#     def __init__(self, data):
+#         self.data = data
 
-        Returns
-        -------
-        pandas.DataFrame
-        """
-        return self.data
+#     def __iter__(self):
+#         return iter(self.data)
 
-    def to_xarray(self, **kwargs):
-        """Return a `xarray.Dataset` representation of the data.
+#     def __getitem__(self, i):
+#         return self.data.columns[i]
 
-        Returns
-        -------
-        numpy.array
-        """
-        return self.data.to_xarray(**kwargs)
+#     def __len__(self):
+#         return len(self.data)
+
+#     def to_pandas(self):
+#         """
+#         Return a `pandas.Series` representation of the data.
+
+#         Returns
+#         -------
+#         pandas.Series
+#         """
+#         return self.data
+
+#     def to_numpy(self, **kwargs):
+#         """
+#         Return a `numpy.array` representation of the data.
+
+#         Returns
+#         -------
+#         numpy.array
+#         """
+#         return self.data.to_numpy(**kwargs)
+
+#     def to_xarray(self, **kwargs):
+#         """
+#         Return a `xarray.DataArray` representation of the data.
+
+#         Returns
+#         -------
+#         numpy.array
+#         """
+#         return self.data.to_xarray(**kwargs)
+
+#     def to_netcdf(self, *args, **kwargs):
+#         """
+#         Write the pandas object to a netCDF file
+
+#         Returns
+#         -------
+#         numpy.array
+#         """
+#         return self.data.to_xarray().to_netcdf(*args, **kwargs)
+
+#     def to_json(self, *args, **kwargs):
+#         """
+#         Write the pandas object to a netCDF file
+
+#         Returns
+#         -------
+#         numpy.array
+#         """
+#         kwargs.setdefault("indent", 2)
+#         return self.data.to_json(*args, **kwargs)
+
+#     def describe(self):
+#         """
+#         A pandas is tabular, therefore return itself
+
+#         Returns
+#         -------
+#         numpy.array
+#         """
+#         return self.data
 
 
-class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
-    """Wrapper around a `geopandas.DataFrame`, offering polymorphism and
-    convenience methods.
+# class PandasDataFrameWrapper(PandasSeriesWrapper):
+#     """Wrapper around a `pandas.DataFrame`, offering polymorphism and
+#     convenience methods.
+#     """
 
-    Key difference to a pandas dataframe wrapper, we treat rows (features) as fields
-    """
+#     def to_pandas(self):
+#         """Return a `pandas.DataFrame` representation of the data.
 
-    def __init__(self, source):
-        super().__init__(source)
-        try:
-            (
-                self.east,
-                self.south,
-                self.west,
-                self.north,
-            ) = self.data.crs.area_of_use.bounds
-        except AttributeError:
-            logger.warn("Bounding box not found in geopandas object")
-            (
-                self.east,
-                self.south,
-                self.west,
-                self.north,
-            ) = (np.nan, np.nan, np.nan, np.nan)
-        self.fields = None
+#         Returns
+#         -------
+#         pandas.DataFrame
+#         """
+#         return self.data
 
-    def __iter__(self):
-        """Iterate over features in geojson via pandas"""
-        self._scan()
-        return iter(self.fields)
+#     def to_xarray(self, **kwargs):
+#         """Return a `xarray.Dataset` representation of the data.
 
-    def __getitem__(self, i):
-        self._scan()
-        return self.fields[i]
-
-    def __len__(self):
-        return len(self.data)
-
-    def _scan(self):
-        if self.fields is None:
-            self.fields = self.get_fields()
-
-    def get_fields(self):
-        """For geopandas, a field is a feature"""
-        return [row[1] for row in self.data.iterrows()]
-
-    def bounding_box(self):
-        """For geopandas, get bounding box and convert to EK.BoundingBox type"""
-        return BoundingBox(north=self.north, south=self.south, east=self.east, west=self.west)
+#         Returns
+#         -------
+#         numpy.array
+#         """
+#         return self.data.to_xarray(**kwargs)
 
 
-def wrapper(data, *args, fieldlist=False, **kwargs):
+# class GeoPandasDataFrameWrapper(PandasDataFrameWrapper):
+#     """Wrapper around a `geopandas.DataFrame`, offering polymorphism and
+#     convenience methods.
+
+#     Key difference to a pandas dataframe wrapper, we treat rows (features) as fields
+#     """
+
+#     def __init__(self, source):
+#         super().__init__(source)
+#         try:
+#             (
+#                 self.east,
+#                 self.south,
+#                 self.west,
+#                 self.north,
+#             ) = self.data.crs.area_of_use.bounds
+#         except AttributeError:
+#             logger.warn("Bounding box not found in geopandas object")
+#             (
+#                 self.east,
+#                 self.south,
+#                 self.west,
+#                 self.north,
+#             ) = (np.nan, np.nan, np.nan, np.nan)
+#         self.fields = None
+
+#     def __iter__(self):
+#         """Iterate over features in geojson via pandas"""
+#         self._scan()
+#         return iter(self.fields)
+
+#     def __getitem__(self, i):
+#         self._scan()
+#         return self.fields[i]
+
+#     def __len__(self):
+#         return len(self.data)
+
+#     def _scan(self):
+#         if self.fields is None:
+#             self.fields = self.get_fields()
+
+#     def get_fields(self):
+#         """For geopandas, a field is a feature"""
+#         return [row[1] for row in self.data.iterrows()]
+
+#     def bounding_box(self):
+#         """For geopandas, get bounding box and convert to EK.BoundingBox type"""
+#         return BoundingBox(north=self.north, south=self.south, east=self.east, west=self.west)
+
+
+def wrapper(data, *args, **kwargs):
     from earthkit.data.utils import is_module_loaded
 
     if not is_module_loaded("pandas"):
@@ -182,11 +314,22 @@ def wrapper(data, *args, fieldlist=False, **kwargs):
         import geopandas as gpd
 
         if isinstance(data, gpd.geodataframe.GeoDataFrame):
-            return GeoPandasDataFrameWrapper(data, *args, **kwargs)
+            return GeoPandasDataFrameData(data, *args, **kwargs)
 
     if isinstance(data, pd.DataFrame):
-        return PandasDataFrameWrapper(data, *args, **kwargs)
+        return PandasDataFrameData(data, *args, **kwargs)
     if isinstance(data, pd.Series):
-        return PandasSeriesWrapper(data, *args, **kwargs)
+        return PandasSeriesData(data, *args, **kwargs)
 
-    return None
+    # if is_module_loaded("geopandas"):
+    #     import geopandas as gpd
+
+    #     if isinstance(data, gpd.geodataframe.GeoDataFrame):
+    #         return GeoPandasDataFrameWrapper(data, *args, **kwargs)
+
+    # if isinstance(data, pd.DataFrame):
+    #     return PandasDataFrameWrapper(data, *args, **kwargs)
+    # if isinstance(data, pd.Series):
+    #     return PandasSeriesWrapper(data, *args, **kwargs)
+
+    # return None
