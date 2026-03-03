@@ -36,7 +36,7 @@ class NetCDFData(Data):
         """Convert into an array (other than numpy)"""
         self._reader.to_array(*args, **kwargs)
 
-    def to_bufr_list(self, *args, **kwargs):
+    def to_featurelist(self, *args, **kwargs):
         """Convert into a list of bufr messages"""
         raise NotImplementedError("Conversion of NetCDF data to bufr is not implemented")
 

@@ -158,7 +158,7 @@ class CovjsonData(Data):
     def to_geopandas(self, **kwargs):
         return self._conversion_not_implemented()
 
-    def to_bufr_list(self, *args, **kwargs):
+    def to_featurelist(self, *args, **kwargs):
         self._conversion_not_implemented()
 
     def to_numpy(self, *args, **kwargs):

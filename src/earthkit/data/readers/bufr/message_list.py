@@ -13,6 +13,7 @@ from collections import defaultdict
 from earthkit.data.core.index import Index
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
+from earthkit.data.sources import Source
 from earthkit.data.utils.parts import Part
 
 from .. import Reader
@@ -505,3 +506,60 @@ class BUFRReader(BUFRInOneFile, Reader):
 
     def _default_encoder(self):
         return Reader._default_encoder(self)
+
+
+class BUFRReader1(Source, Reader):
+    def __init__(self, source, path, parts=None, positions=None):
+        self._ori_source = source
+        self._kwargs = {"parts": parts}
+        Reader.__init__(self, source, path)
+
+    def to_featurelist(self, *args, **kwargs):
+        return BUFRInOneFile(self.path, **self._kwargs, **kwargs)
+
+    def to_pandas(self, *args, **kwargs):
+        return self.to_featurelist().to_pandas(*args, **kwargs)
+
+    def mutate_source(self):
+        # A BUFRReader is a source itself
+        return self
+
+    def mutate(self):
+        return self
+
+    def _to_data_object(self):
+        from .data import BUFRData
+
+        return BUFRData(self)
+
+    @classmethod
+    def merge(cls, sources):
+
+        assert all(isinstance(s, BUFRReader1) for s in sources)
+        return MultiBUFRReader1(sources)
+
+
+class MultiBUFRReader1(BUFRReader1):
+    def __init__(self, sources):
+        self.sources = sources
+
+    def to_featurelist(self):
+        fs = [s.to_featurelist() for s in self.sources]
+        from earthkit.data.mergers import merge_by_class
+
+        merged = merge_by_class(fs)
+        if merged is not None:
+            return merged.mutate()
+
+        raise NotImplementedError("Conversion of MultiBUFRReader1 to featurelist is not implemented")
+
+    def to_pandas(self, *args, **kwargs):
+        return self.to_featurelist().to_pandas(*args, **kwargs)
+
+    def __repr__(self):
+        return "MultiBUFRReader1(%s)" % (self.sources,)
+
+    def _to_data_object(self):
+        from earthkit.data.core.data import MultiData
+
+        return MultiData(self)

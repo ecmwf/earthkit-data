@@ -53,8 +53,8 @@ class Data(Base):
         pass
 
     @abstractmethod
-    def to_bufr_list(self, *args, **kwargs):
-        """Convert into a list of bufr messages"""
+    def to_featurelist(self, *args, **kwargs):
+        """Convert into a list of feature messages"""
         pass
 
     @abstractmethod
@@ -115,7 +115,7 @@ class MultiData(Data):
     def to_geopandas(self, *args, **kwargs):
         raise NotImplementedError("Conversion of MultiData to geopandas is not implemented")
 
-    def to_bufr_list(self, *args, **kwargs):
+    def to_featurelist(self, *args, **kwargs):
         pass
 
     def to_numpy(self, *args, **kwargs):
@@ -153,7 +153,7 @@ class StreamFieldListData(Data):
     def to_geopandas(self, **kwargs):
         return self._conversion_not_implemented()
 
-    def to_bufr_list(self, *args, **kwargs):
+    def to_featurelist(self, *args, **kwargs):
         self._conversion_not_implemented()
 
     def to_numpy(self, *args, **kwargs):
