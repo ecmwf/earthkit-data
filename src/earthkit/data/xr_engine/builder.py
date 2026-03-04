@@ -86,7 +86,7 @@ class VariableBuilder:
         if add_earthkit_attrs:
             f = self.tensor.source[0]
             try:
-                md = f.message()
+                md = f._get_grib().message(deflate=True)
             except Exception:
                 md = ""
 
