@@ -193,14 +193,16 @@ class GribMetadata:
             v = self.get("step", None)
         return to_timedelta(v)
 
-    def message(self):
+    def message(self, deflate=False):
         r"""Return a buffer containing the encoded message.
 
         Returns
         -------
         bytes
         """
-        return self.handle.get_buffer()
+        if deflate:
+            return self._handle.deflate().get_buffer()
+        return self._handle.get_buffer()
 
     def as_namespace(self, namespace):
         return self.handle.as_namespace(namespace)
