@@ -35,7 +35,7 @@ from earthkit.data.utils.testing import earthkit_examples_file
     ],
 )
 def test_grib_single_file_parts(parts, expected_meta):
-    ds = from_source("file", earthkit_examples_file("test6.grib"), parts=parts)
+    ds = from_source("file", earthkit_examples_file("test6.grib"), parts=parts).to_fieldlist()
 
     assert len(ds) == len(expected_meta)
     if len(ds) > 0:
@@ -82,7 +82,7 @@ def test_grib_multi_file_parts(parts1, parts2, expected_meta):
             [earthkit_examples_file("test6.grib"), parts1],
             [earthkit_examples_file("test.grib"), parts2],
         ],
-    )
+    ).to_fieldlist()
 
     assert len(ds) == len(expected_meta)
     if len(ds) > 0:

@@ -120,7 +120,7 @@ def test_grib_isel_slice_invalid(fl_type):
 def test_grib_isel_multi_file(fl_type):
     f1, _ = load_grib_data("tuv_pl.grib", fl_type)
     f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
-    f = from_source("multi", [f1, f2])
+    f = from_source("multi", [f1, f2]).to_fieldlist()
 
     # single resulting field
     g = f.isel({"parameter.variable": 1, "vertical.level": 21})
@@ -136,7 +136,7 @@ def test_grib_isel_multi_file(fl_type):
 def test_grib_isel_slice_multi_file(fl_type):
     f1, _ = load_grib_data("tuv_pl.grib", fl_type)
     f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
-    f = from_source("multi", [f1, f2])
+    f = from_source("multi", [f1, f2]).to_fieldlist()
 
     g = f.isel({"parameter.variable": 1, "vertical.level": slice(20, 22)})
     assert len(g) == 2

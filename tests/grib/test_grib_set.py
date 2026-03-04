@@ -83,7 +83,7 @@ def test_grib_set_detailed(fl_type):
         )
 
         f.to_target("file", tmp)
-        f_saved = from_source("file", tmp)[0]
+        f_saved = from_source("file", tmp).to_fieldlist()[0]
         assert f_saved.get("parameter.variable") == "q"
         assert f_saved.get("parameter.variable") == "q"
         assert f_saved.get("metadata.shortName") == "q"
@@ -149,7 +149,7 @@ def test_grib_set_detailed(fl_type):
     # write back to grib
     with temp_file() as tmp:
         ds.to_target("file", tmp)
-        ds_saved = from_source("file", tmp)
+        ds_saved = from_source("file", tmp).to_fieldlist()
         assert ds_saved.get("parameter.variable") == ["q", "q"]
         assert ds_saved.get("metadata.shortName") == ["q", "q"]
         assert ds_saved.get("vertical.level") == [600, 600]
@@ -198,7 +198,7 @@ def test_grib_set_combined(fl_type):
     # we can only have ecCodes keys
     with temp_file() as tmp:
         f.to_target("file", tmp)
-        f_saved = from_source("file", tmp)[0]
+        f_saved = from_source("file", tmp).to_fieldlist()[0]
         assert f_saved.get("parameter.variable") == "q"
         assert f_saved.get("metadata.shortName") == "q"
         assert f_saved.get("vertical.level") == 600
@@ -260,7 +260,7 @@ def test_grib_set_combined(fl_type):
     # write back to grib
     with temp_file() as tmp:
         ds.to_target("file", tmp)
-        ds_saved = from_source("file", tmp)
+        ds_saved = from_source("file", tmp).to_fieldlist()
         assert ds_saved.get("parameter.variable") == ["q", "q"]
         assert ds_saved.get("metadata.shortName") == ["q", "q"]
         assert ds_saved.get("vertical.level") == [600, 600]
@@ -305,7 +305,7 @@ def test_grib_set_default(fl_type):
     # we can only have ecCodes keys
     with temp_file() as tmp:
         f.to_target("file", tmp)
-        f_saved = from_source("file", tmp)[0]
+        f_saved = from_source("file", tmp).to_fieldlist()[0]
         assert f_saved.get("parameter.variable") == "t"
         assert f_saved.get("metadata.shortName") == "t"
         assert f_saved.get("vertical.level") == 500
@@ -336,7 +336,7 @@ def test_grib_set_with_metadata_object(fl_type):
     # write back to grib
     with temp_file() as tmp:
         f.to_target("file", tmp)
-        f_saved = from_source("file", tmp)[0]
+        f_saved = from_source("file", tmp).to_fieldlist()[0]
         assert f_saved.get("param") == "q"
         assert f_saved.get("shortName") == "q"
         assert f_saved.get("level") == 600
@@ -388,7 +388,7 @@ def test_grib_copy_to_field(fl_type):
     # we can only have ecCodes keys
     with temp_file() as tmp:
         f.to_target("file", tmp)
-        f_saved = from_source("file", tmp)[0]
+        f_saved = from_source("file", tmp).to_fieldlist()[0]
         assert f_saved.get("param") == "q"
         assert f_saved.get("shortName") == "q"
         assert f_saved.get("level") == 600
@@ -428,7 +428,7 @@ def test_grib_copy_to_field(fl_type):
     # write back to grib
     with temp_file() as tmp:
         ds.to_target("file", tmp)
-        ds_saved = from_source("file", tmp)
+        ds_saved = from_source("file", tmp).to_fieldlist()
         assert ds_saved.get("param") == ["q", "q"]
         assert ds_saved.get("shortName") == ["q", "q"]
         assert ds_saved.get("level") == [600, 600]

@@ -16,7 +16,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
 def test_bufr_ls_invalid_num():
-    f = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    f = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
     with pytest.raises(ValueError):
         f.ls(n=0)
 
@@ -25,7 +25,7 @@ def test_bufr_ls_invalid_num():
 
 
 def test_bufr_ls_num():
-    f = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    f = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
 
     # default keys
 
@@ -74,7 +74,7 @@ def test_bufr_ls_num():
 
 
 def test_bufr_head_num():
-    f = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    f = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
 
     # default keys
     df = f.head(n=2)
@@ -101,7 +101,7 @@ def test_bufr_head_num():
 
 
 def test_bufr_tail_num():
-    f = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    f = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
 
     # default keys
     df = f.tail(n=2)
@@ -128,7 +128,7 @@ def test_bufr_tail_num():
 
 
 def test_bufr_describe():
-    ds = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    ds = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
     r = ds[0].describe()
     assert isinstance(r, dict)
     assert "header" in r
@@ -140,7 +140,7 @@ def test_bufr_describe_uncompressed(_kwargs, expected_val):
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("synop_multi_subset_uncompressed.bufr"),
-    )
+    ).to_featurelist()
     n = ds[0].subset_count()
     assert n == 12
 
@@ -156,7 +156,7 @@ def test_bufr_describe_uncompressed_full(_kwargs):
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("synop_multi_subset_uncompressed.bufr"),
-    )
+    ).to_featurelist()
 
     n = ds[0].subset_count()
     assert n == 12
@@ -184,7 +184,7 @@ def test_bufr_describe_compressed(_kwargs, expected_val):
     ds = from_source(
         "url",
         earthkit_remote_test_data_file("ens_multi_subset_compressed.bufr"),
-    )
+    ).to_featurelist()
     n = ds[0].subset_count()
     assert n == 51
 

@@ -16,22 +16,21 @@ from earthkit.data.utils.parts import Part
 
 from .scan import GribCodesMessagePositionIndex
 
+# class PositionDataBase:
+#     def __init__(self, path, parts=None, positions=None):
+#         self.path = path
+#         self._file_parts = parts
+#         self.__positions = positions
 
-class PositionDataBase:
-    def __init__(self, path, parts=None, positions=None):
-        self.path = path
-        self._file_parts = parts
-        self.__positions = positions
+#     @property
+#     def file_parts(self):
+#         return self._file_parts
 
-    @property
-    def file_parts(self):
-        return self._file_parts
-
-    @property
-    def positions(self):
-        if self.__positions is None:
-            raise ValueError("Positions not set")
-        return self.__positions
+#     @property
+#     def positions(self):
+#         if self.__positions is None:
+#             raise ValueError("Positions not set")
+#         return self.__positions
 
 
 class GribFieldListInFile(SimpleFieldListBase):
@@ -152,85 +151,85 @@ class GribFieldListInFile(SimpleFieldListBase):
         return r
 
 
-class GRIBReader(GribFieldListInFile, Reader):
-    appendable = True  # GRIB messages can be added to the same file
+# class GRIBReaderOri(GribFieldListInFile, Reader):
+#     appendable = True  # GRIB messages can be added to the same file
 
-    def __init__(self, source, path, parts=None, positions=None):
-        _kwargs = {}
-        for k in [
-            "grib_handle_policy",
-            "grib_handle_cache_size",
-            "use_grib_metadata_cache",
-        ]:
-            _kwargs[k] = source._kwargs.get(k, None)
+#     def __init__(self, source, path, parts=None, positions=None):
+#         _kwargs = {}
+#         for k in [
+#             "grib_handle_policy",
+#             "grib_handle_cache_size",
+#             "use_grib_metadata_cache",
+#         ]:
+#             _kwargs[k] = source._kwargs.get(k, None)
 
-        for k in source._kwargs:
-            if "-" in k:
-                raise KeyError(f"Invalid option {k} in GRIBReader. Option names must not contain '-'.")
+#         for k in source._kwargs:
+#             if "-" in k:
+#                 raise KeyError(f"Invalid option {k} in GRIBReader. Option names must not contain '-'.")
 
-        Reader.__init__(self, source, path)
-        GribFieldListInFile.__init__(self, path, parts=parts, positions=positions, **_kwargs)
-        self._source_kwargs = source._kwargs
+#         Reader.__init__(self, source, path)
+#         GribFieldListInFile.__init__(self, path, parts=parts, positions=positions, **_kwargs)
+#         self._source_kwargs = source._kwargs
 
-    def __repr__(self):
-        return "GRIBReader(%s)" % (self.path,)
+#     def __repr__(self):
+#         return "GRIBReader(%s)" % (self.path,)
 
-    def mutate_source(self):
-        # A GRIBReader is a source itself
-        return self
+#     def mutate_source(self):
+#         # A GRIBReader is a source itself
+#         return self
 
-    def is_streamable_file(self):
-        return True
+#     def is_streamable_file(self):
+#         return True
 
-    def _to_data_object(self):
-        from .data import GribData
+#     def _to_data_object(self):
+#         from .data import GribData
 
-        return GribData(self)
+#         return GribData(self)
 
-    def __getstate__(self):
-        from earthkit.data.core.config import CONFIG
+#     def __getstate__(self):
+#         from earthkit.data.core.config import CONFIG
 
-        policy = CONFIG.get("grib-file-serialisation-policy")
-        state = {"serialisation_policy": policy, "source_kwargs": self._source_kwargs}
+#         policy = CONFIG.get("grib-file-serialisation-policy")
+#         state = {"serialisation_policy": policy, "source_kwargs": self._source_kwargs}
 
-        if policy == "path":
-            state["path"] = self.path
-            state["positions"] = self._positions
-        else:
-            state["messages"] = [f.message() for f in self]
+#         if policy == "path":
+#             state["path"] = self.path
+#             state["positions"] = self._positions
+#         else:
+#             state["messages"] = [f.message() for f in self]
 
-        return state
+#         return state
 
-    def __setstate__(self, state):
-        policy = state["serialisation_policy"]
+#     def __setstate__(self, state):
+#         policy = state["serialisation_policy"]
 
-        if policy == "path":
-            from earthkit.data import from_source
+#         if policy == "path":
+#             from earthkit.data import from_source
 
-            path = state["path"]
-            ds = from_source("file", path, **state["source_kwargs"])
-            self.__init__(ds.source, path, positions=state["positions"])
-        elif policy == "memory":
-            from earthkit.data import from_source
-            from earthkit.data.core.caching import cache_file
+#             path = state["path"]
+#             ds = from_source("file", path, **state["source_kwargs"])
+#             self.__init__(ds.source, path, positions=state["positions"])
+#         elif policy == "memory":
+#             from earthkit.data import from_source
+#             from earthkit.data.core.caching import cache_file
 
-            def _create(path, args):
-                with open(path, "wb") as f:
-                    for message in state["messages"]:
-                        f.write(message)
+#             def _create(path, args):
+#                 with open(path, "wb") as f:
+#                     for message in state["messages"]:
+#                         f.write(message)
 
-            path = cache_file(
-                "GRIBReader",
-                _create,
-                [],
-            )
-            ds = from_source("file", path)
-            self.__init__(ds.source, path)
-        else:
-            raise ValueError(f"Unknown serialisation policy {policy}")
+#             path = cache_file(
+#                 "GRIBReader",
+#                 _create,
+#                 [],
+#             )
+#             ds = from_source("file", path)
+#             self.__init__(ds.source, path)
+#         else:
+#             raise ValueError(f"Unknown serialisation policy {policy}")
 
 
-class GRIBReader1(Source, Reader):
+class GRIBReader(Source, Reader):
     def __init__(self, source, path, parts=None, positions=None):
         self._ori_source = source
         self._kwargs = {"parts": parts, "positions": positions}
@@ -242,9 +241,15 @@ class GRIBReader1(Source, Reader):
     def to_xarray(self, *args, **kwargs):
         return self.to_fieldlist().to_xarray(*args, **kwargs)
 
-    def mutate_source(self):
-        # A GRIBReader is a source itself
-        return self
+    def to_numpy(self, *args, **kwargs):
+        return self.to_fieldlist().to_numpy(*args, **kwargs)
+
+    def to_array(self, *args, **kwargs):
+        return self.to_fieldlist().to_array(*args, **kwargs)
+
+    # def mutate_source(self):
+    #     # A GRIBReader is a source itself
+    #     return self
 
     def mutate(self):
         return self
@@ -252,19 +257,18 @@ class GRIBReader1(Source, Reader):
     def is_streamable_file(self):
         return True
 
-    def _to_data_object(self):
+    def to_data_object(self):
         from .data import GribData
 
         return GribData(self)
 
     @classmethod
     def merge(cls, sources):
+        assert all(isinstance(s, GRIBReader) for s in sources)
+        return MultiGRIBReader(sources)
 
-        assert all(isinstance(s, GRIBReader1) for s in sources)
-        return MultiGRIBReader1(sources)
 
-
-class MultiGRIBReader1(GRIBReader1):
+class MultiGRIBReader(GRIBReader):
     def __init__(self, sources):
         self.sources = sources
 
@@ -276,15 +280,15 @@ class MultiGRIBReader1(GRIBReader1):
         if merged is not None:
             return merged.mutate()
 
-        raise NotImplementedError("Conversion of MultiGRIBReader1 to fieldlist is not implemented")
+        raise NotImplementedError("Conversion of MultiGRIBReader to fieldlist is not implemented")
 
     def to_xarray(self, *args, **kwargs):
         pass
 
     def __repr__(self):
-        return "MultiGRIBReader1(%s)" % (self.sources,)
+        return f"MultiGRIBReader({self.sources})"
 
-    def _to_data_object(self):
-        from earthkit.data.core.data import MultiData
+    def to_data_object(self):
+        from .data import GribData
 
-        return MultiData(self)
+        return GribData(self)

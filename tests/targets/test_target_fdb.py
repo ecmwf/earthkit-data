@@ -61,7 +61,7 @@ def make_fdb_config(path):
 )
 @pytest.mark.parametrize("direct_call", [True, False])
 def test_target_fdb_grib_core(kwargs, direct_call):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     vals_ref = ds.values[:, :4]
 
     with temp_directory() as tmpdir:

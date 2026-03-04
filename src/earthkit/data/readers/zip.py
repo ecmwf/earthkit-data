@@ -11,7 +11,7 @@ import os
 import stat
 from zipfile import ZipFile
 
-from earthkit.data import from_source
+from earthkit.data.sources import from_source_internal
 
 from .archive import ArchiveReader
 from .csv import CSVReader
@@ -74,7 +74,7 @@ class ZIPReader(ArchiveReader):
     def mutate_source(self):
         # zarr can read data from a zip file
         if ".zattrs" in self._content:
-            return from_source("zarr", self.path)
+            return from_source_internal("zarr", self.path)
 
         return None
 

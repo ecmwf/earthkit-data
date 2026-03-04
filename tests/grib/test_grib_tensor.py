@@ -35,7 +35,7 @@ When indexing a tensor always a tensor is returned.
 
 
 def test_grib_tensor_core():
-    ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+    ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
     c = ds.to_tensor("parameter.variable", "vertical.level")
 
     assert c.user_shape == (3, 6)

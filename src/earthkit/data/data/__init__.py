@@ -16,6 +16,14 @@ from earthkit.data.core import Base
 
 class Data(Base):
     _TYPE_NAME = None
+    _FIELDLIST = "fieldlist"
+    _XARRAY = "xarray"
+    _PANDAS = "pandas"
+    _GEOPANDAS = "geopandas"
+    _GEOJSON = "geojson"
+    _FEATURELIST = "featurelist"
+    _NUMPY = "numpy"
+    _ARRAY = "array"
 
     @property
     @abstractmethod
@@ -49,7 +57,12 @@ class Data(Base):
 
     @abstractmethod
     def to_geopandas(self, **kwargs):
-        """Convert into a geopandas geodataframe"""
+        """Convert into a GeoPandas dataframe"""
+        pass
+
+    @abstractmethod
+    def to_geojson(self, **kwargs):
+        """Convert into a GeoJSON object"""
         pass
 
     @abstractmethod
@@ -80,78 +93,24 @@ class Data(Base):
         raise NotImplementedError(txt)
 
 
-class MultiData(Data):
-    def __init__(self, sources):
-        self.sources = sources
-        # self.datas = [s._reader._to_data_object() for s in self.sources.sources]
-
-    def available_types(self):
-        # types = set()
-        # for d in self.datas:
-        #     types.update(d.available_types)
-        # return sorted(types)
-        return None
-
-    def describe(self):
-        pass
-
-    def to_fieldlist(self, *args, **kwargs):
-        return self.sources.to_fieldlist(*args, **kwargs)
-        # fs = [d.to_fieldlist(*args, **kwargs) for d in self.datas]
-        # from earthkit.data.mergers import merge_by_class
-
-        # merged = merge_by_class(fs)
-        # if merged is not None:
-        #     return merged.mutate()
-
-        # raise NotImplementedError("Conversion of MultiData to fieldlist is not implemented")
-
-    def to_xarray(self, *args, **kwargs):
-        return self.sources.to_xarray(*args, **kwargs)
-
-    def to_pandas(self, *args, **kwargs):
-        pass
-
-    def to_geopandas(self, *args, **kwargs):
-        raise NotImplementedError("Conversion of MultiData to geopandas is not implemented")
-
-    def to_featurelist(self, *args, **kwargs):
-        pass
-
-    def to_numpy(self, *args, **kwargs):
-        pass
-
-    def to_array(self, *args, **kwargs):
-        pass
-
-
-class StreamFieldListData(Data):
-    _TYPE_NAME = "Stream"
-
+class SimpleData(Data):
     def __init__(self, reader):
         self._reader = reader
 
-    @property
-    def available_types(self):
-        return ["fieldlist"]
-
-    def describe(self):
-        return f"Stream data from {self._reader.path}"
-
     def to_fieldlist(self, *args, **kwargs):
-        return self._reader
+        self._conversion_not_implemented()
 
-    def to_pandas(self, **kwargs):
-        return self._conversion_not_implemented()
+    def to_xarray(self, *args, **kwargs):
+        self._conversion_not_implemented()
 
-    def to_xarray(self, **kwargs):
-        return self._conversion_not_implemented()
-
-    def to_geojson(self, **kwargs):
-        return self._conversion_not_implemented()
+    def to_pandas(self, *args, **kwargs):
+        self._conversion_not_implemented()
 
     def to_geopandas(self, **kwargs):
-        return self._conversion_not_implemented()
+        self._conversion_not_implemented()
+
+    def to_geojson(self, **kwargs):
+        self._conversion_not_implemented()
 
     def to_featurelist(self, *args, **kwargs):
         self._conversion_not_implemented()

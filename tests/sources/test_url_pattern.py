@@ -30,7 +30,7 @@ def test_url_pattern_int():
         "url-pattern",
         earthkit_remote_examples_file("test{id}.grib"),
         {"id": [4, 6]},
-    )
+    ).to_fieldlist()
 
     assert len(fs) == 10
 
@@ -40,7 +40,7 @@ def test_url_pattern_date():
         "url-pattern",
         earthkit_remote_test_data_file("test_{my_date:date(%Y-%m-%d)}_{name}.grib"),
         {"my_date": datetime.datetime(2020, 5, 13), "name": ["t2", "msl"]},
-    )
+    ).to_fieldlist()
 
     assert len(fs) == 2
 

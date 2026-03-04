@@ -32,7 +32,7 @@ def test_array_fl_grib_concat_2a(mode):
     if mode == "concat":
         ds = concat(ds1, ds2)
     else:
-        ds = from_source("multi", ds1, ds2)
+        ds = from_source("multi", ds1, ds2).to_fieldlist()
 
     check_array_fl(ds, [ds1, ds2], md)
     check_save_to_disk(ds, 8, md)
@@ -55,8 +55,8 @@ def test_array_fl_grib_concat_3a(mode):
         ds = concat(ds1, ds2)
         ds = concat(ds, ds3)
     else:
-        ds = from_source("multi", ds1, ds2)
-        ds = from_source("multi", ds, ds3)
+        ds = from_source("multi", ds1, ds2).to_fieldlist()
+        ds = from_source("multi", ds, ds3).to_fieldlist()
 
     check_array_fl(ds, [ds1, ds2, ds3], md)
     check_save_to_disk(ds, 26, md)
@@ -67,9 +67,9 @@ def test_array_fl_grib_concat_3b(mode):
     ds1, ds2, ds3, md = load_array_fl(3)
 
     if mode == "concat":
-        ds = concat(ds1, ds2, ds3)
+        ds = concat(ds1, ds2, ds3).to_fieldlist()
     else:
-        ds = from_source("multi", ds1, ds2, ds3)
+        ds = from_source("multi", ds1, ds2, ds3).to_fieldlist()
 
     check_array_fl(ds, [ds1, ds2, ds3], md)
     check_save_to_disk(ds, 26, md)

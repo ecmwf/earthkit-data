@@ -142,7 +142,7 @@ def test_grib_sel_multi_file(fl_type):
         fl_type,
     )
     f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
-    f = from_source("multi", [f1, f2])
+    f = from_source("multi", [f1, f2]).to_fieldlist()
 
     # single resulting field
     g = f.sel({"parameter.variable": "t", "vertical.level": 61})
@@ -160,7 +160,7 @@ def test_grib_sel_slice_multi_file(fl_type):
     f1, _ = load_grib_data("tuv_pl.grib", fl_type)
     f2, _ = load_grib_data("ml_data.grib", fl_type, folder="data")
 
-    f = from_source("multi", [f1, f2])
+    f = from_source("multi", [f1, f2]).to_fieldlist()
 
     g = f.sel({"parameter.variable": "t", "vertical.level": slice(56, 62)})
     assert len(g) == 2
@@ -317,7 +317,7 @@ def test_grib_sel_base_datetime(fl_type, _kwargs):
 #     ],
 # )
 # def test_grib_sel_time_span(_kwargs, ref_len, ref):
-#     ds1 = from_source("url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1"))
+#     ds1 = from_source("url", earthkit_remote_test_data_file("xr_engine/date/wgust_step_range.grib1")).to_fieldlist()
 
 #     g = ds1.sel(**_kwargs)
 #     assert len(g) == ref_len

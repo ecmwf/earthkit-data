@@ -43,7 +43,7 @@ def repeat_list_items(items, count):
 
 def test_grib_from_stream_iter():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream)
+        ds = from_source("stream", stream).to_fieldlist()
 
         # no fieldlist methods are available
         with pytest.raises((TypeError, NotImplementedError)):
@@ -75,7 +75,7 @@ def test_grib_from_stream_iter():
 )
 def test_grib_from_stream_batched(_kwargs, expected_meta):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream)
+        ds = from_source("stream", stream).to_fieldlist()
 
         # no methods are available
         with pytest.raises((TypeError, NotImplementedError)):
@@ -107,7 +107,7 @@ def test_grib_from_stream_batched(_kwargs, expected_meta):
 )
 def test_grib_from_stream_batched_convert_to_numpy(convert_kwargs, expected_shape):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream)
+        ds = from_source("stream", stream).to_fieldlist()
 
         ref = [
             [("t", 1000), ("u", 1000)],
@@ -137,7 +137,7 @@ def test_grib_from_stream_group_by(array_backend, group):
     array_namespace, device, dtype = array_backend
 
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream)
+        ds = from_source("stream", stream).to_fieldlist()
 
         # no methods are available
         with pytest.raises((TypeError, NotImplementedError)):
@@ -171,7 +171,7 @@ def test_grib_from_stream_group_by(array_backend, group):
 def test_grib_from_stream_group_by_convert_to_numpy(convert_kwargs, expected_shape):
     group = "vertical.level"
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream)
+        ds = from_source("stream", stream).to_fieldlist()
 
         # no fieldlist methods are available on a StreamSource
         with pytest.raises((TypeError, NotImplementedError)):
@@ -206,7 +206,7 @@ def test_grib_from_stream_in_memory():
             "stream",
             stream,
             read_all=True,
-        )
+        ).to_fieldlist()
 
         assert len(ds) == 6
 
@@ -275,10 +275,7 @@ def test_grib_from_stream_in_memory():
 )
 def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_shape):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds_s = from_source("stream", stream, read_all=True)
-
-        ds = ds_s.to_fieldlist(array_namespace="numpy", **convert_kwargs)
-
+        ds = from_source("stream", stream, read_all=True).to_fieldlist()
         assert len(ds) == 6
 
         ref = [("t", 1000), ("u", 1000), ("v", 1000), ("t", 850), ("u", 850), ("v", 850)]
@@ -320,18 +317,18 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
 
 def test_grib_save_when_loaded_from_stream():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, read_all=True)
+        fs = from_source("stream", stream, read_all=True).to_fieldlist()
         assert len(fs) == 6
         with temp_file() as tmp:
             fs.to_target("file", tmp)
-            fs_saved = from_source("file", tmp)
+            fs_saved = from_source("file", tmp).to_fieldlist()
             assert len(fs) == len(fs_saved)
 
 
 def test_grib_multi_from_stream_iter():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     stream2 = open(earthkit_examples_file("test4.grib"), "rb")
-    ds = from_source("stream", [stream1, stream2])
+    ds = from_source("stream", [stream1, stream2]).to_fieldlist()
 
     assert isinstance(ds, StreamFieldList)
 
@@ -367,7 +364,7 @@ def test_grib_multi_from_stream_iter():
 def test_grib_multi_grib_from_stream_batched(_kwargs, expected_meta):
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     stream2 = open(earthkit_examples_file("test4.grib"), "rb")
-    ds = from_source("stream", [stream1, stream2])
+    ds = from_source("stream", [stream1, stream2]).to_fieldlist()
 
     assert isinstance(ds, StreamFieldList)
 
@@ -390,7 +387,7 @@ def test_grib_multi_grib_from_stream_batched(_kwargs, expected_meta):
 def test_grib_multi_stream_memory():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     stream2 = open(earthkit_examples_file("test4.grib"), "rb")
-    ds = from_source("stream", [stream1, stream2], read_all=True)
+    ds = from_source("stream", [stream1, stream2], read_all=True).to_fieldlist()
 
     assert len(ds) == 6
 
@@ -454,9 +451,9 @@ def test_grib_multi_stream_memory():
 
 def test_grib_concat_stream():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
-    ds1 = from_source("stream", stream1)
-    ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True)
-    ds3 = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True)
+    ds1 = from_source("stream", stream1).to_fieldlist()
+    ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True).to_fieldlist()
+    ds3 = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True).to_fieldlist()
 
     ds = concat(ds1, ds2, ds3)
 
@@ -487,9 +484,11 @@ def test_grib_concat_stream():
 
 def test_grib_concat_stream_memory():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
-    ds1 = from_source("stream", stream1, read_all=True)
-    ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True, read_all=True)
-    ds3 = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True, read_all=True)
+    ds1 = from_source("stream", stream1, read_all=True).to_fieldlist()
+    ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True, read_all=True).to_fieldlist()
+    ds3 = from_source(
+        "url", earthkit_remote_examples_file("test6.grib"), stream=True, read_all=True
+    ).to_fieldlist()
 
     ds = concat(ds1, ds2, ds3)
 

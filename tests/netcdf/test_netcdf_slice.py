@@ -40,7 +40,7 @@ def test_netcdf_single_index(mode, index, expected_meta):
 
 
 def test_netcdf_single_index_bad():
-    f = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+    f = from_source("file", earthkit_examples_file("tuv_pl.nc")).to_fieldlist()
     with pytest.raises(IndexError):
         f[27]
 
@@ -83,7 +83,7 @@ def test_netcdf_slice_multi_file(indexes, expected_meta):
     f = from_source(
         "file",
         [earthkit_examples_file("test.nc"), earthkit_examples_file("tuv_pl.nc")],
-    )
+    ).to_fieldlist()
     r = f[indexes]
     assert len(r) == 3
     assert r.get(["parameter.variable", "vertical.level"]) == expected_meta
@@ -147,7 +147,7 @@ def test_netcdf_fieldlist_iterator_with_zip():
     # this tests something different with the iterator - this does not try to
     # 'go off the edge' of the fieldlist, because the length is determined by
     # the list of levels
-    g = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+    g = from_source("file", earthkit_examples_file("tuv_pl.nc")).to_fieldlist()
     ref_levs = g.get("vertical.level")
     assert len(ref_levs) == 18
     levs1 = []
@@ -161,7 +161,7 @@ def test_netcdf_fieldlist_iterator_with_zip():
 
 def test_netcdf_fieldlist_iterator_with_zip_multiple():
     # same as test_fieldlist_iterator_with_zip() but multiple times
-    g = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+    g = from_source("file", earthkit_examples_file("tuv_pl.nc")).to_fieldlist()
     ref_levs = g.get("vertical.level")
     assert len(ref_levs) == 18
     for i in range(2):

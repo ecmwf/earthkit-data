@@ -44,7 +44,7 @@ def test_s3_ewc_request(objects, expected_len):
         "objects": objects,
     }
 
-    ds = from_source("s3", r, stream=False, anon=True)
+    ds = from_source("s3", r, stream=False, anon=True).to_fieldlist()
     assert len(ds) == expected_len
 
 
@@ -55,7 +55,7 @@ def test_s3_ewc_public_core():
         "objects": [{"object": "test6.grib"}],
     }
 
-    ds = from_source("s3", r, stream=False, anon=True)
+    ds = from_source("s3", r, stream=False, anon=True).to_fieldlist()
 
     assert len(ds) == 6
 
@@ -80,7 +80,7 @@ def test_s3_ewc_private_core():
         "objects": [{"object": "test6.grib"}],
     }
 
-    ds = from_source("s3", r, stream=False, anon=False)
+    ds = from_source("s3", r, stream=False, anon=False).to_fieldlist()
 
     assert len(ds) == 6
 
@@ -111,7 +111,7 @@ def test_s3_ewc_public_single_parts(parts, expected_meta):
         "objects": [{"object": "test6.grib", "parts": parts}],
     }
 
-    ds = from_source("s3", r, stream=False, anon=True)
+    ds = from_source("s3", r, stream=False, anon=True).to_fieldlist()
 
     assert len(ds) == len(expected_meta)
     assert ds.metadata(("param", "level")) == expected_meta
@@ -134,7 +134,7 @@ def test_s3_ewc_private_single_parts(parts, expected_meta):
         "objects": [{"object": "test6.grib", "parts": parts}],
     }
 
-    ds = from_source("s3", r, stream=False, anon=False)
+    ds = from_source("s3", r, stream=False, anon=False).to_fieldlist()
 
     assert len(ds) == len(expected_meta)
     assert ds.metadata(("param", "level")) == expected_meta
@@ -147,7 +147,7 @@ def test_s3_ewc_public_stream_core():
         "objects": [{"object": "test6.grib"}],
     }
 
-    ds = from_source("s3", r, stream=True, anon=True)
+    ds = from_source("s3", r, stream=True, anon=True).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises(NotImplementedError):
@@ -181,7 +181,7 @@ def test_s3_ewc_private_stream():
         "objects": [{"object": "test6.grib"}],
     }
 
-    ds = from_source("s3", r, stream=True, anon=False)
+    ds = from_source("s3", r, stream=True, anon=False).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises(NotImplementedError):
@@ -221,7 +221,7 @@ def test_s3_ewc_public_stream_single_parts(parts, expected_meta):
         "objects": [{"object": "test6.grib", "parts": parts}],
     }
 
-    ds = from_source("s3", r, stream=True, anon=True)
+    ds = from_source("s3", r, stream=True, anon=True).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises(NotImplementedError):
@@ -255,7 +255,7 @@ def test_s3_ewc_private_stream_single_parts(parts, expected_meta):
         "objects": [{"object": "test6.grib", "parts": parts}],
     }
 
-    ds = from_source("s3", r, stream=True, anon=False)
+    ds = from_source("s3", r, stream=True, anon=False).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises(NotImplementedError):

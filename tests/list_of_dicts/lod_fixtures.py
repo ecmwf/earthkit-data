@@ -197,7 +197,7 @@ def build_lod_fieldlist(lod, mode):
     from earthkit.data.indexing.simple import SimpleFieldList
 
     if mode == "list-of-dicts":
-        return from_source("list-of-dicts", lod)
+        return from_source("list-of-dicts", lod).to_fieldlist()
     elif mode == "loop":
         ds = SimpleFieldList()
         for f in lod:

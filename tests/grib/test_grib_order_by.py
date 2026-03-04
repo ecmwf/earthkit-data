@@ -147,7 +147,7 @@ def test_grib_order_by_single_file(
 def test_grib_order_by_multi_file(fl_type, params, expected_meta):
     f1, _ = load_grib_data("test4.grib", fl_type)
     f2, _ = load_grib_data("test6.grib", fl_type)
-    f = from_source("multi", [f1, f2])
+    f = from_source("multi", [f1, f2]).to_fieldlist()
 
     g = f.order_by(params)
     assert len(g) == len(f)

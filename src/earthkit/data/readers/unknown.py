@@ -36,6 +36,11 @@ class UnknownReaderBase(Reader):
     def __len__(self):
         return 0
 
+    def to_data_object(self):
+        from earthkit.data.data.unknown import UnknownData
+
+        return UnknownData(self)
+
 
 class UnknownReader(UnknownReaderBase):
     def __init__(self, source, path, **kwargs):

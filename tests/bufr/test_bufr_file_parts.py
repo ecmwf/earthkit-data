@@ -29,7 +29,7 @@ from earthkit.data.utils.testing import earthkit_examples_file
     ],
 )
 def test_bufr_single_file_parts(parts, expected_meta):
-    ds = from_source("file", earthkit_examples_file("temp_10.bufr"), parts=parts)
+    ds = from_source("file", earthkit_examples_file("temp_10.bufr"), parts=parts).to_featurelist()
 
     assert len(ds) == len(expected_meta)
     if len(ds) > 0:

@@ -36,7 +36,7 @@ def test_cds_grib_prompt(prompt):
         date="2012-12-12",
         prompt=prompt,
         time="12:00",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
     assert s.metadata("param") == ["2t", "msl"]
 
@@ -54,7 +54,7 @@ def test_cds_grib_kwargs():
         area=[50, -50, 20, 50],
         date="2012-12-12",
         time="12:00",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
     assert s.metadata("param") == ["2t", "msl"]
 
@@ -74,7 +74,7 @@ def test_cds_grib_dict_1():
             date="2012-12-12",
             time="12:00",
         ),
-    )
+    ).to_fieldlist()
     assert len(s) == 2
     assert s.metadata("param") == ["2t", "msl"]
 
@@ -94,7 +94,7 @@ def test_cds_grib_dict_2():
             date="2012-12-12",
         ),
         time="12:00",
-    )
+    ).to_fieldlist()
 
     assert len(s) == 2
     assert s.metadata("param") == ["2t", "msl"]
@@ -114,7 +114,7 @@ def test_cds_grib_split_on_var():
         date="2012-12-12",
         time="12:00",
         split_on="variable",
-    )
+    ).to_fieldlist()
     assert len(s) == 2
     assert s.metadata("param") == ["2t", "msl"]
     assert not hasattr(s, "path")
@@ -163,7 +163,7 @@ def test_cds_grib_multi_var_date(date, expected_date):
         area=[50, -50, 20, 50],
         date=date,
         time="12:00",
-    )
+    ).to_fieldlist()
     assert len(s) == 6
     assert s.metadata("param") == ["2t", "msl"] * 3
     assert s.metadata("date") == expected_date
@@ -196,7 +196,7 @@ def test_cds_grib_save():
         area=[50, -50, 20, 50],
         date="2012-12-12",
         time="12:00",
-    )
+    ).to_fieldlist()
     with temp_directory() as tmpdir:
         # Check file can be saved in current dir with detected filename:
         with preserve_cwd():
@@ -234,7 +234,7 @@ def test_cds_split_on(split_on, expected_file_num, expected_param, expected_time
         date="2012-12-12",
         time=["00:00", "12:00"],
         split_on=split_on,
-    )
+    ).to_fieldlist()
 
     if expected_file_num == 1:
         assert hasattr(s, "path")
@@ -272,7 +272,7 @@ def test_cds_multiple_requests(split_on1, split_on2, expected_file_num, expected
         "reanalysis-era5-single-levels",
         {**base_request, **{"variable": "2t", "split_on": split_on1}},
         {**base_request, **{"variable": "msl", "split_on": split_on2}},
-    )
+    ).to_fieldlist()
     assert len(s._indexes) == expected_file_num
     assert len(s) == 4
     assert s.metadata("param") == expected_param
@@ -293,7 +293,7 @@ def test_cds_netcdf_1():
         date="2012-12-12",
         time="12:00",
         format="netcdf",
-    )
+    ).to_fieldlist()
     assert len(ds) == 2
     assert ds.get("parameter.variable") == ["t2m", "msl"]
 
@@ -312,7 +312,7 @@ def test_cds_netcdf_save():
         date="2012-12-12",
         time="12:00",
         format="netcdf",
-    )
+    ).to_fieldlist()
 
     with temp_directory() as tmpdir:
         # Check file can be saved in current dir with detected filename:
@@ -340,7 +340,7 @@ def test_cds_netcdf_selection_limited():
             "month": "01",
             "nominal_day": "10",
         },
-    )
+    ).to_fieldlist()
     assert len(ds) == 9
     assert ds.get("parameter.variable") == [
         "AL_BH_BB",
@@ -368,8 +368,8 @@ def test_cds_observation_csv_file_to_pandas_xarray():
         "variable": ["air_temperature", "altitude"],
         "day": ["21", "22"],
     }
-    data_cds = from_source("cds", collection_id, **request)
-    data_file = from_source("file", data_cds.path)
+    data_cds = from_source("cds", collection_id, **request).to_fieldlist()
+    data_file = from_source("file", data_cds.path).to_fieldlist()
     assert "report_timestamp" in data_cds.to_pandas().columns
 
     # Assert consistent behaviour for local and CDS versions

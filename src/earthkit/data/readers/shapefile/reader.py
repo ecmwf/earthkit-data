@@ -9,8 +9,63 @@
 
 import os
 
+import numpy as np
+from earthkit.utils.decorators import thread_safe_cached_property
+
+from earthkit.data.core.data import SimpleData
+from earthkit.data.featurelist.simple import SimpleFeatureListBase
 from earthkit.data.readers import Reader
 from earthkit.data.utils.bbox import BoundingBox
+
+
+class ShapeFileList(SimpleFeatureListBase):
+    def __init__(self, path):
+        self._path = path
+        print(f"ShapeFileList: {path}")
+
+    @thread_safe_cached_property
+    def _features(self):
+        return self._get_rows()
+
+    def _get_rows(self, **kwargs):
+        return [row[1] for row in self.to_pandas(**kwargs).iterrows()]
+
+    def ls(self, **kwargs):
+        return self.to_pandas(**kwargs)
+
+    def head(self, n=5, **kwargs):
+        return self.ls(n=n, **kwargs)
+
+    def tail(self, n=5, **kwargs):
+        return self.ls(n=-n, **kwargs)
+
+    def to_pandas(self, **kwargs):
+        # TODO: handle multiple paths
+        return self.to_pandas_from_multi_paths([self._path], **kwargs)
+
+    def to_geopandas(self, **kwargs):
+        # TODO: handle multiple paths
+        return self.to_pandas(**kwargs)
+
+    def to_xarray(self, **kwargs):
+        return self.to_pandas(**kwargs).to_xarray()
+
+    @classmethod
+    def to_pandas_from_multi_paths(cls, paths, **kwargs):
+        try:
+            import geopandas as gpd
+        except ImportError:
+            raise ImportError("Geojson handling requires 'geopandas' to be installed")
+
+        geo_df = gpd.pd.concat([gpd.read_file(path, **kwargs) for path in paths])
+
+        return geo_df.set_index(np.arange(len(geo_df)))
+
+    def _normalise_key_values(self, **kwargs):
+        return kwargs
+
+    def describe(self, *args, **kwargs):
+        pass
 
 
 class ShapeFileReader(Reader):
@@ -91,6 +146,38 @@ class ShapeFileReader(Reader):
 
     def to_xarray(self, **kwargs):
         return self.to_pandas(**kwargs).to_xarray()
+
+
+class ShapeFileData(SimpleData):
+    _TYPE_NAME = "Shapefile"
+
+    def __init__(self, reader):
+        self._reader = reader
+
+    @property
+    def available_types(self):
+        return ["geopandas", "pandas", "xarray", "geojson"]
+
+    def describe(self):
+        return f"GeoJSON data from {self._reader.path}"
+
+    def to_pandas(self, **kwargs):
+        return self._reader.to_pandas(**kwargs)
+
+    def to_xarray(self, **kwargs):
+        return self._reader.to_xarray(**kwargs)
+
+    def to_geopandas(self, **kwargs):
+        return self._reader.to_geopandas(**kwargs)
+
+    def to_featurelist(self, *args, **kwargs):
+        return ShapeFileList(self._reader.path)
+
+    def to_numpy(self, *args, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_array(self, *args, **kwargs):
+        self._conversion_not_implemented()
 
 
 SHAPE_EXT = ".shp"

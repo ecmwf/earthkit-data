@@ -55,10 +55,10 @@ def test_bbox():
 
     assert bbox_default(area) == bbox
 
-    source = from_source("file", earthkit_examples_file("test.grib"))
+    source = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     assert bbox_tuple(source[0]) == (73.0, -27.0, 33.0, 45.0)
 
-    source = from_source("file", earthkit_examples_file("test.nc"))
+    source = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
     assert bbox_tuple(source[0]) == (73.0, -27.0, 33.0, 45.0)
 
 

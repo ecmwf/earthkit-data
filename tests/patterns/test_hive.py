@@ -142,7 +142,7 @@ def test_hive_sel_core_1():
     root = earthkit_test_data_file("pattern/1")
     pattern = "{variable}_{base_date:date(%Y-%m-%dT-H-%M)}_{step}.grib"
 
-    ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True)
+    ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True).to_fieldlist()
 
     # assert ds.root == path
     diag = HiveDiag()
@@ -183,7 +183,7 @@ def test_hive_sel_core_2():
     root = earthkit_test_data_file("pattern/invalid")
     pattern = "_{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
 
-    ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True)
+    ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True).to_fieldlist()
 
     r = ds.sel(variable="t", step=12)
     assert len(r) == 0
@@ -193,7 +193,7 @@ def test_hive_sel_grib_1():
     root = earthkit_test_data_file("pattern/1")
     pattern = "{shortName}_{date:date(%Y-%m-%dT-H-%M)}_{step}.grib"
 
-    ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True)
+    ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True).to_fieldlist()
 
     # assert ds.root == path
     diag = HiveDiag()
@@ -234,7 +234,7 @@ def test_hive_sel_grib_2():
     root = earthkit_test_data_file("pattern/invalid")
     pattern = "_{shortName}_{date:date(%Y-%m-%dT%H:%M)}_{step}.grib"
 
-    ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True)
+    ds = from_source("file-pattern", os.path.join(root, pattern), hive_partitioning=True).to_fieldlist()
 
     r = ds.sel(shortName="t", step=12)
     assert len(r) == 0

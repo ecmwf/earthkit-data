@@ -38,7 +38,7 @@ def lod():
 
 
 def test_list_of_dicts(lod):
-    ds = from_source("list-of-dicts", lod)
+    ds = from_source("list-of-dicts", lod).to_fieldlist()
 
     assert len(ds) == 6
     ref = [("t", 500), ("t", 850), ("u", 500), ("u", 850), ("d", 850), ("d", 600)]

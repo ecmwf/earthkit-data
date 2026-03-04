@@ -10,9 +10,9 @@
 from abc import abstractmethod
 from collections import defaultdict
 
-from earthkit.data.core.index import Index
 from earthkit.data.core.index import MaskIndex
 from earthkit.data.core.index import MultiIndex
+from earthkit.data.featurelist.indexed import IndexFeatureListBase
 from earthkit.data.sources import Source
 from earthkit.data.utils.parts import Part
 
@@ -39,13 +39,13 @@ BUFR_LS_KEYS = {
 }
 
 
-class BUFRList(Index):
+class BUFRList(IndexFeatureListBase):
     r"""Represent a list of
     :obj:`BUFRMessage <data.readers.bufr.bufr.BUFRMessage>`\ s.
     """
 
     def __init__(self, *args, **kwargs):
-        Index.__init__(self, *args, **kwargs)
+        IndexFeatureListBase.__init__(self, *args, **kwargs)
 
     def get(
         self,

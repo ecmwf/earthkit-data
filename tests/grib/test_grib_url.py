@@ -35,7 +35,7 @@ from earthkit.data.utils.testing import earthkit_remote_examples_file
     ],
 )
 def test_grib_single_url_parts(parts, expected_meta):
-    ds = from_source("url", earthkit_remote_examples_file("test6.grib"), parts=parts)
+    ds = from_source("url", earthkit_remote_examples_file("test6.grib"), parts=parts).to_fieldlist()
 
     assert len(ds) == len(expected_meta)
     if len(ds) > 0:
@@ -51,7 +51,7 @@ def test_grib_single_url_parts(parts, expected_meta):
     ],
 )
 def test_grib_single_url_parts_1(parts, expected_meta):
-    ds = from_source("url", [earthkit_remote_examples_file("test6.grib"), parts])
+    ds = from_source("url", [earthkit_remote_examples_file("test6.grib"), parts]).to_fieldlist()
 
     assert len(ds) == len(expected_meta)
 
@@ -98,7 +98,7 @@ def test_grib_multi_url_parts(parts1, parts2, expected_meta):
             [earthkit_remote_examples_file("test6.grib"), parts1],
             [earthkit_remote_examples_file("test.grib"), parts2],
         ],
-    )
+    ).to_fieldlist()
 
     assert len(ds) == len(expected_meta)
     assert ds.get(("parameter.variable", "vertical.level")) == expected_meta

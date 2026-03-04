@@ -44,7 +44,7 @@ def _check(ds, group):
 
 @pytest.mark.parametrize("group", ["parameter.variable"])
 def test_grib_simple_fl_1(group):
-    ds_in = from_source("file", earthkit_examples_file("test6.grib"))
+    ds_in = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
 
     ds = SimpleFieldList()
     for f in ds_in:
@@ -55,7 +55,7 @@ def test_grib_simple_fl_1(group):
 
 @pytest.mark.parametrize("group", ["parameter.variable"])
 def test_grib_simple_fl_2(group):
-    ds = from_source("file", earthkit_examples_file("test6.grib"))
+    ds = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
 
     ds = SimpleFieldList([f for f in ds])
 

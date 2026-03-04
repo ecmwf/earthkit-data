@@ -34,12 +34,12 @@ def check_array(v, shape=None, first=None, last=None, meanv=None, eps=1e-3):
 
 @pytest.mark.no_eccodes
 def test_netcdf_reader():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
     # assert str(ds).startswith("NetCDFReader"), r
     assert len(ds) == 2
     assert isinstance(ds[0], Field)
     assert isinstance(ds[1], Field)
-    for f in from_source("file", earthkit_examples_file("test.nc")):
+    for f in from_source("file", earthkit_examples_file("test.nc")).to_fieldlist():
         assert isinstance(f, Field)
 
 
@@ -141,7 +141,7 @@ def test_netcdf_multi_sources():
     s2.to_xarray()
     assert s2.path == path
 
-    s3 = from_source("multi", s1, s2)
+    s3 = from_source("multi", s1, s2).to_fieldlist()
     for s in s3:
         print(s)
 
@@ -165,7 +165,7 @@ def test_netcdf_multi_files():
             earthkit_test_data_file("era5_2t_1.nc"),
             earthkit_test_data_file("era5_2t_2.nc"),
         ],
-    )
+    ).to_fieldlist()
 
     assert len(ds) == 2
 
@@ -251,7 +251,7 @@ def test_netcdf_non_fieldlist():
 # different way, so this test is not relevant anymore.
 @pytest.mark.no_eccodes
 def test_netcdf_lazy_fieldlist_scan():
-    ds = from_source("file", earthkit_examples_file("test.nc"))
+    ds = from_source("file", earthkit_examples_file("test.nc")).to_fieldlist()
     assert len(ds) == 2
 
 

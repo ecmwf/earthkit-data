@@ -40,11 +40,10 @@ def is_grib_file(path):
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if _match_magic(magic, deeper_check):
-        from .file import GRIBReader1
+        from .file import GRIBReader
 
         parts = source.parts if hasattr(source, "parts") else None
-        return GRIBReader1(source, path)
-        # return GRIBReader(source, path, parts=parts)
+        return GRIBReader(source, path, parts=parts)
 
 
 def memory_reader(source, buffer, *, magic=None, deeper_check=False, **kwargs):
@@ -77,7 +76,6 @@ def stream_reader(
     if _is_default(magic, content_type) or _match_magic(magic, deeper_check):
         from .memory import GribStreamReader
 
-        print("Using GribStreamReader for stream")
         r = GribStreamReader(stream, **kwargs)
         if memory:
             from earthkit.data.indexing.simple import SimpleFieldList

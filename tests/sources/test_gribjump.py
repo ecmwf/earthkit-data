@@ -67,7 +67,7 @@ def setup_fdb_with_gribjump():
 
 @pytest.fixture
 def seed_fdb(setup_fdb_with_gribjump):
-    ds = from_source("file", earthkit_test_data_file("t_gribjump.grib"))
+    ds = from_source("file", earthkit_test_data_file("t_gribjump.grib")).to_fieldlist()
     for f in ds:
         setup_fdb_with_gribjump.archive(f.message())
     setup_fdb_with_gribjump.flush()
@@ -305,7 +305,7 @@ def test_gribjump_to_numpy(seed_fdb, arr_expected, method, request):
         "type": "fc",
     }
 
-    source = from_source("gribjump", mars_request, **kwargs)
+    source = from_source("gribjump", mars_request, **kwargs).to_fieldlist()
     arr = source.to_numpy()
 
     assert arr is not None and isinstance(arr, np.ndarray)

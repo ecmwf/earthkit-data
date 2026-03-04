@@ -87,7 +87,7 @@ def test_netcdf_read_multiple_files():
             earthkit_test_data_file("era5_2t_1.nc"),
             earthkit_test_data_file("era5_2t_2.nc"),
         ],
-    )
+    ).to_fieldlist()
 
     assert len(ds) == 2
     assert ds.get("parameter.variable") == ["t2m", "t2m"]
@@ -119,7 +119,7 @@ def test_netdcf_merge_custom(custom_merger):
         kind="netcdf",
         dims=["lat", "lon", "time"],
         variables=["a", "b"],
-    )
+    ).to_fieldlist()
     ds1 = s1.to_xarray()
 
     s2 = from_source(
@@ -127,12 +127,12 @@ def test_netdcf_merge_custom(custom_merger):
         kind="netcdf",
         dims=["lat", "lon", "time"],
         variables=["c", "d"],
-    )
+    ).to_fieldlist()
     ds2 = s2.to_xarray()
 
     target = xr.merge([ds1, ds2])
 
-    ds = from_source("multi", [s1, s2], merger=custom_merger)
+    ds = from_source("multi", [s1, s2], merger=custom_merger).to_fieldlist()
     ds.graph()
     merged = ds.to_xarray()
 
@@ -148,7 +148,7 @@ def test_netcdf_merge_var_1():
         kind="netcdf",
         dims=["lat", "lon", "time"],
         variables=["a", "b"],
-    )
+    ).to_fieldlist()
     ds1 = s1.to_xarray()
 
     s2 = from_source(
@@ -156,11 +156,11 @@ def test_netcdf_merge_var_1():
         kind="netcdf",
         dims=["lat", "lon", "time"],
         variables=["c", "d"],
-    )
+    ).to_fieldlist()
     ds2 = s2.to_xarray()
 
     target = xr.merge([ds1, ds2])
-    ds = from_source("multi", [s1, s2])
+    ds = from_source("multi", [s1, s2]).to_fieldlist()
 
     ds.graph()
     merged = ds.to_xarray()
@@ -177,7 +177,7 @@ def _merge_var_different_coords(kind1, kind2):
         kind=kind1,
         dims=["lat", "lon"],
         variables=["a", "b"],
-    )
+    ).to_fieldlist()
     ds1 = s1.to_xarray()
 
     s2 = from_source(
@@ -185,11 +185,11 @@ def _merge_var_different_coords(kind1, kind2):
         kind=kind2,
         dims=["lat", "time"],
         variables=["c", "d"],
-    )
+    ).to_fieldlist()
     ds2 = s2.to_xarray()
 
     target = xr.merge([ds1, ds2])
-    ds = from_source("multi", [s1, s2])
+    ds = from_source("multi", [s1, s2]).to_fieldlist()
     ds.graph()
     merged = ds.to_xarray()
 
@@ -218,7 +218,7 @@ def _concat_var_different_coords_1(kind1, kind2):
         variables=["a"],
         dims=["lat", "lon", "time"],
         coord_values=dict(time=[1, 3]),
-    )
+    ).to_fieldlist()
     ds1 = s1.to_xarray()
 
     s2 = from_source(
@@ -227,12 +227,12 @@ def _concat_var_different_coords_1(kind1, kind2):
         variables=["a"],
         dims=["lat", "lon", "time"],
         coord_values=dict(time=[2, 4]),
-    )
+    ).to_fieldlist()
     ds2 = s2.to_xarray()
 
     target = xr.concat([ds1, ds2], dim="time")
 
-    ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)")
+    ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)").to_fieldlist()
     ds.graph()
     merged = ds.to_xarray()
 
@@ -252,7 +252,7 @@ def test_netcdf_concat_var_different_coords_2():
         variables=["a"],
         dims=["lat", "lon", "time"],
         coord_values=dict(time=[2, 1]),
-    )
+    ).to_fieldlist()
     ds1 = s1.to_xarray()
 
     s2 = from_source(
@@ -261,12 +261,12 @@ def test_netcdf_concat_var_different_coords_2():
         variables=["a"],
         dims=["lat", "lon", "time"],
         coord_values=dict(time=[3, 4]),
-    )
+    ).to_fieldlist()
     ds2 = s2.to_xarray()
 
     target = xr.concat([ds1, ds2], dim="time")
 
-    ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)")
+    ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)").to_fieldlist()
 
     ds.graph()
     merged = ds.to_xarray()
@@ -281,7 +281,7 @@ def test_netcdf_wrong_concat_var():
         dims=["lat", "lon", "time"],
         variables=["a", "b"],
         coord_values=dict(time=[1, 2]),
-    )
+    ).to_fieldlist()
     ds1 = s1.to_xarray()
 
     s2 = from_source(
@@ -290,13 +290,13 @@ def test_netcdf_wrong_concat_var():
         dims=["lat", "time"],
         variables=["a", "b"],
         coord_values=dict(time=[8, 9]),
-    )
+    ).to_fieldlist()
     ds2 = s2.to_xarray()
 
     print(f"s1={s1}")
     print(f"s2={s2}")
     target = xr.concat([ds1, ds2], dim="time")
-    ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)")
+    ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)").to_fieldlist()
 
     ds.graph()
     merged = ds.to_xarray()
@@ -311,28 +311,28 @@ def get_hierarchy():
         dims=["lat", "lon", "forecast_time"],
         variables=["a"],
         coord_values=dict(forecast_time=[1, 3]),
-    )
+    ).to_fieldlist()
     a2 = from_source(
         "dummy-source",
         kind="netcdf",
         dims=["lat", "lon", "forecast_time"],
         variables=["a"],
         coord_values=dict(forecast_time=[2, 4]),
-    )
+    ).to_fieldlist()
     b1 = from_source(
         "dummy-source",
         kind="netcdf",
         dims=["lat", "lon", "forecast_time"],
         variables=["b"],
         coord_values=dict(forecast_time=[1, 3]),
-    )
+    ).to_fieldlist()
     b2 = from_source(
         "dummy-source",
         kind="netcdf",
         dims=["lat", "lon", "forecast_time"],
         variables=["b"],
         coord_values=dict(forecast_time=[2, 4]),
-    )
+    ).to_fieldlist()
 
     target = xr.merge(
         [
@@ -350,11 +350,11 @@ def test_nc_concat_merge_var():
     s = from_source(
         "multi",
         [
-            from_source("multi", [a1, a2], merger="concat(dim=forecast_time)"),
-            from_source("multi", [b1, b2], merger="concat(dim=forecast_time)"),
+            from_source("multi", [a1, a2], merger="concat(dim=forecast_time)").to_fieldlist(),
+            from_source("multi", [b1, b2], merger="concat(dim=forecast_time)").to_fieldlist(),
         ],
         merger="merge",
-    )
+    ).to_fieldlist()
 
     merged = s.to_xarray()
     assert target.identical(merged), merged
@@ -366,11 +366,11 @@ def test_netcdf_merge_concat_var():
     s = from_source(
         "multi",
         [
-            from_source("multi", [a1, b1], merger="merge()"),
-            from_source("multi", [a2, b2], merger="merge()"),
+            from_source("multi", [a1, b1], merger="merge()").to_fieldlist(),
+            from_source("multi", [a2, b2], merger="merge()").to_fieldlist(),
         ],
         merger="concat(dim=forecast_time)",
-    )
+    ).to_fieldlist()
     merged = s.to_xarray()
     assert target.identical(merged)
 

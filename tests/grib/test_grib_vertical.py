@@ -106,7 +106,7 @@ def test_grib_vertical_2(fl_type):
     ],
 )
 def test_grib_vertical_core(fname, expected_values):
-    ds = from_source("url", earthkit_remote_test_data_file(f"xr_engine/level/{fname}"))
+    ds = from_source("url", earthkit_remote_test_data_file(f"xr_engine/level/{fname}")).to_fieldlist()
 
     ref = expected_values
     if not isinstance(ref, list):

@@ -61,7 +61,7 @@ class NewMetadataField(WrappedField):
 
 def test_ai_models_wrapped_field_grib():
 
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     np_ref = ds.to_numpy()
     vals_ref = ds.values
 

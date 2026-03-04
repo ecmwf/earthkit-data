@@ -127,7 +127,7 @@ def test_grib_gridspec_from_file():
     ds = from_source(
         "file",
         earthkit_test_data_file(os.path.join("gridspec", "t_75_-60_10_40_5x5.grib1")),
-    )
+    ).to_fieldlist()
 
     ref = {
         # "type": "regular_ll",
@@ -204,7 +204,7 @@ def test_grib_gridspec_to_fieldlist(input_file):
     ds_in = from_source(
         "url",
         earthkit_remote_test_data_file(input_file),
-    )
+    ).to_fieldlist()
 
     # target grid: 5x5
     gs = {"grid": [5, 5]}
@@ -255,7 +255,7 @@ def test_grib_gridspec_to_fieldlist(input_file):
     with temp_file() as tmp:
         ds.to_target("file", tmp)
         assert os.path.exists(tmp)
-        r_tmp = from_source("file", tmp)
+        r_tmp = from_source("file", tmp).to_fieldlist()
 
         # values
         v_tmp = r_tmp[0].values

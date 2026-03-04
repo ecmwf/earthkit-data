@@ -377,9 +377,9 @@ class SingleUrlStream(UrlBase):
             raise NotImplementedError(f"Streams are not supported for scheme={o.scheme} urls")
 
     def mutate(self):
-        from .stream import _from_source
+        from .stream import from_source_internal
 
-        return _from_source(self, **self._kwargs)
+        return from_source_internal(self, **self._kwargs)
 
     def to_stream(self):
         from earthkit.data.utils.stream import RequestIterStreamer

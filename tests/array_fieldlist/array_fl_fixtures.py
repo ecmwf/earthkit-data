@@ -27,7 +27,7 @@ def load_array_fl(num, array_namespace=None):
     ds_in = []
     md = []
     for fname in files:
-        ds = from_source("file", earthkit_examples_file(fname))
+        ds = from_source("file", earthkit_examples_file(fname)).to_fieldlist()
         ds_in.append(ds.to_fieldlist(array_namespace=array_namespace))
         md += ds_in[-1].get("parameter.variable")
 
@@ -41,7 +41,7 @@ def load_array_fl(num, array_namespace=None):
 
 
 def load_array_fl_file(fname, array_namespace=None):
-    ds_in = from_source("file", earthkit_examples_file(fname))
+    ds_in = from_source("file", earthkit_examples_file(fname)).to_fieldlist()
     ds_in = ds_in.to_fieldlist(array_namespace=array_namespace)
     md = ds_in.get("parameter.variable")
 
@@ -139,7 +139,7 @@ def check_save_to_disk(ds, len_ref, meta_ref):
     tmp = temp_file()
     ds.to_target("file", tmp.path)
     assert os.path.exists(tmp.path)
-    r_tmp = from_source("file", tmp.path)
+    r_tmp = from_source("file", tmp.path).to_fieldlist()
     assert len(r_tmp) == len_ref
     assert r_tmp.get("metadata.shortName") == meta_ref
     r_tmp = None

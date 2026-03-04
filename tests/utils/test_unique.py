@@ -63,7 +63,7 @@ from earthkit.data.utils.unique import UniqueValuesCollector
     ],
 )
 def test_unique_1(keys, _kwargs, expected_result, cache):
-    ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+    ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
 
     c = UniqueValuesCollector(cache=cache)
 
@@ -77,7 +77,7 @@ def test_unique_1(keys, _kwargs, expected_result, cache):
 
 
 def test_unique_cache():
-    ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+    ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
 
     c = UniqueValuesCollector(cache=True)
 

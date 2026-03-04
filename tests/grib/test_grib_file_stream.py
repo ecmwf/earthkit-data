@@ -32,7 +32,7 @@ def test_grib_file_stream_iter():
         "file",
         earthkit_examples_file("test6.grib"),
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -70,7 +70,7 @@ def test_grib_file_stream_batched(_kwargs, expected_meta):
         "file",
         earthkit_examples_file("test6.grib"),
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -90,7 +90,7 @@ def test_grib_file_stream_batched(_kwargs, expected_meta):
 
 @pytest.mark.parametrize("group", ["vertical.level", ["vertical.level", "metadata.gridType"]])
 def test_grib_file_stream_group_by(group):
-    ds = from_source("file", earthkit_examples_file("test6.grib"), stream=True)
+    ds = from_source("file", earthkit_examples_file("test6.grib"), stream=True).to_fieldlist()
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -119,7 +119,7 @@ def test_grib_file_stream_in_memory():
         earthkit_examples_file("test6.grib"),
         stream=True,
         read_all=True,
-    )
+    ).to_fieldlist()
 
     assert len(ds) == 6
 
@@ -158,11 +158,11 @@ def test_grib_save_when_loaded_from_file_stream():
         earthkit_examples_file("test6.grib"),
         stream=True,
         read_all=True,
-    )
+    ).to_fieldlist()
     assert len(ds) == 6
     with temp_file() as tmp:
         ds.to_target("file", tmp)
-        ds_saved = from_source("file", tmp)
+        ds_saved = from_source("file", tmp).to_fieldlist()
         assert len(ds) == len(ds_saved)
 
 
@@ -181,7 +181,7 @@ def test_grib_file_stream_multi_file_iter():
             earthkit_examples_file("test4.grib"),
         ],
         stream=True,
-    )
+    ).to_fieldlist()
 
     assert isinstance(ds, StreamFieldList)
     assert len(ds._source.sources) == 2
@@ -253,7 +253,7 @@ def test_grib_file_stream_multi_file_memory():
         ],
         stream=True,
         read_all=True,
-    )
+    ).to_fieldlist()
 
     assert len(ds) == 6
 
@@ -333,7 +333,7 @@ def test_grib_file_stream_single_file_parts_core(path, parts, expected_meta, rem
         ds0 = from_source(
             "url",
             earthkit_remote_test_data_file(path),
-        )
+        ).to_fieldlist()
         path = ds0.path
 
     ds = from_source(
@@ -341,7 +341,7 @@ def test_grib_file_stream_single_file_parts_core(path, parts, expected_meta, rem
         earthkit_examples_file(path),
         parts=parts,
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -441,7 +441,7 @@ def test_grib_file_stream_multi_file_parts(parts1, parts2, expected_meta):
             [earthkit_examples_file("test.grib"), parts2],
         ],
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -459,13 +459,13 @@ def test_grib_file_stream_multi_file_parts(parts1, parts2, expected_meta):
 
 
 def test_grib_file_stream_glob():
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
     with temp_directory() as tmpdir:
         s1.to_target("file", os.path.join(tmpdir, "a.grib"))
         s2.to_target("file", os.path.join(tmpdir, "b.grib"))
 
-        ds = from_source("file", os.path.join(tmpdir, "*a.grib"), stream=True)
+        ds = from_source("file", os.path.join(tmpdir, "*a.grib"), stream=True).to_fieldlist()
 
         # no fieldlist methods are available
         with pytest.raises((TypeError, NotImplementedError)):
@@ -487,13 +487,13 @@ def test_grib_file_stream_glob():
 
 
 def test_grib_file_stream_single_directory():
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
     with temp_directory() as tmpdir:
         s1.to_target("file", os.path.join(tmpdir, "a.grib"))
         s2.to_target("file", os.path.join(tmpdir, "b.grib"))
 
-        ds = from_source("file", tmpdir, stream=True)
+        ds = from_source("file", tmpdir, stream=True).to_fieldlist()
 
         # no fieldlist methods are available
         with pytest.raises((TypeError, NotImplementedError)):
@@ -519,9 +519,9 @@ def test_grib_file_stream_single_directory():
 
 
 def test_grib_file_stream_multi_directory():
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
-    s3 = from_source("file", earthkit_examples_file("test6.grib"))
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
+    s3 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     with temp_directory() as tmpdir1:
         s1.to_target("file", os.path.join(tmpdir1, "a.grib"))
         s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
@@ -529,7 +529,7 @@ def test_grib_file_stream_multi_directory():
         with temp_directory() as tmpdir2:
             s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
             s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
-            ds = from_source("file", [tmpdir1, tmpdir2], stream=True)
+            ds = from_source("file", [tmpdir1, tmpdir2], stream=True).to_fieldlist()
 
             ref = [
                 ("2t", 0),
@@ -561,13 +561,13 @@ def test_grib_file_stream_multi_directory():
 
 @pytest.mark.parametrize("filter_kwarg", [(lambda x: "b.grib" in x), ("*b.grib")])
 def test_grib_file_stream_single_directory_filter(filter_kwarg):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
     with temp_directory() as tmpdir:
         s1.to_target("file", os.path.join(tmpdir, "a.grib"))
         s2.to_target("file", os.path.join(tmpdir, "b.grib"))
 
-        ds = from_source("file", tmpdir, filter=filter_kwarg, stream=True)
+        ds = from_source("file", tmpdir, filter=filter_kwarg, stream=True).to_fieldlist()
 
         ref = [
             ("t", 500),
@@ -589,9 +589,9 @@ def test_grib_file_stream_single_directory_filter(filter_kwarg):
 
 @pytest.mark.parametrize("filter_kwarg", [(lambda x: "b.grib" in x), ("*b.grib")])
 def test_grib_file_stream_multi_directory_filter(filter_kwarg):
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
-    s3 = from_source("file", earthkit_examples_file("test6.grib"))
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
+    s3 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     with temp_directory() as tmpdir1:
         s1.to_target("file", os.path.join(tmpdir1, "a.grib"))
         s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
@@ -600,7 +600,7 @@ def test_grib_file_stream_multi_directory_filter(filter_kwarg):
             s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
             s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
 
-            ds = from_source("file", [tmpdir1, tmpdir2], filter=filter_kwarg, stream=True)
+            ds = from_source("file", [tmpdir1, tmpdir2], filter=filter_kwarg, stream=True).to_fieldlist()
 
             ref = [
                 ("t", 500),
@@ -627,9 +627,9 @@ def test_grib_file_stream_multi_directory_filter(filter_kwarg):
 
 
 def test_grib_file_stream_multi_directory_with_tar():
-    s1 = from_source("file", earthkit_examples_file("test.grib"))
-    s2 = from_source("file", earthkit_examples_file("test4.grib"))
-    s3 = from_source("file", earthkit_examples_file("test6.grib"))
+    s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
+    s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
+    s3 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
     with temp_directory() as tmpdir1:
         s1.to_target("file", os.path.join(tmpdir1, "a.grib"))
         s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
@@ -641,7 +641,7 @@ def test_grib_file_stream_multi_directory_with_tar():
             paths = [os.path.join(tmpdir2, f) for f in ["a.grib", "b.grib"]]
             make_tgz(tmpdir2, "test.tar.gz", paths)
 
-            ds = from_source("file", [tmpdir1, tmpdir2], stream=True)
+            ds = from_source("file", [tmpdir1, tmpdir2], stream=True).to_fieldlist()
 
             ref = [
                 ("2t", 0),

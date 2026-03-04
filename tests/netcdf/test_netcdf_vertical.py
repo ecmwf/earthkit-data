@@ -16,7 +16,7 @@ from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 def test_netcdf_vertical_1():
-    ds = from_source("file", earthkit_test_data_file("test_single.nc"))
+    ds = from_source("file", earthkit_test_data_file("test_single.nc")).to_fieldlist()
     f = ds[0]
 
     assert f.vertical.level() == 0
@@ -25,7 +25,7 @@ def test_netcdf_vertical_1():
 
 
 def test_netcdf_vertical_2():
-    ds = from_source("file", earthkit_examples_file("tuv_pl.nc"))
+    ds = from_source("file", earthkit_examples_file("tuv_pl.nc")).to_fieldlist()
     f = ds[0]
 
     assert f.vertical.level() == 1000

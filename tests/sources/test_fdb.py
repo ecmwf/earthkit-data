@@ -41,7 +41,7 @@ def test_fdb_grib_stream():
         "param": [151, 167],
     }
 
-    ds = from_source("fdb", request)
+    ds = from_source("fdb", request).to_fieldlist()
     cnt = sum([1 for f in ds])
     assert cnt == 4
 
@@ -65,7 +65,7 @@ def test_fdb_grib_file():
         "param": [151, 167],
     }
 
-    ds = from_source("fdb", request, stream=False)
+    ds = from_source("fdb", request, stream=False).to_fieldlist()
     assert len(ds) == 4
 
 
@@ -88,7 +88,7 @@ def test_fdb_grib_write(monkeypatch, use_kwargs):
     with temp_directory() as tmpdir:
         config = make_fdb_config(os.path.join(tmpdir, "_fdb"))
 
-        ds = from_source("file", earthkit_examples_file("test.grib"))
+        ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
         import pyfdb
 
@@ -111,10 +111,10 @@ def test_fdb_grib_write(monkeypatch, use_kwargs):
         }
 
         if use_kwargs:
-            ds1 = from_source("fdb", request=request, config=config, stream=False)
+            ds1 = from_source("fdb", request=request, config=config, stream=False).to_fieldlist()
         else:
             monkeypatch.setenv("FDB5_CONFIG", str(config))
-            ds1 = from_source("fdb", request, stream=False)
+            ds1 = from_source("fdb", request, stream=False).to_fieldlist()
 
         assert len(ds1) == 2
         assert ds1.get("parameter.variable") == ["2t", "msl"]

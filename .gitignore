@@ -218,6 +218,8 @@ docs/experimental/_*
 docs/experimental/*.grib*
 docs/experimental/*.pp*
 docs/experimental/*.png*
+docs/experimental/*.nc*
+docs/experimental/*.geojson*
 
 # PyBuilder
 .pybuilder/

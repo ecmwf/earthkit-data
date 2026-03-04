@@ -12,7 +12,7 @@ import logging
 import os
 import shutil
 
-from earthkit.data import from_source
+from earthkit.data.sources import from_source_internal
 
 from . import Reader
 
@@ -70,10 +70,10 @@ class DirectoryReader(Reader):
         ):
             if self.stream:
                 raise ValueError("Cannot stream zarr directories")
-            return from_source("zarr", self.path)
+            return from_source_internal("zarr", self.path)
 
         if len(self._content) == 1:
-            return from_source(
+            return from_source_internal(
                 "file",
                 path=self._content[0],
                 filter=self.filter,
@@ -83,10 +83,10 @@ class DirectoryReader(Reader):
                 **self._source_kwargs,
             )
 
-        return from_source(
+        return from_source_internal(
             "multi",
             [
-                from_source(
+                from_source_internal(
                     "file",
                     path=path,
                     filter=self.filter,

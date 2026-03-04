@@ -21,7 +21,7 @@ assert_frame_equal = pd.testing.assert_frame_equal
 
 @pytest.mark.parametrize("_kwargs", [{}, {"filters": {}}])
 def test_bufr_to_pandas_no_filters(_kwargs):
-    ds = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    ds = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
 
     res = ds.to_pandas(columns=["latitude", "longitude", "WMO_station_id"], **_kwargs)
 
@@ -38,7 +38,7 @@ def test_bufr_to_pandas_no_filters(_kwargs):
 
 
 def test_bufr_to_pandas_filters():
-    ds = from_source("file", earthkit_examples_file("temp_10.bufr"))
+    ds = from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist()
 
     res = ds.to_pandas(
         columns=["latitude", "longitude", "WMO_station_id"],
@@ -57,8 +57,8 @@ def test_bufr_to_pandas_filters():
 
 def test_bufr_to_pandas_multi():
     ds = concat(
-        from_source("file", earthkit_examples_file("temp_10.bufr")),
-        from_source("file", earthkit_examples_file("synop_10.bufr")),
+        from_source("file", earthkit_examples_file("temp_10.bufr")).to_featurelist(),
+        from_source("file", earthkit_examples_file("synop_10.bufr")).to_featurelist(),
     )
 
     res = ds.to_pandas(

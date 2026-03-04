@@ -27,7 +27,7 @@ from array_fl_fixtures import check_array_fl_from_to_fieldlist  # noqa: E402
 
 
 def test_array_fl_grib_single_field():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     assert ds[0].get("metadata.shortName") == "2t"
 
@@ -63,7 +63,7 @@ def test_array_fl_grib_single_field():
 
 
 def test_array_fl_grib_multi_field():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     assert ds[0].get("metadata.shortName") == "2t"
 
@@ -88,7 +88,7 @@ def test_array_fl_grib_multi_field():
     tmp = temp_file()
     r.to_target("file", tmp.path)
     assert os.path.exists(tmp.path)
-    r_tmp = from_source("file", tmp.path)
+    r_tmp = from_source("file", tmp.path).to_fieldlist()
     assert len(r_tmp) == 2
     assert np.allclose(v1, r_tmp.values)
     for i, f in enumerate(r_tmp):
@@ -100,7 +100,7 @@ def test_array_fl_grib_multi_field():
 
 @pytest.mark.skip(reason="Not implemented")
 def test_array_fl_grib_from_list_of_arrays():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     md_full = ds.get("parameter.variable")
     assert len(ds) == 2
 
@@ -113,7 +113,7 @@ def test_array_fl_grib_from_list_of_arrays():
 
 @pytest.mark.skip(reason="Not implemented")
 def test_array_fl_grib_from_list_of_arrays_bad():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     v = ds[0].values
     md = [f.metadata().override(generatingProcessIdentifier=150) for f in ds]
@@ -136,7 +136,7 @@ def test_array_fl_grib_from_list_of_arrays_bad():
     ],
 )
 def test_array_fl_grib_from_to_fieldlist(kwargs):
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     md_full = ds.get("parameter.variable")
     assert len(ds) == 2
 
@@ -145,7 +145,7 @@ def test_array_fl_grib_from_to_fieldlist(kwargs):
 
 
 def test_array_fl_grib_from_to_fieldlist_repeat():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     md_full = ds.get("parameter.variable")
     assert len(ds) == 2
 

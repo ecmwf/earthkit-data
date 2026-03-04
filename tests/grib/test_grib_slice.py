@@ -37,7 +37,7 @@ from grib_fixtures import load_grib_data  # noqa: E402
 )
 def test_grib_single_index(fl_type, index, expected_meta):
     f, _ = load_grib_data("tuv_pl.grib", fl_type)
-    # f = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+    # f = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist() --- IGNORE ---
 
     r = f[index]
     assert r.get(["parameter.variable", "vertical.level"]) == expected_meta
@@ -91,7 +91,7 @@ def test_grib_slice_multi_file(indexes, expected_meta):
     f = from_source(
         "file",
         [earthkit_examples_file("test.grib"), earthkit_examples_file("test4.grib")],
-    )
+    ).to_fieldlist()
     r = f[indexes]
     assert len(r) == 3
     assert r.get(["parameter.variable", "vertical.level"]) == expected_meta

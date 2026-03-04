@@ -398,7 +398,7 @@ def test_grib_eckit_grid_object(fl_type, filename, shape, grid_spec, area, grid_
     ],
 )
 def test_grib_area_various_grids(path, expected_value):
-    ds = earthkit.data.from_source("file", path)
+    ds = earthkit.data.from_source("file", path).to_fieldlist()
 
     assert np.allclose(np.asarray(ds[0].geography.area()), np.asarray(expected_value))
 
@@ -426,7 +426,7 @@ def test_grib_area_various_grids(path, expected_value):
 #     ],
 # )
 # def test_grib_mars_grid(path, expected_value):
-#     ds = earthkit.data.from_source("file", path)
+#     ds = earthkit.data.from_source("file", path).to_fieldlist()
 
 #     if isinstance(expected_value, str):
 #         assert ds[0].geography.mars_grid() == expected_value
@@ -439,7 +439,7 @@ def test_grib_area_various_grids(path, expected_value):
 @pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")
 def test_grib_grid_points_rotated_ll():
     """The"""
-    ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_wind_20x20.grib"))
+    ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_wind_20x20.grib")).to_fieldlist()
 
     # grid points
     res = ds[0].geography.grid_points()
@@ -457,7 +457,7 @@ def test_grib_grid_points_rotated_ll():
     assert np.allclose(res[1][-4:], ref2[1])
 
     # unrotated grid points
-    ds1 = earthkit.data.from_source("file", earthkit_test_data_file("wind_20x20.grib"))
+    ds1 = earthkit.data.from_source("file", earthkit_test_data_file("wind_20x20.grib")).to_fieldlist()
 
     res = ds[0].geography.grid_points_unrotated()
     ref = ds1[0].geography.grid_points_unrotated()
@@ -467,7 +467,7 @@ def test_grib_grid_points_rotated_ll():
 
 @pytest.mark.skipif(NO_GEO, reason="No earthkit-geo support")
 def test_grib_grid_points_rotated_rgg():
-    ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_N32_subarea.grib"))
+    ds = earthkit.data.from_source("file", earthkit_test_data_file("rotated_N32_subarea.grib")).to_fieldlist()
 
     # grid points
     res = ds[0].grid_points()
