@@ -14,13 +14,9 @@ from earthkit.utils.decorators import thread_safe_cached_property
 from earthkit.data.featurelist.simple import IndexFeatureListBase
 
 
-class GeoJsonList(IndexFeatureListBase):
+class ShapeFileList(IndexFeatureListBase):
     def __init__(self, path):
         self._path = path
-
-    @thread_safe_cached_property
-    def _df(self):
-        return self._to_pandas()
 
     def _getitem(self, index):
         return self._df.iloc[index]
@@ -28,8 +24,9 @@ class GeoJsonList(IndexFeatureListBase):
     def __len__(self):
         return len(self._df)
 
-    # def _get_rows(self, **kwargs):
-    #     return [row[1] for row in self.to_pandas(**kwargs).iterrows()]
+    @thread_safe_cached_property
+    def _df(self):
+        return self._to_pandas()
 
     def ls(self, **kwargs):
         return self._df
@@ -44,11 +41,18 @@ class GeoJsonList(IndexFeatureListBase):
         if not kwargs:
             return self._df
         else:
-            return self._to_pandas(**kwargs)
+            return self.to_pandas(**kwargs)
 
     def _to_pandas(self, **kwargs):
-        # TODO: handle multiple paths
-        return self.to_pandas_from_multi_paths([self._path], **kwargs)
+        try:
+            import geopandas as gpd
+        except ImportError:
+            raise ImportError("shapefile handling requires 'geopandas' to be installed")
+
+        import numpy as np
+
+        geo_df = gpd.read_file(self._path, **kwargs)
+        return geo_df.set_index(np.arange(len(geo_df)))
 
     def to_geopandas(self, **kwargs):
         # TODO: handle multiple paths
@@ -56,6 +60,21 @@ class GeoJsonList(IndexFeatureListBase):
 
     def to_xarray(self, **kwargs):
         return self.to_pandas(**kwargs).to_xarray()
+
+    def to_numpy(self, flatten=False, **kwargs):
+        v = self._df.to_numpy(**kwargs)
+        if flatten:
+            import math
+
+            v = v.reshape(
+                math.prod(v.shape),
+            )
+        return v
+
+    def bounding_box(self):
+        from earthkit.data.utils.bbox import BoundingBox
+
+        return BoundingBox.from_geopandas(self._df)
 
     @classmethod
     def to_pandas_from_multi_paths(cls, paths, **kwargs):

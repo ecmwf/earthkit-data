@@ -24,8 +24,9 @@ LOG = logging.getLogger(__name__)
 
 
 def parse_stream_kwargs(**kwargs):
-    read_all = kwargs.pop("read_all", False)
-    stream_kwargs = dict(read_all=read_all)
+    # read_all = kwargs.pop("read_all", False)
+    # stream_kwargs = dict(read_all=read_all)
+    stream_kwargs = dict()
     return (stream_kwargs, kwargs)
 
 
@@ -52,15 +53,13 @@ class StreamMemorySource(MemoryBaseSource):
 
 
 class StreamSource(Source):
-    def __init__(self, stream, *, read_all=False, **kwargs):
+    def __init__(self, stream, **kwargs):
         super().__init__()
         self._stream = self._wrap_stream(stream)
-        self.memory = read_all
+        # self.memory = read_all
 
-        # TODO: remove this check in a future release
-        for k in ["group_by", "batch_size"]:
-            if k in kwargs:
-                raise ValueError(f"Invalid argument '{k}' for StreamSource. Deprecated since 0.8.0.")
+        if "read_all" in kwargs:
+            raise ValueError("Invalid argument 'read_all' for StreamSource. Removed in 1.0.0.")
 
         self._kwargs = kwargs
 
@@ -69,17 +68,20 @@ class StreamSource(Source):
 
     def mutate(self):
         if isinstance(self._stream, (list, tuple)):
-            return MultiStreamSource(self._stream, read_all=self.memory)
-        else:
-            if self.memory:
-                return StreamMemorySource(self._stream, **self._kwargs)
-            elif hasattr(self._reader, "to_fieldlist"):
-                return StreamFieldList(self._reader, **self._kwargs)
+            return MultiStreamSource(self._stream)
+        elif hasattr(self._reader, "to_fieldlist"):
+            return StreamFieldList(self._reader, **self._kwargs)
+        # if self.memory:
+        #     return StreamMemorySource(self._stream, **self._kwargs)
+        # elif hasattr(self._reader, "to_fieldlist"):
+        #     return StreamFieldList(self._reader, **self._kwargs)
         return self
 
     @thread_safe_cached_property
     def _reader(self):
+        print("Creating reader for stream", self._stream, "with kwargs", self._kwargs)
         reader = stream_reader(self, self._stream.stream, False, **self._kwargs)
+        print("Created reader", reader)
         if reader is None:
             raise TypeError(f"could not create reader for stream={self._stream.stream}")
         return reader
@@ -135,26 +137,29 @@ class StreamSource(Source):
 
         return stream
 
+    def to_data_object(self):
+        return self._reader.to_data_object()
+
 
 class MultiStreamSource(Source):
-    def __init__(self, sources, read_all=False, **kwargs):
+    def __init__(self, sources, **kwargs):
         super().__init__(**kwargs)
-        self.memory = read_all
+        # self.memory = read_all
         sources = self._from_sources(sources)
         self.sources = [s.mutate() for s in sources if not s.ignore()]
 
     def mutate(self):
-        if self.memory:
-            from .multi import MultiSource
+        # if self.memory:
+        #     from .multi import MultiSource
 
-            return MultiSource([s.mutate() for s in self.sources])
-        else:
-            if not any(isinstance(s, StreamFieldList) for s in self.sources):
-                first = self.sources[0]
-                if hasattr(first._reader, "to_fieldlist"):
-                    return StreamFieldList(self, **self._kwargs)
-            if all(isinstance(s, StreamFieldList) for s in self.sources):
+        #     return MultiSource([s.mutate() for s in self.sources])
+        # else:
+        if not any(isinstance(s, StreamFieldList) for s in self.sources):
+            first = self.sources[0]
+            if hasattr(first._reader, "to_fieldlist"):
                 return StreamFieldList(self, **self._kwargs)
+        if all(isinstance(s, StreamFieldList) for s in self.sources):
+            return StreamFieldList(self, **self._kwargs)
 
         return self
 
@@ -177,7 +182,7 @@ class MultiStreamSource(Source):
             if isinstance(s, (StreamSource, StreamFieldList, StreamMemorySource)):
                 r.append(s)
             elif isinstance(s, Stream):
-                r.append(StreamSource(s, read_all=self.memory))
+                r.append(StreamSource(s))
             elif isinstance(s, MultiStreamSource):
                 r.extend(s.sources)
             else:
@@ -185,7 +190,7 @@ class MultiStreamSource(Source):
         return r
 
     def to_xarray(self, **kwargs):
-        from earthkit.data.core.fieldlist_ori import FieldList
+        from earthkit.data.core.fieldlist import FieldList
 
         fields = [f for f in self]
         return FieldList.from_fields(fields).to_xarray(**kwargs)
@@ -202,6 +207,11 @@ class MultiStreamSource(Source):
                 s.append(source)
 
         return MultiStreamSource(s)
+
+    def to_data_object(self):
+        from earthkit.data.data.stream import StreamFieldListData
+
+        return StreamFieldListData(self)
 
 
 # class StreamFieldList(FieldList, Source):

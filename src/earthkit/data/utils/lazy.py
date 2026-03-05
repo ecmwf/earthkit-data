@@ -8,7 +8,7 @@
 #
 import logging
 
-from earthkit.data import from_source
+from earthkit.data.sources import from_source_internal
 
 LOG = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class LazySource:
     def source(self):
         if self._source is None:
             try:
-                self._source = from_source(
+                self._source = from_source_internal(
                     self.name,
                     lazily=False,
                     *self.args,

@@ -247,9 +247,9 @@ class GRIBReader(Source, Reader):
     def to_array(self, *args, **kwargs):
         return self.to_fieldlist().to_array(*args, **kwargs)
 
-    # def mutate_source(self):
-    #     # A GRIBReader is a source itself
-    #     return self
+    def mutate_source(self):
+        # A GRIBReader is a source itself
+        return self
 
     def mutate(self):
         return self

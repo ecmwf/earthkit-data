@@ -12,7 +12,7 @@ import os
 from importlib import import_module
 
 from earthkit.data.core import Base
-from earthkit.data.core.data import Data
+from earthkit.data.data import Data
 from earthkit.data.decorators import locked
 
 LOG = logging.getLogger(__name__)

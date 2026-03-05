@@ -12,7 +12,6 @@ import glob
 import logging
 import os
 
-from earthkit.data import from_source
 from earthkit.data.core.caching import CACHE
 from earthkit.data.readers import reader
 from earthkit.data.utils.parts import PathAndParts
@@ -237,7 +236,7 @@ class StreamFileSource(FileSource):
             if len(self.path) == 1:
                 self.path = self.path[0]
             else:
-                return from_source(
+                return from_source_internal(
                     "multi",
                     [
                         from_source_internal(

@@ -121,8 +121,7 @@ def test_xr_engine_chunk_3(allow_holes, lazy_load, _kwargs):
         "url",
         earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"),
         stream=True,
-        read_all=True,
-    )
+    ).to_fieldlist(read_all=True)
 
     ds = ds_in.to_xarray(
         profile="mars", time_dim_mode="valid_time", allow_holes=allow_holes, lazy_load=lazy_load, **_kwargs

@@ -131,10 +131,10 @@ class GribStreamReader(GribMemoryReader):
     def mutate_source(self):
         return self
 
-    def _to_data_object(self):
-        from .data import GribData
+    def to_data_object(self):
+        from earthkit.data.data.stream import StreamFieldListData
 
-        return GribData(self)
+        return StreamFieldListData(self)
 
 
 class GribFieldListInMemory(SimpleFieldList):

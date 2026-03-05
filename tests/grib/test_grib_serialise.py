@@ -246,7 +246,7 @@ def test_grib_serialise_stream_1():
 
 def test_grib_serialise_stream_2():
     with open(earthkit_examples_file("test.grib"), "rb") as f:
-        ds = from_source("stream", f, read_all=True).to_fieldlist()
+        ds = from_source("stream", f).to_fieldlist(read_all=True)
         pickled_f = pickle.dumps(ds)
 
     ds2 = pickle.loads(pickled_f)

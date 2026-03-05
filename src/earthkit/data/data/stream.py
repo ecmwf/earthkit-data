@@ -23,5 +23,13 @@ class StreamFieldListData(SimpleData):
     def describe(self):
         return f"Stream data from {self._reader.path}"
 
-    def to_fieldlist(self, *args, **kwargs):
+    def to_fieldlist(self, *args, read_all=False, **kwargs):
+        print("Stream", self._reader)
+        if read_all:
+            from earthkit.data.indexing.simple import SimpleFieldList
+
+            fields = [f for f in self._reader]
+            r = SimpleFieldList(fields)
+            return r
+
         return self._reader

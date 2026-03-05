@@ -45,7 +45,7 @@ def load_grib_data(filename, fl_type, folder="example", **kwargs):
     elif fl_type == "memory":
         assert len(path) == 1
         with open(path[0], "rb") as f:
-            ds = from_source("stream", f, read_all=True, **kwargs).to_fieldlist()
+            ds = from_source("stream", f, **kwargs).to_fieldlist(read_all=True)
             len(ds)  # force reading
             return ds, ArrayBackend("numpy")
     elif isinstance(fl_type, str):

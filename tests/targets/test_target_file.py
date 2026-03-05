@@ -268,13 +268,13 @@ def test_target_file_grib_to_netcdf_2():
 @pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
 @pytest.mark.with_proj
 def test_target_file_grib_to_geotiff():
-    ds = from_source("file", earthkit_examples_file("test.grib"))
+    ds = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     vals_ref = ds.values[:, :4]
 
     with temp_file() as path:
         ds.to_target("file", path, encoder="geotiff")
 
-        ds1 = from_source("file", path)
+        ds1 = from_source("file", path).to_fieldlist()
         assert len(ds1) == len(ds)
         from earthkit.data import Field
 
@@ -285,13 +285,13 @@ def test_target_file_grib_to_geotiff():
 @pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
 @pytest.mark.with_proj
 def test_target_file_geotiff():
-    ds = from_source("file", earthkit_test_data_file("dgm50hs_col_32_368_5616_nw.tif"))
+    ds = from_source("file", earthkit_test_data_file("dgm50hs_col_32_368_5616_nw.tif")).to_fieldlist()
     assert len(ds) == 3
 
     with temp_file() as path:
         ds.to_target("file", path)
 
-        ds1 = from_source("file", path)
+        ds1 = from_source("file", path).to_fieldlist()
         assert len(ds) == len(ds1)
         assert isinstance(ds[0], Field)
 
@@ -300,7 +300,7 @@ def test_target_file_geotiff():
 @pytest.mark.skipif(NO_RIOXARRAY, reason="rioxarray not available")
 @pytest.mark.with_proj
 def test_target_file_geotiff_to_netcdf():
-    ds = from_source("file", earthkit_test_data_file("dgm50hs_col_32_368_5616_nw.tif"))
+    ds = from_source("file", earthkit_test_data_file("dgm50hs_col_32_368_5616_nw.tif")).to_fieldlist()
     assert len(ds) == 3
 
     with temp_file() as path:

@@ -118,8 +118,7 @@ def test_grib_file_stream_in_memory():
         "file",
         earthkit_examples_file("test6.grib"),
         stream=True,
-        read_all=True,
-    ).to_fieldlist()
+    ).to_fieldlist(read_all=True)
 
     assert len(ds) == 6
 
@@ -157,8 +156,7 @@ def test_grib_save_when_loaded_from_file_stream():
         "file",
         earthkit_examples_file("test6.grib"),
         stream=True,
-        read_all=True,
-    ).to_fieldlist()
+    ).to_fieldlist(read_all=True)
     assert len(ds) == 6
     with temp_file() as tmp:
         ds.to_target("file", tmp)
@@ -226,7 +224,7 @@ def test_grib_file_stream_multi_file_batched(_kwargs, expected_meta):
             earthkit_examples_file("test4.grib"),
         ],
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no methods are available
     with pytest.raises((TypeError, NotImplementedError)):
@@ -252,8 +250,7 @@ def test_grib_file_stream_multi_file_memory():
             earthkit_examples_file("test4.grib"),
         ],
         stream=True,
-        read_all=True,
-    ).to_fieldlist()
+    ).to_fieldlist(read_all=True)
 
     assert len(ds) == 6
 
@@ -373,7 +370,7 @@ def test_grib_file_stream_single_file_parts_as_arg_valid(parts, expected_meta):
         "file",
         [earthkit_examples_file("test6.grib"), parts],
         stream=True,
-    )
+    ).to_fieldlist()
 
     # no fieldlist methods are available
     with pytest.raises((TypeError, NotImplementedError)):

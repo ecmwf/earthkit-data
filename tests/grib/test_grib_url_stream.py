@@ -114,8 +114,7 @@ def test_grib_url_stream_in_memory():
         "url",
         earthkit_remote_examples_file("test6.grib"),
         stream=True,
-        read_all=True,
-    ).to_fieldlist()
+    ).to_fieldlist(read_all=True)
 
     assert len(ds) == 6
 
@@ -153,8 +152,7 @@ def test_grib_save_when_loaded_from_url_stream():
         "url",
         earthkit_remote_examples_file("test6.grib"),
         stream=True,
-        read_all=True,
-    ).to_fieldlist()
+    ).to_fieldlist(read_all=True)
     assert len(ds) == 6
     with temp_file() as tmp:
         ds.to_target("file", tmp)
@@ -248,8 +246,7 @@ def test_grib_url_stream_multi_urls_memory():
             earthkit_remote_examples_file("test4.grib"),
         ],
         stream=True,
-        read_all=True,
-    ).to_fieldlist()
+    ).to_fieldlist(read_all=True)
 
     assert len(ds) == 6
 

@@ -16,7 +16,7 @@ from earthkit.data.utils.testing import earthkit_test_data_file
 
 
 def test_shapefile():
-    ds = from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.shp.zip"))
+    ds = from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.shp.zip")).to_featurelist()
     assert len(ds) == 2010
 
     # slicing
@@ -56,7 +56,7 @@ def test_shapefile():
 
 
 def test_shapefile_bounding_box():
-    ds = from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.shp.zip"))
+    ds = from_source("file", earthkit_test_data_file("NUTS_RG_20M_2021_3035.shp.zip")).to_featurelist()
 
     ref = BoundingBox(north=84.73, west=44.83, south=24.6, east=324.42)
     bb = ds.bounding_box()

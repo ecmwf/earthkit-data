@@ -480,6 +480,9 @@ class BUFRInOneFile(BUFRInFiles):
     def number_of_parts(self):
         return len(self._positions)
 
+    def describe(self, *args, **kwargs):
+        pass
+
 
 class BUFRReader(BUFRInOneFile, Reader):
     """Represent a BUFR file"""
@@ -527,7 +530,7 @@ class BUFRReader1(Source, Reader):
     def mutate(self):
         return self
 
-    def _to_data_object(self):
+    def to_data_object(self):
         from .data import BUFRData
 
         return BUFRData(self)
@@ -559,7 +562,7 @@ class MultiBUFRReader1(BUFRReader1):
     def __repr__(self):
         return "MultiBUFRReader1(%s)" % (self.sources,)
 
-    def _to_data_object(self):
-        from earthkit.data.core.data import MultiData
+    def to_data_object(self):
+        from earthkit.data.data.multi import MultiData
 
         return MultiData(self)

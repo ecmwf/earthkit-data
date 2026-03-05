@@ -148,13 +148,13 @@ def test_url_source_no_cache_setting():
         ds = from_source(
             "url",
             earthkit_remote_examples_file("test.grib"),
-        )
+        ).to_fieldlist()
         assert len(ds) == 2
 
 
 def test_grib_no_cache_setting():
     with settings.temporary("cache-policy", "off"):
-        ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+        ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
         assert len(ds) == 18
 
         f = ds[3]
@@ -214,13 +214,13 @@ def test_cache_zip_file_overwritten_1_setting():
         with zipfile.ZipFile(zip_path, "w") as zip_object:
             zip_object.write(grb1_path)
 
-        ds = from_source("file", zip_path)
+        ds = from_source("file", zip_path).to_fieldlist()
         assert len(ds) == 2
         ds_path = ds.path
 
         # second pass - same zip file, the grib should be read
         #  from the cache
-        ds1 = from_source("file", zip_path)
+        ds1 = from_source("file", zip_path).to_fieldlist()
         assert len(ds1) == 2
         assert ds1.path == ds_path
 
@@ -228,7 +228,7 @@ def test_cache_zip_file_overwritten_1_setting():
         with zipfile.ZipFile(zip_path, "w") as zip_object:
             zip_object.write(grb2_path)
 
-        ds2 = from_source("file", zip_path)
+        ds2 = from_source("file", zip_path).to_fieldlist()
         assert len(ds2) == 6
         assert ds2.path != ds_path
 
@@ -248,7 +248,7 @@ def test_cache_zip_file_changed_modtime_setting():
         with zipfile.ZipFile(zip_path, "w") as zip_object:
             zip_object.write(grb1_path)
 
-        ds = from_source("file", zip_path)
+        ds = from_source("file", zip_path).to_fieldlist()
         assert len(ds) == 2
         ds_path = ds.path
 
@@ -256,7 +256,7 @@ def test_cache_zip_file_changed_modtime_setting():
         st = os.stat(zip_path)
         m_time = (st.st_atime_ns + 10, st.st_mtime_ns + 10)
         os.utime(zip_path, ns=m_time)
-        ds2 = from_source("file", zip_path)
+        ds2 = from_source("file", zip_path).to_fieldlist()
         assert len(ds2) == 2
         assert ds2.path != ds_path
 

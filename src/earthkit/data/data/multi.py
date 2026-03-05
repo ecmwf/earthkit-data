@@ -27,15 +27,16 @@ class MultiData(SimpleData):
         pass
 
     def to_fieldlist(self, *args, **kwargs):
-        return self.sources.to_fieldlist(*args, **kwargs)
-        # fs = [d.to_fieldlist(*args, **kwargs) for d in self.datas]
-        # from earthkit.data.mergers import merge_by_class
+        # return self.sources.to_fieldlist(*args, **kwargs)
+        data = [s.to_data_object() for s in self.sources.sources]
+        fs = [d.to_fieldlist(*args, **kwargs) for d in data]
+        from earthkit.data.mergers import merge_by_class
 
-        # merged = merge_by_class(fs)
-        # if merged is not None:
-        #     return merged.mutate()
+        merged = merge_by_class(fs)
+        if merged is not None:
+            return merged.mutate()
 
-        # raise NotImplementedError("Conversion of MultiData to fieldlist is not implemented")
+        raise NotImplementedError("Conversion of MultiData to fieldlist is not implemented")
 
     def to_xarray(self, *args, **kwargs):
         return self.sources.to_xarray(*args, **kwargs)

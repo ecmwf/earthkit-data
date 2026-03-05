@@ -10,21 +10,29 @@
 from earthkit.data.data import SimpleData
 
 
-class BUFRData(SimpleData):
-    _TYPE_NAME = "BUFR"
+class ShapeFileData(SimpleData):
+    _TYPE_NAME = "Shapefile"
 
     def __init__(self, reader):
         self._reader = reader
 
     @property
     def available_types(self):
-        return [self._PANDAS, self._FEATURELIST]
+        return [self._GEOPANDAS, self._PANDAS, self._XARRAY, self._GEOJSON]
 
     def describe(self):
-        return f"BUFR data from {self._reader.path}"
+        return f"GeoJSON data from {self._reader.path}"
 
     def to_pandas(self, **kwargs):
         return self._reader.to_pandas(**kwargs)
 
+    def to_xarray(self, **kwargs):
+        return self._reader.to_xarray(**kwargs)
+
+    def to_geopandas(self, **kwargs):
+        return self._reader.to_geopandas(**kwargs)
+
     def to_featurelist(self, *args, **kwargs):
-        return self._reader.to_featurelist(*args, **kwargs)
+        from .file import ShapeFileList
+
+        return ShapeFileList(self._reader.path)

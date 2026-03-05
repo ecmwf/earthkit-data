@@ -47,10 +47,12 @@ class MultiSource(Source):
             return EmptySource()
 
         if self.merger is None:
-            merged = merge_by_class(self.sources)
-            if merged is not None:
-                return merged.mutate()
-
+            try:
+                merged = merge_by_class(self.sources)
+                if merged is not None:
+                    return merged.mutate()
+            except Exception:
+                pass
         return self
 
     def _set_dataset(self, dataset):

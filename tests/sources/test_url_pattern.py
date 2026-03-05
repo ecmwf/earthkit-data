@@ -17,11 +17,16 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 
 
 def test_url_pattern_source_1():
-    from_source(
+    ds = from_source(
         "url-pattern",
         earthkit_remote_examples_file("test.{format}"),
         {"format": ["nc", "grib"]},
     )
+    assert ds
+
+    fl = ds.to_fieldlist()
+    assert len(fl) == 4
+
     # source.to_xarray()
 
 

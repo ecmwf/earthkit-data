@@ -105,7 +105,7 @@ class NetCDFReader(Source, Reader):
             **options,
         )
 
-    def _to_data_object(self):
+    def to_data_object(self):
         from .data import NetCDFData
 
         return NetCDFData(self, self._ori_source)
@@ -144,8 +144,8 @@ class MultiNetCDFReader(NetCDFReader):
     def __repr__(self):
         return "MultiNetCDFReader(%s)" % (self.sources,)
 
-    def _to_data_object(self):
-        from earthkit.data.core.data import MultiData
+    def to_data_object(self):
+        from earthkit.data.data.multi import MultiData
 
         return MultiData(self)
 

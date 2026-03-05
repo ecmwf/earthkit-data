@@ -205,8 +205,7 @@ def test_grib_from_stream_in_memory():
         ds = from_source(
             "stream",
             stream,
-            read_all=True,
-        ).to_fieldlist()
+        ).to_fieldlist(read_all=True)
 
         assert len(ds) == 6
 
@@ -275,7 +274,7 @@ def test_grib_from_stream_in_memory():
 )
 def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_shape):
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        ds = from_source("stream", stream, read_all=True).to_fieldlist()
+        ds = from_source("stream", stream).to_fieldlist(read_all=True)
         assert len(ds) == 6
 
         ref = [("t", 1000), ("u", 1000), ("v", 1000), ("t", 850), ("u", 850), ("v", 850)]
@@ -317,7 +316,7 @@ def test_grib_from_stream_in_memory_convert_to_numpy(convert_kwargs, expected_sh
 
 def test_grib_save_when_loaded_from_stream():
     with open(earthkit_examples_file("test6.grib"), "rb") as stream:
-        fs = from_source("stream", stream, read_all=True).to_fieldlist()
+        fs = from_source("stream", stream).to_fieldlist(read_all=True)
         assert len(fs) == 6
         with temp_file() as tmp:
             fs.to_target("file", tmp)
@@ -387,7 +386,7 @@ def test_grib_multi_grib_from_stream_batched(_kwargs, expected_meta):
 def test_grib_multi_stream_memory():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
     stream2 = open(earthkit_examples_file("test4.grib"), "rb")
-    ds = from_source("stream", [stream1, stream2], read_all=True).to_fieldlist()
+    ds = from_source("stream", [stream1, stream2]).to_fieldlist(read_all=True)
 
     assert len(ds) == 6
 
@@ -484,11 +483,11 @@ def test_grib_concat_stream():
 
 def test_grib_concat_stream_memory():
     stream1 = open(earthkit_examples_file("test.grib"), "rb")
-    ds1 = from_source("stream", stream1, read_all=True).to_fieldlist()
-    ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True, read_all=True).to_fieldlist()
-    ds3 = from_source(
-        "url", earthkit_remote_examples_file("test6.grib"), stream=True, read_all=True
-    ).to_fieldlist()
+    ds1 = from_source("stream", stream1).to_fieldlist(read_all=True)
+    ds2 = from_source("file", earthkit_examples_file("test4.grib"), stream=True).to_fieldlist(read_all=True)
+    ds3 = from_source("url", earthkit_remote_examples_file("test6.grib"), stream=True).to_fieldlist(
+        read_all=True
+    )
 
     ds = concat(ds1, ds2, ds3)
 

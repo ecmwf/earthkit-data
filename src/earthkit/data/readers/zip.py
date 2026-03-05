@@ -14,7 +14,7 @@ from zipfile import ZipFile
 from earthkit.data.sources import from_source_internal
 
 from .archive import ArchiveReader
-from .csv import CSVReader
+from .csv.reader import CSVReader
 
 
 class InfoWrapper:

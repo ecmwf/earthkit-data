@@ -9,7 +9,7 @@
 
 import logging
 
-from . import Reader
+from .. import Reader
 
 LOG = logging.getLogger(__name__)
 

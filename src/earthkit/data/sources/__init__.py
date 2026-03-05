@@ -137,6 +137,7 @@ def from_source(name: str, *args, lazily=False, **kwargs) -> Source:
     if lazily:
         return from_source_lazily(name, *args, **kwargs)
 
+    print("HERE", name)
     src = from_source_internal(name, *args, **kwargs)
 
     # prev = None
@@ -151,9 +152,11 @@ def from_source(name: str, *args, lazily=False, **kwargs) -> Source:
     if isinstance(src, MultiSource):
         from earthkit.data.data.multi import MultiData
 
+        print("Create multidata from multi-source: src=", src)
         return MultiData(src)
 
     if hasattr(src, "to_data_object"):
+        print("Convert source to data object: src=", src)
         return src.to_data_object()
         # if hasattr(src, "_reader") and hasattr(src._reader, "_to_data_object"):
         #     print("src=", src)
@@ -167,6 +170,7 @@ def from_source_internal(name: str, *args, lazily=False, **kwargs) -> Source:
     if lazily:
         return from_source_lazily(name, *args, **kwargs)
 
+    print("from_source_internal: name=", name)
     prev = None
     src = get_source(name, *args, **kwargs)
     while src is not prev:

@@ -90,7 +90,7 @@ def test_covjson_stream():
 def test_covjson_stream_memory():
     stream = open(earthkit_test_data_file("time_series.covjson"), "rb")
 
-    ds = from_source("stream", stream, read_all=True).to_fieldlist()
+    ds = from_source("stream", stream).to_fieldlist(read_all=True)
     assert ds
     a = ds.to_xarray()
     assert len(a.data_vars) == 1
