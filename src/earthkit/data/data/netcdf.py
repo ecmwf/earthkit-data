@@ -11,6 +11,8 @@ from .source import SourceData
 
 
 class NetCDFData(SourceData):
+    _TYPE_NAME = "NETCDF"
+
     @property
     def available_types(self):
         return [self._XARRAY, self._PANDAS, self._FIELDLIST, self._NUMPY, self._ARRAY]

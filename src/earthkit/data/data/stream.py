@@ -17,7 +17,6 @@ class StreamIteratorData(SourceData):
         super().__init__(source_or_reader)
         self._data_type = data_type
 
-    @property
     def is_stream(self):
         return True
 
@@ -35,7 +34,6 @@ class StreamIteratorData(SourceData):
 class StreamFieldListData(SourceData):
     _TYPE_NAME = "StreamFieldList"
 
-    @property
     def is_stream(self):
         return True
 

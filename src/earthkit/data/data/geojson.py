@@ -18,7 +18,7 @@ class GeoJsonData(SimpleData):
 
     @property
     def available_types(self):
-        return [self._GEOPANDAS, self._PANDAS, self._XARRAY, self._GEOJSON]
+        return [self._GEOPANDAS, self._PANDAS, self._XARRAY]
 
     def describe(self):
         return f"GeoJSON data from {self._reader.path}"

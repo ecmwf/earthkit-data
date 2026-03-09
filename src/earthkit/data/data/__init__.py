@@ -79,21 +79,28 @@ class Data(Encodable):
 
 
 class SimpleData(Data):
-    @property
     def is_stream(self):
         return False
 
     def to(self, to_type, *args, **kwargs):
         """Convert into another type"""
+        method = None
         if isinstance(to_type, str):
             type_str = to_type.lower()
             method = getattr(self, f"to_{type_str}", None)
         else:
-            from .wrappers import from_object
+            if isinstance(to_type, Data):
+                data = to_type
+            elif hasattr(to_type, "to_data_object"):
+                data = to_type.to_data_object()
+            else:
+                from .wrappers import from_object
 
-            data = from_object(to_type)
-            type_str = data.available_types[0]
-            method = getattr(data, f"to_{type_str}", None)
+                data = from_object(to_type)
+
+            if data and hasattr(data, "available_types"):
+                type_str = data.available_types[0]
+                method = getattr(data, f"to_{type_str}", None)
 
         if method is None:
             raise NotImplementedError(f"Conversion to {type_str} is not implemented")

@@ -7,6 +7,7 @@
 # nor does it submit to any jurisdiction.
 #
 
+from abc import abstractmethod
 
 import numpy as np
 from earthkit.utils.decorators import thread_safe_cached_property
@@ -14,13 +15,11 @@ from earthkit.utils.decorators import thread_safe_cached_property
 from earthkit.data.featurelist.simple import IndexFeatureListBase
 
 
-class GeoJsonList(IndexFeatureListBase):
-    def __init__(self, path):
-        self._path = path
-
-    @thread_safe_cached_property
+class GeoPandasListBase(IndexFeatureListBase):
+    @property
+    @abstractmethod
     def _df(self):
-        return self._to_pandas()
+        pass
 
     def _getitem(self, index):
         return self._df.iloc[index]
@@ -46,6 +45,55 @@ class GeoJsonList(IndexFeatureListBase):
         else:
             return self._to_pandas(**kwargs)
 
+    @abstractmethod
+    def _to_pandas(self, **kwargs):
+        # TODO: handle multiple paths
+        return self.to_pandas_from_multi_paths([self._path], **kwargs)
+
+    @abstractmethod
+    def to_geopandas(self, **kwargs):
+        # TODO: handle multiple paths
+        return self.to_pandas(**kwargs)
+
+    def to_xarray(self, **kwargs):
+        return self.to_pandas(**kwargs).to_xarray()
+
+    def _normalise_key_values(self, **kwargs):
+        return kwargs
+
+    def describe(self, *args, **kwargs):
+        pass
+
+    def to_data_object(self):
+        # TODO: to be decided what to do
+        return None
+
+
+class GeoPandasList(GeoPandasListBase):
+    def __init__(self, gdf):
+        self._gdf = gdf
+
+    @property
+    def _df(self):
+        return self._gdf
+
+    def _to_pandas(self, **kwargs):
+        # TODO: handle multiple paths
+        return self._gdf
+
+    def to_geopandas(self, **kwargs):
+        # TODO: handle multiple paths
+        return self._gdf
+
+
+class GeoJsonList(GeoPandasListBase):
+    def __init__(self, path):
+        self._path = path
+
+    @thread_safe_cached_property
+    def _df(self):
+        return self._to_pandas()
+
     def _to_pandas(self, **kwargs):
         # TODO: handle multiple paths
         return self.to_pandas_from_multi_paths([self._path], **kwargs)
@@ -53,9 +101,6 @@ class GeoJsonList(IndexFeatureListBase):
     def to_geopandas(self, **kwargs):
         # TODO: handle multiple paths
         return self.to_pandas(**kwargs)
-
-    def to_xarray(self, **kwargs):
-        return self.to_pandas(**kwargs).to_xarray()
 
     @classmethod
     def to_pandas_from_multi_paths(cls, paths, **kwargs):
@@ -67,12 +112,6 @@ class GeoJsonList(IndexFeatureListBase):
         geo_df = gpd.pd.concat([gpd.read_file(path, **kwargs) for path in paths])
 
         return geo_df.set_index(np.arange(len(geo_df)))
-
-    def _normalise_key_values(self, **kwargs):
-        return kwargs
-
-    def describe(self, *args, **kwargs):
-        pass
 
     def to_data_object(self):
         from earthkit.data.data.geojson import GeoJsonData

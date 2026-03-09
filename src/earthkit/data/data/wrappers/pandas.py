@@ -87,6 +87,11 @@ class GeoPandasDataFrameData(ObjectWrapperData):
     def to_geopandas(self, **kwargs):
         return self._data
 
+    def to_featurelist(self, *args, **kwargs):
+        from earthkit.data.readers.geojson.file import GeoPandasList
+
+        return GeoPandasList(self._data)
+
     def to_numpy(self, **kwargs):
         """
         Return a `numpy.array` representation of the data.
