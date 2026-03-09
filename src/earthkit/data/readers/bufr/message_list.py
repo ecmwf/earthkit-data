@@ -7,7 +7,6 @@
 # nor does it submit to any jurisdiction.
 #
 
-from abc import abstractmethod
 from collections import defaultdict
 
 from earthkit.data.core.index import MaskIndex
@@ -433,18 +432,104 @@ class BUFRList(IndexFeatureListBase):
         assert all(isinstance(_, BUFRList) for _ in sources)
         return MultiBUFRList(sources)
 
+    def to_data_object(self):
+        from earthkit.data.data.featurelist import FeatureListData
+
+        return FeatureListData(self)
+
+    def _default_encoder(self):
+        return "bufr"
+
+    def _encode(self, encoder, **kwargs):
+        return encoder._encode_featurelist(self, **kwargs)
+
 
 class MaskBUFRList(BUFRList, MaskIndex):
     def __init__(self, *args, **kwargs):
         MaskIndex.__init__(self, *args, **kwargs)
+
+    def describe(self, *args, **kwargs):
+        pass
+
+    def to_data_object(self):
+        from earthkit.data.data.featurelist import FeatureListData
+
+        return FeatureListData(self)
+
+    def _encode(self, encoder, **kwargs):
+        print("MaskBUFRList._encode", encoder, kwargs)
+        return encoder._encode_featurelist(self, **kwargs)
 
 
 class MultiBUFRList(BUFRList, MultiIndex):
     def __init__(self, *args, **kwargs):
         MultiIndex.__init__(self, *args, **kwargs)
 
+    def describe(self, *args, **kwargs):
+        pass
 
-class BUFRInFiles(BUFRList):
+    def to_data_object(self):
+        from earthkit.data.data.featurelist import FeatureListData
+
+        return FeatureListData(self)
+
+    def _encode(self, encoder, **kwargs):
+        return encoder._encode_featurelist(self, **kwargs)
+
+
+# class BUFRInFiles(BUFRList):
+#     def _getitem(self, n):
+#         if isinstance(n, int):
+#             part = self.part(n if n >= 0 else len(self) + n)
+#             return BUFRMessage(part.path, part.offset, part.length)
+
+#     def __len__(self):
+#         return self.number_of_parts()
+
+#     @abstractmethod
+#     def part(self, n):
+#         self._not_implemented()
+
+#     @abstractmethod
+#     def number_of_parts(self):
+#         self._not_implemented()
+
+
+# class BUFRInOneFile(BUFRInFiles):
+#     def __init__(self, path, parts=None):
+#         self.path = path
+#         self._file_parts = parts
+#         self.__positions = None
+
+#     @property
+#     def _positions(self):
+#         if self.__positions is None:
+#             self.__positions = BufrCodesMessagePositionIndex(self.path, parts=self._file_parts)
+#         return self.__positions
+
+#     def part(self, n):
+#         return Part(self.path, self._positions.offsets[n], self._positions.lengths[n])
+
+#     def number_of_parts(self):
+#         return len(self._positions)
+
+#     def describe(self, *args, **kwargs):
+#         pass
+
+
+class BUFRListInFile(BUFRList):
+    def __init__(self, path, parts=None, positions=None):
+        self.path = path
+        self._file_parts = parts
+        # self._file = BUFRInOneFile(path, parts=parts)
+        self.__positions = positions
+
+    @property
+    def _positions(self):
+        if self.__positions is None:
+            self.__positions = BufrCodesMessagePositionIndex(self.path, parts=self._file_parts)
+        return self.__positions
+
     def _getitem(self, n):
         if isinstance(n, int):
             part = self.part(n if n >= 0 else len(self) + n)
@@ -453,75 +538,125 @@ class BUFRInFiles(BUFRList):
     def __len__(self):
         return self.number_of_parts()
 
-    @abstractmethod
     def part(self, n):
-        self._not_implemented()
-
-    @abstractmethod
-    def number_of_parts(self):
-        self._not_implemented()
-
-
-class BUFRInOneFile(BUFRInFiles):
-    def __init__(self, path, parts=None):
-        self.path = path
-        self._file_parts = parts
-        self.__positions = None
-
-    @property
-    def _positions(self):
-        if self.__positions is None:
-            self.__positions = BufrCodesMessagePositionIndex(self.path, parts=self._file_parts)
-        return self.__positions
-
-    def part(self, n):
-        return Part(self.path, self._positions.offsets[n], self._positions.lengths[n])
+        pos = self._positions
+        return Part(self.path, pos.offsets[n], pos.lengths[n])
 
     def number_of_parts(self):
         return len(self._positions)
 
+    def to_data_object(self):
+        from earthkit.data.data.bufr import BUFRData
+
+        return BUFRData(self)
+
     def describe(self, *args, **kwargs):
         pass
 
-
-class BUFRReader(BUFRInOneFile, Reader):
-    """Represent a BUFR file"""
-
-    appendable = True  # BUFR messages can be added to the same file
-
-    def __init__(self, source, path, parts=None):
-        Reader.__init__(self, source, path)
-        BUFRInOneFile.__init__(self, path, parts=parts)
-
-    def __repr__(self):
-        return "BUFRReader(%s)" % (self.path,)
-
-    @classmethod
-    def merge(cls, readers):
-        assert all(isinstance(s, BUFRReader) for s in readers), readers
-        assert len(readers) > 1
-
-        return MultiBUFRList(readers)
-
-    def mutate_source(self):
-        # A BUFRReader is a source itself
-        return self
-
     def _default_encoder(self):
-        return Reader._default_encoder(self)
+        return "bufr"
+
+    def _encode(self, encoder, **kwargs):
+        self._kwargs = {}
+        if self._file_parts is None:
+            _kwargs = {"path": self.path, "binary": True}
+
+        return encoder._encode_featurelist(self, **_kwargs, **kwargs)
 
 
-class BUFRReader1(Source, Reader):
+# class BUFRReader(BUFRInOneFile, Reader):
+#     """Represent a BUFR file"""
+
+#     appendable = True  # BUFR messages can be added to the same file
+
+#     def __init__(self, source, path, parts=None):
+#         Reader.__init__(self, source, path)
+#         BUFRInOneFile.__init__(self, path, parts=parts)
+
+#     def __repr__(self):
+#         return "BUFRReader(%s)" % (self.path,)
+
+#     @classmethod
+#     def merge(cls, readers):
+#         assert all(isinstance(s, BUFRReader) for s in readers), readers
+#         assert len(readers) > 1
+
+#         return MultiBUFRList(readers)
+
+#     def mutate_source(self):
+#         # A BUFRReader is a source itself
+#         return self
+
+#     def _default_encoder(self):
+#         return Reader._default_encoder(self)
+
+
+# class BUFRReader1(Source, Reader):
+#     def __init__(self, source, path, parts=None, positions=None):
+#         self._ori_source = source
+#         self._kwargs = {"parts": parts}
+#         Reader.__init__(self, source, path)
+
+#     def to_featurelist(self, *args, **kwargs):
+#         return BUFRInOneFile(self.path, **self._kwargs, **kwargs)
+
+#     def to_pandas(self, *args, **kwargs):
+#         return self.to_featurelist().to_pandas(*args, **kwargs)
+
+#     def mutate_source(self):
+#         # A BUFRReader is a source itself
+#         return self
+
+#     def mutate(self):
+#         return self
+
+#     def to_data_object(self):
+#         from .data import BUFRData
+
+#         return BUFRData(self)
+
+#     @classmethod
+#     def merge(cls, sources):
+
+#         assert all(isinstance(s, BUFRReader1) for s in sources)
+#         return MultiBUFRReader1(sources)
+
+
+# class MultiBUFRReader1(BUFRReader1):
+#     def __init__(self, sources):
+#         self.sources = sources
+
+#     def to_featurelist(self):
+#         fs = [s.to_featurelist() for s in self.sources]
+#         from earthkit.data.mergers import merge_by_class
+
+#         merged = merge_by_class(fs)
+#         if merged is not None:
+#             return merged.mutate()
+
+#         raise NotImplementedError("Conversion of MultiBUFRReader1 to featurelist is not implemented")
+
+#     def to_pandas(self, *args, **kwargs):
+#         return self.to_featurelist().to_pandas(*args, **kwargs)
+
+#     def __repr__(self):
+#         return "MultiBUFRReader1(%s)" % (self.sources,)
+
+#     def to_data_object(self):
+#         from earthkit.data.data.multi import MultiData
+
+#         return MultiData(self)
+
+
+class BUFRReader(Source, Reader):
     def __init__(self, source, path, parts=None, positions=None):
         self._ori_source = source
-        self._kwargs = {"parts": parts}
+        self._kwargs = {"parts": parts, "positions": positions}
+
         Reader.__init__(self, source, path)
 
     def to_featurelist(self, *args, **kwargs):
-        return BUFRInOneFile(self.path, **self._kwargs, **kwargs)
-
-    def to_pandas(self, *args, **kwargs):
-        return self.to_featurelist().to_pandas(*args, **kwargs)
+        return BUFRListInFile(self.path, **self._kwargs, **kwargs)
 
     def mutate_source(self):
         # A BUFRReader is a source itself
@@ -530,23 +665,38 @@ class BUFRReader1(Source, Reader):
     def mutate(self):
         return self
 
+    def is_streamable_file(self):
+        return False
+
     def to_data_object(self):
-        from .data import BUFRData
+        from earthkit.data.data.bufr import BUFRData
 
         return BUFRData(self)
 
     @classmethod
     def merge(cls, sources):
+        assert all(isinstance(s, BUFRReader) for s in sources)
+        return MultiBUFRReader(sources)
 
-        assert all(isinstance(s, BUFRReader1) for s in sources)
-        return MultiBUFRReader1(sources)
 
-
-class MultiBUFRReader1(BUFRReader1):
+class MultiBUFRReader(BUFRReader):
     def __init__(self, sources):
-        self.sources = sources
+        self.sources = list(self._flatten(sources))
+
+    def _flatten(self, sources):
+        for s in sources:
+            if isinstance(s, MultiBUFRReader):
+                yield from self._flatten(s.sources)
+            else:
+                yield s
 
     def to_featurelist(self):
+        # from earthkit.data.mergers import make_merger
+
+        # merged = make_merger(None, self.sources).to_fieldlist()
+        # if merged is not None:
+        #     return merged.mutate()
+
         fs = [s.to_featurelist() for s in self.sources]
         from earthkit.data.mergers import merge_by_class
 
@@ -554,15 +704,28 @@ class MultiBUFRReader1(BUFRReader1):
         if merged is not None:
             return merged.mutate()
 
-        raise NotImplementedError("Conversion of MultiBUFRReader1 to featurelist is not implemented")
-
-    def to_pandas(self, *args, **kwargs):
-        return self.to_featurelist().to_pandas(*args, **kwargs)
+        raise NotImplementedError("Conversion of MultiBUFRReader to featurelist is not implemented")
 
     def __repr__(self):
-        return "MultiBUFRReader1(%s)" % (self.sources,)
+        return f"MultiBUFRReader({self.sources})"
 
     def to_data_object(self):
-        from earthkit.data.data.multi import MultiData
+        from earthkit.data.data.bufr import BUFRData
 
-        return MultiData(self)
+        return BUFRData(self)
+
+    @classmethod
+    def merge(cls, sources):
+        r = []
+        for source in sources:
+            if isinstance(source, MultiBUFRReader):
+                r.extend(source.sources)
+            elif isinstance(source, BUFRReader):
+                r.append(source)
+            elif not source.ignore():
+                raise ValueError(f"Cannot merge source of type {type(source)} in MultiBUFRReader.merge")
+
+        if r:
+            return MultiBUFRReader(r)
+
+        raise ValueError("No BUFRReader found in sources to merge")

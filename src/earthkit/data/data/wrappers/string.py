@@ -6,18 +6,19 @@
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
 #
+
 import datetime
 import re
 
-from dateutil.parser import isoparse
-from dateutil.parser import parse
-
-from earthkit.data.wrappers import Wrapper
+from . import ObjectWrapperData
 
 VALID_DATE = re.compile(r"\d\d\d\d-?\d\d-?\d\d([T\s]\d\d:\d\d(:\d\d)?)?Z?")
 
 
 def parse_date(dt):
+    from dateutil.parser import isoparse
+    from dateutil.parser import parse
+
     if not VALID_DATE.match(dt):
         raise ValueError(f"Invalid datetime '{dt}'")
 
@@ -34,9 +35,15 @@ def parse_date(dt):
     return parse(dt)
 
 
-class StrWrapper(Wrapper):
-    def __init__(self, data):
-        self.data = data
+class StrData(ObjectWrapperData):
+    _TYPE_NAME = "str"
+
+    @property
+    def available_types(self):
+        return ["value", "datetime", "datetime_list", "bounding_box"]
+
+    def describe():
+        pass
 
     def bounding_box(self):
         if "/" in self.data:
@@ -44,17 +51,17 @@ class StrWrapper(Wrapper):
         else:
             raise ValueError(f"Invalid bounding box '{self.data}'")
 
-    def datetime(self):
-        return parse_date(self.data)
+    def _datetime(self):
+        return parse_date(self._data)
 
     def to_datetime(self):
-        return self.datetime()
+        return self._datetime()
 
     def to_datetime_list(self):
         from earthkit.data.utils.dates import mars_like_date_list
 
         # MARS style lists
-        bits = self.data.split("/")
+        bits = self._data.split("/")
         if len(bits) == 3 and bits[1].lower() == "to":
             return mars_like_date_list(parse_date(bits[0]), parse_date(bits[2]), 1)
 
@@ -63,11 +70,14 @@ class StrWrapper(Wrapper):
 
         return [parse_date(d) for d in bits]
 
+    def to_value(self):
+        return self._data
+
     def to_string(self):
-        return self.data
+        return self._data
 
 
-def wrapper(data, *args, fieldlist=False, **kwargs):
+def wrapper(data, *args, **kwargs):
     if isinstance(data, str):
-        return StrWrapper(data)
+        return StrData(data)
     return None

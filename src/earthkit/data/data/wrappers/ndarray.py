@@ -7,32 +7,41 @@
 # nor does it submit to any jurisdiction.
 
 
-from earthkit.data.wrappers import Wrapper
+from . import ObjectWrapperData
 
 
-class NumpyNDArrayWrapper(Wrapper):
+class NumpyNDArrayWrapper(ObjectWrapperData):
     """Wrapper around an numpy `ndarray`, offering polymorphism and
     convenience methods.
     """
 
-    def __init__(self, data):
-        self.data = data
+    _TYPE_NAME = "numpy.ndarray"
 
     @property
-    def values(self):
-        return self.data
+    def available_types(self):
+        return [self._NUMPY, self._ARRAY, self._XARRAY]
 
-    def to_numpy(self):
+    def describe():
+        pass
+
+    def to_numpy(self, flatten=False, dtype=None, copy=True, index=None, **kwargs):
         """Return a numpy `ndarray` representation of the data.
 
         Returns
         -------
         numpy.ndarray
         """
-        return self.data
+        v = self._data
+        if copy:
+            v = v.copy()
+        if dtype:
+            v = v.astype(dtype)
+        if flatten:
+            v = v.flatten()
+        if index is not None:
+            v = v[index]
 
-    def to_pandas(self, **kwargs):
-        self._not_implemented()
+        return v
 
     def to_xarray(self, **kwargs):
         """Return an xarray.DataArray representation of the data.
@@ -43,10 +52,10 @@ class NumpyNDArrayWrapper(Wrapper):
         """
         import xarray as xr
 
-        return xr.DataArray(self.data, **kwargs)
+        return xr.DataArray(self._data, **kwargs)
 
 
-def wrapper(data, *args, fieldlist=False, **kwargs):
+def wrapper(data, *args, **kwargs):
     import numpy as np
 
     if isinstance(data, np.ndarray):

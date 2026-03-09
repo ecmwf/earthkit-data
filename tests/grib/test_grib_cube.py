@@ -138,7 +138,7 @@ def test_grib_cubelet():
 
 def test_grib_cube_non_hypercube():
     ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
-    ds = concat(ds, from_source("file", earthkit_test_data_file("ml_data.grib").to_fieldlist())[:2])
+    ds = concat(ds, from_source("file", earthkit_test_data_file("ml_data.grib")).to_fieldlist()[:2])
     assert len(ds) == 18 + 2
 
     with pytest.raises(ValueError):

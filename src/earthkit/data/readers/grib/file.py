@@ -16,22 +16,6 @@ from earthkit.data.utils.parts import Part
 
 from .scan import GribCodesMessagePositionIndex
 
-# class PositionDataBase:
-#     def __init__(self, path, parts=None, positions=None):
-#         self.path = path
-#         self._file_parts = parts
-#         self.__positions = positions
-
-#     @property
-#     def file_parts(self):
-#         return self._file_parts
-
-#     @property
-#     def positions(self):
-#         if self.__positions is None:
-#             raise ValueError("Positions not set")
-#         return self.__positions
-
 
 class GribFieldListInFile(SimpleFieldListBase):
     handle_cache = None
@@ -97,14 +81,21 @@ class GribFieldListInFile(SimpleFieldListBase):
         from earthkit.data.core.config import CONFIG
 
         policy = CONFIG.get("grib-file-serialisation-policy")
-        state = {"serialisation_policy": policy, "kwargs": self._source_kwargs}
+        # state = {"serialisation_policy": policy, "kwargs": self._source_kwargs}
+        state = {"serialisation_policy": policy}
+
+        state["handle_policy"] = self.handle_policy
+        state["handle_cache_size"] = self.handle_cache_size
+        state["use_metadata_cache"] = self.use_metadata_cache
 
         if policy == "path":
             state["path"] = self.path
             state["positions"] = self._positions
-            state["handle_policy"] = self.handle_policy
-            state["handle_cache_size"] = self.handle_cache_size
-            state["use_metadata_cache"] = self.use_metadata_cache
+            # state["handle_policy"] = self.handle_policy
+            # state["handle_cache_size"] = self.handle_cache_size
+            # state["use_metadata_cache"] = self.use_metadata_cache
+        elif policy == "memory":
+            state["messages"] = [f.message() for f in self]
         else:
             raise ValueError(f"Policy {policy} not supported for GribFieldListInFile")
 
@@ -127,7 +118,30 @@ class GribFieldListInFile(SimpleFieldListBase):
                 use_grib_metadata_cache=use_metadata_cache,
             )
         elif policy == "memory":
-            raise ValueError(f"Policy {policy} not supported for GribFieldListInFile")
+            from earthkit.data.core.caching import cache_file
+            from earthkit.data.sources import from_source_internal
+
+            def _create(path, args):
+                with open(path, "wb") as f:
+                    for message in state["messages"]:
+                        f.write(message)
+
+            path = cache_file(
+                "GRIBReader",
+                _create,
+                [],
+            )
+            handle_policy = state["handle_policy"]
+            handle_cache_size = state["handle_cache_size"]
+            use_metadata_cache = state["use_metadata_cache"]
+            ds = from_source_internal(
+                "file",
+                path,
+                grib_handle_policy=handle_policy,
+                grib_handle_cache_size=handle_cache_size,
+                use_grib_metadata_cache=use_metadata_cache,
+            )
+            self.__init__(ds.path)
         else:
             raise ValueError(f"Unknown serialisation policy {policy}")
 
@@ -151,88 +165,18 @@ class GribFieldListInFile(SimpleFieldListBase):
         return r
 
 
-# class GRIBReaderOri(GribFieldListInFile, Reader):
-#     appendable = True  # GRIB messages can be added to the same file
-
-#     def __init__(self, source, path, parts=None, positions=None):
-#         _kwargs = {}
-#         for k in [
-#             "grib_handle_policy",
-#             "grib_handle_cache_size",
-#             "use_grib_metadata_cache",
-#         ]:
-#             _kwargs[k] = source._kwargs.get(k, None)
-
-#         for k in source._kwargs:
-#             if "-" in k:
-#                 raise KeyError(f"Invalid option {k} in GRIBReader. Option names must not contain '-'.")
-
-#         Reader.__init__(self, source, path)
-#         GribFieldListInFile.__init__(self, path, parts=parts, positions=positions, **_kwargs)
-#         self._source_kwargs = source._kwargs
-
-#     def __repr__(self):
-#         return "GRIBReader(%s)" % (self.path,)
-
-#     def mutate_source(self):
-#         # A GRIBReader is a source itself
-#         return self
-
-#     def is_streamable_file(self):
-#         return True
-
-#     def _to_data_object(self):
-#         from .data import GribData
-
-#         return GribData(self)
-
-#     def __getstate__(self):
-#         from earthkit.data.core.config import CONFIG
-
-#         policy = CONFIG.get("grib-file-serialisation-policy")
-#         state = {"serialisation_policy": policy, "source_kwargs": self._source_kwargs}
-
-#         if policy == "path":
-#             state["path"] = self.path
-#             state["positions"] = self._positions
-#         else:
-#             state["messages"] = [f.message() for f in self]
-
-#         return state
-
-#     def __setstate__(self, state):
-#         policy = state["serialisation_policy"]
-
-#         if policy == "path":
-#             from earthkit.data import from_source
-
-#             path = state["path"]
-#             ds = from_source("file", path, **state["source_kwargs"])
-#             self.__init__(ds.source, path, positions=state["positions"])
-#         elif policy == "memory":
-#             from earthkit.data import from_source
-#             from earthkit.data.core.caching import cache_file
-
-#             def _create(path, args):
-#                 with open(path, "wb") as f:
-#                     for message in state["messages"]:
-#                         f.write(message)
-
-#             path = cache_file(
-#                 "GRIBReader",
-#                 _create,
-#                 [],
-#             )
-#             ds = from_source("file", path)
-#             self.__init__(ds.source, path)
-#         else:
-#             raise ValueError(f"Unknown serialisation policy {policy}")
-
-
 class GRIBReader(Source, Reader):
     def __init__(self, source, path, parts=None, positions=None):
         self._ori_source = source
         self._kwargs = {"parts": parts, "positions": positions}
+
+        for k in [
+            "grib_handle_policy",
+            "grib_handle_cache_size",
+            "use_grib_metadata_cache",
+        ]:
+            self._kwargs[k] = source._kwargs.get(k, None)
+
         Reader.__init__(self, source, path)
 
     def to_fieldlist(self, *args, **kwargs):
@@ -258,7 +202,7 @@ class GRIBReader(Source, Reader):
         return True
 
     def to_data_object(self):
-        from .data import GribData
+        from earthkit.data.data.grib import GribData
 
         return GribData(self)
 
@@ -267,18 +211,37 @@ class GRIBReader(Source, Reader):
         assert all(isinstance(s, GRIBReader) for s in sources)
         return MultiGRIBReader(sources)
 
+    def _default_encoder(self):
+        return "grib"
+
+    def _encode(self, encoder, *args, **kwargs):
+        return self.to_fieldlist()._encode(encoder, *args, **kwargs)
+
 
 class MultiGRIBReader(GRIBReader):
     def __init__(self, sources):
-        self.sources = sources
+        self.sources = list(self._flatten(sources))
+
+    def _flatten(self, sources):
+        for s in sources:
+            if isinstance(s, MultiGRIBReader):
+                yield from self._flatten(s.sources)
+            else:
+                yield s
 
     def to_fieldlist(self):
-        fs = [s.to_fieldlist() for s in self.sources]
-        from earthkit.data.mergers import merge_by_class
+        from earthkit.data.mergers import make_merger
 
-        merged = merge_by_class(fs)
+        merged = make_merger(None, self.sources).to_fieldlist()
         if merged is not None:
             return merged.mutate()
+
+        # fs = [s.to_fieldlist() for s in self.sources]
+        # from earthkit.data.mergers import merge_by_class
+
+        # merged = merge_by_class(fs)
+        # if merged is not None:
+        #     return merged.mutate()
 
         raise NotImplementedError("Conversion of MultiGRIBReader to fieldlist is not implemented")
 
@@ -289,6 +252,22 @@ class MultiGRIBReader(GRIBReader):
         return f"MultiGRIBReader({self.sources})"
 
     def to_data_object(self):
-        from .data import GribData
+        from earthkit.data.data.grib import GribData
 
         return GribData(self)
+
+    @classmethod
+    def merge(cls, sources):
+        r = []
+        for source in sources:
+            if isinstance(source, MultiGRIBReader):
+                r.extend(source.sources)
+            elif isinstance(source, GRIBReader):
+                r.append(source)
+            elif not source.ignore():
+                raise ValueError(f"Cannot merge source of type {type(source)} in MultiGRIBReader.merge")
+
+        if r:
+            return MultiGRIBReader(r)
+
+        raise ValueError("No GRIBReader found in sources to merge")

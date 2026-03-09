@@ -9,6 +9,8 @@
 
 import logging
 
+from earthkit.data.data.fieldlist import FieldListData
+
 from . import Source
 
 LOG = logging.getLogger(__name__)
@@ -27,6 +29,10 @@ class FieldlistFromDicts(Source):
         for f in self.d:
             fields.append(Field.from_dict(f))
         return SimpleFieldList(fields=fields)
+
+    def to_data_object(self):
+
+        return FieldListData(self.mutate())
 
 
 source = FieldlistFromDicts

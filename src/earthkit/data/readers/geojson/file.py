@@ -73,3 +73,8 @@ class GeoJsonList(IndexFeatureListBase):
 
     def describe(self, *args, **kwargs):
         pass
+
+    def to_data_object(self):
+        from earthkit.data.data.geojson import GeoJsonData
+
+        return GeoJsonData(self)

@@ -32,7 +32,7 @@ def test_netcdf_fieldlist_string_coord():
     # sanity check
     assert np.allclose(a.sel(level="500", x=2).values, np.array([21, 22, 23]))
 
-    ds = earthkit.data.from_object(a)
+    ds = earthkit.data.from_object(a).to_fieldlist()
 
     assert ds
     assert len(ds) == 2
@@ -59,7 +59,7 @@ def test_netcdf_fieldlist_bounds():
         name="dummyvar",
     )
 
-    ds = earthkit.data.from_object(a)
+    ds = earthkit.data.from_object(a).to_fieldlist()
     assert ds
     assert len(ds) == 2
 

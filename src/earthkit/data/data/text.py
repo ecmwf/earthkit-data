@@ -7,21 +7,18 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.data import SimpleData
+from .source import SourceData
 
 
-class ODBData(SimpleData):
-    _TYPE_NAME = "ODB"
+class TextData(SourceData):
+    _TYPE_NAME = "Text"
 
-    def __init__(self, reader):
-        self._reader = reader
+    # def __init__(self, reader):
+    #     self._reader = reader
 
     @property
     def available_types(self):
-        return [self._PANDAS]
+        return None
 
     def describe(self):
-        return f"ODB data from {self._reader.path}"
-
-    def to_pandas(self, **kwargs):
-        return self._reader.to_pandas(**kwargs)
+        return f"Text data from {self._reader.path}"

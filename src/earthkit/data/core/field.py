@@ -1342,16 +1342,16 @@ class Field(Base):
 
     def _binary_op(self, oper, y):
         from earthkit.data.core.fieldlist import FieldList
+        from earthkit.data.data.wrappers import from_object
         from earthkit.data.indexing.indexed import IndexFieldListBase
-        from earthkit.data.wrappers import get_wrapper
 
-        y = get_wrapper(y)
+        y = from_object(y)
         if isinstance(y, FieldList):
             x = IndexFieldListBase.from_fields([self])
             return x._binary_op(oper, y)
 
         vx = self.values
-        vy = y.values
+        vy = y.to_numpy(flatten=True)
         v = oper(vx, vy)
         r = self.set(values=v)
         return r

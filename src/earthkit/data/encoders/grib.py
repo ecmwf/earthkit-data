@@ -375,6 +375,7 @@ class GribEncoder(Encoder):
         metadata=None,
         template=None,
         missing_value=9999,
+        target=None,
         **kwargs,
     ):
         """
@@ -428,9 +429,9 @@ class GribEncoder(Encoder):
         kwargs["can_infer_time"] = can_infer_time
 
         if data is not None:
-            from earthkit.data.wrappers import get_wrapper
+            from earthkit.data.data.wrappers import from_object
 
-            data = get_wrapper(data, fieldlist=False)
+            data = from_object(data)
             return data._encode(self, template=template, **kwargs)
         else:
             handle = self._get_handle(template=template, values=values, metadata=metadata)
@@ -501,6 +502,9 @@ class GribEncoder(Encoder):
     def _encode_xarray(self, data, **kwargs):
         accessor = data.earthkit
         return self._encode_fieldlist(accessor._generator(), **kwargs)
+
+    def _encode_featurelist(self, data, **kwargs):
+        raise NotImplementedError
 
     def _make_message(
         self, handle, values=None, check_nans=True, metadata=None, missing_value=9999, can_infer_time=False

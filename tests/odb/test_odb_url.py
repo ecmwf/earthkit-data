@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # (C) Copyright 2020 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
@@ -7,19 +9,12 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.wrappers import Wrapper
+from earthkit.data import from_source
+from earthkit.data.utils.testing import earthkit_remote_examples_file
 
 
-class FloatWrapper(Wrapper):
-    def __init__(self, data):
-        self.data = data
-
-    @property
-    def values(self):
-        return self.data
-
-
-def wrapper(data, *args, fieldlist=False, **kwargs):
-    if isinstance(data, float):
-        return FloatWrapper(data)
-    return None
+def test_odb_url():
+    ds = from_source("url", earthkit_remote_examples_file("test.odb"))
+    assert "pandas" in ds.available_types
+    df = ds.to_pandas()
+    assert len(df) == 717

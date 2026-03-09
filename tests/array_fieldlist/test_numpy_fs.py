@@ -58,7 +58,7 @@ def test_array_fl_grib_single_field():
     tmp = temp_file()
     r.to_target("file", tmp.path)
     assert os.path.exists(tmp.path)
-    r_tmp = from_source("file", tmp.path)
+    r_tmp = from_source("file", tmp.path).to_fieldlist()
     _check_field(r_tmp)
 
 

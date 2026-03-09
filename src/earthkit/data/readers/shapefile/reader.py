@@ -9,14 +9,16 @@
 
 
 from earthkit.data.readers import Reader
+from earthkit.data.sources import Source
 from earthkit.data.utils.bbox import BoundingBox
 
 
-class ShapeFileReader(Reader):
+class ShapeFileReader(Source, Reader):
     def __init__(self, source, path):
-        super().__init__(source, path)
         self.__gdf = None
         assert path.endswith(".shp")
+        self._ori_source = source
+        Reader.__init__(self, source, path)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.path})"
@@ -92,6 +94,6 @@ class ShapeFileReader(Reader):
         return self.to_pandas(**kwargs).to_xarray()
 
     def to_data_object(self):
-        from .data import ShapeFileData
+        from earthkit.data.data.shapefile import ShapeFileData
 
         return ShapeFileData(self)

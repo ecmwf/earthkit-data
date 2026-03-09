@@ -7,14 +7,14 @@
 # nor does it submit to any jurisdiction.
 #
 
-from . import SimpleData
+from .source import SourceData
 
 
-class UnknownData(SimpleData):
+class UnknownData(SourceData):
     _TYPE_NAME = "Unknown"
 
-    def __init__(self, reader):
-        self._reader = reader
+    # def __init__(self, reader):
+    #     self._reader = reader
 
     @property
     def available_types(self):

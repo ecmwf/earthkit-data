@@ -448,7 +448,7 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         elif isinstance(filename_or_obj, (str, os.PathLike, pathlib.Path)):
             from earthkit.data import from_source
 
-            ds = from_source(source_type, filename_or_obj)
+            ds = from_source(source_type, filename_or_obj).to_fieldlist()
         return ds
 
 

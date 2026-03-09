@@ -52,12 +52,25 @@ class NetCDFEncoder(Encoder):
         **kwargs,
     ):
         if data is not None:
-            from earthkit.data.wrappers import get_wrapper
+            from earthkit.data.data import Data
+            from earthkit.data.data.wrappers import from_object
 
-            data = get_wrapper(data, fieldlist=False)
-            return data._encode(self, **kwargs)
+            data = from_object(data)
+            if hasattr(data, "_encode"):
+                return data._encode(self, **kwargs)
+            elif isinstance(data, Data):
+                return self._call_encode(data, **kwargs)
+
         else:
             raise ValueError("No data to encode")
+
+    def _call_encode(self, data, **kwargs):
+        types = data.available_types
+        for t in types:
+            if t == self._XARRAY:
+                return self._encode_xarray(data.to_xarray(), **kwargs)
+            elif t == self._FIELDLIST:
+                return self._encode_fieldlist(data.to_fieldlist(), **kwargs)
 
     def _encode(
         self,
@@ -70,6 +83,7 @@ class NetCDFEncoder(Encoder):
         template=None,
         # return_bytes=False,
         missing_value=9999,
+        target=None,
         **kwargs,
     ):
         _kwargs = kwargs.copy()
@@ -92,6 +106,9 @@ class NetCDFEncoder(Encoder):
 
     def _encode_xarray(self, data, **kwargs):
         return NetCDFEncodedData(data)
+
+    def _encode_featurelist(self, data, **kwargs):
+        raise NotImplementedError
 
 
 encoder = NetCDFEncoder

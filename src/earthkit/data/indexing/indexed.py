@@ -346,6 +346,11 @@ class IndexFieldListBase(Index, FieldList):
         r = get_method(method).binary_op(oper, self, y)
         return r
 
+    def to_data_object(self):
+        from earthkit.data.data.fieldlist import FieldListData
+
+        return FieldListData(self)
+
     @classmethod
     def new_mask_index(cls, *args, **kwargs):
         return MaskFieldList(*args, **kwargs)

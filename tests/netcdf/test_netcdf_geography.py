@@ -284,7 +284,7 @@ def test_netcdf_geography_2d_1(lat_name, lon_name):
     v = {"a": a}
     ds_in = xr.Dataset(v, coords=coords)
 
-    ds = from_object(ds_in)
+    ds = from_object(ds_in).to_fieldlist()
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 
@@ -326,7 +326,7 @@ def test_netcdf_geography_2d_2(lat_name, lon_name):
     v = {"a": a}
     ds_in = xr.Dataset(v, coords=coords)
 
-    ds = from_object(ds_in)
+    ds = from_object(ds_in).to_fieldlist()
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 
@@ -369,7 +369,7 @@ def test_netcdf_geography_2d_3(lat_name, lon_name):
     v = {"a": a, lat_name: lat, lon_name: lon}
     ds_in = xr.Dataset(v, coords=coords)
 
-    ds = from_object(ds_in)
+    ds = from_object(ds_in).to_fieldlist()
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 
@@ -411,7 +411,7 @@ def test_netcdf_geography_1d_1(lat_name, lon_name):
     v = {"a": a}
     ds_in = xr.Dataset(v, coords=coords)
 
-    ds = from_object(ds_in)
+    ds = from_object(ds_in).to_fieldlist()
     assert len(ds) == 2
     assert np.allclose(ds.get("vertical.level"), coords["level"])
 

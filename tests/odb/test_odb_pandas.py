@@ -29,9 +29,3 @@ def test_odb_to_pandas():
     assert np.allclose(df["lat"][0:2], [38.808998, 73.6931])
     assert np.allclose(df["lon"][0:2], [4.2926, -3.4167])
     assert np.allclose(df["fg_dep"][0:2], [0.514543, -0.098977])
-
-
-if __name__ == "__main__":
-    from earthkit.data.utils.testing import main
-
-    main()

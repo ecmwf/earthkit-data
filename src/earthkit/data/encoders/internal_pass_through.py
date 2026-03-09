@@ -46,12 +46,13 @@ class _InternalPassThroughEncoder(Encoder):
     def encode(
         self,
         data=None,
+        target=None,
         **kwargs,
     ):
         if data is not None:
-            from earthkit.data.wrappers import get_wrapper
+            from earthkit.data.data.wrappers import from_object
 
-            data = get_wrapper(data)
+            data = from_object(data)
             return data._encode(self, **kwargs)
         else:
             raise ValueError("No data to encode")
@@ -71,6 +72,9 @@ class _InternalPassThroughEncoder(Encoder):
         return self._encode(fieldlist, **kwargs)
 
     def _encode_xarray(self, data, **kwargs):
+        raise NotImplementedError
+
+    def _encode_featurelist(self, data, **kwargs):
         raise NotImplementedError
 
 

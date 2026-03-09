@@ -83,6 +83,6 @@ class CSVReader(Reader):
         return self.to_pandas(pandas_read_csv_kwargs=pandas_read_csv_kwargs).to_xarray(**kwargs)
 
     def to_data_object(self):
-        from .data import CSVData
+        from earthkit.data.data.csv import CSVData
 
         return CSVData(self)

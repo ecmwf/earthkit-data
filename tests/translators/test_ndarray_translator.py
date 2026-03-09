@@ -11,19 +11,20 @@
 
 import logging
 
+import numpy as np
+
 from earthkit.data import from_object
-from earthkit.data import wrappers
-from earthkit.data.wrappers import ndarray as ndwrapper
+from earthkit.data import transform
 
 LOG = logging.getLogger(__name__)
 
 
-def test_ndarray_wrapper():
-    import numpy as np
+def test_ndarray_translator():
+    val = np.array([1, 2, 3])
+    ds = from_object(val)
 
-    _wrapper = ndwrapper.wrapper(np.array([]))
-    assert isinstance(_wrapper, ndwrapper.NumpyNDArrayWrapper)
-    _wrapper = wrappers.get_wrapper(np.array([]))
-    assert isinstance(_wrapper, ndwrapper.NumpyNDArrayWrapper)
-    _wrapper = from_object(np.array([]))
-    assert isinstance(_wrapper, ndwrapper.NumpyNDArrayWrapper)
+    assert np.allclose(transform(val, np.ndarray), val)
+    assert np.allclose(transform(ds, np.ndarray), val)
+
+    assert isinstance(transform(val, np.ndarray), np.ndarray)
+    assert isinstance(transform(ds, np.ndarray), np.ndarray)

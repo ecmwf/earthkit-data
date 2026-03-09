@@ -8,22 +8,22 @@
 #
 
 
-import typing
 from abc import abstractmethod
+from typing import Any
 
-from earthkit.data.core import Base
+from earthkit.data.core import Encodable
 
 
-class Data(Base):
+class Data(Encodable):
     _TYPE_NAME = None
     _FIELDLIST = "fieldlist"
     _XARRAY = "xarray"
     _PANDAS = "pandas"
     _GEOPANDAS = "geopandas"
-    _GEOJSON = "geojson"
     _FEATURELIST = "featurelist"
     _NUMPY = "numpy"
     _ARRAY = "array"
+    _VALUE = "value"
 
     @property
     @abstractmethod
@@ -31,18 +31,20 @@ class Data(Base):
         pass
 
     @abstractmethod
-    def describe():
+    def is_stream(self):
         pass
 
-    def to(self, target_type, *args, **kwargs):
-        """Convert into another type"""
-        method = getattr(self, f"to_{target_type}", None)
-        if method is None:
-            raise NotImplementedError(f"Conversion to {target_type} is not implemented")
-        return method(*args, **kwargs)
+    @abstractmethod
+    def describe(self):
+        pass
 
     @abstractmethod
-    def to_fieldlist(self, *args, **kwargs) -> typing.Any:
+    def to(self, to_type: Any, *args, **kwargs):
+        """Convert into another type"""
+        pass
+
+    @abstractmethod
+    def to_fieldlist(self, *args, **kwargs):
         pass
 
     @abstractmethod
@@ -61,11 +63,6 @@ class Data(Base):
         pass
 
     @abstractmethod
-    def to_geojson(self, **kwargs):
-        """Convert into a GeoJSON object"""
-        pass
-
-    @abstractmethod
     def to_featurelist(self, *args, **kwargs):
         """Convert into a list of feature messages"""
         pass
@@ -80,22 +77,27 @@ class Data(Base):
         """Convert into an array (numpy or xarray)"""
         pass
 
-    def _conversion_not_implemented(self):
-        import inspect
-
-        func = inspect.stack()[1][3]
-        if func.startswith("to_"):
-            func = func[3:]
-            txt = f"Conversion of {self._TYPE_NAME} to {func} is not implemented"
-        else:
-            txt = f"Conversion of {self._TYPE_NAME} with {func} is not implemented"
-
-        raise NotImplementedError(txt)
-
 
 class SimpleData(Data):
-    def __init__(self, reader):
-        self._reader = reader
+    @property
+    def is_stream(self):
+        return False
+
+    def to(self, to_type, *args, **kwargs):
+        """Convert into another type"""
+        if isinstance(to_type, str):
+            type_str = to_type.lower()
+            method = getattr(self, f"to_{type_str}", None)
+        else:
+            from .wrappers import from_object
+
+            data = from_object(to_type)
+            type_str = data.available_types[0]
+            method = getattr(data, f"to_{type_str}", None)
+
+        if method is None:
+            raise NotImplementedError(f"Conversion to {type_str} is not implemented")
+        return method(*args, **kwargs)
 
     def to_fieldlist(self, *args, **kwargs):
         self._conversion_not_implemented()
@@ -120,3 +122,34 @@ class SimpleData(Data):
 
     def to_array(self, *args, **kwargs):
         self._conversion_not_implemented()
+
+    def to_values(self, *args, **kwargs):
+        self._conversion_not_implemented()
+
+    def to_target(self, target, *args, **kwargs):
+        from earthkit.data.targets import to_target
+
+        if "data" in kwargs:
+            raise ValueError("Cannot specify data in to_target when calling to_target on a data  object")
+        to_target(target, *args, data=self._to_default(), **kwargs)
+
+    def _default_encoder(self):
+        return self._reader._default_encoder()
+
+    def _encode(self, *args, **kwargs):
+        return self._to_default()._encode(*args, **kwargs)
+
+    def _conversion_not_implemented(self):
+        import inspect
+
+        func = inspect.stack()[1][3]
+        if func.startswith("to_"):
+            func = func[3:]
+            txt = f"Conversion of {self._TYPE_NAME} to {func} is not implemented"
+        else:
+            txt = f"Conversion of {self._TYPE_NAME} with {func} is not implemented"
+
+        raise NotImplementedError(txt)
+
+    def _to_default(self, *args, **kwargs):
+        return self.to(self.available_types[0], *args, **kwargs)

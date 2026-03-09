@@ -12,7 +12,7 @@ import re
 
 import numpy as np
 
-from earthkit.data.wrappers import get_wrapper
+from earthkit.data.data.wrappers import from_object
 
 ECC_SECONDS_FACTORS = {"s": 1, "m": 60, "h": 3600}
 NUM_STEP_PATTERN = re.compile(r"\d+")
@@ -67,7 +67,7 @@ def to_datetime(dt):
     if hasattr(dt, "isoformat"):
         return datetime.datetime.fromisoformat(dt.isoformat())
 
-    dt = get_wrapper(dt)
+    dt = from_object(dt)
 
     return to_datetime(dt.to_datetime())
 
@@ -118,7 +118,7 @@ def to_datetime_list(datetimes):  # noqa C901
 
         return [to_datetime(x) for x in datetimes]
 
-    datetimes = get_wrapper(datetimes)
+    datetimes = from_object(datetimes)
 
     return to_datetime_list(datetimes.to_datetime_list())
 

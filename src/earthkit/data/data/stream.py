@@ -7,14 +7,37 @@
 # nor does it submit to any jurisdiction.
 #
 
-from . import SimpleData
+from .source import SourceData
 
 
-class StreamFieldListData(SimpleData):
-    _TYPE_NAME = "Stream"
+class StreamIteratorData(SourceData):
+    _TYPE_NAME = "StreamIterator"
 
-    def __init__(self, reader):
-        self._reader = reader
+    def __init__(self, source_or_reader, data_type=None):
+        super().__init__(source_or_reader)
+        self._data_type = data_type
+
+    @property
+    def is_stream(self):
+        return True
+
+    @property
+    def available_types(self):
+        return ["value"]
+
+    def describe(self):
+        return f"Stream data from {self._reader.path}"
+
+    def to_iterator(self):
+        return self._reader
+
+
+class StreamFieldListData(SourceData):
+    _TYPE_NAME = "StreamFieldList"
+
+    @property
+    def is_stream(self):
+        return True
 
     @property
     def available_types(self):
@@ -24,7 +47,6 @@ class StreamFieldListData(SimpleData):
         return f"Stream data from {self._reader.path}"
 
     def to_fieldlist(self, *args, read_all=False, **kwargs):
-        print("Stream", self._reader)
         if read_all:
             from earthkit.data.indexing.simple import SimpleFieldList
 

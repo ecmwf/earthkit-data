@@ -11,8 +11,6 @@ import logging
 
 from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
 
-from .. import Reader
-
 LOG = logging.getLogger(__name__)
 
 
@@ -109,17 +107,16 @@ class NetCDFFieldList(XArrayFieldList):
 #         return "NetCDFFieldListFromURL(%s)" % (self.path_or_url,)
 
 
-class NetCDFFieldListFromFile(NetCDFFieldList, Reader):
-    def __init__(self, source, path):
-        Reader.__init__(self, source, path)
+class NetCDFFieldListFromFile(NetCDFFieldList):
+    def __init__(self, path):
         super().__init__(path)
 
     def __repr__(self):
         return f"NetCDFFieldListFromFile({self.path})"
 
-    def mutate_source(self):
-        # A NetCDFReader is a source itself
-        return self
+    # def mutate_source(self):
+    #     # A NetCDFReader is a source itself
+    #     return self
 
     # def write(self, f, **kwargs):
     #     import shutil

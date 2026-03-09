@@ -36,7 +36,7 @@ def xr_lod_latlon():
         {"parameter": {"variable": "u"}, "vertical": {"level": 500}, **prototype},
         {"parameter": {"variable": "u"}, "vertical": {"level": 850}, **prototype},
     ]
-    ds = from_source("list-of-dicts", d)
+    ds = from_source("list-of-dicts", d).to_fieldlist()
     return ds
 
 
@@ -53,7 +53,7 @@ def xr_lod_nongeo():
         {"parameter": {"variable": "u"}, "vertical": {"level": 500}, **prototype},
         {"parameter": {"variable": "u"}, "vertical": {"level": 850}, **prototype},
     ]
-    ds = from_source("list-of-dicts", d)
+    ds = from_source("list-of-dicts", d).to_fieldlist()
     return ds
 
 
@@ -90,7 +90,7 @@ def xr_lod_forecast():
             **prototype,
         },
     ]
-    ds = from_source("list-of-dicts", d)
+    ds = from_source("list-of-dicts", d).to_fieldlist()
     return ds
 
 
@@ -119,7 +119,7 @@ def xr_lod_valid_time():
             **prototype,
         },
     ]
-    ds = from_source("list-of-dicts", d)
+    ds = from_source("list-of-dicts", d).to_fieldlist()
     return ds
 
 
@@ -152,7 +152,7 @@ def xr_lod_raw_time():
             **prototype,
         },
     ]
-    ds = from_source("list-of-dicts", d)
+    ds = from_source("list-of-dicts", d).to_fieldlist()
     return ds
 
 

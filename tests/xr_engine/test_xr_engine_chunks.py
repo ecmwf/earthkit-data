@@ -46,7 +46,9 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 )
 def test_xr_engine_chunk_1(allow_holes, lazy_load, handle_policy, _kwargs):
     with config.temporary(**handle_policy):
-        ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"))
+        ds_in = from_source(
+            "url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib")
+        ).to_fieldlist()
 
         ds = ds_in.to_xarray(
             profile="mars",
@@ -83,7 +85,9 @@ def test_xr_engine_chunk_2(allow_holes, lazy_load, _kwargs):
     handle_policy = {"grib-handle-policy": "cache", "grib-handle-cache-size": 1}
 
     with config.temporary(**handle_policy):
-        ds_in = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib"))
+        ds_in = from_source(
+            "url", earthkit_remote_test_data_file("xr_engine", "date", "t2_1_year.grib")
+        ).to_fieldlist()
 
         ds = ds_in.to_xarray(
             profile="mars",

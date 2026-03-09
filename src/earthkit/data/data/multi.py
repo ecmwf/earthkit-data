@@ -14,6 +14,7 @@ from . import SimpleData
 class MultiData(SimpleData):
     def __init__(self, sources):
         self.sources = sources
+        self._source = sources
         # self.datas = [s._reader._to_data_object() for s in self.sources.sources]
 
     @property

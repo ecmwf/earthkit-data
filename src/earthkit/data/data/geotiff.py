@@ -1,4 +1,4 @@
-# (C) Copyright 2020 ECMWF.
+# (C) Copyright 2024 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,21 +7,24 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.data import SimpleData
+from . import SimpleData
 
 
-class CSVData(SimpleData):
-    _TYPE_NAME = "CSV"
+class GeoTIFFData(SimpleData):
+    _TYPE_NAME = "GeoTIFF"
 
     def __init__(self, reader):
         self._reader = reader
 
     @property
     def available_types(self):
-        return [self._PANDAS, self._XARRAY]
+        return [self._XARRAY, self._PANDAS, self._FIELDLIST]
 
     def describe(self):
-        return f"CSV data from {self._reader.path}"
+        return f"GeoTIFF data from {self._reader.path}"
+
+    def to_fieldlist(self, *args, **kwargs):
+        return self._reader.to_fieldlist(*args, **kwargs)
 
     def to_pandas(self, **kwargs):
         return self._reader.to_pandas(**kwargs)

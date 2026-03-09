@@ -44,9 +44,9 @@ class TextReader(Reader):
         return self
 
     def to_data_object(self, **kwargs):
-        from earthkit.data.data.unknown import UnknownData
+        from earthkit.data.data.text import TextData
 
-        return UnknownData(self)
+        return TextData(self)
 
 
 def reader(source, path, *, magic=None, deeper_check=False, **kwargs):

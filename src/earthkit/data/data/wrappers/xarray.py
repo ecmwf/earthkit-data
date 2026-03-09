@@ -5,31 +5,15 @@
 # In applying this licence, ECMWF does not waive the privileges and immunities
 # granted to it by virtue of its status as an intergovernmental organisation
 # nor does it submit to any jurisdiction.
+#
+
+from . import ObjectWrapperData
 
 
-# from earthkit.data.readers import netcdf
-from earthkit.data.wrappers import Wrapper
-
-
-class XarrayData(Wrapper):
-    def __init__(self, data, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._data = data
-
+class XarrayData(ObjectWrapperData):
     @property
     def available_types(self):
-        return ["xarray", "pandas", "fieldlist", "numpy", "array"]
-
-    def describe():
-        pass
-
-    def to_fieldlist(self, *args, **kwargs):
-        from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
-
-        fl = XArrayFieldList.from_xarray(self._data, **kwargs)
-        if len(fl) == 0:
-            raise ValueError("No fields found in xarray dataset")
-        return fl
+        return [self._XARRAY, self._PANDAS, self._FIELDLIST, self._NUMPY, self._ARRAY]
 
     def to_xarray(self, *args, **kwargs):
         return self._data
@@ -43,38 +27,83 @@ class XarrayData(Wrapper):
         """
         return self._data.to_dataframe(*args, **kwargs)
 
-    def to_geopandas(self, **kwargs):
-        return self._conversion_not_implemented()
-
-    def to_featurelist(self, *args, **kwargs):
-        return self._conversion_not_implemented()
-
-    def to_geojson(self, **kwargs):
-        return self._conversion_not_implemented()
-
-    # def to_netcdf(self, *args, **kwargs):
-    #     """Save the data to a netCDF file.
-
-    #     Parameters
-    #     ----------
-    #     See `xarray.DataArray.to_netcdf`.
-    #     """
-    #     return self._data.to_netcdf(*args, **kwargs)
-
-    def to_numpy(self, flatten=False):
+    @staticmethod
+    def _to_numpy(data_array, flatten=False, copy=True, dtype=None, index=None, **kwargs):
         """Return a numpy `ndarray` representation of the data.
 
         Returns
         -------
         numpy.ndarray
         """
-        arr = self.data.to_numpy()
+        v = data_array.to_numpy()
+        if copy:
+            v = v.copy()
+        if dtype is not None:
+            v = v.astype(dtype)
         if flatten:
-            arr = arr.flatten()
-        return arr
+            v = v.flatten()
+        if index is not None:
+            v = v[index]
+        return v
 
-    def to_array(self, *args, **kwargs):
-        return self._conversion_not_implemented()
+    def _default_encoder(self):
+        return "netcdf"
+
+    def _encode(self, encoder, **kwargs):
+        """Encode the data using the specified encoder.
+
+        Parameters
+        ----------
+        encoder : Encoder
+            The encoder to use for encoding the data.
+        **kwargs : dict
+            Additional keyword arguments to pass to the encoder.
+
+        Returns
+        -------
+        EncodedData
+            The encoded data.
+        """
+        return encoder._encode_xarray(data=self._data, **kwargs)
+
+
+class XarrayDataArrayData(XarrayData):
+    _TYPE_NAME = "xarray.DataArray"
+
+    def describe():
+        pass
+
+    def to_fieldlist(self, *args, **kwargs):
+        from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
+
+        data = self._data.to_dataset()
+        fl = XArrayFieldList.from_xarray(data, **kwargs)
+        if len(fl) == 0:
+            raise ValueError("No fields found in Xarray DataArray")
+        return fl
+
+    def to_numpy(self, flatten=False, copy=True, dtype=None, index=None, **kwargs):
+        return self._to_numpy(self._data, flatten=flatten, copy=copy, dtype=dtype, index=index, **kwargs)
+
+
+class XarrayDatasetData(XarrayData):
+    _TYPE_NAME = "xarray.Dataset"
+
+    def describe():
+        pass
+
+    def to_fieldlist(self, *args, **kwargs):
+        from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
+
+        fl = XArrayFieldList.from_xarray(self._data, **kwargs)
+        if len(fl) == 0:
+            raise ValueError("No fields found in Xarray Dataset")
+        return fl
+
+    def to_numpy(self, flatten=False, copy=True, dtype=None, index=None, **kwargs):
+        return self._to_numpy(
+            self._data.to_array(), flatten=flatten, copy=copy, dtype=dtype, index=index, **kwargs
+        )
 
 
 # class XArrayDataArrayWrapper(Wrapper):
@@ -220,29 +249,8 @@ def wrapper(data, *args, **kwargs):
 
     import xarray as xr
 
-    if isinstance(data, (xr.Dataset, xr.DataArray)):
-        return XarrayData(data, *args, **kwargs)
+    if isinstance(data, xr.Dataset):
+        return XarrayDatasetData(data, *args, **kwargs)
+    elif isinstance(data, xr.DataArray):
+        return XarrayDataArrayData(data, *args, **kwargs)
     return None
-
-    # ds = None
-    # if isinstance(data, xr.Dataset):
-    #     ds = data
-    # elif isinstance(data, xr.DataArray):
-    #     try:
-    #         ds = data.to_dataset()
-    #     except ValueError:
-    #         return XArrayDataArrayWrapper(data, *args, **kwargs)
-
-    # if ds is not None:
-    #     if not fieldlist:
-    #         return XArrayDatasetWrapper(ds, *args, **kwargs)
-
-    #     from earthkit.data.readers.xarray.fieldlist import XArrayFieldList
-
-    #     fl = XArrayFieldList.from_xarray(ds, **kwargs)
-    #     if len(fl) > 0:
-    #         return fl
-    #     else:
-    #         return XArrayDatasetWrapper(ds, *args, **kwargs)
-
-    # return None

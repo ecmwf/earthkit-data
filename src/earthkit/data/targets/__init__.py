@@ -182,7 +182,7 @@ class SimpleTarget(Target):
         if template is None:
             template = self._template
 
-        return encoder.encode(data, template=template, **kwargs)
+        return encoder.encode(data, template=template, target=self, **kwargs)
 
     def __enter__(self):
         return self

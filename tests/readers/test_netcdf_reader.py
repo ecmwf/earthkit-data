@@ -53,9 +53,11 @@ def test_dummy_netcdf_reader_2(attribute):
     )
     ds = s.to_xarray()
     assert "lat" in ds.dims
-    assert len(s) == 1
+
+    fl = s.to_fieldlist()
+    assert len(fl) == 1
     # s.to_datetime_list()
-    bb = s.geography.bounding_box()
+    bb = fl.geography.bounding_box()
     assert bb.as_tuple() == (1, 0, 0, 1)
 
 
@@ -134,12 +136,12 @@ def test_netcdf_multi_sources():
     path = earthkit_test_data_file("era5_2t_1.nc")
     s1 = from_source("file", path)
     s1.to_xarray()
-    assert s1.path == path
+    assert s1._source.path == path
 
     path = earthkit_test_data_file("era5_2t_2.nc")
     s2 = from_source("file", path)
     s2.to_xarray()
-    assert s2.path == path
+    assert s2._source.path == path
 
     s3 = from_source("multi", s1, s2).to_fieldlist()
     for s in s3:
@@ -199,7 +201,7 @@ def test_get_fields_missing_standard_name_attr_in_coord_array():
     with tempfile.TemporaryDirectory() as tmp_dir:
         fpath = os.path.join(tmp_dir, "tmp.nc")
         ds.to_netcdf(fpath)
-        fs = from_source("file", earthkit_test_data_file(fpath))
+        fs = from_source("file", earthkit_test_data_file(fpath)).to_fieldlist()
         assert len(fs) == 2
 
 
@@ -229,8 +231,9 @@ def test_get_fields_missing_standard_name_attr_in_coord_array():
 @pytest.mark.no_eccodes
 def test_netcdf_non_fieldlist():
     ds = from_source("file", earthkit_test_data_file("hovexp_vert_area.nc"))
-    with pytest.raises(TypeError):
-        len(ds)
+
+    fl = ds.to_fieldlist()
+    assert len(fl) == 0
 
     import xarray as xr
 
@@ -241,7 +244,10 @@ def test_netcdf_non_fieldlist():
     assert ds.to_numpy().shape == (1, 6, 5)
 
     with temp_file() as tmp:
-        ds.to_target("file", tmp)
+        from earthkit.data import to_target
+
+        to_target("file", tmp, data=ds)
+        # ds.to_target("file", tmp)
         assert os.path.exists(tmp)
         ds_saved = from_source("file", tmp)
         assert ds_saved.to_xarray().identical(res)

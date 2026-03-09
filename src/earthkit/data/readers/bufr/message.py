@@ -323,3 +323,9 @@ class BUFRMessage(Base):
         bytes
         """
         return self.handle.get_buffer()
+
+    def _default_encoder(self):
+        return "bufr"
+
+    def _encode(self, encoder, **kwargs):
+        return encoder._encode_message(self, **kwargs)

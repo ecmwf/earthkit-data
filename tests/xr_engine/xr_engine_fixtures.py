@@ -151,16 +151,16 @@ def load_grib_data(filename, source, stream=False, folder="example"):
             raise ValueError("Invalid folder={folder}")
 
     if source == "file":
-        ds = from_source("file", path)
-        ds_ref = from_source("file", path)
+        ds = from_source("file", path).to_fieldlist()
+        ds_ref = from_source("file", path).to_fieldlist()
     elif source == "url":
-        ds = from_source("url", path)
-        ds_ref = from_source("url", path)
+        ds = from_source("url", path).to_fieldlist()
+        ds_ref = from_source("url", path).to_fieldlist()
     else:
         raise ValueError("Invalid source={source}")
 
     if stream:
         f = open(ds.path, "rb")
-        ds = from_source("stream", f)
+        ds = from_source("stream", f).to_fieldlist()
 
     return ds, ds_ref

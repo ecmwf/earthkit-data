@@ -29,6 +29,6 @@ class ODBReader(Reader):
         return odc.read_odb(self.path, single=True, **odc_read_odb_kwargs)
 
     def to_data_object(self):
-        from .data import ODBData
+        from earthkit.data.data.odb import ODBData
 
         return ODBData(self)

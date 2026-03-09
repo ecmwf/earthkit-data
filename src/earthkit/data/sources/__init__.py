@@ -13,45 +13,20 @@ import weakref
 from abc import abstractmethod
 from importlib import import_module
 
-from earthkit.data.core import Base
+from earthkit.data.core import Loader
 from earthkit.data.core.caching import cache_file
-from earthkit.data.core.config import CONFIG
 from earthkit.data.core.plugins import find_plugin
 from earthkit.data.core.plugins import register as register_plugin
+from earthkit.data.data.source import DefaultSourceData
 
 
-class Source(Base):
-    """Doc"""
-
+class Source(Loader):
     name = None
-    home_page = "-"
-    licence = "-"
-    documentation = "-"
-    citation = "-"
-
-    _parent = None
-
     source_filename = None
 
     def __init__(self, **kwargs):
         self._kwargs = kwargs
-
-    def config(self, name):
-        return CONFIG.get(name)
-
-    def mutate(self):
-        # Give a chance to `multi` to change source
-        return self
-
-    def ignore(self):
-        """Indicates to ignore this source in concatenation/merging.
-
-        Returns
-        -------
-        bool
-        """
-        # Used by multi-source
-        return False
+        self._parent = None
 
     def cache_file(self, create, args, **kwargs):
         owner = self.name
@@ -79,16 +54,16 @@ class Source(Base):
     def graph(self, depth=0):
         print(" " * depth, self)
 
-    def to_target(self, target, *args, **kwargs):
-        from earthkit.data.targets import to_target
-
-        to_target(target, *args, data=self, **kwargs)
+    def _encode(self, encoder, **kwargs):
+        return encoder._encode(self, **kwargs)
 
     def _default_encoder(self):
         return None
 
     def to_data_object(self):
-        return None
+        from earthkit.data.data.source import DefaultSourceData
+
+        return DefaultSourceData(self)
 
 
 class SourceLoader:
@@ -137,31 +112,12 @@ def from_source(name: str, *args, lazily=False, **kwargs) -> Source:
     if lazily:
         return from_source_lazily(name, *args, **kwargs)
 
-    print("HERE", name)
     src = from_source_internal(name, *args, **kwargs)
 
-    # prev = None
-    # src = get_source(name, *args, **kwargs)
-    # while src is not prev:
-    #     prev = src
-    #     src = src.mutate()
-
-    # from earthkit.data.core.data import Data
-    from .multi import MultiSource
-
-    if isinstance(src, MultiSource):
-        from earthkit.data.data.multi import MultiData
-
-        print("Create multidata from multi-source: src=", src)
-        return MultiData(src)
-
     if hasattr(src, "to_data_object"):
-        print("Convert source to data object: src=", src)
-        return src.to_data_object()
-        # if hasattr(src, "_reader") and hasattr(src._reader, "_to_data_object"):
-        #     print("src=", src)
-        #     # print("-> reader.source=", src._reader.source)
-        #     data = src._reader._to_data_object()
+        data = src.to_data_object()
+        if data is not None:
+            return data
 
     raise ValueError(f"Source {src} cannot be converted into a data object")
 
@@ -177,7 +133,6 @@ def from_source_internal(name: str, *args, lazily=False, **kwargs) -> Source:
         prev = src
         src = src.mutate()
 
-    print("from_source_internal: src=", src)
     return src
 
 

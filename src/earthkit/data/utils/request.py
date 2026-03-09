@@ -130,7 +130,9 @@ class FileRequestRetriever:
         assert callable(self.retriever), self.retriever
 
     def retrieve(self, requests, *extra_args):
-        nthreads = min(self.owner.config("number-of-download-threads"), len(requests))
+        from earthkit.data.core.config import CONFIG
+
+        nthreads = min(CONFIG.get("number-of-download-threads"), len(requests))
 
         if nthreads < 2:
             path = [self.retriever(r, *extra_args) for r in requests]

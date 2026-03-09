@@ -44,13 +44,13 @@ class GeoTIFFEncoder(Encoder):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def encode(self, data, **kwargs):
+    def encode(self, data, target=None, **kwargs):
         if data is None:
             raise ValueError("No data to encode")
 
-        from ..wrappers import get_wrapper
+        from earthkit.data.data.wrappers import from_object
 
-        data = get_wrapper(data)
+        data = from_object(data)
         return data._encode(self, **kwargs)
 
     def _encode(self, data, **kwargs):
@@ -70,6 +70,9 @@ class GeoTIFFEncoder(Encoder):
         return self._encode(fieldlist, **kwargs)
 
     def _encode_xarray(self, data, **kwargs):
+        raise NotImplementedError
+
+    def _encode_featurelist(self, data, **kwargs):
         raise NotImplementedError
 
 

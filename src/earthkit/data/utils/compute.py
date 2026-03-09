@@ -11,7 +11,7 @@ import math
 from abc import ABCMeta
 from abc import abstractmethod
 
-from earthkit.data.wrappers import get_wrapper
+from earthkit.data.data.wrappers import from_object
 
 # NOTE: __and__ is used as the concatenation operator for FieldLists.
 # Therefore cannot be overloaded here for compute operations
@@ -72,7 +72,7 @@ def apply_ufunc(func, *args):
     from earthkit.data.core.field import Field
     from earthkit.data.core.fieldlist import FieldList
 
-    x = [get_wrapper(a) for a in args]
+    x = [from_object(a) for a in args]
 
     d = None
 
@@ -98,8 +98,8 @@ def apply_ufunc(func, *args):
                 assert len(r) == 1
                 return r
 
-        if all(hasattr(a, "values") for a in x):
-            return func([f.values for f in x])
+        if all(hasattr(a, "to_numpy") for a in x):
+            return func([f.to_numpy() for f in x])
 
     raise ValueError("Cannot find a suitable object to apply ufunc")
 
@@ -120,18 +120,17 @@ class LoopCompute(Compute):
         from earthkit.data.core.field import Field
         from earthkit.data.core.fieldlist import FieldList
 
-        x = get_wrapper(x)
+        x = from_object(x)
 
         if isinstance(x, FieldList):
             return x
-
-        if isinstance(x, Field):
+        elif isinstance(x, Field):
             return FieldList.from_fields([x])
-        elif hasattr(x, "values"):
+        elif hasattr(x, "to_numpy"):
             # from earthkit.data.sources.array_list import from_array
             # from earthkit.data.utils.metadata.dict import UserMetadata
 
-            x_val = x.values
+            x_val = x.to_numpy()
             from earthkit.utils.array import array_namespace
 
             xp = array_namespace(x_val)
@@ -166,8 +165,8 @@ class LoopCompute(Compute):
                     return _make_fieldlist(x_val, n=x_shape[0])
                     # return from_array(x_val, [UserMetadata()] * x_shape[0])
 
-            assumed_ref_shape = tuple(len(ref), **ref_field_shape)
-            raise ValueError(f"y shape={x.shape} cannot be used with x shape={assumed_ref_shape}")
+            assumed_ref_shape = tuple([len(ref), *ref_field_shape])
+            raise ValueError(f"y shape={x_val.shape} cannot be used with x shape={assumed_ref_shape}")
 
         raise ValueError(f"y type={type(x)} cannot be used with x type={type(ref)}")
 
@@ -213,7 +212,7 @@ class LoopCompute(Compute):
     def apply_ufunc(func, ref, *args, template=None):
         from earthkit.data.indexing.simple import SimpleFieldList
 
-        x = [get_wrapper(a) for a in args]
+        x = [from_object(a) for a in args]
         ds = []
         for i, a in enumerate(x):
             if a is not ref:
@@ -231,7 +230,7 @@ class LoopCompute(Compute):
 
         r = []
         for f_ref, *f_ds in zip(ref, *ds):
-            x = [f.values for f in f_ds]
+            x = [f.to_numpy() for f in f_ds]
             vx = func(*x)
             f = f_ref.set(values=vx)
             # f.to_disk()

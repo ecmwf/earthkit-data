@@ -95,7 +95,7 @@ from earthkit.data.utils.testing import earthkit_remote_test_data_file
 def test_xr_engine_empty_slices(allow_holes, lazy_load, file, variables, sel_dicts, shapes):
     kwargs = dict(profile="mars", squeeze=False, allow_holes=allow_holes, lazy_load=lazy_load)
 
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "grid", file)).to_fieldlist()
 
     ds = ds_ek.to_xarray(**kwargs).squeeze()
     assert set(ds) == set(variables)

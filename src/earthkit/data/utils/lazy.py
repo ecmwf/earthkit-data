@@ -29,6 +29,9 @@ class LazySource:
     def source(self):
         if self._source is None:
             try:
+                print(
+                    f"LazySource: loading source {self.name} with args={self.args} and kwargs={self.kwargs}"
+                )
                 self._source = from_source_internal(
                     self.name,
                     lazily=False,
@@ -61,6 +64,7 @@ class LazySource:
         return getattr(self.source, name)
 
     def __call__(self, **kwargs):
+        print(f"LazySource: __call__ with kwargs={kwargs}")
         assert self._source is None
         self.kwargs.update(kwargs)
         return self.source

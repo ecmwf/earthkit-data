@@ -21,6 +21,7 @@ _SUFFIXES = {
     (".grib", ".grb", ".grib1", ".grib2", ".grb1", ".grb2"): "grib",
     (".nc", ".nc3", ".nc4", ".netcdf"): "netcdf",
     (".tiff", ".tif"): "geotiff",
+    (".bufr",): "bufr",
 }
 
 
@@ -63,6 +64,28 @@ class EncodedData(metaclass=ABCMeta):
         pass
 
 
+class FilePathEncodedData(EncodedData):
+    def __init__(self, path, binary):
+        self.path = path
+        self.binary = binary
+
+    def to_bytes(self):
+        raise NotImplementedError
+
+    def to_file(self, f, **kwargs):
+        print("FilePathEncodedData.to_file", self.path, self.binary)
+        mode = "rb" if self.binary else "r"
+        with open(self.path, mode) as g:
+            while True:
+                chunk = g.read(1024 * 1024)
+                if not chunk:
+                    break
+                f.write(chunk)
+
+    def get(self, key, default=None):
+        raise NotImplementedError
+
+
 class Encoder(metaclass=ABCMeta):
     """Base class for encoders.
 
@@ -92,6 +115,7 @@ class Encoder(metaclass=ABCMeta):
         metadata={},
         template=None,
         missing_value=9999,
+        target=None,
         **kwargs,
     ) -> EncodedData:
         """Encode the data.
@@ -113,6 +137,8 @@ class Encoder(metaclass=ABCMeta):
             the template the :class:`Encoder` was created with will be used if available.
         missing_value: number
             The value to use for missing values.
+        target: Target, None
+            The target to write to. Can be used by the encoder to determine how to encode the data. When None, the encoder will determine the target from the data to write (if possible) or from the :class:`Encoder` properties.
         **kwargs: dict
             Additional keyword arguments.
 
@@ -169,6 +195,30 @@ class Encoder(metaclass=ABCMeta):
             The data to encode
 
         Double dispatch method that called from ``data`` to encode itself."""
+        pass
+
+    @abstractmethod
+    def _encode_featurelist(self, featurelist, **kwargs) -> EncodedData:
+        """Subclass implementation of the encoding logic for a FeatureList.
+
+        Parameters:
+        -----------
+        featurelist: :obj:`FeatureList`
+            The FeatureList to encode
+
+        Double dispatch method that called from ``featurelist`` to encode itself."""
+        pass
+
+    @abstractmethod
+    def _encode_featurelist(self, featurelist, **kwargs) -> EncodedData:
+        """Subclass implementation of the encoding logic for a FeatureList.
+
+        Parameters:
+        -----------
+        featurelist: :obj:`FeatureList`
+            The FeatureList to encode
+
+        Double dispatch method that called from ``featurelist`` to encode itself."""
         pass
 
 
@@ -230,9 +280,17 @@ def make_encoder(data, encoder=None, suffix=None, metadata=None, **kwargs):
         if suffix is not None:
             encoder = _suffix_to_encoder(suffix)
         if encoder is None:
+            from earthkit.data.data import Data
+
             if hasattr(data, "_default_encoder"):
                 # print("data._default_encoder", data._default_encoder())
                 encoder = data._default_encoder()
+            if (
+                isinstance(data, Data)
+                and hasattr(data, "_source")
+                and hasattr(data._source, "_default_encoder")
+            ):
+                encoder = data._source._default_encoder()
 
     if isinstance(encoder, str):
         encoder = create_encoder(encoder, metadata=metadata, **kwargs)

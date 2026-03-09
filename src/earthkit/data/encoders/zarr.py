@@ -42,10 +42,9 @@ class ZarrEncoder(Encoder):
         **kwargs,
     ):
         if data is not None:
-            from earthkit.data.wrappers import get_wrapper
+            from earthkit.data.data.wrappers import from_object
 
-            # data = get_wrapper(data, fieldlist=False)
-            data = get_wrapper(data)
+            data = from_object(data)
 
             if hasattr(data, "_encode"):
                 return data._encode(self, **kwargs)
@@ -65,6 +64,7 @@ class ZarrEncoder(Encoder):
         template=None,
         # return_bytes=False,
         missing_value=9999,
+        target=None,
         **kwargs,
     ):
         return ZarrEncodedData(data.to_xarray(add_earthkit_attrs=False))
@@ -82,6 +82,9 @@ class ZarrEncoder(Encoder):
         return ZarrEncodedData(ds)
 
     def _encode_xarray(self, data, **kwargs):
+        raise NotImplementedError
+
+    def _encode_featurelist(self, data, **kwargs):
         raise NotImplementedError
 
 

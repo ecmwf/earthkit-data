@@ -83,7 +83,7 @@ from xr_engine_fixtures import compare_dims  # noqa: E402
     ],
 )
 def test_xr_engine_member_dim_1(allow_holes, lazy_load, kwargs, dims):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/ens/ens_cf_pf.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/ens/ens_cf_pf.grib")).to_fieldlist()
 
     ds = ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
     compare_dims(ds, dims, order_ref_var="t")
@@ -118,7 +118,7 @@ def test_xr_engine_member_dim_1(allow_holes, lazy_load, kwargs, dims):
     ],
 )
 def test_xr_engine_member_dim_2(allow_holes, lazy_load, kwargs, dims):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/ens/ens_cf_pf.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/ens/ens_cf_pf.grib")).to_fieldlist()
 
     with pytest.raises(ValueError):
         ds_ek.to_xarray(allow_holes=allow_holes, lazy_load=lazy_load, **kwargs)
@@ -128,7 +128,9 @@ def test_xr_engine_member_dim_2(allow_holes, lazy_load, kwargs, dims):
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_member_dim_missing_1(allow_holes, lazy_load):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_td2_1_year.grib"))
+    ds_ek = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine", "date", "t2_td2_1_year.grib")
+    ).to_fieldlist()
 
     ds = ds_ek[10].to_xarray(
         profile="mars",
@@ -148,7 +150,9 @@ def test_xr_engine_member_dim_missing_1(allow_holes, lazy_load):
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_member_dim_missing_2(allow_holes, lazy_load):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "date", "t2_td2_1_year.grib"))
+    ds_ek = from_source(
+        "url", earthkit_remote_test_data_file("xr_engine", "date", "t2_td2_1_year.grib")
+    ).to_fieldlist()
 
     ds = ds_ek[10].to_xarray(
         profile="mars",

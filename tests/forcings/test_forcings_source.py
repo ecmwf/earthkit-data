@@ -89,7 +89,7 @@ def test_forcings_source_2():
 
 
 def test_forcings_source_3():
-    sample = from_source("file", earthkit_test_data_file("t_time_series.grib"))
+    sample = from_source("file", earthkit_test_data_file("t_time_series.grib")).to_fieldlist()
 
     dates = [
         datetime.datetime(2020, 12, 21, 12, 0),

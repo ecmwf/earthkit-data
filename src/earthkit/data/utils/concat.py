@@ -19,14 +19,30 @@ def concat(*args):
     # TODO: make it more flexible
     # currently we assume all arguments are sources
     from earthkit.data import Field
+    from earthkit.data.data import Data
+    from earthkit.data.sources import Source
 
+    has_data = False
     data = []
     for arg in args:
         if isinstance(arg, Field):
             data.append(arg.to_fieldlist())
-        else:
+        elif isinstance(arg, Data):
+            has_data = True
+            if hasattr(arg, "_source"):
+                data.append(arg._source)
+            else:
+                raise ValueError(f"Cannot concatenate type={type(arg)} object")
+        elif isinstance(arg, Source):
             data.append(arg)
+    print(f"concat: data={data}, has_data={has_data}")
 
     from earthkit.data.sources import from_source
 
-    return from_source("multi", *data)
+    result = from_source("multi", *data)
+    print(f"concat: result={result}")
+    if not has_data:
+        if result is None or not hasattr(result, "_source"):
+            raise ValueError("concat could not create a valid Data object from the provided arguments")
+        return result._source
+    return result

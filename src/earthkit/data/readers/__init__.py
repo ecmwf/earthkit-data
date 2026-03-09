@@ -12,9 +12,7 @@ import os
 import weakref
 from importlib import import_module
 
-import deprecation
-
-from earthkit.data.core import Base
+from earthkit.data.core import Loader
 from earthkit.data.core.config import CONFIG
 from earthkit.data.decorators import detect_out_filename
 from earthkit.data.decorators import locked
@@ -22,14 +20,9 @@ from earthkit.data.decorators import locked
 LOG = logging.getLogger(__name__)
 
 
-# class ReaderMeta(type(Base), type(os.PathLike)):
-#     pass
-
-
-# class Reader(Base, os.PathLike, metaclass=ReaderMeta):
-class Reader(Base, os.PathLike):
-    appendable = False  # Set to True if the data can be appended to and existing file
-    binary = True
+class Reader(Loader, os.PathLike):
+    _appendable = False  # Set to True if the data can be appended to and existing file
+    _binary = True
 
     def __init__(self, source, path):
         LOG.debug("Reader for %s is %s", path, self.__class__.__name__)
@@ -60,28 +53,16 @@ class Reader(Base, os.PathLike):
     def merger(self):
         return self.source.merger
 
-    def mutate(self):
-        # Give a chance to `directory` or `zip` to change the reader
-        return self
+    @property
+    def appendable(self):
+        return self._appendable
 
-    def mutate_source(self):
-        # The source may ask if it needs to mutate
-        return None
-
-    def ignore(self):
-        # Used by multi-source
-        return False
+    @property
+    def binary(self):
+        return self._binary
 
     def cache_file(self, *args, **kwargs):
         return self.source.cache_file(*args, **kwargs)
-
-    def to_target(self, target, *args, **kwargs):
-        from earthkit.data.targets import to_target
-
-        to_target(target, *args, data=self, **kwargs)
-
-    def _encode(self, encoder, **kwargs):
-        return encoder._encode(self, **kwargs)
 
     def _default_encoder(self):
         return "internal-pass-through"
@@ -89,12 +70,8 @@ class Reader(Base, os.PathLike):
     def __fspath__(self):
         return self.path
 
-    # def index_content(self):
-    #     LOG.warning(f"index-content(): Ignoring {self.path}")
-    #     return []
-
-    # def ranges(self):
-    #     self.source._kw
+    def to_data_object(self):
+        return None
 
 
 _READERS = {}

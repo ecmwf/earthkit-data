@@ -26,7 +26,7 @@ LOG = logging.getLogger(__name__)
 
 
 def test_file_source_grib():
-    s = from_source("file", earthkit_examples_file("test.grib"))
+    s = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
 
     assert len(s) == 2
 
@@ -108,7 +108,8 @@ def test_file_source_netcdf_no_overwrite():
 
 def test_file_source_odb():
     s = from_source("file", earthkit_examples_file("test.odb"))
-    assert s.path == earthkit_examples_file("test.odb")
+    assert s._TYPE_NAME == "ODB"
+    assert s._reader.path == earthkit_examples_file("test.odb")
 
 
 def test_file_glob():
@@ -145,7 +146,7 @@ def test_file_single_directory():
         assert ds.metadata(("param", "level")) == ref
 
 
-def test_file_multi_directory():
+def test_file_multi_directory_1():
     s1 = from_source("file", earthkit_examples_file("test.grib")).to_fieldlist()
     s2 = from_source("file", earthkit_examples_file("test4.grib")).to_fieldlist()
     s3 = from_source("file", earthkit_examples_file("test6.grib")).to_fieldlist()
@@ -154,8 +155,8 @@ def test_file_multi_directory():
         s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
 
         with temp_directory() as tmpdir2:
-            s1.to_target("file", os.path.join(tmpdir2, "a.grib")).to_fieldlist()
-            s3.to_target("file", os.path.join(tmpdir2, "b.grib")).to_fieldlist()
+            s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
+            s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
 
             ds = from_source("file", [tmpdir1, tmpdir2]).to_fieldlist()
             assert len(ds) == 14, len(ds)
@@ -241,8 +242,8 @@ def test_file_multi_directory_with_tar():
         s2.to_target("file", os.path.join(tmpdir1, "b.grib"))
 
         with temp_directory() as tmpdir2:
-            s1.to_target("file", os.path.join(tmpdir2, "a.grib")).to_fieldlist()
-            s3.to_target("file", os.path.join(tmpdir2, "b.grib")).to_fieldlist()
+            s1.to_target("file", os.path.join(tmpdir2, "a.grib"))
+            s3.to_target("file", os.path.join(tmpdir2, "b.grib"))
 
             paths = [os.path.join(tmpdir2, f) for f in ["a.grib", "b.grib"]]
             make_tgz(tmpdir2, "test.tar.gz", paths)

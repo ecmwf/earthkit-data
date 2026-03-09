@@ -165,7 +165,7 @@ def test_grib_no_cache_setting():
 def test_grib_offset_index_cache_setting(index_cache):
     s = {"cache-policy": "temporary", "use-message-position-index-cache": index_cache}
     with settings.temporary(s):
-        ds = from_source("file", earthkit_examples_file("tuv_pl.grib"))
+        ds = from_source("file", earthkit_examples_file("tuv_pl.grib")).to_fieldlist()
         assert len(ds) == 18
 
         f = ds[3]
@@ -287,8 +287,8 @@ def test_cache_management_setting(policy):
                 r.append(from_source("dummy-source", "zeros", size=data_size, n=n))
 
             for ds in r:
-                assert os.path.exists(ds.path)
-                assert os.path.dirname(ds.path) == cache.directory()
+                assert os.path.exists(ds._source.path)
+                assert os.path.dirname(ds._source.path) == cache.directory()
 
             # check cache contents
             num, size = cache.summary_dump_database()
@@ -339,31 +339,31 @@ def test_cache_force_setting():
 
     data_size = 10 * 1024
     ds = from_source("dummy-source", "zeros", size=data_size, n=0)
-    st = os.stat(ds.path)
+    st = os.stat(ds._source.path)
     m_time_ref = st.st_mtime_ns
 
     ds1 = from_source("dummy-source", "zeros", size=data_size, n=0)
-    assert ds1.path == ds.path
-    st = os.stat(ds1.path)
+    assert ds1._source.path == ds._source.path
+    st = os.stat(ds1._source.path)
     m_time = st.st_mtime_ns
     assert m_time == m_time_ref
 
     ds2 = from_source("dummy-source", "zeros", force=_force_false, size=data_size, n=0)
-    assert ds2.path == ds.path
-    st = os.stat(ds2.path)
+    assert ds2._source.path == ds._source.path
+    st = os.stat(ds2._source.path)
     m_time = st.st_mtime_ns
     assert m_time == m_time_ref
 
     ds3 = from_source("dummy-source", "zeros", force=_force_true, size=data_size, n=0)
-    assert ds3.path == ds.path
-    st = os.stat(ds3.path)
+    assert ds3._source.path == ds._source.path
+    st = os.stat(ds3._source.path)
     m_time = st.st_mtime_ns
     assert m_time != m_time_ref
     m_time_ref = m_time
 
     ds4 = from_source("dummy-source", "zeros", size=data_size, n=0)
-    assert ds4.path == ds.path
-    st = os.stat(ds4.path)
+    assert ds4._source.path == ds._source.path
+    st = os.stat(ds4._source.path)
     m_time = st.st_mtime_ns
     assert m_time == m_time_ref
 

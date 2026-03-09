@@ -7,35 +7,24 @@
 # nor does it submit to any jurisdiction.
 #
 
-# The code is copied from skinnywms, and we should combile later
+from . import SimpleData
 
 
-from earthkit.data.data import SimpleData
-
-
-class GeoJsonData(SimpleData):
-    _TYPE_NAME = "GeoJSON"
+class BUFRData(SimpleData):
+    _TYPE_NAME = "BUFR"
 
     def __init__(self, reader):
         self._reader = reader
 
     @property
     def available_types(self):
-        return [self._GEOPANDAS, self._PANDAS, self._XARRAY, self._GEOJSON]
+        return [self._PANDAS, self._FEATURELIST]
 
     def describe(self):
-        return f"GeoJSON data from {self._reader.path}"
+        return f"BUFR data from {self._reader.path}"
 
     def to_pandas(self, **kwargs):
         return self._reader.to_pandas(**kwargs)
 
-    def to_xarray(self, **kwargs):
-        return self._reader.to_xarray(**kwargs)
-
-    def to_geopandas(self, **kwargs):
-        return self._reader.to_geopandas(**kwargs)
-
     def to_featurelist(self, *args, **kwargs):
-        from .file import GeoJsonList
-
-        return GeoJsonList(self._reader.path)
+        return self._reader.to_featurelist(*args, **kwargs)

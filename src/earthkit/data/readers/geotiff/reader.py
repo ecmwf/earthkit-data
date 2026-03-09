@@ -54,7 +54,7 @@ class GeoTIFFReader(Source, Reader):
         return GeoTIFFFieldList(self.path, **kwargs)
 
     def to_data_object(self):
-        from .data import GeoTIFFData
+        from earthkit.data.data.geotiff import GeoTIFFData
 
         return GeoTIFFData(self)
 

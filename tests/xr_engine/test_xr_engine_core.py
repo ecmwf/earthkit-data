@@ -27,7 +27,7 @@ from xr_engine_fixtures import load_grib_data  # noqa: E402
 
 
 def test_xr_engine_kwargs_unchanged_earthkit():
-    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib")).to_fieldlist()
 
     _kwargs = {"profile": "mars", "squeeze": True}
     res = ds.to_xarray(engine="earthkit", xarray_open_dataset_kwargs=_kwargs)
@@ -36,7 +36,7 @@ def test_xr_engine_kwargs_unchanged_earthkit():
 
 
 def test_xr_engine_kwargs_unchanged_cfgrib():
-    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib"))
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl_small.grib")).to_fieldlist()
 
     _kwargs = {"squeeze": True}
     res = ds.to_xarray(engine="cfgrib", xarray_open_dataset_kwargs=_kwargs)
@@ -46,7 +46,7 @@ def test_xr_engine_kwargs_unchanged_cfgrib():
 
 @pytest.mark.cache
 def test_xr_engine_basic():
-    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
+    ds = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib")).to_fieldlist()
     res = ds.to_xarray(profile="mars")
     assert res is not None
 
@@ -55,8 +55,8 @@ def test_xr_engine_basic():
 @pytest.mark.parametrize("path_maker", [lambda x: x, lambda x: pathlib.Path(x)])
 def test_xr_engine_open_dataset_path(path_maker):
 
-    ds = from_source("sample", "pl.grib")
-    path = path_maker(ds.path)
+    ds = from_source("sample", "pl.grib").to_fieldlist()
+    path = path_maker(ds._source.path)
 
     import xarray as xr
 
@@ -69,7 +69,7 @@ def test_xr_engine_open_dataset_path(path_maker):
 @pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize("api", ["earthkit", "xr"])
 def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib")).to_fieldlist()
 
     if api == "earthkit":
         ds = ds_ek.to_xarray(
@@ -262,7 +262,7 @@ def test_xr_engine_detailed_check_1(allow_holes, lazy_load, api):
 @pytest.mark.parametrize("lazy_load", [True, False])
 @pytest.mark.parametrize("api", ["earthkit", "xr"])
 def test_xr_engine_detailed_check_2(allow_holes, lazy_load, api):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib")).to_fieldlist()
 
     if api == "earthkit":
         ds = ds_ek.to_xarray(
@@ -821,7 +821,7 @@ def test_xr_engine_detailed_flatten_check_2(allow_holes, stream, lazy_load, rele
     ],
 )
 def test_xr_engine_invalid_kwargs(kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine", "level", "pl.grib")).to_fieldlist()
 
     import xarray as xr
 
@@ -845,7 +845,7 @@ def test_xr_engine_invalid_kwargs(kwargs):
     ],
 )
 def test_xr_engine_dtype(dtype, expected_dtype):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
     ds = ds_ek.to_xarray(profile="mars", dtype=dtype)
     assert ds["t"].data.dtype == expected_dtype
@@ -856,7 +856,7 @@ def test_xr_engine_dtype(dtype, expected_dtype):
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_single_field(allow_holes, lazy_load):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek[0]
 
     ds = ds_ek.to_xarray(
@@ -938,7 +938,7 @@ def test_xr_engine_single_field(allow_holes, lazy_load):
 @pytest.mark.cache
 @pytest.mark.parametrize("add", [False, True])
 def test_xr_engine_add_earthkit_attrs_1(add):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek[0]
 
     ds = ds_ek.to_xarray(
@@ -958,7 +958,7 @@ def test_xr_engine_add_earthkit_attrs_1(add):
 
 @pytest.mark.cache
 def test_xr_engine_add_earthkit_attrs_2():
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib"))
+    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
     ds_ek = ds_ek[0]
 
     ds = ds_ek.to_xarray(

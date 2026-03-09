@@ -7,32 +7,24 @@
 # nor does it submit to any jurisdiction.
 #
 
-from earthkit.data.data import SimpleData
+from . import SimpleData
 
 
-class ShapeFileData(SimpleData):
-    _TYPE_NAME = "Shapefile"
+class CSVData(SimpleData):
+    _TYPE_NAME = "CSV"
 
     def __init__(self, reader):
         self._reader = reader
 
     @property
     def available_types(self):
-        return [self._GEOPANDAS, self._PANDAS, self._XARRAY, self._GEOJSON]
+        return [self._PANDAS, self._XARRAY]
 
     def describe(self):
-        return f"GeoJSON data from {self._reader.path}"
+        return f"CSV data from {self._reader.path}"
 
     def to_pandas(self, **kwargs):
         return self._reader.to_pandas(**kwargs)
 
     def to_xarray(self, **kwargs):
         return self._reader.to_xarray(**kwargs)
-
-    def to_geopandas(self, **kwargs):
-        return self._reader.to_geopandas(**kwargs)
-
-    def to_featurelist(self, *args, **kwargs):
-        from .file import ShapeFileList
-
-        return ShapeFileList(self._reader.path)

@@ -12,6 +12,7 @@ from abc import abstractmethod
 from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.core.field import Field
+from earthkit.data.data.fieldlist import FieldListData
 
 from .indexed import IndexFieldListBase
 
@@ -96,6 +97,9 @@ class SimpleFieldListBase(IndexFieldListBase):
         from itertools import chain
 
         return cls.from_fields(list(chain(*[f for f in sources])))
+
+    def to_data_object(self):
+        return FieldListData(self)
 
 
 class SimpleFieldList(SimpleFieldListBase):
