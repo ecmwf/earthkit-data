@@ -16,7 +16,7 @@ import typing as T
 from functools import wraps
 
 from earthkit.data import transform
-from earthkit.data.wrappers import Wrapper
+from earthkit.data.data.wrappers import ObjectWrapperData as Wrapper
 
 try:
     UNION_TYPES = [T.Union, types.UnionType]
