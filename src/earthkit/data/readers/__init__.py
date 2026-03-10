@@ -241,14 +241,16 @@ def _readers(method_name):
             if path.endswith(".py") or os.path.isdir(os.path.join(here, path)):
                 name, _ = os.path.splitext(path)
                 try:
-                    for method in ["reader", "memory_reader", "stream_reader"]:
+                    for method in ["READER", "MEMORY_READER", "STREAM_READER"]:
                         module = import_module(f".{name}", package=__name__)
                         if hasattr(module, method):
-                            _READERS[(name, method)] = getattr(module, method)
-                            if hasattr(module, "aliases"):
-                                for a in module.aliases:
-                                    assert a not in _READERS
-                                    _READERS[(a, method_name)] = getattr(module, method)
+                            func = getattr(module, method)
+                            if func is not None:
+                                _READERS[(name, method.lower())] = func
+                                if hasattr(module, "aliases"):
+                                    for a in module.aliases:
+                                        assert a not in _READERS
+                                        _READERS[(a, method.lower())] = func
                 except Exception:
                     LOG.exception("Error loading reader %s", name)
 
@@ -323,7 +325,10 @@ def reader(source, path, **kwargs):
             r = _empty(source, path, **kwargs)
             if r is not None:
                 return r
-            raise Exception(f"File is empty: '{path}'")
+
+            from earthkit.data.utils.exceptions import EmptyFileError
+
+            raise EmptyFileError(f"File is empty: '{path}'")
 
         n_bytes = CONFIG.get("reader-type-check-bytes")
         with open(path, "rb") as f:

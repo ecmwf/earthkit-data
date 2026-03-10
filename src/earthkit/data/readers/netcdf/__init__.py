@@ -20,3 +20,6 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
         from .reader import NetCDFFileReader
 
         return NetCDFFileReader(source, path)
+
+
+READER = reader

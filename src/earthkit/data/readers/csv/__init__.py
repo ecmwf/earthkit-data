@@ -137,3 +137,6 @@ def reader(source, path, *, magic=None, deeper_check=False, fwf=False, **kwargs)
             from .reader import CSVReader
 
             return CSVReader(source, path)
+
+
+READER = reader

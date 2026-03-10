@@ -60,3 +60,6 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     if deeper_check:
         if is_text(path):
             return TextReader(source, path)
+
+
+READER = reader

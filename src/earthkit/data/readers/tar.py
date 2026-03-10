@@ -36,3 +36,6 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
 
     if kind == "application/x-tar":
         return TarReader(source, path, compression)
+
+
+READER = reader

@@ -27,3 +27,6 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
 
         parts = source.parts if hasattr(source, "parts") else None
         return BUFRReader(source, path, parts=parts)
+
+
+READER = reader

@@ -36,3 +36,6 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
             from ..unknown import UnknownReader
 
             return UnknownReader(source, "", skip_warning=True)
+
+
+READER = reader

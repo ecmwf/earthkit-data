@@ -20,3 +20,6 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
         from .reader import GeojsonReader
 
         return GeojsonReader(source, path)
+
+
+READER = reader

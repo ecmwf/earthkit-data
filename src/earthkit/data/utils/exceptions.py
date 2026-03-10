@@ -1,4 +1,4 @@
-# (C) Copyright 2025- ECMWF.
+# (C) Copyright 2020 ECMWF.
 #
 # This software is licensed under the terms of the Apache Licence Version 2.0
 # which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,11 +8,11 @@
 #
 
 
-def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
-    if path.endswith(".pp"):
-        from .reader import PPReader
+class EmptyFileError(Exception):
+    """Exception raised when attempting to read or process an empty file.
 
-        return PPReader(source, path)
+    This exception is raised when a file is found to be empty (zero bytes)
+    and the operation requires the file to contain data.
+    """
 
-
-READER = reader
+    pass

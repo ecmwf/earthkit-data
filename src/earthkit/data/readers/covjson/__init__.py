@@ -68,3 +68,8 @@ def stream_reader(
         from .reader import CovjsonStreamReader
 
         return CovjsonStreamReader(stream)
+
+
+READER = reader
+MEMORY_READER = memory_reader
+STREAM_READER = stream_reader

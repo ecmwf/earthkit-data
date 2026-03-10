@@ -22,3 +22,6 @@ def reader(source, path, *, magic=None, **kwargs):
         from .reader import GeoTIFFReader
 
         return GeoTIFFReader(source, path)
+
+
+READER = reader
