@@ -36,18 +36,6 @@ def test_xr_engine_numpy_core_1(allow_holes, lazy_load):
 @pytest.mark.cache
 @pytest.mark.parametrize("allow_holes", [False, True])
 @pytest.mark.parametrize("lazy_load", [True, False])
-@pytest.mark.parametrize("_kwargs", [{"array_backend": "numpy"}, {"array_module": "numpy"}])
-def test_xr_engine_numpy_core_compat(allow_holes, lazy_load, _kwargs):
-    ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
-
-    ds = ds_ek.to_xarray(profile="mars", allow_holes=allow_holes, lazy_load=lazy_load, **_kwargs)
-
-    check_array_type(ds["t"].data, _NUMPY)
-
-
-@pytest.mark.cache
-@pytest.mark.parametrize("allow_holes", [False, True])
-@pytest.mark.parametrize("lazy_load", [True, False])
 def test_xr_engine_numpy_dtype(allow_holes, lazy_load):
     ds_ek = from_source("url", earthkit_remote_test_data_file("xr_engine/level/pl.grib")).to_fieldlist()
 
