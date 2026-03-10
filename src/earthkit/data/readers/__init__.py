@@ -33,8 +33,6 @@ class Reader(Loader, Encodable, os.PathLike):
         self._source = weakref.ref(source)
         self.path = path
         self.source_filename = self.source.source_filename
-        # self._binary = binary
-        # self._appendable = appendable  # Set to True if the data can be appended to and existing file
 
     @property
     def source(self):
@@ -74,28 +72,6 @@ class Reader(Loader, Encodable, os.PathLike):
         from earthkit.data.targets import to_target
 
         to_target(target, *args, data=self, **kwargs)
-
-    # def _default_encoder(self):
-    #     return self._format
-
-    # def _encode(self, encoder, *args, **kwargs):
-    #     result = self._encode_path(encoder, *args, **kwargs)
-    #     if result is not None:
-    #         return result
-    #     return self._default_encoder(encoder, *args, **kwargs)
-
-    # def _encode_path(self, encoder, *args, **kwargs):
-    #     path_info = self._path_info()
-    #     if path_info is not None:
-    #         target = kwargs.get("target", None)
-    #         if target is not None and target._name == "file":
-    #             path_info = self._path_info()
-    #             return encoder._encode_path(path_info, **kwargs)
-    #     return None
-
-    # @abstractmethod
-    # def _encode_default(self, encoder, *args, **kwargs):
-    #     pass
 
     def __fspath__(self):
         return self.path
@@ -140,90 +116,6 @@ class Reader(Loader, Encodable, os.PathLike):
                 default_encoder=self._default_encoder(),
             )
         return None
-
-
-class Reader1(Loader, os.PathLike):
-    _format = None
-    _binary = True
-    _appendable = True
-
-    def __init__(self, source, path, **kwargs):
-        LOG.debug("Reader for %s is %s", path, self.__class__.__name__)
-        self._source = weakref.ref(source)
-        self.path = path
-        self.source_filename = self.source.source_filename
-        # self._binary = binary
-        # self._appendable = appendable  # Set to True if the data can be appended to and existing file
-
-    @property
-    def source(self):
-        return self._source()
-
-    @property
-    def filter(self):
-        return self.source.filter
-
-    @property
-    def parts(self):
-        if hasattr(self.source, "parts"):
-            return self.source.parts
-
-    @property
-    def stream(self):
-        if hasattr(self.source, "stream"):
-            return self.source.stream
-        return False
-
-    @property
-    def merger(self):
-        return self.source.merger
-
-    @property
-    def appendable(self):
-        return self._appendable
-
-    @property
-    def binary(self):
-        return self._binary
-
-    def cache_file(self, *args, **kwargs):
-        return self.source.cache_file(*args, **kwargs)
-
-    def _default_encoder(self):
-        return self._format
-
-    def _encode(self, encoder, *args, **kwargs):
-        result = self._encode_path(encoder, *args, **kwargs)
-        if result is not None:
-            return result
-        return self._default_encoder(encoder, *args, **kwargs)
-
-    def _encode_path(self, encoder, *args, **kwargs):
-        path_info = self._path_info()
-        if path_info is not None:
-            target = kwargs.get("target", None)
-            if target is not None and target._name == "file":
-                path_info = self._path_info()
-                return encoder._encode_path(path_info, **kwargs)
-        return None
-
-    @abstractmethod
-    def _encode_default(self, encoder, *args, **kwargs):
-        pass
-
-    def __fspath__(self):
-        return self.path
-
-    def to_data_object(self):
-        return None
-
-    def path_info(self):
-        return PathInfo(
-            self.path,
-            binary=self.binary,
-            appendable=self.appendable,
-            default_encoder=self._default_encoder(),
-        )
 
 
 _READERS = {}
