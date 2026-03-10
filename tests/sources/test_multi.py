@@ -46,7 +46,7 @@ def test_multi_graph_1():
         from_source("multi", b21, b22),
     )
 
-    ds = from_source("multi", m1, m2)
+    ds = from_source("multi", m1, m2).to_fieldlist()
     # ds.graph()
 
     assert len(ds) == 8
@@ -82,7 +82,7 @@ def test_multi_graph_2():
         def filter(path_or_url):
             return path_or_url.endswith("2.grib")
 
-        ds = from_source("file", tmpdir, filter=filter)
+        ds = from_source("file", tmpdir, filter=filter).to_fieldlist()
         # ds.graph()
 
         assert len(ds) == 4

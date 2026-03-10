@@ -88,8 +88,7 @@ def update_metadata(metadata, compulsory, step_len=0):
         metadata["typeOfLevel"] = levtype_remap[v]
 
 
-def data_array_to_fields(da, reference_field=None):
-
+def data_array_to_fields(da, reference_field=None, metadata=None):
     dims = [dim for dim in da.dims if dim not in ["values", "X", "Y", "lat", "lon", "latitude", "longitude"]]
     coords = {k: v for k, v in da.coords.items() if k in dims}
     # components = {}
@@ -149,6 +148,9 @@ def data_array_to_fields(da, reference_field=None):
                 grib_metadata[k] = compulsory_metadata[k]
 
         update_metadata(grib_metadata, [], step_len=step_len)
+
+        if metadata:
+            grib_metadata.update(metadata)
 
         from earthkit.data.encoders.grib import GribEncoder
 

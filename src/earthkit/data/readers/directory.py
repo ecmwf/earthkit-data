@@ -123,3 +123,6 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
         )
     ):
         return DirectoryReader(source, path)
+
+
+READER = reader

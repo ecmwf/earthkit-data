@@ -55,8 +55,6 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         allow_holes=None,
         strict=None,
         dtype=None,
-        array_module=None,
-        array_backend=None,
         array_namespace=None,
         errors=None,
     ):
@@ -355,28 +353,6 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         else:
             from .builder import SingleDatasetBuilder
 
-            if array_module is not None:
-                import warnings
-
-                warnings.warn(
-                    "'array_module' is deprecated. Use 'array_namespace' instead", DeprecationWarning
-                )
-                if array_namespace is None:
-                    array_namespace = array_module
-                else:
-                    raise ValueError("Cannot specify both 'array_module' and 'array_namespace' arguments")
-
-            if array_backend is not None:
-                import warnings
-
-                warnings.warn(
-                    "'array_backend' is deprecated. Use 'array_namespace' instead", DeprecationWarning
-                )
-                if array_namespace is None:
-                    array_namespace = array_backend
-                else:
-                    raise ValueError("Cannot specify both 'array_backend' and 'array_namespace' arguments")
-
             _kwargs = dict(
                 variable_key=variable_key,
                 drop_variables=drop_variables,
@@ -421,9 +397,9 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
     @classmethod
     def guess_can_open(cls, filename_or_obj):
         try:
-            from earthkit.data.core import Base
+            from earthkit.data.core.fieldlist import FieldList
 
-            if isinstance(filename_or_obj, Base):
+            if isinstance(filename_or_obj, FieldList):
                 return True
             elif isinstance(filename_or_obj, str):
                 from earthkit.data.readers.grib import is_grib_file
@@ -441,14 +417,21 @@ class EarthkitBackendEntrypoint(BackendEntrypoint):
         import os
         import pathlib
 
-        from earthkit.data.core import Base
+        from earthkit.data.core.fieldlist import FieldList
 
-        if isinstance(filename_or_obj, Base):
+        ds = None
+        if isinstance(filename_or_obj, FieldList):
             ds = filename_or_obj
         elif isinstance(filename_or_obj, (str, os.PathLike, pathlib.Path)):
             from earthkit.data import from_source
 
-            ds = from_source(source_type, filename_or_obj).to_fieldlist()
+            ds = from_source(source_type, filename_or_obj)
+            if ds and "fieldlist" in ds.available_types:
+                ds = ds.to_fieldlist()
+            else:
+                raise ValueError(
+                    f"Could not generate fieldlist from path={filename_or_obj} with source type {source_type}"
+                )
         return ds
 
 
@@ -527,6 +510,15 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
                 )
             ) from e
 
+    def _extra_grib_metadata(self):
+        if "_earthkit" in self._obj.attrs:
+            md = self._obj.attrs.get("_earthkit")
+            bvp = md.get("bitsPerValue", None) if isinstance(md, dict) else None
+            if bvp is not None and bvp != 0:
+                return {"bitsPerValue": bvp}
+
+        return dict()
+
     def _remove_earthkit_attrs(self):
         """Create a copy of the dataarray and remove earthkit attributes."""
         da = self._obj
@@ -538,7 +530,9 @@ class XarrayEarthkitDataArray(XarrayEarthkit):
     def _to_fields(self):
         from .grib import data_array_to_fields
 
-        for f in data_array_to_fields(self._obj, reference_field=self._reference_field):
+        for f in data_array_to_fields(
+            self._obj, reference_field=self._reference_field, metadata=self._extra_grib_metadata()
+        ):
             yield f
 
     def to_netcdf(self, *args, **kwargs):

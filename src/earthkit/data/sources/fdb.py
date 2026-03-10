@@ -112,7 +112,7 @@ class FDBRetriever:
     def get(self, request):
         from . import from_source
 
-        return from_source("fdb", request, stream=True, read_all=True, **self.fdb_kwargs)
+        return from_source("fdb", request, stream=True, **self.fdb_kwargs).to_fieldlist(read_all=True)
 
 
 class FDBRequestMapper(RequestMapper):

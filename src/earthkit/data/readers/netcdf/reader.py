@@ -111,9 +111,17 @@ class NetCDFUrlReader(NetCDFReader):
     #     return NetCDFFieldListFromURL(self.path)
 
 
-class MultiNetCDFReader(NetCDFReader):
+class MultiNetCDFReader(Source, NetCDFReaderBase):
     def __init__(self, sources):
-        self.sources = sources
+        NetCDFReaderBase.__init__(self, self, "")
+        self.sources = list(self._flatten(sources))
+
+    def _flatten(self, sources):
+        for s in sources:
+            if isinstance(s, MultiNetCDFReader):
+                yield from self._flatten(s.sources)
+            else:
+                yield s
 
     def to_fieldlist(self):
         from earthkit.data.mergers import make_merger
@@ -132,7 +140,7 @@ class MultiNetCDFReader(NetCDFReader):
         raise NotImplementedError("Conversion of MultiNetCDFReader to fieldlist is not implemented")
 
     def to_xarray(self, *args, **kwargs):
-        return MultiNetCDFReader.to_xarray_multi_from_paths([s.path for s in self.sources], *args, **kwargs)
+        return NetCDFReader.to_xarray_multi_from_paths([s.path for s in self.sources], *args, **kwargs)
 
     def __repr__(self):
         return "MultiNetCDFReader(%s)" % (self.sources,)
@@ -141,3 +149,9 @@ class MultiNetCDFReader(NetCDFReader):
         from earthkit.data.data.netcdf import NetCDFData
 
         return NetCDFData(self)
+
+    def _encode(self, encoder, hints=None, **kwargs):
+        return encoder._encode_xarray(self.to_xarray(), **kwargs)
+
+    def _encode_default(self, encoder, **kwargs):
+        return encoder._encode_xarray(self.to_xarray(), **kwargs)

@@ -13,7 +13,6 @@ from earthkit.data.indexing.simple import SimpleFieldListBase
 from earthkit.data.sources import Source
 from earthkit.data.utils.parts import Part
 
-from .. import Reader
 from .core import GRIBReaderBase
 from .scan import GribCodesMessagePositionIndex
 
@@ -214,12 +213,12 @@ class GRIBReader(Source, GRIBReaderBase):
         return MultiGRIBReader(sources)
 
     def _encode_default(self, encoder, *args, **kwargs):
-        return encoder._encode_fieldlist(self.to_xarray(), *args, **kwargs)
+        return encoder._encode_fieldlist(self.to_fieldlist(), *args, **kwargs)
 
 
 class MultiGRIBReader(Source, GRIBReaderBase):
     def __init__(self, sources):
-        Reader.__init__(self, self, "")
+        GRIBReader.__init__(self, self, "")
         self.sources = list(self._flatten(sources))
 
     def _flatten(self, sources):

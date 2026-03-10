@@ -452,6 +452,10 @@ class BaseGeography(SimpleFieldComponent):
     def points(self, flatten=False, dtype=None):
         return self.xys(flatten=flatten, dtype=dtype)
 
+    @classmethod
+    def from_dict(cls, data, shape_hint=None):
+        return create_geography_from_dict(data, shape_hint=shape_hint)
+
     def __getstate__(self):
         return super().__getstate__()
 

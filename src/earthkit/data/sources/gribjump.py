@@ -24,7 +24,7 @@ import numpy as np
 from earthkit.utils.decorators import thread_safe_cached_property
 
 from earthkit.data.core.field import Field
-from earthkit.data.indexing.simple import SimpleFieldListCore
+from earthkit.data.indexing.simple import SimpleFieldListBase
 from earthkit.data.sources import Source
 from earthkit.data.sources.fdb import FDBRetriever
 
@@ -252,7 +252,7 @@ class ExtractionRequestCollection(UserList):
         return cls(extraction_requests)
 
 
-class FieldExtractList(SimpleFieldListCore):
+class FieldExtractList(SimpleFieldListBase):
     """Lazily loaded representation of points extracted from multiple fields using GribJump.
 
     .. warning::
@@ -291,7 +291,7 @@ class FieldExtractList(SimpleFieldListCore):
 
     @thread_safe_cached_property
     def _fields(self) -> list[Field]:
-        fields, self.grid_indices = self._load()
+        fields, self._grid_indices = self._load()
         return fields
 
     def _load(self) -> tuple[list[Field], np.ndarray]:
@@ -350,8 +350,8 @@ class FieldExtractList(SimpleFieldListCore):
         if reference_field is None:
             return None
 
-        latitudes = reference_field.geography.latitudes()
-        longitudes = reference_field.geography.longitudes()
+        latitudes = reference_field.geography.latitudes().flatten()
+        longitudes = reference_field.geography.longitudes().flatten()
 
         return latitudes, longitudes
 

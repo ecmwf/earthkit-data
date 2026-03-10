@@ -33,7 +33,6 @@ def reader(source, path, *, magic=None, deeper_check=False, **kwargs):
     # returns true given a file of zeros
 
     kind, compression = mimetypes.guess_type(path)
-
     if kind == "application/x-tar":
         return TarReader(source, path, compression)
 

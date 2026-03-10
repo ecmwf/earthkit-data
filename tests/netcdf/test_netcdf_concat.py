@@ -218,7 +218,7 @@ def _concat_var_different_coords_1(kind1, kind2):
         variables=["a"],
         dims=["lat", "lon", "time"],
         coord_values=dict(time=[1, 3]),
-    ).to_fieldlist()
+    )
     ds1 = s1.to_xarray()
 
     s2 = from_source(
@@ -227,13 +227,13 @@ def _concat_var_different_coords_1(kind1, kind2):
         variables=["a"],
         dims=["lat", "lon", "time"],
         coord_values=dict(time=[2, 4]),
-    ).to_fieldlist()
+    )
     ds2 = s2.to_xarray()
 
     target = xr.concat([ds1, ds2], dim="time")
 
-    ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)").to_fieldlist()
-    ds.graph()
+    ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)")
+    # ds.graph()
     merged = ds.to_xarray()
 
     assert target.identical(merged), f"Concat failed for {kind1}, {kind2}"
@@ -252,7 +252,7 @@ def test_netcdf_concat_var_different_coords_2():
         variables=["a"],
         dims=["lat", "lon", "time"],
         coord_values=dict(time=[2, 1]),
-    ).to_fieldlist()
+    )
     ds1 = s1.to_xarray()
 
     s2 = from_source(
@@ -261,14 +261,14 @@ def test_netcdf_concat_var_different_coords_2():
         variables=["a"],
         dims=["lat", "lon", "time"],
         coord_values=dict(time=[3, 4]),
-    ).to_fieldlist()
+    )
     ds2 = s2.to_xarray()
 
     target = xr.concat([ds1, ds2], dim="time")
 
-    ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)").to_fieldlist()
+    ds = from_source("multi", [s1, s2], merger="concat(concat_dim=time)")
 
-    ds.graph()
+    # ds.graph()
     merged = ds.to_xarray()
 
     assert target.identical(merged)

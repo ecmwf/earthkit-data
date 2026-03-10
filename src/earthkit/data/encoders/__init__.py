@@ -286,7 +286,6 @@ def make_encoder(data, encoder=None, suffix=None, metadata=None, **kwargs):
 
             # print("make_encoder1", data, suffix)
             if hasattr(data, "_default_encoder"):
-                print("data._default_encoder", data._default_encoder())
                 encoder = data._default_encoder()
             # print("make_encoder2", encoder, data)
             if (

@@ -13,6 +13,7 @@ def create_mars_field(request, data=None, values=None, geography=None, reference
 
     from earthkit.data.core.field import Field
     from earthkit.data.field.handler.data import ArrayDataFieldComponentHandler
+    from earthkit.data.field.handler.geography import GeographyFieldComponentHandler
     from earthkit.data.field.handler.labels import SimpleLabels
     from earthkit.data.field.mars.ensemble import MarsEnsembleBuilder
     from earthkit.data.field.mars.parameter import MarsParameterBuilder
@@ -27,6 +28,8 @@ def create_mars_field(request, data=None, values=None, geography=None, reference
     time = MarsTimeBuilder.build(request)
     vertical = MarsVerticalBuilder.build(request)
     labels = SimpleLabels({"mars": request})
+    if geography is not None:
+        geography = GeographyFieldComponentHandler.from_any(geography)
 
     _kwargs = dict(
         data=data,

@@ -200,8 +200,8 @@ class GribHandleMaker:
         return GribCodesHandle.from_sample(sample)
 
     def update_metadata_from_template(self, metadata, template, handle):
-
         return
+
         # the template can contain extra metadata that is not encoded in the handle
         if "bitsPerValue" in metadata:
             return
@@ -493,6 +493,8 @@ class GribEncoder(Encoder):
                     metadata["bitsPerValue"] = bpv
                 else:
                     bpv = field_md.get("bitsPerValue", default=None)
+                    if bpv is not None and bpv > 0:
+                        metadata["bitsPerValue"] = bpv
 
         if values is None:
             values = field_values

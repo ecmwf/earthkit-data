@@ -55,7 +55,7 @@ def test_xr_engine_basic():
 @pytest.mark.parametrize("path_maker", [lambda x: x, lambda x: pathlib.Path(x)])
 def test_xr_engine_open_dataset_path(path_maker):
 
-    ds = from_source("sample", "pl.grib").to_fieldlist()
+    ds = from_source("sample", "pl.grib")
     path = path_maker(ds._source.path)
 
     import xarray as xr

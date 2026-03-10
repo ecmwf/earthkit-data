@@ -318,7 +318,7 @@ def test_xr_engine_write_bits_per_value(allow_holes, lazy_load):
     ref_bpm = ds_ek[0].metadata("bitsPerValue")
     assert ref_bpm == 16
 
-    ds_ek = ds_ek.to_fieldlist()
+    # ds_ek = ds_ek.to_fieldlist()
 
     encoder = create_encoder("grib")
     ds_ek = ds_ek.from_fields(
@@ -335,6 +335,8 @@ def test_xr_engine_write_bits_per_value(allow_holes, lazy_load):
         allow_holes=allow_holes, lazy_load=lazy_load, **{"profile": "mars", "time_dim_mode": "raw"}
     )
     ds += 1
+
+    # assert ds["t"].earthkit._reference_field.metadata("bitsPerValue") == 8
 
     # data-array
     r = ds["t"].earthkit.to_fieldlist()

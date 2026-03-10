@@ -79,9 +79,7 @@ class StreamSource(Source):
 
     @thread_safe_cached_property
     def _reader(self):
-        print("Creating reader for stream", self._stream, "with kwargs", self._kwargs)
         reader = stream_reader(self, self._stream.stream, False, **self._kwargs)
-        print("Created reader", reader)
         if reader is None:
             raise TypeError(f"could not create reader for stream={self._stream.stream}")
         return reader
